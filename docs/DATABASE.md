@@ -98,6 +98,7 @@ owned_by           VARCHAR(64)                  # Collection owner
 located_at         VARCHAR(64)                  # Physical location
 specimen_notes     TEXT                         # Free-form notes
 dna_notes          TEXT                         # DNA/genetics notes
+previous_determinations TEXT                    # Earlier determinations, newest first, " | " separated (since 2026-10)
 access_group       INT                          # Access control group
 created            DATETIME
 modified           DATETIME
@@ -504,6 +505,11 @@ Tab-delimited file with 42 columns:
 40. BiogeographicRegion
 41. LocalityNotes
 42. ElevationMaxError
+
+**Optional columns** (may be added anywhere in the header row; headers are case-insensitive; files without them upload unchanged):
+- `previousDeterminations`: the specimen's earlier determinations, newest first, entries separated by ` | ` (space, vertical bar, space). Each entry is free text, usually `Taxon: determination code by Name on YYYY-MM-DD` (by and on are optional). Example:
+  `Nylanderia: US_CA01 by Ward on 2025-12-10 | Nylanderia: US_CA01 by Fisher on 2000-11-10`
+  Stored as is in `specimen.previous_determinations` and shown on the specimen page as "Previous determination", one entry per line. The current determination stays in the taxon columns, `DeterminedBy` and `DateDetermined`. TaxonWorks uploads fill it from the Darwin Core column `previousIdentifications`.
 
 **Example Row:**
 ```

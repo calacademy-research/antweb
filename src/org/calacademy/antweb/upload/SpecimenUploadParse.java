@@ -995,8 +995,12 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
        */
 
        if (m_headerArrayList != null) return m_headerArrayList;
+       m_headerArrayList = buildHeaderArrayList();
+       return m_headerArrayList;
+    }
 
-       m_headerArrayList = new ArrayList<>();
+    private static ArrayList<String> buildHeaderArrayList() {
+       ArrayList<String> m_headerArrayList = new ArrayList<>();
        m_headerArrayList.add("specimencode");
        m_headerArrayList.add("subfamily");
        m_headerArrayList.add("tribe");
@@ -1052,11 +1056,35 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
        m_headerArrayList.add("collxyaccuracy");
 
        m_headerArrayList.add("taxonworks_co_id");
-       
+
+       // Optional. Previous determinations, newest first, separated by " | ".
+       m_headerArrayList.add(PREVIOUS_DETERMINATIONS_HEADER);
+
       return m_headerArrayList; 
     }
 
+    /** Optional specimen-file column (any case): previous determinations as text. */
+    public static final String PREVIOUS_DETERMINATIONS_HEADER = "previousdeterminations";
+    public static final String PREVIOUS_DETERMINATIONS_COLUMN = "previous_determinations";
+
+    /**
+     * The specimen table column a specimen-file header is stored in, or null when the
+     * header is not one of the specimen columns (it then goes to the "other" XML).
+     * Same rules as SpecimenUpload.getSpecimenColumns(): case-insensitive, trimmed.
+     */
+    public static String specimenColumnForHeader(String header) {
+        if (header == null) return null;
+        String head = header.toLowerCase().trim();
+        if (!buildHeaderArrayList().contains(head)) return null;
+        String translated = buildColumnTranslations().get(head);
+        return translated != null ? translated : head;
+    }
+
     protected Hashtable<String, String> getColumnTranslations() {
+        return buildColumnTranslations();
+    }
+
+    private static Hashtable<String, String> buildColumnTranslations() {
         // *Thau Note:  Somewhat goofy way to match specimen field names to  
         // the database schema.  There's a better way to do this, but I don't have time now!
         // Mark Note.  If the column in the specimen file differs from the database field, map it.
@@ -1087,6 +1115,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         //if (!(group.getId() == 1))
         
         columnTranslations.put("collxyaccuracy", "collectionnotes");        
+
+        columnTranslations.put(PREVIOUS_DETERMINATIONS_HEADER, PREVIOUS_DETERMINATIONS_COLUMN);
         
         return columnTranslations;
     }

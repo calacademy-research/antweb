@@ -363,6 +363,8 @@ LatDeg	LatMin	NS	LonDeg	LonMin	EW	LocLatitude	LocLongitude
 LatLonMaxError	BiogeographicRegion	LocalityNotes	ElevationMaxError
 ```
 
+Optional column: `previousDeterminations` (earlier determinations, newest first, separated by ` | `, e.g. `Nylanderia: US_CA01 by Ward on 2025-12-10 | Nylanderia: US_CA01 by Fisher on 2000-11-10`).
+
 See DATABASE.md → "Specimen Upload File Format" for full details and examples.
 
 ### Upload Processing Flow

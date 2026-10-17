@@ -94,6 +94,9 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
 
     private String taxonworksCollectionObjectID;
 
+    // Previous determinations as text, newest first, separated by " | " (specimen.previous_determinations).
+    private String previousDeterminations;
+
     public Specimen() {
     }    
 
@@ -157,7 +160,8 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
                 + ", datecollectedstart, datecollectedend, datecollectedstartStr, datecollectedendStr"
                 + ", family, kingdom_name, phylum_name, class_name, order_name"
                 + ", taxon_name, image_count, original_taxon_name, line_num, is_introduced"
-                + ", created, backup_file_name, upload_id, flag, issue, taxonworks_co_id, other";
+                + ", created, backup_file_name, upload_id, flag, issue, taxonworks_co_id, other"
+                + ", previous_determinations";
     }
 
     public static Specimen fromTaxonomicInfoResult(ResultSet rset) throws SQLException {
@@ -250,6 +254,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         setFlag(rset.getString("flag"));
         setIssue(rset.getString("issue"));
         setTaxonworksCollectionObjectID(rset.getString("taxonworks_co_id"));
+        setPreviousDeterminations(rset.getString("previous_determinations"));
         setDetailXml(rset.getString("other"));
         goSetDetails();
     }
@@ -1515,6 +1520,29 @@ For a locality name without code (this name has special characters):
 
     private void setTaxonworksCollectionObjectID(String id) {
         this.taxonworksCollectionObjectID = id;
+    }
+
+    public String getPreviousDeterminations() {
+        return previousDeterminations;
+    }
+
+    public void setPreviousDeterminations(String previousDeterminations) {
+        this.previousDeterminations = previousDeterminations;
+    }
+
+    /** The previous determinations, one entry each (split on " | "), for display. Empty when none. */
+    public List<String> getPreviousDeterminationList() {
+        return splitPreviousDeterminations(previousDeterminations);
+    }
+
+    public static List<String> splitPreviousDeterminations(String text) {
+        List<String> list = new ArrayList<>();
+        if (text == null) return list;
+        for (String part : text.split(" \\| ")) {
+            String entry = part.trim();
+            if (!entry.isEmpty()) list.add(entry);
+        }
+        return list;
     }
 
     public String getTaxonWorksEditUrl() {
