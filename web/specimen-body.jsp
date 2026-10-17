@@ -437,6 +437,14 @@ if (casteValue == null) casteValue = "undefined";
    %>
 </li>
 </ul>
+
+<% java.util.List<String> previousDeterminations = specimen.getPreviousDeterminationList();
+   if (!previousDeterminations.isEmpty()) { %>
+<ul class="previous_determinations">
+<li><b>Previous determination: </b></li>
+<li><% for (int pdIndex = 0; pdIndex < previousDeterminations.size(); pdIndex++) { %><%= pdIndex > 0 ? "<br>" : "" %><%= Html.esc(previousDeterminations.get(pdIndex)) %><% } %></li>
+</ul>
+<% } %>
   
 <% if (Utility.displayEmptyOrNotBlank(specimen.getTypeStatus())) {
     String antcatTypeUrl = specimen.getTypeStatusAntcatSearchURL();

@@ -89,6 +89,18 @@ public class TaxonWorksTransformer extends Transformer {
             "rank",
     };
 
+    // Darwin Core previousIdentifications (newest first, entries separated by " | ") is
+    // stored as is in specimen.previous_determinations. Optional: older exports lack it.
+    static final String PREVIOUS_IDENTIFICATIONS_IN = "previousIdentifications";
+    static final String PREVIOUS_DETERMINATIONS_OUT = "previousDeterminations";
+
+    /** previousIdentifications value as stored: trimmed, blank becomes null. */
+    public static String previousDeterminations(String previousIdentifications) {
+        if (previousIdentifications == null) return null;
+        String value = previousIdentifications.trim();
+        return value.isEmpty() ? null : value;
+    }
+
     public TaxonWorksTransformer() {
         for (Pair<String, String> pair : directHeaderTranslations) {
             outputColumnOrder.add(pair.getRight());
@@ -101,7 +113,8 @@ public class TaxonWorksTransformer extends Transformer {
                 "elevation",
                 "ElevationMaxError",
                 "ownedby",
-                "collectioncode"    // taken from fieldNumber, strip 'eventID:' prefix
+                "collectioncode",   // taken from fieldNumber, strip 'eventID:' prefix
+                PREVIOUS_DETERMINATIONS_OUT   // from previousIdentifications, when the export has it
         );
         outputColumnOrder.addAll(generatedOutputColumns);
     }
@@ -312,6 +325,10 @@ public class TaxonWorksTransformer extends Transformer {
                 line.get("maximumElevationInMeters")));
 
         row.put("ownedby", setOwnedBy(line.get("institutionCode")));
+
+        if (line.isMapped(PREVIOUS_IDENTIFICATIONS_IN)) {
+            row.put(PREVIOUS_DETERMINATIONS_OUT, previousDeterminations(line.get(PREVIOUS_IDENTIFICATIONS_IN)));
+        }
 
         return outputColumnOrder
                 .stream()
