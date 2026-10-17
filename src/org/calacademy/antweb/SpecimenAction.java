@@ -86,6 +86,7 @@ public final class SpecimenAction extends DescriptionAction {
                     //A.log("execute() uploadedBy:" + specimen.getAccessGroup());
                     boolean success = saveDescriptionEdit(specimenForm, specimen, accessLogin, request, connection);   
                     if (!success) return mapping.findForward("message");
+                    prepareDescriptionEdit(specimen, accessLogin, request, connection);
                     
                     if (accessLogin != null) getDescEditHistory(specimen, connection, request);
                     

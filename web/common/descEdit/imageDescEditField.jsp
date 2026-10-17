@@ -2,17 +2,17 @@
   if (true) {
       boolean turnedOn =  true; //AntwebProps.isDevOrStageMode();
       
-      if ((accessLogin != null) || (desc.containsKey(thisDesc ))) { %>   
+      if (canEditDesc || (desc.containsKey(thisDesc ))) { %>   
 
-     <% if (accessLogin != null) { %>
+     <% if (canEditDesc) { %>
           <p><a name="<%= thisDesc %>"></a><h3 style="float:left;"><%= descHeader %>:</h3>
      <% } %>
 <%      String contents = (String) desc.get(thisDesc);
 
-        if (turnedOn && accessLogin != null) { %>
+        if (turnedOn && canEditDesc) { %>
        <% // They are an admin.  So display editable if this is the editField %>
        <% if (thisDesc.equals(editField)) { %>
-         Click "Source" to edit html code.  Contact <%= AntwebUtil.getAdminEmail() %> with any issues.<br>
+         Click "Source" (in the new editor: the &lt;&gt; Source code button) to edit html code.  Contact <%= AntwebUtil.getAdminEmail() %> with any issues.<br>
          <div class="clear"></div><%@ include file="/common/descEdit/ckEditorMinConfigDescEditForm.jsp" %>
        <% } else { %>
          <p><small style="float:left; margin-top:14px; margin-left:5px;"> <a href="<%= thisPageTarget %>&editField=<%= thisDesc %>#<%= thisDesc %>">[Edit]</a></small><div class="clear"></div></p>

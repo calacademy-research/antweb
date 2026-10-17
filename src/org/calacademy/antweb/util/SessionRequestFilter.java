@@ -137,7 +137,11 @@ public class SessionRequestFilter implements Filter {
                         + " path:" + request.getServletPath() + " ip:" + HttpUtil.getClientIpAddress(request);
                     s_log.warn("doFilter() " + note);
                     LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " " + note);
-                    Csrf.deny(response);
+                    if (Csrf.isEditorSave(request)) {
+                        Csrf.denyEditorSave(response, request.getParameter("contents"));
+                    } else {
+                        Csrf.deny(response);
+                    }
                     return;
                 }
             }

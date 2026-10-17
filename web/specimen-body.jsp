@@ -38,18 +38,21 @@
    Hashtable desc = specimen.getDescription();   
    
    Login accessLogin = LoginMgr.getAccessLogin(request);
+   // Only curators and administrators see [Edit] links and the editor.
+   boolean canEditDesc = DescEditSafety.canEdit(accessLogin);
    
-   String editField = request.getParameter("editField");
-   if (editField == null) editField = "none";
+   // The field open in the editor, or "none" (DescEditSafety: after a refused save, the same field again).
+   String editField = DescEditSafety.activeEditField(request);
 %>
 
-<% if (accessLogin != null) { %>
-<script type="text/javascript" src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/ckeditor/ckeditor.js") %>"></script>
+<% if (canEditDesc && !"none".equals(editField)) { %>
+<%@ include file="/common/descEdit/editorScripts.jsp" %>
 <% } %>
 
 <input id="for_print" type="text" value="AntWeb. Available from: <%= Html.escAttr(HttpUtil.getFullJspTarget(request))%>">
 <input id="for_web" type="text" value="URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request))%>">
 <div id="page_contents">
+<%@ include file="/common/descEdit/descEditNotice.jsp" %>
 <%@ include file="/common/taxonTitle.jsp" %>
 
         <div class="links">

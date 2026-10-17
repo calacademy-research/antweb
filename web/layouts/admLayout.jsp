@@ -24,7 +24,8 @@
 <title><tiles:getAsString name="title" /></title>
 <!-- tiles:getAsString name="meta" / --> 
 <html:base/>
-<link rel="shortcut icon" href="<%= AntwebProps.getDomainApp() %>/image/favicon.ico" >
+<link rel="shortcut icon" href="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/image/favicon.ico") %>" >
+<link rel="apple-touch-icon" href="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/image/apple-touch-icon.png") %>">
 </head>
 
 <link href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/antweb_style.css") %>" rel="stylesheet" type="text/css">

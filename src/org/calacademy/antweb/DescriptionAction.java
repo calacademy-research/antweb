@@ -25,301 +25,350 @@ public class DescriptionAction extends AntwebAction {
         "specimenImage3", "taxanomicnotes", "taxonomicnotes", "taxonomichistory", "taxonomictreatment",
         "textauthor", "revdate", "videos");
 
-    // Escape a value for a single-quoted MySQL string literal (backslash first).
-    private static String sqlString(String value) {
-        if (value == null) return null;
-        return value.replace("\\", "\\\\").replace("'", "''");
-    }
-      
+    private static final String KEPT = " Your text is shown again below and is also kept as a draft in this browser.";
+
+    /*
+     * Save a page-text field (taxon, specimen and overview pages). Safety rules (DescEditSafety):
+     * - only curators and administrators save; anyone else, including a curator whose session
+     *   ended (daily restart, 4 hours idle), gets a message and their text back, never a silent loss;
+     * - the editor must have fully loaded the stored text (editorReady=1 and loadedHash);
+     * - if the stored text changed since the editor opened (loadedHash differs), nothing is
+     *   overwritten: the curator sees their text and the newer stored text;
+     * - an empty box is never saved over text; clearing is the separate clearField=1 action;
+     * - check, history copy and write run in one transaction with the row locked.
+     * A refused save sets a DescEditSafety.Result and returns true, so the page is shown with the
+     * curator's text in the editor. Returns false (message page) only for an unknown field or a GET.
+     */
     protected boolean saveDescriptionEdit(DescriptionForm form, Describable editObject, Login accessLogin, HttpServletRequest request, Connection connection) 
         throws SQLException {            
-        boolean success = true;
+        String editField = form.getEditField();
+        if (!form.getIsSaveEditField() || editField == null) return true;
+
+        if (!EDIT_FIELDS.contains(editField)) {
+          s_log.warn("saveDescriptionEdit() refused editField:" + editField + " login:" + (accessLogin == null ? "-" : accessLogin.getId()));
+          request.setAttribute("message", "Unknown page field: " + Html.esc(editField));
+          return false;
+        }
+        // Saving changes data: only from the edit form (POST).
+        if (!"POST".equalsIgnoreCase(request.getMethod())) {
+          request.setAttribute("message", "Please use the edit form to save page text.");
+          return false;
+        }
+
+        String contents = form.getContents();
+        if (contents == null) contents = "";
+        String imageUrl = form.getImageUrl();
+        boolean isImage = imageUrl != null && !imageUrl.isEmpty();
+        String pretty = DescEditSafety.prettyField(editField);
+
         // Only curators and admins may save page text (not the anonymous "Browse" login or self-registered accounts).
-        if (LoginMgr.isCurator(accessLogin) || LoginMgr.isAdmin(accessLogin)) {
-            // The descriptionEdit.do allows for the posting and saving of Description Edit records.
-            String editField = form.getEditField();
-            boolean isSaveEditField = form.getIsSaveEditField();
-
-            //A.log("saveDescriptionEdit() editField:" + editField + " is:" + isSaveEditField);          
-
-            if (isSaveEditField && editField != null) {
-              if (!EDIT_FIELDS.contains(editField)) {
-                s_log.warn("saveDescriptionEdit() refused editField:" + editField + " login:" + accessLogin.getId());
-                request.setAttribute("message", "Unknown page field: " + Html.esc(editField));
-                return false;
-              }
-              // Saving changes data: only from the edit form (POST).
-              if (!"POST".equalsIgnoreCase(request.getMethod())) {
-                request.setAttribute("message", "Please use the edit form to save page text.");
-                return false;
-              }
-              String contents = form.getContents();
-              if (contents == null) contents = "";
-              String imageUrl = form.getImageUrl();
-              String guiDefaultContent = AntwebProps.getProp("gui.default.content");
-                  
-              s_log.debug("saveDescriptionEdit() descriptionEdit.  contents:" + contents + " imageUrl:" + imageUrl);
-                  
-              if (contents.equals(guiDefaultContent) && imageUrl == null) {
-                // The user hit Done but did not modify the default text
-                s_log.warn("saveDescriptionEdit() User hit done to save the gui default content.  Returning success.");
-                return true;  // was a success forward
-              }
-
-              if (imageUrl != null && !"".equals(imageUrl)) {
-                if (contents.equals(guiDefaultContent) || "null".equals(contents)) contents = "";
-                // A.log("saveDescriptionEdit() 1 contents:" + contents);
-                contents = HttpUtil.decode(contents);
-                s_log.debug("saveDescriptionEdit() 2 contents:" + contents);
-                String tag = "<a href=\"" + imageUrl + "\"><img class=\"taxon_page_img\" src=\"" + imageUrl + "\"></a>";
-                s_log.debug("saveDescriptionEdit() 3 tag:" + tag);
-                contents += "<br>" + tag;
-                s_log.debug("saveDescriptionEdit() 4 editField:" + editField + " contents:" + contents);
-                //A.log("saveDescriptionEdit() editField:" + editField + " imageUrl:" + imageUrl + " contents:" + contents);
-              }
-
-              // The text is shown as HTML on public pages: keep only allowed tags and attributes
-              // (HtmlSanitizer). The videos field may also hold YouTube/Vimeo embeds.
-              contents = HtmlSanitizer.sanitize(contents, "videos".equals(editField));
-
-              //s_log.info("saveDescriptionEdit() New contents: " + contents);
-              success = saveOrUpdateDescription(editObject, request, connection, editField, contents, accessLogin);
-              
-              AntwebCacheMgr.reCacheItem(connection, request);              
+        if (!DescEditSafety.canEdit(accessLogin)) {
+          DescEditSafety.Result r;
+          if (accessLogin == null) {
+            r = DescEditSafety.Result.refused(editField, "You are not logged in any more, so your text for " + pretty + " was NOT saved."
+              + " (AntWeb restarts every morning around 8 AM Pacific, and logins end after 4 hours without use.)"
+              + " Your text is shown below and is kept as a draft in this browser. Log in (the link opens a new tab),"
+              + " then open this field again with [Edit] and choose Restore, then Save.", isImage ? null : contents);
+            r.loggedOut = true;
+          } else {
+            r = DescEditSafety.Result.refused(editField, "Your account cannot edit page text, so nothing was saved."
+              + " Your text is shown below.", isImage ? null : contents);
           }
-        }  
-        return success;
-    }         
-    
-    protected boolean saveOrUpdateDescription(Describable describable, HttpServletRequest request, Connection connection, String title
-      , String contents, Login accessLogin) throws SQLException {
-
-        Group accessGroup = accessLogin.getGroup();
-
-        if (describable instanceof Taxon) 
-          return saveOrUpdateDescription((Taxon) describable, request, connection, title, contents, accessLogin);
-
-        // if Project or Museum, ...
-          //saved = saveOrUpdateDescription(editObject, request, connection, title, contents, accessGroup);
-//        if (editObject instanceof Museum) 
-//          saved = saveOrUpdateDescription((Museum) editObject, request, connection, title, contents, accessGroup);
-        
-
-        if (contents.contains("<div")) {
-          String message = "Error: contains div tag.  Edit source to remove.  describable:" + Html.esc(describable.getName()) + " title:" + Html.esc(title);
-          s_log.warn(message);
-          request.setAttribute("message", message);          
-          return false;
+          s_log.warn("saveDescriptionEdit() not saved, not a curator. field:" + editField
+            + " login:" + (accessLogin == null ? "-" : accessLogin.getId()) + " length:" + contents.length());
+          request.setAttribute(DescEditSafety.RESULT_ATTR, r);
+          return true;
         }
 
-        String accessGroupStr = accessGroup.getName();
-        //String taxonName = new Utility().makeNameFromTaxon(taxon);
-        String currentDML = "";  // for debugging.
-
-        Statement stmt = null;
-        String savedContents = contents;
-        try {
-            int rowCount = 0;
-
-            // To avoid MySQLSyntaxErrorException (and SQL injection)
-            contents = sqlString(contents);
-
-            String whereClause = " where object_key ='" + sqlString(describable.getName()) + "' and title ='" + sqlString(title) + "'"; // + "' and " + codeClause;
-            
-            String backupCommand = "insert into object_hist (object_key, title, content, edit_id, created, access_group, access_login) " 
-              + " select object_key, title, content, edit_id, created, access_group, access_login " //\'" + accessGroupStr + "\', " + accessGroup.getLogin().getId() 
-              + " from object_edit " + whereClause;
-            currentDML = backupCommand;
-            //insert into description_hist (taxon_name, title, content, edit_id, access_group) select taxon_name, title, content, edit_id, 'me' from description_edit where taxon_name = "formicinaecamponotus atriceps" and title = "textauthor";
-            stmt = connection.createStatement();
-            rowCount = stmt.executeUpdate(backupCommand);
-            s_log.debug("saveOrUpdateDescription() insert hist backup:" + rowCount + " for backupString" + backupCommand);
-
-            if ("".equals(contents)) {
-              // delete from description_edit.
-              //s_log.info("empty contents, so deleting description_edit record.");
-              String deleteString = "delete from object_edit " + whereClause;
-              currentDML = deleteString;            
-              rowCount = stmt.executeUpdate(deleteString);
-              //s_log.info("deleteString:" + deleteString + " rowCount:" + rowCount);            
-            } else {
-              // update description_edit.
-              String updateString = "update object_edit set content = '" + contents + "', is_manual_entry = 1" 
-                + " , access_group = " + accessGroup.getId() + " , access_login = " + accessLogin.getId()
-                + " , created = now() "
-                + whereClause;
-              currentDML = updateString;
-                // Could we use edit_id here?  
-                // May need to escape content properly?
-              rowCount = stmt.executeUpdate(updateString);
-              s_log.debug("saveOrUpdateDescription() updateString:" + updateString + " rowCount:" + rowCount);
-            
-              if (rowCount == 0) {
-                // record does not exist.  So no record backed up.  Let's insert instead...
-                //if (code != null) code = "'" + code + "'";
-                String insertString = "insert into object_edit (object_key, title, content, is_manual_entry, access_group, access_login) "
-                  + " values ('" + sqlString(describable.getName()) + "', '" + sqlString(title) + "', '" + contents + "', 1, " + accessGroup.getId() + "," + accessLogin.getId() + ")";
-
-                s_log.debug("saveOrUpdateDescription() insertString is:" + insertString);
-                currentDML = insertString;
-                stmt.executeUpdate(insertString);
-              }
-            }
-
-            //A.log("saveOrUpdateDescription() taxon:" + taxon);
-            describable.getDescription().put(title, savedContents);
-            
-        } catch (SQLException e) {
-            s_log.error("saveOrUpdateDescription() Name:" + describable.getName() + " Title:" + title + " e:" + e  + " currentDML:" + currentDML);
-           throw e;
-        } finally {
-           stmt.close();
+        DescEditSafety.Result result;
+        if (isImage) {
+          result = saveImage(editObject, request, connection, editField, imageUrl, accessLogin);
+        } else {
+          result = saveText(form, editObject, request, connection, editField, contents, accessLogin);
         }
+        if (!result.saved) result.reshowInEditor = !isImage;
+        request.setAttribute(DescEditSafety.RESULT_ATTR, result);
         return true;
     }
 
-    protected boolean saveOrUpdateDescription(Taxon taxon, HttpServletRequest request, Connection connection, String title
-      , String contents, Login accessLogin) throws SQLException {
-        // See Plazi.java:135 for description table insertion
-            
-        Group accessGroup = accessLogin.getGroup();
-            
-        if (contents.contains("<div")) {
-          String message = "Error: contains div tag.  Edit source to remove.  taxon:" + Html.esc(taxon.getTaxonName()) + " title:" + Html.esc(title);
-          s_log.warn(message);
-          request.setAttribute("message", message);          
-          return false;
+    private DescEditSafety.Result saveText(DescriptionForm form, Describable describable, HttpServletRequest request
+      , Connection connection, String title, String contents, Login accessLogin) throws SQLException {
+        String pretty = DescEditSafety.prettyField(title);
+        String loadedHash = form.getLoadedHash();
+        boolean clear = "1".equals(form.getClearField());
+
+        if (!"1".equals(form.getEditorReady()) || loadedHash == null || loadedHash.isEmpty()) {
+          s_log.warn("saveText() refused, editor not ready. field:" + title + " login:" + accessLogin.getId());
+          return DescEditSafety.Result.refused(title, "Nothing was saved: the editor had not finished loading the stored text of "
+            + pretty + " (or this page was opened before an AntWeb update). Check the text below, then press Save again." + KEPT, contents);
         }
 
-        if (Event.TAXON_PAGE_IMAGES.equals(title)
-         || Event.TAXON_PAGE_VIDEOS.equals(title)
-         || Event.TAXON_PAGE_OVERVIEW.equals(title)
-           ) {
-          EventDb eventDb = new EventDb(connection);
-          s_log.debug("saveOrUpdateDescription() "
-            + " taxonName:" + taxon.getTaxonName()
-            + " title:" + title + " curatorId:" + accessLogin.getId());
-
-          eventDb.addEvent(new Event(title, accessLogin.getId(), taxon.getTaxonName(), new Date()));
+        String sanitized = clear ? "" : HtmlSanitizer.sanitize(contents, "videos".equals(title));
+        if (!clear && sanitized.contains("<div")) {
+          s_log.warn("saveText() refused, div. name:" + describable.getName() + " field:" + title);
+          return DescEditSafety.Result.refused(title, "Nothing was saved: the text contains a <div> block (from pasted web text)."
+            + " Click Source, remove the <div ...> and </div> tags (keep the text between them), then Save." + KEPT, contents);
         }
-        
-        String accessGroupStr = accessGroup.getName();
-        //String taxonName = new Utility().makeNameFromTaxon(taxon);
-        String taxonName = taxon.getTaxonName();
-        String currentDML = "";  // for debugging.
+        boolean blank = clear || DescEditSafety.isBlank(sanitized);
 
-        Statement stmt = null;
-        String savedContents = contents;
+        boolean autoCommit = connection.getAutoCommit();
+        String outcome;
         try {
-            int rowCount = 0;
+          connection.setAutoCommit(false);
+          String current = DescEditDb.readFieldForEdit(connection, describable, title, true);
+          String currentHash = DescEditSafety.hash(current);
 
-            // To avoid MySQLSyntaxErrorException (and SQL injection)
-            contents = sqlString(contents);
-            
-            String code = null;
-            String codeClause = " code is null";
-            if (taxon instanceof Specimen) {
-              code = sqlString(taxon.getCode());
-              codeClause = " code = '" + code + "'";
-            }
+          // Nothing would change (for example the same form sent twice, or the editor opened and saved
+          // without changes; browsers send a text box's line breaks as CRLF): no write, no conflict.
+          if (!blank && DescEditSafety.sameText(sanitized, current)) {
+            connection.rollback();
+            return DescEditSafety.Result.saved(title, "Your changes to " + pretty + " were saved (the stored text already matched).");
+          }
+          if (clear && current == null) {
+            connection.rollback();
+            return DescEditSafety.Result.saved(title, pretty + " was cleared (it was already empty).");
+          }
 
-            String whereClause = " where taxon_name='" + sqlString(taxonName) + "' and title='" + sqlString(title) + "' and " + codeClause;
-            
-            String backupCommand = "insert into description_hist (taxon_name, title, code, content, edit_id, created, access_group, access_login) " 
-              + " select taxon_name, title, code, content, edit_id, created, access_group, access_login " //\'" + accessGroupStr + "\', " + accessGroup.getLogin().getId() 
-              + " from description_edit " + whereClause;
-            currentDML = backupCommand;
-            //insert into description_hist (taxon_name, title, content, edit_id, access_group) select taxon_name, title, content, edit_id, 'me' from description_edit where taxon_name = "formicinaecamponotus atriceps" and title = "textauthor";
-            stmt = connection.createStatement();
-            rowCount = stmt.executeUpdate(backupCommand);
-            s_log.debug("saveOrUpdateDescription() insert hist backup:" + rowCount + " for backupString" + backupCommand);
+          if (!currentHash.equals(loadedHash)) {
+            connection.rollback();
+            s_log.warn("saveText() refused, conflict. name:" + describable.getName() + " field:" + title + " login:" + accessLogin.getId());
+            DescEditSafety.Result r = DescEditSafety.Result.refused(title, "Nothing was saved: someone else saved " + pretty
+              + " after you opened the editor. Their text (now stored) is shown below; your text is in the editor."
+              + " Combine them in the editor if needed, then Save (that replaces the stored text)."
+              + " Your text is also kept as a draft in this browser.", clear ? null : contents);
+            r.conflict = true;
+            return r;
+          }
 
-            if ("".equals(contents)) {
-              // delete from description_edit.
-              //s_log.info("empty contents, so deleting description_edit record.");
-              String deleteString = "delete from description_edit " + whereClause;
-              currentDML = deleteString;            
-              rowCount = stmt.executeUpdate(deleteString);
-              //s_log.info("deleteString:" + deleteString + " rowCount:" + rowCount);            
-            } else {
-              // update description_edit.
-              String updateString = "update description_edit set content = '" + contents + "', is_manual_entry = 1" 
-                + " , access_group = " + accessGroup.getId() + " , access_login = " + accessLogin.getId()
-                + " , created = now() "
-                + whereClause;
-              currentDML = updateString;
-                // Could we use edit_id here?  
-                // May need to escape content properly?
-              rowCount = stmt.executeUpdate(updateString);
-              s_log.debug("saveOrUpdateDescription() updateString:" + updateString + " rowCount:" + rowCount);
-            
-              if (rowCount == 0) {
-                // record does not exist.  So no record backed up.  Let's insert instead...
-                if (code != null) code = "'" + code + "'";
-                String insertString = "insert into description_edit (taxon_name, title, code, content, is_manual_entry, access_group, access_login) "
-                  + " values ('" + sqlString(taxonName) + "', '" + sqlString(title) + "', " + code + ", '" + contents + "', 1, " + accessGroup.getId() + "," + accessLogin.getId() + ")";
+          if (blank && current == null) {
+            connection.rollback();
+            return DescEditSafety.Result.saved(title, "Nothing to save: the box was empty and " + pretty + " has no text.");
+          }
+          if (blank && !clear) {
+            connection.rollback();
+            DescEditSafety.Result r = DescEditSafety.Result.refused(title, "Nothing was saved: the box is empty, and an empty box is never saved over "
+              + pretty + ". If you really want to remove all text from this field, use the \"Clear this field\" button.", contents);
+            r.offerClear = true;
+            return r;
+          }
 
-                s_log.debug("saveOrUpdateDescription() insertString is:" + insertString);
-                currentDML = insertString;
-                stmt.executeUpdate(insertString);
-              }
-            }              
-
-            // New contents.  Let's regenerate the recent content list...
-            //s_log.warn("genRecentDescEdits.");
-            try {
-              AntwebFunctions.genRecentDescEdits(connection);
-            } catch (IOException e) {
-              s_log.error("saveOrUpdateDescription() taxonName:" + taxonName + " Title:" + title + " e:" + e);
-              return false;
-            }
-            
-            s_log.debug("saveOrUpdateDescription() taxon:" + taxon);
-            taxon.getDescription().put(title, savedContents);
-            
+          writeField(describable, connection, title, blank ? null : sanitized, current != null, accessLogin);
+          connection.commit();
+          outcome = blank ? "cleared" : "saved";
         } catch (SQLException e) {
-            s_log.error("saveOrUpdateDescription() taxonName:" + taxonName + " Title:" + title + " e:" + e  + " currentDML:" + currentDML);
-           throw e;
+          try { connection.rollback(); } catch (SQLException e2) { /* ignore */ }
+          s_log.error("saveText() name:" + describable.getName() + " field:" + title + " login:" + accessLogin.getId() + " e:" + e);
+          return DescEditSafety.Result.refused(title, "Nothing was saved: the database did not answer (AntWeb may be busy or restarting)."
+            + " Please try Save again in a minute." + KEPT, contents);
         } finally {
-           stmt.close();
+          try { connection.setAutoCommit(autoCommit); } catch (SQLException e) { /* ignore */ }
         }
-        return true;
+
+        afterWrite(describable, request, connection, title, "cleared".equals(outcome) ? null : sanitized, accessLogin);
+        if ("cleared".equals(outcome)) {
+          s_log.info("saveText() cleared name:" + describable.getName() + " field:" + title + " login:" + accessLogin.getId());
+          return DescEditSafety.Result.saved(title, pretty + " was cleared. The old text is kept in the page history.");
+        }
+        return DescEditSafety.Result.saved(title, "Your changes to " + pretty + " were saved.");
     }
-    
+
+    /*
+     * The image upload confirmation: add the uploaded image to the field as it is now (taxon page
+     * "images": appended; overview page image fields: replaced, as before). The text the upload
+     * form saw when the page opened is not used, so a newer edit is never overwritten.
+     */
+    private DescEditSafety.Result saveImage(Describable describable, HttpServletRequest request, Connection connection
+      , String title, String imageUrl, Login accessLogin) throws SQLException {
+        String pretty = DescEditSafety.prettyField(title);
+        String tag = "<a href=\"" + Html.escAttr(imageUrl) + "\"><img class=\"taxon_page_img\" src=\"" + Html.escAttr(imageUrl) + "\"></a>";
+        boolean autoCommit = connection.getAutoCommit();
+        String contents;
+        try {
+          connection.setAutoCommit(false);
+          String current = DescEditDb.readFieldForEdit(connection, describable, title, true);
+          if ("images".equals(title) && current != null) {
+            contents = current + "<br>" + tag;
+          } else {
+            contents = "<br>" + tag;
+          }
+          contents = HtmlSanitizer.sanitize(contents, false);
+          writeField(describable, connection, title, contents, current != null, accessLogin);
+          connection.commit();
+        } catch (SQLException e) {
+          try { connection.rollback(); } catch (SQLException e2) { /* ignore */ }
+          s_log.error("saveImage() name:" + describable.getName() + " field:" + title + " e:" + e);
+          return DescEditSafety.Result.refused(title, "The image was uploaded (" + imageUrl + ") but could not be added to "
+            + pretty + " because the database did not answer. Please try again in a minute.", null);
+        } finally {
+          try { connection.setAutoCommit(autoCommit); } catch (SQLException e) { /* ignore */ }
+        }
+        afterWrite(describable, request, connection, title, contents, accessLogin);
+        return DescEditSafety.Result.saved(title, "The image was added to " + pretty + ".");
+    }
+
+    /*
+     * Copy the stored row to history, then write the new text, or delete the row when newContents
+     * is null (clear). A clear also adds a history row with empty text, the time and the person who
+     * cleared it, so the history shows who did it. Runs inside the caller's transaction.
+     */
+    private void writeField(Describable describable, Connection connection, String title, String newContents
+      , boolean exists, Login accessLogin) throws SQLException {
+        String table, histTable, where, histCols, histSelect;
+        List<String> keys = new ArrayList<>();
+        if (describable instanceof Specimen) {
+          table = "description_edit"; histTable = "description_hist";
+          where = " where code = ? and title = ?";
+          keys.add(((Specimen) describable).getCode());
+        } else if (describable instanceof Taxon) {
+          table = "description_edit"; histTable = "description_hist";
+          where = " where taxon_name = ? and title = ? and code is null";
+          keys.add(((Taxon) describable).getTaxonName());
+        } else {
+          table = "object_edit"; histTable = "object_hist";
+          where = " where object_key = ? and title = ?";
+          keys.add(describable.getName());
+        }
+        keys.add(title);
+        boolean isDesc = "description_edit".equals(table);
+        String keyCols = isDesc ? "taxon_name, title, code" : "object_key, title";
+        int groupId = accessLogin.getGroupId();
+
+        if (exists) {
+          // History: the current text, with its author and date.
+          histCols = keyCols + ", content, edit_id, created, access_group, access_login";
+          execute(connection, "insert into " + histTable + " (" + histCols + ") select " + histCols + " from " + table + where, keys);
+        }
+
+        if (newContents == null) {
+          if (exists) {
+            // History: who cleared the field, and when.
+            List<String> params = new ArrayList<>();
+            params.add(String.valueOf(groupId));
+            params.add(String.valueOf(accessLogin.getId()));
+            params.addAll(keys);
+            histCols = keyCols + ", content, edit_id, created, access_group, access_login";
+            histSelect = keyCols + ", '', edit_id, now(), ?, ?";
+            execute(connection, "insert into " + histTable + " (" + histCols + ") select " + histSelect + " from " + table + where, params);
+            execute(connection, "delete from " + table + where, keys);
+          }
+          return;
+        }
+
+        List<String> params = new ArrayList<>();
+        params.add(newContents);
+        params.add(String.valueOf(groupId));
+        params.add(String.valueOf(accessLogin.getId()));
+        params.addAll(keys);
+        int rows = execute(connection, "update " + table + " set content = ?, is_manual_entry = 1, access_group = ?, access_login = ?, created = now()" + where, params);
+        if (rows == 0) {
+          List<String> ins = new ArrayList<>();
+          String sql;
+          if (isDesc) {
+            sql = "insert into description_edit (taxon_name, title, code, content, is_manual_entry, access_group, access_login) values (?, ?, ?, ?, 1, ?, ?)";
+            ins.add(((Taxon) describable).getTaxonName());
+            ins.add(title);
+            ins.add(describable instanceof Specimen ? ((Specimen) describable).getCode() : null);
+          } else {
+            sql = "insert into object_edit (object_key, title, content, is_manual_entry, access_group, access_login) values (?, ?, ?, 1, ?, ?)";
+            ins.add(describable.getName());
+            ins.add(title);
+          }
+          ins.add(newContents);
+          ins.add(String.valueOf(groupId));
+          ins.add(String.valueOf(accessLogin.getId()));
+          execute(connection, sql, ins);
+        }
+    }
+
+    private static int execute(Connection connection, String sql, List<String> params) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+          for (int i = 0; i < params.size(); i++) {
+            if (params.get(i) == null) stmt.setNull(i + 1, Types.VARCHAR);
+            else stmt.setString(i + 1, params.get(i));
+          }
+          return stmt.executeUpdate();
+        }
+    }
+
+    // After a committed write: the in-memory page object, events, recent edits list, page cache.
+    private void afterWrite(Describable describable, HttpServletRequest request, Connection connection, String title
+      , String newContents, Login accessLogin) {
+        Hashtable<String, String> desc = describable.getDescription();
+        if (desc != null) {
+          if (newContents == null) desc.remove(title);
+          else desc.put(title, newContents);
+        }
+        if (describable instanceof Taxon) {
+          Taxon taxon = (Taxon) describable;
+          try {
+            if (Event.TAXON_PAGE_IMAGES.equals(title) || Event.TAXON_PAGE_VIDEOS.equals(title) || Event.TAXON_PAGE_OVERVIEW.equals(title)) {
+              new EventDb(connection).addEvent(new Event(title, accessLogin.getId(), taxon.getTaxonName(), new Date()));
+            }
+            AntwebFunctions.genRecentDescEdits(connection);
+          } catch (SQLException | IOException e) {
+            s_log.error("afterWrite() taxonName:" + taxon.getTaxonName() + " title:" + title + " e:" + e);
+          }
+        }
+        try {
+          AntwebCacheMgr.reCacheItem(connection, request);
+        } catch (SQLException e) {
+          s_log.warn("afterWrite() reCacheItem e:" + e);
+        }
+    }
+
+    /*
+     * Prepare the editor for the field being edited on this page (GET ?editField=..., or a refused
+     * save): read its stored text fresh from the database, with its fingerprint. A failed read
+     * shows a message instead of an editor. Also sets the page key used for browser drafts.
+     */
+    protected void prepareDescriptionEdit(Describable describable, Login accessLogin, HttpServletRequest request, Connection connection) {
+        if (describable == null || !DescEditSafety.canEdit(accessLogin)) return;
+        request.setAttribute(DescEditSafety.PAGE_KEY_ATTR, DescEditSafety.pageKey(describable));
+        String field = DescEditSafety.activeEditField(request);
+        if ("none".equals(field) || !EDIT_FIELDS.contains(field)) return;
+        DescEditSafety.Loaded load;
+        try {
+          load = new DescEditSafety.Loaded(field, DescEditDb.readFieldForEdit(connection, describable, field, false), false);
+        } catch (SQLException e) {
+          s_log.error("prepareDescriptionEdit() name:" + describable.getName() + " field:" + field + " e:" + e);
+          load = new DescEditSafety.Loaded(field, null, true);
+        }
+        request.setAttribute(DescEditSafety.LOAD_ATTR, load);
+    }
+
     protected void getDescEditHistory(Taxon taxon, Connection connection, HttpServletRequest request)
       throws SQLException {
         /* Get all edits and hists for a given taxon where the access_login is known.  (Added late March, 2012) */
-        
-      String codeClause = " and code is null";
+
+      String keyClause = " where taxon_name = ? and code is null";
+      String key = taxon.getTaxonName();
       if (taxon instanceof Specimen) {
-        codeClause = " and code = '" + taxon.getCode() + "'";
+        keyClause = " where code = ?";
+        key = taxon.getCode();
       }
         
       String query = "select distinct de.created, l.first_name, l.last_name, l.name, title from description_edit de" 
           + " join login l on access_login = l.id "
-          + " where taxon_name = \"" + taxon.getTaxonName() + "\""
-          + codeClause
+          + keyClause
           + " and is_manual_entry = 1";
       query += " union select distinct dh.created, l.first_name, l.last_name, l.name, title from description_hist dh" 
           + " join login l on access_login = l.id "
-          + " where taxon_name = \"" + taxon.getTaxonName() + "\""
-          + codeClause
+          + keyClause
           + " order by created desc ";         
 
-      Statement stmt = null;
+      PreparedStatement stmt = null;
       ResultSet rset = null;
       String dbMethodName = DBUtil.getDbMethodName("getDescEditHistory()");
       try {
-          stmt = DBUtil.getStatement(connection, dbMethodName);
-          rset = stmt.executeQuery(query);
+          stmt = connection.prepareStatement(query);
+          stmt.setString(1, key);
+          stmt.setString(2, key);
+          rset = stmt.executeQuery();
 
-          //A.log("getDescEditHistory() query:" + query);
- 
           ArrayList<String> arrayList = new ArrayList<>();
           while (rset.next()) {
 
             String created = DateUtil.getFormatDateTimeStr(rset.getTimestamp("created"));        
-            //s_log.warn("getDescEditHistory 1 created:" + created);
  
             String firstName = rset.getString("first_name");
             String lastName = rset.getString("last_name");
@@ -331,9 +380,7 @@ public class DescriptionAction extends AntwebAction {
             if (!arrayList.contains(record)) {          
               arrayList.add(record);
             }
-            //A.log("getDescEditHistory() created: " + created + " " + firstName + " " + lastName);
           }
-          //A.log("getDescEditHistory() arrayList:" + arrayList);
           request.setAttribute("descEditHist", arrayList);
       } finally {
           DBUtil.close(stmt, rset, this, dbMethodName);

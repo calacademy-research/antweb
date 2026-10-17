@@ -66,7 +66,8 @@
 
 
 <link rel="image_src" type="image/png" href="<%= domainApp %>/image/new_antweb_logo.png" />
-<link rel="shortcut icon" href="<%= domainApp %>/image/favicon.ico" />
+<link rel="shortcut icon" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/image/favicon.ico") %>" />
+<link rel="apple-touch-icon" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/image/apple-touch-icon.png") %>">
 <link rel="stylesheet" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/common/base.css") %>"/>
 
 <% 

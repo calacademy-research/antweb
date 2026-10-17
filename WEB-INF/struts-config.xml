@@ -839,6 +839,11 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="success" path="/specimen.jsp"/>
     </action>
 
+    <!-- Page-text editor: "still logged in?" and a fresh form token (JSON). See EditSessionAction. -->
+    <action path="/editSession"
+            type="org.calacademy.antweb.EditSessionAction">
+    </action>
+
     <action  path="/typeStatus"
              type="org.calacademy.antweb.upload.TypeStatusMgr">
       <forward name="success" path="/message-body.jsp"/>
@@ -1293,6 +1298,13 @@ We would like to remove getChildImages.  Not needed now in the new UI
     <action path="/sanitizeDescriptions"
                 type="org.calacademy.antweb.util.SanitizeDescriptionsAction"
                 scope="request">
+    </action>
+
+    <!-- Curators and admins: HugeRTE and TinyMCE 8 side by side on stored page text (read only). -->
+    <action path="/editorTrial"
+                type="org.calacademy.antweb.curate.EditorTrialAction"
+                scope="request">
+        <forward name="success" path="/curate/editorTrial.jsp" />
     </action>
     
     <action path="/manageMuseum"

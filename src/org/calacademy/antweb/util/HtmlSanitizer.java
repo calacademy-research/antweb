@@ -108,6 +108,35 @@ public final class HtmlSanitizer {
         return run(html, allowVideoEmbeds, null);
     }
 
+    // Attribute order for editorValidElements (the editors write attributes in rule order).
+    private static final List<String> EDITOR_ATTR_ORDER = List.of("href", "src", "alt", "name", "target", "rel",
+        "width", "height", "border", "cellpadding", "cellspacing", "align", "valign", "colspan", "rowspan",
+        "nowrap", "scope", "summary", "size", "color", "face", "title");
+
+    /**
+     * The allowlist above as a TinyMCE / HugeRTE valid_elements rule, for example
+     * "@[class|style|title],b,...,a[href|name|target|rel|title],...", so an editor keeps exactly
+     * the tags and attributes this sanitizer keeps. With allowVideoEmbeds the rule also allows
+     * the YouTube/Vimeo iframe that sanitize() keeps on the videos field. Used by the editor
+     * trial page (EditorTrialAction).
+     */
+    public static String editorValidElements(boolean allowVideoEmbeds) {
+        StringBuilder sb = new StringBuilder("@[class|style|title]");
+        for (Map.Entry<String, Set<String>> e : TAGS.entrySet()) {
+            List<String> attrs = new ArrayList<>();
+            for (String a : EDITOR_ATTR_ORDER) {
+                if (e.getValue().contains(a) || ("a".equals(e.getKey()) && "rel".equals(a))) attrs.add(a);
+            }
+            for (String a : e.getValue()) if (!attrs.contains(a)) attrs.add(a);
+            sb.append(',').append(e.getKey());
+            if (!attrs.isEmpty()) sb.append('[').append(String.join("|", attrs)).append(']');
+        }
+        if (allowVideoEmbeds) {
+            sb.append(",iframe[src|width|height|title|frameborder|allowfullscreen|referrerpolicy|allow]");
+        }
+        return sb.toString();
+    }
+
     /** What sanitize() would remove for a security reason; empty if the text is safe as stored. */
     public static List<Unsafe> findUnsafe(String html) {
         return findUnsafe(html, false);

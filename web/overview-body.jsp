@@ -47,16 +47,19 @@
     boolean hasExtraPrivs = false;     
 
     String thisPageTarget = overview.getThisPageTarget();
-    String editField = request.getParameter("editField");
-    if (editField == null) editField = "none";
+    // The field open in the editor, or "none" (DescEditSafety: after a refused save, the same field again).
+    String editField = DescEditSafety.activeEditField(request);
+    // Only curators and administrators see [Edit] links and the editor.
+    boolean canEditDesc = DescEditSafety.canEdit(accessLogin);
         
-    if (accessLogin != null) { %>
-<script type="text/javascript" src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/ckeditor/ckeditor.js") %>"></script>
+    if (canEditDesc && !"none".equals(editField)) { %>
+<%@ include file="/common/descEdit/editorScripts.jsp" %>
  <% } 
 
 %>
 
 <div id="page_contents">
+<%@ include file="/common/descEdit/descEditNotice.jsp" %>
 
 <%@ include file="/common/overviewHeading.jsp" %>
 

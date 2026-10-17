@@ -3,12 +3,12 @@
   if (true) {
      boolean turnedOn = true; // AntwebProps.isDevOrStageMode();
      
-     if ((accessLogin != null) || (desc.containsKey(thisDesc ))) {        
+     if (canEditDesc || (desc.containsKey(thisDesc ))) {        
        %>
 
      <p><a name="<%= thisDesc %>"></a><h3 style="float:left;"><%= descHeader %>:</h3>
-     <% if (turnedOn && accessLogin != null) { 
-          // They are an admin.  So display editable if this is the editField 
+     <% if (turnedOn && canEditDesc) { 
+          // A curator or admin (DescEditSafety.canEdit).  So display editable if this is the editField 
           if ((thisDesc.equals(editField)) && (!thisDesc.equals("notes") || ( hasExtraPrivs) )) { %>
          <div class="clear"></div>
          <%= descNotes %>

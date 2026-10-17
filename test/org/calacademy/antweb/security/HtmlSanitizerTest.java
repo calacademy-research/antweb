@@ -92,4 +92,18 @@ public class HtmlSanitizerTest extends TestCase {
         assertEquals("[<svg> element @0]", unsafe("<svg onload=alert(1)>"));
         assertFalse(HtmlSanitizer.findUnsafe("<iframe src=\"https://evil.example/embed/abc\"></iframe>", true).isEmpty());
     }
+
+    /** The editor rule (editor trial page) lists the same tags and attributes as the sanitizer. */
+    public void testEditorValidElements() {
+        String rule = HtmlSanitizer.editorValidElements(false);
+        assertTrue(rule, rule.startsWith("@[class|style|title],"));
+        assertTrue(rule, rule.contains(",font[size|color|face]"));
+        assertTrue(rule, rule.contains(",a[href|name|target|rel|title]"));
+        assertTrue(rule, rule.contains(",img[src|alt|width|height|border|align|title]"));
+        assertTrue(rule, rule.contains(",center,"));
+        assertFalse(rule, rule.contains("script"));
+        assertFalse(rule, rule.contains("iframe"));
+        assertFalse(rule, rule.contains(",h1"));
+        assertTrue(HtmlSanitizer.editorValidElements(true).contains(",iframe[src|"));
+    }
 }

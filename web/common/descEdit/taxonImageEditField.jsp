@@ -7,17 +7,17 @@
   */ %>   
 
 <%     
-      if ((accessLogin != null) || (desc.containsKey(thisDesc ))) { %>   
+      if (canEditDesc || (desc.containsKey(thisDesc ))) { %>   
         <% // Then we will do somesomething at least, if only a header with an empty box. %>
         <% // desc, thisDesc and utility are defined in the including jsp (taxonPage-body.jsp) %>
         <p><a name="<%= thisDesc %>"></a><h3 style="float:left;"><%= descHeader %>:</h3>
 
 <%      String contents = (String) desc.get(thisDesc);     
 
-        if (accessLogin != null) { %>     
+        if (canEditDesc) { %>     
        <% // They are an admin.  So display editable if this is the editField %>
        <% if (thisDesc.equals(editField)) { %>
-         Click "Source" to edit html code.  Contact <%= AntwebUtil.getAdminEmail() %> with any issues.<br>       
+         Click "Source" (in the new editor: the &lt;&gt; Source code button) to edit html code.  Contact <%= AntwebUtil.getAdminEmail() %> with any issues.<br>       
          <div class="clear"></div><%@ include file="/common/descEdit/ckEditorMinConfigTaxonForm.jsp" %>         
        <% } else { 
               String browserParams = taxon.getBrowserParams();
@@ -31,7 +31,7 @@
 <input type="hidden" name="rank" value="<%= taxon.getRank() %>">
 <input type="hidden" name="name" value="<%= taxon.getName() %>">
 <input type="hidden" name="target" value="description.do?<%= Utility.stripParams(browserParams, "editField") %>">
-<input type="hidden" name="contents" value="<%= ((contents==null) ? guiDefaultContent : java.net.URLEncoder.encode(contents)) %>">
+<%-- No copy of the field's text: the server adds the image to the text stored at that moment. --%>
 
            <span class="float:left;"><html:file property="theFile2" /></span>
            <input type="submit" class="tool_label"  style="float:none;" value="Submit">
