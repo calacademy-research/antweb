@@ -117,14 +117,10 @@
     <form-bean      name="teamMemberForm"
                     type="org.calacademy.antweb.curate.team.TeamMemberForm"/>
                                                                            
-    <form-bean      name="homePageForm"
-                    type="org.calacademy.antweb.curate.HomePageForm"/>
                                                                                                                                
     <form-bean      name="newProjectForm"
                     type="org.calacademy.antweb.curate.project.NewProjectForm"/>
 
-    <form-bean      name="simpleContentEditorForm"
-                    type="org.calacademy.antweb.SimpleContentEditorForm"/>
 
     <form-bean      name="orphanTaxonsForm"
                     type="org.calacademy.antweb.curate.orphans.OrphanTaxonsForm"/>
@@ -1374,12 +1370,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
 			<!-- forward name="upload" path="/curate/curate.jsp" /   not used.  Was /update.jsp-->                
 	</action>
 																							
-	<action path="/saveProject"
-					type="org.calacademy.antweb.curate.project.SaveProjectAction"
-					name="editProjectForm">
-			<forward name="success" path="/curate.do"/>
-			<forward name="failure" path="/curate/project/editProject.jsp"/>
-	</action>
 				
 <!-- Home Pages --> 
 
@@ -1578,17 +1568,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
 	</action>                                                                                                        
 			   
 																									
-	<action path="/simpleContentEditorRead"
-					type="org.calacademy.antweb.SimpleContentEditorReadAction"
-					name="simpleContentEditorForm">
-			<forward name="success" path="/simple_editor.jsp"/>
-	</action>             
 	
-	<action path="/simpleContentEditorWrite"
-					type="org.calacademy.antweb.SimpleContentEditorWriteAction"
-					name="simpleContentEditorForm">
-			<forward name="success" path="/web/team/staff.jsp"/>
-	</action>                                               
 	
 	<action path="/newBioRegion"
 					type="org.calacademy.antweb.curate.NewBioRegionAction"

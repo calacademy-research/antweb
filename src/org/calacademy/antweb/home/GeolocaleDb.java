@@ -40,23 +40,23 @@ public class GeolocaleDb extends AntwebDb {
 
     public Geolocale getAdm1(String adm1, String country) {
        int id = 0;
-               
-       String query = "select id from geolocale where name = '" + Formatter.escapeQuotes(adm1) + "' and parent = '" + Formatter.escapeQuotes(country) + "'";
-       Statement stmt = null;
+       String query = "select id from geolocale where name = ? and parent = ?";
+       PreparedStatement stmt = null;
        ResultSet rset = null;
        try {
-            stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.getAdm1(adm1, country)");
-            rset = stmt.executeQuery(query);
-
+            stmt = DBUtil.getPreparedStatement(getConnection(), "GeolocaleDb.getAdm1(adm1, country)", query);
+            stmt.setString(1, adm1);
+            stmt.setString(2, country);
+            rset = stmt.executeQuery();
             while (rset.next()) {
-              id = rset.getInt("id");  
-            }       
+              id = rset.getInt("id");
+            }
         } catch (SQLException e) {
             s_log.error("getAdm1(" + adm1 + ", " + country + ") e:" + e);
         } finally {
             DBUtil.close(stmt, rset, "GeolocaleDb.getAdm1(adm1, country)");
         }
-       if (id > 0) return getGeolocale(id);    
+       if (id > 0) return getGeolocale(id);
        return null;
     }
     
@@ -135,10 +135,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         if (Georank.ADM1.equals(georank)) geolocale = new Adm1();
 
         String query = "";
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
 
-        name = Formatter.escapeQuotes(name);
         try {
             query = "select * "
 /*
@@ -154,8 +153,8 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
              // + " , specimenImage1, specimenImage2, specimenImage3, specimenImage1Link, specimenImage2Link, specimenImage3Link, author, authorImage, authorbio "               
  */
               + " from geolocale g " // left join project on id = geolocale_id"
-              + " where name = '" + name + "'"
-              + " and georank = '" + georank + "'"
+              + " where name = ?"
+              + " and georank = ?"
               + " order by name"
              // + "  COLLATE utf8_bin"  
               ;
@@ -168,8 +167,10 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             //if (AntwebProps.isDevMode() && "Madagascar".equals(name)) s_log.warn("getGeolocale(name, georank) query:" + query);
             //if (AntwebProps.isDevMode() && id == 19) s_log.warn("getGeolocale(name, georank) query:" + query);
 
-            stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.getGeolocale()");
-            rset = stmt.executeQuery(query);
+            stmt = DBUtil.getPreparedStatement(getConnection(), "GeolocaleDb.getGeolocale()", query);
+            stmt.setString(1, name);
+            stmt.setString(2, georank);
+            rset = stmt.executeQuery();
 
             if (geolocale == null) s_log.warn("getGeolocale() name:" + name + " georank:" + georank + " query:" + query);
 
@@ -207,21 +208,23 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
         //if ("Venezuela".equals(parent)) A.log("getGeolocales() georank:" + georank + " parent:" + parent);
 
-        parent = AntFormatter.escapeQuotes(parent);
+        List<String> params = new ArrayList<>();
+        String rankClause = "";
+        if (georank != null) {
+          rankClause = " and georank = ?";
+          params.add(georank);
+        }
 
         String parentClause = "";
-        if (parent != null) {
-            parentClause = " and parent = '" + parent + "'";
-        }
         if ("none".equals(parent)) {
             // This is invoked by the GeolocaleMgr to get ALL...
             parentClause = " and parent is null";
+        } else if (parent != null) {
+            parentClause = " and parent = ?";
+            params.add(parent);
         }
 
-        String rankClause = "";
-        if (georank != null) {
-          rankClause = " and georank = '" + georank + "'";
-        } else {
+        if (georank == null) {
           // These will show up as children, so exclude from the main query.
           //rankClause = " and georank != 'adm1'";
         }
@@ -230,16 +233,13 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         if (liveOnly) liveClause = " and is_live = 1 ";
 
         String orderByClause = " order by ";
-        if ("isValid".equals(orderBy)) orderBy = "is_valid";
-        if ("isLive".equals(orderBy)) orderBy = "is_live";  
-        if ("validName".equals(orderBy)) orderBy = "valid_name";  
-              
+        orderBy = orderByColumn(orderBy);
         if (orderBy != null) orderByClause += orderBy + ", ";
         orderByClause += "name collate utf8_unicode_ci, valid_name";
            // + " order by " + orderBy + " georank desc, name, valid_name"; //is_valid desc, 
 
         String query;
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
 
         try {
@@ -268,8 +268,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             //String testParent = "Eastern Asia";
             if (query.equals("United States")) s_log.debug("GeolocaleDb.getGeolocale(5) query:" + query);
 
-            stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.getGeolocales()");
-            rset = stmt.executeQuery(query);
+            stmt = DBUtil.getPreparedStatement(getConnection(), "GeolocaleDb.getGeolocales()", query);
+            for (int p = 0; p < params.size(); p++) stmt.setString(p + 1, params.get(p));
+            rset = stmt.executeQuery();
             
             int i = 0;
             while (rset.next()) {
@@ -395,16 +396,14 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
     public String getAlternatives(String name, String georank) throws SQLException {
         String alternatives = "";
         String query;
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
         try {
-            query = "select name from geolocale"
-// collate utf8_bin 
-              + " where valid_name = '" + AntFormatter.escapeQuotes(name) + "'"
-              + "   and georank = '" + georank + "'"
-              + " order by name";
-            stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.getAlternatives()");
-            rset = stmt.executeQuery(query);
+            query = "select name from geolocale where valid_name = ? and georank = ? order by name";
+            stmt = DBUtil.getPreparedStatement(getConnection(), "GeolocaleDb.getAlternatives()", query);
+            stmt.setString(1, name);
+            stmt.setString(2, georank);
+            rset = stmt.executeQuery();
          
             int i = 0;
             while (rset.next()) {
@@ -479,26 +478,19 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
     // Just Id and name, useful for drop down list.
     public ArrayList<Geolocale> getValidChildren(String parent) throws SQLException {
-        ArrayList<Geolocale> validChildren = new ArrayList<>()	;
+        ArrayList<Geolocale> validChildren = new ArrayList<>();
 
-        String query;
-        Statement stmt = null;
+        String query = "select id, name from geolocale where parent = ? and is_valid = 1 order by name";
+        PreparedStatement stmt = null;
         ResultSet rset = null;
         try {
-            query = "select id, name from geolocale"
-              + " where parent = '" + parent + "'"
-              + " and is_valid = 1 "
-              + " order by name";
-            stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.getValidChildren()");
-            rset = stmt.executeQuery(query);
-
-            int i = 0;
+            stmt = DBUtil.getPreparedStatement(getConnection(), "GeolocaleDb.getValidChildren()", query);
+            stmt.setString(1, parent);
+            rset = stmt.executeQuery();
             while (rset.next()) {
-              String name = rset.getString("name");
-              int id = rset.getInt("id");
               Geolocale child = new Geolocale();
-              child.setId(id);
-              child.setName(name);
+              child.setId(rset.getInt("id"));
+              child.setName(rset.getString("name"));
               child.setParent(parent);
               validChildren.add(child);
             }
@@ -518,30 +510,22 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         return getGeolocaleNames(georank, -1);
     }    
     public ArrayList<String> getGeolocaleNames(String georank, int isValid) {
-        ArrayList<String> validGeolocales = new ArrayList<>()	;
- 
+        ArrayList<String> validGeolocales = new ArrayList<>();
+
         // isValid.  1:true, 0:false, -1:N/A.
         String isValidClause = "";
         if (isValid == 1) isValidClause = " and is_valid = 1";
         if (isValid == 0) isValidClause = " and is_valid = 0";
-        
-        String query;
-        Statement stmt = null;
-        ResultSet rset = null;
 
+        String query = "select name from geolocale where georank = ?" + isValidClause + " order by name";
+        PreparedStatement stmt = null;
+        ResultSet rset = null;
         try {
-            query = "select name from geolocale"
-              + " where georank = '" + georank + "'"
-              + isValidClause
-              + " order by name";
-            //A.log("getValidGeolocaleNames() query:" + query);
-            stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.getValidGeolocaleNames()");
-            rset = stmt.executeQuery(query);
-            
-            int i = 0;
+            stmt = DBUtil.getPreparedStatement(getConnection(), "GeolocaleDb.getValidGeolocaleNames()", query);
+            stmt.setString(1, georank);
+            rset = stmt.executeQuery();
             while (rset.next()) {
-              String name = rset.getString("name");
-              validGeolocales.add(name);
+              validGeolocales.add(rset.getString("name"));
             }
         } catch (SQLException e) {
             s_log.error("getValidGeolocaleNames() e:" + e);
@@ -553,46 +537,37 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
     public String createGeolocale(EditGeolocaleForm form) throws SQLException {
         String message = null;
-        Statement stmt = null;
-
-        String cols = "";
-        String vals = "";
-        if (form.getParent() != null) {
-          cols += ", parent";
-          vals += ", '" + form.getParent() + "'";
-        }
-        
-        // This will always be blank at creation.
-        if (form.getGeorank().equals("adm1")) {
-          cols += ", georank_type";
-          vals += ", 'Province'";
-        }
-
-        cols += ", is_valid";
-        vals += ", 0";
 
         if (Formatter.hasSpecialCharacter(form.getName())) {
           message = "createGeolocale() special character(s) detected in: " + form.getName();
           s_log.error(message);
           return message;
         }
-        
-        String dml = null;
-        try {
-        
-            dml = "insert into geolocale (name, georank, source" + cols + ") " 
-              + " values ('" + AntFormatter.escapeQuotes(form.getName()) + "', '" + form.getGeorank() + "', '" + form.getSource() + "'" + vals + ")";
-            //A.log("createGeolocale() dml:" + dml);
 
-            stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.createGeolocale()");
-            int x = stmt.executeUpdate(dml);
-            if (x > 0) message = "success";
+        String cols = "name, georank, source";
+        List<Object> params = new ArrayList<>();
+        params.add(form.getName());
+        params.add(form.getGeorank());
+        params.add(form.getSource());
+        if (form.getParent() != null) {
+          cols += ", parent";
+          params.add(form.getParent());
+        }
+        // This will always be blank at creation.
+        if ("adm1".equals(form.getGeorank())) {
+          cols += ", georank_type";
+          params.add("Province");
+        }
+        cols += ", is_valid";
+        params.add(Boolean.FALSE);
+
+        String dml = "insert into geolocale (" + cols + ") values (" + placeholders(params.size()) + ")";
+        try {
+            if (executeBound(dml, params, "GeolocaleDb.createGeolocale()") > 0) message = "success";
         } catch (SQLException e) {
             s_log.error("createGeolocale() e:" + e);
             throw e;
-        } finally {
-            DBUtil.close(stmt, null, "GeolocaleDb.createGeolocale()");
-        }   
+        }
         return message;
     }    
     
@@ -620,110 +595,79 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
     public String updateGeolocale(EditGeolocaleForm form) throws SQLException {
         String returnVal = "Update successful.";
-        String query;
-        Statement stmt = null;
 
-        if (false) s_log.debug("updateGeolocale() id:" + form.getId() + " name:" + form.getName() + " georank:" + form.getGeorank() + " isValid:" + form.isValid()
-          + " isUn:" + form.isUn() + " isLive:" + form.isLive() + " isValid:" + form.isValid() + " source:" + form.getSource() + " validName:"+ form.getValidName() + " region:" + form.getRegion()
-          + " centroidFixed:" + form.getCentroidFixed() + " boundingBoxFixed:" + form.getBoundingBoxFixed());
+        Geolocale geolocale = getGeolocale(form.getId());
+        if (geolocale == null) return "Geolocale id:" + form.getId() + " not found";
 
-        Geolocale geolocale = getGeolocale(form.getId()); //form.getName(), form.getGeorank());
-        if (geolocale == null) return "Geolocale id:" + form.getId() + " not found";  // form.getName() + " of rank:" + form.getGeorank() + " not found";
+        // Every value is a bound parameter. Columns are set in the same order as before; a column may
+        // appear twice (valid_name), the last value wins as before.
+        List<String> sets = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
 
-        String dml = null;
+        sets.add("is_valid = ?"); params.add(form.isValid());
+        if (form.getGeorank() != null) { sets.add("georank = ?"); params.add(form.getGeorank()); }
+        sets.add("name = ?"); params.add(form.getName());
+        sets.add("isoCode = ?"); params.add(form.getIsoCode());
+        sets.add("iso3Code = ?"); params.add(form.getIso3Code());
+        sets.add("is_un = ?"); params.add(form.isUn());
+        sets.add("is_live = ?"); params.add(form.isLive());
+        sets.add("source = ?"); params.add(form.getSource());
+        sets.add("admin_notes = ?"); params.add(form.getAdminNotes());
+
+        if (form.getGeorankType() != null) {
+          if ("adm1".equals(form.getGeorank())) { sets.add("georank_type = ?"); params.add(form.getGeorankType()); }
+
+          // Set children georank type (Province, Region, etc...)
+          if ("country".equals(form.getGeorank())) updateChildrenGeorankType(form.getName(), form.getGeorankType());
+        }
+
+        if (form.getCountry() != null) { sets.add("country = ?"); params.add(form.getCountry()); }
+
+        if (form.getValidName() != null) { sets.add("valid_name = ?"); params.add(form.getValidName()); }
+        if (form.getValidNameId() > 0) {
+          Geolocale validNameGeolocale = getGeolocale(form.getValidNameId());
+          if (validNameGeolocale != null) { sets.add("valid_name = ?"); params.add(validNameGeolocale.getName()); }
+        }
+        if (form.getValidNameId() == -1) { sets.add("valid_name = ?"); params.add(null); }
+
+        if (form.getParent() != null) { sets.add("parent = ?"); params.add(form.getParent()); }
+
+        // If we set the subregion, the region will be set as well.
+        Geolocale subregion = GeolocaleMgr.getSubregion(form.getParent());
+        if (subregion != null) form.setRegion(subregion.getParent());
+
+        if (form.getRegion() != null) { sets.add("region = ?"); params.add(form.getRegion()); }
+        if (form.getBioregion() != null) { sets.add("bioregion = ?"); params.add(form.getBioregion()); }
+        if (form.getAltBioregion() != null) { sets.add("alt_bioregion = ?"); params.add(form.getAltBioregion()); }
+
+        if (form.getWoeId() != null && !"".equals(form.getWoeId())) {
+          FlickrPlace place = FlickrPlace.scrapePlace(form.getWoeId());
+          if (place != null) {
+            setFlickrData(form.getId(), place.getWoeId(), place.getBoundingBox(), place.getLatitude(), place.getLongitude());
+          }
+        }
+
+        if (form.getCentroidFixed() != null) {
+          sets.add("centroid_fixed = ?"); params.add("".equals(form.getCentroidFixed()) ? null : form.getCentroidFixed());
+        }
+        if (form.getBoundingBoxFixed() != null) {
+          sets.add("bounding_box_fixed = ?"); params.add("".equals(form.getBoundingBoxFixed()) ? null : form.getBoundingBoxFixed());
+        }
+        if (form.getMapImage() != null && !"".equals(form.getMapImage())) {
+          sets.add("map = ?"); params.add(form.getMapImage());
+        }
+        sets.add("is_use_children = ?"); params.add(form.isUseChildren());
+        sets.add("is_use_parent_region = ?"); params.add(form.isUseParentRegion());
+        sets.add("is_island = ?"); params.add(form.isIsland());
+
+        params.add(form.getId());
+        String dml = "update geolocale set " + String.join(", ", sets) + " where id = ?";
         try {
-        
-            dml = "update geolocale";
-            dml += "  set is_valid = " + form.isValid(); 
-
-            if (form.getGeorank() != null) dml += " , georank = '" + form.getGeorank() + "'";
-
-            dml += ", name = '" + AntFormatter.escapeQuotes(form.getName()) + "'";
-            String val = form.getIsoCode() == null ? "null" : "'" + form.getIsoCode() + "'";
-            dml += ", isoCode = " + val;
-            val = form.getIso3Code() == null ? "null" : "'" + form.getIso3Code() + "'";
-            dml += ", iso3Code = " + val;
-            dml += ", is_un = " + form.isUn(); 
-            dml += ", is_live = " + form.isLive();
-            dml += ", source = '" + form.getSource() + "'";
-            dml += ", admin_notes = '" + form.getAdminNotes() + "'";
-                                                
-            if (form.getGeorankType() != null) {
-              if ("adm1".equals(form.getGeorank())) dml += " , georank_type = '" + form.getGeorankType() + "'";
-
-              // Set children georank type (Province, Region, etc...)
-              if ("country".equals(form.getGeorank())) updateChildrenGeorankType(form.getName(), form.getGeorankType());
-            }
-
-            if (form.getCountry() != null) {
-                dml += ", country = '" + form.getCountry() + "'";
-            }
-
-            if (form.getValidName() != null) dml += " , valid_name = '" + AntFormatter.escapeQuotes(form.getValidName()) + "'";
-
-		    if (form.getValidNameId() > 0) {
-			  Geolocale validNameGeolocale = getGeolocale(form.getValidNameId());
-			  if (validNameGeolocale != null) dml += ", valid_name = '" + AntFormatter.escapeQuotes(validNameGeolocale.getName()) + "'";
-		    }
-		    if (form.getValidNameId() == -1) {
-			  dml += ", valid_name = null";
-		    }
-
-            if (form.getParent() != null) dml += " , parent = '" + form.getParent() + "'";
-
-            // If we set the subregion, the region will be set as well.
-			Geolocale subregion = GeolocaleMgr.getSubregion(form.getParent());
-			if (subregion != null) form.setRegion(subregion.getParent());
-
-            if (form.getRegion() != null) dml += " , region = '" + form.getRegion() + "'";
-
-            if (form.getBioregion() != null) dml += " , bioregion = '" + form.getBioregion() + "'";
-            if (form.getAltBioregion() != null) dml += " , alt_bioregion = '" + form.getAltBioregion() + "'";
-
-
-		    if (form.getWoeId() != null && !"".equals(form.getWoeId())) {       
-			  FlickrPlace place = FlickrPlace.scrapePlace(form.getWoeId());
-			  if (place != null) {
-			    setFlickrData(form.getId(), place.getWoeId(), place.getBoundingBox(), place.getLatitude(), place.getLongitude());
-			  }
-		    }
-
-            if (form.getCentroidFixed() != null) {
-              if ("".equals(form.getCentroidFixed())) {
-                dml += ", centroid_fixed = null";
-              } else {
-                dml += ", centroid_fixed = '" + form.getCentroidFixed() + "'";
-              }
-            }
-
-            if (form.getBoundingBoxFixed() != null) {
-              if ("".equals(form.getBoundingBoxFixed())) {
-                dml += ", bounding_box_fixed = null";
-              } else {
-                dml += ", bounding_box_fixed = '" + form.getBoundingBoxFixed() + "'";
-              }
-            }  
-            if (form.getMapImage() != null && !"".equals(form.getMapImage())) {
-              dml += ", map = '" + form.getMapImage() + "'";
-            }  
-            dml += ", is_use_children = " + form.isUseChildren();
-            dml += ", is_use_parent_region = " + form.isUseParentRegion();     
-            dml += ", is_island = " + form.isIsland();     
-                   
-            dml += " where id = " + form.getId();
-            //dml += " where name = '" + form.getName() + "'";
-
-            //A.log("updateGeolocale() dml:" + dml);
-
-            stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.updateGeolocale()");
-            stmt.executeUpdate(dml);
-
+            executeBound(dml, params, "GeolocaleDb.updateGeolocale()");
         } catch (SQLException e) {
-            s_log.error("updateGeolocale() e:" + e + " dml:" + dml);
+            s_log.error("updateGeolocale() id:" + form.getId() + " e:" + e + " dml:" + dml);
             throw e;
-        } finally {
-            DBUtil.close(stmt, null, "GeolocaleDb.updateGeolocale()");
-        }   
+        }
         return returnVal;
     }    
     
@@ -1919,30 +1863,21 @@ Have parallel methods:
 
 
     public void deleteFetchedAdm1(String source) {
-        String dml = "delete from geolocale where georank = 'adm1' and source = '" + AntFormatter.escapeQuotes(source) + "'";
-        Statement stmt = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.deleteFetchedAdm1()");
-            int x = stmt.executeUpdate(dml);
-//A.log("deleteFetchedAdm1(" + source + ") x:" + x + " dml:" + dml);
+            executeBound("delete from geolocale where georank = 'adm1' and source = ?", Collections.singletonList(source), "GeolocaleDb.deleteFetchedAdm1()");
         } catch (SQLException e) {
             s_log.error("deleteFetchedAdm1() e:" + e);
-        } finally {
-            DBUtil.close(stmt, null, "GeolocaleDb.deleteFetchedAdm1()");
         }
     }
 
-    public void deleteFetchedAdm1(Geolocale country, String source) {    
-        String dml = "delete from geolocale where georank = 'adm1' and source = '" + source + "' and parent = '" + AntFormatter.escapeQuotes(country.getName()) + "'";
-        Statement stmt = null;
+    public void deleteFetchedAdm1(Geolocale country, String source) {
+        List<Object> params = new ArrayList<>();
+        params.add(source);
+        params.add(country.getName());
         try {
-            stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.deleteFetchedAdm1()");
-            int x = stmt.executeUpdate(dml);
-//A.log("deleteFetchedAdm1(" + country + ", " + source + ") x:" + x + " dml:" + dml);
+            executeBound("delete from geolocale where georank = 'adm1' and source = ? and parent = ?", params, "GeolocaleDb.deleteFetchedAdm1()");
         } catch (SQLException e) {
             s_log.error("deleteFetchedAdm1() e:" + e);
-        } finally {
-            DBUtil.close(stmt, null, "GeolocaleDb.deleteFetchedAdm1()");
         }
     }    
     
@@ -2195,32 +2130,27 @@ Have parallel methods:
 
     public void adjustGeolocale(EditGeolocaleForm form) {
       // Called from the Geolocale Mgr individual update feature.
-      Statement stmt = null;
-      String dml = null;
+      List<Object> params = new ArrayList<>();
+      params.add(form.isValid());
+      params.add(form.isLive());
       String validNameClause = "";
       Geolocale validNameGeolocale = null;
       if (form.getValidNameId() > 0) {
          validNameGeolocale = getGeolocale(form.getValidNameId());
-         if (validNameGeolocale != null) validNameClause = ", valid_name = '" + AntFormatter.escapeQuotes(validNameGeolocale.getName()) + "'";
+         if (validNameGeolocale != null) { validNameClause = ", valid_name = ?"; params.add(validNameGeolocale.getName()); }
       }
       if (form.getValidNameId() == -1) {
          validNameClause = ", valid_name = null";
       }
       if ("".equals(validNameClause) && form.getValidName() != null) {
-         validNameClause = ", valid_name = '" + AntFormatter.escapeQuotes(form.getValidName()) + "'";
+         validNameClause = ", valid_name = ?"; params.add(form.getValidName());
       }
-      String revClause = ", rev = " + AntwebProps.getRev(); 
+      params.add(AntwebProps.getRev());
+      params.add(form.getId());
       try {
-        stmt = DBUtil.getStatement(getConnection(), "adjustGeolocale()");
-        dml = "update geolocale set is_valid = " + form.isValid() + ", is_live = " + form.isLive() + validNameClause + revClause 
-           + " where id = " + form.getId();
-        stmt.executeUpdate(dml); 
-
-        //A.log("adjustGeolocale() dml" + dml);      
+        executeBound("update geolocale set is_valid = ?, is_live = ?" + validNameClause + ", rev = ? where id = ?", params, "adjustGeolocale()");
       } catch (SQLException e) {
         s_log.warn("adjustGeolocale() e:" + e);
-      } finally {
-        DBUtil.close(stmt, "adjustGeolocale()");
       }
 
       FlickrPlace place = null;
@@ -2242,24 +2172,16 @@ Have parallel methods:
 
     public void setFlickrData(int geolocaleId, String woeId, String boundingBox, String lat, String lon) {
       if (geolocaleId <= 0) return;
-	  Statement stmt = null;
-	  String dml = null;
-	  try {
-		stmt = DBUtil.getStatement(getConnection(), "setFlickrData()");
-		dml = "update geolocale set "
-		  + " woe_id = '" + woeId + "'"
-		  // + ", bounding_box = '" + boundingBox + "', centroid = '" + lat + ", " + lon + "'"
-		  + " where id = " + geolocaleId;
-		stmt.executeUpdate(dml); 
-
-		//A.log("setFlickrData() dml" + dml);
-	  } catch (SQLException e) {
-		s_log.warn("setFlickrData() e:" + e);
-	  } finally {
-		DBUtil.close(stmt, "setFlickrData()");
-	  }
-	  
-	}
+      List<Object> params = new ArrayList<>();
+      params.add(woeId);
+      params.add(geolocaleId);
+      try {
+        // (bounding_box and centroid are not set from Flickr.)
+        executeBound("update geolocale set woe_id = ? where id = ?", params, "setFlickrData()");
+      } catch (SQLException e) {
+        s_log.warn("setFlickrData() e:" + e);
+      }
+    }
 
     public void updateAdm1FromCountryData() {
       updateBioregionFromCountry();
@@ -2337,19 +2259,55 @@ Have parallel methods:
     }
 
     public void updateChildrenGeorankType(String country, String georankType) {
-	  Statement stmt = null;
-	  String dml = null;
-	  try {
-		stmt = DBUtil.getStatement(getConnection(), "updateChildrenGeorankType()");
-		dml = "update geolocale set georank_type = '" + georankType + "' where parent = '" + country + "'";
-		stmt.executeUpdate(dml);
+      List<Object> params = new ArrayList<>();
+      params.add(georankType);
+      params.add(country);
+      try {
+        executeBound("update geolocale set georank_type = ? where parent = ?", params, "updateChildrenGeorankType()");
+      } catch (SQLException e) {
+        s_log.warn("updateChildrenGeorankType() e:" + e);
+      }
+    }
 
-		//A.log("updateChildrenGeorankType() dml:" + dml);
-	  } catch (SQLException e) {
-		s_log.warn("updateChildrenGeorankType() e:" + e);
-	  } finally {
-		DBUtil.close(stmt, "updateChildrenGeorankType()");
-	  }
+    // ---- Bound-parameter helpers ----
+
+    /** Columns the Geolocale Mgr may sort by (request values are never put into SQL). */
+    private static final Set<String> ORDER_BY_COLUMNS = Set.of(
+        "id", "name", "parent", "is_valid", "valid_name", "is_live", "source", "region", "subregion",
+        "bioregion", "alt_bioregion", "georank", "georank_type", "country", "created", "isoCode", "iso3Code",
+        "is_un", "is_island", "rev", "subfamily_count", "genus_count", "species_count", "specimen_count", "image_count");
+
+    /** The column for an orderBy value ("isValid", "validName", "g.created", "name"...), or null if not allowed. */
+    static String orderByColumn(String orderBy) {
+        if (orderBy == null) return null;
+        String o = orderBy.trim();
+        if (o.startsWith("g.")) o = o.substring(2);
+        if ("isValid".equals(o)) o = "is_valid";
+        if ("isLive".equals(o)) o = "is_live";
+        if ("validName".equals(o)) o = "valid_name";
+        return ORDER_BY_COLUMNS.contains(o) ? o : null;
+    }
+
+    private static String placeholders(int n) {
+        return String.join(", ", Collections.nCopies(n, "?"));
+    }
+
+    /** Run an insert, update or delete with bound parameters (String, Boolean, Integer or null). */
+    private int executeBound(String sql, List<?> params, String name) throws SQLException {
+        PreparedStatement stmt = null;
+        try {
+            stmt = DBUtil.getPreparedStatement(getConnection(), name, sql);
+            for (int i = 0; i < params.size(); i++) {
+                Object v = params.get(i);
+                if (v == null) stmt.setNull(i + 1, Types.VARCHAR);
+                else if (v instanceof Boolean) stmt.setBoolean(i + 1, (Boolean) v);
+                else if (v instanceof Integer) stmt.setInt(i + 1, (Integer) v);
+                else stmt.setString(i + 1, v.toString());
+            }
+            return stmt.executeUpdate();
+        } finally {
+            DBUtil.close(stmt, null, name);
+        }
     }
     
 

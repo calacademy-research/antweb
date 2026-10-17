@@ -156,8 +156,8 @@ public final class EditProjectAction extends AntwebAction {
 
      
     public static void saveProject(Project project, Connection connection, HttpServletRequest request) 
-    /** Notice that this method is static.  It is called not only from the saveProject.do struts action
-      * but also from the EditProjectAction.generateAllHomePages() method, invoked from the editProject.do
+    /** Saves the project's settings (editProject.do). The page text (contents, author, author bio,
+      * page images) is not saved here: it is edited on the project page (DescriptionAction).
       */
       throws SQLException {
         HttpSession session = request.getSession();

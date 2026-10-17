@@ -78,7 +78,7 @@
    if (LoginMgr.isAdmin(accessLogin)) { 
      if (!isValidMatch && !isInvalidMatch) { 
 %>
-<br>As an Antweb Admin, you may <b><a href='<%= domainApp %>/editGeolocale.do?georank=adm1&parent=<%= encodedCountry %>&isCreate=true&isSubmit=1&name=<%= encodedAdm1 %>&source=adm1Mgr'>Create</a></b> this ADM1.
+<br>As an Antweb Admin, you may <b><%= org.calacademy.antweb.util.Csrf.postButton(request, domainApp + "/editGeolocale.do?georank=adm1&parent=" + encodedCountry + "&isCreate=true&isSubmit=true&name=" + encodedAdm1 + "&source=adm1Mgr", "Create") %></b> this ADM1.
 <%   } else if (isInvalidMatch){ %>
 <br>As an Antweb Admin, you may <b><a href='<%= domainApp %>/editGeolocale.do?georank=adm1&parent=<%= encodedCountry %>&name=<%= encodedAdm1 %>'>Edit</a></b> this ADM1.
 <%   }
