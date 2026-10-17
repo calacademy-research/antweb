@@ -226,7 +226,7 @@ def test_tinymce_edit_form_at_phone_width(playwright, browser, curator_session):
         layout = page.evaluate("document.documentElement.clientWidth")
         assert box and box["x"] >= 0 and box["x"] + box["width"] <= layout + 1, \
             f"editor wider than the page layout ({layout} px): {box}"
-        assert page.locator(".tox-toolbar__primary, .tox-toolbar-overlord").count() > 0
+        assert page.locator(".tox-toolbar, .tox-toolbar__primary, .tox-toolbar-overlord").count() > 0, "no editor toolbar at phone width"
         assert not page.errors, page.errors
     finally:
         ctx.close()
