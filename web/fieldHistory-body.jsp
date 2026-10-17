@@ -4,8 +4,8 @@
 <%@ page errorPage = "error.jsp" %>
 <%-- fieldHistory-body.jsp: the versions of one page-text field (DescHistory, set by FieldHistoryAction).
      Each version: date, who saved it, size, the changes compared with the current text, a preview,
-     its HTML source, and "Restore this version". Restore posts to the page's normal save
-     (DescriptionAction.saveDescriptionEdit with restoreFrom), which applies the same rules as Save:
+     its HTML source, and "Restore this version". Restore posts to fieldHistory.do, which hands it to
+     the page's normal save (DescriptionAction.saveDescriptionEdit with restoreFrom), which applies the same rules as Save:
      login, CSRF token, sanitizer, conflict check against currentHash, history copy of the text it replaces. --%>
 <%
   DescHistory h = (DescHistory) request.getAttribute(DescHistory.ATTR);
@@ -19,7 +19,8 @@
   String currentText = h.current == null ? null : h.current.content;
   long[] budget = { TextDiff.PAGE_BUDGET };
   String selfUrl = DescHistory.url(h.key.toString(), h.field, h.page);
-  String restoreAction = h.page == null ? null : domainApp + "/" + Csrf.stripParam(h.page);
+  // Restore always posts to fieldHistory.do itself, which hands it to the page's save (FieldHistoryAction.restore).
+  String restoreAction = h.page == null ? null : domainApp + "/fieldHistory.do";
 %>
 <link rel="stylesheet" href="<%= domainApp %><%= Asset.url(application, "/common/descEdit/fieldHistory.css") %>">
 <div id="page_contents">
@@ -102,6 +103,7 @@
 <% if (restoreAction != null && !same) { %>
     <form method="POST" action="<%= Html.escAttr(restoreAction) %>" class="fh-restore"
           data-field="<%= Html.escAttr(pretty) %>" data-date="<%= Html.escAttr(v.date() + ", " + v.who) %>"><%= Csrf.field(request) %>
+      <input type="hidden" name="page" value="<%= Html.escAttr(h.page) %>">
       <input type="hidden" name="editField" value="<%= Html.escAttr(h.field) %>">
       <input type="hidden" name="isSaveEditField" value="true">
       <input type="hidden" name="restoreFrom" value="<%= v.histId %>">

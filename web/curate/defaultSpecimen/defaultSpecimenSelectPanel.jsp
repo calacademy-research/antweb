@@ -34,10 +34,10 @@ ArrayList<Taxon> specimenChildren = taxon.getChildren();
 
 </select>
 
-<input type="hidden" name="taxonName" value="<%= defaultSpecimenTaxon %>" >
+<input type="hidden" name="taxonName" value="<%= org.calacademy.antweb.util.Html.escAttr(defaultSpecimenTaxon) %>" ><input type="hidden" name="command" value="post">
 <input border="0" type="image" src="<%= AntwebProps.getDomainApp() %>/image/selectButton.png" height="24" name="done" value="">
 
-as the representative image for taxon<b>: <%= Taxon.getPrettyTaxonName(defaultSpecimenTaxon) %></b>
+as the representative image for taxon<b>: <%= org.calacademy.antweb.util.Html.esc(Taxon.getPrettyTaxonName(defaultSpecimenTaxon)) %></b>
 
 or cancel this search: <a href="<%= AntwebProps.getDomainApp() %>/defaultSpecimen.do?command=cancel"><img border=0" src="<%= AntwebProps.getDomainApp() %>/image/grey_cancel.gif" height="24"></a>
 

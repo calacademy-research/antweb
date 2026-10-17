@@ -206,30 +206,58 @@ public final class DescHistory {
     private static final Pattern PAGE = Pattern.compile("[A-Za-z][A-Za-z0-9]*\\.do(\\?[^<>\"'`\\\\\\r\\n\\t#]*)?");
 
     /**
-     * The page address as a relative "x.do?..." without the editor's own parameters, or null if
-     * it is not a plain AntWeb page address. Used for the "Back to the page" link and as the
-     * Restore form's target (the save there checks the version belongs to that page).
+     * The pages that host editable page-text fields, with the parameters that name what they show.
+     * Any other action, and any other parameter, is never used as a History page.
+     */
+    private static final java.util.Map<String, java.util.Set<String>> PAGE_PARAMS = java.util.Map.ofEntries(
+        java.util.Map.entry("description.do", java.util.Set.of("taxonName", "subfamily", "genus", "subgenus", "species",
+            "subspecies", "rank", "name", "project", "countryName", "regionName", "subregionName", "adm1Name",
+            "bioregionName", "museumCode", "geolocaleId")),
+        java.util.Map.entry("specimen.do", java.util.Set.of("name", "code")),
+        java.util.Map.entry("project.do", java.util.Set.of("name", "projectName", "project")),
+        java.util.Map.entry("country.do", java.util.Set.of("name", "countryName", "id")),
+        java.util.Map.entry("island.do", java.util.Set.of("name", "countryName", "id")),
+        java.util.Map.entry("region.do", java.util.Set.of("name", "regionName", "id")),
+        java.util.Map.entry("subregion.do", java.util.Set.of("name", "subregionName", "id")),
+        java.util.Map.entry("adm1.do", java.util.Set.of("name", "country", "adm1Name", "countryName", "id")),
+        java.util.Map.entry("museum.do", java.util.Set.of("name", "museumCode", "code")),
+        java.util.Map.entry("bioregion.do", java.util.Set.of("name", "bioregionName")));
+
+    /** True if action is one of the pages that host editable page text (description.do, specimen.do, the overview pages). */
+    public static boolean isPageAction(String action) {
+        return action != null && PAGE_PARAMS.containsKey(action);
+    }
+
+    /**
+     * The page address as a relative "x.do?..." keeping only the parameters that name what the page
+     * shows, or null if it is not one of the pages that host editable page text (PAGE_PARAMS).
+     * Used for the "Back to the page" link and as the page a Restore is handed to (by
+     * fieldHistory.do itself; the save there checks the version belongs to that page).
      */
     public static String safePage(String page) {
         if (page == null) return null;
         String p = page.trim();
-        String domainApp = AntwebProps.getDomainApp();
-        if (domainApp != null && !domainApp.isEmpty() && p.startsWith(domainApp + "/")) p = p.substring(domainApp.length() + 1);
-        else if (p.contains("://")) p = HttpUtil.trimDomainApp(p);
+        if (p.contains("://")) {
+            String domainApp = AntwebProps.getDomainApp();
+            if (domainApp != null && !domainApp.isEmpty() && p.startsWith(domainApp + "/")) p = p.substring(domainApp.length() + 1);
+            else p = HttpUtil.trimDomainApp(p);
+        }
         while (p.startsWith("/")) p = p.substring(1);
         if (p.length() > 1000 || !PAGE.matcher(p).matches()) return null;
         int q = p.indexOf('?');
-        if (q < 0) return p;
+        if (q < 0) return null;  // a page without parameters does not name what it shows
+        java.util.Set<String> allowed = PAGE_PARAMS.get(p.substring(0, q));
+        if (allowed == null) return null;
         StringBuilder kept = new StringBuilder();
         for (String pair : p.substring(q + 1).split("&")) {
             if (pair.isEmpty()) continue;
-            String name = pair.contains("=") ? pair.substring(0, pair.indexOf('=')) : pair;
-            if ("editField".equals(name) || "isSaveEditField".equals(name) || "restoreFrom".equals(name)
-                || Csrf.PARAM.equals(name) || "field".equals(name)) continue;
+            int eq = pair.indexOf('=');
+            if (eq <= 0 || eq == pair.length() - 1) continue;  // name=value only
+            if (!allowed.contains(pair.substring(0, eq))) continue;
             if (kept.length() > 0) kept.append('&');
             kept.append(pair);
         }
-        return kept.length() == 0 ? p.substring(0, q) : p.substring(0, q) + "?" + kept;
+        return kept.length() == 0 ? null : p.substring(0, q) + "?" + kept;
     }
 
     /** Curators and admins see history of the fields they may edit (taxon "notes": admins and Jack only). */

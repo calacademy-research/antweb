@@ -52,7 +52,7 @@
 
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">
   <tiles:put name="title" type="string">
-    Closeup of the <%= Html.esc(shotString) %> of Specimen <%= Html.esc(code) %>
+    Closeup of the <%= shotString %> of Specimen <%= code %>
   </tiles:put>
         <tiles:put name="meta" value="<%= metaString %>" />
 	<tiles:put name="body-content" value="/bigPicture-body.jsp" />	

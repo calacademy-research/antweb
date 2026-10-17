@@ -44,16 +44,16 @@ if (exception != null) {
   errorReason = "exception";
   logMessage += errorReason + ": " + exception;
   logMessage += " " + HttpUtil.getRequestInfo(request);
-  out.println("<!--");
-  out.println(logMessage);
+  // The exception text is never put in the page for visitors (it can hold SQL or request details):
+  // it is logged with a case number, and only administrators see it on the page.
+  String caseId = Long.toString(System.currentTimeMillis(), 36);
+  logMessage = "case:" + caseId + " " + logMessage;
+  boolean errorShowAdmin = false;
+  try { errorShowAdmin = LoginMgr.isAdmin(request); } catch (Exception e) { /* no session */ }
+  out.println("<p><small>Case " + caseId + "</small></p>");
+  if (errorShowAdmin) out.println("<pre style=\"white-space:pre-wrap\">" + Html.esc(logMessage) + "</pre>");
 
   String shortStack = "No stacktrace.";
-  if (exception instanceof Exception) {
-    //shortStack = AntwebUtil.getAntwebStackTrace((Exception) exception);
-  }
-  out.print(shortStack);
-
-  out.println("-->");
 
   if (exception instanceof java.io.FileNotFoundException) {
     AntwebUtil.log(logMessage + " " + HttpUtil.getRequestInfo(request));  

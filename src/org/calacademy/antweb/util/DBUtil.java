@@ -476,6 +476,15 @@ Or, if there are stmts and/or rsets...
 	  return "'" + value.replace("\\", "\\\\").replace("'", "''") + "'";
 	}
 
+	/**
+	 * Like sqlLiteral, but a null value becomes the text 'null' (quoted), exactly as the old
+	 * "'" + value + "'" concatenation did. Use when replacing such concatenation, so that the
+	 * query is unchanged for every value without quotes or backslashes.
+	 */
+	public static String sqlQuote(Object value) {
+	  return sqlLiteral(String.valueOf(value));
+	}
+
 
     /**
      * Create a prepared statement to query the database

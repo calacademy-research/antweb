@@ -31,8 +31,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
             query = "select project_name, taxon_name, source, rev " 
                + " , subfamily_count, genus_count, species_count, specimen_count, image_count " // Added Mar 2, 2019
                + " from proj_taxon " 
-               + " where project_name = '" + projectName + "'"
-               + " and taxon_name = '" + taxonName + "'";
+               + " where project_name = " + DBUtil.sqlQuote(projectName)
+               + " and taxon_name = " + DBUtil.sqlQuote(taxonName);
 
             rset = stmt.executeQuery(query);
             while (rset.next()) {
@@ -231,8 +231,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "hasItem()");
             query = "select 'x' as x from proj_taxon"
-               + " where project_name = '" + projectName + "'"
-               + " and taxon_name = '" + taxonName + "'";
+               + " where project_name = " + DBUtil.sqlQuote(projectName)
+               + " and taxon_name = " + DBUtil.sqlQuote(taxonName);
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 String x = (String) rset.getObject("x");
@@ -256,8 +256,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "updateItem()");
 
-            dml = "update proj_taxon set source = '" + source + "' where project_name = '" + projectName + "'"
-              + " and taxon_name = '" + taxonName + "'";
+            dml = "update proj_taxon set source = " + DBUtil.sqlQuote(source) + " where project_name = " + DBUtil.sqlQuote(projectName)
+              + " and taxon_name = " + DBUtil.sqlQuote(taxonName);
             count = stmt.executeUpdate(dml);
 	    } catch (SQLException e) {
           s_log.debug("updateItem e:" + e + " source:" + source);
@@ -285,8 +285,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         stmt1 = DBUtil.getStatement(getConnection(), "delete()");
 
         delete = "delete from proj_taxon " 
-          + " where project_name = '" + projectName + "'" 
-          + "   and taxon_name = '" + taxonName + "'"; 
+          + " where project_name = " + DBUtil.sqlQuote(projectName) 
+          + "   and taxon_name = " + DBUtil.sqlQuote(taxonName); 
         //A.log("delete() 1 delete:" + delete);
         c = stmt1.executeUpdate(delete);
 
@@ -366,13 +366,13 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
     // Satisfies the EditableTaxonSetDb abstract method.
     public boolean hasTaxonSetSpecies(String speciesListName, String genus) throws SQLException {
-        String fromWhereClause = "from proj_taxon where project_name = '" + speciesListName + "'";
+        String fromWhereClause = "from proj_taxon where project_name = " + DBUtil.sqlQuote(speciesListName);
 		//A.log("ProjTaxonDb.hasTaxonSetSpecies() fromWhereClause:" + fromWhereClause);
         return super.hasTaxonSetSpecies(speciesListName, genus, fromWhereClause);
     }
     // Satisfies the EditableTaxonSetDb abstract method.
     public boolean hasTaxonSetGenera(String speciesListName, String subfamily) throws SQLException {
-        String fromWhereClause = "from proj_taxon where project_name = '" + speciesListName + "'";
+        String fromWhereClause = "from proj_taxon where project_name = " + DBUtil.sqlQuote(speciesListName);
 		//A.log("ProjTaxonDb.hasTaxonSetGenera() fromWhereClause:" + fromWhereClause);
         return super.hasTaxonSetGenera(speciesListName, subfamily, fromWhereClause);
     }
@@ -423,8 +423,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
     private boolean hasNoChildren(String taxonName, String projectName) throws SQLException {
         int count = 0;
-        String query = "select pt.taxon_name, pt.project_name from proj_taxon pt where pt.project_name = '" + projectName + "'"
-            + " and pt.taxon_name in (select taxon_name from taxon where parent_taxon_name = '" + taxonName + "')";
+        String query = "select pt.taxon_name, pt.project_name from proj_taxon pt where pt.project_name = " + DBUtil.sqlQuote(projectName)
+            + " and pt.taxon_name in (select taxon_name from taxon where parent_taxon_name = " + DBUtil.sqlQuote(taxonName) + ")";
 
         Statement stmt = null;
         ResultSet rset = null;
@@ -448,8 +448,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     }
     private String deleteProjTaxon(String taxonName, String projectName, String extraClause) throws SQLException {
         String dml = "delete from proj_taxon "
-            + " where taxon_name = '" + taxonName + "'"
-            + " and project_name = '" + projectName + "'";
+            + " where taxon_name = " + DBUtil.sqlQuote(taxonName)
+            + " and project_name = " + DBUtil.sqlQuote(projectName);
         if (extraClause != null) dml += extraClause;
         Statement stmt = null;
         int c = 0;
@@ -513,7 +513,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
           if (Rank.SPECIES.equals(rank)) {
             rank = "'" + Rank.SPECIES + "', '" + Rank.SUBSPECIES + "'";        
           } else {
-            rank = "'" + rank + "'";        
+            rank = DBUtil.sqlQuote(rank);        
           }
           rankClause = " and t.taxarank in (" + rank + ")";
         }
@@ -530,7 +530,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
               + " from proj_taxon pt, taxon t " 
               + " where pt.taxon_name = t.taxon_name"
               + rankClause;
-            if (projectName != null) theQuery += " and pt.project_name = '" + projectName + "'";
+            if (projectName != null) theQuery += " and pt.project_name = " + DBUtil.sqlQuote(projectName);
             theQuery += " order by pt.project_name, subfamily, genus, species, subspecies, author_date";
 
             //A.log("getProjTaxa() query:" + theQuery);
@@ -577,7 +577,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
               + " from proj_taxon pt, taxon t " 
               + " where pt.taxon_name = t.taxon_name"
               + " and t.taxarank in ('species', 'subspecies')";
-              theQuery += " and pt.project_name='" + projectName + "'";
+              theQuery += " and pt.project_name=" + DBUtil.sqlQuote(projectName);
             theQuery += " order by subfamily, genus, species, subspecies, author_date";
 
             //A.log("getTaxa() query:" + theQuery);
@@ -616,7 +616,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
           stmt = DBUtil.getStatement(getConnection(), "getProjectCount()");
             
   		  query = "select count(project_name) from proj_taxon " 
-  		    + " where taxon_name = '" + taxonName + "'" 
+  		    + " where taxon_name = " + DBUtil.sqlQuote(taxonName) 
 		    + "   and project_name != '" + Project.ALLANTWEBANTS + "'";
 	  
 		  //A.log("getProjectCount() query:" + query);
@@ -644,7 +644,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         stmt = DBUtil.getStatement(getConnection(), "getSpecimenCount()");
 
 		query = "select count(code) from specimen " 
-		  + " where taxon_name = '" + taxonName + "'"; 
+		  + " where taxon_name = " + DBUtil.sqlQuote(taxonName); 
 
 		//A.log("getSpecimenCount() query:" + query);
 
@@ -847,8 +847,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "addProjectFamily()");
 
-            String query = "insert into proj_taxon (project_name, taxon_name, source) values ('"
-                + project + "','formicidae', 'addProjectFamily')";
+            String query = "insert into proj_taxon (project_name, taxon_name, source) values ("
+                + DBUtil.sqlQuote(project) + ",'formicidae', 'addProjectFamily')";
             stmt.executeUpdate(query);
             stmt.close();
         } catch (SQLException e) {

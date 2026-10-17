@@ -94,7 +94,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
             query = "select gt.geolocale_id, gt.taxon_name, gt.source, gt.rev, gt.is_introduced "
                     + " from geolocale_taxon gt, taxon "
                     + " where taxon.taxon_name = gt.taxon_name "
-                    + "  and taxon.taxarank = '" + taxaRank + "'"
+                    + "  and taxon.taxarank = " + DBUtil.sqlQuote(taxaRank)
                     + "  and geolocale_id = " + geolocaleId
                     ;
 
@@ -422,7 +422,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
         try {
             stmt = DBUtil.getStatement(getConnection(), "insertItem()");
             dml = "insert into geolocale_taxon (geolocale_id, taxon_name, insert_method, source)"
-              + " values (" + geolocale.getId() + ", '" + taxonName + "', 'insertItem', '" + source + "')";
+              + " values (" + geolocale.getId() + ", " + DBUtil.sqlQuote(taxonName) + ", 'insertItem', " + DBUtil.sqlQuote(source) + ")";
 
             count = stmt.executeUpdate(dml);
             //A.log("insertItem() id:" + id + " taxonName:" + taxonName + " source:" + source + " count:" + count);
@@ -466,7 +466,7 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
         try {
             stmt = DBUtil.getStatement(getConnection(), "updateItem()");
 
-            dml = "update geolocale_taxon set source = '" + source + "' where geolocale_id = " + id
+            dml = "update geolocale_taxon set source = " + DBUtil.sqlQuote(source) + " where geolocale_id = " + id
               + " and taxon_name = " + DBUtil.sqlLiteral(taxonName);
 
 //if (!AntwebProps.isDevMode()) // For testing
@@ -680,7 +680,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
         try {
             stmt = DBUtil.getStatement(getConnection(), "deleteSource()");
 
-            dml = "delete from geolocale_taxon where source like '%" + source + "%'";
+            dml = "delete from geolocale_taxon where source like " + DBUtil.sqlQuote("%" + source + "%");
              // + " and taxon_name in (select taxon_name from taxon where status = 'valid')"; // Why this criteria?
             count = stmt.executeUpdate(dml);
 
@@ -925,7 +925,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
         
             stmt = DBUtil.getStatement(getConnection(), "undoPopulate()");
 
-            dml = "delete from geolocale_taxon where source = '" + source + "'";
+            dml = "delete from geolocale_taxon where source = " + DBUtil.sqlQuote(source);
             stmt.executeUpdate(dml);
             
         } catch (SQLException e) {
@@ -1243,7 +1243,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
         String query = null;
         try {
             Country country = null;
-            taxonName = AntFormatter.escapeQuotes(taxonName);        
+            // taxonName is quoted where it is used (no escaping here, it would be doubled).
             query =
                 " select g.id, g.name, g.parent, g.bioregion, g.georank, g.region, g.subregion" 
               + " from geolocale_taxon gt, geolocale g" 
@@ -1451,7 +1451,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
         int taxonSetCount = getGeolocaleTaxonCount(geolocale, genusName);
 
         String query = "select geolocale_id, taxon_name, species_count, source, created from geolocale_taxon "
-                + "where taxon_name = '" + genusName + "'"
+                + "where taxon_name = " + DBUtil.sqlQuote(genusName)
                 + " and geolocale_id = " + geolocale.getId()
                 + " and species_count != " + taxonSetCount;
         //A.log("testGeolocaleTaxon() query:" + query);
@@ -1504,7 +1504,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
         Statement stmt = null;
         ResultSet rset = null;
         String query = "select count(*) count from geolocale_taxon where taxon_name in "
-                + " (select taxon_name from taxon where parent_taxon_name = '" + parentTaxonName + "') "
+                + " (select taxon_name from taxon where parent_taxon_name = " + DBUtil.sqlQuote(parentTaxonName) + ") "
                 + " and geolocale_id = " + geolocale.getId()
                 ;
         //A.log("testGeolocaleTaxon() query:" + query);

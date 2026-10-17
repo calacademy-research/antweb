@@ -18,8 +18,9 @@ import jakarta.servlet.http.HttpSession;
  * Each session gets one random token (32 bytes from SecureRandom, base64url). Every form that
  * POSTs carries it as the hidden field "_csrf" (Csrf.field(request) in a JSP). Multipart forms
  * (file uploads) also carry it in the form's action URL (Csrf.action(request, url)), because the
- * filter cannot read a multipart body without consuming it. SessionRequestFilter refuses a POST
- * from a logged-in user whose token is missing or wrong, or whose Origin/Referer is another site.
+ * filter cannot read a multipart body without consuming it; only multipart POSTs may present it
+ * there. SessionRequestFilter refuses a POST from a logged-in user whose token is missing or
+ * wrong, or whose Origin/Referer is another site.
  */
 public final class Csrf {
 
@@ -151,12 +152,39 @@ public final class Csrf {
         return null;
     }
 
-    /** The token the request presents: header first, then the query string, then (not multipart) the form body. */
+    /**
+     * The token the request presents: the X-CSRF-Token header first; then, for a multipart (file
+     * upload) form, the query string (Csrf.action puts it there because the body can not be read
+     * here); for any other POST, the form body only: a token in the URL of a normal form is never
+     * used, so a token can not be handed to another action through a link or a form action built
+     * from request input.
+     */
     static String presented(HttpServletRequest request) {
         String given = request.getHeader(HEADER);
-        if (given == null || given.isEmpty()) given = queryParam(request.getQueryString());
-        if ((given == null || given.isEmpty()) && !isMultipart(request)) given = request.getParameter(PARAM);
-        return given;
+        if (given != null && !given.isEmpty()) return given;
+        if (isMultipart(request)) return queryParam(request.getQueryString());
+        // Tomcat lists query-string values before body values: skip the ones from the URL.
+        int inQuery = queryCount(request.getQueryString());
+        if (inQuery == 0) return request.getParameter(PARAM);
+        String[] all = request.getParameterValues(PARAM);
+        return (all != null && all.length > inQuery) ? all[inQuery] : null;
+    }
+
+    /** How many _csrf parameters the query string has. */
+    public static int queryCount(String queryString) {
+        if (queryString == null) return 0;
+        int n = 0;
+        for (String pair : queryString.split("&")) {
+            int eq = pair.indexOf('=');
+            String name = eq < 0 ? pair : pair.substring(0, eq);
+            try {
+                name = URLDecoder.decode(name, StandardCharsets.UTF_8);  // as the server reads it (%5Fcsrf is _csrf)
+            } catch (IllegalArgumentException e) {
+                // left as is
+            }
+            if (PARAM.equals(name)) n++;
+        }
+        return n;
     }
 
     /** Host of an Origin or Referer header value, lower case; null if it can not be read. */

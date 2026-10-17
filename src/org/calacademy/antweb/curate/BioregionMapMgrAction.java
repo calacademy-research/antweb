@@ -53,17 +53,29 @@ public final class BioregionMapMgrAction extends AntwebAction {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "BioregionMgrAction.execute()");
 
-			if (HttpUtil.isPost(request)) {
-			  s_log.debug("execute POST values:" + bioregionMapMgrForm);
-			  TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
-              taxonPropDb.updateBioregionMap(bioregionMapMgrForm.getTaxonName(), bioregionMapMgrForm.getValues());
-			}
-
 			s_log.debug("execute() refresh:" + bioregionMapMgrForm.isRefresh());
             if (bioregionMapMgrForm.isRefresh()) {
+              // Rebuilds the whole table: admins only, and only from the POST button (form token).
+              if (!LoginMgr.isAdmin(request)) {
+                request.setAttribute("message", "Only an administrator can refresh the bioregion maps.");
+                return mapping.findForward("message");
+              }
+              if (!HttpUtil.isPost(request)) {
+                request.setAttribute("message", "Nothing was changed. Use the Refresh button on the Bioregion Map Manager page.");
+                return mapping.findForward("message");
+              }
 			  TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
               taxonPropDb.refreshBioregionMap();
-            }
+            } else if (HttpUtil.isPost(request)) {
+			  s_log.debug("execute POST values:" + bioregionMapMgrForm);
+			  TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
+			  String taxonName = bioregionMapMgrForm.getTaxonName();
+			  if (!taxonPropDb.isTaxon(taxonName)) {
+                request.setAttribute("message", "Nothing was changed: unknown genus " + Html.esc(taxonName) + ".");
+                return mapping.findForward("message");
+			  }
+              taxonPropDb.updateBioregionMap(taxonName, bioregionMapMgrForm.getValues());
+			}
 
             String query1 = "select taxon_name from taxon where taxarank = 'genus' and status = 'valid' and fossil = false " + orderBy;
             stmt = connection.createStatement();

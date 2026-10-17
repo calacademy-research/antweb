@@ -74,6 +74,14 @@ public final class EditGeolocaleAction extends AntwebAction {
             request.setAttribute("message", "Nothing was changed: use the buttons on the Edit Geolocale page.");
             return mapping.findForward("message");
         }
+        // Every setting on this form is structural (name, codes, rank, parent, bioregion, valid and live
+        // flags, map data, admin notes); the page text has its own editor on the page. So saving and
+        // creating are for administrators only; curators can still open the form to read the settings.
+        if (isChange && !LoginMgr.isAdmin(accessLogin)) {
+            s_log.warn("execute() refused a change by a non-admin. id:" + id + " login:" + (accessLogin == null ? "-" : accessLogin.getId()));
+            request.setAttribute("message", "Only an AntWeb administrator may change countries and regions. Nothing was changed.");
+            return mapping.findForward("message");
+        }
 
 
         Connection connection = null;

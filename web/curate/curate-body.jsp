@@ -469,7 +469,7 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
  
     if (projList != null) {
       for (SpeciesListable project : projList) { %>
-         <html:option value="<%= project.getName() %>"><%= project.getTitle() %></html:option>
+         <html:option value="<%= project.getName() %>"><%= org.calacademy.antweb.util.Html.esc(project.getTitle()) %></html:option>
   <%  } 
     } else {
       AntwebUtil.log("curate-body.jsp projList is null for:" + HttpUtil.getTarget(request));
@@ -557,7 +557,7 @@ Upload Curator File
 	<% if (projList != null) {
 	     for (SpeciesListable p : projList) { %>
      <%    if (!p.getName().equals("globalants")) { %>
-           <html:option value="<%= p.getName() %>"><%= p.getTitle() %></html:option>
+           <html:option value="<%= p.getName() %>"><%= org.calacademy.antweb.util.Html.esc(p.getTitle()) %></html:option>
       <%   } 
 	     }
 	   } 
@@ -678,7 +678,7 @@ if (speciesListList != null && !speciesListList.isEmpty()) { %>
 	       value = "";           
          }
 	%>
-         <option value="<%= value %>" disable><%= spacer + s.getTitle() %></option>
+         <option value="<%= org.calacademy.antweb.util.Html.esc(value) %>" disable><%= spacer + org.calacademy.antweb.util.Html.esc(s.getTitle()) %></option>
 	<% } %>
   </html:select>
   

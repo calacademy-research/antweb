@@ -61,7 +61,7 @@ public class TaxonDb extends AntwebDb {
         //}
 
         String tableName = "taxon";
-        String taxonNameClause = " taxon_name = '" + taxonName + "'";
+        String taxonNameClause = " taxon_name = " + DBUtil.sqlQuote(taxonName);
         //ProfileCounter.add("getTaxon() " + AntwebUtil.getShortStackTrace(9));
 
         if (taxonName == null) {
@@ -296,7 +296,7 @@ public class TaxonDb extends AntwebDb {
         String theQuery = "select taxon_name, status from taxon"
                 + " where 1 = 1"
                 + familyClause + subfamilyClause + genusClause + speciesClause + subspeciesClause
-                + " and taxarank = '" + rank + "'"
+                + " and taxarank = " + DBUtil.sqlQuote(rank)
                 // + " and status != 'synonym'"
                 ;
 
@@ -411,10 +411,10 @@ Code added below on Apr 26 2023:
       if (rank.contains("taxarank in")) {
         rankClause = rank; // it is already a clause, so use it.
       } else {
-        rankClause = "taxarank = '" + rank + "'";
+        rankClause = "taxarank = " + DBUtil.sqlQuote(rank);
       }
       String statusClause = "1 = 1";
-      if (status != null) statusClause = "status = '" + status + "'";
+      if (status != null) statusClause = "status = " + DBUtil.sqlQuote(status);
       return getTaxaWithClause(rankClause,  statusClause);
     }
     private ArrayList<Taxon> getTaxaWithClause(String rankClause, String statusClause) {
@@ -566,13 +566,13 @@ Code added below on Apr 26 2023:
 
         // Delete the taxon
         String delete = "delete from taxon " 
-          + " where taxon_name = '" + taxonName + "'"; 
+          + " where taxon_name = " + DBUtil.sqlQuote(taxonName); 
         s_log.debug("TaxonDb.deleteTaxon() delete:" + delete);
         stmt.executeUpdate(delete);
  
         // Delete the allantwebants projTaxon
         delete = "delete from proj_taxon " 
-          + " where taxon_name = '" + taxonName + "'";
+          + " where taxon_name = " + DBUtil.sqlQuote(taxonName);
         stmt.executeUpdate(delete);
         s_log.debug("TaxonDb.deleteTaxon() delete:" + delete);
       } finally {
@@ -755,7 +755,7 @@ Code added below on Apr 26 2023:
         String taxonName = null;
         Statement stmt = null;
         ResultSet rset = null;
-        String theQuery = "select taxon_name from taxon where taxon_name = '" + currentValidName.toLowerCase() + "'";
+        String theQuery = "select taxon_name from taxon where taxon_name = " + DBUtil.sqlQuote(currentValidName.toLowerCase());
         int count = 0;
         try {            
             ++count;
@@ -785,11 +785,11 @@ Code added below on Apr 26 2023:
          String query = "select distinct subfamily from taxon " 
             + " where taxarank = 'genus' and "; // Added Jun 26, 2014";
         if (family != null && !"null".equals(family)) {
-            query += " family = '" + family + "' and ";
+            query += " family = " + DBUtil.sqlQuote(family) + " and ";
         } else {
             query += " family = 'formicidae' and ";
         }
-        query += "   genus = '" + genus + "'";
+        query += "   genus = " + DBUtil.sqlQuote(genus);
 
         return isSubfamilyForGenus(query, subfamily);        
     }
@@ -801,11 +801,11 @@ Code added below on Apr 26 2023:
          String query = "select distinct subfamily from taxon " 
             + " where ";
         if (family != null && !"null".equals(family)) {
-            query += " family = '" + family + "' and ";
+            query += " family = " + DBUtil.sqlQuote(family) + " and ";
         } else {
             query += " family = 'formicidae' and ";
         }
-        query += "   genus = '" + genus + "'";
+        query += "   genus = " + DBUtil.sqlQuote(genus);
 
         boolean isValid = isSubfamilyForGenus(query, subfamily);
         
@@ -870,8 +870,8 @@ Code added below on Apr 26 2023:
                 String authorDate = rset.getString("author_date");
                 String newAuthorDate = UploadUtil.cleanHtml(authorDate);
                 
-                utilDb.updateField("taxon", "author_date", "'" + newAuthorDate + "'", " taxon_name = '" + taxonName + "'");
-                utilDb.updateField("homonym", "author_date", "'" + newAuthorDate + "'", " taxon_name = '" + taxonName + "'");
+                utilDb.updateField("taxon", "author_date", DBUtil.sqlQuote(newAuthorDate), " taxon_name = " + DBUtil.sqlQuote(taxonName));
+                utilDb.updateField("homonym", "author_date", DBUtil.sqlQuote(newAuthorDate), " taxon_name = " + DBUtil.sqlQuote(taxonName));
             }
             s_log.debug("fixHtmlAuthorDates() count:" + count);
 	  } catch (SQLException e) {
@@ -940,9 +940,9 @@ Code added below on Apr 26 2023:
         ArrayList<Taxon> taxa = getTaxa("subfamily");
         int i = 0;
         for (Taxon taxon : taxa) {
-            String whereClause = "taxon_name = '" + taxon.getTaxonName() + "'";
+            String whereClause = "taxon_name = " + DBUtil.sqlQuote(taxon.getTaxonName());
             //A.log("setSubfamilyChartColor() whereClause:" + whereClause);
-            utilDb.updateField("taxon", "chart_color", "'" + colors[i] + "'", whereClause);
+            utilDb.updateField("taxon", "chart_color", DBUtil.sqlQuote(colors[i]), whereClause);
             ++i;
         }
     }
@@ -968,7 +968,7 @@ Code added below on Apr 26 2023:
             // for each distinct created...
             if (created != null) {
                 String query = "select concat(access_group, concat(', ', concat(concat(taxon_name, ','), created))) from taxon "
-                    + " where created < '" + created + "' and access_group = " + group.getId() + " and " + StatusSet.getAllAntwebClause();
+                    + " where created < " + DBUtil.sqlQuote(created) + " and access_group = " + group.getId() + " and " + StatusSet.getAllAntwebClause();
                 String result = utilDb.runQuery(query);
                 A.log("deleteOldSpecimeUploadTaxa() result:" + result);
                 //String dml = "delete from taxon where created < '" + created + "' and access_group = " + group.getId() + " and " + StatusSet.getAllAntwebClause();

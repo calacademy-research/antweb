@@ -87,7 +87,7 @@ if (true) {
     if (LoginMgr.isAdmin(request) && overview instanceof Project) {
       Project headerProject = (Project) overview;
 
-      note = Formatter.initCap(Rank.getPluralRank(pageRank)) + " in the Project: " + headerProject.getTitle() + " are based on ";
+      note = Formatter.initCap(Rank.getPluralRank(pageRank)) + " in the Project: " + org.calacademy.antweb.util.Html.esc(headerProject.getTitle()) + " are based on ";
       if ("worldants".equals(headerProject.getName())) { 
           note += "data from Antcat.org."; 
       } else if ("allantwebants".equals(headerProject.getName())) { 

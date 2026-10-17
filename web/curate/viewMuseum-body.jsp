@@ -51,7 +51,7 @@
     <input type="text" class="input_200" name="name" value="<%= thisMuseum.getName() %>">
 
     <p><p><b>Museum Title:</b>
-    <input type="text" class="input_200" name="title" value="<%= thisMuseum.getTitle() %>">
+    <input type="text" class="input_200" name="title" value="<%= org.calacademy.antweb.util.Html.esc(thisMuseum.getTitle()) %>">
 
     <p><b>Active:</b>
     <input type="checkbox" name="isActive" <%= (thisMuseum.getIsActive() == true)?"checked":"" %>>

@@ -54,6 +54,11 @@ public final class GeolocaleMgrAction extends AntwebAction {
             GeolocaleDb geolocaleDb = new GeolocaleDb(connection);              
 
 			if (HttpUtil.isPost(request) && editGeolocaleForm.getId() > 0) {
+			  // Valid / live flags and valid names change what is on the site: administrators only.
+			  if (!LoginMgr.isAdmin(request)) {
+			    request.setAttribute("message", "Only an AntWeb administrator may change countries and regions. Nothing was changed.");
+			    return mapping.findForward("message");
+			  }
 			  s_log.debug("GeolocaleMgrAction.execute() POST form:" + editGeolocaleForm);
 			  geolocaleDb.adjustGeolocale(editGeolocaleForm);
 			}

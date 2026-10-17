@@ -167,7 +167,5 @@ a taxon with a taxon_prop introducedMap, and a geolocale within that introducedM
 <tr><td></td><td></td><td><b>Totals:</b></td><td><%= noneSelectedTot %></td><td><%= afroTot %></td><td><%= antTot %></td><td><%= ausTot %></td><td><%= indoTot %></td><td><%= malaTot %></td><td><%= nearcTot %></td><td><%= neoTot %></td><td><%= oceanTot %></td><td><%= paleaTot %></td><td></td></tr>
 </table>
 
-<% if (LoginMgr.isDeveloper(request)) { %>
-     <br><br>Dev only:<a href= "<%= AntwebProps.getDomainApp() %>/introducedMapMgr.do?isRefresh=true">Refresh</a> Introduced Distribution Tool. (Careful! Will reload table from specimen data). 
-<% } %>
+<%-- The old "Refresh" of this table is disabled (IntroducedMapMgrAction). --%>
 </div>

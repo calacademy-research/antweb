@@ -71,7 +71,7 @@
 	<html:option value="none">Select...</html:option>
 
   <% for (SpeciesListable p : projList) { %>
-      <html:option value="<%= p.getName() %>"><%= p.getTitle() %></html:option>
+      <html:option value="<%= p.getName() %>"><%= org.calacademy.antweb.util.Html.esc(p.getTitle()) %></html:option>
   <% } %>
          
   </html:select>

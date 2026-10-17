@@ -103,14 +103,19 @@ public final class EditProjectForm extends ActionForm {
 		return coords;
 	}
 	public void setCoords(String coords) {
-		this.coords = coords;
+		this.coords = plain(coords);
+	}
+
+	/** Plain-text settings never contain markup: angle brackets are dropped (the pages also escape them). */
+	public static String plain(String value) {
+		return value == null ? null : value.replace("<", "").replace(">", "");
 	}
 
 	public String getExtent() {
 		return extent;
 	}
 	public void setExtent(String extent) {
-		this.extent = extent;
+		this.extent = plain(extent);
 	}
 
 	public Date getLastChanged() {
@@ -124,7 +129,7 @@ public final class EditProjectForm extends ActionForm {
 		return locality;
 	}
 	public void setLocality(String locality) {
-		this.locality = locality;
+		this.locality = plain(locality);
 	}
 
 	public String getMapImage() {
@@ -189,7 +194,7 @@ public final class EditProjectForm extends ActionForm {
 	}
 	public void setTitle(String title) {
 	  //s_log.warn("setTitle() title:" + title);
-		this.title = title;
+		this.title = plain(title);
 	}
 
 	public FormFile getTheFile() {
@@ -235,7 +240,7 @@ public final class EditProjectForm extends ActionForm {
       return displayKey;
     }
     public void setDisplayKey(String displayKey) {
-      this.displayKey = displayKey;
+      this.displayKey = plain(displayKey);
     }
 	
 

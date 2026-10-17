@@ -7,7 +7,7 @@ if (true) { // to create nesting of variables...
     String titleHTML = "";
     if (bioregions != null) {
       for (Bioregion bioregion : bioregions) {
-        titleHTML = "<a>" + bioregion.getTitle() + "</a>";
+        titleHTML = "<a>" + org.calacademy.antweb.util.Html.esc(bioregion.getTitle()) + "</a>";
                 
         ArrayList<Project> projects = bioregion.getProjects();
                 
@@ -20,7 +20,7 @@ if (true) { // to create nesting of variables...
 <%      }
         int i = 1;
         for (Project subProject : projects) { %>      
-        <li><a href="<%=domainApp%>/taxonomicPage.do?rank=genus&project=<%= subProject.getUseName() %>&images=true"><%= subProject.getTitle() %></a></li>  
+        <li><a href="<%=domainApp%>/taxonomicPage.do?rank=genus&project=<%= org.calacademy.antweb.util.Html.esc(org.calacademy.antweb.util.Html.url(subProject.getUseName())) %>&images=true"><%= org.calacademy.antweb.util.Html.esc(subProject.getTitle()) %></a></li>  
 <%      }
         if (!projects.isEmpty()) { %>
       </ul> <!-- close region_items -->

@@ -131,14 +131,17 @@ public class AntwebCacheMgr {
             
         String theInsert = "insert into long_request (cache_type, url, dir_file, millis, " 
             + " is_logged_in, curator_id, request_info, busy_connections, is_bot) " 
-            + " values ('" + cacheType + "', '" + url + "', '" + dirFile + "', " + millis 
-            + ", " + (isLoggedIn ? 1 : 0) + ", " + loginId  + ", '" + HttpUtil.getShortRequestInfo(request) 
-            + "', " + busyConnections + ", " + HttpUtil.getIsBot(request) + ")";
+            + " values (?, ?, ?, " + millis 
+            + ", " + (isLoggedIn ? 1 : 0) + ", " + loginId  + ", ?, " + busyConnections + ", " + HttpUtil.getIsBot(request) + ")";
 
         //s_log.warn("insertLongRequest() query:" + theInsert);
 
-        try (Statement stmt = connection.createStatement()) {
-            stmt.executeUpdate(theInsert);
+        try (PreparedStatement stmt = connection.prepareStatement(theInsert)) {
+            stmt.setString(1, cacheType);
+            stmt.setString(2, url);
+            stmt.setString(3, dirFile);
+            stmt.setString(4, HttpUtil.getShortRequestInfo(request));
+            stmt.executeUpdate();
         } catch (Exception e) {
             s_log.warn("insertLongRequest e:" + e);
         }
@@ -444,12 +447,14 @@ public class AntwebCacheMgr {
   public static void reCacheItem(Connection connection, HttpServletRequest request) throws SQLException {     
       String url = HttpUtil.getRequestURL(request) + "?" + request.getQueryString();
 
-      String theUpdate = "update long_request set cached = default where url = '" + url + "'";                                   
-      Statement stmt = null;
+      // The url (with the request's query string) is a bound parameter.
+      String theUpdate = "update long_request set cached = default where url = ?";
+      PreparedStatement stmt = null;
       try {
-        stmt = DBUtil.getStatement(connection, "reCacheItem");
-        int result = stmt.executeUpdate(theUpdate);
-        s_log.debug("reCacheItem() result:" + result + " query:" + theUpdate);
+        stmt = DBUtil.getPreparedStatement(connection, "reCacheItem", theUpdate);
+        stmt.setString(1, url);
+        int result = stmt.executeUpdate();
+        s_log.debug("reCacheItem() result:" + result + " url:" + url);
       } finally {
         DBUtil.close(stmt, null, "AntwebCacheMgr", "reCacheItem");
       }
@@ -537,12 +542,13 @@ s_log.debug("cacheItem() dataFile:" + dataFile);
   private static void updateCachedItems(Connection connection, String url, long sinceStart)
     throws SQLException {
         String theUpdate = "update long_request set cached = now(), cache_millis = " + sinceStart 
-          + " where url = '" + url + "'";
+          + " where url = ?";
 
-        s_log.debug("updateCachedItems() query:" + theUpdate);
+        s_log.debug("updateCachedItems() query:" + theUpdate + " url:" + url);
 
-      try (Statement stmt = connection.createStatement()) {
-          stmt.executeUpdate(theUpdate);
+      try (PreparedStatement stmt = connection.prepareStatement(theUpdate)) {
+          stmt.setString(1, url);
+          stmt.executeUpdate();
       }
   }
 

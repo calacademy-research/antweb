@@ -119,19 +119,19 @@ The SpeciesListTool log is here: <a href="<%= AntwebProps.getDomainApp() %>/web/
   if (mapSpeciesList1Name != null && !"none".equals(mapSpeciesList1Name)) { 
     SpeciesListable sl = SpeciesListMgr.getSpeciesList(mapSpeciesList1Name);
 if (sl == null) A.log("speciesListTool-body.jsp sl is null for mapSpeciesList1Name:" + mapSpeciesList1Name);
-    String publicListLink = "<a href='" + sl.getListLink() + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width='11' height='12' border='0' title='Go to " + sl.getTitle() + " Ant List'></a>";
+    String publicListLink = "<a href='" + sl.getListLink() + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width='11' height='12' border='0' title='Go to " + org.calacademy.antweb.util.Html.esc(sl.getTitle()) + " Ant List'></a>";
     header1 = "<a href='" + AntwebProps.getDomainApp() + "/speciesListHistory.do?speciesListName=" + mapSpeciesList1Name + "'>Species List 1</a>" + publicListLink;
   }
   String header2 = "Species List 2";
   if (mapSpeciesList2Name != null && !"none".equals(mapSpeciesList2Name)) {
     SpeciesListable sl = SpeciesListMgr.getSpeciesList(mapSpeciesList2Name);
-    String publicListLink = "<a href='" + sl.getListLink() + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width='11' height='12' border='0' title='Go to " + sl.getTitle() + " Ant List'></a>";
+    String publicListLink = "<a href='" + sl.getListLink() + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width='11' height='12' border='0' title='Go to " + org.calacademy.antweb.util.Html.esc(sl.getTitle()) + " Ant List'></a>";
     header2 = "<a href='" + AntwebProps.getDomainApp() + "/speciesListHistory.do?speciesListName=" + mapSpeciesList2Name + "'>Species List 2</a>" + publicListLink;
   }
   String header3 = "Species List 3";
   if (mapSpeciesList3Name != null && !"none".equals(mapSpeciesList3Name)) {
     SpeciesListable sl = SpeciesListMgr.getSpeciesList(mapSpeciesList3Name);
-    String publicListLink = "<a href='" + sl.getListLink() + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width='11' height='12' border='0' title='Go to " + sl.getTitle() + " Ant List'></a>";
+    String publicListLink = "<a href='" + sl.getListLink() + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width='11' height='12' border='0' title='Go to " + org.calacademy.antweb.util.Html.esc(sl.getTitle()) + " Ant List'></a>";
     header3 = "<a href='" + AntwebProps.getDomainApp() + "/speciesListHistory.do?speciesListName=" + mapSpeciesList3Name + "'>Species List 3</a>" + publicListLink;
   }
 %>

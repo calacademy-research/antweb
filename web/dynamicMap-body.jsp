@@ -103,7 +103,7 @@
       if (adm1Name != null) {
         mapType += "Adm1";
         title = "Adm1: " + Html.esc(request.getParameter("adm1Name"));
-        if (overview != null) title = "Adm1: " + overview.getTitle(); 
+        if (overview != null) title = "Adm1: " + org.calacademy.antweb.util.Html.esc(overview.getTitle()); 
       } 
     } else if (request.getParameter("locality") != null) {
         isLocality = true;
