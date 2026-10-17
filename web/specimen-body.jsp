@@ -597,8 +597,7 @@ if (LoginMgr.isAdmin(request)) {
 
 <ul>
 <li><b>Description: </b></li>
-<li><a href='<%= AntwebProps.getDomainApp() %>/logMgr.do?action=specimenDetails&code=<%= Html.escAttr(Html.url(specimen.getCode())) %>'>Link</a> -
-<%= Html.esc(specimen.getDetailHash()) %> &nbsp;</li>
+<li><a href='<%= AntwebProps.getDomainApp() %>/logMgr.do?action=specimenDetails&code=<%= Html.escAttr(Html.url(specimen.getCode())) %>'>Specimen's extra upload fields</a></li>
 </ul>
 
 <ul>
