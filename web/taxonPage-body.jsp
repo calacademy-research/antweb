@@ -549,7 +549,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>Line Number:</b>
 </div>
 <div id=data_items2>
-<%= taxon.getLineNumLink() %>
+<%= taxon.getLineNumLink() %><% if (Status.isWorldantsStatus(taxon.getStatus())) { %> (shows this taxon's row in the Worldants (AntCat) file)<% } %>
 </div>
 
 <div class="clear"></div>

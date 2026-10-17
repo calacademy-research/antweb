@@ -529,7 +529,7 @@ if (LoginMgr.isAdmin(request) || specimen.isCurator(accessLogin)) { %>
 <ul>
 <li><b>Upload Record: </b></li>
 <% if (specimen.getBackupFileName() != null) { %>
-<li>Upload File Line: <a href='<%= AntwebProps.getDomainApp() %>/logMgr.do?action=uploadLog&file=<%= Html.escAttr(Html.url(specimen.getBackupFileName())) %>&line=<%= specimen.getLineNum() %>'><%= specimen.getLineNum() %></a></li>
+<li>Upload File Line: <a href='<%= AntwebProps.getDomainApp() %>/logMgr.do?action=uploadLog&file=<%= Html.escAttr(Html.url(specimen.getBackupFileName())) %>&line=<%= specimen.getLineNum() %>' title='This specimen&#39;s row as it was uploaded'><%= specimen.getLineNum() %></a> (shows this specimen's data as uploaded)</li>
 <% } %>
 </ul>
 
