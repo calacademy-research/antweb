@@ -334,15 +334,17 @@
             self.trySubmit();
         });
 
-        var clearButtons = this.form.querySelectorAll('button.descEditClear');
-        for (var i = 0; i < clearButtons.length; i++) {
-            clearButtons[i].addEventListener('click', function () {
-                if (!window.confirm('Remove all text from ' + (self.opts.fieldName || 'this field')
-                        + '? The old text is kept in the page history.')) return;
-                self.clearing = true;
-                self.trySubmit();
-            });
-        }
+        // Delegated: the Clear button comes after this script in the page, so it does not exist yet here.
+        this.form.addEventListener('click', function (e) {
+            var t = e.target;
+            while (t && t !== self.form && !(t.classList && t.classList.contains('descEditClear'))) t = t.parentNode;
+            if (!t || t === self.form || t.disabled) return;
+            e.preventDefault();
+            if (!window.confirm('Remove all text from ' + (self.opts.fieldName || 'this field')
+                    + '? The old text is kept in the page history.')) return;
+            self.clearing = true;
+            self.trySubmit();
+        });
 
         window.addEventListener('beforeunload', function (e) {
             if (self.submitting || !self.ready) return undefined;
