@@ -65,6 +65,15 @@ public final class EditGeolocaleAction extends AntwebAction {
             request.setAttribute("message", "Only an AntWeb administrator may do this.");
             return mapping.findForward("message");
         }
+        // Anything that changes data (save, create, delete, the Flickr/Geonames actions) must come from
+        // a form (POST), so the session's form token (util/Csrf, checked by SessionRequestFilter) is
+        // required. A GET only shows the form.
+        boolean isChange = editGeolocaleForm.getIsSubmit() || editGeolocaleForm.getIsCreate() || isAdminRequest;
+        if (isChange && !HttpUtil.isPost(request)) {
+            s_log.warn("execute() refused a change by GET. id:" + id + " login:" + (accessLogin == null ? "-" : accessLogin.getId()));
+            request.setAttribute("message", "Nothing was changed: use the buttons on the Edit Geolocale page.");
+            return mapping.findForward("message");
+        }
 
 
         Connection connection = null;

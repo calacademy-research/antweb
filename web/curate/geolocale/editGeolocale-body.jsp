@@ -80,7 +80,7 @@
 <!-- For UI stuff see the old: ~/dev/calacademy/antweb/web/curate/manageLogin-body.jsp -->
 
 <!-- form action="< %= domainApp % >/editCountry.do" method="POST" -->
-<html:form method="GET" action="editGeolocale">
+<html:form method="POST" action="editGeolocale"><%= Csrf.field(request) %>
             
 <input type="hidden" name="isSubmit" value="true">
             
@@ -227,8 +227,8 @@ String woeIdLink = "";
 if (geolocale.getWoeId() != null && !("null".equals(geolocale.getWoeId()))) {
   woeIdLink = "<a href='https://www.flickr.com/places/info/" + geolocale.getWoeId() + "'>" + geolocale.getWoeId() + "</a>";
   out.println("<br>&nbsp;&nbsp;&nbsp;<b>Woe Id:</b> " + woeIdLink);
-  String deleteLink = "&nbsp;&nbsp;&nbsp;<a href='" + domainApp + "/editGeolocale.do?id=" + geolocale.getId() + "&action=removeFlickrData'><img src='" + domainApp + "/image/redX.png' width='10'/></a>";
-  out.println(deleteLink);
+  // Removing the Flickr data is a button below the form (a form may not hold another form).
+  out.println("&nbsp;&nbsp;&nbsp;(<a href='#removeFlickrData'>remove</a>)");
 } else { %>
 <br><input type="text" class="input_50" name="woeId" value="">
 <%
@@ -245,11 +245,11 @@ if (geolocale.getWoeId() != null && !("null".equals(geolocale.getWoeId()))) {
 &nbsp;&nbsp;&nbsp;<%= GeonamesPlace.getGeonamePageTag(geolocale) %>
 
 <% if (false && "country".equals(georank)) { %>
-<br><a href='<%= AntwebProps.getDomainApp() %>/editGeolocale.do?id=<%= geolocale.getId() %>&action=removeGeoData'>Remove</a> Geo Data.
-<br><a href='<%= AntwebProps.getDomainApp() %>/editGeolocale.do?id=<%= geolocale.getId() %>&action=fetchGeoData'>Fetch</a> Geo Data.
-<br>&nbsp;&nbsp;&nbsp;<a href='<%= AntwebProps.getDomainApp() %>/editGeolocale.do?id=<%= geolocale.getId() %>&action=fetchFlickrCountryData'>Fetch</a> Flickr Country Data.
-<br>&nbsp;&nbsp;&nbsp;<a href='<%= AntwebProps.getDomainApp() %>/editGeolocale.do?id=<%= geolocale.getId() %>&action=fetchGeonamesData'>Fetch</a> Geonames Data.
-<br>&nbsp;&nbsp;&nbsp;<a href='<%= AntwebProps.getDomainApp() %>/editGeolocale.do?id=<%= geolocale.getId() %>&action=fetchFlickrData'>Fetch</a> Flickr Data.
+<br><%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + geolocale.getId() + "&action=removeGeoData", "Remove") %> Geo Data.
+<br><%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + geolocale.getId() + "&action=fetchGeoData", "Fetch") %> Geo Data.
+<br>&nbsp;&nbsp;&nbsp;<%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + geolocale.getId() + "&action=fetchFlickrCountryData", "Fetch") %> Flickr Country Data.
+<br>&nbsp;&nbsp;&nbsp;<%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + geolocale.getId() + "&action=fetchGeonamesData", "Fetch") %> Geonames Data.
+<br>&nbsp;&nbsp;&nbsp;<%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + geolocale.getId() + "&action=fetchFlickrData", "Fetch") %> Flickr Data.
 <% } %>
 
 <br><br>
@@ -462,7 +462,6 @@ To indicate that adm1 should be used, for instance, United States, Brazil, China
             <div class="align_left">
             <br><br>< Back To <a href="<%= AntwebProps.getDomainApp() %>/geolocaleMgr.do?georank=<%= georank %>#<%= geolocale.getId() %>">Geo Locale Manager</a>
 
-            | <a href="<%= AntwebProps.getDomainApp() %>/editGeolocale.do?id=<%= geolocale.getId() %>&isDelete=true">Delete</a>
             </div>
 
             <div class="clear"></div>
@@ -471,3 +470,13 @@ To indicate that adm1 should be used, for instance, United States, Brazil, China
 
 <!-- /form -->
 </html:form>
+
+<%-- Changes other than Save are small POST forms with the form token (EditGeolocaleAction refuses them by GET). --%>
+<div class="align_left">
+<% if (geolocale.getWoeId() != null && !("null".equals(geolocale.getWoeId()))) { %>
+<a name="removeFlickrData"></a><%= Csrf.postButton(request, domainApp + "/editGeolocale.do?id=" + geolocale.getId() + "&action=removeFlickrData", "Remove Flickr data (Woe Id)", "Remove the Flickr data of this geolocale?") %>
+<% } %>
+<% if (LoginMgr.isAdmin(request)) { %>
+| <%= Csrf.postButton(request, domainApp + "/editGeolocale.do?id=" + geolocale.getId() + "&isDelete=true", "Delete", "Delete this geolocale?") %>
+<% } %>
+</div>
