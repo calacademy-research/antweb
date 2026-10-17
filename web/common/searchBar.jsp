@@ -1,11 +1,8 @@
 
 
-        <link rel="stylesheet" type="text/css" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+        <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.3/themes/base/jquery-ui.min.css" integrity="sha512-8PjjnSP8Bw/WNPxF6wkklW6qlQJdWJc/3w/ZQPvZ/1bjVDkrrSqLe9mfPYrMxtnzsXFPc434+u4FHLnLjXTSsg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <link rel="stylesheet" type="text/css" href="<%= AntwebProps.getDomainApp() %>/search/autocomplete.css"/>
-        <!-- script src="https://code.jquery.com/jquery-1.12.4.js"></script -->
-        <!-- script src="https://code.jquery.com/jquery-3.2.1.js"></script -->    
-        <!-- script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script -->
-        <script src="https://code.jquery.com/jquery-migrate-1.2.1.js"></script>
+        <% // jQuery 3.7.1 and jQuery Migrate are loaded once by the layout %>
         <script src="<%= AntwebProps.getDomainApp() %>/search/autocomplete.js"></script>
 
         <div class="searchBoxes2">

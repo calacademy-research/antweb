@@ -69,10 +69,6 @@
 <% if (theTarget.contains("description.do")) { %>
 <link rel="stylesheet" href="<%= domainApp %>/common/plazi.css"/>
 <% } %>
-<!--[if lt IE 9]>
-<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
-<script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
-<![endif]-->
 <!--[if lt IE 8]>
 <style type="text/css">
 .subnav, .region_list, .show_items, #global, #regions, #projects, .container, #contents, .slide  { zoom: 1; min-width:0; position:relative; }
@@ -96,8 +92,8 @@
 
 <%
  if (HttpUtil.isOnline()) { %>
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
-<!-- script src="https://code.jquery.com/jquery-1.12.4.js"></script -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-migrate/3.5.2/jquery-migrate.min.js" integrity="sha512-BzvgYEoHXuphX+g7B/laemJGYFdrq4fTKEo+B3PurSxstMZtwu28FHkPKXu6dSBCzbUWqz/rMv755nUwhjQypw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <% } %>
 
 <script type="text/javascript" src="<%= domainApp %>/common/jquery.tools.min.js"></script>
