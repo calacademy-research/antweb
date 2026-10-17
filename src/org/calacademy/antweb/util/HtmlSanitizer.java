@@ -1,9 +1,11 @@
 package org.calacademy.antweb.util;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +33,12 @@ import java.util.regex.Pattern;
  *  - Unclosed tags are closed at the end; stray closing tags are dropped.
  *  - With allowVideoEmbeds (the taxon page "videos" field only), an iframe is kept when its
  *    src is a YouTube or Vimeo embed URL over https; any other iframe is dropped.
+ *
+ * findUnsafe() runs the same pass but only reports what was removed for a security reason
+ * (script and other active elements, on* handlers, javascript:/data: URLs, dangerous CSS),
+ * ignoring cosmetic normalisation such as <br /> to <br>, closing unclosed tags, quoting
+ * attributes or dropping harmless attributes like id or rel. Used by SanitizeDescriptionsAction
+ * to clean only stored text that actually needs it.
  */
 public final class HtmlSanitizer {
 
@@ -65,6 +73,21 @@ public final class HtmlSanitizer {
         "object", "embed", "applet", "form", "textarea", "select", "button", "noscript", "noembed", "noframes",
         "template", "svg", "math", "title", "head", "xmp", "plaintext", "listing", "video", "audio", "canvas");
 
+    // Unknown tags that are dropped (text kept) and are a risk in their own right.
+    private static final Set<String> UNSAFE_UNKNOWN = Set.of("meta", "link", "base", "input", "param",
+        "source", "track", "keygen", "isindex", "portal");
+    private static final Pattern UNSAFE_STYLE = Pattern.compile(
+        "url\\(|expression|javascript|vbscript|@import|behavior|binding|image\\(|image-set");
+    private static final Pattern TARGET_VALUE = Pattern.compile("[A-Za-z_][A-Za-z0-9_-]{0,31}");
+
+    /** One thing the sanitizer removes for a security reason: what, and where in the input. */
+    public static final class Unsafe {
+        public final String reason;
+        public final int offset;
+        Unsafe(String reason, int offset) { this.reason = reason; this.offset = offset; }
+        @Override public String toString() { return reason + " @" + offset; }
+    }
+
     private static final Pattern TAG_NAME = Pattern.compile("[A-Za-z][A-Za-z0-9]*");
     private static final Pattern NUMBER_OR_PERCENT = Pattern.compile("[0-9]{1,5}%?");
     private static final Pattern SIMPLE_TOKEN = Pattern.compile("[A-Za-z0-9 _.:#,+-]{0,100}");
@@ -82,6 +105,27 @@ public final class HtmlSanitizer {
 
     /** The sanitized HTML; allowVideoEmbeds keeps YouTube/Vimeo iframes. Null stays null. */
     public static String sanitize(String html, boolean allowVideoEmbeds) {
+        return run(html, allowVideoEmbeds, null);
+    }
+
+    /** What sanitize() would remove for a security reason; empty if the text is safe as stored. */
+    public static List<Unsafe> findUnsafe(String html) {
+        return findUnsafe(html, false);
+    }
+
+    /** As findUnsafe(html), with the same allowVideoEmbeds rule as sanitize(). */
+    public static List<Unsafe> findUnsafe(String html, boolean allowVideoEmbeds) {
+        List<Unsafe> found = new ArrayList<>();
+        if (html != null) run(html, allowVideoEmbeds, found);
+        return found;
+    }
+
+    private static void note(List<Unsafe> found, String reason, int offset) {
+        if (found != null) found.add(new Unsafe(reason, offset));
+    }
+
+    // The sanitizer pass. When found is not null, security removals are recorded there.
+    private static String run(String html, boolean allowVideoEmbeds, List<Unsafe> found) {
         if (html == null) return null;
         StringBuilder out = new StringBuilder(html.length() + 16);
         Deque<String> open = new ArrayDeque<>();
@@ -118,8 +162,13 @@ public final class HtmlSanitizer {
                 continue;
             }
             String name = html.substring(nameStart, nameEnd).toLowerCase(Locale.ROOT);
+            int tagStart = i;
             Tag tag = parseTagRest(html, nameEnd);
             i = tag.end;
+
+            if (found != null && !closing && !DROP_WITH_CONTENT.contains(name)) {
+                checkAttrs(found, name, tag, tagStart, allowVideoEmbeds);
+            }
 
             if (closing) {
                 if (TAGS.containsKey(name) && !VOID_TAGS.contains(name) && open.contains(name)) {
@@ -132,6 +181,7 @@ public final class HtmlSanitizer {
                 continue;
             }
             if (DROP_WITH_CONTENT.contains(name)) {
+                note(found, "<" + name + "> element", tagStart);
                 if (!tag.selfClosing) i = skipElement(html, i, name);
                 continue;
             }
@@ -148,11 +198,16 @@ public final class HtmlSanitizer {
                     if (t != null) out.append(" title=\"").append(escape(t.length() > 200 ? t.substring(0, 200) : t)).append('"');
                     out.append(" frameborder=\"0\" allowfullscreen referrerpolicy=\"strict-origin-when-cross-origin\"")
                        .append(" allow=\"accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen\"></iframe>");
+                } else {
+                    note(found, allowVideoEmbeds ? "<iframe> not a YouTube/Vimeo embed" : "<iframe> element", tagStart);
                 }
                 continue;
             }
             Set<String> allowed = TAGS.get(name);
-            if (allowed == null) continue;  // unknown tag: drop it, keep its text
+            if (allowed == null) {  // unknown tag: drop it, keep its text
+                if (UNSAFE_UNKNOWN.contains(name)) note(found, "<" + name + "> tag", tagStart);
+                continue;
+            }
 
             out.append('<').append(name);
             for (Map.Entry<String, String> attr : tag.attrs.entrySet()) {
@@ -162,7 +217,8 @@ public final class HtmlSanitizer {
                 if (value == null) continue;
                 out.append(' ').append(an).append("=\"").append(escape(value)).append('"');
             }
-            if ("a".equals(name) && tag.attrs.containsKey("target")) out.append(" rel=\"noopener noreferrer\"");
+            if ("a".equals(name) && tag.attrs.containsKey("target")
+                    && cleanAttr(name, "target", tag.attrs.get("target")) != null) out.append(" rel=\"noopener noreferrer\"");
             out.append('>');
             if (!VOID_TAGS.contains(name)) {
                 if (tag.selfClosing) out.append("</").append(name).append('>');
@@ -171,6 +227,55 @@ public final class HtmlSanitizer {
         }
         while (!open.isEmpty()) out.append("</").append(open.pop()).append('>');
         return out.toString();
+    }
+
+    // Record the attributes of one tag that are removed for a security reason.
+    private static void checkAttrs(List<Unsafe> found, String name, Tag tag, int offset, boolean allowVideoEmbeds) {
+        for (Map.Entry<String, String> attr : tag.attrs.entrySet()) {
+            String an = attr.getKey();
+            String v = attr.getValue();
+            if (an.startsWith("on")) {
+                note(found, an + " attribute on <" + name + ">", offset);
+            } else if ("href".equals(an) || "src".equals(an) || "action".equals(an) || "formaction".equals(an)
+                    || "xlink:href".equals(an) || "data".equals(an) || "background".equals(an)
+                    || "lowsrc".equals(an) || "dynsrc".equals(an) || "poster".equals(an)) {
+                String scheme = dangerousScheme(v);
+                if (scheme != null) note(found, scheme + ": URL in " + an + " of <" + name + ">", offset);
+            } else if ("style".equals(an)) {
+                String why = unsafeStyle(v);
+                if (why != null) note(found, "style with " + why + " on <" + name + ">", offset);
+            } else if ("srcdoc".equals(an)) {
+                note(found, "srcdoc attribute on <" + name + ">", offset);
+            }
+        }
+    }
+
+    // javascript, vbscript, data or livescript if the URL uses that scheme (whitespace and
+    // control characters ignored, as browsers do); else null.
+    static String dangerousScheme(String url) {
+        if (url == null) return null;
+        StringBuilder sb = new StringBuilder();
+        for (int k = 0; k < url.length() && sb.length() < 16; k++) {
+            char c = url.charAt(k);
+            if (c > 0x20 && c != 0x7F) sb.append(Character.toLowerCase(c));
+        }
+        String u = sb.toString();
+        for (String s : new String[] {"javascript", "vbscript", "data", "livescript"}) {
+            if (u.startsWith(s + ":")) return s;
+        }
+        return null;
+    }
+
+    // Why a style value is dangerous (url(), expression() and similar, or a CSS escape or
+    // comment that could hide one); null if it is not.
+    static String unsafeStyle(String style) {
+        if (style == null) return null;
+        String compact = style.toLowerCase(Locale.ROOT).replaceAll("\\s+", "");
+        java.util.regex.Matcher m = UNSAFE_STYLE.matcher(compact);
+        if (m.find()) return m.group();
+        if (style.indexOf('\\') >= 0) return "a CSS escape";
+        if (style.contains("/*")) return "a CSS comment";
+        return null;
     }
 
     private static boolean isNameChar(char c) {
@@ -269,7 +374,9 @@ public final class HtmlSanitizer {
                 String a = value.trim().toLowerCase(Locale.ROOT);
                 return Set.of("left", "right", "center", "justify", "top", "middle", "bottom", "baseline").contains(a) ? a : null;
             case "target":
-                return "_blank".equals(value.trim()) ? "_blank" : null;
+                // A window name such as _blank or "new" (old pages use target="new").
+                String tg = value.trim();
+                return TARGET_VALUE.matcher(tg).matches() ? tg : null;
             case "nowrap":
                 return "nowrap";
             case "scope":
