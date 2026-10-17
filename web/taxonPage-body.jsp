@@ -43,7 +43,7 @@
   //Group accessGroup = GroupMgr.getAccessGroup(request);
   
   if (accessLogin != null) { %>
-<script type="text/javascript" src="<%= AntwebProps.getDomainApp() %>/ckeditor/ckeditor.js"></script>
+<script type="text/javascript" src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/ckeditor/ckeditor.js") %>"></script>
 <%
   } %>
 

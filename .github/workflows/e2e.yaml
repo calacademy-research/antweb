@@ -39,6 +39,8 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r tests/e2e/requirements.txt
+      # Headless Chromium for test_browser.py (real-browser checks: JS errors, autocomplete, asset versions).
+      - run: python -m playwright install --with-deps chromium
       # Staging only accepts web traffic from Cloudflare, and Cloudflare's bot protection
       # challenges test robots. So the tests reach staging through an SSH tunnel to the
       # server itself (same hostname, same Caddy, no Cloudflare in between).
@@ -61,6 +63,10 @@ jobs:
           curl -sSf --max-time 30 -o /tmp/cf-origin-ca.pem https://developers.cloudflare.com/ssl/static/origin_ca_rsa_root.pem
           cat "$(python -m certifi)" /tmp/cf-origin-ca.pem > /tmp/ca-bundle.pem
           echo "REQUESTS_CA_BUNDLE=/tmp/ca-bundle.pem" >> "$GITHUB_ENV"
+          # Chromium (test_browser.py): same host mapping as /etc/hosts, and accept the origin
+          # certificate (Chromium ignores REQUESTS_CA_BUNDLE; requests-based tests verify it).
+          echo "ANTWEB_BROWSER_HOST_RULES=MAP staging.antweb.org 127.0.0.1" >> "$GITHUB_ENV"
+          echo "ANTWEB_BROWSER_IGNORE_HTTPS_ERRORS=1" >> "$GITHUB_ENV"
           curl -sS --max-time 60 --retry 3 --retry-delay 20 --retry-all-errors --cacert /tmp/ca-bundle.pem -o /dev/null -w 'staging via tunnel: HTTP %{http_code}\n' https://staging.antweb.org/
       - name: Survey (report in the job summary)
         run: python tests/e2e/survey.py

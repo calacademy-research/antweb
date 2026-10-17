@@ -12,7 +12,7 @@
 <script src="https://unpkg.com/leaflet.fullscreen@1.6.0/Control.FullScreen.js"></script>
 
 <!-- Local SDK and adapter -->
-<script src="/maps/sdk/drawMap.js" type="text/javascript"></script>
-<script src="/maps/drawGoogleMap.js" type="text/javascript"></script>
+<script src="<%= org.calacademy.antweb.util.Asset.url(application, "/maps/sdk/drawMap.js") %>" type="text/javascript"></script>
+<script src="<%= org.calacademy.antweb.util.Asset.url(application, "/maps/drawGoogleMap.js") %>" type="text/javascript"></script>
 
 <% } %>

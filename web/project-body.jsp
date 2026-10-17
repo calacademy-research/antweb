@@ -41,7 +41,7 @@
     if (editField == null) editField = "none";
 
     if (accessLogin != null) { %>
-<script type="text/javascript" src="<%= AntwebProps.getDomainApp() %>/ckeditor/ckeditor.js"></script>
+<script type="text/javascript" src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/ckeditor/ckeditor.js") %>"></script>
  <% } %>
 
 <input type="hidden" id="coords_for_geo" name="coords_for_geo" value="<%= project.getCoords() %>">
@@ -218,7 +218,7 @@ if (!project.isAntProject()) {
    <%@ include file="/common/descEdit/descEditFieldCK.jsp" %>
 
 <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.4/d3.min.js"></script>
-<script src="<%= AntwebProps.getDomainApp() %>/chart/d3pie.min.js"></script>
+<script src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/chart/d3pie.min.js") %>"></script>
 
 <% if (true) {
      String title = "Species per Subfamily 'Pie Chart'";
