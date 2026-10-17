@@ -33,7 +33,7 @@
 <input type="hidden" name="clearField" value="0">
 <!-- name is used by server. The stored HTML is escaped so the box holds exactly the stored text. -->
 <textarea id="editor1" name="contents" rows="20" style="width:100%"><%= Html.esc(deText) %></textarea>
-<script type="text/javascript" src="<%= AntwebProps.getDomainApp() %>/common/descEdit/editSafety.js"></script>
+<script type="text/javascript" src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/common/descEdit/editSafety.js") %>"></script>
 <script type="text/javascript">
     AntwebEditSafety.watch('editor1', {
         draftKey: '<%= Html.js(deDraftKey) %>',

@@ -53,7 +53,7 @@
     boolean canEditDesc = DescEditSafety.canEdit(accessLogin);
         
     if (canEditDesc && !"none".equals(editField)) { %>
-<script type="text/javascript" src="<%= AntwebProps.getDomainApp() %>/ckeditor/ckeditor.js"></script>
+<script type="text/javascript" src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/ckeditor/ckeditor.js") %>"></script>
  <% } 
 
 %>
@@ -390,7 +390,7 @@ if (!HttpUtil.isOffline()) {
 %>
 
 <script src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.4/d3.min.js"></script>
-<script src="<%= AntwebProps.getDomainApp() %>/chart/d3pie.min.js"></script>
+<script src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/chart/d3pie.min.js") %>"></script>
 
 <%
    String jsonData = overview.getTaxonSubfamilyDistJson();

@@ -72,7 +72,7 @@ function checkDate(selectedDate) {
   <bean:define id="project" value=""/>
 </logic:notPresent>
  
-<script src="<%= AntwebProps.getDomainApp() %>/openAndFocus.js" type="text/javascript"></script>
+<script src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/openAndFocus.js") %>" type="text/javascript"></script>
 
 <%
 java.lang.String offset = "0";

@@ -185,6 +185,20 @@
        <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
 
+    <!-- Cache lifetime of local scripts and stylesheets: 1 year for file.js?v=hash
+         (pages write these, see util/Asset), 1 day without ?v=. Must stay mapped AFTER
+         ExpiresFilter, which then leaves these responses alone. -->
+    <filter>
+       <filter-name>AssetCacheFilter</filter-name>
+       <filter-class>org.calacademy.antweb.util.AssetCacheFilter</filter-class>
+    </filter>
+    <filter-mapping>
+       <filter-name>AssetCacheFilter</filter-name>
+       <url-pattern>*.js</url-pattern>
+       <url-pattern>*.css</url-pattern>
+       <dispatcher>REQUEST</dispatcher>
+    </filter-mapping>
+
     <!-- Here we can insert code that should be run for every request. -->
     <filter>
         <filter-name>SessionRequestFilter</filter-name>

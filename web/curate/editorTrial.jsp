@@ -21,7 +21,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Editor trial - AntWeb</title>
-<link rel="stylesheet" href="<%= editors %>/editorTrial.css?v=1">
+<link rel="stylesheet" href="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/common/editors/editorTrial.css") %>">
 </head>
 <body>
 <div id="et" class="et"
@@ -171,6 +171,6 @@
 
 <script src="<%= editors %>/hugerte/1.0.14/hugerte.min.js"></script>
 <script src="<%= editors %>/tinymce/8.10.0/tinymce.min.js"></script>
-<script src="<%= editors %>/editorTrial.js?v=1"></script>
+<script src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/common/editors/editorTrial.js") %>"></script>
 </body>
 </html>
