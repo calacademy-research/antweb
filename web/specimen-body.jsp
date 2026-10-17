@@ -562,16 +562,12 @@ if (LoginMgr.isAdmin(request)) {
 <li><a href="<%= Html.escAttr(taxonNameUrl) %>"><%= Html.esc(specimen.getTaxonName()) %></a></li>
 </ul>
 
+<%-- Upload File (the whole upload file) and Upload Search (a search over the whole upload, ~265,000
+     specimens for the TaxonWorks upload) removed 10-17 (Brian): this specimen's own line is under
+     Curator Information (Upload File Line) and the whole upload under Upload Report. --%>
 <ul>
-<li><b>Upload File: </b></li>
-<% if (specimen.getBackupFileName() != null) { %>
-<li><a href='<%= AntwebProps.getDomainApp() %>/web/upload/<%= Html.escAttr(specimen.getBackupFileName()) %>'><%= Html.esc(specimen.getBackupFileName()) %></a></li>
-<% } %>
-</ul>
-
-<ul>
-<li><b>Upload Search: </b></li>
-<li><a href="<%= AntwebProps.getDomainApp() %>/advancedSearch.do?searchMethod=advancedSearch&advanced=true&uploadId=<%= specimen.getUploadId() %>">Upload ID: <%= specimen.getUploadId() %></a></li> <!-- AntwebMgr.getSpecimenUploadId() -->
+<li><b>Upload ID: </b></li>
+<li><%= specimen.getUploadId() %></li>
 </ul>
 
 <ul>

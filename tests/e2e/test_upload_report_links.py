@@ -108,14 +108,15 @@ DEAD = ("hol.osu.edu", "plazi.cs.umb.edu", "/showLog.do")
 
 
 def test_specimen_page_curator_links(session):
-    """Curator and admin links on a specimen page (upload line, upload report, upload file,
-    description). They pointed at showLog.do, renamed logMgr.do in 2023, and the images
+    """Curator and admin links on a specimen page (upload line, upload report, description). They pointed at showLog.do, renamed logMgr.do in 2023, and the images
     folder, whose listing is off."""
     url = BASE_URL + "/specimen.do?code=" + SPECIMEN
     html = _check_all(session, url, after="Curator Information")
     for dead in DEAD:
         assert dead not in html, f"{dead} still linked on {url}"
     assert not re.search(r"href=['\"][^'\"]*/images/[^/'\"]+/?['\"]", html), "images folder still linked"
+    # A search over the whole upload (265,000 specimens for TaxonWorks) does not belong on a specimen page.
+    assert not re.search(r"advancedSearch\.do\?[^'\"]*uploadId=", html), "Upload Search (whole-upload search) still linked"
 
 
 def test_taxon_page_has_no_dead_sites(session):

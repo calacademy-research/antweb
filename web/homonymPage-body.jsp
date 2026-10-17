@@ -137,7 +137,7 @@
    <% if (desc.containsKey("taxonomichistory")) { %>
         <br><h2>Taxonomic History (provided by Barry Bolton, <%= year %>)</h2>
                     <% new Formatter();
-                        String words = Formatter.removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomichistory"),""), "br"); %>
+                        String words = Formatter.removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomichistory"),""), "br"); words = words == null ? null : words.replaceAll("(?i)\\s*<a[^>]*hol\\.osu\\.edu[^>]*>[^<]*</a>", ""); /* HOL is offline; AntCat stopped sending the link (#1573), older imports still have it. */ %>
                     <%= new Formatter().removeTag((String) words, "o:p") %>
    <% } %>
 
@@ -164,23 +164,7 @@
 <%    }
     }
 
-    if (desc.containsKey("plaziData")) { 
-    %>
-
-        <p><h3>Taxonomic Treatment (provided by <a href="https://plazi.org/" target="new">Plazi</a>)</h3>
-        <div id="plazi">
-        
-        <% 
-            String taxonomicTreatment = (String) desc.get("plaziData");
-            //String taxonomicTreatment = new Formatter().convertFromUTF8((String) desc.get("taxonomictreatment"));
-            //if (AntwebProps.isDevOrStageMode()) AntwebUtil.log("taxonPage-body.jsp utf8 taxonomicTreatment:" + taxonomicTreatment); %>
-        <%= taxonomicTreatment %>
-                    <!-- %= new Formatter().convertFromUTF8((String) desc.get("taxonomictreatment")) % -->
-                    <!-- % String words = new Formatter().removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomictreatment"),""), "br"); % -->
-                    <!-- %= new Formatter().removeTag((String) words, "o:p") % -->
-        </div>
-<% 
-    }
+    // Stored Plazi table removed: its links pointed at plazi.cs.umb.edu, which is offline.
   }
 
   if (LoginMgr.isAdmin(request)) { %>
