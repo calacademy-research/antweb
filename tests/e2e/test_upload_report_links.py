@@ -34,7 +34,8 @@ def session():
 
 def _links(html, page_url):
     found = []
-    for href in re.findall(r"""href\s*=\s*["']([^"']+)["']""", html, re.I):
+    # Only <a> links, the ones people click (a stylesheet or icon <link> is not a link to check).
+    for href in re.findall(r"""<a\s[^>]*?href\s*=\s*["']([^"']+)["']""", html, re.I):
         href = href.replace("&amp;", "&").strip()
         if href.startswith(("mailto:", "javascript:", "#")):
             continue
