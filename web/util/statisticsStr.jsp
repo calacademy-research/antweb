@@ -11,7 +11,7 @@
 %>  
 <head>
 <title>Antweb Realtime Statistics</title>
-<link rel="shortcut icon" href="<%= domainApp %>/image/favicon.ico" />
+<link rel="shortcut icon" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/image/favicon.ico") %>" />
 </head>
 <h1>Antweb Realtime Statistics</h1>
 

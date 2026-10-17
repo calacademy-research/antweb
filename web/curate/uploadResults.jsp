@@ -15,7 +15,7 @@
 <head>
 <title>Thanks</title>
 <html:base/>
-<link rel="shortcut icon" href="<%= domainApp %>/image/favicon.ico" />
+<link rel="shortcut icon" href="<%= domainApp %><%= org.calacademy.antweb.util.Asset.url(application, "/image/favicon.ico") %>" />
 </head>
 <body bgcolor="white">
 
