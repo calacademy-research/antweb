@@ -122,7 +122,7 @@ public class QueryAction extends AntwebAction {
                 if (action.equals("descEdit")) { 
                   String field = theForm.getField();
           
-                  String query = "select taxon_name, title, content from description_edit where title = \"" + field + "\"";
+                  String query = "select taxon_name, title, content from description_edit where title = " + DBUtil.sqlLiteral(field);
                   String message = QueryManager.getQueryResults(connection, query);
                   request.setAttribute("message", message);
                   returnLoc = mapping.findForward("adminMessage");
@@ -130,7 +130,13 @@ public class QueryAction extends AntwebAction {
 
 
                 if (action.equals("countryEndemic")) { 
-                  String field = theForm.getField();
+                  int field;
+                  try {
+                    field = Integer.parseInt(theForm.getField());
+                  } catch (NumberFormatException e) {
+                    request.setAttribute("message", "field must be a geolocale id.");
+                    return mapping.findForward("message");
+                  }
               
                   String query = "select taxon_name from geolocale_taxon where geolocale_id = " + field + " and is_endemic = 1";
                   //String query = "select gt.taxon_name taxon_name from geolocale g, geolocale_taxon gt, taxon t  where g.id = gt.geolocale_id and t.taxon_name = gt.taxon_name  and t.status != 'morphotaxon' and t.rank in ('species', 'subspecies') and g.georank = 'country'  and is_introduced = 0 and geolocale_id = " + field + " group by taxon_name, gt.geolocale_id having count(*) = 1 order by gt.taxon_name";
@@ -171,7 +177,7 @@ public class QueryAction extends AntwebAction {
 
 			  return returnLoc;
 			}
-			request.setAttribute("message", "action not found:" + action);
+			request.setAttribute("message", "action not found:" + Html.esc(action));
 			return mapping.findForward("message");
 
         } catch (SQLException e) {

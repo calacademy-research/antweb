@@ -48,15 +48,28 @@ public class SpeciesListMoveAction extends SpeciesListSuperAction {
 
         String message = null;
         String action = (String) df.get("action");
+        // save (preview) and confirm only by POST, so the CSRF filter checks the form token.
+        if (("save".equals(action) || "confirm".equals(action)) && !HttpUtil.isPost(request)) {
+          request.setAttribute("message", "Use the form on the Move page to rename a taxon.");
+          return mapping.findForward("message");
+        }
+        // A rename or combine changes the taxon everywhere on AntWeb: administrators only.
+        if ("confirm".equals(action) && !accessLogin.isAdmin()) {
+          request.setAttribute("message", "Only an administrator may rename or combine taxa.");
+          return mapping.findForward("message");
+        }
         if ("save".equals(action)) {
           if (toTaxonName == null) {
             message = "To Move a taxon, you must select a valid taxon";        
             message = "<b><font color=red>" + message + "</font></b>";
           } else {
             message = saveTaxon(connection, loginId, fromTaxonName, toTaxonName, false); 
-            message += "<br><br><a href='" + AntwebProps.getDomainApp() 
-              + "/speciesListMove.do?fromTaxonName=" + Html.escAttr(Html.url(fromTaxonName)) + "&amp;toTaxonName=" + Html.escAttr(Html.url(toTaxonName)) 
-              + "&action=confirm'>Confirm</a>" 
+            message += "<br><br><form method='POST' action='" + AntwebProps.getDomainApp() + "/speciesListMove.do'>"
+              + Csrf.field(request)
+              + "<input type='hidden' name='fromTaxonName' value='" + Html.escAttr(fromTaxonName) + "'>"
+              + "<input type='hidden' name='toTaxonName' value='" + Html.escAttr(toTaxonName) + "'>"
+              + "<input type='hidden' name='action' value='confirm'>"
+              + "<input type='submit' value='Confirm'></form>" 
               + "<br><br>  Back to <a href='" + AntwebProps.getDomainApp() 
               + "/moveToValid.do'>Move To Valid</a> Tool.";
             request.setAttribute("message", message);

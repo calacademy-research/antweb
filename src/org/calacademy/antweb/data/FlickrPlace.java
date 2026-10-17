@@ -219,6 +219,7 @@ public class FlickrPlace extends DataPlace {
         //A.log("FlickrPlace.getPlace() placeName:" + placeName + " parent:" + parent);
 
         String url = FlickrPlace.getPlaceInfoUrl(placeName);
+        if (url == null) return null;  // no Flickr key configured
         String json = FlickrPlace.getPlaceJson(url);
         if (json == null) {
           if (A.dev()) s_log.warn("json is null for name:" + placeName + " url:" + url);
@@ -284,21 +285,54 @@ public class FlickrPlace extends DataPlace {
         return flickrPlace;
     }
 
-    public static String getPlaceInfoTag(Geolocale geolocale) {
-        String url = FlickrPlace.getPlaceInfoUrl(geolocale.getName());
-        return "Flickr API: <a href='" + url + "'>url</a>"; 
+    // The Flickr API key is a server-only setting: /antweb/deploy/etc/flickr.properties
+    // (~/antweb/etc/flickr.properties on the host, gitignored), with apiKey= and secret=.
+    // No file (or no apiKey): the Flickr look-ups are off. Logged once.
+    static final String CONFIG = "/antweb/deploy/etc/flickr.properties";
+    private static java.util.Properties s_props = null;
+
+    private static synchronized java.util.Properties props() {
+        if (s_props == null) {
+            java.util.Properties p = new java.util.Properties();
+            java.io.File f = new java.io.File(CONFIG);
+            if (f.isFile()) {
+                try (java.io.InputStream in = new java.io.FileInputStream(f)) {
+                    p.load(in);
+                } catch (Exception e) {
+                    s_log.error("props() could not read " + CONFIG + " e:" + e);
+                }
+            }
+            if (p.getProperty("apiKey", "").trim().isEmpty()) {
+                s_log.warn("props() no Flickr apiKey in " + CONFIG + ": Flickr place look-ups are off.");
+            }
+            s_props = p;
+        }
+        return s_props;
     }
+
+    static String getApiKey() {
+        return props().getProperty("apiKey", "").trim();
+    }
+
+    public static boolean isEnabled() {
+        return !getApiKey().isEmpty();
+    }
+
+    public static String getPlaceInfoTag(Geolocale geolocale) {
+        if (!isEnabled()) return "Flickr API (not configured)";
+        // Link to the public explorer, not the API url (which carries the key).
+        String flickrUrl = "https://www.flickr.com/services/api/explore/flickr.places.find";
+        return "Flickr API: <a href='" + flickrUrl + "'>flickr.places.find</a> (query: "
+            + org.calacademy.antweb.util.Html.esc(geolocale.getName()) + ")";
+    }
+
+    /** The API url for a place name, or null when no key is configured. */
     public static String getPlaceInfoUrl(String placeName) {
-        String placeNameNoSpace = Formatter.replace(placeName, " ", "+");
-
-        // Yahoo markshermanjohnson account        
-        String apiKey = "1d343308387163f48089fae4f1dccbc0";
-        // Secret: 24b1e95a9a03a5b1
-
-        String flickrUrl = "https://www.flickr.com/services/api/explore/flickr.places.find"; // For humans
+        String apiKey = getApiKey();
+        if (apiKey.isEmpty()) return null;
 		String url = 
-		"https://api.flickr.com/services/rest/?method=flickr.places.find&api_key=" + apiKey + "&query=" + placeNameNoSpace + "&format=json&nojsoncallback=1"; //&api_sig=" + apiSig;
-
+		"https://api.flickr.com/services/rest/?method=flickr.places.find&api_key=" + org.calacademy.antweb.util.Html.url(apiKey)
+		  + "&query=" + org.calacademy.antweb.util.Html.url(placeName) + "&format=json&nojsoncallback=1";
         return url;
     }
     

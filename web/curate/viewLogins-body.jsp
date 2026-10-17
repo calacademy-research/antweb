@@ -51,7 +51,7 @@
     %>
         <tr>
         <td><%= count %>.</td> 
-        <td><a href='<%= AntwebProps.getDomainApp() %>/viewLogin.do?id=<%= login.getId() %>'><%= login.getDisplayName() %></a>        
+        <td><a href='<%= AntwebProps.getDomainApp() %>/viewLogin.do?id=<%= login.getId() %>'><%= Html.esc(login.getDisplayName()) %></a>        
         <td><%= login.getGroupLink() %></td>
         </tr>
     <% } %>

@@ -31,6 +31,9 @@ import com.google.gson.*;
 public class UtilAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(UtilAction.class);
+
+    static final Set<String> CHANGING_ACTIONS = Set.of(
+        "unlockImageUpload", "reloadAntwebMgr", "archiveLogs", "emailTest", "logQueryStats");
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
@@ -45,6 +48,23 @@ public class UtilAction extends AntwebAction {
 		if (!"isRestart".equals(action) && !"postInstantiate".equals(action) && !LoginMgr.isAdmin(request)) {
 			request.setAttribute("message", "Administrators only.");
 			return mapping.findForward("message");
+		}
+
+		// postInstantiate: AntwebMgr calls it (without a login) after loading the managers and
+		// passes its own secret code. Anyone else gets a refusal, so it can not be used to reload
+		// the managers on demand.
+		if ("postInstantiate".equals(action) && !LoginMgr.isAdmin(request)
+		    && !AntwebMgr.isPostInitializeCode(theForm.getSecureCode())) {
+			request.setAttribute("message", "Administrators only.");
+			return mapping.findForward("message");
+		}
+
+		// Actions that change state run only by POST from a browser (CSRF-checked);
+		// a GET link shows a Run button instead.
+		if (CHANGING_ACTIONS.contains(action)) {
+			ActionForward confirm = PostOnly.confirm(request, mapping, "Run admin utility: " + action
+			    + (theForm.getName() == null ? "" : " " + theForm.getName()));
+			if (confirm != null) return confirm;
 		}
 
 		String[] longActions = new String[]{"postInstantiate", "reloadAntwebMgr"};
@@ -245,15 +265,21 @@ public class UtilAction extends AntwebAction {
 			  if (action.equals("descEdit")) { 
 				String field = theForm.getField();
 			
-				String query = "select taxon_name, title, content from description_edit where title = \"" + field + "\"";
+				String query = "select taxon_name, title, content from description_edit where title = " + DBUtil.sqlLiteral(field);
 				String message = QueryManager.getQueryResults(connection, query);
 				request.setAttribute("message", message);
 				returnLoc = mapping.findForward("message");
 			  }
 
 			  if (action.equals("geolocaleIntroduced")) { 
-				String field = theForm.getField();
-				String query = "select gt.taxon_name, is_introduced, is_endemic from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name and t.taxarank in ('species', 'subspecies') and geolocale_id = " + field + " and (is_introduced = 1 or is_endemic = 0)";
+				int geolocaleId;
+				try {
+				  geolocaleId = Integer.parseInt(theForm.getField());
+				} catch (NumberFormatException e) {
+				  request.setAttribute("message", "field must be a geolocale id.");
+				  return mapping.findForward("message");
+				}
+				String query = "select gt.taxon_name, is_introduced, is_endemic from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name and t.taxarank in ('species', 'subspecies') and geolocale_id = " + geolocaleId + " and (is_introduced = 1 or is_endemic = 0)";
 				String message = QueryManager.getQueryResults(connection, query);
 				request.setAttribute("message", message);
 				returnLoc = mapping.findForward("message");
@@ -344,7 +370,7 @@ public class UtilAction extends AntwebAction {
 			  if (action.contains("latlng")) {
 				String latLng = param;
 				String key = AntwebProps.getGoogleMapServerKey();
-				String fetchUrl = "https://maps.googleapis.com/maps/api/geocode/json?key=" + key + "&latlng=" + latLng;  //&latlng=10.96667,79.78333
+				String fetchUrl = "https://maps.googleapis.com/maps/api/geocode/json?key=" + key + "&latlng=" + Html.url(latLng);  //&latlng=10.96667,79.78333
 				String message = null;
 				try {
 					//message = HttpUtil.getJson(fetchUrl);

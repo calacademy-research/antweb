@@ -51,7 +51,7 @@
 <%
     if (LoginMgr.isCurator(request)) {
 %>
-<html:form method="GET" action="artist">
+<html:form method="POST" action="artist"><%= Csrf.field(request) %>
 <input type="hidden" name="isCreate" value="true">
 Create artist with name: <input type="text" style="border:1px solid" name="name" value="">
 <input border="0" type="image" src="<%= AntwebProps.getDomainApp() %>/image/addIcon.png" height="23" value="Submit">
@@ -67,7 +67,7 @@ Create artist with name: <input type="text" style="border:1px solid" name="name"
           if (Formatter.hasSpecialCharacter(artist.getName())) {
              ++j;
              if (j > 1) nonUtf8 += "<br>";
-             nonUtf8 += " " + j + ":" + artist.getName() + ":" + artist.getId();
+             nonUtf8 += " " + j + ":" + Html.esc(artist.getName()) + ":" + artist.getId();
           }
         }
         if (!nonUtf8.equals("")) out.println("<br><br><h3><u>Non Utf8 (Admin only)</u></h3>" + nonUtf8 + "<br>");

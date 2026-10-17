@@ -61,8 +61,7 @@ public final class TestAction extends AntwebAction {
 				}
 			}
 
-            UploadDb uploadDb = new UploadDb(connection);
-            uploadDb.updateCounts(21);
+            // Was: new UploadDb(connection).updateCounts(21) on every anonymous hit (database write).
 
 		} catch (SQLException e) {
 			s_log.error("execute() e:" + e);

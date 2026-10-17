@@ -27,13 +27,13 @@
 <%
         for (AdminAlert adminAlert : adminAlerts) {
           //A.log("adminAlert.jsp alert:" + adminAlert.getAlert() + " id:" + adminAlert.getId());        
-          out.println("<br>&nbsp;&nbsp;&nbsp;" + adminAlert.getCreated() + " &nbsp;&nbsp;&nbsp;" + adminAlert.getAlert() + " &nbsp;&nbsp;&nbsp;<a href='" + AntwebProps.getDomainApp() + "/adminAlert.do?action=remove&id=" + adminAlert.getId() + "'><img src='" + AntwebProps.getDomainApp() + "/image/redX.png' width='10' /></a>"); 
+          out.println("<br>&nbsp;&nbsp;&nbsp;" + adminAlert.getCreated() + " &nbsp;&nbsp;&nbsp;" + adminAlert.getAlert() +  " &nbsp;&nbsp;&nbsp;" + Csrf.postButton(request, AntwebProps.getDomainApp() + "/adminAlert.do?action=remove&id=" + adminAlert.getId(), "<img src='" + AntwebProps.getDomainApp() + "/image/redX.png' width='10' alt='remove' />")); 
         }
 %>
         <br><br>
         To acknowledge an Admin Alert click: <img src='<%= domainApp %>/image/redX.png' width='10' />
  <br>
-        To acknowledge all Admin Alerts click: <a href='<%= AntwebProps.getDomainApp() %>/adminAlert.do?action=removeAll'><img src='<%= domainApp %>/image/redX.png' width='15' /></a>
+        To acknowledge all Admin Alerts click: <%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/adminAlert.do?action=removeAll", "<img src='" + domainApp + "/image/redX.png' width='15' alt='remove all' />", "Acknowledge all admin alerts?") %>
 
  <% } else { %>
         <b>No Admin Alerts.</b>
@@ -45,7 +45,7 @@
 <small>(The link in the header is only visible to administrators)</small>
 
 <br><br>
-To refresh: <a href='<%= AntwebProps.getDomainApp() %>/adminAlert.do?action=refresh'>Here</a>
+To refresh: <%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/adminAlert.do?action=refresh", "Here") %>
 
 <br><br>
 QueryAlerts: <%= AdminAlertMgr.getQueryAlerts() %>

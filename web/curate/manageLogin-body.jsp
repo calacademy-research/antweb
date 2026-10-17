@@ -53,9 +53,9 @@
 </logic:messagesPresent>
 
 <% if (!isInvitee) { %>
-<h2>Viewing Login:<%= thisLogin.getEmail() %></h2>
+<h2>Viewing Login:<%= Html.esc(thisLogin.getEmail()) %></h2>
 <% } else { %>
-<h2>Welcome to Antweb.org: <%= thisLogin.getEmail() %></h2>
+<h2>Welcome to Antweb.org: <%= Html.esc(thisLogin.getEmail()) %></h2>
 <% } %>
 
 <form action="<%= secureDomainApp %>/saveLogin.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
@@ -64,10 +64,10 @@
 <input type="text" class="input_200" name="id" value="<%= thisLogin.getId() %>" disabled>
 
 <h3>Email:</h3>
-<input type="text" class="input_200" name="email" value="<%= thisLogin.getEmail() %>">
+<input type="text" class="input_200" name="email" value="<%= Html.escAttr(thisLogin.getEmail()) %>">
 
 <h3>Username:</h3>
-<input type="text" class="input_200" name="name" value="<%= thisLogin.getName() %>">
+<input type="text" class="input_200" name="name" value="<%= Html.escAttr(thisLogin.getName()) %>">
 
 <h3>Password:</h3>
 <input type="password" class="input_200" name="password" value="" autocomplete="new-password" placeholder="leave blank to keep">
@@ -82,10 +82,10 @@ NOTE: These will not be modified unless "Changed Password" button is selected.
 <% } %>
 
 <h3>First Name:</h3>
-<input type="text" class="input_200" name="firstName" value="<%= thisLogin.getFirstName() %>">
+<input type="text" class="input_200" name="firstName" value="<%= Html.escAttr(thisLogin.getFirstName()) %>">
 
 <h3>Last Name:</h3>
-<input type="text" class="input_200" name="lastName" value="<%= thisLogin.getLastName() %>">
+<input type="text" class="input_200" name="lastName" value="<%= Html.escAttr(thisLogin.getLastName()) %>">
 
 <!-- h3>Created:</h3>
 <input type="text" class="input_200" name="created" value="< %= thisLogin.getCreated() % >" disabled -->
@@ -103,7 +103,7 @@ NOTE: These will not be modified unless "Changed Password" button is selected.
     <% } %> <!-- end bioregion loop -->
     </select> 
 <% } else { %>
-     <br><br><h3>Institution: <%= thisLogin.getGroup().getName() %></h3>
+     <br><br><h3>Institution: <%= Html.esc(thisLogin.getGroup().getName()) %></h3>
 <% } %>
 
 <br />
@@ -126,7 +126,7 @@ NOTE: These will not be modified unless "Changed Password" button is selected.
 
             name = aProject.getName();
             title = aProject.getTitle();
-%> <option <%= ((thisLogin.getProjectNames() != null) && (thisLogin.getProjectNames().contains(name)))?"selected":"" %> value="<%= name %>"><%= title %> <%
+%> <option <%= ((thisLogin.getProjectNames() != null) && (thisLogin.getProjectNames().contains(name)))?"selected":"" %> value="<%= Html.escAttr(name) %>"><%= Html.esc(title) %> <%
         } //end project loop
 
 %>
@@ -147,7 +147,7 @@ NOTE: These will not be modified unless "Changed Password" button is selected.
           //AntwebUtil.log("manageLogin-body.jsp name:" + name + " names:" + thisLogin.getCountryNames());
           %> 
 
-              <option <%= ((thisLogin.getCountryNames() != null) && (thisLogin.getCountryNames().contains(name)))?"selected":"" %> value="<%= name %>"><%= name %> 
+              <option <%= ((thisLogin.getCountryNames() != null) && (thisLogin.getCountryNames().contains(name)))?"selected":"" %> value="<%= Html.escAttr(name) %>"><%= Html.esc(name) %> 
     <%      
       
         } //end Geolocale loop
@@ -223,7 +223,7 @@ NOTE: To allow access to multiple areas, hold the Ctrl key, or the command key w
 
 
 <% if (LoginMgr.isAdmin(request)) { %>
-&nbsp;&nbsp;&nbsp;Login as: <a href="<%= secureDomainApp %>/loginAs.do?id=<%= thisLogin.getId() %>"><%= thisLogin.getName() %></a>
+&nbsp;&nbsp;&nbsp;Login as: <a href="<%= secureDomainApp %>/loginAs.do?id=<%= thisLogin.getId() %>"><%= Html.esc(thisLogin.getName()) %></a>
 <% } %>
 
 

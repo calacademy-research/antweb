@@ -26,6 +26,9 @@ public final class DbStatusAction extends AntwebAction {
 		HttpServletRequest request, HttpServletResponse response)
 		throws IOException, ServletException {
 
+        // Administrators only (the JSP check alone ran after this action had done its work).
+        ActionForward c = Check.admin(request, mapping); if (c != null) return c;
+
 		boolean success = true;
         s_log.info("in DbStatusAction");
 
@@ -33,15 +36,7 @@ public final class DbStatusAction extends AntwebAction {
         DynaActionForm df = (DynaActionForm) form;
 
         String op = (String) df.get("name");
-        if (op != null) {
-          if (op.equals("holdOpenConnection")) {
-            df.set("name", null);
-            s_log.warn("Holding open connection");
-            holdOpenConnection(request, response);
-          } else if (op.equals("closeOpenConnection")) {
-            closeOpenConnection();
-          }
-        }
+        if (op == null) op = "";
 
         Connection connection = null;
         String dbMethodName = DBUtil.getDbMethodName("DbStatusAction.execute()");
@@ -52,6 +47,9 @@ public final class DbStatusAction extends AntwebAction {
             DataSource dataSource3 = getDataSource(request, "longConPool");
 
             if (op.contains("resetDS")) {
+                // Resetting the pools breaks requests in flight: POST only (CSRF-checked).
+                ActionForward confirm = PostOnly.confirm(request, mapping, "Hard reset database connection pool: " + op);
+                if (confirm != null) return confirm;
                 if (op.equals("resetDS") || op.equals("resetDS1")) ((PooledDataSource) dataSource1).hardReset();
                 if (op.equals("resetDS") || op.equals("resetDS2")) ((PooledDataSource) dataSource2).hardReset();
                 if (op.equals("resetDS") || op.equals("resetDS3")) ((PooledDataSource) dataSource3).hardReset();
@@ -84,35 +82,4 @@ public final class DbStatusAction extends AntwebAction {
 		}
 	}
 
-    private static Connection connection;
-
-    public boolean holdOpenConnection(HttpServletRequest request, HttpServletResponse response) {
-        // This should only be done to test connection expiration...
-		DataSource dataSource = getDataSource(request, "conPool");
-		
-        connection = null;
-        try {
-            connection = DBUtil.getConnection(dataSource, "DbStatusAction.holdOpenConnection()", HttpUtil.getTarget(request));
-            new OperationLockDb(connection).getOperationLock();
-
-            s_log.warn("Connection held open");
-        } catch (SQLException e) {
-            s_log.error("holdOpenConnection() e:" + e);
-        }             
-        // Finally nothing! Holding open...
-        
-        return true;
-    }
-
-    public void closeOpenConnection() {
-      if (connection != null) {
-        try {
-          s_log.warn("closeOpenConnection");
-          DBUtil.close(connection, "DbStatusAction.holdOpenConnection()");
-          connection = null;        
-        } catch (Exception e) {
-          s_log.warn("e:" + e);
-        }
-      } else s_log.warn("No open connection found.");
-    }
 }

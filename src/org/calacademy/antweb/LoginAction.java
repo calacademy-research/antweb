@@ -182,6 +182,10 @@ public final class LoginAction extends AntwebAction {
         if (userNameOrEmail == null || userNameOrEmail.length() == 0) {
             msg = new ActionMessage("error.login.needName");
             messages.add("message", msg);
+        } else if (!LoginNames.isValidName(userNameOrEmail)) {
+            // Letters (any language), digits, space and . _ - @ ' + only.
+            msg = new ActionMessage("error.login.invalidName");
+            messages.add("message", msg);
         }
         
         if (password == null || password.length() == 0) {

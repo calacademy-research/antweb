@@ -65,7 +65,7 @@
 <div id="admin_header">
     <div class="admin_header_logo"></div>
     <div class="admin_header_login_out"></div>
-    <div class="admin_header_login_out"><b><%= accessLogin.getDisplayName() %></b> | <a href="<%= domainApp %>/logout.do">Log out</a> | <a href="<%= domainApp %>/curate.do">Curate</a> | <a href="<%= domainApp %>/">Home</a></div>
+    <div class="admin_header_login_out"><b><%= org.calacademy.antweb.util.Html.esc(accessLogin.getDisplayName()) %></b> | <a href="<%= domainApp %>/logout.do">Log out</a> | <a href="<%= domainApp %>/curate.do">Curate</a> | <a href="<%= domainApp %>/">Home</a></div>
 </div>
 
 <div class="clear"></div>

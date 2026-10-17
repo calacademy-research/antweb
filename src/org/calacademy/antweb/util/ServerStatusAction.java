@@ -62,6 +62,11 @@ static double getVersion () {
                 request.setAttribute("message", "Administrators only.");
                 return mapping.findForward("message");
             }
+            if (isAdminAction) {
+                ActionForward confirm = PostOnly.confirm(request, mapping,
+                    "toggleDownTime".equals(action) ? "Toggle upload down time." : "Email the server status report.");
+                if (confirm != null) return confirm;
+            }
 
             if (action.equals("toggleDownTime")) {
                 String message = ServerDb.toggleDownTime(connection);

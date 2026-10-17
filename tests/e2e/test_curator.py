@@ -83,6 +83,12 @@ def test_admin_page_refused_for_curator(curator, url):
     assert outcome.category in ("login", "denied"), f"{url} was not refused for an ordinary curator: {outcome}"
 
 
+def test_other_account_refused_for_curator(curator):
+    """viewLogin.do: a non-admin may open only their own account (login 1 is an administrator)."""
+    outcome = get(curator, "/viewLogin.do?id=1")
+    assert outcome.category in ("message", "denied", "login"), f"/viewLogin.do?id=1: {outcome}"
+
+
 def test_password_not_in_pages(curator):
     """The curator's own password must never be echoed into a page they open themselves.
     Passwords are stored hashed and never pre-filled into forms."""

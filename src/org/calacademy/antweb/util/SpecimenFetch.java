@@ -17,46 +17,31 @@ public class SpecimenFetch extends HttpServlet {
   // Accessible as: http://localhost/antweb/specimen/CASENT0106322X    
   //   http://data.antweb.org/specimen/CASENT0078328  
     
+  // Specimen codes: letters, digits and . _ - : (e.g. CASENT0106322, jtl028522-01).
+  static final java.util.regex.Pattern CODE = java.util.regex.Pattern.compile("[A-Za-z0-9._:-]{1,80}");
+
+  /** The redirect target for a /specimen/<code> short link, or null if the code is not valid. */
+  public static String target(String contextPath, String pathInfo) {
+    if (pathInfo == null || pathInfo.length() < 2) return null;
+    String specimenCode = pathInfo.substring(1).trim();
+    if (!CODE.matcher(specimenCode).matches()) return null;
+    return (contextPath == null ? "" : contextPath) + "/specimen.do?name=" + Html.url(specimenCode);
+  }
+
+  // A short link now redirects to the specimen page. It used to fetch the page from this server
+  // and, on any error, echo the exception and URL unescaped (reflected XSS).
   public void doGet(HttpServletRequest request, HttpServletResponse response)
     throws ServletException, IOException {
 
-    String pathInfo = request.getPathInfo();
-    String specimenCode = pathInfo.substring(1).trim();
-
-    // String url = AntwebProps.getDomainApp() + "/specimen.do?name=" + specimenCode;
-    
-    // The new server Feb 2020 can not access itself at https://www.antweb.org
-        
-    String url = AntwebProps.getThisDomainApp() + "/specimen.do?name=" + specimenCode;
-/*
-    if (AntwebProps.isDevMode()) {
-      url = "http://localhost/antweb" + "/specimen.do?name=" + specimenCode;
+    String target = target(request.getContextPath(), request.getPathInfo());
+    if (target == null) {
+      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+      response.setContentType("text/plain;charset=UTF-8");
+      Writer writer = response.getWriter();
+      writer.write("Specimen not found.");
+      return;
     }
-
-    //s_log.warn("doGet() pathInfo:" + pathInfo + " url:" + url);
-*/
-    if (request.getRequestURL().toString().contains("data.")) {
-      //s_log.warn("doGet() data request:" + request.getRequestURL());  // http://localhost/antweb/specimen/CASENT0106322X
-
-      // return an xml page
-    } 
-    
-    String output;
-    try {
-      output = HttpUtil.fetchUrl(url);
-    } catch (Exception e) {
-      output = "e:" + e;
-      //if (AntwebProps.isDevMode()) 
-      output += " url:" + url;
-      s_log.error("execute() " + output);
-    }
-
-    //response.setContentType("text/html");
-
-    //A.log("SpecimenFetch output:" + output);
-
-    response.setContentType("text/html;charset=UTF-8");
-    Writer writer = response.getWriter();
-    writer.write(output);
+    response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+    response.setHeader("Location", target);
   }
 }

@@ -90,6 +90,8 @@ public final class ListAction extends AntwebAction {
                     return mapping.findForward("likes");
                 }
                 case "toUpload": {
+                    // Server file listing: administrators only.
+                    ActionForward denied = Check.admin(request, mapping); if (denied != null) return denied;
                     String toUploadDir = AntwebProps.getProp("site.toUpload");
                     String message = new AntwebSystem().launchProcess("ls -al " + toUploadDir, true);
                     request.setAttribute("message", message);

@@ -11,6 +11,16 @@
 <%@include file="/common/antwebSecureAdmin-defs.jsp" %>
 
 <%@include file="/curate/curatorCheck.jsp" %>
+<%
+  // The session's "thisLogin" may be shown only to its owner or an administrator.
+  org.calacademy.antweb.Login _shownLogin = (org.calacademy.antweb.Login) session.getAttribute("thisLogin");
+  org.calacademy.antweb.Login _viewer = org.calacademy.antweb.util.LoginMgr.getAccessLogin(request);
+  if (_shownLogin == null || _viewer == null || (!_viewer.isAdmin() && _viewer.getId() != _shownLogin.getId())) {
+    session.removeAttribute("thisLogin");
+    response.sendRedirect(org.calacademy.antweb.util.AntwebProps.getDomainApp() + "/login.do");
+    return;
+  }
+%>
 
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">
     <tiles:put name="title" value="Viewing Login Info - AntWeb" />

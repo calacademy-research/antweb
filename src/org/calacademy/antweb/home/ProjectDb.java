@@ -191,19 +191,21 @@ public class ProjectDb extends AntwebDb {
 // was Project.saveToDb(Project project)
     public void save(Project project) throws SQLException {
         if (project.getName() != null && project.getName().length() > 0) {
-            String theInsert;
-            if (null != project.getScope()) {
-               theInsert = "insert into project (root, project_title, scope, project_name, species_list_mappable) values (";
-               theInsert += "'" + project.getRoot() + "','" + project.getTitle() + "','" + project.getScope() + "','" + project.getName() + "', " + project.getSpeciesListMappable() + ")";
-            } else {
-               theInsert = "insert into project (root, project_title, scope, project_name) values (";
-               theInsert += "'" + project.getRoot() + "','" + project.getTitle() + "', null,'" + project.getName() + "')";
-            }
+            boolean hasScope = null != project.getScope();
+            String theInsert = hasScope
+              ? "insert into project (root, project_title, scope, project_name, species_list_mappable) values (?, ?, ?, ?, ?)"
+              : "insert into project (root, project_title, scope, project_name) values (?, ?, null, ?)";
             
-            Statement stmt = null;
+            PreparedStatement stmt = null;
             try {
-                stmt = DBUtil.getStatement(getConnection(), "ProjectDb.save()");
-                stmt.executeUpdate(theInsert);
+                stmt = DBUtil.getPreparedStatement(getConnection(), "ProjectDb.save()", theInsert);
+                int i = 1;
+                stmt.setString(i++, project.getRoot());
+                stmt.setString(i++, project.getTitle());
+                if (hasScope) stmt.setString(i++, project.getScope());
+                stmt.setString(i++, project.getName());
+                if (hasScope) stmt.setBoolean(i++, project.getSpeciesListMappable());
+                stmt.executeUpdate();
             } catch (SQLException e) {
                 s_log.error("save() root:" + project.getRoot() + " insert: " + theInsert);
                 //org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
@@ -248,7 +250,7 @@ public class ProjectDb extends AntwebDb {
 
             theQuery += addSet("display_key", project.getDisplayKey());
                   
-            theQuery += " where project_name='" + project.getName() + "'";
+            theQuery += " where project_name = " + DBUtil.sqlLiteral(project.getName());
             Statement stmt = null;
             try {
                 stmt = DBUtil.getStatement(getConnection(), "ProjectDb.update()");

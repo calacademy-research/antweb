@@ -53,6 +53,8 @@ public class Scheduler extends AntwebAction {
 			request.setAttribute("message", message);
 			return mapping.findForward("message");
 		}
+		ActionForward confirm = PostOnly.confirm(request, mapping, "Start the scheduled (nightly) tasks: " + request.getParameter("action"));
+		if (confirm != null) return confirm;
 
         HttpSession session = request.getSession();
 		UtilForm theForm = (UtilForm) form;

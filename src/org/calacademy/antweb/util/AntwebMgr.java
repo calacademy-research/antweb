@@ -216,9 +216,26 @@ public class AntwebMgr {
         return message;
     }
 
+    // Random per JVM; only AntwebMgr's own util.do?action=postInstantiate call knows it.
+    private static final String s_postInitializeCode = newCode();
+    private static String newCode() {
+        byte[] bytes = new byte[16];
+        new java.security.SecureRandom().nextBytes(bytes);
+        StringBuilder sb = new StringBuilder(32);
+        for (byte b : bytes) sb.append(String.format("%02x", b));
+        return sb.toString();
+    }
+    public static boolean isPostInitializeCode(String code) {
+        if (code == null) return false;
+        return java.security.MessageDigest.isEqual(
+            s_postInitializeCode.getBytes(java.nio.charset.StandardCharsets.US_ASCII),
+            code.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+    }
+
     public static void callPostInitialize() {
 
-        String url = AntwebProps.getThisDomainApp() + "/util.do?action=postInstantiate";
+        // The code shows util.do that the call comes from this server (see isPostInitializeCode).
+        String url = AntwebProps.getThisDomainApp() + "/util.do?action=postInstantiate&secureCode=" + s_postInitializeCode;
         //if (AntwebProps.isDevMode()) url = "https://localhost:8080/util.do?action=postInstantiate";
 
         s_log.debug("callPostInitialize() url:" + url);

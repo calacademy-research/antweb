@@ -27,10 +27,10 @@
 %>
 <br><br>
 
-<html:form method="GET" action="speciesListMove" enctype="multipart/form-data">
+<html:form method="POST" action="speciesListMove"><%= Csrf.field(request) %>
 
-<input type="hidden" id="fromTaxonName" name="fromTaxonName" value="<%= fromTaxon.getTaxonName() %>"/>
-<input type="hidden" id="toTaxonName" name="toTaxonName" value="<%= toTaxon.getTaxonName() %>"/>
+<input type="hidden" id="fromTaxonName" name="fromTaxonName" value="<%= Html.escAttr(fromTaxon.getTaxonName()) %>"/>
+<input type="hidden" id="toTaxonName" name="toTaxonName" value="<%= Html.escAttr(toTaxon.getTaxonName()) %>"/>
      
 <table><tr><td>      
 <b>Rename</b> taxon:   

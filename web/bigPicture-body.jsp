@@ -233,7 +233,7 @@ if (theImage.getNumber() > 1) {
    if ("l".equals(theImage.getShot())) displayLikeLink = false;
 
    if (displayLikeLink) {  %>
-   <li><a href="<%= AntwebProps.getDomainApp() %>/pictureLike.do?code=<%= theImage.getCode() %>&shot=<%= theImage.getShot() %>&number=<%= theImage.getNumber() %>">Add to Favorites<img src='<%= AntwebProps.getDomainApp() %>/image/yellow-star-md.png' width=10/></a></li>
+   <li><%= org.calacademy.antweb.util.Csrf.postButton(request, AntwebProps.getDomainApp() + "/pictureLike.do?code=" + Html.url(theImage.getCode()) + "&shot=" + Html.url(theImage.getShot()) + "&number=" + theImage.getNumber(), "Add to Favorites<img src='" + AntwebProps.getDomainApp() + "/image/yellow-star-md.png' width=10/>") %></li>
 <% } %>
 
 </ul>

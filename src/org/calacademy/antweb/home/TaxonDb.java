@@ -582,90 +582,87 @@ Code added below on Apr 26 2023:
     
     // Do Not update specimen records!?
 
-    public String prepareMoveTaxon(String moveTaxonName, String toTaxonName) 
-      throws SQLException {    
- 
-       String message = "Are you sure that you want to change the name of:<br><br><b>" + moveTaxonName + "</b> (found in ";
-       Statement stmt = null;
+    private String projectsOfTaxon(String taxonName) throws SQLException {
+       String list = "";
+       PreparedStatement stmt = null;
        ResultSet rset = null;
        try {
-         stmt = DBUtil.getStatement(getConnection(), "prepareMoveTaxon()");
- 
-         int i = 0;        
-         String projectsQuery = "select project_name from proj_taxon where taxon_name = '" + moveTaxonName + "'"; 
-         rset = stmt.executeQuery(projectsQuery);
+         stmt = DBUtil.getPreparedStatement(getConnection(), "projectsOfTaxon()"
+           , "select project_name from proj_taxon where taxon_name = ?");
+         stmt.setString(1, taxonName);
+         rset = stmt.executeQuery();
+         int i = 0;
          while (rset.next()) {
            ++i;
-           if (i > 1) message += ", ";
-           String projectName = rset.getString("project_name");
-           message += projectName;          
+           if (i > 1) list += ", ";
+           list += Html.esc(rset.getString("project_name"));
          }
-         if (i == 0) message += "no lists";
-         message += ")";
-                
-         message += "<br><br> to <br><br><b>" + toTaxonName + "</b> (found in ";
-         i = 0;        
-         projectsQuery = "select project_name from proj_taxon where taxon_name = '" + toTaxonName + "'"; 
-         rset = stmt.executeQuery(projectsQuery);
-         while (rset.next()) {
-           ++i;
-           if (i > 1) message += ", ";
-           String projectName = rset.getString("project_name");
-           message += projectName;          
-         }
-         if (i == 0) message += "no lists";
-         message += ")";
-
-         s_log.warn("prepareMoveTaxon() moveProjects:" + message);
-                        
+         if (i == 0) list += "no lists";
        } finally {
-         DBUtil.close(stmt, rset, "prepareMoveTaxon()");
+         DBUtil.close(stmt, rset, "projectsOfTaxon()");
        }
+       return list;
+    }
+
+    public String prepareMoveTaxon(String moveTaxonName, String toTaxonName) 
+      throws SQLException {    
+       String message = "Are you sure that you want to change the name of:<br><br><b>" + Html.esc(moveTaxonName) + "</b> (found in "
+         + projectsOfTaxon(moveTaxonName) + ")"
+         + "<br><br> to <br><br><b>" + Html.esc(toTaxonName) + "</b> (found in "
+         + projectsOfTaxon(toTaxonName) + ")";
+       s_log.warn("prepareMoveTaxon() moveProjects:" + message);
        return message;
     }
-     
+
+    // Runs "update <table> set taxon_name = to where taxon_name = from" with bound values.
+    private int updateTaxonName(String table, String fromTaxonName, String toTaxonName) throws SQLException {
+      PreparedStatement stmt = null;
+      try {
+        stmt = DBUtil.getPreparedStatement(getConnection(), "updateTaxonName()"
+          , "update " + table + " set taxon_name = ? where taxon_name = ?");
+        stmt.setString(1, toTaxonName);
+        stmt.setString(2, fromTaxonName);
+        return stmt.executeUpdate();
+      } finally {
+        DBUtil.close(stmt, "updateTaxonName()");
+      }
+    }
+
     public String renameTaxon(String fromTaxonName, String toTaxonName) 
       throws SQLException {    
       
       String message = null;
-      Statement stmt = null;
+      PreparedStatement stmt = null;
       try {
-        stmt = DBUtil.getStatement(getConnection(), "renameTaxon()");
-        
-        String updateTaxon = "update taxon " 
-          + " set taxon_name = '" + toTaxonName + "'" ;
+        ArrayList<String> values = new ArrayList<>();
+        String updateTaxon = "update taxon set taxon_name = ?";
+        values.add(toTaxonName);
         String subfamily = Taxon.getSubfamilyFromName(toTaxonName);
-        if (subfamily != null) updateTaxon += " , subfamily = '" + subfamily + "'"; 
+        if (subfamily != null) { updateTaxon += " , subfamily = ?"; values.add(subfamily); }
         String genus = Taxon.getGenusFromName(toTaxonName);
-        if (genus != null) updateTaxon += " , genus = '" + genus + "'";
+        if (genus != null) { updateTaxon += " , genus = ?"; values.add(genus); }
         String species = Taxon.getSpeciesFromName(toTaxonName);
-        if (species != null) updateTaxon += " , species = '" + species + "'"; 
+        if (species != null) { updateTaxon += " , species = ?"; values.add(species); }
         String subspecies = Taxon.getSubspeciesFromName(toTaxonName);
-        if (subspecies != null) updateTaxon += " , subspecies = '" + subspecies + "'";
-        updateTaxon += " where taxon_name = '" + fromTaxonName + "'"; 
-        s_log.debug("moveTaxon() update:" + updateTaxon);
-        int taxonUpdateCount = stmt.executeUpdate(updateTaxon);
+        if (subspecies != null) { updateTaxon += " , subspecies = ?"; values.add(subspecies); }
+        updateTaxon += " where taxon_name = ?";
+        values.add(fromTaxonName);
+        stmt = DBUtil.getPreparedStatement(getConnection(), "renameTaxon()", updateTaxon);
+        for (int i = 0; i < values.size(); i++) stmt.setString(i + 1, values.get(i));
+        s_log.debug("moveTaxon() update:" + updateTaxon + " values:" + values);
+        int taxonUpdateCount = stmt.executeUpdate();
 
-        String setStatement = " set taxon_name = '" + toTaxonName + "' where taxon_name = '" + fromTaxonName + "'";
- 
-        String updateProjTaxon = "update proj_taxon " + setStatement;
-        int projTaxonUpdateCount = stmt.executeUpdate(updateProjTaxon);
-        
-        stmt.executeUpdate("update description_edit " + setStatement);        
-        stmt.executeUpdate("update description_hist " + setStatement);        
-        stmt.executeUpdate("update specimen " + setStatement);             
-        stmt.executeUpdate("update taxon_prop " + setStatement);        
+        int projTaxonUpdateCount = updateTaxonName("proj_taxon", fromTaxonName, toTaxonName);
+        updateTaxonName("description_edit", fromTaxonName, toTaxonName);
+        updateTaxonName("description_hist", fromTaxonName, toTaxonName);
+        updateTaxonName("specimen", fromTaxonName, toTaxonName);
+        updateTaxonName("taxon_prop", fromTaxonName, toTaxonName);
 
-        //stmt.executeUpdate("update synonymy " + setStatement);
-        //stmt.executeUpdate("update tapir_specimen " + setStatement);
-
-        message = "Taxon <b>" + fromTaxonName + "</b> renamed <b>" + toTaxonName + "</b>.  " + taxonUpdateCount + " taxon updated and " + projTaxonUpdateCount + " projects updated.";
+        message = "Taxon <b>" + Html.esc(fromTaxonName) + "</b> renamed <b>" + Html.esc(toTaxonName) + "</b>.  " + taxonUpdateCount + " taxon updated and " + projTaxonUpdateCount + " projects updated.";
         
       } finally {
          DBUtil.close(stmt, "renameTaxon()");
       }
-
-      //s_log.warn("moveTaxon() projTaxonUpdateCount:" + projTaxonUpdateCount);
       return message;
     }
 
@@ -673,52 +670,49 @@ Code added below on Apr 26 2023:
       throws SQLException {    
         
       String message = null;
-      Statement stmt = null;
+      PreparedStatement stmt = null;
       ResultSet rset = null;
       try {
-        stmt = DBUtil.getStatement(getConnection(), "combineTaxa()");
-
         // Delete the old taxon record
 // ! But couldn't it be the legitamate taxon record create for a specimen?  Should we check
 // here if specimens exist for this taxon?        
-        String deleteTaxon = "delete from taxon " 
-          + " where taxon_name = '" + fromTaxonName + "'"; 
-        s_log.warn("combineTaxon() update:" + deleteTaxon);
-        int taxonDeleteCount = stmt.executeUpdate(deleteTaxon);
+        stmt = DBUtil.getPreparedStatement(getConnection(), "combineTaxa()", "delete from taxon where taxon_name = ?");
+        stmt.setString(1, fromTaxonName);
+        s_log.warn("combineTaxon() delete taxon:" + fromTaxonName);
+        int taxonDeleteCount = stmt.executeUpdate();
+        stmt.close();
 
         // Delete the fromTaxon proj_taxon records which are already extant for the toTaxon
         int projTaxonDeleteCount = 0;
-        String dupsQuery = "select project_name from proj_taxon where taxon_name = '" + toTaxonName + "'"; 
-        rset = stmt.executeQuery(dupsQuery);
+        stmt = DBUtil.getPreparedStatement(getConnection(), "combineTaxa()", "select project_name from proj_taxon where taxon_name = ?");
+        stmt.setString(1, toTaxonName);
+        rset = stmt.executeQuery();
         while (rset.next()) {
           String projectName = rset.getString("project_name");
-          String deleteProjTaxon = "delete from proj_taxon "
-            + " where taxon_name = '" + fromTaxonName + "'"
-            + " and project_name = '" + projectName + "'";
-            
-          Statement stmt2 = getConnection().createStatement();
-          projTaxonDeleteCount = stmt2.executeUpdate(deleteProjTaxon);
-          stmt2.close();
-          s_log.warn("combineTaxon() deleted:" + projTaxonDeleteCount + " deleteProjTaxon:" + deleteProjTaxon);
+          PreparedStatement stmt2 = getConnection().prepareStatement(
+            "delete from proj_taxon where taxon_name = ? and project_name = ?");
+          try {
+            stmt2.setString(1, fromTaxonName);
+            stmt2.setString(2, projectName);
+            projTaxonDeleteCount = stmt2.executeUpdate();
+          } finally {
+            stmt2.close();
+          }
+          s_log.warn("combineTaxon() deleted:" + projTaxonDeleteCount + " from:" + fromTaxonName + " project:" + projectName);
         }
        
-        String setStatement = " set taxon_name = '" + toTaxonName + "' where taxon_name = '" + fromTaxonName + "'";
-        
-        String updateProjTaxon = "update proj_taxon " + setStatement;
-        //s_log.warn("combineTaxon() updateProjTaxon:" + updateProjTaxon);
-        int projTaxonUpdateCount = stmt.executeUpdate(updateProjTaxon);
-
-        stmt.executeUpdate("update description_edit " + setStatement);        
-        stmt.executeUpdate("update description_hist " + setStatement);        
-        stmt.executeUpdate("update specimen " + setStatement);       
-        stmt.executeUpdate("update taxon_prop " + setStatement);     
+        int projTaxonUpdateCount = updateTaxonName("proj_taxon", fromTaxonName, toTaxonName);
+        updateTaxonName("description_edit", fromTaxonName, toTaxonName);
+        updateTaxonName("description_hist", fromTaxonName, toTaxonName);
+        updateTaxonName("specimen", fromTaxonName, toTaxonName);
+        updateTaxonName("taxon_prop", fromTaxonName, toTaxonName);
         
          message = "Taxa combined.  " + projTaxonDeleteCount + " project mappings removed.  " + projTaxonUpdateCount + " project mappings updated.";
          s_log.warn("combineTaxon() projTaxonUpdateCount:" + projTaxonUpdateCount 
            + " projTaxonDeleteCount:" + projTaxonDeleteCount);
         
        } finally {
-         DBUtil.close(stmt, "combineTaxa()");
+         DBUtil.close(stmt, rset, "combineTaxa()");
        }
 
        return message;

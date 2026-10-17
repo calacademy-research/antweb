@@ -81,6 +81,13 @@ public final class SaveLoginAction extends AntwebAction {
             login = loginDb.getLogin(id);
             String storedPassword = login == null ? null : login.getPassword();
 
+            // Only safe characters in names, and a valid email (checked when changed).
+            String nameProblem = LoginNames.problem(form.getName(), form.getFirstName(), form.getLastName(), form.getEmail(), login);
+            if (nameProblem != null) {
+                request.setAttribute("message", Html.esc(nameProblem));
+                return mapping.findForward("message");
+            }
+
             if (login == null) {
                 isNew = true;
                 login = new Login();
