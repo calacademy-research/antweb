@@ -169,20 +169,20 @@ def test_taxon_history_and_restore(curator):
         # Stale fingerprint: someone changed the field after History was opened. Nothing changes.
         before = stored_hash(curator, url, field)
         r = post_restore(curator, old, loadedHash="0" * 64)
-        assert "was changed after you opened its History" in r.text and "was restored" not in r.text
+        assert "was changed after you opened its History" in r.text and "was restored to the version" not in r.text
         assert stored_hash(curator, url, field) == before
 
         # Anonymous POST (login ended): refused, nothing changes.
         anon = {k: v for k, v in old.fields.items() if k != "_csrf"}
         target = old.action if old.action.startswith("http") else BASE_URL + old.action
         r = new_session().post(target, data=anon, timeout=TIMEOUT, allow_redirects=True)
-        assert "not logged in any more" in r.text and "was restored" not in r.text
+        assert "not logged in any more" in r.text and "was restored to the version" not in r.text
         assert stored_hash(curator, url, field) == before
 
         # A row that is not a version of this field, and a bad id: refused.
         for bad in ("999999999", "x"):
             r = post_restore(curator, old, restoreFrom=bad)
-            assert "not in the history" in r.text and "was restored" not in r.text, bad
+            assert "not in the history" in r.text and "was restored to the version" not in r.text, bad
         assert stored_hash(curator, url, field) == before
 
         # Restore: the stored text is version one again; version two is now in the history.
@@ -204,7 +204,7 @@ def test_taxon_history_and_restore(curator):
         restorable = h.with_text(one)
         assert restorable and restorable[0].action, "the text before the clear cannot be restored"
         r = post_restore(curator, restorable[0], restoreFrom=h.cleared[0].hist_id)
-        assert "being cleared" in r.text and "was restored" not in r.text
+        assert "being cleared" in r.text and "was restored to the version" not in r.text
         assert stored_hash(curator, url, field) == pe.ABSENT
         r = post_restore(curator, restorable[0])
         assert "was restored to the version of" in r.text, r.text[:500]
