@@ -243,3 +243,43 @@ def test_ckeditor_fallback_still_loads(browser, curator_session):  # noqa: F811
         assert not page.errors, page.errors
     finally:
         ctx.close()
+
+
+# ---------- History and Restore (page editor plan phase 2) ----------
+
+def test_history_restore_in_browser(browser, curator_session):  # noqa: F811
+    """[History] next to the field opens its versions; Restore asks for confirmation and restores.
+    Writes only the test field, only when it is empty at the start; leaves it empty."""
+    url, field = pe.TEST_TAXON_URL, pe.TEST_TAXON_FIELD
+    form = pe._empty_field_or_skip(curator_session, url, field)
+    stamp = str(int(time.time()))
+    one, two = f"E2E browser history one {stamp}", f"E2E browser history two {stamp}"
+    ctx = _curator_context(browser, curator_session)
+    try:
+        assert "were saved" in pe.post_save(curator_session, form, f"<p>{one}</p>").text
+        form2, _ = pe.open_editor(curator_session, url, field)
+        assert "were saved" in pe.post_save(curator_session, form2, f"<p>{two}</p>").text
+
+        page = ctx.new_page()
+        errors = []
+        page.on("pageerror", lambda e: errors.append(str(e)))
+        dialogs = []
+        page.on("dialog", lambda d: (dialogs.append(d.message), d.accept()))
+        page.goto(BASE_URL + url)
+        link = page.locator(f"a.descEditHistoryLink[href*='field={field}&']")
+        assert link.count() == 1, "no [History] link next to the field"
+        with page.expect_navigation():
+            link.click()
+        assert "History of" in page.inner_text("h1")
+        block = page.locator(".fh-version", has=page.locator("textarea.fh-copy", has_text=one))
+        assert block.count() >= 1, "the earlier version is not listed"
+        with page.expect_navigation(timeout=120000):
+            block.first.locator("button.fh-restore-btn").click()
+        assert dialogs and "Replace the current text" in dialogs[0], dialogs
+        assert "was restored to the version of" in page.content()
+        assert one in page.inner_text("body")
+        assert not errors, errors
+        assert one in pe.open_editor(curator_session, url, field)[0].text
+    finally:
+        ctx.close()
+        pe._leave_empty(curator_session, url, field)

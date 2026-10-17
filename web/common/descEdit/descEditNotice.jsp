@@ -8,7 +8,7 @@
       if (neResult.saved) {
         String neKey = DescEditSafety.draftKey(request, accessLogin, neResult.field); %>
   <div class="descEditSaved" style="border:2px solid #2e7d32;background:#f1f8f1;padding:8px;margin:8px 0"><b><%= Html.esc(neResult.message) %></b></div>
-<%      if (neKey != null) { // The text is stored: the browser draft is no longer needed. %>
+<%      if (neKey != null && !neResult.restore) { // The text is stored: the browser draft is no longer needed. %>
   <script>try { window.localStorage.removeItem('<%= Html.js(neKey) %>'); } catch (e) {}</script>
 <%      }
       } else if (!neResult.reshowInEditor) { %>
@@ -16,6 +16,10 @@
     <b><%= Html.esc(neResult.message) %></b>
 <%      if (neResult.loggedOut) { %>
     <p><a href="<%= AntwebProps.getDomainApp() %>/login.do" target="_blank" rel="noopener">Log in (opens a new tab)</a></p>
+<%      }
+        String neHistory = neResult.restore ? org.calacademy.antweb.DescHistory.link(request, neResult.field, thisPageTarget) : "";
+        if (!neHistory.isEmpty()) { // a refused "Restore this version": back to the History of that field %>
+    <p>History of <%= Html.esc(DescEditSafety.prettyField(neResult.field)) %>:<%= neHistory %></p>
 <%      }
         if (neResult.submitted != null) { %>
     <p>Your text (copy it if you need it):</p>

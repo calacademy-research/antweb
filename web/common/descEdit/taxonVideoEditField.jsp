@@ -21,7 +21,7 @@
               String browserParams = taxon.getBrowserParams();
               //if (AntwebProps.isDevMode()) AntwebUtil.log("taxonImageEditField.jsp taxonName:" + taxon.getTaxonName() + " browserParams:" + browserParams);       
        %>
-         <p><small style="float:left; margin-top:14px; margin-left:5px;"> <a href="description.do?<%= Utility.stripParams(browserParams, "editField") %>&editField=<%= thisDesc %>#<%= thisDesc %>">[Edit]</a></small><div class="clear"></div></p>
+         <p><small style="float:left; margin-top:14px; margin-left:5px;"> <a href="description.do?<%= Utility.stripParams(browserParams, "editField") %>&editField=<%= thisDesc %>#<%= thisDesc %>">[Edit]</a> <%= org.calacademy.antweb.DescHistory.link(request, thisDesc, thisPageTarget) %></small><div class="clear"></div></p>
          <% if (DescEditSafety.result(request) != null && DescEditSafety.result(request).saved && thisDesc.equals(DescEditSafety.result(request).field)) { %>
            <b><font color=green>Your Content has been saved.  </font><a href='<%= AntwebProps.getDomainApp() + "/description.do?" + browserParams %>'>Click here to proceed.</a> <font color=green></font></b>
          <% } else { %>
