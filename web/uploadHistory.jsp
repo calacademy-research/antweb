@@ -35,7 +35,7 @@
     out.println("</tr>");
     for (String file : files) {
       ++count;
-      out.println("<tr><td>" + count + "</td><td><a href=\"" + domainApp + "/web/upload/" + file + "\">" + file + "</a></td></tr>");
+      out.println("<tr><td>" + count + "</td><td><a href=\"" + domainApp + "/uploadFile.do?file=" + Html.escAttr(Html.url(file)) + "\">" + Html.esc(file) + "</a></td></tr>");
     }
     out.println("</table>");
 %>

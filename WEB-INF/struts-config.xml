@@ -544,6 +544,12 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="success" path="/uploadHistory.jsp" />
     </action>
 
+    <!-- One archived upload file from web/upload/, for curators (web/upload/ is not served). -->
+    <action path="/uploadFile"
+            type="org.calacademy.antweb.upload.UploadFileAction"
+            scope="request">
+    </action>
+
     <action path="/validateSpeciesList"
             type="org.calacademy.antweb.curate.speciesList.ValidateSpeciesListAction"
             scope="request"

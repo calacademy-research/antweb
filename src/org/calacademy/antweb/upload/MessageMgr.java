@@ -163,6 +163,7 @@ public class MessageMgr {
     public static final String specialCharacterFound = "specialCharacterFound";
     public static final String specimenIdSpacesRemoved = "specimenIdSpacesRemoved";
     public static final String whitespaceInTaxonField = "whitespaceInTaxonField";
+    public static final String invalidSpecimenCode = "invalidSpecimenCode";
     // public static final String  = "";
     
      
@@ -239,6 +240,7 @@ public class MessageMgr {
       testList.add(new Test(specialCharacterFound, SET, "<b>Special Character Found <font color=red>(not uploaded)</font></b>"));
 			testList.add(new Test(specimenIdSpacesRemoved, SET, "<b>Spaces removed from specimen code (auto-corrected — please fix your source data)</b>"));
       testList.add(new Test(whitespaceInTaxonField, SET, "<b>Whitespace in taxonomic field <font color=red>(not uploaded)</font> — please fix your source data</b>"));
+      testList.add(new Test(invalidSpecimenCode, SET, "<b>Specimen code with characters other than letters, digits and . _ : / ( ) # + - <font color=red>(not uploaded)</font> — please fix your source data</b>"));
     }     
     
     public static String getMessageDisplay(String key) {

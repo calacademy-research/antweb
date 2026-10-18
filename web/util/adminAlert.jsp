@@ -54,7 +54,7 @@ QueryAlerts: <%= AdminAlertMgr.getQueryAlerts() %>
 Full list: <a href='<%= AntwebProps.getDomainApp() %>/query.do?action=curiousQuery&name=adminAlerts'>Admin Alerts</a>
 
 <br><br>
-Admin Alert <a href='<%= AntwebProps.getDomainApp() %>/web/log/adminAlerts.log'>Log File</a>
+Admin Alert <a href='<%= AntwebProps.getDomainApp() %>/logMgr.do?action=get&fileName=adminAlerts&ext=log'>Log File</a>
 <br>&nbsp;&nbsp;<small>These are more developer oriented... from places in the code that do not have access to a database connection.</small>
 
 <% if (LoginMgr.isDeveloper(request)) { %>

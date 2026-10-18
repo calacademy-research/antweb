@@ -225,6 +225,10 @@ or for Worldants upload
             //A.log("saveTaxon() new authorDate:" + authorDate);
             item.put("author_date", authorDate);
         }
+        // AntCat sends author_date_html as HTML; keep only safe markup (shown on taxon pages).
+        if (item.get("author_date_html") instanceof String authorDateHtml && !authorDateHtml.isEmpty()) {
+            item.put("author_date_html", HtmlSanitizer.sanitize(authorDateHtml));
+        }
 
         String parentTaxonName;
         String currentValidName = (String) item.get("current_valid_name");
@@ -1308,6 +1312,8 @@ or for Worldants upload
           if (title.equals("taxonomichistory")) {
           
             content = AntFormatter.replace(content, "Csősz", "Csosz");
+            // AntCat history is HTML shown on public taxon pages: keep only safe markup.
+            content = HtmlSanitizer.sanitize(content);
 
             getUploadDb().insertDescription(table, taxonName, authorDate, title, content);  // was getSpeciesListUploadDb()
           }

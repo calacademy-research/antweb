@@ -686,7 +686,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
             if (!"subfamily".equals(getRank())) {
               currentValidName = getSubfamily() + currentValidName;
             }
-            seeAlsoSynonyms += "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + currentValidName + "'>" + Taxon.displayTaxonName(currentValidName) + "</a>";
+            seeAlsoSynonyms += "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.escAttr(currentValidName) + "'>" + Html.esc(Taxon.displayTaxonName(currentValidName)) + "</a>";
         }
         //A.log("setSeeAlsoSynonyms() seeAlsoSynonyms:" + seeAlsoSynonyms);        
         //return seeAlsoSynonyms;

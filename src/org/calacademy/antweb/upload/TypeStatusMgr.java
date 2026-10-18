@@ -88,10 +88,10 @@ public class TypeStatusMgr extends AntwebAction {
         }
 
         message = "<h3>Type Status Reports</h3>";
-        message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/web/log/typeStatusSpeciesFound.txt" + "'>Species Found</a>";
-        message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/web/log/typeStatusSpeciesNotFound.txt" + "'>Species Not Found</a>";
-        message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/web/log/typeStatusNoTaxonName.txt" + "'>No Taxon Name</a>";
-        message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/web/log/typeStatusHomonym.txt" + "'>Homonyms</a>";
+        message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=typeStatusSpeciesFound&ext=txt" + "'>Species Found</a>";
+        message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=typeStatusSpeciesNotFound&ext=txt" + "'>Species Not Found</a>";
+        message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=typeStatusNoTaxonName&ext=txt" + "'>No Taxon Name</a>";
+        message += "<br><br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=typeStatusHomonym&ext=txt" + "'>Homonyms</a>";
 
         s_log.warn("execute() complete.");
         request.setAttribute("message", message);

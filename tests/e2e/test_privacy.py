@@ -5,10 +5,20 @@ from antweb import BASE_URL, IS_PRODUCTION, new_session
 
 
 @pytest.mark.parametrize("path", ["/web/log/logins.txt", "/web/log/serverBusy.html", "/data/index.jsp",
-                                  "/web/log/", "/web/curator/", "/web/bak/taxonSets/"])
+                                  "/web/log/", "/web/curator/", "/web/bak/taxonSets/",
+                                  # Logs are read by admins through logMgr.do; archived upload files through uploadFile.do.
+                                  "/web/log/compute.log", "/web/log/taxonworksNightly.log", "/web/log/notFound.txt",
+                                  "/web/log/profiler.jsp", "/web/log/unclosedConnections/x.txt",
+                                  "/web/upload/20220224-11:49:08-specimen2.txt", "/web/upload/x.txt"])
 def test_private_file_not_public(path):
     r = new_session().get(BASE_URL + path, timeout=60)
     assert r.status_code in (403, 404), f"{path} is public (HTTP {r.status_code})"
+
+
+def test_upload_file_download_requires_login():
+    """uploadFile.do (archived upload files) is for curators."""
+    from antweb import get
+    assert get(new_session(), "/uploadFile.do?file=x.txt").category == "login"
 
 
 # Folders are never listed, at any depth (Tomcat listings are off; Caddy also refuses them).

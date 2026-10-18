@@ -72,8 +72,17 @@ www.antweb.org {
             path /web/workingdir /web/workingdir/* /web/log/srf* /web/log/bak /web/log/bak/*
             path /workingDir /workingDir/* /web/log/getUrl* /web/log/accessLog* /web/log/insecure* /staff_gen_inc.jsp
             path /WEB-INF/* /META-INF/*
+            # Archived upload files: curators download them through /uploadFile.do.
+            path /web/upload /web/upload/*
         }
         respond @denied_paths "Not found" 404
+        # Logs under /web/log/ are read by admins through /logMgr.do. Only the upload report
+        # folders stay public (group and upload pages link to those reports).
+        @private_logs {
+            path /web/log /web/log/*
+            not path /web/log/upload/* /web/log/specimen/* /web/log/worldants/* /web/log/detail/*
+        }
+        respond @private_logs "Not found" 404
 
         # A ";" in the path (or its encoded form %3B) is never needed here, and Tomcat strips
         # ";..." from a path while Caddy does not, which could slip past the lists above.
