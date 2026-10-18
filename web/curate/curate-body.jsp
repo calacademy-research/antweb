@@ -270,7 +270,8 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
         <!-- End Specimen file or Zip File Upload -->
 
 
-       <!-- Reload Specimen Data -->
+       <% if (LoginMgr.isAdmin(accessLogin)) { %>
+       <!-- Reload Specimen Data (administrators only) -->
 
        <div class="admin_action_module">
          <div class="admin_action_item">    
@@ -307,6 +308,7 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
              </html:form>
          </div>
        </div>
+       <% } %>
 
 
 

@@ -8,7 +8,9 @@
 - The request-error page escapes the request URL (static check of SessionRequestFilter).
 - upload.do?action=genAll needs a login (any host, anonymous, refused before anything runs);
   allSpecimenFiles is for administrators (test curator, staging, only where the change is
-  deployed); getSearchList.do needs a login; introducedMapMgr.do is for administrators.
+  deployed); getSearchList.do needs a login; introducedMapMgr.do is for administrators;
+  reloadSpecimenList and removeSpecimenList are for administrators, by POST only (anonymous:
+  log-in page; test curator: refused, only where the change is deployed, nothing runs).
 Other parts of the batch are checked in CI (.github/workflows/tests.yaml): ImageMagick policy,
 API container, clearDisk.py, Java unit tests (test/.../security/SecurityBatch7Test.java); the
 image upload ownership rule in test_image_upload.py.
@@ -75,7 +77,7 @@ def own_login():
     page, fields = _form(s, info["loginId"])
     if "needed to change your password or email" not in page:
         pytest.skip("the email check is not deployed on this server")
-    assert fields.get("email") and fields.get("name"), fields
+    assert fields.get("name"), fields   # the test login may have no email address
     return s, info["loginId"], fields
 
 
@@ -155,3 +157,30 @@ def test_all_specimen_files_admin_only(own_login):
 def test_introduced_map_admin_only(own_login):
     r = own_login[0].get(BASE_URL + "/introducedMapMgr.do", timeout=TIMEOUT)
     assert classify(r).category == "login", classify(r)
+
+
+@pytest.mark.parametrize("action", ["reloadSpecimenList", "removeSpecimenList"])
+def test_specimen_list_jobs_need_login(action):
+    r = new_session().get(f"{BASE_URL}/upload.do?action={action}&groupId=1", timeout=TIMEOUT)
+    assert r.status_code < 500 and classify(r).category == "login", (r.status_code, classify(r))
+
+
+@staging_only
+@pytest.mark.parametrize("action", ["reloadSpecimenList", "removeSpecimenList"])
+def test_specimen_list_jobs_admin_only(own_login, action):
+    if not _gen_all_needs_login()[1]:
+        pytest.skip("the upload.do checks are not deployed on this server")
+    s = own_login[0]
+    r = s.get(f"{BASE_URL}/upload.do?action={action}&groupId=1", timeout=TIMEOUT)
+    assert r.status_code == 200 and "Only administrators can run this upload action." in r.text, r.text[:300]
+
+
+@staging_only
+def test_specimen_list_reload_post_admin_only(own_login):
+    if not _gen_all_needs_login()[1]:
+        pytest.skip("the upload.do checks are not deployed on this server")
+    s = own_login[0]
+    token = s.get(BASE_URL + "/editSession.do", timeout=TIMEOUT).json()["csrf"]
+    r = s.post(f"{BASE_URL}/upload.do?_csrf={token}", files={"action": (None, "reloadSpecimenList"),
+               "groupId": (None, "1"), "_csrf": (None, token)}, timeout=TIMEOUT)
+    assert r.status_code == 200 and "Only administrators can run this upload action." in r.text, r.text[:300]

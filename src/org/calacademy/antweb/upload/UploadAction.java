@@ -46,7 +46,15 @@ public class UploadAction extends AntwebAction {
 	static final java.util.Set<String> ADMIN_ONLY_ACTIONS = java.util.Set.of(
 			"uploadSpeciesList", "fetchAndReloadWorldants", "reloadSpeciesLists", "museumCalc",
 			"speciesTest", "runStatistics", "runCountCrawls", "toggleDownTime", "genAll", "genRecentDescEdits",
-			"allSpecimenFiles");
+			"allSpecimenFiles", "reloadSpecimenList", "removeSpecimenList");
+
+	// Change data: only by POST (the forms on the Curate page), so the form token is checked.
+	static final java.util.Set<String> POST_ONLY_ACTIONS = java.util.Set.of(
+			"reloadSpecimenList", "removeSpecimenList");
+
+	public static boolean isPostOnlyAction(String action) {
+		return action != null && POST_ONLY_ACTIONS.contains(action);
+	}
 
 	public static boolean isAdminOnlyAction(String action) {
 		return action != null && ADMIN_ONLY_ACTIONS.contains(action);
@@ -131,6 +139,10 @@ public class UploadAction extends AntwebAction {
 			}
 			if (!isAdmin && requested != null && ADMIN_ONLY_ACTIONS.contains(requested)) {
 				request.setAttribute("message", "Only administrators can run this upload action.");
+				return mapping.findForward("message");
+			}
+			if (isPostOnlyAction(requested) && !HttpUtil.isPost(request)) {
+				request.setAttribute("message", "Nothing was changed. Use the form on the Curate page.");
 				return mapping.findForward("message");
 			}
 			if (!isAdmin && requested != null && SPECIMEN_UPLOAD_ACTIONS.contains(requested)

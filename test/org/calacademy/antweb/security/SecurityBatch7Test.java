@@ -103,6 +103,11 @@ public class SecurityBatch7Test extends TestCase {
         assertTrue(UploadAction.isAdminOnlyAction("allSpecimenFiles"));
         assertFalse(UploadAction.isAdminOnlyAction("specimenUpload"));
         assertFalse(UploadAction.isAdminOnlyAction(null));
+        for (String a : new String[]{"reloadSpecimenList", "removeSpecimenList"}) {
+            assertTrue(a, UploadAction.isAdminOnlyAction(a));
+            assertTrue(a, UploadAction.isPostOnlyAction(a));
+        }
+        assertFalse(UploadAction.isPostOnlyAction("specimenUpload"));
     }
 
     public void testArtistChangesOwnerOrAdmin() {
