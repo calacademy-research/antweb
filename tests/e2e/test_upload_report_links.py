@@ -43,6 +43,11 @@ def _links(html, page_url):
         # longer served (newer reports link uploadFile.do, checked like any other link).
         if "/web/upload/" in href:
             continue
+        # Archived upload files (uploadFile.do) are open to admins and to curators of the file's
+        # group only (10-18); Worldants and species list files are admin only, so the test
+        # curator is refused them by design.
+        if "/uploadFile.do" in href and "-specimen" not in href:
+            continue
         url = urljoin(page_url, href)
         if (urlparse(url).hostname or "") == HOST:
             found.append(url.replace("http://", "https://", 1) if BASE_URL.startswith("https") else url)
