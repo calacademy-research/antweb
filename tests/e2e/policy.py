@@ -30,7 +30,7 @@ WRITE_ACTIONS = {
     "/worldAuthoritySave", "/newBioRegion", "/editCredit",
     "/teamMemberImgUpload", "/deleteImages", "/saveLogin",
     "/editLogin", "/antwebInvite",
-    "/editGeolocale", "/speciesListMove", "/speciesListToolAdd",
+    "/editGeolocale",
     "/descEditImageUpload",
     "/editProject", "/bioregionMapMgr", "/introducedMapMgr",
     "/disputeMgr",

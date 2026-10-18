@@ -21,8 +21,6 @@
     <form-bean      name="historyForm"
                     type="org.calacademy.antweb.curate.speciesList.SpeciesListHistoryForm"/>
 
-    <form-bean      name="speciesListMoveForm"
-                    type="org.calacademy.antweb.curate.speciesList.SpeciesListMoveForm"/>
 
     <form-bean      name="utilForm"
                     type="org.calacademy.antweb.util.UtilForm"/>
@@ -194,21 +192,6 @@
       <form-property name="loc"           type="java.lang.String"/>
     </form-bean>
     
-    <form-bean name="moveTaxonForm" 
-        type="org.apache.struts.action.DynaActionForm" 
-        dynamic="true">
-      <form-property name="action"      type="java.lang.String"/>
-      <form-property name="fromTaxonName"      type="java.lang.String"/>
-      <form-property name="toTaxonName"      type="java.lang.String"/>
-      <form-property name="fromSubfamily"   type="java.lang.String"/>
-      <form-property name="fromGenus"       type="java.lang.String"/>
-      <form-property name="fromSpecies"     type="java.lang.String"/>
-      <form-property name="fromSubspecies"     type="java.lang.String"/>
-      <form-property name="toSubfamily"   type="java.lang.String"/>
-      <form-property name="toGenus"       type="java.lang.String"/>
-      <form-property name="toSpecies"     type="java.lang.String"/>
-      <form-property name="toSubspecies"     type="java.lang.String"/>
-  </form-bean>  
 
   <form-bean name="validateSpeciesListForm" type="org.calacademy.antweb.curate.speciesList.ValidateSpeciesListForm"/>
   <form-bean name="specimenListLookupForm" type="org.calacademy.antweb.curate.specimen.SpecimenListLookupForm"/>
@@ -584,20 +567,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="speciesListHistory" path="/curate/speciesList/speciesListHistory.jsp" />
     </action>
 
-    <action path="/speciesListToolAdd"
-            type="org.calacademy.antweb.curate.speciesList.SpeciesListToolAction"
-            scope="request"
-            name="toolForm">
-      <forward name="speciesListTool" path="/curate/speciesList/speciesListTool.jsp" />
-    </action>
     
-    <action path="/speciesListMove"
-            type="org.calacademy.antweb.curate.speciesList.SpeciesListMoveAction"
-            scope="request"
-            name="moveTaxonForm">
-      <forward name="speciesListMove" path="/curate/speciesList/speciesListMove.jsp" />
-      <forward name="speciesListTool" path="/speciesListTool.do" />
-    </action>
 
     <action path="/disputeMgr"
             type="org.calacademy.antweb.curate.speciesList.DisputeMgrAction"

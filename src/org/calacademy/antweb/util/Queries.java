@@ -1130,20 +1130,10 @@ public abstract class Queries {
         queries.add(new NamedQuery(
                 "lastSpecimenUpload"
                 , "Specimen uploads ordered by date."
-                , "<th>Group Name</th><th>Count</th><th>Last Upload</th><th>Reload</th>"
+                , "<th>Group Name</th><th>Count</th><th>Last Upload</th>"
                 , "select g.name, count(distinct code), max(s.created)"
-                + ", concat(concat(concat(concat(\"&nbsp;&nbsp;&nbsp;<a href='" + AntwebProps.getDomainApp() + "/upload.do?action=reloadSpecimenList&groupId=\", g.id), \"'>\"), 'run'), \"</a>\") "
                 + " from specimen s, ant_group g where s.access_group = g.id group by access_group order by max(s.created) desc"
         ));
-        /* namedQueries.add(new NamedQuery(
-              "lastSpecimenUpload"
-             , "Specimen uploads ordered by date."
-             , "<th>Group Name</th><th>Count</th><th>Emails</th><th>Last Upload</th><th>Reload</th>"
-             , "select g.name, count(distinct code), substring(group_concat(distinct email), 1, 60), max(s.created)" 
-             + ", concat(concat(concat(concat(\"&nbsp;&nbsp;&nbsp;<a href=\'" + AntwebProps.getDomainApp() + "/upload.do?action=reloadSpecimenList&groupId=\", g.id), \"\'>\"), 'run'), \"</a>\") " 
-             + " from specimen s, ant_group g, login l where s.access_group = g.id and g.id = l.group_id group by access_group order by max(s.created) desc"
-           ));
-        */
 
         queries.add(new NamedQuery(
                 "emptySourceTaxonSets"

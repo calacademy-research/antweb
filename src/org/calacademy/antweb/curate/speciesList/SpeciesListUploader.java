@@ -63,26 +63,6 @@ public class SpeciesListUploader {
     return uploadDetails;    
   }
 
-  public UploadDetails uploadWorldants(FormFile theFile, UploadFile uploadFile, Group accessGroup) throws AntwebException, IOException, SQLException {
-    UploadDetails uploadDetails;
-    UploadHelper.init(uploadFile, accessGroup);   
-
-    SpeciesListUpload speciesListUpload = new SpeciesListUpload(connection);
-    uploadDetails = speciesListUpload.uploadSpeciesList("worldants", theFile, uploadFile, accessGroup.getId());
-
-   // (new WorldantsUploadDb(connection)).insertWorldantsUpload(backupFileName, backupFileSize, origWorldantsCount, validateMessage, fileSize);
-    String fileLoc = worldDir + "worldants_speciesList.txt";
-    int origWorldantsCount = new TaxonDb(connection).getWorldantsCount();
-    //String validateMessage = validateWorldantsFile(fileLoc, origWorldantsCount);
-    String validateMessage = speciesListUpload.getValidateMessage();
-    String backupDirFile = record(validateMessage, fileLoc, origWorldantsCount, true);
-    if (AntwebProps.isDevOrStageMode()) s_log.info("uploadWorldants() orig:" + origWorldantsCount + " validateMessage:" + validateMessage + " backupDirFile:" + backupDirFile + " fileLoc:" + fileLoc);
-    uploadDetails.setBackupDirFile(backupDirFile);
-    uploadDetails.setMessage(validateMessage);
-                
-    return uploadDetails;  
-  }
-
   public UploadDetails fetchWorldantsList() throws IOException, SQLException {
 
     UploadDetails uploadDetails = new UploadDetails("Fetch");  // This one will be thrown away but useful for return values.
