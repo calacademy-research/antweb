@@ -645,14 +645,14 @@ public abstract class Queries {
             "curatorInfoAndProjects"
           , "These are the emails of curators that manage species lists."
           , "<th>Name</th><th>Email</th><th>Projects</th>"
-          , "select l.name, l.email, group_concat(lp.project_name) from login l, login_project lp where l.id = lp.login_id group by l.name, l.email order by l.name;"
+          , "select l.name, l.email, group_concat(lp.project_name) from login l, login_project lp, project p where l.id = lp.login_id and lp.project_name = p.project_name and p.is_live = 1 group by l.name, l.email order by l.name;"
         ));
 
         queries.add(new NamedQuery(
             "curatorEmails"
           , "These are a comma separated list of the emails of curators that manage species lists."
           , "<th>Email</th>"
-          , "select group_concat(distinct concat(l.email, ' ')) from login l, login_project lp where l.id = lp.login_id"
+          , "select group_concat(distinct concat(l.email, ' ')) from login l, login_project lp, project p where l.id = lp.login_id and lp.project_name = p.project_name and p.is_live = 1"
         ));
         
         queries.add(new NamedQuery(
