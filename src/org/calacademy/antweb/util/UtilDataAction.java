@@ -41,6 +41,7 @@ public class UtilDataAction extends AntwebAction {
     private static final Log s_log = LogFactory.getLog(UtilDataAction.class);
 
     private static String m_inComputeProcess;
+    private static volatile long m_inComputeProcessSince = 0; // when m_inComputeProcess was set (ms), 0 if none
 
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
@@ -980,7 +981,12 @@ public class UtilDataAction extends AntwebAction {
       return m_inComputeProcess;
     }
     public static void setInComputeProcess(String inComputeProcess) {
+      m_inComputeProcessSince = inComputeProcess == null ? 0 : System.currentTimeMillis();
       m_inComputeProcess = inComputeProcess;
+    }
+    /** When the current compute process (set1, set2, ...) started, in ms; 0 if none. */
+    public static long getInComputeProcessSince() {
+      return m_inComputeProcessSince;
     }
   
 }
