@@ -80,6 +80,10 @@ def test_edit_geolocale_page_has_coordinate_fields_and_no_dead_tools(session):
     for field in ("centroidFixed", "boundingBoxFixed"):
         tag = re.search(r'<input[^>]*name="' + field + r'"[^>]*>', page).group(0)
         assert "disabled" not in tag, f"{field} is disabled"
+    # Whole words in the page without hidden inputs: the random CSRF token can contain
+    # any three letters (a token with "Woe" in it failed this test once, 10-18).
+    visible = re.sub(r"<input[^>]*type=['\"]hidden['\"][^>]*>", "", page, flags=re.I)
     for word in DEAD_WORDS:
-        assert word not in page, f'"{word}" is still on the Edit Geolocale page'
+        assert not re.search(r"\b" + re.escape(word) + r"\b", visible), \
+            f'"{word}" is still on the Edit Geolocale page'
     assert "mapdevelopers.com" not in page

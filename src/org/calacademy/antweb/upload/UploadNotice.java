@@ -173,6 +173,7 @@ public class UploadNotice {
         public int specimensLoaded = -1;
         public int redFlagged = -1;
         public int imagesSaved = -1;
+        public int imagesNotSaved = -1;     // files the Image Uploader did not save (listed in the report)
         public String reportUrl;            // null: no report was written
         public boolean reportNeedsLogin = false;
         public String failure;              // the message shown on the page, when it did not complete
@@ -217,6 +218,7 @@ public class UploadNotice {
             if (f.specimensLoaded >= 0) b.append("Specimens loaded: ").append(n(f.specimensLoaded)).append("\n");
             if (f.redFlagged >= 0) b.append("Red-flagged specimens: ").append(n(f.redFlagged)).append("\n");
             if (f.imagesSaved >= 0) b.append("Images saved: ").append(n(f.imagesSaved)).append("\n");
+            if (f.images && f.imagesNotSaved >= 0) b.append("Images not saved: ").append(n(f.imagesNotSaved)).append("\n");
         } else if (f.failure != null && !f.failure.isEmpty()) {
             b.append("Message: ").append(f.failure).append("\n");
         }
@@ -231,8 +233,10 @@ public class UploadNotice {
                 b.append("Upload report:\n");
             }
             b.append(f.reportUrl).append("\n\n");
-            if (f.images) {
-                b.append("The report lists the images that were saved. Files the Image Uploader refused were listed on the upload page and are not in the report.\n\n");
+            if (f.images && f.imagesNotSaved > 0) {
+                b.append("The report lists the images that were saved, and under \"Not saved\" each file that was not saved and why.\n\n");
+            } else if (f.images) {
+                b.append("The report lists the images that were saved.\n\n");
             }
         } else {
             b.append("No upload report was written for this upload.\n\n");

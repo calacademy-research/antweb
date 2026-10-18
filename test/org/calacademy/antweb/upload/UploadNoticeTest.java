@@ -141,9 +141,43 @@ public class UploadNoticeTest extends TestCase {
             + "Images saved: 25\n\n"
             + "Upload report (log in to AntWeb to see it):\n"
             + "https://www.antweb.org/imageUploadReport.do?id=812\n\n"
-            + "The report lists the images that were saved. Files the Image Uploader refused were listed on the upload page and are not in the report.\n\n"
+            + "The report lists the images that were saved.\n\n"
             + "Replies to this message go to antweb@antweb.org.\n",
             UploadNotice.body(f));
+    }
+
+    public void testImagesCompleteWithFilesNotSaved() {
+        Facts f = new Facts();
+        f.images = true;
+        f.complete = true;
+        f.imagesSaved = 22;
+        f.imagesNotSaved = 3;
+        f.groupName = "Field Museum";
+        f.when = specimenFacts().when;
+        f.reportUrl = "https://www.antweb.org/imageUploadReport.do?id=812";
+        f.reportNeedsLogin = true;
+        assertEquals("AntWeb: your image upload is complete (22 images)", UploadNotice.subject(f));
+        assertEquals(
+            "Your image upload to AntWeb is complete.\n\n"
+            + "Group: Field Museum\n"
+            + "Finished: 18 Oct 2026, 2:05 PM PDT\n"
+            + "Images saved: 22\n"
+            + "Images not saved: 3\n\n"
+            + "Upload report (log in to AntWeb to see it):\n"
+            + "https://www.antweb.org/imageUploadReport.do?id=812\n\n"
+            + "The report lists the images that were saved, and under \"Not saved\" each file that was not saved and why.\n\n"
+            + "Replies to this message go to antweb@antweb.org.\n",
+            UploadNotice.body(f));
+        // None refused: the line says 0 and the report sentence is the short one.
+        f.imagesNotSaved = 0;
+        String body = UploadNotice.body(f);
+        assertTrue(body, body.contains("Images not saved: 0\n"));
+        assertTrue(body, body.contains("The report lists the images that were saved.\n"));
+        // Specimen uploads never get the line.
+        Facts s = specimenFacts();
+        s.complete = true;
+        s.imagesNotSaved = 4;
+        assertFalse(UploadNotice.body(s).contains("not saved"));
     }
 
     public void testNoticeLimitIsPerAddressNotPerSubject() {
