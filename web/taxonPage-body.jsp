@@ -235,7 +235,7 @@ To do:
     descNotes = "A brief, global overview of select aspects of taxon biology (distribution, biology, identification). Intended to be brief -- not more than 400 or 500 words -- and present highlights of the taxon to engage the reader.";   %>
    <%@ include file="/common/descEdit/taxonEditFieldCK.jsp" %>
 
-// Distribution
+<%-- Distribution --%>
    <%@ include file="/distribution.jsp" %>
 
 
