@@ -357,19 +357,6 @@ public abstract class HttpUtil {
         return true;
     }
 
-    public static boolean isDisallowedFileType(String fileName) {
-        return fileName != null &&
-                (fileName.contains(".jsp")
-                        || fileName.contains(".JSP")
-                        || fileName.contains(".php")
-                        || fileName.contains(".PHP")
-                        || fileName.contains(".pl")
-                        || fileName.contains(".PL")
-                        || fileName.contains(".sh")
-                        || fileName.contains(".SH")
-                );
-    }
-
     public static boolean isAlphaNumeric(String str) {
         // str = "abcdefà";
         if (str == null) return true;

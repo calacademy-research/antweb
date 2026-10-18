@@ -390,31 +390,6 @@ public class Utility implements Serializable {
         return false;
     }
 
-    public String unzipFile(String zipName, String unzipDir) {
-        String command = "";
-        if (zipName != null) {
-            // create a new temp directory
-            boolean success = new File(unzipDir).mkdir();
-            
-            if (new File(zipName).exists()) {
-                try {
-                    command = "unzip -d " + unzipDir + " " + zipName + "";
-                    Process process = Runtime.getRuntime().exec(command);
-                    //process.waitFor();
-                    s_log.warn("unzipFile() command:" + command);  // exitValue:" + process.exitValue() + " 
-                } catch (IOException e) {
-                    s_log.error("problem unzipping file " + zipName + ": " + e);
-                    AntwebUtil.logStackTrace(e);
-               // } catch (InterruptedException e) {
-               //     s_log.error("problem unzipping file " + zipName + ": " + e);
-               //     org.calacademy.antweb.util.AntwebUtil.logStackTrace(e);
-               }
-            }
-        }
-        return command;
-    }
-
-
     public boolean directoryExists(String directory) {
         return new File(directory).exists();
     }
