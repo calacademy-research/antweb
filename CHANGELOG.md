@@ -11,6 +11,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [9.2.0] - 2026-10-17
+
+AntWeb's 24th birthday release (AntWeb launched 17 October 2002).
+
+### Added
+- AntWeb on phones: one responsive layout for all devices; the old user-agent mobile layout is removed (#134).
+- Page editor TinyMCE 8 for all curator page text, with safety checks: no save before the stored text has loaded, no accidental empty saves (separate confirmed Clear), conflict check, refused saves keep the text, browser drafts, login keep-alive (#128, #131).
+- Field history with differences and one-click restore for curators (#134).
+- "Keep me logged in" (30 days) and password reset by email (#112, #116).
+- Curator files page for each curator's own folder (#135).
+- Version stamps on scripts and stylesheets so browsers never keep an old copy after a release (#130).
+- Real-browser tests (Playwright) in the end-to-end suite (#130, #134).
+- Image Uploader sends one file per request (imageUploadBatch.do) with per-file progress and retries; any number of images per upload behind Cloudflare's 100 MB request limit (#137).
+- Previous determinations: column `specimen.previous_determinations`, from TaxonWorks `previousIdentifications` and the optional `previousDeterminations` column in specimen text uploads; shown on specimen pages (#138).
+- Link tests in the end-to-end suite: home page (AntWeb and outside links), upload reports, specimen and taxon pages (#137, #138).
+
+### Changed
+- Tomcat runs as a non-root user (#134).
+- TaxonWorks nightly upload waits for the fresh archive, so it includes the previous day's edits (#114).
+- Small overview maps use Leaflet and OpenStreetMap; Google Maps removed (#109).
+- jQuery 3.7, jQuery UI 1.13 (#124).
+- Favicon visible in dark mode (#131).
+- Project settings form links to the page editor; old page-text boxes removed (#132).
+- Specimen and taxon pages: upload-line, extra-fields and Worldants-line links fixed (pointed at showLog.do, renamed in 2023); Default Specimen linked; whole-upload search and file links removed from the specimen admin block (#138).
+- Plazi: link to a live TreatmentBank search instead of the stored 2012 table; Ant Course link to www.antcourse.org (#138).
+- Participate page updated with the 2026 specimen template (new previousDeterminations column); Curate page links fixed; field guide, compare and map-of-results links show a login message to visitors (#140).
+- Group, groups and curator pages link upload reports in their current folder (dead since 2019) (#143).
+
+### Removed
+- Unused editors, test pages, actions, servlets and classes (#118, #132, #135).
+- HOL (hol.osu.edu, offline) links; AntShare from the menu (#138).
+- AntShare page, unused URL aliases, three unlinked PDFs; direct requests to page templates (*.jsp) refused except a short allow-list (#140).
+- Flickr, Geonames, Geonet and Google APIs geodata importers; the geolocale edit page keeps one centroid and one bounding-box field (#143).
+
+### Security
+- Several rounds of security fixes from two audits (#99-#101, #107, #111, #113, #115, #117, #119, #126, #132, #134-#137, #139, #143).
+
+---
+
 ## [9.1.0] - 2026-10-16
 
 AntWeb's software brought up to current, supported versions, and several long-standing issues fixed. Contributors: Sathya (Sathyavrv), Gladrin (Gladrin22), Antony (antony-jr), Brian Fisher (bpescador).
