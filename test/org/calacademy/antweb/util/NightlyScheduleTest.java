@@ -10,7 +10,7 @@ import junit.framework.TestCase;
 import org.calacademy.antweb.util.Scheduler;
 import org.calacademy.antweb.util.SessionRequestFilter;
 
-/** Nightly run: the restart setting (etc/scheduler.properties) and the 5 AM re-anchoring. */
+/** Nightly run: the restart setting (etc/scheduler.properties), the 5 AM re-anchoring and the "stuck in set1" rule. */
 public class NightlyScheduleTest extends TestCase {
 
     public void testRestartSettingDefaultsOff() throws Exception {
@@ -46,6 +46,22 @@ public class NightlyScheduleTest extends TestCase {
         assertLaunch(la, at(la, 2026, Calendar.OCTOBER, 31, 8, 0), 2026, Calendar.NOVEMBER, 1);
         // And across its start (14 Mar 2027), at 5:00, not 6:00.
         assertLaunch(la, at(la, 2027, Calendar.MARCH, 13, 8, 0), 2027, Calendar.MARCH, 14);
+    }
+
+    public void testStuckInSet1OnlyAfterThreeAndAHalfHours() {
+        long min = 60L * 1000;
+        long start = 1_000_000_000L;
+        // A normal set1 with the TaxonWorks wait (up to 90 minutes) is not stuck at 6 or 8 AM.
+        assertFalse(Scheduler.isStuckInSet1("set1", start, start + 60 * min));
+        assertFalse(Scheduler.isStuckInSet1("set1", start, start + 180 * min));
+        assertFalse(Scheduler.isStuckInSet1("set1", start, start + 209 * min));
+        assertTrue(Scheduler.isStuckInSet1("set1", start, start + 210 * min));
+        assertTrue(Scheduler.isStuckInSet1("set1", start, start + 400 * min));
+        // Other sets, no process, or no start time: never.
+        assertFalse(Scheduler.isStuckInSet1("set2", start, start + 400 * min));
+        assertFalse(Scheduler.isStuckInSet1(null, start, start + 400 * min));
+        assertFalse(Scheduler.isStuckInSet1("set1", 0, start + 400 * min));
+        assertEquals(210, Scheduler.SET1_STUCK_MINUTES);
     }
 
     private static Calendar at(TimeZone tz, int y, int m, int d, int h, int min) {

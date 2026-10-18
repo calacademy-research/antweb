@@ -45,7 +45,7 @@ public class Scheduler extends AntwebAction {
     // etc/scheduler.properties (~/antweb/etc/ on the host, gitignored; the container sees
     // /antweb/deploy/etc/) has the line  nightlyRestart=true . Read at the end of each run,
     // so a change needs no restart or deploy. The manual restart (utilData.do?action=setIsRestart),
-    // the "stuck in set1" restart and the host's case#/watchdog restarts are unchanged.
+    // the "stuck in set1" restart (SET1_STUCK_MINUTES) and the host's case#/watchdog restarts are unchanged.
     static final String CONFIG = "/antweb/deploy/etc/scheduler.properties";
 
     public static boolean isNightlyRestartOn() {
@@ -284,38 +284,41 @@ public class Scheduler extends AntwebAction {
         return "action:" + action + " not found.";
     }
 
-    private static boolean s_isStuckInSet1 = false;
+    // "Stuck in set1": set1 is still running long after it should have finished, and
+    // AntwebSystem.isRestart() then asks the host (reboot_checker.sh) to restart the container.
+    // Until 2026-10 this was "set1 still running at 6 AM", checked once, and the answer stayed
+    // true until the restart. Since #114 set1 includes the TaxonWorks upload, which waits up to
+    // 90 minutes for a fresh archive, so a normal set1 can run past 6 AM (WorldAnts about 12
+    // minutes, the wait up to 90, then the upload itself). It now counts as stuck only after it
+    // has been running SET1_STUCK_MINUTES (3.5 hours: 8:30 AM for the 5 AM run), is checked
+    // each time the host asks (every 5 minutes), and stops counting the moment set1 ends.
+    // A curator's or the TaxonWorks upload is never interrupted (AntwebSystem.isRestart), and
+    // the Scheduler's own read timeout for a set (SET_READ_TIMEOUT_MS, 4 hours) is longer.
+    public static final int SET1_STUCK_MINUTES = 210;
+
     public static boolean isStuckInSet1() {
-      return s_isStuckInSet1;
+      boolean stuck = isStuckInSet1(UtilDataAction.getIsInComputeProcess(),
+          UtilDataAction.getInComputeProcessSince(), System.currentTimeMillis());
+      if (stuck && !s_stuckLogged) {
+        s_stuckLogged = true;
+        s_log.error("isStuckInSet1() set1 running for more than " + SET1_STUCK_MINUTES + " minutes");
+        LogMgr.appendLog("compute.log", "set1 still running after " + SET1_STUCK_MINUTES + " minutes: treated as stuck, container restart requested.", true);
+      }
+      if (!stuck) s_stuckLogged = false;
+      return stuck;
 	}
-	private static boolean set1Tested = false;
-	// Return true if set1 running after an hour of scheduled tasks. Only report true once.
+    private static volatile boolean s_stuckLogged = false;
+
+    /** True if process is set1 and it started at least SET1_STUCK_MINUTES before now (times in ms). */
+    public static boolean isStuckInSet1(String process, long since, long now) {
+      if (process == null || !process.contains("set1") || since <= 0) return false;
+      return now - since >= SET1_STUCK_MINUTES * 60L * 1000;
+    }
+
+	// Called from BrowseAction (via Check.adminTest). isStuckInSet1() is now evaluated when
+	// asked; this only logs it once per stuck run.
 	public static void set1Test() {
-		// Test for the set1 not finishing issue.
-		Calendar rightNow = Calendar.getInstance();
-		int hour = rightNow.get(Calendar.HOUR_OF_DAY);
-		if (hour <= LAUNCHTIME) {
-			set1Tested = false;
-            return;
-		}
-
-		if (set1Tested) return;
-
-		if (hour >= (LAUNCHTIME + 1)) {
-			set1Tested = true;
-			String msg = UtilDataAction.getIsInComputeProcess();
-			s_isStuckInSet1 = (msg != null && msg.contains("set1"));
-            /*
-			if (stuckInSet1) {
-				// Yes, in set 1 after it should have completed.
-				String body = "Stuck in set1. " + msg;
-				String recipients = AntwebUtil.getDevEmail();
-				String subject = "Antweb Alert";
-				Emailer.sendMail(recipients, subject, body);
-			}
-        	*/
-			if (s_isStuckInSet1) s_log.error("set1Test() stuckInSet1:" + s_isStuckInSet1);
-		}
+		isStuckInSet1();
 	}
 }
 

@@ -580,30 +580,11 @@ public class UploadAction extends AntwebAction {
 				return mapping.findForward("message");
 			}
 
-			// Upload a File to Folder:
+			// "Upload a File to Folder" (theFile2) is no longer offered; refuse it.
 			FormFile file2 = theForm.getTheFile2();
-			//A.log("upload file:" + file2);
 			if (file2 != null) {
-				if (!file2.getFileName().equals("")) {
-
-
-					request.setAttribute("message", "Must select a file for uploading.");
-					return mapping.findForward("message");
-
-/*
-				action = "upload:" + file2.getFileName();
-
-				s_log.info("file upload:" + action);
-				uploadDetails = uploadFileToFolder(theForm, request, accessLogin);
-
-                ActionForward forward = uploadDetails.findForward(mapping, request);
-                A.log("upload a file forward:" + forward);
-                return forward;
-*/
-				} else {
-					request.setAttribute("message", "Must select a file for uploading.");
-					return mapping.findForward("message");
-				}
+				request.setAttribute("message", "Must select a file for uploading.");
+				return mapping.findForward("message");
 			}
 
 			// Upload a Data File:
@@ -775,123 +756,6 @@ public class UploadAction extends AntwebAction {
 		return null;
 	}
 
-
-	private static UploadDetails uploadFileToFolder(UploadForm theForm, HttpServletRequest request
-			, Login accessLogin) throws IOException {
-
-		String messageStr;
-
-		FormFile file2 = theForm.getTheFile2();
-		Utility util = new Utility();
-		String dir = theForm.getHomePageDirectory();
-
-		String docBase = AntwebProps.getDocRoot();
-
-		String fileName = theForm.getTheFile2().getFileName();
-
-		if (HttpUtil.isDisallowedFileType(fileName)) {
-			messageStr = "Unsupported file upload type for file:" + Html.esc(fileName);
-			return new UploadDetails("uploadFile", messageStr, "message");
-		}
-
-		String serverDir = null;
-
-		s_log.debug("uploadFileToFolder() serverDir:" + serverDir + " dir:" + dir);
-
-		// Create the curator's directory if it does not already exist.
-		if (dir.equals("curator")) {
-			serverDir = "curator/" + accessLogin.getId();
-			dir = "web/" + serverDir;
-			String fullDir = AntwebProps.getDocRoot() + dir;
-			s_log.debug("uploadFileToFolder() mk:" + fullDir);
-			Utility.makeDirTree(fullDir);
-		} else if (!"homepage".equals(dir)) {
-			dir = Project.getSpeciesListDir() + dir;
-//		} else if ("homepage".equals(dir)) {
-//		  dir = "web/homepage";
-//		  serverDir = "homepage";
-		}
-
-		String dirFileName = dir + "/" + fileName;
-		String outputFileName = theForm.getOutputFileName();
-
-		String outputFileName2 = docBase + dirFileName;
-
-		if (outputFileName != null
-				&& !outputFileName.equals("")) {
-			outputFileName2 = docBase + dir + "/" + outputFileName;
-		}
-
-		String logMessage = "uploadFileToFolder() upload file"
-				+ " docBase:" + docBase
-				+ " dir:" + dir
-				+ " fileName:" + fileName
-				//+ " dirFileName:" + dirFileName
-				+ " outputFileName:" + outputFileName
-				+ " outputFileName2:" + outputFileName2;
-		s_log.info(logMessage);
-
-		Utility.backupFile(outputFileName2);
-		boolean isSuccess = Utility.copyFile(theForm.getTheFile2(), outputFileName2);
-		if (!isSuccess) {
-			messageStr = "uploadFileToFolder() copyFile failure";
-			return new UploadDetails("uploadFile", messageStr, "message");
-		}
-
-		s_antwebEventLog.info(logMessage);
-
-		if (outputFileName2.contains(".zip")) {
-			// If the uploaded file is a zip file, then unzip it.  (Completed?)
-			if (outputFileName2.contains(" ")) {
-				messageStr = "Space not allowed in uploaded zip filename.";
-				//request.setAttribute("message", "Space not allowed in uploaded zip filename.");
-				//return mapping.findForward("message");
-			} else {
-
-				String newDirName = fileName.substring(0, fileName.indexOf(".zip"));
-				String fileLoc = dir + "/" + newDirName; // was "/uploaded"
-				String unzipDir = docBase + fileLoc;
-				String command = util.unzipFile(outputFileName2, unzipDir);
-				s_log.info("uploadFileToFolder() unzipping: " + outputFileName2);
-
-				String url = AntwebProps.getDomainApp() + "/" + fileLoc;
-
-				messageStr = "Your file has been uploaded and unzipped here:<br><br>"
-						+ "  &nbsp;&nbsp;&nbsp;<a href=\"" + url + "\">" + url + "</a>";
-
-				//request.setAttribute("message", messageStr);
-				//return mapping.findForward("message");
-			}
-			return new UploadDetails("uploadFile", messageStr, "message");
-		}
-
-		String url = AntwebProps.getDomainApp() + "/" + dirFileName;
-
-//		UploadFile uploadFile = new UploadFile(docBase + dir, fileName, request.getHeader("User-Agent"), null);
-//		uploadFile.setRoot( request.getSession().getServletContext().getRealPath("") + "/" );
-//		A.log("uploadFileToFolder() serverDir:" + serverDir);
-//		uploadFile.setServerDir(serverDir);
-
-		messageStr = "Your uploaded file is here: <a href=\"" + Html.escAttr(url) + "\">" + Html.esc(url) + "</a>";
-
-		if (fileName.contains("jpg")
-				|| fileName.contains("JPG")
-				|| fileName.contains("png")
-				|| fileName.contains("PNG")) {
-			messageStr += "<br><br>You may embed this image in a web page with this html tag: "
-					+ "<pre>&lt;img src=\"" + url + "\"&gt;</pre>";
-		}
-
-		// runStatistics = true;
-		s_log.info("uploadFileToFolder() done importing file:" + outputFileName2);
-
-		s_log.info("uploadFileToFolder() " + messageStr);
-
-		UploadDetails uploadDetails = new UploadDetails(file2.getFileName(), messageStr, request);
-		uploadDetails.setForwardPage("adminMessage");
-
-		return uploadDetails;
-	}
 
 	public String getUploadDataFileDoc(Login accessLogin) {
 		String message = "";

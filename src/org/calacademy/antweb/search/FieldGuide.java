@@ -88,7 +88,8 @@ public class FieldGuide {
         Locality result = null;
 
         String locality = ((LocalityOverview) getOverview()).getLocality();
-        String theQuery = "select localitycode from specimen where specimen.code='" + taxon.getName() + "'";
+        // The specimen code is bound; the locality clause is built by the overview itself (not from a request).
+        String theQuery = "select localitycode from specimen where specimen.code = ?";
 
         if (locality != null && locality.length() > 0 && !locality.equals("null"))  {
             theQuery += " and " + locality;
@@ -96,11 +97,12 @@ public class FieldGuide {
         
         //s_log.info("query:" + theQuery);
         String localityCode = null;
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = connection.createStatement();
-            rset = stmt.executeQuery(theQuery);
+            stmt = connection.prepareStatement(theQuery);
+            stmt.setString(1, taxon.getName());
+            rset = stmt.executeQuery();
             
             while (rset.next()) {
                 localityCode = rset.getString("localitycode");

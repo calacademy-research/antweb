@@ -75,6 +75,8 @@ public final class LogMgrAction extends AntwebAction {
         String lines = (String) df.get("lines");
         String list = (String) df.get("list");
         String loc = (String) df.get("loc"); // Either data or web (which is web/log).
+        // No action: show the log list (the log manager's start page).
+        if (action == null || "".equals(action)) action = "list";
         if ("list".equals(action)) {
             message = getLinkList();
         }
@@ -90,7 +92,9 @@ public final class LogMgrAction extends AntwebAction {
         UploadLine uploadLine = null;
 
         if ("uploadLog".equals(action)) { // DEPRECATED. Used the old upload/ without worldants or specimen.
-          message = getUploadLog(file, lineNum);
+          // Curators see lines of their own group's upload files only (admins any).
+          message = UploadFileAction.mayRead(LoginMgr.getAccessLogin(request), file)
+              ? getUploadLog(file, lineNum) : "Not available.";
         } else if ("worldants".equals(action)) {
             message = getWorldantsLine(lineNum);
         } else if ("specimenDetails".equals(action)) {
