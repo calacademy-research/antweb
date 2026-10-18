@@ -28,13 +28,19 @@ import org.calacademy.antweb.home.RememberTokenDb;
  * selector and the SHA-256 of the validator, the login's session_version at that time,
  * and the expiry (30 days from login; not extended by use).
  *
- * When a page (.do) is requested with no login in the session, SessionRequestFilter calls
- * autoLogin(): the row is found by selector, the validator hash compared in constant time,
+ * When a page is requested with no login in the session, autoLogin() runs (SessionRequestFilter
+ * for *.do, RememberMeFilter for "/" and *.jsp, so the home page counts too): the row is
+ * found by selector, the validator hash compared in constant time,
  * and the login must still exist, not be must_reset, and have the same session_version
  * (so a password change, reset, admin "end sessions" or the campaign ends it). On success
  * the login is put in a new session exactly as at a normal login (LoginMgr.logIn()) and
  * the validator is replaced (new cookie). On any failure the row is deleted and the cookie
  * cleared. Session timeout is unchanged; the cookie only re-creates the session.
+ *
+ * Opening the login page (GET /login.do) with a valid cookie logs in the same way, and
+ * LoginAction then goes to the target page (or home) instead of showing the form, which
+ * would otherwise make a remembered user type the password again (and that login replaces
+ * the token). A POST to /login.do (the form itself) and /logout.do never auto-login.
  *
  * Tokens are never logged.
  */
@@ -49,6 +55,8 @@ public final class RememberMeMgr {
     public static final int VALIDATOR_BYTES = 32;  // 43 base64url characters
     // After a rotation the previous validator still works this long (parallel requests).
     public static final int GRACE_SECONDS = 60;
+    // Request attribute set when autoLogin() logged the user in on this request.
+    public static final String AUTO_LOGGED_IN_ATTR = "rememberMeAutoLogin";
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
@@ -179,22 +187,30 @@ public final class RememberMeMgr {
         clearCookie(response);
     }
 
+    /** True if autoLogin() should not run for this request (logout, or submitting the login form). */
+    public static boolean isExcluded(String servletPath, String method) {
+        if ("/logout.do".equals(servletPath)) return true;
+        // The login form itself (POST) logs in with the password; opening the page (GET) may auto-login.
+        return "/login.do".equals(servletPath) && !"GET".equalsIgnoreCase(method) && !"HEAD".equalsIgnoreCase(method);
+    }
+
     /**
-     * Per page request (SessionRequestFilter): if the session has no login and the
-     * request carries AW_REMEMBER, try to log in from it. Costs nothing without the cookie.
+     * Per page request (SessionRequestFilter for *.do, RememberMeFilter for "/" and *.jsp):
+     * if the session has no login and the request carries AW_REMEMBER, try to log in from it.
+     * Costs nothing without the cookie. Returns true if it logged the user in on this request
+     * (and sets the request attribute AUTO_LOGGED_IN_ATTR).
      */
-    public static void autoLogin(HttpServletRequest request, HttpServletResponse response) {
+    public static boolean autoLogin(HttpServletRequest request, HttpServletResponse response) {
         String value = cookieValue(request);
-        if (value == null) return;
-        String path = request.getServletPath();
-        if ("/logout.do".equals(path) || "/login.do".equals(path)) return;
+        if (value == null) return false;
+        if (isExcluded(request.getServletPath(), request.getMethod())) return false;
         HttpSession existing = request.getSession(false);
-        if (existing != null && LoginMgr.getAccessLogin(request) != null) return;
+        if (existing != null && LoginMgr.getAccessLogin(request) != null) return false;
 
         String[] parts = parse(value);
         if (parts == null) {
             clearCookie(response);
-            return;
+            return false;
         }
         String selector = parts[0], validator = parts[1];
         try (Connection c = DBUtilSimple.getDataSource().getConnection()) {
@@ -202,13 +218,16 @@ public final class RememberMeMgr {
             RememberTokenDb.Token t = db.findBySelector(selector);
             if (t == null) {
                 clearCookie(response);
-                return;
+                return false;
             }
             Verdict v = check(validator, t.tokenHash, t.prevHash, t.remainingSecs, t.secsSinceRotated,
                 t.loginExists, t.mustReset, t.sessionVersion, t.loginSessionVersion);
             Login login = null;
             if (v == Verdict.OK || v == Verdict.GRACE) {
-                login = new LoginDb(c).getLogin(t.loginId);
+                // Fully loaded, as at a password login (getLoginByName): a curator's species lists too.
+                LoginDb loginDb = new LoginDb(c);
+                login = loginDb.getLogin(t.loginId);
+                if (login != null) loginDb.postInstantiate(login);
                 if (login == null) v = Verdict.NO_LOGIN;
             }
             if (login == null) {
@@ -220,12 +239,13 @@ public final class RememberMeMgr {
                         + " remember-me: validator mismatch, token deleted for login:" + t.loginId);
                 }
                 s_log.info("autoLogin() refused (" + v + ") login:" + t.loginId);
-                return;
+                return false;
             }
 
             // Log in exactly as a password login does.
             PasswordResetMgr.noteVersion(login.getId(), t.loginSessionVersion);
             LoginMgr.logIn(request, login);
+            request.setAttribute(AUTO_LOGGED_IN_ATTR, Boolean.TRUE);
             new LoginDb(c).updateLastLogin(login);
             LogMgr.appendLog("logins.txt", login.getName() + " - " + new Date() + " (remembered)");
 
@@ -238,8 +258,10 @@ public final class RememberMeMgr {
             } else {
                 db.touch(t.id);
             }
+            return true;
         } catch (Exception e) {
             s_log.error("autoLogin() e:" + e);
         }
+        return LoginMgr.getAccessLogin(request) != null && request.getAttribute(AUTO_LOGGED_IN_ATTR) != null;
     }
 }
