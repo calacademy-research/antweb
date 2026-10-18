@@ -70,6 +70,11 @@ public final class LoginAction extends AntwebAction {
 
         // Just opening the login page: show the form, without "Please provide a username" messages.
         if (userNameOrEmail == null && password == null && value == null) {
+            // "Keep me logged in": the AW_REMEMBER cookie just logged this browser in (RememberMeMgr,
+            // on GET /login.do), so go on to the page instead of asking for the password again.
+            if (request.getAttribute(RememberMeMgr.AUTO_LOGGED_IN_ATTR) != null && LoginMgr.getAccessLogin(request) != null) {
+                return new ActionForward(afterAutoLogin(target), true);
+            }
             return mapping.findForward("failure");
         }
         
@@ -172,6 +177,16 @@ public final class LoginAction extends AntwebAction {
             LoginMgr.removeAccessLogin(request);
             return mapping.findForward("failure");
         }
+    }
+
+    /** Where to go after "Keep me logged in" logged the user in on opening the login page. */
+    static String afterAutoLogin(String target) {
+        if (target != null && !target.isEmpty() && HttpUtil.isSafeRedirectTarget(target)
+                && !target.contains("login.do") && !target.contains("logout.do")
+                && !target.contains("forgotPassword") && !target.contains("resetPassword")) {
+            return target;
+        }
+        return AntwebProps.getDomainApp() + "/";
     }
 
     private Login createAccount(HttpServletRequest request, String userNameOrEmail, String password, ActionMessages messages) {
@@ -281,7 +296,7 @@ public final class LoginAction extends AntwebAction {
                         PasswordResetMgr.VALID_MINUTES, true);
                     PasswordResetMgr.logEvent("login refused until password reset (must_reset) login:" + login.getId() + " link:" + result);
                     String text = PasswordResetMgr.NO_EMAIL.equals(result)
-                        ? "For security, please set a new password. There is no email address on this account, so please write to antweb@calacademy.org."
+                        ? "For security, please set a new password. There is no email address on this account, so please write to antweb@antweb.org."
                         : "For security, please set a new password. We have emailed you a link to do so (please check your inbox and spam folder).";
                     messages.add("message", new ActionMessage(text, false));
                     login = null;

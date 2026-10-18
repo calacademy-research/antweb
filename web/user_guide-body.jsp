@@ -26,7 +26,7 @@ We here at AntWeb have been busy working on our newest (and most ambitious) vers
 
 <p>We've put together a handy little guide to show you all the new features and enhancements to get you on your way. Click on any of the topics below to find out more.</p>
 
-<p>We hope you like this new version of AntWeb - and <a href="mailto:antweb@calacademy.org">we'd love to hear your feedback!</a><br />
+<p>We hope you like this new version of AntWeb - and <a href="mailto:antweb@antweb.org">we'd love to hear your feedback!</a><br />
 - The AntWeb Team
 
 <div id="scroll"></div>

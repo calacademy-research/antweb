@@ -39,6 +39,45 @@ public class Scheduler extends AntwebAction {
     // (compute.log: "Begin run 05:00:00 / End run 05:05:00").
     public static final int SET_READ_TIMEOUT_MS = 4 * 60 * 60 * 1000; // 4 hours
 
+    // Restart after the full nightly run. Until 2026-10 the run always ended with
+    // AntwebSystem.setIsRestart(true), and the host's reboot_checker.sh (every 5 minutes)
+    // then restarted the container, around 8 AM. It is now off unless the server-only file
+    // etc/scheduler.properties (~/antweb/etc/ on the host, gitignored; the container sees
+    // /antweb/deploy/etc/) has the line  nightlyRestart=true . Read at the end of each run,
+    // so a change needs no restart or deploy. The manual restart (utilData.do?action=setIsRestart),
+    // the "stuck in set1" restart (SET1_STUCK_MINUTES) and the host's case#/watchdog restarts are unchanged.
+    static final String CONFIG = "/antweb/deploy/etc/scheduler.properties";
+
+    public static boolean isNightlyRestartOn() {
+        return isNightlyRestartOn(new File(CONFIG));
+    }
+
+    public static boolean isNightlyRestartOn(File config) {
+        if (config == null || !config.isFile()) return false;
+        java.util.Properties p = new java.util.Properties();
+        try (InputStream in = new FileInputStream(config)) {
+            p.load(in);
+        } catch (IOException e) {
+            s_log.error("isNightlyRestartOn() could not read " + config + " e:" + e);
+            return false;
+        }
+        return isOn(p.getProperty("nightlyRestart"));
+    }
+
+    public static boolean isOn(String value) {
+        if (value == null) return false;
+        String v = value.trim().toLowerCase();
+        return "true".equals(v) || "on".equals(v) || "yes".equals(v) || "1".equals(v);
+    }
+
+    /** JVM heap use, for compute.log (the restart used to hide slow growth; watch it instead). */
+    public static String memoryReport() {
+        Runtime rt = Runtime.getRuntime();
+        long mb = 1024L * 1024L;
+        long used = (rt.totalMemory() - rt.freeMemory()) / mb;
+        return "heap used:" + used + " MB committed:" + rt.totalMemory() / mb + " MB max:" + rt.maxMemory() / mb + " MB";
+    }
+
 
     private static final Log s_log = LogFactory.getLog(Scheduler.class);
 
@@ -149,6 +188,7 @@ public class Scheduler extends AntwebAction {
 			    String output = "";
 				Date startTime = new Date();
 			    String url = null;
+				boolean set5Skipped = false;
 				try {
 					int i = Math.max(num, 0);  // This will invoke one of them if num != 0, otherwise invokes all of them
 
@@ -188,6 +228,7 @@ public class Scheduler extends AntwebAction {
 					// set5 (object maps, reload all) needs more memory than staging's 4 GB droplet has:
 					// skip it there in the nightly run (an admin can still request it by hand).
 					if (i == 0 && AntwebProps.isStageMode()) {
+						set5Skipped = true;
 						s_log.warn("doAction() set5 skipped on staging (memory)");
 						LogMgr.appendLog("compute.log", "  set5 skipped on staging (memory)", true);
 					} else
@@ -208,8 +249,25 @@ public class Scheduler extends AntwebAction {
 
 				if (num == 0) {
 				  // This was the full scheduled tasks, now completed.
+				  if (isNightlyRestartOn()) {
 					s_log.warn("SET REBOOT TRUE");
-				  AntwebSystem.setIsRestart(true);	// This will trigger a reboot within 5 minutes.
+					LogMgr.appendLog("compute.log", "Nightly restart requested (nightlyRestart=true in etc/scheduler.properties). " + memoryReport(), true);
+				    AntwebSystem.setIsRestart(true);	// This will trigger a reboot within 5 minutes.
+				  } else {
+					if (set5Skipped) {
+					  // set5 ends with AntwebMgr.populate(), which reloads every cache after the
+					  // counts of sets 2 to 4. Where set5 is skipped (staging), the restart did that.
+					  try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
+						AntwebMgr.populate(connection, true);
+						LogMgr.appendLog("compute.log", "  caches reloaded (AntwebMgr.populate), as set5 was skipped", true);
+					  } catch (Exception e) {
+						s_log.error("doAction() cache reload after the nightly run e:" + e);
+						LogMgr.appendLog("compute.log", "  cache reload FAILED e:" + e, true);
+					  }
+					}
+					s_log.warn("doAction() nightly restart skipped (off)");
+					LogMgr.appendLog("compute.log", "Nightly restart skipped (off; nightlyRestart=true in etc/scheduler.properties turns it on). " + memoryReport(), true);
+				  }
 				}
 
 				return message + " output:" + output;
@@ -226,38 +284,41 @@ public class Scheduler extends AntwebAction {
         return "action:" + action + " not found.";
     }
 
-    private static boolean s_isStuckInSet1 = false;
+    // "Stuck in set1": set1 is still running long after it should have finished, and
+    // AntwebSystem.isRestart() then asks the host (reboot_checker.sh) to restart the container.
+    // Until 2026-10 this was "set1 still running at 6 AM", checked once, and the answer stayed
+    // true until the restart. Since #114 set1 includes the TaxonWorks upload, which waits up to
+    // 90 minutes for a fresh archive, so a normal set1 can run past 6 AM (WorldAnts about 12
+    // minutes, the wait up to 90, then the upload itself). It now counts as stuck only after it
+    // has been running SET1_STUCK_MINUTES (3.5 hours: 8:30 AM for the 5 AM run), is checked
+    // each time the host asks (every 5 minutes), and stops counting the moment set1 ends.
+    // A curator's or the TaxonWorks upload is never interrupted (AntwebSystem.isRestart), and
+    // the Scheduler's own read timeout for a set (SET_READ_TIMEOUT_MS, 4 hours) is longer.
+    public static final int SET1_STUCK_MINUTES = 210;
+
     public static boolean isStuckInSet1() {
-      return s_isStuckInSet1;
+      boolean stuck = isStuckInSet1(UtilDataAction.getIsInComputeProcess(),
+          UtilDataAction.getInComputeProcessSince(), System.currentTimeMillis());
+      if (stuck && !s_stuckLogged) {
+        s_stuckLogged = true;
+        s_log.error("isStuckInSet1() set1 running for more than " + SET1_STUCK_MINUTES + " minutes");
+        LogMgr.appendLog("compute.log", "set1 still running after " + SET1_STUCK_MINUTES + " minutes: treated as stuck, container restart requested.", true);
+      }
+      if (!stuck) s_stuckLogged = false;
+      return stuck;
 	}
-	private static boolean set1Tested = false;
-	// Return true if set1 running after an hour of scheduled tasks. Only report true once.
+    private static volatile boolean s_stuckLogged = false;
+
+    /** True if process is set1 and it started at least SET1_STUCK_MINUTES before now (times in ms). */
+    public static boolean isStuckInSet1(String process, long since, long now) {
+      if (process == null || !process.contains("set1") || since <= 0) return false;
+      return now - since >= SET1_STUCK_MINUTES * 60L * 1000;
+    }
+
+	// Called from BrowseAction (via Check.adminTest). isStuckInSet1() is now evaluated when
+	// asked; this only logs it once per stuck run.
 	public static void set1Test() {
-		// Test for the set1 not finishing issue.
-		Calendar rightNow = Calendar.getInstance();
-		int hour = rightNow.get(Calendar.HOUR_OF_DAY);
-		if (hour <= LAUNCHTIME) {
-			set1Tested = false;
-            return;
-		}
-
-		if (set1Tested) return;
-
-		if (hour >= (LAUNCHTIME + 1)) {
-			set1Tested = true;
-			String msg = UtilDataAction.getIsInComputeProcess();
-			s_isStuckInSet1 = (msg != null && msg.contains("set1"));
-            /*
-			if (stuckInSet1) {
-				// Yes, in set 1 after it should have completed.
-				String body = "Stuck in set1. " + msg;
-				String recipients = AntwebUtil.getDevEmail();
-				String subject = "Antweb Alert";
-				Emailer.sendMail(recipients, subject, body);
-			}
-        	*/
-			if (s_isStuckInSet1) s_log.error("set1Test() stuckInSet1:" + s_isStuckInSet1);
-		}
+		isStuckInSet1();
 	}
 }
 

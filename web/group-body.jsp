@@ -84,8 +84,12 @@
 	       String lastUploadAnchor = "";
 		   if (group.getLastUploadDate() != null) {
 		     lastUploadStr = Utility.getSimpleDate(group.getLastUploadDate());
-		     String logFile = AntwebProps.getDomainApp() + "/web/log/" + lastUpload.getUploadDir() + "/" + Html.url(lastUpload.getLogFileName());
-  		     lastUploadAnchor = "<a href='" + logFile + "'>" + lastUploadStr + "</a>";
+		     if (lastUpload.hasReport()) {
+		       String logFile = AntwebProps.getDomainApp() + "/web/log/" + lastUpload.getUploadDir() + "/" + Html.url(lastUpload.getLogFileName());
+  		       lastUploadAnchor = "<a href='" + Html.escAttr(logFile) + "'>" + lastUploadStr + "</a>";
+		     } else {
+		       lastUploadAnchor = lastUploadStr + " (report no longer available)"; // report file no longer on the server
+		     }
 		   }
 		   %>
 		<li><%= lastUploadAnchor %></li>

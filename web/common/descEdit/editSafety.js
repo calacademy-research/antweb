@@ -18,7 +18,7 @@
  *   into the form, then submits.
  * - "Clear this field" asks for confirmation, then submits clearField=1.
  * - Unchanged text is sent exactly as it was loaded (an editor may rewrite HTML it did not change).
- * - Warns near the daily restart (about 8 AM Pacific).
+ * - Warns near the nightly restart (about 8 AM Pacific), only where it is turned on (nightlyRestart).
  * Plain ES5, no libraries. Every storage access is in try/catch (private windows, blocked storage).
  */
 (function (window, document) {
@@ -278,7 +278,9 @@
                 try { data = JSON.parse(xhr.responseText); } catch (e) { data = null; }
                 if (xhr.status !== 200 || !data || typeof data.loggedIn !== 'boolean') finish({ok: false});
                 else finish({ok: true, loggedIn: data.loggedIn, canEdit: !!data.canEdit, csrf: data.csrf,
-                    upMinutes: typeof data.upMinutes === 'number' ? data.upMinutes : null});
+                    upMinutes: typeof data.upMinutes === 'number' ? data.upMinutes : null,
+                    // Older servers do not send it; they always restarted.
+                    nightlyRestart: data.nightlyRestart !== false});
             };
             xhr.onerror = function () { finish({ok: false}); };
             xhr.ontimeout = function () { finish({ok: false}); };
@@ -306,7 +308,7 @@
         login.target = '_blank';
         login.rel = 'noopener';
         login.style.marginLeft = '8px';
-        this.say('You are not logged in any more (AntWeb restarts every morning around 8 AM Pacific, and logins end'
+        this.say('You are not logged in any more (AntWeb may have restarted, or the login ended'
             + ' after 4 hours without use). Your text is kept in this browser. Log in in the new tab, come back here,'
             + ' and press Save again.', [login], true);
     };
@@ -331,6 +333,10 @@
         this.restartChecking = true;
         this.checkSession(function (res) {
             self.restartChecking = false;
+            if (res.ok && !res.nightlyRestart) {
+                self.restartWarned = true;   // no nightly restart on this server
+                return;
+            }
             if (res.ok && res.upMinutes !== null && res.upMinutes < m - 7 * 60) {
                 self.restartWarned = true;   // already restarted this morning
                 return;

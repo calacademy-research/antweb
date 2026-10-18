@@ -92,7 +92,7 @@ window.api = root.data("scrollable");
         <b><a href="/staff.do">Meet the rest of the team!</a></b><br />
             <p>Many curators already contribute to AntWeb - would you like to join us?  Curators can edit the home page of the geographic section they curate, upload specimen data and authority files, and control a number of other aspects of their project. Learn how to <a href=https://www.antweb.org/documentation.do> submit data to Antweb</a>.
 
-<p>If you would like to join us, contact us at - <a href="mailto:antweb@calacademy.org">antweb@calacademy.org</a>.
+<p>If you would like to join us, contact us at - <a href="mailto:antweb@antweb.org">antweb@antweb.org</a>.
        </div>
    <div class="clear"></div>
 </div>

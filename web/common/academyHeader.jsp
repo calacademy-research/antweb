@@ -63,7 +63,9 @@
         <div id="logo"><a href="<%= AntwebProps.getDomainApp() %>/"><img src="<%= logo %>" width='<%= logoWidth %>' title="[AntWeb]"></a></div>
 
         <div id="version">
-            <a href="https://github.com/calacademy-research/antweb/releases" title="Release notes (change log)">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v<%=antwebRelease %></a>
+            <a href="https://github.com/calacademy-research/antweb/releases" title="Release notes (change log)">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;v<%=antwebRelease %></a><%
+            String gitCommit = GitCommit.shortHash();
+            if (gitCommit != null) { %><span class="aw-commit"> &middot; <a href="<%= GitCommit.url() %>" title="Deployed commit on GitHub"><%= gitCommit %></a></span><% } %>
         </div>
         
         <%-- Phone menu button: hidden at desktop widths (responsive.css); responsive.js toggles body.aw-nav-open,

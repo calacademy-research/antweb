@@ -35,6 +35,8 @@ public final class EditSessionAction extends AntwebAction {
         if (started != null) {
             json.append(",\"upMinutes\":").append((System.currentTimeMillis() - started.getTime()) / 60000L);
         }
+        // Whether the nightly run ends with a restart (off by default since 2026-10; Scheduler).
+        json.append(",\"nightlyRestart\":").append(org.calacademy.antweb.util.Scheduler.isNightlyRestartOn());
         if (loggedIn) {
             json.append(",\"loginId\":").append(accessLogin.getId())
                 .append(",\"csrf\":\"").append(Csrf.token(request)).append('"');

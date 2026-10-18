@@ -1,6 +1,7 @@
 package org.calacademy.antweb.upload;
 
 import org.calacademy.antweb.AntwebAction;
+import org.calacademy.antweb.Login;
 
 import java.util.*;
 import jakarta.servlet.http.*;
@@ -27,6 +28,11 @@ public class UploadHistoryAction extends AntwebAction {
 
         UploadForm uploadForm = (UploadForm) form;
         String name = uploadForm.getEditSpeciesList();
+        // Curators list their own group's files only (the menu offers no others); admins any.
+        Login accessLogin = LoginMgr.getAccessLogin(request);
+        if (!LoginMgr.isAdmin(accessLogin) && (accessLogin == null || !("specimen" + accessLogin.getGroupId()).equals(name))) {
+            name = "none";
+        }
         ArrayList<String> files = AntwebUtil.getUploadDirFiles(name);
         request.setAttribute("files", files);
         return mapping.findForward("success");

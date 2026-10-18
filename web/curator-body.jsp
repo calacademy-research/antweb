@@ -101,7 +101,11 @@
         <li><b>Last Upload:</b></li>
 <li>
 <ul>
+<% if (lastUpload.hasReport()) { %>
   <li><a href='<%= AntwebProps.getDomainApp() %>/web/log/<%= lastUpload.getUploadDir() %>/<%= Html.escAttr(Html.url(lastUpload.getLogFileName())) %>'><%= lastUpload.getCreated() %></a></li>
+<% } else { %>
+  <li><%= lastUpload.getCreated() %> (report no longer available)</li>
+<% } %>
   <li>&nbsp;&nbsp;Specimen: <%= Formatter.commaFormat(lastUpload.getSpecimens()) %></li>
   <li>&nbsp;&nbsp;Ungeoreferenced: <%= Formatter.commaFormat(lastUpload.getUngeoreferenced()) %></li>
   <li>&nbsp;&nbsp;Flagged: <%= Formatter.commaFormat(lastUpload.getFlagged()) %></li>

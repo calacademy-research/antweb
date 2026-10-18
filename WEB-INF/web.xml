@@ -146,6 +146,20 @@
        <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
 
+    <!-- "Keep me logged in" (AW_REMEMBER cookie) on the home page and other directly opened JSPs.
+         SessionRequestFilter below does the same for *.do. REQUEST only: JSPs that actions
+         forward to are already covered. Returns at once without the cookie. -->
+    <filter>
+        <filter-name>RememberMeFilter</filter-name>
+        <filter-class>org.calacademy.antweb.util.RememberMeFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>RememberMeFilter</filter-name>
+        <url-pattern>/</url-pattern>
+        <url-pattern>*.jsp</url-pattern>
+        <dispatcher>REQUEST</dispatcher>
+    </filter-mapping>
+
     <!-- Here we can insert code that should be run for every request. -->
     <filter>
         <filter-name>SessionRequestFilter</filter-name>

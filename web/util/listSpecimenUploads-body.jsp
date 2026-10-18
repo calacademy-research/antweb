@@ -39,7 +39,12 @@
       ++count;
       out.println("<tr><td>" + count + ".</td>");
       if (isAllGroups) out.println("<td><a href=\"" + domainApp + "/listUploads.do?groupId=" + upload.getGroupId() + "\">" + GroupMgr.getGroup(upload.getGroupId()).getAbbrev() + "</a></td>");
-      out.println("<td>" + upload.getCreated() + "</td><td><a href=\"" + domainApp + "/web/log/" + upload.getUploadDir() + "/" + upload.getLogFileName() + "\">" + upload.getLogFileName() + "</a></td>");
+      // Link the report only while it is on the server (most reports from before Nov 2019 are gone).
+      if (upload.hasReport()) {
+        out.println("<td>" + upload.getCreated() + "</td><td><a href=\"" + Html.escAttr(domainApp + "/web/log/" + upload.getUploadDir() + "/" + Html.url(upload.getLogFileName())) + "\">" + Html.esc(upload.getLogFileName()) + "</a></td>");
+      } else {
+        out.println("<td>" + upload.getCreated() + "</td><td>" + Html.esc(upload.getLogFileName()) + " (report no longer available)</td>");
+      }
     }
     out.println("</tr></table>");
     if (count == 0) out.println("<br> No uploads for this group");

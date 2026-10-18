@@ -115,9 +115,14 @@ if (here.contains("orderBy=name")) { t1 = a; t2 = b; } else { t1 = c; t2 = d; } 
 		} 
 		if (here.contains("orderBy=lastUpload")) { t1 = a; t2 = b; } else { t1 = ""; t2 = ""; } 
 
-String logFile = AntwebProps.getDomainApp() + "/web/log/" + upload.getUploadDir() + "/" + Html.url(upload.getLogFileName());  // reports moved from upload/ to specimen/ in 2019
-t1 += "<a href='" + logFile + "'>";
-t2 += "</a>";		
+// Link the report only while it is on the server (most reports from before Nov 2019 are gone).
+if (lastUpload != null && upload.hasReport()) {
+  String logFile = AntwebProps.getDomainApp() + "/web/log/" + upload.getUploadDir() + "/" + Html.url(upload.getLogFileName());  // reports moved from upload/ to specimen/ in 2019
+  t1 += "<a href='" + Html.escAttr(logFile) + "'>";
+  t2 += "</a>";
+} else if (lastUpload != null) {
+  t2 += " (report no longer available)";
+}
 		%>		
 <td align="right"><%= t1 %><%= Utility.getSimpleDate(lastUpload) %><%= t2 %></td>
 

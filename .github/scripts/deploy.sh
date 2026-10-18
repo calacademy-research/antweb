@@ -36,6 +36,12 @@ git fetch origin "$DEPLOY_BRANCH"
 git checkout "$DEPLOY_BRANCH"
 git pull --rebase origin "$DEPLOY_BRANCH"
 
+# Record the deployed commit for the page header (version · short hash, linked to
+# GitHub). etc/ is mounted read-only in the container at /antweb/deploy/etc/ and the
+# file is gitignored; GitCommit.java re-reads it when it changes, so no restart is
+# needed. A failure here never stops the deploy.
+git rev-parse HEAD > etc/git-commit.tmp && mv -f etc/git-commit.tmp etc/git-commit || echo "warning: could not write etc/git-commit"
+
 # Nothing the site runs changed (only CI, tests, docs or release notes): no restart.
 changed=$(git diff --name-only "$PREV" HEAD)
 if [ -n "$changed" ] && ! printf '%s\n' "$changed" | grep -qvE '^(\.github/|tests/|doc/|docs/|release-notes/|[^/]*\.md$)'; then

@@ -68,4 +68,17 @@ public class RememberMeTest extends TestCase {
         // Grace does not bypass the other checks.
         assertEquals(Verdict.STALE, RememberMeMgr.check(v, other, h, DAY, 5, true, false, 3, 4));
     }
+
+    public void testWhichRequestsAutoLogin() {
+        // Pages, the home page and opening the login page may log in from the cookie.
+        assertFalse(RememberMeMgr.isExcluded("/index.jsp", "GET"));
+        assertFalse(RememberMeMgr.isExcluded("/", "GET"));
+        assertFalse(RememberMeMgr.isExcluded("/curate.do", "POST"));
+        assertFalse(RememberMeMgr.isExcluded("/login.do", "GET"));
+        assertFalse(RememberMeMgr.isExcluded("/login.do", "HEAD"));
+        // Submitting the login form, and logging out, never do.
+        assertTrue(RememberMeMgr.isExcluded("/login.do", "POST"));
+        assertTrue(RememberMeMgr.isExcluded("/logout.do", "GET"));
+        assertTrue(RememberMeMgr.isExcluded("/logout.do", "POST"));
+    }
 }

@@ -71,7 +71,7 @@ public class SessionRequestFilter implements Filter {
         try {
 
             // "Keep me logged in": log in from the AW_REMEMBER cookie if the session has no login.
-            // Only pages (.do) reach this filter; without the cookie this costs nothing.
+            // Only pages (.do) reach this filter ("/" and *.jsp: RememberMeFilter); without the cookie this costs nothing.
             RememberMeMgr.autoLogin(request, response);
 
             try {
@@ -323,41 +323,44 @@ public class SessionRequestFilter implements Filter {
     }
 
     public void runTask() {
-      // In production, execute at 8:05 pm and every 24 thereafter...
+      // Production and staging: the nightly sets at LAUNCHTIME (5 AM Pacific, the container's
+      // time zone). Not in dev.
+      if (AntwebProps.isDevMode()) return;
 
-      Calendar calendar = Calendar.getInstance();
+      // Each run schedules the next one at the next 5:00 (CustomTask.run). A fixed 24-hour
+      // period drifts by an hour at each daylight-saving change, and by the delay of each start;
+      // that did not matter while the container restarted every morning (and re-anchored the
+      // timer), but the nightly restart is now off by default (Scheduler.isNightlyRestartOn).
+      scheduleNextRun(new Timer());
+    }
 
-      if (AntwebProps.isDevMode()) {
-          if (true) return;
-
-          calendar.set(Calendar.HOUR_OF_DAY, 13);
-          calendar.set(Calendar.MINUTE, 54);
-      } else {
-          // 5am scheduled tasks. 
-          calendar.set(Calendar.HOUR_OF_DAY, Scheduler.LAUNCHTIME);
-          calendar.set(Calendar.MINUTE, 0);  // was: 5. Set to allow time in case of a reboot.
-          calendar.set(Calendar.SECOND, 0);
-          calendar.set(Calendar.MILLISECOND, 0);
-      }
-
-      Calendar now = Calendar.getInstance();
-      if(calendar.before(now) || calendar.equals(now)) {
+    /** The next LAUNCHTIME:00:00 strictly after now, in the JVM's time zone. */
+    public static Date nextLaunchTime(Calendar now) {
+      Calendar calendar = (Calendar) now.clone();
+      calendar.set(Calendar.HOUR_OF_DAY, Scheduler.LAUNCHTIME);
+      calendar.set(Calendar.MINUTE, 0);  // was: 5. Set to allow time in case of a reboot.
+      calendar.set(Calendar.SECOND, 0);
+      calendar.set(Calendar.MILLISECOND, 0);
+      if (!calendar.after(now)) {
          calendar.add(Calendar.DATE, 1);
       }
+      return calendar.getTime();
+    }
 
-      Timer timer = new Timer();
-      s_log.warn("runTask() time:" + calendar.getTime());  // calendar:" + calendar + "
-      //if (AntwebProps.isDevMode()) return;  // Don't run on dev
-
-      // if you want to run the task immediately, set the 2nd parameter to 0
-      timer.schedule(new CustomTask(), calendar.getTime(), TimeUnit.HOURS.toMillis(24));
-    }    
+    static void scheduleNextRun(Timer timer) {
+      Date next = nextLaunchTime(Calendar.getInstance());
+      s_log.warn("runTask() time:" + next);
+      timer.schedule(new CustomTask(timer), next);
+    }
 }
 
 
 class CustomTask extends TimerTask  {
-    
-  public CustomTask() {
+
+  private final Timer timer;
+
+  public CustomTask(Timer timer) {
+    this.timer = timer;
   }
 
   public void run() {
@@ -374,6 +377,13 @@ class CustomTask extends TimerTask  {
     
     } catch (Exception ex) {
         AntwebUtil.log("SessionRequestFilter.CustomTask.run() error running thread " + ex.getMessage());
+    } finally {
+        // Tomorrow's run (also after a failure).
+        try {
+            SessionRequestFilter.scheduleNextRun(timer);
+        } catch (RuntimeException e) {
+            AntwebUtil.log("SessionRequestFilter.CustomTask.run() could not schedule the next run " + e);
+        }
     }
   }
 }
