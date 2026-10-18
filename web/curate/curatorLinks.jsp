@@ -2,11 +2,11 @@
 	
     <h3 align=left>Curator Links</h2>
     <ul align=left>
-	  <li><form action="<%= domainApp %>/description.do" method="get" style="display:inline"><input type="text" name="taxonName" size="18" aria-label="Access direct by taxon_name"> <input type="submit" value="Go"></form> Access direct by taxon_name
-	  <li><form action="<%= domainApp %>/description.do" method="get" style="display:inline"><input type="text" name="antcatId" size="18" aria-label="Access direct by Antcat ID"> <input type="submit" value="Go"></form> Access direct by Antcat ID
-	  <li><form action="<%= domainApp %>/specimen.do" method="get" style="display:inline"><input type="text" name="code" size="18" aria-label="Access direct by specimen code"> <input type="submit" value="Go"></form> Access direct by specimen code
-	  <li><form action="<%= domainApp %>/geolocale.do" method="get" style="display:inline"><input type="text" name="id" size="18" aria-label="Access direct by Geolocale Id"> <input type="submit" value="Go"></form> Access direct by Geolocale Id
-	  <li><form action="<%= domainApp %>/query.do" method="get" style="display:inline"><input type="hidden" name="action" value="curiousQuery"><input type="text" name="name" size="18" aria-label="Curious Query (name)"> <input type="submit" value="Go"></form> Curious Query (name)
+	  <li><form action="<%= domainApp %>/description.do" method="get" style="display:inline"><input type="text" name="taxonName" style="width:8em;max-width:40%" aria-label="Access direct by taxon_name"> <input type="submit" value="Go"></form> Access direct by taxon_name
+	  <li><form action="<%= domainApp %>/description.do" method="get" style="display:inline"><input type="text" name="antcatId" style="width:8em;max-width:40%" aria-label="Access direct by Antcat ID"> <input type="submit" value="Go"></form> Access direct by Antcat ID
+	  <li><form action="<%= domainApp %>/specimen.do" method="get" style="display:inline"><input type="text" name="code" style="width:8em;max-width:40%" aria-label="Access direct by specimen code"> <input type="submit" value="Go"></form> Access direct by specimen code
+	  <li><form action="<%= domainApp %>/geolocale.do" method="get" style="display:inline"><input type="text" name="id" style="width:8em;max-width:40%" aria-label="Access direct by Geolocale Id"> <input type="submit" value="Go"></form> Access direct by Geolocale Id
+	  <li><form action="<%= domainApp %>/query.do" method="get" style="display:inline"><input type="hidden" name="action" value="curiousQuery"><input type="text" name="name" style="width:8em;max-width:40%" aria-label="Curious Query (name)"> <input type="submit" value="Go"></form> Curious Query (name)
     </ul>
 
 <% if (accessLogin.isAdmin()) { %>  

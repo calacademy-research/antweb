@@ -103,7 +103,7 @@ window.api = root.data("scrollable");
         Ant Course is a 10-day workshop designed for systematists, ecologists, behaviorists, conservation biologists, whose research require a greater understanding of ant taxonomy and field research techniques. Emphasis is on the evolution, classification and identification of ant genera.  <a href="https://www.antcourse.org/">Read More &#187;</a>
 
     </div>
-    <div class="promo">
+    <div class="promo right">
         <b><a href=/worldants.do>World Ant Collections</a></b><br />
         We at AntWeb have been busy taking photos of many of the world's great ant collections.  Visit the AntWeb <a href=/worldants.do>World Ant Collection</a> to see the collections and get information about where they are housed.  
     </div>
