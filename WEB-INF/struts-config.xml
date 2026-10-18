@@ -1165,6 +1165,12 @@ We would like to remove getChildImages.  Not needed now in the new UI
         <forward name="success" path="/curate/passwordResetCampaign.jsp" />
     </action>
 
+    <!-- Admin: preview / apply making regular accounts not used for three years inactive. -->
+    <action path="/inactiveAccounts"
+                type="org.calacademy.antweb.curate.login.InactiveAccountsAction"
+                scope="request">
+    </action>
+
     <!-- Admin: preview / apply sanitizing of page text saved before edits were sanitized. -->
     <action path="/sanitizeDescriptions"
                 type="org.calacademy.antweb.util.SanitizeDescriptionsAction"

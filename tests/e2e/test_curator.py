@@ -46,6 +46,7 @@ ADMIN_ONLY = [
     "/dbStatus.do",
     "/loginAs.do?id=1",
     "/sanitizeDescriptions.do",
+    "/inactiveAccounts.do",
 ]
 
 
