@@ -765,13 +765,6 @@ public abstract class Queries {
         ));
            
         queries.add(new NamedQuery(
-            "flickrGeoData"
-          , "Bounding box, longitude and latitude are coming from Flickr."
-          , "<th>Valid</th><th>Name</th><th>Extent</th><th>Coords</th><th>Bounding Box</th><th>Latitude</th><th>Longitude</th>"
-          , "select is_valid, name, extent, coords, bounding_box, latitude, longitude from geolocale where georank = 'country' and is_valid =1 order by name"
-          ));
-           
-        queries.add(new NamedQuery(
             "geolocaleCountryTest"
           , "Show the specimen table countries not in the geolocale table."
           , "<th>Country</th><th>Codes</th>"

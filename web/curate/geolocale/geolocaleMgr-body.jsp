@@ -114,7 +114,6 @@ String bioregionLink = "<a href='" + target + "&orderBy=bioregion'>Bioregion</a>
 <% if (!"adm1".equals(georank)) { %>
 <th><%= bioregionLink %></th>
 <% } %>
-<th>Woe ID</th>
 <th>C</td>
 <th>BB</td>
 </tr>
@@ -201,17 +200,7 @@ for (Geolocale geolocale : geolocaleArray) {
 <td><%= geolocale.getRegion() %></td>
 <% if (!"adm1".equals(georank)) { %>
 <td><%= geolocale.getBioregion() %></td>
-<% } 
-
-String woeIdMarkup = "";
-if (geolocale.getWoeId() != null && !("null".equals(geolocale.getWoeId()))) {
-  woeIdMarkup = "<a href='https://www.flickr.com/places/info/" + geolocale.getWoeId() + "'>" + geolocale.getWoeId() + "</a>" 
-    + "<input type='hidden' name='woeId' value='" + geolocale.getWoeId() + "'>";
-} else {
-  woeIdMarkup = "<input type='text' class='input_50' name='woeId' value=''>";
-}
-%>
-<td><%= woeIdMarkup %></td>
+<% } %>
 
 <% if (geolocale.useCentroid() != null && !("".equals(geolocale.useCentroid()))) { %>
 <td><img src="<%= AntwebProps.getDomainApp() %>/image/checkmark.gif" height="10"></td>

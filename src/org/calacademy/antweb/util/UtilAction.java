@@ -361,23 +361,6 @@ public class UtilAction extends AntwebAction {
 				  returnLoc = mapping.findForward("message");
 			  }
 
-			  if (action.contains("latlng")) {
-				String latLng = param;
-				String key = AntwebProps.getGoogleMapServerKey();
-				String fetchUrl = "https://maps.googleapis.com/maps/api/geocode/json?key=" + key + "&latlng=" + Html.url(latLng);  //&latlng=10.96667,79.78333
-				String message = null;
-				try {
-					//message = HttpUtil.getJson(fetchUrl);
-					//A.log("fetchUrl:" + fetchUrl);  // Do not write the key to the log file.
-					message = HttpUtil.fetchUrl(fetchUrl);
-					if (message != null && message.contains("Exception")) s_log.warn("execute() latlng:" + message);
-				} catch (Exception e) {
-					message = "e:" + Html.esc(e.toString());
-				}
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("adminMessage");
-			  }
-
 			  if (returnLoc != null) return returnLoc;
 			}               
 			request.setAttribute("message", "action not found:" + Html.esc(action));

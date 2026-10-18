@@ -16,25 +16,13 @@ Prevent
     from showing up in: https://www.antweb.org/bigMap.do?taxonName=myrmicinaemyrmica%20incompleta&adm1Name=California
 
 
-API access of ADM1 info.
-	Flickr coords has commas.
-	  Flickr centroid does not have parenthesis and is reversed order.
-	Get the adm1 from geonames.
-	  Get the centroid and Bounding Box (extent) from Flickr.
-    Of note:Statoids.com
-
-Use Bounding box in googleMap api call. See: https://developers.google.com/maps/documentation/javascript/reference
-  https://maps.googleapis.com/maps/api/geocode/json?address=California
+Centroid: "lat, lon". Bounding box: "west lon, south lat, east lon, north lat" (west > east when the
+box crosses longitude 180, e.g. Fiji: 174.8662, -21.0171, -178.2032, -12.4662). The *Fixed values are
+entered on the Edit Geolocale page and override the older stored values (see useCentroid(),
+useBoundingBox()).
 
 Validate lat long using extents and coords.
   Check bounding box coords of madagascar at specimen upload.
-
-
-Fiji
-Flickr
-  174.8662, -21.0171, -178.2032, -12.4662
-  180 -21.02 -179.98 -12.47
-  
 */
 
 // LocalityOverview objects are Bioregion, Geolocale and Project.
@@ -51,8 +39,6 @@ public abstract class LocalityOverview extends Overview {
 
     private String centroid;
     private String centroidFixed;
-    
-    private String woeId;
     
     private String adminNotes;
     
@@ -109,13 +95,6 @@ specimen country:United States adm1:Maine lat:44.78 lon:-68.42
         //parseExtent(); // for performance, use within isWithinBounds()
     }
 
-
-    public String getWoeId() {
-      return woeId;
-    }
-    public void setWoeId(String woeId) {
-      this.woeId = woeId;
-    }
 
     public String getAdminNotes() {
       return adminNotes;

@@ -11,10 +11,6 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.curate.OperationDetails;
 import org.calacademy.antweb.curate.speciesList.SpeciesListUploader;
 import org.calacademy.antweb.data.AntWikiDataAction;
-import org.calacademy.antweb.data.FlickrPlace;
-import org.calacademy.antweb.data.GeonamesPlace;
-import org.calacademy.antweb.data.geonet.GeonetMgr;
-import org.calacademy.antweb.data.googleApis.GoogleApisMgr;
 import org.calacademy.antweb.geolocale.Geolocale;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.search.AdvancedSearchAction;
@@ -97,7 +93,7 @@ public class UtilDataAction extends AntwebAction {
         // Being called from a getUrl() by Schedule.do, Scheduler.java.
         if (!isAllow) { 
 
-          List<String> needNothingInit = new ArrayList<>(Arrays.asList("fetchGoogleApisData", "delGoogleMapFunction", "genGoogleMapFunction", "delGoogleMapFunction", "genObjectMaps"
+          List<String> needNothingInit = new ArrayList<>(Arrays.asList("delGoogleMapFunction", "genGoogleMapFunction", "genObjectMaps"
                   , "genGroupObjectMap", "genGroupObjectMaps", "updateGroupCounts", "updateGroupUploadStats", "exifData", "changeOwner", "changeOwnerAndPerms"
                   , "adminAlertTest", "populateBioregion", "siteWarning", "imageUtil"));
           List<String> needLoginInit = new ArrayList<>(List.of("imageUtil"));
@@ -688,74 +684,13 @@ public class UtilDataAction extends AntwebAction {
             message += "<br><br><h2>DML</h2><br><br>" + curationsDml;
         }
 
-// ---------- Geo Data Methods. (Many are deprecated) -----------
+// ---------- Geo Data Methods -----------
 
         if (action.equals("gson")) {
           Geolocale country = GeolocaleMgr.getCountry("Algeria");
           Gson gson = new Gson();
           message = " country:" + country + " gson:" + gson.toJson(country);                    
         }
-
-        // This will populate country records with Flickr woe_id, bounds and centroid.
-        if (action.equals("fetchFlickrCountryData")) {
-          message = FlickrPlace.fetchCountryData(connection);
-        }
-
-        // This will populate adm1 records from Geonames.org.
-        if (action.equals("fetchGeonamesData")) {   
-          message = GeonamesPlace.fetchData(connection);
-        }
-
-        // This will populate more adm1 records (as invalid) from Flickr data.
-        if (action.equals("fetchFlickrAdm1Data")) {   
-          message = FlickrPlace.fetchAdm1Data(connection);
-        }
-
-        // This will run all three of the above.
-        if (action.equals("fullGeodataFetch")) {   
-          message = FlickrPlace.fetchCountryData(connection);
-          AntwebMgr.populate(connection, true); 
-          message += GeonamesPlace.fetchData(connection);
-          AntwebMgr.populate(connection, true); 
-          message += " " + FlickrPlace.fetchAdm1Data(connection);
-        }
-        
-        if (action.equals("geodataTestFetch")) {   
-          //String country = "Russia";
-          String country = "Belgium";
-          message = GeonamesPlace.fetchData(connection, country);
-          message += " " + FlickrPlace.fetchAdm1Data(connection, country);
-        }
-
-        if (action.equals("fetchGeonetData")) {   
-          message = GeonetMgr.fetchData(connection);
-        }                  
-
-        // can run for a single country as /utilData.do?action=fetchGeonetCentroidData&country=Comoros
-        if (action.equals("fetchGeonetCentroidData")) {   
-          if (form.getCountry() != null) {
-            // param might be country
-            message = GeonetMgr.fetchCentroidData(connection, form.getCountry());
-          } else {
-            message = GeonetMgr.fetchCentroidData(connection);
-          }
-        }
-
-        if (action.equals("fetchGoogleApisData")) {   
-          int id = 0;
-          //Adm1 adm1 = (Adm1) GeolocaleMgr.getAdm1("Wainikeli", "Fiji");	                    
-          id = form.getId();
-          //if (AntwebProps.isDevMode() && id == 0) id = 5315;				  
-          // Google geocoding was retired in October 2026 (no API key).
-          String key = AntwebProps.getGoogleMapKey();
-          if (key == null || key.isEmpty()) {
-            message += "Google geocoding is no longer available.";
-          } else if (id > 0) {
-            message += GoogleApisMgr.fetchData(connection, id);
-          } else {
-            message += GoogleApisMgr.fetchData(connection);
-          }                
-        }        
 
 // ----------------- Assorted --------------------
 
@@ -777,12 +712,6 @@ public class UtilDataAction extends AntwebAction {
         if (action.equals("archiveLogs")) { 
           message = LogMgr.archiveLogs();
         } 
-
-        // Very fast. Run occasionally to get adm1s in line with hierarchy. Should be rare. Unnecessary.
-        if (action.equals("updateAdm1FromCountryData")) {   
-          new GeolocaleDb(connection).updateAdm1FromCountryData();
-          message = "Update Adm1 From Country Data";
-        }
 
         // Full set is 8.27 mins.  After transactions - 9.17 mins!
         // caste:1 in 3.45 mins
@@ -838,7 +767,7 @@ public class UtilDataAction extends AntwebAction {
               ObjectMapDb objectMapDb = new ObjectMapDb(connection);
               objectMapDb.deleteMap("geolocale_id = " + id);                 
           }
-          message = "message: delete Google Map for id:" + id;
+          message = "Map deleted for geolocale id:" + id;
         }
 
         if (action.contains("genGoogleMapFunction")) {
@@ -886,7 +815,7 @@ public class UtilDataAction extends AntwebAction {
 
               message = "title:" + map.getTitle() + " subtitle:" + map.getSubtitle() + " info:" + map.getInfo() + " googleMapFunction.length:" + map.getGoogleMapFunction().length();
             }
-            if (message == null) message = "genGoogleMapFunction";
+            if (message == null) message = "Map rebuilt.";
         }		
         
         if (action.contains("genObjectMaps")) {

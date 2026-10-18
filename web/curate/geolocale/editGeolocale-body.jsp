@@ -6,8 +6,6 @@
 <%@ page import="org.calacademy.antweb.geolocale.*" %>
 <%@ page import="org.calacademy.antweb.curate.geolocale.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
-<%@ page import="org.calacademy.antweb.data.*" %>
-<%@ page import="org.calacademy.antweb.data.googleApis.*" %>
 
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
@@ -94,7 +92,9 @@
             <div class="clear"></div>
 <br><br>
             
-<input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit">            
+<% if (LoginMgr.isAdmin(request)) { %>
+<input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit">
+<% } %>
             
             <div class="clear"></div>
 <br><br>
@@ -196,7 +196,7 @@ Mostly the UN geolocales, with overrides.
 
 <% // if (AntwebProps.isDevMode()) { %> 
 
-<b>Alternate Bioregion:<b>
+<h3>Alternate Bioregion:</h3>
   <select name="altBioregion">  <!-- %= disabled % -->
 	<%
        selected = "";
@@ -216,180 +216,24 @@ Mostly the UN geolocales, with overrides.
 <br><br>
 
 
-<H3>Geodata Fetch Methods</H3>
-
-
-<H4>Flickr Woe ID:</H4>
-&nbsp;&nbsp;&nbsp;WoeId is the Flickr primary key. May not be modified (except by automated data fetchs).<br>
-&nbsp;&nbsp;&nbsp;It is inferred from <%= FlickrPlace.getPlaceInfoTag(geolocale) %>
-<%
-String woeIdLink = "";
-if (geolocale.getWoeId() != null && !("null".equals(geolocale.getWoeId()))) {
-  woeIdLink = "<a href='https://www.flickr.com/places/info/" + geolocale.getWoeId() + "'>" + geolocale.getWoeId() + "</a>";
-  out.println("<br>&nbsp;&nbsp;&nbsp;<b>Woe Id:</b> " + woeIdLink);
-  // Removing the Flickr data is a button below the form (a form may not hold another form).
-  out.println("&nbsp;&nbsp;&nbsp;(<a href='#removeFlickrData'>remove</a>)");
-} else { %>
-<br><input type="text" class="input_50" name="woeId" value="">
-<%
-}
+<h3>Centroid (lat, lon):</h3>
+For a new country or adm1, look up the centroid and bounding box and enter them here.<br>
+<% String centroidValue = (String) request.getAttribute("centroidInput");
+   if (centroidValue == null) centroidValue = geolocale.useCentroid();
+   if (centroidValue == null || "null".equals(centroidValue)) centroidValue = "";
 %>
+<input type="text" class="input_200" name="centroidFixed" value="<%= Html.escAttr(centroidValue) %>" placeholder="-18.77, 46.87">
 <br><br>
 
-<h4>Geonames</h4>
-<% if ("country".equals(georank)) { %>
-<%= GeonamesPlace.getCountryTag(geolocale) %> (Used to select the geonameId to use to fetch the children).
-<br><%= GeonamesPlace.getChildrenTag(geolocale) %> (These are the adm1 (children) for the selected goenameId).
-<% } %>
-
-&nbsp;&nbsp;&nbsp;<%= GeonamesPlace.getGeonamePageTag(geolocale) %>
-
-<% if (false && "country".equals(georank)) { %>
-<br><%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + geolocale.getId() + "&action=removeGeoData", "Remove") %> Geo Data.
-<br><%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + geolocale.getId() + "&action=fetchGeoData", "Fetch") %> Geo Data.
-<br>&nbsp;&nbsp;&nbsp;<%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + geolocale.getId() + "&action=fetchFlickrCountryData", "Fetch") %> Flickr Country Data.
-<br>&nbsp;&nbsp;&nbsp;<%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + geolocale.getId() + "&action=fetchGeonamesData", "Fetch") %> Geonames Data.
-<br>&nbsp;&nbsp;&nbsp;<%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/editGeolocale.do?id=" + geolocale.getId() + "&action=fetchFlickrData", "Fetch") %> Flickr Data.
-<% } %>
-
-<br><br>
-
-<h4>Google Apis</h4>
-<%
-   if ("country".equals(georank)) { 
-	 String googleApisLink = GoogleApisMgr.getFetchCountryUrl(geolocale);
-	 googleApisLink = "<a href='" + googleApisLink + "'>Link</a>";
- 	 out.println("&nbsp;&nbsp;&nbsp;<b>GoogleApis:</b> " + googleApisLink);
-
-     String georankTypeVal = Utility.notBlankValue(geolocale.getGeorankType());
+<h3>Bounding box (west lon, south lat, east lon, north lat):</h3>
+<% String boundingBoxValue = (String) request.getAttribute("boundingBoxInput");
+   if (boundingBoxValue == null) boundingBoxValue = geolocale.useBoundingBox();
+   if (boundingBoxValue == null || "null".equals(boundingBoxValue)) boundingBoxValue = "";
 %>
-<br>&nbsp;&nbsp;&nbsp;<b>Georank Type:</b> <input type="text" class="input_120" name="georankType" value="<%= georankTypeVal %>">
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This property set will adjust the <b>children Adm1</b> and be used in their Google Api fetches.
-
-<% }
-   if ("adm1".equals(geolocale.getGeorank())) {
-	String googleApisLink = GoogleApisMgr.getFetchAdm1Url(geolocale);
-	googleApisLink = "<a href='" + googleApisLink + "'>Link</a>";
-
-    String loadGoogleApisLink = "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=fetchGoogleApisData&id=" + geolocale.getId() + "'>load</a>";
-
-	out.println("&nbsp;&nbsp;&nbsp;<b>GoogleApis:</b> " + googleApisLink);
-	out.println("<br>&nbsp;&nbsp;&nbsp;<b>Set bounds and centroid:</b> " + loadGoogleApisLink + " (caution:irreversible)");
-	%>
-
-<br>&nbsp;&nbsp;&nbsp;<b>Georank Type:</b> <input type="text" class="input_120" name="georankType" value="<%= geolocale.getGeorankType() %>">
-<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;This property will be used in Google Api fetches. For Adm1, usually it will be Province.
-	
-<% } %>
+<input type="text" class="input_550" name="boundingBoxFixed" value="<%= Html.escAttr(boundingBoxValue) %>" placeholder="43.22, -25.61, 50.48, -11.95">
 <br><br>
 
-<H3>Centroid:</H3>
-Lat, Lon.  Data from Flickr. May not be modified.<br>
-<% //String centroid = geolocale.getLatitude() + ", " + geolocale.getLongitude();
-   String centroid = geolocale.getCentroid();
-   if (centroid == null || "null".equals(centroid)) centroid = "";
-%>
-<input type="text" class="input_20" name="centroid" value="<%= centroid %>" disabled>
-<br><br>
-
-<H3>Centroid (Fixed):</H3>
-This Lat, Lon will override the Centroid (data from Flickr).<br>
-<% //String centroidFixed = geolocale.getLatitudeFixed() + ", " + geolocale.getLongitudeFixed();
-   String centroidFixed = geolocale.getCentroidFixed();
-   //if (geolocale.getLatitudeFixed() == null || geolocale.getLongitudeFixed() == null) centroidFixed = "";
-   if (geolocale.getCentroidFixed() == null) centroidFixed = "";
-%>
-<input type="text" class="input_20" name="centroidFixed" value="<%= centroidFixed %>">
-<br><br>
-
-<% String displayUseCentroid = geolocale.useCentroid();
-   if (displayUseCentroid == null) displayUseCentroid = ""; 
-   //A.log("editGeolocale-body.jsp displayUse:" + displayUseCentroid);
-   %>
-&nbsp;&nbsp;&nbsp;<b>Use Centroid:</b>&nbsp;<%= displayUseCentroid %>
-<br>&nbsp;&nbsp;&nbsp;(A Fixed value will override the original value, if it exists)
-<br><br>
-
-<H3>Bounding Box:</H3>
-Left (West Longitude), Bottom (South Latitude), Right (East Longitude), Top (North Latitude).  Data from Flickr. May not be modified.<br>
-<% String boundingBox = geolocale.getBoundingBox();
-   if (boundingBox == null || "null".equals(boundingBox)) boundingBox = "";
-%>
-<input type="text" class="input_200" name="boundingBox" value="<%= boundingBox %>" disabled>
-<br><br>
-
-<H3>Bounding Box (Fixed):</H3>
-Left (West Longitude), Bottom (South Latitude), Right (East Longitude), Top (North Latitude). 
-&nbsp;&nbsp;&nbsp;(This will override the Bounding Box).<br>
-Look up bounding box: <a href='https://www.mapdevelopers.com/geocode_bounding_box.php'>Geocode Bounding Box</a>
-<% String boundingBoxFixed = geolocale.getBoundingBoxFixed();
-   if (boundingBoxFixed == null || "null".equals(boundingBoxFixed)) boundingBoxFixed = "";
-%>
-<input type="text" class="input_550" name="boundingBoxFixed" value="<%= boundingBoxFixed %>">
-<br>
-
-<% String displayUseBB = geolocale.useBoundingBox();
-   if (displayUseBB == null) displayUseBB = ""; 
-   //A.log("editGeolocale-body.jsp displayUse:" + displayUseBB);
-   %>
-<br>&nbsp;&nbsp;&nbsp;<b>Use Bounding Box:</b>&nbsp;<%= displayUseBB %>
-<br>&nbsp;&nbsp;&nbsp;(A Fixed value will override the original value, if it exists)
-<br>
-<br>
- 
-<h3>Map:</h3>
-
-
-<% 
-/*
-// To be added. This will support V3. Not successfully debugged yet.
-
-      LocalityOverview localityOverview = (LocalityOverview) geolocale;
-      Map map = localityOverview.getMap();
-      String mapType = "geolocale";
-      String object = "locality";
-      Overview overview = null;
-      String objectName = null;
- % >
-
-        <div class="left">
-          <div class="small_map">
-            < %@include file="/maps/googleMapPreInclude.jsp" % >  
-            < %@include file="/maps/googleMapInclude.jsp" % >  
-          </div>
-        </div>
-        
-        
-        
-// Was here. Bad map. Old code. To be removed. See functioning at V7.83.2 or earlier. 
-// Once removed we can remove (or deprecated map.jsp, googleMap.jsp and includeMap.jsp.
-// See documentation in googleMapInclude.jsp.
-
-< %@include file="/maps/includeMap.jsp" % >
-
-      LocalityOverview localityOverview = (LocalityOverview) overview;
-      Map map = localityOverview.getMap();
-
-      // causes npe on server...
-      //if (overview != null) A.log("overview-body.jsp 2 overview:" + overview);
-      //A.log("overview-body.jsp 3 map:" + map);
-      if (map != null) {
-        //if (map.getGoogleMapFunction() != null) A.log("overview-body.jsp len:" + map.getGoogleMapFunction().length());
-
-        String object = "localityOverview";
-        if ("overview".equals(mapType)) {
-          // Then we failed to assign the specific mapType.
-          AntwebUtil.log("overview-body.jsp overview:" + mapType + " name:" + overview.getName());
-        }
-        //objectName is set above	
-    % >
-
-*/
-%>
-
-<br><br>
-
-<H3>Admin Notes:</H3>
+<h3>Admin Notes:</h3>
 (Plain text, for administrators only; not shown on the site.)<br>
 <% String adminNotes = geolocale.getAdminNotes();
    if (adminNotes == null || "null".equals(adminNotes)) adminNotes = "";
@@ -397,7 +241,6 @@ Look up bounding box: <a href='https://www.mapdevelopers.com/geocode_bounding_bo
 <textarea rows="4" cols="50" name="adminNotes" class="biotextarea550"><%= Html.esc(adminNotes) %></textarea>
 <br>
 
-<h3>&nbsp;<h3>
 <h3>Use Parent Region:</h3>
 For some Geolocales it is best to display the region.<br>
 <input type="checkbox" name="isUseParentRegion" <%= (geolocale.getIsUseParentRegion() == true)?"checked":"" %>>
@@ -406,7 +249,6 @@ For some Geolocales it is best to display the region.<br>
 
 <% if ("country".equals(geolocale.getGeorank())) { %>
 
-<h3>&nbsp;<h3>
 <h3>Is Island:</h3>
 Some countries are treated as countries (like Hawaii, Galapagos Islands) to support our bioregion data.<br>
 <input type="checkbox" name="isIsland" <%= (geolocale.getIsIsland() == true)?"checked":"" %>>
@@ -416,7 +258,7 @@ Some countries are treated as countries (like Hawaii, Galapagos Islands) to supp
        if (!geolocale.isValid()) {
          out.println("Country can be set for valid islands");
        } else { %>
-<H3>Country (of an Island):</H3>
+<h3>Country (of an Island):</h3>
 An island can have a country set different from its parentage. Galapagos Islands (georank country) is a child of South America
 with country set to Ecuador. Hawaii (georank country) is a child of Polynesia with country set to United States.
 <%
@@ -446,13 +288,6 @@ To indicate that adm1 should be used, for instance, United States, Brazil, China
 <br><br>
 
 
-
-<h3>Author:</h3>
-<input name="author" type=text class=input_550 value="<%= Formatter.formDisplay(geolocale.getAuthor()) %>"> 
-<br><br>
-<p>
-
-
 </div>
             <div class="clear"></div>
 
@@ -475,12 +310,9 @@ To indicate that adm1 should be used, for instance, United States, Brazil, China
 <!-- /form -->
 </html:form>
 
-<%-- Changes other than Save are small POST forms with the form token (EditGeolocaleAction refuses them by GET). --%>
+<%-- Delete is a small POST form with the form token (EditGeolocaleAction refuses it by GET). --%>
 <div class="align_left">
-<% if (geolocale.getWoeId() != null && !("null".equals(geolocale.getWoeId()))) { %>
-<a name="removeFlickrData"></a><%= Csrf.postButton(request, domainApp + "/editGeolocale.do?id=" + geolocale.getId() + "&action=removeFlickrData", "Remove Flickr data (Woe Id)", "Remove the Flickr data of this geolocale?") %>
-<% } %>
 <% if (LoginMgr.isAdmin(request)) { %>
-| <%= Csrf.postButton(request, domainApp + "/editGeolocale.do?id=" + geolocale.getId() + "&isDelete=true", "Delete", "Delete this geolocale?") %>
+<%= Csrf.postButton(request, domainApp + "/editGeolocale.do?id=" + geolocale.getId() + "&isDelete=true", "Delete", "Delete this geolocale?") %>
 <% } %>
 </div>
