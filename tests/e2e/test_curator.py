@@ -208,6 +208,61 @@ def test_forged_remember_cookie_is_refused():
     assert get(b, "/curate.do").category == "login"
 
 
+def _remembered_value():
+    """Log in with "Keep me logged in" and return the AW_REMEMBER value (the login's own session is dropped)."""
+    r = post_login(new_session(), USER, PASSWORD, extra={"rememberMe": "on"}, allow_redirects=False)
+    headers = [h for h in _remember_set_cookie(r) if not h.startswith("AW_REMEMBER=;")]
+    assert headers, "login with rememberMe set no AW_REMEMBER cookie"
+    return headers[-1].split(";", 1)[0].split("=", 1)[1].strip('"')
+
+
+def _shows_logged_in(html):
+    return "/logout.do" in html
+
+
+def test_remember_me_after_restart():
+    """A restart ends every session; the browser keeps only AW_REMEMBER.
+
+    The home page ("/", index.jsp, not a .do page) must show the user logged in, and opening
+    the login page must log in and go on, not show the form (logging in there again replaced
+    the token, so "keep me logged in" never seemed to work). Skipped while neither is deployed.
+    """
+    assert not _shows_logged_in(new_session().get(BASE_URL + "/", timeout=60).text), \
+        "anonymous home page shows a Logout link"
+
+    # 1. Home page, no session cookie at all.
+    b = _browser_with_remember(_remembered_value())
+    home = b.get(BASE_URL + "/", timeout=60)
+    home_ok = home.status_code == 200 and _shows_logged_in(home.text)
+
+    # 2. Login page, again without a session (JSESSIONID dropped, rotated AW_REMEMBER kept).
+    if home_ok:
+        value = b.cookies.get("AW_REMEMBER")
+    else:
+        b.get(BASE_URL + "/logout.do", timeout=60)  # deletes that token
+        value = _remembered_value()
+    b = _browser_with_remember(value)
+    r = b.get(BASE_URL + "/login.do?target=" + BASE_URL + "/curate.do", timeout=60, allow_redirects=False)
+    login_ok = r.status_code in (301, 302, 303) and "login.do" not in r.headers.get("Location", "")
+
+    if not home_ok and not login_ok:
+        b.get(BASE_URL + "/logout.do", timeout=60)
+        pytest.skip("keep-me-logged-in on the home page and login page is not deployed on this server yet")
+
+    assert home_ok, f"AW_REMEMBER did not log in on the home page (HTTP {home.status_code})"
+    assert login_ok, f"GET /login.do with AW_REMEMBER showed the form (HTTP {r.status_code}), not a redirect"
+    assert r.headers["Location"].rstrip("/").endswith("/curate.do"), r.headers["Location"]
+    assert get(b, "/curate.do").category != "login"
+
+    # Plain /login.do (no target) goes to the home page, logged in.
+    b = _browser_with_remember(b.cookies.get("AW_REMEMBER"))
+    r = b.get(BASE_URL + "/login.do", timeout=60, allow_redirects=True)
+    assert r.status_code == 200 and _shows_logged_in(r.text), "login.do without target did not end on a logged-in page"
+
+    # Clean up: logout deletes the token.
+    b.get(BASE_URL + "/logout.do", timeout=60)
+
+
 # CSRF protection: a logged-in POST must carry the session's token. deleteImages is used
 # because, with nothing chosen, it changes nothing even if a request got through.
 def test_post_without_csrf_token_is_refused(curator):
