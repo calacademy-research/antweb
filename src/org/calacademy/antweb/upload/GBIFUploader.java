@@ -71,7 +71,7 @@ public class GBIFUploader extends Uploader {
         String errMsg = tf.transformFile(preTransformFilePath, specimenFilePath);
         if (errMsg != null) {
             s_log.error("uploadSpecimenFile() errMsg:" + errMsg);
-            return new UploadDetails(theForm.getAction(), errMsg);
+            return new UploadDetails(theForm.getAction(), errMsg, "message"); // stop here and show the message
         }
         //A.log("End GBIF transformFile");
 

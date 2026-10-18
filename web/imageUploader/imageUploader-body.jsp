@@ -72,6 +72,8 @@
         <a href="<%= AntwebProps.getDomainApp() %>/listImageUploads.do?curatorId=<%= accessLogin.getId() %>">Image Upload Reports</a>.
       </div>
 
+      <noscript><p><b>The Image Uploader needs JavaScript. Please enable it in your browser.</b></p></noscript>
+
       <h3>1. Select files to upload:</h3>
       <br>
       <form id="imageUploadForm" action="<%= org.calacademy.antweb.util.Csrf.action(request, (AntwebProps.getDomainApp()) + "/imageUploader.do") %>" 
@@ -128,7 +130,6 @@
       </div>
       <ul id="iuList"></ul>
     </div>
-    <noscript><p class="action_hint">JavaScript is off: all selected files are sent in one request, which works only for a few images (under 100 MB in total).</p></noscript>
     <script src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/imageUploader/imageUploader.js") %>"></script>
 
     <br>
