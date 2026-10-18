@@ -197,7 +197,6 @@ public final class PasswordResetMgr {
             + "Your new password must be at least " + PasswordPolicy.MIN_LENGTH + " characters long.<br><br>\n"
             + "If the link has expired, go to <a href=\"" + Html.escAttr(login) + "\">" + Html.esc(login) + "</a>,"
             + " click \"Forgot your password?\" and enter your username or email address: a new link arrives within a minute.<br><br>\n"
-            + "If you did not ask for this, you can ignore this email: the account stays inactive and nothing else changes.<br><br>\n"
             + "AntWeb<br>California Academy of Sciences";
     }
 
