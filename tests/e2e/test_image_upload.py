@@ -18,7 +18,14 @@ What is checked, over HTTP (no JavaScript):
 - add and finish refuse an upload record that does not exist (404) and one started by another
   login (403), before anything is read or written.
 
-Writes: none by default. dryRun=1 makes the server check names and specimens and read the file,
+- not saved files (image_upload_refused): a dry-run start counts the names it rejects and the
+  page's own "refused" list, cleaned and capped (nothing created); test_not_saved_round_trip
+  makes one upload record with no images, records refused files three ways (start, add, finish)
+  and checks the report's "Not saved" list, with the page's text escaped.
+
+Writes: test_not_saved_round_trip leaves one finished upload record with no images (and its
+"Not saved" rows) on staging per run; no image file or image row. Otherwise none by default.
+dryRun=1 makes the server check names and specimens and read the file,
 and save nothing (no upload record, no image file, no image row).
 The real upload test (test_real_upload_round_trip) adds images to a specimen and the images
 folder, so it runs only when ANTWEB_IMAGE_UPLOAD_WRITE_TEST=1 and ANTWEB_IMAGE_UPLOAD_TEST_SPECIMEN
@@ -241,9 +248,11 @@ def test_report_specimen_links_open_specimen_pages(curator):
     """
     s = curator[0]
     page = s.get(BASE_URL + "/listImageUploads.do", timeout=TIMEOUT).text
-    ids = re.findall(r"imageUploadReport\.do\?id=(\d+)", page)
+    # Reports with images only: test_not_saved_round_trip leaves uploads with none.
+    ids = re.findall(r"<td>([1-9]\d*)</td>\s*<td><a href='[^']*imageUploadReport\.do\?id=(\d+)'", page)
+    ids = [upload_id for _count, upload_id in ids]
     if not ids:
-        pytest.skip("no upload reports listed on listImageUploads.do")
+        pytest.skip("no upload reports with images listed on listImageUploads.do")
     report = None
     for upload_id in sorted({int(i) for i in ids}, reverse=True)[:10]:
         text = s.get(BASE_URL + f"/imageUploadReport.do?id={upload_id}", timeout=TIMEOUT).text
@@ -259,6 +268,80 @@ def test_report_specimen_links_open_specimen_pages(curator):
     assert codes, "no specimen links in the Uploaded Specimen Set"
     r = s.get(BASE_URL + "/specimen.do?code=" + codes[0], timeout=TIMEOUT)
     assert r.status_code == 200 and "is not in the AntWeb database" not in r.text, (codes[0], r.status_code)
+
+
+# ---------- files not saved (image_upload_refused) ----------
+
+def _supports_not_saved(start_json):
+    if "notSaved" not in start_json:
+        pytest.skip("the server does not record files not saved yet")
+
+
+@needs_curator
+def test_start_counts_not_saved_dry_run(curator):
+    """Rejected names and the page's own refused list are counted once each; nothing is created."""
+    s, token, _ = curator
+    names = [TEST_SPECIMEN + "_D_1.JPG", NO_SPECIMEN + "_D_1.JPG"]
+    refused = "\n".join([
+        TEST_SPECIMEN + "_P_1.JPG\tlarger than 95 MB",
+        TEST_SPECIMEN + "_P_1.JPG\tsame name twice counts once",
+        NO_SPECIMEN + "_D_1.JPG\talso rejected by the server: counts once",
+        "\tno name",
+        "",
+    ])
+    r = _post(s, "start", token, "&dryRun=1", data={"artist": _artist(s), "names": "\n".join(names), "refused": refused})
+    assert r.status_code == 200, r.text[:300]
+    j = r.json()
+    _supports_not_saved(j)
+    assert j["batchId"] == 0 and j["accepted"] == 1
+    assert j["notSaved"] == 2, j
+    # The page's list is capped (2000 per upload).
+    many = "\n".join(f"F{i}.JPG\tx" for i in range(2100))
+    r = _post(s, "start", token, "&dryRun=1", data={"artist": _artist(s), "names": names[0], "refused": many})
+    assert r.status_code == 200 and r.json()["notSaved"] == 2000, r.text[:300]
+
+
+@needs_curator
+def test_not_saved_round_trip(curator):
+    """One upload with no image saved: files refused at start (server and page), at add (server)
+    and at finish (page) are listed under "Not saved" in the report, with the reasons escaped.
+    Writes one upload record (no images) on staging."""
+    s, token, _ = curator
+    r = _post(s, "start", token, "&dryRun=1", data={"artist": _artist(s), "names": TEST_SPECIMEN + "_D_1.JPG"})
+    _supports_not_saved(r.json())
+
+    good = TEST_SPECIMEN + "_D_94.JPG"            # accepted at start, never sent
+    bad_start = NO_SPECIMEN + "_D_1.JPG"          # the server rejects it at start
+    page_big = TEST_SPECIMEN + "_P_94.JPG"        # the page refused it (too large)
+    bad_add = TEST_SPECIMEN.lower() + "_h_94.jpg" # the server refuses it at add
+    failed = TEST_SPECIMEN + "_L_94.JPG"          # failed after retries (page, at finish)
+    script = "<script>alert(1)</script>"
+
+    r = _post(s, "start", token, data={"artist": _artist(s), "names": good + "\n" + bad_start,
+                                       "refused": page_big + "\tlarger than 95 MB"})
+    j = r.json()
+    assert r.status_code == 200 and j["batchId"] > 0 and j["notSaved"] == 2, r.text[:300]
+    batch = j["batchId"]
+
+    r = _post(s, "add", token, f"&batch={batch}", files=_file(bad_add))
+    assert r.status_code == 422, r.text[:200]
+
+    r = _post(s, "finish", token, data={"batch": str(batch), "refused": "\n".join([
+        failed + "\tfailed: network error " + script,
+        bad_start + "\tthe server's reason is kept",
+    ])})
+    j = r.json()
+    assert r.status_code == 200 and j["images"] == 0 and j["notSaved"] == 4, r.text[:300]
+
+    report = s.get(BASE_URL + f"/imageUploadReport.do?id={batch}", timeout=TIMEOUT).text
+    assert "Not saved (4)" in report, report[:500]
+    part = report.split('id="notSaved"', 1)[1]
+    for name in (bad_start, page_big, bad_add, failed):
+        assert name in part, name
+    assert "not in AntWeb" in part and "larger than 95 MB" in part
+    assert "the server's reason is kept" not in part
+    assert script not in report and "&lt;script&gt;" in part
+    assert good not in part
 
 
 # ---------- the old one-request form (removed 2026-10) ----------

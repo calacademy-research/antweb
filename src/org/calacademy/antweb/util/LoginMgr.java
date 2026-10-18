@@ -65,6 +65,11 @@ public class LoginMgr extends Manager {
           } catch (SQLException e) {
             s_log.error("startPasswordConversion() remember_token schema not created e:" + e);
           }
+          try {
+            new ImageUploadRefusedDb(conn).ensureSchema();   // image upload "Not saved" list
+          } catch (SQLException e) {
+            s_log.error("startPasswordConversion() image_upload_refused schema not created e:" + e);
+          }
           int count = new LoginDb(conn).hashLegacyPasswords();
           if (count > 0) populate(conn, true, true);  // drop the cached plain-text values
         } catch (Exception e) {

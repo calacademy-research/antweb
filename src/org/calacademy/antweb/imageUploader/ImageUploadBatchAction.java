@@ -5,7 +5,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -30,6 +34,8 @@ import org.calacademy.antweb.home.Copyright;
 import org.calacademy.antweb.home.CopyrightDb;
 import org.calacademy.antweb.home.ImageDb;
 import org.calacademy.antweb.home.ImageUploadDb;
+import org.calacademy.antweb.home.ImageUploadRefusedDb;
+import org.calacademy.antweb.home.ImageUploadRefusedDb.Refused;
 import org.calacademy.antweb.home.SpecimenDb;
 import org.calacademy.antweb.upload.UploadNotice;
 import org.calacademy.antweb.util.*;
@@ -43,16 +49,24 @@ import org.calacademy.antweb.util.*;
  * One upload (one image_upload row, one report) spans many requests, all POST with the form
  * token (X-CSRF-Token header, checked by SessionRequestFilter) from a logged-in curator who may
  * upload images:
- *   step=start   artist=<id>, names=<one file name per line>  -> {"batchId":..,"rejected":[..]}
+ *   step=start   artist=<id>, names=<one file name per line>,
+ *                refused=<name TAB reason per line>          -> {"batchId":..,"rejected":[..]}
  *                Checks every name (naming rules, file type, specimen exists) before anything is
- *                sent, and creates the upload record if at least one name is good.
+ *                sent, and creates the upload record if at least one name is good. The names it
+ *                rejects, and the files the page refused itself (refused: selected twice, too
+ *                large, empty), are recorded as "not saved" for the report.
  *   step=add     batch=<id>, multipart with exactly one file -> {"status":"saved"|...}
  *                Checks the name again, saves the file (an existing file of that name is copied
  *                to images/backup/ first, as before), makes the four sizes and the image row.
  *                Answers in seconds for a normal TIFF. A retry of a file already saved in this
  *                batch is accepted and does not touch the backup.
- *   step=finish  batch=<id>                                  -> {"reportUrl":..}
- *                Marks the upload complete and regenerates the home page's recent images.
+ *   step=finish  batch=<id>, refused=<name TAB reason per line> -> {"reportUrl":..,"notSaved":n}
+ *                Records the files that could not be sent (refused: failed after retries, or
+ *                refused by the server), marks the upload complete, regenerates the home page's
+ *                recent images and emails the uploader (UploadNotice).
+ * Not saved files are kept in image_upload_refused (ImageUploadRefusedDb) and listed under
+ * "Not saved" in the report. The page's names and reasons are only text to show: they are
+ * cleaned and limited there, never used as file names, and escaped on the report.
  * A batch belongs to the curator who started it: nobody else can add to or finish it.
  * dryRun=1 (start, add, finish) checks everything, reads the file, and saves nothing; the
  * end-to-end tests use it on staging.
@@ -150,6 +164,7 @@ public final class ImageUploadBatchAction extends AntwebAction {
 
         SpecimenDb specimenDb = new SpecimenDb(connection);
         StringBuilder rejected = new StringBuilder();
+        List<Refused> notSaved = new ArrayList<>();
         int good = 0;
         for (String name : names) {
             String reason = checkFile(name, specimenDb);
@@ -158,8 +173,12 @@ public final class ImageUploadBatchAction extends AntwebAction {
             } else {
                 if (rejected.length() > 0) rejected.append(',');
                 rejected.append("{\"name\":\"").append(Html.js(name)).append("\",\"reason\":\"").append(Html.js(reason)).append("\"}");
+                notSaved.add(new Refused(name, reason, ImageUploadRefusedDb.SERVER));
             }
         }
+        // Files the page refused before asking (selected twice, too large, empty).
+        notSaved.addAll(ImageUploadRefusedDb.parse(request.getParameter("refused"), ImageUploadRefusedDb.BROWSER));
+        notSaved = distinct(notSaved);
 
         int batchId = 0;
         if (good > 0 && !dryRun) {
@@ -174,10 +193,14 @@ public final class ImageUploadBatchAction extends AntwebAction {
             imageUpload.setImageCount(0);
             imageUpload = new ImageUploadDb(connection).saveImageUpload(imageUpload);
             batchId = imageUpload.getId();
-            s_log.info("start() batch:" + batchId + " login:" + accessLogin.getId() + " files:" + good);
+            s_log.info("start() batch:" + batchId + " login:" + accessLogin.getId() + " files:" + good + " notSaved:" + notSaved.size());
+            recordNotSaved(connection, batchId, notSaved, null);
         }
+        // notSaved: how many files would be listed as not saved (capped like the record).
         return json(response, 200, "{\"ok\":true,\"batchId\":" + batchId + ",\"dryRun\":" + dryRun
-            + ",\"accepted\":" + good + ",\"maxBytes\":" + MAX_FILE_BYTES + ",\"rejected\":[" + rejected + "]}");
+            + ",\"accepted\":" + good + ",\"maxBytes\":" + MAX_FILE_BYTES
+            + ",\"notSaved\":" + Math.min(notSaved.size(), ImageUploadRefusedDb.MAX_PER_UPLOAD)
+            + ",\"rejected\":[" + rejected + "]}");
     }
 
     /** Null if the file name is acceptable and its specimen exists, else the reason. */
@@ -253,7 +276,10 @@ public final class ImageUploadBatchAction extends AntwebAction {
 
             SpecimenDb specimenDb = new SpecimenDb(connection);
             String reason = checkFile(name, specimenDb);
-            if (reason != null) return json(response, 422, fileError(name, reason));
+            if (reason != null) {
+                if (!dryRun) recordNotSaved(connection, imageUpload.getId(), List.of(new Refused(name, reason, ImageUploadRefusedDb.SERVER)), null);
+                return json(response, 422, fileError(name, reason));
+            }
 
             if (dryRun) {
                 return json(response, 200, "{\"ok\":true,\"status\":\"checked\",\"dryRun\":true,\"name\":\""
@@ -338,30 +364,71 @@ public final class ImageUploadBatchAction extends AntwebAction {
             return json(response, 403, error("This upload was started by another login.", false));
         }
         int count = imageUpload.getImageCount();
+        // A name saved in this upload is never listed as not saved (same rule as the report).
+        Set<String> saved = new HashSet<>();
+        for (ImageUploaded iu : imageUpload.getImages()) {
+            if (iu.getErrorMessage() == null) saved.add(iu.getFileName());
+        }
         if (!imageUpload.getIsComplete()) {   // finishing twice changes nothing
+            // Files the page could not send.
+            recordNotSaved(connection, batchId,
+                ImageUploadRefusedDb.parse(request.getParameter("refused"), ImageUploadRefusedDb.BROWSER), saved);
             count = imageUploadDb.updateImageCount(batchId);
             imageUploadDb.completeImageUpload(imageUpload);
             if (count > 0) new ImageUploaderAction().writeRecentImages(connection);
-            s_log.info("finish() batch:" + batchId + " login:" + accessLogin.getId() + " images:" + count);
-            sendNotice(accessLogin, imageUpload, count);
+            int notSaved = countNotSaved(connection, batchId, saved);
+            s_log.info("finish() batch:" + batchId + " login:" + accessLogin.getId() + " images:" + count + " notSaved:" + notSaved);
+            // Images saved: files whose four sizes and image row were made. image_count also counts
+            // a file whose sending was cut off part way (it is then listed as not saved, too).
+            sendNotice(accessLogin, imageUpload, saved.size(), notSaved);
         }
         String reportUrl = AntwebProps.getDomainApp() + "/imageUploadReport.do?id=" + batchId;
-        return json(response, 200, "{\"ok\":true,\"batchId\":" + batchId + ",\"images\":" + count
+        return json(response, 200, "{\"ok\":true,\"batchId\":" + batchId + ",\"images\":" + saved.size()
+            + ",\"notSaved\":" + countNotSaved(connection, batchId, saved)
             + ",\"reportUrl\":\"" + Html.js(reportUrl) + "\"}");
     }
 
     /** Emails the uploader that the upload is complete (UploadNotice). Sent once, when the upload is first finished. */
-    private static void sendNotice(Login accessLogin, ImageUpload imageUpload, int count) {
+    private static void sendNotice(Login accessLogin, ImageUpload imageUpload, int count, int notSaved) {
         UploadNotice.Facts f = new UploadNotice.Facts();
         f.images = true;
         f.complete = true;
         f.imagesSaved = count;
+        f.imagesNotSaved = notSaved;
         f.reportUrl = AntwebProps.getDomainApp() + "/imageUploadReport.do?id=" + imageUpload.getId();
         f.reportNeedsLogin = true;
         UploadNotice.send(accessLogin, true, GroupMgr.getGroup(imageUpload.getGroupId()), f);
     }
 
     // ---------- helpers ----------
+
+    /** Record files that were not saved. A failure is logged and never stops the upload. */
+    private static void recordNotSaved(Connection connection, int batchId, List<Refused> files, Set<String> skipNames) {
+        if (batchId <= 0 || files == null || files.isEmpty()) return;
+        try {
+            new ImageUploadRefusedDb(connection).record(batchId, files, skipNames);
+        } catch (Exception e) {
+            s_log.warn("recordNotSaved() batch:" + batchId + " files:" + files.size() + " e:" + e);
+        }
+    }
+
+    private static int countNotSaved(Connection connection, int batchId, Set<String> saved) {
+        int n = 0;
+        for (Refused r : new ImageUploadRefusedDb(connection).list(batchId)) {
+            if (!saved.contains(r.fileName)) n++;
+        }
+        return n;
+    }
+
+    /** One entry per file name; the first (the server's reason comes first) is kept. */
+    static List<Refused> distinct(List<Refused> files) {
+        Map<String, Refused> byName = new LinkedHashMap<>();
+        for (Refused r : files) {
+            String name = ImageUploadRefusedDb.cleanName(r.fileName);
+            if (name != null) byName.putIfAbsent(name, r);
+        }
+        return new ArrayList<>(byName.values());
+    }
 
     private static int intParam(HttpServletRequest request, String name) {
         try {

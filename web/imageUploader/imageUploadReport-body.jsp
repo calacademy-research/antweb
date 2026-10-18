@@ -150,6 +150,14 @@
         <li><%= imageUpload.getImageCount() %></li>
         </ul>
     </div>
+<% if (!imageUpload.getRefused().isEmpty()) { %>
+    <div id="overview_data" class="plain">
+        <ul>
+        <li><b>Not saved:</b></li>
+        <li><a href="#notSaved"><%= imageUpload.getRefused().size() %></a></li>
+        </ul>
+    </div>
+<% } %>
 
     <div id="overview_data" class="plain">
         <ul>
@@ -193,6 +201,34 @@ A.log("imagerUploadReport-body.jsp fileName:" + imageUploaded.getFileName() + " 
 
 <div class="clear"></div>
 <br>
+
+<%
+    // Files that were not saved, and why (image_upload_refused). Names and reasons may come from
+    // the curator's browser: always escaped.
+    if (!imageUpload.getRefused().isEmpty()) { %>
+    <div id="notSaved" class="plain">
+        <ul>
+        <li><b>Not saved (<%= imageUpload.getRefused().size() %>):</b></li>
+        <li>These files were not saved. To add them, fix what the reason says, then upload them again.</li>
+        </ul>
+    </div>
+    <div class="plain image-upload-not-saved">
+        <ul>
+<%
+   int r = 0;
+   for (ImageUploadRefusedDb.Refused refusedFile : imageUpload.getRefused()) {
+     ++r; %>
+      <ul>
+        <li><b><%= r %>:</b></li>
+        <li><span class="not-saved-name"><%= Html.esc(refusedFile.getFileName()) %></span>: <span class="not-saved-reason"><%= Html.esc(refusedFile.getReason()) %></span></li>
+      </ul>
+<% } %>
+        </ul>
+    </div>
+
+<div class="clear"></div>
+<br>
+<% } %>
 
 <% if (imageDirs.size() > 0) { %>
 

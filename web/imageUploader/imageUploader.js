@@ -10,6 +10,8 @@
  *            check pauses the queue until the curator presses Resume.
  * 3. finish: when every file is done (or the curator chooses to finish without the failed ones),
  *            the upload is marked complete and the report link is shown.
+ * Files that are not saved (refused here or by the server, or failed) are sent by name with their
+ * reason (start and finish, "refused"), so the report lists them under "Not saved".
  * Without JavaScript the page says the Image Uploader needs JavaScript; a form post to
  * imageUploader.do gets the same answer (the old one-request upload was removed in 2026-10).
  */
@@ -294,11 +296,20 @@
     finish();
   }
 
+  // "name<TAB>reason" for each file in one of these states, one per line (for the report's "Not saved").
+  function refusedLines(states) {
+    var clean = function (s) { return String(s || '').replace(/[\t\r\n]+/g, ' '); };
+    // A file selected twice is sent once: its name is not "not saved".
+    return items.filter(function (it) { return !it.dup && states.indexOf(it.state) >= 0; })
+      .map(function (it) { return clean(it.name) + '\t' + clean(it.why || it.state); }).join('\n');
+  }
+
   function finish() {
     if (finished) return;
     if (!DRY_RUN && !batchId) return;
     var body = new URLSearchParams();
     body.set('batch', String(batchId));
+    body.set('refused', refusedLines(['failed', 'rejected']));
     post(BATCH_URL + '?step=finish' + (DRY_RUN ? '&dryRun=1' : ''), body, function (xhr) {
       var r = classify(xhr);
       if (r.kind === 'ok') {
@@ -306,8 +317,9 @@
         window.removeEventListener('beforeunload', onLeave);
         fileInput.disabled = false;
         if (r.json.reportUrl) {
+          var notSaved = r.json.notSaved > 0 ? ', ' + escapeHtml(r.json.notSaved) + ' not saved, listed in the report with the reasons' : '';
           setBanner('Upload finished. <a href="' + escapeHtml(r.json.reportUrl) + '">See the upload report</a> (' +
-            escapeHtml(r.json.images) + ' images).');
+            escapeHtml(r.json.images) + ' images' + notSaved + ').');
         } else {
           setBanner('Upload finished (test mode, nothing saved).');
         }
@@ -333,6 +345,7 @@
     var body = new URLSearchParams();
     body.set('artist', form.elements.artist ? form.elements.artist.value : '');
     body.set('names', names.join('\n'));
+    body.set('refused', refusedLines(['rejected']));   // refused here: selected twice, too large, empty
     post(BATCH_URL + '?step=start' + (DRY_RUN ? '&dryRun=1' : ''), body, function (xhr) {
       var r = classify(xhr);
       if (r.kind === 'pause') { pause(r.why); return; }
@@ -409,7 +422,7 @@
       var it = { file: f, name: f.name, state: 'checking', tries: 0, busy: 0, sent: 0 };
       addRow(it);
       items.push(it);
-      if (seen[f.name]) { it.why = 'selected twice'; setState(it, 'rejected', 'not sent: selected twice'); continue; }
+      if (seen[f.name]) { it.dup = true; it.why = 'selected twice'; setState(it, 'rejected', 'not sent: selected twice'); continue; }
       seen[f.name] = true;
       if (f.size > MAX_BYTES) {
         it.why = 'larger than ' + Math.round(MAX_BYTES / 1e6) + ' MB';
