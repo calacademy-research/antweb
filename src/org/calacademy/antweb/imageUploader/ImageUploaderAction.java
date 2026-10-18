@@ -67,6 +67,7 @@ public final class ImageUploaderAction extends AntwebAction {
                 
         Connection connection = null;
         String dbMethodName = DBUtil.getDbMethodName("BrowseAction.execute()");
+        ImageUpload started = null;   // set once the upload record exists; the uploader is emailed if it then fails
         try {
             DataSource dataSource = getDataSource(request, "longConPool");
             connection = DBUtil.getConnection(dataSource, dbMethodName);
@@ -164,6 +165,7 @@ public final class ImageUploaderAction extends AntwebAction {
                 imageUpload.setImages(images);
                 imageUpload.setImageCount(images.size());
                 imageUpload = imageUploadDb.saveImageUpload(imageUpload); // This will set the ID.
+                started = imageUpload;
 
                 for (ImageUploaded imageUploaded : imageUpload.getImages()) {
                     imageUploaded.setImageUpload(imageUpload);
@@ -186,6 +188,10 @@ public final class ImageUploaderAction extends AntwebAction {
                 
                 imageUploadDb.completeImageUpload(imageUpload); // Flag as finished.
                 imageUpload.setIsComplete(true); // so the report shown now says so too
+                started = null;
+                int saved = 0;
+                for (ImageUploaded iu : imageUpload.getImages()) if (iu.getIsContinueUpload()) ++saved;
+                sendNotice(accessLogin, imageUpload, true, saved, imageUpload.getImages().size() - saved, null);
                                 
                 writeRecentImages(connection);
                 
@@ -204,12 +210,27 @@ public final class ImageUploaderAction extends AntwebAction {
           AdminAlertMgr.add(message, connection);
           request.setAttribute("message", message);
           s_log.warn(message + " temppDir:" + ImageUploaded.tempDir);
+          if (started != null) sendNotice(accessLogin, started, false, -1, -1, UploadNotice.plain(message));
           return mapping.findForward("message");
         } finally {
           DBUtil.close(connection, this, dbMethodName);
           if (entered) ImageUploadGate.exit();
         }    
 	}	
+
+    /** Emails the uploader that the upload is complete or did not complete (UploadNotice). */
+    private static void sendNotice(Login accessLogin, ImageUpload imageUpload, boolean complete, int saved, int notSaved, String failure) {
+        UploadNotice.Facts f = new UploadNotice.Facts();
+        f.images = true;
+        f.complete = complete;
+        f.imagesSaved = saved;
+        f.imagesNotSaved = notSaved;
+        f.failure = failure;
+        f.reportUrl = AntwebProps.getDomainApp() + "/imageUploadReport.do?id=" + imageUpload.getId();
+        f.reportNeedsLogin = true;
+        if (!complete) f.uploadPageUrl = AntwebProps.getDomainApp() + "/imageUploader.do";
+        UploadNotice.send(accessLogin, true, GroupMgr.getGroup(imageUpload.getGroupId()), f);
+    }
 
     public void writeRecentImages(Connection connection) {
         int maxRecent = 5;

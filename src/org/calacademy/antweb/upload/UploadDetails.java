@@ -435,6 +435,9 @@ public class UploadDetails extends OperationDetails {
     public void countInsertedSpecimen() {
       ++countInsertedSpecimens;
     }
+    public int getInsertedSpecimenCount() {
+      return countInsertedSpecimens;
+    }
 
     
     public MessageMgr getMessageMgr() {

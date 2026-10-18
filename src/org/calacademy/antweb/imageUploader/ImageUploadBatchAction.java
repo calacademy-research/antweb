@@ -31,6 +31,7 @@ import org.calacademy.antweb.home.CopyrightDb;
 import org.calacademy.antweb.home.ImageDb;
 import org.calacademy.antweb.home.ImageUploadDb;
 import org.calacademy.antweb.home.SpecimenDb;
+import org.calacademy.antweb.upload.UploadNotice;
 import org.calacademy.antweb.util.*;
 
 /**
@@ -342,10 +343,23 @@ public final class ImageUploadBatchAction extends AntwebAction {
             imageUploadDb.completeImageUpload(imageUpload);
             if (count > 0) new ImageUploaderAction().writeRecentImages(connection);
             s_log.info("finish() batch:" + batchId + " login:" + accessLogin.getId() + " images:" + count);
+            sendNotice(accessLogin, imageUpload, count);
         }
         String reportUrl = AntwebProps.getDomainApp() + "/imageUploadReport.do?id=" + batchId;
         return json(response, 200, "{\"ok\":true,\"batchId\":" + batchId + ",\"images\":" + count
             + ",\"reportUrl\":\"" + Html.js(reportUrl) + "\"}");
+    }
+
+    /** Emails the uploader that the upload is complete (UploadNotice). Sent once, when the upload is first finished. */
+    private static void sendNotice(Login accessLogin, ImageUpload imageUpload, int count) {
+        UploadNotice.Facts f = new UploadNotice.Facts();
+        f.images = true;
+        f.complete = true;
+        f.batchImages = true;
+        f.imagesSaved = count;
+        f.reportUrl = AntwebProps.getDomainApp() + "/imageUploadReport.do?id=" + imageUpload.getId();
+        f.reportNeedsLogin = true;
+        UploadNotice.send(accessLogin, true, GroupMgr.getGroup(imageUpload.getGroupId()), f);
     }
 
     // ---------- helpers ----------
