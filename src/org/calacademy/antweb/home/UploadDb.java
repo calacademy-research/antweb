@@ -136,12 +136,14 @@ public class UploadDb extends AntwebDb {
     public UploadLine getUploadLine(String fileName, int lineNum) {
         //A.log("UploadDb.getUploadLines()");
         ArrayList<UploadLine> uploadLines = new ArrayList<>();
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
-        String query = "select * from upload_line where file_name = '" + fileName + "' and line_num = " + lineNum;
+        String query = "select * from upload_line where file_name = ? and line_num = ?";
         try {
-            stmt = DBUtil.getStatement(getConnection(), "getUploadLines()");
-            rset = stmt.executeQuery(query);
+            stmt = getConnection().prepareStatement(query);
+            stmt.setString(1, fileName);
+            stmt.setInt(2, lineNum);
+            rset = stmt.executeQuery();
             s_log.debug("getUploadLine() query:" + query);
             
             while (rset.next()) {
