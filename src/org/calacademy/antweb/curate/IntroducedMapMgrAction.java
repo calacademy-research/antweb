@@ -27,7 +27,9 @@ public final class IntroducedMapMgrAction extends AntwebAction {
 
         HttpSession session = request.getSession();
 
-        ActionForward c = Check.curator(request, mapping); if (c != null) return c;  
+        // Administrators only, like the other managers in the admin list (the page also fills
+        // in empty maps when it loads).
+        ActionForward c = Check.admin(request, mapping); if (c != null) return c;
 
 		BioregionMapMgrForm bioregionMapMgrForm = (BioregionMapMgrForm) form;
         String orderBy = bioregionMapMgrForm.getOrderBy();

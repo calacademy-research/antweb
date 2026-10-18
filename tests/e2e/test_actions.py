@@ -39,7 +39,9 @@ def test_removed_actions_stay_removed():
              # AntShare: only an embedded Google Form that no longer works.
              "/antShare",
              # Cleanup batch 3: old field guide step (no page linked it) and the retired Move To Valid tool.
-             "/prepareFieldGuideResults", "/moveToValid"]
+             "/prepareFieldGuideResults", "/moveToValid",
+             # Unused tools removed 2026-10-18: species list rename tool and a duplicate mapping.
+             "/speciesListMove", "/speciesListToolAdd"]
     if not IS_PRODUCTION:
         # These two used to update counts; only call them where this change may not be live yet.
         paths += ["/test", "/mobile"]

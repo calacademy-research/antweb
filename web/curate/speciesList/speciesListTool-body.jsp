@@ -370,9 +370,6 @@ if (sl == null) A.log("speciesListTool-body.jsp sl is null for mapSpeciesList1Na
 
 <a href="<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= taxonName %>&project=allantwebants" target=new><img src="<%= AntwebProps.getDomainApp() %>/image/view_icon.png" height="13" width="13" title="View" /></a>
 
-<% if (false && (Taxon.isMorpho(taxonName))) { %>  <!--  || (noPassWorldantsSpeciesList.contains(taxon.getTaxonName())) -->
-<a href="<%= AntwebProps.getDomainApp() %>/speciesListMove.do?taxonName=<%= taxonName %>" target=new><img src="<%= AntwebProps.getDomainApp() %>/image/modifyPen.jpeg" height="15" width="15" title="Rename" /></a>
-<% } %>
 
 <%
 

@@ -114,7 +114,7 @@ public final class ArtistAction extends AntwebAction {
                   request.setAttribute("message", "Artist with id:" + artistId + " does not exist.");
                   return mapping.findForward("message");
                 }
-                if (!accessLogin.isAdmin() && artist.getCuratorId() != accessLogin.getId()) {
+                if (!mayChange(artist, accessLogin)) {
                   request.setAttribute("message", "Only the artist's curator or an administrator may rename an artist.");
                   return mapping.findForward("message");
                 }
@@ -137,6 +137,10 @@ public final class ArtistAction extends AntwebAction {
                 Artist artist = ArtistMgr.getArtist(artistId);
                 if (artist == null) {
                   request.setAttribute("message", "Artist with id:" + artistId + " does not exist.");
+                  return mapping.findForward("message");
+                }
+                if (!mayChange(artist, accessLogin)) {
+                  request.setAttribute("message", "Only the artist's curator or an administrator may remove an artist.");
                   return mapping.findForward("message");
                 }
                 Artist moveToArtist = ArtistMgr.getArtist(moveTo);
@@ -193,4 +197,10 @@ public final class ArtistAction extends AntwebAction {
 		  return mapping.findForward("artists");
         }
 	}
+
+    /** Rename and remove: the artist's curator or an administrator. */
+    public static boolean mayChange(Artist artist, Login accessLogin) {
+        if (artist == null || accessLogin == null) return false;
+        return Boolean.TRUE.equals(accessLogin.isAdmin()) || artist.getCuratorId() == accessLogin.getId();
+    }
 }

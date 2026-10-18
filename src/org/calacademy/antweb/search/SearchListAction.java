@@ -21,12 +21,42 @@ public final class SearchListAction extends AntwebAction {
 
     private static final int specimenCount = 0;
 
+    // Downloads are kept a day: long enough to fetch, and the folder does not grow.
+    static final long KEEP_MILLIS = 24L * 60 * 60 * 1000;
+
+    /** Deletes the earlier downloads (regular files ending in search.txt, never links) older than the cutoff. */
+    public static int removeOldFiles(java.io.File dir, long cutoffMillis) {
+        int removed = 0;
+        java.io.File[] files = dir.listFiles();
+        if (files == null) return 0;
+        for (java.io.File f : files) {
+            java.nio.file.Path p = f.toPath();
+            if (!f.getName().endsWith("search.txt")) continue;
+            if (!java.nio.file.Files.isRegularFile(p, java.nio.file.LinkOption.NOFOLLOW_LINKS)) continue;
+            if (f.lastModified() >= cutoffMillis) continue;
+            try {
+                java.nio.file.Files.delete(p);
+                removed++;
+            } catch (IOException e) {
+                s_log.warn("removeOldFiles() " + f.getName() + " e:" + e);
+            }
+        }
+        return removed;
+    }
+
     public ActionForward execute(
         ActionMapping mapping,
         ActionForm form,
         HttpServletRequest request,
         HttpServletResponse response)
         throws IOException, ServletException {
+
+        // The download is written to a file under web/data/search/: logged-in users only.
+        Login accessLogin = LoginMgr.getAccessLogin(request);
+        if (accessLogin == null) {
+          request.setAttribute("message", "Please log in to download search results.");
+          return mapping.findForward("message");
+        }
 
         //String data = Specimen.getDataHeader() + "\n";
         StringBuffer data = new StringBuffer();
@@ -79,7 +109,8 @@ public final class SearchListAction extends AntwebAction {
         }
 
         String dir = "/web/data/search/";
-        String fileName = DateUtil.getFormatDateTimeStr(new Date()) + "search.txt";
+        removeOldFiles(new java.io.File(AntwebProps.getDocRoot() + dir), System.currentTimeMillis() - KEEP_MILLIS);
+        String fileName = DateUtil.getFormatDateTimeStr(new Date()) + "-" + accessLogin.getId() + "search.txt";
         AntwebUtil.writeDataFile(dir, fileName, data.toString());
         String url = AntwebProps.getDomainApp() + dir + fileName;
         String message = "<li>&middot; <a href=\"" + url + "\" target=\"new\">Tab-delimited data</a></li>";

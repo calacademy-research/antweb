@@ -58,9 +58,34 @@ services:
     expose:
       - 5000
 
-    # etc/api-db.properties (not in git) holds the API's read-only database login.
+    # etc/api-db.properties (not in git) holds the API's read-only database login. Only that
+    # file is mounted: the API never sees the other server settings (main database login,
+    # mail, ...). gunicorn reads it as root at start (--preload, docker/api/Dockerfile) and
+    # serves requests as the user api.
     volumes:
-      - ./etc:/antweb-etc:ro
+      - ./etc/api-db.properties:/antweb-etc/api-db.properties:ro
+
+    # One bulk request holds its records in memory (api.py: at most 10,000 per request, about
+    # 150 MB). The limit keeps a burst of them from taking memory Tomcat and MySQL need: the
+    # kernel stops the largest gunicorn worker and gunicorn starts a new one. Fits both prod
+    # (16 GB) and staging (4 GB).
+    mem_limit: 1g
+    memswap_limit: 1g
+    cpus: 1.0
+    pids_limit: 200
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    # Root in the container (gunicorn's master) keeps only what it needs to start the workers
+    # as the user api.
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
 
   antweb:
     container_name: antweb_antweb_1

@@ -54,6 +54,8 @@ public final class PasswordResetMgr {
     public static final int INVITE_VALID_MINUTES = 14 * 24 * 60;
     public static final int MAX_PER_LOGIN_PER_HOUR = 3;
     public static final int MAX_PER_IP_PER_HOUR = 10;
+    // A wrong password for an inactive account emails a reactivation link at most once in this time.
+    public static final int WRONG_PASSWORD_REACTIVATION_MINUTES = 24 * 60;
 
     public static final String SUBJECT_RESET = "AntWeb password reset";
     public static final String SUBJECT_CAMPAIGN = "AntWeb: please set a new password";
@@ -282,7 +284,8 @@ public final class PasswordResetMgr {
     /**
      * A wrong password for an inactive account: email a reactivation link in the background,
      * so the login page answers as for any wrong password and takes the same time. Counts
-     * against the same per-IP limit as "Forgot your password?".
+     * against the same per-IP limit as "Forgot your password?", and sends nothing if a link
+     * was made for the account in the last 24 hours.
      */
     public static void requestReactivationAsync(final int loginId, final String ip) {
         if (!allowIp(ip)) {
@@ -295,6 +298,12 @@ public final class PasswordResetMgr {
                 if (a == null) return;
                 if (!a.hasEmail()) {
                     logEvent("wrong password for inactive login:" + a.id + " which has no email address");
+                    return;
+                }
+                // At most one such email per account a day: a link made in the last 24 hours
+                // (from this, "Forgot your password?" or a correct-password login) still works.
+                if (new PasswordResetDb(c).countRequestsWithin(a.id, WRONG_PASSWORD_REACTIVATION_MINUTES) > 0) {
+                    logEvent("wrong password for inactive login:" + a.id + " reactivation link not sent (one already sent in the last 24 hours)");
                     return;
                 }
                 String r = sendReactivationLink(c, a.id, a.getDisplayName(), a.name, a.email, ip);

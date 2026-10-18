@@ -78,6 +78,18 @@ public class PasswordResetDb extends AntwebDb {
         }
     }
 
+    /** Links (reset, reactivation, invitation) made for this login in the last given minutes. */
+    public int countRequestsWithin(int loginId, int minutes) throws SQLException {
+        String q = "select count(*) from password_reset where login_id = ? and created > now() - interval ? minute";
+        try (PreparedStatement stmt = getConnection().prepareStatement(q)) {
+            stmt.setInt(1, loginId);
+            stmt.setInt(2, minutes);
+            try (ResultSet rset = stmt.executeQuery()) {
+                return rset.next() ? rset.getInt(1) : 0;
+            }
+        }
+    }
+
     public void insertToken(int loginId, String tokenHash, int validMinutes, String ip) throws SQLException {
         String q = "insert into password_reset (login_id, token_hash, created, expires, requested_ip)"
             + " values (?, ?, now(), now() + interval ? minute, ?)";

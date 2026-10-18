@@ -68,8 +68,7 @@ is a sort of species list (with a description field which goes into description_
 ImportSpeciesList() is called in either case (with an isWorldAnts boolean property) and 
 generateBiogeographicRegions() in the case of Bolton.
 
-      uploadSpeciesList()
-        importSpeciesList()
+      importSpeciesList()
           importProjectByValidity()
             saveProjectTaxon()
               saveTaxon()
@@ -94,68 +93,9 @@ public class SpeciesListUpload extends AntwebUpload {
       m_speciesListUploadDb = new SpeciesListUploadDb(getConnection());      
     }
     
-// WOULD BE GOOD TO REMOVE PROJECT AS IT IS ALWAYS WORLDANTS
-// RENAME UPLOADSPECIESLIST TO uploadWorldants
-    public UploadDetails uploadSpeciesList(String project, FormFile theFile, UploadFile uploadFile, int accessGroupId) throws AntwebException, SQLException, IOException {
-    /* Called by UplaodAction in the case of an project file
-
-       UploadFile in this case is the file being created on the server.  So if a bolton010112.txt file is uploaded
-         then the uploadFile is pointing to  fileName:/data/antweb/worldants.txt encoding:UTF-8
-     */
-        UploadDetails uploadDetails = new UploadDetails("uploadWorldants");
-        String message = null;
-        
-        //s_log.warn("uploadSpeciesList() projectFile:" + project + " theFile:" + theFile + " root:" + uploadFile.getRoot() + " uploadFile:" + uploadFile);
-
-        //String outputFileDir = util.getInputFileHome();
-        //String outputFileName = outputFileDir + project + ".txt";
-        //String encoding = UploadFile.getEncoding(outputFileName, userAgent);
-        s_log.debug("uploadSpeciesList(4) project:" + project + " formFile:" + theFile + " to uploadFileLoc:" + uploadFile.getFileLoc());
-        
-        Utility.copyFile(theFile, uploadFile.getFileLoc()); // Copy to the working directory
-
-        uploadFile.backup(); // We keep a timestamped copy even if it is bad...
-        String backupDirFile = uploadFile.getBackupDirFile();
-
-        s_log.debug("uploadSpeciesList:" + backupDirFile);
-
-        if (!(theFile.toString().indexOf(".txt") > 0)) {
-          message = "Species List must be a .txt file.";
-        }
-        if (!Utility.isTabDelimited(uploadFile.getFileLoc())) {
-          message =  "Species List must be a tab-delimited file."; 
-        }
-        if (!isCurrentProjectFileFormat(uploadFile.getFileLoc())) {
-       // we should really be reading in theFile before copying, so that if it is wrong format we don't overwrite the good one on the server.
-          message =  "Species List must be in the most current format.";
-        }
-        if (message != null) {
-          uploadDetails.setMessage(message);
-          return uploadDetails;
-        }
-
-        A.log("uploadSpeciesList() uploadFile.fileName:" + uploadFile.getFileLoc());
-
-        uploadDetails = importSpeciesList(project, uploadFile, accessGroupId, true);
-        uploadDetails.setOperation("uploadWorldants");
-        if (!uploadDetails.getMessage().equals("success")) {
-          return uploadDetails;
-        }
-        
-        copySpeciesListFile(project, uploadFile);
-
-        message = "success";
-        
-        uploadDetails.setMessage(message);
-        return uploadDetails;
-    }                  
     
     /*
     Two primary access methods. Would be good if they shared more code.
-    UploadAction - uploadSpeciesList
-      (new SpeciesListUploader(connection)).uploadWorldants()
-        speciesListUpload.uploadSpeciesList(4)   (will regenerateAllAntweb())
-          speciesListUpload.importSpeciesList()
     UtilDataAction (called from scheduler)
       SpeciesListUploader(connection)).worldantsFetchAndReload();	
       SpeciesListUploader.worldantsReload()
@@ -1008,31 +948,6 @@ public class SpeciesListUpload extends AntwebUpload {
       }
     } 
     
-    private static void copySpeciesListFile(String project, UploadFile uploadFile) throws IOException {
-        Utility util = new Utility();
-        try {
-            // copy project file to home directory
-
-            String projectRoot = ProjectMgr.getProject(project).getRoot();
-
-            String speciesListFile = uploadFile.getRoot() + Project.getSpeciesListDir() + projectRoot +  "/" + project + UploadFile.getSpeciesListTail();
-            String message = " copy " + uploadFile.getFileLoc() + " to " + speciesListFile;
-            s_log.info("copySpeciesListFile()" + message);
-            Utility.copyFile(uploadFile.getFileLoc(), speciesListFile);
-
-            LogMgr.appendLog("worldantsLog.txt", DateUtil.getFormatDateTimeStr(new Date()) + message);
-
-            // The web/workingdir always has one copy of the latest... in theory.  Similar logic in reloadSpeciesList().
-            String webWorkingDir = uploadFile.getRoot() + "web/workingdir/";
-            Utility.makeDirTree(webWorkingDir); // Didn't work on dev
-            String webWorkingDirCopy = webWorkingDir + project + UploadFile.getSpeciesListTail();
-            s_log.info("copySpeciesListFile() copy " + uploadFile.getFileLoc() + " to " + webWorkingDirCopy);
-            Utility.copyFile(uploadFile.getFileLoc(), webWorkingDirCopy);
-          } catch (IOException e) {
-            s_log.error("copySpeciesListFile() e:" + e);
-        }
-    }
-
     private String makeNameUpToSpecies(Hashtable taxonHash) {
 
         StringBuffer sb = new StringBuffer();
@@ -1069,34 +984,5 @@ public class SpeciesListUpload extends AntwebUpload {
     }
     
 
-    private boolean isCurrentProjectFileFormat(String fileName) {
-        boolean isCurrentFormat = true;
-        try {
-            BufferedReader in = new BufferedReader(new FileReader(fileName));
-            if (in == null) {
-              s_log.error("isCurrentProjectFileFormat() BufferedReader is null for file:" + fileName);
-              return false;
-            }
-            
-            String theLine = in.readLine();
-            if (theLine == null) {
-              s_log.error("isCurrentProjectFileFormat() null line.  Perhaps empty file:" + fileName + "?");
-              return false;
-            }
-
-            s_log.info("isCurrentProjectFileFormat() testLine:" + theLine);
-
-            if (!theLine.contains("Subfamily") && !theLine.contains("subfamily")) {
-              s_log.error("isCurrentProjectFileFormat() " + fileName + " does not contain Subfamily");
-              return false;
-            }
-
-        } catch (Exception e) {
-            String message = "fileName:" + fileName + " e:" + e;
-            s_log.error("isCurrentProjectFileFormat() " + message);
-            return false;
-        }
-        return isCurrentFormat;
-    }
     
 }

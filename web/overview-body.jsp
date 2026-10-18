@@ -290,7 +290,7 @@ Images:
         Museum counts are computed daily and may not reflect most recent specimen uploads.
 
 	 <% if (LoginMgr.isPeter(request)) { %>
-          <br><b><%= overview.getRecalcLink() %></b> (Includes count crawl. Recalculate overview: <%= overview.getKeyStr() %> and make the charts. Update <%= overview.getTable() %> counts.)
+          <br><b><%= overview.getRecalcButton(request) %></b> (Includes count crawl. Recalculate overview: <%= overview.getKeyStr() %> and make the charts. Update <%= overview.getTable() %> counts.)
      <% }
 
       }
@@ -331,7 +331,7 @@ Images:
          <br><b><a href='<%= AntwebProps.getDomainApp() %>/utilData.do?action=projTaxonChildCountCrawl&name=<%= overview.getName() %>'>Project Taxon Child Count Crawl</a></b>
          <% } %>
 	   
-         <br><b><%= overview.getRecalcLink() %></b> (Recalculate overview: <%= overview.getKeyStr() %> and make the charts. Update <%= overview.getTable() %> counts.)
+         <br><b><%= overview.getRecalcButton(request) %></b> (Recalculate overview: <%= overview.getKeyStr() %> and make the charts. Update <%= overview.getTable() %> counts.)
          <% if ("geolocale".equals(overviewType)) { %>
          <br><b><%= overview.getGoogleMapFunctionLink() %></b><%= overview.getGoogleMapFunctionLinkDesc() %>
          <% } %>

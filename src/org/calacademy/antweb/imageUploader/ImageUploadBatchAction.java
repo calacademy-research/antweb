@@ -51,13 +51,14 @@ import org.calacademy.antweb.util.*;
  * upload images:
  *   step=start   artist=<id>, names=<one file name per line>,
  *                refused=<name TAB reason per line>          -> {"batchId":..,"rejected":[..]}
- *                Checks every name (naming rules, file type, specimen exists) before anything is
+ *                Checks every name (naming rules, file type, specimen exists, an existing image
+ *                belongs to the curator's group) before anything is
  *                sent, and creates the upload record if at least one name is good. The names it
  *                rejects, and the files the page refused itself (refused: selected twice, too
  *                large, empty), are recorded as "not saved" for the report.
  *   step=add     batch=<id>, multipart with exactly one file -> {"status":"saved"|...}
  *                Checks the name again, saves the file (an existing file of that name is copied
- *                to images/backup/ first, as before), makes the four sizes and the image row.
+ *                to images/backup/ first, under a dated name), makes the four sizes and the image row.
  *                Answers in seconds for a normal TIFF. A retry of a file already saved in this
  *                batch is accepted and does not touch the backup.
  *   step=finish  batch=<id>, refused=<name TAB reason per line> -> {"reportUrl":..,"notSaved":n}
@@ -163,11 +164,12 @@ public final class ImageUploadBatchAction extends AntwebAction {
         if (names.size() > MAX_NAMES) return json(response, 400, error("At most " + MAX_NAMES + " files at a time.", false));
 
         SpecimenDb specimenDb = new SpecimenDb(connection);
+        ImageDb imageDb = new ImageDb(connection);
         StringBuilder rejected = new StringBuilder();
         List<Refused> notSaved = new ArrayList<>();
         int good = 0;
         for (String name : names) {
-            String reason = checkFile(name, specimenDb);
+            String reason = checkFile(name, specimenDb, imageDb, accessLogin);
             if (reason == null) {
                 good++;
             } else {
@@ -203,14 +205,39 @@ public final class ImageUploadBatchAction extends AntwebAction {
             + ",\"rejected\":[" + rejected + "]}");
     }
 
-    /** Null if the file name is acceptable and its specimen exists, else the reason. */
-    private static String checkFile(String fileName, SpecimenDb specimenDb) throws SQLException {
+    /**
+     * Null if the file name is acceptable, its specimen exists and this login may write the
+     * image, else the reason. A new image is fine; an image that already exists may be
+     * replaced only by a curator of the group that owns it (admins: any), the same rule as
+     * deleting images (DeleteImagesAction).
+     */
+    private static String checkFile(String fileName, SpecimenDb specimenDb, ImageDb imageDb, Login accessLogin) throws SQLException {
         String reason = ImageUploaded.checkName(fileName);
         if (reason != null) return reason;
         ImageUploaded iu = new ImageUploaded();
         iu.init(ImageUploaded.baseName(fileName));
         if (!specimenDb.exists(iu.getCode())) return "Specimen " + iu.getCode().toUpperCase() + " is not in AntWeb. Upload its data first.";
+        if (!mayReplace(iu, imageDb, accessLogin)) {
+            s_log.warn("checkFile() refused replacing image code:" + iu.getCode() + " shot:" + iu.getShot() + iu.getNumber()
+                + " by login:" + accessLogin.getId() + " group:" + accessLogin.getGroupId());
+            return "This image already exists and belongs to another group. Ask an AntWeb administrator to replace it.";
+        }
         return null;
+    }
+
+    /**
+     * True if the image is new (no image row with a group for this code, shot and number; the
+     * same test ImageDb.putImage uses to decide whether it replaces one), or every group it
+     * belongs to is this login's group. Admins: always.
+     */
+    public static boolean mayReplace(ImageUploaded iu, ImageDb imageDb, Login accessLogin) {
+        if (Boolean.TRUE.equals(accessLogin.isAdmin())) return true;
+        Set<Integer> ownerGroups = imageDb.getImageGroupIds(iu.getCode(), iu.getShot(), iu.getNumber());
+        if (ownerGroups.isEmpty()) return true;
+        for (Integer ownerGroup : ownerGroups) {
+            if (ownerGroup == null || ownerGroup != accessLogin.getGroupId()) return false;
+        }
+        return true;
     }
 
     // ---------- add ----------
@@ -275,7 +302,7 @@ public final class ImageUploadBatchAction extends AntwebAction {
             if (fileItem.getSize() <= 0) return json(response, 400, error("Empty file.", true));
 
             SpecimenDb specimenDb = new SpecimenDb(connection);
-            String reason = checkFile(name, specimenDb);
+            String reason = checkFile(name, specimenDb, new ImageDb(connection), accessLogin);
             if (reason != null) {
                 if (!dryRun) recordNotSaved(connection, imageUpload.getId(), List.of(new Refused(name, reason, ImageUploadRefusedDb.SERVER)), null);
                 return json(response, 422, fileError(name, reason));
