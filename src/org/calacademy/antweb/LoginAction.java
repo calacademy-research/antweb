@@ -296,7 +296,7 @@ public final class LoginAction extends AntwebAction {
                         PasswordResetMgr.VALID_MINUTES, true);
                     PasswordResetMgr.logEvent("login refused until password reset (must_reset) login:" + login.getId() + " link:" + result);
                     String text = PasswordResetMgr.NO_EMAIL.equals(result)
-                        ? "For security, please set a new password. There is no email address on this account, so please write to antweb@calacademy.org."
+                        ? "For security, please set a new password. There is no email address on this account, so please write to antweb@antweb.org."
                         : "For security, please set a new password. We have emailed you a link to do so (please check your inbox and spam folder).";
                     messages.add("message", new ActionMessage(text, false));
                     login = null;

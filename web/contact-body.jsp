@@ -13,7 +13,7 @@
 <div id="page_data">
 <div id="overview_data">
 
-For questions regarding AntWeb, please contact <a href="mailto:antweb@calacademy.org">Brian L. Fisher</a> at the California Academy of Sciences.
+For questions regarding AntWeb, please contact <a href="mailto:antweb@antweb.org">Brian L. Fisher</a> at the California Academy of Sciences.
 
 </div>
 </div>

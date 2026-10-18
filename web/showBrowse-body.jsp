@@ -257,5 +257,5 @@ if (childrenList != null) {
 
 <div class="clear"></div>
 <br /><br />
-<a href="mailto:antweb@calacademy.org?subject=Regarding AntWeb page <%= Html.escAttr(thePage) %>">See something amiss? Send us an email.</a>
+<a href="mailto:antweb@antweb.org?subject=Regarding AntWeb page <%= Html.escAttr(thePage) %>">See something amiss? Send us an email.</a>
 
