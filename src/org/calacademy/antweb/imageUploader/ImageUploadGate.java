@@ -7,8 +7,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.calacademy.antweb.upload.UploadAction;
 
 /**
- * Shared state for image uploads (the one-request upload in ImageUploaderAction and the
- * one-file-per-request batch upload in ImageUploadBatchAction).
+ * Shared state for image uploads (the one-file-per-request batch upload in ImageUploadBatchAction).
  *
  * - The site-wide "upload in process" flag (UploadAction.setIsInUploadProcess) is set while at
  *   least one image is being processed, and cleared when the last one finishes. Before, the flag

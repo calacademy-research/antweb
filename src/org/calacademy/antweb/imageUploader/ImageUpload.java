@@ -25,6 +25,7 @@ public class ImageUpload {
     private boolean complete = false;
     
     private ArrayList<ImageUploaded> images;
+    private List<ImageUploadRefusedDb.Refused> refused = new ArrayList<>();   // files not saved (image_upload_refused)
 
 
     public ImageUpload() { 
@@ -103,6 +104,12 @@ public class ImageUpload {
     public String toString() {
       return "id:" + getId() + " created:" + getCreated() + " group:" + getGroupId() + " curator:" + getCuratorId() + " artist:" + getArtistId();
     } 
+
+    /** Files of this upload that were not saved, and why (filled by ImageUploadReport). */
+    public List<ImageUploadRefusedDb.Refused> getRefused() {
+      return refused;
+    }
+    public void setRefused(List<ImageUploadRefusedDb.Refused> refused) {
+      this.refused = refused == null ? new ArrayList<>() : refused;
+    }
 }
-
-

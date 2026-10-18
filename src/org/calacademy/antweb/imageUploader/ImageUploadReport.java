@@ -53,6 +53,16 @@ public final class ImageUploadReport extends AntwebAction {
 
             if (imageUploadId != 0) {            
               imageUpload = imageUploadDb.getImageUpload(imageUploadId);
+              if (imageUpload != null) {
+                // Files not saved; a name saved in this upload (for example on a later try) is left out.
+                java.util.Set<String> saved = new java.util.HashSet<>();
+                for (ImageUploaded iu : imageUpload.getImages()) {
+                  if (iu.getErrorMessage() == null) saved.add(iu.getFileName());
+                }
+                java.util.List<ImageUploadRefusedDb.Refused> refused = new ImageUploadRefusedDb(connection).list(imageUploadId);
+                refused.removeIf(r -> saved.contains(r.getFileName()));
+                imageUpload.setRefused(refused);
+              }
               request.setAttribute("imageUpload", imageUpload);  
               return mapping.findForward("report");
             } else {          

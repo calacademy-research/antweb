@@ -166,6 +166,9 @@ public class UploadAction extends AntwebAction {
 
 		Date worldantsFetchTime = null;
 		String dbMethodName = DBUtil.getDbMethodName("UploadAction.execute()");
+		// Set once a specimen file upload starts; the uploader is emailed when it ends (see the finally block).
+		UploadNotice.Facts notice = null;
+		Group noticeGroup = null;
 		try {
 			setIsInUploadProcess(accessLogin.getName() + ":" + accessGroup.getName());
 
@@ -219,6 +222,12 @@ public class UploadAction extends AntwebAction {
 
 					FormFile specimenFile = theForm.getTheFile();
 					if (specimenFile != null && !specimenFile.getFileName().equals("")) {
+
+						notice = new UploadNotice.Facts();
+						notice.fileName = specimenFile.getFileName();
+						notice.fileType = "taxonWorksUpload".equals(action) ? "TaxonWorks file"
+								: "GBIFUpload".equals(action) ? "GBIF file" : "AntWeb specimen file";
+						noticeGroup = curator != null ? curator.getGroup() : accessGroup;
 
 						if ("specimenUpload".equals(action)) {
 							String theFileName = accessGroup.getAbbrev() + "SpecimenList";
@@ -618,6 +627,10 @@ public class UploadAction extends AntwebAction {
 			uploadDetails.finish(accessLogin, request, connection);
 
 			connection.commit();
+			if (notice != null) {
+				notice.complete = true;
+				notice.uploadId = AntwebMgr.getNextSpecimenUploadId();
+			}
 
 			AntwebUtil.logCount();
 
@@ -642,11 +655,34 @@ public class UploadAction extends AntwebAction {
 
 			DBUtil.close(connection, this, dbMethodName);
 
+			if (notice != null) sendUploadNotice(notice, noticeGroup, uploadDetails, accessLogin, request);
+
 			Profiler.profile("uploadAction", uploadDetails.getStartTime());
 			Profiler.report();
 		}
 	}
 
+
+	/** Emails the uploader that the specimen upload is complete or did not complete (UploadNotice). */
+	private static void sendUploadNotice(UploadNotice.Facts notice, Group noticeGroup, UploadDetails uploadDetails,
+										 Login accessLogin, HttpServletRequest request) {
+		try {
+			notice.when = new Date();
+			String reportPath = uploadDetails.getLogDirFile();
+			boolean hasReport = reportPath != null && new File(LogMgr.getWebLogRoot() + reportPath).isFile();
+			if (hasReport) notice.reportUrl = AntwebProps.getDomainApp() + "/web/log/" + reportPath;
+			if (notice.complete) {
+				notice.specimensLoaded = uploadDetails.getInsertedSpecimenCount();
+				notice.redFlagged = uploadDetails.getMessageMgr().getRedFlagCount();
+			} else {
+				notice.failure = UploadNotice.failureText(request.getAttribute("message"));
+				notice.uploadPageUrl = AntwebProps.getDomainApp() + "/curate.do";
+			}
+			UploadNotice.send(accessLogin, accessLogin != null, noticeGroup, notice);
+		} catch (Exception e) {
+			s_log.error("sendUploadNotice() e:" + e);
+		}
+	}
 
 	private ActionForward handleException(Exception e, String action, Connection connection, ActionMapping mapping, HttpServletRequest request) {
 
