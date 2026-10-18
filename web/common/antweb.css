@@ -73,6 +73,12 @@ a {
     margin-top:24px;
 }
 
+/* Deployed git commit next to the version: smaller and lighter. */
+#version .aw-commit {
+    font-size: 0.8em;
+    opacity: 0.65;
+}
+
 .version {
   font-family:'Helvetica', 'Arial', sans-serif;
   font-size:.9em;

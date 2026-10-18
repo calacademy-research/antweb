@@ -34,3 +34,5 @@ antweb-docs.zip
 /etc/editor.properties
 /etc/db.properties
 /etc/mail.properties
+/etc/git-commit
+/etc/git-commit.tmp
