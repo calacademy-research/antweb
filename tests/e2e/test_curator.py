@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 
 import pytest
 
-from antweb import BASE_URL, IS_PRODUCTION, get, new_session
+from antweb import BASE_URL, IS_PRODUCTION, get, new_session, post_login
 
 USER = os.environ.get("ANTWEB_TEST_USER")
 PASSWORD = os.environ.get("ANTWEB_TEST_PASSWORD")
@@ -177,9 +177,7 @@ def _browser_with_remember(value):
 
 def test_remember_me():
     s = new_session()
-    r = s.post(BASE_URL + "/login.do",
-               data={"userName": USER, "password": PASSWORD, "isSubmit": "true", "rememberMe": "on"},
-               timeout=60, allow_redirects=False)
+    r = post_login(s, USER, PASSWORD, extra={"rememberMe": "on"}, allow_redirects=False)
     headers = [h for h in _remember_set_cookie(r) if not h.startswith("AW_REMEMBER=;")]
     assert headers, f"login with rememberMe set no AW_REMEMBER cookie: {r.raw.headers.getlist('Set-Cookie')}"
     h = headers[-1].lower()
@@ -200,8 +198,7 @@ def test_remember_me():
 
 def test_login_without_remember_me_sets_no_cookie():
     s = new_session()
-    r = s.post(BASE_URL + "/login.do", data={"userName": USER, "password": PASSWORD, "isSubmit": "true"},
-               timeout=60, allow_redirects=False)
+    r = post_login(s, USER, PASSWORD, allow_redirects=False)
     assert not [h for h in _remember_set_cookie(r) if not h.startswith("AW_REMEMBER=;")]
     s.get(BASE_URL + "/logout.do", timeout=60)
 

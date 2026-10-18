@@ -2,6 +2,7 @@
 Anonymous visitors see the links, and get the log-in page with an explanation; after logging in
 they return to the page they asked for (a same-site relative path only)."""
 import html
+from urllib.parse import urlparse
 import re
 
 import pytest
@@ -48,4 +49,7 @@ def test_post_return_target_ignores_other_sites():
                timeout=TIMEOUT, allow_redirects=True)
     assert MESSAGE in r.text
     m = TARGET.search(r.text)
-    assert not m or html.unescape(m.group(1)).startswith("/") and "evil.example" not in m.group(1)
+    if m:
+        value = html.unescape(m.group(1))
+        assert "evil.example" not in value, value
+        assert value.startswith("/") or urlparse(value).hostname == urlparse(BASE_URL).hostname, value

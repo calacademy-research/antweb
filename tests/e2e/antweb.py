@@ -110,16 +110,21 @@ import time as _time
 _LOGIN_TIMES: list = []
 
 
-def post_login(session, user, password, timeout=60):
+def login_slot():
+    """Wait until another login POST fits under the site's limit, and count it."""
+    now = _time.time()
+    while _LOGIN_TIMES and now - _LOGIN_TIMES[0] > 60:
+        _LOGIN_TIMES.pop(0)
+    if len(_LOGIN_TIMES) >= 7:
+        _time.sleep(61 - (now - _LOGIN_TIMES[0]))
+    _LOGIN_TIMES.append(_time.time())
+
+
+def post_login(session, user, password, timeout=60, extra=None, allow_redirects=True):
+    data = {"userName": user, "password": password, "isSubmit": "true", **(extra or {})}
     for attempt in range(4):
-        now = _time.time()
-        while _LOGIN_TIMES and now - _LOGIN_TIMES[0] > 60:
-            _LOGIN_TIMES.pop(0)
-        if len(_LOGIN_TIMES) >= 7:
-            _time.sleep(61 - (now - _LOGIN_TIMES[0]))
-        _LOGIN_TIMES.append(_time.time())
-        r = session.post(BASE_URL + "/login.do", data={"userName": user, "password": password, "isSubmit": "true"},
-                         timeout=timeout, allow_redirects=True)
+        login_slot()
+        r = session.post(BASE_URL + "/login.do", data=data, timeout=timeout, allow_redirects=allow_redirects)
         if r.status_code != 429:
             return r
         _time.sleep(30)
