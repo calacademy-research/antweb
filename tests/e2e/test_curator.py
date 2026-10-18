@@ -50,10 +50,9 @@ ADMIN_ONLY = [
 
 
 def login(session):
-    r = session.post(BASE_URL + "/login.do",
-                     data={"userName": USER, "password": PASSWORD, "isSubmit": "true"},
-                     timeout=60, allow_redirects=True)
-    return r
+    # Paced and retried like every other test login: the site allows 10 login POSTs a minute
+    # per visitor, and runs that overlap on staging come from the same address.
+    return post_login(session, USER, PASSWORD)
 
 
 @pytest.fixture(scope="module")
@@ -65,7 +64,7 @@ def curator():
 
 def test_wrong_password_is_refused():
     s = new_session()
-    s.post(BASE_URL + "/login.do", data={"userName": USER, "password": PASSWORD + "-wrong", "isSubmit": "true"}, timeout=60)
+    post_login(s, USER, PASSWORD + "-wrong")
     assert get(s, "/curate.do").category == "login"
 
 

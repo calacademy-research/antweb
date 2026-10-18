@@ -21,6 +21,13 @@ on:
 permissions:
   contents: write
 
+# One run at a time against staging. Overlapping runs (several PRs opened together, or a
+# deploy in the middle of a run) share the site's login limit and restart, and fail at random.
+# A newer queued run replaces an older queued one; a running one is never cancelled.
+concurrency:
+  group: e2e-${{ inputs.antweb_url || 'staging' }}
+  cancel-in-progress: false
+
 jobs:
   e2e:
     runs-on: ubuntu-24.04
