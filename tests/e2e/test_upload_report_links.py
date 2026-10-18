@@ -171,6 +171,8 @@ def test_upload_report_folders_stay_public():
     logs = re.findall(r"""href=["']([^"']*/web/log/(?:specimen|upload|worldants)/[^"']+\.html)["']""", page)
     if not logs:
         pytest.skip("no upload reports linked on groups.do")
-    url = urljoin(BASE_URL + "/", logs[0].replace("&amp;", "&"))
+    # Newest report: files from before about 2019 are no longer on the server (old links fixed 10-17).
+    newest = max(logs, key=lambda h: h.rsplit("/", 1)[-1])
+    url = urljoin(BASE_URL + "/", newest.replace("&amp;", "&"))
     r = new_session().get(url, timeout=TIMEOUT)
     assert r.status_code == 200, (url, r.status_code)
