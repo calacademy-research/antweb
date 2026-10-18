@@ -75,6 +75,8 @@ public final class LogMgrAction extends AntwebAction {
         String lines = (String) df.get("lines");
         String list = (String) df.get("list");
         String loc = (String) df.get("loc"); // Either data or web (which is web/log).
+        // No action: show the log list (the log manager's start page).
+        if (action == null || "".equals(action)) action = "list";
         if ("list".equals(action)) {
             message = getLinkList();
         }
