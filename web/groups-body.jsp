@@ -115,7 +115,7 @@ if (here.contains("orderBy=name")) { t1 = a; t2 = b; } else { t1 = c; t2 = d; } 
 		} 
 		if (here.contains("orderBy=lastUpload")) { t1 = a; t2 = b; } else { t1 = ""; t2 = ""; } 
 
-String logFile = AntwebProps.getDomainApp() + "/web/log/upload/" + upload.getLogFileName();
+String logFile = AntwebProps.getDomainApp() + "/web/log/" + upload.getUploadDir() + "/" + Html.url(upload.getLogFileName());  // reports moved from upload/ to specimen/ in 2019
 t1 += "<a href='" + logFile + "'>";
 t2 += "</a>";		
 		%>		

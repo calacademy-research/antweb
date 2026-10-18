@@ -70,12 +70,12 @@
     </div>
 
     <!-- 
-        taxonName:<%= taxon.getTaxonName() %> 
-        details:<%= taxon.getDetails() %>        
-        simpleName:<%= taxon.getSimpleName() %>
-        prettyName:<%= taxon.getPrettyName() %>
-        fullName:<%= taxon.getFullName() %>
-        name:<%= taxon.getName() %>
+        taxonName:<%= Html.esc(taxon.getTaxonName()) %> 
+        details:<%= Html.esc(taxon.getDetails()) %>        
+        simpleName:<%= Html.esc(taxon.getSimpleName()) %>
+        prettyName:<%= Html.esc(taxon.getPrettyName()) %>
+        fullName:<%= Html.esc(taxon.getFullName()) %>
+        name:<%= Html.esc(taxon.getName()) %>
         execTime:<%= taxon.getExecTime() %>
     -->
 
@@ -118,7 +118,7 @@
       if (seniorHomonym != null) { 
           ++i; 
           %>
-          <b><a href="<%= seniorHomonym.getUrl() %>"><%= (seniorHomonym.getAuthorDate() != null) ? seniorHomonym.getAuthorDate() : seniorHomonym.getPrettyName()  %>
+          <b><a href="<%= seniorHomonym.getUrl() %>"><%= Html.esc((seniorHomonym.getAuthorDate() != null) ? seniorHomonym.getAuthorDate() : seniorHomonym.getPrettyName())  %>
           <% if (seniorHomonym.getIsValid()) { %>
             <img src="<%= AntwebProps.getDomainApp() %>/image/valid_name.png" border="0" title="Valid Name">          
           <% } %>
@@ -129,7 +129,7 @@
           if (i > 1) out.println(", ");
           String taxonUrl = homonym.getTaxonUrl();
         %>        
-          <a href="<%= taxonUrl %>&authorDate=<%= authorDate %>"><%= authorDate %></a>
+          <a href="<%= taxonUrl %>&authorDate=<%= Html.escAttr(Html.url(authorDate)) %>"><%= Html.esc(authorDate) %></a>
      <% } %>
        <br>
    <% } %>            
@@ -138,7 +138,7 @@
         <br><h2>Taxonomic History (provided by Barry Bolton, <%= year %>)</h2>
                     <% new Formatter();
                         String words = Formatter.removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomichistory"),""), "br"); words = words == null ? null : words.replaceAll("(?i)\\s*<a[^>]*hol\\.osu\\.edu[^>]*>[^<]*</a>", ""); /* HOL is offline; AntCat stopped sending the link (#1573), older imports still have it. */ %>
-                    <%= new Formatter().removeTag((String) words, "o:p") %>
+                    <%= HtmlSanitizer.sanitize(new Formatter().removeTag((String) words, "o:p")) %>
    <% } %>
 
    <% String seeAlso = taxon.getSeeAlso();
@@ -182,7 +182,7 @@ TaxonName:
   String taxonNameUrl = AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxon.getTaxonName();
   //if (AntwebProps.isDevMode()) AntwebUtil.log("TaxonNameUrl:" + taxonNameUrl);
 %>
-<b><a href="<%= taxonNameUrl %>"><%= taxon.getTaxonName() %></a></b>
+<b><a href="<%= Html.escAttr(taxonNameUrl) %>"><%= Html.esc(taxon.getTaxonName()) %></a></b>
 </div>
 
 <div class="clear"></div>
@@ -190,7 +190,7 @@ TaxonName:
 Display TaxonName:
 </div>
 <div id=data_items2>
-<b><%= taxon.getTaxonNameDisplay() %></b>
+<b><%= Html.esc(taxon.getTaxonNameDisplay()) %></b>
 </div>
 
 
@@ -199,7 +199,7 @@ Display TaxonName:
 Name:
 </div>
 <div id=data_items2>
-<b><%= taxon.getName() %></b> &nbsp;
+<b><%= Html.esc(taxon.getName()) %></b> &nbsp;
 </div>
 
 <div class="clear"></div>
@@ -211,7 +211,7 @@ ParentTaxonName:
   taxonNameUrl = AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxon.getParentTaxonName();
   //if (AntwebProps.isDevMode()) AntwebUtil.log("TaxonNameUrl:" + taxonNameUrl);
 %>
-<b><a href="<%= taxonNameUrl %>"><%= taxon.getParentTaxonName() %></a></b>
+<b><a href="<%= Html.escAttr(taxonNameUrl) %>"><%= Html.esc(taxon.getParentTaxonName()) %></a></b>
 </div>
 
 <div class="clear"></div>
@@ -226,42 +226,42 @@ Rank:
 <div id=data_title2>
 Kingdom</div>
 <div id=data_items2>
-<b><%= Formatter.initCap(taxon.getKingdomName()) %></b>
+<b><%= Html.esc(Formatter.initCap(taxon.getKingdomName())) %></b>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 PhylumName:
 </div>
 <div id=data_items2>
-<b><%= Formatter.initCap(taxon.getPhylumName()) %></b>
+<b><%= Html.esc(Formatter.initCap(taxon.getPhylumName())) %></b>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 OrderName:
 </div>
 <div id=data_items2>
-<b><%= Formatter.initCap(taxon.getOrderName()) %></b>
+<b><%= Html.esc(Formatter.initCap(taxon.getOrderName())) %></b>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 ClassName:
 </div>
 <div id=data_items2>
-<b><%= Formatter.initCap(taxon.getClassName()) %></b>
+<b><%= Html.esc(Formatter.initCap(taxon.getClassName())) %></b>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 Family:
 </div>
 <div id=data_items2>
-<b><%= Formatter.initCap(taxon.getFamily()) %></b>
+<b><%= Html.esc(Formatter.initCap(taxon.getFamily())) %></b>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 Subfamily:
 </div>
 <div id=data_items2>
-<b><%= Utility.notBlankValue(Formatter.initCap(taxon.getSubfamily())) %></b>
+<b><%= Html.esc(Utility.notBlankValue(Formatter.initCap(taxon.getSubfamily()))) %></b>
 </div>
 
 <div class="clear"></div>
@@ -269,7 +269,7 @@ Subfamily:
 Tribe:
 </div>
 <div id=data_items2>
-<b><%= Utility.notBlankValue(Formatter.initCap(taxon.getTribe())) %></b>
+<b><%= Html.esc(Utility.notBlankValue(Formatter.initCap(taxon.getTribe()))) %></b>
 </div>
 
 <div class="clear"></div>
@@ -277,35 +277,35 @@ Tribe:
 Genus:
 </div>
 <div id=data_items2>
-<b><%= Utility.notBlankValue(Formatter.initCap(taxon.getGenus())) %></b>
+<b><%= Html.esc(Utility.notBlankValue(Formatter.initCap(taxon.getGenus()))) %></b>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 Subgenus:
 </div>
 <div id=data_items2>
-<b><%= Utility.notBlankValue(Formatter.initCap(taxon.getSubgenus())) %></b>
+<b><%= Html.esc(Utility.notBlankValue(Formatter.initCap(taxon.getSubgenus()))) %></b>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 Species Group:
 </div>
 <div id=data_items2>
-<b><%= Utility.notBlankValue(Formatter.initCap(taxon.getSpeciesGroup())) %></b>
+<b><%= Html.esc(Utility.notBlankValue(Formatter.initCap(taxon.getSpeciesGroup()))) %></b>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 Species:
 </div>
 <div id=data_items2>
-<b><%= Utility.notBlankValue(taxon.getSpecies()) %></b>
+<b><%= Html.esc(Utility.notBlankValue(taxon.getSpecies())) %></b>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 Subspecies:
 </div>
 <div id=data_items2>
-<b><%= Utility.notBlankValue(taxon.getSubspecies()) %></b>
+<b><%= Html.esc(Utility.notBlankValue(taxon.getSubspecies())) %></b>
 </div>
 
 <div class="clear"></div>
@@ -345,7 +345,7 @@ HasImageCount (deprecated):
 Source:
 </div>
 <div id=data_items2>
-<b><%= taxon.getSource() %></b>
+<b><%= Html.esc(taxon.getSource()) %></b>
 </div>
 
 <div class="clear"></div>
@@ -401,7 +401,7 @@ Pending:
 Author Date:
 </div>
 <div id=data_items2>
-<b><%= taxon.getAuthorDate() %></b>
+<b><%= Html.esc(taxon.getAuthorDate()) %></b>
 </div>
 
 <div class="clear"></div>
@@ -409,7 +409,7 @@ Author Date:
 Author Date Html:
 </div>
 <div id=data_items2>
-<b><%= taxon.getAuthorDateHtml() %></b>
+<b><%= HtmlSanitizer.sanitize(taxon.getAuthorDateHtml()) %></b>
 </div>
 
 <div class="clear"></div>
@@ -417,7 +417,7 @@ Author Date Html:
 Authors:
 </div>
 <div id=data_items2>
-<b><%= taxon.getAuthors() %></b>
+<b><%= Html.esc(taxon.getAuthors()) %></b>
 </div>
 
 <div class="clear"></div>
@@ -449,7 +449,7 @@ Available:
 Current Valid name:
 </div>
 <div id=data_items2>
-<b><%= taxon.getCurrentValidName() %></b>
+<b><%= Html.esc(taxon.getCurrentValidName()) %></b>
 </div>
 
 <div class="clear"></div>
@@ -457,7 +457,7 @@ Current Valid name:
 Current Valid Rank:
 </div>
 <div id=data_items2>
-<b><%= taxon.getCurrentValidRank() %></b>
+<b><%= Html.esc(taxon.getCurrentValidRank()) %></b>
 </div>
 
 <div class="clear"></div>
@@ -465,7 +465,7 @@ Current Valid Rank:
 Current Valid Parent:
 </div>
 <div id=data_items2>
-<b><%= taxon.getCurrentValidParent() %></b>
+<b><%= Html.esc(taxon.getCurrentValidParent()) %></b>
 </div>
 
 <div class="clear"></div>

@@ -160,7 +160,7 @@ public abstract class Overview implements Overviewable, Headerable, Describable 
     }    
     
     public String getGoogleMapFunctionLinkDesc() {
-      if (!"".equals(getGoogleMapFunctionLink())) return "(Generate Google Map Function).";
+      if (!"".equals(getGoogleMapFunctionLink())) return " (rebuilds the stored specimen map; x deletes it).";
       return "";
     }
     

@@ -22,6 +22,9 @@ public class UploadHistoryAction extends AntwebAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
 
+        // Archived upload files are curator data.
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;
+
         UploadForm uploadForm = (UploadForm) form;
         String name = uploadForm.getEditSpeciesList();
         ArrayList<String> files = AntwebUtil.getUploadDirFiles(name);

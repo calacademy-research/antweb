@@ -73,7 +73,6 @@
    String encodedAdm1 = java.net.URLEncoder.encode(adm1);
    String encodedCountry = java.net.URLEncoder.encode(country);     
 %>
-<br>For reference: <a href='http://geonames.nga.mil/namesgaz/'>Geonames Search</a>
 <%
    if (LoginMgr.isAdmin(accessLogin)) { 
      if (!isValidMatch && !isInvalidMatch) { 

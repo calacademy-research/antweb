@@ -7,6 +7,7 @@ import org.calacademy.antweb.util.AntwebDebug;
 import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.CompareUtil;
 import org.calacademy.antweb.util.DBUtil;
+import org.calacademy.antweb.util.Html;
 
 import java.io.Serializable;
 import java.sql.*;
@@ -67,7 +68,7 @@ these other _cf1 etc.
             if (!"".equals(cfAndNrTaxaLinks)) {
               cfAndNrTaxaLinks += ", ";
             }
-            cfAndNrTaxaLinks += "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+            cfAndNrTaxaLinks += "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.escAttr(taxonName) + "'>" + Html.esc(Taxon.displayTaxonName(taxonName)) + "</a>";
         }
         //A.log("getSeeAlsoCfAndNr() cfAndNrTaxaLinks:" + cfAndNrTaxaLinks);        
         return cfAndNrTaxaLinks;
@@ -97,7 +98,7 @@ these other _cf1 etc.
             if (!"".equals(siblingSubspecies)) {
               siblingSubspecies += ", ";
             }
-            siblingSubspecies += "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+            siblingSubspecies += "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.escAttr(taxonName) + "'>" + Html.esc(Taxon.displayTaxonName(taxonName)) + "</a>";
         }
       } finally {
           DBUtil.close(stmt, rset, this, "getSeeAlsoSiblingSubspecies()");

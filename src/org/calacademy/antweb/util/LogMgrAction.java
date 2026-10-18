@@ -30,7 +30,12 @@ public final class LogMgrAction extends AntwebAction {
         "searches.txt", "notFound.txt", "taxonSet.log", "adminTask.log", "invalid.log", "logins.txt",
         "accessLog.txt", "getUrl.txt", "profiler.jsp", "badRequest.log", "taxonNotFound.txt", "isRestart.log",
         "getConns.log", "compute.log", "admin.log", "geolocaleTaxonFix.log", "hacks.log", "taxonworksNightly.log",
-        "srfExceptions.txt");
+        "srfExceptions.txt",
+        // web/log/ is not served to the public (Caddy); these are read here instead.
+        "worldantsLog.txt", "speciesListTool.txt", "adminAlerts.log", "denied.log", "throttle.txt",
+        "pageTracker.log", "geonames.log", "DataPlaceCase.txt", "flickrAdm1.html", "outOfBounds.txt",
+        "connections.txt", "typeStatusSpeciesFound.txt", "typeStatusSpeciesNotFound.txt",
+        "typeStatusNoTaxonName.txt", "typeStatusHomonym.txt");
     private static final Set<String> DATA_LOGS = Set.of("cCheck.log", "longRequest.log", "messages.txt", "serverBusy.html");
 
     public ActionForward execute(
@@ -333,7 +338,7 @@ public final class LogMgrAction extends AntwebAction {
         message += "<h3>Primary Logs</h3>";
         message += "<ul><li><a href='" + AntwebProps.getDomainApp() + "/listUploads.do?groupId=0'>Specimen Uploads</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/query.do?name=worldantsUploads'>Worldants Uploads</a>";
-        message += "<li><a href='" + AntwebProps.getDomainApp() + "/web/log/srfExceptions.txt'>SRF Exceptions</a>";
+        message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=srfExceptions&ext=txt'>SRF Exceptions</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=tomcatLog'>Tomcat Log</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=apacheLog'>Apache Log</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=antwebLog'>Antweb Log</a>";
@@ -399,7 +404,6 @@ public final class LogMgrAction extends AntwebAction {
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=pageTracker&ext=log'>pageTracker.log</a>";
 
         message += "<h3>Domain Data Logs</h3>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=DataPlaceCase&ext=txt'>DataPlaceCase.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=exifData&ext=txt'>exifData.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=dateDetermined&ext=log'>dateDetermined.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=defaultSpecimen&ext=log'>defaultSpecimen.log</a>";
@@ -407,12 +411,6 @@ public final class LogMgrAction extends AntwebAction {
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=typeStatusSpeciesFound&ext=txt'>typeStatusSpeciesFound.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=typeStatusHomonym&ext=txt'>typeStatusHomonym.txt</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=typeStatusNoTaxonName&ext=txt'>typeStatusNoTaxonName.txt</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=googleApisAdm1Adm2Data&ext=html'>googleApisAdm1Adm2Data.html</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=googleApisAdm1&ext=log'>googleApisAdm1.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=googleApisAdm1&ext=html'>googleApisAdm1.html</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=googleApisAdm1Issue&ext=html'>googleApisAdm1Issue.html</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=geonames&ext=log'>geonames.log</a>";
-        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=flickrAdm1&ext=html'>flickrAdm1.html</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=speciesListTool&ext=txt'>speciesListTool.txt</a>";
 
         message += "<h3>Dev Logs</h3>";

@@ -84,7 +84,7 @@
 	       String lastUploadAnchor = "";
 		   if (group.getLastUploadDate() != null) {
 		     lastUploadStr = Utility.getSimpleDate(group.getLastUploadDate());
-		     String logFile = AntwebProps.getDomainApp() + "/web/log/upload/" + lastUpload.getLogFileName();
+		     String logFile = AntwebProps.getDomainApp() + "/web/log/" + lastUpload.getUploadDir() + "/" + Html.url(lastUpload.getLogFileName());
   		     lastUploadAnchor = "<a href='" + logFile + "'>" + lastUploadStr + "</a>";
 		   }
 		   %>

@@ -16,7 +16,9 @@ ALLOWED = jsp_allow_list(STAGING)
 # Concrete URLs for the wildcard entries.
 WILDCARD_EXAMPLES = {
     "/web/speciesList/*/*.jsp": "/web/speciesList/florida/florida.jsp",
-    "/web/log/*": "/web/log/profiler.jsp",
+    # Top-level files under /web/log/ are closed (admins read them via logMgr.do); the upload
+    # report folders stay open, so the example is a report path.
+    "/web/log/*": "/web/log/upload/x.jsp",
 }
 
 # Real JSPs that are not on the list: Caddy must refuse them.

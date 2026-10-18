@@ -28,7 +28,6 @@
       <li><a href="<%= domainApp %>/typeStatus.do">Type Status Manager</a>
       <li><a href="<%= domainApp %>/query.do">Query Manager</a>
       <li><a href="<%= domainApp %>/logMgr.do?action=list">Log Manager</a>
-      <li><a href="<%= domainApp %>/util.do?action=latlng&param=10.96667,79.78333">maps.googleapis</a>
     </ul>
 
     <h3 align=left>Administrator Functions</h2>
@@ -140,7 +139,6 @@
   	    <li><a href="<%= domainApp %>/utilData.do?action=regenerateAllAntweb"> Regenerate AllAntwebAnts </a>
 	    <li><a href="<%= domainApp %>/utilData.do?action=crawlForType">Crawl </a> For Type
   	    <li><a href="<%= domainApp %>/utilData.do?action=allCountCrawls"> Crawl</a> for Children and Image Counts</a>
-		<li><a href="<%= domainApp %>/utilData.do?action=fetchGoogleApisData">Fetch</a> Google Apis Data for Adm1  	 
 
         <li>Populate Overviews
           <ul>
@@ -161,13 +159,6 @@
 
           </ul>
 
-          <!-- li><a href="< %= domainApp % >/utilData.do?action=fetchGeonamesData">Fetch</a> Geonames Data -->
-
-          <li><a href="<%= domainApp %>/utilData.do?action=fetchGeonamesCountryData">Fetch</a> Get Geonames Country Data
-          <li><a href="<%= domainApp %>/utilData.do?action=fetchGeonamesAdm1Data">Fetch</a> Get Geonames Adm1 Data
-          <li><a href="<%= domainApp %>/utilData.do?action=fullGeodataFetch">Full</a> Geodata Fetch
-          <li><a href="<%= domainApp %>/utilData.do?action=geodataTestFetch">Test</a> Geodata Fetch
-          <li><a href="<%= domainApp %>/utilData.do?action=fetchGeonetData">Geonet</a> Fetch
           <!-- li><a href="< %= domainApp % >/utilData.do?action=moveDataToTaxonProps">Move</a> Favorites to Taxon Prop -->
           <!-- li><a href="< %= domainApp % >/utilData.do?action=populateIntroduced">Populate</a> Introduced -->
 	      <li><a href="<%= domainApp %>/utilData.do?action=updateTaxonSetTaxonNames"> Update</a> Taxon Set TaxonNames 

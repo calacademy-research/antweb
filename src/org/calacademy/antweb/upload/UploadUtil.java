@@ -19,6 +19,15 @@ public class UploadUtil {
 
     private static final Log s_log = LogFactory.getLog(UploadUtil.class);
 
+    // Characters a specimen code may contain (after lower-casing and space removal), e.g.
+    // casent0005428, antweb1032442, blf1862(05)-16, casent0123456-d01, mcz:ent:00012345.
+    private static final java.util.regex.Pattern SPECIMEN_CODE = java.util.regex.Pattern.compile("[a-z0-9._:/()#+-]+");
+
+    /** True if the specimen code uses only the allowed characters (letters, digits and . _ : / ( ) # + -). */
+    public static boolean isValidSpecimenCode(String code) {
+        return code != null && SPECIMEN_CODE.matcher(code).matches();
+    }
+
     static String getFirstLine(String fileName, String encoding) {
         String theLine = "";
 

@@ -456,21 +456,21 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
         String voucherName = getCode();
         if (voucherName.indexOf("-d") > 0) voucherName = voucherName.substring(0, voucherName.indexOf("-d"));
         String seeAlsoLinks = "";
-        String dnaCodeCondition = voucherName + "-d%";
-        String notDnaCodeNameCondition = "";        
-        if (getCode().contains("-d")) {
-            notDnaCodeNameCondition = " or specimen.code = '" + voucherName + "'";
-        }                
+        // Bound parameters: the code is stored data from an upload. LIKE wildcards in it are escaped.
+        String likeVoucher = voucherName.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        boolean isDnaCode = getCode().contains("-d");
         String query = "select specimen.code " 
             + " from specimen " 
-            + " where specimen.code like '" + dnaCodeCondition + "'"
-            + notDnaCodeNameCondition
+            + " where specimen.code like ?"
+            + (isDnaCode ? " or specimen.code = ?" : "")
           ;
-        Statement stmt = null;        
+        PreparedStatement stmt = null;        
         ResultSet rset = null;
         try {
-          stmt = DBUtil.getStatement(connection, "setSeeAlso()");
-          rset = stmt.executeQuery(query);
+          stmt = DBUtil.getPreparedStatement(connection, "setSeeAlso()", query);
+          stmt.setString(1, likeVoucher + "-d%");
+          if (isDnaCode) stmt.setString(2, voucherName);
+          rset = stmt.executeQuery();
 
           //A.log("setSeeAlso() query:" + query);
           while (rset.next()) {
@@ -480,7 +480,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
             if (!"".equals(seeAlsoLinks)) {
               seeAlsoLinks += ", ";
             }
-            seeAlsoLinks += "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a>";
+            seeAlsoLinks += "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.escAttr(Html.url(code)) + "'>" + Html.esc(code) + "</a>";
           }
         } finally {
           DBUtil.close(stmt, rset, this, "setSeeAlso()");

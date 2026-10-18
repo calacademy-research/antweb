@@ -163,6 +163,7 @@ public class MessageMgr {
     public static final String specialCharacterFound = "specialCharacterFound";
     public static final String specimenIdSpacesRemoved = "specimenIdSpacesRemoved";
     public static final String whitespaceInTaxonField = "whitespaceInTaxonField";
+    public static final String invalidSpecimenCode = "invalidSpecimenCode";
     // public static final String  = "";
     
      
@@ -202,7 +203,7 @@ public class MessageMgr {
       testList.add(new Test(invalidLatLon, STR, "<b>Invalid lat/lon <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(unrecognizedColumn, STR, "<b>Unrecognized Column <font color=red>(ignored)</font></b>"));
       testList.add(new Test(invalidColumn, SET, "<b>Invalid Column Count <font color=red>(not uploaded)</font></b>"));
-      testList.add(new Test(notValidAdm1, STR, "<b>Not <a href='http://geonames.nga.mil/namesgaz/'>valid</a> Antweb adm1</b>"));
+      testList.add(new Test(notValidAdm1, STR, "<b>Not valid Antweb adm1</b>"));
       //testList.add(new Test(noCasteNotes, STR, "<b>No life stage/sex data. Undiscernable <a href='" + AntwebProps.getDomainApp() + "/casteDisplayPage.do'>caste</a></b>"));
       testList.add(new Test(unrecognizedCaste, STR, "<b>Unrecognized Caste</b>")); // Not a recognized <a href='" + AntwebProps.getDomainApp() + "/casteList.do'>caste</a>
       testList.add(new Test(invalidDateCollectedStart, STR, "<b>Invalid Date Collected Start</b>"));
@@ -239,6 +240,7 @@ public class MessageMgr {
       testList.add(new Test(specialCharacterFound, SET, "<b>Special Character Found <font color=red>(not uploaded)</font></b>"));
 			testList.add(new Test(specimenIdSpacesRemoved, SET, "<b>Spaces removed from specimen code (auto-corrected — please fix your source data)</b>"));
       testList.add(new Test(whitespaceInTaxonField, SET, "<b>Whitespace in taxonomic field <font color=red>(not uploaded)</font> — please fix your source data</b>"));
+      testList.add(new Test(invalidSpecimenCode, SET, "<b>Specimen code with characters other than letters, digits and . _ : / ( ) # + - <font color=red>(not uploaded)</font> — please fix your source data</b>"));
     }     
     
     public static String getMessageDisplay(String key) {

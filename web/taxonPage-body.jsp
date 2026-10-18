@@ -93,7 +93,7 @@
                   //A.log("taxonPage-body.jsp map:" + taxon.getMap() + " hasMap:" + taxon.hasMap() + " map:" + map);
 	
 				  if (taxon.hasMap() && map != null) { %>
-                  <li><a href="<%= AntwebProps.getDomainApp() %>/bigMap.do?taxonName=<%= taxon.getTaxonName() %>&<%= overview.getParams() %>">Map</a></li>
+                  <li><a href="<%= AntwebProps.getDomainApp() %>/bigMap.do?taxonName=<%= Html.escAttr(taxon.getTaxonName()) %>&<%= overview.getParams() %>">Map</a></li>
 				<% } %>
             </ul>
         </div>
@@ -102,12 +102,12 @@
         <div class="clear"></div>
     </div>
     <!-- 
-        taxonName:<%= taxon.getTaxonName() %> 
-        details:<%= taxon.getDetails() %>        
-        simpleName:<%= taxon.getSimpleName() %>
-        prettyName:<%= taxon.getPrettyName() %>
-        fullName:<%= taxon.getFullName() %>
-        name:<%= taxon.getName() %>
+        taxonName:<%= Html.esc(taxon.getTaxonName()) %> 
+        details:<%= Html.esc(taxon.getDetails()) %>        
+        simpleName:<%= Html.esc(taxon.getSimpleName()) %>
+        prettyName:<%= Html.esc(taxon.getPrettyName()) %>
+        fullName:<%= Html.esc(taxon.getFullName()) %>
+        name:<%= Html.esc(taxon.getName()) %>
         execTime:<%= taxon.getExecTime() %>
     -->
 <%@ include file="/common/taxonomicHierarchy.jsp" %>
@@ -165,7 +165,7 @@ To do:
         // We give extra privs to Jack - he can modify notes
 
     if (taxon.getCurrentValidName() != null && !taxon.getCurrentValidName().equals(taxon.getTaxonName())) {
-      currentValidNameLink = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxon.getCurrentValidTaxonName() + "'>" + Taxon.displayTaxonName(taxon.getCurrentValidName()) + "</a>";
+      currentValidNameLink = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.escAttr(taxon.getCurrentValidTaxonName()) + "'>" + Html.esc(Taxon.displayTaxonName(taxon.getCurrentValidName())) + "</a>";
       %> 
       <br><h2>Current Valid Name:</h2>  <%= currentValidNameLink %><br> 
  <% }      
@@ -186,12 +186,12 @@ To do:
             // Do not do this. It leads to taxon for some reason. status is ignored. This does not seem to help us with this one
             // homonym which will not resolve due to special character: https://www.antweb.org/description.do?genus=temnothorax&species=spinosus&rank=species&authorDate=(Arnol%27di,%201968)
           %>
-          <a href="<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= taxon.getTaxonName() %>&status=homonym"><%= authorDate %></a>
+          <a href="<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= taxon.getTaxonName() %>&status=homonym"><%= Html.esc(authorDate) %></a>
       <%
           } else {
       %>
 
-          <a href="<%= taxon.getUrl() %>&authorDate=<%= authorDate %>"><%= authorDate %></a>
+          <a href="<%= taxon.getUrl() %>&authorDate=<%= Html.escAttr(Html.url(authorDate)) %>"><%= Html.esc(authorDate) %></a>
    <%     }
        } %>
        <br>
@@ -211,7 +211,7 @@ To do:
     if (desc.containsKey("taxonomichistory")) { %>
       <br><h2>Taxonomic History (provided by Barry Bolton, <%= year %>)</h2>
                   <% String words = new Formatter().removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomichistory"),""), "br"); words = words == null ? null : words.replaceAll("(?i)\\s*<a[^>]*hol\\.osu\\.edu[^>]*>[^<]*</a>", ""); /* HOL is offline; AntCat stopped sending the link (#1573), older imports still have it. */ %>
-                    <%= new Formatter().removeTag((String) words, "o:p") %>
+                    <%= HtmlSanitizer.sanitize(new Formatter().removeTag((String) words, "o:p")) %>
  <% }
  
     thisDesc = "images";       
@@ -354,7 +354,7 @@ To do:
   String taxonNameUrl = AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxon.getTaxonName();
   //if (AntwebProps.isDevMode()) AntwebUtil.log("TaxonNameUrl:" + taxonNameUrl);
 %>
-<a href="<%= taxonNameUrl %>"><%= taxon.getTaxonName() %></a>
+<a href="<%= Html.escAttr(taxonNameUrl) %>"><%= Html.esc(taxon.getTaxonName()) %></a>
 </div>
 
 <div class="clear"></div>
@@ -362,7 +362,7 @@ To do:
 <b>Display TaxonName:</b>
 </div>
 <div id=data_items2>
-<%= taxon.getTaxonNameDisplay() %>
+<%= Html.esc(taxon.getTaxonNameDisplay()) %>
 </div>
 
 
@@ -371,7 +371,7 @@ To do:
 <b>Name:</b>
 </div>
 <div id=data_items2>
-<%= taxon.getName() %> &nbsp;
+<%= Html.esc(taxon.getName()) %> &nbsp;
 </div>
 
 <div class="clear"></div>
@@ -383,7 +383,7 @@ To do:
   taxonNameUrl = AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxon.getParentTaxonName();
   //if (AntwebProps.isDevMode()) AntwebUtil.log("TaxonNameUrl:" + taxonNameUrl);
 %>
-<a href="<%= taxonNameUrl %>"><%= taxon.getParentTaxonName() %></a>
+<a href="<%= Html.escAttr(taxonNameUrl) %>"><%= Html.esc(taxon.getParentTaxonName()) %></a>
 </div>
 
 <div class="clear"></div>
@@ -399,42 +399,42 @@ To do:
 <b>Kingdom</b>
 </div>
 <div id=data_items2>
-<%= Formatter.initCap(taxon.getKingdomName()) %>
+<%= Html.esc(Formatter.initCap(taxon.getKingdomName())) %>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 <b>PhylumName:</b>
 </div>
 <div id=data_items2>
-<%= Formatter.initCap(taxon.getPhylumName()) %>
+<%= Html.esc(Formatter.initCap(taxon.getPhylumName())) %>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 <b>OrderName:</b>
 </div>
 <div id=data_items2>
-<%= Formatter.initCap(taxon.getOrderName()) %>
+<%= Html.esc(Formatter.initCap(taxon.getOrderName())) %>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 <b>ClassName:</b>
 </div>
 <div id=data_items2>
-<%= Formatter.initCap(taxon.getClassName()) %>
+<%= Html.esc(Formatter.initCap(taxon.getClassName())) %>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 <b>Family:</b>
 </div>
 <div id=data_items2>
-<%= Formatter.initCap(taxon.getFamily()) %>
+<%= Html.esc(Formatter.initCap(taxon.getFamily())) %>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 <b>Subfamily:</b>
 </div>
 <div id=data_items2>
-<%= Utility.notBlankValue(Formatter.initCap(taxon.getSubfamily())) %>
+<%= Html.esc(Utility.notBlankValue(Formatter.initCap(taxon.getSubfamily()))) %>
 </div>
 
 <div class="clear"></div>
@@ -442,7 +442,7 @@ To do:
 <b>Tribe:</b>
 </div>
 <div id=data_items2>
-<%= Utility.notBlankValue(Formatter.initCap(taxon.getTribe())) %>
+<%= Html.esc(Utility.notBlankValue(Formatter.initCap(taxon.getTribe()))) %>
 </div>
 
 <div class="clear"></div>
@@ -450,7 +450,7 @@ To do:
 <b>Genus:</b>
 </div>
 <div id=data_items2>
-<%= Utility.notBlankValue(Formatter.initCap(taxon.getGenus())) %>
+<%= Html.esc(Utility.notBlankValue(Formatter.initCap(taxon.getGenus()))) %>
 </div>
 
 <div class="clear"></div>
@@ -458,28 +458,28 @@ To do:
 <b>Subgenus:</b>
 </div>
 <div id=data_items2>
-<%= Utility.notBlankValue(Formatter.initCap(taxon.getSubgenus())) %>
+<%= Html.esc(Utility.notBlankValue(Formatter.initCap(taxon.getSubgenus()))) %>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 <b>Species Group:</b>
 </div>
 <div id=data_items2>
-<%= Utility.notBlankValue(Formatter.initCap(taxon.getSpeciesGroup())) %>
+<%= Html.esc(Utility.notBlankValue(Formatter.initCap(taxon.getSpeciesGroup()))) %>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 <b>Species:</b>
 </div>
 <div id=data_items2>
-<%= Utility.notBlankValue(taxon.getSpecies()) %>
+<%= Html.esc(Utility.notBlankValue(taxon.getSpecies())) %>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
 <b>Subspecies:</b>
 </div>
 <div id=data_items2>
-<%= Utility.notBlankValue(taxon.getSubspecies()) %>
+<%= Html.esc(Utility.notBlankValue(taxon.getSubspecies())) %>
 </div>
 <div class="clear"></div>
 <div id=data_title2>
@@ -541,7 +541,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>Source:</b>
 </div>
 <div id=data_items2>
-<%= taxon.getSource() %>
+<%= Html.esc(taxon.getSource()) %>
 </div>
 
 <div class="clear"></div>
@@ -605,7 +605,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>Author Date:</b>
 </div>
 <div id=data_items2>
-<%= taxon.getAuthorDate() %>
+<%= Html.esc(taxon.getAuthorDate()) %>
 </div>
 
 <div class="clear"></div>
@@ -613,7 +613,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>Author Date Html:</b>
 </div>
 <div id=data_items2>
-<%= taxon.getAuthorDateHtml() %>
+<%= HtmlSanitizer.sanitize(taxon.getAuthorDateHtml()) %>
 </div>
 
 <div class="clear"></div>
@@ -621,7 +621,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>Authors:</b>
 </div>
 <div id=data_items2>
-<%= taxon.getAuthors() %>
+<%= Html.esc(taxon.getAuthors()) %>
 </div>
 
 <div class="clear"></div>
@@ -662,7 +662,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>Current Valid Rank:</b>
 </div>
 <div id=data_items2>
-<%= taxon.getCurrentValidRank() %>
+<%= Html.esc(taxon.getCurrentValidRank()) %>
 </div>
 
 <div class="clear"></div>
@@ -670,7 +670,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 <b>Current Valid Parent:</b>
 </div>
 <div id=data_items2>
-<%= taxon.getCurrentValidParent() %>
+<%= Html.esc(taxon.getCurrentValidParent()) %>
 </div>
 
 <div class="clear"></div>

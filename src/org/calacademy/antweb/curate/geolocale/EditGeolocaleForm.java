@@ -36,8 +36,6 @@ public final class EditGeolocaleForm extends ActionForm {
     //private String latitudeFixed;
     //private String longitudeFixed;    
 
-    private String woeId;
-
     private String adminNotes;
     
     private String mapImage;
@@ -46,10 +44,6 @@ public final class EditGeolocaleForm extends ActionForm {
     private boolean isUseParentRegion;
     private boolean isIsland;
     private Timestamp created;
-    
-    private String georankType;
-    
-    private String action;
     
     private boolean isCreate = false;
     private boolean isDelete = false;
@@ -96,13 +90,6 @@ public final class EditGeolocaleForm extends ActionForm {
         this.georank = georank;
     }
 
-    public String getGeorankType() {
-        return georankType;
-    }
-    public void setGeorankType(String georankType) {
-        this.georankType = georankType;
-    }
-    
     public boolean isValid() {
         return isValid;
     }
@@ -192,51 +179,8 @@ public final class EditGeolocaleForm extends ActionForm {
     public String getBoundingBoxFixed() {
         return boundingBoxFixed;
     }
-    public void setBoundingBoxFixed(String boundingBoxFixed) {	
-        if (boundingBoxFixed.contains("North Latitude:")) {
-          // North Latitude: -17.350311 South Latitude: -17.983958 East Longitude: 178.039970 West Longitude: 177.343368
-          // We will parse this into our preferred format.
-          // Should be left, bottom, right, top.
-          // So the above would be...  177.343368, -17.983958, 178.039970, -17.350311
-          String top = getLoc(boundingBoxFixed, 1);
-          String bottom = getLoc(boundingBoxFixed, 2);
-          String right = getLoc(boundingBoxFixed, 3);
-          String left = getLoc(boundingBoxFixed, 4);
-          String newBoundingBoxFixed = left + ", " + bottom + ", " + right + ", " + top;          
-          s_log.debug("EditGeolocaleForm.setBoundingBoxFixed() was: boundingBoxFixed:" + boundingBoxFixed + " newBoundingBoxFixed:" + newBoundingBoxFixed);
-          boundingBoxFixed = newBoundingBoxFixed;
-        }   
+    public void setBoundingBoxFixed(String boundingBoxFixed) {
         this.boundingBoxFixed = boundingBoxFixed;
-    }
-
-    private String getLoc(String box, int i) {
-      String thisLoc = "";
-      try {
-		  // see: https://www.mapdevelopers.com/geocode_bounding_box.php. This is where the box format comes from.
-		  int thisLocColon = box.indexOf(":");
-		  while (i > 1) {
-			thisLocColon = box.indexOf(":", thisLocColon + 1);
-			i = i - 1;        
-		  }
-		  int endOfLoc = box.indexOf(" ", thisLocColon + 2);
-		  if (endOfLoc > 0) {
-	  	    thisLoc = box.substring(thisLocColon + 2, endOfLoc);
-          } else {
-            thisLoc = box.substring(thisLocColon + 2);
-          }
-		  s_log.debug("EditGeolocaleForm.getLoc() i:" + i + " thisLocColon:" + thisLocColon + " endOfLoc:" + endOfLoc + " thisLoc:" + thisLoc);
-      } catch (Exception e) {
-        s_log.warn("getLoc() e:" + e);
-      }
-      return thisLoc;
-    }
-
-
-    public String getWoeId() {
-        return woeId;
-    }
-    public void setWoeId(String woeId) {
-        this.woeId = woeId;
     }
 
     public String getAdminNotes() {
@@ -320,12 +264,6 @@ public final class EditGeolocaleForm extends ActionForm {
       this.orderBy = orderBy;
     }
 
-    public String getAction() {
-      return this.action;
-    }
-    public void setAction(String action) {
-      this.action = action;
-    }
        
 
 	public void reset(ActionMapping mapping, HttpServletRequest request) {
@@ -337,7 +275,7 @@ public final class EditGeolocaleForm extends ActionForm {
 	}       
         
     public String toString() {
-      return "id:" + id + " name:" + getName() + " isValid:" + isValid() + " isLive:" + isLive() + " validName:" + getValidName() + " woeId:" + getWoeId();
+      return "id:" + id + " name:" + getName() + " isValid:" + isValid() + " isLive:" + isLive() + " validName:" + getValidName();
     }
 }
 
