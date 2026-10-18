@@ -112,7 +112,7 @@ public class UploadNoticeTest extends TestCase {
 
     public void testSpecimenFailed() {
         Facts f = specimenFacts();
-        f.failure = UploadNotice.plain("Specimen File must be a <b>tab-delimited</b> file.");
+        f.failure = UploadNotice.failureText("Specimen File must be a <b>tab-delimited</b> file.");
         f.uploadPageUrl = "https://www.antweb.org/curate.do";
         assertEquals("AntWeb: your specimen upload did not complete", UploadNotice.subject(f));
         String body = UploadNotice.body(f);
@@ -156,6 +156,27 @@ public class UploadNoticeTest extends TestCase {
         // A new day.
         assertNull(org.calacademy.antweb.util.Emailer.throttleNotice("a@x.org", t + 25L * 60 * 60 * 1000));
         org.calacademy.antweb.util.Emailer.resetThrottle();
+    }
+
+    public void testCrashesGetTheFixedSentence() {
+        assertEquals("AntWeb hit an unexpected problem (case 12) and made no changes. Please reply to this email so we can look into it.",
+            UploadNotice.failureText("Error. Case number:12. No changes made. e:org.calacademy.antweb.AntwebException: No records processed"));
+        assertEquals("AntWeb hit an unexpected problem and made no changes. Please reply to this email so we can look into it.",
+            UploadNotice.failureText("Error uploading images. ex:java.io.IOException: No space left on device"));
+        assertEquals("AntWeb hit an unexpected problem and made no changes. Please reply to this email so we can look into it.",
+            UploadNotice.failureText("java.lang.NullPointerException at org.calacademy.antweb.Foo.bar(Foo.java:12)"));
+        // Ordinary validation messages are passed on.
+        assertEquals("Specimen File must be in the most current format.",
+            UploadNotice.failureText("Specimen File must be in the most current format."));
+        assertEquals("occurrence.txt should be uploaded as TaxonWorks.",
+            UploadNotice.failureText("occurrence.txt should be uploaded as TaxonWorks."));
+        assertNull(UploadNotice.failureText(null));
+        // The whole email never shows the exception.
+        Facts f = specimenFacts();
+        f.failure = UploadNotice.failureText("Error. Case number:12. No changes made. e:org.calacademy.antweb.AntwebException: x");
+        String body = UploadNotice.body(f);
+        assertTrue(body, body.contains("Message: AntWeb hit an unexpected problem (case 12) and made no changes. Please reply to this email so we can look into it.\n"));
+        assertFalse(body, body.contains("Exception"));
     }
 
     public void testPlain() {

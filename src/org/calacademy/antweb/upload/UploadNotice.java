@@ -248,6 +248,28 @@ public class UploadNotice {
         return b.toString();
     }
 
+    private static final java.util.regex.Pattern CASE_NUMBER = java.util.regex.Pattern.compile("(?i)case number:\\s*(\\d+)");
+    // A Java class name such as java.io.IOException or org.calacademy.antweb.AntwebException.
+    private static final java.util.regex.Pattern JAVA_CLASS = java.util.regex.Pattern.compile("\\b[a-z][a-z0-9_]*(\\.[A-Za-z0-9_$]+)+(Exception|Error)\\b");
+
+    /**
+     * The "Message:" text for an upload that did not complete. Ordinary validation messages
+     * are passed on as plain text. Crashes and unexpected errors (a case number, a Java
+     * exception, "Error uploading images. ex:") become a fixed sentence, so no exception
+     * names or stack text reach a curator.
+     */
+    public static String failureText(Object message) {
+        String s = plain(message);
+        if (s == null) return null;
+        java.util.regex.Matcher m = CASE_NUMBER.matcher(s);
+        boolean hasCase = m.find();
+        boolean crash = hasCase || JAVA_CLASS.matcher(s).find() || s.contains("Exception")
+            || s.startsWith("Error uploading images.") || s.contains(" ex:") || s.contains(" e:");
+        if (!crash) return s;
+        return "AntWeb hit an unexpected problem" + (hasCase ? " (case " + m.group(1) + ")" : "")
+            + " and made no changes. Please reply to this email so we can look into it.";
+    }
+
     /** The page's message as plain text, at most 500 characters. */
     public static String plain(Object message) {
         if (message == null) return null;
