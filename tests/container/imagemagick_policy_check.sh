@@ -4,7 +4,7 @@
 # (TIFF, JPEG, PNG -> JPEG, as ImageUploaded.genImage does) must still work; files that
 # use risky formats, whatever their extension, must be refused.
 set -u
-echo "$(convert -version | head -1)"
+echo "::notice::ImageMagick in the image: $(convert -version | head -1 | cut -c1-120); formats: $(convert -list format 2>/dev/null | grep -iE "^ *(EPHEMERAL|MVG|MSL|TEXT)" | tr -s " " | tr "\n" "|" | cut -c1-300)"
 echo "policy files: $(ls /etc/ImageMagick-*/policy.xml 2>&1)"
 convert -list policy | grep -q "MVG" || echo "::error::ImageMagick check: the AntWeb policy is not loaded ($(convert -version | head -1); $(ls -d /etc/ImageMagick-* 2>&1))"
 d=$(mktemp -d)
@@ -33,7 +33,7 @@ printf '%%!PS\n/Courier findfont 12 scalefont setfont 10 10 moveto (x) show show
 
 refuse() {
   if convert "$@" refused.jpg 2>/dev/null && [ -s refused.jpg ]; then
-    echo "::error::ImageMagick check: not refused: $*"; fail=1
+    echo "::error::ImageMagick check: not refused: $* ($(cp sample.tif probe.tif; convert -debug Policy "$(echo "$*" | sed 's/sample.jpg/probe.tif/')" probe-out.jpg 2>&1 | grep -i policy | head -3 | tr "\n" " " | cut -c1-400))"; fail=1
   else
     echo "ok: refused: $*"
   fi

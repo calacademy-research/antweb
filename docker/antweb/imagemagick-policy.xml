@@ -24,6 +24,11 @@
   <policy domain="coder" rights="none" pattern="{MVG,MSL,TEXT,TXT,LABEL,CAPTION,PANGO,INLINE,DATA,URL,HTTP,HTTPS,FTP,FILE,EPHEMERAL,MPC,VID,PWP,SHOW,WIN,X,PLT,HTML,SHTML}"/>
   <policy domain="coder" rights="none" pattern="{PS,PS2,PS3,EPS,EPS2,EPS3,EPI,EPSF,EPSI,EPT,EPT2,EPT3,PDF,PDFA,AI,XPS,PCL,SVG,SVGZ,MSVG,RSVG}"/>
 
+  <!-- The same, for the modules that implement them (some prefixes, such as ephemeral:,
+       are checked only as a module). -->
+  <policy domain="module" rights="none" pattern="{MVG,MSL,TXT,LABEL,CAPTION,PANGO,INLINE,URL,EPHEMERAL,MPC,VID,PWP,SHOW,WIN,X,PLT,HTML}"/>
+  <policy domain="module" rights="none" pattern="{PS,PS2,PS3,EPS,EPT,PDF,XPS,PCL,SVG,MSVG,RSVG}"/>
+
   <!-- No "@file" lists of further file names. -->
   <policy domain="path" rights="none" pattern="@*"/>
 </policymap>
