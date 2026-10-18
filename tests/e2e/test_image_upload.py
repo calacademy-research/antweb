@@ -261,6 +261,28 @@ def test_report_specimen_links_open_specimen_pages(curator):
     assert r.status_code == 200 and "is not in the AntWeb database" not in r.text, (codes[0], r.status_code)
 
 
+# ---------- the old one-request form (removed 2026-10) ----------
+
+NEEDS_JS = "The Image Uploader needs JavaScript. Please enable it in your browser."
+
+
+@needs_curator
+def test_old_form_post_is_refused(curator):
+    """imageUploader.do no longer takes files: a form post (as the page sent without JavaScript)
+    gets the "needs JavaScript" line and saves nothing. The file names a specimen that does not
+    exist, so even a server still running the old code saves nothing."""
+    s, token, _ = curator
+    page = s.get(BASE_URL + "/imageUploader.do", timeout=TIMEOUT).text
+    if NEEDS_JS not in page:
+        pytest.skip("the server still has the old no-JavaScript form")
+    assert "<noscript>" in page and "imagesUploaded" not in page
+    r = s.post(BASE_URL + "/imageUploader.do", headers={"X-CSRF-Token": token},
+               data={"artist": _artist(s)}, files=_file(NO_SPECIMEN + "_D_1.JPG"),
+               timeout=TIMEOUT, allow_redirects=False)
+    assert r.status_code == 200, r.status_code
+    assert NEEDS_JS in r.text, r.text[:300]
+
+
 # ---------- real upload (opt-in, writes to staging) ----------
 
 @needs_curator

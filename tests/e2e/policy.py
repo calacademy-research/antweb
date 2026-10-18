@@ -14,7 +14,7 @@ NEVER = {
     "/cache": "flushes or rebuilds caches",
     "/adminAlert": "admin alert controls",
     "/upload": "specimen and image upload",
-    "/imageUploader": "image upload",
+    "/imageUploader": "the Image Uploader page; a form post is refused (tested in test_image_upload.py)",
     "/imageUploadBatch": "image upload, one file per request (tested in test_image_upload.py)",
     "/pageTracker": "records page views",
     "/pictureLike": "records a like",

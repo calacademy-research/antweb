@@ -23,8 +23,8 @@ import org.calacademy.antweb.util.LogMgr;
  * with a link to the upload report. Uploads can take a long time; the curator can wait for
  * this mail instead of checking back.
  *
- * Sent only for uploads made by a logged-in person on the upload pages (upload.do,
- * imageUploader.do, imageUploadBatch.do). Never for the nightly TaxonWorks job or anything
+ * Sent only for uploads made by a logged-in person on the upload pages (upload.do and the
+ * Image Uploader's imageUploadBatch.do). Never for the nightly TaxonWorks job or anything
  * else without a web session, never for excluded groups (default: group 1, CAS, which uploads
  * every day), and never when the login has no email address.
  *
@@ -173,8 +173,6 @@ public class UploadNotice {
         public int specimensLoaded = -1;
         public int redFlagged = -1;
         public int imagesSaved = -1;
-        public int imagesNotSaved = -1;
-        public boolean batchImages = false; // the Image Uploader's batch mode (refused files are not in the report)
         public String reportUrl;            // null: no report was written
         public boolean reportNeedsLogin = false;
         public String failure;              // the message shown on the page, when it did not complete
@@ -219,7 +217,6 @@ public class UploadNotice {
             if (f.specimensLoaded >= 0) b.append("Specimens loaded: ").append(n(f.specimensLoaded)).append("\n");
             if (f.redFlagged >= 0) b.append("Red-flagged specimens: ").append(n(f.redFlagged)).append("\n");
             if (f.imagesSaved >= 0) b.append("Images saved: ").append(n(f.imagesSaved)).append("\n");
-            if (f.imagesNotSaved > 0) b.append("Images not saved: ").append(n(f.imagesNotSaved)).append("\n");
         } else if (f.failure != null && !f.failure.isEmpty()) {
             b.append("Message: ").append(f.failure).append("\n");
         }
@@ -234,7 +231,7 @@ public class UploadNotice {
                 b.append("Upload report:\n");
             }
             b.append(f.reportUrl).append("\n\n");
-            if (f.batchImages) {
+            if (f.images) {
                 b.append("The report lists the images that were saved. Files the Image Uploader refused were listed on the upload page and are not in the report.\n\n");
             }
         } else {
@@ -242,7 +239,7 @@ public class UploadNotice {
         }
 
         if (!f.complete && f.uploadPageUrl != null) {
-            b.append(f.images ? "You can upload the images again at " : "You can upload the file again at ").append(f.uploadPageUrl).append("\n\n");
+            b.append("You can upload the file again at ").append(f.uploadPageUrl).append("\n\n");
         }
         b.append("Replies to this message go to ").append(REPLY_TO).append(".\n");
         return b.toString();
@@ -255,27 +252,19 @@ public class UploadNotice {
     /**
      * The "Message:" text for an upload that did not complete. Ordinary validation messages
      * are passed on as plain text. Crashes and unexpected errors (a case number, a Java
-     * exception, "Error uploading images. ex:") become a fixed sentence, so no exception
+     * exception) become a fixed sentence, so no exception
      * names or stack text reach a curator.
      */
     public static String failureText(Object message) {
-        return failureText(message, true);
-    }
-
-    /**
-     * As failureText(message), but madeNoChanges=false leaves out "and made no changes" for an
-     * upload that may have saved part of its work before the error (the no-JavaScript image form).
-     */
-    public static String failureText(Object message, boolean madeNoChanges) {
         String s = plain(message);
         if (s == null) return null;
         java.util.regex.Matcher m = CASE_NUMBER.matcher(s);
         boolean hasCase = m.find();
         boolean crash = hasCase || JAVA_CLASS.matcher(s).find() || s.contains("Exception")
-            || s.startsWith("Error uploading images.") || s.contains(" ex:") || s.contains(" e:");
+            || s.contains(" ex:") || s.contains(" e:");
         if (!crash) return s;
         return "AntWeb hit an unexpected problem" + (hasCase ? " (case " + m.group(1) + ")" : "")
-            + (madeNoChanges ? " and made no changes" : "") + ". Please reply to this email so we can look into it.";
+            + " and made no changes. Please reply to this email so we can look into it.";
     }
 
     /** The page's message as plain text, at most 500 characters. */

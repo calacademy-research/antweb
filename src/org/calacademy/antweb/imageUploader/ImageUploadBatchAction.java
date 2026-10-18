@@ -355,7 +355,6 @@ public final class ImageUploadBatchAction extends AntwebAction {
         UploadNotice.Facts f = new UploadNotice.Facts();
         f.images = true;
         f.complete = true;
-        f.batchImages = true;
         f.imagesSaved = count;
         f.reportUrl = AntwebProps.getDomainApp() + "/imageUploadReport.do?id=" + imageUpload.getId();
         f.reportNeedsLogin = true;

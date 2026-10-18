@@ -11,10 +11,6 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import javax.sql.DataSource;
 
-import org.apache.commons.fileupload2.core.DiskFileItem;
-import org.apache.commons.fileupload2.core.DiskFileItemFactory;
-import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
-
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.Formatter;
@@ -28,9 +24,6 @@ public final class ImageUploaderAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ImageUploaderAction.class);
 
-    private static final int MAX_FILE_SIZE      = 1024 * 1024 * 199; // 199MB
-    private static final int MAX_REQUEST_SIZE   = 1024 * 1024 * 200; // 200MB
-
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
 		throws IOException, ServletException {
@@ -40,197 +33,48 @@ public final class ImageUploaderAction extends AntwebAction {
         ActionForward c = Check.curator(request, mapping); if (c != null) return c;
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;
 
-        if (UploadAction.isInUploadProcess() && request.getContentType() != null && request.getContentType().contains("multipart/form-data")) {
-            String message = "Server is currently in an Upload Process. Please try again in a little while.";
-            if (LoginMgr.isAdmin(request)) message += " " + UploadAction.getIsInUploadProcess();
-            request.setAttribute("message", message);
-            return mapping.findForward("message");
-        }
-
-        //ActionForward e = Check.admin(request, mapping); if (e != null) return e;     
-     
         Login accessLogin = LoginMgr.getAccessLogin(request);
         Group accessGroup = GroupMgr.getAccessGroup(request);
 
-        // The page itself checks this (imageUploader.jsp); a POST must too.
+        // The page itself checks this too (imageUploader.jsp).
         if (accessGroup == null || !(Boolean.TRUE.equals(accessLogin.isUploadImages()) || accessLogin.isAdmin())) {
             request.setAttribute("message", "This login may not upload images.");
             return mapping.findForward("message");
         }
-    
-        HttpSession session = request.getSession();
-        
+
         HttpUtil.setUtf8(request, response);
 
-        String message = "";
-        boolean entered = false;
-                
-        Connection connection = null;
-        String dbMethodName = DBUtil.getDbMethodName("BrowseAction.execute()");
-        ImageUpload started = null;   // set once the upload record exists; the uploader is emailed if it then fails
-        try {
-            DataSource dataSource = getDataSource(request, "longConPool");
-            connection = DBUtil.getConnection(dataSource, dbMethodName);
+        // Images are uploaded by the page's JavaScript through imageUploadBatch.do, one file per
+        // request. The old one-request form post (without JavaScript) was removed in 2026-10.
+        String contentType = request.getContentType();
+        if (contentType != null && contentType.toLowerCase().contains("multipart/form-data")) {
+            request.setAttribute("message", NEEDS_JAVASCRIPT);
+            return mapping.findForward("message");
+        }
 
-            ActionForward b = Check.busy(connection, request, mapping); if (b != null) return b;
-
-            String action = request.getParameter("action");
-            if ("regenerate".equals(action)) {
-              writeRecentImages(connection);
-              message = "Recent Images page regenerated";
-              request.setAttribute("message", message);
-              return mapping.findForward("message");
-            }
-
-            String contentType = request.getContentType(); // Verify the content type
-            //A.log("execute() contentType:" + contentType);        
-            if (contentType != null && contentType.contains("multipart/form-data")) {
-
-                String artist = null;
-                String license = "Attribution-ShareAlike (BY-SA) Creative Commons License and GNU Free Documentation License (GFDL)";
-                String group = null;
-            
-                ImageUpload imageUpload = null;
-
-                // Sets the site-wide upload flag, shared with the batch uploader (ImageUploadGate).
-                if (!ImageUploadGate.enter(accessLogin.getName() + ":" + accessGroup.getName())) {
-                    request.setAttribute("message", "Server is currently in an Upload Process. Please try again in a little while.");
-                    return mapping.findForward("message");
-                }
-                entered = true;
-
-                ImageUploaded.tempDir.toFile().mkdirs();
-                // /usr/local/antweb/temp/images/
-
-                ImageUploadDb imageUploadDb = new ImageUploadDb(connection);        
-                ImageDb imageDb = new ImageDb(connection);
-                SpecimenDb specimenDb = new SpecimenDb(connection);
-   
-                // Files larger than the in-memory threshold are buffered in tempDir.
-                DiskFileItemFactory factory = DiskFileItemFactory.builder().setPath(ImageUploaded.tempDir).get();
-                //factory.setSizeThreshold(MAX_REQUEST_SIZE); // maximum size that will be stored in memory      
-  
-                JakartaServletFileUpload<DiskFileItem, DiskFileItemFactory> upload = new JakartaServletFileUpload<>(factory); // Create a new file upload handler                            
-                //upload.setSizeMax(MAX_REQUEST_SIZE); // maximum file size to be uploaded.
-
-                ArrayList<ImageUploaded> images = new ArrayList<>();
-          
-                List<DiskFileItem> fileItems = upload.parseRequest(request); // Parse the request to get file items.
-
-                if (fileItems.size() == 0) {
-                   request.setAttribute("message", "No files uploaded.");
-                   return mapping.findForward("message");
-                }
-                // The files and other items come mixed together. Handle all, process later.
-                for (DiskFileItem fileItem : fileItems) {
-                    if (!fileItem.isFormField()) {
-                        ImageUploaded imageUploaded = new ImageUploaded();
-                        message = imageUploaded.init(fileItem.getName()); // parse
-
-                        if (!"success".equals(message)) {
-                            request.setAttribute("message", message);
-                            s_log.warn(message);
-                            return mapping.findForward("message");
-                        }
-
-                        String code = imageUploaded.getCode();
-                        boolean exists = new SpecimenDb(connection).exists(code);
-                        if (!exists) {
-                            message = "Specimen:" + Html.esc(code) + " not found in the Antweb database.";
-                            request.setAttribute("message", message);
-                            s_log.warn(message);
-                            return mapping.findForward("message");
-                        }
-
-                        boolean specimenDataExists = specimenDb.exists(imageUploaded.getCode());
-                        imageUploaded.setIsSpecimenDataExists(specimenDataExists); // verify specimen existence.
-                        imageUploaded.setFileItem(fileItem); // write to disk.
-                        images.add(imageUploaded);
-                    } else {
-                        if (fileItem.getFieldName().equals("artist")) artist = fileItem.getString();
-                        if (fileItem.getFieldName().equals("group")) group = fileItem.getString();
-                    }
-                }
-
-                imageUpload = new ImageUpload();
-                imageUpload.setCuratorId(accessLogin.getId());
-                imageUpload.setGroupId(accessGroup.getId());
-                if (artist != null) {
-                  imageUpload.setArtistId(Integer.parseInt(artist));
-                }
-                imageUpload.setCreated(new Date());
-                Copyright copyright = new CopyrightDb(connection).getCurrentCopyright();
-                imageUpload.setCopyright(copyright);
-                imageUpload.setLicense(ImageUpload.LICENSE);
-                imageUpload.setImages(images);
-                imageUpload.setImageCount(images.size());
-                imageUpload = imageUploadDb.saveImageUpload(imageUpload); // This will set the ID.
-                started = imageUpload;
-
-                for (ImageUploaded imageUploaded : imageUpload.getImages()) {
-                    imageUploaded.setImageUpload(imageUpload);
-                    ImageUploadGate.DB_LOCK.lock();
-                    try {
-                      imageUploadDb.saveImageUploaded(imageUploaded);
-                    } finally {
-                      ImageUploadGate.DB_LOCK.unlock();
-                    }
-                    if (imageUploaded.getIsContinueUpload()) {                    
-                      String imagesMessage = imageUploaded.genImages(); // Create derivatives. persist.
-                      ImageUploadGate.DB_LOCK.lock();
-                      try {
-                        imageDb.putImage(imageUploaded); // Create image.
-                      } finally {
-                        ImageUploadGate.DB_LOCK.unlock();
-                      }
-                    }
-                }
-                
-                imageUploadDb.completeImageUpload(imageUpload); // Flag as finished.
-                imageUpload.setIsComplete(true); // so the report shown now says so too
-                started = null;
-                int saved = 0;
-                for (ImageUploaded iu : imageUpload.getImages()) if (iu.getIsContinueUpload()) ++saved;
-                sendNotice(accessLogin, imageUpload, true, saved, imageUpload.getImages().size() - saved, null);
-                                
+        if ("regenerate".equals(request.getParameter("action"))) {
+            Connection connection = null;
+            String dbMethodName = DBUtil.getDbMethodName("ImageUploaderAction.execute()");
+            try {
+                DataSource dataSource = getDataSource(request, "conPool");
+                connection = DBUtil.getConnection(dataSource, dbMethodName);
                 writeRecentImages(connection);
-                
-                request.setAttribute("imageUpload", imageUpload);
-                s_log.debug("go to report");
-                return mapping.findForward("report");
-
-            } else {        
-                s_log.debug("go to imageUploader");
-                return mapping.findForward("imageUploader");
+                request.setAttribute("message", "Recent Images page regenerated");
+                return mapping.findForward("message");
+            } catch (Exception e) {
+                s_log.warn("execute() regenerate e:" + e);
+                request.setAttribute("message", "Could not regenerate the Recent Images page.");
+                return mapping.findForward("message");
+            } finally {
+                DBUtil.close(connection, this, dbMethodName);
             }
-        } catch (Exception ex) {
-          //AntwebUtil.logStackTrace(ex);
-          AntwebUtil.log("ImageUploaderAction.execute() e:" + ex);
-          message = "Error uploading images. ex:" + Html.esc(ex);
-          AdminAlertMgr.add(message, connection);
-          request.setAttribute("message", message);
-          s_log.warn(message + " temppDir:" + ImageUploaded.tempDir);
-          if (started != null) sendNotice(accessLogin, started, false, -1, -1, UploadNotice.failureText(message, false));
-          return mapping.findForward("message");
-        } finally {
-          DBUtil.close(connection, this, dbMethodName);
-          if (entered) ImageUploadGate.exit();
-        }    
-	}	
+        }
 
-    /** Emails the uploader that the upload is complete or did not complete (UploadNotice). */
-    private static void sendNotice(Login accessLogin, ImageUpload imageUpload, boolean complete, int saved, int notSaved, String failure) {
-        UploadNotice.Facts f = new UploadNotice.Facts();
-        f.images = true;
-        f.complete = complete;
-        f.imagesSaved = saved;
-        f.imagesNotSaved = notSaved;
-        f.failure = failure;
-        f.reportUrl = AntwebProps.getDomainApp() + "/imageUploadReport.do?id=" + imageUpload.getId();
-        f.reportNeedsLogin = true;
-        if (!complete) f.uploadPageUrl = AntwebProps.getDomainApp() + "/imageUploader.do";
-        UploadNotice.send(accessLogin, true, GroupMgr.getGroup(imageUpload.getGroupId()), f);
-    }
+        return mapping.findForward("imageUploader");
+	}
+
+    /** Shown when the page is used without JavaScript (imageUploader-body.jsp has the same line). */
+    public static final String NEEDS_JAVASCRIPT = "The Image Uploader needs JavaScript. Please enable it in your browser.";
 
     public void writeRecentImages(Connection connection) {
         int maxRecent = 5;

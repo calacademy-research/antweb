@@ -10,7 +10,8 @@
  *            check pauses the queue until the curator presses Resume.
  * 3. finish: when every file is done (or the curator chooses to finish without the failed ones),
  *            the upload is marked complete and the report link is shown.
- * Without JavaScript the form posts everything to imageUploader.do as before (small uploads only).
+ * Without JavaScript the page says the Image Uploader needs JavaScript; a form post to
+ * imageUploader.do gets the same answer (the old one-request upload was removed in 2026-10).
  */
 (function () {
   'use strict';
