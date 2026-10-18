@@ -16,16 +16,37 @@ inDirs = [
  # , '/usr/local/tomcat/logs/detail' \
   ]
 
-print('Running clearDisk.py.' + "\n")
+# Never walked: the app's own web/log (host ./logs/web, mounted at
+# /usr/local/antweb/web/log), which tomcat owns and logrotate manages
+# (docker/antweb/logrotate.conf). Links are never followed or deleted.
+SKIP_DIRS = {'web'}
 
 # -------------------------------------------------------------
 
+def walkLogs(directory):
+    """(dirpath, name) of the regular files under directory, skipping SKIP_DIRS at its top
+    and any symbolic link (to a folder or a file)."""
+    top = os.path.normpath(directory)
+    for dirpath, dirnames, files in os.walk(top, followlinks=False):
+        keep = []
+        for d in dirnames:
+            if os.path.normpath(dirpath) == top and d in SKIP_DIRS:
+                continue
+            if os.path.islink(os.path.join(dirpath, d)):
+                continue
+            keep.append(d)
+        dirnames[:] = keep
+        for name in files:
+            path = os.path.join(dirpath, name)
+            if os.path.islink(path) or not os.path.isfile(path):
+                continue
+            yield dirpath, name
+
 def findFiles(directory):
     print("\nFinding files in " + directory)
-    for dirpath, dirnames, files in os.walk(directory):
-        for name in files:
-          if isLogOlderThan(name) or isNumberedLogFile(name):
-              deleteFile(dirpath, name)
+    for dirpath, name in walkLogs(directory):
+        if isLogOlderThan(name) or isNumberedLogFile(name):
+            deleteFile(dirpath, name)
 
 def isNumberedLogFile(name):
     #print("fileOlderThan name:" + name)
@@ -68,20 +89,18 @@ def deleteFile(dirpath, name):
 	inFile = os.path.join(dirpath, name)
 	#print('delete ' + inFile)
 	try:
-	  #pass
-	  os.remove(inFile)
-	except PermissionError:
-	  print ('Permission error:' + name)
+	  if not os.path.islink(inFile):
+	    os.remove(inFile)
+	except OSError as e:
+	  print ('Not deleted:' + name + ' ' + str(e))
 
 def getSize(start_path = '.'):
     total_size = 0
-    for dirpath, dirnames, filenames in os.walk(start_path):
-        for f in filenames:
-            fp = os.path.join(dirpath, f)
-            # skip if it is symbolic link
-            if not os.path.islink(fp):
-                total_size += os.path.getsize(fp)
-
+    for dirpath, name in walkLogs(start_path):
+        try:
+            total_size += os.path.getsize(os.path.join(dirpath, name))
+        except OSError:
+            pass
     return total_size
 
 def convertSize(size_bytes):
@@ -107,14 +126,21 @@ def purgeOldBakDir():
         shutil.rmtree(oldDir)
       except FileNotFoundError:
         print ("file not found:" + oldDir)
+      except OSError as e:
+        print ("not deleted:" + oldDir + " " + str(e))
 # -----------------------------          
-          
-purgeOldBakDir()          
-          
-for inDir in inDirs:    
-  beforeBytes = getSize(inDir)
-  findFiles(inDir)
-  afterBytes = getSize(inDir)
-  print("dir:" + inDir + " before:" + str(convertSize(beforeBytes)) + " afterBytes:" + str(convertSize(afterBytes)) + "M")          
 
-print('\n')
+def main():
+  print('Running clearDisk.py.' + "\n")
+  purgeOldBakDir()
+
+  for inDir in inDirs:
+    beforeBytes = getSize(inDir)
+    findFiles(inDir)
+    afterBytes = getSize(inDir)
+    print("dir:" + inDir + " before:" + str(convertSize(beforeBytes)) + " afterBytes:" + str(convertSize(afterBytes)) + "M")
+
+  print('\n')
+
+if __name__ == '__main__':
+  main()

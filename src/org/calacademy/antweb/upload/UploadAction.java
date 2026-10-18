@@ -44,12 +44,25 @@ public class UploadAction extends AntwebAction {
 
 	// Site-wide jobs: admins only.
 	static final java.util.Set<String> ADMIN_ONLY_ACTIONS = java.util.Set.of(
-			"uploadSpeciesList", "fetchAndReloadWorldants", "reloadSpeciesLists", "museumCalc",
-			"speciesTest", "runStatistics", "runCountCrawls", "toggleDownTime", "genAll", "genRecentDescEdits");
+			"fetchAndReloadWorldants", "reloadSpeciesLists", "museumCalc",
+			"speciesTest", "runStatistics", "runCountCrawls", "toggleDownTime", "genAll", "genRecentDescEdits",
+			"allSpecimenFiles");
+
+	// Removed sub-actions (unused tools, 2026-10): answered as "Action not found." before anything else.
+	static final java.util.Set<String> REMOVED_ACTIONS = java.util.Set.of(
+			"reloadSpecimenList", "removeSpecimenList", "uploadSpeciesList");
+
+	public static boolean isRemovedAction(String action) {
+		return action != null && REMOVED_ACTIONS.contains(action);
+	}
+
+	public static boolean isAdminOnlyAction(String action) {
+		return action != null && ADMIN_ONLY_ACTIONS.contains(action);
+	}
 
 	// Need the login's "upload specimens" permission (or admin).
 	static final java.util.Set<String> SPECIMEN_UPLOAD_ACTIONS = java.util.Set.of(
-			"specimenUpload", "taxonWorksUpload", "GBIFUpload", "reloadSpecimenList", "removeSpecimenList", "specimenTest");
+			"specimenUpload", "taxonWorksUpload", "GBIFUpload", "specimenTest");
 
 	/** Upload as another curator: admins, or a curator listed in this login's "upload as" setting. */
 	public static boolean isAllowedUploadAs(Login accessLogin, String curateAs) {
@@ -110,14 +123,20 @@ public class UploadAction extends AntwebAction {
 		Login accessLogin = LoginMgr.getAccessLogin(request);
 		Group accessGroup = GroupMgr.getAccessGroup(request);
 
-		if (accessLogin == null && !"genAll".equals(theForm.getAction())) {
+		// Every action needs a login (genAll too: it is an admin job, nothing calls it anonymously).
+		if (accessLogin == null) {
 			s_log.info("execute() login failure.  No accessGroup.");
 			return mapping.findForward("goToLogin");
 		}
 
+		if (isRemovedAction(theForm.getAction())) {
+			request.setAttribute("message", "Action not found.");
+			return mapping.findForward("message");
+		}
+
 		// Uploads are for curators only (not the anonymous "Browse" login or self-registered
 		// accounts), and the site-wide jobs are for admins only.
-		if (accessLogin != null) {
+		{
 			String requested = theForm.getAction();
 			boolean isAdmin = LoginMgr.isAdmin(accessLogin);
 			if (!isAdmin && !LoginMgr.isCurator(accessLogin)) {
@@ -195,7 +214,6 @@ public class UploadAction extends AntwebAction {
 			if (!(HttpUtil.isPost(request) || httpPostOK) && !(
 					"runStatistics".equals(action)
 							|| "specimenTest".equals(action)
-							|| "reloadSpecimenList".equals(action)
 							|| "genRecentDescEdits".equals(action)
 			)) {
 				String message = "action:" + action + " must be submitted through an http post.";
@@ -272,41 +290,6 @@ public class UploadAction extends AntwebAction {
 
 					//if (!curator.equals(accessLogin)) uploadDetails.setCurator(accessLogin);
 
-				} else if (action.equals("uploadSpeciesList")) {
-					// This functionality should probably be inside of SpeciesListUploader.java
-
-					try {
-						TaxonMgr.setIsInWorldants(true);
-
-						//s_log.debug("setIsInWorldants(true) + root:" + AntwebProps.getDocRoot());
-
-						// Do we need to create /data/antweb/web/workingdir if it does not exist?
-						// Worldants should not be hardcoded. Get from file... (2 times)
-						UploadFile uploadFile = new UploadFile(AntwebProps.getDocRoot() + "web/workingdir/", "worldants.txt", request.getHeader("User-Agent"), null);
-						uploadFile.setRoot(AntwebProps.getDocRoot());
-
-						Date startTime = new Date();
-
-						uploadDetails = new SpeciesListUploader(connection).uploadWorldants(theForm.getTheFile(), uploadFile, accessGroup);
-
-						uploadDetails.setStartTime(startTime);
-						if (uploadDetails.isErrorForward()) {
-							request.setAttribute("message", uploadDetails.getMessage());
-							return uploadDetails.getErrorForward(mapping);
-						}
-
-						if ("on".equals(theForm.getRecrawl())) {
-							runCountCrawls = true;
-						}
-
-						runStatistics(action, connection, request, accessLogin.getId(), uploadDetails.getExecTime());
-						//runStatistics(action, dataSource, request, accessLogin.getId(), uploadDetails);
-
-						s_log.debug("uploadSpeciesList uploadDetails:" + uploadDetails);
-					} finally {
-						TaxonMgr.setIsInWorldants(false);
-						s_log.debug("setIsInWorldants(false)");
-					}
                 /*
  			  } else if (action.equals("reloadSpeciesLists")) {
 				util.deleteFile(AntwebProps.getWebDir() + "log/passBoltonSpeciesCheck.txt");
@@ -338,68 +321,6 @@ public class UploadAction extends AntwebAction {
 					runStatistics(action, connection, request, accessLogin.getId(), uploadDetails.getExecTime());
 
 					uploadDetails.finish(accessLogin, request, connection);
-
-				} else if (action.equals("removeSpecimenList")) {
-
-					SpecimenUploadDb specimenUploadDb = new SpecimenUploadDb(connection);
-					specimenUploadDb.dropSpecimens(accessGroup);
-
-				} else if (action.equals("reloadSpecimenList")) {
-
-					/*
-					AccessGroup is the group that is logged in.
-					SubmitGroup is the effective group. Actions are taken as... can be passed in with the form.
-					Not all actions consider the submitGroup (currently).
-					*/
-					Curator submitCurator = LoginMgr.getCurator(accessLogin.getId());
-					int groupId = theForm.getGroupId();
-					if (groupId > 0) {
-						Group group = GroupMgr.getGroup(theForm.getGroupId());
-						if (group != null) {
-     						int groupAdminId = group.getAdminLogin().getId();
-							submitCurator = LoginMgr.getCurator(groupAdminId);
-						}
-					}
-
-					String abbrev = submitCurator.getGroup().getAbbrev();
-
-					s_log.info("action:" + action + " submitGroup:" + submitCurator.getGroup());
-
-					// Happening in Uploader now.
-					// LogMgr.logQuery(connection, "Before specimen upload Proj_taxon worldants counts", "select project_name, source, count(*) from proj_taxon where source = 'worldants' group by project_name, source");
-					// LogMgr.logAntQuery(connection, "projectTaxaCountByProjectRank", "Before specimen upload Proj_taxon worldants counts");
-
-					String theFileName = abbrev + "SpecimenList";
-					action = "reload:" + theFileName;
-					// logFileName += theFileName + UploadDetails.getLogExt();
-					String formFileName = new Date() + "reloadSpecimen" + submitCurator.getGroup() + ".txt";
-
-					boolean isUpload = false; // It is a reload.
-					uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(theFileName, formFileName
-							, submitCurator, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
-
-					if (AntwebProps.isDevMode()) {
-						s_log.debug("DEV SKIPPING, post specimen processing aborted.");
-						uploadDetails.finish(accessLogin, request, connection);
-						return uploadDetails.findForward(mapping, request);
-					}
-
-					ActionForward af = uploadDetails.returnForward(mapping, request);
-					if (af != null) return af;
-
-					//LogMgr.logQuery(connection, "After specimen upload Proj_taxon worldants counts", "select project_name, source, count(*) from proj_taxon where source = 'worldants' group by project_name, source");
-					// LogMgr.logAntQuery(connection, "projectTaxaCountByProjectRank", "After specimen upload Proj_taxon worldants counts");
-
-					specimenPostProcess(request, connection, submitCurator, uploadDetails);
-					specimenPostProcessGlobal(connection);
-
-					httpPostOK = true;
-
-					uploadDetails.finish(accessLogin, request, connection);
-
-					ActionForward forward = uploadDetails.findForward(mapping, request);
-					s_log.debug("execute() action:" + action + " uploadDetails:" + uploadDetails + " forward:" + forward);
-					if (forward != null) return forward;
 
 				} else if (action.equals("specimenTest")) {
 					// This will reload the last specimen upload of the login listed below.

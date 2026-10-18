@@ -270,43 +270,6 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
         <!-- End Specimen file or Zip File Upload -->
 
 
-       <!-- Reload Specimen Data -->
-
-       <div class="admin_action_module">
-         <div class="admin_action_item">    
-             <div style="float:left;">        
-               <br>Reload Specimen Data:
-             </div>
-             <div class="clear"></div>
-
-             <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "upload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-                   <input type="hidden" name="action" value="reloadSpecimenList" />
-               <div class="align_right">
-                   <input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="ReloadSpecimenList" <%= active %>>
-               </div>
-               <div class="clear"></div>
-
-             </html:form>
-         </div>
-       </div>
-
-       <!-- Remove Specimen Data -->
-
-       <div class="admin_action_module">
-         <div class="admin_action_item">    
-             <div style="float:left;">        
-             Remove Specimen Data:
-             </div>
-             <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "upload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-                   <input type="hidden" name="action" value="removeSpecimenList" />
-               <div class="align_right">
-                   <input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="RemoveSpecimenList" <%= active %>>
-               </div>
-             <div class="clear"></div>
-
-             </html:form>
-         </div>
-       </div>
 
 
 
@@ -577,42 +540,6 @@ Upload Curator File
     </div>
 </html:form>
 
-<!-- Upload Species List -->   
-<html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "upload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-    <input type="hidden" name="action" value="uploadSpeciesList" />
-    <input type="hidden" name="ancFileDirectory" value="none" />
-    <input type="hidden" name="updateAdvanced" value="no" />
-    <input type="hidden" name="updateFieldGuide" value="none" />
-    <input type="hidden" name="images" value="no" />
-    <input type="hidden" name="outputFileName" value="" />
-    <input type="hidden" name="successkey" value="null" />
-    <div class="admin_action_module">
-        <div class="admin_action_item">
-            <div class="action_desc"><b>Upload</b> Species List for:<br>(tab-delimited .txt file) </div>
-            <div class="action_dropdown">
-  <html:select property="projectFile">
-	<html:option value="none">Select...</html:option>
-
-      <html:option value="worldants">Bolton World Catalog</html:option>
-
-	<!-- % for (Project p : nonMappableSpeciesList) { % >
-      <html :option value="< %= p.getName() % >">< %= p.getTitle() % ></html :option>
-	< % } % -->
-		    
-  </html:select>
-            </div>
-            <div class="action_browse">
-  <html:file property="theFile" />
-            </div>
-            <div class="clear"></div>
-
-            <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit"></div>
-            <div class="clear"></div>
-            
-            <input type=checkbox name=recrawl >Recrawl for counts	            
-        </div>
-    </div>
-</html:form>
 
 <% } %>
 

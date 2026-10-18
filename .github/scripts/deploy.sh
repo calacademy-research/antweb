@@ -86,10 +86,11 @@ git pull --rebase origin "$DEPLOY_BRANCH"
 # needed. A failure here never stops the deploy.
 git rev-parse HEAD > etc/git-commit.tmp && mv -f etc/git-commit.tmp etc/git-commit || echo "warning: could not write etc/git-commit"
 
-# Nothing the site runs changed (only CI, tests, docs or release notes): no restart.
+# Nothing the site runs changed (only CI, tests, docs, release notes or tools/, the host
+# scripts the site never runs): no restart. tests/unit/test_deploy_paths.py checks this list.
 changed=$(git diff --name-only "$PREV" HEAD)
-if [ -n "$changed" ] && ! printf '%s\n' "$changed" | grep -qvE '^(\.github/|tests/|doc/|docs/|release-notes/|[^/]*\.md$)'; then
-  echo "Only CI, tests or docs changed since $PREV; antweb not restarted."
+if [ -n "$changed" ] && ! printf '%s\n' "$changed" | grep -qvE '^(\.github/|tests/|tools/|doc/|docs/|release-notes/|[^/]*\.md$)'; then
+  echo "Only CI, tests, docs or tools changed since $PREV; antweb not restarted."
   exit 0
 fi
 

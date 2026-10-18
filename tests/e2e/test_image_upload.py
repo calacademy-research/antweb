@@ -189,6 +189,32 @@ def test_start_checks_names(curator):
     assert j["accepted"] == len(good)
 
 
+# A CAS specimen with images (CAS group); the test curator is in "Default Group".
+OTHER_GROUP_SPECIMEN = os.environ.get("ANTWEB_OTHER_GROUP_IMAGE_SPECIMEN", "casent0005904")
+
+
+@needs_curator
+def test_start_refuses_replacing_other_groups_image(curator):
+    """An existing image may be replaced only by its own group (admins: any), like deleting."""
+    s, token, _ = curator
+    r = new_session().get(f"{BASE_URL}/v3.1/images?specimenCode={OTHER_GROUP_SPECIMEN}&up=1", timeout=max(TIMEOUT, 120))
+    images = [i for rec in (r.json().get("images") or []) if isinstance(rec, dict) for i in rec.get("images") or []] \
+        if r.status_code == 200 else []
+    if not images:
+        pytest.skip(f"{OTHER_GROUP_SPECIMEN} has no images on this server")
+    img = images[0]
+    name = f"{OTHER_GROUP_SPECIMEN.upper()}_{str(img['shotType']).upper()}_{img['shotNumber']}.JPG"
+    r = _post(s, "start", token, "&dryRun=1", data={"artist": _artist(s), "names": name})
+    assert r.status_code == 200, r.text[:300]
+    j = r.json()
+    rejected = {x["name"]: x["reason"] for x in j["rejected"]}
+    assert name in rejected and "another group" in rejected[name], j
+    assert j["accepted"] == 0
+    # The same file sent on its own (dry run) is refused too.
+    r = _post(s, "add", token, "&dryRun=1", files=_file(name))
+    assert r.status_code == 422 and "another group" in r.text, (r.status_code, r.text[:300])
+
+
 @needs_curator
 def test_start_needs_artist_and_names(curator):
     s, token, _ = curator

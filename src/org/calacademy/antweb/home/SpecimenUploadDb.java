@@ -181,7 +181,6 @@ It has been archived to here:
     public String getBackupDirFile(int accessGroup) {
         String backupDirFile = null;
         // Called from here: https://localhost/query.do?action=curiousQuery&name=lastSpecimenUpload
-        // Invoked like: https://localhost/upload.do?action=reloadSpecimenList&groupId=2
 
         Statement stmt = null;
         ResultSet rset = null;

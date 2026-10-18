@@ -38,9 +38,66 @@ jobs:
         run: |
           docker build -t antweb/api:dev -f docker/api/Dockerfile .
 
+      - name: Compose files are valid (prod and staging)
+        run: |
+          docker compose -f docker-compose.yml -f docker-compose.prod.yml config -q
+          docker compose -f docker-compose.yml -f docker-compose.stage.yml config -q
+
+      - name: API limits and streamed ndjson (tests/unit/test_api_limits.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_limits.py
+
+      - name: API container as in docker-compose.yml (only its login file, read-only, workers not root)
+        # The login file is root-only (0600) here: gunicorn's master reads it at start
+        # (--preload), the workers serve as the user api (uid 2002).
+        run: |
+          d=$(mktemp -d)
+          printf 'user=ci_reader\npassword=dummy\n' > "$d/api-db.properties"
+          sudo chown root:root "$d/api-db.properties"
+          sudo chmod 600 "$d/api-db.properties"
+          docker run -d --name apitest --read-only --tmpfs /tmp --memory 1g --memory-swap 1g --cpus 1 \
+            --pids-limit 200 --security-opt no-new-privileges:true --cap-drop ALL \
+            --cap-add CHOWN --cap-add SETUID --cap-add SETGID \
+            -v "$d/api-db.properties:/antweb-etc/api-db.properties:ro" antweb/api:dev
+          ok=0
+          for i in $(seq 1 30); do
+            if docker exec apitest curl -fsS http://localhost:5000/ 2>/dev/null | grep -q "Antweb API"; then ok=1; break; fi
+            sleep 2
+          done
+          docker logs apitest 2>&1 | tail -20
+          [ "$ok" = 1 ] || { echo "::error::API did not answer"; exit 1; }
+          docker logs apitest 2>&1 | grep -q "API database user: ci_reader" || { echo "::error::API did not read its login file"; exit 1; }
+          uids=$(docker exec apitest sh -c 'for s in /proc/[0-9]*/status; do awk "/^Uid:/{print \$2}" "$s"; done' | sort | uniq -c)
+          echo "$uids"
+          workers=$(echo "$uids" | awk '$2 == 2002 {print $1}')
+          [ "${workers:-0}" -ge 3 ] || { echo "::error::gunicorn workers do not run as api (2002)"; exit 1; }
+          docker rm -f apitest
+
       - name: Test Antweb Build
         run: |
           docker build -t antweb/antweb:dev -f docker/antweb/Dockerfile .
+
+      - name: ImageMagick policy (TIFF/JPEG/PNG convert; risky formats refused)
+        run: |
+          docker run --rm --entrypoint sh -u tomcat -v "$PWD/tests/container:/t:ro" antweb/antweb:dev /t/imagemagick_policy_check.sh
+
+      - name: Java unit tests of the 2026-10-18 hardening batch (in the antweb image)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/imageUploader/ImageUploaded.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/SecurityBatch7Test.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.SecurityBatch7Test
+          '
+
+      - name: clearDisk.py skips web/log and links (tests/unit/test_clear_disk.py)
+        run: python3 tests/unit/test_clear_disk.py
+
+      - name: deploy.sh no-restart list (tests/unit/test_deploy_paths.py)
+        run: python3 tests/unit/test_deploy_paths.py
 
       - name: web/log on a host folder (report links, tomcat writes, log rotation)
         # web/log is a host folder in production (docker-compose.yml: ./logs/web). Starting
