@@ -39,6 +39,9 @@ public final class UploadReportAction extends AntwebAction {
           if (upload == null) {
             s_log.debug("execute() upload not found:" + uploadId);
             UploadMgr.log();
+          } else if (!upload.hasReport()) {
+            request.setAttribute("message", "The report for upload " + uploadId + " is no longer available.");
+            return mapping.findForward("message");
           } else {
             String url = AntwebProps.getDomainApp() + "/web/log/" + upload.getUploadDir() + "/" + upload.getLogFileName();
             s_log.debug("execute() redirect to url:" + url);

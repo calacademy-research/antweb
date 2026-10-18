@@ -176,3 +176,25 @@ def test_upload_report_folders_stay_public():
     url = urljoin(BASE_URL + "/", newest.replace("&amp;", "&"))
     r = new_session().get(url, timeout=TIMEOUT)
     assert r.status_code == 200, (url, r.status_code)
+
+
+def test_groups_page_links_only_existing_reports():
+    """groups.do links a group's last upload report only while the report is on the server
+    (most reports from before Nov 2019 are gone); otherwise it says "(report no longer available)".
+    Every /web/log/ link on the page answers 200."""
+    page = new_session().get(BASE_URL + "/groups.do", timeout=TIMEOUT).text
+    hrefs = re.findall(r"""href=["']([^"']*/web/log/[^"']+)["']""", page)
+    if not hrefs:
+        pytest.skip("no upload reports linked on groups.do")
+    urls = list(dict.fromkeys(urljoin(BASE_URL + "/", h.replace("&amp;", "&")) for h in hrefs))
+
+    def check(url):
+        try:
+            r = new_session().head(url, timeout=TIMEOUT, allow_redirects=True)
+        except Exception as e:  # noqa: BLE001
+            return f"{urlparse(url).path}: {type(e).__name__}"
+        return None if r.status_code == 200 else f"{urlparse(url).path}: HTTP {r.status_code}"
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        bad = [b for b in pool.map(check, urls) if b]
+    assert not bad, f"{len(bad)} of {len(urls)} report links on groups.do fail:\n" + "\n".join(bad[:15])

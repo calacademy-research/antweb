@@ -1,7 +1,12 @@
 package org.calacademy.antweb.upload;
 
+import java.io.File;
 import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.text.*;
+
+import org.calacademy.antweb.util.AntwebProps;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -84,6 +89,37 @@ public class Upload {
         }        
         //A.log("getUploadDir() uploadDir:" + uploadDir + " d1:" + d1 + " created:" + getCreated() + " compare:" + getCreated().after(d1));
         return uploadDir;
+    }
+
+    /** The report's path under the web root, e.g. web/log/specimen/20261018-05:31:02-specimen1.html, or null. */
+    public String getReportPath() {
+        String name = getLogFileName();
+        if (name == null || name.isEmpty() || name.contains("/") || name.contains("\\") || name.contains("..")) return null;
+        return "web/log/" + getUploadDir() + "/" + name;
+    }
+
+    /**
+     * True if the upload report is still on the server. Reports written before the
+     * Nov 2019 move (web/log/upload/) are mostly gone, so pages link a report only when
+     * this is true. Answers are cached for an hour: the group pages list hundreds of
+     * uploads and web/log may be on network storage.
+     */
+    public boolean hasReport() {
+        return reportExists(AntwebProps.getDocRoot(), getReportPath(), System.currentTimeMillis());
+    }
+
+    static final long REPORT_CACHE_MILLIS = 60L * 60 * 1000;
+    private static final Map<String, long[]> s_reportExists = new ConcurrentHashMap<>();
+
+    /** docRoot + path exists, using a cached answer younger than REPORT_CACHE_MILLIS. */
+    public static boolean reportExists(String docRoot, String path, long now) {
+        if (docRoot == null || path == null) return false;
+        String full = docRoot + path;
+        long[] cached = s_reportExists.get(full);
+        if (cached != null && now - cached[0] < REPORT_CACHE_MILLIS) return cached[1] == 1;
+        boolean exists = new File(full).isFile();
+        s_reportExists.put(full, new long[] {now, exists ? 1 : 0});
+        return exists;
     }
 
     public String getLogFileName() {
