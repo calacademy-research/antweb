@@ -5,3 +5,5 @@
 0 21 * * * root /antweb/deploy/bin/admin.sh | setpriv --reuid=tomcat --regid=antweb --init-groups tee /data/antweb/web/log/adminTask.log > /dev/null
 0 23 1 * * root /antweb/deploy/bin/db-monthly-dump.sh
 50 3 * * 4 root /antweb/deploy/bin/taxonSetBackup.sh | setpriv --reuid=tomcat --regid=antweb --init-groups tee -a /data/antweb/web/log/taxonSetBackup.log > /dev/null
+# Log rotation (docker/antweb/logrotate.conf), as tomcat; its own report goes to log/logrotate.log.
+40 3 * * * root setpriv --reuid=tomcat --regid=antweb --init-groups /usr/sbin/logrotate --state /usr/local/antweb/log/.logrotate.state --log /usr/local/antweb/log/logrotate.log /etc/antweb-logrotate.conf

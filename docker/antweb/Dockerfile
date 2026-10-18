@@ -26,6 +26,7 @@ ant \
 ant-optional \
 cron \
 imagemagick \
+logrotate \
 util-linux \
 default-mysql-client \
 php \
@@ -42,6 +43,8 @@ RUN ln -fs /usr/share/zoneinfo/"${TZ}" /etc/localtime && \
 COPY --chmod=0755 docker/antweb/startup.sh /startup.sh
 COPY --chmod=0755 docker/antweb/fix-perms.sh /usr/local/bin/antweb-fix-perms
 COPY --chmod=0644 docker/antweb/crontab.txt /etc/cron.d/antwebcrontab
+# Rotation of the growing logs in web/log and log/ (run by that crontab as tomcat).
+COPY --chmod=0644 docker/antweb/logrotate.conf /etc/antweb-logrotate.conf
 
 
 COPY --chown=tomcat docker/antweb/tomcat/conf/ /usr/local/tomcat/conf/
