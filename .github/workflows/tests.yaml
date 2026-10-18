@@ -31,6 +31,9 @@ jobs:
               caddy adapt --config /etc/caddy/$f --adapter caddyfile > /dev/null && echo "$f OK"
           done
 
+      - name: JSP allow-list is the same in Caddyfile and Caddyfile.common
+        run: python3 tests/e2e/caddy_lists.py
+
       - name: Test API Build
         run: |
           docker build -t antweb/api:dev -f docker/api/Dockerfile .

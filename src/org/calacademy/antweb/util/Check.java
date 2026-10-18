@@ -169,6 +169,63 @@ public class Check {
       return LoginMgr.mustLogIn(request, mapping);
     }
 
+    public static final String FEATURE_LOGIN_MESSAGE = "Field guides, image comparisons and maps of search results need an AntWeb login."
+        + " Please log in, or create a free account.";
+
+    /*
+      Field guides, compare results and map of results: anyone sees the links, but only logged in
+      visitors (any login) can use them. Anonymous visitors get the log-in page with a short
+      explanation, and after logging in go back to the page they asked for (a GET) or to the page
+      the form was posted from (a POST, e.g. the search results page). Only same-site relative
+      paths are used as the return target.
+      ActionForward f = Check.loginForFeature(request); if (f != null) return f;
+    */
+    public static ActionForward loginForFeature(HttpServletRequest request) {
+        if (LoginMgr.isLoggedIn(request)) return null;
+        request.setAttribute("loginMessage", FEATURE_LOGIN_MESSAGE);
+        String target = featureReturnTarget(request);
+        if (target != null) request.setAttribute("loginTarget", target);
+        return new ActionForward("/login.jsp");
+    }
+
+    /** The relative path (and query) to return to after logging in, or null. */
+    static String featureReturnTarget(HttpServletRequest request) {
+        String target = null;
+        if ("GET".equals(request.getMethod())) {
+            target = request.getRequestURI();
+            String query = request.getQueryString();
+            if (target != null && query != null && !query.isEmpty()) target += "?" + query;
+        } else {
+            target = sameSitePath(request.getHeader("Referer"), request.getServerName());
+        }
+        return relativeTarget(target);
+    }
+
+    /** The path and query of a same-host URL, or null for another host or a bad URL. */
+    static String sameSitePath(String url, String serverName) {
+        if (url == null || url.isEmpty() || serverName == null) return null;
+        try {
+            java.net.URI uri = new java.net.URI(url);
+            if (uri.getHost() == null || !uri.getHost().equalsIgnoreCase(serverName)) return null;
+            String scheme = uri.getScheme();
+            if (scheme == null || !(scheme.equalsIgnoreCase("https") || scheme.equalsIgnoreCase("http"))) return null;
+            String path = uri.getRawPath();
+            if (path == null || path.isEmpty()) path = "/";
+            return uri.getRawQuery() == null ? path : path + "?" + uri.getRawQuery();
+        } catch (java.net.URISyntaxException e) {
+            return null;
+        }
+    }
+
+    /** Only a same-site relative path ("/x.do?..."), never "//host" or a full URL. */
+    static String relativeTarget(String target) {
+        if (target == null || target.length() > 2000) return null;
+        if (!target.startsWith("/") || target.startsWith("//")) return null;
+        if (!HttpUtil.isSafeRedirectTarget(target, null)) return null;
+        if (target.contains("login.do")) return null;
+        return target;
+    }
+
     // ActionForward c = Check.admin(request, mapping); if (c != null) return c;
     public static ActionForward admin(HttpServletRequest request, ActionMapping mapping) {
       return LoginMgr.mustBeAdmin(request, mapping);

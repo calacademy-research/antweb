@@ -1,0 +1,51 @@
+"""Field guides, image comparisons and maps of search results need a login (any login).
+Anonymous visitors see the links, and get the log-in page with an explanation; after logging in
+they return to the page they asked for (a same-site relative path only)."""
+import html
+import re
+
+import pytest
+
+from antweb import BASE_URL, TIMEOUT, classify, new_session
+
+MESSAGE = "Field guides, image comparisons and maps of search results need an AntWeb login."
+
+FEATURE_URLS = [
+    "/fieldGuide.do?genus=camponotus&rank=genus&project=allantwebants",
+    "/fieldguide.do?genus=camponotus&rank=genus&project=allantwebants",
+    "/prepareMapResults.do?resultRank=specimen",
+    "/prepareCompareResults.do?resultRank=specimen",
+    "/prepareFieldGuideResults.do?resultRank=specimen",
+    "/mapResults.do",
+    "/compareResults.do",
+    "/fieldGuideResults.do",
+]
+
+TARGET = re.compile(r'<input type="hidden" name="target" value="([^"]*)"')
+
+
+@pytest.mark.parametrize("url", FEATURE_URLS)
+def test_anonymous_gets_explained_login(url):
+    r = new_session().get(BASE_URL + url, timeout=TIMEOUT, allow_redirects=True)
+    assert classify(r).category == "login", f"{url}: {classify(r)}"
+    assert MESSAGE in r.text, f"{url}: no explanation on the log-in page"
+    assert 'value="Create Account"' in r.text
+
+
+def test_return_target_is_the_requested_page():
+    url = "/fieldGuide.do?genus=camponotus&rank=genus&project=allantwebants"
+    r = new_session().get(BASE_URL + url, timeout=TIMEOUT, allow_redirects=True)
+    m = TARGET.search(r.text)
+    assert m, "no return target in the log-in form"
+    target = html.unescape(m.group(1))
+    assert target.startswith("/fieldGuide.do?") and "genus=camponotus" in target, target
+
+
+def test_post_return_target_ignores_other_sites():
+    """A POST from another site's page gets no return target from its Referer."""
+    s = new_session()
+    r = s.post(BASE_URL + "/mapResults.do", headers={"Referer": "https://evil.example/x"},
+               timeout=TIMEOUT, allow_redirects=True)
+    assert MESSAGE in r.text
+    m = TARGET.search(r.text)
+    assert not m or html.unescape(m.group(1)).startswith("/") and "evil.example" not in m.group(1)

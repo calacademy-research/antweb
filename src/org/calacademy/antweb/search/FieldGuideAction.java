@@ -38,7 +38,7 @@ public final class FieldGuideAction extends AntwebAction {
 		HttpServletRequest request, HttpServletResponse response)
 		throws IOException, ServletException {
 
-        ActionForward a = Check.loginValid(request, mapping); if (a != null) return a; 
+        ActionForward a = Check.loginForFeature(request); if (a != null) return a;
         ActionForward d = Check.valid(request, mapping); if (d != null) return d;
 
         Login accessLogin = LoginMgr.getAccessLogin(request);

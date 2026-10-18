@@ -31,6 +31,8 @@ public final class FieldGuideResultsAction extends ResultsAction {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
+        ActionForward loginNeeded = org.calacademy.antweb.util.Check.loginForFeature(request); if (loginNeeded != null) return loginNeeded;
+
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();
         ActionForward forward = null;

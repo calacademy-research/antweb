@@ -27,6 +27,8 @@ public final class PrepareMapResultsAction extends PrepareAction {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
+        ActionForward loginNeeded = org.calacademy.antweb.util.Check.loginForFeature(request); if (loginNeeded != null) return loginNeeded;
+
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();
         

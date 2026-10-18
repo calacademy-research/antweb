@@ -126,3 +126,35 @@ def test_taxon_page_has_no_dead_sites(session):
     html = _check_all(session, url)
     for dead in DEAD:
         assert dead not in html, f"{dead} still linked on {url}"
+
+
+# Links on the Curate page that start jobs, change data or end the session: never followed.
+CURATE_SKIP = ("/util.do", "/utilData.do", "/logout.do", "/upload.do", "/cache.do", "/adminAlert.do",
+               "/pageTracker.do", "/schedule.do", "/imageUploader.do", "/loginAs.do",
+               "/sanitizeDescriptions.do", "/passwordResetCampaign.do")
+# Deliberate test links (an error message on purpose).
+CURATE_TEST_LINKS = ("/adm1.do?%20(Terr.%20Amazonas)",)
+
+
+def test_curate_page_links(session):
+    """Every link on the Curate page (curate-body.jsp and curatorLinks.jsp) opens a real page:
+    the old "Access" URL templates, log links under /web/log/ and /web/workingdir/, the Flickr and
+    Geonames log files and a 2017 upload report link were dead (removed or replaced, cleanup batch 2)."""
+    from policy import NEVER, WRITE_ACTIONS
+    url = BASE_URL + "/curate.do"
+    r = session.get(url, timeout=TIMEOUT)
+    assert r.status_code == 200, r.status_code
+    if "Please Log In" in r.text[:5000]:
+        pytest.skip("test login could not open curate.do")
+    html = re.sub(r"<!--.*?-->", "", r.text, flags=re.S)  # commented-out links are not shown
+    skip = set(CURATE_SKIP) | {p + ".do" for p in NEVER} | {p + ".do" for p in WRITE_ACTIONS}
+    links = [u for u in _links(html, url)
+             if urlparse(u).path not in skip and not any(t in u for t in CURATE_TEST_LINKS)]
+    assert links, "no links found on curate.do"
+    for dead in ("/web/workingdir/", "/web/log/geonames.log", "/web/log/flickrAdm1.html",
+                 "/web/log/DataPlaceCase.txt", "/moveToValid.do", "20170731-14:44:39"):
+        assert dead not in html, f"{dead} still linked on curate.do"
+    for template in ("description.do?taxonName=", "description.do?antcatId=", "specimen.do?code=",
+                     "geolocale.do?id=", "curiousQuery&name=", "curiousQuery&amp;name="):
+        assert not re.search(r"""href=["'][^"']*""" + re.escape(template) + """["']""", html), f"empty link {template}"
+    _check_links(session, url, links)

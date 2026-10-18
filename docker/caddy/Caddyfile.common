@@ -102,6 +102,28 @@ route {
         reverse_proxy api:5000
     }
 
+    # Direct *.jsp requests (cleanup batch 2, 2026-10): only the JSPs below reach Tomcat; any other
+    # *.jsp is a 404 here. Pages are reached through .do actions, which forward to their JSPs
+    # inside Tomcat without passing Caddy, so this does not affect them. The list is the JSPs
+    # people request directly (production traffic) plus every JSP the site's own pages link,
+    # redirect to or load. Keep the list the same in Caddyfile and Caddyfile.common (CI checks;
+    # tests/e2e/test_jsp_allow_list.py tests it on staging).
+    @jsp_not_allowed {
+        path *.jsp *.jspx *.jspf
+        not path /index.jsp /about.jsp /citing_antweb.jsp /user_guide.jsp /search.jsp
+        not path /countries.jsp /imagePage.jsp /bigPicture.jsp /mapComparison.jsp /dynamicMap.jsp
+        not path /berlin.jsp /geneva.jsp /genoa.jsp /basel.jsp /oxford.jsp /copenhagen.jsp /paraguay.jsp
+        not path /login.jsp /forgot_password.jsp /notLoggedIn.jsp /permissionDenied.jsp /error.jsp /thanks.jsp
+        not path /common/statusDisplayPage.jsp /common/casteDisplayPage.jsp /common/distStatusDisplayPage.jsp
+        not path /search/loading_search_results_data.jsp /search/autoCompleteKeys.jsp
+        not path /search/autoCompletePlaceKeys.jsp /search/multiTaxaOneView.jsp
+        not path /documentation/api/apiV3_1.jsp /documentation/releaseNotes.jsp /documentation/links.jsp
+        not path /web/speciesList/*/*.jsp
+        # Old upload reports and logs; Tomcat sends these as plain, sandboxed text (GeneratedJspFilter).
+        not path /web/log/*
+    }
+    respond @jsp_not_allowed "Not found" 404
+
     reverse_proxy @allowed_paths antweb:8080
 
     # Any request that doesn't match one of the proxies gets a 404 response

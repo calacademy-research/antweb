@@ -28,6 +28,8 @@ public final class MapResultsAction extends ResultsAction {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException { 
 
+        ActionForward loginNeeded = org.calacademy.antweb.util.Check.loginForFeature(request); if (loginNeeded != null) return loginNeeded;
+
         // Extract attributes we will need
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();

@@ -33,7 +33,11 @@ def test_removed_actions_stay_removed():
              "/showLine", "/taxonomicPageGen",
              "/testMessage", "/testMobile", "/userAgents", "/display", "/chooseComparison",
              "/googleEarth", "/curateB", "/viewGroupsBak", "/bayAreaSearch", "/apiDev",
-             "/participate", "/techDoc", "/pictureLikex", "/pictureLikey"]
+             "/participate", "/techDoc", "/pictureLikex", "/pictureLikey",
+             # Old aliases with no traffic and no links (cleanup batch 2).
+             "/home", "/rules", "/basicsearch", "/advancedsearch", "/bigMapReq", "/recentsearchresults",
+             # AntShare: only an embedded Google Form that no longer works.
+             "/antShare"]
     if not IS_PRODUCTION:
         # These two used to update counts; only call them where this change may not be live yet.
         paths += ["/test", "/mobile"]
