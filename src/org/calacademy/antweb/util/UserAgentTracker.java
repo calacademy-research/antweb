@@ -42,7 +42,7 @@ public class UserAgentTracker extends AntwebAction {
         return mapping.findForward("userAgents");
     }
 
-    private static String[] allowPages = new String[]{"login", "index", "basicLayout", "about.do", "documentation.do", "antShare.do", "press.do", "favs.do", "contact.do", "api.do"};
+    private static String[] allowPages = new String[]{"login", "index", "basicLayout", "about.do", "documentation.do", "press.do", "favs.do", "contact.do", "api.do"};
     private static final Set<String> allowPagesSet = new HashSet<>(Arrays.asList(allowPages));
 
     public static boolean isBlockUser(HttpServletRequest request) {

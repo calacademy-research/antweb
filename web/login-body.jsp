@@ -32,6 +32,14 @@
 
 </html:messages>
 
+<%
+// Set by Check.loginForFeature() (field guides, compare and map of search results).
+String loginMessage = (String) request.getAttribute("loginMessage");
+if (loginMessage != null) {
+%>
+<p class="login_needed" style="font-size:1.1em; margin:10px 0 16px 0;"><b><%= Html.esc(loginMessage) %></b></p>
+<% } %>
+
 <!-- html:form action="login" -->
 <form name="loginForm" method="POST" action="<%= AntwebProps.getSecureDomainApp() %>/login.do"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
@@ -39,6 +47,7 @@
 LoginForm loginForm = (LoginForm) request.getAttribute("loginForm");
 String target = null;
 if (loginForm != null) target = loginForm.getTarget();
+if (target == null) target = (String) request.getAttribute("loginTarget");  // same-site relative path, see Check.loginForFeature()
 if (target == null && !HttpUtil.isPost(request)) target = HttpUtil.getTarget(request);
 if (target != null) {
   out.println("<input type=\"hidden\" name=\"target\" value=\"" + Html.escAttr(target) + "\">");

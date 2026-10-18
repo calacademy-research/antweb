@@ -258,25 +258,16 @@
       path="/index" 
       forward="/index.jsp"/>
 
-    <action
-      path="/home" 
-      forward="/index.do"/>
 
     <action
       path="/about" 
       forward="/about.jsp"/>
 
-    <action
-      path="/antShare" 
-      forward="/header/antShare.jsp"/>
 
     <action
       path="/documentation"
       forward="/web/homepage/documentation.jsp"/>
 
-    <action
-      path="/rules"
-      forward="/documentation/rules.jsp"/>
 
     <action
       path="/press" 
@@ -787,9 +778,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
     <action
       path="/basicSearch"
       forward="/search/basicResults.jsp"/>
-    <action
-      path="/basicsearch"
-      forward="/search/basicResults.jsp"/>
 
 
     <action path="/defaultSpecimen"
@@ -813,10 +801,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
     / -->
     <!-- To inactivate, replace:   forward="/search/advancedSearch.jsp"   with:    forward="/common/tempDown.jsp"    -->
 
-    <!-- lowercased to handled error requests --> 
-    <action
-      path="/advancedsearch"  
-      forward="/advSearch.do"/>
 
     <!-- This action is used for advancedSearch posts.  -->
     <action path="/advancedSearch"
@@ -937,8 +921,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
         <forward name="success" path="/dynamicMap.jsp"/>
     </action>
 
-    <action path="/bigMapReq"
-            forward="/bigMap.do"/>
         
     <action path="/collection"
             type="org.calacademy.antweb.CollectionAction"
@@ -1662,8 +1644,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
             forward="/mapComparison.do"/>
     <!-- action path="/googleearth"
             forward="/googleEarth.do"/ -->
-    <action path="/recentsearchresults"
-            forward="/recentSearchResults.do"/>
 
   </action-mappings>
   

@@ -4,7 +4,9 @@
         <div class="clear"></div>
         <p>To download specimen data, Right-click and save to your desktop.</p>
         <ul> <!-- download_results.jsp -->
-            <iframe id="download_search_results" width="100%" border="0" src="<%= util.getDomainApp() %>/search/loading_search_results_data.jsp"></iframe>
+            <%-- Starts blank: the Download Data link sets the real src (antweb.jquery.js). It used to load
+             loading_search_results_data.jsp on every page view, hidden, even when nobody opened it. --%>
+            <iframe id="download_search_results" width="100%" border="0" src="about:blank"></iframe>
         </ul>
     </div>
 </div>

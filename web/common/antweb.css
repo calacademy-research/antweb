@@ -1334,6 +1334,11 @@ input[type="checkbox"] {
     margin-right:60px;
 }
 
+/* Two promos: one at the left edge, one at the right (10-17). */
+.promo.right {
+    float:right;
+}
+
 
 /* style for overview layout */
 #overview_data {

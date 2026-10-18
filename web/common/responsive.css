@@ -500,7 +500,8 @@
         margin-top: 12px;
     }
     .promo,
-    .promo.middle {
+    .promo.middle,
+    .promo.right {
         float: none;
         width: auto;
         margin: 0 0 14px;

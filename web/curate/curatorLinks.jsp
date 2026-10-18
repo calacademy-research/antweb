@@ -2,11 +2,11 @@
 	
     <h3 align=left>Curator Links</h2>
     <ul align=left>
-	  <li><a href="<%= domainApp %>/description.do?taxonName=">Access</a> direct by taxon_name
-	  <li><a href="<%= domainApp %>/description.do?antcatId=">Access</a> direct by Antcat ID
-	  <li><a href="<%= domainApp %>/specimen.do?code=">Access</a> direct by specimen code	  
-	  <li><a href="<%= domainApp %>/geolocale.do?id=">Access</a> direct by Geolocale Id
-	  <li><a href="<%= domainApp %>/query.do?action=curiousQuery&name=">Access</a> Curious Query	  
+	  <li><form action="<%= domainApp %>/description.do" method="get" style="display:inline"><input type="text" name="taxonName" style="width:8em;max-width:40%" aria-label="Access direct by taxon_name"> <input type="submit" value="Go"></form> Access direct by taxon_name
+	  <li><form action="<%= domainApp %>/description.do" method="get" style="display:inline"><input type="text" name="antcatId" style="width:8em;max-width:40%" aria-label="Access direct by Antcat ID"> <input type="submit" value="Go"></form> Access direct by Antcat ID
+	  <li><form action="<%= domainApp %>/specimen.do" method="get" style="display:inline"><input type="text" name="code" style="width:8em;max-width:40%" aria-label="Access direct by specimen code"> <input type="submit" value="Go"></form> Access direct by specimen code
+	  <li><form action="<%= domainApp %>/geolocale.do" method="get" style="display:inline"><input type="text" name="id" style="width:8em;max-width:40%" aria-label="Access direct by Geolocale Id"> <input type="submit" value="Go"></form> Access direct by Geolocale Id
+	  <li><form action="<%= domainApp %>/query.do" method="get" style="display:inline"><input type="hidden" name="action" value="curiousQuery"><input type="text" name="name" style="width:8em;max-width:40%" aria-label="Curious Query (name)"> <input type="submit" value="Go"></form> Curious Query (name)
     </ul>
 
 <% if (accessLogin.isAdmin()) { %>  
@@ -59,7 +59,7 @@
     <h3 align=left>Reports</H3>
     <ul align=left>
       <li><a href="<%= domainApp %>/query.do?action=curateAntcat">Curate AntCat Queries</a>
-      <li><a href="<%= domainApp %>/web/log/admin.log">Admin Log</a>     
+      <li><a href="<%= domainApp %>/logMgr.do?action=get&fileName=admin&ext=log">Admin Log</a>     
       <li><a href="<%= domainApp %>/util.do?action=homonyms">Homonym Report</a>
       <!-- li><a href="< %= domainApp % >/adminUpdates.do">Admin Updates</a -->
       <li><a href="<%= domainApp %>/util.do?action=events">Events</a>
@@ -108,9 +108,9 @@
       <ul align=left>
   	    <!-- li><a href="< %= domainApp % >/upload.do?action=reloadSpeciesLists">Reload</a> All Species Lists -->
 		<li><a href="<%= domainApp %>/schedule.do?action=populateAll"> Populate </a> All (1.5hrs) 
-		<li>Crawl <a href="<%= domainApp %>/web/log/compute.log"> Log </a> File
+		<li>Crawl <a href="<%= domainApp %>/logMgr.do?action=get&fileName=compute&ext=log"> Log </a> File
 		<li><a href="<%= domainApp %>/utilData.do?action=testProjTaxon">testProjTaxon</a>
-		<li><a href="<%= domainApp %>/web/log/profiler.jsp">Profiler log</a>
+		<li><a href="<%= domainApp %>/logMgr.do?action=get&fileName=profiler&ext=jsp">Profiler log</a>
       </ul>
 	  <li><a href="<%= domainApp %>/util.do?action=testMessage"> Test </a>Message
 	  <li><a href="<%= domainApp %>/util.do?action=unboldMessage"> Test </a>Unbold Message
@@ -162,14 +162,9 @@
           </ul>
 
           <!-- li><a href="< %= domainApp % >/utilData.do?action=fetchGeonamesData">Fetch</a> Geonames Data -->
-          <!-- li>&nbsp;&nbsp;<a href="< %= domainApp % >/web/log/geonames.log">GeonamesAdm1</a> log file -->
 
           <li><a href="<%= domainApp %>/utilData.do?action=fetchGeonamesCountryData">Fetch</a> Get Geonames Country Data
           <li><a href="<%= domainApp %>/utilData.do?action=fetchGeonamesAdm1Data">Fetch</a> Get Geonames Adm1 Data
-          <li>&nbsp;&nbsp;<a href="<%= domainApp %>/web/log/geonames.log">Geonames</a> log file
-          <li>&nbsp;&nbsp;<a href="<%= domainApp %>/web/log/DataPlaceCase.txt">Data Place</a> Case file          
-          <li><a href="<%= domainApp %>/utilData.do?action=fetchFlickrAdm1Data">Fetch</a> Flickr Adm1 Data
-          <li>&nbsp;&nbsp;<a href="<%= domainApp %>/web/log/flickrAdm1.html">FlickrAdm1</a> log file
           <li><a href="<%= domainApp %>/utilData.do?action=fullGeodataFetch">Full</a> Geodata Fetch
           <li><a href="<%= domainApp %>/utilData.do?action=geodataTestFetch">Test</a> Geodata Fetch
           <li><a href="<%= domainApp %>/utilData.do?action=fetchGeonetData">Geonet</a> Fetch
@@ -232,7 +227,6 @@
       <h3 align=left>Retired</h3>
       <ul align=left>
 	  <li><a href="<%= domainApp %>/utilData.do?action=updateFormicidaeProjects"> Update </a>Formicidae Project
-      <li><a href="<%= domainApp %>/moveToValid.do">Move To Valid</a>      
 	  <li><a href="<%= domainApp %>/utilData.do?action=calculateTaxonIsValidNames"> Calculate </a>Taxon is Valid Names
 	  <!-- li><a href="< %= domainApp % >/upload.do?action=genAll">Generate All</a> Species Lists -->
       </ul>
@@ -255,7 +249,6 @@
       <!-- 
         execute() 6003 geolocale_taxon Taxon parentage records missing, 9661 inserted. 770 geolocale_taxon Taxon parentage records, 425 inserted.  2.22 mins
       -->
-      <li>Check specimen upload: <a href='https://www.antweb.org/web/log/upload/20170731-14:44:39-12SpecimenList.html'>report</a></li>
       <li><a href="<%= domainApp %>/query.do?action=curiousQuery&name=badGeolocaleTaxonParentTaxonName"> Bad GeolocaleTaxon parents</a></li>
       <li><a href="<%= domainApp %>/query.do?action=curiousQuery&name=badParentTaxonName"> Bad Parent TaxonName</a></li>
       <li><a href="<%= domainApp %>/schedule.do?action=run"> New Scheduler functionalty</a></li>

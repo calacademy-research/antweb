@@ -20,7 +20,9 @@
         <div class="clear"></div>
         <p>To download specimen data, Right-click and save to your desktop.</p>
         <ul><!-- data_download_overlay.jsp 2 -->
-                <iframe id="tab_data" width="100%" border="0" src="<%= util.getDomainApp() %>/search/loading_search_results_data.jsp"></iframe>
+                <%-- Starts blank: the Download Data link sets the real src (antweb.jquery.js). It used to load
+                     loading_search_results_data.jsp on every page view, hidden, even when nobody opened it. --%>
+                <iframe id="tab_data" width="100%" border="0" src="about:blank"></iframe>
             <%
                String dataLink = (String) request.getAttribute("dataLink");
             %>
