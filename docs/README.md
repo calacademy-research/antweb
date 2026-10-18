@@ -6,6 +6,8 @@ AntWeb (https://www.antweb.org) is the California Academy of Sciences' database 
 
 | Document | What it is |
 |---|---|
+| [architecture-overview.md](architecture-overview.md) | **Architecture overview.** Servers, request path (Cloudflare, Caddy, Tomcat, MySQL, API), containers and mounts, settings files in `etc/`, scheduled jobs and the nightly sets, email, the AntCat feed, monitoring, and the deploy pipeline. Two diagrams. |
+| [runbook.md](runbook.md) | **Operations runbook.** Deploy and rollback, restart, logs, common checks, backups and restore to staging, what each alert means, weekly reboot, restart checker and watchdog, settings switches, emergencies (site down, disk full, nightly stuck, upload stuck). |
 | [catalog/actions.md](catalog/actions.md) | **Function catalog.** One row per Struts action (`*.do`), per sub-action (`?action=...`) and per API v3.1 route: URL, Java class, JSPs, the access check found in the code, the anonymous result on staging, the e2e tests that request it, recent traffic, purpose and status (keep, check, remove?). |
 | [catalog/actions.csv](catalog/actions.csv) | The same catalog as CSV. The purpose, status and notes columns are written by hand here. |
 | [catalog/coverage-gaps.md](catalog/coverage-gaps.md) | Rows with no functional e2e test, most important first (uploads, curator saves, login, nightly jobs, public pages). |
@@ -47,7 +49,7 @@ In `docs/`:
 |---|---|
 | [INDEX-2026-01.md](INDEX-2026-01.md) | The previous index of this folder (January 2026) |
 | [API.md](API.md) | API documentation |
-| [ARCHITECTURE.md](ARCHITECTURE.md) | Architecture overview |
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Architecture overview (January 2026; superseded by [architecture-overview.md](architecture-overview.md)) |
 | [DATABASE.md](DATABASE.md) | Database schema |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Development guide |
 | [EXAMPLES.md](EXAMPLES.md) | Modification examples |
@@ -57,4 +59,4 @@ In `docs/`:
 | [ROADMAP.md](ROADMAP.md) | Long-term roadmap |
 | [TESTING.md](TESTING.md) | Testing guide |
 
-In `doc/` (mostly developer notes from the 2010s): antweb-docs.txt, antweb-docs2.txt, apiV2.txt, apiV3.txt, artist.txt, bolton.txt, cron.txt, dataFlow.txt, dbDebug.txt, deploy.txt, deployment.md, description.txt, develop.txt, downtimes.txt, erd.mwb, erd.png, exif.txt, feed.txt, fileChanges.txt, fileMods.txt, fileSystem.txt, git.txt, hack.txt, homepage.txt, imageUpload.txt, innoDbAndUtf8.txt, install.txt, installAfterJoe.txt, issues.txt, locality.txt, localityMaps.txt, login.txt, mobile.txt, museumTitle.txt, notes.txt, projectData.txt, pythonDev.txt, release.txt, restartBug.txt, search.txt, specialChars.txt, speciesListMerge.txt, specimen16.txt, stableId.txt, stgHttpd.conf, taxonImages.txt, thau.txt, toDo.txt, tomcat-nonroot-runbook.md, uErrors.txt, uiV2.txt, version.txt, zonageek.txt.
+In `doc/` (mostly developer notes from the 2010s). These stay where they are for now and will be reviewed area by area as the documentation phase reaches each part of the code (uploads and nightly sets, curator and admin tools, public pages and API, data model); anything still true moves into `docs/`, the rest is removed: antweb-docs.txt, antweb-docs2.txt, apiV2.txt, apiV3.txt, artist.txt, bolton.txt, cron.txt, dataFlow.txt, dbDebug.txt, deploy.txt, deployment.md, description.txt, develop.txt, downtimes.txt, erd.mwb, erd.png, exif.txt, feed.txt, fileChanges.txt, fileMods.txt, fileSystem.txt, git.txt, hack.txt, homepage.txt, imageUpload.txt, innoDbAndUtf8.txt, install.txt, installAfterJoe.txt, issues.txt, locality.txt, localityMaps.txt, login.txt, mobile.txt, museumTitle.txt, notes.txt, projectData.txt, pythonDev.txt, release.txt, restartBug.txt, search.txt, specialChars.txt, speciesListMerge.txt, specimen16.txt, stableId.txt, stgHttpd.conf, taxonImages.txt, thau.txt, toDo.txt, tomcat-nonroot-runbook.md, uErrors.txt, uiV2.txt, version.txt, zonageek.txt.
