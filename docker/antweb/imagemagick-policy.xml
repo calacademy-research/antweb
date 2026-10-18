@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ImageMagick policy for AntWeb (installed by docker/antweb/Dockerfile as the
+  ImageMagick 6 policy.xml). AntWeb only converts uploaded specimen images
+  (TIFF, JPEG, PNG) to JPEG (ImageUploaded.genImage). Formats that can read or
+  fetch other files, run programs or draw text are turned off, as are external
+  delegates and @file lists. Resource limits keep one conversion bounded.
+  CI checks this policy in .github/workflows/tests.yaml (container job).
+-->
+<policymap>
+  <policy domain="resource" name="memory" value="1GiB"/>
+  <policy domain="resource" name="map" value="2GiB"/>
+  <policy domain="resource" name="area" value="256MP"/>
+  <policy domain="resource" name="disk" value="4GiB"/>
+  <policy domain="resource" name="width" value="32KP"/>
+  <policy domain="resource" name="height" value="32KP"/>
+  <policy domain="resource" name="list-length" value="64"/>
+  <policy domain="resource" name="time" value="300"/>
+
+  <!-- No external programs (Ghostscript, curl, rsvg, ...). -->
+  <policy domain="delegate" rights="none" pattern="*"/>
+
+  <!-- Formats that read other files, fetch URLs, run scripts or render text/vector data. -->
+  <policy domain="coder" rights="none" pattern="{MVG,MSL,TEXT,TXT,LABEL,CAPTION,PANGO,INLINE,DATA,URL,HTTP,HTTPS,FTP,FILE,EPHEMERAL,MPC,VID,PWP,SHOW,WIN,X,PLT,HTML,SHTML}"/>
+  <policy domain="coder" rights="none" pattern="{PS,PS2,PS3,EPS,EPS2,EPS3,EPI,EPSF,EPSI,EPT,EPT2,EPT3,PDF,PDFA,AI,XPS,PCL,SVG,SVGZ,MSVG,RSVG}"/>
+
+  <!-- No "@file" lists of further file names. -->
+  <policy domain="path" rights="none" pattern="@*"/>
+</policymap>

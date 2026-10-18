@@ -36,6 +36,11 @@ zip \
 && rm -rf /var/lib/apt/lists/* \
 && setpriv --version
 
+# ImageMagick (used to make the image sizes of uploaded TIFF/JPEG/PNG files) may only
+# read and write ordinary image formats, within resource limits. Checked in CI
+# (tests/container/imagemagick_policy_check.sh).
+COPY --chmod=0644 docker/antweb/imagemagick-policy.xml /etc/ImageMagick-6/policy.xml
+
 RUN ln -fs /usr/share/zoneinfo/"${TZ}" /etc/localtime && \
     dpkg-reconfigure --frontend noninteractive tzdata
 

@@ -213,17 +213,22 @@ def down(request):
 
 DEFAULT_LIMIT = 10000
 MAX_LIMIT = 10000
-MAX_LIMIT_NDJSON = 1000000
+# ndjson bulk downloads: up to 10,000 records per request, the same as the normal JSON reply.
+# Larger sets are fetched in pages with offset. The records of one request are held in memory
+# (database rows and their dicts, roughly 15-20 KB per specimen record), so 10,000 records stay
+# around 200 MB; the earlier 1,000,000 could use many GB for one request.
+MAX_LIMIT_NDJSON = 10000
 
 
 def setGlobals(request):
+    # Returns this request's settings: limit, offset, log, ndjson, startTime.
+    # They are local to each request. Module globals were shared by the gunicorn threads,
+    # so one request could run with another request's limit.
     print("request:" + str(request))
 
-    global limit, offset, log, ndjson, startTime
     startTime = time.time()
     log = request.args.get('log', default='*', type=str)
     ndjson = request.args.get('ndjson', default='*', type=str)
-    # limit: default and maximum 10,000 records; ndjson bulk downloads may ask for up to 1,000,000.
     maxLimit = MAX_LIMIT_NDJSON if ndjson == 'true' else MAX_LIMIT
     limit = request.args.get('limit', default=DEFAULT_LIMIT, type=int)
     if limit is None or limit <= 0:
@@ -232,38 +237,23 @@ def setGlobals(request):
     offset = request.args.get('offset', default=0, type=int)
     if offset is None or offset < 0:
         offset = 0
+    return limit, offset, log, ndjson, startTime
+
+
+def ndjsonLines(dataList):
+    # One index header line and one record line per datum, encoded one record at a time.
+    # application.json.dumps is the same encoder the request used before (Decimal as number,
+    # sorted keys), and it works outside the request context while the reply streams.
+    lineEnd = '\n'.encode('utf8')
+    for i, datum in enumerate(dataList):
+        header = {"index": {"_index": "specimens", "_id": i}}
+        yield (application.json.dumps(header, sort_keys=False).encode('utf8') + lineEnd
+               + application.json.dumps(datum, indent=None, ensure_ascii=False).encode('utf8') + lineEnd)
 
 
 def getNdjson(dataList):
-    empty = ''.encode('utf8')
-    jsonResponse = []
-    i = 0
-    lineEnd = '\n'.encode('utf8')
-    # print('log:' + str(log))
-    for datum in dataList:
-        if log == 'true':
-            if i > 0 and i % 10000 == 0:
-                pass
-                # print('log i:' + str(i))
-        # data = '{"index" : {"_index":"specimens","_id":' + str(i) + '} }'
-        header = {
-            "index": {
-                "_index": "specimens",
-                "_id": i
-            }
-        }
-
-        jsonResponse.extend(
-            json.dumps(header, sort_keys=False).encode('utf8') + lineEnd + json.dumps(datum, indent=None,
-                                                                                      ensure_ascii=False).encode(
-                'utf8') + lineEnd)
-        # print("response:" + str(jsonResponse))
-        i = i + 1
-        # print("ndjson jsonResponse:" + jsonResponse)
-    # jsonO = b''.join(jsonResponse)
-    response = Response(bytearray(jsonResponse), content_type="application/json; charset=utf-8")
-    # print('Finished jdson request. length:' + str(len(dataList)) + ' bytes:' + str(len(jsonResponse)))
-    return response
+    # Streamed: the reply is written as it is encoded, never held in memory as a whole.
+    return Response(ndjsonLines(dataList), content_type="application/json; charset=utf-8")
 
 
 def returnJsonify(method, returnVal):
@@ -510,7 +500,7 @@ def getSpecimen():
     hasImage = request.args.get('hasImage', default='*', type=str)
     geolocaleName = request.args.get('geolocaleName', default='*', type=str)
     lifeStageSex = request.args.get('lifeStageSex', default='*', type=str)
-    setGlobals(request)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
 
     # Build query criteria
@@ -716,7 +706,7 @@ def getGeoSpecimens():
         return 'Must enter coords for a geoSpecimens request'
     radius = request.args.get('radius', default='5', type=int)  # in kilometers
     distinct = request.args.get('distinct', default='*', type=str)
-    setGlobals(request)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
 
     query = session.query(Specimen)
@@ -818,7 +808,7 @@ def getGeoSpeciesStatsDict(row):
 @application.route('/geoSpeciesStats', methods=['GET'])
 def getGeoSpeciesStats():
     geolocaleName = request.args.get('geolocaleName', default='*', type=str)
-    setGlobals(request)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
 
     # add introduced and endemics
@@ -940,7 +930,7 @@ def getTaxa():
     subspecies = request.args.get('subspecies', default='*', type=str)
     # parent = request.args.get('parentTaxonName', default='*', type=str) # Could do parentTaxonName but not parent.
     status = request.args.get('status', default='*', type=str)
-    setGlobals(request)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
 
     query = session.query(Taxon)
@@ -1044,7 +1034,7 @@ def getDistinctTaxa():
     minElevation = request.args.get('minElevation', default='*', type=str)
     maxElevation = request.args.get('maxElevation', default='*', type=str)
     status = request.args.get('status', default='*', type=str)
-    setGlobals(request)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
 
     query = session.query(Specimen)
@@ -1142,7 +1132,7 @@ def getImages():
     shotType = request.args.get('shotType', default='*', type=str)
     shotNumber = request.args.get('shotNumber', default='*', type=str)
     hasTiff = request.args.get('hasTiff', default='*', type=str)
-    setGlobals(request)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
 
     query = session.query(Image)
@@ -1399,7 +1389,7 @@ def getMeasurements():
     bioregion = request.args.get('bioregion', default='*', type=str)
     caste = request.args.get('caste', default='*', type=str)
     taxonStatus = request.args.get('taxonStatus', default='*', type=str)
-    setGlobals(request)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
 
     query = session.query(Measurement, Specimen).outerjoin(Specimen, Specimen.code == Measurement.code)
@@ -1593,7 +1583,7 @@ def getTaxaImages():
     shotNumber = request.args.get('shotNumber', default='*', type=str)
     hasTiff = request.args.get('hasTiff', default='*', type=str)
 
-    setGlobals(request)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
 
     query = session.query(TaxaImage)
@@ -1723,7 +1713,7 @@ def getGeolocales():
         name = request.args.get('name', default='*', type=str)  # backwardly compatible
     parent = request.args.get('parent', default='*', type=str)
     georank = request.args.get('georank', default='*', type=str)
-    setGlobals(request)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
 
     query = session.query(Geolocale)
@@ -1838,7 +1828,7 @@ def getGeolocaleTaxa():
     genus = request.args.get('genus', default='*', type=str)
     species = request.args.get('species', default='*', type=str)
     status = request.args.get('status', default='*', type=str)
-    setGlobals(request)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
 
     query = session.query(GeolocaleTaxon)
@@ -1979,7 +1969,7 @@ class Bioregion(Base):
 @application.route('/bioregions', methods=['GET'])
 def getBioregions():
     name = request.args.get('bioregionName', default='*', type=str)
-    setGlobals(request)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
 
     query = session.query(Bioregion)
@@ -2063,7 +2053,7 @@ def getBioregionTaxa():
     genus = request.args.get('genus', default='*', type=str)
     species = request.args.get('species', default='*', type=str)
     status = request.args.get('status', default='*', type=str)
-    setGlobals(request)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
 
     query = session.query(BioregionTaxon)
@@ -2148,7 +2138,7 @@ def getUnimagedGeolocaleTaxa():
     # caste = request.args.get('caste', default = '*',  type=str)
     taxarank = request.args.get('taxarank', default='*', type=str)
     status = request.args.get('status', default='*', type=str)
-    setGlobals(request)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
 
     geolocale = getGeolocale(geolocaleName)

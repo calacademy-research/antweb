@@ -65,7 +65,7 @@ public class ImageUploaded {
 
   /**
    * Write the uploaded file to images/<code>/. If a file of that name exists it is first copied
-   * to images/backup/ (and the upload is marked as a re-upload), unless backupExisting is false:
+   * to images/backup/ under a dated name (and the upload is marked as a re-upload), unless backupExisting is false:
    * the batch uploader makes the backup itself (backupExisting()) before it records the file,
    * and never again on a retry, so the backup keeps the image that was there before the batch.
    */
@@ -93,9 +93,9 @@ public class ImageUploaded {
 
       try {
         if (backupExisting && file.exists()) {
-          // move the file to the backupdir.
+          // copy the file to the backupdir, under a name no earlier backup has.
           FileUtil.makeDir(backupDir);
-          Utility.copyFile(fullName, backupDir + name);
+          Utility.copyFile(fullName, backupDir + backupName(name, new File(backupDir)));
           setIsReUploaded(true);
         }
       } catch (FileNotFoundException e) {
@@ -104,7 +104,7 @@ public class ImageUploaded {
       fileItem.write(file.toPath());
   }
 
-  /** Copy an existing images/<code>/<fileName> to images/backup/ (marks a re-upload). */
+  /** Copy an existing images/<code>/<fileName> to images/backup/ under a dated name (marks a re-upload). */
   public void backupExisting() throws IOException {
       if (!getIsContinueUpload()) return;
       String name = baseName(getFileName());
@@ -112,12 +112,33 @@ public class ImageUploaded {
       try {
         if (new File(fullName).exists()) {
           FileUtil.makeDir(backupDir);
-          Utility.copyFile(fullName, backupDir + name);
+          Utility.copyFile(fullName, backupDir + backupName(name, new File(backupDir)));
           setIsReUploaded(true);
         }
       } catch (FileNotFoundException e) {
         s_log.debug("backupExisting() e:" + e + " backupDir:" + backupDir);
       }
+  }
+
+  /**
+   * Name for a backup of fileName in dir that no earlier backup has: the date and time go
+   * before the extension (CASENT0001234_H_1.tif -> CASENT0001234_H_1.20261018-153012.tif),
+   * with -2, -3, ... added if that name is taken. Every replaced image keeps its own backup;
+   * before, a second replacement overwrote the first backup.
+   */
+  public static String backupName(String fileName, File dir) {
+      return backupName(fileName, dir, new java.text.SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()));
+  }
+
+  public static String backupName(String fileName, File dir, String stamp) {
+      int dot = fileName.lastIndexOf('.');
+      String base = dot > 0 ? fileName.substring(0, dot) : fileName;
+      String ext = dot > 0 ? fileName.substring(dot) : "";
+      String candidate = base + "." + stamp + ext;
+      for (int i = 2; new File(dir, candidate).exists(); i++) {
+          candidate = base + "." + stamp + "-" + i + ext;
+      }
+      return candidate;
   }
 
   // Characters allowed in an uploaded file name (after any folder part is removed).

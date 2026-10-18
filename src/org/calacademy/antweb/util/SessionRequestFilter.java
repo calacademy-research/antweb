@@ -80,7 +80,7 @@ public class SessionRequestFilter implements Filter {
                 boolean blockUser = UserAgentTracker.isBlockUser(request);
                 if (blockUser) {
                     String message = "<br><h2>Due to current Bot traffic, we are supporting only logged in users: "
-                            + "<a href=" + AntwebProps.getDomainApp() + "/login.do>Login</a></h2><!-- reqPage:" + target + " -->";
+                            + "<a href=" + AntwebProps.getDomainApp() + "/login.do>Login</a></h2><!-- reqPage:" + Html.esc(target) + " -->";
                     HttpUtil.write(message, response);
                     return;
                 }
@@ -179,7 +179,7 @@ public class SessionRequestFilter implements Filter {
             message = ""
                     + "<br><b>startTime:</b>" + startTime
                     + "<br><b>case#:</b>" + caseNumber
-                    + "<br><b>target:</b>" + HttpUtil.forLog(target)
+                    + "<br><b>target:</b>" + Html.esc(HttpUtil.forLog(target))
                     + "<br><b>e:</b>" + e
                     //+ "<br><b>userAgent:</b>" + UserAgentTracker.getUserAgent(request)
                     //+ "<br><b>info:</b>" + HttpUtil.getLongRequestInfo(request)
@@ -190,7 +190,7 @@ public class SessionRequestFilter implements Filter {
                     = "<br><b>Request Error</b>"
                     + "<br><br><b>Case#:</b>" + caseNumber
                     + "<br>(Please notify " + AntwebUtil.getAdminEmail() + ") with this info and description of use case. Thank you."
-                    + "<br><b>Request:</b>" + target
+                    + "<br><b>Request:</b>" + Html.esc(target)
                     + "<br><b>Datetime:</b>" + formatDateTime
             ;
             if (AntwebProps.isDevMode()) {

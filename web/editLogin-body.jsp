@@ -50,7 +50,7 @@
 <p>
 
 <% if (accessLogin != null && accessLogin.getId() == thisLogin.getId()) { %>
-<h3>Current Password (only needed to change your password):
+<h3>Current Password (needed to change your password or email):
 <br>
 <input type="password" class="login_input" name="currentPassword" value="" autocomplete="current-password">
 </h3>

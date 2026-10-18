@@ -180,6 +180,21 @@ public final class EditLoginAction extends AntwebAction {
                 if (problem != null) message = Html.esc(problem);
             }
         }
+
+        // Changing the email of your own login also needs your current password: password reset
+        // links go to that address. An admin editing another login does not need it.
+        if (message == null && accessLogin.getId() == login.getId()
+                && emailChanged(login.getEmail(), email)
+                && !PasswordHash.matches(login.getPassword(), editForm.getCurrentPassword())) {
+            message = "To change your email, please enter your current password.";
+        }
         return message;  
+    }
+
+    /** True if the new email differs from the stored one (ignoring case and surrounding spaces). */
+    public static boolean emailChanged(String stored, String submitted) {
+        String a = stored == null ? "" : stored.trim();
+        String b = submitted == null ? "" : submitted.trim();
+        return !a.equalsIgnoreCase(b);
     }
 }
