@@ -42,6 +42,34 @@ jobs:
         run: |
           docker build -t antweb/antweb:dev -f docker/antweb/Dockerfile .
 
+      - name: web/log on a host folder (report links, tomcat writes, log rotation)
+        # web/log is a host folder in production (docker-compose.yml: ./logs/web). Starting
+        # from an empty one, antweb-fix-perms must make the four upload report links into
+        # the bucket and give the folder to tomcat; logrotate (as tomcat) must rotate a big
+        # log, leave small files and the report folders alone.
+        run: |
+          d=$(mktemp -d)
+          docker run --rm --entrypoint sh -v "$d:/usr/local/antweb/web/log" antweb/antweb:dev -c '
+            set -e
+            L=/usr/local/antweb/web/log
+            /usr/local/bin/antweb-fix-perms
+            for r in specimen worldants detail upload; do
+              test "$(readlink $L/$r)" = "/mnt/antweb/web/log/$r" || { echo "missing link $L/$r"; exit 1; }
+            done
+            /usr/local/bin/antweb-fix-perms   # a second start changes nothing and warns about nothing
+            T="setpriv --reuid=tomcat --regid=antweb --init-groups"
+            $T sh -c "head -c 11000000 /dev/zero > $L/compute.log; echo flag > $L/siteWarning.txt"
+            # As if both files were last rotated long ago: only the one over 10 MB is due.
+            printf "logrotate state -- version 2\n\"$L/compute.log\" 2026-1-1-0:0:0\n\"$L/siteWarning.txt\" 2026-1-1-0:0:0\n" > /tmp/s
+            chown tomcat /tmp/s
+            $T /usr/sbin/logrotate --state /tmp/s /etc/antweb-logrotate.conf
+            ls -la $L
+            ls $L | grep -q "^compute.log-[0-9]\{8\}$" || { echo "compute.log was not rotated"; exit 1; }
+            test -f $L/siteWarning.txt || { echo "small file was rotated"; exit 1; }
+            for r in specimen worldants detail upload; do test -L $L/$r; done
+            grep -q "logrotate" /etc/cron.d/antwebcrontab
+          '
+
   java-compile:
     # Compiles every Java source against the jars in WEB-INF/lib and the
     # servlet/JSP APIs of the same Tomcat image production runs, so a change

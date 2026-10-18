@@ -15,8 +15,10 @@ host first, on staging, then prod:
    readable by gid 2000.
 
 Both changes also work with today's root Tomcat, so they go in before the code.
-`./logs`, `./logbak` and the `antweb_genInc` volume need nothing on the host: the
-container chowns them at start.
+`./logs`, `./logs/web` (web/log, since 2026-10-18), `./logbak` and the `antweb_genInc`
+volume need nothing on the host: the container chowns them at start, and makes the
+upload report links in web/log (`specimen`, `worldants`, `detail`, `upload` ->
+`/mnt/antweb/web/log/...`).
 
 Order: staging (A to E), run e2e and the checks, then prod (A to E).
 Staging: `ssh root@165.232.136.170`. Prod: `ssh root@165.232.137.86`.

@@ -30,6 +30,50 @@ restart_caddy_if_changed() {
   fi
 }
 
+migrate_web_log() {
+  # web/log (compute.log, admin.log, taxonworksNightly.log, ...) used to live in the
+  # container and was lost when the container was replaced. It is now the host folder
+  # <project>/logs/web (docker-compose.yml). The first time a container without that
+  # mount is replaced by one with it, stop the old container and copy its web/log to
+  # the host folder, so nothing is lost. Afterwards the old container already has the
+  # mount and this does nothing. If anything fails, the old container is started again
+  # and the deploy stops (the site keeps running the old code).
+  local dc="$1" wd dest need avail
+  if docker inspect antweb_antweb_1 --format '{{range .Mounts}}{{println .Destination}}{{end}}' 2>/dev/null \
+       | grep -qx /usr/local/antweb/web/log; then
+    return 0
+  fi
+  wd=$(docker inspect antweb_antweb_1 --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}')
+  if ! grep -qE ':/usr/local/antweb/web/log/?$' "$wd/docker-compose.yml"; then
+    return 0   # the new code has no web/log mount either
+  fi
+  dest="$wd/logs/web"
+  # Host folder already in use (e.g. staging ran an older branch for a while): keep
+  # what is there and put the container's copy in a dated subfolder next to it.
+  if [ -n "$(ls -A "$dest" 2>/dev/null)" ]; then
+    dest="$dest/from-container-$(date +%Y%m%d-%H%M%S)"
+  fi
+  # Size of web/log (du does not follow the links to the bucket); 0 if the container is not running.
+  need=$(docker exec antweb_antweb_1 du -sk /usr/local/antweb/web/log < /dev/null 2>/dev/null | cut -f1 || true)
+  need=${need:-0}
+  mkdir -p "$wd/logs"
+  avail=$(df -Pk "$wd/logs" | awk 'NR==2 {print $4}')
+  echo "Moving web/log out of the container: ${need} KB to copy, ${avail} KB free on the host."
+  if [ "$avail" -lt $((need + 1048576)) ]; then
+    echo "ERROR: not enough disk space to copy web/log (need ${need} KB + 1 GB spare); deploy stopped, nothing changed." >&2
+    exit 1
+  fi
+  $dc stop antweb < /dev/null
+  mkdir -p "$dest"
+  if ! docker cp antweb_antweb_1:/usr/local/antweb/web/log/. "$dest/" < /dev/null; then
+    echo "ERROR: copying web/log out of the container failed; starting the old container again. Deploy stopped." >&2
+    docker start antweb_antweb_1 < /dev/null
+    exit 1
+  fi
+  chown -Rh 2001:2000 "$dest"
+  echo "web/log copied to $dest ($(du -sk "$dest" | cut -f1) KB, $(find "$dest" -type f | wc -l) files)."
+}
+
 # Get the latest source code
 PREV=$(git rev-parse HEAD)
 git fetch origin "$DEPLOY_BRANCH"
@@ -60,6 +104,7 @@ if ! git diff --quiet "$PREV" HEAD -- docker/antweb docker-compose.yml docker-co
   project=$(docker inspect antweb_antweb_1 --format '{{index .Config.Labels "com.docker.compose.project"}}')
   dc="docker compose -p $project $(echo "$files" | tr ',' '\n' | sed 's/^/-f /')"
   $dc build antweb < /dev/null
+  migrate_web_log "$dc"
   $dc up -d --build api antweb < /dev/null
   restart_caddy_if_changed
   echo "Rebuilt; antweb container started at:"

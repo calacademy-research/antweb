@@ -9,6 +9,10 @@ from antweb import BASE_URL, IS_PRODUCTION, new_session
                                   # Logs are read by admins through logMgr.do; archived upload files through uploadFile.do.
                                   "/web/log/compute.log", "/web/log/taxonworksNightly.log", "/web/log/notFound.txt",
                                   "/web/log/profiler.jsp", "/web/log/unclosedConnections/x.txt",
+                                  # Rotated logs and the copy deploy.sh makes when web/log moved to the host (10-18).
+                                  "/web/log/compute.log-20261025", "/web/log/logins.txt-20261025.gz",
+                                  "/web/log/from-container-20261018-120000/compute.log", "/log/.logrotate.state",
+                                  "/log/logrotate.log",
                                   "/web/upload/20220224-11:49:08-specimen2.txt", "/web/upload/x.txt"])
 def test_private_file_not_public(path):
     r = new_session().get(BASE_URL + path, timeout=60)

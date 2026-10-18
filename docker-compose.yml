@@ -87,6 +87,12 @@ services:
       - ${ANTWEB_BACKUP_PATH:-/mnt/backup}:/mnt/backup
       - ./logs:/usr/local/tomcat/logs
       - ./logbak:/usr/local/antweb/log/
+      # AntWeb's own logs (web/log: compute.log, admin.log, taxonworksNightly.log, ...) on the
+      # host, so rebuilding the container keeps them (2026-10). The upload report folders
+      # inside (specimen, worldants, detail, upload) are links to /mnt/antweb/web/log/...,
+      # made at every start by antweb-fix-perms. deploy.sh copies the old container's
+      # web/log here the first time.
+      - ./logs/web:/usr/local/antweb/web/log
       - antweb_genInc:/usr/local/antweb/web/genInc
 
       # Code and settings are read-only inside the container: ant deploy only reads
