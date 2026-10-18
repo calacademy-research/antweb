@@ -98,7 +98,7 @@ the old mount until it is restarted.
 
 Give the files Tomcat reads group 2000 and mode 640 (api-db.properties stays root 600; only the API container reads it):
 ```
-D=$(docker inspect antweb_antweb_1 --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}'); for f in db mail editor turnstile taxonworks flickr; do p="$D/etc/$f.properties"; [ -f "$p" ] && chgrp 2000 "$p" && chmod 640 "$p"; done; ls -ln "$D"/etc/*.properties
+D=$(docker inspect antweb_antweb_1 --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}'); for f in db mail editor turnstile taxonworks; do p="$D/etc/$f.properties"; [ -f "$p" ] && chgrp 2000 "$p" && chmod 640 "$p"; done; ls -ln "$D"/etc/*.properties
 ```
 
 Only if step A showed `$D/etc` as `drwx------` (Tomcat could not open the folder):
@@ -169,7 +169,7 @@ F=$(systemctl show -p FragmentPath --value rclone); cp -a "$F.bak-nonroot" "$F" 
 
 Undo the secrets permissions, if wanted:
 ```
-D=$(docker inspect antweb_antweb_1 --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}'); for f in db mail editor turnstile taxonworks flickr; do p="$D/etc/$f.properties"; [ -f "$p" ] && chgrp 0 "$p" && chmod 600 "$p"; done; ls -ln "$D"/etc/*.properties
+D=$(docker inspect antweb_antweb_1 --format '{{index .Config.Labels "com.docker.compose.project.working_dir"}}'); for f in db mail editor turnstile taxonworks; do p="$D/etc/$f.properties"; [ -f "$p" ] && chgrp 0 "$p" && chmod 600 "$p"; done; ls -ln "$D"/etc/*.properties
 ```
 
 Host log folders back to root (not needed; root reads them either way):

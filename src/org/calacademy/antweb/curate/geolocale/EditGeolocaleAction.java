@@ -12,7 +12,6 @@ import org.apache.struts.action.*;
 
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
-import org.calacademy.antweb.data.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 
@@ -39,14 +38,13 @@ public final class EditGeolocaleAction extends AntwebAction {
         String name = editGeolocaleForm.getName();
         String georank = editGeolocaleForm.getGeorank();
         
-        String action = editGeolocaleForm.getAction();
 		String parent = editGeolocaleForm.getParent();
 
 		String country = editGeolocaleForm.getCountry();
 
 		int id = editGeolocaleForm.getId();
         
-        s_log.debug("execute() action:" + action + " name:" + name + " country:" + country + " parent:" + parent + " id:" + id + " isFast:" + editGeolocaleForm.getIsFast());
+        s_log.debug("execute() name:" + name + " country:" + country + " parent:" + parent + " id:" + id + " isFast:" + editGeolocaleForm.getIsFast());
 
         if ((name == null || "".equals(name)) && editGeolocaleForm.getIsCreate()) {
 			request.setAttribute("message", "Enter an Adm1 Name in the URL bar...");
@@ -57,15 +55,13 @@ public final class EditGeolocaleAction extends AntwebAction {
             return mapping.findForward("startFresh");
         }
 
-        // Deleting a geolocale, or removing/fetching its Flickr and Geonames data, is done
-        // from links (GET): administrators only.
-        boolean isAdminRequest = editGeolocaleForm.getIsDelete()
-            || (action != null && !"".equals(action) && !editGeolocaleForm.getIsSubmit());
+        // Deleting a geolocale (a button below the form): administrators only.
+        boolean isAdminRequest = editGeolocaleForm.getIsDelete();
         if (isAdminRequest && !LoginMgr.isAdmin(accessLogin)) {
             request.setAttribute("message", "Only an AntWeb administrator may do this.");
             return mapping.findForward("message");
         }
-        // Anything that changes data (save, create, delete, the Flickr/Geonames actions) must come from
+        // Anything that changes data (save, create, delete) must come from
         // a form (POST), so the session's form token (util/Csrf, checked by SessionRequestFilter) is
         // required. A GET only shows the form.
         boolean isChange = editGeolocaleForm.getIsSubmit() || editGeolocaleForm.getIsCreate() || isAdminRequest;
@@ -75,7 +71,7 @@ public final class EditGeolocaleAction extends AntwebAction {
             return mapping.findForward("message");
         }
         // Every setting on this form is structural (name, codes, rank, parent, bioregion, valid and live
-        // flags, map data, admin notes); the page text has its own editor on the page. So saving and
+        // flags, centroid and bounding box, admin notes); the page text has its own editor on the page. So saving and
         // creating are for administrators only; curators can still open the form to read the settings.
         if (isChange && !LoginMgr.isAdmin(accessLogin)) {
             s_log.warn("execute() refused a change by a non-admin. id:" + id + " login:" + (accessLogin == null ? "-" : accessLogin.getId()));
@@ -107,7 +103,7 @@ public final class EditGeolocaleAction extends AntwebAction {
           boolean forwardToMessage = false;  
 
           if (editGeolocaleForm.getIsSubmit() || editGeolocaleForm.getIsCreate()) {
-          
+            boolean isSaved = true;
 			s_log.debug("execute() name:" + name + " isPost:" + HttpUtil.isPost(request));
 			if (editGeolocaleForm.getIsCreate()) {
 			  if (editGeolocaleForm.getSource() == null) editGeolocaleForm.setSource("geolocaleMgr");
@@ -133,57 +129,24 @@ public final class EditGeolocaleAction extends AntwebAction {
 			  }
 			} else { // if not create
 	   	      s_log.debug("execute() form:" + editGeolocaleForm);
-			
-			  message = geolocaleDb.updateGeolocale(editGeolocaleForm);
-			  
-			  //forwardToMessage = true;                  
-			  message += " Updated.	";
-			}
-   	        if (!editGeolocaleForm.getIsFast()) {
-			    GeolocaleMgr.populate(connection, true, false);               
-            }		
-          } else { // not submit
-			
-			//A.log("1 georank:" + georank + " fetchGeoData:" + editGeolocaleForm.getAction());            
-			if (action != null) {
-			  if ("removeFlickrData".equals(action)) {
-				  message = " removeFlickrData adjust:" + editGeolocaleForm;
-				  forwardToMessage = true;
-				  geolocaleDb.setFlickrData(editGeolocaleForm.getId(), null, null, null, null);
-			  } else {
-				  if (!"country".equals(tempGeolocale.getGeorank())) {
-					s_log.warn("execute() all of the actions, including:" + action + " should be run against countries.");
-				  } else {
-					if ("removeGeoData".equals(action)) {
-						geolocaleDb.deleteFetchedAdm1(tempGeolocale, GeonamesPlace.source);
-						geolocaleDb.deleteFetchedAdm1(tempGeolocale, FlickrPlace.source);
-						message = "Flickr and Geonames data removed from country:" + tempGeolocale.getName();
-					}
-					if ("fetchGeoData".equals(action)) {
-					  message = GeonamesPlace.fetchData(connection, tempGeolocale.getName());
-					  message += " " + FlickrPlace.fetchAdm1Data(connection, tempGeolocale.getName());
-					}
-					if ("fetchFlickrCountryData".equals(action)) {
-					  message = FlickrPlace.fetchCountryData(connection, tempGeolocale.getName());
-					  //A.log("execute() fetchFlickrCountryData name:" + tempGeolocale.getName() + " message:" + message);
-					}
-					if ("fetchGeonamesData".equals(action)) {
-					  message = GeonamesPlace.fetchData(connection, tempGeolocale.getName());  
-					}
-					if ("fetchFlickrData".equals(action)) {
-					  message = FlickrPlace.fetchAdm1Data(connection, tempGeolocale.getName());
-					}
 
-					//if (action != null && action.contains("fetch")) {
-					//    forwardToMessage = true;
-					//	AntwebMgr.populate(connection, true);   // Maybe reload GeolocaleMgr?
-					//}
-			
-				  }
+			  String coordsError = checkCoords(editGeolocaleForm, tempGeolocale);
+			  if (coordsError != null) {
+			    isSaved = false;
+			    // Nothing is saved; the form is shown again with what was typed.
+			    message = "Nothing was saved. " + Html.esc(coordsError);
+			    request.setAttribute("centroidInput", request.getParameter("centroidFixed"));
+			    request.setAttribute("boundingBoxInput", request.getParameter("boundingBoxFixed"));
+			  } else {
+			    message = geolocaleDb.updateGeolocale(editGeolocaleForm);
+			    message += " Updated.";
 			  }
 			}
+   	        if (isSaved && !editGeolocaleForm.getIsFast()) {
+			    GeolocaleMgr.populate(connection, true, false);
+            }
 			
-		  } // end if submit
+          }
 		
 		  if (editGeolocaleForm.getIsDelete()) {
 		    Geolocale deleteGeo = geolocaleDb.getGeolocale(id);
@@ -225,7 +188,7 @@ public final class EditGeolocaleAction extends AntwebAction {
 		  }
 		
 		  if (geolocale == null) {
-		    message = " id:" + id + " name:" + Html.esc(name) + " georank:" + Html.esc(georank) + " action:" + Html.esc(action);
+		    message = " id:" + id + " name:" + Html.esc(name) + " georank:" + Html.esc(georank);
 		    s_log.warn("execute() Error creating " + message );
 			message = "<br><br>Error." + message;
 			request.setAttribute("message", message);
@@ -245,5 +208,44 @@ public final class EditGeolocaleAction extends AntwebAction {
 		}
 
         return mapping.findForward("failure");
+    }
+    /**
+     * The centroid and bounding box fields are shown filled with the values the site uses now
+     * (useCentroid(), useBoundingBox()) and are saved into centroid_fixed and bounding_box_fixed.
+     * A field left as shown is not saved, so nothing changes for it. A changed field is checked
+     * (numbers, latitude -90..90, longitude -180..180, south < north, west < east unless the box crosses
+     * longitude 180) and saved in the tidy form; an emptied field clears the fixed value.
+     * Returns an error message, or null when both fields are fine.
+     */
+    static String checkCoords(EditGeolocaleForm form, Geolocale current) {
+        try {
+            String centroid = form.getCentroidFixed();
+            if (centroid != null) {
+                String now = current == null ? null : current.useCentroid();
+                form.setCentroidFixed(isUnchanged(centroid, now, true) ? null : GeoCoords.normalizeCentroid(centroid));
+            }
+            String box = form.getBoundingBoxFixed();
+            if (box != null) {
+                String now = current == null ? null : current.useBoundingBox();
+                form.setBoundingBoxFixed(isUnchanged(box, now, false) ? null : GeoCoords.normalizeBoundingBox(box));
+            }
+        } catch (IllegalArgumentException e) {
+            return e.getMessage();
+        }
+        return null;
+    }
+
+    private static boolean isUnchanged(String typed, String now, boolean isCentroid) {
+        String t = typed.trim();
+        String n = (now == null || "null".equals(now)) ? "" : now.trim();
+        if (t.equals(n)) return true;
+        if (t.isEmpty() || n.isEmpty()) return false;
+        try {
+            return isCentroid
+                ? GeoCoords.normalizeCentroid(t).equals(GeoCoords.normalizeCentroid(n))
+                : GeoCoords.normalizeBoundingBox(t).equals(GeoCoords.normalizeBoundingBox(n));
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 }

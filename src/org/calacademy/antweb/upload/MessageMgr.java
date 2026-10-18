@@ -202,7 +202,7 @@ public class MessageMgr {
       testList.add(new Test(invalidLatLon, STR, "<b>Invalid lat/lon <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(unrecognizedColumn, STR, "<b>Unrecognized Column <font color=red>(ignored)</font></b>"));
       testList.add(new Test(invalidColumn, SET, "<b>Invalid Column Count <font color=red>(not uploaded)</font></b>"));
-      testList.add(new Test(notValidAdm1, STR, "<b>Not <a href='http://geonames.nga.mil/namesgaz/'>valid</a> Antweb adm1</b>"));
+      testList.add(new Test(notValidAdm1, STR, "<b>Not valid Antweb adm1</b>"));
       //testList.add(new Test(noCasteNotes, STR, "<b>No life stage/sex data. Undiscernable <a href='" + AntwebProps.getDomainApp() + "/casteDisplayPage.do'>caste</a></b>"));
       testList.add(new Test(unrecognizedCaste, STR, "<b>Unrecognized Caste</b>")); // Not a recognized <a href='" + AntwebProps.getDomainApp() + "/casteList.do'>caste</a>
       testList.add(new Test(invalidDateCollectedStart, STR, "<b>Invalid Date Collected Start</b>"));

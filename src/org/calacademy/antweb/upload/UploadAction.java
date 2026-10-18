@@ -11,7 +11,6 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.upload.FormFile;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.curate.speciesList.SpeciesListUploader;
-import org.calacademy.antweb.data.Adm1LoadAction;
 import org.calacademy.antweb.data.AntWikiData;
 import org.calacademy.antweb.data.AntWikiDataAction;
 import org.calacademy.antweb.home.*;
@@ -1000,8 +999,6 @@ public class UploadAction extends AntwebAction {
               messageStr += "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'>"
 					  + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'</a><br><br>";
               messageStr += new AntWikiDataAction().loadRegionalTaxonList(in, connection);
-            } else if (fileName.contains("fips-414")) {  // Adm1 load file
-              messageStr = new Adm1LoadAction().loadList(in, connection);
             } else if (fileName.contains("ngc_species") || fileName.contains("NGC Species")) { // Bolton New Genera Catalog
               messageStr = boltonNewGeneraCatalog(in, connection);
             } else if (fileName.contains("specimen")) {

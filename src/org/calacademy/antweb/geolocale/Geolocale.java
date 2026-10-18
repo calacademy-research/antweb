@@ -28,7 +28,6 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     private int id;
     protected String name;
     private String georank;
-    private String georankType;
     protected boolean isValid;
     private boolean isUn;
     private String isoCode;
@@ -153,13 +152,6 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     }
     public String getPrettyGeorank() {
       return georank;
-    }
-
-    public String getGeorankType() {
-        return georankType;
-    }
-    public void setGeorankType(String georankType) {
-        this.georankType = georankType;
     }
 
     public boolean isValid() { return getIsValid(); }
