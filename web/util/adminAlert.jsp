@@ -56,7 +56,3 @@ Full list: <a href='<%= AntwebProps.getDomainApp() %>/query.do?action=curiousQue
 <br><br>
 Admin Alert <a href='<%= AntwebProps.getDomainApp() %>/logMgr.do?action=get&fileName=adminAlerts&ext=log'>Log File</a>
 <br>&nbsp;&nbsp;<small>These are more developer oriented... from places in the code that do not have access to a database connection.</small>
-
-<% if (LoginMgr.isDeveloper(request)) { %>
-<br><br>Create test alert: <a href='<%= AntwebProps.getDomainApp() %>/utilData.do?action=adminAlertTest'>Here</a>
-<% } %>

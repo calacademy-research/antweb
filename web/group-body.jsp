@@ -149,7 +149,7 @@
 
     <br><hr>
     <h3>Admin Area</h3>
-    <a href = "<%= AntwebProps.getDomainApp() %>/utilData.do?action=genGroupObjectMap&num=<%= group.getId() %>">Generate Group Map</a>
+    <a href = "<%= AntwebProps.getDomainApp() %>/utilData.do?action=genGroupObjectMaps&num=<%= group.getId() %>">Generate Group Map</a>
 <%
   }
 %>

@@ -31,7 +31,7 @@ public abstract class QueryManager {
       for (String query : queries) {
         if (i == 0) html += "<ul align=left>";
         ++i;
-        html += "<li><a href='" + AntwebProps.getDomainApp() + "/util.do?action=curiousQuery&name=" + query +"'>" + query + "</a>";
+        html += "<li><a href='" + AntwebProps.getDomainApp() + "/query.do?action=curiousQuery&name=" + query +"'>" + query + "</a>";
         if (i == queries.size()) html += "</ul>";
       }
       return html;
@@ -316,7 +316,7 @@ public abstract class QueryManager {
 
             if (i > 0) {               
               if (namedQuery.getDetailQuery() != null) {
-                message.append("<br><br><b>Detail Query: </b><a href='" + AntwebProps.getDomainApp() + "/util.do?action=curiousQuery&name=" + namedQuery.getDetailQuery() + "'>" + namedQuery.getDetailQuery() + "</a>\n");
+                message.append("<br><br><b>Detail Query: </b><a href='" + AntwebProps.getDomainApp() + "/query.do?action=curiousQuery&name=" + namedQuery.getDetailQuery() + "'>" + namedQuery.getDetailQuery() + "</a>\n");
               }
             }
 

@@ -20,12 +20,10 @@
 <%
     //AntwebUtil.getRandomNumber();
 
-    // https://localhost/util.do?action=testMessage
 
     // Utility.makeDirTree("/usr/local/antweb/web/log/detail/duplicateEntries1.jsp");
     //LogMgr.appendWebLog("detail/testFile.jsp", "Did it!");
 
-    // Test this way: http://localhost/util.do?action=testMessage
 
     String message = (String) request.getAttribute("message");
    // A.log("-" + message + "-");

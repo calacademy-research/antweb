@@ -12,7 +12,6 @@ import org.apache.struts.upload.FormFile;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.curate.speciesList.SpeciesListUploader;
 import org.calacademy.antweb.data.AntWikiData;
-import org.calacademy.antweb.data.AntWikiDataAction;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 
@@ -809,13 +808,6 @@ public class UploadAction extends AntwebAction {
 							+ "<br><br>or"
 							+ "<br><br>'<b>synonym</b>' in the filename that has columns subfamily, genus, species, [subspecies], current_valid_name (Genus species [subspecies]) - delete other columns."
 							+ "<br><br>or"
-							+ "<br><br>'<b>Regional_Taxon_List</b>' in the filename."
-							+ "<br>File can be downloaded from http://www.antwiki.org/wiki/images/0/0c/AntWiki_Regional_Taxon_List.txt."
-							+ "<br>File likely to require editing/massage.  If file is 'binary', select * in BBEdit and save in a new file (with a name that contains 'Regional_Taxon_List')."
-							+ "<br>After the upload is complete, execute "
-							+ "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'>" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'</a>"
-							+ "<br>in order to push data from the antwiki_taxon_country into the geolocale_taxon table with source = 'antwiki'."
-							+ "<br><br>or"
 							+ "<br><br>'<b>ngc_species</b>' or '<b>NGC Species</b>' in the filename where the contents are the Bolten New Genera Catalog saved as plain text."
 							+ "<br><br>or";
 		}
@@ -826,7 +818,7 @@ public class UploadAction extends AntwebAction {
    	    return message;
     }
 
-    // Can run valid test, synonym test, or load a regional taxon list (from Antwiki).
+    // Can run valid test, fossil test, synonym test, Bolton NGC load or specimen list.
     public UploadDetails uploadDataFile(UploadForm theForm, HttpServletRequest request, ActionMapping mapping, Connection connection)
       throws IOException {
 
@@ -894,11 +886,6 @@ public class UploadAction extends AntwebAction {
               messageStr = testFileFossil(in, connection);
             } else if (fileName.contains("synonym")) {
               messageStr = testFileSynonyms(in, connection);
-            } else if (fileName.contains("Regional_Taxon_List")) {
-              messageStr = "<br><br>In order to push antwiki data on to geolocale_taxon, click ";
-              messageStr += "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'>"
-					  + AntwebProps.getDomainApp() + "/utilData.do?action=populateFromAntwikiData'</a><br><br>";
-              messageStr += new AntWikiDataAction().loadRegionalTaxonList(in, connection);
             } else if (fileName.contains("ngc_species") || fileName.contains("NGC Species")) { // Bolton New Genera Catalog
               messageStr = boltonNewGeneraCatalog(in, connection);
             } else if (fileName.contains("specimen")) {
@@ -1137,7 +1124,7 @@ public class UploadAction extends AntwebAction {
             } // end while loop through lines
 
             s_log.debug("testFileValid() validTaxonCount:" + validTaxonCount + " notValidTaxonCount:" + notValidTaxonCount);
-            messageStr = "<h3>AntWiki Regional Taxon List Load</h3><br><br>"
+            messageStr = "<h3>AntWiki Valid Species List Check</h3><br><br>"
               + "validTaxonCount:" + validTaxonCount + " notValidTaxonCount:" + notValidTaxonCount + "\n"
               + "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;Report: <a href='" + AntwebProps.getDomainApp() + "/query.do?action=curiousQuery&name=antwebUniqueValidTaxa'>Antweb Unique Valid Taxa</a>"
               + "<br><br>" + content

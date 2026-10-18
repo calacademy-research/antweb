@@ -1520,7 +1520,7 @@ WHERE geolocale_id = (SELECT geolocale_id FROM geolocale WHERE name='California'
 ```
 
 **Triggered by:**
-- Admin tool: `/util.do?action=calcEndemic`
+- Nightly: inside `geolocaleCountCrawl` (set 2); an admin can rerun it with `/utilData.do?action=geolocaleCountCrawl` (all geolocales)
 - After specimen upload (if specified)
 - Manual DB update
 
@@ -1700,7 +1700,7 @@ BioregionTaxonCountDb.java
 → Modify `GeolocaleDb.calcEndemic()` algorithm
 
 **Step 7: Test**
-→ Run `/util.do?action=calcEndemic` and verify results
+→ Run `/utilData.do?action=geolocaleCountCrawl` on staging and verify results
 
 ---
 

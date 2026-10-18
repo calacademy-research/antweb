@@ -16,7 +16,6 @@ FEATURE_URLS = [
     "/fieldguide.do?genus=camponotus&rank=genus&project=allantwebants",
     "/prepareMapResults.do?resultRank=specimen",
     "/prepareCompareResults.do?resultRank=specimen",
-    "/prepareFieldGuideResults.do?resultRank=specimen",
     "/mapResults.do",
     "/compareResults.do",
     "/fieldGuideResults.do",
