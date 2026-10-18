@@ -24,7 +24,6 @@
 
         <div id="browseby" class="browse">
             <ul>
-                <!-- li style="margin-right:12px;"><a href="< %= AntwebProps.getDomainApp() % >/browse.do?name=formicidae&rank=family&project=allantwebants">Browse:</a></li -->
                     <li class="menu_l1" data-submenu="global"><a class="browse_options">Global</a></li>
                     <li class="menu_l1" data-submenu="georegions"><a class="browse_options">Georegions</a></li>   <!-- was class="browse_options_green -->
                     <li class="menu_l1" data-submenu="bioregions"><a class="browse_options">Bioregions</a></li>

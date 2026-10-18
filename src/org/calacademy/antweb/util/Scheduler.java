@@ -39,6 +39,45 @@ public class Scheduler extends AntwebAction {
     // (compute.log: "Begin run 05:00:00 / End run 05:05:00").
     public static final int SET_READ_TIMEOUT_MS = 4 * 60 * 60 * 1000; // 4 hours
 
+    // Restart after the full nightly run. Until 2026-10 the run always ended with
+    // AntwebSystem.setIsRestart(true), and the host's reboot_checker.sh (every 5 minutes)
+    // then restarted the container, around 8 AM. It is now off unless the server-only file
+    // etc/scheduler.properties (~/antweb/etc/ on the host, gitignored; the container sees
+    // /antweb/deploy/etc/) has the line  nightlyRestart=true . Read at the end of each run,
+    // so a change needs no restart or deploy. The manual restart (utilData.do?action=setIsRestart),
+    // the "stuck in set1" restart and the host's case#/watchdog restarts are unchanged.
+    static final String CONFIG = "/antweb/deploy/etc/scheduler.properties";
+
+    public static boolean isNightlyRestartOn() {
+        return isNightlyRestartOn(new File(CONFIG));
+    }
+
+    public static boolean isNightlyRestartOn(File config) {
+        if (config == null || !config.isFile()) return false;
+        java.util.Properties p = new java.util.Properties();
+        try (InputStream in = new FileInputStream(config)) {
+            p.load(in);
+        } catch (IOException e) {
+            s_log.error("isNightlyRestartOn() could not read " + config + " e:" + e);
+            return false;
+        }
+        return isOn(p.getProperty("nightlyRestart"));
+    }
+
+    public static boolean isOn(String value) {
+        if (value == null) return false;
+        String v = value.trim().toLowerCase();
+        return "true".equals(v) || "on".equals(v) || "yes".equals(v) || "1".equals(v);
+    }
+
+    /** JVM heap use, for compute.log (the restart used to hide slow growth; watch it instead). */
+    public static String memoryReport() {
+        Runtime rt = Runtime.getRuntime();
+        long mb = 1024L * 1024L;
+        long used = (rt.totalMemory() - rt.freeMemory()) / mb;
+        return "heap used:" + used + " MB committed:" + rt.totalMemory() / mb + " MB max:" + rt.maxMemory() / mb + " MB";
+    }
+
 
     private static final Log s_log = LogFactory.getLog(Scheduler.class);
 
@@ -149,6 +188,7 @@ public class Scheduler extends AntwebAction {
 			    String output = "";
 				Date startTime = new Date();
 			    String url = null;
+				boolean set5Skipped = false;
 				try {
 					int i = Math.max(num, 0);  // This will invoke one of them if num != 0, otherwise invokes all of them
 
@@ -188,6 +228,7 @@ public class Scheduler extends AntwebAction {
 					// set5 (object maps, reload all) needs more memory than staging's 4 GB droplet has:
 					// skip it there in the nightly run (an admin can still request it by hand).
 					if (i == 0 && AntwebProps.isStageMode()) {
+						set5Skipped = true;
 						s_log.warn("doAction() set5 skipped on staging (memory)");
 						LogMgr.appendLog("compute.log", "  set5 skipped on staging (memory)", true);
 					} else
@@ -208,8 +249,25 @@ public class Scheduler extends AntwebAction {
 
 				if (num == 0) {
 				  // This was the full scheduled tasks, now completed.
+				  if (isNightlyRestartOn()) {
 					s_log.warn("SET REBOOT TRUE");
-				  AntwebSystem.setIsRestart(true);	// This will trigger a reboot within 5 minutes.
+					LogMgr.appendLog("compute.log", "Nightly restart requested (nightlyRestart=true in etc/scheduler.properties). " + memoryReport(), true);
+				    AntwebSystem.setIsRestart(true);	// This will trigger a reboot within 5 minutes.
+				  } else {
+					if (set5Skipped) {
+					  // set5 ends with AntwebMgr.populate(), which reloads every cache after the
+					  // counts of sets 2 to 4. Where set5 is skipped (staging), the restart did that.
+					  try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
+						AntwebMgr.populate(connection, true);
+						LogMgr.appendLog("compute.log", "  caches reloaded (AntwebMgr.populate), as set5 was skipped", true);
+					  } catch (Exception e) {
+						s_log.error("doAction() cache reload after the nightly run e:" + e);
+						LogMgr.appendLog("compute.log", "  cache reload FAILED e:" + e, true);
+					  }
+					}
+					s_log.warn("doAction() nightly restart skipped (off)");
+					LogMgr.appendLog("compute.log", "Nightly restart skipped (off; nightlyRestart=true in etc/scheduler.properties turns it on). " + memoryReport(), true);
+				  }
 				}
 
 				return message + " output:" + output;
