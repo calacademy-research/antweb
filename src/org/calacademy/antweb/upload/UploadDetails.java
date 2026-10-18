@@ -303,8 +303,11 @@ public class UploadDetails extends OperationDetails {
     public String getBackupFileAnchor() {
         String backupFileAnchor = "";
         if (getBackupDirFile() != null) {
-            backupFileAnchor = "<a href=\"" + AntwebProps.getDomainApp() + "/web/"
-                    + getBackupDirFile() + "\">" + getBackupDirFile() + "</a>";
+            // web/upload/ is not served; curators download the file through uploadFile.do.
+            String name = getBackupDirFile();
+            if (name.startsWith("upload/")) name = name.substring("upload/".length());
+            backupFileAnchor = "<a href=\"" + AntwebProps.getDomainApp() + "/uploadFile.do?file="
+                    + Html.escAttr(Html.url(name)) + "\">" + Html.esc(getBackupDirFile()) + "</a>";
         }
         return backupFileAnchor;
     }

@@ -39,6 +39,10 @@ def _links(html, page_url):
         href = href.replace("&amp;", "&").strip()
         if href.startswith(("mailto:", "javascript:", "#")):
             continue
+        # Reports written before 10-17 link the raw upload file under /web/upload/, which is no
+        # longer served (newer reports link uploadFile.do, checked like any other link).
+        if "/web/upload/" in href:
+            continue
         url = urljoin(page_url, href)
         if (urlparse(url).hostname or "") == HOST:
             found.append(url.replace("http://", "https://", 1) if BASE_URL.startswith("https") else url)
@@ -158,3 +162,15 @@ def test_curate_page_links(session):
                      "geolocale.do?id=", "curiousQuery&name=", "curiousQuery&amp;name="):
         assert not re.search(r"""href=["'][^"']*""" + re.escape(template) + """["']""", html), f"empty link {template}"
     _check_links(session, url, links)
+
+
+def test_upload_report_folders_stay_public():
+    """Upload reports under /web/log/specimen/ are linked from public group pages: still served
+    after the rest of /web/log/ was closed (10-17)."""
+    page = new_session().get(BASE_URL + "/groups.do", timeout=TIMEOUT).text
+    logs = re.findall(r"""href=["']([^"']*/web/log/(?:specimen|upload|worldants)/[^"']+\.html)["']""", page)
+    if not logs:
+        pytest.skip("no upload reports linked on groups.do")
+    url = urljoin(BASE_URL + "/", logs[0].replace("&amp;", "&"))
+    r = new_session().get(url, timeout=TIMEOUT)
+    assert r.status_code == 200, (url, r.status_code)

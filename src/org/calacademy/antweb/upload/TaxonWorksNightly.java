@@ -108,8 +108,9 @@ public final class TaxonWorksNightly {
                 Thread.currentThread().interrupt();
                 result = "FAILED: interrupted while waiting for TaxonWorks";
             } catch (Exception e) {
-                result = "FAILED: " + e;
-                s_log.error("run() " + result, e);
+                // Only the exception type in the logs: its text can include the download URL (with its token).
+                result = "FAILED: " + e.getClass().getSimpleName();
+                s_log.error("run() " + result + " (details in the server log)", e);
             } finally {
                 s_running.set(false);
             }

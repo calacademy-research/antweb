@@ -30,7 +30,12 @@ public final class LogMgrAction extends AntwebAction {
         "searches.txt", "notFound.txt", "taxonSet.log", "adminTask.log", "invalid.log", "logins.txt",
         "accessLog.txt", "getUrl.txt", "profiler.jsp", "badRequest.log", "taxonNotFound.txt", "isRestart.log",
         "getConns.log", "compute.log", "admin.log", "geolocaleTaxonFix.log", "hacks.log", "taxonworksNightly.log",
-        "srfExceptions.txt");
+        "srfExceptions.txt",
+        // web/log/ is not served to the public (Caddy); these are read here instead.
+        "worldantsLog.txt", "speciesListTool.txt", "adminAlerts.log", "denied.log", "throttle.txt",
+        "pageTracker.log", "geonames.log", "DataPlaceCase.txt", "flickrAdm1.html", "outOfBounds.txt",
+        "connections.txt", "typeStatusSpeciesFound.txt", "typeStatusSpeciesNotFound.txt",
+        "typeStatusNoTaxonName.txt", "typeStatusHomonym.txt");
     private static final Set<String> DATA_LOGS = Set.of("cCheck.log", "longRequest.log", "messages.txt", "serverBusy.html");
 
     public ActionForward execute(
@@ -333,7 +338,7 @@ public final class LogMgrAction extends AntwebAction {
         message += "<h3>Primary Logs</h3>";
         message += "<ul><li><a href='" + AntwebProps.getDomainApp() + "/listUploads.do?groupId=0'>Specimen Uploads</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/query.do?name=worldantsUploads'>Worldants Uploads</a>";
-        message += "<li><a href='" + AntwebProps.getDomainApp() + "/web/log/srfExceptions.txt'>SRF Exceptions</a>";
+        message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=srfExceptions&ext=txt'>SRF Exceptions</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=tomcatLog'>Tomcat Log</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=apacheLog'>Apache Log</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=antwebLog'>Antweb Log</a>";

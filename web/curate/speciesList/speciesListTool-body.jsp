@@ -85,7 +85,7 @@
 </table>
 <br><br>
 
-The SpeciesListTool log is here: <a href="<%= AntwebProps.getDomainApp() %>/web/log/speciesListTool.txt">log</a>
+The SpeciesListTool log is here: <a href="<%= AntwebProps.getDomainApp() %>/logMgr.do?action=get&fileName=speciesListTool&ext=txt">log</a>
 
 <br><br>
 <hr><br>

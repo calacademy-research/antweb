@@ -182,6 +182,11 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                            if (!lowerCode.equals(newCode)) {
                                getMessageMgr().addToMessages(MessageMgr.specimenIdSpacesRemoved, Html.esc(newCode));
                            }
+                           if (!"".equals(newCode) && !UploadUtil.isValidSpecimenCode(newCode)) {
+                               errorMessage = "invalid character in specimen code:" + newCode;
+                               getMessageMgr().addToMessages(MessageMgr.invalidSpecimenCode, Html.esc(newCode));
+                               return errorMessage;
+                           }
                            code = newCode;
                            specimenItem.put(col, newCode);
                            //A.log("parseLine() code col:" + col + " element:" + element);
