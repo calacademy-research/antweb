@@ -19,8 +19,10 @@ public class QueryAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(QueryAction.class);
 
+    // homonyms: the Homonym Report (moved here from util.do, where it was admin only; its page needs a login).
     private static final Set<String> ADMIN_ACTIONS = Set.of(
-        "checkIntegrity", "curiousQueries", "curateAntcat", "devQueries", "descEdit", "countryEndemic", "events");
+        "checkIntegrity", "curiousQueries", "curateAntcat", "devQueries", "descEdit", "countryEndemic", "events",
+        "homonyms");
 
     // True for named queries that expose curator logins/emails or modify data.
     private static boolean isSensitiveQuery(String name) {

@@ -110,7 +110,6 @@
   "/passwordResetCampaign": "login",
   "/place": "message",
   "/prepareCompareResults": "login",
-  "/prepareFieldGuideResults": "login",
   "/prepareMapResults": "login",
   "/press": "ok",
   "/project": "message",

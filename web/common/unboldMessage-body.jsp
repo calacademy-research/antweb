@@ -20,7 +20,6 @@
 <div class="wide_left">
 
 <% 
-    // Test this way: http://localhost/antweb/util.do?action=testMessage
 
     String message = (String) request.getAttribute("message"); 
     //A.log("message-body.jsp message:" + message);

@@ -564,7 +564,7 @@ But that is not a valid taxon. Why do we allow that?
 
 This specimen: https://www.antweb.org/specimen.do?name=jwj-bu19
 
-This work should clear this integrity report: https://www.antweb.org/util.do?action=curiousQuery&name=geolocaleTaxaWithoutTaxon
+This work should clear this integrity report: https://www.antweb.org/query.do?action=curiousQuery&name=geolocaleTaxaWithoutTaxon
 
 Debug the above method UploadDb.passGenusSubfamilyCheck();
 */

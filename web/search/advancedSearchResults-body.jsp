@@ -136,13 +136,7 @@ int intOffset = Integer.parseInt(offset);
 <input type="hidden" name="resultRank" value="specimen"/>
 <%  }
 
-    if ("fieldGuide".equals(mode)) {
-%>
-<form action="<%= util.getDomainApp() %>/fieldGuideResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-<input type="hidden" name="resultRank" value="specimen"/>
-<%  }
-
-    if (("map".equals(mode)) || ("compare".equals(mode)) || ("fieldGuide".equals(mode)) ) {
+    if (("map".equals(mode)) || ("compare".equals(mode))) {
       //AntwebUtil.log("advancedSearchResults-body.jsp mode:" + mode);
 %>
 Select All

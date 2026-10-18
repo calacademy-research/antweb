@@ -79,9 +79,6 @@ function selectAll(thisForm) {
 <logic:equal name="mode" value="map">
 <input type=button class="adv_top_submit" onClick="javascript:history.back();" value="Back to Search Results &#187;">
 </logic:equal>
-<logic:equal name="mode" value="fieldGuide">
-<input type=button class="adv_top_submit" onClick="javascript:history.back();" value="Back to Search Results &#187;">
-</logic:equal>
 
 <logic:equal name="mode" value="map">
 <form action="<%= AntwebProps.getDomainApp() %>/mapResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
@@ -90,10 +87,6 @@ function selectAll(thisForm) {
 <logic:equal name="mode" value="compare">
 <form action="<%= AntwebProps.getDomainApp() %>/compareResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="resultRank" value="species"/>
-</logic:equal>
-<logic:equal name="mode" value="fieldGuide">
-<form action="<%= AntwebProps.getDomainApp() %>/fieldGuideResults.do" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-<input type="hidden" name="resultRank" value="<%= resultRank %>"/>
 </logic:equal>
 
 <logic:equal name="mode" value="map">
@@ -106,12 +99,6 @@ Select All
 Select All
 <input type="checkbox" name="selectall" onClick="selectAll(document.taxaFromSearchForm);">
 <input type="submit" class="submit" value="Compare Selected &#187;" align="right"/>
-<hr></hr>
-</logic:equal>
-<logic:equal name="mode" value="fieldGuide"> 
-Select All
-<input type="checkbox" name="selectall" onClick="selectAll(document.taxaFromSearchForm);">
-<input type="submit" class="submit" value="Field Guide Selected &#187;" align="right"/>
 <hr></hr>
 </logic:equal>
 
@@ -128,9 +115,6 @@ Sorry, nothing matches your request.
 <div class="adv_search_checkbox">&nbsp;</div>
 </logic:equal>
 <logic:equal name="mode" value="map">
-<div class="adv_search_checkbox">&nbsp;</div>
-</logic:equal>
-<logic:equal name="mode" value="fieldGuide">
 <div class="adv_search_checkbox">&nbsp;</div>
 </logic:equal>
 
@@ -218,11 +202,6 @@ Sorry, nothing matches your request.
 				</div>
 			</logic:equal>
 			<logic:equal name="mode" value="compare">
-				<div class="adv_search_checkbox">
-				<input type="checkbox" name="chosen" value="<bean:write name="index"/>"/>
-				</div>
-			</logic:equal>
-			<logic:equal name="mode" value="fieldGuide">
 				<div class="adv_search_checkbox">
 				<input type="checkbox" name="chosen" value="<bean:write name="index"/>"/>
 				</div>

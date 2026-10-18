@@ -147,7 +147,7 @@ public class Museum extends LocalityOverview implements Countable {
     }    
     
     public String getCountCrawlLink() {
-      return "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=countCrawl&num=" + getCode() + "'>Count Crawl " + getCode() + "</a>";
+      return "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=museumTaxonCountCrawl&code=" + getCode() + "'>Count Crawl " + getCode() + "</a>";
     }
     
 /*

@@ -36,7 +36,6 @@
       <li><a href="<%= domainApp %>/serverStatus.do">Server Status</a>
       <li><a href="<%= domainApp %>/sessionProps.do">Session Properties</a>
       <li><a href="<%= domainApp %>/dbStatus.do">Database Status</a>
-      <!-- li><a href="< %= domainApp % >/util.do?action=unlockImageUpload">Unlock</a> Image Upload -->
       <li><a href="<%= AntwebProps.getSecureDomainApp() %>/list.do?action=usrAdm">User Login List</a>
       <li><a href="<%= AntwebProps.getSecureDomainApp() %>/query.do?action=curiousQuery&name=lastSpecimenUpload">Last Upload List</a>
       <li><a href="<%= domainApp %>/list.do?action=usrAdmLastLogin">User Last Login List</a>
@@ -46,7 +45,6 @@
 %>
       <li><a href="<%= domainApp %>/utilData.do?action=siteWarning&text=<%= content %>">Site Warning</a>
          <br><verbatim>&lt;br&gt;&lt;font color=lightgreen&gt;&lt;/font&gt;</verbatim>
-      <li><a href="<%= domainApp %>/utilData.do?action=deleteTaxonProp&taxonName=&prop=">Delete Taxon Property</a>
       <li><a href="<%= domainApp %>/util.do?action=isRestart">Restart Status</a>
       <% if (AntwebUtil.minsSince(SessionRequestFilter.getInitTime()) >= 10) { %>
       <br>&nbsp; &nbsp;<a href="<%= domainApp %>/utilData.do?action=setIsRestart&param=true">Restart server now</a> (<5 min)
@@ -59,10 +57,10 @@
     <ul align=left>
       <li><a href="<%= domainApp %>/query.do?action=curateAntcat">Curate AntCat Queries</a>
       <li><a href="<%= domainApp %>/logMgr.do?action=get&fileName=admin&ext=log">Admin Log</a>     
-      <li><a href="<%= domainApp %>/util.do?action=homonyms">Homonym Report</a>
+      <li><a href="<%= domainApp %>/query.do?action=homonyms">Homonym Report</a>
       <!-- li><a href="< %= domainApp % >/adminUpdates.do">Admin Updates</a -->
-      <li><a href="<%= domainApp %>/util.do?action=events">Events</a>
-      <li><a href="<%= domainApp %>/util.do?action=adminAlerts">Admin Alerts</a>      
+      <li><a href="<%= domainApp %>/query.do?action=events">Events</a>
+      <li><a href="<%= domainApp %>/query.do?action=curiousQuery&name=adminAlerts">Admin Alerts</a>
       <li><a href="<%= domainApp %>/common/statusDisplayPage.jsp">Taxa Status Documentation</a>
       <li><a href="<%= domainApp %>/taxonomicPage.do?rank=species&project=worldants&isImaged=false">Unimaged Bolton Ants</a>    
       <li><a href="<%= domainApp %>/list.do?action=countries">Countries List</a>
@@ -108,19 +106,14 @@
   	    <!-- li><a href="< %= domainApp % >/upload.do?action=reloadSpeciesLists">Reload</a> All Species Lists -->
 		<li><a href="<%= domainApp %>/schedule.do?action=populateAll"> Populate </a> All (1.5hrs) 
 		<li>Crawl <a href="<%= domainApp %>/logMgr.do?action=get&fileName=compute&ext=log"> Log </a> File
-		<li><a href="<%= domainApp %>/utilData.do?action=testProjTaxon">testProjTaxon</a>
 		<li><a href="<%= domainApp %>/logMgr.do?action=get&fileName=profiler&ext=jsp">Profiler log</a>
       </ul>
-	  <li><a href="<%= domainApp %>/util.do?action=testMessage"> Test </a>Message
-	  <li><a href="<%= domainApp %>/util.do?action=unboldMessage"> Test </a>Unbold Message
-	  <li><a href="<%= domainApp %>/util.do?action=bareMessage"> Bare </a>Message
 	  <li><a href="<%= domainApp %>/adm1.do?%20(Terr.%20Amazonas)"> Session Request Error </a>Message
 	  <li><a href="<%= domainApp %>/uptime.do"> Uptime </a>Message
-	  <li><a href="<%= domainApp %>/util.do?action=descEdit&field=notes">Notes</a>
+	  <li><a href="<%= domainApp %>/query.do?action=descEdit&field=notes">Notes</a>
 	  <li><a href="<%= domainApp %>/util.do?action=logQueryStats">Log</a> Query Stats
 	  <!-- li><a href="< %= domainApp % >/util.do?action=moveSpeciesListPages">Move</a> Species List Pages	  -->
       <li><a href="<%= domainApp %>/documentation/links.jsp">Links</a>      
-      <li><a href="<%= domainApp %>/utilData.do?action=updateAdm1FromParentData">Update</a> Adm1 from parent data
 <% } %>
 
     </ul>
@@ -131,14 +124,8 @@
         <!-- li><a href="< %= domainApp % >/utilData.do?action=plaziData">Get Plazi Data</a -->
         <!-- li><a href="< %= domainApp % >/getPlazi.do?test">Plazi Test</a -->
         <!-- li><a href="< %= domainApp % >/utilData.do?action=populateObjectEdit">Populate</a> Object Edit -->
-        <li><a href="<%= domainApp %>/utilData.do?action=countryData">Fetch</a> Country Data <!-- Fetch data from antwiki.org -->
-        <li><a href="<%= domainApp %>/utilData.do?action=finishCountryUpload">Finish</a> Country Upload
-        <li><a href="<%= domainApp %>/utilData.do?action=calcEndemic">Calc</a> Endemism
-        <li><a href="<%= domainApp %>/utilData.do?action=calcIntroduced">Calc</a> Introduced
-
   	    <li><a href="<%= domainApp %>/utilData.do?action=regenerateAllAntweb"> Regenerate AllAntwebAnts </a>
 	    <li><a href="<%= domainApp %>/utilData.do?action=crawlForType">Crawl </a> For Type
-  	    <li><a href="<%= domainApp %>/utilData.do?action=allCountCrawls"> Crawl</a> for Children and Image Counts</a>
 
         <li>Populate Overviews
           <ul>
@@ -150,18 +137,13 @@
             <li><a href="<%= domainApp %>/utilData.do?action=geolocaleCountCrawl"> Crawl</a> Geolocale (CA)
             <li><a href="<%= domainApp %>/utilData.do?action=geolocaleCountCrawl&num=392"> Crawl</a> One Geolocale (CA)
 
-<% //Do these work? Use the above? %>
-            <li><a href="<%= domainApp %>/utilData.do?action=populateOneGeolocaleTaxon&num=392"> Populate </a> One Geolocale (CA)
-            <li><a href="<%= domainApp %>/utilData.do?action=geolocaleTaxonCountCrawl&num=392"> Crawl</a> One Geolocale (CA)
-
-            <li><a href="<%= domainApp %>/utilData.do?action=populateGeolocaleCountryTaxon"> Populate </a> Countries
-            <li><a href="<%= domainApp %>/utilData.do?action=populateOneProjTaxon"> Populate </a> One Project
+            <li><a href="<%= domainApp %>/utilData.do?action=geolocaleTaxonCountCrawl&num=392"> Crawl</a> One Geolocale's Taxon Counts (CA)
 
           </ul>
 
           <!-- li><a href="< %= domainApp % >/utilData.do?action=moveDataToTaxonProps">Move</a> Favorites to Taxon Prop -->
           <!-- li><a href="< %= domainApp % >/utilData.do?action=populateIntroduced">Populate</a> Introduced -->
-	      <li><a href="<%= domainApp %>/utilData.do?action=updateTaxonSetTaxonNames"> Update</a> Taxon Set TaxonNames 
+	      <li><a href="<%= domainApp %>/utilData.do?action=updateTaxonSets"> Update</a> Taxon Sets (current valid names and sources)
 	      <li><a href="<%= domainApp %>/utilData.do?action=genObjectMaps"> Generate</a> Geolocale Maps
 	      <li><a href="<%= domainApp %>/utilData.do?action=updateGroupCounts"> Update</a> Group Counts
 	      <li><a href="<%= domainApp %>/utilData.do?action=genGroupObjectMaps"> Generate</a> Group maps.
@@ -176,7 +158,6 @@
 	  <li><a href="<%= domainApp %>/upload.do?action=allSpecimenFiles">Load</a> All Specimen Files
 	  <li><a href="<%= domainApp %>/upload.do?action=speciesTest">Run</a> Species Test
       <li>Taxon <a href="<%= domainApp %>/utilData.do?action=taxonFinish"> finish </a>
-      <li><a href="<%= domainApp %>/util.do?action=archiveLogs">Archive</a> logs
       </ul>
 <%   } %> 
 <%   if (AntwebProps.isDevOrStageMode()) { %>
@@ -185,13 +166,9 @@
       
 	    <li><a href="<%= domainApp %>/utilData.do?action=geolocaleCountCrawl">Geolocale Crawl</a>
       
-	    <li><a href="<%= domainApp %>/utilData.do?action=reCrawl"> ReCrawl (custom)</a>
-	    <li><a href="<%= domainApp %>/utilData.do?action=countCrawls"> Count </a> Crawls
-	    <li><a href="<%= domainApp %>/utilData.do?action=parentCrawl"> Crawl </a> for Parents
 	    <li><a href="<%= domainApp %>/utilData.do?action=imageCountCrawl"> Crawl </a> Image Counts
 	    <!-- 7.10 min -->
 	    <li><a href="<%= domainApp %>/utilData.do?action=projTaxonChildCountCrawl"> Crawl </a> Project Taxon Child Counts
-	    <li><a href="<%= domainApp %>/utilData.do?action=projTaxonImageCountCrawl"> Crawl </a> Project Taxon Image Counts
 
 	    <li><a href="<%= domainApp %>/utilData.do?action=projectCountCrawl"> Crawl </a> Project Taxon Counts
 	    <li><a href="<%= domainApp %>/utilData.do?action=geolocaleCountCrawl"> Crawl </a> Geolocale Taxon Counts
@@ -214,16 +191,7 @@
 
 <%
    if (false) {
-     if (AntwebProps.isDevOrStageMode()) { %>
-      <h3 align=left>Retired</h3>
-      <ul align=left>
-	  <li><a href="<%= domainApp %>/utilData.do?action=updateFormicidaeProjects"> Update </a>Formicidae Project
-	  <li><a href="<%= domainApp %>/utilData.do?action=calculateTaxonIsValidNames"> Calculate </a>Taxon is Valid Names
-	  <!-- li><a href="< %= domainApp % >/upload.do?action=genAll">Generate All</a> Species Lists -->
-      </ul>
-<%   } %> 
-
-<%   if (LoginMgr.isDeveloper(accessLogin)) { %>
+     if (LoginMgr.isDeveloper(accessLogin)) { %>
       <h3 align=left>Release 7.1</h3>
       <ul align=left>
 	  <li><a href="<%= domainApp %>/utilData.do?action=generateGeolocaleTaxaFromSpecimens"> Generate </a>Geolocale Taxa

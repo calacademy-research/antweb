@@ -9,10 +9,7 @@ import jakarta.servlet.http.*;
 //import org.apache.fop.apps.FOPException;
 //import org.apache.fop.messaging.MessageHandler;
 
-import com.zonageek.jpeg.JpegException;
 import org.apache.struts.action.*;
-
-import com.zonageek.jpeg.Jpeg;
 
 import java.sql.*;
 import javax.sql.DataSource;
@@ -25,15 +22,18 @@ import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 
-import com.google.gson.*;
-
 
 public class UtilAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(UtilAction.class);
 
+    // Every sub-action util.do handles. Anything else is answered with 404 before any other check
+    // (cleanup batch 3 removed 18 developer tests and reports that duplicated query.do).
+    static final Set<String> ACTIONS = Set.of(
+        "postInstantiate", "isRestart", "reloadAntwebMgr", "logQueryStats", "emailTest");
+
     static final Set<String> CHANGING_ACTIONS = Set.of(
-        "unlockImageUpload", "reloadAntwebMgr", "archiveLogs", "emailTest", "logQueryStats");
+        "reloadAntwebMgr", "emailTest", "logQueryStats");
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
@@ -42,6 +42,12 @@ public class UtilAction extends AntwebAction {
 		String action = theForm.getAction();
 
 		ActionForward forward = null;
+
+		if (action == null || !ACTIONS.contains(action)) {
+			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			request.setAttribute("message", "action not found:" + Html.esc(action));
+			return mapping.findForward("message");
+		}
 
 		// Everything here is an admin tool, except isRestart (polled by the host's
 		// reboot_checker.sh) and postInstantiate (AntWeb's own call after startup).
@@ -201,125 +207,12 @@ public class UtilAction extends AntwebAction {
 
 			if (action != null) {
 
-			  if (action.equals("unlockImageUpload")) {
-				AntwebUtil.writeFile("/var/www/html/imageUpload/" + "imageUploadInProcess.txt", "0");
-				returnLoc = mapping.findForward("success");
-			  }
-
-			  if ("testMessage".equals(action)) {
-				   String message = "Test Message";
-				   s_log.warn("execute() " + message);
-				   request.setAttribute("message", message);
-				   return mapping.findForward("message");
-			  }
-			  if ("unboldMessage".equals(action)) {
-				   String message = "Test Message";
-				   s_log.warn("execute() " + message);
-				   request.setAttribute("message", message);
-				   return mapping.findForward("unboldMessage");
-			  }
-			  if ("bareMessage".equals(action)) {
-				   String message = "Bare Message";
-				   s_log.warn("execute() " + message);
-				   request.setAttribute("message", message);
-				   return mapping.findForward("bareMessage");
-			  }
-			  
-			  if (action.equals("checkIntegrity")) {
-				String message = QueryManager.checkIntegrity(connection);
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("adminHtmlMessage");
-			  }
-
-			  if (action.equals("zonageekTest")) {
-				String message = zonageekTest(connection);
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("adminHtmlMessage");
-			  }
-			  
-			  if (action.equals("curiousQueries")) {
-				String message = QueryManager.curiousQueries(connection);
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("adminHtmlMessage");
-			  }
-
-			  if (action.equals("curiousQuery")) {
-				String message = QueryManager.curiousQuery(name, connection);
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("adminHtmlMessage");
-			  }
-
-			  if (action.equals("adminAlerts")) {
-				String message = QueryManager.adminAlerts(connection);
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("adminHtmlMessage");
-			  }
-
-			  // utilAction.do?action=descEdit&field=notes
-			  if (action.equals("descEdit")) { 
-				String field = theForm.getField();
-			
-				String query = "select taxon_name, title, content from description_edit where title = " + DBUtil.sqlLiteral(field);
-				String message = QueryManager.getQueryResults(connection, query);
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("message");
-			  }
-
-			  if (action.equals("geolocaleIntroduced")) { 
-				int geolocaleId;
-				try {
-				  geolocaleId = Integer.parseInt(theForm.getField());
-				} catch (NumberFormatException e) {
-				  request.setAttribute("message", "field must be a geolocale id.");
-				  return mapping.findForward("message");
-				}
-				String query = "select gt.taxon_name, is_introduced, is_endemic from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name and t.taxarank in ('species', 'subspecies') and geolocale_id = " + geolocaleId + " and (is_introduced = 1 or is_endemic = 0)";
-				String message = QueryManager.getQueryResults(connection, query);
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("message");
-			  }
-
-
 			  if (action.equals("logQueryStats")) {
 				DBUtil.logQueryStats();
 				String message = "Query stats logged to queryStats.log. <a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=queryStatsLog'>Query Stats Log</a>";
 				request.setAttribute("message", message);
 				returnLoc = mapping.findForward("adminMessage");
 			  }
-			  if (action.equals("homonyms")) {
-				HomonymDb homonymDb = new HomonymDb(connection);
-				ArrayList<Taxon> homonyms = homonymDb.getHomonyms();
-				//s_log.error("execute()  homonyms:" + homonyms);
-				request.setAttribute("homonyms", homonyms);
-				returnLoc = mapping.findForward("homonyms");
-			  }
-
-			  if (action.equals("events")) {
-				ArrayList<Event> events = new EventDb(connection).getEvents();
-				request.setAttribute("events", events);
-				HashMap<Integer, Login> curators = new LoginDb(connection).getCuratorMap();
-				//A.log("execute()  events:" + events + " curators:" + curators);
-				request.setAttribute("curators", curators);
-				returnLoc = mapping.findForward("events");
-			  }
-
-			  if (action.equals("archiveLogs")) { 
-				String message = LogMgr.archiveLogs();
-
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("adminMessage");
-			  } 
-
-
-			  if (action.equals("gson")) {
-				Geolocale country = GeolocaleMgr.getCountry("Algeria");
-				Gson gson = new Gson();
-				String message = " country:" + country + " gson:" + gson.toJson(country);                    
-
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("adminMessage");
-			  }
-
 			  if (action.equals("emailTest") && !LoginMgr.isAdmin(request)) {
 			    request.setAttribute("message", "Administrators only.");
 			    return mapping.findForward("message");
@@ -333,26 +226,6 @@ public class UtilAction extends AntwebAction {
 				request.setAttribute("message", message);
 				returnLoc = mapping.findForward("adminMessage");
 			  }
-
-			  if (action.equals("cpuCheck")) {
-			    String message = AntwebSystem.cpuCheck();              
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("adminMessage");
-			  }
-
-			  if (action.equals("diskFree")) {
-			    String message = FileUtil.getDiskFree();              
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("adminMessage");
-			  }
-
-			  if (action.equals("isDiskLow")) {
-			    int percent = FileUtil.getPercentDiskFull();              
-                String message = "Disk full:" + percent;
-				request.setAttribute("message", message);
-				returnLoc = mapping.findForward("adminMessage");
-			  }
-			  
 
 			  if (action.equals("isRestart")) {
 				  String message = "false";
@@ -378,38 +251,6 @@ public class UtilAction extends AntwebAction {
         return mapping.findForward("failure");
     }
         
-    public String zonageekTest(Connection connection) {
-      String message = "zonageekTest()";
-	  String docRoot = AntwebProps.getDocRoot();
-
-      /* How could we manage to cycle through each taxon, and for each image of each taxon, 	
-         test this zonageek business. 
-      SpecimenImage theImage = null;
-      theImage.getHighres()
-      */
-	  String imageName = "casent0740806_h_1_high.jpg";
-	  String imagePath = docRoot + imageName;
-	  s_log.warn("zonageekTest() imagePath:" + imagePath);
-	
-      if (imagePath.contains("/null")) {
-        s_log.error("zonageekTest() WSS.  Image path contains null in bigPicture-body.jsp:" + imagePath); 
-        //continue;
-      } else {
-        Jpeg jpeg = new Jpeg();    
-  
-        try {
-          jpeg.read(new FileInputStream(imagePath));
-  
-        } catch (JpegException | IOException e) {
-          message = "WSS. zonageekTest() e:" + e + " on " + imagePath;
-          AntwebUtil.log(message);
-          
-          //continue;
-        }
-	  }
-      return message;
-    }
-    
 }
 
 

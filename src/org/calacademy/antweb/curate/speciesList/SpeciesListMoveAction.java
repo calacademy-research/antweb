@@ -71,7 +71,7 @@ public class SpeciesListMoveAction extends SpeciesListSuperAction {
               + "<input type='hidden' name='action' value='confirm'>"
               + "<input type='submit' value='Confirm'></form>" 
               + "<br><br>  Back to <a href='" + AntwebProps.getDomainApp() 
-              + "/moveToValid.do'>Move To Valid</a> Tool.";
+              + "/speciesListTool.do'>Species List Tool</a>.";
             request.setAttribute("message", message);
             return mapping.findForward("message");
           }
@@ -82,12 +82,12 @@ public class SpeciesListMoveAction extends SpeciesListSuperAction {
            } else {
             message = saveTaxon(connection, loginId, fromTaxonName, toTaxonName, true); 
             message += "<br><br>  Back to <a href='" + AntwebProps.getDomainApp() 
-              + "/moveToValid.do'>Move To Valid</a> Tool.";
+              + "/speciesListTool.do'>Species List Tool</a>.";
             request.setAttribute("message", message);
             return mapping.findForward("message");
           }
         } else if ("back".equals(action)) {
-            return mapping.findForward("moveToValid");
+            return mapping.findForward("speciesListTool");
         } else {
           request.setAttribute("fromTaxon", fromTaxon);   
           request.setAttribute("toTaxon", toTaxon);   

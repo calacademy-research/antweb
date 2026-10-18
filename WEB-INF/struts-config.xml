@@ -119,9 +119,6 @@
     <form-bean      name="orphanTaxonsForm"
                     type="org.calacademy.antweb.curate.orphans.OrphanTaxonsForm"/>
 
-    <form-bean      name="moveToValidForm"
-                    type="org.calacademy.antweb.curate.MoveToValidForm"/>
-
     <form-bean      name="editGeolocaleForm"
                     type="org.calacademy.antweb.curate.geolocale.EditGeolocaleForm"/>
 
@@ -600,7 +597,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
             name="moveTaxonForm">
       <forward name="speciesListMove" path="/curate/speciesList/speciesListMove.jsp" />
       <forward name="speciesListTool" path="/speciesListTool.do" />
-      <forward name="moveToValid" path="/moveToValid.do" />
     </action>
 
     <action path="/disputeMgr"
@@ -615,6 +611,8 @@ We would like to remove getChildImages.  Not needed now in the new UI
             type="org.calacademy.antweb.util.QueryAction"
             scope="request"
             name="utilForm">
+      <forward name="homonyms" path="/util/homonyms.jsp" />
+      <forward name="events" path="/util/events.jsp" />
     </action>
 
     <action path="/utilData"
@@ -629,8 +627,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
             type="org.calacademy.antweb.util.UtilAction"
             scope="request"
             name="utilForm">
-      <forward name="homonyms" path="/util/homonyms.jsp" />
-      <forward name="events" path="/util/events.jsp" />
       <forward name="success" path="/curate.do" />
     </action>
 
@@ -888,14 +884,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
         <forward name="oneView" path="/search/multiTaxaOneView.jsp"/>
      </action>
 
-     <action path="/prepareFieldGuideResults"
-             type="org.calacademy.antweb.search.PrepareFieldGuideResultsAction"
-             name="blankForm"
-             input="/index.jsp">
-        <forward name="advancedSearch" path="/search/advancedSearchResults.jsp?mode=fieldGuide"/>
-        <forward name="advancedSearchByTaxon" path="/search/advancedSearchResultsByTaxon.jsp?mode=fieldGuide"/>
-     </action>
-          
      <action path="/fieldGuideResults"
              type="org.calacademy.antweb.search.FieldGuideResultsAction"
              name="taxaFromSearchForm"
@@ -1541,7 +1529,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="report" path="/imageUploader/imageUploadReport.jsp"/>
     </action>
 
-     <!-- called as: /util.do?action=countryData  as below only to test fetch. -->
+     <!-- Admin only: /antWikiData.do?action=checkForUpdates (are AntWiki's valid and fossil species lists newer?) -->
      <action path="/antWikiData"
              type="org.calacademy.antweb.data.AntWikiDataAction"
              name="dummyForm"

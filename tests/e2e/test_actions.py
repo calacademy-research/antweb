@@ -37,7 +37,9 @@ def test_removed_actions_stay_removed():
              # Old aliases with no traffic and no links (cleanup batch 2).
              "/home", "/rules", "/basicsearch", "/advancedsearch", "/bigMapReq", "/recentsearchresults",
              # AntShare: only an embedded Google Form that no longer works.
-             "/antShare"]
+             "/antShare",
+             # Cleanup batch 3: old field guide step (no page linked it) and the retired Move To Valid tool.
+             "/prepareFieldGuideResults", "/moveToValid"]
     if not IS_PRODUCTION:
         # These two used to update counts; only call them where this change may not be live yet.
         paths += ["/test", "/mobile"]

@@ -1178,7 +1178,7 @@ public abstract class Queries {
         return queries; // end getAssortedNamedQueries()
     }
 
-    // Invoke like: /util.do?action=curiousQuery&name=nonAsciiTaxonName
+    // Invoke like: /query.do?action=curiousQuery&name=nonAsciiTaxonName
     public static ArrayList<NamedQuery> getNamedQueries() {        
         
         ArrayList<NamedQuery> namedQueries = new ArrayList<>();
@@ -1199,7 +1199,7 @@ public abstract class Queries {
         return namedQueries;
     }
 
-    // Invoke like: /util.do?action=curiousQuery&name=nonAsciiTaxonName
+    // Invoke like: /query.do?action=curiousQuery&name=nonAsciiTaxonName
     public static String getQueryManagerPage() {        
         String page = "<h2>&nbsp;Query Manager <img width='23' src='" + AntwebProps.getDomainApp() + "/image/new1.png'></h2>";
         page += "&nbsp;&nbsp;&nbsp;&nbsp;Old Query Manager is: <a href='" + AntwebProps.getDomainApp() + "/queries.do'>here</a><br>";
@@ -1245,7 +1245,7 @@ public abstract class Queries {
       for (String query : queries) {
         if (i == 0) html += "<ul align=left>";
         ++i;
-        html += "<li><a href='" + AntwebProps.getDomainApp() + "/util.do?action=curiousQuery&name=" + query +"'>" + query + "</a>";
+        html += "<li><a href='" + AntwebProps.getDomainApp() + "/query.do?action=curiousQuery&name=" + query +"'>" + query + "</a>";
         if (i == queries.size()) html += "</ul>";
       }
       return html;

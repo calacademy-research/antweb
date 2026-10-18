@@ -124,47 +124,6 @@ antweb	ALL=(ALL)	NOPASSWD: /antweb/deploy/bin/admin.sh
 
     
 
-    public static String moveImages(String code) {
-      if (code == null || code.length() <= 0) return "Enter code to move";
-      code = code.toLowerCase();
-      String imgDir = AntwebProps.getDocRoot() + "images/";
-      Utility.makeDirTree(imgDir + "bak/");
-      String command = "mv " + imgDir + code + " " + imgDir + "bak/" + code;
-      s_log.warn("moveImages() command:" + command);
-      new AntwebSystem().launchProcess(command, true);
-      String message = command;
-      return message;
-    }
-
-    public static String changeOwner(String code) {
-      if (code == null || code.length() <= 0) return "Enter code to change owner of";
-      code = code.toLowerCase();
-      String imgDir = AntwebProps.getDocRoot() + "images/";
-      String command = "chown -R apache:apache " + imgDir + code;
-      s_log.warn("changeOwner() command:" + command);
-      new AntwebSystem().launchProcess(command, true);
-      String link = " See specimen:<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a>";
-      String message = command + "<br>" + link;
-      return message;
-    }
-
-    public static String changeOwnerAndPerms(String code) {
-      if (code == null || code.length() <= 0) return "Enter code to change owner and permissions of";
-      code = code.toLowerCase();
-      String imgDir = AntwebProps.getDocRoot() + "images/";
-
-      String chownCommand = "chown -R antweb:antweb " + imgDir + code;
-      s_log.warn("changeOwnerAndPerms() command:" + chownCommand);
-      new AntwebSystem().launchProcess(chownCommand, true);
-
-      String permsCommand = "chmod 775 " + imgDir + code;
-      s_log.warn("changeOwnerAndPerms() command:" + permsCommand);
-      new AntwebSystem().launchProcess(permsCommand, true);
-
-      String link = " See specimen:<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a>";
-      String message = chownCommand + "<br>" + permsCommand + "<br>" + link;
-      return message;
-    }
     
 }
 
