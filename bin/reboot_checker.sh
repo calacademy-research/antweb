@@ -2,11 +2,10 @@
 # Host cron, every 5 minutes: restart the AntWeb container when the app asks for it
 # (util.do?action=isRestart answers <b>true</b>).
 #
-# Which site to ask: the server this runs on, never another one (on staging, asking
-# production restarted staging on production's flag).
-#   1. ANTWEB_URL, if set (e.g. ANTWEB_URL=https://staging.antweb.org), or
-#   2. https://staging.antweb.org when the host name contains "staging", otherwise
-#   3. https://www.antweb.org (production; unchanged).
+# Which site to ask: the AntWeb container on this server, directly on its local port
+# (127.0.0.1:8081 on production and staging). Going through the public address
+# reached Cloudflare's challenge page, so the app's answer was never seen.
+# ANTWEB_URL overrides it (e.g. ANTWEB_URL=http://127.0.0.1:8081).
 # --dry-run: print the URL and the answer, restart nothing, write no log.
 log_path="../logs/detail/rebootCheck.log"
 cd "$(dirname "$0")"
@@ -14,13 +13,8 @@ cd "$(dirname "$0")"
 dry_run=0
 [[ "$1" == "--dry-run" ]] && dry_run=1
 
-if [[ -n "$ANTWEB_URL" ]]; then
-    base_url="${ANTWEB_URL%/}"
-elif [[ "$(hostname)" == *staging* ]]; then
-    base_url="https://staging.antweb.org"
-else
-    base_url="https://www.antweb.org"
-fi
+base_url="${ANTWEB_URL:-http://127.0.0.1:8081}"
+base_url="${base_url%/}"
 
 page_content=$(curl -s --max-time 10 "$base_url/util.do?action=isRestart")
 now=$(date)
