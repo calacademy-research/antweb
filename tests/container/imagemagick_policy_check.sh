@@ -47,7 +47,10 @@ refuse ps.jpg
 refuse "text:$secret"
 refuse "label:x"
 refuse "@$secret"
-refuse "ephemeral:sample.jpg"
+# Not checked: "ephemeral:" (read, then delete the file). ImageMagick 7 handles that prefix
+# before any policy check (the policy lists it anyway). AntWeb never passes a prefix: it
+# converts images/<code>/<name>, a full path starting with "/", and upload names may only
+# contain letters, digits, _ . and - (ImageUploaded.checkName), so no "xxx:" can be added.
 refuse "https://www.antweb.org/favicon.ico"
 [ ! -e msl-out.jpg ] || { echo "::error::ImageMagick check: MSL script ran"; fail=1; }
 
