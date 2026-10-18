@@ -121,6 +121,16 @@ def _file(name, data=JPEG):
     return {"file": (name, data, "image/jpeg")}
 
 
+def _upload_list(session):
+    """listImageUploads.do, which must not fail part way (then it lists nothing and the tests
+    that read it would only skip)."""
+    r = session.get(BASE_URL + "/listImageUploads.do", timeout=TIMEOUT)
+    assert r.status_code == 200, r.status_code
+    assert "an error occurred" not in r.text and "NullPointerException" not in r.text, \
+        "listImageUploads.do failed: " + re.sub(r"<[^>]+>", " ", r.text)[-600:]
+    return r.text
+
+
 # ---------- anonymous ----------
 
 @pytest.mark.parametrize("step", ["start", "add", "finish"])
@@ -223,7 +233,7 @@ def test_add_and_finish_refuse_unknown_upload(curator):
 def test_other_logins_upload_refused(curator):
     """An upload record started by someone else can be neither added to nor finished."""
     s, token, login_id = curator
-    page = s.get(BASE_URL + "/listImageUploads.do", timeout=TIMEOUT).text
+    page = _upload_list(s)
     other = None
     for row in page.split("<tr>"):
         c = re.search(r"curator\.do\?id=(\d+)", row)
@@ -247,7 +257,7 @@ def test_report_specimen_links_open_specimen_pages(curator):
     50-image test, 10-17). Read-only: uses the newest report listed on listImageUploads.do.
     """
     s = curator[0]
-    page = s.get(BASE_URL + "/listImageUploads.do", timeout=TIMEOUT).text
+    page = _upload_list(s)
     # Reports with images only: test_not_saved_round_trip leaves uploads with none.
     ids = re.findall(r"<td>([1-9]\d*)</td>\s*<td><a href='[^']*imageUploadReport\.do\?id=(\d+)'", page)
     ids = [upload_id for _count, upload_id in ids]
@@ -268,6 +278,16 @@ def test_report_specimen_links_open_specimen_pages(curator):
     assert codes, "no specimen links in the Uploaded Specimen Set"
     r = s.get(BASE_URL + "/specimen.do?code=" + codes[0], timeout=TIMEOUT)
     assert r.status_code == 200 and "is not in the AntWeb database" not in r.text, (codes[0], r.status_code)
+
+
+@needs_curator
+def test_upload_list_loads(curator):
+    """The list of all image uploads shows every row, also an upload by a login that is not a
+    listed curator. The test login's uploads (test_not_saved_round_trip) made the page fail with
+    a NullPointerException on 10-18, so the two tests above only skipped."""
+    page = _upload_list(curator[0])
+    assert "Total image uploads:" in page
+    assert re.search(r"imageUploadReport\.do\?id=\d+", page) or "Total image uploads: 0" in page
 
 
 # ---------- files not saved (image_upload_refused) ----------

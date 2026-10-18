@@ -64,18 +64,19 @@
       ++c;
       out.println("<tr><td>" + c + ".</td>");
       
+      // A login that is not (or no longer) a listed curator, a removed group or artist: show the id.
       if ("all".equals(uploadsBy)) {
         Group group = GroupMgr.getGroup(imageUpload.getGroupId());
-        out.println("<td>" + group.getLinkAbbrev() + "</td>");
+        out.println("<td>" + (group != null ? group.getLinkAbbrev() : "id " + imageUpload.getGroupId()) + "</td>");
         Curator curator = LoginMgr.getCurator(imageUpload.getCuratorId());
-        out.println("<td>" + curator.getLink() + "</td>");
+        out.println("<td>" + (curator != null ? curator.getLink() : "id " + imageUpload.getCuratorId()) + "</td>");
       }
       if ("group".equals(uploadsBy)) {
         Curator curator = LoginMgr.getCurator(imageUpload.getCuratorId());
-        out.println("<td>" + curator.getLink() + "</td>");
+        out.println("<td>" + (curator != null ? curator.getLink() : "id " + imageUpload.getCuratorId()) + "</td>");
       }
       Artist artist = ArtistMgr.getArtist(imageUpload.getArtistId());
-      out.println("<td>" + artist.getLink() + "</td>");
+      out.println("<td>" + (artist != null ? artist.getLink() : "id " + imageUpload.getArtistId()) + "</td>");
       out.println("<td>" + imageUpload.getIsComplete() + "</td>");
       out.println("<td>" + imageUpload.getImageCount() + "</td>");
       out.println("<td><a href='" + domainApp + "/imageUploadReport.do?id=" + imageUpload.getId() + "'>" + imageUpload.getCreated() + "</a></td>");

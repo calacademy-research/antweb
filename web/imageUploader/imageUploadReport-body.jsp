@@ -54,7 +54,7 @@
     <div id="overview_data" class="plain">
         <ul>
         <li><b>Group: </b></li>
-        <li><%= group.getLink() %> - <a href="<%= AntwebProps.getDomainApp() %>/listImageUploads.do?groupId=<%= (group.getId()) %>">[Reports]</a>
+        <li><%= group != null ? group.getLink() : "id " + imageUpload.getGroupId() %> - <a href="<%= AntwebProps.getDomainApp() %>/listImageUploads.do?groupId=<%= imageUpload.getGroupId() %>">[Reports]</a>
 </li>
         </ul>
     </div>
@@ -62,7 +62,7 @@
     <div id="overview_data" class="plain">
         <ul>
         <li><b>Artist: </b></li>
-        <li><%= artist.getLink() %></li>
+        <li><%= artist != null ? artist.getLink() : "id " + imageUpload.getArtistId() %></li>
         </ul>
     </div>
 

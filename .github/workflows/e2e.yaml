@@ -88,4 +88,4 @@ jobs:
           git commit -m "e2e: record baseline from $ANTWEB_URL" && git push
       - name: Tests
         if: ${{ env.MODE == 'test' && hashFiles('tests/e2e/expectations.json') != '' }}
-        run: pytest tests/e2e -q -rfE -p no:cacheprovider
+        run: pytest tests/e2e -q -rfEs -p no:cacheprovider
