@@ -165,6 +165,12 @@ public class UploadNoticeTest extends TestCase {
             UploadNotice.failureText("Error uploading images. ex:java.io.IOException: No space left on device"));
         assertEquals("AntWeb hit an unexpected problem and made no changes. Please reply to this email so we can look into it.",
             UploadNotice.failureText("java.lang.NullPointerException at org.calacademy.antweb.Foo.bar(Foo.java:12)"));
+        // The no-JavaScript image form may have saved some images before the error.
+        assertEquals("AntWeb hit an unexpected problem (case 12). Please reply to this email so we can look into it.",
+            UploadNotice.failureText("Error. Case number:12. e:java.io.IOException: x", false));
+        assertEquals("AntWeb hit an unexpected problem. Please reply to this email so we can look into it.",
+            UploadNotice.failureText("Error uploading images. ex:java.io.IOException: No space left on device", false));
+        assertEquals("Specimen not found.", UploadNotice.failureText("Specimen not found.", false));
         // Ordinary validation messages are passed on.
         assertEquals("Specimen File must be in the most current format.",
             UploadNotice.failureText("Specimen File must be in the most current format."));

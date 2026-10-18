@@ -259,6 +259,14 @@ public class UploadNotice {
      * names or stack text reach a curator.
      */
     public static String failureText(Object message) {
+        return failureText(message, true);
+    }
+
+    /**
+     * As failureText(message), but madeNoChanges=false leaves out "and made no changes" for an
+     * upload that may have saved part of its work before the error (the no-JavaScript image form).
+     */
+    public static String failureText(Object message, boolean madeNoChanges) {
         String s = plain(message);
         if (s == null) return null;
         java.util.regex.Matcher m = CASE_NUMBER.matcher(s);
@@ -267,7 +275,7 @@ public class UploadNotice {
             || s.startsWith("Error uploading images.") || s.contains(" ex:") || s.contains(" e:");
         if (!crash) return s;
         return "AntWeb hit an unexpected problem" + (hasCase ? " (case " + m.group(1) + ")" : "")
-            + " and made no changes. Please reply to this email so we can look into it.";
+            + (madeNoChanges ? " and made no changes" : "") + ". Please reply to this email so we can look into it.";
     }
 
     /** The page's message as plain text, at most 500 characters. */

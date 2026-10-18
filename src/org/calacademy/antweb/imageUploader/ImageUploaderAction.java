@@ -210,7 +210,7 @@ public final class ImageUploaderAction extends AntwebAction {
           AdminAlertMgr.add(message, connection);
           request.setAttribute("message", message);
           s_log.warn(message + " temppDir:" + ImageUploaded.tempDir);
-          if (started != null) sendNotice(accessLogin, started, false, -1, -1, UploadNotice.failureText(message));
+          if (started != null) sendNotice(accessLogin, started, false, -1, -1, UploadNotice.failureText(message, false));
           return mapping.findForward("message");
         } finally {
           DBUtil.close(connection, this, dbMethodName);
