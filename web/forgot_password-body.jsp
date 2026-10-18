@@ -35,13 +35,13 @@
 <p><input type="submit" class="tool_label" style="float:none;" value="Email me a link"></p>
 </form>
 
-<p>If your account has no email address, or the email does not arrive, please write to <a href="mailto:antweb@calacademy.org?subject=Password%20Recovery">antweb@calacademy.org</a>.</p>
+<p>If your account has no email address, or the email does not arrive, please write to <a href="mailto:antweb@antweb.org?subject=Password%20Recovery">antweb@antweb.org</a>.</p>
 <% } %>
 
 <br><br>
 <p>If you're not currently a curator, would you like to join us?  Curators can edit the home page of the geographic section they curate, upload specimen data and authority files, and control a number of other aspects of their project. Learn how to <a href="<%= AntwebProps.getDomainApp() %>/documentation.do">submit data to AntWeb</a>.
 
-<p>If you would like to join us, contact us at <a href="mailto:antweb@calacademy.org">antweb@calacademy.org</a>.
+<p>If you would like to join us, contact us at <a href="mailto:antweb@antweb.org">antweb@antweb.org</a>.
 
     </div>
 </div>

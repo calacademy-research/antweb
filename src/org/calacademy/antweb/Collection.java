@@ -190,7 +190,7 @@ public class Collection extends AdvancedSearchResults {
   }        
   
   public String getAmissEmail() {
-    String amissEmail = "antweb@calacademy.org";  
+    String amissEmail = "antweb@antweb.org";  
     if (getGroupList().size() == 1) {
       amissEmail = getGroupList().get(0).getAdminEmail();
     }
