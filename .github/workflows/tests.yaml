@@ -34,6 +34,12 @@ jobs:
       - name: JSP allow-list is the same in Caddyfile and Caddyfile.common
         run: python3 tests/e2e/caddy_lists.py
 
+      - name: Function catalog has a row for every action
+        # Regenerates the catalog in memory and fails when a Struts action or sub-action has no
+        # row in docs/catalog/actions.csv. Fix: python3 tools/catalog/build_catalog.py, fill in
+        # purpose and status of the new rows, commit docs/catalog/ (see docs/README.md).
+        run: python3 tools/catalog/build_catalog.py --check
+
       - name: Test API Build
         run: |
           docker build -t antweb/api:dev -f docker/api/Dockerfile .
