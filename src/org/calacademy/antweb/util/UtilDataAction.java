@@ -767,7 +767,7 @@ public class UtilDataAction extends AntwebAction {
               ObjectMapDb objectMapDb = new ObjectMapDb(connection);
               objectMapDb.deleteMap("geolocale_id = " + id);                 
           }
-          message = "message: delete Google Map for id:" + id;
+          message = "Map deleted for geolocale id:" + id;
         }
 
         if (action.contains("genGoogleMapFunction")) {
@@ -815,7 +815,7 @@ public class UtilDataAction extends AntwebAction {
 
               message = "title:" + map.getTitle() + " subtitle:" + map.getSubtitle() + " info:" + map.getInfo() + " googleMapFunction.length:" + map.getGoogleMapFunction().length();
             }
-            if (message == null) message = "genGoogleMapFunction";
+            if (message == null) message = "Map rebuilt.";
         }		
         
         if (action.contains("genObjectMaps")) {

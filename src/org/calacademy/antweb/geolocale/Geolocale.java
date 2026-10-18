@@ -558,8 +558,8 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
       return "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=geolocaleTaxonCountCrawl&num=" + getId() + "'>Count Crawl " + getName() + "</a>";
     }
     public String getGoogleMapFunctionLink() {
-      String genLink = "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=genGoogleMapFunction&num=" + getId() + "'>Generate Google Map " + getName() + "</a>.";
-      String delLink = "[<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=delGoogleMapFunction&num=" + getId() + "'>x</a>]";
+      String genLink = "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=genGoogleMapFunction&num=" + getId() + "'>Rebuild map for " + getName() + "</a>.";
+      String delLink = "[<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=delGoogleMapFunction&num=" + getId() + "' title='Delete the stored map'>x</a>]";
       return genLink + delLink;
     }
         
