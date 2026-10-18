@@ -103,10 +103,6 @@ window.api = root.data("scrollable");
         Ant Course is a 10-day workshop designed for systematists, ecologists, behaviorists, conservation biologists, whose research require a greater understanding of ant taxonomy and field research techniques. Emphasis is on the evolution, classification and identification of ant genera.  <a href="https://www.antcourse.org/">Read More &#187;</a>
 
     </div>
-    <div class="promo middle">
-        <b><a href=/page.do?name=bayarea>Bay Area Ants Survey</a></b><br />
-        The 11-county Bay Area is home to more 100 types of ant species. Visit AntWeb's <a href=/page.do?name=bayarea>Bay Area Ant Survey</a> to find out how to become a Citizen Naturalist and help discover and learn about the ants in your backyard, schools and local Bay Area parks.
-        </div>
     <div class="promo">
         <b><a href=/worldants.do>World Ant Collections</a></b><br />
         We at AntWeb have been busy taking photos of many of the world's great ant collections.  Visit the AntWeb <a href=/worldants.do>World Ant Collection</a> to see the collections and get information about where they are housed.  
