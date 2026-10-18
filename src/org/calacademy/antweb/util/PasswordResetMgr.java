@@ -22,6 +22,7 @@ import jakarta.servlet.http.HttpSession;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.calacademy.antweb.home.InactiveAccountDb;
 import org.calacademy.antweb.home.PasswordResetDb;
 
 /**
@@ -56,6 +57,7 @@ public final class PasswordResetMgr {
 
     public static final String SUBJECT_RESET = "AntWeb password reset";
     public static final String SUBJECT_CAMPAIGN = "AntWeb: please set a new password";
+    public static final String SUBJECT_REACTIVATE = "AntWeb: reactivate your account";
 
     public static final String SESSION_VERSION_ATTR = "sessionVersion";
 
@@ -146,6 +148,24 @@ public final class PasswordResetMgr {
     /** required: the account must reset (campaign, or login refused), so the email must not say it can be ignored. */
     public static String sendResetLink(Connection connection, int loginId, String displayName, String email,
                                        String ip, String subject, String intro, int validMinutes, boolean required) {
+        return sendLink(connection, loginId, email, ip, subject, validMinutes,
+            link -> emailBody(displayName, intro, link, validMinutes, required));
+    }
+
+    /**
+     * Reactivation link for an inactive account (InactiveAccounts): the same single-use reset
+     * link (24 hours, only its SHA-256 stored, at most 3 per login per hour); setting a new
+     * password with it also makes the account active again (ResetPasswordAction).
+     * Returns SENT, NO_EMAIL, RATE_LIMITED, MAIL_FAILED or ERROR.
+     */
+    public static String sendReactivationLink(Connection connection, int loginId, String displayName, String userName,
+                                              String email, String ip) {
+        return sendLink(connection, loginId, email, ip, SUBJECT_REACTIVATE, VALID_MINUTES,
+            link -> reactivationEmailBody(displayName, userName, link));
+    }
+
+    private static String sendLink(Connection connection, int loginId, String email, String ip, String subject,
+                                   int validMinutes, java.util.function.Function<String, String> body) {
         if (email == null || !email.contains("@")) return NO_EMAIL;
         try {
             PasswordResetDb db = new PasswordResetDb(connection);
@@ -156,13 +176,29 @@ public final class PasswordResetMgr {
             String token = newToken();
             db.insertToken(loginId, hashToken(token), validMinutes, ip);
             String link = AntwebProps.getSecureDomainApp() + "/resetPassword.do?token=" + token;
-            boolean sent = Emailer.sendTransactional(email, subject, emailBody(displayName, intro, link, validMinutes, required));
+            boolean sent = Emailer.sendTransactional(email, subject, body.apply(link));
             logEvent("reset link " + (sent ? "emailed" : "NOT emailed") + " login:" + loginId + " subject:" + subject);
             return sent ? SENT : MAIL_FAILED;
         } catch (SQLException e) {
-            s_log.error("sendResetLink() login:" + loginId + " e:" + e);
+            s_log.error("sendLink() login:" + loginId + " e:" + e);
             return ERROR;
         }
+    }
+
+    /** The reactivation email (HTML like the reset email; the exact text is in the PR description). */
+    public static String reactivationEmailBody(String displayName, String userName, String link) {
+        String login = AntwebProps.getSecureDomainApp() + "/login.do";
+        String hello = displayName == null || displayName.trim().isEmpty() ? "Hello," : "Hello " + Html.esc(displayName.trim()) + ",";
+        return hello + "<br><br>\n"
+            + "Your AntWeb account (username: " + Html.esc(userName == null ? "" : userName) + ") has not been used for more than three years,"
+            + " so it has been made inactive. Someone, probably you, has just tried to log in to it or asked for a new password.<br><br>\n"
+            + "To reactivate the account, open this link and choose a new password (the link works for " + validFor(VALID_MINUTES) + ", and only once):<br>\n"
+            + "<a href=\"" + Html.escAttr(link) + "\">" + Html.esc(link) + "</a><br><br>\n"
+            + "Your new password must be at least " + PasswordPolicy.MIN_LENGTH + " characters long.<br><br>\n"
+            + "If the link has expired, go to <a href=\"" + Html.escAttr(login) + "\">" + Html.esc(login) + "</a>,"
+            + " click \"Forgot your password?\" and enter your username or email address: a new link arrives within a minute.<br><br>\n"
+            + "If you did not ask for this, you can ignore this email: the account stays inactive and nothing else changes.<br><br>\n"
+            + "AntWeb<br>California Academy of Sciences";
     }
 
     /**
@@ -230,10 +266,42 @@ public final class PasswordResetMgr {
                     logEvent("forgot-password request for login:" + a.id + " which has no email address");
                     return;
                 }
+                if (new InactiveAccountDb(c).isInactive(a.id)) {
+                    // Inactive account (InactiveAccounts): the link reactivates it as well.
+                    String r = sendReactivationLink(c, a.id, a.getDisplayName(), a.name, a.email, ip);
+                    logEvent("forgot-password request for inactive login:" + a.id + " reactivation link:" + r);
+                    return;
+                }
                 sendResetLink(c, a.id, a.getDisplayName(), a.email, ip, SUBJECT_RESET,
                     "Someone, probably you, asked to reset the password of your AntWeb account (username: " + a.name + ").");
             } catch (Exception e) {
                 s_log.error("requestResetAsync() e:" + e);
+            }
+        });
+    }
+
+    /**
+     * A wrong password for an inactive account: email a reactivation link in the background,
+     * so the login page answers as for any wrong password and takes the same time. Counts
+     * against the same per-IP limit as "Forgot your password?".
+     */
+    public static void requestReactivationAsync(final int loginId, final String ip) {
+        if (!allowIp(ip)) {
+            logEvent("reactivation link not sent (too many requests from the IP) login:" + loginId);
+            return;
+        }
+        s_mailExecutor.execute(() -> {
+            try (Connection c = DBUtilSimple.getDataSource().getConnection()) {
+                PasswordResetDb.Account a = new PasswordResetDb(c).getAccount(loginId);
+                if (a == null) return;
+                if (!a.hasEmail()) {
+                    logEvent("wrong password for inactive login:" + a.id + " which has no email address");
+                    return;
+                }
+                String r = sendReactivationLink(c, a.id, a.getDisplayName(), a.name, a.email, ip);
+                logEvent("wrong password for inactive login:" + a.id + " reactivation link:" + r);
+            } catch (Exception e) {
+                s_log.error("requestReactivationAsync() e:" + e);
             }
         });
     }

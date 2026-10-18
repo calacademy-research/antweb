@@ -15,6 +15,7 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
+import org.calacademy.antweb.home.InactiveAccountDb;
 import org.calacademy.antweb.home.PasswordResetDb;
 import org.calacademy.antweb.util.DBUtil;
 import org.calacademy.antweb.util.HttpUtil;
@@ -27,7 +28,8 @@ import org.calacademy.antweb.util.PasswordResetMgr;
  * GET shows the form (new password twice) if the token is valid. POST checks
  * the token again (unused, not expired), applies PasswordPolicy, then stores
  * the new password, marks the token used, cancels the login's other tokens,
- * clears must_reset and ends all of the login's sessions.
+ * clears must_reset and ends all of the login's sessions. An inactive account
+ * (InactiveAccounts) becomes active again.
  *
  * Request attributes for resetPassword-body.jsp:
  *   resetState  "invalid", "form" or "done"
@@ -73,6 +75,11 @@ public final class ResetPasswordAction extends AntwebAction {
                         } else {
                             int version = db.setNewPassword(loginId, password);
                             db.invalidateOutstanding(loginId);
+                            // The link proves the email address: an inactive account is active again.
+                            if (InactiveAccountDb.reactivateQuietly(connection, loginId)) {
+                                PasswordResetMgr.logEvent("inactive account reactivated with a reset link login:" + loginId);
+                                request.setAttribute("reactivated", Boolean.TRUE);
+                            }
                             PasswordResetMgr.noteVersion(loginId, version);  // ends all sessions at once
                             PasswordResetMgr.logEvent("password set with reset link login:" + loginId);
                             state = "done";

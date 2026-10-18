@@ -284,7 +284,25 @@ public final class LoginAction extends AntwebAction {
 //A.log("login() A userNameOrEmail:" + userNameOrEmail + " login:" + login);
                 if (login == null) login = loginDb.getLoginByEmail(userNameOrEmail);
 //A.log("login() B userNameOrEmail:" + userNameOrEmail + " login:" + login);
-                if (login == null || !PasswordHash.matches(login.getPassword(), password)) {
+                if (login != null && new InactiveAccountDb(connection).isInactive(login.getId())) {
+                    // Inactive account (regular account not used for three years, see InactiveAccounts):
+                    // no password login; a reactivation link is emailed instead.
+                    String ip = HttpUtil.getClientIpAddress(request);
+                    if (PasswordHash.matches(login.getPassword(), password)) {
+                        String result = PasswordResetMgr.sendReactivationLink(connection, login.getId(), login.getDisplayName(),
+                            login.getName(), login.getEmail(), ip);
+                        PasswordResetMgr.logEvent("login refused, account inactive login:" + login.getId() + " reactivation link:" + result);
+                        String text = PasswordResetMgr.NO_EMAIL.equals(result)
+                            ? InactiveAccounts.LOGIN_MESSAGE_NO_EMAIL : InactiveAccounts.LOGIN_MESSAGE;
+                        messages.add("message", new ActionMessage(text, false));
+                    } else {
+                        // Wrong password: the same answer as for any wrong password, so the page tells
+                        // someone who guesses nothing new; the owner is still emailed a link (background).
+                        PasswordResetMgr.requestReactivationAsync(login.getId(), ip);
+                        messages.add("message", new ActionMessage("error.login.failedLogin"));
+                    }
+                    login = null;
+                } else if (login == null || !PasswordHash.matches(login.getPassword(), password)) {
                     msg = new ActionMessage("error.login.failedLogin");                    
                     messages.add("message",msg);
                     //A.log("login() 3 msg:" + msg + " pwd:" + password);            

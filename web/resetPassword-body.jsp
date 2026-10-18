@@ -16,6 +16,9 @@
 
 <% if ("done".equals(resetState)) { %>
 <p><b>Password set. Please log in with your new password.</b></p>
+<% if (request.getAttribute("reactivated") != null) { %>
+<p>Your account is active again.</p>
+<% } %>
 <p>For your security, any other sessions on this account have been ended.</p>
 <p><a href="<%= secureDomainApp %>/login.do">Log in</a></p>
 

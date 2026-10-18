@@ -76,6 +76,7 @@
   "/groups": "ok",
   "/imageUploadReport": "login",
   "/images": "message",
+  "/inactiveAccounts": "login",
   "/index": "ok",
   "/introduced": "ok",
   "/introducedMapMgr": "login",
