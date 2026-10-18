@@ -14,13 +14,16 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import org.calacademy.antweb.AntwebAction;
+import org.calacademy.antweb.Login;
 import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.Check;
+import org.calacademy.antweb.util.LoginMgr;
 
 /**
  * /uploadFile.do?file=20220224-11:49:08-specimen2.txt: download one archived upload file
  * from web/upload/ (the copy of each specimen or species list file as it was uploaded).
- * Curators only; web/upload/ itself is not served to the public.
+ * Admins, or curators for their own group's specimen files; web/upload/ itself is not
+ * served to the public.
  */
 public final class UploadFileAction extends AntwebAction {
 
@@ -32,13 +35,30 @@ public final class UploadFileAction extends AntwebAction {
         return name != null && FILE_NAME.matcher(name).matches() && !name.contains("..");
     }
 
+    /**
+     * True if this login may read the archived upload file: admins any file, curators only
+     * their own group's specimen files (20220224-11:49:08-specimen2.txt, ...-specimenTW2.txt,
+     * ...-specimenGBIF2.txt for group 2). Worldants and species list files are admin only.
+     */
+    public static boolean mayRead(Login login, String name) {
+        if (login == null || name == null) return false;
+        if (LoginMgr.isAdmin(login)) return true;
+        if (!LoginMgr.isCurator(login)) return false;
+        int groupId = login.getGroupId();
+        if (groupId <= 0) return false;
+        for (String kind : new String[] {"-specimen", "-specimenTW", "-specimenGBIF"}) {
+            if (name.endsWith(kind + groupId + ".txt")) return true;
+        }
+        return false;
+    }
+
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         ActionForward c = Check.curator(request, mapping); if (c != null) return c;
 
         String name = request.getParameter("file");
-        if (!isValidName(name)) {
+        if (!isValidName(name) || !mayRead(LoginMgr.getAccessLogin(request), name)) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             return null;
         }
