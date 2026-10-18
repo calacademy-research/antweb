@@ -45,7 +45,7 @@ public final class LogMgrAction extends AntwebAction {
         // The specimen page links curators to one line of an upload file, a specimen's
         // stored details and one Worldants line; those are curator data and open to curators.
         String requestedAction = (String) ((DynaActionForm) form).get("action");
-        boolean curatorView = requestedAction != null && Set.of("uploadLog", "uploadLine", "specimenDetails", "worldants").contains(requestedAction);
+        boolean curatorView = requestedAction != null && Set.of("uploadLog", "specimenDetails", "worldants").contains(requestedAction);
         ActionForward c = curatorView ? Check.curator(request, mapping) : Check.admin(request, mapping);
         if (c != null) return c;
 
@@ -93,7 +93,7 @@ public final class LogMgrAction extends AntwebAction {
           //A.log("execute() specimenDetails:" + message);
         } else if ("uploadLine".equals(action)) { // Not sure when/if this and supporting method is used.
 		  uploadLine = getUploadLine(request, file, lineNum);
-          message = uploadLine.getLine();
+          message = uploadLine == null ? "Line not found." : "<pre>" + Html.esc(uploadLine.getLine()) + "</pre>";
         }
 
         if (message != null) {
@@ -160,6 +160,8 @@ public final class LogMgrAction extends AntwebAction {
             command = "tail" + linesParam + " " + log;
         }
         message = new AntwebSystem().launchProcess(command, true);
+        // Log lines include text from visitors (URLs, user agents): show them as text, never as HTML.
+        if (message != null && !message.isEmpty()) message = "<pre>" + Html.esc(message) + "</pre>";
         String logMessage = "";
         if (message != null && message.length() > 100) logMessage = message.substring(100) + "...";
 
