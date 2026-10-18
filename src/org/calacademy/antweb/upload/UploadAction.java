@@ -45,7 +45,12 @@ public class UploadAction extends AntwebAction {
 	// Site-wide jobs: admins only.
 	static final java.util.Set<String> ADMIN_ONLY_ACTIONS = java.util.Set.of(
 			"uploadSpeciesList", "fetchAndReloadWorldants", "reloadSpeciesLists", "museumCalc",
-			"speciesTest", "runStatistics", "runCountCrawls", "toggleDownTime", "genAll", "genRecentDescEdits");
+			"speciesTest", "runStatistics", "runCountCrawls", "toggleDownTime", "genAll", "genRecentDescEdits",
+			"allSpecimenFiles");
+
+	public static boolean isAdminOnlyAction(String action) {
+		return action != null && ADMIN_ONLY_ACTIONS.contains(action);
+	}
 
 	// Need the login's "upload specimens" permission (or admin).
 	static final java.util.Set<String> SPECIMEN_UPLOAD_ACTIONS = java.util.Set.of(
@@ -110,14 +115,15 @@ public class UploadAction extends AntwebAction {
 		Login accessLogin = LoginMgr.getAccessLogin(request);
 		Group accessGroup = GroupMgr.getAccessGroup(request);
 
-		if (accessLogin == null && !"genAll".equals(theForm.getAction())) {
+		// Every action needs a login (genAll too: it is an admin job, nothing calls it anonymously).
+		if (accessLogin == null) {
 			s_log.info("execute() login failure.  No accessGroup.");
 			return mapping.findForward("goToLogin");
 		}
 
 		// Uploads are for curators only (not the anonymous "Browse" login or self-registered
 		// accounts), and the site-wide jobs are for admins only.
-		if (accessLogin != null) {
+		{
 			String requested = theForm.getAction();
 			boolean isAdmin = LoginMgr.isAdmin(accessLogin);
 			if (!isAdmin && !LoginMgr.isCurator(accessLogin)) {

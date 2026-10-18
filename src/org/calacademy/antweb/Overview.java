@@ -151,6 +151,13 @@ public abstract class Overview implements Overviewable, Headerable, Describable 
       return "";    
     }
 
+    /** getRecalcLink() as a POST button with the form token (recalculate runs only on POST). */
+    public String getRecalcButton(jakarta.servlet.http.HttpServletRequest request) {
+      java.util.regex.Matcher m = java.util.regex.Pattern.compile("href='([^']*)'>([^<]*)</a>").matcher(getRecalcLink());
+      if (!m.find()) return "";
+      return org.calacademy.antweb.util.Csrf.postButton(request, m.group(1), org.calacademy.antweb.util.Html.esc(m.group(2)));
+    }
+
     public String getCountCrawlLink() {
       return "";
     }    

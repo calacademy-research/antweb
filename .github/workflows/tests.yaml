@@ -96,6 +96,9 @@ jobs:
       - name: clearDisk.py skips web/log and links (tests/unit/test_clear_disk.py)
         run: python3 tests/unit/test_clear_disk.py
 
+      - name: deploy.sh no-restart list (tests/unit/test_deploy_paths.py)
+        run: python3 tests/unit/test_deploy_paths.py
+
       - name: web/log on a host folder (report links, tomcat writes, log rotation)
         # web/log is a host folder in production (docker-compose.yml: ./logs/web). Starting
         # from an empty one, antweb-fix-perms must make the four upload report links into

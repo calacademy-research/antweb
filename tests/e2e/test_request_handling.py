@@ -10,7 +10,7 @@ nothing: every request is refused or only reads.
 - defaultSpecimen.do: redirects within the site; changes only by POST with the form token, only for
   known names;
 - bioregionMapMgr.do: "refresh" only by POST and only for administrators; unknown names refused;
-  introducedMapMgr.do the same;
+  introducedMapMgr.do the same (administrators only since 2026-10-18: a curator gets the log-in page);
 - fieldHistory.do: Restore forms post to fieldHistory.do itself, for page-text pages only;
 - the form token is read from the form body of a normal POST (the URL is used only for uploads).
 
@@ -161,7 +161,9 @@ def test_introduced_map_refresh_get_does_nothing(curator, deployed):
 def test_map_manager_quotes_are_refused(curator, deployed, action, word, taxon):
     r = curator.post(BASE_URL + action, data={"_csrf": _token(curator), "taxonName": taxon},
                      timeout=TIMEOUT, allow_redirects=True)
-    _clean(r)
+    out = _clean(r)
+    if action == "/introducedMapMgr.do" and out.category == "login":
+        return   # administrators only since 2026-10-18: refused before the name is read
     assert f"unknown {word}" in r.text, r.text[:300]
 
 

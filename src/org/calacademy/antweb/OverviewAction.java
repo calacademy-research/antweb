@@ -50,6 +50,10 @@ public final class OverviewAction extends DescriptionAction {
 
         connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
 
+        // Recalculate changes data: curators only, and only by POST (the Recalculate button,
+        // so the form token is checked); a GET with action=recalc just shows the page.
+        boolean isRecalc = "recalc".equals(action) && LoginMgr.isCurator(request) && HttpUtil.isPost(request);
+
         AntwebMgr.populate(connection);
 
         // Like to check AntewbMgr.isPopulated()?  Otherwise sometimes... NPE. When?
@@ -77,7 +81,7 @@ public final class OverviewAction extends DescriptionAction {
               return mapping.findForward("message");
             }
 
-            if (LoginMgr.isCurator(request) && "recalc".equals(action)) {
+            if (isRecalc) {
                 projectDb.updateCounts(projectName);
                 ProjectMgr.populate(connection, true);
                 //A.log("Project:" + projectName + " action:" + action);
@@ -113,7 +117,7 @@ public final class OverviewAction extends DescriptionAction {
            }
  
            if (museumCode != null && !"".equals(museumCode)) {
-              if (LoginMgr.isCurator(request) && "recalc".equals(action)) {		
+              if (isRecalc) {		
                 new TaxonDb(connection).setSubfamilyChartColor();
               	
 	  	   	    MuseumDb museumDb = new MuseumDb(connection);
@@ -155,7 +159,7 @@ public final class OverviewAction extends DescriptionAction {
         if (uri.contains("/bioregion.do")) {
            if (name != null && !"".equals(name)) {
 
-               if (LoginMgr.isCurator(request) && "recalc".equals(action)) {
+               if (isRecalc) {
                    new TaxonDb(connection).setSubfamilyChartColor();
 
                    BioregionDb bioregionDb = new BioregionDb(connection);
@@ -345,7 +349,7 @@ public final class OverviewAction extends DescriptionAction {
             return mapping.findForward("message");
           }
 
-		  if (LoginMgr.isCurator(request) && "recalc".equals(action)) {
+		  if (isRecalc) {
 			GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
 			geolocaleDb.updateCounts(geolocale.getId());
 			GeolocaleMgr.populate(connection, true, false);
@@ -433,7 +437,7 @@ public final class OverviewAction extends DescriptionAction {
             return mapping.findForward("message");
           }
           
-		  if (LoginMgr.isCurator(request) && "recalc".equals(action)) {
+		  if (isRecalc) {
 			GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
 			geolocaleDb.updateCounts(geolocale.getId());
 			GeolocaleMgr.populate(connection, true, false);

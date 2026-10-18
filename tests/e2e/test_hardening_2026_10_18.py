@@ -6,6 +6,9 @@
   password does). As the test curator, staging only; every request is refused and the stored
   email is checked to be unchanged. Skipped where the change is not deployed (form label).
 - The request-error page escapes the request URL (static check of SessionRequestFilter).
+- upload.do?action=genAll needs a login (any host, anonymous, refused before anything runs);
+  allSpecimenFiles is for administrators (test curator, staging, only where the change is
+  deployed); getSearchList.do needs a login; introducedMapMgr.do is for administrators.
 Other parts of the batch are checked in CI (.github/workflows/tests.yaml): ImageMagick policy,
 API container, clearDisk.py, Java unit tests (test/.../security/SecurityBatch7Test.java); the
 image upload ownership rule in test_image_upload.py.
@@ -17,7 +20,7 @@ import re
 
 import pytest
 
-from antweb import BASE_URL, IS_PRODUCTION, TIMEOUT, new_session
+from antweb import BASE_URL, IS_PRODUCTION, TIMEOUT, classify, new_session
 import test_page_editor as pe
 
 API_TIMEOUT = max(TIMEOUT, 120)
@@ -118,3 +121,37 @@ def test_error_page_escapes_request():
     for line in src.splitlines():
         if "<" in line and "target" in line and "+ target" in line.replace("+target", "+ target"):
             assert "Html.esc(" in line, line.strip()
+
+
+# ---------- upload.do jobs, search download, introduced map ----------
+
+def _gen_all_needs_login():
+    r = new_session().get(BASE_URL + "/upload.do?action=genAll", timeout=TIMEOUT)
+    return r, classify(r).category == "login"
+
+
+def test_upload_gen_all_needs_login():
+    r, refused = _gen_all_needs_login()
+    assert r.status_code < 500 and refused, (r.status_code, classify(r))
+
+
+def test_search_list_needs_login():
+    r = new_session().get(BASE_URL + "/getSearchList.do", timeout=TIMEOUT)
+    assert r.status_code < 500, r.status_code
+    assert "search.txt" not in r.text
+    assert "Please log in to download search results." in r.text, r.text[:300]
+
+
+@staging_only
+def test_all_specimen_files_admin_only(own_login):
+    if not _gen_all_needs_login()[1]:
+        pytest.skip("the upload.do checks are not deployed on this server")
+    s = own_login[0]
+    r = s.get(BASE_URL + "/upload.do?action=allSpecimenFiles", timeout=TIMEOUT)
+    assert r.status_code == 200 and "Only administrators can run this upload action." in r.text, r.text[:300]
+
+
+@staging_only
+def test_introduced_map_admin_only(own_login):
+    r = own_login[0].get(BASE_URL + "/introducedMapMgr.do", timeout=TIMEOUT)
+    assert classify(r).category == "login", classify(r)
