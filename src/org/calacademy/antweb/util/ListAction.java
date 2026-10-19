@@ -136,7 +136,20 @@ public final class ListAction extends AntwebAction {
                         }
                         if (action.equals("casentDAnomalies")) {
                             List<SpecimenDb.PartGroup> groups = new SpecimenDb(connection).getPartsWithDifferentNames();
-                            request.setAttribute("message", partsReport(groups));
+                            Integer groupId = PartsReport.parseGroupId(request.getParameter("groupId"));
+                            if ("csv".equals(request.getParameter("format"))) {
+                                byte[] body = PartsReport.csv(groups, groupId, AntwebProps.getDomainApp())
+                                    .getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                                response.setContentType("text/csv; charset=UTF-8");
+                                response.setHeader("Content-Disposition", "attachment; filename=\"" + PartsReport.csvFileName(groupId) + "\"");
+                                response.setHeader("Cache-Control", "no-store");
+                                response.setHeader("X-Content-Type-Options", "nosniff");
+                                response.setContentLength(body.length);
+                                response.getOutputStream().write(body);
+                                response.getOutputStream().flush();
+                                return null;
+                            }
+                            request.setAttribute("message", PartsReport.html(groups, groupId, AntwebProps.getDomainApp()));
                             return mapping.findForward("adminHtmlMessage");
                         }
 
@@ -201,36 +214,8 @@ public final class ListAction extends AntwebAction {
         
         return mapping.findForward("success");
     }
-    /** The "Specimen parts (-D codes) with different names" page: explanation, then one row per base specimen. */
+    /** The "Specimen parts (-D codes) with different names" page, all groups (see PartsReport). */
     public static String partsReport(List<SpecimenDb.PartGroup> groups) {
-        String domainApp = AntwebProps.getDomainApp();
-        StringBuilder b = new StringBuilder("</b><h1>Specimen parts (-D codes) with different names</h1>");
-        b.append(ReportHelp.PARTS);
-        b.append("<p><b>").append(groups.size()).append(groups.size() == 1 ? " specimen" : " specimens")
-         .append("</b> with parts under different names.</p>");
-        if (groups.isEmpty()) {
-            b.append("<p>None: every specimen's parts carry the same name.</p>");
-            return b.toString();
-        }
-        b.append("<table cellpadding=6 border=1 style='border-collapse:collapse'><tr><th>#</th><th>Specimen</th><th>Part</th><th>Taxon name</th></tr>");
-        int i = 0;
-        for (SpecimenDb.PartGroup g : groups) {
-            ++i;
-            int rows = g.parts.size();
-            boolean first = true;
-            for (String[] p : g.parts) {
-                b.append("<tr>");
-                if (first) {
-                    b.append("<td rowspan=").append(rows).append(">").append(i).append(".</td>")
-                     .append("<td rowspan=").append(rows).append("><a href=\"").append(Html.escAttr(domainApp + "/specimen.do?code=" + Html.url(g.base)))
-                     .append("\">").append(Html.esc(g.base)).append("</a></td>");
-                    first = false;
-                }
-                b.append("<td><a href=\"").append(Html.escAttr(domainApp + "/specimen.do?code=" + Html.url(p[0]))).append("\">")
-                 .append(Html.esc(p[0])).append("</a></td><td>").append(Html.esc(p[1] == null ? "" : p[1])).append("</td></tr>");
-            }
-        }
-        b.append("</table>");
-        return b.toString();
+        return PartsReport.html(groups, null, AntwebProps.getDomainApp());
     }
 }

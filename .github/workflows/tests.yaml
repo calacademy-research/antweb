@@ -214,7 +214,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/ReportsTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.ReportsTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (3 tests)" /tmp/out.txt
+            grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
       - name: clearDisk.py skips web/log and links (tests/unit/test_clear_disk.py)

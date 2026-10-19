@@ -657,22 +657,55 @@ public class SpecimenDb extends AntwebDb {
         return m.matches() ? m.group(1) : null;
     }
 
+    /** One record of a part report: a part code, or the base specimen's own record. */
+    public static final class PartRow {
+        public String code;
+        public String taxonName;
+        public String originalTaxonName;   // the name as uploaded, when AntWeb replaced it with the current valid name
+        public int groupId;                // specimen.access_group (0 when missing)
+        public String groupName;           // ant_group.name
+        public String museum;              // specimen.museum (institution code)
+        public String determinedBy;        // specimen.determinedby
+        public String dateDetermined;      // specimen.datedetermined, else datedeterminedstr
+
+        public PartRow() {}
+        public PartRow(String code, String taxonName, int groupId, String groupName) {
+            this.code = code; this.taxonName = taxonName; this.groupId = groupId; this.groupName = groupName;
+        }
+
+        /** The uploaded name when it differs from the name shown, else null. */
+        public String uploadedName() {
+            if (originalTaxonName == null || originalTaxonName.isBlank()) return null;
+            return originalTaxonName.equals(taxonName) ? null : originalTaxonName;
+        }
+    }
+
     /** One base specimen whose parts (and the base record itself, if there is one) carry different taxon names. */
     public static final class PartGroup {
         public String base;
-        public final List<String[]> parts = new ArrayList<>();   // {code, taxon_name}
+        public final List<PartRow> parts = new ArrayList<>();
         public final Set<String> names = new TreeSet<>();
+
+        /** The groups that uploaded any record of this specimen. */
+        public Set<Integer> groupIds() {
+            Set<Integer> ids = new LinkedHashSet<>();
+            for (PartRow r : parts) ids.add(r.groupId);
+            return ids;
+        }
     }
 
     /**
      * Specimen parts (-D codes) with different names, in one query: every code ending in -d and digits, grouped
      * by its base code together with the base specimen's own record; groups with more than one taxon name.
+     * Each record carries the group that uploaded it, the museum code and the determination.
      */
     public List<PartGroup> getPartsWithDifferentNames() throws SQLException {
-        String query = "select x.base, x.code, x.taxon_name from ("
-            + " select regexp_replace(code, ?, '') as base, code, taxon_name from specimen where code regexp ?"
+        String cols = "code, taxon_name, original_taxon_name, access_group, museum, determinedby, datedetermined, datedeterminedstr";
+        String query = "select x.base, x.code, x.taxon_name, x.original_taxon_name, x.access_group, g.name,"
+            + " x.museum, x.determinedby, x.datedetermined, x.datedeterminedstr from ("
+            + " select regexp_replace(code, ?, '') as base, " + cols + " from specimen where code regexp ?"
             + " union all"
-            + " select s.code as base, s.code, s.taxon_name from specimen s where s.code in"
+            + " select s.code as base, s." + cols.replace(", ", ", s.") + " from specimen s where s.code in"
             + "   (select regexp_replace(code, ?, '') from specimen where code regexp ?)"
             + ") x join ("
             + " select base from ("
@@ -681,7 +714,7 @@ public class SpecimenDb extends AntwebDb {
             + "   select s.code, s.taxon_name from specimen s where s.code in"
             + "     (select regexp_replace(code, ?, '') from specimen where code regexp ?)"
             + " ) y group by base having count(distinct taxon_name) > 1"
-            + ") d on d.base = x.base order by x.base, x.code";
+            + ") d on d.base = x.base left join ant_group g on g.id = x.access_group order by x.base, x.code";
         LinkedHashMap<String, PartGroup> groups = new LinkedHashMap<>();
         try (PreparedStatement ps = getConnection().prepareStatement(query)) {
             for (int k = 1; k <= 8; k++) ps.setString(k, PART_SUFFIX_SQL);
@@ -689,9 +722,19 @@ public class SpecimenDb extends AntwebDb {
                 while (rset.next()) {
                     String base = rset.getString(1);
                     PartGroup g = groups.computeIfAbsent(base, b -> { PartGroup n = new PartGroup(); n.base = b; return n; });
-                    String name = rset.getString(3);
-                    g.parts.add(new String[] {rset.getString(2), name});
-                    if (name != null) g.names.add(name);
+                    PartRow r = new PartRow();
+                    r.code = rset.getString(2);
+                    r.taxonName = rset.getString(3);
+                    r.originalTaxonName = rset.getString(4);
+                    r.groupId = rset.getInt(5);
+                    r.groupName = rset.getString(6);
+                    r.museum = rset.getString(7);
+                    r.determinedBy = rset.getString(8);
+                    String date = rset.getString(9);
+                    if (date == null || date.isBlank()) date = rset.getString(10);
+                    r.dateDetermined = date;
+                    g.parts.add(r);
+                    if (r.taxonName != null) g.names.add(r.taxonName);
                 }
             }
         }
