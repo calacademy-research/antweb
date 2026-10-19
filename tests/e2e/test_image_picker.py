@@ -86,7 +86,9 @@ def check_comparison_form(p):
 
 def test_species_images_page_comparison_fields():
     """Anonymous: the getComparison form carries the genus name, not "false"."""
-    r = new_session().get(BASE_URL + SPECIES_IMAGES, timeout=TIMEOUT)
+    s = new_session()
+    s.cookies.set("thumbs", "a", domain=urlparse(BASE_URL).hostname)
+    r = s.get(BASE_URL + SPECIES_IMAGES, timeout=TIMEOUT)
     assert r.status_code == 200, r.status_code
     p = parse(r.text)
     assert p.nested == 0, f"{p.nested} form(s) inside another form"
@@ -103,6 +105,8 @@ def test_pick_buttons_post_complete_requests():
     """Test curator (staging): every Pick/Unpick button posts to defaultSpecimen.do with all its parameters."""
     s = new_session()
     post_login(s, USER, PASSWORD)
+    # The buttons are shown in the "All" thumbnail view (cookie thumbs=a, set by the view selector).
+    s.cookies.set("thumbs", "a", domain=urlparse(BASE_URL).hostname)
     r = s.get(BASE_URL + SPECIES_IMAGES, timeout=TIMEOUT)
     assert r.status_code == 200, r.status_code
     p = parse(r.text)
