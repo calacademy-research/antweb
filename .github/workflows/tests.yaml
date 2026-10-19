@@ -187,6 +187,22 @@ jobs:
           '
           docker rm -f mysql
 
+      - name: Java unit tests of the admin report pages (-D part codes, parts report, explanation boxes)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/ReportsTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.ReportsTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (3 tests)" /tmp/out.txt
+          '
+
       - name: clearDisk.py skips web/log and links (tests/unit/test_clear_disk.py)
         run: python3 tests/unit/test_clear_disk.py
 

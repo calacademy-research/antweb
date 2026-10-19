@@ -43,12 +43,12 @@
 
     <h3 align=left>Reports</h3>
     <ul align=left>
-      <li><a href="<%= domainApp %>/query.do?action=curateAntcat">Curate AntCat Queries</a> (name checks against AntCat and the AntCat import history)
-      <li><a href="<%= domainApp %>/query.do?action=homonyms">Homonym Report</a>
+      <li><a href="<%= domainApp %>/query.do?action=checkIntegrity">Integrity Check</a> (automatic checks of names, species lists and specimen data, including the name checks against AntCat; each says what to fix)
+      <li><a href="<%= domainApp %>/query.do?action=homonyms">Homonym Report</a> (names spelled like another ant name; specimens may be filed under the wrong one)
       <li><a href="<%= domainApp %>/query.do?action=events">Curator activity log</a> (edits to the images, videos and overview text of taxon pages)
       <li><a href="<%= domainApp %>/taxonomicPage.do?rank=species&project=worldants&isImaged=false">Species without images</a> (AntCat species with no image on AntWeb)
       <li><a href="<%= domainApp %>/recentDescEdits.do?action=recentDescEdits">Recent Description Edits</a>
-      <li><a href="<%= domainApp %>/list.do?action=casentDAnomalies">Specimen parts (-D codes) with different names</a>
+      <li><a href="<%= domainApp %>/list.do?action=casentDAnomalies">Specimen parts (-D codes) with different names</a> (usually an identification to correct in TaxonWorks or the upload file)
       <li><a href="<%= domainApp %>/utilData.do?action=taxaOutsideOfNativeBioregion">Taxa outside their native bioregions</a> (a list to check for misidentifications or introductions; it only reads data, but opens through a confirmation page)
       <li><a href="<%= domainApp %>/orphanedImages.do">Orphaned images</a> (images whose specimen record no longer exists)
     </ul>

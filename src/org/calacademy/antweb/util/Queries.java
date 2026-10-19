@@ -26,7 +26,11 @@ public abstract class Queries {
           , "taxonNameWithDoubleQuote"
           , "taxonNameWithSingleQuote"
           , "adminLoginIdIsZero"
-          , "sourceWithBadParent"
+          // badParentTaxonName (moved from the removed Curate AntCat page, 2026-10-19) lists the taxa that
+          // sourceWithBadParent only counted by source, so it replaces it here.
+          , "badParentTaxonName"
+          , "unrecognizedWithSynonymParent"
+          , "geolocaleTaxaNotUsingCurrentValidName"
           , "validsWithCurrentValidName"
           , "missingCurrentValidName"
           , "checkSpecimenStatus"
@@ -57,20 +61,6 @@ public abstract class Queries {
     }
 
 
-    public static String[] getCurateAntcatNames() {
-        String[] list = {
-          "unrecognizedTaxaWithoutSpecimen"
-        , "unrecognizedWithSynonymParent"
-        , "geolocaleTaxaNotUsingCurrentValidName"   
-        , "badParentTaxonName"      
-        , "worldantsUploads"   
-        };
-        return list;
-    }
-    public static ArrayList<String> getCurateAntcatNamesArray() {
-      return new ArrayList<>(Arrays.asList(getCurateAntcatNames()));
-    }        
-    
     public static String[] getDevIntegrityNames() {
         String[] list = {
             "emptySourceTaxonSets"
@@ -355,7 +345,9 @@ public abstract class Queries {
           
         queries.add(new NamedQuery( 
             "unrecognizedWithSynonymParent"
-          , "These unrecognized taxa have parent_taxa that are synonyms"
+          , "Names that AntCat does not recognize (they came from specimen data) whose genus or species is a synonym in AntCat:"
+            + " the specimens were identified under an old name. Fix: change the identification to the current valid name"
+            + " in TaxonWorks (CAS) or in the curator's upload file; if the name is right, it is missing from AntCat."
           , "<th>Taxon Name</th><th>Source</th>"
           , "select taxon_name, source from taxon where status = 'unrecognized' and parent_taxon_name in (select taxon_name from taxon where status = 'synonym')"
           ));
@@ -421,7 +413,9 @@ public abstract class Queries {
                 
         queries.add(new NamedQuery(
             "badParentTaxonName"
-          , "These taxa have a parent_taxon_name that does not exist in the taxon table. "
+          , "Names whose parent (the genus of a species, the species of a subspecies) is not among AntWeb's names,"
+            + " usually a misspelled or outdated genus or species in specimen data. Fix: correct the identification in"
+            + " TaxonWorks (CAS) or in the curator's upload file; if the parent name is correct, check it in AntCat."
           , "<th>TaxonName</th><th>Parent Taxon Name</th><th>Source</th><th>Status</th><th>current_valid_name</th><th>Created</th>"
           , "select t.taxon_name, t.parent_taxon_name, t.source, t.status, t.current_valid_name, t.created from taxon t where family = 'formicidae' and taxarank != 'family' and status not in ('unavailable misspelling', 'unavailable uncategorized', 'original combination') and parent_taxon_name not in (select taxon_name from taxon) order by created"
         ));
@@ -975,7 +969,9 @@ public abstract class Queries {
  
         queries.add(new NamedQuery(
            "geolocaleTaxaNotUsingCurrentValidName"
-          , "These geolocale could be updated to use the taxon's current valid name."
+          , "Country and region species lists (by geolocale id) that still hold a synonym or other non-valid name"
+            + " instead of its current valid name. Fix: in the Species List Tool for that country or region, replace"
+            + " the name with the current valid name; names that come from specimens follow the next nightly run."
           , "<th>Geolocale ID</th><th>Taxon Name</th><th>Status</th><th>Current Valid Name</th>"
           , "select geolocale_id, gt.taxon_name, t.status, t.current_valid_name from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name and t.taxon_name not in (select taxon_name from taxon where status in ('valid', 'morphotaxon')) and t.current_valid_name is not null and t.taxon_name != t.current_valid_name"
         ));
@@ -1089,11 +1085,11 @@ public abstract class Queries {
 
         queries.add(new NamedQuery(
                 "worldantsUploads"
-                , "Worldants uploads since May of 2019."
+                , "The last 60 imports of AntCat names (Worldants uploads), newest first."
                 , "<th>Created</th><th>Operation</th><th>Message</th><th>File Size</th><th>Worldants Count</th><th>Exec Time</th><th>Log File</th>"
                 , "SELECT created, operation, validate_message, file_size, orig_worldants_count, exec_time "
                 + ", concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/web/log/worldants/\",log_file_name), \"'>Log file</a>\") "
-                + " FROM worldants_upload order by created desc"
+                + " FROM worldants_upload order by created desc limit 60"
         ));
 
         queries.add(new NamedQuery(
