@@ -445,13 +445,13 @@ public class Map {
 
     private void setPoints(Taxon taxon, LocalityOverview overview, Connection connection, int maxMapPoints, boolean geolocaleFocus) {
         
-        boolean persist = taxon.isSubfamily() && !geolocaleFocus; // or genus?
+        boolean persist = taxon.isSubfamilyRank() && !geolocaleFocus; // or genus?
         if (persist) {
           ++nonFucusedSubfamilyMaps;
           // Oops, not so easy to persist a map, is it?
           // We could persist these maps and fetch them without calculation. 
         }
-        if (taxon.isSubfamily() && !geolocaleFocus && overview instanceof Adm1) {
+        if (taxon.isSubfamilyRank() && !geolocaleFocus && overview instanceof Adm1) {
           ++adm1NonFucusedSubfamilyMaps;
           // We could choose to not display these. Would do so in the BrowseAction class.
         }

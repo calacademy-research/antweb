@@ -77,7 +77,7 @@ Examples of species with images that don't have h1 images:
             if (isSpecimen) {
                 imageRoot = specChild.getName();
 %>
-<div class="data_checkbox" style="float:left; margin-top:2px; display:none;"><input type="checkbox" name="chosen" value="<%= thisChild.getName() %>"></div>
+<div class="data_checkbox" style="float:left; margin-top:2px; display:none;"><input form="getComparison" type="checkbox" name="chosen" value="<%= thisChild.getName() %>"></div>
 <div class="data_overlay"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= code %><%= overviewParams %>"><%= thisChild.getPrettyName() %></a>
 <%
                 if (specChild.getTypeStatus() != null) { %>
@@ -275,7 +275,7 @@ Examples of species with images that don't have h1 images:
 
         </div>
 
-        <div class="data_checkbox" style="display:none;"><input type="checkbox" name="chosen" value="<%= thisChild.getName() %>"></div>
+        <div class="data_checkbox" style="display:none;"><input form="getComparison" type="checkbox" name="chosen" value="<%= thisChild.getName() %>"></div>
         <div class="clear"></div>
     </div>
     <div class="ratio_overlay<% if (position == first) { %> first<% } %><% if (position == fourth) { %> last<% } %>" id="r<%= index %>" onmouseover="runSlideshow('n<%= index %>');" onmouseleave="hideRatioOverlay('r<%= index %>','s<%= index %>','n<%= index %>');">

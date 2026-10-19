@@ -2764,17 +2764,19 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 		this.statusSetSize = statusSetSize;
 	}
 
-    public boolean isSubfamily() {
-	    //A.log("isSubfamily() class:" + getClass().toString());
+    // Named ...Rank, not isGenus() etc.: a boolean isGenus() next to String getGenus() makes the
+    // JavaBeans property "genus" read isGenus(), so <bean:write property="genus"> and ${taxon.genus}
+    // printed "false" instead of the genus name.
+    public boolean isSubfamilyRank() {
         return "class org.calacademy.antweb.Subfamily".equals(getClass().toString());
     }
-    public boolean isGenus() {
+    public boolean isGenusRank() {
         return "class org.calacademy.antweb.Genus".equals(getClass().toString());
     }
-    public boolean isSpecies() {
+    public boolean isSpeciesRank() {
         return "class org.calacademy.antweb.Species".equals(getClass().toString());
     }
-    public boolean isSubspecies() {
+    public boolean isSubspeciesRank() {
         return "class org.calacademy.antweb.Subspecies".equals(getClass().toString());
     }
 
