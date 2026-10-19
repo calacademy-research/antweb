@@ -76,6 +76,7 @@ public final class AntWikiDataAction extends AntwebAction {
 
     public static String checkForValidSpeciesListUpdate(Connection connection) {
       String upDate = AntWikiDataAction.getValidSpeciesListUpDate();
+      if (upDate == null) return "Valid Species List update date not found on AntWiki";
 
       // Check in database. Is this the last update date?
       AntwebDb antwebDb = new AntwebDb(connection);
@@ -107,15 +108,15 @@ public final class AntWikiDataAction extends AntwebAction {
           s_log.warn("getValidSpeciesListUpDate() e:" + e);
         }
 
-        int i = output.indexOf("List of valid species (names in use)");
-        String validSpeciesListUpDate = output.substring(i + 69, i + 69 + 10);
-        s_log.debug("AntWikiDataAction.getValidSpeciesListUpDate() i:" + i + " validSpeciesUpDate:" + validSpeciesListUpDate);
+        String validSpeciesListUpDate = dateAfter(output, "List of valid species (names in use)", 69);
+        s_log.debug("AntWikiDataAction.getValidSpeciesListUpDate() validSpeciesUpDate:" + validSpeciesListUpDate);
         return validSpeciesListUpDate;
     }
 
     public static String checkForFossilSpeciesListUpdate(Connection connection) {
 
       String upDate = AntWikiDataAction.getFossilSpeciesListUpDate();
+      if (upDate == null) return "Fossil Species List update date not found on AntWiki";
       
       //upDate = "test";
       
@@ -142,10 +143,36 @@ public final class AntWikiDataAction extends AntwebAction {
       } catch (IOException e) {
         s_log.warn("getFossilSpeciesListUpDate() e:" + e);
       }
-      int i = output.indexOf("List of valid fossil species (names in use)</a> (tab-delimited text) (Date: ");
-      String fossilSpeciesListUpDate = output.substring(i + 76, i + 76 + 10);
+      String fossilSpeciesListUpDate = dateAfter(output, "List of valid fossil species (names in use)</a> (tab-delimited text) (Date: ", 76);
       s_log.debug("AntWikiDataAction.getFossilSpeciesListUpDate() validSpeciesUpDate:" + fossilSpeciesListUpDate);
  
       return fossilSpeciesListUpDate;
-    }    
+    }
+
+    /** The 10 characters at offset after marker in page, if they are a date (else null). */
+    public static String dateAfter(String page, String marker, int offset) {
+        if (page == null) return null;
+        int i = page.indexOf(marker);
+        if (i < 0 || i + offset + 10 > page.length()) return null;
+        return validDate(page.substring(i + offset, i + offset + 10));
+    }
+
+    private static final String[] DATE_FORMATS = {"uuuu-MM-dd", "dd-MM-uuuu", "dd/MM/uuuu", "MM/dd/uuuu", "dd.MM.uuuu"};
+
+    /** The text, trimmed, when it is a real calendar date in one of DATE_FORMATS; otherwise null. */
+    public static String validDate(String text) {
+        if (text == null) return null;
+        String t = text.trim();
+        if (!t.matches("[0-9]{1,4}[-/.][0-9]{1,2}[-/.][0-9]{1,4}")) return null;
+        for (String f : DATE_FORMATS) {
+            try {
+                java.time.LocalDate.parse(t, java.time.format.DateTimeFormatter.ofPattern(f)
+                    .withResolverStyle(java.time.format.ResolverStyle.STRICT));
+                return t;
+            } catch (java.time.format.DateTimeParseException e) {
+                // try the next format
+            }
+        }
+        return null;
+    }
 }

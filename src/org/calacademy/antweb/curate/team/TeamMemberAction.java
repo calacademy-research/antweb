@@ -21,6 +21,10 @@ public class TeamMemberAction extends AntwebAction {
 	public ActionForward execute(ActionMapping mapping, ActionForm f,
 		HttpServletRequest request, HttpServletResponse response) {
 
+        // The team member list (with email addresses) and its edit form are for administrators.
+        ActionForward adminOnly = LoginMgr.mustBeAdmin(request, mapping);
+        if (adminOnly != null) return adminOnly;
+
         TeamMemberDb teamMemberDb = null;
 		Connection connection = null;
 		ArrayList<TeamMember> curatorList = new ArrayList<>();
@@ -31,8 +35,6 @@ public class TeamMemberAction extends AntwebAction {
           TeamMemberForm form = (TeamMemberForm) f;
 
           if (form.getId() != null) {
-            // Saving a team member requires an administrator.
-            ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
             ActionForward confirm = org.calacademy.antweb.util.PostOnly.confirm(request, mapping, "Save team member " + form.getId());
             if (confirm != null) return confirm;
             // A submit!

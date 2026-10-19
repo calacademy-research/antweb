@@ -20,23 +20,6 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
 
 /*  Proj_taxon_log */
 
-    public void deleteAllLogs() throws SQLException {
-      Statement stmt = DBUtil.getStatement(getConnection(), "ProjTaxonDb.deleteAllLogs()");
-
-      boolean debug = true;   
-      String dml = null;
-               
-      try {
-        dml = "delete from proj_taxon_log";
-        stmt.executeUpdate(dml);        
-
-        dml = "delete from proj_taxon_log_detail";
-        stmt.executeUpdate(dml);        
-
-      } finally {
-        DBUtil.close(stmt, "ProjTaxonDb.deleteAllLogs()");
-      }   
-    }
 
     public void archiveSpeciesList(String projectName, Login curatorLogin) throws SQLException {
 

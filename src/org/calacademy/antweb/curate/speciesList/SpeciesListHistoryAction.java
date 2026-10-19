@@ -41,13 +41,6 @@ public class SpeciesListHistoryAction extends SpeciesListToolAction {
        String speciesListName = historyForm.getSpeciesListName();
        int projLogId = historyForm.getProjLogId();       
        int geoLogId = historyForm.getGeoLogId();
-       if ((projLogId == -1 || geoLogId == -1) && AntwebProps.isDevOrStageMode()) {       
-         projTaxonLogDb.deleteAllLogs();
-         geolocaleTaxonLogDb.deleteAllLogs();
-
-         s_log.debug("execute() all logs deleted");
-         //return mapping.findForward("speciesListHistory");
-       }
          
        String displaySubfamily = (String) request.getSession().getAttribute("displaySubfamily");
        s_log.debug("execute() form:" + form + " speciesListName:" + speciesListName + " projLogId:" + projLogId + " geoLogId:" + geoLogId + " displaySubfamily:" + displaySubfamily);

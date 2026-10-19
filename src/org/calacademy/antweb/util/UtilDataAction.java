@@ -595,18 +595,17 @@ public class UtilDataAction extends AntwebAction {
         if (action.equals("calcCaste")) {
           SpecimenDb specimenDb = new SpecimenDb(connection);
           //groupId = num;		
-          String appendStr = "";
-          if (groupId > 0) appendStr = "groupId:" + groupId;
+          // One of: a group, a specimen, or (neither given) every specimen.
           if (groupId > 0) {
-            message += ":" + groupId;
             specimenDb.calcCaste(groupId);
-          } if (code != null) {
-            message += ":" + code;
-            specimenDb.calcCaste(code);				
+            message = "calcCaste groupId:" + groupId;
+          } else if (code != null) {
+            specimenDb.calcCaste(code);
+            message = "calcCaste code:" + Html.esc(code);
           } else {
             specimenDb.calcCaste();
+            message = "calcCaste";
           }
-          message = "calcCaste";          
         }
         
         if (action.equals("siteWarning")) {

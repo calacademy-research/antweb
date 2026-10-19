@@ -19,7 +19,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 public final class SpeciesListAction extends AntwebAction {
-/* /getSpeciesList.do?name=allantwebants   This class returns a link to the species authority file */
+/* /getSpeciesList.do?name=allantwebants   This class returns a link to the species authority file.
+   Administrators only. A request shows the link to the file as it is; the file is written again
+   only when an administrator asks for it (&rebuild=true, then a POST from the confirm button). */
 
     private static final Log s_log = LogFactory.getLog(SpeciesListAction.class);
 
@@ -28,12 +30,22 @@ public final class SpeciesListAction extends AntwebAction {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
-        Locale locale = getLocale(request);
-        HttpSession session = request.getSession();
+        ActionForward adminOnly = Check.admin(request, mapping);
+        if (adminOnly != null) return adminOnly;
+
         Date startTime = new Date();
         
         DynaActionForm df = (DynaActionForm) form;
         String name = (String) df.get("name");       // (project name)
+        if (name != null && !isValidName(name)) {
+            request.setAttribute("message", "Invalid name.");
+            return mapping.findForward("message");
+        }
+        boolean rebuild = "true".equals(request.getParameter("rebuild"));
+        if (name != null && rebuild) {
+            ActionForward confirm = PostOnly.confirm(request, mapping, "Write the species list file for " + name + " again");
+            if (confirm != null) return confirm;
+        }
         if (name != null) {
           Connection connection = null;
           String dbMethodName = DBUtil.getDbMethodName("SpeciesListAction.execute()");
@@ -42,10 +54,10 @@ public final class SpeciesListAction extends AntwebAction {
             connection = DBUtil.getConnection(dataSource, dbMethodName);
         
             if (name.equals(Project.ALLANTWEBANTS)) {
-              return getAllAntwebAnts(connection, dataSource, mapping, request);
+              return getAllAntwebAnts(connection, dataSource, mapping, request, rebuild);
             } else {
               if (ProjectDb.isSpeciesListMappingProject(connection, name)) {
-                return createSpeciesListLink(connection, dataSource, mapping, request, name);
+                return createSpeciesListLink(connection, dataSource, mapping, request, name, rebuild);
               } else {
                 // for all regions (and bioregions [only malagasy due to jsp conditions])
                 // we link directly to uploaded authority file
@@ -82,8 +94,21 @@ public final class SpeciesListAction extends AntwebAction {
     }
 
 
+    /** Project names are letters, digits, underscore and hyphen. */
+    public static boolean isValidName(String name) {
+        return name != null && name.matches("[A-Za-z0-9_-]{1,80}");
+    }
+
+    /** The message page: a link to the file if it exists, and a link to write it again. */
+    static String fileMessage(String url, boolean exists, String name) {
+        String rebuildUrl = AntwebProps.getDomainApp() + "/getSpeciesList.do?name=" + Html.url(name) + "&rebuild=true";
+        String rebuildLink = "<br><br><a href=\"" + Html.escAttr(rebuildUrl) + "\">Write the file again</a> (loads every species; slow)";
+        if (!exists) return "The species list file for " + Html.esc(name) + " has not been written yet." + rebuildLink;
+        return "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + Html.escAttr(url) + "\">" + Html.esc(url) + "</a>" + rebuildLink;
+    }
+
     private ActionForward createSpeciesListLink(Connection connection, DataSource dataSource, ActionMapping mapping
-        , HttpServletRequest request, String name) throws SQLException {
+        , HttpServletRequest request, String name, boolean rebuild) throws SQLException {
         int specimenCount = 0;
         StringBuffer data = new StringBuffer();    
 
@@ -94,7 +119,7 @@ public final class SpeciesListAction extends AntwebAction {
         String url = AntwebProps.getDomainApp() + "/" + dir + "/" + fileName;
         String fullPath = AntwebProps.getDocRoot() + dir + "/" + fileName;
 
-        if (true) { //!AntwebCacheMgr.isCached(fullPath)) {
+        if (rebuild) {
 
             if (DBStatus.isServerBusy(connection, request)) {
             //if (DBUtil.isServerBusy(dataSource, request)) {
@@ -132,24 +157,24 @@ public final class SpeciesListAction extends AntwebAction {
             s_log.debug("createSpeciesListLink() fullPath:" + fullPath);
             AntwebUtil.writeFile(fullPath, data.toString());
         }
-        String message = "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + Html.escAttr(url) + "\">" + Html.esc(url) + "</a>";
-        s_log.info(message);
+        String message = fileMessage(url, new java.io.File(fullPath).isFile(), name);
+        s_log.info("createSpeciesListLink() name:" + name + " rebuild:" + rebuild);
         request.setAttribute("message", message);
         return mapping.findForward("message");
     }   
 
     private ActionForward getAllAntwebAnts(Connection connection, DataSource dataSource
-        , ActionMapping mapping, HttpServletRequest request)  throws SQLException {
+        , ActionMapping mapping, HttpServletRequest request, boolean rebuild)  throws SQLException {
         //String projectName = "allantweb";
         int specimenCount = 0;
         StringBuffer data = new StringBuffer();    
 
         String dir = "/web/data/";
-        new Utility().createDirectory(dir);
         String fileName = "allantwebants" + UploadFile.getSpeciesListTail();
         String fullPath = AntwebProps.getDocRoot() + dir + fileName;
         
-        if (true) { //!AntwebCacheMgr.isCached(fullPath)) {
+        if (rebuild) {
+            new Utility().createDirectory(dir);
 
             if (DBStatus.isServerBusy(connection, request)) {
             //if (DBUtil.isServerBusy(dataSource, request)) {
@@ -187,8 +212,8 @@ public final class SpeciesListAction extends AntwebAction {
         }
         
         String url = AntwebProps.getDomainApp() + dir + fileName;
-        String message = "<b>'Right-click' and 'Save Link As' to download:</b><br>&nbsp;&nbsp;&nbsp;&nbsp; <a href=\"" + url + "\">" + url + "</a>";
-        s_log.info("getAllAntwebAnts() specimenCount:" + specimenCount);
+        String message = fileMessage(url, new java.io.File(fullPath).isFile(), Project.ALLANTWEBANTS);
+        s_log.info("getAllAntwebAnts() rebuild:" + rebuild + " specimenCount:" + specimenCount);
         request.setAttribute("message", message);
         return mapping.findForward("message");
     }

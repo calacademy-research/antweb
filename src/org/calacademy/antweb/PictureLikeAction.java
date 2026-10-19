@@ -44,6 +44,10 @@ public final class PictureLikeAction extends AntwebAction {
 
         String code = ((SpecimenImageForm) form).getCode();
         if (code == null) code = ((SpecimenImageForm) form).getName();
+        if (code == null || code.isBlank()) {
+            request.setAttribute("message", "BigPicture not found.");
+            return mapping.findForward("message");
+        }
         code = code.toLowerCase();
         if (code.contains("shot=")) {
             String message = "Incorrect specimen identifier:" + Html.esc(code);
@@ -80,6 +84,10 @@ public final class PictureLikeAction extends AntwebAction {
 
             ImageDb imageDb = new ImageDb(connection);
             theImage = imageDb.getSpecimenImage(code, shot, number);
+            if (theImage == null) {
+                // Unknown image: answered below with "BigPicture not found." (no like is stored).
+                return notFound(request, mapping, code, shot, number);
+            }
 
             query = "select id, has_tiff from image where image_of_id = ?"
                   + " and shot_type = ? and shot_number = ?";
@@ -110,12 +118,7 @@ public final class PictureLikeAction extends AntwebAction {
         //theImage.setPaths();
         
         // If we could ascertain success here (if the file exists) we could avoid using error.jsp
-        if (theImage == null) {
-         s_log.warn("Image not found for image:" + code + "shot:" + shot + " number:" + number);
-          String message = "BigPicture not found.";
-          request.setAttribute("message", message);
-          return mapping.findForward("message");
-        }
+        if (theImage == null) return notFound(request, mapping, code, shot, number);
         
         boolean requestScope = "request".equals(mapping.getScope());
         if (requestScope) {
@@ -129,6 +132,12 @@ public final class PictureLikeAction extends AntwebAction {
         // Set a transactional control token to prevent double posting
         saveToken(request);
         return mapping.findForward("bigPicture");
+    }
+
+    private static ActionForward notFound(HttpServletRequest request, ActionMapping mapping, String code, String shot, int number) {
+        s_log.warn("Image not found for image:" + code + " shot:" + shot + " number:" + number);
+        request.setAttribute("message", "BigPicture not found.");
+        return mapping.findForward("message");
     }
 
     private void likeSpecimenImage(int imageId, Login accessLogin, DataSource dataSource) {
