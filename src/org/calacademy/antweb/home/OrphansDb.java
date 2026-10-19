@@ -407,6 +407,8 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
           stmt = getConnection().createStatement();
           String delete = "delete from taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
           stmt.executeUpdate(delete);    
+          // Keep the curators' list rows of this name: they return when the name exists again.
+          new CuratorTaxonSetDb(getConnection()).parkCuratorRows(taxonName);
           delete = "delete from proj_taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
           stmt.executeUpdate(delete);    
           delete = "delete from geolocale_taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 

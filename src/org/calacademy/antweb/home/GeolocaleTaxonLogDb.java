@@ -602,6 +602,7 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
             dml = "insert into geolocale_taxon_dispute (geolocale_id, taxon_name, source, rev, curator_id) " 
               + " values (" + geolocaleTaxon.getGeolocaleId() + ", " + DBUtil.sqlQuote(geolocaleTaxon.getTaxonName()) + ", " + DBUtil.sqlQuote(geolocaleTaxon.getSource()) + ", " + geolocaleTaxon.getRev() + ", " + geolocaleTaxon.getCuratorId() + " )";  
             stmt.execute(dml);
+            s_disputes = null; // getDispute() reads the table again
 
             //A.log("insertDispute() geolocaleTaxon:" + geolocaleTaxon);
         } catch (SQLException e) {
@@ -626,6 +627,10 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
               + "   and taxon_name = " + DBUtil.sqlLiteral(taxonName);
 
             stmt.execute(dml);
+            // getDispute() keeps the disputes in memory. Without this, a name a curator removed
+            // and then added back was still "disputed" there until the next restart, and the
+            // insert was skipped without a word (the tool said "added").
+            s_disputes = null;
 
             //if (AntwebProps.isDevMode()) s_log.error("removeDispute() speciesListName:" + speciesListName + " taxonName:" + taxonName);
         } catch (SQLException e) {
@@ -637,15 +642,17 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
     }
 
 
-	private static ArrayList<TaxonSet> s_disputes;
+	private static volatile ArrayList<TaxonSet> s_disputes;
 
     public TaxonSet getDispute(int geolocaleId, String taxonName) throws SQLException {
 
-        if (s_disputes == null) {
-          s_disputes = getDisputes();
+        ArrayList<TaxonSet> disputes = s_disputes;
+        if (disputes == null) {
+          disputes = getDisputes();
+          s_disputes = disputes;
           //s_log.warn("getDispute(" + geolocaleId + ", " + taxonName + ") fetched size:" + s_disputes.size() + " s_disputes:" + s_disputes);
         }
-        for (TaxonSet taxonSet : s_disputes) {
+        for (TaxonSet taxonSet : disputes) {
           GeolocaleTaxon geolocaleTaxon = (GeolocaleTaxon) taxonSet;
           if (geolocaleTaxon.getGeolocaleId() == geolocaleId && geolocaleTaxon.getTaxonName().equals(taxonName)) {
             //s_log.warn("getDispute(" + geolocaleId + ", " + taxonName + ") found.");
@@ -734,4 +741,4 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
         return disputes;
     }
 
-}
+}

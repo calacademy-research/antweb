@@ -467,8 +467,10 @@ public class SpeciesListDb extends AntwebDb {
 
             Overview overview = OverviewMgr.getOverview(speciesListName);
 
-            taxonSetDb.insert(overview, taxonName, "speciesListTool");
+            // The curator adds it: an earlier "not in this list" (dispute) no longer holds. Removed
+            // before the insert, which skips disputed names.
             taxonSetLogDb.removeDispute(speciesListName, taxonName);
+            taxonSetDb.insert(overview, taxonName, "speciesListTool");
 
             //A.log("saveTaxonSet() taxonName:" + taxonName + " contains:" + oldChosenList.contains(taxonName));
             if (!oldChosenList.contains(taxonName)) {
@@ -530,7 +532,25 @@ public class SpeciesListDb extends AntwebDb {
 		  ++i;
 		}
 
+        // Recount this list now, so that a name just added shows its species and specimen counts
+        // (the genus row said "No Species" and the species "No Specimens" until the nightly run).
+        recount(speciesListName, isProjectAndNotGeolocale);
+
         return message;
+    }
+
+    private void recount(String speciesListName, boolean isProject) {
+        try {
+            if (isProject) {
+                new ProjTaxonCountDb(getConnection()).childrenCountCrawl(speciesListName);
+            } else {
+                int geolocaleId = GeolocaleMgr.getGeolocaleId(speciesListName);
+                if (geolocaleId > 0) new GeolocaleTaxonCountDb(getConnection()).childrenCountCrawl(geolocaleId);
+            }
+        } catch (SQLException e) {
+            // The list is saved; the counts follow in the nightly run.
+            s_log.warn("recount() speciesListName:" + speciesListName + " e:" + e);
+        }
     }
 
     /* Get the list of species in the specified species list where the taxon is not valid,
