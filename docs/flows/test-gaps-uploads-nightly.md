@@ -4,6 +4,13 @@ Companion to [specimen-upload.md](specimen-upload.md), [image-upload.md](image-u
 
 Rules for every proposed test: it runs against **staging only** (or locally, or as a unit test with no server). A test that writes data refuses to run unless the host is `staging.antweb.org`, `localhost` or `127.0.0.1` (the pattern of `tests/e2e/test_image_upload.py`). Read-only checks may also run against production. No test ever writes to production.
 
+## 0. Built on 2026-10-19
+
+- Staging test accounts: `tools/staging/create-test-accounts.py` (test group "ZZ Test Group (staging only)", codes `zztest0001`..., an uploader, a curator without upload rights, an admin; `--remove`). Secrets `ANTWEB_TEST_UPLOADER_*`, `ANTWEB_TEST_NOUPLOAD_*`, `ANTWEB_TEST_ADMIN_*`, sent to staging only.
+- e2e (skip without the secrets): test 1 nightly health (`test_admin_staging.py`), test 2 round trip and test 3 as xfail (`test_specimen_upload_roundtrip.py`), test 10 first part, a real image upload to a test specimen (`test_image_upload_test_group.py`), test 12 "no upload right" (both files), admin pages load (`test_admin_staging.py`).
+- Unit, in CI: test 5 `TaxonWorksTransformFixtureTest` (fixture `test/org/calacademy/antweb/upload/fixtures/taxonworks-data.tsv`), test 6 without the refactor (`TaxonWorksNightlyDecisionsTest`: wait decisions, zip check, fingerprint, record count, one run at a time, no settings file; the guard and HTTP steps still need the seam), test 7 the database-free half (`NameResolutionRuleTest`), and `PasswordHashCompatTest` with `tests/unit/test_staging_accounts.py`.
+- New finding while writing test 5: the transform writes a value containing quote marks in CSV quoting (`"""Smith"" collection"`), and the specimen upload only trims the outer quote marks, so such a value would be stored with doubled quote marks (check on staging).
+
 ## 1. What is tested today, step by step
 
 "e2e" = `tests/e2e/` (runs against staging for every pull request and daily at 13:17 Pacific). "unit" = `test/` JUnit. "unit, not in CI" = the test exists but `.github/workflows/tests.yaml` only compiles and runs `SecurityBatch7Test` (step "Java unit tests of the 2026-10-18 hardening batch"); the others are run by hand (`ant test`) if at all.
