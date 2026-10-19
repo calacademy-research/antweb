@@ -157,6 +157,35 @@ jobs:
 
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
         run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml
+      - name: Database dates in Pacific time (connection pools against MySQL 8.4 as in docker-compose.yml)
+        # DbTimeZoneTest: dates written by MySQL and by Java read back as the same moment and are
+        # stored as Pacific wall-clock time, for conPool, mediumConPool and longConPool.
+        run: |
+          ! grep -rnE "jdbc:mysql[^\"]*serverTimezone" WEB-INF src --include=*.xml --include=*.java || { echo "::error::serverTimezone in a JDBC URL (use connectionTimeZone=LOCAL)"; exit 1; }
+          cmp WEB-INF/struts-configDbAnt.xml WEB-INF/struts-configDb.xml
+          docker network create tzcheck
+          docker run -d --name mysql --network tzcheck -e TZ=America/Los_Angeles -e MYSQL_ROOT_PASSWORD=ci-root \
+            -e MYSQL_DATABASE=ant -e MYSQL_USER=antweb -e MYSQL_PASSWORD=CHANGE_ME \
+            -v "$PWD/docker/mysql/mysql.cnf:/etc/mysql/conf.d/custom.cnf:ro" mysql:8.4 --mysql-native-password=ON
+          ok=0
+          for i in $(seq 1 90); do
+            if docker exec mysql mysql -uroot -pci-root -h127.0.0.1 -e "select 1" >/dev/null 2>&1; then ok=1; break; fi
+            sleep 2
+          done
+          [ "$ok" = 1 ] || { docker logs mysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
+          # As in production: the antweb login uses mysql_native_password (the driver does not use SSL).
+          docker exec mysql mysql -uroot -pci-root -h127.0.0.1 -e "ALTER USER 'antweb'@'%' IDENTIFIED WITH mysql_native_password BY 'CHANGE_ME'"
+          docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/WEB-INF:/w:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/DbTimeZoneTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.DbTimeZoneTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (4 tests)" /tmp/out.txt
+          '
+          docker rm -f mysql
 
       - name: clearDisk.py skips web/log and links (tests/unit/test_clear_disk.py)
         run: python3 tests/unit/test_clear_disk.py
