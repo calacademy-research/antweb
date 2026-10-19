@@ -39,11 +39,6 @@ if (curator != null) {
 
 <br><b>Curator:</b> <%= curatorStr %>
 
-<% if (LoginMgr.isDeveloper(request)) { %>
-<br><br><br>
-<h2>Dev only:</h2>
-<b>Source:</b> <%= curation.getSource() %>
-<% } %>
 
 <% } %>
 

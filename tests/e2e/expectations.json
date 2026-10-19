@@ -98,7 +98,7 @@
   "/newGroup": "login",
   "/newLogin": "login",
   "/notFound": "not_found",
-  "/orphanedImages": "ok",
+  "/orphanedImages": "login",
   "/oxford": "ok",
   "/page": "message",
   "/passwordResetCampaign": "login",

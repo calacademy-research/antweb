@@ -193,7 +193,7 @@ if (sl == null) A.log("speciesListTool-body.jsp sl is null for mapSpeciesList1Na
    %>
      
       </select>
-      <br><% if (AntwebProps.isDevOrStageMode() || LoginMgr.isDeveloper(accessLogin)) out.println(toolProps.getDisplayRefSpeciesListParams()); %>
+      <br><% if (AntwebProps.isDevMode()) out.println(toolProps.getDisplayRefSpeciesListParams()); %>
       <input type="submit" name="go" value="go">      
 
 </form>
@@ -477,7 +477,7 @@ if (sl == null) A.log("speciesListTool-body.jsp sl is null for mapSpeciesList1Na
 </table>
 
 <%
-if (AntwebProps.isDevOrStageMode() || LoginMgr.isDeveloper(accessLogin)) {
+if (AntwebProps.isDevMode()) {
 %> <br><b>Developer Info</b> <%
   if (toolProps.getRefSpeciesList() != null) {
     out.println("<br>refSpeciesList.size:" + toolProps.getRefSpeciesList().size());

@@ -117,7 +117,9 @@ public final class OverviewAction extends DescriptionAction {
            }
  
            if (museumCode != null && !"".equals(museumCode)) {
-              if (isRecalc) {		
+              // Recalculate on a museum page is for administrators (the button is shown only to them;
+              // curators recount the museums of their own upload from the Curate page).
+              if (isRecalc && LoginMgr.isAdmin(request)) {		
                 new TaxonDb(connection).setSubfamilyChartColor();
               	
 	  	   	    MuseumDb museumDb = new MuseumDb(connection);

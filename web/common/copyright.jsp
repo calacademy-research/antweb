@@ -27,7 +27,6 @@
 AntWeb is hosted and supported by the <a href="http://www.calacademy.org/">California Academy of Sciences</a>.
 </div>
 
-<jsp:include page="/util/developerDetail.jsp" flush="true"/>
 
 </p>
 

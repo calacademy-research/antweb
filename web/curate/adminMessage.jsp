@@ -20,4 +20,3 @@
 	<tiles:put name="body-content" value="/common/message-body.jsp" />	
 </tiles:insert>
 
-<%@include file="/util/developerDetail.jsp" %>

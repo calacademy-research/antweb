@@ -34,15 +34,6 @@
 <H2>Introduced Species Native Bioregion Distribution Tool</H2>
 <br>
 Of the species that are on the Introduced Species <a href='<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=species&project=introducedants'>list</a>, here is where they are known to be native...
-<% if (LoginMgr.isDeveloper(request)) { %>
-<br><br><b>Dev:</b>
-For species on the introduced list, records will be stored in the Taxon Props table with the introducedMap prop, with a map that looks something like:
-<br>&nbsp;&nbsp;&nbsp;Australasia:true Neotropical:true Oceania:true Malagasy:true Nearctic:true Indomalaya:true
-<br>&nbsp;&nbsp;&nbsp;Omitted properties default to false.
-<br><br>
-The values here are used during a scheduled computation process (GeolocaleDb.calcIntroduced()) during which the geolocale_taxon that have 
-a taxon with a taxon_prop introducedMap, and a geolocale within that introducedMap will be flagged as is_introduced.
-<% } %>
 <br>
 <br>
 <table>

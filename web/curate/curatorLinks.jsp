@@ -50,6 +50,7 @@
       <li><a href="<%= domainApp %>/recentDescEdits.do?action=recentDescEdits">Recent Description Edits</a>
       <li><a href="<%= domainApp %>/list.do?action=casentDAnomalies">Specimen parts (-D codes) with different names</a>
       <li><a href="<%= domainApp %>/utilData.do?action=taxaOutsideOfNativeBioregion">Taxa outside their native bioregions</a> (a list to check for misidentifications or introductions; it only reads data, but opens through a confirmation page)
+      <li><a href="<%= domainApp %>/orphanedImages.do">Orphaned images</a> (images whose specimen record no longer exists)
     </ul>
 
 <% } %>

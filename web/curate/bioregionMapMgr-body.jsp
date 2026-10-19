@@ -160,7 +160,7 @@
 <tr><td></td><td></td><td><b>Totals:</b></td><td><%= afroTot %></td><td><%= antTot %></td><td><%= ausTot %></td><td><%= indoTot %></td><td><%= malaTot %></td><td><%= oceanTot %></td><td><%= nearcTot %></td><td><%= neoTot %></td><td><%= paleaTot %></td><td></td></tr>
 </table>
 
-<% if (LoginMgr.isDeveloper(request)) { %>
-     <br><br>Dev only: <%= org.calacademy.antweb.util.Csrf.postButton(request, AntwebProps.getDomainApp() + "/bioregionMapMgr.do?isRefresh=true", "Refresh", "Refresh the whole bioregion map table from specimen data?") %> Bioregion Distribution Tool. (Careful! Will refresh whole table from specimen data). 
+<% if (LoginMgr.isAdmin(request)) { %>
+     <br><br><%= org.calacademy.antweb.util.Csrf.postButton(request, AntwebProps.getDomainApp() + "/bioregionMapMgr.do?isRefresh=true", "Refresh", "Refresh the whole bioregion map table from specimen data?") %> rebuilds the whole table above from specimen data (replaces any changes made here).
 <% } %>
 </div>

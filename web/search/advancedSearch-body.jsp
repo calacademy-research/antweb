@@ -751,9 +751,7 @@ Click <b>SHOW | HIDE</b> to add more criteria to your search.
 			<div class=adv_left_col>
 			Group by: <html:select styleClass="input_150" property="resultRank" value="specimen">
 			<% 
-			   if (LoginMgr.isDeveloper(accessLogin)) { %>
-            <% } 
-               if (LoginMgr.isAdmin(accessLogin)) { %>
+			   if (LoginMgr.isAdmin(accessLogin)) { %>
 			  <html:option value="locality">Locality</html:option>
 			<% } %>
 			  <html:option value="subfamily">Subfamily</html:option>

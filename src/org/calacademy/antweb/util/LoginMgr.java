@@ -250,13 +250,6 @@ public class LoginMgr extends Manager {
         return accessLogin != null && accessLogin.isAdmin();
     }
     
-    public static boolean isPeter(HttpServletRequest request) {
-        return LoginMgr.isPeter(getAccessLogin(request));
-    }
-    public static boolean isPeter(Login accessLogin) {
-        return accessLogin != null && accessLogin.getId() == 36;
-    }
-
     public static boolean isMichele(HttpServletRequest request) {
         Login accessLogin = getAccessLogin(request);
 	    return isMichele(accessLogin);

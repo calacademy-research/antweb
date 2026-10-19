@@ -430,8 +430,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
     <input type="hidden" name="successkey" value="null" />
     <div class="admin_action_module">
         <div class="admin_action_item">
-            <div class="action_desc"><b>Import AntCat names now</b>: downloads the AntCat export and loads the names, as the nightly run does at 05:00 Pacific. Use it only when the nightly AntCat import failed (an admin alert or compute.log says so). Takes several minutes.
-              <br><small>Source: <%= org.calacademy.antweb.util.Html.esc(org.calacademy.antweb.curate.speciesList.SpeciesListUploader.fetchWorldantsUrl) %></small></div>
+            <div class="action_desc"><b>Import AntCat names now</b>: downloads the AntCat export and loads the names, as the nightly run does at 05:00 Pacific. Use it only when the nightly AntCat import failed (an admin alert or compute.log says so). Takes several minutes.</div>
             <div class="clear"></div>
             <div class="align_right">
                 <input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="fetchAndReloadWorldants">

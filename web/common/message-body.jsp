@@ -77,35 +77,3 @@
 <b><%= message %></b>
 </div>
 
-<%
-if (AntwebProps.isDevMode() || LoginMgr.isDeveloper(request)) {
-  if (true) {
-    //String str = "amblyoponinaemystrium mysticum-a";
-    // String str = "amblyoponinaemystrium mysticum-0?";
-    String str = "formicinaegaesomyrmex hörnesii";
-    boolean hasSC = false;
-
-    if (false && AntwebProps.isDevMode()) {
-       //java.util.Map<String, String> headers = HttpUtil.getHeadersInfo(request);
-       
-		Enumeration headerNames = request.getHeaderNames();
-		while (headerNames.hasMoreElements()) {
-			String key = (String) headerNames.nextElement();
-			String value = request.getHeader(key);
-            AntwebUtil.log("message-body.jsp key:" + key + " value:" + value);
-		}
-		       
-/*    
-      hasSC = Formatter.hasSpecialCharacter(str);
-    } else {
-      String extras = "";
-      extras = "äáëéìöü";
-      Pattern p = Pattern.compile("[^A-Za-z0-9 " + extras + "()/_.-]");
-      Matcher m = p.matcher(str);
-      hasSC = m.find();   
-*/
-    }    
-    //out.println("message-body.jsp hasSC:" + hasSC + " str:" + str);
-  } 
-}
-%>

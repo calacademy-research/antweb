@@ -289,8 +289,8 @@ Images:
         <br><br><h2>Curator Info</h2>
         Museum counts are computed daily and may not reflect most recent specimen uploads.
 
-	 <% if (LoginMgr.isPeter(request)) { %>
-          <br><b><%= overview.getRecalcButton(request) %></b> (Includes count crawl. Recalculate overview: <%= overview.getKeyStr() %> and make the charts. Update <%= overview.getTable() %> counts.)
+	 <% if (LoginMgr.isAdmin(accessLogin)) { %>
+          <br><b><%= overview.getRecalcButton(request) %></b> (admins: recounts this museum's specimens, images and taxa now instead of in the nightly run; takes a few minutes)
      <% }
 
       }
@@ -340,17 +340,7 @@ Images:
 	<% }
     }
 
-	if (LoginMgr.isDeveloper(accessLogin)) { %>
-	<br>
-	<h2>Dev Info</h2>
-
-	<!-- Class:<%= overview.getClass().getName() %> -->
-	<%
-	  if (isGeolocale) {
-		out.println("<br>Prefer Link: <a href='" + geolocale.getThisPageTarget() + "'> /" + geolocale.getThisPageTarget() + "</a>");
-		out.println("<br>Alt Link: <a href='" + geolocale.getAltThisPageTarget() + "'> /" + geolocale.getAltThisPageTarget() + "</a>");
-	  }
-	} %>
+	%>
 
 	<%    if (desc.get("author") != null) { %>
 	<br>
