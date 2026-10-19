@@ -20,13 +20,14 @@ public class QueryAction extends AntwebAction {
     private static final Log s_log = LogFactory.getLog(QueryAction.class);
 
     // homonyms: the Homonym Report (moved here from util.do, where it was admin only; its page needs a login).
+    // curateAntcat was removed 2026-10-19: its checks are in the Integrity Check (checkIntegrity).
     private static final Set<String> ADMIN_ACTIONS = Set.of(
-        "checkIntegrity", "curiousQueries", "curateAntcat", "devQueries", "countryEndemic", "events",
+        "checkIntegrity", "curiousQueries", "devQueries", "countryEndemic", "events",
         "homonyms");
 
     // Every sub-action query.do handles; anything else (descEdit, the old "Notes" link) is not found.
     static final Set<String> ACTIONS = Set.of(
-        "checkIntegrity", "curiousQueries", "curateAntcat", "devQueries", "countryEndemic", "events",
+        "checkIntegrity", "curiousQueries", "devQueries", "countryEndemic", "events",
         "homonyms", "curiousQuery", "query", "queryBattery");
 
     // Named queries that public pages link to (read-only, no login data): anyone may run them.
@@ -107,11 +108,6 @@ public class QueryAction extends AntwebAction {
                   returnLoc = mapping.findForward("adminHtmlMessage");
                 }
 
-                if (action.equals("curateAntcat")) {
-                  String message = QueryManager.runCurateAntcatQueries(connection);
-                  request.setAttribute("message", message);
-                  returnLoc = mapping.findForward("adminHtmlMessage");
-                }
                 if (action.equals("devQueries")) {
                   String message = QueryManager.runDevIntegrityQueries(connection);
                   request.setAttribute("message", message);

@@ -28,7 +28,7 @@
 <h2>Old Query Manager</h2>
 
     <h3 align="left">Integrity Queries</h3>
-	  Execute All:<a href="<%= domainApp %>/query.do?action=checkIntegrity">here</a>
+	  Execute All (the Integrity Check page, with an explanation of each check):<a href="<%= domainApp %>/query.do?action=checkIntegrity">here</a>
     <%
       ArrayList<String> integrityQueries = Queries.getIntegrityNamesArray();    
       int i = 0;
@@ -40,23 +40,10 @@
       }
     %>
 
-    <h3 align="left">Curate AntCat Queries</h3>
-	  Execute All:<a href="<%= domainApp %>/query.do?action=curateAntcat">here</a>
-    <%
-      ArrayList<String> queries = Queries.getCurateAntcatNamesArray();   
-      i = 0; 
-      for (String name : queries) {
-        if (i == 0) out.println("<ul align=left>");
-        ++i;
-        out.println("<li><a href='" + domainApp + "/query.do?name=" + name +"'>" + name + "</a>");
-        if (i == queries.size()) out.println("</ul>");
-      }
-    %>
-    
     <h3 align="left">Dev Queries</h3>
 	  Execute All:<a href="<%= domainApp %>/query.do?action=devQueries">here</a>
     <%
-      queries = Queries.getDevIntegrityNamesArray();   
+      ArrayList<String> queries = Queries.getDevIntegrityNamesArray();   
       i = 0; 
       for (String name : queries) {
         if (i == 0) out.println("<ul align=left>");

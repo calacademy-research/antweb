@@ -35,7 +35,6 @@ public class SpecimenDb extends AntwebDb {
                 int c = rset.getInt("count");
                 if (c == 1) return true;
             }
-            //A.log("isDuplicatedTaxonName() count:" + count);
         } catch (SQLException e) {
             s_log.error("exists() e:" + e);
             throw e;
@@ -647,83 +646,56 @@ public class SpecimenDb extends AntwebDb {
       Where casent and casent-dxx have different taxon names.
       Invoked as: https://www.antweb.org/list.do?action=casentDAnamalies
     */
-    public ArrayList<String> getCasentDAnamalies() throws SQLException {
-        ArrayList<String> bads = new ArrayList<>();
-        Statement stmt = null;
-        ResultSet rset = null;
-        String query = "select concat(substring_index(code, '-d', 1)) as codeFrag from specimen where code like '%-d%'";
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "getBads()");
-            rset = stmt.executeQuery(query);
+    /** A part code ends in "-d" and digits (casent0001234-d01). MySQL REGEXP; case follows the column collation. */
+    public static final String PART_SUFFIX_SQL = "-d[0-9]+$";
+    private static final java.util.regex.Pattern PART_SUFFIX = java.util.regex.Pattern.compile("(?i)^(.+)-d[0-9]+$");
 
-            int count = 0;
-            while (rset.next()) {
-                ++count;
-                String codeFrag = rset.getString("codeFrag");
-                boolean isDup = isDuplicatedTaxonName(codeFrag);
-                if (isDup) {
-                    //A.log("getBads() isDup:true codeFrag:" + codeFrag);
-                    bads.add(getDups(codeFrag));
+    /** The base specimen code of a part code (casent0001234-d01 -> casent0001234), else null. Only a suffix at the end counts. */
+    public static String partBase(String code) {
+        if (code == null) return null;
+        java.util.regex.Matcher m = PART_SUFFIX.matcher(code.trim());
+        return m.matches() ? m.group(1) : null;
+    }
+
+    /** One base specimen whose parts (and the base record itself, if there is one) carry different taxon names. */
+    public static final class PartGroup {
+        public String base;
+        public final List<String[]> parts = new ArrayList<>();   // {code, taxon_name}
+        public final Set<String> names = new TreeSet<>();
+    }
+
+    /**
+     * Specimen parts (-D codes) with different names, in one query: every code ending in -d and digits, grouped
+     * by its base code together with the base specimen's own record; groups with more than one taxon name.
+     */
+    public List<PartGroup> getPartsWithDifferentNames() throws SQLException {
+        String query = "select x.base, x.code, x.taxon_name from ("
+            + " select regexp_replace(code, ?, '') as base, code, taxon_name from specimen where code regexp ?"
+            + " union all"
+            + " select s.code as base, s.code, s.taxon_name from specimen s where s.code in"
+            + "   (select regexp_replace(code, ?, '') from specimen where code regexp ?)"
+            + ") x join ("
+            + " select base from ("
+            + "   select regexp_replace(code, ?, '') as base, taxon_name from specimen where code regexp ?"
+            + "   union all"
+            + "   select s.code, s.taxon_name from specimen s where s.code in"
+            + "     (select regexp_replace(code, ?, '') from specimen where code regexp ?)"
+            + " ) y group by base having count(distinct taxon_name) > 1"
+            + ") d on d.base = x.base order by x.base, x.code";
+        LinkedHashMap<String, PartGroup> groups = new LinkedHashMap<>();
+        try (PreparedStatement ps = getConnection().prepareStatement(query)) {
+            for (int k = 1; k <= 8; k++) ps.setString(k, PART_SUFFIX_SQL);
+            try (ResultSet rset = ps.executeQuery()) {
+                while (rset.next()) {
+                    String base = rset.getString(1);
+                    PartGroup g = groups.computeIfAbsent(base, b -> { PartGroup n = new PartGroup(); n.base = b; return n; });
+                    String name = rset.getString(3);
+                    g.parts.add(new String[] {rset.getString(2), name});
+                    if (name != null) g.names.add(name);
                 }
             }
-            s_log.debug("getBads() count:" + count);
-
-        } catch (SQLException e) {
-            s_log.error("getBads() e:" + e);
-            throw e;
-        } finally {
-            DBUtil.close(stmt, rset, "this", "getBads()");
         }
-
-        return bads;
-    }
-
-    public boolean isDuplicatedTaxonName(String codeFrag) throws SQLException {
-        Statement stmt = null;
-        ResultSet rset = null;
-        String query = "select count(distinct taxon_name) as c from specimen where code like '" + codeFrag + "%'";
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "isDuplicatedTaxonName()");
-            rset = stmt.executeQuery(query);
-
-            int count = 0;
-            while (rset.next()) {
-                int c = rset.getInt("c");
-                if (c > 1) return true;
-            }
-            //A.log("isDuplicatedTaxonName() count:" + count);
-        } catch (SQLException e) {
-            s_log.error("getBads() e:" + e);
-            throw e;
-        } finally {
-            DBUtil.close(stmt, rset, "this", "isDuplicatedTaxonName()");
-        }
-        return false;
-    }
-
-    public String getDups(String codeFrag) throws SQLException {
-        String dups = "";
-        Statement stmt = null;
-        ResultSet rset = null;
-        String query = "select code, taxon_name from specimen where code like '" + codeFrag + "%'";
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "getDups()");
-            rset = stmt.executeQuery(query);
-
-            int count = 0;
-            while (rset.next()) {
-                ++count;
-                String code = rset.getString("code");
-                String taxonName = rset.getString("taxon_name");
-                dups += "<br><b>" + code + ":</b>" + taxonName;
-            }
-        } catch (SQLException e) {
-            s_log.error("getDups() e:" + e);
-            throw e;
-        } finally {
-            DBUtil.close(stmt, rset, "this", "getDups()");
-        }
-        return dups;
+        return new ArrayList<>(groups.values());
     }
 
 

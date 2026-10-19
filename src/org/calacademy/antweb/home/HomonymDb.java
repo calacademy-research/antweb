@@ -122,6 +122,11 @@ public class HomonymDb extends AntwebDb {
                 String taxonName = rset.getString("taxon_name");
                 String authorDate = rset.getString("author_date");
                 Taxon taxon = getHomonym(taxonName, authorDate);
+                // A homonym row that cannot be read as a taxon is left out of the report (and logged).
+                if (taxon == null) {
+                    s_log.warn("getHomonyms() could not read homonym taxonName:" + taxonName + " authorDate:" + authorDate);
+                    continue;
+                }
                 homonyms.add(taxon);
             }
         } catch (SQLException e) {

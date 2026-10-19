@@ -38,6 +38,9 @@ jobs:
       MODE: ${{ inputs.mode || 'test' }}
       ANTWEB_TEST_USER: ${{ secrets.ANTWEB_TEST_USER }}
       ANTWEB_TEST_PASSWORD: ${{ secrets.ANTWEB_TEST_PASSWORD }}
+      # Optional administrator login (staging) for the admin report pages; tests skip without it.
+      ANTWEB_TEST_ADMIN_USER: ${{ secrets.ANTWEB_TEST_ADMIN_USER }}
+      ANTWEB_TEST_ADMIN_PASSWORD: ${{ secrets.ANTWEB_TEST_ADMIN_PASSWORD }}
     steps:
       - uses: actions/checkout@v5
         with:

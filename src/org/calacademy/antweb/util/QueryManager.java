@@ -63,38 +63,34 @@ public abstract class QueryManager {
         return message;        
     }
 
+    /**
+     * The Integrity Check page: a plain-language explanation, then every check in its own section.
+     * A check that finds nothing says "None"; a check that fails says so and the others still run.
+     */
     public static String checkIntegrity(Connection connection) throws SQLException {
-        String message = "</b>";
-        message += "<h1>Integrity Check</h1>";
-        message += " * - Ideally none of these queries return results, or the queries are modified to correctly display data integrity.";
-        ArrayList<NamedQuery> queryList = Queries.getIntegrityQueries();       
-        // Above, due to scrappy groups/login design, it is possible to not specify a admin_login for a group, and when the group is created
-        // and used for insertion of records (SpecimenUpload.java:309) there is no access_login created, causing problems at loadAllSpecimenFiles times.
-        for (NamedQuery namedQuery : queryList) {
-          String results = runNamedQueryHtml(namedQuery, connection);
-          if (results != null && !results.contains("<br><b>rowCount:</b>0"))
-              message += results;
+        StringBuilder message = new StringBuilder("</b><h1>Integrity Check</h1>");
+        message.append(ReportHelp.INTEGRITY);
+        for (NamedQuery namedQuery : Queries.getIntegrityQueries()) {
+            message.append(checkSection(namedQuery, connection));
         }
-        if ("".equals(message)) message = "Success";
-        return message;        
+        return message.toString();
     }
-    
-    public static String runCurateAntcatQueries(Connection connection) throws SQLException {
-        String message = "</b>";
-        message += "<h1>Curate AntCat</h1>";
-        message += " * - These AntWeb issues imply that there are changes to be made to AntCat.";
-        ArrayList<NamedQuery> queryList = Queries.getNamedQueryList(Queries.getCurateAntcatNames());       
-        //A.log("runCurateAntcatQueries");
-        // Above, due to scrappy groups/login design, it is possible to not specify a admin_login for a group, and when the group is created
-        // and used for insertion of records (SpecimenUpload.java:309) there is no access_login created, causing problems at loadAllSpecimenFiles times.
-        for (NamedQuery namedQuery : queryList) {
-          String results = runNamedQueryHtml(namedQuery, connection);
-          if (results != null)
-            message += results;
+
+    /** One check of a report page: its rows, "None." when it finds nothing, or the error it ran into. */
+    static String checkSection(NamedQuery namedQuery, Connection connection) {
+        String desc = namedQuery.getDesc() == null ? "" : namedQuery.getDesc();
+        String head = "<hr><br><b>" + Html.esc(namedQuery.getName()) + "</b>: " + desc;
+        try {
+            String results = runNamedQueryHtml(namedQuery, connection);
+            if (results == null || results.contains("<br><b>rowCount:</b>0\n")) {
+                return head + "<br><br><b>None.</b><br><br>\n";
+            }
+            return results;
+        } catch (Exception e) {
+            s_log.warn("checkSection() " + namedQuery.getName() + " e:" + e);
+            return head + "<br><br><b>This check could not run:</b> " + Html.esc(String.valueOf(e.getMessage())) + "<br><br>\n";
         }
-        if ("".equals(message)) message = "Success";
-        return message;        
-    }    
+    }
 
     public static String runDevIntegrityQueries(Connection connection) throws SQLException {
         String message = "</b>";
@@ -154,6 +150,7 @@ public abstract class QueryManager {
           }
         }
         if (namedQuery == null) return "Query not found:" + Html.esc(name);
+        if ("worldantsUploads".equals(name)) message += ReportHelp.WORLDANTS_UPLOADS;
         String result = runNamedQueryHtml(namedQuery, connection);
         if (result != null) message += result;
         return message;
