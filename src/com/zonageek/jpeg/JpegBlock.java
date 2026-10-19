@@ -265,9 +265,13 @@ public class JpegBlock {
   }
 
   //===========================================================================
+  // Bytes are mapped one to one to chars (ISO-8859-1), so binary data and text in
+  // any encoding survive unchanged. Callers that show text decode it themselves
+  // (org.calacademy.antweb.util.ExifText). The platform charset (UTF-8 since
+  // Java 18) turned every byte that is not valid UTF-8 into U+FFFD.
   public String getFixedString(int pos, int length) {
     try {
-      return new String(this.data, pos, length);
+      return new String(this.data, pos, length, java.nio.charset.StandardCharsets.ISO_8859_1);
     }
     catch (Exception ex) {
       return "";
@@ -276,7 +280,7 @@ public class JpegBlock {
   
   //===========================================================================
   public void putString(int pos, String value) {
-    System.arraycopy(value.getBytes(), 0, this.data, pos, value.length());
+    System.arraycopy(value.getBytes(java.nio.charset.StandardCharsets.ISO_8859_1), 0, this.data, pos, value.length());
 
     if ((pos + value.length()) > this.length)
       this.length = pos + value.length();

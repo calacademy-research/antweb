@@ -1,3 +1,17 @@
+Current state (2026-10)
+-----------------------
+EXIF is not stored in the database. bigPicture-body.jsp reads it from the high resolution
+JPEG each time the page is shown (com.zonageek.jpeg, headers only) and lists it in the
+Admin Information section (administrators only). util/ExifText.java decodes the text:
+UTF-8 if the bytes are valid UTF-8, else Windows-1252 (older images were tagged in Latin-1);
+"&#44;" written by the old processImages.pl becomes a comma; maker notes and the embedded
+thumbnail are summarized as "binary data, N bytes". JpegBlock.getFixedString maps bytes
+to chars one to one (ISO-8859-1); with the platform charset (UTF-8 since Java 18) every
+Latin-1 byte became U+FFFD. Test: test/org/calacademy/antweb/util/ExifTextTest.java.
+
+The notes below are older.
+
+
 
 Tools
 -----
