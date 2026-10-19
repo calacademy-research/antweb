@@ -43,7 +43,7 @@ public class UploadAction extends AntwebAction {
 
 	// Site-wide jobs: admins only.
 	static final java.util.Set<String> ADMIN_ONLY_ACTIONS = java.util.Set.of(
-			"fetchAndReloadWorldants", "reloadSpeciesLists", "museumCalc",
+			"fetchAndReloadWorldants", "reloadSpeciesLists",
 			"runStatistics", "runCountCrawls", "toggleDownTime", "genAll", "genRecentDescEdits");
 
 	// Removed sub-actions (unused tools, 2026-10): answered as "Action not found." before anything else.
@@ -58,6 +58,12 @@ public class UploadAction extends AntwebAction {
 
 	public static boolean isRemovedAction(String action) {
 		return action != null && REMOVED_ACTIONS.contains(action);
+	}
+
+	/** Recalculate Your Museums: the museum list in the session must come from this login's own upload. */
+	public static boolean mayRecalcMuseums(Login accessLogin, Object museumMapLoginId) {
+		if (accessLogin == null || museumMapLoginId == null) return false;
+		return String.valueOf(accessLogin.getId()).equals(String.valueOf(museumMapLoginId));
 	}
 
 	public static boolean isAdminOnlyAction(String action) {
@@ -322,15 +328,16 @@ public class UploadAction extends AntwebAction {
 				} else if (action.equals("museumCalc")) {
 					Map<String, Integer> museumMap = (Map<String, Integer>) session.getAttribute("museumMap");
 
-					if (museumMap == null) {
-						String message = "Museum Map not found in session";
-						request.setAttribute("message", message);
+					// Curators recount only the museums of their own last upload (set in this session by
+					// that upload); admins too, or any upload they made in this session.
+					if (museumMap == null || !mayRecalcMuseums(accessLogin, session.getAttribute("museumMapLoginId"))) {
+						request.setAttribute("message", "Upload a specimen file first: this recounts the museums of your last upload.");
 						return mapping.findForward("message");
 					}
 					MuseumDb museumDb = new MuseumDb(connection);
 					museumDb.populate(museumMap);
 
-					request.setAttribute("message", "Museum recalculation:" + museumMap.keySet());
+					request.setAttribute("message", "Museums recounted: " + Html.esc(String.join(", ", new java.util.TreeSet<>(museumMap.keySet()))));
 					return mapping.findForward("message");
 
 				} else {
@@ -498,6 +505,8 @@ public class UploadAction extends AntwebAction {
 		HttpSession session = request.getSession();
 		try {
 			session.setAttribute("museumMap", uploadDetails.getMuseumMap());
+			Login uploader = LoginMgr.getAccessLogin(request);
+			session.setAttribute("museumMapLoginId", uploader == null ? null : uploader.getId());
 		} catch (IllegalStateException e) {
 			s_log.info("execute() handled:" + e);
 		}

@@ -52,7 +52,8 @@ REMOVED_FILES = (
 )
 UTIL = REPO_ROOT / "src/org/calacademy/antweb/util/UtilAction.java"
 UTIL_DATA = REPO_ROOT / "src/org/calacademy/antweb/util/UtilDataAction.java"
-CURATE_PAGES = ("web/curate/curatorLinks.jsp", "web/curate/curate-body.jsp", "web/curate/geolocale/countryDoc-body.jsp")
+CURATE_PAGES = ("web/curate/curatorLinks.jsp", "web/curate/curate-body.jsp", "web/curate/technical-body.jsp",
+                "web/curate/geolocale/countryDoc-body.jsp")
 LINK = re.compile(r"/(util|utilData)\.do\?action=(\w+)")
 
 

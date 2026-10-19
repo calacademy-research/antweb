@@ -18,6 +18,7 @@
 <!-- /div -->
 <div id="page_data">
 AntWeb's curators' favorite ant images!
+<% if (LoginMgr.isAdmin(request)) { %><br><a href="<%= AntwebProps.getDomainApp() %>/list.do?action=pictureLikes">Number of likes per image</a><% } %>
     <div class="clear"></div>
     <div class="page_spacer"></div>
 

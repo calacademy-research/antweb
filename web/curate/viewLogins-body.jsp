@@ -22,6 +22,8 @@
 
 <div class="admin_left">
     <h1>Login Manager</h1>
+    <p><a href="<%= secureDomainApp %>/list.do?action=usrAdm">All logins with their permissions</a>
+     | <a href="<%= secureDomainApp %>/list.do?action=usrAdmLastLogin">Logins by last login</a></p>
     <hr></hr>
 
           <li><b>Relevant Queries</b>

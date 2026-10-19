@@ -161,7 +161,9 @@ String serverDetails = (String) request.getAttribute("serverDetails");
 
 <br><br><br>
 <h2>Assorted Links</h2>
-     <a href = "<%= domainApp %>/uptime.do">Uptime</a>
+     <a href = "<%= domainApp %>/dbStatus.do">Database Status</a> (connection pools; reset a pool)
+     <br><a href = "<%= domainApp %>/util.do?action=isRestart">Restart Status</a> (true when the application has asked for a restart; read by the host's restart checker)
+     <br>     <a href = "<%= domainApp %>/uptime.do">Uptime</a>
      <br><a href = "<%= domainApp %>/sessionExpired.jsp">sessionExpired.jsp</a>
      <br><a href = "<%= domainApp %>/error.jsp">error.jsp</a>
 

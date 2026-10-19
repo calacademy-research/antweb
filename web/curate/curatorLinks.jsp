@@ -1,113 +1,55 @@
 	<div class="clear"></div>
-	
-<% if (accessLogin.isAdmin()) { %>  
-    <h3 align=left>Manager Tools</h2>
+
+<% if (accessLogin.isAdmin()) { %>
+    <h3 align=left>Manager Tools</h3>
     <ul align=left>
-      <li>Display <a href="<%= domainApp %>/geolocaleMgr.do?name=displayGeoregions">Georegions</a> or
-         <a href="<%= domainApp %>/geolocaleMgr.do?name=displayBioregions">Bioregions</a>.     
-      <li><a href="<%= domainApp %>/viewLogins.do">Login Manager</a>
+      <li><a href="<%= domainApp %>/viewLogins.do">Login Manager</a> (also: all logins with their permissions, logins by last login)
       <li><a href="<%= domainApp %>/viewGroups.do">Group Manager</a>
       <li><a href="<%= domainApp %>/manageMuseum.do">Museum Manager</a>
-      <li><a href="<%= domainApp %>/geolocaleMgr.do">Geolocale Manager</a>    
+      <li><a href="<%= domainApp %>/geolocaleMgr.do">Geolocale Manager</a> (countries and adm1s; also the georegion and bioregion tables)
       <li><a href="<%= domainApp %>/projectMgr.do">Project Manager</a>
-      <li><a href="<%= domainApp %>/artists.do">Artist Manager</a>
+      <li><a href="<%= domainApp %>/artists.do">Photographers</a> (image credits)
       <li><a href="<%= domainApp %>/adminAlert.do">Admin Alert Manager</a>
-      <li><a href="<%= domainApp %>/bioregionMapMgr.do">Bioregion Map Manager</a>      
-      <li><a href="<%= domainApp %>/introducedMapMgr.do">Introduced Map Manager</a>
-      <li><a href="<%= domainApp %>/query.do">Query Manager</a>
-      <li><a href="<%= domainApp %>/logMgr.do?action=list">Log Manager</a>
+      <li><a href="<%= domainApp %>/bioregionMapMgr.do">Bioregion Map Manager</a> (where a species is native)
+      <li><a href="<%= domainApp %>/introducedMapMgr.do">Introduced Map Manager</a> (where a species is introduced)
+      <li><a href="<%= domainApp %>/query.do">Query Manager</a> (ready-made database checks; they only read data)
+      <li><a href="<%= domainApp %>/logMgr.do?action=list">Log Manager</a> (compute.log is the nightly run, admin.log the AntCat imports and scheduler runs; also the profiler log)
     </ul>
 
-    <h3 align=left>Administrator Functions</h2>
-    <ul align=left>	
+    <h3 align=left>Administrator Functions</h3>
+    <ul align=left>
       <li><a href="<%= domainApp %>/statistics.do">Antweb Statistics</a>
-      <li><a href="<%= domainApp %>/serverStatus.do">Server Status</a>
-      <li><a href="<%= domainApp %>/sessionProps.do">Session Properties</a>
-      <li><a href="<%= domainApp %>/dbStatus.do">Database Status</a>
-      <li><a href="<%= AntwebProps.getSecureDomainApp() %>/list.do?action=usrAdm">User Login List</a>
-      <li><a href="<%= AntwebProps.getSecureDomainApp() %>/query.do?action=curiousQuery&name=lastSpecimenUpload">Last Upload List</a>
-      <li><a href="<%= domainApp %>/list.do?action=usrAdmLastLogin">User Last Login List</a>
+      <li><a href="<%= domainApp %>/serverStatus.do">Server Status</a> (connections, running jobs, upload down time, pages being served; links to database status and restart status)
+      <li><a href="<%= domainApp %>/technical.do">Technical page</a> (reload in-memory lists, regenerate content and statistics, run a nightly set, debugging)
 <%
       String content = AntwebUtil.readFile("/data/antweb/web/siteWarning.txt");
       if (content == null || "null".equals(content)) content = "";
 %>
-      <li><a href="<%= domainApp %>/utilData.do?action=siteWarning&text=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.url(content)) %>">Site Warning</a>
-         <br><verbatim>&lt;br&gt;&lt;font color=lightgreen&gt;&lt;/font&gt;</verbatim>
-      <li><a href="<%= domainApp %>/util.do?action=isRestart">Restart Status</a>
+      <li>Site Warning: the banner shown at the top of every page. Simple formatting (bold, colour, line breaks, links) is kept.
+        <form method="post" action="<%= domainApp %>/utilData.do" style="margin:4px 0"><%= org.calacademy.antweb.util.Csrf.field(request) %>
+          <input type="hidden" name="action" value="siteWarning">
+          <textarea name="text" rows="2" style="width:95%" aria-label="Site warning text"><%= org.calacademy.antweb.util.Html.esc(content) %></textarea>
+          <br><input type="submit" value="Save">
+        </form>
+        <form method="post" action="<%= domainApp %>/utilData.do" style="margin:0 0 4px 0"><%= org.calacademy.antweb.util.Csrf.field(request) %>
+          <input type="hidden" name="action" value="siteWarning">
+          <input type="hidden" name="text" value="">
+          <input type="submit" value="Clear the warning">
+        </form>
       <% if (AntwebUtil.minsSince(SessionRequestFilter.getInitTime()) >= 10) { %>
-      <br>&nbsp; &nbsp;<a href="<%= domainApp %>/utilData.do?action=setIsRestart&param=true">Restart server now</a> (<5 min)
-
+      <li><a href="<%= domainApp %>/utilData.do?action=setIsRestart&param=true">Restart server now</a>: the AntWeb application restarts within 5 minutes (never during an upload); the site shows an error page for 2 to 4 minutes while it starts. You are asked to confirm first.
      <% } %>
-
     </ul>
 
-    <h3 align=left>Reports</H3>
+    <h3 align=left>Reports</h3>
     <ul align=left>
-      <li><a href="<%= domainApp %>/query.do?action=curateAntcat">Curate AntCat Queries</a>
-      <li><a href="<%= domainApp %>/logMgr.do?action=get&fileName=admin&ext=log">Admin Log</a>     
+      <li><a href="<%= domainApp %>/query.do?action=curateAntcat">Curate AntCat Queries</a> (name checks against AntCat and the AntCat import history)
       <li><a href="<%= domainApp %>/query.do?action=homonyms">Homonym Report</a>
-      <!-- li><a href="< %= domainApp % >/adminUpdates.do">Admin Updates</a -->
-      <li><a href="<%= domainApp %>/query.do?action=events">Events</a>
-      <li><a href="<%= domainApp %>/query.do?action=curiousQuery&name=adminAlerts">Admin Alerts</a>
-      <li><a href="<%= domainApp %>/common/statusDisplayPage.jsp">Taxa Status Documentation</a>
-      <li><a href="<%= domainApp %>/taxonomicPage.do?rank=species&project=worldants&isImaged=false">Unimaged Bolton Ants</a>    
-      <li><a href="<%= domainApp %>/list.do?action=pictureLikes">Image Likes</a>
+      <li><a href="<%= domainApp %>/query.do?action=events">Curator activity log</a> (edits to the images, videos and overview text of taxon pages)
+      <li><a href="<%= domainApp %>/taxonomicPage.do?rank=species&project=worldants&isImaged=false">Species without images</a> (AntCat species with no image on AntWeb)
       <li><a href="<%= domainApp %>/recentDescEdits.do?action=recentDescEdits">Recent Description Edits</a>
-      <li><a href="<%= domainApp %>/list.do?action=casentDAnomalies">Casent -Dxx Anomalies</a>
-      <li><a href="<%= domainApp %>/utilData.do?action=taxaOutsideOfNativeBioregion">Taxa Outside of Native Bioregion</a>
+      <li><a href="<%= domainApp %>/list.do?action=casentDAnomalies">Specimen parts (-D codes) with different names</a>
+      <li><a href="<%= domainApp %>/utilData.do?action=taxaOutsideOfNativeBioregion">Taxa outside their native bioregions</a> (a list to check for misidentifications or introductions; it only reads data, but opens through a confirmation page)
     </ul>
 
-    <h3 align=left>Technical Functions</h2>
-     <ul align=left>
-	  <li><a href="<%= domainApp %>/serverDebug.do">Server Debug</a>
-      <li><a href="<%= domainApp %>/util.do?action=reloadAntwebMgr">Reload</a> All Managers
-        <br>&nbsp&nbsp;Manager:<a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=group">g</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=allAntweb">a</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=login">l</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=project">p</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=bioregion">b</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=museum">m</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=geolocale">g</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=taxon">t</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=taxonProp">tp</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=upload">u</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=artist">a</a> 
-        <a href="<%= domainApp %>/util.do?action=reloadAntwebMgr&name=adminAlert">aa</a>      
-	  <li><a href="<%= domainApp %>/pageTracker.do">Page Tracker</a>
-	  <li>Process (automated)</li>
-      <ul align=left>
-  	    <li><a href="<%= domainApp %>/utilData.do?action=genRecentContent">Generate</a> Recent Content
-    	    <!-- li><a href="< %= domainApp % >/upload.do?action=genRecentDescEdits">Generate</a> Recent Desc Edits -->
-    	    <!-- li><a href="< %= domainApp % >/imageUploader.do?action=regenerate">Generate</a> Recent Images -->
-	    <li><a href="<%= domainApp %>/upload.do?action=runStatistics">Generate</a> Statistics
-      </ul>
-
-	  <li>Crawl <a href="<%= domainApp %>/logMgr.do?action=get&fileName=compute&ext=log"> Log </a> File
-	  <li><a href="<%= domainApp %>/logMgr.do?action=get&fileName=profiler&ext=jsp">Profiler log</a>
-	  <li><a href="<%= domainApp %>/util.do?action=logQueryStats">Log</a> Query Stats
-    </ul>
-
-      <h3 align=left>Data Mgmt</h3>
-      <ul align=left>
-  	    <li><a href="<%= domainApp %>/utilData.do?action=regenerateAllAntweb"> Regenerate AllAntwebAnts </a>
-      </ul>
-
-<%   if (AntwebProps.isDevOrStageMode()) { %>
-      <h3 align=left>Dev</h3>
-      <ul align=left>
-	    <li><a href="<%= domainApp %>/utilData.do?action=worldantsFetchAndReload"> Worldants Fetch and Reload</a>
-      </ul>
-<%   } %>
-
-      <h3 align=left>Scheduler</h3>
-      <ul align=left>
-	    <li><a href="<%= domainApp %>/schedule.do?action=run"> Full Scheduler</a>
-	    <li><a href="<%= domainApp %>/schedule.do?action=run&num=1"> Schedule 1 </a>
-	    <li><a href="<%= domainApp %>/schedule.do?action=run&num=2"> Schedule 2 </a>
-	    <li><a href="<%= domainApp %>/schedule.do?action=run&num=3"> Schedule 3 </a>
-	    <li><a href="<%= domainApp %>/schedule.do?action=run&num=4"> Schedule 4 </a>
-	    <li><a href="<%= domainApp %>/schedule.do?action=run&num=5"> Schedule 5 </a>
-      </ul>
-    </ul>
-
-<% } %>    
+<% } %>
