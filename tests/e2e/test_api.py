@@ -22,3 +22,19 @@ def test_api(name):
 def test_taxa_respects_limit():
     r = new_session().get(BASE_URL + "/v3.1/taxa?genus=camponotus&limit=3&up=1", timeout=120)
     assert len(r.json()["taxa"]) <= 3
+
+
+def test_unknown_parameter_is_refused():
+    # A misspelt filter used to be ignored and the reply was the first 10,000 specimens.
+    r = new_session().get(BASE_URL + "/v3.1/specimens?up=1&specimenCod=casent0922626", timeout=120)
+    assert r.status_code == 400, r.status_code
+    body = r.json()
+    assert body["unknownParameters"] == ["specimenCod"], body
+    assert "specimenCode" in body["acceptedParameters"], body
+
+
+def test_code_is_specimen_code():
+    r = new_session().get(BASE_URL + "/v3.1/specimens?up=1&code=casent0922626", timeout=120)
+    assert r.status_code == 200, r.status_code
+    specimens = r.json()["specimens"]
+    assert [s["specimenCode"] for s in specimens] == ["casent0922626"], [s["specimenCode"] for s in specimens][:5]

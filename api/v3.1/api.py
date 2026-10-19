@@ -2271,5 +2271,88 @@ def getUnimagedGeolocaleTaxa():
         return getNdjson(dataList)  # return flask Response
 
 
+# --- Parameter check (every endpoint) ---------------------------------------------------------------
+# A parameter the endpoint does not know used to be ignored, so a misspelt filter returned the
+# first 10,000 records of everything (for example /specimens?code=... instead of specimenCode).
+# Now such a request gets HTTP 400 with the list of accepted parameter names.
+#
+# The accepted names of an endpoint are the request.args.get('name') calls in its function (read
+# from the source once at start), plus the settings every endpoint reads (setGlobals, down).
+
+import ast
+import inspect
+import textwrap
+
+from werkzeug.datastructures import ImmutableMultiDict
+
+COMMON_PARAMS = ('up', 'limit', 'offset', 'ndjson', 'log')
+
+# Other names for a parameter: {alias: name}. Applied only where the endpoint takes that name.
+#   code: the specimen code parameter of API v3 (/v3/specimens?code=...).
+#   rank: used in the examples on the v3.1 documentation page for taxarank.
+PARAM_ALIASES = {'code': 'specimenCode', 'rank': 'taxarank'}
+
+UNCHECKED_ENDPOINTS = ('hello', 'static')
+
+
+def readParams(function):
+    """The names in request.args.get('name', ...) calls inside a view function."""
+    tree = ast.parse(textwrap.dedent(inspect.getsource(function)))
+    names = []
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'get'
+                and isinstance(node.func.value, ast.Attribute) and node.func.value.attr == 'args'
+                and node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str)):
+            if node.args[0].value not in names:
+                names.append(node.args[0].value)
+    return names
+
+
+ACCEPTED_PARAMS = {}
+
+
+def acceptedParams(endpoint):
+    if endpoint not in ACCEPTED_PARAMS:
+        own = readParams(application.view_functions[endpoint])
+        ACCEPTED_PARAMS[endpoint] = own + [p for p in COMMON_PARAMS if p not in own]
+    return ACCEPTED_PARAMS[endpoint]
+
+
+def aliasesFor(endpoint):
+    accepted = acceptedParams(endpoint)
+    return {a: n for a, n in PARAM_ALIASES.items() if n in accepted and a not in accepted}
+
+
+def badParams(message, endpoint, unknown=None):
+    body = {'error': message, 'acceptedParameters': acceptedParams(endpoint)}
+    aliases = aliasesFor(endpoint)
+    if aliases:
+        body['aliases'] = aliases
+    if unknown:
+        body['unknownParameters'] = unknown
+    body['documentation'] = prodServer + "/" + apiUri
+    return jsonify(body), 400
+
+
+@application.before_request
+def checkParams():
+    endpoint = request.endpoint
+    if endpoint is None or endpoint in UNCHECKED_ENDPOINTS or endpoint not in application.view_functions:
+        return None
+    accepted = acceptedParams(endpoint)
+    aliases = aliasesFor(endpoint)
+    unknown = [k for k in request.args.keys() if k and k not in accepted and k not in aliases]
+    if unknown:
+        return badParams("Unknown parameter: " + ", ".join(unknown) + ".", endpoint, unknown)
+    used = [a for a in aliases if a in request.args]
+    if used:
+        for a in used:
+            if aliases[a] in request.args:
+                return badParams("Give " + a + " or " + aliases[a] + ", not both.", endpoint)
+        renamed = [(aliases.get(k, k), v) for k, v in request.args.items(multi=True)]
+        request.args = ImmutableMultiDict(renamed)
+    return None
+
+
 if __name__ == "__main__":
     application.run()

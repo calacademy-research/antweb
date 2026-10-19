@@ -42,7 +42,7 @@
         <table class="arguments">
             <tr>
                 <td><b>Limit</b></td>
-                <td>Limit the number of specimen returned on large requests (limit=100). Default and maximum is 10,000 (up to 1,000,000 with ndjson=true); use offset to page through more.</td>
+                <td>Limit the number of specimen returned on large requests (limit=100). Default and maximum is 10,000 (also with ndjson=true); use offset to page through more.</td>
             </tr>
             <tr>
                 <td><b>Offset</b></td>
@@ -63,6 +63,7 @@
             </tr>            
 <% } %>
         </table>
+        <p><b>Parameter names:</b> parameter names are case sensitive. A request with a parameter the function does not know (for example a misspelt name) is answered with HTTP 400 and a JSON message listing the accepted parameters, instead of ignoring it. <b>code</b> may be used for <b>specimenCode</b>, and <b>rank</b> for <b>taxarank</b>.</p>
         <p><p>
         <p>There are the different ways to access the api, documented below...
            <br>&nbsp;&nbsp;<a href="#specimens">Specimens</a>
@@ -241,7 +242,7 @@
         <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/specimens?minElevation=0&maxElevation=100&country=Australia&habitat=rainforest&type=holotype&georeferenced=true&minDate=1970-01-01&maxDate=1979-12-31:<%= appendStr %>"><%= apiDomainApp %>/specimens?minElevation=0&maxElevation=100&country=Australia&habitat=rainforest&type=holotype&georeferenced=true&minDate=1970-01-01&maxDate=1979-12-31</a></p>            
 
 		<p class="link">A query for the Technomyrmex within the bounding box (w, s, e, n):
-        <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/specimens?bbox=37.77,-122.46,37.76,-122.47&genus=Technomyrmex<%= appendStr %>"><%= apiDomainApp %>/specimens?coords=37.77,-122.46,37.76,-122.47&genus=Technomyrmex</a></p>
+        <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/specimens?bbox=37.77,-122.46,37.76,-122.47&genus=Technomyrmex<%= appendStr %>"><%= apiDomainApp %>/specimens?bbox=37.77,-122.46,37.76,-122.47&genus=Technomyrmex</a></p>
 
         <p class="link">A query for some queens of the genus Tetramorium in ndjson format (for use with Elasticsearch):
         <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/specimens?caste=queen&genus=Tetramorium&limit=10&ndjson=true<%= appendStr %>"><%= apiDomainApp %>/specimens?caste=queen&genus=Tetramorium&limit=10&ndjson=true</a></p>
@@ -328,7 +329,7 @@
             <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?subfamily=myrmicinae&rank=subfamily<%= appendStr %>"><%= apiDomainApp %>/taxa?subfamily=myrmicinae&rank=subfamily</a>   	
             <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?genus=camponotus&rank=genus<%= appendStr %>"><%= apiDomainApp %>/taxa?genus=camponotus&rank=genus</a>
             <p class="link">This Query will return multiple species from different genera:
-              <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?species=aberrans&rank=species&status=valid<%= appendStr %>"><%= apiDomainApp %>/taxa?aberrans&rank=species&status=valid</a>
+              <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?species=aberrans&rank=species&status=valid<%= appendStr %>"><%= apiDomainApp %>/taxa?species=aberrans&rank=species&status=valid</a>
             </p>          
            
 
@@ -622,7 +623,7 @@
         </table>
             <p><b>Examples:</b>
             <p class="link">Counts of all species in the species list of Comoros:
-            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/geoSpeciesStats?geolocaleName=Comoros<%= appendStr %>"><%= apiDomainApp %>/geolocaleSpeciesStats?country=Comoros</a>   
+            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/geoSpeciesStats?geolocaleName=Comoros<%= appendStr %>"><%= apiDomainApp %>/geoSpeciesStats?geolocaleName=Comoros</a>   
             </p>                       
             </p>   
 
