@@ -76,7 +76,10 @@
     </div>
 </div> <!-- totals_and_tools_container -->
 
-<form id="getComparison" action="<%= AntwebProps.getDomainApp() %>/getComparison.do">
+<%-- The comparison form is closed at once; its fields point to it with form="getComparison".
+     It must not wrap the images: the Pick and Unpick buttons are small POST forms of their own,
+     and a form inside a form is dropped by the browser, so the first button submitted this form. --%>
+<form id="getComparison" action="<%= AntwebProps.getDomainApp() %>/getComparison.do"></form>
 
 <div id="page_data">
     <div id="domain" style="display:none;"><%= AntwebProps.getDomainApp() %></div>
@@ -130,16 +133,16 @@
     }
 
 %>
-<input type="hidden" name="name" value="<bean:write name="showTaxon" property="name"/>">
-<input type="hidden" name="rank" value="<bean:write name="showTaxon" property="rank"/>">
-<logic:equal value="species" name="showTaxon" property="rank">
-<input type="hidden" name="genus" value="<bean:write name="showTaxon" property="genus" />">
-</logic:equal>
-<input type="hidden" name="overview" value="<%= overview.getName() %>">
+<input form="getComparison" type="hidden" name="name" value="<bean:write name="showTaxon" property="name"/>">
+<input form="getComparison" type="hidden" name="rank" value="<bean:write name="showTaxon" property="rank"/>">
+<% if (Rank.SPECIES.equals(taxon.getRank())) { %>
+<input form="getComparison" type="hidden" name="genus" value="<%= org.calacademy.antweb.util.Html.escAttr(taxon.getGenus()) %>">
+<% } %>
+<input form="getComparison" type="hidden" name="overview" value="<%= org.calacademy.antweb.util.Html.escAttr(overview.getName()) %>">
 
  <%
     if (useShot) { %>
- <input id="thumb_choice" type="hidden" name="shot" value="<%= choice_is %>" checked>
+ <input form="getComparison" id="thumb_choice" type="hidden" name="shot" value="<%= choice_is %>" checked>
  <% }
     if (totalImaged > 0) {
         ArrayList<Taxon> theChildren = taxon.getChildren();
@@ -202,6 +205,3 @@
     } // totalImaged > 0   
 %>
 </div>
-
-<!-- /html:form -->
-</form>
