@@ -9,6 +9,7 @@ AntWeb (https://www.antweb.org) is the California Academy of Sciences' database 
 | [catalog/actions.md](catalog/actions.md) | **Function catalog.** One row per Struts action (`*.do`), per sub-action (`?action=...`) and per API v3.1 route: URL, Java class, JSPs, the access check found in the code, the anonymous result on staging, the e2e tests that request it, recent traffic, purpose and status (keep, check, remove?). |
 | [catalog/actions.csv](catalog/actions.csv) | The same catalog as CSV. The purpose, status and notes columns are written by hand here. |
 | [catalog/coverage-gaps.md](catalog/coverage-gaps.md) | Rows with no functional e2e test, most important first (uploads, curator saves, login, nightly jobs, public pages). |
+| [guides/curate-page.md](guides/curate-page.md) | **Curate page guide** for curators and admins: each tool on the Curator Tools page, in page order, what it is for and how to use it. |
 | [../tests/e2e/README.md](../tests/e2e/README.md) | The end-to-end test suite: what each test file checks and how to run it. |
 | [RELEASING.md](RELEASING.md), [VERSIONING.md](VERSIONING.md) | How a release is made and numbered. |
 

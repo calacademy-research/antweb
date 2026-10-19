@@ -24,7 +24,7 @@ Specimen, species list, image and name uploads.
 | 10 | `/upload.do?action=genRecentDescEdits` | admin | <2 |  | Admin: regenerate the recent page-text edits page. | keep |
 | 11 | `/upload.do?action=museumCalc` | admin | <2 |  | Admin: recompute museum counts. | keep |
 | 12 | `/upload.do?action=reloadSpeciesLists` | admin | <2 |  | Admin: reload all species lists. | check |
-| 13 | `/upload.do?action=runCountCrawls` | admin | <2 |  | Admin: recompute counts. | keep |
+| 13 | `/upload.do?action=runCountCrawls` | admin | <2 |  | Admin: does nothing (logs "should be done through UtilData.do"). | keep |
 | 14 | `/upload.do?action=runStatistics` | admin | <2 |  | Admin: recompute statistics. | keep |
 | 15 | `/upload.do?action=toggleDownTime` | admin | <2 |  | Admin: switch upload down time. | check |
 
@@ -134,10 +134,10 @@ The scheduler's data jobs and the calls the host and the app make.
 | 101 | `/utilData.do?action=projectCountCrawl` | admin or system | <2 |  | Recount project totals. | keep |
 | 102 | `/utilData.do?action=projTaxonChildCountCrawl` | admin or system | <2 |  | Recount child taxa per project. | check |
 | 103 | `/utilData.do?action=regenerateAllAntweb` | admin or system | <2 |  | Rebuild the allantwebants project. | check |
-| 104 | `/utilData.do?action=runCountCrawls` | admin or system | <2 |  | Run all count crawls. | keep |
+| 104 | `/utilData.do?action=runCountCrawls` | admin or system | <2 |  | Recompute child-taxon counts of projects, bioregions, regions and museums (heavy). | keep |
 | 105 | `/utilData.do?action=setIsRestart` | admin or system | <2 |  | Ask for an app restart (picked up by reboot_checker.sh). | keep |
 | 106 | `/utilData.do?action=siteWarning` | admin or system | <2 |  | Set or clear the site warning banner. | keep |
-| 107 | `/utilData.do?action=taxaOutsideOfNativeBioregion` | admin or system | <2 |  | Report taxa with specimens outside their native bioregions. | check |
+| 107 | `/utilData.do?action=taxaOutsideOfNativeBioregion` | admin or system | <2 |  | Report (read only) of taxa with specimens outside their native bioregions. | check |
 | 108 | `/utilData.do?action=taxonFinish` | admin or system | <2 |  | Finish steps after a names import. | keep |
 | 109 | `/utilData.do?action=testGeolocaleTaxonParentage` | admin or system | <2 |  | Report region taxon records with missing parents. | check |
 | 110 | `/utilData.do?action=updateGeolocaleParentHierarchy` | admin or system | <2 |  | Update region parent hierarchy. | check |
@@ -188,7 +188,7 @@ Ordered by traffic.
 | 148 | `/list.do?action=countries` | public | <2 |  | Public list of countries. | keep |
 | 149 | `/list.do?action=getTaxonNames` | public | <2 |  | Public: taxon names matching a string. | check |
 | 150 | `/list.do?action=likes` | public | <2 |  | Public: favourite images. | keep |
-| 151 | `/list.do?action=pictureLikes` | public | <2 |  | Public: image likes. | keep |
+| 151 | `/list.do?action=pictureLikes` | public | <2 |  | Public: images with their number of likes (Add to Favorites). | keep |
 | 152 | `/list.do?action=recentDescEdits` | public | <2 |  | Public: recent page-text edits. | keep |
 | 153 | `/orphanedImages.do` | public | <2 | probe | Report of images whose specimen record is missing. | check |
 | 154 | `/oxford.do` | public | <2 | probe | Museum type collection page (Oxford), linked from worldants.jsp. | check |
@@ -222,7 +222,7 @@ Read-only tools and reports.
 | 175 | `/cache.do?action=genCacheThread` | admin | <2 |  | Admin: generate cached pages in a background thread. | check |
 | 176 | `/cache.do?action=purgeCache` | admin | <2 |  | Admin: delete cached pages. | check |
 | 177 | `/countryDoc.do` | admin | <2 | probe | Admin documentation page for country and adm1 data (geolocale manager). | keep |
-| 178 | `/list.do?action=casentDAnomalies` | admin | <2 |  | Admin: CASENT-D code anomalies. | check |
+| 178 | `/list.do?action=casentDAnomalies` | admin | <2 |  | Admin: specimen codes split into -D parts (e.g. CASENT0001234-D01) whose parts have different taxon names. | check |
 | 179 | `/list.do?action=specimensWithMorphoGenera` | curator | <2 |  | Curators: specimens of morpho genera. | check |
 | 180 | `/list.do?action=toUpload` | admin | <2 |  | Admin: files waiting in the toUpload folder. | check |
 | 181 | `/list.do?action=usrAdm` | admin | <2 |  | Admin: user admin list. | keep |
@@ -259,11 +259,11 @@ Read-only tools and reports.
 | 212 | `/recentDescEdits.do?action=usrAdm` | admin | <2 |  | Admin: user admin list. | keep |
 | 213 | `/recentDescEdits.do?action=usrAdmLastLogin` | admin | <2 |  | Admin: user list by last login. | keep |
 | 214 | `/saveMuseum.do?action=view` | admin | <2 |  | Admin: view one museum. | keep |
-| 215 | `/sessionProps.do` | admin | <2 | probe | Admin page showing the current session's attributes (debugging). | check |
+| 215 | `/sessionProps.do` | admin | <2 | probe | Admin page showing the attributes stored in the current session (debugging). | check |
 | 216 | `/speciesListHistory.do?action=changeRefSpeciesList` | curator | <2 |  | Change the reference list shown. | keep |
 | 217 | `/speciesListTool.do?action=changeRefSpeciesList` | curator | <2 |  | Change the reference list compared with. | keep |
 | 218 | `/speciesListToolSearch.do` | curator | <2 | probe | Species list tool: choose the reference list to compare with. | keep |
-| 219 | `/typeStatus.do` | admin | <2 | probe | Admin report: type-status strings that do or do not match a species name. | check |
+| 219 | `/typeStatus.do` | admin | <2 | probe | Admin report: re-scans the type-status text of CAS (group 1) specimens on every visit and writes four report files (species found, not found, no taxon name, homonym). | check |
 | 220 | `/util.do?action=emailTest` | admin | <2 |  | Admin: send a test email to the developer address. | keep |
 | 221 | `/util.do?action=logQueryStats` | admin | <2 |  | Admin: write query statistics to queryStats.log. | keep |
 | 222 | `/viewGroup.do` | admin | <2 | probe | Admin view of one group. | keep |
