@@ -23,7 +23,7 @@ What you see depends on your login:
 - **Manage Your Login Information**: your account. From here you change your name, email address and password.
 - **View Your Specimen Upload Reports**: the list of your group's specimen uploads, newest first. Each line opens the upload report (how many specimens were loaded, which names were changed to the current valid name, which lines had problems). Check it after every upload.
 - **View Your Image Upload Reports**: the same for image uploads: one line per upload batch, with its report.
-- **View the files in your curator folder**: the files you uploaded for use on taxon pages (for example an image you inserted into a taxon's page text). Only you and admins see this list.
+- **Images you uploaded for taxon page text** (your curator folder): the files you uploaded for use on taxon pages (for example an image you inserted into a taxon's page text). Only you and admins see this list.
 
 At the top of this area a red or blue line may appear when the server is busy (an upload or the nightly run is in progress, or uploads are paused). If you see one, wait and try again later.
 
@@ -40,7 +40,9 @@ Your upload replaces your group's specimen records on AntWeb. Names are matched 
 
 The optional column **previousDeterminations** lets you send earlier identifications of a specimen, newest first, separated by " | " (an example is shown on the page).
 
-**View Archived Specimen List Files**: your group's earlier uploaded specimen files. Choose your group in the list and click **Submit** to see the files; each one can be downloaded. Useful if you need a copy of what you sent before.
+**Recalculate Your Museums** (shown after you upload in the same session): recounts the museums found in your last upload now, instead of waiting for the nightly run. It only touches the museums of your own upload.
+
+**Your past upload files**: your group's earlier uploaded specimen files; each one can be downloaded. Useful if you need a copy of what you sent before. (Admins choose the group from a list.)
 
 ### Upload Specimen Images (curators with the "upload images" permission)
 
@@ -50,7 +52,7 @@ The optional column **previousDeterminations** lets you send earlier identificat
 
 These tools never change anything on AntWeb.
 
-- **Validate Species List (Pre-flight checker)**: upload a species list file (tab-delimited text) to check every name against AntWeb's names from AntCat. You get a report on screen and can download it, or download a corrected copy of your list with the current valid names.
+- **Check names against AntCat** (formerly "Validate Species List"): upload a list of species names (a tab-delimited text file) to check every name against AntWeb's names from AntCat. You get a report on screen and can download it, or download a corrected copy of your list with the current valid names. Nothing is saved on AntWeb.
 - **Specimen List Lookup**: paste a list of specimen codes (one per line) and get the AntWeb data for those specimens, on screen or as a tab-delimited file. Handy for checking what AntWeb holds for a loan or a batch of material.
 
 ### AntWeb Statistics (right side)
@@ -77,50 +79,56 @@ Admins see two extra menus in **Upload Zip File**:
 - **Upload Type**: **Antweb** (the normal AntWeb specimen file) or **TaxonWorks** (a TaxonWorks Darwin Core archive; the CAS TaxonWorks data normally arrives in the nightly run, so use this only when the nightly TaxonWorks upload failed). The GBIF option was removed in October 2026.
 - **Upload as**: upload the file on behalf of another curator, so the data goes to that curator's group. The menu lists you and the curators your login may upload for.
 
-### AntCat names
+### Import AntCat names now
 
-**Fetch and Reload Worldants** (the **Submit** button next to "Reload Worldants"): downloads the AntCat names now and loads them into AntWeb. This normally happens every night (05:00 Pacific). Use it only when the nightly AntCat import failed (you would see an admin alert or a red line in the nightly log). It takes several minutes. Hover over "Source" to see the address of the AntCat export it downloads.
+Downloads the AntCat export and loads the names into AntWeb, as the nightly run does at 05:00 Pacific. Use it only when the nightly AntCat import failed (an admin alert or compute.log says so). It takes several minutes. The source address is shown under the button. (This replaces the old "Reload" link, the "Worldants" button and the staging-only "Worldants Fetch and Reload" link.)
 
-### Edit Species List
+### Open the Species List Tool
 
 Shown when your login looks after project or region species lists. Choose a list and click **Submit** to open the **Species List Tool** for it: compare it with another list and add or remove species.
 
 ### Manager Tools
 
-- **Login Manager**: all logins. Open one to change its details and permissions (upload specimens, upload images, admin, the projects and regions it may edit, "upload as"). The form at the top creates a new login.
+- **Login Manager**: all logins. Open one to change its details and permissions (upload specimens, upload images, admin, the projects and regions it may edit, "upload as"). The form at the top creates a new login. The page also links a table of all logins with their permissions and a list of logins by last login.
 - **Group Manager**: the contributing groups (institutions). Edit a group, create one, or delete one (you are asked to confirm).
 - **Museum Manager**: the museum codes used in specimen data (code, name, title, active). Edit or add a museum. **Delete** (on a museum's form) asks you to confirm on a second page; there is no undo.
-- **Geolocale Manager**: countries and states/provinces (adm1): whether they are valid and shown on the site, names, bioregion and map coordinates. Curators can look; only admins can save changes.
+- **Geolocale Manager**: countries and states/provinces (adm1): whether they are valid and shown on the site, names, bioregion and map coordinates. Curators can look; only admins can save changes. The page also links the georegion table (region, subregion, country) and the bioregion table.
 - **Project Manager**: the projects (for example regional ant faunas): settings and page text. Create or delete projects here.
-- **Artist Manager**: the list of photographers credited on images. Add or rename a photographer here.
-- **Admin Alert Manager**: problems AntWeb has flagged for admins (for example a failed AntCat import). Remove an alert once it is dealt with.
+- **Photographers** (formerly "Artist Manager"): the photographers credited on images. Add or rename a photographer here.
+- **Admin Alert Manager**: problems AntWeb has flagged for admins (for example a failed AntCat import). Remove an alert once it is dealt with. The page links the full history of alerts.
 - **Bioregion Map Manager**: which bioregions a species is native to (used for the "introduced" flags and maps).
 - **Introduced Map Manager**: in which bioregions a species is introduced.
 - **Query Manager**: a list of ready-made database checks, by topic. Click a name to run it and see the rows. The checks only read data. Only admins can run them, except the few that public pages link to (for example the AntCat import history).
-- **Log Manager**: the server logs. The most useful are compute.log (the nightly run), admin.log (AntCat imports and scheduler runs) and taxonWorksNightly.log (the nightly CAS TaxonWorks upload).
+- **Log Manager**: the server logs. The most useful are compute.log (the nightly run), admin.log (AntCat imports and scheduler runs), taxonWorksNightly.log (the nightly CAS TaxonWorks upload) and the profiler log (timings of uploads and pages).
 
 ### Administrator Functions
 
 - **Antweb Statistics**: statistics tables by project, museum, bioregion and upload.
-- **Server Status**: what the server is doing now: database connections, running jobs, and the switch that pauses uploads ("down time").
-- **Site Warning**: the message banner shown at the top of every page (for example before maintenance). The link opens a confirmation page that saves the current text again; to change the text you edit the `text=` part of the address. An empty text removes the banner. Simple formatting (bold, colour, line breaks, links) is kept; anything else, such as scripts, is removed.
+- **Server Status**: what the server is doing now: database connections, running jobs, the switch that pauses uploads ("down time") and the pages being served. It links Database Status (connection pools) and Restart Status (whether the application has asked for a restart).
+- **Technical page**: see below.
+- **Site Warning**: the banner shown at the top of every page (for example before maintenance). Type the text in the box and click **Save**; **Clear the warning** removes it. Simple formatting (bold, colour, line breaks, links) is kept; anything else, such as scripts, is removed.
 - **Restart server now**: asks for a restart of the AntWeb application. It happens within 5 minutes (never during an upload), and the site shows an error page for 2 to 4 minutes while it starts again. You are asked to confirm first. The link appears only when the server has been up for at least 10 minutes.
 
 ### Reports
 
 - **Curate AntCat Queries**: checks on how AntWeb's names line up with AntCat: names not recognized by AntCat that have no specimens, unrecognized names under a synonym parent, region lists not using the current valid name, bad parent names, and the history of AntCat imports.
 - **Homonym Report**: the homonyms AntWeb holds.
-- **Events**: a log of curator edits to the images, videos and overview text of taxon pages, with the curator's name and date.
-- **Unimaged Bolton Ants**: species in the AntCat list that have no image on AntWeb yet. Useful for planning imaging.
+- **Curator activity log** (formerly "Events"): curator edits to the images, videos and overview text of taxon pages, with the curator's name and date.
+- **Species without images** (formerly "Unimaged Bolton Ants"): species in the AntCat list that have no image on AntWeb yet. Useful for planning imaging.
 - **Recent Description Edits**: the latest edits to taxon page text, by whom.
-- **Casent -Dxx Anomalies**: specimens whose code has been split into parts (for example `casent0001234-d01`) where the parts carry different taxon names; usually a data entry problem to fix in the source data.
-- **Taxa Outside of Native Bioregion**: taxa with specimens recorded outside their native bioregions; a list to check for misidentifications or introduced records. It runs through a confirmation page but only reads data.
+- **Specimen parts (-D codes) with different names** (formerly "Casent -Dxx Anomalies"): specimens whose code has been split into parts (for example `casent0001234-d01`) where the parts carry different taxon names; usually a data entry problem to fix in the source data.
+- **Taxa outside their native bioregions**: taxa with specimens recorded outside their native bioregions; a list to check for misidentifications or introduced records. It runs through a confirmation page but only reads data.
 
-### Technical Functions
+Elsewhere: each group's last specimen upload is linked from the Specimen Upload Reports page (admins); the number of likes per image from the Favorites page (admins); the explanation of taxon status values from the Curator Tool Documentation page.
 
-- **Reload All Managers**, and the one-letter links after "Manager:": AntWeb keeps lists such as logins, groups, projects, regions and taxa in memory. After a change made directly in the database, reload them here (or all at once). The letters stand for: g group, a all-AntWeb, l login, p project, b bioregion, m museum, g geolocale, t taxon, tp taxon properties, u upload, a artist, aa admin alert.
+### Technical page (`technical.do`, admins)
 
-Data jobs started from this page (reloads, recounts, restarts) always show a confirmation page with a **Run it** button first; nothing runs on the first click.
+- **Reload the in-memory lists**: AntWeb keeps lists such as logins, groups, projects, regions and taxa in memory. After a change made directly in the database, reload the list concerned, or all of them.
+- **Regenerate**: the recent content on the home page, the statistics, the all-AntWeb ants project list (a repair tool), and the database query timings (written to queryStats.log).
+- **Run the nightly run now**: set 1 (AntCat names, then the CAS specimens from TaxonWorks), set 2 (countries and adm1s), set 3 (projects, museums, bioregions), set 4 (image counts), set 5 (maps and checks), or all five. These run by themselves every night from 05:00 Pacific and put a heavy load on the server; run one by hand only when it failed in the night.
+- **Debugging**: Server Debug (the server debug flag) and Session Properties (what is stored in your own session).
+
+Data jobs started from the Curate page or the Technical page (reloads, recounts, restarts, the nightly sets) always show a confirmation page with a **Run it** button first; nothing runs on the first click.
 
 ---
 

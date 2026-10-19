@@ -25,7 +25,9 @@
     // Sloppy. If there is a curator or a group there will be a colon in the message (title).
     boolean isAllGroups = !message.contains(":");
 %>
-&nbsp;&nbsp;&nbsp;<a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a><br><br><br>
+&nbsp;&nbsp;&nbsp;<a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a>
+<% if (LoginMgr.isAdmin(request)) { %> | <a href = "<%= domainApp %>/query.do?action=curiousQuery&name=lastSpecimenUpload">Each group's last upload</a><% } %>
+<br><br><br>
 
 <%
     if (!isAllGroups) { out.println("&nbsp;&nbsp;&nbsp;Group Uploads: <a href='" + AntwebProps.getDomainApp() + "/listSpecimenUploads.do" + "'>All</a><br><br>"); }

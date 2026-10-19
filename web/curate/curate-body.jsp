@@ -71,9 +71,6 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 
             &nbsp;&nbsp;&nbsp;View Your <a href="<%= domainApp %>/listImageUploads.do?groupId=<%= accessGroup.getId() %>">Image Upload Reports</a>
 
-<% if (accessLogin.isAdmin()) { %>
-             &nbsp;&nbsp;&nbsp;View <a href="<%= domainApp %>/query.do?name=worldantsUploads">Worldants</a> uploads.       
-<% } %>
 
 
           </div>
@@ -82,7 +79,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
         
         <div class="admin_action_item">
           <div class="action_hint">
-            &nbsp;&nbsp;&nbsp;View <a href="<%= domainApp %>/curatorFiles.do">the files in your curator folder</a>.
+            &nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/curatorFiles.do">Images you uploaded for taxon page text</a> (your curator folder).
           </div>
           <div class="clear"></div>
         </div>
@@ -261,7 +258,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
             <input type="hidden" name="successkey" value="null" />
             <div class="admin_action_module">
                 <div class="admin_action_item">
-                    <div class="action_desc">Recalculate Your <b>Museums</b> </div>
+                    <div class="action_desc">Recalculate Your <b>Museums</b>: recount the museums in your last upload now, instead of waiting for tonight's run. </div>
                     <div class="clear"></div>
                     <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="museumCalc"></div>
                     <div class="clear"></div>
@@ -282,6 +279,14 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
            // To be replaced by uploadGroupList
           //  ArrayList<String> uploadFileKindList = AntwebUtil.getUploadDirKinds();
         %>
+        <% if (!LoginMgr.isAdmin(accessLogin)) { %>
+            <div class="admin_action_module">
+                <div class="admin_action_item">
+                    <div class="action_desc"><a href="<%= domainApp %>/uploadHistory.do?editSpeciesList=specimen<%= accessGroup.getId() %>">Your past upload files</a> (the specimen files your group uploaded; each can be downloaded)</div>
+                    <div class="clear"></div>
+                </div>
+            </div>
+        <% } else { %>
             <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "uploadHistory.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
                 <input type="hidden" name="updateAdvanced" value="no" />
                 <input type="hidden" name="updateFieldGuide" value="none" />
@@ -290,7 +295,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                 <input type="hidden" name="successkey" value="null" />
                 <div class="admin_action_module">
                     <div class="admin_action_item">
-                        <div class="action_desc"><b>View</b> Archived Specimen List Files: </div>
+                        <div class="action_desc">Past upload files of: </div>
                         <div class="action_dropdown">
               <html:select property="editSpeciesList">
                 <html:option value="none">Select...</html:option>
@@ -354,6 +359,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                 </div>
             </div>
         </html:form>
+        <% } %>
 
      <% } %>  <!-- takeDownUpload -->
  <% } %>  <!-- accessLogin.isUploadSpecimens() -->
@@ -398,7 +404,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
         </div>
         <div class="admin_action_item">
           <div class="action_desc">
-            &nbsp;&nbsp;&nbsp;<a href="<%= AntwebProps.getDomainApp() %>/validateSpeciesList.do">Validate Species List (Pre-flight checker)</a>
+            &nbsp;&nbsp;&nbsp;<a href="<%= AntwebProps.getDomainApp() %>/validateSpeciesList.do">Check names against AntCat</a>: upload a list of species names (a text file) to see which are current valid names in AntCat, with a report and a corrected copy to download. Nothing is saved on AntWeb.
           </div>
           <div class="clear"></div>
         </div>
@@ -424,13 +430,8 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
     <input type="hidden" name="successkey" value="null" />
     <div class="admin_action_module">
         <div class="admin_action_item">
-            <% String reloadStr = "Reload";
-               // This happens on the live server, so must be able to test. Antweb is invoked to pull down the fetch and reload from antcat (ibis...).
-               // This enables us to test that upload process. 
-               reloadStr = "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=worldantsReload'>Reload</a>";
-               String fetchStr = "<a title=" + org.calacademy.antweb.curate.speciesList.SpeciesListUploader.fetchWorldantsUrl + ">Source</a><br>";
-            %>
-            <div class="action_desc"><%= reloadStr %> <b>Worldants</b> &nbsp;&nbsp;&nbsp;<%= fetchStr %> </div>
+            <div class="action_desc"><b>Import AntCat names now</b>: downloads the AntCat export and loads the names, as the nightly run does at 05:00 Pacific. Use it only when the nightly AntCat import failed (an admin alert or compute.log says so). Takes several minutes.
+              <br><small>Source: <%= org.calacademy.antweb.util.Html.esc(org.calacademy.antweb.curate.speciesList.SpeciesListUploader.fetchWorldantsUrl) %></small></div>
             <div class="clear"></div>
             <div class="align_right">
                 <input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="fetchAndReloadWorldants">
@@ -457,7 +458,7 @@ if (speciesListList != null && !speciesListList.isEmpty()) { %>
     <input type="hidden" name="isFresh" value="true" />
     <div class="admin_action_module">
         <div class="admin_action_item">
-            <div class="action_desc"><b>Edit</b> Species List: </div>
+            <div class="action_desc">Open the <b>Species List Tool</b> for: </div>
             <div class="action_dropdown">
 
        <% ArrayList<SpeciesListable> groupSpeciesList = speciesListList; %>   

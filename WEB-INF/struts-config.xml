@@ -282,6 +282,10 @@
       forward="/team/staff.jsp"/>
 
     <action
+      path="/technical" 
+      forward="/curate/technical.jsp"/>
+
+    <action
       path="/thanks" 
       forward="/thanks.jsp"/>      
 

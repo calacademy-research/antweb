@@ -41,6 +41,8 @@
 	<li>
 		<a href="<%= domainApp %>/web/homepage/Specimen%20data%20overview_v04.pdf" target="_blank">Overview of specimen data</a> capture and submission (PDF) 2012-02-20</li>
 	<li>
+		<a href="<%= domainApp %>/statusDisplayPage.do" target="_blank">Taxon status values</a> explained (valid, synonym, morphotaxon and others)</li>
+	<li>
 		<a href="<%= domainApp %>/web/homepage/AntWeb_specimen_data_requirements_2026v1.xlsx" target="_blank">Specimen template example</a> and instructions (XLSX) 2026-10-17, with the new optional previousDeterminations column</li>
 </ul>
 <h3>

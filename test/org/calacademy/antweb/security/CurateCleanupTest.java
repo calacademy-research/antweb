@@ -71,6 +71,17 @@ public class CurateCleanupTest extends TestCase {
         assertTrue(UploadAction.isAdminOnlyAction("runStatistics"));
     }
 
+    public void testMuseumRecalcOnlyForOwnUpload() {
+        Login curator = new Login();
+        curator.setId(4321);
+        curator.setIsAdmin(false);
+        assertTrue(UploadAction.mayRecalcMuseums(curator, 4321));
+        assertFalse(UploadAction.mayRecalcMuseums(curator, 1234));
+        assertFalse(UploadAction.mayRecalcMuseums(curator, null));
+        assertFalse(UploadAction.mayRecalcMuseums(null, 4321));
+        assertFalse(UploadAction.isAdminOnlyAction("museumCalc"));
+    }
+
     public void testSiteWarningKeepsOnlySafeHtml() {
         String kept = HtmlSanitizer.sanitize("<br><font color=lightgreen>Maintenance tonight</font>");
         assertTrue(kept, kept.contains("<font color=\"lightgreen\">Maintenance tonight</font>"));

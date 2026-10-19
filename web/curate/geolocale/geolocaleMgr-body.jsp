@@ -38,6 +38,8 @@
 <div class="in_admin">
 <h1>Geolocale Manager:</h1>
 <h2>&nbsp;&nbsp;&nbsp;&nbsp;<font color=green><%= org.calacademy.antweb.Formatter.initCap(Georank.getPluralRank(georank)) %><%= titleAddendum %></font></h2>
+&nbsp;&nbsp;&nbsp;&nbsp;Tables: <a href="<%= domainApp %>/geolocaleMgr.do?name=displayGeoregions">georegions</a> (region, subregion, country)
+ | <a href="<%= domainApp %>/geolocaleMgr.do?name=displayBioregions">bioregions</a>
 </div>
 
 <br>
