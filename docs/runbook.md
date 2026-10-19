@@ -111,7 +111,7 @@ Expect four containers `Up` (the API also `(healthy)`), no repeated exceptions i
 
 | What | When | Where | Kept |
 |---|---|---|---|
-| Database dump (`ant`, with routines), `bin/db-daily-dump.sh` from host cron | 01:00 daily | `/mnt/backup/db/daily/YYYY-MM-DD.sql.gz` (about 120 MB); the newest also as `/mnt/backup/db/ant-currentDump.sql.gz` | files older than 7 days are deleted |
+| Database dump (`ant`, with routines), `bin/db-daily-dump.sh` from host cron | 01:00 daily | `/mnt/backup/db/daily/YYYY-MM-DD.sql.gz` (about 120 MB); the newest also as `/mnt/backup/db/ant-currentDump.sql.gz` | files older than 7 days are deleted (in practice 8 to 9 daily files are present; 9 on 2026-10-18) |
 | Monthly dump, `bin/db-monthly-dump.sh` from container cron | 23:00 on the 1st | `/mnt/backup/db/monthly/YYYY-MM-DD.sql.gz` | 365 days |
 | Taxon sets (geolocale, project, museum, bioregion) | Thursdays 03:50 | `/mnt/antweb/web/bak/taxonSets/` | not pruned |
 | DigitalOcean droplet backups | daily (antweb-prod, antcat-prod); weekly (staging, antcat-export) | DigitalOcean | 7 days (daily); 28 days (weekly) |
@@ -144,7 +144,7 @@ Notes before starting:
 install -d -m 700 /root/restore && df -h / && ls -la /root/restore
 ```
 
-Expect an empty folder and at least 10 GB free on `/`.
+Expect an empty folder and at least 10 GB free on `/` (an estimate, not measured).
 
 **Step 2. Copy the chosen dump from production to staging, through your Mac.** Run these two lines on the Mac (not on a server); replace the date.
 
@@ -341,3 +341,9 @@ tail -30 /root/antweb/logs/detail/upload.log; docker logs antweb_antweb_1 --sinc
 ```
 
 If the log shows recent progress, wait: large uploads take a long time. If nothing has moved for a long time (no rule yet; judge from the upload's size), restart AntWeb. The upload is rolled back and the curator repeats it. If it was the nightly TaxonWorks upload, it runs again the next night, or an admin starts it by hand at `/utilData.do?action=taxonWorksNightly`.
+
+## Backup facts checked on 2026-10-18
+
+- Production: `/mnt/backup` is the rclone mount of Spaces bucket `antweb-dbarchive` (service `rclone-dbarchive`), `/mnt/antweb` of bucket `antweb` (service `rclone`); both enabled at boot. Check with `findmnt /mnt/backup` (one folder per call).
+- Staging: `/mnt/backup` is a plain local folder on staging's own disk (last written October 2025); staging runs no daily dump, so it never touches production's backups.
+- `/mnt/backup/db/daily/error.log` holds failures from up to December 2023 only. A failed or skipped dump is written only there and is not reported anywhere yet (an alert is on the to-do list).
