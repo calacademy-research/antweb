@@ -63,7 +63,7 @@
             </tr>            
 <% } %>
         </table>
-        <p><b>Parameter names:</b> parameter names are case sensitive. A request with a parameter the function does not know (for example a misspelt name) is answered with HTTP 400 and a JSON message listing the accepted parameters, instead of ignoring it. <b>code</b> may be used for <b>specimenCode</b>, and <b>rank</b> for <b>taxarank</b>.</p>
+        <p><b>Parameter names:</b> parameter names are case sensitive. A request with a parameter the function does not know (for example a misspelt name) is answered with HTTP 400 and a JSON message listing the accepted parameters, instead of ignoring it. When a close name exists, the message suggests it ("did you mean").</p>
         <p><p>
         <p>There are the different ways to access the api, documented below...
            <br>&nbsp;&nbsp;<a href="#specimens">Specimens</a>
@@ -296,8 +296,8 @@
                 <td>Antweb unique identifier for a particular taxon (&taxonName= )</td>
             </tr>
              <tr>
-                <td><b>Rank</b></td>
-                <td>Query on a particular rank (rank=[subfamily, genus, species, subspecies])</td>
+                <td><b>taxarank</b></td>
+                <td>Query on a particular rank (taxarank=[subfamily, genus, species, subspecies])</td>
             </tr>
             <tr>
                 <td><b>Subfamily</b></td>
@@ -326,10 +326,10 @@
         </table>
             <p><b>Examples:</b>
             <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?taxonName=myrmicinaecrematogaster modiglianii<%= appendStr %>"><%= apiDomainApp %>/taxa?taxonName=myrmicinaecrematogaster modiglianii</a>                  	
-            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?subfamily=myrmicinae&rank=subfamily<%= appendStr %>"><%= apiDomainApp %>/taxa?subfamily=myrmicinae&rank=subfamily</a>   	
-            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?genus=camponotus&rank=genus<%= appendStr %>"><%= apiDomainApp %>/taxa?genus=camponotus&rank=genus</a>
+            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?subfamily=myrmicinae&taxarank=subfamily<%= appendStr %>"><%= apiDomainApp %>/taxa?subfamily=myrmicinae&taxarank=subfamily</a>   	
+            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?genus=camponotus&taxarank=genus<%= appendStr %>"><%= apiDomainApp %>/taxa?genus=camponotus&taxarank=genus</a>
             <p class="link">This Query will return multiple species from different genera:
-              <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?species=aberrans&rank=species&status=valid<%= appendStr %>"><%= apiDomainApp %>/taxa?species=aberrans&rank=species&status=valid</a>
+              <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?species=aberrans&taxarank=species&status=valid<%= appendStr %>"><%= apiDomainApp %>/taxa?species=aberrans&taxarank=species&status=valid</a>
             </p>          
            
 
@@ -342,8 +342,8 @@
 
         <table class="arguments">
             <tr>
-                <td><b>Rank</b></td>
-                <td>Return a list of unique names for a given rank. (rank=genus)</td>
+                <td><b>taxarank</b></td>
+                <td>Return a list of unique names for a given rank. (taxarank=genus)</td>
             </tr>
             <tr>
                 <td><b>Country</b></td>
@@ -376,9 +376,9 @@
         </table>
             <p><b>Examples:</b>
 		<p class="link">Query for 200 genera in the set of all genera:
-        <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/distinctTaxa?rank=genus&limit=20<%= appendStr %>"><%= apiDomainApp %>/distinctTaxa?rank=genus&limit=200</a></P>
+        <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/distinctTaxa?taxarank=genus&limit=20<%= appendStr %>"><%= apiDomainApp %>/distinctTaxa?taxarank=genus&limit=200</a></P>
 		<p class="link">Query for 200 spedies in the set of all valid species:
-        <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/distinctTaxa?rank=species&status=valid&limit=20<%= appendStr %>"><%= apiDomainApp %>/distinctTaxa?rank=species&status=valid&limit=20</a></P>
+        <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/distinctTaxa?taxarank=species&status=valid&limit=20<%= appendStr %>"><%= apiDomainApp %>/distinctTaxa?taxarank=species&status=valid&limit=20</a></P>
 
 
 <a name="images"></a><br><hr><br>
@@ -564,8 +564,8 @@
                 <td>Antweb unique identifier for a particular taxon (&taxonName= )</td>
             </tr>
             <tr>
-                <td><b>Rank</b></td>
-                <td>Query on the taxon rank (&rank=[subfamily, genus, species [will return species and subspecies], subspecies])</td>
+                <td><b>taxarank</b></td>
+                <td>Query on the taxon rank (&taxarank=[subfamily, genus, species [will return species and subspecies], subspecies])</td>
             </tr>         
             <tr>
                 <td><b>Subfamily</b></td>
@@ -586,16 +586,16 @@
         </table>
             <p><b>Examples:</b>
             <p class="link">All valid species in the country of Comoros:
-            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/geolocaleTaxa?rank=species&country=Comoros&status=valid<%= appendStr %>"><%= apiDomainApp %>/geolocaleTaxa?rank=species&country=Comoros&status=valid</a>   
+            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/geolocaleTaxa?taxarank=species&country=Comoros&status=valid<%= appendStr %>"><%= apiDomainApp %>/geolocaleTaxa?taxarank=species&country=Comoros&status=valid</a>   
             </p>
             <p class="link">All countries that contain the species: Crematogaster modiglianii:
             <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/geolocaleTaxa?subfamily=myrmicinae&genus=crematogaster&species=modiglianii&georank=country<%= appendStr %>"><%= apiDomainApp %>/geolocaleTaxa?subfamily=myrmicinae&genus=crematogaster&species=modiglianii&georank=country</a>                  	
             </p>
             <p class="link">All countries that have species in the Myrmicinae subfamily:
-            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/geolocaleTaxa?subfamily=myrmicinae&rank=subfamily&georank=country<%= appendStr %>"><%= apiDomainApp %>/geolocaleTaxa?subfamily=myrmicinae&rank=subfamily&georank=country</a>   	
+            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/geolocaleTaxa?subfamily=myrmicinae&taxarank=subfamily&georank=country<%= appendStr %>"><%= apiDomainApp %>/geolocaleTaxa?subfamily=myrmicinae&taxarank=subfamily&georank=country</a>   	
             </p>      
             <p class="link">All subregions that have species in the Myrmicinae subfamily:
-            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/geolocaleTaxa?subfamily=myrmicinae&rank=subfamily&georank=subregion<%= appendStr %>"><%= apiDomainApp %>/geolocaleTaxa?subfamily=myrmicinae&rank=subfamily&georank=subregion </a>   	
+            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/geolocaleTaxa?subfamily=myrmicinae&taxarank=subfamily&georank=subregion<%= appendStr %>"><%= apiDomainApp %>/geolocaleTaxa?subfamily=myrmicinae&taxarank=subfamily&georank=subregion </a>   	
             </p>              
                        
             </p>   
@@ -667,7 +667,7 @@
                 <td>Antweb unique identifier for a particular taxon</td>
             </tr>
             <tr>
-                <td><b>Rank</b></td>
+                <td><b>taxarank</b></td>
                 <td>Query on the taxon rank (subfamily, genus, species [will return species and subspecies], subspecies)</td>
             </tr>         
             <tr>
@@ -685,10 +685,10 @@
         </table>
             <p><b>Examples:</b>
             <p class="link">All valid species (the first 100) in the Nearctic bioregion:
-            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/bioregionTaxa?rank=species&bioregionName=nearctic&limit=100<%= appendStr %>"><%= apiDomainApp %>/bioregionTaxa?rank=species&bioregionName=nearctic&limit=100</a>   
+            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/bioregionTaxa?taxarank=species&bioregionName=nearctic&limit=100<%= appendStr %>"><%= apiDomainApp %>/bioregionTaxa?taxarank=species&bioregionName=nearctic&limit=100</a>   
             </p>                       
             <p class="link">All valid genera (the first 100) in the Nearctic bioregion:
-            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/bioregionTaxa?rank=genus&bioregionName=nearctic<%= appendStr %>"><%= apiDomainApp %>/bioregionTaxa?rank=species&bioregionName=nearctic</a>   
+            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/bioregionTaxa?taxarank=genus&bioregionName=nearctic<%= appendStr %>"><%= apiDomainApp %>/bioregionTaxa?taxarank=species&bioregionName=nearctic</a>   
             </p>                       
             </p>   
 
@@ -706,7 +706,7 @@
                 <td>Query on the antweb unique name for geolocale</td>
             </tr>
             <tr>
-                <td><b>Rank</b></td>
+                <td><b>taxarank</b></td>
                 <td>Query on the taxon rank (subfamily, genus, species [will return species and subspecies], subspecies)</td>
             </tr>         
             <tr>
@@ -719,7 +719,7 @@
             <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/unimagedGeolocaleTaxa?geolocaleName=California&byCaste=1<%= appendStr %>"><%= apiDomainApp %>/unimagedGeolocaleTaxa?geolocaleName=California&byCaste=1</a>   
             </p>                       
             <p class="link">Show all unimaged taxa (and which castes are unimaged) for subspecies in the California geolocale:
-            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/unimagedGeolocaleTaxa?geolocaleName=California&byCaste=1&rank=subspecies<%= appendStr %>"><%= apiDomainApp %>/unimagedGeolocaleTaxa?geolocaleName=California&byCaste=1&rank=subspecies</a>   
+            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/unimagedGeolocaleTaxa?geolocaleName=California&byCaste=1&taxarank=subspecies<%= appendStr %>"><%= apiDomainApp %>/unimagedGeolocaleTaxa?geolocaleName=California&byCaste=1&taxarank=subspecies</a>   
             </p>                       
             <p class="link">Show all unimaged taxa (and which castes are unimaged) for morphotaxa in the California geolocale:
             <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/unimagedGeolocaleTaxa?geolocaleName=California&byCaste=1&status=morphotaxon<%= appendStr %>"><%= apiDomainApp %>/unimagedGeolocaleTaxa?geolocaleName=California&byCaste=1&status=morphotaxon</a>   
