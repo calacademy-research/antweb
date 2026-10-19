@@ -31,16 +31,23 @@ concurrency:
 jobs:
   e2e:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    # About 40 minutes without the staging test accounts; their upload tests add up to about 20.
+    timeout-minutes: 75
     env:
       ANTWEB_URL: ${{ inputs.antweb_url || 'https://staging.antweb.org' }}
       ANTWEB_PROBE_WRITE_ACTIONS: ${{ inputs.probe_write_actions || '1' }}
       MODE: ${{ inputs.mode || 'test' }}
       ANTWEB_TEST_USER: ${{ secrets.ANTWEB_TEST_USER }}
       ANTWEB_TEST_PASSWORD: ${{ secrets.ANTWEB_TEST_PASSWORD }}
-      # Optional administrator login (staging) for the admin report pages; tests skip without it.
-      ANTWEB_TEST_ADMIN_USER: ${{ secrets.ANTWEB_TEST_ADMIN_USER }}
-      ANTWEB_TEST_ADMIN_PASSWORD: ${{ secrets.ANTWEB_TEST_ADMIN_PASSWORD }}
+      # Staging-only test accounts (tools/staging/create-test-accounts.py): the test group's
+      # uploader, a curator without upload rights, and an administrator. Passed only when the
+      # target is staging (empty otherwise); tests that need one skip without it.
+      ANTWEB_TEST_UPLOADER_USER: ${{ (inputs.antweb_url || 'https://staging.antweb.org') == 'https://staging.antweb.org' && secrets.ANTWEB_TEST_UPLOADER_USER || '' }}
+      ANTWEB_TEST_UPLOADER_PASSWORD: ${{ (inputs.antweb_url || 'https://staging.antweb.org') == 'https://staging.antweb.org' && secrets.ANTWEB_TEST_UPLOADER_PASSWORD || '' }}
+      ANTWEB_TEST_NOUPLOAD_USER: ${{ (inputs.antweb_url || 'https://staging.antweb.org') == 'https://staging.antweb.org' && secrets.ANTWEB_TEST_NOUPLOAD_USER || '' }}
+      ANTWEB_TEST_NOUPLOAD_PASSWORD: ${{ (inputs.antweb_url || 'https://staging.antweb.org') == 'https://staging.antweb.org' && secrets.ANTWEB_TEST_NOUPLOAD_PASSWORD || '' }}
+      ANTWEB_TEST_ADMIN_USER: ${{ (inputs.antweb_url || 'https://staging.antweb.org') == 'https://staging.antweb.org' && secrets.ANTWEB_TEST_ADMIN_USER || '' }}
+      ANTWEB_TEST_ADMIN_PASSWORD: ${{ (inputs.antweb_url || 'https://staging.antweb.org') == 'https://staging.antweb.org' && secrets.ANTWEB_TEST_ADMIN_PASSWORD || '' }}
     steps:
       - uses: actions/checkout@v5
         with:
@@ -78,6 +85,16 @@ jobs:
           echo "ANTWEB_BROWSER_HOST_RULES=MAP staging.antweb.org 127.0.0.1" >> "$GITHUB_ENV"
           echo "ANTWEB_BROWSER_IGNORE_HTTPS_ERRORS=1" >> "$GITHUB_ENV"
           curl -sS --max-time 60 --retry 3 --retry-delay 20 --retry-all-errors --cacert /tmp/ca-bundle.pem -o /dev/null -w 'staging via tunnel: HTTP %{http_code}\n' https://staging.antweb.org/
+      - name: Staging-only test accounts are used on staging only
+        run: |
+          if [ "$ANTWEB_URL" != "https://staging.antweb.org" ]; then
+            for v in ANTWEB_TEST_UPLOADER_USER ANTWEB_TEST_NOUPLOAD_USER ANTWEB_TEST_ADMIN_USER; do
+              [ -z "${!v}" ] || { echo "::error::$v is set for $ANTWEB_URL"; exit 1; }
+            done
+          fi
+          for v in ANTWEB_TEST_UPLOADER_USER ANTWEB_TEST_NOUPLOAD_USER ANTWEB_TEST_ADMIN_USER; do
+            [ -n "${!v}" ] && echo "$v: set" || echo "$v: not set (its tests skip)"
+          done
       - name: Survey (report in the job summary)
         run: python tests/e2e/survey.py
       - name: Record baseline (first run, or mode=record)

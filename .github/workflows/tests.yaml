@@ -171,6 +171,39 @@ jobs:
             grep -q "^OK (4 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of uploads and the nightly TaxonWorks job (transform fixture, job decisions, name rule, password hash)
+        # TaxonWorksTransformFixtureTest: test/.../upload/fixtures/taxonworks-data.tsv through the
+        # TaxonWorks transform. TaxonWorksNightlyDecisionsTest: wait/skip decisions, one run at a
+        # time, no settings file. NameResolutionRuleTest: statuses that use the current valid name,
+        # indet and morpho names. PasswordHashCompatTest: hashes made by
+        # tools/staging/create-test-accounts.py are accepted. See docs/flows/test-gaps-uploads-nightly.md.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc \
+              /t/org/calacademy/antweb/upload/TaxonWorksTransformFixtureTest.java \
+              /t/org/calacademy/antweb/upload/TaxonWorksNightlyDecisionsTest.java \
+              /t/org/calacademy/antweb/upload/NameResolutionRuleTest.java \
+              /t/org/calacademy/antweb/security/PasswordHashCompatTest.java
+            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:7 \
+                     upload.NameResolutionRuleTest:6 security.PasswordHashCompatTest:2; do
+              cls=${t%%:*}; n=${t##*:}
+              # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+              java -Dantweb.test=/t -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+              grep -v "LogMgr" /tmp/out.txt | tail -3
+              grep -q "^OK ($n tests)" /tmp/out.txt || { cat /tmp/out.txt; echo "::error::$cls"; exit 1; }
+            done
+          '
+
+      - name: Staging test accounts tool (tests/unit/test_staging_accounts.py)
+        run: python3 tests/unit/test_staging_accounts.py
+
       - name: No email tells the reader to ignore it (tests/unit/test_email_texts.py)
         run: python3 tests/unit/test_email_texts.py
 

@@ -97,7 +97,10 @@ def _check_links(session, report_url, links):
 
 def test_specimen_upload_report_links(session):
     page = session.get(BASE_URL + "/listSpecimenUploads.do", timeout=TIMEOUT).text
-    logs = re.findall(r"""href=["']([^"']*/web/log/specimen/[^"']+\.html)["']""", page)
+    # Not the staging test group's reports (zztest): its upload file is open to its own curators
+    # only, and test_specimen_upload_roundtrip.py checks those reports itself.
+    rows = [r for r in page.split("<tr>") if ">zztest</a>" not in r]
+    logs = re.findall(r"""href=["']([^"']*/web/log/specimen/[^"']+\.html)["']""", "<tr>".join(rows))
     if not logs:
         pytest.skip("no specimen upload reports listed on listSpecimenUploads.do")
     _check_all(session, urljoin(BASE_URL + "/", logs[0]))

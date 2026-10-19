@@ -7,8 +7,8 @@ garbage, nothing escaped. Now: labelled rows, text decoded (UTF-8, else Windows-
 binary fields summarized, every value escaped once, a short explanation of EXIF.
 
 Static checks; anonymous and test-curator page loads (no EXIF section, no replacement
-characters); the admin view itself only when ANTWEB_ADMIN_USER / ANTWEB_ADMIN_PASSWORD are
-set (there is no admin test account in CI), on staging only.
+characters); the admin view itself only when ANTWEB_TEST_ADMIN_USER / ANTWEB_TEST_ADMIN_PASSWORD
+are set (the staging admin test login, tools/staging/create-test-accounts.py), on staging only.
 """
 import os
 
@@ -27,8 +27,8 @@ PAGES = [
 # U+FFFD, and UTF-8 read as Latin-1 ("Ã©" for "é").
 GARBLED = ["�", "&#65533;", "Ã©", "Ã±"]
 
-ADMIN_USER = os.environ.get("ANTWEB_ADMIN_USER")
-ADMIN_PASSWORD = os.environ.get("ANTWEB_ADMIN_PASSWORD")
+ADMIN_USER = os.environ.get("ANTWEB_TEST_ADMIN_USER")
+ADMIN_PASSWORD = os.environ.get("ANTWEB_TEST_ADMIN_PASSWORD")
 
 
 def _text(path):
@@ -88,7 +88,7 @@ def test_image_page_curator_has_no_exif_section():
 
 @pytest.mark.skipif(
     IS_PRODUCTION or pe.HOST not in pe.ALLOWED_HOSTS or not ADMIN_USER or not ADMIN_PASSWORD,
-    reason="admin view checked only on staging with ANTWEB_ADMIN_USER / ANTWEB_ADMIN_PASSWORD")
+    reason="admin view checked only on staging with ANTWEB_TEST_ADMIN_USER / ANTWEB_TEST_ADMIN_PASSWORD")
 @pytest.mark.parametrize("path", PAGES)
 def test_image_page_admin_exif_is_legible(path):
     s = new_session()
