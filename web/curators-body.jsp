@@ -57,18 +57,10 @@
 <th><a href='<%= AntwebProps.getDomainApp() %>/curators.do?sortBy=group'>Group</a></th>
 <th><a href='<%= AntwebProps.getDomainApp() %>/curators.do?sortBy=specimenUploadCount'>Specimen Uploads</a></th>
 <th><a href='<%= AntwebProps.getDomainApp() %>/curators.do?sortBy=descEditCount'>Description Edits</a></th>
-<% if (LoginMgr.isDeveloper(request)) { %>
-<th>Image Uploads</th>
-<th>Images Uploaded</th>
-<% } %>
 <th>Projects</th>
 </tr>
 
-<% String hrLine = "<tr><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td>";
-   if (LoginMgr.isDeveloper(request)) {
-     hrLine += "<td><hr></td><td><hr></td>"; 
-   }
-   hrLine += "<td><hr></td></tr>"; %>
+<% String hrLine = "<tr><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td></tr>"; %>
 <%= hrLine %>
 
 <% 
@@ -79,9 +71,6 @@
      ++i;
    %>   
      <tr><td><%= i %></td><td><%= curator.getLink() %></td><td><%= curator.getGroup().getLink() %></td><td><%= curator.getSpecimenUploadCount() %></td><td><%= curator.getDescEditCount() %></td>
-<% if (LoginMgr.isDeveloper(request)) { %>
-     <td><%= curator.getImageUploadCount() %></td><td><%= curator.getImagesUploadedCount() %></td>
-<% } %>
      <td><%= curator.getProjectNamesShort() %> </td></tr>
 <% } 
 

@@ -22,4 +22,3 @@
 
 <br><b><%= message %></b>
 
-<%@include file="/util/developerDetail.jsp" %>

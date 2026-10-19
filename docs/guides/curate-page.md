@@ -81,7 +81,7 @@ Admins see two extra menus in **Upload Zip File**:
 
 ### Import AntCat names now
 
-Downloads the AntCat export and loads the names into AntWeb, as the nightly run does at 05:00 Pacific. Use it only when the nightly AntCat import failed (an admin alert or compute.log says so). It takes several minutes. The source address is shown under the button. (This replaces the old "Reload" link, the "Worldants" button and the staging-only "Worldants Fetch and Reload" link.)
+Downloads the AntCat export and loads the names into AntWeb, as the nightly run does at 05:00 Pacific. Use it only when the nightly AntCat import failed (an admin alert or compute.log says so). It takes several minutes. (This replaces the old "Reload" link, the "Worldants" button and the staging-only "Worldants Fetch and Reload" link.)
 
 ### Open the Species List Tool
 
@@ -118,8 +118,27 @@ Shown when your login looks after project or region species lists. Choose a list
 - **Recent Description Edits**: the latest edits to taxon page text, by whom.
 - **Specimen parts (-D codes) with different names** (formerly "Casent -Dxx Anomalies"): specimens whose code has been split into parts (for example `casent0001234-d01`) where the parts carry different taxon names; usually a data entry problem to fix in the source data.
 - **Taxa outside their native bioregions**: taxa with specimens recorded outside their native bioregions; a list to check for misidentifications or introduced records. It runs through a confirmation page but only reads data.
+- **Orphaned images** (`/orphanedImages.do`): images whose specimen record no longer exists: images in AntWeb's image table whose specimen code is not (or no longer) in the specimen data, for example after a group removed or renamed specimens in an upload. Each line is a specimen code. Use it to find images to re-link (fix the code in the source data) or remove. It only reads data.
 
 Elsewhere: each group's last specimen upload is linked from the Specimen Upload Reports page (admins); the number of likes per image from the Favorites page (admins); the explanation of taxon status values from the Curator Tool Documentation page.
+
+### Museum pages: Recalculate (admins)
+
+On a museum page (for example `https://www.antweb.org/museum.do?museumCode=BMNH`), admins see a **Recalculate** button under Curator Info. It recounts that one museum now, the same work the nightly run does for every museum (set 3, from 05:00 Pacific). Curators recount the museums of their own last upload with **Recalculate Your Museums** on the Curate page instead.
+
+What it does, in order:
+
+1. Resets the subfamily chart colours (the `chart_color` of each subfamily, used by the pie charts on every museum, country and project page).
+2. Specimens: clears the `museum` field of the specimens marked with this museum, then marks again every specimen whose "owned by" value contains the museum code.
+3. Museum totals: specimen and image counts in the `museum` table, from those specimens.
+4. Museum taxa: deletes the museum's rows in `museum_taxon` and rebuilds them, one row per species or subspecies with its specimen and image counts, then the genera and subfamilies above them.
+5. Count crawl: adds the counts up the tree (species to genus to subfamily).
+6. Finish: the museum's subfamily, genus and species counts (valid and other countable names), imaged-specimen count, valid-species count, and the data for the two pie charts (taxa and specimens by subfamily).
+7. Reloads the in-memory museum list, so the page shows the new numbers at once.
+
+How long: a few minutes for most museums (the code notes about 4 minutes for ZMHB); a museum with many specimens, such as CASC, takes longer. The page answers when it is done. The nightly run recounts all museums in about 8 to 20 minutes.
+
+When to use it: after a correction that should show on a museum page before tomorrow (for example a fixed "owned by" code, or a museum code just added in the Museum Manager). Otherwise the nightly run is enough. Avoid running it while an upload or the nightly run (05:00 to about 08:00 Pacific) is in progress: it rewrites the same tables. It does not change specimen data other than the `museum` field.
 
 ### Technical page (`technical.do`, admins)
 

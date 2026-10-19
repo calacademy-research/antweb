@@ -3,11 +3,6 @@
         <div id="tools">
             <div class="tool_label"><a href="#" onclick="showTools('compare_tools'); return false;">Compare Images</a></div>
             
-            <% if (LoginMgr.isDeveloper(request)) {
-              session.setAttribute("activeSession", new Boolean(true));
-             %>
-            <div class="tool_label"><a href="<%= AntwebProps.getDomainApp() %>/mapResults.do">Map Results (Dev)</a></div>            
-            <% } %>
             <div class="tool_label"><a href="#" onclick="showTools('map_tools'); return false;">Map Results</a></div>
             
             <div class="tool_label"><a href="#" onclick="showTools('fieldguide_tools'); return false;">Create Field Guide</a></div>

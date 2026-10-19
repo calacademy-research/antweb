@@ -22,21 +22,17 @@
 <h2>Current Statistics:</h2>                    
 <br><b><%= A.commaFormat(TaxonMgr.getValidTaxonCount()) %> valid species + ssp.</b>
 <br>&nbsp;&nbsp;Valid species and subspecies.
-<% if (LoginMgr.isDeveloper(request)) { %> <br>&nbsp;&nbsp;<b>Dev:</b> select count(taxon_name) from taxon where status = 'valid' and rank in ('species', 'subspecies')" <% } %>
  
 <br><br><b><%= A.commaFormat(AntwebMgr.getSpecimensCount()) %> specimen records</b>
 <br>&nbsp;&nbsp;Specimen records from Antweb's 21 collaborating institutions.
 
 <br><br><b><%= A.commaFormat(AntwebMgr.getImagedSpeciesCount()) %>  species + ssp. imaged </b>
 <br>&nbsp;&nbsp;Valid, morpho or indetermined species and subspecies imaged.
-<% if (LoginMgr.isDeveloper(request)) { %> <br>&nbsp;&nbsp;<b>Dev:</b> select distinct genus, species, subspecies from specimen, image where specimen.code = image.image_of_id <% } %>
 
 <br><br><b><%= A.commaFormat(AntwebMgr.getImagedSpecimensCount()) %> specimens imaged</b>
-<% if (LoginMgr.isDeveloper(request)) { %> <br>&nbsp;&nbsp;<b>Dev:</b> select count(distinct specimen.code) from specimen,image where specimen.code = image.image_of_id <% } %>
 
 <br><br><b><%= A.commaFormat(AntwebMgr.getTotalImagesCount()) %> total specimen images</b>
 
-<% if (LoginMgr.isDeveloper(request)) { %> <br><b>Dev:</b> &nbsp;&nbsp;select count(*) from image <br>&nbsp;&nbsp;This is all images. Should claim to be specimen images?  Or just all images.<% } %>
 
 
 <br><br><br>

@@ -23,6 +23,9 @@ public final class OrphanedImagesAction extends AntwebAction {
 			HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
 
+		// Administrators only: a report of images whose specimen record no longer exists.
+		ActionForward c = Check.admin(request, mapping); if (c != null) return c;
+
 		boolean success = false;
 
 		// Extract attributes we will need
