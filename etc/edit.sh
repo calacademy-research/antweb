@@ -31,6 +31,5 @@ edit src/org/calacademy/antweb/BrowseAction.java
 edit src/org/calacademy/antweb/util/AntwebUtil.java
 edit src/org/calacademy/antweb/util/AppContextListener.java
 
-edit web/documentation/links.jsp
 edit web/specimen-body.jsp
 edit web/taxonPage-body.jsp

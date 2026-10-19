@@ -56,8 +56,7 @@ possible moment - ideally in jsp footer.
       trackerMap.put(tracker.getKey(), tracker);
 
       if (isDebug) {
-          if (target.contains("ionName=Oceania") && LoginMgr.isMark(request))
-              s_log.info("add() request:" + request.getAttribute("trackerKey"));
+          s_log.debug("add() request:" + request.getAttribute("trackerKey"));
 
           //A.log("add() request:" + (String) request.getAttribute("trackerKey"));
           //if (AntwebProps.isDevMode()) AntwebUtil.logAntwebStackTrace();
@@ -72,8 +71,7 @@ possible moment - ideally in jsp footer.
       trackerMap.remove(key);
 
       if (isDebug) {
-          if (target.contains("ionName=Oceania") && LoginMgr.isMark(request))
-              s_log.debug("remove() request:" + request.getAttribute("trackerKey"));
+          s_log.debug("remove() request:" + request.getAttribute("trackerKey"));
         //if (AntwebProps.isDevMode()) AntwebUtil.logAntwebStackTrace();
       }
     }

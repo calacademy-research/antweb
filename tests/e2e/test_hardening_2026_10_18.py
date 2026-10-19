@@ -147,11 +147,13 @@ def test_search_list_needs_login():
 
 @staging_only
 def test_all_specimen_files_admin_only(own_login):
+    """Refused to curators; removed altogether in the Curate page cleanup ("Action not found.")."""
     if not _gen_all_needs_login()[1]:
         pytest.skip("the upload.do checks are not deployed on this server")
     s = own_login[0]
     r = s.get(BASE_URL + "/upload.do?action=allSpecimenFiles", timeout=TIMEOUT)
-    assert r.status_code == 200 and "Only administrators can run this upload action." in r.text, r.text[:300]
+    assert r.status_code == 200, r.status_code
+    assert ("Only administrators can run this upload action." in r.text or "Action not found." in r.text), r.text[:300]
 
 
 @staging_only

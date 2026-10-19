@@ -114,9 +114,6 @@
                     type="org.calacademy.antweb.curate.project.NewProjectForm"/>
 
 
-    <form-bean      name="orphanTaxonsForm"
-                    type="org.calacademy.antweb.curate.orphans.OrphanTaxonsForm"/>
-
     <form-bean      name="editGeolocaleForm"
                     type="org.calacademy.antweb.curate.geolocale.EditGeolocaleForm"/>
 
@@ -284,10 +281,6 @@
       path="/staff" 
       forward="/team/staff.jsp"/>
 
-    <action
-      path="/orphanMgr" 
-      forward="/curate/orphanMgr.jsp"/>
-      
     <action
       path="/thanks" 
       forward="/thanks.jsp"/>      
@@ -639,44 +632,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
 
 
 
-    <action path="/orphanSpecies"
-            type="org.calacademy.antweb.curate.orphans.OrphanSpeciesAction"
-            scope="request"
-            name="orphanTaxonsForm">
-      <forward name="success" path="/curate/orphanSpecies.jsp" />
-    </action>
-    <action path="/orphanGenera"
-            type="org.calacademy.antweb.curate.orphans.OrphanGeneraAction"
-            scope="request"
-            name="orphanTaxonsForm">
-      <forward name="success" path="/curate/orphanGenera.jsp" />
-    </action>
-    <action path="/dupedGenera"
-            type="org.calacademy.antweb.curate.orphans.DupedGeneraAction"
-            scope="request"
-            name="orphanTaxonsForm">
-      <forward name="success" path="/curate/dupedGenera.jsp" />
-    </action>
-    <action path="/orphanSubfamilies"
-            type="org.calacademy.antweb.curate.orphans.OrphanSubfamiliesAction"
-            scope="request"
-            name="orphanTaxonsForm">
-      <forward name="success" path="/curate/orphanSubfamilies.jsp" />      
-    </action>    
-    <action path="/orphanDescEdits"
-            type="org.calacademy.antweb.curate.orphans.OrphanDescEditsAction"
-            scope="request"
-            name="orphanTaxonsForm">
-      <forward name="transferPage" path="/curate/orphanDescEditTransfer.jsp" />
-      <forward name="success" path="/curate/orphanDescEdits.jsp" />
-    </action>
-
-    <action path="/orphanAlternates"
-            type="org.calacademy.antweb.curate.orphans.OrphanAlternateAction"
-            scope="request"
-            name="orphanTaxonsForm">
-      <forward name="success" path="/curate/orphanAlternates.jsp" />
-    </action>
     
     
     
@@ -733,11 +688,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
     <action path="/fieldHistory"
             type="org.calacademy.antweb.FieldHistoryAction">
       <forward name="success" path="/fieldHistory.jsp"/>
-    </action>
-
-    <action  path="/typeStatus"
-             type="org.calacademy.antweb.upload.TypeStatusMgr">
-      <forward name="success" path="/message-body.jsp"/>
     </action>
 
     <!--==========Action Mappings that search==========-->
@@ -1555,14 +1505,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
           <forward name ="success" path="/util/statsPage.jsp"/>     
       </action>
 
-
-      <action path="/cache"
-              type = "org.calacademy.antweb.util.CacheAction"
-              name="dummyForm"
-              scope="request">
-          <forward name ="longRequests" path="/curate/cacheMgr.jsp"/>
-          <forward name ="longRequestDetails" path="/curate/cacheDetail.jsp"/>
-      </action>
 
       <action path="/uptime"
               type = "org.calacademy.antweb.util.UptimeAction"

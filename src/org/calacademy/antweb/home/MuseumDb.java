@@ -184,9 +184,11 @@ public class MuseumDb extends AntwebDb {
         Statement stmt = null;
         String dml = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "deleteByCode()");            
-            dml = "delete from museum where code = '" + code + "'";
-            int c = stmt.executeUpdate(dml);
+            dml = "delete from museum where code = ?";
+            PreparedStatement ps = getConnection().prepareStatement(dml);
+            stmt = ps;
+            ps.setString(1, code);
+            int c = ps.executeUpdate();
             message = c + " record deleted.";
         } catch (SQLException e) {
             s_log.error("deleteByCode() e:" + e + " dml:" + dml);

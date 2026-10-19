@@ -90,7 +90,7 @@
 
                      
 
-        <%= siteWarning %>
+        <%= org.calacademy.antweb.util.HtmlSanitizer.sanitize(siteWarning) %>
 
 
 

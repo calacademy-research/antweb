@@ -602,6 +602,8 @@ public class UtilDataAction extends AntwebAction {
         
         if (action.equals("siteWarning")) {
           s_log.debug("text:" + text);
+          // Shown on every page: only the page-text HTML allowlist is kept (HtmlSanitizer).
+          text = HtmlSanitizer.sanitize(text == null ? "" : text);
           AntwebMgr.createSiteWarning(text);
           message = "SiteWarning set:" + Html.esc(text);
         }

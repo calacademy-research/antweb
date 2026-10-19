@@ -42,17 +42,30 @@ public class ManageMuseumsAction extends AntwebAction {
 
         if (HttpUtil.getTarget(request).contains("viewMuseum")) action = "view";
 
-        if (HttpUtil.isPost(request)) action = "save";
-        
-        if ("delete".equals(step)) action = "delete";
+        boolean isPost = HttpUtil.isPost(request);
+        if (isPost) action = "save";
+
+        String message = "";
+
+        // Delete: only from the form's button (a POST, checked for the form token), and only after
+        // a confirmation page. A link (GET) with step=delete deletes nothing.
+        if ("delete".equals(step)) {
+          if (!isPost) {
+            action = "view";
+            message = "To delete a museum, use the Delete button on its form.";
+          } else if (!"yes".equals(request.getParameter("confirmDelete"))) {
+            request.setAttribute("message", confirmDeleteHtml(request, museumCode));
+            return mapping.findForward("message");
+          } else {
+            action = "delete";
+          }
+        }
 
         // Is it new?
         if ("save".equals(action) && museumCode == null) {
           return mapping.findForward("success");
         }
-              
-        String message = "";
-        
+
         s_log.debug("execute() action:" + action + " code:" + museumCode + " museumName:" + museumName + " isActive:" + isActive);
                             
         try {
@@ -62,6 +75,7 @@ public class ManageMuseumsAction extends AntwebAction {
             MuseumDb museumDb = new MuseumDb(connection);
             if ("delete".equals(action)) {
               message = museumDb.deleteByCode(museumCode);
+              MuseumMgr.populate(connection, true);
             }
 
             if ("save".equals(action)) {
@@ -98,5 +112,19 @@ public class ManageMuseumsAction extends AntwebAction {
         if (message != null) request.setAttribute("message", message);
                
         return mapping.findForward("success");
+    }
+
+    /** The page that asks before a museum is deleted: a POST form with the form token. */
+    static String confirmDeleteHtml(HttpServletRequest request, String code) {
+        String domainApp = AntwebProps.getDomainApp();
+        return "<div style=\"margin:1em 0\"><p>Delete museum <b>" + Html.esc(code) + "</b>? This cannot be undone.</p>"
+            + "<form method=\"post\" action=\"" + domainApp + "/viewMuseum.do\">"
+            + Csrf.field(request)
+            + "<input type=\"hidden\" name=\"code\" value=\"" + Html.escAttr(code) + "\">"
+            + "<input type=\"hidden\" name=\"step\" value=\"delete\">"
+            + "<input type=\"hidden\" name=\"confirmDelete\" value=\"yes\">"
+            + "<input type=\"submit\" value=\"Delete museum\"> &nbsp; "
+            + "<a href=\"" + domainApp + "/viewMuseum.do?code=" + Html.escAttr(Html.url(code)) + "\">Cancel</a>"
+            + "</form></div>";
     }
 }

@@ -25,7 +25,7 @@
 	Login accessLogin = LoginMgr.getAccessLogin(request);
     Group accessGroup = GroupMgr.getAccessGroup(request);
     
-	ArrayList<SpeciesListable> projList = accessLogin.getProjects();	
+
     ArrayList<SpeciesListable> speciesListList = accessLogin.getSpeciesListList();
     
     session.removeAttribute("ancFile");
@@ -37,7 +37,7 @@
     }    
 %>
 
-Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new">Curator Tool Documentation</a> | <a href="<%= domainApp %>/curate.do">Refresh</a>
+Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new">Curator Tool Documentation</a>
 <div class="admin_left">
 
 <html:messages id="message" message="true">
@@ -90,22 +90,13 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 
 
 <div>
-<% // This warning is to prevent developers (me) from accidentally posting data to the live site.
-   if (!AntwebProps.isDevOrStageMode()) {
-     if (LoginMgr.isDeveloper(accessLogin)) {
-       %><h2><font color=red>Warning: Live Site</font></h2><% 
-     }
-   }
-   //A.log("curate-body.jsp hasServerMessage:" + AntwebMgr.hasServerMessage() + " : " + AntwebMgr.getServerMessage());
+<%
    if (AntwebMgr.hasServerMessage()) {
      out.println(AntwebMgr.getServerMessage());
    }
  %>
 </div>
 
-<% if (LoginMgr.isDeveloper(request)) { %>
-  <H4>Is AntwebMgr initialized: <%= AntwebMgr.isPostInitialized() %> </h4><br>
-<% } %>
 
 <!-- Specimen Data -->
 
@@ -138,7 +129,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
              </div>
 
 <!-- Universal Specimen Upload -->
-        <!-- Antweb, TaxonWorks, or GBIF Specimen (file or Zip File) Upload -->
+        <!-- Antweb or TaxonWorks Specimen (Zip File) Upload -->
         
         <script type="text/javascript">
             var uploadReportUrl = '<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>';
@@ -201,7 +192,6 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                     <select name="action">
                         <option value="specimenUpload" selected>Antweb
                         <option value="taxonWorksUpload">TaxonWorks
-                        <option value="GBIFUpload">GBIF
                     </select>
 
                     &nbsp;&nbsp;Upload as:
@@ -248,20 +238,8 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 
              <div class="clear"></div>
 
-<% if (LoginMgr.isDeveloper(request)) { %>
-<small>
-<b>For Developers:</b>
-<br>To test Upload Type:Antweb as zip user:longinoj file:20250209allantsbiota.txt.zip
-<br>To test Upload Type:Antweb user:longinoj file:20250209allantsbiota.txt
-<br>To test Upload Type:TaxonWorks, user:aerochild file:dwc-a_2025-01-31T20_39_16+00_00.zip
-<br>To Test Upload Type:GBIF, user:  file:dwca-utep_ento-v1.85.zip
-<br>
-</small>
-<% } %>
 
 
-To calculate the taxon children counts run the <a href='<%= domainApp %>/utilData.do?action=runCountCrawls' title="If taxon children counts are not calculated subsequent to the upload, it will happen nightly.">Count Crawls<img src=<%= domainApp%>/image/new1.png width=20></a>
-<br>If not returned an upload report, find it in the <a href='<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>'>Specimen Upload Reports</a>. <br><br>
 
             </div>
             <div class="clear"></div>
@@ -276,7 +254,6 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
      <% if (session.getAttribute("museumMap") != null) {  %>
         <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "upload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
             <input type="hidden" name="action" value="museumCalc" />
-            <input type="hidden" name="ancFileDirectory" value="none" />
             <input type="hidden" name="updateAdvanced" value="no" />
             <input type="hidden" name="updateFieldGuide" value="none" />
             <input type="hidden" name="images" value="no" />
@@ -306,7 +283,6 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
           //  ArrayList<String> uploadFileKindList = AntwebUtil.getUploadDirKinds();
         %>
             <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "uploadHistory.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-                <input type="hidden" name="ancFileDirectory" value="none" />
                 <input type="hidden" name="updateAdvanced" value="no" />
                 <input type="hidden" name="updateFieldGuide" value="none" />
                 <input type="hidden" name="images" value="no" />
@@ -406,67 +382,7 @@ To calculate the taxon children counts run the <a href='<%= domainApp %>/utilDat
 <% } %>
 
 
-<% if (LoginMgr.isAdmin(request)) { %>
-<!-- Create Ancillary Pages -->
-<html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "upload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-    <div style="display:none;">
-    <input type="file" name="theFile" value="" />
-    <input type="file" name="biota" value="" />
-    </div>
-    <input type="hidden" name="whole" value="false" />
-    <input type="hidden" name="projectFile" value="" />
-    <input type="hidden" name="homePageDirectory" value="" />
-    <input type="hidden" name="updateAdvanced" value="no" />
-    <input type="hidden" name="updateFieldGuide" value="none" />
-    <input type="hidden" name="images" value="no" />
-    <input type="hidden" name="outputFileName" value="" />
-<!--
-    <input type="file" name="theFile2" value="" />
-    <input type="hidden" name="successkey" value="null" />
--->
-    <div class="admin_action_module">
-        <div class="admin_action_item"><h2>Create a New Ancillary Page</h2></div>
-        <div class="admin_action_item">
-            <div class="action_desc">Create an ancillary page for:</div>
-            <div class="action_dropdown">
-  <html:select property="ancFileDirectory">
-	<html:option value="curator">Curator Dir</html:option>
- <% if (accessLogin.isAdmin()) { %>  
-     <html:option value="homepage">AntWeb Home Page</html:option>
- <% } 
- 
-    if (projList != null) {
-      for (SpeciesListable project : projList) { %>
-         <html:option value="<%= project.getName() %>"><%= org.calacademy.antweb.util.Html.esc(project.getTitle()) %></html:option>
-  <%  } 
-    } else {
-      AntwebUtil.log("curate-body.jsp projList is null for:" + HttpUtil.getTarget(request));
-    }
-  %>
 
-  </html:select>
-            </div>
-            <div class="clear"></div>
-
-            <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit"></div>
-            <div class="clear"></div>
-        </div>
-    </div>
-</html:form>
-
-<% } %>
-
-<!--
-Ancillary Files
-  Create
-  View  [Curator (ex:bfisher) or All should be options]
-    (DB query driven)
-
-Upload Curator File
-  Upload to curator folder
-  View All -files in curator folder (link directly to the curator directory)
-  * When creating html links to files in your curator directory use this format: /bfisher/filename.ext
--->
 
 
 <!-- Projects -->                
@@ -495,60 +411,12 @@ Upload Curator File
     </div>
 <% } %>
 
-<% if (accessLogin.isDeveloper()) { %>  <!-- was isAdmin() -->
-
-        <div class="admin_action_item">
-            <div style="float:left;">
-                <h2>Species Lists</h2>
-            </div>
-            <div class="clear"></div>
-        </div>
-
-
-<html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "upload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-    <input type="hidden" name="ancFileDirectory" value="none" />
-    <input type="hidden" name="updateAdvanced" value="no" />
-    <input type="hidden" name="updateFieldGuide" value="none" />
-    <input type="hidden" name="images" value="no" />
-    <input type="hidden" name="outputFileName" value="" />
-    <input type="hidden" name="successkey" value="null" />
-    <div class="admin_action_module">
-
-        <div class="admin_action_item">
-            <div class="action_desc"><b>Download</b> Species List for:<br></div>
-            <div class="action_dropdown">
-  <html:select property="downloadSpeciesList">
-	<html:option value="none">Select...</html:option>
-
-       <html:option value="worldants">Bolton World Catalog</html:option>
-
-	<% if (projList != null) {
-	     for (SpeciesListable p : projList) { %>
-     <%    if (!p.getName().equals("globalants")) { %>
-           <html:option value="<%= p.getName() %>"><%= org.calacademy.antweb.util.Html.esc(p.getTitle()) %></html:option>
-      <%   } 
-	     }
-	   } 
-	%>
-
-  </html:select>
-            </div>
-              <div class="clear"></div>
-            <div class="align_right"><input type="image" border="0" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="DownloadSpeciesList"></div>            
-            <div class="clear"></div>	
-        </div>  
-    </div>
-</html:form>
-
-
-<% } %>
 
 <!-- Fetch and Reload Worldants List -->
 <% if (accessLogin.isAdmin()) {  %>
 <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "upload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
     <input type="hidden" name="action" value="fetchAndReloadWorldants" />
     <input type="hidden" name="reloadSpeciesList" value="worldants" />
-    <input type="hidden" name="ancFileDirectory" value="none" />
     <input type="hidden" name="updateAdvanced" value="no" />
     <input type="hidden" name="updateFieldGuide" value="none" />
     <input type="hidden" name="images" value="no" />
@@ -581,7 +449,6 @@ if (AntwebProps.isDevOrStageMode()) {
 
 if (speciesListList != null && !speciesListList.isEmpty()) { %>
 <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "upload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-    <input type="hidden" name="ancFileDirectory" value="none" />
     <input type="hidden" name="updateAdvanced" value="no" />
     <input type="hidden" name="updateFieldGuide" value="none" />
     <input type="hidden" name="images" value="no" />

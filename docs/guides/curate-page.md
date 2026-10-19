@@ -57,14 +57,14 @@ These tools never change anything on AntWeb.
 
 Totals for the whole site (specimens, imaged specimens, species and so on). They are updated after uploads and in the nightly run.
 
-### Curator Links (bottom right): quick jump boxes
+### Opening a page by its id
 
-Type a value in a box and click **Go**:
+The jump boxes that used to sit at the bottom right ("Access direct by ...", "Curious Query") were removed in October 2026. The addresses behind them still work; type them in the browser's address bar:
 
-- **Access direct by taxon_name**: opens a taxon page by its AntWeb taxon name. The AntWeb taxon name is lower case, with the subfamily joined to the genus, for example `myrmicinaepheidole megacephala`.
-- **Access direct by Antcat ID**: opens a taxon page by its AntCat number.
-- **Access direct by specimen code**: opens a specimen page, for example `casent0005904`.
-- **Access direct by Geolocale Id**: opens a country or state/province page by its AntWeb id number (admins can see the ids in the Geolocale Manager).
+- `https://www.antweb.org/description.do?antcatId=429011` opens the taxon page for an AntCat taxon number (here 429011). This is the address AntCat links to.
+- `https://www.antweb.org/description.do?taxonName=myrmicinaepheidole%20megacephala` opens a taxon page by its AntWeb taxon name (lower case, subfamily joined to the genus).
+- `https://www.antweb.org/specimen.do?code=casent0005904` opens a specimen page.
+- `https://www.antweb.org/geolocale.do?id=N` opens a country or state/province page by its AntWeb id (the ids are shown in the Geolocale Manager).
 
 ---
 
@@ -74,7 +74,7 @@ Type a value in a box and click **Go**:
 
 Admins see two extra menus in **Upload Zip File**:
 
-- **Upload Type**: **Antweb** (the normal AntWeb specimen file), **TaxonWorks** (a TaxonWorks Darwin Core archive; the CAS TaxonWorks data normally arrives in the nightly run, so use this only when the nightly TaxonWorks upload failed) or **GBIF** (a GBIF Darwin Core archive).
+- **Upload Type**: **Antweb** (the normal AntWeb specimen file) or **TaxonWorks** (a TaxonWorks Darwin Core archive; the CAS TaxonWorks data normally arrives in the nightly run, so use this only when the nightly TaxonWorks upload failed). The GBIF option was removed in October 2026.
 - **Upload as**: upload the file on behalf of another curator, so the data goes to that curator's group. The menu lists you and the curators your login may upload for.
 
 ### AntCat names
@@ -89,23 +89,21 @@ Shown when your login looks after project or region species lists. Choose a list
 
 - **Login Manager**: all logins. Open one to change its details and permissions (upload specimens, upload images, admin, the projects and regions it may edit, "upload as"). The form at the top creates a new login.
 - **Group Manager**: the contributing groups (institutions). Edit a group, create one, or delete one (you are asked to confirm).
-- **Museum Manager**: the museum codes used in specimen data (code, name, title, active). Edit or add a museum. **Delete** removes the museum at once, without asking; there is no undo.
+- **Museum Manager**: the museum codes used in specimen data (code, name, title, active). Edit or add a museum. **Delete** (on a museum's form) asks you to confirm on a second page; there is no undo.
 - **Geolocale Manager**: countries and states/provinces (adm1): whether they are valid and shown on the site, names, bioregion and map coordinates. Curators can look; only admins can save changes.
 - **Project Manager**: the projects (for example regional ant faunas): settings and page text. Create or delete projects here.
 - **Artist Manager**: the list of photographers credited on images. Add or rename a photographer here.
 - **Admin Alert Manager**: problems AntWeb has flagged for admins (for example a failed AntCat import). Remove an alert once it is dealt with.
-- **Orphan Manager**: tools for taxa left without specimens (orphan species, genera and subfamilies), genera that appear under two subfamilies, page-text edits whose taxon no longer exists, and alternate names. Read the page warning first: the delete icons delete at once, with no undo. Note that the nightly run already removes species and genera that have no specimens and are not AntCat names.
 - **Bioregion Map Manager**: which bioregions a species is native to (used for the "introduced" flags and maps).
 - **Introduced Map Manager**: in which bioregions a species is introduced.
-- **Type Status Manager**: a check of the type-status text in the CAS specimen data. Opening it re-runs the check and shows four reports: species found, species not found, no taxon name, homonyms. It changes no data.
-- **Query Manager**: a list of ready-made database checks, by topic. Click a name to run it and see the rows. A few checks repair data when opened; read the description before you click.
+- **Query Manager**: a list of ready-made database checks, by topic. Click a name to run it and see the rows. The checks only read data. Only admins can run them, except the few that public pages link to (for example the AntCat import history).
 - **Log Manager**: the server logs. The most useful are compute.log (the nightly run), admin.log (AntCat imports and scheduler runs) and taxonWorksNightly.log (the nightly CAS TaxonWorks upload).
 
 ### Administrator Functions
 
 - **Antweb Statistics**: statistics tables by project, museum, bioregion and upload.
 - **Server Status**: what the server is doing now: database connections, running jobs, and the switch that pauses uploads ("down time").
-- **Site Warning**: the message banner shown at the top of every page (for example before maintenance). The link opens a confirmation page that saves the current text again; to change the text you edit the `text=` part of the address. An empty text removes the banner.
+- **Site Warning**: the message banner shown at the top of every page (for example before maintenance). The link opens a confirmation page that saves the current text again; to change the text you edit the `text=` part of the address. An empty text removes the banner. Simple formatting (bold, colour, line breaks, links) is kept; anything else, such as scripts, is removed.
 - **Restart server now**: asks for a restart of the AntWeb application. It happens within 5 minutes (never during an upload), and the site shows an error page for 2 to 4 minutes while it starts again. You are asked to confirm first. The link appears only when the server has been up for at least 10 minutes.
 
 ### Reports

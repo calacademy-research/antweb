@@ -138,7 +138,7 @@ def test_taxon_page_has_no_dead_sites(session):
 
 
 # Links on the Curate page that start jobs, change data or end the session: never followed.
-CURATE_SKIP = ("/util.do", "/utilData.do", "/logout.do", "/upload.do", "/cache.do", "/adminAlert.do",
+CURATE_SKIP = ("/util.do", "/utilData.do", "/logout.do", "/upload.do", "/adminAlert.do",
                "/pageTracker.do", "/schedule.do", "/imageUploader.do", "/loginAs.do",
                "/sanitizeDescriptions.do", "/passwordResetCampaign.do")
 # Deliberate test links (an error message on purpose).

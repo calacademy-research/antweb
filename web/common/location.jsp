@@ -35,10 +35,6 @@
 
 
               // The double call appears to be happening in the jsp includes. Before taxonomicPage.jsp but after the jsp are called.
-              if (false && HttpUtil.getTarget(request).contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) {
-                  A.log("EXIT()");
-                  return;
-              }
 
 
 %>

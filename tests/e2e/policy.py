@@ -11,7 +11,6 @@ NEVER = {
     "/util": "admin utilities (reload managers, postInstantiate); called internally",
     "/utilData": "admin data jobs (crawls, recounts)",
     "/schedule": "starts the nightly scheduled tasks",
-    "/cache": "flushes or rebuilds caches",
     "/adminAlert": "admin alert controls",
     "/upload": "specimen and image upload",
     "/imageUploader": "the Image Uploader page; a form post is refused (tested in test_image_upload.py)",

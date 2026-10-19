@@ -100,7 +100,7 @@ public class SecurityBatch7Test extends TestCase {
 
     public void testAdminOnlyUploadActions() {
         assertTrue(UploadAction.isAdminOnlyAction("genAll"));
-        assertTrue(UploadAction.isAdminOnlyAction("allSpecimenFiles"));
+        assertTrue(UploadAction.isRemovedAction("allSpecimenFiles"));   // removed (Curate page cleanup)
         assertFalse(UploadAction.isAdminOnlyAction("specimenUpload"));
         assertFalse(UploadAction.isAdminOnlyAction(null));
         for (String a : new String[]{"reloadSpecimenList", "removeSpecimenList", "uploadSpeciesList"}) {

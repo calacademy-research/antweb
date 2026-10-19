@@ -138,7 +138,7 @@ www.antweb.org {
             not path /common/statusDisplayPage.jsp /common/casteDisplayPage.jsp /common/distStatusDisplayPage.jsp
             not path /search/loading_search_results_data.jsp /search/autoCompleteKeys.jsp
             not path /search/autoCompletePlaceKeys.jsp /search/multiTaxaOneView.jsp
-            not path /documentation/api/apiV3_1.jsp /documentation/releaseNotes.jsp /documentation/links.jsp
+            not path /documentation/api/apiV3_1.jsp /documentation/releaseNotes.jsp
             not path /web/speciesList/*/*.jsp
             # Old upload reports and logs; Tomcat sends these as plain, sandboxed text (GeneratedJspFilter).
             not path /web/log/*

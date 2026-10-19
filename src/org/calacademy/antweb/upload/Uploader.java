@@ -157,7 +157,7 @@ public class Uploader {
     }
 
 
-    // Called by TaxonWorksUploader and GBIFUploader. Not by SpecimenUploader.
+    // Called by TaxonWorksUploader. Not by SpecimenUploader.
     // Takes zipFileTarget (data.tsv, occurrence.txt) from the top level of the uploaded zip into outName
     // (a full path), with SafeUnzip. Returns null when done, or the reason the archive was refused.
     protected static String copyAndUnzipFile(FormFile file, Group group, String outName, String zipFileTarget) throws IOException {
