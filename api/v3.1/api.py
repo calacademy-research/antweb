@@ -2271,5 +2271,88 @@ def getUnimagedGeolocaleTaxa():
         return getNdjson(dataList)  # return flask Response
 
 
+# --- Parameter check (every endpoint) ---------------------------------------------------------------
+# A parameter the endpoint does not know used to be ignored, so a misspelt filter returned the
+# first 10,000 records of everything (for example /specimens?code=... instead of specimenCode).
+# Now such a request gets HTTP 400 with the list of accepted parameter names and, when an
+# accepted name is close, a "did you mean" hint. The accepted names themselves are unchanged.
+#
+# The accepted names of an endpoint are the request.args.get('name') calls in its function (read
+# from the source once at start), plus the settings every endpoint reads (setGlobals, down).
+
+import ast
+import difflib
+import inspect
+import textwrap
+
+COMMON_PARAMS = ('up', 'limit', 'offset', 'ndjson', 'log')
+
+UNCHECKED_ENDPOINTS = ('hello', 'static')
+
+
+def readParams(function):
+    """The names in request.args.get('name', ...) calls inside a view function."""
+    tree = ast.parse(textwrap.dedent(inspect.getsource(function)))
+    names = []
+    for node in ast.walk(tree):
+        if (isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == 'get'
+                and isinstance(node.func.value, ast.Attribute) and node.func.value.attr == 'args'
+                and node.args and isinstance(node.args[0], ast.Constant) and isinstance(node.args[0].value, str)):
+            if node.args[0].value not in names:
+                names.append(node.args[0].value)
+    return names
+
+
+ACCEPTED_PARAMS = {}
+
+
+def acceptedParams(endpoint):
+    if endpoint not in ACCEPTED_PARAMS:
+        own = readParams(application.view_functions[endpoint])
+        ACCEPTED_PARAMS[endpoint] = own + [p for p in COMMON_PARAMS if p not in own]
+    return ACCEPTED_PARAMS[endpoint]
+
+
+def suggestParams(name, accepted):
+    """Accepted names close to an unknown one: same name in other case, a name that ends with it
+    (code -> specimenCode), or a near spelling."""
+    lower = name.lower()
+    byLower = {a.lower(): a for a in accepted}
+    found = []
+    if lower in byLower:
+        found.append(byLower[lower])
+    if len(lower) >= 3:
+        found += [a for a in accepted if a.lower() != lower and a.lower().endswith(lower)]
+    found += [byLower[m] for m in difflib.get_close_matches(lower, list(byLower), n=3, cutoff=0.75)]
+    out = []
+    for a in found:
+        if a not in out:
+            out.append(a)
+    return out[:3]
+
+
+@application.before_request
+def checkParams():
+    endpoint = request.endpoint
+    if endpoint is None or endpoint in UNCHECKED_ENDPOINTS or endpoint not in application.view_functions:
+        return None
+    accepted = acceptedParams(endpoint)
+    unknown = [k for k in request.args.keys() if k and k not in accepted]
+    if not unknown:
+        return None
+    message = "Unknown parameter: " + ", ".join(unknown) + "."
+    didYouMean = {}
+    for k in unknown:
+        close = suggestParams(k, accepted)
+        if close:
+            didYouMean[k] = close
+            message += " Did you mean " + " or ".join(close) + " (for " + k + ")?"
+    body = {'error': message, 'unknownParameters': unknown, 'acceptedParameters': accepted,
+            'documentation': prodServer + "/" + apiUri}
+    if didYouMean:
+        body['didYouMean'] = didYouMean
+    return jsonify(body), 400
+
+
 if __name__ == "__main__":
     application.run()
