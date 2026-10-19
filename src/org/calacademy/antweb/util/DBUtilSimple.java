@@ -29,7 +29,7 @@ public class DBUtilSimple {
         // Was called from SessionRequestFilter.init() because it can not call getDataSource as a struts action class can.
         public static DataSource getDataSource() {
             MysqlDataSource ds = null;
-            String jdbcUrl = "jdbc:mysql://mysql:3306/ant?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&characterSetResults=utf8&connectionCollation=utf8_general_ci";
+            String jdbcUrl = "jdbc:mysql://mysql:3306/ant?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&characterSetResults=utf8&connectionCollation=utf8_general_ci&connectionTimeZone=LOCAL";
             ds = new MysqlDataSource();
             ds.setURL(jdbcUrl);
             ds.setUser("antweb");
@@ -47,7 +47,7 @@ public class DBUtilSimple {
     public static Date fetchDate = null;
     public static DataSource getDataSource() throws SQLException, java.beans.PropertyVetoException {
         if (cpds == null) {
-            String jdbcUrl = "jdbc:mysql://mysql:3306/ant?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&characterSetResults=utf8&connectionCollation=utf8_general_ci";
+            String jdbcUrl = "jdbc:mysql://mysql:3306/ant?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&characterSetResults=utf8&connectionCollation=utf8_general_ci&connectionTimeZone=LOCAL";
             cpds = new ComboPooledDataSource();
             cpds.setDriverClass("com.mysql.jdbc.Driver");
             cpds.setJdbcUrl(jdbcUrl);

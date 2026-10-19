@@ -21,6 +21,13 @@ Another connection is defined in DBSimpleUtil.getDataSource()
 <struts-config>
   <data-sources>
 
+    <!-- Time zone (2026-10-19): connectionTimeZone=LOCAL. MySQL (TZ America/Los_Angeles in
+         docker-compose.yml) stores now() and CURRENT_TIMESTAMP in Pacific time, and the JVM runs
+         in Pacific time (docker/antweb/Dockerfile), so the driver must not convert. The former
+         serverTimezone=UTC made the driver read every date as UTC: pages showed times 7 hours
+         early (8 in winter), and dates written from Java were stored 7 hours late.
+         Checked in CI against MySQL 8.4 (test/.../security/DbTimeZoneTest.java). -->
+
     <data-source key="conPool" type="com.mchange.v2.c3p0.ComboPooledDataSource">    <!-- add  destroy-method="close" ? -->
       <set-property property="factory" value="org.apache.naming.factory.BeanFactory"/>
       <set-property property="auth" value="Container"/>
@@ -29,7 +36,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="CHANGE_ME"/>
       <set-property property="driverClass" value="com.mysql.cj.jdbc.Driver" />   <!-- was driverClassName-->
-      <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>
+      <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;connectionTimeZone=LOCAL"/>
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
       <set-property property="testConnectionOnCheckout" value="true"/>
       <set-property property="autoCommitOnClose" value="true"/>
@@ -51,7 +58,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="CHANGE_ME"/>
       <set-property property="driverClass" value="com.mysql.cj.jdbc.Driver" />   <!-- was driverClassName-->
-      <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>
+      <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;connectionTimeZone=LOCAL"/>
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
       <set-property property="testConnectionOnCheckout" value="true"/>
       <set-property property="autoCommitOnClose" value="true"/>
@@ -73,7 +80,7 @@ Another connection is defined in DBSimpleUtil.getDataSource()
       <set-property property="user" value="antweb"/>
       <set-property property="password" value="CHANGE_ME"/>
       <set-property property="driverClass" value="com.mysql.cj.jdbc.Driver" />   <!-- was com.mysql.jdbc.Driver driverClassName-->
-      <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;serverTimezone=UTC"/>
+      <set-property property="jdbcUrl" value="jdbc:mysql://mysql:3306/ant?autoReconnect=true&amp;useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=utf8&amp;connectionCollation=utf8_general_ci&amp;useSSL=false&amp;connectionTimeZone=LOCAL"/>
       <set-property property="name" value="jdbc/antDb"/> <!-- not used elsewhere -->
       <set-property property="testConnectionOnCheckout" value="true"/>
       <set-property property="autoCommitOnClose" value="true"/>

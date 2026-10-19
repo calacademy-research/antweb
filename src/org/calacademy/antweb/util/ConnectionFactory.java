@@ -24,7 +24,7 @@ public class ConnectionFactory {
             // Initialize C3P0 datasource
             dataSource = new ComboPooledDataSource();
             dataSource.setDriverClass("com.mysql.cj.jdbc.Driver"); // MySQL driver
-            dataSource.setJdbcUrl("jdbc:mysql://mysql:3306/ant");
+            dataSource.setJdbcUrl("jdbc:mysql://mysql:3306/ant?connectionTimeZone=LOCAL");
             dataSource.setUser(DbCredentials.user("antweb"));
             dataSource.setPassword(AntwebProps.getDbPwd());
 
