@@ -99,6 +99,22 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.SecurityBatch7Test
           '
 
+      - name: Java unit tests of upload and scheduler hardening (zip extraction, nightly self-calls)
+        # SafeUnzip (symlink, .., size and entry caps, picks the right entry), specimen header
+        # checks, species list deletion, image upload reports, and SchedulerCall: the nightly
+        # Scheduler's request as HttpUtil sends it is accepted, a code in the query string refused.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/upload/SafeUnzip.class
+            test -f $C/org/calacademy/antweb/util/SchedulerCall.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/UploadSchedulerHardeningTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.UploadSchedulerHardeningTest
+          '
+
       - name: clearDisk.py skips web/log and links (tests/unit/test_clear_disk.py)
         run: python3 tests/unit/test_clear_disk.py
 

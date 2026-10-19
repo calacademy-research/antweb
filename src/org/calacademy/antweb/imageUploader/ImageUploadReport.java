@@ -27,6 +27,15 @@ public final class ImageUploadReport extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ImageUploadReport.class);
 
+    public static final String NOT_OWN_GROUP = "This image upload report belongs to another group.";
+
+    /** Curators see their own group's reports; administrators any. */
+    public static boolean mayView(org.calacademy.antweb.Login login, int uploadGroupId) {
+        if (login == null) return false;
+        if (Boolean.TRUE.equals(login.isAdmin())) return true;
+        return login.getGroupId() == uploadGroupId;
+    }
+
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
 		throws IOException, ServletException {
@@ -53,6 +62,10 @@ public final class ImageUploadReport extends AntwebAction {
 
             if (imageUploadId != 0) {            
               imageUpload = imageUploadDb.getImageUpload(imageUploadId);
+              if (imageUpload != null && !mayView(LoginMgr.getAccessLogin(request), imageUpload.getGroupId())) {
+                request.setAttribute("message", NOT_OWN_GROUP);
+                return mapping.findForward("message");
+              }
               if (imageUpload != null) {
                 // Files not saved; a name saved in this upload (for example on a later try) is left out.
                 java.util.Set<String> saved = new java.util.HashSet<>();

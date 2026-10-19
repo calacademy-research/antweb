@@ -284,9 +284,10 @@ def test_report_specimen_links_open_specimen_pages(curator):
     """
     s = curator[0]
     page = _upload_list(s)
-    # Reports with images only: test_not_saved_round_trip leaves uploads with none.
-    ids = re.findall(r"<td>([1-9]\d*)</td>\s*<td><a href='[^']*imageUploadReport\.do\?id=(\d+)'", page)
-    ids = [upload_id for _count, upload_id in ids]
+    # Reports with images only: test_not_saved_round_trip leaves uploads with none. Only the
+    # test login's own group's reports are open to it (other groups': administrators only).
+    own = _own_group_ids(page, curator[2])
+    ids = [u for g, count, u in _report_rows(page) if count > 0 and g in own]
     if not ids:
         pytest.skip("no upload reports with images listed on listImageUploads.do")
     report = None
@@ -304,6 +305,48 @@ def test_report_specimen_links_open_specimen_pages(curator):
     assert codes, "no specimen links in the Uploaded Specimen Set"
     r = s.get(BASE_URL + "/specimen.do?code=" + codes[0], timeout=TIMEOUT)
     assert r.status_code == 200 and "is not in the AntWeb database" not in r.text, (codes[0], r.status_code)
+
+
+def _report_rows(page):
+    """(group id, image count, upload id) for every row of listImageUploads.do."""
+    rows = []
+    for row in page.split("<tr>"):
+        g = re.search(r"group\.do\?id=(\d+)", row)
+        u = re.search(r"<td>(\d+)</td>\s*<td><a href='[^']*imageUploadReport\.do\?id=(\d+)'", row)
+        if g and u:
+            rows.append((int(g.group(1)), int(u.group(1)), u.group(2)))
+    return rows
+
+
+def _own_group_ids(page, login_id):
+    """Groups of the uploads made by this login (its own group)."""
+    own = set()
+    for row in page.split("<tr>"):
+        g = re.search(r"group\.do\?id=(\d+)", row)
+        c = re.search(r"curator\.do\?id=(\d+)", row)
+        if g and c and int(c.group(1)) == int(login_id):
+            own.add(int(g.group(1)))
+    return own
+
+
+@needs_curator
+def test_report_of_other_group_refused(curator):
+    """A curator reads the image upload reports of their own group; another group's report is
+    refused (administrators read all). Read-only."""
+    s, _token, login_id = curator
+    page = _upload_list(s)
+    own = _own_group_ids(page, login_id)
+    if not own:
+        pytest.skip("the test login has no image uploads listed (own group unknown)")
+    other = next((u for g, _c, u in _report_rows(page) if g not in own), None)
+    if not other:
+        pytest.skip("no upload of another group listed on listImageUploads.do")
+    r = s.get(BASE_URL + f"/imageUploadReport.do?id={other}", timeout=TIMEOUT)
+    assert r.status_code == 200, r.status_code
+    assert "This image upload report belongs to another group." in r.text, r.text[:300]
+    mine = next((u for g, _c, u in _report_rows(page) if g in own), None)
+    r = s.get(BASE_URL + f"/imageUploadReport.do?id={mine}", timeout=TIMEOUT)
+    assert r.status_code == 200 and "belongs to another group" not in r.text, r.text[:300]
 
 
 @needs_curator

@@ -1327,9 +1327,16 @@ public abstract class HttpUtil {
   }
 
   private static URLConnection openWithTimeouts(String theUrl, int readTimeoutMs) throws IOException {
+    return openWithTimeouts(theUrl, readTimeoutMs, null);
+  }
+
+  private static URLConnection openWithTimeouts(String theUrl, int readTimeoutMs, java.util.Map<String, String> headers) throws IOException {
     URLConnection conn = new URL(theUrl).openConnection();
     conn.setConnectTimeout(DEFAULT_CONNECT_TIMEOUT_MS);
     conn.setReadTimeout(readTimeoutMs);
+    if (headers != null) {
+      for (java.util.Map.Entry<String, String> h : headers.entrySet()) conn.setRequestProperty(h.getKey(), h.getValue());
+    }
     return conn;
   }
 
@@ -1435,6 +1442,12 @@ public abstract class HttpUtil {
    */
   public static String fetchUrl(String theUrl, int readTimeoutMs)   
     throws IOException {  
+      return fetchUrl(theUrl, readTimeoutMs, null);
+  }
+
+  /** fetchUrl with request headers, for example the code of AntWeb's calls to itself (SchedulerCall). */
+  public static String fetchUrl(String theUrl, int readTimeoutMs, java.util.Map<String, String> headers)
+    throws IOException {
 
       String encode = "UTF-8";
     
@@ -1468,7 +1481,7 @@ public abstract class HttpUtil {
       url = new URL(theUrl) ;
 
       //BufferedReader br = new BufferedReader(new InputStreamReader(is, UTF8), BUFFER_SIZE);
-      BufferedReader in = new BufferedReader(new InputStreamReader(openWithTimeouts(theUrl, readTimeoutMs).getInputStream(), encode));  //"UTF-8" ?
+      BufferedReader in = new BufferedReader(new InputStreamReader(openWithTimeouts(theUrl, readTimeoutMs, headers).getInputStream(), encode));  //"UTF-8" ?
 
       String str = null;
       while ((str = in.readLine()) != null) {

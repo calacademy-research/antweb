@@ -55,9 +55,10 @@ public class TaxonWorksUploader extends Uploader {
                 errorMsg = copyAndUnzipFile(theFile, group, preTransformFilePath.toString(), zipFileTarget);
                 //A.log("uploadSpecimenFile() post unzip");
             } catch (IOException e) {
-                errorMsg = "copyAndUnzipFile() e:" + e.toString();
+                s_log.error("uploadSpecimenFile() copyAndUnzipFile e:" + e);
+                errorMsg = "The zip file could not be read.";
             }
-            if (errorMsg != null) throw new AntwebException(errorMsg);
+            if (errorMsg != null) return new UploadDetails(theForm.getAction(), errorMsg, "message"); // archive refused: stop and show why
 
         } else {
             // copy from uploader's fileName to the biotaFile name.

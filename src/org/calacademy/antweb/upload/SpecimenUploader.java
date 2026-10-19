@@ -43,10 +43,13 @@ public class SpecimenUploader extends Uploader {
 
         if (formFileName.endsWith(".zip")) {  // was: contains("zip")
             specimenFileName = "specimen" + group.getId() + ".txt"; // was: workingDir +
-            String groupName = "group" + group.getId();
-            //            A.log("uploadSpecimenFile() tempDirName:" + tempDirName + " specimenFileName:" + specimenFileName);
-            copyAndUnzipFile(theForm.getTheFile(), groupName, specimenFileName);
-            //copyAndUnzipFile(theForm.getTheFile(), group, tempDirName, specimenFileName);
+            String refused = unzipSpecimenFile(theForm.getTheFile(), specimenFileName);
+            if (refused != null) {
+                s_log.warn("uploadSpecimenFile() zip refused for group:" + group.getId() + " " + refused);
+                UploadDetails refusedDetails = new UploadDetails("specimen", refused, "message");
+                refusedDetails.setAction(theForm.getAction());
+                return refusedDetails;
+            }
         } else {
             // copy from uploader's fileName to the biotaFile name.
             specimenFileName = workingDir + "specimen" + group.getId() + ".txt";
@@ -62,155 +65,23 @@ public class SpecimenUploader extends Uploader {
     }
 
 
-    public static void copyAndUnzipFile(FormFile file, String groupName, String outName) throws IOException, AntwebException {
-        Utility util = new Utility();
-
-        if (file != null) {
-            // create a new temp directory
-            boolean success = new File(groupName).mkdir();
-
-            // unzip into that directory
-            String zippedName = outName + ".zip";
-            String fullOutputPath = AntwebProps.getWorkingDir() + zippedName;
-            util.copyFile(file, zippedName); //fullOutputPath)
-            boolean exists = new File(fullOutputPath).exists();
-
-            String tempDirName = AntwebProps.getWorkingDir() + groupName;
-
-            A.log("copyAndUnzipFile() exists:" + exists + " zippedName:" + zippedName + " tempDirName:" + tempDirName + " outName:" + outName + " fullOutputPath:" + fullOutputPath);
-            if (exists) {
-                try {
-                    String command = "unzip -o -d " + tempDirName + " " + fullOutputPath;  // zippedName;
-                    A.log("copyAndUnzip() command:" + command);
-                    Process process = Runtime.getRuntime().exec(command);
-
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
-                        String line;
-                        int n = 0;
-                        while ((line = reader.readLine()) != null) {
-                            ++n;
-                            A.log("n:" + n + " line:" + line);
-                        }
-                        int exitCode = process.waitFor();
-                        A.log("n:" + n + " exitCode:" + exitCode + " which:" + Runtime.getRuntime().exec("which unzip") + " which:" + Runtime.getRuntime().exec("unzip -v"));
-                    }
-                } catch (IOException e) {
-                    s_log.error("copyAndUnzipFile() problem unzipping file1 " + zippedName + ": " + e);
-                    AntwebUtil.logStackTrace(e);
-                } catch (InterruptedException e) {
-                    s_log.error("copyAndUnzipFile() problem unzipping file2 " + zippedName + ": " + e);
-                    AntwebUtil.logStackTrace(e);
-                }
-            } else {
-                A.log("Not existing:" + fullOutputPath);
-                throw new AntwebException("NotFoundError unzipping:" +  zippedName);
-            }
-
-            // move the file out of that directory and give it the right name
-            File tempDir = new File(tempDirName);
-            A.log("copyAndUnzipFile() tempDir: " + tempDir);
-            String[] dirListing = tempDir.list();
-            A.log("copyAndUnzipFile() tempDir listing has length: " + dirListing.length);
-            String fileName = "";
-            for (String s : dirListing) {
-                A.log("copyAndUnzipFile() tempDir listing shows: *" + s + "*");
-                if (!s.equals(".") && !s.equals("..") && !s.contains("__")) {
-                    fileName = s;
-                }
-            }
-
-            String out = null;
-            try {
-                String in = tempDirName + "/" + fileName;
-                out = AntwebProps.getWorkingDir() + "/" + outName;
-                A.log("copyAndUnzipFile() in:" + in + " out:" + out);
-                util.copyFile(in, out);
-            } catch (IOException e) {
-                s_log.error("copyAndUnzipFile() couldn't move " + tempDirName + "/" + fileName + " to " + outName);
-                AntwebUtil.logShortStackTrace(e);
-                throw e;
-            }
-
-            // remove the temporary directory
-            boolean isDebug = false && AntwebProps.isDevMode();
-            if (!isDebug) Utility.deleteDirectory(tempDir);
-            A.log("copyAndUnzipFile() deleteDir:" + tempDir + " deleted:" + !isDebug);
+    /**
+     * Saves the uploaded zip in the working directory and takes its one .txt file out as
+     * outName (in the working directory), with SafeUnzip. Returns null when done, or the
+     * reason the archive was refused (nothing is then written).
+     */
+    static String unzipSpecimenFile(FormFile file, String outName) throws IOException {
+        if (file == null) return "Must choose a specimen file for upload.";
+        String workingDir = AntwebProps.getWorkingDir();
+        File zip = new File(workingDir + outName + ".zip");
+        if (!Utility.copyFormFile(file, zip.getPath())) return "The uploaded zip file could not be saved.";
+        try {
+            SafeUnzip.extract(zip, SafeUnzip.ONE_TXT, ".txt file", new File(workingDir + outName));
+            return null;
+        } catch (SafeUnzip.Refused r) {
+            return r.getMessage();
+        } finally {
+            if (!zip.delete()) s_log.warn("unzipSpecimenFile() could not delete " + zip);
         }
     }
-
-
-    /*
-    //Called from this (SpecimenUploader), but not by GBIFUploader or TaxonWorksUploader.
-    private static void copyAndUnzipFile(FormFile file, Group group, String outName) throws IOException {
-
-        String tempDirName = AntwebProps.getWorkingDir() + "group" + group.getId();
-
-        Utility util = new Utility();
-
-        boolean success = false;
-        if (file != null) {
-            // create a new temp directory
-            success = new File(tempDirName).mkdir();
-
-            // unzip into that directory
-            String zippedName = outName + ".zip";
-            util.copyFile(file, zippedName);
-
-            File theFile = new File(AntwebProps.getWorkingDir() + zippedName);
-
-            //A.log("copyAndUnzipFile() zippedName:" + zippedName + " exists:" +  new File(zippedName).exists() + " 2:" + new File(AntwebProps.getWorkingDir() + zippedName).exists() );
-            if (theFile.exists()) {
-            //if (new File(zippedName).exists()) {
-
-                try {
-                    String command = "unzip -d " + tempDirName + " " + zippedName;
-                    A.log("copyAndUnzip() command:" + command);
-                    Process process = Runtime.getRuntime().exec(command);
-                    process.waitFor();
-                } catch (IOException e) {
-                    s_log.error("copyAndUnzipFile() problem unzipping file1 " + zippedName + ": " + e);
-                    AntwebUtil.logStackTrace(e);
-                } catch (InterruptedException e) {
-                    s_log.error("copyAndUnzipFile() problem unzipping file2 " + zippedName + ": " + e);
-                    AntwebUtil.logStackTrace(e);
-                }
-            } else {
-                s_log.error("copyAndUnzipFile() file does not exist. zippedName:" + zippedName);
-                // Perhaps, in /usr/local/antweb/workingDir
-                //   there is now contained a directory structure: /usr/local/antweb/workingDir
-            }
-
-            // move the file out of that directory and give it the right name
-            File dir = new File(tempDirName);
-            String[] dirListing = dir.list();
-            A.log("copyAndUnzipFile() zippedName:" + zippedName + " tempDirName:" + tempDirName + " zippedName:" + zippedName
-                    + " dirListing.length:" + dirListing.length + " success:" + success);
-            String fileName = "";
-            for (String s : dirListing) {
-                A.log("copyAndUnzipFile() dir listing shows: *" + s + "*");
-                if (!s.equals(".") && !s.equals("..") && !s.contains("__")) {
-                    fileName = s;
-                }
-            }
-            try {
-                A.log("copyAndUnizpFile() copying... tempDirName:" + tempDirName + "/" + fileName + " outFile:" + outName);
-                util.copyFile(tempDirName + "/" + fileName, outName);
-            } catch (IOException e) {
-                s_log.error("copyAndUnzipFile() couldn't move " + tempDirName + "/" + fileName + " to " + outName);
-                AntwebUtil.logShortStackTrace(e);
-                throw e;
-            }
-
-            util.deleteDirectory(dir);
-
-        } else {
-            s_log.error("copyAndUnzipFile() file is null");
-        }
-    }
-*/
-
-
-
-
-
 }

@@ -235,14 +235,15 @@ public class AntwebMgr {
     public static void callPostInitialize() {
 
         // The code shows util.do that the call comes from this server (see isPostInitializeCode).
-        String url = AntwebProps.getThisDomainApp() + "/util.do?action=postInstantiate&secureCode=" + s_postInitializeCode;
+        // The code goes in a request header (SchedulerCall), not in the URL.
+        String url = AntwebProps.getThisDomainApp() + "/util.do?action=postInstantiate";
         //if (AntwebProps.isDevMode()) url = "https://localhost:8080/util.do?action=postInstantiate";
 
         s_log.debug("callPostInitialize() url:" + url);
         //s_log.warn("callPostInitialize() url:" + url);
         try {
-            HttpUtil.hitUrl(url);
-        } catch (IOException e) {
+            new HitUrlThread(url, SchedulerCall.headers(s_postInitializeCode)).start();
+        } catch (RuntimeException e) {
             s_log.error("callPostInitialize() e:" + e);
         }
     }
