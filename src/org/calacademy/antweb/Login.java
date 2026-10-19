@@ -13,9 +13,7 @@ public class Login implements Comparable {
     private static final Log s_log = LogFactory.getLog(Login.class);
     
     public static int BRIAN = 1;
-    public static final int MARK = 22;
     public static int MICHELE = 23;
-    public static final int TEST_LOGIN = 50;
     
     private int id;
     private String firstName;
@@ -118,10 +116,9 @@ public class Login implements Comparable {
         return isCurator;
     }
     
+    /** Developer tools and debug output: the admin role (no longer tied to login ids). */
     public boolean isDeveloper() {
-        // This should probably be a field in the database.  But this is simpler.
-        // Only while the account is still an admin (former developers lose it with admin).
-        return isAdmin() && getId() == 22;
+        return isAdmin();
     }
     
     public Boolean isUploadSpecimens() {

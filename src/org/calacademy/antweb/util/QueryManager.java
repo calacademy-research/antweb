@@ -193,9 +193,8 @@ public abstract class QueryManager {
             Date startTime = new Date();
 
             String query = namedQuery.getQuery();
-            if (query.contains("delete from")) {
-                int result = stmt.executeUpdate(query);
-                namedQuery.setResult("query executed result:" + result);
+            if (!isReadOnly(query)) {
+                namedQuery.setResult("Refused: named queries only read data.");
                 return;
             }
 
@@ -238,6 +237,16 @@ public abstract class QueryManager {
         }
     }
 
+    /** Named queries only read: a query must start with select (or with/show/explain). */
+    public static boolean isReadOnly(String query) {
+        if (query == null) return false;
+        String q = query.trim().toLowerCase();
+        while (q.startsWith("(")) q = q.substring(1).trim();
+        return (q.startsWith("select ") || q.startsWith("select\n") || q.startsWith("with ")
+                || q.startsWith("show ") || q.startsWith("explain "))
+            && !q.matches("(?s).*\\b(delete\\s+from|insert\\s+into|update\\s+\\w+\\s+set|drop\\s+table|truncate|alter\\s+table|replace\\s+into|into\\s+outfile)\\b.*");
+    }
+
     public static String runQueryWithParamHtml(String queryName, String param, Connection connection) throws SQLException {
         NamedQuery namedQuery = QueriesWithParams.getNamedQueryWithParam(queryName, param);
         String result = "";
@@ -263,9 +272,8 @@ public abstract class QueryManager {
             Date startTime = new Date();            
 
             String query = namedQuery.getQuery();
-            if (query.contains("delete from")) {
-              int result = stmt.executeUpdate(query);
-              return "query executed result:" + result;
+            if (!isReadOnly(query)) {
+              return "Refused: named queries only read data.";
             }
 
             String permalink = AntwebProps.getDomainApp() + "/query.do?name=" + namedQuery.getName() ;

@@ -964,14 +964,6 @@ public abstract class Queries {
           + " concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/browse.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\") "
           + ", name, geolocale_id, geolocale_taxon.created, geolocale_taxon.source " 
           + " from geolocale_taxon, geolocale where geolocale_taxon.geolocale_id = geolocale.id and taxon_name in (select taxon_name from taxon where status = 'morphotaxon')  and taxon_name not in (select distinct taxon_name from specimen) order by georank, name"
-          , "deleteGeolocaleListMorphotaxa"
-          ));
-
-        queries.add(new NamedQuery(
-            "deleteGeolocaleListMorphotaxa"
-          , "Delete the morphotaxa that are in geolocales that do not have specimen."
-          , "<th>Taxon Name</th><th>Geolocale Name</th><th>Geolocale Id</th>"
-          , "delete from geolocale_taxon where taxon_name in (select taxon_name from taxon where status = 'morphotaxon')  and taxon_name not in (select distinct taxon_name from specimen)"
           ));
 
         queries.add(new NamedQuery(
@@ -1001,16 +993,8 @@ public abstract class Queries {
           , "These geolocale_taxon records do not have corresponding taxon records."
           , "<th>Source</th><th>Taxon Name</th><th>Geolocale Name</th><th>Created</th><th>Insert Method</th>"
           , "select geolocale_taxon.source, taxon_name, name, geolocale_taxon.created, insert_method from geolocale_taxon, geolocale where geolocale_taxon.geolocale_id = geolocale.id and taxon_name not in (select taxon_name from taxon) order by source, taxon_name, geolocale.georank desc"
-          , "deleteGeolocaleTaxaWithoutTaxon"
         ));
 
-        queries.add(new NamedQuery(
-            "deleteGeolocaleTaxaWithoutTaxon"
-          , "Delete the geolocale_taxon records that do not have corresponding taxon records."
-          , "<th>Taxon Name</th><th>Geolocale Name</th><th>Geolocale Id</th>"
-          , " delete from geolocale_taxon where taxon_name not in (select taxon_name from taxon)"
-              + " and source in ('curator', 'speciesList', 'speciesListTool')"
-          ));
     
         queries.add(new NamedQuery(
            "geolocaleTaxaInMultipleBioregions"

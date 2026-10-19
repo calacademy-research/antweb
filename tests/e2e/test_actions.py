@@ -41,7 +41,10 @@ def test_removed_actions_stay_removed():
              # Cleanup batch 3: old field guide step (no page linked it) and the retired Move To Valid tool.
              "/prepareFieldGuideResults", "/moveToValid",
              # Unused tools removed 2026-10-18: species list rename tool and a duplicate mapping.
-             "/speciesListMove", "/speciesListToolAdd"]
+             "/speciesListMove", "/speciesListToolAdd",
+             # Curate page cleanup: Orphan Manager (one-click deletes), Type Status Manager, Cache Manager.
+             "/orphanMgr", "/orphanSpecies", "/orphanGenera", "/dupedGenera", "/orphanSubfamilies",
+             "/orphanDescEdits", "/orphanAlternates", "/typeStatus", "/cache"]
     if not IS_PRODUCTION:
         # These two used to update counts; only call them where this change may not be live yet.
         paths += ["/test", "/mobile"]

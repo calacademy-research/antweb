@@ -245,23 +245,11 @@ public class LoginMgr extends Manager {
         Login accessLogin = getAccessLogin(request);
 	    return isDeveloper(accessLogin);
 	}
+	/** Developer tools and debug output are for administrators (the admin role, not login ids). */
 	public static boolean isDeveloper(Login accessLogin) {
-        return accessLogin != null && accessLogin.isAdmin()
-                // A specific list of Developer admins (only while they are admins).
-                && (
-                accessLogin.getId() == Login.MARK
-                        || accessLogin.getId() == Login.TEST_LOGIN
-        );
+        return accessLogin != null && accessLogin.isAdmin();
     }
     
-
-    public static boolean isMark(HttpServletRequest request) {
-	    return LoginMgr.isMark(getAccessLogin(request));
-	}
-	public static boolean isMark(Login accessLogin) {
-        return accessLogin != null && accessLogin.isAdmin() && accessLogin.getId() == 22;
-    }
-
     public static boolean isPeter(HttpServletRequest request) {
         return LoginMgr.isPeter(getAccessLogin(request));
     }

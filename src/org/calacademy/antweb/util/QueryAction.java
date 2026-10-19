@@ -21,15 +21,27 @@ public class QueryAction extends AntwebAction {
 
     // homonyms: the Homonym Report (moved here from util.do, where it was admin only; its page needs a login).
     private static final Set<String> ADMIN_ACTIONS = Set.of(
-        "checkIntegrity", "curiousQueries", "curateAntcat", "devQueries", "descEdit", "countryEndemic", "events",
+        "checkIntegrity", "curiousQueries", "curateAntcat", "devQueries", "countryEndemic", "events",
         "homonyms");
 
-    // True for named queries that expose curator logins/emails or modify data.
-    private static boolean isSensitiveQuery(String name) {
-        NamedQuery namedQuery = Queries.getNamedQuery(name);
-        if (namedQuery == null || namedQuery.getQuery() == null) return false;
-        String q = namedQuery.getQuery().toLowerCase();
-        return q.contains("email") || q.matches("(?s).*\\blogin\\b.*") || q.contains("delete from");
+    // Every sub-action query.do handles; anything else (descEdit, the old "Notes" link) is not found.
+    static final Set<String> ACTIONS = Set.of(
+        "checkIntegrity", "curiousQueries", "curateAntcat", "devQueries", "countryEndemic", "events",
+        "homonyms", "curiousQuery", "query", "queryBattery");
+
+    // Named queries that public pages link to (read-only, no login data): anyone may run them.
+    static final Set<String> PUBLIC_QUERIES = Set.of(
+        "worldantsUploads",                    // AntCat import history, linked from the upload reports
+        "bioregionSpeciesListWithRangeData",   // bioregion species list page, "Species List with Range Data"
+        "imageData");                          // "Download All" on the recent images search results
+    // Named queries that pages show to curators (country and adm1 species lists).
+    static final Set<String> CURATOR_QUERIES = Set.of("geolocaleSpeciesListWithRangeData");
+
+    /** Who may run a named query: "public", "curator" or (every other query) "admin". */
+    public static String namedQueryAccess(String name) {
+        if (name != null && PUBLIC_QUERIES.contains(name)) return "public";
+        if (name != null && CURATOR_QUERIES.contains(name)) return "curator";
+        return "admin";
     }
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
@@ -56,6 +68,12 @@ public class QueryAction extends AntwebAction {
             DataSource dataSource = getDataSource(request, "longConPool");
             connection = DBUtil.getConnection(dataSource, dbMethodName);
 
+			if (action != null && !ACTIONS.contains(action)) {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+                request.setAttribute("message", "action not found:" + Html.esc(action));
+                return mapping.findForward("message");
+			}
+
 			if (action == null && name == null) {
                 
                 ActionForward c = Check.admin(request, mapping); if (c != null) return c;
@@ -67,11 +85,14 @@ public class QueryAction extends AntwebAction {
             
                 if (action == null) action = "query";
 
-                // Maintenance batteries, raw-field queries and the events list (curator logins) are admin tools.
-                // Named queries stay public for the species-list/image pages, except ones that read logins/emails or delete.
-                if (ADMIN_ACTIONS.contains(action)
-                    || (("curiousQuery".equals(action) || "query".equals(action)) && name != null && isSensitiveQuery(name))) {
+                // Maintenance batteries and the events list (curator logins) are admin tools. Named queries
+                // are admin tools too, except the few that public or curator pages link to (namedQueryAccess).
+                boolean isNamedQuery = "curiousQuery".equals(action) || "query".equals(action) || "queryBattery".equals(action);
+                String access = isNamedQuery && !"queryBattery".equals(action) ? namedQueryAccess(name) : "admin";
+                if (ADMIN_ACTIONS.contains(action) || (isNamedQuery && "admin".equals(access))) {
                     ActionForward c = Check.admin(request, mapping); if (c != null) return c;
+                } else if (isNamedQuery && "curator".equals(access)) {
+                    ActionForward c = Check.curator(request, mapping); if (c != null) return c;
                 }
                         
                 if (action.equals("checkIntegrity")) {
@@ -120,17 +141,6 @@ public class QueryAction extends AntwebAction {
                   returnLoc = mapping.findForward("adminHtmlMessage");
                 }
             
-                // utilAction.do?action=descEdit&field=notes
-                if (action.equals("descEdit")) { 
-                  String field = theForm.getField();
-          
-                  String query = "select taxon_name, title, content from description_edit where title = " + DBUtil.sqlLiteral(field);
-                  String message = QueryManager.getQueryResults(connection, query);
-                  request.setAttribute("message", message);
-                  returnLoc = mapping.findForward("adminMessage");
-                }
-
-
                 if (action.equals("countryEndemic")) { 
                   int field;
                   try {

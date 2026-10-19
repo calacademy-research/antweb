@@ -17,6 +17,8 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ListAction extends AntwebAction {
 
+    static final java.util.Set<String> REMOVED_ACTIONS = java.util.Set.of("countries", "bioregions");
+
     private static final Log s_log = LogFactory.getLog(ListAction.class);
 
     public ActionForward execute(
@@ -37,7 +39,14 @@ public final class ListAction extends AntwebAction {
         HttpSession session = request.getSession();
         
         DynaActionForm df = (DynaActionForm) form;
-        String action = (String) df.get("action");        
+        String action = (String) df.get("action");
+
+        // Removed lists (Curate page cleanup): the public Countries and Bioregions pages replace them.
+        if (action != null && REMOVED_ACTIONS.contains(action)) {
+          response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+          request.setAttribute("message", "action:" + Html.esc(action) + " not found.");
+          return mapping.findForward("message");
+        }        
         
         
         Connection connection = null;
@@ -51,20 +60,6 @@ public final class ListAction extends AntwebAction {
 
           // s_log.warn("execute action:" + action);
             switch (action) {
-                case "countries": {
-                    String message = "Antweb Valid Country List";
-                    request.setAttribute("message", message);
-                    ArrayList<String> list = GeolocaleMgr.getValidCountryList();
-                    request.setAttribute("list", list);
-                    break;
-                }
-                case "bioregions": {
-                    String message = "Antweb Valid Biogeographic Region List";
-                    request.setAttribute("message", message);
-                    ArrayList list = BioregionMgr.getList(connection);
-                    request.setAttribute("list", list);
-                    break;
-                }
                 case "pictureLikes": {
                     String message = "Antweb Liked Pictures List";
                     request.setAttribute("message", message);

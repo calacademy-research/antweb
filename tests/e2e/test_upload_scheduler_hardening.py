@@ -6,7 +6,7 @@ As the test curator (not an administrator), staging only:
 - The removed upload.do tools answer "Action not found.": the developer sub-actions
   specimenTest and speciesTest, "Upload a Data File" (testFile) and the world authority file
   generation (successKey=worldAuthorityFiles).
-- downloadSpeciesList is escaped in the message page.
+- downloadSpeciesList never reaches the page (the form was removed in the Curate page cleanup).
 - utilData.do data jobs refuse a scheduler code sent from outside, in the query string or in
   the request header (only AntWeb's own calls from inside the container are accepted).
 
@@ -97,10 +97,12 @@ def test_world_authority_generation_removed(deployed):
 
 @staging_only
 def test_download_species_list_escaped(deployed):
+    """The developer "Download Species List" form was removed (Curate page cleanup): the field is
+    ignored ("Action not found.") and never reaches the page."""
     r = _post_upload(deployed, {"downloadSpeciesList": 'e2e"><i id=e2e>x'})
     assert r.status_code == 200, r.status_code
     assert '<i id=e2e>' not in r.text, "downloadSpeciesList reached the page unescaped"
-    assert "speciesListDownload.do?projectName=" in r.text, r.text[:300]
+    assert "Action not found." in r.text or "speciesListDownload.do?projectName=" in r.text, r.text[:300]
 
 
 # ---------- utilData.do: the scheduler code is accepted only from inside the container ----------

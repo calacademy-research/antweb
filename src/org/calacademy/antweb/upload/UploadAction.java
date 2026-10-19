@@ -44,12 +44,17 @@ public class UploadAction extends AntwebAction {
 	// Site-wide jobs: admins only.
 	static final java.util.Set<String> ADMIN_ONLY_ACTIONS = java.util.Set.of(
 			"fetchAndReloadWorldants", "reloadSpeciesLists", "museumCalc",
-			"runStatistics", "runCountCrawls", "toggleDownTime", "genAll", "genRecentDescEdits",
-			"allSpecimenFiles");
+			"runStatistics", "runCountCrawls", "toggleDownTime", "genAll", "genRecentDescEdits");
 
 	// Removed sub-actions (unused tools, 2026-10): answered as "Action not found." before anything else.
+	// allSpecimenFiles (reload every group from the working folder) and GBIFUpload: Curate page cleanup.
 	static final java.util.Set<String> REMOVED_ACTIONS = java.util.Set.of(
-			"reloadSpecimenList", "removeSpecimenList", "uploadSpeciesList", "specimenTest", "speciesTest");
+			"reloadSpecimenList", "removeSpecimenList", "uploadSpeciesList", "specimenTest", "speciesTest",
+			"allSpecimenFiles", "GBIFUpload");
+
+	// Admin jobs linked from the Curate page: a GET shows a confirmation page that repeats the
+	// request by POST with the form token (PostOnly). Every other sub-action must be posted.
+	static final java.util.Set<String> CONFIRM_ON_GET = java.util.Set.of("runStatistics", "genRecentDescEdits");
 
 	public static boolean isRemovedAction(String action) {
 		return action != null && REMOVED_ACTIONS.contains(action);
@@ -61,7 +66,7 @@ public class UploadAction extends AntwebAction {
 
 	// Need the login's "upload specimens" permission (or admin).
 	static final java.util.Set<String> SPECIMEN_UPLOAD_ACTIONS = java.util.Set.of(
-			"specimenUpload", "taxonWorksUpload", "GBIFUpload");
+			"specimenUpload", "taxonWorksUpload");
 
 	/** Upload as another curator: admins, or a curator listed in this login's "upload as" setting. */
 	public static boolean isAllowedUploadAs(Login accessLogin, String curateAs) {
@@ -161,6 +166,18 @@ public class UploadAction extends AntwebAction {
             return af;
 		}
 
+		// Nothing in upload.do runs on a GET (a GET is not checked for the form token).
+		if (!HttpUtil.isPost(request)) {
+			String requested = theForm.getAction();
+			if (requested != null && CONFIRM_ON_GET.contains(requested)) {
+				return PostOnly.confirm(request, mapping, "Run: " + requested);
+			}
+			String message = "action:" + Html.esc(requested) + " must be submitted through an http post.";
+			s_log.info(message);
+			request.setAttribute("message", message);
+			return mapping.findForward("message");
+		}
+
 		if (UploadAction.isInUploadProcess()) {
 			String message = "Server is currently in an Upload Process. Please try again in a little while.";
 			if (LoginMgr.isAdmin(request)) message += " " + getIsInUploadProcess();
@@ -209,21 +226,11 @@ public class UploadAction extends AntwebAction {
 				}
 			}
 
-			//if (AntwebProps.isDevOrStageMode()) httpPostOK = true;
-			if (!(HttpUtil.isPost(request) || httpPostOK) && !(
-					"runStatistics".equals(action)
-							|| "genRecentDescEdits".equals(action)
-			)) {
-				String message = "action:" + action + " must be submitted through an http post.";
-				s_log.info(message);
-				request.setAttribute("message", message);
-				return mapping.findForward("message");
-			}
 
 			//A.log("execute() action:" + action);
 			if (action != null) {
 
-				if ("specimenUpload".equals(action) || "taxonWorksUpload".equals(action) || "GBIFUpload".equals(action)) {
+				if ("specimenUpload".equals(action) || "taxonWorksUpload".equals(action)) {
 
 					String curateAs = theForm.getUploadAs();
 					if (!isAllowedUploadAs(accessLogin, curateAs)) {
@@ -241,8 +248,7 @@ public class UploadAction extends AntwebAction {
 
 						notice = new UploadNotice.Facts();
 						notice.fileName = specimenFile.getFileName();
-						notice.fileType = "taxonWorksUpload".equals(action) ? "TaxonWorks file"
-								: "GBIFUpload".equals(action) ? "GBIF file" : "AntWeb specimen file";
+						notice.fileType = "taxonWorksUpload".equals(action) ? "TaxonWorks file" : "AntWeb specimen file";
 						noticeGroup = curator != null ? curator.getGroup() : accessGroup;
 
 						if ("specimenUpload".equals(action)) {
@@ -263,13 +269,6 @@ public class UploadAction extends AntwebAction {
 
 							uploadDetails = new TaxonWorksUploader(connection).uploadSpecimenFile(theForm, curator, request.getHeader("User-Agent"), theForm.getEncoding());
 
-						} else if ("GBIFUpload".equals(action)) {
-							String theFileName = accessGroup.getAbbrev() + "GBIFSpecimenList";
-							A.log("GBIFUpload specimenFile:" + specimenFile.getFileName() + " fileName:" + theFileName);
-
-							if (abort) AntwebUtil.returnMessage("abort GBIF specimen upload", mapping, request);
-
-							uploadDetails = new GBIFUploader(connection).uploadSpecimenFile(theForm, curator, request.getHeader("User-Agent"), theForm.getEncoding());
 						}
 
 						ActionForward af = uploadDetails.returnForward(mapping, request);
@@ -320,60 +319,6 @@ public class UploadAction extends AntwebAction {
 
 					uploadDetails.finish(accessLogin, request, connection);
 
-				} else if ("allSpecimenFiles".equals(action)) {
-					/*
-					// All specimen*.txt files should be downloaded to the machine from the production site, prior to this command.
-					cd /antweb/workingdir/
-					scp mjohnson@antweb-prod:/antweb/workingdir/specimen*.txt .
-					*/
-					//logFileName += "allSpecimenFiles" + UploadDetails.getLogExt();
-					for (int i = 0; i < 100; ++i) {
-						String formFileName = AntwebProps.getWorkingDir() + "specimen" + i + ".txt";
-
-						if (new File(formFileName).exists()) {
-
-							s_log.info("-+-+-+-+-+-+-+-+-+ reloading:" + formFileName + "+-+-+-+-+-+-+-+-+-+-+-+");
-
-							boolean beAbbreviated = false;
-							if (AntwebProps.isDevMode()) beAbbreviated = true;
-							if (!(beAbbreviated && (i == 1 || i == 2 || i == 25))) {  // Testing.  Do not run the big ones...
-
-								Group submitAsGroup = GroupMgr.getGroup(i);
-								Login submitAsLogin = submitAsGroup.getAdminLogin();
-								Curator submitAsCurator = LoginMgr.getCurator(submitAsLogin.getId());
-
-								if (submitAsGroup.getAdminLoginId() == 0) {
-									s_log.info("allSpecimenFiles accessLoginId == 0.  Update database.");
-									// Perhaps the most recent database snapshot has not been loaded?
-								}
-
-								// Testing required.
-								DBUtil.close(connection, this, dbMethodName);
-								dataSource = getDataSource(request, "longConPool");
-								connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));  // must keep the same name to close at the end.
-								connection.setAutoCommit(false);
-
-								//s_log.info("formFileName:" + formFileName + " accessGroup:" + accessGroup + " logFileName:" + logFileName);
-
-								boolean isUpload = false; // This is a reload
-								uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile("allSpecimenFiles", formFileName
-										, submitAsCurator, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
-
-								ActionForward af = uploadDetails.returnForward(mapping, request);
-								if (af != null) return af;
-
-								specimenPostProcess(request, connection, submitAsCurator, uploadDetails);
-
-								connection.commit();
-							} else {
-								//s_log.info("execute() not exists:" + formFileName);
-							}
-						}
-					}
-
-					specimenPostProcessGlobal(connection);
-
-					httpPostOK = true;
 				} else if (action.equals("museumCalc")) {
 					Map<String, Integer> museumMap = (Map<String, Integer>) session.getAttribute("museumMap");
 
@@ -453,26 +398,8 @@ public class UploadAction extends AntwebAction {
 				return mapping.findForward("speciesListTool");
 			}
 
-			if (!HttpUtil.isPost(request) && !httpPostOK) {
-				String message = "Must use Http Post.  Group:" + accessGroup.getId();
-				s_log.info("execute() " + message);
-				request.setAttribute("message", message);
-				return mapping.findForward("message");
-			}
-
-			if (!theForm.getDownloadSpeciesList().equals("none")) {
-				String downloadSpeciesList = theForm.getDownloadSpeciesList();
-				//String dir = downloadSpeciesList.substring(0, downloadSpeciesList.indexOf("ants"));
-				//if (dir.equals("mad")) dir = "madagascar";
-				//if (dir.equals("cal")) dir = "california";
-				String url = domainApp + "/speciesListDownload.do?projectName=" + Html.url(downloadSpeciesList);
-				//String url = domainApp + "/web/speciesList/" + dir + "/" + downloadSpeciesList + UploadFile.getSpeciesListTail();  //"_project.txt";
-				String message = "<b>'Right-click' and 'Save Link As' to download:</b> <a href=\"" + Html.escAttr(url) + "\">" + Html.esc(url) + "</a>";
-				s_log.info(message);
-
-				request.setAttribute("message", message);
-				return mapping.findForward("message");
-			}
+			// The developer "Download Species List" form was removed (Curate page cleanup); the
+			// downloadSpeciesList field is ignored and ends as "Action not found." below.
 
 			// "Upload a File to Folder" (theFile2) is no longer offered; refuse it.
 			FormFile file2 = theForm.getTheFile2();
@@ -552,10 +479,6 @@ public class UploadAction extends AntwebAction {
 
 		int caseNumber = AntwebUtil.getCaseNumber();
 		String errorMessage = null;
-
-		if (errorMessage == null && ("GBIFUpload").equals(action) && e.toString().contains("occurrence.txt")) {
-			errorMessage = "occurrence.txt should be uploaded as TaxonWorks.";
-		}
 
 		if (errorMessage == null) {
 			errorMessage = "Error. Case number:" + caseNumber + ". No changes made. e:" + Html.esc(e.toString());

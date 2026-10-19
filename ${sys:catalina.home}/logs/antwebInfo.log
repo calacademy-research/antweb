@@ -1,0 +1,6 @@
+2026-10-18T18:01:53,099 WARN main org.calacademy.antweb.util.AntwebProps - getBundle(AntwebResources) e:java.util.MissingResourceException: Can't find bundle for base name AntwebResources, locale en_US
+2026-10-18T18:01:53,108 ERROR main org.calacademy.antweb.util.AntwebProps - getBundle(AntwebResources) message: Has the appropriate antweb/etc/config script been executed?
+2026-10-18T18:01:55,557 WARN main org.calacademy.antweb.util.AntwebProps - getBundle(AntwebResources) e:java.util.MissingResourceException: Can't find bundle for base name AntwebResources, locale en_US
+2026-10-18T18:01:55,566 ERROR main org.calacademy.antweb.util.AntwebProps - getBundle(AntwebResources) message: Has the appropriate antweb/etc/config script been executed?
+2026-10-18T18:02:00,658 WARN main org.calacademy.antweb.util.AntwebProps - getBundle(AntwebResources) e:java.util.MissingResourceException: Can't find bundle for base name AntwebResources, locale en_US
+2026-10-18T18:02:00,670 ERROR main org.calacademy.antweb.util.AntwebProps - getBundle(AntwebResources) message: Has the appropriate antweb/etc/config script been executed?

@@ -28,14 +28,6 @@
     
     <br>
 
-<%
-   // This warning is to prevent developers (me) from accidentally posting data to the live site.
-   if (!AntwebProps.isDevOrStageMode()) {
-     if (LoginMgr.isDeveloper(accessLogin)) { 
-       %><h2><font color=red>Warning: Live Site</font></h2><% 
-     }
-   } 
-%>
 
 <br>
 
