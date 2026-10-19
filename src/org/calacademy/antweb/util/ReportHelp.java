@@ -29,7 +29,8 @@ public final class ReportHelp {
     public static final String PARTS = box(
         "Specimens whose code was split into parts (for example casent0001234-d01 and "
             + "casent0001234-d02: separate individuals recorded under one specimen code) where the parts carry different taxon names. Each base "
-            + "specimen is listed once, with each part and its name.",
+            + "specimen is listed once per group, with each part, its name, its determination and the group that uploaded it. "
+            + "Use the group filter to get the list for one institution; each curator can only fix the specimens their group uploaded.",
         "Parts of one specimen normally belong to one species. Different names usually mean a data entry mistake, "
             + "and the specimen then counts toward two species on AntWeb.",
         "Check the specimens (or their images) and correct the identification in TaxonWorks (CAS) or in the curator's "
