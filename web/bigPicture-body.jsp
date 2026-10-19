@@ -58,17 +58,17 @@ is called which displays a short stacktrace.  Remove session variables.  Mark, F
     String photographer = null;
     String date = null;
 
-    String exifData = "";
-
-    Exif exif = new Exif(imagePath);
-    //AntwebUtil.log("bigPicture-body.jsp imagePath:" + imagePath + " exif:" + exif);
-    if (exif != null && exif.isFound()) {
-      exifData = exif.getFields();
-      photographer = exif.getArtist();
-      A.log("exif:" + exif.toString());  
-    } else {
-      A.log("exif null or not found:" + imagePath);        
-    } 
+    // EXIF is read from the image file when the page is shown (nothing is stored).
+    // Needed for the admin section, and for the photographer when the image has no artist.
+    Exif exif = null;
+    if (LoginMgr.isAdmin(request) || theImage.getArtist() == null) {
+      exif = new Exif(imagePath);
+      if (exif.isFound()) {
+        if (Utility.notBlank(exif.getArtist())) photographer = exif.getArtist();
+      } else {
+        A.log("exif not found:" + imagePath);
+      }
+    }
     
   //if (photographer == null) {
     Artist artist = theImage.getArtist();
@@ -307,8 +307,24 @@ if (theImage.getNumber() > 1) {
 </ul>
 
 <ul>
-<li><b>Exif data:</b></li>
-<li><%= exifData %></li>
+<li><b>EXIF data:</b></li>
+<li class="exif_data">
+<p class="exif_note">EXIF is information the camera and imaging software store inside the image file:
+camera and lens, exposure (shutter speed, aperture, ISO), the date the photo was taken, the software used,
+and often the photographer and copyright. It is read from the high resolution file each time this page
+is shown. Camera maker's notes and the embedded thumbnail are binary data and are not shown.</p>
+<% if (exif == null || !exif.isFound()) { %>
+  <p>The image file could not be read.</p>
+<% } else if (exif.getRows().isEmpty()) { %>
+  <p>This image has no EXIF data.</p>
+<% } else { %>
+  <table class="exif_table" style="border-collapse:collapse">
+  <% for (ExifText.Row row : exif.getRows()) { %>
+    <tr><td style="padding:2px 12px 2px 0;vertical-align:top;white-space:nowrap"><%= Html.esc(row.label) %></td><td style="padding:2px 0"><%= Html.esc(row.value) %></td></tr>
+  <% } %>
+  </table>
+<% } %>
+</li>
 </ul>
 
 <ul>
@@ -363,7 +379,7 @@ if (theImage.getNumber() > 1) {
   java.util.Calendar today = java.util.Calendar.getInstance();
   int year = today.get(java.util.Calendar.YEAR);
 %>
-<input id="for_print" type="text" value="Photo by <%= photographer %> / From www.antweb.org">
-<input id="for_web" type="text" value="Photo by <%= photographer %> / URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
+<input id="for_print" type="text" value="Photo by <%= Html.escAttr(photographer) %> / From www.antweb.org">
+<input id="for_web" type="text" value="Photo by <%= Html.escAttr(photographer) %> / URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
 <input id="extra_copyright" type="text" value="Image Copyright &copy; AntWeb 2002 - <%= year %>.  Licensing: Creative Commons Attribution License">
 </div>

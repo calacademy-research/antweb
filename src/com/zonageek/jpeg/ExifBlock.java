@@ -91,6 +91,11 @@ public class ExifBlock extends JpegBlock {
   public HashMap getExifFields() {
     return this.exifData;
   }
+
+  //===========================================================================
+  public boolean isBigEndian() {
+    return this.isBigEndian;
+  }
   
   //===========================================================================
   public Object getExifField(String name) {
@@ -1123,6 +1128,11 @@ class ExifTagList {
       this.put(new ExifTagInfo(0xA000, "FlashPixVersion", ExifTagInfo.TYPE_UNDEFINED, 4));
       this.put(new ExifTagInfo(0xA001, "ColorSpace", ExifTagInfo.TYPE_SHORT, 1));
       this.put(new ExifTagInfo(0xA002, "PixelXDimension", ExifTagInfo.TYPE_LONG, 1)); // or SHORT
+      // Exif 2.3 camera and lens tags (shown on the image page for admins).
+      this.put(new ExifTagInfo(0xA430, "CameraOwnerName", ExifTagInfo.TYPE_ASCII, 0));
+      this.put(new ExifTagInfo(0xA431, "BodySerialNumber", ExifTagInfo.TYPE_ASCII, 0));
+      this.put(new ExifTagInfo(0xA433, "LensMake", ExifTagInfo.TYPE_ASCII, 0));
+      this.put(new ExifTagInfo(0xA434, "LensModel", ExifTagInfo.TYPE_ASCII, 0));
       this.put(new ExifTagInfo(0xA003, "PixelYDimension", ExifTagInfo.TYPE_LONG, 1)); // or SHORT
       this.put(new ExifTagInfo(0xA004, "RelatedSoundFile", ExifTagInfo.TYPE_ASCII, 13));
       this.put(new ExifTagInfo(0xA005, "InteropIFDOffset", ExifTagInfo.TYPE_LONG, 1));

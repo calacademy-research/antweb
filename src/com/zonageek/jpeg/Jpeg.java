@@ -453,6 +453,18 @@ public class Jpeg {
   
   //===========================================================================
   public void read(InputStream input) throws IOException, JpegException {
+    read(input, false);
+  }
+
+  /**
+   * Reads the blocks before the image data (EXIF, JFIF, Adobe, ...) and stops at
+   * the start of scan, without reading the compressed image into memory.
+   */
+  public void readHeaders(InputStream input) throws IOException, JpegException {
+    read(input, true);
+  }
+
+  private void read(InputStream input, boolean headersOnly) throws IOException, JpegException {
     int c1, c2;
 
     this.blocks.clear();
@@ -485,6 +497,10 @@ public class Jpeg {
         throw new JpegException("Unexpected EOF");
       }
       
+      if (marker == Jpeg.MARKER_SOS && headersOnly) {
+        return;
+      }
+
       if (marker == Jpeg.MARKER_SOS) { 
       // This is the last field, so it doesn't has a length
         Vector buffers;
@@ -524,7 +540,8 @@ public class Jpeg {
         }
         length = length - 2; // The length counts itself (2 bytes)
         data = new byte[length];
-        int actual = input.read(data);
+        // readNBytes: a single read() may return fewer bytes (network or FUSE mounts).
+        int actual = input.readNBytes(data, 0, length);
         if (actual != length) {
           throw new JpegException("Unexpected EOF");
         }

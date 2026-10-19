@@ -271,21 +271,21 @@ public class SpecimenImage implements Serializable {
     	if (exif != null) {
     		HashMap theFields = exif.getExifFields();
     		if (theFields.containsKey("Artist")) {
-    			artist = (String) exif.getExifField("Artist");
+    			artist = org.calacademy.antweb.util.ExifText.decodeText((String) exif.getExifField("Artist"));
                 if (artist != null && artist.length() > 0) {
                     artist = artist.trim();
                 }
     		}
          
     		if (theFields.containsKey("Copyright")) {
-                copyright = (String) exif.getExifField("Copyright");
+                copyright = org.calacademy.antweb.util.ExifText.decodeText((String) exif.getExifField("Copyright"));
                 if (copyright != null && copyright.length() > 0) {
                     copyright = copyright.trim();
                 } 
     		}
     		
     		if (theFields.containsKey("ImageDescription")) {
-     			description = (String) exif.getExifField("ImageDescription");
+     			description = org.calacademy.antweb.util.ExifText.decodeText((String) exif.getExifField("ImageDescription"));
      			if (description != null && description.length() > 0) {
      				description = description.trim();
      			} 
