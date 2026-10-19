@@ -15,21 +15,20 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
-import org.calacademy.antweb.home.InactiveAccountDb;
-import org.calacademy.antweb.home.PasswordResetDb;
 import org.calacademy.antweb.util.DBUtil;
 import org.calacademy.antweb.util.HttpUtil;
-import org.calacademy.antweb.util.PasswordPolicy;
 import org.calacademy.antweb.util.PasswordResetMgr;
 
 /**
  * /resetPassword.do?token=... : the page a reset email links to.
  *
- * GET shows the form (new password twice) if the token is valid. POST checks
+ * GET shows the form (new password twice) if the token is valid, and changes
+ * nothing (link scanners in email systems open links first). POST checks
  * the token again (unused, not expired), applies PasswordPolicy, then stores
  * the new password, marks the token used, cancels the login's other tokens,
  * clears must_reset and ends all of the login's sessions. An inactive account
- * (InactiveAccounts) becomes active again.
+ * (InactiveAccounts) becomes active again. The logic is in
+ * PasswordResetMgr.handleResetPage() (unit-tested without a servlet container).
  *
  * Request attributes for resetPassword-body.jsp:
  *   resetState  "invalid", "form" or "done"
@@ -52,40 +51,22 @@ public final class ResetPasswordAction extends AntwebAction {
         String state = "invalid";
 
         if (PasswordResetMgr.isWellFormed(token)) {
-            String tokenHash = PasswordResetMgr.hashToken(token);
             Connection connection = null;
             String dbMethodName = DBUtil.getDbMethodName("ResetPasswordAction.execute()");
             try {
                 DataSource dataSource = getDataSource(request, "conPool");
                 connection = DBUtil.getConnection(dataSource, dbMethodName);
-                PasswordResetDb db = new PasswordResetDb(connection);
-                int loginId = db.findValidLoginId(tokenHash);
-                PasswordResetDb.Account account = loginId > 0 ? db.getAccount(loginId) : null;
-                if (account != null) {
-                    state = "form";
-                    request.setAttribute("resetToken", token);
-                    if (HttpUtil.isPost(request)) {
-                        String password = request.getParameter("password");
-                        String retype = request.getParameter("retypePassword");
-                        String problem = PasswordPolicy.check(password, retype, account.name, account.email);
-                        if (problem != null) {
-                            request.setAttribute("resetError", problem);
-                        } else if (!db.consumeToken(tokenHash, loginId)) {
-                            state = "invalid";  // used or expired meanwhile
-                        } else {
-                            int version = db.setNewPassword(loginId, password);
-                            db.invalidateOutstanding(loginId);
-                            // The link proves the email address: an inactive account is active again.
-                            if (InactiveAccountDb.reactivateQuietly(connection, loginId)) {
-                                PasswordResetMgr.logEvent("inactive account reactivated with a reset link login:" + loginId);
-                                request.setAttribute("reactivated", Boolean.TRUE);
-                            }
-                            PasswordResetMgr.noteVersion(loginId, version);  // ends all sessions at once
-                            PasswordResetMgr.logEvent("password set with reset link login:" + loginId);
-                            state = "done";
-                        }
-                    }
-                }
+                // Only the POST that sets a valid new password uses up the token. Opening the link
+                // (GET), any number of times, changes nothing: email security scanners open links
+                // before the person does.
+                boolean isPost = HttpUtil.isPost(request);
+                PasswordResetMgr.ResetPage page = PasswordResetMgr.handleResetPage(connection, token, isPost,
+                    isPost ? request.getParameter("password") : null,
+                    isPost ? request.getParameter("retypePassword") : null);
+                state = page.state;
+                if ("form".equals(state)) request.setAttribute("resetToken", token);
+                if (page.error != null) request.setAttribute("resetError", page.error);
+                if (page.reactivated) request.setAttribute("reactivated", Boolean.TRUE);
             } catch (SQLException e) {
                 s_log.error("execute() e:" + e);
                 request.setAttribute("resetError", "Sorry, there is a problem with our database. Please try again later.");
