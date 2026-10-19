@@ -133,6 +133,31 @@ jobs:
             grep -q "^OK (7 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of email texts and reset links (no "ignore this email"; opening a link uses nothing up)
+        # EmailLinkTest renders every email text, and runs resetPassword.do's logic against an
+        # in-memory database: GET twice changes nothing, only the POST that sets a password uses the token.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/EmailLinkTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.EmailLinkTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (4 tests)" /tmp/out.txt
+          '
+
+      - name: No email tells the reader to ignore it (tests/unit/test_email_texts.py)
+        run: python3 tests/unit/test_email_texts.py
+
+      - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
+        run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml
+
       - name: clearDisk.py skips web/log and links (tests/unit/test_clear_disk.py)
         run: python3 tests/unit/test_clear_disk.py
 

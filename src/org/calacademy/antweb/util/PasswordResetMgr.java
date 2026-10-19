@@ -147,7 +147,7 @@ public final class PasswordResetMgr {
         return sendResetLink(connection, loginId, displayName, email, ip, subject, intro, VALID_MINUTES, false);
     }
 
-    /** required: the account must reset (campaign, or login refused), so the email must not say it can be ignored. */
+    /** required: the account must reset (campaign, or login refused); the email says so. */
     public static String sendResetLink(Connection connection, int loginId, String displayName, String email,
                                        String ip, String subject, String intro, int validMinutes, boolean required) {
         return sendLink(connection, loginId, email, ip, subject, validMinutes,
@@ -220,11 +220,12 @@ public final class PasswordResetMgr {
         return minutes + " minutes";
     }
 
-    static String emailBody(String displayName, String intro, String link) {
+    public static String emailBody(String displayName, String intro, String link) {
         return emailBody(displayName, intro, link, VALID_MINUTES, false);
     }
 
-    static String emailBody(String displayName, String intro, String link, int validMinutes, boolean required) {
+    /** The reset email (public for the email text test, EmailTextTest). */
+    public static String emailBody(String displayName, String intro, String link, int validMinutes, boolean required) {
         String login = AntwebProps.getSecureDomainApp() + "/login.do";
         String hello = displayName == null || displayName.trim().isEmpty() ? "Hello," : "Hello " + Html.esc(displayName.trim()) + ",";
         return hello + "<br><br>\n"
@@ -234,11 +235,58 @@ public final class PasswordResetMgr {
             + "The link works only once. Your new password must be at least " + PasswordPolicy.MIN_LENGTH + " characters long.<br><br>\n"
             + "If the link has expired, go to <a href=\"" + Html.escAttr(login) + "\">" + Html.esc(login) + "</a>,"
             + " click \"Forgot your password?\" and enter your email address: a new link arrives within a minute.<br><br>\n"
-            // Only a link someone asked for (forgot password) can be ignored; a required
-            // reset (campaign, or login refused until reset) must not say so.
-            + (!required ? "If you did not ask for this, you can ignore this email.<br><br>\n"
-                : "This is required: your old AntWeb password no longer works, so you need to set a new one before you can log in.<br><br>\n")
+            // No email says it may be ignored (2026-10-19). A required reset (campaign, or
+            // login refused until reset) says why it is needed.
+            + (required ? "This is required: your old AntWeb password no longer works, so you need to set a new one before you can log in.<br><br>\n" : "")
             + "AntWeb<br>California Academy of Sciences";
+    }
+
+    // ---------------------------------------------------- the reset page
+
+    /** What resetPassword.do shows: state "invalid", "form" or "done", an optional error. */
+    public static final class ResetPage {
+        public String state = "invalid";
+        public String error;
+        public boolean reactivated;
+    }
+
+    /**
+     * The logic of resetPassword.do (ResetPasswordAction). A GET only reads: it checks
+     * the token (unused, not expired) and shows the form; it never marks the token used,
+     * so a link opened first by an email security scanner (Safe Links, Mimecast,
+     * Proofpoint, Avanan) still works for the person. Only a POST with a new password
+     * that passes PasswordPolicy uses up the token, sets the password, cancels the
+     * login's other links, reactivates an inactive account and ends its sessions.
+     */
+    public static ResetPage handleResetPage(Connection connection, String token, boolean isPost,
+                                            String password, String retype) throws SQLException {
+        ResetPage page = new ResetPage();
+        if (!isWellFormed(token)) return page;
+        String tokenHash = hashToken(token);
+        PasswordResetDb db = new PasswordResetDb(connection);
+        int loginId = db.findValidLoginId(tokenHash);
+        PasswordResetDb.Account account = loginId > 0 ? db.getAccount(loginId) : null;
+        if (account == null) return page;
+        page.state = "form";
+        if (!isPost) return page;
+        String problem = PasswordPolicy.check(password, retype, account.name, account.email);
+        if (problem != null) {
+            page.error = problem;
+        } else if (!db.consumeToken(tokenHash, loginId)) {
+            page.state = "invalid";  // used or expired meanwhile
+        } else {
+            int version = db.setNewPassword(loginId, password);
+            db.invalidateOutstanding(loginId);
+            // The link proves the email address: an inactive account is active again.
+            if (InactiveAccountDb.reactivateQuietly(connection, loginId)) {
+                logEvent("inactive account reactivated with a reset link login:" + loginId);
+                page.reactivated = true;
+            }
+            noteVersion(loginId, version);  // ends all sessions at once
+            logEvent("password set with reset link login:" + loginId);
+            page.state = "done";
+        }
+        return page;
     }
 
     // One background thread sends forgot-password mail, so the page answers at

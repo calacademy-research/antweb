@@ -71,11 +71,18 @@
          which also gives the session cookie the Secure flag).
          connectionTimeout 1 hour: long batch uploads.
          maxParameterCount / maxPartCount: Tomcat 11 defaults (1000 / 10) are too
-         low for AntWeb's large forms and multi-image uploads. -->
+         low for AntWeb's large forms and multi-image uploads.
+         maxLocaleCount: Tomcat 11 refuses a request whose Accept-Language header lists
+         more than 10 languages (default 10), and AntWeb then shows its "Request Error"
+         page. Some browsers and corporate email-security proxies send many more
+         (a curator could not log in, 2026-10-19). 100 is generous; the header itself
+         stays limited by maxHttpHeaderSize (8 KB). Tested by
+         tests/e2e/test_request_limits.py. -->
     <Connector port="8080" protocol="HTTP/1.1"
                connectionTimeout="3600000" scheme="https" secure="true"
                maxParameterCount="10000"
-               maxPartCount="1000" />
+               maxPartCount="1000"
+               maxLocaleCount="100" />
     <!-- A "Connector" using the shared thread pool-->
     <!--
     <Connector executor="tomcatThreadPool"
