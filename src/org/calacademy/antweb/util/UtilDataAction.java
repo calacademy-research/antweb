@@ -45,7 +45,7 @@ public class UtilDataAction extends AntwebAction {
     // (cleanup batch 3 removed 30 unused, duplicate, test and retired jobs).
     static final java.util.Set<String> ACTIONS = java.util.Set.of(
         "set1", "set2", "set3", "set4", "set5", "taxonWorksNightly",
-        "worldantsFetchAndReload", "worldantsReload", "taxonFinish", "dataCleanup",
+        "worldantsFetchAndReload", "worldantsReload", "taxonFinish", "dataCleanup", "restoreParkedTaxonSets",
         "generateGeolocaleTaxaFromSpecimens", "geolocaleCountCrawl", "geolocaleTaxonFix",
         "fixGeolocaleTaxonParentage", "testGeolocaleTaxonParentage", "updateGeolocaleParentHierarchy",
         "projectCountCrawl", "populateMuseum", "populateBioregion", "updateTaxonSets", "crawlForType",
@@ -355,9 +355,18 @@ public class UtilDataAction extends AntwebAction {
         // This should only need to be run once. No! Species list tool will not allow addition.
         // But could have a specimen removed from a specimen upload. Keep it in the scheduler.
 		if (action.equals("dataCleanup")) {
-		  message = TaxonDb.deleteSpeciesWithoutSpecimenOrAntcatSource(connection);
-		  message = TaxonDb.deleteGeneraWithoutSpecimenOrAntcatSource(connection);
+		  // First put back curator list rows parked on an earlier night whose name exists again
+		  // (set 1 has just reloaded the specimens), then clean up (which parks before deleting).
+		  message = new CuratorTaxonSetDb(connection).restore();
+		  message += TaxonDb.deleteSpeciesWithoutSpecimenOrAntcatSource(connection);
+		  message += TaxonDb.deleteGeneraWithoutSpecimenOrAntcatSource(connection);
           message += TaxonSetDb.dataCleanup(connection);
+		}
+
+		// Curator rows of region and project lists kept in taxon_set_parked (CuratorTaxonSetDb):
+		// put back those whose name exists again. Also runs at the start of dataCleanup (nightly set 2).
+		if (action.equals("restoreParkedTaxonSets")) {
+		  message = new CuratorTaxonSetDb(connection).restore();
 		}	
 
 		/*

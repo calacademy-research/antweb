@@ -71,6 +71,10 @@ public abstract class TaxonSetDb extends AntwebDb {
     // Retained in scheduler because a specimen could be removed from a specimen list.
     public static String dataCleanup(Connection connection) throws SQLException {
       String message = "";
+      // Curator rows whose taxon row is gone (for example a morphospecies whose specimens are
+      // missing tonight) are parked first and come back when the name exists again
+      // (CuratorTaxonSetDb). The deletes below then only remove what the system can rebuild.
+      message += "parked:" + new CuratorTaxonSetDb(connection).parkCuratorRowsWithoutTaxon() + " ";
       // Only operating on the Editable ones.
       GeolocaleTaxonDb geolocaleTaxonDb = new GeolocaleTaxonDb(connection);
       message += geolocaleTaxonDb.deleteUncuratedMorphosWithoutSpecimen();

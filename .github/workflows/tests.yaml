@@ -176,7 +176,7 @@ jobs:
 
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
         run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml
-      - name: Database dates in Pacific time (connection pools against MySQL 8.4 as in docker-compose.yml)
+      - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept)
         # DbTimeZoneTest: dates written by MySQL and by Java read back as the same moment and are
         # stored as Pacific wall-clock time, for conPool, mediumConPool and longConPool.
         run: |
@@ -203,6 +203,21 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.DbTimeZoneTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (4 tests)" /tmp/out.txt
+          '
+          # CuratorTaxonSetTest: curator rows of region and project species lists survive the
+          # nightly cleanup (parked in taxon_set_parked, restored when the name exists again).
+          docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/home/CuratorTaxonSetTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.home.CuratorTaxonSetTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            grep -v "LogMgr" /tmp/out.txt | tail -5
+            grep -q "^OK (6 tests)" /tmp/out.txt
           '
           docker rm -f mysql
 
