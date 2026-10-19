@@ -19,74 +19,9 @@ public class AntwikiTaxonCountryDb extends AntwebDb {
       super(connection);
     }
 
-    public void deleteValidTaxa() {
-        String sql = null;
-        Statement stmt = null;
+    // deleteValidTaxa/insertValidTaxa and deleteFossilTaxa/insertFossilTaxa were used only by
+    // upload.do's "Upload a Data File" tool, removed in 2026-10.
 
-        try {
-          sql = "delete from antwiki_valid_taxa";
-          stmt = DBUtil.getStatement(getConnection(), "deleteValidTaxa()");
-          stmt.executeUpdate(sql);
-        } catch (SQLException e) {
-          s_log.error("deleteValidTaxa() e:" + e);
-        } finally {
-          DBUtil.close(stmt, "deleteValidTaxa");
-        }
-    }    
-    public void insertValidTaxa(String taxonName) throws SQLException {
-
-        String sql = null;
-        Statement stmt = null;
-
-        try {
-            // todo use prepared statement, skip escaping quotes
-          taxonName = Formatter.escapeQuotes(taxonName);
-          sql = "insert into antwiki_valid_taxa(taxon_name) values ('" + taxonName + "')";
-          
-          //A.log("insertValidTaxa() taxonName:" + taxonName);
-
-          stmt = DBUtil.getStatement(getConnection(), "insertValidTaxa()");
-          stmt.executeUpdate(sql);
-        } catch (SQLException e) {
-          s_log.warn("insertValidTaxa() taxonName:" + taxonName + " e:" + e);
-        } finally {
-          DBUtil.close(stmt, "insertValidTaxa()");
-        }
-    }
-    
-    public void deleteFossilTaxa() {
-        String sql = null;
-        Statement stmt = null;
-
-        try {
-          sql = "delete from antwiki_fossil_taxa";
-          stmt = DBUtil.getStatement(getConnection(), "deleteFossilTaxa()");
-          stmt.executeUpdate(sql);
-        } catch (SQLException e) {
-          s_log.error("deleteFossilTaxa() e:" + e);
-        } finally {
-          DBUtil.close(stmt, "deleteFossilTaxa");
-        }
-    }    
-    public void insertFossilTaxa(String taxonName) throws SQLException {
-
-        String sql = null;
-        Statement stmt = null;
-
-        try {
-          taxonName = Formatter.escapeQuotes(taxonName);
-          sql = "insert into antwiki_fossil_taxa(taxon_name) values ('" + taxonName + "')";
-
-          stmt = DBUtil.getStatement(getConnection(), "insertFossilTaxa()");
-          stmt.executeUpdate(sql);
-        } catch (SQLException e) {
-          s_log.warn("insertFossilTaxa() taxonName:" + taxonName + " e:" + e);
-        } finally {
-          DBUtil.close(stmt, "insertFossilTaxa()");
-        }
-    }
-        
-    
     //----------------------------------------------------------------------------------------
 
     

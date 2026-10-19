@@ -470,22 +470,16 @@ public class ProjectDb extends AntwebDb {
     }
     
     public void deleteSpeciesList(String speciesList) {
-        String query;
-        try {	
-            Statement stmt;
-            stmt = getConnection().createStatement();
-
-            query = "delete from project where project_name = '" + speciesList + "'";
-            stmt.executeUpdate(query);
-
-            query = "delete from proj_taxon where project_name = '" + speciesList + "'";
-            stmt.executeUpdate(query);
-
-            stmt.close();
-        } catch (SQLException e) {
-          s_log.error("deleteSpeciesList(" + speciesList + ") e:" + e);
-        }  
-
+        if (speciesList == null) return;
+        String[] queries = {"delete from project where project_name = ?", "delete from proj_taxon where project_name = ?"};
+        for (String query : queries) {
+            try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
+                stmt.setString(1, speciesList);
+                stmt.executeUpdate();
+            } catch (SQLException e) {
+                s_log.error("deleteSpeciesList() query:" + query + " e:" + e);
+            }
+        }
         s_log.info("deleteSpeciesList speciesList:" + speciesList);
     }
 

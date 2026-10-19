@@ -11,7 +11,6 @@ import org.apache.struts.action.ActionMapping;
 import org.apache.struts.upload.FormFile;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.curate.speciesList.SpeciesListUploader;
-import org.calacademy.antweb.data.AntWikiData;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 
@@ -45,12 +44,12 @@ public class UploadAction extends AntwebAction {
 	// Site-wide jobs: admins only.
 	static final java.util.Set<String> ADMIN_ONLY_ACTIONS = java.util.Set.of(
 			"fetchAndReloadWorldants", "reloadSpeciesLists", "museumCalc",
-			"speciesTest", "runStatistics", "runCountCrawls", "toggleDownTime", "genAll", "genRecentDescEdits",
+			"runStatistics", "runCountCrawls", "toggleDownTime", "genAll", "genRecentDescEdits",
 			"allSpecimenFiles");
 
 	// Removed sub-actions (unused tools, 2026-10): answered as "Action not found." before anything else.
 	static final java.util.Set<String> REMOVED_ACTIONS = java.util.Set.of(
-			"reloadSpecimenList", "removeSpecimenList", "uploadSpeciesList");
+			"reloadSpecimenList", "removeSpecimenList", "uploadSpeciesList", "specimenTest", "speciesTest");
 
 	public static boolean isRemovedAction(String action) {
 		return action != null && REMOVED_ACTIONS.contains(action);
@@ -62,7 +61,7 @@ public class UploadAction extends AntwebAction {
 
 	// Need the login's "upload specimens" permission (or admin).
 	static final java.util.Set<String> SPECIMEN_UPLOAD_ACTIONS = java.util.Set.of(
-			"specimenUpload", "taxonWorksUpload", "GBIFUpload", "specimenTest");
+			"specimenUpload", "taxonWorksUpload", "GBIFUpload");
 
 	/** Upload as another curator: admins, or a curator listed in this login's "upload as" setting. */
 	public static boolean isAllowedUploadAs(Login accessLogin, String curateAs) {
@@ -213,7 +212,6 @@ public class UploadAction extends AntwebAction {
 			//if (AntwebProps.isDevOrStageMode()) httpPostOK = true;
 			if (!(HttpUtil.isPost(request) || httpPostOK) && !(
 					"runStatistics".equals(action)
-							|| "specimenTest".equals(action)
 							|| "genRecentDescEdits".equals(action)
 			)) {
 				String message = "action:" + action + " must be submitted through an http post.";
@@ -322,39 +320,6 @@ public class UploadAction extends AntwebAction {
 
 					uploadDetails.finish(accessLogin, request, connection);
 
-				} else if (action.equals("specimenTest")) {
-					// This will reload the last specimen upload of the login listed below.
-					// First log in as them and upload as them, then subsequents to
-					// http://localhost/antweb/upload.do?action=specimenTest from any admin
-					// will reload.
-					//String testAccessLoginName = "cmoreau@fieldmuseum.org";
-					//String testAccessLoginName = "psward";
-					//String testAccessLoginName = "SShattuck";
-					String testAccessLoginName = "testLogin";
-					Login testLogin = loginDb.getLoginByName(testAccessLoginName);
-					Curator testCurator = LoginMgr.getCurator(testLogin);
-					accessGroup = testLogin.getGroup();
-
-					// Fetched from AppResources site.inputfilehome=/Users/mark/dev/calAcademy/workingdir/
-					// In this test case, no file is uploaded, but the server side workingdir copy is used. (specimen21.txt).
-					// UploadFile - backup() /antweb/workingdir/specimen21.txt to /antweb/web/upload/20131112-21:28:53-specimen21.txt
-					String formFileName = new Date() + "specimenTest" + accessGroup + ".txt";
-
-					//logFileName += accessGroup.getAbbrev() + "SpecimenTest" + UploadDetails.getLogExt();
-					s_log.info("execute() specimenTest");
-					boolean isUpload = false; // This is a reload
-					uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(accessGroup.getAbbrev() + "specimenTest", formFileName
-							, testCurator, request.getHeader("User-Agent"), theForm.getEncoding(), isUpload);
-
-					ActionForward af = uploadDetails.returnForward(mapping, request);
-					if (af != null) return af;
-
-					specimenPostProcess(request, connection, testCurator, uploadDetails);
-					specimenPostProcessGlobal(connection);
-
-					return uploadDetails.findForward(mapping, request);
-
-					//  Yes it should, unless there are errors.  s_log.info("execute() specimenTest.  This should not happen");
 				} else if ("allSpecimenFiles".equals(action)) {
 					/*
 					// All specimen*.txt files should be downloaded to the machine from the production site, prior to this command.
@@ -409,14 +374,6 @@ public class UploadAction extends AntwebAction {
 					specimenPostProcessGlobal(connection);
 
 					httpPostOK = true;
-				} else if (action.equals("speciesTest")) {
-					//String message = "Species List test not yet implemented.";
-
-					SpeciesListUpload speciesListUpload = new SpeciesListUpload(connection);
-					uploadDetails = speciesListUpload.importSpeciesList("worldants", "/Users/mark/dev/calAcademy/workingdir/worldants.txt"
-							, "worldants.txt", "UTF-8", accessGroup.getId());
-					if (uploadDetails.getErrorForward(mapping) != null) return uploadDetails.getErrorForward(mapping);
-
 				} else if (action.equals("museumCalc")) {
 					Map<String, Integer> museumMap = (Map<String, Integer>) session.getAttribute("museumMap");
 
@@ -447,6 +404,14 @@ public class UploadAction extends AntwebAction {
 			// Delete Project
 			if (!theForm.getDeleteProject().equals("none")) {
 				String deleteProject = theForm.getDeleteProject();
+
+				// Only the administrators' form on projectMgr.do offers this.
+				String refused = deleteProjectRefusal(accessLogin, deleteProject, ProjectMgr.getAllProjectsHash());
+				if (refused != null) {
+					s_log.warn("execute() deleteProject refused for login:" + accessLogin.getId());
+					request.setAttribute("message", refused);
+					return mapping.findForward("message");
+				}
 
 				ProjectDb projectDb = new ProjectDb(connection);
 				projectDb.deleteSpeciesList(deleteProject);
@@ -500,9 +465,9 @@ public class UploadAction extends AntwebAction {
 				//String dir = downloadSpeciesList.substring(0, downloadSpeciesList.indexOf("ants"));
 				//if (dir.equals("mad")) dir = "madagascar";
 				//if (dir.equals("cal")) dir = "california";
-				String url = domainApp + "/speciesListDownload.do?projectName=" + downloadSpeciesList;
+				String url = domainApp + "/speciesListDownload.do?projectName=" + Html.url(downloadSpeciesList);
 				//String url = domainApp + "/web/speciesList/" + dir + "/" + downloadSpeciesList + UploadFile.getSpeciesListTail();  //"_project.txt";
-				String message = "<b>'Right-click' and 'Save Link As' to download:</b> <a href=\"" + url + "\">" + url + "</a>";
+				String message = "<b>'Right-click' and 'Save Link As' to download:</b> <a href=\"" + Html.escAttr(url) + "\">" + Html.esc(url) + "</a>";
 				s_log.info(message);
 
 				request.setAttribute("message", message);
@@ -516,33 +481,11 @@ public class UploadAction extends AntwebAction {
 				return mapping.findForward("message");
 			}
 
-			// Upload a Data File:
-			FormFile testFile = theForm.getTestFile();
-			//A.log("upload a data file:" + testFile);
-			if (testFile != null) {
-				if (!testFile.getFileName().equals("")) {
-					//action = "upload:" + testFile.getFileName();
-					//s_log.info("execute() Upload a test file logFileName:" + logFileName);
-					//s_log.info("execute() testFile:" + testFile.getFileName());
-
-					uploadDetails = uploadDataFile(theForm, request, mapping, connection);
-                    if (uploadDetails != null) {
-						return uploadDetails.findForward(mapping, request);
-					} else {
-						request.setAttribute("message", "Upload unsuccessful.");
-						return mapping.findForward("message");
-					}
-				} else {
-                    String message = getUploadDataFileDoc(accessLogin);
-					request.setAttribute("message", message);
-					return mapping.findForward("message");
-				}
-			}
-
-			if (theForm.getSuccessKey() != null && theForm.getSuccessKey().equals("worldAuthorityFiles")) {
-				s_log.debug("execute() worldauth successKey:" + theForm.getSuccessKey());
-				worldAuthGen(request);
-				uploadDetails.setForwardPage(theForm.getSuccessKey());
+			// Nothing else is done by upload.do ("Upload a Data File" and the world authority
+			// file generation were removed in 2026-10: no form used them).
+			if (action == null) {
+				request.setAttribute("message", "Action not found.");
+				return mapping.findForward("message");
 			}
 
 			uploadDetails.finish(accessLogin, request, connection);
@@ -713,645 +656,15 @@ public class UploadAction extends AntwebAction {
 	}
 
 
-	public String getUploadDataFileDoc(Login accessLogin) {
-		String message = "";
-		String delimitNote = "";
-		if (accessLogin.isAdmin()) delimitNote = "tab-delimited ";
-	    message = "<h2>Upload Data</h2><br> requires a " + delimitNote + "text file with...";
+	public static final String DELETE_PROJECT_ADMIN_ONLY = "Only an AntWeb administrator may delete a species list.";
+	public static final String DELETE_PROJECT_NOT_FOUND = "Species list not found.";
 
-		if (accessLogin.isAdmin()) {
-			message +=
-					"<br><br>'<b>valid_species_list</b>' in the filename and has column headers: subfamily, genus, genus_species, ... - other columns irrelevant."
-							+ "<br><br>or"
-							+ "<br><br>'<b>valid</b>' in the filename and has column headers: subfamily, genus, species, subspecies - delete other columns."
-							+ "<br><br>or"
-							+ "<br><br>'<b>fossil</b>' in the filename and has column headers: subfamily, genus, species, subspecies - delete other columns."
-							+ "<br><br>or"
-							+ "<br><br>'<b>synonym</b>' in the filename that has columns subfamily, genus, species, [subspecies], current_valid_name (Genus species [subspecies]) - delete other columns."
-							+ "<br><br>or"
-							+ "<br><br>'<b>ngc_species</b>' or '<b>NGC Species</b>' in the filename where the contents are the Bolten New Genera Catalog saved as plain text."
-							+ "<br><br>or";
-		}
-		if (accessLogin.isCurator()) {
-			message +=
-					"<br><br>'<b>specimen</b>' in the filename and just one specimen code per line (no tabs required) to get a tab-delimited file of specimen details.";
-		}
-   	    return message;
-    }
-
-    // Can run valid test, fossil test, synonym test, Bolton NGC load or specimen list.
-    public UploadDetails uploadDataFile(UploadForm theForm, HttpServletRequest request, ActionMapping mapping, Connection connection)
-      throws IOException {
-
-        UploadDetails uploadDetails = null;
-        String dir = theForm.getHomePageDirectory();
-
-        FormFile testFile = theForm.getTestFile();
-        String operation = testFile.getFileName();
-
-		String docBase = AntwebProps.getDocRoot();
-        //String docBase = request.getRealPath("/");
-        //if (AntwebProps.isDevMode()) docBase = "/Users/mark/dev/calacademy/workingdir/";
-        docBase += "web/workingdir/";
-        Utility.makeDirTree(docBase);
-        //A.log("uploadDataFile() docBase:" + docBase);
-		String fileName = testFile.getFileName();
-        String filePath = docBase + testFile.getFileName();
-        boolean isSuccess = Utility.copyFormFile(theForm.getTestFile(), filePath, false);
-
-        String UNMATCHED_FUNCTION = "UNMATCHED_FUNCTION";
-		String messageStr = UNMATCHED_FUNCTION;
-		if (!isSuccess) {
-          messageStr = "copyFile failure";
-
-          s_log.error("uploadDataFile() messageStr:" + messageStr + " does docBase exist:" + docBase);
-          return new UploadDetails(operation, messageStr, request);
-        }
-
-		s_log.debug("uploadDataFile() dir:" + dir + " docBase:" + docBase + " filePath:" + filePath);
-        // project:worldants fileName:/Users/mark/dev/calAcademy/workingdir/worldants.txt shortFileName:worldants.txt encoding:UTF-8 isBioRegion:true
-
-		BufferedReader in = null;
-        try {
-
-            String encoding = "UTF-8";
-
-			in = Files.newBufferedReader(Paths.get(filePath), Charset.forName(encoding));
-
-            if (in == null) {
-                messageStr = "uploadDataFile() BufferedReader is null for file:" + Html.esc(filePath);
-				return new UploadDetails(operation, messageStr, request);
-            }
-
-            // parse the header
-            String theLine = in.readLine();
-            if (theLine == null) {
-                messageStr = "uploadDataFile() null line.  Perhaps empty file:" + Html.esc(fileName) + "?";
-            } else {
-                A.log("uploadDataFile() 1 fileName:" + fileName + " header:" + theLine);
-            }
-            // File comes from: http://antwiki.org/wiki/images/9/9e/AntWiki_Valid_Species.txt
-            // Notice the version number inside. Link to current is here:
-            //    http://antwiki.org/wiki/Species_Accounts under: List of valid fossil species (names in use)
-            // AntwikiDataAction checks for updates.
-
-            if (fileName.contains("valid_species_list")) {
-              messageStr = testValidSpeciesList(in, connection);
-            } else if (fileName.contains("valid") || fileName.contains("Valid")) {
-              messageStr = testFileValid(in, connection);
-            } else if (fileName.contains("fossil") || fileName.contains("Fossil")) {
-              // File comes from: http://www.antwiki.org/wiki/images/7/7b/AntWiki_Fossil_Species.txt
-              // Notice the version number inside. Link to current is here:
-              //    http://antwiki.org/wiki/Species_Accounts under: List of valid fossil species (names in use)
-              // AntwikiDataAction checks for updates.
-              messageStr = testFileFossil(in, connection);
-            } else if (fileName.contains("synonym")) {
-              messageStr = testFileSynonyms(in, connection);
-            } else if (fileName.contains("ngc_species") || fileName.contains("NGC Species")) { // Bolton New Genera Catalog
-              messageStr = boltonNewGeneraCatalog(in, connection);
-            } else if (fileName.contains("specimen")) {
-				messageStr = getSpecimenList(fileName, theLine, in, connection);
-			} else if (UNMATCHED_FUNCTION.equals(messageStr)) {
-            	messageStr = "Upload file function not recognized:" + Html.esc(filePath) + ". Submit for documention.";
-			}
-
-			s_log.info("uploadDataFile() fileName:" + fileName + " messageStr:" + messageStr);
-            request.setAttribute("message", messageStr);
-        } catch (FileNotFoundException e) {
-            messageStr = "uploadDataFile() e" + Html.esc(e);
-            s_log.error(messageStr);
-        } catch (IndexOutOfBoundsException e) {
-            messageStr = "uploadDataFile() e" + Html.esc(e);
-            AntwebUtil.logStackTrace(e);
-            s_log.error(messageStr);
-        } catch (Exception e) {
-            AntwebUtil.logStackTrace(e);
-            messageStr = "uploadDataFile() e" + Html.esc(e);
-            s_log.error(messageStr);
-        } finally {
-            in.close();
-        }
-
-		uploadDetails = new UploadDetails(operation, messageStr, request);
-		uploadDetails.setForwardPage("adminMessage");
-
-        return uploadDetails;
-    }
-
-
-	private String getSpecimenList(String fileName, String firstLine, BufferedReader in, Connection connection)
-			throws IOException, SQLException {
-		String messageStr;
-		String line = firstLine;
-
-		int lineNum = 0;
-		String dir = "/tmp";
-		String fullDir = AntwebProps.getDocRoot() + dir;
-		FileUtil.makeDir(fullDir);
-		String outputPath = "/specimenList.txt";
-		String fullPath = fullDir + outputPath;
-		String fullUrl = AntwebProps.getDomainApp() + dir + outputPath;
-		A.log("getSpecimenList() outputPath is:" + fullPath + " fullUrl:" + fullUrl);
-
-		SpecimenDb specimenDb = new SpecimenDb(connection);
-		//TaxonDb taxonDb = new TaxonDb(connection);
-
-		LogMgr.emptyFile(fullPath);
-		LogMgr.appendFile(fullPath, Specimen.getTabDelimHeader());
-
-		StringBuilder validationErrors = new StringBuilder();
-		int errorCount = 0;
-
-		while (line != null) {
-            //A.log("getSpecimenList() lineNum:" + lineNum + " line:" + line);
-
-			// If the file contains simply "*", generate a file with all specimen data.
-			if ("*".equals(line) && 0 == lineNum) {
-				ArrayList<String> allSpecimen = specimenDb.getAntwebSpecimenCodes(Family.FORMICIDAE);
-				A.log("logAll() size:" + allSpecimen.size());
-				for (String code : allSpecimen) {
-					String outputLine = specimenDb.getSpecimen(code).getTabDelimString();
-					LogMgr.appendFile(fullPath, outputLine);
-				}
-				break;
-			}
-
-			++lineNum;
-			if (line == null) continue;
-			String specimenCode = line.trim();
-			if (specimenCode.isEmpty()) {
-				line = in.readLine();
-				continue;
-			}
-
-			if (specimenCode.contains(" ")) {
-				validationErrors.append("Line " + lineNum + ": specimen code \""
-					+ specimenCode + "\" contains a space character, which is not permitted.<br>");
-				errorCount++;
-				line = in.readLine();
-				continue;
-			}
-
-			try {
-				if (!specimenDb.exists(specimenCode)) {
-					validationErrors.append("Line " + lineNum + ": specimen code \""
-						+ specimenCode + "\" was not found in the database.<br>");
-					errorCount++;
-					line = in.readLine();
-					continue;
-				}
-
-				Specimen specimen = specimenDb.getSpecimen(specimenCode);
-			//String taxonName = specimen.getTaxonName();
-			//Taxon taxon = taxonDb.getTaxon(taxonName);
-				String outputLine = specimen.getTabDelimString();
-				LogMgr.appendFile(fullPath, outputLine);
-			} catch (Exception e) {
-				validationErrors.append("Line " + lineNum + ": specimen code \""
-					+ specimenCode + "\" caused an error: " + e.getMessage() + "<br>");
-				errorCount++;
-			}
-
-			line = in.readLine();
-		} // end while loop through lines
-
-		A.log("getSpecimenList() lineNum:" + lineNum + " line:" + line);
-				//http://localhost/antweb//tmp/specimenList.txt
-
-		if (errorCount > 0) {
-			messageStr = "<h1>Specimen List</h1><br><br>"
-				+ "<b>Upload failed with " + errorCount + " error(s) in file: " + fileName + "</b><br><br>"
-				+ validationErrors.toString();
-			s_log.error("getSpecimenList() " + errorCount + " validation errors in file: " + fileName);
-			return messageStr;
-		}
-
-		messageStr = "<h2>Specimen List</h2><br><br>";
-		messageStr += "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + fullUrl + "\">" + outputPath + "</a>";
-		messageStr += "<br><br>";
-
-		return messageStr;
+	/** Null if accessLogin may delete the species list projectName (an existing one, admins only), otherwise why not. */
+	public static String deleteProjectRefusal(Login accessLogin, String projectName, Map<String, ?> existing) {
+		if (accessLogin == null || !Boolean.TRUE.equals(accessLogin.isAdmin())) return DELETE_PROJECT_ADMIN_ONLY;
+		if (projectName == null || existing == null || !existing.containsKey(projectName)) return DELETE_PROJECT_NOT_FOUND;
+		return null;
 	}
-
-    private String  boltonNewGeneraCatalog(BufferedReader in, Connection connection)
-      throws IOException {
-        String messageStr;
-        String line = "";
-
-        StringBuffer content = new StringBuffer();
-
-        int lineNum = 0;
-        int parsedLines = 0;
-
-        String dir = "/tmp";
-        String fullDir = AntwebProps.getDocRoot() + dir;
-        FileUtil.makeDir(fullDir);
-        String outputPath = "/parsedBoltonNGC.txt";
-        String fullPath = fullDir + outputPath;
-        String fullUrl = AntwebProps.getDomainApp() + dir + outputPath;
-        s_log.debug("boltonNewGeneraCatalog() outputPath is:" + fullPath + " fullUrl:" + fullUrl);
-
-        while (line != null) {
-          line = in.readLine();
-          ++lineNum;
-
-          if (line == null) continue;
-
-          boolean parseLine = true;
-
-          // if it follows the pattern of one word, followed by a period, no *
-          if (line.length() > 0 && line.charAt(0) == '*') parseLine = false;
-          if (!line.contains("(")) parseLine = false;
-          int periodIndex = line.indexOf(".");
-          if (periodIndex < 0) continue;
-          if (line.indexOf(" ") < periodIndex) parseLine = false;
-
-          if (parseLine) {
-            String p1 = line.substring(0, periodIndex);
-            int parenIndex = line.indexOf("(");
-            if (parenIndex < 0 || parenIndex < periodIndex) continue;
-            String p2 = line.substring(periodIndex + 2, parenIndex);
-
-            ++parsedLines;
-
-            if (parsedLines < 20)
-              content.append(p1 + "\t" + p2 + "<br>\n");
-
-            if (p1.equals("striatus")) s_log.debug("striatus " + p2);
-
-            LogMgr.appendFile(fullPath, p1 + "\t" + p2);
-
-          }
-
-        } // end while loop through lines
-
-        s_log.debug("boltonNewGeneraCatalog() lineNum:" + lineNum + " parsedLines:" + parsedLines);
-
-        messageStr = "<h3>Parsed Bolton New Genera Catalog</h3><br><br>";
-
-        messageStr += "<b>'Right-click' and 'Save Link As' to download:</b><br> <a href=\"" + fullUrl + "\">" + outputPath + "</a>";
-
-//http://localhost/antweb//tmp/parsedBoltonNGC.txt
-
-        messageStr += "<br><br>" + content;
-
-        return messageStr;
-    }
-
-    private String testFileValid(BufferedReader in, Connection connection)
-      throws IOException, SQLException {
-        String messageStr;
-        String theLine = "";
-
-        //try {
-
-            AntwikiTaxonCountryDb antwikiTaxonCountryDb = new AntwikiTaxonCountryDb(connection);
-            antwikiTaxonCountryDb.deleteValidTaxa();
-
-            StringBuffer content = new StringBuffer();
-
-            int validTaxonCount = 0;
-            int notValidTaxonCount = 0;
-            int lineNum = 0;
-            TaxonDb taxonDb = new TaxonDb(connection);
-            while (theLine != null) {
-              theLine = in.readLine();
-              ++lineNum;
-
-              if (theLine == null) continue;
-
-              //String taxonName = (new AntWikiData(theLine)).getShortTaxonName();
-              String taxonName = new AntWikiData(theLine).getTaxonName();
-              antwikiTaxonCountryDb.insertValidTaxa(taxonName);
-              // insert taxonName into Antwiki_valid_taxa
-              // then report on select valid taxa from taxon where not in (select taxon_name from antwiki_valid_taxa.
-
-              Taxon dummyTaxon = taxonDb.getTaxon(taxonName); //TEMP08
-              String validStr = "null";
-              if (dummyTaxon != null) validStr = dummyTaxon.getStatus();
-              //A.log("testFileValid() taxonName:" + taxonName + " valid:" + validStr);
-              if (dummyTaxon != null) {
-                if (dummyTaxon.getStatus().equals(Status.VALID) || dummyTaxon.getStatus().equals(Status.UNIDENTIFIABLE)) {
-                  ++validTaxonCount;
-                } else {
-                  ++notValidTaxonCount;
-                  content.append("line:" + lineNum + " " + Taxon.makeDescriptionLink(taxonName, taxonName) + " - " + Html.esc(dummyTaxon.getStatus()) + " <br>\n");
-                }
-              } else {
-                ++notValidTaxonCount;
-                content.append("line:" + lineNum + " " + taxonName + " <br>\n");
-              }
-
-            } // end while loop through lines
-
-            s_log.debug("testFileValid() validTaxonCount:" + validTaxonCount + " notValidTaxonCount:" + notValidTaxonCount);
-            messageStr = "<h3>AntWiki Valid Species List Check</h3><br><br>"
-              + "validTaxonCount:" + validTaxonCount + " notValidTaxonCount:" + notValidTaxonCount + "\n"
-              + "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;Report: <a href='" + AntwebProps.getDomainApp() + "/query.do?action=curiousQuery&name=antwebUniqueValidTaxa'>Antweb Unique Valid Taxa</a>"
-              + "<br><br>" + content
-              ;
-
-        return messageStr;
-    }
-
-    private String testFileFossil(BufferedReader in, Connection connection)
-      throws IOException, SQLException {
-        String messageStr = null;
-        String theLine = "";
-
-        try {
-
-            AntwikiTaxonCountryDb antwikiTaxonCountryDb = new AntwikiTaxonCountryDb(connection);
-            antwikiTaxonCountryDb.deleteFossilTaxa();
-
-            RE tab = new RE("\t");
-
-            String[] components;
-            StringBuffer content = new StringBuffer();
-
-            int fossilTaxonCount = 0;
-            int notFossilTaxonCount = 0;
-            int lineNum = 0;
-            TaxonDb taxonDb = new TaxonDb(connection);
-            while (theLine != null) {
-              theLine = in.readLine();
-              ++lineNum;
-
-              if (theLine == null) continue;
-
-              components = tab.split(theLine);
-              String subfamily = components[0].toLowerCase();
-              if ("uncertain".equals(subfamily)) subfamily = "incertae_sedis";
-              String genus = components[1].toLowerCase();
-              String species = components[2];
-              String subspecies = null;
-              if (components.length > 3) {
-                  subspecies = components[3];
-              }
-
-              //subfamily = subfamily.trim();
-              //genus = genus.trim();
-
-              String taxonName = subfamily + genus + " " + species;
-              if (subspecies != null) taxonName += " " + subspecies;
-
-              //A.log("testFileFossil() subfamily:" + subfamily + ". genus:" + genus + ". taxonName:" + taxonName);
-
-
-              antwikiTaxonCountryDb.insertFossilTaxa(taxonName);
-              // insert taxonName into Antwiki_fossil_taxa
-              // then report on select fossil taxa from taxon where not in (select taxon_name from antwiki_fossil_taxa.
-
-              Taxon dummyTaxon = taxonDb.getTaxon(taxonName); //TEMP08
-              if (dummyTaxon != null) {
-                if (dummyTaxon.getIsFossil()) {
-                  ++fossilTaxonCount;
-                } else {
-                  ++notFossilTaxonCount;
-
-//??
-                  content.append("line:" + lineNum + " " + Taxon.makeDescriptionLink(taxonName, taxonName) + " - not fossil<br>\n");
-                }
-              } else {
-                ++notFossilTaxonCount;
-                content.append("line:" + lineNum + " " + taxonName + " <br>\n");
-              }
-
-            } // end while loop through lines
-
-            s_log.debug("testFileFossil() fossilTaxonCount:" + fossilTaxonCount + " notFossilTaxonCount:" + notFossilTaxonCount);
-            messageStr = "<h3>Fossil Test</h3><br><br>"
-              + "These taxa were found in the file but not on Antweb, or they were found but were not flagged as a fossil...<br><br><br>"
-              + "fossilTaxonCount:" + fossilTaxonCount + " notFossilTaxonCount:" + notFossilTaxonCount + "\n"
-
-              + "<br><br>&nbsp;&nbsp;&nbsp;&nbsp;Report: <a href='" + AntwebProps.getDomainApp() + "/query.do?action=curiousQuery&name=antwebUniqueFossilTaxa'>Antweb Unique Fossil Taxa</a>"
-
-              + "<br><br>" + content
-              ;
-
-        } catch (RESyntaxException e) {
-          s_log.info("testFileFossil() e:" + e);
-        }
-        return messageStr;
-    }
-
-    private String testValidSpeciesList(BufferedReader in, Connection connection)
-      throws IOException, SQLException {
-        String messageStr = null;
-        String theLine = "";
-        try {
-            //RE tab = new RE("\t");
-            RE comma = new RE(",");
-
-            String[] components;
-            //StringBuffer cvnfContent = new StringBuffer();
-            StringBuffer tnfContent = new StringBuffer(96); // Taxa Not Found
-            StringBuffer awContent = new StringBuffer(64); // Taxa Not Found
-
-            int currentValidFound = 0;
-            int currentValidNotFound = 0;
-            int taxonNotFound = 0;
-            int lineNum = 0;
-            TaxonDb taxonDb = new TaxonDb(connection);
-
-            ArrayList<Taxon> validSpecies = taxonDb.getTaxa("species", "valid");
-            HashMap<String, Taxon> validSpeciesMap = new HashMap<>();
-            for (Taxon taxon : validSpecies) {
-              validSpeciesMap.put(taxon.getTaxonName(), taxon);
-            }
-            int antwebValidSpeciesCount = validSpeciesMap.size();
-
-            int c = 0;
-            while (theLine != null) {
-              theLine = in.readLine();
-              ++lineNum;
-
-              if (theLine == null) continue;
-
-              //components = tab.split(theLine);
-              components = comma.split(theLine);
-              String subfamily = components[0].toLowerCase();
-              String genus = components[1].toLowerCase();
-              String species = components[2];
-/*(
-              String subspecies = null;
-              if (components.length > 3) {
-                  subspecies = components[3];
-              }
-              String currentValidName = null;
-              if (components.length > 4) {
-                  currentValidName = subfamily + components[4].toLowerCase();
-              }
-*/
-              if (subfamily == null || "".equals(subfamily)) subfamily = "incertae_sedis";
-              String taxonName = subfamily + species;
-              taxonName = taxonName.toLowerCase();
-//              if (subspecies != null) taxonName += " " + subspecies;
-
-              validSpeciesMap.remove(taxonName);
-
-              Taxon dummyTaxon = taxonDb.getTaxon(taxonName);
-              String antwebCurrentValidName = null;
-              if (dummyTaxon != null) {
-/*
-                antwebCurrentValidName = dummyTaxon.getCurrentValidName();
-                if (currentValidName != null && currentValidName.equals(antwebCurrentValidName)) {
-                  ++currentValidFound;
-                } else {
-                  cvnfContent.append("line:" + lineNum + " " + Taxon.makeDescriptionLink(taxonName, taxonName) + " refers:" + Html.esc(currentValidName) + " antwebCurrentValidName:" + Html.esc(antwebCurrentValidName) + "<br>\n");
-                  ++currentValidNotFound;
-                }
-*/
-              } else {
-                ++c;
-                tnfContent.append(c + ". line:" + lineNum + " " + Taxon.makeDescriptionLink(taxonName, species) + "<br>&nbsp;&nbsp;" + Html.esc(theLine) + "<br>\n"); //" refers:" + currentValidName +
-                ++taxonNotFound;
-              }
-            } // end while loop through lines
-
-            int c2 = 0;
-            for (Taxon taxon : validSpeciesMap.values()) {
-              ++c2;
-              awContent.append("<br>" + c2 + ". " + Taxon.makeDescriptionLink(taxon.getTaxonName()));
-            }
-
-            messageStr = "<h2>Valid Species List</h2>"
-              + "<br>Lines in Antcat valid species file: " + (lineNum - 1)  // minus 1 for the header
-              + "<br>Antcat valid species Count not in Antweb: " + c
-              + "<br><br>Antweb valid species count: " + antwebValidSpeciesCount
-              + "<br>Antweb valid species count not in file: " + validSpeciesMap.size()
-             // + " taxonNotFound:" + taxonNotFound + "\n"
-             // + "<br><br><h3>Current Valid Name in Question:</h3><br><br>" + cvnfContent.toString()
-              + "<br><br><h3>Antcat taxa not found in Antweb</h3><br>" + tnfContent
-              + "<br><br><h3>Antweb taxa not found in file</h3>" + awContent;
-
-
-        } catch (RESyntaxException e) {
-          s_log.error("testValidSpeciesList() e:" + e);
-        }
-        return messageStr;
-    }
-
-    private String testFileSynonyms(BufferedReader in, Connection connection)
-      throws IOException, SQLException {
-        String messageStr = null;
-        String theLine = "";
-        try {
-            RE tab = new RE("\t");
-
-            String[] components;
-            StringBuffer cvnfContent = new StringBuffer(96);
-            StringBuffer tnfContent = new StringBuffer();
-
-            int currentValidFound = 0;
-            int currentValidNotFound = 0;
-            int taxonNotFound = 0;
-            int lineNum = 1;
-            TaxonDb taxonDb = new TaxonDb(connection);
-            while (theLine != null) {
-              theLine = in.readLine();
-              ++lineNum;
-
-              if (theLine == null) continue;
-
-              components = tab.split(theLine);
-              String subfamily = components[0].toLowerCase();
-              String genus = components[1].toLowerCase();
-              String species = components[2];
-              String subspecies = null;
-              if (components.length > 3) {
-                  subspecies = components[3];
-              }
-              String currentValidName = null;
-              if (components.length > 4) {
-                  currentValidName = subfamily + components[4].toLowerCase();
-              }
-
-              String taxonName = subfamily + genus + " " + species;
-              if (subspecies != null) taxonName += " " + subspecies;
-
-              Taxon dummyTaxon = taxonDb.getTaxon(taxonName);
-              String antwebCurrentValidName;
-              if (dummyTaxon != null) {
-                antwebCurrentValidName = dummyTaxon.getCurrentValidName();
-                if (currentValidName != null && currentValidName.equals(antwebCurrentValidName)) {
-                  ++currentValidFound;
-                } else {
-                  cvnfContent.append("line:" + lineNum + " " + Taxon.makeDescriptionLink(taxonName, taxonName) + " refers:" + Html.esc(currentValidName) + " antwebCurrentValidName:" + Html.esc(antwebCurrentValidName) + "<br>\n");
-                  ++currentValidNotFound;
-                }
-              } else {
-                tnfContent.append("line:" + lineNum + " " + taxonName + " refers:" + currentValidName + "<br>\n");
-                ++taxonNotFound;
-              }
-            } // end while loop through lines
-
-            messageStr = "<h3>Synonym Test</h3><br><br>"
-              + " currentValidFound:" + currentValidFound + " currentValidNotFound:" + currentValidNotFound + " taxonNotFound:" + taxonNotFound + "\n"
-              + "<br><br><h3>Current Valid Name in Question:</h3><br><br>" + cvnfContent
-              + "<br><br><h3>Taxa Not Found</h3><br><br>" + tnfContent;
-
-        } catch (RESyntaxException e) {
-          s_log.error("testFileSynonyms() e:" + e);
-        }
-        return messageStr;
-    }
-
-
-    private String worldAuthGen(HttpServletRequest request) {
-
-        HttpSession session = request.getSession();
-
-        s_log.info("worldAuthGen() generating world authority files");
-        WorldAuthorityGenerator worldGen = new WorldAuthorityGenerator();
-
-        ArrayList<HashMap<String, String>> extinctSubfamilies = worldGen.getSubfamilies("extinct");
-        ArrayList<HashMap<String, String>> extantSubfamilies = worldGen.getSubfamilies("extant");
-
-        s_log.info("worldAuthGen() Extinct subfamilies:" + extinctSubfamilies.size());
-        s_log.info("worldAuthGen() Extant subfamilies:" + extantSubfamilies.size());
-        s_antwebEventLog.info("import worldAuthorityFiles");
-
-        ArrayList<HashMap<String, String>> allSubfamilies = new ArrayList<>();
-        Iterator<HashMap<String,String>> iter = extinctSubfamilies.iterator();
-        while (iter.hasNext()) {
-          allSubfamilies.add(iter.next());
-        }
-        iter = extantSubfamilies.iterator();
-        while (iter.hasNext()) {
-           allSubfamilies.add(iter.next());
-        }
-        HashMap<String, ArrayList<String>> genusToSubfamily = worldGen.getSubfamilyLookup(allSubfamilies);
-        // do this 3 times because sometimes there are chains of synonyms - this is sort of a hack
-        // but should be ok...
-        for (int loop = 0; loop < 3; loop++) {
-          extinctSubfamilies = worldGen.getSubfamiliesForSynonyms(extinctSubfamilies, genusToSubfamily);
-          extantSubfamilies = worldGen.getSubfamiliesForSynonyms(extantSubfamilies, genusToSubfamily);
-        }
-
-        extantSubfamilies =  worldGen.addSynposisInfo(extantSubfamilies,"extant");
-        extinctSubfamilies =  worldGen.addSynposisInfo(extinctSubfamilies,"extinct");
-
-        // for testing purposes
-        //ArrayList<String> extant = worldGen.generateTSVSynopsisOnly("extant", allSubfamilies, extantSubfamilies);
-        //ArrayList<String> extinct = extant;
-
-        ArrayList<String> extinct = worldGen.generateTSV("extinct", allSubfamilies, extinctSubfamilies);
-        s_log.info("worldAuthGen() done with extinct");
-        ArrayList<String> extant = worldGen.generateTSV("extant", allSubfamilies, extantSubfamilies);
-
-        s_log.info("worldAuthGen() about to make problems");
-        String problems = "<h2>Problems with extinct taxa</h2>" + extinct.get(0) + " <h2>Problems with extant taxa</h2>" + extant.get(0);
-
-        session.setAttribute("extinct", extinct.get(1));
-        session.setAttribute("extant", extant.get(1));
-        session.setAttribute("problems",problems);
-        s_log.info("worldAuthGen() done generating world authority files");
-
-        s_log.info("World Authority File upload not running statistics.  Correct?  Struts Forward correct?");
-        return "worldAuthorityFiles";
-    }
-
 
     public Project getProjectForDirectory(Login login, String directory, Connection connection) {
       Project returnVal = null;

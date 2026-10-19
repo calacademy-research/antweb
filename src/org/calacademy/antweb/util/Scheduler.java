@@ -111,8 +111,6 @@ public class Scheduler extends AntwebAction {
 
 		s_log.warn("execute() action:" + action + " num:" + num + " target:" + HttpUtil.getTarget(request));
 
-        String secureCode = AntwebUtil.getSecureCode();
-
         if (AntwebMgr.isServerInitializing()) {
             String message = "Scheduler failed because isInitializing:" + AntwebMgr.isServerInitializing();
             s_log.error("execute() " + message);
@@ -120,7 +118,7 @@ public class Scheduler extends AntwebAction {
 			return mapping.findForward("adminMessage");
 		}
 
-        String message = doAction(action, num, secureCode);
+        String message = doAction(action, num);
 
         LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " Scheduler complete. "); // + 	" mesage:" + message);
 		request.setAttribute("message", message);
@@ -130,12 +128,11 @@ public class Scheduler extends AntwebAction {
     // Called from SessionRequestFilter
     public String doAction() {
       //return doAction("justLog", 0); // Perform all
-      String secureCode = AntwebUtil.getSecureCode();
-      String value = doAction("run", 0, secureCode); // Perform all
+      String value = doAction("run", 0); // Perform all
       return value;
     }
 
-    public String doAction(String action, int num, String secureCode) {
+    public String doAction(String action, int num) {
     
         if (action == null) return "Null action";
     
@@ -158,19 +155,19 @@ public class Scheduler extends AntwebAction {
           }
         }
 				
+		// A run already in progress keeps its flag and its code: checked before this run sets
+		// or clears either (the finally block below is only for a run that started here).
+		if (UtilDataAction.isInComputeProcess()) {
+		    String m = "Already in compute proceess:" + UtilDataAction.getIsInComputeProcess();
+			s_log.warn("doAction() " + m);
+			LogMgr.appendLog("compute.log", m, true);
+			return m;
+		}
+
 		try {
-			if (UtilDataAction.isInComputeProcess()) {
-			    String m = "Already in compute proceess:" + UtilDataAction.getIsInComputeProcess();
-				s_log.warn("doAction() " + m);
-				LogMgr.appendLog("compute.log", m, true);
-
-				// Would be good to send email alert?
-
-				return m;
-			}
-
-			String codeParam = "&secureCode=" + secureCode;
 		    UtilDataAction.setInComputeProcess(action);
+			// One-time code for this run's calls to utilData.do, sent in a request header (SchedulerCall).
+			java.util.Map<String, String> codeHeader = SchedulerCall.headers(AntwebUtil.getSecureCode());
 
             Object list = DBUtil.getOldConnectionList();
             if (list != null) s_log.warn("doAction() overdue resource:" + list);
@@ -198,29 +195,29 @@ public class Scheduler extends AntwebAction {
 					boolean log = true;
 
 					if (i == 0 || i == 1) {
-						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set1&param=allow" + codeParam;
-						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS);
+						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set1&param=allow";
+						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS, codeHeader);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
 						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 2) {
-						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set2&param=allow" + codeParam;
-						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS);
+						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set2&param=allow";
+						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS, codeHeader);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
 						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 3) {
-						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set3&param=allow" + codeParam;
-						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS);
+						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set3&param=allow";
+						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS, codeHeader);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
 						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
 					}
 					if (i == 0 || i == 4) {
-						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set4&param=allow" + codeParam;
-						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS);
+						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set4&param=allow";
+						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS, codeHeader);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
 						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
@@ -233,8 +230,8 @@ public class Scheduler extends AntwebAction {
 						LogMgr.appendLog("compute.log", "  set5 skipped on staging (memory)", true);
 					} else
 					if (i == 0 || i == 5) {
-						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow&reload=all" + codeParam;
-						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS);
+						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow&reload=all";
+						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS, codeHeader);
 						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
 						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
 						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");

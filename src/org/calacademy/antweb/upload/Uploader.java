@@ -39,7 +39,6 @@ public class Uploader {
     }
 
 
-    /* This version can be called directly in the case of specimenTest */
     // was 2nd param: String specimenUploadType,
     public UploadDetails uploadSpecimenFile(String operation, String fileName
             , Curator curator, String userAgent, String encoding, boolean isUpload)
@@ -69,7 +68,7 @@ public class Uploader {
             A.log("uploadSpecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
         }
 
-        if (!uploadFile.correctEncoding(encoding)) messageStr = "Encoding not validated for file:" + uploadFile.getFileLoc() + " encoding:" + uploadFile.getEncoding();
+        if (!uploadFile.correctEncoding(encoding)) messageStr = "The file is not in the chosen encoding (" + Html.esc(uploadFile.getEncoding()) + ").";
 
         if (messageStr != null) {
             // No further tests necessary.
@@ -80,6 +79,9 @@ public class Uploader {
             messageStr = "Specimen File must be in the most current format. " + isCurrentSpecimenFormat(specimenFileLoc);
         } else if (!Utility.isTabDelimited(specimenFileLoc)) {
             messageStr = "Specimen File must be a tab-delimited file.";
+        } else if (!hasSpecimenCodeColumn(specimenFileLoc, uploadFile.getCharset())) {
+            // Checked here, before importSpecimens() empties the group.
+            messageStr = "Specimen File must have a SpecimenCode column in its header line.";
         }
         if (messageStr != null) {
             s_log.warn("uploadSpecimenFile() " + messageStr);
@@ -113,93 +115,65 @@ public class Uploader {
     }
 
 
+    /** Null if the header line looks like a current specimen file, otherwise what is wrong (never the line itself). */
     protected String isCurrentSpecimenFormat(String fileName) {
-        String error = null;
-        try {
-            BufferedReader in = new BufferedReader(new FileReader(fileName));
-            if (in == null) {
-                error = "BufferedReader is null for file:" + fileName;
-                //s_log.error("isCurrentSpecimenFormat() error:" + error);
-            }
-
-            String theLine = in.readLine();
-            if (theLine == null) {
-                error = "null line.  Perhaps empty file:" + fileName + "?";
-                //s_log.error("isCurrentSpecimenFormat() error:" + error);
-            }
-
-            //s_log.warn("isCurrentSpecimenFormat() testLine:" + theLine);
-
-            if (theLine.contains("/")) {
-                error = "Line contains /.  Must be pre-Antweb 4.13.  The header:" + theLine;
-            } if (theLine.contains("taxonomic history")) {
-                error = "This specimen file contains taxonomic history.  Is it maybe a species file?";
-                //s_log.warn(error);
-            }
-            // This line will determine if Antweb4.12
-            //if (theLine.contains(SpecimenNotes)) return true;
-
-        } catch (Exception e) {
-            error = "fileName:" + fileName + " e:" + e;
-            //s_log.error("isCurrentSpecimenFormat() error:" + error);
+        try (BufferedReader in = new BufferedReader(new FileReader(fileName))) {
+            return headerProblem(in.readLine());
+        } catch (IOException e) {
+            s_log.warn("isCurrentSpecimenFormat() e:" + e);
+            return "The file could not be read.";
         }
-        //s_log.warn("isCurrentFormat() mustContainStr:" + mustContainStr + " not found in file:" + fileName);
-        return error;
+    }
+
+    /** What is wrong with a specimen file's header line, or null. The message never quotes the line. */
+    public static String headerProblem(String theLine) {
+        if (theLine == null) return "The file is empty.";
+        if (theLine.contains("taxonomic history")) {
+            return "This specimen file contains taxonomic history.  Is it maybe a species file?";
+        }
+        if (theLine.contains("/")) {
+            return "The header line contains a '/', as in files from before AntWeb 4.13. Please use the current column names.";
+        }
+        return null;
+    }
+
+    /** True if a column of the header line is SpecimenCode (any case), the column every upload needs. */
+    static boolean hasSpecimenCodeColumn(String fileLoc, java.nio.charset.Charset charset) {
+        try (BufferedReader in = java.nio.file.Files.newBufferedReader(Paths.get(fileLoc),
+                charset != null ? charset : java.nio.charset.StandardCharsets.UTF_8)) {
+            return hasSpecimenCodeColumn(in.readLine());
+        } catch (IOException | RuntimeException e) {
+            s_log.warn("hasSpecimenCodeColumn() e:" + e);
+            return false;
+        }
+    }
+
+    public static boolean hasSpecimenCodeColumn(String header) {
+        if (header == null) return false;
+        for (String col : header.split("\t", -1)) {
+            if ("specimencode".equals(col.replace("\uFEFF", "").trim().toLowerCase())) return true;
+        }
+        return false;
     }
 
 
     // Called by TaxonWorksUploader and GBIFUploader. Not by SpecimenUploader.
+    // Takes zipFileTarget (data.tsv, occurrence.txt) from the top level of the uploaded zip into outName
+    // (a full path), with SafeUnzip. Returns null when done, or the reason the archive was refused.
     protected static String copyAndUnzipFile(FormFile file, Group group, String outName, String zipFileTarget) throws IOException {
-        String errorMsg = null;
-
-        String tempDirName = AntwebProps.getWorkingDir() + "group" + group.getId();
-        File tempDir = new File(tempDirName);
-        A.log("copyAndUnzipFile() file:" + file + " tempDirName:" + tempDirName + " outName:" + outName + " zipFileTarget:" + zipFileTarget);
-
-        if (file != null) {
-            // create a new temp directory
-            boolean success = tempDir.mkdir();
-            //A.log("copyAndUnzipFile() tempDirName:" + tempDirName + " mkdirSuccess:" + success);
-
-            // unzip into that directory
-            String zippedName = outName + ".zip";
-            boolean debugOn = true;
-            Utility.copyFormFile(file, zippedName, debugOn);
-            if (new File(zippedName).exists()) {
-                try {
-                    String command = "unzip -o -d " + tempDirName + " " + zippedName;
-                    A.log("copyAndUnzipFile() before command:" + command);
-                    Process process = Runtime.getRuntime().exec(command);
-                    process.waitFor();
-                    //A.log("copyAndUnzipFile() after");
-                } catch (InterruptedException e) {
-                    errorMsg = "copyAndUnzipFile() problem unzipping file2 " + zippedName + ": " + e;
-                    s_log.error(errorMsg);
-                    return errorMsg;
-                }
-            } else {
-                return ("copyAndUnzipFile() zip does not exist:" + zippedName);
-            }
-
-            // move the file out of that directory and give it the right name
-            //String[] dirListing = tempDir.list();
-            //A.log("copyAndUnzipFile() tempDir:" + tempDir + " dirListing.length: " + dirListing.length);
-
-            String target = tempDirName + "/" + zipFileTarget;
-            //A.log("copyAndUnzipFile() target:" + target + " zipFileTarget:" + zipFileTarget);
-            try {
-                //A.log("copyAndUnzipFile() target:" + target + " outName:" + outName);
-                Utility.copyFile(target, outName);
-            } catch (IOException e2) {
-                return "copyAndUnzipFile() couldn't move target:" + target + " to " + outName + " e:" + e2;
-            }
-
-            // remove the temporary directory
-            boolean isDebug = false && AntwebProps.isDevMode();
-            if (!isDebug) Utility.deleteDirectory(tempDir);
-            A.log("copyAndUnzipFile() deleteDir:" + tempDir + " deleted:" + !isDebug);
+        if (file == null) return "Must choose a file for upload.";
+        File zip = new File(outName + ".zip");
+        A.log("copyAndUnzipFile() group:" + group.getId() + " outName:" + outName + " zipFileTarget:" + zipFileTarget);
+        if (!Utility.copyFormFile(file, zip.getPath(), false)) return "The uploaded zip file could not be saved.";
+        try {
+            SafeUnzip.extract(zip, SafeUnzip.named(zipFileTarget), zipFileTarget + " file", new File(outName));
+            return null;
+        } catch (SafeUnzip.Refused r) {
+            s_log.warn("copyAndUnzipFile() refused for group:" + group.getId() + " " + r.getMessage());
+            return r.getMessage();
+        } finally {
+            if (!zip.delete()) s_log.warn("copyAndUnzipFile() could not delete " + zip);
         }
-        return errorMsg;
     }
 
 }

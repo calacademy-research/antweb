@@ -60,7 +60,7 @@ public class UtilAction extends AntwebAction {
 		// passes its own secret code. Anyone else gets a refusal, so it can not be used to reload
 		// the managers on demand.
 		if ("postInstantiate".equals(action) && !LoginMgr.isAdmin(request)
-		    && !AntwebMgr.isPostInitializeCode(theForm.getSecureCode())) {
+		    && !SchedulerCall.isPostInitialize(request)) {
 			request.setAttribute("message", "Administrators only.");
 			return mapping.findForward("message");
 		}

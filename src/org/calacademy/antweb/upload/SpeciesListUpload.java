@@ -227,7 +227,6 @@ public class SpeciesListUpload extends AntwebUpload {
         return uploadDetails;
     }
 
-    // Can be called directly from UploadAction for speciesTest
     public UploadDetails importSpeciesList(String project, String fileName, String fileNameBase
         , String encoding, int accessGroupId) throws AntwebException, IOException, SQLException {
           

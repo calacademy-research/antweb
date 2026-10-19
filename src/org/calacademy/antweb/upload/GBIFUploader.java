@@ -55,9 +55,10 @@ public class GBIFUploader extends Uploader {
             try {
                 errorMsg = copyAndUnzipFile(theForm.getTheFile(), group, preTransformFilePath.toString(), zipFileTarget);
             } catch (IOException e) {
-                errorMsg = "copyAndUnzipFile() e:" + e.toString();
+                s_log.error("uploadSpecimenFile() copyAndUnzipFile e:" + e);
+                errorMsg = "The zip file could not be read.";
             }
-            if (errorMsg != null) throw new AntwebException(errorMsg);
+            if (errorMsg != null) return new UploadDetails(theForm.getAction(), errorMsg, "message"); // archive refused: stop and show why
 
         } else {
             // copy from uploader's fileName to the biotaFile name.

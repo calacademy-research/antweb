@@ -8,7 +8,6 @@ public class UploadForm extends ActionForm {
   protected FormFile theFile;
   protected FormFile theFile2;
   //protected FormFile biota;
-  protected FormFile testFile;
   protected String projectFile = "";
   protected String homePageDirectory = "";
   protected String ancFileDirectory = "";
@@ -156,13 +155,6 @@ public class UploadForm extends ActionForm {
   }
   public FormFile getTheFile2() {
     return theFile2;
-  }
-
-  public void setTestFile(FormFile testFile) {
-    this.testFile = testFile;
-  }
-  public FormFile getTestFile() {
-    return testFile;
   }
 
   public void setProjectFile(String projectFile) {

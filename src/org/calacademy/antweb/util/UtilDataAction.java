@@ -97,7 +97,8 @@ public class UtilDataAction extends AntwebAction {
         // Data jobs change or recompute data: administrators only, or the scheduler
         // (which passes the one-time secureCode). "param=allow" alone is not enough.
         boolean isAdmin = accessLogin != null && accessLogin.isAdmin();
-        boolean isScheduler = AntwebUtil.isSecureCode(theForm.getSecureCode());
+        // The code comes in a request header from the container itself (SchedulerCall); a code in the URL is refused.
+        boolean isScheduler = SchedulerCall.isScheduler(request);
         if (!isAdmin && !isScheduler) {
             s_log.warn("execute() refused action:" + action + " for " + loginName + " target:" + HttpUtil.getTarget(request));
             ActionForward denied = LoginMgr.mustBeAdmin(request, mapping);
@@ -128,6 +129,13 @@ public class UtilDataAction extends AntwebAction {
           if (accessGroup == null) {
               message = "Not Logged in";
           }
+        }
+
+        // A data job started by hand while another one runs (for example during the nightly
+        // run) would overwrite the shared compute flag and clear it when it ends: refused.
+        // The Scheduler's own calls are part of the running job and go through.
+        if (message == null && !isScheduler && isInComputeProcess()) {
+            message = "Another data job is running (" + Html.esc(getIsInComputeProcess()) + "). Please try again when it has finished.";
         }
 
         if (message == null) {
@@ -209,10 +217,9 @@ public class UtilDataAction extends AntwebAction {
         String text = form.getText();	
         String taxonName = form.getTaxonName();
         String prop = form.getProp();
-        String secureCode = form.getSecureCode();
 
         boolean isAdmin = accessLogin != null && accessLogin.isAdmin();
-        boolean isSecure = AntwebUtil.isSecureCode(secureCode) || isAdmin;
+        boolean isSecure = SchedulerCall.isScheduler(request) || isAdmin;
         
         s_log.info("doAction() " + action + " request:" + request + " isSecure:" + isSecure + " isAdmin:" + isAdmin);
 

@@ -154,9 +154,7 @@
 <%   if (AntwebProps.isDevOrStageMode()) { %>
       <h3 align=left>Dev or Stage</h3>
       <ul align=left>
-	  <li><a href="<%= domainApp %>/upload.do?action=specimenTest">Run</a> Specimen Test
 	  <li><a href="<%= domainApp %>/upload.do?action=allSpecimenFiles">Load</a> All Specimen Files
-	  <li><a href="<%= domainApp %>/upload.do?action=speciesTest">Run</a> Species Test
       <li>Taxon <a href="<%= domainApp %>/utilData.do?action=taxonFinish"> finish </a>
       </ul>
 <%   } %> 
