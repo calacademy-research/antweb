@@ -100,13 +100,15 @@ window.api = root.data("scrollable");
 <div id="promo_container">
     <div class="promo">
         <b><a href="https://www.antcourse.org/">Ant Course</a></b><br />
-        Ant Course is a 10-day workshop designed for systematists, ecologists, behaviorists, conservation biologists, whose research require a greater understanding of ant taxonomy and field research techniques. Emphasis is on the evolution, classification and identification of ant genera.  <a href="https://www.antcourse.org/">Read More &#187;</a>
+        Ant Course is a 10-day workshop designed for systematists, ecologists, behaviorists, conservation biologists, whose research require a greater understanding of ant taxonomy and field research techniques. Emphasis is on the evolution, classification and identification of ant genera.  <a href="https://www.antcourse.org/">Read&nbsp;More&nbsp;&#187;</a>
 
     </div>
-    <div class="promo right">
+    <div class="promo middle">
         <b><a href="<%= domainApp %>/worldants.do">World Ant Collections</a></b><br />
         We at AntWeb have been busy taking photos of many of the world's great ant collections.  Visit the AntWeb <a href="<%= domainApp %>/worldants.do">World Ant Collection</a> to see the collections and get information about where they are housed.
-        <br /><a class="home_button" href="<%= domainApp %>/worldants.do">See the World Ant Collections &rarr;</a>
+    </div>
+    <div class="promo right">
+        <a class="home_button" href="<%= domainApp %>/worldants.do">See the World Ant Collections &rarr;</a>
         <ul class="home_museums">
             <li><a href="<%= domainApp %>/basel.do">Basel</a> (Santschi collection)</li>
             <li><a href="<%= domainApp %>/berlin.do">Berlin</a> (Roger collection)</li>
