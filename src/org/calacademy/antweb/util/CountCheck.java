@@ -400,6 +400,7 @@ public class CountCheck {
      *  its list): stored subfamily_count against the subfamily rows on the place's list with a counted status. */
     int checkSubfamilyTotal(Place place, Result result, boolean listChanged) throws SQLException {
         if (!GEOLOCALE.equals(place.type) && !PROJECT.equals(place.type)) return 0;
+        if (!columnExists(placeTable(place.type), "subfamily_count")) return 0;
         int stored = -1;
         try (PreparedStatement stmt = connection.prepareStatement("select subfamily_count from "
                 + placeTable(place.type) + " where " + placeKeyColumn(place.type) + " = ?")) {
@@ -419,6 +420,15 @@ public class CountCheck {
                 listChanged ? "the list got a new row after the last nightly run" : null));
         }
         return 1;
+    }
+
+    private boolean columnExists(String table, String column) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "select 1 from information_schema.columns where table_schema = database() and table_name = ? and column_name = ?")) {
+            stmt.setString(1, table);
+            stmt.setString(2, column);
+            try (ResultSet r = stmt.executeQuery()) { return r.next(); }
+        }
     }
 
     private boolean tableExists(String table) throws SQLException {
