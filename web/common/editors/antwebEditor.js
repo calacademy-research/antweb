@@ -1,7 +1,6 @@
 /*
  * antwebEditor.js: the one TinyMCE 8 setup for AntWeb page text. Used by the curator edit forms
- * (web/common/descEdit/ckEditorMinConfigForm.jsp, with editSafety.js) and by the editor trial
- * page (/editorTrial.do, editorTrial.js), so both always run the same settings.
+ * (web/common/descEdit/ckEditorMinConfigForm.jsp, with editSafety.js).
  *
  * TinyMCE 8 is self-hosted under its GPL 2+ licence (web/common/editors/tinymce/<version>/,
  * LICENSE.md and notices.txt there). TinyMCE 8 opens READ ONLY unless license_key is set, so

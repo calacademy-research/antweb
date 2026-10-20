@@ -36,6 +36,9 @@ public final class LogMgrAction extends AntwebAction {
         "pageTracker.log", "geonames.log", "DataPlaceCase.txt", "flickrAdm1.html", "outOfBounds.txt",
         "connections.txt", "typeStatusSpeciesFound.txt", "typeStatusSpeciesNotFound.txt",
         "typeStatusNoTaxonName.txt", "typeStatusHomonym.txt");
+    // Removed sub-actions: answered 404 before anything else. apacheLog: there is no Apache (Caddy
+    // serves the site) and its setting pointed at no file (removed 2026-10-19).
+    static final Set<String> REMOVED_ACTIONS = Set.of("apacheLog");
     private static final Set<String> DATA_LOGS = Set.of("cCheck.log", "longRequest.log", "messages.txt", "serverBusy.html");
 
     public ActionForward execute(
@@ -50,6 +53,11 @@ public final class LogMgrAction extends AntwebAction {
         // The specimen page links curators to one line of an upload file, a specimen's
         // stored details and one Worldants line; those are curator data and open to curators.
         String requestedAction = (String) ((DynaActionForm) form).get("action");
+        if (requestedAction != null && REMOVED_ACTIONS.contains(requestedAction)) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            request.setAttribute("message", "action:" + Html.esc(requestedAction) + " not found.");
+            return mapping.findForward("message");
+        }
         boolean curatorView = requestedAction != null && Set.of("uploadLog", "specimenDetails", "worldants").contains(requestedAction);
         ActionForward c = curatorView ? Check.curator(request, mapping) : Check.admin(request, mapping);
         if (c != null) return c;
@@ -115,9 +123,6 @@ public final class LogMgrAction extends AntwebAction {
         switch (action) {
             case "tomcatLog":
                 log = tomcatDir + AntwebProps.getProp("site.tomcatLog");
-                break;
-            case "apacheLog":
-                log = tomcatDir + AntwebProps.getProp("site.apacheLog");
                 break;
             case "antwebLog":
                 log = tomcatDir + AntwebProps.getProp("site.antwebLog");
@@ -344,7 +349,6 @@ public final class LogMgrAction extends AntwebAction {
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/query.do?name=worldantsUploads'>Worldants Uploads</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=srfExceptions&ext=txt'>SRF Exceptions</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=tomcatLog'>Tomcat Log</a>";
-        message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=apacheLog'>Apache Log</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=antwebLog'>Antweb Log</a>";
         message += "</ul><br><br>";
 

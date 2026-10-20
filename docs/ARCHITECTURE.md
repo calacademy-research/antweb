@@ -90,7 +90,7 @@ AntWeb is the world's largest online database of images, specimen records, and n
 
 ┌─────────────────────────────┐
 │  Python API (Flask)          │
-│  api.antweb.org/v3/          │
+│  www.antweb.org/v3.1/        │
 │  - Independent service       │
 │  - Direct MySQL access       │
 │  - RESTful JSON responses    │
@@ -171,13 +171,13 @@ AntWeb is the world's largest online database of images, specimen records, and n
 
 ### 4. RESTful API (Python/Flask)
 
-**Location:** `/api/v3/`
+**Location:** `api/v3.1/` (the old v3 API was removed on 2026-10-19; see [API.md](API.md))
 
-**Endpoints:**
-- `/api/v3/specimens` - Specimen data
-- `/api/v3/images` - Image metadata
-- `/api/v3/taxa` - Taxonomic information
-- `/api/v3/geolocales` - Geographic data
+**Endpoints** (at `https://www.antweb.org/v3.1/`):
+- `/specimens` - Specimen data
+- `/images` - Image metadata
+- `/taxa` - Taxonomic information
+- `/geolocales` - Geographic data
 
 **Technology:**
 - Flask application server
@@ -187,7 +187,7 @@ AntWeb is the world's largest online database of images, specimen records, and n
 
 **Deployment:**
 - Runs as separate Docker container
-- Accessible at `api.antweb.org`
+- Accessible at `https://www.antweb.org/v3.1/` (Caddy forwards `/v3.1/` to it)
 - Can be deployed independently from main app
 
 ### 5. File Storage

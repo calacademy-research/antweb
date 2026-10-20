@@ -2,7 +2,7 @@
 
 The Curate page (**Curator Tools**, `https://www.antweb.org/curate.do`) is where you start when you upload data, check your uploads, or (for admins) manage the site. You reach it from the **Curator Tools** link after you log in.
 
-This guide follows the page from top to bottom. Each tool says what it is for and how to use it. It covers the tools we intend to keep; a few tools on the page today are under review and are not described here. Where a label on the page is unclear, the guide gives the plain meaning next to it.
+This guide follows the page from top to bottom. Each tool says what it is for and how to use it. It covers the tools we keep; the tools removed in October 2026 are listed at the end. Where a label on the page is unclear, the guide gives the plain meaning next to it.
 
 What you see depends on your login:
 
@@ -153,6 +153,17 @@ When to use it: after a correction that should show on a museum page before tomo
 - **Debugging**: Server Debug (the server debug flag) and Session Properties (what is stored in your own session).
 
 Data jobs started from the Curate page or the Technical page (reloads, recounts, restarts, the nightly sets) always show a confirmation page with a **Run it** button first; nothing runs on the first click.
+
+### Removed tools (19 October 2026)
+
+These pages and links were taken out after a review of every unclear tool; their addresses now answer "not found". Where something replaces them, it is named.
+
+- Old team member pages (`teamMember.do` and its photo upload and download): the public **Curators** (`curators.do`) and **Staff** (`staff.do`) pages replace them. The old team member table is archived on the server before it is dropped.
+- Invitation links (`antwebInvite.do`): new logins get a one-time link to set their password; pending logins are edited from the Logins list.
+- AntWiki list check (`antWikiData.do`), the world authority save (`worldAuthoritySave.do`; the nightly AntCat import replaced it) and the species list file (`getSpeciesList.do`).
+- Editor trial page (`editorTrial.do`): TinyMCE 8 was chosen and is on every edit form.
+- Credit editor (`editCredit.do`), new bioregion form (`newBioRegion.do`; bioregions are a fixed table), donation and thank-you pages, the old Google site search (`basicSearch.do`), the v3 API page (`apiV3.do`; the API is v3.1, see `apiV3.1.do`) and two lower-case aliases (`getcomparison.do`, `taxonomicpage.do`).
+- Reports and jobs with no use left: `list.do` taxon names, specimens with morpho genera, recent CAS pinned Ponerinae, the toUpload folder listing; `query.do?action=countryEndemic` (the public **Endemic** page lists the same taxa); the Apache log in the Log Manager (there is no Apache); `upload.do` reload species lists and toggle down time (the switch is on **Server Status**); `utilData.do` bioregion taxon count crawl (the nightly run does it), update group counts and update group upload stats (every upload does both); the scheduler's `justLog` test.
 
 ---
 

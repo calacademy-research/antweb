@@ -7,9 +7,8 @@ requires for the GPL self-hosted build; no Tiny Cloud account or API key is used
 the key TinyMCE 8 opens read only; `tests/e2e/test_editor_roundtrip.py` checks it).
 
 Used by the curator page-text edit forms (taxon, specimen and overview pages:
-`web/common/descEdit/ckEditorMinConfigForm.jsp`, `editorScripts.jsp`, `editSafety.js`) and the
-editor trial page `/editorTrial.do`. Both take their settings from one file,
-`web/common/editors/antwebEditor.js`. The version and folder are named once, in
+`web/common/descEdit/ckEditorMinConfigForm.jsp`, `editorScripts.jsp`, `editSafety.js`). They take
+their settings from one file, `web/common/editors/antwebEditor.js`. The version and folder are named once, in
 `src/org/calacademy/antweb/util/PageEditor.java` (`TINYMCE_VERSION`).
 
 ## Licence notice and source

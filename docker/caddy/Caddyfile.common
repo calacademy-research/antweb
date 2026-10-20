@@ -122,7 +122,7 @@ route {
         not path /index.jsp /about.jsp /citing_antweb.jsp /user_guide.jsp /search.jsp
         not path /countries.jsp /imagePage.jsp /bigPicture.jsp /mapComparison.jsp /dynamicMap.jsp
         not path /berlin.jsp /geneva.jsp /genoa.jsp /basel.jsp /oxford.jsp /copenhagen.jsp /paraguay.jsp
-        not path /login.jsp /forgot_password.jsp /notLoggedIn.jsp /permissionDenied.jsp /error.jsp /thanks.jsp
+        not path /login.jsp /forgot_password.jsp /notLoggedIn.jsp /permissionDenied.jsp /error.jsp
         not path /common/statusDisplayPage.jsp /common/casteDisplayPage.jsp /common/distStatusDisplayPage.jsp
         not path /search/loading_search_results_data.jsp /search/autoCompleteKeys.jsp
         not path /search/autoCompletePlaceKeys.jsp /search/multiTaxaOneView.jsp

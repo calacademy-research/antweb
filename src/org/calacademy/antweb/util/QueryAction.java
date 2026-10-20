@@ -21,13 +21,14 @@ public class QueryAction extends AntwebAction {
 
     // homonyms: the Homonym Report (moved here from util.do, where it was admin only; its page needs a login).
     // curateAntcat was removed 2026-10-19: its checks are in the Integrity Check (checkIntegrity).
+    // countryEndemic was removed 2026-10-19: the public /endemic.do page lists the same taxa.
     private static final Set<String> ADMIN_ACTIONS = Set.of(
-        "checkIntegrity", "curiousQueries", "devQueries", "countryEndemic", "events",
+        "checkIntegrity", "curiousQueries", "devQueries", "events",
         "homonyms");
 
     // Every sub-action query.do handles; anything else (descEdit, the old "Notes" link) is not found.
     static final Set<String> ACTIONS = Set.of(
-        "checkIntegrity", "curiousQueries", "devQueries", "countryEndemic", "events",
+        "checkIntegrity", "curiousQueries", "devQueries", "events",
         "homonyms", "curiousQuery", "query", "queryBattery");
 
     // Named queries that public pages link to (read-only, no login data): anyone may run them.
@@ -137,23 +138,6 @@ public class QueryAction extends AntwebAction {
                   returnLoc = mapping.findForward("adminHtmlMessage");
                 }
             
-                if (action.equals("countryEndemic")) { 
-                  int field;
-                  try {
-                    field = Integer.parseInt(theForm.getField());
-                  } catch (NumberFormatException e) {
-                    request.setAttribute("message", "field must be a geolocale id.");
-                    return mapping.findForward("message");
-                  }
-              
-                  String query = "select taxon_name from geolocale_taxon where geolocale_id = " + field + " and is_endemic = 1";
-                  //String query = "select gt.taxon_name taxon_name from geolocale g, geolocale_taxon gt, taxon t  where g.id = gt.geolocale_id and t.taxon_name = gt.taxon_name  and t.status != 'morphotaxon' and t.rank in ('species', 'subspecies') and g.georank = 'country'  and is_introduced = 0 and geolocale_id = " + field + " group by taxon_name, gt.geolocale_id having count(*) = 1 order by gt.taxon_name";
-                  //String query = "select gt.taxon_name, is_introduced, is_endemic from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name and t.rank in ('species', 'subspecies') and geolocale_id = " + field + " and (is_introduced = 1 or is_endemic = 0)";
-                  String message = QueryManager.getQueryResults(connection, query);
-                  request.setAttribute("message", message);
-                  returnLoc = mapping.findForward("adminMessage");
-                }
-
                 if (action.equals("homonyms")) {
                   HomonymDb homonymDb = new HomonymDb(connection);
                   ArrayList<Taxon> homonyms = homonymDb.getHomonyms();

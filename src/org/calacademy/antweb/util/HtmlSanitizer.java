@@ -117,8 +117,8 @@ public final class HtmlSanitizer {
      * The allowlist above as a TinyMCE / HugeRTE valid_elements rule, for example
      * "@[class|style|title],b,...,a[href|name|target|rel|title],...", so an editor keeps exactly
      * the tags and attributes this sanitizer keeps. With allowVideoEmbeds the rule also allows
-     * the YouTube/Vimeo iframe that sanitize() keeps on the videos field. Used by the editor
-     * trial page (EditorTrialAction).
+     * the YouTube/Vimeo iframe that sanitize() keeps on the videos field. Used by the page-text
+     * edit forms (web/common/descEdit/ckEditorMinConfigForm.jsp).
      */
     public static String editorValidElements(boolean allowVideoEmbeds) {
         StringBuilder sb = new StringBuilder("@[class|style|title]");

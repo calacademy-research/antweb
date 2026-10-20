@@ -26,9 +26,8 @@ NEVER = {
 # (ANTWEB_PROBE_WRITE_ACTIONS=1), never against production.
 WRITE_ACTIONS = {
     "/saveGroup", "/manageMuseum", "/viewMuseum", "/saveMuseum",
-    "/worldAuthoritySave", "/newBioRegion", "/editCredit",
-    "/teamMemberImgUpload", "/deleteImages", "/saveLogin",
-    "/editLogin", "/antwebInvite",
+    "/deleteImages", "/saveLogin",
+    "/editLogin",
     "/editGeolocale",
     "/descEditImageUpload",
     "/editProject", "/bioregionMapMgr", "/introducedMapMgr",
@@ -37,7 +36,7 @@ WRITE_ACTIONS = {
 
 # Write actions that refuse anonymous requests with a message page rather than
 # the log-in page.
-REFUSE_WITH_MESSAGE = {"/editLogin", "/antwebInvite"}  # antwebInvite: old invite links now say "no longer valid"
+REFUSE_WITH_MESSAGE = {"/editLogin"}
 
 # Actions whose anonymous result varies between runs (AntWeb shows its
 # "We'll be right back" page on some first requests of a new session).

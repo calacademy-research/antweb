@@ -228,8 +228,6 @@
 #nav li.press { background: url("../image/press_off4.gif") no-repeat; width: 54px; height:36px; cursor: hand; }
 #nav li.press:hover { background: url("../image/press_on4.gif") no-repeat; width: 54px; height:36px; cursor: hand; }
 
-#nav li.donate { background: url("../image/donate_off4.gif") no-repeat; width: 63px; height:36px; }
-#nav li.donate:hover { background: url("../image/donate_on4.gif") no-repeat; width: 63px; height:36px; }
 
 #nav li.contact{ background: url("../image/contact_off4.gif") no-repeat; width: 89px; height:36px; }
 #nav li.contact:hover { background: url("../image/contact_on4.gif") no-repeat; width: 89px; height:36px; }

@@ -17,7 +17,11 @@ import org.apache.commons.logging.LogFactory;
 
 public final class ListAction extends AntwebAction {
 
-    static final java.util.Set<String> REMOVED_ACTIONS = java.util.Set.of("countries", "bioregions");
+    // countries, bioregions: Curate page cleanup. getTaxonNames (the autocomplete does this),
+    // recentCASPinnedPonerinae and specimensWithMorphoGenera (one-off reports), toUpload (a folder
+    // that is not in the container): removed 2026-10-19.
+    static final java.util.Set<String> REMOVED_ACTIONS = java.util.Set.of("countries", "bioregions",
+        "getTaxonNames", "recentCASPinnedPonerinae", "specimensWithMorphoGenera", "toUpload");
 
     private static final Log s_log = LogFactory.getLog(ListAction.class);
 
@@ -41,7 +45,7 @@ public final class ListAction extends AntwebAction {
         DynaActionForm df = (DynaActionForm) form;
         String action = (String) df.get("action");
 
-        // Removed lists (Curate page cleanup): the public Countries and Bioregions pages replace them.
+        // Removed sub-actions (see REMOVED_ACTIONS).
         if (action != null && REMOVED_ACTIONS.contains(action)) {
           response.setStatus(HttpServletResponse.SC_NOT_FOUND);
           request.setAttribute("message", "action:" + Html.esc(action) + " not found.");
@@ -88,14 +92,6 @@ public final class ListAction extends AntwebAction {
 
                     return mapping.findForward("likes");
                 }
-                case "toUpload": {
-                    // Server file listing: administrators only.
-                    ActionForward denied = Check.admin(request, mapping); if (denied != null) return denied;
-                    String toUploadDir = AntwebProps.getProp("site.toUpload");
-                    String message = new AntwebSystem().launchProcess("ls -al " + toUploadDir, true);
-                    request.setAttribute("message", message);
-                    return mapping.findForward("message");
-                }
                 case "recentDescEdits": {
                     String message = "Antweb Recent Description Edits";
                     request.setAttribute("message", message);
@@ -104,16 +100,6 @@ public final class ListAction extends AntwebAction {
                     ArrayList<DescEdit> descEdits = descEditDb.getRecentDescEdits();
                     request.setAttribute("descEdits", descEdits);
                     break;
-                }
-                case "getTaxonNames": {
-                    String taxonName = (String) df.get("taxonName");
-                    String message = "Taxon Names matching:" + Html.esc(taxonName);
-                    request.setAttribute("message", message);
-                    TaxonDb taxonDb = new TaxonDb(connection);
-                    List<String> list = taxonDb.getTaxonNames(taxonName, true);
-                    //A.log("ListAction listOfLists:" + listOfLists);
-                    request.setAttribute("listTable", list);
-                    return mapping.findForward("listTable");
                 }
                 default:
 
@@ -153,12 +139,6 @@ public final class ListAction extends AntwebAction {
                             return mapping.findForward("adminHtmlMessage");
                         }
 
-                        if (action.equals("recentCASPinnedPonerinae")) {
-                            SpecimenDb specimenDb = new SpecimenDb(connection);
-                            QueryReport queryReport = specimenDb.getRecentCASPinnedPonerinaeQueryReport();
-                            request.setAttribute("queryReport", queryReport);
-                            return mapping.findForward("queryReport");
-                        }
 
                     }
 
@@ -176,17 +156,6 @@ public final class ListAction extends AntwebAction {
                             int groupId = (Integer) o;
                             ArrayList<String> list = specimenDb.getIntroducedByGroup(groupId);
                             //A.log("ListAction list:" + list);
-                            request.setAttribute("listTable", list);
-                            return mapping.findForward("listTable");
-                        }
-
-                        if (action.equals("specimensWithMorphoGenera")) {
-                            String message = "Specimen with Morpho Genera";
-                            request.setAttribute("message", message);
-                            SpecimenDb specimenDb = new SpecimenDb(connection);
-                            int groupId = (Integer) df.get("groupId");
-                            ArrayList<String> list = specimenDb.getSpecimensWithMorphoGenera(groupId);
-                            s_log.debug("ListAction list:" + list);
                             request.setAttribute("listTable", list);
                             return mapping.findForward("listTable");
                         }

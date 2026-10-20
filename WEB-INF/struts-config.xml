@@ -31,8 +31,6 @@
     <form-bean      name="uploadImagesForm"
                     type="org.calacademy.antweb.upload.UploadImagesForm"/>
 
-    <form-bean      name="editCreditForm"
-                    type="org.calacademy.antweb.EditCreditForm"/>
 
     <form-bean      name="searchForm"
                     type="org.calacademy.antweb.search.SearchForm"/>
@@ -94,8 +92,6 @@
     <form-bean      name="overviewForm"
                     type="org.calacademy.antweb.OverviewForm"/>
 
-    <form-bean      name="worldAuthorityForm"
-                    type="org.calacademy.antweb.upload.WorldAuthorityForm"/>
                                                                                                                                
     <form-bean      name="saveGroupForm"
                     type="org.calacademy.antweb.curate.group.SaveGroupForm"/>
@@ -106,8 +102,6 @@
     <form-bean      name="editLoginForm"
                     type="org.calacademy.antweb.EditLoginForm"/>
                                       
-    <form-bean      name="teamMemberForm"
-                    type="org.calacademy.antweb.curate.team.TeamMemberForm"/>
                                                                            
                                                                                                                                
     <form-bean      name="newProjectForm"
@@ -121,12 +115,6 @@
                     type="org.calacademy.antweb.curate.BioregionMapMgrForm"/>
 
 
-    <form-bean name="imgUploadForm" 
-        type="org.apache.struts.action.DynaActionForm" 
-        dynamic="true">
-      <form-property name="id"     type="java.lang.Long"/>
-      <form-property name="myFile" type="org.apache.struts.upload.FormFile"/>
-    </form-bean> 
 
 
     <form-bean name="imageUploadForm" 
@@ -250,9 +238,6 @@
       path="/press" 
       forward="/press.jsp"/>
       
-    <action
-      path="/donate" 
-      forward="/donate.jsp"/>
 
     <action
       path="/contact" 
@@ -262,9 +247,6 @@
       path="/api" 
       forward="/apiV3.1.do"/>
 
-    <action
-      path="/apiV3" 
-      forward="/documentation/api/apiV3.jsp"/>
     <action
       path="/apiV3.1" 
       forward="/documentation/api/apiV3_1.jsp"/>
@@ -285,9 +267,6 @@
       path="/technical" 
       forward="/curate/technical.jsp"/>
 
-    <action
-      path="/thanks" 
-      forward="/thanks.jsp"/>      
 
     <action
       path="/queries"
@@ -429,7 +408,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
           <forward name ="list" path="/util/list.jsp"/>
           <forward name ="listTable" path="/util/listTable.jsp"/>
           <forward name ="listOfLists" path="/util/listOfLists.jsp"/>
-          <forward name ="queryReport" path="/util/queryReport.jsp"/> <!-- preferred -->
           <forward name="likes" path="/imageLikes.jsp"/>
       </action>
 
@@ -483,7 +461,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="statisticsDo" path="/statistics.do"/>     
       <forward name="uploadResults" path="/curate/uploadResults.jsp" />
       <forward name="speciesListTool" path="/speciesListTool.do" />
-      <forward name="worldAuthorityFiles" path="/world_authority_admin_results.jsp" />
       <forward name="curate" path="/curate.do" />
       <forward name="success" path="/curate.do" />
       <forward name="taxonCountryPage" path="/curate/geolocale/taxonCountryMgr.jsp" />
@@ -604,10 +581,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="success" path="/curate.do" />
     </action>
     
-      <action path="/getSpeciesList"
-              type = "org.calacademy.antweb.util.SpeciesListAction"
-              name="dummyForm">
-      </action>    
       
       <action path="/getSpecimenList"
               type = "org.calacademy.antweb.util.SpecimenListAction"
@@ -701,9 +674,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       path="/search"
       forward="/search/advancedSearch.jsp"/>
 
-    <action
-      path="/basicSearch"
-      forward="/search/basicResults.jsp"/>
 
 
     <action path="/defaultSpecimen"
@@ -859,12 +829,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
     <!--==========Begin User Management Action Mappings==========-->
 
                                                                                                                                
-    <action path="/editCredit"
-            type="org.calacademy.antweb.EditCreditAction"
-            scope="request"
-            name="editCreditForm">
-      <forward name="success" path="/edit_credit.jsp" />
-    </action>
                                                                                                                             
     <action path="/login"
             type="org.calacademy.antweb.LoginAction"
@@ -1050,14 +1014,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="editLogin" path="/editLogin.jsp" />
     </action>
     
-    <action path="/antwebInvite"
-            type="org.calacademy.antweb.curate.login.AntwebInviteAction"
-            scope="request"
-            validate="false"
-            name="saveLoginForm">
-      <forward name="antwebInvite" path="/login/antwebInvite.jsp" />
-      <forward name="viewLogin" path="/curate/viewLogin.jsp" />      
-    </action>    
         
 <!-- Password -->
                
@@ -1101,12 +1057,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
                 scope="request">
     </action>
 
-    <!-- Curators and admins: HugeRTE and TinyMCE 8 side by side on stored page text (read only). -->
-    <action path="/editorTrial"
-                type="org.calacademy.antweb.curate.EditorTrialAction"
-                scope="request">
-        <forward name="success" path="/curate/editorTrial.jsp" />
-    </action>
     
     <action path="/manageMuseum"
             type="org.calacademy.antweb.curate.ManageMuseumsAction"
@@ -1133,28 +1083,11 @@ We would like to remove getChildImages.  Not needed now in the new UI
 
  <!--========== Team Member Action Mappings==========-->    
     
-    <action path="/teamMember"
-            type="org.calacademy.antweb.curate.team.TeamMemberAction"
-            scope="request"
-            validate="false"
-            input="/curate/curators.jsp"
-            name="teamMemberForm">
-      <forward name="success" path="/curate/curators.jsp" />
-    </action>    
     
-    <action 
-         path="/teamMemberImgUpload" 
-         type="org.calacademy.antweb.curate.team.TeamMemberImgUploadAction" 
-         name="imgUploadForm"
-         scope="request">
-      <forward name="success"            path="/curate/curators.jsp" />
-    </action>
      <!--Because we are using two separate actions and forms for this page, it does not seem possible
          to forward to another action and pass parameters.  If possible, not found quickly. -->
      <!--forward name="success" path="/about_us/team/teamMemberEdit.jsp" / -->
 
-    <action path="/teamMemberImgDownload" 
-         type="org.calacademy.antweb.curate.team.TeamMemberImgDownloadAction" />
 
  <!--==========Project Managment Action Mappings==========-->
 
@@ -1358,25 +1291,10 @@ We would like to remove getChildImages.  Not needed now in the new UI
 <!--==========End of Project Managment Action Mappings==========-->
 
 
-	<action path="/worldAuthoritySave"
-					type="org.calacademy.antweb.upload.WorldAuthorityAction"
-					name="worldAuthorityForm"
-					input="/world_authority_admin.jsp">
-			<forward name="success" path="/world_authority_admin_saved.jsp"/>
-			<forward name="failure" path="/world_authority_admin.jsp"/>
-	</action>                                                                                                        
 			   
 																									
 	
 	
-	<action path="/newBioRegion"
-					type="org.calacademy.antweb.curate.NewBioRegionAction"
-					name="editProjectForm"
-					input="/curate/addbio_area.jsp">
-			<forward name="addBioPage" path="/curate/addbio_area.jsp"/>
-			<forward name="success" path="/curate/bioarea_success.jsp"/>
-			<forward name="failure" path="/curate/addbio_area.jsp"/>
-	</action>
 	
     
     <action
@@ -1405,9 +1323,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
         <forward name="success" path="/orphanedImages.jsp"/>
     </action>
 
-    <action
-            path="/taxonomicpage"
-            forward="/taxonomicPage.do"/>
 
     <action path="/taxonomicPage"
             type="org.calacademy.antweb.TaxaPageAction"
@@ -1457,13 +1372,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="report" path="/imageUploader/imageUploadReport.jsp"/>
     </action>
 
-     <!-- Admin only: /antWikiData.do?action=checkForUpdates (are AntWiki's valid and fossil species lists newer?) -->
-     <action path="/antWikiData"
-             type="org.calacademy.antweb.data.AntWikiDataAction"
-             name="dummyForm"
-             input="/index.jsp">
-         <forward name="failure" path="/error.jsp"/>
-      </action>
 
       <action path="/serverStatus"
               type = "org.calacademy.antweb.util.ServerStatusAction"
@@ -1552,8 +1460,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
             forward="/bigMap.do"/>
     <action path="/fieldguide"
             forward="/fieldGuide.do"/>
-    <action path="/getcomparison"
-            forward="/getComparison.do"/>
     <action path="/mapcomparison"
             forward="/mapComparison.do"/>
     <!-- action path="/googleearth"

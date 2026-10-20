@@ -10,7 +10,6 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.curate.geolocale.*;
 import org.calacademy.antweb.util.*;
-import org.calacademy.antweb.data.*;
 import org.calacademy.antweb.Formatter;
 
 public class GeolocaleDb extends AntwebDb {

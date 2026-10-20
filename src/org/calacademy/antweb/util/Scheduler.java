@@ -81,9 +81,17 @@ public class Scheduler extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(Scheduler.class);
 
+    static final java.util.Set<String> REMOVED_ACTIONS = java.util.Set.of("justLog");
+
     public ActionForward execute(ActionMapping mapping, ActionForm form,
             HttpServletRequest request, HttpServletResponse response) {
 
+		// Removed sub-action (justLog, a test stub that ran nothing; 2026-10-19): 404 before anything else.
+		if (REMOVED_ACTIONS.contains(String.valueOf(request.getParameter("action")))) {
+			response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+			request.setAttribute("message", "action not found.");
+			return mapping.findForward("message");
+		}
 
 		Login accessLogin = LoginMgr.getAccessLogin(request);
 		if (accessLogin == null || !accessLogin.isAdmin()) {
@@ -127,7 +135,6 @@ public class Scheduler extends AntwebAction {
 
     // Called from SessionRequestFilter
     public String doAction() {
-      //return doAction("justLog", 0); // Perform all
       String value = doAction("run", 0); // Perform all
       return value;
     }
@@ -175,11 +182,6 @@ public class Scheduler extends AntwebAction {
 		    LogMgr.appendLog("compute.log", "Begin " + action, true);
 
 			// -------------- Full Computation ----------------
-
-			if (action.equals("justLog")) {
-			  s_log.warn("justLog");
-			  return action + " completed.";
-			}
 
 			if (action.equals("run")) {
 			    String output = "";
