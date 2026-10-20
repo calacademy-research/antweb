@@ -53,7 +53,7 @@ public class SpecimenNameUpdateDbTest extends TestCase {
             s.executeUpdate("create table taxon (taxon_name varchar(128) not null primary key, taxarank varchar(20),"
                 + " status varchar(40), current_valid_name varchar(128), insert_method varchar(30), family varchar(64),"
                 + " subfamily varchar(64), tribe varchar(64), genus varchar(64), subgenus varchar(64), species varchar(64),"
-                + " subspecies varchar(64), parent_taxon_name varchar(128), antcat_id int)");
+                + " subspecies varchar(64), parent_taxon_name varchar(128), antcat_id int, author_date varchar(128))");
             s.executeUpdate("create table description_edit (taxon_name varchar(128) not null, title varchar(128), content mediumtext,"
                 + " code varchar(128), is_manual_entry tinyint, author_date varchar(128))");
             s.executeUpdate("create table homonym (taxon_name varchar(128) not null, author_date varchar(128))");
@@ -82,7 +82,7 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         exec("update taxon set antcat_id = 102 where taxon_name = '" + NEW + "'");
         exec("update taxon set antcat_id = 103 where taxon_name = '" + VALID_AGAIN + "'");
         exec("insert into description_edit (taxon_name, title, content, is_manual_entry) values ('" + OLD + "', 'taxonomichistory',"
-            + " '<p><b>Taxonomic history</b></p><div><div>Junior synonym of <a href=\"https://www.antcat.org/catalog/102\"><i>Ravavy indicus</i></a>:"
+            + " '<p><b>Taxonomic history</b></p><div><div>Combination in <a href=\"https://www.antcat.org/catalog/102\"><i>Ravavy</i></a>:"
             + " <a href=\"https://antcat.org/references/1\">Fisher &amp; Bolton, 2026a</a> <a href=\"x.pdf\">PDF</a>: 12</div></div>', 0)");
         exec("insert into description_edit (taxon_name, title, content, is_manual_entry) values ('" + VALID_AGAIN + "', 'taxonomichistory',"
             + " '<p><b>Taxonomic history</b></p><div><div>Junior synonym of <i>Pheidole other</i>: Wilson, 2003 PDF: 5.</div>"
@@ -149,11 +149,13 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         assertEquals(4, count("select count(*) from specimen_name_update where mode = 'would_change'"));
         assertEquals(1, count("select count(*) from specimen_name_update where code = 'jtl0000001' and access_group = 7"
             + " and uploaded_name = '" + OLD + "' and old_name = '" + OLD + "' and new_name = '" + NEW + "' and antcat_status = 'synonym'"));
-        // Why, from AntCat's taxonomic history (2026-10-20).
-        assertEquals("synonym: junior synonym of Ravavy indicus (Fisher & Bolton 2026a)",
+        // Why, from AntCat's taxonomic history (2026-10-20): Tapinoma indicum -> Ravavy indicus changes the
+        // genus and only the gender ending, a new combination; the specimen uploaded as Pheidole again goes back.
+        assertEquals("new combination: Ravavy indicus (Fisher & Bolton 2026a); spelling as in AntCat",
             one("select reason from specimen_name_update where code = 'jtl0000001'"));
         assertEquals("101", one("select antcat_id from specimen_name_update where code = 'jtl0000001'"));
-        assertEquals("uploaded as Pheidole again; valid again (was junior synonym of Pheidole other, Wilson 2003; status as species: Fisher 2025b)",
+        assertEquals("Your name Pheidole again is valid again. It had been shown under P. other (synonymy by Wilson 2003),"
+            + " and was revived as a species by Longino 2019.",
             one("select reason from specimen_name_update where code = 'casent0000003'"));
         assertEquals("103", one("select antcat_id from specimen_name_update where code = 'casent0000003'"));
         assertTrue(s.line(), s.line().startsWith("name update: 4 specimens in 2 groups (report: would change)"));
@@ -207,9 +209,50 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         assertEquals(0, db.getRuns(JTL, "2001-01-01", "2001-01-02", 30).size());
         assertEquals(2, db.getGroupIds().size());
         SpecimenNameUpdateDb.Line jtl = db.getLines(JTL, db.getRuns(JTL, null, null, 30)).get(0);
-        assertEquals("synonym: junior synonym of Ravavy indicus (Fisher & Bolton 2026a)", jtl.reason);
+        assertEquals("new combination: Ravavy indicus (Fisher & Bolton 2026a); spelling as in AntCat", jtl.reason);
         assertEquals(Integer.valueOf(101), jtl.antcatId);
         assertEquals(OLD, jtl.uploadedName);
+    }
+
+    /**
+     * A name shared by two AntCat taxa (Pachycondyla sauteri: Wheeler, 1906, now Cryptopone sauteri; Forel,
+     * 1912, now Ectomomyrmex sauteri): not moved, listed for the curator, replaced at the next run.
+     */
+    public void testSharedNameIsHeldForTheCurator() throws Exception {
+        String obs = "ponerinaepachycondyla sauteri";
+        String valid = "ponerinaecryptopone sauteri";
+        taxon(obs, "species", "obsolete combination", valid, null, "ponerinae", "pachycondyla", "sauteri", null);
+        taxon(valid, "species", "valid", null, null, "ponerinae", "cryptopone", "sauteri", null);
+        specimen("casent0000020", obs, null, CAS);
+        org.calacademy.antweb.upload.SharedNames shared = org.calacademy.antweb.upload.SharedNames.fromExport(new java.io.StringReader(
+            "antcat id\tsubfamily\tgenus\tspecies\tsubspecies\tauthor date\tstatus\tcurrent valid name\n"
+            + "509406\tPonerinae\tPachycondyla\tsauteri\t\tWheeler, 1906\tobsolete combination\tPonerinae Cryptopone sauteri\n"
+            + "509563\tPonerinae\tPachycondyla\tsauteri\t\tForel, 1912\tobsolete combination\tPonerinae Ectomomyrmex sauteri\n"));
+
+        SpecimenNameUpdate.Summary s = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000, shared);
+        assertEquals("not moved", obs, nameOf("casent0000020"));
+        assertEquals(4, s.specimens);
+        assertEquals(1, s.sharedSpecimens);
+        assertEquals(1, (int) s.skipped.get(SpecimenNameUpdate.Outcome.SHARED_NAME));
+        assertTrue(s.line(), s.line().contains("for the curator to confirm (shared name): 1 specimens"));
+        assertEquals("name is shared by two taxa; please confirm the identification: Cryptopone sauteri or Ectomomyrmex sauteri",
+            one("select reason from specimen_name_update where code = 'casent0000020' and mode = 'shared_name'"));
+
+        SpecimenNameUpdateDb db = new SpecimenNameUpdateDb(connection);
+        java.util.List<SpecimenNameUpdateDb.Line> held = db.getShared(CAS);
+        assertEquals(1, held.size());
+        assertEquals(obs, held.get(0).oldName);
+        assertEquals("casent0000020", held.get(0).codes.get(0));
+        assertTrue("other groups do not see it", db.getShared(JTL).isEmpty());
+        for (SpecimenNameUpdateDb.Run run : db.getRuns(0, null, null, 30)) assertFalse("not a run of moves", SpecimenNameUpdate.SHARED.equals(run.mode));
+
+        // The next run replaces the list.
+        SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000, shared);
+        assertEquals(1, count("select count(*) from specimen_name_update where mode = 'shared_name'"));
+        // Without the shared names (AntCat no longer has two taxa of the name), it moves.
+        SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000, org.calacademy.antweb.upload.SharedNames.none());
+        assertEquals(valid, nameOf("casent0000020"));
+        assertEquals(0, count("select count(*) from specimen_name_update where mode = 'shared_name'"));
     }
 
     /** A table made by the first version of the step (2026-10-20 morning) gets reason and antcat_id. */
