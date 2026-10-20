@@ -135,6 +135,37 @@ public class SpecimenNameUpdateTest extends TestCase {
         return SpecimenNameUpdate.decide(uploaded, current, n -> placeholder && n.equals(current), rule(uploaded));
     }
 
+    public void testUploadedHomonymIsLeftWhereTheUploadFiledIt() throws Exception {
+        // 2026-10-20: uploaded as "Camponotus gigas" (two AntCat taxa: Latreille 1802 -> Dinomyrmex gigas,
+        // Leach 1825 -> synonym of Camponotus cruentatus), filed under Dinomyrmex gigas by the upload.
+        // The taxon row of the uploaded name is the Leach one; the nightly must not follow it.
+        CurrentValidNameRule.Result r = rule(OLD);
+        assertEquals(Kind.REPLACE, r.kind);
+        SpecimenNameUpdate.Decision d = SpecimenNameUpdate.decide(OLD, "formicinaedinomyrmex gigas", n -> false, r, true);
+        assertEquals(SpecimenNameUpdate.Outcome.HOMONYM, d.outcome);
+        assertNull(d.newName);
+        // Not a homonym: the same case moves as before.
+        d = SpecimenNameUpdate.decide(OLD, "formicinaedinomyrmex gigas", n -> false, r, false);
+        assertEquals(SpecimenNameUpdate.Outcome.CHANGE, d.outcome);
+    }
+
+    public void testSpecimenUnderAValidNameStays() throws Exception {
+        // Brian 2026-10-20: Dinomyrmex gigas -> Camponotus cruentatus is wrong, both are valid. The specimen's
+        // current name is valid; the uploaded name's row points elsewhere (the other Camponotus gigas).
+        CurrentValidNameRule.Result r = rule(OLD);
+        SpecimenNameUpdate.Decision d = SpecimenNameUpdate.decide(OLD, "formicinaedinomyrmex gigas", n -> false, r, false, true);
+        assertEquals(SpecimenNameUpdate.Outcome.CURRENT_VALID, d.outcome);
+        assertNull(d.newName);
+    }
+
+    public void testResurrectedUploadedNameStillMovesBack() throws Exception {
+        // The uploaded name is valid again: the specimen goes back to it, even from a valid name
+        // (e.g. Crematogaster hespera, resurrected from synonymy under C. laeviuscula).
+        SpecimenNameUpdate.Decision d = SpecimenNameUpdate.decide(NEW, OLD, n -> false, rule(NEW), false, true);
+        assertEquals(SpecimenNameUpdate.Outcome.CHANGE, d.outcome);
+        assertEquals(NEW, d.newName);
+    }
+
     public void testSynonymAfterUploadIsMoved() throws Exception {
         // Uploaded as OLD while it was valid; AntCat has since made it a synonym of NEW.
         SpecimenNameUpdate.Decision d = nightly(OLD, OLD, false);

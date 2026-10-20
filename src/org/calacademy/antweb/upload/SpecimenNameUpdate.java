@@ -144,6 +144,7 @@ public class SpecimenNameUpdate {
         MORPHO_OR_INDET("morphospecies or indet"),
         PLACEHOLDER("filed under a homonym placeholder"),
         HOMONYM("homonym"),
+        CURRENT_VALID("filed under a name AntCat still calls valid"),
         NOT_IN_ANTCAT("uploaded name not in AntCat"),
         NO_TARGET("current valid name has no taxon row"),
         OTHER_STATUS("other status");
@@ -171,7 +172,33 @@ public class SpecimenNameUpdate {
      * taxa (insert_method homononymMirroringTaxon) apart. Pure: tested in SpecimenNameUpdateTest.
      */
     public static Decision decide(String uploadedName, String currentName, java.util.function.Predicate<String> isPlaceholder, CurrentValidNameRule.Result rule) {
+        return decide(uploadedName, currentName, isPlaceholder, rule, false, false);
+    }
+
+    public static Decision decide(String uploadedName, String currentName, java.util.function.Predicate<String> isPlaceholder, CurrentValidNameRule.Result rule, boolean uploadedIsHomonym) {
+        return decide(uploadedName, currentName, isPlaceholder, rule, uploadedIsHomonym, false);
+    }
+
+    /**
+     * uploadedIsHomonym: the uploaded name belongs to more than one AntCat taxon (it is in the homonym
+     * table). The name alone cannot tell which one the curator meant, so the nightly step leaves the
+     * specimen where the upload filed it. 2026-10-20: specimens uploaded as "Camponotus gigas" were filed
+     * under Dinomyrmex gigas (Camponotus gigas Latreille, 1802); the taxon row of that name is the other
+     * Camponotus gigas (Leach, 1825), a synonym of Camponotus cruentatus, and the preview would have moved
+     * them there (Brian: both species are valid).
+     */
+    /**
+     * currentIsValid: AntCat calls the name the specimen is filed under valid. Brian Fisher, 2026-10-20: a
+     * specimen filed under a valid name never moves to another name through its uploaded name's synonymy
+     * (the AntCat import keeps only the first of two taxa with the same name, so the uploaded name's row can
+     * be the wrong one, e.g. Camponotus gigas Leach instead of Camponotus gigas Latreille). The one move
+     * still made from a valid name: the uploaded name itself is valid again (resurrected from synonymy),
+     * and the specimen goes back to the name the curator gave.
+     */
+    public static Decision decide(String uploadedName, String currentName, java.util.function.Predicate<String> isPlaceholder, CurrentValidNameRule.Result rule, boolean uploadedIsHomonym, boolean currentIsValid) {
         if (Taxon.isMorphoOrIndet(uploadedName) || Taxon.isMorphoOrIndet(currentName)) return Decision.of(Outcome.MORPHO_OR_INDET);
+        if (uploadedIsHomonym && !uploadedName.equals(currentName)) return Decision.of(Outcome.HOMONYM);
+        if (currentIsValid && rule.kind == CurrentValidNameRule.Kind.REPLACE) return Decision.of(Outcome.CURRENT_VALID);
         if (isPlaceholder.test(currentName)) return Decision.of(Outcome.PLACEHOLDER);
         String newName;
         switch (rule.kind) {
@@ -353,6 +380,8 @@ public class SpecimenNameUpdate {
 
         CurrentValidNameRule.Lookup lookup = CurrentValidNameRule.plainLookup(connection);
         Map<String, CurrentValidNameRule.Result> ruleCache = new java.util.HashMap<>();
+        Map<String, Boolean> homonymCache = new java.util.HashMap<>();
+        Map<String, Boolean> currentValidCache = new java.util.HashMap<>();
         List<Change> changes = new ArrayList<>();
         Set<String> names = new HashSet<>();
 
@@ -370,7 +399,18 @@ public class SpecimenNameUpdate {
                 rule = CurrentValidNameRule.decide(uploaded, lookup);
                 ruleCache.put(uploaded, rule);
             }
-            Decision d = decide(uploaded, current, placeholders::contains, rule);
+            Boolean uploadedHomonym = homonymCache.get(uploaded);
+            if (uploadedHomonym == null) {
+                uploadedHomonym = lookup.isHomonym(uploaded);
+                homonymCache.put(uploaded, uploadedHomonym);
+            }
+            Boolean currentValid = currentValidCache.get(current);
+            if (currentValid == null) {
+                CurrentValidNameRule.TaxonRow cur = lookup.getTaxon(current);
+                currentValid = cur != null && Status.VALID.equals(cur.status);
+                currentValidCache.put(current, currentValid);
+            }
+            Decision d = decide(uploaded, current, placeholders::contains, rule, uploadedHomonym, currentValid);
             if (d.outcome != Outcome.CHANGE) {
                 summary.skipped.merge(d.outcome, 1, Integer::sum);
                 continue;
