@@ -44,7 +44,15 @@ def test_removed_actions_stay_removed():
              "/speciesListMove", "/speciesListToolAdd",
              # Curate page cleanup: Orphan Manager (one-click deletes), Type Status Manager, Cache Manager.
              "/orphanMgr", "/orphanSpecies", "/orphanGenera", "/dupedGenera", "/orphanSubfamilies",
-             "/orphanDescEdits", "/orphanAlternates", "/typeStatus", "/cache"]
+             "/orphanDescEdits", "/orphanAlternates", "/typeStatus", "/cache",
+             # Check of the 57 unclear catalog rows (2026-10-19, Brian's decisions): retired invitation
+             # links, AntWiki check, v3 API page, Google site search, donation pages, broken credit
+             # editor, editor trial, lower-case aliases, species list file, bioregion-as-project form,
+             # team member pages, world authority save.
+             "/antwebInvite", "/antWikiData", "/apiV3", "/basicSearch", "/donate", "/thanks",
+             "/editCredit", "/editorTrial", "/getcomparison", "/taxonomicpage", "/getSpeciesList",
+             "/newBioRegion", "/teamMember", "/teamMemberImgUpload", "/teamMemberImgDownload",
+             "/worldAuthoritySave"]
     if not IS_PRODUCTION:
         # These two used to update counts; only call them where this change may not be live yet.
         paths += ["/test", "/mobile"]
@@ -54,15 +62,6 @@ def test_removed_actions_stay_removed():
     # Any unknown path: a 404 page, not a blank 200.
     outcome = get(new_session(), "/noSuchAction.do")
     assert outcome.status in (400, 404), f"/noSuchAction.do: {outcome}"
-
-
-def test_editor_trial_requires_login():
-    """The editor trial page and its sanitize request are for curators only."""
-    assert get(new_session(), "/editorTrial.do").category == "login"
-    r = new_session().post(BASE_URL + "/editorTrial.do", data={"op": "sanitize", "html": "<b>x</b>"},
-                           timeout=TIMEOUT, allow_redirects=True)
-    assert "application/json" not in r.headers.get("Content-Type", ""), "anonymous sanitize request answered with JSON"
-    assert classify(r).category == "login", f"anonymous sanitize request: {classify(r)}"
 
 
 def test_every_action_has_a_decision():

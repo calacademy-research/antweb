@@ -104,7 +104,7 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.SecurityBatch7Test
           '
 
-      - name: Java unit tests of the 2026-10-19 hardening (AntWiki date check, page.do redirect, species list names)
+      - name: Java unit tests of the 2026-10-19 hardening (page.do redirect)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
             set -e
@@ -115,7 +115,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/HardeningSmallFixesTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.HardeningSmallFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (5 tests)" /tmp/out.txt
+            grep -q "^OK (1 test)" /tmp/out.txt
           '
 
       - name: Java unit tests of the EXIF section on the image page (Latin-1 and UTF-8 text, binary fields, escaping)

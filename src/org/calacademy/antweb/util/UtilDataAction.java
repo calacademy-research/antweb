@@ -51,9 +51,9 @@ public class UtilDataAction extends AntwebAction {
         "projectCountCrawl", "populateMuseum", "populateBioregion", "updateTaxonSets", "crawlForType",
         "imageCountCrawl", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
         "verifyProjTaxon", "regenerateAllAntweb", "runCountCrawls", "projTaxonChildCountCrawl",
-        "geolocaleTaxonCountCrawl", "museumTaxonCountCrawl", "bioregionTaxonCountCrawl", "countReport",
-        "genGoogleMapFunction", "delGoogleMapFunction", "genGroupObjectMaps", "updateGroupCounts",
-        "updateGroupUploadStats", "calcCaste", "setIsRestart", "siteWarning", "taxaOutsideOfNativeBioregion",
+        "geolocaleTaxonCountCrawl", "museumTaxonCountCrawl", "countReport",
+        "genGoogleMapFunction", "delGoogleMapFunction", "genGroupObjectMaps",
+        "calcCaste", "setIsRestart", "siteWarning", "taxaOutsideOfNativeBioregion",
         "genRecentContent");
 
 
@@ -115,7 +115,7 @@ public class UtilDataAction extends AntwebAction {
         if (!isAllow) { 
 
           List<String> needNothingInit = new ArrayList<>(Arrays.asList("delGoogleMapFunction", "genGoogleMapFunction", "genObjectMaps"
-                  , "genGroupObjectMaps", "updateGroupCounts", "updateGroupUploadStats"
+                  , "genGroupObjectMaps"
                   , "populateBioregion", "siteWarning"));
           List<String> needTaxonInit = new ArrayList<>(List.of("worldantsReload"));
 
@@ -279,8 +279,6 @@ public class UtilDataAction extends AntwebAction {
 
                 message += " " + doAction("verifyProjTaxon", form, accessLogin, accessGroup, connection, request, mapping);
                 s_log.info("Done verifyProjTaxon.");
-
-                // The AntWiki list check is antWikiData.do?action=checkForUpdates (admin, not part of the nightly run).
 
                 AntwebMgr.populate(connection, true);
             }
@@ -543,17 +541,6 @@ public class UtilDataAction extends AntwebAction {
 		  message = "Finished Museum Count Crawl (" + Html.esc(code) + ")";
 		}
 
-		if (action.equals("bioregionTaxonCountCrawl")) {
-		  BioregionTaxonCountDb bioregionTaxonCountDb = new BioregionTaxonCountDb(connection);
-          if (name == null || "".equals(name)) {
-            s_log.info("countCrawl expecting name:" + name + ". Running ChildrenCountCrawls for all bioregions.");
-		    bioregionTaxonCountDb.childrenCountCrawl();
-		  } else {
-		    bioregionTaxonCountDb.childrenCountCrawl(name);
-		  }
-		  message = "Finished Bioregion Count Crawl (" + Html.esc(form.getName()) + ")";
-		}
-
         // Useful for debugging? Code to execute and get results or a particular count.
 		if (action.equals("countReport")) {
 		  GeolocaleTaxonCountDb geolocaleTaxonCountDb = new GeolocaleTaxonCountDb(connection);
@@ -702,21 +689,6 @@ public class UtilDataAction extends AntwebAction {
               objectMapDb.genGroupObjectMaps(); 				  
             }
             message = "genObject Maps executed.";
-        }			  
-
-        if (action.contains("updateGroupCounts")) {
-            UploadDb uploadDb = new UploadDb(connection);
-            uploadDb.updateCounts(); 
-            message = "groupDb Update Counts executed.";
-        }
-
-        if (action.contains("updateGroupUploadStats")) {
-            ArrayList<Group> groups = GroupMgr.getGroups();
-            UploadDb uploadDb = new UploadDb(connection);
-            for (Group group : groups) {                  
-                uploadDb.updateGroup(group);
-            }
-            message = "group first_specimen_update and upload_counts updated.";
         }			  
 
         if (action.equals("deleteConflictedDefaultImages")) {

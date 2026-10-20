@@ -23,8 +23,6 @@
         <hr>
 <!--        <img src='<%= AntwebProps.getDomainApp() %>/image/yellow-star-md.png' width=15> New version! Specimen API field names have changed. While in beta the api is potentially subject to change.
         <hr> -->
-        <div class="versionx">Version 3.0 is [<a href='<%= AntwebProps.getDomainApp() %>/apiV3.do'>here</a>]</div>
-        <div class="versionx">Version 2 is [<a href='https://www.antweb.org/api/v2/'>here</a>]</div>
 
 <%
    if (LoginMgr.isAdmin(accessLogin)) { %>

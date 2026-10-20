@@ -260,7 +260,7 @@ antweb/
 │   └── classes/
 │       └── AntwebResources.properties  # Configuration
 ├── api/                          # Python API
-│   └── v3/
+│   └── v3.1/
 │       ├── api.py                # Flask application
 │       └── home/                 # SQLAlchemy models
 ├── db/                           # Database files
@@ -336,7 +336,7 @@ mysql> SOURCE /path/to/migration.sql;
 
 #### Python API Changes
 
-1. Edit files in `api/v3/`
+1. Edit files in `api/v3.1/`
 
 2. Restart API container:
 ```bash
@@ -345,7 +345,7 @@ docker-compose restart api
 
 3. Test endpoint:
 ```bash
-curl http://localhost:5000/api/v3/specimens?limit=1
+curl "http://localhost:5000/specimens?limit=1"
 ```
 
 ### Testing Changes
@@ -372,13 +372,13 @@ mysql> SELECT * FROM taxon WHERE taxon_name = 'formicinae';
 
 ```bash
 # Test specimens endpoint
-curl http://localhost:5000/api/v3/specimens?genus=camponotus&limit=5
+curl "http://localhost:5000/specimens?genus=camponotus&limit=5"
 
 # Test specific specimen
-curl http://localhost:5000/api/v3/specimens/CASENT0106322
+curl "http://localhost:5000/specimens?specimenCode=casent0106322"
 
 # Test taxa endpoint
-curl http://localhost:5000/api/v3/taxa?rank=genus&limit=10
+curl "http://localhost:5000/taxa?taxarank=genus&limit=10"
 ```
 
 ### Debugging
@@ -422,7 +422,7 @@ SHOW INDEXES FROM specimen;
 
 1. **Enable debug mode:**
 
-Edit `api/v3/api.py`:
+Edit `api/v3.1/api.py`:
 ```python
 application.debug = True
 ```
@@ -545,7 +545,7 @@ docker-compose exec antweb ant deploy
 
 1. **Create SQLAlchemy model:**
 ```python
-# api/v3/home/mytable.py
+# api/v3.1/mytable.py (example)
 from sqlalchemy import Column, Integer, String, Text, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 
@@ -562,10 +562,10 @@ class MyTable(Base):
 
 2. **Add endpoint to API:**
 ```python
-# api/v3/api.py
+# api/v3.1/api.py
 from home.mytable import MyTable
 
-@application.route("/api/v3/mytable", methods=['GET'])
+@application.route("/mytable", methods=['GET'])
 def get_mytable():
     limit = request.args.get('limit', 100, type=int)
     
@@ -588,7 +588,7 @@ def get_mytable():
 3. **Test:**
 ```bash
 docker-compose restart api
-curl http://localhost:5000/api/v3/mytable?limit=5
+curl "http://localhost:5000/mytable?limit=5"
 ```
 
 ## Code Style Guidelines
@@ -742,7 +742,7 @@ Follow conventional commits format:
 ```
 feat(api): add endpoint for specimen images
 
-Add new /api/v3/specimens/{code}/images endpoint
+Add new /v3.1/specimenImages endpoint
 that returns all images for a specimen.
 
 Closes #123
@@ -841,7 +841,7 @@ docker-compose exec antweb cat WEB-INF/classes/AntwebResources.properties | grep
 - **Repository:** https://github.com/calacademy-research/antweb
 - **Issues:** https://github.com/calacademy-research/antweb/issues
 - **Live Site:** https://www.antweb.org
-- **API Docs:** https://api.antweb.org/v3/docs
+- **API Docs:** https://www.antweb.org/apiV3.1.do (see docs/API.md)
 - **Docker Docs:** https://docs.docker.com
 - **Struts Docs:** https://struts.apache.org
 - **Flask Docs:** https://flask.palletsprojects.com

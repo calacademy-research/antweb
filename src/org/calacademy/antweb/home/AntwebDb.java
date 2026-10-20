@@ -131,45 +131,6 @@ public class AntwebDb {
     }
 
 
-    /** True when the lookup row for key already holds value; otherwise stores value and returns false. Bound parameters. */
-    public boolean isCurrentInLookup(Connection connection, String key, String value) {
-        if (key == null || value == null) return false;
-        PreparedStatement stmt = null;
-        ResultSet rset = null;
-        String dml = null;
-        try {
-          stmt = connection.prepareStatement("select value from lookup where handle = ?");
-          stmt.setString(1, key);
-          rset = stmt.executeQuery();
-          int i = 0;
-          while (rset.next()) {
-            ++i;
-            if (value.equals(rset.getString("value"))) return true;
-          }
-          rset.close();
-          rset = null;
-          stmt.close();
-
-          if (i == 0) {
-            dml = "insert into lookup (handle, value) values (?, ?)";
-            stmt = connection.prepareStatement(dml);
-            stmt.setString(1, key);
-            stmt.setString(2, value);
-          } else {
-            dml = "update lookup set value = ? where handle = ?";
-            stmt = connection.prepareStatement(dml);
-            stmt.setString(1, value);
-            stmt.setString(2, key);
-          }
-          stmt.executeUpdate();
-        } catch (Exception e) {
-          s_log.warn("isCurrentInLookup() e:" + e);
-        } finally {
-          DBUtil.close(stmt, rset, "AntwebDb.isCurrentInLookup()");
-        }
-        s_log.debug("isCurrentInLookup() dml:" + dml);
-        return false;
-    }	
     
             
 }

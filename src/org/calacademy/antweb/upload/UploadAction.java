@@ -43,14 +43,16 @@ public class UploadAction extends AntwebAction {
 
 	// Site-wide jobs: admins only.
 	static final java.util.Set<String> ADMIN_ONLY_ACTIONS = java.util.Set.of(
-			"fetchAndReloadWorldants", "reloadSpeciesLists",
-			"runStatistics", "runCountCrawls", "toggleDownTime", "genAll", "genRecentDescEdits");
+			"fetchAndReloadWorldants",
+			"runStatistics", "runCountCrawls", "genAll", "genRecentDescEdits");
 
 	// Removed sub-actions (unused tools, 2026-10): answered as "Action not found." before anything else.
 	// allSpecimenFiles (reload every group from the working folder) and GBIFUpload: Curate page cleanup.
+	// reloadSpeciesLists (its code was commented out) and toggleDownTime (serverStatus.do has the
+	// working switch): removed 2026-10-19.
 	static final java.util.Set<String> REMOVED_ACTIONS = java.util.Set.of(
 			"reloadSpecimenList", "removeSpecimenList", "uploadSpeciesList", "specimenTest", "speciesTest",
-			"allSpecimenFiles", "GBIFUpload");
+			"allSpecimenFiles", "GBIFUpload", "reloadSpeciesLists", "toggleDownTime");
 
 	// Admin jobs linked from the Curate page: a GET shows a confirmation page that repeats the
 	// request by POST with the form token (PostOnly). Every other sub-action must be posted.
@@ -224,12 +226,10 @@ public class UploadAction extends AntwebAction {
 			AntwebMgr.incrementSpecimenUploadId(connection);
 
 
-			if (!"toggleDownTime".equals(action)) {
-				String downTimeMessage = ServerDb.isDownTime(action, connection);
-				if (!"".equals(downTimeMessage)) {
-					request.setAttribute("message", downTimeMessage);
-					return mapping.findForward("message");
-				}
+			String downTimeMessage = ServerDb.isDownTime(action, connection);
+			if (!"".equals(downTimeMessage)) {
+				request.setAttribute("message", downTimeMessage);
+				return mapping.findForward("message");
 			}
 
 
@@ -292,21 +292,6 @@ public class UploadAction extends AntwebAction {
 
 
 					//if (!curator.equals(accessLogin)) uploadDetails.setCurator(accessLogin);
-
-                /*
- 			  } else if (action.equals("reloadSpeciesLists")) {
-				util.deleteFile(AntwebProps.getWebDir() + "log/passBoltonSpeciesCheck.txt");
-				SpeciesListUpload speciesListUpload = new SpeciesListUpload(connection);
-				speciesListUpload.reloadSpeciesLists();
-				uploadDetails = speciesListUpload.getUploadDetails();
-
-				logFileName += "allAuthFiles" + UploadDetails.appendLogExt;
-				runStatistics(action, connection, request, accessLogin.getId(), uploadDetails);
-				httpPostOK = true;
-                runCountCrawls = true;
-
-				//runCountCrawls(connection);
-*/
 
 				} else if (action.equals("fetchAndReloadWorldants")) {
 					SpeciesListUploader speciesListUploader = new SpeciesListUploader(connection);
