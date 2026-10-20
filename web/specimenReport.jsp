@@ -234,6 +234,11 @@ if (sortedBy == null) {
     specimenReportTaxa.toArray(specimenReportTaxaArray);
     //A.log("specimenReport.jsp specimenReportTaxaArray:" + specimenReportTaxaArray.length + " taxonChildren:" + taxon.getChildren().size());
 
+%>
+<%-- aw-list-scroll / aw-list: on narrow screens the rows scroll sideways inside this box instead of
+     the whole page; see responsive.css. Plain divs at desktop width. --%>
+<div class="aw-list-scroll"><div class="aw-list">
+<%
  for (Taxon thisSpecimen : specimenReportTaxaArray) {
     Specimen thisChild = (Specimen) thisSpecimen;
     //AntwebUtil.log("specimenReport.jsp children code:" + ((Specimen) child).getCode() + " groupName:" + ((Specimen) child).getGroupName());
@@ -450,5 +455,6 @@ if (sortedBy == null) {
 
 } // For loop
 %>
+</div></div><%-- /aw-list, /aw-list-scroll --%>
 
 </form>

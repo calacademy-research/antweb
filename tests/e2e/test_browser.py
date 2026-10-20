@@ -11,7 +11,11 @@ browsers kept an old autocomplete.js) passed them. These tests open pages in Chr
   d. open the main page types at phone width (390x844, iPhone user agent) and check that they fit the
      screen (no sideways page scroll), that the header search box works and the menu button opens
      the menu (responsive.css / responsive.js), with no JS errors; at 1280 px the menu button stays
-     hidden and nothing scrolls sideways.
+     hidden and nothing scrolls sideways;
+  e. at phone width, wide lists (a country species list, a specimen list) scroll sideways inside
+     their own box (div.aw-list-scroll), not the page: the row shading spans all columns, an edge
+     shadow shows more columns to the right, and the name column stays in view after scrolling.
+     At 1280 px the lists keep their fixed 1000 px desktop layout.
 
 Read-only: pages are opened and the search boxes typed into, nothing is submitted.
 Skipped when Playwright is not installed (pip install -r requirements.txt;
@@ -317,5 +321,106 @@ def test_desktop_layout_unchanged(desktop, name):
         header = page.locator("#masthead .header").bounding_box()
         assert header and abs(header["width"] - 1000) <= 1, f"{path}: header is no longer 1000 px wide: {header}"
         _assert_fits(page, path, "at 1280 px")
+    finally:
+        page.close()
+
+
+# e. wide lists at phone width -----------------------------------------------------------
+
+SPECIES_LIST = "/taxonomicPage.do?rank=species&countryName=Reunion"
+
+# Measures the first div.aw-list-scroll box: its size, the frame classes (responsive.js), the first
+# stripe row and the first-column cell of the first (or first striped) row.
+LIST_JS = """(firstCol) => { const box = document.querySelector('.aw-list-scroll');
+    if (!box) return null;
+    const cs = getComputedStyle(box);
+    const rows = [...box.querySelectorAll('.specimen_layout')];
+    const c0 = rows.length && rows[0].querySelector(firstCol);
+    if (c0) c0.scrollIntoView({block: 'center', inline: 'nearest'});
+    const br = box.getBoundingClientRect();
+    const alt = box.querySelector('.specimen_layout.specimen_layout_alt');
+    const cell = (row) => row && row.querySelector(firstCol);
+    const at = (el) => { if (!el) return null;
+        const r = el.getBoundingClientRect();
+        const hit = document.elementFromPoint(Math.min(r.left + 8, br.right - 1), r.top + Math.min(8, r.height / 2));
+        return {left: r.left, right: r.right, width: r.width, visible: !!hit && (hit === el || el.contains(hit)),
+                bg: getComputedStyle(el).backgroundColor}; };
+    return {overflowX: cs.overflowX, scrollWidth: box.scrollWidth, clientWidth: box.clientWidth,
+        scrollLeft: box.scrollLeft, boxLeft: br.left, boxRight: br.right,
+        frame: box.parentNode.className || '', rows: rows.length,
+        rowWidth: rows.length ? rows[0].getBoundingClientRect().width : 0,
+        first: at(cell(rows[0])), alt: at(cell(alt)),
+        altRowBg: alt ? getComputedStyle(alt).backgroundColor : null}; }"""
+
+
+def _specimen_list_path(ctx) -> str:
+    """A specimen list known to have rows: the first Reunion species' Reunion specimens link."""
+    page = _open_settled(ctx, SPECIES_LIST)
+    try:
+        hrefs = page.eval_on_selector_all(
+            ".specimen_layout .list_extras.specimens a[href*='browse.do']",
+            "els => els.map(a => a.getAttribute('href')).filter(h => !/global=true/.test(h))")
+    finally:
+        page.close()
+    assert hrefs, f"{SPECIES_LIST}: no Reunion specimen links in the species list"
+    parts = urlsplit(hrefs[0] if "://" in hrefs[0] else BASE_URL + "/" + hrefs[0].lstrip("/"))
+    return parts.path + ("?" + parts.query if parts.query else "")
+
+
+def _check_wide_list(page, path, first_col):
+    _assert_fits(page, path, "at 390 px")
+    m = page.evaluate(LIST_JS, first_col)
+    assert m, f"{path}: no div.aw-list-scroll around the list"
+    assert m["rows"] > 0, f"{path}: no list rows"
+    assert m["overflowX"] in ("auto", "scroll"), f"{path}: list box does not scroll sideways: {m}"
+    assert m["scrollWidth"] > m["clientWidth"] + 20, f"{path}: list is not wider than its box at 390 px: {m}"
+    assert m["rowWidth"] >= m["scrollWidth"] - 1, \
+        f"{path}: row shading stops at {m['rowWidth']} px of a {m['scrollWidth']} px wide list"
+    assert "aw-more-right" in m["frame"], f"{path}: no edge shadow for the hidden columns: {m['frame']!r}"
+    assert m["first"] and m["first"]["visible"], f"{path}: first column not visible before scrolling: {m}"
+
+    page.evaluate("() => { const b = document.querySelector('.aw-list-scroll'); b.scrollLeft = b.scrollWidth; "
+                  "b.dispatchEvent(new Event('scroll')); }")
+    page.wait_for_timeout(300)
+    m = page.evaluate(LIST_JS, first_col)
+    assert m["scrollLeft"] > 20, f"{path}: list box did not scroll: {m}"
+    f = m["first"]
+    assert f and f["left"] >= m["boxLeft"] - 1 and f["right"] <= m["boxRight"] + 1 and f["visible"], \
+        f"{path}: first column ({first_col}) scrolled out of view: {m}"
+    if m["alt"]:
+        assert m["alt"]["bg"] == m["altRowBg"], \
+            f"{path}: sticky column background {m['alt']['bg']} does not match the row shading {m['altRowBg']}"
+    assert "aw-scrolled" in m["frame"] and "aw-more-right" not in m["frame"], \
+        f"{path}: frame classes not updated after scrolling to the end: {m['frame']!r}"
+    _assert_fits(page, path, "after scrolling the list")
+
+
+@pytest.mark.parametrize("kind", ["species list", "specimen list"])
+def test_phone_wide_list_scrolls_in_its_own_box(phone, kind):
+    path = SPECIES_LIST if kind == "species list" else _specimen_list_path(phone)
+    first_col = ".sd_name" if kind == "species list" else ".sd_specimen_code"
+    page = _open_settled(phone, path)
+    try:
+        _check_wide_list(page, path, first_col)
+        assert not _unexpected(page.errors), page.errors
+    finally:
+        page.close()
+
+
+def test_desktop_species_list_unchanged(desktop):
+    """At 1280 px the list keeps its 1000 px rows and nothing scrolls sideways inside or outside it."""
+    page = _open_settled(desktop, SPECIES_LIST)
+    try:
+        _assert_fits(page, SPECIES_LIST, "at 1280 px")
+        m = page.evaluate("""() => { const box = document.querySelector('.aw-list-scroll');
+            const d = box && box.querySelector('.specimen_layout .sd_data');
+            return box && {frame: box.parentNode.className || '', overflowX: getComputedStyle(box).overflowX,
+                sdData: d ? d.getBoundingClientRect().width : 0,
+                sticky: d ? getComputedStyle(d.querySelector('.sd_name')).position : ''}; }""")
+        assert m, f"{SPECIES_LIST}: no div.aw-list-scroll around the list"
+        assert m["overflowX"] == "visible", f"{SPECIES_LIST}: list box scrolls at 1280 px: {m}"
+        assert abs(m["sdData"] - 1000) <= 1, f"{SPECIES_LIST}: list rows are no longer 1000 px wide: {m}"
+        assert m["sticky"] != "sticky" and "aw-scroll-frame" not in m["frame"], \
+            f"{SPECIES_LIST}: phone list rules applied at 1280 px: {m}"
     finally:
         page.close()

@@ -7,11 +7,11 @@
   file changes nothing.
 
   Tier 1, up to 1000 px (tablets, narrow windows): the fixed 976/1000 px page boxes
-          become fluid, so there is no sideways scrolling.
+          become fluid, so there is no sideways scrolling; wide tables and lists scroll
+          inside their own box (div.aw-table-scroll / div.aw-list-scroll).
   Tier 2, up to 760 px (phones): single column, header collapses behind a menu button
           (responsive.js toggles body.aw-nav-open), full-width search boxes, image grids
-          two across, wide tables scroll inside their own box (responsive.js wraps them
-          in div.aw-table-scroll).
+          two across, the first column of wide tables and lists stays in view.
 
   Many antweb.css rules carry // comments, which are not valid CSS and make browsers
   drop the next declaration; a few rules below use !important to win against inline
@@ -75,6 +75,47 @@
         max-width: 100%;
         margin-left: 0;
         margin-right: 0;
+    }
+
+    /* -- wide tables and lists scroll sideways inside their own box, never the page ---------
+       div.aw-table-scroll: added by responsive.js around a <table> wider than its box.
+       div.aw-list-scroll > div.aw-list: written by the list JSPs (taxonReportBody.jsp,
+       specimenReport.jsp, advancedSearchResultsByTaxon-body.jsp), whose "tables" are rows of
+       floated divs (.specimen_layout > .sd_data, 1000 px wide).
+       div.aw-scroll-frame: added by responsive.js around either box; it carries the edge
+       shadow that shows more columns to the right (aw-more-right) and the scrolled state
+       (aw-scrolled), both kept up to date while scrolling. */
+    .aw-scroll-frame {
+        position: relative;
+    }
+    .aw-table-scroll,
+    .aw-list-scroll {
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .aw-list {                     /* as wide as its columns, so row stripes span them all */
+        width: max-content;
+        min-width: 100%;
+    }
+    .aw-list .sd_data {            /* fit the columns instead of a fixed 1000 px */
+        width: auto;
+    }
+    .aw-scroll-frame::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 16px;
+        z-index: 3;
+        pointer-events: none;
+        background: linear-gradient(to left, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0));
+        opacity: 0;
+        transition: opacity 0.15s;
+    }
+    .aw-scroll-frame.aw-more-right::after {
+        opacity: 1;
     }
 }
 
@@ -424,11 +465,47 @@
         margin: 6px 0;
     }
 
-    /* -- wide tables: scroll inside their own box (responsive.js adds the wrapper) --- */
-    .aw-table-scroll {
-        max-width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    /* -- wide tables and lists: first column stays in view (see tier 1 for the scroll box) */
+    /* Taxon lists (taxonReportBody.jsp): the name column is narrowed and sticks to the left edge;
+       its background matches the row stripe (specimen_list.js adds specimen_layout_alt). */
+    .aw-list .sd_name,
+    .aw-list .sd_name.pad {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        width: 150px;
+        margin-left: 0;
+        padding-left: 6px;
+        padding-right: 8px;
+        background-color: #fff;
+        overflow-wrap: anywhere;
+    }
+    /* Specimen lists (specimenReport.jsp): the specimen code column sticks. */
+    .aw-list .sd_specimen_code {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        padding-left: 4px;
+        background-color: #fff;
+    }
+    .aw-list .specimen_layout_alt .sd_name,
+    .aw-list .specimen_layout_alt .sd_specimen_code {
+        background-color: #e4e4e4;
+    }
+    /* once scrolled, a thin shadow separates the sticky column from what slides under it */
+    .aw-scrolled .aw-list .sd_name,
+    .aw-scrolled .aw-list .sd_specimen_code,
+    .aw-scrolled .aw-sticky-first > * > tr > :first-child,
+    .aw-scrolled .aw-sticky-first > tr > :first-child {
+        box-shadow: 4px 0 4px -3px rgba(0, 0, 0, 0.35);
+    }
+    /* Real tables: responsive.js adds aw-sticky-first to simple data tables (no merged cells,
+       first column not too wide) and gives each first cell its row's background colour. */
+    .aw-sticky-first > * > tr > :first-child,
+    .aw-sticky-first > tr > :first-child {
+        position: sticky;
+        left: 0;
+        z-index: 1;
     }
     #photo_metadata {
         width: auto;
