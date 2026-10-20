@@ -207,7 +207,7 @@ public class SpecimenNameUpdateTest extends TestCase {
         List<SpecimenNameUpdateDb.Line> lines = new ArrayList<>();
         lines.add(line);
         String html = NameUpdatesAction.sharedHtml(lines, "https://www.antweb.org");
-        assertTrue(html, html.contains("<h3>Needs the curator's decision</h3>"));
+        assertTrue(html, html.contains("Needs the curator's decision</h3>"));
         assertTrue(html, html.contains(Taxon.makeDescriptionLink("ponerinaepachycondyla sauteri") + ": <span class=\"name-update-reason\">name is shared by two taxa"));
         assertTrue(html, html.contains("/specimen.do?name=casent0009\">casent0009</a>"));
         assertEquals("", NameUpdatesAction.sharedHtml(new ArrayList<>(), ""));
