@@ -12,7 +12,9 @@ import java.util.List;
 /**
  * Table specimen_name_update: one row per specimen moved (mode 'changed') or that would be moved
  * (mode 'would_change', report mode and the Preview button) by the nightly name update
- * (SpecimenNameUpdate). Read by the Name updates page (nameUpdates.do).
+ * (SpecimenNameUpdate), and per specimen held back for the curator because its name belongs to two or
+ * more AntCat taxa (mode 'shared_name', new_name empty; replaced at each run). Read by the Name
+ * updates page (nameUpdates.do).
  *
  * ensureSchema() creates the table when missing (same DDL: db/upgrade/8.113/2026-10-20-specimen-name-update.sql),
  * in the character set and collation of taxon.taxon_name, as CuratorTaxonSetDb does for taxon_set_parked.
@@ -83,6 +85,13 @@ public class SpecimenNameUpdateDb {
     public int deletePreview() throws SQLException {
         try (Statement stmt = connection.createStatement()) {
             return stmt.executeUpdate("delete from specimen_name_update where mode = '" + SpecimenNameUpdate.WOULD_CHANGE + "'");
+        }
+    }
+
+    /** Removes the previous list of specimens held back for the curator (shared names): each run makes a new one. */
+    public int deleteShared() throws SQLException {
+        try (Statement stmt = connection.createStatement()) {
+            return stmt.executeUpdate("delete from specimen_name_update where mode = '" + SpecimenNameUpdate.SHARED + "'");
         }
     }
 
@@ -201,6 +210,7 @@ public class SpecimenNameUpdateDb {
         fromDay = day(fromDay);
         toDay = day(toDay);
         List<String> where = new ArrayList<>();
+        where.add("mode != '" + SpecimenNameUpdate.SHARED + "'");   // listed apart: getShared
         if (groupId > 0) where.add("access_group = ?");
         if (fromDay != null) where.add("run_date >= ?");
         if (toDay != null) where.add("run_date < date_add(?, interval 1 day)");
@@ -224,6 +234,31 @@ public class SpecimenNameUpdateDb {
             }
         }
         return runs;
+    }
+
+    /**
+     * The specimens held back for the curator by the latest run (name shared by two or more AntCat taxa):
+     * one line per group, name and uploaded name, its reason listing the candidates. groupId 0 = all groups.
+     */
+    public List<Line> getShared(int groupId) throws SQLException {
+        ensureSchema();
+        List<Run> runs = new ArrayList<>();
+        String query = "select run_date, count(*) from specimen_name_update where mode = ?" + (groupId > 0 ? " and access_group = ?" : "")
+            + " group by run_date order by run_date desc limit 1";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setString(1, SpecimenNameUpdate.SHARED);
+            if (groupId > 0) stmt.setInt(2, groupId);
+            try (ResultSet r = stmt.executeQuery()) {
+                if (r.next()) {
+                    Run run = new Run();
+                    run.runDate = r.getTimestamp(1);
+                    run.mode = SpecimenNameUpdate.SHARED;
+                    run.specimens = r.getInt(2);
+                    runs.add(run);
+                }
+            }
+        }
+        return getLines(groupId, runs);
     }
 
     /** Groups that have rows. */

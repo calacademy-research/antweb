@@ -174,6 +174,45 @@ public class SpecimenNameUpdateTest extends TestCase {
         assertEquals("Uploaded As keeps the curator's name", OLD, d.newOriginalName);
     }
 
+    /**
+     * A name shared by two AntCat taxa (Brian Fisher, 2026-10-20; Pachycondyla sauteri: Cryptopone sauteri
+     * or Ectomomyrmex sauteri): never moved, held for the curator with the candidates. Only a move is
+     * held back; a specimen that stays anyway is not listed.
+     */
+    public void testSharedNameIsHeldForTheCurator() throws Exception {
+        List<String> both = List.of("Cryptopone sauteri", "Ectomomyrmex sauteri");
+        SpecimenNameUpdate.Decision d = SpecimenNameUpdate.decide(OLD, OLD, n -> false, rule(OLD), false, false, both);
+        assertEquals(Outcome.SHARED_NAME, d.outcome);
+        assertNull("not moved", d.newName);
+        assertEquals(both, d.candidates);
+        assertEquals("name is shared by two taxa; please confirm the identification: Cryptopone sauteri or Ectomomyrmex sauteri",
+            org.calacademy.antweb.upload.SharedNames.reason(d.candidates));
+        assertEquals("already on the valid name: nothing to hold", Outcome.UNCHANGED,
+            SpecimenNameUpdate.decide(OLD, NEW, n -> false, rule(OLD), false, false, both).outcome);
+        assertEquals("one candidate is not shared", Outcome.CHANGE,
+            SpecimenNameUpdate.decide(OLD, OLD, n -> false, rule(OLD), false, false, List.of("Ravavy indicus")).outcome);
+        assertEquals(Outcome.CHANGE, SpecimenNameUpdate.decide(OLD, OLD, n -> false, rule(OLD), false, false, null).outcome);
+
+        // The page lists them apart, per group, with the codes.
+        SpecimenNameUpdateDb.Line line = new SpecimenNameUpdateDb.Line();
+        line.runDate = Timestamp.valueOf("2026-10-20 05:20:00");
+        line.mode = SpecimenNameUpdate.SHARED;
+        line.groupId = 1;
+        line.oldName = "ponerinaepachycondyla sauteri";
+        line.uploadedName = "ponerinaepachycondyla sauteri";
+        line.newName = "";
+        line.reason = org.calacademy.antweb.upload.SharedNames.reason(both);
+        line.count = 1;
+        line.codes.add("casent0009");
+        List<SpecimenNameUpdateDb.Line> lines = new ArrayList<>();
+        lines.add(line);
+        String html = NameUpdatesAction.sharedHtml(lines, "https://www.antweb.org");
+        assertTrue(html, html.contains("<h3>Needs the curator's decision</h3>"));
+        assertTrue(html, html.contains(Taxon.makeDescriptionLink("ponerinaepachycondyla sauteri") + ": <span class=\"name-update-reason\">name is shared by two taxa"));
+        assertTrue(html, html.contains("/specimen.do?name=casent0009\">casent0009</a>"));
+        assertEquals("", NameUpdatesAction.sharedHtml(new ArrayList<>(), ""));
+    }
+
     public void testAlreadyOnTheValidNameIsUnchanged() throws Exception {
         assertEquals(Outcome.UNCHANGED, nightly(OLD, NEW, false).outcome);
         assertEquals(Outcome.UNCHANGED, nightly(NEW, NEW, false).outcome);

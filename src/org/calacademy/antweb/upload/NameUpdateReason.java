@@ -21,14 +21,16 @@ import org.calacademy.antweb.util.Html;
  * The reason compares the old name (the one the specimen was filed under) with the new name, whatever
  * the chain of AntCat acts between them (spec: claude/antweb-name-update-reasons-spec.md):
  *
- *   epithet changed (beyond a gender ending)   synonym: junior synonym of NEW (Author year)
- *   genus changed, epithet same or gender      new combination: NEW (Author year)
- *                                              [; ending agrees with the gender of GENUS]
+ *   epithet changed                            synonym: junior synonym of NEW (Author year)
+ *   unnecessary replacement name               unnecessary replacement name for NEW (Author year);
+ *                                              junior objective synonym
+ *   genus changed, epithet the same            new combination: NEW (Author year)
+ *     (or only its ending)                     [; spelling as in AntCat]
  *   subspecies to species                      raised to species: NEW (Author year)
  *   species to subspecies                      placed as subspecies: NEW (Author year)
  *   A b b -> A b                               nominotypical subspecies, shown as the species
- *   same genus, only the gender ending         ending agrees with the gender of GENUS (ICZN Art. 34.2)
- *   other spelling of the same epithet         misspelling of NEW
+ *   same genus, only the ending of the epithet spelling as in AntCat: NEW
+ *   other spelling (AntCat: misspelling)       misspelling of NEW
  *   the uploaded name is valid again           Your name NEW is valid again. It had been shown under
  *                                              OLD (synonymy by Author year), and was revived as a
  *                                              species by Author year.
@@ -38,18 +40,18 @@ import org.calacademy.antweb.util.Html;
  * combination" for one that uploaded Camponotus pylartes, because the reason followed the uploaded
  * name's status and history). The uploaded name counts only for "valid again" (the new name is it).
  *
- * Gender ending or misspelling: an ending change is gender agreement when the new ending is the form
- * of the new genus's grammatical gender (Opisthopsis pictus -> picta, Opisthopsis is feminine);
- * otherwise it is a misspelling (Camponotus ligniperdus -> ligniperda: Camponotus is masculine, so -a
- * is not agreement; ligniperda is a noun, invariable). The gender of a genus is read from its ending
- * (genderOf). A reference that cannot be found in the history is left out rather than guessed. Names are
- * display names (Crematogaster hespera); the page shows them in italics (toHtml). Pure: tested in
- * AntcatHistoryTest.
+ * Endings: AntWeb shows what AntCat states as the valid, correctly spelled name; gender agreement is for
+ * AntCat to sort out. A change of the ending only (same stem: Opisthopsis pictus -> picta, Camponotus
+ * ligniperdus -> ligniperda) is never called a misspelling and no gender is claimed: "spelling as in
+ * AntCat". A reference that cannot be found in the history, or that predates a contrary act, is left
+ * out rather than guessed. Names are display names (Crematogaster hespera); the page shows them in
+ * italics (toHtml). Pure: tested in AntcatHistoryTest.
  */
 public final class NameUpdateReason {
 
     public static final int MAX_LENGTH = 500;
     public static final String ANTCAT_CATALOG = "https://www.antcat.org/catalog/";
+    public static final String SPELLING_AS_IN_ANTCAT = "spelling as in AntCat";
 
     public final String text;
     /** AntCat id of the taxon whose history gave the reason, or null. */
@@ -75,11 +77,16 @@ public final class NameUpdateReason {
         public final String status;     // AntCat status, or null
         public final Integer antcatId;
         public final AntcatHistory history;
+        public final String authorDate; // e.g. "(Brown, 1975)", or null
         public TaxonInfo(String name, String status, Integer antcatId, AntcatHistory history) {
+            this(name, status, antcatId, history, null);
+        }
+        public TaxonInfo(String name, String status, Integer antcatId, AntcatHistory history, String authorDate) {
             this.name = name;
             this.status = status;
             this.antcatId = antcatId;
             this.history = history == null ? AntcatHistory.parse(null) : history;
+            this.authorDate = authorDate;
         }
     }
 
@@ -97,7 +104,7 @@ public final class NameUpdateReason {
     public static NameUpdateReason validAgain(TaxonInfo old, TaxonInfo target) {
         String[] o = parts(old.name);
         Predicate<String> isOld = s -> sameTaxon(parts(s), o, false);
-        String syn = target.history.juniorSynonymRef(isOld);
+        String syn = target.history.juniorSynonymRef(isOld, false);
         String revived = target.history.revivalRef(isOld);
         StringBuilder b = new StringBuilder("Your name ").append(target.name).append(" is valid again. It had been shown under ")
             .append(abbreviate(old.name, target.name));
@@ -112,7 +119,7 @@ public final class NameUpdateReason {
         String[] o = parts(old.name);
         String[] n = parts(target.name);
         Integer fallbackId = old.antcatId != null ? old.antcatId : target.antcatId;
-        if (o.length < 2 || n.length < 2 || o.length > 3 || n.length > 3) return statusReason(old, fallbackId);
+        if (o.length < 2 || n.length < 2) return statusReason(old, fallbackId);
 
         // A b b -> A b: the nominotypical subspecies is the species. Otherwise go on with A b.
         String nominotypical = null;
@@ -130,76 +137,82 @@ public final class NameUpdateReason {
             return synonym(old, target, o, n, nominotypical, fallbackId);
         }
         if (o.length == 2 && n.length == 3) {        // species -> subspecies
-            if (relation(o[1], n[2]) != Relation.OTHER) {
-                String[] species = {n[0], n[1]};
-                Predicate<String> ofSpecies = s -> sameTaxon(parts(s), species, false);
-                return cited("placed as subspecies: " + target.name, target.history.subspeciesRef(ofSpecies), target,
-                    old.history.subspeciesRef(ofSpecies), old, fallbackId);
-            }
+            if (relation(o[1], n[2]) != Relation.OTHER) return placed(old, target, n, fallbackId);
             return synonym(old, target, o, n, nominotypical, fallbackId);
         }
         // Same rank: compare the last epithet (and, for subspecies, the species).
         Relation r = relation(o[o.length - 1], n[n.length - 1]);
-        if (o.length == 3 && relation(o[1], n[1]) == Relation.OTHER && r != Relation.OTHER) {
-            String[] species = {n[0], n[1]};
-            Predicate<String> ofSpecies = s -> sameTaxon(parts(s), species, false);
-            return cited("placed as subspecies: " + target.name, target.history.subspeciesRef(ofSpecies), target,
-                old.history.subspeciesRef(ofSpecies), old, fallbackId);
-        }
-        String oldEnd = o[o.length - 1];
-        String newEnd = n[n.length - 1];
+        if (o.length == 3 && relation(o[1], n[1]) == Relation.OTHER && r != Relation.OTHER) return placed(old, target, n, fallbackId);
+        boolean misspelledInAntCat = Status.UNAVAILABLE_MISSPELLING.equals(old.status);
         switch (r) {
             case SAME:
-            case GENDER:
+            case ENDING:
                 if (genusChanged) {
-                    String genus = n[0];
-                    String note = "";
-                    Gender g = genderOf(genus);
-                    boolean agrees = g != null && endingAgrees(newEnd, g);
-                    Gender og = genderOf(o[0]);
-                    if (agrees && (r == Relation.GENDER || (og != null && !endingAgrees(oldEnd, og) && hasGenderEnding(oldEnd)))) {
-                        note = "; ending agrees with the gender of " + genus;
-                    }
-                    String ref = target.history.combinationRef(genus);
+                    String note = r == Relation.ENDING || misspelledInAntCat ? "; " + SPELLING_AS_IN_ANTCAT : "";
+                    String ref = target.history.combinationRef(n[0]);
                     if (ref != null) return new NameUpdateReason("new combination: " + target.name + refPart(ref) + note, target.antcatId);
-                    ref = old.history.combinationRef(genus);
+                    ref = old.history.combinationRef(n[0]);
                     return new NameUpdateReason("new combination: " + target.name + refPart(ref) + note, ref != null ? old.antcatId : fallbackId);
                 }
                 if (r == Relation.SAME) return statusReason(old, fallbackId);   // only the subgenus differs
-                Gender g = genderOf(n[0]);
-                if (g == null || endingAgrees(newEnd, g)) {
-                    return new NameUpdateReason("ending agrees with the gender of " + n[0], target.antcatId != null ? target.antcatId : fallbackId);
-                }
-                return new NameUpdateReason("misspelling of " + target.name, fallbackId);
+                return new NameUpdateReason(SPELLING_AS_IN_ANTCAT + ": " + target.name, target.antcatId != null ? target.antcatId : fallbackId);
             case SPELLING:
                 if (genusChanged) {
                     String ref = target.history.combinationRef(n[0]);
-                    return new NameUpdateReason("new combination: " + target.name + refPart(ref), ref != null ? target.antcatId : fallbackId);
+                    return new NameUpdateReason("new combination: " + target.name + refPart(ref) + "; " + SPELLING_AS_IN_ANTCAT,
+                        ref != null ? target.antcatId : fallbackId);
                 }
                 return new NameUpdateReason("misspelling of " + target.name, fallbackId);
             default:
-                if (Status.UNAVAILABLE_MISSPELLING.equals(old.status) && !genusChanged && o.length == n.length
-                        && (o.length == 2 || o[1].equals(n[1])) && levenshtein(normal(oldEnd), normal(newEnd)) <= 2) {
+                if (misspelledInAntCat && !genusChanged && o.length == n.length
+                        && (o.length == 2 || o[1].equals(n[1])) && levenshtein(normal(o[o.length - 1]), normal(n[n.length - 1])) <= 2) {
                     return new NameUpdateReason("misspelling of " + target.name, fallbackId);
                 }
                 return synonym(old, target, o, n, nominotypical, fallbackId);
         }
     }
 
+    private static NameUpdateReason placed(TaxonInfo old, TaxonInfo target, String[] n, Integer fallbackId) {
+        String[] species = {n[0], n[1]};
+        Predicate<String> ofSpecies = s -> sameTaxon(parts(s), species, false);
+        return cited("placed as subspecies: " + target.name, target.history.subspeciesRef(ofSpecies), target,
+            old.history.subspeciesRef(ofSpecies), old, fallbackId);
+    }
+
     /**
      * Synonym: the synonymy in the junior's (old) history, the first with the current senior after the
      * last revival; if the old name has none (an obsolete combination or misspelling often has no
-     * history), the "Senior synonym of" entry for it in the new name's history.
+     * history), the "Senior synonym of" entry for it in the new name's history. An unnecessary
+     * replacement name (Lioponera lata for L. reticulata) is said so, with the replacement's author.
      */
     private static NameUpdateReason synonym(TaxonInfo old, TaxonInfo target, String[] o, String[] n, String nominotypical, Integer fallbackId) {
+        Predicate<String> isNew = s -> sameTaxon(parts(s), n, false);
+        Predicate<String> isOld = s -> sameTaxon(parts(s), o, true);
+        String seniorSays = target.history.unnecessaryReplacementAuthor(isOld);
+        if (old.history.isUnnecessaryReplacementFor(isNew) || seniorSays != null) {
+            String ref = authorRef(old.authorDate);
+            if (ref == null && seniorSays != null && !seniorSays.isEmpty()) ref = seniorSays;
+            return new NameUpdateReason("unnecessary replacement name for " + abbreviate(target.name, old.name) + refPart(ref)
+                + "; junior objective synonym", old.antcatId != null ? old.antcatId : target.antcatId);
+        }
         String text = (nominotypical != null ? "synonym: " + nominotypical + " is a junior synonym of " : "synonym: junior synonym of ") + target.name;
-        String ref = old.history.juniorSynonymRef(s -> sameTaxon(parts(s), n, false));
+        String ref = old.history.juniorSynonymRef(isNew);
         if (ref != null) return new NameUpdateReason(text + refPart(ref), old.antcatId);
-        ref = target.history.seniorSynonymRef(s -> sameTaxon(parts(s), o, false));
-        if (ref == null) ref = target.history.seniorSynonymRef(s -> sameTaxon(parts(s), o, true));
-        if (ref == null) ref = target.history.seniorSynonymRef(s -> sameLastEpithet(parts(s), o));
-        if (ref != null) return new NameUpdateReason(text + refPart(ref), target.antcatId);
+        if (old.history.refs(e -> AntcatHistory.JUNIOR_SYNONYM_OF.equals(e.heading) && isNew.test(e.subject)).isEmpty()) {
+            // No synonymy with the senior in the old name's history: the senior's history.
+            ref = target.history.seniorSynonymRef(s -> sameTaxon(parts(s), o, false));
+            if (ref == null) ref = target.history.seniorSynonymRef(isOld);
+            if (ref == null) ref = target.history.seniorSynonymRef(s -> sameLastEpithet(parts(s), o));
+            if (ref != null) return new NameUpdateReason(text + refPart(ref), target.antcatId);
+        }
         return new NameUpdateReason(text, fallbackId);
+    }
+
+    /** "(Brown, 1975)" or "Brown, 1975" -> "Brown, 1975"; null when there is no year. */
+    static String authorRef(String authorDate) {
+        if (authorDate == null) return null;
+        String a = authorDate.replaceAll("<[^>]*>", "").replace("(", "").replace(")", "").replaceAll("\\s+", " ").trim();
+        return a.matches(".*, \\d{4}[a-z]?") ? a : null;
     }
 
     private static NameUpdateReason cited(String text, String ref, TaxonInfo from, String ref2, TaxonInfo from2, Integer fallbackId) {
@@ -215,21 +228,25 @@ public final class NameUpdateReason {
     // ------------------------------------------------------------ names and endings
 
     /**
-     * "Camponotus (Colobopsis) pylartes" -> {Camponotus, pylartes}: the genus and the epithets, without
-     * subgenus or the author and year a history may add ("Formica picea Nylander, 1846").
+     * "Camponotus (Colobopsis) pylartes" -> {Camponotus, pylartes}: the genus and up to two epithets,
+     * without subgenus or what a history adds after the name (author and year, "Formica picea
+     * Nylander, 1846"; "Lioponera reticulata (Clark, 1926)"; "(unnecessary replacement name)").
      */
     public static String[] parts(String name) {
         if (name == null) return new String[0];
-        String s = name.replace("\u2020", "").replaceAll("\\([^)]*\\)", " ").trim();
+        String s = name.replace("†", "").replaceAll("\\(\\s*[A-Z][a-z]+\\s*\\)", " ");
+        int paren = s.indexOf('(');
+        if (paren >= 0) s = s.substring(0, paren);
+        s = s.trim();
         if (s.isEmpty()) return new String[0];
         String[] p = s.split("\\s+");
         int n = 1;
-        while (n < p.length && p[n].matches("[a-z][a-z-]*")) n++;
+        while (n < p.length && n < 3 && p[n].matches("[a-z][a-z-]*")) n++;
         return Arrays.copyOf(p, n);
     }
 
     /**
-     * The same taxon in any genus: same number of epithets, each the same or another gender ending (with
+     * The same taxon in any genus: same number of epithets, each the same or another ending (with
      * loose, also another spelling). The genus is not compared: a history names the senior in the
      * combination of its time ("Junior synonym of Camponotus (Colobopsis) impressa").
      */
@@ -251,18 +268,19 @@ public final class NameUpdateReason {
         return a.length >= 2 && b.length >= 2 && relation(a[a.length - 1], b[b.length - 1]) != Relation.OTHER;
     }
 
-    public enum Relation { SAME, GENDER, SPELLING, OTHER }
-    public enum Gender { MASCULINE, FEMININE, NEUTER }
+    /** SAME; ENDING: the same stem, another ending (pictus, picta; niger, nigra); SPELLING: another spelling; OTHER: another name. */
+    public enum Relation { SAME, ENDING, SPELLING, OTHER }
 
-    /** Adjective endings by declension: masculine, feminine, neuter. */
+    /** Latin adjective endings by declension (masculine, feminine, neuter): only to find the stem. */
     private static final String[][] ENDINGS = {
         {"us", "a", "um"}, {"er", "ra", "rum"}, {"er", "era", "erum"}, {"is", "is", "e"}, {"er", "ris", "re"}, {"ior", "ior", "ius"}
     };
 
     /**
-     * How two epithets relate: the same; the same stem with another gender ending (nomada, nomadus;
-     * niger, nigra); another spelling (noveboracensis, novaeboracensis; haenschei, haenschi: the same
-     * after ae/oe -> e, final ei/ii -> i, y -> i, j -> i, double letters made single); or another name.
+     * How two epithets relate: the same; the same stem with another ending (nomada, nomadus; niger,
+     * nigra; ligniperdus, ligniperda); another spelling (noveboracensis, novaeboracensis; haenschei,
+     * haenschi: the same after ae/oe -> e, final ei/ii -> i, y -> i, j -> i, double letters made
+     * single); or another name.
      */
     public static Relation relation(String a, String b) {
         a = a.toLowerCase(Locale.ROOT);
@@ -275,7 +293,7 @@ public final class NameUpdateReason {
                     if (a.endsWith(decl[i]) && b.endsWith(decl[j])) {
                         String sa = a.substring(0, a.length() - decl[i].length());
                         String sb = b.substring(0, b.length() - decl[j].length());
-                        if (sa.length() >= 2 && sa.equals(sb)) return Relation.GENDER;
+                        if (sa.length() >= 2 && sa.equals(sb)) return Relation.ENDING;
                     }
                 }
             }
@@ -302,42 +320,6 @@ public final class NameUpdateReason {
             int[] t = prev; prev = cur; cur = t;
         }
         return prev[b.length()];
-    }
-
-    /**
-     * The grammatical gender of a genus name, from its ending (ICZN Art. 30 and the usual Greek and
-     * Latin endings of ant genera), or null when the ending does not tell: -myrmex, -ops, -oides, -ides,
-     * -ites, -otes, -us, -er, -or masculine; -myrma, -opsis, -pone, -ponera, -is, -ys, -a, -e feminine;
-     * -ma (Greek -ma, Stigmatomma), -um, -on neuter.
-     */
-    public static Gender genderOf(String genus) {
-        if (genus == null) return null;
-        String g = genus.toLowerCase(Locale.ROOT);
-        if (g.endsWith("myrmex") || g.endsWith("ops") || g.endsWith("oides") || g.endsWith("ides") || g.endsWith("ites")
-            || g.endsWith("otes") || g.endsWith("us") || g.endsWith("er") || g.endsWith("or")) return Gender.MASCULINE;
-        if (g.endsWith("myrma") || g.endsWith("opsis") || g.endsWith("pone") || g.endsWith("ponera")) return Gender.FEMININE;
-        if (g.endsWith("ma") || g.endsWith("um") || g.endsWith("on")) return Gender.NEUTER;
-        if (g.endsWith("is") || g.endsWith("ys") || g.endsWith("a") || g.endsWith("e")) return Gender.FEMININE;
-        return null;
-    }
-
-    /** Whether an epithet's ending is a form of that gender (-us, -er, -is masculine; -a, -ra, -is feminine; -um, -rum, -e neuter). */
-    static boolean endingAgrees(String epithet, Gender g) {
-        int col = g == Gender.MASCULINE ? 0 : g == Gender.FEMININE ? 1 : 2;
-        String best = null;
-        for (String[] decl : ENDINGS) {
-            for (String e : decl) if (epithet.endsWith(e) && (best == null || e.length() > best.length())) best = e;
-        }
-        if (best == null) return false;
-        for (String[] decl : ENDINGS) {
-            if (epithet.endsWith(decl[col]) && decl[col].length() >= best.length()) return true;
-        }
-        return false;
-    }
-
-    static boolean hasGenderEnding(String epithet) {
-        for (String[] decl : ENDINGS) for (String e : decl) if (epithet.endsWith(e)) return true;
-        return false;
     }
 
     /** "Crematogaster cerasi" with "Crematogaster browni" -> "C. cerasi"; another genus stays in full. */

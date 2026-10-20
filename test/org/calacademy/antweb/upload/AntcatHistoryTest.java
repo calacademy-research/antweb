@@ -33,10 +33,12 @@ public class AntcatHistoryTest extends TestCase {
         final int antcatId;
         final String status;
         final String history;
-        Row(int antcatId, String status, String history) {
+        final String authorDate;
+        Row(int antcatId, String status, String history, String authorDate) {
             this.antcatId = antcatId;
             this.status = status;
             this.history = history;
+            this.authorDate = authorDate;
         }
     }
 
@@ -49,7 +51,7 @@ public class AntcatHistoryTest extends TestCase {
         for (String line : Files.readAllLines(p, StandardCharsets.UTF_8)) {
             if (line.startsWith("#") || line.isBlank()) continue;
             String[] f = line.split("\t", -1);
-            m.put(f[0], new Row(Integer.parseInt(f[1]), f[2], HtmlSanitizer.sanitize(f[3])));
+            m.put(f[0], new Row(Integer.parseInt(f[1]), f[2], HtmlSanitizer.sanitize(f[3]), f.length > 4 ? f[4] : null));
         }
         rows = m;
         return m;
@@ -64,7 +66,7 @@ public class AntcatHistoryTest extends TestCase {
     static TaxonInfo info(String name) throws IOException {
         Row r = rows().get(name);
         assertNotNull(name, r);
-        return new TaxonInfo(name, r.status, r.antcatId, AntcatHistory.parse(r.history));
+        return new TaxonInfo(name, r.status, r.antcatId, AntcatHistory.parse(r.history), r.authorDate);
     }
 
     static TaxonInfo info(String name, String status) {
@@ -79,18 +81,18 @@ public class AntcatHistoryTest extends TestCase {
 
     public void testCrematogasterHespera() throws IOException {
         AntcatHistory h = history("Crematogaster hespera");
-        assertEquals("Morgan & Mackay, 2017", h.juniorSynonymRef("Crematogaster laeviuscula"));
-        assertEquals("subgenus and case do not matter", "Morgan & Mackay, 2017", h.juniorSynonymRef("crematogaster (Crematogaster) laeviuscula"));
+        assertNull("revived since: not a current synonymy", h.juniorSynonymRef("Crematogaster laeviuscula"));
+        assertEquals("the former synonymy", "Morgan & Mackay, 2017", h.juniorSynonymRef(x -> x.endsWith("laeviuscula"), false));
         assertEquals("first status as species after the synonymy", "Ward & Blaimer, 2022", h.revivalRef(s -> s.endsWith("laeviuscula")));
         assertEquals("Blaimer, 2012c", h.combinationRef("Crematogaster"));
-        assertNull("not its senior synonym", h.juniorSynonymRef("Crematogaster opaca"));
+        assertNull("not its senior synonym", h.juniorSynonymRef(x -> x.endsWith("opaca"), false));
 
         // The same history as plain text, entries run together (the export's text with the tags removed).
         AntcatHistory t = AntcatHistory.parse("Taxonomic history Combination in Crematogaster (Crematogaster) : Blaimer, 2012c PDF : 55;"
             + " Ward & Blaimer, 2022 PDF : 902. Junior synonym of Crematogaster laeviuscula : Morgan & Mackay, 2017 PDF : 197"
             + " Status as species: Hunt & Snelling, 1975 PDF : 21; Smith, 1979 : 1379; Ward & Blaimer, 2022 PDF : 917.");
         assertEquals(3, t.getEntries().size());
-        assertEquals("Morgan & Mackay, 2017", t.juniorSynonymRef("Crematogaster laeviuscula"));
+        assertEquals("Morgan & Mackay, 2017", t.juniorSynonymRef(x -> x.endsWith("laeviuscula"), false));
         assertEquals("Ward & Blaimer, 2022", t.revivalRef(s -> true));
     }
 
@@ -98,8 +100,9 @@ public class AntcatHistoryTest extends TestCase {
         // Authors went back and forth: listed as a synonym of C. piceus until Radchenko 2016, as a species
         // from 1978 on. The synonymy cited is the first after the last listing as a species before it.
         AntcatHistory h = history("Camponotus atricolor");
-        assertEquals("Radchenko, 2016", h.juniorSynonymRef("Camponotus piceus"));
-        assertEquals("Bernard, 1967a", h.juniorSynonymRef("Camponotus merula"));
+        assertEquals("Radchenko, 2016", h.juniorSynonymRef(x -> x.endsWith("piceus"), false));
+        assertEquals("Bernard, 1967a", h.juniorSynonymRef(x -> x.endsWith("merula"), false));
+        assertNull("listed as a species after it: not current", h.juniorSynonymRef("Camponotus piceus"));
         assertEquals("Steiner et al., 2017", h.revivalRef(s -> s.endsWith("piceus")));
     }
 
@@ -107,7 +110,7 @@ public class AntcatHistoryTest extends TestCase {
         // Revived after the synonymy with D. smithi (Snelling 1995a) by Deyrup 2003, not Deyrup 2017; the
         // later listing as a synonym of D. insanus (Cuezzo & Guerrero 2012) is another senior.
         AntcatHistory h = history("Dorymyrmex medeis");
-        assertEquals("Snelling, 1995a", h.juniorSynonymRef("Dorymyrmex smithi"));
+        assertEquals("Snelling, 1995a", h.juniorSynonymRef(x -> x.endsWith("smithi"), false));
         assertEquals("Deyrup, 2003", h.revivalRef(s -> s.endsWith("smithi")));
     }
 
@@ -115,11 +118,11 @@ public class AntcatHistoryTest extends TestCase {
         AntcatHistory h = history("Strumigenys ohioensis");
         assertEquals("Booher, 2019", h.juniorSynonymRef("Strumigenys pilinasis"));
         assertEquals("first Strumigenys after Pyramica", "Baroni Urbani & De Andrade, 2007", h.combinationRef("Strumigenys"));
-        assertEquals("Bolton, 1999", h.combinationRef("Pyramica"));
+        assertNull("in Strumigenys since: no current combination in Pyramica", h.combinationRef("Pyramica"));
 
         AntcatHistory s = history("Holcoponera striatula");
         assertEquals("genus with its author in the heading; after the last Gnamptogenys", "Camacho et al., 2022", s.combinationRef("Holcoponera"));
-        assertEquals("Brown, 1958g", s.combinationRef("Gnamptogenys"));
+        assertNull("in Holcoponera since", s.combinationRef("Gnamptogenys"));
         assertNull(s.combinationRef("Camponotus"));
     }
 
@@ -137,10 +140,10 @@ public class AntcatHistoryTest extends TestCase {
     public void testCitationRuleDatesNotOrder() throws IOException {
         // Real: Lasius emarginatus lists "Combination in Acanthomyops: Donisthorpe 1927a; 1926b; 1950e" and,
         // after it, "Combination in Lasius: Stitz 1917 ..." (not in date order). Back in Lasius after the
-        // last Acanthomyops (1950e): Wilson 1955a. In Acanthomyops after the last Lasius before it (1936): 1950e.
+        // last Acanthomyops (1950e): Wilson 1955a. Acanthomyops is not current (Lasius came after): none.
         AntcatHistory le = history("Lasius emarginatus");
         assertEquals("Wilson, 1955a", le.combinationRef("Lasius"));
-        assertEquals("Donisthorpe, 1950e", le.combinationRef("Acanthomyops"));
+        assertNull(le.combinationRef("Acanthomyops"));
         assertEquals("earliest of an entry by date", "Donisthorpe, 1926b", le.earliest(e -> e.subject.startsWith("Acanthomyops")));
 
         // Entries out of order, letters of one year, a revival between two synonymies.
@@ -149,16 +152,21 @@ public class AntcatHistoryTest extends TestCase {
         AntcatHistory t = AntcatHistory.parse("<div>Junior synonym of Pheidole beta: Young, 2025b PDF: 1; Old, 1950 PDF: 2.</div>"
             + "<div>Status as species: Brown, 2025a PDF: 4; Green, 1960: 5.</div>");
         assertEquals("after the revival of 2025a", "Young, 2025b", t.juniorSynonymRef("Pheidole beta"));
-        assertEquals("revived after the synonymy of 1950, though listed later", "Green, 1960", t.revivalRef(s -> s.endsWith("beta")));
+        AntcatHistory early = AntcatHistory.parse("<div>Junior synonym of Pheidole gamma: Old, 1950 PDF: 2.</div>"
+            + "<div>Status as species: Brown, 1995b: 4.</div>");
+        assertNull("the only synonymy predates the listing as a species: none", early.juniorSynonymRef("Pheidole gamma"));
+        assertNull("a synonym again since 2025b: no current revival", t.revivalRef(s -> s.endsWith("beta")));
+        AntcatHistory r = AntcatHistory.parse("<div>Junior synonym of Pheidole beta: Old, 1950 PDF: 2.</div>"
+            + "<div>Status as species: Brown, 2025a PDF: 4; Green, 1960: 5.</div>");
+        assertEquals("revived after the synonymy of 1950, though listed later", "Green, 1960", r.revivalRef(s -> s.endsWith("beta")));
     }
 
     // ------------------------------------------------------------ the reasons (claude/antweb-name-update-reasons-spec.md)
 
     /** 1. The epithet changes (beyond a gender ending): synonym, whatever the chain. */
     public void testSynonyms() throws IOException {
-        assertEquals("synonym: junior synonym of Lioponera inconspicua (Clark 1924b)", reason("Lioponera incontenta", "Lioponera inconspicua"));
-        assertEquals("unnecessary replacement name: AntCat gives no reference", "synonym: junior synonym of Lioponera reticulata",
-            reason("Lioponera lata", "Lioponera reticulata"));
+        assertEquals("the only synonymy (2001) predates a listing as a species (2010): no citation",
+            "synonym: junior synonym of Liomyrmex gestroi", reason("Liomyrmex taylori", "Liomyrmex gestroi"));
         assertEquals("synonym: junior synonym of Lioponera clara (Brown 1975)", reason("Lioponera princeps", "Lioponera clara"));
         assertEquals("synonym: junior synonym of Melophorus bagoti (Heterick et al. 2017)", reason("Melophorus cowlei", "Melophorus bagoti"));
         assertEquals("synonym: junior synonym of Chelaner whitei (Heterick 2001)", reason("Chelaner armstrongi", "Chelaner whitei"));
@@ -190,7 +198,7 @@ public class AntcatHistoryTest extends TestCase {
         NameUpdateReason r = NameUpdateReason.of(null, gnamp, info("Holcoponera striatula"));
         assertEquals("new combination: Holcoponera striatula (Camacho et al. 2022)", r.text);
         assertEquals("the history that gave the reference", Integer.valueOf(512958), r.antcatId);
-        assertEquals("new combination: Allomerus sigmoideus (Longino & Branstetter 2026); ending agrees with the gender of Allomerus",
+        assertEquals("new combination: Allomerus sigmoideus (Longino & Branstetter 2026); spelling as in AntCat",
             reason("Wasmannia sigmoidea", "Allomerus sigmoideus"));
     }
 
@@ -212,22 +220,38 @@ public class AntcatHistoryTest extends TestCase {
             reason("Solenopsis texana texana", "Solenopsis canariensis"));
     }
 
-    /** 5. Gender agreement (ICZN Art. 34.2), never "misspelling", even when AntCat's status says so. */
-    public void testGenderAgreement() throws IOException {
+    /** Unnecessary replacement names: junior objective synonyms, cited by the replacement's author. */
+    public void testUnnecessaryReplacementName() throws IOException {
+        assertEquals("unnecessary replacement name for L. reticulata (Brown 1975); junior objective synonym",
+            reason("Lioponera lata", "Lioponera reticulata"));
+        // AntCat's history of L. incontenta has only "Junior synonym of L. inconspicua: Clark, 1924b"; the senior's says
+        // "Senior synonym of Lioponera incontenta (Brown, 1975) (unnecessary replacement name)".
+        assertEquals("unnecessary replacement name for L. inconspicua (Brown 1975); junior objective synonym",
+            reason("Lioponera incontenta", "Lioponera inconspicua"));
+        TaxonInfo noAuthor = new TaxonInfo("Lioponera lata", Status.SYNONYM, 508832, history("Lioponera lata"));
+        assertEquals("the author from the senior's entry", "unnecessary replacement name for L. reticulata (Brown 1975); junior objective synonym",
+            NameUpdateReason.of(null, noAuthor, info("Lioponera reticulata")).text);
+    }
+
+    /**
+     * 5. Only the ending of the epithet changes: AntWeb shows AntCat's spelling, never "misspelling", never a
+     * gender claim (Brian Fisher, 2026-10-20: gender agreement is for AntCat to sort out).
+     */
+    public void testEndingOnly() throws IOException {
         assertEquals("unavailable misspelling", info("Leptanilloides nomada").status);
-        assertEquals("ending agrees with the gender of Leptanilloides", reason("Leptanilloides nomada", "Leptanilloides nomadus"));
-        assertEquals("ending agrees with the gender of Leptanilloides", reason("Leptanilloides atlantica", "Leptanilloides atlanticus"));
-        assertEquals("ending agrees with the gender of Opisthopsis", reason("Opisthopsis diadematus", "Opisthopsis diademata"));
-        assertEquals("ending agrees with the gender of Opisthopsis", reason("Opisthopsis lienosus", "Opisthopsis lienosa"));
-        assertEquals("ending agrees with the gender of Opisthopsis", reason("Opisthopsis pictus", "Opisthopsis picta"));
-        assertEquals("ending agrees with the gender of Lasius", reason("Lasius bombycina", "Lasius bombycinus"));
-        assertEquals("celata disagreed with neuter Stigmatomma", "new combination: Fulakora celata (Ward & Fisher 2016); ending agrees with the gender of Fulakora",
+        assertEquals("spelling as in AntCat: Leptanilloides nomadus", reason("Leptanilloides nomada", "Leptanilloides nomadus"));
+        assertEquals("spelling as in AntCat: Leptanilloides atlanticus", reason("Leptanilloides atlantica", "Leptanilloides atlanticus"));
+        assertEquals("spelling as in AntCat: Opisthopsis diademata", reason("Opisthopsis diadematus", "Opisthopsis diademata"));
+        assertEquals("spelling as in AntCat: Opisthopsis lienosa", reason("Opisthopsis lienosus", "Opisthopsis lienosa"));
+        assertEquals("spelling as in AntCat: Opisthopsis picta", reason("Opisthopsis pictus", "Opisthopsis picta"));
+        assertEquals("spelling as in AntCat: Lasius bombycinus", reason("Lasius bombycina", "Lasius bombycinus"));
+        assertEquals("ending only, by stem", "spelling as in AntCat: Camponotus ligniperda", reason("Camponotus ligniperdus", "Camponotus ligniperda"));
+        assertEquals("genus changed, AntCat's misspelling", "new combination: Fulakora celata (Ward & Fisher 2016); spelling as in AntCat",
             reason("Stigmatomma celata", "Fulakora celata"));
     }
 
-    /** 6. Genuine misspellings: ligniperda does not agree with masculine Camponotus (a noun, invariable). */
+    /** 6. Genuine misspellings: AntCat says misspelling and more than the ending differs. */
     public void testMisspellings() throws IOException {
-        assertEquals("misspelling of Camponotus ligniperda", reason("Camponotus ligniperdus", "Camponotus ligniperda"));
         assertEquals("misspelling of Camponotus novaeboracensis", reason("Camponotus noveboracensis", "Camponotus novaeboracensis"));
     }
 
@@ -263,21 +287,19 @@ public class AntcatHistoryTest extends TestCase {
             NameUpdateReason.of(leptoTerg, terg, info("Temnothorax sordidulus")));
     }
 
-    public void testRelationAndGender() {
-        assertEquals(NameUpdateReason.Relation.GENDER, NameUpdateReason.relation("nomada", "nomadus"));
-        assertEquals(NameUpdateReason.Relation.GENDER, NameUpdateReason.relation("nigra", "niger"));
-        assertEquals(NameUpdateReason.Relation.GENDER, NameUpdateReason.relation("antarcticum", "antarcticus"));
+    public void testRelationAndParts() {
+        assertEquals(NameUpdateReason.Relation.ENDING, NameUpdateReason.relation("nomada", "nomadus"));
+        assertEquals(NameUpdateReason.Relation.ENDING, NameUpdateReason.relation("nigra", "niger"));
+        assertEquals(NameUpdateReason.Relation.ENDING, NameUpdateReason.relation("antarcticum", "antarcticus"));
+        assertEquals(NameUpdateReason.Relation.ENDING, NameUpdateReason.relation("ligniperdus", "ligniperda"));
         assertEquals(NameUpdateReason.Relation.SPELLING, NameUpdateReason.relation("noveboracensis", "novaeboracensis"));
         assertEquals(NameUpdateReason.Relation.SPELLING, NameUpdateReason.relation("haenschei", "haenschi"));
         assertEquals(NameUpdateReason.Relation.OTHER, NameUpdateReason.relation("teneriffana", "indica"));
-        assertEquals(NameUpdateReason.Gender.MASCULINE, NameUpdateReason.genderOf("Camponotus"));
-        assertEquals(NameUpdateReason.Gender.MASCULINE, NameUpdateReason.genderOf("Leptanilloides"));
-        assertEquals(NameUpdateReason.Gender.FEMININE, NameUpdateReason.genderOf("Opisthopsis"));
-        assertEquals(NameUpdateReason.Gender.NEUTER, NameUpdateReason.genderOf("Stigmatomma"));
-        assertEquals(NameUpdateReason.Gender.NEUTER, NameUpdateReason.genderOf("Monomorium"));
-        assertEquals(NameUpdateReason.Gender.MASCULINE, NameUpdateReason.genderOf("Chelaner"));
         assertArrayEquals(new String[] {"Formica", "picea"}, NameUpdateReason.parts("Formica picea Nylander, 1846"));
         assertArrayEquals(new String[] {"Camponotus", "pylartes"}, NameUpdateReason.parts("Camponotus (Colobopsis) pylartes"));
+        assertArrayEquals(new String[] {"Colobopsis", "mayriella"},
+            NameUpdateReason.parts("Colobopsis mayriella (unnecessary (second) replacement name for Colobopsis carinata Mayr, 1870)"));
+        assertArrayEquals(new String[] {"Lioponera", "reticulata"}, NameUpdateReason.parts("Lioponera reticulata (Clark, 1926)"));
     }
 
     private static void assertArrayEquals(String[] a, String[] b) {
@@ -312,8 +334,11 @@ public class AntcatHistoryTest extends TestCase {
         assertEquals("new combination: <i>Holcoponera striatula</i> (<a href=\"https://www.antcat.org/catalog/512958\">Camacho et al. 2022</a>)",
             NameUpdateReason.toHtml("new combination: Holcoponera striatula (Camacho et al. 2022)", 512958, "Gnamptogenys striatula", "Holcoponera striatula"));
         assertEquals("no reference: a link to AntCat follows",
-            "misspelling of <i>Camponotus ligniperda</i> (<a href=\"https://www.antcat.org/catalog/1\">AntCat</a>)",
-            NameUpdateReason.toHtml("misspelling of Camponotus ligniperda", 1, "Camponotus ligniperdus", "Camponotus ligniperda"));
+            "misspelling of <i>Camponotus novaeboracensis</i> (<a href=\"https://www.antcat.org/catalog/1\">AntCat</a>)",
+            NameUpdateReason.toHtml("misspelling of Camponotus novaeboracensis", 1, "Camponotus noveboracensis", "Camponotus novaeboracensis"));
+        assertEquals("abbreviated names in italics", "unnecessary replacement name for <i>L. reticulata</i> (<a href=\"https://www.antcat.org/catalog/2\">Brown 1975</a>);"
+            + " junior objective synonym", NameUpdateReason.toHtml("unnecessary replacement name for L. reticulata (Brown 1975); junior objective synonym",
+            2, "Lioponera lata", "Lioponera reticulata"));
         assertEquals("no id: no link", "AntCat status: unavailable", NameUpdateReason.toHtml("AntCat status: unavailable", null));
         assertFalse("escaped", NameUpdateReason.toHtml("synonym: junior synonym of <script>", 1, "<script>").contains("<script>"));
     }

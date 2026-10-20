@@ -73,12 +73,14 @@ public final class NameUpdatesAction extends AntwebAction {
             SpecimenNameUpdateDb db = new SpecimenNameUpdateDb(connection);
             List<SpecimenNameUpdateDb.Run> runs = groupId < 0 ? new ArrayList<>() : db.getRuns(groupId, from, to, MAX_RUNS);
             List<SpecimenNameUpdateDb.Line> lines = groupId < 0 ? new ArrayList<>() : db.getLines(groupId, runs);
+            List<SpecimenNameUpdateDb.Line> shared = groupId < 0 ? new ArrayList<>() : db.getShared(groupId);
             List<Integer> groupIds = isAdmin ? db.getGroupIds() : new ArrayList<>();
 
             StringBuilder html = new StringBuilder();
             html.append(HELP);
             if (isAdmin) html.append(adminBox(request, SpecimenNameUpdate.readSettings()));
             html.append(filterForm(isAdmin, groupIds, Math.max(groupId, 0), from, to));
+            html.append(sharedHtml(shared, AntwebProps.getDomainApp()));
             html.append(linesHtml(runs, lines, AntwebProps.getDomainApp()));
             request.setAttribute("html", html.toString());
         } catch (SQLException e) {
@@ -105,7 +107,8 @@ public final class NameUpdatesAction extends AntwebAction {
             + "valid one) and its counts and maps stay under the old name until the group uploads its data again.",
         "Usually nothing: the counts, lists and maps follow by the end of the nightly run (about 8 AM). If a move looks wrong, "
             + "check the name in AntCat first. If the identification itself is out of date, correct it in TaxonWorks (CAS) or in "
-            + "your upload file; the next upload or nightly run uses it. Morphospecies, indets and homonyms are never moved.");
+            + "your upload file; the next upload or nightly run uses it. Morphospecies, indets and homonyms are never moved, nor are "
+            + "specimens whose name belongs to two or more AntCat taxa: those are listed under \"Needs the curator's decision\".");
 
     static String adminBox(HttpServletRequest request, SpecimenNameUpdate.Settings settings) {
         String domainApp = AntwebProps.getDomainApp();
@@ -154,6 +157,47 @@ public final class NameUpdatesAction extends AntwebAction {
         return Taxon.makeDescriptionLink(oldName) + " -> " + Taxon.makeDescriptionLink(newName);
     }
 
+    /**
+     * "Needs the curator's decision": specimens the nightly step did not move because their name belongs
+     * to two or more AntCat taxa (latest run), per group, with the candidates and the codes.
+     */
+    public static String sharedHtml(List<SpecimenNameUpdateDb.Line> lines, String domainApp) {
+        if (lines.isEmpty()) return "";
+        StringBuilder b = new StringBuilder("<h3>Needs the curator's decision</h3>"
+            + "<p>Not moved: the name belongs to two or more AntCat taxa, so the name alone does not tell which one the specimens are. "
+            + "Please confirm the identification and correct it in TaxonWorks (CAS) or in your upload file.</p>");
+        int lastGroup = Integer.MIN_VALUE;
+        boolean open = false;
+        for (SpecimenNameUpdateDb.Line line : lines) {
+            if (line.groupId != lastGroup) {
+                if (open) b.append("</ul>");
+                b.append("<h4>").append(Html.esc(groupName(line.groupId))).append("</h4><ul>");
+                open = true;
+                lastGroup = line.groupId;
+            }
+            b.append("<li class=\"name-update-shared\">").append(Taxon.makeDescriptionLink(line.oldName));
+            if (line.uploadedName != null && !line.uploadedName.equals(line.oldName)) {
+                b.append(" (uploaded as <i>").append(Html.esc(Taxon.getPrettyTaxonName(line.uploadedName))).append("</i>)");
+            }
+            if (line.reason != null) b.append(": <span class=\"name-update-reason\">").append(Html.esc(line.reason)).append("</span>");
+            appendCodes(b, line, domainApp);
+            b.append("</li>");
+        }
+        if (open) b.append("</ul>");
+        return b.toString();
+    }
+
+    private static void appendCodes(StringBuilder b, SpecimenNameUpdateDb.Line line, String domainApp) {
+        b.append(" <details style=\"display:inline\"><summary>").append(line.count).append(line.count == 1 ? " specimen" : " specimens").append("</summary>");
+        int i = 0;
+        for (String code : line.codes) {
+            if (i++ > 0) b.append(", ");
+            b.append("<a href=\"").append(domainApp).append("/specimen.do?name=").append(Html.url(code)).append("\">").append(Html.esc(code)).append("</a>");
+        }
+        if (line.count > line.codes.size()) b.append(" ... (").append(line.count - line.codes.size()).append(" more)");
+        b.append("</details>");
+    }
+
     public static String linesHtml(List<SpecimenNameUpdateDb.Run> runs, List<SpecimenNameUpdateDb.Line> lines, String domainApp) {
         if (runs.isEmpty()) {
             return "<p><b>No name updates</b> for this selection.</p>";
@@ -184,14 +228,8 @@ public final class NameUpdatesAction extends AntwebAction {
                 } else if (line.antcatStatus != null) {
                     b.append(" (AntCat: ").append(Html.esc(line.antcatStatus)).append(")");
                 }
-                b.append(" <details style=\"display:inline\"><summary>").append(line.count).append(line.count == 1 ? " specimen" : " specimens").append("</summary>");
-                int i = 0;
-                for (String code : line.codes) {
-                    if (i++ > 0) b.append(", ");
-                    b.append("<a href=\"").append(domainApp).append("/specimen.do?name=").append(Html.url(code)).append("\">").append(Html.esc(code)).append("</a>");
-                }
-                if (line.count > line.codes.size()) b.append(" ... (").append(line.count - line.codes.size()).append(" more)");
-                b.append("</details></li>");
+                appendCodes(b, line, domainApp);
+                b.append("</li>");
             }
             if (open) b.append("</ul>");
         }

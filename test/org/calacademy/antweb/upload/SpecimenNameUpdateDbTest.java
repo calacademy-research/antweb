@@ -53,7 +53,7 @@ public class SpecimenNameUpdateDbTest extends TestCase {
             s.executeUpdate("create table taxon (taxon_name varchar(128) not null primary key, taxarank varchar(20),"
                 + " status varchar(40), current_valid_name varchar(128), insert_method varchar(30), family varchar(64),"
                 + " subfamily varchar(64), tribe varchar(64), genus varchar(64), subgenus varchar(64), species varchar(64),"
-                + " subspecies varchar(64), parent_taxon_name varchar(128), antcat_id int)");
+                + " subspecies varchar(64), parent_taxon_name varchar(128), antcat_id int, author_date varchar(128))");
             s.executeUpdate("create table description_edit (taxon_name varchar(128) not null, title varchar(128), content mediumtext,"
                 + " code varchar(128), is_manual_entry tinyint, author_date varchar(128))");
             s.executeUpdate("create table homonym (taxon_name varchar(128) not null, author_date varchar(128))");
@@ -212,6 +212,47 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         assertEquals("new combination: Ravavy indicus (Fisher & Bolton 2026a)", jtl.reason);
         assertEquals(Integer.valueOf(101), jtl.antcatId);
         assertEquals(OLD, jtl.uploadedName);
+    }
+
+    /**
+     * A name shared by two AntCat taxa (Pachycondyla sauteri: Wheeler, 1906, now Cryptopone sauteri; Forel,
+     * 1912, now Ectomomyrmex sauteri): not moved, listed for the curator, replaced at the next run.
+     */
+    public void testSharedNameIsHeldForTheCurator() throws Exception {
+        String obs = "ponerinaepachycondyla sauteri";
+        String valid = "ponerinaecryptopone sauteri";
+        taxon(obs, "species", "obsolete combination", valid, null, "ponerinae", "pachycondyla", "sauteri", null);
+        taxon(valid, "species", "valid", null, null, "ponerinae", "cryptopone", "sauteri", null);
+        specimen("casent0000020", obs, null, CAS);
+        org.calacademy.antweb.upload.SharedNames shared = org.calacademy.antweb.upload.SharedNames.fromExport(new java.io.StringReader(
+            "antcat id\tsubfamily\tgenus\tspecies\tsubspecies\tauthor date\tstatus\tcurrent valid name\n"
+            + "509406\tPonerinae\tPachycondyla\tsauteri\t\tWheeler, 1906\tobsolete combination\tPonerinae Cryptopone sauteri\n"
+            + "509563\tPonerinae\tPachycondyla\tsauteri\t\tForel, 1912\tobsolete combination\tPonerinae Ectomomyrmex sauteri\n"));
+
+        SpecimenNameUpdate.Summary s = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000, shared);
+        assertEquals("not moved", obs, nameOf("casent0000020"));
+        assertEquals(4, s.specimens);
+        assertEquals(1, s.sharedSpecimens);
+        assertEquals(1, (int) s.skipped.get(SpecimenNameUpdate.Outcome.SHARED_NAME));
+        assertTrue(s.line(), s.line().contains("for the curator to confirm (shared name): 1 specimens"));
+        assertEquals("name is shared by two taxa; please confirm the identification: Cryptopone sauteri or Ectomomyrmex sauteri",
+            one("select reason from specimen_name_update where code = 'casent0000020' and mode = 'shared_name'"));
+
+        SpecimenNameUpdateDb db = new SpecimenNameUpdateDb(connection);
+        java.util.List<SpecimenNameUpdateDb.Line> held = db.getShared(CAS);
+        assertEquals(1, held.size());
+        assertEquals(obs, held.get(0).oldName);
+        assertEquals("casent0000020", held.get(0).codes.get(0));
+        assertTrue("other groups do not see it", db.getShared(JTL).isEmpty());
+        for (SpecimenNameUpdateDb.Run run : db.getRuns(0, null, null, 30)) assertFalse("not a run of moves", SpecimenNameUpdate.SHARED.equals(run.mode));
+
+        // The next run replaces the list.
+        SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000, shared);
+        assertEquals(1, count("select count(*) from specimen_name_update where mode = 'shared_name'"));
+        // Without the shared names (AntCat no longer has two taxa of the name), it moves.
+        SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000, org.calacademy.antweb.upload.SharedNames.none());
+        assertEquals(valid, nameOf("casent0000020"));
+        assertEquals(0, count("select count(*) from specimen_name_update where mode = 'shared_name'"));
     }
 
     /** A table made by the first version of the step (2026-10-20 morning) gets reason and antcat_id. */

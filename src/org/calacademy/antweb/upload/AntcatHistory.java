@@ -34,6 +34,7 @@ public final class AntcatHistory {
     public static final String SUBSPECIES_OF = "Subspecies of";
     public static final String REVIVED = "Revived from synonymy";
     public static final String RAISED = "Raised to species";
+    public static final String UNNECESSARY_REPLACEMENT = "Unnecessary replacement name for";
 
     /** Headings that start an entry: used to split text whose entries are not on lines of their own. */
     private static final String[] HEADINGS = {
@@ -53,6 +54,9 @@ public final class AntcatHistory {
     }
     private static final Pattern BLOCK_TAG = Pattern.compile("<\\s*/?\\s*(?:div|p|br|li|ul|ol|tr|h\\d)\\b[^>]*>", Pattern.CASE_INSENSITIVE);
     private static final Pattern TAG = Pattern.compile("<[^>]*>");
+    /** "Unnecessary (second) replacement name for", "Unnecessary third replacement name for" -> UNNECESSARY_REPLACEMENT. */
+    private static final Pattern UNNECESSARY_VARIANTS = Pattern.compile("^Unnecessary (?:\\(?[a-z]+\\)? )?replacement name for\\b");
+    private static final Pattern NO_REFS = Pattern.compile("^(Unnecessary replacement name for|Senior synonym of|Junior synonym of) ([^:]+?)\\.?$");
     private static final Pattern ENTRY = Pattern.compile("^([A-Z][^:]*?)\\s*:\\s*(.*)$");
     private static final Pattern REF = Pattern.compile("^(\\D+?,\\s*\\d{4}[a-z]?)(?![0-9a-z])");
 
@@ -101,8 +105,15 @@ public final class AntcatHistory {
     }
 
     private static Entry entry(String text) {
+        text = UNNECESSARY_VARIANTS.matcher(text).replaceFirst(UNNECESSARY_REPLACEMENT);
         Matcher m = ENTRY.matcher(text);
-        if (!m.matches()) return null;
+        if (!m.matches()) {
+            // Lines without references: "Unnecessary replacement name for Lioponera reticulata (Clark, 1926).",
+            // "Senior synonym of Lioponera lata (Brown, 1975) (unnecessary replacement name)."
+            Matcher n = NO_REFS.matcher(text);
+            if (!n.matches()) return null;
+            return new Entry(n.group(1), n.group(2).replace("\u2020", "").trim(), new ArrayList<>());
+        }
         String head = m.group(1).trim();
         String heading = null;
         for (String h : HEADINGS) {
@@ -173,18 +184,51 @@ public final class AntcatHistory {
     /**
      * The act that made the current state: the earliest of current dated after the most recent of
      * contrary that comes before the latest of current. Without such a contrary act, the earliest of
-     * current. Null when current is empty. Example (Dorymyrmex medeis, revived from synonymy with
+     * current. Null when current is empty, or when a contrary act is dated after the latest of current
+     * (then the act that made the current state is not in the history). Example (Dorymyrmex medeis, revived from synonymy with
      * D. smithi): synonymy Snelling 1995a; status as species Deyrup 2003, Deyrup 2017 => Deyrup 2003.
      */
     public static String actOf(List<Ref> current, List<Ref> contrary) {
+        return actOf(current, contrary, true);
+    }
+
+    /** stillCurrent false: a past state (the synonymy of a name now valid again), whatever came after it. */
+    static String actOf(List<Ref> current, List<Ref> contrary, boolean stillCurrent) {
         if (current.isEmpty()) return null;
         Ref latest = current.get(current.size() - 1);
+        // The only references for the current state predate a contrary one (Lioponera incontenta: synonymy
+        // Clark 1924b, listed as a species 1985-2009): AntCat's history does not record the act. None is cited.
+        if (stillCurrent && !contrary.isEmpty() && contrary.get(contrary.size() - 1).compareDate(latest) > 0) return null;
         Ref lastContrary = null;
         for (Ref c : contrary) if (c.compareDate(latest) < 0) lastContrary = c;   // sorted: the last one wins
         for (Ref r : current) {
             if (lastContrary == null || r.compareDate(lastContrary) > 0) return r.text;
         }
         return latest.text;
+    }
+
+    /** Whether the history says the name is an unnecessary replacement name for an accepted senior. */
+    public boolean isUnnecessaryReplacementFor(Predicate<String> senior) {
+        for (Entry e : entries) if (UNNECESSARY_REPLACEMENT.equals(e.heading) && senior.test(e.subject)) return true;
+        return false;
+    }
+
+    private static final Pattern AUTHOR_YEAR = Pattern.compile("\\(([^()]*?, \\d{4}[a-z]?)\\)");
+
+    /**
+     * In a senior's history, "Senior synonym of <junior> (Author, year) (unnecessary replacement name)":
+     * the author and year of the replacement name ("Brown, 1975"), "" when the entry has none, or null
+     * when there is no such entry for an accepted junior.
+     */
+    public String unnecessaryReplacementAuthor(Predicate<String> junior) {
+        for (Entry e : entries) {
+            if (!SENIOR_SYNONYM_OF.equals(e.heading)) continue;
+            String lower = e.subject.toLowerCase(Locale.ROOT);
+            if (!lower.contains("unnecessary") || !lower.contains("replacement name") || !junior.test(e.subject)) continue;
+            Matcher m = AUTHOR_YEAR.matcher(e.subject);
+            return m.find() ? m.group(1).replaceAll("\\s+", " ").trim() : "";
+        }
+        return null;
     }
 
     /** The earliest reference of the entries that p accepts, or null. */
@@ -203,8 +247,13 @@ public final class AntcatHistory {
      * latest such synonymy.
      */
     public String juniorSynonymRef(Predicate<String> senior) {
+        return juniorSynonymRef(senior, true);
+    }
+
+    /** stillCurrent false: the synonymy of a name that is now valid again (later revivals do not void it). */
+    public String juniorSynonymRef(Predicate<String> senior, boolean stillCurrent) {
         return actOf(refs(e -> JUNIOR_SYNONYM_OF.equals(e.heading) && senior.test(e.subject)),
-            refs(e -> isRevival(e) || SUBSPECIES_OF.equals(e.heading)));
+            refs(e -> isRevival(e) || SUBSPECIES_OF.equals(e.heading)), stillCurrent);
     }
 
     /** juniorSynonymRef for one senior name (subgenus, case and spaces do not matter). */

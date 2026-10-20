@@ -73,6 +73,8 @@ public class SpecimenNameUpdate {
     /** specimen_name_update.mode values. */
     public static final String CHANGED = "changed";
     public static final String WOULD_CHANGE = "would_change";
+    /** Specimens left for the curator: their name belongs to two or more AntCat taxa (SharedNames). Replaced at each run. */
+    public static final String SHARED = "shared_name";
 
     public static final String PLACEHOLDER_INSERT_METHOD = "homononymMirroringTaxon";
 
@@ -149,6 +151,7 @@ public class SpecimenNameUpdate {
         MORPHO_OR_INDET("morphospecies or indet"),
         PLACEHOLDER("filed under a homonym placeholder"),
         HOMONYM("homonym"),
+        SHARED_NAME("name shared by two or more AntCat taxa"),
         CURRENT_VALID("filed under a name AntCat still calls valid"),
         NOT_IN_ANTCAT("uploaded name not in AntCat"),
         NO_TARGET("current valid name has no taxon row"),
@@ -162,10 +165,15 @@ public class SpecimenNameUpdate {
         public final Outcome outcome;
         public final String newName;            // CHANGE only
         public final String newOriginalName;    // CHANGE only: uploaded name, or null when the specimen goes back to it
+        public final List<String> candidates;   // SHARED_NAME only: the valid names the shared name can stand for
         Decision(Outcome outcome, String newName, String newOriginalName) {
+            this(outcome, newName, newOriginalName, null);
+        }
+        Decision(Outcome outcome, String newName, String newOriginalName, List<String> candidates) {
             this.outcome = outcome;
             this.newName = newName;
             this.newOriginalName = newOriginalName;
+            this.candidates = candidates;
         }
         static Decision of(Outcome outcome) { return new Decision(outcome, null, null); }
         public String toString() { return outcome + (newName != null ? " -> " + newName : ""); }
@@ -201,6 +209,23 @@ public class SpecimenNameUpdate {
      * and the specimen goes back to the name the curator gave.
      */
     public static Decision decide(String uploadedName, String currentName, java.util.function.Predicate<String> isPlaceholder, CurrentValidNameRule.Result rule, boolean uploadedIsHomonym, boolean currentIsValid) {
+        return decide(uploadedName, currentName, isPlaceholder, rule, uploadedIsHomonym, currentIsValid, null);
+    }
+
+    /**
+     * shared: the candidates when the name the specimen is filed under, or the uploaded name, belongs to
+     * two or more AntCat taxa (SharedNames), otherwise null. Brian Fisher, 2026-10-20: such specimens are
+     * never moved; the curator is asked to confirm the identification (Pachycondyla sauteri: Cryptopone
+     * sauteri or Ectomomyrmex sauteri). Only a move is held back: a specimen that would stay anyway is
+     * not listed.
+     */
+    public static Decision decide(String uploadedName, String currentName, java.util.function.Predicate<String> isPlaceholder, CurrentValidNameRule.Result rule, boolean uploadedIsHomonym, boolean currentIsValid, List<String> shared) {
+        Decision d = decideMove(uploadedName, currentName, isPlaceholder, rule, uploadedIsHomonym, currentIsValid);
+        if (d.outcome == Outcome.CHANGE && shared != null && shared.size() > 1) return new Decision(Outcome.SHARED_NAME, null, null, shared);
+        return d;
+    }
+
+    private static Decision decideMove(String uploadedName, String currentName, java.util.function.Predicate<String> isPlaceholder, CurrentValidNameRule.Result rule, boolean uploadedIsHomonym, boolean currentIsValid) {
         if (Taxon.isMorphoOrIndet(uploadedName) || Taxon.isMorphoOrIndet(currentName)) return Decision.of(Outcome.MORPHO_OR_INDET);
         if (uploadedIsHomonym && !uploadedName.equals(currentName)) return Decision.of(Outcome.HOMONYM);
         if (currentIsValid && rule.kind == CurrentValidNameRule.Kind.REPLACE) return Decision.of(Outcome.CURRENT_VALID);
@@ -275,6 +300,7 @@ public class SpecimenNameUpdate {
         public boolean capped;
         public int maxChanges;
         public int parkedRenamed;
+        public int sharedSpecimens;     // held back: name shared by two or more AntCat taxa
         public long millis;
         public String note;             // skipped / failed
 
@@ -305,6 +331,7 @@ public class SpecimenNameUpdate {
                 s.append(e.getValue()).append(" ").append(e.getKey().label);
             }
             if (skippedTotal > 0) b.append("; left alone (names): ").append(s);
+            if (sharedSpecimens > 0) b.append("; for the curator to confirm (shared name): ").append(sharedSpecimens).append(" specimens");
             if (parkedRenamed > 0) b.append("; parked list entries moved: ").append(parkedRenamed);
             b.append("; ").append(String.format("%.1f", millis / 60000.0)).append(" min. See nameUpdates.do.");
             if (note != null) b.append(" ").append(note);
@@ -365,6 +392,11 @@ public class SpecimenNameUpdate {
         + " where access_group = ? and taxon_name = ? and coalesce(nullif(original_taxon_name, ''), taxon_name) = ?";
 
     public static Summary run(Connection connection, String mode, int maxChanges) throws SQLException {
+        return run(connection, mode, maxChanges, null);
+    }
+
+    /** shared: the names shared by two or more AntCat taxa; null reads them (sharedNames). */
+    public static Summary run(Connection connection, String mode, int maxChanges, SharedNames shared) throws SQLException {
         long start = System.currentTimeMillis();
         Summary summary = new Summary();
         summary.requestedMode = mode;
@@ -392,8 +424,10 @@ public class SpecimenNameUpdate {
         Map<String, CurrentValidNameRule.Result> ruleCache = new java.util.HashMap<>();
         Map<String, Boolean> homonymCache = new java.util.HashMap<>();
         Map<String, Boolean> currentValidCache = new java.util.HashMap<>();
+        if (shared == null) shared = sharedNames(connection);
         Reasons reasons = new Reasons(connection);
         List<Change> changes = new ArrayList<>();
+        List<Change> held = new ArrayList<>();
         Set<String> names = new HashSet<>();
 
         List<Object[]> candidates = new ArrayList<>();
@@ -421,7 +455,18 @@ public class SpecimenNameUpdate {
                 currentValid = cur != null && Status.VALID.equals(cur.status);
                 currentValidCache.put(current, currentValid);
             }
-            Decision d = decide(uploaded, current, placeholders::contains, rule, uploadedHomonym, currentValid);
+            List<String> sharedWith = shared.candidatesOf(Taxon.getPrettyTaxonName(current));
+            if (sharedWith == null) sharedWith = shared.candidatesOf(Taxon.getPrettyTaxonName(uploaded));
+            Decision d = decide(uploaded, current, placeholders::contains, rule, uploadedHomonym, currentValid, sharedWith);
+            if (d.outcome == Outcome.SHARED_NAME) {
+                summary.skipped.merge(d.outcome, 1, Integer::sum);
+                CurrentValidNameRule.TaxonRow row = lookup.getTaxon(current);
+                Change h = new Change(groupId, uploaded, current, "", null, row == null ? null : row.status,
+                    new NameUpdateReason(SharedNames.reason(d.candidates), null));
+                addSpecimens(connection, h);
+                if (!h.specimens.isEmpty()) held.add(h);
+                continue;
+            }
             if (d.outcome != Outcome.CHANGE) {
                 summary.skipped.merge(d.outcome, 1, Integer::sum);
                 continue;
@@ -429,14 +474,7 @@ public class SpecimenNameUpdate {
             CurrentValidNameRule.TaxonRow oldRow = lookup.getTaxon(current);
             Change change = new Change(groupId, uploaded, current, d.newName, d.newOriginalName, oldRow == null ? null : oldRow.status,
                 reasons.get(uploaded, current, d.newName));
-            try (PreparedStatement stmt = connection.prepareStatement(SPECIMENS_SQL)) {
-                stmt.setInt(1, groupId);
-                stmt.setString(2, current);
-                stmt.setString(3, uploaded);
-                try (ResultSet r = stmt.executeQuery()) {
-                    while (r.next()) change.specimens.add(new String[] {r.getString(1), r.getString(2)});
-                }
-            }
+            addSpecimens(connection, change);
             if (change.specimens.isEmpty()) continue;
             changes.add(change);
             summary.specimens += change.specimens.size();
@@ -458,6 +496,9 @@ public class SpecimenNameUpdate {
             for (Change change : changes) applyChange(connection, change);
         }
         db.insert(runDate, summary.rowMode, changes);
+        db.deleteShared();   // the list for the curators is the latest run's
+        db.insert(runDate, SHARED, held);
+        for (Change h : held) summary.sharedSpecimens += h.specimens.size();
         summary.parkedRenamed = moveParkedListEntries(connection, lookup, apply);
 
         summary.millis = System.currentTimeMillis() - start;
@@ -465,6 +506,59 @@ public class SpecimenNameUpdate {
             s_log.warn("run() " + summary.specimens + " specimens would change, above maxChanges=" + maxChanges + ": nothing changed");
         }
         return summary;
+    }
+
+    private static void addSpecimens(Connection connection, Change change) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement(SPECIMENS_SQL)) {
+            stmt.setInt(1, change.groupId);
+            stmt.setString(2, change.oldName);
+            stmt.setString(3, change.uploadedName);
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) change.specimens.add(new String[] {r.getString(1), r.getString(2)});
+            }
+        }
+    }
+
+    /**
+     * The names shared by two or more AntCat taxa (SharedNames): from the AntCat export the nightly
+     * import loaded (web/speciesList/world/worldants_speciesList.txt), which has every taxon; when it
+     * cannot be read, from the homonym table (the second taxon of a name the import stored there; it
+     * misses two obsolete combinations of one name, which the import does not store).
+     */
+    static SharedNames sharedNames(Connection connection) {
+        File file = null;
+        try {
+            file = new File(org.calacademy.antweb.util.AntwebProps.getWebDir() + SharedNames.EXPORT_FILE);
+        } catch (RuntimeException e) {
+            s_log.warn("sharedNames() no web directory. e:" + e);
+        }
+        if (file != null && file.isFile()) {
+            try {
+                return SharedNames.fromExport(file);
+            } catch (IOException | RuntimeException e) {
+                s_log.warn("sharedNames() could not read " + file + ", using the homonym table. e:" + e);
+            }
+        }
+        Map<String, List<String>> byName = new java.util.HashMap<>();
+        String query = "select h.taxon_name, h.author_date, t.status, t.current_valid_name from homonym h left join taxon t on t.taxon_name = h.taxon_name";
+        try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(query)) {
+            while (r.next()) {
+                String name = Taxon.getPrettyTaxonName(r.getString(1));
+                List<String> c = byName.computeIfAbsent(name, k -> new ArrayList<>());
+                String status = r.getString(3);
+                String cvn = r.getString(4);
+                if (status != null) {
+                    if (Status.VALID.equals(status)) c.add(name);
+                    else if (cvn != null && !cvn.isEmpty()) c.add(Taxon.getPrettyTaxonName(cvn));
+                    else c.add(name + " (" + status + ")");
+                }
+                String author = r.getString(2);
+                c.add(name + (author == null || author.isEmpty() ? "" : " " + author.replaceAll("<[^>]*>", "")) + " (homonym)");
+            }
+        } catch (SQLException e) {
+            s_log.warn("sharedNames() homonym table not read. e:" + e);
+        }
+        return SharedNames.of(byName);
     }
 
     /**
@@ -477,6 +571,7 @@ public class SpecimenNameUpdate {
         private final Map<String, NameUpdateReason> byNames = new java.util.HashMap<>();
         private final Map<String, NameUpdateReason.TaxonInfo> taxa = new java.util.HashMap<>();
         private boolean failed = false;
+        private boolean noAuthorDate = false;
 
         Reasons(Connection connection) {
             this.connection = connection;
@@ -529,7 +624,19 @@ public class SpecimenNameUpdate {
                     s_log.warn("Reasons.info() taxonomic history not read, reasons without references. e:" + e);
                 }
             }
-            info = new NameUpdateReason.TaxonInfo(Taxon.getPrettyTaxonName(taxonName), status, antcatId, AntcatHistory.parse(history));
+            String authorDate = null;   // the author of an unnecessary replacement name (Lioponera lata: Brown, 1975)
+            if (!failed && !noAuthorDate) {
+                try (PreparedStatement stmt = connection.prepareStatement("select author_date from taxon where taxon_name = ?")) {
+                    stmt.setString(1, taxonName);
+                    try (ResultSet r = stmt.executeQuery()) {
+                        if (r.next()) authorDate = r.getString(1);
+                    }
+                } catch (SQLException e) {
+                    noAuthorDate = true;
+                    s_log.warn("Reasons.info() author_date not read. e:" + e);
+                }
+            }
+            info = new NameUpdateReason.TaxonInfo(Taxon.getPrettyTaxonName(taxonName), status, antcatId, AntcatHistory.parse(history), authorDate);
             taxa.put(taxonName, info);
             return info;
         }
