@@ -10,7 +10,9 @@ AntCat is the ant catalog: every name, whether it is valid, and if not, which na
 2. At 5:00 AM AntWeb's nightly set 1 downloads that file. If it is too short (29,000 lines or fewer), AntWeb stops and keeps yesterday's names. Otherwise it deletes all AntCat names from its own tables and loads them again from the file, with each name's status and current valid name, its countries and bioregions, its fossil flag and its taxonomic history text.
 3. Then AntWeb moves the entries of every species list (projects, countries and states, bioregions, museums) from old names to the current valid name.
 
-What does **not** happen: specimens are not moved. A specimen gets its current valid name only when its file is uploaded. If AntCat changes a name later, the specimen stays on the old name until the curator uploads again (for CAS, until the next TaxonWorks upload), and with the default page settings it then shows on neither the old nor the new species page. A nightly "name update" for existing specimens is designed and waiting in the feature backlog.
+4. Then (since 2026-10, when switched on) the **name update** moves existing specimens whose name AntCat has changed since their upload to the current valid name, with the same rule the specimen upload uses, and keeps the name from the curator's file as "Uploaded As". Every specimen moved is listed on the Name updates page (section 7).
+
+Before the name update, specimens were not moved: a specimen got its current valid name only when its file was uploaded, and if AntCat changed a name later it stayed on the old name until the curator uploaded again (for CAS, until the next TaxonWorks upload), showing on neither the old nor the new species page.
 
 ---
 
@@ -41,7 +43,7 @@ Exported ranks: all except subtribe and infrasubspecies (`exporter.rb`, `EXPORTA
 
 ## 2. The import in nightly set 1
 
-Caller: `util/UtilDataAction.doAction()` line 222 (`set1`), which runs, in order: `worldantsFetchAndReload` (line 291), `taxonFinish` (line 312), `TaxonWorksNightly.run(connection, 90)` (see [specimen-upload.md](specimen-upload.md) section 5), `TaxonMgr.populate`. Manual equivalents for admins: `utilData.do?action=worldantsFetchAndReload` (fetch and load), `utilData.do?action=worldantsReload` (load the file already downloaded, no fetch), and `upload.do?action=fetchAndReloadWorldants` (fetch and load from the Curate page; on failure it adds an admin alert).
+Caller: `util/UtilDataAction.doAction()` (`set1`), which runs, in order: `worldantsFetchAndReload`, `taxonFinish`, `TaxonWorksNightly.run(connection, 90)` (see [specimen-upload.md](specimen-upload.md) section 5), the name update (section 7), `TaxonMgr.populate`. Manual equivalents for admins: `utilData.do?action=worldantsFetchAndReload` (fetch and load), `utilData.do?action=worldantsReload` (load the file already downloaded, no fetch), and `upload.do?action=fetchAndReloadWorldants` (fetch and load from the Curate page; on failure it adds an admin alert).
 
 Steps (`curate/speciesList/SpeciesListUploader.java`, `upload/SpeciesListUpload.java`):
 
@@ -88,7 +90,7 @@ Set 1 runs on one `longConPool` connection with auto-commit off (`UtilDataAction
 
 ## 5. What does NOT happen (the known gap)
 
-- **Specimens are not re-resolved.** `specimen.taxon_name` is written only by the specimen upload (`SpecimenUploadProcess.setStatusAndCurrentValidName()`, see [specimen-upload.md](specimen-upload.md) section 4). No nightly set touches it. When AntCat synonymises or recombines a name after the upload:
+- **Specimens are not re-resolved (until 2026-10; see section 7).** `specimen.taxon_name` is written only by the specimen upload (`SpecimenUploadProcess.setStatusAndCurrentValidName()`, see [specimen-upload.md](specimen-upload.md) section 4). No nightly set touches it. When AntCat synonymises or recombines a name after the upload:
   - the valid species page lists only specimens filed under the valid name (`Species.setChildren()` joins `specimen.taxon_name` to `taxon.taxon_name`), so the specimen is missing there;
   - the old name's page filters by taxon status ("valid extant" by default), so it is hidden there too, unless the status set is "complete" or "worldants";
   - set 2 rebuilds the specimen-derived country and adm1 lists from `specimen.taxon_name` (`generateGeolocaleTaxaFromSpecimens`), re-adding the old name, which set 3 (`updateTaxonSets`) then moves again; maps, museum and bioregion lists also start from `specimen.taxon_name`.
@@ -98,7 +100,7 @@ Set 1 runs on one `longConPool` connection with auto-commit off (`UtilDataAction
 - Nothing checks that the AntCat file is from today.
 - Curator-made names on species lists whose current valid name AntCat changes are moved (step 7) but the move is not recorded in the list history.
 
-The approved fix (nightly name update for all specimens, table `specimen_name_update`, "Name updates" page, `etc/name-update.properties` with off / report / apply) is described in the feature backlog section of [test-gaps-uploads-nightly.md](test-gaps-uploads-nightly.md).
+The first point is what the nightly name update (section 7) fixes, once it is in apply mode.
 
 ## 6. Logs and where failures show
 
@@ -108,3 +110,46 @@ The approved fix (nightly name update for all specimens, table `specimen_name_up
 | Fetch or size-guard failure | `admin.log` line "worldantsFetchAndReload: <message>" and a report under `web/log/upload/<date>-Fetch.html`; no admin alert from the nightly path |
 | Load done | `web/log/worldants/<date>-fetchAndReloadWorldants.html`; table `worldants_upload` (admin query `query.do?name=worldantsUploads`) |
 | An exception in set 1 | `UtilDataAction.handleException()`: rolled back, message only in the set's HTTP answer and the Tomcat log (not compute.log) |
+
+## 7. The nightly name update (2026-10)
+
+Approved by Brian 2026-10-18. Code: `upload/SpecimenNameUpdate.java` (the step), `upload/CurrentValidNameRule.java` (the rule, shared with the upload), `upload/SpecimenNameUpdateDb.java` (table), `curate/NameUpdatesAction.java` (page).
+
+**The rule is the upload's.** `SpecimenUploadProcess.setStatusAndCurrentValidName()` now asks `CurrentValidNameRule.decide()` which name to file a specimen under and keeps its own side effects (report lines, the homonym placeholder taxon, the name columns). The nightly step asks the same method for the uploaded name of every specimen (`coalesce(nullif(original_taxon_name, ''), taxon_name)`; the upload fills `original_taxon_name` only when it replaced the name).
+
+**When it runs.** Set 1, after the AntCat import and the TaxonWorks upload, before `TaxonMgr.populate` and before sets 2 to 5 rebuild lists, counts and maps from `specimen.taxon_name` (`UtilDataAction.nightlyNameUpdate`). Skipped when tonight's AntCat import did not succeed, and when a specimen upload is running; while it runs, uploads are refused ("nightly name update"). It commits what set 1 did before it and then its own work, so a failure in the step (logged "name update: FAILED") does not undo the AntCat import or the TaxonWorks upload.
+
+**What it does.** Candidates are the (group, uploaded name, current name) combinations whose uploaded name has a status in `Status.USES_CURRENT_VALID_NAME` (synonym, original combination, obsolete combination, obsolete classification, unavailable misspelling, unavailable uncategorized) or whose uploaded name differs from the current name. For each, `SpecimenNameUpdate.decide()`:
+
+| Case | Result |
+|---|---|
+| uploaded name now a synonym etc., current valid taxon exists | moved to it: `taxon_name`, `original_taxon_name` = uploaded name, `status` valid, family to subspecies from the valid taxon, `is_introduced` recomputed |
+| uploaded name valid again (resurrected) | moved back to it, `original_taxon_name` cleared |
+| name (filed or uploaded) belongs to two or more AntCat taxa with different valid names, e.g. Pachycondyla sauteri (Cryptopone sauteri or Ectomomyrmex sauteri) | not moved; listed on nameUpdates.do under "Needs the curator's decision" (mode `shared_name`, replaced each run). Read from the AntCat export the import loaded (`web/speciesList/world/worldants_speciesList.txt`, every row; the import stores only the first taxon of a name); without it, the homonym table |
+| already on the right name | nothing |
+| morphospecies or indet (uploaded or current name) | left alone |
+| filed under a homonym placeholder (`insert_method = 'homononymMirroringTaxon'`), or the current valid name is a homonym or a placeholder, or the name's status is homonym | left alone (never creates taxa) |
+| current valid name has no taxon row, or no current valid name | left alone |
+| uploaded name not in AntCat, or another status (unavailable, ...) | left alone |
+
+Curator list entries: list rows are moved to the current valid name every night by the AntCat import (`TaxonSetDb.updateTaxonSetTaxonNames`, step 7 of section 2, and again in set 3). Curator rows parked by a cleanup (`taxon_set_parked`, PR #180) under a name that is now a synonym etc. are moved to the current valid name by the name update, so the restore puts them back under the name the list shows.
+
+**Switch.** `etc/name-update.properties` on the host (`/root/antweb/etc/`, staging `/root/antweb-next/etc/`; the container reads `/antweb/deploy/etc/name-update.properties` at each run, no restart needed; gitignored):
+
+```
+mode=report        # off | report | apply   (no file = off)
+maxChanges=50000   # apply mode: above this many specimens in one run, change nothing and list them as "would change"
+```
+
+- `report`: rows `would_change`, specimens untouched. `apply`: specimens moved, rows `changed`. Each run deletes the previous `would_change` rows (the page shows only the latest preview); `changed` rows are kept.
+- Admins: "Preview now (report only)" on the Name updates page (`utilData.do?action=specimenNameUpdatePreview`, POST) runs it in report mode at once; `utilData.do?action=specimenNameUpdate` runs it with the file's setting.
+
+**Record.** Table `specimen_name_update` (created by the application; DDL, checks and the undo in `db/upgrade/8.113/2026-10-20-specimen-name-update.sql`): run_date, mode, code, access_group, uploaded_name, old_name, new_name, antcat_status, reason, antcat_id. `reason` (added 2026-10-20) says why, with AntCat's reference, read from AntCat's taxonomic history as the AntCat import stored it that night (`description_edit`, title `taxonomichistory`; `AntcatHistory`, `NameUpdateReason`): It compares the old name with the new name across the whole chain of AntCat acts (rules decided by Brian Fisher 2026-10-20, `claude/antweb-name-update-reasons-spec.md` in the project): epithet changed: `synonym: junior synonym of Strumigenys pilinasis (Booher 2019)`; genus changed, epithet the same or only its gender ending: `new combination: Holcoponera striatula (Camacho et al. 2022)` (plus `; spelling as in AntCat` when the ending changed or AntCat calls the old name a misspelling); `unnecessary replacement name for L. reticulata (Brown 1975); junior objective synonym`; `raised to species: Crematogaster sjostedti (Taylor & McGavin 2020)`; `placed as subspecies: Pheidole pubiventris foederalis (Kempf 1972b)`; `nominotypical subspecies, shown as the species`; same genus, only the ending of the epithet: `spelling as in AntCat: Opisthopsis picta` (AntWeb shows AntCat's spelling and makes no gender claim); other spellings AntCat calls misspellings: `misspelling of Camponotus novaeboracensis`; back to the uploaded name: `Your name Crematogaster browni is valid again. It had been shown under C. cerasi (synonymy by Morgan & Mackay 2017), and was revived as a species by Ward & Blaimer 2022.` The reference is the earliest act of the current kind after the most recent contrary act, by date (not AntCat's order; 2025a before 2025b); when the old name has no history, the new name's "Senior synonym of" entry; no reference when the only one for the current state predates a contrary act (e.g. a synonymy older than a listing as a species). The same old -> new pair gets the same reason in every group; the uploaded name counts only for "valid again". A reference not found in the history is left out. `antcat_id` is the AntCat id of the taxon whose history gave the reason. One compute.log line per run, for example `name update: 214 specimens in 9 groups (apply: changed) [CAS 120, JTL 40, ...], 31 names; left alone (names): 2 homonym; 0.4 min. See nameUpdates.do.`
+
+**Page.** `nameUpdates.do`, linked from the Curate page: curators see their own group, admins all groups with a group filter and the Preview button; filter by date (from, to); newest run first; each line "old name -> new name" with the links of the upload report (`Taxon.makeDescriptionLink`), the reason (names in italics, the reference linked to https://www.antcat.org/catalog/<antcat_id>; rows recorded before 2026-10-20 show the AntCat status of the old name instead) and the specimen codes.
+
+**Not covered.** Page text, `taxon_prop` and favourite images under an old name; the genus-level move of morphospecies of a synonymized genus (done at upload by `SpecimenUploadParse`); the list-history record of list moves.
+
+**Tests.** `test/.../upload/SpecimenNameUpdateTest.java` (rule with a fake taxon table, decisions, cap, settings, log and page lines), `SpecimenNameUpdateDbTest.java` (MySQL 8.4 in CI: report, apply, cap, parked entries, upload lock), `tests/e2e/test_name_updates.py`.
+
+**Count check.** `countCheck.do` (admins, read-only; `util/CountCheck.java`) recounts from the specimen records the list numbers of Madagascar, Reunion, the country with the most morphospecies, the largest live curated project, the Malagasy bioregion and the CASC museum, and lists every difference with both numbers. The end of the last completed nightly run is read from compute.log. A difference caused by a change after it (an upload of that name, a list row added, specimens moved by hand, or any upload when the stored number is higher) is "pending"; any other is "real" and fails `tests/e2e/test_count_check.py` (staging, admin test login), which lists them in the job summary. When compute.log has no completed run, the test lists the differences and skips. DB test: `test/.../util/CountCheckTest.java`.

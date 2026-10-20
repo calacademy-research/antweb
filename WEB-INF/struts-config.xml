@@ -592,6 +592,20 @@ We would like to remove getChildImages.  Not needed now in the new UI
       path="/listUploads" 
       forward="/listSpecimenUploads.do"/>  
       
+      <!-- Name updates: specimens moved to the current valid name by the nightly name update (curators: own group). -->
+      <action path="/nameUpdates"
+              type="org.calacademy.antweb.curate.NameUpdatesAction"
+              scope="request">
+          <forward name="success" path="/curate/nameUpdates.jsp"/>
+      </action>
+
+      <!-- Count check: list counts recomputed from the specimen table (admins, read-only). -->
+      <action path="/countCheck"
+              type="org.calacademy.antweb.util.CountCheckAction"
+              scope="request">
+          <forward name="success" path="/util/countCheck.jsp"/>
+      </action>
+
       <action path="/listSpecimenUploads"
               type = "org.calacademy.antweb.util.ListUploadsAction"
               name="dummyForm"

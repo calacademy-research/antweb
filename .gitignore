@@ -38,3 +38,4 @@ antweb-docs.zip
 /etc/git-commit
 /etc/git-commit.tmp
 /etc/scheduler.properties
+/etc/name-update.properties

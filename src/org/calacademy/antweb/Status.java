@@ -101,18 +101,24 @@ public class Status {
     
     
     // See: myrmicinaetetramorium sericeiventre colluta  status:unavailable.  Should be fixed.
+    // Not in the list: unavailable, unidentifiable, collective group name, excluded from formicidae.
+    /** The statuses whose specimens are filed under the current valid name (usesCurrentValidName). */
+    public static final List<String> USES_CURRENT_VALID_NAME = List.of(ORIGINAL_COMBINATION, OBSOLETE_COMBINATION,
+        OBSOLETE_CLASSIFICATION, UNAVAILABLE_UNCATEGORIZED, UNAVAILABLE_MISSPELLING, SYNONYM);
+
     public static boolean usesCurrentValidName(String status) {
-        // || Status.UNAVAILABLE.equals(status)
-        // || Status.UNIDENTIFIABLE.equals(status)
-        // || Status.COLLECTIVE_GROUP_NAME.equals(status)
-        // || Status.EXCLUDED_FROM_FORMICIDAE.equals(status)
-        return Status.ORIGINAL_COMBINATION.equals(status)
-                || Status.OBSOLETE_COMBINATION.equals(status)
-                || Status.OBSOLETE_CLASSIFICATION.equals(status)
-                || Status.UNAVAILABLE_UNCATEGORIZED.equals(status)
-                || Status.UNAVAILABLE_MISSPELLING.equals(status)
-                || Status.SYNONYM.equals(status);
-    }    
+        return status != null && USES_CURRENT_VALID_NAME.contains(status);
+    }
+
+    /** SQL list of USES_CURRENT_VALID_NAME: ('original combination', ...). The values are constants. */
+    public static String usesCurrentValidNameSqlList() {
+        StringBuilder b = new StringBuilder("(");
+        for (int i = 0; i < USES_CURRENT_VALID_NAME.size(); i++) {
+            if (i > 0) b.append(", ");
+            b.append("'").append(USES_CURRENT_VALID_NAME.get(i)).append("'");
+        }
+        return b.append(")").toString();
+    }
 
     public static boolean excludeFromImport(String status) {
         // || Status.UNAVAILABLE_MISSPELLING.equals(status)

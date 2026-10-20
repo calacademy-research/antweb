@@ -74,6 +74,11 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
             <br>&nbsp;&nbsp;&nbsp;View the <a href="<%= domainApp %>/query.do?name=worldantsUploads">World (AntCat) upload reports</a> (the nightly AntCat name import: names added, changed and removed each night)
 <% } %>
 
+            &nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/nameUpdates.do">Name updates</a> (specimens moved to the current valid name after an AntCat change)
+<% if (LoginMgr.isAdmin(accessLogin)) { %>
+            &nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/countCheck.do">Count check</a> (list counts recomputed from specimen records)
+<% } %>
+
 
 
           </div>

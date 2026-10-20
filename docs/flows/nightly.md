@@ -6,7 +6,7 @@ Read from the code on master at commit 5b0c1d5 (2026-10-18). Paths are relative 
 
 Every morning at 5:00 Pacific, AntWeb recomputes everything that depends on names and specimens, in five steps ("sets") that run one after the other and take until about 8 AM:
 
-1. **Set 1, names and CAS specimens:** load the AntCat catalog ([antcat-to-antweb.md](antcat-to-antweb.md)), then upload the CAS specimens from TaxonWorks ([specimen-upload.md](specimen-upload.md) section 5). Can take up to about two hours because it waits for TaxonWorks.
+1. **Set 1, names and CAS specimens:** load the AntCat catalog ([antcat-to-antweb.md](antcat-to-antweb.md)), then upload the CAS specimens from TaxonWorks ([specimen-upload.md](specimen-upload.md) section 5), then (when switched on) move existing specimens whose name AntCat has changed to the current valid name ([antcat-to-antweb.md](antcat-to-antweb.md) section 7). Can take up to about two hours because it waits for TaxonWorks.
 2. **Set 2, countries and states:** remove names nobody uses any more, rebuild the country and adm1 species lists from the specimens, recount every country and adm1.
 3. **Set 3, projects, museums, bioregions:** recount projects, rebuild museum and bioregion lists and counts, move list entries to current valid names, mark species with type specimens.
 4. **Set 4, images:** count images for every taxon, country, project, museum and bioregion.
@@ -60,6 +60,7 @@ Times are from comments in `UtilDataAction.doAction()` (production unless stated
 | `worldantsFetchAndReload` | `SpeciesListUploader.worldantsFetchAndReload()`, then `ProjTaxonCountDb.childrenCountCrawl("worldants")` | see [antcat-to-antweb.md](antcat-to-antweb.md): `taxon`, `homonym`, taxonomic history, `proj_taxon`, `geolocale_taxon`, `bioregion_taxon`, `museum_taxon`, `worldants_upload` |
 | `taxonFinish` | `TaxonDb.setSubfamilyChartColor()` (35 s) | `taxon` chart colours |
 | TaxonWorks | `TaxonWorksNightly.run(connection, 90)` | CAS specimens, see [specimen-upload.md](specimen-upload.md) section 5 |
+| name update | `UtilDataAction.nightlyNameUpdate()` -> `SpecimenNameUpdate.runLocked()`; setting `etc/name-update.properties` (no file = off); skipped if the AntCat import failed or an upload is running; commits on its own | `specimen` (apply mode), `specimen_name_update`, `taxon_set_parked`; see [antcat-to-antweb.md](antcat-to-antweb.md) section 7 |
 | cache | `TaxonMgr.populate(connection, true, false)` | in-memory taxon cache |
 
 ### Set 2 (line 233): countries and adm1s, about 44 minutes
@@ -75,7 +76,7 @@ Times are from comments in `UtilDataAction.doAction()` (production unless stated
 
 | Step | Code | What |
 |---|---|---|
-| `projectCountCrawl` (0.7 min) | `ProjectDb.updateCounts()` (line 586) | counts of every ant and global project (`project`, `proj_taxon` counts); "Projects counts computed" |
+| `projectCountCrawl` (0.7 min, plus the list recount) | `ProjectDb.updateCounts()`, then (since 2026-10) `ProjTaxonCountDb.curatedProjectsCountCrawl()` | project totals (`project`); "Projects counts computed". Then the counts on the species list of every live project except worldants and allantwebants (`proj_taxon`: set to 0, then counted from the specimens); "Project species-list counts crawled: N projects". Before 2026-10 these list counts were only recounted when a curator saved the list or pressed Recalculate, and went stale (found by countCheck.do) |
 | `populateMuseum` (8 min) | `MuseumDb.populate()` then `updateMuseum()` | per museum: delete its `museum_taxon` rows, set `specimen.museum`, rebuild `museum_taxon` from specimens (species, then higher taxa), child counts, museum fields; "Museums populated" |
 | `populateBioregion` (5.5 min) | `BioregionDb.populate()` (line 291) | per bioregion: reset counts, rebuild `bioregion_taxon` from specimens and higher taxa, child counts, fields; then endemic and introduced for bioregions; "Bioregions populated" |
 | `updateTaxonSets` | `TaxonSetDb.updateTaxonSetTaxonNames()` and `updateTaxonSetSources()` | second pass moving list entries to current valid names (see the AntCat flow); recompute the `source` column of `proj_taxon`, `bioregion_taxon`, `geolocale_taxon` |
@@ -122,7 +123,7 @@ After any restart AntWeb needs 2 to 4 minutes to load its caches. A restart duri
 
 | Log | Content |
 |---|---|
-| `web/log/compute.log` | Begin/End of each run, per-step lines written by the Db classes ("Populating Geolocales", "Museums populated", ...), staging set 5 skip, restart decision with heap use, "Scheduler FAILED", "set1 still running after 210 minutes" |
+| `web/log/compute.log` | Begin/End of each run, per-step lines written by the Db classes ("Populating Geolocales", "Museums populated", ...), the name update line ("name update: N specimens in M groups (mode)", "name update: off", "... FAILED"), staging set 5 skip, restart decision with heap use, "Scheduler FAILED", "set1 still running after 210 minutes" |
 | `web/log/admin.log` | "worldantsFetchAndReload: <result>", "taxonWorksNightly: <result>", "Scheduler complete." (manual runs) |
 | `web/log/taxonworksNightly.log` | one line per TaxonWorks run (and the "waiting" line) |
 | `web/log/worldants/<date>-fetchAndReloadWorldants.html` | AntCat import report |

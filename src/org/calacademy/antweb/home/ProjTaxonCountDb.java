@@ -57,6 +57,40 @@ import org.calacademy.antweb.home.*;
           fixExceptions();
      }
 
+    /**
+     * Nightly (set 3, utilData.do?action=projectCountCrawl): the counts on the species lists of every
+     * live project except worldants and allantwebants (those two are recounted by the AntCat import).
+     * Until 2026-10 the nightly run recounted only the project totals (ProjectDb.updateCounts), so the
+     * per-taxon counts of curated project lists (specimens of a species, species of a genus...) were
+     * only recounted when a curator saved the list or pressed Recalculate, and went stale; the count
+     * check (countCheck.do) found 109 such species in project atolants on staging. The count columns
+     * are set to 0 first, so a taxon whose specimens are gone shows 0, not its old count (the crawl
+     * only writes taxa it finds). Same transaction as the rest of set 3, so pages never see the zeros.
+     */
+    public String curatedProjectsCountCrawl() throws SQLException {
+        int n = 0;
+        for (Project project : ProjectMgr.getLiveProjects()) {
+            if (project == null || Project.WORLDANTS.equals(project.getName()) || Project.ALLANTWEBANTS.equals(project.getName())) continue;
+            recount(project);
+            ++n;
+        }
+        String message = "Project species-list counts crawled: " + n + " projects";
+        LogMgr.appendLog("compute.log", "  " + message, true);
+        return message;
+    }
+
+    /** SQL that sets a project list's count columns to 0 before the crawl (subfamily_count is left as it is). */
+    public static final String RESET_SQL = "update proj_taxon set specimen_count = 0, species_count = 0, genus_count = 0 where project_name = ?";
+
+    /** One project list: counts set to 0, then counted again from the specimens. */
+    public void recount(Project project) throws SQLException {
+        try (PreparedStatement stmt = getConnection().prepareStatement(RESET_SQL)) {
+            stmt.setString(1, project.getName());
+            stmt.executeUpdate();
+        }
+        childrenCountCrawl(project);
+    }
+
     public void childrenCountCrawl(String projectName) throws SQLException {
         Project project = ProjectMgr.getProject(projectName);
         A.log("childrenCountCrawl:" + project);
