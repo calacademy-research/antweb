@@ -10,7 +10,7 @@ Staging only; every test skips without the secrets. Nothing is changed: page loa
    (today; yesterday before 08:30 Pacific, while today's run may still be going), with no
    "FAILED" and no "still running after 210 minutes" in between; a failure quotes those lines.
    taxonworksNightly.log and admin.log have a line from that day (the TaxonWorks job logs one
-   line per night). Where the job is off (no etc/taxonworks.properties, as on staging) that
+   line per night). Where the job is off on a server (no etc/taxonworks.properties) that
    line reads "skipped: no .../taxonworks.properties" and the TaxonWorks checks skip.
 """
 import datetime
