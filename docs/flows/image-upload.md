@@ -12,6 +12,17 @@ Files that are not saved (bad name, unknown specimen, another group's image, too
 
 ---
 
+## Who can upload at the same time (locks), in plain words
+
+Written 2026-10-20 at Brian Fisher's request, so the reasons are not lost.
+
+- **Several curators can upload images at the same time.** The old lock that let only one person upload images at a time was removed when the uploader was rebuilt (October 2026). Each file is its own request; `ImageUploadGate` counts how many are being processed.
+- **Image uploads pause while a specimen upload or the nightly CAS (TaxonWorks) upload runs.** These share the site-wide "upload in process" flag (`UploadAction.setIsInUploadProcess`). The browser gets "busy, try again in 30 seconds" (503 with `retryAfter`) and retries by itself; the curator does nothing. Reason: two heavy jobs (image conversion with ImageMagick and a full specimen load) at once overload the server. A specimen upload started while images are being processed waits too (with the background job queue, PR #201, it waits in the queue instead of being refused).
+- **A short database lock around saving each image's row** (`ImageUploadGate.DB_LOCK`, about a second per file). Reason: `ImageDb.insertImage` numbers a new image as the highest id + 1, so two images saved at the same instant could get the same number and one would be lost. This lock can go if the `image` table's id becomes an auto-increment column assigned by the database (on the fix list).
+- **Each file is reserved while it is processed** (`ImageUploadGate.reserve(code/name)`). Reason: if a browser gives up on a slow file and sends it again, the second try waits (409 "busy") instead of backing up the new file over the backup of the original image.
+
+All four are covered by the image upload tests (`tests/e2e/test_image_upload.py`).
+
 ## 1. Entry points
 
 | URL | Code | What |
