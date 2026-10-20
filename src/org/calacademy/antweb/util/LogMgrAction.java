@@ -181,7 +181,12 @@ public final class LogMgrAction extends AntwebAction {
         }
         message = new AntwebSystem().launchProcess(command, true);
         // Log lines include text from visitors (URLs, user agents): show them as text, never as HTML.
-        if (message != null && !message.isEmpty()) message = "<pre>" + Html.esc(message) + "</pre>";
+        // launchProcess() returns each output line as "<br>" + the line already escaped (Html.esc),
+        // so escaping again showed one long line with a literal "<br>" before every log line.
+        // Put the lines back one per line instead; their text stays escaped.
+        if (message != null && !message.isEmpty()) {
+            message = "<pre>" + message.replaceFirst("^<br>", "").replace("<br>", "\n") + "</pre>";
+        }
         String logMessage = "";
         if (message != null && message.length() > 100) logMessage = message.substring(100) + "...";
 
