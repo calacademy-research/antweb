@@ -1136,16 +1136,16 @@ input[type="checkbox"] {
     color:#fff;
 }
 
-/* Home page links (2026-10-19): the page text is white on a dark photo and black, so links get
-   their own colour and an underline (not only on hover) to be recognizable as links.
-   #ffd479 (light amber) on black: contrast 14.9:1; on the 70% black chip behind the links in
-   the photo area, at least 6:1 over any photo colour (WCAG AA asks 4.5:1). The header menu and
-   the subfamily slideshow keep their own look. */
+/* Home page links (2026-10-20, after users read the amber links and yellow button as an error):
+   white, underlined (the underline makes them recognizable as links, contrast 21:1 on black and at
+   least 7:1 on the 55% black panels); thicker underline on hover; visible focus outline. The header
+   menu and the subfamily slideshow keep their own look. */
 #page_data.home a,
 #home_lower a,
 #footer.home a {
-    color:#ffd479;
+    color:#fff;
     text-decoration:underline;
+    text-decoration-color:rgba(255,255,255,0.6);
     text-underline-offset:3px;
     text-shadow:none;
     border-bottom:0;
@@ -1153,7 +1153,7 @@ input[type="checkbox"] {
 #page_data.home a:visited,
 #home_lower a:visited,
 #footer.home a:visited {
-    color:#ffd479;
+    color:#fff;
 }
 #page_data.home a:hover,
 #page_data.home a:focus,
@@ -1162,13 +1162,14 @@ input[type="checkbox"] {
 #footer.home a:hover,
 #footer.home a:focus {
     color:#fff;
+    text-decoration-color:#fff;
     text-decoration-thickness:2px;
     border-bottom:0;
 }
 #page_data.home a:focus-visible,
 #home_lower a:focus-visible,
 #footer.home a:focus-visible {
-    outline:2px solid #ffd479;
+    outline:2px solid #fff;
     outline-offset:2px;
 }
 /* Text over the photo (2026-10-20, Brian: the dark chip behind every link looked busy): each
@@ -1205,8 +1206,9 @@ input[type="checkbox"] {
     display:inline-block;
     margin:0 0 4px;
     padding:6px 12px;
-    color:#000;
-    background-color:#ffd479;
+    color:#fff;
+    background-color:transparent;
+    border:1px solid #fff;
     border-radius:4px;
     font-weight:bold;
     text-decoration:none;
@@ -1214,8 +1216,8 @@ input[type="checkbox"] {
 }
 #home_lower a.home_button:hover,
 #home_lower a.home_button:focus {
-    color:#000;
-    background-color:#fff;
+    color:#fff;
+    background-color:rgba(255,255,255,0.15);
     text-decoration:none;
 }
 .home_museums {
