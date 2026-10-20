@@ -55,6 +55,48 @@
         width: auto;
         max-width: 900px;
     }
+    /* Home page subfamily strip (2026-10-20): between phone width and 1000 px the strip of seven
+       fixed-width pictures no longer fits; it scrolls sideways inside its own box, as on phones. */
+    #home_upper > #slideshow {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        overflow: hidden;
+    }
+    #autoscroll {
+        width: 100% !important;
+        max-width: 100%;
+    }
+    #slideshow a.browse {
+        display: none;
+    }
+    .scrollable {
+        float: none;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .scrollable .items {
+        position: static;
+        width: auto;
+        display: flex;
+        left: auto !important;     /* jQuery Tools scrollable sets left inline */
+    }
+    .scrollable .items > .cloned {
+        display: none;
+    }
+    .items div.things {
+        float: none;
+        width: auto;
+        max-width: none;
+        flex: none;
+        display: flex;
+    }
+    .items div.things .slide.small {
+        flex: none;
+    }
     .big_picture,
     .big_picture img,
     .taxon_page_img {
@@ -116,6 +158,45 @@
     }
     .aw-scroll-frame.aw-more-right::after {
         opacity: 1;
+    }
+}
+
+/* Home page top row above phone width (2026-10-20, Brian: the boxes misbehaved when the window was
+   resized): statistics, mission and recent activity stay in one row; the middle box takes the room
+   that is left, so the right box no longer drops below the others. At phone width they stack. */
+@media (min-width: 761px) {
+    #home_upper {
+        display: grid;
+        grid-template-columns: minmax(150px, 200px) minmax(0, 1fr) minmax(190px, 270px);
+        column-gap: 16px;
+        align-items: start;
+        box-sizing: border-box;
+        width: 100%;
+    }
+    #home_upper > * {
+        grid-column: 1 / -1;
+        min-width: 0;
+    }
+    #home_upper > #stats {
+        grid-column: 1;
+        width: auto;
+        margin-right: 0;
+    }
+    #home_upper > #mission {
+        grid-column: 2;
+        width: auto;
+    }
+    #home_upper > #recent_activity {
+        grid-column: 3;
+        width: auto;
+    }
+    #home_upper > .clear,
+    #home_upper > script {
+        display: none;
+    }
+    #home_upper > #background_attr {
+        justify-self: end;
+        float: none;
     }
 }
 

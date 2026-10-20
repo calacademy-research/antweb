@@ -478,3 +478,31 @@ def test_home_page_links_look_like_links(request, where):
         assert not _unexpected(page.errors), page.errors
     finally:
         page.close()
+
+
+# g. home page between phone and desktop width (2026-10-20) --------------------------------------
+# Brian: the home page boxes misbehaved when the window was resized (the right box dropped below the
+# others and the subfamily strip spilled over). At 900 px the page must not scroll sideways, the three
+# top boxes stay in one row, and the strip scrolls inside its own box.
+@pytest.fixture(scope="module")
+def tablet(browser):
+    ctx = _context(browser, viewport={"width": 900, "height": 900})
+    yield ctx
+    ctx.close()
+
+
+def test_home_page_at_900px(tablet):
+    page = _open_settled(tablet, "/")
+    try:
+        _assert_fits(page, "/", "at 900 px")
+        tops = page.evaluate("""() => ['#stats', '#mission', '#recent_activity'].map(s => {
+            const b = document.querySelector(s).getBoundingClientRect(); return [b.top, b.left, b.right]; })""")
+        (st, sl, sr), (mt, ml, mr), (rt, rl, rr) = tops
+        assert abs(st - rt) < 60 and abs(mt - rt) < 60, f"top boxes not in one row at 900 px: {tops}"
+        assert sr <= ml + 1 and mr <= rl + 1, f"top boxes overlap at 900 px: {tops}"
+        strip = page.evaluate("""() => { const s = document.querySelector('#slideshow'), c = document.querySelector('#home_upper');
+            return [s.getBoundingClientRect().right, c.getBoundingClientRect().right]; }""")
+        assert strip[0] <= strip[1] + 1, f"subfamily strip wider than the page box at 900 px: {strip}"
+        assert not _unexpected(page.errors), page.errors
+    finally:
+        page.close()
