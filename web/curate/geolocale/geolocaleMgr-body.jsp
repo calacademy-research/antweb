@@ -256,7 +256,7 @@ After changes are made, click to reload <a href='<%= AntwebProps.getDomainApp() 
         <%= Queries.getQueryList("Geolocale") %>
       <li><a href="<%= domainApp %>/bioregionCountryList.do">Bioregion Country List</a>
       <li><a href="<%= domainApp %>/countryAdm1List.do">Country Adm1 List</a>   
-      <li><a href="<%= domainApp %>/utilData.do?action=taxaOutsideOfNativeBioregion">Taxa Outside of Native Bioregion Report</a>   
+      <li><a href="<%= domainApp %>/query.do?action=taxaOutsideOfNativeBioregion">Taxa outside their native bioregions</a>   
 </ul>
 </div>
 

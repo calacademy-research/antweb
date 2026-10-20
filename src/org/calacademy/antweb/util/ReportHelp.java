@@ -46,6 +46,18 @@ public final class ReportHelp {
             + "homonym by mistake, change their identification to the current valid name in TaxonWorks (CAS) or in "
             + "the curator's upload file.");
 
+    public static final String TAXA_OUTSIDE = box(
+        "Species and subspecies recorded in a country or adm1 that lies in a bioregion where their genus is not "
+            + "native, according to the genus's bioregions in the Bioregion Map Manager. Taxa on the introduced and "
+            + "fossil ant lists are left out. At the end: genera that have no bioregion map, and names whose genus "
+            + "could not be read (those taxa could not be checked).",
+        "Such a record is often a misidentification or a wrong locality, or an introduced species that is not yet "
+            + "marked as introduced; it then shows in the wrong region's species list.",
+        "Open the taxon and the place. A wrong identification or locality is fixed at the source (TaxonWorks for "
+            + "CAS, the curator's upload file, or the region's species list). If the species is introduced there, "
+            + "add it to the introduced ants list (project introducedants); it then drops out of this report. If the genus is native there after all, add that bioregion to "
+            + "the genus in the Bioregion Map Manager.");
+
     public static final String WORLDANTS_UPLOADS = box(
         "The last 60 imports of AntCat names into AntWeb (the nightly run at 05:00 Pacific, or Import AntCat names now), "
             + "newest first, each with its log file.",

@@ -37,7 +37,7 @@
     if (showStatuses) { %>
     
        <div id="status_toggle">
-           <div class="left"><a href=<%= AntwebProps.getDomainApp() %>/common/statusDisplayPage.jsp target="new"><%= sdDisplayChildRank %> Status</a>:</div>
+           <div class="left"><a href=<%= AntwebProps.getDomainApp() %>/statusDisplayPage.do target="new"><%= sdDisplayChildRank %> Status</a>:</div>
            <div id="change_status" class="has_options">
                <span id="which_status"><span style="text-transform:capitalize;"><%= statusSet %></span></span>
                <div id="status_choice" class="options">

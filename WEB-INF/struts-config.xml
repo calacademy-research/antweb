@@ -670,9 +670,10 @@ We would like to remove getChildImages.  Not needed now in the new UI
     <!--==========Action Mappings that search==========-->
     
     <!-- This is our Google driven search box -->
-    <action
-      path="/search"
-      forward="/search/advancedSearch.jsp"/>
+    <!-- Old address of the search page (the form opened without its lists): sent to /advSearch.do (2026-10-19). -->
+    <action path="/search"
+            type="org.calacademy.antweb.util.RedirectAction"
+            parameter="/advSearch.do"/>
 
 
 
@@ -721,8 +722,9 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="success" path="/search/recentSearchResults.jsp"/>
     </action>
     
+    <!-- Only action=recentDescEdits (or none); other actions 404 (2026-10-19; the reports are on /list.do). -->
     <action path="/recentDescEdits"
-            type="org.calacademy.antweb.util.ListAction"
+            type="org.calacademy.antweb.util.RecentDescEditsAction"
             name="dummyForm">
       <forward name="success" path="/descEditReport.jsp"/>
     </action>

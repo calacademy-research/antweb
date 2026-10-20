@@ -44,15 +44,16 @@ public class UploadAction extends AntwebAction {
 	// Site-wide jobs: admins only.
 	static final java.util.Set<String> ADMIN_ONLY_ACTIONS = java.util.Set.of(
 			"fetchAndReloadWorldants",
-			"runStatistics", "runCountCrawls", "genAll", "genRecentDescEdits");
+			"runStatistics", "runCountCrawls", "genRecentDescEdits");
 
 	// Removed sub-actions (unused tools, 2026-10): answered as "Action not found." before anything else.
 	// allSpecimenFiles (reload every group from the working folder) and GBIFUpload: Curate page cleanup.
 	// reloadSpeciesLists (its code was commented out) and toggleDownTime (serverStatus.do has the
-	// working switch): removed 2026-10-19.
+	// working switch): removed 2026-10-19. genAll (an alias of genRecentDescEdits) merged into
+	// utilData.do?action=genRecentContent (Technical page), which also regenerates recent images.
 	static final java.util.Set<String> REMOVED_ACTIONS = java.util.Set.of(
 			"reloadSpecimenList", "removeSpecimenList", "uploadSpeciesList", "specimenTest", "speciesTest",
-			"allSpecimenFiles", "GBIFUpload", "reloadSpeciesLists", "toggleDownTime");
+			"allSpecimenFiles", "GBIFUpload", "reloadSpeciesLists", "toggleDownTime", "genAll");
 
 	// Admin jobs linked from the Curate page: a GET shows a confirmation page that repeats the
 	// request by POST with the form token (PostOnly). Every other sub-action must be posted.
@@ -135,7 +136,7 @@ public class UploadAction extends AntwebAction {
 		Login accessLogin = LoginMgr.getAccessLogin(request);
 		Group accessGroup = GroupMgr.getAccessGroup(request);
 
-		// Every action needs a login (genAll too: it is an admin job, nothing calls it anonymously).
+		// Every action needs a login.
 		if (accessLogin == null) {
 			s_log.info("execute() login failure.  No accessGroup.");
 			return mapping.findForward("goToLogin");
@@ -557,7 +558,7 @@ public class UploadAction extends AntwebAction {
 			//return (mapping.findForward("success"));
 		}
 
-		if (action.equals("genRecentDescEdits") || action.equals("genAll")) {
+		if (action.equals("genRecentDescEdits")) {
 			try {
 				AntwebFunctions.genRecentDescEdits(connection);
 				return mapping.findForward("success");

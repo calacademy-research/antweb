@@ -22,14 +22,16 @@ public class QueryAction extends AntwebAction {
     // homonyms: the Homonym Report (moved here from util.do, where it was admin only; its page needs a login).
     // curateAntcat was removed 2026-10-19: its checks are in the Integrity Check (checkIntegrity).
     // countryEndemic was removed 2026-10-19: the public /endemic.do page lists the same taxa.
+    // taxaOutsideOfNativeBioregion (2026-10-19, from utilData.do): a read-only report, so no
+    // "Run data job" confirmation.
     private static final Set<String> ADMIN_ACTIONS = Set.of(
         "checkIntegrity", "curiousQueries", "devQueries", "events",
-        "homonyms");
+        "homonyms", "taxaOutsideOfNativeBioregion");
 
     // Every sub-action query.do handles; anything else (descEdit, the old "Notes" link) is not found.
     static final Set<String> ACTIONS = Set.of(
         "checkIntegrity", "curiousQueries", "devQueries", "events",
-        "homonyms", "curiousQuery", "query", "queryBattery");
+        "homonyms", "taxaOutsideOfNativeBioregion", "curiousQuery", "query", "queryBattery");
 
     // Named queries that public pages link to (read-only, no login data): anyone may run them.
     static final Set<String> PUBLIC_QUERIES = Set.of(
@@ -144,6 +146,12 @@ public class QueryAction extends AntwebAction {
                   //s_log.error("execute()  homonyms:" + homonyms);
                   request.setAttribute("homonyms", homonyms);
                   returnLoc = mapping.findForward("homonyms");
+                }
+
+                if (action.equals("taxaOutsideOfNativeBioregion")) {
+                  String report = new GeolocaleTaxonDb(connection).getTaxaOutsideOfNativeBioregion();
+                  request.setAttribute("message", "<h2>Taxa outside their native bioregions</h2>" + ReportHelp.TAXA_OUTSIDE + report);
+                  returnLoc = mapping.findForward("adminHtmlMessage");
                 }
 
                 if (action.equals("events")) {

@@ -63,7 +63,7 @@ public class CurateCleanupTest extends TestCase {
     }
 
     public void testRemovedUploadTools() {
-        for (String a : new String[]{"allSpecimenFiles", "GBIFUpload", "reloadSpeciesLists", "toggleDownTime"}) {
+        for (String a : new String[]{"allSpecimenFiles", "GBIFUpload", "reloadSpeciesLists", "toggleDownTime", "genAll"}) {
             assertTrue(a, UploadAction.isRemovedAction(a));
             assertFalse(a, UploadAction.isAdminOnlyAction(a));
         }
