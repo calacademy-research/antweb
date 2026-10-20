@@ -143,7 +143,7 @@ public class Museum extends LocalityOverview implements Countable {
     }
     
     public String getRecalcLink() {
-      return "<a href='" + getThisPageTarget() + "&action=recalc'>Recalculate " + getName() + "</a>";    
+      return "<a href='" + getThisPageTarget() + "&action=recalc'>Update statistics</a>";    
     }    
     
     

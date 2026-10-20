@@ -605,7 +605,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     }
     
     public String getRecalcLink() {
-      return "<a href='" + getThisPageTarget() + "&action=recalc'>Recalculate " + getName() + "</a>";    
+      return "<a href='" + getThisPageTarget() + "&action=recalc'>Update statistics</a>";    
     }        
     
     public TaxonSet getTaxonSet(String taxonName, String rank, Connection connection) throws SQLException {
