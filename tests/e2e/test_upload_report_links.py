@@ -206,3 +206,11 @@ def test_groups_page_links_only_existing_reports():
     with ThreadPoolExecutor(max_workers=4) as pool:
         bad = [b for b in pool.map(check, urls) if b]
     assert not bad, f"{len(bad)} of {len(urls)} report links on groups.do fail:\n" + "\n".join(bad[:15])
+
+
+def test_curate_page_links_world_upload_reports(admin_session=None):
+    """Brian 2026-10-20: the World (AntCat) upload reports link went missing from the Curate page in the
+    10-18 cleanup; it is back for administrators (static check of the page source)."""
+    import pathlib
+    src = (pathlib.Path(__file__).resolve().parents[2] / "web" / "curate" / "curate-body.jsp").read_text()
+    assert "/query.do?name=worldantsUploads" in src and "World (AntCat) upload reports" in src
