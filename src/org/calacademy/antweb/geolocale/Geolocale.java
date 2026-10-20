@@ -660,12 +660,34 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         return theQuery;    
     }
 
+    /**
+     * The specimens of this place, as the specimen counts take them (getCountSpecimensQuery):
+     * islands by specimen.island_country, adm1s by specimen.adm1, countries by specimen.country;
+     * regions and subregions have no place column (the names on their list, collected anywhere).
+     * Specimen alias s. Quotes in the name are doubled.
+     */
+    public String getSpecimenPlaceCriteria() {
+      String name = getName() == null ? "" : getName().replace("'", "''");
+      if (isIsland()) return " and s.island_country = '" + name + "'";
+      if (Georank.ADM1.equals(getGeorank())) return " and s.adm1 = '" + name + "'";
+      if (Georank.COUNTRY.equals(getGeorank())) return " and s.country = '" + name + "'";
+      return "";
+    }
+
+    // Images of each taxon on the list (geolocale_taxon.image_count, "N Images" on the place's image
+    // pages): since 2026-10-20 only the images of the specimens of this place (before: of all
+    // specimens of the name, anywhere), the same specimens as the list's specimen counts.
+    // Ordered by family, subfamily and genus: CountDb.imageCountCrawl() adds up a genus or subfamily
+    // when the next row belongs to another one.
     public String getTaxonImageCountQuery() {
       String query = "select s.taxon_name taxonName, s.family family, s.subfamily subfamily " 
            + ", s.genus genus, s.species species, sum(s.image_count) imageSum" 
            + " from specimen s join geolocale_taxon gt on s.taxon_name = gt.taxon_name " 
            + " where gt.geolocale_id = " + getId()
-           + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species";    
+           + getSpecimenPlaceCriteria()
+           + " and s.status in " + StatusSet.getCountables()
+           + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species"
+           + " order by s.family, s.subfamily, s.genus, s.taxon_name";
       return query;
     }
 

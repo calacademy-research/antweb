@@ -22,7 +22,7 @@
   "status": 200,
   "table_rows": 2,
   "taxon_links": 1,
-  "text_length": 7946,
+  "text_length": 8711,
   "title": "Adm1: Antananarivo, Madagascar - Antweb"
  },
  "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&subregion=Eastern Africa&country=Comoros&resultRank=specimen": {
@@ -76,7 +76,7 @@
   "status": 200,
   "table_rows": 2,
   "taxon_links": 1,
-  "text_length": 8212,
+  "text_length": 8902,
   "title": "Browsing Afrotropical Ants - AntWeb"
  },
  "/bioregions.do": {
@@ -163,7 +163,7 @@
   "status": 200,
   "table_rows": 2,
   "taxon_links": 4,
-  "text_length": 11513,
+  "text_length": 12233,
   "title": "Country Comoros - Antweb"
  },
  "/curator.do?id=79": {
@@ -356,7 +356,7 @@
   "status": 200,
   "table_rows": 2,
   "taxon_links": 4,
-  "text_length": 12673,
+  "text_length": 13390,
   "title": "Island Hawaii - Antweb"
  },
  "/locality.do?code=Ngerimel": {
@@ -385,7 +385,7 @@
   "status": 200,
   "table_rows": 2,
   "taxon_links": 1,
-  "text_length": 9059,
+  "text_length": 9494,
   "title": "British Museum of Natural History Ants - AntWeb"
  },
  "/museums.do": {
@@ -416,7 +416,7 @@
   "status": 200,
   "table_rows": 2,
   "taxon_links": 1,
-  "text_length": 10803,
+  "text_length": 11278,
   "title": "Fossil Ants - AntWeb"
  },
  "/projects.do": {
@@ -441,7 +441,7 @@
   "status": 200,
   "table_rows": 2,
   "taxon_links": 1,
-  "text_length": 7702,
+  "text_length": 8172,
   "title": "Region: Africa - Antweb"
  },
  "/specimen.do?name=casent0103190": {
@@ -506,7 +506,7 @@
   "status": 200,
   "table_rows": 2,
   "taxon_links": 1,
-  "text_length": 8016,
+  "text_length": 8496,
   "title": "Subegion: Polynesia - Antweb"
  },
  "/taxonomicPage.do?rank=genus&project=worldants": {

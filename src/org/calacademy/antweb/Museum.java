@@ -256,7 +256,9 @@ public class Museum extends LocalityOverview implements Countable {
            + ", s.genus genus, s.species species, sum(s.image_count) imageSum" 
            + " from specimen s join museum_taxon mt on s.taxon_name = mt.taxon_name " 
            + " where mt.code = '" + getCode() + "'" 
-           + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species";
+           + " and s.museum = '" + getCode() + "'"  // 2026-10-20: images of this museum's specimens only
+           + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species"
+           + " order by s.family, s.subfamily, s.genus, s.taxon_name";  // CountDb.imageCountCrawl() adds up on a change of genus
       //A.log("getTaxonImageCountQuery() query:" + query);
 
       return query;

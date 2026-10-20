@@ -63,6 +63,9 @@ public class MuseumTaxonCountDb extends CountDb {
      public void imageCountCrawl()
        throws SQLException {
           s_log.debug("imageCountCrawl()");
+          // Since 2026-10-20 a taxon's count is of the images of this place's specimens only: names
+          // with none here get no row from the query, so every count starts at 0.
+          resetImageCounts("museum_taxon");
                 
           ArrayList<Museum> museums = new MuseumDb(getConnection()).getMuseums();
           for (Museum museum : museums) {            

@@ -149,33 +149,66 @@
    }
 %>
 
-<br><b>Specimens:</b>&nbsp;<%=  Formatter.commaFormat(overview.getSpecimenCount()) %>
-<br><b>Images:</b>&nbsp;<%=  Formatter.commaFormat(overview.getImageCount()) %>
+<%
+  // Each number is followed by what it counts (Brian Fisher, 2026-10-20). The rules are those of the
+  // nightly counts: GeolocaleDb, ProjectDb, MuseumDb, BioregionDb, PlaceImageCountDb, CountDb.
+  org.calacademy.antweb.home.PlaceImageCountDb.PlaceImages placeImages =
+      (org.calacademy.antweb.home.PlaceImageCountDb.PlaceImages) request.getAttribute("placeImages");
+  boolean isProjectOverview = (overview instanceof Project);
+  String georank = isGeolocale ? geolocale.getGeorank() : null;
+  boolean isListOnlyPlace = isGeolocale && !geolocale.isIsland() && ("region".equals(georank) || "subregion".equals(georank));
+  String placeWord = "place";
+  if (isGeolocale) {
+    if (geolocale.isIsland()) placeWord = "island";
+    else if ("adm1".equals(georank)) placeWord = "state or province";
+    else if (georank != null) placeWord = georank;
+  } else if (isBioregion) placeWord = "bioregion";
+  else if (isMuseum) placeWord = "museum";
+  else if (isProjectOverview) placeWord = "project";
 
-<% if (overview.getImagedSpecimenCount() != 0) { %>
-<br><b>Imaged Specimens:</b>&nbsp;<%=  Formatter.commaFormat(overview.getImagedSpecimenCount()) %>
+  String specimensDef;
+  if (isListOnlyPlace) specimensDef = "specimens of the species on this " + placeWord + "'s list, collected anywhere, not only here";
+  else if (isGeolocale) specimensDef = "ant specimens collected here, identified to a species, morphospecies or indet name";
+  else if (isBioregion) specimensDef = "ant specimens collected in this bioregion";
+  else if (isMuseum) specimensDef = "ant specimens recorded as held by this museum";
+  else specimensDef = "specimens, collected anywhere, of the species and subspecies on this project's list";
+
+  int imagesShown = overview.getImageCount();
+  int imagedShown = overview.getImagedSpecimenCount();
+  if (placeImages != null) {
+    imagesShown = placeImages.allImages;
+    imagedShown = placeImages.imagedSpecimens;
+  }
+%>
+<div id="place-stats"<% if (placeImages != null) { %> data-images="<%= placeImages.allImages %>" data-ant="<%= placeImages.antImages %>" data-labels="<%= placeImages.labelImages() %>" data-imaged="<%= placeImages.imagedSpecimens %>" data-label-only="<%= placeImages.labelOnlySpecimens %>"<% } %>>
+<br><b>Specimens:</b>&nbsp;<%= Formatter.commaFormat(overview.getSpecimenCount()) %> <span class="stat_def">(<%= specimensDef %>)</span>
+<% if (placeImages != null) { %>
+<br><b>Imaged specimens:</b>&nbsp;<%= Formatter.commaFormat(imagedShown) %> <span class="stat_def">(specimens with at least one photo of the ant; label-only photos not counted)<% if (placeImages.labelOnlySpecimens > 0) { %> (<%= Formatter.commaFormat(placeImages.labelOnlySpecimens) %> more have only a label photo)<% } %></span>
+<br><b>Images:</b>&nbsp;<%= Formatter.commaFormat(imagesShown) %><% if (imagesShown > 0) { %>: <span class="stat_def" id="image-breakdown"><%= org.calacademy.antweb.home.PlaceImageCountDb.breakdown(placeImages) %></span><% } %>
+<% } else { %>
+<% if (imagedShown != 0) { %>
+<br><b>Imaged specimens:</b>&nbsp;<%= Formatter.commaFormat(imagedShown) %> <span class="stat_def">(specimens with at least one photo)</span>
 <% } %>
-
+<br><b>Images:</b>&nbsp;<%= Formatter.commaFormat(imagesShown) %> <span class="stat_def">(photos of these specimens, labels included)</span>
+<% } %>
 <br>
 
-<br><b>Subfamilies:</b>&nbsp;<%= Formatter.commaFormat(overview.getSubfamilyCount()) %>
-<br><b>Genera:</b>&nbsp;<%= Formatter.commaFormat(overview.getGenusCount()) %>
+<br><b>Subfamilies:</b>&nbsp;<%= Formatter.commaFormat(overview.getSubfamilyCount()) %> <span class="stat_def">(subfamilies on this <%= placeWord %>'s list)</span>
+<br><b>Genera:</b>&nbsp;<%= Formatter.commaFormat(overview.getGenusCount()) %> <span class="stat_def">(genera on this <%= placeWord %>'s list)</span>
 <% String speciesCountLink = Formatter.commaFormat(overview.getSpeciesCount());
    if (overview instanceof Geolocale) {
      Geolocale g = (Geolocale) overview;
      if (LoginMgr.isAdmin(request)) speciesCountLink = "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=countReport&num=" + g.getId() + "'>" + speciesCountLink + "</a>";
    }
 %>
-<br><b>Species/Subspecies:</b>&nbsp;<%= speciesCountLink %>
+<br><b>Species/Subspecies:</b>&nbsp;<%= speciesCountLink %> <span class="stat_def">(species and subspecies on this <%= placeWord %>'s list, from any source, including morphospecies and indet names)</span>
 
 <%
    if (overview.getValidSpeciesCount() > 0) {
 %>
-       <br><br><b>Valid Species/Subspecies:</b>&nbsp;<%=  Formatter.commaFormat(overview.getValidSpeciesCount()) %>
+       <br><br><b>Valid Species/Subspecies:</b>&nbsp;<%=  Formatter.commaFormat(overview.getValidSpeciesCount()) %> <span class="stat_def">(currently valid, living (non-fossil) species and subspecies on the list)</span>
        <br>
 <% } %>
-
-
 
 <% 
    String endemicCountHtml = "";
@@ -191,7 +224,10 @@
 		  endemicCountHtml = "<a href='" + AntwebProps.getDomainApp() + "/endemic.do?geolocaleId=" + geolocaleId + "'>" + endemicCount + "</a>";  
 		}
 	  }
-	  endemicCountHtml = "<br><b>&nbsp;&nbsp;Endemic:</b>&nbsp;" + endemicCountHtml;
+	  endemicCountHtml = "<br><b>&nbsp;&nbsp;Endemic:</b>&nbsp;" + endemicCountHtml
+	    + ("adm1".equals(geolocale.getGeorank())
+	        ? " <span class=\"stat_def\">(named species and subspecies, not morphospecies or fossils, found in this country only and on no other state or province's list)</span>"
+	        : " <span class=\"stat_def\">(named species and subspecies, not morphospecies or fossils, on this " + placeWord + "'s list and on no other country's list)</span>");
 
 	  String introducedCount = Formatter.commaFormat(overview.getIntroducedSpeciesCount());
 	  introducedCountHtml = introducedCount;
@@ -201,7 +237,8 @@
 		  introducedCountHtml = "<a href='" + AntwebProps.getDomainApp() + "/introduced.do?geolocaleId=" + geolocaleId + "'>" + introducedCount + "</a>";  // * should be introducedCount but it is not calculated yet.
 		}
 	  }
-	  introducedCountHtml = "<br><b>&nbsp;&nbsp;Introduced:</b>&nbsp;" + introducedCountHtml;
+	  introducedCountHtml = "<br><b>&nbsp;&nbsp;Introduced:</b>&nbsp;" + introducedCountHtml
+	    + " <span class=\"stat_def\">(species known to have been introduced by people: on AntWeb's list of introduced ants and not native to this " + placeWord + "'s bioregion)</span>";
   }
   if (isBioregion) {
 	  String endemicCount = Formatter.commaFormat(overview.getEndemicSpeciesCount());
@@ -210,7 +247,8 @@
 		String bioregionName = ((Bioregion) overview).getName();
   	    endemicCountHtml = "<a href='" + AntwebProps.getDomainApp() + "/endemic.do?bioregionName=" + bioregionName + "'>" + endemicCount + "</a>";
 	  }
-	  endemicCountHtml = "<br><b>&nbsp;&nbsp;Endemic:</b>&nbsp;" + endemicCountHtml;
+	  endemicCountHtml = "<br><b>&nbsp;&nbsp;Endemic:</b>&nbsp;" + endemicCountHtml
+	    + " <span class=\"stat_def\">(species and subspecies, morphospecies included, not fossils, on this bioregion's list and on no other bioregion's list)</span>";
 
 	  String introducedCount = Formatter.commaFormat(overview.getIntroducedSpeciesCount());
 	  introducedCountHtml = introducedCount;
@@ -218,11 +256,14 @@
 		String bioregionName = ((Bioregion) overview).getName();
   	    introducedCountHtml = "<a href='" + AntwebProps.getDomainApp() + "/introduced.do?bioregionName=" + bioregionName + "'>" + introducedCount + "</a>";
 	  }
-	  introducedCountHtml = "<br><b>&nbsp;&nbsp;Introduced:</b>&nbsp;" + introducedCountHtml;
+	  introducedCountHtml = "<br><b>&nbsp;&nbsp;Introduced:</b>&nbsp;" + introducedCountHtml
+	    + " <span class=\"stat_def\">(species known to have been introduced by people: on AntWeb's list of introduced ants and not native to this bioregion)</span>";
   }
   %>
 <%= endemicCountHtml %></b>
 <%= introducedCountHtml %></b>
+</div>
+<style>#place-stats .stat_def { color: #666; font-size: 0.9em; }</style>
 
 <% 
 //A.log("*");

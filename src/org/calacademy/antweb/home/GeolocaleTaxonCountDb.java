@@ -97,6 +97,9 @@ public class GeolocaleTaxonCountDb extends CountDb {
      public void imageCountCrawl() 
        throws SQLException {
           //s_log.info("startImageCountCrawl()");
+          // Since 2026-10-20 a taxon's count is of the images of this place's specimens only: names
+          // with none here get no row from the query, so every count starts at 0.
+          resetImageCounts("geolocale_taxon");
 
           ArrayList<Geolocale> geolocales = GeolocaleMgr.getGeolocales();
           //ArrayList<Project> projects = ProjectMgr.getProjects();

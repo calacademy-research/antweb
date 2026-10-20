@@ -56,6 +56,9 @@ public class BioregionTaxonCountDb extends CountDb {
      public void imageCountCrawl() 
        throws SQLException {
           s_log.debug("startImageCountCrawl()");
+          // Since 2026-10-20 a taxon's count is of the images of this place's specimens only: names
+          // with none here get no row from the query, so every count starts at 0.
+          resetImageCounts("bioregion_taxon");
 
           ArrayList<Bioregion> bioregions = BioregionMgr.getBioregions();
           for (Bioregion bioregion : bioregions) {

@@ -793,7 +793,8 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         geolocale.setId(geolocaleId);
 
         getSpecimenCount(geolocale);
-        getImageCount(geolocale);
+        // image_count is not taken from here any more: the per-taxon image counts it summed are only
+        // filled in by nightly set 4, after this runs (set 2). See PlaceImageCountDb.
 
         //A.log("getFromSpecimenData() geolocaleId:" + geolocale.getId() + " s:" + geolocale.getSpecimenCount() + " i:" + geolocale.getImageCount());
     
@@ -826,35 +827,6 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       }
     }
     
-    public void getImageCount(Geolocale geolocale) {
-
-      Statement stmt = null;
-      ResultSet rset = null;
-      try {
-        stmt = DBUtil.getStatement(getConnection(), "getImageCount()");
-                        
-        String query = "select sum(gt.image_count) image_count" 
-          + " from geolocale_taxon gt, taxon t "
-          + " where gt.taxon_name = t.taxon_name "
-          + " and t.taxarank in ('species', 'subspecies')"
-          + " and gt.geolocale_id = " + geolocale.getId();
-
-        if (geolocale.getId() == 284) A.log("getImageCount() query:" + query);
-          
-        rset = stmt.executeQuery(query);
-        while (rset.next()) {
-
-          geolocale.setImageCount(rset.getInt("image_count"));
-        }
-
-      } catch (SQLException e) {
-        s_log.error("getImageCount() e:" + e);
-      } finally {
-        DBUtil.close(stmt, rset, "getImageCount()");
-      } 
-    }      
-
-
 
 // ------------- Populate Geolocale_Taxon -----------------------
 
@@ -937,9 +909,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
           stmt = DBUtil.getStatement(getConnection(), "updateCountsFromSpecimenData()");
           int x = 0;
 
+          // image_count and imaged_specimen_count: PlaceImageCountDb (nightly set 4, Recalculate).
           dml = "update geolocale " 
-            + " set image_count = " + geolocale.getImageCount()
-            + "  , specimen_count = " + geolocale.getSpecimenCount()
+            + " set specimen_count = " + geolocale.getSpecimenCount()
             + " where id = " + geolocale.getId();
 
           //A.log("updateCountsFromSpecimenData() dml:" + dml);
@@ -1372,7 +1344,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
     private String finish(int geolocaleId) throws SQLException {
         updateCountableTaxonData(geolocaleId);
-        updateImagedSpecimenCount(geolocaleId);
+        // imaged_specimen_count: PlaceImageCountDb (nightly set 4, Recalculate), labels not counted.
         makeCharts(geolocaleId);
       return "Geolocale Finished:" + geolocaleId;
     }
@@ -1390,55 +1362,6 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         geolocaleTaxonCountDb.updateCountableTaxonCounts("geolocale", criteria, subfamilyCount, genusCount, speciesCount);                  
     }    
       
-    private void updateImagedSpecimen() throws SQLException {
-      for (Geolocale subregion : GeolocaleMgr.getGeolocales("subregion")) {
-        updateImagedSpecimenCount(subregion.getId());
-      }  
-    }
-
-    private void updateImagedSpecimenCount(int geolocaleId) throws SQLException {
-        Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleId);        
-        int count = getImagedSpecimenCount(geolocale);
-        UtilDb utilDb = new UtilDb(getConnection());
-        //A.log("updateImagedSpecimenCount() id:" + geolocale.getId());
-        utilDb.updateField("geolocale", "imaged_specimen_count", Integer.valueOf(count).toString(), "id = " + geolocale.getId());
-    }
-
-    private int getImagedSpecimenCount(Geolocale geolocale) {
-      int geolocaleId = geolocale.getId();
-      int imagedSpecimenCount = 0;
-      String query = null;
-      Statement stmt = null;
-      ResultSet rset = null;
-      try {
-        stmt = DBUtil.getStatement(getConnection(), "getImagedSpecimenCount()");
-                
-        String specimenLocaleClause = getSpecimenLocaleClause(geolocale);
-        if (specimenLocaleClause == null) {
-          s_log.info("getImagedSpecimenCount() geolocale:" + geolocale + " id:" + geolocale.getId() + " No specimenLocaleClause.");
-          return 0;
-        }
-        
-        query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and " + specimenLocaleClause;
-
-        if (289 == geolocale.getId()) {
-          //A.log("getImagedSpecimenCount() query:" + query);
-        }
-
-        rset = stmt.executeQuery(query);
-        while (rset.next()) {
-         imagedSpecimenCount = rset.getInt("count");
-        }
-
-        //A.log("getImagedSpecimenCount() query:" + query + " imagedSpecimenCount:" + imagedSpecimenCount);       
-      } catch (SQLException e) {
-        s_log.error("getImagedSpecimenCount() e:" + e + " query:" + query);
-      } finally {
-        DBUtil.close(stmt, rset, "getImagedSpecimenCount()");
-      } 
-      return imagedSpecimenCount;
-    }    
-   
     public String getSpecimenLocaleClause(Geolocale geolocale) {
       String clause = null;
       

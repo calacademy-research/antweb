@@ -441,7 +441,9 @@ public class BioregionDb extends AntwebDb {
       try {
         stmt = DBUtil.getStatement(getConnection(), "getImagedSpecimenCount()");
 
-        query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and bioregion = '" + bioregion + "'";
+        // Labels not counted (an image of the ant): as PlaceImageCountDb, which nightly set 4 runs after this.
+        query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and bioregion = '" + bioregion + "'"
+            + " and lower(trim(coalesce(i.shot_type, ''))) <> 'l'";
 
         rset = stmt.executeQuery(query);
         while (rset.next()) {

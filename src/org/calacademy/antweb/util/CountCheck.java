@@ -32,6 +32,13 @@ import java.util.Set;
  *   genera     subfamily rows: genus_count = genus rows of that subfamily in the same list (same statuses).
  *   global     species rows of the places checked: the allantwebants specimen_count ("Global" column) =
  *              all specimens filed under that name.
+ *   place images  (2026-10-20) the place's own numbers: Images (all files, labels too), images of each
+ *              view (shot type) and Imaged specimens (specimens with an image that is not a label), as
+ *              stored by PlaceImageCountDb (place_image_count and the image_count / imaged_specimen_count of
+ *              the place table), against a recount from the image table of the place's specimens (the
+ *              specimens of the "specimens" check above: geolocale and project by their list, geolocale
+ *              of a countable status; museum and bioregion all their specimens). Also: Images is never
+ *              smaller than Imaged specimens (a difference there is always "real").
  *
  * These are the rules of the nightly count crawls (CountDb and the Countable queries of Geolocale,
  * Project, Museum and Bioregion), written again here, so a stored number that is stale or was never
@@ -139,6 +146,10 @@ public class CountCheck {
         public final Map<Place, Integer> rowsChecked = new HashMap<>();
         public final List<Mismatch> mismatches = new ArrayList<>();
         public final List<String> notes = new ArrayList<>();
+        /** Images were added after the last nightly run (image.upload_date). */
+        public boolean imagesSinceNightly;
+        /** place_image_count exists and has rows. */
+        public boolean placeImagesComputed;
 
         public int real() {
             int n = 0;
@@ -180,6 +191,7 @@ public class CountCheck {
         result.lastRunEnd = lastRunEnd;
         if (lastRunEnd != null && !result.inNightlyWindow) result.countedUntil = lastRunEnd;
         Set<String> changedNames = changedNamesSince(result);
+        imagesSince(result);
 
         for (Place place : places) {
             result.places.add(place);
@@ -188,6 +200,7 @@ public class CountCheck {
             rows += checkChildren(place, "genus", "species_count", "('species', 'subspecies')", "species", result, changedNames);
             rows += checkChildren(place, "subfamily", "genus_count", "('genus')", "genera", result, changedNames);
             if (!PROJECT.equals(place.type)) rows += checkGlobal(place, result, changedNames);
+            rows += checkPlaceImages(place, result, changedNames);
             result.rowsChecked.put(place, rows);
         }
         return result;
@@ -254,6 +267,132 @@ public class CountCheck {
             }
         }
         return names;
+    }
+
+    void imagesSince(Result result) throws SQLException {
+        result.placeImagesComputed = new org.calacademy.antweb.home.PlaceImageCountDb(connection).isComputed();
+        if (!result.placeImagesComputed) {
+            result.notes.add("The place image numbers (Images, Imaged specimens) have not been computed yet: they are"
+                + " written by nightly set 4 (place_image_count). Their check starts after the next nightly run.");
+        }
+        if (tableExists("image")) {
+            try (PreparedStatement stmt = connection.prepareStatement("select count(*) from image where upload_date >= ?")) {
+                stmt.setTimestamp(1, result.countedUntil);
+                try (ResultSet r = stmt.executeQuery()) {
+                    r.next();
+                    result.imagesSinceNightly = r.getInt(1) > 0;
+                }
+            }
+        }
+    }
+
+    /** The specimens of a place joined to their images (alias s, i), with the place's own rules; parameters: key, column value. */
+    static String placeImageFrom(Place place) {
+        boolean list = GEOLOCALE.equals(place.type) || PROJECT.equals(place.type);
+        return " from specimen s join image i on i.image_of_id = s.code"
+            + (list ? " join " + place.table() + " l on l.taxon_name = s.taxon_name and l." + place.keyColumn() + " = ?"
+                    + " join taxon t on t.taxon_name = s.taxon_name and t.taxarank in ('species', 'subspecies')" : "")
+            + " where 1 = 1"
+            + (place.specimenColumn != null ? " and s." + place.specimenColumn + " = ?" : "")
+            + (GEOLOCALE.equals(place.type) ? " and s.status in " + COUNTABLE : "");
+    }
+
+    private static int setPlaceImageParams(Place place, PreparedStatement stmt) throws SQLException {
+        int i = 1;
+        if (GEOLOCALE.equals(place.type) || PROJECT.equals(place.type)) place.setKey(stmt, i++);
+        if (place.specimenColumn != null) stmt.setString(i++, place.specimenValue);
+        return i;
+    }
+
+    static String placeTable(String type) {
+        switch (type) {
+            case GEOLOCALE: return "geolocale";
+            case PROJECT: return "project";
+            case MUSEUM: return "museum";
+            default: return "bioregion";
+        }
+    }
+
+    static String placeKeyColumn(String type) {
+        switch (type) {
+            case GEOLOCALE: return "id";
+            case PROJECT: return "project_name";
+            case MUSEUM: return "code";
+            default: return "name";
+        }
+    }
+
+    /** The place's Images, images per view and Imaged specimens against a recount from the image table. */
+    int checkPlaceImages(Place place, Result result, Set<String> changedNames) throws SQLException {
+        if (!result.placeImagesComputed) return 0;
+        // The list decides which specimens count (geolocales, projects): a row added after the nightly run.
+        boolean listChanged = false;
+        if (GEOLOCALE.equals(place.type) || PROJECT.equals(place.type)) {
+            try (PreparedStatement stmt = connection.prepareStatement("select count(*) from " + place.table()
+                    + " where " + place.keyColumn() + " = ? and created >= ?")) {
+                place.setKey(stmt, 1);
+                stmt.setTimestamp(2, result.countedUntil);
+                try (ResultSet r = stmt.executeQuery()) {
+                    r.next();
+                    listChanged = r.getInt(1) > 0;
+                }
+            }
+        }
+        String shot = "lower(trim(coalesce(i.shot_type, '')))";
+        Map<String, Integer> recount = new java.util.TreeMap<>();
+        try (PreparedStatement stmt = connection.prepareStatement("select " + shot + ", count(distinct i.id)" + placeImageFrom(place) + " group by 1")) {
+            setPlaceImageParams(place, stmt);
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) recount.merge(r.getString(1) == null ? "" : r.getString(1), r.getInt(2), Integer::sum);
+            }
+        }
+        int imagedRecount;
+        try (PreparedStatement stmt = connection.prepareStatement("select count(distinct s.code)" + placeImageFrom(place) + " and " + shot + " <> 'l'")) {
+            setPlaceImageParams(place, stmt);
+            try (ResultSet r = stmt.executeQuery()) {
+                r.next();
+                imagedRecount = r.getInt(1);
+            }
+        }
+        int allRecount = 0;
+        for (int n : recount.values()) allRecount += n;
+
+        org.calacademy.antweb.home.PlaceImageCountDb.PlaceImages stored = new org.calacademy.antweb.home.PlaceImageCountDb(connection).read(place.type, place.key);
+        Map<String, Integer> storedShots = stored == null ? new HashMap<>() : stored.shotImages;
+        int storedAll = -1;
+        int storedImaged = -1;
+        try (PreparedStatement stmt = connection.prepareStatement("select image_count, imaged_specimen_count from "
+                + placeTable(place.type) + " where " + placeKeyColumn(place.type) + " = ?")) {
+            place.setKey(stmt, 1);
+            try (ResultSet r = stmt.executeQuery()) {
+                if (r.next()) {
+                    storedAll = r.getInt(1);
+                    storedImaged = r.getInt(2);
+                }
+            }
+        }
+        String pending = result.imagesSinceNightly ? "images were added after the last nightly run"
+            : result.uploadSinceNightly ? "specimens were uploaded after the last nightly run"
+            : listChanged ? "the list got a new row after the last nightly run"
+            : !changedNames.isEmpty() ? "specimens were renamed after the last nightly run" : null;
+        int rows = 0;
+        Set<String> shots = new java.util.TreeSet<>(recount.keySet());
+        shots.addAll(storedShots.keySet());
+        for (String s : shots) {
+            ++rows;
+            int st = storedShots.getOrDefault(s, 0);
+            int c = recount.getOrDefault(s, 0);
+            if (st != c) result.mismatches.add(new Mismatch(place, "place images", "view '" + s + "'", st, c, pending));
+        }
+        if (storedAll >= 0) {
+            rows += 3;
+            if (storedAll != allRecount) result.mismatches.add(new Mismatch(place, "place images", "Images (all files)", storedAll, allRecount, pending));
+            if (storedImaged != imagedRecount) result.mismatches.add(new Mismatch(place, "place images", "Imaged specimens", storedImaged, imagedRecount, pending));
+            if (storedAll < storedImaged) {
+                result.mismatches.add(new Mismatch(place, "place images", "Images smaller than Imaged specimens", storedAll, storedImaged, null));
+            }
+        }
+        return rows;
     }
 
     private boolean tableExists(String table) throws SQLException {

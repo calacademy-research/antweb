@@ -225,7 +225,7 @@ jobs:
 
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
         run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml
-      - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check)
+      - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts)
         # DbTimeZoneTest: dates written by MySQL and by Java read back as the same moment and are
         # stored as Pacific wall-clock time, for conPool, mediumConPool and longConPool.
         run: |
@@ -270,6 +270,8 @@ jobs:
           '
           # SpecimenNameUpdateDbTest: the nightly name update (report, apply, cap, parked list entries).
           # CountCheckTest: list counts against a recount from specimens (real and pending differences).
+          # PlaceImageCountDbTest: Images, images per view and Imaged specimens of places (labels apart),
+          # per-taxon image counts of a place, and the count check of those numbers.
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
             set -e
@@ -279,8 +281,9 @@ jobs:
             cp /p/platform.properties /tmp/res/
             CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc \
-              /t/org/calacademy/antweb/upload/SpecimenNameUpdateDbTest.java /t/org/calacademy/antweb/util/CountCheckTest.java
-            for t in upload.SpecimenNameUpdateDbTest:6 util.CountCheckTest:7; do
+              /t/org/calacademy/antweb/upload/SpecimenNameUpdateDbTest.java /t/org/calacademy/antweb/util/CountCheckTest.java \
+              /t/org/calacademy/antweb/home/PlaceImageCountDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:6 util.CountCheckTest:7 home.PlaceImageCountDbTest:5; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

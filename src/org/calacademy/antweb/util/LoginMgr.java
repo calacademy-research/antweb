@@ -75,6 +75,11 @@ public class LoginMgr extends Manager {
           } catch (SQLException e) {
             s_log.error("startPasswordConversion() login.inactive columns not created e:" + e);
           }
+          try {
+            new org.calacademy.antweb.home.PlaceImageCountDb(conn).ensureSchema();   // place_image_count (Images on place pages)
+          } catch (SQLException e) {
+            s_log.error("startPasswordConversion() place_image_count not created e:" + e);
+          }
           int count = new LoginDb(conn).hashLegacyPasswords();
           if (count > 0) populate(conn, true, true);  // drop the cached plain-text values
         } catch (Exception e) {
