@@ -902,7 +902,7 @@ input[type="checkbox"] {
 }
 
 #browse_hint_text {
-    width:500px;
+    width:484px;
     background-color: #0b3e64;
     padding:8px;
     margin-left:19px;
@@ -1146,8 +1146,8 @@ input[type="checkbox"] {
 #footer.home a {
     color:#ffd479;
     text-decoration:underline;
-    text-underline-offset:2px;
-    text-shadow:0 1px 2px #000;
+    text-underline-offset:3px;
+    text-shadow:none;
     border-bottom:0;
 }
 #page_data.home a:visited,
@@ -1171,12 +1171,24 @@ input[type="checkbox"] {
     outline:2px solid #ffd479;
     outline-offset:2px;
 }
-/* Links over the photo (upper box and the top of the lower box): a dark chip behind the text. */
-#home_upper a,
-#contributor_container a {
-    background-color:rgba(0,0,0,0.7);
-    padding:0 2px;
-    border-radius:2px;
+/* Text over the photo (2026-10-20, Brian: the dark chip behind every link looked busy): each
+   text block sits on one see-through dark panel instead, and links have no box of their own.
+   55% black under white or amber text keeps at least 4.5:1 contrast over the light parts of the
+   background photo. */
+#stats,
+#mission,
+#recent_activity,
+#contributors,
+#get_involved {
+    box-sizing:border-box;
+    padding:10px 14px;
+    background-color:rgba(0,0,0,0.55);
+    border-radius:6px;
+}
+#background_attr {
+    padding:4px 10px;
+    background-color:rgba(0,0,0,0.55);
+    border-radius:6px;
 }
 /* The subfamily slideshow: image links and arrows, unchanged. */
 #page_data.home #slideshow a,
@@ -1191,7 +1203,7 @@ input[type="checkbox"] {
 #home_lower a.home_button,
 #home_lower a.home_button:visited {
     display:inline-block;
-    margin:8px 0 4px;
+    margin:0 0 4px;
     padding:6px 12px;
     color:#000;
     background-color:#ffd479;
@@ -1239,16 +1251,15 @@ input[type="checkbox"] {
 #stats {
     float:left;
     margin-top:48px;
-    width:190px;
-    padding-right:24px;
+    margin-right:16px;
+    width:200px;
     line-height:1.25;
 }
 
 #mission {
     float:left;
     margin-top:12px;
-    padding-right:24px;
-    width:480px;
+    width:484px;
     font-size:18px;
     font-weight:bold;
     line-height:1.2;
@@ -1257,7 +1268,7 @@ input[type="checkbox"] {
 #recent_activity {
     float:right;
     margin-top:42px;
-    width:250px;
+    width:270px;
     line-height:1.25;
 }
 
@@ -1348,8 +1359,7 @@ input[type="checkbox"] {
 
 #contributors {
     float:left;
-    width:49%;
-    padding-right:0;
+    width:48%;
 }
 
 .curator_container {
@@ -1391,9 +1401,8 @@ input[type="checkbox"] {
 }
 
 #get_involved {
-    float:left;
-    width:45%;
-    padding-left:30px;
+    float:right;
+    width:48%;
 }
 
 #promo_container {
@@ -1411,7 +1420,8 @@ input[type="checkbox"] {
     margin-right:60px;
 }
 
-/* Two promos: one at the left edge, one at the right (10-17). */
+/* Three promos (2026-10-20): Ant Course left, World Ant Collections text in the middle, its
+   button and the six museum links on the right, so the black area is filled. */
 .promo.right {
     float:right;
 }
