@@ -280,7 +280,7 @@ jobs:
             CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc \
               /t/org/calacademy/antweb/upload/SpecimenNameUpdateDbTest.java /t/org/calacademy/antweb/util/CountCheckTest.java
-            for t in upload.SpecimenNameUpdateDbTest:6 util.CountCheckTest:6; do
+            for t in upload.SpecimenNameUpdateDbTest:6 util.CountCheckTest:7; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

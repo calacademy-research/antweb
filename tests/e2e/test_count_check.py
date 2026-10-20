@@ -3,7 +3,7 @@
 Brian Fisher, 2026-10: "we need to make sure we have a test that would validate the counts based on
 real specimen data to make sure these counts are true". The page (administrators, read-only) recounts,
 straight from the specimen and taxon tables, for Madagascar, Reunion, the country with the most
-morphospecies, the largest live curated project (only live projects are recounted each night), the Malagasy bioregion and the CASC museum: the specimens
+morphospecies, the largest live curated project, the Malagasy bioregion and the CASC museum: the specimens
 of each species in the place, the species of each genus and the genera of each subfamily in the list,
 and the "Global" specimens of each species (rules: src/org/calacademy/antweb/util/CountCheck.java).
 

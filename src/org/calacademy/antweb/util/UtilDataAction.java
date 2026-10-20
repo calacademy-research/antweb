@@ -516,6 +516,8 @@ public class UtilDataAction extends AntwebAction {
 			appendStr += ":" + projectName;
 		  } else {
 			projectDb.updateCounts();
+			// The counts on the project species lists (proj_taxon), not only the project totals (2026-10).
+			appendStr += " " + new ProjTaxonCountDb(connection).curatedProjectsCountCrawl();
 		  }
 		  message = "Project" + appendStr + " counts updated";
 		}

@@ -155,6 +155,21 @@ public class CountCheckTest extends TestCase {
         assertTrue(found);
     }
 
+    /** The nightly recount of project lists (set 3) makes the stored counts match the recount, stale or missing. */
+    public void testProjectRecountFixesStaleCounts() throws Exception {
+        exec("update proj_taxon set specimen_count = 1, species_count = 9 where project_name = 'madants'");
+        exec("insert into taxon values ('myrmicinaepheidole gone', 'species', 'valid', '" + GENUS + "')");
+        exec("insert into proj_taxon values ('madants', 'myrmicinaepheidole gone', 0, 0, 0, 12, '2020-01-01 10:00:00')");
+        List<CountCheck.Place> places = new ArrayList<>();
+        places.add(project);
+        assertTrue(new CountCheck(connection).run(places).real() >= 3);
+        org.calacademy.antweb.Project p = new org.calacademy.antweb.Project();
+        p.setName("madants");
+        new org.calacademy.antweb.home.ProjTaxonCountDb(connection).recount(p);
+        CountCheck.Result r = new CountCheck(connection).run(places);
+        assertEquals(r.mismatches.toString(), 0, r.mismatches.size());
+    }
+
     public void testChangesAfterTheNightlyArePending() throws Exception {
         exec("update geolocale_taxon set specimen_count = 1 where taxon_name = '" + SP_A + "'");
         // casent2 came with an upload after the last nightly count run.

@@ -76,7 +76,7 @@ Times are from comments in `UtilDataAction.doAction()` (production unless stated
 
 | Step | Code | What |
 |---|---|---|
-| `projectCountCrawl` (0.7 min) | `ProjectDb.updateCounts()` (line 586) | counts of every ant and global project (`project`, `proj_taxon` counts); "Projects counts computed" |
+| `projectCountCrawl` (0.7 min, plus the list recount) | `ProjectDb.updateCounts()`, then (since 2026-10) `ProjTaxonCountDb.curatedProjectsCountCrawl()` | project totals (`project`); "Projects counts computed". Then the counts on the species list of every live project except worldants and allantwebants (`proj_taxon`: set to 0, then counted from the specimens); "Project species-list counts crawled: N projects". Before 2026-10 these list counts were only recounted when a curator saved the list or pressed Recalculate, and went stale (found by countCheck.do) |
 | `populateMuseum` (8 min) | `MuseumDb.populate()` then `updateMuseum()` | per museum: delete its `museum_taxon` rows, set `specimen.museum`, rebuild `museum_taxon` from specimens (species, then higher taxa), child counts, museum fields; "Museums populated" |
 | `populateBioregion` (5.5 min) | `BioregionDb.populate()` (line 291) | per bioregion: reset counts, rebuild `bioregion_taxon` from specimens and higher taxa, child counts, fields; then endemic and introduced for bioregions; "Bioregions populated" |
 | `updateTaxonSets` | `TaxonSetDb.updateTaxonSetTaxonNames()` and `updateTaxonSetSources()` | second pass moving list entries to current valid names (see the AntCat flow); recompute the `source` column of `proj_taxon`, `bioregion_taxon`, `geolocale_taxon` |
