@@ -51,14 +51,16 @@ public final class LogMgrAction extends AntwebAction {
 
         // Log files can contain visitor IPs, logins and internal paths: admin only.
         // The specimen page links curators to one line of an upload file, a specimen's
-        // stored details and one Worldants line; those are curator data and open to curators.
+        // stored details and one Worldants line, and the upload reports link one stored upload
+        // line (uploadLine); those are curator data and open to curators (upload lines: only
+        // their own group's files, as UploadFileAction.mayRead decides).
         String requestedAction = (String) ((DynaActionForm) form).get("action");
         if (requestedAction != null && REMOVED_ACTIONS.contains(requestedAction)) {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
             request.setAttribute("message", "action:" + Html.esc(requestedAction) + " not found.");
             return mapping.findForward("message");
         }
-        boolean curatorView = requestedAction != null && Set.of("uploadLog", "specimenDetails", "worldants").contains(requestedAction);
+        boolean curatorView = requestedAction != null && Set.of("uploadLog", "uploadLine", "specimenDetails", "worldants").contains(requestedAction);
         ActionForward c = curatorView ? Check.curator(request, mapping) : Check.admin(request, mapping);
         if (c != null) return c;
 
@@ -99,7 +101,7 @@ public final class LogMgrAction extends AntwebAction {
         }
         UploadLine uploadLine = null;
 
-        if ("uploadLog".equals(action)) { // DEPRECATED. Used the old upload/ without worldants or specimen.
+        if ("uploadLog".equals(action)) { // One line of an archived upload file (specimen page, curator section).
           // Curators see lines of their own group's upload files only (admins any).
           message = UploadFileAction.mayRead(LoginMgr.getAccessLogin(request), file)
               ? getUploadLog(file, lineNum) : "Not available.";
@@ -108,9 +110,13 @@ public final class LogMgrAction extends AntwebAction {
         } else if ("specimenDetails".equals(action)) {
           message = getSpecimenDetails(request, code);
           //A.log("execute() specimenDetails:" + message);
-        } else if ("uploadLine".equals(action)) { // Not sure when/if this and supporting method is used.
-		  uploadLine = getUploadLine(request, file, lineNum);
-          message = uploadLine == null ? "Line not found." : "<pre>" + Html.esc(uploadLine.getLine()) + "</pre>";
+        } else if ("uploadLine".equals(action)) { // One stored line of an upload (linked from upload reports).
+          if (!UploadFileAction.mayRead(LoginMgr.getAccessLogin(request), file)) {
+            message = "Not available.";
+          } else {
+		    uploadLine = getUploadLine(request, file, lineNum);
+            message = uploadLine == null ? "Line not found." : "<pre>" + Html.esc(uploadLine.getLine()) + "</pre>";
+          }
         }
 
         if (message != null) {

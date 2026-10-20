@@ -588,7 +588,9 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
               if (!Taxon.isSpeciesOrSubspecies(taxonName)) continue;
               
               String id = "" + rset.getObject("id");
-              String  georank = GeolocaleMgr.getGeolocale(id).getGeorank();
+              Geolocale geolocaleOfRow = GeolocaleMgr.getGeolocale(id);
+              if (geolocaleOfRow == null) continue; // not in memory (for example not valid)
+              String  georank = geolocaleOfRow.getGeorank();
               if (!lastGeorank.equals(georank)) {
                 buffer.append("<br><br><h2>" + Formatter.initCap(georank) + "</h2>");
                 lastGeorank = georank;
@@ -625,9 +627,9 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
                   ++total;
 			  
 				  //taxaOutside.add(taxonName);
-				  String idLink = "<a href='" + AntwebProps.getDomainApp() + "/geolocale.do?id=" + id + "'>" + id + "</a>";
-                  String taxonLink = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + taxonName + "</a>"; 
-				  String message = "geolocale:" + name + "(" + idLink + ") taxonName:" + taxonLink;
+				  String idLink = "<a href='" + AntwebProps.getDomainApp() + "/geolocale.do?id=" + Html.url(id) + "'>" + Html.esc(id) + "</a>";
+                  String taxonLink = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.url(taxonName) + "'>" + Html.esc(taxonName) + "</a>";
+				  String message = "geolocale:" + Html.esc(name) + "(" + idLink + ") taxonName:" + taxonLink;
 				  buffer.append("<br>" + message);
 				  s_log.debug("getTaxaOutsideOfNativeBioregion() " + message);
 				  //bioregion:" + bioregion + " is not native for genus:" + genus + " bioregionMap:" + bioregionMap);		    
@@ -637,11 +639,11 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
            buffer.append("<br><br>" + totalStr);
            s_log.debug("getTaxaOutsideOfNativeBioregion() " + totalStr);
 
-           String bioregionsNotFound = "bioregionMapsNotFound:" + bioregionMapsNotFound;
+           String bioregionsNotFound = "bioregionMapsNotFound:" + Html.esc(bioregionMapsNotFound.toString());
            buffer.append("<br><br>" + bioregionsNotFound);           
            s_log.debug("getTaxaOutsideOfNativeBioregion() " + bioregionsNotFound);
 
-           String genusNotFoundStr = "genusNotFound:" + genusNotFound;
+           String genusNotFoundStr = "genusNotFound:" + Html.esc(genusNotFound.toString());
            buffer.append("<br><br>" + genusNotFoundStr);
            s_log.debug("getTaxaOutsideOfNativeBioregion() " + genusNotFoundStr);
 
@@ -1007,6 +1009,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
             if ("hymenoptera".equals(parentTaxonName)) continue;
             
             Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleId);
+            if (geolocale == null) continue; // not in memory (for example not valid): skipped
           boolean d = "Chile".equals(geolocale.getName());
             
             String geolocaleName = geolocale.getName();

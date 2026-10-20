@@ -21,7 +21,7 @@ What you see depends on your login:
 
 - **Your Curator Page**: your public page on AntWeb, listing your uploads, images and page-text edits. This is what other people see about you.
 - **Manage Your Login Information**: your account. From here you change your name, email address and password.
-- **View Your Specimen Upload Reports**: the list of your group's specimen uploads, newest first. Each line opens the upload report (how many specimens were loaded, which names were changed to the current valid name, which lines had problems). Check it after every upload.
+- **View Your Specimen Upload Reports**: the list of your group's specimen uploads, newest first. Each line opens the upload report (how many specimens were loaded, which names were changed to the current valid name, which lines had problems). Check it after every upload. Line numbers in a report open that line of your upload as AntWeb stored it (your own group's uploads only).
 - **View Your Image Upload Reports**: the same for image uploads: one line per upload batch, with its report.
 - **Images you uploaded for taxon page text** (your curator folder): the files you uploaded for use on taxon pages (for example an image you inserted into a taxon's page text). Only you and admins see this list.
 
@@ -122,7 +122,7 @@ Each report page starts with a short box: what it shows, why it matters, and wha
 - **Specimen parts (-D codes) with different names** (formerly "Casent -Dxx Anomalies"): specimens whose code has parts (a code ending in `-d` and digits, for example `casent0001234-d01`) where the parts, or the parts and the base specimen, carry different taxon names. Each row shows the part, its taxon name, the name as uploaded (when AntWeb replaced it with the current valid name), who determined it and when, the group that uploaded it and the museum code. Usually a data entry mistake: correct the identification in TaxonWorks or the curator's upload file. A real mixed series needs no change.
   - **Group filter**: the dropdown lists every group with at least one hit and its count, for example "California Academy of Sciences (212)"; `list.do?action=casentDAnomalies&groupId=1` is the CAS list. Use it to get the list for one institution; each curator can only fix the specimens their group uploaded. A specimen whose base record and parts were uploaded by different groups is listed under every group involved, and the rows of other groups are greyed and marked, so the curator sees the whole conflict and knows which rows are theirs.
   - **Download this list (CSV)** downloads the current list (`&format=csv`), sorted by group, then base code, to attach to an email. Columns: group, specimen code, part code, taxon name, determined by, date determined, uploaded name, uploaded by, this group can fix (yes/no), museum, specimen page. Administrators only, like the page.
-- **Taxa outside their native bioregions**: taxa with specimens recorded outside their native bioregions; a list to check for misidentifications or introduced records. It runs through a confirmation page but only reads data.
+- **Taxa outside their native bioregions** (`query.do?action=taxaOutsideOfNativeBioregion`, also linked from the Geolocale Manager): species and subspecies recorded in a country or adm1 that lies in a bioregion where their genus is not native (by the genus's bioregions in the Bioregion Map Manager); taxa on the introduced and fossil ant lists are left out. A list to check for misidentifications, wrong localities or introduced species not yet on the introduced list. It only reads data and opens directly (since October 2026 it no longer goes through the data-job confirmation page).
 - **Orphaned images** (`/orphanedImages.do`): images whose specimen record no longer exists: images in AntWeb's image table whose specimen code is not (or no longer) in the specimen data, for example after a group removed or renamed specimens in an upload. Each line is a specimen code. Use it to find images to re-link (fix the code in the source data) or remove. It only reads data.
 
 Elsewhere: each group's last specimen upload is linked from the Specimen Upload Reports page (admins); the number of likes per image from the Favorites page (admins); the explanation of taxon status values from the Curator Tool Documentation page.
@@ -145,12 +145,18 @@ How long: a few minutes for most museums (the code notes about 4 minutes for ZMH
 
 When to use it: after a correction that should show on a museum page before tomorrow (for example a fixed "owned by" code, or a museum code just added in the Museum Manager). Otherwise the nightly run is enough. Avoid running it while an upload or the nightly run (05:00 to about 08:00 Pacific) is in progress: it rewrites the same tables. It does not change specimen data other than the `museum` field.
 
+### Recalculate on region, project and bioregion pages (admins)
+
+Country, adm1, project and bioregion pages have the same **Recalculate** button in their admin area. Each recounts that one page now, including the count crawl that adds the taxon counts up the tree (species to genus to subfamily). Since October 2026 there are no separate "Count Crawl" links on taxon pages or "Project Taxon Child Count Crawl" link on project pages: the project Recalculate now runs that crawl too.
+
 ### Technical page (`technical.do`, admins)
 
 - **Reload the in-memory lists**: AntWeb keeps lists such as logins, groups, projects, regions and taxa in memory. After a change made directly in the database, reload the list concerned, or all of them.
-- **Regenerate**: the recent content on the home page, the statistics, the all-AntWeb ants project list (a repair tool), and the database query timings (written to queryStats.log).
+- **Regenerate**: the recent content on the home page (recent description edits and images, `utilData.do?action=genRecentContent`; it also runs at every start; the old `upload.do?action=genAll` did only the first half and was removed), the statistics, the all-AntWeb ants project list (a repair tool), and the database query timings (written to queryStats.log).
 - **Run the nightly run now**: set 1 (AntCat names, then the CAS specimens from TaxonWorks), set 2 (countries and adm1s), set 3 (projects, museums, bioregions), set 4 (image counts), set 5 (maps and checks), or all five. These run by themselves every night from 05:00 Pacific and put a heavy load on the server; run one by hand only when it failed in the night.
 - **Debugging**: Server Debug (the server debug flag) and Session Properties (what is stored in your own session).
+
+Repair without a link: **geolocale taxon parentage** (`utilData.do?action=fixGeolocaleTaxonParentage`). Every species recorded in an adm1 should also be recorded in its country, and every taxon in a place should have its parent taxon there. The tool first shows a preview (how many records are missing; nothing is changed), then an **Apply the fix** button that removes the proxy records and inserts the missing ones. Use it after a large change to the geolocale hierarchy; the nightly run does not need it.
 
 Data jobs started from the Curate page or the Technical page (reloads, recounts, restarts, the nightly sets) always show a confirmation page with a **Run it** button first; nothing runs on the first click.
 

@@ -42,19 +42,20 @@ public class UtilDataAction extends AntwebAction {
     private static volatile long m_inComputeProcessSince = 0; // when m_inComputeProcess was set (ms), 0 if none
 
     // Every sub-action utilData.do handles. Anything else is answered with 404 before any other check
-    // (cleanup batch 3 removed 30 unused, duplicate, test and retired jobs).
+    // (cleanup batch 3 removed 30 unused, duplicate, test and retired jobs). 2026-10-19: the three
+    // taxon count crawls are part of each page's Recalculate, testGeolocaleTaxonParentage is the
+    // preview step of fixGeolocaleTaxonParentage, taxaOutsideOfNativeBioregion is a report
+    // (query.do?action=taxaOutsideOfNativeBioregion).
     static final java.util.Set<String> ACTIONS = java.util.Set.of(
         "set1", "set2", "set3", "set4", "set5", "taxonWorksNightly",
         "worldantsFetchAndReload", "worldantsReload", "taxonFinish", "dataCleanup", "restoreParkedTaxonSets",
         "generateGeolocaleTaxaFromSpecimens", "geolocaleCountCrawl", "geolocaleTaxonFix",
-        "fixGeolocaleTaxonParentage", "testGeolocaleTaxonParentage", "updateGeolocaleParentHierarchy",
+        "fixGeolocaleTaxonParentage", "updateGeolocaleParentHierarchy",
         "projectCountCrawl", "populateMuseum", "populateBioregion", "updateTaxonSets", "crawlForType",
         "imageCountCrawl", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
-        "verifyProjTaxon", "regenerateAllAntweb", "runCountCrawls", "projTaxonChildCountCrawl",
-        "geolocaleTaxonCountCrawl", "museumTaxonCountCrawl", "countReport",
+        "verifyProjTaxon", "regenerateAllAntweb", "runCountCrawls", "countReport",
         "genGoogleMapFunction", "delGoogleMapFunction", "genGroupObjectMaps",
-        "calcCaste", "setIsRestart", "siteWarning", "taxaOutsideOfNativeBioregion",
-        "genRecentContent");
+        "calcCaste", "setIsRestart", "siteWarning", "genRecentContent");
 
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
@@ -386,12 +387,14 @@ public class UtilDataAction extends AntwebAction {
 
 		// Very fast. Run occasionally to get adm1s in line with hierarchy. Should be rare. Unnecessary.
 		//if (action.equals("geolocaleTaxonCheckIntegrity")) {
+		// Two steps: first a preview that only counts the missing parent records, then (apply=true,
+		// a second button) the fix that deletes the proxy records and inserts the missing ones.
 		if (action.equals("fixGeolocaleTaxonParentage")) {
-		  message = new GeolocaleTaxonDb(connection).fixGeolocaleTaxonParentage();
-		}
-
-		if (action.equals("testGeolocaleTaxonParentage")) {
-		  message = new GeolocaleTaxonDb(connection).testGeolocaleTaxonParentage();
+		  if ("true".equals(request.getParameter("apply"))) {
+		    message = new GeolocaleTaxonDb(connection).fixGeolocaleTaxonParentage();
+		  } else {
+		    message = parentagePreviewHtml(new GeolocaleTaxonDb(connection).testGeolocaleTaxonParentage(), request);
+		  }
 		}
 		
 		// Geolocale counts updated 6.30 mins	  
@@ -503,44 +506,6 @@ public class UtilDataAction extends AntwebAction {
         // Don't just do worldants. Do all projects...
         // Added Mar2022 to fix missing worldant counts...
         // https://antweb-stg/utilData.do?action=geolocaleTaxonCountCrawl&num=392
-        if (action.equals("projTaxonChildCountCrawl")) {
-            ProjTaxonCountDb projTaxonCountDb = new ProjTaxonCountDb(connection);
-            if (name == null || "".equals(name)) {
-                s_log.info("countCrawl expecting name:" + name + ". Running ChildrenCountCrawls for all projects.");
-                projTaxonCountDb.childrenCountCrawl();
-            } else {
-                projTaxonCountDb.childrenCountCrawl(name);
-            }
-            message = "Finished Project Count Crawl (" + Html.esc(name) + ")";
-        }
-
-
-
-		// https://antweb-stg/utilData.do?action=geolocaleTaxonCountCrawl&num=392
-		if (action.equals("geolocaleTaxonCountCrawl")) {
-		  GeolocaleTaxonCountDb geolocaleTaxonCountDb = new GeolocaleTaxonCountDb(connection);
-          if (num == 0) {
-            s_log.info("countCrawl expecting num:" + num + ". Running ChildrenCountCrawls for all geolocales.");
-		    geolocaleTaxonCountDb.childrenCountCrawl();
-		  } else {
-		    geolocaleTaxonCountDb.childrenCountCrawl(num);
-		  }
-		  message = "Finished Geolocale Count Crawl (" + form.getNum() + ")";
-		}
-
-        // Generally not needed as it runs as a part of populate(code).
-		// http://localhost/antweb/utilData.do?action=museumTaxonCountCrawl&code=AFRC
-		if (action.equals("museumTaxonCountCrawl")) {
-		  MuseumTaxonCountDb museumTaxonCountDb = new MuseumTaxonCountDb(connection);
-          if (code == null || "".equals(code)) {
-            s_log.info("countCrawl expecting num:" + code + ". Running ChildrenCountCrawls for all museum.");
-		    museumTaxonCountDb.childrenCountCrawl();
-		  } else {
-		    museumTaxonCountDb.childrenCountCrawl(code);
-		  }
-		  message = "Finished Museum Count Crawl (" + Html.esc(code) + ")";
-		}
-
         // Useful for debugging? Code to execute and get results or a particular count.
 		if (action.equals("countReport")) {
 		  GeolocaleTaxonCountDb geolocaleTaxonCountDb = new GeolocaleTaxonCountDb(connection);
@@ -697,11 +662,6 @@ public class UtilDataAction extends AntwebAction {
 
 // ----------- Debug -------------
         
-        if (action.equals("taxaOutsideOfNativeBioregion")) {
-          String taxaOutside = new GeolocaleTaxonDb(connection).getTaxaOutsideOfNativeBioregion();
-          message = taxaOutside + " " + AntwebUtil.getMinsPassed(startTime);
-        }
-        
         if (action.equals("genRecentContent")) {
             AntwebMgr.genRecentContent(connection);
             message = "Recent content generated.";
@@ -748,6 +708,14 @@ public class UtilDataAction extends AntwebAction {
       return m_inComputeProcessSince;
     }
   
+
+    /** Preview page of fixGeolocaleTaxonParentage: what the check found, and a button that applies the fix. */
+    static String parentagePreviewHtml(String preview, HttpServletRequest request) {
+        String url = AntwebProps.getDomainApp() + "/utilData.do?action=fixGeolocaleTaxonParentage&apply=true";
+        return "<h2>Geolocale taxon parentage: preview</h2>"
+            + "<p>Nothing has been changed yet. The check found:</p><p>" + Html.esc(preview) + "</p>"
+            + "<p>Apply the fix: remove the proxy records and insert the missing parent records "
+            + "(country for each adm1 record, parent taxon for each record).</p>"
+            + Csrf.postButton(request, url, "Apply the fix", "Change geolocale_taxon records now?");
+    }
 }
-
-

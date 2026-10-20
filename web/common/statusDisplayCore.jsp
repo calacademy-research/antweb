@@ -8,7 +8,7 @@ if (true) {  // This allows multiple includes of statusDisplay on a single page 
   // See statusDisplayChild.jsp, statusDisplayTitle.jsp and statusDisplayRow.jsp
   
   //if (AntwebProps.isDevMode()) AntwebUtil.log("statusDisplay.jsp status:" + thisChild.getStatus());
-%> <a href='<%= AntwebProps.getDomainApp() %>/common/statusDisplayPage.jsp' target="new"> <%
+%> <a href='<%= AntwebProps.getDomainApp() %>/statusDisplayPage.do' target="new"> <%
   if (Status.VALID.equals(thisStatus)) { %>
   <img src="<%= AntwebProps.getDomainApp() %>/image/valid_name.png" border="0" title="Valid name.  <%= statusNote %>">
 <% } else {

@@ -158,10 +158,6 @@ public abstract class Overview implements Overviewable, Headerable, Describable 
       return org.calacademy.antweb.util.Csrf.postButton(request, m.group(1), org.calacademy.antweb.util.Html.esc(m.group(2)));
     }
 
-    public String getCountCrawlLink() {
-      return "";
-    }    
-
     public String getGoogleMapFunctionLink() {
       return "";
     }    

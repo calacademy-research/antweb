@@ -43,7 +43,7 @@ if (taxon.getRank() != null) { // Otherwise SkipIt
 <%
 
  if (isType) { %>
-<a href='<%= AntwebProps.getDomainApp() %>/common/statusDisplayPage.jsp#type' target="new">
+<a href='<%= AntwebProps.getDomainApp() %>/statusDisplayPage.do#type' target="new">
 <img src="<%= AntwebProps.getDomainApp() %>/image/has_type_status_icon.png" title="Has type specimens">
 </a>
 <% }

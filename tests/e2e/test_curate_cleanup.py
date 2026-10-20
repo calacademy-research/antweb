@@ -52,7 +52,7 @@ ADMIN_TOOLS = [
     "/viewMuseum.do?step=delete&code=E2ENOSUCHMUSEUM",
     "/utilData.do?action=siteWarning&text=e2e",
 ]
-REMOVED_UPLOAD_ACTIONS = ["allSpecimenFiles", "GBIFUpload", "reloadSpeciesLists", "toggleDownTime"]
+REMOVED_UPLOAD_ACTIONS = ["allSpecimenFiles", "GBIFUpload", "reloadSpeciesLists", "toggleDownTime", "genAll"]
 
 CURATE_SOURCES = ("web/curate/curate-body.jsp", "web/curate/curatorLinks.jsp")
 REMOVED_LINKS = (

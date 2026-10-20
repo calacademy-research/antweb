@@ -82,6 +82,9 @@ public final class OverviewAction extends DescriptionAction {
             }
 
             if (isRecalc) {
+                // The taxon child counts first (the region, museum and bioregion recounts include
+                // their crawl too), then the project's own counts.
+                new ProjTaxonCountDb(connection).childrenCountCrawl(projectName);
                 projectDb.updateCounts(projectName);
                 ProjectMgr.populate(connection, true);
                 //A.log("Project:" + projectName + " action:" + action);

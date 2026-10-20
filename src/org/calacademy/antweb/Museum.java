@@ -146,9 +146,6 @@ public class Museum extends LocalityOverview implements Countable {
       return "<a href='" + getThisPageTarget() + "&action=recalc'>Recalculate " + getName() + "</a>";    
     }    
     
-    public String getCountCrawlLink() {
-      return "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=museumTaxonCountCrawl&code=" + getCode() + "'>Count Crawl " + getCode() + "</a>";
-    }
     
 /*
     public String getGoogleMapFunctionLink() {
