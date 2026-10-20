@@ -49,7 +49,7 @@ public final class CountCheckAction extends AntwebAction {
             connection.setReadOnly(true);
             List<String> notes = new ArrayList<>();
             List<CountCheck.Place> places = places(request, connection, notes);
-            CountCheck.Result result = new CountCheck(connection).run(places);
+            CountCheck.Result result = new CountCheck(connection).run(places, CountCheck.lastCompletedRun(computeLog()));
             result.notes.addAll(notes);
             request.setAttribute("html", html(result, AntwebProps.getDomainApp()));
         } catch (SQLException e) {
@@ -61,6 +61,17 @@ public final class CountCheckAction extends AntwebAction {
             DBUtil.close(connection, this, dbMethodName);
         }
         return mapping.findForward("success");
+    }
+
+    /** The lines of web/log/compute.log (empty if it cannot be read). */
+    static List<String> computeLog() {
+        try {
+            return java.nio.file.Files.readAllLines(java.nio.file.Paths.get(LogMgr.getWebLogRoot() + "compute.log"),
+                java.nio.charset.StandardCharsets.ISO_8859_1);
+        } catch (Exception e) {
+            s_log.warn("computeLog() e:" + e);
+            return new ArrayList<>();
+        }
     }
 
     static CountCheck.Place geolocalePlace(Geolocale g) {
@@ -154,8 +165,14 @@ public final class CountCheckAction extends AntwebAction {
         if (result.inNightlyWindow) {
             b.append("<p><b>The nightly run is rebuilding the counts now (05:00 to 08:15 Pacific); differences are expected until it ends.</b></p>");
         }
-        b.append("<p>Counted by the last nightly run up to ").append(f.format(result.countedUntil))
-         .append(result.uploadSinceNightly ? "; specimens were uploaded since then." : "; no specimen upload since then.").append("</p>");
+        if (result.lastRunEnd == null) {
+            b.append("<p><b>compute.log has no completed nightly run</b> (it may have been emptied, or the run failed or was stopped). "
+                + "The stored counts may then be older than one day, and differences may only mean that the counts were not rebuilt. "
+                + "Changes after ").append(f.format(result.countedUntil)).append(" are treated as pending.</p>");
+        } else {
+            b.append("<p>Counts written by the nightly run that ended ").append(f.format(result.lastRunEnd)).append(".</p>");
+        }
+        b.append("<p>").append(result.uploadSinceNightly ? "Specimens were uploaded after that." : "No specimen upload after that.").append("</p>");
         for (String note : result.notes) b.append("<p>Note: ").append(note).append("</p>");
         b.append("<table border=1 cellpadding=4 style=\"border-collapse:collapse\"><tr><th>Place</th><th>Rows checked</th><th>Real</th><th>Pending</th></tr>");
         for (CountCheck.Place p : result.places) {
@@ -193,7 +210,8 @@ public final class CountCheckAction extends AntwebAction {
             b.append("</table>");
         }
         b.append("<p id=\"count-check-result\" data-real=\"").append(result.real()).append("\" data-pending=\"").append(result.pending())
-         .append("\" data-window=\"").append(result.inNightlyWindow ? 1 : 0).append("\">Real mismatches: ").append(result.real())
+         .append("\" data-window=\"").append(result.inNightlyWindow ? 1 : 0)
+         .append("\" data-nightly=\"").append(result.lastRunEnd == null ? 0 : 1).append("\">Real mismatches: ").append(result.real())
          .append(". Pending: ").append(result.pending()).append(".</p>");
         return b.toString();
     }

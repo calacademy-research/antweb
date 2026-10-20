@@ -38,7 +38,8 @@ import java.util.Set;
  * updated shows up.
  *
  * Expected differences: counts are only recomputed by the nightly run, which starts at 05:00
- * Pacific and has written them by 08:15 (the AntCat import, the TaxonWorks upload and the name
+ * Pacific and has written them by 08:15 (the end of the last completed run is read from compute.log;
+ * without one, the last 08:15 is assumed and the page and the e2e test say so) (the AntCat import, the TaxonWorks upload and the name
  * update come before the counts, so their changes are counted). A difference is "pending" (expected
  * to disappear after the next nightly run) when, after the end of the last nightly run (08:15): a
  * specimen of that name was uploaded, or specimens were moved to or from that name (name update by
@@ -130,6 +131,8 @@ public class CountCheck {
     public static final class Result {
         /** End of the last nightly count run: changes after it are not counted yet. */
         public Timestamp countedUntil;
+        /** End of the last completed nightly run found in compute.log, or null when none was found. */
+        public Timestamp lastRunEnd;
         public boolean inNightlyWindow;
         public boolean uploadSinceNightly;
         public final List<Place> places = new ArrayList<>();
@@ -160,12 +163,22 @@ public class CountCheck {
         + " timestamp(curdate() - interval 1 day, '08:15:00')), time(now()) >= '05:00:00' and time(now()) < '08:15:00'";
 
     public Result run(List<Place> places) throws SQLException {
+        return run(places, null);
+    }
+
+    /**
+     * lastRunEnd: end of the last completed nightly run (compute.log, lastCompletedRun()); the counts
+     * are from that run. Without it, the last 08:15 is assumed, and the result says so (lastRunEnd null).
+     */
+    public Result run(List<Place> places, Timestamp lastRunEnd) throws SQLException {
         Result result = new Result();
         try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(LAST_NIGHTLY_SQL)) {
             r.next();
             result.countedUntil = r.getTimestamp(1);
             result.inNightlyWindow = r.getBoolean(2);
         }
+        result.lastRunEnd = lastRunEnd;
+        if (lastRunEnd != null && !result.inNightlyWindow) result.countedUntil = lastRunEnd;
         Set<String> changedNames = changedNamesSince(result);
 
         for (Place place : places) {
@@ -178,6 +191,33 @@ public class CountCheck {
             result.rowsChecked.put(place, rows);
         }
         return result;
+    }
+
+    private static final java.util.regex.Pattern LOG_LINE = java.util.regex.Pattern.compile("^(\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d) (Begin|End) run\\b");
+
+    /**
+     * End of the last nightly run in compute.log ("<date time> Begin run" ... "<date time> End run")
+     * that has no "FAILED" line between its Begin and End; null if there is none.
+     */
+    public static Timestamp lastCompletedRun(List<String> lines) {
+        Timestamp last = null;
+        boolean inRun = false;
+        boolean failed = false;
+        for (String line : lines) {
+            java.util.regex.Matcher m = LOG_LINE.matcher(line);
+            if (m.find()) {
+                if ("Begin".equals(m.group(2))) {
+                    inRun = true;
+                    failed = false;
+                } else if (inRun) {
+                    if (!failed) last = Timestamp.valueOf(m.group(1));
+                    inRun = false;
+                }
+            } else if (inRun && line.contains("FAILED") && !line.contains("name update")) {
+                failed = true;
+            }
+        }
+        return last;
     }
 
     /** Names whose specimens changed since the last nightly start: uploads, and the name update outside the nightly. */

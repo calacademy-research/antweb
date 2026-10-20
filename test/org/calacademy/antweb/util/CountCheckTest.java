@@ -98,6 +98,35 @@ public class CountCheckTest extends TestCase {
         return new CountCheck(connection).run(places);
     }
 
+    public void testLastCompletedRunFromComputeLog() {
+        List<String> log = new ArrayList<>();
+        assertNull(CountCheck.lastCompletedRun(log));
+        log.add("2026-10-18 05:00:00 Begin run");
+        log.add("2026-10-18 07:58:12 End run");
+        log.add("2026-10-19 05:00:01 Begin run");
+        log.add("2026-10-19 05:40:00 Scheduler FAILED (remaining sets skipped) url:x e:y");
+        log.add("2026-10-19 05:40:01 End run");
+        assertEquals("a failed run does not count", java.sql.Timestamp.valueOf("2026-10-18 07:58:12"), CountCheck.lastCompletedRun(log));
+        log.add("2026-10-20 05:00:00 Begin run");
+        log.add("2026-10-20 05:31:00   name update: FAILED, nothing changed (x)");
+        log.add("2026-10-20 07:50:00 End run");
+        assertEquals("a failed name update does not stop the counts", java.sql.Timestamp.valueOf("2026-10-20 07:50:00"), CountCheck.lastCompletedRun(log));
+        log.add("2026-10-21 05:00:00 Begin run");
+        assertEquals("a run still going does not count", java.sql.Timestamp.valueOf("2026-10-20 07:50:00"), CountCheck.lastCompletedRun(log));
+    }
+
+    public void testCountedUntilIsTheLastRun() throws Exception {
+        List<CountCheck.Place> places = new ArrayList<>();
+        places.add(madagascar);
+        // The last completed run was long ago: the upload of 2020-06-01 came after it.
+        exec("update upload set created = '2020-06-01 10:00:00' where upload_id = 1");
+        exec("update geolocale_taxon set specimen_count = 1 where taxon_name = '" + SP_A + "'");
+        CountCheck.Result r = new CountCheck(connection).run(places, java.sql.Timestamp.valueOf("2020-05-01 08:00:00"));
+        assertEquals(java.sql.Timestamp.valueOf("2020-05-01 08:00:00"), r.countedUntil);
+        assertEquals(r.mismatches.toString(), 0, r.real());
+        assertTrue(r.pending() >= 1);
+    }
+
     public void testRightCountsGiveNoMismatch() throws Exception {
         CountCheck.Result r = check();
         assertEquals(r.mismatches.toString(), 0, r.mismatches.size());
