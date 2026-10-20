@@ -328,6 +328,16 @@ public class CountDb extends AntwebDb {
     
 // =================== Image Counts =======================
 
+    /** Sets image_count to 0 on every row of a taxon list table that has another value (before a full image count crawl). */
+    protected void resetImageCounts(String table) throws SQLException {
+        if (!java.util.Set.of("geolocale_taxon", "bioregion_taxon", "museum_taxon", "proj_taxon").contains(table)) {
+            throw new IllegalArgumentException(table);
+        }
+        try (Statement stmt = getConnection().createStatement()) {
+            stmt.executeUpdate("update " + table + " set image_count = 0 where image_count != 0");
+        }
+    }
+
     protected void imageCountCrawl(Countable countable) throws SQLException {
         if (countable == null) {
           s_log.warn("imageCountCrawl WST countable is null");

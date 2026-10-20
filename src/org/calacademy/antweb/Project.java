@@ -605,7 +605,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     }
     
     public String getRecalcLink() {
-      return "<a href='" + getThisPageTarget() + "&action=recalc'>Recalculate " + getName() + "</a>";    
+      return "<a href='" + getThisPageTarget() + "&action=recalc'>Update statistics</a>";    
     }        
     
     public TaxonSet getTaxonSet(String taxonName, String rank, Connection connection) throws SQLException {
@@ -698,7 +698,8 @@ group by taxonName
            + ", s.genus genus, s.species species, sum(s.image_count) imageSum" 
            + " from specimen s join proj_taxon pt on s.taxon_name = pt.taxon_name " 
            + " where pt.project_name = '" + getName() + "'" 
-           + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species";   
+           + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species"
+           + " order by s.family, s.subfamily, s.genus, s.taxon_name";  // CountDb.imageCountCrawl() adds up on a change of genus   
       return query;
     }
 

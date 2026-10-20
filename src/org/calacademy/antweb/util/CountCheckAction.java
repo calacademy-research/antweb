@@ -161,6 +161,8 @@ public final class CountCheckAction extends AntwebAction {
             + "(Madagascar, Reunion, the country with the most morphospecies, the largest live curated project, the Malagasy bioregion "
             + "and the CASC museum). Four numbers are checked: specimens of each species in the place, species of each genus "
             + "and genera of each subfamily in the place's list, and the \"Global\" specimens of each species. "
+            + "Also the place's own Images (all files, labels too), images of each view and Imaged specimens "
+            + "(\"place images\", against the image table), and that Images is never smaller than Imaged specimens. "
             + "Every number that differs is listed with the stored number (shown on the site) and the recount.",
         "The site does not count when a page is shown: the nightly run (05:00 to about 08:00 Pacific) stores the counts. "
             + "A stored number that differs from the specimen records is wrong on the site until something recounts it.",
@@ -211,7 +213,7 @@ public final class CountCheckAction extends AntwebAction {
                     break;
                 }
                 b.append("<tr class=\"count-mismatch\"><td>").append(Html.esc(m.place.label)).append("</td><td>").append(m.check)
-                 .append("</td><td>").append(Taxon.makeDescriptionLink(m.taxonName)).append("</td><td>").append(m.stored)
+                 .append("</td><td>").append(m.check.startsWith("place ") ? Html.esc(m.taxonName) : Taxon.makeDescriptionLink(m.taxonName)).append("</td><td>").append(m.stored)
                  .append("</td><td>").append(m.recount).append("</td>");
                 if (!real) b.append("<td>").append(Html.esc(m.pendingReason)).append("</td>");
                 b.append("</tr>");

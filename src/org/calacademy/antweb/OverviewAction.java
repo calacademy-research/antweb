@@ -86,6 +86,7 @@ public final class OverviewAction extends DescriptionAction {
                 // their crawl too), then the project's own counts.
                 new ProjTaxonCountDb(connection).childrenCountCrawl(projectName);
                 projectDb.updateCounts(projectName);
+                new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.PROJECT, projectName);
                 ProjectMgr.populate(connection, true);
                 //A.log("Project:" + projectName + " action:" + action);
             }
@@ -98,7 +99,7 @@ public final class OverviewAction extends DescriptionAction {
             prepareDescriptionEdit(project, accessLogin, request, connection);
   
             OverviewMgr.setOverview(request, project);  
-            request.setAttribute("overview", project);
+            request.setAttribute("overview", project); setPlaceImages(request, project, connection);
             //A.log("execute() 2 statusSet:" + (String) request.getSession().getAttribute("statusSet"));
                 
             return mapping.findForward("project");
@@ -127,6 +128,7 @@ public final class OverviewAction extends DescriptionAction {
               	
 	  	   	    MuseumDb museumDb = new MuseumDb(connection);
   	  		    museumDb.populate(museumCode);
+                new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.MUSEUM, museumCode);
    
                 MuseumMgr.populate(connection, true);
               }						
@@ -148,7 +150,7 @@ public final class OverviewAction extends DescriptionAction {
               OverviewMgr.setOverview(request, museum); 
               museum.setMap(new ObjectMapDb(connection).getMuseumMap(museum.getCode()));
 
-              request.setAttribute("overview", museum);
+              request.setAttribute("overview", museum); setPlaceImages(request, museum, connection);
               return mapping.findForward("museum");  
            } else {
               request.setAttribute("message", "Museum not found.");
@@ -169,6 +171,7 @@ public final class OverviewAction extends DescriptionAction {
 
                    BioregionDb bioregionDb = new BioregionDb(connection);
                    bioregionDb.populate(name);
+                   new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.BIOREGION, name);
 
                    BioregionMgr.populate(connection, true);
                }
@@ -188,7 +191,7 @@ public final class OverviewAction extends DescriptionAction {
               prepareDescriptionEdit(bioregion, accessLogin, request, connection);
 
               OverviewMgr.setOverview(request, bioregion);
-              request.setAttribute("overview", bioregion);
+              request.setAttribute("overview", bioregion); setPlaceImages(request, bioregion, connection);
               return mapping.findForward("bioregion");  
            } else {
               request.setAttribute("message", "Bioregion not found.");
@@ -290,7 +293,7 @@ public final class OverviewAction extends DescriptionAction {
               }                
               prepareDescriptionEdit(geolocale, accessLogin, request, connection);
               OverviewMgr.setOverview(request, geolocale);
-              request.setAttribute("overview", geolocale);
+              request.setAttribute("overview", geolocale); setPlaceImages(request, geolocale, connection);
               return mapping.findForward("region");
            } else {
               request.setAttribute("message", "Region not found.");
@@ -325,7 +328,7 @@ public final class OverviewAction extends DescriptionAction {
               }
               prepareDescriptionEdit(geolocale, accessLogin, request, connection);
               OverviewMgr.setOverview(request, geolocale);
-              request.setAttribute("overview", geolocale);
+              request.setAttribute("overview", geolocale); setPlaceImages(request, geolocale, connection);
               return mapping.findForward("subregion");
            } else {              
               request.setAttribute("message", "Subregion not found.");
@@ -357,6 +360,7 @@ public final class OverviewAction extends DescriptionAction {
 		  if (isRecalc) {
 			GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
 			geolocaleDb.updateCounts(geolocale.getId());
+			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.GEOLOCALE, "" + geolocale.getId());
 			GeolocaleMgr.populate(connection, true, false);
 			s_log.debug("execute() AntwebMgr.populate()");
 		  }
@@ -372,7 +376,7 @@ public final class OverviewAction extends DescriptionAction {
             geolocale = GeolocaleMgr.getGeolocale(geolocale.getId());
             OverviewMgr.setOverview(request, geolocale);
 			geolocale.setMap(new ObjectMapDb(connection).getGeolocaleMap(geolocale.getId()));
-            request.setAttribute("overview", geolocale); 
+            request.setAttribute("overview", geolocale); setPlaceImages(request, geolocale, connection); 
             return mapping.findForward("country");
           } else {
             request.setAttribute("message", "Country not found.");
@@ -430,7 +434,7 @@ public final class OverviewAction extends DescriptionAction {
               //A.log("OverviewAction.execute() geolocale:" + geolocale + " id:" + geolocale.getId() + " georank:" + geolocale.getGeorank());
               OverviewMgr.setOverview(request, geolocale);   
               geolocale.setMap(new ObjectMapDb(connection).getGeolocaleMap(geolocale.getId()));
-              request.setAttribute("overview", geolocale); 
+              request.setAttribute("overview", geolocale); setPlaceImages(request, geolocale, connection); 
               return mapping.findForward("island");              
             }
           }
@@ -445,6 +449,7 @@ public final class OverviewAction extends DescriptionAction {
 		  if (isRecalc) {
 			GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
 			geolocaleDb.updateCounts(geolocale.getId());
+			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.GEOLOCALE, "" + geolocale.getId());
 			GeolocaleMgr.populate(connection, true, false);
 			s_log.debug("execute() geolocale:" + geolocale.getName() + " recalculated.");
 		  }
@@ -460,7 +465,7 @@ public final class OverviewAction extends DescriptionAction {
             geolocale = GeolocaleMgr.getGeolocale(geolocale.getId());
             OverviewMgr.setOverview(request, geolocale);            
 			geolocale.setMap(new ObjectMapDb(connection).getGeolocaleMap(geolocale.getId()));
-            request.setAttribute("overview", geolocale); 
+            request.setAttribute("overview", geolocale); setPlaceImages(request, geolocale, connection); 
             return mapping.findForward("adm1");  
           } else {
             request.setAttribute("message", "Adm1 not found.");
@@ -476,5 +481,24 @@ public final class OverviewAction extends DescriptionAction {
       // This will not happen
         s_log.error("execute() This shouold not happen.");
         return null;
+    }
+
+    /**
+     * The image numbers of the place (PlaceImageCountDb) for overview-body.jsp: request attribute
+     * "placeImages", null when not computed (yet) or when the table is missing.
+     */
+    static void setPlaceImages(HttpServletRequest request, Overview overview, Connection connection) {
+        String type = null;
+        String key = null;
+        if (overview instanceof Geolocale) { type = PlaceImageCountDb.GEOLOCALE; key = "" + ((Geolocale) overview).getId(); }
+        else if (overview instanceof Project) { type = PlaceImageCountDb.PROJECT; key = overview.getName(); }
+        else if (overview instanceof Museum) { type = PlaceImageCountDb.MUSEUM; key = ((Museum) overview).getCode(); }
+        else if (overview instanceof Bioregion) { type = PlaceImageCountDb.BIOREGION; key = overview.getName(); }
+        if (type == null || key == null) return;
+        try {
+            request.setAttribute("placeImages", new PlaceImageCountDb(connection).read(type, key));
+        } catch (SQLException e) {
+            s_log.warn("setPlaceImages() " + type + " " + key + " e:" + e);
+        }
     }
 }

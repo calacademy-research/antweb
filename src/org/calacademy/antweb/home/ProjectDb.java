@@ -613,8 +613,7 @@ public class ProjectDb extends AntwebDb {
         utilDb.updateField("project", "species_count", null, "project_name = '" + projectName + "'");
         //utilDb.updateField("project", "endemic_species_count", null, "project_name = '" + projectName + "'");
         utilDb.updateField("project", "specimen_count", null, "project_name = '" + projectName + "'");
-        utilDb.updateField("project", "image_count", null, "project_name = '" + projectName + "'");
-        utilDb.updateField("project", "imaged_specimen_count", null, "project_name = '" + projectName + "'");
+        // image_count and imaged_specimen_count are kept: PlaceImageCountDb writes them (nightly set 4, Recalculate).
         utilDb.updateField("project", "taxon_subfamily_dist_json", null, "project_name = '" + projectName + "'");
         utilDb.updateField("project", "specimen_subfamily_dist_json", null, "project_name = '" + projectName + "'");
     }
@@ -633,9 +632,9 @@ public class ProjectDb extends AntwebDb {
           stmt = DBUtil.getStatement(getConnection(), "updateCountsFromSpecimenData()");
           int x = 0;
 
+          // image_count: PlaceImageCountDb (the sum of proj_taxon.image_count read here was a day old).
           dml = "update project " 
-            + " set image_count = " + project.getImageCount()
-            + "  , specimen_count = " + project.getSpecimenCount()
+            + " set specimen_count = " + project.getSpecimenCount()
             + " where project_name = '" + project.getName() + "'";
 
           x = stmt.executeUpdate(dml);
@@ -666,7 +665,7 @@ public class ProjectDb extends AntwebDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "getSpecimenAndImageCount()");
 
-            String query = "select sum(pt.specimen_count) specimen_count, sum(pt.image_count) image_count "
+            String query = "select sum(pt.specimen_count) specimen_count "
                     + " from proj_taxon pt, taxon t "
                     + " where pt.taxon_name = t.taxon_name "
                     + " and t.taxarank in ('species', 'subspecies')"
@@ -677,7 +676,6 @@ public class ProjectDb extends AntwebDb {
             ResultSet rset = stmt.executeQuery(query);
             while (rset.next()) {
                 project.setSpecimenCount(rset.getInt("specimen_count"));
-                project.setImageCount(rset.getInt("image_count"));
             }
         } catch (SQLException e) {
             s_log.error("getSpecimenAndImageCount() e:" + e);
@@ -723,10 +721,26 @@ public class ProjectDb extends AntwebDb {
         return "Project Finished:" + project;
     }       
 
+    /** Subfamily rows on the project's list whose taxon has a counted status (CountCheck.COUNTABLE). */
+    int getListedSubfamilyCount(String projectName) throws SQLException {
+        String query = "select count(distinct pt.taxon_name) from proj_taxon pt"
+            + " join taxon t on t.taxon_name = pt.taxon_name"
+            + " where pt.project_name = ? and t.taxarank = 'subfamily' and t.status in " + org.calacademy.antweb.util.CountCheck.COUNTABLE;
+        try (java.sql.PreparedStatement stmt = getConnection().prepareStatement(query)) {
+            stmt.setString(1, projectName);
+            try (java.sql.ResultSet r = stmt.executeQuery()) {
+                return r.next() ? r.getInt(1) : 0;
+            }
+        }
+    }
+
     private void updateCountableTaxonData(Project project) throws SQLException {
         ProjTaxonCountDb projTaxonCountDb = new ProjTaxonCountDb(getConnection());
         String criteria = "project_name = '" + project + "'";
-        int subfamilyCount = projTaxonCountDb.getCountableTaxonCount("proj_taxon", criteria, "subfamily");
+        // Subfamilies counted directly as the subfamily rows on the project's list with a counted status
+        // (2026-10-20: the roll-up sum(subfamily_count) gave atolants 32 with 16 subfamilies listed).
+        // Same rule as GeolocaleDb and CountCheck.checkSubfamilyTotal.
+        int subfamilyCount = getListedSubfamilyCount(project.getName());
         int genusCount = projTaxonCountDb.getCountableTaxonCount("proj_taxon", criteria, "genus");        
         int speciesCount = projTaxonCountDb.getCountableTaxonCount("proj_taxon", criteria, "species");
 

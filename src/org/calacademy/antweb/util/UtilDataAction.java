@@ -53,7 +53,7 @@ public class UtilDataAction extends AntwebAction {
         "generateGeolocaleTaxaFromSpecimens", "geolocaleCountCrawl", "geolocaleTaxonFix",
         "fixGeolocaleTaxonParentage", "updateGeolocaleParentHierarchy",
         "projectCountCrawl", "populateMuseum", "populateBioregion", "updateTaxonSets", "crawlForType",
-        "imageCountCrawl", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
+        "imageCountCrawl", "placeImageCounts", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
         "verifyProjTaxon", "regenerateAllAntweb", "runCountCrawls", "countReport",
         "genGoogleMapFunction", "delGoogleMapFunction", "genGroupObjectMaps",
         "calcCaste", "setIsRestart", "siteWarning", "genRecentContent");
@@ -296,6 +296,9 @@ public class UtilDataAction extends AntwebAction {
                 message = "set4 - ";
                 // message += doAction("allCountCrawls", form, accessLogin, accessGroup, connection, request, mapping);
                 message += doAction("imageCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);
+                // Images and imaged specimens of each place, from the image table (2026-10-20). After the
+                // per-taxon image counts, so set 4 leaves every image number of the day in place.
+                message += " " + doAction("placeImageCounts", form, accessLogin, accessGroup, connection, request, mapping);
                 // message += " " + doAction("calcEndemic", form, accessLogin, accessGroup, connection, request, mapping);
                 // message += " " + doAction("calcIntroduced", form, accessLogin, accessGroup, connection, request, mapping);
             }
@@ -449,6 +452,7 @@ public class UtilDataAction extends AntwebAction {
 		  int geolocaleId = form.getNum();
 		  if (geolocaleId > 0) {
 			new GeolocaleDb(connection).updateCounts(geolocaleId);
+			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.GEOLOCALE, "" + geolocaleId);
 		  } else {			    
             CountDb.s_isBulk = true;
 			new GeolocaleDb(connection).updateCounts();   // ~13.38 mins.
@@ -513,6 +517,7 @@ public class UtilDataAction extends AntwebAction {
 		  ProjectDb projectDb = new ProjectDb(connection);
 		  if (projectName != null) {
 			projectDb.updateCounts(projectName);
+			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.PROJECT, projectName);
 			appendStr += ":" + projectName;
 		  } else {
 			projectDb.updateCounts();
@@ -570,6 +575,20 @@ public class UtilDataAction extends AntwebAction {
 		  ImageCountDb imageCountDb = new ImageCountDb(connection);
 		  imageCountDb.imageCountCrawls();
 		  message = "Finished Image Count Crawls";
+		}
+
+		// Images (all files, labels too), images per view and imaged specimens (an image of the ant,
+		// not only of the label) of every place: PlaceImageCountDb. Nightly set 4. name=<type> does one
+		// kind of place only (geolocale, bioregion, museum, project).
+		if (action.equals("placeImageCounts")) {
+		  PlaceImageCountDb placeImageCountDb = new PlaceImageCountDb(connection);
+		  String type = form.getName();
+		  if (type != null && java.util.Arrays.asList(PlaceImageCountDb.TYPES).contains(type)) {
+		    message = "Place image counts: " + type + " " + placeImageCountDb.updateType(type) + " places with images";
+		  } else {
+		    message = placeImageCountDb.updateAll();
+		  }
+		  LogMgr.appendLog("compute.log", "  " + message, true);
 		}
 
         // 37 sec.  Called following specimen upload.
