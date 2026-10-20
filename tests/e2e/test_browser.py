@@ -15,7 +15,10 @@ browsers kept an old autocomplete.js) passed them. These tests open pages in Chr
   e. at phone width, wide lists (a country species list, a specimen list) scroll sideways inside
      their own box (div.aw-list-scroll), not the page: the row shading spans all columns, an edge
      shadow shows more columns to the right, and the name column stays in view after scrolling.
-     At 1280 px the lists keep their fixed 1000 px desktop layout.
+     At 1280 px the lists keep their fixed 1000 px desktop layout;
+  f. on the home page (desktop and phone width), every text link looks like a link (underlined or a
+     colour other than the body text) with at least 4.5:1 contrast, and the World Ant Collections box
+     has its button and the six museum links.
 
 Read-only: pages are opened and the search boxes typed into, nothing is submitted.
 Skipped when Playwright is not installed (pip install -r requirements.txt;
@@ -422,5 +425,56 @@ def test_desktop_species_list_unchanged(desktop):
         assert abs(m["sdData"] - 1000) <= 1, f"{SPECIES_LIST}: list rows are no longer 1000 px wide: {m}"
         assert m["sticky"] != "sticky" and "aw-scroll-frame" not in m["frame"], \
             f"{SPECIES_LIST}: phone list rules applied at 1280 px: {m}"
+    finally:
+        page.close()
+
+
+# f. home page links (2026-10-19) ---------------------------------------------------------
+# The home page text is white on a dark photo and black. Every text link in the page body and the
+# footer must look like a link: underlined, or a colour different from the body text, and its colour
+# must have at least 4.5:1 contrast against black (WCAG AA). The World Ant Collections box has a
+# button-style link and links to the six museum pages. The slideshow (image links) is left out.
+HOME_LINKS_JS = """() => {
+  const rgb = s => (s.match(/[\\d.]+/g) || []).slice(0, 3).map(Number);
+  const lum = c => { const v = c.map(x => { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); });
+                     return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2]; };
+  const ratio = (a, b) => { const la = lum(a), lb = lum(b); return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05); };
+  const body = rgb(getComputedStyle(document.querySelector('#mission')).color);
+  const out = [];
+  document.querySelectorAll('#page_data.home a, #home_lower a, #footer.home a').forEach(a => {
+    if (a.closest('#slideshow') || !a.textContent.trim() || !a.getClientRects().length) return;
+    const cs = getComputedStyle(a);
+    const color = rgb(cs.color);
+    const underlined = cs.textDecorationLine.includes('underline');
+    const distinct = color.join() !== body.join();
+    const button = a.classList.contains('home_button');
+    const contrast = button ? ratio(color, rgb(cs.backgroundColor)) : ratio(color, [0, 0, 0]);
+    out.push({text: a.textContent.trim().slice(0, 40), underlined, distinct, button, contrast});
+  });
+  return out;
+}"""
+MUSEUMS = ("basel", "berlin", "copenhagen", "geneva", "genoa", "oxford")
+
+
+@pytest.mark.parametrize("where", ["desktop", "phone"])
+def test_home_page_links_look_like_links(request, where):
+    ctx = request.getfixturevalue(where)
+    page = _open_settled(ctx, "/")
+    try:
+        links = page.evaluate(HOME_LINKS_JS)
+        assert len(links) >= 15, f"only {len(links)} text links found on the home page"
+        plain = [l["text"] for l in links if not l["button"] and not (l["underlined"] or l["distinct"])]
+        assert not plain, f"{where}: home page links that look like body text: {plain}"
+        low = [(l["text"], round(l["contrast"], 1)) for l in links if l["contrast"] < 4.5]
+        assert not low, f"{where}: home page links below 4.5:1 contrast: {low}"
+        button = page.locator("#home_lower a.home_button", has_text="See the World Ant Collections")
+        assert button.is_visible(), f"{where}: no World Ant Collections button"
+        assert button.get_attribute("href").endswith("/worldants.do")
+        for m in MUSEUMS:
+            link = page.locator(f"#promo_container a[href$='/{m}.do']")
+            assert link.count() == 1 and link.first.is_visible(), f"{where}: no visible link to /{m}.do"
+        if where == "phone":
+            _assert_fits(page, "/", "at 390 px")
+        assert not _unexpected(page.errors), page.errors
     finally:
         page.close()
