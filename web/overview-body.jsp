@@ -181,18 +181,6 @@
   }
 %>
 <div id="place-stats"<% if (placeImages != null) { %> data-images="<%= placeImages.allImages %>" data-ant="<%= placeImages.antImages %>" data-labels="<%= placeImages.labelImages() %>" data-imaged="<%= placeImages.imagedSpecimens %>" data-label-only="<%= placeImages.labelOnlySpecimens %>"<% } %>>
-<br><b>Specimens:</b>&nbsp;<%= Formatter.commaFormat(overview.getSpecimenCount()) %> <span class="stat_def">(<%= specimensDef %>)</span>
-<% if (placeImages != null) { %>
-<br><b>Imaged specimens:</b>&nbsp;<%= Formatter.commaFormat(imagedShown) %> <span class="stat_def">(specimens with at least one photo of the ant; label-only photos not counted)<% if (placeImages.labelOnlySpecimens > 0) { %> (<%= Formatter.commaFormat(placeImages.labelOnlySpecimens) %> more have only a label photo)<% } %></span>
-<br><b>Images:</b>&nbsp;<%= Formatter.commaFormat(imagesShown) %><% if (imagesShown > 0) { %>: <span class="stat_def" id="image-breakdown"><%= org.calacademy.antweb.home.PlaceImageCountDb.breakdown(placeImages) %></span><% } %>
-<% } else { %>
-<% if (imagedShown != 0) { %>
-<br><b>Imaged specimens:</b>&nbsp;<%= Formatter.commaFormat(imagedShown) %> <span class="stat_def">(specimens with at least one photo)</span>
-<% } %>
-<br><b>Images:</b>&nbsp;<%= Formatter.commaFormat(imagesShown) %> <span class="stat_def">(photos of these specimens, labels included)</span>
-<% } %>
-<br>
-
 <br><b>Subfamilies:</b>&nbsp;<%= Formatter.commaFormat(overview.getSubfamilyCount()) %> <span class="stat_def">(subfamilies on this <%= placeWord %>'s list)</span>
 <br><b>Genera:</b>&nbsp;<%= Formatter.commaFormat(overview.getGenusCount()) %> <span class="stat_def">(genera on this <%= placeWord %>'s list)</span>
 <% String speciesCountLink = Formatter.commaFormat(overview.getSpeciesCount());
@@ -262,6 +250,17 @@
   %>
 <%= endemicCountHtml %></b>
 <%= introducedCountHtml %></b>
+<br>
+<br><b>Specimens:</b>&nbsp;<%= Formatter.commaFormat(overview.getSpecimenCount()) %> <span class="stat_def">(<%= specimensDef %>)</span>
+<% if (placeImages != null) { %>
+<br><b>Imaged specimens:</b>&nbsp;<%= Formatter.commaFormat(imagedShown) %> <span class="stat_def">(specimens with at least one photo of the ant; label-only photos not counted)<% if (placeImages.labelOnlySpecimens > 0) { %> (<%= Formatter.commaFormat(placeImages.labelOnlySpecimens) %> more have only a label photo)<% } %></span>
+<br><b>Images:</b>&nbsp;<%= Formatter.commaFormat(imagesShown) %><% if (imagesShown > 0) { %>: <span class="stat_def" id="image-breakdown"><%= org.calacademy.antweb.home.PlaceImageCountDb.breakdown(placeImages) %></span><% } %>
+<% } else { %>
+<% if (imagedShown != 0) { %>
+<br><b>Imaged specimens:</b>&nbsp;<%= Formatter.commaFormat(imagedShown) %> <span class="stat_def">(specimens with at least one photo)</span>
+<% } %>
+<br><b>Images:</b>&nbsp;<%= Formatter.commaFormat(imagesShown) %> <span class="stat_def">(photos of these specimens, labels included)</span>
+<% } %>
 </div>
 <style>#place-stats .stat_def { color: #666; font-size: 0.9em; }</style>
 
@@ -282,7 +281,7 @@
      	 //if (LoginMgr.isAdmin(request)) { 
 		 //  out.println("<b><a href='" + AntwebProps.getDomainApp() + speciesSearchUrl + "'>Show All Species<a></b> | ");     
          //}
-		 out.println("<b><a href='" + AntwebProps.getDomainApp() + specimenSearchUrl + "'>Show All Specimens<a></b>");     
+		 out.println("<b><a href='" + AntwebProps.getDomainApp() + specimenSearchUrl + "'>List all specimens collected in " + Html.esc(overview.getName()) + "</a></b> <span class=\"stat_def\">(every record, under any name, including those not counted above)</span>");     
      }
    } %>
 
@@ -369,11 +368,10 @@ Images:
 	   if (LoginMgr.isAdmin(request)) { %>
 
 	   
-         <br><b><%= overview.getRecalcButton(request) %></b> (Recalculate overview: <%= overview.getKeyStr() %> and make the charts. Update <%= overview.getTable() %> counts.)
+         <br><b><%= overview.getRecalcButton(request) %></b> (recount this page's numbers and redraw its charts now; the nightly run does this every morning; takes a minute or two)
          <% if ("geolocale".equals(overviewType)) { %>
          <br><b><%= overview.getGoogleMapFunctionLink() %></b><%= overview.getGoogleMapFunctionLinkDesc() %>
          <% } %>
-         <br><b><a href='<%= AntwebProps.getDomainApp() %>/util.do?action=reloadAntwebMgr&name=<%= overviewType %>'>Reload Overview Manager</a></b> (Server-wide. Should not be needed. Takes up to 8 seconds.)
 	     <br>
 	<% }
     }

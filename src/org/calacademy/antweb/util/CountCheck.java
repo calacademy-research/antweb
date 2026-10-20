@@ -392,7 +392,33 @@ public class CountCheck {
                 result.mismatches.add(new Mismatch(place, "place images", "Images smaller than Imaged specimens", storedAll, storedImaged, null));
             }
         }
+        rows += checkSubfamilyTotal(place, result, listChanged);
         return rows;
+    }
+
+    /** The place's Subfamilies number (2026-10-20: staging's Madagascar page showed 0 with 8 subfamilies on
+     *  its list): stored subfamily_count against the subfamily rows on the place's list with a counted status. */
+    int checkSubfamilyTotal(Place place, Result result, boolean listChanged) throws SQLException {
+        if (!GEOLOCALE.equals(place.type) && !PROJECT.equals(place.type)) return 0;
+        int stored = -1;
+        try (PreparedStatement stmt = connection.prepareStatement("select subfamily_count from "
+                + placeTable(place.type) + " where " + placeKeyColumn(place.type) + " = ?")) {
+            place.setKey(stmt, 1);
+            try (ResultSet r = stmt.executeQuery()) { if (r.next()) stored = r.getInt(1); }
+        }
+        if (stored < 0) return 0;
+        int recount;
+        try (PreparedStatement stmt = connection.prepareStatement("select count(distinct l.taxon_name) from " + place.table() + " l"
+                + " join taxon t on t.taxon_name = l.taxon_name"
+                + " where l." + place.keyColumn() + " = ? and t.taxarank = 'subfamily' and t.status in " + COUNTABLE)) {
+            place.setKey(stmt, 1);
+            try (ResultSet r = stmt.executeQuery()) { r.next(); recount = r.getInt(1); }
+        }
+        if (stored != recount) {
+            result.mismatches.add(new Mismatch(place, "place totals", "Subfamilies", stored, recount,
+                listChanged ? "the list got a new row after the last nightly run" : null));
+        }
+        return 1;
     }
 
     private boolean tableExists(String table) throws SQLException {
