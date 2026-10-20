@@ -99,7 +99,8 @@ public class SecurityBatch7Test extends TestCase {
     // ---------- upload.do site-wide jobs, artists, search downloads ----------
 
     public void testAdminOnlyUploadActions() {
-        assertTrue(UploadAction.isAdminOnlyAction("genAll"));
+        assertTrue(UploadAction.isAdminOnlyAction("genRecentDescEdits"));
+        assertTrue(UploadAction.isRemovedAction("genAll"));   // merged into utilData.do?action=genRecentContent (2026-10-19)
         assertTrue(UploadAction.isRemovedAction("allSpecimenFiles"));   // removed (Curate page cleanup)
         assertFalse(UploadAction.isAdminOnlyAction("specimenUpload"));
         assertFalse(UploadAction.isAdminOnlyAction(null));
