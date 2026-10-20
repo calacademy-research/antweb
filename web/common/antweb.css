@@ -1203,7 +1203,7 @@ input[type="checkbox"] {
 #home_lower a.home_button,
 #home_lower a.home_button:visited {
     display:inline-block;
-    margin:8px 0 4px;
+    margin:0 0 4px;
     padding:6px 12px;
     color:#000;
     background-color:#ffd479;
@@ -1420,7 +1420,8 @@ input[type="checkbox"] {
     margin-right:60px;
 }
 
-/* Two promos: one at the left edge, one at the right (10-17). */
+/* Three promos (2026-10-20): Ant Course left, World Ant Collections text in the middle, its
+   button and the six museum links on the right, so the black area is filled. */
 .promo.right {
     float:right;
 }
