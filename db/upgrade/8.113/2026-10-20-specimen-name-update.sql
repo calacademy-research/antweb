@@ -5,7 +5,13 @@
 --                          "Preview now" button of the Name updates page, or apply mode above
 --                          maxChanges). run_date = start of that run; uploaded_name = the name in the
 --                          curator's file; old_name / new_name = specimen.taxon_name before / after;
---                          antcat_status = AntCat status of old_name at that time (e.g. synonym).
+--                          antcat_status = AntCat status of old_name at that time (e.g. synonym);
+--                          reason = why, from AntCat's taxonomic history at the time of the move, e.g.
+--                          "synonym: junior synonym of Strumigenys pilinasis (Booher 2019)" or "uploaded as
+--                          Crematogaster hespera; valid again (was junior synonym of Crematogaster laeviuscula,
+--                          Morgan & Mackay 2017; status as species: Ward & Blaimer 2022)" (added 2026-10-20);
+--                          antcat_id = AntCat id of the taxon whose history gave the reason
+--                          (https://www.antcat.org/catalog/<antcat_id>).
 --                          Each run first deletes the previous would_change rows; changed rows are kept
 --                          (history, and the record for an undo).
 --
@@ -28,6 +34,12 @@
 --          Turn the step off first (mode=off), or the next night moves them again. The counts
 --          follow at the next nightly run.
 -- Remove the table (deploy the previous code first): DROP TABLE specimen_name_update;
+--
+-- 2026-10-20, reason and antcat_id: a table made by the first version of the step gets the two
+-- columns from the application too (SpecimenNameUpdateDb.ensureSchema(), SpecimenNameUpdateDb.ADD_REASON):
+--          ALTER TABLE specimen_name_update ADD COLUMN reason varchar(500) NULL, ADD COLUMN antcat_id int NULL, ALGORITHM=INSTANT;
+-- Undo (deploy the previous code first):
+--          ALTER TABLE specimen_name_update DROP COLUMN reason, DROP COLUMN antcat_id, ALGORITHM=INSTANT;
 
 CREATE TABLE IF NOT EXISTS specimen_name_update (
   id int NOT NULL AUTO_INCREMENT,
@@ -39,6 +51,8 @@ CREATE TABLE IF NOT EXISTS specimen_name_update (
   old_name varchar(128) NOT NULL,
   new_name varchar(128) NOT NULL,
   antcat_status varchar(40) NULL,
+  reason varchar(500) NULL,
+  antcat_id int NULL,
   PRIMARY KEY (id),
   KEY by_group_date (access_group, run_date),
   KEY by_date (run_date),

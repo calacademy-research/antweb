@@ -20,6 +20,7 @@ import org.calacademy.antweb.AntwebAction;
 import org.calacademy.antweb.Group;
 import org.calacademy.antweb.Login;
 import org.calacademy.antweb.Taxon;
+import org.calacademy.antweb.upload.NameUpdateReason;
 import org.calacademy.antweb.upload.SpecimenNameUpdate;
 import org.calacademy.antweb.upload.SpecimenNameUpdateDb;
 import org.calacademy.antweb.util.*;
@@ -32,8 +33,9 @@ import org.calacademy.antweb.util.*;
  * groups, can pick one, and get the "Preview now (report only)" button, which runs the step at once
  * in report mode (utilData.do?action=specimenNameUpdatePreview, POST). Newest run first; filters by
  * group and by date (from, to). Each line is "old name -> new name" with the same links as the
- * upload report's "Recognized invalid species" section, the AntCat status of the old name, the number
- * of specimens and their codes.
+ * upload report's "Recognized invalid species" section, the reason with AntCat's reference (linked to
+ * the AntCat page of the taxon whose history gave it; NameUpdateReason), the number of specimens and
+ * their codes. Rows recorded before the reason existed show the AntCat status of the old name.
  */
 public final class NameUpdatesAction extends AntwebAction {
 
@@ -95,7 +97,9 @@ public final class NameUpdatesAction extends AntwebAction {
             + "Each night, after the AntCat names are loaded (05:00 Pacific), AntWeb applies the rule every specimen upload uses: "
             + "a specimen uploaded under a name that is no longer valid is filed under the current valid name. "
             + "The name in the curator's file is kept and shown on the specimen page as \"Uploaded As\". "
-            + "A line reads: old name -> new name, the AntCat status of the old name, and the specimens. "
+            + "A line reads: old name -> new name, why (from AntCat's taxonomic history, for example \"synonym: junior synonym of "
+            + "Strumigenys pilinasis (Booher 2019)\", with the publication linked to the AntCat page it comes from), and the specimens. "
+            + "\"Valid again\" means AntCat restored the name in the curator's file, so the specimens go back to it. "
             + "\"Would change (report only)\" lists what the step would do; nothing has been changed for those.",
         "Without this, a specimen whose name AntCat changed after the upload drops out of both species pages (the old and the "
             + "valid one) and its counts and maps stay under the old name until the group uploads its data again.",
@@ -173,7 +177,13 @@ public final class NameUpdatesAction extends AntwebAction {
                     lastGroup = line.groupId;
                 }
                 b.append("<li class=\"name-update\">").append(nameLine(line.oldName, line.newName));
-                if (line.antcatStatus != null) b.append(" (AntCat: ").append(Html.esc(line.antcatStatus)).append(")");
+                if (line.reason != null) {
+                    b.append(": <span class=\"name-update-reason\">").append(NameUpdateReason.toHtml(line.reason, line.antcatId,
+                        Taxon.getPrettyTaxonName(line.uploadedName), Taxon.getPrettyTaxonName(line.oldName), Taxon.getPrettyTaxonName(line.newName)))
+                     .append("</span>");
+                } else if (line.antcatStatus != null) {
+                    b.append(" (AntCat: ").append(Html.esc(line.antcatStatus)).append(")");
+                }
                 b.append(" <details style=\"display:inline\"><summary>").append(line.count).append(line.count == 1 ? " specimen" : " specimens").append("</summary>");
                 int i = 0;
                 for (String code : line.codes) {

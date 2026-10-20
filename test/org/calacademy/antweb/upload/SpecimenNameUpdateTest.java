@@ -312,8 +312,17 @@ public class SpecimenNameUpdateTest extends TestCase {
         String html = NameUpdatesAction.linesHtml(runs, lines, "https://www.antweb.org");
         assertTrue(html, html.contains("2026-10-20 05:20: Would change (report only)"));
         assertTrue(html, html.contains(NameUpdatesAction.nameLine(OLD, NEW)));
-        assertTrue(html, html.contains("(AntCat: synonym)"));
+        assertTrue("a row recorded before the reason existed", html.contains("(AntCat: synonym)"));
         assertTrue(html, html.contains("/specimen.do?name=casent0001\">casent0001</a>"));
+
+        // With the reason (2026-10-20): it replaces the status; names in italics, reference linked to AntCat.
+        line.uploadedName = OLD;
+        line.reason = "synonym: junior synonym of Ravavy indicus (Fisher 2026)";
+        line.antcatId = 1234;
+        html = NameUpdatesAction.linesHtml(runs, lines, "https://www.antweb.org");
+        assertTrue(html, html.contains(NameUpdatesAction.nameLine(OLD, NEW) + ": <span class=\"name-update-reason\">synonym: junior synonym of"
+            + " <i>Ravavy indicus</i> (<a href=\"https://www.antcat.org/catalog/1234\">Fisher 2026</a>)</span>"));
+        assertFalse(html, html.contains("(AntCat: synonym)"));
         assertFalse("codes are escaped", html.contains("<script>"));
         assertTrue(NameUpdatesAction.linesHtml(new ArrayList<>(), new ArrayList<>(), "").contains("No name updates"));
         assertTrue("every report explains itself", NameUpdatesAction.HELP.contains("report-help"));

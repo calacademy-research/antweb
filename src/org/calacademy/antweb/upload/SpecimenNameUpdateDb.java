@@ -39,6 +39,8 @@ public class SpecimenNameUpdateDb {
             + " old_name varchar(128) NOT NULL,"
             + " new_name varchar(128) NOT NULL,"
             + " antcat_status varchar(40) NULL,"
+            + " reason varchar(500) NULL,"
+            + " antcat_id int NULL,"
             + " PRIMARY KEY (id),"
             + " KEY by_group_date (access_group, run_date),"
             + " KEY by_date (run_date),"
@@ -62,9 +64,20 @@ public class SpecimenNameUpdateDb {
                 }
             }
             stmt.executeUpdate(createTable(charset, collation));
+            // Added 2026-10-20 (reason and AntCat id of each move): tables made before get the columns.
+            boolean hasReason;
+            try (ResultSet rset = stmt.executeQuery("select count(*) from information_schema.columns"
+                    + " where table_schema = database() and table_name = 'specimen_name_update' and column_name = 'reason'")) {
+                hasReason = rset.next() && rset.getInt(1) > 0;
+            }
+            if (!hasReason) stmt.executeUpdate(ADD_REASON);
         }
         s_schemaChecked = true;
     }
+
+    /** Same as db/upgrade/8.113/2026-10-20-specimen-name-update.sql. */
+    public static final String ADD_REASON = "ALTER TABLE specimen_name_update ADD COLUMN reason varchar(500) NULL,"
+        + " ADD COLUMN antcat_id int NULL, ALGORITHM=INSTANT";
 
     /** Removes the previous preview (would_change rows). The changed rows are kept: they are the history and the undo record. */
     public int deletePreview() throws SQLException {
@@ -74,8 +87,8 @@ public class SpecimenNameUpdateDb {
     }
 
     public int insert(Timestamp runDate, String mode, List<SpecimenNameUpdate.Change> changes) throws SQLException {
-        String dml = "insert into specimen_name_update (run_date, mode, code, access_group, uploaded_name, old_name, new_name, antcat_status)"
-            + " values (?, ?, ?, ?, ?, ?, ?, ?)";
+        String dml = "insert into specimen_name_update (run_date, mode, code, access_group, uploaded_name, old_name, new_name, antcat_status, reason, antcat_id)"
+            + " values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         int n = 0;
         try (PreparedStatement stmt = connection.prepareStatement(dml)) {
             for (SpecimenNameUpdate.Change c : changes) {
@@ -88,6 +101,9 @@ public class SpecimenNameUpdateDb {
                     stmt.setString(6, c.oldName);
                     stmt.setString(7, c.newName);
                     stmt.setString(8, c.antcatStatus);
+                    stmt.setString(9, c.reason == null ? null : c.reason.text);
+                    if (c.reason == null || c.reason.antcatId == null) stmt.setNull(10, java.sql.Types.INTEGER);
+                    else stmt.setInt(10, c.reason.antcatId);
                     stmt.addBatch();
                     if (++n % 1000 == 0) stmt.executeBatch();
                 }
@@ -106,7 +122,10 @@ public class SpecimenNameUpdateDb {
         public int groupId;
         public String oldName;
         public String newName;
+        public String uploadedName;
         public String antcatStatus;
+        public String reason;
+        public Integer antcatId;
         public int count;
         public final List<String> codes = new ArrayList<>();
     }
@@ -120,14 +139,17 @@ public class SpecimenNameUpdateDb {
 
     public static final int MAX_CODES_PER_LINE = 200;
 
-    /** Lines of the given runs, in the order of the runs, then group, then old name. groupId 0 = all groups. */
+    /**
+     * Lines of the given runs, in the order of the runs, then group, then old name. groupId 0 = all groups.
+     * Specimens of one old and new name with different reasons (uploaded under different names) are separate lines.
+     */
     public List<Line> getLines(int groupId, List<Run> runs) throws SQLException {
         ensureSchema();
         List<Line> lines = new ArrayList<>();
         for (Run run : runs) {
-            String query = "select access_group, old_name, new_name, antcat_status, code from specimen_name_update"
+            String query = "select access_group, old_name, new_name, antcat_status, code, uploaded_name, reason, antcat_id from specimen_name_update"
                 + " where run_date = ? and mode = ?" + (groupId > 0 ? " and access_group = ?" : "")
-                + " order by access_group, old_name, new_name, code";
+                + " order by access_group, old_name, new_name, reason, code";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setTimestamp(1, run.runDate);
                 stmt.setString(2, run.mode);
@@ -138,7 +160,9 @@ public class SpecimenNameUpdateDb {
                         int g = r.getInt(1);
                         String oldName = r.getString(2);
                         String newName = r.getString(3);
-                        if (line == null || line.groupId != g || !line.oldName.equals(oldName) || !line.newName.equals(newName)) {
+                        String reason = r.getString(7);
+                        if (line == null || line.groupId != g || !line.oldName.equals(oldName) || !line.newName.equals(newName)
+                                || !java.util.Objects.equals(line.reason, reason)) {
                             line = new Line();
                             line.runDate = run.runDate;
                             line.mode = run.mode;
@@ -146,6 +170,10 @@ public class SpecimenNameUpdateDb {
                             line.oldName = oldName;
                             line.newName = newName;
                             line.antcatStatus = r.getString(4);
+                            line.uploadedName = r.getString(6);
+                            line.reason = reason;
+                            int id = r.getInt(8);
+                            line.antcatId = r.wasNull() ? null : id;
                             lines.add(line);
                         }
                         ++line.count;

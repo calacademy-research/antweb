@@ -47,6 +47,11 @@ import org.calacademy.antweb.util.TaxonPropMgr;
  * specimen_name_update, shown on the Name updates page (nameUpdates.do). Sets 2 to 5 then rebuild
  * the lists, counts and maps from the new names.
  *
+ * Each row also records why (Brian Fisher, 2026-10-20): the taxonomic reason with AntCat's reference,
+ * read from AntCat's taxonomic history as the AntCat import stored it that night (description_edit,
+ * title taxonomichistory), and the AntCat id of the taxon whose history gave it (NameUpdateReason,
+ * AntcatHistory). This is the specimen's taxonomic history.
+ *
  * Left alone: morphospecies and indets; specimens filed under a homonym placeholder taxon; names
  * whose current valid name is a homonym or has no taxon row (the step never creates taxa); uploaded
  * names AntCat does not know; names with another non-valid status (unavailable, homonym, ...).
@@ -244,14 +249,19 @@ public class SpecimenNameUpdate {
         public final String newName;
         public final String newOriginalName;
         public final String antcatStatus;
+        public final NameUpdateReason reason;
         public final List<String[]> specimens = new ArrayList<>();   // code, bioregion
         Change(int groupId, String uploadedName, String oldName, String newName, String newOriginalName, String antcatStatus) {
+            this(groupId, uploadedName, oldName, newName, newOriginalName, antcatStatus, null);
+        }
+        Change(int groupId, String uploadedName, String oldName, String newName, String newOriginalName, String antcatStatus, NameUpdateReason reason) {
             this.groupId = groupId;
             this.uploadedName = uploadedName;
             this.oldName = oldName;
             this.newName = newName;
             this.newOriginalName = newOriginalName;
             this.antcatStatus = antcatStatus;
+            this.reason = reason;
         }
     }
 
@@ -382,6 +392,7 @@ public class SpecimenNameUpdate {
         Map<String, CurrentValidNameRule.Result> ruleCache = new java.util.HashMap<>();
         Map<String, Boolean> homonymCache = new java.util.HashMap<>();
         Map<String, Boolean> currentValidCache = new java.util.HashMap<>();
+        Reasons reasons = new Reasons(connection);
         List<Change> changes = new ArrayList<>();
         Set<String> names = new HashSet<>();
 
@@ -416,7 +427,8 @@ public class SpecimenNameUpdate {
                 continue;
             }
             CurrentValidNameRule.TaxonRow oldRow = lookup.getTaxon(current);
-            Change change = new Change(groupId, uploaded, current, d.newName, d.newOriginalName, oldRow == null ? null : oldRow.status);
+            Change change = new Change(groupId, uploaded, current, d.newName, d.newOriginalName, oldRow == null ? null : oldRow.status,
+                reasons.get(uploaded, current, d.newName));
             try (PreparedStatement stmt = connection.prepareStatement(SPECIMENS_SQL)) {
                 stmt.setInt(1, groupId);
                 stmt.setString(2, current);
@@ -453,6 +465,67 @@ public class SpecimenNameUpdate {
             s_log.warn("run() " + summary.specimens + " specimens would change, above maxChanges=" + maxChanges + ": nothing changed");
         }
         return summary;
+    }
+
+    /**
+     * The reason of each move, from the taxon table (status, antcat_id) and the taxonomic history the
+     * AntCat import stored in description_edit. One per (uploaded, old, new) name; each taxon is read once.
+     * If the history cannot be read the move still happens, with the AntCat status as its reason.
+     */
+    static final class Reasons {
+        private final Connection connection;
+        private final Map<String, NameUpdateReason> byNames = new java.util.HashMap<>();
+        private final Map<String, NameUpdateReason.TaxonInfo> taxa = new java.util.HashMap<>();
+        private boolean failed = false;
+
+        Reasons(Connection connection) {
+            this.connection = connection;
+        }
+
+        NameUpdateReason get(String uploaded, String oldName, String newName) {
+            String key = uploaded + "\t" + oldName + "\t" + newName;
+            NameUpdateReason r = byNames.get(key);
+            if (r == null) {
+                r = NameUpdateReason.of(info(uploaded), info(oldName), info(newName));
+                byNames.put(key, r);
+            }
+            return r;
+        }
+
+        NameUpdateReason.TaxonInfo info(String taxonName) {
+            NameUpdateReason.TaxonInfo info = taxa.get(taxonName);
+            if (info != null) return info;
+            String status = null;
+            Integer antcatId = null;
+            String history = null;
+            if (!failed) {
+                try {
+                    try (PreparedStatement stmt = connection.prepareStatement("select status, antcat_id from taxon where taxon_name = ?")) {
+                        stmt.setString(1, taxonName);
+                        try (ResultSet r = stmt.executeQuery()) {
+                            if (r.next()) {
+                                status = r.getString(1);
+                                int id = r.getInt(2);
+                                antcatId = r.wasNull() ? null : id;
+                            }
+                        }
+                    }
+                    try (PreparedStatement stmt = connection.prepareStatement(
+                            "select content from description_edit where taxon_name = ? and title = 'taxonomichistory' and code is null")) {
+                        stmt.setString(1, taxonName);
+                        try (ResultSet r = stmt.executeQuery()) {
+                            while (r.next()) history = r.getString(1);   // as the taxon page: the last one
+                        }
+                    }
+                } catch (SQLException e) {
+                    failed = true;
+                    s_log.warn("Reasons.info() taxonomic history not read, reasons without references. e:" + e);
+                }
+            }
+            info = new NameUpdateReason.TaxonInfo(Taxon.getPrettyTaxonName(taxonName), status, antcatId, AntcatHistory.parse(history));
+            taxa.put(taxonName, info);
+            return info;
+        }
     }
 
     private static void applyChange(Connection connection, Change change) throws SQLException {

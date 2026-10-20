@@ -18,7 +18,8 @@ import org.calacademy.antweb.upload.SpecimenNameUpdateDb;
  *
  * Runs in CI (.github/workflows/tests.yaml) in the antweb image against a MySQL 8.4 container
  * reachable as host "mysql" (database ant, user antweb), like CuratorTaxonSetTest.
- * ANTWEB_TEST_DB_URL overrides the URL. It creates its own small taxon, homonym and specimen tables.
+ * ANTWEB_TEST_DB_URL overrides the URL. It creates its own small taxon, homonym, specimen and
+ * description_edit tables (the last holds AntCat's taxonomic history, which gives each move its reason).
  */
 public class SpecimenNameUpdateDbTest extends TestCase {
 
@@ -48,11 +49,13 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         connection = connect();
         connection.setAutoCommit(true);
         try (Statement s = connection.createStatement()) {
-            for (String t : new String[] {"specimen", "taxon", "homonym"}) s.executeUpdate("drop table if exists " + t);
+            for (String t : new String[] {"specimen", "taxon", "homonym", "description_edit"}) s.executeUpdate("drop table if exists " + t);
             s.executeUpdate("create table taxon (taxon_name varchar(128) not null primary key, taxarank varchar(20),"
                 + " status varchar(40), current_valid_name varchar(128), insert_method varchar(30), family varchar(64),"
                 + " subfamily varchar(64), tribe varchar(64), genus varchar(64), subgenus varchar(64), species varchar(64),"
-                + " subspecies varchar(64), parent_taxon_name varchar(128))");
+                + " subspecies varchar(64), parent_taxon_name varchar(128), antcat_id int)");
+            s.executeUpdate("create table description_edit (taxon_name varchar(128) not null, title varchar(128), content mediumtext,"
+                + " code varchar(128), is_manual_entry tinyint, author_date varchar(128))");
             s.executeUpdate("create table homonym (taxon_name varchar(128) not null, author_date varchar(128))");
             s.executeUpdate("create table specimen (code varchar(128) not null primary key, taxon_name varchar(128),"
                 + " original_taxon_name varchar(128), access_group int, status varchar(40), family varchar(64), subfamily varchar(64),"
@@ -74,6 +77,16 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         taxon(VALID_AGAIN, "species", "valid", null, null, "myrmicinae", "pheidole", "again", null);
         taxon(OTHER, "species", "synonym", "myrmicinaepheidole third", null, "myrmicinae", "pheidole", "other", null);
         taxon(LOST, "species", "synonym", "ponerinaehypoponera nowhere", null, "ponerinae", "hypoponera", "lost", null);
+        // AntCat ids and taxonomic histories, as the AntCat import stores them.
+        exec("update taxon set antcat_id = 101 where taxon_name = '" + OLD + "'");
+        exec("update taxon set antcat_id = 102 where taxon_name = '" + NEW + "'");
+        exec("update taxon set antcat_id = 103 where taxon_name = '" + VALID_AGAIN + "'");
+        exec("insert into description_edit (taxon_name, title, content, is_manual_entry) values ('" + OLD + "', 'taxonomichistory',"
+            + " '<p><b>Taxonomic history</b></p><div><div>Junior synonym of <a href=\"https://www.antcat.org/catalog/102\"><i>Ravavy indicus</i></a>:"
+            + " <a href=\"https://antcat.org/references/1\">Fisher &amp; Bolton, 2026a</a> <a href=\"x.pdf\">PDF</a>: 12</div></div>', 0)");
+        exec("insert into description_edit (taxon_name, title, content, is_manual_entry) values ('" + VALID_AGAIN + "', 'taxonomichistory',"
+            + " '<p><b>Taxonomic history</b></p><div><div>Junior synonym of <i>Pheidole other</i>: Wilson, 2003 PDF: 5.</div>"
+            + "<div>Status as species: Longino, 2019 PDF: 9; Fisher, 2025b: 3.</div></div>', 0)");
 
         // Uploaded as OLD when it was valid (2 CAS specimens, 1 JTL): now a synonym of NEW.
         specimen("casent0000001", OLD, null, CAS);
@@ -136,6 +149,13 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         assertEquals(4, count("select count(*) from specimen_name_update where mode = 'would_change'"));
         assertEquals(1, count("select count(*) from specimen_name_update where code = 'jtl0000001' and access_group = 7"
             + " and uploaded_name = '" + OLD + "' and old_name = '" + OLD + "' and new_name = '" + NEW + "' and antcat_status = 'synonym'"));
+        // Why, from AntCat's taxonomic history (2026-10-20).
+        assertEquals("synonym: junior synonym of Ravavy indicus (Fisher & Bolton 2026a)",
+            one("select reason from specimen_name_update where code = 'jtl0000001'"));
+        assertEquals("101", one("select antcat_id from specimen_name_update where code = 'jtl0000001'"));
+        assertEquals("uploaded as Pheidole again; valid again (was junior synonym of Pheidole other, Wilson 2003; status as species: Fisher 2025b)",
+            one("select reason from specimen_name_update where code = 'casent0000003'"));
+        assertEquals("103", one("select antcat_id from specimen_name_update where code = 'casent0000003'"));
         assertTrue(s.line(), s.line().startsWith("name update: 4 specimens in 2 groups (report: would change)"));
 
         // A second preview replaces the first.
@@ -186,6 +206,23 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         assertEquals("a curator sees only the group's lines", 1, db.getLines(JTL, db.getRuns(JTL, null, null, 30)).size());
         assertEquals(0, db.getRuns(JTL, "2001-01-01", "2001-01-02", 30).size());
         assertEquals(2, db.getGroupIds().size());
+        SpecimenNameUpdateDb.Line jtl = db.getLines(JTL, db.getRuns(JTL, null, null, 30)).get(0);
+        assertEquals("synonym: junior synonym of Ravavy indicus (Fisher & Bolton 2026a)", jtl.reason);
+        assertEquals(Integer.valueOf(101), jtl.antcatId);
+        assertEquals(OLD, jtl.uploadedName);
+    }
+
+    /** A table made by the first version of the step (2026-10-20 morning) gets reason and antcat_id. */
+    public void testOldTableGetsTheReasonColumns() throws Exception {
+        exec("drop table if exists specimen_name_update_old");
+        exec(SpecimenNameUpdateDb.createTable(null, null).replace("specimen_name_update", "specimen_name_update_old")
+            .replace(" reason varchar(500) NULL,", "").replace(" antcat_id int NULL,", ""));
+        assertEquals(0, count("select count(*) from information_schema.columns where table_schema = database()"
+            + " and table_name = 'specimen_name_update_old' and column_name in ('reason', 'antcat_id')"));
+        exec(SpecimenNameUpdateDb.ADD_REASON.replace("specimen_name_update", "specimen_name_update_old"));
+        assertEquals(2, count("select count(*) from information_schema.columns where table_schema = database()"
+            + " and table_name = 'specimen_name_update_old' and column_name in ('reason', 'antcat_id')"));
+        exec("drop table specimen_name_update_old");
     }
 
     public void testMaxChangesStopsApply() throws Exception {
