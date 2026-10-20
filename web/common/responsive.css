@@ -521,7 +521,8 @@
         float: none;
         width: auto;
         margin-top: 12px;
-        padding-right: 0;
+        margin-right: 0;
+        padding: 10px 12px;
     }
     #mission {
         font-size: 16px;
@@ -571,7 +572,7 @@
     #get_involved {
         float: none;
         width: auto;
-        padding: 0;
+        padding: 10px 12px;        /* keeps the text inside its dark panel (antweb.css) */
     }
     #get_involved {
         margin-top: 12px;
