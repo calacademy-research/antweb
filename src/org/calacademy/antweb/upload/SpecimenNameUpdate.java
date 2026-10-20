@@ -469,7 +469,7 @@ public class SpecimenNameUpdate {
 
     /**
      * The reason of each move, from the taxon table (status, antcat_id) and the taxonomic history the
-     * AntCat import stored in description_edit. One per (uploaded, old, new) name; each taxon is read once.
+     * AntCat import stored in description_edit. One per (old, new) name; each taxon is read once.
      * If the history cannot be read the move still happens, with the AntCat status as its reason.
      */
     static final class Reasons {
@@ -482,11 +482,18 @@ public class SpecimenNameUpdate {
             this.connection = connection;
         }
 
+        /**
+         * One reason per (old, new) pair, the same for every group: the uploaded name counts only when
+         * the specimen goes back to it (valid again). 2026-10-20 preview: keyed on the uploaded name, the
+         * reason followed that name's status and history, so groups that uploaded Camponotus pylartes
+         * and Colobopsis pylartes got different reasons for Colobopsis pylartes -> C. impressa.
+         */
         NameUpdateReason get(String uploaded, String oldName, String newName) {
-            String key = uploaded + "\t" + oldName + "\t" + newName;
+            boolean back = newName.equals(uploaded);
+            String key = oldName + "\t" + newName + "\t" + back;
             NameUpdateReason r = byNames.get(key);
             if (r == null) {
-                r = NameUpdateReason.of(info(uploaded), info(oldName), info(newName));
+                r = back ? NameUpdateReason.validAgain(info(oldName), info(newName)) : NameUpdateReason.of(info(oldName), info(newName));
                 byNames.put(key, r);
             }
             return r;

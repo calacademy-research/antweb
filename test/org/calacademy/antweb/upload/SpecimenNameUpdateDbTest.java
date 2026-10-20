@@ -82,7 +82,7 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         exec("update taxon set antcat_id = 102 where taxon_name = '" + NEW + "'");
         exec("update taxon set antcat_id = 103 where taxon_name = '" + VALID_AGAIN + "'");
         exec("insert into description_edit (taxon_name, title, content, is_manual_entry) values ('" + OLD + "', 'taxonomichistory',"
-            + " '<p><b>Taxonomic history</b></p><div><div>Junior synonym of <a href=\"https://www.antcat.org/catalog/102\"><i>Ravavy indicus</i></a>:"
+            + " '<p><b>Taxonomic history</b></p><div><div>Combination in <a href=\"https://www.antcat.org/catalog/102\"><i>Ravavy</i></a>:"
             + " <a href=\"https://antcat.org/references/1\">Fisher &amp; Bolton, 2026a</a> <a href=\"x.pdf\">PDF</a>: 12</div></div>', 0)");
         exec("insert into description_edit (taxon_name, title, content, is_manual_entry) values ('" + VALID_AGAIN + "', 'taxonomichistory',"
             + " '<p><b>Taxonomic history</b></p><div><div>Junior synonym of <i>Pheidole other</i>: Wilson, 2003 PDF: 5.</div>"
@@ -149,11 +149,13 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         assertEquals(4, count("select count(*) from specimen_name_update where mode = 'would_change'"));
         assertEquals(1, count("select count(*) from specimen_name_update where code = 'jtl0000001' and access_group = 7"
             + " and uploaded_name = '" + OLD + "' and old_name = '" + OLD + "' and new_name = '" + NEW + "' and antcat_status = 'synonym'"));
-        // Why, from AntCat's taxonomic history (2026-10-20).
-        assertEquals("synonym: junior synonym of Ravavy indicus (Fisher & Bolton 2026a)",
+        // Why, from AntCat's taxonomic history (2026-10-20): Tapinoma indicum -> Ravavy indicus changes the
+        // genus and only the gender ending, a new combination; the specimen uploaded as Pheidole again goes back.
+        assertEquals("new combination: Ravavy indicus (Fisher & Bolton 2026a)",
             one("select reason from specimen_name_update where code = 'jtl0000001'"));
         assertEquals("101", one("select antcat_id from specimen_name_update where code = 'jtl0000001'"));
-        assertEquals("uploaded as Pheidole again; valid again (was junior synonym of Pheidole other, Wilson 2003; status as species: Fisher 2025b)",
+        assertEquals("Your name Pheidole again is valid again. It had been shown under P. other (synonymy by Wilson 2003),"
+            + " and was revived as a species by Longino 2019.",
             one("select reason from specimen_name_update where code = 'casent0000003'"));
         assertEquals("103", one("select antcat_id from specimen_name_update where code = 'casent0000003'"));
         assertTrue(s.line(), s.line().startsWith("name update: 4 specimens in 2 groups (report: would change)"));
@@ -207,7 +209,7 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         assertEquals(0, db.getRuns(JTL, "2001-01-01", "2001-01-02", 30).size());
         assertEquals(2, db.getGroupIds().size());
         SpecimenNameUpdateDb.Line jtl = db.getLines(JTL, db.getRuns(JTL, null, null, 30)).get(0);
-        assertEquals("synonym: junior synonym of Ravavy indicus (Fisher & Bolton 2026a)", jtl.reason);
+        assertEquals("new combination: Ravavy indicus (Fisher & Bolton 2026a)", jtl.reason);
         assertEquals(Integer.valueOf(101), jtl.antcatId);
         assertEquals(OLD, jtl.uploadedName);
     }

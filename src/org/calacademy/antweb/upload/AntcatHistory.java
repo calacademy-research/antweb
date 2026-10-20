@@ -2,8 +2,10 @@ package org.calacademy.antweb.upload;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,11 +30,15 @@ public final class AntcatHistory {
     public static final String JUNIOR_SYNONYM_OF = "Junior synonym of";
     public static final String COMBINATION_IN = "Combination in";
     public static final String STATUS_AS_SPECIES = "Status as species";
+    public static final String SENIOR_SYNONYM_OF = "Senior synonym of";
+    public static final String SUBSPECIES_OF = "Subspecies of";
+    public static final String REVIVED = "Revived from synonymy";
+    public static final String RAISED = "Raised to species";
 
     /** Headings that start an entry: used to split text whose entries are not on lines of their own. */
     private static final String[] HEADINGS = {
         "Junior synonym of", "Senior synonym of", "Combination in", "Status as species", "Status as subspecies",
-        "Subspecies of", "Revived from synonymy", "Lectotype designation", "Neotype designation", "As unavailable",
+        "Subspecies of", "Revived from synonymy", "Raised to species", "Lectotype designation", "Neotype designation", "As unavailable",
         "Unnecessary replacement name for", "Replacement name", "Unidentifiable taxon", "Unidentifiable to genus",
         "Material of the unavailable", "Material referred to", "Incertae sedis in", "Included under", "Nomen nudum"
     };
@@ -106,7 +112,7 @@ public final class AntcatHistory {
             }
         }
         if (heading == null) return null;
-        String subject = head.substring(heading.length()).trim();
+        String subject = head.substring(heading.length()).replace("\u2020", "").trim();
         List<String> refs = new ArrayList<>();
         for (String r : m.group(2).split(";")) {
             Matcher rm = REF.matcher(r.trim());
@@ -115,45 +121,136 @@ public final class AntcatHistory {
         return new Entry(heading, subject, refs);
     }
 
-    /**
-     * The reference of the latest "Junior synonym of <seniorName>" entry: its first reference, the
-     * publication that made the synonymy (those after it confirm it). Null when there is none.
-     */
-    public String juniorSynonymRef(String seniorName) {
-        Entry latest = null;
-        String want = nameKey(seniorName);
-        for (Entry e : entries) {
-            if (JUNIOR_SYNONYM_OF.equals(e.heading) && nameKey(e.subject).equals(want)) latest = e;
+    // ------------------------------------------------------------ the acts (Brian Fisher, 2026-10-20)
+    //
+    // Each reference of an entry is an act dated by its year (and year letter: 2025a before 2025b).
+    // AntCat's entries are not always in date order (21 of 565 rows checked were not), nor are the
+    // references inside one entry, so the acts are sorted by date and the order of the text is used
+    // only to break exact ties. The act cited for a current state is the earliest act of that kind
+    // after the most recent contrary act (actOf).
+
+    /** One reference of an entry: "Author(s), year[letter]", dated. */
+    public static final class Ref {
+        public final String text;
+        final int year;
+        final String letter;
+        final int order;
+        Ref(String text, int order) {
+            this.text = text;
+            this.order = order;
+            Matcher m = YEAR.matcher(text);
+            boolean dated = m.find();
+            this.year = dated ? Integer.parseInt(m.group(1)) : 0;
+            this.letter = dated ? m.group(2) : "";
         }
-        return latest == null || latest.refs.isEmpty() ? null : latest.refs.get(0);
+        /** Compares the dates only (year, then letter: 2025 before 2025a before 2025b). */
+        int compareDate(Ref o) {
+            if (year != o.year) return Integer.compare(year, o.year);
+            return letter.compareTo(o.letter);
+        }
+        public String toString() { return text; }
+    }
+    private static final Pattern YEAR = Pattern.compile("(\\d{4})([a-z]?)$");
+    private static final Comparator<Ref> BY_DATE = (a, b) -> {
+        int c = a.compareDate(b);
+        return c != 0 ? c : Integer.compare(a.order, b.order);
+    };
+
+    /** The references of the entries that p accepts, sorted by date. */
+    public List<Ref> refs(Predicate<Entry> p) {
+        List<Ref> out = new ArrayList<>();
+        int order = 0;
+        for (Entry e : entries) {
+            for (String r : e.refs) {
+                order++;
+                if (p.test(e)) out.add(new Ref(r, order));
+            }
+        }
+        out.sort(BY_DATE);
+        return out;
     }
 
     /**
-     * The reference of the latest "Combination in <genus>" entry (any subgenus): its last reference,
-     * the publication that put the species in that genus most recently (e.g. Camacho et al., 2022 for
-     * Holcoponera, restored as a genus that year). Null when there is none.
+     * The act that made the current state: the earliest of current dated after the most recent of
+     * contrary that comes before the latest of current. Without such a contrary act, the earliest of
+     * current. Null when current is empty. Example (Dorymyrmex medeis, revived from synonymy with
+     * D. smithi): synonymy Snelling 1995a; status as species Deyrup 2003, Deyrup 2017 => Deyrup 2003.
+     */
+    public static String actOf(List<Ref> current, List<Ref> contrary) {
+        if (current.isEmpty()) return null;
+        Ref latest = current.get(current.size() - 1);
+        Ref lastContrary = null;
+        for (Ref c : contrary) if (c.compareDate(latest) < 0) lastContrary = c;   // sorted: the last one wins
+        for (Ref r : current) {
+            if (lastContrary == null || r.compareDate(lastContrary) > 0) return r.text;
+        }
+        return latest.text;
+    }
+
+    /** The earliest reference of the entries that p accepts, or null. */
+    public String earliest(Predicate<Entry> p) {
+        List<Ref> r = refs(p);
+        return r.isEmpty() ? null : r.get(0).text;
+    }
+
+    static boolean isRevival(Entry e) {
+        return STATUS_AS_SPECIES.equals(e.heading) || REVIVED.equals(e.heading) || RAISED.equals(e.heading);
+    }
+
+    /**
+     * The synonymy with a senior name: the first "Junior synonym of" an accepted senior after the last
+     * act that treated the taxon as valid (status as species, or subspecies of a species) before the
+     * latest such synonymy.
+     */
+    public String juniorSynonymRef(Predicate<String> senior) {
+        return actOf(refs(e -> JUNIOR_SYNONYM_OF.equals(e.heading) && senior.test(e.subject)),
+            refs(e -> isRevival(e) || SUBSPECIES_OF.equals(e.heading)));
+    }
+
+    /** juniorSynonymRef for one senior name (subgenus, case and spaces do not matter). */
+    public String juniorSynonymRef(String seniorName) {
+        String want = nameKey(seniorName);
+        return juniorSynonymRef(s -> nameKey(s).equals(want));
+    }
+
+    /** The earliest reference of a "Senior synonym of" an accepted junior name (the senior's history). */
+    public String seniorSynonymRef(Predicate<String> junior) {
+        return earliest(e -> SENIOR_SYNONYM_OF.equals(e.heading) && junior.test(e.subject));
+    }
+
+    /**
+     * The revival from synonymy with an accepted senior: the first status as species after the last
+     * synonymy with it. Without such a synonymy, the first status as species after the last synonymy.
+     */
+    public String revivalRef(Predicate<String> formerSenior) {
+        List<Ref> syn = refs(e -> JUNIOR_SYNONYM_OF.equals(e.heading) && formerSenior.test(e.subject));
+        if (syn.isEmpty()) syn = refs(e -> JUNIOR_SYNONYM_OF.equals(e.heading));
+        return actOf(refs(AntcatHistory::isRevival), syn);
+    }
+
+    /** Raised to species: the first status as species after the last "Subspecies of". */
+    public String raisedRef() {
+        return actOf(refs(AntcatHistory::isRevival), refs(e -> SUBSPECIES_OF.equals(e.heading)));
+    }
+
+    /** Placed as subspecies: the first "Subspecies of" an accepted species after the last status as species. */
+    public String subspeciesRef(Predicate<String> species) {
+        return actOf(refs(e -> SUBSPECIES_OF.equals(e.heading) && species.test(e.subject)), refs(AntcatHistory::isRevival));
+    }
+
+    /**
+     * The combination in a genus (any subgenus): the first "Combination in <genus>" after the last
+     * combination in another genus (Holcoponera striatula: Camacho et al. 2022, not Emery 1911e).
      */
     public String combinationRef(String genus) {
         if (genus == null) return null;
-        Entry latest = null;
         String want = genus.trim().toLowerCase(Locale.ROOT);
-        for (Entry e : entries) {
-            if (!COMBINATION_IN.equals(e.heading)) continue;
-            String first = e.subject.split("[\\s(]", 2)[0].toLowerCase(Locale.ROOT);
-            if (first.equals(want)) latest = e;
-        }
-        return latest == null || latest.refs.isEmpty() ? null : latest.refs.get(latest.refs.size() - 1);
+        return actOf(refs(e -> COMBINATION_IN.equals(e.heading) && genusOf(e.subject).equals(want)),
+            refs(e -> COMBINATION_IN.equals(e.heading) && !genusOf(e.subject).equals(want)));
     }
 
-    /** The latest reference of "Status as species" (or "Revived from synonymy" when AntCat uses it). Null when there is none. */
-    public String statusAsSpeciesRef() {
-        String ref = null;
-        for (Entry e : entries) {
-            if ((STATUS_AS_SPECIES.equals(e.heading) || "Revived from synonymy".equals(e.heading)) && !e.refs.isEmpty()) {
-                ref = e.refs.get(e.refs.size() - 1);
-            }
-        }
-        return ref;
+    static String genusOf(String subject) {
+        return subject.replace("\u2020", "").trim().split("[\\s(]", 2)[0].toLowerCase(Locale.ROOT);
     }
 
     /** "Morgan & Mackay, 2017" -> "Morgan & Mackay 2017". */
