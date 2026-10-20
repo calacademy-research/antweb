@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.calacademy.antweb.geolocale.Geolocale;
+
 /**
  * Image numbers of places (country, adm1, island, region and subregion pages, bioregions, museums,
  * projects), counted straight from the image table (Brian Fisher, 2026-10-20).
@@ -29,8 +31,10 @@ import java.util.Map;
  *                indetermined or unidentifiable, name (species or subspecies) on the country's list
  *   island       the same with specimen.island_country (geolocale.is_island = 1, any rank)
  *   adm1         the same with specimen.adm1
- *   region,      no place column (as their Specimens number, GeolocaleTaxonCountDb / Geolocale.
- *   subregion    getCountSpecimensQuery): specimens, collected anywhere, of the names on the list
+ *   region,      since 2026-10-20 (as their Specimens number, Geolocale.getCountSpecimensQuery and
+ *   subregion    regionSpecimensSql): the specimens that the pages of its countries count (collected in
+ *                one of its countries, countable status, name on that country's list), name also on
+ *                the region's list; before: specimens of the names on the list, collected anywhere
  *   bioregion    specimen.bioregion = the bioregion, any status (BioregionDb.getSpecimenCount)
  *   museum       specimen.museum = the museum code, any status (MuseumDb.getSpecimenCount)
  *   project      specimens, collected anywhere and of any status, of the species and subspecies on
@@ -144,15 +148,14 @@ public class PlaceImageCountDb {
                 list.add(new Source(geolocaleColumnSource("island_country", "coalesce(g.is_island, 0) = 1", one), true));
                 list.add(new Source(geolocaleColumnSource("country", "g.georank = 'country' and coalesce(g.is_island, 0) = 0", one), true));
                 list.add(new Source(geolocaleColumnSource("adm1", "g.georank = 'adm1' and coalesce(g.is_island, 0) = 0", one), true));
-                list.add(new Source("select g.id k, s.code code, i.id id, " + SHOT + " shot"
-                    + " from geolocale g"
-                    + " join geolocale_taxon gt on gt.geolocale_id = g.id"
-                    + " join taxon t on t.taxon_name = gt.taxon_name"
-                    + " join specimen s on s.taxon_name = gt.taxon_name"
+                // Regions and subregions (since 2026-10-20): the specimens of their countries, each once.
+                list.add(new Source("select d.k k, s.code code, i.id id, " + SHOT + " shot"
+                    + " from (select distinct rs.k, rs.code from (" + Geolocale.regionSpecimensSql(one ? " and r.id = ?" : "") + ") rs) d"
+                    + " join specimen s on s.code = d.code"
+                    + " join geolocale_taxon gt on gt.geolocale_id = d.k and gt.taxon_name = s.taxon_name"
+                    + " join taxon t on t.taxon_name = s.taxon_name"
                     + " join image i on i.image_of_id = s.code"
-                    + " where g.georank in ('region', 'subregion') and coalesce(g.is_island, 0) = 0"
-                    + " and t.taxarank in " + SPECIES + " and s.status in " + COUNTABLE
-                    + (one ? " and g.id = ?" : ""), true));
+                    + " where t.taxarank in " + SPECIES, true));
                 break;
             case BIOREGION:
                 list.add(new Source("select b.name k, s.code code, i.id id, " + SHOT + " shot"
@@ -259,9 +262,13 @@ public class PlaceImageCountDb {
         return places;
     }
 
+    /** Sets every parameter of the source's statement to the place key (the region source has several). */
     private static void setKey(PreparedStatement stmt, Source source, String key) throws SQLException {
-        if (source.keyIsInt) stmt.setInt(1, Integer.parseInt(key));
-        else stmt.setString(1, key);
+        int n = source.sql.length() - source.sql.replace("?", "").length();
+        for (int i = 1; i <= n; i++) {
+            if (source.keyIsInt) stmt.setInt(i, Integer.parseInt(key));
+            else stmt.setString(i, key);
+        }
     }
 
     // ------------------------------------------------------------------ writing

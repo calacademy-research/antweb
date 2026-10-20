@@ -156,7 +156,7 @@
       (org.calacademy.antweb.home.PlaceImageCountDb.PlaceImages) request.getAttribute("placeImages");
   boolean isProjectOverview = (overview instanceof Project);
   String georank = isGeolocale ? geolocale.getGeorank() : null;
-  boolean isListOnlyPlace = isGeolocale && !geolocale.isIsland() && ("region".equals(georank) || "subregion".equals(georank));
+  boolean isListOnlyPlace = isGeolocale && geolocale.isCountedFromCountries();   // region or subregion
   String placeWord = "place";
   if (isGeolocale) {
     if (geolocale.isIsland()) placeWord = "island";
@@ -166,9 +166,22 @@
   else if (isMuseum) placeWord = "museum";
   else if (isProjectOverview) placeWord = "project";
 
+  // Regions and subregions (since 2026-10-20): the specimens of their countries (Geolocale.regionSpecimensSql).
+  // Countries, islands and adm1s: specimens under a name that is not on the list are left out; the public
+  // "Show Specimen Taxa" link of the species list (Geolocale.isCanShowSpecimenTaxa) shows those names.
   String specimensDef;
-  if (isListOnlyPlace) specimensDef = "specimens of the species on this " + placeWord + "'s list, collected anywhere, not only here";
-  else if (isGeolocale) specimensDef = "ant specimens collected here, identified to a species, morphospecies or indet name";
+  if (isListOnlyPlace) specimensDef = "ant specimens collected in this " + placeWord + "'s countries and identified to a name on their lists: the specimens counted on the country pages, each once";
+  else if (isGeolocale) {
+    specimensDef = "ant specimens collected here and identified to a name on this " + placeWord + "'s list (species, morphospecies or indet names)";
+    if (geolocale.isCanShowSpecimenTaxa()) {
+      String listParams = "adm1".equals(georank)
+          ? "countryName=" + Html.url(geolocale.getParent()) + "&adm1Name=" + Html.url(geolocale.getName())
+          : "countryName=" + Html.url(geolocale.getName());
+      String specimenTaxaUrl = AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&" + listParams + "&specimen=true";
+      specimensDef += "; specimens under other names, such as synonyms, appear with <a id=\"specimen-taxa-link\" href=\""
+          + Html.escAttr(specimenTaxaUrl) + "\">Show Specimen Taxa</a> on the species list";
+    }
+  }
   else if (isBioregion) specimensDef = "ant specimens collected in this bioregion";
   else if (isMuseum) specimensDef = "ant specimens recorded as held by this museum";
   else specimensDef = "specimens, collected anywhere, of the species and subspecies on this project's list";

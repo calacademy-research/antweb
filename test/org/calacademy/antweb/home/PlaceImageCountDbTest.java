@@ -49,8 +49,8 @@ public class PlaceImageCountDbTest extends TestCase {
             + " adm1 varchar(64), island_country varchar(64), museum varchar(64), bioregion varchar(64), upload_id int,"
             + " family varchar(64), subfamily varchar(64), genus varchar(64), species varchar(64), image_count int default 0)");
         exec("create table image (id int primary key, image_of_id varchar(128), shot_type varchar(10), upload_date datetime)");
-        exec("create table geolocale (id int primary key, name varchar(128), georank varchar(20), is_island tinyint default 0,"
-            + " image_count int default 0, imaged_specimen_count int default 0)");
+        exec("create table geolocale (id int primary key, name varchar(128), georank varchar(20), parent varchar(128), is_valid tinyint default 1,"
+            + " is_island tinyint default 0, image_count int default 0, imaged_specimen_count int default 0)");
         exec("create table geolocale_taxon (geolocale_id int, taxon_name varchar(128), subfamily_count int default 0, genus_count int default 0,"
             + " species_count int default 0, specimen_count int default 0, image_count int default 0, created timestamp null,"
             + " primary key (geolocale_id, taxon_name))");
@@ -76,10 +76,11 @@ public class PlaceImageCountDbTest extends TestCase {
         exec("insert into taxon values ('" + SP_B + "', 'species', 'valid', '" + GENUS + "')");
         exec("insert into taxon values ('" + SP_C + "', 'species', 'valid', '" + GENUS + "')");
 
-        exec("insert into geolocale values (7, 'Madagascar', 'country', 1, 3435, 9999)");   // stale numbers, as before the fix
-        exec("insert into geolocale values (8, 'Comoros', 'country', 0, 0, 0)");
-        exec("insert into geolocale values (9, 'Antananarivo', 'adm1', 0, 0, 0)");
-        exec("insert into geolocale values (1, 'Africa', 'region', 0, 0, 0)");
+        exec("insert into geolocale values (7, 'Madagascar', 'country', 'Eastern Africa', 1, 1, 3435, 9999)");   // stale numbers, as before the fix
+        exec("insert into geolocale values (8, 'Comoros', 'country', 'Eastern Africa', 1, 0, 0, 0)");
+        exec("insert into geolocale values (9, 'Antananarivo', 'adm1', 'Madagascar', 1, 0, 0, 0)");
+        exec("insert into geolocale values (1, 'Africa', 'region', null, 1, 0, 0, 0)");
+        exec("insert into geolocale values (2, 'Eastern Africa', 'subregion', 'Africa', 1, 0, 0, 0)");
         String old = "'2020-01-01 10:00:00'";
         for (int g : new int[] {7, 1}) {
             for (String t : new String[] {SUBFAMILY, GENUS, SP_A, SP_B}) exec("insert into geolocale_taxon (geolocale_id, taxon_name, created) values (" + g + ", '" + t + "', " + old + ")");
@@ -162,7 +163,8 @@ public class PlaceImageCountDbTest extends TestCase {
         assertEquals("Comoros: casent4", 1, placeRow("geolocale", "id", "8")[0]);
         assertEquals("Antananarivo: casent1", 4, placeRow("geolocale", "id", "9")[0]);
         assertEquals(1, placeRow("geolocale", "id", "9")[1]);
-        // Africa: specimens of the names on its list, anywhere, of a countable status: casent1 to casent4.
+        // Africa (since 2026-10-20): the specimens of its countries (Madagascar, Comoros), each counted by
+        // its country's rule: casent1 to casent4 (more in RegionCountDbTest).
         assertEquals(9, placeRow("geolocale", "id", "1")[0]);
         assertEquals(3, placeRow("geolocale", "id", "1")[1]);
         // Museum and bioregion: all their specimens, any status.
