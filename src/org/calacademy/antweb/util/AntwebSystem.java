@@ -70,6 +70,9 @@ public class AntwebSystem {
     // upload in set1): the restart would kill it and roll it back. reboot_checker.sh asks
     // again every 5 minutes, so the restart just waits until the upload has finished.
     if (org.calacademy.antweb.upload.UploadAction.isInUploadProcess()) return false;
+    // Nor while a job started from a page (an upload, an admin data job) is running (BackgroundJobs).
+    // Jobs still waiting in the queue do not stop a restart: they show as "interrupted".
+    if (BackgroundJobs.isJobRunning()) return false;
     if (Scheduler.isStuckInSet1()) return true;
     if (getIsRestart()) return true;
     return false;

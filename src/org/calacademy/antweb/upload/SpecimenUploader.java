@@ -26,62 +26,49 @@ public class SpecimenUploader extends Uploader {
       super(connection);
     }
 
-    // This gets called from an upload post.
-    public UploadDetails uploadSpecimenFile(UploadForm theForm, Curator curator, String userAgent, String encoding)
+    /**
+     * The upload of a file the upload page saved (UploadAction, SpecimenUploadJob): a zip with one
+     * .txt file (checked by SafeUnzip on the page), or a .txt file. Called on the background job's
+     * thread. originalName is the name the curator's file had.
+     */
+    public UploadDetails uploadSavedFile(File saved, String originalName, String action, Curator curator, String userAgent, String encoding)
       throws SQLException, IOException, RESyntaxException, TestException, AntwebException
     {
         Group group = curator.getGroup();
-        //A.log("uploadSpecimenFile() encoding:" + encoding);    
-
-        String formFileName = theForm.getTheFile().getFileName();
-        //String specimenUploadType = theForm.getSpecimenUploadType();
-
         String workingDir = AntwebProps.getWorkingDir();
         FileUtil.makeDir(workingDir);
 
-        String specimenFileName;
+        String specimenFileName = "specimen" + group.getId() + ".txt";
 
-        if (formFileName.endsWith(".zip")) {  // was: contains("zip")
-            specimenFileName = "specimen" + group.getId() + ".txt"; // was: workingDir +
-            String refused = unzipSpecimenFile(theForm.getTheFile(), specimenFileName);
+        if (originalName.toLowerCase().endsWith(".zip")) {
+            String refused = unzipSpecimenFile(saved, specimenFileName);
             if (refused != null) {
-                s_log.warn("uploadSpecimenFile() zip refused for group:" + group.getId() + " " + refused);
+                s_log.warn("uploadSavedFile() zip refused for group:" + group.getId() + " " + refused);
                 UploadDetails refusedDetails = new UploadDetails("specimen", refused, "message");
-                refusedDetails.setAction(theForm.getAction());
+                refusedDetails.setAction(action);
                 return refusedDetails;
             }
         } else {
-            // copy from uploader's fileName to the biotaFile name.
-            specimenFileName = workingDir + "specimen" + group.getId() + ".txt";
-            A.log("uploadSpecimenFile() theFile:" + theForm.getTheFile() + " specimenFileName:" + specimenFileName);
-            Utility.copyFormFile(theForm.getTheFile(), specimenFileName, true); // debugOn
+            java.nio.file.Files.copy(saved.toPath(), new File(workingDir + specimenFileName).toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING);
         }
 
-        boolean isUpload = true;
-        // was 2nd param: specimenUploadType, 
-        A.log("uploadSpecimenFile() action:" + theForm.getAction() + " formFileName:" + formFileName);
-        String fileName = specimenFileName;  // was: "specimen" + group.getId() + ".txt"
-        return uploadSpecimenFile(theForm.getAction(), fileName, curator, userAgent, encoding, isUpload);
+        A.log("uploadSavedFile() action:" + action + " originalName:" + originalName);
+        return uploadSpecimenFile(action, specimenFileName, curator, userAgent, encoding, true);
     }
 
 
     /**
-     * Saves the uploaded zip in the working directory and takes its one .txt file out as
-     * outName (in the working directory), with SafeUnzip. Returns null when done, or the
-     * reason the archive was refused (nothing is then written).
+     * Takes the one .txt file out of a saved zip as outName (in the working directory), with
+     * SafeUnzip. Returns null when done, or the reason the archive was refused (nothing is then written).
      */
-    static String unzipSpecimenFile(FormFile file, String outName) throws IOException {
-        if (file == null) return "Must choose a specimen file for upload.";
-        String workingDir = AntwebProps.getWorkingDir();
-        File zip = new File(workingDir + outName + ".zip");
-        if (!Utility.copyFormFile(file, zip.getPath())) return "The uploaded zip file could not be saved.";
+    static String unzipSpecimenFile(File zip, String outName) throws IOException {
+        if (zip == null) return "Must choose a specimen file for upload.";
         try {
-            SafeUnzip.extract(zip, SafeUnzip.ONE_TXT, ".txt file", new File(workingDir + outName));
+            SafeUnzip.extract(zip, SafeUnzip.ONE_TXT, ".txt file", new File(AntwebProps.getWorkingDir() + outName));
             return null;
         } catch (SafeUnzip.Refused r) {
             return r.getMessage();
-        } finally {
-            if (!zip.delete()) s_log.warn("unzipSpecimenFile() could not delete " + zip);
         }
     }
 }

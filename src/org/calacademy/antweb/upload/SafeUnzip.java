@@ -84,30 +84,7 @@ public final class SafeUnzip {
         List<Boolean> links = symlinkFlags(zip, maxEntries);
 
         try (ZipFile zf = open(zip)) {
-            List<ZipEntry> wanted = new ArrayList<>();
-            long declared = 0;
-            int i = 0;
-            Enumeration<? extends ZipEntry> en = zf.entries();
-            while (en.hasMoreElements()) {
-                ZipEntry e = en.nextElement();
-                if (i >= maxEntries) throw new Refused("The zip file has more than " + maxEntries + " entries.");
-                if (i >= links.size()) throw new Refused("The zip file could not be read.");
-                if (links.get(i)) throw new Refused("The zip file contains a symbolic link, which is not allowed.");
-                ++i;
-                String name = e.getName().replace('\\', '/');
-                if (!isSafeName(name)) {
-                    throw new Refused("The zip file contains a file name that is not allowed (an absolute path or \"..\").");
-                }
-                if (e.getSize() > 0) declared += e.getSize();
-                if (declared > maxTotalBytes) throw new Refused(tooLarge(maxTotalBytes));
-                if (e.isDirectory() || name.endsWith("/") || isJunk(name)) continue;
-                if (picker.wanted(name)) wanted.add(e);
-            }
-            if (i != links.size()) throw new Refused("The zip file could not be read.");
-            if (wanted.isEmpty()) throw new Refused("The zip file has no " + what + ".");
-            if (wanted.size() > 1) throw new Refused("The zip file must contain only one " + what + ".");
-
-            ZipEntry entry = wanted.get(0);
+            ZipEntry entry = pick(zf, links, picker, what, maxTotalBytes, maxEntries);
             File part = new File(out.getPath() + ".part");
             long written = 0;
             boolean ok = false;
@@ -130,6 +107,49 @@ public final class SafeUnzip {
         } catch (ZipException ze) {
             throw new Refused("The zip file could not be read.");
         }
+    }
+
+    /**
+     * The same checks as extract(), without writing anything: refused (with the message the
+     * uploader sees) when extract() would refuse the archive. Reads only the archive's list of
+     * entries, so it is quick also for a large file (the upload page uses it before it answers).
+     */
+    public static String check(File zip, Picker picker, String what) throws Refused, IOException {
+        if (zip == null || !zip.isFile()) throw new Refused("The uploaded zip file was not received.");
+        List<Boolean> links = symlinkFlags(zip, MAX_ENTRIES);
+        try (ZipFile zf = open(zip)) {
+            return pick(zf, links, picker, what, MAX_TOTAL_BYTES, MAX_ENTRIES).getName();
+        } catch (ZipException ze) {
+            throw new Refused("The zip file could not be read.");
+        }
+    }
+
+    /** The one wanted entry, after the checks on every entry (names, links, count, declared size). */
+    private static ZipEntry pick(ZipFile zf, List<Boolean> links, Picker picker, String what, long maxTotalBytes, int maxEntries)
+            throws Refused {
+        List<ZipEntry> wanted = new ArrayList<>();
+        long declared = 0;
+        int i = 0;
+        Enumeration<? extends ZipEntry> en = zf.entries();
+        while (en.hasMoreElements()) {
+            ZipEntry e = en.nextElement();
+            if (i >= maxEntries) throw new Refused("The zip file has more than " + maxEntries + " entries.");
+            if (i >= links.size()) throw new Refused("The zip file could not be read.");
+            if (links.get(i)) throw new Refused("The zip file contains a symbolic link, which is not allowed.");
+            ++i;
+            String name = e.getName().replace('\\', '/');
+            if (!isSafeName(name)) {
+                throw new Refused("The zip file contains a file name that is not allowed (an absolute path or \"..\").");
+            }
+            if (e.getSize() > 0) declared += e.getSize();
+            if (declared > maxTotalBytes) throw new Refused(tooLarge(maxTotalBytes));
+            if (e.isDirectory() || name.endsWith("/") || isJunk(name)) continue;
+            if (picker.wanted(name)) wanted.add(e);
+        }
+        if (i != links.size()) throw new Refused("The zip file could not be read.");
+        if (wanted.isEmpty()) throw new Refused("The zip file has no " + what + ".");
+        if (wanted.size() > 1) throw new Refused("The zip file must contain only one " + what + ".");
+        return wanted.get(0);
     }
 
     private static String tooLarge(long max) {

@@ -58,6 +58,17 @@ public class UtilDataAction extends AntwebAction {
         "genGoogleMapFunction", "delGoogleMapFunction", "genGroupObjectMaps",
         "calcCaste", "setIsRestart", "siteWarning", "genRecentContent");
 
+    // Started by an admin from a page, a data job runs in the background (BackgroundJobs) and the
+    // page answers at once with its status page (jobStatus.do), since 2026-10-20. These few stay
+    // in the request: they are quick, or (fixGeolocaleTaxonParentage) their answer is a page with
+    // a second button. The Scheduler's own calls (nightly run) always stay in the request.
+    static final java.util.Set<String> IN_REQUEST = java.util.Set.of(
+        "siteWarning", "setIsRestart", "fixGeolocaleTaxonParentage");
+
+    public static boolean runsInBackground(String action, boolean isScheduler) {
+        return !isScheduler && action != null && ACTIONS.contains(action) && !IN_REQUEST.contains(action);
+    }
+
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
@@ -140,6 +151,10 @@ public class UtilDataAction extends AntwebAction {
             message = "Another data job is running (" + Html.esc(getIsInComputeProcess()) + "). Please try again when it has finished.";
         }
 
+        if (message == null && runsInBackground(action, isScheduler)) {
+            return submitDataJob(action, theForm, accessLogin, accessGroup, loginName, request, mapping);
+        }
+
         if (message == null) {
             String dbMethodName = DBUtil.getDbMethodName("UtilDataAction.execute()");
             try {
@@ -218,7 +233,59 @@ public class UtilDataAction extends AntwebAction {
         return line;
     }
 
-    private String handleException(Exception e, Connection connection, String action, String loginName) {
+    /** A data job started from a page: runs in the background; the answer is a redirect to its status page. */
+    private ActionForward submitDataJob(String action, UtilForm form, Login accessLogin, Group accessGroup, String loginName,
+                                        HttpServletRequest request, ActionMapping mapping) {
+        BackgroundJobDb.setDataSource(getDataSource(request, "conPool"));
+        final DataSource dataSource = getDataSource(request, "longConPool");
+        StringBuilder title = new StringBuilder("Data job: " + action);
+        if (form.getNum() != 0) title.append(" num=").append(form.getNum());
+        if (form.getName() != null && !form.getName().isEmpty()) title.append(" name=").append(form.getName());
+        if (form.getCode() != null && !form.getCode().isEmpty()) title.append(" code=").append(form.getCode());
+        if (form.getGroupId() != 0) title.append(" groupId=").append(form.getGroupId());
+        BackgroundJobs.Job job = new BackgroundJobs.Job(BackgroundJobs.DATA, action, title.toString(),
+            accessLogin == null ? 0 : accessLogin.getId(), loginName, 0);
+        BackgroundJobs.Submitted submitted = BackgroundJobs.get().submit(job,
+            j -> runDataJob(action, form, accessLogin, accessGroup, loginName, dataSource));
+        if (submitted.job == null) {
+            request.setAttribute("message", Html.esc(submitted.refused));
+            return mapping.findForward("message");
+        }
+        s_log.warn("submitDataJob() job " + submitted.job.getId() + " " + title + " by " + loginName + (submitted.isNew ? "" : " (already queued)"));
+        return new ActionForward("/jobStatus.do?id=" + submitted.job.getId() + (submitted.isNew ? "" : "&already=1"), true);
+    }
+
+    /** The work of a data job started from a page (what execute() does in the request). */
+    private BackgroundJobs.Outcome runDataJob(String action, UtilForm form, Login accessLogin, Group accessGroup, String loginName,
+                                              DataSource dataSource) throws Exception {
+        while (!claimComputeProcess(action)) {
+            BackgroundJobs.step("Waiting for the nightly data update (or another data job) to finish. This job starts right after it.");
+            Thread.sleep(5000);
+        }
+        BackgroundJobs.step("Running " + action + ".");
+        Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("UtilDataAction.runDataJob()");
+        try {
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
+            connection.setAutoCommit(false);
+            OperationDetails operationDetails = doAction(action, form, accessLogin, accessGroup, connection, null, null);
+            String link = null;
+            if (operationDetails instanceof UploadDetails) {
+                ((UploadDetails) operationDetails).finish(accessLogin, null, connection);
+                link = org.calacademy.antweb.upload.SpecimenUploadJob.reportUrl((UploadDetails) operationDetails);
+            }
+            connection.commit();
+            LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " " + action + " (background) by " + loginName + " done");
+            return BackgroundJobs.Outcome.ok(operationDetails.getMessage(), link, "Report");
+        } catch (Exception e) {
+            return BackgroundJobs.Outcome.failed(handleException(e, connection, action, loginName));
+        } finally {
+            releaseComputeProcess(action);
+            DBUtil.close(connection, this, dbMethodName);
+        }
+    }
+
+    private static String handleException(Exception e, Connection connection, String action, String loginName) {
         String message = "Error. No changes made for action:" + Html.esc(action) + " user:" + Html.esc(loginName) + " e:" + Html.esc(e);
         s_log.error("handleException() " + message);
         if (e instanceof NullPointerException) s_log.error(AntwebUtil.getShortStackTrace(e));
@@ -250,7 +317,8 @@ public class UtilDataAction extends AntwebAction {
         String prop = form.getProp();
 
         boolean isAdmin = accessLogin != null && accessLogin.isAdmin();
-        boolean isSecure = SchedulerCall.isScheduler(request) || isAdmin;
+        // request is null for a job run in the background (started by an admin).
+        boolean isSecure = (request != null && SchedulerCall.isScheduler(request)) || isAdmin;
         
         s_log.info("doAction() " + action + " request:" + request + " isSecure:" + isSecure + " isAdmin:" + isAdmin);
 
@@ -767,9 +835,19 @@ public class UtilDataAction extends AntwebAction {
     public static String getIsInComputeProcess() {
       return m_inComputeProcess;
     }
-    public static void setInComputeProcess(String inComputeProcess) {
+    public static synchronized void setInComputeProcess(String inComputeProcess) {
       m_inComputeProcessSince = inComputeProcess == null ? 0 : System.currentTimeMillis();
       m_inComputeProcess = inComputeProcess;
+    }
+    /** Sets the compute flag if no data job holds it. True if this caller now holds it (background jobs). */
+    public static synchronized boolean claimComputeProcess(String inComputeProcess) {
+      if (m_inComputeProcess != null) return false;
+      setInComputeProcess(inComputeProcess);
+      return true;
+    }
+    /** Clears the compute flag if the caller still holds it. */
+    public static synchronized void releaseComputeProcess(String inComputeProcess) {
+      if (inComputeProcess != null && inComputeProcess.equals(m_inComputeProcess)) setInComputeProcess(null);
     }
     /** When the current compute process (set1, set2, ...) started, in ms; 0 if none. */
     public static long getInComputeProcessSince() {

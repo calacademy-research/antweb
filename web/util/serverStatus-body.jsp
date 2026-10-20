@@ -59,6 +59,14 @@ if (UtilDataAction.isInComputeProcess()) {
 <br>&nbsp;&nbsp;&nbsp;Is Compute in process: <%= computeValue %>
 
 <%
+// Uploads and admin data jobs started from a page run in the background (jobStatus.do).
+String jobRunning = org.calacademy.antweb.util.BackgroundJobs.runningDescription();
+java.util.List<Integer> jobsActive = org.calacademy.antweb.util.BackgroundJobs.get().activeIds();
+%>
+<br>&nbsp;&nbsp;&nbsp;Background job running: <%= jobRunning == null ? "<font color=\"green\">none</font>" : "<font color=\"red\">" + org.calacademy.antweb.util.Html.esc(jobRunning) + "</font>" %>
+ (<%= jobsActive.size() %> waiting or running; <a href="<%= AntwebProps.getDomainApp() %>/jobStatus.do">Upload status</a>)
+
+<%
 OperationLock operationLock = (OperationLock) request.getAttribute("operationLock");
 String imageUploadLock = "";
 

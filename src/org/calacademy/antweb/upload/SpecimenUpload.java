@@ -99,7 +99,9 @@ public class SpecimenUpload extends SpecimenUploadParse {
             String theLine = in.readLine();         
             theLine = theLine.toLowerCase();
 
+            org.calacademy.antweb.util.BackgroundJobs.step("Removing the group's current specimens (the file replaces them).");
             doPreliminaries(accessGroup);
+            org.calacademy.antweb.util.BackgroundJobs.startProgress("Reading and saving specimens", Paths.get(uploadFile.getFileLoc()));
                                 
             // Get the header values
             ArrayList<String> colList = getSpecimenColumns(theLine);
@@ -130,6 +132,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
                     }
 
                     LineNumMgr.setLineNum(lineNum);
+                    org.calacademy.antweb.util.BackgroundJobs.progress(lineNum);
 
                     Date startTimeLoop = new Date();    
                 
@@ -208,6 +211,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
  
 				// How to ascertain which museum to update?
 				//(new MuseumDb.updateMuseum(museum, getConnection());
+				org.calacademy.antweb.util.BackgroundJobs.step("All lines read. Checking names and updating species lists.");
 				getUploadDetails().setBuildLineTotal(buildLineTotal);
 				getUploadDetails().setProcessLineTotal(processLineTotal);
 
