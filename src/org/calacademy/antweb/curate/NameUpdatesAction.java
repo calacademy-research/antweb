@@ -161,9 +161,13 @@ public final class NameUpdatesAction extends AntwebAction {
      * "Needs the curator's decision": specimens the nightly step did not move because their name belongs
      * to two or more AntCat taxa (latest run), per group, with the candidates and the codes.
      */
+    /** Section headings (Needs the curator's decision, each run): the site's h3 is small and grey; these are green
+     *  like the group names (h4) and larger, so the sections stand out the same way (Brian, 2026-10-20). */
+    static final String SECTION_STYLE = "color:#a3c76d;font-size:16px;font-weight:bold;margin:18px 0 6px";
+
     public static String sharedHtml(List<SpecimenNameUpdateDb.Line> lines, String domainApp) {
         if (lines.isEmpty()) return "";
-        StringBuilder b = new StringBuilder("<h3>Needs the curator's decision</h3>"
+        StringBuilder b = new StringBuilder("<h3 style=\"" + SECTION_STYLE + "\">Needs the curator's decision</h3>"
             + "<p>Not moved: the name belongs to two or more AntCat taxa, so the name alone does not tell which one the specimens are. "
             + "Please confirm the identification and correct it in TaxonWorks (CAS) or in your upload file.</p>");
         int lastGroup = Integer.MIN_VALUE;
@@ -206,7 +210,7 @@ public final class NameUpdatesAction extends AntwebAction {
         StringBuilder b = new StringBuilder();
         for (SpecimenNameUpdateDb.Run run : runs) {
             boolean changed = SpecimenNameUpdate.CHANGED.equals(run.mode);
-            b.append("<h3>").append(f.format(run.runDate)).append(": ")
+            b.append("<h3 style=\"" + SECTION_STYLE + "\">").append(f.format(run.runDate)).append(": ")
              .append(changed ? "Recognized invalid species. Specimens moved to the current valid name from AntCat.org"
                              : "Would change (report only). Nothing was changed")
              .append(" (").append(String.format("%,d", run.specimens)).append(run.specimens == 1 ? " specimen" : " specimens").append(")</h3>");
