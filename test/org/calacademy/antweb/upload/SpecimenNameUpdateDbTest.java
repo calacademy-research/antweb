@@ -151,7 +151,7 @@ public class SpecimenNameUpdateDbTest extends TestCase {
             + " and uploaded_name = '" + OLD + "' and old_name = '" + OLD + "' and new_name = '" + NEW + "' and antcat_status = 'synonym'"));
         // Why, from AntCat's taxonomic history (2026-10-20): Tapinoma indicum -> Ravavy indicus changes the
         // genus and only the gender ending, a new combination; the specimen uploaded as Pheidole again goes back.
-        assertEquals("new combination: Ravavy indicus (Fisher & Bolton 2026a)",
+        assertEquals("new combination: Ravavy indicus (Fisher & Bolton 2026a); spelling as in AntCat",
             one("select reason from specimen_name_update where code = 'jtl0000001'"));
         assertEquals("101", one("select antcat_id from specimen_name_update where code = 'jtl0000001'"));
         assertEquals("Your name Pheidole again is valid again. It had been shown under P. other (synonymy by Wilson 2003),"
@@ -209,7 +209,7 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         assertEquals(0, db.getRuns(JTL, "2001-01-01", "2001-01-02", 30).size());
         assertEquals(2, db.getGroupIds().size());
         SpecimenNameUpdateDb.Line jtl = db.getLines(JTL, db.getRuns(JTL, null, null, 30)).get(0);
-        assertEquals("new combination: Ravavy indicus (Fisher & Bolton 2026a)", jtl.reason);
+        assertEquals("new combination: Ravavy indicus (Fisher & Bolton 2026a); spelling as in AntCat", jtl.reason);
         assertEquals(Integer.valueOf(101), jtl.antcatId);
         assertEquals(OLD, jtl.uploadedName);
     }

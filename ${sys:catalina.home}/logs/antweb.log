@@ -4,3 +4,25 @@
 2026-10-18T18:01:55,566 ERROR main org.calacademy.antweb.util.AntwebProps - getBundle(AntwebResources) message: Has the appropriate antweb/etc/config script been executed?
 2026-10-18T18:02:00,658 WARN main org.calacademy.antweb.util.AntwebProps - getBundle(AntwebResources) e:java.util.MissingResourceException: Can't find bundle for base name AntwebResources, locale en_US
 2026-10-18T18:02:00,670 ERROR main org.calacademy.antweb.util.AntwebProps - getBundle(AntwebResources) message: Has the appropriate antweb/etc/config script been executed?
+2026-10-20T14:35:48,156 WARN main org.calacademy.antweb.util.TaxonPropMgr - getIntroducedMaps() WST taxonName:dolichoderinaeravavy indicus
+2026-10-20T14:35:48,167 WARN main org.calacademy.antweb.util.AntwebUtil - AntwebUtil.logShortStackTrace(7) - org.calacademy.antweb.util.StackTraceException
+	at org.calacademy.antweb.util.AntwebUtil.logShortStackTrace(AntwebUtil.java:608)
+	at org.calacademy.antweb.util.AntwebUtil.logShortStackTrace(AntwebUtil.java:605)
+	at org.calacademy.antweb.util.TaxonPropMgr.getIntroducedMap(TaxonPropMgr.java:38)
+	at org.calacademy.antweb.util.TaxonPropMgr.isIntroduced(TaxonPropMgr.java:46)
+	at org.calacademy.antweb.upload.SpecimenNameUpdate.applyChange(SpecimenNameUpdate.java:670)
+	at org.calacademy.antweb.upload.SpecimenNameUpdate.run(SpecimenNameUpdate.java:496)
+	at test.org.calacademy.antweb.upload.SpecimenNameUpdateDbTest.testSharedNameIsHeldForTheCurator(SpecimenNameUpdateDbTest.java:232)
+2026-10-20T14:35:48,348 ERROR main org.calacademy.antweb.util.LogMgr - appendFile() fullPath:/usr/local/antweb/web/log/taxonSet.log e: No such file or directory
+2026-10-20T14:35:48,549 WARN main org.calacademy.antweb.upload.SpecimenNameUpdate - run() 4 specimens would change, above maxChanges=3: nothing changed
+2026-10-20T14:35:58,061 WARN main org.calacademy.antweb.util.TaxonPropMgr - getIntroducedMaps() WST taxonName:dolichoderinaeravavy indicus
+2026-10-20T14:35:58,070 WARN main org.calacademy.antweb.util.AntwebUtil - AntwebUtil.logShortStackTrace(7) - org.calacademy.antweb.util.StackTraceException
+	at org.calacademy.antweb.util.AntwebUtil.logShortStackTrace(AntwebUtil.java:608)
+	at org.calacademy.antweb.util.AntwebUtil.logShortStackTrace(AntwebUtil.java:605)
+	at org.calacademy.antweb.util.TaxonPropMgr.getIntroducedMap(TaxonPropMgr.java:38)
+	at org.calacademy.antweb.util.TaxonPropMgr.isIntroduced(TaxonPropMgr.java:46)
+	at org.calacademy.antweb.upload.SpecimenNameUpdate.applyChange(SpecimenNameUpdate.java:670)
+	at org.calacademy.antweb.upload.SpecimenNameUpdate.run(SpecimenNameUpdate.java:496)
+	at test.org.calacademy.antweb.upload.SpecimenNameUpdateDbTest.testSharedNameIsHeldForTheCurator(SpecimenNameUpdateDbTest.java:232)
+2026-10-20T14:35:58,233 ERROR main org.calacademy.antweb.util.LogMgr - appendFile() fullPath:/usr/local/antweb/web/log/taxonSet.log e: No such file or directory
+2026-10-20T14:35:58,428 WARN main org.calacademy.antweb.upload.SpecimenNameUpdate - run() 4 specimens would change, above maxChanges=3: nothing changed
