@@ -188,6 +188,8 @@ Sorry, nothing matches your request.
     <input id="thumb_choice" type="hidden" name="shot" value="<%= choice_is %>" checked> 
 <% } %>
 
+<%-- aw-list-scroll / aw-list: see responsive.css (narrow screens only). --%>
+<div class="aw-list-scroll"><div class="aw-list">
     <logic:iterate id="row" collection="<%=taxonList%>" indexId="index">
 
 		<logic:notEmpty name="row" property="pageParams">
@@ -234,6 +236,7 @@ Sorry, nothing matches your request.
 
 
 	</logic:iterate>
+</div></div><%-- /aw-list, /aw-list-scroll --%>
 </form>
 
 </div>

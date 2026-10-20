@@ -28,6 +28,9 @@
 <!--  Column Headings -->
     <div class="clear"></div>
 <br>
+<%-- aw-list-scroll / aw-list: on narrow screens the list scrolls sideways inside this box
+     (header and rows together) instead of the whole page; see responsive.css. Plain divs at desktop width. --%>
+<div class="aw-list-scroll"><div class="aw-list">
     <div class="sd_data">
 
 	  <%
@@ -239,6 +242,7 @@
 
 
 </div>
+</div></div><%-- /aw-list, /aw-list-scroll --%>
 <% if (LoginMgr.isAdmin(request)) { %>
      <br>Subtaxon total: <%= subtaxonTotal %>
 <% } %>
