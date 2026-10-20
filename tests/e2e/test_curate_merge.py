@@ -47,10 +47,11 @@ MOVED = [
     ("/schedule.do?action=run", "web/curate/technical-body.jsp"),
 ]
 CURATE = ("web/curate/curate-body.jsp", "web/curate/curatorLinks.jsp")
-# Gone from the Curate page (merged elsewhere, or the same tool linked twice).
+# Gone from the Curate page (merged elsewhere, or the same tool linked twice). The World (AntCat) upload
+# reports link (name=worldantsUploads) came back for administrators on 2026-10-20 at Brian's request.
 NOT_ON_CURATE = [m for m, _ in MOVED] + [
     "/pageTracker.do", "logMgr.do?action=get", "action=worldantsReload", "action=worldantsFetchAndReload",
-    "name=worldantsUploads", "/common/statusDisplayPage.jsp", "Manager:", "Artist Manager",
+    "/common/statusDisplayPage.jsp", "Manager:", "Artist Manager",
     "Unimaged Bolton Ants", "Casent -Dxx", ">Events<", "Validate Species List", "Archived Specimen List Files",
 ]
 
