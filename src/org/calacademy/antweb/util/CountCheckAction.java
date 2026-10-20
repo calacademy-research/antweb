@@ -29,7 +29,7 @@ import org.calacademy.antweb.geolocale.Georank;
 /**
  * countCheck.do (administrators, read-only): CountCheck for a sample of places. Default sample:
  * Madagascar, Reunion, the country with the most morphospecies specimens (after those two), the
- * curated project with the most species, the Malagasy bioregion and the CASC museum. Parameters
+ * live curated project with the most species (only live projects are recounted each night), the Malagasy bioregion and the CASC museum. Parameters
  * geolocaleId (one or more), project, museum and bioregion replace the sample.
  * The page ends with a line "Real mismatches: N. Pending: M." read by tests/e2e/test_count_check.py.
  */
@@ -117,10 +117,19 @@ public final class CountCheckAction extends AntwebAction {
                 Geolocale g = GeolocaleMgr.getValidCountry(morphoCountry);
                 if (g != null) geolocales.add(g); else notes.add("Country " + Html.esc(morphoCountry) + " not found");
             }
+            // The nightly run recounts only live projects (ProjTaxonCountDb.childrenCountCrawl, ProjectMgr.getLiveProjects):
+            // the largest live curated project.
+            java.util.Set<String> live = new java.util.HashSet<>();
+            for (Project p : ProjectMgr.getLiveProjects()) live.add(p.getName());
             query = "select project_name, count(*) n from proj_taxon where project_name not in ('worldants', 'allantwebants', 'fossilants')"
-                + " group by project_name order by n desc limit 1";
+                + " group by project_name order by n desc";
             try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(query)) {
-                if (r.next()) project = r.getString(1);
+                while (r.next()) {
+                    if (live.contains(r.getString(1))) {
+                        project = r.getString(1);
+                        break;
+                    }
+                }
             }
             museum = "CASC";
             bioregion = "Malagasy";
@@ -149,7 +158,7 @@ public final class CountCheckAction extends AntwebAction {
 
     public static final String HELP = ReportHelp.box(
         "The numbers on taxon lists counted again, straight from the specimen records, for a sample of places "
-            + "(Madagascar, Reunion, the country with the most morphospecies, the largest curated project, the Malagasy bioregion "
+            + "(Madagascar, Reunion, the country with the most morphospecies, the largest live curated project, the Malagasy bioregion "
             + "and the CASC museum). Four numbers are checked: specimens of each species in the place, species of each genus "
             + "and genera of each subfamily in the place's list, and the \"Global\" specimens of each species. "
             + "Every number that differs is listed with the stored number (shown on the site) and the recount.",
