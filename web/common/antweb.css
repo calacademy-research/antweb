@@ -1136,9 +1136,80 @@ input[type="checkbox"] {
     color:#fff;
 }
 
-.home a:hover {
+/* Home page links (2026-10-19): the page text is white on a dark photo and black, so links get
+   their own colour and an underline (not only on hover) to be recognizable as links.
+   #ffd479 (light amber) on black: contrast 14.9:1; on the 70% black chip behind the links in
+   the photo area, at least 6:1 over any photo colour (WCAG AA asks 4.5:1). The header menu and
+   the subfamily slideshow keep their own look. */
+#page_data.home a,
+#home_lower a,
+#footer.home a {
+    color:#ffd479;
+    text-decoration:underline;
+    text-underline-offset:2px;
+    text-shadow:0 1px 2px #000;
+    border-bottom:0;
+}
+#page_data.home a:visited,
+#home_lower a:visited,
+#footer.home a:visited {
+    color:#ffd479;
+}
+#page_data.home a:hover,
+#page_data.home a:focus,
+#home_lower a:hover,
+#home_lower a:focus,
+#footer.home a:hover,
+#footer.home a:focus {
     color:#fff;
-    border-bottom:1px dotted #fff;
+    text-decoration-thickness:2px;
+    border-bottom:0;
+}
+#page_data.home a:focus-visible,
+#home_lower a:focus-visible,
+#footer.home a:focus-visible {
+    outline:2px solid #ffd479;
+    outline-offset:2px;
+}
+/* Links over the photo (upper box and the top of the lower box): a dark chip behind the text. */
+#home_upper a,
+#contributor_container a {
+    background-color:rgba(0,0,0,0.7);
+    padding:0 2px;
+    border-radius:2px;
+}
+/* The subfamily slideshow: image links and arrows, unchanged. */
+#page_data.home #slideshow a,
+#page_data.home #slideshow a:hover {
+    color:#fff;
+    text-decoration:none;
+    text-shadow:none;
+    background-color:transparent;
+    padding:0;
+}
+/* World Ant Collections: a button-style link and the six museum pages. */
+#home_lower a.home_button,
+#home_lower a.home_button:visited {
+    display:inline-block;
+    margin:8px 0 4px;
+    padding:6px 12px;
+    color:#000;
+    background-color:#ffd479;
+    border-radius:4px;
+    font-weight:bold;
+    text-decoration:none;
+    text-shadow:none;
+}
+#home_lower a.home_button:hover,
+#home_lower a.home_button:focus {
+    color:#000;
+    background-color:#fff;
+    text-decoration:none;
+}
+.home_museums {
+    margin:6px 0 0;
+    padding-left:18px;
+    line-height:1.5;
 }
 
 #home_upper {

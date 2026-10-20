@@ -80,10 +80,10 @@ window.api = root.data("scrollable");
 
 <div id="contributor_container">
     <div id="contributors">
-<h3><u>Antweb Community</u></h3>
+<h3>Antweb Community</h3>
        <br>&nbsp;&nbsp;&nbsp;<b><a href="<%= AntwebProps.getDomainApp() %>/groups.do?orderBy=specimens">Specimen Contributors</a></b><br />
        <br>&nbsp;&nbsp;&nbsp;<b><a href="<%= AntwebProps.getDomainApp() %>/curators.do?sortBy=specimenUploadCount">Curators</a></b><br />
-       <br>&nbsp;&nbsp;&nbsp;<b><b><a href="<%= AntwebProps.getDomainApp() %>/museums.do">Museums</a></b><br />
+       <br>&nbsp;&nbsp;&nbsp;<b><a href="<%= AntwebProps.getDomainApp() %>/museums.do">Museums</a></b><br />
        <br>&nbsp;&nbsp;&nbsp;<b><a href="<%= AntwebProps.getDomainApp() %>/artists.do">Artists (Photographers)</a></b><br />
     </div>
 
@@ -104,8 +104,17 @@ window.api = root.data("scrollable");
 
     </div>
     <div class="promo right">
-        <b><a href=/worldants.do>World Ant Collections</a></b><br />
-        We at AntWeb have been busy taking photos of many of the world's great ant collections.  Visit the AntWeb <a href=/worldants.do>World Ant Collection</a> to see the collections and get information about where they are housed.  
+        <b><a href="<%= domainApp %>/worldants.do">World Ant Collections</a></b><br />
+        We at AntWeb have been busy taking photos of many of the world's great ant collections.  Visit the AntWeb <a href="<%= domainApp %>/worldants.do">World Ant Collection</a> to see the collections and get information about where they are housed.
+        <br /><a class="home_button" href="<%= domainApp %>/worldants.do">See the World Ant Collections &rarr;</a>
+        <ul class="home_museums">
+            <li><a href="<%= domainApp %>/basel.do">Basel</a> (Santschi collection)</li>
+            <li><a href="<%= domainApp %>/berlin.do">Berlin</a> (Roger collection)</li>
+            <li><a href="<%= domainApp %>/copenhagen.do">Copenhagen</a> (Fabricius collection)</li>
+            <li><a href="<%= domainApp %>/geneva.do">Geneva</a> (Forel collection)</li>
+            <li><a href="<%= domainApp %>/genoa.do">Genoa</a> (Emery collection)</li>
+            <li><a href="<%= domainApp %>/oxford.do">Oxford</a> (Hope, Crawley and Bingham collections)</li>
+        </ul>
     </div>
     <div class="clear"></div>
 </div>

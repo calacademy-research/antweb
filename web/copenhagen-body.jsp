@@ -17,9 +17,11 @@
 
     <p><a href=wac/zm_copenhagen_lg.jpg target=new><img border=0 src=wac/zm_copenhagen_sm.jpg></a><br><a class=footer_href href=wac/zm_copenhagen_lg.jpg target=new>Click for larger version</a><br>(Photo by Geert Brovad)<br>
 
-    <p><a href=wac/CASENT0102533_P_lg.jpg target=new><img border=0 src=wac/CASENT0102533_P.jpg></a><br><a class=footer_href href=wac/CASENT0102533_P_lg.jpg target=new>Click for larger version</a><br>
+    <%-- The larger version is the specimen's profile image in AntWeb's image store (2026-10-19). --%>
+    <p><a href=https://static.antweb.org/images/casent0102533/casent0102533_p_1_high.jpg target=new><img border=0 src=wac/CASENT0102533_P.jpg></a><br><a class=footer_href href=https://static.antweb.org/images/casent0102533/casent0102533_p_1_high.jpg target=new>Click for larger version</a>
+    (<a class=footer_href href=specimen.do?code=casent0102533>specimen CASENT0102533</a>)<br>
 
-    <p><a href=wac/CASENT0102533_L.jpg target=new><img border=0 src=wac/CASENT0102533_L.jpg></a><br><a class=footer_href href=wac/CASENT0102533_L.jpg target=new>Click for larger version</a><br>
+    <p><a href=https://static.antweb.org/images/casent0102533/casent0102533_l_1_high.jpg target=new><img border=0 src=wac/CASENT0102533_L.jpg></a><br><a class=footer_href href=https://static.antweb.org/images/casent0102533/casent0102533_l_1_high.jpg target=new>Click for larger version</a><br>
 
     <p><a href=wac/Fabricius_lg.jpg target=new><img border=0 src=wac/Fabricius.jpg></a><br><a class=footer_href href=wac/Fabricius_lg.jpg target=new>Click for larger version</a><br>
 

@@ -30,7 +30,8 @@
 
     <p><a href=wac/Emery_lg.jpg target=new><img border=0 src=wac/Emery.jpg></a><br><a class=footer_href href=wac/Emery_lg.jpg target=new>Click for larger version</a><br>
 
-    <p><a href=wac/MSNG054_lg.jpg target=new><img border=0 src=wac/MSNG054.jpg></a><br><a class=footer_href href=wac/MSNG054_lg.jpg target=new>Click for larger version</a><br>
+    <%-- Drawer MSNG 54 (a photo of the drawer, not a specimen image). No larger version exists (2026-10-19). --%>
+    <p><img border=0 src=wac/MSNG054.jpg alt="Drawer MSNG 54, Emery collection"><br>
 
 
 </div>
