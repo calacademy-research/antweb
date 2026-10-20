@@ -12,9 +12,9 @@
      for (Enumeration e = session.getAttributeNames() ; e.hasMoreElements() ;) {
        String name = (String) e.nextElement();
        if (!"dummyForm".equals(name) && !"statistics".equals(name)) {
-         out.println("<br><b>" + name + "</b>: " + session.getAttribute(name));
+         out.println("<br><b>" + Html.esc(name) + "</b>: " + Html.esc(session.getAttribute(name)));
        } else {
-         out.println("<br><b>" + name + "</b>");
+         out.println("<br><b>" + Html.esc(name) + "</b>");
          A.log("serverStatus-body.jsp dummyForm:" + session.getAttribute(name));
        }
      }

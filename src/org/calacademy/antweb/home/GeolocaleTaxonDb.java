@@ -940,10 +940,11 @@ select group_concat( distinct source) from geolocale_taxon order by source;
             String source = rset.getString("source");
 
             Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleId);
-            if ("region".equals(geolocale.getGeorank())) continue;
+            if (geolocale == null || "region".equals(geolocale.getGeorank())) continue;
             Geolocale parentGeolocale = GeolocaleMgr.getGeolocale(geolocale.getParent());
-            
-          boolean d = "Chile".equals(geolocale.getName()) || "Chile".equals(parentGeolocale.getName());
+
+            // Debug flag for one country; the parent may be missing (handled just below).
+            boolean d = "Chile".equals(geolocale.getName()) || (parentGeolocale != null && "Chile".equals(parentGeolocale.getName()));
             if (parentGeolocale == null) {
               String message = "null parentGeolocale for geolocaleId:" + geolocaleId + " name:" + geolocale.getName() + " parent:" + geolocale.getParent();
               if (!message.equals(lastLine)) {

@@ -16,16 +16,16 @@
 <input type="hidden" name="id" value="<%= accessLogin.getId() %>">
 
 <h3>Name:</h3>
-<input type="text" class="input_200" name="name" value="<%= teamMemberEdit.getName() %>">
+<input type="text" class="input_200" name="name" value="<%= org.calacademy.antweb.util.Html.escAttr(teamMemberEdit.getName()) %>">
 
 <h3>Role/Org:</h3>
-<input type="text" class="input_200" name="roleOrg" value="<%= teamMemberEdit.getRoleOrg() %>">
+<input type="text" class="input_200" name="roleOrg" value="<%= org.calacademy.antweb.util.Html.escAttr(teamMemberEdit.getRoleOrg()) %>">
 
 <h3>Email:</h3>
-<input type="text" class="input_200" name="email" value="<%= teamMemberEdit.getEmail() %>">
+<input type="text" class="input_200" name="email" value="<%= org.calacademy.antweb.util.Html.escAttr(teamMemberEdit.getEmail()) %>">
 
 <h3>Short description:</h3>
-<input type="textarea" cols="60" rows="15" name="text" value="<%= teamMemberEdit.getText() %>">
+<input type="textarea" cols="60" rows="15" name="text" value="<%= org.calacademy.antweb.util.Html.escAttr(teamMemberEdit.getText()) %>">
 
 
 <input type=submit class=submit value="Update &#187;">

@@ -19,8 +19,12 @@
    <tr>
     <td>
     <!-- p>Y<img src="< %= teamMemberA.getImgLoc() % >< %= teamMemberA.getImgFileName() % >" alt="< %= teamMemberA.getName() % >" -->
-    <p><strong><a href="mailto:<%= teamMemberA.getEmail() %>"><%= teamMemberA.getName() %></a>, <%= teamMemberA.getRoleOrg() %></strong>
-    <br><%= teamMemberA.getText() %></p>
+    <% if (org.calacademy.antweb.util.LoginMgr.isAdmin(request) && teamMemberA.getEmail() != null && !teamMemberA.getEmail().isEmpty()) { %>
+    <p><strong><a href="mailto:<%= org.calacademy.antweb.util.Html.escAttr(teamMemberA.getEmail()) %>"><%= org.calacademy.antweb.util.Html.esc(teamMemberA.getName()) %></a>, <%= org.calacademy.antweb.util.Html.esc(teamMemberA.getRoleOrg()) %></strong>
+    <% } else { %>
+    <p><strong><%= org.calacademy.antweb.util.Html.esc(teamMemberA.getName()) %>, <%= org.calacademy.antweb.util.Html.esc(teamMemberA.getRoleOrg()) %></strong>
+    <% } %>
+    <br><%= org.calacademy.antweb.util.Html.esc(teamMemberA.getText()) %></p>
     </td>
    </tr>
    </table>

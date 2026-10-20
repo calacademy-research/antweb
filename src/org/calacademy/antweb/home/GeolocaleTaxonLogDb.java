@@ -19,23 +19,6 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
       super(connection);
     }
 
-    public void deleteAllLogs() throws SQLException {
-      Statement stmt = DBUtil.getStatement(getConnection(), "GeolocaleTaxonDb.deleteAllLogs()");
-
-      boolean debug = true;   
-      String dml = null;
-               
-      try {
-        dml = "delete from geolocale_taxon_log";
-        stmt.executeUpdate(dml);        
-
-        dml = "delete from geolocale_taxon_log_detail";
-        stmt.executeUpdate(dml);        
-
-      } finally {
-        DBUtil.close(stmt, "GeolocaleTaxonDb.deleteAllLogs()");
-      }   
-    }
     
     public void archiveSpeciesList(String speciesListName, Login curatorLogin) throws SQLException {
 

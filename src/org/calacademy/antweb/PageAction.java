@@ -25,22 +25,27 @@ public final class PageAction extends AntwebAction {
         HttpServletRequest request, HttpServletResponse response)
         throws IOException, ServletException {
 
-        Locale locale = getLocale(request);
-        HttpSession session = request.getSession();
-
         DynaActionForm df = (DynaActionForm) form;
         String name = (String) df.get("name");
 
-        // String url = AntwebProps.getDomainApp() + "/" + Project.getSpeciesListDir() + name + "/" + name + ".jsp";
-
-        // name is URL-encoded, so it cannot add parameters or change the path of the fetch.
-        if (name == null) name = "";
-        String url = AntwebProps.getThisDomainApp() + "/project.do?name=" + Html.url(name + "ants");
-        //s_log.warn("execute() url:" + url);
-
+        // /page.do?name=california sends the browser to /project.do?name=californiaants
+        // (the server no longer fetches the project page itself).
+        String path = redirectPath(name);
         PageTracker.remove(request);
-        HttpUtil.fetchAndWrite(url, response);        
-        return null;  
+        if (path == null) {
+            request.setAttribute("message", "Page not found.");
+            return mapping.findForward("message");
+        }
+        response.sendRedirect(AntwebProps.getDomainApp() + path);
+        return null;
+    }
+
+    /** "/project.do?name=<name>ants" (URL-encoded) for a plain project name, else null. */
+    public static String redirectPath(String name) {
+        if (name == null) return null;
+        name = name.trim();
+        if (!name.matches("[A-Za-z0-9_-]{1,60}")) return null;
+        return "/project.do?name=" + Html.url(name + "ants");
     }
     
 // This mechanism creates a frame and includes the pregenerated page and stub

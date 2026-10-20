@@ -1290,19 +1290,6 @@ public abstract class HttpUtil {
       //A.log("isStaticCall() exception made ? for:" + target);
   }
 
-  public static void fetchAndWrite(String url, HttpServletResponse response) {  
-        // See PageAction.java.
-        //s_log.warn("execute() url:" + url);
-        try { 
-          String output = HttpUtil.fetchUrl(url);
-          HttpUtil.write(output, response);
-        } catch (IOException e) {
-          String message = "url:" + url + " e:" + e;
-          s_log.warn("fetchAndWrite() " + message);
-          AdminAlertMgr.log(message);
-        }
-  }
-  
   public static void write(String output, HttpServletResponse response) throws IOException {
         response.setContentType("text/html");
         Writer writer = response.getWriter();

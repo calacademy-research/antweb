@@ -481,7 +481,10 @@ def analyse_class(cls, seen=None):
                     g["conditional"] = True
                 res["gates"].append(g)
             res["writes"] = res["writes"] or sres["writes"]
-            if not res["subs"] and sres["subs"]:
+            # Sub-actions are read in the superclass's execute(); a subclass with its own
+            # execute() (not calling super.execute) never reaches them.
+            overrides = bool(execute) and "super.execute(" not in code
+            if not res["subs"] and sres["subs"] and not overrides:
                 res["subs"] = sres["subs"]
                 res["action_vars"] = sres["action_vars"]
     return res
