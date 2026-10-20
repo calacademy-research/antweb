@@ -49,6 +49,7 @@ public class UtilDataAction extends AntwebAction {
     static final java.util.Set<String> ACTIONS = java.util.Set.of(
         "set1", "set2", "set3", "set4", "set5", "taxonWorksNightly",
         "worldantsFetchAndReload", "worldantsReload", "taxonFinish", "dataCleanup", "restoreParkedTaxonSets",
+        "specimenNameUpdate", "specimenNameUpdatePreview",
         "generateGeolocaleTaxaFromSpecimens", "geolocaleCountCrawl", "geolocaleTaxonFix",
         "fixGeolocaleTaxonParentage", "updateGeolocaleParentHierarchy",
         "projectCountCrawl", "populateMuseum", "populateBioregion", "updateTaxonSets", "crawlForType",
@@ -188,6 +189,35 @@ public class UtilDataAction extends AntwebAction {
         return mapping.findForward("message");
     }
 
+    /**
+     * Nightly set 1: the name update (SpecimenNameUpdate) with the setting in etc/name-update.properties.
+     * Runs only if tonight's AntCat import succeeded. Its own commit and rollback: a failure here
+     * does not undo the AntCat import or the TaxonWorks upload. Writes one line to compute.log.
+     */
+    static String nightlyNameUpdate(Connection connection, String worldantsMessage) {
+        org.calacademy.antweb.upload.SpecimenNameUpdate.Settings settings = org.calacademy.antweb.upload.SpecimenNameUpdate.readSettings();
+        String line;
+        if (org.calacademy.antweb.upload.SpecimenNameUpdate.OFF.equals(settings.mode)) {
+            line = "name update: off" + (settings.note != null ? " (" + settings.note + ")" : "");
+        } else if (!"success".equals(worldantsMessage)) {
+            line = "name update: skipped, tonight's AntCat import did not succeed (" + worldantsMessage + ")";
+        } else {
+            try {
+                connection.commit();   // what set 1 did so far stays, whatever happens below
+                org.calacademy.antweb.upload.SpecimenNameUpdate.Summary summary =
+                    org.calacademy.antweb.upload.SpecimenNameUpdate.runLocked(connection, settings.mode, settings.maxChanges);
+                connection.commit();
+                line = summary.line();
+            } catch (Exception e) {
+                try { connection.rollback(); } catch (SQLException e2) { s_log.error("nightlyNameUpdate() rollback e:" + e2); }
+                s_log.error("nightlyNameUpdate() e:" + e);
+                line = "name update: FAILED, nothing changed (" + e + ")";
+            }
+        }
+        LogMgr.appendLog("compute.log", "  " + line, true);
+        return line;
+    }
+
     private String handleException(Exception e, Connection connection, String action, String loginName) {
         String message = "Error. No changes made for action:" + Html.esc(action) + " user:" + Html.esc(loginName) + " e:" + Html.esc(e);
         s_log.error("handleException() " + message);
@@ -229,11 +259,15 @@ public class UtilDataAction extends AntwebAction {
             // dev: 11.68 mins  Or 24.98 mins? Prod: 11.23 mins. Dev2: 0.90 mins (presumably failure to access worldants file)
             if ("set1".equals(action)) {
                 message = "set1 - ";
-                message += doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
+                OperationDetails worldants = doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
+                message += worldants;
                 message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
                 // CAS specimens from TaxonWorks (GitHub #27). Does nothing without etc/taxonworks.properties.
                 // Waits up to 90 minutes for TaxonWorks to build a fresh archive (see TaxonWorksNightly.run).
                 message += " taxonWorksNightly: " + org.calacademy.antweb.upload.TaxonWorksNightly.run(connection, 90);
+                // Existing specimens follow AntCat name changes (etc/name-update.properties; off without it).
+                // After the AntCat import and the TaxonWorks upload, before sets 2 to 5 rebuild lists and counts.
+                message += " " + nightlyNameUpdate(connection, worldants == null ? null : worldants.getMessage());
                 TaxonMgr.populate(connection, true, false);
             }
 
@@ -360,6 +394,19 @@ public class UtilDataAction extends AntwebAction {
 		  message += TaxonDb.deleteSpeciesWithoutSpecimenOrAntcatSource(connection);
 		  message += TaxonDb.deleteGeneraWithoutSpecimenOrAntcatSource(connection);
           message += TaxonSetDb.dataCleanup(connection);
+		}
+
+		// The nightly name update by hand (admin, POST): specimenNameUpdate uses the setting in
+		// etc/name-update.properties; specimenNameUpdatePreview always runs in report mode (the
+		// "Preview now" button of the Name updates page). See org.calacademy.antweb.upload.SpecimenNameUpdate.
+		if (action.equals("specimenNameUpdate") || action.equals("specimenNameUpdatePreview")) {
+		  org.calacademy.antweb.upload.SpecimenNameUpdate.Settings settings = org.calacademy.antweb.upload.SpecimenNameUpdate.readSettings();
+		  String mode = action.equals("specimenNameUpdatePreview") ? org.calacademy.antweb.upload.SpecimenNameUpdate.REPORT : settings.mode;
+		  org.calacademy.antweb.upload.SpecimenNameUpdate.Summary summary =
+		      org.calacademy.antweb.upload.SpecimenNameUpdate.runLocked(connection, mode, settings.maxChanges);
+		  org.calacademy.antweb.upload.SpecimenNameUpdate.log(summary);
+		  LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " " + action + " by " + (accessLogin == null ? "scheduler" : accessLogin.getName()) + ": " + summary.line());
+		  message = Html.esc(summary.line()) + "<br><br><a href='" + AntwebProps.getDomainApp() + "/nameUpdates.do'>Name updates page</a>";
 		}
 
 		// Curator rows of region and project lists kept in taxon_set_parked (CuratorTaxonSetDb):

@@ -71,6 +71,11 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 
             &nbsp;&nbsp;&nbsp;View Your <a href="<%= domainApp %>/listImageUploads.do?groupId=<%= accessGroup.getId() %>">Image Upload Reports</a>
 
+            &nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/nameUpdates.do">Name updates</a> (specimens moved to the current valid name after an AntCat change)
+<% if (LoginMgr.isAdmin(accessLogin)) { %>
+            &nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/countCheck.do">Count check</a> (list counts recomputed from specimen records)
+<% } %>
+
 
 
           </div>

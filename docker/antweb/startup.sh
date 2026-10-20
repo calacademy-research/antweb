@@ -15,7 +15,7 @@ service cron start
 as_tomcat() {
   setpriv --reuid=tomcat --regid=antweb --init-groups "$@"
 }
-for f in db mail editor turnstile taxonworks; do
+for f in db mail editor turnstile taxonworks scheduler name-update; do
   p=/antweb/deploy/etc/$f.properties
   # shellcheck disable=SC2016 # $1 expands in the inner sh
   if [ -e "$p" ] && ! as_tomcat sh -c 'test -r "$1"' _ "$p"; then

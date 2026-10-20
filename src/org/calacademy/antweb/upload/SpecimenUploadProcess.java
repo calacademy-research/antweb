@@ -445,91 +445,70 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
       String status = null;    
       String originalTaxonName = null;
       
-      //The case of morpho and indet are easy because we can determine by the taxon name.
-      if (Taxon.isIndet(taxonName)) {
-        status = Status.INDETERMINED;  
-      } else if (Taxon.isMorpho(taxonName)) {
-        status = Status.MORPHOTAXON;
-      } else {
-		  ProfileCounter.add("SpecimenUploadProcess.SetStatusAndCurrentValidName()A"); // CAS:158,415 X
-          TaxonDb taxonDb = new TaxonDb(getConnection());
-          //DummyTaxon taxon = taxonDb.getDummyTaxon(taxonName);
-		  Taxon taxon = null;
-		  if (TaxonMgr.isUseRefreshing()) {
-			  taxon = TaxonMgr.getTaxon(taxonName);
-		  } else {
-			  taxon = taxonDb.getTaxon(taxonName);
-		  }
+      // The decision is CurrentValidNameRule.decide() (shared with the nightly name update,
+      // SpecimenNameUpdate); the report lines, the homonym placeholder taxon and the name columns stay here.
+      CurrentValidNameRule.Result rule = CurrentValidNameRule.decide(taxonName, CurrentValidNameRule.uploadLookup(getConnection()));
+      status = rule.status;
 
-          if (taxon != null) status = taxon.getStatus();
+      switch (rule.kind) {
+        case INDET:
+        case MORPHO:
+          break;
 
-          if (taxon == null || status == null || Status.UNRECOGNIZED.equals(status)) {
-          
-            if (false && taxonName.contains("gryllinaegryllus")) s_log.debug("setStatusAndCurrentValidName() taxon:" + taxon
-              + " status:" + status + " statusAndCurrentValidNameCount:" + s_statusAndCurrentValidNameCount
-              + " quad:" + Taxon.isQuadrinomial(taxonName)
-              + " ant:" + Taxon.isAnt(taxonName));
-
-			/*
-			If it is unrecognized, it could have a parent specified which is a synonym.  In this case
-			we would want to insert the taxon with a new parent, and with modified taxonomic lineage.
-			use makeSpecimenUseTaxon() as illustrated below.
-			*/
-
-            if (status == null) status = Status.UNRECOGNIZED;
-
+        case NOT_IN_ANTCAT: {
+            /*
+            If it is unrecognized, it could have a parent specified which is a synonym.  In this case
+            we would want to insert the taxon with a new parent, and with modified taxonomic lineage.
+            use makeSpecimenUseTaxon() as illustrated below.
+            */
             if (new HomonymDb(getConnection()).isHomonym(taxonName)) {
-              //String heading = "<b>Taxon names recognized as Homonyms.  Names are not verified against AntCat.org  Submission <font color=green>(uploaded)</font></b>";
               String displayName = Taxon.makeDescriptionLink(taxonName);
-              getMessageMgr().addToMessages(MessageMgr.taxonNamesAreHomonyms, displayName);            
+              getMessageMgr().addToMessages(MessageMgr.taxonNamesAreHomonyms, displayName);
             } else {
               // if quadrinomial put in a separate list.  Do upload, otherwise don't.
               if (Taxon.isQuadrinomial(taxonName)) {
-                //String heading = "<b>Unavailable quadrinomial. Submission <font color=green>(uploaded)</font></b>";
                 String displayName = Taxon.makeDescriptionLink(taxonName);
-                getMessageMgr().addToMessages(MessageMgr.unavailableQuadrinomial, displayName);            
+                getMessageMgr().addToMessages(MessageMgr.unavailableQuadrinomial, displayName);
               } else {
                 if (Taxon.isAnt(taxonName)) {
-                	  // Currently we allow these to be uploaded.  In the future we won't.
-					//String heading = "<b>Unrecognized Invalid species.  Names not found in AntCat.org. Submission <font color=green>(uploaded)</font></b>";
-					String displayName = Taxon.makeDescriptionLink(taxonName);
-					getMessageMgr().addToMessages(MessageMgr.unrecognizedInvalidSpecies, displayName);            
-    		    }
+                    // Currently we allow these to be uploaded.  In the future we won't.
+                    String displayName = Taxon.makeDescriptionLink(taxonName);
+                    getMessageMgr().addToMessages(MessageMgr.unrecognizedInvalidSpecies, displayName);
+                }
               }
             }
-          } else { 
-            String currentValidName = taxon.getCurrentValidName();
-            String subfamily = taxon.getSubfamily();
-            status = taxon.getStatus();
- 
-            if (Status.usesCurrentValidName(status)) {
-              if (currentValidName == null) {
-                s_log.debug("setStatusAndCurrentValidName() shouldn't status:" + status + " have a current valid name?");
-                // Shouldn't a status that uses a current valid name have a current valid name?
-              } else {
+            break;
+        }
 
-                originalTaxonName = taxonName;
-                taxonName = currentValidName;
-                skipTaxonEntry = true;
+        case NO_CURRENT_VALID_NAME:
+            s_log.debug("setStatusAndCurrentValidName() shouldn't status:" + status + " have a current valid name?");
+            break;
 
-    	   	    ProfileCounter.add("SpecimenUploadProcess.SetStatusAndCurrentValidName()B"); // CAS:42 X
-                String currentValidTaxonName = TaxonDb.getCurrentValidTaxonName(getConnection(), currentValidName);  // Does not look in Homonym table.
+        case KEEP:
+            if (!(Status.VALID.equals(status) || Status.UNAVAILABLE.equals(status) || Status.UNIDENTIFIABLE.equals(status))) {
+              s_log.debug("setStatusAndCurrentValidName() for taxonName:" + taxonName + " status not found:" + status);
+            }
+            break;
 
-                String newTaxonStr = null;
-                
-                if (currentValidTaxonName == null) {
-                  Taxon dummyTaxon = new HomonymDb(getConnection()).getHomonym(currentValidName);  // Unsafe usage! Homonym primary key includes author_date.
-                  boolean isHomonym = dummyTaxon != null;
-					if (isHomonym) {
-                    // Seems to be Homonym.  Ideally in this case, we would create a taxon for the insertion.  As is, pointing at not current valid name.
-                    // XXX.  FM.  See http://localhost/antweb/specimen.do?name=fmnhins0000109175 
-                    // Create a matching taxon to be parent of the specimen.
-                    // We will do this even AFTER we shut off specimen upload taxa creation.  We do not want children of homonyms.
+        default: {
+            // REPLACE, TARGET_IS_HOMONYM, TARGET_MISSING, TARGET_SAME: filed under the current valid name.
+            String currentValidName = rule.taxonName;
+            originalTaxonName = rule.originalTaxonName;
+            taxonName = currentValidName;
+            skipTaxonEntry = true;
 
+            ProfileCounter.add("SpecimenUploadProcess.SetStatusAndCurrentValidName()B");
+            TaxonDb taxonDb = new TaxonDb(getConnection());
+            String newTaxonStr = null;
+
+            if (rule.kind == CurrentValidNameRule.Kind.TARGET_IS_HOMONYM) {
+                Taxon dummyTaxon = new HomonymDb(getConnection()).getHomonym(currentValidName);  // Unsafe usage! Homonym primary key includes author_date.
+                if (dummyTaxon != null) {
+                    // Create a matching taxon to be parent of the specimen. We do not want children of homonyms.
                     // currentValidName is a misnomer at this point.  As a homonym, new taxon created that is "Unrecoginzed" as a place holder for the homonym.
                     s_log.warn("setStatusAndCurrentValidName() taxon does not exist for homonym with specimen.  Create.  new taxon:" + currentValidName + " code:" + specimenItem.get("code") + " taxonItem:" + taxonItem + " specimenItem:" + specimenItem);
 
-	                taxonItem.put("family", dummyTaxon.getFamily());
+                    taxonItem.put("family", dummyTaxon.getFamily());
                     taxonItem.put("subfamily", dummyTaxon.getSubfamily());
                     if (dummyTaxon.getTribe() != null) taxonItem.put("tribe", dummyTaxon.getTribe());
                     taxonItem.put("genus", dummyTaxon.getGenus());
@@ -540,40 +519,19 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
                     taxonItem.put("insert_method", "homononymMirroringTaxon");
                     taxonItem.put("source", source);
 
-                    // (new AntwebUpload(getConnection())). // *** changed Nov 11, 2019
                     saveTaxonAndProjTaxon(taxonItem, Project.ALLANTWEBANTS);
-                    
-                    status = Status.UNRECOGNIZED;
 
                     newTaxonStr = makeSpecimenUseTaxon(taxonDb, currentValidName, originalTaxonName, specimenItem, taxonItem);
-
-                  } else {
-                    //A.log("setStatusAndCurrentValidName() No currentValidTaxonName for" + " currentValidName:" + currentValidName + " taxonName:" + taxonName + " code:" + specimenItem.get("code"));
-                  }
-                } else {
-                  if (currentValidTaxonName.equals(originalTaxonName)) {
-                    s_log.warn("setStatusAndCurrentValidTaxonName() currentValidName should be distinct from taxonName:" + taxonName);
-                  } else {
-                    // We found it.  Use it.
-
-                    status = Status.VALID;
-
-                    newTaxonStr = makeSpecimenUseTaxon(taxonDb, currentValidTaxonName, originalTaxonName, specimenItem, taxonItem);
-
-                    //A.iLog(6, "setStatusAndCurrentValidName() Using currentValidTaxonName:" + currentValidTaxonName + " for originalTaxonName:" + originalTaxonName, 100);
-                  }
-                } 
-                if (newTaxonStr != null)
-                  getUploadDetails().getMessageMgr().addToMessages(MessageMgr.recognizedInvalidSpecies, newTaxonStr);
-
-              } // Check for null currentValidName
-            } else if (Status.VALID.equals(status) || Status.UNAVAILABLE.equals(status) || Status.UNIDENTIFIABLE.equals(status)) {
-              // do nothing
-            } else {
-              s_log.debug("setStatusAndCurrentValidName() for taxonName:" + taxonName + " status not found:" + status);
-            }            
-          }
-      } // end if/else
+                }
+            } else if (rule.kind == CurrentValidNameRule.Kind.TARGET_SAME) {
+                s_log.warn("setStatusAndCurrentValidTaxonName() currentValidName should be distinct from taxonName:" + originalTaxonName);
+            } else if (rule.kind == CurrentValidNameRule.Kind.REPLACE) {
+                newTaxonStr = makeSpecimenUseTaxon(taxonDb, rule.validTaxonName, originalTaxonName, specimenItem, taxonItem);
+            }
+            if (newTaxonStr != null)
+              getUploadDetails().getMessageMgr().addToMessages(MessageMgr.recognizedInvalidSpecies, newTaxonStr);
+        }
+      }
 
 	  if (!Taxon.isAnt(taxonName)) {
 		String displayName = Taxon.makeDescriptionLink(taxonName);
