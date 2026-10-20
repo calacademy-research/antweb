@@ -252,6 +252,15 @@
 <%= introducedCountHtml %></b>
 <br>
 <br><b>Specimens:</b>&nbsp;<%= Formatter.commaFormat(overview.getSpecimenCount()) %> <span class="stat_def">(<%= specimensDef %>)</span>
+<%
+   // List of the specimen records behind this number (public; Brian 2026-10-20). Advanced search by the
+   // place's own criteria, every name and status, so it can be longer than the Specimens number.
+   if (!HttpUtil.isBot(request) && overview instanceof LocalityOverview) {
+     String listCriteria = ((LocalityOverview) overview).getSearchCriteria();
+     if (listCriteria != null && !"".equals(listCriteria)) { %>
+<br>&nbsp;&nbsp;<a href="<%= AntwebProps.getDomainApp() %>/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&<%= listCriteria %>&resultRank=specimen">List all specimens collected in <%= Html.esc(overview.getName()) %></a> <span class="stat_def">(every record, under any name, including those not counted above)</span>
+<%   }
+   } %>
 <% if (placeImages != null) { %>
 <br><b>Imaged specimens:</b>&nbsp;<%= Formatter.commaFormat(imagedShown) %> <span class="stat_def">(specimens with at least one photo of the ant; label-only photos not counted)<% if (placeImages.labelOnlySpecimens > 0) { %> (<%= Formatter.commaFormat(placeImages.labelOnlySpecimens) %> more have only a label photo)<% } %></span>
 <br><b>Images:</b>&nbsp;<%= Formatter.commaFormat(imagesShown) %><% if (imagesShown > 0) { %>: <span class="stat_def" id="image-breakdown"><%= org.calacademy.antweb.home.PlaceImageCountDb.breakdown(placeImages) %></span><% } %>
@@ -264,26 +273,7 @@
 </div>
 <style>#place-stats .stat_def { color: #666; font-size: 0.9em; }</style>
 
-<% 
-//A.log("*");
-   // The Show All Specimen advanced search link.
-   if (!HttpUtil.isBot(request) && isGeolocale) {
-     String clause = null;
-     if (overview instanceof LocalityOverview) {
-       clause = "&family=formicidae&" + ((LocalityOverview) overview).getSearchCriteria();
-     }
-     
-     if (clause != null) {
-		 String specimenSearchUrl = "/advancedSearch.do?searchMethod=advancedSearch&advanced=true" + clause + "&resultRank=specimen";
-         String speciesSearchUrl = specimenSearchUrl + "&resultRank=species";
-     	 out.println("<br><br>");
-     	 
-     	 //if (LoginMgr.isAdmin(request)) { 
-		 //  out.println("<b><a href='" + AntwebProps.getDomainApp() + speciesSearchUrl + "'>Show All Species<a></b> | ");     
-         //}
-		 out.println("<b><a href='" + AntwebProps.getDomainApp() + specimenSearchUrl + "'>List all specimens collected in " + Html.esc(overview.getName()) + "</a></b> <span class=\"stat_def\">(every record, under any name, including those not counted above)</span>");     
-     }
-   } %>
+
 
 <%
   if (HttpUtil.isOffline()) { %>
