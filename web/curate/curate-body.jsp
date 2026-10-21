@@ -192,33 +192,26 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                     </select>
 
                     &nbsp;&nbsp;Upload as:
-                    <select name="uploadAs">
-                        <option value="<%= accessLogin.getId() %>" selected><%= Html.esc(accessLogin.getName()) %>
+                    <select name="uploadAs" aria-label="Upload as" aria-describedby="upload-as-warning">
                 <%
+                // Each choice names the group the upload goes into (an upload replaces that group's specimens);
+                // the value stays the login id. org.calacademy.antweb.curate.UploadAsOptions.
+                List<org.calacademy.antweb.curate.UploadAsOptions.Option> uploadAsOptions = new ArrayList<>();
+                uploadAsOptions.add(org.calacademy.antweb.curate.UploadAsOptions.of(accessLogin));
                 String uploadAs = accessLogin.getUploadAs();
                 if (uploadAs != null && !"".equals(uploadAs)) {
-                    List<String> curatorList = new ArrayList<String>(Arrays.asList(uploadAs.split(",")));
-                    for (String curatorIdStr : curatorList) {
-                      int curatorId = 0;
-                      Login curator = null;
+                    for (String curatorIdStr : uploadAs.split(",")) {
                       try {
-                        curatorId = Integer.parseInt((curatorIdStr.trim()));
-                        curator = LoginMgr.getCurator(curatorId);
-                        if (curator != null) { %>
-                            <option value="<%= curator.getId() %>"><%= Html.esc(curator.getName()) %>
-                     <% } else {
-                         //A.log("curate-body.jsp curator:null for " + curatorList + " curatorIDStr:" + curatorIdStr + " curatorId:" + curatorId + " curator:" + curator);
-                        }
-                      } catch (NullPointerException e) {
-                         // Why is this not getting trapped outside/above?
-                         AntwebUtil.log("NullPointerException for curatorList:" + curatorList + " curatorIDStr:" + curatorIdStr + " curatorId:" + curatorId + " curator:" + curator);
-                      } catch (NumberFormatException e) {
-                         AntwebUtil.log("NumberFormatException for curatorID:" + curatorIdStr);
+                        Login curator = LoginMgr.getCurator(Integer.parseInt(curatorIdStr.trim()));
+                        if (curator != null) uploadAsOptions.add(org.calacademy.antweb.curate.UploadAsOptions.of(curator));
+                      } catch (RuntimeException e) {
+                         AntwebUtil.log("curate-body.jsp uploadAs: " + e + " for curatorID:" + curatorIdStr);
                       }
                     }
                 } %>
-
+                <%= org.calacademy.antweb.curate.UploadAsOptions.optionsHtml(uploadAsOptions, accessLogin.getId()) %>
                     </select>
+                    <span id="upload-as-warning" style="color:red;font-weight:bold"><%= org.calacademy.antweb.curate.UploadAsOptions.WARNING %></span>
                 </div>
                 <div class="clear"></div>
 

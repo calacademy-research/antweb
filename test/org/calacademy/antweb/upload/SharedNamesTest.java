@@ -66,6 +66,23 @@ public class SharedNamesTest extends TestCase {
         assertFalse(new File("no-such-export.txt").isFile());
     }
 
+    /** Each shared name keeps its AntCat taxa (oldest first), for the lines of SharedNameReport. */
+    public void testAntcatTaxaOfAName() throws IOException {
+        SharedNames s = fixture();
+        List<SharedNames.AntcatTaxon> t = s.taxaOf("Pachycondyla sauteri");
+        assertEquals(2, t.size());
+        assertEquals(509406, t.get(0).antcatId);
+        assertEquals("Wheeler, 1906", t.get(0).authorDate);
+        assertEquals("obsolete combination", t.get(0).status);
+        assertEquals("Cryptopone sauteri", t.get(0).validName);
+        assertEquals("Forel, 1912", t.get(1).authorDate);
+        assertEquals("tags removed", "Longino et al., 2026", s.taxaOf("Gnamptogenys andina").get(1).authorDate);
+        assertNull("a junior homonym has no valid name", s.taxaOf("Gnamptogenys andina").get(1).validName);
+        assertEquals("only a junior homonym: kept too", "homonym", s.taxaOf("Pheidole zzhomonym").get(0).status);
+        assertNull("one valid taxon: nothing kept", s.taxaOf("Cryptopone sauteri"));
+        assertNull("not shared, a valid name", s.taxaOf("Crematogaster obscurus"));
+    }
+
     public void testFromTheHomonymTable() {
         SharedNames s = SharedNames.of(Map.of(
             "Carebara silvestrii", List.of("Carebara silvestrii (unrecognized)", "Carebara silvestrii Forel, 1905 (homonym)"),

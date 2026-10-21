@@ -216,8 +216,13 @@ public class AntcatHistoryTest extends TestCase {
         assertEquals(n, reason("Formica oreas oreas", "Formica oreas"));
         assertEquals(n, reason("Myrmica discontinua discontinua", "Myrmica discontinua"));
         assertEquals(n, reason("Prenolepis imparis imparis", "Prenolepis imparis"));
-        assertEquals("synonym: Solenopsis texana is a junior synonym of Solenopsis canariensis (Seifert 2026a)",
-            reason("Solenopsis texana texana", "Solenopsis canariensis"));
+        // One wording for every synonym (Brian, 2026-10-20), the chain named after the reference.
+        String texana = reason("Solenopsis texana texana", "Solenopsis canariensis");
+        assertEquals("synonym: junior synonym of Solenopsis canariensis (Seifert 2026a); nominotypical subspecies of S. texana", texana);
+        assertTrue(texana.startsWith("synonym: junior synonym of "));
+        String html = NameUpdateReason.toHtml(texana, 7, "Solenopsis texana texana", "Solenopsis canariensis");
+        assertEquals("synonym: junior synonym of <i>Solenopsis canariensis</i> (<a href=\"https://www.antcat.org/catalog/7\">Seifert 2026a</a>);"
+            + " nominotypical subspecies of <i>S. texana</i>", html);
     }
 
     /** Unnecessary replacement names: junior objective synonyms, cited by the replacement's author. */

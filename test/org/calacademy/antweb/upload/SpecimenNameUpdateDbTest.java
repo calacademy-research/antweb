@@ -162,7 +162,8 @@ public class SpecimenNameUpdateDbTest extends TestCase {
 
         // A second preview replaces the first.
         SpecimenNameUpdate.run(connection, SpecimenNameUpdate.REPORT, 50000);
-        assertEquals(4, count("select count(*) from specimen_name_update"));
+        assertEquals(4, count("select count(*) from specimen_name_update where mode = 'would_change'"));
+        assertEquals("the curator's list, replaced too", 1, count("select count(*) from specimen_name_update where mode = 'shared_name'"));
     }
 
     public void testApplyMovesSpecimensAndKeepsTheUploadedName() throws Exception {
@@ -191,8 +192,13 @@ public class SpecimenNameUpdateDbTest extends TestCase {
 
         assertEquals("the preview is gone, the changes recorded", 0, count("select count(*) from specimen_name_update where mode = 'would_change'"));
         assertEquals(4, count("select count(*) from specimen_name_update where mode = 'changed'"));
-        assertTrue(s.skipped.get(SpecimenNameUpdate.Outcome.HOMONYM) >= 1);
-        assertEquals(1, (int) s.skipped.get(SpecimenNameUpdate.Outcome.PLACEHOLDER));
+        // casent0000005: its valid name is a homonym (a placeholder taxon); casent0000006 is already on the placeholder.
+        // One category since 2026-10-20: held for the curator, not a separate "homonym" or "placeholder" count.
+        assertEquals(1, (int) s.skipped.get(SpecimenNameUpdate.Outcome.SHARED_NAME));
+        assertEquals(1, count("select count(*) from specimen_name_update where mode = 'shared_name' and code = 'casent0000005'"));
+        assertEquals("its current valid name, Carebara silvestrii, is shared by two or more AntCat taxa; please confirm the identification",
+            one("select reason from specimen_name_update where code = 'casent0000005'"));
+        assertEquals(0, count("select count(*) from specimen_name_update where code = 'casent0000006'"));
         assertEquals("a morpho on its own name is not even a candidate", 0, (int) s.skipped.get(SpecimenNameUpdate.Outcome.MORPHO_OR_INDET));
         assertEquals(1, (int) s.skipped.get(SpecimenNameUpdate.Outcome.NO_TARGET));
 
@@ -232,27 +238,173 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         SpecimenNameUpdate.Summary s = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000, shared);
         assertEquals("not moved", obs, nameOf("casent0000020"));
         assertEquals(4, s.specimens);
-        assertEquals(1, s.sharedSpecimens);
-        assertEquals(1, (int) s.skipped.get(SpecimenNameUpdate.Outcome.SHARED_NAME));
-        assertTrue(s.line(), s.line().contains("for the curator to confirm (shared name): 1 specimens"));
+        assertEquals("and casent0000005 (valid name only a homonym)", 2, s.sharedSpecimens);
+        assertEquals(2, (int) s.skipped.get(SpecimenNameUpdate.Outcome.SHARED_NAME));
+        assertTrue(s.line(), s.line().contains("for the curator to confirm (shared name): 2 specimens"));
         assertEquals("name is shared by two taxa; please confirm the identification: Cryptopone sauteri or Ectomomyrmex sauteri",
             one("select reason from specimen_name_update where code = 'casent0000020' and mode = 'shared_name'"));
 
         SpecimenNameUpdateDb db = new SpecimenNameUpdateDb(connection);
         java.util.List<SpecimenNameUpdateDb.Line> held = db.getShared(CAS);
-        assertEquals(1, held.size());
-        assertEquals(obs, held.get(0).oldName);
-        assertEquals("casent0000020", held.get(0).codes.get(0));
+        assertEquals(2, held.size());
+        assertEquals(obs, held.get(1).oldName);
+        assertEquals("casent0000020", held.get(1).codes.get(0));
         assertTrue("other groups do not see it", db.getShared(JTL).isEmpty());
         for (SpecimenNameUpdateDb.Run run : db.getRuns(0, null, null, 30)) assertFalse("not a run of moves", SpecimenNameUpdate.SHARED.equals(run.mode));
 
         // The next run replaces the list.
         SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000, shared);
-        assertEquals(1, count("select count(*) from specimen_name_update where mode = 'shared_name'"));
+        assertEquals(2, count("select count(*) from specimen_name_update where mode = 'shared_name'"));
         // Without the shared names (AntCat no longer has two taxa of the name), it moves.
         SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000, org.calacademy.antweb.upload.SharedNames.none());
         assertEquals(valid, nameOf("casent0000020"));
-        assertEquals(0, count("select count(*) from specimen_name_update where mode = 'shared_name'"));
+        assertEquals(0, count("select count(*) from specimen_name_update where mode = 'shared_name' and code = 'casent0000020'"));
+    }
+
+    /**
+     * Brian Fisher, 2026-10-20 preview: "Wasmannia auropunctata -> Allomerus auropunctatus" was shown twice under
+     * one group (1 and 42 specimens). Rows that show the same old -> new pair in one group are one line, the
+     * counts added; specimens with another reason keep it on that line. Another group, or another run, is apart.
+     */
+    public void testOneLinePerPairAndGroup() throws Exception {
+        exec("insert into specimen_name_update (run_date, mode, code, access_group, uploaded_name, old_name, new_name, antcat_status, reason, antcat_id) values"
+            + " ('2026-10-20 05:20:00', 'would_change', 'mg0001', 9, 'myrmicinaewasmannia auropunctata', 'myrmicinaewasmannia auropunctata', 'myrmicinaeallomerus auropunctatus', 'obsolete combination', 'new combination: Allomerus auropunctatus (X 2026)', 11),"
+            + " ('2026-10-20 05:20:00', 'would_change', 'mg0002', 9, 'myrmicinaewasmannia auropunctata', 'myrmicinaewasmannia auropunctata', 'myrmicinaeallomerus auropunctatus', 'obsolete combination', 'new combination: Allomerus auropunctatus (X 2026)', 11),"
+            + " ('2026-10-20 05:20:00', 'would_change', 'mg0003', 9, 'formicinaewasmannia auropunctata', 'formicinaewasmannia auropunctata', 'myrmicinaeallomerus auropunctatus', 'obsolete combination', 'new combination: Allomerus auropunctatus (X 2026)', 11),"
+            + " ('2026-10-20 05:20:00', 'would_change', 'mg0004', 9, 'myrmicinaeallomerus auropunctatus', 'myrmicinaewasmannia auropunctata', 'myrmicinaeallomerus auropunctatus', 'synonym', 'Your name Allomerus auropunctatus is valid again.', 12),"
+            + " ('2026-10-20 05:20:00', 'would_change', 'abs0001', 10, 'myrmicinaewasmannia auropunctata', 'myrmicinaewasmannia auropunctata', 'myrmicinaeallomerus auropunctatus', 'obsolete combination', 'new combination: Allomerus auropunctatus (X 2026)', 11)");
+        SpecimenNameUpdateDb db = new SpecimenNameUpdateDb(connection);
+        java.util.List<SpecimenNameUpdateDb.Run> runs = db.getRuns(0, null, null, 30);
+        java.util.List<SpecimenNameUpdateDb.Line> lines = db.getLines(0, runs);
+        assertEquals("one line per group", 2, lines.size());
+        SpecimenNameUpdateDb.Line mg = lines.get(0);
+        assertEquals(9, mg.groupId);
+        assertEquals("counts added", 4, mg.count);
+        assertEquals(java.util.List.of("mg0003", "mg0001", "mg0002", "mg0004"), mg.codes);
+        assertEquals("new combination: Allomerus auropunctatus (X 2026)", mg.reason);
+        assertEquals(java.util.List.of("Your name Allomerus auropunctatus is valid again."), mg.moreReasons);
+        assertEquals(1, lines.get(1).count);
+
+        String html = org.calacademy.antweb.curate.NameUpdatesAction.linesHtml(runs, lines, "");
+        assertEquals(2, html.split("class=\"name-update\"", -1).length - 1);
+        assertTrue(html, html.contains(">4 specimens</summary>"));
+        assertTrue(html, html.contains(">X 2026</a>)</span>; <span class=\"name-update-reason\">Your name"));
+    }
+
+    /**
+     * Brian Fisher, 2026-10-20: the specimen upload report and the Name updates page share one code path
+     * for names of two or more AntCat taxa (SharedNameReport). For the same name, against the same tables:
+     * the upload's rule would move Pachycondyla sauteri to the one taxon the table holds, the upload keeps it
+     * and writes its line; the nightly run holds it and the page writes its line. The two are identical.
+     */
+    public void testUploadAndPageGiveTheSameSharedNameLine() throws Exception {
+        String obs = "ponerinaepachycondyla sauteri";
+        String valid = "ponerinaecryptopone sauteri";
+        taxon(obs, "species", "obsolete combination", valid, null, "ponerinae", "pachycondyla", "sauteri", null);
+        taxon(valid, "species", "valid", null, null, "ponerinae", "cryptopone", "sauteri", null);
+        specimen("casent0000021", obs, null, CAS);
+        org.calacademy.antweb.upload.SharedNames shared = org.calacademy.antweb.upload.SharedNames.fromExport(new java.io.StringReader(
+            "antcat id\tsubfamily\tgenus\tspecies\tsubspecies\tauthor date\tstatus\tcurrent valid name\n"
+            + "509406\tPonerinae\tPachycondyla\tsauteri\t\tWheeler, 1906\tobsolete combination\tPonerinae Cryptopone sauteri\n"
+            + "509563\tPonerinae\tPachycondyla\tsauteri\t\tForel, 1912\tobsolete combination\tPonerinae Ectomomyrmex sauteri\n"));
+
+        // The upload: what SpecimenUploadProcess.setStatusAndCurrentValidName() asks.
+        org.calacademy.antweb.upload.CurrentValidNameRule.Result rule = org.calacademy.antweb.upload.CurrentValidNameRule.decide(
+            obs, org.calacademy.antweb.upload.CurrentValidNameRule.plainLookup(connection));
+        assertEquals("the rule alone would move it", valid, rule.validTaxonName);
+        String upload = org.calacademy.antweb.upload.SharedNameReport.uploadLine(obs, rule, shared);
+        assertNotNull("kept for the curator", upload);
+
+        // The nightly run and the page.
+        SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000, shared);
+        assertEquals("not moved", obs, nameOf("casent0000021"));
+        String page = org.calacademy.antweb.curate.NameUpdatesAction.sharedHtml(new SpecimenNameUpdateDb(connection).getShared(CAS), "", shared);
+        String li = page.substring(page.indexOf("<li class=\"name-update-shared\">" + org.calacademy.antweb.Taxon.makeDescriptionLink(obs)) + "<li class=\"name-update-shared\">".length());
+        assertEquals("the same text in the upload report and on nameUpdates.do", upload, li.substring(0, li.indexOf(" <details")));
+        assertTrue(upload, upload.contains("<a href=\"https://www.antcat.org/catalog/509563\"><i>Pachycondyla sauteri</i> Forel, 1912</a>, obsolete combination, now <i>Ectomomyrmex sauteri</i>"));
+
+        // Without the export, both read the homonym table the same way (SharedNames.load's fallback).
+        org.calacademy.antweb.upload.SharedNames fromTable = org.calacademy.antweb.upload.SharedNames.fromHomonymTable(connection);
+        assertNotNull("Carebara silvestrii: a placeholder row and a homonym", fromTable.candidatesOf("Carebara silvestrii"));
+        assertEquals(2, fromTable.taxaOf("Carebara silvestrii").size());
+        assertEquals("Forel, 1905", fromTable.taxaOf("Carebara silvestrii").get(0).authorDate);
+    }
+
+    /**
+     * Filed under a name AntCat calls valid while the uploaded name now points elsewhere (Brian Fisher,
+     * 2026-10-20: Camponotus gigas filed under Dinomyrmex gigas): not moved, listed per run as kept_valid
+     * with the uploaded name, the name it is filed under, where the uploaded name points, and the specimens.
+     * A specimen already where its uploaded name points (casent0000004) is not listed.
+     */
+    public void testKeptOnAValidNameIsListed() throws Exception {
+        String gigas = "formicinaecamponotus gigas";
+        String cruentatus = "formicinaecamponotus cruentatus";
+        String dino = "formicinaedinomyrmex gigas";
+        taxon(gigas, "species", "synonym", cruentatus, null, "formicinae", "camponotus", "gigas", null);
+        taxon(cruentatus, "species", "valid", null, null, "formicinae", "camponotus", "cruentatus", null);
+        taxon(dino, "species", "valid", null, null, "formicinae", "dinomyrmex", "gigas", null);
+        specimen("casent0000030", dino, gigas, CAS);
+        specimen("casent0000031", dino, gigas, CAS);
+        specimen("jtl0000030", dino, gigas, JTL);
+
+        SpecimenNameUpdate.Summary s = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000);
+        assertEquals("not moved", dino, nameOf("casent0000030"));
+        assertEquals(dino, nameOf("jtl0000030"));
+        assertEquals("the moves are as before", 4, s.specimens);
+        assertEquals(3, s.keptValidSpecimens);
+        assertEquals("one name per group", 2, (int) s.skipped.get(SpecimenNameUpdate.Outcome.CURRENT_VALID));
+        assertEquals(3, count("select count(*) from specimen_name_update where mode = 'kept_valid'"));
+        assertEquals(0, count("select count(*) from specimen_name_update where mode = 'kept_valid' and code = 'casent0000004'"));
+        assertEquals(1, count("select count(*) from specimen_name_update where mode = 'kept_valid' and code = 'jtl0000030'"
+            + " and uploaded_name = '" + gigas + "' and old_name = '" + dino + "' and new_name = '" + cruentatus + "'"));
+
+        SpecimenNameUpdateDb db = new SpecimenNameUpdateDb(connection);
+        java.util.List<SpecimenNameUpdateDb.Line> cas = db.getKeptValid(CAS);
+        assertEquals(1, cas.size());
+        assertEquals(dino, cas.get(0).oldName);
+        assertEquals(gigas, cas.get(0).uploadedName);
+        assertEquals(cruentatus, cas.get(0).newName);
+        assertEquals(2, cas.get(0).count);
+        assertEquals("all groups", 2, db.getKeptValid(0).size());
+        assertEquals("a curator sees the group's own", 1, db.getKeptValid(JTL).size());
+        for (SpecimenNameUpdateDb.Run run : db.getRuns(0, null, null, 30)) assertFalse("not a run of moves", SpecimenNameUpdate.KEPT_VALID.equals(run.mode));
+        String html = org.calacademy.antweb.curate.NameUpdatesAction.keptValidHtml(db.getKeptValid(0), "");
+        assertTrue(html, html.contains("(2 names)</summary>"));
+
+        // Two uploaded names on one valid name: two lines.
+        String gigasLatr = "formicinaecamponotus gigantea";
+        taxon(gigasLatr, "species", "synonym", cruentatus, null, "formicinae", "camponotus", "gigantea", null);
+        specimen("casent0000032", dino, gigasLatr, CAS);
+        SpecimenNameUpdate.run(connection, SpecimenNameUpdate.REPORT, 50000);
+        assertEquals("replaced at each run", 4, count("select count(*) from specimen_name_update where mode = 'kept_valid'"));
+        assertEquals(2, db.getKeptValid(CAS).size());
+        assertEquals("the changed rows are kept", 4, count("select count(*) from specimen_name_update where mode = 'changed'"));
+        try {
+            db.deleteMode(SpecimenNameUpdate.CHANGED);
+            fail("the history cannot be deleted this way");
+        } catch (IllegalArgumentException expected) {
+            // ok
+        }
+    }
+
+    /**
+     * The upload report's "Recognized invalid species" line (UploadNameReasons): the same reason as the
+     * nightly name update for the same pair, read from the same tables; plain "old -> new" when they cannot be read.
+     */
+    public void testUploadReportReasonIsTheNameUpdateReason() throws Exception {
+        SpecimenNameUpdate.run(connection, SpecimenNameUpdate.REPORT, 50000);
+        String nightly = one("select reason from specimen_name_update where code = 'jtl0000001'");
+        org.calacademy.antweb.upload.UploadNameReasons reasons = org.calacademy.antweb.upload.UploadNameReasons.of(connection);
+        String line = reasons.line("old -> new", OLD, NEW);
+        assertEquals("old -> new: <span class=\"name-update-reason\">new combination: <i>Ravavy indicus</i>"
+            + " (<a href=\"https://www.antcat.org/catalog/101\">Fisher &amp; Bolton 2026a</a>); spelling as in AntCat</span>", line);
+        assertEquals("new combination: Ravavy indicus (Fisher & Bolton 2026a); spelling as in AntCat", nightly);
+
+        // The tables cannot be read (connection closed): the plain line, and the upload goes on.
+        Connection closed = connect();
+        closed.close();
+        org.calacademy.antweb.upload.UploadNameReasons broken = org.calacademy.antweb.upload.UploadNameReasons.of(closed);
+        assertEquals("old -> new", broken.line("old -> new", OLD, NEW));
     }
 
     /** A table made by the first version of the step (2026-10-20 morning) gets reason and antcat_id. */

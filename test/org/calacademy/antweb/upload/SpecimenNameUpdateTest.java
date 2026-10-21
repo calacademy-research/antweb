@@ -142,8 +142,10 @@ public class SpecimenNameUpdateTest extends TestCase {
         CurrentValidNameRule.Result r = rule(OLD);
         assertEquals(Kind.REPLACE, r.kind);
         SpecimenNameUpdate.Decision d = SpecimenNameUpdate.decide(OLD, "formicinaedinomyrmex gigas", n -> false, r, true);
-        assertEquals(SpecimenNameUpdate.Outcome.HOMONYM, d.outcome);
+        // 2026-10-20: one category with the shared names, listed for the curator.
+        assertEquals(SpecimenNameUpdate.Outcome.SHARED_NAME, d.outcome);
         assertNull(d.newName);
+        assertEquals("name is shared by two or more AntCat taxa; please confirm the identification", d.reason);
         // Not a homonym: the same case moves as before.
         d = SpecimenNameUpdate.decide(OLD, "formicinaedinomyrmex gigas", n -> false, r, false);
         assertEquals(SpecimenNameUpdate.Outcome.CHANGE, d.outcome);
@@ -191,7 +193,7 @@ public class SpecimenNameUpdateTest extends TestCase {
             SpecimenNameUpdate.decide(OLD, NEW, n -> false, rule(OLD), false, false, both).outcome);
         assertEquals("one candidate is not shared", Outcome.CHANGE,
             SpecimenNameUpdate.decide(OLD, OLD, n -> false, rule(OLD), false, false, List.of("Ravavy indicus")).outcome);
-        assertEquals(Outcome.CHANGE, SpecimenNameUpdate.decide(OLD, OLD, n -> false, rule(OLD), false, false, null).outcome);
+        assertEquals(Outcome.CHANGE, SpecimenNameUpdate.decide(OLD, OLD, n -> false, rule(OLD), false, false, (List<String>) null).outcome);
 
         // The page lists them apart, per group, with the codes.
         SpecimenNameUpdateDb.Line line = new SpecimenNameUpdateDb.Line();
@@ -226,19 +228,35 @@ public class SpecimenNameUpdateTest extends TestCase {
         assertNull("back on the uploaded name: no Uploaded As", d.newOriginalName);
     }
 
-    public void testHomonymsAreSkipped() throws Exception {
-        assertEquals(Outcome.HOMONYM, nightly(TO_HOMONYM, TO_HOMONYM, false).outcome);
-        assertEquals(Outcome.HOMONYM, nightly(HOMONYM, "myrmicinaesolenopsis other", false).outcome);
-        assertEquals("specimens on a homonym placeholder stay", Outcome.PLACEHOLDER, nightly(OLD, HOM_NAME, true).outcome);
+    /**
+     * Brian Fisher, 2026-10-20: "homonym" and "name shared by two or more AntCat taxa" are one category, one
+     * wording, one code path (SharedNameReport.involved). Every homonym case is SHARED_NAME: not moved, listed.
+     */
+    public void testHomonymsAreSharedNames() throws Exception {
+        SpecimenNameUpdate.Decision d = nightly(TO_HOMONYM, TO_HOMONYM, false);
+        assertEquals("current valid name only a homonym", Outcome.SHARED_NAME, d.outcome);
+        assertNull(d.newName);
+        assertEquals("its current valid name, Carebara silvestrii, is shared by two or more AntCat taxa; please confirm the identification", d.reason);
+        d = nightly(HOMONYM, "myrmicinaesolenopsis other", false);
+        assertEquals("AntCat status homonym", Outcome.SHARED_NAME, d.outcome);
+        assertEquals("name is shared by two or more AntCat taxa; please confirm the identification", d.reason);
+        assertEquals("specimens on a homonym placeholder stay", Outcome.SHARED_NAME, nightly(OLD, HOM_NAME, true).outcome);
+        assertNull(nightly(OLD, HOM_NAME, true).newName);
+        // With the candidates from the AntCat export, the same wording as the other shared names.
+        d = SpecimenNameUpdate.decide(OLD, "formicinaedinomyrmex gigas", n -> false, rule(OLD), true, false,
+            List.of("Camponotus cruentatus", "Dinomyrmex gigas"));
+        assertEquals(Outcome.SHARED_NAME, d.outcome);
+        assertEquals("name is shared by two taxa; please confirm the identification: Camponotus cruentatus or Dinomyrmex gigas", d.reason);
+        for (Outcome o : Outcome.values()) assertFalse("no separate homonym outcome: " + o, o.label.contains("homonym"));
         // Once the upload has created the placeholder, the rule finds it as the current valid taxon:
         // the nightly step still does not move specimens there.
         TAXA.put("myrmicinaecarebara viaph", new String[] {Status.SYNONYM, "myrmicinaecarebara placeholder"});
         TAXA.put("myrmicinaecarebara placeholder", new String[] {Status.UNRECOGNIZED, null});
         try {
             assertEquals(Kind.REPLACE, rule("myrmicinaecarebara viaph").kind);
-            SpecimenNameUpdate.Decision d = SpecimenNameUpdate.decide("myrmicinaecarebara viaph", "myrmicinaecarebara viaph",
+            d = SpecimenNameUpdate.decide("myrmicinaecarebara viaph", "myrmicinaecarebara viaph",
                 n -> n.equals("myrmicinaecarebara placeholder"), rule("myrmicinaecarebara viaph"));
-            assertEquals(Outcome.HOMONYM, d.outcome);
+            assertEquals(Outcome.SHARED_NAME, d.outcome);
         } finally {
             TAXA.remove("myrmicinaecarebara viaph");
             TAXA.remove("myrmicinaecarebara placeholder");
@@ -309,10 +327,11 @@ public class SpecimenNameUpdateTest extends TestCase {
         s.names = 3;
         s.byGroup.put(1, 1200);
         s.byGroup.put(7, 34);
-        s.skipped.put(Outcome.HOMONYM, 2);
+        s.skipped.put(Outcome.SHARED_NAME, 2);
         String line = s.line();
         assertTrue(line, line.startsWith("name update: 1,234 specimens in 2 groups (report: would change)"));
-        assertTrue(line, line.contains("2 homonym"));
+        assertTrue(line, line.contains("left alone (names): 2 name shared by two or more AntCat taxa, for the curator"));
+        assertFalse(line, line.contains("homonym"));
 
         s.rowMode = SpecimenNameUpdate.CHANGED;
         assertTrue(s.line(), s.line().startsWith("name update: 1,234 specimens in 2 groups (apply: changed)"));
