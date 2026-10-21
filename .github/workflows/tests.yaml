@@ -300,8 +300,7 @@ jobs:
 
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
         run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml
-      - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; place renames keep page text; every place's numbers; specimen name history)
-      - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; download guards)
+      - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; place renames keep page text; every place's numbers; specimen name history; download guards)
         # DbTimeZoneTest: dates written by MySQL and by Java read back as the same moment and are
         # stored as Pacific wall-clock time, for conPool, mediumConPool and longConPool.
         run: |
