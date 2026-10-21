@@ -320,7 +320,7 @@ jobs:
               /t/org/calacademy/antweb/home/PlaceImageCountDbTest.java /t/org/calacademy/antweb/util/BackgroundJobDbTest.java \
               /t/org/calacademy/antweb/home/RegionCountDbTest.java /t/org/calacademy/antweb/util/NumbersTestDb.java \
               /t/org/calacademy/antweb/util/CountInvariantsTest.java /t/org/calacademy/antweb/home/PlaceTotalsDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 util.CountInvariantsTest:9 home.PlaceTotalsDbTest:10; do
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 util.CountInvariantsTest:11 home.PlaceTotalsDbTest:10; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

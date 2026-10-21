@@ -617,7 +617,7 @@ public class CountCheck {
      */
     int checkRowImages(Place place, Result result, Set<String> changedNames) throws SQLException {
         if (!columnExists(place.table(), "image_count")) return 0;
-        Map<String, Integer> recount = new HashMap<>();
+        Map<String, Integer> recount = CountInvariants.keyMap();   // names as MySQL compares them
         String query = "select s.taxon_name, sum(s.image_count) from specimen s"
             + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
             + " join " + place.table() + " l on l.taxon_name = s.taxon_name and l." + place.keyColumn() + " = ?"
@@ -635,7 +635,7 @@ public class CountCheck {
             }
         }
         int rows = 0;
-        try (PreparedStatement stmt = connection.prepareStatement("select l.taxon_name, l.image_count, l.created from " + place.table() + " l"
+        try (PreparedStatement stmt = connection.prepareStatement("select l.taxon_name, l.image_count, " + CountInvariants.safeDate("l.created") + " from " + place.table() + " l"
                 + " join taxon t on t.taxon_name = l.taxon_name where l." + place.keyColumn() + " = ? and t.taxarank in ('species', 'subspecies')")) {
             place.setKey(stmt, 1);
             try (ResultSet r = stmt.executeQuery()) {
@@ -709,7 +709,7 @@ public class CountCheck {
     int checkSpecimens(Place place, Result result, Set<String> changedNames) throws SQLException {
         String t = place.table();
         String k = place.keyColumn();
-        Map<String, Integer> recount = new HashMap<>();
+        Map<String, Integer> recount = CountInvariants.keyMap();   // names as MySQL compares them
         String query = "select s.taxon_name, count(*) from specimen s"
             + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
             + " join " + t + " l on l.taxon_name = s.taxon_name and l." + k + " = ?"
@@ -727,7 +727,7 @@ public class CountCheck {
             }
         }
         int rows = 0;
-        String stored = "select l.taxon_name, l.specimen_count, l.created from " + t + " l"
+        String stored = "select l.taxon_name, l.specimen_count, " + CountInvariants.safeDate("l.created") + " from " + t + " l"
             + " join taxon on taxon.taxon_name = l.taxon_name"
             + " where l." + k + " = ? and taxon.taxarank in ('species', 'subspecies')";
         try (PreparedStatement stmt = connection.prepareStatement(stored)) {
@@ -754,9 +754,9 @@ public class CountCheck {
     int checkChildren(Place place, String parentRank, String column, String childRanks, String check, Result result, Set<String> changedNames) throws SQLException {
         String t = place.table();
         String k = place.keyColumn();
-        Map<String, Integer> recount = new HashMap<>();
-        Map<String, Boolean> childPending = new HashMap<>();
-        String query = "select taxon.parent_taxon_name, l.taxon_name, l.created from taxon"
+        Map<String, Integer> recount = CountInvariants.keyMap();   // names as MySQL compares them
+        Map<String, Boolean> childPending = CountInvariants.keyMap();
+        String query = "select taxon.parent_taxon_name, l.taxon_name, " + CountInvariants.safeDate("l.created") + " from taxon"
             + " join " + t + " l on l.taxon_name = taxon.taxon_name and l." + k + " = ?"
             + " where taxon.taxarank in " + childRanks
             + (place.statusFiltered() ? " and taxon.status in " + COUNTABLE : "");
@@ -774,7 +774,7 @@ public class CountCheck {
             }
         }
         int rows = 0;
-        String stored = "select l.taxon_name, l." + column + ", l.created from " + t + " l"
+        String stored = "select l.taxon_name, l." + column + ", " + CountInvariants.safeDate("l.created") + " from " + t + " l"
             + " join taxon on taxon.taxon_name = l.taxon_name"
             + " where l." + k + " = ? and taxon.taxarank = ?";
         try (PreparedStatement stmt = connection.prepareStatement(stored)) {
@@ -801,7 +801,7 @@ public class CountCheck {
     int checkGlobal(Place place, Result result, Set<String> changedNames) throws SQLException {
         String t = place.table();
         String k = place.keyColumn();
-        Map<String, Integer> recount = new HashMap<>();
+        Map<String, Integer> recount = CountInvariants.keyMap();   // names as MySQL compares them
         String query = "select s.taxon_name, count(*) from specimen s"
             + " where s.taxon_name in (select l.taxon_name from " + t + " l join taxon on taxon.taxon_name = l.taxon_name"
             + "   where l." + k + " = ? and taxon.taxarank in ('species', 'subspecies'))"
@@ -813,7 +813,7 @@ public class CountCheck {
             }
         }
         int rows = 0;
-        String stored = "select a.taxon_name, a.specimen_count, a.created from proj_taxon a"
+        String stored = "select a.taxon_name, a.specimen_count, " + CountInvariants.safeDate("a.created") + " from proj_taxon a"
             + " where a.project_name = 'allantwebants' and a.taxon_name in (select l.taxon_name from " + t + " l"
             + "   join taxon on taxon.taxon_name = l.taxon_name where l." + k + " = ? and taxon.taxarank in ('species', 'subspecies'))";
         try (PreparedStatement stmt = connection.prepareStatement(stored)) {

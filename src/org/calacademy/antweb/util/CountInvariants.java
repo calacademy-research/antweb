@@ -68,6 +68,38 @@ public final class CountInvariants {
     }
 
     static final String COUNTABLE = PlaceTotals.COUNTABLE;
+
+    /**
+     * Keys (taxon names, specimen codes, museum codes, place names) compared as MySQL compares them: the
+     * database's collation (utf8_general_ci) ignores case and trailing spaces, so a key read from one table
+     * can differ in case from the same key in another (2026-10-21: specimen.code against image.image_of_id
+     * on staging). Java maps of keys use this order.
+     */
+    static final java.util.Comparator<String> KEYS = java.util.Comparator.comparing(CountInvariants::key);
+
+    static String key(String s) {
+        if (s == null) return "";
+        int end = s.length();
+        while (end > 0 && s.charAt(end - 1) == ' ') --end;
+        return s.substring(0, end).toLowerCase(java.util.Locale.ROOT);
+    }
+
+    static <V> Map<String, V> keyMap() { return new java.util.TreeMap<>(KEYS); }
+
+    static Set<String> keySet() { return new java.util.TreeSet<>(KEYS); }
+
+    /** A datetime column as SQL that never reads a zero date ('0000-00-00', which Connector/J refuses to read). */
+    static String safeDate(String column) {
+        return "if(" + column + " < '1971-01-01', null, " + column + ")";
+    }
+
+    /** The SQL last run by the current check (shown with its error). */
+    String lastSql;
+
+    private String track(String sql) {
+        lastSql = sql;
+        return sql;
+    }
     static final String SP = "('species', 'subspecies')";
 
     /** One check, run over all places. */
@@ -103,7 +135,7 @@ public final class CountInvariants {
 
     private final Connection connection;
     private final CountCheck.Result result;
-    private final Set<String> changedNames;
+    private final Set<String> changedNames;   // KEYS order
     private final boolean rulesCounted;
     /** statsPage's first number (TaxonMgr, in memory); null when not known (tests). */
     public Integer statsPageValidSpecies;
@@ -121,7 +153,8 @@ public final class CountInvariants {
     public CountInvariants(Connection connection, CountCheck.Result result, Set<String> changedNames, boolean rulesCounted) {
         this.connection = connection;
         this.result = result;
-        this.changedNames = changedNames == null ? new HashSet<>() : changedNames;
+        this.changedNames = keySet();
+        if (changedNames != null) this.changedNames.addAll(changedNames);
         this.rulesCounted = rulesCounted;
     }
 
@@ -136,13 +169,27 @@ public final class CountInvariants {
         try {
             body.run(check);
         } catch (SQLException | RuntimeException e) {
-            check.error = e.toString();
+            check.error = errorText(e, lastSql);
             CountCheck.Place p = place("site", "*", "site");
-            result.mismatches.add(new CountCheck.Mismatch(p, check.id, "the check could not run: " + e.getMessage(), 0, 0, null));
+            result.mismatches.add(new CountCheck.Mismatch(p, check.id, "the check could not run: " + check.error, 0, 0, null));
             ++check.real;
         }
+        lastSql = null;
         check.millis = System.currentTimeMillis() - start;
         checks.add(check);
+    }
+
+    /** The exception, where in AntWeb's code it happened, and the SQL last run (cut to 400 characters). */
+    static String errorText(Exception e, String sql) {
+        StringBuilder b = new StringBuilder(e.toString());
+        for (StackTraceElement f : e.getStackTrace()) {
+            if (f.getClassName().startsWith("org.calacademy")) {
+                b.append(" (at ").append(f.getClassName().replaceAll(".*\\.", "")).append(".java:").append(f.getLineNumber()).append(")");
+                break;
+            }
+        }
+        if (sql != null) b.append("; SQL: ").append(sql.length() > 400 ? sql.substring(0, 400) + "..." : sql);
+        return b.toString();
     }
 
     public void run() throws SQLException {
@@ -183,8 +230,8 @@ public final class CountInvariants {
     void loadPlaces() throws SQLException {
         for (String type : PlaceTotals.TYPES) {
             if (!tableExists(PlaceTotals.placeTable(type)) || !tableExists(PlaceTotals.listTable(type))) continue;
-            Map<String, String> m = new LinkedHashMap<>();
-            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(scopeSql(type))) {
+            Map<String, String> m = keyMap();
+            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(scopeSql(type)))) {
                 while (r.next()) {
                     String key = r.getString(1);
                     String rank = r.getString(3);
@@ -202,10 +249,10 @@ public final class CountInvariants {
                 }
             }
             places.put(type, m);
-            Set<String> changed = new HashSet<>();
+            Set<String> changed = keySet();
             if (columnExists(PlaceTotals.listTable(type), "created")) {
-                try (PreparedStatement stmt = connection.prepareStatement("select distinct " + PlaceTotals.listKey(type) + " from "
-                        + PlaceTotals.listTable(type) + " where created >= ?")) {
+                try (PreparedStatement stmt = connection.prepareStatement(track("select distinct " + PlaceTotals.listKey(type) + " from "
+                        + PlaceTotals.listTable(type) + " where created >= ?"))) {
                     stmt.setTimestamp(1, result.countedUntil);
                     try (ResultSet r = stmt.executeQuery()) {
                         while (r.next()) changed.add(r.getString(1));
@@ -261,8 +308,9 @@ public final class CountInvariants {
 
     /** key -> the columns 2.. of the query as longs. */
     Map<String, long[]> rows(String sql, Object... params) throws SQLException {
-        Map<String, long[]> m = new HashMap<>();
-        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+        Map<String, long[]> m = keyMap();
+        lastSql = sql;
+        try (PreparedStatement stmt = connection.prepareStatement(track(sql))) {
             for (int i = 0; i < params.length; i++) stmt.setObject(i + 1, params[i]);
             try (ResultSet r = stmt.executeQuery()) {
                 int n = r.getMetaData().getColumnCount();
@@ -289,7 +337,7 @@ public final class CountInvariants {
         Map<String, String> inScope = places.get(type);
         boolean flags = PlaceTotals.GEOLOCALE.equals(type) || PlaceTotals.BIOREGION.equals(type);
 
-        Map<String, long[]> stored = new HashMap<>();
+        Map<String, long[]> stored = keyMap();
         String extra = flags ? ", endemic_species_count, introduced_species_count" : ", 0, 0";
         check(new Check("place." + type + ".stored", "read the " + t + " table", ""), c -> stored.putAll(rows(
             "select " + k + ", subfamily_count, genus_count, species_count, valid_species_count, specimen_count, image_count,"
@@ -369,7 +417,7 @@ public final class CountInvariants {
             .pendingOn(true, true, PlaceTotals.MUSEUM.equals(type) || PlaceTotals.BIOREGION.equals(type), false);
         check(pies, c -> {
             try (Statement stmt = connection.createStatement();
-                 ResultSet r = stmt.executeQuery("select " + k + ", taxon_subfamily_dist_json, specimen_subfamily_dist_json, species_count, specimen_count from " + t)) {
+                 ResultSet r = stmt.executeQuery(track("select " + k + ", taxon_subfamily_dist_json, specimen_subfamily_dist_json, species_count, specimen_count from " + t))) {
                 while (r.next()) {
                     String key = r.getString(1);
                     if (!inScope.containsKey(key)) continue;
@@ -411,18 +459,18 @@ public final class CountInvariants {
                 + " sum(case when shot_type = '*label_only' then specimen_count else 0 end)"
                 + " from place_image_count group by place_type, place_key";
             Map<String, Map<String, long[]>> byType = new HashMap<>();
-            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(sql)) {
+            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(sql))) {
                 while (r.next()) {
                     long[] a = new long[7];
                     for (int i = 0; i < 7; i++) a[i] = r.getLong(i + 3);
-                    byType.computeIfAbsent(r.getString(1), x -> new HashMap<>()).put(r.getString(2), a);
+                    byType.computeIfAbsent(r.getString(1), x -> keyMap()).put(r.getString(2), a);
                 }
             }
             for (String type : PlaceTotals.TYPES) {
                 Map<String, String> inScope = places.get(type);
                 if (inScope == null) continue;
                 Map<String, long[]> placeTable = rows("select " + PlaceTotals.placeKey(type) + ", image_count, imaged_specimen_count from " + PlaceTotals.placeTable(type));
-                Map<String, long[]> pic = byType.getOrDefault(type, new HashMap<>());
+                Map<String, long[]> pic = byType.getOrDefault(type, keyMap());
                 for (String key : inScope.keySet()) {
                     long[] a = pic.get(key);
                     if (a == null) continue;   // no images there
@@ -510,17 +558,17 @@ public final class CountInvariants {
                         + " where (" + diff + ")" + parentKey;
                     if (!columnExists(l, "created")) sql = sql.replace("(pp.created >= ?)", "0");
                     // children added after the nightly run (their parent's counts wait for it)
-                    Set<String> childAdded = new HashSet<>();
+                    Set<String> childAdded = keySet();
                     if (columnExists(l, "created")) {
-                        try (PreparedStatement stmt = connection.prepareStatement("select c." + lk + ", t.parent_taxon_name from " + l
-                                + " c join taxon t on t.taxon_name = c.taxon_name where c.created >= ? and t.taxarank in " + level[1] + keyCondition)) {
+                        try (PreparedStatement stmt = connection.prepareStatement(track("select c." + lk + ", t.parent_taxon_name from " + l
+                                + " c join taxon t on t.taxon_name = c.taxon_name where c.created >= ? and t.taxarank in " + level[1] + keyCondition))) {
                             stmt.setTimestamp(1, result.countedUntil);
                             try (ResultSet r = stmt.executeQuery()) {
                                 while (r.next()) childAdded.add(r.getString(1) + "\u0000" + r.getString(2));
                             }
                         }
                     }
-                    try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+                    try (PreparedStatement stmt = connection.prepareStatement(track(sql))) {
                         if (columnExists(l, "created")) stmt.setTimestamp(1, result.countedUntil);
                         try (ResultSet r = stmt.executeQuery()) {
                             while (r.next()) {
@@ -541,8 +589,8 @@ public final class CountInvariants {
                     }
                 }
                 // rows compared (not only the differing ones): one per parent row in scope
-                try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery("select count(*) from " + l
-                        + " p join taxon pt on pt.taxon_name = p.taxon_name where pt.taxarank = '" + parentRank + "'")) {
+                try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track("select count(*) from " + l
+                        + " p join taxon pt on pt.taxon_name = p.taxon_name where pt.taxarank = '" + parentRank + "'"))) {
                     if (r.next()) c.compared = Math.max(c.compared, r.getInt(1));
                 }
             });
@@ -566,7 +614,7 @@ public final class CountInvariants {
                     + " join proj_taxon a on a.project_name = 'allantwebants' and a.taxon_name = l.taxon_name"
                     + " where t.taxarank in " + SP + " and l.specimen_count > a.specimen_count"
                     + (PlaceTotals.PROJECT.equals(type) ? " and l.project_name <> 'allantwebants'" : "");
-                try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(sql)) {
+                try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(sql))) {
                     while (r.next()) {
                         String key = r.getString(1);
                         if (!inScope.containsKey(key)) continue;
@@ -577,8 +625,8 @@ public final class CountInvariants {
                     }
                 }
             }
-            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(
-                    "select count(*) from proj_taxon a join taxon t on t.taxon_name = a.taxon_name where a.project_name = 'allantwebants' and t.taxarank in " + SP)) {
+            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(
+                    "select count(*) from proj_taxon a join taxon t on t.taxon_name = a.taxon_name where a.project_name = 'allantwebants' and t.taxarank in " + SP))) {
                 if (r.next()) c.compared += r.getInt(1);
             }
         });
@@ -590,11 +638,11 @@ public final class CountInvariants {
             .pendingOn(false, false, false, false);
         check(check, c -> {
             Map<String, long[]> counted = rows("select taxon_name, count(*) from specimen group by taxon_name");
-            String sql = "select a.taxon_name, a.specimen_count, " + (columnExists("proj_taxon", "created") ? "a.created" : "null")
+            String sql = "select a.taxon_name, a.specimen_count, " + (columnExists("proj_taxon", "created") ? safeDate("a.created") : "null")
                 + " from proj_taxon a join taxon t on t.taxon_name = a.taxon_name where a.project_name = 'allantwebants' and t.taxarank in " + SP;
             CountCheck.Place site = place("project", "allantwebants", "Global (all AntWeb)");
-            places.computeIfAbsent("project", x -> new LinkedHashMap<>()).putIfAbsent("allantwebants", "Global (all AntWeb)");
-            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(sql)) {
+            places.computeIfAbsent("project", x -> keyMap()).putIfAbsent("allantwebants", "Global (all AntWeb)");
+            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(sql))) {
                 while (r.next()) {
                     String name = r.getString(1);
                     long stored = r.getLong(2);
@@ -619,8 +667,9 @@ public final class CountInvariants {
         check(check, c -> {
             long[] row = null;
             java.sql.Timestamp created = null;
-            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(
-                    "select extant_taxa, specimens, species_imaged, specimens_imaged, total_images, created from statistics order by created desc limit 1")) {
+            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(
+                    "select extant_taxa, specimens, species_imaged, specimens_imaged, total_images, " + safeDate("created")
+                    + " from statistics order by created desc limit 1"))) {
                 if (r.next()) {
                     row = new long[] {r.getLong(1), r.getLong(2), r.getLong(3), r.getLong(4), r.getLong(5)};
                     created = r.getTimestamp(6);
@@ -628,20 +677,20 @@ public final class CountInvariants {
             }
             if (row == null) return;
             boolean nightlyRow;
-            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery("select count(*) from statistics where action = 'nightly'")) {
+            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track("select count(*) from statistics where action = 'nightly'"))) {
                 nightlyRow = r.next() && r.getInt(1) > 0;
             }
             // Changes after the statistics row was written (an upload rewrites it; images do not).
             boolean imagesSince = false;
             boolean uploadSince = false;
             if (created != null && tableExistsQuietly("image")) {
-                try (PreparedStatement stmt = connection.prepareStatement("select count(*) from image where upload_date > ?")) {
+                try (PreparedStatement stmt = connection.prepareStatement(track("select count(*) from image where upload_date > ?"))) {
                     stmt.setTimestamp(1, created);
                     try (ResultSet r = stmt.executeQuery()) { imagesSince = r.next() && r.getInt(1) > 0; }
                 }
             }
             if (created != null && tableExistsQuietly("upload")) {
-                try (PreparedStatement stmt = connection.prepareStatement("select count(*) from upload where created > ?")) {
+                try (PreparedStatement stmt = connection.prepareStatement(track("select count(*) from upload where created > ?"))) {
                     stmt.setTimestamp(1, created);
                     try (ResultSet r = stmt.executeQuery()) { uploadSince = r.next() && r.getInt(1) > 0; }
                 }
@@ -653,10 +702,10 @@ public final class CountInvariants {
                 org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIES_SQL,
                 org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIMENS_SQL,
                 "select count(*) from image"};
-            places.computeIfAbsent("site", x -> new LinkedHashMap<>()).put("home", "home page and statsPage");
+            places.computeIfAbsent("site", x -> keyMap()).put("home", "home page and statsPage");
             for (int i = 0; i < what.length; i++) {
                 long live;
-                try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(sql[i])) {
+                try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(sql[i]))) {
                     live = r.next() ? r.getLong(1) : 0;
                 }
                 String p = null;
@@ -678,25 +727,25 @@ public final class CountInvariants {
         Check check = new Check("taxon.images", "taxon image_count = images of its specimens and of the taxa under it; specimen image_count = its images",
             "54, 56, 61, 63, 100, 104").pendingOn(true, false, true, true);
         check(check, c -> {
-            places.computeIfAbsent("site", x -> new LinkedHashMap<>()).put("taxa", "taxon table");
+            places.computeIfAbsent("site", x -> keyMap()).put("taxa", "taxon table");
             // Specimens with images: their image_count and name (one pass over specimen); images per specimen.
-            Map<String, Long> own = new HashMap<>();
-            Map<String, Long> specimenCount = new HashMap<>();
-            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(
-                    "select code, taxon_name, image_count from specimen where image_count <> 0")) {
+            Map<String, Long> own = keyMap();
+            Map<String, Long> specimenCount = keyMap();
+            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(
+                    "select code, taxon_name, image_count from specimen where image_count <> 0"))) {
                 while (r.next()) {
                     specimenCount.put(r.getString(1), r.getLong(3));
                     if (r.getString(2) != null) own.merge(r.getString(2), r.getLong(3), Long::sum);
                 }
             }
-            Map<String, Long> children = new HashMap<>();
+            Map<String, Long> children = keyMap();
             String in = "('" + String.join("', '", org.calacademy.antweb.home.ImageCountDb.ROLL_UP_RANKS) + "')";
-            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(
-                    "select parent_taxon_name, sum(image_count) from taxon where taxarank in " + in + " and parent_taxon_name is not null group by parent_taxon_name")) {
+            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(
+                    "select parent_taxon_name, sum(image_count) from taxon where taxarank in " + in + " and parent_taxon_name is not null group by parent_taxon_name"))) {
                 while (r.next()) children.put(r.getString(1), r.getLong(2));
             }
             String p = why(c, "site", null);
-            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery("select taxon_name, coalesce(image_count, 0) from taxon")) {
+            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track("select taxon_name, coalesce(image_count, 0) from taxon"))) {
                 while (r.next()) {
                     String name = r.getString(1);
                     long expected = own.getOrDefault(name, 0L) + children.getOrDefault(name, 0L);
@@ -707,8 +756,8 @@ public final class CountInvariants {
             places.get("site").put("specimens", "specimen table");
             Check imagesOnly = new Check("x", "", "").pendingOn(false, false, true, true);
             String sp = why(imagesOnly, "site", null);
-            Map<String, Long> images = new HashMap<>();
-            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery("select image_of_id, count(*) from image group by image_of_id")) {
+            Map<String, Long> images = keyMap();
+            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track("select image_of_id, count(*) from image group by image_of_id"))) {
                 while (r.next()) images.put(r.getString(1), r.getLong(2));
             }
             List<String> zero = new ArrayList<>();   // images, but image_count 0 or not a specimen (orphan images)
@@ -724,10 +773,13 @@ public final class CountInvariants {
                 List<String> part = zero.subList(from, Math.min(zero.size(), from + 1000));
                 StringBuilder q = new StringBuilder("select code from specimen where code in (");
                 for (int i = 0; i < part.size(); i++) q.append(i == 0 ? "?" : ", ?");
-                try (PreparedStatement stmt = connection.prepareStatement(q.append(")").toString())) {
+                try (PreparedStatement stmt = connection.prepareStatement(track(q.append(")").toString()))) {
                     for (int i = 0; i < part.size(); i++) stmt.setString(i + 1, part.get(i));
                     try (ResultSet r = stmt.executeQuery()) {
-                        while (r.next()) compare(c, "site", "specimens", r.getString(1) + ": image_count", 0, images.get(r.getString(1)), "=", sp);
+                        while (r.next()) {
+                            Long n = images.get(r.getString(1));
+                            if (n != null) compare(c, "site", "specimens", r.getString(1) + ": image_count", 0, n, "=", sp);
+                        }
                     }
                 }
             }
