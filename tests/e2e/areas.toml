@@ -324,6 +324,20 @@ tests = [
   "test_overview_editor.py",
 ]
 
+[areas.downloads]
+# Search results (paged), specimen and search downloads (genus/species only, 5,000 cap), robots.txt.
+paths = [
+  "src/org/calacademy/antweb/search/**",
+  "src/org/calacademy/antweb/util/SpecimenListAction.java",
+  "src/org/calacademy/antweb/util/DownloadLimits.java",
+  "src/org/calacademy/antweb/home/SpecimenDb.java",
+  "web/search/**",
+  "web/robots.txt",
+]
+tests = [
+  "test_download_guards.py",          # added by #222
+]
+
 [areas.images]
 # Image pages, the image picker, EXIF, World Ant Collections photos.
 paths = [
