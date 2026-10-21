@@ -120,7 +120,15 @@ def login_slot():
     _LOGIN_TIMES.append(_time.time())
 
 
+# Set by conftest.py while a test of the parallel set runs in a parallel run (pytest -n): those
+# tests share the site with other workers at the same moment, so they must never log in.
+PARALLEL_TEST = None
+
+
 def post_login(session, user, password, timeout=60, extra=None, allow_redirects=True):
+    if PARALLEL_TEST:
+        raise RuntimeError(f"{PARALLEL_TEST} logs in but is listed in [parallel] in tests/e2e/areas.toml: "
+                           "remove it from that list (logged-in tests run one at a time)")
     data = {"userName": user, "password": password, "isSubmit": "true", **(extra or {})}
     for attempt in range(4):
         login_slot()

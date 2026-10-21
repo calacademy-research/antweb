@@ -1,4 +1,6 @@
 pytest>=8.3,<9
+# Parallel workers (-n 4 --dist loadgroup) for the anonymous read-only tests; see README.md.
+pytest-xdist==3.8.0
 requests>=2.32,<3
 # Browser tests (test_browser.py); after installing: python -m playwright install --with-deps chromium
 playwright==1.56.0
