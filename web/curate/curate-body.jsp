@@ -259,57 +259,6 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 
 
 
-        <!-- View Archived Specimen List Files -->
-        <% 
-            ArrayList<Integer> uploadGroupList = AntwebUtil.getUploadGroupList();
-            // A.log("curate-body.jsp uploadGroupList:" + uploadGroupList);
-
-           // To be replaced by uploadGroupList
-          //  ArrayList<String> uploadFileKindList = AntwebUtil.getUploadDirKinds();
-        %>
-        <% if (!LoginMgr.isAdmin(accessLogin)) { %>
-            <div class="admin_action_module">
-                <div class="admin_action_item">
-                    <div class="action_desc"><a href="<%= domainApp %>/uploadHistory.do?editSpeciesList=specimen<%= accessGroup.getId() %>">Your past upload files</a>: copies of the specimen data files your group sent to AntWeb, newest first. Click one to download it.</div>
-                    <div class="clear"></div>
-                </div>
-            </div>
-        <% } else { %>
-            <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "uploadHistory.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-                <input type="hidden" name="updateAdvanced" value="no" />
-                <input type="hidden" name="updateFieldGuide" value="none" />
-                <input type="hidden" name="images" value="no" />
-                <input type="hidden" name="outputFileName" value="" />
-                <input type="hidden" name="successkey" value="null" />
-                <div class="admin_action_module">
-                    <div class="admin_action_item">
-                        <div class="action_desc" id="past-upload-files"><b>Specimen files uploaded before</b>: choose a group and click Submit to list the specimen data files it sent to AntWeb (its uploads, and TaxonWorks or GBIF files), newest first; click a file to download it.<br>Group: </div>
-                        <div class="action_dropdown">
-              <html:select property="editSpeciesList">
-                <html:option value="none">Choose a group...</html:option>
-            <%
-                // Admins only (curators get the link above): every group with a file in web/upload/, by name.
-                List<String[]> uploadGroupOptions = new ArrayList<>();
-                for (Integer uploadGroupId : uploadGroupList) {
-                    String groupName = "group " + uploadGroupId;
-                    Group g = GroupMgr.getGroup(uploadGroupId);
-                    if (g != null) groupName = g.toString();
-                    uploadGroupOptions.add(new String[] {"specimen" + uploadGroupId, groupName});
-                }
-                uploadGroupOptions.sort((optionA, optionB) -> optionA[1].compareToIgnoreCase(optionB[1]));
-                for (String[] option : uploadGroupOptions) { %>
-                      <option value="<%= org.calacademy.antweb.util.Html.escAttr(option[0]) %>"><%= org.calacademy.antweb.util.Html.esc(option[1]) %></option>
-            <%  } %>
-              </html:select>
-                </div>
-                <div class="clear"></div>
-                <div class="align_right"><input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="EditUploadFileKindList"></div>
-                <div class="clear"></div>
-                </div>
-            </div>
-        </html:form>
-        <% } %>
-
      <% } %>  <!-- takeDownUpload -->
  <% } %>  <!-- accessLogin.isUploadSpecimens() -->
 

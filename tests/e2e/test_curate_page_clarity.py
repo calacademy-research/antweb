@@ -6,15 +6,17 @@
 2. "Name updates" is called "Name update report" wherever users see it (the URL stays nameUpdates.do).
 3. The count check is labelled "Check the counts" and its page says in plain words what it checks, what
    a difference means and what to do (usually nothing; persistent ones to antweb@antweb.org).
-4. "Past upload files of: Select..." (administrators) is "Specimen files uploaded before": choose a
-   group to list the specimen files it sent (AntWeb, TaxonWorks and GBIF files), newest first.
+4. "Past upload files" (the admin box and the curators' "Your past upload files" link, uploadHistory.do)
+   is removed (Brian's decision): each specimen upload report links its uploaded file ("Uploaded File",
+   uploadFile.do), and the specimen upload list has a Download column. Checked: the file link of the
+   group's newest report and of the list opens (as the test curator and as the test administrator).
 5. Specimen List Lookup, opened from the Curate page as the staging test curator: a short list of
    known CAS codes and one unknown code; the known codes are found (their data downloads) and the
    unknown one is listed as not found. Read-only.
 
 Static checks run anywhere; the page checks run on staging with the zztest accounts
-(tools/staging/create-test-accounts.py), read-only: only GET requests, the lookup (which changes
-nothing) and the upload-file listing.
+(tools/staging/create-test-accounts.py), read-only: only GET requests and the lookup (which changes
+nothing). File downloads are streamed and closed after the headers.
 """
 import re
 from html import unescape
@@ -79,7 +81,8 @@ def test_source_three_groups_one_link_per_line():
     # Administrators only, as before.
     assert re.search(r"isAdmin\(\)\) \{ %>\s*<li><a [^\n]*worldantsUploads", names)
     assert re.search(r"LoginMgr\.isAdmin\(accessLogin\)\) \{ %>\s*<li><a [^\n]*countCheck\.do", names)
-    for old in ("View Your <a", "Manage Your <a", ">Name updates<", ">Count check<", "Past upload files of"):
+    for old in ("View Your <a", "Manage Your <a", ">Name updates<", ">Count check<", "Past upload files of",
+                "past upload files", "uploadHistory.do", "Specimen files uploaded before"):
         assert old not in src, old
 
 
@@ -132,18 +135,47 @@ def test_name_update_report_title(curator):
     assert "Name updates" not in _visible(r.text)
 
 
+def _assert_file_opens(session, href):
+    """An uploaded data file (uploadFile.do) downloads: 200, text/plain, as an attachment. Streamed and
+    closed after the headers (the CAS TaxonWorks files are large)."""
+    with session.get(_absolute(href), timeout=120, stream=True) as r:
+        assert r.status_code == 200, f"{href}: {r.status_code}"
+        assert r.headers.get("Content-Type", "").startswith("text/plain"), (href, r.headers.get("Content-Type"))
+        assert "attachment" in r.headers.get("Content-Disposition", ""), href
+
+
+def _uploaded_file_links(session, list_url):
+    """(report links, file links) on a specimen upload list page, newest first."""
+    r = _assert_opens(session, list_url)
+    assert "<th>Uploaded file</th>" in r.text, "no Uploaded file column on " + list_url
+    reports = re.findall(r'href="([^"]*/web/log/specimen/[^"]+\.html)"', r.text)
+    files = re.findall(r'<a class="uploaded-file" href="([^"]+)"', r.text)
+    return reports, files
+
+
+def _check_report_and_list_file_links(session, group_id):
+    reports, files = _uploaded_file_links(session, f"/listSpecimenUploads.do?groupId={group_id}")
+    if not files:
+        pytest.skip(f"group {group_id} has no upload whose file is still on the server")
+    _assert_file_opens(session, files[0])
+    assert all("-specimen" in unescape(f) for f in files), files[:3]
+    # The newest report links the same kind of file ("Uploaded File:").
+    if reports:
+        report = session.get(_absolute(reports[0]), timeout=120)
+        m = re.search(r'<b>Uploaded File:</b> <a href="([^"]*/uploadFile\.do\?file=[^"]+)"', report.text)
+        if m:  # reports written before 2026-10-17 link /web/upload/ (not served); the list covers those
+            _assert_file_opens(session, m.group(1))
+
+
 @needs("uploader")
-def test_curator_past_upload_files(curator):
+def test_curator_opens_own_upload_files(curator):
+    """No past upload files box or link any more; the group's upload list and newest report link
+    the uploaded files, and they download for the group's curator."""
     s, html = curator
-    m = re.search(r'href="([^"]*uploadHistory\.do\?editSpeciesList=specimen\d+)">Your past upload files</a>: (.*?)</div>', html, re.S)
-    assert m, "no 'Your past upload files' link for the uploader"
-    assert "download" in m.group(2)
-    r = _assert_opens(s, m.group(1))
-    assert "Specimen files uploaded before" in r.text and 'id="upload-history-help"' in r.text
-    files = re.findall(r'uploadFile\.do\?file=([^"]+)"', r.text)
-    stamps = [re.match(r"(\d{8}-\d\d(?:%3A|:)\d\d(?:%3A|:)\d\d)", f) for f in files]
-    stamps = [x.group(1) for x in stamps if x]
-    assert stamps == sorted(stamps, reverse=True), "newest first"
+    assert "uploadHistory.do" not in html and "past upload files" not in html.lower()
+    m = re.search(r"listSpecimenUploads\.do\?groupId=(\d+)", html)
+    assert m, "no specimen upload reports link"
+    _check_report_and_list_file_links(s, int(m.group(1)))
 
 
 @needs("uploader")
@@ -174,7 +206,7 @@ def test_specimen_list_lookup_from_the_curate_page(curator):
 
 
 @needs("admin")
-def test_admin_sees_all_links_and_upload_files_menu():
+def test_admin_sees_all_links_and_opens_upload_files():
     s, _token, _id = login("admin")
     r = s.get(BASE_URL + "/curate.do", timeout=TIMEOUT)
     assert r.status_code == 200 and classify(r).category == "ok", classify(r)
@@ -188,16 +220,6 @@ def test_admin_sees_all_links_and_upload_files_menu():
         for href in re.findall(r'href="([^"]+)"', _group(html, gid)):
             if "/countCheck.do" not in href:  # slow; loaded by test_count_check.py
                 _assert_opens(s, href)
-    # Specimen files uploaded before: a group menu, sorted by name, then the group's list.
-    assert 'id="past-upload-files"' in html and "Past upload files of" not in html
-    menu = html.split('id="past-upload-files"', 1)[1].split("</select>", 1)[0]
-    options = re.findall(r'<option value="(specimen\d+)">([^<]*)</option>', menu)
-    assert options, "no groups in the Specimen files uploaded before menu"
-    labels = [unescape(label) for _v, label in options]
-    assert labels == sorted(labels, key=str.lower), "groups sorted by name"
-    token = re.search(r'name="_csrf" value="([A-Za-z0-9_-]+)"', html).group(1)
-    value = next((v for v, label in options if "ZZ Test Group" in label), options[0][0])
-    page = s.post(f"{BASE_URL}/uploadHistory.do?_csrf={token}",
-                  files={"editSpeciesList": (None, value), "_csrf": (None, token)}, timeout=TIMEOUT)
-    assert page.status_code == 200 and classify(page).category == "ok", classify(page)
-    assert "Specimen files uploaded before" in page.text
+    assert "uploadHistory.do" not in html and "Past upload files of" not in html
+    # Upload files: the CAS list (AntWeb text and TaxonWorks uploads), as an administrator.
+    _check_report_and_list_file_links(s, 1)
