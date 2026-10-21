@@ -3,7 +3,9 @@
 Brian Fisher, 2026-10: "we need to make sure we have a test that would validate the counts based on
 real specimen data to make sure these counts are true". The page (administrators, read-only) recounts,
 straight from the specimen and taxon tables, for Madagascar, Reunion, the country with the most
-morphospecies, the largest live curated project, the Malagasy bioregion and the CASC museum: the specimens
+morphospecies, the subregion of Madagascar (since 2026-10-20: the specimens of its countries; its
+differences are pending until a nightly run has counted it that way), the largest live curated project,
+the Malagasy bioregion and the CASC museum: the place's own Specimens, Imaged specimens and Images, the specimens
 of each species in the place, the species of each genus and the genera of each subfamily in the list,
 and the "Global" specimens of each species (rules: src/org/calacademy/antweb/util/CountCheck.java).
 
@@ -42,6 +44,7 @@ def test_list_counts_match_the_specimen_records():
         pytest.skip("countCheck.do is not deployed on this server yet")
     assert outcome.category == "ok", outcome
     assert "What this shows:" in r.text
+    assert "<h1>Check the counts</h1>" in r.text, "page renamed from Count check (2026-10-20)"
     m = re.search(r'id="count-check-result" data-real="(\d+)" data-pending="(\d+)" data-window="(\d)" data-nightly="(\d)"', r.text)
     assert m, "no result line on countCheck.do"
     real, pending, window, nightly = int(m.group(1)), int(m.group(2)), m.group(3) == "1", m.group(4) == "1"

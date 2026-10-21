@@ -21,6 +21,7 @@ public class Upload {
     private String groupName;
     private int groupId;
     private String logFileName;
+    private String backupDirFile;
     private Date created;
     
     private int specimens;
@@ -124,6 +125,32 @@ public class Upload {
 
     public String getLogFileName() {
       return this.logFileName;
+    }
+
+    /** The uploaded file as kept on the server (upload.backup_dir_file), e.g. upload/20220224-11:49:08-specimen2.txt. */
+    public String getBackupDirFile() {
+      return this.backupDirFile;
+    }
+    public void setBackupDirFile(String backupDirFile) {
+      this.backupDirFile = backupDirFile;
+    }
+
+    /**
+     * The uploaded file's name in web/upload/ (what uploadFile.do?file= takes), or null when the upload
+     * has none or it is not a plain file name. 2026-10-20: the upload list links each upload's file
+     * (the reports written before 2026-10-17 link /web/upload/, which is not served).
+     */
+    public String getUploadedFileName() {
+      String name = getBackupDirFile();
+      if (name == null || !name.endsWith(".txt")) return null;   // also "null": an upload stopped before its file was kept
+      if (name.startsWith("upload/")) name = name.substring("upload/".length());
+      return UploadFileAction.isValidName(name) ? name : null;
+    }
+
+    /** True if the uploaded file is still on the server (cached for an hour, like the report). */
+    public boolean hasUploadedFile() {
+      String name = getUploadedFileName();
+      return name != null && reportExists(AntwebProps.getDocRoot(), "web/upload/" + name, System.currentTimeMillis());
     }
     public void setLogFileName(String logFileName) {
       this.logFileName = logFileName;

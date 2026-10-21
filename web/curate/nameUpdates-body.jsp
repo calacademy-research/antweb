@@ -7,7 +7,7 @@
     String html = (String) request.getAttribute("html");
 %>
 <div class=left>
-<h1>Name updates</h1>
+<h1>Name update report</h1>
 <a href="<%= domainApp %>">Home</a> | <a href="<%= domainApp %>/curate.do">Curator Tools</a>
 <%= html == null ? "" : html %>
 </div>

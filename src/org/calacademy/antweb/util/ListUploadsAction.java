@@ -145,7 +145,7 @@ public final class ListUploadsAction extends AntwebAction {
             stmt = DBUtil.getStatement(connection, "listSpecimenUploads()");
             
             // number of specimens imaged
-            query = "select log_file_name, created, group_name, login_id, group_id from upload ";
+            query = "select log_file_name, created, group_name, login_id, group_id, backup_dir_file from upload ";
             if (groupIdInt != 0) {
               query += " where group_id = " + groupIdInt;
             }
@@ -157,6 +157,7 @@ public final class ListUploadsAction extends AntwebAction {
             while (rset.next()) {
                 Upload upload = new Upload();
                 upload.setLogFileName(rset.getString("log_file_name"));
+                upload.setBackupDirFile(rset.getString("backup_dir_file"));
                 upload.setCreated(rset.getTimestamp("created"));
                 groupName = rset.getString("group_name");
                 upload.setGroupName(groupName);

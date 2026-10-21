@@ -5,14 +5,19 @@ As the test uploader (ANTWEB_TEST_UPLOADER_*, a curator of "ZZ Test Group (stagi
 1. upload a 5-line file (codes zztest0001 to zztest0005):
      zztest0001  a valid AntCat name                 -> loaded under that name
      zztest0002  a synonym of it                     -> filed under the valid name, report
-                                                       "Recognized invalid species", specimen page
+                                                       "Recognized invalid species" with the reason
+                                                       ("synonym: junior synonym of <valid>", as on the
+                                                       Name updates page), specimen page
                                                        "Uploaded As: <synonym>"
      zztest0003  a name AntCat does not know         -> kept, report "Unrecognized Invalid species"
      zztest0004! a code with a character not allowed -> refused, report "(not uploaded)"
      zztest0005  coordinates outside the country     -> loaded, report "Lat/Long not within ..."
+     zztest0006  Pachycondyla sauteri, a name of two -> kept under the uploaded name, report "Needs the
+                 AntCat taxa (when this server has it)    curator's decision" with both AntCat taxa linked,
+                                                       the same line as on nameUpdates.do (SharedNameReport)
    then check the report, the specimen pages and the group's upload list;
 2. upload the 2-line baseline (zztest0001, zztest0002): the upload replaces the group's data, so
-   zztest0003 and zztest0005 are gone. The group is left at this baseline (an upload cannot leave
+   zztest0003, zztest0005 and zztest0006 are gone. The group is left at this baseline (an upload cannot leave
    a group empty except through bug 1 below; tools/staging/create-test-accounts.py --remove
    deletes everything).
 
@@ -61,6 +66,8 @@ def find_names():
             continue
         if (syn.get("genus") or "").lower() not in cvn:
             continue  # keep the genus: avoids the synonymised-genus path (tested elsewhere)
+        if cvn.rsplit(" ", 1)[-1][:3] == syn["species"][:3]:
+            continue  # another epithet, not another ending or spelling: the reason reads "synonym: junior synonym of ..."
         tried += 1
         if tried > 25:
             break
@@ -69,6 +76,17 @@ def find_names():
                 and re.fullmatch(r"[a-z]+", valid[0].get("species") or ""):
             return syn, valid[0]
     pytest.skip("no species synonym with a valid species name found through the API")
+
+
+SHARED_NAME = {"taxonName": "ponerinaepachycondyla sauteri", "subfamily": "ponerinae", "genus": "pachycondyla",
+               "species": "sauteri"}
+
+
+def shared_name_on_server():
+    """True when this server holds Pachycondyla sauteri as a name AntCat moves elsewhere (obsolete combination
+    of Cryptopone sauteri, Wheeler 1906; the other, Forel 1912, is Ectomomyrmex sauteri)."""
+    taxa = _api("taxa?taxonName=" + quote(SHARED_NAME["taxonName"])).get("taxa") or []
+    return bool(taxa) and taxa[0].get("status") not in (None, "valid", "unrecognized")
 
 
 def _row(n, taxon, species=None, lat="-18.91", lon="47.52", code_text=None):
@@ -121,6 +139,9 @@ def test_specimen_upload_round_trip(uploader, names):
         _row(4, valid, code_text=code(4) + "!"),
         _row(5, valid, lat="40.1", lon="10.2"),
     ]
+    with_shared = shared_name_on_server()
+    if with_shared:
+        lines.append(_row(6, SHARED_NAME))
     r = upload_specimens(s, token, "\n".join(lines) + "\n")
     assert_upload_complete(r)
     # The upload runs in the background: the page answers at once (Cloudflare cuts at 100 s).
@@ -134,6 +155,11 @@ def test_specimen_upload_round_trip(uploader, names):
     recognized = _section(report, "Recognized invalid species")
     assert recognized, "no 'Recognized invalid species' section in " + rep_url
     assert syn["species"] in recognized and valid["species"] in recognized, _text(recognized)[:400]
+    # The line gives the reason, worded as on the Name updates page (UploadNameReasons, 2026-10-20):
+    # "<synonym> -> <valid>: synonym: junior synonym of <Valid name> (Author year)".
+    valid_pretty = valid["genus"].capitalize() + " " + valid["species"]
+    assert "synonym: junior synonym of " + valid_pretty in _text(recognized), _text(recognized)[:600]
+    assert 'class="name-update-reason"' in recognized, _text(recognized)[:400]
     unrecognized = _section(report, "Unrecognized Invalid species")
     assert UNKNOWN_SPECIES in unrecognized, _text(unrecognized or report)[:400]
     refused = _section(report, "Specimen code with characters other than")
@@ -141,8 +167,23 @@ def test_specimen_upload_round_trip(uploader, names):
     assert ("Lat/Long not within country" in report or "Lat/Long not within adm1" in report), \
         "zztest0005 (Italy coordinates, country Madagascar) not reported as out of bounds"
 
+    # A name of two AntCat taxa: kept under the uploaded name, both taxa listed with their AntCat links,
+    # worded as on the Name updates page (SharedNameReport, 2026-10-20; the old homonym section never fired).
+    if with_shared:
+        kept = _section(report, "Needs the curator&#39;s decision") or _section(report, "Needs the curator's decision")
+        assert kept, "no 'Needs the curator's decision' section in " + rep_url
+        text = _text(kept)
+        assert "kept under the uploaded name" in text and "Pachycondyla sauteri" in text, text[:600]
+        assert "name is shared by two taxa" in text and "Cryptopone sauteri" in text and "Ectomomyrmex sauteri" in text, text[:600]
+        assert "https://www.antcat.org/catalog/" in kept and 'class="shared-name-taxa"' in kept, kept[:600]
+        assert "Taxon names recognized as Homonyms" not in report
+        api6 = new_session().get(f"{BASE_URL}/v3.1/specimens?specimenCode={code(6)}&up=1", timeout=API_TIMEOUT)
+        if api6.status_code == 200 and (api6.json().get("specimens") or []):
+            assert api6.json()["specimens"][0].get("antwebTaxonName") == SHARED_NAME["taxonName"], \
+                "zztest0006 was moved to one of the two taxa"
+
     # The specimens.
-    for n in (1, 2, 3, 5):
+    for n in (1, 2, 3, 5) + ((6,) if with_shared else ()):
         exists, _page = specimen_page(s, code(n))
         assert exists, f"{code(n)} was not loaded"
     exists, _page = specimen_page(s, code(4))
@@ -166,7 +207,7 @@ def test_specimen_upload_round_trip(uploader, names):
 
     # Replacement: the baseline file leaves only zztest0001 and zztest0002.
     _upload_baseline(s, token, valid)
-    for n, expected in ((1, True), (2, True), (3, False), (5, False)):
+    for n, expected in ((1, True), (2, True), (3, False), (5, False), (6, False)):
         exists, _page = specimen_page(s, code(n))
         assert exists == expected, f"after the baseline upload {code(n)} {'is missing' if expected else 'is still there'}"
 

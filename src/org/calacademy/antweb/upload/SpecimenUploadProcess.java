@@ -450,7 +450,15 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
       CurrentValidNameRule.Result rule = CurrentValidNameRule.decide(taxonName, CurrentValidNameRule.uploadLookup(getConnection()));
       status = rule.status;
 
-      switch (rule.kind) {
+      // A name of two or more AntCat taxa (Pachycondyla sauteri: now Cryptopone sauteri or Ectomomyrmex
+      // sauteri) is not moved to the one the taxon table happens to hold: kept under the uploaded name and
+      // listed for the curator, as the nightly name update does (SharedNameReport; Brian Fisher, 2026-10-20).
+      String keptLine = rule.replacesName()
+          ? SharedNameReport.uploadLine(taxonName, rule, isInHomonymTable(taxonName), placeholderTest(), getSharedNames()) : null;
+      if (keptLine != null) {
+        status = rule.uploadedStatus;
+        getMessageMgr().addToMessages(MessageMgr.sharedNameKept, keptLine);
+      } else switch (rule.kind) {
         case INDET:
         case MORPHO:
           break;
@@ -461,9 +469,10 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
             we would want to insert the taxon with a new parent, and with modified taxonomic lineage.
             use makeSpecimenUseTaxon() as illustrated below.
             */
-            if (new HomonymDb(getConnection()).isHomonym(taxonName)) {
-              String displayName = Taxon.makeDescriptionLink(taxonName);
-              getMessageMgr().addToMessages(MessageMgr.taxonNamesAreHomonyms, displayName);
+            // In AntCat, but not as a name AntWeb files specimens under (a junior homonym): its AntCat taxa.
+            String homonymOnly = SharedNameReport.homonymOnlyLine(taxonName, getSharedNames());
+            if (homonymOnly != null) {
+              getMessageMgr().addToMessages(MessageMgr.taxonNamesAreHomonyms, homonymOnly);
             } else {
               // if quadrinomial put in a separate list.  Do upload, otherwise don't.
               if (Taxon.isQuadrinomial(taxonName)) {
@@ -527,6 +536,8 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
                 s_log.warn("setStatusAndCurrentValidTaxonName() currentValidName should be distinct from taxonName:" + originalTaxonName);
             } else if (rule.kind == CurrentValidNameRule.Kind.REPLACE) {
                 newTaxonStr = makeSpecimenUseTaxon(taxonDb, rule.validTaxonName, originalTaxonName, specimenItem, taxonItem);
+                // "old -> new: why", worded as on the Name updates page (2026-10-20); once per pair.
+                if (newTaxonStr != null) newTaxonStr = getNameReasons().line(newTaxonStr, originalTaxonName, rule.validTaxonName);
             }
             if (newTaxonStr != null)
               getUploadDetails().getMessageMgr().addToMessages(MessageMgr.recognizedInvalidSpecies, newTaxonStr);
@@ -564,6 +575,14 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 	  return taxonName;
     }
   
+    /** The reasons of the "Recognized invalid species" lines of this upload's report (UploadNameReasons). */
+    private UploadNameReasons nameReasons;
+
+    private UploadNameReasons getNameReasons() {
+        if (nameReasons == null) nameReasons = UploadNameReasons.of(getConnection());
+        return nameReasons;
+    }
+
     private static String makeSpecimenUseTaxon(TaxonDb taxonDb, String currentTaxonName, String originalTaxonName, Hashtable specimenItem, Hashtable taxonItem)
       throws SQLException {
         

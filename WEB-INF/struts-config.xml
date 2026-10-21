@@ -482,13 +482,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="countryAdm1Data" path="/reports/countryAdm1Data.jsp" />
     </action>
 
-    <action path="/uploadHistory"
-            type="org.calacademy.antweb.upload.UploadHistoryAction"
-            scope="request"
-            name="uploadForm">
-      <forward name="success" path="/uploadHistory.jsp" />
-    </action>
-
     <!-- One archived upload file from web/upload/, for curators (web/upload/ is not served). -->
     <action path="/uploadFile"
             type="org.calacademy.antweb.upload.UploadFileAction"

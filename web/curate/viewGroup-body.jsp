@@ -44,7 +44,7 @@
     <div style="border:1px solid #ccc;background:#f7f7f7;padding:8px 12px;margin:10px 0;max-width:760px">
     <p><b>What an upload group is:</b> the institution or lab that owns specimen records on AntWeb (a museum, a university lab, or one curator's collection). Every specimen record belongs to one upload group, and the logins in the group can upload its records. <b>An upload replaces all specimens of the uploader's upload group.</b> (In the database and older pages: "group", table ant_group.)</p>
     <p><b>Adding someone who wants to upload:</b> use <a href="<%= domainApp %>/addUploader.do">Add an uploader</a>; it creates the upload group, the login and the rights in one step.</p>
-    <p><b>Where these values show:</b> the group's name on specimen pages and the list of contributors; the short name in reports and summaries where space is short (upload reports, the Name updates summary in compute.log).</p>
+    <p><b>Where these values show:</b> the group's name on specimen pages and the list of contributors; the short name in reports and summaries where space is short (upload reports, the name update summary in compute.log).</p>
     </div>
 
     <form action="<%= domainApp %>/saveGroup.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>

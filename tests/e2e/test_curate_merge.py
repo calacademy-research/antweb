@@ -5,7 +5,8 @@ open to curators for the museums of their own last upload.
 Anonymous, read-only, any host: the Technical page asks for a login; the documentation page links
 the taxon status help. As the test curator, staging only, changing nothing: the Technical page is
 refused; Recalculate Your Museums without an upload in the session is refused before anything runs;
-the Curate page shows the new names and "Your past upload files" opens the group's files.
+the Curate page shows the new names. ("Your past upload files" was removed on 2026-10-20: the upload
+reports link each uploaded file; tests/e2e/test_curate_page_clarity.py.)
 Static: the Curate page links each merged tool once, from its new home only.
 Java checks in CI: test/org/calacademy/antweb/security/CurateCleanupTest.java.
 """
@@ -53,6 +54,7 @@ NOT_ON_CURATE = [m for m, _ in MOVED] + [
     "/pageTracker.do", "logMgr.do?action=get", "action=worldantsReload", "action=worldantsFetchAndReload",
     "/common/statusDisplayPage.jsp", "Manager:", "Artist Manager",
     "Unimaged Bolton Ants", "Casent -Dxx", ">Events<", "Validate Species List", "Archived Specimen List Files",
+    "/uploadHistory.do", "Your past upload files",
 ]
 
 
@@ -68,7 +70,7 @@ def test_curate_page_no_longer_links_merged_tools():
 
 def test_curate_page_new_names():
     text = _text("web/curate/curate-body.jsp") + _text("web/curate/curatorLinks.jsp")
-    for name in ("Check names against AntCat", "Your past upload files", "Import AntCat names now",
+    for name in ("Check names against AntCat", "Import AntCat names now",
                  "Images you uploaded for taxon page text", "Species List Tool", "Photographers",
                  "Curator activity log", "Species without images", "Specimen parts (-D codes) with different names",
                  "Taxa outside their native bioregions", "/technical.do", "Clear the warning"):
@@ -121,7 +123,4 @@ def test_curate_page_as_curator_new_names(curator):
     html = r.text
     assert "Check names against AntCat" in html
     assert "Images you uploaded for taxon page text" in html
-    m = re.search(r'href="([^"]*uploadHistory\.do\?editSpeciesList=specimen\d+)"', html)
-    if m:  # shown to logins with the upload-specimens permission
-        page = s.get(m.group(1) if m.group(1).startswith("http") else BASE_URL + m.group(1), timeout=TIMEOUT)
-        assert page.status_code == 200 and classify(page).category not in ("login", "denied"), classify(page)
+    assert "uploadHistory.do" not in html

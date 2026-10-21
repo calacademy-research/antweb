@@ -43,4 +43,18 @@ public class UploadReportExistsTest extends TestCase {
         // A folder of that name is not a report.
         assertFalse(Upload.reportExists(docRoot, "web/log/specimen", t));
     }
+
+    /** The upload list links each upload's file (upload.backup_dir_file) through uploadFile.do (2026-10-20). */
+    public void testUploadedFileName() {
+        Upload u = new Upload();
+        assertNull(u.getUploadedFileName());
+        u.setBackupDirFile("upload/20220224-11:49:08-specimen2.txt");
+        assertEquals("20220224-11:49:08-specimen2.txt", u.getUploadedFileName());
+        u.setBackupDirFile("upload/20261018-05:31:02-specimenTW1.txt");
+        assertEquals("20261018-05:31:02-specimenTW1.txt", u.getUploadedFileName());
+        u.setBackupDirFile("null");   // an upload stopped before its file was kept
+        assertNull(u.getUploadedFileName());
+        u.setBackupDirFile("upload/../etc/passwd.txt");
+        assertNull(u.getUploadedFileName());
+    }
 }

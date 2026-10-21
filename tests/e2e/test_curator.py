@@ -23,7 +23,6 @@ pytestmark = pytest.mark.skipif(
 # Pages a logged-in curator uses.
 CURATOR_PAGES = [
     "/curate.do",
-    "/uploadHistory.do",
     "/listSpecimenUploads.do",
     "/listImageUploads.do",
     "/speciesListTool.do",
