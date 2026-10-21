@@ -189,6 +189,10 @@ public final class LoginEditPage {
     // ------------------------------------------------------------------ administrator's page
 
     /** The page for an administrator (any login, also their own, or a new one). */
+    /** Shown under "Places and projects" when a login has none assigned. */
+    static final String NONE_ASSIGNED = "None assigned yet.";
+    static final String NOT_NEEDED_FOR_ADMIN = "Not needed: administrators can edit every project and country.";
+
     public static String renderAdmin(PageData d, int viewerId, String csrfField, String app, String secureApp) {
         State s = d.state;
         boolean isSelf = !d.isNew && s.id == viewerId;
@@ -278,9 +282,9 @@ public final class LoginEditPage {
         b.append("<h2>Places and projects this curator can edit</h2>\n<p class=\"hint\">This login may change the species lists ")
          .append("(Species List Tool) and the page text of these projects and countries. A country includes its states and provinces. ")
          .append("Administrators can edit all of them, so they need none here.</p>\n");
-        assigned(b, "Projects", "removeProjects", "project", s.projects, d, true);
+        assigned(b, "Projects", "removeProjects", "project", s.projects, d, true, s.isAdmin);
         adder(b, "addProjects", "projectOptions", "projects", "Add a project", d.projectOptions);
-        assigned(b, "Countries", "removeCountries", "country", s.countries, d, false);
+        assigned(b, "Countries", "removeCountries", "country", s.countries, d, false, s.isAdmin);
         adder(b, "addCountries", "countryOptions", "countries", "Add a country", d.countryOptions);
 
         // ---- Other settings
@@ -353,10 +357,10 @@ public final class LoginEditPage {
     }
 
     private static void assigned(StringBuilder b, String title, String removeName, String what, java.util.Set<String> keys,
-                                 PageData d, boolean isProject) {
+                                 PageData d, boolean isProject, boolean isAdmin) {
         b.append("<h3>").append(title).append("</h3>\n");
         if (keys.isEmpty()) {
-            b.append("<p>None.</p>\n");
+            b.append("<p>").append(isAdmin ? NOT_NEEDED_FOR_ADMIN : NONE_ASSIGNED).append("</p>\n");
             return;
         }
         b.append("<table class=\"assigned\">\n");
@@ -436,7 +440,7 @@ public final class LoginEditPage {
          .append(g != null && s.uploadSpecimens ? " (each upload replaces all specimens of this upload group)" : "").append("</li>\n");
         b.append("</ul>\n<h3>Places and projects you can edit</h3>\n");
         if (s.projects.isEmpty() && s.countries.isEmpty()) {
-            b.append("<p>None.</p>\n");
+            b.append("<p>").append(s.isAdmin ? NOT_NEEDED_FOR_ADMIN : NONE_ASSIGNED).append("</p>\n");
         } else {
             b.append("<ul>\n");
             for (String p : s.projects) b.append("<li>Project ").append(e(projectLabel(d, p))).append("</li>\n");

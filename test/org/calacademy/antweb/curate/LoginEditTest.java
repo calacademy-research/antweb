@@ -305,4 +305,27 @@ public class LoginEditTest extends TestCase {
         assertTrue(html.contains("<li>Upload specimen data: added</li>"));
         assertTrue(html.contains("&lt;b&gt;"));
     }
+
+    /** Empty "Places and projects" lists: administrators need none, other logins have none yet. */
+    public void testEmptyPlacesText() {
+        String admin = "<p>Not needed: administrators can edit every project and country.</p>";
+        String none = "<p>None assigned yet.</p>";
+        State s = state();
+        s.projects.clear();
+        s.countries.clear();
+        String html = LoginEditPage.renderAdmin(page(s), 1, "", "", "");
+        assertEquals("curator: projects and countries both say none yet", 2, html.split(java.util.regex.Pattern.quote(none), -1).length - 1);
+        assertFalse(html.contains(admin));
+        assertFalse(html.contains("<p>None.</p>"));
+        assertTrue(LoginEditPage.renderSelf(page(s), "", "", "").contains(none));
+
+        s.isAdmin = true;
+        html = LoginEditPage.renderAdmin(page(s), 1, "", "", "");
+        assertEquals("administrator: both lists say not needed", 2, html.split(java.util.regex.Pattern.quote(admin), -1).length - 1);
+        assertFalse(html.contains(none));
+
+        s.projects.add("madagascarants");
+        html = LoginEditPage.renderAdmin(page(s), 1, "", "", "");
+        assertEquals("only the empty list (countries) gets the text", 1, html.split(java.util.regex.Pattern.quote(admin), -1).length - 1);
+    }
 }

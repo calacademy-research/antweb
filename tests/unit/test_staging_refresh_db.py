@@ -6,7 +6,8 @@ group and a test login), run tools/staging/scrub.sql, put the test logins back, 
     test group, which is created again with a new id when production uses its old id;
   - a kept login that exists in production (the ANTWEB_TEST_USER curator) gets its staging hash
     and projects back, under production's id;
-  - production's own rows with the colliding ids are untouched.
+  - production's own rows with the colliding ids are untouched;
+  - the administrator's "Upload as" list gets the test uploader's new login number, once.
 
 Run: STAGING_REFRESH_DB_CONTAINER=<mysql container> STAGING_REFRESH_DB_PASSWORD=<root password> \
      python3 tests/unit/test_staging_refresh_db.py      (the container needs a database `ant`)
@@ -175,6 +176,15 @@ def main():
         assert accounts.restore_accounts(db, saved) == [], "a second restore changes nothing"
         check_restored(saved)
         print("ok restored again (idempotent)")
+
+        # The admin's "Upload as" gets the test uploader's new number, once; curators are left alone.
+        uid = value("select id from login where name = 'zztest_uploader'")
+        assert accounts.add_upload_as(db, ["bfisher", "curator1", "nobody_here"]) == 1
+        assert value("select upload_as from login where name = 'bfisher'") == uid
+        assert value("select upload_as from login where name = 'curator1'") == "5,9"
+        assert accounts.add_upload_as(db, ["bfisher"]) == 0, "already listed"
+        assert value("select upload_as from login where name = 'bfisher'") == uid
+        print("ok upload as")
 
 
 if __name__ == "__main__":

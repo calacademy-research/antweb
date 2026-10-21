@@ -258,6 +258,87 @@ def test_keep_logins_file():
             pass
 
 
+def test_upload_as_with():
+    assert accounts.upload_as_with(None, 1203) == "1203"
+    assert accounts.upload_as_with("", 1203) == "1203"
+    assert accounts.upload_as_with("23,45", 1203) == "23,45,1203"
+    assert accounts.upload_as_with(" 23, 45 ,", 1203) == "23,45,1203"
+    assert accounts.upload_as_with("23,1203,45", 1203) is None
+    assert accounts.upload_as_with("12030", 1203) == "12030,1203", "a number that only contains it is not it"
+
+
+def test_upload_as_config():
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "upload-as.txt")
+        assert accounts.read_upload_as_config(p) == ["antweb"], "no file: the login antweb"
+        with open(p, "w") as f:
+            f.write("# Brian's admin login on staging\nadminLogin=antweb\n\nadminLogin = bfisher  # second\nadminLogin=antweb\n")
+        assert accounts.read_upload_as_config(p) == ["antweb", "bfisher"]
+        with open(p, "w") as f:
+            f.write("# switched off\n")
+        assert accounts.read_upload_as_config(p) == []
+        for bad in ("antweb\n", "admin=antweb\n", "adminLogin=x'; drop table login\n"):
+            with open(p, "w") as f:
+                f.write(bad)
+            try:
+                accounts.read_upload_as_config(p)
+                raise AssertionError("accepted " + bad)
+            except SystemExit:
+                pass
+
+
+class FakeDb:
+    """Answers the queries of add_upload_as from a dict of logins; records the updates."""
+
+    def __init__(self, logins):
+        self.logins = logins   # name -> [id, is_admin, upload_as]
+        self.updates = []
+
+    def run(self, sql):
+        if sql.startswith("update login"):
+            self.updates.append(sql)
+            m = re.search(r"upload_as = '([^']*)'.* where id = (\d+)$", sql)
+            for row in self.logins.values():
+                if row[0] == int(m.group(2)):
+                    row[2] = m.group(1)
+            return []
+        if "information_schema" in sql:
+            return [["id"], ["name"], ["upload_as"], ["created"]]
+        name = re.search(r"where name = '([^']*)'", sql).group(1)
+        row = self.logins.get(name)
+        if row is None:
+            return []
+        if sql.startswith("select id from login"):
+            return [[str(row[0])]]
+        return [[str(row[0]), str(row[1]), row[2] or ""]]
+
+    def value(self, sql):
+        r = self.run(sql)
+        return r[0][0] if r else None
+
+
+def test_add_upload_as():
+    db = FakeDb({"antweb": [1, 1, "23,45"], "curator1": [12, 0, ""], "zztest_uploader": [1203, 0, None]})
+    assert accounts.add_upload_as(db, ["antweb", "curator1", "nobody"]) == 1
+    assert db.logins["antweb"][2] == "23,45,1203"
+    assert len(db.updates) == 1 and db.updates[0].endswith("created = created where id = 1"), db.updates
+    assert db.logins["curator1"][2] == "", "not an administrator: left alone"
+    assert accounts.add_upload_as(db, ["antweb"]) == 0, "already listed: nothing changed"
+    assert len(db.updates) == 1
+    assert accounts.add_upload_as(db, []) == 0
+    assert accounts.add_upload_as(FakeDb({"antweb": [1, 1, ""]}), ["antweb"]) == 0, "no test uploader"
+
+
+def test_refresh_adds_upload_as_after_restore():
+    src = open(REFRESH, encoding="utf-8").read()
+    restore = src.index('--restore-from "$SAVED"')
+    add = src.index('--add-upload-as "$UPLOAD_AS_FILE"')
+    start = src.index('docker start "$APP_CONTAINER" >/dev/null\n  APP_STOPPED=0\n  IN_RESTORE=0')
+    assert restore < add < start, "the Upload as step runs after the restore and before AntWeb starts"
+    assert 'UPLOAD_AS_FILE="$WORK_DIR/upload-as.txt"' in src
+    assert "|| log \"WARNING: the \\\"Upload as\\\" list was not updated" in src, "a failure there is no rollback"
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
