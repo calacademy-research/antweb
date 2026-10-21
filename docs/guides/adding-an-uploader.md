@@ -63,6 +63,8 @@ The page has these sections:
 - **Other settings**: **Upload as**, login numbers separated by commas. It matters only for an administrator: these logins are listed in the administrator's "Upload as" menu on Curator Tools (upload a file into that login's upload group). Administrators may upload for anyone, so the list only fills the menu. The page shows whose numbers they are.
 - **Other actions** (each its own button, so they never save the fields above): **Set a new password** (they are logged out everywhere; usually better: ask them to use "Forgot your password?"), **Log in as** the login, and **Delete this login** (asks first; their uploads and specimens stay; not your own login). A login without a password also has **Save and make a set-password link**.
 
+Login numbers are never reused (since 21 October 2026): a new login gets a number above every number any login ever had, so it never takes over a deleted login's curator folder (`web/curator/<number>/`, with the images that login put into page text) or its name as author of page text. The number shown on the new-login form may therefore change when you save.
+
 Removed in October 2026 because they did nothing or were misleading: the greyed-out "Login ID" box, the "None" entry and the Ctrl-click note of the old project and country lists, the note about the "Changed Password" button, and the password boxes on other people's logins (they were never saved by Done). Before this change, saving another person's login with empty password boxes was refused with "Empty Password".
 
 ## "Your session changed"

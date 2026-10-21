@@ -15,7 +15,7 @@
 
     Overview overview = OverviewMgr.getOverview(request);
 
-    String titleStr = "Subegion: " + overview.getTitle() + " - Antweb" ;
+    String titleStr = "Subregion: " + overview.getTitle() + " - Antweb" ;
 %>
 
 <%@include file="/common/antweb-defs.jsp" %>

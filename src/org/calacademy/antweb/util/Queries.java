@@ -652,7 +652,7 @@ public abstract class Queries {
         queries.add(new NamedQuery(
             "uploadingCurators"
           , "Curators who can upload."
-          , "<th>Login ID</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Name</th><th>Is Admin?</th><th>Can Upload Specimen</th><th>Can Upload Images</th>"
+          , "<th>Login ID</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Name</th><th>Group ID</th><th>Is Admin?</th><th>Can Upload Specimen</th><th>Can Upload Images</th>"
           , "select id, first_name, last_name, email, name, group_id, is_admin, is_upload_specimens, is_upload_images from login where is_upload_specimens = true or is_upload_images = true"
         ));
                 
@@ -1205,6 +1205,22 @@ public abstract class Queries {
     
  //   http://localhost/antweb/query.do?name=noSubfamilyForSubfamily
 
+    /**
+     * One plain line next to each query of the "Relevant Queries" boxes of the Upload groups page
+     * (viewGroups.do) and the Login Manager (viewLogins.do): what it lists, its columns, when to use it
+     * (Brian Fisher, 2026-10-21).
+     */
+    static final Map<String, String> QUERY_LIST_HELP = Map.of(
+        "groups", "Every upload group with its number, name, date of the last specimen upload, the login ID of its "
+            + "administrator and its short name. Use it to see when each group last uploaded (the list on this page has "
+            + "the names only).",
+        "specimenGroups", "How many specimen records each upload group has on AntWeb: group number, name and count, "
+            + "largest first. Use it to compare groups or to check a group's total after an upload.",
+        "uploadingCurators", "Every login allowed to upload specimens or images: login ID, first and last name, email, "
+            + "name, upload group number, administrator, and the two upload rights (1 = yes). Use it to see who can upload.",
+        "curatorEmails", "The emails of the logins assigned to a live project (the species-list curators), in one "
+            + "comma-separated cell to paste into an email. These are not the uploaders: see uploadingCurators for those.");
+
     public static String getQueryList(String listName) {
       String html = "";
       ArrayList<String> queries = null;
@@ -1220,6 +1236,8 @@ public abstract class Queries {
         if (i == 0) html += "<ul align=left>";
         ++i;
         html += "<li><a href='" + AntwebProps.getDomainApp() + "/query.do?action=curiousQuery&name=" + query +"'>" + query + "</a>";
+        String help = QUERY_LIST_HELP.get(query);
+        if (help != null) html += " <span class=\"query-help\">" + Html.esc(help) + "</span>";
         if (i == queries.size()) html += "</ul>";
       }
       return html;
