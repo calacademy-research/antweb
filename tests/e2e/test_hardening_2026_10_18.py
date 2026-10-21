@@ -1,7 +1,8 @@
 """Hardening batch of 2026-10-18.
 
 - API v3.1: ndjson replies are complete JSON lines; the record limit is 10,000 per request for
-  JSON and ndjson (larger sets: page with offset). Anonymous, read-only, any host.
+  JSON and ndjson (larger sets: page with offset); 500 since 2026-10-21 (test_api.py).
+  Anonymous, read-only, any host.
 - editLogin.do: changing the email of your own login needs your current password (as a new
   password does). As the test curator, staging only; every request is refused and the stored
   email is checked to be unchanged. Skipped where the change is not deployed (form label).
@@ -48,7 +49,7 @@ def test_api_ndjson_lines_are_json():
 def test_api_limit_is_capped():
     r = new_session().get(BASE_URL + "/v3.1/specimens?genus=zzznotagenus&limit=50000&up=1", timeout=API_TIMEOUT)
     assert r.status_code == 200, r.status_code
-    assert r.json()["metaData"]["limit"] == 10000
+    assert r.json()["metaData"]["limit"] in (500, 10000)   # 500 where the 2026-10-21 cap is deployed
     r = new_session().get(BASE_URL + "/v3.1/specimens?genus=zzznotagenus&limit=1000000&ndjson=true&up=1",
                           timeout=API_TIMEOUT)
     assert r.status_code == 200 and r.text.strip() == "", (r.status_code, r.text[:200])

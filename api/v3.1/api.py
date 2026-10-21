@@ -20,7 +20,8 @@
 # assert os.path.exists('/var/www/html/apiV3/api_db.conf')
 
 import configparser
-from flask import Flask, jsonify, json, request, Response
+from flask import Flask, json, request, Response, g
+from flask import jsonify as flaskJsonify
 
 from sqlalchemy import create_engine, or_, text
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Numeric
@@ -39,24 +40,32 @@ from sqlalchemy.ext.declarative import declarative_base
 # from home.specimen import Specimen
 
 
-def _db_credentials():
+API_PROPERTIES = '/antweb-etc/api-db.properties'
+
+
+def _apiProperties(path=API_PROPERTIES):
+    # etc/api-db.properties on the server (not in the repository; only this file of etc/ is
+    # mounted in the api container, as /antweb-etc/api-db.properties). Empty if missing.
+    try:
+        with open(path) as f:
+            return dict(line.strip().split('=', 1) for line in f if '=' in line and not line.startswith('#'))
+    except OSError:
+        return {}
+
+
+def _db_credentials(props):
     # The API only reads. On the servers it logs in as a read-only MySQL user whose
-    # name and password are in etc/api-db.properties (not in the repository; the
-    # api container sees ./etc as /antweb-etc). Without that file it falls back to
+    # name and password are in etc/api-db.properties. Without that file it falls back to
     # the main antweb account, as before.
     user, password = 'antweb', 'CHANGE_ME'
-    try:
-        with open('/antweb-etc/api-db.properties') as f:
-            props = dict(line.strip().split('=', 1) for line in f if '=' in line and not line.startswith('#'))
-        if props.get('user') and props.get('password'):
-            user, password = props['user'], props['password']
-    except OSError:
-        pass
+    if props.get('user') and props.get('password'):
+        user, password = props['user'], props['password']
     print('API database user:', user, flush=True)
     return user, password
 
 
-_dbUser, _dbPass = _db_credentials()
+_apiProps = _apiProperties()
+_dbUser, _dbPass = _db_credentials(_apiProps)
 dbUrl = f'mysql+pymysql://{_dbUser}:{_dbPass}@mysql:3306/ant?autocommit=true'
 # dbUrl = 'mysql+mysqldb://antweb:CHANGE_ME@localhost:3306/ant?autocommit=true'
 # pool_pre_ping: check a pooled connection before use, so a connection MySQL closed
@@ -211,13 +220,35 @@ def down(request):
     return 0
 
 
-DEFAULT_LIMIT = 10000
-MAX_LIMIT = 10000
-# ndjson bulk downloads: up to 10,000 records per request, the same as the normal JSON reply.
-# Larger sets are fetched in pages with offset. The records of one request are held in memory
-# (database rows and their dicts, roughly 15-20 KB per specimen record), so 10,000 records stay
-# around 200 MB; the earlier 1,000,000 could use many GB for one request.
-MAX_LIMIT_NDJSON = 10000
+# Records per request, for every endpoint, JSON and ndjson alike (2026-10-21: 500, until
+# registered API keys arrive; it was 10,000). Larger sets are fetched in pages with offset.
+# Set on the server without a code change: maxLimit=<n> in etc/api-db.properties, then
+# restart the api container (docker restart antweb_api_1). Default 500.
+CAP_DEFAULT = 500
+
+
+def readMaxLimit(props):
+    # The login lines are read exactly as before; only this key tolerates spaces (maxLimit = 750).
+    raw = next((v for k, v in props.items() if k.strip() == 'maxLimit'), CAP_DEFAULT)
+    try:
+        value = int(str(raw).strip())
+    except ValueError:
+        value = CAP_DEFAULT
+    return value if value > 0 else CAP_DEFAULT
+
+
+MAX_LIMIT = readMaxLimit(_apiProps)
+MAX_LIMIT_NDJSON = MAX_LIMIT
+# Without a limit parameter a request gets the maximum (as before, when both were 10,000).
+DEFAULT_LIMIT = MAX_LIMIT
+print('API record limit per request:', MAX_LIMIT, flush=True)
+
+LIMIT_HEADER = 'X-AntWeb-Limit-Notice'
+
+
+def limitNoticeText():
+    return (f"Requests are limited to {MAX_LIMIT:,} records while AntWeb moves to registered API keys. "
+            "For larger data needs contact antweb@antweb.org.")
 
 
 def setGlobals(request):
@@ -230,14 +261,51 @@ def setGlobals(request):
     log = request.args.get('log', default='*', type=str)
     ndjson = request.args.get('ndjson', default='*', type=str)
     maxLimit = MAX_LIMIT_NDJSON if ndjson == 'true' else MAX_LIMIT
-    limit = request.args.get('limit', default=DEFAULT_LIMIT, type=int)
-    if limit is None or limit <= 0:
+    limit = request.args.get('limit', default=None, type=int)
+    requested = limit if limit is not None and limit > 0 else None
+    if requested is None:
         limit = DEFAULT_LIMIT
     limit = min(limit, maxLimit)
     offset = request.args.get('offset', default=0, type=int)
     if offset is None or offset < 0:
         offset = 0
+    # For limitNotice(): what was asked for and what is used (per request, flask.g).
+    g.apiLimitRequested = requested
+    g.apiLimit = limit
     return limit, offset, log, ndjson, startTime
+
+
+def limitNotice(count):
+    # The notice when the reply was cut by the cap: more than the cap was asked for, or no limit
+    # was given and the reply is full (there may be more). None otherwise.
+    requested = getattr(g, 'apiLimitRequested', None)
+    limit = getattr(g, 'apiLimit', None)
+    if limit is None:
+        return None
+    if requested is not None and requested > limit:
+        return limitNoticeText()
+    if requested is None and count >= limit:
+        return limitNoticeText()
+    return None
+
+
+def jsonify(*args, **kwargs):
+    # flask.jsonify, plus the limit notice: in the reply's metaData (or _metaData) as
+    # "limitNotice" and in the X-AntWeb-Limit-Notice header. The record count is the length of
+    # the reply's list (specimens, taxa, images, ...).
+    notice = None
+    if not args:
+        lists = [v for k, v in kwargs.items() if isinstance(v, list)]
+        if lists:
+            notice = limitNotice(len(lists[0]))
+        if notice:
+            for key in ('metaData', '_metaData'):
+                if isinstance(kwargs.get(key), dict):
+                    kwargs[key]['limitNotice'] = notice
+    response = flaskJsonify(*args, **kwargs)
+    if notice:
+        response.headers[LIMIT_HEADER] = notice
+    return response
 
 
 def ndjsonLines(dataList):
@@ -253,7 +321,12 @@ def ndjsonLines(dataList):
 
 def getNdjson(dataList):
     # Streamed: the reply is written as it is encoded, never held in memory as a whole.
-    return Response(ndjsonLines(dataList), content_type="application/json; charset=utf-8")
+    # The limit notice (no metadata in ndjson) is in the X-AntWeb-Limit-Notice header.
+    response = Response(ndjsonLines(dataList), content_type="application/json; charset=utf-8")
+    notice = limitNotice(len(dataList))
+    if notice:
+        response.headers[LIMIT_HEADER] = notice
+    return response
 
 
 def returnJsonify(method, returnVal):
@@ -575,6 +648,9 @@ def getSpecimen():
         query = query.join(Taxon).join(GeolocaleTaxon).join(Geolocale).filter(Geolocale.name == geolocaleName)
         query = addExtraGeolocaleListCriteria(query, geolocaleName)
 
+    # A fixed order (specimen code, the specimen table's key) so paging with offset neither
+    # repeats nor skips records; with 500 per request, paging is how larger sets are fetched.
+    query = query.order_by(Specimen.code)
     query = query.limit(limit)
     query = query.offset(offset)
 
@@ -756,7 +832,8 @@ def getGeoSpecimens():
             return jsonify(metaData=metaDataDict, genera=dataList)
         return jsonify(_metaData=metaDataDict, specimens=dataList)
 
-    # if not distinct. Show everything.
+    # if not distinct. Show everything (in specimen code order, for stable paging).
+    query = query.order_by(Specimen.code)
     query = query.limit(limit)
     query = query.offset(offset)
 
@@ -837,17 +914,20 @@ def getGeoSpeciesStats():
             + extraClause \
             + " and g.name = :geolocaleName" \
             + "  and s.status = 'valid'" \
-            + " group by s.taxon_name, s.genus, s.species"
+            + " group by s.taxon_name, s.genus, s.species" \
+            + " order by s.taxon_name" \
+            + " limit :limit offset :offset"
 
     # print(query)
     dataList = []
-    result = session.execute(text(query), {"geolocaleName": geolocaleName})
+    result = session.execute(text(query), {"geolocaleName": geolocaleName, "limit": limit, "offset": offset})
     for row in result:
         geoSpeciesStats = getGeoSpeciesStatsDict(row)
         dataList.append(geoSpeciesStats)
 
     params = [request.args]
-    metaDataDict = {'parameters': params, 'request': str(request), 'count': len(dataList)}
+    metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'offset': offset,
+                    'count': len(dataList)}
 
     if ndjson != 'true':
         return jsonify(metaData=metaDataDict, geoSpeciesStats=dataList)  # return flask Response
@@ -1726,6 +1806,8 @@ def getGeolocales():
     if georank != '*':
         query = query.filter(Geolocale.georank == georank)
     query = query.filter(Geolocale.isValid == 1)
+    # limit and offset were ignored here (every geolocale was returned).
+    query = query.order_by(Geolocale.id).limit(limit).offset(offset)
 
     try:
         data = query.all()
@@ -1771,7 +1853,8 @@ def getGeolocales():
         dataList.append(geolocaleDict)
 
     params = [request.args]
-    metaDataDict = {'parameters': params, 'request': str(request), 'geolocaleCount': geolocaleCount}
+    metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'offset': offset,
+                    'geolocaleCount': geolocaleCount}
 
     if ndjson != 'true':
         return jsonify(metaData=metaDataDict, geolocales=dataList)  # return flask Response
@@ -1975,6 +2058,8 @@ def getBioregions():
     query = session.query(Bioregion)
     if name != '*':
         query = query.filter(Bioregion.name == name)
+    # limit and offset were ignored here (every bioregion was returned).
+    query = query.order_by(Bioregion.name).limit(limit).offset(offset)
 
     try:
         data = query.all()
@@ -2009,7 +2094,8 @@ def getBioregions():
         dataList.append(bioregionDict)
 
     params = [request.args]
-    metaDataDict = {'parameters': params, 'request': str(request), 'bioregionCount': bioregionCount}
+    metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'offset': offset,
+                    'bioregionCount': bioregionCount}
 
     if ndjson != 'true':
         return jsonify(metaData=metaDataDict, bioregions=dataList)  # return flask Response
@@ -2202,7 +2288,7 @@ def getUnimagedGeolocaleTaxa():
                  f" order by taxon_name, caste desc"
 
     if int(limit) > 0:
-        query += " limit " + str(limit)
+        query += " limit " + str(int(limit)) + " offset " + str(int(offset))
 
     # Note: Without &byCaste=1 the number of taxa returned could be greater because the is_worker, is_queen, is_male are not computed (by scheduler).
 
