@@ -86,6 +86,7 @@ public final class CollectionAction extends AntwebAction {
 			}			
 			
             session.setAttribute("advancedSearchResults", collection);
+            session.removeAttribute("advancedSearchPaging");  // the Download Data box reads this collection, not an earlier search
             //session.setAttribute("activeSession", new Object());
             session.setAttribute("activeSession", Boolean.TRUE);
 

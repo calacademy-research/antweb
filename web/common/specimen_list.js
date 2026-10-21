@@ -25,7 +25,8 @@ $('#sortBy_select').on('change', function () {
 
 var url = $.url();
 var all_params = $.url(url).attr('query');
-var trim_params = all_params.replace(/&sortBy.*/, '');
+// A new sort starts at the first page of a paged search list.
+var trim_params = all_params.replace(/&sortBy.*/, '').replace(/(^|&)page=\d*/g, '');
 $("#sortby_extras").val(trim_params);
 
 var sort_by = $.url(url).param('sortBy');

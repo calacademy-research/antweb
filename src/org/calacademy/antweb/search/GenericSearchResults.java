@@ -35,6 +35,12 @@ public class GenericSearchResults implements Serializable {
     protected int startingPoint = 2;
     protected String name;
     protected String taxonName;
+    protected boolean keepOrder = false;
+
+    /** True: setResults() keeps the order of the rows (a page of the paged specimen list). */
+    public void setKeepOrder(boolean keepOrder) {
+        this.keepOrder = keepOrder;
+    }
     
     public ArrayList<ResultItem> filter(ArrayList<ResultItem> dataset, String property) {
         ArrayList<ResultItem> newList = new ArrayList<>();
@@ -320,7 +326,8 @@ public class GenericSearchResults implements Serializable {
                 myResults.add(item);
             }
 
-        myResults.sort(new ResultItemComparator());
+        // A paged list (SearchPaging) comes sorted from the database: keep that order.
+        if (!keepOrder) myResults.sort(new ResultItemComparator());
         this.results = myResults;
     }
 
@@ -621,7 +628,8 @@ public class GenericSearchResults implements Serializable {
             resItem.setTypes(typeCheck.get(thisCombo));
 		}
 
-        myResults.sort(new ResultItemComparator());
+        // A paged list (SearchPaging) comes sorted from the database: keep that order.
+        if (!keepOrder) myResults.sort(new ResultItemComparator());
         this.results = myResults;
     }
             

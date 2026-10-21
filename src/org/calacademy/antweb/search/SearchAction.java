@@ -156,6 +156,14 @@ public final class SearchAction extends DispatchAction {
         }
 
         HttpSession session = request.getSession();
+
+        // The specimen list is paged (SearchPaging, 2026-10-21): a COUNT and one page of rows.
+        if ((resultRank == null || "".equals(resultRank) || ResultRank.SPECIMEN.equals(resultRank))
+            && (output == null || "".equals(output) || Output.LIST.equals(output))) {
+          return doPagedSpecimenSearch(searchParameters, request, mapping);
+        }
+        session.removeAttribute("advancedSearchPaging");
+
 		Date startTime = new Date();
         String execTime = null;
         
@@ -307,6 +315,65 @@ public final class SearchAction extends DispatchAction {
       } finally {
         SearchAction.undoSetTempSpecimenSearchLimit();        
       }
+    }
+
+    /**
+     * Advanced search, specimen list: one page of SearchPaging.PAGE_SIZE specimens in the order chosen
+     * (sortBy, sortOrder) and the total from a COUNT query. The page's rows are the session's
+     * advancedSearchResults (Map, Compare and Field Guide tools work on them; checkboxes index them).
+     * The search itself is kept as advancedSearchPaging for the Download Data box (getSearchList.do).
+     */
+    private ActionForward doPagedSpecimenSearch(SearchParameters searchParameters, HttpServletRequest request, ActionMapping mapping)
+        throws SearchException, SQLException {
+        HttpSession session = request.getSession();
+        Date startTime = new Date();
+        int page = SearchPaging.pageFromParam(request.getParameter(SearchPaging.PAGE_PARAM));
+        String sortBy = request.getParameter("sortBy");
+        String sortOrder = request.getParameter("sortOrder");
+
+        AdvancedSearchAction searchAction = new AdvancedSearchAction();
+        searchAction.setServlet(servlet);
+        String title = searchAction.getSearchTitle(searchParameters);
+
+        SearchPaging paging = null;
+        ArrayList<ResultItem> rows = null;
+        Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("SearchAction.doPagedSpecimenSearch()");
+        try {
+            DataSource dataSource = org.calacademy.antweb.util.AntwebDataSources.get(request.getServletContext(), "mediumConPool");
+            connection = DBUtil.getConnection(dataSource, dbMethodName);
+            AdvancedSearch search = searchAction.buildSearch(connection, searchParameters);
+            int total = search.countPaged();
+            paging = new SearchPaging(total, page, sortBy, sortOrder, searchParameters);
+            rows = search.getPage(paging.getOrderBy(), SearchPaging.PAGE_SIZE, paging.getOffset());
+        } finally {
+            DBUtil.close(connection, this, dbMethodName);
+        }
+
+        AdvancedSearchResults results = new AdvancedSearchResults();
+        results.setKeepOrder(true);
+        results.setRset(rows);
+        results.setResultsWithFilters(new ArrayList<>());  // "Images only" and "Types only" are in the query
+
+        session.setAttribute("advancedSearchResults", results);
+        session.setAttribute("fullAdvancedSearchResults", results.getResults());
+        session.setAttribute("advancedSearchPaging", paging);
+        session.removeAttribute("searchResults");
+        session.removeAttribute("taxonList");
+        session.setAttribute("searchTitle", title);
+        session.setAttribute("resultSetModifier", DownloadLimits.count(paging.getTotal()));
+        session.setAttribute("resultRank", ResultRank.SPECIMEN);
+
+        request.setAttribute("isSearchPage", "true");
+        request.setAttribute("searchPaging", paging);
+        String path = AntwebProps.getDomainApp() + "/advancedSearch.do";
+        String queryString = request.getQueryString();
+        if (paging.hasPrevious()) request.setAttribute("searchPagingPrevUrl", SearchPaging.pageUrl(path, queryString, paging.getPage() - 1));
+        if (paging.hasNext()) request.setAttribute("searchPagingNextUrl", SearchPaging.pageUrl(path, queryString, paging.getPage() + 1));
+
+        String execTime = HttpUtil.finish(request, startTime);
+        searchLog("doPagedSpecimenSearch() time:" + execTime + " page:" + paging.getPage() + " total:" + paging.getTotal() + " title:" + title);
+        return mapping.findForward("advanced");
     }
 
     public ActionForward descEditSearch(ActionMapping mapping, ActionForm form,
