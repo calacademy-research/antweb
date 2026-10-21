@@ -326,7 +326,7 @@ public class DescriptionAction extends AntwebAction {
         } else {
           table = "object_edit"; histTable = "object_hist";
           where = " where object_key = ? and title = ?";
-          keys.add(describable.getName());
+          keys.add(DescEditDb.objectKey(describable));
         }
         keys.add(title);
         boolean isDesc = "description_edit".equals(table);
@@ -370,7 +370,7 @@ public class DescriptionAction extends AntwebAction {
             ins.add(describable instanceof Specimen ? ((Specimen) describable).getCode() : null);
           } else {
             sql = "insert into object_edit (object_key, title, content, is_manual_entry, access_group, access_login) values (?, ?, ?, 1, ?, ?)";
-            ins.add(describable.getName());
+            ins.add(DescEditDb.objectKey(describable));
             ins.add(title);
           }
           ins.add(newContents);

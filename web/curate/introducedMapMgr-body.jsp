@@ -33,7 +33,14 @@
 
 <H2>Introduced Species Native Bioregion Distribution Tool</H2>
 <br>
-Of the species that are on the Introduced Species <a href='<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=species&project=introducedants'>list</a>, here is where they are known to be native...
+<div class="mgr_help" style="max-width:70em;margin:6px 0 12px 0">
+For each species on the <a href='<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=species&project=introducedants'>introduced species list</a>
+(project introducedants), tick the bioregions where it is <b>native</b>. A specimen of the species uploaded
+from any other bioregion is marked introduced, and these species are not flagged as "not native" by the
+genus check of the Bioregion Map Manager. A red dot means no bioregion is ticked yet (then the species
+counts as introduced everywhere). The green arrow saves that species' row (administrators only); it
+applies to the next upload. Opening this page adds an empty row for a listed species that has none.
+</div>
 <br>
 <br>
 <table>
@@ -136,8 +143,8 @@ Of the species that are on the Introduced Species <a href='<%= AntwebProps.getDo
 <td><%= genusDisplay %></td>
 <td><%= speciesDisplay %></td>
 
-<input type="hidden" class="input_200" name="taxonName" value="<%= taxonName %>">
-<input type="hidden" class="input_200" name="orderBy" value="<%= orderBy %>">
+<input type="hidden" class="input_200" name="taxonName" value="<%= Html.escAttr(taxonName) %>">
+<input type="hidden" class="input_200" name="orderBy" value="<%= Html.escAttr(orderBy) %>">
 <td><% if (noneSelected) { %><img src="<%= domainApp %>/image/redDot.jpg" width="10" title="None selected" /><% } %></td>
 <td><a title="Afrotropical">At</a>:<input type="checkbox" name="isAfrotropical" <%= isAfrotropical ? "checked":"" %>></td>
 <td><a title="Antarctica">A</a>:<input type="checkbox" name="isAntarctica" <%= isAntarctica ? "checked":"" %>></td>

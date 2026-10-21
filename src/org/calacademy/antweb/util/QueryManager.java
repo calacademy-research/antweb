@@ -297,7 +297,7 @@ public abstract class QueryManager {
               ++i;
               int columnCount = rset.getMetaData().getColumnCount();
               for (int j=1 ; j <= columnCount ; ++j) {
-                String val = rset.getString(j);
+                String val = cell(rset.getString(j));
                 if (j == 1) {
                   message.append("<tr><td>" + val + "</td>");
                 } else if (j == columnCount) {
@@ -337,6 +337,31 @@ public abstract class QueryManager {
         return message.toString();
     }    
 
+
+    /** A link a named query builds itself: an a tag to an AntWeb page, with a plain text label. */
+    private static final java.util.regex.Pattern QUERY_LINK = java.util.regex.Pattern.compile(
+        "<a href=(['\"]?)([^'\"<>\\s]+)\\1>([^<>]*)</a>");
+
+    /**
+     * One value of a named query's result, for the HTML table. Values are data (specimen fields,
+     * names, log text) and are shown as text; only the links that some queries build in SQL
+     * (concat('<a href=...', taxon_name, ...)) to AntWeb pages are kept as links.
+     */
+    public static String cell(String value) {
+        return cell(value, AntwebProps.getDomainApp());
+    }
+
+    public static String cell(String value, String domainApp) {
+        if (value == null) return "null";
+        java.util.regex.Matcher m = QUERY_LINK.matcher(value);
+        if (m.matches()) {
+            String href = m.group(2);
+            for (String prefix : new String[] {domainApp + "/", "http://antweb.org/", "https://www.antweb.org/"}) {
+                if (prefix != null && !prefix.startsWith("null") && href.startsWith(prefix)) return value;
+            }
+        }
+        return Html.esc(value);
+    }
 
     // This method can be called simply to get html output from a query. Used by UtilAction.java.
     public static String getQueryResults(Connection connection, String theQuery) throws SQLException {

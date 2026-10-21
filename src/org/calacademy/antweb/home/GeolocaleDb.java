@@ -567,6 +567,25 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         return message;
     }    
     
+    /** How many places name this one as their parent (the countries of a subregion, the adm1s of a country). */
+    public int getChildCount(Geolocale geolocale) throws SQLException {
+        String childRank = Georank.getChild(geolocale.getGeorank());
+        if (childRank == null || geolocale.getName() == null) return 0;
+        PreparedStatement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getPreparedStatement(getConnection(), "GeolocaleDb.getChildCount()",
+                "select count(*) from geolocale where parent = ? and georank = ?");
+            stmt.setString(1, geolocale.getName());
+            stmt.setString(2, childRank);
+            rset = stmt.executeQuery();
+            return rset.next() ? rset.getInt(1) : 0;
+        } finally {
+            DBUtil.close(stmt, rset, "GeolocaleDb.getChildCount()");
+        }
+    }
+
+    /** Delete a place and its species list rows (geolocale_taxon); the caller checks it has no child places. */
     public boolean deleteGeolocale(int id) throws SQLException {
         boolean success = false;
         Statement stmt = null;
@@ -579,7 +598,10 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
             stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.deleteGeolocale()");
             int x = stmt.executeUpdate(dml);
-            if (x > 0) success = true;
+            if (x > 0) {
+              success = true;
+              stmt.executeUpdate("delete from geolocale_taxon where geolocale_id = " + id);
+            }
         } catch (SQLException e) {
             s_log.error("deleteGeolocale() e:" + e);
             throw e;
@@ -627,7 +649,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
         if (form.getRegion() != null) { sets.add("region = ?"); params.add(form.getRegion()); }
         if (form.getBioregion() != null) { sets.add("bioregion = ?"); params.add(form.getBioregion()); }
+        else if (form.isClearBioregion()) { sets.add("bioregion = ?"); params.add(null); }
         if (form.getAltBioregion() != null) { sets.add("alt_bioregion = ?"); params.add(form.getAltBioregion()); }
+        else if (form.isClearAltBioregion()) { sets.add("alt_bioregion = ?"); params.add(null); }
 
         if (form.getCentroidFixed() != null) {
           sets.add("centroid_fixed = ?"); params.add("".equals(form.getCentroidFixed()) ? null : form.getCentroidFixed());
@@ -644,14 +668,64 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
         params.add(form.getId());
         String dml = "update geolocale set " + String.join(", ", sets) + " where id = ?";
+
+        // A rename moves the page text (object_edit) and its history (object_hist), keyed by the
+        // name, in the same transaction (PageTextKeys). If the new name already has page text,
+        // nothing is saved. If another place still has the old name, the text stays with it.
+        String oldName = geolocale.getName();
+        String newName = form.getName();
+        boolean renamed = oldName != null && newName != null && !"".equals(newName) && !oldName.equals(newName);
+        Connection conn = getConnection();
+        boolean autoCommit = conn.getAutoCommit();
         try {
+            conn.setAutoCommit(false);
+            boolean shared = renamed && isNameUsedByOther(oldName, form.getId());
+            if (renamed && !shared) {
+                String refusal = PageTextKeys.refusal(conn, oldName, newName);
+                if (refusal != null) {
+                    conn.rollback();
+                    s_log.warn("updateGeolocale() id:" + form.getId() + " rename refused, " + newName + " has page text");
+                    return NOT_SAVED + refusal;
+                }
+            }
             executeBound(dml, params, "GeolocaleDb.updateGeolocale()");
+            if (renamed && !shared) {
+                int[] moved = PageTextKeys.move(conn, oldName, newName);
+                if (moved[0] + moved[1] > 0) {
+                    returnVal += " Renamed " + Html.esc(oldName) + " to " + Html.esc(newName) + ": its page text ("
+                        + moved[0] + (moved[0] == 1 ? " field" : " fields") + ", " + moved[1]
+                        + (moved[1] == 1 ? " earlier version" : " earlier versions") + ") moved with it.";
+                }
+                s_log.info("updateGeolocale() id:" + form.getId() + " renamed " + oldName + " to " + newName
+                    + ", object_edit rows moved:" + moved[0] + " object_hist rows moved:" + moved[1]);
+            } else if (shared) {
+                returnVal += " Another place is still named " + Html.esc(oldName)
+                    + ", so the page text under that name stays with it; this place starts without page text.";
+            }
+            conn.commit();
         } catch (SQLException e) {
+            try { conn.rollback(); } catch (SQLException e2) { /* the first error is the one to report */ }
             s_log.error("updateGeolocale() id:" + form.getId() + " e:" + e + " dml:" + dml);
             throw e;
+        } finally {
+            try { conn.setAutoCommit(autoCommit); } catch (SQLException e) { /* ignore */ }
         }
         return returnVal;
-    }    
+    }
+
+    /** Start of updateGeolocale()'s message when nothing was saved. */
+    public static final String NOT_SAVED = "Nothing was saved. ";
+
+    /** True if a geolocale other than id has this name (names are not unique across georanks). */
+    private boolean isNameUsedByOther(String name, int id) throws SQLException {
+        try (PreparedStatement s = getConnection().prepareStatement("select count(*) from geolocale where name = ? and id <> ?")) {
+            s.setString(1, name);
+            s.setInt(2, id);
+            try (ResultSet r = s.executeQuery()) {
+                return r.next() && r.getInt(1) > 0;
+            }
+        }
+    }
     
     public ArrayList<SpeciesListable> fetchSpeciesLists(Login login) throws SQLException {
         return fetchSpeciesLists(login, true);

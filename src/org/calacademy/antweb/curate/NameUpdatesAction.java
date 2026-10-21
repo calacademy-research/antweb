@@ -244,15 +244,9 @@ public final class NameUpdatesAction extends AntwebAction {
         return b.append("</details>").toString();
     }
 
+    /** "N specimens" and the codes, collapsed: the same markup as the upload report's lines (SpecimenCodes). */
     private static void appendCodes(StringBuilder b, SpecimenNameUpdateDb.Line line, String domainApp) {
-        b.append(" <details style=\"display:inline\"><summary>").append(line.count).append(line.count == 1 ? " specimen" : " specimens").append("</summary>");
-        int i = 0;
-        for (String code : line.codes) {
-            if (i++ > 0) b.append(", ");
-            b.append("<a href=\"").append(domainApp).append("/specimen.do?name=").append(Html.url(code)).append("\">").append(Html.esc(code)).append("</a>");
-        }
-        if (line.count > line.codes.size()) b.append(" ... (").append(line.count - line.codes.size()).append(" more)");
-        b.append("</details>");
+        b.append(SpecimenCodes.html(line.count, line.codes, domainApp, true));
     }
 
     public static String linesHtml(List<SpecimenNameUpdateDb.Run> runs, List<SpecimenNameUpdateDb.Line> lines, String domainApp) {
