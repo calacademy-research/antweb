@@ -530,8 +530,10 @@ public class UploadAction extends AntwebAction {
 			UploadDetails uploadDetails = new SpeciesListUploader(connection).worldantsFetchAndReload();
 			String message = uploadDetails.getMessage();
 			if (message != null && !"success".equals(message)) {
-				AdminAlertMgr.add(message, connection);
 				DBUtil.rollback(connection);
+				// The alert is written after the rollback, in its own committed statement.
+				try { connection.setAutoCommit(true); } catch (SQLException e) { s_log.warn("runWorldantsImport() autocommit e:" + e); }
+				AdminAlertMgr.add("AntCat import failed: " + message, connection);
 				return BackgroundJobs.Outcome.failed(message);
 			}
 			BackgroundJobs.step("Saving a statistics snapshot and writing the report.");

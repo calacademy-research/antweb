@@ -122,6 +122,16 @@ public final class ArtistAction extends AntwebAction {
                   request.setAttribute("message", "Enter an Artist Name.");
                   return mapping.findForward("message");
                 }
+                name = name.trim();
+                Artist sameName = artistDb.getArtistByName(name);
+                if (sameName != null && sameName.getId() != artist.getId()) {
+                  // Two photographers with one name cannot be told apart in the image credits.
+                  request.setAttribute("message", "Nothing was changed: photographer " + sameName.getLink() + " (id " + sameName.getId()
+                      + ") already has that name. To merge the two, delete this one and enter " + sameName.getId()
+                      + " as the photographer its images move to.");
+                  return mapping.findForward("message");
+                }
+                String oldName = artist.getName();
                 artist.setName(name);
                 String returnVal = artistDb.saveArtist(artist, accessLogin);
                 if (returnVal == null) {
@@ -129,6 +139,7 @@ public final class ArtistAction extends AntwebAction {
                   return mapping.findForward("message");
                 }
                 ArtistMgr.populate(connection, true, false);
+                if (returnVal.isEmpty()) returnVal = "Renamed " + Html.esc(oldName) + " to " + Html.esc(name) + ".";
                 request.setAttribute("message", "<font color=green>" + returnVal + "</font>");
                 //goToArtistManager = true;
             }

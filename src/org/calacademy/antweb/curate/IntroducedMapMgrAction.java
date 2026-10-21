@@ -79,9 +79,11 @@ public final class IntroducedMapMgrAction extends AntwebAction {
               DummyTaxon species = new DummyTaxon();
               species.setTaxonName(taxonName);
 
-  			  String query = "select value from taxon_prop where prop = 'introducedMap' and taxon_name = '" + taxonName + "'";       
-              stmt = connection.createStatement();
-              rset = stmt.executeQuery(query);
+              DBUtil.close(stmt, rset, "IntroducedMapMgrAction.execute() row");
+              PreparedStatement ps = connection.prepareStatement("select value from taxon_prop where prop = 'introducedMap' and taxon_name = ?");
+              ps.setString(1, taxonName);
+              stmt = ps;
+              rset = ps.executeQuery();
 
               int i = 0;
               while (rset.next()) {

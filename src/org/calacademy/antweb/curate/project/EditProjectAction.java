@@ -30,6 +30,13 @@ public final class EditProjectAction extends AntwebAction {
         throws IOException, ServletException {
 
         ActionForward c = Check.curator(request, mapping); if (c != null) return c;   
+        // Project settings (title, live, map, coordinates; create and delete) are for administrators:
+        // the settings page and the Project Manager are admin pages. Curators edit a project's species
+        // list in the Species List Tool and its page text on the project page.
+        if (!LoginMgr.isAdmin(request)) {
+          request.setAttribute("message", "Only an AntWeb administrator may change project settings.");
+          return mapping.findForward("message");
+        }
         ActionForward f = Check.upload(request, mapping); if (f != null) return f;
 
         HttpSession session = request.getSession();
@@ -76,6 +83,10 @@ public final class EditProjectAction extends AntwebAction {
             }
 
             if (HttpUtil.isPost(request)) {
+              if (new ProjectDb(connection).getProject(projectName) == null && !Project.isProjectName(projectName)) {
+                request.setAttribute("message", "Nothing was saved: a project key is one lowercase word ending with \"ants\".");
+                return mapping.findForward("message");
+              }
               String message = handlePost(mapping, form, request, connection);
               if (message != null) {
                 request.setAttribute("message", message);
@@ -101,7 +112,13 @@ public final class EditProjectAction extends AntwebAction {
             // Get the project and return it to the projectEdit.jsp
             Project thisProject = new ProjectDb(connection).getProject(projectName);
             if (thisProject == null) {
+              if (!Project.isProjectName(projectName)) {
+                request.setAttribute("message", "No project " + Html.esc(projectName) + ". A new project's key is one"
+                    + " lowercase word without spaces, ending with \"ants\" (for example malagasyants).");
+                return mapping.findForward("message");
+              }
               thisProject = editProjectForm.freshProject();
+              request.setAttribute("isNewProject", Boolean.TRUE);
             }
 
             s_log.debug("execute() Putting in request thisProject:" + thisProject);
@@ -127,25 +144,14 @@ public final class EditProjectAction extends AntwebAction {
           && !"".equals(editProjectForm.getExtent())
           && editProjectForm.getExtent().contains(",")
           ) {
-            ActionMessages messages = new ActionMessages();
-            ActionMessage msg = new ActionMessage("error.extent.commas");
-            return msg.toString();
+            return "Nothing was saved: the Geographic Extent must not contain commas (separate the four numbers with spaces).";
         }
-        
-        String locality = editProjectForm.getLocality();
-        boolean isAllAntwebAnts = false;
-        if (editProjectForm.getProjectName() != null && editProjectForm.getProjectName().equals("allantwebants")) isAllAntwebAnts = true;
-        
-        if ( !isAllAntwebAnts && locality != null && !"".equals(locality) && !(
-                 locality.contains("bioregion")
-              || locality.contains("country")
-              || locality.contains("adm1")
-              )) {
-            String message = "Mapping Range Criteria must be bioregion, country or adm1.";
-            return message;
-        }        
-    
+        // (The former "Locality (Mapping Range Criteria)" field was never stored, so it was removed.)
+
         Project project = editProjectForm.getProject();
+        // The settings form does not carry the project's source: keep the stored one (the update used to blank it).
+        Project stored = new ProjectDb(connection).getProject(project.getName());
+        if (stored != null && project.getSource() == null) project.setSource(stored.getSource());
 
         s_log.debug("handlePost() form.isLive:" + editProjectForm.getIsLive() + " Project.isLive:" + project.getIsLive());
 

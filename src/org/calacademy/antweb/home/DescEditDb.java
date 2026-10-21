@@ -115,6 +115,18 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
      * forUpdate locks the row until the transaction ends. Throws on a database error: the caller
      * must not treat a failed read as an empty field.
      */
+    /**
+     * The object_key of an overview page's text (object_edit, object_hist): the name of a place,
+     * project or bioregion, and the CODE of a museum. Museum pages load their text by code
+     * (MuseumDb.getMuseum, getMuseums), so the editor must read and write it by code as well; by
+     * name, text saved on a museum whose name is not its code (code ABS, name "ABS, Lake Placid")
+     * was stored under the name and did not show after a reload.
+     */
+    public static String objectKey(Describable describable) {
+        if (describable instanceof org.calacademy.antweb.Museum) return ((org.calacademy.antweb.Museum) describable).getCode();
+        return describable.getName();
+    }
+
     public static String readFieldForEdit(Connection connection, Describable describable, String title, boolean forUpdate)
         throws SQLException {
         String sql;
@@ -127,7 +139,7 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
             key = ((Taxon) describable).getTaxonName();
         } else {
             sql = "select content from object_edit where object_key = ? and title = ? limit 1";
-            key = describable.getName();
+            key = objectKey(describable);
         }
         if (forUpdate) sql += " for update";
         PreparedStatement stmt = null;

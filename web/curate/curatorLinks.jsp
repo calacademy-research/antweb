@@ -6,13 +6,13 @@
       <li><a href="<%= domainApp %>/viewLogins.do">Login Manager</a> (also: all logins with their permissions, logins by last login)
       <li><a href="<%= domainApp %>/addUploader.do">Add an uploader</a> (someone wants to upload specimens: login or invitation, upload group, rights and welcome email in one form)
       <li><a href="<%= domainApp %>/viewGroups.do">Upload groups</a> (the institutions, labs and collections that own specimen records; an upload replaces its uploader's group)
-      <li><a href="<%= domainApp %>/manageMuseum.do">Museum Manager</a>
-      <li><a href="<%= domainApp %>/geolocaleMgr.do">Geolocale Manager</a> (countries and adm1s; also the georegion and bioregion tables)
-      <li><a href="<%= domainApp %>/projectMgr.do">Project Manager</a>
-      <li><a href="<%= domainApp %>/artists.do">Photographers</a> (image credits)
-      <li><a href="<%= domainApp %>/adminAlert.do">Admin Alert Manager</a>
-      <li><a href="<%= domainApp %>/bioregionMapMgr.do">Bioregion Map Manager</a> (where a species is native)
-      <li><a href="<%= domainApp %>/introducedMapMgr.do">Introduced Map Manager</a> (where a species is introduced)
+      <li><a href="<%= domainApp %>/manageMuseum.do">Museum Manager</a> (the museum codes of specimen data: name, title, active; add or delete)
+      <li><a href="<%= domainApp %>/geolocaleMgr.do">Geolocale Manager</a> (countries and adm1s: valid, live, valid name, bioregion, map; also the georegion and bioregion tables)
+      <li><a href="<%= domainApp %>/projectMgr.do">Project Manager</a> (projects such as regional faunas: settings, create, delete)
+      <li><a href="<%= domainApp %>/artists.do">Photographers</a> (image credits: add, rename, merge)
+      <li><a href="<%= domainApp %>/adminAlert.do">Admin Alert Manager</a> (problems AntWeb recorded for admins, such as a failed AntCat import)
+      <li><a href="<%= domainApp %>/bioregionMapMgr.do">Bioregion Map Manager</a> (the bioregions where each genus is native)
+      <li><a href="<%= domainApp %>/introducedMapMgr.do">Introduced Map Manager</a> (where each introduced species is native; elsewhere it counts as introduced)
       <li><a href="<%= domainApp %>/query.do">Query Manager</a> (ready-made database checks; they only read data)
       <li><a href="<%= domainApp %>/logMgr.do?action=list">Log Manager</a> (compute.log is the nightly run, admin.log the AntCat imports and scheduler runs; also the profiler log)
     </ul>

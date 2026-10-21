@@ -213,7 +213,7 @@ public class ArtistDb extends AntwebDb {
             if (moveToArtist != null) {
                 int i = moveToArtist(artist, moveToArtist);
                 if (i > 0) {
-                    String moveToArtistLink = "<a href='" + AntwebProps.getDomainApp() + "/artist.do?id=" + moveToArtist.getId() + "'>" + moveToArtist + "</a>";            
+                    String moveToArtistLink = moveToArtist.getLink();
                     if (i == 1) returnVal = i + " image attributed to " + moveToArtistLink + ".";
                     if (i > 1) returnVal = i + " images attributed to " + moveToArtistLink + ".";
                     s_log.debug("moveToArtist() dml:" + dml + " i:" + i + " returnVal:" + returnVal);
@@ -234,7 +234,7 @@ public class ArtistDb extends AntwebDb {
               returnVal += " Artist:" + Html.esc(artist) + " NOT deleted.";
             }
         } catch (Exception e) {
-            return "error:" + e;
+            return "error:" + Html.esc(e);
         }
         return returnVal;
     }
@@ -307,6 +307,8 @@ public class ArtistDb extends AntwebDb {
 
             while (rset.next()) {
                 Artist artist = artistMap.get(rset.getInt("artist"));
+                // Images without a photographer, or with a deleted one, have no artist row.
+                if (artist == null) continue;
 
                 artist.setImageCount(rset.getInt("images"));
                 artist.setSpecimenCount(rset.getInt("specimen"));

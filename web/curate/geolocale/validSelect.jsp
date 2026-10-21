@@ -28,7 +28,7 @@
 		  String displayName = validGeolocale.getName();
 		  if (displayName.length() > 40) displayName = displayName.substring(0, 40) + "...";
 %> 
-  <option name="validNameId" value='<%= validGeolocale.getId() %>' <%= validSelected %>><%= displayName %></option>
+  <option name="validNameId" value='<%= validGeolocale.getId() %>' <%= validSelected %>><%= org.calacademy.antweb.util.Html.esc(displayName) %></option>
 <% 
 	  	} // for
 	  } // if

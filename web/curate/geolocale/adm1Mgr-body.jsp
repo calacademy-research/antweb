@@ -59,10 +59,16 @@
 <H2>Adm1 Manager</H2>
 <br>
 
-<h3>Country: <a href='<%= domainApp %>/geolocaleMgr.do?georank=adm1&parent=<%= country %>'><%= country %></a></h3>
+<div class="mgr_help" style="max-width:60em;margin:6px 0 12px 0">
+Checks one adm1 name (as written in specimen data) against the adm1s AntWeb knows for the country.
+A name that matches an invalid adm1 with a Valid Name is changed to that valid name at upload; an
+unmatched name can be added by an administrator (Create). This page changes nothing by itself.
+</div>
+
+<h3>Country: <a href='<%= domainApp %>/geolocaleMgr.do?georank=adm1&parent=<%= Html.escAttr(Html.url(country)) %>'><%= Html.esc(country) %></a></h3>
 
 <br>
-<h3>Adm1: <b><%= adm1 %></b><%= isFound %>.</h3>
+<h3>Adm1: <b><%= Html.esc(adm1) %></b><%= isFound %>.</h3>
 
 <%
     String message = (String) request.getAttribute("message"); 
@@ -79,12 +85,12 @@
 %>
 <br>As an Antweb Admin, you may <b><%= org.calacademy.antweb.util.Csrf.postButton(request, domainApp + "/editGeolocale.do?georank=adm1&parent=" + encodedCountry + "&isCreate=true&isSubmit=true&name=" + encodedAdm1 + "&source=adm1Mgr", "Create") %></b> this ADM1.
 <%   } else if (isInvalidMatch){ %>
-<br>As an Antweb Admin, you may <b><a href='<%= domainApp %>/editGeolocale.do?georank=adm1&parent=<%= encodedCountry %>&name=<%= encodedAdm1 %>'>Edit</a></b> this ADM1.
+<br>As an Antweb Admin, you may <b><a href='<%= domainApp %>/editGeolocale.do?georank=adm1&parent=<%= Html.escAttr(encodedCountry) %>&name=<%= Html.escAttr(encodedAdm1) %>'>Edit</a></b> this ADM1.
 <%   }
    }
    
    if (isInvalidMatch && useValidName != null) { %>
-<br><br>Because the invalid adm1 (<b><%= adm1 %></b>) has a Valid Name (<b><%= useValidName %></b>) this name will be used when the specimen file uploaded.
+<br><br>Because the invalid adm1 (<b><%= Html.esc(adm1) %></b>) has a Valid Name (<b><%= Html.esc(useValidName) %></b>) this name will be used when the specimen file uploaded.
 <% } %>
 
    
@@ -124,11 +130,11 @@
          <% } %>             
       
         <td><%= count %></td>
-        <td><a href="<%= domainApp %>/adm1Mgr.do?adm1Name=<%= geolocale.getName() %>&countryName=<%= geolocale.getParent() %>"><img src="<%= domainApp %>/image/view_icon.png"></a></td>        
-        <td><a href='<%= domainApp %>/editGeolocale.do?id=<%= geolocale.getId() %>'><%= geolocale.getName() %></a></td>
-        <td><%= geolocale.getSource() %></td>
+        <td><a href="<%= domainApp %>/adm1Mgr.do?adm1Name=<%= Html.escAttr(Html.url(geolocale.getName())) %>&countryName=<%= Html.escAttr(Html.url(geolocale.getParent())) %>"><img src="<%= domainApp %>/image/view_icon.png"></a></td>        
+        <td><a href='<%= domainApp %>/editGeolocale.do?id=<%= geolocale.getId() %>'><%= Html.esc(geolocale.getName()) %></a></td>
+        <td><%= Html.esc(geolocale.getSource()) %></td>
 <%      if (!geolocale.getIsValid()) { %>
-          <td><%= geolocale.getValidName() %></td>
+          <td><%= Html.esc(geolocale.getValidName()) %></td>
 <%      }
       } %>
    </tr>
@@ -141,7 +147,7 @@
     </h3>
     <% if (!isValidMatch && codeStr != null && !"".equals(codeStr)) { 
          if (useValidName != null) { %>
-    <br>(You may update these specimen in your specimen upload file to refer to ADM1:<%= useValidName %> or Antweb will automatically update them at specimen upload time).
+    <br>(You may update these specimen in your specimen upload file to refer to ADM1:<%= Html.esc(useValidName) %> or Antweb will automatically update them at specimen upload time).
     <%   } else { %>
     <br>(Please update your specimen upload file to refer to a valid adm1 or discuss with <%= AntwebUtil.getAdminEmail() %>).
     <%   }
