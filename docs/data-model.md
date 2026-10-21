@@ -14,22 +14,22 @@ as much as scripts: some say they were never run, some mix pasted output with SQ
 hand on the server. So the live database can differ, and where it is known to differ this page says so (for
 example: on 2026-10-21 `museum.specimen_subfamily_dist_json` was smaller on staging than `db/upgrade/6.2`
 creates it; the API reads `taxon.subfamily_count` although `db/upgrade/4.150` drops it). To compare with the
-live schema, run on the server (read-only) and copy the output here:
+live schema, run on production (read-only; after this page is merged, so the production checkout has the script):
 
 ```
-F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 \
-  mysql -B -N -u "$(sed -n 's/^user=//p' "$F")" ant -e "SELECT c.table_name, c.column_name, c.column_type, t.table_type
-  FROM information_schema.columns c JOIN information_schema.tables t USING (table_schema, table_name)
-  WHERE c.table_schema = 'ant' ORDER BY c.table_name, c.ordinal_position" > /tmp/live-schema.tsv
-python3 tools/datamodel/list_tables.py --compare live-schema.tsv
+ssh root@165.232.137.86
+F=/root/antweb/etc/db.properties
+sed -n 's/^password=//p' "$F" | docker exec -i antweb_mysql_1 sh -c 'IFS= read -r p; MYSQL_PWD="$p" exec mysql -B -N -u "$1" ant -e "SELECT c.table_name, c.column_name, c.column_type, t.table_type FROM information_schema.columns c JOIN information_schema.tables t USING (table_schema, table_name) WHERE c.table_schema = DATABASE() ORDER BY c.table_name, c.ordinal_position"' sh "$(sed -n 's/^user=//p' "$F")" > /root/live-schema.tsv
+python3 /root/antweb/tools/datamodel/list_tables.py --compare /root/live-schema.tsv
 ```
 
-`--compare` lists tables and views that exist only live or only in the repository, and column differences. The
-first such run should be recorded here and the sections corrected.
+The password goes to MySQL on standard input, so it never appears on a command line. `--compare` lists tables and
+views that exist only live or only in the repository, and column differences. The first such run should be
+recorded here and the sections corrected.
 
 **Keeping this page complete.** CI (`.github/workflows/tests.yaml`, step "Data model doc has a section for every
 table") runs `python3 tools/datamodel/list_tables.py --check`: it fails when a table or view that the repository's
-SQL creates has no section here (a heading `### \`name\``), or when a section names a table the SQL does not know.
+SQL creates has no section here (a heading of the form `### ` followed by the name in backticks), or when a section names a table the SQL does not know.
 A new table therefore needs its `db/upgrade` file (or its `CREATE TABLE IF NOT EXISTS` in the code) and a section.
 `python3 tools/datamodel/list_tables.py` prints every table with its columns and the file that created it.
 
@@ -1164,9 +1164,6 @@ on staging first. The dates are those of the file that made the table (or of the
 | `user_agentbak` | 2023-01-17, `db/upgrade/8.85` | copy of `user_agent` before it was emptied |
 | `team_member` | 2011, `db/upgrade/4.3` | an old staff table with images in the database; the team page (`web/team/staff.jsp`) is static HTML |
 
-The run-time backups below are made by the code on purpose and are part of an undo; they should be dropped after a
-retention period that Brian sets (not decided yet).
-
 ### `description_edit_plazi20150601`
 
 Backup, see the table above.
@@ -1210,6 +1207,9 @@ Backup, see the table above.
 ### `team_member`
 
 Obsolete, see the table above.
+
+The two run-time backups below are made by the code on purpose and are part of an undo; they should be dropped
+after a retention period that Brian sets (not decided yet).
 
 ### `login_inactive_backup_*`
 

@@ -23,11 +23,12 @@ Usage:
   python3 tools/datamodel/list_tables.py --json       the same as JSON
   python3 tools/datamodel/list_tables.py --compare live.tsv
                                                       differences between the repository's schema and the live
-                                                      one; live.tsv is the output of (read-only, on the server):
+                                                      one; live.tsv is the tab-separated output (mysql -B -N)
+                                                      of this read-only query (the full command, which keeps the
+                                                      password off the command line, is in docs/data-model.md):
       SELECT c.table_name, c.column_name, c.column_type, t.table_type FROM information_schema.columns c
         JOIN information_schema.tables t USING (table_schema, table_name)
-       WHERE c.table_schema = 'ant' ORDER BY c.table_name, c.ordinal_position;
-      run with mysql -B -N (tab-separated, no header)
+       WHERE c.table_schema = DATABASE() ORDER BY c.table_name, c.ordinal_position
   python3 tools/datamodel/list_tables.py --check      fail (exit 1) when a table has no section in
                                                       docs/data-model.md, or a section names a table the
                                                       repository does not know (CI, tests.yaml)
@@ -126,6 +127,8 @@ class Schema:
         self.dropped_views = {}
 
     def _t(self, name, src, origin="altered only"):
+        if name in self.dropped and name not in self.tables and name not in ALTERED_AFTER_DROP:
+            return None  # an ALTER left in a file after the table was dropped: the table stays dropped
         if name not in self.tables:
             self.tables[name] = {"columns": {}, "created": None, "origin": origin, "history": []}
             self.dropped.pop(name, None)
@@ -171,6 +174,8 @@ class Schema:
         if name in self.views:  # ALTER TABLE on a view (fails in MySQL; 8.56 tried it)
             return
         t = self._t(name, src)
+        if t is None:
+            return
         if not t["history"] or not t["history"][-1].endswith(src):
             t["history"].append("altered " + src)
         for spec in split_top(specs, ","):
@@ -393,6 +398,12 @@ def collect_method_returns():
             METHOD_RETURNS[m.group(1)] = '"' + re.sub(r"%[0-9]*[a-z]", "*", m.group(2)[1:-1]) + '"'
 
 
+def java_unescape(lit):
+    """The text of a Java string literal: the usual escapes only, other characters (also non-ASCII) as they are."""
+    escapes = {"n": "\n", "t": "\t", "r": "\r", '"': '"', "'": "'", "\\": "\\"}
+    return re.sub(r"\\(.)", lambda m: escapes.get(m.group(1), m.group(1)), lit)
+
+
 def java_create_statements(text):
     """CREATE TABLE statements built from string literals and constants in one Java file."""
     consts = {}
@@ -404,7 +415,7 @@ def java_create_statements(text):
         out = []
         for tok in re.findall(JAVA_LIT + r"|[A-Za-z_][A-Za-z0-9_.]*(?:\([^)]*\))?", expr):
             if tok.startswith('"'):
-                out.append(bytes(tok[1:-1], "utf-8").decode("unicode_escape"))
+                out.append(java_unescape(tok[1:-1]))
             elif tok in consts and depth < 3:
                 out.append(expand(consts[tok], depth + 1))
             else:
@@ -433,6 +444,12 @@ NOT_RUN = {
     # "These have not been executed. Proposed changes below." (charset conversion; also proposes dropping
     # museumBak and taxon_prop20170617, so those two may still exist).
     "db/upgrade/8.56/2021-06-21.sql": None,
+}
+# Tables an upgrade file drops but a later file alters, so they evidently still exist. Any other ALTER of a dropped
+# table is ignored (it would otherwise bring the table back and CI would ask for a section).
+ALTERED_AFTER_DROP = {
+    # dropped in db/upgrade/6.16/2017-01-16.sql, converted to InnoDB in db/upgrade/8.56/2021-04-08.sql
+    "taxon_country",
 }
 # (file, table): a CREATE TABLE that records what was dropped just before ("These are gone now").
 RECORD_ONLY = {
@@ -488,10 +505,11 @@ def build():
     return schema
 
 
-def doc_sections():
+def doc_headings():
+    """Every table heading of docs/data-model.md, in order (a list, so a heading written twice can be found)."""
     if not DOC.exists():
-        return set()
-    return set(HEADING.findall(DOC.read_text(encoding="utf-8")))
+        return []
+    return HEADING.findall(DOC.read_text(encoding="utf-8"))
 
 
 def norm_type(t):
@@ -546,12 +564,24 @@ def main(argv):
                           "dropped_views": schema.dropped_views}, indent=1, sort_keys=True))
         return 0
     if "--compare" in argv:
-        return compare(schema, Path(argv[argv.index("--compare") + 1]))
+        i = argv.index("--compare")
+        if i + 1 >= len(argv):
+            print("usage: list_tables.py --compare LIVE.tsv (see the top of this file for how to make LIVE.tsv)")
+            return 2
+        path = Path(argv[i + 1])
+        if not path.is_file():
+            print(f"--compare: {path} is not a readable file")
+            return 2
+        return compare(schema, path)
     if "--check" in argv:
-        sections = doc_sections()
+        headings = doc_headings()
+        sections = set(headings)
+        twice = sorted({h for h in headings if headings.count(h) > 1})
         known = set(schema.tables) | set(schema.dropped) | set(schema.views) | set(schema.dropped_views)
         missing = [n for n in names + views if n not in sections]
         unknown = [s for s in sorted(sections) if s not in known]
+        for n in twice:
+            print(f"::error file=docs/data-model.md::table {n} has two sections in docs/data-model.md (keep one)")
         for n in missing:
             kind = "view" if n in schema.views else "table"
             where = schema.views[n] if n in schema.views else (schema.tables[n]["created"] or schema.tables[n]["origin"])
@@ -562,7 +592,7 @@ def main(argv):
                   "alters or drops (rename the heading, or remove the section)")
         print(f"{len(names)} tables and {len(views)} views in the repository's SQL, {len(sections)} sections in "
               f"docs/data-model.md, {len(missing)} missing, {len(unknown)} unknown")
-        return 1 if missing or unknown else 0
+        return 1 if missing or unknown or twice else 0
     for n in names:
         t = schema.tables[n]
         print(f"{n}\t{t['created'] or '(not created in the repository: ' + t['origin'] + ')'}")
