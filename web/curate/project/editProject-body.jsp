@@ -70,12 +70,14 @@ The text and images shown on the project page are edited on the page itself:
 </div>
 
 <p><h3>Map (Image):</h3>
-<input name="map" type=text class=input_550 value="<%= Html.escAttr(Formatter.formDisplay(thisProject.getMap())) %>"><br>
+<%-- The stored map image (project.map, Project.getMapImage); saved as mapImage (EditProjectForm). The old field
+     was named "map" and showed the page's map object, so it was never saved. --%>
+<input name="mapImage" type=text class=input_550 value="<%= Html.escAttr(Formatter.formDisplay(thisProject.getMapImage())) %>"><br>
 File name of the map image in the project's species list folder (at most 40 characters).
 
-<% if (thisProject.getMap() != null && !"".equals(thisProject.getMap())) { %>
+<% if (thisProject.getMapImage() != null && !"".equals(thisProject.getMapImage())) { %>
 
-        <div id="static_map" class="slide medium last"><img src="<%= AntwebProps.getImgDomainApp() %>/<%= Project.getSpeciesListDir() %><%= Html.escAttr(thisProject.getRoot()) %>/<%= Html.escAttr(thisProject.getMap()) %>"></div>
+        <div id="static_map" class="slide medium last"><img src="<%= AntwebProps.getImgDomainApp() %>/<%= Project.getSpeciesListDir() %><%= Html.escAttr(thisProject.getRoot()) %>/<%= Html.escAttr(thisProject.getMapImage()) %>"></div>
 <% } %>
 
 <br><br>
