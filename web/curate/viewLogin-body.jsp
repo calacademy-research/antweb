@@ -24,7 +24,7 @@
 </div>
 <% } %>
 
-<div class="admin_left">
+<div class="admin_left loginEditPage">
 <logic:messagesPresent property="error">
     <h2>Please correct the following:</h2>
     <font color="red">

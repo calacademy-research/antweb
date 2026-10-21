@@ -20,7 +20,7 @@
  ArrayList<Login> logins =   (ArrayList<Login>) session.getAttribute("antwebLogins");
 %>
 
-<div class="admin_left">
+<div class="admin_left loginListPage">
     <h1>Login Manager</h1>
     <p><a href="<%= secureDomainApp %>/list.do?action=usrAdm">All logins with their permissions</a>
      | <a href="<%= secureDomainApp %>/list.do?action=usrAdmLastLogin">Logins by last login</a></p>
@@ -39,8 +39,20 @@
     <p><br>
     <p><h2>Existing Logins:</h2>
 
-    <table>
-
+    <%-- Name gets about a third of the width (long email addresses break), the upload group the rest,
+         so most group names fit on one line (a long one wraps rather than being cut). Phone width: the list takes the whole screen. --%>
+    <style>
+    table.loginList { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    table.loginList col.num { width: 3em; }
+    table.loginList col.name { width: 35%; }
+    table.loginList td { vertical-align: top; padding: 1px 6px 1px 0; }
+    table.loginList td.name { overflow-wrap: anywhere; }
+    @media (max-width: 760px) {
+      .admin_left.loginListPage { float: none; width: auto; padding: 0 8px; }
+    }
+    </style>
+    <table class="loginList">
+    <colgroup><col class="num"><col class="name"><col class="group"></colgroup>
     <tr>
     <th>#</th>
     <th>Name</th>
@@ -55,8 +67,8 @@
     %>
         <tr>
         <td><%= count %>.</td> 
-        <td><a href='<%= AntwebProps.getDomainApp() %>/viewLogin.do?id=<%= login.getId() %>'><%= Html.esc(login.getDisplayName()) %></a>        
-        <td><%= login.getGroupLink() %></td>
+        <td class="name"><a href='<%= AntwebProps.getDomainApp() %>/viewLogin.do?id=<%= login.getId() %>'><%= Html.esc(login.getDisplayName()) %></a></td>
+        <td class="group"><%= login.getGroupLink() %></td>
         </tr>
     <% } %>
     </table>

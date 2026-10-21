@@ -239,6 +239,12 @@ public class LoginEditTest extends TestCase {
         // Sorted by name, case does not matter.
         int cas = html.indexOf("California Academy"), eco = html.indexOf("economo ant lab"), mx = html.indexOf(">Museum X");
         assertTrue(cas < eco && eco < mx);
+        // One right per line, in this order, without the site's floating "right" class.
+        assertFalse(html.contains("class=\"right\""));
+        int sp = html.indexOf("<b>Upload specimen data</b>"), im = html.indexOf("<b>Upload specimen images</b>"), ad = html.indexOf("> Administrator</label>");
+        assertTrue(sp > 0 && sp < im && im < ad && ad < html.indexOf("<h2>Upload group</h2>"));
+        assertTrue(html.contains(".loginEdit h2 { clear: both;"));
+        assertTrue(html.contains("@media (max-width: 760px)"));
         // The warning is there, hidden while the box is not ticked.
         assertTrue(html.contains("id=\"adminWarning\" hidden"));
         assertFalse("no old fields", html.contains("Is Super Admin") || html.contains("Upload As (comma") || html.contains("multiple size"));
