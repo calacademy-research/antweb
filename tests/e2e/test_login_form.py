@@ -1,7 +1,7 @@
 """The login form (Login Manager, open a login: viewLogin.do, saved by saveLogin.do), reworked 2026-10-20.
 
 Anonymous (any host, read-only):
-- viewLogin.do asks for a login.
+- viewLogin.do, newLogin.do and saveLogin.do (GET and POST) ask for a login.
 Test admin (staging; ANTWEB_TEST_ADMIN_USER), read-only:
 - another login's page has the sections Account, What this person can do, Upload group, Places
   and projects this curator can edit, Other settings; the administrator warning; the upload group
@@ -24,6 +24,18 @@ from staging_accounts import GROUP_ABBREV, GROUP_NAME, IS_STAGING, has, login, n
 
 def test_anonymous_gets_login_page():
     assert get(new_session(), "/viewLogin.do?id=1").category == "login"
+    assert get(new_session(), "/newLogin.do").category == "login"
+
+
+def test_anonymous_save_gets_login_page():
+    """saveLogin.do asks a visitor to log in, for a GET and a POST, with or without values."""
+    assert get(new_session(), "/saveLogin.do").category == "login"
+    assert get(new_session(), "/saveLogin.do?id=1").category == "login"
+    if not IS_STAGING:
+        return  # a POST to a write action is a write probe: never against production
+    r = new_session().post(BASE_URL + "/saveLogin.do", timeout=TIMEOUT,
+                           data={"id": "1", "password": "never-stored-1", "retypePassword": "never-stored-2"})
+    assert classify(r).category == "login", classify(r)
 
 
 @pytest.fixture(scope="module")

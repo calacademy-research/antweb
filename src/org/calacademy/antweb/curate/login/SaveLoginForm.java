@@ -194,6 +194,9 @@ public class SaveLoginForm extends ActionForm {
 
         ActionErrors errors = null;
 
+        // Not logged in: no checks here; SaveLoginAction sends the visitor to the log-in page.
+        if (LoginMgr.getAccessLogin(request) == null) return null;
+
         if (!"delete".equals(getStep())) {
 
             errors = new ActionErrors();
