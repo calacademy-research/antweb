@@ -268,8 +268,8 @@ rows and the time taken. They only read data; some take a minute. Administrators
 that public pages link to (the AntCat import history, the bioregion species lists with range data, the
 image data download). "Older list" shows the same queries grouped as before (integrity, dev, curious).
 
-**Changed 2026-10-21**: result values were written into the page as HTML; they are now text, and only
-the links the queries build to AntWeb pages stay links.
+**Changed 2026-10-21**: result values and column headings were written into the page as HTML; they are
+now text, and only the links the queries build to AntWeb pages stay links.
 
 ---
 

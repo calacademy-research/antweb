@@ -79,6 +79,11 @@ public class ManagerToolsTest extends TestCase {
         assertTrue(QueryManager.cell(script, app).startsWith("&lt;a "));
     }
 
+    public void testQueryHeadingsAreText() {
+        assertEquals("<th>Count</th><th>a&lt;b &amp; &quot;c&quot;</th>",
+            org.calacademy.antweb.util.NamedQuery.headerHtml(new String[] {"Count", "a<b & \"c\""}));
+    }
+
     public void testLinkedNamedQueriesExist() {
         List<String> names = new ArrayList<>();
         names.addAll(Queries.getGeolocaleQueries());   // Geolocale Manager, Relevant Queries

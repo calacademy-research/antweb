@@ -386,7 +386,7 @@ jobs:
           docker run --rm --entrypoint sh antweb/antweb:dev -c '
             set -e
             A=/usr/local/antweb
-            CP="/usr/local/tomcat/lib/*:/usr/local/tomcat/bin/*:$A/WEB-INF/classes:$A/WEB-INF/lib/*"
+            CP="/usr/local/tomcat/lib/*:/usr/local/tomcat/bin/*:/usr/share/ant/lib/*:$A/WEB-INF/classes:$A/WEB-INF/lib/*"
             java -cp "$CP" org.apache.jasper.JspC -uriroot $A -d /tmp/jspc -compile -failFast \
               curate/manageMuseums-body.jsp curate/viewMuseum-body.jsp curate/manageMuseums.jsp curate/viewMuseum.jsp \
               curate/geolocale/geolocaleMgr-body.jsp curate/geolocale/editGeolocale-body.jsp curate/geolocale/adm1Mgr-body.jsp \
@@ -414,7 +414,7 @@ jobs:
             CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc \
               /t/org/calacademy/antweb/curate/ManagerToolsTest.java /t/org/calacademy/antweb/home/ManagerToolsDbTest.java
-            for t in curate.ManagerToolsTest:9 home.ManagerToolsDbTest:4; do
+            for t in curate.ManagerToolsTest:10 home.ManagerToolsDbTest:4; do
               cls=${t%%:*}; n=${t##*:}
               java -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
