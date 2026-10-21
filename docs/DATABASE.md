@@ -336,6 +336,16 @@ modified           DATETIME
 
 **Record Count:** ~20,000+ descriptions
 
+### Page text of places, projects and museums: object_edit, object_hist
+
+Page text of overview pages (countries, adm1, regions, subregions, projects, museums, bioregions) is
+in `object_edit` (one row per page and field: `object_key`, `title`, `content`, `created`, author in
+`access_login`), earlier versions in `object_hist`. `object_key` is the page's name (a place's
+`geolocale.name`, a project's `project_name`). Renaming a place on editGeolocale.do moves its rows in
+both tables to the new name in the same transaction, keeping their dates (`PageTextKeys`); a new name
+that already has page text is refused and nothing is saved; when another place still has the old name
+(names repeat across georanks, for example Georgia), the text stays with that name.
+
 ### 9. login
 
 **Purpose:** User accounts and authentication
@@ -369,6 +379,17 @@ modified           DATETIME
 - INDEX (`access_group`)
 
 **Record Count:** ~200 users
+
+**Login numbers and `created` (2026-10-21):** in the live database `login.id` is not AUTO_INCREMENT; the
+code picks the number (`LoginDb.nextLoginId()`): one above every login number ever used, that is above
+`login.id`, every login number in other tables (`login_id`, `access_login`, `curator_id`,
+`admin_login_id`, and the `id` of backup tables named like login, such as `login_inactive_backup_*`) and
+the numbered curator folders `web/curator/N/`. So a new login never gets a deleted login's number and
+with it that login's curator folder (whose images may be linked from page text), page-text authorship
+or uploads; a new login whose folder exists already is refused. `login.created` was `ON UPDATE
+CURRENT_TIMESTAMP`: every update of login says `created = created` (checked by
+`tests/unit/test_small_fixes.py`), and `db/upgrade/8.113/2026-10-21-login-created.sql` removes the
+ON UPDATE.
 
 ### 10. bioregion
 

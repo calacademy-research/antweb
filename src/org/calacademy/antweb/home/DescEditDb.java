@@ -1,7 +1,6 @@
 package org.calacademy.antweb.home;
 
 import java.util.*;
-import java.util.Collection;
 import java.sql.*;
 
 import org.apache.commons.logging.Log;
@@ -290,121 +289,6 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
         }
 
         return description;
-    }    
-    
-    
-    public String populateObjectEdit() {
-      // Object Edits are like Description Edits but for any object. 
-      // Either similar to, or fully replacing the description edit feature.
-      // 
-      // The Object_edit database table.
-
-      emptyObjectEdit();
-      
-      HashMap<String, Project> projectsHashMap = new ProjectDb(getConnection()).getAllProjects();
-      Collection<Project> values = projectsHashMap.values();
-      int i = 0;
-      for (Project project : values) {
-        ++i;
-
-        //if (!"comorosants".equals(project.getName())) continue;
-
-      // project_name, root,
-      // specimenImage1, specimenImage2, specimenImage3, authorImage, authorbio, 
-      // specimenImage1Link, specimenImage2Link specimenImage3Link, author
-
-        insertObjectEdit(project, "contents", project.getContents());
-        insertObjectEdit(project, "specimenImage1", project.getSpecimenImage1(), project.getSpecimenImage1Link());        
-        insertObjectEdit(project, "specimenImage2", project.getSpecimenImage2(), project.getSpecimenImage2Link());        
-        insertObjectEdit(project, "specimenImage3", project.getSpecimenImage3(), project.getSpecimenImage3Link());
-        insertObjectEdit(project, "authorImage", project.getAuthorImage());
-        insertObjectEdit(project, "author", project.getAuthor());
-        insertObjectEdit(project, "authorBio", project.getAuthorBio());
-
-        // map?      
-      }
-      return "Populated object_edit table with " + i + " projects, " + insertions + " insertions, " + exceptions + " exceptions.";
-    }
-
-    private void insertObjectEdit(Project project, String title, String imageName, String hrefLink) {
-        String projectName = project.getName();
-        if (imageName == null || "".equals(imageName)) return;
-
-        String content = Formatter.escapeQuotes(imageName);
-        
-        if ("specimenImage1".equals(title) || "specimenImage2".equals(title) || "specimenImage3".equals(title)) {
-          // <img src="http://www.antweb.org/web/speciesList/comoros/CASENT0101243_H.jpg">
-          content = "<a href=\"" + hrefLink + "\"><img src=\"" + AntwebProps.getImgDomainApp() + "/" + Project.getSpeciesListDir() + project.getRoot() + "/" + imageName + "\"></a>";
-// <a href="http://www.antweb.org/description.do?rank=species&genus=cataulacus&name=voeltzkowi&project="><img src="http://www.antweb.org/web/speciesList/comoros/CASENT0101243_H.jpg"></a>
-        }
-
-        String insert = "insert into object_edit (" 
-          + "object_key, title, content, edit_id, is_manual_entry, access_group, access_login" 
-          + ") values (" 
-          + "'" + projectName + "', '" + title + "', '" + content + "', 0, 0, 0, 0)";
-
-        insert(insert);
-
-        // s_log.warn("populateObjectEdit() project:" + projectName + " title:" + title + " value:" + value);      
-    }
-
-    private void insertObjectEdit(Project project, String title, String value) {
-        String projectName = project.getName();
-        if (value == null || "".equals(value)) return;
-
-        String content = Formatter.escapeQuotes(value);
-
-        if ("authorImage".equals(title)) {
-          content = "<img src=\"" + AntwebProps.getImgDomainApp() + "/" + Project.getSpeciesListDir() + project.getRoot() + "/" + value + "\">";
-        }
-
-        String insert = "insert into object_edit (" 
-          + "object_key, title, content, edit_id, is_manual_entry, access_group, access_login" 
-          + ") values (" 
-          + "'" + projectName + "', '" + title + "', '" + content + "', 0, 0, 0, 0)";
-
-        insert(insert);
-
-        // s_log.warn("populateObjectEdit() project:" + projectName + " title:" + title + " value:" + value);      
-    }
-
-
-    private static int exceptions = 0;
-    private static int insertions = 0;
-
-    
-    private void insert(String insert) {
-      Statement stmt = null;
-               
-      try {
-        stmt = DBUtil.getStatement(getConnection(), "DescEditDb.insert()");
-        stmt.executeUpdate(insert);   
-        ++insertions;     
-      } catch (SQLException e) {
-        ++exceptions;
-        s_log.error("insert() e:" + e + " insert:" + insert);
-      } finally {
-        DBUtil.close(stmt, "DescEditDb.insert()");
-      }   
-    }
-
-    private void emptyObjectEdit() {
-        
-      String delete = null;
-      ResultSet rset1 = null;
-      Statement stmt1 = null;
-      try {
-        stmt1 = DBUtil.getStatement(getConnection(), "emptyObjectEdit()");
-
-        delete = "delete from object_edit "; 
-        stmt1.executeUpdate(delete);
-        
-      } catch (SQLException e) {
-        s_log.error("emptyObjectEdit() e:" + e);
-      } finally {
-        DBUtil.close(stmt1, rset1, "this", "emptyObjectEdit()");
-      }        
-        
     }
 
 }
