@@ -39,6 +39,14 @@ import java.util.Set;
  *              specimens of the "specimens" check above: geolocale and project by their list, geolocale
  *              of a countable status; museum and bioregion all their specimens). Also: Images is never
  *              smaller than Imaged specimens (a difference there is always "real").
+ *   place specimens  (2026-10-20) geolocales: the place's own Specimens number (geolocale.specimen_count)
+ *              against a recount of the specimens of its species and subspecies rows.
+ *
+ * Regions and subregions (Place.region, 2026-10-20): their specimens are those counted on the pages of
+ * their countries (Geolocale.regionSpecimensSql: collected in one of its countries, of a countable status,
+ * identified to a name on that country's list), with the name also on the region's list. Until a nightly
+ * run has counted them by this rule (compute.log line with GeolocaleDb.REGION_RULE_LOG), their
+ * differences are pending.
  *
  * These are the rules of the nightly count crawls (CountDb and the Countable queries of Geolocale,
  * Project, Museum and Bioregion), written again here, so a stored number that is stale or was never
@@ -65,6 +73,9 @@ public class CountCheck {
     /** Countable specimen statuses (StatusSet.getCountables) and list statuses (StatusSet ALL). */
     public static final String COUNTABLE = "('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')";
 
+    /** specimenColumn of a region or subregion: the specimens of its countries. */
+    public static final String COUNTRIES = "*countries";
+
     public static final class Place {
         public final String type;
         public final String key;          // geolocale id, project name, museum code, bioregion name
@@ -79,6 +90,16 @@ public class CountCheck {
             this.specimenColumn = specimenColumn;
             this.specimenValue = specimenValue;
         }
+
+        /** A region or subregion (geolocale id key): its specimens are those of its countries. */
+        public static Place region(String geolocaleId, String label) {
+            return new Place(GEOLOCALE, geolocaleId, label, COUNTRIES, null);
+        }
+
+        boolean isFromCountries() { return COUNTRIES.equals(specimenColumn); }
+
+        /** The specimen column that places a specimen here, or null (all specimens; regions: their own rule). */
+        String column() { return isFromCountries() ? null : specimenColumn; }
 
         String table() {
             switch (type) {
@@ -150,6 +171,8 @@ public class CountCheck {
         public boolean imagesSinceNightly;
         /** place_image_count exists and has rows. */
         public boolean placeImagesComputed;
+        /** A nightly run has counted regions and subregions by the 2026-10-20 rule (their countries). */
+        public boolean regionRuleCounted = true;
 
         public int real() {
             int n = 0;
@@ -182,7 +205,13 @@ public class CountCheck {
      * are from that run. Without it, the last 08:15 is assumed, and the result says so (lastRunEnd null).
      */
     public Result run(List<Place> places, Timestamp lastRunEnd) throws SQLException {
+        return run(places, lastRunEnd, true);
+    }
+
+    /** regionRuleCounted: regionRuleCounted(compute.log lines); false makes region and subregion differences pending. */
+    public Result run(List<Place> places, Timestamp lastRunEnd, boolean regionRuleCounted) throws SQLException {
         Result result = new Result();
+        result.regionRuleCounted = regionRuleCounted;
         try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(LAST_NIGHTLY_SQL)) {
             r.next();
             result.countedUntil = r.getTimestamp(1);
@@ -201,6 +230,7 @@ public class CountCheck {
             rows += checkChildren(place, "subfamily", "genus_count", "('genus')", "genera", result, changedNames);
             if (!PROJECT.equals(place.type)) rows += checkGlobal(place, result, changedNames);
             rows += checkPlaceImages(place, result, changedNames);
+            rows += checkPlaceSpecimens(place, result, changedNames);
             result.rowsChecked.put(place, rows);
         }
         return result;
@@ -232,6 +262,17 @@ public class CountCheck {
         }
         return last;
     }
+
+    /** Whether compute.log has a line written by the region and subregion counts of the 2026-10-20 rule. */
+    public static boolean regionRuleCounted(List<String> lines) {
+        for (String line : lines) {
+            if (line.contains(org.calacademy.antweb.home.GeolocaleDb.REGION_RULE_LOG)) return true;
+        }
+        return false;
+    }
+
+    static final String REGION_RULE_PENDING = "regions and subregions are counted from their countries since 2026-10-20;"
+        + " no nightly run has done it yet";
 
     /** Names whose specimens changed since the last nightly start: uploads, and the name update outside the nightly. */
     Set<String> changedNamesSince(Result result) throws SQLException {
@@ -286,21 +327,32 @@ public class CountCheck {
         }
     }
 
-    /** The specimens of a place joined to their images (alias s, i), with the place's own rules; parameters: key, column value. */
+    /** Regions and subregions: the specimens of their countries, each once (alias rsc, column code); 4 parameters (the id). */
+    static String regionSpecimens() {
+        return "(select distinct rs.code from (" + org.calacademy.antweb.geolocale.Geolocale.regionSpecimensSql(" and r.id = ?") + ") rs) rsc";
+    }
+
+    /**
+     * The specimens of a place joined to their images (alias s, i), with the place's own rules;
+     * parameters: (regions: 4 times the id), key, column value.
+     */
     static String placeImageFrom(Place place) {
         boolean list = GEOLOCALE.equals(place.type) || PROJECT.equals(place.type);
-        return " from specimen s join image i on i.image_of_id = s.code"
+        return " from specimen s"
+            + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
+            + " join image i on i.image_of_id = s.code"
             + (list ? " join " + place.table() + " l on l.taxon_name = s.taxon_name and l." + place.keyColumn() + " = ?"
                     + " join taxon t on t.taxon_name = s.taxon_name and t.taxarank in ('species', 'subspecies')" : "")
             + " where 1 = 1"
-            + (place.specimenColumn != null ? " and s." + place.specimenColumn + " = ?" : "")
+            + (place.column() != null ? " and s." + place.column() + " = ?" : "")
             + (GEOLOCALE.equals(place.type) ? " and s.status in " + COUNTABLE : "");
     }
 
     private static int setPlaceImageParams(Place place, PreparedStatement stmt) throws SQLException {
         int i = 1;
+        if (place.isFromCountries()) for (int n = 0; n < 4; n++) place.setKey(stmt, i++);
         if (GEOLOCALE.equals(place.type) || PROJECT.equals(place.type)) place.setKey(stmt, i++);
-        if (place.specimenColumn != null) stmt.setString(i++, place.specimenValue);
+        if (place.column() != null) stmt.setString(i++, place.specimenValue);
         return i;
     }
 
@@ -371,7 +423,8 @@ public class CountCheck {
                 }
             }
         }
-        String pending = result.imagesSinceNightly ? "images were added after the last nightly run"
+        String pending = place.isFromCountries() && !result.regionRuleCounted ? REGION_RULE_PENDING
+            : result.imagesSinceNightly ? "images were added after the last nightly run"
             : result.uploadSinceNightly ? "specimens were uploaded after the last nightly run"
             : listChanged ? "the list got a new row after the last nightly run"
             : !changedNames.isEmpty() ? "specimens were renamed after the last nightly run" : null;
@@ -394,6 +447,56 @@ public class CountCheck {
         }
         rows += checkSubfamilyTotal(place, result, listChanged);
         return rows;
+    }
+
+    /**
+     * Geolocales: the Specimens number of the page (geolocale.specimen_count) against a recount of the
+     * specimens of the species and subspecies rows of its list (the specimens of the "specimens" check).
+     */
+    int checkPlaceSpecimens(Place place, Result result, Set<String> changedNames) throws SQLException {
+        if (!GEOLOCALE.equals(place.type) || !columnExists("geolocale", "specimen_count")) return 0;
+        int stored;
+        try (PreparedStatement stmt = connection.prepareStatement("select specimen_count from geolocale where id = ?")) {
+            place.setKey(stmt, 1);
+            try (ResultSet r = stmt.executeQuery()) {
+                if (!r.next()) return 0;
+                stored = r.getInt(1);
+            }
+        }
+        String query = "select count(*) from specimen s"
+            + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
+            + " join geolocale_taxon l on l.taxon_name = s.taxon_name and l.geolocale_id = ?"
+            + " join taxon t on t.taxon_name = s.taxon_name and t.taxarank in ('species', 'subspecies')"
+            + " where s.status in " + COUNTABLE
+            + (place.column() != null ? " and s." + place.column() + " = ?" : "");
+        int recount;
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            int i = 1;
+            if (place.isFromCountries()) for (int n = 0; n < 4; n++) place.setKey(stmt, i++);
+            place.setKey(stmt, i++);
+            if (place.column() != null) stmt.setString(i, place.specimenValue);
+            try (ResultSet r = stmt.executeQuery()) {
+                r.next();
+                recount = r.getInt(1);
+            }
+        }
+        if (stored != recount) {
+            boolean listChanged;
+            try (PreparedStatement stmt = connection.prepareStatement("select count(*) from geolocale_taxon where geolocale_id = ? and created >= ?")) {
+                place.setKey(stmt, 1);
+                stmt.setTimestamp(2, result.countedUntil);
+                try (ResultSet r = stmt.executeQuery()) {
+                    r.next();
+                    listChanged = r.getInt(1) > 0;
+                }
+            }
+            String pending = place.isFromCountries() && !result.regionRuleCounted ? REGION_RULE_PENDING
+                : result.uploadSinceNightly ? "specimens were uploaded after the last nightly run"
+                : listChanged ? "the list got a new row after the last nightly run"
+                : !changedNames.isEmpty() ? "specimens were renamed after the last nightly run" : null;
+            result.mismatches.add(new Mismatch(place, "place specimens", "Specimens", stored, recount, pending));
+        }
+        return 1;
     }
 
     /** The place's Subfamilies number (2026-10-20: staging's Madagascar page showed 0 with 8 subfamilies on
@@ -450,14 +553,17 @@ public class CountCheck {
         String k = place.keyColumn();
         Map<String, Integer> recount = new HashMap<>();
         String query = "select s.taxon_name, count(*) from specimen s"
+            + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
             + " join " + t + " l on l.taxon_name = s.taxon_name and l." + k + " = ?"
             + " where 1 = 1"
-            + (place.specimenColumn != null ? " and s." + place.specimenColumn + " = ?" : "")
+            + (place.column() != null ? " and s." + place.column() + " = ?" : "")
             + (place.statusFiltered() ? " and s.status in " + COUNTABLE : "")
             + " group by s.taxon_name";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            place.setKey(stmt, 1);
-            if (place.specimenColumn != null) stmt.setString(2, place.specimenValue);
+            int i = 1;
+            if (place.isFromCountries()) for (int n = 0; n < 4; n++) place.setKey(stmt, i++);
+            place.setKey(stmt, i++);
+            if (place.column() != null) stmt.setString(i, place.specimenValue);
             try (ResultSet r = stmt.executeQuery()) {
                 while (r.next()) recount.put(r.getString(1), r.getInt(2));
             }
@@ -476,6 +582,7 @@ public class CountCheck {
                     int c = recount.getOrDefault(name, 0);
                     if (s == c) continue;
                     String pending = rowPending(r.getTimestamp(3), result);
+                    if (pending == null && place.isFromCountries() && !result.regionRuleCounted) pending = REGION_RULE_PENDING;
                     if (pending == null && changedNames.contains(name)) pending = "specimens of this name uploaded or renamed after the last nightly run";
                     if (pending == null && s > c && result.uploadSinceNightly) pending = "an upload after the last nightly run may have removed specimens";
                     result.mismatches.add(new Mismatch(place, "specimens", name, s, c, pending));

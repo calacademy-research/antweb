@@ -800,6 +800,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
     
         return geolocale;
     }
+    // The place's Specimens number: the sum of the specimen counts of the species and subspecies rows
+    // of its list (Geolocale.getCountSpecimensQuery: collected in the place; regions and subregions: in
+    // their countries, since 2026-10-20).
     public void getSpecimenCount(Geolocale geolocale) {
 
       Statement stmt = null;
@@ -884,14 +887,22 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       for (Geolocale geolocale : subregionList) {
         updateCounts(geolocale.getId());
       }
-	  LogMgr.appendLog("compute.log", "    Subregions populated", true);
+	  // countCheck.do reads REGION_RULE_LOG: the region and subregion counts of the nightly run are by the 2026-10-20 rule.
+	  LogMgr.appendLog("compute.log", "    Subregions populated (" + REGION_RULE_LOG + ")", true);
     }
+    /**
+     * Words in the compute.log lines of the subregion and region counts since 2026-10-20 (specimens
+     * collected in their countries); CountCheck treats region differences as pending until a nightly
+     * run has written them.
+     */
+    public static final String REGION_RULE_LOG = "specimens collected in their countries";
+
     public void updateRegionCounts() throws SQLException {
       ArrayList<Geolocale> regionList = GeolocaleMgr.getGeolocales("region");
       for (Geolocale geolocale : regionList) {
         updateCounts(geolocale.getId());
       }
-	  LogMgr.appendLog("compute.log", "    Regions populated", true);
+	  LogMgr.appendLog("compute.log", "    Regions populated (" + REGION_RULE_LOG + ")", true);
     }
            
     private void updateCountsFromSpecimenData(int geolocaleId) {
@@ -1520,15 +1531,20 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       return query;
     }
     
+    // "Specimens per Subfamily" chart: the place's Specimens number by subfamily, i.e. the specimen
+    // counts of the species and subspecies rows of its list (CountDb.countSpecimens, written just before
+    // by updateCounts). Until 2026-10-20 it counted every specimen of the names on the list, anywhere in
+    // the world, for every kind of place.
     public String getSpecimenSubfamilyDistJsonQuery(String criteria) {
-      String query = "select subfamily, count(*) count " 
-          + " from geolocale_taxon gt, specimen s, geolocale g " 
-          + " where gt.taxon_name = s.taxon_name " 
-          + " and g.id = gt.geolocale_id "
+      String query = "select t.subfamily subfamily, sum(gt.specimen_count) count"
+          + " from geolocale_taxon gt, taxon t, geolocale g"
+          + " where gt.taxon_name = t.taxon_name"
+          + " and g.id = gt.geolocale_id"
           + " and g." + criteria
-          + " and s.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') " 
-          + " and s.family = 'formicidae' " 
-          + " group by subfamily"; 
+          + " and t.taxarank in ('species', 'subspecies')"
+          + " and t.family = 'formicidae'"
+          + " group by t.subfamily"
+          + " having sum(gt.specimen_count) > 0";
       return query;
     }
 
