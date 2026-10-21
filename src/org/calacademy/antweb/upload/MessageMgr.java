@@ -8,6 +8,7 @@ import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.Html;
 import org.calacademy.antweb.util.HttpUtil;
 import org.calacademy.antweb.util.LogMgr;
+import org.calacademy.antweb.util.SpecimenCodes;
 
 import java.util.*;
     
@@ -168,12 +169,62 @@ public class MessageMgr {
     // public static final String  = "";
     
      
+    /*
+     * The specimens of each report line (Brian Fisher, 2026-10-21: the Name updates page's "N specimens"
+     * list of codes on every specimen report). While a line of the file is read and saved, the specimen
+     * upload sets its code here (setCurrentCode); every message added meanwhile records the code against its
+     * report line, and each line ends with "N specimens" and the codes, collapsed (SpecimenCodes, the same
+     * markup as nameUpdates.do). Codes link to the specimen page, plain for sections marked "(not uploaded)".
+     * Sections whose lines already name the code (CODES_IN_LINE) get no list. Each line lists at most
+     * SpecimenCodes.MAX_CODES codes and the whole report at most MAX_REPORT_CODES, so a CAS upload's report
+     * (about 265,000 records) stays small; past that a line gives its count only.
+     */
+    public static final int MAX_REPORT_CODES = 10000;
+
+    /** Sections whose lines already give the specimen code (or line number): no list added. */
+    static final Set<String> CODES_IN_LINE = new HashSet<>(Arrays.asList(
+        "codeNotFound", "emptyStringSubfamily", "emptyStringGenus", "emptyStringSpecies", "genusOutsideNativeBioregion",
+        "invalidLatLon", "invalidColumn", "specimenIdSpacesRemoved", "invalidSpecimenCode", "nonAntTaxa",
+        "makeTaxonNameError", "latLonNotInCountryBounds", "latLonNotInAdm1Bounds", "codeNotFoundInLine", "badRankList",
+        "databaseErrors", "futureDateDetermined", "futureDateCollected", "noRecordsProcessed", "extraCarriageReturn",
+        "multipleBioregionsForNonIntroducedTaxa", "unrecognizedColumn"));
+
+    private String currentCode;
+    private int reportCodesLeft = MAX_REPORT_CODES;
+
+    /** The code of the specimen line being read and saved, or null between lines (see above). */
+    public void setCurrentCode(String code) {
+        currentCode = code == null || code.isBlank() ? null : code;
+    }
+    public String getCurrentCode() {
+        return currentCode;
+    }
+
+    /** Records a specimen code for a report line without adding to the line's total (for lines made after the
+     *  file is read, such as the morpho genera, whose codes are read in one query). */
+    public void addCode(String key, String line, String code) {
+        Test test = getTest(key);
+        if (test != null) test.recordCode(line, code);
+    }
+
+    /** The "N specimens" list of one report line, within the report's limit. */
+    private String codesHtml(Test test, String line) {
+        SpecimenCodes codes = test.codesByLine.get(line);
+        if (codes == null || codes.count() == 0) return "";
+        List<String> list = codes.codes();
+        int n = Math.min(list.size(), Math.max(reportCodesLeft, 0));
+        reportCodesLeft -= n;
+        return SpecimenCodes.html(codes.count(), list.subList(0, n), AntwebProps.getDomainApp(), test.linkCodes());
+    }
+
     // All of the tests below should have constants above, and vice versa.
     public void init() {
         s_message = null;
         s_messages = new Vector<>();
         s_errors = new Vector<>();
         flags = new HashMap<>();
+        currentCode = null;
+        reportCodesLeft = MAX_REPORT_CODES;
 
       testList.add(new Test(noRecordsProcessed, STR, "<b>Rollback occurred. <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(duplicateEntries, SET, "<b>Duplicate Entries <font color=red>(not uploaded)</font></b>"));
@@ -274,6 +325,7 @@ public class MessageMgr {
     public void addToMessages(String key, String value, String detail) { 
         Test test = getTest(key);
         if (value == null) value = "null";
+        test.recordCode(value, currentCode);
         test.add(value);
         test.addDetail(detail);
         test.increment();
@@ -282,6 +334,7 @@ public class MessageMgr {
     public void addToMapMessages(String key, String key2, String value) { 
         Test test = getTest(key);
         if (value == null) value = "null";
+        test.recordCode(key2, currentCode);
         test.add(key2, value);
         test.increment();
     }
@@ -389,6 +442,19 @@ public class MessageMgr {
       final HashMap<String, HashMap<String, HashSet<String>>> messageMapsHash = new HashMap<>();
 
       final Vector<String> details = new Vector<>();
+
+      /** Report line (value, or the bold key of a MAP line) -> its specimens. */
+      final HashMap<String, SpecimenCodes> codesByLine = new HashMap<>();
+
+      void recordCode(String line, String code) {
+        if (code == null || line == null || CODES_IN_LINE.contains(key)) return;
+        codesByLine.computeIfAbsent(line, k -> new SpecimenCodes()).add(code);
+      }
+
+      /** Codes link to the specimen page unless the section's specimens were not uploaded. */
+      boolean linkCodes() {
+        return heading == null || !heading.contains("not uploaded");
+      }
 
       Test(String key, String type, String heading, String flag) {
         this(key, type, heading);
@@ -582,7 +648,7 @@ public class MessageMgr {
                 for (String value : values) {
                     ++i;
                     if (i > 1) messages += delimiter;
-                    messages += value;                      
+                    messages += value + codesHtml(this, value);
                 }                    
                 if (key.contains("lines")) messages += "<br>* line numbers are approximate";
 
@@ -616,13 +682,14 @@ public class MessageMgr {
                 boolean printAsList = !"adm1Missing".equals(getKey());
                 int i = 0;
                 for (String value : list2) {
+                  String codes = codesHtml(this, value);
                   if (printAsList) {
-                    messages += "<br>&nbsp;&nbsp;" + value;          
+                    messages += "<br>&nbsp;&nbsp;" + value + codes;
                   } else {
                     if (i > 0) {
-                      messages += ", &nbsp;" + value;          
+                      messages += ", &nbsp;" + value + codes;
                     } else {
-                      messages += value;                              
+                      messages += value + codes;
                     }
                     ++i;
                   }
@@ -655,7 +722,8 @@ public class MessageMgr {
                        ++i;
                        if (i > 1) messages += ", ";
                        messages += value; 
-                    }                    
+                    }
+                    messages += codesHtml(this, key2);
                 }
                 //A.log("compileMessages() 3 key1:" + key1);
 				returnStr += messages;    

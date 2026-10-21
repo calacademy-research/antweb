@@ -189,6 +189,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                            }
                            code = newCode;
                            specimenItem.put(col, newCode);
+                           getMessageMgr().setCurrentCode(newCode);   // this line's report messages list the code (MessageMgr)
                            //A.log("parseLine() code col:" + col + " element:" + element);
                         } else {
                            if (!"".equals(element) && element != null) {
