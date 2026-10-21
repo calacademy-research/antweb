@@ -74,7 +74,7 @@ def strip_sql_comments(text):
             elif ch in "'\"`":
                 q = ch
                 buf.append(ch)
-            elif ch == "#" or (line.startswith("-- ", i)):
+            elif ch == "#" or re.match(r"--(\s|$)", line[i:]):
                 break
             else:
                 buf.append(ch)
@@ -308,7 +308,7 @@ def apply_statement(schema, stmt, src, origin):
         lm = re.match(r"\(?\s*like\s+" + NAME, rest, re.I)
         if lm:
             schema.like(name, ident(lm.group(1)), src)
-        elif rest.startswith("("):
+        elif rest.startswith("(") and not re.match(r"\(\s*select\b", rest, re.I):
             schema.create(name, body_of(rest), src, origin)
         elif re.match(r"(as\s+)?\(?\s*select", rest, re.I):
             cols = select_columns(rest)
@@ -404,6 +404,30 @@ def java_unescape(lit):
     return re.sub(r"\\(.)", lambda m: escapes.get(m.group(1), m.group(1)), lit)
 
 
+def strip_java_comments(text):
+    """Java source without // and /* */ comments (string and char literals kept as they are)."""
+    out, i, n = [], 0, len(text)
+    while i < n:
+        ch = text[i]
+        if ch in "\"'":
+            j = i + 1
+            while j < n and text[j] != ch and text[j] != "\n":
+                j += 2 if text[j] == "\\" else 1
+            out.append(text[i:j + 1])
+            i = j + 1
+        elif text.startswith("//", i):
+            j = text.find("\n", i)
+            i = n if j < 0 else j
+        elif text.startswith("/*", i):
+            j = text.find("*/", i + 2)
+            out.append(" ")
+            i = n if j < 0 else j + 2
+        else:
+            out.append(ch)
+            i += 1
+    return "".join(out)
+
+
 def java_create_statements(text):
     """CREATE TABLE statements built from string literals and constants in one Java file."""
     consts = {}
@@ -429,10 +453,13 @@ def java_create_statements(text):
         return re.sub(r"\*+", "*", s)
 
     stmts = []
-    for m in re.finditer(r"(?i)create table", text):
-        # from the opening quote of the literal, forward over the concatenation (literals, +, names, calls)
-        start = text.rfind('"', 0, m.start())
-        chunk = re.match(r"(?:" + JAVA_LIT + r"|\s|\+|[A-Za-z_][A-Za-z0-9_.]*(?:\([^)]*\))?)+", text[start:], re.S)
+    code = strip_java_comments(text)
+    for m in re.finditer(JAVA_LIT, code):
+        if not re.search(r"(?i)create\s+table", m.group(0)):
+            continue
+        # from this literal, forward over the concatenation (literals, +, names, calls)
+        start = m.start()
+        chunk = re.match(r"(?:" + JAVA_LIT + r"|\s|\+|[A-Za-z_][A-Za-z0-9_.]*(?:\([^)]*\))?)+", code[start:], re.S)
         expr = chunk.group(0) if chunk else ""
         stmts.append(expand(expr))
     return stmts

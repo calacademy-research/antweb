@@ -14,10 +14,10 @@ as much as scripts: some say they were never run, some mix pasted output with SQ
 hand on the server. So the live database can differ, and where it is known to differ this page says so (for
 example: on 2026-10-21 `museum.specimen_subfamily_dist_json` was smaller on staging than `db/upgrade/6.2`
 creates it; the API reads `taxon.subfamily_count` although `db/upgrade/4.150` drops it). To compare with the
-live schema, run on production (read-only; after this page is merged, so the production checkout has the script):
+live schema, run on the production host, antweb-prod (how to log in: [runbook.md](runbook.md); read-only; after this
+page is merged, so the production checkout has the script):
 
 ```
-ssh root@165.232.137.86
 F=/root/antweb/etc/db.properties
 sed -n 's/^password=//p' "$F" | docker exec -i antweb_mysql_1 sh -c 'IFS= read -r p; MYSQL_PWD="$p" exec mysql -B -N -u "$1" ant -e "SELECT c.table_name, c.column_name, c.column_type, t.table_type FROM information_schema.columns c JOIN information_schema.tables t USING (table_schema, table_name) WHERE c.table_schema = DATABASE() ORDER BY c.table_name, c.ordinal_position"' sh "$(sed -n 's/^user=//p' "$F")" > /root/live-schema.tsv
 python3 /root/antweb/tools/datamodel/list_tables.py --compare /root/live-schema.tsv
@@ -133,9 +133,9 @@ erDiagram
 
 ## 2. Every table and its status
 
-Status: **in use** (the code reads and writes it); **reference** (the code reads it, nothing writes it: loaded by
-hand once); **admin query only** (only a saved query of the admin Query page, `query.do`, reads it); **unused**
-(nothing in `src/`, `web/`, `api/` or `bin/` reads or writes it); **backup** (a copy made before a change, never
+Status: **in use** (the code reads and writes it); **read only** (the code reads it, nothing writes it);
+**admin query only** (only a saved query of the admin Query page, `query.do`, reads it); **unused**
+(nothing in `src/`, `web/`, `api/` or `bin/` that runs reads or writes it); **backup** (a copy made before a change, never
 read: candidate to drop); **run-time backup** (dated copies the code makes before a bulk change). The evidence for
 unused and backup is a search of the code for SQL that names the table (2026-10-21). "Live?" says whether the table
 is known to exist in production: "2021" means it is in the list of tables converted to InnoDB on 2021-04-08
@@ -193,7 +193,9 @@ is known to exist in production: "2021" means it is in the list of tables conver
 | `long_request` | [10](#long_request) | in use |
 | `admin_alerts` | [10](#admin_alerts) | in use |
 | `user_agent`, `user_agent_whitelist` | [10](#user_agent) | in use |
-| `country`, `un_country`, `adm1` | [11](#country) | reference; the Java readers are never called |
+| `country` | [11](#country) | unused (its reader is never called) |
+| `un_country` | [11](#un_country) | admin query only |
+| `adm1` | [11](#adm1) | unused (its reader is never called) |
 | `country_bioregion` | [11](#country_bioregion) | unused (2021) |
 | `lookup` | [11](#lookup) | unused |
 | `antwiki_taxon_country` | [11](#antwiki_taxon_country) | unused (reader never called) |
@@ -1045,7 +1047,8 @@ same kind of list. Countries and adm1s now live in `geolocale`.
 **Read by.** `CountryDb.populate` and `Adm1Db.populate`, which nothing calls (the call in `SpecimenUploadParse` is
 commented out); `un_country` also by the admin query `importedCountryData`. **Written by.** Nothing.
 
-**Status.** Reference, effectively unused. Candidates to drop together with `CountryDb` and `Adm1Db`.
+**Status.** `country` and `adm1`: unused (only uncalled code reads them); `un_country`: admin query only.
+Candidates to drop together with `CountryDb`, `Adm1Db` and the query.
 
 ### `un_country`
 

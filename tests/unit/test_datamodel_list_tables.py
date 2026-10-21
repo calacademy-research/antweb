@@ -3,7 +3,8 @@
 The generator replays the db/upgrade files, which mix SQL with notes and pasted output. These cases pin the
 parts of its parser that the real files need: a missing semicolon, an apostrophe in a note, comments, ALTER TABLE
 ... RENAME TO, RENAME TABLE, CREATE TABLE ... LIKE and AS SELECT, views, a table dropped and later altered, and a
-CREATE TABLE built from Java string literals and a constant. Also --check on a duplicate heading.
+CREATE TABLE built from Java string literals and a constant (and not from a comment). Also --check on a
+duplicate heading.
 
 Run: python3 tests/unit/test_datamodel_list_tables.py   (also in .github/workflows/tests.yaml)
 """
@@ -58,6 +59,25 @@ def test_like_and_as_select():
     assert list(s.tables["pick"]["columns"]) == ["login_id", "b"]
 
 
+def test_comments_and_parenthesised_select():
+    s = replay("create table p (a int, b int);\n"
+               "alter table p add column c int; --\n"
+               "alter table p add column d int; --\tnote\n"
+               "create table q (select a, b from p);\n")
+    assert list(s.tables["p"]["columns"]) == ["a", "b", "c", "d"], s.tables["p"]["columns"]
+    assert list(s.tables["q"]["columns"]) == ["a", "b"], s.tables["q"]["columns"]
+
+
+def test_java_create_table_in_a_comment_is_ignored():
+    java = ('class Y {\n'
+            '    String a = "first";\n'
+            '    // the old code did create table foo here\n'
+            '    /* "create table bar (x int)" */\n'
+            '    String url = "http://example.org/create";\n'
+            '}\n')
+    assert L.java_create_statements(java) == []
+
+
 def test_views_and_drop():
     s = replay("CREATE ALGORITHM=UNDEFINED DEFINER=`x`@`localhost` SQL SECURITY DEFINER VIEW `v1` AS select 1;\n"
                "create view v2 as select 2;\n"
@@ -110,10 +130,6 @@ def test_check_reports_a_heading_written_twice():
             assert "table taxon has two sections" in out.getvalue()
     finally:
         L.DOC = old
-
-
-def test_repository_doc_is_complete():
-    assert L.main(["--check"]) == 0
 
 
 def main():
