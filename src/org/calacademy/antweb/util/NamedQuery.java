@@ -72,13 +72,15 @@ public class NamedQuery  //implements Iterable
   }
 
   public String getHeaderHtml() {
-    if (headerArray != null) {
-      headerHtml = "";
-      for (String col : headerArray) {
-        headerHtml += "<th>" + col + "</th>";
-      }
-    }
+    if (headerArray != null) headerHtml = headerHtml(headerArray);
     return headerHtml;
+  }
+
+  /** Table headings for column names, as text (escaped). */
+  public static String headerHtml(String[] columns) {
+    StringBuilder html = new StringBuilder();
+    for (String col : columns) html.append("<th>").append(Html.esc(col)).append("</th>");
+    return html.toString();
   }
   public void setHeaderHtml(String headerHtml)
   { 

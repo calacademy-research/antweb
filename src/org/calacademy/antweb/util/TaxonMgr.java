@@ -87,6 +87,23 @@ public class TaxonMgr extends Manager {
         return s_taxa.values();
     }
 
+    /**
+     * Valid species and subspecies (fossils included): the first number of statsPage.do, "valid species + ssp."
+     * (2026-10-21; it showed getValidTaxonCount(), valid taxa of every rank). Same rule as the home page's
+     * number (StatisticsDb.populateStatistics).
+     */
+    public static int getValidSpeciesCount() {
+        return countValidSpecies(getTaxa());
+    }
+
+    public static int countValidSpecies(Collection<Taxon> taxa) {
+        int n = 0;
+        for (Taxon taxon : taxa) {
+            if (taxon.isValid() && ("species".equals(taxon.getRank()) || "subspecies".equals(taxon.getRank()))) ++n;
+        }
+        return n;
+    }
+
     public static int getValidTaxonCount() {
         int validTaxonCount = 0;
         for (Taxon taxon : getTaxa()) {

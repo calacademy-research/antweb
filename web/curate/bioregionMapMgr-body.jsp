@@ -33,7 +33,16 @@
 <a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a><br><br><br>
 
 <H2>Genera Native Distribution Tool</H2>
-<br><br>
+
+<div class="mgr_help" style="max-width:70em;margin:6px 0 12px 0">
+The bioregions where each genus is native. A specimen upload flags specimens of a genus collected outside
+its native bioregions ("not native to ... Region" in the upload report; species on the introduced list are
+not flagged), and the report "Taxa outside their native bioregions" uses the same table. Tick the
+bioregions and click the green arrow to save that genus (administrators only; curators can look). Saving
+changes only that genus's row and applies to the next upload. <b>Refresh</b> (bottom) rebuilds the whole
+table from the bioregions of all specimens and replaces every change made here.
+</div>
+<br>
 
 <table>
 <tr>
@@ -139,7 +148,7 @@
 %>
 
 <td><%= genusDisplay %></td>
-<input type="hidden" class="input_200" name="taxonName" value="<%= taxonName %>">
+<input type="hidden" class="input_200" name="taxonName" value="<%= Html.escAttr(taxonName) %>">
 <input type="hidden" class="input_200" name="orderBy" value="<%= Html.escAttr(orderBy) %>">
 <td><a title="Afrotropical">At</a>:<input type="checkbox" name="isAfrotropical" <%= isAfrotropical ? "checked":"" %>></td>
 <td><a title="Antarctica">A</a>:<input type="checkbox" name="isAntarctica" <%= isAntarctica ? "checked":"" %>></td>
@@ -150,14 +159,15 @@
 <td><a title="Neotropical">Nt</a>:<input type="checkbox" id="isNeotropical" name="isNeotropical" <%= isNeotropical ? "checked":"" %>></td>
 <td><a title="Oceania">O</a>:<input type="checkbox" name="isOceania" <%= isOceania ? "checked":"" %>></td>
 <td><a title="Palearctic">P</a>:<input type="checkbox" name="isPalearctic" <%= isPalearctic ? "checked":"" %>></td>
-<td><input border="0" type="image" src="<%= domainApp %>/image/upGreen.jpg" height="23" value="Submit"></td>
+<td><% if (LoginMgr.isAdmin(request)) { %><input border="0" type="image" src="<%= domainApp %>/image/upGreen.jpg" height="23" value="Submit" title="Save this genus"><% } %></td>
 </form>
 </tr>
     
 
 <% } %>
 <tr><td></td><td></td><td></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td><hr></td><td></td></tr>
-<tr><td></td><td></td><td><b>Totals:</b></td><td><%= afroTot %></td><td><%= antTot %></td><td><%= ausTot %></td><td><%= indoTot %></td><td><%= malaTot %></td><td><%= oceanTot %></td><td><%= nearcTot %></td><td><%= neoTot %></td><td><%= paleaTot %></td><td></td></tr>
+<%-- Same order as the columns: Afrotropical, Antarctica, Australasia, Indomalaya, Malagasy, Nearctic, Neotropical, Oceania, Palearctic. --%>
+<tr><td></td><td></td><td><b>Totals:</b></td><td><%= afroTot %></td><td><%= antTot %></td><td><%= ausTot %></td><td><%= indoTot %></td><td><%= malaTot %></td><td><%= nearcTot %></td><td><%= neoTot %></td><td><%= oceanTot %></td><td><%= paleaTot %></td><td></td></tr>
 </table>
 
 <% if (LoginMgr.isAdmin(request)) { %>

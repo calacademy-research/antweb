@@ -98,7 +98,7 @@ def test_project_settings_form_links_to_page_editor(curator):
     assert r.status_code == 200
     assert 'name="contents"' not in r.text, "the old Page Copy box is back"
     assert 'name="authorBio"' not in r.text
-    assert r.text.count('name="map"') == 1, "duplicate map field"
+    assert r.text.count('name="mapImage"') == 1, "duplicate map field"
     assert "editField=contents" in r.text, "no link to the page-text editor"
 
 

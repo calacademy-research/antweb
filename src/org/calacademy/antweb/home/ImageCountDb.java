@@ -26,12 +26,8 @@ public class ImageCountDb extends AntwebDb {
          s_log.info("done countSpecimenImages()");
          countSpeciesImages();
          s_log.info("done countSpeciesImages()");
-         countTaxonImages("genus");
-         s_log.info("done countTaxonImages('genus')");
-         countTaxonImages("subfamily");
-         s_log.info("done countTaxonImages('subfamily')");
-         countTaxonImages("family");
-         s_log.info("done countTaxonImages('family')");
+         rollUpTaxonImageCounts();
+         s_log.info("done rollUpTaxonImageCounts()");
 
          new GeolocaleTaxonCountDb(getConnection()).imageCountCrawl();
          new ProjTaxonCountDb(getConnection()).imageCountCrawl();
@@ -100,10 +96,24 @@ public class ImageCountDb extends AntwebDb {
     }
 
 
+    /**
+     * Ranks whose taxon.image_count is added to their parent's, in this order (2026-10-21). countSpeciesImages()
+     * first sets every taxon to the images of the specimens filed under its own name; then subspecies are added
+     * to their species, species to their genus, genera to their subfamily, subfamilies to the family. So the
+     * image_count of a taxon = images of the specimens of the taxon and of every taxon under it. Before, the
+     * species were never added to their genus (a genus counted only the specimens filed under the genus name),
+     * and each step replaced the parent's own images instead of adding to them. Checked by CountInvariants.
+     */
+    public static final String[] ROLL_UP_RANKS = {"subspecies", "species", "genus", "subfamily"};
+
+    public void rollUpTaxonImageCounts() throws SQLException {
+        for (String rank : ROLL_UP_RANKS) countTaxonImages(rank);
+    }
+
      private void countTaxonImages(String rank)
        throws SQLException {
        String query = "select sum(image_count) count, parent_taxon_name from taxon "
-           + " where taxarank = '" + rank + "'"
+           + " where taxarank = '" + rank + "' and parent_taxon_name is not null"
            + " group by parent_taxon_name";
         Statement stmt = null;
         ResultSet rset = null;
@@ -133,8 +143,9 @@ public class ImageCountDb extends AntwebDb {
           stmt = getConnection().createStatement();
           //String taxonName = getTaxonName(taxonId);
 
-          String updateSql = "update taxon set image_count = '" + count + "'"
-            + " where taxon_name = '" + taxonName + "'";
+          // Added to the parent's own images (rollUpTaxonImageCounts).
+          String updateSql = "update taxon set image_count = coalesce(image_count, 0) + " + count
+            + " where taxon_name = '" + taxonName.replace("'", "''") + "'";
 
           //s_log.info("updateImageCount() update:" + updateSql);
           int taxonUpdateCount = stmt.executeUpdate(updateSql);

@@ -358,14 +358,35 @@ museum
     }
 */
 
+    /** An image of the ant: shot type not 'l' (label). Alias i. */
+    public static final String ANT_IMAGE = "lower(trim(coalesce(i.shot_type, ''))) <> 'l'";
+
+    /** Specimen codes with an image of the ant, each once (alias x, column image_of_id). */
+    static final String ANT_IMAGED = "(select i.image_of_id from image i where " + ANT_IMAGE + " group by i.image_of_id) x";
+
+    /** Home and statsPage "specimens imaged". */
+    public static final String IMAGED_SPECIMENS_SQL = "select count(*) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id";
+
+    /** Home and statsPage "species + ssp. imaged": valid, morpho or indetermined (counted statuses), as the statsPage text says. */
+    public static final String IMAGED_SPECIES_SQL = "select count(distinct s.taxon_name) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id"
+        + " join taxon t on t.taxon_name = s.taxon_name where t.taxarank in ('species', 'subspecies')"
+        + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')";
+
+    /** statistics.valid_species_imaged. */
+    public static final String VALID_SPECIES_IMAGED_SQL = "select count(distinct s.taxon_name) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id"
+        + " join taxon t on t.taxon_name = s.taxon_name where t.taxarank in ('species', 'subspecies') and t.status = 'valid'";
+
+    /** Home "valid species + ssp." (statistics.extant_taxa). */
+    public static final String VALID_SPECIES_SQL = "select count(taxon_name) from taxon where status = 'valid' and taxarank in ('species', 'subspecies')";
+
     public void populateStatistics(String action, int loginId, String execTime, String docBase)
             throws SQLException, IOException {
 
             UtilDb utilDb = new UtilDb(getConnection());
 
-            // number of specimens imaged
-            String query = "select count(distinct specimen.code) from specimen,image where "
-                    + " specimen.code = image.image_of_id";
+            // number of specimens imaged: specimens with an image of the ant, labels not counted
+            // (2026-10-21; as Imaged specimens on the place pages, PlaceImageCountDb).
+            String query = IMAGED_SPECIMENS_SQL;
             int imagedSpecimens = utilDb.getCount(query);
             AntwebMgr.setImagedSpecimensCount(imagedSpecimens);
             //A.log("populateStatistics 1 query:" + query);
@@ -376,16 +397,16 @@ museum
             AntwebMgr.setSpecimensCount(specimenRecords);
             //A.log("populateStatistics 2 query:" + query);
 
-            // number of species + spp. imaged
-            query = "select distinct genus, species, subspecies from specimen, image where"
-                    + " specimen.code = image.image_of_id";
-            // and then find the number of rows in result
-            int imagedSpecies = utilDb.getCountFromQuery(query);
+            // number of species + spp. imaged: species and subspecies names with a specimen that has an image of
+            // the ant (2026-10-21; was distinct genus, species, subspecies strings of specimens with any image,
+            // so genus-only names, and labels, counted).
+            query = IMAGED_SPECIES_SQL;
+            int imagedSpecies = utilDb.getCount(query);
             AntwebMgr.setImagedSpeciesCount(imagedSpecies);
 
             //A.log("populateStatistics 3 query:" + query);
-            query = "select count(*) from image where image_of_id in "
-                + " (select s.code from specimen s, taxon t where s.taxon_name = t.taxon_name and t.status = 'valid')";
+            // Valid species and subspecies imaged (admin statistics.do "V. Sp. Imaged"; 2026-10-21: it counted images).
+            query = VALID_SPECIES_IMAGED_SQL;
             int validSpeciesImaged = utilDb.getCount(query);
             //A.log("populateStatistics 4 query:" + query);
 
@@ -396,7 +417,7 @@ museum
             //A.log("populateStatistics 5 query:" + query);
 
             // number of valid species in database
-            query = "select count(taxon_name) from taxon where status = 'valid' and taxarank in ('species', 'subspecies')";
+            query = VALID_SPECIES_SQL;
             //A.log("runStatistics() query:" + query);            
             int validSpecies = utilDb.getCount(query);
             AntwebMgr.setValidSpeciesCount(validSpecies);

@@ -438,13 +438,7 @@ if (casteValue == null) casteValue = "undefined";
 </li>
 </ul>
 
-<% java.util.List<String> previousDeterminations = specimen.getPreviousDeterminationList();
-   if (!previousDeterminations.isEmpty()) { %>
-<ul class="previous_determinations">
-<li><b>Previous determination: </b></li>
-<li><% for (int pdIndex = 0; pdIndex < previousDeterminations.size(); pdIndex++) { %><%= pdIndex > 0 ? "<br>" : "" %><%= Html.esc(previousDeterminations.get(pdIndex)) %><% } %></li>
-</ul>
-<% } %>
+<%-- Previous determinations: under Name History below (SpecimenNameHistory, 2026-10-21). --%>
   
 <% if (Utility.displayEmptyOrNotBlank(specimen.getTypeStatus())) {
     String antcatTypeUrl = specimen.getTypeStatusAntcatSearchURL();
@@ -519,6 +513,13 @@ if (casteValue == null) casteValue = "undefined";
 <li><b>Last Modified: </b></li>
 <li><%= Html.esc(specimen.getLastModified()) %> &nbsp;</li>
 </ul>
+
+<%-- Name History (road map step 6, 2026-10-21): name updates, uploaded vs filed name, the curator's decision on a
+     shared name, previous determinations. Built and escaped in SpecimenNameHistory; "" (no heading) when there is none. --%>
+<% String nameHistory = (String) request.getAttribute("nameHistory");
+   if (nameHistory == null) nameHistory = org.calacademy.antweb.upload.SpecimenNameHistory.render(specimen.getParentTaxonName(), null,
+       specimen.getPreviousDeterminationList(), null, null, null); %>
+<%= nameHistory %>
 
 <%
 if (LoginMgr.isAdmin(request) || specimen.isCurator(accessLogin)) { %>

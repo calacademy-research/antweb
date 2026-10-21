@@ -98,6 +98,9 @@ public final class SpecimenAction extends DescriptionAction {
                     
                     TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
                     specimen.setDefaultFor(taxonPropDb.getDefaultFor(specimen.getCode()));
+
+                    // Name History section (SpecimenNameHistory): one indexed query; "" when there is none.
+                    request.setAttribute("nameHistory", org.calacademy.antweb.upload.SpecimenNameHistory.html(connection, specimen));
                     
                 } else {
                     String message = "Specimen:" + Html.esc(code) + " is not in the AntWeb database";

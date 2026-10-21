@@ -188,7 +188,7 @@ public final class DescEditSafety {
     public static String pageKey(Describable describable) {
         if (describable instanceof Specimen) return "specimen:" + ((Specimen) describable).getCode();
         if (describable instanceof Taxon) return "taxon:" + ((Taxon) describable).getTaxonName();
-        return "object:" + describable.getName();
+        return "object:" + org.calacademy.antweb.home.DescEditDb.objectKey(describable);
     }
 
     /** localStorage key for a draft: antweb.draft.<login id>.<page key>.<field>. Null if not known. */

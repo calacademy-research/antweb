@@ -44,6 +44,13 @@
 <br>
 <h1>Artists (Photographers):</h1>
 </div>
+<% if (LoginMgr.isCurator(request)) { %>
+<div class="mgr_help" style="max-width:60em;margin:6px 16px 12px 16px">
+Photographers credited on images (the image upload asks for one). <b>Create</b> adds a photographer to that
+list; you become its curator. Click a name to rename it, or to delete it after moving its images to another
+photographer (merge). Photographers without images are listed only for logged-in curators.
+</div>
+<% } %>
 
 <div class="admin_left">
 <br>
