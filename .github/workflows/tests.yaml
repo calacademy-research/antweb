@@ -392,7 +392,8 @@ jobs:
               curate/geolocale/geolocaleMgr-body.jsp curate/geolocale/editGeolocale-body.jsp curate/geolocale/adm1Mgr-body.jsp \
               curate/projectMgr-body.jsp curate/project/editProject-body.jsp artists-body.jsp artist-body.jsp \
               util/adminAlert.jsp curate/bioregionMapMgr-body.jsp curate/introducedMapMgr-body.jsp curate/curate-body.jsp \
-              > /tmp/jspc.txt 2>&1 || { cat /tmp/jspc.txt; echo "::error::a Manager Tools JSP does not compile"; exit 1; }
+              > /tmp/jspc.txt 2>&1 || { cat /tmp/jspc.txt
+                echo "::error::a Manager Tools JSP does not compile:%0A$(grep -v "^\s*at " /tmp/jspc.txt | head -40 | sed "s/%/%25/g" | tr "\n" "\001" | sed "s/\x01/%0A/g")"; exit 1; }
             echo "JSPs compiled: $(find /tmp/jspc -name "*.class" | wc -l) classes"
           '
           ok=0
