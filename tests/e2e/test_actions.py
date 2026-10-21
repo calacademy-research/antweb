@@ -52,7 +52,10 @@ def test_removed_actions_stay_removed():
              "/antwebInvite", "/antWikiData", "/apiV3", "/basicSearch", "/donate", "/thanks",
              "/editCredit", "/editorTrial", "/getcomparison", "/taxonomicpage", "/getSpeciesList",
              "/newBioRegion", "/teamMember", "/teamMemberImgUpload", "/teamMemberImgDownload",
-             "/worldAuthoritySave"]
+             "/worldAuthoritySave",
+             # Curate page clarity (2026-10-20, Brian's decision): "Past upload files" (uploadHistory.do);
+             # each specimen upload report and the upload list link the uploaded file.
+             "/uploadHistory"]
     if not IS_PRODUCTION:
         # These two used to update counts; only call them where this change may not be live yet.
         paths += ["/test", "/mobile"]

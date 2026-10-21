@@ -29,7 +29,7 @@ Three short groups, one link per line, each with a one-line explanation on the p
 
 **Your uploads**
 
-- **Specimen upload reports**: the list of your group's specimen uploads, newest first. Each line opens the upload report (how many specimens were loaded, which names were changed to the current valid name, which lines had problems). Check it after every upload. Line numbers in a report open that line of your upload as AntWeb stored it (your own group's uploads only).
+- **Specimen upload reports**: the list of your group's specimen uploads, newest first. Each line opens the upload report (how many specimens were loaded, which names were changed to the current valid name, which lines had problems). Check it after every upload. Line numbers in a report open that line of your upload as AntWeb stored it (your own group's uploads only). Each report also links the file you uploaded (**Uploaded File**), and the list has a **Download** column for each upload's file while it is kept on the server, so you can get a copy of what you sent. Only your group's curators and admins can download a group's files. (This replaces "Your past upload files" and the admins' "Past upload files of" menu, removed on 20 October 2026.)
 - **Image upload reports**: the same for image uploads: one line per upload batch, with its report.
 - **Upload status**: uploads waiting or in progress, and the result of each.
 
@@ -55,8 +55,6 @@ Your upload replaces your group's specimen records on AntWeb. Names are matched 
 The optional column **previousDeterminations** lets you send earlier identifications of a specimen, newest first, separated by " | " (an example is shown on the page).
 
 **Recalculate Your Museums** (shown after you upload in the same session): recounts the museums found in your last upload now, instead of waiting for the nightly run. It only touches the museums of your own upload.
-
-**Your past upload files**: copies of the specimen data files your group sent to AntWeb (your own uploads, and TaxonWorks or GBIF files), newest first; click one to download it. Useful if you need a copy of what you sent before. AntWeb's data for your group always come from your latest upload. Admins see **Specimen files uploaded before** instead: choose a group from the list (sorted by name) and click **Submit** (this replaces the unclear "Past upload files of: Select...").
 
 ### Upload Specimen Images (curators with the "upload images" permission)
 
@@ -174,7 +172,7 @@ Repair without a link: **geolocale taxon parentage** (`utilData.do?action=fixGeo
 
 Data jobs started from the Curate page or the Technical page (reloads, recounts, restarts, the nightly sets) always show a confirmation page with a **Run it** button first; nothing runs on the first click.
 
-### Removed tools (19 October 2026)
+### Removed tools (19 and 20 October 2026)
 
 These pages and links were taken out after a review of every unclear tool; their addresses now answer "not found". Where something replaces them, it is named.
 
@@ -183,6 +181,7 @@ These pages and links were taken out after a review of every unclear tool; their
 - AntWiki list check (`antWikiData.do`), the world authority save (`worldAuthoritySave.do`; the nightly AntCat import replaced it) and the species list file (`getSpeciesList.do`).
 - Editor trial page (`editorTrial.do`): TinyMCE 8 was chosen and is on every edit form.
 - Credit editor (`editCredit.do`), new bioregion form (`newBioRegion.do`; bioregions are a fixed table), donation and thank-you pages, the old Google site search (`basicSearch.do`), the v3 API page (`apiV3.do`; the API is v3.1, see `apiV3.1.do`) and two lower-case aliases (`getcomparison.do`, `taxonomicpage.do`).
+- (20 October 2026) **Past upload files** (`uploadHistory.do`: the curators' "Your past upload files" link and the admins' "Past upload files of" menu): the specimen upload reports and the Specimen upload reports list link each uploaded file instead.
 - Reports and jobs with no use left: `list.do` taxon names, specimens with morpho genera, recent CAS pinned Ponerinae, the toUpload folder listing; `query.do?action=countryEndemic` (the public **Endemic** page lists the same taxa); the Apache log in the Log Manager (there is no Apache); `upload.do` reload species lists and toggle down time (the switch is on **Server Status**); `utilData.do` bioregion taxon count crawl (the nightly run does it), update group counts and update group upload stats (every upload does both); the scheduler's `justLog` test.
 
 ---

@@ -36,7 +36,9 @@
     int count = 0;
     out.println("<table cellpadding=10><tr><th>#</th>");
     if (isAllGroups) out.println("<th>Group</th>");
-    out.println("<th width='100'>Created</th><th>Log File</th></tr>");
+    out.println("<th width='100'>Created</th><th>Log File</th><th>Uploaded file</th></tr>");
+    // The uploaded data file (uploadFile.do): admins any group's, curators their own group's.
+    org.calacademy.antweb.Login listLogin = LoginMgr.getAccessLogin(request);
     for (Upload upload : list) {
       ++count;
       out.println("<tr><td>" + count + ".</td>");
@@ -47,8 +49,17 @@
       } else {
         out.println("<td>" + upload.getCreated() + "</td><td>" + Html.esc(upload.getLogFileName()) + " (report no longer available)</td>");
       }
+      String fileName = upload.getUploadedFileName();
+      if (fileName == null || !org.calacademy.antweb.upload.UploadFileAction.mayRead(listLogin, fileName)) {
+        out.println("<td></td>");
+      } else if (upload.hasUploadedFile()) {
+        out.println("<td><a class=\"uploaded-file\" href=\"" + Html.escAttr(domainApp + "/uploadFile.do?file=" + Html.url(fileName)) + "\">Download</a></td>");
+      } else {
+        out.println("<td>(no longer on the server)</td>");
+      }
+      out.println("</tr>");
     }
-    out.println("</tr></table>");
+    out.println("</table>");
     if (count == 0) out.println("<br> No uploads for this group");
 %>
 
