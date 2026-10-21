@@ -32,8 +32,25 @@ suggests the nearest valid name (`tests/unit/test_api_params.py`).
 
 ## Paging and limits
 
-`limit` (default and maximum 10,000 records per request) and `offset` page through large
-results. Example:
+`limit` and `offset` page through large results. Since 2026-10-21 every endpoint returns at
+most **500 records per request** (also with `ndjson=true`), until registered API keys arrive; it
+was 10,000. Without `limit` a request gets up to 500. A request that asks for more gets 500, plus
+this notice in the reply's `metaData` as `limitNotice` and in the `X-AntWeb-Limit-Notice` HTTP
+header (ndjson replies have no metadata, only the header):
+
+> Requests are limited to 500 records while AntWeb moves to registered API keys. For larger data
+> needs contact antweb@antweb.org.
+
+The notice is also given when no `limit` was asked for and the reply is full (500 records: there
+may be more). `/geolocales`, `/bioregions` and `/geoSpeciesStats` used to ignore `limit` and
+return everything; they now page like the others. Cloudflare also limits each address to 15
+requests per 10 seconds on `/v3.1/`.
+
+The cap is a server setting, not code: `maxLimit=<n>` in `etc/api-db.properties` (the API's own
+settings file on the server, not in git), then `docker restart antweb_api_1`. Missing or invalid:
+500. The API prints `API record limit per request: <n>` in its log at start.
+
+Example:
 
 ```bash
 curl "https://www.antweb.org/v3.1/specimens?genus=acanthognathus&limit=100&offset=200"

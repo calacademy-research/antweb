@@ -40,7 +40,7 @@
         <table class="arguments">
             <tr>
                 <td><b>Limit</b></td>
-                <td>Limit the number of specimen returned on large requests (limit=100). Default and maximum is 10,000 (also with ndjson=true); use offset to page through more.</td>
+                <td>Limit the number of records returned (limit=100). Default and maximum is 500 records per request, for every endpoint and also with ndjson=true; use offset to page through more. A request that asks for more than 500 gets 500, with a notice in the reply's metaData ("limitNotice") and in the X-AntWeb-Limit-Notice header. Requests are limited to 500 records while AntWeb moves to registered API keys. For larger data needs contact antweb@antweb.org.</td>
             </tr>
             <tr>
                 <td><b>Offset</b></td>
@@ -251,7 +251,7 @@
 <% if (LoginMgr.isAdmin(accessLogin)) { %>
         <p class="link"><b>-- Admin Only --</b>
         <p class="link">A query for all non-fossil, valid genera ants in ndjson format (for use with Elasticsearch):
-        <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/specimens?family=Formicidae&fossil=false&validGenus=true&limit=1000000&ndjson=true<%= appendStr %>"><%= apiDomainApp %>/specimens?family=Formicidae&fossil=false&validGenus=true&limit=1000000&ndjson=true</a></p>
+        <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/specimens?family=Formicidae&fossil=false&validGenus=true&limit=500&offset=0&ndjson=true<%= appendStr %>"><%= apiDomainApp %>/specimens?family=Formicidae&fossil=false&validGenus=true&limit=500&offset=0&ndjson=true</a> (500 per request: page with offset)</p>
 <% } %>
             
 <a name="geoSpecimens"></a><br><hr><br>
@@ -278,7 +278,7 @@
         <p><b>Examples:</b>
         
         <p class="link">Query for all specimen of genus Technomyrmex found within two kilometers of The California Academy of Sciences:
-        <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/geoSpecimens?coords=37,%20-122&limit=8000&radius=2<%= appendStr %>"><%= apiDomainApp %>/geoSpecimens?coords=37,%20-122&limit=8000&radius=2</a></p>
+        <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/geoSpecimens?coords=37,%20-122&limit=500&radius=2<%= appendStr %>"><%= apiDomainApp %>/geoSpecimens?coords=37,%20-122&limit=500&radius=2</a></p>
 
 
 <a name="taxa"></a><br><hr><br>
