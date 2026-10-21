@@ -211,8 +211,7 @@ jobs:
         # interrupted after a restart, who sees a job). UploadReportExistsTest: the upload lists link a report
         # only while it exists, and each upload's file through uploadFile.do. SpecimenNameHistoryTest: the specimen page's
         # Name History section (applied moves only, newest first, the Name updates page's line and reason, uploaded name,
-        # shared-name hold, previous determinations, escaping, nothing when empty). See docs/flows/test-gaps-uploads-nightly.md.
-        # only while it exists, and each upload's file through uploadFile.do. SpecimenCodesTest: "N specimens" and the
+        # shared-name hold, previous determinations, escaping, nothing when empty). SpecimenCodesTest: "N specimens" and the
         # collapsed list of codes on every upload report line and on the Name updates page (one helper; count, cap of
         # 200 per line and 10,000 per report, escaping, plain codes for lines not uploaded). RelevantQueriesTest: the
         # Relevant Queries boxes of viewGroups.do and viewLogins.do explain each query; headings match the columns.
@@ -246,8 +245,8 @@ jobs:
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:14 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
-                     upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9; do
-                     upload.UploadReportExistsTest:3 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2; do
+                     upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 \
+                     util.SpecimenCodesTest:6 util.RelevantQueriesTest:2; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
