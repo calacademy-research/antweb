@@ -104,7 +104,7 @@ Shown when your login looks after project or region species lists. Choose a list
 Each tool's fields, what saving does and its pitfalls: [Manager Tools guide](manager-tools.md).
 
 - **Login Manager**: all logins. Open one to change its details and permissions; see "Editing a login" below. The form at the top creates a new login (without a password it gets a one-time link to choose one); for someone who wants to upload, use Add an uploader instead. The page also links a table of all logins with their permissions and a list of logins by last login.
-- **Add an uploader**: when someone asks to upload specimen data. One form finds the person's login by email address or username (or creates one and makes a one-time link for them to choose a password), chooses an existing upload group or creates a new one, gives the right to upload specimens (and images if ticked), and shows a welcome email that is sent only when you click Send. See [Adding a new uploader](adding-an-uploader.md).
+- **Add an uploader**: when someone asks to upload specimen data. One form finds the person's login by email address or username (or creates one and makes a one-time link for them to choose a password), chooses an existing upload group or creates a new one, gives the right to upload specimens (and images if ticked), and drafts a welcome email (To, Subject and the text, with a Copy button) for you to send from your own email; AntWeb does not send it. See [Adding a new uploader](adding-an-uploader.md).
 - **Upload groups** (formerly "Group Manager"): the institutions, labs and personal collections that own specimen records (table `ant_group`; older pages say "group"). Every specimen record belongs to one upload group, and an upload replaces all specimens of the uploader's upload group. Open one to change its full name, short name (the AntCat institution code where there is one) or admin curator; its number cannot be changed. **Delete** asks you to confirm and is refused while the upload group still has logins or specimens.
 - **Museum Manager**: the museum codes used in specimen data (code, name, title, active). Edit or add a museum; the code of an existing museum is fixed. **Delete** (on a museum's form) asks you to confirm on a second page, which says how many specimens carry the code; there is no undo.
 - **Geolocale Manager**: countries and states/provinces (adm1): whether they are valid and shown on the site, names, bioregion and map coordinates. Curators can look; only admins can save changes. The page also links the georegion table (region, subregion, country) and the bioregion table.
@@ -179,7 +179,7 @@ Repair without a link: **geolocale taxon parentage** (`utilData.do?action=fixGeo
 
 Data jobs started from the Curate page or the Technical page (reloads, recounts, restarts, the nightly sets) always show a confirmation page with a **Run it** button first; nothing runs on the first click.
 
-### Removed tools (19 and 20 October 2026)
+### Removed tools (19 to 21 October 2026)
 
 These pages and links were taken out after a review of every unclear tool; their addresses now answer "not found". Where something replaces them, it is named.
 
@@ -189,6 +189,7 @@ These pages and links were taken out after a review of every unclear tool; their
 - Editor trial page (`editorTrial.do`): TinyMCE 8 was chosen and is on every edit form.
 - Credit editor (`editCredit.do`), new bioregion form (`newBioRegion.do`; bioregions are a fixed table), donation and thank-you pages, the old Google site search (`basicSearch.do`), the v3 API page (`apiV3.do`; the API is v3.1, see `apiV3.1.do`) and two lower-case aliases (`getcomparison.do`, `taxonomicpage.do`).
 - (20 October 2026) **Past upload files** (`uploadHistory.do`: the curators' "Your past upload files" link and the admins' "Past upload files of" menu): the specimen upload reports and the Specimen upload reports list link each uploaded file instead.
+- (21 October 2026, Manager Tools) the older Query Manager list (`queries.do`; use the **Query Manager**), the old project-creation step of `upload.do` (`createProject`; use the **Project Manager**), the **Fast** option of Edit Geolocale (every save now reloads the places), the **Refresh** button of the Bioregion Map Manager (it counted introduced populations as native and overwrote corrections) and the `groups` query on the Upload groups page. Details: [Manager Tools](manager-tools.md#removed-2026-10-21-brians-decision).
 - Reports and jobs with no use left: `list.do` taxon names, specimens with morpho genera, recent CAS pinned Ponerinae, the toUpload folder listing; `query.do?action=countryEndemic` (the public **Endemic** page lists the same taxa); the Apache log in the Log Manager (there is no Apache); `upload.do` reload species lists and toggle down time (the switch is on **Server Status**); `utilData.do` bioregion taxon count crawl (the nightly run does it), update group counts and update group upload stats (every upload does both); the scheduler's `justLog` test.
 
 ---

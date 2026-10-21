@@ -50,10 +50,6 @@ public abstract class Queries {
         };
         return list;      
     }
-    public static ArrayList<String> getIntegrityNamesArray() {
-      return new ArrayList<>(Arrays.asList(getIntegrityNames()));
-    }        
-    
     public static ArrayList<NamedQuery> getIntegrityQueries() {
         String[] list = getIntegrityNames();
         
@@ -61,6 +57,7 @@ public abstract class Queries {
     }
 
 
+    // query.do?action=devQueries (QueryManager).
     public static String[] getDevIntegrityNames() {
         String[] list = {
             "emptySourceTaxonSets"
@@ -68,10 +65,7 @@ public abstract class Queries {
         };
         return list;
     }
-    public static ArrayList<String> getDevIntegrityNamesArray() {
-      return new ArrayList<>(Arrays.asList(getDevIntegrityNames()));
-    }        
-    
+
     // Highest priority. More so that Integrity queries.
     public static ArrayList<NamedQuery> getAdminCheckQueries() {
         String[] list = {
@@ -106,43 +100,11 @@ public abstract class Queries {
         };    
         return list;    
     }        
-    public static ArrayList<String> getCuriousNamesArray() {
-      return new ArrayList<>(Arrays.asList(getCuriousNames()));
-    }  
-    
     public static ArrayList<NamedQuery> getCuriousQueries() {
         String[] list = getCuriousNames();
         
         return getNamedQueryList(list);
     }    
-
-    // Used in the queries.jsp to list the various Queries.
-    public static ArrayList<String> getNames() {
-    
-      String[] list = {
-          "geolocaleListMorphotaxa"      
-        , "nonAsciiTaxonName"
-        , "invalidCurrentValid"
-        , "longCurrentValidNames"
-        , "notValidTaxaFromSpeciesList"
-        , "notValidTaxaFromSpecimenList"
-        , "imageCountByOwner"
-        , "imageCountByStatus"
-        , "specimenCountByOwner"
-        , "descriptionEditCountByOwner"
-        , "importedCountryData"
-        , "badParentTaxonName"
-        , "specimenGroups"
-        , "multiBioregionSpecimenTaxa"
-        , "notValidBioregionTaxonNames"
-        , "notValidMuseumTaxonNames"
-        , "notValidGeolocaleTaxonNames"
-        , "notValidProjectTaxonNames"
-        , "worldantsUploads"
-      };
-      ArrayList<String> names = new ArrayList<>(Arrays.asList(list));
-      return names;
-    }
 
     // For Geolocale Manager.
     public static ArrayList<String> getGeolocaleQueries() {
@@ -174,8 +136,7 @@ public abstract class Queries {
     // For Group Manager.
     public static ArrayList<String> getGroupQueries() {
       String[] list = {
-          "groups"
-        , "specimenGroups"
+          "specimenGroups"
       };
       ArrayList<String> names = new ArrayList<>(Arrays.asList(list));
       return names;
@@ -668,13 +629,6 @@ public abstract class Queries {
           , "<th>Group Name</th>"      
           , "select name from ant_group where admin_login_id = 0 and id > 0"
           ));
-             
-        queries.add(new NamedQuery(
-            "groups"
-          , "Group data."
-          , "<th>Group ID</th><th>Group Name</th><th>Last Upload</th><th>Admin Login ID</th><th>Abbreviation</th>" //<th>Can Upload Specimen?</th><th>Can Upload Images</th>
-          , "select id, name, last_specimen_upload, admin_login_id, abbrev from ant_group"  // is_upload_specimens, is_upload_images,  (moved to login).
-        ));
              
                                   
         return queries; // end getGroupsNamedQueries()
@@ -1176,7 +1130,6 @@ public abstract class Queries {
             + " Click a name to run it: the page shows the query, its rows and how long it took. The queries only read data"
             + " (nothing is changed); some take a minute on the full database. Most are checks that should find no rows."
             + " Administrators only, except the few that public pages link to.</div>";
-        page += "&nbsp;&nbsp;&nbsp;&nbsp;The same queries grouped as before (integrity, dev, curious): <a href='" + AntwebProps.getDomainApp() + "/queries.do'>older list</a><br>";
         page += getQueryManagerBlock("Taxon Queries", getTaxaNamedQueries());
         page += getQueryManagerBlock("Homonym Queries", getHomonymNamedQueries());
         page += getQueryManagerBlock("Specimen Queries", getSpecimenNamedQueries());
@@ -1211,9 +1164,6 @@ public abstract class Queries {
      * (Brian Fisher, 2026-10-21).
      */
     static final Map<String, String> QUERY_LIST_HELP = Map.of(
-        "groups", "Every upload group with its number, name, date of the last specimen upload, the login ID of its "
-            + "administrator and its short name. Use it to see when each group last uploaded (the list on this page has "
-            + "the names only).",
         "specimenGroups", "How many specimen records each upload group has on AntWeb: group number, name and count, "
             + "largest first. Use it to compare groups or to check a group's total after an upload.",
         "uploadingCurators", "Every login allowed to upload specimens or images: login ID, first and last name, email, "

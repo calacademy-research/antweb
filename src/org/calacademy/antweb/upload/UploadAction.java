@@ -336,23 +336,8 @@ public class UploadAction extends AntwebAction {
 				return mapping.findForward("message");
 			}
 
-			// Create Project
-			if (!theForm.getCreateProject().equals("none")) {
-				String createProject = theForm.getCreateProject();
-
-				if (!Project.isProjectName(createProject)) {
-					request.setAttribute("message", "Project name must be lowercased, have no spaces, and end with 'ants'");
-					return mapping.findForward("message");
-				}
-
-				String url = AntwebProps.getDomainApp() + "/editProject.do?projectName=" + Html.url(createProject);
-				String anchorTag = "<a href='" + Html.escAttr(url) + "'>Here</a>";
-				String message = "To create project <b>" + Html.esc(createProject) + "</b> click: <b>" + anchorTag + "</b>. <br><br>&nbsp;&nbsp;&nbsp;Once you click 'Done', the project will be created.";
-				//s_log.into("execute() " + message);
-
-				request.setAttribute("message", message);
-				return mapping.findForward("message");
-			}
+			// The old "Create Project" step (createProject=..., a "click Here" page) was removed on
+			// 2026-10-21; projects are created in the Project Manager. The field is ignored.
 
 			if (!theForm.getEditSpeciesList().equals("none")) {
 				String editSpeciesList = theForm.getEditSpeciesList();

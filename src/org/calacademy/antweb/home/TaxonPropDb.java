@@ -40,21 +40,6 @@ public class TaxonPropDb extends AntwebDb {
 	   return false;
     }	
 
-    public String deleteBioregionMaps() {
-        Statement stmt = null;
-        ResultSet rset = null;
-        String dml = "delete from taxon_prop where prop = 'bioregionMap'";
-        try {            
-            stmt = DBUtil.getStatement(getConnection(), "getBioregionMaps()");
-            stmt.execute(dml);
-        } catch (SQLException e) {
-            s_log.error("deleteBioregionMaps() exception:" + e + " dml:" + dml);
-        } finally {
-            DBUtil.close(stmt, rset, "this", "DeleteBioregionMaps()");
-        }
-        return null;
-    }  
-        
     public String getBioregionMap(String taxonName) {
         Statement stmt = null;
         ResultSet rset = null;
@@ -147,62 +132,9 @@ public class TaxonPropDb extends AntwebDb {
       }
     }
 
-    public void refreshBioregionMap() {      
-        // Delete the existing records from taxon_prop that are for bioregionMap
-        deleteBioregionMaps();
-
-        // Select the distinct Bioregions for each genera in the specimen table.      
-        HashMap<String, HashSet<String>> bioregionMaps = new HashMap<>();
-        Statement stmt = null;
-        ResultSet rset = null;
-        String query = null;
-
-        // Build bioregionMaps based on specimen bioregion and taxon.
-        query = "select taxon_name, bioregion from specimen ";
-        try {            
-            stmt = DBUtil.getStatement(getConnection(), "refreshBioregionMap()");
-            rset = stmt.executeQuery(query);
-
-            while (rset.next()) {
-                String taxonName = rset.getString("taxon_name");
-                String genus = Taxon.getGenusTaxonNameFromName(taxonName);
-                String bioregion = rset.getString("bioregion");
-
-                if (isWordInArray(bioregion, Bioregion.list)) {
-                  HashSet<String> bioregionSet = bioregionMaps.get(genus);
-                  if (bioregionSet == null) bioregionSet = new HashSet<>();
-                  bioregionSet.add(bioregion);
-                  bioregionMaps.put(genus, bioregionSet);
-                } else {
-                  if (bioregion != null) {
-                    s_log.debug("refreshBioregionMap() illegal bioregion:" + bioregion);
-                  }
-                }
-            }
-        } catch (SQLException e) {
-            s_log.error("refreshBioregionMap() exception:" + e + " query:" + query);
-        } finally {
-            DBUtil.close(stmt, rset, "this", "refreshBioregionMap()");
-        }
-
-
-        //Loop through bioregionMaps making the insert strings.
-        for (String genus : bioregionMaps.keySet()) {
-          HashSet<String> bioregionSet = bioregionMaps.get(genus);
-          String bioregionMapStr = "";
-          int i = 0;
-
-            for (String bioregion : bioregionSet) {
-                ++i;
-                if (i > 1) bioregionMapStr += " ";
-                bioregionMapStr += bioregion + ":true";
-            }
-          s_log.debug("refreshBioregionMap() genus:" + genus + " bioregionMapStr:" + bioregionMapStr);
-        
-          // insert into taxon_props genus, bioregionMapStr
-          updateBioregionMap(genus, bioregionMapStr);
-        }
-    }
+    // refreshBioregionMap() (the Bioregion Map Manager's "Refresh": it rebuilt every genus's native
+    // bioregions from all specimens, introduced populations included, over hand corrections) was
+    // removed on 2026-10-21, with deleteBioregionMaps().
 
     // ------------------------ Introduced Map Methods ------------------------------------    
 

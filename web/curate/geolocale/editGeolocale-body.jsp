@@ -57,7 +57,7 @@
 
 <div class="mgr_help" style="max-width:70em;margin:6px 16px 12px 16px">
 All settings of one place. <b>Submit</b> saves every field below at once (administrators only) and
-makes the change live at once, unless Fast is ticked. Bioregion decides the bioregion of specimens
+makes the change live at once. Bioregion decides the bioregion of specimens
 collected here (at upload); a place with an Alternate Bioregion lies in two bioregions, so its specimens
 get no bioregion from the place. None means no value.
 </div>
@@ -298,7 +298,7 @@ To indicate that adm1 should be used, for instance, United States, Brazil, China
 </div>
             <div class="clear"></div>
 
-			<br>Fast:<input type="checkbox" name="isFast" <%= (form.getIsFast() == true)?"checked":"" %>> Ticked: save without reloading the list of places in memory (quicker when you change several places); reload it afterwards with <a href='<%= AntwebProps.getDomainApp() %>/util.do?action=reloadAntwebMgr&name=geolocale'>Reload places</a>.<br><br>
+			<br>
 <% if (LoginMgr.isAdmin(request)) { %>
 			<input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit">
 <% } else { %>

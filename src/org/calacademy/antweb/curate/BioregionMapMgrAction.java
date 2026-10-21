@@ -53,20 +53,10 @@ public final class BioregionMapMgrAction extends AntwebAction {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "BioregionMgrAction.execute()");
 
-			s_log.debug("execute() refresh:" + bioregionMapMgrForm.isRefresh());
-            if (bioregionMapMgrForm.isRefresh()) {
-              // Rebuilds the whole table: admins only, and only from the POST button (form token).
-              if (!LoginMgr.isAdmin(request)) {
-                request.setAttribute("message", "Only an administrator can refresh the bioregion maps.");
-                return mapping.findForward("message");
-              }
-              if (!HttpUtil.isPost(request)) {
-                request.setAttribute("message", "Nothing was changed. Use the Refresh button on the Bioregion Map Manager page.");
-                return mapping.findForward("message");
-              }
-			  TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
-              taxonPropDb.refreshBioregionMap();
-            } else if (HttpUtil.isPost(request)) {
+			// The "Refresh" that rebuilt the whole table from specimen data (isRefresh=true) was removed
+			// on 2026-10-21: it counted introduced populations as native and overwrote hand corrections.
+			// The isRefresh field (shared with the Introduced Map Manager's form) is ignored here.
+            if (HttpUtil.isPost(request)) {
 			  // A genus's native bioregions decide the "introduced" flags across the site: administrators
 			  // only, like the Introduced Map Manager (curators can look at the table).
 			  if (!LoginMgr.isAdmin(request)) {

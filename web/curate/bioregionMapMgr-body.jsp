@@ -39,8 +39,7 @@ The bioregions where each genus is native. A specimen upload flags specimens of 
 its native bioregions ("not native to ... Region" in the upload report; species on the introduced list are
 not flagged), and the report "Taxa outside their native bioregions" uses the same table. Tick the
 bioregions and click the green arrow to save that genus (administrators only; curators can look). Saving
-changes only that genus's row and applies to the next upload. <b>Refresh</b> (bottom) rebuilds the whole
-table from the bioregions of all specimens and replaces every change made here.
+changes only that genus's row and applies to the next upload.
 </div>
 <br>
 
@@ -170,7 +169,4 @@ table from the bioregions of all specimens and replaces every change made here.
 <tr><td></td><td></td><td><b>Totals:</b></td><td><%= afroTot %></td><td><%= antTot %></td><td><%= ausTot %></td><td><%= indoTot %></td><td><%= malaTot %></td><td><%= nearcTot %></td><td><%= neoTot %></td><td><%= oceanTot %></td><td><%= paleaTot %></td><td></td></tr>
 </table>
 
-<% if (LoginMgr.isAdmin(request)) { %>
-     <br><br><%= org.calacademy.antweb.util.Csrf.postButton(request, AntwebProps.getDomainApp() + "/bioregionMapMgr.do?isRefresh=true", "Refresh", "Refresh the whole bioregion map table from specimen data?") %> rebuilds the whole table above from specimen data (replaces any changes made here).
-<% } %>
 </div>

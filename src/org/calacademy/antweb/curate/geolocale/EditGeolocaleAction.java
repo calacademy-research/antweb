@@ -53,7 +53,7 @@ public final class EditGeolocaleAction extends AntwebAction {
 
 		int id = editGeolocaleForm.getId();
         
-        s_log.debug("execute() name:" + name + " country:" + country + " parent:" + parent + " id:" + id + " isFast:" + editGeolocaleForm.getIsFast());
+        s_log.debug("execute() name:" + name + " country:" + country + " parent:" + parent + " id:" + id);
 
         if ((name == null || "".equals(name.trim())) && editGeolocaleForm.getIsCreate()) {
 			request.setAttribute("message", "Nothing was created: enter a name.");
@@ -161,7 +161,8 @@ public final class EditGeolocaleAction extends AntwebAction {
 			    }
 			  }
 			}
-   	        if (isSaved && !editGeolocaleForm.getIsFast()) {
+   	        // Every save reloads the places in memory (the "Fast" option that skipped this was removed 2026-10-21).
+   	        if (isSaved) {
 			    GeolocaleMgr.populate(connection, true, false);
             }
 			
