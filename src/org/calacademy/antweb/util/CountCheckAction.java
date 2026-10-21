@@ -19,6 +19,7 @@ import org.apache.struts.action.ActionForward;
 import org.apache.struts.action.ActionMapping;
 
 import org.calacademy.antweb.AntwebAction;
+import org.calacademy.antweb.Login;
 import org.calacademy.antweb.Museum;
 import org.calacademy.antweb.Project;
 import org.calacademy.antweb.Taxon;
@@ -41,6 +42,43 @@ public final class CountCheckAction extends AntwebAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form, HttpServletRequest request, HttpServletResponse response) {
         ActionForward a = Check.initLogin(request, mapping); if (a != null) return a;
         ActionForward c = Check.admin(request, mapping); if (c != null) return c;
+
+        // The whole check (every place and the rotating sample) runs as a background job (CountCheckJob,
+        // 2026-10-21: 107 seconds on staging, over Cloudflare's 100). A check of given places (parameters
+        // geolocaleId, project, museum, bioregion) is short and still runs in the request.
+        if (!isCustom(request)) {
+            BackgroundJobDb.setDataSource(getDataSource(request, "conPool"));
+            String domainApp = AntwebProps.getDomainApp();
+            String jobParam = request.getParameter("job");
+            if (jobParam != null) {
+                int id = 0;
+                try { id = Integer.parseInt(jobParam.trim()); } catch (NumberFormatException e) { /* 0 */ }
+                String report = CountCheckJob.report(id);
+                request.setAttribute("html", runLink(domainApp) + (report != null ? report
+                    : "<p>The report of job " + id + " is not kept any more (only the last " + CountCheckJob.KEEP
+                      + ", and none after a restart). Run the check again.</p>"));
+                return mapping.findForward("success");
+            }
+            BackgroundJobs.Job active = CountCheckJob.active();
+            if (active != null) return new ActionForward("/jobStatus.do?id=" + active.getId() + "&already=1", true);
+            if (!"1".equals(request.getParameter("run")) && CountCheckJob.latest() > 0) {
+                request.setAttribute("html", runLink(domainApp) + "<p>Latest check: job " + CountCheckJob.latest() + ".</p>"
+                    + CountCheckJob.report(CountCheckJob.latest()));
+                return mapping.findForward("success");
+            }
+            int seconds = CountCheckJob.SECONDS;
+            try {
+                if (request.getParameter("seconds") != null) seconds = Math.max(0, Math.min(600, Integer.parseInt(request.getParameter("seconds"))));
+            } catch (NumberFormatException e) { /* default */ }
+            Login login = LoginMgr.getAccessLogin(request);
+            BackgroundJobs.Submitted submitted = CountCheckJob.submit(getDataSource(request, "longConPool"),
+                login == null ? 0 : login.getId(), login == null ? "" : login.getName(), seconds, "started by " + (login == null ? "?" : login.getName()));
+            if (submitted.job == null) {
+                request.setAttribute("message", Html.esc(submitted.refused));
+                return mapping.findForward("message");
+            }
+            return new ActionForward("/jobStatus.do?id=" + submitted.job.getId() + (submitted.isNew ? "" : "&already=1"), true);
+        }
 
         Connection connection = null;
         String dbMethodName = DBUtil.getDbMethodName("CountCheckAction.execute()");
@@ -89,7 +127,7 @@ public final class CountCheckAction extends AntwebAction {
      * this many seconds, so the page answers within about a minute (Cloudflare ends requests after 100 s).
      * Parameter seconds (0 to 600) changes it.
      */
-    static final int ROTATING_SECONDS = 50;
+    static final int ROTATING_SECONDS = 50;   // a check of given places in the request (the full check: CountCheckJob.SECONDS)
 
     static boolean isCustom(HttpServletRequest request) {
         return request.getParameterValues("geolocaleId") != null || request.getParameter("project") != null
@@ -156,13 +194,21 @@ public final class CountCheckAction extends AntwebAction {
         return new CountCheck.Place(CountCheck.GEOLOCALE, "" + g.getId(), g.getName(), column, g.getName());
     }
 
+    static String runLink(String domainApp) {
+        return "<p><a id=\"count-check-run\" href=\"" + domainApp + "/countCheck.do?run=1\">Run the check now</a>"
+            + " (in the background: a few minutes; the page then shows the result). The nightly run also starts it every day.</p>";
+    }
+
     static List<CountCheck.Place> places(HttpServletRequest request, Connection connection, List<String> notes) throws SQLException {
+        return places(request.getParameterValues("geolocaleId"), request.getParameter("project"), request.getParameter("museum"),
+            request.getParameter("bioregion"), connection, notes);
+    }
+
+    /** The places given (custom check) or, with all null, the core sample. */
+    static List<CountCheck.Place> places(String[] geolocaleIds, String project, String museum, String bioregion, Connection connection,
+                                         List<String> notes) throws SQLException {
         List<CountCheck.Place> places = new ArrayList<>();
-        String[] geolocaleIds = request.getParameterValues("geolocaleId");
-        String project = request.getParameter("project");
-        String museum = request.getParameter("museum");
-        String bioregion = request.getParameter("bioregion");
-        boolean custom = isCustom(request);
+        boolean custom = geolocaleIds != null || project != null || museum != null || bioregion != null;
 
         List<Geolocale> geolocales = new ArrayList<>();
         if (custom) {
@@ -263,6 +309,13 @@ public final class CountCheckAction extends AntwebAction {
     /** Checks whose "Taxon" cell is a taxon name (linked to its page). */
     static final java.util.Set<String> LINKED_CHECKS = java.util.Set.of("specimens", "species", "genera", "global", "images");
 
+    /** "This check took N s (every place A s, core places B s, rotating sample C s for X of Y places)." */
+    static String partsText(CountCheck.Result result) {
+        return String.format("This check took %.1f s (every place: %s; core places: %.1f s; rotating sample: %.1f s for %d of %d places).",
+            result.millis / 1000.0, result.invariants == null ? "not run" : String.format("%.1f s", result.invariants.millis / 1000.0),
+            result.coreMillis / 1000.0, result.rotatingMillis / 1000.0, result.rotatingChecked, result.rotatingPlanned);
+    }
+
     static String html(CountCheck.Result result, String domainApp) {
         SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         StringBuilder b = new StringBuilder(HELP);
@@ -282,10 +335,9 @@ public final class CountCheckAction extends AntwebAction {
                 + " endemic numbers, taxon image counts, home page numbers): the differences of those numbers are pending until it has.</p>");
         }
         for (String note : result.notes) b.append("<p>Note: ").append(note).append("</p>");
-        b.append("<p id=\"count-check-time\" data-seconds=\"").append(result.millis / 1000).append("\">This check took ")
-         .append(String.format("%.1f", result.millis / 1000.0)).append(" seconds (every place: ")
-         .append(result.invariants == null ? "not run" : String.format("%.1f s", result.invariants.millis / 1000.0))
-         .append("; recounts from the specimen records: ").append(String.format("%.1f s", result.recountMillis / 1000.0)).append(").</p>");
+        b.append("<p id=\"count-check-time\" data-seconds=\"").append(result.millis / 1000).append("\" data-invariants=\"")
+         .append(result.invariants == null ? 0 : result.invariants.millis / 1000).append("\" data-core=\"").append(result.coreMillis / 1000)
+         .append("\" data-rotating=\"").append(result.rotatingMillis / 1000).append("\">").append(Html.esc(partsText(result))).append("</p>");
         if (result.invariants != null) {
             b.append("<h3>Every place: numbers that must agree</h3>");
             b.append("<table border=1 cellpadding=4 style=\"border-collapse:collapse\" id=\"count-invariants\"><tr><th>Check</th><th>What</th>"

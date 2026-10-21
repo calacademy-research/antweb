@@ -230,6 +230,14 @@ public final class CountInvariants {
     void loadPlaces() throws SQLException {
         for (String type : PlaceTotals.TYPES) {
             if (!tableExists(PlaceTotals.placeTable(type)) || !tableExists(PlaceTotals.listTable(type))) continue;
+            // a type whose places cannot be read is reported as a failed check, the other types go on
+            check(new Check("places." + type, "read the " + type + " places", ""), c -> loadPlaces(type));
+            if (checks.get(checks.size() - 1).error == null) checks.remove(checks.size() - 1);
+        }
+    }
+
+    private void loadPlaces(String type) throws SQLException {
+        {
             Map<String, String> m = keyMap();
             try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(scopeSql(type)))) {
                 while (r.next()) {

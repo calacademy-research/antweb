@@ -26,11 +26,18 @@ A difference the check finds is **real** (the site shows a wrong number) or **pe
 the last nightly run: an upload, new images, a list edit, a name update by hand; or the number's rule changed on
 2026-10-21 and no nightly run has counted it that way yet). The end-to-end test fails on real differences.
 
-Run time: the check runs inside the request and is bounded: the invariants over every place, then the core
-places, then the rotating slice until the whole check has run 50 seconds (parameter `seconds`, 0 to 600); places
-of the slice not reached are listed on the page. Measured on a copy of production's size (1,000,000 specimens,
-1,100,000 images, 63,000 taxa, 4,300 geolocales, 380,000 geolocale list rows; MySQL 8.0, 2 cores, 2 GB buffer
-pool): invariants 29 s, recount of 4 core and 175 rotating places 18 s, 46 s in all. The page prints its run time.
+Run time: the whole check runs as a background job (CountCheckJob, BackgroundJobs; staging took 107 seconds,
+over Cloudflare's 100-second limit for a request). `countCheck.do` shows the latest report or starts the job
+(`countCheck.do?run=1`) and sends the browser to `jobStatus.do?id=N`; the report is `countCheck.do?job=N`. The
+nightly run starts the same job when it has finished, so the check runs every day on staging and production,
+read-only. Order: the invariants over every place, the core places, then the rotating slice until the whole check
+has run 300 seconds (parameter `seconds`, 0 to 600); places of the slice not reached are listed. With the
+invariants run, the rotating places skip the genus, subfamily and Global recounts (checked for every place).
+The report prints the time of each part. The end-to-end test fails when the job takes over 10 minutes or does not
+finish. Measured on a copy of production's size (1,000,000 specimens, 1,100,000 images, 63,000 taxa, 4,300
+geolocales, 380,000 geolocale list rows; MySQL 8.0, 2 cores): every place 29 to 35 s, core places 7 s, 175
+rotating places 14 s. A check of given places (`geolocaleId`, `project`, `museum`, `bioregion`) still runs in
+the request.
 
 Status: **yes** = the number is compared with an independent recount or with the number it must equal, on every
 place (or a rotating sample covering every place); **partly** = only some places or parts, or only a consistency

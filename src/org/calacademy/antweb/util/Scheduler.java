@@ -292,6 +292,9 @@ public class Scheduler extends AntwebAction {
 					}
 					s_log.warn("doAction() nightly restart skipped (off)");
 					LogMgr.appendLog("compute.log", "Nightly restart skipped (off; nightlyRestart=true in etc/scheduler.properties turns it on). " + memoryReport(), true);
+					// The daily count check (read-only, a background job: countCheck.do shows its report). It waits
+					// until this run's flags are clear (BackgroundJobs gate), then checks the numbers just written.
+					CountCheckJob.startAfterNightly();
 				  }
 				}
 
