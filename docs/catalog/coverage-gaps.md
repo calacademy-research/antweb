@@ -161,7 +161,7 @@ Read-only tools and reports.
 | 114 | `/logMgr.do?action=uploadLog` | admin | <2 |  | Curators (own group) and admins: one line of an archived specimen upload file (web/upload/) with its header, i.e. a specimen's row as it was uploaded. | keep |
 | 115 | `/logMgr.do?action=worldants` | admin | <2 |  | Curators: a WorldAnts (AntCat import) log line or file. | keep |
 | 116 | `/manageMuseum.do?action=view` | admin | <2 |  | Admin: view one museum. | keep |
-| 117 | `/newGroup.do` | admin | <2 | probe | Admin: form for a new group (next free id). | keep |
+| 117 | `/newGroup.do` | admin | <2 | probe | Admin: form for a new upload group (number given on save). | keep |
 | 118 | `/queries.do` | admin | <2 | probe | Admin list of named database queries (Queries.java). | keep |
 | 119 | `/query.do?action=curiousQueries` | admin | <2 |  | Admin: all curious queries. | keep |
 | 120 | `/query.do?action=devQueries` | admin | <2 |  | Admin: developer integrity queries. | keep |
