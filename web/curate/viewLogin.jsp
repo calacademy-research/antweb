@@ -23,6 +23,6 @@
 %>
 
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">
-    <tiles:put name="title" value="Viewing Login Info - AntWeb" />
+    <tiles:put name="title" value="Login - AntWeb" />
     <tiles:put name="body-content" value="/curate/viewLogin-body.jsp" />    
 </tiles:insert>

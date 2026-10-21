@@ -905,6 +905,14 @@ public class LoginDb extends AntwebDb {
     }
     
     public void deleteById(int id) throws SQLException {
+        // Its project and country assignments go too: a new login can get the same number
+        // (getNewLoginId() is the highest number + 1) and must not inherit them.
+        for (String table : new String[] {"login_project", "login_country"}) {
+            try (PreparedStatement del = getConnection().prepareStatement("delete from " + table + " where login_id = ?")) {
+                del.setInt(1, id);
+                del.executeUpdate();
+            }
+        }
         String theQuery = "delete from login where id = ?";
         PreparedStatement stmt = null;
         try {

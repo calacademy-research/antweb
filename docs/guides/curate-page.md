@@ -101,7 +101,7 @@ Shown when your login looks after project or region species lists. Choose a list
 
 ### Manager Tools
 
-- **Login Manager**: all logins. Open one to change its details and permissions (upload group, upload specimens, upload images, admin, the projects and regions it may edit, "upload as"). The form at the top creates a new login; for someone who wants to upload, use Add an uploader instead. The page also links a table of all logins with their permissions and a list of logins by last login.
+- **Login Manager**: all logins. Open one to change its details and permissions; see "Editing a login" below. The form at the top creates a new login (without a password it gets a one-time link to choose one); for someone who wants to upload, use Add an uploader instead. The page also links a table of all logins with their permissions and a list of logins by last login.
 - **Add an uploader**: when someone asks to upload specimen data. One form finds the person's login by email address or username (or creates one and makes a one-time link for them to choose a password), chooses an existing upload group or creates a new one, gives the right to upload specimens (and images if ticked), and shows a welcome email that is sent only when you click Send. See [Adding a new uploader](adding-an-uploader.md).
 - **Upload groups** (formerly "Group Manager"): the institutions, labs and personal collections that own specimen records (table `ant_group`; older pages say "group"). Every specimen record belongs to one upload group, and an upload replaces all specimens of the uploader's upload group. Open one to change its full name, short name (the AntCat institution code where there is one) or admin curator; its number cannot be changed. **Delete** asks you to confirm and is refused while the upload group still has logins or specimens.
 - **Museum Manager**: the museum codes used in specimen data (code, name, title, active). Edit or add a museum. **Delete** (on a museum's form) asks you to confirm on a second page; there is no undo.
@@ -113,6 +113,10 @@ Shown when your login looks after project or region species lists. Choose a list
 - **Introduced Map Manager**: in which bioregions a species is introduced.
 - **Query Manager**: a list of ready-made database checks, by topic. Click a name to run it and see the rows. The checks only read data. Only admins can run them, except the few that public pages link to (for example the AntCat import history).
 - **Log Manager**: the server logs. The most useful are compute.log (the nightly run), admin.log (AntCat imports and scheduler runs), taxonWorksNightly.log (the nightly CAS TaxonWorks upload) and the profiler log (timings of uploads and pages).
+
+### Editing a login
+
+Login Manager, click a login. The page has plain sections, each with a one-line explanation: **Account** (username, email, names; login number, created, last login, inactive, password set or not), **What this person can do** (Upload specimen data, Upload specimen images, Administrator with a red warning), **Upload group** (one list sorted by name, "Museum X (MX) — group 71", or No upload group), **Places and projects this curator can edit** (the assigned projects and countries as rows with a Remove box, and an Add box that searches as you type) and **Other settings** ("Upload as"). **Save changes** saves everything in one step or nothing, and the next page lists what changed ("Upload specimen data: added; Project Madagascar (madagascarants): removed"). You cannot remove your own administrator rights. Setting a password, making a set-password link, Log in as and Delete are separate buttons below. Details: [Adding a new uploader, Editing a login](adding-an-uploader.md#editing-a-login).
 
 ### Administrator Functions
 

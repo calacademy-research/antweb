@@ -31,6 +31,24 @@ public class SaveLoginForm extends ActionForm {
 
     private String[] projects;
     private String[] countries;
+
+    // The login form since 2026-10-20 (LoginEditPage, editForm=2): the assigned projects and
+    // countries to remove (stored keys) and the ones to add (as typed or picked from the list).
+    private String editForm;
+    private String[] removeProjects;
+    private String[] addProjects;
+    private String[] removeCountries;
+    private String[] addCountries;
+    public String getEditForm() { return editForm; }
+    public void setEditForm(String editForm) { this.editForm = editForm; }
+    public String[] getRemoveProjects() { return removeProjects; }
+    public void setRemoveProjects(String[] v) { this.removeProjects = v; }
+    public String[] getAddProjects() { return addProjects; }
+    public void setAddProjects(String[] v) { this.addProjects = v; }
+    public String[] getRemoveCountries() { return removeCountries; }
+    public void setRemoveCountries(String[] v) { this.removeCountries = v; }
+    public String[] getAddCountries() { return addCountries; }
+    public void setAddCountries(String[] v) { this.addCountries = v; }
     
     public String getId() {
       //A.log("getId():" + id);
@@ -180,11 +198,15 @@ public class SaveLoginForm extends ActionForm {
 
             errors = new ActionErrors();
 
-            if (email != null && !"".equals(email) && !AntwebUtil.validEmail(email)) {
+            // The administrator's form (editForm=2) checks a changed email in LoginEdit, so an old
+            // stored address that this check would refuse does not block every other change.
+            if (!"2".equals(editForm) && email != null && !"".equals(email) && !AntwebUtil.validEmail(email)) {
                 errors.add("error", new ActionMessage("error.login.invalidEmail"));
             }
 
-            if (retypePassword == null || !password.equals(retypePassword)) {
+            String pw = password == null ? "" : password;
+            String retype = retypePassword == null ? "" : retypePassword;
+            if (!pw.equals(retype)) {
                 errors.add("error", new ActionMessage("error.login.retypePasswordMismatch"));        
             }
 
@@ -194,12 +216,12 @@ public class SaveLoginForm extends ActionForm {
             if ("invite".equals(getStep())) {            
               //s_log.warn("is invite form validation");
               
-              if (getName() != null &&
+              if (getName() != null && accessLogin != null &&
                       getName().equals(accessLogin.getName())) {
                   // This condition is to catch and block the error of form autofill 
                 errors.add("error", new ActionMessage("error.login.invalidUsername"));
               } else {
-                s_log.warn("validate() name:" + getName() + " accessName:" + accessLogin.getName());
+                s_log.debug("validate() name:" + getName() + " accessName:" + (accessLogin == null ? null : accessLogin.getName()));
               }
               if (
                   getPassword() != null && !getPassword().equals("") ||
@@ -207,15 +229,10 @@ public class SaveLoginForm extends ActionForm {
                   ) {
                 errors.add("error", new ActionMessage("error.login.notEmptyPasswords"));              
               }
-            } else {
-              //s_log.warn("is NOT invite form validation");
-              if (accessLogin != null && accessLogin.isAdmin()) {
-                // And admin can modify a user without entering username/pwd.  They are not updated.
-                if (getPassword() != null && getPassword().equals("")) {
-                  errors.add("error", new ActionMessage("error.login.emptyPassword"));              
-                }
-              }
             }
+            // (Until 2026-10-20 an administrator's save was refused here with "Empty Password"
+            // when the password boxes were blank, which they always are since passwords are
+            // hashed and no longer shown: a blank password means "keep it".)
         }           
         return errors;
     }

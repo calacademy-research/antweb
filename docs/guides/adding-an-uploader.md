@@ -48,4 +48,19 @@ Nothing is changed when something is wrong (all in one step). The page then says
 ## Other pages
 
 - **Upload groups** (`/viewGroups.do`): all upload groups; open one to change its names or admin curator. Its number cannot be changed. Delete is refused while it has logins or specimens.
-- **Login Manager** (`/viewLogins.do`): every other setting of a login. Its **Upload group** list moves a login to another group.
+- **Login Manager** (`/viewLogins.do`): every other setting of a login (see below). Its **Upload group** list moves a login to another group.
+
+## Editing a login
+
+Login Manager, click the login. Admins only (a curator who opens their own login sees only their name, email address and password, and what they may do as plain text). Change what you need and click **Save changes** at the bottom. Everything is saved in one step; if anything is wrong, the page says what and **nothing** is changed. The next page lists what changed, for example "Upload specimen data: added" or "Project Madagascar (madagascarants): removed", and the same line goes to admin.log. The person sees new rights the next time they log in.
+
+The page has these sections:
+
+- **Account**: username, email address (where password links and upload emails go), first and last name; and, to read only, the login number, when it was created (dates of 14 to 16 October 2026 are not real: they were overwritten then), the last login, whether the account is inactive, and whether it has a password yet. A username or email address another login already has is refused.
+- **What this person can do**: **Upload specimen data** (for their upload group; each upload replaces all specimens of that upload group), **Upload specimen images**, and **Administrator** (full access to all tools, all logins and all data; only for AntWeb staff; a red warning shows while it is ticked). You cannot remove your own administrator rights (so you cannot lock yourself out); another administrator can.
+- **Upload group**: one list, sorted by name, each shown as "Museum X (MX) — group 71", plus **No upload group**. A login with "Upload specimen data" but no upload group cannot upload; the summary says so.
+- **Places and projects this curator can edit**: the projects and countries whose species lists (Species List Tool) and page text this login may change. A country includes its states and provinces. Each assigned one is a row with a **Remove** box. To add one, type part of its name in **Add a project** or **Add a country**, pick it from the list that appears, and click **Add** (repeat for more). Only live projects and valid countries are offered; an assignment to a project that is no longer live, or a country that is no longer valid, stays until you remove it. Administrators can edit every project and country, so they need none here.
+- **Other settings**: **Upload as**, login numbers separated by commas. It matters only for an administrator: these logins are listed in the administrator's "Upload as" menu on Curator Tools (upload a file into that login's upload group). Administrators may upload for anyone, so the list only fills the menu. The page shows whose numbers they are.
+- **Other actions** (each its own button, so they never save the fields above): **Set a new password** (they are logged out everywhere; usually better: ask them to use "Forgot your password?"), **Log in as** the login, and **Delete this login** (asks first; their uploads and specimens stay; not your own login). A login without a password also has **Save and make a set-password link**.
+
+Removed in October 2026 because they did nothing or were misleading: the greyed-out "Login ID" box, the "None" entry and the Ctrl-click note of the old project and country lists, the note about the "Changed Password" button, and the password boxes on other people's logins (they were never saved by Done). Before this change, saving another person's login with empty password boxes was refused with "Empty Password".

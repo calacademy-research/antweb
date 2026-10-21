@@ -61,6 +61,12 @@ public final class SaveLoginAction extends AntwebAction {
                 return mapping.findForward("permissionDenied");
             }
         }
+        // A login is changed only by the form: a POST, whose form token SessionRequestFilter checks.
+        // A link or an image on another page (a GET) cannot change or delete a login.
+        if (!HttpUtil.isPost(request)) {
+            request.setAttribute("message", "Please use the form to change a login.");
+            return mapping.findForward("message");
+        }
         Login login = null;
 
         Connection connection = null;
@@ -72,14 +78,37 @@ public final class SaveLoginAction extends AntwebAction {
             LoginDb loginDb = new LoginDb(connection);
 
             if ("delete".equals(form.getDelete())) {
+                if (accessLogin != null && accessLogin.getId() == id) {
+                    request.setAttribute("message", "You cannot delete your own login.");
+                    return mapping.findForward("message");
+                }
                 s_log.warn("execute() delete");
                 loginDb.deleteById(id);
-                request.setAttribute("message", "Login deleted id:" + id);
+                adminLog("login " + id + " deleted by login " + accessLogin.getId());
+                LoginMgr.populate(connection, true, false);
+                request.setAttribute("message", "Login " + id + " was deleted. <a href=\"" + AntwebProps.getDomainApp() + "/viewLogins.do\">Login Manager</a>");
                 return mapping.findForward("message");
             }
 
             login = loginDb.getLogin(id);
             String storedPassword = login == null ? null : login.getPassword();
+
+            // An administrator changes an existing login (also their own): LoginEdit, in one step.
+            if (isAdminUser && login != null) {
+                boolean self = accessLogin.getId() == id;
+                if ("Change Password".equals(form.getChangePassword()) && !self) {
+                    String problem = PasswordPolicy.check(form.getPassword(), form.getRetypePassword(), login.getName(), login.getEmail());
+                    if (problem != null) return refuse(request, mapping, connection, id, false, List.of(problem));
+                    loginDb.changePassword(login, form.getPassword());
+                    endSessions(connection, request, login, false, accessLogin);
+                    List<String> changes = List.of("Password: set by you. They are logged out everywhere and log in with the new password.");
+                    adminLog("login " + id + " changed by login " + accessLogin.getId() + ": password set");
+                    request.setAttribute(LoginEditPage.CHANGES_ATTR, changes);
+                    request.setAttribute("savedLoginId", id);
+                    return mapping.findForward("success");
+                }
+                return saveByAdmin(mapping, request, form, connection, loginDb, login, accessLogin, self);
+            }
 
             // Only safe characters in names, and a valid email (checked when changed).
             String nameProblem = LoginNames.problem(form.getName(), form.getFirstName(), form.getLastName(), form.getEmail(), login);
@@ -92,6 +121,15 @@ public final class SaveLoginAction extends AntwebAction {
                 isNew = true;
                 login = new Login();
                 login.setId(id);
+                login.setGroupId(LoginEdit.NO_GROUP);
+                String n = form.getName() == null ? "" : form.getName().trim();
+                String m = form.getEmail() == null ? "" : form.getEmail().trim();
+                if (n.isEmpty() && !m.isEmpty() && m.length() <= LoginEdit.MAX_USERNAME) form.setName(m);
+                if (form.getName() == null || form.getName().trim().isEmpty()) {
+                    return refuse(request, mapping, connection, id, true, List.of("Enter a username (or an email address of at most " + LoginEdit.MAX_USERNAME + " characters)."));
+                }
+                // No password: the new login gets a one-time link to choose one.
+                if ((form.getPassword() == null || form.getPassword().isEmpty()) && !"invite".equals(form.getStep())) form.setStep("invite");
             }
             login.setName(form.getName());
             login.setEmail(form.getEmail());
@@ -109,26 +147,19 @@ public final class SaveLoginAction extends AntwebAction {
             login.setIsUploadImages(form.isUploadImages());
             login.setUploadAs(form.getUploadAs());
 
-            // Handle Projects Access
-            String[] projects = form.getProjects();
-            if (projects == null) projects = new String[0];
-            ArrayList<String> projectsList = new ArrayList<>(Arrays.asList(projects));
+            // Projects and countries: only a new login (made by an administrator) gets them here;
+            // LoginDb.updateLogin() does not change them when people save their own login.
             ArrayList<SpeciesListable> projectObjects = new ArrayList<>();
-            for (String projectName : projectsList) {
-              Project project = ProjectMgr.getProject(projectName);
-              projectObjects.add(project); 
+            ArrayList<SpeciesListable> countryObjects = new ArrayList<>();
+            if (isNew && isAdminUser) {
+                List<String> problems = new ArrayList<>();
+                TreeSet<String> projects = LoginEdit.newList(new TreeSet<>(), null, form.getAddProjects(), LoginEditOptions.projectOptions(), "live project", problems);
+                TreeSet<String> countries = LoginEdit.newList(new TreeSet<>(), null, form.getAddCountries(), LoginEditOptions.countryOptions(), "country", problems);
+                if (!problems.isEmpty()) return refuse(request, mapping, connection, id, true, problems);
+                for (String projectName : projects) projectObjects.add(ProjectMgr.getProject(projectName));
+                for (String countryName : countries) countryObjects.add(GeolocaleMgr.getCountry(countryName));
             }
             login.setProjects(projectObjects);
-
-            // Handle Country Access
-            String[] countries = form.getCountries();
-            if (countries == null) countries = new String[0];
-            ArrayList<String> countriesList = new ArrayList<>(Arrays.asList(countries));
-            ArrayList<SpeciesListable> countryObjects = new ArrayList<>();
-            for (String countryName : countriesList) {
-              Geolocale country = GeolocaleMgr.getCountry(countryName);
-              countryObjects.add(country);
-            }
             login.setCountries(countryObjects);
 
             
@@ -141,7 +172,9 @@ public final class SaveLoginAction extends AntwebAction {
               groupName = groups[0];
               s_log.info("execute() groupName:" + groupName);   
             }
-            if (groupName != null) {
+            if ("none".equals(groupName)) {
+              login.setGroupId(LoginEdit.NO_GROUP);
+            } else if (groupName != null) {
               //s_log.warn("execute() login group:" + groupName);
               // The Login form sends the group's number (since 2026-10-20); a name still works.
               Group group = groupName.matches("\\d{1,9}") ? GroupMgr.getGroup(Integer.parseInt(groupName)) : GroupMgr.getGroup(groupName);
@@ -232,6 +265,8 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
                 }
                 return mapping.findForward("invite");
             }
+            if (isNew) request.setAttribute(LoginEditPage.CHANGES_ATTR, List.of("Login created: " + login.getName()));
+            request.setAttribute("savedLoginId", login.getId());
 
         } catch (AntwebException e) {
             s_log.error("execute() e:" + e + "isNew:" + isNew);
@@ -253,6 +288,92 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
 		return mapping.findForward("success");
 	}
 
+
+    /**
+     * An administrator saves the login form for an existing login (LoginEdit: all changes in one
+     * transaction, nothing changed when a check fails). Their own new password, if typed, is
+     * stored after the checks of checkNewPassword(). The next page lists what changed.
+     */
+    private ActionForward saveByAdmin(ActionMapping mapping, HttpServletRequest request, SaveLoginForm form, Connection connection,
+                                      LoginDb loginDb, Login login, Login accessLogin, boolean isSelf) throws SQLException {
+        int id = login.getId();
+        String newPassword = form.getPassword();
+        // Other logins' passwords are set only with "Set this password" (a separate form).
+        boolean storesPassword = isSelf && newPassword != null && !newPassword.isEmpty();
+        if (storesPassword) {
+            String problem = checkNewPassword(request, form, login.getPassword(), true);
+            if (problem != null) return refuse(request, mapping, connection, id, false, List.of(problem));
+        }
+
+        LoginEdit.Change change = new LoginEdit.Change();
+        change.id = id;
+        change.name = form.getName();
+        change.email = form.getEmail();
+        change.firstName = form.getFirstName();
+        change.lastName = form.getLastName();
+        change.isAdmin = form.isAdmin();
+        change.uploadSpecimens = form.isUploadSpecimens();
+        change.uploadImages = form.isUploadImages();
+        change.group = form.getGroups() == null || form.getGroups().length == 0 ? null : form.getGroups()[0];
+        change.uploadAs = form.getUploadAs();
+        change.removeProjects = form.getRemoveProjects();
+        change.addProjects = form.getAddProjects();
+        change.removeCountries = form.getRemoveCountries();
+        change.addCountries = form.getAddCountries();
+        // An older copy of the form (without editForm=2) sent the whole lists instead: keep the
+        // assignments as they are rather than guess.
+        if (!"2".equals(form.getEditForm())) {
+            change.removeProjects = null; change.addProjects = null; change.removeCountries = null; change.addCountries = null;
+        }
+
+        LoginEdit.Result result = LoginEdit.apply(connection, change, accessLogin.getId(), true,
+            LoginEditOptions.projectOptions(), LoginEditOptions.countryOptions(), LoginEditOptions.projectLabels());
+        if (!result.problems.isEmpty()) return refuse(request, mapping, connection, id, false, result.problems);
+
+        List<String> changes = new ArrayList<>(result.changes);
+        if (storesPassword) {
+            loginDb.changePassword(login, newPassword);
+            endSessions(connection, request, login, true, accessLogin);
+            changes.add("Password: changed");
+        }
+        if (!changes.isEmpty()) {
+            adminLog("login " + id + " changed by login " + accessLogin.getId() + ": " + LoginEdit.join(changes));
+            LoginMgr.populate(connection, true, false);
+        }
+        if (result.after != null && result.after.uploadSpecimens && result.after.groupId == LoginEdit.NO_GROUP) {
+            changes.add("Note: this login may upload specimen data but has no upload group, so its uploads are refused until it has one.");
+        }
+
+        request.setAttribute(LoginEditPage.CHANGES_ATTR, changes);
+        request.setAttribute("savedLoginId", id);
+        if ("invite".equals(form.getStep()) && !isSelf) {
+            Login saved = loginDb.getLogin(id);
+            if (saved != null && (saved.getPassword() == null || saved.getPassword().isEmpty())) {
+                request.setAttribute("inviteLogin", saved);
+                request.setAttribute("inviteLink", PasswordResetMgr.newInviteLink(connection, id, accessLogin.getId()));
+                return mapping.findForward("invite");
+            }
+        }
+        return mapping.findForward("success");
+    }
+
+    /** Back to the form with the problems; nothing was changed. */
+    private ActionForward refuse(HttpServletRequest request, ActionMapping mapping, Connection connection, int id, boolean isNew,
+                                 List<String> problems) throws SQLException {
+        ActionErrors errors = new ActionErrors();
+        for (String p : problems) errors.add("error", new ActionMessage(p, false));
+        errors.add("error", new ActionMessage("Nothing was changed.", false));
+        saveErrors(request, errors);
+        // The form shows this login again (also if another login was opened in another tab meanwhile).
+        Login shown = isNew ? null : new LoginDb(connection).getLogin(id);
+        if (shown != null) request.getSession().setAttribute("thisLogin", shown);
+        LoginEditOptions.prepare(connection, request, id, isNew);
+        return mapping.findForward("failure");
+    }
+
+    private static void adminLog(String text) {
+        LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " " + text);
+    }
 
     // A new password: only from a POST, with your current password when it is your own login,
     // and following PasswordPolicy. Returns null if fine, else the reason.

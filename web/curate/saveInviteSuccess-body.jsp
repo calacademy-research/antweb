@@ -21,17 +21,18 @@
 <h1>Success!</h1>
 <hr></hr>
 <% if (inviteLink != null) { %>
-You have created the new login <b><%= Html.esc(inviteLogin.getName()) %></b>. Email to <b><%= Html.esc(inviteLogin.getEmail()) %></b> this link
+The login <b><%= Html.esc(inviteLogin.getName()) %></b> is saved. Email to <b><%= Html.esc(inviteLogin.getEmail()) %></b> this link
 and the username:
 <br><br>&nbsp;&nbsp;&nbsp;<a href="<%= Html.escAttr(inviteLink) %>"><%= Html.esc(inviteLink) %></a>
-<br><br>The link lets them set a password. It works once and for 14 days; press Invite again on the login to make a new one.
+<br><br>The link lets them set a password. It works once and for 14 days; open the login and press "Save and make a set-password link" to make a new one.
 This link is shown only now: copy it before leaving the page.
 <% } else { %>
 This login already has a password, so no invitation link was made. Use Change Password, or ask them to use "Forgot your password?".
 <% } %>
 
+<%= org.calacademy.antweb.curate.login.LoginEditPage.renderChanges((java.util.List<String>) request.getAttribute(org.calacademy.antweb.curate.login.LoginEditPage.CHANGES_ATTR)) %>
 <% if (LoginMgr.isAdmin(request)) { %>
-<p><a href="<%= domainApp %>/viewLogins.do">Return to Your Login Admin Screen</a>.
+<p><a href="<%= domainApp %>/viewLogins.do">Login Manager</a>
 <% } else { %>
 <p><a href="<%= domainApp %>/curate.do">Return to Curatorial Tools</a>.
 <% } %>
