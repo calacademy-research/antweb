@@ -11,9 +11,18 @@ FORM = pathlib.Path(__file__).resolve().parents[2] / "web" / "curate" / "viewGro
 
 def test_group_form_explains_each_field():
     src = FORM.read_text()
-    for label in ("Group number", "Full name", "Short name", "Group admin", "Curators of this group"):
+    # "Upload group" since 2026-10-20 (Brian: "group" alone means little on the Curate page).
+    for label in ("Upload group number", "Full name", "Short name", "Admin curator", "Logins in this upload group"):
         assert label in src, f"label {label!r} missing"
     assert src.count("Example") >= 4, "every field needs an example"
     assert "https://antcat.org/institutions" in src
     assert "< %= thisGroup.getId() % >" not in src, "broken hidden id field is back"
     assert "Html.escAttr(thisGroup.getName())" in src and "Html.escAttr(thisGroup.getAbbrev()" in src
+
+
+def test_group_number_cannot_be_edited():
+    """Typing another number into the old text box saved this form over that other group (fixed 2026-10-20)."""
+    src = FORM.read_text()
+    assert '<input type="hidden" name="id" value="<%= thisGroup.getId() %>">' in src
+    assert '<input type="text" class="input_200" name="id"' not in src
+    assert "addUploader.do" in src, "the form points to Add an uploader"

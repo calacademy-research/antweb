@@ -20,39 +20,43 @@
 %>
 
 <div class=admin_left>
-<h1>Group Manager</h1>
+<h1>Upload groups</h1>
     <hr></hr>
+
+    <p>An <b>upload group</b> is the institution, lab or personal collection that owns specimen records on AntWeb.
+    Each specimen record belongs to one upload group; the logins in the group upload its records, and
+    <b>an upload replaces all specimens of the uploader's upload group</b>. (Older pages and the database call it a "group".)</p>
+
+    <p><b>Someone wants to upload specimens?</b> Use <a href="<%= domainApp %>/addUploader.do">Add an uploader</a>:
+    one form finds or invites the person, chooses or creates their upload group, gives the upload rights and prepares the welcome email.</p>
 
           <li><b>Relevant Queries</b>
             <%= Queries.getQueryList("Groups") %>
 
-    From here you can manage and edit existing groups and what they have access to.
-    <br>Add new groups at bottom of page.
-    <br>
-    
-
     <br><br>
     <form action="<%= domainApp %>/newGroup.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-    <b>Add New Group: <input type=submit class=submit value="Add &#187;"><b>
+    <b>New upload group only (no login): <input type=submit class=submit value="Add &#187;"></b>
     </form>
     
     <br><br>
-    <p><h2>Existing Groups:</h2>
+    <p><h2>Existing upload groups:</h2>
 
     <table>
-    <tr><th>ID</th>
+    <tr><th>Number</th>
     <th>Name</th>
+    <th>Short name</th>
     </tr>
 
-    <% String hrLine = "<tr><td><hr></td><td><hr></td></tr>"; %>
+    <% String hrLine = "<tr><td><hr></td><td><hr></td><td><hr></td></tr>"; %>
     <%= hrLine %>
     
     <% for (Group group : antwebGroups) { %>
     <tr>
     <td><%= group.getId() %>.</td>
-    <td><a href="<%= domainApp %>/viewGroup.do?id=<%= group.getId() %>"><%= group.getName() %></a>
+    <td><a href="<%= domainApp %>/viewGroup.do?id=<%= group.getId() %>"><%= Html.esc(group.getName()) %></a>
     <a href='<%= AntwebProps.getDomainApp() %>/group.do?id=<%= group.getId() %>'><img src="<%= AntwebProps.getDomainApp() %>/image/view_icon.png" height="13" width="13" title="View"></a>
     </td>
+    <td><%= Html.esc(group.getAbbrev() == null ? "" : group.getAbbrev()) %></td>
     </tr>
 
      <% } %>
@@ -62,6 +66,7 @@
 <div class=right>
 <br>
 <a href="<%= AntwebProps.getDomainApp() %>/viewLogins.do">Login Manager</a>
+<br><a href="<%= AntwebProps.getDomainApp() %>/addUploader.do">Add an uploader</a>
 
 <br><br>
 

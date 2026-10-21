@@ -4,7 +4,8 @@
     <h3 align=left>Manager Tools</h3>
     <ul align=left>
       <li><a href="<%= domainApp %>/viewLogins.do">Login Manager</a> (also: all logins with their permissions, logins by last login)
-      <li><a href="<%= domainApp %>/viewGroups.do">Group Manager</a>
+      <li><a href="<%= domainApp %>/addUploader.do">Add an uploader</a> (someone wants to upload specimens: login or invitation, upload group, rights and welcome email in one form)
+      <li><a href="<%= domainApp %>/viewGroups.do">Upload groups</a> (the institutions, labs and collections that own specimen records; an upload replaces its uploader's group)
       <li><a href="<%= domainApp %>/manageMuseum.do">Museum Manager</a>
       <li><a href="<%= domainApp %>/geolocaleMgr.do">Geolocale Manager</a> (countries and adm1s; also the georegion and bioregion tables)
       <li><a href="<%= domainApp %>/projectMgr.do">Project Manager</a>
