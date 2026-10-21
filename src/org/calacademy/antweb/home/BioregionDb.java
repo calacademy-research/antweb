@@ -211,7 +211,8 @@ public class BioregionDb extends AntwebDb {
             
         String theQuery = "select count(distinct code) specimen_count" 
           + " from specimen "
-          + " where specimen.bioregion = '" + bioregion.getName() + "'";
+          + " where specimen.bioregion = '" + bioregion.getName() + "'"
+          + " and specimen.family = 'formicidae'";   // ants only (2026-10-21, PlaceTotals)
 
         //A.log("getSpecimenCount() query:" + theQuery);  
           
@@ -237,7 +238,7 @@ public class BioregionDb extends AntwebDb {
             
         String query = "select count(distinct id) image_count" 
           + " from specimen left join image on specimen.code = image.image_of_id"
-          + " where specimen.bioregion = '" + bioregion.getName() + "'";
+          + " where specimen.bioregion = '" + bioregion.getName() + "' and specimen.family = 'formicidae'";
           
         //A.log("getImageCount() query:" + query);  
           
@@ -440,7 +441,7 @@ public class BioregionDb extends AntwebDb {
         stmt = DBUtil.getStatement(getConnection(), "getImagedSpecimenCount()");
 
         // Labels not counted (an image of the ant): as PlaceImageCountDb, which nightly set 4 runs after this.
-        query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and bioregion = '" + bioregion + "'"
+        query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and bioregion = '" + bioregion + "' and s.family = 'formicidae'"
             + " and lower(trim(coalesce(i.shot_type, ''))) <> 'l'";
 
         rset = stmt.executeQuery(query);

@@ -384,19 +384,20 @@ public final class CountInvariants {
         Check specimens = new Check("place.totals.specimens", "Specimens of " + type + " pages", "26, 74, 108");
         if (PlaceTotals.MUSEUM.equals(type) || PlaceTotals.BIOREGION.equals(type)) {
             String column = PlaceTotals.MUSEUM.equals(type) ? "museum" : "bioregion";
-            specimens.pendingOn(false, false, true, false);
+            specimens.pendingOn(true, false, true, false);
             check(specimens, c -> {
-                Map<String, long[]> counted = rows("select " + column + ", count(*) from specimen where " + column + " is not null group by " + column);
+                Map<String, long[]> counted = rows("select " + column + ", count(*) from specimen where " + column + " is not null"
+                    + " and family = 'formicidae' group by " + column);
                 for (String key : inScope.keySet()) {
                     if (!stored.containsKey(key)) continue;
                     compare(c, type, key, "Specimens", v(stored, key, 4), v(counted, key, 0), "=", why(c, type, key));
                 }
             });
         } else {
-            specimens.pendingOn(false, true, false, false);
+            specimens.pendingOn(true, true, false, false);
             check(specimens, c -> {
                 Map<String, long[]> summed = rows("select l." + lk + ", sum(l.specimen_count) from " + l + " l join taxon t on t.taxon_name = l.taxon_name"
-                    + " where t.taxarank in " + SP + " group by l." + lk);
+                    + " where t.taxarank in " + SP + PlaceTotals.ANTS + " group by l." + lk);
                 for (String key : inScope.keySet()) {
                     if (!stored.containsKey(key)) continue;
                     compare(c, type, key, "Specimens", v(stored, key, 4), v(summed, key, 0), "=", why(c, type, key));

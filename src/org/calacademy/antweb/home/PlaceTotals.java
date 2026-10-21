@@ -98,15 +98,21 @@ public final class PlaceTotals {
     /** Taxon conditions (alias t) of the rows a total counts. rank: subfamily, genus or species. */
     public static String rankCondition(String rank) {
         switch (rank) {
-            case SUBFAMILY: return "t.taxarank = 'subfamily' and t.status in " + COUNTABLE;
-            case GENUS: return "t.taxarank = 'genus' and t.status in " + COUNTABLE;
-            case SPECIES: return "t.taxarank in ('species', 'subspecies') and t.status in " + COUNTABLE + " and t.family = 'formicidae'";
+            case SUBFAMILY: return "t.taxarank = 'subfamily' and t.status in " + COUNTABLE + ANTS;
+            case GENUS: return "t.taxarank = 'genus' and t.status in " + COUNTABLE + ANTS;
+            case SPECIES: return "t.taxarank in ('species', 'subspecies') and t.status in " + COUNTABLE + ANTS;
             default: throw new IllegalArgumentException(rank);
         }
     }
 
+    /**
+     * Ants only (alias t). Brian Fisher, 2026-10-21: specimens of other families stay in AntWeb but are not counted
+     * on place pages; every number of the place page (totals, pies, Specimens, images) counts Formicidae only.
+     */
+    public static final String ANTS = " and t.family = 'formicidae'";
+
     /** Valid species and subspecies, not fossil (alias t). */
-    public static final String VALID_CONDITION = "t.taxarank in ('species', 'subspecies') and t.status = 'valid' and t.fossil = 0";
+    public static final String VALID_CONDITION = "t.taxarank in ('species', 'subspecies') and t.status = 'valid' and t.fossil = 0" + ANTS;
 
     /** One place (parameter: its key): the number of rows of that rank on its list. */
     public static String listedCountSql(String type, String rank) {
@@ -164,11 +170,11 @@ public final class PlaceTotals {
         if (MUSEUM.equals(type) || BIOREGION.equals(type)) {
             String column = MUSEUM.equals(type) ? "museum" : "bioregion";
             return "select " + SLICE + " subfamily, count(*) count from specimen s" + sliceJoin("s.subfamily")
-                + " where s." + column + " = ? group by " + SLICE + " order by " + SLICE;
+                + " where s." + column + " = ? and s.family = 'formicidae' group by " + SLICE + " order by " + SLICE;
         }
         return "select " + SLICE + " subfamily, sum(l.specimen_count) count from " + listTable(type) + " l"
             + " join taxon t on t.taxon_name = l.taxon_name" + sliceJoin("t.subfamily")
-            + " where l." + listKey(type) + " = ? and t.taxarank in ('species', 'subspecies')"
+            + " where l." + listKey(type) + " = ? and t.taxarank in ('species', 'subspecies')" + ANTS
             + " group by " + SLICE + " having sum(l.specimen_count) > 0 order by " + SLICE;
     }
 

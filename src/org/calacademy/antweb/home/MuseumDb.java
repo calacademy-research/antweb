@@ -218,7 +218,8 @@ public class MuseumDb extends AntwebDb {
             
         String theQuery = "select count(distinct code) specimen_count" 
           + " from specimen "
-          + " where specimen.museum = '" + museumCode + "'";
+          + " where specimen.museum = '" + museumCode + "'"
+          + " and specimen.family = 'formicidae'";   // ants only (2026-10-21, PlaceTotals)
 
         rset = stmt.executeQuery(theQuery);
         while (rset.next()) {
@@ -244,7 +245,7 @@ public class MuseumDb extends AntwebDb {
             
         String theQuery = "select count(distinct id) image_count" 
           + " from specimen left join image on specimen.code = image.image_of_id"
-          + " where specimen.museum = '" + museumCode + "'";
+          + " where specimen.museum = '" + museumCode + "' and specimen.family = 'formicidae'";
 
         rset = stmt.executeQuery(theQuery);
         while (rset.next()) {
@@ -410,7 +411,7 @@ public class MuseumDb extends AntwebDb {
       try {
           stmt = DBUtil.getStatement(getConnection(), "getImagedSpecimenCount()");  
           // Labels not counted (an image of the ant): as PlaceImageCountDb, which nightly set 4 runs after this.
-          query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and museum = '" + code + "'"
+          query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and museum = '" + code + "' and s.family = 'formicidae'"
               + " and lower(trim(coalesce(i.shot_type, ''))) <> 'l'";
 
           rset = stmt.executeQuery(query);
