@@ -32,6 +32,7 @@ ADMIN_PAGES = [
     ("/geolocaleMgr.do?georank=adm1&parent=Madagascar", "Geolocale Manager"),
     ("/projectMgr.do", "Project Manager"),
     ("/editProject.do?projectName=fossilants", "project's settings"),
+    ("/editProject.do?projectName=introducedants", "project's settings"),
     ("/artists.do", "Photographers credited on images"),
     ("/adminAlert.do", "Admin Alert Manager"),
     ("/bioregionMapMgr.do", "Genera Native Distribution Tool"),

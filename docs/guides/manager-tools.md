@@ -186,7 +186,8 @@ on the project page; the species in the Species List Tool.
 
 **Changed 2026-10-21**: both pages check for an administrator in the action (the settings save
 accepted assigned curators although the page was admin-only); saving blanked the project's Source; the
-"Locality (Mapping Range Criteria)" field was never stored and was removed; the extent error showed an
+"Locality (Mapping Range Criteria)" field was never stored and was removed; the "Map (Image)" field showed
+the page's map object instead of the stored file name and was never saved (it now shows and saves `project.map`); the extent error showed an
 internal key; Create no longer goes through the upload page and a "click Here" step.
 
 ---
