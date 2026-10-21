@@ -137,9 +137,7 @@ Status: **in use** (the code reads and writes it); **read only** (the code reads
 **admin query only** (only a saved query of the admin Query page, `query.do`, reads it); **unused**
 (nothing in `src/`, `web/`, `api/` or `bin/` that runs reads or writes it); **backup** (a copy made before a change, never
 read: candidate to drop); **run-time backup** (dated copies the code makes before a bulk change). The evidence for
-unused and backup is a search of the code for SQL that names the table (2026-10-21). "Live?" says whether the table
-is known to exist in production: "2021" means it is in the list of tables converted to InnoDB on 2021-04-08
-(`db/upgrade/8.56/2021-04-08.sql`), the last full list of tables in the repository.
+unused and backup is a search of the code for SQL that names the table (2026-10-21). "(2021)" in a status means the table is known to have existed in production then: it is in the list of tables converted to InnoDB on 2021-04-08 (`db/upgrade/8.56/2021-04-08.sql`), the last full list of tables in the repository.
 
 | Table | Section | Status |
 |---|---|---|

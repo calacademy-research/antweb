@@ -78,6 +78,31 @@ def test_java_create_table_in_a_comment_is_ignored():
     assert L.java_create_statements(java) == []
 
 
+def test_columns_that_start_with_a_keyword_and_enum_values():
+    s = replay("create table k (id int, kind enum('A','b'));\n"
+               "alter table k add column key_count int;\n"
+               "alter table k add column unique_id int, add index by_id (id);\n"
+               "alter table k drop column primary_x;\n"
+               "alter table k drop index by_id;\n")
+    assert list(s.tables["k"]["columns"]) == ["id", "kind", "key_count", "unique_id"], s.tables["k"]["columns"]
+    assert s.tables["k"]["columns"]["kind"] == "enum('A','b')"
+
+
+def test_java_text_block():
+    java = ('class Z {\n'
+            '    static final String DDL = """\n'
+            '        CREATE TABLE IF NOT EXISTS block_t (\n'
+            '          id int NOT NULL, -- a note // not a Java comment\n'
+            '          url varchar(200)\n'
+            '        )""";\n'
+            '}\n')
+    stmts = L.java_create_statements(java)
+    assert len(stmts) == 1, stmts
+    s = L.Schema()
+    L.apply_statement(s, L.sql_statements(stmts[0])[0], "Z.java", "code")
+    assert list(s.tables["block_t"]["columns"]) == ["id", "url"], s.tables
+
+
 def test_views_and_drop():
     s = replay("CREATE ALGORITHM=UNDEFINED DEFINER=`x`@`localhost` SQL SECURITY DEFINER VIEW `v1` AS select 1;\n"
                "create view v2 as select 2;\n"

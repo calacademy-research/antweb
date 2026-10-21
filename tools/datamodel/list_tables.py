@@ -138,8 +138,8 @@ class Schema:
         t = {"columns": {}, "created": src, "origin": origin, "history": ["created " + src]}
         old = self.tables.get(name)
         if old and origin == "code":
-            # The code creates "if not exists" a table an upgrade file already made: keep the file's columns
-            # unless the code has more.
+            # The code creates "if not exists" a table an upgrade file already made: keep the file's columns;
+            # the code's are used only when the file gave none.
             old["history"].append("also created by " + src)
             if not old["columns"]:
                 old["columns"] = parse_columns(body)
@@ -192,7 +192,7 @@ class Schema:
                 old, new = ident(m.group(1)), ident(m.group(2))
                 t["columns"][new] = t["columns"].pop(old, "?")
                 continue
-            m = re.match(r"add\s+(?:column\s+)?(?!index|key|unique|primary|constraint|fulltext|foreign|spatial)(?:if\s+not\s+exists\s+)?\(?(.*)$", s, re.I)
+            m = re.match(r"add\s+(?:column\s+)?(?!(?:index|key|unique|primary|constraint|fulltext|foreign|spatial)\b)(?:if\s+not\s+exists\s+)?\(?(.*)$", s, re.I)
             if m and not re.match(r"add\s+(index|key|unique|primary|constraint|fulltext|foreign|spatial)\b", low):
                 rest = m.group(1).rstrip(")") if m.group(1).count(")") > m.group(1).count("(") else m.group(1)
                 for c in split_top(rest, ","):
@@ -200,7 +200,7 @@ class Schema:
                     if col:
                         t["columns"][col[0]] = col[1]
                 continue
-            m = re.match(r"drop\s+(?:column\s+)?(?!index|key|primary|foreign)" + NAME + r"\s*$", s, re.I)
+            m = re.match(r"drop\s+(?:column\s+)?(?!(?:index|key|primary|foreign)\b)" + NAME + r"\s*$", s, re.I)
             if m and not re.match(r"drop\s+(index|key|primary|foreign)\b", low):
                 t["columns"].pop(ident(m.group(1)), None)
                 continue
@@ -230,7 +230,9 @@ def column_def(c):
     m = re.match(r"`?([A-Za-z0-9_]+)`?\s+([A-Za-z]+(?:\s*\([^)]*\))?(?:\s+unsigned)?)", c)
     if not m:
         return None
-    return m.group(1).lower(), re.sub(r"\s+", "", m.group(2).lower()).replace("unsigned", " unsigned")
+    ty = re.sub(r"\s+", "", m.group(2))
+    ty = re.sub(r"^[A-Za-z]+", lambda w: w.group(0).lower(), ty)  # the type word in lower case, enum values as written
+    return m.group(1).lower(), re.sub(r"(?i)unsigned$", " unsigned", ty)
 
 
 def parse_columns(body):
@@ -383,7 +385,7 @@ def sql_statements(text):
     return [s for s in stmts if s.strip()]
 
 
-JAVA_LIT = r'"(?:[^"\\]|\\.)*"'
+JAVA_LIT = r'"""[\s\S]*?"""|"(?:[^"\\\n]|\\.)*"'
 
 # Methods that return a table name, across src/ (e.g. InactiveAccounts.backupTableName):
 # name -> the returned string literal, with format placeholders (%04d) as *.
@@ -409,7 +411,12 @@ def strip_java_comments(text):
     out, i, n = [], 0, len(text)
     while i < n:
         ch = text[i]
-        if ch in "\"'":
+        if text.startswith('"""', i):  # text block (Java 15+)
+            j = text.find('"""', i + 3)
+            j = n if j < 0 else j + 3
+            out.append(text[i:j])
+            i = j
+        elif ch in "\"'":
             j = i + 1
             while j < n and text[j] != ch and text[j] != "\n":
                 j += 2 if text[j] == "\\" else 1
@@ -438,7 +445,9 @@ def java_create_statements(text):
     def expand(expr, depth=0):
         out = []
         for tok in re.findall(JAVA_LIT + r"|[A-Za-z_][A-Za-z0-9_.]*(?:\([^)]*\))?", expr):
-            if tok.startswith('"'):
+            if tok.startswith('"""'):
+                out.append(java_unescape(tok[3:-3]))
+            elif tok.startswith('"'):
                 out.append(java_unescape(tok[1:-1]))
             elif tok in consts and depth < 3:
                 out.append(expand(consts[tok], depth + 1))
@@ -554,6 +563,9 @@ def compare(schema, path):
         t, c, ty = parts[0].lower(), parts[1].lower(), parts[2]
         live.setdefault(t, {})[c] = ty
         kinds[t] = parts[3] if len(parts) > 3 else "BASE TABLE"
+    if not live:
+        print(f"--compare: no rows in {path}; the query or the login failed (see the command in docs/data-model.md)")
+        return 2
     repo = {n: t["columns"] for n, t in schema.tables.items() if "*" not in n}
     patterns = [re.compile("^" + re.escape(n).replace(r"\*", ".*") + "$") for n in schema.tables if "*" in n]
     live_tables = {t for t, k in kinds.items() if k != "VIEW"}
