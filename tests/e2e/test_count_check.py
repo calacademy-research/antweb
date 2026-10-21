@@ -42,6 +42,7 @@ def test_list_counts_match_the_specimen_records():
         pytest.skip("countCheck.do is not deployed on this server yet")
     assert outcome.category == "ok", outcome
     assert "What this shows:" in r.text
+    assert "<h1>Check the counts</h1>" in r.text, "page renamed from Count check (2026-10-20)"
     m = re.search(r'id="count-check-result" data-real="(\d+)" data-pending="(\d+)" data-window="(\d)" data-nightly="(\d)"', r.text)
     assert m, "no result line on countCheck.do"
     real, pending, window, nightly = int(m.group(1)), int(m.group(2)), m.group(3) == "1", m.group(4) == "1"

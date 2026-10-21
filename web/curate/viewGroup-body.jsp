@@ -39,7 +39,7 @@
 
     <div style="border:1px solid #ccc;background:#f7f7f7;padding:8px 12px;margin:10px 0;max-width:760px">
     <p><b>What a group is:</b> a group is the institution or lab that owns specimen records on AntWeb (a museum, a university lab, or one curator's collection). Every specimen record belongs to one group, and the group's curators can upload and edit its records.</p>
-    <p><b>Where these values show:</b> the group's name on specimen pages and the list of contributors; the short name in reports and summaries where space is short (upload reports, the Name updates summary in compute.log).</p>
+    <p><b>Where these values show:</b> the group's name on specimen pages and the list of contributors; the short name in reports and summaries where space is short (upload reports, the name update summary in compute.log).</p>
     </div>
 
     <form action="<%= domainApp %>/saveGroup.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>

@@ -477,7 +477,7 @@ public class UtilDataAction extends AntwebAction {
 		      org.calacademy.antweb.upload.SpecimenNameUpdate.runLocked(connection, mode, settings.maxChanges);
 		  org.calacademy.antweb.upload.SpecimenNameUpdate.log(summary);
 		  LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " " + action + " by " + (accessLogin == null ? "scheduler" : accessLogin.getName()) + ": " + summary.line());
-		  message = Html.esc(summary.line()) + "<br><br><a href='" + AntwebProps.getDomainApp() + "/nameUpdates.do'>Name updates page</a>";
+		  message = Html.esc(summary.line()) + "<br><br><a href='" + AntwebProps.getDomainApp() + "/nameUpdates.do'>Name update report</a>";
 		}
 
 		// Curator rows of region and project lists kept in taxon_set_parked (CuratorTaxonSetDb):

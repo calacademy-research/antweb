@@ -198,7 +198,8 @@ jobs:
         # page's "Not moved: filed under a name AntCat calls valid" list. UploadAsOptionsTest: the Curate page's
         # "Upload as" list names the group each upload replaces. BackgroundJobsTest: uploads and admin jobs in the
         # background (status changes, one at a time, a second upload goes to the first, waiting while busy,
-        # interrupted after a restart, who sees a job). See docs/flows/test-gaps-uploads-nightly.md.
+        # interrupted after a restart, who sees a job). UploadHistoryFilesTest: the files listed under "Specimen
+        # files uploaded before" (a group's AntWeb, TaxonWorks and GBIF files). See docs/flows/test-gaps-uploads-nightly.md.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" -v "$PWD/web:/web:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
@@ -217,12 +218,14 @@ jobs:
               /t/org/calacademy/antweb/upload/SharedNamesTest.java \
               /t/org/calacademy/antweb/upload/UploadNameReasonsTest.java \
               /t/org/calacademy/antweb/curate/UploadAsOptionsTest.java \
+              /t/org/calacademy/antweb/upload/UploadHistoryFilesTest.java \
               /t/org/calacademy/antweb/security/PasswordHashCompatTest.java \
               /t/org/calacademy/antweb/util/BackgroundJobsTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:7 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:4 security.PasswordHashCompatTest:2 \
-                     util.BackgroundJobsTest:14 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4; do
+                     util.BackgroundJobsTest:14 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
+                     upload.UploadHistoryFilesTest:2; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }

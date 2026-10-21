@@ -10,6 +10,6 @@
 <%@include file="/common/antweb_admin-defs.jsp" %>
 
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">
-        <tiles:put name="title" value="Name updates" />
+        <tiles:put name="title" value="Name update report" />
         <tiles:put name="body-content" value="/curate/nameUpdates-body.jsp" />
 </tiles:insert>

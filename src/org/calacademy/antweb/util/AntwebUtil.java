@@ -254,18 +254,31 @@ public abstract class AntwebUtil {
     return dirFiles;
   }
 
+  /**
+   * The archived specimen files of one group in web/upload/, newest first (the file names start with
+   * the date). name is "specimen" + group id; the group's TaxonWorks and GBIF files
+   * (...-specimenTW12.txt, ...-specimenGBIF12.txt) are its files too (2026-10-20: they were left out,
+   * though uploadFile.do lets the group's curators download them). Used by uploadHistory.do.
+   */
   public static ArrayList<String> getUploadDirFiles(String name) {
     ArrayList<String> qualifiedFiles = new ArrayList<>();
-    ArrayList<String> files = getUploadDirFiles();
-    for (String file : files) {
-      String kind = file.substring(18); // everything after the date
-      kind = kind.substring(0, kind.indexOf(".txt"));
-      if (kind.equals(name)) {
-        qualifiedFiles.add(file);  
-        //s_log.warn("getUploadDirFiles(" + name + ") file:" + file + " name:" + name);  
-      }    
+    for (String file : getUploadDirFiles()) {
+      if (isGroupSpecimenFile(file, name)) qualifiedFiles.add(file);
     }
+    qualifiedFiles.sort(java.util.Comparator.reverseOrder());
     return qualifiedFiles;
+  }
+
+  /**
+   * True if file (an archived upload file name, "20220224-11:49:08-specimen2.txt") is a specimen file of
+   * the group that name ("specimen2") stands for: AntWeb, TaxonWorks (specimenTW2) or GBIF (specimenGBIF2).
+   */
+  public static boolean isGroupSpecimenFile(String file, String name) {
+    if (file == null || name == null || !name.startsWith("specimen") || file.length() <= 18 || !file.endsWith(".txt")) return false;
+    String kind = file.substring(18, file.length() - ".txt".length()); // everything after the date
+    String groupId = name.substring("specimen".length());
+    if (groupId.isEmpty()) return false;
+    return kind.equals("specimen" + groupId) || kind.equals("specimenTW" + groupId) || kind.equals("specimenGBIF" + groupId);
   }
 
   private static ArrayList<Integer> s_uploadGroupList;
