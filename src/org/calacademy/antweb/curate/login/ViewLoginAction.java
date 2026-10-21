@@ -68,6 +68,8 @@ public final class ViewLoginAction extends AntwebAction {
                 return mapping.findForward("message");
             }
             session.setAttribute("thisLogin", login);
+            // The form's data (stored assignments, upload groups, lists to add from): LoginEditPage.
+            LoginEditOptions.prepare(connection, request, id, false);
 
             // This fetches the full list for select box population
             ArrayList<Group> groupList = new GroupDb(connection).getAllGroups();

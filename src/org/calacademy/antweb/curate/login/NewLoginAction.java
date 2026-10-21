@@ -30,6 +30,7 @@ public class NewLoginAction extends AntwebAction {
         HttpServletRequest request, HttpServletResponse response) {
 
         ActionForward a = Check.init("project", request, mapping); if (a != null) return a;
+        ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
         
         Connection connection = null;
         String query;
@@ -52,6 +53,7 @@ public class NewLoginAction extends AntwebAction {
 
               ArrayList<Group> groupList = new GroupDb(connection).getAllGroups();
               request.getSession().setAttribute("antwebGroups", groupList);   
+              LoginEditOptions.prepare(connection, request, newLoginId, true);
             }
           
         } catch (SQLException e) {

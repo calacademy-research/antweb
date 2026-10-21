@@ -3,270 +3,50 @@
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 <%@ page import="org.calacademy.antweb.*" %>
-<%@ page import="org.calacademy.antweb.geolocale.*" %>
-<%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
-<%@ page import="org.calacademy.antweb.Utility" %>
+<%@ page import="org.calacademy.antweb.curate.login.LoginEditPage" %>
 
-<!-- viewLogin-body.jsp -->
-
-<div class=right>
-<br>
-<a href="<%= AntwebProps.getDomainApp() %>/viewLogins.do">Login Manager</a>
-<br><a href="<%= AntwebProps.getDomainApp() %>/viewGroups.do">Upload groups</a>
-<br><a href="<%= AntwebProps.getDomainApp() %>/addUploader.do">Add an uploader</a>
-</div>
-
+<!-- viewLogin-body.jsp: the page is built (and every value escaped) by org.calacademy.antweb.curate.login.LoginEditPage. -->
 <%
-    String secureDomainApp = AntwebProps.getSecureDomainApp();
-    String domainApp = AntwebProps.getDomainApp(); 
     Login accessLogin = LoginMgr.getAccessLogin(request);
-    Group accessGroup = GroupMgr.getAccessGroup(request);
-    if (accessLogin == null) {
-      A.log("viewLogin-body.jsp accessLogin is null");
-      return;
-    }
+    if (accessLogin == null) return;
     Login thisLogin = (Login) request.getSession().getAttribute("thisLogin");
-    if (thisLogin == null) {
-      A.log("viewLogin-body.jsp thisLogin is null"); 
-      %> Login not found <%
-      return;
-    }    
-    boolean isInvitee = false;
-    Boolean isInviteeBool = (Boolean) request.getSession().getAttribute("isInvitee");
-    if (isInviteeBool != null) {
-      isInvitee = isInviteeBool.booleanValue();
-    }
-
-    boolean isSelf = (accessLogin.getId() == thisLogin.getId());
-    ArrayList<Group> groups = (ArrayList) request.getSession().getAttribute("antwebGroups");
-
-A.log("viewLogin-body.jsp uploadAs:" + thisLogin.getUploadAs());
+    LoginEditPage.PageData pageData = (LoginEditPage.PageData) request.getSession().getAttribute(LoginEditPage.SESSION_ATTR);
+    String domainApp = AntwebProps.getDomainApp();
+    String secureDomainApp = AntwebProps.getSecureDomainApp();
 %>
- 
-<div class=admin_left>
+<% if (accessLogin.isAdmin()) { %>
+<div class="right">
+<br>
+<a href="<%= domainApp %>/viewLogins.do">Login Manager</a>
+<br><a href="<%= domainApp %>/viewGroups.do">Upload groups</a>
+<br><a href="<%= domainApp %>/addUploader.do">Add an uploader</a>
+</div>
+<% } %>
+
+<div class="admin_left loginEditPage">
 <logic:messagesPresent property="error">
-    <h2>Sorry, you need to correct the following errors:</h2>
+    <h2>Please correct the following:</h2>
     <font color="red">
     <html:messages property="error" id="errMsg">
         <bean:write name="errMsg"/><br>
     </html:messages>
     </font>
 </logic:messagesPresent>
-
-<% if (!isInvitee) { %>
-<h2>Viewing Login: <%= Html.esc(thisLogin.getEmail()) %></h2>
-<% } else { %>
-<h2>Welcome to Antweb.org: <%= Html.esc(thisLogin.getEmail()) %></h2>
-<% } %>
-
-<form action="<%= secureDomainApp %>/saveLogin.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-
-<br><br>
-<h3>Login ID:</h3>
-<input type="text" class="input_200" name="id" value="<%= thisLogin.getId() %>" disabled>
-<br><br>
-<h3>Email:</h3>
-<input type="text" class="input_200" name="email" value="<%= Html.escAttr(thisLogin.getEmail()) %>">
-<br><br>
-<h3>Username:</h3>
-<input type="text" class="input_200" name="name" value="<%= Html.escAttr(thisLogin.getName()) %>">
-<br><br>
-
-<% if (isSelf) { %>
-<h3>Current Password (only needed to change your password):</h3>
-<input type="password" class="input_200" name="currentPassword" value="" autocomplete="current-password">
-<br><br>
-<% } %>
-
-<h3>New Password (at least <%= PasswordPolicy.MIN_LENGTH %> characters):</h3>
-<input type="password" class="input_200" name="password" value="" autocomplete="new-password" placeholder="leave blank to keep">
-<br><br>
-
-<h3>Retype Password:</h3>
-<input type="password" class="input_200" name="retypePassword" value="" autocomplete="new-password" placeholder="leave blank to keep">
-
-<% if (accessLogin.isAdmin()) { %>
-<div class="action_hint">
-NOTE: These will not be modified unless "Changed Password" button is selected.
-</div>
-<% } %>
-
-<br>
-
-<h3>First Name:</h3>
-<input type="text" class="input_200" name="firstName" value="<%= Html.escAttr(thisLogin.getFirstName()) %>">
-<br><br>
-
-<h3>Last Name:</h3>
-<input type="text" class="input_200" name="lastName" value="<%= Html.escAttr(thisLogin.getLastName()) %>">
-<br><br>
-
-<h1>Created: <%= thisLogin.getCreated() %></h>
-
-<% if (accessLogin.isAdmin()) { %>
-    <h3>Upload group:</h3>
-    <div class="action_hint">The institution, lab or collection whose specimens this login uploads. An upload replaces all specimens of this upload group.
-    To give someone upload rights in one step, use <a href="<%= domainApp %>/addUploader.do">Add an uploader</a>.</div>
-    <select class="input_200" name="groups" size="10" aria-label="Upload group">
-    <% int groupId = thisLogin.getGroupId();  
-       Collections.sort(groups, Group.getGroupNameComparator);  
-       for (Group group : groups) {
-     %>
-         <option <%= (thisLogin.getGroupId() == group.getId()) ? "selected" : "" %> value="<%= group.getId() %>"><%= Html.esc(group.getName()) %> (<%= group.getId() %>)
-    <% } %> <!-- end groups loop -->
-    </select> 
-<% } else { %>
-     <br><br><h3>Upload group: <%= Html.esc(thisLogin.getGroup().getName()) %></h3>
-<% } %>
-
-
-<% 
-//if (AntwebProps.isDevMode()) AntwebUtil.log("viewLogin-body.jsp login.ProjectNames:" + thisLogin.getProjectNames()); 
-%>
-<br><br>
-
-<h3>Project Access:</h3>
-<select class="input_200" name="projects" multiple size="10" <%= (accessLogin.isAdmin()) ? "" : " disabled" %>>
-<option <%= ((thisLogin.getProjectNames() == null) || (thisLogin.getProjectNames().size() == 0))?"selected":"" %> value="none">None
-
-<%        
-        int count = 0;
-        String name, title;
-
-       // ArrayList<Project> atomicProjects = ProjectMgr.getAtomicProjects();
-        ArrayList<Project> antProjects = ProjectMgr.getAllProjects();
-        Collections.sort(antProjects, Project.getNameComparator);
-        for (Project aProject : antProjects) {
-            if (Project.ALLANTWEBANTS.equals(aProject.getName())) continue;
-            if (Project.WORLDANTS.equals(aProject.getName())) continue;
-
-            name = aProject.getName();
-            title = aProject.getTitle();
-%> <option <%= ((thisLogin.getProjectNames() != null) && (thisLogin.getProjectNames().contains(name)))?"selected":"" %> value="<%= Html.escAttr(name) %>"><%= Html.esc(title) %> <%
-        } //end project loop
-
-%>
-</select>
-<% if (LoginMgr.isAdmin(thisLogin)) { %>
-<br>* Admin automatically get access to all projects.
-<% } %>
-<br><br>
-
-<% //if (AntwebProps.isDevMode()) AntwebUtil.log("viewLogin-body.jsp login.ProjectNames:" + thisLogin.getProjectNames()); %>
-
-<h3>Country Access:</h3>
-<select class="input_200" name="countries" multiple size="10" <%= (accessLogin.isAdmin()) ? "" : " disabled" %>>
-<option <%= ((thisLogin.getCountryNames() == null) || (thisLogin.getCountryNames().size() == 0))?"selected":"" %> value="none">None
-
 <%
-        ArrayList<Geolocale> countries = GeolocaleMgr.getValidCountries();
-        //Collections.sort(countries);
-        for (Geolocale country : countries) {
-
-          name = country.getName(); 
-          //AntwebUtil.log("viewLogin-body.jsp name:" + name + " names:" + thisLogin.getCountryNames());
-          %> 
-
-              <option <%= ((thisLogin.getCountryNames() != null) && (thisLogin.getCountryNames().contains(name)))?"selected":"" %> value="<%= Html.escAttr(name) %>"><%= Html.esc(name) %> 
-    <%      
-      
-        } //end Geolocale loop
-
+    if (thisLogin == null || pageData == null || pageData.state.id != thisLogin.getId()) {
 %>
-</select>
-<% if (LoginMgr.isAdmin(thisLogin)) { %>
-<br>* Admin automatically get access to all countries.
-<% } %>
-
-<div class="admin_action_item">
-<% if (accessLogin.isAdmin()) { %>
-<br>
-<div class="action_hint">
-<b>NOTE:</b> For above lists, to allow access to multiple areas, hold the Ctrl key, or the command key while clicking.
+<p>This login could not be shown. Open it again from the <a href="<%= domainApp %><%= accessLogin.isAdmin() ? "/viewLogins.do" : "/curate.do" %>"><%= accessLogin.isAdmin() ? "Login Manager" : "Curator Tools" %></a>.</p>
+<%
+    } else if (accessLogin.isAdmin()) {
+%>
+<%= LoginEditPage.renderAdmin(pageData, accessLogin.getId(), Csrf.field(request), domainApp, secureDomainApp) %>
+<%
+    } else if (accessLogin.getId() == thisLogin.getId()) {
+%>
+<%= LoginEditPage.renderSelf(pageData, Csrf.field(request), domainApp, secureDomainApp) %>
+<%
+    }
+%>
 </div>
-<% } %>
-</div>
-
-<br><br>
-<% if (accessLogin.isAdmin()) { %>
-<h3>Is Super Admin:
-<input type="checkbox" name="isAdmin" <%= (thisLogin.isAdmin() == true)?"checked":"" %> <%= (accessLogin.isAdmin()) ? "" : " disabled" %>>
-</h3>
-<% } %>
-
-<br>
-<h3>Can Upload Specimens:
-<input type="checkbox" name="isUploadSpecimens" <%= (thisLogin.isUploadSpecimens() == true)?"checked":"" %> <%= (accessLogin.isAdmin()) ? "" : " disabled" %>>
-</h3>
-<br>
-<h3>Can Upload Images:
-<input type="checkbox" name="isUploadImages" <%= (thisLogin.isUploadImages() == true)?"checked":"" %> <%= (accessLogin.isAdmin()) ? "" : " disabled" %>>
-</h3>
-
-<% if (LoginMgr.isAdmin(accessLogin)) { %>
-<br>
-<H3>Upload As (comma separated list of curator IDs):
-<input type="text" name="uploadAs" <%= (LoginMgr.isAdmin(accessLogin)) ? "" : " disabled" %> value="<%= Html.escAttr(thisLogin.getUploadAs()) %>">
-</h3>
-<% } %>
-
-<input type="hidden" name="id" value="<%= thisLogin.getId() %>">
-<logic:present parameter="isNewLogin">
-<input type="hidden" name="newLogin" value="true">
-</logic:present>
-
-<br />
-<br />
-
-</div>
-<div class=admin_right>
-</div> 
-
 <div class="clear"></div>
-<br />
-<br />
-<div class="msg in_admin">
-    <div class="msg_actions" align="center">
-<input border="0" type="image" src="<%= secureDomainApp %>/image/orange_done.gif" width="98" height="36" value="Done">
-<a href="<%= domainApp %><%= (accessLogin.isAdmin()) ? "/viewLogins.do" : "/curate.do" %>"><img border=0" src="<%= secureDomainApp %>/image/grey_cancel.gif" width="123" height="36"></a>
-
-<% if (! isSelf) {   // You can't delete yourself
-  //AntwebUtil.log("thisLogin.id:" + thisLogin.getId()); 
- %>
-
-
-<%   if ((accessLogin.isAdmin()) && (thisLogin.getPassword().equals(""))) { %>
-<html:submit property="step"> 
-<bean:message key="button.invite"/> 
-</html:submit>
-<%   } %>
-
-<%   if (accessLogin.isAdmin()) { %>
-<html:submit property="changePassword"> 
-<bean:message key="button.changePassword"/> 
-</html:submit>
-<%   } %>
-
-<%   if (accessLogin.isAdmin()) { %>
-<html:submit property="delete"> 
-<bean:message key="button.delete"/> 
-</html:submit>
-<%   } %>
-
-
-<% if (accessLogin.isAdmin()) { %>
-&nbsp;&nbsp;&nbsp;Login as: <a href="<%= secureDomainApp %>/loginAs.do?id=<%= thisLogin.getId() %>"><%= Html.esc(thisLogin.getName()) %></a>
-<% } %>
-
-
-<% } %>
-    </div>
-
-</div>
-
-</form>
-
-
-
-

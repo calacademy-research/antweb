@@ -225,9 +225,9 @@ jobs:
               /t/org/calacademy/antweb/util/BackgroundJobsTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:7 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
-                     upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 security.PasswordHashCompatTest:2 \
+                     upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:14 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
-                     upload.UploadReportExistsTest:3 upload.SharedNameReportTest:6; do
+                     upload.UploadReportExistsTest:3; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -332,12 +332,15 @@ jobs:
             grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
-      - name: Add an uploader (input checks and welcome email; database steps against MySQL 8.4)
+      - name: Add an uploader and the login form (input checks, welcome email, page; database steps against MySQL 8.4)
         # UploaderOnboardingTest: the form's checks, the welcome email text (escaped, no "ignore"), and
         # which refused POSTs are shown again filled in (Csrf.mayRefill: stale token on addUploader.do only).
         # UploaderOnboardingDbTest: new person and new upload group, existing account by email or
         # username, moving only when asked, refusals change nothing, login.created kept, inactive
         # accounts get a link, a group with logins or specimens is not deleted.
+        # LoginEditTest: the login form (sections, escaping, admin warning, own admin rights locked,
+        # upload group list, add boxes, change summary). LoginEditDbTest: an administrator's save in
+        # one step, refused values change nothing, old assignments kept, delete removes assignments.
         run: |
           docker network create ugcheck
           docker run -d --name ugmysql --network ugcheck -e MYSQL_ROOT_PASSWORD=ci-root \
@@ -354,11 +357,13 @@ jobs:
             set -e
             C=/usr/local/antweb/WEB-INF/classes
             test -f $C/org/calacademy/antweb/curate/group/UploaderOnboarding.class
+            test -f $C/org/calacademy/antweb/curate/login/LoginEdit.class
             CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
             mkdir -p /tmp/tc
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc \
-              /t/org/calacademy/antweb/curate/UploaderOnboardingTest.java /t/org/calacademy/antweb/curate/UploaderOnboardingDbTest.java
-            for t in curate.UploaderOnboardingTest:6 curate.UploaderOnboardingDbTest:10; do
+              /t/org/calacademy/antweb/curate/UploaderOnboardingTest.java /t/org/calacademy/antweb/curate/UploaderOnboardingDbTest.java \
+              /t/org/calacademy/antweb/curate/LoginEditTest.java /t/org/calacademy/antweb/curate/LoginEditDbTest.java
+            for t in curate.UploaderOnboardingTest:6 curate.UploaderOnboardingDbTest:10 curate.LoginEditTest:10 curate.LoginEditDbTest:6; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

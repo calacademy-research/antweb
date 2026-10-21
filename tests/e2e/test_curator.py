@@ -45,6 +45,7 @@ ADMIN_ONLY = [
     "/addUploader.do",
     "/viewGroups.do",
     "/viewGroup.do?id=1",
+    "/newLogin.do",
 ]
 
 
