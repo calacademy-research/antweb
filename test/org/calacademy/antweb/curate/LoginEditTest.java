@@ -323,6 +323,7 @@ public class LoginEditTest extends TestCase {
         html = LoginEditPage.renderAdmin(page(s), 1, "", "", "");
         assertEquals("administrator: both lists say not needed", 2, html.split(java.util.regex.Pattern.quote(admin), -1).length - 1);
         assertFalse(html.contains(none));
+        assertTrue("own page of an administrator", LoginEditPage.renderSelf(page(s), "", "", "").contains(admin));
 
         s.projects.add("madagascarants");
         html = LoginEditPage.renderAdmin(page(s), 1, "", "", "");

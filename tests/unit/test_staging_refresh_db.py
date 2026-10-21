@@ -179,11 +179,15 @@ def main():
 
         # The admin's "Upload as" gets the test uploader's new number, once; curators are left alone.
         uid = value("select id from login where name = 'zztest_uploader'")
-        assert accounts.add_upload_as(db, ["bfisher", "curator1", "nobody_here"]) == 1
+        assert accounts.add_upload_as(db, ["bfisher", "curator1", "nobody_here"]) == (1, 1)
         assert value("select upload_as from login where name = 'bfisher'") == uid
         assert value("select upload_as from login where name = 'curator1'") == "5,9"
-        assert accounts.add_upload_as(db, ["bfisher"]) == 0, "already listed"
+        assert accounts.add_upload_as(db, ["bfisher"]) == (0, 1), "already listed"
         assert value("select upload_as from login where name = 'bfisher'") == uid
+        # A list that is not empty (the format LoginEdit.uploadAsIds reads: numbers, commas).
+        db.run("update login set upload_as = '23, 45' where name = 'bfisher'")
+        assert accounts.add_upload_as(db, ["bfisher"]) == (1, 1)
+        assert value("select upload_as from login where name = 'bfisher'") == "23,45," + uid
         print("ok upload as")
 
 

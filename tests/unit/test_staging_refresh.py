@@ -319,14 +319,15 @@ class FakeDb:
 
 def test_add_upload_as():
     db = FakeDb({"antweb": [1, 1, "23,45"], "curator1": [12, 0, ""], "zztest_uploader": [1203, 0, None]})
-    assert accounts.add_upload_as(db, ["antweb", "curator1", "nobody"]) == 1
+    assert accounts.add_upload_as(db, ["antweb", "curator1", "nobody"]) == (1, 1)
     assert db.logins["antweb"][2] == "23,45,1203"
     assert len(db.updates) == 1 and db.updates[0].endswith("created = created where id = 1"), db.updates
     assert db.logins["curator1"][2] == "", "not an administrator: left alone"
-    assert accounts.add_upload_as(db, ["antweb"]) == 0, "already listed: nothing changed"
+    assert accounts.add_upload_as(db, ["antweb"]) == (0, 1), "already listed: nothing changed"
     assert len(db.updates) == 1
-    assert accounts.add_upload_as(db, []) == 0
-    assert accounts.add_upload_as(FakeDb({"antweb": [1, 1, ""]}), ["antweb"]) == 0, "no test uploader"
+    assert accounts.add_upload_as(db, []) == (0, 0)
+    assert accounts.add_upload_as(db, ["curator1", "nobody"]) == (0, 0), "no usable administrator"
+    assert accounts.add_upload_as(FakeDb({"antweb": [1, 1, ""]}), ["antweb"]) == (0, 0), "no test uploader"
 
 
 def test_refresh_adds_upload_as_after_restore():

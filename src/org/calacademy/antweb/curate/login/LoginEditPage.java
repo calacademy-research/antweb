@@ -188,11 +188,11 @@ public final class LoginEditPage {
 
     // ------------------------------------------------------------------ administrator's page
 
-    /** The page for an administrator (any login, also their own, or a new one). */
     /** Shown under "Places and projects" when a login has none assigned. */
     static final String NONE_ASSIGNED = "None assigned yet.";
     static final String NOT_NEEDED_FOR_ADMIN = "Not needed: administrators can edit every project and country.";
 
+    /** The page for an administrator (any login, also their own, or a new one). */
     public static String renderAdmin(PageData d, int viewerId, String csrfField, String app, String secureApp) {
         State s = d.state;
         boolean isSelf = !d.isNew && s.id == viewerId;

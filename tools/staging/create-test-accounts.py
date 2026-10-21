@@ -559,26 +559,28 @@ def upload_as_with(current, login_id_to_add):
 
 
 def add_upload_as(db, admin_names, uploader=UPLOAD_AS_UPLOADER):
-    """Adds the uploader's login number to each named administrator's upload_as. Returns the number
-    of logins changed. Missing logins and non-administrators are reported and left alone."""
+    """Adds the uploader's login number to each named administrator's upload_as. Returns
+    (changed, usable): the logins changed and the named administrator logins found (changed or
+    already listing it). Missing logins and non-administrators are reported and left alone."""
     uid = login_id(db, uploader)
     if not uid:
-        print(f"Upload as: no login {uploader} on this server; nothing added.")
-        return 0
+        print(f"WARNING: Upload as: no login {uploader} on this server; nothing added.")
+        return 0, 0
     if not admin_names:
-        print("Upload as: no adminLogin in the config file; nothing added.")
-        return 0
+        print("Upload as: no adminLogin in the config file (switched off); nothing added.")
+        return 0, 0
     keep_created = ", created = created" if "created" in table_columns(db, "login") else ""
-    changed = 0
+    changed = usable = 0
     for name in admin_names:
         found = db.run(f"select id, is_admin, coalesce(upload_as, '') from login where name = {sql_str(name)}")
         if not found:
-            print(f"Upload as: no login {name} on this server; skipped.")
+            print(f"WARNING: Upload as: no login {name} on this server; skipped.")
             continue
         lid, is_admin, current = int(found[0][0]), found[0][1], found[0][2] if len(found[0]) > 2 else ""
         if is_admin != "1":
-            print(f"Upload as: {name} (login {lid}) is not an administrator; skipped.")
+            print(f"WARNING: Upload as: {name} (login {lid}) is not an administrator; skipped.")
             continue
+        usable += 1
         new = upload_as_with(current, uid)
         if new is None:
             print(f"Upload as: {name} (login {lid}) already lists {uploader} ({uid}).")
@@ -586,7 +588,7 @@ def add_upload_as(db, admin_names, uploader=UPLOAD_AS_UPLOADER):
         db.run(f"update login set upload_as = {sql_str(new)}{keep_created} where id = {lid}")
         print(f"Upload as: added {uploader} ({uid}) to {name} (login {lid}): {new}")
         changed += 1
-    return changed
+    return changed, usable
 
 
 # ---------- main ----------
@@ -640,7 +642,12 @@ def main(argv=None):
         print("All saved logins are back with their saved passwords. AntWeb loads them when it starts.")
         return 0
     if args.add_upload_as:
-        add_upload_as(db, read_upload_as_config(args.add_upload_as))
+        names = read_upload_as_config(args.add_upload_as)
+        _changed, usable = add_upload_as(db, names)
+        if names and not usable:
+            print(f"WARNING: none of {', '.join(names)} is an administrator login here; set adminLogin=NAME in "
+                  f"{args.add_upload_as}")
+            return 1
         return 0
     if args.remove:
         if remove(db, args.yes) and not args.no_restart:
