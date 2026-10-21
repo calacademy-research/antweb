@@ -139,7 +139,7 @@ public class PasswordResetDb extends AntwebDb {
      * Returns the new session_version.
      */
     public int setNewPassword(int loginId, String plainPassword) throws SQLException {
-        String q = "update login set password = ?, must_reset = 0, session_version = session_version + 1 where id = ?";
+        String q = "update login set password = ?, must_reset = 0, session_version = session_version + 1, created = created where id = ?";
         try (PreparedStatement stmt = getConnection().prepareStatement(q)) {
             stmt.setString(1, PasswordHash.hash(plainPassword));
             stmt.setInt(2, loginId);
@@ -155,7 +155,7 @@ public class PasswordResetDb extends AntwebDb {
      */
     public int afterPasswordChange(int loginId) throws SQLException {
         try (PreparedStatement stmt = getConnection().prepareStatement(
-                "update login set must_reset = 0, session_version = session_version + 1 where id = ?")) {
+                "update login set must_reset = 0, session_version = session_version + 1, created = created where id = ?")) {
             stmt.setInt(1, loginId);
             stmt.executeUpdate();
         }
@@ -175,7 +175,7 @@ public class PasswordResetDb extends AntwebDb {
 
     /** End all sessions of the login. Returns the new session_version. */
     public int bumpSessionVersion(int loginId) throws SQLException {
-        try (PreparedStatement stmt = getConnection().prepareStatement("update login set session_version = session_version + 1 where id = ?")) {
+        try (PreparedStatement stmt = getConnection().prepareStatement("update login set session_version = session_version + 1, created = created where id = ?")) {
             stmt.setInt(1, loginId);
             stmt.executeUpdate();
         }
@@ -194,7 +194,7 @@ public class PasswordResetDb extends AntwebDb {
 
     /** Set must_reset = 1 and end all sessions of the login. */
     public void markMustReset(int loginId) throws SQLException {
-        String q = "update login set must_reset = 1, session_version = session_version + 1 where id = ?";
+        String q = "update login set must_reset = 1, session_version = session_version + 1, created = created where id = ?";
         try (PreparedStatement stmt = getConnection().prepareStatement(q)) {
             stmt.setInt(1, loginId);
             stmt.executeUpdate();

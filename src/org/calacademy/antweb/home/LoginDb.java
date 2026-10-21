@@ -14,6 +14,7 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 
 public class LoginDb extends AntwebDb {
     
@@ -447,27 +448,79 @@ public class LoginDb extends AntwebDb {
         return curators;      
     }
 
+    /** The number for a new login (nextLoginId), or 0 if the database did not answer. */
     public int getNewLoginId() {
-        int newLoginId = 0;
-        PreparedStatement stmt = null;
-        ResultSet rset = null;
         try {
-            String theQuery = "select max(id) as maxid from login";
-            stmt = DBUtil.getPreparedStatement(getConnection(), "getNewLoginId", theQuery);
-            rset = stmt.executeQuery();
-            int max = 0;
-            while (rset.next()) {
-                max = rset.getInt("maxid");
-            }
-            if (max > 0) {
-                newLoginId = max + 1;
-            }  
+            return nextLoginId(getConnection(), curatorDir());
         } catch (SQLException e) {
-            s_log.error("getNextLoginId() e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, this, "getNewLoginId()");
+            s_log.error("getNewLoginId() e:" + e);
+            return 0;
         }
-        return newLoginId;    
+    }
+
+    /** web/curator: one folder per login number (images curators put in page text). */
+    public static java.io.File curatorDir() {
+        return new java.io.File(AntwebProps.getWebDir() + "curator");
+    }
+
+    /**
+     * The number for a new login: above every login number ever used, so a new login never gets
+     * a deleted login's number and with it the deleted login's curator folder (web/curator/N/,
+     * whose image links may be in page text), page text authorship, uploads or likes. The highest
+     * of: login.id; every login number in other tables (columns login_id, access_login,
+     * curator_id, admin_login_id; the id of backup tables named like login, such as
+     * login_inactive_backup_YYYYMMDD); and the numbered folders in curatorDir (null: not looked
+     * at). Plus one. Login numbers are not AUTO_INCREMENT, so nothing else remembers them.
+     */
+    public static int nextLoginId(Connection c, java.io.File curatorDir) throws SQLException {
+        long max = 0;
+        try (PreparedStatement s = c.prepareStatement("select coalesce(max(id), 0) from login for update");
+             ResultSet r = s.executeQuery()) {
+            if (r.next()) max = r.getLong(1);
+        }
+        List<String[]> cols = new ArrayList<>();
+        String q = "select table_name, column_name from information_schema.columns where table_schema = database()"
+            + " and (column_name in ('login_id', 'access_login', 'curator_id', 'admin_login_id')"
+            + " or (column_name = 'id' and table_name like '%login%' and table_name <> 'login'))";
+        try (PreparedStatement s = c.prepareStatement(q); ResultSet r = s.executeQuery()) {
+            while (r.next()) cols.add(new String[] {r.getString(1), r.getString(2)});
+        }
+        for (String[] tc : cols) {
+            // Names come from information_schema of this database, quoted.
+            String mq = "select max(`" + tc[1].replace("`", "``") + "`) from `" + tc[0].replace("`", "``") + "`";
+            try (Statement s = c.createStatement(); ResultSet r = s.executeQuery(mq)) {
+                if (r.next()) max = Math.max(max, parseId(r.getString(1)));
+            } catch (SQLException e) {
+                s_log.warn("nextLoginId() skipped " + tc[0] + "." + tc[1] + " e:" + e);
+            }
+        }
+        max = Math.max(max, maxCuratorFolder(curatorDir));
+        if (max >= Integer.MAX_VALUE) throw new SQLException("nextLoginId(): no login number left (highest used " + max + ")");
+        return (int) max + 1;
+    }
+
+    private static long parseId(String v) {
+        if (v == null) return 0;
+        try {
+            return Math.max(0, Long.parseLong(v.trim()));
+        } catch (NumberFormatException e) {
+            return 0;  // a text column: not a login number
+        }
+    }
+
+    /** The highest numbered folder in dir (web/curator/N), 0 if none or dir is null or unreadable. */
+    public static long maxCuratorFolder(java.io.File dir) {
+        if (dir == null) return 0;
+        String[] names = dir.list();
+        if (names == null) {
+            s_log.warn("maxCuratorFolder() cannot list " + dir + "; login numbers from the database only");
+            return 0;
+        }
+        long max = 0;
+        for (String n : names) {
+            if (n.matches("\\d{1,9}")) max = Math.max(max, Long.parseLong(n));
+        }
+        return max;
     }
     
     public Login createAccount(String name, String password) throws SQLException, AntwebException {
@@ -905,8 +958,8 @@ public class LoginDb extends AntwebDb {
     }
     
     public void deleteById(int id) throws SQLException {
-        // Its project and country assignments go too: a new login can get the same number
-        // (getNewLoginId() is the highest number + 1) and must not inherit them.
+        // Its project and country assignments go too. (A new login never gets this number again:
+        // nextLoginId() also counts curator folders and login numbers in other tables.)
         for (String table : new String[] {"login_project", "login_country"}) {
             try (PreparedStatement del = getConnection().prepareStatement("delete from " + table + " where login_id = ?")) {
                 del.setInt(1, id);

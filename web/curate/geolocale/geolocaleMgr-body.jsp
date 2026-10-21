@@ -32,15 +32,28 @@
 	if (georank == null) georank = "country";
 	String parentGeorank = Georank.getParent(georank);
     String titleAddendum = "";
-    if (parentName != null) titleAddendum = " of <a href='" + domainApp + "/editGeolocale.do?name=" + parentName + "&georank=" + parentGeorank + "'>" + parentName + "</a>";
+    if (parentName != null) titleAddendum = " of <a href='" + domainApp + "/editGeolocale.do?name=" + Html.escAttr(Html.url(parentName)) + "&georank=" + Html.escAttr(Html.url(parentGeorank)) + "'>" + Html.esc(parentName) + "</a>";
 %>
 
 <div class="in_admin">
 <h1>Geolocale Manager:</h1>
-<h2>&nbsp;&nbsp;&nbsp;&nbsp;<font color=green><%= org.calacademy.antweb.Formatter.initCap(Georank.getPluralRank(georank)) %><%= titleAddendum %></font></h2>
+<h2>&nbsp;&nbsp;&nbsp;&nbsp;<font color=green><%= Html.esc(org.calacademy.antweb.Formatter.initCap(Georank.getPluralRank(georank))) %><%= titleAddendum %></font></h2>
 &nbsp;&nbsp;&nbsp;&nbsp;Tables: <a href="<%= domainApp %>/geolocaleMgr.do?name=displayGeoregions">georegions</a> (region, subregion, country)
  | <a href="<%= domainApp %>/geolocaleMgr.do?name=displayBioregions">bioregions</a>
 </div>
+
+<div class="mgr_help" style="max-width:70em;margin:6px 16px 12px 16px">
+The places AntWeb uses: regions, subregions, countries and adm1s (states, provinces). Choose a rank and
+click the magnifier; a number in the second column opens that place's children. Click a name to open all
+its settings (Edit Geolocale). <b>Valid</b>: an accepted name, with its own page and species list.
+<b>Live</b>: listed in the site's region menus. <b>UN</b>: on the UN list (fixed). <b>Valid Name</b>: for
+an invalid name, the valid place that specimen data with this name are moved to at upload.
+<b>C</b> and <b>BB</b>: a map centre and a bounding box are set. The green arrow saves that row's
+Valid, Live and Valid Name at once (administrators only; curators can look). The change is live
+immediately; the counts follow in the nightly run.
+</div>
+<% String mgrMessage = (String) request.getAttribute("message");
+   if (mgrMessage != null) { %><p style="margin-left:16px"><font color=green><%= mgrMessage %></font></p><% } %>
 
 <br>
 
@@ -61,7 +74,7 @@
     if (parentName != null) {
       parent = GeolocaleMgr.getGeolocale(parentName); 
       if (parent != null) { 
-        String parentClause = "&parent=" + parent.getParent();
+        String parentClause = "&parent=" + Html.escAttr(Html.url(parent.getParent()));
         if (parent.getParent() == null || "null".equals(parent.getParent())) parentClause = "";
       %>
 <a href='<%= domainApp %>/geolocaleMgr.do?georank=<%= parentGeorank %><%= parentClause %>'><img src='<%= domainApp %>/image/upLeft.png' width=20></a>
@@ -82,9 +95,9 @@ String thisTarget = HttpUtil.getTarget(request);
    if ("adm1".equals(georank)) parentHeading = "Country";
 
 
-String params = "georank=" + georank;
-if (parentName != null) params += "&parent=" + parentName;
-String target = AntwebProps.getDomainApp() + "/geolocaleMgr.do?" + params;
+String params = "georank=" + Html.url(georank);
+if (parentName != null) params += "&parent=" + Html.url(parentName);
+String target = AntwebProps.getDomainApp() + "/geolocaleMgr.do?" + Html.escAttr(params);
 String nameLink = "<a href='" + target + "&orderBy=name'>Name</a>";
 String parentLink = "<a href='" + target + "&orderBy=parent'>" + parentHeading + "</a>";
 String validLink = "<a href='" + target + "&orderBy=isValid'>Valid</a>";
@@ -108,8 +121,8 @@ String bioregionLink = "<a href='" + target + "&orderBy=bioregion'>Bioregion</a>
 <th>UN</th>
 <th><%= sourceLink %></th>
 <th><%= validNameLink %></th>
-<th>Update</th>
 <% if (!"NONE".equals(parentHeading)) { %>
+  <th>Save</th>
   <th><%= parentLink %></th>
 <% } %>
 <th><%= regionLink %></th>
@@ -133,15 +146,16 @@ for (Geolocale geolocale : geolocaleArray) {
 <form id="geolocaleMgrForm" action="<%= Html.escAttr(thisTarget) %>#<%= geolocale.getId() %>" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
 <td>
-<input type="hidden" name="parent" value="<%= geolocale.getParent() %>">
-<input type="hidden" name="georank" value="<%= geolocale.getGeorank() %>">
+<%-- After saving, show the same list again (the list's parent, not the row's). --%>
+<% if (parentName != null) { %><input type="hidden" name="parent" value="<%= Html.escAttr(parentName) %>"><% } %>
+<input type="hidden" name="georank" value="<%= Html.escAttr(geolocale.getGeorank()) %>">
 
 <a name="<%= geolocale.getId() %>"></a> 
-<a href="<%= domainApp %>/editGeolocale.do?id=<%= geolocale.getId() %>"><%= geolocale.getName() %></a>
+<a href="<%= domainApp %>/editGeolocale.do?id=<%= geolocale.getId() %>"><%= Html.esc(geolocale.getName()) %></a>
 
 <% if ("adm1".equals(georank)) {
 	   String strVal = "<td><a href=\"" + AntwebProps.getDomainApp() + "/adm1Mgr.do?adm1Name=" 
-	     + geolocale.getName() + "&countryName=" + geolocale.getParent() + "\"><img src='" + domainApp + "/image/view_icon.png'></a></td>";
+	     + Html.escAttr(Html.url(geolocale.getName())) + "&countryName=" + Html.escAttr(Html.url(geolocale.getParent())) + "\"><img src='" + domainApp + "/image/view_icon.png'></a></td>";
        
        //strVal = URLEncoder.encode(strVal, "UTF-8");
        
@@ -152,7 +166,7 @@ for (Geolocale geolocale : geolocaleArray) {
 	   if (mgrGeolocale != null) {     
 		 int size = mgrGeolocale.getValidChildren().size();
 		 if (size > 0) {
-		   strVal = "<td><a href='" + domainApp + "/geolocaleMgr.do?georank=" + Georank.getChild(georank) + "&parent=" + geolocale.getName() + "'>" + size + "</a></td>";    
+		   strVal = "<td><a href='" + domainApp + "/geolocaleMgr.do?georank=" + Georank.getChild(georank) + "&parent=" + Html.escAttr(Html.url(geolocale.getName())) + "'>" + size + "</a></td>";    
 		 }
          //A.log("geolocaleMgr-body.jsp size:" + size);
 		 %>
@@ -161,12 +175,12 @@ for (Geolocale geolocale : geolocaleArray) {
 <% } %>
 </td>
 <input type="hidden" name="id" value="<%= geolocale.getId() %>">
-<input type="hidden" name="name" value="<%= geolocale.getName() %>">
+<input type="hidden" name="name" value="<%= Html.escAttr(geolocale.getName()) %>">
 <td><input type="checkbox" name="isValid" <%= (geolocale.getIsValid() == true)?"checked":"" %>></td>
 <td><input type="checkbox" name="isLive" <%= (geolocale.getIsLive() == true)?"checked":"" %>></td>
 <td><input type="checkbox" name="isUn" <%= (geolocale.isUn() == true)?"checked":"" %> disabled></td>
 
-<td><%= geolocale.getSource() %></td>
+<td><%= Html.esc(geolocale.getSource()) %></td>
 
 <td>
 <%
@@ -179,7 +193,7 @@ for (Geolocale geolocale : geolocaleArray) {
 
 <% }   
  } else { %>
- <%= geolocale.getValidName() %>
+ <%= Html.esc(geolocale.getValidName()) %>
 <%
  }
 
@@ -196,12 +210,12 @@ for (Geolocale geolocale : geolocaleArray) {
 <input border="0" type="image" src="<%= domainApp %>/image/upGreen.jpg" width="25" value="Submit">
 </td>
 
-<td><%= parentStr %></td>
+<td><%= Html.esc(parentStr) %></td>
 
 <% } %>
-<td><%= geolocale.getRegion() %></td>
+<td><%= Html.esc(geolocale.getRegion()) %></td>
 <% if (!"adm1".equals(georank)) { %>
-<td><%= geolocale.getBioregion() %></td>
+<td><%= Html.esc(geolocale.getBioregion()) %></td>
 <% } %>
 
 <% if (geolocale.useCentroid() != null && !("".equals(geolocale.useCentroid()))) { %>
@@ -233,19 +247,24 @@ for (Geolocale geolocale : geolocaleArray) {
 
 <!-- a href="< %= domainApp % >/editGeolocale.do?parent=< %= parentName % >&isCreate=true&georank=< %= georank % >name=">Create</a> Adm1. -->
 
+<% if (LoginMgr.isAdmin(request)) {
+     if (parentName == null && !"region".equals(georank)) { %>
+To add a <%= Html.esc(georank) %>, first open the list of the place it belongs to (for an adm1: Country, then the number next to the country), then use the Create box there.
+<%   } else { %>
 <html:form method="POST" action="editGeolocale"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-<input type="hidden" class="input_200" name="georank" value="<%= georank %>">
-<input type="hidden" name="parent" value="<%= parentName %>">
+<input type="hidden" class="input_200" name="georank" value="<%= Html.escAttr(georank) %>">
+<% if (parentName != null) { %><input type="hidden" name="parent" value="<%= Html.escAttr(parentName) %>"><% } %>
 <input type="hidden" name="isCreate" value="true">
-Create <%= georank %> with name:<input type="text" class="input_20" name="name" value="">
+Create <%= Html.esc(georank) %><%= parentName == null ? "" : " in " + Html.esc(parentName) %> with name:<input type="text" class="input_20" name="name" value="">
 <input border="0" type="image" src="<%= domainApp %>/image/addIcon.png" height="23" value="Submit">
+(created not valid and not live; open it afterwards to set its bioregion, map centre and bounding box)
 </html:form>
+<%   }
+   } %>
 
 <br>
 <hr>
 <br>
-After changes are made, click to reload <a href='<%= AntwebProps.getDomainApp() %>/util.do?action=reloadAntwebMgr'>GeolocaleMgr</a> to be sure all changes are made live.
-<br><br>
 <hr>
 <br><br>
 <div class="admin_left">

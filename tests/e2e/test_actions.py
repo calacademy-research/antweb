@@ -55,7 +55,10 @@ def test_removed_actions_stay_removed():
              "/worldAuthoritySave",
              # Curate page clarity (2026-10-20, Brian's decision): "Past upload files" (uploadHistory.do);
              # each specimen upload report and the upload list link the uploaded file.
-             "/uploadHistory"]
+             "/uploadHistory",
+             # Manager Tools removals (2026-10-21, Brian's decision): the older Query Manager list
+             # (the Query Manager, query.do, has the same queries).
+             "/queries"]
     if not IS_PRODUCTION:
         # These two used to update counts; only call them where this change may not be live yet.
         paths += ["/test", "/mobile"]

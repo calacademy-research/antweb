@@ -44,7 +44,7 @@ public final class GeolocaleMgrAction extends AntwebAction {
         }
 
         String georank = editGeolocaleForm.getGeorank();        		
-		if (georank == null) georank = "country";
+		if (georank == null || !java.util.Set.of("region", "subregion", "country", "adm1").contains(georank)) georank = "country";
 		
         Connection connection = null;
         try {
@@ -61,10 +61,15 @@ public final class GeolocaleMgrAction extends AntwebAction {
 			  }
 			  s_log.debug("GeolocaleMgrAction.execute() POST form:" + editGeolocaleForm);
 			  geolocaleDb.adjustGeolocale(editGeolocaleForm);
+			  // Make the change live at once (as Edit Geolocale does), so the site and this list agree.
+			  GeolocaleMgr.populate(connection, true, false);
+			  Geolocale changed = geolocaleDb.getGeolocale(editGeolocaleForm.getId());
+			  if (changed != null) request.setAttribute("message", "Saved " + Html.esc(changed.getName())
+			      + ": valid " + (changed.getIsValid() ? "yes" : "no") + ", live " + (changed.getIsLive() ? "yes" : "no") + ".");
 			}
 
             String orderBy = editGeolocaleForm.getOrderBy();            
-            String parent = editGeolocaleForm.getParent();
+            String parent = EditGeolocaleAction.noneToNull(editGeolocaleForm.getParent());
             
             ArrayList<Geolocale> geolocaleArray = geolocaleDb.getGeolocales(georank, parent, false, orderBy);
 s_log.debug("GeolocaleMgrAction.execute() geolocaleArray.size:" + geolocaleArray.size());

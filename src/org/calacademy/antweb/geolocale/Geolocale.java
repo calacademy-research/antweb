@@ -238,14 +238,19 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         return bioregion;
     }
     public void setBioregion(String bioregion) {
-        this.bioregion = bioregion;
+        this.bioregion = noBioregion(bioregion) ? null : bioregion;
+    }
+
+    /** Older saves of Edit Geolocale stored the menu's "None" as the text "none": that means no bioregion. */
+    static boolean noBioregion(String bioregion) {
+        return bioregion == null || bioregion.trim().isEmpty() || "none".equalsIgnoreCase(bioregion.trim()) || "null".equals(bioregion.trim());
     }
     
     public String getAltBioregion() {
         return altBioregion;
     }
     public void setAltBioregion(String altBioregion) {
-        this.altBioregion = altBioregion;
+        this.altBioregion = noBioregion(altBioregion) ? null : altBioregion;
     }    
 
     /*

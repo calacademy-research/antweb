@@ -37,6 +37,11 @@ public final class BackgroundJobDb implements BackgroundJobs.Store {
         if (dataSource != null) s_dataSource = dataSource;
     }
 
+    /** For jobs started without a page (the count check after the nightly run): only when no page has set one. */
+    public static void setDataSourceIfMissing(DataSource dataSource) {
+        if (s_dataSource == null) setDataSource(dataSource);
+    }
+
     public static String createTable() {
         return "CREATE TABLE IF NOT EXISTS " + TABLE + " ("
             + " id int NOT NULL AUTO_INCREMENT,"

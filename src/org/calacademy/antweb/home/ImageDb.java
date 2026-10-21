@@ -476,7 +476,8 @@ A.log("getFormProps() theQuery:" + theQuery);
           + ", sum(IF(caste = 'worker', 1, 0)) worker"
           + ", sum(IF(caste = 'male', 1, 0)) male"
           + ", sum(IF(caste = 'queen', 1, 0)) queen"
-          + ", sum(IF(caste not in ('worker', 'male', 'queen'), 1, 0)) as other"
+          // NULL caste counts as Other (2026-10-21: it fell in no column, so the four did not add up to Total)
+          + ", sum(IF(caste is null or caste not in ('worker', 'male', 'queen'), 1, 0)) as other"
           + " from specimen s, image i where s.code = i.image_of_id group by status"
           + " order by total desc";
 

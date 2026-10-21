@@ -13,6 +13,7 @@ AntWeb (https://www.antweb.org) is the California Academy of Sciences' database 
 | [catalog/coverage-gaps.md](catalog/coverage-gaps.md) | Rows with no functional e2e test, most important first (uploads, curator saves, login, nightly jobs, public pages). |
 | [flows/README.md](flows/README.md) | **Data flows.** Step by step, with class and file names: specimen upload (curator file and TaxonWorks), image upload, AntCat names to AntWeb, the nightly sets 1 to 5; plus the test gaps and findings for these areas. |
 | [guides/curate-page.md](guides/curate-page.md) | **Curate page guide** for curators and admins: each tool on the Curator Tools page, in page order, what it is for and how to use it. |
+| [guides/manager-tools.md](guides/manager-tools.md) | **Manager Tools guide** for admins: Museum, Geolocale, Project Manager, Photographers, Admin Alert, Bioregion and Introduced Map, Query and Log Manager; fields, what saving does, pitfalls. |
 | [../tests/e2e/README.md](../tests/e2e/README.md) | The end-to-end test suite: what each test file checks and how to run it. |
 | [RELEASING.md](RELEASING.md), [VERSIONING.md](VERSIONING.md) | How a release is made and numbered. |
 

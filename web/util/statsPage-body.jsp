@@ -20,7 +20,7 @@
 <br><br><br>
 
 <h2>Current Statistics:</h2>                    
-<br><b><%= A.commaFormat(TaxonMgr.getValidTaxonCount()) %> valid species + ssp.</b>
+<br><b data-stat="valid-species"><%= A.commaFormat(TaxonMgr.getValidSpeciesCount()) %> valid species + ssp.</b>
 <br>&nbsp;&nbsp;Valid species and subspecies.
  
 <br><br><b><%= A.commaFormat(AntwebMgr.getSpecimensCount()) %> specimen records</b>
@@ -60,8 +60,12 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
     int grandTotal = 0, workers = 0, males = 0, queens = 0, others = 0;
     HashMap<String, int[]> imageStats = (HashMap<String, int[]>) request.getAttribute("imageStats");
     
-    String[] keys = {"valid", "morphotaxon", "indetermined", "unrecognized", "unavailable", "unidentifiable"};
+    // Every status in the table (2026-10-21: six fixed statuses only, so the Sum row left the others out).
+    ArrayList<String> keys = new ArrayList<String>(java.util.Arrays.asList("valid", "morphotaxon", "indetermined", "unrecognized", "unavailable", "unidentifiable"));
     if (imageStats != null) {
+        java.util.TreeSet<String> more = new java.util.TreeSet<String>();
+        for (String k : imageStats.keySet()) if (k != null && !keys.contains(k)) more.add(k);
+        keys.addAll(more);
         for (String status : keys) {
           int[] stats = imageStats.get(status);
           if (stats != null) {

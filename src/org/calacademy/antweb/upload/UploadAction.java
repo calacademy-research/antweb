@@ -336,23 +336,8 @@ public class UploadAction extends AntwebAction {
 				return mapping.findForward("message");
 			}
 
-			// Create Project
-			if (!theForm.getCreateProject().equals("none")) {
-				String createProject = theForm.getCreateProject();
-
-				if (!Project.isProjectName(createProject)) {
-					request.setAttribute("message", "Project name must be lowercased, have no spaces, and end with 'ants'");
-					return mapping.findForward("message");
-				}
-
-				String url = AntwebProps.getDomainApp() + "/editProject.do?projectName=" + Html.url(createProject);
-				String anchorTag = "<a href='" + Html.escAttr(url) + "'>Here</a>";
-				String message = "To create project <b>" + Html.esc(createProject) + "</b> click: <b>" + anchorTag + "</b>. <br><br>&nbsp;&nbsp;&nbsp;Once you click 'Done', the project will be created.";
-				//s_log.into("execute() " + message);
-
-				request.setAttribute("message", message);
-				return mapping.findForward("message");
-			}
+			// The old "Create Project" step (createProject=..., a "click Here" page) was removed on
+			// 2026-10-21; projects are created in the Project Manager. The field is ignored.
 
 			if (!theForm.getEditSpeciesList().equals("none")) {
 				String editSpeciesList = theForm.getEditSpeciesList();
@@ -530,8 +515,10 @@ public class UploadAction extends AntwebAction {
 			UploadDetails uploadDetails = new SpeciesListUploader(connection).worldantsFetchAndReload();
 			String message = uploadDetails.getMessage();
 			if (message != null && !"success".equals(message)) {
-				AdminAlertMgr.add(message, connection);
 				DBUtil.rollback(connection);
+				// The alert is written after the rollback, in its own committed statement.
+				try { connection.setAutoCommit(true); } catch (SQLException e) { s_log.warn("runWorldantsImport() autocommit e:" + e); }
+				AdminAlertMgr.add("AntCat import failed: " + message, connection);
 				return BackgroundJobs.Outcome.failed(message);
 			}
 			BackgroundJobs.step("Saving a statistics snapshot and writing the report.");

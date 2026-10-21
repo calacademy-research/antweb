@@ -79,8 +79,9 @@ import org.calacademy.antweb.home.*;
         return message;
     }
 
-    /** SQL that sets a project list's count columns to 0 before the crawl (subfamily_count is left as it is). */
-    public static final String RESET_SQL = "update proj_taxon set specimen_count = 0, species_count = 0, genus_count = 0 where project_name = ?";
+    /** SQL that sets a project list's count columns to 0 before the crawl (2026-10-21: subfamily_count too;
+     *  the crawl writes it on the formicidae row, other rows kept old values). */
+    public static final String RESET_SQL = "update proj_taxon set specimen_count = 0, species_count = 0, genus_count = 0, subfamily_count = 0 where project_name = ?";
 
     /** One project list: counts set to 0, then counted again from the specimens. */
     public void recount(Project project) throws SQLException {
@@ -139,6 +140,10 @@ import org.calacademy.antweb.home.*;
             //countSpeciesImages();
           }
                 
+          // Every row starts at 0 (2026-10-21), as for the other lists: the crawl writes only names with
+          // specimens, so a project row whose images were deleted kept its old Images number.
+          resetImageCounts("proj_taxon");
+
           //String project = "tokelauants";  
           ArrayList<Project> projects = ProjectMgr.getLiveProjects();
           for (Project project : projects) {

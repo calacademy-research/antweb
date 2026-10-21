@@ -104,7 +104,7 @@
 				
 		<ul>
 		<li><b>Specimens:</b></li>
-		<li><a href="<%= AntwebProps.getDomainApp() %>/advancedSearch.do?searchMethod=advancedSearch&advanced=true&familySearchType=equals&family=Formicidae&groupName=<%= group.getName() %>&statusSet=all"><%= Formatter.commaFormat(lastUpload.getSpecimens()) %></a></li>
+		<li><a rel="nofollow" href="<%= AntwebProps.getDomainApp() %>/advancedSearch.do?searchMethod=advancedSearch&advanced=true&familySearchType=equals&family=Formicidae&groupName=<%= group.getName() %>&statusSet=all"><%= Formatter.commaFormat(lastUpload.getSpecimens()) %></a></li>
 		</ul>
 
 		<ul>
@@ -124,7 +124,7 @@
 
 		<ul>
 		<li><b>Localities:</b></li>
-		<li><a href='<%= AntwebProps.getDomainApp() %>/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=Formicidae&groupName=<%= group.getName() %>&output=mapLocality'><%= Formatter.commaFormat(lastUpload.getLocalities()) %></a></li>
+		<li><a rel='nofollow' href='<%= AntwebProps.getDomainApp() %>/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=Formicidae&groupName=<%= group.getName() %>&output=mapLocality'><%= Formatter.commaFormat(lastUpload.getLocalities()) %></a></li>
 		</ul>
 
 		<ul>

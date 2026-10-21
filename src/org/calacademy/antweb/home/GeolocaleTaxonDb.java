@@ -768,6 +768,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 
             query = "select distinct country, adm1, taxon_name "
                     + " from specimen where (status = 'valid')"
+                    + " and " + SpecimenDb.getAntSpecimenCriteria("specimen")  // non-ants: by search only (2026-10-21)
                     + " and " + SpecimenDb.getFlagCriteria() + " and country is not null"
                     + clause
 
@@ -775,6 +776,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 
                     + "select distinct island_country, adm1, taxon_name " // adm1 will generally be null
                     + " from specimen where (status = 'valid')"
+                    + " and " + SpecimenDb.getAntSpecimenCriteria("specimen")
                     + " and " + SpecimenDb.getFlagCriteria() + " and island_country is not null"
                     + clause
 

@@ -90,7 +90,7 @@ public final class Adm1MgrAction extends AntwebAction {
               ++i;
               String code = rset.getString("code");
               //A.log("Adm1MgrAction code:" + code);
-              String codeTag = " <a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a>";
+              String codeTag = " <a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.escAttr(Html.url(code)) + "'>" + Html.esc(code) + "</a>";
               if (i > 1) codeTag = ", " + codeTag;
               codeStr += codeTag;
               if (i >= 20) {

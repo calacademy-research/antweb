@@ -15,7 +15,10 @@ As the test uploader (ANTWEB_TEST_UPLOADER_*, a curator of "ZZ Test Group (stagi
      zztest0006  Pachycondyla sauteri, a name of two -> kept under the uploaded name, report "Needs the
                  AntCat taxa (when this server has it)    curator's decision" with both AntCat taxa linked,
                                                        the same line as on nameUpdates.do (SharedNameReport)
-   then check the report, the specimen pages and the group's upload list;
+   then check the report, the specimen pages and the group's upload list. Every report line ends with
+   "N specimens" and the collapsed list of its codes linked to the specimen pages (SpecimenCodes, the
+   Name updates page's markup): zztest0002 on its "Recognized invalid species" line, zztest0003 on its
+   "Unrecognized" line;
 2. upload the 2-line baseline (zztest0001, zztest0002): the upload replaces the group's data, so
    zztest0003, zztest0005 and zztest0006 are gone. The group is left at this baseline (an upload cannot leave
    a group empty except through bug 1 below; tools/staging/create-test-accounts.py --remove
@@ -162,6 +165,12 @@ def test_specimen_upload_round_trip(uploader, names):
     assert 'class="name-update-reason"' in recognized, _text(recognized)[:400]
     unrecognized = _section(report, "Unrecognized Invalid species")
     assert UNKNOWN_SPECIES in unrecognized, _text(unrecognized or report)[:400]
+    # Each line ends with "N specimens" and the collapsed list of its codes, linked to the specimen pages,
+    # as on the Name updates page (SpecimenCodes, 2026-10-21).
+    for sec, n in ((recognized, 2), (unrecognized, 3)):
+        assert '<details class="specimen-codes"' in sec, _text(sec)[:400]
+        assert f'/specimen.do?name={code(n)}">{code(n)}</a>' in sec, (code(n), sec[:1500])
+        assert re.search(r"<summary>\d[\d,]* specimens?</summary>", sec), sec[:1500]
     refused = _section(report, "Specimen code with characters other than")
     assert code(4) in refused and "not uploaded" in refused, _text(report)[:600]
     assert ("Lat/Long not within country" in report or "Lat/Long not within adm1" in report), \
