@@ -239,6 +239,24 @@ jobs:
       - name: Staging test accounts tool (tests/unit/test_staging_accounts.py)
         run: python3 tests/unit/test_staging_accounts.py
 
+      - name: Staging refresh scripts (shellcheck; guards, dump checks, disk estimate, cleanup safe list, cron line)
+        run: |
+          shellcheck -S warning tools/staging/*.sh
+          python3 tests/unit/test_staging_refresh.py
+
+      - name: Staging refresh database steps against MySQL 8.4 (scrub.sql; test logins put back with their passwords)
+        run: |
+          docker run -d --name refreshmysql -e MYSQL_ROOT_PASSWORD=ci-root -e MYSQL_DATABASE=ant \
+            -v "$PWD/docker/mysql/mysql_stage.cnf:/etc/mysql/conf.d/custom.cnf:ro" mysql:8.4 --mysql-native-password=ON
+          ok=0
+          for i in $(seq 1 90); do
+            if docker exec refreshmysql mysql -uroot -pci-root -h127.0.0.1 ant -e "select 1" >/dev/null 2>&1; then ok=1; break; fi
+            sleep 2
+          done
+          [ "$ok" = 1 ] || { docker logs refreshmysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
+          STAGING_REFRESH_DB_CONTAINER=refreshmysql STAGING_REFRESH_DB_PASSWORD=ci-root python3 tests/unit/test_staging_refresh_db.py
+          docker rm -f refreshmysql
+
       - name: No email tells the reader to ignore it (tests/unit/test_email_texts.py)
         run: python3 tests/unit/test_email_texts.py
 
