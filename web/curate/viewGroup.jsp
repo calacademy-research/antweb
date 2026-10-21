@@ -13,6 +13,6 @@
 <%@include file="/curate/adminCheck.jsp" %>
 
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">
-    <tiles:put name="title" value="ViewingGroup Info - AntWeb" />
+    <tiles:put name="title" value="Upload group - AntWeb" />
     <tiles:put name="body-content" value="/curate/viewGroup-body.jsp" />    
 </tiles:insert>

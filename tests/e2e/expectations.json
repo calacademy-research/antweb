@@ -2,6 +2,7 @@
  "actions": {
   "/": "ok",
   "/about": "ok",
+  "/addUploader": "login",
   "/adm1": "message",
   "/adm1Mgr": "login",
   "/adm1s": "ok",
@@ -141,7 +142,7 @@
   "/uploadReport": "message",
   "/uptime": "ok",
   "/validateSpeciesList": "login",
-  "/viewGroup": "error_page",
+  "/viewGroup": "login",
   "/viewGroups": "login",
   "/viewLogin": "login",
   "/viewLogins": "login",

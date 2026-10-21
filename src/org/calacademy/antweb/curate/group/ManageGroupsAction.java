@@ -28,6 +28,8 @@ public class ManageGroupsAction extends AntwebAction {
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
 
+        ActionForward denied = org.calacademy.antweb.util.LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
+
         Connection connection = null;
         ArrayList<Group> groupList = null;
 

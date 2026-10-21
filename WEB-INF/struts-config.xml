@@ -982,6 +982,15 @@ We would like to remove getChildImages.  Not needed now in the new UI
       <forward name="success" path="/curate/viewGroup.jsp" />
     </action>
 
+    <!-- Admin: add an uploader (find or invite the login, existing or new upload group, upload
+         rights, welcome email preview sent on click). docs/guides/adding-an-uploader.md -->
+    <action path="/addUploader"
+            type="org.calacademy.antweb.curate.group.AddUploaderAction"
+            scope="request"
+            validate="false">
+      <forward name="success" path="/curate/addUploader.jsp" />
+    </action>
+
     <!-- see masterAdmin.do above - links directory to /curate/antwebAdmin.jsp -->
 
 <!-- Login -->               

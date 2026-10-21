@@ -318,6 +318,40 @@ jobs:
             grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
+      - name: Add an uploader (input checks and welcome email; database steps against MySQL 8.4)
+        # UploaderOnboardingTest: the form's checks and the welcome email text (escaped, no "ignore").
+        # UploaderOnboardingDbTest: new person and new upload group, existing account by email or
+        # username, moving only when asked, refusals change nothing, login.created kept, inactive
+        # accounts get a link, a group with logins or specimens is not deleted.
+        run: |
+          docker network create ugcheck
+          docker run -d --name ugmysql --network ugcheck -e MYSQL_ROOT_PASSWORD=ci-root \
+            -e MYSQL_DATABASE=ant -e MYSQL_USER=antweb -e MYSQL_PASSWORD=CHANGE_ME mysql:8.4 --mysql-native-password=ON
+          ok=0
+          for i in $(seq 1 90); do
+            if docker exec ugmysql mysql -uroot -pci-root -h127.0.0.1 -e "select 1" >/dev/null 2>&1; then ok=1; break; fi
+            sleep 2
+          done
+          [ "$ok" = 1 ] || { docker logs ugmysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
+          docker exec ugmysql mysql -uroot -pci-root -h127.0.0.1 -e "ALTER USER 'antweb'@'%' IDENTIFIED WITH mysql_native_password BY 'CHANGE_ME'"
+          docker run --rm --network ugcheck --entrypoint sh -v "$PWD/test:/t:ro" \
+            -e ANTWEB_TEST_DB_URL="jdbc:mysql://ugmysql:3306/ant?useSSL=false&allowPublicKeyRetrieval=true" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/curate/group/UploaderOnboarding.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc \
+              /t/org/calacademy/antweb/curate/UploaderOnboardingTest.java /t/org/calacademy/antweb/curate/UploaderOnboardingDbTest.java
+            for t in curate.UploaderOnboardingTest:5 curate.UploaderOnboardingDbTest:10; do
+              cls=${t%%:*}; n=${t##*:}
+              java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+              grep -v "LogMgr" /tmp/out.txt | tail -3
+              grep -q "^OK ($n tests)" /tmp/out.txt || { cat /tmp/out.txt; echo "::error::$cls"; exit 1; }
+            done
+          '
+          docker rm -f ugmysql
+
       - name: Java unit tests of the image picker (taxon name properties, Pick buttons not inside another form)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/web:/w:ro" antweb/antweb:dev -c '

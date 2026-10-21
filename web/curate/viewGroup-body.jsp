@@ -22,11 +22,15 @@
 <div class=right>
     <br>
     <a href="<%= AntwebProps.getDomainApp() %>/viewLogins.do">Login Manager</a>
-    <br><a href="<%= AntwebProps.getDomainApp() %>/viewGroups.do">Group Manager</a>
+    <br><a href="<%= AntwebProps.getDomainApp() %>/viewGroups.do">Upload groups</a>
+    <br><a href="<%= AntwebProps.getDomainApp() %>/addUploader.do">Add an uploader</a>
 </div>
 
 <div class="admin_left">
-    <h1>Group Form</h1>
+<%
+    boolean isNewGroup = request.getAttribute("isNewGroup") != null || "true".equals(request.getParameter("newGroup"));  // group 0 ("Default Group") is an existing group
+%>
+    <h1><%= isNewGroup ? "New upload group" : "Upload group: " + Html.esc(thisGroup.getName()) %></h1>
 
     <logic:messagesPresent property="error">
         <h2>Sorry, you need to correct the following errors:</h2>
@@ -38,19 +42,21 @@
     </logic:messagesPresent>
 
     <div style="border:1px solid #ccc;background:#f7f7f7;padding:8px 12px;margin:10px 0;max-width:760px">
-    <p><b>What a group is:</b> a group is the institution or lab that owns specimen records on AntWeb (a museum, a university lab, or one curator's collection). Every specimen record belongs to one group, and the group's curators can upload and edit its records.</p>
+    <p><b>What an upload group is:</b> the institution or lab that owns specimen records on AntWeb (a museum, a university lab, or one curator's collection). Every specimen record belongs to one upload group, and the logins in the group can upload its records. <b>An upload replaces all specimens of the uploader's upload group.</b> (In the database and older pages: "group", table ant_group.)</p>
+    <p><b>Adding someone who wants to upload:</b> use <a href="<%= domainApp %>/addUploader.do">Add an uploader</a>; it creates the upload group, the login and the rights in one step.</p>
     <p><b>Where these values show:</b> the group's name on specimen pages and the list of contributors; the short name in reports and summaries where space is short (upload reports, the Name updates summary in compute.log).</p>
     </div>
 
     <form action="<%= domainApp %>/saveGroup.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
-    <p><b>Group number</b> (Institution ID)<br>
-    <input type="text" class="input_200" name="id" value="<%= thisGroup.getId() %>">
-    <br><span style="color:#666">AntWeb's number for this group. Set once when the group is created; do not change it later (every specimen record of the group refers to it). Example: <code>62</code>.</span></p>
+    <p><b>Upload group number</b><br>
+    <% if (isNewGroup) { %>given when you click Done (the next free number)<% } else { %><%= thisGroup.getId() %><% } %>
+    <input type="hidden" name="id" value="<%= thisGroup.getId() %>">
+    <br><span style="color:#666">AntWeb's number for this upload group (every specimen record of the group refers to it). It cannot be changed. Example: <code>62</code>.</span></p>
 
     <p><b>Full name</b> (Institution Name)<br>
     <input type="text" class="input_200" name="name" value="<%= Html.escAttr(thisGroup.getName()) %>">
-    <br><span style="color:#666">The name people see on specimen pages and in the list of contributors: the institution, the lab, or "Curator" and the person's name for a personal collection. Examples: <code>Archbold Biological Station</code>, <code>Economo Ant Lab</code>, <code>Curator Kiko Gomez</code>.</span></p>
+    <br><span style="color:#666">Required. The name people see on specimen pages and in the list of contributors: the institution, the lab, or "Curator" and the person's name for a personal collection. Examples: <code>Archbold Biological Station</code>, <code>Economo Ant Lab</code>, <code>Curator Kiko Gomez</code>.</span></p>
 
     <p><b>Short name</b> (Institution Abbreviation)<br>
     <input type="text" class="input_200" name="abbrev" value="<%= Html.escAttr(thisGroup.getAbbrev() == null ? "" : thisGroup.getAbbrev()) %>">
@@ -59,7 +65,7 @@
 <%
     String selected = null;
 %>
-    <p><b>Group admin</b> (Group Admin Curator)<br>
+    <p><b>Admin curator</b> of the upload group<br>
       <select name="adminLoginId">  <!-- %= disabled % -->
         <%
            selected = "";
@@ -78,17 +84,18 @@
           <option value='<%= curator.getId() %>' <%= selected %>><%= Html.esc(curator.getDisplayName()) %></option>
         <% } %>	
       </select>
-    <br><span style="color:#666">The curator responsible for this group's records; AntWeb contacts this person about the group's uploads. Choose None only for a group nobody manages any more. Example: the lab head or collection manager.</span></p>
+    <br><span style="color:#666">The curator responsible for this upload group's records; AntWeb contacts this person about the group's uploads. The list shows logins that already belong to an upload group: for a new group choose None, then add the person with <a href="<%= domainApp %>/addUploader.do">Add an uploader</a> (it makes them the admin curator of a group that has none). Example: the lab head or collection manager.</span></p>
 
     <br>
 
 
 
-    <logic:present parameter="isNewGroup">
+    <% if (isNewGroup) { %>
     <input type="hidden" name="newGroup" value="true">
-    </logic:present>
+    <% } %>
 
-    <p><b>Curators of this group</b> <span style="color:#666">(logins that belong to the group; change them on each login's page in the Login Manager)</span>
+    <p><b>Logins in this upload group</b> <span style="color:#666">(they upload this group's specimens; change a login's group on its page in the Login Manager)</span>
+    <% if (!isNewGroup) { %><br>&nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/addUploader.do?groupId=existing&amp;existingGroupId=<%= thisGroup.getId() %>">Add an uploader to this upload group</a><% } %>
     <% 
      ArrayList<Curator> curators = thisGroup.getCurators()  ;
      if (curators != null) {
@@ -115,9 +122,10 @@
         <a href="<%= domainApp %>/viewGroups.do"><img border=0" src="<%= domainApp %>/image/grey_cancel.gif" width="123" height="36"></a>
 
         <!-- input border="0" type="image"  width="98" height="36" name="delete" value="Delete" -->
-        <html:submit property="step"> 
-        <bean:message key="button.delete"/> 
-        </html:submit>
+        <% if (!isNewGroup) { %>
+        <%-- Refused by SaveGroupAction while the group has logins or specimens. --%>
+        <input type="submit" name="step" value="delete" onclick="return confirm('Delete this upload group? This is refused while it has logins or specimens.')">
+        <% } %>
 
 
         <br><br>

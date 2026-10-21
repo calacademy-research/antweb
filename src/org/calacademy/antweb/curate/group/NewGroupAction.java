@@ -27,6 +27,8 @@ public class NewGroupAction extends AntwebAction {
     public ActionForward execute( ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) {
 
+        ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
+
         Connection connection = null;
         String query;
         int newGroupId = 0;

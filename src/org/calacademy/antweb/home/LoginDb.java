@@ -542,7 +542,9 @@ public class LoginDb extends AntwebDb {
     
         PreparedStatement stmt = null;
         try {
-            String theUpdate = "update login set last_login = now() where id = ?";
+            // "created = created": login.created is ON UPDATE CURRENT_TIMESTAMP in production, so
+            // without it every login overwrote the account's creation date.
+            String theUpdate = "update login set last_login = now(), created = created where id = ?";
             stmt = getConnection().prepareStatement(theUpdate);
 
             stmt.setInt(1, login.getId());
@@ -584,7 +586,7 @@ public class LoginDb extends AntwebDb {
             try {
                 if (isSelfUpdate && !isAdminUpdate) {
                     String selfUpdate = "update login "
-                            + "set name = ?, first_name = ?, last_name = ?, email = ?, password = ? "
+                            + "set name = ?, first_name = ?, last_name = ?, email = ?, password = ?, created = created "
                             + "where id = ?";
 
                     theUpdate = selfUpdate;
@@ -599,7 +601,7 @@ public class LoginDb extends AntwebDb {
                     stmt.setInt(6, login.getId());
                 } else if (isAdminUpdate && !isSelfUpdate) {
                     String adminUpdate = "update login "
-                            + "set name = ?, first_name = ?, last_name = ?, email = ?, group_id = ?, is_admin = ?, is_upload_specimens = ?, is_upload_images = ?, upload_as = ? "
+                            + "set name = ?, first_name = ?, last_name = ?, email = ?, group_id = ?, is_admin = ?, is_upload_specimens = ?, is_upload_images = ?, upload_as = ?, created = created "
                             + "where id = ?";
 
                     theUpdate = adminUpdate;
@@ -617,7 +619,7 @@ public class LoginDb extends AntwebDb {
                     stmt.setInt(10, login.getId());
                 } else if (isAdminUpdate && isSelfUpdate) {
                     String adminSelfUpdate = "update login "
-                            + "set name = ?, first_name = ?, last_name = ?, email = ?, password = ?, group_id = ?, is_admin = ?, is_upload_specimens = ?, is_upload_images = ?, upload_as = ? "
+                            + "set name = ?, first_name = ?, last_name = ?, email = ?, password = ?, group_id = ?, is_admin = ?, is_upload_specimens = ?, is_upload_images = ?, upload_as = ?, created = created "
                             + "where id = ?";
 
                     theUpdate = adminSelfUpdate;
@@ -756,7 +758,8 @@ public class LoginDb extends AntwebDb {
         String query;
 
         if (namePresent && emailPresent) {
-            query = "select count(*) as num from login where (name = ? or email = ?) or (name = ? or email = ?) and id != ?";
+            // Parentheses: "and id != ?" applies to both name and email (AND binds tighter than OR).
+            query = "select count(*) as num from login where ((name = ? or email = ?) or (name = ? or email = ?)) and id != ?";
         } else {
             query = "select count(*) as num from login where (name = ? or email = ?) and id != ?";   // we can fill with either email or name
         }
@@ -841,7 +844,7 @@ public class LoginDb extends AntwebDb {
 
         PreparedStatement stmt = null;
         try {
-            String theUpdate = "update login set password = ? where id = ?";
+            String theUpdate = "update login set password = ?, created = created where id = ?";
             stmt = getConnection().prepareStatement(theUpdate);
 
             String stored = PasswordHash.forStorage(newPassword);  // never store plain text
@@ -889,7 +892,7 @@ public class LoginDb extends AntwebDb {
         }
         int count = 0;
         // Only replace the value we read, in case the user changed it meanwhile.
-        try (PreparedStatement update = getConnection().prepareStatement("update login set password = ? where id = ? and password = ?")) {
+        try (PreparedStatement update = getConnection().prepareStatement("update login set password = ?, created = created where id = ? and password = ?")) {
             for (int i = 0; i < ids.size(); i++) {
                 update.setString(1, PasswordHash.hash(plain.get(i)));
                 update.setInt(2, ids.get(i));

@@ -31,7 +31,9 @@
 
     <br><br>
     <form action="<%= secureDomainApp %>/newLogin.do" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-    <b>Add New Login: <input type=submit class=submit value="Add &#187;"></b>
+    <b>Someone wants to upload specimens?</b> Use <a href="<%= secureDomainApp %>/addUploader.do">Add an uploader</a>
+    (finds or invites the person, chooses or creates their upload group, gives the upload rights, prepares the welcome email).
+    <br><br><b>Add New Login (any other account): <input type=submit class=submit value="Add &#187;"></b>
     <p><p><p><p>
     </form>
     <p><br>
@@ -41,8 +43,8 @@
 
     <tr>
     <th>#</th>
-    <th>Name</a></th>
-    <th>Group</a></th>
+    <th>Name</th>
+    <th>Upload group</th>
     </tr>   
     <% String hrLine = "<tr><td><hr></td><td><hr></td><td><hr></td></tr>"; %>
     <%= hrLine %>
@@ -63,7 +65,7 @@
 
 <div class=right>
     <br>
-    <a href="<%= AntwebProps.getDomainApp() %>/viewGroups.do">Group Manager</a>
+    <a href="<%= AntwebProps.getDomainApp() %>/viewGroups.do">Upload groups</a>
     <br><br>
     <div class=green_module>
        <span class=module_header>NOTE:</span>

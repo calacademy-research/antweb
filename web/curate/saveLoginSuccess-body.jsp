@@ -19,7 +19,7 @@ You have successfully modified login information.
 
 <% if (LoginMgr.isAdmin(request)) { %>
 <p>&nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/viewLogins.do">Login Manager</a>
-<br>&nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/viewGroups.do">Group Manager</a>
+<br>&nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/viewGroups.do">Upload groups</a>
 <% } else { %>
 <p><a href="<%= domainApp %>/curate.do">Return to Curatorial Tools</a>.
 <% } %>
