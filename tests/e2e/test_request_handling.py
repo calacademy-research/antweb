@@ -172,6 +172,8 @@ def test_map_manager_quotes_are_refused(curator, deployed, action, word, taxon):
     out = _clean(r)
     if action == "/introducedMapMgr.do" and out.category == "login":
         return   # administrators only since 2026-10-18: refused before the name is read
+    if action == "/bioregionMapMgr.do" and "Only an administrator can change the native bioregions" in r.text:
+        return   # saving a genus is for administrators since 2026-10-21: refused before the name is read
     assert f"unknown {word}" in r.text, r.text[:300]
 
 

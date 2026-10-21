@@ -364,6 +364,12 @@ public class UtilDataAction extends AntwebAction {
                 message = "set2 - ";
                 message += doAction("dataCleanup", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("generateGeolocaleTaxaFromSpecimens", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 12.30 mins
+                // Synonym rows of the lists renamed to (or merged into) their current valid name BEFORE the counts
+                // (2026-10-21). It ran only in set 3, after the geolocale and project totals: a merged synonym row
+                // left its specimens in the total but not in any row, so Specimens was larger than the sum of the
+                // species rows on every country, adm1, region and project (count check, place.totals.specimens).
+                // Set 3 still runs it for the museum and bioregion lists it rebuilds.
+                message += " " + doAction("updateTaxonSets", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("geolocaleCountCrawl", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 30.48 mins
                 message += " " + doAction("geolocaleTaxonFix", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 1.00 mins
                 //GeolocaleMgr.populate(connection, true, false); // Unnecessary. We reload all in set5.

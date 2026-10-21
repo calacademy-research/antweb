@@ -44,10 +44,11 @@ public class PlaceImageCountDbTest extends TestCase {
                                       "museum", "bioregion", "museum_taxon", "bioregion_taxon", "upload", "place_image_count"}) {
             exec("drop table if exists " + t);
         }
-        exec("create table taxon (taxon_name varchar(128) primary key, taxarank varchar(20), status varchar(40), parent_taxon_name varchar(128))");
+        exec("create table taxon (taxon_name varchar(128) primary key, taxarank varchar(20), status varchar(40), parent_taxon_name varchar(128),"
+            + " family varchar(64) default 'formicidae')");   // place numbers count ants only (2026-10-21)
         exec("create table specimen (code varchar(128) primary key, taxon_name varchar(128), status varchar(40), country varchar(64),"
             + " adm1 varchar(64), island_country varchar(64), museum varchar(64), bioregion varchar(64), upload_id int,"
-            + " family varchar(64), subfamily varchar(64), genus varchar(64), species varchar(64), image_count int default 0)");
+            + " family varchar(64) default 'formicidae', subfamily varchar(64), genus varchar(64), species varchar(64), image_count int default 0)");
         exec("create table image (id int primary key, image_of_id varchar(128), shot_type varchar(10), upload_date datetime)");
         exec("create table geolocale (id int primary key, name varchar(128), georank varchar(20), parent varchar(128), is_valid tinyint default 1,"
             + " is_island tinyint default 0, image_count int default 0, imaged_specimen_count int default 0)");
@@ -70,11 +71,11 @@ public class PlaceImageCountDbTest extends TestCase {
         exec("insert into upload values (1, '2020-01-01 10:00:00')");
         exec(PlaceImageCountDb.createTable(null, null));   // as the application does at startup
 
-        exec("insert into taxon values ('" + SUBFAMILY + "', 'subfamily', 'valid', 'formicidae')");
-        exec("insert into taxon values ('" + GENUS + "', 'genus', 'valid', '" + SUBFAMILY + "')");
-        exec("insert into taxon values ('" + SP_A + "', 'species', 'morphotaxon', '" + GENUS + "')");
-        exec("insert into taxon values ('" + SP_B + "', 'species', 'valid', '" + GENUS + "')");
-        exec("insert into taxon values ('" + SP_C + "', 'species', 'valid', '" + GENUS + "')");
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name) values ('" + SUBFAMILY + "', 'subfamily', 'valid', 'formicidae')");
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name) values ('" + GENUS + "', 'genus', 'valid', '" + SUBFAMILY + "')");
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name) values ('" + SP_A + "', 'species', 'morphotaxon', '" + GENUS + "')");
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name) values ('" + SP_B + "', 'species', 'valid', '" + GENUS + "')");
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name) values ('" + SP_C + "', 'species', 'valid', '" + GENUS + "')");
 
         exec("insert into geolocale values (7, 'Madagascar', 'country', 'Eastern Africa', 1, 1, 3435, 9999)");   // stale numbers, as before the fix
         exec("insert into geolocale values (8, 'Comoros', 'country', 'Eastern Africa', 1, 0, 0, 0)");

@@ -26,11 +26,18 @@ A difference the check finds is **real** (the site shows a wrong number) or **pe
 the last nightly run: an upload, new images, a list edit, a name update by hand; or the number's rule changed on
 2026-10-21 and no nightly run has counted it that way yet). The end-to-end test fails on real differences.
 
-Run time: the check runs inside the request and is bounded: the invariants over every place, then the core
-places, then the rotating slice until the whole check has run 50 seconds (parameter `seconds`, 0 to 600); places
-of the slice not reached are listed on the page. Measured on a copy of production's size (1,000,000 specimens,
-1,100,000 images, 63,000 taxa, 4,300 geolocales, 380,000 geolocale list rows; MySQL 8.0, 2 cores, 2 GB buffer
-pool): invariants 29 s, recount of 4 core and 175 rotating places 18 s, 46 s in all. The page prints its run time.
+Run time: the whole check runs as a background job (CountCheckJob, BackgroundJobs; staging took 107 seconds,
+over Cloudflare's 100-second limit for a request). `countCheck.do` shows the latest report or starts the job
+(`countCheck.do?run=1`) and sends the browser to `jobStatus.do?id=N`; the report is `countCheck.do?job=N`. The
+nightly run starts the same job when it has finished, so the check runs every day on staging and production,
+read-only. Order: the invariants over every place, the core places, then the rotating slice until the whole check
+has run 300 seconds (parameter `seconds`, 0 to 600); places of the slice not reached are listed. With the
+invariants run, the rotating places skip the genus, subfamily and Global recounts (checked for every place).
+The report prints the time of each part. The end-to-end test fails when the job takes over 10 minutes or does not
+finish. Measured on a copy of production's size (1,000,000 specimens, 1,100,000 images, 63,000 taxa, 4,300
+geolocales, 380,000 geolocale list rows; MySQL 8.0, 2 cores): every place 29 to 35 s, core places 7 s, 175
+rotating places 14 s. A check of given places (`geolocaleId`, `project`, `museum`, `bioregion`) still runs in
+the request.
 
 Status: **yes** = the number is compared with an independent recount or with the number it must equal, on every
 place (or a rotating sample covering every place); **partly** = only some places or parts, or only a consistency
@@ -76,7 +83,7 @@ Coverage after 2026-10-21: **42 validated, 22 partly, 54 not yet** of 118 (befor
 | 32 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Label images | PlaceImageCountDb: shot type l | yes | cc:place images; inv:place.images |
 | 33 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Imaged specimens / Images before set 4 ran once | place table image_count, imaged_specimen_count | yes | cc:place images; inv:place.images |
 | 34 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Species per Subfamily pie | PlaceTotals.speciesPieSql: the rows of Species by subfamily (geolocales counted rank species only; projects and bioregions every rank) | yes | inv:place.pies; junit:PlaceTotalsDbTest#testPiesOfMuseumsAndBioregionsCountTheirOwnSpecimens |
-| 35 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Specimens per Subfamily pie | PlaceTotals.specimenPieSql: geolocales, projects the species rows' specimens; museums, bioregions their own specimens (were every specimen in AntWeb of their names) | yes | inv:place.pies; junit:PlaceTotalsDbTest#testPiesOfMuseumsAndBioregionsCountTheirOwnSpecimens |
+| 35 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Specimens per Subfamily pie | PlaceTotals.specimenPieSql: geolocales, projects the species rows' specimens; museums, bioregions their own specimens (were every specimen in AntWeb of their names); one Other slice for names that are not a subfamily; fitted to its column, a chart never stops an upload | yes | inv:place.pies; junit:PlaceTotalsDbTest#testPiesOfMuseumsAndBioregionsCountTheirOwnSpecimens |
 | 36 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Taxa menu N Species | = #22 (getSpeciesCount()) | yes | inv:place.totals.species |
 | 37 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Admin: species count link | = #22 | yes | inv:place.totals.species |
 | 38 | taxonomicPage.do, browse.do | List header N [status] Species / Genera / Subfamilies | live: rows shown (session status set) | not yet | not yet: e2e comparing the header (statusSet=all) with #20-#22 |
@@ -194,6 +201,18 @@ Checked again against master after #189, #191, #192, #204 and #206.
 
 Found while doing this (not in the 24):
 
+- **B27** (fixed 2026-10-21): place Specimens larger than the sum of the species rows on every country, adm1,
+  region, subregion and project (staging: 110 places, Brazil 20,981 against 20,678). Cause: set 3 renames the
+  list rows of synonyms to their current valid name and deletes a synonym row when the valid name already has
+  one (`TaxonSetDb.updateTaxonSetTaxonNames`), after set 2 had summed the rows into the total. Now it also runs
+  in set 2 before the counts. Projects also had B2 (totals before their list).
+- **Ants only** (Brian Fisher, 2026-10-21): specimens of other families stay in AntWeb but are not counted on
+  place pages. Subfamilies, Genera, Species, Valid species, Specimens, both pies, Images and Imaged specimens
+  of every place count Formicidae only (`PlaceTotals.ANTS`), in the nightly run and in the check.
+- **Port of Entry** (open): its page shows 37,430 specimens while its list has no species with specimens
+  (staging). The nightly does not recount it. Decide: hide it as a place (is_valid = 0) or count interceptions
+  as a place; until then the check shows it as a real difference.
+
 - **B25** (planned): when a subspecies' parent is its species, the crawl writes the sum of the subspecies'
   specimens into the species row (`countGrandChildren` for rank species groups by `parent_taxon_name`). To
   confirm on staging: `select count(*) from taxon where taxarank = 'subspecies' and parent_taxon_name in (select
@@ -214,4 +233,5 @@ Found while doing this (not in the 24):
 | B22 | Curator counts: recount when an upload or image upload ends; place pages: an e2e test comparing each sampled place's page (`data-stat` numbers) with `countCheck.do?format=json`; alert when set 5 fails. |
 | B23 | `MessageMgr` errors per upload (instance, not static). |
 | B25, B26 | as above, each with an `inv:` or `cc:` check. |
+| museum, bioregion lists | set 3 still renames synonym rows of museum and bioregion lists after their counts (rows of a genus may then not add up: `inv:list.genus`). Plan: run the rename before `populateMuseum` and `populateBioregion` count, or recount their lists after it. |
 | not yet rows | Live numbers (search results, browse headers, collection and locality pages, API meta counts) are counted when shown; next: e2e tests that compare each with a SQL count on staging, starting with #38, #46 and #55. Curator, group and upload numbers: an `inv:` check against `upload` and `image_upload`. |

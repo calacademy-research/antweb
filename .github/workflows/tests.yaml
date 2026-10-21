@@ -212,10 +212,14 @@ jobs:
         # only while it exists, and each upload's file through uploadFile.do. SpecimenNameHistoryTest: the specimen page's
         # Name History section (applied moves only, newest first, the Name updates page's line and reason, uploaded name,
         # shared-name hold, previous determinations, escaping, nothing when empty). SpecimenCodesTest: "N specimens" and the
+        # only while it exists, and each upload's file through uploadFile.do. SpecimenCodesTest: "N specimens" and the
         # collapsed list of codes on every upload report line and on the Name updates page (one helper; count, cap of
         # 200 per line and 10,000 per report, escaping, plain codes for lines not uploaded). RelevantQueriesTest: the
         # Relevant Queries boxes of viewGroups.do and viewLogins.do explain each query; headings match the columns.
         # See docs/flows/test-gaps-uploads-nightly.md.
+        # only while it exists, and each upload's file through uploadFile.do. SpecimenNameHistoryTest: the specimen page's
+        # Name History section (applied moves only, newest first, the Name updates page's line and reason, uploaded name,
+        # shared-name hold, previous determinations, escaping, nothing when empty). See docs/flows/test-gaps-uploads-nightly.md.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" -v "$PWD/web:/web:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
@@ -247,6 +251,8 @@ jobs:
                      util.BackgroundJobsTest:14 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 \
                      util.SpecimenCodesTest:6 util.RelevantQueriesTest:2; do
+                     upload.UploadReportExistsTest:3 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2; do
+                     upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -285,6 +291,8 @@ jobs:
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
         run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml
       - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; place renames keep page text; every place's numbers; specimen name history)
+      - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; every place's numbers)
+      - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; place renames keep page text)
         # DbTimeZoneTest: dates written by MySQL and by Java read back as the same moment and are
         # stored as Pacific wall-clock time, for conPool, mediumConPool and longConPool.
         run: |
@@ -358,7 +366,7 @@ jobs:
               /t/org/calacademy/antweb/util/NumbersTestDb.java \
               /t/org/calacademy/antweb/util/CountInvariantsTest.java \
               /t/org/calacademy/antweb/home/PlaceTotalsDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:9 home.PlaceTotalsDbTest:10; do
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 home.PlaceTotalsDbTest:12; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
@@ -444,14 +452,25 @@ jobs:
             set -e
             A=/usr/local/antweb
             CP="/usr/local/tomcat/lib/*:/usr/local/tomcat/bin/*:/usr/share/ant/lib/*:$A/WEB-INF/classes:$A/WEB-INF/lib/*"
-            java -cp "$CP" org.apache.jasper.JspC -uriroot $A -d /tmp/jspc -compile -failFast \
-              curate/manageMuseums-body.jsp curate/viewMuseum-body.jsp curate/manageMuseums.jsp curate/viewMuseum.jsp \
-              curate/geolocale/geolocaleMgr-body.jsp curate/geolocale/editGeolocale-body.jsp curate/geolocale/adm1Mgr-body.jsp \
-              curate/projectMgr-body.jsp curate/project/editProject-body.jsp artists-body.jsp artist-body.jsp \
-              util/adminAlert.jsp curate/bioregionMapMgr-body.jsp curate/introducedMapMgr-body.jsp curate/curate-body.jsp \
-              > /tmp/jspc.txt 2>&1 || { cat /tmp/jspc.txt
-                echo "::error::a Manager Tools JSP does not compile:%0A$(grep -v "^\s*at " /tmp/jspc.txt | head -40 | sed "s/%/%25/g" | tr "\n" "\001" | sed "s/\x01/%0A/g")"; exit 1; }
-            echo "JSPs compiled: $(find /tmp/jspc -name "*.class" | wc -l) classes"
+            # One JSP at a time, and each must leave its compiled class: JspC can end with status 0
+            # without compiling a page (a Java error in editProject-body.jsp passed this step once).
+            n=0
+            for f in curate/manageMuseums-body.jsp curate/viewMuseum-body.jsp curate/manageMuseums.jsp curate/viewMuseum.jsp \
+                curate/geolocale/geolocaleMgr-body.jsp curate/geolocale/editGeolocale-body.jsp curate/geolocale/adm1Mgr-body.jsp \
+                curate/projectMgr-body.jsp curate/project/editProject-body.jsp curate/project/editProject.jsp \
+                artists-body.jsp artist-body.jsp util/adminAlert.jsp curate/bioregionMapMgr-body.jsp \
+                curate/introducedMapMgr-body.jsp curate/curate-body.jsp; do
+              rm -rf /tmp/jspc; mkdir -p /tmp/jspc
+              java -cp "$CP" org.apache.jasper.JspC -uriroot $A -d /tmp/jspc -compile -failFast "$A/$f" > /tmp/jspc.txt 2>&1 || true
+              cls=$(find /tmp/jspc -name "*_jsp.class" | wc -l)
+              if [ "$cls" -lt 1 ] || grep -qiE "^(SEVERE|ERROR)|JasperException|An error occurred" /tmp/jspc.txt; then
+                cat /tmp/jspc.txt
+                echo "::error::$f does not compile:%0A$(grep -v "^\s*at " /tmp/jspc.txt | head -30 | sed "s/%/%25/g" | tr "\n" "\001" | sed "s/\x01/%0A/g")"
+                exit 1
+              fi
+              n=$((n+1))
+            done
+            echo "Manager Tools JSPs compiled: $n"
           '
           ok=0
           for i in $(seq 1 90); do

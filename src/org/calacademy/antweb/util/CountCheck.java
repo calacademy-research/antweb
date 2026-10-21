@@ -200,6 +200,9 @@ public class CountCheck {
         /** Run time of the whole check, and of the recounts of the sample. */
         public long millis;
         public long recountMillis;
+        /** Recount of the core places, of the rotating places (part of recountMillis). */
+        public long coreMillis;
+        public long rotatingMillis;
 
         public int real() {
             int n = 0;
@@ -269,30 +272,40 @@ public class CountCheck {
         }
 
         long recountStart = System.currentTimeMillis();
-        for (Place place : places) recount(place, result, changedNames);
+        // With the invariants run, every place's genus and subfamily rows and Global numbers are already checked
+        // (list.genus, list.subfamily, global.specimens): the recounts skip them (2026-10-21: core places took 76 s on staging).
+        for (Place place : places) recount(place, result, changedNames, !invariants);
+        result.coreMillis = System.currentTimeMillis() - recountStart;
         result.rotatingPlanned = rotating.size();
+        long rotatingStart = System.currentTimeMillis();
         for (Place place : rotating) {
             if (result.places.contains(place)) continue;
+            // the time limit counts the whole check (the invariants and the core places too)
             if (System.currentTimeMillis() - start > secondsForRotating * 1000L) {
                 result.rotatingSkipped.add(place);
                 continue;
             }
-            recount(place, result, changedNames);
+            // With the invariants run, the rotating places skip what they already checked for every place
+            // (genus and subfamily rows against their children: list.genus, list.subfamily; Global: global.specimens).
+            recount(place, result, changedNames, !invariants);
             ++result.rotatingChecked;
         }
+        result.rotatingMillis = System.currentTimeMillis() - rotatingStart;
         result.recountMillis = System.currentTimeMillis() - recountStart;
         result.millis = System.currentTimeMillis() - start;
         return result;
     }
 
     /** The recounts from the specimen records of one place. */
-    void recount(Place place, Result result, Set<String> changedNames) throws SQLException {
+    void recount(Place place, Result result, Set<String> changedNames, boolean all) throws SQLException {
         result.places.add(place);
         int rows = 0;
         rows += checkSpecimens(place, result, changedNames);
-        rows += checkChildren(place, "genus", "species_count", "('species', 'subspecies')", "species", result, changedNames);
-        rows += checkChildren(place, "subfamily", "genus_count", "('genus')", "genera", result, changedNames);
-        if (!PROJECT.equals(place.type)) rows += checkGlobal(place, result, changedNames);
+        if (all) {
+            rows += checkChildren(place, "genus", "species_count", "('species', 'subspecies')", "species", result, changedNames);
+            rows += checkChildren(place, "subfamily", "genus_count", "('genus')", "genera", result, changedNames);
+            if (!PROJECT.equals(place.type)) rows += checkGlobal(place, result, changedNames);
+        }
         rows += checkPlaceImages(place, result, changedNames);
         rows += checkPlaceSpecimens(place, result, changedNames);
         rows += checkRowImages(place, result, changedNames);
@@ -405,8 +418,10 @@ public class CountCheck {
             + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
             + " join image i on i.image_of_id = s.code"
             + (list ? " join " + place.table() + " l on l.taxon_name = s.taxon_name and l." + place.keyColumn() + " = ?"
-                    + " join taxon t on t.taxon_name = s.taxon_name and t.taxarank in ('species', 'subspecies')" : "")
+                    + " join taxon t on t.taxon_name = s.taxon_name and t.taxarank in ('species', 'subspecies') and t.family = 'formicidae'"
+                  : "")
             + " where 1 = 1"
+            + (list ? "" : " and s.family = 'formicidae'")   // ants only (2026-10-21)
             + (place.column() != null ? " and s." + place.column() + " = ?" : "")
             + (GEOLOCALE.equals(place.type) ? " and s.status in " + COUNTABLE : "");
     }
@@ -486,7 +501,8 @@ public class CountCheck {
                 }
             }
         }
-        String pending = place.isFromCountries() && !result.regionRuleCounted ? REGION_RULE_PENDING
+        String pending = !result.rulesCounted ? CountInvariants.RULES_PENDING
+            : place.isFromCountries() && !result.regionRuleCounted ? REGION_RULE_PENDING
             : result.imagesSinceNightly ? "images were added after the last nightly run"
             : result.uploadSinceNightly ? "specimens were uploaded after the last nightly run"
             : listChanged ? "the list got a new row after the last nightly run"
@@ -530,7 +546,7 @@ public class CountCheck {
         String query = "select count(*) from specimen s"
             + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
             + " join geolocale_taxon l on l.taxon_name = s.taxon_name and l.geolocale_id = ?"
-            + " join taxon t on t.taxon_name = s.taxon_name and t.taxarank in ('species', 'subspecies')"
+            + " join taxon t on t.taxon_name = s.taxon_name and t.taxarank in ('species', 'subspecies') and t.family = 'formicidae'"
             + " where s.status in " + COUNTABLE
             + (place.column() != null ? " and s." + place.column() + " = ?" : "");
         int recount;
@@ -554,7 +570,8 @@ public class CountCheck {
                     listChanged = r.getInt(1) > 0;
                 }
             }
-            String pending = place.isFromCountries() && !result.regionRuleCounted ? REGION_RULE_PENDING
+            String pending = !result.rulesCounted ? CountInvariants.RULES_PENDING
+                : place.isFromCountries() && !result.regionRuleCounted ? REGION_RULE_PENDING
                 : result.uploadSinceNightly ? "specimens were uploaded after the last nightly run"
                 : listChanged ? "the list got a new row after the last nightly run"
                 : !changedNames.isEmpty() ? "specimens were renamed after the last nightly run" : null;
@@ -580,7 +597,7 @@ public class CountCheck {
         int recount;
         try (PreparedStatement stmt = connection.prepareStatement("select count(*) from specimen s"
                 + " join proj_taxon l on l.taxon_name = s.taxon_name and l.project_name = ?"
-                + " join taxon t on t.taxon_name = s.taxon_name and t.taxarank in ('species', 'subspecies')")) {
+                + " join taxon t on t.taxon_name = s.taxon_name and t.taxarank in ('species', 'subspecies') and t.family = 'formicidae'")) {
             stmt.setString(1, place.key);
             try (ResultSet r = stmt.executeQuery()) {
                 r.next();
@@ -588,7 +605,8 @@ public class CountCheck {
             }
         }
         if (stored != recount) {
-            String pending = result.uploadSinceNightly ? "specimens were uploaded after the last nightly run"
+            String pending = !result.rulesCounted ? CountInvariants.RULES_PENDING
+                : result.uploadSinceNightly ? "specimens were uploaded after the last nightly run"
                 : listChangedSince(place, result) ? "the list got a new row after the last nightly run"
                 : !changedNames.isEmpty() ? "specimens were renamed after the last nightly run" : null;
             result.mismatches.add(new Mismatch(place, "place specimens", "Specimens", stored, recount, pending));
@@ -617,7 +635,7 @@ public class CountCheck {
      */
     int checkRowImages(Place place, Result result, Set<String> changedNames) throws SQLException {
         if (!columnExists(place.table(), "image_count")) return 0;
-        Map<String, Integer> recount = new HashMap<>();
+        Map<String, Integer> recount = CountInvariants.keyMap();   // names as MySQL compares them
         String query = "select s.taxon_name, sum(s.image_count) from specimen s"
             + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
             + " join " + place.table() + " l on l.taxon_name = s.taxon_name and l." + place.keyColumn() + " = ?"
@@ -635,7 +653,7 @@ public class CountCheck {
             }
         }
         int rows = 0;
-        try (PreparedStatement stmt = connection.prepareStatement("select l.taxon_name, l.image_count, l.created from " + place.table() + " l"
+        try (PreparedStatement stmt = connection.prepareStatement("select l.taxon_name, l.image_count, " + CountInvariants.safeDate("l.created") + " from " + place.table() + " l"
                 + " join taxon t on t.taxon_name = l.taxon_name where l." + place.keyColumn() + " = ? and t.taxarank in ('species', 'subspecies')")) {
             place.setKey(stmt, 1);
             try (ResultSet r = stmt.executeQuery()) {
@@ -672,13 +690,13 @@ public class CountCheck {
         int recount;
         try (PreparedStatement stmt = connection.prepareStatement("select count(distinct l.taxon_name) from " + place.table() + " l"
                 + " join taxon t on t.taxon_name = l.taxon_name"
-                + " where l." + place.keyColumn() + " = ? and t.taxarank = 'subfamily' and t.status in " + COUNTABLE)) {
+                + " where l." + place.keyColumn() + " = ? and t.taxarank = 'subfamily' and t.status in " + COUNTABLE + " and t.family = 'formicidae'")) {
             place.setKey(stmt, 1);
             try (ResultSet r = stmt.executeQuery()) { r.next(); recount = r.getInt(1); }
         }
         if (stored != recount) {
             result.mismatches.add(new Mismatch(place, "place totals", "Subfamilies", stored, recount,
-                listChanged ? "the list got a new row after the last nightly run" : null));
+                !result.rulesCounted ? CountInvariants.RULES_PENDING : listChanged ? "the list got a new row after the last nightly run" : null));
         }
         return 1;
     }
@@ -709,7 +727,7 @@ public class CountCheck {
     int checkSpecimens(Place place, Result result, Set<String> changedNames) throws SQLException {
         String t = place.table();
         String k = place.keyColumn();
-        Map<String, Integer> recount = new HashMap<>();
+        Map<String, Integer> recount = CountInvariants.keyMap();   // names as MySQL compares them
         String query = "select s.taxon_name, count(*) from specimen s"
             + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
             + " join " + t + " l on l.taxon_name = s.taxon_name and l." + k + " = ?"
@@ -727,7 +745,7 @@ public class CountCheck {
             }
         }
         int rows = 0;
-        String stored = "select l.taxon_name, l.specimen_count, l.created from " + t + " l"
+        String stored = "select l.taxon_name, l.specimen_count, " + CountInvariants.safeDate("l.created") + " from " + t + " l"
             + " join taxon on taxon.taxon_name = l.taxon_name"
             + " where l." + k + " = ? and taxon.taxarank in ('species', 'subspecies')";
         try (PreparedStatement stmt = connection.prepareStatement(stored)) {
@@ -754,9 +772,9 @@ public class CountCheck {
     int checkChildren(Place place, String parentRank, String column, String childRanks, String check, Result result, Set<String> changedNames) throws SQLException {
         String t = place.table();
         String k = place.keyColumn();
-        Map<String, Integer> recount = new HashMap<>();
-        Map<String, Boolean> childPending = new HashMap<>();
-        String query = "select taxon.parent_taxon_name, l.taxon_name, l.created from taxon"
+        Map<String, Integer> recount = CountInvariants.keyMap();   // names as MySQL compares them
+        Map<String, Boolean> childPending = CountInvariants.keyMap();
+        String query = "select taxon.parent_taxon_name, l.taxon_name, " + CountInvariants.safeDate("l.created") + " from taxon"
             + " join " + t + " l on l.taxon_name = taxon.taxon_name and l." + k + " = ?"
             + " where taxon.taxarank in " + childRanks
             + (place.statusFiltered() ? " and taxon.status in " + COUNTABLE : "");
@@ -774,7 +792,7 @@ public class CountCheck {
             }
         }
         int rows = 0;
-        String stored = "select l.taxon_name, l." + column + ", l.created from " + t + " l"
+        String stored = "select l.taxon_name, l." + column + ", " + CountInvariants.safeDate("l.created") + " from " + t + " l"
             + " join taxon on taxon.taxon_name = l.taxon_name"
             + " where l." + k + " = ? and taxon.taxarank = ?";
         try (PreparedStatement stmt = connection.prepareStatement(stored)) {
@@ -801,7 +819,7 @@ public class CountCheck {
     int checkGlobal(Place place, Result result, Set<String> changedNames) throws SQLException {
         String t = place.table();
         String k = place.keyColumn();
-        Map<String, Integer> recount = new HashMap<>();
+        Map<String, Integer> recount = CountInvariants.keyMap();   // names as MySQL compares them
         String query = "select s.taxon_name, count(*) from specimen s"
             + " where s.taxon_name in (select l.taxon_name from " + t + " l join taxon on taxon.taxon_name = l.taxon_name"
             + "   where l." + k + " = ? and taxon.taxarank in ('species', 'subspecies'))"
@@ -813,7 +831,7 @@ public class CountCheck {
             }
         }
         int rows = 0;
-        String stored = "select a.taxon_name, a.specimen_count, a.created from proj_taxon a"
+        String stored = "select a.taxon_name, a.specimen_count, " + CountInvariants.safeDate("a.created") + " from proj_taxon a"
             + " where a.project_name = 'allantwebants' and a.taxon_name in (select l.taxon_name from " + t + " l"
             + "   join taxon on taxon.taxon_name = l.taxon_name where l." + k + " = ? and taxon.taxarank in ('species', 'subspecies'))";
         try (PreparedStatement stmt = connection.prepareStatement(stored)) {

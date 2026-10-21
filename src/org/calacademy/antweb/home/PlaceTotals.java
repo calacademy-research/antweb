@@ -30,7 +30,7 @@ import java.sql.SQLException;
  *   Specimens per Subfamily geolocales and projects: the specimen counts of the species and subspecies
  *                           rows, grouped by subfamily; museums and bioregions: the place's own specimens
  *                           (specimen.museum, specimen.bioregion) by subfamily. Either way the slices add
- *                           up to Specimens (a slice "(no subfamily)" when needed). Before 2026-10-21 museums and bioregions
+ *                           up to Specimens (one slice "Other" for names that are not a subfamily of the taxon table, and when the JSON would not fit its column, the smallest slices merged into it). Before 2026-10-21 museums and bioregions
  *                           counted every specimen in AntWeb of the names on their list, and project and
  *                           bioregion species pies counted rows of every rank.
  */
@@ -98,15 +98,21 @@ public final class PlaceTotals {
     /** Taxon conditions (alias t) of the rows a total counts. rank: subfamily, genus or species. */
     public static String rankCondition(String rank) {
         switch (rank) {
-            case SUBFAMILY: return "t.taxarank = 'subfamily' and t.status in " + COUNTABLE;
-            case GENUS: return "t.taxarank = 'genus' and t.status in " + COUNTABLE;
-            case SPECIES: return "t.taxarank in ('species', 'subspecies') and t.status in " + COUNTABLE + " and t.family = 'formicidae'";
+            case SUBFAMILY: return "t.taxarank = 'subfamily' and t.status in " + COUNTABLE + ANTS;
+            case GENUS: return "t.taxarank = 'genus' and t.status in " + COUNTABLE + ANTS;
+            case SPECIES: return "t.taxarank in ('species', 'subspecies') and t.status in " + COUNTABLE + ANTS;
             default: throw new IllegalArgumentException(rank);
         }
     }
 
+    /**
+     * Ants only (alias t). Brian Fisher, 2026-10-21: specimens of other families stay in AntWeb but are not counted
+     * on place pages; every number of the place page (totals, pies, Specimens, images) counts Formicidae only.
+     */
+    public static final String ANTS = " and t.family = 'formicidae'";
+
     /** Valid species and subspecies, not fossil (alias t). */
-    public static final String VALID_CONDITION = "t.taxarank in ('species', 'subspecies') and t.status = 'valid' and t.fossil = 0";
+    public static final String VALID_CONDITION = "t.taxarank in ('species', 'subspecies') and t.status = 'valid' and t.fossil = 0" + ANTS;
 
     /** One place (parameter: its key): the number of rows of that rank on its list. */
     public static String listedCountSql(String type, String rank) {
@@ -137,26 +143,39 @@ public final class PlaceTotals {
      * the subfamily's colour). The rows of the Species number, so the slices add up to Species.
      */
     public static String speciesPieSql(String type) {
-        return "select t.subfamily subfamily, count(distinct l.taxon_name) count, null chart_color from " + listTable(type) + " l"
-            + " join taxon t on t.taxon_name = l.taxon_name where l." + listKey(type) + " = ? and " + rankCondition(SPECIES)
-            + " group by t.subfamily order by t.subfamily";
+        return "select " + SLICE + " subfamily, count(distinct l.taxon_name) count from " + listTable(type) + " l"
+            + " join taxon t on t.taxon_name = l.taxon_name" + sliceJoin("t.subfamily")
+            + " where l." + listKey(type) + " = ? and " + rankCondition(SPECIES)
+            + " group by " + SLICE + " order by " + SLICE;
+    }
+
+    /** Label of the slice of everything that is not a subfamily in the taxon table (other families, typos, none). */
+    public static final String OTHER = "Other";
+
+    /** The slice of a row: the subfamily when it is a subfamily of the taxon table, else Other (alias sf). */
+    static final String SLICE = "coalesce(sf.taxon_name, '" + OTHER + "')";
+
+    static String sliceJoin(String subfamilyColumn) {
+        return " left join taxon sf on sf.taxon_name = " + subfamilyColumn + " and sf.taxarank = 'subfamily'";
     }
 
     /**
      * "Specimens per Subfamily" pie of one place (parameter: its key): subfamily, count. Geolocales and
      * projects: the specimen counts of the species and subspecies rows of the list (as the Specimens
-     * number); museums and bioregions: the specimens of the museum or bioregion.
+     * number); museums and bioregions: the specimens of the museum or bioregion. A slice per subfamily of the
+     * taxon table, one Other slice for the rest (2026-10-21: specimen.subfamily of other families or typos made
+     * one slice each, and the JSON outgrew its column; see pieJson).
      */
     public static String specimenPieSql(String type) {
         if (MUSEUM.equals(type) || BIOREGION.equals(type)) {
             String column = MUSEUM.equals(type) ? "museum" : "bioregion";
-            return "select s.subfamily subfamily, count(*) count from specimen s where s." + column + " = ?"
-                + " group by s.subfamily order by s.subfamily";
+            return "select " + SLICE + " subfamily, count(*) count from specimen s" + sliceJoin("s.subfamily")
+                + " where s." + column + " = ? and s.family = 'formicidae' group by " + SLICE + " order by " + SLICE;
         }
-        return "select t.subfamily subfamily, sum(l.specimen_count) count from " + listTable(type) + " l"
-            + " join taxon t on t.taxon_name = l.taxon_name where l." + listKey(type) + " = ?"
-            + " and t.taxarank in ('species', 'subspecies')"
-            + " group by t.subfamily having sum(l.specimen_count) > 0 order by t.subfamily";
+        return "select " + SLICE + " subfamily, sum(l.specimen_count) count from " + listTable(type) + " l"
+            + " join taxon t on t.taxon_name = l.taxon_name" + sliceJoin("t.subfamily")
+            + " where l." + listKey(type) + " = ? and t.taxarank in ('species', 'subspecies')" + ANTS
+            + " group by " + SLICE + " having sum(l.specimen_count) > 0 order by " + SLICE;
     }
 
     /** Runs a one-number query with one parameter (the place key). */
@@ -181,48 +200,125 @@ public final class PlaceTotals {
     /** Colour of a slice whose subfamily has no colour of its own (the slice is kept, so the pie still adds up). */
     public static final String NO_COLOR = "#999999";
 
-    /**
-     * The JSON of one pie (one place, parameter: its key): one element per row of the query
-     * (subfamily, count[, chart_color]), coloured by the subfamily (TaxonMgr). No row is left out.
-     */
-    public static String pieJson(Connection connection, String sql, String key) throws SQLException {
-        StringBuilder json = new StringBuilder();
+    private static final org.apache.commons.logging.Log s_log = org.apache.commons.logging.LogFactory.getLog(PlaceTotals.class);
+
+    /** One slice: label (subfamily or Other), count. */
+    static final class Slice {
+        String subfamily;
+        long count;
+        Slice(String subfamily, long count) { this.subfamily = subfamily; this.count = count; }
+    }
+
+    static java.util.List<Slice> slices(Connection connection, String sql, String key) throws SQLException {
+        java.util.List<Slice> list = new java.util.ArrayList<>();
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, key);
             try (ResultSet r = stmt.executeQuery()) {
-                int i = 0;
-                while (r.next()) {
-                    String subfamily = r.getString(1);
-                    int count = r.getInt(2);
-                    String color = null;
-                    if (subfamily != null) {
-                        try {
-                            org.calacademy.antweb.Subfamily s = org.calacademy.antweb.util.TaxonMgr.getSubfamily(subfamily);
-                            if (s != null) color = s.getChartColor();
-                        } catch (RuntimeException e) {
-                            // taxa not loaded (tests): the slice keeps NO_COLOR
-                        }
-                    }
-                    if (color == null) color = NO_COLOR;
-                    if (i++ > 0) json.append(",");
-                    json.append(org.calacademy.antweb.util.HttpUtil.getJsonElement(i,
-                        subfamily == null ? "(no subfamily)" : org.calacademy.antweb.Formatter.initCap(subfamily), count, color));
+                while (r.next()) list.add(new Slice(r.getString(1), r.getLong(2)));
+            }
+        }
+        return list;
+    }
+
+    static String json(java.util.List<Slice> slices) {
+        StringBuilder json = new StringBuilder();
+        int i = 0;
+        for (Slice sl : slices) {
+            String color = null;
+            if (sl.subfamily != null && !OTHER.equals(sl.subfamily)) {
+                try {
+                    org.calacademy.antweb.Subfamily s = org.calacademy.antweb.util.TaxonMgr.getSubfamily(sl.subfamily);
+                    if (s != null) color = s.getChartColor();
+                } catch (RuntimeException e) {
+                    // taxa not loaded (tests): the slice keeps NO_COLOR
                 }
             }
+            if (color == null) color = NO_COLOR;
+            if (i++ > 0) json.append(",");
+            String label = sl.subfamily == null || OTHER.equals(sl.subfamily) ? OTHER : org.calacademy.antweb.Formatter.initCap(sl.subfamily);
+            json.append(org.calacademy.antweb.util.HttpUtil.getJsonElement(i, label, (int) sl.count, color));
         }
         return json.toString();
     }
 
-    /** Writes both pies of one place (nightly run, Recalculate). */
-    public static void writePies(Connection connection, String type, String key) throws SQLException {
-        String species = pieJson(connection, speciesPieSql(type), key);
-        String specimens = pieJson(connection, specimenPieSql(type), key);
-        try (PreparedStatement stmt = connection.prepareStatement("update " + placeTable(type)
-                + " set taxon_subfamily_dist_json = ?, specimen_subfamily_dist_json = ? where " + placeKey(type) + " = ?")) {
-            stmt.setString(1, species);
-            stmt.setString(2, specimens);
-            stmt.setString(3, key);
-            stmt.executeUpdate();
+    /**
+     * The pie's JSON, at most maxLength characters (the column's size; 0 = no limit): if longer, the smallest
+     * slices are merged into Other until it fits, so the slices still add up. Same format as before
+     * (HttpUtil.getJsonElement), read by overview-body.jsp.
+     */
+    public static String fit(java.util.List<Slice> in, int maxLength) {
+        java.util.List<Slice> slices = new java.util.ArrayList<>();
+        Slice other = null;
+        for (Slice s : in) {
+            if (OTHER.equals(s.subfamily) || s.subfamily == null) {
+                if (other == null) other = new Slice(OTHER, 0);
+                other.count += s.count;
+            } else {
+                slices.add(new Slice(s.subfamily, s.count));
+            }
+        }
+        while (true) {
+            java.util.List<Slice> all = new java.util.ArrayList<>(slices);
+            if (other != null) all.add(other);
+            String json = json(all);
+            if (maxLength <= 0 || json.length() <= maxLength) return json;
+            if (slices.isEmpty()) return "";       // not even one slice fits: no chart
+            Slice smallest = slices.get(0);
+            for (Slice s : slices) if (s.count < smallest.count) smallest = s;
+            slices.remove(smallest);
+            if (other == null) other = new Slice(OTHER, 0);
+            other.count += smallest.count;
+        }
+    }
+
+    /** The JSON of one pie (one place, parameter: its key), unlimited length. */
+    public static String pieJson(Connection connection, String sql, String key) throws SQLException {
+        return fit(slices(connection, sql, key), 0);
+    }
+
+    private static final java.util.Map<String, Integer> s_columnLength = new java.util.concurrent.ConcurrentHashMap<>();
+
+    /** Characters the column holds (information_schema), 0 when unknown or very large. */
+    static int columnLength(Connection connection, String table, String column) {
+        return s_columnLength.computeIfAbsent(table + "." + column, k -> {
+            try (PreparedStatement stmt = connection.prepareStatement("select character_maximum_length from information_schema.columns"
+                    + " where table_schema = database() and table_name = ? and column_name = ?")) {
+                stmt.setString(1, table);
+                stmt.setString(2, column);
+                try (ResultSet r = stmt.executeQuery()) {
+                    if (!r.next()) return 0;
+                    long n = r.getLong(1);
+                    return n <= 0 || n > 1000000 ? 0 : (int) n;
+                }
+            } catch (SQLException e) {
+                return 0;
+            }
+        });
+    }
+
+    /** Forgets the column sizes read (tests that change the schema). */
+    public static void clearColumnLengths() { s_columnLength.clear(); }
+
+    /**
+     * Writes both pies of one place (nightly run, Recalculate, museum recount after an upload). A chart never
+     * stops the work around it (2026-10-21: an upload rolled back with "Data too long for column
+     * specimen_subfamily_dist_json"): the JSON is fitted to the column, and any error is logged and the old
+     * charts are kept.
+     */
+    public static void writePies(Connection connection, String type, String key) {
+        try {
+            String table = placeTable(type);
+            String species = fit(slices(connection, speciesPieSql(type), key), columnLength(connection, table, "taxon_subfamily_dist_json"));
+            String specimens = fit(slices(connection, specimenPieSql(type), key), columnLength(connection, table, "specimen_subfamily_dist_json"));
+            try (PreparedStatement stmt = connection.prepareStatement("update " + table
+                    + " set taxon_subfamily_dist_json = ?, specimen_subfamily_dist_json = ? where " + placeKey(type) + " = ?")) {
+                stmt.setString(1, species);
+                stmt.setString(2, specimens);
+                stmt.setString(3, key);
+                stmt.executeUpdate();
+            }
+        } catch (SQLException | RuntimeException e) {
+            s_log.error("writePies() " + type + " " + key + ": charts not written, the old ones are kept. e:" + e);
         }
     }
 

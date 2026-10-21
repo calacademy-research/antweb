@@ -22,6 +22,7 @@ not deployed yet. Database behaviour: test/org/calacademy/antweb/util/CountCheck
 """
 import os
 import re
+import time
 from html import unescape
 
 import pytest
@@ -43,15 +44,49 @@ def test_count_check_needs_login():
     assert outcome.category == "login", outcome
 
 
-@pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")
-@needs("admin")
-def test_list_counts_match_the_specimen_records():
-    s, _token, _id = login("admin")
-    r = s.get(BASE_URL + "/countCheck.do", timeout=600)
+# The whole check runs as a background job since 2026-10-21 (107 seconds on staging, over Cloudflare's 100):
+# countCheck.do?run=1 starts it and sends the browser to jobStatus.do?id=N; the job's report is countCheck.do?job=N.
+JOB_LIMIT_SECONDS = 600
+POLL_SECONDS = 10
+
+
+def run_count_check(s):
+    """Starts the check, waits for its job (at most JOB_LIMIT_SECONDS) and returns the report page."""
+    r = s.get(BASE_URL + "/countCheck.do?run=1", timeout=90)
     outcome = classify(r)
     if outcome.category == "not_found":
         pytest.skip("countCheck.do is not deployed on this server yet")
     assert outcome.category == "ok", outcome
+    m = re.search(r"jobStatus\.do\?id=(\d+)", r.url)
+    if not m:
+        return r   # a build before 2026-10-21: the report came in the request
+    job = m.group(1)
+    started = time.time()
+    status, step = "", ""
+    while True:
+        page = s.get(BASE_URL + "/jobStatus.do?id=" + job, timeout=60).text
+        st = re.search(r'id="job-status" data-status="(\w+)"', page)
+        status = st.group(1) if st else "?"
+        sp = re.search(r'id="job-step">(.*?)</span>', page, re.S)
+        step = unescape(sp.group(1)) if sp else ""
+        if status not in ("queued", "running"):
+            break
+        if status == "queued" and "nightly" in step and time.time() - started > 60:
+            pytest.skip(f"count check job {job} waits for the nightly run: {step}")
+        assert time.time() - started < JOB_LIMIT_SECONDS, (
+            f"count check job {job} did not finish in {JOB_LIMIT_SECONDS} s (status {status}: {step})")
+        time.sleep(POLL_SECONDS)
+    assert status == "finished", f"count check job {job} ended {status}: {re.sub(r'<[^>]+>', ' ', page)[-1500:]}"
+    report = s.get(BASE_URL + "/countCheck.do?job=" + job, timeout=60)
+    assert classify(report).category == "ok"
+    return report
+
+
+@pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")
+@needs("admin")
+def test_list_counts_match_the_specimen_records():
+    s, _token, _id = login("admin")
+    r = run_count_check(s)
     assert "What this shows:" in r.text
     assert "<h1>Check the counts</h1>" in r.text, "page renamed from Count check (2026-10-20)"
     m = re.search(r'id="count-check-result" data-real="(\d+)" data-pending="(\d+)" data-window="(\d)" data-nightly="(\d)"', r.text)
@@ -81,9 +116,13 @@ def test_list_counts_match_the_specimen_records():
         ids = set(re.findall(r'<tr class="count-invariant" data-id="([^"]+)"', r.text))
         missing = INVARIANTS - ids
         assert not missing, f"invariants not run: {sorted(missing)}"
-        assert "(failed:" not in r.text, "an invariant could not run (see countCheck.do)"
-        t = re.search(r'id="count-check-time" data-seconds="(\d+)"', r.text)
-        assert t and int(t.group(1)) < 90, f"the count check took {t.group(1) if t else '?'} seconds"
+        failed = [(i, unescape(e)) for i, e in re.findall(
+            r'<tr class="count-invariant" data-id="([^"]+)"><td>.*?</td><td>.*? <b>\(failed: (.*?)\)</b></td>', r.text, re.S)]
+        assert not failed, "invariants could not run (check id: exception, code line, SQL):\n" + "\n".join(
+            f"{i}: {e}" for i, e in failed)
+        t = re.search(r'id="count-check-time" data-seconds="(\d+)"[^>]*>(.*?)</p>', r.text, re.S)
+        assert t, "no run time on the report"
+        assert int(t.group(1)) < JOB_LIMIT_SECONDS, unescape(t.group(2))
         if summary:
             with open(summary, "a", encoding="utf-8") as f:
                 f.write("\n### Count check: every place\n\n| Check | Compared | Real | Pending | ms |\n|---|---|---|---|---|\n")
