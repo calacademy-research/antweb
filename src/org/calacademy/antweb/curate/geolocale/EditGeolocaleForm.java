@@ -49,7 +49,6 @@ public final class EditGeolocaleForm extends ActionForm {
     private boolean isDelete = false;
 
     private boolean isSubmit = false;
-    private boolean isFast;
         
     private String orderBy;
         
@@ -250,13 +249,15 @@ public final class EditGeolocaleForm extends ActionForm {
     }
     
     
-    public boolean getIsFast() {
-      return isFast;
-    }
-    public void setIsFast(boolean isFast) {
-      this.isFast = isFast;
-    }
         
+    // Set by EditGeolocaleAction (not form fields): the Bioregion or Alternate Bioregion menu was set to None.
+    private boolean clearBioregion = false;
+    private boolean clearAltBioregion = false;
+    public boolean isClearBioregion() { return clearBioregion; }
+    public void setClearBioregion(boolean clear) { this.clearBioregion = clear; }
+    public boolean isClearAltBioregion() { return clearAltBioregion; }
+    public void setClearAltBioregion(boolean clear) { this.clearAltBioregion = clear; }
+
     public String getOrderBy() {
       return this.orderBy;
     }

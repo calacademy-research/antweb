@@ -795,7 +795,7 @@ To fix this proper would involve rewriting Species.sort()
               + " where taxon_name='" + taxonName + "'"
               + " and habitat is not null and habitat != ''"
               + " group by habitat " 
-              + " order by count(habitat) desc"
+              + " order by count(distinct collectioncode) desc, habitat"   // by the number shown (2026-10-21; was by specimens)
               + " limit 25";
 
             stmt = DBUtil.getStatement(connection, "setHabitats()");
@@ -840,7 +840,7 @@ To fix this proper would involve rewriting Species.sort()
               + " where taxon_name='" + taxonName + "'"
               + " and microhabitat is not null and microhabitat != ''"
               + " group by microhabitat " 
-              + " order by count(microhabitat) desc"
+              + " order by count(distinct collectioncode) desc, microhabitat"
               + " limit 25";
 
 //A.log("setMicrohabitats() query:" + theQuery);
@@ -884,7 +884,7 @@ To fix this proper would involve rewriting Species.sort()
               + " where taxon_name='" + taxonName + "'"
               + " and method is not null and method != ''"
               + " group by method " 
-              + " order by count(method) desc"
+              + " order by count(distinct collectioncode) desc, method"
               + " limit 25";
 
             stmt = DBUtil.getStatement(connection, "setMethods()");

@@ -19,7 +19,6 @@ public class UploadForm extends ActionForm {
   protected String reloadSpeciesList = "none";
   protected String deleteSpeciesList = "none";
   protected String deleteProject = "none";
-  protected String createProject = "none";
   protected String editSpeciesList = "none";
   protected String whole = "false";
   protected String encoding;  
@@ -107,12 +106,6 @@ public class UploadForm extends ActionForm {
   }
   public void setDeleteProject(String deleteProject) {
 	this.deleteProject = deleteProject;
-  }
-  public String getCreateProject() {
-	return createProject;
-  }
-  public void setCreateProject(String createProject) {
-	this.createProject = createProject;
   }
 
   public String getEditSpeciesList() {

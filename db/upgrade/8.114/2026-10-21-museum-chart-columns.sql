@@ -1,0 +1,24 @@
+-- Museum pie-chart columns (2026-10-21). Optional: the code works without it.
+--
+-- A specimen upload on staging rolled back with "Data too long for column 'specimen_subfamily_dist_json'"
+-- after #216 changed the museum and bioregion pies (one slice per value of specimen.subfamily, also of other
+-- families and typos). Since then the JSON has one slice per subfamily of the taxon table plus one "Other",
+-- is fitted to the column's size (smallest slices merged into Other; PlaceTotals.fit), and a chart that cannot
+-- be written is logged and never stops an upload.
+--
+-- db/upgrade/6.2 created museum.taxon_subfamily_dist_json and specimen_subfamily_dist_json as varchar(10000)
+-- and has a commented-out change to varchar(1000); geolocale, bioregion and project have varchar(5000)
+-- (db/upgrade/6.3). If the museum columns are smaller than 5000, this gives museums the same size, so a museum
+-- pie shows every subfamily instead of merging small ones into Other.
+--
+-- 1. Look (staging, then production):
+SELECT table_name, column_name, column_type FROM information_schema.columns
+ WHERE table_schema = DATABASE() AND column_name LIKE '%subfamily_dist_json' ORDER BY table_name, column_name;
+--
+-- 2. Only if museum shows varchar(1000) (or anything below 5000). In place, no table copy, no lock
+--    (a longer varchar keeps its 2-byte length prefix):
+-- ALTER TABLE museum MODIFY taxon_subfamily_dist_json varchar(5000), MODIFY specimen_subfamily_dist_json varchar(5000),
+--   ALGORITHM=INPLACE, LOCK=NONE;
+--
+-- Rollback (only if every value fits; check first: SELECT max(length(specimen_subfamily_dist_json)) FROM museum;):
+-- ALTER TABLE museum MODIFY taxon_subfamily_dist_json varchar(1000), MODIFY specimen_subfamily_dist_json varchar(1000);

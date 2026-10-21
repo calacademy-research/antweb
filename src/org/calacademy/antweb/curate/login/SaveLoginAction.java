@@ -123,6 +123,17 @@ public final class SaveLoginAction extends AntwebAction {
 
             if (login == null) {
                 isNew = true;
+                // The number is chosen now, not taken from the form: above every login number ever
+                // used (LoginDb.nextLoginId), so a deleted login's number and curator folder are never reused.
+                int freshId = LoginDb.nextLoginId(connection, LoginDb.curatorDir());
+                if (freshId != id) s_log.info("execute() new login: form number " + id + ", saved as " + freshId);
+                id = freshId;
+                if (new java.io.File(LoginDb.curatorDir(), String.valueOf(id)).exists()) {
+                    // Never write a new login into an existing folder (its files belong to someone else).
+                    s_log.error("execute() new login " + id + ": curator folder exists already, not saved");
+                    return refuse(request, mapping, connection, id, true, List.of("The curator folder for login number " + id
+                        + " exists already (web/curator/" + id + "). Please try again; if it happens again, tell the site administrator."));
+                }
                 login = new Login();
                 login.setId(id);
                 login.setGroupId(LoginEdit.NO_GROUP);

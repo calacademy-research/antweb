@@ -269,10 +269,6 @@
 
 
     <action
-      path="/queries"
-      forward="/util/queries.jsp"/>
-      
-    <action
       path="/statusDisplayPage" 
       forward="/common/statusDisplayPage.jsp"/> 
     <action

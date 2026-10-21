@@ -20,14 +20,21 @@
 
 <h1>Admin Alert Manager</h1>
 
+<div class="mgr_help" style="max-width:60em;margin:6px 0 12px 0">
+Problems AntWeb has recorded for the administrators: a failed AntCat import, no AntCat changes for a week. The header of administrators' pages shows how many are open. The red X
+marks one alert as dealt with (it stays in the full list below); nothing else changes. Reload re-reads the
+alerts and reruns the alert checks (the "Checks" lines below).
+</div>
+
 <%
     List<AdminAlert> adminAlerts = AdminAlertMgr.getAdminAlerts();
     if (adminAlerts.size() > 0) { %>
     Alerts: <b><%= adminAlerts.size() %></b>
 <%
         for (AdminAlert adminAlert : adminAlerts) {
-          //A.log("adminAlert.jsp alert:" + adminAlert.getAlert() + " id:" + adminAlert.getId());        
-          out.println("<br>&nbsp;&nbsp;&nbsp;" + adminAlert.getCreated() + " &nbsp;&nbsp;&nbsp;" + adminAlert.getAlert() +  " &nbsp;&nbsp;&nbsp;" + Csrf.postButton(request, AntwebProps.getDomainApp() + "/adminAlert.do?action=remove&id=" + adminAlert.getId(), "<img src='" + AntwebProps.getDomainApp() + "/image/redX.png' width='10' alt='remove' />")); 
+
+          // Alert text can quote data (an AntCat import message): shown as text.
+          out.println("<br>&nbsp;&nbsp;&nbsp;" + adminAlert.getCreated() + " &nbsp;&nbsp;&nbsp;" + Html.esc(adminAlert.getAlert()) +  " &nbsp;&nbsp;&nbsp;" + Csrf.postButton(request, AntwebProps.getDomainApp() + "/adminAlert.do?action=remove&id=" + adminAlert.getId(), "<img src='" + AntwebProps.getDomainApp() + "/image/redX.png' width='10' alt='remove' />")); 
         }
 %>
         <br><br>
@@ -45,13 +52,14 @@
 <small>(The link in the header is only visible to administrators)</small>
 
 <br><br>
-To refresh: <%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/adminAlert.do?action=refresh", "Here") %>
+Reload the alerts and rerun the checks: <%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/adminAlert.do?action=refresh", "Reload") %>
 
 <br><br>
-QueryAlerts: <%= AdminAlertMgr.getQueryAlerts() %>
+Checks (ready-made queries that should find nothing): <%= AdminAlertMgr.getQueryAlerts() %>
 
 <br><br>
-Full list: <a href='<%= AntwebProps.getDomainApp() %>/query.do?action=curiousQuery&name=adminAlerts'>Admin Alerts</a>
+Full list, including alerts already dealt with: <a href='<%= AntwebProps.getDomainApp() %>/query.do?action=curiousQuery&name=adminAlerts'>Admin Alerts</a>
+| AntCat import history: <a href='<%= AntwebProps.getDomainApp() %>/query.do?name=worldantsUploads'>worldantsUploads</a>
 
 <br><br>
 Admin Alert <a href='<%= AntwebProps.getDomainApp() %>/logMgr.do?action=get&fileName=adminAlerts&ext=log'>Log File</a>

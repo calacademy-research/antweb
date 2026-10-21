@@ -34,6 +34,17 @@
 
 <br><br>
     <h1><a href="<%= AntwebProps.getDomainApp() %>/artists.do">Artist:</a> <%= Html.esc(artist.getName()) %></h1>
+<% String artistMessage = (String) request.getAttribute("message");
+   if (artistMessage != null && !artistMessage.isEmpty()) { %><p><%= artistMessage %></p><% } %>
+<% if (isOwner || LoginMgr.isAdmin(request)) { %>
+<div class="mgr_help" style="max-width:60em;margin:6px 0 12px 0">
+The photographer credited on images. <b>Save changes</b> renames the photographer on every image credited
+to them at once (the images keep pointing to this photographer). <b>Delete</b> with another photographer's ID
+first moves all images to that photographer (use this to merge two entries for one person), then deletes this
+one; without an ID it is refused while images are credited. Only the curator who added the photographer and
+administrators may rename or delete.
+</div>
+<% } %>
 </div>
 
 <div class="page_divider"></div>
@@ -105,7 +116,7 @@
 <html:form method="POST" action="artist"><%= Csrf.field(request) %>
 <input type="hidden" name="isRemove" value="true">
 <input type="hidden" name="id" value="<%= artist.getId() %>">
-Delete this artist (If artist has attributed images, must reassign to an other artist) <br>ID: <input border="1" type="text" style="border:1px solid" name="moveTo" value="">
+Delete this photographer. If images are credited to them, first enter the ID of the photographer the images move to (the ID is shown on that photographer's page and in the list).<br>Move images to ID: <input border="1" type="text" style="border:1px solid" name="moveTo" value="">
 <input border="0" type="image" src="<%= AntwebProps.getDomainApp() %>/image/deleteButton.png" height="23" value="Submit">
 </html:form>
 </br>
