@@ -38,8 +38,12 @@ public final class SaveLoginAction extends AntwebAction {
         Login accessLogin = LoginMgr.getAccessLogin(request);
         Group accessGroup = GroupMgr.getAccessGroup(request);
         
+        // Not logged in (GET or POST): the log-in page. ("login" is not a forward of this action:
+        // it answered an empty page. Until 2026-10-20 visitors reached the log-in page only because
+        // SaveLoginForm.validate() refused the empty form first.)
+        ActionForward notLoggedIn = LoginMgr.mustLogIn(request, mapping); if (notLoggedIn != null) return notLoggedIn;
         if (accessGroup == null) {
-          return mapping.findForward("login");
+          return mapping.findForward("notLoggedIn");
         }
 
 		s_log.debug("execute() 0 id:" + form.getId() + " step:" + form.getStep() + " delete:" + form.getDelete());
