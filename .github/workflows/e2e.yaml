@@ -1,9 +1,17 @@
 name: End-to-end tests
 
 # Drives a running AntWeb (staging by default) over HTTP. See tests/e2e/README.md.
+# Quick run (under 10 minutes) on pull requests: page loads, permission and CSRF checks, plus the
+# tests of the areas the pull request changes (tests/e2e/areas.toml). Full run (every test): daily,
+# on demand (Run workflow, full), and for pull requests titled "Do not merge: staging combo..." or
+# labelled full-e2e (before a production merge).
 on:
   workflow_dispatch:
     inputs:
+      full:
+        description: "Full run (every test). Off: the quick run for this branch's changes against master"
+        type: boolean
+        default: true
       antweb_url:
         description: "AntWeb to test (write probes are refused on production)"
         default: "https://staging.antweb.org"
@@ -15,28 +23,35 @@ on:
         default: "1"
   pull_request:
     branches: [master]
+    # labeled: adding the full-e2e label starts a full run (other labels start nothing).
+    types: [opened, synchronize, reopened, labeled]
   schedule:
     - cron: "17 20 * * *"   # daily 13:17 Pacific (PDT); the 5 AM jobs run until ~8 AM since #62
 
 permissions:
   contents: write
-
-# One run at a time against staging. Overlapping runs (several PRs opened together, or a
-# deploy in the middle of a run) share the site's login limit and restart, and fail at random.
-# A newer queued run replaces an older queued one; a running one is never cancelled.
-concurrency:
-  group: e2e-${{ inputs.antweb_url || 'staging' }}
-  cancel-in-progress: false
+  pull-requests: read
 
 jobs:
   e2e:
+    # A label other than full-e2e starts nothing (the job is skipped before it joins the queue below).
+    if: ${{ github.event.action != 'labeled' || github.event.label.name == 'full-e2e' }}
     runs-on: ubuntu-24.04
-    # About 40 minutes without the staging test accounts; their upload tests add up to about 20.
+    # One run at a time against staging. Overlapping runs (several PRs opened together, or a
+    # deploy in the middle of a run) share the site's login limit and restart, and fail at random.
+    # A newer queued run replaces an older queued one; a running one is never cancelled.
+    # (On the job, not the workflow, so that a skipped label run never replaces a queued one.)
+    concurrency:
+      group: e2e-${{ inputs.antweb_url || 'staging' }}
+      cancel-in-progress: false
+    # Full run about 20 minutes, quick run under 10 (tests/e2e/README.md).
     timeout-minutes: 75
     env:
       ANTWEB_URL: ${{ inputs.antweb_url || 'https://staging.antweb.org' }}
       ANTWEB_PROBE_WRITE_ACTIONS: ${{ inputs.probe_write_actions || '1' }}
       MODE: ${{ inputs.mode || 'test' }}
+      # Parallel workers for the anonymous read-only tests (logged-in tests run one at a time in one of them).
+      E2E_WORKERS: "4"
       ANTWEB_TEST_USER: ${{ secrets.ANTWEB_TEST_USER }}
       ANTWEB_TEST_PASSWORD: ${{ secrets.ANTWEB_TEST_PASSWORD }}
       # Staging-only test accounts (tools/staging/create-test-accounts.py): the test group's
@@ -55,6 +70,38 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+      - name: Choose the tests (quick or full run)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.pull_request.number }}
+          INPUT_FULL: ${{ inputs.full }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          full=false
+          changed=/tmp/changed-files.txt
+          : > "$changed"
+          case "$EVENT" in
+            schedule) full=true ;;
+            workflow_dispatch)
+              if [ "$INPUT_FULL" = "true" ]; then full=true
+              else gh api "repos/$REPO/compare/master...$SHA" --jq '.files[].filename' > "$changed"; fi ;;
+            pull_request)
+              # Title and labels as they are now (also right for a re-run after adding the label).
+              title=$(gh api "repos/$REPO/pulls/$PR" --jq .title)
+              labels=$(gh api "repos/$REPO/issues/$PR/labels" --jq '.[].name')
+              case "$title" in "Do not merge: staging combo"*) full=true ;; esac
+              if printf '%s\n' "$labels" | grep -qx 'full-e2e'; then full=true; fi
+              gh api --paginate "repos/$REPO/pulls/$PR/files" --jq '.[].filename' > "$changed" ;;
+          esac
+          echo "E2E_FULL=$full" >> "$GITHUB_ENV"
+          if [ "$full" = true ]; then
+            printf '## Test selection: full run (%s)\n' "$EVENT" >> "$GITHUB_STEP_SUMMARY"
+          else
+            python3 tests/e2e/select_tests.py --changed "$changed" --github
+          fi
       - run: pip install -r tests/e2e/requirements.txt
       # Headless Chromium for test_browser.py (real-browser checks: JS errors, autocomplete, asset versions).
       - run: python -m playwright install --with-deps chromium
@@ -95,7 +142,10 @@ jobs:
           for v in ANTWEB_TEST_UPLOADER_USER ANTWEB_TEST_NOUPLOAD_USER ANTWEB_TEST_ADMIN_USER; do
             [ -n "${!v}" ] && echo "$v: set" || echo "$v: not set (its tests skip)"
           done
+      # The survey (about 6 minutes) is a report; test_actions.py checks the same pages against the
+      # baseline. It runs daily, on demand and for survey/record, not on pull requests.
       - name: Survey (report in the job summary)
+        if: ${{ github.event_name != 'pull_request' || env.MODE != 'test' || hashFiles('tests/e2e/expectations.json') == '' || hashFiles('tests/e2e/snapshots.json') == '' }}
         run: python tests/e2e/survey.py
       - name: Record baseline (first run, or mode=record)
         if: ${{ env.MODE == 'record' || hashFiles('tests/e2e/expectations.json') == '' || hashFiles('tests/e2e/snapshots.json') == '' }}
@@ -106,6 +156,18 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add tests/e2e/expectations.json tests/e2e/snapshots.json
           git commit -m "e2e: record baseline from $ANTWEB_URL" && git push
+      # Anonymous read-only tests run side by side in E2E_WORKERS workers; every other test runs one
+      # at a time in one worker (xdist group "serial", tests/e2e/conftest.py). The full run is the
+      # whole suite; the quick run is the files chosen above.
       - name: Tests
         if: ${{ env.MODE == 'test' && hashFiles('tests/e2e/expectations.json') != '' }}
-        run: pytest tests/e2e -q -rfEs -p no:cacheprovider
+        run: |
+          set -uo pipefail
+          args=(-q -rfEs -p no:cacheprovider --durations=30 -n "$E2E_WORKERS" --dist loadgroup)
+          if [ "$E2E_FULL" = true ]; then
+            E2E_RUN=full pytest tests/e2e "${args[@]}"
+          else
+            read -r -a targets <<< "$E2E_TARGETS"
+            echo "Quick run, areas: ${E2E_AREAS:-none}; ${#targets[@]} test files"
+            E2E_RUN=quick pytest "${targets[@]}" "${args[@]}"
+          fi

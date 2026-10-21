@@ -1,0 +1,446 @@
+# How the end-to-end tests are split. Read by conftest.py, select_tests.py and
+# tests/unit/test_e2e_areas.py; explained in README.md ("Quick and full runs").
+#
+# Entries name a whole test file ("test_x.py") or one test function of it ("test_x.py::test_y",
+# every parameter set included). Every test file must be in [quick] or in at least one area
+# (tests/unit/test_e2e_areas.py checks it in the pull request checks). A file listed here before
+# the pull request that adds it is merged is fine (it is ignored until it exists).
+#
+# The FULL run is always the whole suite (pytest tests/e2e), whatever this file says.
+
+[quick]
+# In every quick run: page loads of every public page type, the API, real-browser checks of the
+# key pages, permission checks (anonymous visitors and curators refused admin pages, private files
+# not public, data-changing actions ask for a login), CSRF refusals, the curator login.
+tests = [
+  "test_actions.py",            # every Struts action and recorded page against the baseline
+  "test_page_content.py",       # key pages show the same content
+  "test_api.py",
+  "test_header_version.py",
+  "test_browser.py",            # JavaScript errors, header search boxes, asset versions, phone width
+  "test_privacy.py",            # private files and folder listings not public
+  "test_jsp_allow_list.py",     # direct JSP calls refused
+  "test_login_needed.py",
+  "test_request_handling.py",   # quote characters, error pages, form token (CSRF) refusals
+  "test_curator.py",            # curator login, admin pages refused, CSRF, remember-me
+  "test_curate_cleanup.py",     # admin tools refused to anonymous visitors and curators
+]
+
+[full_when]
+# A pull request that changes one of these gets the full run instead of the quick one
+# (they change every page: libraries, the Tomcat image, the database server).
+paths = [
+  "WEB-INF/lib/**",
+  "WEB-INF/web.xml",
+  "docker/antweb/Dockerfile",
+  "docker/mysql/**",
+  "docker-compose.yml",
+]
+
+[parallel]
+# Anonymous, read-only tests that never log in: run side by side (pytest-xdist, -n 4). Every other
+# test (logged in, uploads, anything that changes state) runs one at a time in one worker, so the
+# login limit (10 a minute) and the test records are never shared. A test listed here that logs in
+# fails with "logs in but is listed in [parallel]" (antweb.post_login): remove it from the list.
+tests = [
+  # whole files
+  "test_actions.py",
+  "test_api.py",
+  "test_browser.py",
+  "test_check57_removals.py",
+  "test_curator_species_lists.py",
+  "test_documentation_links.py",
+  "test_editor_roundtrip.py",
+  "test_group_form_help.py",
+  "test_header_version.py",
+  "test_jsp_allow_list.py",
+  "test_login_needed.py",
+  "test_page_content.py",
+  "test_place_image_counts.py",
+  "test_previous_determinations.py",
+  "test_privacy.py",
+  "test_world_ant_collections.py",
+  # anonymous tests of files that also log in
+  "test_add_uploader.py::test_anonymous_gets_login_page",
+  "test_background_jobs.py::test_status_page_needs_login",
+  "test_background_jobs.py::test_curate_page_note_is_accurate",
+  "test_check57_merges.py::test_search_redirects_to_advanced_search",
+  "test_check57_merges.py::test_recent_desc_edits_page",
+  "test_check57_merges.py::test_recent_desc_edits_other_actions_not_found",
+  "test_check57_merges.py::test_merged_data_jobs_not_found",
+  "test_check57_merges.py::test_reports_need_login",
+  "test_check57_merges.py::test_count_crawl_links_gone",
+  "test_check57_merges.py::test_project_recalculate_runs_the_crawl",
+  "test_check57_merges.py::test_taxa_outside_report_links_and_box",
+  "test_check57_merges.py::test_parentage_repair_previews_first",
+  "test_check57_merges.py::test_status_links_use_the_action",
+  "test_cleanup_batch3.py::test_actions_sets_match_the_code",
+  "test_cleanup_batch3.py::test_removed_sub_actions_stay_removed_in_source",
+  "test_cleanup_batch3.py::test_curate_pages_link_only_handled_actions",
+  "test_cleanup_batch3.py::test_removed_files_are_gone",
+  "test_cleanup_batch3.py::test_removed_sub_action_is_not_found",
+  "test_cleanup_batch3.py::test_kept_sub_actions_still_answer",
+  "test_cleanup_batch3.py::test_homonym_report_needs_login",
+  "test_count_check.py::test_count_check_needs_login",
+  "test_curate_cleanup.py::test_removed_sub_action_is_not_found",
+  "test_curate_cleanup.py::test_developer_links_page_is_gone",
+  "test_curate_cleanup.py::test_admin_named_query_anonymous",
+  "test_curate_cleanup.py::test_public_named_query_still_public",
+  "test_curate_cleanup.py::test_admin_tool_anonymous",
+  "test_curate_cleanup.py::test_removed_upload_action_anonymous",
+  "test_curate_cleanup.py::test_taxon_page_by_antcat_id",
+  "test_curate_cleanup.py::test_curate_sources_link_no_removed_tool",
+  "test_curate_cleanup.py::test_developer_rights_are_the_admin_role",
+  "test_curate_cleanup.py::test_upload_action_runs_nothing_on_get",
+  "test_curate_cleanup.py::test_named_queries_do_not_write",
+  "test_curate_cleanup.py::test_site_warning_is_sanitized",
+  "test_curate_followups.py::test_no_login_id_for_museum_recalc",
+  "test_curate_followups.py::test_no_developer_debug_notes",
+  "test_curate_followups.py::test_antcat_import_shows_no_internal_address",
+  "test_curate_followups.py::test_orphaned_images_admin_only_and_linked",
+  "test_curate_followups.py::test_guide_explains_museum_recalculate",
+  "test_curate_followups.py::test_orphaned_images_needs_login",
+  "test_curate_followups.py::test_museum_page_has_no_recalc_button_anonymous",
+  "test_curate_merge.py::test_merged_tools_have_a_new_home",
+  "test_curate_merge.py::test_curate_page_no_longer_links_merged_tools",
+  "test_curate_merge.py::test_curate_page_new_names",
+  "test_curate_merge.py::test_technical_page_needs_login",
+  "test_curate_merge.py::test_documentation_links_taxon_status_help",
+  "test_curate_page_clarity.py::test_source_three_groups_one_link_per_line",
+  "test_curate_page_clarity.py::test_source_name_update_report_label",
+  "test_curate_page_clarity.py::test_source_count_check_wording",
+  "test_curator.py::test_forged_remember_cookie_is_refused",
+  "test_display_cleanup.py::test_taxon_page_has_no_stray_distribution_comment",
+  "test_exif_view.py::test_jsp_escapes_exif_rows_and_explains",
+  "test_exif_view.py::test_jpeg_text_is_read_byte_for_byte",
+  "test_exif_view.py::test_image_page_anonymous",
+  "test_field_history.py::test_history_page_requires_login",
+  "test_geolocale_edit.py::test_anonymous_get_with_save_parameters_asks_for_login",
+  "test_geolocale_edit.py::test_anonymous_post_asks_for_login",
+  "test_geolocale_edit_page.py::test_removed_geodata_sub_actions_stay_removed",
+  "test_hardening_2026_10_18.py::test_api_ndjson_lines_are_json",
+  "test_hardening_2026_10_18.py::test_api_limit_is_capped",
+  "test_hardening_2026_10_18.py::test_error_page_escapes_request",
+  "test_hardening_2026_10_18.py::test_upload_gen_all_needs_login",
+  "test_hardening_2026_10_18.py::test_search_list_needs_login",
+  "test_hardening_2026_10_18.py::test_removed_upload_actions_anonymous",
+  "test_hardening_2026_10_19.py::test_page_redirects_to_project",
+  "test_hardening_2026_10_19.py::test_page_refuses_other_names",
+  "test_hardening_2026_10_19.py::test_species_list_history_has_no_delete_all",
+  "test_hardening_2026_10_19.py::test_session_props_escape",
+  "test_hardening_2026_10_19.py::test_calc_caste_runs_one_scope",
+  "test_hardening_2026_10_19.py::test_parentage_repair_checks_null_first",
+  "test_image_picker.py::test_species_images_page_comparison_fields",
+  "test_image_upload.py::test_anonymous_post_refused",
+  "test_image_upload.py::test_get_refused",
+  "test_login_form.py::test_anonymous_gets_login_page",
+  "test_login_form.py::test_anonymous_save_gets_login_page",
+  "test_logmgr.py::test_anonymous_refused",
+  "test_logmgr.py::test_no_action_is_not_a_server_error",
+  "test_name_updates.py::test_step_runs_in_set1_after_antcat_and_taxonworks_before_counts",
+  "test_name_updates.py::test_upload_and_nightly_share_the_rule",
+  "test_name_updates.py::test_page_needs_login",
+  "test_name_updates.py::test_preview_needs_admin",
+  "test_overview_editor.py::test_settings_forms_require_login",
+  "test_overview_editor.py::test_anonymous_sees_no_editor",
+  "test_overview_editor.py::test_anonymous_save_is_refused_and_text_kept",
+  "test_page_editor.py::test_edit_session_anonymous",
+  "test_page_editor.py::test_anonymous_save_is_refused_and_text_kept",
+  "test_parts_by_group.py::test_group_page_and_csv_need_login",
+  "test_region_counts.py::test_specimens_definition",
+  "test_region_counts.py::test_images_not_fewer_than_imaged_specimens",
+  "test_region_counts.py::test_country_specimens_row_points_to_specimen_taxa",
+  "test_reports_plain_language.py::test_curate_antcat_removed_and_checks_moved",
+  "test_reports_plain_language.py::test_integrity_sections_say_none_and_catch_errors",
+  "test_reports_plain_language.py::test_parts_query_is_one_bound_query",
+  "test_reports_plain_language.py::test_homonym_links",
+  "test_reports_plain_language.py::test_admin_report_needs_login",
+  "test_reports_plain_language.py::test_curate_antcat_action_is_gone",
+  "test_reports_plain_language.py::test_antcat_import_history_explained_and_short",
+  "test_request_handling.py::test_quote_in_taxon_name_anonymous",
+  "test_request_handling.py::test_error_pages_show_no_exception_text",
+  "test_request_handling.py::test_server_busy_report_not_public",
+  "test_request_limits.py::test_many_accept_languages",
+  "test_upload_report_links.py::test_upload_report_folders_stay_public",
+  "test_upload_report_links.py::test_groups_page_links_only_existing_reports",
+  "test_upload_report_links.py::test_curate_page_links_world_upload_reports",
+  "test_upload_scheduler_hardening.py::test_developer_upload_actions_anonymous",
+  "test_upload_scheduler_hardening.py::test_scheduler_code_from_outside_refused",
+]
+
+# ---------------------------------------------------------------------------------------------
+# Areas: a pull request that changes a file matching one of an area's paths also runs the area's
+# tests in its quick run. A changed test file always runs itself. Paths are globs from the
+# repository root: ** spans folders, * stays within one name.
+
+[areas.upload]
+# Specimen and image uploads, upload reports, background jobs. Includes the real upload round trips.
+paths = [
+  "src/org/calacademy/antweb/upload/**",
+  "src/org/calacademy/antweb/imageUploader/**",
+  "src/org/calacademy/antweb/home/*Upload*.java",
+  "src/org/calacademy/antweb/home/SpecimenDb.java",
+  "src/org/calacademy/antweb/util/BackgroundJob*.java",
+  "src/org/calacademy/antweb/util/JobStatusAction.java",
+  "src/org/calacademy/antweb/util/UploadMgr.java",
+  "src/org/calacademy/antweb/util/ListUploadsAction.java",
+  "src/org/calacademy/antweb/util/ImageUtil.java",
+  "src/org/calacademy/antweb/curate/UploadAsOptions.java",
+  "web/imageUploader/**",
+  "web/curate/upload*",
+  "web/curate/**/upload*",
+  "docker/caddy/**",
+  "tests/e2e/staging_accounts.py",
+  "tools/staging/create-test-accounts.py",
+]
+tests = [
+  "test_specimen_upload_roundtrip.py",
+  "test_image_upload.py",
+  "test_image_upload_test_group.py",
+  "test_browser_image_upload.py",
+  "test_background_jobs.py",
+  "test_upload_report_links.py",
+  "test_upload_scheduler_hardening.py",
+  "test_previous_determinations.py",
+  "test_dates_pacific.py",
+  "test_relevant_queries.py",          # added by #211
+]
+
+[areas.curator]
+# Logins, the Curate page and its tools, upload groups, login forms, page permissions.
+paths = [
+  "src/org/calacademy/antweb/curate/**",
+  "src/org/calacademy/antweb/*Login*.java",
+  "src/org/calacademy/antweb/LogoutAction.java",
+  "src/org/calacademy/antweb/ForgotPasswordAction.java",
+  "src/org/calacademy/antweb/ResetPasswordAction.java",
+  "src/org/calacademy/antweb/Curator*.java",
+  "src/org/calacademy/antweb/Group*.java",
+  "src/org/calacademy/antweb/home/LoginDb.java",
+  "src/org/calacademy/antweb/home/GroupDb.java",
+  "src/org/calacademy/antweb/util/LoginMgr.java",
+  "src/org/calacademy/antweb/util/Csrf.java",
+  "src/org/calacademy/antweb/util/PostOnly.java",
+  "src/org/calacademy/antweb/util/RememberMe*.java",
+  "src/org/calacademy/antweb/util/Password*.java",
+  "src/org/calacademy/antweb/util/GroupMgr.java",
+  "src/org/calacademy/antweb/util/InactiveAccounts.java",
+  "src/org/calacademy/antweb/util/OrphanedImages*.java",
+  "web/curate/**",
+  "web/login/**",
+  "web/curator*",
+  "web/common/descEdit/**",
+]
+tests = [
+  "test_curator.py",
+  "test_login_form.py",
+  "test_add_uploader.py",
+  "test_curate_cleanup.py",
+  "test_curate_followups.py",
+  "test_curate_merge.py",
+  "test_curate_page_clarity.py",
+  "test_curator_species_lists.py",
+  "test_display_cleanup.py",
+  "test_group_form_help.py",
+  "test_hardening_2026_10_18.py",
+  "test_hardening_2026_10_19.py",
+  "test_manager_tools.py",             # added by #215
+  "test_browser_admin_phone.py",       # added by #213
+]
+
+[areas.editor]
+# The page-text editor (taxon, specimen and overview pages), History and Restore.
+paths = [
+  "src/org/calacademy/antweb/Desc*.java",
+  "src/org/calacademy/antweb/DescriptionAction.java",
+  "src/org/calacademy/antweb/EditSessionAction.java",
+  "src/org/calacademy/antweb/FieldHistoryAction.java",
+  "src/org/calacademy/antweb/OverviewAction.java",
+  "src/org/calacademy/antweb/home/DescEditDb.java",
+  "src/org/calacademy/antweb/util/PageEditor.java",
+  "src/org/calacademy/antweb/util/HtmlSanitizer.java",
+  "src/org/calacademy/antweb/util/OverviewMgr.java",
+  "web/common/descEdit/**",
+  "web/common/*edit*",
+  "web/common/*Edit*",
+  "web/ckeditor/**",
+  "web/common/tinymce/**",
+  "tests/e2e/editor/**",
+]
+tests = [
+  "test_page_editor.py",
+  "test_field_history.py",
+  "test_browser_editor.py",
+  "test_overview_editor.py",
+  "test_browser_overview_editor.py",
+  "test_editor_roundtrip.py",
+]
+
+[areas.counts]
+# Numbers: taxon, place, museum and image counts, the count check, the nightly count sets.
+paths = [
+  "src/org/calacademy/antweb/util/CountCheck*.java",
+  "src/org/calacademy/antweb/util/StatSet.java",
+  "src/org/calacademy/antweb/home/*Count*.java",
+  "src/org/calacademy/antweb/home/StatisticsDb.java",
+  "src/org/calacademy/antweb/home/GeolocaleTaxon*.java",
+  "src/org/calacademy/antweb/home/ProjTaxon*.java",
+  "src/org/calacademy/antweb/home/MuseumTaxon*.java",
+  "src/org/calacademy/antweb/home/BioregionTaxon*.java",
+  "src/org/calacademy/antweb/geolocale/**",
+  "src/org/calacademy/antweb/Countable.java",
+  "web/countCheck*",
+  "web/util/countCheck*",
+  "docs/numbers.md",
+]
+tests = [
+  "test_count_check.py",
+  "test_region_counts.py",
+  "test_place_image_counts.py",
+  "test_numbers_pages.py",             # added by #216
+]
+
+[areas.places]
+# Country, region, adm1 and bioregion pages and their edit forms.
+paths = [
+  "src/org/calacademy/antweb/geolocale/**",
+  "src/org/calacademy/antweb/curate/geolocale/**",
+  "src/org/calacademy/antweb/home/GeolocaleDb.java",
+  "src/org/calacademy/antweb/home/Adm1Db.java",
+  "src/org/calacademy/antweb/home/BioregionDb.java",
+  "src/org/calacademy/antweb/util/GeolocaleMgr.java",
+  "src/org/calacademy/antweb/util/BioregionMgr.java",
+  "web/curate/geolocale/**",
+  "web/country*",
+  "web/adm1*",
+  "web/bioregion*",
+  "web/region*",
+]
+tests = [
+  "test_geolocale_edit.py",
+  "test_geolocale_edit_page.py",
+  "test_region_counts.py",
+  "test_place_image_counts.py",
+  "test_overview_editor.py",
+]
+
+[areas.images]
+# Image pages, the image picker, EXIF, World Ant Collections photos.
+paths = [
+  "src/org/calacademy/antweb/BigPictureAction.java",
+  "src/org/calacademy/antweb/PictureLikeAction.java",
+  "src/org/calacademy/antweb/SpecimenImage*.java",
+  "src/org/calacademy/antweb/home/Image*.java",
+  "src/org/calacademy/antweb/util/Exif*.java",
+  "web/image/**",
+  "web/bigPicture*",
+  "web/images*",
+  "web/wac/**",
+  "web/*copenhagen*",
+  "web/*basel*",
+  "web/*berlin*",
+]
+tests = [
+  "test_exif_view.py",
+  "test_image_picker.py",
+  "test_world_ant_collections.py",
+]
+
+[areas.specimen]
+# Specimen and taxon pages.
+paths = [
+  "src/org/calacademy/antweb/Specimen*.java",
+  "src/org/calacademy/antweb/DefaultSpecimenAction.java",
+  "src/org/calacademy/antweb/home/SpecimenDb.java",
+  "src/org/calacademy/antweb/home/TaxonDb.java",
+  "web/specimen*",
+  "web/description*",
+  "web/taxon*",
+]
+tests = [
+  "test_previous_determinations.py",
+  "test_display_cleanup.py",
+  "test_upload_report_links.py",
+  "test_specimen_name_history.py",     # added by #212
+]
+
+[areas.admin]
+# Administrator pages, reports, queries, logs, the nightly jobs and their health check.
+paths = [
+  "src/org/calacademy/antweb/util/*Action.java",
+  "src/org/calacademy/antweb/util/Quer*.java",
+  "src/org/calacademy/antweb/util/NamedQuery.java",
+  "src/org/calacademy/antweb/util/PartsReport.java",
+  "src/org/calacademy/antweb/util/Report*.java",
+  "src/org/calacademy/antweb/util/LogMgr*.java",
+  "src/org/calacademy/antweb/util/Scheduler*.java",
+  "src/org/calacademy/antweb/util/ServerStatus*.java",
+  "src/org/calacademy/antweb/upload/TaxonWorks*.java",
+  "src/org/calacademy/antweb/upload/SpecimenNameUpdate*.java",
+  "src/org/calacademy/antweb/curate/NameUpdatesAction.java",
+  "src/org/calacademy/antweb/home/HomonymDb.java",
+  "web/reports/**",
+  "web/util/**",
+  "bin/**",
+]
+tests = [
+  "test_admin_staging.py",
+  "test_reports_plain_language.py",
+  "test_parts_by_group.py",
+  "test_logmgr.py",
+  "test_name_updates.py",
+  "test_check57_merges.py",
+  "test_check57_removals.py",
+  "test_cleanup_batch3.py",
+  "test_count_check.py",
+  "test_removals_2026_10_21.py",       # added by #217/#218
+]
+
+[areas.api]
+# API v3.1 (Flask) and its container.
+paths = [
+  "api/**",
+  "docker/api/**",
+]
+tests = [
+  "test_api.py",
+  "test_hardening_2026_10_18.py",
+]
+
+[areas.server]
+# Caddy, Tomcat settings, deploy: what any request goes through.
+paths = [
+  "docker/caddy/**",
+  "docker/antweb/**",
+  ".github/scripts/deploy.sh",
+  "etc/**",
+]
+tests = [
+  "test_jsp_allow_list.py",
+  "test_privacy.py",
+  "test_request_limits.py",
+  "test_header_version.py",
+  "test_dates_pacific.py",
+]
+
+[areas.pages]
+# Public pages, the header and menu, the home page and documentation.
+paths = [
+  "web/web/**",
+  "web/layouts/**",
+  "web/common/**",
+  "web/documentation/**",
+  "web/*.jsp",
+  "src/org/calacademy/antweb/util/Asset*.java",
+  "src/org/calacademy/antweb/util/GitCommit.java",
+  "src/org/calacademy/antweb/search/**",
+  "WEB-INF/struts-config.xml",
+]
+tests = [
+  "test_home_page_links.py",
+  "test_documentation_links.py",
+  "test_world_ant_collections.py",
+  "test_display_cleanup.py",
+  "test_header_version.py",
+  "test_request_limits.py",
+]
