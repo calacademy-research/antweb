@@ -93,10 +93,12 @@ def test_offset_pages_past_the_cap():
     first = _get("/v3.1/specimens?genus=camponotus&limit=1000&up=1").json()
     _skip_if_cap_not_deployed(first["metaData"])
     second = _get("/v3.1/specimens?genus=camponotus&limit=500&offset=500&up=1").json()
-    # The specimens query has no ORDER BY, so only the paging itself is checked, not which rows.
+    # /specimens is sorted by specimen code (since the cap), so pages follow on without overlap.
     assert second["metaData"]["offset"] == 500, second["metaData"]
-    assert len(second["specimens"]) > 0
     assert "limitNotice" not in second["metaData"], second["metaData"]
+    codes1 = [s["specimenCode"] for s in first["specimens"]]
+    codes2 = [s["specimenCode"] for s in second["specimens"]]
+    assert codes2 and not set(codes1) & set(codes2), len(set(codes1) & set(codes2))
 
 
 def test_geolocales_are_capped():

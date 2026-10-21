@@ -46,8 +46,9 @@ may be more). `/geolocales`, `/bioregions` and `/geoSpeciesStats` used to ignore
 return everything; they now page like the others. Their counts (`geolocaleCount`, `bioregionCount`, `count`) are
 for the page returned, not the total.
 
-`/specimens` and the other record endpoints have no fixed sort order (as before), so when paging
-through a large result, de-duplicate on `specimenCode` (or the record's id). Cloudflare also limits each address to 15
+`/specimens` and `/geoSpecimens` are sorted by specimen code, so pages follow on without gaps or
+overlap (unless specimens are uploaded between requests). The other record endpoints have no
+fixed sort order (as before); when paging through them, de-duplicate on the record's name or id. Cloudflare also limits each address to 15
 requests per 10 seconds on `/v3.1/`.
 
 The cap is a server setting, not code: `maxLimit=<n>` in `etc/api-db.properties` (the API's own

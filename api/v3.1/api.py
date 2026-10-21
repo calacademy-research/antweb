@@ -648,6 +648,9 @@ def getSpecimen():
         query = query.join(Taxon).join(GeolocaleTaxon).join(Geolocale).filter(Geolocale.name == geolocaleName)
         query = addExtraGeolocaleListCriteria(query, geolocaleName)
 
+    # A fixed order (specimen code, the specimen table's key) so paging with offset neither
+    # repeats nor skips records; with 500 per request, paging is how larger sets are fetched.
+    query = query.order_by(Specimen.code)
     query = query.limit(limit)
     query = query.offset(offset)
 
@@ -829,7 +832,8 @@ def getGeoSpecimens():
             return jsonify(metaData=metaDataDict, genera=dataList)
         return jsonify(_metaData=metaDataDict, specimens=dataList)
 
-    # if not distinct. Show everything.
+    # if not distinct. Show everything (in specimen code order, for stable paging).
+    query = query.order_by(Specimen.code)
     query = query.limit(limit)
     query = query.offset(offset)
 
