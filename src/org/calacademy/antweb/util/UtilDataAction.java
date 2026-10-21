@@ -204,6 +204,12 @@ public class UtilDataAction extends AntwebAction {
         return mapping.findForward("message");
     }
 
+    /** Whether the nightly name update moved specimens to other names, so the Global counts must be rebuilt. */
+    public static boolean globalRecountNeeded(org.calacademy.antweb.upload.SpecimenNameUpdate.Summary summary) {
+        return summary != null && org.calacademy.antweb.upload.SpecimenNameUpdate.CHANGED.equals(summary.rowMode)
+            && !summary.capped && summary.specimens > 0;
+    }
+
     /**
      * Nightly set 1: the name update (SpecimenNameUpdate) with the setting in etc/name-update.properties.
      * Runs only if tonight's AntCat import succeeded. Its own commit and rollback: a failure here
@@ -223,6 +229,20 @@ public class UtilDataAction extends AntwebAction {
                     org.calacademy.antweb.upload.SpecimenNameUpdate.runLocked(connection, settings.mode, settings.maxChanges);
                 connection.commit();
                 line = summary.line();
+                if (globalRecountNeeded(summary)) {
+                    // The "Global" column (allantwebants) is rebuilt only by uploads; sets 2 to 5 skip it, so
+                    // after the name update moved specimens it showed the old counts until the next upload
+                    // (2026-10-21). Same rebuild as after an upload.
+                    try {
+                        new ProjTaxonDb(connection).regenerateAllAntweb();
+                        connection.commit();
+                        line += "; Global column recounted";
+                    } catch (Exception e) {
+                        try { connection.rollback(); } catch (SQLException e2) { s_log.error("nightlyNameUpdate() rollback e:" + e2); }
+                        s_log.error("nightlyNameUpdate() Global recount e:" + e);
+                        line += "; Global column NOT recounted (" + e + ")";
+                    }
+                }
             } catch (Exception e) {
                 try { connection.rollback(); } catch (SQLException e2) { s_log.error("nightlyNameUpdate() rollback e:" + e2); }
                 s_log.error("nightlyNameUpdate() e:" + e);
@@ -367,6 +387,18 @@ public class UtilDataAction extends AntwebAction {
                 // Images and imaged specimens of each place, from the image table (2026-10-20). After the
                 // per-taxon image counts, so set 4 leaves every image number of the day in place.
                 message += " " + doAction("placeImageCounts", form, accessLogin, accessGroup, connection, request, mapping);
+                // Home page and statsPage numbers (2026-10-21): written only after specimen uploads, so images added
+                // since were missing. Now also every night, after the image counts. Its own try: a failure here
+                // must not stop set 4.
+                try {
+                    new StatisticsDb(connection).populateStatistics("nightly", 0, "set4", AntwebProps.getDocRoot());
+                    message += " statistics";
+                } catch (Exception e) {
+                    s_log.error("set4 populateStatistics() e:" + e);
+                    message += " statistics not written (" + e + ")";
+                }
+                // countCheck.do reads this line: tonight's numbers follow the rules of 2026-10-21 (PlaceTotals).
+                LogMgr.appendLog("compute.log", "  Set 4 done (" + CountInvariants.RULES_LOG + ")", true);
                 // message += " " + doAction("calcEndemic", form, accessLogin, accessGroup, connection, request, mapping);
                 // message += " " + doAction("calcIntroduced", form, accessLogin, accessGroup, connection, request, mapping);
             }
@@ -583,14 +615,20 @@ public class UtilDataAction extends AntwebAction {
 		  String projectName = form.getName();
 		  String appendStr = "";
 		  ProjectDb projectDb = new ProjectDb(connection);
+		  // The list (proj_taxon counts) first, then the project totals, which sum the list's species rows
+		  // (2026-10-21: the totals ran first and showed the day before's list counts every night).
 		  if (projectName != null) {
+			Project project = ProjectMgr.getProject(projectName);
+			if (project != null && !Project.WORLDANTS.equals(projectName) && !Project.ALLANTWEBANTS.equals(projectName)) {
+			  new ProjTaxonCountDb(connection).recount(project);
+			}
 			projectDb.updateCounts(projectName);
 			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.PROJECT, projectName);
 			appendStr += ":" + projectName;
 		  } else {
-			projectDb.updateCounts();
 			// The counts on the project species lists (proj_taxon), not only the project totals (2026-10).
 			appendStr += " " + new ProjTaxonCountDb(connection).curatedProjectsCountCrawl();
+			projectDb.updateCounts();
 		  }
 		  message = "Project" + appendStr + " counts updated";
 		}

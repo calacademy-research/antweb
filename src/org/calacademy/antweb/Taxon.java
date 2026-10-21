@@ -2864,7 +2864,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           desc = desc.trim();
           String count2 = countStrArray[1];
           microhabitatString.append(comma + count2 + " times " + desc);
-          if (i > maxCount) break;
+          if (i >= maxCount) break;   // maxCount entries, as habitats (2026-10-21: one more)
         }
         if (getMicrohabitats().size() > maxCount) { 
           microhabitatString.append(", ...");
@@ -2886,7 +2886,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           methodDesc = methodDesc.trim();
           String count = methodCountArray[1];
           methodString.append(comma + count + " times " + methodDesc);
-          if (i > maxCount) break;
+          if (i >= maxCount) break;   // maxCount entries, as habitats (2026-10-21: one more)
         }
         if (getMethods().size() > maxCount) { 
           methodString.append(", ...");

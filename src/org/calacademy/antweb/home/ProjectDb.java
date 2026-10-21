@@ -721,46 +721,25 @@ public class ProjectDb extends AntwebDb {
         return "Project Finished:" + project;
     }       
 
-    /** Subfamily rows on the project's list whose taxon has a counted status (CountCheck.COUNTABLE). */
+    /** Subfamily rows on the project's list whose taxon has a counted status (PlaceTotals). */
     int getListedSubfamilyCount(String projectName) throws SQLException {
-        String query = "select count(distinct pt.taxon_name) from proj_taxon pt"
-            + " join taxon t on t.taxon_name = pt.taxon_name"
-            + " where pt.project_name = ? and t.taxarank = 'subfamily' and t.status in " + org.calacademy.antweb.util.CountCheck.COUNTABLE;
-        try (java.sql.PreparedStatement stmt = getConnection().prepareStatement(query)) {
-            stmt.setString(1, projectName);
-            try (java.sql.ResultSet r = stmt.executeQuery()) {
-                return r.next() ? r.getInt(1) : 0;
-            }
-        }
+        return PlaceTotals.count(getConnection(), PlaceTotals.listedCountSql(PlaceTotals.PROJECT, PlaceTotals.SUBFAMILY), projectName);
     }
 
     private void updateCountableTaxonData(Project project) throws SQLException {
-        ProjTaxonCountDb projTaxonCountDb = new ProjTaxonCountDb(getConnection());
-        String criteria = "project_name = '" + project + "'";
-        // Subfamilies counted directly as the subfamily rows on the project's list with a counted status
-        // (2026-10-20: the roll-up sum(subfamily_count) gave atolants 32 with 16 subfamilies listed).
-        // Same rule as GeolocaleDb and CountCheck.checkSubfamilyTotal.
+        // Subfamilies (2026-10-20: the roll-up sum(subfamily_count) gave atolants 32 with 16 subfamilies
+        // listed), Genera and Species (2026-10-21) counted directly from the list (PlaceTotals).
         int subfamilyCount = getListedSubfamilyCount(project.getName());
-        int genusCount = projTaxonCountDb.getCountableTaxonCount("proj_taxon", criteria, "genus");        
-        int speciesCount = projTaxonCountDb.getCountableTaxonCount("proj_taxon", criteria, "species");
 
-        boolean subfamilyIsZero = subfamilyCount == 0;
-
-        A.log("updateCountableTaxonCounts() project:" + project + " subfamilyCount:" + subfamilyCount + " condition:" + !("worldants".equals(project.getName()) && subfamilyCount == 0));
-
-        //A.log("updateCountableTaxonData() project:" + project + " subfamily:" + subfamilyCount + " genus:" + genusCount + " species:" + speciesCount);
         if (!("worldants".equals(project.getName()) && subfamilyCount == 0)) { // Don't munge data!
-          //s_log.warn("updateCountableTaxonData(" + project + ") subfamilyCount:" + subfamilyCount);
-          projTaxonCountDb.updateCountableTaxonCounts("project", criteria, subfamilyCount, genusCount, speciesCount);                  
+          PlaceTotals.writeListedCounts(getConnection(), PlaceTotals.PROJECT, project.getName());
         } else {
           s_log.info("updateCountableTaxonData(" + project + ") Not updating subfamilyCount:" + subfamilyCount);
         }
     }
 
     private void updateValidSpeciesCount(Project project) throws SQLException {
-        int count = getValidSpeciesCount(project);
-        UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("project", "valid_species_count", Integer.valueOf(count).toString(), "project_name = '" + project.getName() + "'");
+        PlaceTotals.writeValidSpecies(getConnection(), PlaceTotals.PROJECT, project.getName());
     }
 
     private int getValidSpeciesCount(Project project) {
@@ -797,42 +776,11 @@ public class ProjectDb extends AntwebDb {
       }  
     }         
             
+    // PlaceTotals (2026-10-21): species pie = the rows of Species (was: rows of every rank); specimen pie =
+    // the specimen counts of the species and subspecies rows, as Specimens (was: specimens of names of
+    // every rank, countable status, while Specimens counts any status).
     public void makeCharts(Project project) throws SQLException {
-//A.log("makeCharts() start project:" + project);
-      UtilDb utilDb = new UtilDb(getConnection());
-      ProjTaxonCountDb projTaxonCountDb = new ProjTaxonCountDb(getConnection());
-      String criteria = "project_name = '" + project + "'";
-      String taxonCountQuery = getTaxonSubfamilyDistJsonQuery(criteria);
-      String specimenCountQuery = getSpecimenSubfamilyDistJsonQuery(criteria);
-        //A.log("makeCharts() taxonCountQuery:" + taxonCountQuery);
-            utilDb.updateField("project", "taxon_subfamily_dist_json", "'" + projTaxonCountDb.getTaxonSubfamilyDistJson(taxonCountQuery) + "'", criteria);
-            utilDb.updateField("project", "specimen_subfamily_dist_json", "'" + projTaxonCountDb.getSpecimenSubfamilyDistJson(specimenCountQuery) + "'", criteria);
+      PlaceTotals.writePies(getConnection(), PlaceTotals.PROJECT, project.getName());
     }
-    
-    public String getTaxonSubfamilyDistJsonQuery(String criteria) {
-      String query = "select t.subfamily, count(*) count, t2.chart_color " 
-          + " from proj_taxon pt, taxon t, taxon t2, project p " 
-          + " where pt.taxon_name = t.taxon_name " 
-          + " and t.subfamily = t2.taxon_name "          
-          + " and p.project_name = pt.project_name "
-          + " and p." + criteria
-          + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') " 
-          + " and t.family = 'formicidae' " 
-          + " group by t.subfamily"; 
-      return query;
-    }
-    
-    public String getSpecimenSubfamilyDistJsonQuery(String criteria) {
-      String query = "select subfamily, count(*) count " 
-          + " from proj_taxon pt, specimen s, project p " 
-          + " where pt.taxon_name = s.taxon_name " 
-          + " and p.project_name = pt.project_name "
-          + " and p." + criteria
-          + " and s.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') " 
-          + " and s.family = 'formicidae' " 
-          + " group by subfamily"; 
-      return query;
-    }  
-    
-           
+
 }
