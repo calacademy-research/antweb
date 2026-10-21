@@ -32,6 +32,7 @@ public class ManageMuseumsAction extends AntwebAction {
 
         DynaActionForm df = (DynaActionForm) form;        
         String museumCode = (String) df.get("code");   
+        if (museumCode != null) museumCode = museumCode.trim();
         String museumName = (String) df.get("name");   
         String museumTitle = (String) df.get("title");   
            
@@ -54,7 +55,17 @@ public class ManageMuseumsAction extends AntwebAction {
             action = "view";
             message = "To delete a museum, use the Delete button on its form.";
           } else if (!"yes".equals(request.getParameter("confirmDelete"))) {
-            request.setAttribute("message", confirmDeleteHtml(request, museumCode));
+            int specimens = -1;
+            Connection countConnection = null;
+            try {
+              countConnection = DBUtil.getConnection(getDataSource(request, "conPool"), "ManageMuseumsAction count");
+              specimens = new MuseumDb(countConnection).getSpecimenCountOfCode(museumCode);
+            } catch (SQLException e) {
+              s_log.warn("execute() count e:" + e);
+            } finally {
+              DBUtil.close(countConnection, this, "ManageMuseumsAction count");
+            }
+            request.setAttribute("message", confirmDeleteHtml(request, museumCode, specimens));
             return mapping.findForward("message");
           } else {
             action = "delete";
@@ -116,8 +127,17 @@ public class ManageMuseumsAction extends AntwebAction {
 
     /** The page that asks before a museum is deleted: a POST form with the form token. */
     static String confirmDeleteHtml(HttpServletRequest request, String code) {
+        return confirmDeleteHtml(request, code, -1);
+    }
+
+    /** specimens: how many specimen records carry this museum code (-1 if not known). */
+    static String confirmDeleteHtml(HttpServletRequest request, String code, int specimens) {
         String domainApp = AntwebProps.getDomainApp();
-        return "<div style=\"margin:1em 0\"><p>Delete museum <b>" + Html.esc(code) + "</b>? This cannot be undone.</p>"
+        String inUse = specimens > 0
+            ? "<p><b>" + specimens + " specimen records carry this museum code.</b> They keep the code, but it will"
+              + " no longer have a museum page or counts. Usually a museum in use should be kept (untick Active instead).</p>"
+            : "";
+        return "<div style=\"margin:1em 0\"><p>Delete museum <b>" + Html.esc(code) + "</b>? This cannot be undone.</p>" + inUse
             + "<form method=\"post\" action=\"" + domainApp + "/viewMuseum.do\">"
             + Csrf.field(request)
             + "<input type=\"hidden\" name=\"code\" value=\"" + Html.escAttr(code) + "\">"

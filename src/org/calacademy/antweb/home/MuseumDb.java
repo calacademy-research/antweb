@@ -78,18 +78,15 @@ public class MuseumDb extends AntwebDb {
     }
 
     public Museum getMuseum(String code) throws SQLException {
-      return getMuseumWithClause(" code = '" + code + "'");
-    }
-    private Museum getMuseumWithClause(String keyClause) throws SQLException {
+      if (code == null) return null;
       Museum museum = null;
-      Statement stmt = null;
+      PreparedStatement stmt = null;
       ResultSet rset = null;
       try {
-        stmt = DBUtil.getStatement(getConnection(), "getMuseumWithClause()");  
-        String theQuery = "select *" 
-          + " from museum " 
-          + " where " + keyClause;
-        rset = stmt.executeQuery(theQuery);
+        // The code is bound (it comes from the Museum Manager's address).
+        stmt = DBUtil.getPreparedStatement(getConnection(), "getMuseum()", "select * from museum where code = ?");
+        stmt.setString(1, code);
+        rset = stmt.executeQuery();
         while (rset.next()) {
            museum = new Museum();
            museum.setCode(rset.getString("code"));
@@ -106,78 +103,68 @@ public class MuseumDb extends AntwebDb {
            museum.setDescription(description);         
         }
       } finally {
-          DBUtil.close(stmt, rset, "getMuseumWithClause()");
+          DBUtil.close(stmt, rset, "getMuseum()");
       }
       //A.log("getMuseum() museum:" + museum.toString());       
       
       return museum;
     }
 
+    /**
+     * Museum Manager: add the museum, or update its name, title and active flag when the code
+     * exists already (the code is the key and is not changed here). Values are bound, so names
+     * with an apostrophe (Musee d'histoire naturelle) save as typed.
+     */
     public String saveMuseum(Museum museum) throws SQLException {
-    
-        String message = "";
-        if (museum.getCode() == null) {
-          message = "Attempt to save museum with null code";
-          s_log.info("saveMuseum() message:" + message);
-          return message;
+        if (museum.getCode() == null || museum.getCode().trim().isEmpty()) {
+          s_log.info("saveMuseum() no code");
+          return "Nothing was saved: enter a museum code.";
         }
-        int activeInt = 1;
-        if (!museum.getIsActive()) activeInt = 0;
-            
-        String dml = "insert into museum (code, name, title, active) " 
-            + " values ('"+ museum.getCode() + "', '" + museum.getName() + "', '" + museum.getTitle() + "', " + activeInt + ")";
-
-        Statement stmt = null;
+        String code = museum.getCode().trim();
+        int activeInt = museum.getIsActive() ? 1 : 0;
+        boolean exists = getMuseum(code) != null;
+        PreparedStatement stmt = null;
         try {
-          stmt = DBUtil.getStatement(getConnection(), "saveMuseum()");  
-                                                                                                                         
-          //A.log("updateMuseum() dml:" + dml);
-          int c = stmt.executeUpdate(dml);
-          message = c + " record inserted.";
-        } catch (SQLIntegrityConstraintViolationException e) {
-          // no problem
-          message = updateMuseum(museum);
+          if (exists) {
+            stmt = DBUtil.getPreparedStatement(getConnection(), "saveMuseum()",
+                "update museum set name = ?, title = ?, active = ? where code = ?");
+            stmt.setString(1, museum.getName());
+            stmt.setString(2, museum.getTitle());
+            stmt.setInt(3, activeInt);
+            stmt.setString(4, code);
+            stmt.executeUpdate();
+            return "Museum " + Html.esc(code) + " updated.";
+          }
+          stmt = DBUtil.getPreparedStatement(getConnection(), "saveMuseum()",
+              "insert into museum (code, name, title, active) values (?, ?, ?, ?)");
+          stmt.setString(1, code);
+          stmt.setString(2, museum.getName());
+          stmt.setString(3, museum.getTitle());
+          stmt.setInt(4, activeInt);
+          stmt.executeUpdate();
+          return "Museum " + Html.esc(code) + " added.";
         } catch (SQLException e) {
-          s_log.error("saveMuseum() e:" + e + " dml:" + dml);
+          s_log.error("saveMuseum() code:" + code + " e:" + e);
           throw e;
         } finally {
           DBUtil.close(stmt, null, this, "saveMuseum()");
         }
-        return message;
     }
 
-    private String updateMuseum(Museum museum) throws SQLException {
-        String message = "";
-        if (museum.getCode() != null) {
-        
-            int activeInt = 1;
-              if (!museum.getIsActive()) activeInt = 0;
-        
-            //String title = museum.getTitle();
-            //if (title == null) title = museum.getName();
-            String dml = "update museum set " 
-              + " name = '" + museum.getName() + "', "
-              + " title = '" + museum.getTitle() + "', "
-              + " active = " + activeInt
-              + " where code='" + museum.getCode() + "'"; 
-            Statement stmt = null;
-            try {
-              stmt = DBUtil.getStatement(getConnection(), "updateMuseum()");           
-              s_log.info(dml);
-              int c = stmt.executeUpdate(dml);
-              s_log.debug("updateMuseum() dml:" + dml);
-              message = c + " record updated.";
-            } catch (SQLException e) {
-              s_log.error("updateMuseum() e:" + e + " dml:" + dml);
-              throw e;
-            } finally {
-              DBUtil.close(stmt, null, this, "updateMuseum()");
-            }
-        } else {
-            s_log.error("Attempt to update code null");
+    /** How many specimen records carry this museum code (specimen.museum); shown before a delete. */
+    public int getSpecimenCountOfCode(String code) throws SQLException {
+        if (code == null) return 0;
+        PreparedStatement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getPreparedStatement(getConnection(), "getSpecimenCountOfCode()", "select count(*) from specimen where museum = ?");
+            stmt.setString(1, code);
+            rset = stmt.executeQuery();
+            return rset.next() ? rset.getInt(1) : 0;
+        } finally {
+            DBUtil.close(stmt, rset, "getSpecimenCountOfCode()");
         }
-        return message;
-    }    
+    }
 
     public String deleteByCode(String code) throws SQLException {
         String message = "";

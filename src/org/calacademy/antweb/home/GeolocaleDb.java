@@ -567,6 +567,25 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         return message;
     }    
     
+    /** How many places name this one as their parent (the countries of a subregion, the adm1s of a country). */
+    public int getChildCount(Geolocale geolocale) throws SQLException {
+        String childRank = Georank.getChild(geolocale.getGeorank());
+        if (childRank == null || geolocale.getName() == null) return 0;
+        PreparedStatement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getPreparedStatement(getConnection(), "GeolocaleDb.getChildCount()",
+                "select count(*) from geolocale where parent = ? and georank = ?");
+            stmt.setString(1, geolocale.getName());
+            stmt.setString(2, childRank);
+            rset = stmt.executeQuery();
+            return rset.next() ? rset.getInt(1) : 0;
+        } finally {
+            DBUtil.close(stmt, rset, "GeolocaleDb.getChildCount()");
+        }
+    }
+
+    /** Delete a place and its species list rows (geolocale_taxon); the caller checks it has no child places. */
     public boolean deleteGeolocale(int id) throws SQLException {
         boolean success = false;
         Statement stmt = null;
@@ -579,7 +598,10 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
             stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.deleteGeolocale()");
             int x = stmt.executeUpdate(dml);
-            if (x > 0) success = true;
+            if (x > 0) {
+              success = true;
+              stmt.executeUpdate("delete from geolocale_taxon where geolocale_id = " + id);
+            }
         } catch (SQLException e) {
             s_log.error("deleteGeolocale() e:" + e);
             throw e;
@@ -627,7 +649,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
         if (form.getRegion() != null) { sets.add("region = ?"); params.add(form.getRegion()); }
         if (form.getBioregion() != null) { sets.add("bioregion = ?"); params.add(form.getBioregion()); }
+        else if (form.isClearBioregion()) { sets.add("bioregion = ?"); params.add(null); }
         if (form.getAltBioregion() != null) { sets.add("alt_bioregion = ?"); params.add(form.getAltBioregion()); }
+        else if (form.isClearAltBioregion()) { sets.add("alt_bioregion = ?"); params.add(null); }
 
         if (form.getCentroidFixed() != null) {
           sets.add("centroid_fixed = ?"); params.add("".equals(form.getCentroidFixed()) ? null : form.getCentroidFixed());

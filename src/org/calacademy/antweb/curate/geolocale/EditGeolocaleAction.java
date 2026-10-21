@@ -38,6 +38,15 @@ public final class EditGeolocaleAction extends AntwebAction {
         String name = editGeolocaleForm.getName();
         String georank = editGeolocaleForm.getGeorank();
         
+        // The form's "None" choices and an empty or "null" value mean no value (SQL NULL), never the
+        // text "none" or "null": a bioregion of "none" made specimens of that country lose their bioregion.
+        editGeolocaleForm.setParent(noneToNull(editGeolocaleForm.getParent()));
+        // A menu set to None clears the value (the field was on the form, so it is saved as NULL).
+        editGeolocaleForm.setClearBioregion(editGeolocaleForm.getBioregion() != null && noneToNull(editGeolocaleForm.getBioregion()) == null);
+        editGeolocaleForm.setClearAltBioregion(editGeolocaleForm.getAltBioregion() != null && noneToNull(editGeolocaleForm.getAltBioregion()) == null);
+        editGeolocaleForm.setBioregion(noneToNull(editGeolocaleForm.getBioregion()));
+        editGeolocaleForm.setAltBioregion(noneToNull(editGeolocaleForm.getAltBioregion()));
+        if (editGeolocaleForm.getCountry() != null) editGeolocaleForm.setCountry(noneToNull(editGeolocaleForm.getCountry()));
 		String parent = editGeolocaleForm.getParent();
 
 		String country = editGeolocaleForm.getCountry();
@@ -46,8 +55,13 @@ public final class EditGeolocaleAction extends AntwebAction {
         
         s_log.debug("execute() name:" + name + " country:" + country + " parent:" + parent + " id:" + id + " isFast:" + editGeolocaleForm.getIsFast());
 
-        if ((name == null || "".equals(name)) && editGeolocaleForm.getIsCreate()) {
-			request.setAttribute("message", "Enter an Adm1 Name in the URL bar...");
+        if ((name == null || "".equals(name.trim())) && editGeolocaleForm.getIsCreate()) {
+			request.setAttribute("message", "Nothing was created: enter a name.");
+			return mapping.findForward("message");
+        }
+        if (editGeolocaleForm.getIsCreate() && !"region".equals(georank) && parent == null) {
+			request.setAttribute("message", "Nothing was created: open the list of the place it belongs to first"
+			    + " (for an adm1, the adm1 list of its country), then use the Create box there.");
 			return mapping.findForward("message");
         }
      
@@ -150,12 +164,18 @@ public final class EditGeolocaleAction extends AntwebAction {
 		
 		  if (editGeolocaleForm.getIsDelete()) {
 		    Geolocale deleteGeo = geolocaleDb.getGeolocale(id);
-		  
-		    boolean success = geolocaleDb.deleteGeolocale(id);
-		    if (!success) {
-		 	  message = "Failed to delete:" + Html.esc(name);  
+		    int children = deleteGeo == null ? 0 : geolocaleDb.getChildCount(deleteGeo);
+		    if (deleteGeo == null) {
+		      message = "Not found: id " + id + ".";
+		    } else if (children > 0) {
+		      // Its countries or adm1s would be left without a parent.
+		      message = "Not deleted: " + Html.esc(deleteGeo.getName()) + " still has " + children
+		          + " places under it (" + Html.esc(Georank.getChild(deleteGeo.getGeorank())) + "). Move or delete those first.";
+		    } else if (!geolocaleDb.deleteGeolocale(id)) {
+		 	  message = "Failed to delete:" + Html.esc(deleteGeo.getName());
 		    } else {
-		  	  message = "Deleted:" + Html.esc(deleteGeo.getName());
+		  	  message = "Deleted:" + Html.esc(deleteGeo.getName()) + " (and its species list rows).";
+		  	  GeolocaleMgr.populate(connection, true, false);
 		    }
 		    forwardToMessage = true;
 		  }
@@ -209,6 +229,14 @@ public final class EditGeolocaleAction extends AntwebAction {
 
         return mapping.findForward("failure");
     }
+    /** Form values that mean "no value": null, "", "none" (the menus' None) and "null" (an old printed null). */
+    public static String noneToNull(String value) {
+        if (value == null) return null;
+        String v = value.trim();
+        if (v.isEmpty() || "none".equalsIgnoreCase(v) || "null".equals(v)) return null;
+        return v;
+    }
+
     /**
      * The centroid and bounding box fields are shown filled with the values the site uses now
      * (useCentroid(), useBoundingBox()) and are saved into centroid_fixed and bounding_box_fixed.

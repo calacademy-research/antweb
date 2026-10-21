@@ -1171,8 +1171,12 @@ public abstract class Queries {
 
     // Invoke like: /query.do?action=curiousQuery&name=nonAsciiTaxonName
     public static String getQueryManagerPage() {        
-        String page = "<h2>&nbsp;Query Manager <img width='23' src='" + AntwebProps.getDomainApp() + "/image/new1.png'></h2>";
-        page += "&nbsp;&nbsp;&nbsp;&nbsp;Old Query Manager is: <a href='" + AntwebProps.getDomainApp() + "/queries.do'>here</a><br>";
+        String page = "<h2>&nbsp;Query Manager</h2>";
+        page += "<div class=\"mgr_help\" style=\"max-width:60em;margin:6px 16px 12px 16px\">Ready-made database queries, by topic."
+            + " Click a name to run it: the page shows the query, its rows and how long it took. The queries only read data"
+            + " (nothing is changed); some take a minute on the full database. Most are checks that should find no rows."
+            + " Administrators only, except the few that public pages link to.</div>";
+        page += "&nbsp;&nbsp;&nbsp;&nbsp;The same queries grouped as before (integrity, dev, curious): <a href='" + AntwebProps.getDomainApp() + "/queries.do'>older list</a><br>";
         page += getQueryManagerBlock("Taxon Queries", getTaxaNamedQueries());
         page += getQueryManagerBlock("Homonym Queries", getHomonymNamedQueries());
         page += getQueryManagerBlock("Specimen Queries", getSpecimenNamedQueries());
