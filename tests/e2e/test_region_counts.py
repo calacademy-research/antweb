@@ -8,12 +8,14 @@ a name on that country's list), each once (Geolocale.regionSpecimensSql).
 
 Checked on the Eastern Africa subregion page (the subregion of Madagascar; staging data differs from
 production, so no fixed numbers):
-- Specimens is followed by the new definition;
+- the Specimens row of the statistics table (data-stat="specimens") has the new definition;
 - Images is not smaller than Imaged specimens (when the image numbers are computed);
 - staging, admin login: once a nightly run has counted the subregions by the new rule (compute.log line
   "Subregions populated (specimens collected in their countries)"), Specimens is not more than the sum of
   the Specimens of its countries (the country pages listed on the subregion page for curators, valid
   countries, islands included). Before that run the stored number is still the old one: skipped.
+Country pages (Comoros): the Specimens row says "identified to ... on this country's AntWeb list" and,
+under "List all specimens collected in ...", points to Show Specimen Taxa of the species list.
 Read-only. Database behaviour: test/org/calacademy/antweb/home/RegionCountDbTest.java (CI).
 """
 import re
@@ -25,14 +27,25 @@ from antweb import BASE_URL, TIMEOUT, new_session
 from staging_accounts import IS_STAGING, login, needs
 
 PAGE = "/subregion.do?name=Eastern+Africa"
-DEFINITION = "(ant specimens collected in this subregion's countries and identified to a name on their lists"
+DEFINITION = "Ant specimens collected in this subregion's countries and identified to a name on their lists; each specimen counted once."
 RULE_LOG = "specimens collected in their countries"   # GeolocaleDb.REGION_RULE_LOG
 
-SPECIMENS = re.compile(r"<b>Specimens:</b>&nbsp;([\d,]+)")
+# Rows of the statistics table carry data-stat and data-n (the number shown).
+ROW = re.compile(r'<tr data-stat="([a-z-]+)" data-n="(\d+)"[^>]*>(.*?)</tr>', re.S)
 
 
-def _num(s):
-    return int(s.replace(",", ""))
+def _rows(html):
+    """data-stat -> (data-n, row HTML) of the statistics table of a place page."""
+    if 'id="place-stats"' not in html:
+        return {}
+    block = html[html.index('id="place-stats"'):]
+    block = block[:block.index("</table>")]
+    return {m.group(1): (int(m.group(2)), m.group(3)) for m in ROW.finditer(block)}
+
+
+def _specimens(html):
+    rows = _rows(html)
+    return rows["specimens"][0] if "specimens" in rows else None
 
 
 def _text(html):
@@ -51,16 +64,39 @@ def page():
 
 
 def test_specimens_definition(page):
-    text = _text(page[page.index('id="place-stats"'):])
-    m = re.search(r"Specimens:\s*([\d,]+)\s*" + re.escape(DEFINITION), text)
-    assert m, f"Specimens is not followed by its number and {DEFINITION!r}: {text[:600]}"
+    rows = _rows(page)
+    assert "specimens" in rows, f"no Specimens row in the statistics table; rows: {list(rows)}"
+    text = _text(rows["specimens"][1])
+    assert DEFINITION in text, f"Specimens definition {DEFINITION!r} not in {text!r}"
 
 
 def test_images_not_fewer_than_imaged_specimens(page):
-    if "data-images=" not in page:
+    rows = _rows(page)
+    if "images" not in rows or "imaged" not in rows:
         pytest.skip("place image numbers not computed yet (nightly set 4 after the deploy)")
-    d = dict(re.findall(r'data-([a-z-]+)="(\d+)"', page[page.index('id="place-stats"'):][:400]))
-    assert int(d["images"]) >= int(d["imaged"]), d
+    assert rows["images"][0] >= rows["imaged"][0], {k: v[0] for k, v in rows.items()}
+
+
+COUNTRY_PAGE = "/country.do?name=Comoros"
+COUNTRY_DEFINITION = ("Ant specimens collected in this country and identified to a species, morphospecies, or unidentified taxon"
+                      " on this country's AntWeb list.")
+
+
+def test_country_specimens_row_points_to_specimen_taxa():
+    """A country's Specimens row: its definition (names on its list) and, under the link to all its specimen
+    records, Show Specimen Taxa of the species list for the names of every specimen collected there."""
+    r = new_session().get(BASE_URL + COUNTRY_PAGE, timeout=max(TIMEOUT, 120))
+    assert r.status_code == 200, f"{COUNTRY_PAGE}: HTTP {r.status_code}"
+    rows = _rows(r.text)
+    if "specimens" not in rows or "on this country's AntWeb list" not in _text(rows["specimens"][1]):
+        pytest.skip("the country definition of 2026-10-20 is not deployed on this server yet")
+    row = rows["specimens"][1]
+    assert COUNTRY_DEFINITION in _text(row), _text(row)
+    assert "List all specimens collected in Comoros" in _text(row), _text(row)
+    m = re.search(r'id="specimen-taxa-link" href="([^"]+)"', row)
+    assert m, f"no Show Specimen Taxa link in the Specimens row: {row}"
+    href = unescape(m.group(1))
+    assert "taxonomicPage.do?rank=species" in href and "countryName=Comoros" in href and "specimen=true" in href, href
 
 
 @pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")
@@ -77,9 +113,8 @@ def test_specimens_not_more_than_its_countries():
 
     r = s.get(BASE_URL + PAGE, timeout=max(TIMEOUT, 120))
     assert r.status_code == 200, r.status_code
-    m = SPECIMENS.search(r.text)
-    assert m, "no Specimens number on the subregion page"
-    subregion = _num(m.group(1))
+    subregion = _specimens(r.text)
+    assert subregion is not None, "no Specimens row on the subregion page"
     # Curators see the valid countries (the ones the count uses), live or not.
     heading = r.text.index("Countries:</b>") if "Countries:</b>" in r.text else -1
     assert heading >= 0, "no list of countries on the subregion page"
@@ -91,8 +126,8 @@ def test_specimens_not_more_than_its_countries():
         url = href if href.startswith("http") else BASE_URL + href
         c = s.get(url, timeout=max(TIMEOUT, 120))
         assert c.status_code == 200, (name, c.status_code)
-        cm = SPECIMENS.search(c.text)
-        assert cm, f"no Specimens number on the page of {name}"
-        total += _num(cm.group(1))
+        n = _specimens(c.text)
+        assert n is not None, f"no Specimens row on the page of {name}"
+        total += n
     assert subregion <= total, (f"Eastern Africa shows {subregion} specimens, more than its countries together ({total}): "
                                 f"{', '.join(n for _h, n in links)}")

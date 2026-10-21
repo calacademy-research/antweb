@@ -17,7 +17,7 @@ import re
 import pytest
 
 from antweb import BASE_URL, TIMEOUT
-from staging_accounts import (IS_STAGING, baseline_text, code, login, needs, require_test_group,
+from staging_accounts import (IS_STAGING, assert_upload_complete, baseline_text, code, login, needs, require_test_group,
                               specimen_page, upload_specimens)
 from test_image_upload import JPEG, _artist
 
@@ -42,7 +42,7 @@ def test_image_upload_to_test_specimen():
         _syn, valid = find_names()
         r = upload_specimens(s, token, baseline_text((valid.get("subfamily") or "").capitalize(),
                                                      valid["genus"].capitalize(), valid["species"]))
-        assert "Successful Upload." in r.text
+        assert_upload_complete(r)
         assert specimen_page(s, SPECIMEN)[0], f"{SPECIMEN} missing after the baseline upload"
 
     r = _post(s, "start", token, data={"artist": _artist(s), "names": NAME})

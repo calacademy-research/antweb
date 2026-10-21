@@ -117,16 +117,49 @@ public class UploadAction extends AntwebAction {
 		s_isInProcess = inProcess;
 	}
 
+	/** Sets the upload flag if no upload holds it. True if this caller now holds it (background jobs). */
+	public static synchronized boolean claimUploadProcess(String inProcess) {
+		if (s_isInProcess != null) return false;
+		s_isInProcess = inProcess;
+		return true;
+	}
+
+	/** Clears the upload flag if the caller still holds it. */
+	public static synchronized void releaseUploadProcess(String inProcess) {
+		if (inProcess != null && inProcess.equals(s_isInProcess)) s_isInProcess = null;
+	}
+
+	/**
+	 * Run in the background (BackgroundJobs) since 2026-10-20: the page answers at once with a
+	 * status page (jobStatus.do). A specimen upload waits in the queue while another upload or the
+	 * nightly run is running; the AntCat import waits for another upload, and is refused during the
+	 * nightly run, as before.
+	 */
+	static final java.util.Set<String> BACKGROUND_ACTIONS = java.util.Set.of(
+			"specimenUpload", "taxonWorksUpload", "fetchAndReloadWorldants");
+
+	public static boolean isBackgroundAction(String action) {
+		return action != null && BACKGROUND_ACTIONS.contains(action);
+	}
+
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 								 HttpServletRequest request, HttpServletResponse response) {
 
-		ActionForward f = Check.upload(request, mapping);
-		if (f != null) return f;
-		ActionForward g = Check.compute(request, mapping);
-		if (g != null) return g;
+		UploadForm theForm = (UploadForm) form;
+		boolean isBackground = isBackgroundAction(theForm.getAction());
+
+		// A specimen upload is not refused while another upload or the nightly run is running:
+		// it waits in the queue (BackgroundJobs). The AntCat import waits for another upload.
+		if (!isBackground) {
+			ActionForward f = Check.upload(request, mapping);
+			if (f != null) return f;
+		}
+		if (!isBackground || "fetchAndReloadWorldants".equals(theForm.getAction())) {
+			ActionForward g = Check.compute(request, mapping);
+			if (g != null) return g;
+		}
 
 		HttpSession session = request.getSession();
-		UploadForm theForm = (UploadForm) form;
 		//A.log("execute() up:" + theForm.isUp());
 
 		String domainApp = AntwebProps.getDomainApp();
@@ -187,6 +220,14 @@ public class UploadAction extends AntwebAction {
 			return mapping.findForward("message");
 		}
 
+		if (isBackground) {
+			BackgroundJobDb.setDataSource(getDataSource(request, "conPool"));
+			if ("fetchAndReloadWorldants".equals(theForm.getAction())) {
+				return submitWorldantsImport(accessLogin, request, mapping);
+			}
+			return submitSpecimenUpload(theForm, accessLogin, request, mapping);
+		}
+
 		if (UploadAction.isInUploadProcess()) {
 			String message = "Server is currently in an Upload Process. Please try again in a little while.";
 			if (LoginMgr.isAdmin(request)) message += " " + getIsInUploadProcess();
@@ -210,11 +251,13 @@ public class UploadAction extends AntwebAction {
 
 		Date worldantsFetchTime = null;
 		String dbMethodName = DBUtil.getDbMethodName("UploadAction.execute()");
-		// Set once a specimen file upload starts; the uploader is emailed when it ends (see the finally block).
-		UploadNotice.Facts notice = null;
-		Group noticeGroup = null;
+		// Taken only if free: a background upload (BackgroundJobs) may have started since the check above.
+		final String processName = accessLogin.getName() + ":" + accessGroup.getName();
+		if (!claimUploadProcess(processName)) {
+			request.setAttribute("message", "Server is currently in an Upload Process. Please try again in a little while.");
+			return mapping.findForward("message");
+		}
 		try {
-			setIsInUploadProcess(accessLogin.getName() + ":" + accessGroup.getName());
 
 			DataSource dataSource = getDataSource(request, "longConPool");
 			connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
@@ -237,81 +280,9 @@ public class UploadAction extends AntwebAction {
 			//A.log("execute() action:" + action);
 			if (action != null) {
 
-				if ("specimenUpload".equals(action) || "taxonWorksUpload".equals(action)) {
-
-					String curateAs = theForm.getUploadAs();
-					if (!isAllowedUploadAs(accessLogin, curateAs)) {
-						s_log.warn("execute() uploadAs:" + curateAs + " not allowed for login:" + accessLogin.getId());
-						curateAs = null;
-					}
-					Curator curator = LoginMgr.getCurator(curateAs);
-					if (curator == null) curator = LoginMgr.getCurator(accessLogin);
-					A.log("execute action:" + action + " curateAs:" + curateAs + " curator:" + curator + " login:" + accessLogin);
-
-					boolean abort = AntwebProps.isDevMode();
-
-					FormFile specimenFile = theForm.getTheFile();
-					if (specimenFile != null && !specimenFile.getFileName().equals("")) {
-
-						notice = new UploadNotice.Facts();
-						notice.fileName = specimenFile.getFileName();
-						notice.fileType = "taxonWorksUpload".equals(action) ? "TaxonWorks file" : "AntWeb specimen file";
-						noticeGroup = curator != null ? curator.getGroup() : accessGroup;
-
-						if ("specimenUpload".equals(action)) {
-							String theFileName = accessGroup.getAbbrev() + "SpecimenList";
-							A.log("specimenUpload specimenFile:" + specimenFile.getFileName() + " fileName:" + theFileName);
-
-							s_log.info("execute() type:" + theForm.getSpecimenUploadType() + " encoding:" + theForm.getEncoding());
-
-							if (abort) AntwebUtil.returnMessage("abort Antweb specimen upload", mapping, request);
-
-							uploadDetails = new SpecimenUploader(connection).uploadSpecimenFile(theForm, curator, request.getHeader("User-Agent"), theForm.getEncoding());
-
-						} else if ("taxonWorksUpload".equals(action)) {
-							String theFileName = accessGroup.getAbbrev() + "TWSpecimenList";
-							A.log("specimenFile:" + specimenFile + " fileName:" + theFileName);
-
-							if (abort) AntwebUtil.returnMessage("abort TaxonWorks specimen upload", mapping, request);
-
-							uploadDetails = new TaxonWorksUploader(connection).uploadSpecimenFile(theForm, curator, request.getHeader("User-Agent"), theForm.getEncoding());
-
-						}
-
-						ActionForward af = uploadDetails.returnForward(mapping, request);
-						if (af != null) return af;
-
-						specimenPostProcess(request, connection, curator, uploadDetails);
-						specimenPostProcessGlobal(connection);
-
-						runCountCrawls = true;
-
-					} else {
-						request.setAttribute("message", "Must choosen specimen file for upload");
-						return uploadDetails.getErrorForward(mapping);
-					}
-
-
-					//if (!curator.equals(accessLogin)) uploadDetails.setCurator(accessLogin);
-
-				} else if (action.equals("fetchAndReloadWorldants")) {
-					SpeciesListUploader speciesListUploader = new SpeciesListUploader(connection);
-					uploadDetails = speciesListUploader.worldantsFetchAndReload();
-
-					String message = uploadDetails.getMessage();
-					if (message != null && !"success".equals(message)) {
-						AdminAlertMgr.add(message, connection);
-						request.setAttribute("message", message);
-						return mapping.findForward("message");
-					}
-
-					//runCountCrawls(connection);
-
-					runStatistics(action, connection, request, accessLogin.getId(), uploadDetails.getExecTime());
-
-					uploadDetails.finish(accessLogin, request, connection);
-
-				} else if (action.equals("museumCalc")) {
+				// specimenUpload, taxonWorksUpload and fetchAndReloadWorldants run in the background
+				// (submitSpecimenUpload, submitWorldantsImport) and never reach this point.
+				if (action.equals("museumCalc")) {
 					Map<String, Integer> museumMap = (Map<String, Integer>) session.getAttribute("museumMap");
 
 					// Curators recount only the museums of their own last upload (set in this session by
@@ -411,10 +382,6 @@ public class UploadAction extends AntwebAction {
 			uploadDetails.finish(accessLogin, request, connection);
 
 			connection.commit();
-			if (notice != null) {
-				notice.complete = true;
-				notice.uploadId = AntwebMgr.getNextSpecimenUploadId();
-			}
 
 			AntwebUtil.logCount();
 
@@ -423,7 +390,7 @@ public class UploadAction extends AntwebAction {
 			}
 			return mapping.findForward(uploadDetails.getForwardPage());
 
-		} catch (TestException | SQLException | IOException | AntwebException | RESyntaxException e) {
+		} catch (SQLException | IOException e) {
 			return handleException(e, action, connection, mapping, request);
 		} catch (Exception e) {
 			s_log.error("execute() e:" + e + " " + AntwebUtil.getShortStackTrace(e));
@@ -433,13 +400,11 @@ public class UploadAction extends AntwebAction {
 			if (errorMessage != null) finishMessage = errorMessage;
 			s_log.warn("execute() finished action:" + action + " group:" + accessGroup.getAbbrev()
 					+ " in " + AntwebUtil.getMinsPassed(uploadDetails.getStartTime()));
-			setIsInUploadProcess(null);
+			releaseUploadProcess(processName);
 
 			UploadMgr.populate(connection, true); // Repopulate UploadMgr.
 
 			DBUtil.close(connection, this, dbMethodName);
-
-			if (notice != null) sendUploadNotice(notice, noticeGroup, uploadDetails, accessLogin, request);
 
 			Profiler.profile("uploadAction", uploadDetails.getStartTime());
 			Profiler.report();
@@ -447,9 +412,153 @@ public class UploadAction extends AntwebAction {
 	}
 
 
-	/** Emails the uploader that the specimen upload is complete or did not complete (UploadNotice). */
-	private static void sendUploadNotice(UploadNotice.Facts notice, Group noticeGroup, UploadDetails uploadDetails,
-										 Login accessLogin, HttpServletRequest request) {
+	/** The status page of a background job (jobStatus.do), by redirect. */
+	static ActionForward statusPage(int jobId, boolean already) {
+		return new ActionForward("/jobStatus.do?id=" + jobId + (already ? "&already=1" : ""), true);
+	}
+
+	/**
+	 * Specimen upload (AntWeb file or TaxonWorks archive): the quick checks here, then the file is
+	 * saved and the upload runs in the background (SpecimenUploadJob). The answer is a redirect to
+	 * the job's status page, well within Cloudflare's 100 seconds. While an upload of the same
+	 * group, or by the same login, is waiting or running, no second one is started: the curator is
+	 * sent to that upload's status page.
+	 */
+	private ActionForward submitSpecimenUpload(UploadForm theForm, Login accessLogin, HttpServletRequest request, ActionMapping mapping) {
+		String action = theForm.getAction();
+		String curateAs = theForm.getUploadAs();
+		if (!isAllowedUploadAs(accessLogin, curateAs)) {
+			s_log.warn("submitSpecimenUpload() uploadAs:" + curateAs + " not allowed for login:" + accessLogin.getId());
+			curateAs = null;
+		}
+		Curator curator = LoginMgr.getCurator(curateAs);
+		if (curator == null) curator = LoginMgr.getCurator(accessLogin);
+		if (curator == null || curator.getGroup() == null) {
+			request.setAttribute("message", "This login has no curator group to upload to.");
+			return mapping.findForward("message");
+		}
+		Group group = curator.getGroup();
+
+		FormFile specimenFile = theForm.getTheFile();
+		if (specimenFile == null || specimenFile.getFileName() == null || specimenFile.getFileName().isEmpty()) {
+			request.setAttribute("message", "Must choose a specimen file for upload.");
+			return mapping.findForward("message");
+		}
+		String originalName = specimenFile.getFileName();
+		boolean isTaxonWorks = "taxonWorksUpload".equals(action);
+
+		BackgroundJobs.Job job = new BackgroundJobs.Job(BackgroundJobs.UPLOAD, action,
+				(isTaxonWorks ? "TaxonWorks upload" : "Specimen upload") + " for " + group.getName() + " (" + originalName + ")",
+				accessLogin.getId(), accessLogin.getName(), group.getId());
+		BackgroundJobs.Job running = BackgroundJobs.get().findDuplicate(job);
+		if (running != null) {
+			s_log.warn("submitSpecimenUpload() login:" + accessLogin.getId() + " group:" + group.getId() + " already has job " + running.getId());
+			return statusPage(running.getId(), true);
+		}
+
+		// Save the file (Struts deletes its own copy when this request ends). Only a zip is unpacked,
+		// and only on the job's thread; here its list of entries is checked (SafeUnzip.check).
+		File saved = null;
+		try {
+			File dir = new File(AntwebProps.getWorkingDir() + "jobs");
+			if (!dir.isDirectory() && !dir.mkdirs()) throw new IOException("could not create " + dir);
+			boolean isZip = originalName.toLowerCase().endsWith(".zip");
+			saved = File.createTempFile("upload-group" + group.getId() + "-", isZip ? ".zip" : ".txt", dir);
+			if (!Utility.copyFormFile(specimenFile, saved.getPath())) throw new IOException("could not save the uploaded file");
+			if (isZip) {
+				if (isTaxonWorks) SafeUnzip.check(saved, SafeUnzip.named("data.tsv"), "data.tsv file");
+				else SafeUnzip.check(saved, SafeUnzip.ONE_TXT, ".txt file");
+			}
+		} catch (SafeUnzip.Refused r) {
+			deleteSaved(saved);
+			request.setAttribute("message", Html.esc(r.getMessage()));
+			return mapping.findForward("message");
+		} catch (IOException e) {
+			s_log.error("submitSpecimenUpload() e:" + e);
+			deleteSaved(saved);
+			request.setAttribute("message", "The uploaded file could not be saved. Please try again.");
+			return mapping.findForward("message");
+		}
+
+		SpecimenUploadJob work = new SpecimenUploadJob(action, saved, originalName, curator, accessLogin, request.getSession(),
+				getDataSource(request, "longConPool"), request.getHeader("User-Agent"), theForm.getEncoding());
+		BackgroundJobs.Submitted submitted = BackgroundJobs.get().submit(job, work);
+		if (submitted.job == null) {
+			deleteSaved(saved);
+			request.setAttribute("message", Html.esc(submitted.refused));
+			return mapping.findForward("message");
+		}
+		if (!submitted.isNew) {
+			deleteSaved(saved);
+			return statusPage(submitted.job.getId(), true);
+		}
+		s_log.warn("submitSpecimenUpload() job " + submitted.job.getId() + " action:" + action + " group:" + group.getId()
+				+ " login:" + accessLogin.getId() + " file:" + originalName + " bytes:" + saved.length());
+		return statusPage(submitted.job.getId(), false);
+	}
+
+	private static void deleteSaved(File saved) {
+		if (saved != null && saved.exists() && !saved.delete()) s_log.warn("deleteSaved() could not delete " + saved);
+	}
+
+	/** "Import AntCat names now" on the Curate page (admins): the nightly AntCat import, in the background. */
+	private ActionForward submitWorldantsImport(Login accessLogin, HttpServletRequest request, ActionMapping mapping) {
+		BackgroundJobs.Job job = new BackgroundJobs.Job(BackgroundJobs.DATA, "fetchAndReloadWorldants", "Import AntCat names now",
+				accessLogin.getId(), accessLogin.getName(), 0);
+		final DataSource dataSource = getDataSource(request, "longConPool");
+		BackgroundJobs.Submitted submitted = BackgroundJobs.get().submit(job, j -> runWorldantsImport(dataSource, accessLogin));
+		if (submitted.job == null) {
+			request.setAttribute("message", Html.esc(submitted.refused));
+			return mapping.findForward("message");
+		}
+		return statusPage(submitted.job.getId(), !submitted.isNew);
+	}
+
+	/** The work of "Import AntCat names now" (was the fetchAndReloadWorldants branch of execute()). */
+	static BackgroundJobs.Outcome runWorldantsImport(DataSource dataSource, Login accessLogin) throws Exception {
+		String processName = accessLogin.getName() + ":fetchAndReloadWorldants";
+		while (!claimUploadProcess(processName)) {
+			BackgroundJobs.step("Waiting for an upload to finish. The import starts right after it.");
+			Thread.sleep(SpecimenUploadJob.CLAIM_WAIT_MS);
+		}
+		BackgroundJobs.step("Downloading the AntCat export and loading the names (several minutes).");
+		Connection connection = null;
+		String dbMethodName = DBUtil.getDbMethodName("UploadAction.runWorldantsImport()");
+		try {
+			connection = DBUtil.getConnection(dataSource, dbMethodName);
+			connection.setAutoCommit(false);
+			UploadDetails uploadDetails = new SpeciesListUploader(connection).worldantsFetchAndReload();
+			String message = uploadDetails.getMessage();
+			if (message != null && !"success".equals(message)) {
+				AdminAlertMgr.add(message, connection);
+				DBUtil.rollback(connection);
+				return BackgroundJobs.Outcome.failed(message);
+			}
+			BackgroundJobs.step("Saving a statistics snapshot and writing the report.");
+			new StatisticsDb(connection).populateStatistics("fetchAndReloadWorldants", accessLogin.getId(),
+					uploadDetails.getExecTime() == null ? "N/A" : uploadDetails.getExecTime(), AntwebProps.getDocRoot());
+			uploadDetails.finish(accessLogin, null, connection);
+			connection.commit();
+			return BackgroundJobs.Outcome.ok("AntCat names imported in " + Html.esc(String.valueOf(uploadDetails.getExecTime())) + ".",
+					SpecimenUploadJob.reportUrl(uploadDetails), "Import report");
+		} catch (Exception e) {
+			int caseNumber = AntwebUtil.getCaseNumber();
+			s_log.error("runWorldantsImport() case:" + caseNumber + " e:" + e);
+			DBUtil.rollback(connection);
+			return BackgroundJobs.Outcome.failed("Error. Case number:" + caseNumber + ". No changes made. e:" + Html.esc(e.toString()));
+		} finally {
+			releaseUploadProcess(processName);
+			UploadMgr.populate(connection, true);
+			DBUtil.close(connection, UploadAction.class, dbMethodName);
+		}
+	}
+
+	/**
+	 * Emails the uploader that the specimen upload is complete or did not complete (UploadNotice).
+	 * failureMessage: what the upload page used to show when it did not complete.
+	 */
+	static void sendUploadNotice(UploadNotice.Facts notice, Group noticeGroup, UploadDetails uploadDetails,
+										 Login accessLogin, Object failureMessage) {
 		try {
 			notice.when = new Date();
 			String reportPath = uploadDetails.getLogDirFile();
@@ -459,7 +568,7 @@ public class UploadAction extends AntwebAction {
 				notice.specimensLoaded = uploadDetails.getInsertedSpecimenCount();
 				notice.redFlagged = uploadDetails.getMessageMgr().getRedFlagCount();
 			} else {
-				notice.failure = UploadNotice.failureText(request.getAttribute("message"));
+				notice.failure = UploadNotice.failureText(failureMessage);
 				notice.uploadPageUrl = AntwebProps.getDomainApp() + "/curate.do";
 			}
 			UploadNotice.send(accessLogin, accessLogin != null, noticeGroup, notice);
@@ -481,21 +590,6 @@ public class UploadAction extends AntwebAction {
 		DBUtil.rollback(connection);
 		request.setAttribute("message", errorMessage);
 		return mapping.findForward("message");
-	}
-
-	private void specimenPostProcess(HttpServletRequest request, Connection connection, Curator curator, UploadDetails uploadDetails) throws IOException, SQLException {
-		postProcessSpecimenUpload(connection, curator, uploadDetails);
-
-		//A.log("execute() populate Museum map:" + uploadDetails.getMuseumMap());
-		// We will hold this for a separate curator driven museum calculation
-		HttpSession session = request.getSession();
-		try {
-			session.setAttribute("museumMap", uploadDetails.getMuseumMap());
-			Login uploader = LoginMgr.getAccessLogin(request);
-			session.setAttribute("museumMapLoginId", uploader == null ? null : uploader.getId());
-		} catch (IllegalStateException e) {
-			s_log.info("execute() handled:" + e);
-		}
 	}
 
 	/** The database work after a specimen upload. Also used by the nightly TaxonWorks job (no web request). */

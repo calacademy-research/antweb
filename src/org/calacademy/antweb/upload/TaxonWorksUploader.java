@@ -31,61 +31,50 @@ public class TaxonWorksUploader extends Uploader {
         super(connection);
     }
 
-    // This gets called from an upload post.
-    public UploadDetails uploadSpecimenFile(UploadForm theForm, Curator curator, String userAgent, String encoding)
+    /**
+     * The upload of a TaxonWorks file the upload page saved (UploadAction, SpecimenUploadJob): a
+     * Darwin Core archive (zip, its data.tsv is used) or a data.tsv file. Called on the background
+     * job's thread. originalName is the name the curator's file had.
+     */
+    public UploadDetails uploadSavedFile(File saved, String originalName, String action, Curator curator, String userAgent, String encoding)
       throws SQLException, TestException, AntwebException
     {
         String zipFileTarget = "data.tsv";
-        FormFile theFile = theForm.getTheFile();
         Group group = curator.getGroup();
-        String formFileName = theFile.getFileName();
         String workingDir = AntwebProps.getWorkingDir();
         FileUtil.makeDir(workingDir);
         String fileName = "specimenTW" + group.getId() + ".txt";
-        String preTransformFileName = "specimenTW" + group.getId() + "_temp.txt";
-        Path preTransformFilePath = Paths.get(workingDir, preTransformFileName);
+        Path preTransformFilePath = Paths.get(workingDir, "specimenTW" + group.getId() + "_temp.txt");
         Path specimenFilePath = Paths.get(workingDir, fileName);
 
-        //A.log("uploadSpecimenFile() workingDir:" + workingDir);
-        A.log("uploadSpecimenFile() formFileName:" + formFileName + " preTransform:" + preTransformFilePath.toString());
+        A.log("uploadSavedFile() originalName:" + originalName + " preTransform:" + preTransformFilePath);
 
-        if (formFileName.endsWith(".zip")) {
-            String errorMsg = null;
-            try {
-                errorMsg = copyAndUnzipFile(theFile, group, preTransformFilePath.toString(), zipFileTarget);
-                //A.log("uploadSpecimenFile() post unzip");
-            } catch (IOException e) {
-                s_log.error("uploadSpecimenFile() copyAndUnzipFile e:" + e);
-                errorMsg = "The zip file could not be read.";
+        try {
+            if (originalName.toLowerCase().endsWith(".zip")) {
+                String errorMsg = unzipSavedFile(saved, group, preTransformFilePath.toString(), zipFileTarget);
+                if (errorMsg != null) return new UploadDetails(action, errorMsg, "message"); // archive refused: stop and show why
+            } else {
+                java.nio.file.Files.copy(saved.toPath(), preTransformFilePath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             }
-            if (errorMsg != null) return new UploadDetails(theForm.getAction(), errorMsg, "message"); // archive refused: stop and show why
-
-        } else {
-            // copy from uploader's fileName to the biotaFile name.
-            boolean success = Utility.copyFile(theFile, preTransformFileName);
-            A.log("uploadSpecimenFile() success:" + success + " taxonWorks:" + theFile + " preTransformFileName:" + preTransformFileName);
+        } catch (IOException e) {
+            s_log.error("uploadSavedFile() e:" + e);
+            return new UploadDetails(action, "The zip file could not be read.", "message");
         }
 
-        //A.log("Start TaxonWorks transformFile");
+        org.calacademy.antweb.util.BackgroundJobs.step("Converting the TaxonWorks file to an AntWeb specimen file.");
         TaxonWorksTransformer tf = new TaxonWorksTransformer();
-        //A.log("uploadSpecimenFile() preTransformFilePath:" + preTransformFilePath + " specimenFilePath:" + specimenFilePath);
         String errMsg = tf.transformFile(preTransformFilePath, specimenFilePath);
         if (!tf.getSkippedRecords().isEmpty()) {
-            s_log.warn("uploadSpecimenFile() skipped " + tf.getSkippedRecords().size() + " malformed records: " + tf.getSkippedRecords());
+            s_log.warn("uploadSavedFile() skipped " + tf.getSkippedRecords().size() + " malformed records: " + tf.getSkippedRecords());
         }
         if (errMsg != null) {
-            s_log.error("uploadSpecimenFile() errMsg:" + errMsg);
-            return new UploadDetails(theForm.getAction(), errMsg, "message"); // stop here and show the message
+            s_log.error("uploadSavedFile() errMsg:" + errMsg);
+            return new UploadDetails(action, errMsg, "message"); // stop here and show the message
         }
-        //A.log("End TaxonWorks transformFile");
 
-        return uploadSpecimenFile(theForm.getAction(), fileName, curator, userAgent, encoding, true);
+        return uploadSpecimenFile(action, fileName, curator, userAgent, encoding, true);
     }
 
-
-    
-    
-      
 
     /**
      * Unzip data.tsv from a TaxonWorks DwC archive and transform it into an AntWeb

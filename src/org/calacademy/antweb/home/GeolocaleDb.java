@@ -1363,7 +1363,11 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
     private void updateCountableTaxonData(int geolocaleId) throws SQLException {
         GeolocaleTaxonCountDb geolocaleTaxonCountDb = new GeolocaleTaxonCountDb(getConnection());
         String criteria = "geolocale_id = " + geolocaleId;
-        int subfamilyCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "subfamily");
+        // Subfamilies: counted directly as the subfamily rows on the place's list with a counted status
+        // (2026-10-20). The old roll-up, sum(subfamily_count) over the list, depended on the Formicidae row's
+        // stored subfamily_count and gave 0 on staging's Madagascar after an incomplete nightly run, with
+        // 8 subfamilies on the list. CountCheck.checkSubfamilyTotal checks the same rule.
+        int subfamilyCount = getListedSubfamilyCount(geolocaleId);
         int genusCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "genus");
         int speciesCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "species");
 
@@ -1373,6 +1377,19 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         geolocaleTaxonCountDb.updateCountableTaxonCounts("geolocale", criteria, subfamilyCount, genusCount, speciesCount);                  
     }    
       
+    /** Subfamily rows on the geolocale's list whose taxon has a counted status (CountCheck.COUNTABLE). */
+    int getListedSubfamilyCount(int geolocaleId) throws SQLException {
+        String query = "select count(distinct gt.taxon_name) from geolocale_taxon gt"
+            + " join taxon t on t.taxon_name = gt.taxon_name"
+            + " where gt.geolocale_id = ? and t.taxarank = 'subfamily' and t.status in " + org.calacademy.antweb.util.CountCheck.COUNTABLE;
+        try (java.sql.PreparedStatement stmt = getConnection().prepareStatement(query)) {
+            stmt.setInt(1, geolocaleId);
+            try (ResultSet r = stmt.executeQuery()) {
+                return r.next() ? r.getInt(1) : 0;
+            }
+        }
+    }
+
     public String getSpecimenLocaleClause(Geolocale geolocale) {
       String clause = null;
       

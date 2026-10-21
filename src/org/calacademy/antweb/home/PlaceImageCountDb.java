@@ -432,7 +432,7 @@ public class PlaceImageCountDb {
     // ------------------------------------------------------------------ words for the page
 
     /** Shot type letters as the image pages name them (SpecimenImage.getShotText, bigPicture-body.jsp). */
-    static final String[][] SHOT_NAMES = {{"h", "head"}, {"p", "profile"}, {"d", "dorsal"}, {"v", "ventral"}, {"f", "field photo"}};
+    static final String[][] SHOT_NAMES = {{"h", "head"}, {"p", "profile"}, {"d", "dorsal"}, {"v", "ventral"}, {"f", "field image"}};
 
     private static String num(int n) {
         return NumberFormat.getNumberInstance(Locale.US).format(n);
@@ -442,6 +442,28 @@ public class PlaceImageCountDb {
      * "24,264 of the ant (7,849 head, 9,332 profile, 6,806 dorsal, 276 ventral, 1 field photo) and 5,436 of labels":
      * the images that are not labels by view, other letters together as "other". Plain text (no HTML).
      */
+    /**
+     * ": 6,649 head, 7,576 profile, 5,407 dorsal, 7 ventral, and 1 field image" for the Ant images row of the
+     * statistics table (Brian Fisher, 2026-10-20); other letters together as "other"; "" when there are none.
+     */
+    public static String antViews(PlaceImages p) {
+        List<String> parts = new ArrayList<>();
+        int known = 0;
+        for (String[] s : SHOT_NAMES) {
+            int n = p.shotImages.getOrDefault(s[0], 0);
+            if (n == 0) continue;
+            known += n;
+            String name = s[1];
+            if (n != 1 && name.endsWith("image")) name += "s";
+            parts.add(num(n) + " " + name);
+        }
+        int other = p.antImages - known;
+        if (other > 0) parts.add(num(other) + " other");
+        if (parts.isEmpty()) return "";
+        if (parts.size() == 1) return ": " + parts.get(0);
+        return ": " + String.join(", ", parts.subList(0, parts.size() - 1)) + ", and " + parts.get(parts.size() - 1);
+    }
+
     public static String breakdown(PlaceImages p) {
         List<String> parts = new ArrayList<>();
         int known = 0;
@@ -450,7 +472,7 @@ public class PlaceImageCountDb {
             if (n == 0) continue;
             known += n;
             String name = s[1];
-            if (n != 1 && name.endsWith("photo")) name += "s";
+            if (n != 1 && (name.endsWith("photo") || name.endsWith("image"))) name += "s";
             parts.add(num(n) + " " + name);
         }
         int other = p.antImages - known;

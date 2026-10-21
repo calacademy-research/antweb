@@ -166,26 +166,6 @@
   else if (isMuseum) placeWord = "museum";
   else if (isProjectOverview) placeWord = "project";
 
-  // Regions and subregions (since 2026-10-20): the specimens of their countries (Geolocale.regionSpecimensSql).
-  // Countries, islands and adm1s: specimens under a name that is not on the list are left out; the public
-  // "Show Specimen Taxa" link of the species list (Geolocale.isCanShowSpecimenTaxa) shows those names.
-  String specimensDef;
-  if (isListOnlyPlace) specimensDef = "ant specimens collected in this " + placeWord + "'s countries and identified to a name on their lists: the specimens counted on the country pages, each once";
-  else if (isGeolocale) {
-    specimensDef = "ant specimens collected here and identified to a name on this " + placeWord + "'s list (species, morphospecies or indet names)";
-    if (geolocale.isCanShowSpecimenTaxa()) {
-      String listParams = "adm1".equals(georank)
-          ? "countryName=" + Html.url(geolocale.getParent()) + "&adm1Name=" + Html.url(geolocale.getName())
-          : "countryName=" + Html.url(geolocale.getName());
-      String specimenTaxaUrl = AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&" + listParams + "&specimen=true";
-      specimensDef += "; specimens under other names, such as synonyms, appear with <a id=\"specimen-taxa-link\" href=\""
-          + Html.escAttr(specimenTaxaUrl) + "\">Show Specimen Taxa</a> on the species list";
-    }
-  }
-  else if (isBioregion) specimensDef = "ant specimens collected in this bioregion";
-  else if (isMuseum) specimensDef = "ant specimens recorded as held by this museum";
-  else specimensDef = "specimens, collected anywhere, of the species and subspecies on this project's list";
-
   int imagesShown = overview.getImageCount();
   int imagedShown = overview.getImagedSpecimenCount();
   if (placeImages != null) {
@@ -193,111 +173,113 @@
     imagedShown = placeImages.imagedSpecimens;
   }
 %>
+<%
+  // Statistics table (Brian Fisher, 2026-10-20, "AntWeb Country Pages"): four sections, each number with
+  // its definition. Rules are those of the nightly counts (GeolocaleDb, ProjectDb, MuseumDb, BioregionDb,
+  // PlaceImageCountDb, CountDb). Each row carries data-stat and data-n for the tests.
+  String pw = placeWord;
+  boolean isAdm1 = isGeolocale && "adm1".equals(georank);
+  String listName = "this " + pw + "'s AntWeb list";
+  String speciesCount = Formatter.commaFormat(overview.getSpeciesCount());
+  String speciesCell = speciesCount;
+  if (overview instanceof Geolocale && LoginMgr.isAdmin(request)) {
+    speciesCell = "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=countReport&num=" + ((Geolocale) overview).getId() + "'>" + speciesCount + "</a>";
+  }
+  String introducedListLink = "<a href='" + AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&project=introducedants'>introduced-species list</a>";
+
+  boolean showEndemism = isBioregion || (isGeolocale && ("country".equals(georank) || isAdm1));
+  String endemicCell = Formatter.commaFormat(overview.getEndemicSpeciesCount());
+  String introducedCell = Formatter.commaFormat(overview.getIntroducedSpeciesCount());
+  String endemicDef = "";
+  String introducedDef = "";
+  if (showEndemism) {
+    if (isBioregion) {
+      String bn = ((Bioregion) overview).getName();
+      if (overview.getEndemicSpeciesCount() > 0) endemicCell = "<a href='" + AntwebProps.getDomainApp() + "/endemic.do?bioregionName=" + bn + "'>" + endemicCell + "</a>";
+      if (overview.getIntroducedSpeciesCount() > 0) introducedCell = "<a href='" + AntwebProps.getDomainApp() + "/introduced.do?bioregionName=" + bn + "'>" + introducedCell + "</a>";
+      endemicDef = "Species and subspecies, including morphospecies, recorded for this bioregion and no other bioregion in AntWeb. Excludes fossils. Endemism is calculated from AntWeb records only.";
+      introducedDef = "Species introduced by humans that are not native to this bioregion, based on AntWeb's " + introducedListLink + ".";
+    } else {
+      int gid = ((Geolocale) overview).getId();
+      if (overview.getEndemicSpeciesCount() > 0) endemicCell = "<a href='" + AntwebProps.getDomainApp() + "/endemic.do?geolocaleId=" + gid + "'>" + endemicCell + "</a>";
+      if (overview.getIntroducedSpeciesCount() > 0) introducedCell = "<a href='" + AntwebProps.getDomainApp() + "/introduced.do?geolocaleId=" + gid + "'>" + introducedCell + "</a>";
+      endemicDef = isAdm1
+        ? "Named species and subspecies recorded for this state or province and no other state or province in AntWeb. Excludes morphospecies and fossils. Endemism is calculated from AntWeb records only."
+        : "Named species and subspecies recorded for this country and no other country in AntWeb. Excludes morphospecies and fossils. Endemism is calculated from AntWeb records only.";
+      introducedDef = "Species introduced by humans that are not native to this " + pw + "'s bioregion, based on AntWeb's " + introducedListLink + ".";
+    }
+  }
+
+  // Regions and subregions (since 2026-10-20): the specimens counted on the pages of their countries, each once
+  // (Geolocale.regionSpecimensSql). Countries, islands and states: only specimens under a name on the list; the
+  // "Show Specimen Taxa" view of the species list (Geolocale.isCanShowSpecimenTaxa) shows the other names.
+  String specimensFullDef;
+  if (isListOnlyPlace) specimensFullDef = "Ant specimens collected in this " + pw + "'s countries and identified to a name on their lists; each specimen counted once.";
+  else if (isGeolocale) specimensFullDef = "Ant specimens collected in this " + pw + " and identified to a species, morphospecies, or unidentified taxon on " + listName + ".";
+  else if (isBioregion) specimensFullDef = "Ant specimens collected in this bioregion.";
+  else if (isMuseum) specimensFullDef = "Ant specimens recorded as held by this museum.";
+  else specimensFullDef = "Specimens, collected anywhere, of the species and subspecies on this project's list.";
+  String fromWhere = isMuseum ? "held by this museum" : (isProjectOverview ? "of this project's species" : "from this " + pw);
+
+  String specimenListLink = null;
+  if (!HttpUtil.isBot(request) && overview instanceof LocalityOverview) {
+    String listCriteria = ((LocalityOverview) overview).getSearchCriteria();
+    if (listCriteria != null && !"".equals(listCriteria)) {
+      specimenListLink = "<a href=\"" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&" + listCriteria + "&resultRank=specimen\">List all specimens collected in " + Html.esc(overview.getName()) + "</a> (every record, under any name, including those not counted above)";
+    }
+  }
+  // Countries, islands and states: every name their specimens are filed under (Show Specimen Taxa of the species list).
+  if (specimenListLink != null && isGeolocale && geolocale.isCanShowSpecimenTaxa()) {
+    String listParams = isAdm1
+        ? "countryName=" + Html.url(geolocale.getParent()) + "&adm1Name=" + Html.url(geolocale.getName())
+        : "countryName=" + Html.url(geolocale.getName());
+    String specimenTaxaUrl = AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&" + listParams + "&specimen=true";
+    specimenListLink += "<br>Names of all specimens collected here, including those not on the list: <a id=\"specimen-taxa-link\" href=\"" + Html.escAttr(specimenTaxaUrl) + "\">Show Specimen Taxa</a>.";
+  }
+%>
 <div id="place-stats"<% if (placeImages != null) { %> data-images="<%= placeImages.allImages %>" data-ant="<%= placeImages.antImages %>" data-labels="<%= placeImages.labelImages() %>" data-imaged="<%= placeImages.imagedSpecimens %>" data-label-only="<%= placeImages.labelOnlySpecimens %>"<% } %>>
-<br><b>Specimens:</b>&nbsp;<%= Formatter.commaFormat(overview.getSpecimenCount()) %> <span class="stat_def">(<%= specimensDef %>)</span>
+<table class="place_stats">
+<tr class="ps_head"><th colspan="3">Taxonomic diversity</th></tr>
+<tr data-stat="subfamilies" data-n="<%= overview.getSubfamilyCount() %>"><td class="ps_name">Subfamilies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getSubfamilyCount()) %></td><td class="ps_def">Subfamilies recorded on <%= listName %>.</td></tr>
+<tr data-stat="genera" data-n="<%= overview.getGenusCount() %>"><td class="ps_name">Genera</td><td class="ps_num"><%= Formatter.commaFormat(overview.getGenusCount()) %></td><td class="ps_def">Genera recorded on <%= listName %>.</td></tr>
+<tr data-stat="species" data-n="<%= overview.getSpeciesCount() %>"><td class="ps_name">Species / subspecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">All species and subspecies recorded on <%= listName %>, from any source, including valid names, morphospecies, and unidentified taxa.</td></tr>
+<% if (overview.getValidSpeciesCount() > 0) { %>
+<tr data-stat="valid" data-n="<%= overview.getValidSpeciesCount() %>"><td class="ps_name">Valid species / subspecies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getValidSpeciesCount()) %></td><td class="ps_def">Currently valid, formally named, living (non-fossil) species and subspecies recorded on <%= listName %>. Excludes morphospecies and unidentified taxa.</td></tr>
+<% } %>
+<% if (showEndemism) { %>
+<tr class="ps_head"><th colspan="3">Endemism and introduced species</th></tr>
+<tr data-stat="endemic" data-n="<%= overview.getEndemicSpeciesCount() %>"><td class="ps_name">Endemic</td><td class="ps_num"><%= endemicCell %></td><td class="ps_def"><%= endemicDef %></td></tr>
+<tr data-stat="introduced" data-n="<%= overview.getIntroducedSpeciesCount() %>"><td class="ps_name">Introduced</td><td class="ps_num"><%= introducedCell %></td><td class="ps_def"><%= introducedDef %></td></tr>
+<% } %>
+<tr class="ps_head"><th colspan="3">Specimen holdings</th></tr>
+<tr data-stat="specimens" data-n="<%= overview.getSpecimenCount() %>"><td class="ps_name">Specimens</td><td class="ps_num"><%= Formatter.commaFormat(overview.getSpecimenCount()) %></td><td class="ps_def"><%= specimensFullDef %><% if (specimenListLink != null) { %><br><%= specimenListLink %><% } %></td></tr>
 <% if (placeImages != null) { %>
-<br><b>Imaged specimens:</b>&nbsp;<%= Formatter.commaFormat(imagedShown) %> <span class="stat_def">(specimens with at least one photo of the ant; label-only photos not counted)<% if (placeImages.labelOnlySpecimens > 0) { %> (<%= Formatter.commaFormat(placeImages.labelOnlySpecimens) %> more have only a label photo)<% } %></span>
-<br><b>Images:</b>&nbsp;<%= Formatter.commaFormat(imagesShown) %><% if (imagesShown > 0) { %>: <span class="stat_def" id="image-breakdown"><%= org.calacademy.antweb.home.PlaceImageCountDb.breakdown(placeImages) %></span><% } %>
+<tr data-stat="imaged" data-n="<%= placeImages.imagedSpecimens %>"><td class="ps_name">Imaged specimens</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.imagedSpecimens) %></td><td class="ps_def">Specimens with at least one image of the ant.<% if (placeImages.labelOnlySpecimens > 0) { %> Excludes specimens with only label images (<span data-label-only-shown="<%= placeImages.labelOnlySpecimens %>"><%= Formatter.commaFormat(placeImages.labelOnlySpecimens) %></span> additional specimens).<% } %></td></tr>
+<tr class="ps_head"><th colspan="3">Image documentation</th></tr>
+<tr data-stat="images" data-n="<%= placeImages.allImages %>"><td class="ps_name">Images</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.allImages) %></td><td class="ps_def">Total images associated with specimens <%= fromWhere %>, including ant and specimen-label images.</td></tr>
+<tr data-stat="ant-images" data-n="<%= placeImages.antImages %>" class="ps_sub"><td class="ps_name">Ant images</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.antImages) %></td><td class="ps_def" id="image-breakdown">Images showing the ant<%= org.calacademy.antweb.home.PlaceImageCountDb.antViews(placeImages) %>.</td></tr>
+<tr data-stat="label-images" data-n="<%= placeImages.labelImages() %>" class="ps_sub"><td class="ps_name">Label images</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.labelImages()) %></td><td class="ps_def">Images showing specimen labels rather than the ant.</td></tr>
 <% } else { %>
 <% if (imagedShown != 0) { %>
-<br><b>Imaged specimens:</b>&nbsp;<%= Formatter.commaFormat(imagedShown) %> <span class="stat_def">(specimens with at least one photo)</span>
+<tr data-stat="imaged" data-n="<%= imagedShown %>"><td class="ps_name">Imaged specimens</td><td class="ps_num"><%= Formatter.commaFormat(imagedShown) %></td><td class="ps_def">Specimens with at least one image (labels included until tonight's update).</td></tr>
 <% } %>
-<br><b>Images:</b>&nbsp;<%= Formatter.commaFormat(imagesShown) %> <span class="stat_def">(photos of these specimens, labels included)</span>
+<tr class="ps_head"><th colspan="3">Image documentation</th></tr>
+<tr data-stat="images" data-n="<%= imagesShown %>"><td class="ps_name">Images</td><td class="ps_num"><%= Formatter.commaFormat(imagesShown) %></td><td class="ps_def">Images of these specimens, labels included (the breakdown appears after tonight's update).</td></tr>
 <% } %>
-<br>
-
-<br><b>Subfamilies:</b>&nbsp;<%= Formatter.commaFormat(overview.getSubfamilyCount()) %> <span class="stat_def">(subfamilies on this <%= placeWord %>'s list)</span>
-<br><b>Genera:</b>&nbsp;<%= Formatter.commaFormat(overview.getGenusCount()) %> <span class="stat_def">(genera on this <%= placeWord %>'s list)</span>
-<% String speciesCountLink = Formatter.commaFormat(overview.getSpeciesCount());
-   if (overview instanceof Geolocale) {
-     Geolocale g = (Geolocale) overview;
-     if (LoginMgr.isAdmin(request)) speciesCountLink = "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=countReport&num=" + g.getId() + "'>" + speciesCountLink + "</a>";
-   }
-%>
-<br><b>Species/Subspecies:</b>&nbsp;<%= speciesCountLink %> <span class="stat_def">(species and subspecies on this <%= placeWord %>'s list, from any source, including morphospecies and indet names)</span>
-
-<%
-   if (overview.getValidSpeciesCount() > 0) {
-%>
-       <br><br><b>Valid Species/Subspecies:</b>&nbsp;<%=  Formatter.commaFormat(overview.getValidSpeciesCount()) %> <span class="stat_def">(currently valid, living (non-fossil) species and subspecies on the list)</span>
-       <br>
-<% } %>
-
-<% 
-   String endemicCountHtml = "";
-   String introducedCountHtml = "";
-  //A.log("overview-body.jsp geolocale:" + ((Geolocale)overview).getId());
-
-  if (isGeolocale && ("country".equals(geolocale.getGeorank()) || "adm1".equals(geolocale.getGeorank())) ) {
-	  String endemicCount = Formatter.commaFormat(overview.getEndemicSpeciesCount());
-	  endemicCountHtml = endemicCount;
-	  if (overview.getEndemicSpeciesCount() > 0) {
-		int geolocaleId = ((Geolocale) overview).getId();
-		if ("country".equals(geolocale.getGeorank()) || "adm1".equals(geolocale.getGeorank())) {
-		  endemicCountHtml = "<a href='" + AntwebProps.getDomainApp() + "/endemic.do?geolocaleId=" + geolocaleId + "'>" + endemicCount + "</a>";  
-		}
-	  }
-	  endemicCountHtml = "<br><b>&nbsp;&nbsp;Endemic:</b>&nbsp;" + endemicCountHtml
-	    + ("adm1".equals(geolocale.getGeorank())
-	        ? " <span class=\"stat_def\">(named species and subspecies, not morphospecies or fossils, found in this country only and on no other state or province's list)</span>"
-	        : " <span class=\"stat_def\">(named species and subspecies, not morphospecies or fossils, on this " + placeWord + "'s list and on no other country's list)</span>");
-
-	  String introducedCount = Formatter.commaFormat(overview.getIntroducedSpeciesCount());
-	  introducedCountHtml = introducedCount;
-	  if (overview.getIntroducedSpeciesCount() > 0) {
-		int geolocaleId = ((Geolocale) overview).getId();
-		if ("country".equals(geolocale.getGeorank()) || "adm1".equals(geolocale.getGeorank())) {
-		  introducedCountHtml = "<a href='" + AntwebProps.getDomainApp() + "/introduced.do?geolocaleId=" + geolocaleId + "'>" + introducedCount + "</a>";  // * should be introducedCount but it is not calculated yet.
-		}
-	  }
-	  introducedCountHtml = "<br><b>&nbsp;&nbsp;Introduced:</b>&nbsp;" + introducedCountHtml
-	    + " <span class=\"stat_def\">(species known to have been introduced by people: on AntWeb's list of introduced ants and not native to this " + placeWord + "'s bioregion)</span>";
-  }
-  if (isBioregion) {
-	  String endemicCount = Formatter.commaFormat(overview.getEndemicSpeciesCount());
-	  endemicCountHtml = endemicCount;
-	  if (overview.getEndemicSpeciesCount() > 0) {
-		String bioregionName = ((Bioregion) overview).getName();
-  	    endemicCountHtml = "<a href='" + AntwebProps.getDomainApp() + "/endemic.do?bioregionName=" + bioregionName + "'>" + endemicCount + "</a>";
-	  }
-	  endemicCountHtml = "<br><b>&nbsp;&nbsp;Endemic:</b>&nbsp;" + endemicCountHtml
-	    + " <span class=\"stat_def\">(species and subspecies, morphospecies included, not fossils, on this bioregion's list and on no other bioregion's list)</span>";
-
-	  String introducedCount = Formatter.commaFormat(overview.getIntroducedSpeciesCount());
-	  introducedCountHtml = introducedCount;
-	  if (overview.getIntroducedSpeciesCount() > 0) {
-		String bioregionName = ((Bioregion) overview).getName();
-  	    introducedCountHtml = "<a href='" + AntwebProps.getDomainApp() + "/introduced.do?bioregionName=" + bioregionName + "'>" + introducedCount + "</a>";
-	  }
-	  introducedCountHtml = "<br><b>&nbsp;&nbsp;Introduced:</b>&nbsp;" + introducedCountHtml
-	    + " <span class=\"stat_def\">(species known to have been introduced by people: on AntWeb's list of introduced ants and not native to this bioregion)</span>";
-  }
-  %>
-<%= endemicCountHtml %></b>
-<%= introducedCountHtml %></b>
+</table>
 </div>
-<style>#place-stats .stat_def { color: #666; font-size: 0.9em; }</style>
+<style>
+#place-stats .place_stats { border-collapse: collapse; margin: 10px 0; width: 100%; max-width: 760px; }
+#place-stats .place_stats th { text-align: left; padding: 10px 6px 4px; font-size: 1.05em; border-bottom: 1px solid #ccc; }
+#place-stats .place_stats td { padding: 4px 6px; vertical-align: top; border-bottom: 1px solid #eee; }
+#place-stats .ps_name { font-weight: bold; white-space: nowrap; }
+#place-stats .ps_num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+#place-stats .ps_def { color: #555; font-size: 0.92em; }
+#place-stats .ps_sub .ps_name { font-weight: normal; padding-left: 20px; }
+@media (max-width: 600px) { #place-stats .ps_name { white-space: normal; } }
+</style>
 
-<% 
-//A.log("*");
-   // The Show All Specimen advanced search link.
-   if (!HttpUtil.isBot(request) && isGeolocale) {
-     String clause = null;
-     if (overview instanceof LocalityOverview) {
-       clause = "&family=formicidae&" + ((LocalityOverview) overview).getSearchCriteria();
-     }
-     
-     if (clause != null) {
-		 String specimenSearchUrl = "/advancedSearch.do?searchMethod=advancedSearch&advanced=true" + clause + "&resultRank=specimen";
-         String speciesSearchUrl = specimenSearchUrl + "&resultRank=species";
-     	 out.println("<br><br>");
-     	 
-     	 //if (LoginMgr.isAdmin(request)) { 
-		 //  out.println("<b><a href='" + AntwebProps.getDomainApp() + speciesSearchUrl + "'>Show All Species<a></b> | ");     
-         //}
-		 out.println("<b><a href='" + AntwebProps.getDomainApp() + specimenSearchUrl + "'>Show All Specimens<a></b>");     
-     }
-   } %>
+
 
 <%
   if (HttpUtil.isOffline()) { %>
@@ -382,11 +364,10 @@ Images:
 	   if (LoginMgr.isAdmin(request)) { %>
 
 	   
-         <br><b><%= overview.getRecalcButton(request) %></b> (Recalculate overview: <%= overview.getKeyStr() %> and make the charts. Update <%= overview.getTable() %> counts.)
+         <br><b><%= overview.getRecalcButton(request) %></b> (recalculates all statistics on this page, including specimen and image counts, and redraws the charts using current records; also runs automatically each night; takes a minute or two)
          <% if ("geolocale".equals(overviewType)) { %>
          <br><b><%= overview.getGoogleMapFunctionLink() %></b><%= overview.getGoogleMapFunctionLinkDesc() %>
          <% } %>
-         <br><b><a href='<%= AntwebProps.getDomainApp() %>/util.do?action=reloadAntwebMgr&name=<%= overviewType %>'>Reload Overview Manager</a></b> (Server-wide. Should not be needed. Takes up to 8 seconds.)
 	     <br>
 	<% }
     }

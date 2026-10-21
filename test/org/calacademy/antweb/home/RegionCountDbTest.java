@@ -61,7 +61,8 @@ public class RegionCountDbTest extends TestCase {
             + " family varchar(64), subfamily varchar(64), genus varchar(64), species varchar(64), image_count int default 0)");
         exec("create table image (id int primary key, image_of_id varchar(128), shot_type varchar(10), upload_date datetime)");
         exec("create table geolocale (id int primary key, name varchar(128), georank varchar(20), parent varchar(128), is_valid tinyint default 1,"
-            + " is_island tinyint default 0, specimen_count int default 0, image_count int default 0, imaged_specimen_count int default 0)");
+            + " is_island tinyint default 0, specimen_count int default 0, image_count int default 0, imaged_specimen_count int default 0,"
+            + " subfamily_count int default 0)");
         exec("create table geolocale_taxon (geolocale_id int, taxon_name varchar(128), subfamily_count int default 0, genus_count int default 0,"
             + " species_count int default 0, specimen_count int default 0, image_count int default 0, created timestamp null,"
             + " primary key (geolocale_id, taxon_name))");
@@ -291,8 +292,17 @@ public class RegionCountDbTest extends TestCase {
         CountCheck.Place eastern = CountCheck.Place.region("" + EASTERN_AFRICA, "Eastern Africa (subregion)");
         places.add(eastern);
         java.sql.Timestamp nightly = java.sql.Timestamp.valueOf("2021-01-01 08:00:00");
+        // Subfamilies of the page (CountCheck.checkSubfamilyTotal, GeolocaleDb.getListedSubfamilyCount): the
+        // subfamily rows of the subregion's list, as for any other place.
+        exec("update geolocale set subfamily_count = 1 where id = " + EASTERN_AFRICA);
         CountCheck.Result r = new CountCheck(connection).run(places, nightly, true);
         assertEquals(checked(r).toString(), 0, checked(r).size());
+        assertEquals(r.mismatches.toString(), 0, subfamilyTotals(r).size());
+        exec("update geolocale set subfamily_count = 0 where id = " + EASTERN_AFRICA);
+        List<CountCheck.Mismatch> sub = subfamilyTotals(new CountCheck(connection).run(places, nightly, true));
+        assertEquals(sub.toString(), 1, sub.size());
+        assertEquals(1, sub.get(0).recount);
+        exec("update geolocale set subfamily_count = 1 where id = " + EASTERN_AFRICA);
 
         // The old numbers (every specimen of the name, anywhere): real differences once the nightly has used the rule.
         exec("update geolocale set specimen_count = 9, image_count = 8 where id = " + EASTERN_AFRICA);
@@ -319,6 +329,12 @@ public class RegionCountDbTest extends TestCase {
         assertFalse(CountCheck.regionRuleCounted(log));
         log.add("2026-10-21 05:40:00     Subregions populated (" + GeolocaleDb.REGION_RULE_LOG + ")");
         assertTrue(CountCheck.regionRuleCounted(log));
+    }
+
+    private static List<CountCheck.Mismatch> subfamilyTotals(CountCheck.Result r) {
+        List<CountCheck.Mismatch> list = new ArrayList<>();
+        for (CountCheck.Mismatch m : r.mismatches) if ("place totals".equals(m.check) && "Subfamilies".equals(m.taxonName)) list.add(m);
+        return list;
     }
 
     /** The differences of the checks this change is about (list species and genus counts are not set up here). */

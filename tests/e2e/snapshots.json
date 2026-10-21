@@ -20,7 +20,7 @@
   "images": 16,
   "specimen_links": 0,
   "status": 200,
-  "table_rows": 2,
+  "table_rows": 17,
   "taxon_links": 1,
   "text_length": 8711,
   "title": "Adm1: Antananarivo, Madagascar - Antweb"
@@ -74,7 +74,7 @@
   "images": 16,
   "specimen_links": 0,
   "status": 200,
-  "table_rows": 2,
+  "table_rows": 17,
   "taxon_links": 1,
   "text_length": 8902,
   "title": "Browsing Afrotropical Ants - AntWeb"
@@ -161,7 +161,7 @@
   "images": 21,
   "specimen_links": 0,
   "status": 200,
-  "table_rows": 2,
+  "table_rows": 17,
   "taxon_links": 4,
   "text_length": 12233,
   "title": "Country Comoros - Antweb"
@@ -354,7 +354,7 @@
   "images": 20,
   "specimen_links": 0,
   "status": 200,
-  "table_rows": 2,
+  "table_rows": 17,
   "taxon_links": 4,
   "text_length": 13390,
   "title": "Island Hawaii - Antweb"
@@ -383,7 +383,7 @@
   "images": 16,
   "specimen_links": 0,
   "status": 200,
-  "table_rows": 2,
+  "table_rows": 14,
   "taxon_links": 1,
   "text_length": 9494,
   "title": "British Museum of Natural History Ants - AntWeb"
@@ -414,7 +414,7 @@
   "images": 19,
   "specimen_links": 1,
   "status": 200,
-  "table_rows": 2,
+  "table_rows": 14,
   "taxon_links": 1,
   "text_length": 11278,
   "title": "Fossil Ants - AntWeb"
@@ -439,7 +439,7 @@
   "images": 16,
   "specimen_links": 0,
   "status": 200,
-  "table_rows": 2,
+  "table_rows": 14,
   "taxon_links": 1,
   "text_length": 8172,
   "title": "Region: Africa - Antweb"
@@ -504,7 +504,7 @@
   "images": 16,
   "specimen_links": 0,
   "status": 200,
-  "table_rows": 2,
+  "table_rows": 14,
   "taxon_links": 1,
   "text_length": 8496,
   "title": "Subegion: Polynesia - Antweb"

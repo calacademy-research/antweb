@@ -80,6 +80,8 @@ public class LoginMgr extends Manager {
           } catch (SQLException e) {
             s_log.error("startPasswordConversion() place_image_count not created e:" + e);
           }
+          // background_job (status pages of uploads and admin jobs); jobs of the last run become "interrupted".
+          BackgroundJobDb.startup(conn);
           int count = new LoginDb(conn).hashLegacyPasswords();
           if (count > 0) populate(conn, true, true);  // drop the cached plain-text values
         } catch (Exception e) {

@@ -34,8 +34,8 @@ from urllib.parse import quote, unquote_plus
 import pytest
 
 from antweb import BASE_URL, TIMEOUT, new_session
-from staging_accounts import (BASELINE_HEADER, baseline_text, code, login, needs, require_test_group,
-                              report_url, specimen_page, upload_specimens, IS_STAGING)
+from staging_accounts import (BASELINE_HEADER, assert_upload_complete, baseline_text, code, login, needs,
+                              require_test_group, report_url, specimen_page, upload_specimens, IS_STAGING)
 
 pytestmark = pytest.mark.skipif(not IS_STAGING, reason="specimen uploads run only on staging")
 
@@ -105,7 +105,7 @@ def names():
 def _upload_baseline(s, token, valid):
     r = upload_specimens(s, token, baseline_text((valid.get("subfamily") or "").capitalize(),
                                                  valid["genus"].capitalize(), valid["species"]))
-    assert "Successful Upload." in r.text, _text(r.text)[:600]
+    assert_upload_complete(r)
     return r
 
 
@@ -122,7 +122,9 @@ def test_specimen_upload_round_trip(uploader, names):
         _row(5, valid, lat="40.1", lon="10.2"),
     ]
     r = upload_specimens(s, token, "\n".join(lines) + "\n")
-    assert "Successful Upload." in r.text, _text(r.text)[:800]
+    assert_upload_complete(r)
+    # The upload runs in the background: the page answers at once (Cloudflare cuts at 100 s).
+    assert r.post_seconds < 20, f"the upload POST took {r.post_seconds:.1f} s"
     rep_url = report_url(r)
     rep = s.get(rep_url, timeout=TIMEOUT)
     assert rep.status_code == 200, (rep_url, rep.status_code)

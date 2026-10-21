@@ -135,12 +135,82 @@ public class SpecimenNameUpdateTest extends TestCase {
         return SpecimenNameUpdate.decide(uploaded, current, n -> placeholder && n.equals(current), rule(uploaded));
     }
 
+    public void testUploadedHomonymIsLeftWhereTheUploadFiledIt() throws Exception {
+        // 2026-10-20: uploaded as "Camponotus gigas" (two AntCat taxa: Latreille 1802 -> Dinomyrmex gigas,
+        // Leach 1825 -> synonym of Camponotus cruentatus), filed under Dinomyrmex gigas by the upload.
+        // The taxon row of the uploaded name is the Leach one; the nightly must not follow it.
+        CurrentValidNameRule.Result r = rule(OLD);
+        assertEquals(Kind.REPLACE, r.kind);
+        SpecimenNameUpdate.Decision d = SpecimenNameUpdate.decide(OLD, "formicinaedinomyrmex gigas", n -> false, r, true);
+        assertEquals(SpecimenNameUpdate.Outcome.HOMONYM, d.outcome);
+        assertNull(d.newName);
+        // Not a homonym: the same case moves as before.
+        d = SpecimenNameUpdate.decide(OLD, "formicinaedinomyrmex gigas", n -> false, r, false);
+        assertEquals(SpecimenNameUpdate.Outcome.CHANGE, d.outcome);
+    }
+
+    public void testSpecimenUnderAValidNameStays() throws Exception {
+        // Brian 2026-10-20: Dinomyrmex gigas -> Camponotus cruentatus is wrong, both are valid. The specimen's
+        // current name is valid; the uploaded name's row points elsewhere (the other Camponotus gigas).
+        CurrentValidNameRule.Result r = rule(OLD);
+        SpecimenNameUpdate.Decision d = SpecimenNameUpdate.decide(OLD, "formicinaedinomyrmex gigas", n -> false, r, false, true);
+        assertEquals(SpecimenNameUpdate.Outcome.CURRENT_VALID, d.outcome);
+        assertNull(d.newName);
+    }
+
+    public void testResurrectedUploadedNameStillMovesBack() throws Exception {
+        // The uploaded name is valid again: the specimen goes back to it, even from a valid name
+        // (e.g. Crematogaster hespera, resurrected from synonymy under C. laeviuscula).
+        SpecimenNameUpdate.Decision d = SpecimenNameUpdate.decide(NEW, OLD, n -> false, rule(NEW), false, true);
+        assertEquals(SpecimenNameUpdate.Outcome.CHANGE, d.outcome);
+        assertEquals(NEW, d.newName);
+    }
+
     public void testSynonymAfterUploadIsMoved() throws Exception {
         // Uploaded as OLD while it was valid; AntCat has since made it a synonym of NEW.
         SpecimenNameUpdate.Decision d = nightly(OLD, OLD, false);
         assertEquals(Outcome.CHANGE, d.outcome);
         assertEquals(NEW, d.newName);
         assertEquals("Uploaded As keeps the curator's name", OLD, d.newOriginalName);
+    }
+
+    /**
+     * A name shared by two AntCat taxa (Brian Fisher, 2026-10-20; Pachycondyla sauteri: Cryptopone sauteri
+     * or Ectomomyrmex sauteri): never moved, held for the curator with the candidates. Only a move is
+     * held back; a specimen that stays anyway is not listed.
+     */
+    public void testSharedNameIsHeldForTheCurator() throws Exception {
+        List<String> both = List.of("Cryptopone sauteri", "Ectomomyrmex sauteri");
+        SpecimenNameUpdate.Decision d = SpecimenNameUpdate.decide(OLD, OLD, n -> false, rule(OLD), false, false, both);
+        assertEquals(Outcome.SHARED_NAME, d.outcome);
+        assertNull("not moved", d.newName);
+        assertEquals(both, d.candidates);
+        assertEquals("name is shared by two taxa; please confirm the identification: Cryptopone sauteri or Ectomomyrmex sauteri",
+            org.calacademy.antweb.upload.SharedNames.reason(d.candidates));
+        assertEquals("already on the valid name: nothing to hold", Outcome.UNCHANGED,
+            SpecimenNameUpdate.decide(OLD, NEW, n -> false, rule(OLD), false, false, both).outcome);
+        assertEquals("one candidate is not shared", Outcome.CHANGE,
+            SpecimenNameUpdate.decide(OLD, OLD, n -> false, rule(OLD), false, false, List.of("Ravavy indicus")).outcome);
+        assertEquals(Outcome.CHANGE, SpecimenNameUpdate.decide(OLD, OLD, n -> false, rule(OLD), false, false, null).outcome);
+
+        // The page lists them apart, per group, with the codes.
+        SpecimenNameUpdateDb.Line line = new SpecimenNameUpdateDb.Line();
+        line.runDate = Timestamp.valueOf("2026-10-20 05:20:00");
+        line.mode = SpecimenNameUpdate.SHARED;
+        line.groupId = 1;
+        line.oldName = "ponerinaepachycondyla sauteri";
+        line.uploadedName = "ponerinaepachycondyla sauteri";
+        line.newName = "";
+        line.reason = org.calacademy.antweb.upload.SharedNames.reason(both);
+        line.count = 1;
+        line.codes.add("casent0009");
+        List<SpecimenNameUpdateDb.Line> lines = new ArrayList<>();
+        lines.add(line);
+        String html = NameUpdatesAction.sharedHtml(lines, "https://www.antweb.org");
+        assertTrue(html, html.contains("Needs the curator's decision</h3>"));
+        assertTrue(html, html.contains(Taxon.makeDescriptionLink("ponerinaepachycondyla sauteri") + ": <span class=\"name-update-reason\">name is shared by two taxa"));
+        assertTrue(html, html.contains("/specimen.do?name=casent0009\">casent0009</a>"));
+        assertEquals("", NameUpdatesAction.sharedHtml(new ArrayList<>(), ""));
     }
 
     public void testAlreadyOnTheValidNameIsUnchanged() throws Exception {
@@ -281,8 +351,17 @@ public class SpecimenNameUpdateTest extends TestCase {
         String html = NameUpdatesAction.linesHtml(runs, lines, "https://www.antweb.org");
         assertTrue(html, html.contains("2026-10-20 05:20: Would change (report only)"));
         assertTrue(html, html.contains(NameUpdatesAction.nameLine(OLD, NEW)));
-        assertTrue(html, html.contains("(AntCat: synonym)"));
+        assertTrue("a row recorded before the reason existed", html.contains("(AntCat: synonym)"));
         assertTrue(html, html.contains("/specimen.do?name=casent0001\">casent0001</a>"));
+
+        // With the reason (2026-10-20): it replaces the status; names in italics, reference linked to AntCat.
+        line.uploadedName = OLD;
+        line.reason = "synonym: junior synonym of Ravavy indicus (Fisher 2026)";
+        line.antcatId = 1234;
+        html = NameUpdatesAction.linesHtml(runs, lines, "https://www.antweb.org");
+        assertTrue(html, html.contains(NameUpdatesAction.nameLine(OLD, NEW) + ": <span class=\"name-update-reason\">synonym: junior synonym of"
+            + " <i>Ravavy indicus</i> (<a href=\"https://www.antcat.org/catalog/1234\">Fisher 2026</a>)</span>"));
+        assertFalse(html, html.contains("(AntCat: synonym)"));
         assertFalse("codes are escaped", html.contains("<script>"));
         assertTrue(NameUpdatesAction.linesHtml(new ArrayList<>(), new ArrayList<>(), "").contains("No name updates"));
         assertTrue("every report explains itself", NameUpdatesAction.HELP.contains("report-help"));

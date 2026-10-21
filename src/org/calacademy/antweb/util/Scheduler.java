@@ -126,11 +126,36 @@ public class Scheduler extends AntwebAction {
 			return mapping.findForward("adminMessage");
 		}
 
-        String message = doAction(action, num);
+        // Started by an admin from a page: runs in the background (BackgroundJobs, 2026-10-20), the
+        // answer is the job's status page. The nightly run (doAction() from SessionRequestFilter)
+        // is not affected.
+        BackgroundJobDb.setDataSource(getDataSource(request, "conPool"));
+        final String runAction = action;
+        final int runNum = num;
+        String title = "Nightly " + (num > 0 ? "set " + num : "sets 1 to 5") + " (started by hand)";
+        BackgroundJobs.Job job = new BackgroundJobs.Job(BackgroundJobs.DATA, "schedule:" + action + ":" + num, title,
+            accessLogin.getId(), accessLogin.getName(), 0);
+        BackgroundJobs.Submitted submitted = BackgroundJobs.get().submit(job, j -> {
+            BackgroundJobs.step("Running " + (runNum > 0 ? "set " + runNum : "sets 1 to 5")
+                + " (progress in compute.log, Server Status page).");
+            String message = doAction(runAction, runNum);
+            LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " Scheduler complete. ");
+            return message != null && message.startsWith("Scheduler ") ? BackgroundJobs.Outcome.ok(message)
+                : BackgroundJobs.Outcome.failed(Html.esc(message));
+        });
+        if (submitted.job == null) {
+            request.setAttribute("message", Html.esc(submitted.refused));
+            return mapping.findForward("adminMessage");
+        }
+        return new ActionForward("/jobStatus.do?id=" + submitted.job.getId() + (submitted.isNew ? "" : "&already=1"), true);
+    }
 
-        LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " Scheduler complete. "); // + 	" mesage:" + message);
-		request.setAttribute("message", message);
-		return mapping.findForward("adminMessage");
+    // True from the start to the end of a run of the sets (nightly or started by an admin). The
+    // compute flag is briefly clear between two sets; jobs waiting in BackgroundJobs also check this.
+    private static volatile boolean s_running = false;
+
+    public static boolean isRunning() {
+      return s_running;
     }
 
     // Called from SessionRequestFilter
@@ -172,6 +197,7 @@ public class Scheduler extends AntwebAction {
 		}
 
 		try {
+		    s_running = true;
 		    UtilDataAction.setInComputeProcess(action);
 			// One-time code for this run's calls to utilData.do, sent in a request header (SchedulerCall).
 			java.util.Map<String, String> codeHeader = SchedulerCall.headers(AntwebUtil.getSecureCode());
@@ -272,6 +298,7 @@ public class Scheduler extends AntwebAction {
 				return message + " output:" + output;
 		    }
 		} finally {
+		  s_running = false;
 		  UtilDataAction.setInComputeProcess(null);
 
           AntwebUtil.resetSecureCode();

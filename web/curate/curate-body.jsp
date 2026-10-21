@@ -71,6 +71,11 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 
             &nbsp;&nbsp;&nbsp;View Your <a href="<%= domainApp %>/listImageUploads.do?groupId=<%= accessGroup.getId() %>">Image Upload Reports</a>
 
+            &nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/jobStatus.do">Upload status</a> (uploads waiting or in progress, and their results)
+<% if (accessLogin.isAdmin()) { %>
+            <br>&nbsp;&nbsp;&nbsp;View the <a href="<%= domainApp %>/query.do?name=worldantsUploads">World (AntCat) upload reports</a> (the nightly AntCat name import: names added, changed and removed each night)
+<% } %>
+
             &nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/nameUpdates.do">Name updates</a> (specimens moved to the current valid name after an AntCat change)
 <% if (LoginMgr.isAdmin(accessLogin)) { %>
             &nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/countCheck.do">Count check</a> (list counts recomputed from specimen records)
@@ -134,9 +139,8 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
         <!-- Antweb or TaxonWorks Specimen (Zip File) Upload -->
         
         <script type="text/javascript">
-            var uploadReportUrl = '<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>';
-            var uploadTimeoutId = null;
-
+            // The upload runs on the server in the background: once the file has been sent, the
+            // page answers with the upload's status page (jobStatus.do), which follows its progress.
             function validateZipUpload(form) {
                 var fileInput = form.elements['theFile'];
                 if (!fileInput || !fileInput.value) {
@@ -149,15 +153,6 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                 }
                 document.getElementById('upload-submit-btn').disabled = true;
                 document.getElementById('upload-processing-msg').style.display = 'block';
-                // Cloudflare times out at 100s — redirect to upload report after 85s
-                // The upload continues processing server-side even after a Cloudflare timeout
-                uploadTimeoutId = setTimeout(function() {
-                    document.getElementById('upload-processing-msg').innerHTML =
-                        '<b>This is taking a while.</b> Your data is still being processed on the server.<br>' +
-                        'You will be redirected to your <a href="' + uploadReportUrl + '">Upload Report</a> shortly, ' +
-                        'where you can check the result.';
-                    setTimeout(function() { window.location.href = uploadReportUrl; }, 5000);
-                }, 85000);
                 return true;
             }
         </script>
@@ -172,13 +167,13 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                 <div class="clear"></div>
 
                 <div id="upload-processing-msg" style="display:none; color: blue; font-weight: bold; margin: 10px 0;">
-                    Uploading and processing your file&hellip; please wait.
+                    Sending your file&hellip; please wait. The next page shows the progress of your upload.
                 </div>
 
                 <div style="color: red; font-weight: bold; margin: 10px 0;">
                     1. Only ZIP Files Allowed<br>
-                    2. If you see a Cloudflare timeout, your data is still processing &mdash;
-                       check your <a href="<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>">Upload Report</a>.
+                    2. Large files take several minutes; you will see the progress on the next page
+                       (and later under <a href="<%= domainApp %>/jobStatus.do">Upload status</a>).
                 </div>
 
                 <div class="upload_optional_columns" style="margin: 0 0 10px 0;">

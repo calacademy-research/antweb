@@ -155,7 +155,8 @@ public class PlaceImageCountDbTest extends TestCase {
         assertEquals("casent2", 1, p.labelOnlySpecimens);
         assertEquals(1, p.labelOnlyImages);
         assertEquals(3, p.specimensWithImages);
-        assertEquals("6 of the ant (2 head, 1 profile, 1 dorsal, 1 field photo, 1 other) and 2 of labels", PlaceImageCountDb.breakdown(p));
+        assertEquals("6 of the ant (2 head, 1 profile, 1 dorsal, 1 field image, 1 other) and 2 of labels", PlaceImageCountDb.breakdown(p));
+        assertEquals(": 2 head, 1 profile, 1 dorsal, 1 field image, and 1 other", PlaceImageCountDb.antViews(p));
 
         // The numbers on the page: the stale 3,435 and 9,999 are replaced.
         assertEquals(8, placeRow("geolocale", "id", "7")[0]);
