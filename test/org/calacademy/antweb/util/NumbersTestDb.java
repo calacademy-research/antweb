@@ -55,9 +55,14 @@ public final class NumbersTestDb {
     static final String[] TABLES = {"taxon", "specimen", "image", "geolocale", "geolocale_taxon", "project", "proj_taxon", "museum",
         "museum_taxon", "bioregion", "bioregion_taxon", "place_image_count", "statistics", "upload", "specimen_name_update"};
 
-    static final String PLACE_COLUMNS = "subfamily_count int default 0, genus_count int default 0, species_count int default 0,"
-        + " valid_species_count int default 0, specimen_count int default 0, image_count int default 0, imaged_specimen_count int default 0,"
-        + " taxon_subfamily_dist_json text, specimen_subfamily_dist_json text";
+    /** Pie columns as db/upgrade made them: varchar(5000) (6.3: geolocale, bioregion, project); museum: chartSize. */
+    static String placeColumns(int chartSize) {
+        return "subfamily_count int default 0, genus_count int default 0, species_count int default 0,"
+            + " valid_species_count int default 0, specimen_count int default 0, image_count int default 0, imaged_specimen_count int default 0,"
+            + " taxon_subfamily_dist_json varchar(" + chartSize + "), specimen_subfamily_dist_json varchar(" + chartSize + ")";
+    }
+
+    static final String PLACE_COLUMNS = placeColumns(5000);
 
     static final String LIST_COLUMNS = "taxon_name varchar(128), subfamily_count int default 0, genus_count int default 0,"
         + " species_count int default 0, specimen_count int default 0, image_count int default 0, created timestamp null";
@@ -80,7 +85,9 @@ public final class NumbersTestDb {
             + " primary key (geolocale_id, taxon_name))");
         exec(c, "create table project (project_name varchar(64) primary key, is_live tinyint, scope varchar(20) default 'PROJECT', " + PLACE_COLUMNS + ")");
         exec(c, "create table proj_taxon (project_name varchar(64), " + LIST_COLUMNS + ", primary key (project_name, taxon_name))");
-        exec(c, "create table museum (code varchar(64) primary key, " + PLACE_COLUMNS + ")");
+        // museum: varchar(10000) in db/upgrade/6.2, which also has a commented-out change to varchar(1000); staging and
+        // production evidently have the smaller one (2026-10-21 "Data too long" on uploads). The smaller one here.
+        exec(c, "create table museum (code varchar(64) primary key, " + placeColumns(1000) + ")");
         exec(c, "create table museum_taxon (code varchar(64), " + LIST_COLUMNS + ", primary key (code, taxon_name))");
         exec(c, "create table bioregion (name varchar(64) primary key, endemic_species_count int default 0, introduced_species_count int default 0, "
             + PLACE_COLUMNS + ")");
