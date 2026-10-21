@@ -6,12 +6,17 @@ Test admin (staging; ANTWEB_TEST_ADMIN_USER):
 - the page loads with its labels (Upload group, existing or new, AntCat institution hint) and
   lists the test upload group; the Curate page links "Add an uploader" and "Upload groups";
   the upload group pages say "Upload group".
-- a POST with incomplete input changes nothing and says so; a POST without the form token is
-  refused (HTTP 403). No test here creates a login or a group.
+- a POST with incomplete input changes nothing and says so; the token taken from the page itself
+  is accepted (the validation message, not a 403); a POST without the form token is refused
+  (HTTP 403); a POST with a stale token (as after a restart with "Keep me logged in") shows the
+  form again, filled in, with the "Your session changed" note and a new token, and does nothing.
+  Every POST here has invalid input as well, so no test can create a login or a group.
 Test curator without admin rights (staging; ANTWEB_TEST_NOUPLOAD_USER):
 - the page is refused, also a POST with a valid form token.
 Unit and database tests: test/org/calacademy/antweb/curate/UploaderOnboarding*Test.java.
 """
+import re
+
 import pytest
 
 from antweb import BASE_URL, TIMEOUT, classify, get, new_session
@@ -75,6 +80,39 @@ def test_incomplete_input_changes_nothing(admin):
     assert "Nothing was changed" in r.text
     assert "is not a valid email address" in r.text
     assert "Add an uploader: done" not in r.text
+
+
+CSRF_FIELD = re.compile(r'name="_csrf" value="([A-Za-z0-9_-]+)"')
+
+
+@needs("admin")
+def test_token_from_the_page_is_accepted(admin):
+    """Brian's 403 of 2026-10-20: the form's own token must pass (here: the validation message)."""
+    s, _token = admin
+    page = s.get(BASE_URL + "/addUploader.do", timeout=TIMEOUT)
+    m = CSRF_FIELD.search(page.text)
+    assert m, "no _csrf field in the Add an uploader form"
+    r = s.post(BASE_URL + "/addUploader.do", timeout=TIMEOUT,
+               data={"_csrf": m.group(1), "step": "save", "email": "zz-e2e@example.org", "groupId": "new",
+                     "newGroupName": "", "newGroupAbbrev": ""})
+    assert r.status_code == 200, (r.status_code, r.text[:300])
+    assert "Request refused" not in r.text
+    assert "Nothing was changed" in r.text and "Enter a short name" in r.text
+
+
+@needs("admin")
+def test_stale_token_shows_the_form_again(admin):
+    """A token from an earlier session: the form comes back filled in with a new token; nothing is done."""
+    s, token = admin
+    r = s.post(BASE_URL + "/addUploader.do", timeout=TIMEOUT,
+               data={"_csrf": "A" * 43, "step": "save", "email": "zz-stale@example.org", "firstName": "Stale",
+                     "groupId": "new", "newGroupName": "", "newGroupAbbrev": "zzStale"})
+    assert r.status_code == 200, (r.status_code, r.text[:300])
+    assert "Your session changed (AntWeb restarted or you logged in again)" in r.text
+    assert 'value="zz-stale@example.org"' in r.text and 'value="zzStale"' in r.text and 'value="Stale"' in r.text
+    assert "Nothing was changed:" not in r.text, "the stale request must not be processed"
+    m = CSRF_FIELD.search(r.text)
+    assert m and m.group(1) == token, "the form is shown with this session's token"
 
 
 @needs("admin")
