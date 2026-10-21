@@ -139,7 +139,12 @@ public final class EditGeolocaleAction extends AntwebAction {
 			    request.setAttribute("boundingBoxInput", request.getParameter("boundingBoxFixed"));
 			  } else {
 			    message = geolocaleDb.updateGeolocale(editGeolocaleForm);
-			    message += " Updated.";
+			    // A rename onto a name that already has page text is refused (GeolocaleDb.updateGeolocale).
+			    if (message != null && message.startsWith(GeolocaleDb.NOT_SAVED)) {
+			      isSaved = false;
+			    } else {
+			      message += " Updated.";
+			    }
 			  }
 			}
    	        if (isSaved && !editGeolocaleForm.getIsFast()) {
