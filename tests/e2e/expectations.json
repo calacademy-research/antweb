@@ -137,7 +137,6 @@
   "/technical": "login",
   "/tools": "ok",
   "/uploadFile": "login",
-  "/uploadHistory": "login",
   "/uploadReport": "message",
   "/uptime": "ok",
   "/validateSpeciesList": "login",

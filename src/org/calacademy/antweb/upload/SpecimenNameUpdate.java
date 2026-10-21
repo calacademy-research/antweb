@@ -347,7 +347,7 @@ public class SpecimenNameUpdate {
             if (skippedTotal > 0) b.append("; left alone (names): ").append(s);
             if (sharedSpecimens > 0) b.append("; for the curator to confirm (shared name): ").append(sharedSpecimens).append(" specimens");
             if (parkedRenamed > 0) b.append("; parked list entries moved: ").append(parkedRenamed);
-            b.append("; ").append(String.format("%.1f", millis / 60000.0)).append(" min. See nameUpdates.do.");
+            b.append("; ").append(String.format("%.1f", millis / 60000.0)).append(" min. See the Name update report (nameUpdates.do).");
             if (note != null) b.append(" ").append(note);
             return b.toString();
         }

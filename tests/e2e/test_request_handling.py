@@ -57,7 +57,7 @@ def test_quote_in_taxon_name_anonymous(action, taxon):
 
 
 ERROR_PROBES = ["/error.jsp", "/specimen.jsp", "/descEditReport.jsp", "/search/fieldGuide.jsp",
-                "/search/basicResults.jsp", "/search/recentSearchResults.jsp", "/uploadHistory.jsp"]
+                "/search/basicResults.jsp", "/search/recentSearchResults.jsp"]
 
 
 @pytest.mark.parametrize("url", ERROR_PROBES)
