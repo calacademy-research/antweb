@@ -48,7 +48,8 @@ def _apiProperties(path=API_PROPERTIES):
     # mounted in the api container, as /antweb-etc/api-db.properties). Empty if missing.
     try:
         with open(path) as f:
-            return dict(line.strip().split('=', 1) for line in f if '=' in line and not line.startswith('#'))
+            pairs = [line.strip().split('=', 1) for line in f if '=' in line and not line.strip().startswith('#')]
+        return {k.strip(): v.strip() for k, v in pairs}
     except OSError:
         return {}
 

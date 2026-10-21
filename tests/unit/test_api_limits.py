@@ -72,7 +72,7 @@ def test_cap_is_a_server_setting():
     for bad in ("x", "0", "-5", ""):
         assert api.readMaxLimit({"maxLimit": bad}) == 500, bad
     with tempfile.NamedTemporaryFile("w", suffix=".properties", delete=False) as f:
-        f.write("# comment\nuser=reader\npassword=a=b\nmaxLimit=750\n")
+        f.write("# comment\nuser=reader\npassword=a=b\nmaxLimit = 750\n")
     try:
         props = api._apiProperties(f.name)
     finally:
@@ -148,6 +148,30 @@ def test_every_endpoint_applies_the_limit():
         assert re.search(r"\.limit\(limit\)|:limit\b|\" limit \" \+", src), rule.rule + " does not apply limit"
         assert re.search(r"\.offset\(offset\)|:offset\b|\" offset \" \+", src), rule.rule + " does not apply offset"
     assert len(checked) >= 13, checked
+
+
+def test_every_record_reply_carries_the_notice():
+    # The notice is added by api.jsonify when the reply is built as jsonify(metaData=..., <records>=[...]).
+    # Every jsonify call of an endpoint that reads limit has that shape (keywords, a metaData dict
+    # first, then the record list), so none can skip the notice or count the wrong list.
+    for rule in app.url_map.iter_rules():
+        fn = app.view_functions[rule.endpoint]
+        src = inspect.getsource(fn)
+        if "setGlobals(" not in src:
+            continue
+        calls = re.findall(r"\bjsonify\(([^)]*)\)", src)
+        assert calls, rule.rule
+        for args in calls:
+            assert re.match(r"\s*_?metaData=metaDataDict,\s*\w+=dataList\s*$", args), (rule.rule, args)
+        assert "flaskJsonify" not in src, rule.rule
+
+
+def test_parameter_errors_have_no_notice():
+    # The unknown-parameter reply (before the endpoint and setGlobals run) carries lists but no notice.
+    client = app.test_client()
+    r = client.get("/specimens?up=1&limit=5000&specimenCod=x")
+    assert r.status_code == 400
+    assert "limitNotice" not in r.get_json() and api.LIMIT_HEADER not in r.headers
 
 
 def test_ndjson_is_streamed_and_unchanged():
