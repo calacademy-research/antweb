@@ -200,6 +200,9 @@ public class CountCheck {
         /** Run time of the whole check, and of the recounts of the sample. */
         public long millis;
         public long recountMillis;
+        /** Recount of the core places, of the rotating places (part of recountMillis). */
+        public long coreMillis;
+        public long rotatingMillis;
 
         public int real() {
             int n = 0;
@@ -269,30 +272,38 @@ public class CountCheck {
         }
 
         long recountStart = System.currentTimeMillis();
-        for (Place place : places) recount(place, result, changedNames);
+        for (Place place : places) recount(place, result, changedNames, true);
+        result.coreMillis = System.currentTimeMillis() - recountStart;
         result.rotatingPlanned = rotating.size();
+        long rotatingStart = System.currentTimeMillis();
         for (Place place : rotating) {
             if (result.places.contains(place)) continue;
+            // the time limit counts the whole check (the invariants and the core places too)
             if (System.currentTimeMillis() - start > secondsForRotating * 1000L) {
                 result.rotatingSkipped.add(place);
                 continue;
             }
-            recount(place, result, changedNames);
+            // With the invariants run, the rotating places skip what they already checked for every place
+            // (genus and subfamily rows against their children: list.genus, list.subfamily; Global: global.specimens).
+            recount(place, result, changedNames, !invariants);
             ++result.rotatingChecked;
         }
+        result.rotatingMillis = System.currentTimeMillis() - rotatingStart;
         result.recountMillis = System.currentTimeMillis() - recountStart;
         result.millis = System.currentTimeMillis() - start;
         return result;
     }
 
     /** The recounts from the specimen records of one place. */
-    void recount(Place place, Result result, Set<String> changedNames) throws SQLException {
+    void recount(Place place, Result result, Set<String> changedNames, boolean all) throws SQLException {
         result.places.add(place);
         int rows = 0;
         rows += checkSpecimens(place, result, changedNames);
-        rows += checkChildren(place, "genus", "species_count", "('species', 'subspecies')", "species", result, changedNames);
-        rows += checkChildren(place, "subfamily", "genus_count", "('genus')", "genera", result, changedNames);
-        if (!PROJECT.equals(place.type)) rows += checkGlobal(place, result, changedNames);
+        if (all) {
+            rows += checkChildren(place, "genus", "species_count", "('species', 'subspecies')", "species", result, changedNames);
+            rows += checkChildren(place, "subfamily", "genus_count", "('genus')", "genera", result, changedNames);
+            if (!PROJECT.equals(place.type)) rows += checkGlobal(place, result, changedNames);
+        }
         rows += checkPlaceImages(place, result, changedNames);
         rows += checkPlaceSpecimens(place, result, changedNames);
         rows += checkRowImages(place, result, changedNames);

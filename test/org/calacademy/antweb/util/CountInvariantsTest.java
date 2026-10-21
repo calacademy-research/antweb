@@ -210,6 +210,22 @@ public class CountInvariantsTest extends TestCase {
         assertTrue(r.invariants.summary().get("taxon.images")[0] > 0);
     }
 
+    /** The background job keeps the last reports for countCheck.do?job=N; the report shows the time of each part. */
+    public void testJobReportsAndPartTimes() throws Exception {
+        for (int id = 101; id <= 107; id++) org.calacademy.antweb.util.CountCheckJob.keep(id, "report " + id);
+        assertEquals(107, org.calacademy.antweb.util.CountCheckJob.latest());
+        assertEquals("report 107", org.calacademy.antweb.util.CountCheckJob.report(107));
+        assertNull("only the last 5 are kept", org.calacademy.antweb.util.CountCheckJob.report(102));
+        List<CountCheck.Place> rotating = new ArrayList<>();
+        rotating.add(new CountCheck.Place(CountCheck.MUSEUM, "CASC", "museum CASC", "museum", "CASC"));
+        CountCheck.Result r = new CountCheck(connection).run(new ArrayList<>(), rotating, 60, Timestamp.valueOf("2021-01-01 08:15:00"),
+            true, true, true, null);
+        assertTrue(r.millis >= r.invariants.millis + r.coreMillis + r.rotatingMillis - 5);
+        assertEquals(1, r.rotatingChecked);
+        // with the invariants run, a rotating place skips the genus, subfamily and Global recounts
+        for (CountCheck.Mismatch m : r.mismatches) assertFalse(m.check.equals("species") || m.check.equals("global"));
+    }
+
     public void testStatsPageNumberInMemory() throws Exception {
         CountCheck.Result r = new CountCheck(connection).run(new ArrayList<>(), new ArrayList<>(), 0, Timestamp.valueOf("2021-01-01 08:15:00"),
             true, true, true, 3);
