@@ -44,6 +44,45 @@ save (the values were written into the SQL text; now bound values); a blank code
 of an existing museum can no longer be overwritten by accident (it used to create a second museum);
 the delete page counts the specimens; the list and form show names as text.
 
+**Museum page text (fixed 2026-10-21)**: the page-text editor read and wrote a museum's text under the
+museum's **name**, but the museum page loads it by **code**. For a museum whose name is not its code
+(code ABS, name "ABS, Lake Placid") saved text did not show after a reload. The editor now uses the
+code (`DescEditDb.objectKey`). Text saved earlier under a name stays there until it is moved, on
+production, by an admin, with the database command pattern (back up first; nothing here runs by itself):
+
+```sql
+-- 1. Check (read only): museum page text stored under the museum's name instead of its code.
+--    to_code_has_text = 1: the code already has text for that field (that row is not moved).
+select o.object_key as stored_under_name, m.code, o.title, o.created, length(o.content) as chars,
+       (select count(*) from object_edit c where c.object_key = m.code and c.title = o.title) as to_code_has_text
+from object_edit o join museum m on o.object_key = m.name
+where m.name <> m.code order by m.code, o.title;
+select count(*) as history_rows_under_name from object_hist h join museum m on h.object_key = m.name where m.name <> m.code;
+
+-- 2. Backup (the rows that will move, with their new key).
+create table object_edit_bak_20261021 as
+  select o.*, m.code as new_key from object_edit o join museum m on o.object_key = m.name
+  where m.name <> m.code
+    and not exists (select 1 from object_edit c where c.object_key = m.code and c.title = o.title);
+create table object_hist_bak_20261021 as
+  select h.*, m.code as new_key from object_hist h join museum m on h.object_key = m.name where m.name <> m.code;
+
+-- 3. Move (dates kept).
+update object_edit o join object_edit_bak_20261021 b on b.object_key = o.object_key and b.title = o.title
+  set o.object_key = b.new_key, o.created = o.created;
+update object_hist h join object_hist_bak_20261021 b on b.hist_id = h.hist_id
+  set h.object_key = b.new_key, h.created = h.created;
+
+-- Rollback (if needed):
+-- update object_edit o join object_edit_bak_20261021 b on o.object_key = b.new_key and o.title = b.title
+--   set o.object_key = b.object_key, o.created = o.created;
+-- update object_hist h join object_hist_bak_20261021 b on b.hist_id = h.hist_id
+--   set h.object_key = b.object_key, h.created = h.created;
+```
+
+A row whose code already has text for the same field (to_code_has_text = 1) is not moved: compare the
+two texts on the museum page and the check output and decide by hand.
+
 ---
 
 ## Geolocale Manager (`geolocaleMgr.do`)

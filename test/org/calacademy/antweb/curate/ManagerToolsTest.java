@@ -51,6 +51,18 @@ public class ManagerToolsTest extends TestCase {
         assertNull(g.getBioregion());
     }
 
+    public void testMuseumPageTextIsKeyedByCode() {
+        // Museum pages load their text by code; the editor must read, write and key drafts by code too.
+        org.calacademy.antweb.Museum m = new org.calacademy.antweb.Museum();
+        m.setCode("ABS");
+        m.setName("ABS, Lake Placid");
+        assertEquals("ABS", org.calacademy.antweb.home.DescEditDb.objectKey(m));
+        assertEquals("object:ABS", org.calacademy.antweb.DescEditSafety.pageKey(m));
+        Geolocale g = new Geolocale();
+        g.setName("Madagascar");
+        assertEquals("places stay keyed by name", "Madagascar", org.calacademy.antweb.home.DescEditDb.objectKey(g));
+    }
+
     public void testQueryCellsAreTextExceptAntwebLinks() {
         String app = "https://www.antweb.org";
         assertEquals("null", QueryManager.cell(null, app));

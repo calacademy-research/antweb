@@ -376,7 +376,7 @@ jobs:
         # The JSP pages of the Manager Tools compile (Jasper JspC, as Tomcat 11 compiles them).
         # ManagerToolsTest: "None" in Edit Geolocale is no value (a stored "none" bioregion reads as none),
         # query results are text except AntWeb links, linked named queries exist, every page explains
-        # itself and prints no request value unescaped. ManagerToolsDbTest (MySQL 8.4): museum names with
+        # itself and prints no request value unescaped, museum page text is keyed by code. ManagerToolsDbTest (MySQL 8.4): museum names with
         # an apostrophe, no duplicate on update, blank code refused, specimen count before a delete, a place
         # with places under it, a deleted place's species list rows. See docs/guides/manager-tools.md.
         run: |
@@ -413,7 +413,7 @@ jobs:
             CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc \
               /t/org/calacademy/antweb/curate/ManagerToolsTest.java /t/org/calacademy/antweb/home/ManagerToolsDbTest.java
-            for t in curate.ManagerToolsTest:8 home.ManagerToolsDbTest:4; do
+            for t in curate.ManagerToolsTest:9 home.ManagerToolsDbTest:4; do
               cls=${t%%:*}; n=${t##*:}
               java -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
