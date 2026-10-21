@@ -185,6 +185,96 @@ public class SpecimenDb extends AntwebDb {
         return specimenCodes;
     }
 
+    /**
+     * "from ... where ..." (specimen alias s) of the specimens a Download Data file of this page may hold
+     * (getSpecimenList.do, Brian Fisher 2026-10-21): a place gives only the specimens collected there,
+     * as the place counts take them: countries, adm1s and islands by Geolocale.getSpecimenPlaceCriteria()
+     * (specimen.country, adm1 or island_country), regions and subregions by the specimens of their
+     * countries (Geolocale.getSpecimenPlaceJoin()), a museum its own specimens (specimen.museum), a
+     * bioregion specimen.bioregion. A project gives the specimens of the names on its list (the project
+     * counts, proj_taxon), allantwebants all specimens. Null when the page is none of these (no download).
+     * Before, every overview used its taxon list only, so a country download held every specimen,
+     * worldwide, of the names on the country's list.
+     */
+    public static String getDownloadFromWhere(Overview overview) {
+        if (overview == null) return null;
+        if (overview instanceof org.calacademy.antweb.geolocale.Geolocale) {
+            org.calacademy.antweb.geolocale.Geolocale g = (org.calacademy.antweb.geolocale.Geolocale) overview;
+            String join = g.getSpecimenPlaceJoin();
+            String criteria = g.getSpecimenPlaceCriteria();
+            if ("".equals(join) && "".equals(criteria)) return null;  // a place rank without its own specimens
+            return " from specimen s" + join + " where 1 = 1" + criteria;
+        }
+        if (overview instanceof org.calacademy.antweb.geolocale.Bioregion) {
+            return " from specimen s where s.bioregion = '" + sqlText(overview.getName()) + "'";
+        }
+        if (overview instanceof Museum) {
+            return " from specimen s where s.museum = '" + sqlText(((Museum) overview).getCode()) + "'";
+        }
+        if (overview instanceof Project) {
+            if (Project.ALLANTWEBANTS.equals(overview.getName())) return " from specimen s where 1 = 1";
+            return " from specimen s join proj_taxon pt on pt.taxon_name = s.taxon_name"
+                + " and pt.project_name = '" + sqlText(overview.getName()) + "' where 1 = 1";
+        }
+        return null;
+    }
+
+    private static String sqlText(String s) {
+        return s == null ? "" : s.replace("\\", "\\\\").replace("'", "''");
+    }
+
+    /** " and s.family = ... and s.genus = ..." for the given names (null: any). */
+    public static String getDownloadTaxonCriteria(String family, String subfamily, String genus, String species, String subspecies) {
+        String c = "";
+        if (family != null) c += " and s.family = '" + sqlText(family) + "'";
+        if (subfamily != null) c += " and s.subfamily = '" + sqlText(subfamily) + "'";
+        if (genus != null) c += " and s.genus = '" + sqlText(genus) + "'";
+        if (species != null) c += " and s.species = '" + sqlText(species) + "'";
+        if (subspecies != null) c += " and s.subspecies = '" + sqlText(subspecies) + "'";
+        return c;
+    }
+
+    /** Number of specimens a Download Data file of this page and taxon would hold (-1: no download for this page). */
+    public int countDownloadSpecimens(Overview overview, String family, String subfamily, String genus, String species, String subspecies) throws SQLException {
+        String fromWhere = getDownloadFromWhere(overview);
+        if (fromWhere == null) return -1;
+        String query = "select count(distinct s.code)" + fromWhere + getDownloadTaxonCriteria(family, subfamily, genus, species, subspecies);
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "countDownloadSpecimens()");
+            rset = stmt.executeQuery(query);
+            return rset.next() ? rset.getInt(1) : 0;
+        } catch (SQLException e) {
+            s_log.error("countDownloadSpecimens() e:" + e + " query:" + query);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, rset, "this", "countDownloadSpecimens()");
+        }
+    }
+
+    /** Codes of the specimens of a Download Data file, by code, at most limit of them (limit <= 0: all). */
+    public ArrayList<String> getDownloadSpecimenCodes(Overview overview, String family, String subfamily, String genus, String species, String subspecies, int limit) throws SQLException {
+        ArrayList<String> codes = new ArrayList<>();
+        String fromWhere = getDownloadFromWhere(overview);
+        if (fromWhere == null) return codes;
+        String query = "select distinct s.code" + fromWhere + getDownloadTaxonCriteria(family, subfamily, genus, species, subspecies)
+            + " order by s.code" + (limit > 0 ? " limit " + limit : "");
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(getConnection(), "getDownloadSpecimenCodes()");
+            rset = stmt.executeQuery(query);
+            while (rset.next()) codes.add(rset.getString(1));
+        } catch (SQLException e) {
+            s_log.error("getDownloadSpecimenCodes() e:" + e + " query:" + query);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, rset, "this", "getDownloadSpecimenCodes()");
+        }
+        return codes;
+    }
+
     public String getSpecimenDetailXML(String code) throws SQLException {
         // Also called "Other" and "Features".
         String theXML = null;
@@ -582,6 +672,16 @@ public class SpecimenDb extends AntwebDb {
 
         //A.iLog("getFlagCriteria() this should not happen option: " + option + " " + AntwebUtil.getStackTrace());
         return " 1 = 1 ";
+    }
+
+    /**
+     * Ant specimens only (Brian Fisher, 2026-10-21: non-ant specimens may be uploaded, and are found by
+     * search, but are not listed on place pages): family Formicidae and a subfamily that AntCat has as
+     * a valid ant subfamily (taxon rows of rank subfamily). alias: the specimen table's alias.
+     */
+    public static String getAntSpecimenCriteria(String alias) {
+      return " " + alias + ".family = 'formicidae' and " + alias + ".subfamily in"
+          + " (select ant_sf.taxon_name from taxon ant_sf where ant_sf.taxarank = 'subfamily' and ant_sf.family = 'formicidae' and ant_sf.status = 'valid')";
     }
 
     public static String getStatusCriteria() {

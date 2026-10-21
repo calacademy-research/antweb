@@ -234,12 +234,16 @@ public class AdvancedSearchAction extends AntwebAction {
 		throws IOException, ServletException, SearchException, SQLException {
         // s_log.warn("getSearchResults()");		
 
-		AdvancedSearchResults results = new AdvancedSearchResults();
-		AdvancedSearch search = new AdvancedSearch();
-		ArrayList<ResultItem> searchResults = null;
-		
         Date startTime = new Date();
-        
+		AdvancedSearch search = buildSearch(connection, searchParameters);
+		ArrayList<ResultItem> searchResults = search.getResults();
+		QueryProfiler.profile("advSearch", startTime);	 
+		return searchResults;
+	}
+
+	/** The search of the form's parameters, on this connection (also used by the paged specimen list). */
+	public AdvancedSearch buildSearch(Connection connection, SearchParameters searchParameters) {
+		AdvancedSearch search = new AdvancedSearch();
 	    search.setFamily(searchParameters.getFamily().trim());
 		search.setSubfamily(searchParameters.getSubfamily().trim());
 		search.setName(searchParameters.getName().trim());
@@ -342,11 +346,6 @@ public class AdvancedSearchAction extends AntwebAction {
         search.setIsIgnoreInsufficientCriteria(searchParameters.isIgnoreInsufficientCriteria());
 		//A.log("getSearchResults() ignore:" + search.isIgnoreInsufficientCriteria() + " paramIgnore:" + searchParameters.isIgnoreInsufficientCriteria());
 
-		searchResults = search.getResults();
-		//A.log("getSearchResults() list:" + searchResults.get(0).getDateCollectedStart());
-
-		QueryProfiler.profile("advSearch", startTime);	 
-
-		return searchResults;
+		return search;
 	}
 }

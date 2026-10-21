@@ -28,15 +28,15 @@
  "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&subregion=Eastern Africa&country=Comoros&resultRank=specimen": {
   "headings": [
    "h1:Advanced Search Results",
-   "h2:3206 specimens Specimens (255 imaged)",
+   "h2:Showing 1–200 of 3,206 Specimens (25 imaged on this page)",
    "h3:Download Specimen Data"
   ],
-  "images": 2055,
-  "specimen_links": 2001,
+  "images": 255,
+  "specimen_links": 201,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 2002,
-  "text_length": 1209519,
+  "taxon_links": 202,
+  "text_length": 128400,
   "title": "Advanced Specimen Search - AntWeb"
  },
  "/artists.do?sortBy=name": {

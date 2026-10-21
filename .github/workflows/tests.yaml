@@ -141,6 +141,23 @@ jobs:
             grep -q "^OK (8 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of the download guards (genus/species files, 5,000-record cap, paged search list)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/util/DownloadLimits.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/DownloadGuardsTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.DownloadGuardsTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (6 tests)" /tmp/out.txt
+          '
+
+      - name: Download guards in the pages (no See all link, nofollow search links, robots.txt) (tests/unit/test_download_guards.py)
+        run: python3 tests/unit/test_download_guards.py
+
       - name: Java unit tests of upload and scheduler hardening (zip extraction, nightly self-calls)
         # SafeUnzip (symlink, .., size and entry caps, picks the right entry), specimen header
         # checks, species list deletion, image upload reports, and SchedulerCall: the nightly
@@ -284,6 +301,7 @@ jobs:
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
         run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml
       - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; place renames keep page text; every place's numbers; specimen name history)
+      - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; download guards)
         # DbTimeZoneTest: dates written by MySQL and by Java read back as the same moment and are
         # stored as Pacific wall-clock time, for conPool, mediumConPool and longConPool.
         run: |
@@ -341,6 +359,8 @@ jobs:
           # CountInvariantsTest: the count check's invariants over every place (docs/numbers.md), each wrong number found.
           # PlaceTotalsDbTest: the numbers the nightly run writes (place totals, pies, endemic, museums, taxon images,
           # home page, Global after the name update, statsPage) as the invariants expect them.
+          # DownloadGuardsDbTest: a place download holds only the specimens collected there (5,000 cap), the paged
+          # search list (COUNT, LIMIT/OFFSET, sort before paging, images/types only), ant specimens only on place pages.
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
             set -e
@@ -356,8 +376,9 @@ jobs:
               /t/org/calacademy/antweb/upload/SpecimenNameHistoryDbTest.java \
               /t/org/calacademy/antweb/util/NumbersTestDb.java \
               /t/org/calacademy/antweb/util/CountInvariantsTest.java \
-              /t/org/calacademy/antweb/home/PlaceTotalsDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 home.PlaceTotalsDbTest:12; do
+              /t/org/calacademy/antweb/home/PlaceTotalsDbTest.java \
+              /t/org/calacademy/antweb/home/DownloadGuardsDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

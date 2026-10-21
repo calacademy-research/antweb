@@ -141,17 +141,18 @@ public class TaxaPage implements Serializable {
 	   	    specimenQuery += ", s.genus, s.species, s.subspecies, IF(subspecies is null ,'species','subspecies') as taxarank";
 	      }          
           
-          specimenQuery += " from specimen s ";
+          // Ant specimens only: non-ant specimens are found by search, not listed on place pages (2026-10-21).
+          specimenQuery += " from specimen s where" + org.calacademy.antweb.home.SpecimenDb.getAntSpecimenCriteria("s");
           
           if (overview instanceof Country) {
-            specimenQuery += " where country = '" + overview+ "'";
+            specimenQuery += " and country = '" + overview+ "'";
           }
           if (overview instanceof Adm1) {
-            specimenQuery += " where adm1 = '" + overview + "'";
+            specimenQuery += " and adm1 = '" + overview + "'";
           }
 
           if (overview instanceof Project) {
-            specimenQuery += " where ( country = '" + overview.getTitle() + "'"
+            specimenQuery += " and ( country = '" + overview.getTitle() + "'"
               + " or adm1 = '" + overview.getTitle() + "' )" ;
           }
 
