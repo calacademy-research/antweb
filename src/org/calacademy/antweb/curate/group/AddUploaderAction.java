@@ -2,6 +2,8 @@ package org.calacademy.antweb.curate.group;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -24,7 +26,6 @@ import org.calacademy.antweb.Login;
 import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.Csrf;
 import org.calacademy.antweb.util.DBUtil;
-import org.calacademy.antweb.util.Emailer;
 import org.calacademy.antweb.util.GroupMgr;
 import org.calacademy.antweb.util.Html;
 import org.calacademy.antweb.util.HttpUtil;
@@ -39,13 +40,14 @@ import org.calacademy.antweb.util.PasswordResetMgr;
  *                                            find or create the upload group, attach, upload rights;
  *                                            a one-time set-password link when the login has no
  *                                            password (or is inactive). Then redirects to the summary.
- *   GET  /addUploader.do?done=1              summary of what was done and the welcome email, as it
- *                                            would be sent, with a Send button
- *   POST /addUploader.do step=send           sends the welcome email (Amazon SES), once
+ *   GET  /addUploader.do?done=1              summary of what was done and a draft welcome email
+ *                                            (To, Subject, plain-text body) to copy into the
+ *                                            administrator's own email program
  *
- * The welcome email is never sent without the administrator clicking Send. The set-password
- * link lives only in this administrator's session until it is sent or the page is left for a
- * new uploader. Every change is written to admin.log (PasswordResetMgr.logEvent).
+ * AntWeb does not send the welcome email (since 2026-10-21, Brian Fisher): each new uploader needs
+ * details only the administrator knows, so the page gives a draft to copy and edit (Copy button,
+ * and a mailto: link). The set-password link lives only in this administrator's session until the
+ * page is left for a new uploader. Every change is written to admin.log (PasswordResetMgr.logEvent).
  */
 public final class AddUploaderAction extends AntwebAction {
 
@@ -63,7 +65,6 @@ public final class AddUploaderAction extends AntwebAction {
         int loginId;
         String loginName;
         boolean hasLink;
-        String sent;   // null until Send was clicked: the outcome
     }
 
     public ActionForward execute(ActionMapping mapping, ActionForm form,
@@ -86,19 +87,8 @@ public final class AddUploaderAction extends AntwebAction {
         if (sessionChanged) {
             s_log.warn("execute() form token did not match the session (" + request.getAttribute(Csrf.REFUSED_ATTR)
                 + "): page shown again, nothing done. login:" + admin.getId() + " step:" + step);
-            notice = "send".equals(step) ? SESSION_CHANGED_SEND : SESSION_CHANGED;
+            notice = SESSION_CHANGED;
             post = false;
-        }
-
-        if (post && "send".equals(step)) {
-            Done done = (Done) session.getAttribute(DONE);
-            if (done != null && done.sent == null) {
-                boolean ok = Emailer.sendTransactional(done.email, done.subject, done.body);
-                done.sent = ok ? "Sent to " + done.email + "." : "Not sent: the mail server did not accept it (see emails.log). Copy the text below and send it from your own email.";
-                PasswordResetMgr.logEvent("welcome email for uploader login:" + done.loginId + (ok ? " sent" : " NOT sent") + " by login:" + admin.getId());
-                session.setAttribute(DONE, done);
-            }
-            return new ActionForward("/addUploader.do?done=1", true);
         }
 
         List<UploaderOnboarding.GroupRow> groups = new ArrayList<>();
@@ -120,7 +110,7 @@ public final class AddUploaderAction extends AntwebAction {
                     if (r.needsPasswordLink) {
                         link = PasswordResetMgr.newInviteLink(connection, r.login.id, admin.getId());
                         done.lines.add("Made a one-time link (" + days() + " days) for " + r.login.name
-                            + " to choose a password; it is in the welcome email below.");
+                            + " to choose a password; it is in the draft welcome email below.");
                     }
                     done.email = r.login.email;
                     done.loginId = r.login.id;
@@ -147,8 +137,7 @@ public final class AddUploaderAction extends AntwebAction {
             DBUtil.close(connection, this, dbMethodName);
         }
 
-        Done done = "1".equals(request.getParameter("done")) || (sessionChanged && "send".equals(step))
-            ? (Done) session.getAttribute(DONE) : null;
+        Done done = "1".equals(request.getParameter("done")) ? (Done) session.getAttribute(DONE) : null;
         if (!post && done == null && !sessionChanged) session.removeAttribute(DONE);  // a fresh form: forget the last link
         if (sessionChanged && done == null) notice = SESSION_CHANGED;
         request.setAttribute(PAGE, done != null
@@ -197,16 +186,14 @@ public final class AddUploaderAction extends AntwebAction {
     static final String INTRO =
         "<p>Use this page when someone asks to upload specimen data. In one step it finds the person's AntWeb login"
         + " (or creates one and makes a link for them to choose a password), puts the login in an <b>upload group</b>"
-        + " (an existing one, or a new one made here), gives it the right to upload specimens, and shows a welcome"
-        + " email with what to do next. The email is sent only when you click Send.</p>"
+        + " (an existing one, or a new one made here), gives it the right to upload specimens, and drafts a welcome"
+        + " email with what to do next, for you to copy into your own email (AntWeb does not send it).</p>"
         + "<p>An <b>upload group</b> is the institution, lab or personal collection that owns specimen records on AntWeb."
         + " Each specimen record belongs to one upload group, and <b>an upload replaces all specimens of the uploader's"
         + " upload group</b>. Give two people the same upload group only when they upload one shared data set.</p>";
 
     static final String SESSION_CHANGED = "Your session changed (AntWeb restarted or you logged in again)."
         + " Nothing was done. Check the form and press Add uploader again.";
-    static final String SESSION_CHANGED_SEND = "Your session changed (AntWeb restarted or you logged in again)."
-        + " The email was not sent. Check it and press Send again.";
 
     static String noticeHtml(String notice) {
         return notice == null ? "" : "<div id=\"session-changed\" style=\"border:2px solid #c80;background:#fff6e0;padding:8px 12px;margin:10px 0;max-width:760px\"><b>"
@@ -288,23 +275,71 @@ public final class AddUploaderAction extends AntwebAction {
          .append(" | <a href=\"").append(app).append("/addUploader.do\">Add another uploader</a>")
          .append(" | <a href=\"").append(app).append("/curate.do\">Curator Tools</a></p>\n");
 
-        b.append("<h2>Welcome email</h2>\n");
-        boolean canSend = done.email != null && done.email.contains("@");
-        if (done.sent != null) {
-            b.append("<p><b>").append(Html.esc(done.sent)).append("</b></p>\n");
-        } else if (!canSend) {
-            b.append("<p><b>This login has no email address, so AntWeb cannot send the email.</b> Add the address on the login"
-                + " (Open the login) or copy the text below into your own email.</p>\n");
-        } else {
-            b.append("<p>Check the text, then send it. It goes from antweb@antweb.org to <b>").append(Html.esc(done.email)).append("</b>.");
-            if (done.hasLink) b.append(" It holds the person's one-time link to choose a password: send it only to them.");
-            b.append("</p>\n<form method=\"POST\" action=\"").append(app).append("/addUploader.do\">").append(Csrf.field(request))
-             .append("<input type=\"hidden\" name=\"step\" value=\"send\"><input type=\"submit\" value=\"Send this email to ")
-             .append(Html.escAttr(done.email)).append("\"></form>\n");
-        }
-        b.append("<div style=\"border:1px solid #ccc;padding:8px 12px;margin:10px 0;max-width:760px\">")
-         .append("<p><b>To:</b> ").append(Html.esc(canSend ? done.email : "(no email address)")).append("<br><b>Subject:</b> ").append(Html.esc(done.subject)).append("</p>")
-         .append(done.body).append("</div>\n");
+        b.append(draftHtml(done.email, done.subject, done.body, done.hasLink));
         return b.toString();
+    }
+
+    /** The Copy button's script: the clipboard where the browser allows it, else the text is selected. */
+    static final String COPY_SCRIPT = "<script>\n"
+        + "function awCopyDraft(btn) {\n"
+        + "  var t = document.getElementById('draft-body'), note = document.getElementById('draft-copied');\n"
+        + "  function selectAll() { t.focus(); t.select(); t.setSelectionRange(0, t.value.length); }\n"
+        + "  function say(text) { note.textContent = text; }\n"
+        + "  function fallback() {\n"
+        + "    selectAll();\n"
+        + "    var ok = false;\n"
+        + "    try { ok = document.execCommand('copy'); } catch (e) { ok = false; }\n"
+        + "    say(ok ? 'Copied.' : 'Selected: press Ctrl+C (Cmd+C on a Mac) to copy.');\n"
+        + "  }\n"
+        + "  if (navigator.clipboard && window.isSecureContext) {\n"
+        + "    navigator.clipboard.writeText(t.value).then(function () { say('Copied.'); }, fallback);\n"
+        + "  } else {\n"
+        + "    fallback();\n"
+        + "  }\n"
+        + "}\n"
+        + "</script>\n";
+
+    /**
+     * The "Draft email" box of the summary page: To, Subject and the plain-text body in a read-only
+     * text box, a Copy button and a mailto: link. Every value is escaped. to may be null or have no @
+     * (a login without an email address): then there is no mailto: link.
+     */
+    public static String draftHtml(String to, String subject, String body, boolean hasLink) {
+        boolean hasTo = to != null && to.contains("@");
+        StringBuilder b = new StringBuilder();
+        b.append("<h2>Draft email</h2>\n")
+         .append("<p>AntWeb does not send this email. Copy it into your own email, add what this person needs to know,")
+         .append(" replace [Your name] with your name, and send it.");
+        if (hasLink) b.append(" <b>It holds the person's one-time link to choose a password: send it only to them.</b>");
+        b.append("</p>\n");
+        b.append("<div id=\"welcome-draft\" style=\"border:1px solid #ccc;padding:8px 12px;margin:10px 0;max-width:760px\">\n")
+         .append("<p><label><b>To:</b> <input type=\"text\" id=\"draft-to\" readonly size=\"50\" onfocus=\"this.select()\" value=\"")
+         .append(Html.escAttr(hasTo ? to : "")).append("\"></label>");
+        if (!hasTo) b.append(" <b>This login has no email address.</b> Add it on the login (Open the login), or enter it in your email.");
+        b.append("<br>\n<label><b>Subject:</b> <input type=\"text\" id=\"draft-subject\" readonly size=\"50\" onfocus=\"this.select()\" value=\"")
+         .append(Html.escAttr(subject)).append("\"></label></p>\n")
+         .append("<textarea id=\"draft-body\" readonly rows=\"24\" style=\"width:100%;box-sizing:border-box;font-family:inherit\" aria-label=\"Email text\">")
+         .append(Html.esc(body)).append("</textarea>\n")
+         .append("<p><button type=\"button\" id=\"draft-copy\" onclick=\"awCopyDraft(this)\">Copy</button>")
+         .append(" <span id=\"draft-copied\" role=\"status\"></span>");
+        if (hasTo) {
+            b.append(" &nbsp; <a id=\"draft-mailto\" href=\"").append(Html.escAttr(mailtoUrl(to, subject, body)))
+             .append("\">Open in my email program</a>");
+        }
+        b.append("</p>\n<p style=\"color:#666\">Copy copies the email text; paste it into a new email to the address above.")
+         .append(" \"Open in my email program\" starts a new email with To, Subject and the text filled in, but some email")
+         .append(" programs cut a long text short: check it, or use Copy.</p>\n")
+         .append("</div>\n").append(COPY_SCRIPT);
+        return b.toString();
+    }
+
+    /** mailto: address with To, subject and body percent-encoded (RFC 6068: spaces as %20, lines as %0D%0A). */
+    public static String mailtoUrl(String to, String subject, String body) {
+        String lines = (body == null ? "" : body).replace("\r\n", "\n").replace("\n", "\r\n");
+        return "mailto:" + enc(to).replace("%40", "@") + "?subject=" + enc(subject) + "&body=" + enc(lines);
+    }
+
+    private static String enc(String s) {
+        return URLEncoder.encode(s == null ? "" : s, StandardCharsets.UTF_8).replace("+", "%20");
     }
 }

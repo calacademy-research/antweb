@@ -7,3 +7,8 @@ Disallow: /data/
 Disallow: /ckeditor/
 Disallow: /WEB-INF/
 Disallow: /web/
+# Specimen searches and downloads (2026-10-21): no crawling of result pages or data files.
+Disallow: /advancedSearch.do
+Disallow: /getSpecimenList.do
+Disallow: /getSearchList.do
+Disallow: /speciesListDownload.do

@@ -61,7 +61,7 @@
           + "&genusSearchType=equals&genus=" + taxon.getGenus()
           + "&images=on&resultRank=specimen"
           + overviewCriteria;
-   %> <div class="tool_label"><a target="_blank" href="<%= imageSearchUrl %>">Image Search</a></div> <%
+   %> <div class="tool_label"><a target="_blank" rel="nofollow" href="<%= imageSearchUrl %>">Image Search</a></div> <%
       }
       A.log("pageToolLinks.jsp overview:" + overviewCriteria);     
     }

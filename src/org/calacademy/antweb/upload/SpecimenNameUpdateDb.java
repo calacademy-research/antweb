@@ -158,7 +158,7 @@ public class SpecimenNameUpdateDb {
         public int specimens;
     }
 
-    public static final int MAX_CODES_PER_LINE = 200;
+    public static final int MAX_CODES_PER_LINE = org.calacademy.antweb.util.SpecimenCodes.MAX_CODES;   // the same cap as the upload report
 
     /**
      * Lines of the given runs, in the order of the runs, then group, then old name. groupId 0 = all groups.

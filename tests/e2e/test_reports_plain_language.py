@@ -43,13 +43,14 @@ def _text(path):
 
 def test_curate_antcat_removed_and_checks_moved():
     queries = _text("src/org/calacademy/antweb/util/Queries.java")
-    integrity = queries[queries.index("getIntegrityNames()"):queries.index("getIntegrityNamesArray()")]
+    integrity = queries[queries.index("getIntegrityNames()"):queries.index("getIntegrityQueries()")]
     for name in ("badParentTaxonName", "unrecognizedWithSynonymParent", "geolocaleTaxaNotUsingCurrentValidName"):
         assert f'"{name}"' in integrity, name
     assert '"unrecognizedTaxaWithoutSpecimen"' not in integrity
     assert "getCurateAntcatNames" not in queries
     assert "curateAntcat" not in re.sub(r"//.*", "", _text("src/org/calacademy/antweb/util/QueryAction.java"))
-    for page in ("web/curate/curatorLinks.jsp", "web/curate/curate-body.jsp", "web/util/queries-body.jsp"):
+    # web/util/queries-body.jsp (the older query list) was removed on 2026-10-21.
+    for page in ("web/curate/curatorLinks.jsp", "web/curate/curate-body.jsp"):
         assert "curateAntcat" not in _text(page), page
     assert "order by created desc limit 60" in queries
 

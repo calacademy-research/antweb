@@ -151,13 +151,13 @@
      if (locality.getLocalityCode() != null) {
 		 String specimenSearchUrl = "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&localityCodeSearchType=equals&localityCode=" + java.net.URLEncoder.encode("\"" + locality.getLocalityCode() + "\"", java.nio.charset.StandardCharsets.UTF_8);
 		 String speciesSearchUrl = specimenSearchUrl + "&resultRank=species";	 
-		 out.println("<br><br><b><a href='" + AntwebProps.getDomainApp() + speciesSearchUrl + "'>Show All Species<a></b>");     
-		 out.println(" | <b><a href='" + AntwebProps.getDomainApp() + specimenSearchUrl + "'>Show All Specimens<a></b>");     
+		 out.println("<br><br><b><a rel='nofollow' href='" + AntwebProps.getDomainApp() + speciesSearchUrl + "'>Show All Species<a></b>");     
+		 out.println(" | <b><a rel='nofollow' href='" + AntwebProps.getDomainApp() + specimenSearchUrl + "'>Show All Specimens<a></b>");     
 	   } else if (locality.getLocalityName() != null) {
 		 String specimenSearchUrl = "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&localityNameSearchType=equals&localityName=" + java.net.URLEncoder.encode("\"" + locality.getLocalityName() + "\"", java.nio.charset.StandardCharsets.UTF_8);
 		 String speciesSearchUrl = specimenSearchUrl + "&resultRank=species";
-		 out.println("<br><br><b><a href='" + AntwebProps.getDomainApp() + speciesSearchUrl + "'>Show All Species<a></b>");     
-		 out.println(" | <b><a href='" + AntwebProps.getDomainApp() + specimenSearchUrl + "'>Show All Specimens<a></b>");        
+		 out.println("<br><br><b><a rel='nofollow' href='" + AntwebProps.getDomainApp() + speciesSearchUrl + "'>Show All Species<a></b>");     
+		 out.println(" | <b><a rel='nofollow' href='" + AntwebProps.getDomainApp() + specimenSearchUrl + "'>Show All Specimens<a></b>");        
 	   }
    }
    %>

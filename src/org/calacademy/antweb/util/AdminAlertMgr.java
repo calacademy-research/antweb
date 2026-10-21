@@ -18,8 +18,20 @@ public final class AdminAlertMgr {
     public static String s_queryAlerts = "";
     
     public static void populate(Connection connection) {
+        loadAlerts(connection);
 
-        s_adminAlerts = new ArrayList<>();
+        // Add any alerting queries.
+        try {
+          s_queryAlerts = QueryManager.adminAlerts(connection);
+        } catch (SQLException e) {
+          s_log.warn("checkIntegrity() e:" + e);
+        }
+    }
+
+    /** The unacknowledged rows of admin_alerts (without rerunning the alerting queries). */
+    private static void loadAlerts(Connection connection) {
+        List<AdminAlert> alerts = new ArrayList<>();
+
 
         // Get any alerts from the admin_alerts table.          
         String query = null;
@@ -39,21 +51,14 @@ public final class AdminAlertMgr {
             adminAlert.setCreated(rset.getTimestamp("created")); 
             adminAlert.setIsAcknowledged(rset.getInt("acknowledged") == 1);
     
-            s_adminAlerts.add(adminAlert);
+            alerts.add(adminAlert);
           }
+          s_adminAlerts = alerts;
         } catch (Exception e) {
-          s_log.warn("populate() e:" + e);
+          s_log.warn("loadAlerts() e:" + e);
         } finally {
-          DBUtil.close(stmt, "AdminAlertMgr.populate()");        
+          DBUtil.close(stmt, "AdminAlertMgr.loadAlerts()");        
         }
-
-        // Add any alerting queries.
-        try {
-          s_queryAlerts = QueryManager.adminAlerts(connection);
-        } catch (SQLException e) {
-          s_log.warn("checkIntegrity() e:" + e);
-        }
-
     }
 
     public static String getQueryAlerts() {
@@ -66,29 +71,35 @@ public final class AdminAlertMgr {
         LogMgr.appendLog("adminAlerts.log", message, true);   
     }
 
+    /**
+     * Record an alert for the administrators (Admin Alert Manager, and the count in the page header
+     * of administrators). Stored as plain text; the page shows it escaped. Writing was switched off in
+     * May 2026 (AdminAlertMgr.add only logged "skipping"), so failed AntCat imports, low disk space at
+     * start-up and the weekly "no AntCat changes" note were never shown; restored 2026-10-21 with a
+     * bound insert. Never throws: an alert must not break the caller.
+     */
     public static void add(String message, Connection connection) {
-        s_log.warn("AdminAlertMgr.add(message)");
-        Statement stmt = null;
-        String dml = "insert into admin_alerts (alert) values ('" + AntFormatter.escapeQuotes(message) + "')	";
-        s_log.warn("AdminAlertMgr.add(): skipping... ");
-	return;
-	/*
-	try {
-          stmt = DBUtil.getStatement(connection, "AdminAlertMgr.add()");  
-          stmt.executeUpdate(dml);
-          s_log.debug("add() dml:" + dml);
-
+        if (message == null || message.isEmpty()) return;
+        LogMgr.appendLog("adminAlerts.log", message, true);
+        PreparedStatement stmt = null;
+        try {
+          if (connection == null || connection.isClosed()) {
+            s_log.warn("add() no database connection; logged only: " + message);
+            return;
+          }
+          stmt = connection.prepareStatement("insert into admin_alerts (alert) values (?)");
+          stmt.setString(1, message.length() > 4000 ? message.substring(0, 4000) : message);
+          stmt.executeUpdate();
         } catch (Exception e) {
-          s_log.warn("add() e:" + e + " dml:" + dml);
+          s_log.warn("add() e:" + e);
+          return;
         } finally {
-          DBUtil.close(stmt, "AdminAlertMgr.add()");        
+          DBUtil.close(stmt, "AdminAlertMgr.add()");
         }
-
-        AdminAlertMgr.populate(connection);  
-	*/
+        loadAlerts(connection);
     }
-    
-    public static final String noWorldantsChanges = "No Worldants changes in last week. See: <a href='" + AntwebProps.getDomainApp() + "/query.do?name=worldantsUploads'>Worldants Upload Report</a>.";
+
+    public static final String noWorldantsChanges = "No Worldants changes in last week. See the AntCat import history (query.do?name=worldantsUploads).";
     public static final String noWorldantsChangesContains = "No Worldants changes";  // Should be a substring of the above.
     public static final String WEEK = "INTERVAL DAYOFWEEK(curdate()) + 6 DAY";
     public static void addIfFresh(String message, String contains, String period, Connection connection) {

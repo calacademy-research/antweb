@@ -128,6 +128,12 @@ public class PlaceImageCountDb {
         Source(String sql, boolean keyIsInt) { this.sql = sql; this.keyIsInt = keyIsInt; }
     }
 
+    /**
+     * Ants only (Brian Fisher, 2026-10-21: specimens of other families stay in AntWeb but are not counted on place
+     * pages), as every number of the place page (PlaceTotals.ANTS).
+     */
+    static final String ANTS = " and t.family = 'formicidae'";
+
     private static String geolocaleColumnSource(String column, String georankCondition, boolean one) {
         return "select g.id k, s.code code, i.id id, " + SHOT + " shot"
             + " from geolocale g"
@@ -136,7 +142,7 @@ public class PlaceImageCountDb {
             + " join taxon t on t.taxon_name = s.taxon_name"
             + " join image i on i.image_of_id = s.code"
             + " where " + georankCondition
-            + " and t.taxarank in " + SPECIES + " and s.status in " + COUNTABLE
+            + " and t.taxarank in " + SPECIES + " and s.status in " + COUNTABLE + ANTS
             + (one ? " and g.id = ?" : "");
     }
 
@@ -155,19 +161,21 @@ public class PlaceImageCountDb {
                     + " join geolocale_taxon gt on gt.geolocale_id = d.k and gt.taxon_name = s.taxon_name"
                     + " join taxon t on t.taxon_name = s.taxon_name"
                     + " join image i on i.image_of_id = s.code"
-                    + " where t.taxarank in " + SPECIES, true));
+                    + " where t.taxarank in " + SPECIES + ANTS, true));
                 break;
             case BIOREGION:
                 list.add(new Source("select b.name k, s.code code, i.id id, " + SHOT + " shot"
                     + " from bioregion b join specimen s on s.bioregion = b.name"
                     + " join image i on i.image_of_id = s.code"
-                    + (one ? " where b.name = ?" : ""), false));
+                    + " where s.family = 'formicidae'"
+                    + (one ? " and b.name = ?" : ""), false));
                 break;
             case MUSEUM:
                 list.add(new Source("select m.code k, s.code code, i.id id, " + SHOT + " shot"
                     + " from museum m join specimen s on s.museum = m.code"
                     + " join image i on i.image_of_id = s.code"
-                    + (one ? " where m.code = ?" : ""), false));
+                    + " where s.family = 'formicidae'"
+                    + (one ? " and m.code = ?" : ""), false));
                 break;
             case PROJECT:
                 list.add(new Source("select pt.project_name k, s.code code, i.id id, " + SHOT + " shot"
@@ -175,7 +183,7 @@ public class PlaceImageCountDb {
                     + " join taxon t on t.taxon_name = pt.taxon_name"
                     + " join specimen s on s.taxon_name = pt.taxon_name"
                     + " join image i on i.image_of_id = s.code"
-                    + " where t.taxarank in " + SPECIES
+                    + " where t.taxarank in " + SPECIES + ANTS
                     + (one ? " and pt.project_name = ?" : ""), false));
                 break;
             default:

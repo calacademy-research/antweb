@@ -45,14 +45,21 @@
 <div class="in_admin">
 <h1>Edit Geolocale</h1>
 
-<br>&nbsp;&nbsp;&nbsp; <a href="<%= domainApp %>/geolocaleMgr.do?georank=<%= georank %>&parent=<%= geolocale.getParent() %>#<%= geolocale.getId() %>">Parent List</a>  
+<br>&nbsp;&nbsp;&nbsp; <a href="<%= domainApp %>/geolocaleMgr.do?georank=<%= Html.escAttr(Html.url(georank)) %><%= parent == null ? "" : "&parent=" + Html.escAttr(Html.url(parent)) %>#<%= geolocale.getId() %>">Parent List</a>  
   | Public: <%= geolocale.getTag() %>
   <% if ("adm1".equals(georank)) { %>
-  | <a href='<%= domainApp %>/adm1Mgr.do?adm1Name=<%= geolocale.getName() %>&countryName=<%= geolocale.getParent() %>'>Adm1 Mgr</a>
+  | <a href='<%= domainApp %>/adm1Mgr.do?adm1Name=<%= Html.escAttr(Html.url(geolocale.getName())) %>&countryName=<%= Html.escAttr(Html.url(geolocale.getParent())) %>'>Adm1 Mgr</a>
   <% } %>
   <% if (childRank != null) { %>
-  | <a href='<%= domainApp %>/geolocaleMgr.do?georank=<%= childRank %>&parent=<%= geolocale.getName() %>'>Children List</a>
+  | <a href='<%= domainApp %>/geolocaleMgr.do?georank=<%= childRank %>&parent=<%= Html.escAttr(Html.url(geolocale.getName())) %>'>Children List</a>
   <% } %>
+</div>
+
+<div class="mgr_help" style="max-width:70em;margin:6px 16px 12px 16px">
+All settings of one place. <b>Submit</b> saves every field below at once (administrators only) and
+makes the change live at once. Bioregion decides the bioregion of specimens
+collected here (at upload); a place with an Alternate Bioregion lies in two bioregions, so its specimens
+get no bioregion from the place. None means no value.
 </div>
 
 <%-- Page text (Contents, Author, Author Bio, page images) is edited on the public page itself with the
@@ -107,7 +114,7 @@
 <br><br>
 
 <h3>Name:</h3>
-<input type="text" class="input_200" name="name" value="<%= geolocale.getName() %>">
+<input type="text" class="input_200" name="name" value="<%= Html.escAttr(geolocale.getName()) %>">
 <br><br>
 
 <% if ("country".equals(georank)) { %>
@@ -129,7 +136,7 @@
   <option value="country"<%= ("country".equals(georank) ? "selected" : "") %>>Country</option>
   <option value="adm1"<%= ("adm1".equals(georank) ? "selected" : "") %>>adm1</option>
   </select>
-<% if (isDisabled) { %><input type="hidden" class="input_200" name="georank" value="<%= georank %>"><% } %>
+<% if (isDisabled) { %><input type="hidden" class="input_200" name="georank" value="<%= Html.escAttr(georank) %>"><% } %>
 <br><br>
 
 <h3>Valid:</h3>
@@ -143,8 +150,8 @@ Mostly the UN geolocales, with overrides.
 <br><br>
 
 <h3>Source:</h3>
-<%= geolocale.getSource() %>
-<input type="hidden" class="input_200" name="source" value="<%= geolocale.getSource() %>">
+<%= Html.esc(geolocale.getSource()) %>
+<input type="hidden" class="input_200" name="source" value="<%= Html.escAttr(geolocale.getSource()) %>">
 <br><br>
 
 <% //if (AntwebProps.isDevMode()) AntwebUtil.log("editGeolocale-body.jsp georank:" + georank); %>
@@ -154,7 +161,7 @@ Mostly the UN geolocales, with overrides.
 
 <%@include file="/curate/geolocale/validSelect.jsp" %>
 <%
-    if (isOther) out.println("&nbsp;&nbsp;(Other:&nbsp;" + geolocale.getValidName() + ")");
+    if (isOther) out.println("&nbsp;&nbsp;(Other:&nbsp;" + Html.esc(geolocale.getValidName()) + ")");
  } else { %>
  <%= "N/A" %>
 <%
@@ -172,7 +179,7 @@ Mostly the UN geolocales, with overrides.
        for (Geolocale validGeolocale : GeolocaleMgr.getGeolocales(Georank.getParent(georank), true)) {
 	     if (validGeolocale.getName().equals(geolocale.getParent())) selected = "selected"; else selected = "";
  	 %>
-      <option value='<%= validGeolocale %>' <%= selected %>><%= validGeolocale %></option>
+      <option value='<%= Html.escAttr(validGeolocale) %>' <%= selected %>><%= Html.esc(validGeolocale) %></option>
 	<% } %>	
   </select>
   
@@ -265,7 +272,7 @@ with country set to Ecuador. Hawaii (georank country) is a child of Polynesia wi
          String disableCountry = "disabled";
          if (geolocale.getIsIsland()) { disableCountry = ""; }
 %>
-<input type="text" class="input_20" name="country" value="<%= geolocale.getCountry() %>" <%= disableCountry %> >
+<input type="text" class="input_20" name="country" value="<%= Html.escAttr(geolocale.getCountry()) %>" <%= disableCountry %> >
 <br><br>
     <% } %>
   <% } %>
@@ -275,7 +282,7 @@ with country set to Ecuador. Hawaii (georank country) is a child of Polynesia wi
 <h3>Locality:</h3>
 <% String locality = geolocale.getLocality();
    if (locality == null || "null".equals(locality)) locality = "";
-%><%= locality %>
+%><%= Html.esc(locality) %>
 <br><br>
 
 <h3>Use Children:</h3>
@@ -291,7 +298,7 @@ To indicate that adm1 should be used, for instance, United States, Brazil, China
 </div>
             <div class="clear"></div>
 
-			<br>Fast:<input type="checkbox" name="isFast" <%= (form.getIsFast() == true)?"checked":"" %>> If fast, will not reload GeolocaleMgr. To manually reload, click  <a href='<%= AntwebProps.getDomainApp() %>/util.do?action=reloadAntwebMgr'>GeolocaleMgr</a><br><br>
+			<br>
 <% if (LoginMgr.isAdmin(request)) { %>
 			<input border="0" type="image" src="<%= domainApp %>/image/grey_submit.png" width="77" height="23" value="Submit">
 <% } else { %>
@@ -299,7 +306,7 @@ To indicate that adm1 should be used, for instance, United States, Brazil, China
 <% } %>
             
             <div class="align_left">
-            <br><br>< Back To <a href="<%= AntwebProps.getDomainApp() %>/geolocaleMgr.do?georank=<%= georank %>#<%= geolocale.getId() %>">Geo Locale Manager</a>
+            <br><br>&lt; Back To <a href="<%= AntwebProps.getDomainApp() %>/geolocaleMgr.do?georank=<%= Html.escAttr(Html.url(georank)) %>#<%= geolocale.getId() %>">Geolocale Manager</a>
 
             </div>
 
@@ -313,6 +320,6 @@ To indicate that adm1 should be used, for instance, United States, Brazil, China
 <%-- Delete is a small POST form with the form token (EditGeolocaleAction refuses it by GET). --%>
 <div class="align_left">
 <% if (LoginMgr.isAdmin(request)) { %>
-<%= Csrf.postButton(request, domainApp + "/editGeolocale.do?id=" + geolocale.getId() + "&isDelete=true", "Delete", "Delete this geolocale?") %>
+<%= Csrf.postButton(request, domainApp + "/editGeolocale.do?id=" + geolocale.getId() + "&isDelete=true", "Delete", "Delete this geolocale and its species list? Refused while places lie under it.") %>
 <% } %>
 </div>

@@ -115,14 +115,48 @@ public class AdvancedSearch extends GenericSearch implements Serializable {
 	    
     protected ArrayList<ResultItem> createInitialResults() throws SearchException, SQLException {
 
-		int sufficientCriteria = 3;   
-        //  We expect to receive status and family so have 2 already by default. If family
-        // is removed, or a special status is selected, we might lower the sufficientCriteria.        	
-
         ResultSet rset = null;
         String theQuery = null;
         try {
-            String fieldList = " sp.taxon_name, sp.family, sp.subfamily, sp.genus, sp.species, sp.subspecies, sp.status, sp.type_status, sp.code " 
+            String fieldList = FIELD_LIST;
+            String where = buildWhere();
+
+            theQuery = "select " + fieldList
+                + ", count(image.id) as imagecount"
+                + " from specimen as sp " 
+                + " left outer join image on (sp.code = image.image_of_id)"  //  and image.shot_type != \"l\"
+                + " left outer join ant_group on sp.access_group = ant_group.id "
+                + where;
+
+            //String sortString = " sp.genus, sp.species, sp.subspecies";
+            String sortString = " sp.code";
+
+            // Every other search invert the results. This is useful for generating maps.
+            // If we don't like a set of searchResults we can have another.
+            if (flipSort) sortString += " desc";
+            flipSort = !flipSort;
+            
+            theQuery
+                += " group by " + fieldList 
+                + " order by " + sortString
+                + " limit " + SearchAction.getSpecimenSearchLimit();
+
+            s_query = theQuery;
+
+  		    Statement stmt = connection.createStatement();
+            Date startTime = new Date();
+		    rset = stmt.executeQuery(theQuery);
+            DBUtil.profileQuery("AdvancedSearch", startTime, theQuery);
+		    ArrayList<ResultItem> itemList = getListFromRset(GenericSearch.ADVANCED, rset, null, theQuery);
+		    return itemList;
+        } catch (SQLException e) {
+            s_log.error("createInitialResults() e:" + e + " query:" + theQuery);
+            throw e;
+        }
+    }
+
+    /** The columns of a specimen row of the advanced search (ResultItem, getListFromRset). */
+    static final String FIELD_LIST = " sp.taxon_name, sp.family, sp.subfamily, sp.genus, sp.species, sp.subspecies, sp.status, sp.type_status, sp.code " 
                 + ", sp.toc, sp.country, sp.adm1, sp.adm2, sp.localityname" 
                 + ", sp.life_stage, sp.caste, sp.subcaste"
                 + ", sp.medium, sp.specimennotes, sp.localitycode, sp.collectioncode, sp.created"  // Added Dec, 6, 2012 Mark
@@ -134,16 +168,19 @@ public class AdvancedSearch extends GenericSearch implements Serializable {
                // + ", sp.flag, issue"
                     ;
 
-            String redFlagOption = getRedFlagOption();  //SpecimenDb.FLAG_EXCLUDE; //
-            //A.log("createInitialResults() redFlagOption:" + redFlagOption);
+    /**
+     * " where ..." of the advanced search: red flag option and every criterion of the form. Throws
+     * SearchException when the criteria are not enough (see sufficientCriteria). Used by the full
+     * search (createInitialResults) and the paged specimen list (countPaged, getPage).
+     */
+    protected String buildWhere() throws SearchException {
 
-            theQuery = "select " + fieldList
-                + ", count(image.id) as imagecount"
-                + " from specimen as sp " 
-                + " left outer join image on (sp.code = image.image_of_id)"  //  and image.shot_type != \"l\"
-                + " left outer join ant_group on sp.access_group = ant_group.id "
-                + " where " + SpecimenDb.getFlagCriteria(redFlagOption);
-                ; 
+		int sufficientCriteria = 3;   
+        //  We expect to receive status and family so have 2 already by default. If family
+        // is removed, or a special status is selected, we might lower the sufficientCriteria.        	
+
+            String redFlagOption = getRedFlagOption();  //SpecimenDb.FLAG_EXCLUDE; //
+            String theQuery = " where " + SpecimenDb.getFlagCriteria(redFlagOption);
 
 /* 
   if you want synoynms, which doesn't seem to make sense here
@@ -365,48 +402,106 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
                 theQuery += " and (" + whereCondition + ")";
             }
 
-            //String sortString = " sp.genus, sp.species, sp.subspecies";
-            String sortString = " sp.code";
-
-            // Every other search invert the results. This is useful for generating maps.
-            // If we don't like a set of searchResults we can have another.
-            if (flipSort) sortString += " desc";
-            flipSort = !flipSort;
-            
-            theQuery
-                += " group by " + fieldList 
-                + " order by " + sortString
-                + " limit " + SearchAction.getSpecimenSearchLimit();
-
-            s_query = theQuery;
-            
-            //A.log("createInitialResults() theQuery:" + theQuery);
-            //s_log.warn("createInitialResults() theQuery:" + theQuery);
-              //AntwebUtil.logStackTrace();
-
-            //A.log("createInitialResults() ignore:" + isIgnoreInsufficientCriteria() + " where.size:" + where.size() + " sufficientCriteria:" + sufficientCriteria);            
             if (!isIgnoreInsufficientCriteria() && where.size() < sufficientCriteria) {
               // defaults criteria:[sp.family = 'Formicidae',  sp.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')]
-              //A.log("createInitialResults() where.size:" + where.size() + " insufficient criteria in query:" + theQuery);
               String message = "Insufficient criteria in search - sufficientCriteria:" + sufficientCriteria + " insufficient criteria:" + where;
               throw new SearchException(message);
             }
+            return theQuery;
+    }
 
-  		    Statement stmt = connection.createStatement();
+    // Paged specimen list (advanced search results page, 2026-10-21): a COUNT query for the total and
+    // one query per page (LIMIT/OFFSET), so a page never loads the whole result set. The "Images only"
+    // and "Types only" boxes, filtered in Java for the full search, are SQL conditions here.
+    private static final String PAGED_FROM = " from specimen as sp left outer join ant_group on sp.access_group = ant_group.id ";
+
+    // Built once: reading rows (getListFromRset) overwrites the "name" field, a criterion of buildWhere().
+    private String pagedWhere = null;
+
+    String getPagedWhere() throws SearchException {
+        if (pagedWhere != null) return pagedWhere;
+        String w = buildWhere();
+        if ("on".equals(getImagesOnly())) w += " and exists (select 1 from image where image.image_of_id = sp.code)";
+        if ("on".equals(getTypes())) w += " and (sp.type_status is not null and sp.type_status != '')";
+        pagedWhere = w;
+        return w;
+    }
+
+    /** Number of specimens the search finds (the paged list's total). */
+    public int countPaged() throws SearchException, SQLException {
+        String where = getPagedWhere();
+        String query = "select count(*)" + pagedFrom(where) + where;
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = connection.createStatement();
             Date startTime = new Date();
-		    rset = stmt.executeQuery(theQuery);
-            DBUtil.profileQuery("AdvancedSearch", startTime, theQuery);
-		    ArrayList<ResultItem> itemList = getListFromRset(GenericSearch.ADVANCED, rset, null, theQuery);
-		    String message = " listSize:" + itemList.size();
-		    if (itemList != null && !itemList.isEmpty()) message += " 1st:" + itemList.get(0);
-
-		    //A.log("createInitialResults()" + message + " query:" + theQuery);
-		    //AntwebUtil.logShortStackTrace();
-		    return itemList;
+            rset = stmt.executeQuery(query);
+            DBUtil.profileQuery("AdvancedSearch.countPaged", startTime, query);
+            return rset.next() ? rset.getInt(1) : 0;
         } catch (SQLException e) {
-            s_log.error("createInitialResults() e:" + e + " query:" + theQuery);
-            //AntwebUtil.logShortStackTrace(e, 18);
+            s_log.error("countPaged() e:" + e + " query:" + query);
             throw e;
+        } finally {
+            DBUtil.close(stmt, rset, this, "countPaged()");
+        }
+    }
+
+    // The ant_group join only when the query uses it (the left join on its key never changes the rows).
+    private static String pagedFrom(String uses) {
+        return uses.contains("ant_group") ? PAGED_FROM : " from specimen as sp ";
+    }
+
+    private static final String IMAGE_COUNT = "(select count(*) from image where image.image_of_id = sp.code)";
+
+    /**
+     * One page of specimens, in the order given (SearchPaging.orderBy), limit rows from offset. Two
+     * queries: the page's codes (a narrow sort, fast even deep in the list), then their rows.
+     */
+    public ArrayList<ResultItem> getPage(String orderBy, int limit, int offset) throws SearchException, SQLException {
+        String where = getPagedWhere();
+        String codeQuery = "select sp.code" + (orderBy.contains("imagecount") ? ", " + IMAGE_COUNT + " as imagecount" : "")
+            + pagedFrom(where + orderBy) + where
+            + " order by " + orderBy
+            + " limit " + Math.max(0, limit) + " offset " + Math.max(0, offset);
+        ArrayList<String> codes = new ArrayList<>();
+        Statement stmt = null;
+        ResultSet rset = null;
+        String query = codeQuery;
+        try {
+            stmt = connection.createStatement();
+            Date startTime = new Date();
+            rset = stmt.executeQuery(codeQuery);
+            DBUtil.profileQuery("AdvancedSearch.getPage codes", startTime, codeQuery);
+            while (rset.next()) codes.add(rset.getString(1));
+            DBUtil.close(stmt, rset, this, "getPage()");
+            stmt = null;
+            rset = null;
+            if (codes.isEmpty()) return new ArrayList<>();
+
+            StringBuilder in = new StringBuilder();
+            for (String code : codes) {
+                if (in.length() > 0) in.append(", ");
+                in.append("'").append(code.replace("\\", "\\\\").replace("'", "''")).append("'");
+            }
+            query = "select " + FIELD_LIST + ", " + IMAGE_COUNT + " as imagecount"
+                + PAGED_FROM + " where sp.code in (" + in + ")";
+            s_query = codeQuery;
+            stmt = connection.createStatement();
+            startTime = new Date();
+            rset = stmt.executeQuery(query);
+            DBUtil.profileQuery("AdvancedSearch.getPage rows", startTime, query);
+            ArrayList<ResultItem> rows = getListFromRset(GenericSearch.ADVANCED, rset, null, query);
+            // Back in the order of the codes.
+            java.util.HashMap<String, Integer> position = new java.util.HashMap<>();
+            for (int i = 0; i < codes.size(); i++) position.put(codes.get(i), i);
+            rows.sort(java.util.Comparator.comparingInt(r -> position.getOrDefault(r.getCode(), Integer.MAX_VALUE)));
+            return rows;
+        } catch (SQLException e) {
+            s_log.error("getPage() e:" + e + " query:" + query);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, rset, this, "getPage()");
         }
     }
 

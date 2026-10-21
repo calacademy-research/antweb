@@ -17,8 +17,13 @@
     <div class="msg_alert"></div>
     <div class="msg_type">NOTE</div>
     <div class="msg_pipe"></div>
-    <div class="msg_copy">
-These are the project's settings. The page text is edited on the project page (see Page text below).
+    <div class="msg_copy"><div class="mgr_help">
+These are the project's settings. <b>Save</b> stores all of them at once and reloads the project lists.
+The page text is edited on the project page (see Page text below); the project's species in the Species List Tool.
+<% if (request.getAttribute("isNewProject") != null) { %>
+<br><b>New project:</b> nothing is stored until you click Save.
+<% } %>
+</div>
 
     </div>
     <div class="clear"></div>
@@ -35,13 +40,15 @@ These are the project's settings. The page text is edited on the project page (s
 
 <hr></hr>
 
-<form method="post" action="<%= domainApp %>/editProject.do?projectName=<%= thisProject.getName() %>"><%= org.calacademy.antweb.util.Csrf.field(request) %>
+<form method="post" action="<%= domainApp %>/editProject.do?projectName=<%= Html.escAttr(Html.url(thisProject.getName())) %>"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 
-<h3>Key: <%= thisProject.getName() %></h3>
+<h3>Key: <%= Html.esc(thisProject.getName()) %></h3>
+(The project's permanent name; it cannot be changed.)
 <p>
 
 <h3>Display Key:</h3>
-<input name="displayKey" type=text class=input_550 value="<%= Formatter.formDisplay(thisProject.getDisplayKey()) %>">
+<input name="displayKey" type=text class=input_550 value="<%= Html.escAttr(Formatter.formDisplay(thisProject.getDisplayKey())) %>"><br>
+Optional other name used in the project page's address (project.do?name=...) after saving; empty means the key.
 <p>
 
 <h3>Title:</h3>
@@ -63,19 +70,17 @@ The text and images shown on the project page are edited on the page itself:
 </div>
 
 <p><h3>Map (Image):</h3>
-<input name="map" type=text class=input_550 value="<%= thisProject.getMap() %>"><br> <!-- Formatter.formDisplay(thisProject.getMap()) -->
+<%-- The stored map image (project.map, Project.getMapImage); saved as mapImage (EditProjectForm). The old field
+     was named "map" and showed the page's map object, so it was never saved. --%>
+<input name="mapImage" type=text class=input_550 value="<%= Html.escAttr(Formatter.formDisplay(thisProject.getMapImage())) %>"><br>
+File name of the map image in the project's species list folder (at most 40 characters).
 
-<% if (thisProject.getMap() != null && !"".equals(thisProject.getMap())) { %>
+<% if (thisProject.getMapImage() != null && !"".equals(thisProject.getMapImage())) { %>
 
-        <div id="static_map" class="slide medium last"><img src="<%= AntwebProps.getImgDomainApp() %>/<%= Project.getSpeciesListDir() %><%= thisProject.getRoot() %>/<%= thisProject.getMap() %>"></div>
+        <div id="static_map" class="slide medium last"><img src="<%= AntwebProps.getImgDomainApp() %>/<%= Project.getSpeciesListDir() %><%= Html.escAttr(thisProject.getRoot()) %>/<%= Html.escAttr(thisProject.getMapImage()) %>"></div>
 <% } %>
 
 <br><br>
-
-
-<h3>Map (Coords & Extent):</h3>
-  (Modify in the associated geolocale).
-  <br>
 
 
 
@@ -91,24 +96,17 @@ Will be listed in the Region hierarchy.<br>
 <br><br>
 
 <h3>Source:</h3>
-<%= thisProject.getSource() %>
+<%= Html.esc(thisProject.getSource()) %> (kept as it is)
 <br><br>
 
-<p><h3>Geocoding Coordinates for Homepage 	:</h3>
-<input id="coords" type="text" name="coords" value="<%= thisProject.getCoords() %>"><br />
+<p><h3>Map centre (coordinates):</h3>
+<input id="coords" type="text" name="coords" value="<%= Html.escAttr(Formatter.formDisplay(thisProject.getCoords())) %>"><br />
 Enter the center as (latitude, longitude), for example (-18.77, 46.87).
 
 <p><h3>Geographic Extent:</h3>
-<input id="extent" name="extent" type=text class=input_550 value="<%= thisProject.getExtent() %>"><br>
-Needed to do the maps for region field guides. Separated by spaces. Must not contain any commas.
+<input id="extent" name="extent" type=text class=input_550 value="<%= Html.escAttr(Formatter.formDisplay(thisProject.getExtent())) %>"><br>
+The map area for the region field guides: four numbers separated by spaces, no commas.
 
-<p><h3>Locality (Mapping Range Criteria):</h3>
-<%
-String locValue = thisProject.getLocality();
-if (locValue == null || "null".equals(locValue)) locValue = "";
-%>
-<input name="locality" type=text class=input_550 value="<%= locValue %>"><br>
-For examples: biogeographicregion='Afrotropical' (or Australasia, Indomalaya, Malagasy, Nearctic, Neotropical, Oceania, Palearctic)	 &nbsp;&nbsp;&nbsp; or &nbsp;&nbsp;&nbsp; country='Peru' &nbsp;&nbsp;&nbsp; or &nbsp;&nbsp;&nbsp; adm1='California'
 
 
 
@@ -147,7 +145,7 @@ For examples: biogeographicregion='Afrotropical' (or Australasia, Indomalaya, Ma
 
 <p>
 <h3>Species List Mapping:</h3> 
-(This project may be modified via the Species List Mapping Tool):
+(true: the project's species list can be changed in the Species List Tool):
 <select name="speciesListMappable" id="SpeciesList_select">
   <option id="speciesListMappable" value="true" <%= (thisProject.getSpeciesListMappable() ? "selected" : "") %>>true</option>  
   <option id="speciesListMappable" value="false" <%= (!thisProject.getSpeciesListMappable() ? "selected" : "") %>>false</option>  
@@ -158,8 +156,8 @@ For examples: biogeographicregion='Afrotropical' (or Australasia, Indomalaya, Ma
 <br />
 <div class="msg in_admin">
     <div class="msg_actions" align="center">
-<input border="0" type="image" src="<%= domainApp %>/image/orange_done.gif" width="137" height="36" value="Preview">
-<a href="<%= domainApp %>/curate.do"><img border=0" src="<%= domainApp %>/image/grey_cancel.gif" width="123" height="36"></a>
+<input type="submit" value="Save">
+<a href="<%= domainApp %>/projectMgr.do">Cancel</a>
 </form>
     </div>
 </div>
@@ -170,7 +168,9 @@ For examples: biogeographicregion='Afrotropical' (or Australasia, Indomalaya, Ma
 
 
 <% if (LoginMgr.isAdmin(request)) { %>  
-<%= Csrf.postButton(request, domainApp + "/editProject.do?action=delete&projectName=" + Html.url(thisProject.getName()), "Delete", "Delete this project?") %>
+<% if (request.getAttribute("isNewProject") == null) { %>
+<%= Csrf.postButton(request, domainApp + "/editProject.do?action=delete&projectName=" + Html.url(thisProject.getName()), "Delete", "Delete this project and its species list? There is no undo.") %>
+<% } %>
 <% } %>
 
 </div> 

@@ -78,18 +78,15 @@ public class MuseumDb extends AntwebDb {
     }
 
     public Museum getMuseum(String code) throws SQLException {
-      return getMuseumWithClause(" code = '" + code + "'");
-    }
-    private Museum getMuseumWithClause(String keyClause) throws SQLException {
+      if (code == null) return null;
       Museum museum = null;
-      Statement stmt = null;
+      PreparedStatement stmt = null;
       ResultSet rset = null;
       try {
-        stmt = DBUtil.getStatement(getConnection(), "getMuseumWithClause()");  
-        String theQuery = "select *" 
-          + " from museum " 
-          + " where " + keyClause;
-        rset = stmt.executeQuery(theQuery);
+        // The code is bound (it comes from the Museum Manager's address).
+        stmt = DBUtil.getPreparedStatement(getConnection(), "getMuseum()", "select * from museum where code = ?");
+        stmt.setString(1, code);
+        rset = stmt.executeQuery();
         while (rset.next()) {
            museum = new Museum();
            museum.setCode(rset.getString("code"));
@@ -106,78 +103,68 @@ public class MuseumDb extends AntwebDb {
            museum.setDescription(description);         
         }
       } finally {
-          DBUtil.close(stmt, rset, "getMuseumWithClause()");
+          DBUtil.close(stmt, rset, "getMuseum()");
       }
       //A.log("getMuseum() museum:" + museum.toString());       
       
       return museum;
     }
 
+    /**
+     * Museum Manager: add the museum, or update its name, title and active flag when the code
+     * exists already (the code is the key and is not changed here). Values are bound, so names
+     * with an apostrophe (Musee d'histoire naturelle) save as typed.
+     */
     public String saveMuseum(Museum museum) throws SQLException {
-    
-        String message = "";
-        if (museum.getCode() == null) {
-          message = "Attempt to save museum with null code";
-          s_log.info("saveMuseum() message:" + message);
-          return message;
+        if (museum.getCode() == null || museum.getCode().trim().isEmpty()) {
+          s_log.info("saveMuseum() no code");
+          return "Nothing was saved: enter a museum code.";
         }
-        int activeInt = 1;
-        if (!museum.getIsActive()) activeInt = 0;
-            
-        String dml = "insert into museum (code, name, title, active) " 
-            + " values ('"+ museum.getCode() + "', '" + museum.getName() + "', '" + museum.getTitle() + "', " + activeInt + ")";
-
-        Statement stmt = null;
+        String code = museum.getCode().trim();
+        int activeInt = museum.getIsActive() ? 1 : 0;
+        boolean exists = getMuseum(code) != null;
+        PreparedStatement stmt = null;
         try {
-          stmt = DBUtil.getStatement(getConnection(), "saveMuseum()");  
-                                                                                                                         
-          //A.log("updateMuseum() dml:" + dml);
-          int c = stmt.executeUpdate(dml);
-          message = c + " record inserted.";
-        } catch (SQLIntegrityConstraintViolationException e) {
-          // no problem
-          message = updateMuseum(museum);
+          if (exists) {
+            stmt = DBUtil.getPreparedStatement(getConnection(), "saveMuseum()",
+                "update museum set name = ?, title = ?, active = ? where code = ?");
+            stmt.setString(1, museum.getName());
+            stmt.setString(2, museum.getTitle());
+            stmt.setInt(3, activeInt);
+            stmt.setString(4, code);
+            stmt.executeUpdate();
+            return "Museum " + Html.esc(code) + " updated.";
+          }
+          stmt = DBUtil.getPreparedStatement(getConnection(), "saveMuseum()",
+              "insert into museum (code, name, title, active) values (?, ?, ?, ?)");
+          stmt.setString(1, code);
+          stmt.setString(2, museum.getName());
+          stmt.setString(3, museum.getTitle());
+          stmt.setInt(4, activeInt);
+          stmt.executeUpdate();
+          return "Museum " + Html.esc(code) + " added.";
         } catch (SQLException e) {
-          s_log.error("saveMuseum() e:" + e + " dml:" + dml);
+          s_log.error("saveMuseum() code:" + code + " e:" + e);
           throw e;
         } finally {
           DBUtil.close(stmt, null, this, "saveMuseum()");
         }
-        return message;
     }
 
-    private String updateMuseum(Museum museum) throws SQLException {
-        String message = "";
-        if (museum.getCode() != null) {
-        
-            int activeInt = 1;
-              if (!museum.getIsActive()) activeInt = 0;
-        
-            //String title = museum.getTitle();
-            //if (title == null) title = museum.getName();
-            String dml = "update museum set " 
-              + " name = '" + museum.getName() + "', "
-              + " title = '" + museum.getTitle() + "', "
-              + " active = " + activeInt
-              + " where code='" + museum.getCode() + "'"; 
-            Statement stmt = null;
-            try {
-              stmt = DBUtil.getStatement(getConnection(), "updateMuseum()");           
-              s_log.info(dml);
-              int c = stmt.executeUpdate(dml);
-              s_log.debug("updateMuseum() dml:" + dml);
-              message = c + " record updated.";
-            } catch (SQLException e) {
-              s_log.error("updateMuseum() e:" + e + " dml:" + dml);
-              throw e;
-            } finally {
-              DBUtil.close(stmt, null, this, "updateMuseum()");
-            }
-        } else {
-            s_log.error("Attempt to update code null");
+    /** How many specimen records carry this museum code (specimen.museum); shown before a delete. */
+    public int getSpecimenCountOfCode(String code) throws SQLException {
+        if (code == null) return 0;
+        PreparedStatement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getPreparedStatement(getConnection(), "getSpecimenCountOfCode()", "select count(*) from specimen where museum = ?");
+            stmt.setString(1, code);
+            rset = stmt.executeQuery();
+            return rset.next() ? rset.getInt(1) : 0;
+        } finally {
+            DBUtil.close(stmt, rset, "getSpecimenCountOfCode()");
         }
-        return message;
-    }    
+    }
 
     public String deleteByCode(String code) throws SQLException {
         String message = "";
@@ -231,7 +218,8 @@ public class MuseumDb extends AntwebDb {
             
         String theQuery = "select count(distinct code) specimen_count" 
           + " from specimen "
-          + " where specimen.museum = '" + museumCode + "'";
+          + " where specimen.museum = '" + museumCode + "'"
+          + " and specimen.family = 'formicidae'";   // ants only (2026-10-21, PlaceTotals)
 
         rset = stmt.executeQuery(theQuery);
         while (rset.next()) {
@@ -257,7 +245,7 @@ public class MuseumDb extends AntwebDb {
             
         String theQuery = "select count(distinct id) image_count" 
           + " from specimen left join image on specimen.code = image.image_of_id"
-          + " where specimen.museum = '" + museumCode + "'";
+          + " where specimen.museum = '" + museumCode + "' and specimen.family = 'formicidae'";
 
         rset = stmt.executeQuery(theQuery);
         while (rset.next()) {
@@ -398,17 +386,9 @@ public class MuseumDb extends AntwebDb {
         }          
     }
     private void updateCountableTaxonData(String code) throws SQLException {
-        MuseumTaxonCountDb museumTaxonCountDb = new MuseumTaxonCountDb(getConnection());
-
-        String criteria = "code = '" + code + "'";
-        int subfamilyCount = museumTaxonCountDb.getCountableTaxonCount("museum_taxon", criteria, "subfamily");
-        
-        int genusCount = museumTaxonCountDb.getCountableTaxonCount("museum_taxon", criteria, "genus");
-
-        //A.log("updateMuseumTaxonData() code:" + code + " genusCount:" + genusCount);
-        int speciesCount = museumTaxonCountDb.getCountableTaxonCount("museum_taxon", criteria, "species");
-
-        museumTaxonCountDb.updateCountableTaxonCounts("museum", criteria, subfamilyCount, genusCount, speciesCount);                  
+        // Subfamilies, Genera and Species counted directly from the list (PlaceTotals, 2026-10-21); were
+        // roll-up sums of the list rows' child counts.
+        PlaceTotals.writeListedCounts(getConnection(), PlaceTotals.MUSEUM, code);
     }
 
     private void updateImagedSpecimen() throws SQLException {
@@ -431,7 +411,7 @@ public class MuseumDb extends AntwebDb {
       try {
           stmt = DBUtil.getStatement(getConnection(), "getImagedSpecimenCount()");  
           // Labels not counted (an image of the ant): as PlaceImageCountDb, which nightly set 4 runs after this.
-          query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and museum = '" + code + "'"
+          query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and museum = '" + code + "' and s.family = 'formicidae'"
               + " and lower(trim(coalesce(i.shot_type, ''))) <> 'l'";
 
           rset = stmt.executeQuery(query);
@@ -449,9 +429,7 @@ public class MuseumDb extends AntwebDb {
     }
 
     private void updateValidSpeciesCount(String code) throws SQLException {
-        int count = getValidSpeciesCount(code);
-        UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("museum", "valid_species_count", Integer.valueOf(count).toString(), "code = '" + code + "'");
+        PlaceTotals.writeValidSpecies(getConnection(), PlaceTotals.MUSEUM, code);
     }
 
     private int getValidSpeciesCount(String code) {
@@ -480,6 +458,24 @@ public class MuseumDb extends AntwebDb {
         return validSpeciesCount;
     }
 
+    /** Sets specimen.museum to the code (parameter 1) where ownedBy matches the pattern (parameter 2, ownedByPattern). */
+    public static String specimenMuseumDml() {
+        return "update specimen set museum = ? where ownedBy regexp ?";
+    }
+
+    /**
+     * Regular expression for ownedBy: the museum code as a whole word (not inside a longer code or word),
+     * any case, as LIKE matched before. Characters other than letters and digits in the code are escaped.
+     */
+    public static String ownedByPattern(String museumCode) {
+        StringBuilder code = new StringBuilder();
+        for (char ch : museumCode.toCharArray()) {
+            if (Character.isLetterOrDigit(ch)) code.append(ch);
+            else code.append("[").append(ch == '\\' || ch == ']' || ch == '^' ? "\\" + ch : String.valueOf(ch)).append("]");
+        }
+        return "(^|[^[:alnum:]])" + code + "($|[^[:alnum:]])";
+    }
+
     // Populate the museum field of the specimen table if can be determined from the ownedby field.
     private void populateSpecimenMuseum(String museumCode) throws SQLException {
       A.log("populateSpecimenMuseum(" + museumCode + ")");
@@ -488,16 +484,17 @@ public class MuseumDb extends AntwebDb {
       new UtilDb(getConnection()).updateField("specimen", "museum", null, whereClause);
 
       //A.log("populateSpecimenMuseum() emptied specimen.museum field whereClause:" + whereClause);
-      Statement stmt = null;
+      PreparedStatement stmt = null;
       try {
-    
-          String dml = "update specimen set museum = '" + museumCode + "' where ownedBy like ('%" + museumCode + "%')";
-            
-          stmt = DBUtil.getStatement(getConnection(), "MuseumDb.populateSpecimenMuseum()");
+          // The code as a whole word of ownedBy (2026-10-21): was like '%CODE%', so a code inside another
+          // code or word (CAS in CASC, MCZ in MCZC) took the other museum's specimens.
+          stmt = getConnection().prepareStatement(specimenMuseumDml());
+          stmt.setString(1, museumCode);
+          stmt.setString(2, ownedByPattern(museumCode));
 
-          int c = stmt.executeUpdate(dml);
+          int c = stmt.executeUpdate();
 
-          if ("AFRC".equals(museumCode)) s_log.debug("populateSpecimenMuseum() updated:" + c + " dml:" + dml);
+          if ("AFRC".equals(museumCode)) s_log.debug("populateSpecimenMuseum() updated:" + c);
           
       } catch (SQLException e) {
         s_log.error("MuseumDb.populateSpecimenMuseum() e:" + e);
@@ -702,38 +699,9 @@ public class MuseumDb extends AntwebDb {
     }     
 
     private void makeCharts(String code) throws SQLException {
-      //A.log("makeCharts(" + code + ")");
-      MuseumTaxonCountDb museumTaxonCountDb = new MuseumTaxonCountDb(getConnection());
-      UtilDb utilDb = new UtilDb(getConnection());
-      String criteria = "code = '" + code + "'";
-      String taxonCountQuery = getTaxonSubfamilyDistJsonQuery(criteria);
-      String specimenCountQuery = getSpecimenSubfamilyDistJsonQuery(criteria);
-      utilDb.updateField("museum", "taxon_subfamily_dist_json", "'" + museumTaxonCountDb.getTaxonSubfamilyDistJson(taxonCountQuery) + "'", criteria);
-      utilDb.updateField("museum", "specimen_subfamily_dist_json", "'" + museumTaxonCountDb.getSpecimenSubfamilyDistJson(specimenCountQuery) + "'", criteria);
+      // PlaceTotals (2026-10-21): specimen pie = the museum's own specimens (was: every specimen in AntWeb
+      // of the names on its list).
+      PlaceTotals.writePies(getConnection(), PlaceTotals.MUSEUM, code);
     }    
 
-    private String getTaxonSubfamilyDistJsonQuery(String criteria) {
-        //A.log("getTaxonSubfamilyDistJsonQuery() query:" + query);
-      return "select t.subfamily, count(*) count, t2.chart_color "
-          + " from museum_taxon mt, taxon t, taxon t2, museum m "
-          + " where mt.taxon_name = t.taxon_name "
-          + " and t.subfamily = t2.taxon_name "
-          + " and m.code = mt.code "
-          + " and m." + criteria
-          + " and t.taxarank in ('species', 'subspecies') "
-          + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') "
-          + " and t.family = 'formicidae' "
-          + " group by t.subfamily";
-    }
-
-    private String getSpecimenSubfamilyDistJsonQuery(String criteria) {
-        return "select subfamily, count(*) count "
-            + " from museum_taxon mt, specimen s, museum m "
-            + " where mt.taxon_name = s.taxon_name "
-            + " and m.code = mt.code "
-            + " and m." + criteria
-            + " and s.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') "
-            + " and s.family = 'formicidae' "
-            + " group by subfamily";
-    }
 }

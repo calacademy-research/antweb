@@ -211,7 +211,8 @@ public class BioregionDb extends AntwebDb {
             
         String theQuery = "select count(distinct code) specimen_count" 
           + " from specimen "
-          + " where specimen.bioregion = '" + bioregion.getName() + "'";
+          + " where specimen.bioregion = '" + bioregion.getName() + "'"
+          + " and specimen.family = 'formicidae'";   // ants only (2026-10-21, PlaceTotals)
 
         //A.log("getSpecimenCount() query:" + theQuery);  
           
@@ -237,7 +238,7 @@ public class BioregionDb extends AntwebDb {
             
         String query = "select count(distinct id) image_count" 
           + " from specimen left join image on specimen.code = image.image_of_id"
-          + " where specimen.bioregion = '" + bioregion.getName() + "'";
+          + " where specimen.bioregion = '" + bioregion.getName() + "' and specimen.family = 'formicidae'";
           
         //A.log("getImageCount() query:" + query);  
           
@@ -337,6 +338,12 @@ public class BioregionDb extends AntwebDb {
       utilDb.updateField("bioregion", "specimen_subfamily_dist_json", null, "name = '" + bioregionName + "'");    
 
       int count = utilDb.deleteFrom("bioregion_taxon", " where bioregion_name = '" + bioregionName + "' and source != 'antcat'");    
+      // The AntCat rows stay; their counts start at 0 too (2026-10-21), as the crawl writes only rows it finds.
+      try (PreparedStatement stmt = getConnection().prepareStatement("update bioregion_taxon set subfamily_count = 0, genus_count = 0,"
+              + " species_count = 0, specimen_count = 0 where bioregion_name = ?")) {
+          stmt.setString(1, bioregionName);
+          stmt.executeUpdate();
+      }
     }
 
     private String populateSpecies() throws SQLException {
@@ -408,17 +415,9 @@ public class BioregionDb extends AntwebDb {
     
 
     private void updateCountableTaxonData(Bioregion bioregion) throws SQLException {
-        BioregionTaxonCountDb bioregionTaxonCountDb = new BioregionTaxonCountDb(getConnection());
-        String criteria = "bioregion_name = '" + bioregion + "'";
-        int subfamilyCount = bioregionTaxonCountDb.getCountableTaxonCount("bioregion_taxon", criteria, "subfamily");
-        
-        int genusCount = bioregionTaxonCountDb.getCountableTaxonCount("bioregion_taxon", criteria, "genus");
-
-        //A.log("updateCountableTaxonData() bioregionName:" + bioregionName + " genusCount:" + genusCount);
-        int speciesCount = bioregionTaxonCountDb.getCountableTaxonCount("bioregion_taxon", criteria, "species");
-
-        criteria = "name = '" + bioregion + "'";
-        bioregionTaxonCountDb.updateCountableTaxonCounts("bioregion", criteria, subfamilyCount, genusCount, speciesCount);                  
+        // Subfamilies, Genera and Species counted directly from the list (PlaceTotals, 2026-10-21); were
+        // roll-up sums of the list rows' child counts.
+        PlaceTotals.writeListedCounts(getConnection(), PlaceTotals.BIOREGION, bioregion.getName());
     }    
 
     private void updateImagedSpecimen() throws SQLException {
@@ -442,7 +441,7 @@ public class BioregionDb extends AntwebDb {
         stmt = DBUtil.getStatement(getConnection(), "getImagedSpecimenCount()");
 
         // Labels not counted (an image of the ant): as PlaceImageCountDb, which nightly set 4 runs after this.
-        query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and bioregion = '" + bioregion + "'"
+        query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and bioregion = '" + bioregion + "' and s.family = 'formicidae'"
             + " and lower(trim(coalesce(i.shot_type, ''))) <> 'l'";
 
         rset = stmt.executeQuery(query);
@@ -461,9 +460,7 @@ public class BioregionDb extends AntwebDb {
     }
 
     private void updateValidSpeciesCount(Bioregion bioregion) throws SQLException {
-        int count = getValidSpeciesCount(bioregion);
-        UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("bioregion", "valid_species_count", Integer.valueOf(count).toString(), "name = '" + bioregion + "'");
+        PlaceTotals.writeValidSpecies(getConnection(), PlaceTotals.BIOREGION, bioregion.getName());
     }
 
     private int getValidSpeciesCount(Bioregion bioregion) throws SQLException {
@@ -502,41 +499,9 @@ public class BioregionDb extends AntwebDb {
     }     
             
     public void makeCharts(Bioregion bioregion) throws SQLException {
-      //A.log("makeCharts(" + bioregion + ")");
-      UtilDb utilDb = new UtilDb(getConnection());
-      BioregionTaxonCountDb bioregionTaxonCountDb = new BioregionTaxonCountDb(getConnection());
-      String criteria = "name = '" + bioregion + "'";
-      String taxonCountQuery = getTaxonSubfamilyDistJsonQuery(criteria);
-      String specimenCountQuery = getSpecimenSubfamilyDistJsonQuery(criteria);
-
-      utilDb.updateField("bioregion", "taxon_subfamily_dist_json", "'" + bioregionTaxonCountDb.getTaxonSubfamilyDistJson(taxonCountQuery) + "'", criteria);
-      utilDb.updateField("bioregion", "specimen_subfamily_dist_json", "'" + bioregionTaxonCountDb.getSpecimenSubfamilyDistJson(specimenCountQuery) + "'", criteria);
-    }
-
-// Add SpecimenDb.getFlagCriteria() ?
-    public String getTaxonSubfamilyDistJsonQuery(String criteria) throws SQLException {
-      String query = "select t.subfamily, count(*) count, t2.chart_color " 
-          + " from bioregion_taxon bt, taxon t, taxon t2, bioregion b " 
-          + " where bt.taxon_name = t.taxon_name " 
-          + " and t.subfamily = t2.taxon_name "                
-          + " and b.name = bt.bioregion_name "
-          + " and b." + criteria
-          + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') " 
-          + " and t.family = 'formicidae' " 
-          + " group by t.subfamily"; 
-      return query;
-    }
-
-    public String getSpecimenSubfamilyDistJsonQuery(String criteria) throws SQLException {
-      String query = "select subfamily, count(*) count " 
-          + " from bioregion_taxon bt, specimen s, bioregion b " 
-          + " where bt.taxon_name = s.taxon_name " 
-          + " and b.name = bt.bioregion_name "
-          + " and b." + criteria
-          + " and s.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') " 
-          + " and s.family = 'formicidae' " 
-          + " group by subfamily"; 
-      return query;
+      // PlaceTotals (2026-10-21): species pie = the rows of Species (was: rows of every rank); specimen
+      // pie = the bioregion's own specimens (was: every specimen in AntWeb of the names on its list).
+      PlaceTotals.writePies(getConnection(), PlaceTotals.BIOREGION, bioregion.getName());
     }
 
     // -----------------------------
@@ -549,6 +514,8 @@ public class BioregionDb extends AntwebDb {
         for (Bioregion bioregion : bioregionList) {
             sum += calcIntroduced(bioregion);
         }
+        // Introduced number = the flagged rows (introduced.do), PlaceTotals.
+        PlaceTotals.writeCountsFromFlags(getConnection(), PlaceTotals.BIOREGION, "introduced");
         return sum;
     }
     public int calcIntroduced(Bioregion bioregion) throws SQLException {
@@ -654,7 +621,10 @@ public class BioregionDb extends AntwebDb {
                 + " group by bt.taxon_name having count(*) = 1"
                 + " order by bioregionName";
 
-        return calcEndemism(query);
+        int n = calcEndemism(query);
+        // Endemic number = the flagged rows (endemic.do), PlaceTotals (2026-10-21).
+        PlaceTotals.writeCountsFromFlags(getConnection(), PlaceTotals.BIOREGION, "endemic");
+        return n;
     }
 
     private int calcEndemism(String query) throws SQLException {
@@ -668,7 +638,6 @@ public class BioregionDb extends AntwebDb {
             String lastBioregionName = null;
             int count = 0;
             while (rset.next()) {
-                ++count;
                 String bioregionName = rset.getString("bioregionName");
                 String taxonName = rset.getString("taxon_name");
 
@@ -683,6 +652,8 @@ public class BioregionDb extends AntwebDb {
                     c += updateBioregionFieldCount("endemic", lastBioregionName, count);
                     count = 0;
                 }
+                // Counted after the break (2026-10-21; was before it: first bioregion +1, last -1).
+                ++count;
 
                 lastBioregionName = bioregionName;
             }

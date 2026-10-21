@@ -62,39 +62,38 @@ if (advancedSearchResults == null) {
 <% // String searchMode = request.getParameter("mode"); %>
 
 <%
-java.lang.String offset = "0";
-java.lang.String length = "2000";  // was 500
-// See also specimenReport.jsp which has a hardcoded 2000
-
-if ((request.getParameter("offset") != null) && (request.getParameter("offset").length() < 8)) {
-	offset = request.getParameter("offset");
-}
-
-if ((request.getParameter("length") != null) && (request.getParameter("offset").length() < 8)) {
-	length = request.getParameter("length");
-}
-
-int intLength = Integer.parseInt(length);
-int intOffset = Integer.parseInt(offset);
-
+  // Paged list (SearchPaging, 2026-10-21): 200 specimens a page. After a specimen search
+  // (advancedSearch.do) the session holds one page, read from the database, and searchPaging has the
+  // total. Otherwise (Map or Compare views of a search, older session results) the session list is
+  // shown 200 at a time.
   String pageContainer = "advancedSearchResults";
-  String recordCountString = "";  
-  String more_results = "";  
+  SearchPaging searchPaging = (SearchPaging) request.getAttribute("searchPaging");
+  int listSize = advancedSearchResults.getResults().size();
+  int listFirst = 0;        // first row of the session list shown
+  int numberOffset = 0;     // row number of that row in the whole result
+  String showingText = null;
+  String pagerPrevUrl = null;
+  String pagerNextUrl = null;
+  if (searchPaging != null) {
+    numberOffset = searchPaging.getOffset();
+    showingText = searchPaging.getShowingText();
+    pagerPrevUrl = (String) request.getAttribute("searchPagingPrevUrl");
+    pagerNextUrl = (String) request.getAttribute("searchPagingNextUrl");
+  } else {
+    int listPage = SearchPaging.pageFromParam(request.getParameter(SearchPaging.PAGE_PARAM));
+    if (listPage > SearchPaging.lastPage(listSize)) listPage = SearchPaging.lastPage(listSize);
+    listFirst = SearchPaging.offset(listPage);
+    numberOffset = 0;
+    showingText = SearchPaging.showingText(listPage, listSize);
+    String listPath = new Utility().getDomain() + HttpUtil.getRequestURI(request);
+    String listQuery = HttpUtil.getQueryStringNoQuestionMark(request);
+    if (listPage > 1) pagerPrevUrl = SearchPaging.pageUrl(listPath, listQuery, listPage - 1);
+    if (listPage < SearchPaging.lastPage(listSize)) pagerNextUrl = SearchPaging.pageUrl(listPath, listQuery, listPage + 1);
+  }
+  request.setAttribute("specimenReportFirst", listFirst);
+  request.setAttribute("specimenReportNumberOffset", numberOffset);
+  String showingHtml = Html.esc(showingText).replace("\u2013", "&ndash;");
   String resultSetModifier = Utility.notBlankValue((String) session.getAttribute("resultSetModifier"));
-  if (advancedSearchResults.getResults().size() <= intLength) { 
-    recordCountString = resultSetModifier;
-  } else { 
-    String beginning = (new Integer(intOffset + 1)).toString();
-    String ending = "";
-    int intEnding = intOffset + intLength;
-    if (intEnding < advancedSearchResults.getResults().size()) {
-      ending = (new Integer(intEnding)).toString();
-    } else {
-      ending = (new Integer(advancedSearchResults.getResults().size())).toString();
-      more_results = " (Showing results " + beginning + " - " + ending + ") "; 
-    }  
-    // recordCountString = "Showing records " + beginning + " to " + ending + " of " + resultSetModifier;
-  } 
 %>    
 
 <div id="page_contents">
@@ -156,7 +155,8 @@ if (size < 1) { %>
 <% } else if (size > 0) { %> 
 
 <%
-    if (request.getParameter("sortBy") != null) {
+    // A paged search comes sorted from the database (the sort applies before paging).
+    if (searchPaging == null && request.getParameter("sortBy") != null) {
       advancedSearchResults.sortBy(request.getParameter("sortBy"), request.getParameter("sortOrder"));
     }
 
@@ -177,32 +177,21 @@ if (size < 1) { %>
 <div class="page_divider project"></div>
 <div id="totals_and_tools_container">
     <div id="totals_and_tools">
-        <h2 class="display_count"><span class="numbers"><%= resultSetModifier %></span> Specimens <%=more_results%><% if (imagedSpecimenCount > 0) { %> (<span class="numbers"><%= imagedSpecimenCount %></span> imaged)<% } %></h2>
-        <div id="totalcount" style="display:none;"><span class="numbers"><%= resultSetModifier %></span> Specimens <%=more_results%><% if (imagedSpecimenCount > 0) { %> (<span class="numbers"><%= imagedSpecimenCount %></span> imaged)<% } %></div>
-        <div id="imagecount" style="display:none;"><span class="numbers"><%= imagedSpecimenCount %></span> Imaged Specimens (out of <span class="numbers"><%= resultSetModifier %></span> total)</div>
-
+        <h2 class="display_count"><span class="numbers"><%= showingHtml %></span> Specimens<% if (searchPaging != null) { %> (<span class="numbers"><%= imagedSpecimenCount %></span> imaged on this page)<% } else if (imagedSpecimenCount > 0) { %> (<span class="numbers"><%= imagedSpecimenCount %></span> imaged)<% } %></h2>
+        <div id="totalcount" style="display:none;"><span class="numbers"><%= showingHtml %></span> Specimens</div>
+        <div id="imagecount" style="display:none;"><span class="numbers"><%= imagedSpecimenCount %></span> Imaged Specimens</div>
 <%
-   int limit = Taxon.MAX_DISPLAY;
-   String limitNote = "";
-   String limitStr = (String) request.getParameter("limit");
-   if (limitStr != null) {
-     limit = Integer.parseInt(limitStr);
-   }
-   if (taxonChildren.size() > limit) {
-       String allUrl = HttpUtil.getTargetReplaceParam(request, "limit", "limit=10000");
-       String allLink = " See all: <a href='" + Html.escAttr(allUrl) + "'>here</a>";
-       limitNote = "(Only the first " + limit + " of " + taxonChildren.size() + " displayed - " + allLink + ").";
-   }        
-
-   if (!"".equals(limitNote)) { %>
-     <div class="clear"></div><font color=red><%= limitNote %></font>
-<% } %>
+   // Rows listFirst .. listFirst + 199 of the session list (specimenReport.jsp: index <= limit).
+   int limit = listFirst + SearchPaging.PAGE_SIZE - 1;
+%>
+<%@ include file="/search/searchPager.jsp" %>
 
     <%@ include file="/common/pageToolsSearch.jsp" %>
     <%@ include file="/search/download_results.jsp" %>
     </div>
 </div>
     <%@include file="/specimenReport.jsp" %> 
+<%@ include file="/search/searchPager.jsp" %>
 <% } %> 
 
 

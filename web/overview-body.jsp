@@ -225,7 +225,7 @@
   if (!HttpUtil.isBot(request) && overview instanceof LocalityOverview) {
     String listCriteria = ((LocalityOverview) overview).getSearchCriteria();
     if (listCriteria != null && !"".equals(listCriteria)) {
-      specimenListLink = "<a href=\"" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&" + listCriteria + "&resultRank=specimen\">List all specimens collected in " + Html.esc(overview.getName()) + "</a> (every record, under any name, including those not counted above)";
+      specimenListLink = "<a rel=\"nofollow\" href=\"" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&" + listCriteria + "&resultRank=specimen\">List all specimens collected in " + Html.esc(overview.getName()) + "</a> (every record, under any name, including those not counted above)";
     }
   }
   // Countries, islands and states: every name their specimens are filed under (Show Specimen Taxa of the species list).
@@ -307,8 +307,8 @@ Images:
     Museum museum = (Museum) overview;
     String code = museum.getCode();
     
-  		 out.println("<br><br><b>List of species with types at the museum: <a href='" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&ownedBy=" + code + "&type=type&resultRank=species&output=list'>here</a>");
-		 out.println("<br><b>List of type specimens from the museum: <a href='" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&ownedBy=" + code + "&type=type&resultRank=specimen&output=list'>here</a>");
+  		 out.println("<br><br><b>List of species with types at the museum: <a rel='nofollow' href='" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&ownedBy=" + code + "&type=type&resultRank=species&output=list'>here</a>");
+		 out.println("<br><b>List of type specimens from the museum: <a rel='nofollow' href='" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&ownedBy=" + code + "&type=type&resultRank=specimen&output=list'>here</a>");
   }
 
     // For the notes field

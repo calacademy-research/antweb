@@ -64,12 +64,14 @@
 <% 
     ArrayList<Taxon> childrenList = taxaPage.getChildren();
     int childrenCount = childrenList.size();
-    //A.log("count:" + childrenCount);
+    // Imaged = children with images (2026-10-21: the header printed childrenCount twice).
+    int imagedChildrenCount = 0;
+    for (Taxon imgChild : new ArrayList<Taxon>(childrenList)) if (imgChild.getHasImages()) ++imagedChildrenCount;
 %>
 
   <div id="totals_and_tools_container">
     <div id="totals_and_tools">
-        <h2 class="display_count"><%= childrenCount %> <%= Rank.getPluralRank(pageRank) %> Imaged (out of <%= childrenCount %> Total)</h2>
+        <h2 class="display_count" data-imaged="<%= imagedChildrenCount %>" data-total="<%= childrenCount %>"><%= imagedChildrenCount %> <%= Rank.getPluralRank(pageRank) %> Imaged (out of <%= childrenCount %> Total)</h2>
 <%
     if (false && overview instanceof Geolocale) { 
     %> <font color=red>Page Under Maintenance</font> <% 

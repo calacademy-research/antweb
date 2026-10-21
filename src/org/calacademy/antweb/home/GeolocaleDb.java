@@ -567,6 +567,25 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         return message;
     }    
     
+    /** How many places name this one as their parent (the countries of a subregion, the adm1s of a country). */
+    public int getChildCount(Geolocale geolocale) throws SQLException {
+        String childRank = Georank.getChild(geolocale.getGeorank());
+        if (childRank == null || geolocale.getName() == null) return 0;
+        PreparedStatement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getPreparedStatement(getConnection(), "GeolocaleDb.getChildCount()",
+                "select count(*) from geolocale where parent = ? and georank = ?");
+            stmt.setString(1, geolocale.getName());
+            stmt.setString(2, childRank);
+            rset = stmt.executeQuery();
+            return rset.next() ? rset.getInt(1) : 0;
+        } finally {
+            DBUtil.close(stmt, rset, "GeolocaleDb.getChildCount()");
+        }
+    }
+
+    /** Delete a place and its species list rows (geolocale_taxon); the caller checks it has no child places. */
     public boolean deleteGeolocale(int id) throws SQLException {
         boolean success = false;
         Statement stmt = null;
@@ -579,7 +598,10 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
             stmt = DBUtil.getStatement(getConnection(), "GeolocaleDb.deleteGeolocale()");
             int x = stmt.executeUpdate(dml);
-            if (x > 0) success = true;
+            if (x > 0) {
+              success = true;
+              stmt.executeUpdate("delete from geolocale_taxon where geolocale_id = " + id);
+            }
         } catch (SQLException e) {
             s_log.error("deleteGeolocale() e:" + e);
             throw e;
@@ -627,7 +649,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
         if (form.getRegion() != null) { sets.add("region = ?"); params.add(form.getRegion()); }
         if (form.getBioregion() != null) { sets.add("bioregion = ?"); params.add(form.getBioregion()); }
+        else if (form.isClearBioregion()) { sets.add("bioregion = ?"); params.add(null); }
         if (form.getAltBioregion() != null) { sets.add("alt_bioregion = ?"); params.add(form.getAltBioregion()); }
+        else if (form.isClearAltBioregion()) { sets.add("alt_bioregion = ?"); params.add(null); }
 
         if (form.getCentroidFixed() != null) {
           sets.add("centroid_fixed = ?"); params.add("".equals(form.getCentroidFixed()) ? null : form.getCentroidFixed());
@@ -644,14 +668,64 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
         params.add(form.getId());
         String dml = "update geolocale set " + String.join(", ", sets) + " where id = ?";
+
+        // A rename moves the page text (object_edit) and its history (object_hist), keyed by the
+        // name, in the same transaction (PageTextKeys). If the new name already has page text,
+        // nothing is saved. If another place still has the old name, the text stays with it.
+        String oldName = geolocale.getName();
+        String newName = form.getName();
+        boolean renamed = oldName != null && newName != null && !"".equals(newName) && !oldName.equals(newName);
+        Connection conn = getConnection();
+        boolean autoCommit = conn.getAutoCommit();
         try {
+            conn.setAutoCommit(false);
+            boolean shared = renamed && isNameUsedByOther(oldName, form.getId());
+            if (renamed && !shared) {
+                String refusal = PageTextKeys.refusal(conn, oldName, newName);
+                if (refusal != null) {
+                    conn.rollback();
+                    s_log.warn("updateGeolocale() id:" + form.getId() + " rename refused, " + newName + " has page text");
+                    return NOT_SAVED + refusal;
+                }
+            }
             executeBound(dml, params, "GeolocaleDb.updateGeolocale()");
+            if (renamed && !shared) {
+                int[] moved = PageTextKeys.move(conn, oldName, newName);
+                if (moved[0] + moved[1] > 0) {
+                    returnVal += " Renamed " + Html.esc(oldName) + " to " + Html.esc(newName) + ": its page text ("
+                        + moved[0] + (moved[0] == 1 ? " field" : " fields") + ", " + moved[1]
+                        + (moved[1] == 1 ? " earlier version" : " earlier versions") + ") moved with it.";
+                }
+                s_log.info("updateGeolocale() id:" + form.getId() + " renamed " + oldName + " to " + newName
+                    + ", object_edit rows moved:" + moved[0] + " object_hist rows moved:" + moved[1]);
+            } else if (shared) {
+                returnVal += " Another place is still named " + Html.esc(oldName)
+                    + ", so the page text under that name stays with it; this place starts without page text.";
+            }
+            conn.commit();
         } catch (SQLException e) {
+            try { conn.rollback(); } catch (SQLException e2) { /* the first error is the one to report */ }
             s_log.error("updateGeolocale() id:" + form.getId() + " e:" + e + " dml:" + dml);
             throw e;
+        } finally {
+            try { conn.setAutoCommit(autoCommit); } catch (SQLException e) { /* ignore */ }
         }
         return returnVal;
-    }    
+    }
+
+    /** Start of updateGeolocale()'s message when nothing was saved. */
+    public static final String NOT_SAVED = "Nothing was saved. ";
+
+    /** True if a geolocale other than id has this name (names are not unique across georanks). */
+    private boolean isNameUsedByOther(String name, int id) throws SQLException {
+        try (PreparedStatement s = getConnection().prepareStatement("select count(*) from geolocale where name = ? and id <> ?")) {
+            s.setString(1, name);
+            s.setInt(2, id);
+            try (ResultSet r = s.executeQuery()) {
+                return r.next() && r.getInt(1) > 0;
+            }
+        }
+    }
     
     public ArrayList<SpeciesListable> fetchSpeciesLists(Login login) throws SQLException {
         return fetchSpeciesLists(login, true);
@@ -814,6 +888,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
           + " from geolocale_taxon gt, taxon t "
           + " where gt.taxon_name = t.taxon_name "
           + " and t.taxarank in ('species', 'subspecies')"
+          + " and t.family = 'formicidae'"   // ants only (2026-10-21, PlaceTotals)
           + " and gt.geolocale_id = " + geolocale.getId();
 
         //if (geolocale.getId() == 284) A.log("getSpecimenCount() query:" + query);
@@ -959,7 +1034,14 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       updateGeolocaleTaxonField("introduced", 0, null);
       updateGeolocaleFieldCount("introduced", 0, 0);
       
-      return calcIntroducedGeolocales();
+      int n = calcIntroducedGeolocales();
+      // The Introduced number of every geolocale = its flagged rows (the rows of introduced.do).
+      try {
+        PlaceTotals.writeCountsFromFlags(getConnection(), PlaceTotals.GEOLOCALE, "introduced");
+      } catch (SQLException e) {
+        s_log.error("calcIntroduced() counts from flags e:" + e);
+      }
+      return n;
     }
 
     public int calcIntroducedGeolocales() {
@@ -1052,6 +1134,13 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       //if (!AntwebProps.isDevMode())
       calcHigherEndemism();
 
+      // The Endemic number of every geolocale = its flagged rows (the rows of endemic.do), 2026-10-21:
+      // also for the countries, subregions and regions whose flags calcHigherEndemism() set.
+      try {
+        PlaceTotals.writeCountsFromFlags(getConnection(), PlaceTotals.GEOLOCALE, "endemic");
+      } catch (SQLException e) {
+        s_log.error("calcEndemic() counts from flags e:" + e);
+      }
       return c;
     }
 
@@ -1109,7 +1198,6 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         int lastGeolocaleId = 0;
         int count = 0;
         while (rset.next()) {
-          ++count;
           int geolocaleId = rset.getInt("geolocale_id");
           String taxonName = rset.getString("taxon_name");
 
@@ -1123,6 +1211,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             c += updateGeolocaleFieldCount("endemic", lastGeolocaleId, count);          
             count = 0;
           }
+          // Counted after the break (2026-10-21): it was counted before, so the first species of each
+          // place was added to the previous place.
+          ++count;
           
           lastGeolocaleId = geolocaleId;          
         }
@@ -1355,39 +1446,25 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
     private String finish(int geolocaleId) throws SQLException {
         updateCountableTaxonData(geolocaleId);
+        // Valid species / subspecies (2026-10-21): until then only finish() wrote it, and nothing called
+        // finish(), so every geolocale kept the number of the last time someone ran it by hand.
+        updateValidSpeciesCount(geolocaleId);
         // imaged_specimen_count: PlaceImageCountDb (nightly set 4, Recalculate), labels not counted.
         makeCharts(geolocaleId);
       return "Geolocale Finished:" + geolocaleId;
     }
 
     private void updateCountableTaxonData(int geolocaleId) throws SQLException {
-        GeolocaleTaxonCountDb geolocaleTaxonCountDb = new GeolocaleTaxonCountDb(getConnection());
-        String criteria = "geolocale_id = " + geolocaleId;
-        // Subfamilies: counted directly as the subfamily rows on the place's list with a counted status
-        // (2026-10-20). The old roll-up, sum(subfamily_count) over the list, depended on the Formicidae row's
-        // stored subfamily_count and gave 0 on staging's Madagascar after an incomplete nightly run, with
-        // 8 subfamilies on the list. CountCheck.checkSubfamilyTotal checks the same rule.
-        int subfamilyCount = getListedSubfamilyCount(geolocaleId);
-        int genusCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "genus");
-        int speciesCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "species");
-
-		if (geolocaleId == 768) A.log("updatedCountableTaxonData(" + geolocaleId + ") subfamilyCount:" + subfamilyCount + " speciesCount:" + speciesCount);
-
-        criteria = "id = " + geolocaleId;
-        geolocaleTaxonCountDb.updateCountableTaxonCounts("geolocale", criteria, subfamilyCount, genusCount, speciesCount);                  
+        // Subfamilies (2026-10-20), Genera and Species (2026-10-21): counted directly as the rows of that
+        // rank on the place's list with a counted status (PlaceTotals). The old roll-up, sum(genus_count) or
+        // sum(species_count) over the list rows, was wrong whenever a row count was stale or of the wrong
+        // rank (Subfamilies 0 on staging's Madagascar with 8 subfamilies listed). Checked by CountInvariants.
+        PlaceTotals.writeListedCounts(getConnection(), PlaceTotals.GEOLOCALE, "" + geolocaleId);
     }    
       
-    /** Subfamily rows on the geolocale's list whose taxon has a counted status (CountCheck.COUNTABLE). */
+    /** Subfamily rows on the geolocale's list whose taxon has a counted status (PlaceTotals). */
     int getListedSubfamilyCount(int geolocaleId) throws SQLException {
-        String query = "select count(distinct gt.taxon_name) from geolocale_taxon gt"
-            + " join taxon t on t.taxon_name = gt.taxon_name"
-            + " where gt.geolocale_id = ? and t.taxarank = 'subfamily' and t.status in " + org.calacademy.antweb.util.CountCheck.COUNTABLE;
-        try (java.sql.PreparedStatement stmt = getConnection().prepareStatement(query)) {
-            stmt.setInt(1, geolocaleId);
-            try (ResultSet r = stmt.executeQuery()) {
-                return r.next() ? r.getInt(1) : 0;
-            }
-        }
+        return PlaceTotals.count(getConnection(), PlaceTotals.listedCountSql(PlaceTotals.GEOLOCALE, PlaceTotals.SUBFAMILY), "" + geolocaleId);
     }
 
     public String getSpecimenLocaleClause(Geolocale geolocale) {
@@ -1465,9 +1542,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
     }
 
     private void updateValidSpeciesCount(int geolocaleId) throws SQLException {
-        int count = getValidSpeciesCount(geolocaleId);
-        UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("geolocale", "valid_species_count", Integer.valueOf(count).toString(), "id = '" + geolocaleId + "'");
+        PlaceTotals.writeValidSpecies(getConnection(), PlaceTotals.GEOLOCALE, "" + geolocaleId);
     }
 
     private int getValidSpeciesCount(int geolocaleId) {
@@ -1505,47 +1580,10 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       }  
     }     
             
+    // The two pies (PlaceTotals.speciesPieSql, specimenPieSql; 2026-10-21): "Species per Subfamily" adds up
+    // to Species (it counted rank species only, no subspecies), "Specimens per Subfamily" to Specimens.
     public void makeCharts(int geolocaleId) throws SQLException {
-      //A.log("makeCharts(" + geolocaleId + ")");
-      UtilDb utilDb = new UtilDb(getConnection());
-      GeolocaleTaxonCountDb geolocaleTaxonCountDb = new GeolocaleTaxonCountDb(getConnection());
-      String criteria = "id = " + geolocaleId;
-      String taxonCountQuery = getTaxonSubfamilyDistJsonQuery(criteria);
-      String specimenCountQuery = getSpecimenSubfamilyDistJsonQuery(criteria);
-
-      utilDb.updateField("geolocale", "taxon_subfamily_dist_json", "'" + geolocaleTaxonCountDb.getTaxonSubfamilyDistJson(taxonCountQuery) + "'", criteria);
-      utilDb.updateField("geolocale", "specimen_subfamily_dist_json", "'" + geolocaleTaxonCountDb.getSpecimenSubfamilyDistJson(specimenCountQuery) + "'", criteria);
-    }
-
-    public String getTaxonSubfamilyDistJsonQuery(String criteria) {
-      String query = "select subfamily, count(*) count, t.chart_color " 
-          + " from geolocale_taxon gt, taxon t, geolocale g " 
-          + " where gt.taxon_name = t.taxon_name " 
-          + " and g.id = gt.geolocale_id "
-          + " and g." + criteria
-          + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') " 
-          + " and family = 'formicidae'" 
-          + " and taxarank = 'species'"
-          + " group by subfamily, t.chart_color"; 
-          //if (AntwebProps.isDevMode()) s_log.info("getTaxonSubfamilyDistJsonQuery() query:" + query);
-      return query;
-    }
-    
-    // "Specimens per Subfamily" chart: the place's Specimens number by subfamily, i.e. the specimen
-    // counts of the species and subspecies rows of its list (CountDb.countSpecimens, written just before
-    // by updateCounts). Until 2026-10-20 it counted every specimen of the names on the list, anywhere in
-    // the world, for every kind of place.
-    public String getSpecimenSubfamilyDistJsonQuery(String criteria) {
-      String query = "select t.subfamily subfamily, sum(gt.specimen_count) count"
-          + " from geolocale_taxon gt, taxon t, geolocale g"
-          + " where gt.taxon_name = t.taxon_name"
-          + " and g.id = gt.geolocale_id"
-          + " and g." + criteria
-          + " and t.taxarank in ('species', 'subspecies')"
-          + " and t.family = 'formicidae'"
-          + " group by t.subfamily"
-          + " having sum(gt.specimen_count) > 0";
-      return query;
+      PlaceTotals.writePies(getConnection(), PlaceTotals.GEOLOCALE, "" + geolocaleId);
     }
 
 

@@ -355,6 +355,12 @@ public final class LogMgrAction extends AntwebAction {
         // directories: detail   worldants   bak   specimen  unclosedConnections  imageCheck
         String message = "";
 
+        message += "<div class=\"mgr_help\" style=\"max-width:60em;margin:6px 0 12px 0\">The server's log files, read only"
+            + " (the last 2000 lines; add &amp;lines=N or &amp;grep=word to the address). The most useful: compute.log (the nightly"
+            + " run from 05:00 Pacific), admin.log (AntCat imports and scheduler runs), taxonworksNightly.log (the nightly CAS"
+            + " TaxonWorks upload) and profiler.jsp (timings of uploads and pages). The logs are emptied when the AntWeb"
+            + " container is rebuilt. Administrators only.</div>";
+
         message += "<h3>Primary Logs</h3>";
         message += "<ul><li><a href='" + AntwebProps.getDomainApp() + "/listUploads.do?groupId=0'>Specimen Uploads</a>";
         message += "<li><a href='" + AntwebProps.getDomainApp() + "/query.do?name=worldantsUploads'>Worldants Uploads</a>";
@@ -407,6 +413,8 @@ public final class LogMgrAction extends AntwebAction {
 
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=compute&ext=log'>compute.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=admin&ext=log'>admin.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=taxonworksNightly&ext=log'>taxonworksNightly.log</a>";
+        message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=adminAlerts&ext=log'>adminAlerts.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=geolocaleTaxonFix&ext=log'>geolocaleTaxonFix.log</a>";
         message += "<br><a href='" + AntwebProps.getDomainApp() + "/logMgr.do?action=get&fileName=hacks&ext=log'>hacks.log</a>";
 

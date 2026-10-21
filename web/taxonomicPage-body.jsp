@@ -161,7 +161,7 @@
       if (overview instanceof LocalityOverview && !HttpUtil.isBot(request)) {
         String listCriteria = ((LocalityOverview) overview).getSearchCriteria();
         if (listCriteria != null && !"".equals(listCriteria)) { %>
-&nbsp; | &nbsp;<a href='<%= AntwebProps.getDomainApp() %>/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&<%= listCriteria %>&resultRank=specimen' title='Every specimen record collected here, under any name'>List all specimens collected in <%= Html.esc(overview.getName()) %></a>
+&nbsp; | &nbsp;<a rel='nofollow' href='<%= AntwebProps.getDomainApp() %>/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&<%= listCriteria %>&resultRank=specimen' title='Every specimen record collected here, under any name'>List all specimens collected in <%= Html.esc(overview.getName()) %></a>
      <% }
       }
     } %>

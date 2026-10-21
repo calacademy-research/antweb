@@ -40,6 +40,11 @@ jobs:
         # purpose and status of the new rows, commit docs/catalog/ (see docs/README.md).
         run: python3 tools/catalog/build_catalog.py --check
 
+      - name: Every number on the site names its test (docs/numbers.md)
+        # Each kind of number AntWeb shows has a row: status yes, partly or not yet; the tests it names exist;
+        # every count check (CountInvariants.IDS) is named. Fix: edit docs/numbers.md (see its section 1).
+        run: python3 tools/numbers/check_numbers_doc.py
+
       - name: Test API Build
         run: |
           docker build -t antweb/api:dev -f docker/api/Dockerfile .
@@ -57,6 +62,10 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" -v "$PWD/web/documentation/api:/docs:ro" \
             antweb/api:dev /t/test_api_params.py
+
+      - name: API counts (tests/unit/test_api_counts.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_counts.py
 
       - name: API container as in docker-compose.yml (only its login file, read-only, workers not root)
         # The login file is root-only (0600) here: gunicorn's master reads it at start
@@ -132,6 +141,23 @@ jobs:
             grep -q "^OK (8 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of the download guards (genus/species files, 5,000-record cap, paged search list)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/util/DownloadLimits.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/DownloadGuardsTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.DownloadGuardsTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (6 tests)" /tmp/out.txt
+          '
+
+      - name: Download guards in the pages (no See all link, nofollow search links, robots.txt) (tests/unit/test_download_guards.py)
+        run: python3 tests/unit/test_download_guards.py
+
       - name: Java unit tests of upload and scheduler hardening (zip extraction, nightly self-calls)
         # SafeUnzip (symlink, .., size and entry caps, picks the right entry), specimen header
         # checks, species list deletion, image upload reports, and SchedulerCall: the nightly
@@ -200,7 +226,13 @@ jobs:
         # "Upload as" list names the group each upload replaces. BackgroundJobsTest: uploads and admin jobs in the
         # background (status changes, one at a time, a second upload goes to the first, waiting while busy,
         # interrupted after a restart, who sees a job). UploadReportExistsTest: the upload lists link a report
-        # only while it exists, and each upload's file through uploadFile.do. See docs/flows/test-gaps-uploads-nightly.md.
+        # only while it exists, and each upload's file through uploadFile.do. SpecimenNameHistoryTest: the specimen page's
+        # Name History section (applied moves only, newest first, the Name updates page's line and reason, uploaded name,
+        # shared-name hold, previous determinations, escaping, nothing when empty). SpecimenCodesTest: "N specimens" and the
+        # collapsed list of codes on every upload report line and on the Name updates page (one helper; count, cap of
+        # 200 per line and 10,000 per report, escaping, plain codes for lines not uploaded). RelevantQueriesTest: the
+        # Relevant Queries boxes of viewGroups.do and viewLogins.do explain each query; headings match the columns.
+        # See docs/flows/test-gaps-uploads-nightly.md.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" -v "$PWD/web:/web:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
@@ -219,15 +251,18 @@ jobs:
               /t/org/calacademy/antweb/upload/SharedNamesTest.java \
               /t/org/calacademy/antweb/upload/SharedNameReportTest.java \
               /t/org/calacademy/antweb/upload/UploadNameReasonsTest.java \
+              /t/org/calacademy/antweb/upload/SpecimenNameHistoryTest.java \
               /t/org/calacademy/antweb/curate/UploadAsOptionsTest.java \
               /t/org/calacademy/antweb/upload/UploadReportExistsTest.java \
               /t/org/calacademy/antweb/security/PasswordHashCompatTest.java \
-              /t/org/calacademy/antweb/util/BackgroundJobsTest.java
+              /t/org/calacademy/antweb/util/BackgroundJobsTest.java \
+              /t/org/calacademy/antweb/util/SpecimenCodesTest.java \
+              /t/org/calacademy/antweb/util/RelevantQueriesTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:7 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:14 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
-                     upload.UploadReportExistsTest:3; do
+                     upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -239,12 +274,33 @@ jobs:
       - name: Staging test accounts tool (tests/unit/test_staging_accounts.py)
         run: python3 tests/unit/test_staging_accounts.py
 
+      - name: Staging refresh scripts (shellcheck; guards, dump checks, disk estimate, cleanup safe list, cron line)
+        run: |
+          shellcheck -S warning tools/staging/*.sh
+          python3 tests/unit/test_staging_refresh.py
+
+      - name: Staging refresh database steps against MySQL 8.4 (scrub.sql; test logins put back with their passwords)
+        run: |
+          docker run -d --name refreshmysql -e MYSQL_ROOT_PASSWORD=ci-root -e MYSQL_DATABASE=ant \
+            -v "$PWD/docker/mysql/mysql_stage.cnf:/etc/mysql/conf.d/custom.cnf:ro" mysql:8.4 --mysql-native-password=ON
+          ok=0
+          for i in $(seq 1 90); do
+            if docker exec refreshmysql mysql -uroot -pci-root -h127.0.0.1 ant -e "select 1" >/dev/null 2>&1; then ok=1; break; fi
+            sleep 2
+          done
+          [ "$ok" = 1 ] || { docker logs refreshmysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
+          STAGING_REFRESH_DB_CONTAINER=refreshmysql STAGING_REFRESH_DB_PASSWORD=ci-root python3 tests/unit/test_staging_refresh_db.py
+          docker rm -f refreshmysql
+
       - name: No email tells the reader to ignore it (tests/unit/test_email_texts.py)
         run: python3 tests/unit/test_email_texts.py
 
+      - name: Login updates keep login.created, no delete of all page text, page titles, admin links on phones (tests/unit/test_small_fixes.py)
+        run: python3 tests/unit/test_small_fixes.py
+
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
         run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml
-      - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts)
+      - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; place renames keep page text; every place's numbers; specimen name history; download guards)
         # DbTimeZoneTest: dates written by MySQL and by Java read back as the same moment and are
         # stored as Pacific wall-clock time, for conPool, mediumConPool and longConPool.
         run: |
@@ -295,6 +351,15 @@ jobs:
           # per-taxon image counts of a place, and the count check of those numbers.
           # RegionCountDbTest: region and subregion numbers count the specimens of their countries only.
           # BackgroundJobDbTest: the background_job table (status pages of uploads and admin jobs; interrupted at start-up).
+          # PageTextRenameDbTest: renaming a place (editGeolocale.do) moves its page text and history (object_edit,
+          # object_hist) with their dates; a new name that has page text already is refused and nothing changes.
+          # SpecimenNameHistoryDbTest: the specimen page's Name History query (applied rows of one specimen, newest first,
+          # never report-only rows; index by_code; no history when the table is missing).
+          # CountInvariantsTest: the count check's invariants over every place (docs/numbers.md), each wrong number found.
+          # PlaceTotalsDbTest: the numbers the nightly run writes (place totals, pies, endemic, museums, taxon images,
+          # home page, Global after the name update, statsPage) as the invariants expect them.
+          # DownloadGuardsDbTest: a place download holds only the specimens collected there (5,000 cap), the paged
+          # search list (COUNT, LIMIT/OFFSET, sort before paging, images/types only), ant specimens only on place pages.
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
             set -e
@@ -306,10 +371,15 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc \
               /t/org/calacademy/antweb/upload/SpecimenNameUpdateDbTest.java /t/org/calacademy/antweb/util/CountCheckTest.java \
               /t/org/calacademy/antweb/home/PlaceImageCountDbTest.java /t/org/calacademy/antweb/util/BackgroundJobDbTest.java \
-              /t/org/calacademy/antweb/home/RegionCountDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4; do
+              /t/org/calacademy/antweb/home/RegionCountDbTest.java /t/org/calacademy/antweb/home/PageTextRenameDbTest.java \
+              /t/org/calacademy/antweb/upload/SpecimenNameHistoryDbTest.java \
+              /t/org/calacademy/antweb/util/NumbersTestDb.java \
+              /t/org/calacademy/antweb/util/CountInvariantsTest.java \
+              /t/org/calacademy/antweb/home/PlaceTotalsDbTest.java \
+              /t/org/calacademy/antweb/home/DownloadGuardsDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6; do
               cls=${t%%:*}; n=${t##*:}
-              java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+              java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
               grep -q "^OK ($n tests)" /tmp/out.txt || { cat /tmp/out.txt; echo "::error::$cls"; exit 1; }
             done
@@ -332,8 +402,10 @@ jobs:
             grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
-      - name: Add an uploader and the login form (input checks, welcome email, page; database steps against MySQL 8.4)
-        # UploaderOnboardingTest: the form's checks, the welcome email text (escaped, no "ignore"), and
+      - name: Add an uploader and the login form (input checks, draft welcome email, page; database steps against MySQL 8.4)
+        # UploaderOnboardingTest: the form's checks, the welcome email text (plain text, signed "[Your name]",
+        # no "ignore", no "reply to this email"), the summary page's Draft email box (escaped, read-only,
+        # Copy and mailto:, no Send button; AntWeb no longer sends it, 2026-10-21), and
         # which refused POSTs are shown again filled in (Csrf.mayRefill: stale token on addUploader.do only).
         # UploaderOnboardingDbTest: new person and new upload group, existing account by email or
         # username, moving only when asked, refusals change nothing, login.created kept, inactive
@@ -341,6 +413,9 @@ jobs:
         # LoginEditTest: the login form (sections, escaping, admin warning, own admin rights locked,
         # upload group list, add boxes, change summary). LoginEditDbTest: an administrator's save in
         # one step, refused values change nothing, old assignments kept, delete removes assignments.
+        # LoginIdDbTest: a new login never gets a number used before (deleted logins, curator folders,
+        # login numbers in other tables); password reset steps keep login.created; the upgrade script
+        # db/upgrade/8.113/2026-10-21-login-created.sql removes ON UPDATE from login.created.
         run: |
           docker network create ugcheck
           docker run -d --name ugmysql --network ugcheck -e MYSQL_ROOT_PASSWORD=ci-root \
@@ -352,7 +427,7 @@ jobs:
           done
           [ "$ok" = 1 ] || { docker logs ugmysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
           docker exec ugmysql mysql -uroot -pci-root -h127.0.0.1 -e "ALTER USER 'antweb'@'%' IDENTIFIED WITH mysql_native_password BY 'CHANGE_ME'"
-          docker run --rm --network ugcheck --entrypoint sh -v "$PWD/test:/t:ro" \
+          docker run --rm --network ugcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/db:/d:ro" \
             -e ANTWEB_TEST_DB_URL="jdbc:mysql://ugmysql:3306/ant?useSSL=false&allowPublicKeyRetrieval=true" antweb/antweb:dev -c '
             set -e
             C=/usr/local/antweb/WEB-INF/classes
@@ -362,15 +437,78 @@ jobs:
             mkdir -p /tmp/tc
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc \
               /t/org/calacademy/antweb/curate/UploaderOnboardingTest.java /t/org/calacademy/antweb/curate/UploaderOnboardingDbTest.java \
-              /t/org/calacademy/antweb/curate/LoginEditTest.java /t/org/calacademy/antweb/curate/LoginEditDbTest.java
-            for t in curate.UploaderOnboardingTest:6 curate.UploaderOnboardingDbTest:10 curate.LoginEditTest:10 curate.LoginEditDbTest:6; do
+              /t/org/calacademy/antweb/curate/LoginEditTest.java /t/org/calacademy/antweb/curate/LoginEditDbTest.java \
+              /t/org/calacademy/antweb/curate/LoginIdDbTest.java
+            for t in curate.UploaderOnboardingTest:8 curate.UploaderOnboardingDbTest:10 curate.LoginEditTest:10 curate.LoginEditDbTest:6 curate.LoginIdDbTest:8; do
               cls=${t%%:*}; n=${t##*:}
-              java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+              java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
               grep -q "^OK ($n tests)" /tmp/out.txt || { cat /tmp/out.txt; echo "::error::$cls"; exit 1; }
             done
           '
           docker rm -f ugmysql
+
+      - name: Manager Tools (Museum, Geolocale, Project, Photographers, Admin Alert, map managers, Query and Log Manager)
+        # The JSP pages of the Manager Tools compile (Jasper JspC, as Tomcat 11 compiles them).
+        # ManagerToolsTest: "None" in Edit Geolocale is no value (a stored "none" bioregion reads as none),
+        # query results are text except AntWeb links, linked named queries exist, every page explains
+        # itself and prints no request value unescaped, museum page text is keyed by code. ManagerToolsDbTest (MySQL 8.4): museum names with
+        # an apostrophe, no duplicate on update, blank code refused, specimen count before a delete, a place
+        # with places under it, a deleted place's species list rows. See docs/guides/manager-tools.md.
+        run: |
+          docker network create mgrcheck
+          docker run -d --name mgrmysql --network mgrcheck -e MYSQL_ROOT_PASSWORD=ci-root \
+            -e MYSQL_DATABASE=ant -e MYSQL_USER=antweb -e MYSQL_PASSWORD=CHANGE_ME mysql:8.4 --mysql-native-password=ON
+          docker run --rm --entrypoint sh antweb/antweb:dev -c '
+            set -e
+            A=/usr/local/antweb
+            CP="/usr/local/tomcat/lib/*:/usr/local/tomcat/bin/*:/usr/share/ant/lib/*:$A/WEB-INF/classes:$A/WEB-INF/lib/*"
+            # One JSP at a time, and each must leave its compiled class: JspC can end with status 0
+            # without compiling a page (a Java error in editProject-body.jsp passed this step once).
+            n=0
+            for f in curate/manageMuseums-body.jsp curate/viewMuseum-body.jsp curate/manageMuseums.jsp curate/viewMuseum.jsp \
+                curate/geolocale/geolocaleMgr-body.jsp curate/geolocale/editGeolocale-body.jsp curate/geolocale/adm1Mgr-body.jsp \
+                curate/projectMgr-body.jsp curate/project/editProject-body.jsp curate/project/editProject.jsp \
+                artists-body.jsp artist-body.jsp util/adminAlert.jsp curate/bioregionMapMgr-body.jsp \
+                curate/introducedMapMgr-body.jsp curate/curate-body.jsp; do
+              rm -rf /tmp/jspc; mkdir -p /tmp/jspc
+              java -cp "$CP" org.apache.jasper.JspC -uriroot $A -d /tmp/jspc -compile -failFast "$A/$f" > /tmp/jspc.txt 2>&1 || true
+              cls=$(find /tmp/jspc -name "*_jsp.class" | wc -l)
+              if [ "$cls" -lt 1 ] || grep -qiE "^(SEVERE|ERROR)|JasperException|An error occurred" /tmp/jspc.txt; then
+                cat /tmp/jspc.txt
+                echo "::error::$f does not compile:%0A$(grep -v "^\s*at " /tmp/jspc.txt | head -30 | sed "s/%/%25/g" | tr "\n" "\001" | sed "s/\x01/%0A/g")"
+                exit 1
+              fi
+              n=$((n+1))
+            done
+            echo "Manager Tools JSPs compiled: $n"
+          '
+          ok=0
+          for i in $(seq 1 90); do
+            if docker exec mgrmysql mysql -uroot -pci-root -h127.0.0.1 -e "select 1" >/dev/null 2>&1; then ok=1; break; fi
+            sleep 2
+          done
+          [ "$ok" = 1 ] || { docker logs mgrmysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
+          docker exec mgrmysql mysql -uroot -pci-root -h127.0.0.1 -e "ALTER USER 'antweb'@'%' IDENTIFIED WITH mysql_native_password BY 'CHANGE_ME'"
+          docker run --rm --network mgrcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" -v "$PWD/web:/web:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" \
+            -e ANTWEB_TEST_DB_URL="jdbc:mysql://mgrmysql:3306/ant?useSSL=false&allowPublicKeyRetrieval=true" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc \
+              /t/org/calacademy/antweb/curate/ManagerToolsTest.java /t/org/calacademy/antweb/home/ManagerToolsDbTest.java
+            for t in curate.ManagerToolsTest:10 home.ManagerToolsDbTest:4; do
+              cls=${t%%:*}; n=${t##*:}
+              java -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+              grep -v "LogMgr" /tmp/out.txt | tail -3
+              grep -q "^OK ($n tests)" /tmp/out.txt || { cat /tmp/out.txt; echo "::error::$cls"; exit 1; }
+            done
+          '
+          docker rm -f mgrmysql
 
       - name: Java unit tests of the image picker (taxon name properties, Pick buttons not inside another form)
         run: |
