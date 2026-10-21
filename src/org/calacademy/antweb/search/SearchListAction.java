@@ -58,51 +58,57 @@ public final class SearchListAction extends AntwebAction {
           return mapping.findForward("message");
         }
 
-        //String data = Specimen.getDataHeader() + "\n";
         StringBuffer data = new StringBuffer();
         data.append(Specimen.getDataHeader() + "\n");
         
         HttpSession session = request.getSession();
 
-		GenericSearchResults results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
-
-		if (results == null) {
-          s_log.debug("execute() advancedSearchResults not found in session");
-		  //return mapping.findForward("permissionDenied"); //sessionExpired
-          request.setAttribute("message", "Your session seems to have expired. Perhaps re-login.");
-          return mapping.findForward("message");
-          
-          // if troubles, see layout.jsp:55 Known to be blank: http://localhost/antweb/getSearchList.do
-        }
-		
-    	if (session.getAttribute("fullAdvancedSearchResults") != null) {
-    	    results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
-        }
-        
-        //A.log("execute() 1");
+        // At most 5,000 specimens (administrators: all). DownloadLimits, 2026-10-21.
+        int cap = DownloadLimits.capFor(LoginMgr.isAdmin(accessLogin));
+        int matching = 0;
+        ArrayList<String> codes = new ArrayList<>();
 
         Connection connection = null;
         try {
           connection = getDataSource(request, "conPool").getConnection();
 
-  		  ArrayList<ResultItem> theResults = results.getResults();
-		  //ArrayList newResults = new ArrayList();
-		  Iterator<ResultItem> iter = theResults.iterator();
-		  ResultItem thisItem = null;
-		  while (iter.hasNext()) {
-			thisItem = (ResultItem) iter.next();
-            String code = thisItem.getCode();
-            //s_log.warn("code:" + code);            
+          SearchPaging paging = (SearchPaging) session.getAttribute("advancedSearchPaging");
+          if (paging != null && paging.getSearchParameters() != null) {
+            // A paged specimen search: read its specimens again, in the order shown, up to the cap.
+            AdvancedSearch search = new AdvancedSearchAction().buildSearch(connection, paging.getSearchParameters());
+            matching = search.countPaged();
+            int limit = cap > 0 ? cap : matching;
+            for (ResultItem item : search.getPage(paging.getOrderBy(), limit, 0)) codes.add(item.getCode());
+          } else {
+            GenericSearchResults results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
+            if (results == null) {
+              s_log.debug("execute() advancedSearchResults not found in session");
+              request.setAttribute("message", "Your session seems to have expired. Perhaps re-login.");
+              return mapping.findForward("message");
+              // if troubles, see layout.jsp:55 Known to be blank: http://localhost/antweb/getSearchList.do
+            }
+            if (session.getAttribute("fullAdvancedSearchResults") != null) {
+              results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
+            }
+            ArrayList<ResultItem> theResults = results.getResults();
+            matching = theResults.size();
+            for (ResultItem item : theResults) {
+              if (cap > 0 && codes.size() >= cap) break;
+              codes.add(item.getCode());
+            }
+          }
 
+          for (String code : codes) {
             Specimen specimen = new Specimen(code, null, connection, false); // Don't get images
-            //data += specimen.getData() + "\n";
 		    data.append(specimen.getData(connection) + "\n");
 		  }
-        } catch (SQLException e) {
-          s_log.warn("execute() fetchTaxon e:" + e);
+        } catch (SQLException | SearchException e) {
+          s_log.warn("execute() e:" + e);
+          request.setAttribute("message", "The download could not be made.");
+          return mapping.findForward("bareMessage");
         } finally {
           try {
-            connection.close();
+            if (connection != null) connection.close();
 		  } catch (SQLException e) {
 			s_log.error("execute() Connection.close e:" + e);
 		  }
@@ -114,6 +120,9 @@ public final class SearchListAction extends AntwebAction {
         AntwebUtil.writeDataFile(dir, fileName, data.toString());
         String url = AntwebProps.getDomainApp() + dir + fileName;
         String message = "<li>&middot; <a href=\"" + url + "\" target=\"new\">Tab-delimited data</a></li>";
+        if (DownloadLimits.isCapped(matching, cap)) {
+          message += "<p>" + Html.esc(DownloadLimits.capMessage(matching)) + "</p>";
+        }
         //String message = data.toString();
         
         s_log.debug("execute() url:" + url + " message:" + message);

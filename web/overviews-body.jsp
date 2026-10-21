@@ -63,7 +63,8 @@ else heading = heading + "s";
     }
     out.println("<table><tr><th>Name</th>");
     if (!titleIsName) out.println("<th>Title</th>");
-    out.println("<th>Species</th><th>Specimen</th><th>Images</th></tr>");
+    // The column is the Valid species number of the place pages (2026-10-21: it was labelled "Species").
+    out.println("<th>Valid species</th><th>Specimens</th><th>Images</th></tr>");
     for (Overview overview : overviews) {
       if ("Antarctica_region".equals(overview.getName())) continue;
       out.println(

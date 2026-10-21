@@ -129,7 +129,7 @@ Expect today's file, about 120 MB. If `/mnt/backup` is not mounted, the script f
 
 ### Restore a dump to staging
 
-This replaces staging's database with a production dump, for a restore test or to refresh staging. It never touches production. A restore to production is Brian's decision and is not covered here.
+This replaces staging's database with a production dump, for a restore test or to refresh staging. It never touches production. The weekly automatic refresh ("Staging refresh", below) does the same with the newest dump; use these steps for one particular date. A restore to production is Brian's decision and is not covered here.
 
 Notes before starting:
 - The dump holds personal data (logins, email addresses, password hashes). Keep copies in root-only folders and delete them at the end.
@@ -217,6 +217,132 @@ rm /root/restore/2026-10-18.sql.gz && ls -lh /root/restore
 Keep `staging-before-restore-*` for a week, then delete it the same way.
 
 **Undo** (staging back to how it was before step 6): stop AntWeb as in step 5, load `staging-before-restore-*.sql.gz` exactly as in step 6, start AntWeb as in step 7.
+
+### Staging refresh
+
+Once a week staging's database is replaced by production's newest nightly dump. This keeps staging's data current and proves every week that production's backups load. The manual procedure above stays for loading one particular date.
+
+How it works (`tools/staging/refresh-from-prod.sh`, runs on staging only):
+- It refuses to run unless the host is `staging`, `/etc/antweb-role` says `staging`, the project is `/root/antweb-next`, AntWeb was started from there and the server does not have production's address. It also refuses between 04:45 and 08:15 Pacific (nightly run) and while another refresh runs.
+- It reads production's newest daily dump from the Spaces bucket `antweb-dbarchive` (`db/daily/`) with rclone, read only. Nothing is ever written to production or to the bucket. A dump older than 3 days stops the refresh with an error: that means production's nightly backup is failing.
+- It checks free disk first (3 times the dump size plus 1 GB) and the dump itself (complete gzip, only the database `ant`, ends with "Dump completed").
+- Before loading it saves the test logins (`zztest_uploader`, `zztest_noupload`, `zztest_admin`, the test group, and any login named in `/root/staging-refresh/keep-logins.txt`) with their password hashes, and makes one safety dump of staging's database.
+- It stops AntWeb, loads the dump, scrubs personal data (`tools/staging/scrub.sql`: every email becomes `login<id>@example.invalid`, every password a random hash nobody knows, sessions and reset links ended), puts the test logins back with the same password hashes (so the GitHub secrets keep working), starts AntWeb and waits until it answers on 127.0.0.1:8081.
+- If any step after stopping AntWeb fails, it loads the safety dump again and starts AntWeb: staging is as before.
+- On success it deletes the downloaded dump and the safety dump (`--keep-safety` keeps the safety dump until the next refresh).
+- Columns staging had that production has not (a migration tried on staging only) are listed as a WARNING; re-apply that `db/upgrade` file if the branch on staging still needs it.
+- Log: `journalctl -t staging-refresh` and `/root/staging-refresh/refresh.log`. Exit codes: 0 done, 1 failed (staging put back), 2 refused (not staging, nightly window, or `--no-scrub` with `mail.properties`), 3 another refresh running, 4 production's dump too old, 5 not enough disk, 6 too late (`--not-after`).
+- Mail: staging should have no `etc/mail.properties` (then nothing is sent). With scrubbing no real address is left in any case. `--no-scrub` is refused while `mail.properties` exists.
+
+**Decisions (Brian):** scrubbing is on by default (recommended: staging needs no real emails or password hashes; the end-to-end tests use only the test logins). Schedule: Sundays 02:30 Pacific, after production's 01:00 dump and before the 04:00 weekly reboot; the cron line passes `--not-after 03:15`, so a late run stops before AntWeb is touched. How long the load takes is not yet measured: the first run's log shows it ("Loaded in ...").
+
+#### One-time setup and first refresh
+
+Each step on staging:
+
+```
+ssh root@165.232.136.170
+```
+
+**Step 1. Mark the server as staging and check the clock.**
+
+```
+echo staging > /etc/antweb-role && cat /etc/antweb-role && hostname && timedatectl show -p Timezone --value && ls -l /root/antweb-next/tools/staging/
+```
+
+Expect `staging`, `staging`, `America/Los_Angeles`, and `refresh-from-prod.sh` and `cleanup-disk.sh` with `x` in their modes (`-rwxr-xr-x`). If the time zone is different, stop and tell Claude (the cron time assumes Pacific).
+
+**Step 2. Check rclone.**
+
+```
+rclone version | head -1; rclone listremotes
+```
+
+Expect a version line (if "command not found": `apt-get install -y rclone`) and a list of remotes, possibly empty. If `dbarchive-ro:` is already listed, skip step 3.
+
+**Step 3. Give staging read-only access to production's dumps.** In the DigitalOcean console: Spaces Object Storage, Access Keys, Create Access Key, "Limited access", bucket `antweb-dbarchive`, permission Read; name it `staging-refresh-readonly`. The secret is shown once. Then on staging type the key id and secret at the prompts (the secret is not shown):
+
+```
+read -rp 'Spaces access key id: ' K; read -rsp 'Spaces secret key: ' S; echo; rclone config create dbarchive-ro s3 provider=DigitalOcean endpoint=sfo3.digitaloceanspaces.com access_key_id="$K" secret_access_key="$S" acl=private --non-interactive >/dev/null; unset K S; chmod 600 /root/.config/rclone/rclone.conf; rclone lsf dbarchive-ro:antweb-dbarchive/db/daily | tail -3
+```
+
+Expect the three newest dump names, for example `2026-10-25.sql.gz`. "AccessDenied": the key is not for that bucket.
+
+**Step 4. Disk report (deletes nothing).**
+
+```
+/root/antweb-next/tools/staging/cleanup-disk.sh
+```
+
+Expect the disk use, the largest folders, Docker's use, and the safe list with sizes; at the end "Report only: nothing was deleted". Read what it would delete (build cache, dangling images, old dump copies in `/root`, old restore files, `/root/antweb-old-2026-10-13` if no container uses it, rotated logs over 30 days, old watchdog dumps, journal above 100 MB, apt cache). The section "Not on the safe list" is for Brian to decide, by hand.
+
+**Step 5. Free the safe list.**
+
+```
+/root/antweb-next/tools/staging/cleanup-disk.sh --apply
+```
+
+Expect "deleted ..." lines, then the report again with a lower `Use%`. Docker volumes (the database), `/mnt` and `etc/` are never touched.
+
+**Step 6. Dry run of the refresh (changes nothing).**
+
+```
+/root/antweb-next/tools/staging/refresh-from-prod.sh --dry-run
+```
+
+Expect: "Mail: no ... mail.properties", "Dump: newest in ... is YYYY-MM-DD.sql.gz (about 120 MB)", "Dump age: 0 day(s)", "Disk: need about ... MB free; free: ...", the test logins on staging, "Logins used on staging in the last 14 days (not zztest): ...", and "Dry run: nothing was changed." A "Refused" or "ERROR" line says what to fix.
+
+**Step 7. Keep the end-to-end curator login.** The tests also log in with `ANTWEB_TEST_USER` (a curator login, not one of the zztest logins). Its name is among "Logins used on staging in the last 14 days" in step 6. Put it in the keep list (replace `NAME`):
+
+```
+install -d -m 700 /root/staging-refresh && echo 'NAME' > /root/staging-refresh/keep-logins.txt && cat /root/staging-refresh/keep-logins.txt
+```
+
+Expect the name. That login keeps its staging password (and email, rights, projects) after each refresh; every other login is scrubbed.
+
+**Step 8. First refresh, by hand.** Not between 04:45 and 08:15, not near 13:17 (daily end-to-end run). It runs as a background service, so a dropped ssh connection does not stop it; `--keep-safety` keeps the safety dump for a rollback after checking.
+
+```
+systemd-run --unit=staging-refresh-manual --collect /root/antweb-next/tools/staging/refresh-from-prod.sh --keep-safety && journalctl -t staging-refresh -f
+```
+
+Expect the steps one by one: download, "Dump checked", "Saved 4 login(s)", "Safety dump done", "Stopping AntWeb", "Loaded in ...", "Scrubbed", four "restored" lines, "Starting AntWeb", "AntWeb answers", "Refresh OK". Then press Ctrl-C (this only stops watching). "Refresh FAILED" means staging was put back; send Claude the lines above it.
+
+**Step 9. Check.** Open https://staging.antweb.org/ and a species page. Then Claude starts the end-to-end tests on staging (they log in with the test logins). If they pass, the safety dump can stay; the next refresh replaces it.
+
+**Step 10. Install the weekly run.**
+
+```
+install -m 644 /root/antweb-next/tools/staging/staging-refresh.cron /etc/cron.d/staging-refresh && cat /etc/cron.d/staging-refresh | grep -v '^#'
+```
+
+Expect the `SHELL`, `PATH`, `MAILTO` lines and `30 2 * * 0 root /root/antweb-next/tools/staging/refresh-from-prod.sh --not-after 03:15 ...`.
+
+#### Weekly check (Sunday, after 03:30)
+
+```
+journalctl -t staging-refresh --since "6 hours ago" --no-pager | tail -5
+```
+
+Expect "Refresh OK: staging has production's data of <today>.sql.gz". "production's newest daily dump is N days old" means production's backup is failing: check it (Backups, above).
+
+#### Rollback
+
+Back to staging's database from before the last refresh (only while the safety dump exists: after a failed refresh, after a `--keep-safety` run, or when AntWeb did not answer after the refresh):
+
+```
+/root/antweb-next/tools/staging/refresh-from-prod.sh --rollback
+```
+
+Expect "Rollback done". Without a safety dump, the fallbacks are the next weekly refresh (staging's data is a copy of production anyway) or DigitalOcean's weekly droplet backup (Brian, in the console). If the test logins ever stop working, `python3 /root/antweb-next/tools/staging/create-test-accounts.py --reset-passwords` makes new passwords for the GitHub secrets.
+
+#### Stop the weekly refresh
+
+```
+rm /etc/cron.d/staging-refresh && ls /etc/cron.d/
+```
+
+Expect `staging-refresh` no longer listed. To start it again, step 10.
 
 ## Alerts
 

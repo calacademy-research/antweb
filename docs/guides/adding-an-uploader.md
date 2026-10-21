@@ -20,7 +20,10 @@ For admins. Use this when someone writes "I want to upload specimens to AntWeb".
 4. Tick **Can also upload specimen images** if they will upload images too.
 5. Click **Add uploader**.
 6. Read the summary: what was created or changed.
-7. Read the **welcome email** shown below the summary. If it is right, click **Send this email**. It goes from antweb@antweb.org; replies go to that address, which forwards to the AntWeb lead.
+7. Below the summary is a **Draft email** box: **To** (the person's address), **Subject**, and the text of the welcome email. AntWeb does not send it: you send it from your own email, so you can add what this person needs to know.
+   - Click **Copy** and paste the text into a new email to the address shown (the main way). Or click **Open in my email program**: it starts a new email with To, Subject and the text filled in, but some email programs cut a long text short, so check it or use Copy.
+   - Add the details for this person, replace **[Your name]** at the end with your name, and send it.
+   - When the person had no password yet, the text holds their one-time link to choose one (it says the link is for them only). Send it only to them. The link is not kept anywhere else: once you leave the page for a new uploader, use "Save and make a set-password link" on the login to make a new one.
 
 ## What the page does
 
@@ -37,7 +40,7 @@ Nothing is changed when something is wrong (all in one step). The page then says
 - **matches more than one login**: open them in the Login Manager and decide which one to use; then enter its username.
 - **no login has the username**: enter the email address instead, to invite them.
 
-## What the uploader does next (the welcome email)
+## What the uploader does next (the welcome email text)
 
 1. Opens the link and chooses a password (new accounts and inactive accounts), or logs in with their existing password. Someone who was logged in already logs out and in again to see the upload tools.
 2. Opens Curator Tools (`/curate.do`).
@@ -63,8 +66,12 @@ The page has these sections:
 - **Other settings**: **Upload as**, login numbers separated by commas. It matters only for an administrator: these logins are listed in the administrator's "Upload as" menu on Curator Tools (upload a file into that login's upload group). Administrators may upload for anyone, so the list only fills the menu. The page shows whose numbers they are.
 - **Other actions** (each its own button, so they never save the fields above): **Set a new password** (they are logged out everywhere; usually better: ask them to use "Forgot your password?"), **Log in as** the login, and **Delete this login** (asks first; their uploads and specimens stay; not your own login). A login without a password also has **Save and make a set-password link**.
 
+Login numbers are never reused (since 21 October 2026): a new login gets a number above every number any login ever had, so it never takes over a deleted login's curator folder (`web/curator/<number>/`, with the images that login put into page text) or its name as author of page text. The number shown on the new-login form may therefore change when you save.
+
 Removed in October 2026 because they did nothing or were misleading: the greyed-out "Login ID" box, the "None" entry and the Ctrl-click note of the old project and country lists, the note about the "Changed Password" button, and the password boxes on other people's logins (they were never saved by Done). Before this change, saving another person's login with empty password boxes was refused with "Empty Password".
 
 ## "Your session changed"
 
-If AntWeb restarted while the form was open (with "Keep me logged in" you are logged in again at once, in a new session), or you logged in again in another tab, the form's security token no longer matches. Instead of the "Request refused (403)" page, Add an uploader shows the form again with what you typed and the note "Your session changed (AntWeb restarted or you logged in again)". Nothing was done: check the form and press Add uploader (or Send) again.
+If AntWeb restarted while the form was open (with "Keep me logged in" you are logged in again at once, in a new session), or you logged in again in another tab, the form's security token no longer matches. Instead of the "Request refused (403)" page, Add an uploader shows the form again with what you typed and the note "Your session changed (AntWeb restarted or you logged in again)". Nothing was done: check the form and press Add uploader again.
+
+Until 21 October 2026 the page had a **Send this email** button that sent the welcome email from antweb@antweb.org. It was replaced by the draft, because each new uploader needs details that only the administrator knows.

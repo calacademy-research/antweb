@@ -67,7 +67,8 @@ if (sortedBy == null) {
             <select name="sortBy" id="sortBy_select">
      <% } else { %>
           <form id="sortby">
-            <input type="hidden" id="sortby_action" name="sortby_action" value="<%= AntwebProps.getDomainApp() %>/advancedSearchResults.do" />
+            <%-- A paged search sorts in the database: the sort runs the search again (advancedSearch.do). --%>
+            <input type="hidden" id="sortby_action" name="sortby_action" value="<%= AntwebProps.getDomainApp() %><%= request.getAttribute("searchPaging") != null ? "/advancedSearch.do" : "/advancedSearchResults.do" %>" />
             <input type="hidden" id="sortby_extras" name="b" value="" />
             <input type="hidden" id="show_tool" name="t" value="" />
             <span class="label">Sort by:</span>
@@ -227,6 +228,10 @@ if (sortedBy == null) {
       return;
     }
 
+    // Paged advanced search list (advancedSearchResults-body.jsp): first row shown and the number of its first row.
+    int srFirst = request.getAttribute("specimenReportFirst") instanceof Integer ? (Integer) request.getAttribute("specimenReportFirst") : 0;
+    int srNumberOffset = request.getAttribute("specimenReportNumberOffset") instanceof Integer ? (Integer) request.getAttribute("specimenReportNumberOffset") : 0;
+
     // To avoid ConcurrentModificationException
     ArrayList<Taxon> specimenReportTaxa = taxon.getChildren();
     int specimenReportTaxaSize = specimenReportTaxa.size();
@@ -245,7 +250,7 @@ if (sortedBy == null) {
 
     ++index;
     //A.log("specimenReport.jsp index:" + index + " thisChild:" + thisChild);
-    if (index <= limit) { // set in showBrowse-body.jsp from Taxon.MAX_DISPLAY or override.
+    if (index >= srFirst && index <= limit) { // limit: set in showBrowse-body.jsp from Taxon.MAX_DISPLAY or override; srFirst: paged search list.
 
       // Note the advancedSearchResults-body.jsp also has a hardcoded 2000
       //A.log("specimenReport.jsp index:" + index); }
@@ -283,7 +288,7 @@ if (sortedBy == null) {
             <div class="specimen_layout<% if (!thisChild.getHasImages()) { %> no_photos<% } %>">
                 <div class="sd_checkbox">
                 <% String indexNote = "";
-                   if (LoginMgr.isAdmin(request)) indexNote = (index + 1) + ".&nbsp;&nbsp;";
+                   if (LoginMgr.isAdmin(request)) indexNote = (srNumberOffset + index + 1) + ".&nbsp;&nbsp;";
                 %>
                     <b><%= indexNote %></b><span class="sdcb<% if (!thisChild.getHasImages()) { %> np<% } %>"><input type="checkbox" class="thecb" name="chosen" value="<%= Html.escAttr(for_chosen) %>"></span>
                 </div>

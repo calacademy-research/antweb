@@ -26,7 +26,8 @@ public final class ProjectMgrAction extends AntwebAction {
 		Locale locale = getLocale(request);
 		HttpSession session = request.getSession();
         
-        ActionForward c = Check.curator(request, mapping); if (c != null) return c;    
+        // Creating and deleting projects: administrators only (the page itself checks too).
+        ActionForward c = Check.admin(request, mapping); if (c != null) return c;    
         Login accessLogin = LoginMgr.getAccessLogin(request);
 			
         if (HttpUtil.getRequestURI(request).contains("projectMgr")) return mapping.findForward("projectMgr");        

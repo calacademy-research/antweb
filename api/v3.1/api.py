@@ -2217,6 +2217,15 @@ def getBioregionTaxa():
 
 # --- Unimaged Geolocale Taxa API -------------------------------------------------------------------------------------    
 
+def imagedTaxaSql(casteClause=""):
+    """Names (taxon_name) that are imaged: a specimen of the name has an image of the ant, that is an image
+    whose shot type is not 'l' (label). Used by /unimagedGeolocaleTaxa (2026-10-21; before: a specimen with
+    image_count > 1, so a name whose specimens had one image each was "unimaged", and label images counted).
+    casteClause: "" or " and s.caste = '...'" (specimen alias s)."""
+    return ("select s.taxon_name from specimen s join image i on i.image_of_id = s.code"
+            " where lower(trim(coalesce(i.shot_type, ''))) <> 'l'" + casteClause)
+
+
 @application.route('/unimagedGeolocaleTaxa', methods=['GET'])
 def getUnimagedGeolocaleTaxa():
     geolocaleName = request.args.get('geolocaleName', default='*', type=str)
@@ -2255,27 +2264,27 @@ def getUnimagedGeolocaleTaxa():
         casteFieldW = ", 'worker' as caste"
         casteFieldQ = ", 'queen' as caste"
         casteFieldM = ", 'male' as caste"
-        casteClauseW = " and caste = 'worker'"
-        casteClauseQ = " and caste = 'queen'"
-        casteClauseM = " and caste = 'male'"
+        casteClauseW = " and s.caste = 'worker'"
+        casteClauseQ = " and s.caste = 'queen'"
+        casteClauseM = " and s.caste = 'male'"
 
     # query = ""
 
     query = f"select gt.taxon_name {casteFieldW} from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name" \
             f" {rankClause}{statusClause} and geolocale_id = {str(geolocale.id)}" \
-            f" and gt.taxon_name not in (select taxon_name from specimen where image_count > 1 {casteClauseW})"
+            f" and gt.taxon_name not in ({imagedTaxaSql(casteClauseW)})"
 
     if byCaste == '1':
 
         query += f" union select gt.taxon_name {casteFieldQ} from geolocale_taxon gt, taxon t" \
                  f" where gt.taxon_name = t.taxon_name {rankClause}{statusClause}" \
                  f" and geolocale_id = {str(geolocale.id)}" \
-                 f" and gt.taxon_name not in (select taxon_name from specimen where image_count > 1 {casteClauseQ})"
+                 f" and gt.taxon_name not in ({imagedTaxaSql(casteClauseQ)})"
 
         query += f" union select gt.taxon_name {casteFieldM} from geolocale_taxon gt, taxon t" \
                  f" where gt.taxon_name = t.taxon_name {rankClause}{statusClause}" \
                  f" and geolocale_id = {str(geolocale.id)}" \
-                 f" and gt.taxon_name not in (select taxon_name from specimen where image_count > 1 {casteClauseM})" \
+                 f" and gt.taxon_name not in ({imagedTaxaSql(casteClauseM)})" \
                  f" order by taxon_name, caste desc"
 
     if int(limit) > 0:

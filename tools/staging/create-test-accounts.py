@@ -27,6 +27,12 @@ password by logging in through the local port 127.0.0.1:8081.
 
 Refuses to run unless the host name is "staging" and the repository is /root/antweb-next, and
 between 04:45 and 08:15 Pacific (the nightly run).
+
+Weekly refresh from production (tools/staging/refresh-from-prod.sh) uses two more options:
+    --save-to FILE [--keep-logins FILE]   before the load: save the test group and the logins to
+                                          keep, with their password hashes (JSON, chmod 600)
+    --restore-from FILE                   after the load: put them back with the same hashes, so
+                                          the passwords in the GitHub secrets keep working
 """
 import argparse
 import base64
@@ -148,18 +154,29 @@ def read_db_properties(path=DB_PROPERTIES):
 
 
 class Db:
-    def __init__(self):
-        self.user, self._password = read_db_properties()
+    def __init__(self, user=None, password=None, container=DB_CONTAINER):
+        if user is None:
+            user, password = read_db_properties()
+        self.user, self._password, self.container = user, password, container
+
+    def _mysql(self, sql, raw=False):
+        env = dict(os.environ, MYSQL_PWD=self._password)
+        cmd = ["docker", "exec", "-i", "-e", "MYSQL_PWD", self.container,
+               "mysql", "-N", "-B", "--default-character-set=utf8mb4", "-u", self.user, DATABASE]
+        if raw:
+            cmd.insert(cmd.index("-B") + 1, "-r")
+        r = subprocess.run(cmd, input=sql, env=env, capture_output=True, text=True)
+        if r.returncode != 0:
+            sys.exit("database command failed: " + r.stderr.strip())
+        return r.stdout
 
     def run(self, sql):
         """Run SQL (read from stdin by the mysql client); rows as lists of strings."""
-        env = dict(os.environ, MYSQL_PWD=self._password)
-        r = subprocess.run(["docker", "exec", "-i", "-e", "MYSQL_PWD", DB_CONTAINER,
-                            "mysql", "-N", "-B", "--default-character-set=utf8mb4", "-u", self.user, DATABASE],
-                           input=sql, env=env, capture_output=True, text=True)
-        if r.returncode != 0:
-            sys.exit("database command failed: " + r.stderr.strip())
-        return [line.split("\t") for line in r.stdout.splitlines() if line != ""]
+        return [line.split("\t") for line in self._mysql(sql).splitlines() if line != ""]
+
+    def json_rows(self, sql):
+        """Rows of a query that selects one JSON_OBJECT(...) column, as dicts."""
+        return [json.loads(line) for line in self._mysql(sql, raw=True).splitlines() if line.strip()]
 
     def value(self, sql):
         rows = self.run(sql)
@@ -344,6 +361,156 @@ def remove(db, assume_yes):
     return True
 
 
+# ---------- keep across a refresh from production (tools/staging/refresh-from-prod.sh) ----------
+#
+# --save-to FILE writes the test group and the logins to keep (the three test logins plus any
+# names listed in --keep-logins FILE) with their password HASHES, rights and project/country rows,
+# as JSON (chmod 600). --restore-from FILE puts them back after production's database has been
+# loaded: the test group is created again if missing (new id), each login gets back its saved
+# hash, so the passwords in the GitHub secrets keep working. Logins that also exist in
+# production keep production's id; logins that do not are inserted with a new id.
+
+SAVE_VERSION = 1
+LOGIN_COLUMNS = ["id", "name", "first_name", "last_name", "email", "password", "group_id", "is_admin",
+                 "is_upload_specimens", "is_upload_images", "upload_as"]
+LOGIN_NAME_RE = re.compile(r"[A-Za-z0-9_.@+-]{1,64}")
+
+
+def read_keep_logins(path):
+    """Login names from a file, one per line; blank lines and # comments ignored."""
+    if not path or not os.path.isfile(path):
+        return []
+    names = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            name = line.split("#", 1)[0].strip()
+            if not name:
+                continue
+            if not LOGIN_NAME_RE.fullmatch(name):
+                sys.exit(f"{path}: not a login name: {name!r}")
+            if name not in names:
+                names.append(name)
+    return names
+
+
+def keep_names(extra):
+    names = [a[0] for a in ACCOUNTS]
+    return names + [n for n in extra if n not in names]
+
+
+def sql_str(value):
+    """SQL literal for any text (quotes and backslashes escaped), or NULL."""
+    if value is None:
+        return "NULL"
+    s = str(value)
+    if "\x00" in s:
+        raise ValueError("NUL character in " + repr(s))
+    return "'" + s.replace("\\", "\\\\").replace("'", "''") + "'"
+
+
+def sql_int(value):
+    return "NULL" if value is None else str(int(value))
+
+
+def table_columns(db, table):
+    return {r[0] for r in db.run(
+        f"select column_name from information_schema.columns where table_schema = database() and table_name = {q(table)}")}
+
+
+def save_accounts(db, names):
+    """The test group and the named logins, as a dict (see SAVE_VERSION)."""
+    gid = group_id(db)
+    name_list = ",".join(sql_str(n) for n in names)
+    obj = ", ".join(f"{sql_str(c)}, {c}" for c in LOGIN_COLUMNS)
+    logins = db.json_rows(f"select json_object({obj}) from login where name in ({name_list}) order by id")
+    tables = existing_tables(db)
+    for login in logins:
+        login["in_test_group"] = gid is not None and login.get("group_id") == gid
+        login["projects"] = [r[0] for r in db.run(
+            f"select project_name from login_project where login_id = {int(login['id'])} order by project_name")] \
+            if "login_project" in tables else []
+        login["countries"] = [r[0] for r in db.run(
+            f"select country from login_country where login_id = {int(login['id'])} order by country")] \
+            if "login_country" in tables else []
+    return {"version": SAVE_VERSION, "saved": pacific_now().isoformat(timespec="seconds"),
+            "group": {"name": GROUP_NAME, "abbrev": GROUP_ABBREV, "id": gid} if gid else None,
+            "logins": logins}
+
+
+def write_saved(path, data):
+    fd = os.open(path + ".tmp", os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=1)
+    os.chmod(path + ".tmp", 0o600)
+    os.replace(path + ".tmp", path)
+
+
+def restore_statements(saved, gid, existing_ids, login_cols, has_project, has_country):
+    """SQL (one string) that puts the saved logins back. Pure, unit-tested.
+
+    gid: the test group's id now (after create_group); existing_ids: {name: id} of saved names
+    that exist in the loaded database; login_cols: the login table's columns."""
+    out = []
+    for login in saved["logins"]:
+        name = login["name"]
+        group = gid if login.get("in_test_group") else login.get("group_id")
+        sets = {"password": sql_str(login["password"]), "email": sql_str(login.get("email") or ""),
+                "group_id": sql_int(group), "is_admin": sql_int(login.get("is_admin") or 0),
+                "is_upload_specimens": sql_int(login.get("is_upload_specimens") or 0),
+                "is_upload_images": sql_int(login.get("is_upload_images") or 0),
+                "upload_as": sql_str(login.get("upload_as"))}
+        for col, val in (("inactive", "0"), ("inactive_since", "NULL"), ("must_reset", "0")):
+            if col in login_cols:
+                sets[col] = val
+        if name in existing_ids:
+            lid = int(existing_ids[name])
+            out.append("update login set " + ", ".join(f"{k} = {v}" for k, v in sets.items())
+                       + (", created = created" if "created" in login_cols else "") + f" where id = {lid};")
+            id_expr = str(lid)
+        else:
+            cols = ["id", "name", "first_name", "last_name"] + list(sets)
+            vals = ["coalesce(max(id), 0) + 1", sql_str(name), sql_str(login.get("first_name")),
+                    sql_str(login.get("last_name") or "")] + list(sets.values())
+            out.append(f"insert into login ({', '.join(cols)}) select {', '.join(vals)} from login;")
+            id_expr = f"(select id from (select id from login where name = {sql_str(name)}) as t)"
+        if has_project:
+            out.append(f"delete from login_project where login_id = {id_expr};")
+            for p in login.get("projects") or []:
+                out.append(f"insert into login_project (login_id, project_name) values ({id_expr}, {sql_str(p)});")
+        if has_country:
+            out.append(f"delete from login_country where login_id = {id_expr};")
+            for c in login.get("countries") or []:
+                out.append(f"insert into login_country (login_id, country) values ({id_expr}, {sql_str(c)});")
+    return "\n".join(out) + "\n"
+
+
+def restore_accounts(db, saved):
+    """Puts the saved group and logins back; returns the names whose hash is not as saved."""
+    if saved.get("version") != SAVE_VERSION:
+        sys.exit(f"saved file has version {saved.get('version')}, expected {SAVE_VERSION}")
+    gid = None
+    if saved.get("group") or any(login.get("in_test_group") for login in saved["logins"]):
+        gid = create_group(db)
+    names = [login["name"] for login in saved["logins"]]
+    existing = {}
+    if names:
+        existing = {r[0]: int(r[1]) for r in db.run(
+            "select name, id from login where name in (" + ",".join(sql_str(n) for n in names) + ")")}
+    tables = existing_tables(db)
+    sql = restore_statements(saved, gid, existing, table_columns(db, "login"),
+                             "login_project" in tables, "login_country" in tables)
+    db.run(sql)
+    wrong = []
+    for login in saved["logins"]:
+        now = db.value(f"select password from login where name = {sql_str(login['name'])}")
+        state = "restored" if now == login["password"] else "NOT RESTORED"
+        if now != login["password"]:
+            wrong.append(login["name"])
+        print(f"Login {login['name']}: {state} (id {login_id(db, login['name'])}, "
+              f"{'existed in production' if login['name'] in existing else 'new'})")
+    return wrong
+
+
 # ---------- main ----------
 
 def main(argv=None):
@@ -352,6 +519,12 @@ def main(argv=None):
     ap.add_argument("--reset-passwords", action="store_true", help="give the three test logins new passwords")
     ap.add_argument("--yes", action="store_true", help="with --remove: do not ask")
     ap.add_argument("--no-restart", action="store_true", help="do not restart AntWeb (logins work after the next restart)")
+    ap.add_argument("--save-to", metavar="FILE",
+                    help="save the test group and logins to keep (hashes, rights) to FILE, change nothing")
+    ap.add_argument("--restore-from", metavar="FILE",
+                    help="put the logins saved with --save-to back (same passwords); no restart")
+    ap.add_argument("--keep-logins", metavar="FILE",
+                    help="with --save-to: more login names to keep, one per line (e.g. the ANTWEB_TEST_USER login)")
     args = ap.parse_args(argv)
 
     repo_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
@@ -362,6 +535,29 @@ def main(argv=None):
         return 2
 
     db = Db()
+    if args.save_to:
+        names = keep_names(read_keep_logins(args.keep_logins))
+        data = save_accounts(db, names)
+        write_saved(args.save_to, data)
+        found = [login["name"] for login in data["logins"]]
+        print(f"Saved {len(found)} login(s) to {args.save_to}: {', '.join(found) or 'none'}"
+              + (f"; test group id {data['group']['id']}" if data["group"] else "; no test group"))
+        missing = [n for n in names if n not in found]
+        if missing:
+            print("Not on this server (not saved): " + ", ".join(missing))
+        return 0
+    if args.restore_from:
+        with open(args.restore_from, encoding="utf-8") as f:
+            saved = json.load(f)
+        if not saved["logins"] and not saved.get("group"):
+            print("Nothing saved: no test group and no logins to put back.")
+            return 0
+        wrong = restore_accounts(db, saved)
+        if wrong:
+            print("FAILED for: " + ", ".join(wrong))
+            return 1
+        print("All saved logins are back with their saved passwords. AntWeb loads them when it starts.")
+        return 0
     if args.remove:
         if remove(db, args.yes) and not args.no_restart:
             restart_app()

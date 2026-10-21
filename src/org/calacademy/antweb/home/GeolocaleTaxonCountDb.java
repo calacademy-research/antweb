@@ -101,10 +101,14 @@ public class GeolocaleTaxonCountDb extends CountDb {
         return super.countSpecimens(countable);
     }
 
-    /** Sets specimen_count to 0 on the species and subspecies rows of one geolocale's list. */
+    /**
+     * Sets the count columns of every row of one geolocale's list to 0 (2026-10-21; before: only specimen_count
+     * of the species and subspecies rows, so a genus or subfamily row whose children were gone kept its old
+     * Species, Genera and Specimens numbers). The crawl then writes every row that has children or specimens.
+     */
     public int resetSpecimenCounts(int geolocaleId) throws SQLException {
-        String dml = "update geolocale_taxon set specimen_count = 0 where geolocale_id = ? and specimen_count <> 0"
-            + " and taxon_name in (select t.taxon_name from taxon t where t.taxarank in ('species', 'subspecies'))";
+        String dml = "update geolocale_taxon set specimen_count = 0, species_count = 0, genus_count = 0, subfamily_count = 0"
+            + " where geolocale_id = ? and (specimen_count <> 0 or species_count <> 0 or genus_count <> 0 or subfamily_count <> 0)";
         try (PreparedStatement stmt = getConnection().prepareStatement(dml)) {
             stmt.setInt(1, geolocaleId);
             return stmt.executeUpdate();

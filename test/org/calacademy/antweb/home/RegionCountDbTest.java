@@ -17,6 +17,7 @@ import org.calacademy.antweb.geolocale.Geolocale;
 import org.calacademy.antweb.home.GeolocaleDb;
 import org.calacademy.antweb.home.GeolocaleTaxonCountDb;
 import org.calacademy.antweb.home.PlaceImageCountDb;
+import org.calacademy.antweb.home.PlaceTotals;
 import org.calacademy.antweb.util.CountCheck;
 
 /**
@@ -246,12 +247,15 @@ public class RegionCountDbTest extends TestCase {
         assertTrue(placeSpecimens(EASTERN_AFRICA) <= countries);
 
         // "Specimens per Subfamily" chart: the same specimens.
-        String chart = new GeolocaleDb(connection).getSpecimenSubfamilyDistJsonQuery("id = " + EASTERN_AFRICA);
-        try (Statement s = connection.createStatement(); ResultSet r = s.executeQuery(chart)) {
+        String chart = PlaceTotals.specimenPieSql(PlaceTotals.GEOLOCALE);
+        try (java.sql.PreparedStatement s = connection.prepareStatement(chart)) {
+          s.setString(1, "" + EASTERN_AFRICA);
+          try (ResultSet r = s.executeQuery()) {
             assertTrue(r.next());
             assertEquals(SUBFAMILY, r.getString("subfamily"));
             assertEquals(4, r.getInt("count"));
             assertFalse(r.next());
+          }
         }
     }
 

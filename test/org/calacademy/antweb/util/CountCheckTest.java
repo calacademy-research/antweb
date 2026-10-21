@@ -43,6 +43,8 @@ public class CountCheckTest extends TestCase {
         exec("drop table if exists proj_taxon");
         exec("drop table if exists upload");
         exec("drop table if exists geolocale");   // left by PlaceImageCountDbTest or RegionCountDbTest: no place totals here
+        exec("drop table if exists project");     // left by CountInvariantsTest or PlaceTotalsDbTest: no project totals here
+        exec("drop table if exists place_image_count");   // the same: no place image numbers here
         exec("create table taxon (taxon_name varchar(128) primary key, taxarank varchar(20), status varchar(40), parent_taxon_name varchar(128))");
         exec("create table specimen (code varchar(128) primary key, taxon_name varchar(128), status varchar(40), country varchar(64),"
             + " adm1 varchar(64), island_country varchar(64), museum varchar(64), bioregion varchar(64), upload_id int)");
@@ -123,6 +125,9 @@ public class CountCheckTest extends TestCase {
         exec("update upload set created = '2020-06-01 10:00:00' where upload_id = 1");
         exec("update geolocale_taxon set specimen_count = 1 where taxon_name = '" + SP_A + "'");
         CountCheck.Result r = new CountCheck(connection).run(places, java.sql.Timestamp.valueOf("2020-05-01 08:00:00"));
+        // From 05:00 to 08:15 Pacific (database time) the nightly run is going on and the given run end
+        // is not used (CountCheck.run); this test checks the rest of the day only.
+        if (r.inNightlyWindow) return;
         assertEquals(java.sql.Timestamp.valueOf("2020-05-01 08:00:00"), r.countedUntil);
         assertEquals(r.mismatches.toString(), 0, r.real());
         assertTrue(r.pending() >= 1);

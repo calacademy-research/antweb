@@ -1,0 +1,12 @@
+# /etc/cron.d/staging-refresh -- STAGING droplet only (ssh root@165.232.136.170). Installed by hand,
+# never by a deploy: see docs/runbook.md, "Staging refresh". Remove: rm /etc/cron.d/staging-refresh
+#
+# Sundays 02:30 Pacific (cron uses the droplet's time zone; the install step checks that it is
+# America/Los_Angeles): after production's 01:00 dump, before
+# the 04:00 weekly reboot and the 05:00 nightly. --not-after 03:15: if the download or the safety
+# dump ran late, stop before AntWeb is touched, so the load cannot run into the reboot.
+# Log: journalctl -t staging-refresh  and  /root/staging-refresh/refresh.log
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+MAILTO=""
+30 2 * * 0 root /root/antweb-next/tools/staging/refresh-from-prod.sh --not-after 03:15 >/dev/null 2>&1

@@ -39,8 +39,8 @@ public final class BioregionMapMgrAction extends AntwebAction {
 		BioregionMapMgrForm bioregionMapMgrForm = (BioregionMapMgrForm) form;
         String orderBy = bioregionMapMgrForm.getOrderBy();
         //String orderBy = request.getParameter("orderBy");
-        if ("genus".equals(orderBy)) orderBy = " order by genus";
-          else orderBy = " order by subfamily, genus";
+        if ("genus".equals(orderBy)) orderBy = " order by t.genus";
+          else orderBy = " order by t.subfamily, t.genus";
         s_log.debug("execute() orderBy:" + orderBy + " param:" + request.getParameter("orderBy"));
 
         //TreeMap<Taxon, String> genusBioregionMap = new TreeMap<String, String>();
@@ -53,20 +53,16 @@ public final class BioregionMapMgrAction extends AntwebAction {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, "BioregionMgrAction.execute()");
 
-			s_log.debug("execute() refresh:" + bioregionMapMgrForm.isRefresh());
-            if (bioregionMapMgrForm.isRefresh()) {
-              // Rebuilds the whole table: admins only, and only from the POST button (form token).
-              if (!LoginMgr.isAdmin(request)) {
-                request.setAttribute("message", "Only an administrator can refresh the bioregion maps.");
+			// The "Refresh" that rebuilt the whole table from specimen data (isRefresh=true) was removed
+			// on 2026-10-21: it counted introduced populations as native and overwrote hand corrections.
+			// The isRefresh field (shared with the Introduced Map Manager's form) is ignored here.
+            if (HttpUtil.isPost(request)) {
+			  // A genus's native bioregions decide the "introduced" flags across the site: administrators
+			  // only, like the Introduced Map Manager (curators can look at the table).
+			  if (!LoginMgr.isAdmin(request)) {
+                request.setAttribute("message", "Only an administrator can change the native bioregions. Nothing was changed.");
                 return mapping.findForward("message");
-              }
-              if (!HttpUtil.isPost(request)) {
-                request.setAttribute("message", "Nothing was changed. Use the Refresh button on the Bioregion Map Manager page.");
-                return mapping.findForward("message");
-              }
-			  TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
-              taxonPropDb.refreshBioregionMap();
-            } else if (HttpUtil.isPost(request)) {
+			  }
 			  s_log.debug("execute POST values:" + bioregionMapMgrForm);
 			  TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
 			  String taxonName = bioregionMapMgrForm.getTaxonName();
@@ -75,42 +71,24 @@ public final class BioregionMapMgrAction extends AntwebAction {
                 return mapping.findForward("message");
 			  }
               taxonPropDb.updateBioregionMap(taxonName, bioregionMapMgrForm.getValues());
+              // Uploads check specimens against the genus in memory: give it the new map now
+              // (otherwise only the next reload of the taxa, after an upload or the nightly run, has it).
+              Taxon inMemory = TaxonMgr.getGenus(taxonName);
+              if (inMemory != null) inMemory.setBioregionMap(bioregionMapMgrForm.getValues());
 			}
 
-            String query1 = "select taxon_name from taxon where taxarank = 'genus' and status = 'valid' and fossil = false " + orderBy;
+            // All valid extant genera with their bioregion map (one query; no value is put into SQL).
+            String query1 = "select t.taxon_name, tp.value from taxon t"
+                + " left join taxon_prop tp on tp.taxon_name = t.taxon_name and tp.prop = 'bioregionMap'"
+                + " where t.taxarank = 'genus' and t.status = 'valid' and t.fossil = false " + orderBy;
             stmt = connection.createStatement();
             rset = stmt.executeQuery(query1);
-
-            Statement stmt2 = null;
-            ResultSet rset2 = null;
-            
             while (rset.next()) {
-
-              boolean bioregionMapFound = false;
-
-              String taxonName = rset.getString("taxon_name");
-
               DummyTaxon genus = new DummyTaxon();
-              genus.setTaxonName(taxonName);
-
-  			  String query2 = "select value from taxon_prop where prop = 'bioregionMap' and taxon_name = '" + taxonName + "'";       
-              stmt2 = connection.createStatement();
-              rset2 = stmt2.executeQuery(query2);
-              
-              while (rset2.next()) {
-                bioregionMapFound = true;
-                String bioregionMap = rset2.getString("value");
-                
-                genus.setBioregionMap(bioregionMap);
-                //genusBioregionMap.put(taxonName, bioregionMap);
-              }
-
-              genusList.add(genus); 
-                          
-              stmt2.close();
-              rset2.close();
-			
-			  //A.log("execute() taxonName:" + taxonName);
+              genus.setTaxonName(rset.getString("taxon_name"));
+              String bioregionMap = rset.getString("value");
+              if (bioregionMap != null) genus.setBioregionMap(bioregionMap);
+              genusList.add(genus);
             }
                         
         } catch (SQLException e) {

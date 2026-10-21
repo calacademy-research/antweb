@@ -21,6 +21,8 @@
 <html:html lang="true">
 <head>
 <meta charset="utf-8"/>
+<%-- Phones: lay out at the device width; admin_style.css fits the page (max-width 760px rules). --%>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <%-- The title is plain text: escaped here, so names typed by curators (project titles, ...) can not add markup. --%>
 <tiles:importAttribute name="title" ignore="true" />
 <% Object layoutTitle = pageContext.getAttribute("title"); %>

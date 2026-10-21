@@ -167,6 +167,8 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
                     specimenItem.clear();
                     taxonItem.clear();
+                    // The report lines' specimen lists: set when the code column is read (SpecimenUploadParse).
+                    getMessageMgr().setCurrentCode(null);
 
                     // Used for the taxon's source. Something like specimen1.txt
                     String uploadFileName = uploadFile.getFileNameBase(); //uploadFile.getBackupFileName();
@@ -206,6 +208,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 					//Profiler.profile("importSpecimenLoop", startTimeLoop);                     
 		
   	  	        } // end while.
+                getMessageMgr().setCurrentCode(null);
 
 				//A.log("importSpecimens() final lineNum:" + lineNum + " okTotal:" + okTotal); 
  
@@ -439,6 +442,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 
              s_log.debug("groupMorphoGenera() query:" + query);
 
+            java.util.Map<String, String> genusLinks = new java.util.HashMap<>();
             rset = stmt.executeQuery(query);
             while (rset.next()) {
                 //String code = (String) rset.getObject("code");
@@ -451,7 +455,25 @@ public class SpecimenUpload extends SpecimenUploadParse {
                 //String specimenLink = Specimen.makeReportLink(code);        
 
                 getMessageMgr().addToMessages(MessageMgr.groupMorphoGenera, genusLink); //, specimenLink);  
-            }            
+                genusLinks.put(subfamily + "\t" + genus, genusLink);
+            }
+            rset.close();
+
+            // The specimens of each morpho genus, in one query (the report line's "N specimens" list).
+            // A failure here leaves the lines without their lists; the upload goes on.
+            if (!genusLinks.isEmpty()) {
+                String codesQuery = "select subfamily, genus, code from specimen where access_group = " + group.getId()
+                  + " and (subfamily, genus) in (" + query + ") order by code";
+                try {
+                    rset = stmt.executeQuery(codesQuery);
+                    while (rset.next()) {
+                        String genusLink = genusLinks.get(rset.getString("subfamily") + "\t" + rset.getString("genus"));
+                        if (genusLink != null) getMessageMgr().addCode(MessageMgr.groupMorphoGenera, genusLink, rset.getString("code"));
+                    }
+                } catch (SQLException e) {
+                    s_log.warn("groupMorphoGenera() specimen codes not listed. e:" + e + " query:" + codesQuery);
+                }
+            }
         } catch (SQLException e) {
             s_log.error("groupMorphoGenera() e:" + e + " query:" + query);
             throw e;
