@@ -44,7 +44,10 @@ header (ndjson replies have no metadata, only the header):
 The notice is also given when no `limit` was asked for and the reply is full (500 records: there
 may be more). `/geolocales`, `/bioregions` and `/geoSpeciesStats` used to ignore `limit` and
 return everything; they now page like the others. Their counts (`geolocaleCount`, `bioregionCount`, `count`) are
-for the page returned, not the total. Cloudflare also limits each address to 15
+for the page returned, not the total.
+
+`/specimens` and the other record endpoints have no fixed sort order (as before), so when paging
+through a large result, de-duplicate on `specimenCode` (or the record's id). Cloudflare also limits each address to 15
 requests per 10 seconds on `/v3.1/`.
 
 The cap is a server setting, not code: `maxLimit=<n>` in `etc/api-db.properties` (the API's own

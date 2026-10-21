@@ -48,8 +48,7 @@ def _apiProperties(path=API_PROPERTIES):
     # mounted in the api container, as /antweb-etc/api-db.properties). Empty if missing.
     try:
         with open(path) as f:
-            pairs = [line.strip().split('=', 1) for line in f if '=' in line and not line.strip().startswith('#')]
-        return {k.strip(): v.strip() for k, v in pairs}
+            return dict(line.strip().split('=', 1) for line in f if '=' in line and not line.startswith('#'))
     except OSError:
         return {}
 
@@ -229,8 +228,10 @@ CAP_DEFAULT = 500
 
 
 def readMaxLimit(props):
+    # The login lines are read exactly as before; only this key tolerates spaces (maxLimit = 750).
+    raw = next((v for k, v in props.items() if k.strip() == 'maxLimit'), CAP_DEFAULT)
     try:
-        value = int(str(props.get('maxLimit', CAP_DEFAULT)).strip())
+        value = int(str(raw).strip())
     except ValueError:
         value = CAP_DEFAULT
     return value if value > 0 else CAP_DEFAULT
