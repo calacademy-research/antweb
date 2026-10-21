@@ -29,6 +29,8 @@ import org.calacademy.antweb.util.Html;
  *   subspecies to species                      raised to species: NEW (Author year)
  *   species to subspecies                      placed as subspecies: NEW (Author year)
  *   A b b -> A b                               nominotypical subspecies, shown as the species
+ *   A b b -> C d (A b a synonym of C d)        synonym: junior synonym of C d (Author year);
+ *                                              nominotypical subspecies of A. b
  *   same genus, only the ending of the epithet spelling as in AntCat: NEW
  *   other spelling (AntCat: misspelling)       misspelling of NEW
  *   the uploaded name is valid again           Your name NEW is valid again. It had been shown under
@@ -195,17 +197,21 @@ public final class NameUpdateReason {
             return new NameUpdateReason("unnecessary replacement name for " + abbreviate(target.name, old.name) + refPart(ref)
                 + "; junior objective synonym", old.antcatId != null ? old.antcatId : target.antcatId);
         }
-        String text = (nominotypical != null ? "synonym: " + nominotypical + " is a junior synonym of " : "synonym: junior synonym of ") + target.name;
+        // One wording for every synonym (Brian Fisher, 2026-10-20). From a nominotypical subspecies (Solenopsis
+        // texana texana) the synonymy is the species': "synonym: junior synonym of Solenopsis canariensis
+        // (Seifert 2026a); nominotypical subspecies of S. texana", not "synonym: Solenopsis texana is a junior ...".
+        String text = "synonym: junior synonym of " + target.name;
+        String chain = nominotypical == null ? "" : "; nominotypical subspecies of " + abbreviate(nominotypical, target.name);
         String ref = old.history.juniorSynonymRef(isNew);
-        if (ref != null) return new NameUpdateReason(text + refPart(ref), old.antcatId);
+        if (ref != null) return new NameUpdateReason(text + refPart(ref) + chain, old.antcatId);
         if (old.history.refs(e -> AntcatHistory.JUNIOR_SYNONYM_OF.equals(e.heading) && isNew.test(e.subject)).isEmpty()) {
             // No synonymy with the senior in the old name's history: the senior's history.
             ref = target.history.seniorSynonymRef(s -> sameTaxon(parts(s), o, false));
             if (ref == null) ref = target.history.seniorSynonymRef(isOld);
             if (ref == null) ref = target.history.seniorSynonymRef(s -> sameLastEpithet(parts(s), o));
-            if (ref != null) return new NameUpdateReason(text + refPart(ref), target.antcatId);
+            if (ref != null) return new NameUpdateReason(text + refPart(ref) + chain, target.antcatId);
         }
-        return new NameUpdateReason(text, fallbackId);
+        return new NameUpdateReason(text + chain, fallbackId);
     }
 
     /** "(Brown, 1975)" or "Brown, 1975" -> "Brown, 1975"; null when there is no year. */
@@ -355,10 +361,16 @@ public final class NameUpdateReason {
         for (String n : names) {
             if (n == null || n.isEmpty()) continue;
             if (!sorted.contains(n)) sorted.add(n);
-            String[] p = n.split(" ", 2);   // and abbreviated: C. cerasi
-            if (p.length == 2 && !p[0].isEmpty()) {
-                String abbr = p[0].charAt(0) + ". " + p[1];
-                if (!sorted.contains(abbr)) sorted.add(abbr);
+            String[] w = n.split(" ");
+            List<String> forms = new ArrayList<>(List.of(n));
+            if (w.length == 3) forms.add(w[0] + " " + w[1]);   // the species of a subspecies (nominotypical: S. texana)
+            for (String f : forms) {
+                if (!sorted.contains(f)) sorted.add(f);
+                String[] p = f.split(" ", 2);   // and abbreviated: C. cerasi
+                if (p.length == 2 && !p[0].isEmpty()) {
+                    String abbr = p[0].charAt(0) + ". " + p[1];
+                    if (!sorted.contains(abbr)) sorted.add(abbr);
+                }
             }
         }
         sorted.sort(Comparator.comparingInt(String::length).reversed());
