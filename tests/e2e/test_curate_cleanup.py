@@ -208,4 +208,5 @@ def test_curate_page_has_no_boxes(curator):
     for gone in ("Access direct by", "Curious Query", 'name="antcatId"', 'name="taxonName"',
                  "action=curiousQuery", ">Refresh</a>"):
         assert gone not in html, f"{gone} still on curate.do"
-    assert "Specimen Upload Reports" in html  # the page itself still renders
+    # The page itself still renders (link renamed "Specimen upload reports" on 2026-10-20).
+    assert "listSpecimenUploads.do" in html and "Specimen upload reports" in html
