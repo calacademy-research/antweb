@@ -13,7 +13,9 @@ import java.util.List;
  * Table specimen_name_update: one row per specimen moved (mode 'changed') or that would be moved
  * (mode 'would_change', report mode and the Preview button) by the nightly name update
  * (SpecimenNameUpdate), and per specimen held back for the curator because its name belongs to two or
- * more AntCat taxa (mode 'shared_name', new_name empty; replaced at each run). Read by the Name
+ * more AntCat taxa (mode 'shared_name', new_name empty; replaced at each run), and per specimen left on a
+ * name AntCat calls valid while its uploaded name points elsewhere (mode 'kept_valid', new_name where the
+ * uploaded name points; replaced at each run). Read by the Name
  * updates page (nameUpdates.do).
  *
  * ensureSchema() creates the table when missing (same DDL: db/upgrade/8.113/2026-10-20-specimen-name-update.sql),
@@ -90,8 +92,15 @@ public class SpecimenNameUpdateDb {
 
     /** Removes the previous list of specimens held back for the curator (shared names): each run makes a new one. */
     public int deleteShared() throws SQLException {
-        try (Statement stmt = connection.createStatement()) {
-            return stmt.executeUpdate("delete from specimen_name_update where mode = '" + SpecimenNameUpdate.SHARED + "'");
+        return deleteMode(SpecimenNameUpdate.SHARED);
+    }
+
+    /** Removes the rows of a list replaced at each run (shared_name, kept_valid). Never the changed rows (the history). */
+    public int deleteMode(String mode) throws SQLException {
+        if (SpecimenNameUpdate.CHANGED.equals(mode)) throw new IllegalArgumentException("the changed rows are the history");
+        try (PreparedStatement stmt = connection.prepareStatement("delete from specimen_name_update where mode = ?")) {
+            stmt.setString(1, mode);
+            return stmt.executeUpdate();
         }
     }
 
@@ -153,12 +162,17 @@ public class SpecimenNameUpdateDb {
      * Specimens of one old and new name with different reasons (uploaded under different names) are separate lines.
      */
     public List<Line> getLines(int groupId, List<Run> runs) throws SQLException {
+        return getLines(groupId, runs, false);
+    }
+
+    /** byUploadedName: specimens uploaded under different names are separate lines (the kept_valid list). */
+    public List<Line> getLines(int groupId, List<Run> runs, boolean byUploadedName) throws SQLException {
         ensureSchema();
         List<Line> lines = new ArrayList<>();
         for (Run run : runs) {
             String query = "select access_group, old_name, new_name, antcat_status, code, uploaded_name, reason, antcat_id from specimen_name_update"
                 + " where run_date = ? and mode = ?" + (groupId > 0 ? " and access_group = ?" : "")
-                + " order by access_group, old_name, new_name, reason, code";
+                + " order by access_group, old_name, new_name, reason" + (byUploadedName ? ", uploaded_name" : "") + ", code";
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setTimestamp(1, run.runDate);
                 stmt.setString(2, run.mode);
@@ -171,7 +185,8 @@ public class SpecimenNameUpdateDb {
                         String newName = r.getString(3);
                         String reason = r.getString(7);
                         if (line == null || line.groupId != g || !line.oldName.equals(oldName) || !line.newName.equals(newName)
-                                || !java.util.Objects.equals(line.reason, reason)) {
+                                || !java.util.Objects.equals(line.reason, reason)
+                                || (byUploadedName && !java.util.Objects.equals(line.uploadedName, r.getString(6)))) {
                             line = new Line();
                             line.runDate = run.runDate;
                             line.mode = run.mode;
@@ -210,7 +225,7 @@ public class SpecimenNameUpdateDb {
         fromDay = day(fromDay);
         toDay = day(toDay);
         List<String> where = new ArrayList<>();
-        where.add("mode != '" + SpecimenNameUpdate.SHARED + "'");   // listed apart: getShared
+        where.add("mode not in ('" + SpecimenNameUpdate.SHARED + "', '" + SpecimenNameUpdate.KEPT_VALID + "')");   // listed apart: getShared, getKeptValid
         if (groupId > 0) where.add("access_group = ?");
         if (fromDay != null) where.add("run_date >= ?");
         if (toDay != null) where.add("run_date < date_add(?, interval 1 day)");
@@ -241,24 +256,36 @@ public class SpecimenNameUpdateDb {
      * one line per group, name and uploaded name, its reason listing the candidates. groupId 0 = all groups.
      */
     public List<Line> getShared(int groupId) throws SQLException {
+        return getLatest(groupId, SpecimenNameUpdate.SHARED, false);
+    }
+
+    /**
+     * The names the latest run left on a name AntCat calls valid while the uploaded name points elsewhere
+     * (kept_valid): one line per group, name, where the uploaded name points, and uploaded name. groupId 0 = all groups.
+     */
+    public List<Line> getKeptValid(int groupId) throws SQLException {
+        return getLatest(groupId, SpecimenNameUpdate.KEPT_VALID, true);
+    }
+
+    private List<Line> getLatest(int groupId, String mode, boolean byUploadedName) throws SQLException {
         ensureSchema();
         List<Run> runs = new ArrayList<>();
         String query = "select run_date, count(*) from specimen_name_update where mode = ?" + (groupId > 0 ? " and access_group = ?" : "")
             + " group by run_date order by run_date desc limit 1";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
-            stmt.setString(1, SpecimenNameUpdate.SHARED);
+            stmt.setString(1, mode);
             if (groupId > 0) stmt.setInt(2, groupId);
             try (ResultSet r = stmt.executeQuery()) {
                 if (r.next()) {
                     Run run = new Run();
                     run.runDate = r.getTimestamp(1);
-                    run.mode = SpecimenNameUpdate.SHARED;
+                    run.mode = mode;
                     run.specimens = r.getInt(2);
                     runs.add(run);
                 }
             }
         }
-        return getLines(groupId, runs);
+        return getLines(groupId, runs, byUploadedName);
     }
 
     /** Groups that have rows. */

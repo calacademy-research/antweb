@@ -20,7 +20,7 @@ import org.calacademy.antweb.AntwebAction;
 import org.calacademy.antweb.Group;
 import org.calacademy.antweb.Login;
 import org.calacademy.antweb.Taxon;
-import org.calacademy.antweb.upload.NameUpdateReason;
+import org.calacademy.antweb.upload.UploadNameReasons;
 import org.calacademy.antweb.upload.SpecimenNameUpdate;
 import org.calacademy.antweb.upload.SpecimenNameUpdateDb;
 import org.calacademy.antweb.util.*;
@@ -36,6 +36,8 @@ import org.calacademy.antweb.util.*;
  * upload report's "Recognized invalid species" section, the reason with AntCat's reference (linked to
  * the AntCat page of the taxon whose history gave it; NameUpdateReason), the number of specimens and
  * their codes. Rows recorded before the reason existed show the AntCat status of the old name.
+ * Two lists of the latest run come first: "Needs the curator's decision" (names shared by two or more
+ * AntCat taxa) and, collapsed, "Not moved: filed under a name AntCat calls valid" (keptValidHtml).
  */
 public final class NameUpdatesAction extends AntwebAction {
 
@@ -74,6 +76,7 @@ public final class NameUpdatesAction extends AntwebAction {
             List<SpecimenNameUpdateDb.Run> runs = groupId < 0 ? new ArrayList<>() : db.getRuns(groupId, from, to, MAX_RUNS);
             List<SpecimenNameUpdateDb.Line> lines = groupId < 0 ? new ArrayList<>() : db.getLines(groupId, runs);
             List<SpecimenNameUpdateDb.Line> shared = groupId < 0 ? new ArrayList<>() : db.getShared(groupId);
+            List<SpecimenNameUpdateDb.Line> keptValid = groupId < 0 ? new ArrayList<>() : db.getKeptValid(groupId);
             List<Integer> groupIds = isAdmin ? db.getGroupIds() : new ArrayList<>();
 
             StringBuilder html = new StringBuilder();
@@ -81,6 +84,7 @@ public final class NameUpdatesAction extends AntwebAction {
             if (isAdmin) html.append(adminBox(request, SpecimenNameUpdate.readSettings()));
             html.append(filterForm(isAdmin, groupIds, Math.max(groupId, 0), from, to));
             html.append(sharedHtml(shared, AntwebProps.getDomainApp()));
+            html.append(keptValidHtml(keptValid, AntwebProps.getDomainApp()));
             html.append(linesHtml(runs, lines, AntwebProps.getDomainApp()));
             request.setAttribute("html", html.toString());
         } catch (SQLException e) {
@@ -108,7 +112,9 @@ public final class NameUpdatesAction extends AntwebAction {
         "Usually nothing: the counts, lists and maps follow by the end of the nightly run (about 8 AM). If a move looks wrong, "
             + "check the name in AntCat first. If the identification itself is out of date, correct it in TaxonWorks (CAS) or in "
             + "your upload file; the next upload or nightly run uses it. Morphospecies, indets and homonyms are never moved, nor are "
-            + "specimens whose name belongs to two or more AntCat taxa: those are listed under \"Needs the curator's decision\".");
+            + "specimens whose name belongs to two or more AntCat taxa: those are listed under \"Needs the curator's decision\". "
+            + "Specimens filed under a name AntCat calls valid are not moved either; they are listed under "
+            + "\"Not moved: filed under a name AntCat calls valid\".");
 
     static String adminBox(HttpServletRequest request, SpecimenNameUpdate.Settings settings) {
         String domainApp = AntwebProps.getDomainApp();
@@ -191,6 +197,47 @@ public final class NameUpdatesAction extends AntwebAction {
         return b.toString();
     }
 
+    /** The one line under the "Not moved: filed under a name AntCat calls valid" heading. */
+    public static final String KEPT_VALID_HELP = "These specimens are filed under a name AntCat calls valid, but the name in the "
+        + "curator's file now points to another name in AntCat. The nightly step leaves them where they are; check that the "
+        + "name they are filed under is right.";
+
+    /**
+     * "Not moved: filed under a name AntCat calls valid (N names)", collapsed (details/summary): specimens the
+     * latest run left on a valid name although their uploaded name now points elsewhere (Brian Fisher,
+     * 2026-10-20: to spot-check before apply). One line per group, name and uploaded name: the name they are
+     * filed under, the uploaded name, where AntCat points the uploaded name, and the specimens.
+     */
+    public static String keptValidHtml(List<SpecimenNameUpdateDb.Line> lines, String domainApp) {
+        if (lines.isEmpty()) return "";
+        StringBuilder b = new StringBuilder("<details class=\"name-update-kept-valid-section\" style=\"margin:18px 0 6px\">"
+            + "<summary style=\"" + SECTION_STYLE + ";cursor:pointer\">Not moved: filed under a name AntCat calls valid ("
+            + String.format("%,d", lines.size()) + (lines.size() == 1 ? " name" : " names") + ")</summary>"
+            + "<p>" + Html.esc(KEPT_VALID_HELP) + "</p>");
+        int lastGroup = Integer.MIN_VALUE;
+        boolean open = false;
+        for (SpecimenNameUpdateDb.Line line : lines) {
+            if (line.groupId != lastGroup) {
+                if (open) b.append("</ul>");
+                b.append("<h4>").append(Html.esc(groupName(line.groupId))).append("</h4><ul>");
+                open = true;
+                lastGroup = line.groupId;
+            }
+            b.append("<li class=\"name-update-kept-valid\">").append(Taxon.makeDescriptionLink(line.oldName));
+            if (line.uploadedName != null && !line.uploadedName.isEmpty()) {
+                b.append(" (uploaded as ").append(Taxon.makeDescriptionLink(line.uploadedName));
+                if (line.newName != null && !line.newName.isEmpty()) {
+                    b.append(", which AntCat now gives as ").append(Taxon.makeDescriptionLink(line.newName));
+                }
+                b.append(")");
+            }
+            appendCodes(b, line, domainApp);
+            b.append("</li>");
+        }
+        if (open) b.append("</ul>");
+        return b.append("</details>").toString();
+    }
+
     private static void appendCodes(StringBuilder b, SpecimenNameUpdateDb.Line line, String domainApp) {
         b.append(" <details style=\"display:inline\"><summary>").append(line.count).append(line.count == 1 ? " specimen" : " specimens").append("</summary>");
         int i = 0;
@@ -226,9 +273,8 @@ public final class NameUpdatesAction extends AntwebAction {
                 }
                 b.append("<li class=\"name-update\">").append(nameLine(line.oldName, line.newName));
                 if (line.reason != null) {
-                    b.append(": <span class=\"name-update-reason\">").append(NameUpdateReason.toHtml(line.reason, line.antcatId,
-                        Taxon.getPrettyTaxonName(line.uploadedName), Taxon.getPrettyTaxonName(line.oldName), Taxon.getPrettyTaxonName(line.newName)))
-                     .append("</span>");
+                    // The same code as the upload report's "Recognized invalid species" lines.
+                    b.append(UploadNameReasons.reasonPart(line.reason, line.antcatId, line.uploadedName, line.oldName, line.newName));
                 } else if (line.antcatStatus != null) {
                     b.append(" (AntCat: ").append(Html.esc(line.antcatStatus)).append(")");
                 }

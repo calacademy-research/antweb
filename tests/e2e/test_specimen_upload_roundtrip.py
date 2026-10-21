@@ -5,7 +5,9 @@ As the test uploader (ANTWEB_TEST_UPLOADER_*, a curator of "ZZ Test Group (stagi
 1. upload a 5-line file (codes zztest0001 to zztest0005):
      zztest0001  a valid AntCat name                 -> loaded under that name
      zztest0002  a synonym of it                     -> filed under the valid name, report
-                                                       "Recognized invalid species", specimen page
+                                                       "Recognized invalid species" with the reason
+                                                       ("synonym: junior synonym of <valid>", as on the
+                                                       Name updates page), specimen page
                                                        "Uploaded As: <synonym>"
      zztest0003  a name AntCat does not know         -> kept, report "Unrecognized Invalid species"
      zztest0004! a code with a character not allowed -> refused, report "(not uploaded)"
@@ -61,6 +63,8 @@ def find_names():
             continue
         if (syn.get("genus") or "").lower() not in cvn:
             continue  # keep the genus: avoids the synonymised-genus path (tested elsewhere)
+        if cvn.rsplit(" ", 1)[-1][:3] == syn["species"][:3]:
+            continue  # another epithet, not another ending or spelling: the reason reads "synonym: junior synonym of ..."
         tried += 1
         if tried > 25:
             break
@@ -134,6 +138,11 @@ def test_specimen_upload_round_trip(uploader, names):
     recognized = _section(report, "Recognized invalid species")
     assert recognized, "no 'Recognized invalid species' section in " + rep_url
     assert syn["species"] in recognized and valid["species"] in recognized, _text(recognized)[:400]
+    # The line gives the reason, worded as on the Name updates page (UploadNameReasons, 2026-10-20):
+    # "<synonym> -> <valid>: synonym: junior synonym of <Valid name> (Author year)".
+    valid_pretty = valid["genus"].capitalize() + " " + valid["species"]
+    assert "synonym: junior synonym of " + valid_pretty in _text(recognized), _text(recognized)[:600]
+    assert 'class="name-update-reason"' in recognized, _text(recognized)[:400]
     unrecognized = _section(report, "Unrecognized Invalid species")
     assert UNKNOWN_SPECIES in unrecognized, _text(unrecognized or report)[:400]
     refused = _section(report, "Specimen code with characters other than")
