@@ -106,7 +106,9 @@ def test_genus_download_of_a_country_holds_only_its_specimens():
     assert link, r.text[:500]
     data = s.get(unescape(link.group(1)), timeout=max(TIMEOUT, 120)).text.splitlines()
     header = data[0].split("\t")
-    country = header.index("country")
+    names = [h.strip().lower() for h in header]
+    assert "country" in names, f"no Country column in the file header: {header[:40]}"
+    country = names.index("country")
     rows = [line.split("\t") for line in data[1:] if line.strip()]
     assert rows, "no Camponotus specimens from the Comoros on this server"
     assert len(rows) <= 5000
