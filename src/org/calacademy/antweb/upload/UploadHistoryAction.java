@@ -35,6 +35,17 @@ public class UploadHistoryAction extends AntwebAction {
         }
         ArrayList<String> files = AntwebUtil.getUploadDirFiles(name);
         request.setAttribute("files", files);
+        // The group's name for the page heading ("specimen12" -> group 12).
+        String groupName = null;
+        if (name != null && name.startsWith("specimen")) {
+            try {
+                org.calacademy.antweb.Group g = GroupMgr.getGroup(Integer.parseInt(name.substring("specimen".length())));
+                if (g != null) groupName = g.getName();
+            } catch (NumberFormatException e) {
+                // "none" or another value: no group
+            }
+        }
+        request.setAttribute("groupName", groupName);
         return mapping.findForward("success");
     }
 

@@ -164,21 +164,25 @@ public final class CountCheckAction extends AntwebAction {
         return places;
     }
 
+    // Plain wording (Brian Fisher, 2026-10-20: "Count check is not clear"): what is checked, what a
+    // difference means, what to do.
     public static final String HELP = ReportHelp.box(
-        "The numbers on taxon lists counted again, straight from the specimen records, for a sample of places "
-            + "(Madagascar, Reunion, the country with the most morphospecies, the subregion of Madagascar, the largest live curated project, "
-            + "the Malagasy bioregion and the CASC museum). Four numbers are checked: specimens of each species in the place, species of each genus "
-            + "and genera of each subfamily in the place's list, and the \"Global\" specimens of each species. "
-            + "Also the place's own Images (all files, labels too), images of each view and Imaged specimens "
-            + "(\"place images\", against the image table), and that Images is never smaller than Imaged specimens; "
-            + "for countries, islands, states and subregions also the place's Specimens number (\"place specimens\"). "
-            + "A subregion's specimens are those counted on the pages of its countries. "
-            + "Every number that differs is listed with the stored number (shown on the site) and the recount.",
-        "The site does not count when a page is shown: the nightly run (05:00 to about 08:00 Pacific) stores the counts. "
-            + "A stored number that differs from the specimen records is wrong on the site until something recounts it.",
-        "\"Pending\" differences come from changes made after the last nightly run (an upload, a list edit) and go away "
-            + "with the next nightly run. A \"real\" difference stays after the nightly run: send the list to the AntWeb "
-            + "developers (it means a count step misses a case). Between 05:00 and 08:15 the nightly run is still writing the numbers.");
+        "AntWeb does not count specimens when a page is shown: the nightly run (05:00 to about 08:15 Pacific) "
+            + "counts them and stores the numbers, and the pages show the stored numbers. This page counts again, "
+            + "straight from the specimen records, for a few sample places (Madagascar, Reunion, the country with the most "
+            + "morphospecies, the subregion of Madagascar, the largest live curated project, the Malagasy bioregion and the CASC museum), and compares. "
+            + "Checked: the specimens of each species, the species of each genus and the genera of each subfamily in the "
+            + "place's taxon list, the \"Global\" specimens of each species, and the place's image numbers (Images, "
+            + "images of each view, Imaged specimens) and, for countries, islands, states and subregions, the place's "
+            + "Specimens number (a subregion's specimens are those collected in its countries). Every number that differs is listed with the number the site "
+            + "shows (\"Stored\") and the fresh count (\"Recount\").",
+        "A difference means the site shows a wrong number on that place's page. A \"pending\" difference is expected: "
+            + "something changed after the last nightly run (an upload, a name update, a list edit) and the next nightly "
+            + "run will count it. A \"real\" difference has no such reason: the nightly count missed something.",
+        "Usually nothing: pending differences go away after the next nightly run. If a real difference is still listed "
+            + "the next day, after the nightly run has finished, email the list (place, number, taxon, both values) "
+            + "to antweb@antweb.org. Between 05:00 and 08:15 Pacific the nightly run is rewriting the numbers, so "
+            + "differences are expected then; look again later.");
 
     static String html(CountCheck.Result result, String domainApp) {
         SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm");

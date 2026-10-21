@@ -52,45 +52,40 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
             </div>
             <div class="clear"></div>
         </div>
-        <div class="admin_action_item">
-          <div class="action_hint">
-            &nbsp;&nbsp;&nbsp;Your <a href="<%= secureDomainApp %>/curator.do?id=<%= (accessLogin.getId()) %>">Curator Page</a>
-          </div>
+<%-- Three short groups, one link per line with a plain explanation (Brian Fisher, 2026-10-20: the
+     section was "very congested"). Who sees what is unchanged: the World (AntCat) upload reports and
+     the count check are for administrators. Tested in tests/e2e/test_curate_page_clarity.py. --%>
+        <div class="admin_action_item curate-group" id="curate-account">
+          <h3 style="margin:6px 0 2px 0">Your account</h3>
+          <ul style="list-style:none;margin:0 0 8px 0;padding-left:12px">
+            <li><a href="<%= secureDomainApp %>/curator.do?id=<%= (accessLogin.getId()) %>">Your curator page</a>: your public page on AntWeb (your uploads, images and page-text edits).</li>
+            <li><a href="<%= secureDomainApp %>/viewLogin.do?id=<%= (accessLogin.getId()) %>">Your login information</a>: change your name, email address or password.</li>
+            <li><a href="<%= domainApp %>/curatorFiles.do">Images you uploaded for taxon page text</a>: the image files in your curator folder, for use in taxon page text.</li>
+          </ul>
           <div class="clear"></div>
         </div>
 
-        <div class="admin_action_item">
-          <div class="action_hint">
-            &nbsp;&nbsp;&nbsp;Manage Your <a href="<%= secureDomainApp %>/viewLogin.do?id=<%= (accessLogin.getId()) %>">Login Information</a>
-          </div>
+        <div class="admin_action_item curate-group" id="curate-uploads">
+          <h3 style="margin:6px 0 2px 0">Your uploads</h3>
+          <ul style="list-style:none;margin:0 0 8px 0;padding-left:12px">
+            <li><a href="<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>">Specimen upload reports</a>: one report per specimen upload of your group, newest first.</li>
+            <li><a href="<%= domainApp %>/listImageUploads.do?groupId=<%= accessGroup.getId() %>">Image upload reports</a>: one report per batch of uploaded images.</li>
+            <li><a href="<%= domainApp %>/jobStatus.do">Upload status</a>: uploads waiting or in progress, and their results.</li>
+          </ul>
           <div class="clear"></div>
         </div>
-        <div class="admin_action_item">
-          <div class="action_hint">
-            &nbsp;&nbsp;&nbsp;View Your <a href="<%= domainApp %>/listSpecimenUploads.do?groupId=<%= accessGroup.getId() %>">Specimen Upload Reports</a>
 
-            &nbsp;&nbsp;&nbsp;View Your <a href="<%= domainApp %>/listImageUploads.do?groupId=<%= accessGroup.getId() %>">Image Upload Reports</a>
-
-            &nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/jobStatus.do">Upload status</a> (uploads waiting or in progress, and their results)
+        <div class="admin_action_item curate-group" id="curate-names">
+          <h3 style="margin:6px 0 2px 0">Names and checks</h3>
+          <ul style="list-style:none;margin:0 0 8px 0;padding-left:12px">
 <% if (accessLogin.isAdmin()) { %>
-            <br>&nbsp;&nbsp;&nbsp;View the <a href="<%= domainApp %>/query.do?name=worldantsUploads">World (AntCat) upload reports</a> (the nightly AntCat name import: names added, changed and removed each night)
+            <li><a href="<%= domainApp %>/query.do?name=worldantsUploads">World (AntCat) upload reports</a>: the nightly import of AntCat names (names added, changed and removed each night).</li>
 <% } %>
-
-            &nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/nameUpdates.do">Name updates</a> (specimens moved to the current valid name after an AntCat change)
+            <li><a href="<%= domainApp %>/nameUpdates.do">Name update report</a>: specimens moved to the current valid name after a name changed in AntCat.</li>
 <% if (LoginMgr.isAdmin(accessLogin)) { %>
-            &nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/countCheck.do">Count check</a> (list counts recomputed from specimen records)
+            <li><a href="<%= domainApp %>/countCheck.do">Check the counts</a>: recounts, from the specimen records, the numbers shown on a few sample country, project, museum and bioregion pages (specimens, species, genera, images) and lists any that differ from what the site shows. Usually nothing to do: the nightly run corrects them.</li>
 <% } %>
-
-
-
-          </div>
-          <div class="clear"></div>
-        </div>
-        
-        <div class="admin_action_item">
-          <div class="action_hint">
-            &nbsp;&nbsp;&nbsp;<a href="<%= domainApp %>/curatorFiles.do">Images you uploaded for taxon page text</a> (your curator folder).
-          </div>
+          </ul>
           <div class="clear"></div>
         </div>
     </div>
@@ -275,7 +270,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
         <% if (!LoginMgr.isAdmin(accessLogin)) { %>
             <div class="admin_action_module">
                 <div class="admin_action_item">
-                    <div class="action_desc"><a href="<%= domainApp %>/uploadHistory.do?editSpeciesList=specimen<%= accessGroup.getId() %>">Your past upload files</a> (the specimen files your group uploaded; each can be downloaded)</div>
+                    <div class="action_desc"><a href="<%= domainApp %>/uploadHistory.do?editSpeciesList=specimen<%= accessGroup.getId() %>">Your past upload files</a>: copies of the specimen data files your group sent to AntWeb, newest first. Click one to download it.</div>
                     <div class="clear"></div>
                 </div>
             </div>
@@ -288,62 +283,23 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
                 <input type="hidden" name="successkey" value="null" />
                 <div class="admin_action_module">
                     <div class="admin_action_item">
-                        <div class="action_desc">Past upload files of: </div>
+                        <div class="action_desc" id="past-upload-files"><b>Specimen files uploaded before</b>: choose a group and click Submit to list the specimen data files it sent to AntWeb (its uploads, and TaxonWorks or GBIF files), newest first; click a file to download it.<br>Group: </div>
                         <div class="action_dropdown">
               <html:select property="editSpeciesList">
-                <html:option value="none">Select...</html:option>
-            <!-- change to java interator 
-            Look in projList.  If projlist (lowercased compacted) is in uploadFileKindList, list the projList entry.
-            Value to send is the uploadFileKindList entry.
-            -->	
-            <%  
-
+                <html:option value="none">Choose a group...</html:option>
+            <%
+                // Admins only (curators get the link above): every group with a file in web/upload/, by name.
+                List<String[]> uploadGroupOptions = new ArrayList<>();
                 for (Integer uploadGroupId : uploadGroupList) {
-                  String val = "specimen" + uploadGroupId.toString();
-                  if (LoginMgr.isAdmin(accessLogin)) {
-                        //if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp uploadGroupId:" + uploadGroupId);
-                        String groupName = "specimen" + uploadGroupId;
-                        Group g = GroupMgr.getGroup(uploadGroupId);
-                        if (g != null) groupName = g.toString();
-                        %>
-                      <html:option value="<%= val %>"><%= groupName %></html:option>
-                      <%
-                  } else {
-                      //if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp uploadGroupId:" + uploadGroupId);
-                      if (Integer.valueOf(accessGroup.getId()).equals(uploadGroupId)) {
-                      %>
-                        <html:option value="<%= val %>"></html:option>
-                      <%
-                      }
-
-                  }
+                    String groupName = "group " + uploadGroupId;
+                    Group g = GroupMgr.getGroup(uploadGroupId);
+                    if (g != null) groupName = g.toString();
+                    uploadGroupOptions.add(new String[] {"specimen" + uploadGroupId, groupName});
                 }
-
-/*
-                for (String uploadFileKind : uploadFileKindList) {
-                  if (LoginMgr.isAdmin(accessLogin)) { 
-                    if (uploadFileKind.contains("specimen")) {
-                      if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp kind:" + uploadFileKind);
-                      %>
-                      <html:option value="<%= (String) uploadFileKind %>"></html:option>
-                      <%
-                    }
-                  } else {
-                    // only the one that is specimen[curator % ]
-                    int specIndex = uploadFileKind.indexOf("specimen") + 8;
-                    if (specIndex > 8) {
-                      String fileAccessId = uploadFileKind.substring(specIndex);
-                      if (AntwebProps.isDevMode()) AntwebUtil.log("curate-body.jsp fileAccessId:" + fileAccessId);
-                      if ((new Integer(accessGroup.getId())).toString().equals(fileAccessId)) {
-            % >
-                        <html:option value="< %= (String) uploadFileKind % >"></html:option>
-            < %
-                      }
-                    }
-                  } 
-                }
-*/
-            %>
+                uploadGroupOptions.sort((optionA, optionB) -> optionA[1].compareToIgnoreCase(optionB[1]));
+                for (String[] option : uploadGroupOptions) { %>
+                      <option value="<%= org.calacademy.antweb.util.Html.escAttr(option[0]) %>"><%= org.calacademy.antweb.util.Html.esc(option[1]) %></option>
+            <%  } %>
               </html:select>
                 </div>
                 <div class="clear"></div>
@@ -403,7 +359,7 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
         </div>
         <div class="admin_action_item">
           <div class="action_desc">
-            &nbsp;&nbsp;&nbsp;<a href="<%= AntwebProps.getDomainApp() %>/specimenListLookup.do">Specimen List Lookup</a>
+            &nbsp;&nbsp;&nbsp;<a href="<%= AntwebProps.getDomainApp() %>/specimenListLookup.do">Specimen List Lookup</a>: upload a text file of specimen codes (one per line) to get AntWeb's data for those specimens as a tab-delimited file; codes that are not in AntWeb are listed. Nothing is changed on AntWeb.
           </div>
           <div class="clear"></div>
         </div>

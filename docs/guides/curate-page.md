@@ -19,11 +19,25 @@ What you see depends on your login:
 
 ### Curator Information
 
-- **Your Curator Page**: your public page on AntWeb, listing your uploads, images and page-text edits. This is what other people see about you.
-- **Manage Your Login Information**: your account. From here you change your name, email address and password.
-- **View Your Specimen Upload Reports**: the list of your group's specimen uploads, newest first. Each line opens the upload report (how many specimens were loaded, which names were changed to the current valid name, which lines had problems). Check it after every upload. Line numbers in a report open that line of your upload as AntWeb stored it (your own group's uploads only).
-- **View Your Image Upload Reports**: the same for image uploads: one line per upload batch, with its report.
+Three short groups, one link per line, each with a one-line explanation on the page.
+
+**Your account**
+
+- **Your curator page**: your public page on AntWeb, listing your uploads, images and page-text edits. This is what other people see about you.
+- **Your login information**: your account. From here you change your name, email address and password.
 - **Images you uploaded for taxon page text** (your curator folder): the files you uploaded for use on taxon pages (for example an image you inserted into a taxon's page text). Only you and admins see this list.
+
+**Your uploads**
+
+- **Specimen upload reports**: the list of your group's specimen uploads, newest first. Each line opens the upload report (how many specimens were loaded, which names were changed to the current valid name, which lines had problems). Check it after every upload. Line numbers in a report open that line of your upload as AntWeb stored it (your own group's uploads only).
+- **Image upload reports**: the same for image uploads: one line per upload batch, with its report.
+- **Upload status**: uploads waiting or in progress, and the result of each.
+
+**Names and checks**
+
+- **World (AntCat) upload reports** (admins): the nightly import of AntCat names, with the names added, changed and removed each night.
+- **Name update report** (`nameUpdates.do`): the specimens AntWeb moved to the current valid name after a name changed in AntCat, with the reason for each move. Curators see their own group's specimens; admins see all groups.
+- **Check the counts** (`countCheck.do`, admins; formerly "Count check"): AntWeb does not count specimens when a page is shown; the nightly run counts them and stores the numbers. This page counts again, straight from the specimen records, for a few sample places (Madagascar, Reunion, the country with the most morphospecies, the largest live curated project, the Malagasy bioregion and the CASC museum) and lists every number that differs from what the site shows: specimens per species, species per genus, genera per subfamily, the "Global" column and the place's image numbers. A "pending" difference comes from a change after the last nightly run (an upload, a name update, a list edit) and goes away with the next nightly run. A "real" difference has no such reason. Usually there is nothing to do; if a real difference is still listed the next day, after the nightly run has finished (about 08:15 Pacific), email the list to antweb@antweb.org.
 
 At the top of this area a red or blue line may appear when the server is busy (an upload or the nightly run is in progress, or uploads are paused). If you see one, wait and try again later.
 
@@ -42,7 +56,7 @@ The optional column **previousDeterminations** lets you send earlier identificat
 
 **Recalculate Your Museums** (shown after you upload in the same session): recounts the museums found in your last upload now, instead of waiting for the nightly run. It only touches the museums of your own upload.
 
-**Your past upload files**: your group's earlier uploaded specimen files; each one can be downloaded. Useful if you need a copy of what you sent before. (Admins choose the group from a list.)
+**Your past upload files**: copies of the specimen data files your group sent to AntWeb (your own uploads, and TaxonWorks or GBIF files), newest first; click one to download it. Useful if you need a copy of what you sent before. AntWeb's data for your group always come from your latest upload. Admins see **Specimen files uploaded before** instead: choose a group from the list (sorted by name) and click **Submit** (this replaces the unclear "Past upload files of: Select...").
 
 ### Upload Specimen Images (curators with the "upload images" permission)
 
@@ -53,7 +67,7 @@ The optional column **previousDeterminations** lets you send earlier identificat
 These tools never change anything on AntWeb.
 
 - **Check names against AntCat** (formerly "Validate Species List"): upload a list of species names (a tab-delimited text file) to check every name against AntWeb's names from AntCat. You get a report on screen and can download it, or download a corrected copy of your list with the current valid names. Nothing is saved on AntWeb.
-- **Specimen List Lookup**: paste a list of specimen codes (one per line) and get the AntWeb data for those specimens, on screen or as a tab-delimited file. Handy for checking what AntWeb holds for a loan or a batch of material.
+- **Specimen List Lookup**: upload a plain text file of specimen codes, one per line (the file name must contain "specimen", for example my_specimens.txt), and get the AntWeb data for those specimens as a tab-delimited file. If some codes are not in AntWeb, a results page lists them (to copy or download) and still offers the data of the codes that were found. Handy for checking what AntWeb holds for a loan or a batch of material.
 
 ### AntWeb Statistics (right side)
 
