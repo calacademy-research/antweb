@@ -37,7 +37,10 @@ public final class EditProjectAction extends AntwebAction {
           request.setAttribute("message", "Only an AntWeb administrator may change project settings.");
           return mapping.findForward("message");
         }
-        ActionForward f = Check.upload(request, mapping); if (f != null) return f;
+        // While an upload runs, saving waits (it reloads the lists in memory); opening the form does not.
+        if (HttpUtil.isPost(request)) {
+          ActionForward f = Check.upload(request, mapping); if (f != null) return f;
+        }
 
         HttpSession session = request.getSession();
         

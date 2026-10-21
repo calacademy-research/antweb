@@ -93,7 +93,9 @@ def test_admin_page_loads_and_explains_itself(admin, url, text):
     s, _token = admin
     r = s.get(BASE_URL + url, timeout=TIMEOUT)
     assert r.status_code == 200 and classify(r).category in ("ok", "message"), f"{url}: {classify(r)}"
-    assert 'class="mgr_help"' in r.text, f"{url}: no explanation block"
+    if "currently in the process of an Upload" in r.text:
+        pytest.skip(f"{url}: an upload is running on staging")
+    assert 'class="mgr_help"' in r.text, f"{url}: no explanation block: {classify(r)} {r.text[:300]!r}"
     assert text in r.text, f"{url}: '{text}' missing"
 
 
