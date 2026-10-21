@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+import org.calacademy.antweb.home.LoginDb;
 import org.calacademy.antweb.util.Html;
 import org.calacademy.antweb.util.LoginNames;
 
@@ -336,7 +337,8 @@ public final class UploaderOnboarding {
 
             if (login == null) {
                 login = new LoginRow();
-                login.id = nextId(c, "login");
+                // Above every login number ever used (a deleted login's curator folder is not reused).
+                login.id = LoginDb.nextLoginId(c, LoginDb.curatorDir());
                 login.email = r.email;
                 login.name = freeUsername(c, r.email);
                 login.firstName = r.firstName;
@@ -430,7 +432,7 @@ public final class UploaderOnboarding {
     }
 
     private static int nextId(Connection c, String table) throws SQLException {
-        // table is one of two constants above, never user input.
+        // table is the constant above (ant_group), never user input.
         try (PreparedStatement s = c.prepareStatement("select coalesce(max(id), 0) + 1 from " + table + " for update");
              ResultSet r = s.executeQuery()) {
             r.next();
