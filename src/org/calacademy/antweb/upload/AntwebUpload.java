@@ -1346,6 +1346,37 @@ or for Worldants upload
       if (sharedNames == null) sharedNames = SharedNames.load(getConnection());
       return sharedNames;
     }
+
+    private java.util.Set<String> placeholders;
+    private final java.util.Map<String, Boolean> inHomonymTable = new java.util.HashMap<>();
+
+    /** Homonym placeholder taxa, read once per upload (SharedNameReport.placeholders, as the nightly step). */
+    protected java.util.function.Predicate<String> placeholderTest() {
+      if (placeholders == null) {
+        try {
+          placeholders = SharedNameReport.placeholders(getConnection());
+        } catch (SQLException e) {
+          s_log.warn("placeholderTest() e:" + e);
+          placeholders = new java.util.HashSet<>();
+        }
+      }
+      return placeholders::contains;
+    }
+
+    /** True when the homonym table has this name (a second AntCat taxon of it); once per name per upload. */
+    protected boolean isInHomonymTable(String taxonName) {
+      Boolean b = inHomonymTable.get(taxonName);
+      if (b == null) {
+        try {
+          b = CurrentValidNameRule.plainLookup(getConnection()).isHomonym(taxonName);
+        } catch (SQLException e) {
+          s_log.warn("isInHomonymTable() e:" + e);
+          b = false;
+        }
+        inHomonymTable.put(taxonName, b);
+      }
+      return b;
+    }
     
     protected void setHigherTaxonomicHierarchy(Hashtable<String, Object> item) {
         // set the hierarchy.  This is true for all projects.  Specimens data may differ.

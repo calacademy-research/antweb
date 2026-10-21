@@ -453,7 +453,8 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
       // A name of two or more AntCat taxa (Pachycondyla sauteri: now Cryptopone sauteri or Ectomomyrmex
       // sauteri) is not moved to the one the taxon table happens to hold: kept under the uploaded name and
       // listed for the curator, as the nightly name update does (SharedNameReport; Brian Fisher, 2026-10-20).
-      String keptLine = SharedNameReport.uploadLine(taxonName, rule, getSharedNames());
+      String keptLine = rule.replacesName()
+          ? SharedNameReport.uploadLine(taxonName, rule, isInHomonymTable(taxonName), placeholderTest(), getSharedNames()) : null;
       if (keptLine != null) {
         status = rule.uploadedStatus;
         getMessageMgr().addToMessages(MessageMgr.sharedNameKept, keptLine);

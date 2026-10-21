@@ -1,6 +1,15 @@
 package org.calacademy.antweb.upload;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
+
+import org.calacademy.antweb.Status;
 
 import org.calacademy.antweb.Taxon;
 import org.calacademy.antweb.util.Html;
@@ -46,33 +55,119 @@ public final class SharedNameReport {
     /** Upload report heading (MessageMgr.taxonNamesAreHomonyms). */
     public static final String HOMONYM_ONLY_HEADING = "Names AntCat has only as a junior homonym (or another name AntWeb does not file specimens under): kept as uploaded";
 
+    /** insert_method of the placeholder taxa the upload creates for a valid name that is only a homonym. */
+    public static final String PLACEHOLDER_INSERT_METHOD = "homononymMirroringTaxon";
+
+    /** The placeholder taxa (read once per run or upload; the nightly step and the upload ask the same). */
+    public static Set<String> placeholders(Connection connection) throws SQLException {
+        Set<String> names = new HashSet<>();
+        try (Statement stmt = connection.createStatement();
+             ResultSet r = stmt.executeQuery("select taxon_name from taxon where insert_method = '" + PLACEHOLDER_INSERT_METHOD + "'")) {
+            while (r.next()) names.add(r.getString(1));
+        }
+        return names;
+    }
+
+    /** A specimen name that involves a name of two or more AntCat taxa: which name, and its candidates (null when unknown). */
+    public static final class Held {
+        /** Taxon name of the shared name (the filed, uploaded or current valid name). */
+        public final String taxonName;
+        /** The valid names it can stand for, or null when only the homonym table or a placeholder says it is shared. */
+        public final List<String> candidates;
+        Held(String taxonName, List<String> candidates) {
+            this.taxonName = taxonName;
+            this.candidates = candidates;
+        }
+        public String toString() { return taxonName + " " + candidates; }
+    }
+
     /**
-     * The candidates when the name the specimen is filed under, or else the name it was uploaded as,
-     * belongs to two or more AntCat taxa; otherwise null. Taxon names (ponerinaepachycondyla sauteri).
+     * The one test, for the upload and the nightly step (Brian Fisher, 2026-10-20: "homonym" and "name
+     * shared by two or more AntCat taxa" are one category): does a specimen filed under filedTaxonName and
+     * uploaded as uploadedTaxonName involve a name that belongs to two or more AntCat taxa? Yes when
+     *   the filed or the uploaded name is shared (SharedNames);
+     *   the uploaded name is in the homonym table (the import puts a second taxon of a name there);
+     *   AntCat's status of the uploaded name is homonym;
+     *   the rule's current valid name is only a homonym (TARGET_IS_HOMONYM), or a homonym placeholder taxon;
+     *   the specimen is filed under a homonym placeholder taxon.
+     * Returns null otherwise. rule may be null; isPlaceholder may be null (no placeholders).
      */
-    public static List<String> candidates(String filedTaxonName, String uploadedTaxonName, SharedNames shared) {
-        if (shared == null) return null;
-        List<String> c = filedTaxonName == null ? null : shared.candidatesOf(Taxon.getPrettyTaxonName(filedTaxonName));
-        if (c == null && uploadedTaxonName != null) c = shared.candidatesOf(Taxon.getPrettyTaxonName(uploadedTaxonName));
+    public static Held involved(String filedTaxonName, String uploadedTaxonName, CurrentValidNameRule.Result rule,
+                                boolean uploadedInHomonymTable, Predicate<String> isPlaceholder, SharedNames shared) {
+        String target = rule == null ? null : rule.validTaxonName != null ? rule.validTaxonName : rule.replacesName() ? rule.taxonName : null;
+        // Not the current valid name: AntCat names one taxon there, and the import keeps the valid one of a
+        // name first (Formica picea Nylander, valid, before two obsolete combinations of the same name).
+        for (String n : new String[] {filedTaxonName, uploadedTaxonName}) {
+            List<String> c = sharedCandidates(n, shared);
+            if (c != null) return new Held(n, c);
+        }
+        if (uploadedInHomonymTable) return new Held(uploadedTaxonName, null);
+        if (rule != null && Status.HOMONYM.equals(rule.uploadedStatus)) return new Held(uploadedTaxonName, null);
+        if (rule != null && rule.kind == CurrentValidNameRule.Kind.TARGET_IS_HOMONYM) return new Held(rule.taxonName, null);
+        if (isPlaceholder != null) {
+            if (target != null && isPlaceholder.test(target)) return new Held(target, null);
+            if (filedTaxonName != null && isPlaceholder.test(filedTaxonName)) return new Held(filedTaxonName, null);
+        }
+        return null;
+    }
+
+    private static List<String> sharedCandidates(String taxonName, SharedNames shared) {
+        if (shared == null || taxonName == null) return null;
+        List<String> c = shared.candidatesOf(Taxon.getPrettyTaxonName(taxonName));
         return c != null && c.size() > 1 ? c : null;
     }
 
     /**
-     * For the specimen upload: the candidates when the name rule would move the uploaded name to another
-     * name (as the nightly step would) and the name is shared; the upload then keeps it. Otherwise null.
+     * The candidates when the name the specimen is filed under, or else the name it was uploaded as,
+     * belongs to two or more AntCat taxa (SharedNames); otherwise null. Taxon names (ponerinaepachycondyla sauteri).
      */
-    public static List<String> heldAtUpload(String uploadedTaxonName, CurrentValidNameRule.Result rule, SharedNames shared) {
+    public static List<String> candidates(String filedTaxonName, String uploadedTaxonName, SharedNames shared) {
+        List<String> c = sharedCandidates(filedTaxonName, shared);
+        return c != null ? c : sharedCandidates(uploadedTaxonName, shared);
+    }
+
+    /**
+     * The reason recorded and shown for a held name: "name is shared by two taxa; please confirm the
+     * identification: Cryptopone sauteri or Ectomomyrmex sauteri"; when the shared name is the current
+     * valid name rather than the specimen's own, it is named; without known candidates, no list.
+     */
+    public static String reason(Held held, String filedTaxonName, String uploadedTaxonName) {
+        boolean own = held.taxonName == null || held.taxonName.equals(filedTaxonName) || held.taxonName.equals(uploadedTaxonName);
+        String subject = own ? "name" : "its current valid name, " + Taxon.getPrettyTaxonName(held.taxonName) + ",";
+        if (held.candidates == null) return subject + " is shared by two or more AntCat taxa; please confirm the identification";
+        String r = SharedNames.reason(held.candidates);   // "name is shared by two taxa; ..."
+        return own ? r : subject + r.substring("name".length());
+    }
+
+    /**
+     * For the specimen upload: what involved() says, when the name rule would move the uploaded name to
+     * another name (the nightly step holds moves only, too); the upload then keeps it. Otherwise null.
+     */
+    public static Held heldAtUpload(String uploadedTaxonName, CurrentValidNameRule.Result rule, boolean uploadedInHomonymTable,
+                                    Predicate<String> isPlaceholder, SharedNames shared) {
         if (rule == null || !rule.replacesName()) return null;
-        return candidates(uploadedTaxonName, uploadedTaxonName, shared);
+        return involved(uploadedTaxonName, uploadedTaxonName, rule, uploadedInHomonymTable, isPlaceholder, shared);
+    }
+
+    /** As heldAtUpload, with only the shared names (no homonym table, no placeholders). */
+    public static List<String> heldAtUpload(String uploadedTaxonName, CurrentValidNameRule.Result rule, SharedNames shared) {
+        Held h = heldAtUpload(uploadedTaxonName, rule, false, null, shared);
+        return h == null ? null : h.candidates;
     }
 
     /**
      * The upload report's line when the upload keeps the uploaded name for the curator (heldAtUpload),
      * otherwise null. The text is line(), as on nameUpdates.do.
      */
+    public static String uploadLine(String uploadedTaxonName, CurrentValidNameRule.Result rule, boolean uploadedInHomonymTable,
+                                    Predicate<String> isPlaceholder, SharedNames shared) {
+        Held h = heldAtUpload(uploadedTaxonName, rule, uploadedInHomonymTable, isPlaceholder, shared);
+        if (h == null) return null;
+        return line(uploadedTaxonName, uploadedTaxonName, shared, reason(h, uploadedTaxonName, uploadedTaxonName));
+    }
+
     public static String uploadLine(String uploadedTaxonName, CurrentValidNameRule.Result rule, SharedNames shared) {
-        if (heldAtUpload(uploadedTaxonName, rule, shared) == null) return null;
-        return line(uploadedTaxonName, uploadedTaxonName, shared, null);
+        return uploadLine(uploadedTaxonName, rule, false, null, shared);
     }
 
     /**

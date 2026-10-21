@@ -113,8 +113,8 @@ public final class NameUpdatesAction extends AntwebAction {
             + "valid one) and its counts and maps stay under the old name until the group uploads its data again.",
         "Usually nothing: the counts, lists and maps follow by the end of the nightly run (about 8 AM). If a move looks wrong, "
             + "check the name in AntCat first. If the identification itself is out of date, correct it in TaxonWorks (CAS) or in "
-            + "your upload file; the next upload or nightly run uses it. Morphospecies, indets and homonyms are never moved, nor are "
-            + "specimens whose name belongs to two or more AntCat taxa: those are listed under \"Needs the curator's decision\". "
+            + "your upload file; the next upload or nightly run uses it. Morphospecies and indets are never moved, nor are "
+            + "specimens whose name belongs to two or more AntCat taxa (homonyms and the like): those are listed under \"Needs the curator's decision\". "
             + "Specimens filed under a name AntCat calls valid are not moved either; they are listed under "
             + "\"Not moved: filed under a name AntCat calls valid\".");
 
@@ -281,6 +281,10 @@ public final class NameUpdatesAction extends AntwebAction {
                 if (line.reason != null) {
                     // The same code as the upload report's "Recognized invalid species" lines.
                     b.append(UploadNameReasons.reasonPart(line.reason, line.antcatId, line.uploadedName, line.oldName, line.newName));
+                    for (int i = 0; i < line.moreReasons.size(); i++) {   // merged specimens with another reason
+                        String more = UploadNameReasons.reasonPart(line.moreReasons.get(i), line.moreAntcatIds.get(i), line.uploadedName, line.oldName, line.newName);
+                        if (!more.isEmpty()) b.append("; ").append(more.substring(2));   // without the leading ": "
+                    }
                 } else if (line.antcatStatus != null) {
                     b.append(" (AntCat: ").append(Html.esc(line.antcatStatus)).append(")");
                 }

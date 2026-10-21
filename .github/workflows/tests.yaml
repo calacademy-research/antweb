@@ -193,7 +193,7 @@ jobs:
         # and the nightly name update's decisions, cap, settings and page line. AntcatHistoryTest: AntCat's
         # taxonomic history (fixtures/antcat-history.tsv) and the wording of each move's reason. SharedNamesTest: names
         # of two or more AntCat taxa (fixtures/antcat-shared-names.tsv), held for the curator. SharedNameReportTest: the
-        # upload report and the Name updates page give the same "Needs the curator's decision" line (one code path). PasswordHashCompatTest: hashes made by
+        # upload report and the Name updates page give the same "Needs the curator's decision" line (one code path; homonyms included). PasswordHashCompatTest: hashes made by
         # tools/staging/create-test-accounts.py are accepted. UploadNameReasonsTest: the upload report's "Recognized
         # invalid species" lines carry the Name updates page's reason (once per pair, plain line on failure), and the
         # page's "Not moved: filed under a name AntCat calls valid" list. UploadAsOptionsTest: the Curate page's
@@ -223,7 +223,7 @@ jobs:
               /t/org/calacademy/antweb/util/BackgroundJobsTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:7 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
-                     upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:5 security.PasswordHashCompatTest:2 \
+                     upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:14 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
@@ -302,7 +302,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc \
               /t/org/calacademy/antweb/upload/SpecimenNameUpdateDbTest.java /t/org/calacademy/antweb/util/CountCheckTest.java \
               /t/org/calacademy/antweb/home/PlaceImageCountDbTest.java /t/org/calacademy/antweb/util/BackgroundJobDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:11 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4; do
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

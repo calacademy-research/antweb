@@ -151,4 +151,24 @@ public class SharedNameReportTest extends TestCase {
             SharedNameReport.candidates(SAUTERI, SAUTERI, shared));
         assertEquals(SpecimenNameUpdate.Outcome.SHARED_NAME, d.outcome);
     }
+
+    /**
+     * "Homonym" (the homonym table, a placeholder) and "name shared by two or more AntCat taxa" are one category
+     * (Brian Fisher, 2026-10-20): the upload and the nightly step ask SharedNameReport.involved() and word it alike.
+     */
+    public void testHomonymTableIsTheSameCategory() throws Exception {
+        CurrentValidNameRule.Result rule = sauteriRule();
+        // Only the homonym table knows (no export): the upload keeps the name, the nightly step holds it, same reason.
+        String upload = SharedNameReport.uploadLine(SAUTERI, rule, true, null, SharedNames.none());
+        assertEquals(Taxon.makeDescriptionLink(SAUTERI)
+            + ": <span class=\"name-update-reason\">name is shared by two or more AntCat taxa; please confirm the identification</span>", upload);
+        SpecimenNameUpdate.Decision d = SpecimenNameUpdate.decide(SAUTERI, SAUTERI, n -> false, rule, true, false, SharedNames.none());
+        assertEquals(SpecimenNameUpdate.Outcome.SHARED_NAME, d.outcome);
+        List<SpecimenNameUpdateDb.Line> lines = new ArrayList<>();
+        lines.add(heldLine(SAUTERI, d.reason));
+        assertEquals(upload, pageLine(NameUpdatesAction.sharedHtml(lines, "", SharedNames.none())));
+        // A valid name the rule points to that is a placeholder for a homonym: held at upload as well.
+        assertNotNull(SharedNameReport.uploadLine(SAUTERI, rule, false, n -> n.equals("ponerinaecryptopone sauteri"), SharedNames.none()));
+        assertNull("nothing shared", SharedNameReport.uploadLine(SAUTERI, rule, false, n -> false, SharedNames.none()));
+    }
 }
