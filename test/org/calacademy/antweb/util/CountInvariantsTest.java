@@ -173,6 +173,43 @@ public class CountInvariantsTest extends TestCase {
         assertEquals(1, real(r, "place specimens"));
     }
 
+    /** Staging, 2026-10-21: an invariant could not run. Keys differ in case between tables; old rows have zero dates. */
+    public void testStagingDataCaseAndZeroDates() throws Exception {
+        exec("update image set image_of_id = 'CASENT1' where image_of_id = 'casent1'");   // as in image, the code in capitals
+        exec("insert into image values (30, 'CASENT9', 'h', " + "'2020-01-01 10:00:00')");   // an orphan image (no specimen)
+        exec("update museum_taxon set code = 'casc' where code = 'CASC'");
+        exec("update specimen set museum = 'casc ' where museum = 'CASC'");
+        exec("set session sql_mode = ''");
+        exec("update proj_taxon set created = '0000-00-00 00:00:00' where project_name = 'allantwebants'");
+        exec("update statistics set created = '0000-00-00 00:00:00', total_images = 5");
+        exec("update geolocale_taxon set created = '0000-00-00 00:00:00' where geolocale_id = " + MADAGASCAR);
+        CountCheck.Result r = run(true);
+        for (CountInvariants.Check c : r.invariants.checks) assertNull(c.id + ": " + c.error, c.error);
+        assertEquals(list(r), 0, r.mismatches.size());
+        List<CountCheck.Place> places = new ArrayList<>();
+        places.add(new CountCheck.Place(CountCheck.GEOLOCALE, "" + MADAGASCAR, "Madagascar", "country", "Madagascar"));
+        places.add(new CountCheck.Place(CountCheck.MUSEUM, "CASC", "museum CASC", "museum", "CASC"));
+        CountCheck.Result s = new CountCheck(connection).run(places, new ArrayList<>(), 0, Timestamp.valueOf("2021-01-01 08:15:00"), true, true, false, null);
+        int real = 0;
+        for (CountCheck.Mismatch m : s.mismatches) if (m.isReal() && !m.check.startsWith("place images")) ++real;
+        assertEquals(list(s), 0, real);
+    }
+
+    public void testACheckThatCannotRunNamesItsQuery() throws Exception {
+        exec("alter table museum drop column taxon_subfamily_dist_json");
+        CountCheck.Result r = run(true);
+        String error = null;
+        for (CountInvariants.Check c : r.invariants.checks) if (c.error != null) error = c.id + ": " + c.error;
+        assertNotNull(error);
+        assertTrue(error, error.startsWith("place.pies: "));
+        assertTrue(error, error.contains("taxon_subfamily_dist_json") && error.contains("SQL: select") && error.contains("CountInvariants.java:"));
+        boolean listed = false;
+        for (CountCheck.Mismatch m : r.mismatches) if (m.taxonName.startsWith("the check could not run: ") && m.taxonName.contains("SQL: ")) listed = true;
+        assertTrue(listed);
+        // the other checks still ran
+        assertTrue(r.invariants.summary().get("taxon.images")[0] > 0);
+    }
+
     public void testStatsPageNumberInMemory() throws Exception {
         CountCheck.Result r = new CountCheck(connection).run(new ArrayList<>(), new ArrayList<>(), 0, Timestamp.valueOf("2021-01-01 08:15:00"),
             true, true, true, 3);

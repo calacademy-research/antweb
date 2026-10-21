@@ -151,6 +151,46 @@ public class PlaceTotalsDbTest extends TestCase {
         assertTrue(text("select taxon_subfamily_dist_json from project where project_name = 'madants'").contains("\"Myrmicinae\""));
     }
 
+    /** 2026-10-21: specimen uploads rolled back with "Data too long for column 'specimen_subfamily_dist_json'". */
+    public void testALongDistributionFitsItsColumnAndNeverStopsTheWork() throws Exception {
+        PlaceTotals.clearColumnLengths();
+        // CASC holds specimens of 60 subfamilies (and of names that are no subfamily): far more than 1000 characters of JSON.
+        StringBuilder taxa = new StringBuilder();
+        StringBuilder specimens = new StringBuilder();
+        for (int i = 1; i <= 60; i++) {
+            String sf = "longsubfamilynumber" + i + "inae";
+            taxa.append(i == 1 ? "" : ", ").append("('").append(sf).append("', 'subfamily', 'valid', 'formicidae', 'formicidae', '").append(sf).append("')");
+            for (int k = 0; k < i % 3 + 1; k++) {
+                specimens.append(specimens.length() == 0 ? "" : ", ").append("('x").append(i).append("_").append(k).append("', 'CASC', '").append(sf).append("')");
+            }
+            specimens.append(", ('typo").append(i).append("', 'CASC', 'notasubfamily").append(i).append("')");
+        }
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily) values " + taxa);
+        exec("insert into specimen (code, museum, subfamily) values " + specimens);
+        long total = one("select count(*) from specimen where museum = 'CASC'");
+        PlaceTotals.writePies(connection, PlaceTotals.MUSEUM, "CASC");
+        String json = text("select specimen_subfamily_dist_json from museum where code = 'CASC'");
+        assertNotNull(json);
+        assertTrue(json.length() + " characters", json.length() <= 1000);
+        assertEquals("the slices still add up to Specimens", total, PlaceTotals.pieSum(json));
+        assertTrue(json.contains("\"label\": \"Other\""));
+        // geolocales: varchar(5000), the whole distribution fits (one Other slice for the names that are no subfamily)
+        String all = PlaceTotals.pieJson(connection, PlaceTotals.specimenPieSql(PlaceTotals.MUSEUM), "CASC");
+        assertEquals(total, PlaceTotals.pieSum(all));
+        assertEquals("60 subfamilies, myrmicinae, Other", 62, all.split("\"label\"").length - 1);
+
+        // A chart that cannot be written (here: no such column) is logged; the work around it goes on.
+        exec("alter table bioregion drop column specimen_subfamily_dist_json");
+        PlaceTotals.clearColumnLengths();
+        PlaceTotals.writePies(connection, PlaceTotals.BIOREGION, "Malagasy");
+        Bioregion b = new Bioregion();
+        b.setName("Malagasy");
+        exec("update bioregion set valid_species_count = 0");
+        callPrivate(new BioregionDb(connection), "finish", Bioregion.class, b);
+        assertEquals(2, one("select valid_species_count from bioregion where name = 'Malagasy'"));
+        PlaceTotals.clearColumnLengths();
+    }
+
     public void testEndemicNumbersAreTheFlaggedRows() throws Exception {
         // Three bioregions, each with species found only there: Afrotropical 2, Malagasy 1, Neotropical 1.
         for (String n : new String[] {"t1", "t2", "t3"}) {

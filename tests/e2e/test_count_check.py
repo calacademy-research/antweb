@@ -81,7 +81,10 @@ def test_list_counts_match_the_specimen_records():
         ids = set(re.findall(r'<tr class="count-invariant" data-id="([^"]+)"', r.text))
         missing = INVARIANTS - ids
         assert not missing, f"invariants not run: {sorted(missing)}"
-        assert "(failed:" not in r.text, "an invariant could not run (see countCheck.do)"
+        failed = [(i, unescape(e)) for i, e in re.findall(
+            r'<tr class="count-invariant" data-id="([^"]+)"><td>.*?</td><td>.*? <b>\(failed: (.*?)\)</b></td>', r.text, re.S)]
+        assert not failed, "invariants could not run (check id: exception, code line, SQL):\n" + "\n".join(
+            f"{i}: {e}" for i, e in failed)
         t = re.search(r'id="count-check-time" data-seconds="(\d+)"', r.text)
         assert t and int(t.group(1)) < 90, f"the count check took {t.group(1) if t else '?'} seconds"
         if summary:
