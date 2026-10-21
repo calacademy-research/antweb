@@ -8,8 +8,8 @@
 3. Page titles: no "Subegion" (subregion.jsp says "Subregion: ...").
 4. The old login page copy web/curate/manageLogin.jsp and manageLogin-body.jsp are gone and
    nothing refers to them.
-5. responsive.css: at phone width the admin pages' column of links (div.right next to
-   div.admin_left) does not float.
+5. At phone width the admin pages' column of links (div.right next to div.admin_left) does not
+   float: admLayout.jsp sets the viewport, admin_style.css and responsive.css have the rules.
 
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -104,6 +104,20 @@ def test_admin_links_column_stacks_on_phones():
         assert "float: none" in m.group(1), selector
     # The :has() rule is on its own: a browser without :has() would drop a whole selector list.
     assert not re.search(r",\s*\.right:has|\.right:has\([^)]*\)\s*,", phone)
+    # The admin pages use admLayout.jsp (not layout.jsp): it must set the viewport to the device
+    # width (else phones lay the page out 980 px wide and no max-width rule applies) and
+    # admin_style.css must have the same rules.
+    adm = read(os.path.join(ROOT, "web", "layouts", "admLayout.jsp"))
+    assert '<meta name="viewport" content="width=device-width, initial-scale=1"/>' in adm
+    assert "/common/admin_style.css" in adm
+    admin_css = read(os.path.join(ROOT, "web", "common", "admin_style.css"))
+    phone = admin_css[admin_css.index("@media (max-width: 760px)"):]
+    for selector in (".admin_left ~ .right", ".right:has(~ .admin_left)", ".admin_left", "#admin_layout"):
+        m = re.search(r"(^|\n)\s*" + re.escape(selector) + r"\s*\{([^}]*)\}", phone)
+        assert m, selector + " missing in admin_style.css phone rules"
+    for selector in (".admin_left ~ .right", ".right:has(~ .admin_left)", ".admin_left"):
+        m = re.search(r"(^|\n)\s*" + re.escape(selector) + r"\s*\{([^}]*)\}", phone)
+        assert "float:none" in m.group(2).replace(" ", ""), selector
     print("Admin link column stacks at phone width.")
 
 

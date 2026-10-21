@@ -666,12 +666,12 @@
         margin: 0 0 14px;
     }
 
-    /* -- admin pages (Login Manager, a login, Upload groups, an upload group, Add an
-       uploader, a museum) ---------------------------------------------------------
-       The column of links (div.right: Login Manager, Upload groups, Add an uploader ...)
-       floats right on desktop. At phone width it stacks above or below the page text
-       (div.admin_left) instead of floating over its first paragraph. Two rules: a browser
-       without :has() drops only the first. */
+    /* -- pages on this layout with a column of links (div.right) next to div.admin_left
+       (editLogin.jsp, artists.jsp ...) ----------------------------------------------
+       At phone width the column stacks above or below the page text instead of floating
+       over its first paragraph. Two rules: a browser without :has() drops only the first.
+       The admin pages (Login Manager, Upload groups, Add an uploader ...) use admLayout.jsp,
+       which does not load this file: their phone rules are in admin_style.css. */
     .admin_left ~ .right {
         float: none;
         width: auto;
