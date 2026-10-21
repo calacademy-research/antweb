@@ -50,16 +50,16 @@ public class SpecimenNameHistoryDbTest extends TestCase {
             s.executeUpdate("insert into specimen_name_update (run_date, mode, code, access_group, uploaded_name, old_name, new_name,"
                 + " antcat_status, reason, antcat_id) values"
                 // applied moves of this specimen, inserted oldest last to check the order is by date
-                + " ('2026-10-22 05:31:07', 'changed', '" + CODE + "', 1, '" + OCH + "', '" + WAS + "', '" + ALLO + "', 'obsolete combination',"
+                + " ('2026-10-22 12:31:07', 'changed', '" + CODE + "', 1, '" + OCH + "', '" + WAS + "', '" + ALLO + "', 'obsolete combination',"
                 + "   'combination in Allomerus (Longino & Branstetter 2026)', 451279),"
-                + " ('2026-10-21 05:30:00', 'changed', '" + CODE + "', 1, '" + OCH + "', '" + OCH + "', '" + WAS + "', 'synonym', null, null),"
+                + " ('2026-10-21 12:30:00', 'changed', '" + CODE + "', 1, '" + OCH + "', '" + OCH + "', '" + WAS + "', 'synonym', null, null),"
                 // report-only and spot-check rows: never shown
-                + " ('2026-10-23 05:30:00', 'would_change', '" + CODE + "', 1, '" + OCH + "', '" + ALLO + "', '" + OCH + "', 'synonym', 'x', 1),"
-                + " ('2026-10-23 05:30:00', 'kept_valid', '" + CODE + "', 1, '" + OCH + "', '" + ALLO + "', '" + OCH + "', 'synonym', null, null),"
+                + " ('2026-10-23 12:30:00', 'would_change', '" + CODE + "', 1, '" + OCH + "', '" + ALLO + "', '" + OCH + "', 'synonym', 'x', 1),"
+                + " ('2026-10-23 12:30:00', 'kept_valid', '" + CODE + "', 1, '" + OCH + "', '" + ALLO + "', '" + OCH + "', 'synonym', null, null),"
                 // the latest run held it (shared name)
-                + " ('2026-10-23 05:30:00', 'shared_name', '" + CODE + "', 1, '" + OCH + "', '" + ALLO + "', '', 'valid', 'name is shared by two taxa', null),"
+                + " ('2026-10-23 12:30:00', 'shared_name', '" + CODE + "', 1, '" + OCH + "', '" + ALLO + "', '', 'valid', 'name is shared by two taxa', null),"
                 // another specimen
-                + " ('2026-10-22 05:31:07', 'changed', 'casent0000002', 1, '" + WAS + "', '" + WAS + "', '" + ALLO + "', 'obsolete combination', 'y', 2)");
+                + " ('2026-10-22 12:31:07', 'changed', 'casent0000002', 1, '" + WAS + "', '" + WAS + "', '" + ALLO + "', 'obsolete combination', 'y', 2)");
         }
     }
 
@@ -78,7 +78,8 @@ public class SpecimenNameHistoryDbTest extends TestCase {
         assertEquals(OCH, events.get(1).uploadedName);
         assertEquals("combination in Allomerus (Longino & Branstetter 2026)", events.get(1).reason);
         assertEquals(Integer.valueOf(451279), events.get(1).antcatId);
-        assertEquals("2026-10-22 05:31:07.0", events.get(1).runDate.toString());
+        // The day (as the page shows it); the hour may shift with the JVM and server time zones in CI.
+        assertEquals("2026-10-22", new java.text.SimpleDateFormat("yyyy-MM-dd").format(events.get(1).runDate));
         assertEquals(OCH, events.get(2).oldName);
         assertNull(events.get(2).antcatId);
         assertNull(events.get(2).reason);
