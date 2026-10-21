@@ -39,7 +39,29 @@ public final class Csrf {
     private static final Set<String> EXEMPT_PATHS = Set.of(
         "/login.do", "/forgotPassword.do", "/resetPassword.do");
 
+    // Admin forms that, on a stale token, are shown again filled in instead of the 403 page
+    // (their action checks REFUSED_ATTR first and then does nothing with the request).
+    private static final Set<String> REFILL_PATHS = Set.of("/addUploader.do");
+
+    /** Request attribute set by SessionRequestFilter when a REFILL_PATHS form had a stale token. */
+    public static final String REFUSED_ATTR = "antweb.csrfRefused";
+
     private Csrf() {}
+
+    /**
+     * True if a refused POST may go on to its action (which must check REFUSED_ATTR and do
+     * nothing but show its form again with the new token): only a token that was presented but
+     * does not match this session (the session changed: restart plus "Keep me logged in", or a
+     * new login in another tab), only for REFILL_PATHS, never multipart. A missing token or a
+     * cross-site Origin/Referer still gets the 403.
+     */
+    public static boolean mayRefill(String servletPath, String reason, boolean multipart) {
+        return "token mismatch".equals(reason) && !multipart && servletPath != null && REFILL_PATHS.contains(servletPath);
+    }
+
+    public static boolean mayRefill(HttpServletRequest request, String reason) {
+        return mayRefill(request.getServletPath(), reason, isMultipart(request));
+    }
 
     /** A new random token: 32 bytes, base64url without padding (43 characters). */
     public static String newToken() {

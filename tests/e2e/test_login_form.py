@@ -67,6 +67,12 @@ def test_admin_sees_sections(admin, curator):
                  'name="_csrf"', 'method="POST"', 'name="editForm" value="2"', "Save changes",
                  "/addUploader.do\">Add an uploader</a>", "Login - AntWeb"):
         assert text in r.text, f"'{text}' not on the login page"
+    # Layout (Brian, 2026-10-20): one right per line, in this order, sections not pushed aside by floats.
+    sp, im, ad, ug = (r.text.find(t) for t in ("<b>Upload specimen data</b>", "<b>Upload specimen images</b>",
+                                                 "> Administrator</label>", "<h2>Upload group</h2>"))
+    assert 0 < sp < im < ad < ug, (sp, im, ad, ug)
+    assert '<div class="perm">' in r.text and ".loginEdit h2 { clear: both;" in r.text
+    assert 'class="admin_left loginEditPage"' in r.text
     for old in ("Is Super Admin", "Upload As (comma separated", "multiple size", "hold the Ctrl key", "orange_done.gif"):
         assert old not in r.text, f"old field '{old}' still on the login page"
 
@@ -119,3 +125,14 @@ def test_curator_own_page(curator):
     assert "Upload specimen data: no" in r.text
     for control in ('name="isAdmin"', 'name="isUploadSpecimens"', 'name="groups"', 'name="uploadAs"', 'name="addProjects"'):
         assert control not in r.text, f"{control} on a curator's own page"
+
+
+@needs("admin")
+def test_login_manager_columns(admin):
+    """viewLogins.do: Name about a third of the width, Upload group the rest (group names were wrapped on 3 to 5 lines)."""
+    s, _token, _id = admin
+    r = s.get(BASE_URL + "/viewLogins.do", timeout=TIMEOUT)
+    assert classify(r).category == "ok", classify(r)
+    for text in ('<table class="loginList">', '<col class="name">', "table.loginList col.name { width: 35%; }",
+                 '<td class="group">', 'class="admin_left loginListPage"'):
+        assert text in r.text, f"'{text}' not on viewLogins.do"

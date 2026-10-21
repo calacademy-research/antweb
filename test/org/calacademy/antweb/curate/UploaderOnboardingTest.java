@@ -117,6 +117,17 @@ public class UploaderOnboardingTest extends TestCase {
         assertEquals("Museum X, group 80, 3 logins", g.label());
     }
 
+    /** A stale form token on Add an uploader shows the form again (filled in); everything else keeps the 403. */
+    public void testStaleTokenRefillOnlyForAddUploader() {
+        assertTrue(org.calacademy.antweb.util.Csrf.mayRefill("/addUploader.do", "token mismatch", false));
+        assertFalse("missing token", org.calacademy.antweb.util.Csrf.mayRefill("/addUploader.do", "missing token", false));
+        assertFalse("cross-site", org.calacademy.antweb.util.Csrf.mayRefill("/addUploader.do", "cross-site Origin", false));
+        assertFalse("cross-site", org.calacademy.antweb.util.Csrf.mayRefill("/addUploader.do", "cross-site Referer", false));
+        assertFalse("multipart", org.calacademy.antweb.util.Csrf.mayRefill("/addUploader.do", "token mismatch", true));
+        assertFalse("other pages", org.calacademy.antweb.util.Csrf.mayRefill("/saveGroup.do", "token mismatch", false));
+        assertFalse(org.calacademy.antweb.util.Csrf.mayRefill(null, "token mismatch", false));
+    }
+
     private static void assertNoIgnore(String body) {
         String lower = body.toLowerCase();
         for (String bad : List.of("ignore this email", "you can ignore", "disregard")) {

@@ -162,13 +162,15 @@ public final class LoginEditPage {
 
     static final String STYLE =
         "<style>\n"
-        + ".loginEdit h2 { margin: 1.4em 0 .2em; border-bottom: 1px solid #ccc; }\n"
+        + ".loginEdit h2 { clear: both; margin: 1.4em 0 .2em; border-bottom: 1px solid #ccc; }\n"
+        + ".loginEdit select { max-width: 100%; }\n"
         + ".loginEdit .hint { color: #555; margin: 0 0 .6em; }\n"
         + ".loginEdit table.fields td { padding: 3px 8px 3px 0; vertical-align: top; }\n"
         + ".loginEdit table.fields td:first-child { font-weight: bold; white-space: nowrap; }\n"
         + ".loginEdit input[type=text], .loginEdit input[type=password] { width: 22em; max-width: 100%; }\n"
-        + ".loginEdit .right { margin: .4em 0; }\n"
-        + ".loginEdit .right .what { margin: 0 0 0 1.8em; color: #555; }\n"
+        // Not "right": the site's .right floats (base.css, antweb_style.css) and pushed the next section aside.
+        + ".loginEdit .perm { display: block; clear: both; margin: .5em 0; }\n"
+        + ".loginEdit .perm .what { margin: 0 0 0 1.8em; color: #555; }\n"
         + ".loginEdit .danger { color: #b00000; font-weight: bold; }\n"
         + ".loginEdit .adminWarning { border: 2px solid #b00000; color: #b00000; padding: 6px; margin: .4em 0 .4em 1.8em; }\n"
         + ".loginEdit table.assigned td { padding: 2px 10px 2px 0; }\n"
@@ -176,6 +178,12 @@ public final class LoginEditPage {
         + ".loginEdit .buttons { margin: 1.2em 0; }\n"
         + ".loginEdit .buttons button, .loginEdit .actions button { font-size: 1em; padding: 4px 12px; }\n"
         + ".loginEdit .actions form { margin: .6em 0; }\n"
+        // Phone width: the page column (.admin_left, 560px, floated) takes the whole width.
+        + "@media (max-width: 760px) {\n"
+        + "  .admin_left.loginEditPage { float: none; width: auto; padding: 0 8px; }\n"
+        + "  .loginEdit table.fields td { display: block; padding: 2px 0; }\n"
+        + "  .loginEdit input[type=text], .loginEdit input[type=password] { width: 100%; box-sizing: border-box; }\n"
+        + "}\n"
         + "</style>\n";
 
     // ------------------------------------------------------------------ administrator's page
@@ -232,10 +240,10 @@ public final class LoginEditPage {
         right(b, "isUploadImages", s.uploadImages, "Upload specimen images",
             "Upload specimen images with the Image Uploader.");
         if (isSelf) {
-            b.append("<div class=\"right\"><b>Administrator: yes</b><input type=\"hidden\" name=\"isAdmin\" value=\"on\">")
+            b.append("<div class=\"perm\"><b>Administrator: yes</b><input type=\"hidden\" name=\"isAdmin\" value=\"on\">")
              .append("<div class=\"what\">You cannot remove your own administrator rights here, so that you do not lock yourself out. Ask another administrator.</div></div>\n");
         } else {
-            b.append("<div class=\"right\"><label class=\"danger\"><input type=\"checkbox\" name=\"isAdmin\" id=\"isAdmin\"").append(checked(s.isAdmin))
+            b.append("<div class=\"perm\"><label class=\"danger\"><input type=\"checkbox\" name=\"isAdmin\" id=\"isAdmin\"").append(checked(s.isAdmin))
              .append("> Administrator</label>\n<div class=\"what\">Full access to all tools, all logins and all data. Give only to AntWeb staff.</div>\n")
              .append("<div class=\"adminWarning\" id=\"adminWarning\"").append(s.isAdmin ? "" : " hidden")
              .append(">Warning: an administrator can change or delete any data, upload for any group, and change every login, including this one. ")
@@ -340,7 +348,7 @@ public final class LoginEditPage {
     }
 
     private static void right(StringBuilder b, String name, boolean on, String label, String what) {
-        b.append("<div class=\"right\"><label><input type=\"checkbox\" name=\"").append(name).append("\"").append(checked(on)).append("> <b>")
+        b.append("<div class=\"perm\"><label><input type=\"checkbox\" name=\"").append(name).append("\"").append(checked(on)).append("> <b>")
          .append(label).append("</b></label>\n<div class=\"what\">").append(what).append("</div></div>\n");
     }
 

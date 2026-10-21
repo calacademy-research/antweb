@@ -76,6 +76,20 @@ public final class AddUploaderAction extends AntwebAction {
         String step = request.getParameter("step");
         boolean post = HttpUtil.isPost(request);
 
+        // The form token did not match this session (SessionRequestFilter let the request through
+        // only for this page, see Csrf.mayRefill): typically AntWeb restarted while the page was open
+        // and "Keep me logged in" started a new session, or the admin logged in again in another tab.
+        // Nothing is done with this request: the same page is shown again, filled in, with the new
+        // session's token, so one more click does it.
+        boolean sessionChanged = request.getAttribute(Csrf.REFUSED_ATTR) != null;
+        String notice = null;
+        if (sessionChanged) {
+            s_log.warn("execute() form token did not match the session (" + request.getAttribute(Csrf.REFUSED_ATTR)
+                + "): page shown again, nothing done. login:" + admin.getId() + " step:" + step);
+            notice = "send".equals(step) ? SESSION_CHANGED_SEND : SESSION_CHANGED;
+            post = false;
+        }
+
         if (post && "send".equals(step)) {
             Done done = (Done) session.getAttribute(DONE);
             if (done != null && done.sent == null) {
@@ -133,11 +147,13 @@ public final class AddUploaderAction extends AntwebAction {
             DBUtil.close(connection, this, dbMethodName);
         }
 
-        Done done = "1".equals(request.getParameter("done")) ? (Done) session.getAttribute(DONE) : null;
-        if (!post && done == null) session.removeAttribute(DONE);  // a fresh form: forget the last link
+        Done done = "1".equals(request.getParameter("done")) || (sessionChanged && "send".equals(step))
+            ? (Done) session.getAttribute(DONE) : null;
+        if (!post && done == null && !sessionChanged) session.removeAttribute(DONE);  // a fresh form: forget the last link
+        if (sessionChanged && done == null) notice = SESSION_CHANGED;
         request.setAttribute(PAGE, done != null
-            ? summaryHtml(request, done)
-            : formHtml(request, in, groups, problems));
+            ? summaryHtml(request, done, notice)
+            : formHtml(request, in, groups, problems, notice));
         return mapping.findForward("success");
     }
 
@@ -187,11 +203,26 @@ public final class AddUploaderAction extends AntwebAction {
         + " Each specimen record belongs to one upload group, and <b>an upload replaces all specimens of the uploader's"
         + " upload group</b>. Give two people the same upload group only when they upload one shared data set.</p>";
 
+    static final String SESSION_CHANGED = "Your session changed (AntWeb restarted or you logged in again)."
+        + " Nothing was done. Check the form and press Add uploader again.";
+    static final String SESSION_CHANGED_SEND = "Your session changed (AntWeb restarted or you logged in again)."
+        + " The email was not sent. Check it and press Send again.";
+
+    static String noticeHtml(String notice) {
+        return notice == null ? "" : "<div id=\"session-changed\" style=\"border:2px solid #c80;background:#fff6e0;padding:8px 12px;margin:10px 0;max-width:760px\"><b>"
+            + Html.esc(notice) + "</b></div>\n";
+    }
+
     static String formHtml(HttpServletRequest request, UploaderOnboarding.Request in,
                            List<UploaderOnboarding.GroupRow> groups, List<String> problems) {
+        return formHtml(request, in, groups, problems, null);
+    }
+
+    static String formHtml(HttpServletRequest request, UploaderOnboarding.Request in,
+                           List<UploaderOnboarding.GroupRow> groups, List<String> problems, String notice) {
         String app = AntwebProps.getDomainApp();
         StringBuilder b = new StringBuilder();
-        b.append("<h1>Add an uploader</h1>\n").append(INTRO);
+        b.append("<h1>Add an uploader</h1>\n").append(noticeHtml(notice)).append(INTRO);
         if (!problems.isEmpty()) {
             b.append("<div style=\"color:#b00;font-weight:bold\"><p>Nothing was changed:</p><ul>");
             for (String p : problems) b.append("<li>").append(Html.esc(p)).append("</li>");
@@ -248,10 +279,10 @@ public final class AddUploaderAction extends AntwebAction {
         return b.toString();
     }
 
-    static String summaryHtml(HttpServletRequest request, Done done) {
+    static String summaryHtml(HttpServletRequest request, Done done, String notice) {
         String app = AntwebProps.getDomainApp();
         StringBuilder b = new StringBuilder();
-        b.append("<h1>Add an uploader: done</h1>\n<ul>");
+        b.append("<h1>Add an uploader: done</h1>\n").append(noticeHtml(notice)).append("<ul>");
         for (String l : done.lines) b.append("<li>").append(Html.esc(l)).append("</li>");
         b.append("</ul>\n<p><a href=\"").append(app).append("/viewLogin.do?id=").append(done.loginId).append("\">Open the login</a>")
          .append(" | <a href=\"").append(app).append("/addUploader.do\">Add another uploader</a>")
