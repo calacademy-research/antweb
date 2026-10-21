@@ -156,7 +156,7 @@
       (org.calacademy.antweb.home.PlaceImageCountDb.PlaceImages) request.getAttribute("placeImages");
   boolean isProjectOverview = (overview instanceof Project);
   String georank = isGeolocale ? geolocale.getGeorank() : null;
-  boolean isListOnlyPlace = isGeolocale && !geolocale.isIsland() && ("region".equals(georank) || "subregion".equals(georank));
+  boolean isListOnlyPlace = isGeolocale && geolocale.isCountedFromCountries();   // region or subregion
   String placeWord = "place";
   if (isGeolocale) {
     if (geolocale.isIsland()) placeWord = "island";
@@ -165,13 +165,6 @@
   } else if (isBioregion) placeWord = "bioregion";
   else if (isMuseum) placeWord = "museum";
   else if (isProjectOverview) placeWord = "project";
-
-  String specimensDef;
-  if (isListOnlyPlace) specimensDef = "specimens of the species on this " + placeWord + "'s list, collected anywhere, not only here";
-  else if (isGeolocale) specimensDef = "ant specimens collected here, identified to a species, morphospecies or indet name";
-  else if (isBioregion) specimensDef = "ant specimens collected in this bioregion";
-  else if (isMuseum) specimensDef = "ant specimens recorded as held by this museum";
-  else specimensDef = "specimens, collected anywhere, of the species and subspecies on this project's list";
 
   int imagesShown = overview.getImageCount();
   int imagedShown = overview.getImagedSpecimenCount();
@@ -217,9 +210,12 @@
     }
   }
 
+  // Regions and subregions (since 2026-10-20): the specimens counted on the pages of their countries, each once
+  // (Geolocale.regionSpecimensSql). Countries, islands and states: only specimens under a name on the list; the
+  // "Show Specimen Taxa" view of the species list (Geolocale.isCanShowSpecimenTaxa) shows the other names.
   String specimensFullDef;
-  if (isListOnlyPlace) specimensFullDef = "Specimens of the species on " + listName + ", collected anywhere, not only here.";
-  else if (isGeolocale) specimensFullDef = "Ant specimens collected in this " + pw + " and identified to a species, morphospecies, or unidentified taxon.";
+  if (isListOnlyPlace) specimensFullDef = "Ant specimens collected in this " + pw + "'s countries and identified to a name on their lists; each specimen counted once.";
+  else if (isGeolocale) specimensFullDef = "Ant specimens collected in this " + pw + " and identified to a species, morphospecies, or unidentified taxon on " + listName + ".";
   else if (isBioregion) specimensFullDef = "Ant specimens collected in this bioregion.";
   else if (isMuseum) specimensFullDef = "Ant specimens recorded as held by this museum.";
   else specimensFullDef = "Specimens, collected anywhere, of the species and subspecies on this project's list.";
@@ -231,6 +227,14 @@
     if (listCriteria != null && !"".equals(listCriteria)) {
       specimenListLink = "<a href=\"" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&" + listCriteria + "&resultRank=specimen\">List all specimens collected in " + Html.esc(overview.getName()) + "</a> (every record, under any name, including those not counted above)";
     }
+  }
+  // Countries, islands and states: every name their specimens are filed under (Show Specimen Taxa of the species list).
+  if (specimenListLink != null && isGeolocale && geolocale.isCanShowSpecimenTaxa()) {
+    String listParams = isAdm1
+        ? "countryName=" + Html.url(geolocale.getParent()) + "&adm1Name=" + Html.url(geolocale.getName())
+        : "countryName=" + Html.url(geolocale.getName());
+    String specimenTaxaUrl = AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&" + listParams + "&specimen=true";
+    specimenListLink += "<br>Names of all specimens collected here, including those not on the list: <a id=\"specimen-taxa-link\" href=\"" + Html.escAttr(specimenTaxaUrl) + "\">Show Specimen Taxa</a>.";
   }
 %>
 <div id="place-stats"<% if (placeImages != null) { %> data-images="<%= placeImages.allImages %>" data-ant="<%= placeImages.antImages %>" data-labels="<%= placeImages.labelImages() %>" data-imaged="<%= placeImages.imagedSpecimens %>" data-label-only="<%= placeImages.labelOnlySpecimens %>"<% } %>>

@@ -146,6 +146,9 @@ public class SpecimenNameUpdateDb {
         public Integer antcatId;
         public int count;
         public final List<String> codes = new ArrayList<>();
+        /** Other reasons of specimens merged into this line (one line per old -> new pair and group), with their AntCat ids. */
+        public final List<String> moreReasons = new ArrayList<>();
+        public final List<Integer> moreAntcatIds = new ArrayList<>();
     }
 
     /** A run (date and mode) and its number of specimens. */
@@ -159,7 +162,11 @@ public class SpecimenNameUpdateDb {
 
     /**
      * Lines of the given runs, in the order of the runs, then group, then old name. groupId 0 = all groups.
-     * Specimens of one old and new name with different reasons (uploaded under different names) are separate lines.
+     * One line per old -> new pair (as shown) and group, the specimen counts added together (Brian Fisher,
+     * 2026-10-20): the 2026-10-20 preview showed "Wasmannia auropunctata -> Allomerus auropunctatus" twice
+     * under one group (1 and 42 specimens), because rows were split by anything that differed in the
+     * stored columns (the exact taxon names, the reason) while the page shows display names. A pair whose
+     * specimens have different reasons keeps them all (moreReasons).
      */
     public List<Line> getLines(int groupId, List<Run> runs) throws SQLException {
         return getLines(groupId, runs, false);
@@ -173,20 +180,23 @@ public class SpecimenNameUpdateDb {
             String query = "select access_group, old_name, new_name, antcat_status, code, uploaded_name, reason, antcat_id from specimen_name_update"
                 + " where run_date = ? and mode = ?" + (groupId > 0 ? " and access_group = ?" : "")
                 + " order by access_group, old_name, new_name, reason" + (byUploadedName ? ", uploaded_name" : "") + ", code";
+            java.util.Map<String, Line> byKey = new java.util.LinkedHashMap<>();
             try (PreparedStatement stmt = connection.prepareStatement(query)) {
                 stmt.setTimestamp(1, run.runDate);
                 stmt.setString(2, run.mode);
                 if (groupId > 0) stmt.setInt(3, groupId);
                 try (ResultSet r = stmt.executeQuery()) {
-                    Line line = null;
                     while (r.next()) {
                         int g = r.getInt(1);
                         String oldName = r.getString(2);
                         String newName = r.getString(3);
+                        String uploaded = r.getString(6);
                         String reason = r.getString(7);
-                        if (line == null || line.groupId != g || !line.oldName.equals(oldName) || !line.newName.equals(newName)
-                                || !java.util.Objects.equals(line.reason, reason)
-                                || (byUploadedName && !java.util.Objects.equals(line.uploadedName, r.getString(6)))) {
+                        int id = r.getInt(8);
+                        Integer antcatId = r.wasNull() ? null : id;
+                        String key = lineKey(g, oldName, newName, byUploadedName ? uploaded : null);
+                        Line line = byKey.get(key);
+                        if (line == null) {
                             line = new Line();
                             line.runDate = run.runDate;
                             line.mode = run.mode;
@@ -194,19 +204,37 @@ public class SpecimenNameUpdateDb {
                             line.oldName = oldName;
                             line.newName = newName;
                             line.antcatStatus = r.getString(4);
-                            line.uploadedName = r.getString(6);
+                            line.uploadedName = uploaded;
                             line.reason = reason;
-                            int id = r.getInt(8);
-                            line.antcatId = r.wasNull() ? null : id;
-                            lines.add(line);
+                            line.antcatId = antcatId;
+                            byKey.put(key, line);
+                        } else if (reason != null && !reason.equals(line.reason) && !line.moreReasons.contains(reason)) {
+                            if (line.reason == null) {
+                                line.reason = reason;
+                                line.antcatId = antcatId;
+                            } else {
+                                line.moreReasons.add(reason);
+                                line.moreAntcatIds.add(antcatId);
+                            }
                         }
                         ++line.count;
                         if (line.codes.size() < MAX_CODES_PER_LINE) line.codes.add(r.getString(5));
                     }
                 }
             }
+            lines.addAll(byKey.values());
         }
         return lines;
+    }
+
+    /** Group and the names as the page shows them (Taxon.getPrettyTaxonName, without case): one line per key. */
+    static String lineKey(int groupId, String oldName, String newName, String uploadedName) {
+        return groupId + "\t" + shown(oldName) + "\t" + shown(newName) + (uploadedName == null ? "" : "\t" + shown(uploadedName));
+    }
+
+    private static String shown(String taxonName) {
+        if (taxonName == null || taxonName.isEmpty()) return "";
+        return org.calacademy.antweb.Taxon.getPrettyTaxonName(taxonName.trim()).replaceAll("\\s+", " ").toLowerCase(java.util.Locale.ROOT);
     }
 
     /** A day as yyyy-mm-dd, or null if it is not one (so it can go into the query). */

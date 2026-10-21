@@ -20,6 +20,8 @@ import org.calacademy.antweb.AntwebAction;
 import org.calacademy.antweb.Group;
 import org.calacademy.antweb.Login;
 import org.calacademy.antweb.Taxon;
+import org.calacademy.antweb.upload.SharedNameReport;
+import org.calacademy.antweb.upload.SharedNames;
 import org.calacademy.antweb.upload.UploadNameReasons;
 import org.calacademy.antweb.upload.SpecimenNameUpdate;
 import org.calacademy.antweb.upload.SpecimenNameUpdateDb;
@@ -83,7 +85,7 @@ public final class NameUpdatesAction extends AntwebAction {
             html.append(HELP);
             if (isAdmin) html.append(adminBox(request, SpecimenNameUpdate.readSettings()));
             html.append(filterForm(isAdmin, groupIds, Math.max(groupId, 0), from, to));
-            html.append(sharedHtml(shared, AntwebProps.getDomainApp()));
+            html.append(sharedHtml(shared, AntwebProps.getDomainApp(), shared.isEmpty() ? SharedNames.none() : SharedNames.load(connection)));
             html.append(keptValidHtml(keptValid, AntwebProps.getDomainApp()));
             html.append(linesHtml(runs, lines, AntwebProps.getDomainApp()));
             request.setAttribute("html", html.toString());
@@ -111,8 +113,8 @@ public final class NameUpdatesAction extends AntwebAction {
             + "valid one) and its counts and maps stay under the old name until the group uploads its data again.",
         "Usually nothing: the counts, lists and maps follow by the end of the nightly run (about 8 AM). If a move looks wrong, "
             + "check the name in AntCat first. If the identification itself is out of date, correct it in TaxonWorks (CAS) or in "
-            + "your upload file; the next upload or nightly run uses it. Morphospecies, indets and homonyms are never moved, nor are "
-            + "specimens whose name belongs to two or more AntCat taxa: those are listed under \"Needs the curator's decision\". "
+            + "your upload file; the next upload or nightly run uses it. Morphospecies and indets are never moved, nor are "
+            + "specimens whose name belongs to two or more AntCat taxa (homonyms and the like): those are listed under \"Needs the curator's decision\". "
             + "Specimens filed under a name AntCat calls valid are not moved either; they are listed under "
             + "\"Not moved: filed under a name AntCat calls valid\".");
 
@@ -172,10 +174,18 @@ public final class NameUpdatesAction extends AntwebAction {
     static final String SECTION_STYLE = "color:#a3c76d;font-size:16px;font-weight:bold;margin:18px 0 6px";
 
     public static String sharedHtml(List<SpecimenNameUpdateDb.Line> lines, String domainApp) {
+        return sharedHtml(lines, domainApp, SharedNames.none());
+    }
+
+    /**
+     * shared: the names shared by two or more AntCat taxa as the nightly step and the upload read them
+     * (SharedNames.load); each line is SharedNameReport.line(), the same text as the upload report's
+     * "Needs the curator's decision" section, followed by the specimens.
+     */
+    public static String sharedHtml(List<SpecimenNameUpdateDb.Line> lines, String domainApp, SharedNames shared) {
         if (lines.isEmpty()) return "";
-        StringBuilder b = new StringBuilder("<h3 style=\"" + SECTION_STYLE + "\">Needs the curator's decision</h3>"
-            + "<p>Not moved: the name belongs to two or more AntCat taxa, so the name alone does not tell which one the specimens are. "
-            + "Please confirm the identification and correct it in TaxonWorks (CAS) or in your upload file.</p>");
+        StringBuilder b = new StringBuilder("<h3 style=\"" + SECTION_STYLE + "\">" + SharedNameReport.HEADING + "</h3>"
+            + "<p>" + SharedNameReport.EXPLANATION + "</p>");   // constants, plain text
         int lastGroup = Integer.MIN_VALUE;
         boolean open = false;
         for (SpecimenNameUpdateDb.Line line : lines) {
@@ -185,11 +195,7 @@ public final class NameUpdatesAction extends AntwebAction {
                 open = true;
                 lastGroup = line.groupId;
             }
-            b.append("<li class=\"name-update-shared\">").append(Taxon.makeDescriptionLink(line.oldName));
-            if (line.uploadedName != null && !line.uploadedName.equals(line.oldName)) {
-                b.append(" (uploaded as <i>").append(Html.esc(Taxon.getPrettyTaxonName(line.uploadedName))).append("</i>)");
-            }
-            if (line.reason != null) b.append(": <span class=\"name-update-reason\">").append(Html.esc(line.reason)).append("</span>");
+            b.append("<li class=\"name-update-shared\">").append(SharedNameReport.line(line.oldName, line.uploadedName, shared, line.reason));
             appendCodes(b, line, domainApp);
             b.append("</li>");
         }
@@ -275,6 +281,10 @@ public final class NameUpdatesAction extends AntwebAction {
                 if (line.reason != null) {
                     // The same code as the upload report's "Recognized invalid species" lines.
                     b.append(UploadNameReasons.reasonPart(line.reason, line.antcatId, line.uploadedName, line.oldName, line.newName));
+                    for (int i = 0; i < line.moreReasons.size(); i++) {   // merged specimens with another reason
+                        String more = UploadNameReasons.reasonPart(line.moreReasons.get(i), line.moreAntcatIds.get(i), line.uploadedName, line.oldName, line.newName);
+                        if (!more.isEmpty()) b.append("; ").append(more.substring(2));   // without the leading ": "
+                    }
                 } else if (line.antcatStatus != null) {
                     b.append(" (AntCat: ").append(Html.esc(line.antcatStatus)).append(")");
                 }

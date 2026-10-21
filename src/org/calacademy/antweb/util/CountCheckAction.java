@@ -29,6 +29,7 @@ import org.calacademy.antweb.geolocale.Georank;
 /**
  * countCheck.do (administrators, read-only): CountCheck for a sample of places. Default sample:
  * Madagascar, Reunion, the country with the most morphospecies specimens (after those two), the
+ * subregion of Madagascar (since 2026-10-20: counted from its countries), the
  * live curated project with the most species (only live projects are recounted each night), the Malagasy bioregion and the CASC museum. Parameters
  * geolocaleId (one or more), project, museum and bioregion replace the sample.
  * The page ends with a line "Real mismatches: N. Pending: M." read by tests/e2e/test_count_check.py.
@@ -49,7 +50,8 @@ public final class CountCheckAction extends AntwebAction {
             connection.setReadOnly(true);
             List<String> notes = new ArrayList<>();
             List<CountCheck.Place> places = places(request, connection, notes);
-            CountCheck.Result result = new CountCheck(connection).run(places, CountCheck.lastCompletedRun(computeLog()));
+            List<String> log = computeLog();
+            CountCheck.Result result = new CountCheck(connection).run(places, CountCheck.lastCompletedRun(log), CountCheck.regionRuleCounted(log));
             result.notes.addAll(notes);
             request.setAttribute("html", html(result, AntwebProps.getDomainApp()));
         } catch (SQLException e) {
@@ -78,7 +80,8 @@ public final class CountCheckAction extends AntwebAction {
         String column = "country";
         if (g.isIsland()) column = "island_country";
         else if (Georank.ADM1.equals(g.getGeorank())) column = "adm1";
-        else if (!Georank.COUNTRY.equals(g.getGeorank())) return null;   // regions and subregions have no specimen column
+        else if (g.isCountedFromCountries()) return CountCheck.Place.region("" + g.getId(), g.getName() + " (" + g.getGeorank() + ")");
+        else if (!Georank.COUNTRY.equals(g.getGeorank())) return null;
         return new CountCheck.Place(CountCheck.GEOLOCALE, "" + g.getId(), g.getName(), column, g.getName());
     }
 
@@ -117,6 +120,11 @@ public final class CountCheckAction extends AntwebAction {
                 Geolocale g = GeolocaleMgr.getValidCountry(morphoCountry);
                 if (g != null) geolocales.add(g); else notes.add("Country " + Html.esc(morphoCountry) + " not found");
             }
+            // A subregion (counted from its countries since 2026-10-20): the one of Madagascar.
+            Geolocale madagascar = GeolocaleMgr.getValidCountry("Madagascar");
+            Geolocale subregion = madagascar == null || madagascar.getParent() == null ? null
+                : GeolocaleMgr.getGeolocale(madagascar.getParent(), Georank.SUBREGION);
+            if (subregion != null) geolocales.add(subregion); else notes.add("The subregion of Madagascar was not found");
             // The nightly run recounts only live projects (ProjTaxonCountDb.childrenCountCrawl, ProjectMgr.getLiveProjects):
             // the largest live curated project.
             java.util.Set<String> live = new java.util.HashSet<>();
@@ -136,7 +144,7 @@ public final class CountCheckAction extends AntwebAction {
         }
         for (Geolocale g : geolocales) {
             CountCheck.Place p = geolocalePlace(g);
-            if (p != null) places.add(p); else notes.add(Html.esc(g.getName()) + ": only countries, adm1s and islands can be checked");
+            if (p != null) places.add(p); else notes.add(Html.esc(g.getName()) + ": only countries, adm1s, islands, subregions and regions can be checked");
         }
         if (project != null) {
             Project p = ProjectMgr.getProject(project, false);
@@ -162,10 +170,11 @@ public final class CountCheckAction extends AntwebAction {
         "AntWeb does not count specimens when a page is shown: the nightly run (05:00 to about 08:15 Pacific) "
             + "counts them and stores the numbers, and the pages show the stored numbers. This page counts again, "
             + "straight from the specimen records, for a few sample places (Madagascar, Reunion, the country with the most "
-            + "morphospecies, the largest live curated project, the Malagasy bioregion and the CASC museum), and compares. "
+            + "morphospecies, the subregion of Madagascar, the largest live curated project, the Malagasy bioregion and the CASC museum), and compares. "
             + "Checked: the specimens of each species, the species of each genus and the genera of each subfamily in the "
             + "place's taxon list, the \"Global\" specimens of each species, and the place's image numbers (Images, "
-            + "images of each view, Imaged specimens). Every number that differs is listed with the number the site "
+            + "images of each view, Imaged specimens) and, for countries, islands, states and subregions, the place's "
+            + "Specimens number (a subregion's specimens are those collected in its countries). Every number that differs is listed with the number the site "
             + "shows (\"Stored\") and the fresh count (\"Recount\").",
         "A difference means the site shows a wrong number on that place's page. A \"pending\" difference is expected: "
             + "something changed after the last nightly run (an upload, a name update, a list edit) and the next nightly "
