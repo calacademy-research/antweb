@@ -311,7 +311,7 @@ Images:
 		 out.println("<br><b>List of type specimens from the museum: <a rel='nofollow' href='" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&ownedBy=" + code + "&type=type&resultRank=specimen&output=list'>here</a>");
   }
 
-    // Introduced species project only (Brian Fisher, 2026-10-21): specimens intercepted at ports have the
+  // Introduced species project only (Brian Fisher, 2026-10-21): specimens intercepted at ports have the
   // country "Port of Entry". The search filters on the specimen's country text, so it works whether or not
   // Port of Entry is a valid (shown) place.
   if (isProjectOverview && "introducedants".equals(overview.getName())) {

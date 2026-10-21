@@ -525,7 +525,8 @@ def restore_accounts(db, saved):
 
 UPLOAD_AS_CONFIG = "/root/staging-refresh/upload-as.txt"
 DEFAULT_ADMIN_LOGINS = ["antweb"]
-UPLOAD_AS_UPLOADER = ACCOUNTS[0][0]   # zztest_uploader
+UPLOAD_AS_UPLOADER = "zztest_uploader"
+assert UPLOAD_AS_UPLOADER in [a[0] for a in ACCOUNTS]
 
 
 def read_upload_as_config(path):
@@ -643,6 +644,10 @@ def main(argv=None):
         return 0
     if args.add_upload_as:
         names = read_upload_as_config(args.add_upload_as)
+        if names and not login_id(db, UPLOAD_AS_UPLOADER):
+            print(f"WARNING: no login {UPLOAD_AS_UPLOADER} on this server (were the test logins put back?); "
+                  "nothing added")
+            return 1
         _changed, usable = add_upload_as(db, names)
         if names and not usable:
             print(f"WARNING: none of {', '.join(names)} is an administrator login here; set adminLogin=NAME in "
