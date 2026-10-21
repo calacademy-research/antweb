@@ -581,27 +581,18 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     // -------------------- Countable Implementation ---------------------
 
     // was getCountSpecimensLocalQuery() Now is the default.
+    // The specimens of each name on this place's list, as its "Specimens" number counts them
+    // (getSpecimenPlaceJoin / getSpecimenPlaceCriteria): collected here, of a countable status.
+    // Regions and subregions: since 2026-10-20 only the specimens collected in their countries (before:
+    // every specimen of the name, anywhere in the world).
     public String getCountSpecimensQuery() {
-      String overviewCriteria = "";
-
-/*
-          adm1 = "Galapagos"
-          1) During upload use the valid name. "Galapagos Islands" not "Galapagos"
-          2) If geolocale is an island, then the
-      }
-*/
-      if (isIsland()) {
-          overviewCriteria = " and specimen.island_country = '" + getName() + "'";
-      } else {
-          if (Georank.ADM1.equals(getGeorank())) overviewCriteria = " and specimen.adm1 = '" + getName() + "'";
-          if (Georank.COUNTRY.equals(getGeorank())) overviewCriteria = " and specimen.country = '" + getName() + "'";
-      }
-      String query = "select count(*) count, specimen.taxon_name taxonName from specimen "
-          + " join geolocale_taxon gt on specimen.taxon_name = gt.taxon_name " 
+      String query = "select count(*) count, s.taxon_name taxonName from specimen s"
+          + getSpecimenPlaceJoin()
+          + " join geolocale_taxon gt on s.taxon_name = gt.taxon_name"
           + " where gt.geolocale_id = " + getId()
-          + overviewCriteria
-          + " and specimen.status in " + StatusSet.getCountables()
-	          + " group by taxonName";
+          + getSpecimenPlaceCriteria()
+          + " and s.status in " + StatusSet.getCountables()
+          + " group by s.taxon_name";
       return query;
     }
 
@@ -663,8 +654,8 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     /**
      * The specimens of this place, as the specimen counts take them (getCountSpecimensQuery):
      * islands by specimen.island_country, adm1s by specimen.adm1, countries by specimen.country;
-     * regions and subregions have no place column (the names on their list, collected anywhere).
-     * Specimen alias s. Quotes in the name are doubled.
+     * regions and subregions by getSpecimenPlaceJoin() (their countries). Specimen alias s. Quotes in
+     * the name are doubled.
      */
     public String getSpecimenPlaceCriteria() {
       String name = getName() == null ? "" : getName().replace("'", "''");
@@ -674,15 +665,75 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
       return "";
     }
 
+    /** Region or subregion page (not an island): its specimens are those of its countries. */
+    public boolean isCountedFromCountries() {
+      return !isIsland() && (Georank.REGION.equals(getGeorank()) || Georank.SUBREGION.equals(getGeorank()));
+    }
+
+    /**
+     * Regions and subregions: a join (specimen alias s) to the specimens collected in their countries,
+     * each specimen once (regionSpecimensSql). Empty for other places.
+     */
+    public String getSpecimenPlaceJoin() {
+      if (!isCountedFromCountries()) return "";
+      return " join (select distinct rs.code from (" + regionSpecimensSql(" and r.id = " + getId()) + ") rs) rsc on rsc.code = s.code";
+    }
+
+    /** Countable specimen statuses (StatusSet.getCountables). */
+    public static final String COUNTABLE = "('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')";
+
+    /**
+     * The countries of regions and subregions (Brian Fisher, 2026-10-20): columns rid (region or
+     * subregion id), cid, cname (country id and name), island (1: an island, its specimens are those
+     * with specimen.island_country = cname, as on its own page). A subregion's countries are the valid
+     * countries whose parent is the subregion; a region's are those of its subregions. rFilter: extra
+     * condition on the region or subregion (alias r), e.g. " and r.id = 7" or " and r.id = ?" (then
+     * the statement has 2 parameters), "" for all of them.
+     */
+    public static String regionCountriesSql(String rFilter) {
+      String country = " c.georank = 'country' and c.is_valid = 1";
+      String place = " and coalesce(r.is_island, 0) = 0" + rFilter;
+      return "select r.id rid, c.id cid, c.name cname, coalesce(c.is_island, 0) island"
+          + " from geolocale r join geolocale c on c.parent = r.name"
+          + " where r.georank = 'subregion' and" + country + place
+          + " union all"
+          + " select r.id rid, c.id cid, c.name cname, coalesce(c.is_island, 0) island"
+          + " from geolocale r join geolocale sr on sr.parent = r.name and sr.georank = 'subregion'"
+          + " join geolocale c on c.parent = sr.name"
+          + " where r.georank = 'region' and" + country + place;
+    }
+
+    /**
+     * The specimens of regions and subregions: one row (k = region or subregion id, code, taxon_name)
+     * for every specimen that the page of one of its countries counts (collected there, of a countable
+     * status, identified to a name on that country's list). A specimen can come twice (an island and
+     * its country in the same subregion): count distinct codes. rFilter as in regionCountriesSql; with
+     * " and r.id = ?" the statement has 4 parameters.
+     */
+    public static String regionSpecimensSql(String rFilter) {
+      String rc = "(" + regionCountriesSql(rFilter) + ")";
+      String list = " join geolocale_taxon ct on ct.geolocale_id = rc.cid and ct.taxon_name = s.taxon_name";
+      String status = " and s.status in " + COUNTABLE;
+      return "select rc.rid k, s.code code, s.taxon_name taxon_name from " + rc + " rc"
+          + " join specimen s on s.country = rc.cname" + list
+          + " where rc.island = 0" + status
+          + " union all"
+          + " select rc.rid k, s.code code, s.taxon_name taxon_name from " + rc + " rc"
+          + " join specimen s on s.island_country = rc.cname" + list
+          + " where rc.island = 1" + status;
+    }
+
     // Images of each taxon on the list (geolocale_taxon.image_count, "N Images" on the place's image
     // pages): since 2026-10-20 only the images of the specimens of this place (before: of all
-    // specimens of the name, anywhere), the same specimens as the list's specimen counts.
+    // specimens of the name, anywhere), the same specimens as the list's specimen counts (regions and
+    // subregions: the specimens of their countries).
     // Ordered by family, subfamily and genus: CountDb.imageCountCrawl() adds up a genus or subfamily
     // when the next row belongs to another one.
     public String getTaxonImageCountQuery() {
       String query = "select s.taxon_name taxonName, s.family family, s.subfamily subfamily " 
            + ", s.genus genus, s.species species, sum(s.image_count) imageSum" 
-           + " from specimen s join geolocale_taxon gt on s.taxon_name = gt.taxon_name " 
+           + " from specimen s" + getSpecimenPlaceJoin()
+           + " join geolocale_taxon gt on s.taxon_name = gt.taxon_name "
            + " where gt.geolocale_id = " + getId()
            + getSpecimenPlaceCriteria()
            + " and s.status in " + StatusSet.getCountables()
