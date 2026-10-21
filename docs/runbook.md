@@ -333,7 +333,7 @@ tail -20 /root/antweb/logs/web/compute.log; tail -10 /root/antweb/logs/web/taxon
 
 ### Upload stuck
 
-While an upload is running, `serverStatus.do` names it, and the application refuses restart requests (so `reboot_checker.sh` waits). The watchdog and a manual `docker restart` still restart.
+While an upload is running, `serverStatus.do` names it, and the application refuses restart requests (so `reboot_checker.sh` waits). The watchdog and a manual `docker restart` still restart. Since 2026-10-20 uploads and admin data jobs started from a page run in the background, one at a time: `jobStatus.do` (Upload status, linked from the Curate page) lists them with their status and current step, and `serverStatus.do` shows "Background job running". A restart interrupts the running and waiting jobs; their status pages then say "Interrupted" and the curator uploads again (the upload's transaction is rolled back). Database view: `select id, kind, action, status, login_name, created, step from background_job order by id desc limit 20;`
 
 ```
 # ssh root@165.232.137.86   (antweb-prod)

@@ -14,6 +14,7 @@ login's group is the test group (group_of()).
 """
 import os
 import re
+import time
 import zipfile
 from io import BytesIO
 from urllib.parse import urlparse
@@ -105,20 +106,79 @@ BUSY = ("currently in an Upload Process", "currently in the process of an Upload
         "AntwebMgr not yet initialized", "down time", "Another data job is running")
 
 
-def upload_specimens(session, token, text, file_name="zztest_specimens.txt", timeout=900):
-    """POST a specimen file (zipped, as the Curate page sends it) to upload.do. Returns the response.
-    Skips the test when the server is busy (another upload, the nightly run, a restart)."""
+JOB_STATUS = re.compile(r'data-status="(\w+)"')
+
+
+def job_status(html):
+    """queued, running, finished, failed or interrupted, from a jobStatus.do page; None if it is not one."""
+    m = JOB_STATUS.search(html or "")
+    return m.group(1) if m else None
+
+
+def job_url(response):
+    """The jobStatus.do address a POST redirected to (on BASE_URL), or None."""
+    if response.status_code not in (301, 302, 303):
+        return None
+    loc = urlparse(response.headers.get("Location", ""))
+    if not loc.path.endswith("/jobStatus.do"):
+        return None
+    return BASE_URL + loc.path + ("?" + loc.query if loc.query else "")
+
+
+def wait_for_job(session, url, timeout=900):
+    """Follows a job's status page until the job has ended. Returns the last page. Skips when the
+    job is still waiting at the end (staging busy: nightly run, another upload)."""
+    deadline = time.monotonic() + timeout
+    while True:
+        r = session.get(url, timeout=TIMEOUT)
+        assert r.status_code == 200, (url, r.status_code)
+        status = job_status(r.text)
+        assert status, "not a job status page: " + re.sub(r"<[^>]+>", " ", r.text)[:400]
+        if status not in ("queued", "running"):
+            return r
+        if time.monotonic() > deadline:
+            if status == "queued":
+                pytest.skip(f"staging is busy: the job is still waiting after {timeout} s ({url})")
+            pytest.fail(f"the job is still running after {timeout} s ({url})")
+        time.sleep(3)
+
+
+def post_upload(session, token, text, file_name="zztest_specimens.txt"):
+    """POST a specimen file (zipped, as the Curate page sends it) to upload.do, without following the
+    redirect. Returns (response, seconds the POST took)."""
     assert_staging()
     files = {"theFile": (file_name.replace(".txt", ".zip"), zip_of(file_name, text), "application/zip")}
+    t0 = time.monotonic()
     r = session.post(BASE_URL + "/upload.do", headers={"X-CSRF-Token": token},
-                     data={"action": "specimenUpload"}, files=files, timeout=timeout)
-    if any(b in r.text for b in BUSY):
+                     data={"action": "specimenUpload"}, files=files, timeout=120, allow_redirects=False)
+    return r, time.monotonic() - t0
+
+
+def upload_specimens(session, token, text, file_name="zztest_specimens.txt", timeout=900):
+    """Upload a specimen file as the Curate page does. The upload runs in the background: the POST
+    answers at once with a redirect to the upload's status page (jobStatus.do?id=N), which this
+    follows until the upload has ended. Returns that last status page (or the message page when
+    the upload was refused before it started), with .post_seconds (how long the POST took) and
+    .job_url. Skips the test when the server is busy (a restart, down time)."""
+    r, seconds = post_upload(session, token, text, file_name)
+    url = job_url(r)
+    if url:
+        r = wait_for_job(session, url, timeout)
+    elif any(b in r.text for b in BUSY):
         pytest.skip("staging is busy: " + next(b for b in BUSY if b in r.text))
+    r.post_seconds = seconds
+    r.job_url = url
     return r
 
 
+def assert_upload_complete(r):
+    """The status page says the upload is complete."""
+    text = re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", r.text))
+    assert job_status(r.text) == "finished" and "Upload complete" in text, text[:800]
+
+
 def report_url(upload_response):
-    """The upload report linked from the "Successful Upload." page."""
+    """The upload report linked from the upload's status page ("Your upload report")."""
     m = re.search(r"""href\s*=\s*["']([^"']*/web/log/specimen/[^"']+\.html)["']""", upload_response.text)
     if not m:
         m = re.search(r"""href\s*=\s*["']([^"']*/web/log/[^"']+\.html)["']""", upload_response.text)

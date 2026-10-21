@@ -593,6 +593,13 @@ We would like to remove getChildImages.  Not needed now in the new UI
       forward="/listSpecimenUploads.do"/>  
       
       <!-- Name updates: specimens moved to the current valid name by the nightly name update (curators: own group). -->
+      <!-- Status page of an upload or admin data job run in the background (BackgroundJobs, 2026-10-20). -->
+      <action path="/jobStatus"
+              type="org.calacademy.antweb.util.JobStatusAction"
+              scope="request">
+          <forward name="success" path="/curate/jobStatus.jsp"/>
+      </action>
+
       <action path="/nameUpdates"
               type="org.calacademy.antweb.curate.NameUpdatesAction"
               scope="request">

@@ -72,6 +72,7 @@
   "/introduced": "ok",
   "/introducedMapMgr": "login",
   "/island": "message",
+  "/jobStatus": "login",
   "/list": "message",
   "/listImageUploads": "login",
   "/listSpecimenUploads": "login",

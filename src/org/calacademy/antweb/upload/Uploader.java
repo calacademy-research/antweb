@@ -45,6 +45,7 @@ public class Uploader {
             throws SQLException, TestException, AntwebException
     {
         A.log("uploadSpecimenFile() fileName:" + fileName + " encoding:" + encoding);
+        org.calacademy.antweb.util.BackgroundJobs.step("Checking the file (format, columns, encoding).");
 
         UploadDetails uploadDetails = null;
         Date startTime = new Date();
@@ -101,6 +102,7 @@ public class Uploader {
         SpecimenUpload specimenUpload = new SpecimenUpload(connection);
         uploadDetails = specimenUpload.importSpecimens(uploadFile, curator, operation);
 
+        org.calacademy.antweb.util.BackgroundJobs.step("Keeping a copy of the uploaded file.");
         if (uploadFile != null) {
             uploadFile.backup();
             uploadDetails.setBackupDirFile(uploadFile.getBackupDirFile());
@@ -158,21 +160,17 @@ public class Uploader {
 
 
     // Called by TaxonWorksUploader. Not by SpecimenUploader.
-    // Takes zipFileTarget (data.tsv, occurrence.txt) from the top level of the uploaded zip into outName
-    // (a full path), with SafeUnzip. Returns null when done, or the reason the archive was refused.
-    protected static String copyAndUnzipFile(FormFile file, Group group, String outName, String zipFileTarget) throws IOException {
-        if (file == null) return "Must choose a file for upload.";
-        File zip = new File(outName + ".zip");
-        A.log("copyAndUnzipFile() group:" + group.getId() + " outName:" + outName + " zipFileTarget:" + zipFileTarget);
-        if (!Utility.copyFormFile(file, zip.getPath(), false)) return "The uploaded zip file could not be saved.";
+    // Takes zipFileTarget (data.tsv) from the top level of a saved zip into outName (a full path),
+    // with SafeUnzip. Returns null when done, or the reason the archive was refused.
+    protected static String unzipSavedFile(File zip, Group group, String outName, String zipFileTarget) throws IOException {
+        if (zip == null) return "Must choose a file for upload.";
+        A.log("unzipSavedFile() group:" + group.getId() + " outName:" + outName + " zipFileTarget:" + zipFileTarget);
         try {
             SafeUnzip.extract(zip, SafeUnzip.named(zipFileTarget), zipFileTarget + " file", new File(outName));
             return null;
         } catch (SafeUnzip.Refused r) {
-            s_log.warn("copyAndUnzipFile() refused for group:" + group.getId() + " " + r.getMessage());
+            s_log.warn("unzipSavedFile() refused for group:" + group.getId() + " " + r.getMessage());
             return r.getMessage();
-        } finally {
-            if (!zip.delete()) s_log.warn("copyAndUnzipFile() could not delete " + zip);
         }
     }
 

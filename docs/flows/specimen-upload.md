@@ -1,6 +1,6 @@
 # Specimen upload: curator file, TaxonWorks (manual and nightly)
 
-Read from the code on master at commit 5b0c1d5 (2026-10-18). Paths are relative to the repo root; Java classes are under `src/org/calacademy/antweb/` unless a full path is given. Line numbers are those of that commit. "Verified" means read in the code; "check" means the code suggests it but it should be confirmed on staging or in the database.
+Read from the code on master at commit 5b0c1d5 (2026-10-18); the background run and status page (sections 3 and 3a, 6, 7.3, 7.4) from the background-jobs change of 2026-10-20, where line numbers are not given. Paths are relative to the repo root; Java classes are under `src/org/calacademy/antweb/` unless a full path is given. Line numbers are those of that commit. "Verified" means read in the code; "check" means the code suggests it but it should be confirmed on staging or in the database.
 
 ## In plain words
 
@@ -9,6 +9,8 @@ A curator uploads one file that holds **all** of their group's specimens. AntWeb
 Each line's name is checked against the AntCat names AntWeb loaded that morning. If the curator's name is an old name (a synonym, an obsolete combination, a misspelling), the specimen is filed under the current valid name and the curator's name is kept as "Uploaded As" on the specimen page. Names AntCat does not know are kept as they are and listed in the report.
 
 Lines that cannot be read (bad specimen code, wrong number of columns, impossible coordinates, a code another group already uses, and so on) are left out and listed in the upload report under headings marked "(not uploaded)". The report is a web page under `/web/log/specimen/`; the curator gets an email when the upload has finished (not for CAS and not for the nightly TaxonWorks job).
+
+The upload runs in the background (since 2026-10-20). The upload page saves the file, checks it (permission, file type, the zip's content) and answers at once with the upload's **status page** (`jobStatus.do?id=N`), which shows what the upload is doing and reloads itself every 5 seconds until it is complete; the result and the report link are shown there, and the email is sent as before. Uploads run one at a time: a second curator's upload waits in the queue ("Waiting for another upload to finish") instead of being refused. While an upload of a group (or by a login) is waiting or running, a second one of that group or by that login is not started: the curator is sent to the first one's status page. See section 3a.
 
 CAS does the same through TaxonWorks: every night at about 5 AM AntWeb downloads the CAS TaxonWorks export, converts it to an AntWeb specimen file and uploads it as Brian's login. It refuses to upload when the new file has fewer than 95% of the specimens CAS has now.
 
@@ -57,12 +59,13 @@ Same shape: `occurrence.txt` from the zip, `GBIFTransformer`, then section 3. No
 
 Numbers are the order in which things happen for `upload.do?action=specimenUpload`.
 
-1. **Gates** (`UploadAction.execute()`):
-   - another upload running (`Check.upload`, line 110, and line 165) or the nightly compute running (`Check.compute`, line 112): message, nothing done. The "upload in process" flag is a single static string (`UploadAction.s_isInProcess`), shared with the image uploader and the nightly TaxonWorks job.
-   - login, curator or admin, "upload specimens" permission (lines 127 to 154);
-   - `AntwebMgr.isPostInitialized()` (line 159): not during the 2 to 4 minutes after a restart;
-   - down time switch in table `server` (`ServerDb.isDownTime`, line 206);
-   - POST only (line 214). The CSRF token is checked earlier by `SessionRequestFilter`.
+1. **Gates, in the request** (`UploadAction.execute()`):
+   - login, curator or admin, "upload specimens" permission;
+   - `AntwebMgr.isPostInitialized()`: not during the 2 to 4 minutes after a restart;
+   - POST only. The CSRF token is checked earlier by `SessionRequestFilter`.
+   - Not a gate any more: another upload running or the nightly compute running. The upload waits in the queue (step 1c).
+1b. **Save and answer** (`UploadAction.submitSpecimenUpload()`): the effective curator (step 3); if an upload of the same group or by the same login is waiting or running (`BackgroundJobs.Runner.findDuplicate()`), a redirect to that upload's status page with `&already=1`, nothing saved. Otherwise the file is saved as `workingDir/jobs/upload-group<id>-<random>.zip` (or `.txt`), a zip's list of entries is checked (`SafeUnzip.check()`: the same rules as the unpacking in step 4, nothing is unpacked yet), and refusals are shown at once as a message. The job is recorded (table `background_job`) and the answer is a redirect to `jobStatus.do?id=N`. A small file answers in a second or two; the time is that of receiving the file.
+1c. **Queue** (`BackgroundJobs`): one thread runs the jobs one at a time, in order (uploads and the admin data jobs started from pages). A job waits ("Waiting for ...", shown as its step) while AntWeb is starting, while the nightly run or another data job runs (`UtilDataAction.isInComputeProcess()`, `Scheduler.isRunning()`), and while another upload holds the upload flag (an image upload, the nightly TaxonWorks upload). The "upload in process" flag (`UploadAction.s_isInProcess`, shared with the image uploader and the nightly TaxonWorks job) is then taken with `claimUploadProcess()`, only when free. The rest runs in `SpecimenUploadJob.run()`; the down time switch in table `server` (`ServerDb.isDownTime`) is checked there (the upload then ends as "did not complete" with the down time message).
 2. **Upload ID**: `AntwebMgr.incrementSpecimenUploadId()` (line 202). This number is written into every inserted specimen (`specimen.upload_id`) and into the `upload` table row.
 3. **Effective curator**: the login, or the curator chosen in "Upload as" if `isAllowedUploadAs()` (line 68) allows it (admins, or ids listed in the login's `upload_as`). The specimens belong to that curator's group.
 4. **Copy and check the file**: section 2. Nothing has been deleted yet.
@@ -94,8 +97,28 @@ Numbers are the order in which things happen for `upload.do?action=specimenUploa
     - the museums found in the file are kept in the session for the "Recalculate Your Museums" button (`museumCalc`).
     - then for the whole site (`specimenPostProcessGlobal()` line 673): `GeolocaleDb.calcEndemic()` and `TaxonDb.removeIndetWithoutSpecimen()`.
 11. **Report** (`UploadDetails.finish()` line 248, `genUploadReport()` line 93): written to `web/log/specimen/<yyyyMMdd-HH:mm:ss>-<operation>.html` (folder chosen by `getLogDir()` line 279: operations containing "specimen", "taxonWorks" or "GBIF"). Public URL `/web/log/specimen/...`; also reachable as `uploadReport.do?uploadId=` (redirect) and listed by `listSpecimenUploads.do?groupId=`.
-12. **Commit** (line 550). Everything from step 6 to 11 is one database transaction (`connection.setAutoCommit(false)`, line 196). An exception anywhere goes to `handleException()` (line 608): rollback and "Error. Case number:N. No changes made."
-13. **Finally** (line 568): the upload flag is cleared, `UploadMgr.populate()` reloads the upload list, the connection is closed, and the email is sent (section 6).
+12. **Commit** (`SpecimenUploadJob.run()`). Everything from step 6 to 11 is one database transaction (`connection.setAutoCommit(false)`). An exception anywhere: rollback and "Error. Case number:N. No changes made." (the status page shows "AntWeb hit an unexpected problem (case N) and made no changes. ...").
+13. **Finally** (`SpecimenUploadJob.run()`): the upload flag is released, `UploadMgr.populate()` reloads the upload list, the connection is closed, the email is sent (section 6) and the saved file in `workingDir/jobs/` is deleted. The job's status (finished or failed), result and report link go to the status page and the table `background_job`.
+
+Steps the status page shows while the upload runs ("Now: ..."): "Checking the file (format, columns, encoding).", for TaxonWorks "Converting the TaxonWorks file to an AntWeb specimen file.", "Removing the group's current specimens (the file replaces them).", "Reading and saving specimens: line N of M." (every 500 lines), "All lines read. Checking names and updating species lists.", "Keeping a copy of the uploaded file.", "Updating the group's counts, map and upload record.", "Updating site-wide lists (endemic species, unused indet names).", "Writing the upload report.".
+
+## 3a. The status page (`jobStatus.do`)
+
+`util/JobStatusAction`, `web/curate/jobStatus.jsp`. Needs a curator login. Curators see the uploads of their own group (and their own uploads to another group); admins see every job, including the admin data jobs. Another group's job, or a number that does not exist, answers "Not available.". Without `id`: "Upload status", the recent jobs, newest first (linked from the Curate page and from the upload form).
+
+The page shows "Status: Waiting / Running / Finished / Did not complete / Interrupted" and, while the upload waits or runs, "Now: <step>", the sentence "This page updates itself every 5 seconds (update now). You may close it: the upload continues on the server, and you can come back to it from the Curate page (Upload status)." (an HTTP `Refresh: 5` header; no script). Per status:
+
+| Status | Text |
+|---|---|
+| Waiting | "Your file has been received and is waiting its turn: uploads run one at a time." and the reason, e.g. "Waiting for another upload to finish. Your job starts right after it." or "Waiting for the nightly data update (or another data job) to finish. Your job starts right after it." |
+| Running | "Your file has been received and is being processed. Large files take several minutes." |
+| Finished | "Upload complete." then "Upload complete: N specimens loaded, R of them red-flagged. Upload ID U." (plus "The upload report lists lines that need your attention (some may not have been loaded)." when the report has messages) and the link "Your upload report" (the same report as in the email) |
+| Did not complete | "The upload did not complete." and the reason as plain text (the same text as in the email; crashes become "AntWeb hit an unexpected problem (case N) and made no changes. Please write to antweb@antweb.org (with the case number) so we can look into it.") |
+| Interrupted | "The server restarted before this job finished. An upload runs as one database transaction, so an upload that did not finish is undone: the group's specimens are as they were before. Please upload the file again." Set at start-up for rows still waiting or running (`BackgroundJobDb.startup()`), and shown for such rows when read. |
+
+A second upload while one is waiting or running: the status page of the first, with "You already have an upload waiting or running (below). The file you just sent was not used: a group's uploads run one after the other. When this upload has finished, upload again if you need to."
+
+Restarts: the restart check (`AntwebSystem.isRestart()`, asked by `bin/reboot_checker.sh`) answers false while a job is running, as it already did during an upload. Jobs still waiting do not hold a restart back; after it they show as interrupted. A `docker restart`, a deploy or the watchdog interrupts a running upload the same way as before (the transaction is rolled back).
 
 Not done at upload time (waits for the nightly run): geolocale (country/adm1) taxon lists and counts, project, museum and bioregion lists and counts, image counts, type flags, object maps of taxa and regions. Curators see a "Count Crawls" link on the Curate page (`utilData.do?action=runCountCrawls`, admin only).
 
@@ -142,7 +165,7 @@ No email is sent for the nightly job (section 6).
 
 ## 6. Upload-complete emails (`UploadNotice`)
 
-- Built in `UploadAction` when a file is chosen (line 244) and sent in the `finally` block (line 579, `sendUploadNotice()` line 588) on a background thread (`UploadNotice.send()` line 299).
+- Built in `SpecimenUploadJob.run()` and sent in its `finally` block (`UploadAction.sendUploadNotice()`) on a background thread (`UploadNotice.send()`). Unchanged by the background run, except that the failure text is the job's failure message instead of the page's.
 - To: the **logged-in uploader** (not the "Upload as" curator). From antweb@antweb.org through Amazon SES (`Emailer.sendNotice`), reply-to antweb@antweb.org.
 - Complete: subject "AntWeb: your specimen upload is complete (N specimens)"; body with file, type, group, time, upload id, specimens loaded (= inserted count), red-flagged count, report link.
 - Not complete: "did not complete", with the page's message as plain text; crashes (case numbers, Java exception names) become a fixed sentence (`failureText()` line 262).
@@ -163,18 +186,21 @@ No email is sent for the nightly job (section 6).
 
 | Message | Cause |
 |---|---|
-| "A curator is currently in the process of an Upload" / "Server is currently in an Upload Process" | another specimen or image upload, or the nightly TaxonWorks upload |
-| "Antweb is currently in it's re-computation process" | a nightly set is running (about 5 to 8 AM) |
+| (no longer shown for a specimen upload: it waits in the queue, section 1c) "A curator is currently in the process of an Upload" / "Antweb is currently in it's re-computation process" | another upload, or a nightly set (about 5 to 8 AM) |
+| status page of an earlier upload, "You already have an upload waiting or running" | an upload of the same group, or by the same login, is waiting or running |
 | "AntwebMgr not yet initialized." | within minutes of a restart |
-| down time message | `server.is_down_time = 1` |
+| "The zip file has no .txt file." and the other zip refusals | the zip's list of entries (`SafeUnzip.check()`), at once, before anything is queued |
+| on the status page, "The upload did not complete." with the down time message | `server.is_down_time = 1` |
 | "Specimen File must be a .txt file." / "...in the most current format. ..." / "...tab-delimited file." | section 2.1 checks |
 | "transformFile() ..." | TaxonWorks/GBIF conversion failed (missing column) |
 | "Error. Case number:N. No changes made. e:..." | an exception; transaction rolled back |
-| "Must choosen specimen file for upload" | no file selected |
+| "Must choose a specimen file for upload." | no file selected |
+
+From "Specimen File must be ..." on, the messages appear on the status page under "The upload did not complete." (they are found by the background job).
 
 ### 7.4 Cloudflare timeout
 
-Cloudflare answers 524 after 100 seconds; the upload continues on the server. The page's script switches to a message after 85 seconds and sends the curator to the Upload Reports list (`curate-body.jsp` line 161). The email tells the curator when it is done.
+Until 2026-10-20 the upload ran in the request: Cloudflare answered 524 after 100 seconds while the upload continued on the server, and curators sent the file again. Now the request ends as soon as the file is received (section 1b) and the status page follows the upload. The upload form's note says "Large files take several minutes; you will see the progress on the next page". Only sending a very large file over a slow connection can still take longer than 100 seconds (the time to receive the file).
 
 ### 7.5 Other behaviour worth knowing
 
@@ -197,9 +223,12 @@ Cloudflare answers 524 after 100 seconds; the upload continues on the server. Th
 | `statistics` | one row of site totals |
 | geolocale / geolocale_taxon | endemic flags (site-wide) |
 
-Files: `workingDir/specimen*.txt` (working copy), `web/upload/<date>-specimen<id>.txt` (kept), `web/log/specimen/<date>-<operation>.html` (report), `web/log/taxonSet.log` (delete counts); nightly: `workingDir/taxonworksNightly.zip`, `.sha256`, `taxonworksSkipped.txt`, `web/log/taxonworksNightly.log`.
+Also `background_job` (one row per upload or admin job started from a page: status, step, result; section 3a; record and undo in `db/upgrade/8.113/2026-10-20-background-job.sql`).
+
+Files: `workingDir/jobs/upload-group<id>-*.zip` (the received file, until the job ends), `workingDir/specimen*.txt` (working copy), `web/upload/<date>-specimen<id>.txt` (kept), `web/log/specimen/<date>-<operation>.html` (report), `web/log/taxonSet.log` (delete counts); nightly: `workingDir/taxonworksNightly.zip`, `.sha256`, `taxonworksSkipped.txt`, `web/log/taxonworksNightly.log`.
 
 ## 9. Related code not covered here
 
+- Admin data jobs in the background (2026-10-20): `utilData.do` sub-actions started from a page (all except `siteWarning`, `setIsRestart` and `fixGeolocaleTaxonParentage`, which answer quickly or have a second button), `upload.do?action=fetchAndReloadWorldants` ("Import AntCat names now") and `schedule.do?action=run` (a nightly set started by hand) answer with their status page. The nightly run itself (`Scheduler` and its `utilData.do` calls with the scheduler's code) runs in the request as before.
 - `upload.do` other sub-actions (`fetchAndReloadWorldants`, `museumCalc`, `runStatistics`, `genRecentDescEdits`, `allSpecimenFiles`, `specimenTest`, `speciesTest`) and the "Upload a Data File" branch (`uploadDataFile()`, line 743): listed in [test-gaps-uploads-nightly.md](test-gaps-uploads-nightly.md) where they matter.
 - `validateSpeciesList.do`: a read-only checker, not an upload.
