@@ -959,7 +959,14 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       updateGeolocaleTaxonField("introduced", 0, null);
       updateGeolocaleFieldCount("introduced", 0, 0);
       
-      return calcIntroducedGeolocales();
+      int n = calcIntroducedGeolocales();
+      // The Introduced number of every geolocale = its flagged rows (the rows of introduced.do).
+      try {
+        PlaceTotals.writeCountsFromFlags(getConnection(), PlaceTotals.GEOLOCALE, "introduced");
+      } catch (SQLException e) {
+        s_log.error("calcIntroduced() counts from flags e:" + e);
+      }
+      return n;
     }
 
     public int calcIntroducedGeolocales() {
@@ -1052,6 +1059,13 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       //if (!AntwebProps.isDevMode())
       calcHigherEndemism();
 
+      // The Endemic number of every geolocale = its flagged rows (the rows of endemic.do), 2026-10-21:
+      // also for the countries, subregions and regions whose flags calcHigherEndemism() set.
+      try {
+        PlaceTotals.writeCountsFromFlags(getConnection(), PlaceTotals.GEOLOCALE, "endemic");
+      } catch (SQLException e) {
+        s_log.error("calcEndemic() counts from flags e:" + e);
+      }
       return c;
     }
 
@@ -1109,7 +1123,6 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         int lastGeolocaleId = 0;
         int count = 0;
         while (rset.next()) {
-          ++count;
           int geolocaleId = rset.getInt("geolocale_id");
           String taxonName = rset.getString("taxon_name");
 
@@ -1123,6 +1136,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             c += updateGeolocaleFieldCount("endemic", lastGeolocaleId, count);          
             count = 0;
           }
+          // Counted after the break (2026-10-21): it was counted before, so the first species of each
+          // place was added to the previous place.
+          ++count;
           
           lastGeolocaleId = geolocaleId;          
         }
@@ -1355,39 +1371,25 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
     private String finish(int geolocaleId) throws SQLException {
         updateCountableTaxonData(geolocaleId);
+        // Valid species / subspecies (2026-10-21): until then only finish() wrote it, and nothing called
+        // finish(), so every geolocale kept the number of the last time someone ran it by hand.
+        updateValidSpeciesCount(geolocaleId);
         // imaged_specimen_count: PlaceImageCountDb (nightly set 4, Recalculate), labels not counted.
         makeCharts(geolocaleId);
       return "Geolocale Finished:" + geolocaleId;
     }
 
     private void updateCountableTaxonData(int geolocaleId) throws SQLException {
-        GeolocaleTaxonCountDb geolocaleTaxonCountDb = new GeolocaleTaxonCountDb(getConnection());
-        String criteria = "geolocale_id = " + geolocaleId;
-        // Subfamilies: counted directly as the subfamily rows on the place's list with a counted status
-        // (2026-10-20). The old roll-up, sum(subfamily_count) over the list, depended on the Formicidae row's
-        // stored subfamily_count and gave 0 on staging's Madagascar after an incomplete nightly run, with
-        // 8 subfamilies on the list. CountCheck.checkSubfamilyTotal checks the same rule.
-        int subfamilyCount = getListedSubfamilyCount(geolocaleId);
-        int genusCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "genus");
-        int speciesCount = geolocaleTaxonCountDb.getCountableTaxonCount("geolocale_taxon", criteria, "species");
-
-		if (geolocaleId == 768) A.log("updatedCountableTaxonData(" + geolocaleId + ") subfamilyCount:" + subfamilyCount + " speciesCount:" + speciesCount);
-
-        criteria = "id = " + geolocaleId;
-        geolocaleTaxonCountDb.updateCountableTaxonCounts("geolocale", criteria, subfamilyCount, genusCount, speciesCount);                  
+        // Subfamilies (2026-10-20), Genera and Species (2026-10-21): counted directly as the rows of that
+        // rank on the place's list with a counted status (PlaceTotals). The old roll-up, sum(genus_count) or
+        // sum(species_count) over the list rows, was wrong whenever a row count was stale or of the wrong
+        // rank (Subfamilies 0 on staging's Madagascar with 8 subfamilies listed). Checked by CountInvariants.
+        PlaceTotals.writeListedCounts(getConnection(), PlaceTotals.GEOLOCALE, "" + geolocaleId);
     }    
       
-    /** Subfamily rows on the geolocale's list whose taxon has a counted status (CountCheck.COUNTABLE). */
+    /** Subfamily rows on the geolocale's list whose taxon has a counted status (PlaceTotals). */
     int getListedSubfamilyCount(int geolocaleId) throws SQLException {
-        String query = "select count(distinct gt.taxon_name) from geolocale_taxon gt"
-            + " join taxon t on t.taxon_name = gt.taxon_name"
-            + " where gt.geolocale_id = ? and t.taxarank = 'subfamily' and t.status in " + org.calacademy.antweb.util.CountCheck.COUNTABLE;
-        try (java.sql.PreparedStatement stmt = getConnection().prepareStatement(query)) {
-            stmt.setInt(1, geolocaleId);
-            try (ResultSet r = stmt.executeQuery()) {
-                return r.next() ? r.getInt(1) : 0;
-            }
-        }
+        return PlaceTotals.count(getConnection(), PlaceTotals.listedCountSql(PlaceTotals.GEOLOCALE, PlaceTotals.SUBFAMILY), "" + geolocaleId);
     }
 
     public String getSpecimenLocaleClause(Geolocale geolocale) {
@@ -1465,9 +1467,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
     }
 
     private void updateValidSpeciesCount(int geolocaleId) throws SQLException {
-        int count = getValidSpeciesCount(geolocaleId);
-        UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("geolocale", "valid_species_count", Integer.valueOf(count).toString(), "id = '" + geolocaleId + "'");
+        PlaceTotals.writeValidSpecies(getConnection(), PlaceTotals.GEOLOCALE, "" + geolocaleId);
     }
 
     private int getValidSpeciesCount(int geolocaleId) {
@@ -1505,47 +1505,10 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       }  
     }     
             
+    // The two pies (PlaceTotals.speciesPieSql, specimenPieSql; 2026-10-21): "Species per Subfamily" adds up
+    // to Species (it counted rank species only, no subspecies), "Specimens per Subfamily" to Specimens.
     public void makeCharts(int geolocaleId) throws SQLException {
-      //A.log("makeCharts(" + geolocaleId + ")");
-      UtilDb utilDb = new UtilDb(getConnection());
-      GeolocaleTaxonCountDb geolocaleTaxonCountDb = new GeolocaleTaxonCountDb(getConnection());
-      String criteria = "id = " + geolocaleId;
-      String taxonCountQuery = getTaxonSubfamilyDistJsonQuery(criteria);
-      String specimenCountQuery = getSpecimenSubfamilyDistJsonQuery(criteria);
-
-      utilDb.updateField("geolocale", "taxon_subfamily_dist_json", "'" + geolocaleTaxonCountDb.getTaxonSubfamilyDistJson(taxonCountQuery) + "'", criteria);
-      utilDb.updateField("geolocale", "specimen_subfamily_dist_json", "'" + geolocaleTaxonCountDb.getSpecimenSubfamilyDistJson(specimenCountQuery) + "'", criteria);
-    }
-
-    public String getTaxonSubfamilyDistJsonQuery(String criteria) {
-      String query = "select subfamily, count(*) count, t.chart_color " 
-          + " from geolocale_taxon gt, taxon t, geolocale g " 
-          + " where gt.taxon_name = t.taxon_name " 
-          + " and g.id = gt.geolocale_id "
-          + " and g." + criteria
-          + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') " 
-          + " and family = 'formicidae'" 
-          + " and taxarank = 'species'"
-          + " group by subfamily, t.chart_color"; 
-          //if (AntwebProps.isDevMode()) s_log.info("getTaxonSubfamilyDistJsonQuery() query:" + query);
-      return query;
-    }
-    
-    // "Specimens per Subfamily" chart: the place's Specimens number by subfamily, i.e. the specimen
-    // counts of the species and subspecies rows of its list (CountDb.countSpecimens, written just before
-    // by updateCounts). Until 2026-10-20 it counted every specimen of the names on the list, anywhere in
-    // the world, for every kind of place.
-    public String getSpecimenSubfamilyDistJsonQuery(String criteria) {
-      String query = "select t.subfamily subfamily, sum(gt.specimen_count) count"
-          + " from geolocale_taxon gt, taxon t, geolocale g"
-          + " where gt.taxon_name = t.taxon_name"
-          + " and g.id = gt.geolocale_id"
-          + " and g." + criteria
-          + " and t.taxarank in ('species', 'subspecies')"
-          + " and t.family = 'formicidae'"
-          + " group by t.subfamily"
-          + " having sum(gt.specimen_count) > 0";
-      return query;
+      PlaceTotals.writePies(getConnection(), PlaceTotals.GEOLOCALE, "" + geolocaleId);
     }
 
 

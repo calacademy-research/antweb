@@ -8,6 +8,9 @@ differences are pending until a nightly run has counted it that way), the larges
 the Malagasy bioregion and the CASC museum: the place's own Specimens, Imaged specimens and Images, the specimens
 of each species in the place, the species of each genus and the genera of each subfamily in the list,
 and the "Global" specimens of each species (rules: src/org/calacademy/antweb/util/CountCheck.java).
+Since 2026-10-21 also today's rotating slice of all places (every place within a week, adm1s within a month)
+and, for every place, the numbers that must agree (CountInvariants; docs/numbers.md lists every number on
+the site and the check or test that covers it).
 
 Rule for failing: the site stores the counts in the nightly run (05:00 to 08:15 Pacific). A difference
 caused by a change after the last nightly run (an upload, a list edit) is "pending" and allowed; any
@@ -25,6 +28,12 @@ import pytest
 
 from antweb import BASE_URL, classify, get, new_session
 from staging_accounts import IS_STAGING, login, needs
+
+# The checks of CountInvariants (docs/numbers.md names them in its Test column).
+INVARIANTS = {"place.totals.subfamily", "place.totals.genus", "place.totals.species", "place.totals.valid",
+              "place.totals.specimens", "place.totals.endemic", "place.totals.introduced", "place.pies",
+              "place.images.order", "place.images", "list.genus", "list.subfamily", "list.family", "list.global",
+              "global.specimens", "home", "taxon.images", "geo.regions"}
 
 
 def test_count_check_needs_login():
@@ -66,6 +75,21 @@ def test_list_counts_match_the_specimen_records():
             f.write("| Place | Number | Taxon | Stored (shown) | Recount |\n|---|---|---|---|---|\n")
             for cells in rows[:300]:
                 f.write("| " + " | ".join(c.replace("|", "/") for c in cells[:5]) + " |\n")
+    # Since 2026-10-21: the invariants over every place (CountInvariants) and the run time (the page must answer
+    # well within Cloudflare's 100 seconds; the rotating sample stops at about 50).
+    if 'id="count-invariants"' in r.text:
+        ids = set(re.findall(r'<tr class="count-invariant" data-id="([^"]+)"', r.text))
+        missing = INVARIANTS - ids
+        assert not missing, f"invariants not run: {sorted(missing)}"
+        assert "(failed:" not in r.text, "an invariant could not run (see countCheck.do)"
+        t = re.search(r'id="count-check-time" data-seconds="(\d+)"', r.text)
+        assert t and int(t.group(1)) < 90, f"the count check took {t.group(1) if t else '?'} seconds"
+        if summary:
+            with open(summary, "a", encoding="utf-8") as f:
+                f.write("\n### Count check: every place\n\n| Check | Compared | Real | Pending | ms |\n|---|---|---|---|---|\n")
+                for row in re.findall(r'<tr class="count-invariant" data-id="([^"]+)"><td>.*?</td><td>.*?</td><td>.*?</td>'
+                                      r'<td>(\d+)</td><td>(\d+)</td><td>(\d+)</td><td>(\d+)</td></tr>', r.text, re.S):
+                    f.write("| " + " | ".join(row) + " |\n")
     if not nightly:
         pytest.skip(f"compute.log has no completed nightly run, so the stored counts may be older than a day "
                     f"({real} differences, listed in the job summary)")
