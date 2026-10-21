@@ -255,6 +255,83 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         assertEquals(0, count("select count(*) from specimen_name_update where mode = 'shared_name'"));
     }
 
+    /**
+     * Filed under a name AntCat calls valid while the uploaded name now points elsewhere (Brian Fisher,
+     * 2026-10-20: Camponotus gigas filed under Dinomyrmex gigas): not moved, listed per run as kept_valid
+     * with the uploaded name, the name it is filed under, where the uploaded name points, and the specimens.
+     * A specimen already where its uploaded name points (casent0000004) is not listed.
+     */
+    public void testKeptOnAValidNameIsListed() throws Exception {
+        String gigas = "formicinaecamponotus gigas";
+        String cruentatus = "formicinaecamponotus cruentatus";
+        String dino = "formicinaedinomyrmex gigas";
+        taxon(gigas, "species", "synonym", cruentatus, null, "formicinae", "camponotus", "gigas", null);
+        taxon(cruentatus, "species", "valid", null, null, "formicinae", "camponotus", "cruentatus", null);
+        taxon(dino, "species", "valid", null, null, "formicinae", "dinomyrmex", "gigas", null);
+        specimen("casent0000030", dino, gigas, CAS);
+        specimen("casent0000031", dino, gigas, CAS);
+        specimen("jtl0000030", dino, gigas, JTL);
+
+        SpecimenNameUpdate.Summary s = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000);
+        assertEquals("not moved", dino, nameOf("casent0000030"));
+        assertEquals(dino, nameOf("jtl0000030"));
+        assertEquals("the moves are as before", 4, s.specimens);
+        assertEquals(3, s.keptValidSpecimens);
+        assertEquals("one name per group", 2, (int) s.skipped.get(SpecimenNameUpdate.Outcome.CURRENT_VALID));
+        assertEquals(3, count("select count(*) from specimen_name_update where mode = 'kept_valid'"));
+        assertEquals(0, count("select count(*) from specimen_name_update where mode = 'kept_valid' and code = 'casent0000004'"));
+        assertEquals(1, count("select count(*) from specimen_name_update where mode = 'kept_valid' and code = 'jtl0000030'"
+            + " and uploaded_name = '" + gigas + "' and old_name = '" + dino + "' and new_name = '" + cruentatus + "'"));
+
+        SpecimenNameUpdateDb db = new SpecimenNameUpdateDb(connection);
+        java.util.List<SpecimenNameUpdateDb.Line> cas = db.getKeptValid(CAS);
+        assertEquals(1, cas.size());
+        assertEquals(dino, cas.get(0).oldName);
+        assertEquals(gigas, cas.get(0).uploadedName);
+        assertEquals(cruentatus, cas.get(0).newName);
+        assertEquals(2, cas.get(0).count);
+        assertEquals("all groups", 2, db.getKeptValid(0).size());
+        assertEquals("a curator sees the group's own", 1, db.getKeptValid(JTL).size());
+        for (SpecimenNameUpdateDb.Run run : db.getRuns(0, null, null, 30)) assertFalse("not a run of moves", SpecimenNameUpdate.KEPT_VALID.equals(run.mode));
+        String html = org.calacademy.antweb.curate.NameUpdatesAction.keptValidHtml(db.getKeptValid(0), "");
+        assertTrue(html, html.contains("(2 names)</summary>"));
+
+        // Two uploaded names on one valid name: two lines.
+        String gigasLatr = "formicinaecamponotus gigantea";
+        taxon(gigasLatr, "species", "synonym", cruentatus, null, "formicinae", "camponotus", "gigantea", null);
+        specimen("casent0000032", dino, gigasLatr, CAS);
+        SpecimenNameUpdate.run(connection, SpecimenNameUpdate.REPORT, 50000);
+        assertEquals("replaced at each run", 4, count("select count(*) from specimen_name_update where mode = 'kept_valid'"));
+        assertEquals(2, db.getKeptValid(CAS).size());
+        assertEquals("the changed rows are kept", 4, count("select count(*) from specimen_name_update where mode = 'changed'"));
+        try {
+            db.deleteMode(SpecimenNameUpdate.CHANGED);
+            fail("the history cannot be deleted this way");
+        } catch (IllegalArgumentException expected) {
+            // ok
+        }
+    }
+
+    /**
+     * The upload report's "Recognized invalid species" line (UploadNameReasons): the same reason as the
+     * nightly name update for the same pair, read from the same tables; plain "old -> new" when they cannot be read.
+     */
+    public void testUploadReportReasonIsTheNameUpdateReason() throws Exception {
+        SpecimenNameUpdate.run(connection, SpecimenNameUpdate.REPORT, 50000);
+        String nightly = one("select reason from specimen_name_update where code = 'jtl0000001'");
+        org.calacademy.antweb.upload.UploadNameReasons reasons = org.calacademy.antweb.upload.UploadNameReasons.of(connection);
+        String line = reasons.line("old -> new", OLD, NEW);
+        assertEquals("old -> new: <span class=\"name-update-reason\">new combination: <i>Ravavy indicus</i>"
+            + " (<a href=\"https://www.antcat.org/catalog/101\">Fisher &amp; Bolton 2026a</a>); spelling as in AntCat</span>", line);
+        assertEquals("new combination: Ravavy indicus (Fisher & Bolton 2026a); spelling as in AntCat", nightly);
+
+        // The tables cannot be read (connection closed): the plain line, and the upload goes on.
+        Connection closed = connect();
+        closed.close();
+        org.calacademy.antweb.upload.UploadNameReasons broken = org.calacademy.antweb.upload.UploadNameReasons.of(closed);
+        assertEquals("old -> new", broken.line("old -> new", OLD, NEW));
+    }
+
     /** A table made by the first version of the step (2026-10-20 morning) gets reason and antcat_id. */
     public void testOldTableGetsTheReasonColumns() throws Exception {
         exec("drop table if exists specimen_name_update_old");

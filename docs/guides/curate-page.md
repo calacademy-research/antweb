@@ -77,7 +77,7 @@ The jump boxes that used to sit at the bottom right ("Access direct by ...", "Cu
 Admins see two extra menus in **Upload Zip File**:
 
 - **Upload Type**: **Antweb** (the normal AntWeb specimen file) or **TaxonWorks** (a TaxonWorks Darwin Core archive; the CAS TaxonWorks data normally arrives in the nightly run, so use this only when the nightly TaxonWorks upload failed). The GBIF option was removed in October 2026.
-- **Upload as**: upload the file on behalf of another curator, so the data goes to that curator's group. The menu lists you and the curators your login may upload for.
+- **Upload as**: upload the file on behalf of another curator, so the data goes to that curator's group. The menu lists you and the curators your login may upload for, each with the group the upload goes into ("aerochild &mdash; Curator Peter Hawkes AFRC (group 31)"), sorted by group name. The upload replaces all specimens of the group shown.
 
 ### Import AntCat names now
 
