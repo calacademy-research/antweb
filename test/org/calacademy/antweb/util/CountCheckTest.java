@@ -43,6 +43,8 @@ public class CountCheckTest extends TestCase {
         exec("drop table if exists proj_taxon");
         exec("drop table if exists upload");
         exec("drop table if exists geolocale");   // left by PlaceImageCountDbTest or RegionCountDbTest: no place totals here
+        exec("drop table if exists project");     // left by CountInvariantsTest or PlaceTotalsDbTest: no project totals here
+        exec("drop table if exists place_image_count");   // the same: no place image numbers here
         exec("create table taxon (taxon_name varchar(128) primary key, taxarank varchar(20), status varchar(40), parent_taxon_name varchar(128))");
         exec("create table specimen (code varchar(128) primary key, taxon_name varchar(128), status varchar(40), country varchar(64),"
             + " adm1 varchar(64), island_country varchar(64), museum varchar(64), bioregion varchar(64), upload_id int)");
