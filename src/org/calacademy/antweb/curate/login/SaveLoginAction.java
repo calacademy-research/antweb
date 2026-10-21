@@ -143,7 +143,8 @@ public final class SaveLoginAction extends AntwebAction {
             }
             if (groupName != null) {
               //s_log.warn("execute() login group:" + groupName);
-              Group group = GroupMgr.getGroup(groupName);
+              // The Login form sends the group's number (since 2026-10-20); a name still works.
+              Group group = groupName.matches("\\d{1,9}") ? GroupMgr.getGroup(Integer.parseInt(groupName)) : GroupMgr.getGroup(groupName);
               if (group != null) {
                 login.setGroupId(group.getId());
               }

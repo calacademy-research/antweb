@@ -20,7 +20,7 @@ PROBE_WRITES = os.environ.get("ANTWEB_PROBE_WRITE_ACTIONS") == "1" and not IS_PR
 # Actions broken when the baseline was recorded. They must not get worse, and
 # the list should shrink; remove an entry once it is fixed.
 KNOWN_BROKEN = {
-    "/viewGroup": "error page without parameters",
+    # "/viewGroup" (error page without parameters) was fixed 2026-10-20: admins only, no id lists the upload groups.
 }
 
 

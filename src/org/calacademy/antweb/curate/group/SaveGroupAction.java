@@ -41,7 +41,13 @@ public final class SaveGroupAction extends AntwebAction {
         boolean isNew = false;
         SaveGroupForm form = (SaveGroupForm) f;
                 
-        int id = Integer.parseInt(form.getId());
+        int id;
+        try {
+            id = Integer.parseInt(form.getId() == null ? "" : form.getId().trim());
+        } catch (NumberFormatException e) {
+            request.setAttribute("message", "No upload group number given.");
+            return mapping.findForward("message");
+        }
         Group group = null;
         
         try {
@@ -49,12 +55,25 @@ public final class SaveGroupAction extends AntwebAction {
             connection = DBUtil.getConnection(dataSource, "SaveGroupAction");          
 
             if ("delete".equals(form.getStep())) {
-                s_log.warn(" step:" + form.getStep() + " id:" + id);      
+                s_log.warn(" step:" + form.getStep() + " id:" + id);
+                // A group that still has logins or specimens is not deleted: its specimens would
+                // belong to no group and its logins would upload into a group that does not exist.
+                String inUse = GroupDb.whyNotDeletable(connection, id);
+                if (inUse != null) {
+                    request.setAttribute("message", Html.esc(inUse));
+                    return mapping.findForward("message");
+                }
                 new GroupDb(connection).deleteById(id);
+                GroupMgr.populate(connection, true);
+                request.setAttribute("savedGroupText", "Upload group " + id + " was deleted.");
                 return mapping.findForward("success");
             }
 
-            group = new GroupDb(connection).getGroup(id);
+            // A new group (form from newGroup.do) is always inserted with the next free number,
+            // even if another group took the number shown on the form in the meantime.
+            // An existing group's number cannot be changed: it comes from a hidden field.
+            boolean newGroupForm = "true".equals(form.getNewGroup());
+            group = newGroupForm ? new Group() : new GroupDb(connection).getGroup(id);
 
             s_log.info("execute() groupId:" + id + " found:" + group);
 
@@ -80,6 +99,9 @@ public final class SaveGroupAction extends AntwebAction {
             }            
             
             GroupMgr.populate(connection, true);     
+            request.setAttribute("savedGroupText", (isNew ? "Created the upload group " : "Saved the upload group ")
+                + group.getName() + " (number " + group.getId() + ").");
+            request.setAttribute("savedGroupId", group.getId());
 
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);

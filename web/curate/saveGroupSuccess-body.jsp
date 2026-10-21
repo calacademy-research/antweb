@@ -11,10 +11,17 @@
 <div class=left>
 <h1>Success!</h1>
 <hr></hr>
-You have successfully modified group information.
+<% String savedGroupText = (String) request.getAttribute("savedGroupText");
+   Integer savedGroupId = (Integer) request.getAttribute("savedGroupId"); %>
+<%= Html.esc(savedGroupText == null ? "The upload group was saved." : savedGroupText) %>
 
 <% if (LoginMgr.isAdmin(request)) { %>
-<p><a href="<%= domainApp %>/viewGroups.do">Return to the Group Manager</a>.
+<% if (savedGroupId != null) { %>
+<p><a href="<%= domainApp %>/addUploader.do?groupId=existing&amp;existingGroupId=<%= savedGroupId %>">Add an uploader to this upload group</a>
+(finds or invites the person, gives upload rights, prepares the welcome email).
+<p><a href="<%= domainApp %>/viewGroup.do?id=<%= savedGroupId %>">Open the upload group again</a>
+<% } %>
+<p><a href="<%= domainApp %>/viewGroups.do">Return to the list of upload groups</a>.
 <br>
 <p>Go to <a href="<%= domainApp %>/viewLogins.do">Login Manager</a>
 <% } else { %>

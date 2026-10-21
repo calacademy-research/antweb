@@ -13,7 +13,8 @@
 <div class=right>
 <br>
 <a href="<%= AntwebProps.getDomainApp() %>/viewLogins.do">Login Manager</a>
-<br><a href="<%= AntwebProps.getDomainApp() %>/viewGroups.do">Group Manager</a>
+<br><a href="<%= AntwebProps.getDomainApp() %>/viewGroups.do">Upload groups</a>
+<br><a href="<%= AntwebProps.getDomainApp() %>/addUploader.do">Add an uploader</a>
 </div>
 
 <%
@@ -104,17 +105,19 @@ NOTE: These will not be modified unless "Changed Password" button is selected.
 <h1>Created: <%= thisLogin.getCreated() %></h>
 
 <% if (accessLogin.isAdmin()) { %>
-    <h3>Institution:</h3>
-    <select class="input_200" name="groups" size="10">
+    <h3>Upload group:</h3>
+    <div class="action_hint">The institution, lab or collection whose specimens this login uploads. An upload replaces all specimens of this upload group.
+    To give someone upload rights in one step, use <a href="<%= domainApp %>/addUploader.do">Add an uploader</a>.</div>
+    <select class="input_200" name="groups" size="10" aria-label="Upload group">
     <% int groupId = thisLogin.getGroupId();  
        Collections.sort(groups, Group.getGroupNameComparator);  
        for (Group group : groups) {
      %>
-         <option <%= (thisLogin.getGroupId() == group.getId()) ? "selected" : "" %> value="<%= group.getName() %>"><%= group.getName() %>
+         <option <%= (thisLogin.getGroupId() == group.getId()) ? "selected" : "" %> value="<%= group.getId() %>"><%= Html.esc(group.getName()) %> (<%= group.getId() %>)
     <% } %> <!-- end groups loop -->
     </select> 
 <% } else { %>
-     <br><br><h3>Institution: <%= Html.esc(thisLogin.getGroup().getName()) %></h3>
+     <br><br><h3>Upload group: <%= Html.esc(thisLogin.getGroup().getName()) %></h3>
 <% } %>
 
 

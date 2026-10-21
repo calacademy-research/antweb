@@ -306,6 +306,28 @@ public class GroupDb extends AntwebDb {
         }
     }
 
+    /**
+     * Null if the group may be deleted, else why not (plain text): it still has logins or
+     * specimens. Used by SaveGroupAction before a delete.
+     */
+    public static String whyNotDeletable(Connection connection, int id) throws SQLException {
+        int logins = count(connection, "select count(*) from login where group_id = ?", id);
+        int specimens = count(connection, "select count(*) from specimen where access_group = ?", id);
+        if (logins == 0 && specimens == 0) return null;
+        return "Upload group " + id + " was not deleted: it still has " + logins + (logins == 1 ? " login" : " logins")
+            + " and " + specimens + (specimens == 1 ? " specimen" : " specimens")
+            + ". Move the logins to another upload group (Login Manager) and remove the specimens first.";
+    }
+
+    private static int count(Connection connection, String query, int id) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            stmt.setInt(1, id);
+            try (ResultSet rset = stmt.executeQuery()) {
+                return rset.next() ? rset.getInt(1) : 0;
+            }
+        }
+    }
+
     public void deleteById(int id) throws SQLException {
         PreparedStatement stmt = null;
         try {
