@@ -256,6 +256,45 @@ public class SpecimenNameUpdateDbTest extends TestCase {
     }
 
     /**
+     * Brian Fisher, 2026-10-20: the specimen upload report and the Name updates page share one code path
+     * for names of two or more AntCat taxa (SharedNameReport). For the same name, against the same tables:
+     * the upload's rule would move Pachycondyla sauteri to the one taxon the table holds, the upload keeps it
+     * and writes its line; the nightly run holds it and the page writes its line. The two are identical.
+     */
+    public void testUploadAndPageGiveTheSameSharedNameLine() throws Exception {
+        String obs = "ponerinaepachycondyla sauteri";
+        String valid = "ponerinaecryptopone sauteri";
+        taxon(obs, "species", "obsolete combination", valid, null, "ponerinae", "pachycondyla", "sauteri", null);
+        taxon(valid, "species", "valid", null, null, "ponerinae", "cryptopone", "sauteri", null);
+        specimen("casent0000021", obs, null, CAS);
+        org.calacademy.antweb.upload.SharedNames shared = org.calacademy.antweb.upload.SharedNames.fromExport(new java.io.StringReader(
+            "antcat id\tsubfamily\tgenus\tspecies\tsubspecies\tauthor date\tstatus\tcurrent valid name\n"
+            + "509406\tPonerinae\tPachycondyla\tsauteri\t\tWheeler, 1906\tobsolete combination\tPonerinae Cryptopone sauteri\n"
+            + "509563\tPonerinae\tPachycondyla\tsauteri\t\tForel, 1912\tobsolete combination\tPonerinae Ectomomyrmex sauteri\n"));
+
+        // The upload: what SpecimenUploadProcess.setStatusAndCurrentValidName() asks.
+        org.calacademy.antweb.upload.CurrentValidNameRule.Result rule = org.calacademy.antweb.upload.CurrentValidNameRule.decide(
+            obs, org.calacademy.antweb.upload.CurrentValidNameRule.plainLookup(connection));
+        assertEquals("the rule alone would move it", valid, rule.validTaxonName);
+        String upload = org.calacademy.antweb.upload.SharedNameReport.uploadLine(obs, rule, shared);
+        assertNotNull("kept for the curator", upload);
+
+        // The nightly run and the page.
+        SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000, shared);
+        assertEquals("not moved", obs, nameOf("casent0000021"));
+        String page = org.calacademy.antweb.curate.NameUpdatesAction.sharedHtml(new SpecimenNameUpdateDb(connection).getShared(CAS), "", shared);
+        String li = page.substring(page.indexOf("<li class=\"name-update-shared\">") + "<li class=\"name-update-shared\">".length());
+        assertEquals("the same text in the upload report and on nameUpdates.do", upload, li.substring(0, li.indexOf(" <details")));
+        assertTrue(upload, upload.contains("<a href=\"https://www.antcat.org/catalog/509563\"><i>Pachycondyla sauteri</i> Forel, 1912</a>, obsolete combination, now <i>Ectomomyrmex sauteri</i>"));
+
+        // Without the export, both read the homonym table the same way (SharedNames.load's fallback).
+        org.calacademy.antweb.upload.SharedNames fromTable = org.calacademy.antweb.upload.SharedNames.fromHomonymTable(connection);
+        assertNotNull("Carebara silvestrii: a placeholder row and a homonym", fromTable.candidatesOf("Carebara silvestrii"));
+        assertEquals(2, fromTable.taxaOf("Carebara silvestrii").size());
+        assertEquals("Forel, 1905", fromTable.taxaOf("Carebara silvestrii").get(0).authorDate);
+    }
+
+    /**
      * Filed under a name AntCat calls valid while the uploaded name now points elsewhere (Brian Fisher,
      * 2026-10-20: Camponotus gigas filed under Dinomyrmex gigas): not moved, listed per run as kept_valid
      * with the uploaded name, the name it is filed under, where the uploaded name points, and the specimens.

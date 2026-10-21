@@ -468,8 +468,8 @@ public class SpecimenNameUpdate {
                 currentValid = cur != null && Status.VALID.equals(cur.status);
                 currentValidCache.put(current, currentValid);
             }
-            List<String> sharedWith = shared.candidatesOf(Taxon.getPrettyTaxonName(current));
-            if (sharedWith == null) sharedWith = shared.candidatesOf(Taxon.getPrettyTaxonName(uploaded));
+            // The same detection as the specimen upload (SharedNameReport, 2026-10-20).
+            List<String> sharedWith = SharedNameReport.candidates(current, uploaded, shared);
             Decision d = decide(uploaded, current, placeholders::contains, rule, uploadedHomonym, currentValid, sharedWith);
             if (d.outcome == Outcome.SHARED_NAME) {
                 summary.skipped.merge(d.outcome, 1, Integer::sum);
@@ -544,45 +544,11 @@ public class SpecimenNameUpdate {
     }
 
     /**
-     * The names shared by two or more AntCat taxa (SharedNames): from the AntCat export the nightly
-     * import loaded (web/speciesList/world/worldants_speciesList.txt), which has every taxon; when it
-     * cannot be read, from the homonym table (the second taxon of a name the import stored there; it
-     * misses two obsolete combinations of one name, which the import does not store).
+     * The names shared by two or more AntCat taxa: SharedNames.load(), read the same way by the specimen
+     * upload and nameUpdates.do (the AntCat export the nightly import loaded; the homonym table without it).
      */
     static SharedNames sharedNames(Connection connection) {
-        File file = null;
-        try {
-            file = new File(org.calacademy.antweb.util.AntwebProps.getWebDir() + SharedNames.EXPORT_FILE);
-        } catch (RuntimeException e) {
-            s_log.warn("sharedNames() no web directory. e:" + e);
-        }
-        if (file != null && file.isFile()) {
-            try {
-                return SharedNames.fromExport(file);
-            } catch (IOException | RuntimeException e) {
-                s_log.warn("sharedNames() could not read " + file + ", using the homonym table. e:" + e);
-            }
-        }
-        Map<String, List<String>> byName = new java.util.HashMap<>();
-        String query = "select h.taxon_name, h.author_date, t.status, t.current_valid_name from homonym h left join taxon t on t.taxon_name = h.taxon_name";
-        try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(query)) {
-            while (r.next()) {
-                String name = Taxon.getPrettyTaxonName(r.getString(1));
-                List<String> c = byName.computeIfAbsent(name, k -> new ArrayList<>());
-                String status = r.getString(3);
-                String cvn = r.getString(4);
-                if (status != null) {
-                    if (Status.VALID.equals(status)) c.add(name);
-                    else if (cvn != null && !cvn.isEmpty()) c.add(Taxon.getPrettyTaxonName(cvn));
-                    else c.add(name + " (" + status + ")");
-                }
-                String author = r.getString(2);
-                c.add(name + (author == null || author.isEmpty() ? "" : " " + author.replaceAll("<[^>]*>", "")) + " (homonym)");
-            }
-        } catch (SQLException e) {
-            s_log.warn("sharedNames() homonym table not read. e:" + e);
-        }
-        return SharedNames.of(byName);
+        return SharedNames.load(connection);
     }
 
     /**

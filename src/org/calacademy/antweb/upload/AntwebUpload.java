@@ -1052,10 +1052,10 @@ or for Worldants upload
           if (taxon == null || status == null || Status.UNRECOGNIZED.equals(status)) {
             if (status == null) status = Status.UNRECOGNIZED;
 
-            if (new HomonymDb(getConnection()).isHomonym(taxonName)) {
-//            if (Status.HOMONYM.equals(status)) {
-              String displayName = Taxon.makeDescriptionLink(taxonName);
-              getMessageMgr().addToMessages(MessageMgr.taxonNamesAreHomonyms, displayName);            
+            // As in the specimen upload (SharedNameReport): in AntCat only as a junior homonym or the like.
+            String homonymOnly = SharedNameReport.homonymOnlyLine(taxonName, getSharedNames());
+            if (homonymOnly != null) {
+              getMessageMgr().addToMessages(MessageMgr.taxonNamesAreHomonyms, homonymOnly);
             } else {
             
               // if quadrinomial put in a separate list.  Do upload, otherwise don't.
@@ -1338,6 +1338,13 @@ or for Worldants upload
 
     public MessageMgr getMessageMgr() {
       return uploadDetails.getMessageMgr();
+    }
+
+    private SharedNames sharedNames;
+    /** The names of two or more AntCat taxa, read once per upload the way the nightly name update reads them. */
+    protected SharedNames getSharedNames() {
+      if (sharedNames == null) sharedNames = SharedNames.load(getConnection());
+      return sharedNames;
     }
     
     protected void setHigherTaxonomicHierarchy(Hashtable<String, Object> item) {
