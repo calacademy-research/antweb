@@ -319,7 +319,8 @@ jobs:
           '
 
       - name: Add an uploader (input checks and welcome email; database steps against MySQL 8.4)
-        # UploaderOnboardingTest: the form's checks and the welcome email text (escaped, no "ignore").
+        # UploaderOnboardingTest: the form's checks, the welcome email text (escaped, no "ignore"), and
+        # which refused POSTs are shown again filled in (Csrf.mayRefill: stale token on addUploader.do only).
         # UploaderOnboardingDbTest: new person and new upload group, existing account by email or
         # username, moving only when asked, refusals change nothing, login.created kept, inactive
         # accounts get a link, a group with logins or specimens is not deleted.
@@ -343,7 +344,7 @@ jobs:
             mkdir -p /tmp/tc
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc \
               /t/org/calacademy/antweb/curate/UploaderOnboardingTest.java /t/org/calacademy/antweb/curate/UploaderOnboardingDbTest.java
-            for t in curate.UploaderOnboardingTest:5 curate.UploaderOnboardingDbTest:10; do
+            for t in curate.UploaderOnboardingTest:6 curate.UploaderOnboardingDbTest:10; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

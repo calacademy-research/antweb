@@ -49,3 +49,7 @@ Nothing is changed when something is wrong (all in one step). The page then says
 
 - **Upload groups** (`/viewGroups.do`): all upload groups; open one to change its names or admin curator. Its number cannot be changed. Delete is refused while it has logins or specimens.
 - **Login Manager** (`/viewLogins.do`): every other setting of a login. Its **Upload group** list moves a login to another group.
+
+## "Your session changed"
+
+If AntWeb restarted while the form was open (with "Keep me logged in" you are logged in again at once, in a new session), or you logged in again in another tab, the form's security token no longer matches. Instead of the "Request refused (403)" page, Add an uploader shows the form again with what you typed and the note "Your session changed (AntWeb restarted or you logged in again)". Nothing was done: check the form and press Add uploader (or Send) again.
