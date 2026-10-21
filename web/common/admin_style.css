@@ -38,5 +38,22 @@ a { font-weight:bold; color:#387ce3; }
 .arrow { position:absolute; background: url(../image/wrapper_arrow.gif) no-repeat; width:12px; height:23px; top:94px; left:-12px; }
 .thumbs_wrapper { position:relative; background-color:#fff; border:1px solid #707070; padding:10px; width:300px; height:200px; }
 .hidden { display:none; }
+
+/* Phone width (2026-10-21). Admin pages use admLayout.jsp, which does not load responsive.css; it
+   sets the viewport to the device width, and these rules let the fixed 950 px layout fit. The
+   column of links (div.right: Login Manager, Upload groups, Add an uploader ...) stacks above or
+   below the page text (div.admin_left) instead of floating over it. Desktop widths unchanged. */
+@media (max-width: 760px) {
+  body { font-size:14px; }
+  #admin_layout { width:auto; max-width:100%; overflow-x:auto; }
+  #admin_header { width:auto; height:auto; min-height:58px; }
+  .admin_header_logo { max-width:100%; background-size:contain; }
+  .admin_header_login_out { position:static; float:none; clear:both; text-align:left; padding:4px 0 8px; }
+  .admin_left { float:none; width:auto; padding:0 10px; box-sizing:border-box; }
+  .admin_action_module { width:auto; }
+  .admin_left ~ .right { float:none; width:auto; margin:0 10px 12px; }
+  .right:has(~ .admin_left) { float:none; width:auto; margin:0 10px 12px; }
+  .admin_left img { max-width:100%; height:auto; }
+}
 /*-->*/
 /*</style>*/
