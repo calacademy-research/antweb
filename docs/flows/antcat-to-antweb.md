@@ -126,7 +126,8 @@ Approved by Brian 2026-10-18. Code: `upload/SpecimenNameUpdate.java` (the step),
 | uploaded name now a synonym etc., current valid taxon exists | moved to it: `taxon_name`, `original_taxon_name` = uploaded name, `status` valid, family to subspecies from the valid taxon, `is_introduced` recomputed |
 | uploaded name valid again (resurrected) | moved back to it, `original_taxon_name` cleared |
 | name (filed or uploaded) belongs to two or more AntCat taxa with different valid names, e.g. Pachycondyla sauteri (Cryptopone sauteri or Ectomomyrmex sauteri) | not moved; listed on nameUpdates.do under "Needs the curator's decision" (mode `shared_name`, replaced each run). Read from the AntCat export the import loaded (`web/speciesList/world/worldants_speciesList.txt`, every row; the import stores only the first taxon of a name); without it, the homonym table |
-| already on the right name | nothing |
+| filed under a name AntCat calls valid while the uploaded name now points to another name (e.g. uploaded Camponotus gigas, filed under Dinomyrmex gigas) | not moved; listed on nameUpdates.do, collapsed, under "Not moved: filed under a name AntCat calls valid (N names)" with the uploaded name, the name it is filed under, where AntCat points the uploaded name and the specimens (mode `kept_valid`, `new_name` = where the uploaded name points, replaced each run), for a spot check |
+| already on the right name (also: filed under the valid name the uploaded name points to) | nothing |
 | morphospecies or indet (uploaded or current name) | left alone |
 | filed under a homonym placeholder (`insert_method = 'homononymMirroringTaxon'`), or the current valid name is a homonym or a placeholder, or the name's status is homonym | left alone (never creates taxa) |
 | current valid name has no taxon row, or no current valid name | left alone |

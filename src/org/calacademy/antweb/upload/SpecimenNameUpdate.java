@@ -52,7 +52,8 @@ import org.calacademy.antweb.util.TaxonPropMgr;
  * title taxonomichistory), and the AntCat id of the taxon whose history gave it (NameUpdateReason,
  * AntcatHistory). This is the specimen's taxonomic history.
  *
- * Left alone: morphospecies and indets; specimens filed under a homonym placeholder taxon; names
+ * Left alone: specimens filed under a name AntCat calls valid while their uploaded name points
+ * elsewhere (listed per run as mode kept_valid, for a spot check); morphospecies and indets; specimens filed under a homonym placeholder taxon; names
  * whose current valid name is a homonym or has no taxon row (the step never creates taxa); uploaded
  * names AntCat does not know; names with another non-valid status (unavailable, homonym, ...).
  *
@@ -75,6 +76,12 @@ public class SpecimenNameUpdate {
     public static final String WOULD_CHANGE = "would_change";
     /** Specimens left for the curator: their name belongs to two or more AntCat taxa (SharedNames). Replaced at each run. */
     public static final String SHARED = "shared_name";
+    /**
+     * Specimens left where they are because they are filed under a name AntCat calls valid, while their
+     * uploaded name points elsewhere (Outcome.CURRENT_VALID; Brian Fisher, 2026-10-20: listed so they can
+     * be spot-checked before apply). new_name is where the uploaded name points. Replaced at each run.
+     */
+    public static final String KEPT_VALID = "kept_valid";
 
     public static final String PLACEHOLDER_INSERT_METHOD = "homononymMirroringTaxon";
 
@@ -228,7 +235,11 @@ public class SpecimenNameUpdate {
     private static Decision decideMove(String uploadedName, String currentName, java.util.function.Predicate<String> isPlaceholder, CurrentValidNameRule.Result rule, boolean uploadedIsHomonym, boolean currentIsValid) {
         if (Taxon.isMorphoOrIndet(uploadedName) || Taxon.isMorphoOrIndet(currentName)) return Decision.of(Outcome.MORPHO_OR_INDET);
         if (uploadedIsHomonym && !uploadedName.equals(currentName)) return Decision.of(Outcome.HOMONYM);
-        if (currentIsValid && rule.kind == CurrentValidNameRule.Kind.REPLACE) return Decision.of(Outcome.CURRENT_VALID);
+        if (currentIsValid && rule.kind == CurrentValidNameRule.Kind.REPLACE) {
+            // Already where the uploaded name points (moved at upload): nothing was held back.
+            if (currentName.equals(rule.validTaxonName)) return Decision.of(Outcome.UNCHANGED);
+            return Decision.of(Outcome.CURRENT_VALID);
+        }
         if (isPlaceholder.test(currentName)) return Decision.of(Outcome.PLACEHOLDER);
         String newName;
         switch (rule.kind) {
@@ -301,6 +312,7 @@ public class SpecimenNameUpdate {
         public int maxChanges;
         public int parkedRenamed;
         public int sharedSpecimens;     // held back: name shared by two or more AntCat taxa
+        public int keptValidSpecimens;  // left on a name AntCat calls valid (listed on the page)
         public long millis;
         public String note;             // skipped / failed
 
@@ -428,6 +440,7 @@ public class SpecimenNameUpdate {
         Reasons reasons = new Reasons(connection);
         List<Change> changes = new ArrayList<>();
         List<Change> held = new ArrayList<>();
+        List<Change> keptValid = new ArrayList<>();
         Set<String> names = new HashSet<>();
 
         List<Object[]> candidates = new ArrayList<>();
@@ -467,6 +480,14 @@ public class SpecimenNameUpdate {
                 if (!h.specimens.isEmpty()) held.add(h);
                 continue;
             }
+            if (d.outcome == Outcome.CURRENT_VALID) {
+                // Listed for a spot check: filed under current (valid), the uploaded name points to rule.validTaxonName.
+                summary.skipped.merge(d.outcome, 1, Integer::sum);
+                Change k = new Change(groupId, uploaded, current, rule.validTaxonName == null ? "" : rule.validTaxonName, null, rule.uploadedStatus, null);
+                addSpecimens(connection, k);
+                if (!k.specimens.isEmpty()) keptValid.add(k);
+                continue;
+            }
             if (d.outcome != Outcome.CHANGE) {
                 summary.skipped.merge(d.outcome, 1, Integer::sum);
                 continue;
@@ -499,6 +520,9 @@ public class SpecimenNameUpdate {
         db.deleteShared();   // the list for the curators is the latest run's
         db.insert(runDate, SHARED, held);
         for (Change h : held) summary.sharedSpecimens += h.specimens.size();
+        db.deleteMode(KEPT_VALID);   // likewise the list of names kept on a valid name
+        db.insert(runDate, KEPT_VALID, keptValid);
+        for (Change k : keptValid) summary.keptValidSpecimens += k.specimens.size();
         summary.parkedRenamed = moveParkedListEntries(connection, lookup, apply);
 
         summary.millis = System.currentTimeMillis() - start;
@@ -575,6 +599,11 @@ public class SpecimenNameUpdate {
 
         Reasons(Connection connection) {
             this.connection = connection;
+        }
+
+        /** True once the taxon table or the history could not be read (the reasons then have no references). */
+        boolean failed() {
+            return failed;
         }
 
         /**

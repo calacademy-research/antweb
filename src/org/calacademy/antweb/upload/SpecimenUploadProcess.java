@@ -527,6 +527,8 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
                 s_log.warn("setStatusAndCurrentValidTaxonName() currentValidName should be distinct from taxonName:" + originalTaxonName);
             } else if (rule.kind == CurrentValidNameRule.Kind.REPLACE) {
                 newTaxonStr = makeSpecimenUseTaxon(taxonDb, rule.validTaxonName, originalTaxonName, specimenItem, taxonItem);
+                // "old -> new: why", worded as on the Name updates page (2026-10-20); once per pair.
+                if (newTaxonStr != null) newTaxonStr = getNameReasons().line(newTaxonStr, originalTaxonName, rule.validTaxonName);
             }
             if (newTaxonStr != null)
               getUploadDetails().getMessageMgr().addToMessages(MessageMgr.recognizedInvalidSpecies, newTaxonStr);
@@ -564,6 +566,14 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 	  return taxonName;
     }
   
+    /** The reasons of the "Recognized invalid species" lines of this upload's report (UploadNameReasons). */
+    private UploadNameReasons nameReasons;
+
+    private UploadNameReasons getNameReasons() {
+        if (nameReasons == null) nameReasons = UploadNameReasons.of(getConnection());
+        return nameReasons;
+    }
+
     private static String makeSpecimenUseTaxon(TaxonDb taxonDb, String currentTaxonName, String originalTaxonName, Hashtable specimenItem, Hashtable taxonItem)
       throws SQLException {
         
