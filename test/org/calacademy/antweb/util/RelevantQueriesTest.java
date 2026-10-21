@@ -9,16 +9,17 @@ import org.calacademy.antweb.util.Queries;
  * The "Relevant Queries" boxes of the Upload groups page (viewGroups.do) and the Login Manager
  * (viewLogins.do): each query has a one-line plain explanation next to it, and each query's column
  * headings match its columns (uploadingCurators had no "Group ID" heading, so the headings from
- * "Is Admin?" on stood over the wrong column). Brian Fisher, 2026-10-21.
+ * "Is Admin?" on stood over the wrong column). Brian Fisher, 2026-10-21. The "groups" query (every
+ * upload group with its last upload date) was removed the same day: the page itself lists the groups.
  */
 public class RelevantQueriesTest extends TestCase {
 
-    static final String[] NAMES = {"groups", "specimenGroups", "uploadingCurators", "curatorEmails"};
+    static final String[] NAMES = {"specimenGroups", "uploadingCurators", "curatorEmails"};
 
     public void testEachQueryIsExplained() {
         String groups = Queries.getQueryList("Groups");
         String logins = Queries.getQueryList("Login");
-        for (String[] box : new String[][] {{groups, "groups", "specimenGroups"}, {logins, "uploadingCurators", "curatorEmails"}}) {
+        for (String[] box : new String[][] {{groups, "specimenGroups"}, {logins, "uploadingCurators", "curatorEmails"}}) {
             for (int i = 1; i < box.length; i++) {
                 String name = box[i];
                 int at = box[0].indexOf("name=" + name + "'>" + name + "</a>");
@@ -30,7 +31,9 @@ public class RelevantQueriesTest extends TestCase {
                 assertTrue(item, item.length() > 80);
             }
         }
-        assertTrue(groups, groups.contains("date of the last specimen upload"));
+        assertFalse("the groups query is removed", groups.contains("name=groups'"));
+        assertFalse(groups, groups.contains("date of the last specimen upload"));
+        assertNull("the groups query is removed", Queries.getNamedQuery("groups"));
         assertTrue(logins, logins.contains("These are not the uploaders: see uploadingCurators for those."));
         assertTrue("escaped", groups.contains("a group&#39;s total"));
         assertFalse("other boxes unchanged", Queries.getQueryList("Geolocale").contains("query-help"));

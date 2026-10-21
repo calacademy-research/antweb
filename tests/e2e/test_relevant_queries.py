@@ -1,6 +1,6 @@
 """The "Relevant Queries" boxes, as the staging admin test login (read-only; Brian Fisher, 2026-10-21).
 
-Upload groups (viewGroups.do): groups and specimenGroups. Login Manager (viewLogins.do): uploadingCurators
+Upload groups (viewGroups.do): specimenGroups (the "groups" query was removed on 2026-10-21). Login Manager (viewLogins.do): uploadingCurators
 and curatorEmails. Each link has a one-line plain explanation next to it (what it lists, its columns,
 when to use it; Queries.QUERY_LIST_HELP), and each query opens with as many column headings as columns
 (uploadingCurators had no "Group ID" heading). Java checks in CI: test/org/calacademy/antweb/util/RelevantQueriesTest.java.
@@ -15,8 +15,7 @@ from staging_accounts import IS_STAGING, login, needs
 pytestmark = [pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only"), needs("admin")]
 
 PAGES = [
-    ("/viewGroups.do", {"groups": "date of the last specimen upload",
-                        "specimenGroups": "How many specimen records each upload group has"}),
+    ("/viewGroups.do", {"specimenGroups": "How many specimen records each upload group has"}),
     ("/viewLogins.do", {"uploadingCurators": "Every login allowed to upload specimens or images",
                         "curatorEmails": "These are not the uploaders"}),
 ]
@@ -36,9 +35,10 @@ def test_each_query_is_explained(admin, path, queries):
         m = re.search(r"name=" + name + r"'>" + name + r"</a> <span class=\"query-help\">([^<]+)</span>", r.text)
         assert m, f"{path}: no explanation next to {name}"
         assert words in m.group(1), (path, name, m.group(1))
+    assert "name=groups'" not in r.text, f"{path}: the removed groups query is still linked"
 
 
-@pytest.mark.parametrize("name", ["groups", "specimenGroups", "uploadingCurators", "curatorEmails"])
+@pytest.mark.parametrize("name", ["specimenGroups", "uploadingCurators", "curatorEmails"])
 def test_query_headings_match_columns(admin, name):
     r = admin.get(f"{BASE_URL}/query.do?action=curiousQuery&name={name}", timeout=TIMEOUT)
     assert classify(r).category == "ok", (name, classify(r))

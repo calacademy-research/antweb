@@ -9,7 +9,8 @@ Curator checks (staging only, ANTWEB_TEST_USER / ANTWEB_TEST_PASSWORD, never pro
 nothing: every request is refused or only reads.
 - defaultSpecimen.do: redirects within the site; changes only by POST with the form token, only for
   known names;
-- bioregionMapMgr.do: "refresh" only by POST and only for administrators; unknown names refused;
+- bioregionMapMgr.do: the "Refresh" of the whole table is gone (removed 2026-10-21; isRefresh=true is
+  ignored and a curator's POST changes nothing); unknown names refused;
   introducedMapMgr.do the same (administrators only since 2026-10-18: a curator gets the log-in page);
 - fieldHistory.do: Restore forms post to fieldHistory.do itself, for page-text pages only;
 - the form token is read from the form body of a normal POST (the URL is used only for uploads).
@@ -143,10 +144,17 @@ def test_default_specimen_quotes_are_refused(curator, deployed, taxon):
 
 
 @staging_only
-def test_bioregion_map_refresh_get_is_refused(curator, deployed):
+def test_bioregion_map_refresh_is_gone(curator, deployed):
+    """Removed 2026-10-21 (Brian's decision): it rebuilt every genus from all specimens, introduced
+    populations included, over hand corrections. isRefresh=true only shows the table; a POST from a
+    curator changes nothing."""
     r = curator.get(BASE_URL + "/bioregionMapMgr.do", params={"isRefresh": "true"}, timeout=TIMEOUT)
     _clean(r)
-    assert "Only an administrator" in r.text or "Nothing was changed" in r.text, r.text[:300]
+    assert "isRefresh=true" not in r.text and "Refresh the whole bioregion map" not in r.text, r.text[:300]
+    r = curator.post(BASE_URL + "/bioregionMapMgr.do", data={"_csrf": _token(curator), "isRefresh": "true"},
+                     timeout=TIMEOUT, allow_redirects=True)
+    _clean(r)
+    assert "Nothing was changed" in r.text, r.text[:300]
 
 
 @staging_only

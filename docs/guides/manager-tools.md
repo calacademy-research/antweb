@@ -28,7 +28,9 @@ example CASC). Each museum has a public page (`museum.do?code=CASC`) with its co
 - **Code**: as in the specimen data. Fixed once the museum exists (it is the key specimen records
   carry); to change a code, add a new museum and delete the old one.
 - **Name**: shown on the museum page and in lists.
-- **Title**: the name in the museum page's "change view" menu.
+- **Title**: the museum's full name (for example "British Museum of Natural History" for BMNH, whose
+  name is "BMNH, London"). It is the heading and browser title of the public museum page, the Title
+  column of the Museums list (`museums.do`) and the entry in the "change view" menu of other museum pages.
 - **Active**: the nightly run (set 5) makes a specimen map only for active museums.
 
 **Save** writes the four values to the `museum` table and reloads the museum list in memory. Specimen
@@ -117,7 +119,7 @@ Country List; Country Adm1 List; Taxa outside their native bioregions.
 ### Edit Geolocale (`editGeolocale.do?id=N`)
 
 All settings of one place. **Submit** (administrators) saves every field at once and reloads the
-places in memory, unless **Fast** is ticked (then reload later with "Reload places").
+places in memory, so the change is live at once.
 
 - **Name**, **ISO Code**, **ISO 3 Code** (countries), **Geo Rank**, **Valid**, **Valid Name** (for an
   invalid place), **Parent** (region, subregion or country above it), **Live**.
@@ -234,9 +236,8 @@ native bioregions" uses the same table. Curators can look.
 
 - Tick the bioregions and click the green arrow to save that genus (administrators). It applies to
   the next upload.
-- **Refresh** (administrators, bottom) rebuilds the whole table from the bioregions of all specimens and
-  replaces every change made here. Specimens of introduced populations count as native there, so check
-  the result.
+- There is no button that rebuilds the whole table (the old **Refresh** was removed on 2026-10-21:
+  it counted introduced populations as native and overwrote every correction made here).
 
 **Changed 2026-10-21**: the Totals row was out of column order (Oceania, Nearctic and Neotropical
 shifted); saving a genus is for administrators (any curator could); the saved map reaches uploads at
@@ -266,7 +267,7 @@ are where it is native. Values in the form are escaped and the rows read with bo
 geolocales, projects, bioregions, museums, images). Click a name to run it: the page shows the query, the
 rows and the time taken. They only read data; some take a minute. Administrators only, except the few
 that public pages link to (the AntCat import history, the bioregion species lists with range data, the
-image data download). "Older list" shows the same queries grouped as before (integrity, dev, curious).
+image data download).
 
 **Changed 2026-10-21**: result values and column headings were written into the page as HTML; they are
 now text, and only the links the queries build to AntWeb pages stay links.
@@ -286,14 +287,23 @@ upload reports.
 
 ---
 
-## Removal candidates (for Brian's decision; nothing removed)
+## Removed 2026-10-21 (Brian's decision)
+
+These addresses and buttons are gone; an old link answers "not found" or is ignored.
 
 - **Older Query Manager list** (`queries.do`): the same named queries as the Query Manager, grouped by
-  an older scheme; one list would do.
-- **Museum Title**: only used in the museum page's "change view" menu, where the name would do.
-- **upload.do createProject**: the old first step of creating a project (a "click Here" page); no form
-  uses it since 2026-10-21.
-- **Edit Geolocale "Fast"**: saves without reloading the places, for bulk edits; rarely useful now that
-  saves are one place at a time.
-- **Bioregion Map Manager "Refresh"**: rebuilds every genus's native bioregions from all specimens,
-  including introduced populations, and overwrites hand corrections.
+  an older scheme. Use the Query Manager (`query.do`). The "Execute all" pages of that list
+  (`query.do?action=devQueries` and `curiousQueries`) still work but are no longer linked.
+- **upload.do createProject**: the old first step of creating a project (a "click Here" page). Projects
+  are created in the Project Manager.
+- **Edit Geolocale "Fast"**: saved without reloading the places in memory. Every save now reloads them.
+- **Bioregion Map Manager "Refresh"**: rebuilt every genus's native bioregions from all specimens,
+  including introduced populations, and overwrote hand corrections.
+- **The "groups" named query** (Upload groups page, Relevant Queries): every upload group with its last
+  upload date. The page lists the groups; `specimenGroups` stays.
+
+**Kept**: the museum **Title**. It was listed as used only in the "change view" menu, but it is also the
+heading and browser title of each public museum page and a column of the Museums list, and for some
+museums it differs from the name (BMNH: name "BMNH, London", title "British Museum of Natural
+History"). Removing it would change those public pages; it needs its own decision (for example: copy
+each title into the name first).

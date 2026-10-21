@@ -10,7 +10,6 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.calacademy.antweb.home.LoginDb;
-import org.calacademy.antweb.util.Html;
 import org.calacademy.antweb.util.LoginNames;
 
 /**
@@ -26,8 +25,8 @@ import org.calacademy.antweb.util.LoginNames;
  *   4. Make the login the group's admin curator when the group has none.
  *
  * Nothing is written when a check fails (all in one transaction). The welcome email
- * (welcomeSubject / welcomeBody) is only shown to the administrator; it is sent when the
- * administrator clicks Send.
+ * (welcomeSubject / welcomeBody) is a draft shown to the administrator, who copies it into their
+ * own email and adds what the person needs to know; AntWeb does not send it.
  *
  * Plain JDBC with bound parameters, so the class can be tested against MySQL without the
  * application's in-memory lists (test/.../curate/UploaderOnboardingDbTest.java).
@@ -462,50 +461,50 @@ public final class UploaderOnboarding {
         return WELCOME_SUBJECT;
     }
 
+    /** The line the administrator replaces with their own name before sending. */
+    public static final String SIGNATURE_PLACEHOLDER = "[Your name]";
+
     /**
-     * The welcome email (HTML, every value escaped). setPasswordLink is the one-time invitation
-     * link (null when the login already has a password). site is e.g. https://www.antweb.org.
-     * The text was drafted for Brian's approval (pull request "Add an uploader").
+     * The draft welcome email, as plain text (the summary page puts it in a read-only text box,
+     * escaped there). setPasswordLink is the one-time invitation link (null when the login already
+     * has a password). site is e.g. https://www.antweb.org. The administrator sends it from their
+     * own address, so it is signed with SIGNATURE_PLACEHOLDER for them to replace.
      */
     public static String welcomeBody(String site, LoginRow login, GroupRow group, String setPasswordLink, int linkDays) {
         // Greet by first and last name; without them (or a username only) a plain "Hello,".
         String name = ((login.firstName == null ? "" : login.firstName.trim()) + " " + (login.lastName == null ? "" : login.lastName.trim())).trim();
-        String hello = name.isEmpty() ? "Hello," : "Hello " + Html.esc(name) + ",";
-        String groupText = Html.esc(group.name) + (group.abbrev == null || group.abbrev.isEmpty() ? "" : " (" + Html.esc(group.abbrev) + ")");
+        String hello = name.isEmpty() ? "Hello," : "Hello " + name + ",";
+        String groupText = group.name + (group.abbrev == null || group.abbrev.isEmpty() ? "" : " (" + group.abbrev + ")");
         String loginUrl = site + "/login.do";
         String curate = site + "/curate.do";
         String template = site + "/web/homepage/AntWeb_specimen_data_requirements_2026v1.xlsx";
         String docs = site + "/documentation.do";
         StringBuilder b = new StringBuilder();
-        b.append(hello).append("<br><br>\n");
-        b.append("You can now upload specimen data to AntWeb for the upload group ").append(groupText).append(".<br><br>\n");
-        b.append("<b>1. Log in.</b> ");
+        b.append(hello).append("\n\n");
+        b.append("You can now upload specimen data to AntWeb for the upload group ").append(groupText).append(".\n\n");
+        b.append("1. Log in. ");
         if (setPasswordLink != null) {
-            b.append("Open this link to choose your password (it works once, for ").append(linkDays).append(" days):<br>\n")
-             .append(link(setPasswordLink)).append("<br>\n")
-             .append("Then log in at ").append(link(loginUrl)).append(" with your username <b>").append(Html.esc(login.name))
-             .append("</b> or your email address. If the link has expired, use \"Forgot your password?\" on that page.<br><br>\n");
+            b.append("This link is for you only: open it to choose your password (it works once, for ").append(linkDays).append(" days):\n")
+             .append(setPasswordLink).append("\n")
+             .append("Then log in at ").append(loginUrl).append(" with your username ").append(login.name)
+             .append(" or your email address. If the link has expired, use \"Forgot your password?\" on that page.\n\n");
         } else {
-            b.append("Log in at ").append(link(loginUrl)).append(" with your username <b>").append(Html.esc(login.name))
-             .append("</b> and your password (\"Forgot your password?\" on that page emails a link to choose a new one).")
-             .append(" If you are logged in already, log out and in again so that AntWeb shows your new upload tools.<br><br>\n");
+            b.append("Log in at ").append(loginUrl).append(" with your username ").append(login.name)
+             .append(" and your password (\"Forgot your password?\" on that page emails a link to choose a new one).")
+             .append(" If you are logged in already, log out and in again so that AntWeb shows your new upload tools.\n\n");
         }
-        b.append("<b>2. Open Curator Tools</b> (").append(link(curate)).append("); AntWeb shows the Curator Tools link once you are logged in.<br><br>\n");
-        b.append("<b>3. Prepare your data</b> with the specimen template and its instructions:<br>\n").append(link(template)).append("<br>\n")
-         .append("Every specimen code must be unique on AntWeb: use your collection's own code prefix, not codes another collection uses.<br><br>\n");
-        b.append("<b>4. Upload.</b> Save the sheet as a tab-delimited text file, put it in a ZIP file, and upload it under \"Specimen Data\" on Curator Tools.")
-         .append(" <b>Each upload replaces all specimen records of your upload group</b>, so always upload your complete data set, not only new records.<br><br>\n");
-        b.append("<b>5. Check the upload report.</b> You get an email when the upload is finished. The report lists the names AntWeb changed to the current valid name (from AntCat) and the lines it could not load.<br><br>\n");
+        b.append("2. Open Curator Tools (").append(curate).append("); AntWeb shows the Curator Tools link once you are logged in.\n\n");
+        b.append("3. Prepare your data with the specimen template and its instructions:\n").append(template).append("\n")
+         .append("Every specimen code must be unique on AntWeb: use your collection's own code prefix, not codes another collection uses.\n\n");
+        b.append("4. Upload. Save the sheet as a tab-delimited text file, put it in a ZIP file, and upload it under \"Specimen Data\" on Curator Tools.")
+         .append(" Each upload replaces all specimen records of your upload group, so always upload your complete data set, not only new records.\n\n");
+        b.append("5. Check the upload report. You get an email when the upload is finished. The report lists the names AntWeb changed to the current valid name (from AntCat) and the lines it could not load.\n\n");
         if (login.uploadImages) {
             b.append("You can also upload specimen images (Curator Tools, Specimen Image Upload); the naming rules are in \"How to upload images\" on ")
-             .append(link(docs)).append(".<br><br>\n");
+             .append(docs).append(".\n\n");
         }
-        b.append("More help: ").append(link(docs)).append(". Questions: reply to this email.<br><br>\n");
-        b.append("AntWeb<br>California Academy of Sciences");
+        b.append("More help: ").append(docs).append(". If you have any questions, let me know.\n\n");
+        b.append("Best regards,\n").append(SIGNATURE_PLACEHOLDER).append("\nAntWeb, California Academy of Sciences\n");
         return b.toString();
-    }
-
-    private static String link(String url) {
-        return "<a href=\"" + Html.escAttr(url) + "\">" + Html.esc(url) + "</a>";
     }
 }
