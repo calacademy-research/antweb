@@ -201,6 +201,18 @@ Checked again against master after #189, #191, #192, #204 and #206.
 
 Found while doing this (not in the 24):
 
+- **B27** (fixed 2026-10-21): place Specimens larger than the sum of the species rows on every country, adm1,
+  region, subregion and project (staging: 110 places, Brazil 20,981 against 20,678). Cause: set 3 renames the
+  list rows of synonyms to their current valid name and deletes a synonym row when the valid name already has
+  one (`TaxonSetDb.updateTaxonSetTaxonNames`), after set 2 had summed the rows into the total. Now it also runs
+  in set 2 before the counts. Projects also had B2 (totals before their list).
+- **Ants only** (Brian Fisher, 2026-10-21): specimens of other families stay in AntWeb but are not counted on
+  place pages. Subfamilies, Genera, Species, Valid species, Specimens, both pies, Images and Imaged specimens
+  of every place count Formicidae only (`PlaceTotals.ANTS`), in the nightly run and in the check.
+- **Port of Entry** (open): its page shows 37,430 specimens while its list has no species with specimens
+  (staging). The nightly does not recount it. Decide: hide it as a place (is_valid = 0) or count interceptions
+  as a place; until then the check shows it as a real difference.
+
 - **B25** (planned): when a subspecies' parent is its species, the crawl writes the sum of the subspecies'
   specimens into the species row (`countGrandChildren` for rank species groups by `parent_taxon_name`). To
   confirm on staging: `select count(*) from taxon where taxarank = 'subspecies' and parent_taxon_name in (select
@@ -221,4 +233,5 @@ Found while doing this (not in the 24):
 | B22 | Curator counts: recount when an upload or image upload ends; place pages: an e2e test comparing each sampled place's page (`data-stat` numbers) with `countCheck.do?format=json`; alert when set 5 fails. |
 | B23 | `MessageMgr` errors per upload (instance, not static). |
 | B25, B26 | as above, each with an `inv:` or `cc:` check. |
+| museum, bioregion lists | set 3 still renames synonym rows of museum and bioregion lists after their counts (rows of a genus may then not add up: `inv:list.genus`). Plan: run the rename before `populateMuseum` and `populateBioregion` count, or recount their lists after it. |
 | not yet rows | Live numbers (search results, browse headers, collection and locality pages, API meta counts) are counted when shown; next: e2e tests that compare each with a SQL count on staging, starting with #38, #46 and #55. Curator, group and upload numbers: an `inv:` check against `upload` and `image_upload`. |

@@ -814,6 +814,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
           + " from geolocale_taxon gt, taxon t "
           + " where gt.taxon_name = t.taxon_name "
           + " and t.taxarank in ('species', 'subspecies')"
+          + " and t.family = 'formicidae'"   // ants only (2026-10-21, PlaceTotals)
           + " and gt.geolocale_id = " + geolocale.getId();
 
         //if (geolocale.getId() == 284) A.log("getSpecimenCount() query:" + query);

@@ -161,13 +161,13 @@ public class PlaceTotalsDbTest extends TestCase {
             String sf = "longsubfamilynumber" + i + "inae";
             taxa.append(i == 1 ? "" : ", ").append("('").append(sf).append("', 'subfamily', 'valid', 'formicidae', 'formicidae', '").append(sf).append("')");
             for (int k = 0; k < i % 3 + 1; k++) {
-                specimens.append(specimens.length() == 0 ? "" : ", ").append("('x").append(i).append("_").append(k).append("', 'CASC', '").append(sf).append("')");
+                specimens.append(specimens.length() == 0 ? "" : ", ").append("('x").append(i).append("_").append(k).append("', 'CASC', '").append(sf).append("', 'formicidae')");
             }
-            specimens.append(", ('typo").append(i).append("', 'CASC', 'notasubfamily").append(i).append("')");
+            specimens.append(", ('typo").append(i).append("', 'CASC', 'notasubfamily").append(i).append("', 'formicidae')");
         }
         exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily) values " + taxa);
-        exec("insert into specimen (code, museum, subfamily) values " + specimens);
-        long total = one("select count(*) from specimen where museum = 'CASC'");
+        exec("insert into specimen (code, museum, subfamily, family) values " + specimens);
+        long total = one("select count(*) from specimen where museum = 'CASC' and family = 'formicidae'");
         PlaceTotals.writePies(connection, PlaceTotals.MUSEUM, "CASC");
         String json = text("select specimen_subfamily_dist_json from museum where code = 'CASC'");
         assertNotNull(json);
@@ -189,6 +189,44 @@ public class PlaceTotalsDbTest extends TestCase {
         callPrivate(new BioregionDb(connection), "finish", Bioregion.class, b);
         assertEquals(2, one("select valid_species_count from bioregion where name = 'Malagasy'"));
         PlaceTotals.clearColumnLengths();
+    }
+
+    /** Brian Fisher, 2026-10-21: specimens of other families stay in AntWeb but are not counted on place pages. */
+    public void testOtherFamiliesAreNotCounted() throws Exception {
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily) values"
+            + " ('apidaeapis mellifera', 'species', 'valid', 'apidaeapis', 'apidae', 'apinae')");
+        exec("insert into specimen (code, taxon_name, status, country, museum, bioregion, upload_id, family, subfamily) values"
+            + " ('bee1', 'apidaeapis mellifera', 'valid', 'Madagascar', 'CASC', 'Malagasy', 1, 'apidae', 'apinae')");
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, specimen_count, created) values (" + MADAGASCAR + ", 'apidaeapis mellifera', 1, '2020-01-01')");
+        exec("insert into image values (40, 'bee1', 'h', '2020-01-01')");
+        exec("update specimen set image_count = 1 where code = 'bee1'");
+        exec("update taxon set image_count = 1 where taxon_name = 'apidaeapis mellifera'");
+        clearTotals();
+        exec("update geolocale_taxon set species_count = 2 where taxon_name = '" + PHEIDOLE + "'");
+        exec("update museum_taxon set subfamily_count = 0 where taxon_name = '" + MYRM + "'");
+        exec("update geolocale set specimen_count = 0 where id = " + MADAGASCAR);
+        GeolocaleDb g = new GeolocaleDb(connection);
+        callPrivate(g, "finish", int.class, MADAGASCAR);
+        callPrivate(g, "updateCountsFromSpecimenData", int.class, MADAGASCAR);
+        callPrivate(new GeolocaleDb(connection), "finish", int.class, INDIAN_OCEAN);
+        callPrivate(new MuseumDb(connection), "finish", String.class, "CASC");
+        callPrivate(new MuseumDb(connection), "finish", String.class, "MCZC");
+        for (String p : new String[] {"madants", "allantwebants"}) {
+            Project pr = new Project();
+            pr.setName(p);
+            callPrivate(new ProjectDb(connection), "finish", Project.class, pr);
+        }
+        Bioregion b = new Bioregion();
+        b.setName("Malagasy");
+        callPrivate(new BioregionDb(connection), "finish", Bioregion.class, b);
+        assertEquals("Madagascar: 5 ant specimens, the bee not counted", 5, one("select specimen_count from geolocale where id = " + MADAGASCAR));
+        assertEquals(4, one("select species_count from geolocale where id = " + MADAGASCAR));
+        assertEquals(2, one("select imaged_specimen_count from museum where code = 'CASC'"));
+        assertEquals(4, PlaceTotals.pieSum(text("select specimen_subfamily_dist_json from museum where code = 'CASC'")));
+        CountCheck.Result r = invariants();
+        int places = 0;
+        for (CountCheck.Mismatch m : r.mismatches) if (m.check.startsWith("place.")) ++places;
+        assertEquals(list(r), 0, places);
     }
 
     public void testEndemicNumbersAreTheFlaggedRows() throws Exception {

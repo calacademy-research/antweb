@@ -669,6 +669,7 @@ public class ProjectDb extends AntwebDb {
                     + " from proj_taxon pt, taxon t "
                     + " where pt.taxon_name = t.taxon_name "
                     + " and t.taxarank in ('species', 'subspecies')"
+                    + " and t.family = 'formicidae'"   // ants only (2026-10-21, PlaceTotals)
                     + " and pt.project_name = '" + project.getName() + "'";
 
             if ("bayareaants".equals(project.getName())) A.log("getSpecimenAndImageCount() query:" + query);
