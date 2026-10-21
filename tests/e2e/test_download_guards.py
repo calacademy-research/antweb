@@ -71,17 +71,18 @@ def test_search_list_is_paged_and_fast():
 
 
 def test_sort_applies_before_paging():
+    """Descending and ascending first pages share no specimen when there are more than 400: the order
+    is applied to the whole result, then cut into pages (a sort within one page would give the same 200)."""
     _deployed()
     s = new_session()
-    r1 = s.get(BASE_URL + MADAGASCAR + "&sortBy=code&sortOrder=down", timeout=max(TIMEOUT, 120))
-    m = SHOWING.search(r1.text)
-    if not m or _num(m.group(3)) <= 200:
-        pytest.skip("fewer than 201 specimens")
-    r2 = s.get(BASE_URL + MADAGASCAR + "&sortBy=code&sortOrder=down&page=2", timeout=max(TIMEOUT, 120))
-    p1, p2 = CODE.findall(r1.text), CODE.findall(r2.text)
-    assert p1 and p2
-    # Descending by code over the whole result: everything on page 2 sorts after page 1.
-    assert min(c.lower() for c in p1) >= max(c.lower() for c in p2), (p1[-1], p2[0])
+    up = s.get(BASE_URL + MADAGASCAR + "&sortBy=code", timeout=max(TIMEOUT, 120))
+    m = SHOWING.search(up.text)
+    if not m or _num(m.group(3)) <= 400:
+        pytest.skip("400 specimens or fewer")
+    down = s.get(BASE_URL + MADAGASCAR + "&sortBy=code&sortOrder=down", timeout=max(TIMEOUT, 120))
+    p_up, p_down = set(CODE.findall(up.text)), set(CODE.findall(down.text))
+    assert p_up and p_down
+    assert not p_up & p_down, sorted(p_up & p_down)[:5]
 
 
 @needs("uploader")
