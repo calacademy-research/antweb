@@ -261,8 +261,6 @@ public class AntwebMgr {
 
         TaxonMgr.postInitialize(connection);
 
-        AntwebUtil.getUploadGroupList();
-
         AntwebMgr.genRecentContent(connection); // Takes about a second. Mostly redundant but good for new installations.
 
         s_isPostInitialized = true;

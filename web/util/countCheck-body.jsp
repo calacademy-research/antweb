@@ -7,7 +7,8 @@
     String html = (String) request.getAttribute("html");
 %>
 <div class=left>
-<h1>Count check</h1>
+<h1>Check the counts</h1>
+<p>Are the numbers on country, project, museum and bioregion pages right? A fresh count from the specimen records, compared with what the site shows.</p>
 <a href="<%= domainApp %>">Home</a> | <a href="<%= domainApp %>/curate.do">Curator Tools</a>
 <%= html == null ? "" : html %>
 </div>

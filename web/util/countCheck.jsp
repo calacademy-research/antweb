@@ -10,6 +10,6 @@
 <%@include file="/common/antweb_admin-defs.jsp" %>
 
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">
-        <tiles:put name="title" value="Count check" />
+        <tiles:put name="title" value="Check the counts" />
         <tiles:put name="body-content" value="/util/countCheck-body.jsp" />
 </tiles:insert>

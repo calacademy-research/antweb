@@ -212,18 +212,6 @@ public abstract class AntwebUtil {
   }
 
 
-  // pass in a directoy and get a list of all of the files.  Not recursive.
-  static ArrayList<String> getDirFiles(File aFile) {
-    ArrayList<String> dirFiles = new ArrayList<>();
-    if (aFile.isDirectory()) {
-      File[] listOfFiles = aFile.listFiles();
-      if(listOfFiles!=null) {
-        for (File listOfFile : listOfFiles) dirFiles.add(listOfFile.getName());
-      }
-    }
-    return dirFiles;
-  }
-
   public static String getReleaseNum() {
     String releaseNumJsp = AntwebProps.getDocRoot() + "documentation/releaseNum.jsp";  
 
@@ -244,77 +232,7 @@ public abstract class AntwebUtil {
   }
 
 
-  // http://localhost/antweb/web/upload/
-  // Still in use. 
-  public static ArrayList<String> getUploadDirFiles() {
-    String dir = AntwebProps.getWebDir()+ "upload/";
-    s_log.debug("getUploadDirFiles() dir:" + dir);
-    File aFile = new File(dir);
-    ArrayList<String> dirFiles = getDirFiles(aFile);
-    return dirFiles;
-  }
 
-  public static ArrayList<String> getUploadDirFiles(String name) {
-    ArrayList<String> qualifiedFiles = new ArrayList<>();
-    ArrayList<String> files = getUploadDirFiles();
-    for (String file : files) {
-      String kind = file.substring(18); // everything after the date
-      kind = kind.substring(0, kind.indexOf(".txt"));
-      if (kind.equals(name)) {
-        qualifiedFiles.add(file);  
-        //s_log.warn("getUploadDirFiles(" + name + ") file:" + file + " name:" + name);  
-      }    
-    }
-    return qualifiedFiles;
-  }
-
-  private static ArrayList<Integer> s_uploadGroupList;
-  public static ArrayList<Integer> getUploadGroupList() {
-    if (s_uploadGroupList != null) {
-      //A.log("getUploadGroupList() found:" + s_uploadGroupList.size());
-      return s_uploadGroupList;
-    }
-
-    Date start = new Date();
-
-    s_uploadGroupList = new ArrayList<>();
-    ArrayList<String> files = getUploadDirFiles();
-    for (String file : files) {
-      if (file != null && file .length() < 18){
-        A.log("getUploadGroupList() File is short:" + file);
-        continue;
-      }
-      String kind = file.substring(18); // everything after the date
-      kind = kind.substring(0, kind.indexOf(".txt"));
-
-      int specIndex = kind.indexOf("specimen") + 8;
-      if (specIndex == 8) {
-        // TaxonWorks uploads have the filename specimenTW<id>, so we need to trim the TW out
-        if (kind.indexOf("specimenTW") == 0) {
-          specIndex = "specimenTW".length();
-        }
-        if (kind.indexOf("specimenGBIF") == 0) {
-          specIndex = "specimenGBIF".length();
-        }
-        String groupId = null;
-        Integer groupIdInteger = 0;
-        try {
-            groupId = kind.substring(specIndex);
-            groupIdInteger = Integer.valueOf(groupId);
-            //A.log("groupIdInteger:" + groupIdInteger);
-        } catch (NumberFormatException e) {
-            s_log.error("getUploadGroupList() kind:" + kind + " specIndex:" + specIndex + " groupId:" + groupId + " e:" + e);
-        }
-        if (!s_uploadGroupList.contains(groupIdInteger)) s_uploadGroupList.add(groupIdInteger);
-      } else {
-        if (kind != null && !kind.contains("worldants")) A.log("getUploadGroupList() ! specIndex:" + specIndex + " file:" + file + " kind:" + kind);
-      }
-    }
-    Collections.sort(s_uploadGroupList);
-
-    A.log("getUploadGroupList() done in " + AntwebUtil.reportTime(start));
-    return s_uploadGroupList;
-  }
 
     public static void writeXmlFile(Document doc, String fileName) {
       try {

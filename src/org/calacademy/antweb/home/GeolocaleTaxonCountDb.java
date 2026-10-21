@@ -6,6 +6,7 @@ import java.sql.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.calacademy.antweb.Countable;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.geolocale.*;
@@ -88,6 +89,28 @@ public class GeolocaleTaxonCountDb extends CountDb {
         return null;
     }
      
+    /**
+     * Before the specimens of a place's names are counted, the species and subspecies rows of its list
+     * are set to 0 (2026-10-20): the count query only returns names that have specimens there, so a
+     * name whose specimens are gone (or, on a region or subregion, a name with specimens elsewhere only)
+     * kept its old number, and the place's Specimens total (the sum of these rows) with it.
+     */
+    @Override
+    protected int countSpecimens(Countable countable) throws SQLException {
+        if (countable instanceof Geolocale) resetSpecimenCounts(((Geolocale) countable).getId());
+        return super.countSpecimens(countable);
+    }
+
+    /** Sets specimen_count to 0 on the species and subspecies rows of one geolocale's list. */
+    public int resetSpecimenCounts(int geolocaleId) throws SQLException {
+        String dml = "update geolocale_taxon set specimen_count = 0 where geolocale_id = ? and specimen_count <> 0"
+            + " and taxon_name in (select t.taxon_name from taxon t where t.taxarank in ('species', 'subspecies'))";
+        try (PreparedStatement stmt = getConnection().prepareStatement(dml)) {
+            stmt.setInt(1, geolocaleId);
+            return stmt.executeUpdate();
+        }
+    }
+
     // ------------------------- Countable_Taxon Image Count Crawl ----------------------------
 
      // These methods populate Geolocale_taxons (just for subregions!).

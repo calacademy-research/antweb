@@ -110,6 +110,7 @@ public class MessageMgr {
     public static final String futureDateDetermined = "futureDateDetermined";
     public static final String duplicateEntries = "duplicateEntries";
     public static final String taxonNamesAreHomonyms = "taxonNamesAreHomonyms";
+    public static final String sharedNameKept = "sharedNameKept";
     public static final String unavailableQuadrinomial = "unavailableQuadrinomial";
     public static final String unrecognizedInvalidSpecies = "unrecognizedInvalidSpecies";
     public static final String recognizedInvalidSpecies = "recognizedInvalidSpecies";
@@ -187,7 +188,10 @@ public class MessageMgr {
       testList.add(new Test(databaseErrors, SET, "<b>Database Errors <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(futureDateCollected, SET, "<b>Date Collected Start is in the future <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(futureDateDetermined, SET, "<b>Date Determined is in the future <font color=green>(uploaded)</font></b>"));
-      testList.add(new Test(taxonNamesAreHomonyms, SET, "<b>Taxon names recognized as Homonyms.  Names are not verified against AntCat.org  Submission <font color=green>(uploaded)</font></b>"));      
+      // Names of two or more AntCat taxa, and names AntCat has only as a junior homonym: SharedNameReport,
+      // the same lines as the Name updates page (2026-10-20; replaces "Taxon names recognized as Homonyms").
+      testList.add(new Test(sharedNameKept, SET, "<b>" + SharedNameReport.UPLOAD_HEADING + " <font color=green>(uploaded)</font></b>"));
+      testList.add(new Test(taxonNamesAreHomonyms, SET, "<b>" + SharedNameReport.HOMONYM_ONLY_HEADING + " <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(unavailableQuadrinomial, SET, "<b>Unavailable quadrinomial. Submission <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(unrecognizedInvalidSpecies, SET, "<b>Unrecognized Invalid species.  Names not found in AntCat.org. Submission <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(recognizedInvalidSpecies, SET, "<b>Recognized invalid species.  Submission replaced with current valid name from AntCat.org <font color=green>(uploaded)</font></b>"));
