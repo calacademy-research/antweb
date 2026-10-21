@@ -78,7 +78,7 @@ public final class NumbersTestDb {
             + " is_island tinyint default 0, endemic_species_count int default 0, introduced_species_count int default 0, " + PLACE_COLUMNS + ")");
         exec(c, "create table geolocale_taxon (geolocale_id int, " + LIST_COLUMNS + ", is_endemic tinyint default 0, is_introduced tinyint default 0,"
             + " primary key (geolocale_id, taxon_name))");
-        exec(c, "create table project (project_name varchar(64) primary key, is_live tinyint, " + PLACE_COLUMNS + ")");
+        exec(c, "create table project (project_name varchar(64) primary key, is_live tinyint, scope varchar(20) default 'PROJECT', " + PLACE_COLUMNS + ")");
         exec(c, "create table proj_taxon (project_name varchar(64), " + LIST_COLUMNS + ", primary key (project_name, taxon_name))");
         exec(c, "create table museum (code varchar(64) primary key, " + PLACE_COLUMNS + ")");
         exec(c, "create table museum_taxon (code varchar(64), " + LIST_COLUMNS + ", primary key (code, taxon_name))");

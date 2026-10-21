@@ -172,7 +172,9 @@ public final class CountInvariants {
             case PlaceTotals.GEOLOCALE:
                 return "select id, name, georank from geolocale where is_valid = 1 and georank in ('country', 'adm1', 'subregion', 'region')"
                     + " and (georank <> 'adm1' or is_live = 1)";
-            case PlaceTotals.PROJECT: return "select project_name, project_name, null from project where is_live = 1";
+            // the projects whose totals the nightly run counts (ProjectDb.updateCounts: scope PROJECT and GLOBAL) and whose
+            // lists it recounts (live projects)
+            case PlaceTotals.PROJECT: return "select project_name, project_name, null from project where is_live = 1 and scope in ('PROJECT', 'GLOBAL')";
             case PlaceTotals.MUSEUM: return "select code, code, null from museum";
             default: return "select name, name, null from bioregion";
         }
