@@ -15,27 +15,8 @@ public abstract class QueryManager {
 
     private static final Log s_log = LogFactory.getLog(QueryManager.class); 
 
-// ---------------
-
-    public static String getQueryList(String listName) {
-      String html = "";
-      ArrayList<String> queries = null;
-      if ("Geolocale".equals(listName)) queries = Queries.getGeolocaleQueries();    
-      if ("Login".equals(listName)) queries = Queries.getLoginQueries();    
-      if ("Groups".equals(listName)) queries = Queries.getGroupQueries();    
-      int i = 0;
-      if (queries == null) {
-        s_log.warn("QueryList:" + listName + " not found.");
-        return null;
-      }
-      for (String query : queries) {
-        if (i == 0) html += "<ul align=left>";
-        ++i;
-        html += "<li><a href='" + AntwebProps.getDomainApp() + "/query.do?action=curiousQuery&name=" + query +"'>" + query + "</a>";
-        if (i == queries.size()) html += "</ul>";
-      }
-      return html;
-    }
+    /** No named query may run longer than this (Statement.setQueryTimeout); the page says so. */
+    public static final int QUERY_TIMEOUT_SECS = 120;
 
 // ---------------- 
 
@@ -79,7 +60,7 @@ public abstract class QueryManager {
     /** One check of a report page: its rows, "None." when it finds nothing, or the error it ran into. */
     static String checkSection(NamedQuery namedQuery, Connection connection) {
         String desc = namedQuery.getDesc() == null ? "" : namedQuery.getDesc();
-        String head = "<hr><br><b>" + Html.esc(namedQuery.getName()) + "</b>: " + desc;
+        String head = "<hr><br><b>" + Html.esc(namedQuery.getName()) + "</b>: " + Html.esc(desc);
         try {
             String results = runNamedQueryHtml(namedQuery, connection);
             if (results == null || results.contains("<br><b>rowCount:</b>0\n")) {
@@ -88,7 +69,7 @@ public abstract class QueryManager {
             return results;
         } catch (Exception e) {
             s_log.warn("checkSection() " + namedQuery.getName() + " e:" + e);
-            return head + "<br><br><b>This check could not run:</b> " + Html.esc(String.valueOf(e.getMessage())) + "<br><br>\n";
+            return head + "<br><br><b class=\"query-error\">This check could not run:</b> " + Html.esc(String.valueOf(e.getMessage())) + "<br><br>\n";
         }
     }
 
@@ -96,11 +77,9 @@ public abstract class QueryManager {
         String message = "</b>";
         message += "<h1>Dev Integrity</h1>";
         message += " * - These AntWeb issues imply issues for Antweb developers to resolve.";
-        ArrayList<NamedQuery> queryList = Queries.getNamedQueryList(Queries.getDevIntegrityNames());       
+        ArrayList<NamedQuery> queryList = Queries.getNamedQueryList(Queries.getDevIntegrityNames());
         for (NamedQuery namedQuery : queryList) {
-          String results = runNamedQueryHtml(namedQuery, connection);
-          if (results != null)
-            message += results;
+          message += checkSection(namedQuery, connection);
         }
         if ("".equals(message)) message = "Success";
         return message;        
@@ -110,9 +89,7 @@ public abstract class QueryManager {
         ArrayList<NamedQuery> battery = new ArrayList<>();
 
         if ("projectTaxonCounts".equals(name)) {
-          battery.add(Queries.getNamedQuery("projectTaxaCount"));
-          battery.add(Queries.getNamedQuery("projectTaxaCountByProject"));
-          battery.add(Queries.getNamedQuery("projectTaxaCountByProjectRank"));
+          battery.addAll(Queries.getNamedQueryList(Queries.getBatteryNames()));
         }
         return battery;
     }
@@ -132,7 +109,7 @@ public abstract class QueryManager {
         }
 
         for (NamedQuery query : battery) {
-          message += runNamedQueryHtml(query, connection);
+          message += runSection(query, connection);
         }
 
         return message;
@@ -151,17 +128,30 @@ public abstract class QueryManager {
         }
         if (namedQuery == null) return "Query not found:" + Html.esc(name);
         if ("worldantsUploads".equals(name)) message += ReportHelp.WORLDANTS_UPLOADS;
-        String result = runNamedQueryHtml(namedQuery, connection);
-        if (result != null) message += result;
+        message += runSection(namedQuery, connection);
         return message;
+    }
+
+    /**
+     * One named query on a page: its rows, or the error it ran into (shown, so a broken query is seen; the
+     * end-to-end test of every query, tests/e2e/test_named_queries.py, looks for it).
+     */
+    static String runSection(NamedQuery namedQuery, Connection connection) {
+        try {
+            String result = runNamedQueryHtml(namedQuery, connection);
+            return result == null ? "" : result;
+        } catch (Exception e) {
+            s_log.warn("runSection() " + namedQuery.getName() + " e:" + e);
+            String desc = namedQuery.getDesc() == null ? "" : namedQuery.getDesc();
+            return "<hr><br><b>Name: </b>" + Html.esc(namedQuery.getName()) + "<br><br><b>What it shows:</b> " + Html.esc(desc)
+                + "<br><br><b class=\"query-error\">This query could not run:</b> " + Html.esc(String.valueOf(e.getMessage())) + "<br><br>\n";
+        }
     }
     
     public static String curiousQueries(Connection connection) throws SQLException {
         String message = "";
         for (NamedQuery namedQuery : Queries.getCuriousQueries()) {
-          String results = runNamedQueryHtml(namedQuery, connection);
-          if (results != null)
-            message += results;
+          message += runSection(namedQuery, connection);
         }
         if ("".equals(message)) message = "Success";
         return message;        
@@ -186,6 +176,7 @@ public abstract class QueryManager {
         ResultSet rset = null;
         try {
             stmt = DBUtil.getStatement(connection, "runNamedQuery()");
+            stmt.setQueryTimeout(QUERY_TIMEOUT_SECS);
 
             Date startTime = new Date();
 
@@ -249,9 +240,7 @@ public abstract class QueryManager {
         String result = "";
         String message = "";
         if (namedQuery == null) return "Query not found:" + Html.esc(queryName) + " with param:" + Html.esc(param);
-        result = runNamedQueryHtml(namedQuery, connection);
-        if (result != null) message += result;
-        return message;
+        return runSection(namedQuery, connection);
     }
 
     public static String runNamedQueryHtml(NamedQuery namedQuery, Connection connection) throws SQLException {
@@ -265,6 +254,7 @@ public abstract class QueryManager {
                 s_log.warn("Failed to getStatement: runNamedQueryHtml()");
                 return null;
             }
+            stmt.setQueryTimeout(QUERY_TIMEOUT_SECS);
 
             Date startTime = new Date();            
 
@@ -282,7 +272,7 @@ public abstract class QueryManager {
 
 		    message.append("<hr><br><b>Name: </b><a href='" + Html.escAttr(permalink) + "'>" + Html.esc(title) + "</a>\n");
             if (namedQuery.getDesc() != null)
-                message.append("<br><br><b>Description:</b>" + namedQuery.getDesc() + "\r");
+                message.append("<br><br><b>What it shows:</b> " + Html.esc(namedQuery.getDesc()) + "\n");
 
             //A.log("namedQuery:" + namedQuery.getDesc());
 
@@ -292,10 +282,12 @@ public abstract class QueryManager {
 			  message.append("<tr>" + namedQuery.getHeaderHtml() + "</tr>\n");
             
             rset = stmt.executeQuery(query);
+            int columns = rset.getMetaData().getColumnCount();
+            int headings = namedQuery.getHeadingCount();
             int i = 0;
             while (rset.next()) {
               ++i;
-              int columnCount = rset.getMetaData().getColumnCount();
+              int columnCount = columns;
               for (int j=1 ; j <= columnCount ; ++j) {
                 String val = cell(rset.getString(j));
                 if (j == 1) {
@@ -309,6 +301,11 @@ public abstract class QueryManager {
             } // end while
 
             message.append("</table>\n");
+            // Read by tests/e2e/test_named_queries.py: every query has one heading per column.
+            message.append("<span class=\"query-check\" data-columns=\"" + columns + "\" data-headings=\"" + headings + "\"></span>");
+            if (columns != headings) {
+              message.append("<br><b class=\"query-error\">The headings do not match the columns:</b> " + headings + " headings, " + columns + " columns.\n");
+            }
             message.append("<br><b>rowCount:</b>" + i + "\n");
 
             long timePassed = AntwebUtil.minsSince(startTime);

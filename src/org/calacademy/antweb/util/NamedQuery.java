@@ -29,16 +29,73 @@ public class NamedQuery  //implements Iterable
     this.query = query;
   }
 
-  NamedQuery(String name, String desc, String headerHtml, String query) {
+  /**
+   * A named query of Queries.java: its name, a plain-language explanation (the first sentence is its summary),
+   * one heading per column of the select, and the (read-only) SQL.
+   */
+  NamedQuery(String name, String desc, String[] headerArray, String query) {
       this.name = name;
       this.desc = desc;
-      this.headerHtml = headerHtml;
+      this.headerArray = headerArray;
       this.query = query;
   }
 
-  NamedQuery(String name, String desc, String headerHtml, String query, String detailQuery) {
-      this(name, desc, headerHtml, query);
+  NamedQuery(String name, String desc, String[] headerArray, String query, String detailQuery) {
+      this(name, desc, headerArray, query);
       this.detailQuery = detailQuery;
+  }
+
+  /** The first sentence of the explanation: the line shown in lists of queries. */
+  public String getSummary() {
+    return summary(desc);
+  }
+
+  public static String summary(String desc) {
+    if (desc == null) return "";
+    String d = desc.trim();
+    int depth = 0;
+    for (int i = 0; i < d.length(); i++) {
+      char c = d.charAt(i);
+      if (c == '(') depth++;
+      else if (c == ')' && depth > 0) depth--;
+      else if (c == '.' && depth == 0 && (i == d.length() - 1 || d.charAt(i + 1) == ' ')) return d.substring(0, i + 1);
+    }
+    return d;
+  }
+
+  /** The number of headings (0 without any). */
+  public int getHeadingCount() {
+    return headerArray == null ? 0 : headerArray.length;
+  }
+
+  /**
+   * The number of columns of a select: the commas of the first select list (up to its "from") that are not
+   * inside parentheses or quotes, plus one. -1 when the text does not start with select.
+   */
+  public static int selectColumnCount(String sql) {
+    if (sql == null) return -1;
+    String s = sql.trim();
+    if (!s.toLowerCase().startsWith("select")) return -1;
+    int depth = 0, count = 1;
+    char quote = 0;
+    for (int i = "select".length(); i < s.length(); i++) {
+      char c = s.charAt(i);
+      if (quote != 0) {
+        if (c == '\\') i++;
+        else if (c == quote) {
+          if (i + 1 < s.length() && s.charAt(i + 1) == quote) i++;
+          else quote = 0;
+        }
+        continue;
+      }
+      if (c == '\'' || c == '"' || c == '`') quote = c;
+      else if (c == '(') depth++;
+      else if (c == ')') depth--;
+      else if (c == ',' && depth == 0) count++;
+      else if (depth == 0 && Character.isWhitespace(c) && s.regionMatches(true, i + 1, "from", 0, 4)
+          && (i + 5 >= s.length() || Character.isWhitespace(s.charAt(i + 5)))) break;
+    }
+    return count;
   }
 
   public String getName() { 

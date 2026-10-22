@@ -410,6 +410,7 @@ tests = [
   "test_cleanup_batch3.py",
   "test_count_check.py",
   "test_removals_2026_10_21.py",       # added by #217/#218
+  "test_named_queries.py",             # every named query runs, in time, headings = columns (admin, read-only)
 ]
 
 [areas.api]

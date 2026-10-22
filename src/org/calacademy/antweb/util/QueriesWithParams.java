@@ -62,22 +62,27 @@ public abstract class QueriesWithParams {
             s_log.warn("getGeolocaleSpeciesListWithRangeData() geolocale not found:" + geolocaleName);
             return null;
         }
-        String georank = geolocale.getGeorank();
-        query = new NamedQuery(
-                "speciesListWithRangeData"
+        query = geolocaleSpeciesListWithRangeData(geolocaleName, geolocale.getGeorank());
+        s_log.debug("getNamedQuery() geolocale:" + geolocale + " query:" + query);
+        return query;
+    }
+
+    // The query's name is the name pages link to (query.do?name=...&param=...): the permalink on the result page
+    // uses it. Was "speciesListWithRangeData" and "speciesListRangeSummary", names no page could open (2026-10-22).
+    public static NamedQuery geolocaleSpeciesListWithRangeData(String geolocaleName, String georank) {
+        return new NamedQuery(
+                "geolocaleSpeciesListWithRangeData"
                 , geolocaleName
                 , FileUtil.makeReportName("SpeciesListWithRange" + geolocaleName)
-                , "species list with range data (including is_introduced and is_endemic) for a given geolocale (region, subregion, country or adm1). Introduced and Endemic only calculated for valid taxa."
+                , "The species and subspecies on this place's species list, with author and year, status, the"
+                  + " introduced and endemic flags of the list (1 = yes; worked out for valid names only) and the other"
+                  + " places of the same rank whose lists hold the name (Range). Copy it into a spreadsheet."
                 , new String[] {"Subfamily", "Genus", "Species", "Subspecies", "Author Date", "Status", "Introduced", "Endemic", "Range"}
                 , "select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, gt.is_introduced, gt.is_endemic, "
-                  + " (select group_concat(' ', g2.name order by name) from geolocale_taxon gt2, geolocale g2 where gt2.geolocale_id = g2.id and g2.georank = '" + DBUtil.escapeQuotes(georank) + "' and gt2.taxon_name = t.taxon_name order by g2.name) "
+                  + " (select group_concat(' ', g2.name order by g2.name) from geolocale_taxon gt2, geolocale g2 where gt2.geolocale_id = g2.id and g2.georank = '" + DBUtil.escapeQuotes(georank) + "' and gt2.taxon_name = t.taxon_name) "
                   + " from taxon t, geolocale_taxon gt, geolocale g where t.taxon_name = gt.taxon_name and gt.geolocale_id = g.id and t.taxarank in ('species', 'subspecies') "
                   + " and g.georank = '" + DBUtil.escapeQuotes(georank) + "' and g.name = '" + DBUtil.escapeQuotes(geolocaleName) + "' order by t.subfamily, t.genus, t.species, t.subspecies"
         );
-
-        s_log.debug("getNamedQuery() geolocale:" + geolocale + " query:" + query);
-
-        return query; // end getQueryWithParam()
     }
 
 
@@ -89,21 +94,23 @@ public abstract class QueriesWithParams {
             s_log.warn("getGeolocaleSpeciesListRangeSummary() geolocale not found:" + geolocaleName);
             return null;
         }
-        String georank = geolocale.getGeorank();
-        query = new NamedQuery(
-                "speciesListRangeSummary"
+        query = geolocaleSpeciesListRangeSummary(geolocaleName, geolocale.getGeorank());
+        s_log.debug("getNamedQuery() geolocale:" + geolocale + " query:" + query);
+        return query;
+    }
+
+    public static NamedQuery geolocaleSpeciesListRangeSummary(String geolocaleName, String georank) {
+        return new NamedQuery(
+                "geolocaleSpeciesListRangeSummary"
                 , geolocaleName
                 , FileUtil.makeReportName("SpeciesListRangeSummary" + geolocaleName)
-                , "Species List Range Summary for a given geolocale (region, subregion, country or adm1)."
-                , new String[] {"Count", "Status", "Introduced", "Endemic"}
+                , "How many species and subspecies on this place's species list have each status, and how many of"
+                  + " them are flagged introduced and endemic (1 = yes). The totals of the Species List with Range Data."
+                , new String[] {"Names", "Status", "Introduced", "Endemic"}
                 , "select count(*), t.status, gt.is_introduced, gt.is_endemic from geolocale g, geolocale_taxon gt, taxon t "
                 + " where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name and g.georank = '" + DBUtil.escapeQuotes(georank) + "' and t.taxarank in ('species', 'subspecies') "
-                + " and g.name = '" + DBUtil.escapeQuotes(geolocaleName) + "' group by t.status, gt.is_introduced, gt.is_endemic"
+                + " and g.name = '" + DBUtil.escapeQuotes(geolocaleName) + "' group by t.status, gt.is_introduced, gt.is_endemic order by count(*) desc"
         );
-
-        s_log.debug("getNamedQuery() geolocale:" + geolocale + " query:" + query);
-
-        return query; // end getQueryWithParam()
     }
 
     private static NamedQuery getBioregionSpeciesListWithRangeData(String bioregionName) {
@@ -114,21 +121,25 @@ public abstract class QueriesWithParams {
             s_log.warn("getBioregionSpeciesListWithRangeData() bioregion not found:" + bioregionName);
             return null;
         }
-        query = new NamedQuery(
+        query = bioregionSpeciesListWithRangeData(bioregionName);
+        s_log.debug("getNamedQuery() bioregion:" + bioregion + " query:" + query);
+        return query;
+    }
+
+    public static NamedQuery bioregionSpeciesListWithRangeData(String bioregionName) {
+        return new NamedQuery(
                 "bioregionSpeciesListWithRangeData"
                 , bioregionName
                 , FileUtil.makeReportName("bioregionSpeciesListWithRange" + bioregionName)
-                , "Bioregion species list with range data (including is_endemic and introduced) for a given bioregion."
+                , "The species and subspecies on this bioregion's species list, with author and year, status, the"
+                  + " introduced and endemic flags (1 = yes) and every bioregion whose list holds the name (Range)."
+                  + " Copy it into a spreadsheet."
                 , new String[] {"Subfamily", "Genus", "Species", "Subspecies", "Author Date", "Status", "Introduced", "Endemic", "Range"}
                 , "select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, bt.is_introduced, bt.is_endemic"
-                + " , (select group_concat(' ', b2.name order by name) from bioregion_taxon bt2, bioregion b2 where bt2.bioregion_name = b2.name and bt2.taxon_name = t.taxon_name order by b2.name)"
+                + " , (select group_concat(' ', b2.name order by b2.name) from bioregion_taxon bt2, bioregion b2 where bt2.bioregion_name = b2.name and bt2.taxon_name = t.taxon_name)"
                 + " from taxon t, bioregion_taxon bt, bioregion b where t.taxon_name = bt.taxon_name and bt.bioregion_name = b.name and t.taxarank in ('species', 'subspecies')"
                 + " and b.name = '" + DBUtil.escapeQuotes(bioregionName) + "' order by t.subfamily, t.genus, t.species, t.subspecies"
         );
-
-        s_log.debug("getNamedQuery() bioregion:" + bioregion + " query:" + query);
-
-        return query;
     }
 
     private static NamedQuery getBioregionSpeciesListRangeSummary(String bioregionName) {
@@ -139,20 +150,23 @@ public abstract class QueriesWithParams {
             s_log.warn("getBioregionSpeciesListRangeSummary() bioregion not found:" + bioregionName);
             return null;
         }
-        query = new NamedQuery(
+        query = bioregionSpeciesListRangeSummary(bioregionName);
+        s_log.debug("getNamedQuery() bioregion:" + bioregion + " query:" + query);
+        return query;
+    }
+
+    public static NamedQuery bioregionSpeciesListRangeSummary(String bioregionName) {
+        return new NamedQuery(
                 "bioregionSpeciesListRangeSummary"
                 , bioregionName
                 , FileUtil.makeReportName("BioregionSpeciesListRangeSummary" + bioregionName)
-                , "Bioregion Species List Range Summary for a given bioregion."
-                , new String[] {"Count", "Status", "Introduced", "Endemic"}
+                , "How many species and subspecies on this bioregion's species list have each status, and how many"
+                  + " of them are flagged introduced and endemic (1 = yes). The totals of the Species List with Range Data."
+                , new String[] {"Names", "Status", "Introduced", "Endemic"}
                 , "select count(*), t.status, bt.is_introduced, bt.is_endemic from bioregion b, bioregion_taxon bt, taxon t "
                 + " where b.name = bt.bioregion_name and bt.taxon_name = t.taxon_name and t.taxarank in ('species', 'subspecies') "
-                + " and b.name = '" + DBUtil.escapeQuotes(bioregionName) + "' group by t.status, bt.is_introduced, bt.is_endemic"
+                + " and b.name = '" + DBUtil.escapeQuotes(bioregionName) + "' group by t.status, bt.is_introduced, bt.is_endemic order by count(*) desc"
         );
-
-        s_log.debug("getNamedQuery() bioregion:" + bioregion + " query:" + query);
-
-        return query;
     }
 
 }
