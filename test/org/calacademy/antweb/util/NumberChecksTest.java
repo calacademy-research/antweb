@@ -167,10 +167,16 @@ public class NumberChecksTest extends TestCase {
         assertEquals(1, m.recount);
     }
 
-    public void testAnUploadAfterTheGroupsLastUploadIsPending() throws Exception {
+    /** Another group's upload does not change this group's numbers; the nightly name update of its specimens may. */
+    public void testGroupNumbersArePendingAfterItsSpecimensWereRenamed() throws Exception {
         exec("update upload set specimens = 9");
         exec("insert into upload (upload_id, created, group_id) values (2, now(), 2)");
         CountCheck.Result r = check();
+        assertEquals(list(r), 1, real(r, "admin.groups"));
+        exec("create table specimen_name_update (id int auto_increment primary key, run_date datetime, mode varchar(12), code varchar(128),"
+            + " access_group int, old_name varchar(128), new_name varchar(128))");
+        exec("insert into specimen_name_update (run_date, mode, code, access_group, old_name, new_name) values (now(), 'changed', 'casent3', 1, 'x', 'y')");
+        r = check();
         assertEquals(list(r), 0, real(r, "admin.groups"));
     }
 

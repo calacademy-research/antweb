@@ -476,10 +476,12 @@ public final class NumberChecks {
                 long[] n = counts.getOrDefault(g, new long[9]);
                 // upload columns: specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera, species
                 long[] recount = {n[1], n[2], n[3], n[4], n[8], n[5], n[6], n[7]};
+                // The numbers are written at the group's upload only: specimens of the group renamed since (the nightly name
+                // update) can change them until its next upload (question Q13 in docs/numbers.md).
                 String p = null;
-                if (created != null && createdSince("upload", created)) p = "another group uploaded after this group's last upload";
-                if (p == null && created != null && names && count("select count(*) from specimen_name_update where mode = 'changed' and run_date > ?", created) > 0) {
-                    p = "specimens were renamed after this group's last upload";
+                if (created != null && names && count("select count(*) from specimen_name_update where mode = 'changed' and access_group = ? and run_date > ?",
+                        Integer.parseInt(g), created) > 0) {
+                    p = "specimens of the group were renamed after its last upload (the numbers are from the upload)";
                 }
                 for (int i = 0; i < 8; i++) {
                     inv.compare(c, "group", g, "last upload (" + row[1] + ") " + what[i] + " = a recount of the group's specimens", v[i], recount[i], "=", p);
