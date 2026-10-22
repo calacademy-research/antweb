@@ -46,6 +46,16 @@ public class UploadDetails extends OperationDetails {
 
     private boolean offerRunCountCrawlLink = false;
 
+    // The upload_id of the upload's row in the upload table (SpecimenUploadDb.recordUpload), 0 until written.
+    private int uploadId = 0;
+    public void setUploadId(int uploadId) { this.uploadId = uploadId; }
+    public int getUploadId() { return uploadId; }
+
+    /** The upload's id: the one recorded, or (before the record is written) the one its specimens carry. */
+    public int getReportUploadId() {
+        return uploadId > 0 ? uploadId : AntwebMgr.getNextSpecimenUploadId();
+    }
+
     public UploadDetails() {
       super();
       messageMgr = new MessageMgr();
@@ -130,7 +140,7 @@ public class UploadDetails extends OperationDetails {
             + AntwebProps.getDomainApp() + "/curate.do\">Curator Tools</a><br><br>"
             + warning
             + "<h3>Upload Details:</h3>"
-            + "&nbsp;&nbsp;&nbsp;<b>Upload ID:</b> <a href='" + AntwebProps.getDomainApp() + "/uploadReport.do?uploadId=" + AntwebMgr.getNextSpecimenUploadId() + "'>" + AntwebMgr.getNextSpecimenUploadId() + "</a>"
+            + "&nbsp;&nbsp;&nbsp;<b>Upload ID:</b> <a href='" + AntwebProps.getDomainApp() + "/uploadReport.do?uploadId=" + getReportUploadId() + "'>" + getReportUploadId() + "</a>"
             + "<br> &nbsp;&nbsp;&nbsp;<b>Operation: " + getOperation() + "</b>"
             + "<br>&nbsp;&nbsp;&nbsp;<b>This Log File:</b> " + getLogFileAnchor() 
             + "<br>&nbsp;&nbsp;&nbsp;<b>Date:</b> " + new Date()
@@ -176,7 +186,7 @@ public class UploadDetails extends OperationDetails {
             logString += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Specimens:</b> " + countInsertedSpecimens;
             logString += "<br>&nbsp;&nbsp;&nbsp;<b>Red Flagged Specimens:</b> " + getMessageMgr().getRedFlagCount();
             logString += "<br>&nbsp;&nbsp;&nbsp;<b>Advanced Search:</b><a href=\"" + AntwebProps.getDomainApp() + "/advancedSearch.do?"
-                    + "searchMethod=advancedSearch&advanced=true&uploadId=" + AntwebMgr.getNextSpecimenUploadId()
+                    + "searchMethod=advancedSearch&advanced=true&uploadId=" + getReportUploadId()
                     //+ "&groupName=" + accessGroup.getName()
                     + "\"> This Upload</a><a href='' title='Could be affected/limited by subsequent uploads. No red flagged specimen included in results.'>*</a>";
         }

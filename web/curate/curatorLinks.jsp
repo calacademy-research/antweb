@@ -29,7 +29,7 @@
       <li>Site Warning: the banner shown at the top of every page. Simple formatting (bold, colour, line breaks, links) is kept.
         <form method="post" action="<%= domainApp %>/utilData.do" style="margin:4px 0"><%= org.calacademy.antweb.util.Csrf.field(request) %>
           <input type="hidden" name="action" value="siteWarning">
-          <textarea name="text" rows="2" style="width:95%" aria-label="Site warning text"><%= org.calacademy.antweb.util.Html.esc(content) %></textarea>
+          <textarea name="text" rows="3" style="width:95%;height:4.5em;resize:vertical" aria-label="Site warning text"><%= org.calacademy.antweb.util.Html.esc(content) %></textarea>
           <br><input type="submit" value="Save">
         </form>
         <form method="post" action="<%= domainApp %>/utilData.do" style="margin:0 0 4px 0"><%= org.calacademy.antweb.util.Csrf.field(request) %>

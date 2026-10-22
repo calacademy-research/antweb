@@ -98,10 +98,16 @@ public final class CountCheckJob {
      */
     public static void startAfterNightly() {
         try {
-            DataSource ds = DBUtilSimple.getDataSource();
-            BackgroundJobDb.setDataSourceIfMissing(ds);
+            // The application's pools (as the count check page uses), built by the first page request;
+            // the plain data source only before that. The job record (background_job) uses conPool.
+            DataSource pool = AntwebDataSources.loaded("conPool");
+            if (pool != null) BackgroundJobDb.setDataSourceIfMissing(pool);
+            DataSource ds = AntwebDataSources.loaded("longConPool");
+            if (ds == null) ds = DBUtilSimple.getDataSource();   // the job record does not keep this one
             BackgroundJobs.Submitted s = submit(ds, 0, "nightly", SECONDS, "after the nightly run");
-            LogMgr.appendLog("compute.log", "  count check started (job " + (s.job == null ? "none: " + s.refused : s.job.getId()) + ")", true);
+            // compute.log is read by admins only (logMgr.do): the reason a job was not recorded goes there.
+            LogMgr.appendLog("compute.log", "  count check started (job " + (s.job == null
+                ? "none: " + s.refused + (s.error == null ? "" : " " + s.error) : s.job.getId()) + ")", true);
         } catch (RuntimeException e) {
             s_log.error("startAfterNightly() e:" + e);
         }
