@@ -17,8 +17,9 @@
 <%@include file="/common/antweb_admin-defs.jsp" %>
 
 <% 
+    // Never "message...": that title marks a plain message page (QueryAction and ListAction set the title).
     String header = (String) request.getAttribute("header"); 
-    if (header == null) header = "message...";
+    if (header == null) header = "AntWeb report";
 
     String message = (String) request.getAttribute("message"); 
     LogMgr.appendDataLog("messages.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + message + " " + HttpUtil.getTarget(request));

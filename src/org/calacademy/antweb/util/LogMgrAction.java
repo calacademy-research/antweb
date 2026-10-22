@@ -355,7 +355,7 @@ public final class LogMgrAction extends AntwebAction {
         // directories: detail   worldants   bak   specimen  unclosedConnections  imageCheck
         String message = "";
 
-        message += "<div class=\"mgr_help aw-lead\">The server's log files, read only"
+        message += "<div class=\"mgr_help\">The server's log files, read only"
             + " (the last 2000 lines; add &amp;lines=N or &amp;grep=word to the address). The most useful: compute.log (the nightly"
             + " run from 05:00 Pacific), admin.log (AntCat imports and scheduler runs), taxonworksNightly.log (the nightly CAS"
             + " TaxonWorks upload) and profiler.jsp (timings of uploads and pages). The logs are emptied when the AntWeb"

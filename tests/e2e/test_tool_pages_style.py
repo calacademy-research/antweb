@@ -194,3 +194,17 @@ def test_source_server_status_has_no_developer_test_buttons():
     "holdOpenConnection", which held a database connection open) were removed on 2026-10-22 (Brian Fisher)."""
     src = _src("web/util/serverStatus-body.jsp")
     assert "holdOpenConnection" not in src and "methodHabitat" not in src
+
+
+def test_source_admin_result_pages_have_a_title():
+    """The admin result pages get a real title: "message..." marks a plain message page (antweb.classify), and
+    the named query, Integrity Check and -D parts pages were then counted as messages (e2e run 2026-10-22)."""
+    jsp = _src("web/curate/adminHtmlMessage.jsp")
+    assert 'header = "message..."' not in jsp and 'header = "AntWeb report"' in jsp
+    qa = _src("src/org/calacademy/antweb/util/QueryAction.java")
+    assert 'request.setAttribute("header", pageTitle(action, name))' in qa and '"Integrity Check - AntWeb"' in qa
+    la = _src("src/org/calacademy/antweb/util/ListAction.java")
+    assert 'request.setAttribute("header", "Specimen parts (-D codes) with different names - AntWeb")' in la
+    # The explanation block keeps the class the manager-tool tests look for.
+    assert 'class=\\"mgr_help\\">The server\'s log files' in _src("src/org/calacademy/antweb/util/LogMgrAction.java")
+    assert 'class=\\"mgr_help\\" id=\\"qm-intro\\"' in _src("src/org/calacademy/antweb/util/Queries.java")

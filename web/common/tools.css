@@ -285,7 +285,7 @@
 }
 .aw-tools .report-help p { margin: 0 0 6px 0; }
 .aw-tools .report-help p:last-child { margin-bottom: 0; }
-.aw-tools .mgr_help { color: #4a545e; }
+.aw-tools .mgr_help { color: #4a545e; margin: 0 0 10px 0; max-width: 62em; }
 
 /* Phone width: cards use the whole width, controls stack. */
 @media (max-width: 760px) {
