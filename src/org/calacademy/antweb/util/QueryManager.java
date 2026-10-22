@@ -250,6 +250,27 @@ public abstract class QueryManager {
         return runSection(namedQuery, connection);
     }
 
+    /**
+     * Most rows a named query shows on its page (2026-10-22). imageData listed every image, about 13 MB
+     * of HTML per view, each view written whole to messages.txt; it now has its own "limit 5000" in its
+     * SQL (Queries.java, #233), so this page limit never cuts it. It guards every other query: rows past
+     * the limit are counted (rowCount stays the full count) but not shown. The species lists with range
+     * data are bounded by the number of species of a place and are shown in full (UNCAPPED).
+     */
+    public static final int MAX_ROWS_SHOWN = 5000;
+    static final Set<String> UNCAPPED = Set.of("bioregionSpeciesListWithRangeData", "geolocaleSpeciesListWithRangeData");
+
+    public static int maxRowsShown(String queryName) {
+        return queryName != null && UNCAPPED.contains(queryName) ? Integer.MAX_VALUE : MAX_ROWS_SHOWN;
+    }
+
+    /** The note under a table that shows only the first rows. */
+    public static String notShownNote(int shown, int total) {
+        if (total <= shown) return "";
+        return "<br><b>Showing the first " + String.format("%,d", shown) + " of " + String.format("%,d", total)
+            + " rows</b> (" + String.format("%,d", total - shown) + " more not shown on this page).\n";
+    }
+
     public static String runNamedQueryHtml(NamedQuery namedQuery, Connection connection) throws SQLException {
         StringBuffer message = new StringBuffer();
         Statement stmt = null;
@@ -288,12 +309,17 @@ public abstract class QueryManager {
 		    if (namedQuery.getHeaderHtml() != null)
 			  message.append("<tr>" + namedQuery.getHeaderHtml() + "</tr>\n");
             
+            // Stream the rows (MySQL Connector/J: forward-only, read-only, fetch size MIN_VALUE) so rows past
+            // the limit are counted without holding the whole result in memory.
+            stmt.setFetchSize(Integer.MIN_VALUE);
+            int maxShown = maxRowsShown(namedQuery.getName());
             rset = stmt.executeQuery(query);
             int columns = rset.getMetaData().getColumnCount();
             int headings = namedQuery.getHeadingCount();
             int i = 0;
             while (rset.next()) {
               ++i;
+              if (i > maxShown) continue;  // counted, not shown
               int columnCount = columns;
               for (int j=1 ; j <= columnCount ; ++j) {
                 String val = cell(rset.getString(j));
@@ -313,6 +339,7 @@ public abstract class QueryManager {
             if (columns != headings) {
               message.append("<br><b class=\"query-error\">The headings do not match the columns:</b> " + headings + " headings, " + columns + " columns.\n");
             }
+            message.append(notShownNote(maxShown, i));
             message.append("<br><b>rowCount:</b>" + i + "\n");
 
             long timePassed = AntwebUtil.minsSince(startTime);

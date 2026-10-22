@@ -276,6 +276,12 @@ public class Scheduler extends AntwebAction {
 
 				if (num == 0) {
 				  // This was the full scheduled tasks, now completed.
+				  // Daily: warn the administrators of a log over 1 GB or a disk over 85% (LogSizeCheck).
+				  try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
+					LogMgr.appendLog("compute.log", "  " + LogSizeCheck.run(connection), true);
+				  } catch (Exception e) {
+					s_log.warn("doAction() log size check e:" + e);
+				  }
 				  if (isNightlyRestartOn()) {
 					s_log.warn("SET REBOOT TRUE");
 					LogMgr.appendLog("compute.log", "Nightly restart requested (nightlyRestart=true in etc/scheduler.properties). " + memoryReport(), true);

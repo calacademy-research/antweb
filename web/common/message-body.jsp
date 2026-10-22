@@ -67,7 +67,7 @@
     if (message != null && (
     !message.contains("Scheduler run:") && !message.contains(Csrf.PARAM)
     )) {
-      LogMgr.appendDataLog("messages.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + message + " " + HttpUtil.getTarget(request));
+      LogMgr.logMessagePage(request, message); // a short record only (MessagePageLog)
     }
 %>
 <%-- Inside the admin layout (curate/adminMessage.jsp; layouts/admLayout.jsp sets awAdminLayout): the tool-page

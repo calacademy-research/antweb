@@ -20,7 +20,7 @@
 
     String message = (String) request.getAttribute("message"); 
     //A.log("message-body.jsp message:" + message);
-    LogMgr.appendDataLog("messages.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + message + " " + HttpUtil.getTarget(request));
+    LogMgr.logMessagePage(request, message); // a short record only (MessagePageLog)
 %>
 <%-- Inside the admin layout (layouts/admLayout.jsp sets awAdminLayout): the tool-page look (common/tools.css).
      In the public layout (common/unboldMessage.jsp, e.g. the Query Manager) the page is as it was. --%>

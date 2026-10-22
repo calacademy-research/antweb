@@ -22,7 +22,7 @@
     if (header == null) header = "AntWeb report";
 
     String message = (String) request.getAttribute("message"); 
-    LogMgr.appendDataLog("messages.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + message + " " + HttpUtil.getTarget(request));
+    LogMgr.logMessagePage(request, message); // a short record only (MessagePageLog)
 
     if (LoginMgr.getAccessLogin(request) != null) {
 %>

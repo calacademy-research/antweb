@@ -556,6 +556,9 @@ int s_notFound = 0;
         }
     }
     
+    /** Most rows the Taxa outside their native bioregions report lists (the total counts them all). */
+    public static final int TAXA_OUTSIDE_SHOWN = 2000;
+
     public String getTaxaOutsideOfNativeBioregion() throws SQLException {
         StringBuffer buffer = new StringBuffer();
         
@@ -592,7 +595,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
               if (geolocaleOfRow == null) continue; // not in memory (for example not valid)
               String  georank = geolocaleOfRow.getGeorank();
               if (!lastGeorank.equals(georank)) {
-                buffer.append("<br><br><h2>" + Formatter.initCap(georank) + "</h2>");
+                if (total < TAXA_OUTSIDE_SHOWN) buffer.append("<br><br><h2>" + Formatter.initCap(georank) + "</h2>");
                 lastGeorank = georank;
               }
 
@@ -625,6 +628,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 			  boolean isNative = TaxonPropMgr.isBioregionNative(bioregion, bioregionMap);
 			  if (!isNative) {
                   ++total;
+                  if (total > TAXA_OUTSIDE_SHOWN) continue;  // counted, not listed (2026-10-22: page size)
 			  
 				  //taxaOutside.add(taxonName);
 				  String idLink = "<a href='" + AntwebProps.getDomainApp() + "/geolocale.do?id=" + Html.url(id) + "'>" + Html.esc(id) + "</a>";
@@ -636,6 +640,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 			  }
            }
            String totalStr = "total:" + total;
+           if (total > TAXA_OUTSIDE_SHOWN) totalStr += " (the first " + TAXA_OUTSIDE_SHOWN + " are listed above)";
            buffer.append("<br><br>" + totalStr);
            s_log.debug("getTaxaOutsideOfNativeBioregion() " + totalStr);
 

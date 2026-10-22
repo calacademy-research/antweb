@@ -129,7 +129,7 @@ function selectAll(thisForm) {
 
 <ul>
 <li>Locality Code:</li>
-<li><b><a href='locality.do?code=<%= Html.escAttr(Html.url(locality.getLocalityCode())) %> '><%= Html.esc(locality.getLocalityCode()) %></a></b></li>
+<li><b><a href='locality.do?code=<%= Html.escAttr(Html.url(locality.getLocalityCode())) %>'><%= Html.esc(locality.getLocalityCode()) %></a></b></li>
 </ul>
 
 <% } %>
@@ -140,7 +140,7 @@ function selectAll(thisForm) {
 <% if (locality.getLocalityCode() != null) { %>
 <li><b><%= Html.esc(locality.getLocalityName()) %></a></b></li>
 <% } else { %>
-<li><b><a href='locality.do?name=<%= Html.escAttr(Html.url(locality.getLocalityName())) %> '><%= Html.esc(locality.getLocalityName()) %></a></b></li>
+<li><b><a href='locality.do?name=<%= Html.escAttr(Html.url(locality.getLocalityName())) %>'><%= Html.esc(locality.getLocalityName()) %></a></b></li>
 <% } %>
 </ul>
 
