@@ -26,7 +26,7 @@
 --   3. adds the columns production has;
 --   4. gives columns production's type (production's is wider, or MySQL converted it: text to mediumtext by the
 --      utf8 conversion of 2021, LONG (mediumtext) widened to longtext by hand, float to double);
---   5. drops four columns that old upgrade files add but production does not have and no code reads:
+--   5. drops (when they hold no values) four columns that old upgrade files add but production does not have and no code reads:
 --      bioregion.biogeographicregion (db/upgrade/4.134), geolocale_taxon.modified (7.9),
 --      project.endemic_species_count (6.3; ProjectDb reads it only in commented-out code),
 --      specimen.is_endemic (6.74; endemic flags are on the taxon lists: geolocale_taxon, bioregion_taxon, proj_taxon);
@@ -42,8 +42,9 @@
 -- defaults; see 2). A retype acts on base tables only, never shortens a varchar, char, text or integer type, and keeps NULL / NOT NULL, the default, ON UPDATE,
 -- AUTO_INCREMENT, the comment and the column's character set and collation; datetime to timestamp
 -- (geolocale_taxon.created) fails under strict mode, rather than changing data, if a value is outside 1970 to 2038.
--- The old tables of step 6 are dropped only when they hold no rows: a database where one still has data keeps it
--- (back it up and drop it by hand, docs/data-model.md section 13).
+-- The columns of step 5 and the old tables of step 6 are dropped only when they hold no values / no rows: a database
+-- where one still has data keeps it and the file says so (back it up and drop it by hand, data-model.md section 13).
+-- Tested on MySQL 8.0.46 (production runs 8.4: REGEXP_SUBSTR, FIELD and information_schema used here are the same).
 --
 -- Rollback: none needed on production (nothing changes). On a test database: rebuild it.
 
@@ -83,10 +84,11 @@ BEGIN
        -- never shorten a varchar or char (that could cut values)
        AND NOT (cur_type REGEXP '^(var)?char\\([0-9]+\\)$' AND ty REGEXP '^(var)?char\\([0-9]+\\)$'
                 AND CAST(REGEXP_SUBSTR(cur_type, '[0-9]+') AS UNSIGNED) > CAST(REGEXP_SUBSTR(ty, '[0-9]+') AS UNSIGNED))
-       -- nor a smaller text or integer type (longtext to mediumtext, bigint to int)
+       -- nor an unsigned integer to a signed one, nor a smaller text or integer type (longtext to mediumtext, bigint to int)
+       AND NOT (LOWER(cur_type) LIKE '%unsigned%' AND LOWER(ty) NOT LIKE '%unsigned%')
        AND NOT (FIELD(LOWER(cur_type), 'tinytext', 'text', 'mediumtext', 'longtext') > FIELD(LOWER(ty), 'tinytext', 'text', 'mediumtext', 'longtext')
                 AND FIELD(LOWER(ty), 'tinytext', 'text', 'mediumtext', 'longtext') > 0)
-       AND NOT (FIELD(SUBSTRING_INDEX(LOWER(cur_type), '(', 1), 'tinyint', 'smallint', 'mediumint', 'int', 'bigint')
+       AND NOT (FIELD(SUBSTRING_INDEX(SUBSTRING_INDEX(LOWER(cur_type), ' ', 1), '(', 1), 'tinyint', 'smallint', 'mediumint', 'int', 'bigint')
                   > FIELD(SUBSTRING_INDEX(LOWER(ty), '(', 1), 'tinyint', 'smallint', 'mediumint', 'int', 'bigint')
                 AND FIELD(SUBSTRING_INDEX(LOWER(ty), '(', 1), 'tinyint', 'smallint', 'mediumint', 'int', 'bigint') > 0) THEN
       SET @schema_sql = CONCAT('ALTER TABLE `', t, '` MODIFY COLUMN `', c, '` ', ty,
@@ -112,10 +114,19 @@ CREATE PROCEDURE schema_drop_column(IN t VARCHAR(64), IN c VARCHAR(64))
 BEGIN
   IF EXISTS (SELECT 1 FROM information_schema.columns c2 JOIN information_schema.tables t2 USING (table_schema, table_name)
               WHERE c2.table_schema = DATABASE() AND c2.table_name = t AND c2.column_name = c AND t2.table_type = 'BASE TABLE') THEN
-    SET @schema_sql = CONCAT('ALTER TABLE `', t, '` DROP COLUMN `', c, '`');
+    -- only when no row has a value in it; otherwise the column is kept and named in the output
+    SET @schema_sql = CONCAT('SELECT COUNT(*) INTO @schema_rows FROM `', t, '` WHERE `', c, '` IS NOT NULL');
     PREPARE schema_stmt FROM @schema_sql;
     EXECUTE schema_stmt;
     DEALLOCATE PREPARE schema_stmt;
+    IF @schema_rows = 0 THEN
+      SET @schema_sql = CONCAT('ALTER TABLE `', t, '` DROP COLUMN `', c, '`');
+      PREPARE schema_stmt FROM @schema_sql;
+      EXECUTE schema_stmt;
+      DEALLOCATE PREPARE schema_stmt;
+    ELSE
+      SELECT CONCAT('kept ', t, '.', c, ': ', @schema_rows, ' rows have a value (back up, then drop it by hand)') AS schema_catch_up;
+    END IF;
   END IF;
 END //
 DROP PROCEDURE IF EXISTS schema_drop_empty_table //

@@ -139,6 +139,10 @@ def test_list_counts_match_the_specimen_records():
     # Since 2026-10-22: the database structure against the committed snapshot (SchemaCheck). The check must run
     # (the snapshot is readable in the container); differences are listed in the job summary, not failed here
     # (staging's database can differ from production's snapshot; production's are read on countCheck.do).
+    # The help text names the section since the same change, so a server that has SchemaCheck must show it
+    # whenever the invariants ran.
+    if 'id="count-invariants"' in r.text and "(Database structure)" in r.text:
+        assert 'id="schema-check"' in r.text, "the count check ran its invariants but shows no Database structure section"
     if 'id="schema-check"' in r.text:
         sm = re.search(r'id="schema-check" data-differences="(\d+)" data-error="(\d)"', r.text)
         assert sm and sm.group(2) == "0", "the schema check could not run: " + unescape(
