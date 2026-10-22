@@ -54,6 +54,15 @@ public abstract class QueriesWithParams {
         return query; // end getQueryWithParam()
     }*/
 
+    /**
+     * A place name or georank as the inside of an SQL string literal: quotes doubled and backslashes doubled
+     * (MySQL reads a backslash as an escape). The builders below are public for the tests; callers from pages
+     * go through getNamedQueryWithParam, which first checks that the place exists.
+     */
+    static String sqlText(String value) {
+        return value == null ? "" : value.replace("\\", "\\\\").replace("'", "''");
+    }
+
     private static NamedQuery getGeolocaleSpeciesListWithRangeData(String geolocaleName) {
         NamedQuery query = null;
 
@@ -79,9 +88,9 @@ public abstract class QueriesWithParams {
                   + " places of the same rank whose lists hold the name (Range). Copy it into a spreadsheet."
                 , new String[] {"Subfamily", "Genus", "Species", "Subspecies", "Author Date", "Status", "Introduced", "Endemic", "Range"}
                 , "select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, gt.is_introduced, gt.is_endemic, "
-                  + " (select group_concat(' ', g2.name order by g2.name) from geolocale_taxon gt2, geolocale g2 where gt2.geolocale_id = g2.id and g2.georank = '" + DBUtil.escapeQuotes(georank) + "' and gt2.taxon_name = t.taxon_name) "
+                  + " (select group_concat(' ', g2.name order by g2.name) from geolocale_taxon gt2, geolocale g2 where gt2.geolocale_id = g2.id and g2.georank = '" + sqlText(georank) + "' and gt2.taxon_name = t.taxon_name) "
                   + " from taxon t, geolocale_taxon gt, geolocale g where t.taxon_name = gt.taxon_name and gt.geolocale_id = g.id and t.taxarank in ('species', 'subspecies') "
-                  + " and g.georank = '" + DBUtil.escapeQuotes(georank) + "' and g.name = '" + DBUtil.escapeQuotes(geolocaleName) + "' order by t.subfamily, t.genus, t.species, t.subspecies"
+                  + " and g.georank = '" + sqlText(georank) + "' and g.name = '" + sqlText(geolocaleName) + "' order by t.subfamily, t.genus, t.species, t.subspecies"
         );
     }
 
@@ -108,8 +117,8 @@ public abstract class QueriesWithParams {
                   + " them are flagged introduced and endemic (1 = yes). The totals of the Species List with Range Data."
                 , new String[] {"Names", "Status", "Introduced", "Endemic"}
                 , "select count(*), t.status, gt.is_introduced, gt.is_endemic from geolocale g, geolocale_taxon gt, taxon t "
-                + " where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name and g.georank = '" + DBUtil.escapeQuotes(georank) + "' and t.taxarank in ('species', 'subspecies') "
-                + " and g.name = '" + DBUtil.escapeQuotes(geolocaleName) + "' group by t.status, gt.is_introduced, gt.is_endemic order by count(*) desc"
+                + " where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name and g.georank = '" + sqlText(georank) + "' and t.taxarank in ('species', 'subspecies') "
+                + " and g.name = '" + sqlText(geolocaleName) + "' group by t.status, gt.is_introduced, gt.is_endemic order by count(*) desc"
         );
     }
 
@@ -138,7 +147,7 @@ public abstract class QueriesWithParams {
                 , "select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, bt.is_introduced, bt.is_endemic"
                 + " , (select group_concat(' ', b2.name order by b2.name) from bioregion_taxon bt2, bioregion b2 where bt2.bioregion_name = b2.name and bt2.taxon_name = t.taxon_name)"
                 + " from taxon t, bioregion_taxon bt, bioregion b where t.taxon_name = bt.taxon_name and bt.bioregion_name = b.name and t.taxarank in ('species', 'subspecies')"
-                + " and b.name = '" + DBUtil.escapeQuotes(bioregionName) + "' order by t.subfamily, t.genus, t.species, t.subspecies"
+                + " and b.name = '" + sqlText(bioregionName) + "' order by t.subfamily, t.genus, t.species, t.subspecies"
         );
     }
 
@@ -165,7 +174,7 @@ public abstract class QueriesWithParams {
                 , new String[] {"Names", "Status", "Introduced", "Endemic"}
                 , "select count(*), t.status, bt.is_introduced, bt.is_endemic from bioregion b, bioregion_taxon bt, taxon t "
                 + " where b.name = bt.bioregion_name and bt.taxon_name = t.taxon_name and t.taxarank in ('species', 'subspecies') "
-                + " and b.name = '" + DBUtil.escapeQuotes(bioregionName) + "' group by t.status, bt.is_introduced, bt.is_endemic order by count(*) desc"
+                + " and b.name = '" + sqlText(bioregionName) + "' group by t.status, bt.is_introduced, bt.is_endemic order by count(*) desc"
         );
     }
 

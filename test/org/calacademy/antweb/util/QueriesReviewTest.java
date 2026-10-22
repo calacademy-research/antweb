@@ -127,6 +127,7 @@ public class QueriesReviewTest extends TestCase {
         assertEquals("bioregionSpeciesListWithRangeData", QueriesWithParams.bioregionSpeciesListWithRangeData("X").getName());
         assertEquals("bioregionSpeciesListRangeSummary", QueriesWithParams.bioregionSpeciesListRangeSummary("X").getName());
         assertTrue(QueriesWithParams.geolocaleSpeciesListWithRangeData("O'Higgins", "adm1").getQuery().contains("'O''Higgins'"));
+        assertTrue(QueriesWithParams.bioregionSpeciesListWithRangeData("x\\' or 1=1 -- ").getQuery().contains("'x\\\\'' or 1=1 -- '"));
     }
 
     public void testQueryManagerListsEveryQueryWithItsSummary() {
@@ -138,6 +139,8 @@ public class QueriesReviewTest extends TestCase {
             assertEquals(q.getName() + " listed twice", at, page.lastIndexOf(item));
         }
         assertTrue(page.contains(QueryManager.QUERY_TIMEOUT_SECS + " seconds"));
+        // tests/e2e/test_named_queries.py skips on a server whose Query Manager lacks this phrase.
+        assertTrue(page.contains("none may run longer than " + QueryManager.QUERY_TIMEOUT_SECS + " seconds"));
     }
 
     public void testGeolocaleBoxExplainsEachQuery() {
