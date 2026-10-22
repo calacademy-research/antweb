@@ -39,7 +39,7 @@
 -- in code). Widening upload.group_name to varchar(100) would match them.
 --
 -- Limits on any other database: "matches production" means names and types only (no keys, indexes, NOT NULL or
--- defaults; see 2). A retype never shortens a varchar or char, and keeps NULL / NOT NULL, the default, ON UPDATE,
+-- defaults; see 2). A retype acts on base tables only, never shortens a varchar, char, text or integer type, and keeps NULL / NOT NULL, the default, ON UPDATE,
 -- AUTO_INCREMENT, the comment and the column's character set and collation; datetime to timestamp
 -- (geolocale_taxon.created) fails under strict mode, rather than changing data, if a value is outside 1970 to 2038.
 -- The old tables of step 6 are dropped only when they hold no rows: a database where one still has data keeps it
@@ -73,8 +73,8 @@ BEGIN
   DECLARE cur_charset VARCHAR(64);
   DECLARE cur_collation VARCHAR(64);
   DECLARE found INT DEFAULT 0;
-  SELECT COUNT(*) INTO found FROM information_schema.columns
-   WHERE table_schema = DATABASE() AND table_name = t AND column_name = c;
+  SELECT COUNT(*) INTO found FROM information_schema.columns c2 JOIN information_schema.tables t2 USING (table_schema, table_name)
+   WHERE c2.table_schema = DATABASE() AND c2.table_name = t AND c2.column_name = c AND t2.table_type = 'BASE TABLE';
   IF found = 1 THEN
     SELECT column_type, is_nullable, column_default, extra, column_comment, character_set_name, collation_name
       INTO cur_type, cur_null, cur_default, cur_extra, cur_comment, cur_charset, cur_collation
@@ -82,7 +82,13 @@ BEGIN
     IF LOWER(cur_type) <> LOWER(ty)
        -- never shorten a varchar or char (that could cut values)
        AND NOT (cur_type REGEXP '^(var)?char\\([0-9]+\\)$' AND ty REGEXP '^(var)?char\\([0-9]+\\)$'
-                AND CAST(REGEXP_SUBSTR(cur_type, '[0-9]+') AS UNSIGNED) > CAST(REGEXP_SUBSTR(ty, '[0-9]+') AS UNSIGNED)) THEN
+                AND CAST(REGEXP_SUBSTR(cur_type, '[0-9]+') AS UNSIGNED) > CAST(REGEXP_SUBSTR(ty, '[0-9]+') AS UNSIGNED))
+       -- nor a smaller text or integer type (longtext to mediumtext, bigint to int)
+       AND NOT (FIELD(LOWER(cur_type), 'tinytext', 'text', 'mediumtext', 'longtext') > FIELD(LOWER(ty), 'tinytext', 'text', 'mediumtext', 'longtext')
+                AND FIELD(LOWER(ty), 'tinytext', 'text', 'mediumtext', 'longtext') > 0)
+       AND NOT (FIELD(SUBSTRING_INDEX(LOWER(cur_type), '(', 1), 'tinyint', 'smallint', 'mediumint', 'int', 'bigint')
+                  > FIELD(SUBSTRING_INDEX(LOWER(ty), '(', 1), 'tinyint', 'smallint', 'mediumint', 'int', 'bigint')
+                AND FIELD(SUBSTRING_INDEX(LOWER(ty), '(', 1), 'tinyint', 'smallint', 'mediumint', 'int', 'bigint') > 0) THEN
       SET @schema_sql = CONCAT('ALTER TABLE `', t, '` MODIFY COLUMN `', c, '` ', ty,
         -- the column's own character set and collation (text types only; a numeric target has none)
         IF(cur_charset IS NOT NULL AND ty REGEXP '(char|text|enum|set)', CONCAT(' CHARACTER SET ', cur_charset, ' COLLATE ', cur_collation), ''),

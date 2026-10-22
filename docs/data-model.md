@@ -1231,6 +1231,9 @@ in the name, as no date was set).
 The run-time backups `login_inactive_backup_20261018` and `description_sanitize_backup_20261016_200412` on
 production are the tables of the two patterns below (to-do list: delete about 2026-11-18 and 2026-11-16).
 
+After dropping dated backups on production, refresh the snapshot (introduction) in a pull request that also removes
+their sections here: until then CI keeps asking for a section for each table the snapshot has.
+
 ### `login_spam_deleted_2026_10_14`
 
 Backup, see the table above.
