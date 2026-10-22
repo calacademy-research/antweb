@@ -272,6 +272,15 @@ public class AntwebSystem {
   */
   
   // This code works with tail, but not with sed.
+  public static final int VIEW_LINE = 2000;
+  public static final long VIEW_TOTAL = 5_000_000L;
+
+  /** One output line for the log viewer: at most VIEW_LINE characters, with the full length if cut. */
+  public static String viewLine(String s) {
+    if (s == null || s.length() <= VIEW_LINE) return s;
+    return s.substring(0, VIEW_LINE) + "... [cut, " + String.format("%,d", s.length()) + " characters]";
+  }
+
   private String returnStdOutAsHtml(Process p) 
     // This works particular to our log files.  Only returns errors (+ 3 lines after)
     throws IOException 
@@ -282,10 +291,22 @@ public class AntwebSystem {
     String result = "";
     String s = null;
     int count = 0;
+    // The log viewer (logMgr.do) shows each line at most VIEW_LINE characters and at most VIEW_TOTAL
+    // characters in all (2026-10-22: messages.txt had lines of ~13 MB; 2,000 of them would not fit in memory).
+    long total = 0;
+    boolean full = false;
     while (!procDone(p)) {
       //int afterErrorCount = 0;
       while ((s = stdOut.readLine()) != null) {
-        strBuf.append("<br>" + Html.esc(s));  
+        if (full) continue;  // read to the end so the process can finish
+        String line = viewLine(s);
+        total += line.length();
+        if (total > VIEW_TOTAL) {
+          strBuf.append("<br>... [output cut at " + String.format("%,d", VIEW_TOTAL) + " characters]");
+          full = true;
+          continue;
+        }
+        strBuf.append("<br>" + Html.esc(line));
       }
     } 
     return strBuf.toString();

@@ -308,6 +308,11 @@ Alerts. The queries are defined in `src/org/calacademy/antweb/util/Queries.java`
 **Changed 2026-10-21**: result values and column headings were written into the page as HTML; they are
 now text, and only the links the queries build to AntWeb pages stay links.
 
+**Page limit 2026-10-22**: a query shows at most 5,000 rows on its page ("Showing the first 5,000 of N rows";
+rowCount is still the full count), so no report page runs to megabytes (each view of the old image data
+query was about 13 MB and was copied whole into the messages log). The bioregion and country species lists
+with range data are shown in full; `imageData` has its own limit of the newest 5,000 (below).
+
 **Reviewed 2026-10-22** (Brian Fisher: "make sure they are working and explained"): every query now has a
 plain explanation and one heading per column; a query that fails shows its error on the page instead of an
 error page, and a heading/column mismatch is flagged. Fixed: `lastSpecimenUpload` (its "Last Upload" was the
@@ -477,6 +482,10 @@ files can be read. Curators reach one line of their own group's upload files fro
 upload reports.
 
 **Changed 2026-10-21**: taxonworksNightly.log and adminAlerts.log are linked in the list.
+
+**Changed 2026-10-22**: a line is shown with at most 2,000 characters ("... [cut, N characters]"), and the
+output stops at 5 MB. messages.txt now holds one short line per message page (runbook, "Log sizes and
+rotation").
 
 ---
 

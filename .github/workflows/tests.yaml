@@ -180,6 +180,20 @@ jobs:
             grep -q "^OK (6 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of log growth (short message-page record, entry cap, log viewer cap, row limits, log size check)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/util/MessagePageLog.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/MessageLogTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.MessageLogTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (11 tests)" /tmp/out.txt
+          '
+
       - name: Download guards in the pages (no See all link, nofollow search links, robots.txt) (tests/unit/test_download_guards.py)
         run: python3 tests/unit/test_download_guards.py
 
@@ -557,6 +571,9 @@ jobs:
             grep -q "^OK (4 tests)" /tmp/out.txt
           '
 
+      - name: Log rotation covers the data logs with maxsize; message pages write short records (tests/unit/test_log_rotation.py)
+        run: python3 tests/unit/test_log_rotation.py
+
       - name: clearDisk.py skips web/log and links (tests/unit/test_clear_disk.py)
         run: python3 tests/unit/test_clear_disk.py
 
@@ -588,10 +605,29 @@ jobs:
             chown tomcat /tmp/s
             $T /usr/sbin/logrotate --state /tmp/s /etc/antweb-logrotate.conf
             ls -la $L
-            ls $L | grep -q "^compute.log-[0-9]\{8\}$" || { echo "compute.log was not rotated"; exit 1; }
+            ls $L | grep -q "^compute.log-[0-9]\{8\}-[0-9]\{2\}.gz$" || { echo "compute.log was not rotated and compressed"; exit 1; }
             test -f $L/siteWarning.txt || { echo "small file was rotated"; exit 1; }
             for r in specimen worldants detail upload; do test -L $L/$r; done
             grep -q "logrotate" /etc/cron.d/antwebcrontab
+          '
+
+      - name: Data logs (log/, host ./logbak) rotate when over 100 MB, even the first time logrotate sees them
+        # 2026-10-22: messages.txt reached 11 GB on staging; logrotate had recorded it on its first run
+        # and would only rotate it a week later. maxsize 100M rotates it at the next daily run.
+        run: |
+          d=$(mktemp -d)
+          docker run --rm --entrypoint sh -v "$d:/usr/local/antweb/log" antweb/antweb:dev -c '
+            set -e
+            D=/usr/local/antweb/log
+            /usr/local/bin/antweb-fix-perms
+            T="setpriv --reuid=tomcat --regid=antweb --init-groups"
+            $T sh -c "head -c 105000000 /dev/zero > $D/messages.txt; head -c 20000000 /dev/zero > $D/longRequest.log"
+            # The command of the crontab, with no state file yet (first run).
+            $T /usr/sbin/logrotate --state $D/.logrotate.state --log $D/logrotate.log /etc/antweb-logrotate.conf
+            ls -la $D
+            ls $D | grep -q "^messages.txt-[0-9]\{8\}-[0-9]\{2\}.gz$" || { echo "messages.txt (over 100 MB) was not rotated"; exit 1; }
+            test ! -e $D/messages.txt || { echo "messages.txt still there"; exit 1; }
+            test -f $D/longRequest.log || { echo "a 20 MB log was rotated on the first run (weekly rule)"; exit 1; }
           '
 
   java-compile:

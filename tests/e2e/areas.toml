@@ -63,6 +63,8 @@ tests = [
   "test_privacy.py",
   "test_world_ant_collections.py",
   # anonymous tests of files that also log in
+  "test_message_log.py::test_page_shows_the_whole_message",
+  "test_message_log.py::test_image_data_query_shows_at_most_5000_rows",
   "test_add_uploader.py::test_anonymous_gets_login_page",
   "test_background_jobs.py::test_status_page_needs_login",
   "test_background_jobs.py::test_curate_page_note_is_accurate",
@@ -400,6 +402,10 @@ paths = [
   "src/org/calacademy/antweb/util/PartsReport.java",
   "src/org/calacademy/antweb/util/Report*.java",
   "src/org/calacademy/antweb/util/LogMgr*.java",
+  "src/org/calacademy/antweb/util/MessagePageLog.java",
+  "src/org/calacademy/antweb/util/LogSizeCheck.java",
+  "web/common/*essage*.jsp",
+  "web/curate/adminHtmlMessage.jsp",
   "src/org/calacademy/antweb/util/Scheduler*.java",
   "src/org/calacademy/antweb/util/ServerStatus*.java",
   "src/org/calacademy/antweb/upload/TaxonWorks*.java",
@@ -421,6 +427,7 @@ tests = [
   "test_cleanup_batch3.py",
   "test_count_check.py",
   "test_removals_2026_10_21.py",       # added by #217/#218
+  "test_message_log.py",               # message pages log a short record (2026-10-22)
   "test_named_queries.py",             # every named query runs, in time, headings = columns (admin, read-only)
 ]
 
