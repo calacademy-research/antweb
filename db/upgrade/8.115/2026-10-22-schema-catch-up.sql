@@ -47,6 +47,13 @@
 -- where one still has data keeps it and the file says so (back it up and drop it by hand, data-model.md section 13).
 -- Tested on MySQL 8.0.46 (production runs 8.4: REGEXP_SUBSTR, FIELD and information_schema used here are the same).
 --
+-- How to run: by hand, with the mysql command-line client (DELIMITER is a client command), as a user with CREATE
+-- ROUTINE; nothing in the deploy runs db/upgrade files. If it stops part-way (for example the datetime to timestamp
+-- retype above), fix the cause and run it again: every step is safe to repeat. The tables of step 2 have no keys:
+-- a database built from them shows the structure but is not fit to run the site until keys are added (a
+-- `mysqldump --no-data` of production, docs/data-model.md section 14, would supply them; it would need ALTERs where
+-- 8.115 already ran, as CREATE TABLE IF NOT EXISTS then does nothing).
+--
 -- Rollback: none needed on production (nothing changes). On a test database: rebuild it.
 
 DELIMITER //
