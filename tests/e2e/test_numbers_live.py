@@ -20,11 +20,12 @@ The place page numbers (data-stat on /country.do) are checked against the record
   locality.do       "N collections" = the collections listed (row 66)
   advancedSearch.do "Showing a-b of N ... (M imaged on this page)": M <= the rows shown; by taxon "S Species
                     (from N specimens)": S <= N, N = the specimen search's N (rows 67, 68)
-  recentSearchResults.do  "Showing records a to b of N" or "N Images": the rows shown (row 71)
+  recentSearchResults.do  "Showing records a to b of N records": 1 <= a <= b <= N (row 71)
   endemic.do, introduced.do  numbered rows = Endemic and Introduced of the place page (rows 78, 79)
 
-Read-only, anonymous. Madagascar and the genus Pheidole (on staging and production). A page without the markup
-(not deployed yet) skips.
+Read-only, anonymous (test_comparison_of_chosen_specimens_counts_them posts the compare form, which only shows the
+chosen specimens). Madagascar and the genus Pheidole (on staging and production). A page without the markup (not
+deployed yet) skips.
 """
 import re
 from html import unescape
@@ -276,10 +277,7 @@ def test_recent_images_count_equals_the_rows_shown():
         a, b, n = (int(g) for g in m.groups())
         assert 1 <= a <= b <= n, m.group(0)
         return
-    m = re.search(r"<h2>(\d+) Images</h2>", html)
-    if not m:
-        pytest.skip("recent images page without a count")
-    assert int(m.group(1)) >= 0
+    pytest.skip("fewer recent images than one page: no 'Showing records a to b of N'")
 
 
 def test_endemic_and_introduced_lists_equal_place_numbers():

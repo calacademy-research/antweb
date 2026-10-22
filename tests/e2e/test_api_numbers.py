@@ -9,8 +9,7 @@ the API computes for each reply must describe that reply, and agree with the pag
   (geolocaleTaxa and bioregionTaxa name their count geolocaleCount and bioregionCount: it is the taxa returned)
   /images meta count = the images returned, specimenCount = the specimens returned      row 106
   /taxaImages meta taxonCount, specimenCount, imageCount = what it returned              row 107
-  /geoSpeciesStats: a caste count is at most the specimens of the name in the place;
-                    queen and worker counts are at least their subcastes                 row 102
+  /geoSpeciesStats: ergatoid queens are at most the queens, ergatoid males at most the males (B30)  row 102
   /specimens imageCount of a specimen = the images /images returns for it               rows 100, 106
   /bioregions: as many as bioregions.do lists                                           row 115
   /unimagedGeolocaleTaxa meta unimagedGeolocaleTaxaCount = the names returned                     rows 117, 118
@@ -115,15 +114,12 @@ def test_geo_species_stats_castes_add_up():
     rows = _rows(_api("geoSpeciesStats?geolocaleName=Madagascar&limit=200"))
     if not rows:
         pytest.skip("geoSpeciesStats returned nothing")
+    # Only the ergatoid counts are restricted to their caste (B30); the other subcaste counts count the subcaste in
+    # any caste (docs/numbers.md), so they are not compared with their caste here.
     wrong = []
     for r in rows:
-        queen, worker = r.get("queenCount") or 0, r.get("workerCount") or 0
-        q_sub = (r.get("queenErgatoidCount") or 0) + (r.get("queenAlateDealateCount") or 0) + (r.get("queenBrachypterousCount") or 0)
-        w_sub = (r.get("workerMajorSoldierCount") or 0) + (r.get("workerNormalCount") or 0)
-        if q_sub > queen:
-            wrong.append(f"{r.get('taxonName')}: queen subcastes {q_sub} > queens {queen}")
-        if w_sub > worker:
-            wrong.append(f"{r.get('taxonName')}: worker subcastes {w_sub} > workers {worker}")
+        if (r.get("queenErgatoidCount") or 0) > (r.get("queenCount") or 0):
+            wrong.append(f"{r.get('taxonName')}: queen ergatoids {r.get('queenErgatoidCount')} > queens {r.get('queenCount')}")
         if (r.get("maleErgatoidCount") or 0) > (r.get("maleCount") or 0):
             wrong.append(f"{r.get('taxonName')}: male ergatoids {r.get('maleErgatoidCount')} > males {r.get('maleCount')}")
         # (maleAlateCount counts subcaste 'alate' of any caste, so it is not compared with the males)

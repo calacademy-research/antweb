@@ -316,6 +316,7 @@ public final class NumberChecks {
         // B31: the statsPage numbers count valid taxa of every family on the list; the place pages count ants only.
         CountInvariants.Check nonAnts = new CountInvariants.Check("stats.nonants",
             "B31: statsPage Bioregion and Museum Data count valid taxa of other families (the place pages count ants only)", museum ? "18, 19" : "17");
+        if (check.error != null) return;   // the numbers were not read completely
         inv.check(nonAnts, c -> {
             Map<String, String> labels = inv.places.getOrDefault(type, CountInvariants.keyMap());
             for (Map.Entry<String, long[][]> e : data.entrySet()) {
@@ -423,8 +424,11 @@ public final class NumberChecks {
                 }
             }
             if (row != null) {
+                // rows added after the row was written, or any upload after the last nightly run (an upload recomputes
+                // endemic flags and lists in place, without new created dates)
                 boolean listsChanged = createdSince("proj_taxon", created) || createdSince("geolocale_taxon", created)
-                    || createdSince("museum_taxon", created) || createdSince("bioregion_taxon", created) || createdSince("upload", created);
+                    || createdSince("museum_taxon", created) || createdSince("bioregion_taxon", created) || createdSince("upload", created)
+                    || inv.result.uploadSinceNightly;
                 boolean imagesChanged = created != null && has("image", "upload_date") && count("select count(*) from image where upload_date > ?", created) > 0;
                 for (int i = 0; i < cols.length; i++) {
                     if (!has("statistics", cols[i])) continue;
