@@ -76,7 +76,7 @@ def count_check_report():
             _REPORT["outcome"] = ("ok", "")
         except pytest.skip.Exception as e:
             _REPORT["outcome"] = ("skip", str(e))
-        except BaseException as e:   # an assertion or a timeout: the other tests do not start another job
+        except (Exception, pytest.fail.Exception) as e:   # an assertion or a timeout: the other tests do not start another job
             _REPORT["outcome"] = ("fail", f"{type(e).__name__}: {e}")
             raise
     kind, why = _REPORT["outcome"]
