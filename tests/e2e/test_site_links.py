@@ -63,7 +63,9 @@ REQUIRED = ["/", "/description:subfamily", "/description:genus", "/description:s
 EXTRA_TYPES = ["/description:subfamily", "/description:genus", "/description:species", "/description:subspecies",
                "/browse:subfamily", "/browse:genus", "/browse:species", "/images:genus", "/images:species"]
 
-MAP_CALL = re.compile(r"drawGoogleMap\w*\s*\(")
+# A map call with at least one point: drawGoogleMapX('small', 'map123', <lat> or new Array(<lat>, ...
+# (Map.java writes no call when there are no points; an empty call would not be a link fault.)
+MAP_CALL = re.compile(r"drawGoogleMap\w*\s*\(\s*'[^']*'\s*,\s*'[^']*'\s*,\s*(?:new Array\(\s*)?-?\d")
 
 # Records the HTML of every Leaflet popup the page's map scripts make (L.Layer.bindPopup), before
 # any page script runs: Leaflet 1.x sets window.L once it has loaded, and the hook goes in then.
