@@ -203,6 +203,20 @@ public class NumberChecksTest extends TestCase {
         assertTrue(list(r), real(r, "place.endemic.flags") > 0);
     }
 
+    /** The adm1 rule uses the recounted country endemics, not the stored country flags it would otherwise inherit. */
+    public void testAdm1EndemicFlagsAreRecountedIndependently() throws Exception {
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, is_endemic, created) values (" + ATSINANANA + ", '" + PA + "', 1, '2020-01-01')");
+        exec("update geolocale_taxon set is_endemic = 0 where geolocale_id = " + MADAGASCAR + " and taxon_name = '" + PA + "'");
+        CountCheck.Result r = check();
+        boolean country = false;
+        for (CountCheck.Mismatch m : r.mismatches) {
+            if (!"place.endemic.flags".equals(m.check)) continue;
+            assertEquals(list(r), "Madagascar", m.place.label);
+            country = true;
+        }
+        assertTrue(list(r), country);
+    }
+
     /** B25: a subspecies whose parent is its species. */
     public void testSubspeciesUnderItsSpeciesIsFound() throws Exception {
         exec("update taxon set parent_taxon_name = '" + PA + "' where taxon_name = '" + PAX + "'");

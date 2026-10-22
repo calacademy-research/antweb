@@ -68,10 +68,22 @@ _REPORT = {}
 def count_check_report():
     """(admin session, report page) of one count check run per test session (the job takes minutes): the tests
     below compare the pages with the numbers of that run."""
-    if "r" not in _REPORT:
-        s, _token, _id = login("admin")
-        _REPORT["s"] = s
-        _REPORT["r"] = run_count_check(s)
+    if "outcome" not in _REPORT:
+        try:
+            s, _token, _id = login("admin")
+            _REPORT["s"] = s
+            _REPORT["r"] = run_count_check(s)
+            _REPORT["outcome"] = ("ok", "")
+        except pytest.skip.Exception as e:
+            _REPORT["outcome"] = ("skip", str(e))
+        except BaseException as e:   # an assertion or a timeout: the other tests do not start another job
+            _REPORT["outcome"] = ("fail", f"{type(e).__name__}: {e}")
+            raise
+    kind, why = _REPORT["outcome"]
+    if kind == "skip":
+        pytest.skip(why)
+    if kind == "fail":
+        pytest.fail("the count check job failed earlier in this run: " + why)
     return _REPORT["s"], _REPORT["r"]
 
 
@@ -171,6 +183,31 @@ def test_list_counts_match_the_specimen_records():
                     "Place | number | taxon | stored (shown) | recount:\n" + "\n".join(" | ".join(c) for c in rows[:40]))
 
 
+@pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")
+@needs("admin")
+def test_no_real_differences_outside_the_known_findings():
+    """The known findings (KNOWN: B11, B25, B26, B31, not fixed yet) make test_list_counts_match_the_specimen_records fail
+    every day until they are fixed (Brian Fisher, 2026-10-21: a real wrong number fails the test). This test fails only
+    on real differences of the other checks, so a new kind of wrong number still changes the state of the run."""
+    _s, r = count_check_report()
+    m = re.search(r'id="count-check-result" data-real="(\d+)" data-pending="(\d+)" data-window="(\d)" data-nightly="(\d)"', r.text)
+    assert m, "no result line on countCheck.do"
+    if m.group(3) == "1":
+        pytest.skip("the nightly run is writing the counts now (05:00 to 08:15 Pacific)")
+    if m.group(4) == "0":
+        pytest.skip("compute.log has no completed nightly run")
+    other = {}
+    for check_id, real in re.findall(r'<tr class="count-invariant" data-id="([^"]+)"><td>.*?</td><td>.*?</td><td>.*?</td><td>\d+</td><td>(\d+)</td>', r.text, re.S):
+        if int(real) and check_id not in KNOWN:
+            other[check_id] = other.get(check_id, 0) + int(real)
+    if int(m.group(1)) and "Real differences" in r.text:
+        section = r.text[r.text.index("Real differences"):r.text.index("Pending differences")]
+        recounts = sum(1 for row in re.findall(r'<tr class="count-mismatch"><td>.*?</td><td>(.*?)</td>', section, re.S) if row in RECOUNT_CHECKS)
+        if recounts:
+            other["recounts of the sampled places"] = recounts
+    assert not other, "real differences outside the known findings: " + "; ".join(f"{k}: {v}" for k, v in sorted(other.items()))
+
+
 # ---------------------------------------------------------------------------------------------------------------
 # The pages against the numbers of the count check (2026-10-22, docs/numbers.md "every number checked"). The check
 # (NumberChecks) recounts these numbers from the records and compares them with what the pages' code computes or
@@ -264,7 +301,10 @@ def test_statspage_tables_equal_the_recount():
 @pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")
 @needs("admin")
 def test_curator_and_artist_pages_equal_the_recount():
-    """curators.do, curator.do (rows 80 to 82, 84) and artists.do (row 92): each number = the check's recount."""
+    """curators.do, curator.do (rows 80 to 82, 84) and artists.do (row 92): each number = the number the check compared
+    with its recount (LoginMgr's and ArtistMgr's, read at the nightly reload; admin.curators and admin.artists compare
+    those with the records). So the pages show what was checked, and an upload by another test in the same run does
+    not fail this test."""
     s, exp = expected_numbers()
     wrong = []
     curators = exp.get("curators") or {}
@@ -279,20 +319,20 @@ def test_curator_and_artist_pages_equal_the_recount():
             seen += 1
             want = curators[m.group(1)]
             if [int(uploads), int(edits)] != want[:2]:
-                wrong.append(f"curators.do curator {m.group(1)}: Specimen Uploads, Description Edits {uploads}, {edits}; recount {want[:2]}")
+                wrong.append(f"curators.do curator {m.group(1)}: Specimen Uploads, Description Edits {uploads}, {edits}; checked {want[:2]}")
         assert seen, "curators.do: no curator row found"
         # one curator page: the one with the most uploads
         cid, want = max(curators.items(), key=lambda kv: kv[1][0])
         page = s.get(BASE_URL + "/curator.do?id=" + cid, timeout=TIMEOUT).text
         m = re.search(r"listUploads\.do\?loginId=" + cid + r"'>(\d+)</a>", page)
         if m and int(m.group(1)) != want[0]:
-            wrong.append(f"curator.do?id={cid} Specimen Uploads {m.group(1)}, recount {want[0]}")
+            wrong.append(f"curator.do?id={cid} Specimen Uploads {m.group(1)}, checked {want[0]}")
         m = re.search(r"listImageUploads\.do\?curatorId=" + cid + r"'>(\d+)</a>", page)
         if m and int(m.group(1)) != want[2]:
-            wrong.append(f"curator.do?id={cid} Image Uploads {m.group(1)}, recount {want[2]}")
+            wrong.append(f"curator.do?id={cid} Image Uploads {m.group(1)}, checked {want[2]}")
         m = re.search(r"<li><b>Images Uploaded:</b></li>\s*<li>([\d,]+)</li>", page)
         if m and _int(m.group(1)) != want[3]:
-            wrong.append(f"curator.do?id={cid} Images Uploaded {m.group(1)}, recount {want[3]}")
+            wrong.append(f"curator.do?id={cid} Images Uploaded {m.group(1)}, checked {want[3]}")
     artists = exp.get("artists") or {}
     if artists:
         html = s.get(BASE_URL + "/artists.do", timeout=TIMEOUT).text
@@ -302,7 +342,7 @@ def test_curator_and_artist_pages_equal_the_recount():
                 continue
             seen += 1
             if [_int(images), _int(specimens)] != artists[aid]:
-                wrong.append(f"artists.do artist {aid}: Images, Specimen {images}, {specimens}; recount {artists[aid]}")
+                wrong.append(f"artists.do artist {aid}: Images, Specimen {images}, {specimens}; checked {artists[aid]}")
         assert seen, "artists.do: no artist row found"
     if not curators and not artists:
         pytest.skip("LoginMgr and ArtistMgr were not loaded when the check ran")

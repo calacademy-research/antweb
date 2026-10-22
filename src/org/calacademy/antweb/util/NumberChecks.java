@@ -434,7 +434,7 @@ public final class NumberChecks {
             + " and " + org.calacademy.antweb.home.SpecimenDb.getTaxaCriteria() + ")";
         String c2 = c1 + " and (" + org.calacademy.antweb.home.SpecimenDb.getAntwebSubfamilyCriteria() + " and "
             + org.calacademy.antweb.home.SpecimenDb.getAntwebGenusCriteria() + ")";
-        return "select access_group + 0 g, count(*), count(case when " + c1 + " then code end),"
+        return "select cast(access_group as signed) g, count(*), count(case when " + c1 + " then code end),"
             + " count(distinct case when " + c1 + " then collectioncode end), count(distinct case when " + c1 + " then localitycode end),"
             + " count(case when " + c1 + " and decimal_latitude is null then 1 end),"
             + " count(distinct case when " + c2 + " then subfamily end), count(distinct case when " + c2 + " then genus end),"
@@ -464,7 +464,14 @@ public final class NumberChecks {
             Map<String, String> groups = inv.places.computeIfAbsent("group", x -> CountInvariants.keyMap());
             Map<String, long[]> counts = groupNumbers();
             Map<String, long[]> uploads = inv.rows("select group_id, count(*) from upload where group_id is not null group by group_id");
-            boolean names = has("specimen_name_update", "run_date");
+            // the last name update of each group's specimens (one query; index by_group_date)
+            Map<String, Timestamp> renamed = CountInvariants.keyMap();
+            if (has("specimen_name_update", "run_date") && has("specimen_name_update", "access_group")) {
+                try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
+                        "select access_group, max(run_date) from specimen_name_update where mode = 'changed' group by access_group"))) {
+                    while (r.next()) renamed.put(r.getString(1), r.getTimestamp(2));
+                }
+            }
             Map<String, Object> exp = new TreeMap<>();
             String sql = "select u.group_id, u.upload_id, u.specimens, u.collections, u.localities, u.ungeoreferenced, u.flagged, u.subfamilies,"
                 + " u.genera, u.species, " + CountInvariants.safeDate("u.created") + " from upload u"
@@ -490,8 +497,7 @@ public final class NumberChecks {
                 // The numbers are written at the group's upload only: specimens of the group renamed since (the nightly name
                 // update) can change them until its next upload (question Q13 in docs/numbers.md).
                 String p = null;
-                if (created != null && names && count("select count(*) from specimen_name_update where mode = 'changed' and access_group = ? and run_date > ?",
-                        Integer.parseInt(g), created) > 0) {
+                if (created != null && renamed.containsKey(g) && renamed.get(g) != null && renamed.get(g).after(created)) {
                     p = "specimens of the group were renamed after its last upload (the numbers are from the upload)";
                 }
                 for (int i = 0; i < 8; i++) {
@@ -666,10 +672,15 @@ public final class NumberChecks {
                 + " left join (" + countryEndemic + ") e on e.taxon_name = gt.taxon_name"
                 + " where g.georank = 'country' group by gt.geolocale_id";
             compareFlags(c, inv.rows(countries), "country");
+            // names endemic to a country by the recount above (not by the stored country flags, which the country half
+            // of this check tests), with that country's name
+            String countryEndemicByName = "select gt.taxon_name, max(g.name) country from geolocale g join geolocale_taxon gt on g.id = gt.geolocale_id"
+                + " join taxon t on t.taxon_name = gt.taxon_name where g.georank = 'country'" + rule
+                + " group by gt.taxon_name having count(*) = 1";
             String adm1Endemic = "select gt.taxon_name from geolocale g join geolocale_taxon gt on g.id = gt.geolocale_id"
-                + " join taxon t on t.taxon_name = gt.taxon_name where g.georank = 'adm1'"
-                + " and (gt.taxon_name, g.parent) in (select gt2.taxon_name, g2.name from geolocale g2 join geolocale_taxon gt2 on g2.id = gt2.geolocale_id"
-                + "   where gt2.is_endemic = 1 and g2.georank = 'country')" + rule
+                + " join taxon t on t.taxon_name = gt.taxon_name"
+                + " join (" + countryEndemicByName + ") ce on ce.taxon_name = gt.taxon_name and ce.country = g.parent"
+                + " where g.georank = 'adm1'" + rule
                 + " group by gt.taxon_name having count(*) = 1";
             String adm1s = "select gt.geolocale_id, sum(gt.is_endemic = 1), sum(e.taxon_name is not null), sum(gt.is_endemic = 1 and e.taxon_name is not null)"
                 + " from geolocale g join geolocale_taxon gt on g.id = gt.geolocale_id"
@@ -743,7 +754,9 @@ public final class NumberChecks {
      * specimen.adm1 = name; also PlaceImageCountDb, TaxaPage, downloads), so a state with the same name in another
      * country, or a specimen with that adm1 and no country, adds to its Specimens and Images. Per live adm1: the
      * specimens counted on its page (ants of a counted status, of a species or subspecies on its list) that were not
-     * collected in its country. Real until B26 is fixed.
+     * collected in its country. Real until B26 is fixed. "Its country" is specimen.country equal to the adm1's parent,
+     * as the country pages match their specimens (specimen.country = name): a specimen whose country is spelled
+     * otherwise (an alias) is counted for the state today and is not counted for the country, so it is reported too.
      */
     void adm1ByCountry() {
         if (!inv.places.containsKey(PlaceTotals.GEOLOCALE) || !has("specimen", "adm1")) return;

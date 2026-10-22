@@ -1207,41 +1207,10 @@ class Image(Base):
             self.id, self.shotType, self.code, self.uploadDate, self.shotNumber, self.hasTiff)
 
 
-@application.route('/images', methods=['GET'])
-def getImages():
-    since = request.args.get('since', default='*', type=str)
-    code = request.args.get('specimenCode', default='*', type=str)
-    shotType = request.args.get('shotType', default='*', type=str)
-    shotNumber = request.args.get('shotNumber', default='*', type=str)
-    hasTiff = request.args.get('hasTiff', default='*', type=str)
-    limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
-
-    query = session.query(Image)
-    if since != '*':
-        day_interval_before = datetime.now() - timedelta(days=int(since))
-        query = query.filter(Image.uploadDate >= day_interval_before)
-    if code != '*':
-        query = query.filter(Image.code == code)
-    if shotType != '*':
-        query = query.filter(Image.shotType == shotType)
-    if shotNumber != '*':
-        query = query.filter(Image.shotNumber == shotNumber)
-    if hasTiff != '*':
-        if hasTiff == 'true':
-            query = query.filter(Image.hasTiff == 1)
-        if hasTiff == 'false':
-            query = query.filter(Image.hasTiff == 0)
-    query = query.limit(limit)
-    query = query.offset(offset)
-
-    try:
-        data = query.all()
-    except OperationalError as error:
-        return apiError("images", error)
-    except Exception as error:
-        return apiError("images", error)
-
+def imagesBySpecimen(data):
+    """The /images reply: (one dict per specimen with its images, specimen count, image count). data: the image rows
+    in order of specimen code. 2026-10-22: with no image, no specimen (was specimenCount 1 and one empty dict), and
+    every specimen under 'specimenCode' (all but the last were under 'spefimenCode'); tests/unit/test_api_counts.py."""
     specimenCount = 0
     imageCount = 0
     dataList = []
@@ -1293,6 +1262,45 @@ def getImages():
         }
         specimenCount += 1
         dataList.append(specimenDict)
+    return dataList, specimenCount, imageCount
+
+
+@application.route('/images', methods=['GET'])
+def getImages():
+    since = request.args.get('since', default='*', type=str)
+    code = request.args.get('specimenCode', default='*', type=str)
+    shotType = request.args.get('shotType', default='*', type=str)
+    shotNumber = request.args.get('shotNumber', default='*', type=str)
+    hasTiff = request.args.get('hasTiff', default='*', type=str)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
+    if down(request): return ""
+
+    query = session.query(Image)
+    if since != '*':
+        day_interval_before = datetime.now() - timedelta(days=int(since))
+        query = query.filter(Image.uploadDate >= day_interval_before)
+    if code != '*':
+        query = query.filter(Image.code == code)
+    if shotType != '*':
+        query = query.filter(Image.shotType == shotType)
+    if shotNumber != '*':
+        query = query.filter(Image.shotNumber == shotNumber)
+    if hasTiff != '*':
+        if hasTiff == 'true':
+            query = query.filter(Image.hasTiff == 1)
+        if hasTiff == 'false':
+            query = query.filter(Image.hasTiff == 0)
+    query = query.limit(limit)
+    query = query.offset(offset)
+
+    try:
+        data = query.all()
+    except OperationalError as error:
+        return apiError("images", error)
+    except Exception as error:
+        return apiError("images", error)
+
+    dataList, specimenCount, imageCount = imagesBySpecimen(data)
 
     # SELECT id,shot_type,upload_date,shot_number,has_tiff FROM image WHERE image_of_id=? ORDER BY shot_number ASC     
     if isDevMode:

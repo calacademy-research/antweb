@@ -131,7 +131,7 @@ Coverage after 2026-10-22: **67 validated, 51 partly, 0 not yet** of 118 (2026-1
 | 67 | search results | Advanced search N specimens (M imaged) | live, HTTP session | partly | e2e:test_numbers_live.py::test_search_counts_agree; e2e:test_download_guards.py::test_search_list_is_paged_and_fast |
 | 68 | search results | Advanced search by taxon N species (from M specimens) | live, session | partly | e2e:test_numbers_live.py::test_search_counts_agree |
 | 69 | search results | Compare / map preparation counts | live | partly | e2e:test_numbers_live.py::test_search_counts_agree |
-| 70 | search results | multiTaxaComparison N specimens | live | partly | e2e:test_numbers_live.py::test_search_counts_agree |
+| 70 | search results | multiTaxaComparison N specimens | live | partly | e2e:test_numbers_live.py::test_comparison_of_chosen_specimens_counts_them |
 | 71 | search results | Recent images N Images | live | partly | e2e:test_numbers_live.py::test_recent_images_count_equals_the_rows_shown |
 | 72 | search results | Bay Area search N records | no longer shown: /bayAreaSearch was removed (2026-10-19), so the page cannot be reached | yes | e2e:test_actions.py::test_removed_actions_stay_removed |
 | 73 | countries.do, regions.do, subregions.do, adm1s.do, projects.do, museums.do, bioregions.do | Valid species column (labelled Species until 2026-10-21) | = #23 | yes | inv:place.totals.valid; e2e:test_numbers_pages.py::test_list_of_countries_labels_valid_species |
@@ -163,11 +163,11 @@ Coverage after 2026-10-22: **67 validated, 51 partly, 0 not yet** of 118 (2026-1
 | 99 | curators, groups, artists, uploads (admin) | orphanedImages Found N | live: specimen codes of images whose specimen is not in AntWeb (labelled images, counts codes) | yes | inv:stats.images; e2e:test_count_check.py::test_image_upload_and_orphan_counts_equal_the_recount |
 | 100 | API v3.1 | /specimens imageCount | specimen.image_count | yes | inv:taxon.images; e2e:test_api_numbers.py::test_images_meta_counts_and_specimen_image_count; e2e:test_numbers_live.py::test_specimen_images_count_equals_the_api |
 | 101 | API v3.1 | /specimens, /geoSpecimens, ... meta count | live: rows in this page | partly | e2e:test_api_numbers.py::test_meta_count_is_the_rows_returned |
-| 102 | API v3.1 | /geoSpeciesStats caste counts | live | partly | e2e:test_api_numbers.py::test_geo_species_stats_castes_add_up |
+| 102 | API v3.1 | /geoSpeciesStats caste counts | live | partly | e2e:test_api_numbers.py::test_geo_species_stats_castes_add_up; unit:test_api_counts.py::test_geo_species_stats_counts_ergatoids_of_their_caste |
 | 103 | API v3.1 | /taxa subfamilyCount, genusCount, speciesCount, specimenCount | taxon columns that no current code writes (B11); must be the name's Global row | yes | inv:api.taxa |
 | 104 | API v3.1 | /taxa imageCount | taxon.image_count (= #54) | yes | inv:taxon.images |
 | 105 | API v3.1 | /taxa meta taxonCount | live | partly | e2e:test_api_numbers.py::test_meta_count_is_the_rows_returned |
-| 106 | API v3.1 | /images meta counts | live: rows in this page; specimenCount was 1 and one empty specimen when nothing was found, and every specimen but the last was under 'spefimenCode' (fixed 2026-10-22) | partly | e2e:test_api_numbers.py::test_images_meta_counts_and_specimen_image_count; e2e:test_api_numbers.py::test_images_of_an_unknown_specimen_are_none |
+| 106 | API v3.1 | /images meta counts | live: rows in this page; specimenCount was 1 and one empty specimen when nothing was found, and every specimen but the last was under 'spefimenCode' (fixed 2026-10-22) | partly | e2e:test_api_numbers.py::test_images_meta_counts_and_specimen_image_count; e2e:test_api_numbers.py::test_images_of_an_unknown_specimen_are_none; unit:test_api_counts.py::test_images_of_nothing_are_no_specimen; unit:test_api_counts.py::test_images_are_grouped_by_specimen |
 | 107 | API v3.1 | /taxaImages meta counts | live | partly | e2e:test_api_numbers.py::test_taxa_images_meta_counts |
 | 108 | API v3.1 | /geolocales subfamily, genus, species, specimen counts | = #20-#22, #26 | yes | inv:place.totals.subfamily; inv:place.totals.genus; inv:place.totals.species; inv:place.totals.specimens |
 | 109 | API v3.1 | /geolocales imageCount, imagedSpecimenCount | = #29, #27 | yes | inv:place.images; cc:place images |
@@ -263,12 +263,14 @@ Found while doing this (2026-10-22):
   distinct image_of_id`), not the images. The check gives both (JSON `orphanedImages`: codes, images) and the
   e2e test compares the page with the codes. Label question: section 5 Q9.
 - **B29** (fixed, trivial) API `/images`: with no image found, `metaData.specimenCount` was 1 and the list held
-  one empty specimen; every specimen but the last was under the key `spefimenCode`. Tests:
+  one empty specimen; every specimen but the last was under the key `spefimenCode` (now `api.imagesBySpecimen`).
+  Tests: `unit:test_api_counts.py::test_images_of_nothing_are_no_specimen`,
   `e2e:test_api_numbers.py::test_images_of_an_unknown_specimen_are_none`,
   `e2e:test_api_numbers.py::test_images_meta_counts_and_specimen_image_count`.
 - **B30** (fixed, trivial) API `/geoSpeciesStats`: `queenErgatoidCount` and `maleErgatoidCount` both counted every
   ergatoid specimen (no caste condition), so a male ergatoid was also counted as a queen ergatoid. Now each counts
-  its caste. Test: `e2e:test_api_numbers.py::test_geo_species_stats_castes_add_up`.
+  its caste. Tests: `unit:test_api_counts.py::test_geo_species_stats_counts_ergatoids_of_their_caste`,
+  `e2e:test_api_numbers.py::test_geo_species_stats_castes_add_up`.
 - **B31** statsPage Bioregion Data and Museum Data count valid taxa of every family on the lists (no
   `family = 'formicidae'`), while the place pages count ants only since 2026-10-21; `inv:stats.bioregions` and
   `inv:stats.museums` report a difference where a non-ant is on a list. Question: section 5 Q7.

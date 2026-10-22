@@ -239,23 +239,31 @@ def test_search_counts_agree():
         if "truncated" not in by_taxon:
             assert specimens == total, f"search by species: from {specimens} specimens; specimen search: {total}"
     # Compare preparation of the same search (row 69): "M imaged specimens (from N total specimens)": M <= N, N = the
-    # search's N; then the comparison of three chosen specimens says "3 specimens to compare." (row 70).
+    # search's N.
     _get(SEARCH + "&resultRank=specimen", s)
     prep = s.get(BASE_URL + "/prepareCompareResults.do?resultRank=specimen", timeout=SLOW)
     p = re.search(r"([\d,]+) imaged specimens \(from ([\d,]+) total specimens\)", _text(prep.text)) if prep.status_code == 200 else None
     if p:
         assert _n(p.group(1)) <= _n(p.group(2)), p.group(0)
         assert _n(p.group(2)) == total, f"compare preparation: {p.group(0)}; specimen search: {total}"
-        form = re.search(r'<form[^>]*action="([^"]*compareResults[^"]*)"(.*?)</form>', prep.text, re.S)
-        chosen = re.findall(r'<input type="checkbox" name="chosen" value="([^"]+)"', prep.text)
-        csrf = re.search(r'name="_csrf" value="([^"]+)"', form.group(2)) if form else None
-        if form and csrf and len(chosen) >= 3:
-            action = unescape(form.group(1))
-            url = action if action.startswith("http") else BASE_URL + (action if action.startswith("/") else "/" + action)
-            done = s.post(url, data={"_csrf": csrf.group(1), "chosen": chosen[:3]}, timeout=SLOW)
-            c = re.search(r"<h2>(\d+) specimens to compare\.</h2>", done.text)
-            if c:
-                assert int(c.group(1)) == 3, c.group(0)
+
+
+def test_comparison_of_chosen_specimens_counts_them():
+    """multiTaxaComparison (row 70): "N specimens to compare." = the specimens chosen on the compare page."""
+    s = new_session()
+    _get(SEARCH + "&resultRank=specimen", s)
+    prep = s.get(BASE_URL + "/prepareCompareResults.do?resultRank=specimen", timeout=SLOW)
+    form = re.search(r'<form[^>]*action="([^"]*compareResults[^"]*)"(.*?)</form>', prep.text, re.S)
+    chosen = re.findall(r'<input type="checkbox" name="chosen" value="([^"]+)"', prep.text)
+    csrf = re.search(r'name="_csrf" value="([^"]+)"', prep.text)
+    if not (form and csrf and len(chosen) >= 3):
+        pytest.skip("compare page without a compareResults form, its form token or three specimens to choose")
+    action = unescape(form.group(1))
+    url = action if action.startswith("http") else BASE_URL + (action if action.startswith("/") else "/" + action)
+    done = s.post(url, data={"_csrf": csrf.group(1), "chosen": chosen[:3]}, timeout=SLOW)
+    c = re.search(r"<h2>(\d+) specimens to compare\.</h2>", done.text)
+    assert c, f"{url}: no 'N specimens to compare.' (HTTP {done.status_code})"
+    assert int(c.group(1)) == 3, c.group(0)
 
 
 def test_recent_images_count_equals_the_rows_shown():
