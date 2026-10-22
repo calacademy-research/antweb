@@ -24,7 +24,7 @@
 
     // Which view this is (ListUploadsAction): every group's uploads, one group's, or one login's.
     String uploadsView = (String) request.getAttribute("uploadsView");
-    boolean isAllGroups = uploadsView == null || ListUploadsAction.UPLOADS_VIEW_ALL.equals(uploadsView);
+    boolean isAllGroups = uploadsView == null || org.calacademy.antweb.util.ListUploadsAction.UPLOADS_VIEW_ALL.equals(uploadsView);
     org.calacademy.antweb.Login viewer = LoginMgr.getAccessLogin(request);
     org.calacademy.antweb.Group ownGroup = viewer == null ? null : viewer.getGroup();
 %>
@@ -33,15 +33,15 @@
 <br><br>
 <%
     if (isAllGroups) {
-        out.println("<p class=\"uploads-view\">&nbsp;&nbsp;&nbsp;<b>" + ListUploadsAction.ALL_GROUPS_LINE + "</b>");
+        out.println("<p class=\"uploads-view\">&nbsp;&nbsp;&nbsp;<b>" + org.calacademy.antweb.util.ListUploadsAction.ALL_GROUPS_LINE + "</b>");
         if (ownGroup != null) {
             out.println(" <a class=\"uploads-own-group\" href=\"" + domainApp + "/listSpecimenUploads.do?groupId=" + ownGroup.getId() + "\">"
-                + ListUploadsAction.ownGroupLinkText(ownGroup) + "</a>");
+                + org.calacademy.antweb.util.ListUploadsAction.ownGroupLinkText(ownGroup) + "</a>");
         }
         out.println("</p>");
     } else if (LoginMgr.isAdmin(request)) {
         out.println("<p class=\"uploads-view\">&nbsp;&nbsp;&nbsp;<a class=\"uploads-all-groups\" href=\"" + domainApp + "/listSpecimenUploads.do\">"
-            + ListUploadsAction.VIEW_ALL_LINK + "</a></p>");
+            + org.calacademy.antweb.util.ListUploadsAction.VIEW_ALL_LINK + "</a></p>");
     }
     out.println("<br>");
 

@@ -103,8 +103,7 @@ public final class CountCheckJob {
             DataSource pool = AntwebDataSources.loaded("conPool");
             if (pool != null) BackgroundJobDb.setDataSourceIfMissing(pool);
             DataSource ds = AntwebDataSources.loaded("longConPool");
-            if (ds == null) ds = DBUtilSimple.getDataSource();
-            BackgroundJobDb.setDataSourceIfMissing(ds);
+            if (ds == null) ds = DBUtilSimple.getDataSource();   // the job record does not keep this one
             BackgroundJobs.Submitted s = submit(ds, 0, "nightly", SECONDS, "after the nightly run");
             // compute.log is read by admins only (logMgr.do): the reason a job was not recorded goes there.
             LogMgr.appendLog("compute.log", "  count check started (job " + (s.job == null
