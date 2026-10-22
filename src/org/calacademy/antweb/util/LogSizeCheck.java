@@ -13,8 +13,8 @@ import org.apache.commons.logging.LogFactory;
  * Daily check, after the nightly run (Scheduler): warns the administrators when a log file is over
  * 1 GB or the disk is over 85% full. Added 2026-10-22, after messages.txt grew to 11 GB on staging
  * unnoticed. The warning is an admin alert (count in the header of administrators, Admin Alert
- * Manager) and an email to antweb@antweb.org (forwarded to Brian). It is sent each day the problem
- * lasts. DigitalOcean also emails when a droplet's disk is over 85% for 30 minutes.
+ * Manager; at most one a week) and an email to antweb@antweb.org (forwarded to Brian), sent each day
+ * the problem lasts. DigitalOcean also emails when a droplet's disk is over 85% for 30 minutes.
  */
 public final class LogSizeCheck {
 
@@ -74,7 +74,8 @@ public final class LogSizeCheck {
             String alert = alert(problems(folders(), FILE_LIMIT, new File("/"), DISK_PERCENT));
             if (alert == null) return TITLE + ": ok";
             s_log.warn("run() " + alert);
-            AdminAlertMgr.add(alert, connection);
+            // One admin alert a week while the problem lasts (the email is daily).
+            AdminAlertMgr.addIfFresh(alert, TITLE, AdminAlertMgr.WEEK, connection);
             Emailer.sendMail(AntwebUtil.getDevEmail(), "AntWeb " + AntwebProps.getDomainApp() + ": log or disk too big", alert);
             return alert;
         } catch (Exception e) {

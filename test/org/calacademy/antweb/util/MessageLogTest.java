@@ -71,9 +71,13 @@ public class MessageLogTest extends TestCase {
 
     public void testRepeatsCountedPerDay() {
         MessagePageLog.Counter c = new MessagePageLog.Counter();
-        int written = 0;
-        for (int i = 0; i < 1000; i++) written += c.add("2026-10-22", "You must log in", "line " + i).size();
-        assertEquals(MessagePageLog.PER_DAY, written);
+        List<String> all = new ArrayList<>();
+        for (int i = 0; i < 1000; i++) all.addAll(c.add("2026-10-22", "You must log in", "line " + i));
+        // 3 lines, then a running count at 100 and 1,000.
+        assertEquals(all.toString(), MessagePageLog.PER_DAY + 2, all.size());
+        assertEquals("line 2", all.get(2));
+        assertEquals("2026-10-22 - count so far: shown 100 times today: You must log in", all.get(3));
+        assertTrue(all.get(4), all.get(4).contains("shown 1,000 times today"));
         assertEquals(1, c.add("2026-10-22", "Another message", "other").size());
         List<String> next = c.add("2026-10-23", "You must log in", "next day");
         assertEquals(next.toString(), 2, next.size());
@@ -132,6 +136,7 @@ public class MessageLogTest extends TestCase {
         }
         String page = PartsReport.html(groups, null, "", 10);
         assertTrue(page, page.contains("Showing the first 10 of 30 listed specimens."));
+        assertTrue(page, page.contains("(30 specimens, first 10 shown)"));
         assertTrue(page.contains("casent1000009-d01"));
         assertFalse(page.contains("casent1000010-d01"));
         assertFalse(PartsReport.html(groups, null, "").contains("Showing the first"));

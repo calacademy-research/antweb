@@ -110,7 +110,17 @@ public final class MessagePageLog {
             }
             n[0]++;
             if (n[0] <= PER_DAY) out.add(line);
+            // A running count at 100, 1,000, 10,000 ... so a restart (counts are in memory) never
+            // loses the record of a message shown very often.
+            else if (isPowerOfTen(n[0]) && n[0] >= 100) {
+                out.add(today + " - count so far: shown " + String.format("%,d", n[0]) + " times today: " + key);
+            }
             return out;
+        }
+
+        static boolean isPowerOfTen(int n) {
+            while (n >= 10 && n % 10 == 0) n /= 10;
+            return n == 1;
         }
 
         /** Summary lines for the current day (messages shown more than PER_DAY times, and the untracked ones). */

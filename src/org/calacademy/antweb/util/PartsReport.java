@@ -121,8 +121,10 @@ public final class PartsReport {
         int listed = 0;
         for (GroupList l : shown) {
             if (listed >= maxShown) break;
+            int left = maxShown - listed;
             b.append("<h2>").append(Html.esc(l.name)).append(" (").append(l.specimens.size())
-             .append(l.specimens.size() == 1 ? " specimen" : " specimens").append(")</h2>");
+             .append(l.specimens.size() == 1 ? " specimen" : " specimens")
+             .append(l.specimens.size() > left ? ", first " + left + " shown" : "").append(")</h2>");
             b.append("<table class=\"parts-report\" cellpadding=6 border=1 style=\"border-collapse:collapse;font-weight:normal\"><tr><th>#</th><th>Specimen</th><th>Part</th>")
              .append("<th>Taxon name</th><th>Uploaded name</th><th>Determined by</th><th>Date determined</th><th>Uploaded by</th><th>Museum</th></tr>");
             int i = 0;

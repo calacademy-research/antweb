@@ -312,6 +312,9 @@ public abstract class QueryManager {
 		    if (namedQuery.getHeaderHtml() != null)
 			  message.append("<tr>" + namedQuery.getHeaderHtml() + "</tr>\n");
             
+            // Stream the rows (MySQL Connector/J: forward-only, read-only, fetch size MIN_VALUE) so rows past
+            // the limit are counted without holding the whole result in memory (imageData: every image).
+            stmt.setFetchSize(Integer.MIN_VALUE);
             rset = stmt.executeQuery(query);
             int i = 0;
             int maxShown = maxRowsShown(namedQuery.getName());
