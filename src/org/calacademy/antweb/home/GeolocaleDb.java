@@ -1944,7 +1944,7 @@ Have parallel methods:
                 String parent = rset.getString("parent");
                 String georank = rset.getString("georank");
                 if ("adm1".equals(georank)) placeName = placeName + ", " + parent;                
-                if (asHtml) placeName = "<br><a href='" + AntwebProps.getDomainApp() + "/place.do?name=" + placeName + "'>" + placeName + "</a>";
+                if (asHtml) placeName = "<br><a href='" + AntwebProps.getDomainApp() + "/place.do?placeName=" + Html.escAttr(Html.url(placeName)) + "'>" + Html.esc(placeName) + "</a>";
                 placeNames.add(placeName);
             }
         } catch (SQLException e) {
