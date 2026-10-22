@@ -732,8 +732,8 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     // pages): since 2026-10-20 only the images of the specimens of this place (before: of all
     // specimens of the name, anywhere), the same specimens as the list's specimen counts (regions and
     // subregions: the specimens of their countries).
-    // Ordered by family, subfamily and genus: CountDb.imageCountCrawl() adds up a genus or subfamily
-    // when the next row belongs to another one.
+    // CountDb.imageCountCrawl() adds the species rows up to their genus, subfamily and family rows by the
+    // taxon tree (parent_taxon_name; 2026-10-22, B40), so the order no longer matters.
     public String getTaxonImageCountQuery() {
       String query = "select s.taxon_name taxonName, s.family family, s.subfamily subfamily " 
            + ", s.genus genus, s.species species, sum(s.image_count) imageSum" 

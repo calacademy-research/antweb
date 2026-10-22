@@ -290,19 +290,64 @@ Found while doing this (2026-10-22):
   only; statsPage "Imaged Species" counts names of any rank and labels (B13 fixed the home number only).
   Question: section 5 Q6.
 
-- **B36** (found by `inv:taxon.parents`, 2026-10-22) an ant name of a counted status whose parent is not its genus
-  (or empty): the nightly crawl counts a list's species and subspecies rows under their parent
-  (`CountDb.countGrandChildren`), so such a name is missing from its genus row's Species and Specimens (and is
-  counted under another genus row if the parent is another genus). `AntwebUpload.saveTaxon` leaves the parent
-  unset when the genus is not yet known (`TaxonMgr.getGenus(parent) == null`) and takes the parent of the current
-  valid name when that differs. Size: the check's report on staging (the first run, 6,503, also counted synonyms
-  and other names that take the parent of their valid name by design; the check now covers counted statuses
-  only). Staging query: `select c.status, p.taxarank, count(*) from taxon c left join taxon p on p.taxon_name =
-  c.parent_taxon_name where c.family = 'formicidae' and c.taxarank in ('species', 'subspecies') and c.taxon_name
-  like '% %' and c.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') and
-  (c.parent_taxon_name is null or c.parent_taxon_name <> substring_index(c.taxon_name, ' ', 1)) group by 1, 2`.
-  Fix: set the parent of these names to their genus (from the name), creating the genus row when missing, in the
-  upload and once for the existing rows.
+- **B36** (found by `inv:taxon.parents`, 2026-10-22; **fixed** 2026-10-22) an ant name of a counted status whose parent is
+  not its genus (or empty), or whose genus has no taxon row: the nightly crawl counts a list's species and subspecies rows
+  under their parent (`CountDb.countGrandChildren`), so such a name is missing from its genus row's Species and Specimens
+  (and is counted under another genus row if the parent is another genus). Staging after the 2026-10-22 runs: 6 names,
+  for example `(indet)decamorium decem` (species, indetermined: no parent, and no genus row `(indet)decamorium`),
+  `(indet)dont exist (indet)`, `(indet)paltotyreus tarsatus`. Causes in `AntwebUpload.saveTaxon`: (1) the parent was left
+  empty when `TaxonMgr` (read before the upload or the AntCat import) did not know the genus: a genus new in tonight's
+  AntCat import (Holcoponera, Mycetomoellerius), a morphogenus, an indet genus; (2) the genus row was not made when its
+  own parent could not be read from its name (no "inae" in it: `(indet)x`, `(formicidae)x`). Fix: (1) the parent is
+  always the genus by name; (2) such a genus row is made under the item's subfamily (and no longer gets the species'
+  current valid name); (3) **every night** in set 1, after the AntCat import, the TaxonWorks upload and the name update,
+  before sets 2 to 5 build the lists, `TaxonParentDb.repair` (called by `UtilDataAction.nightlyTaxonParents`) makes a
+  placeholder genus row (status unrecognized, insert_method `parentFix`, as `addMissingGenus` does) for each such name
+  whose genus has no taxon row, and sets the parent of each such name to its genus row; when it changed a row it recounts
+  the AntCat list (worldants, counted by the import before this step) and rebuilds the Global column (allantwebants), as
+  the name update does; one line in compute.log ("taxon parents (B36): ..."). Only
+  ant species and subspecies of a counted status that are their own current valid name are touched: synonyms and other
+  names keep the parent of their valid name (by design). Names whose genus name is a taxon row of another rank are left
+  alone and stay in the check. This also repairs B25 (a subspecies whose parent is its species) if one appears. The check
+  now also reports a parent that names the genus when the genus has no taxon row. Test:
+  `TaxonTreeCountDbTest#testRepairGivesEveryCountedNameItsGenus`, `#testAParentWithoutAGenusRowIsFoundAndMade`.
+
+  One-off repair (Brian runs it; staging first: `ssh root@165.232.136.170`, then production: `ssh root@165.232.137.86`
+  with `F=/root/antweb/etc/db.properties`). Nightly set 1 with this code does the same every night; the blocks below make
+  it now, without waiting for set 1. Each block is one line.
+
+  1. Preview (read-only): the names it will change. Staging: expect about 6 rows. `genus_row_rank` empty = the genus row
+     will be made; a rank other than `genus` = left alone.
+
+     ```
+     F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select c.taxon_name, c.taxarank, c.status, c.parent_taxon_name, substring_index(c.taxon_name, ' ', 1) genus_by_name, g.taxarank genus_row_rank from taxon c left join taxon g on g.taxon_name = substring_index(c.taxon_name, ' ', 1) where c.family = 'formicidae' and c.taxarank in ('species', 'subspecies') and c.taxon_name like '% %' and c.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') and (c.current_valid_name is null or c.current_valid_name = '' or c.current_valid_name = c.taxon_name) and (c.parent_taxon_name is null or c.parent_taxon_name <> substring_index(c.taxon_name, ' ', 1) or g.taxon_name is null) order by c.taxon_name"
+     ```
+
+  2. Back up exactly those rows to a dated table (fails if the table exists, so it cannot run twice by mistake); prints the
+     number backed up, which must equal the preview's.
+
+     ```
+     F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "create table taxon_parent_bak_20261022 as select c.* from taxon c left join taxon g on g.taxon_name = substring_index(c.taxon_name, ' ', 1) where c.family = 'formicidae' and c.taxarank in ('species', 'subspecies') and c.taxon_name like '% %' and c.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') and (c.current_valid_name is null or c.current_valid_name = '' or c.current_valid_name = c.taxon_name) and (c.parent_taxon_name is null or c.parent_taxon_name <> substring_index(c.taxon_name, ' ', 1) or g.taxon_name is null); select count(*) backed_up from taxon_parent_bak_20261022"
+     ```
+
+  3. Repair: only the rows in the backup table, in one transaction; prints the genus rows made and the parents set.
+
+     ```
+     F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "start transaction; insert into taxon (taxon_name, taxarank, family, subfamily, genus, status, parent_taxon_name, source, insert_method) select x.genus_name, 'genus', 'formicidae', x.subfamily, x.genus, 'unrecognized', sf.taxon_name, 'parentFix', 'parentFix' from (select substring_index(b.taxon_name, ' ', 1) genus_name, min(b.subfamily) subfamily, min(b.genus) genus from taxon_parent_bak_20261022 b left join taxon g on g.taxon_name = substring_index(b.taxon_name, ' ', 1) where g.taxon_name is null group by 1) x left join taxon sf on sf.taxon_name = x.subfamily and sf.taxarank = 'subfamily'; select row_count() genus_rows_made; update taxon c join taxon_parent_bak_20261022 b on b.taxon_name = c.taxon_name join taxon g on g.taxon_name = substring_index(c.taxon_name, ' ', 1) and g.taxarank = 'genus' set c.parent_taxon_name = g.taxon_name; select row_count() parents_set; commit"
+     ```
+
+  4. Check: run the preview again (expect no rows, except names whose genus name is a row of another rank).
+
+  Rollback (removes the genus rows the repair made for these names and puts every parent back as backed up):
+
+  ```
+  F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "start transaction; delete t from taxon t join (select distinct substring_index(taxon_name, ' ', 1) genus_name from taxon_parent_bak_20261022) x on x.genus_name = t.taxon_name where t.insert_method = 'parentFix'; update taxon c join taxon_parent_bak_20261022 b on b.taxon_name = c.taxon_name set c.parent_taxon_name = b.parent_taxon_name; commit"
+  ```
+
+  Then the nightly sets 2, 3 and 4 (or the next nightly run) rebuild and count the lists with the new parents; the
+  application's name cache (`TaxonMgr`) reads them at the next set 1 or restart. The AntCat list's Species and Specimens
+  (worldants, counted only in set 1) and the Global column get them at the next set 1 with this code. Drop the backup table after a week:
+  `drop table taxon_parent_bak_20261022`.
 
 - **B37** (found and fixed 2026-10-22, confirmed on staging by Brian Fisher) Genus rows of country and adm1 lists one too
   high (US formicinaeformica 104 with `formicinaeformica fuliginothorax`, status unavailable; Czech Republic
@@ -337,6 +382,23 @@ Found while doing this (2026-10-22):
   count too. Site (`LoginDb.setDescEditCounts`) and check (`NumberChecks.adminCurators`) now count description_edit,
   description_hist, object_edit and object_hist (`LoginDb.PAGE_TEXT_EDIT_TABLES`); curators.do and curator.do say so.
 
+- **B40** (found by `inv:list.images`, 2026-10-22; **fixed** 2026-10-22) Images of a list's genus row lower than the sum of
+  the rows under it: staging worldants `ectatomminaeholcoponera` 596, its rows 604; `myrmicinaemycetomoellerius` 337 (345);
+  `myrmicinaeallomerus` 394 (401); 9 rows, all genera with recent name changes (Gnamptogenys names now in Holcoponera,
+  Trachymyrmex names in Mycetomoellerius, Wasmannia in Allomerus). Cause: set 4's image crawl (`CountDb.imageCountCrawl`,
+  for every geolocale, project, museum and bioregion list) wrote each species row from the specimens filed under the name,
+  but added the genus, subfamily and family rows up from the specimens' own columns (genus row = `specimen.subfamily` +
+  `specimen.genus`). A synonym or obsolete combination takes the parent of its current valid name (Wasmannia auropunctata
+  under Allomerus), so the images of specimens still filed under it went to the old genus row (Wasmannia) and not to the
+  genus whose row holds the synonym's row. The specimen counts of the lists already roll up by the taxon tree
+  (`parent_taxon_name`), so a genus row's Specimens and Images followed two different rules. Fix: the higher rows are added
+  up by the taxon tree, the rule of the specimen counts and of the check (a species row still counts only the specimens
+  filed under its own name; labels count as image files, as the column says; the lists of places count ants only as
+  before). So a genus, subfamily or family row holds the images of every row under it by construction. A name that is not
+  in the taxon table falls back to the specimen's columns as before. The check was right. Test:
+  `TaxonTreeCountDbTest#testGenusRowHoldsTheImagesOfASynonymUnderIt` (fails with the old crawl: Pheidole 3, its rows 6),
+  `#testCountryImagesAreUnchanged`. Seen on staging after nightly set 4.
+
 **First run on staging (2026-10-22, full e2e with #226; the nightly run before it had the code from before #216):**
 
 | Check | Real differences | What it was | Now |
@@ -348,6 +410,8 @@ Found while doing this (2026-10-22):
 | api.taxa, geo.adm1.country | 29,910, 3 | known B11, B26 | as before |
 | list.genus, place.totals (geolocale genus rows) | US formicinaeformica 104 (right: 103), Czech Republic formicinaecamponotus 8 (right: 7) | real: set 2's `geolocaleTaxonFix` ran after the count and rewrote every country and live adm1 genus row's Species with every list row under the genus, of any status and rank (an unavailable species, a subspecies of an unavailable name) (B37) | **fixed** 2026-10-22: no longer in set 2 (the count writes the same rows, same places, by the counted rule); the admin job counts by that rule too. Test: `NightlyCountOrderDbTest#testAnUnavailableSpeciesDoesNotRaiseItsGenusRow` |
 | place.totals (museums, bioregions) | museum AFRC: 14 valid species rows not in its Species (e.g. ponerinaeboltonopone ilgii 52 specimens filed under an older combination), ABS 1, CELC 4 species and 1 genus | real (B38) | **fixed** 2026-10-22, see B38. Test: `NightlyCountOrderDbTest#testAMuseumListCountsTheSpecimensOfASynonymUnderTheValidName` |
+| taxon.parents (after the fixes above, full e2e of 2026-10-22) | 6 | real (B36): counted ant names with no parent or with no genus row, e.g. `(indet)decamorium decem` | **fixed** 2026-10-22: uploads set the genus by name and make the genus row; nightly set 1 repairs any left (`TaxonParentDb`); one-off repair in B36. Test: `TaxonTreeCountDbTest#testRepairGivesEveryCountedNameItsGenus` |
+| list.images (same run) | 9 | real (B40): worldants genus rows lower than their rows (Holcoponera 596 against 604) | **fixed** 2026-10-22: the higher rows are added up by the taxon tree. Test: `TaxonTreeCountDbTest#testGenusRowHoldsTheImagesOfASynonymUnderIt` |
 | taxonomicPage headers (e2e) | Madagascar | expected: the place numbers are from the nightly run with the old code (non-ants, roll-up sums) | should agree after the 2026-10-22 nightly; a difference after that is real |
 
 ## 4. Plans for the larger ones
@@ -362,7 +426,7 @@ Found while doing this (2026-10-22):
 | B21 | Header says "0 unimaged" instead of falling back; imaged = an image of the ant (list image counts without labels, or a separate column). |
 | B22 | Curator counts: recount when an upload or image upload ends; place pages: an e2e test comparing each sampled place's page (`data-stat` numbers) with `countCheck.do?format=json`; alert when set 5 fails. |
 | B23 | `MessageMgr` errors per upload (instance, not static). |
-| B25 | Checked by `inv:taxon.parents`; if it finds any: set the parent of those subspecies to their genus (as uploads do), or make the crawl group species-rank rows by genus. |
+| B25 | Checked by `inv:taxon.parents`; **repaired every night** since 2026-10-22: nightly set 1 sets the parent of such a subspecies to its genus (`TaxonParentDb.repair`, B36). |
 | B26 | Add the country in the six places listed in section 3 and in the count check's recount (`CountCheck.Place` of an adm1: `and s.country = parent`); `inv:geo.adm1.country` then shows no difference. |
 | museum, bioregion lists | **Done** 2026-10-22 (B38): each list is renamed right after it is built, before it is counted and its totals written; a synonym's specimens count under the valid name. |
 | partly rows | Most are live numbers checked by the end-to-end tests on Madagascar and the genus Pheidole only, or by a consistency rule. Next: a rotating place for the e2e tests (the count check's rotating sample, in its JSON), and recounts in the check for the live numbers that have a SQL definition (taxonomicPage headers, browse counts, the habitat lists of a sample species). |

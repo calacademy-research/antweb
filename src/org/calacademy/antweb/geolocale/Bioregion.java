@@ -378,7 +378,7 @@ public class Bioregion extends LocalityOverview implements Countable {
            + " where bt.bioregion_name = '" + getName() + "'" 
            + " and s.bioregion = '" + getName() + "'"  // 2026-10-20: images of this bioregion's specimens only
            + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species"
-           + " order by s.family, s.subfamily, s.genus, s.taxon_name";  // CountDb.imageCountCrawl() adds up on a change of genus    
+           + " order by s.family, s.subfamily, s.genus, s.taxon_name";  // CountDb.imageCountCrawl() adds the rows up by the taxon tree
       return query;
     }
 

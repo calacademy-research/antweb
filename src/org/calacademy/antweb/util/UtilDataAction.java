@@ -253,6 +253,42 @@ public class UtilDataAction extends AntwebAction {
         return line;
     }
 
+    /**
+     * Nightly set 1 (B36, docs/numbers.md): every ant species and subspecies of a counted status that is its own current
+     * valid name gets its genus as parent, and a placeholder genus row when its genus has none (TaxonParentDb.repair).
+     * Its own commit and rollback, like the name update. When it changed a row, the AntCat list (worldants, counted by
+     * the import before this step) is recounted and the Global column (allantwebants) rebuilt, as after the name update
+     * (sets 2 to 5 do neither). Writes one line to compute.log.
+     */
+    static String nightlyTaxonParents(Connection connection) {
+        String line;
+        try {
+            connection.commit();   // what set 1 did so far stays, whatever happens below
+            org.calacademy.antweb.home.TaxonParentDb.Result result = new org.calacademy.antweb.home.TaxonParentDb(connection).repair();
+            connection.commit();
+            line = result.line();
+            if (result.changed()) {
+                try {
+                    // the AntCat list (worldants) was counted by the import, before this step; sets 2 to 5 skip it
+                    new ProjTaxonCountDb(connection).childrenCountCrawl(Project.WORLDANTS);
+                    new ProjTaxonDb(connection).regenerateAllAntweb();
+                    connection.commit();
+                    line += "; AntCat list and Global column recounted";
+                } catch (Exception e) {
+                    try { connection.rollback(); } catch (SQLException e2) { s_log.error("nightlyTaxonParents() rollback e:" + e2); }
+                    s_log.error("nightlyTaxonParents() recount e:" + e);
+                    line += "; AntCat list and Global column NOT recounted (" + e + ")";
+                }
+            }
+        } catch (Exception e) {
+            try { connection.rollback(); } catch (SQLException e2) { s_log.error("nightlyTaxonParents() rollback e:" + e2); }
+            s_log.error("nightlyTaxonParents() e:" + e);
+            line = "taxon parents (B36): FAILED, nothing changed (" + e + ")";
+        }
+        LogMgr.appendLog("compute.log", "  " + line, true);
+        return line;
+    }
+
     /** A data job started from a page: runs in the background; the answer is a redirect to its status page. */
     private ActionForward submitDataJob(String action, UtilForm form, Login accessLogin, Group accessGroup, String loginName,
                                         HttpServletRequest request, ActionMapping mapping) {
@@ -356,6 +392,9 @@ public class UtilDataAction extends AntwebAction {
                 // Existing specimens follow AntCat name changes (etc/name-update.properties; off without it).
                 // After the AntCat import and the TaxonWorks upload, before sets 2 to 5 rebuild lists and counts.
                 message += " " + nightlyNameUpdate(connection, worldants == null ? null : worldants.getMessage());
+                // Every counted ant name has its genus as parent, so the genus rows of the lists count it (B36,
+                // 2026-10-22). After the import, the upload and the name update; before sets 2 to 5 build the lists.
+                message += " " + nightlyTaxonParents(connection);
                 TaxonMgr.populate(connection, true, false);
             }
 

@@ -775,7 +775,7 @@ public final class NumberChecks {
      */
     void taxonParents() {
         CountInvariants.Check check = new CountInvariants.Check("taxon.parents",
-            "B25: ants of a counted status have their genus as parent (a subspecies under its species changes the species row's Specimens)", "22, 40, 41");
+            "B25, B36: ants of a counted status have their genus as parent, and the genus is a taxon row (nightly set 1 repairs them: TaxonParentDb)", "22, 40, 41");
         inv.check(check, c -> {
             site().put("taxa", "taxon table");
             // Only the names the lists count (counted statuses). Synonyms, homonyms and obsolete combinations take the
@@ -794,13 +794,16 @@ public final class NumberChecks {
                     String parent = r.getString(3);
                     String byName = name.substring(0, name.indexOf(' '));
                     ++c.compared;
-                    if (parent != null && CountInvariants.key(parent).equals(CountInvariants.key(byName))) continue;
+                    boolean isGenus = parent != null && CountInvariants.key(parent).equals(CountInvariants.key(byName));
+                    // its genus by name, and that genus is a taxon row (2026-10-22: a parent naming a genus with no row
+                    // is also missing from the lists, which have no genus row to count it under)
+                    if (isGenus && r.getString(4) != null) continue;
                     --c.compared;
                     boolean b25 = "species".equals(r.getString(4));
                     inv.compare(c, "site", "taxa", name + " (" + r.getString(2) + ", " + r.getString(5) + "): parent " + parent
                         + (r.getString(4) == null ? (parent == null ? "" : " (not a taxon)") : " (" + r.getString(4) + ")") + ", genus by its name " + byName
                         + (b25 ? " (B25: its specimens replace the species row's)" : parent == null ? " (B36: no parent; the genus row does not count it)"
-                            : " (B36: counted under another genus row)"), 1, 0, "=", null);
+                            : isGenus ? " (B36: its genus has no taxon row)" : " (B36: counted under another genus row)"), 1, 0, "=", null);
                 }
             }
             // rows of lists that B25 changes: a species row with a subspecies row whose parent is that species

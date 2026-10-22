@@ -332,7 +332,9 @@ hierarchy complete).
 deletes `antcat = 1` rows; see [flows/antcat-to-antweb.md](flows/antcat-to-antweb.md) section 3). Specimen uploads
 add names (`SpecimenUploadProcess.processLine`, `UploadDb.insertGenus`, `insertSubfamily`) and delete orphans
 (`SpecimenUploadDb.deleteTaxonOrphans`). Set 2 deletes species and genera without specimens or AntCat source
-(`TaxonDb.deleteSpeciesWithoutSpecimenOrAntcatSource`). Admin tools: `TaxonDb.renameTaxon`, `combineTaxa`,
+(`TaxonDb.deleteSpeciesWithoutSpecimenOrAntcatSource`). Set 1, after the name update: the parent of every counted ant
+species and subspecies is set to its genus, and a placeholder genus row (`insert_method` `parentFix`) made when missing
+(`TaxonParentDb.repair`, B36 in [numbers.md](numbers.md)). Admin tools: `TaxonDb.renameTaxon`, `combineTaxa`,
 `deleteTaxon`, `OrphansDb`.
 
 **Read by.** Every taxon page and list (cached in memory by `TaxonMgr`), all place counts (they join list rows to

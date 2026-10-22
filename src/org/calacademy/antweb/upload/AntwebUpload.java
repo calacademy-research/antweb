@@ -240,12 +240,12 @@ or for Worldants upload
             parentTaxonName = Taxon.getParentTaxonNameFromName(taxonName);
         }
         if (parentTaxonName != null) {
-            //A.log("saveTaxon() taxonName:" + taxonName + " parentTaxonName:" + parentTaxonName);
-            if (("species".equals(rank) || "subspecies".equals(rank)) && TaxonMgr.getGenus(parentTaxonName) == null) {
-                //A.log("saveTaxon() 2 parent does not exist:" + parentTaxonName + " rank:" + rank + " genus:" + TaxonMgr.getGenus(parentTaxonName));
-            } else {
-                item.put("parent_taxon_name", parentTaxonName);
-            }
+            // B36 (2026-10-22): the parent is always the genus by name. It was left empty when TaxonMgr (read before
+            // the upload or the AntCat import) did not know the genus: a genus new in tonight's import, a morphogenus,
+            // an indet genus such as "(indet)decamorium". The lists count a species under its parent, so the genus row
+            // did not count it. A missing genus row is made below (or, for AntCat names, comes with the import;
+            // nightly set 1 makes a placeholder for any still missing: TaxonParentDb).
+            item.put("parent_taxon_name", parentTaxonName);
         }
 
         if (table.equals("taxon") && taxonQueryHashMap.containsKey(taxonName)) {
@@ -319,10 +319,20 @@ or for Worldants upload
                 s_log.debug("saveTaxon() 5 BAD currentValidName:" + currentValidName + " taxonName:" + taxonName);
             // if we save a taxon, we make sure it's parent exists, or we create it.
             item.put("taxon_name", parentTaxonName);
+            // the name's current valid name is not the genus row's (it made the genus its own parent below)
+            item.remove("current_valid_name");
             String grandParentTaxonName = Taxon.getParentTaxonNameFromName(parentTaxonName);
-            if (grandParentTaxonName != null) {
-                item.put("parent_taxon_name", grandParentTaxonName);
-                String parentRank = Taxon.getRankFromName(parentTaxonName);
+            String parentRank = Taxon.getRankFromName(parentTaxonName);
+            // B36: a genus whose subfamily cannot be read from its name (a morphogenus or indet genus such as
+            // "(indet)decamorium" or "(formicidae)x") was never made, so its species had no genus row. It is made
+            // now, under the subfamily of the item when there is one.
+            if (grandParentTaxonName == null && Rank.GENUS.equals(parentRank) && item.get("subfamily") instanceof String sf
+                    && !sf.isEmpty() && !sf.equals(parentTaxonName)) {
+                grandParentTaxonName = sf;
+            }
+            if (grandParentTaxonName != null || Rank.GENUS.equals(parentRank)) {
+                if (grandParentTaxonName != null) item.put("parent_taxon_name", grandParentTaxonName);
+                else item.remove("parent_taxon_name");
                 item.put("rank", parentRank);
                 if ("family".equals(parentRank)) {
                     item.remove("subfamily");
