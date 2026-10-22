@@ -27,9 +27,31 @@ public class LogMgr {
     AntwebUtil.remove(file); 
   }
 
+  // Writes a whole report file (not capped: see MAX_ENTRY).
   public static void newLog(String file, String data) {
     emptyLog(file);
-    appendLog(file, data, false);
+    appendFile(getWebLogRoot() + file, data);
+  }
+
+  /**
+   * Longest entry written to a log (2026-10-22). One message page wrote ~13 MB lines to
+   * messages.txt (11 GB in 11 days on staging). The top-level logs (data logs in log/, and
+   * web/log/*.log, *.txt) keep at most this many characters of an entry, ending with
+   * "... [cut, N characters]". Files in subfolders (upload reports in web/log/upload,
+   * specimen, worldants, detail) and whole report files (newLog) are written in full.
+   * 20,000 rather than 10,000: a serverBusy.html entry (running queries) can be ~10 KB.
+   */
+  public static final int MAX_ENTRY = 20000;
+
+  /** The entry, cut to MAX_ENTRY characters with a marker. */
+  public static String capEntry(String data) {
+    if (data == null || data.length() <= MAX_ENTRY) return data;
+    return data.substring(0, MAX_ENTRY) + "... [cut, " + String.format("%,d", data.length()) + " characters]";
+  }
+
+  /** The short record of a message page in messages.txt (MessagePageLog). */
+  public static void logMessagePage(jakarta.servlet.http.HttpServletRequest request, String message) {
+    MessagePageLog.log(request, message);
   }
 
   private static int MaxSize = 50000;
@@ -83,6 +105,8 @@ public class LogMgr {
        If the nested dir does not exist, it will be created. */
     String logRoot = getWebLogRoot();
     if (dir != null) logRoot += dir + "/";
+    // Top-level logs are capped per entry; reports in subfolders are written in full.
+    if (dir == null && file != null && !file.contains("/")) data = capEntry(data);
     file = logRoot + file;
     LogMgr.appendFile(file, data);
   }
@@ -102,7 +126,7 @@ public class LogMgr {
     String logRoot = AntwebProps.getDataRoot()+ "log/";
     if (dir != null) logRoot += dir + "/";
     String fullPath = logRoot + file;
-    LogMgr.appendFile(fullPath, data);
+    LogMgr.appendFile(fullPath, capEntry(data));
   }
 
   public static void emptyFile(String fullPath) {

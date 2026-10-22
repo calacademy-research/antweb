@@ -78,10 +78,10 @@ Production paths; on staging replace `/root/antweb` with `/root/antweb-next` (or
 
 | Log | Where on the host | Also readable |
 |---|---|---|
-| Nightly run (`compute.log`), admin actions (`admin.log`), TaxonWorks nightly (`taxonworksNightly.log`), 21:00 job (`adminTask.log`), `taxonSetBackup.log` and other application logs | `/root/antweb/logs/web/` (kept across rebuilds; rotated weekly over 10 MB, 26 kept) | `https://www.antweb.org/logMgr.do` (admin), e.g. `logMgr.do?action=get&fileName=compute&ext=log` |
+| Nightly run (`compute.log`), admin actions (`admin.log`), TaxonWorks nightly (`taxonworksNightly.log`), 21:00 job (`adminTask.log`), `taxonSetBackup.log` and other application logs | `/root/antweb/logs/web/` (kept across rebuilds; rotated as below) | `https://www.antweb.org/logMgr.do` (admin), e.g. `logMgr.do?action=get&fileName=compute&ext=log` |
 | Tomcat console (`catalina.out`: start-up, errors, `startup.sh` warnings) | `docker logs antweb_antweb_1` (last 50 MB) | `logMgr.do?action=tomcatLog` |
 | Tomcat files: `catalina.*.log`, `localhost_access_log.*.txt` (180 days), `antweb.log`, `antwebInfo.log`, `detail/` (search, upload, event logs) | `/root/antweb/logs/` | `logMgr.do?action=antwebLog`, `antwebInfoLog` |
-| Data logs: `emails.log` (every mail sent or not sent), `messages.txt`, `serverBusy.html`, `logrotate.log` | `/root/antweb/logbak/` | `messages.txt` and `serverBusy.html` through logMgr.do; `emails.log` only on the host |
+| Data logs: `emails.log` (every mail sent or not sent), `messages.txt` (one short line per message page), `longRequest.log` (requests over 10 seconds), `serverBusy.html`, `cCheck.log` (CPU over 90%), `logrotate.log` | `/root/antweb/logbak/` (container `/usr/local/antweb/log`; rotated as below) | `messages.txt`, `longRequest.log`, `cCheck.log` and `serverBusy.html` through logMgr.do; `emails.log` only on the host |
 | Upload reports (public, linked from group and upload pages) | `/mnt/antweb/web/log/{upload,specimen,worldants,detail}/` | `https://www.antweb.org/web/log/upload/...` |
 | Caddy access log (JSON) | `/root/antweb/docker/caddy/logs/access.log` | |
 | Restart checker | `/root/antweb/logs/detail/rebootCheck.log` (only restarts and warnings) | |
@@ -94,6 +94,40 @@ Production paths; on staging replace `/root/antweb` with `/root/antweb-next` (or
 # ssh root@165.232.137.86   (antweb-prod)
 tail -30 /root/antweb/logs/web/compute.log; tail -10 /root/antweb/logs/web/taxonworksNightly.log
 ```
+
+### Log sizes and rotation
+
+- **Rotation.** `docker/antweb/logrotate.conf` (in the image as `/etc/antweb-logrotate.conf`) runs every day at 03:40 as the user tomcat (`docker/antweb/crontab.txt`). It covers the top-level `*.log` and `*.txt` of `logs/web/` and `logbak/`: a file over 10 MB is rotated once a week, a file over 100 MB at the next daily run. Old copies are compressed at once (`compute.log-20261025.gz`); 26 are kept per log, older ones are deleted. The report folders (`upload`, `specimen`, `worldants`, `detail`) are never touched. Each run is logged in `logbak/logrotate.log`; its state (when each file was last rotated) is `logbak/.logrotate.state`.
+- **A new file waits a week.** logrotate records a file it has not seen before with the date of that run and rotates it by the weekly rule only a week later ("log does not need rotating (log has already been rotated)" in `logrotate.log`). That is why `messages.txt` was not rotated when rotation started on 2026-10-19: 11 GB on staging, 1.8 GB on production by 10-22. Since 2026-10-22 the 100 MB `maxsize` rotates a big file the next day regardless.
+- **Size limits in the code.** No log entry is longer than 20,000 characters (`LogMgr.MAX_ENTRY`, cut with "... [cut, N characters]"); upload reports in the report folders are written in full. A message page writes one short line to `messages.txt`: the date, the first 300 characters of the message as plain text, its full length if cut, and the page address without the form token or password values (`MessagePageLog`). The same message is written at most 3 times a day; the next day one "summary: shown N times" line gives the count (the "You must log in" page shown to bots was millions of lines on production). `longRequest.log` lines hold the time, the address (at most 500 characters) and the start of the user agent. The log viewer (logMgr.do) shows at most 2,000 characters of a line and 5 MB in all.
+- **Warning.** After each nightly run (`compute.log`: "Log size check: ok") AntWeb checks for a log file over 1 GB in `logbak/`, `logs/web/` or `logs/`, and the disk over 85%. If so, it adds an admin alert (Admin Alert Manager) and emails antweb@antweb.org (forwarded to Brian), every day until fixed.
+
+### A log grows too big
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+ls -laS /root/antweb/logbak | head -15; ls -laS /root/antweb/logs/web | head -15; df -h /
+tail -20 /root/antweb/logbak/logrotate.log
+```
+
+Expect files well under 100 MB except on the day before a rotation. To rotate now instead of waiting for 03:40 (the same command the crontab runs; it rotates only files due under the rules above and compresses them, which can take a few minutes for a multi-GB file):
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+docker exec antweb_antweb_1 setpriv --reuid=tomcat --regid=antweb --init-groups /usr/sbin/logrotate --state /usr/local/antweb/log/.logrotate.state --log /usr/local/antweb/log/logrotate.log /etc/antweb-logrotate.conf; ls -la /root/antweb/logbak
+```
+
+Then find what writes so much: `tail -c 2000 <file>` shows the last lines. A single writer filling a log is a bug to fix in the code (as for `messages.txt` on 2026-10-22), not only a file to delete.
+
+**Old leftovers, safe to delete (Brian).** These are not rotated (their names do not end in `.log` or `.txt`) or are no longer written: `longRequest.log.0` (730 MB, last written 2023-12-03), `cCheck.log.0` (219 MB, 2023-12-03) and `cCheck.log` (211 MB, last written 2024-06-21) in `logbak/` on production. Check the dates first, then delete:
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+ls -la /root/antweb/logbak/*.log.0 /root/antweb/logbak/cCheck.log
+rm /root/antweb/logbak/longRequest.log.0 /root/antweb/logbak/cCheck.log.0 /root/antweb/logbak/cCheck.log
+```
+
+Expect the three files listed with those sizes and 2023 or 2024 dates; `rm` prints nothing. (If `cCheck.log` shows a 2026 date, it is being written again: leave it, rotation handles it.) On staging, the same `ls -la /root/antweb-next/logbak/*.log.0` shows whether it has such files.
 
 ## Common checks
 
@@ -353,6 +387,7 @@ All alerts email bfisher@calacademy.org.
 | CPU above 90% for 1 hour (antweb-prod) | Between 05:00 and 08:00: the nightly sets (expected heavy load). Otherwise a crawler burst or a stuck Java thread. | Common checks. Outside the nightly window: `docker stats --no-stream`; `tail /var/log/antweb-watchdog.log` (the watchdog restarts a stuck thread within the hour). If it persists, restart (above). |
 | Memory above 90% for 30 minutes | Java heap growth (Java may use up to 40% of RAM), MySQL, or many API bulk requests (API is capped at 1 GB). | `free -h; docker stats --no-stream`; `grep "heap used" /root/antweb/logs/web/compute.log \| tail -5` shows the heap at the end of each nightly run. Restart AntWeb at a quiet time. If it recurs, `nightlyRestart=true` (Switches) brings back the daily restart. |
 | Disk above 85% for 30 minutes | Logs, Docker images or build cache, journal. | "Disk full" below. |
+| "Log size check" (email from antweb@antweb.org and an admin alert, after the nightly run) | A log file over 1 GB, or the disk over 85%. | "A log grows too big" (Logs, above). |
 | Disk read above 90 MB/s for 1 hour (antweb-prod) | The nightly sets, or a long database scan. | If outside 05:00 to 08:00: running queries with the DB pattern and `show full processlist;`. |
 | Uptime: www.antweb.org/v3.1/ down 10 minutes from all regions | Cloudflare cannot reach Caddy or the API (droplet down, Caddy or API stopped, firewall, certificate). This check does not cover Tomcat: AntWeb pages can be down while it passes. | "Site down" below. |
 | Uptime: www.antcat.org/v1/taxa/429011 | antcat.org is down. | AntCat runbook (AntCat repository and project instructions). |

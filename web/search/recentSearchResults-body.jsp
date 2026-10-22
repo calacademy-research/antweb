@@ -166,7 +166,7 @@ function clickrecall(thisfield, defaulttext) {
 <% } %>
 
 
-<span class="right"><b><a href="<%= AntwebProps.getDomainApp() %>/query.do?name=imageData">Download All</a></b></span>
+<span class="right"><b><a href="<%= AntwebProps.getDomainApp() %>/query.do?name=imageData">Image data of the latest 5,000 images</a></b></span>
 
 
 

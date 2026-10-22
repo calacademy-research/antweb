@@ -17,7 +17,7 @@
     if (header == null) header = "message...";
 
     String message = (String) request.getAttribute("message"); 
-    LogMgr.appendDataLog("messages.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + message + " " + HttpUtil.getTarget(request));
+    LogMgr.logMessagePage(request, message); // a short record only (MessagePageLog)
 %>
 
 <br><b><%= message %></b>

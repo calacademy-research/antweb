@@ -254,6 +254,27 @@ public abstract class QueryManager {
         return message;
     }
 
+    /**
+     * Most rows a named query shows on its page (2026-10-22). The public imageData query ("Download All"
+     * on the recent images page) listed every image, about 13 MB of HTML per view, and every view was
+     * written whole to messages.txt. Rows past the limit are counted (rowCount stays the full count) but
+     * not shown. The species lists with range data are bounded by the number of species of a place and
+     * are shown in full (UNCAPPED).
+     */
+    public static final int MAX_ROWS_SHOWN = 5000;
+    static final Set<String> UNCAPPED = Set.of("bioregionSpeciesListWithRangeData", "geolocaleSpeciesListWithRangeData");
+
+    public static int maxRowsShown(String queryName) {
+        return queryName != null && UNCAPPED.contains(queryName) ? Integer.MAX_VALUE : MAX_ROWS_SHOWN;
+    }
+
+    /** The note under a table that shows only the first rows. */
+    public static String notShownNote(int shown, int total) {
+        if (total <= shown) return "";
+        return "<br><b>Showing the first " + String.format("%,d", shown) + " of " + String.format("%,d", total)
+            + " rows</b> (" + String.format("%,d", total - shown) + " more not shown on this page).\n";
+    }
+
     public static String runNamedQueryHtml(NamedQuery namedQuery, Connection connection) throws SQLException {
         StringBuffer message = new StringBuffer();
         Statement stmt = null;
@@ -293,8 +314,10 @@ public abstract class QueryManager {
             
             rset = stmt.executeQuery(query);
             int i = 0;
+            int maxShown = maxRowsShown(namedQuery.getName());
             while (rset.next()) {
               ++i;
+              if (i > maxShown) continue;  // counted, not shown
               int columnCount = rset.getMetaData().getColumnCount();
               for (int j=1 ; j <= columnCount ; ++j) {
                 String val = cell(rset.getString(j));
@@ -309,6 +332,7 @@ public abstract class QueryManager {
             } // end while
 
             message.append("</table>\n");
+            message.append(notShownNote(maxShown, i));
             message.append("<br><b>rowCount:</b>" + i + "\n");
 
             long timePassed = AntwebUtil.minsSince(startTime);

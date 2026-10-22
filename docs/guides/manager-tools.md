@@ -305,6 +305,12 @@ image data download).
 **Changed 2026-10-21**: result values and column headings were written into the page as HTML; they are
 now text, and only the links the queries build to AntWeb pages stay links.
 
+**Changed 2026-10-22**: a query shows at most 5,000 rows ("Showing the first 5,000 of N rows"; rowCount
+is still the full count). The image data query listed every image, about 13 MB of page each time, and
+each view was written whole into the messages log. The bioregion and country species lists with range
+data are shown in full. The image data link on the recent images page now says "Image data of the latest
+5,000 images".
+
 ---
 
 ## Log Manager (`logMgr.do?action=list`)
@@ -317,6 +323,10 @@ files can be read. Curators reach one line of their own group's upload files fro
 upload reports.
 
 **Changed 2026-10-21**: taxonworksNightly.log and adminAlerts.log are linked in the list.
+
+**Changed 2026-10-22**: a line is shown with at most 2,000 characters ("... [cut, N characters]"), and the
+output stops at 5 MB. messages.txt now holds one short line per message page (runbook, "Log sizes and
+rotation").
 
 ---
 

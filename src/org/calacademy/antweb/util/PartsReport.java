@@ -64,8 +64,18 @@ public final class PartsReport {
 
     static String nz(String s) { return s == null ? "" : s; }
 
+    /**
+     * Most specimens listed on the page (2026-10-22): the page is a message page, and a list of every
+     * specimen of every group could run to megabytes. The CSV download and the group filter give the rest.
+     */
+    public static final int MAX_SHOWN = 1000;
+
     /** The HTML page: explanation, group filter, download link, then one table per group. */
     public static String html(List<PartGroup> specimens, Integer groupId, String domainApp) {
+        return html(specimens, groupId, domainApp, MAX_SHOWN);
+    }
+
+    public static String html(List<PartGroup> specimens, Integer groupId, String domainApp, int maxShown) {
         List<GroupList> all = byGroup(specimens);
         List<GroupList> shown = select(all, groupId);
         String base = domainApp + "/list.do?action=casentDAnomalies";
@@ -102,13 +112,22 @@ public final class PartsReport {
         if (groupId == null) {
             b.append("<p style=\"font-weight:normal\">A specimen whose records were uploaded by more than one group is listed under each of them.</p>");
         }
+        int total = 0;
+        for (GroupList l : shown) total += l.specimens.size();
+        if (total > maxShown) {
+            b.append("<p class=\"parts-cut\"><b>Showing the first ").append(String.format("%,d", maxShown)).append(" of ")
+             .append(String.format("%,d", total)).append(" listed specimens.</b> Download the CSV or choose a group for the rest.</p>");
+        }
+        int listed = 0;
         for (GroupList l : shown) {
+            if (listed >= maxShown) break;
             b.append("<h2>").append(Html.esc(l.name)).append(" (").append(l.specimens.size())
              .append(l.specimens.size() == 1 ? " specimen" : " specimens").append(")</h2>");
             b.append("<table class=\"parts-report\" cellpadding=6 border=1 style=\"border-collapse:collapse;font-weight:normal\"><tr><th>#</th><th>Specimen</th><th>Part</th>")
              .append("<th>Taxon name</th><th>Uploaded name</th><th>Determined by</th><th>Date determined</th><th>Uploaded by</th><th>Museum</th></tr>");
             int i = 0;
             for (PartGroup g : l.specimens) {
+                if (listed++ >= maxShown) break;
                 ++i;
                 boolean first = true;
                 for (PartRow r : g.parts) {
