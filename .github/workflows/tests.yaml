@@ -583,7 +583,7 @@ jobs:
             chown tomcat /tmp/s
             $T /usr/sbin/logrotate --state /tmp/s /etc/antweb-logrotate.conf
             ls -la $L
-            ls $L | grep -q "^compute.log-[0-9]\{8\}.gz$" || { echo "compute.log was not rotated and compressed"; exit 1; }
+            ls $L | grep -q "^compute.log-[0-9]\{8\}-[0-9]\{2\}.gz$" || { echo "compute.log was not rotated and compressed"; exit 1; }
             test -f $L/siteWarning.txt || { echo "small file was rotated"; exit 1; }
             for r in specimen worldants detail upload; do test -L $L/$r; done
             grep -q "logrotate" /etc/cron.d/antwebcrontab
@@ -603,7 +603,7 @@ jobs:
             # The command of the crontab, with no state file yet (first run).
             $T /usr/sbin/logrotate --state $D/.logrotate.state --log $D/logrotate.log /etc/antweb-logrotate.conf
             ls -la $D
-            ls $D | grep -q "^messages.txt-[0-9]\{8\}.gz$" || { echo "messages.txt (over 100 MB) was not rotated"; exit 1; }
+            ls $D | grep -q "^messages.txt-[0-9]\{8\}-[0-9]\{2\}.gz$" || { echo "messages.txt (over 100 MB) was not rotated"; exit 1; }
             test ! -e $D/messages.txt || { echo "messages.txt still there"; exit 1; }
             test -f $D/longRequest.log || { echo "a 20 MB log was rotated on the first run (weekly rule)"; exit 1; }
           '

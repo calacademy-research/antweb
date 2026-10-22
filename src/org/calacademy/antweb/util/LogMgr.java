@@ -126,7 +126,9 @@ public class LogMgr {
     String logRoot = AntwebProps.getDataRoot()+ "log/";
     if (dir != null) logRoot += dir + "/";
     String fullPath = logRoot + file;
-    LogMgr.appendFile(fullPath, capEntry(data));
+    // Top-level data logs are capped per entry; files in subfolders are written in full.
+    if (dir == null && file != null && !file.contains("/")) data = capEntry(data);
+    LogMgr.appendFile(fullPath, data);
   }
 
   public static void emptyFile(String fullPath) {
