@@ -55,7 +55,7 @@
 
 <%
    if (AntwebMgr.hasServerMessage()) { %>
-<div class="cp-msg" id="curate-server-message"><%= AntwebMgr.getServerMessage() %></div>
+<div class="cp-notice" id="curate-server-message"><%= AntwebMgr.getServerMessage() %></div>
 <% } %>
 
 <!-- Upload specimen data -->
@@ -147,7 +147,7 @@
                 <input id="upload-submit-btn" class="cp-btn" type="submit" value="Upload" <%= active %>>
             </div>
 
-            <div id="upload-processing-msg" class="cp-progress">
+            <div id="upload-processing-msg" class="cp-progress" style="display:none">
                 Sending your file&hellip; please wait. The next page shows the progress of your upload.
             </div>
 
@@ -300,3 +300,4 @@ if (speciesListList != null && !speciesListList.isEmpty()) { %>
 <%@include file="/curate/curatorLinks.jsp" %>
 
 </div>
+<span id="curate-page-end" hidden></span>

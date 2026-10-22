@@ -44,7 +44,9 @@ def _cards(html):
 def _page_part(html):
     """The Curate page's own markup (div.cp), without the site header."""
     assert 'class="cp" id="curate-page"' in html, "no div.cp (the Curate page wrapper)"
-    return html.split('class="cp" id="curate-page"', 1)[1]
+    page = html.split('class="cp" id="curate-page"', 1)[1]
+    assert 'id="curate-page-end"' in page, "no end marker after div.cp"
+    return page.split('id="curate-page-end"', 1)[0]
 
 
 def _layout_ok(html):
@@ -61,9 +63,9 @@ def _layout_ok(html):
     if present_admin:
         assert cards.index(present_admin[0]) > cards.index(present_curator[-1]), f"admin cards before curator ones: {cards}"
     assert [c for c in cards if c in CURATOR_CARDS] == [c for c in CURATOR_CARDS if c in cards], f"order: {cards}"
-    # Every section card is a direct child of div.cp: no wrapper column narrows it.
-    for m in re.finditer(r'<div class="cp-card', page):
-        assert not re.search(r'style="[^"]*width:\s*\d', page[m.start():m.start() + 200]), "a card with a fixed width"
+    # No card has a width of its own, and no column of the old layout narrows it.
+    for tag in re.findall(r'<div class="cp-card[^>]*>', page):
+        assert "width" not in tag and "float" not in tag, tag
     help_line = re.search(r'<p id="curate-help"[^>]*>Need help\?.*?/documentation\.do', page, re.S)
     assert help_line and help_line.start() < page.index('<div class="cp-card'), "Need help? line missing or not at the top"
     return page
@@ -87,7 +89,10 @@ def _no_statistics_box(html):
 # Static: the source says what the pages will show.
 
 def test_source_curate_layout():
-    src = _src("web/curate/curate-body.jsp") + _src("web/curate/curatorLinks.jsp")
+    # The page as Tomcat builds it: curatorLinks.jsp in place of its include.
+    src = _src("web/curate/curate-body.jsp").replace('<%@include file="/curate/curatorLinks.jsp" %>',
+                                                     _src("web/curate/curatorLinks.jsp"))
+    assert "curate-manager-tools" in src, "curatorLinks.jsp is no longer included"
     page = _layout_ok(src)
     assert _cards(page) == CURATOR_CARDS + ADMIN_CARDS, _cards(page)
     _antcat_import_ok(page)
@@ -101,6 +106,8 @@ def test_source_curate_layout():
         assert re.search(r'<input class="cp-btn[^"]*" type="submit" value="%s"' % re.escape(value), src) or \
             re.search(r'<input id="upload-submit-btn" class="cp-btn" type="submit" value="%s"' % re.escape(value), src), value
     assert 'type="image"' not in src
+    # Hidden until the upload starts, even without the stylesheet.
+    assert '<div id="upload-processing-msg" class="cp-progress" style="display:none">' in src
     # The upload button still starts disabled when the server is busy.
     assert 'id="upload-submit-btn" class="cp-btn" type="submit" value="Upload" <%= active %>>' in src
 

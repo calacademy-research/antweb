@@ -25,6 +25,9 @@
 .cp-msg { margin: 0 0 14px 0; padding: 10px 14px; border-radius: 8px; background: #fff4f2; border: 1px solid #f3c6bd;
   color: #a0281a; font-weight: 600; }
 .cp-msg:empty { display: none; }
+/* The server's own busy / down-time line (AntwebMgr.getServerMessage) brings its own colour. */
+.cp-notice { margin: 0 0 14px 0; padding: 8px 14px; border-radius: 8px; background: #fff; border: 1px solid #e1e5ea; }
+.cp-notice h3 { margin: 0; font-size: 14px; letter-spacing: 0; text-transform: none; }
 
 /* Sections: one card each, full width. */
 .cp-card {
