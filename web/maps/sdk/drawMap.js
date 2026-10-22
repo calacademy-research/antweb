@@ -116,19 +116,44 @@
     fitToDots(bucket);
   };
 
-  // --- Localities ---
-  global.drawMapLocalities = function (divName, latArray, lonArray, nameArray, codeArray) {
+  // --- Popup text and links (antwebMapPopup is also used by tests/unit/test_map_popups.py) ---
+  // Locality names and codes, and collection codes, arrive form-encoded ("West+Bengal%2C+India",
+  // "loc22.8%2C88.3"): Map.java writes them that way and the maps stored in object_map hold them so.
+  // Decode once, then build the link with one encodeURIComponent. Showing them undecoded and encoding
+  // them again gave "locality.do?code=loc22.8%252C88.3" (Locality not found), 2026-10-22.
+  function formDecode(value) {
+    const s = value == null ? "" : String(value);
+    try { return decodeURIComponent(s.replace(/\+/g, " ")); } catch (e) { return s; }
+  }
+  function present(value) {
+    const s = value == null ? "" : String(value).trim();
+    return s && s !== "null" && s !== "undefined" ? s : "";
+  }
+  function esc(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, c =>
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+  }
+  // kind: "locality" (locality.do?code=), "collection" (collection.do?name=) or "specimen" (specimen.do?name=).
+  const LINKS = { locality: "/locality.do?code=", collection: "/collection.do?name=", specimen: "/specimen.do?name=" };
+  function popupHtml(kind, name, code, img) {
+    const encoded = kind === "locality" || kind === "collection";
+    const n = present(encoded ? formDecode(name) : name);
+    const c = present(encoded ? formDecode(code) : code);
+    const title = n || c;
+    let html = title ? `<b>${esc(title)}</b>` : "";
+    // No link without a code: "locality.do?code=" or "?code=null" only finds "Locality not found".
+    if (c) html += `${html ? "<br>" : ""}<a href="${esc(LINKS[kind] + encodeURIComponent(c))}" target="_blank">${esc(c)}</a>`;
+    if (present(img)) html += `<br><img src="${esc(img)}" alt="${esc(n)}">`;
+    return `<div>${html}</div>`;
+  }
+  global.antwebMapPopup = { popupHtml, formDecode };
+
+  // --- Localities (and collections: kind "collection") ---
+  global.drawMapLocalities = function (divName, latArray, lonArray, nameArray, codeArray, kind) {
     const bucket = initMap(divName, latArray?.[0] || 0, lonArray?.[0] || 0, 5);
+    const k = kind === "collection" ? "collection" : "locality";
     for (let i = 0; i < latArray.length; i++) {
-      const name = nameArray?.[i] || "";
-      const code = codeArray?.[i] || "";
-      const url = `/locality.do?code=${encodeURIComponent(code)}`;
-      const html = `
-        <div>
-          <b>${name || code}</b><br>
-          <a href="${url}" target="_blank">${code}</a>
-        </div>`;
-      addDot(bucket, latArray[i], lonArray[i], html);
+      addDot(bucket, latArray[i], lonArray[i], popupHtml(k, nameArray?.[i], codeArray?.[i]));
     }
     fitToDots(bucket);
   };
@@ -137,17 +162,7 @@
   global.drawMapSpecimens = function (divName, latArray, lonArray, nameArray, codeArray, imageArray) {
     const bucket = initMap(divName, latArray?.[0] || 0, lonArray?.[0] || 0, 5);
     for (let i = 0; i < latArray.length; i++) {
-      const name = nameArray?.[i] || "";
-      const code = codeArray?.[i] || "";
-      const img = imageArray?.[i] || "";
-      const url = `/specimen.do?name=${encodeURIComponent(code)}`;
-      const imgTag = img ? `<br><img src="${img}" alt="${name}">` : "";
-      const html = `
-        <div>
-          <b>${name}</b><br>
-          <a href="${url}" target="_blank">${code}</a>${imgTag}
-        </div>`;
-      addDot(bucket, latArray[i], lonArray[i], html);
+      addDot(bucket, latArray[i], lonArray[i], popupHtml("specimen", nameArray?.[i], codeArray?.[i], imageArray?.[i]));
     }
     fitToDots(bucket);
   };
@@ -155,14 +170,7 @@
   // --- Single Point ---
   global.drawMapSinglePoint = function (divName, lat, lon, name, code, img) {
     const bucket = initMap(divName, lat, lon, 8);
-    const url = `/specimen.do?name=${encodeURIComponent(code)}`;
-    const imgTag = img ? `<br><img src="${img}" alt="${name}">` : "";
-    const html = `
-      <div>
-        <b>${name}</b><br>
-        <a href="${url}" target="_blank">${code}</a>${imgTag}
-      </div>`;
-    addDot(bucket, lat, lon, html);
+    addDot(bucket, lat, lon, popupHtml("specimen", name, code, img));
   };
 
   // --- Resize all maps on load ---
