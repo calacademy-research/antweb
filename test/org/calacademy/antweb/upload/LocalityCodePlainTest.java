@@ -92,7 +92,18 @@ public class LocalityCodePlainTest extends TestCase {
         assertEquals("sp.localitycode = 'Français'", search.getCodeSearchString("sp.localitycode", null, "\"Français\""));
         assertEquals("sp.localitycode like '%a''b\\\\c%'", search.getCodeSearchString("sp.localitycode", "contains", "\"a'b\\c\""));
         assertEquals("sp.collectioncode = 'BLF01'", search.getCodeSearchString("sp.collectioncode", "equals", "BLF01"));
+        // Every advanced-search text field: an apostrophe doubled, a backslash escaped, a double quote kept as one.
+        Search plain = new Search();
+        assertEquals("sp.localityname = 'O''Brien\\\\x'", plain.field("sp.localityname", "equals", "O'Brien\\x"));
+        assertEquals("sp.habitat like '%5\"%'", plain.field("sp.habitat", "contains", "5\""));
         // Not one quoted code: read as before (two codes).
         assertEquals("sp.localitycode = 'a' or sp.localitycode = 'b'", search.getCodeSearchString("sp.localitycode", "equals", "\"a\" \"b\""));
+    }
+
+    /** GenericSearch.getSearchString is protected: reached through a subclass. */
+    static class Search extends AdvancedSearch {
+        String field(String property, String searchType, String value) {
+            return getSearchString(property, searchType, value);
+        }
     }
 }

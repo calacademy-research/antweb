@@ -252,10 +252,15 @@ def check_locality_code(s):
     hrefs = [unescape(h) for h in re.findall(r"""href=["']([^"']*locality\.do\?code=[^"']*)["']""", page)]
     assert any(h.endswith(expected) for h in hrefs), (expected, hrefs)
     assert not any(re.search(r"%25[0-9A-Fa-f]{2}", h) for h in hrefs), hrefs
+    # Shown as text, never as markup: the raw "<" of the code must not reach the HTML (it was hidden by the
+    # URL-encoding before 2026-10-22).
+    raw = LOCALITY_CODE.split("_")[0]   # zzloc<5m
+    assert raw not in page, "the specimen page prints the locality code unescaped"
     loc = s.get(BASE_URL + expected, timeout=TIMEOUT)
     assert loc.status_code == 200, (expected, loc.status_code)
     assert "Locality not found" not in loc.text, _text(loc.text)[:400]
     assert LOCALITY_CODE in unescape(loc.text), "the locality page does not show the code as written"
+    assert raw not in loc.text, "the locality page prints the locality code unescaped"
     m = re.search(r"""href=['"]([^'"]*advancedSearch\.do\?[^'"]*localityCode=[^'"]*)['"]>Show All Specimens""", loc.text)
     assert m, "no Show All Specimens link on the locality page"
     found = s.get(unescape(m.group(1)), timeout=API_TIMEOUT)

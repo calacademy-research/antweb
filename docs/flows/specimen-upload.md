@@ -131,7 +131,9 @@ Readers of the stored code, all of which take the plain code:
 | `collection-body.jsp`, `specimen-body.jsp`, `specimenReport.jsp`, `locality-body.jsp` | `Html.url` once (PR #236) |
 | Locality page (`LocalityAction`, `LocalityDb.getLocalityByCode()`) | `where sp.localitycode = <DBUtil.sqlLiteral(code)>`; was `escapeQuotes`, which doubled a `"` so `KM55""805` was never found |
 | Collection page (`CollectionDb.getCollection()`) | the same, `DBUtil.sqlLiteral` |
-| "Show All Specimens" on the locality page, advanced search Locality Code / Collection Code (`GenericSearch.getCodeSearchString()`) | `localityCode="<code>"`: a value in one pair of double quotes with no space is one code, taken whole (it may hold `"` or `,`); a `"` stays one character in the SQL |
+| "Show All Specimens" on the locality page, advanced search Locality Code / Collection Code (`GenericSearch.getCodeSearchString()`) | `localityCode="<code>"`: a value in one pair of double quotes with no space is one code, taken whole (it may hold `"` or `,`); a `"` stays one character in the SQL. Several quoted codes must be separated by a space (`"a" "b"`): `"a","b"` is now one code |
+| "Enlarge Map" link under the small map (`maps/googleMapInclude.jsp`) | `bigMap.do?locality=` (or `collection=`) with the code encoded once (`Html.url`) and the link escaped (was printed raw) |
+| Code shown as text (locality page, collection page, specimen lists) | `Html.esc` or `bean:write` (escapes); the end-to-end round trip checks that the raw `<` never reaches the HTML |
 | Maps (`Map.java`, `drawMap.js`) | `Map.java` form-encodes the code once, `drawMap.js` decodes once and builds the link with one `encodeURIComponent` |
 | Field guide (`FieldGuide`) | `LocalityDb.getLocalityByCode()` (was `getLocality(code)`, which used the code as an SQL clause) |
 | TaxonWorks nightly (`TaxonWorksTransformer`) | passes `LocalityCode` through; the parse above applies |
@@ -143,7 +145,8 @@ MySQL compares codes ignoring case and accents (`utf8mb3_general_ci`): `Montagne
 
 Checks: `LocalityCodePlainTest` (JUnit, CI), `tests/unit/test_map_popups.py`, `tests/unit/test_locality_codes.py`,
 the end-to-end upload round trip (`zztest0007` with the code `zzloc<5m_Français"?`), and the Integrity Check query
-`encodedLocalityCodes` (codes holding `%` and two hex digits; normally none). Old rows: the group's next upload
+`encodedLocalityCodes` (codes holding `%` and two hex digits; normally none). Links saved before a group's codes are stored plain (bookmarks, search engines: `locality.do?code=Ahi_%253C5m`)
+stop finding the locality once the codes are decoded; the new links work. Old rows: the group's next upload
 stores them plain (CAS every night through the TaxonWorks upload); the one-off repair for the others is in
 `docs/runbook.md`, "Locality codes stored URL-encoded".
 

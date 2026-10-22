@@ -49,6 +49,9 @@ def test_upload_stores_plain_codes():
     for path in ("src/org/calacademy/antweb/home/LocalityDb.java", "src/org/calacademy/antweb/home/CollectionDb.java"):
         lines = [l for l in code_lines(src(path)) if "localitycode =" in l.lower() or "collectioncode =" in l.lower()]
         assert lines and all("DBUtil.sqlLiteral(" in l for l in lines), (path, lines)
+    include = src("web/maps/googleMapInclude.jsp")
+    assert include.count("Html.url(objectName)") == 2 and "Html.escAttr(AntwebProps.getDomainApp() + \"/bigMap.do?\"" in include, \
+        "the Enlarge Map link must encode the code once and escape the attribute"
     print("The upload stores locality codes plain; links and lookups use the plain code.")
 
 

@@ -505,6 +505,8 @@ F=/root/antweb-next/etc/db.properties; docker exec -i -e MYSQL_PWD="$(sed -n 's/
 
    Expect three small results (a heading line and a value line each): `backed_up` equal to `expected`, `changed` equal to `expected`, and
    `still_encoded_in_repaired_groups` 0 (or the number of specimens of collisions left out in those groups).
+   `backed_up` can be larger than `expected` when a code left out as a collision differs from a repaired one only in
+   upper and lower case (MySQL compares them as equal); those extra rows are only copied, not changed.
 
 4. Check: the Integrity Check query `query.do?name=encodedLocalityCodes` lists no Economo codes any more, and a
    repaired code opens its locality page with its specimens, for example `locality.do?code=KM55%22%22805`
@@ -513,7 +515,8 @@ F=/root/antweb-next/etc/db.properties; docker exec -i -e MYSQL_PWD="$(sed -n 's/
 5. Then production: the same three commands with `ssh root@165.232.137.86`, `cd /root/antweb`,
    `--project /root/antweb` and `F=/root/antweb/etc/db.properties`.
 
-Rollback (puts every changed code back, from the backup table):
+Rollback (puts every changed code back, from the backup table). Only before the group uploads again: after an
+upload it would put the old encoded codes over the new plain ones.
 
 ```
 # ssh root@165.232.137.86   (antweb-prod; on staging use /root/antweb-next/etc/db.properties)

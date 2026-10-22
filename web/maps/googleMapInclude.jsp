@@ -50,16 +50,18 @@
     String overviewParam = "";
     if (overview != null) overviewParam = overview.getParams();
 
+    // objectName is a taxon name, specimen code, locality code or collection code: encoded once (locality codes
+    // are stored as written since 2026-10-22 and may hold < > " ? &), the whole link escaped for the attribute.
     String objectParam = "";
     if ("taxonName".equals(object) || "specimen".equals(object)) {
-        objectParam = object + "=" + objectName + "&";
+        objectParam = object + "=" + org.calacademy.antweb.util.Html.url(objectName) + "&";
     } else if ("locality".equals(object) || "collection".equals(object)) {
-        objectParam = object + "=" + objectName + "&";
+        objectParam = object + "=" + org.calacademy.antweb.util.Html.url(objectName) + "&";
         overviewParam = "";
     }
 %>
 <div style="text-align:center; margin-top:4px;">
-    <a href="<%= AntwebProps.getDomainApp() %>/bigMap.do?<%= objectParam %><%= overviewParam %>">
+    <a href="<%= org.calacademy.antweb.util.Html.escAttr(AntwebProps.getDomainApp() + "/bigMap.do?" + objectParam + overviewParam) %>">
         Enlarge Map
     </a>
 </div>
@@ -81,7 +83,7 @@
 <%
         } else {
             if (AntwebProps.isDevMode()) {
-                String msg = "No map data found for " + object + " (" + objectName + ")";
+                String msg = "No map data found for " + object + " (" + org.calacademy.antweb.util.Html.esc(objectName) + ")";
                 out.println("<div style='color:red'>" + msg + "</div>");
             }
         }
