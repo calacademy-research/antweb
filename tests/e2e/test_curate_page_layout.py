@@ -53,7 +53,9 @@ def _layout_ok(html):
     """One column of full-width cards, nothing centered, no old two-column classes or image buttons; the
     curator cards come before the admin cards; Import AntCat names now is a card section with its button."""
     page = _page_part(html)
-    assert not CENTERED.search(page), CENTERED.search(page).group(0)
+    # The server's busy line and Struts messages bring their own markup; the page does not control it.
+    own = re.sub(r'<div class="cp-(?:notice|msg)"[^>]*>.*?</div>', "", page, flags=re.S)
+    assert not CENTERED.search(own), CENTERED.search(own).group(0)
     found = [x for x in OLD_LAYOUT if x in page]
     assert not found, f"old layout left on the Curate page: {found}"
     cards = _cards(page)
