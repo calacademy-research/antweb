@@ -243,7 +243,8 @@ def repair_sql(rows, skip_groups=(), include_collisions=False):
                      f" and access_group = {int(r['group_id'])};")
     lines += [
         f"select count(*) as changed, {expected} as expected from specimen s join {BACKUP_TABLE} b"
-        " on b.code = s.code where cast(s.localitycode as binary) <> cast(b.localitycode as binary);",
+        " on b.code = s.code and b.access_group = s.access_group"
+        " where cast(s.localitycode as binary) <> cast(b.localitycode as binary);",
         "commit;",
         "select count(*) as still_encoded_in_repaired_groups from specimen where localitycode regexp " + ENCODED_SQL
         + f" and access_group in (select distinct access_group from {BACKUP_TABLE});",

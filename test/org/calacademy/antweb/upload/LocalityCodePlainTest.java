@@ -27,6 +27,7 @@ public class LocalityCodePlainTest extends TestCase {
         assertEquals("MontagnedesFrançais_150", SpecimenUploadParse.plainLocalityCode("Montagne des Français_150", null));
         assertEquals("a>b<c", SpecimenUploadParse.plainLocalityCode("a > b < c", null));
         assertEquals("Peggy’s_Rock", SpecimenUploadParse.plainLocalityCode("Peggy’s_Rock", null));   // was %3F
+        assertEquals("ant?_site", SpecimenUploadParse.plainLocalityCode("ant\uD83D\uDC1C_site", null));   // utf8mb3 column: no emoji
         for (String code : new String[] {"Ahi_<5m", "KM55\"\"805", "Français_150", "x?y>z"}) {
             String stored = SpecimenUploadParse.plainLocalityCode(code, MADAGASCAR);
             assertFalse(stored, stored.matches(".*%[0-9A-Fa-f]{2}.*"));

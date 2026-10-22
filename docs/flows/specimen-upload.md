@@ -120,7 +120,8 @@ During parse (`SpecimenUploadParse.cleanCollectionCode()` and `cleanLocalityCode
 - **Stored as written** (since 2026-10-22). Every other character is kept: `<`, `>`, `?`, `"`, `,`, `/`,
   accented letters. Until 2026-10-22 the locality code was then URL-encoded (`HttpUtil.encodePath`, ISO-8859-1):
   `Ahi_<5m` was stored as `Ahi_%3C5m`, `MontagnedesFrançais_150` as `MontagnedesFran%E7ais_150`, and a character
-  outside ISO-8859-1 (a curly apostrophe) as `%3F`. On 2026-10-22 production held 1,117 specimens in 67 such codes
+  outside ISO-8859-1 (a curly apostrophe) as `%3F`. A character outside the Basic Multilingual Plane (an emoji) is still stored as `?`:
+  the column is `utf8mb3`. On 2026-10-22 production held 1,117 specimens in 67 such codes
   (Economo Ant Lab 921 in 18 codes, CAS 196 in 49). Collection codes were never encoded.
 
 Readers of the stored code, all of which take the plain code:

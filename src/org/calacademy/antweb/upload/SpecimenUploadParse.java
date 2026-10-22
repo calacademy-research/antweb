@@ -808,6 +808,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     public static String plainLocalityCode(String localityCode, Coordinate coord) {
         if (localityCode != null) {
             localityCode = UploadUtil.cleanCode(localityCode);
+            // specimen.localitycode is utf8mb3: a character outside the Basic Multilingual Plane (an emoji) would fail
+            // the insert. It becomes "?", as the old encoding made it.
+            localityCode = localityCode.replaceAll("[^\\u0000-\\uFFFF]", "?");
         }
         if (("Null".equals(localityCode) || localityCode == null || localityCode.length() < 5)
                 && coord != null && coord.getLat() != 0 && coord.getLon() != 0) {
