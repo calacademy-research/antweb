@@ -1,0 +1,153 @@
+/* The Curate page (curate.do: web/curate/curate-body.jsp and curatorLinks.jsp). Brian Fisher, 2026-10-22:
+   "remove the center align and go back to left align ... can you give it a more modern look".
+   Every rule is scoped to .cp (the page's outer div), so no other page changes. The admin layout
+   (admLayout.jsp) wraps the page in <div align="center">; .cp sets the text back to the left.
+   Tested in tests/e2e/test_curate_page_layout.py. */
+
+.cp {
+  text-align: left;
+  max-width: 1100px;
+  margin: 0;
+  padding: 4px 16px 0 16px;
+  box-sizing: border-box;
+  color: #2d3338;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.cp *, .cp *::before, .cp *::after { box-sizing: border-box; }
+
+.cp a { color: #1f63c6; font-weight: 600; text-decoration: none; }
+.cp a:hover, .cp a:focus { text-decoration: underline; }
+
+/* Top line: help link, messages from the server. */
+.cp-help { margin: 0 0 14px 0; font-size: 14px; color: #5b6570; }
+.cp-msg { margin: 0 0 14px 0; padding: 10px 14px; border-radius: 8px; background: #fff4f2; border: 1px solid #f3c6bd;
+  color: #a0281a; font-weight: 600; }
+.cp-msg:empty { display: none; }
+
+/* Sections: one card each, full width. */
+.cp-card {
+  background: #f8f9fb;
+  border: 1px solid #e1e5ea;
+  border-radius: 10px;
+  padding: 16px 20px 14px 20px;
+  margin: 0 0 16px 0;
+}
+.cp-card > h2, .cp h2.cp-h {
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 650;
+  color: #1f2529;
+  margin: 0 0 10px 0;
+  padding: 0;
+}
+.cp h3 {
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: #66707a;
+  margin: 16px 0 6px 0;
+}
+.cp-card > h3:first-of-type, .cp-card > h2 + h3 { margin-top: 4px; }
+.cp p { font-size: 14px; margin: 0 0 8px 0; }
+.cp-lead { color: #5b6570; margin: -4px 0 10px 0; }
+
+.cp-badge {
+  display: inline-block;
+  vertical-align: 2px;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #e8edf5;
+  color: #44546a;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.cp-admin { background: #f6f7f9; border-color: #dcdfe4; }
+
+/* Link lists: the link in bold, its explanation in normal weight after it. */
+.cp ul.cp-links { list-style: none; margin: 0; padding: 0; }
+.cp ul.cp-links > li {
+  margin: 0;
+  padding: 7px 0;
+  border-top: 1px solid #e8ebef;
+  font-size: 14px;
+}
+.cp ul.cp-links > li:first-child { border-top: 0; padding-top: 2px; }
+
+/* Forms. */
+.cp-form { margin: 0; }
+.cp-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 0; }
+.cp-row label, .cp-label { font-weight: 600; color: #3a434b; }
+.cp-actions { margin: 12px 0 2px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.cp select,
+.cp textarea,
+.cp input[type="text"],
+.cp input[type="file"] {
+  font: inherit;
+  font-size: 14px;
+  color: #2d3338;
+  background: #fff;
+  border: 1px solid #c8ced6;
+  border-radius: 6px;
+  padding: 6px 8px;
+  max-width: 100%;
+}
+.cp textarea { display: block; width: 100%; }
+.cp input[type="file"] { padding: 4px 6px; }
+.cp input[type="file"]::file-selector-button {
+  font: inherit;
+  font-size: 13px;
+  margin-right: 10px;
+  padding: 5px 12px;
+  border: 1px solid #c8ced6;
+  border-radius: 5px;
+  background: #f1f3f6;
+  color: #2d3338;
+  cursor: pointer;
+}
+
+.cp .cp-btn {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-block;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 8px 18px;
+  border: 1px solid #1f63c6;
+  border-radius: 6px;
+  background: #1f63c6;
+  color: #fff;
+  cursor: pointer;
+}
+.cp .cp-btn:hover, .cp .cp-btn:focus { background: #174f9f; border-color: #174f9f; }
+.cp .cp-btn:disabled { background: #aab3bd; border-color: #aab3bd; cursor: not-allowed; }
+.cp .cp-btn-secondary { background: #fff; color: #1f63c6; }
+.cp .cp-btn-secondary:hover, .cp .cp-btn-secondary:focus { background: #eef3fb; color: #174f9f; }
+
+/* Notes next to the forms. */
+.cp-note { font-size: 13px; color: #5b6570; margin: 8px 0 0 0; }
+.cp-note ol, .cp-note ul { margin: 4px 0 0 0; padding-left: 20px; }
+.cp-warn { margin: 8px 0; padding: 8px 12px; border-left: 3px solid #d97706; background: #fff8eb; color: #6b4300;
+  border-radius: 0 6px 6px 0; font-size: 13px; }
+.cp-alert { color: #b42318; font-weight: 600; }
+.cp-progress { display: none; margin: 10px 0; padding: 8px 12px; border-radius: 6px; background: #eaf2fd;
+  color: #174f9f; font-weight: 600; }
+.cp code { font-size: 12.5px; background: #eef0f3; padding: 1px 4px; border-radius: 4px; word-break: break-word; }
+.cp-sub { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e1e5ea; }
+
+/* Phone width: cards use the whole width, controls stack. */
+@media (max-width: 760px) {
+  .cp { padding: 0 10px; font-size: 15px; }
+  .cp-card { padding: 14px 14px 12px 14px; border-radius: 8px; }
+  .cp select, .cp input[type="file"] { width: 100%; }
+  .cp-row { align-items: stretch; flex-direction: column; gap: 6px; }
+  .cp .cp-btn { width: auto; }
+}

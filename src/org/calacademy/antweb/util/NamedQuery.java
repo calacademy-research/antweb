@@ -45,6 +45,11 @@ public class NamedQuery  //implements Iterable
       this.detailQuery = detailQuery;
   }
 
+  /** The topic group of the Query Manager page this query is listed in (Queries.QUERY_GROUPS). */
+  public Queries.QueryGroup getGroup() {
+    return Queries.getGroup(name);
+  }
+
   /** The first sentence of the explanation: the line shown in lists of queries. */
   public String getSummary() {
     return summary(desc);
