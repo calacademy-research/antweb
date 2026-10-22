@@ -59,6 +59,8 @@ tests = [
   "test_page_content.py",
   "test_parallel_safety.py",
   "test_place_image_counts.py",
+  "test_numbers_live.py",
+  "test_api_numbers.py",
   "test_previous_determinations.py",
   "test_privacy.py",
   "test_world_ant_collections.py",
@@ -282,6 +284,8 @@ tests = [
 # Numbers: taxon, place, museum and image counts, the count check, the nightly count sets.
 paths = [
   "src/org/calacademy/antweb/util/CountCheck*.java",
+  "src/org/calacademy/antweb/util/CountInvariants.java",
+  "src/org/calacademy/antweb/util/NumberChecks.java",
   "src/org/calacademy/antweb/util/StatSet.java",
   "src/org/calacademy/antweb/home/*Count*.java",
   "src/org/calacademy/antweb/home/StatisticsDb.java",
@@ -300,6 +304,8 @@ tests = [
   "test_region_counts.py",
   "test_place_image_counts.py",
   "test_numbers_pages.py",             # added by #216
+  "test_numbers_live.py",              # live numbers against the place pages (2026-10-22)
+  "test_api_numbers.py",               # API counts (2026-10-22)
 ]
 
 [areas.places]
@@ -420,6 +426,7 @@ paths = [
 ]
 tests = [
   "test_api.py",
+  "test_api_numbers.py",
   "test_hardening_2026_10_18.py",
 ]
 

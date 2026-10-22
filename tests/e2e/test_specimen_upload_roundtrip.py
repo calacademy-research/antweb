@@ -154,6 +154,13 @@ def test_specimen_upload_round_trip(uploader, names):
     assert rep.status_code == 200, (rep_url, rep.status_code)
     report = rep.text
 
+    # The report's numbers (docs/numbers.md rows 95, 96; 2026-10-22): species inserted or updated by this upload are
+    # at most the specimen lines uploaded.
+    for label in ("Inserted Species", "Updated Species"):
+        m = re.search(r"<b>" + label + r":</b> (\d+)\.", report)
+        if m:
+            assert int(m.group(1)) <= len(lines) - 1, f"{label}: {m.group(1)} for {len(lines) - 1} specimen lines"
+
     # The report: synonym replaced, unknown name kept, bad code refused, out-of-bounds flagged.
     recognized = _section(report, "Recognized invalid species")
     assert recognized, "no 'Recognized invalid species' section in " + rep_url

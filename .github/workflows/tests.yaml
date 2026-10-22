@@ -368,6 +368,7 @@ jobs:
           # SpecimenNameHistoryDbTest: the specimen page's Name History query (applied rows of one specimen, newest first,
           # never report-only rows; index by_code; no history when the table is missing).
           # CountInvariantsTest: the count check's invariants over every place (docs/numbers.md), each wrong number found.
+          # NumberChecksTest: the count check's other numbers (statsPage tables, admin pages, API /taxa, endemic flags, B25, B26).
           # PlaceTotalsDbTest: the numbers the nightly run writes (place totals, pies, endemic, museums, taxon images,
           # home page, Global after the name update, statsPage) as the invariants expect them.
           # DownloadGuardsDbTest: a place download holds only the specimens collected there (5,000 cap), the paged
@@ -386,10 +387,10 @@ jobs:
               /t/org/calacademy/antweb/home/RegionCountDbTest.java /t/org/calacademy/antweb/home/PageTextRenameDbTest.java \
               /t/org/calacademy/antweb/upload/SpecimenNameHistoryDbTest.java \
               /t/org/calacademy/antweb/util/NumbersTestDb.java \
-              /t/org/calacademy/antweb/util/CountInvariantsTest.java \
+              /t/org/calacademy/antweb/util/CountInvariantsTest.java /t/org/calacademy/antweb/util/NumberChecksTest.java \
               /t/org/calacademy/antweb/home/PlaceTotalsDbTest.java \
               /t/org/calacademy/antweb/home/DownloadGuardsDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6; do
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:17 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

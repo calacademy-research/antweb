@@ -204,16 +204,36 @@ public class CountCheck {
         public long coreMillis;
         public long rotatingMillis;
 
+        /**
+         * Differences not listed (more than CountInvariants.LIST_CAP of one check), by check id ("id (pending)" for
+         * pending ones), 2026-10-22.
+         */
+        public final Map<String, Integer> unlisted = new java.util.TreeMap<>();
+
         public int real() {
             int n = 0;
             for (Mismatch m : mismatches) if (m.isReal()) ++n;
+            for (Map.Entry<String, Integer> e : unlisted.entrySet()) if (!e.getKey().endsWith(" (pending)")) n += e.getValue();
             return n;
         }
 
-        public int pending() { return mismatches.size() - real(); }
+        public int pending() {
+            int n = mismatches.size();
+            for (Mismatch m : mismatches) if (m.isReal()) --n;
+            for (Map.Entry<String, Integer> e : unlisted.entrySet()) if (e.getKey().endsWith(" (pending)")) n += e.getValue();
+            return n;
+        }
     }
 
     private final Connection connection;
+
+    /**
+     * The curator and artist numbers as curators.do, curator.do and artists.do show them (LoginMgr, ArtistMgr), for
+     * the invariants (NumberChecks); null: not checked.
+     */
+    public java.util.Map<Integer, int[]> curatorNumbers;
+    public java.util.Map<Integer, int[]> artistNumbers;
+    public java.sql.Timestamp curatorsRead;
 
     public CountCheck(Connection connection) {
         this.connection = connection;
@@ -268,6 +288,9 @@ public class CountCheck {
         if (invariants) {
             result.invariants = new CountInvariants(connection, result, changedNames, rulesCounted);
             result.invariants.statsPageValidSpecies = statsPageValidSpecies;
+            result.invariants.curatorNumbers = curatorNumbers;
+            result.invariants.curatorsRead = curatorsRead;
+            result.invariants.artistNumbers = artistNumbers;
             result.invariants.run();
         }
 
