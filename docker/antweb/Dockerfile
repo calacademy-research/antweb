@@ -29,7 +29,6 @@ imagemagick \
 logrotate \
 util-linux \
 default-mysql-client \
-php \
 python3 \
 unzip \
 zip \

@@ -495,7 +495,7 @@ copyright
 
 ```
 /var/www/html/imageUpload/
-├── upload.php                          - Upload interface (YUI uploader)
+├── (upload.php: removed 2026-10-21; AntWeb runs no PHP)
 ├── getFiles.php                        - Validate uploaded files
 ├── process.php                         - Trigger processing
 └── uploadResults.php                   - Display results
@@ -570,7 +570,7 @@ CASENT0106322_h_1.tif       (original)
 
 1. **Upload Interface:**
    ```
-   Curator → imageUpload.jsp → YUI Flash uploader → upload.php
+   Curator → imageUpload.jsp → image uploader (one file per request, imageUploadBatch.do)
    ```
 
 2. **File Validation (getFiles.php):**
