@@ -37,6 +37,17 @@ def test_missing_semicolon_and_note_with_apostrophe():
     assert list(s.tables["a"]["columns"]) == ["id", "name", "b", "c"], s.tables["a"]["columns"]
 
 
+def test_apostrophe_in_a_note_does_not_hide_comments_or_columns():
+    s = replay("create table n (a int, b int) -- the curator's table\n"
+               "alter table n add column c int; # Brian's request; also add column d\n")
+    assert list(s.tables["n"]["columns"]) == ["a", "b", "c"], s.tables["n"]["columns"]
+
+
+def test_rename_of_a_dropped_table_is_ignored():
+    s = replay("create table r (a int);\ndrop table r;\nrename table r to r2;\n")
+    assert "r2" not in s.tables and "r" in s.dropped
+
+
 def test_rename_and_change_and_drop_column():
     s = replay("create table old (uid int, x int);\n"
                "alter table old change column uid id int(11);\n"
@@ -138,7 +149,7 @@ def test_java_create_table_with_constant():
     for stmt in stmts:
         L.apply_statement(s, stmt, "X.java", "code")
     assert list(s.tables["job_x"]["columns"]) == ["id", "note"]
-    assert "*" in s.tables and list(s.tables["*"]["columns"]) == ["id"]
+    assert "*" not in s.tables, "a name made entirely at run time is not listed"
 
 
 def test_check_reports_a_heading_written_twice():

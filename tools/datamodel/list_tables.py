@@ -55,6 +55,14 @@ def version_key(path):
     return (parts, path.name)
 
 
+def opens_quote(text, i):
+    """True when text[i] opens a quoted string. An apostrophe inside a word (a note such as "doesn't") does not."""
+    ch = text[i]
+    if ch not in "'\"`":
+        return False
+    return not (ch == "'" and i > 0 and text[i - 1].isalnum())
+
+
 def strip_sql_comments(text):
     text = re.sub(r"/\*.*?\*/", " ", text, flags=re.S)
     out = []
@@ -71,7 +79,7 @@ def strip_sql_comments(text):
                 buf.append(ch)
                 if ch == q:
                     q = None
-            elif ch in "'\"`":
+            elif opens_quote(line, i):
                 q = ch
                 buf.append(ch)
             elif ch == "#" or re.match(r"--(\s|$)", line[i:]):
@@ -86,13 +94,13 @@ def strip_sql_comments(text):
 def split_top(text, sep):
     """Splits at sep outside quotes and parentheses."""
     parts, buf, depth, q = [], [], 0, None
-    for ch in text:
+    for i, ch in enumerate(text):
         if q:
             buf.append(ch)
-            if ch == q:
+            if ch == q or ch == "\n":  # a quote never runs past the end of its line
                 q = None
             continue
-        if ch in "'\"`":
+        if opens_quote(text, i):
             q = ch
         elif ch == "(":
             depth += 1
@@ -164,6 +172,8 @@ class Schema:
         self.dropped[name] = src
 
     def rename(self, old, new, src):
+        if old in self.dropped and old not in self.tables and old not in ALTERED_AFTER_DROP:
+            return  # a RENAME left in a file after the table was dropped
         t = self.tables.pop(old, None) or {"columns": {}, "created": None, "origin": "altered only", "history": []}
         t["history"].append("renamed from " + old + " " + src)
         self.tables[new] = t
@@ -288,6 +298,9 @@ def select_columns(rest):
 
 def apply_statement(schema, stmt, src, origin):
     s = " ".join(stmt.split())
+    m = re.match(r"create\s+(?:temporary\s+)?table\s+(?:if\s+not\s+exists\s+)?`?([A-Za-z0-9_$*]+)", s, re.I)
+    if m and not re.search(r"[A-Za-z0-9]", m.group(1)):
+        return  # the name is made entirely at run time (Java): nothing to list
     m = re.match(r"create\s+(?:or\s+replace\s+)?(?:algorithm\s*=\s*\w+\s+)?(?:definer\s*=\s*\S+\s+)?"
                  r"(?:sql\s+security\s+\w+\s+)?view\s+" + NAME, s, re.I)
     if m:
@@ -349,11 +362,11 @@ def split_semicolons(text):
     parts, buf = [], []
     for line in text.splitlines():
         q, cur = None, []
-        for ch in line:
+        for i, ch in enumerate(line):
             if q:
                 if ch == q:
                     q = None
-            elif ch in "'\"`":
+            elif opens_quote(line, i):
                 q = ch
             elif ch == ";":
                 buf.append("".join(cur))
@@ -518,8 +531,8 @@ def build():
     test_cols = {}
     for base in ("test", "tests"):
         for p in sorted((ROOT / base).rglob("*")):
-            if p.suffix not in (".java", ".py") or not p.is_file():
-                continue
+            if p.suffix not in (".java", ".py") or not p.is_file() or p.name == "test_datamodel_list_tables.py":
+                continue  # (the generator's own test holds made-up tables)
             text = p.read_text(encoding="utf-8", errors="replace")
             if not re.search(r"(?i)create table", text):
                 continue
