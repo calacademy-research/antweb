@@ -71,7 +71,7 @@ def test_source_three_groups_one_link_per_line():
     src = _src("web/curate/curate-body.jsp")
     for gid, (title, links) in GROUPS.items():
         block = src.split(f'id="{gid}"', 1)[1].split("</ul>", 1)[0]
-        assert f">{title}</h3>" in block, title
+        assert f"<h2>{title}</h2>" in block, title  # a card each since 2026-10-22
         for link in links:
             assert link in block, f"{link} not in {title}"
         items = re.findall(r"<li>(.*?)</li>", block, re.S)
