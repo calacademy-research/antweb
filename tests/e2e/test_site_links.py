@@ -54,7 +54,6 @@ SEEDS = [
 # Pages that must be checked whatever the crawl finds: the bug report's page and the map pages.
 ALWAYS = {
     "list (favourite images)": "/list.do?action=likes",
-    "page (project by short name)": "/page.do?name=california",
     "place (place name search)": "/place.do?placeName=Madagascar",
     "group (bug report 2026-10-22)": "/group.do?id=80",
     "bigMap (taxon)": "/bigMap.do?taxonName=formicinae&project=allantwebants",
@@ -166,6 +165,13 @@ class Crawl:
                 self.examples[t] = BASE_URL + p
 
 
+def _page_do_example(crawl):
+    """/page.do?name=<x> for the first project on projects.do named <x>ants, or None."""
+    _, html = crawl.fetch(BASE_URL + "/projects.do")
+    m = re.search(r"project\.do\?name=([A-Za-z0-9_-]{1,60})ants[\"'&]", html or "")
+    return f"{BASE_URL}/page.do?name={m.group(1)}" if m else None
+
+
 def _check(session, url):
     try:
         r = session.get(url, timeout=TIMEOUT)
@@ -248,6 +254,12 @@ def test_links_on_every_page_type():
     examples = OrderedDict((t, crawl.examples[t]) for t in sorted(crawl.examples) if t in wanted)
     for name, path in ALWAYS.items():
         examples[name] = BASE_URL + path
+    # page.do?name=X redirects to project.do?name=Xants: take X from a project listed on projects.do.
+    page_example = _page_do_example(crawl)
+    if page_example:
+        examples["page (project by short name)"] = page_example
+    else:
+        NOT_SAMPLED["/page"] = "no project.do?name=...ants link on projects.do to derive a short name from"
     missing_required = [t for t in REQUIRED if t not in examples]
     no_example = sorted(t for t in wanted - set(examples) if types.get(t, ("", "", "message"))[2] == "message")
     # Types that answer without parameters: the bare page is the example.
