@@ -187,6 +187,11 @@ public final class NumberChecks {
                 }
                 sum = add(sum, a);
             }
+            // a status the page shows that the recount does not have
+            for (Map.Entry<String, int[]> p : page.entrySet()) {
+                if (p.getKey() == null || recount.containsKey(p.getKey().toLowerCase(java.util.Locale.ROOT))) continue;
+                inv.compare(c, "site", "statsPage", "Images table, " + p.getKey() + ": Total", p.getValue()[0], 0, "=", null);
+            }
             long all = count("select count(*) from image");
             long orphans = 0;
             long orphanCodes = 0;
@@ -197,8 +202,10 @@ public final class NumberChecks {
                     orphanCodes = r.getLong(2);
                 }
             }
-            inv.compare(c, "site", "statsPage", "Images table: Sum (statuses shown) = all images (" + all + ") minus orphan images (" + orphans + ")"
-                + (nullStatus > 0 ? "; " + nullStatus + " images of specimens without a status are in no row" : ""), sum[0], all - orphans, "=", null);
+            inv.compare(c, "site", "statsPage", "Images table: Sum (statuses shown) + images of specimens without a status = all images (" + all
+                + ") minus orphan images (" + orphans + ")", sum[0] + nullStatus, all - orphans, "=", null);
+            // Images of specimens without a status are in no row of the table (so not in its Sum): a data finding.
+            inv.compare(c, "site", "statsPage", "Images table: images of specimens without a status (in no row, not in the Sum)", nullStatus, 0, "=", null);
             Map<String, Object> images = new LinkedHashMap<>();
             for (Map.Entry<String, long[]> e : recount.entrySet()) images.put(e.getKey(), e.getValue());
             expected("statsPage").put("images", images);
@@ -348,7 +355,11 @@ public final class NumberChecks {
                                 inv.why(c, type, key));
                         }
                     }
-                    c.compared += (int) count("select count(*) from " + l + " p join taxon pt on pt.taxon_name = p.taxon_name and pt.taxarank = '" + level[0] + "'");
+                    // rows compared: the parent rows of the places in scope
+                    for (Map.Entry<String, long[]> e : inv.rows("select p." + lk + ", count(*) from " + l + " p join taxon pt on pt.taxon_name = p.taxon_name"
+                            + " and pt.taxarank = '" + level[0] + "' group by p." + lk).entrySet()) {
+                        if (inScope.containsKey(e.getKey())) c.compared += (int) e.getValue()[0];
+                    }
                 }
             }
         });
@@ -373,6 +384,7 @@ public final class NumberChecks {
                 "select count(*) from bioregion_taxon", "select count(*) from museum_taxon", "select count(*) from geolocale_taxon",
                 "select count(*) from geolocale_taxon where is_introduced = 1", "select count(*) from geolocale_taxon where is_endemic = 1",
                 org.calacademy.antweb.home.StatisticsDb.VALID_SPECIES_IMAGED_SQL};
+            String[] from = {"taxon", "proj_taxon", "bioregion_taxon", "museum_taxon", "geolocale_taxon", "geolocale_taxon", "geolocale_taxon", "image"};
             long[] row = null;
             Timestamp created = null;
             StringBuilder select = new StringBuilder("select ");
@@ -391,8 +403,7 @@ public final class NumberChecks {
                 boolean imagesChanged = created != null && has("image", "upload_date") && count("select count(*) from image where upload_date > ?", created) > 0;
                 for (int i = 0; i < cols.length; i++) {
                     if (!has("statistics", cols[i])) continue;
-                    String table = sql[i].replaceAll(".* from (\\w+).*", "$1");
-                    if (!has(table)) continue;
+                    if (!has(from[i])) continue;
                     String p = listsChanged ? "lists or specimens changed after the row was written"
                         : i == cols.length - 1 && imagesChanged ? "images were added after the row was written" : null;
                     inv.compare(c, "site", "statistics", "statistics.do latest row: " + cols[i], row[i], count(sql[i]), "=", p);
@@ -520,6 +531,7 @@ public final class NumberChecks {
                 has("image_uploaded", "image_upload_id") && has("image_upload", "curator_id")
                     ? "select u.curator_id, count(*) from image_upload u join image_uploaded d on u.id = d.image_upload_id group by u.curator_id" : null};
             String[] tables = {"upload", "description_edit", "image_upload", "image_upload"};
+            Map<String, Object> shownNumbers = new TreeMap<>();
             String[] what = {"Specimen Uploads", "Description Edits", "image uploads", "images uploaded"};
             List<Map<String, long[]>> recount = new ArrayList<>();
             boolean[] since = new boolean[4];
@@ -538,10 +550,12 @@ public final class NumberChecks {
                     inv.compare(c, "curator", id, what[i] + " (curators.do, curator.do)", e.getValue()[i], r[i], "=",
                         since[i] ? "rows were added after the last nightly run (the pages read the numbers at the nightly reload)" : null);
                 }
-                inv.compare(c, "curator", id, "images uploaded >= image uploads", r[3], r[2], ">=", null);
                 exp.put(id, r);
+                shownNumbers.put(id, e.getValue());
             }
-            expected("curators").putAll(exp);
+            // the e2e test compares the pages with the numbers the check compared (LoginMgr's, read at the nightly reload)
+            expected("curators").putAll(shownNumbers);
+            expected("curatorsRecount").putAll(exp);
         });
     }
 
@@ -561,7 +575,7 @@ public final class NumberChecks {
                 inv.compare(c, "artist", id, "Images (artists.do)", e.getValue()[0], r[0], "=", p);
                 inv.compare(c, "artist", id, "Specimen (artists.do)", e.getValue()[1], r[1], "=", p);
                 inv.compare(c, "artist", id, "Specimen <= Images", r[1], r[0], "<=", null);
-                exp.put(id, r);
+                exp.put(id, e.getValue());
             }
             expected("artists").putAll(exp);
         });

@@ -29,7 +29,7 @@ from html import unescape
 import pytest
 
 from antweb import BASE_URL, TIMEOUT, classify, get, new_session
-from staging_accounts import IS_STAGING, login, needs
+from staging_accounts import GROUP_NAME, IS_STAGING, login, needs
 
 # The checks of CountInvariants (docs/numbers.md names them in its Test column).
 INVARIANTS = {"place.totals.subfamily", "place.totals.genus", "place.totals.species", "place.totals.valid",
@@ -40,6 +40,13 @@ INVARIANTS = {"place.totals.subfamily", "place.totals.genus", "place.totals.spec
               "stats.global", "stats.images", "stats.imaged", "stats.bioregions", "stats.museums", "admin.statistics",
               "admin.groups", "admin.imageUploads", "list.images", "place.endemic.flags", "taxon.parents", "geo.adm1.country"}
 # api.taxa runs only where the taxon table has the columns API /taxa reads (B11: no code writes them).
+
+# Checks whose real differences are known findings, not yet fixed (docs/numbers.md section 3): named in the failure.
+KNOWN = {"api.taxa": "B11, API /taxa counts nobody writes", "geo.adm1.country": "B26, adm1 by name only",
+         "stats.bioregions": "B31, statsPage counts every family", "stats.museums": "B31, statsPage counts every family",
+         "taxon.parents": "B25, subspecies under its species"}
+# The recount checks of the sampled places (CountCheck).
+RECOUNT_CHECKS = {"specimens", "species", "genera", "global", "images", "place images", "place specimens", "place totals"}
 
 
 def test_count_check_needs_login():
@@ -150,7 +157,17 @@ def test_list_counts_match_the_specimen_records():
         pytest.skip(f"compute.log has no completed nightly run, so the stored counts may be older than a day "
                     f"({real} differences, listed in the job summary)")
     if real:
-        pytest.fail(f"{real} list counts differ from the specimen records ({pending} more are pending). "
+        # Real differences per check, the known findings named (docs/numbers.md section 3), so that a new kind of
+        # difference stands out from the known ones.
+        per_check = {}
+        for row in re.findall(r'<tr class="count-invariant" data-id="([^"]+)"><td>.*?</td><td>.*?</td><td>.*?</td><td>\d+</td><td>(\d+)</td>', r.text, re.S):
+            if int(row[1]):
+                per_check[row[0]] = per_check.get(row[0], 0) + int(row[1])
+        recounts = sum(1 for c in rows if c[1] in RECOUNT_CHECKS)
+        if recounts:
+            per_check["recounts of the sampled places"] = recounts
+        summary_line = "; ".join(f"{k}: {v}" + (f" (known: {KNOWN[k]})" if k in KNOWN else "") for k, v in sorted(per_check.items()))
+        pytest.fail(f"{real} numbers differ from the records ({pending} more are pending). By check: {summary_line}.\n"
                     "Place | number | taxon | stored (shown) | recount:\n" + "\n".join(" | ".join(c) for c in rows[:40]))
 
 
@@ -292,11 +309,13 @@ def test_curator_and_artist_pages_equal_the_recount():
     assert not wrong, "curator and artist pages differ from the recount" + UPLOAD_NOTE + ":\n" + "\n".join(wrong[:60])
 
 
-def _groups_rows(html):
+def _groups_rows(html, skip_name=None):
     """groups.do: group id -> [uploads, specimens, ungeoreferenced, flagged, collections, localities, subfamilies, genera, species]."""
     rows = {}
-    for m in re.finditer(r"group\.do\?id=(\d+)'>.*?</td>((?:\s*<td align=\"right\">.*?</td>){11})", html, re.S):
-        cells = re.findall(r'<td align="right">(.*?)</td>', m.group(2), re.S)
+    for m in re.finditer(r"group\.do\?id=(\d+)'>(.*?)</a>.*?</td>((?:\s*<td align=\"right\">.*?</td>){11})", html, re.S):
+        if skip_name and unescape(m.group(2)).strip() == skip_name:
+            continue
+        cells = re.findall(r'<td align="right">(.*?)</td>', m.group(3), re.S)
         nums = [_int(c) for c in cells]
         rows[m.group(1)] = [nums[0]] + nums[3:]
     return rows
@@ -316,8 +335,11 @@ def test_group_pages_equal_the_stored_upload_numbers():
     html = s.get(BASE_URL + "/groups.do", timeout=max(TIMEOUT, 120)).text
     rows = _groups_rows(html)
     assert rows, "groups.do: no group rows found"
+    # the staging test group uploads during the suite (test_specimen_upload_roundtrip.py): its numbers can change
+    # between the check and this page
+    others = _groups_rows(html, skip_name=GROUP_NAME)
     wrong = []
-    for gid, values in rows.items():
+    for gid, values in others.items():
         if gid in groups and values != groups[gid]:
             wrong.append(f"groups.do group {gid}: page {values}, stored {groups[gid]}")
     tot = re.search(r"<td><b>Totals:&nbsp;</b>(\d+)</td>((?:\s*<td align=\"right\">.*?</td>){11})", html, re.S)
@@ -333,7 +355,8 @@ def test_group_pages_equal_the_stored_upload_numbers():
         for i, name in ((6, "Subfamilies"), (7, "Genera"), (8, "Species")):
             if totals[i] != max(v[i] or 0 for v in rows.values()):
                 wrong.append(f"groups.do Totals {name} {totals[i]} is not the largest row (the page's rule)")
-    gid = max(rows, key=lambda g: rows[g][1] or 0)
+    pick = others or rows
+    gid = max(pick, key=lambda g: pick[g][1] or 0)
     page = s.get(BASE_URL + "/group.do?id=" + gid, timeout=TIMEOUT).text
     shown = {}
     for label in ("Uploads", "Specimens", "Ungeoreferenced", "Flagged", "Collections", "Localities"):

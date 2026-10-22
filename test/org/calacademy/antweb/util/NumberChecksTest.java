@@ -95,11 +95,12 @@ public class NumberChecksTest extends TestCase {
         exec("insert into specimen (code, taxon_name, status, country, upload_id, family) values ('nostatus1', '" + PA + "', null, 'Madagascar', 1, 'formicidae')");
         exec("insert into image (id, image_of_id, shot_type, upload_date) values (50, 'nostatus1', 'h', '2020-01-01 10:00:00')");
         CountCheck.Result r = check();
+        // the Sum plus the images in no row add up; the images in no row are the finding
+        assertEquals(list(r), 1, real(r, "stats.images"));
         CountCheck.Mismatch m = first(r, "stats.images");
-        assertNotNull(list(r), m);
-        assertTrue(m.taxonName, m.taxonName.contains("Sum") && m.taxonName.contains("without a status"));
-        assertEquals(4, m.stored);
-        assertEquals(5, m.recount);
+        assertTrue(m.taxonName, m.taxonName.contains("without a status") && m.taxonName.contains("not in the Sum"));
+        assertEquals(1, m.stored);
+        assertEquals(0, m.recount);
     }
 
     public void testStatsPageBioregionAndMuseumData() throws Exception {

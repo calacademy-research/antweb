@@ -80,11 +80,20 @@ def test_images_meta_counts_and_specimen_image_count():
     code = specimen.get("specimenCode") or specimen.get("code")
     body = _api("images?specimenCode=" + code)
     meta = _meta(body)
-    rows = [r for r in _rows(body) if r]
+    rows = _rows(body)
+    assert all("specimenCode" in r for r in rows), f"/images {code}: a specimen without specimenCode (B29: 'spefimenCode'): {rows[:2]}"
     images = sum(len(r.get("images") or []) for r in rows)
     assert meta.get("count") == images, f"/images {code}: metaData count {meta.get('count')}, {images} images returned"
     assert meta.get("specimenCount") == len(rows), f"/images {code}: metaData specimenCount {meta.get('specimenCount')}, {len(rows)} specimens"
     assert int(specimen.get("imageCount") or 0) == images, f"{code}: /specimens imageCount {specimen.get('imageCount')}, /images {images}"
+
+
+def test_images_of_an_unknown_specimen_are_none():
+    """B29 (2026-10-22): /images said specimenCount 1 and returned one empty specimen when it found nothing."""
+    body = _api("images?specimenCode=zznosuchcode0000")
+    meta = _meta(body)
+    assert _rows(body) == [], _rows(body)
+    assert meta.get("specimenCount") == 0 and meta.get("count") == 0, meta
 
 
 def test_taxa_images_meta_counts():

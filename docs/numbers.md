@@ -167,7 +167,7 @@ Coverage after 2026-10-22: **67 validated, 51 partly, 0 not yet** of 118 (2026-1
 | 103 | API v3.1 | /taxa subfamilyCount, genusCount, speciesCount, specimenCount | taxon columns that no current code writes (B11); must be the name's Global row | yes | inv:api.taxa |
 | 104 | API v3.1 | /taxa imageCount | taxon.image_count (= #54) | yes | inv:taxon.images |
 | 105 | API v3.1 | /taxa meta taxonCount | live | partly | e2e:test_api_numbers.py::test_meta_count_is_the_rows_returned |
-| 106 | API v3.1 | /images meta counts | live: rows in this page; specimenCount was 1 and one empty specimen when nothing was found, and every specimen but the last was under 'spefimenCode' (fixed 2026-10-22) | partly | e2e:test_api_numbers.py::test_images_meta_counts_and_specimen_image_count |
+| 106 | API v3.1 | /images meta counts | live: rows in this page; specimenCount was 1 and one empty specimen when nothing was found, and every specimen but the last was under 'spefimenCode' (fixed 2026-10-22) | partly | e2e:test_api_numbers.py::test_images_meta_counts_and_specimen_image_count; e2e:test_api_numbers.py::test_images_of_an_unknown_specimen_are_none |
 | 107 | API v3.1 | /taxaImages meta counts | live | partly | e2e:test_api_numbers.py::test_taxa_images_meta_counts |
 | 108 | API v3.1 | /geolocales subfamily, genus, species, specimen counts | = #20-#22, #26 | yes | inv:place.totals.subfamily; inv:place.totals.genus; inv:place.totals.species; inv:place.totals.specimens |
 | 109 | API v3.1 | /geolocales imageCount, imagedSpecimenCount | = #29, #27 | yes | inv:place.images; cc:place images |
@@ -263,7 +263,8 @@ Found while doing this (2026-10-22):
   distinct image_of_id`), not the images. The check gives both (JSON `orphanedImages`: codes, images) and the
   e2e test compares the page with the codes. Label question: section 5 Q9.
 - **B29** (fixed, trivial) API `/images`: with no image found, `metaData.specimenCount` was 1 and the list held
-  one empty specimen; every specimen but the last was under the key `spefimenCode`. Test:
+  one empty specimen; every specimen but the last was under the key `spefimenCode`. Tests:
+  `e2e:test_api_numbers.py::test_images_of_an_unknown_specimen_are_none`,
   `e2e:test_api_numbers.py::test_images_meta_counts_and_specimen_image_count`.
 - **B30** (fixed, trivial) API `/geoSpeciesStats`: `queenErgatoidCount` and `maleErgatoidCount` both counted every
   ergatoid specimen (no caste condition), so a male ergatoid was also counted as a queen ergatoid. Now each counts
