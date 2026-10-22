@@ -536,7 +536,7 @@ public final class NumberChecks {
                 has("image_upload", "curator_id") ? "select curator_id, count(*) from image_upload where curator_id is not null group by curator_id" : null,
                 has("image_uploaded", "image_upload_id") && has("image_upload", "curator_id")
                     ? "select u.curator_id, count(*) from image_upload u join image_uploaded d on u.id = d.image_upload_id group by u.curator_id" : null};
-            String[] tables = {"upload", "description_edit", "image_upload", "image_upload"};
+            String[] tables = {"upload", "description_edit", "image_upload", "image_uploaded"};
             Map<String, Object> shownNumbers = new TreeMap<>();
             String[] what = {"Specimen Uploads", "Description Edits", "image uploads", "images uploaded"};
             List<Map<String, long[]>> recount = new ArrayList<>();
@@ -717,7 +717,7 @@ public final class NumberChecks {
         inv.check(check, c -> {
             site().put("taxa", "taxon table");
             String sql = "select c.taxon_name, c.taxarank, c.parent_taxon_name, p.taxarank from taxon c left join taxon p on p.taxon_name = c.parent_taxon_name"
-                + " where c.taxarank in ('species', 'subspecies') and c.taxon_name like '% %'";
+                + " where c.taxarank in ('species', 'subspecies') and c.taxon_name like '% %' and c.family = 'formicidae'";
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(sql))) {
                 while (r.next()) {
                     String name = r.getString(1);
@@ -781,12 +781,25 @@ public final class NumberChecks {
             String sql = "select count(*) from specimen s join geolocale_taxon gt on gt.geolocale_id = ? and gt.taxon_name = s.taxon_name"
                 + " join taxon t on t.taxon_name = s.taxon_name where s.country <=> ? and s.adm1 = ?"
                 + " and t.taxarank in ('species', 'subspecies') and t.family = 'formicidae' and s.status in " + CountInvariants.COUNTABLE;
+            // one indexed query per pair whose adm1 name is a state of another country; at most 60 s (the invariants have
+            // no other time limit), the pairs not reached are named in one difference
+            long until = System.currentTimeMillis() + 60_000;
+            int notReached = 0;
             for (String[] pair : pairs) {
                 for (String[] g : adm1s.getOrDefault(pair[1], new ArrayList<>())) {
                     if (pair[0] != null && CountInvariants.key(pair[0]).equals(CountInvariants.key(g[1]))) continue;
+                    if (System.currentTimeMillis() > until) {
+                        ++notReached;
+                        continue;
+                    }
                     long n = count(sql, Integer.parseInt(g[0]), pair[0], pair[1]);
                     if (n > 0) foreign.computeIfAbsent(g[0], x -> new long[1])[0] += n;
                 }
+            }
+            if (notReached > 0) {
+                site().put("specimens", "specimen table");
+                inv.compare(c, "site", "specimens", "B26: (country, adm1) pairs not counted this time (60 s limit)", notReached, 0, "=",
+                    "the check stopped at its time limit; the next run counts them");
             }
             Map<String, long[]> stored = inv.rows("select id, specimen_count from geolocale where georank = 'adm1' and is_valid = 1");
             Map<String, String> inScope = inv.places.get(PlaceTotals.GEOLOCALE);

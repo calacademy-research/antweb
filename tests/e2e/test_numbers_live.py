@@ -81,6 +81,9 @@ def test_list_headers_equal_place_numbers():
     wrong = []
     for rank, stat, status in (("subfamily", "subfamilies", "all"), ("genus", "genera", "all"), ("species", "species", "all"),
                                ("species", "valid", "valid%20extant")):
+        if stat not in stats:
+            wrong.append(f"the Madagascar page has no data-stat {stat}")
+            continue
         n, text = header(_get(f"/taxonomicPage.do?rank={rank}&{WHERE}&statusSet={status}"))
         if n != stats[stat]:
             wrong.append(f"taxonomicPage rank={rank} statusSet={status}: header {text!r}, place page {stat} {stats[stat]}")

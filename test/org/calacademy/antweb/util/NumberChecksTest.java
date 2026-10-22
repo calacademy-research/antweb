@@ -232,13 +232,14 @@ public class NumberChecksTest extends TestCase {
         exec("update geolocale set specimen_count = 3 where id = " + ATSINANANA);
         exec("insert into geolocale_taxon (geolocale_id, taxon_name, specimen_count, created) values (" + ATSINANANA + ", '" + PA + "', 3, '2020-01-01')");
         exec("update specimen set adm1 = 'Atsinanana' where code in ('casent1', 'casent2')");
-        exec("insert into specimen (code, taxon_name, status, country, adm1, upload_id, family) values ('kenya1', '" + PA + "', 'valid', 'Kenya', 'Atsinanana', 1, 'formicidae')");
+        exec("insert into specimen (code, taxon_name, status, country, adm1, upload_id, family) values ('kenya1', '" + PA + "', 'valid', 'Kenya', 'Atsinanana', 1, 'formicidae'),"
+            + " ('nocountry1', '" + PA + "', 'valid', null, 'Atsinanana', 1, 'formicidae')");
         CountCheck.Result r = check();
         CountCheck.Mismatch m = first(r, "geo.adm1.country");
         assertNotNull(list(r), m);
         assertTrue(m.isReal());
         assertEquals(3, m.stored);
-        assertEquals(2, m.recount);
+        assertEquals("one of Kenya, one with no country", 1, m.recount);
     }
 
     /** At most LIST_CAP differences of one check are listed; the others are counted (API /taxa can differ for every taxon). */

@@ -263,7 +263,8 @@ Found while doing this (2026-10-22):
   distinct image_of_id`), not the images. The check gives both (JSON `orphanedImages`: codes, images) and the
   e2e test compares the page with the codes. Label question: section 5 Q9.
 - **B29** (fixed, trivial) API `/images`: with no image found, `metaData.specimenCount` was 1 and the list held
-  one empty specimen; every specimen but the last was under the key `spefimenCode` (now `api.imagesBySpecimen`).
+  one empty specimen; every specimen but the last was under the key `spefimenCode` (now `api.imagesBySpecimen`); the
+  query had no order, so the images of one specimen could be split into several entries (now ordered by code).
   Tests: `unit:test_api_counts.py::test_images_of_nothing_are_no_specimen`,
   `e2e:test_api_numbers.py::test_images_of_an_unknown_specimen_are_none`,
   `e2e:test_api_numbers.py::test_images_meta_counts_and_specimen_image_count`.

@@ -1290,6 +1290,9 @@ def getImages():
             query = query.filter(Image.hasTiff == 1)
         if hasTiff == 'false':
             query = query.filter(Image.hasTiff == 0)
+    # imagesBySpecimen needs the images of one specimen together (2026-10-22: without an order a specimen could be
+    # split into several entries and counted more than once)
+    query = query.order_by(Image.code, Image.id)
     query = query.limit(limit)
     query = query.offset(offset)
 
