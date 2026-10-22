@@ -35,7 +35,7 @@ import org.calacademy.antweb.util.UtilDataAction;
 public class BackgroundJobsTest extends TestCase {
 
     /** The table, in memory. */
-    static final class MemoryStore implements BackgroundJobs.Store {
+    static class MemoryStore implements BackgroundJobs.Store {
         final Map<Integer, Job> rows = new ConcurrentHashMap<>();
         final AtomicInteger next = new AtomicInteger(100);
         final AtomicInteger updates = new AtomicInteger();
@@ -165,6 +165,28 @@ public class BackgroundJobsTest extends TestCase {
         Submitted again = runner.submit(upload(7, 5), job -> Outcome.ok("done"));
         assertTrue(again.isNew);
         waitFor(again.job, Status.finished);
+    }
+
+    /** A job the store cannot record is refused with the general text; the exception's details are kept for the admin logs. */
+    public void testNotRecordedKeepsTheReason() throws Exception {
+        MemoryStore failing = new MemoryStore() {
+            @Override public int insert(Job job) {
+                throw new RuntimeException(new java.sql.SQLException("Data too long for column 'title' at row 1", "22001", 1406));
+            }
+        };
+        Runner r = new Runner(failing, job -> null, 20, 0);
+        try {
+            Submitted s = r.submit(new Job(BackgroundJobs.DATA, "countCheck", "Count check (after the nightly run)", 0, "nightly", 0),
+                job -> Outcome.ok("done"));
+            assertNull(s.job);
+            assertEquals("The job could not be recorded. Please try again.", s.refused);
+            assertNotNull(s.error);
+            assertTrue(s.error, s.error.contains("Data too long for column 'title'"));
+            assertTrue(s.error, s.error.contains("SQLState 22001, error 1406"));
+            assertFalse("no exception text for curators", s.refused.contains("Data too long"));
+        } finally {
+            r.shutdown();
+        }
     }
 
     public void testDataJobSameActionNotTwice() throws Exception {
