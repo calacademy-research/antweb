@@ -117,5 +117,6 @@ def test_curate_page_layout_as_curator():
     r = s.get(BASE_URL + "/curate.do", timeout=TIMEOUT)
     assert r.status_code == 200 and classify(r).category == "ok", classify(r)
     _full_width_sections_first(r.text)
-    # Only the Curate page's sections (help line to the admin links): not the shared header or footer.
-    _no_statistics_box(r.text.split('id="curate-help"', 1)[1].split('class="admin_right"', 1)[0])
+    # The removed box (it sat in div.admin_right), anywhere on the page.
+    assert not re.search(r'class="home_module_header">\s*AntWeb Statistics', r.text), "AntWeb Statistics box is back"
+    assert "AntWeb Statistics" not in r.text.split('id="curate-help"', 1)[1]
