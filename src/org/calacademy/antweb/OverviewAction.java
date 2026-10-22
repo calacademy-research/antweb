@@ -296,8 +296,9 @@ public final class OverviewAction extends DescriptionAction {
               request.setAttribute("overview", geolocale); setPlaceImages(request, geolocale, connection);
               return mapping.findForward("region");
            } else {
-              request.setAttribute("message", "Region not found.");
-              return mapping.findForward("message");                
+              // No id or name (bare region.do): the list of regions, not "Region not found." (2026-10-22)
+              request.setAttribute("overviews", GeolocaleMgr.getRegions());
+              return mapping.findForward("regions");
            }
         }
         
@@ -330,9 +331,10 @@ public final class OverviewAction extends DescriptionAction {
               OverviewMgr.setOverview(request, geolocale);
               request.setAttribute("overview", geolocale); setPlaceImages(request, geolocale, connection);
               return mapping.findForward("subregion");
-           } else {              
-              request.setAttribute("message", "Subregion not found.");
-              return mapping.findForward("message");              
+           } else {
+              // No id or name (bare subregion.do): the list of subregions, not "Subregion not found." (2026-10-22)
+              request.setAttribute("overviews", GeolocaleMgr.getSubregions());
+              return mapping.findForward("subregions");
            }
         }   
 
