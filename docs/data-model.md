@@ -9,13 +9,14 @@ table names the code that writes it and the rows of [numbers.md](numbers.md) tha
 `tools/datamodel/list_tables.py`, which replays every `db/upgrade/<version>/*.sql` file in version order
 (CREATE, ALTER, RENAME, DROP; also views), adds the tables the Java code creates itself (`CREATE TABLE IF NOT
 EXISTS` in `src/`), and takes columns of the oldest tables (created before 2010, before the upgrade scripts) from
-the test schemas in `test/` and `tests/`. It finds **80 tables and 9 views**. The upgrade files are working notes
+the test schemas in `test/` and `tests/`. It finds **70 tables and 7 views** (after the catch-up file of
+2026-10-22, below; two of the tables are name patterns for dated copies the code makes). Production has 97
+tables and 8 views: the same, plus 27 dated backups and old unused tables and 1 old view (section 13). The upgrade files are working notes
 as much as scripts: some say they were never run, some mix pasted output with SQL, and some changes were made by
 hand on the server. So the live database can differ, and where it is known to differ this page says so (for
 example: on 2026-10-21 `museum.specimen_subfamily_dist_json` was smaller on staging than `db/upgrade/6.2`
-creates it; the API reads `taxon.subfamily_count` although `db/upgrade/4.150` drops it). To compare with the
-live schema, run on the production host, antweb-prod (how to log in: [runbook.md](runbook.md); read-only; after this
-page is merged, so the production checkout has the script):
+creates it). To compare with the live schema, run on the production host, antweb-prod (how to log in:
+[runbook.md](runbook.md); read-only):
 
 ```
 F=/root/antweb/etc/db.properties
@@ -24,13 +25,52 @@ python3 /root/antweb/tools/datamodel/list_tables.py --compare /root/live-schema.
 ```
 
 The password goes to MySQL on standard input, so it never appears on a command line. `--compare` lists tables and
-views that exist only live or only in the repository, and column differences. The first such run should be
-recorded here and the sections corrected.
+views that exist only live or only in the repository, and column differences.
+
+**The live snapshot.** The first such run, on production on 2026-10-22 (1,412 rows: 97 tables and 8 views), is
+committed as [`doc/schema/live-schema-2026-10-22.tsv`](../doc/schema/live-schema-2026-10-22.tsv): table, column,
+type and table type, tab separated, no header, nothing else (no data, no keys, no defaults). It lives in `doc/`
+(not `docs/`) because `doc/` is the folder the AntWeb container sees (`/antweb/deploy/doc`, read-only), so the
+running site can read it. What it showed, and what was done:
+
+- Tables production has that no file in the repository creates (made before the upgrade scripts, about 2010:
+  `project`, `proj_taxon`, `image`, `ant_group`, `artist`, `copyright`, `group_image`, and 6 small old ones), columns
+  added or widened by hand on the server, and changes of old upgrade files that were never run (for example
+  `db/upgrade/6.16` drops `favorite_images`, `similar_species` and `groups_project`, which production still has).
+  [`db/upgrade/8.115/2026-10-22-schema-catch-up.sql`](../db/upgrade/8.115/2026-10-22-schema-catch-up.sql) brings
+  the repository's SQL to production: it creates those tables with production's columns, adds and retypes columns,
+  drops four columns and twelve tables and views that only the repository had (none exists on production, none is
+  read by the code). Every statement is guarded, so on production the file changes nothing; tested on 2026-10-22 on
+  a local MySQL with a copy of production's structure (no change, also when run twice) and with a database built from
+  the repository's SQL (after the file it matches the snapshot, except the allow-listed tables below).
+- 27 tables and 1 view production has that the repository does not create: 13 dated backups from October 2026 and 14
+  old tables and 1 view that nothing reads. Each has a section in section 13 with a proposal.
+
+**Keeping the repository and production the same.** Two checks use the snapshot:
+
+1. CI: `list_tables.py --check` (below) also fails when the repository's SQL and the snapshot differ in any way
+   not on its allow-list: tables whose names say they are dated backups (`_bak_`, `_backup_`, `_deleted_`, or a
+   date at the end: `BACKUP_PATTERN`), and the old unused tables and view of section 13 (`LIVE_ONLY_UNUSED`). So a
+   new table or column needs its `db/upgrade` file (named `YYYY-MM-DD-...sql`) in the same pull request. A change in
+   a file dated after the snapshot (a later day) counts as pending, also a drop, and so is a table the code creates itself (`CREATE TABLE IF NOT EXISTS` in `src/`): CI prints a notice, not
+   an error. The order is: merge, run the
+   file on staging and production, then refresh the snapshot (until then the daily check on production lists the
+   change, which is expected).
+2. Production, daily: the count check (`countCheck.do`, run after the nightly run) compares the live database's
+   tables and columns with the snapshot (`SchemaCheck.java`) and lists every table or column added, removed or
+   retyped since then, except dated backups (and so also a real table whose name ends in a date: name new tables
+   without one). Read-only. Its summary goes to admin.log with the count check's; it sends no email (a possible
+   follow-up: an admin alert when a change is found).
+
+When production changes on purpose (an upgrade file run, a backup table dropped), refresh the snapshot: run the
+command above on antweb-prod, copy `/root/live-schema.tsv` into the repository as
+`doc/schema/live-schema-<date>.tsv` (the newest file is used; delete the old one in the same pull request), and
+fix whatever `--check` then reports (usually: remove a dropped table from `LIVE_ONLY_UNUSED` and its section).
 
 **Keeping this page complete.** CI (`.github/workflows/tests.yaml`, step "Data model doc has a section for every
 table") runs `python3 tools/datamodel/list_tables.py --check`: it fails when a table or view that the repository's
-SQL creates has no section here (a heading of the form `### ` followed by the name in backticks), when a section names a table the SQL does not know or has dropped (a dropped table goes to "Dropped already" in
-section 13), or when a table has two sections.
+SQL creates, or that the live snapshot has, has no section here (a heading of the form `### ` followed by the name in backticks), when a section names a table the SQL does not know or has dropped (a dropped table goes to "Dropped already" in
+section 13), when a table has two sections, or when the SQL and the snapshot differ (above).
 A new table therefore needs its `db/upgrade` file (or its `CREATE TABLE IF NOT EXISTS` in the code) and a section.
 `python3 tools/datamodel/list_tables.py` prints every table with its columns and the file that created it.
 
@@ -201,11 +241,12 @@ unused and backup is a search of the code for SQL that names the table (2026-10-
 | `antwiki_taxon_country` | [11](#antwiki_taxon_country) | unused (reader never called) |
 | `antwiki_valid_taxa`, `antwiki_fossil_taxa` | [11](#antwiki_valid_taxa) | unused (their admin queries were removed 2026-10-22) |
 | `ancillary` | [11](#ancillary) | unused (its admin query was removed 2026-10-22) |
-| `command` | [11](#command) | unused |
-| `taxon_country` | [11](#taxon_country) | unused; dropped by `db/upgrade/6.16` but still there in 2021 |
-| 9 views | [12](#12-views) | `api3_1_specimen`, `taxon_image` in use (API); the other 7 unused |
+| `taxon_country` | [11](#taxon_country) | unused; dropped by `db/upgrade/6.16` but still on production (2026-10-22) |
+| 8 views | [12](#12-views) | `api3_1_specimen`, `taxon_image` in use (API); the other 6 unused |
 | `team_member` | [13](#team_member) | unused (2021) |
-| 10 backup tables | [13](#13-obsolete-and-backup-tables) | backup |
+| `user_agentbak` | [13](#user_agentbak) | backup |
+| 13 dated backups of October 2026 | [13](#13-obsolete-and-backup-tables) | backup, drop after the date given (production only, not in the repository's SQL) |
+| 14 old tables and 1 view on production only | [13](#13-obsolete-and-backup-tables) | unused; drop proposed |
 | `login_inactive_backup_*`, `description_sanitize_backup_*` | [13](#login_inactive_backup_) | run-time backup |
 
 ## 3. Names and specimens
@@ -302,7 +343,8 @@ add names (`SpecimenUploadProcess.processLine`, `UploadDb.insertGenus`, `insertS
 
 **Status.** In use. Note: the API maps `subfamily_count`, `genus_count`, `species_count`, `specimen_count` of this
 table (#103, "taxon columns that no current code writes"); `db/upgrade/4.150/2013-06-19.sql` adds and then drops
-them, so whether they exist live, and with what values, needs the `--compare` run.
+them, but production has them (snapshot of 2026-10-22; `db/upgrade/8.115` records them). Nothing in the code writes
+them, so the API shows whatever values they last got.
 
 ### `homonym`
 
@@ -927,7 +969,10 @@ pages (`ObjectMapDb.getMap`: `BigMapAction`, `OverviewAction`, `AdvancedSearchAc
 
 **Numbers.** #85.
 
-**Status.** In use. No CREATE in the repository.
+**Status.** In use. Created in the repository only by `db/upgrade/8.115` (from production's columns). `name` is
+varchar(100) on production while `upload.group_name` is varchar(64): an 81-character group name made an upload row
+insert fail (PR #232 handles it in code; widening `upload.group_name` to varchar(100) needs Brian's decision and an
+ALTER on production).
 
 ### `group_count`
 
@@ -1110,21 +1155,18 @@ See [`antwiki_valid_taxa`](#antwiki_valid_taxa).
 Old "ancillary" pages (title, file name, contents, project), from before 2011. Its only reader, the admin query
 `ancillaryFiles`, was removed on 2026-10-22. Unused; candidate to drop.
 
-### `command`
-
-A table from `db/upgrade/5.18` (2014; `command`, `parameter1`, `cached`). No SQL in the code. Unused; candidate to
-drop.
-
 ### `taxon_country`
 
 Old per-country name records. `db/upgrade/6.16/2017-01-16.sql` backs it up (`taxon_country_bak`) and drops it,
-but it is in the 2021 table list (`db/upgrade/8.56/2021-04-08.sql` converts it to InnoDB), so the drop was not run
-or the table came back. No SQL in the code (a comment in `SpeciesListUpload` still mentions it). Unused; candidate
+but production still has it (2021 table list; snapshot of 2026-10-22: `taxon_name`, `country`, `project_name`,
+`created`), so the drop was not run. No SQL in the code (a comment in `SpeciesListUpload` still mentions it). Unused; candidate
 to drop.
 
 ## 12. Views
 
-Views are stored queries. Only two are used.
+Views are stored queries. Only two are used. Production has these 8 (snapshot of 2026-10-22). `tapir_specimen`
+(2012, TAPIR, retired) and `image_count` (2012) were views in the upgrade files but production has neither view
+(it has a table named `image_count`, section 13); `db/upgrade/8.115` drops them where they exist.
 
 ### `api3_1_specimen`
 
@@ -1155,15 +1197,12 @@ As `darwin_core_2` (`db/upgrade/8.77`). No reader. Unused.
 
 Darwin Core multimedia view (`db/upgrade/8.77`). No reader. Unused.
 
-### `tapir_specimen`
+### `darwin_core_2_test`
 
-View for the TAPIR protocol (2012, `db/upgrade/4.68`); TAPIR is retired. No reader. Obsolete; candidate to drop.
-
-### `image_count`
-
-Created as a view in `db/upgrade/4.44` (2012: images per name and project), but `db/upgrade/8.56/2021-04-08.sql`
-converts a table of that name to InnoDB, which suggests a table replaced the view. No reader (the code's
-`image_count` is a column of other tables). Obsolete; candidate to drop.
+A test copy of `darwin_core_2` (Darwin Core export view over `specimen`), on production only: its definition is
+pasted in `db/upgrade/8.56/2021-06-21.sql`, a file that says it was not executed. No reader (search of `src/`, `web/`,
+`api/`, `bin/`, 2026-10-22). Unused; drop proposed (needs Brian's yes; a view holds no data, its definition is in
+that file).
 
 ### `tempgeoview`
 
@@ -1171,66 +1210,187 @@ A temporary view over three geolocale rows (`db/upgrade/6.16`, 2017). No reader.
 
 ## 13. Obsolete and backup tables
 
-Candidates to drop. None is read by the code (search of `src/`, `web/`, `api/`, `bin/`, 2026-10-21). Before
-dropping: confirm the table exists (`--compare`), dump it to `/mnt/backup` with `mysqldump ant <table>`, then drop
-on staging first. The dates are those of the file that made the table (or of the name).
+None of these is read by the code (search of `src/`, `web/`, `api/`, `bin/` for SQL naming the table, 2026-10-22;
+`db/delOrphanTaxon.sql`, an old hand-run cleanup script nothing calls, still deletes from three of them). Nothing is
+dropped without Brian's yes. Before dropping one: confirm it still exists (the snapshot query in the introduction),
+dump it to `/mnt/backup` (`mysqldump ant <table> | gzip > /mnt/backup/<table>-<date>.sql.gz`), drop it on staging,
+then on production, then refresh the snapshot and remove it here and from `LIVE_ONLY_UNUSED` in
+`tools/datamodel/list_tables.py`.
+
+### Tables the repository's SQL knows
 
 | Table | Made | Evidence |
 |---|---|---|
-| `description_edit_plazi20150601` | 2015-06-01, `db/upgrade/5.30` | copy of the `plaziData` rows of `description_edit` before they were changed |
-| `proj_taxon20170422`, `project20170422` | `db/upgrade/6.16` (names: 2017-04-22) | copies of `proj_taxon` and `project` |
-| `favorite_images_bak` | `db/upgrade/6.16` (2017) | copy of `favorite_images`, a table later dropped |
-| `similar_species_bak` | `db/upgrade/6.16` (2017) | copy of `similar_species`, dropped in the same file |
-| `taxon_country_bak` | `db/upgrade/6.16` (2017) | copy of [`taxon_country`](#taxon_country) |
-| `taxon_prop20170617` | name: 2017-06-17 | in the 2021 table list; its drop was proposed in `db/upgrade/8.56/2021-06-21.sql`, a file that says "These have not been executed" |
-| `museumbak` | before 2019 (`db/upgrade/8.0/2019-04-22.sql` alters it) | drop proposed in the same unexecuted 2021 file |
-| `login_project_bak` | before 2021 | in the 2021 table list |
 | `user_agentbak` | 2023-01-17, `db/upgrade/8.85` | copy of `user_agent` before it was emptied |
-| `team_member` | 2011, `db/upgrade/4.3` | an old staff table with images in the database; the team page (`web/team/staff.jsp`) is static HTML |
-
-### `description_edit_plazi20150601`
-
-Backup, see the table above.
-
-### `proj_taxon20170422`
-
-Backup, see the table above.
-
-### `project20170422`
-
-Backup, see the table above.
-
-### `favorite_images_bak`
-
-Backup, see the table above.
-
-### `similar_species_bak`
-
-Backup, see the table above.
-
-### `taxon_country_bak`
-
-Backup, see the table above.
-
-### `taxon_prop20170617`
-
-Backup, see the table above.
-
-### `museumbak`
-
-Backup, see the table above.
-
-### `login_project_bak`
-
-Backup, see the table above.
+| `team_member` | 2011, `db/upgrade/4.3` | an old staff table with images in the database; the team page (`web/team/staff.jsp`) is static HTML; Brian's to-do list plans to drop it about 2026-10-27 |
 
 ### `user_agentbak`
 
-Backup, see the table above.
+Backup, see the table above. Drop proposed.
 
 ### `team_member`
 
 Obsolete, see the table above.
+
+### Dated backups on production (October 2026)
+
+Copies made by hand on production before a change in October 2026 (the to-do list of the AntWeb project records
+each change and, for most, the date to delete the copy). They are in the snapshot of 2026-10-22, not in the
+repository's SQL (CI allows them by name: `_bak_`, `_backup_`, `_deleted_` or a date at the end). Status of each:
+**backup, drop after the date given** ("about" dates are from the to-do list; the others are 30 days after the date
+in the name, as no date was set).
+
+| Table | What it keeps | Drop after |
+|---|---|---|
+| `login_spam_deleted_2026_10_14` | the 9,715 spam logins deleted on 2026-10-14 | 2026-11-13 |
+| `login_deleted_2026_10_16` | the testLogin row removed in the account cleanup of 2026-10-16 | 2026-11-15 |
+| `login_project_backup_2026_10_16`, `login_project_backup_3yr_2026_10_16` | `login_project` rows before the account cleanup (admins removed; curators unused for 3 years) | 2026-11-15 |
+| `login_project_deleted_2026_10_16` | the `login_project` rows that cleanup deleted | 2026-11-15 |
+| `login_rights_backup_2026_10_16`, `login_rights_backup_3yr_2026_10_16` | login rights (admin, upload, group) before the same cleanup | 2026-11-15 |
+| `login_project_20261018` | orphan curator-project rows deleted on 2026-10-18 (projects no longer in `project`) | about 2026-11-18 |
+| `specimen_badcode_backup_20261018` | four specimens with odd codes deleted on 2026-10-18 (groups 57 and 52) | about 2026-11-18 |
+| `geolocale_taxon_bak_20261019`, `proj_taxon_bak_20261019` | the regional and project lists before the lost morphospecies were restored (2026-10-19) | about 2026-11-19 |
+| `image_upload_bak_20261019` | `image_upload.created` before the upload dates were corrected (2026-10-19; the undo is in the to-do list) | about 2026-11-19 |
+| `ant_group_abbrev_bak_20261020` | `ant_group.abbrev` before the group short names were set (2026-10-20) | about 2026-11-20 |
+
+The run-time backups `login_inactive_backup_20261018` and `description_sanitize_backup_20261016_200412` on
+production are the tables of the two patterns below (to-do list: delete about 2026-11-18 and 2026-11-16).
+
+After dropping dated backups on production, refresh the snapshot (introduction) in a pull request that also removes
+their sections here: until then CI keeps asking for a section for each table the snapshot has.
+
+### `login_spam_deleted_2026_10_14`
+
+Backup, see the table above.
+
+### `login_deleted_2026_10_16`
+
+Backup, see the table above.
+
+### `login_project_backup_2026_10_16`
+
+Backup, see the table above.
+
+### `login_project_backup_3yr_2026_10_16`
+
+Backup, see the table above.
+
+### `login_project_deleted_2026_10_16`
+
+Backup, see the table above.
+
+### `login_rights_backup_2026_10_16`
+
+Backup, see the table above.
+
+### `login_rights_backup_3yr_2026_10_16`
+
+Backup, see the table above.
+
+### `login_project_20261018`
+
+Backup, see the table above.
+
+### `specimen_badcode_backup_20261018`
+
+Backup, see the table above.
+
+### `geolocale_taxon_bak_20261019`
+
+Backup, see the table above.
+
+### `proj_taxon_bak_20261019`
+
+Backup, see the table above.
+
+### `image_upload_bak_20261019`
+
+Backup, see the table above.
+
+### `ant_group_abbrev_bak_20261020`
+
+Backup, see the table above.
+
+### Old tables on production only
+
+On production (snapshot of 2026-10-22) but created by no file in the repository, or dropped by an upgrade file that
+was not run there. No code reads them. Status of each: **unused; drop proposed, needs Brian's yes, back up first.**
+The view `darwin_core_2_test` (section 12) is in the same state.
+
+| Table | Columns (production) | What it seems to be |
+|---|---|---|
+| `afro_types_tmp` | `antcat_id`, `valid_genus`, `valid_species`, `valid_subspecies`, `description_year`, `type_country`, `multi_country_types` | a temporary list of Afrotropical names with the country of their type, for a one-off analysis |
+| `artist_copy` | `uid`, `artist`, `created`, `active`, `artist_orig` | a copy of the artist list made while artist names were cleaned up (`artist_orig` = the old name) |
+| `description` | `taxon_name`, `title`, `content`, `rankfocus`, `proj_name` | the taxon page text before 2010; `description_edit` was made as a copy of it (`db/upgrade/3.1`, `3.3`) and replaced it |
+| `favorite_images` | `taxon_name`, `specimen`, `project_name`, `created`, `access_group`, `access_login` | the old choice of a taxon's favorite specimen images; `db/upgrade/6.16` (2017) copies it to `favorite_images_bak` and drops it, but production still has it |
+| `groups_project` | `group_id`, `project_name` | the pre-2011 link of curator groups to projects (`login_project` was made from it in `db/upgrade/4.1.1`); dropped by `db/upgrade/6.16`, still on production |
+| `homepage` | `content_type`, `content` | pieces of the old home page text (`db/upgrade/5.0.10`, 2013, updates it); the home page no longer reads it |
+| `image_backup` | the columns of `image` | an undated copy of `image` (it has `image_upload_id`, so made after 2019) |
+| `image_count` | `subfamily`, `genus`, `species`, `project_name`, `the_count` (all tinyint) | a table that replaced the 2012 view of the same name (images per name and project); the tinyint columns suggest it was made from an empty result; no reader (the code's `image_count` is a column of other tables) |
+| `image_count_materialized` | `subfamily`, `genus`, `species`, `project_name`, `the_count` | a stored copy of the 2012 `image_count` view; dropped by `db/upgrade/5.1.19` (2013), still on production |
+| `junkspec` | `code`, `taxon_name`, name parts, `other`, `type` | specimen rows set aside during an old cleanup |
+| `proj_taxont` | the columns of `proj_taxon` (named `proj_taxonT` on production, with a capital T) | a temporary copy of `proj_taxon` |
+| `similar_species` | `taxon_name`, `similar_species`, `proj_name` | old "similar species" lists; `db/upgrade/6.16` copies it to `similar_species_bak` and drops it, still on production |
+| `synonymy` | `taxon_name`, `synonym_name` | the synonym list from before the AntCat import; only `TaxonDb.javaBak` (not compiled) names it |
+| `temp_image_artist` | `filename`, `specimencode`, `author_name`, `date_upload`, `image_of_id`, `shot_type`, `shot_number` | a temporary import of image photographers, used to fill `image.artist` |
+
+### `afro_types_tmp`
+
+Unused, see the table above.
+
+### `artist_copy`
+
+Unused, see the table above.
+
+### `description`
+
+Unused, see the table above.
+
+### `favorite_images`
+
+Unused, see the table above.
+
+### `groups_project`
+
+Unused, see the table above.
+
+### `homepage`
+
+Unused, see the table above.
+
+### `image_backup`
+
+Unused, see the table above.
+
+### `image_count`
+
+Unused, see the table above.
+
+### `image_count_materialized`
+
+Unused, see the table above.
+
+### `junkspec`
+
+Unused, see the table above.
+
+### `proj_taxont`
+
+Unused, see the table above (the table is `proj_taxonT`; headings here are lower case).
+
+### `similar_species`
+
+Unused, see the table above.
+
+### `synonymy`
+
+Unused, see the table above.
+
+### `temp_image_artist`
+
+Unused, see the table above.
+
+### Run-time backups
 
 The two run-time backups below are made by the code on purpose and are part of an undo; they should be dropped
 after a retention period that Brian sets (not decided yet).
@@ -1248,33 +1408,48 @@ and the new content. Run-time backup.
 
 ### Dropped already
 
-The upgrade scripts drop these, so they are not in the list: `groups` (renamed `ant_group`), `groups_project`,
-`favorite_images`, `similar_species`, `image_catalog`, `image_catalog2`, `image_count_materialized`, `imagebak`,
-`object_edit20151210`, `proj_taxon20160804`, `proj_taxon20160809`, `proj_taxonprod`, `project20160804`,
-`project20160809`, and the views `dwc_image`, `dwc_specimen`, `valid_taxa`. `--compare` will show any that still
-exist.
+The upgrade scripts drop these, and production does not have them (snapshot of 2026-10-22): `groups` (renamed
+`ant_group`), `image_catalog`, `image_catalog2`, `imagebak`, `object_edit20151210`, `proj_taxon20160804`,
+`proj_taxon20160809`, `proj_taxonprod`, `project20160804`, `project20160809`, and the views `dwc_image`,
+`dwc_specimen`, `valid_taxa`. `db/upgrade/8.115` (2026-10-22) drops, where they exist, the tables and views the
+repository described but production no longer had: `command` (2014, `db/upgrade/5.18`, never read),
+`description_edit_plazi20150601` (2015 copy of the Plazi page texts), `proj_taxon20170422` and `project20170422`
+(2017 copies), `favorite_images_bak`, `similar_species_bak`, `taxon_country_bak` (2017 copies), `taxon_prop20170617`,
+`museumbak`, `login_project_bak`, and the views `tapir_specimen` and `image_count`.
 
 ## 14. Findings
 
-From writing this page (2026-10-21). None of these changes anything yet; each needs a decision.
+From writing this page (2026-10-21), updated with the live snapshot (2026-10-22). Each needs a decision unless it
+says done.
 
-1. **The live schema is not in the repository.** Seven tables in use have no CREATE anywhere (`project`,
-   `proj_taxon`, `image`, `ant_group`, `artist`, `copyright`, `group_image`); several upgrade files were only partly
-   run. Proposal: run `--compare` on production once, then commit a schema dump (`mysqldump --no-data`) as
-   `db/schema.sql` and make new tables start from it.
-2. **Known differences:** `museum` pie columns (section 4); `taxon.subfamily_count`, `genus_count`,
-   `species_count`, `specimen_count` read by the API /taxa (numbers.md #103) but dropped by `db/upgrade/4.150`;
-   `taxon_country` dropped in 2017 but present in 2021; `image_count` a view in the scripts but a table in 2021.
-3. **Tables nothing reads:** `license`, `artist_group`, `country_bioregion`, `lookup`, `command`,
-   `antwiki_taxon_country`, `taxon_country`, `team_member`, the 10 backup tables, 7 of the 9 views. `country`,
-   `un_country`, `adm1` are read only by classes nothing calls. `operation_lock` is read (server status page) but
-   nothing writes it.
-4. **Columns written or kept that no SQL in the code names:** `geolocale.georanktype`, `georanktypeloc`,
-   `woe_id`; `geolocale.specimen_local_count` and `geolocale_taxon.specimen_local_count` (added in 2018,
-   `db/upgrade/7.9`); `specimen.speciesauthor`; `taxon.old_speciesgroup`. (Search of the string literals of the
-   Java, JSP and API code; a `select *` still returns them.)
-5. **Numbers with unclear sources**, from numbers.md: API /taxa counts (#103, columns with no writer); the upload
+1. **The live schema was not in the repository.** Done 2026-10-22: the snapshot (names and types) is committed and
+   `db/upgrade/8.115` brings the repository's SQL to it; CI and the daily count check keep them together (see the
+   introduction). Still missing: keys, indexes, NOT NULL and defaults of the tables no file created before 8.115
+   (`project`, `proj_taxon`, `image`, `ant_group`, `artist`, `copyright`, `group_image`, ...). Proposal: commit a
+   `mysqldump --no-data` of production as `db/schema.sql` (structure only, no data).
+2. **Differences found by the snapshot** (all recorded in `db/upgrade/8.115`): `taxon.subfamily_count`,
+   `genus_count`, `species_count`, `specimen_count` exist on production (the API /taxa reads them, numbers.md #103;
+   nothing writes them); `taxon_country`, `favorite_images`, `similar_species`, `groups_project`,
+   `image_count_materialized` were dropped by upgrade files that were not run on production; `image_count` is a table,
+   not a view; columns the code uses that no file added (`login.upload_as`, `image_uploaded.specimen_data_exists`,
+   `specimen.is_male`, `is_worker`, `is_queen`, `ant_group.last_specimen_upload`, `image.source_table`, `has_tiff`,
+   `shot_number`, ...). No code reads a column or table production lacks: the four columns
+   only the repository had (`bioregion.biogeographicregion`, `geolocale_taxon.modified`,
+   `project.endemic_species_count`, `specimen.is_endemic`) are named only in comments or commented-out code.
+3. **Column sizes that do not match between tables:** `ant_group.name` varchar(100), `upload.group_name`
+   varchar(64) (an 81-character group name made an upload row insert fail; PR #232 handles it in code). Widening
+   `upload.group_name` to varchar(100) needs Brian's decision and an ALTER on production. (Harmless the other way:
+   `LoginEdit.MAX_UPLOAD_AS` says `login.upload_as` is varchar(100); production has varchar(128).)
+4. **Tables nothing reads:** `license`, `artist_group`, `country_bioregion`, `lookup`, `antwiki_taxon_country`,
+   `taxon_country`, `team_member`, `user_agentbak`, the 14 old production-only tables and 6 of the 8 views (section
+   13); the 13 dated backups of October 2026 have drop dates. `country`, `un_country`, `adm1` are read only by
+   classes nothing calls. `operation_lock` is read (server status page) but nothing writes it.
+5. **Columns written or kept that no SQL in the code names:** `geolocale.georanktype`, `georanktypeloc`,
+   `woe_id`; `geolocale.specimen_local_count`, `geolocale_taxon.specimen_local_count` (added in 2018,
+   `db/upgrade/7.9`), also on `museum` and `bioregion` (production); `specimen.speciesauthor`; `taxon.old_speciesgroup`.
+   (Search of the string literals of the Java, JSP and API code; a `select *` still returns them.)
+6. **Numbers with unclear sources**, from numbers.md: API /taxa counts (#103, columns with no writer); the upload
    and group Species counts (#88, B14: distinct epithets); curator counts computed only at startup (#80 to #84,
    B22). Nothing in this review adds to that list.
-6. **No foreign keys.** Every link is by value; a misspelled country in `specimen.country` or a deleted name
+7. **No foreign keys.** Every link is by value; a misspelled country in `specimen.country` or a deleted name
    leaves rows that count nowhere. The count checks (`CountInvariants`) cover the totals, not the links.

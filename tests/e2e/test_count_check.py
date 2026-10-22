@@ -199,6 +199,23 @@ def test_list_counts_match_the_specimen_records():
                 for i, cells in inv_rows:
                     if len(cells) == 7 and all(c.strip().isdigit() for c in cells[3:]):
                         f.write("| " + " | ".join([i] + [c.strip() for c in cells[3:]]) + " |\n")
+    # Since 2026-10-22: the database structure against the committed snapshot (SchemaCheck). The check must run
+    # (the snapshot is readable in the container); differences are listed in the job summary, not failed here
+    # (staging's database can differ from production's snapshot; production's are read on countCheck.do).
+    # The help text names the section since the same change, so a server that has SchemaCheck must show it
+    # whenever the invariants ran.
+    if 'id="count-invariants"' in r.text and "(Database structure)" in r.text:
+        assert 'id="schema-check"' in r.text, "the count check ran its invariants but shows no Database structure section"
+    if 'id="schema-check"' in r.text:
+        sm = re.search(r'id="schema-check" data-differences="(\d+)" data-error="(\d)"', r.text)
+        assert sm and sm.group(2) == "0", "the schema check could not run: " + unescape(
+            re.sub(r"<[^>]+>", "", r.text[r.text.index('id="schema-check"'):][:600]))
+        if summary and sm.group(1) != "0":
+            items = [unescape(x) for x in re.findall(r'<li class="schema-difference">(.*?)</li>', r.text)]
+            with open(summary, "a", encoding="utf-8") as f:
+                f.write(f"\n### Database structure: {sm.group(1)} changes since the snapshot\n\n")
+                for x in items[:100]:
+                    f.write(f"- {x}\n")
     if not nightly:
         pytest.skip(f"compute.log has no completed nightly run, so the stored counts may be older than a day "
                     f"({real} differences, listed in the job summary)")
