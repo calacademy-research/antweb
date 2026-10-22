@@ -45,6 +45,15 @@ jobs:
         # every count check (CountInvariants.IDS) is named. Fix: edit docs/numbers.md (see its section 1).
         run: python3 tools/numbers/check_numbers_doc.py
 
+      - name: Data model doc has a section for every table (docs/data-model.md)
+        # Replays db/upgrade/**/*.sql and the CREATE TABLE statements in src/; fails when a table or view
+        # has no "### `name`" section in docs/data-model.md, or a section names a table no SQL knows.
+        # Fix: add the section (see the top of docs/data-model.md). The parser's own cases:
+        # tests/unit/test_datamodel_list_tables.py.
+        run: |
+          python3 tests/unit/test_datamodel_list_tables.py
+          python3 tools/datamodel/list_tables.py --check
+
       - name: Test API Build
         run: |
           docker build -t antweb/api:dev -f docker/api/Dockerfile .
@@ -294,6 +303,9 @@ jobs:
 
       - name: No email tells the reader to ignore it (tests/unit/test_email_texts.py)
         run: python3 tests/unit/test_email_texts.py
+
+      - name: No PHP in the server image or the repository (tests/unit/test_no_php.py)
+        run: python3 tests/unit/test_no_php.py
 
       - name: Login updates keep login.created, no delete of all page text, page titles, admin links on phones (tests/unit/test_small_fixes.py)
         run: python3 tests/unit/test_small_fixes.py
