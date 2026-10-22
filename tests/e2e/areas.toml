@@ -24,6 +24,7 @@ tests = [
   "test_request_handling.py",   # quote characters, error pages, form token (CSRF) refusals
   "test_curator.py",            # curator login, admin pages refused, CSRF, remember-me
   "test_curate_cleanup.py",     # admin tools refused to anonymous visitors and curators
+  "test_parallel_safety.py",    # answers that must not change while another request or an upload runs
 ]
 
 [full_when]
@@ -56,6 +57,7 @@ tests = [
   "test_jsp_allow_list.py",
   "test_login_needed.py",
   "test_page_content.py",
+  "test_parallel_safety.py",
   "test_place_image_counts.py",
   "test_previous_determinations.py",
   "test_privacy.py",

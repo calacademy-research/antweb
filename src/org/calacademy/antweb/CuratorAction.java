@@ -95,7 +95,9 @@ public final class CuratorAction extends AntwebAction {
 			// show all Curators.
 			
 			LoginDb loginDb = new LoginDb(connection);
-			ArrayList<Curator> curators = LoginMgr.getCurators();
+			// A copy: curators-body.jsp sorts it; the shared list must not be sorted by two requests at once.
+			ArrayList<Curator> shared = LoginMgr.getCurators();
+			ArrayList<Curator> curators = shared == null ? null : new ArrayList<>(shared);
 			request.setAttribute("curators", curators);
             //A.log("a1d:" + accessLogin.getName());
 			
