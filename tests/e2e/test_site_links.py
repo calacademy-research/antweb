@@ -332,3 +332,14 @@ def test_links_on_every_page_type():
     print("\n".join(lines))
     assert not missing_required, f"no example page found for {missing_required}\n" + "\n".join(lines)
     assert not broken, "\n".join(lines)
+
+
+@pytest.mark.parametrize("bare, title", [("/region.do", "Regions - AntWeb"), ("/subregion.do", "Subregions - AntWeb")])
+def test_bare_region_pages_show_the_list(bare, title):
+    """region.do and subregion.do without a name show the list of regions / subregions (2026-10-22),
+    not "Region not found."."""
+    r = new_session().get(BASE_URL + bare, timeout=TIMEOUT)
+    assert r.status_code == 200, r.status_code
+    assert lc.problem(r) is None, lc.problem(r)
+    m = re.search(r"<title>\s*(.*?)\s*</title>", r.text, re.S | re.I)
+    assert m and m.group(1) == title, f"{bare}: title {m.group(1) if m else None!r}, expected {title!r} (the list)"

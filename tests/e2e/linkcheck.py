@@ -35,7 +35,7 @@ NOT_FOUND_TEXT = re.compile(
     r"BigPicture not found|Museum not found|Project not found|Country not found|Adm1 not found|"
     r"Region not found|Subregion not found|Bioregion not found|Geolocale not found|Place not found|"
     r"Page not found|No map found|Upload Report not found|Species list not found|Login not found|"
-    r"is not in the AntWeb database|Action not found\.|Invalid request\.?|invalid request|"
+    r"is not in the AntWeb database|Action not found\.|"
     r"Enter a locality name or code|Log not available|Unable to find the file",
 )
 # Message pages that are a normal answer for a visitor, not a broken link.
@@ -180,6 +180,8 @@ def problem(resp):
         return f'"{nf.group(0)}"' + (f" ({_message(body)})" if title.startswith("message") else "")
     if title.startswith("message..."):
         msg = _message(body)
+        if re.search(r"invalid request", msg, re.I):   # only on a message page (page text may say it)
+            return f'"Invalid request" ({msg})'
         if LOGIN_MESSAGE.search(msg):
             return None
         return f'message page: "{msg}"'
