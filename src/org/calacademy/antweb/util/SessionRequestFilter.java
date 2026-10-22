@@ -234,6 +234,17 @@ public class SessionRequestFilter implements Filter {
     public static final int MILLIS = 1000;
     public static int SECS = 60;
     public static int MAX_REQUEST_TIME = MILLIS * 10;
+    /**
+     * One line of longRequest.log (requests over MAX_REQUEST_TIME): time, duration, the address without
+     * secret values (at most 500 characters) and the first 200 characters of the user agent. It used
+     * to hold the referer and user agent up to 1,800 characters and the full address with its form token.
+     */
+    static String longRequestLine(java.util.Date when, String execTime, HttpServletRequest request) {
+        String ua = request.getHeader("user-agent");
+        if (ua != null && ua.length() > 200) ua = ua.substring(0, 200) + "...";
+        return when + " time:" + execTime + " " + MessagePageLog.cleanTarget(HttpUtil.getTarget(request)) + " ua:" + ua;
+    }
+
     public static String finish(HttpServletRequest request, java.util.Date startTime) {
         String execTime = "";
         long millis = AntwebUtil.millisSince(startTime);
@@ -242,14 +253,12 @@ public class SessionRequestFilter implements Filter {
         } else {
             execTime = millis + " millis";
         }
-        String message = new Date() + " time:" + execTime + " requestInfo:" + HttpUtil.getRequestInfo(request);
         if (AntwebProps.isDevMode()) {
-            //s_log.warn(message);
             MAX_REQUEST_TIME = 1;
         }
 
-        s_log.debug("finish() millis:" + millis + " info:" + HttpUtil.getRequestInfo(request));
-        if (millis > MAX_REQUEST_TIME) LogMgr.appendDataLog("longRequest.log", message);
+        if (s_log.isDebugEnabled()) s_log.debug("finish() millis:" + millis + " info:" + HttpUtil.getRequestInfo(request));
+        if (millis > MAX_REQUEST_TIME) LogMgr.appendDataLog("longRequest.log", longRequestLine(new Date(), execTime, request));
         return execTime;
     }
 

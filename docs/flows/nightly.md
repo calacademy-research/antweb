@@ -35,6 +35,7 @@ The secure code: `Scheduler.doAction()` creates a one-time 128-bit code (`Antweb
 4. For each set in order: `HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS)` with a 4-hour read timeout (line 40; before #62 the 5-minute default made set 1 time out every night). If the answer contains "Unexpected error" an exception stops the remaining sets (lines 205 to 240), see the test-gaps file for why this check never fires. An `IOException` (timeout, connection refused) logs "Scheduler FAILED (remaining sets skipped)" to compute.log.
 5. Staging (`AntwebProps.isStageMode()`, full run only): set 5 is skipped and "set5 skipped on staging (memory)" is logged (line 230).
 6. End of a full run (`num == 0`, line 250):
+   - first (since 2026-10-22) the log size check (`LogSizeCheck.run`): compute.log "Log size check: ok", or the list of log files over 1 GB and a disk over 85%, also added as an admin alert and emailed to antweb@antweb.org (runbook, "Log sizes and rotation");
    - `etc/scheduler.properties` has `nightlyRestart=true` (`isNightlyRestartOn()`, line 51, read now): `AntwebSystem.setIsRestart(true)`, compute.log "Nightly restart requested ... heap used ..."; the host restarts the container within 5 minutes (section 5);
    - otherwise: if set 5 was skipped, `AntwebMgr.populate(connection, true)` reloads all caches (line 261); compute.log "Nightly restart skipped (off ...) heap used ..." (memory is logged so slow growth can be watched).
 7. Finally: compute flag cleared, secure code cleared, "End run" (compute.log).
