@@ -52,7 +52,8 @@ running site can read it. What it showed, and what was done:
    not on its allow-list: tables whose names say they are dated backups (`_bak_`, `_backup_`, `_deleted_`, or a
    date at the end: `BACKUP_PATTERN`), and the old unused tables and view of section 13 (`LIVE_ONLY_UNUSED`). So a
    new table or column needs its `db/upgrade` file (named `YYYY-MM-DD-...sql`) in the same pull request. A change in
-   a file dated after the snapshot (a later day) counts as pending, also a drop: CI prints a notice, not an error. The order is: merge, run the
+   a file dated after the snapshot (a later day) counts as pending, also a drop, and so is a table the code creates itself (`CREATE TABLE IF NOT EXISTS` in `src/`): CI prints a notice, not
+   an error. The order is: merge, run the
    file on staging and production, then refresh the snapshot (until then the daily check on production lists the
    change, which is expected).
 2. Production, daily: the count check (`countCheck.do`, run after the nightly run) compares the live database's

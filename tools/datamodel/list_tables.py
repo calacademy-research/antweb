@@ -46,6 +46,7 @@ here like the ALTER TABLE and DROP VIEW they run. What may still differ (--check
     docs/data-model.md, proposed for dropping),
   - a column whose type the repository does not know ("?", from CREATE TABLE ... AS SELECT),
   - a table only the repository has whose name contains * (made at run time, e.g. login_inactive_backup_*).
+  - a table the Java code creates itself that production does not have yet (made on first use after the deploy),
   - a table, view or column added, changed or dropped by a db/upgrade file whose name is dated after the snapshot (pending: it is run
     on production after the merge; --check prints a notice until the snapshot is refreshed).
 Everything else fails the check: add the change to a db/upgrade file (and run it on production), or refresh the
@@ -724,7 +725,8 @@ def pending_notes(schema, path):
     notes, explained = [], set()
     for t in d["only_repo"]:
         src = schema.tables[t]["created"] or ""
-        if file_date(src) > snap_date:
+        # a table the code creates itself (CREATE TABLE IF NOT EXISTS in src/) appears on production once deployed
+        if file_date(src) > snap_date or schema.tables[t]["origin"] == "code":
             notes.append(f"table {t} ({src}) is newer than the snapshot")
             explained.add(("table", t))
     for t in d["only_live"]:

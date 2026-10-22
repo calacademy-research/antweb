@@ -303,8 +303,10 @@ def test_upgrade_files_newer_than_the_snapshot_are_pending():
         L.LIVE_ONLY_UNUSED, L.LIVE_ONLY_UNUSED_VIEWS = old
     assert sorted(errors) == ["column taxon.old_col is in the repository's SQL but not live (snapshot)",
                               "column taxon.same_day is in the repository's SQL but not live (snapshot)"], errors
+    L.apply_statement(s, "CREATE TABLE IF NOT EXISTS code_made (id int)", "src/X.java", "code")
+    assert "code_made" not in "\n".join(L.snapshot_errors(s, path)), "a table the code creates is pending"
     notes = L.pending_notes(s, path)[0]
-    assert len(notes) == 6 and all("newer than the snapshot" in n for n in notes), notes
+    assert len(notes) == 7 and all("newer than the snapshot" in n for n in notes), notes
 
 
 def test_backup_pattern():
