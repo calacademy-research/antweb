@@ -1,9 +1,10 @@
 """Curate page layout, Curators page and About menu (Brian Fisher, 2026-10-22).
 
-1. Curate page: the "Need Help?" line, Curator Information and Read-Only Tools run the full page width
-   (they were squeezed into the 560px left column, div.admin_left); the Read-Only Tools descriptions
-   are no longer 215px floated cells. The upload forms stay in the left column, the admin links in
-   the right one.
+1. Curate page (second pass, same day; Brian: "remove the center align and go back to left align and
+   import antcat name is still a short width column ... can you give it a more modern look"): every
+   section is a full-width card in one left-aligned column (div.aw-tools, styles in web/common/tools.css,
+   loaded only by this page); no left/right columns, no centering, no 215px floated description cells,
+   plain Submit buttons instead of the grey image buttons. Curator sections first, admin cards after.
 2. The AntWeb Statistics box is gone from the Curate page (same numbers on the home page and
    statistics.do, linked under Administrator Functions).
 3. The Site Warning box is about 3 lines tall (inline height; the site CSS gives textareas 200px).
@@ -27,20 +28,59 @@ def _src(path):
     return re.sub(r"<%--.*?--%>|<!--.*?-->", "", (REPO_ROOT / path).read_text(encoding="utf-8"), flags=re.S)
 
 
-def _full_width_sections_first(html):
-    """Curator Information and Read-Only Tools come before div.admin_left (not inside it), each with
-    width:auto, and the Read-Only descriptions are not floated."""
-    left = html.index('class="admin_left"')
-    for sid in ("curate-info", "curate-readonly"):
-        m = re.search(r'<div class="admin_action_module curate-full" id="%s" style="width:auto">' % sid, html)
-        assert m, f"{sid}: no full-width section"
-        assert m.start() < left, f"{sid} is inside the narrow left column"
-    ro = html.split('id="curate-readonly"', 1)[1].split('class="admin_left"', 1)[0]
-    descs = re.findall(r'<div class="action_desc"([^>]*)>', ro)
-    assert len(descs) == 2 and all('style="float:none;width:auto"' in d for d in descs), descs
-    assert "/validateSpeciesList.do" in ro and "/specimenListLookup.do" in ro
-    help_line = re.search(r'<p id="curate-help"[^>]*>Need Help\?.*?/documentation\.do', html, re.S)
-    assert help_line and help_line.start() < left, "Need Help? line missing or not at the top"
+CURATOR_CARDS = ["curate-specimen-upload", "curate-image-upload", "curate-uploads", "curate-names", "curate-readonly",
+                 "curate-account"]
+ADMIN_CARDS = ["curate-admin-names", "curate-manager-tools", "curate-admin-functions", "curate-reports"]
+CENTERED = re.compile(r"""align\s*=\s*["']?center|text-align\s*:\s*center""", re.I)
+OLD_LAYOUT = ("admin_left", "admin_right", "action_desc", "action_dropdown", "action_browse", "align_right",
+              "grey_submit.png", "<h3 align=left>", "<ul align=left>", "width:215")
+
+
+def _cards(html):
+    """The ids of the section cards, in page order."""
+    return re.findall(r'<div class="aw-card[^"]*"[^>]*\bid="([\w-]+)"', html)
+
+
+def _page_part(html):
+    """The Curate page's own markup (div.aw-tools#curate-page), without the site header."""
+    assert 'class="aw-tools" id="curate-page"' in html, "no div.aw-tools#curate-page (the Curate page wrapper)"
+    page = html.split('class="aw-tools" id="curate-page"', 1)[1]
+    assert 'id="curate-page-end"' in page, "no end marker after div.aw-tools"
+    return page.split('id="curate-page-end"', 1)[0]
+
+
+def _layout_ok(html):
+    """One column of full-width cards, nothing centered, no old two-column classes or image buttons; the
+    curator cards come before the admin cards; Import AntCat names now is a card section with its button."""
+    page = _page_part(html)
+    # The server's busy line and Struts messages bring their own markup; the page does not control it.
+    own = re.sub(r'<div class="aw-(?:notice|msg)"[^>]*>.*?</div>', "", page, flags=re.S)
+    assert not CENTERED.search(own), CENTERED.search(own).group(0)
+    found = [x for x in OLD_LAYOUT if x in page]
+    assert not found, f"old layout left on the Curate page: {found}"
+    cards = _cards(page)
+    present_admin = [c for c in cards if c in ADMIN_CARDS]
+    present_curator = [c for c in cards if c in CURATOR_CARDS]
+    assert present_curator, cards
+    if present_admin:
+        assert cards.index(present_admin[0]) > cards.index(present_curator[-1]), f"admin cards before curator ones: {cards}"
+    assert [c for c in cards if c in CURATOR_CARDS] == [c for c in CURATOR_CARDS if c in cards], f"order: {cards}"
+    # No card has a width of its own, and no column of the old layout narrows it.
+    for tag in re.findall(r'<div class="aw-card[^>]*>', page):
+        assert "width" not in tag and "float" not in tag, tag
+    help_line = re.search(r'<p id="curate-help"[^>]*>Need help\?.*?/documentation\.do', page, re.S)
+    assert help_line and help_line.start() < page.index('<div class="aw-card'), "Need help? line missing or not at the top"
+    return page
+
+
+def _antcat_import_ok(page):
+    """The AntCat import section: inside its card, full width (no floated or fixed-width cell), the text then
+    the button."""
+    block = re.split(r"</(?:html:)?form>", page.split('id="curate-antcat-import"', 1)[1], maxsplit=1)[0]
+    assert "<h3>Import AntCat names now</h3>" in block
+    assert "float" not in block and "width:" not in block, block[:400]
+    assert block.index("Downloads the AntCat export") < block.index('<input class="aw-btn" type="submit" value="Import AntCat names now">')
+    assert page.index('id="curate-admin-names"') < page.index('id="curate-antcat-import"')
 
 
 def _no_statistics_box(html):
@@ -50,12 +90,39 @@ def _no_statistics_box(html):
 
 # Static: the source says what the pages will show.
 
-def test_source_curate_sections_full_width():
-    src = _src("web/curate/curate-body.jsp")
-    _full_width_sections_first(src)
-    assert src.count('class="admin_left"') == 1 and src.count('class="admin_right"') == 1
-    # The upload form stays in the left column.
-    assert src.index('class="admin_left"') < src.index("function validateZipUpload") < src.index('class="admin_right"')
+def test_source_curate_layout():
+    # The page as Tomcat builds it: curatorLinks.jsp in place of its include.
+    src = _src("web/curate/curate-body.jsp").replace('<%@include file="/curate/curatorLinks.jsp" %>',
+                                                     _src("web/curate/curatorLinks.jsp"))
+    assert "curate-manager-tools" in src, "curatorLinks.jsp is no longer included"
+    page = _layout_ok(src)
+    assert _cards(page) == CURATOR_CARDS + ADMIN_CARDS, _cards(page)
+    _antcat_import_ok(page)
+    # The shared tool-page stylesheet (2026-10-22; was curate_page.css, for this page only).
+    assert '<%@include file="/common/toolsHead.jsp" %>' in src
+    assert not (REPO_ROOT / "web/common/curate_page.css").exists()
+    # Plain buttons: the upload, the museum recount, the AntCat import, the Species List Tool, the Site Warning.
+    for value in ("Upload", "Recalculate", "Import AntCat names now", "Open the Species List Tool", "Save",
+                  "Clear the warning"):
+        assert re.search(r'<input class="aw-btn[^"]*" type="submit" value="%s"' % re.escape(value), src) or \
+            re.search(r'<input id="upload-submit-btn" class="aw-btn" type="submit" value="%s"' % re.escape(value), src), value
+    assert 'type="image"' not in src
+    # Hidden until the upload starts, even without the stylesheet.
+    assert '<div id="upload-processing-msg" class="aw-progress" style="display:none">' in src
+    # The upload button still starts disabled when the server is busy.
+    assert 'id="upload-submit-btn" class="aw-btn" type="submit" value="Upload" <%= active %>>' in src
+
+
+def test_source_curate_stylesheet_is_scoped():
+    css = (REPO_ROOT / "web/common/tools.css").read_text(encoding="utf-8")
+    body = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+    selectors = [sel.strip() for block in re.findall(r"([^{}]+)\{[^{}]*\}", re.sub(r"@media[^{]*\{", "", body))
+                 for sel in block.split(",")]
+    unscoped = [sel for sel in selectors if sel and not sel.startswith(".aw-tools")]
+    assert not unscoped, f"rules that would change other pages: {unscoped}"
+    assert re.search(r"\.aw-tools \{[^}]*text-align:\s*left", body)
+    assert "text-align: center" not in body and "text-align:center" not in body
+    assert "@media (max-width: 760px)" in body
 
 
 def test_source_curate_has_no_statistics_box():
@@ -116,7 +183,23 @@ def test_curate_page_layout_as_curator():
     s, _token, _id = login("uploader")
     r = s.get(BASE_URL + "/curate.do", timeout=TIMEOUT)
     assert r.status_code == 200 and classify(r).category == "ok", classify(r)
-    _full_width_sections_first(r.text)
+    page = _layout_ok(r.text)
+    assert not [c for c in _cards(page) if c in ADMIN_CARDS], "admin cards shown to a curator"
+    assert "/common/tools.css?v=" in r.text and "/common/tools.js?v=" in r.text
+    css = s.get(BASE_URL + "/common/tools.css", timeout=TIMEOUT)
+    assert css.status_code == 200 and ".aw-tools .aw-card" in css.text, css.status_code
     # The removed box (it sat in div.admin_right), anywhere on the page.
     assert not re.search(r'class="home_module_header">\s*AntWeb Statistics', r.text), "AntWeb Statistics box is back"
     assert "AntWeb Statistics" not in r.text.split('id="curate-help"', 1)[1]
+
+
+@needs("admin")
+def test_curate_page_layout_as_admin():
+    s, _token, _id = login("admin")
+    r = s.get(BASE_URL + "/curate.do", timeout=TIMEOUT)
+    assert r.status_code == 200 and classify(r).category == "ok", classify(r)
+    page = _layout_ok(r.text)
+    cards = _cards(page)
+    for card in ("curate-uploads", "curate-names", "curate-account") + tuple(ADMIN_CARDS):
+        assert card in cards, f"{card} missing: {cards}"
+    _antcat_import_ok(page)

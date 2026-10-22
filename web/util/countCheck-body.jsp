@@ -6,9 +6,13 @@
     String domainApp = AntwebProps.getDomainApp();
     String html = (String) request.getAttribute("html");
 %>
-<div class=left>
+<%-- Tool-page look (common/tools.css, docs/guides/page-style.md). --%>
+<%@include file="/common/toolsHead.jsp" %>
+<div class="aw-tools" id="count-check-page">
+<p class="aw-crumbs"><a href="<%= domainApp %>">Home</a> | <a href="<%= domainApp %>/curate.do">Curator Tools</a></p>
 <h1>Check the counts</h1>
-<p>Are the numbers on country, project, museum and bioregion pages right? A fresh count from the specimen records, compared with what the site shows.</p>
-<a href="<%= domainApp %>">Home</a> | <a href="<%= domainApp %>/curate.do">Curator Tools</a>
+<div class="aw-intro"><p>Are the numbers on country, project, museum and bioregion pages right? A fresh count from the specimen records, compared with what the site shows.</p></div>
+<div class="aw-card" id="count-check-report">
 <%= html == null ? "" : html %>
+</div>
 </div>

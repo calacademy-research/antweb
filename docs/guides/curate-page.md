@@ -17,11 +17,11 @@ What you see depends on your login:
 
 **Curator Tool Documentation** (one line at the top of the page) opens the documentation page: the imaging manual and videos, the guides for submitting images and using the image picker, the specimen data overview and requirements spreadsheet, and the country and region lists.
 
-### Curator Information
+### Layout
 
-This section and Read-Only Tools run the full width of the page; the upload sections below sit in the left column and the admin links in the right one. The AntWeb Statistics box that used to be on the right was removed on 22 October 2026: the same numbers are on the home page and on the statistics page (admins: **Antweb Statistics** under Administrator Functions).
+Since 22 October 2026 the page is one left-aligned column of cards, one card per section, each the full width of the page, with plain blue buttons. Curator sections come first, in this order: **Upload specimen data**, **Upload specimen images**, **Your uploads**, **Names and checks**, **Read-only tools**, **Your account**. Admins then see **AntCat names and species lists**, **Manager tools**, **Administrator functions** and **Reports** (marked "Admin"). On a phone the cards and their controls stack. The styles are the shared tool-page styles in `web/common/tools.css` (see `docs/guides/page-style.md`), used by the admin and curator report and form pages only. The AntWeb Statistics box that used to be on the right was removed on 22 October 2026: the same numbers are on the home page and on the statistics page (admins: **Antweb Statistics** under Administrator functions).
 
-Three short groups, one link per line, each with a one-line explanation on the page.
+Your uploads, Names and checks and Your account list one link per line, each with a one-line explanation on the page.
 
 **Your account**
 
@@ -41,31 +41,31 @@ Three short groups, one link per line, each with a one-line explanation on the p
 - **Name update report** (`nameUpdates.do`): the specimens AntWeb moved to the current valid name after a name changed in AntCat, with the reason for each move. Curators see their own group's specimens; admins see all groups.
 - **Check the counts** (`countCheck.do`, admins; formerly "Count check"): AntWeb does not count specimens when a page is shown; the nightly run counts them and stores the numbers. This page counts again, straight from the specimen records, for a few sample places (Madagascar, Reunion, the country with the most morphospecies, the largest live curated project, the Malagasy bioregion and the CASC museum) and lists every number that differs from what the site shows: specimens per species, species per genus, genera per subfamily, the "Global" column and the place's image numbers. A "pending" difference comes from a change after the last nightly run (an upload, a name update, a list edit) and goes away with the next nightly run. A "real" difference has no such reason. Usually there is nothing to do; if a real difference is still listed the next day, after the nightly run has finished (about 08:15 Pacific), email the list to antweb@antweb.org.
 
-At the top of this area a red or blue line may appear when the server is busy (an upload or the nightly run is in progress, or uploads are paused). If you see one, wait and try again later.
+A message may appear at the top of the page, below the help line, when the server is busy (an upload or the nightly run is in progress, or uploads are paused); the **Upload** button is then greyed out. If you see one, wait and try again later.
 
-### Read-Only Tools
+### Read-only tools
 
 These tools never change anything on AntWeb.
 
 - **Check names against AntCat** (formerly "Validate Species List"): upload a list of species names (a tab-delimited text file) to check every name against AntWeb's names from AntCat. You get a report on screen and can download it, or download a corrected copy of your list with the current valid names. Nothing is saved on AntWeb.
 - **Specimen List Lookup**: upload a plain text file of specimen codes, one per line (the file name must contain "specimen", for example my_specimens.txt), and get the AntWeb data for those specimens as a tab-delimited file. If some codes are not in AntWeb, a results page lists them (to copy or download) and still offers the data of the codes that were found. Handy for checking what AntWeb holds for a loan or a batch of material.
 
-### Specimen Data (curators with the "upload specimens" permission)
+### Upload specimen data (curators with the "upload specimens" permission)
 
-**Upload Zip File**: this is how you send your specimen data to AntWeb.
+This is how you send your specimen data to AntWeb.
 
 1. Put your specimen file (the tab-delimited AntWeb specimen file) in a ZIP file. Only ZIP files are accepted.
-2. Click **Choose File**, pick the ZIP, then click **Submit**.
-3. Wait. A large file can take several minutes. If the page shows a Cloudflare timeout, your data is still being processed: after 85 seconds the page sends you to your upload reports, and you also get an email when the upload is finished.
+2. Click **Choose File** next to **ZIP file**, pick the ZIP, then click **Upload**.
+3. Wait while the file is sent. A large file can take several minutes; the next page shows the progress of your upload (later also under **Upload status**), and you get an email when the upload is finished.
 4. Open the upload report and check it.
 
 Your upload replaces your group's specimen records on AntWeb. Names are matched to the current valid names in AntCat. Counts on country, region and museum pages are brought up to date in the nightly run (from 5 AM Pacific), so new specimens can take until the next morning to show in those counts.
 
 The optional column **previousDeterminations** lets you send earlier identifications of a specimen, newest first, separated by " | " (an example is shown on the page).
 
-**Recalculate Your Museums** (shown after you upload in the same session): recounts the museums found in your last upload now, instead of waiting for the nightly run. It only touches the museums of your own upload.
+**Recalculate Your Museums** (shown after you upload in the same session; button **Recalculate**): recounts the museums found in your last upload now, instead of waiting for the nightly run. It only touches the museums of your own upload.
 
-### Upload Specimen Images (curators with the "upload images" permission)
+### Upload specimen images (curators with the "upload images" permission)
 
 **Specimen Image Upload** opens the Image Uploader. Image files must be named by specimen code and view (the naming rules are on the uploader page and in the "Submitting images" guide). You can add many files at once; each is checked, and you get a report and an email at the end.
 
@@ -84,20 +84,20 @@ The jump boxes that used to sit at the bottom right ("Access direct by ...", "Cu
 
 ### In the upload form
 
-Admins see two extra menus in **Upload Zip File**:
+Admins see two extra menus in **Upload specimen data**:
 
 - **Upload Type**: **Antweb** (the normal AntWeb specimen file) or **TaxonWorks** (a TaxonWorks Darwin Core archive; the CAS TaxonWorks data normally arrives in the nightly run, so use this only when the nightly TaxonWorks upload failed). The GBIF option was removed in October 2026.
 - **Upload as**: upload the file on behalf of another curator, so the data goes to that curator's group. The menu lists you and the curators your login may upload for, each with the group the upload goes into ("aerochild &mdash; Curator Peter Hawkes AFRC (group 31)"), sorted by group name. The upload replaces all specimens of the group shown.
 
-### Import AntCat names now
+### AntCat names and species lists: Import AntCat names now
 
 Downloads the AntCat export and loads the names into AntWeb, as the nightly run does at 05:00 Pacific. Use it only when the nightly AntCat import failed (an admin alert or compute.log says so). It takes several minutes. (This replaces the old "Reload" link, the "Worldants" button and the staging-only "Worldants Fetch and Reload" link.)
 
-### Open the Species List Tool
+### AntCat names and species lists: Species List Tool
 
-Shown when your login looks after project or region species lists. Choose a list and click **Submit** to open the **Species List Tool** for it: compare it with another list and add or remove species.
+Shown when your login looks after project or region species lists. Choose a list and click **Open the Species List Tool** to open the **Species List Tool** for it: compare it with another list and add or remove species.
 
-### Manager Tools
+### Manager tools
 
 Each tool's fields, what saving does and its pitfalls: [Manager Tools guide](manager-tools.md).
 
@@ -111,14 +111,14 @@ Each tool's fields, what saving does and its pitfalls: [Manager Tools guide](man
 - **Admin Alert Manager**: problems AntWeb has flagged for admins (for example a failed AntCat import). Remove an alert once it is dealt with. The page links the full history of alerts.
 - **Bioregion Map Manager**: the bioregions where each genus is native. Uploads flag specimens of a genus collected outside them. Curators can look; admins save.
 - **Introduced Map Manager**: for each species on the introduced list, the bioregions where it is native; a specimen from any other bioregion is marked introduced.
-- **Query Manager**: a list of ready-made database checks, by topic. Click a name to run it and see the rows. The checks only read data. Only admins can run them, except the few that public pages link to (for example the AntCat import history).
+- **Query Manager**: the ready-made database queries (about 90), in groups by topic (names and taxa, specimens, places, species lists, images, uploads and groups, accounts and logins, site checks and counts), with a filter box. Click a name to run it and see the rows. The checks only read data. Only admins can run them, except the few that public pages link to (for example the AntCat import history).
 - **Log Manager**: the server logs. The most useful are compute.log (the nightly run), admin.log (AntCat imports and scheduler runs), taxonWorksNightly.log (the nightly CAS TaxonWorks upload) and the profiler log (timings of uploads and pages).
 
 ### Editing a login
 
 Login Manager, click a login. The page has plain sections, each with a one-line explanation: **Account** (username, email, names; login number, created, last login, inactive, password set or not), **What this person can do** (Upload specimen data, Upload specimen images, Administrator with a red warning), **Upload group** (one list sorted by name, "Museum X (MX) — group 71", or No upload group), **Places and projects this curator can edit** (the assigned projects and countries as rows with a Remove box, and an Add box that searches as you type) and **Other settings** ("Upload as"). **Save changes** saves everything in one step or nothing, and the next page lists what changed ("Upload specimen data: added; Project Madagascar (madagascarants): removed"). You cannot remove your own administrator rights. Setting a password, making a set-password link, Log in as and Delete are separate buttons below. Details: [Adding a new uploader, Editing a login](adding-an-uploader.md#editing-a-login).
 
-### Administrator Functions
+### Administrator functions
 
 - **Antweb Statistics**: statistics tables by project, museum, bioregion and upload.
 - **Server Status**: what the server is doing now: database connections, running jobs, the switch that pauses uploads ("down time") and the pages being served. It links Database Status (connection pools) and Restart Status (whether the application has asked for a restart).

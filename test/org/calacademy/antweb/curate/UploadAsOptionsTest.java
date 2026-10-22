@@ -57,7 +57,8 @@ public class UploadAsOptionsTest extends TestCase {
         if (System.getProperty("antweb.web") != null) assertTrue("CI mounts web/: " + jsp, Files.isRegularFile(jsp));
         if (!Files.isRegularFile(jsp)) return;   // web/ not next to test/ and not mounted
         String src = Files.readString(jsp, StandardCharsets.UTF_8);
-        String form = src.substring(src.indexOf("Upload as:"), src.indexOf("</select>", src.indexOf("Upload as:")) + 200);
+        // The label is "Upload as" since the Curate page redesign (2026-10-22).
+        String form = src.substring(src.indexOf(">Upload as</label>"), src.indexOf("</select>", src.indexOf(">Upload as</label>")) + 200);
         assertTrue(form, form.contains("<select name=\"uploadAs\""));
         assertTrue(form, form.contains("UploadAsOptions.optionsHtml("));
         assertTrue(form, form.contains("UploadAsOptions.WARNING"));

@@ -1265,7 +1265,7 @@ public abstract class Queries {
         return namedQueries;
     }
 
-    /** The queries by topic, in the order of the Query Manager page. */
+    /** The queries by the method that defines them (the order of getNamedQueries). The Query Manager page lists them by QueryGroup. */
     static LinkedHashMap<String, ArrayList<NamedQuery>> getBlocks() {
         LinkedHashMap<String, ArrayList<NamedQuery>> blocks = new LinkedHashMap<>();
         blocks.put("Taxon Queries", getTaxaNamedQueries());
@@ -1284,27 +1284,177 @@ public abstract class Queries {
         return blocks;
     }
 
-    public static String getQueryManagerPage() {
-        String page = "<h2>&nbsp;Query Manager</h2>";
-        page += "<div class=\"mgr_help\" style=\"max-width:60em;margin:6px 16px 12px 16px\">Ready-made database queries, by topic."
-            + " Click a name to run it: the page shows what the query is for and what to do about its rows, the query,"
-            + " its rows and how long it took. The queries only read data (nothing is changed); some take a minute on"
-            + " the full database, and none may run longer than " + QueryManager.QUERY_TIMEOUT_SECS + " seconds."
-            + " Most are checks that should find no rows. Administrators only, except the few that public pages link to."
-            + " The checks that should find nothing also run together in the Integrity Check.</div>";
-        for (Map.Entry<String, ArrayList<NamedQuery>> block : getBlocks().entrySet()) {
-            page += getQueryManagerBlock(block.getKey(), block.getValue());
-        }
-        return page;
+    // ---------------- Query Manager groups ----------------
+
+    /**
+     * The groups of the Query Manager page (query.do), by topic (Brian Fisher, 2026-10-22: "wow! there are a lot of
+     * queries in the query manager"). Every named query must be in exactly one group: a new query is added to
+     * the group it belongs to here (QueriesReviewTest.testEveryQueryHasOneGroup fails otherwise; on the page a
+     * query without a group is listed under "Not yet grouped", so it is never lost). Within a group the queries
+     * keep the order of their definitions below.
+     */
+    public enum QueryGroup {
+        NAMES("Names and taxa", "AntWeb's names (from AntCat and from specimen data): missing parts, parents, synonyms, homonyms, odd characters."),
+        SPECIMENS("Specimens", "Specimen records: their names, status, life stage and caste, bioregions and the introduced flag."),
+        PLACES("Places", "Countries and adm1s (states, provinces): valid or not, names, map coordinates, bioregions."),
+        SPECIES_LISTS("Species lists", "Project, place, bioregion and museum species lists, the list exports and the curators' disputes."),
+        IMAGES("Images", "Specimen images: counts, the newest images and default images."),
+        UPLOADS("Uploads and groups", "Upload groups, their specimen counts and uploads, and the AntCat name imports."),
+        ACCOUNTS("Accounts and logins", "Logins: who may upload, who looks after which project, their emails."),
+        SITE("Site checks and counts", "The Admin Alert checks and history, and counts for orientation."),
+        NONE("Not yet grouped", "Queries added without a group (add them to Queries.QUERY_GROUPS).");
+
+        private final String title;
+        private final String desc;
+        QueryGroup(String title, String desc) { this.title = title; this.desc = desc; }
+        public String getTitle() { return title; }
+        public String getDesc() { return desc; }
+        /** The anchor of the group on the Query Manager page, e.g. qm-species-lists. */
+        public String getAnchor() { return "qm-" + name().toLowerCase().replace('_', '-'); }
     }
-    public static String getQueryManagerBlock(String title, ArrayList<NamedQuery> queries) {
-        String block = "";
-        block += "<br><br><h3>&nbsp;<u>" + Html.esc(title) + "</u></h3>";
-        for (NamedQuery namedQuery : queries) {
-          block += "&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + AntwebProps.getDomainApp() + "/query.do?name=" + namedQuery.getName() + "'>"
-            + namedQuery.getName() + "</a> - " + Html.esc(namedQuery.getSummary()) + "<br>" ;
+
+    /** Which group each named query is in (one place for all queries; see QueryGroup). */
+    static final Map<QueryGroup, String[]> QUERY_GROUPS = new EnumMap<>(QueryGroup.class);
+    static {
+        QUERY_GROUPS.put(QueryGroup.NAMES, new String[] {
+            "noSpeciesForSpecies", "nonAsciiTaxonName", "selfRefSynonyms", "homonyms", "invalidCurrentValid",
+            "noGenusForGenus", "noSubfamilyForSubfamily", "emptyGenus", "generaInMultipleSubfamilies",
+            "generaInMultipleSubfamiliesDetail", "emptySubfamily", "taxonNameWithDoubleQuote", "taxonNameWithSingleQuote",
+            "validsWithCurrentValidName", "missingCurrentValidName", "spaceInGenusName", "unrecognizedWithSynonymParent",
+            "unrecognizedTaxaWithoutSpecimen", "speciesEqualsSubspecies", "indeterminedAndQuestionableMorphoTaxa",
+            "badParentTaxonName", "badParentTaxonNameSpecimens", "taxaFromOldSpecimenLists", "homonymWithoutTaxon"});
+        QUERY_GROUPS.put(QueryGroup.SPECIMENS, new String[] {
+            "notValidTaxaFromSpecimenList", "specimenCountByOwner", "checkSpecimenStatus", "invalidBioregion",
+            "introducedSpecimen", "nonAnts", "castes", "nullCastes", "nullLifeStage", "nonIntroducedAntsInMultipleBioregions"});
+        QUERY_GROUPS.put(QueryGroup.PLACES, new String[] {
+            "invalidValidNamelessCountries", "usedAndUnusedCoords", "badSingleQuotes", "geolocaleNameWithQuestionMarks",
+            "duplicatedGeolocaleNames", "lowGeolocaleTaxonCount", "unfinishedBioregions", "nonvalidValidNames",
+            "nonLiveValidCountries", "geolocaleCountryTest", "geolocaleAdm1Test", "importedCountryData"});
+        QUERY_GROUPS.put(QueryGroup.SPECIES_LISTS, new String[] {
+            "validNonfossilSpeciesWithBioregions", "validNonfossilSpeciesWithMuseumsOwnedByLocatedAt",
+            "nonAntsInSpeciesListsGeolocale", "projTaxaWithoutTaxonWithoutHomonym", "projTaxaWithoutTaxonWithHomonym",
+            "quadrinomialsInSpeciesLists", "nonAntsInSpeciesListsProject", "speciesListHomonyms", "morphoProjTaxa",
+            "projTaxaMorphosWithNoSpecimen", "notValidProjectTaxonNames", "badGeolocaleTaxonParentTaxonName",
+            "geolocaleTaxaMorphosWithNoSpecimen", "geolocaleTaxaFromInvalidTaxonName", "geolocaleTaxaNotUsingCurrentValidName",
+            "geolocaleTaxaWithoutTaxon", "geolocaleTaxaWithoutTaxonDetail", "geolocaleTaxaInMultipleBioregions",
+            "notValidBioregionTaxonNames", "notValidMuseumTaxonNames", "emptySourceTaxonSets", "geolocaleTaxonDisputes",
+            "projectTaxonDisputes"});
+        QUERY_GROUPS.put(QueryGroup.IMAGES, new String[] {
+            "imageCountByOwner", "imageData", "imageStatusCounts", "conflictedDefaultImages"});
+        QUERY_GROUPS.put(QueryGroup.UPLOADS, new String[] {
+            "specimenGroups", "adminLoginIdIsZero", "lastSpecimenUpload", "worldantsUploads", "descriptionEditCountByOwner"});
+        QUERY_GROUPS.put(QueryGroup.ACCOUNTS, new String[] {
+            "loginProjectMapping", "curatorInfoAndProjects", "curatorEmails", "uploadingCurators"});
+        QUERY_GROUPS.put(QueryGroup.SITE, new String[] {
+            "geolocaleTaxaPresent", "adminAlerts", "taxonCountBySubfamily", "taxonCountByGenus", "taxonCountBySpecies",
+            "specimenCountByTaxa", "projectTaxaCount", "projectTaxaCountByProject", "projectTaxaCountByProjectRank"});
+    }
+
+    /** The group of a named query (QueryGroup.NONE when it is in none). */
+    public static QueryGroup getGroup(String queryName) {
+        for (Map.Entry<QueryGroup, String[]> entry : QUERY_GROUPS.entrySet()) {
+            for (String name : entry.getValue()) if (name.equals(queryName)) return entry.getKey();
         }
-        return block;
+        return QueryGroup.NONE;
+    }
+
+    /** The named queries by group, in the order of the Query Manager page; empty groups are left out. */
+    public static LinkedHashMap<QueryGroup, ArrayList<NamedQuery>> getGroupedQueries() {
+        LinkedHashMap<QueryGroup, ArrayList<NamedQuery>> grouped = new LinkedHashMap<>();
+        for (QueryGroup group : QueryGroup.values()) grouped.put(group, new ArrayList<>());
+        for (NamedQuery namedQuery : getNamedQueries()) grouped.get(namedQuery.getGroup()).add(namedQuery);
+        grouped.values().removeIf(List::isEmpty);
+        return grouped;
+    }
+
+    // Styles of the Query Manager page, scoped to .qm (the page is the shared message page).
+    private static final String QUERY_MANAGER_STYLE = "<style>"
+        + ".qm{text-align:left;max-width:1100px;padding:0 16px;box-sizing:border-box;color:#2d3338;font-size:14px;line-height:1.55;"
+        + "font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',Helvetica,Arial,sans-serif}"
+        + ".qm *{box-sizing:border-box}"
+        + ".qm h2{font-size:22px;color:#1f2529;margin:0 0 8px 0}"
+        + ".qm a{color:#1f63c6;font-weight:600;text-decoration:none}.qm a:hover{text-decoration:underline}"
+        + ".qm #qm-intro{max-width:60em;margin:0 0 14px 0;color:#4a545e}"
+        + ".qm-filter{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 12px 0}"
+        + ".qm-filter label{font-weight:600}"
+        + ".qm-filter input{font:inherit;font-size:14px;padding:7px 10px;border:1px solid #c8ced6;border-radius:6px;width:22em;max-width:100%}"
+        + ".qm-filter-count{color:#66707a;font-size:13px}"
+        + ".qm-toc{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px 0;padding:0;list-style:none}"
+        + ".qm-toc a{display:inline-block;padding:3px 10px;border:1px solid #d5dbe2;border-radius:999px;background:#f4f6f9;font-size:13px}"
+        + ".qm-group{background:#f8f9fb;border:1px solid #e1e5ea;border-radius:10px;padding:14px 20px 10px 20px;margin:0 0 16px 0}"
+        + ".qm-group h3{font-size:17px;color:#1f2529;margin:0 0 2px 0;text-decoration:none}"
+        + ".qm-group h3 .qm-count{font-weight:400;color:#66707a;font-size:14px}"
+        + ".qm-group-desc{color:#5b6570;margin:0 0 8px 0;font-size:13px}"
+        + ".qm-list{list-style:none;margin:0;padding:0}"
+        + ".qm-list li{padding:6px 0;border-top:1px solid #e8ebef;overflow-wrap:anywhere}"
+        + ".qm-list li:first-child{border-top:0}"
+        + ".qm-summary{color:#3a434b}"
+        + "@media (max-width:760px){.qm{padding:0 10px}.qm-group{padding:12px 12px 8px 12px}.qm-filter input{width:100%}}"
+        + "</style>";
+
+    // Hides the queries that do not match the words typed in the filter box (name and summary), and the
+    // groups left empty. Plain JavaScript, no library.
+    private static final String QUERY_MANAGER_SCRIPT = "<script>(function(){"
+        + "var box=document.getElementById('qm-filter');if(!box)return;"
+        + "var count=document.getElementById('qm-filter-count');var none=document.getElementById('qm-none');"
+        + "var items=document.querySelectorAll('.qm-item');var groups=document.querySelectorAll('.qm-group');"
+        + "function run(){var words=box.value.toLowerCase().split(/\\s+/).filter(function(w){return w;});var shown=0;"
+        + "for(var i=0;i<items.length;i++){var text=items[i].textContent.toLowerCase();var ok=true;"
+        + "for(var j=0;j<words.length;j++){if(text.indexOf(words[j])<0){ok=false;break;}}"
+        + "items[i].style.display=ok?'':'none';if(ok)shown++;}"
+        + "for(var k=0;k<groups.length;k++){var any=false;var li=groups[k].querySelectorAll('.qm-item');"
+        + "for(var m=0;m<li.length;m++){if(li[m].style.display!=='none'){any=true;break;}}groups[k].style.display=any?'':'none';}"
+        + "count.textContent=words.length?shown+' of '+items.length+' queries':'';none.style.display=shown?'none':'';}"
+        + "box.addEventListener('input',run);"
+        + "box.addEventListener('keydown',function(e){if(e.key==='Escape'){box.value='';run();}});"
+        + "run();})();</script>";
+
+    public static String getQueryManagerPage() {
+        LinkedHashMap<QueryGroup, ArrayList<NamedQuery>> grouped = getGroupedQueries();
+        int total = 0;
+        for (ArrayList<NamedQuery> queries : grouped.values()) total += queries.size();
+        StringBuilder page = new StringBuilder();
+        page.append(QUERY_MANAGER_STYLE);
+        page.append("<div class=\"qm\" id=\"query-manager\">");
+        page.append("<h2>Query Manager</h2>");
+        page.append("<div class=\"mgr_help\" id=\"qm-intro\">There are ").append(total).append(" ready-made database queries, in ")
+            .append(grouped.size()).append(" groups by topic. They only read data (nothing is changed).")
+            .append(" Click a name to run it: the page shows what the query is for and what to do about its rows, the query,")
+            .append(" its rows and how long it took. Some take a minute on the full database, and none may run longer than ")
+            .append(QueryManager.QUERY_TIMEOUT_SECS).append(" seconds.")
+            .append(" Most are checks that should find no rows; those also run together in the Integrity Check.")
+            .append(" Administrators only, except the few that public pages link to.</div>");
+        page.append("<div class=\"qm-filter\"><label for=\"qm-filter\">Filter</label>")
+            .append("<input type=\"search\" id=\"qm-filter\" autocomplete=\"off\" placeholder=\"Words in a name or summary, e.g. homonym\">")
+            .append("<span id=\"qm-filter-count\" class=\"qm-filter-count\" aria-live=\"polite\"></span></div>");
+        page.append("<ul class=\"qm-toc\">");
+        for (Map.Entry<QueryGroup, ArrayList<NamedQuery>> entry : grouped.entrySet()) {
+            page.append("<li><a href=\"#").append(entry.getKey().getAnchor()).append("\">").append(Html.esc(entry.getKey().getTitle()))
+                .append(" (").append(entry.getValue().size()).append(")</a></li>");
+        }
+        page.append("</ul>");
+        for (Map.Entry<QueryGroup, ArrayList<NamedQuery>> entry : grouped.entrySet()) {
+            page.append(getQueryManagerGroup(entry.getKey(), entry.getValue()));
+        }
+        page.append("<p id=\"qm-none\" style=\"display:none\">No query matches the filter.</p>");
+        page.append("</div>");
+        page.append(QUERY_MANAGER_SCRIPT);
+        return page.toString();
+    }
+
+    static String getQueryManagerGroup(QueryGroup group, ArrayList<NamedQuery> queries) {
+        StringBuilder block = new StringBuilder();
+        block.append("<div class=\"qm-group\" id=\"").append(group.getAnchor()).append("\">");
+        block.append("<h3>").append(Html.esc(group.getTitle())).append(" <span class=\"qm-count\">(").append(queries.size()).append(")</span></h3>");
+        block.append("<p class=\"qm-group-desc\">").append(Html.esc(group.getDesc())).append("</p>");
+        block.append("<ul class=\"qm-list\">");
+        for (NamedQuery namedQuery : queries) {
+            block.append("<li class=\"qm-item\"><a href='").append(AntwebProps.getDomainApp()).append("/query.do?name=")
+                .append(namedQuery.getName()).append("'>").append(namedQuery.getName()).append("</a> <span class=\"qm-summary\">")
+                .append(Html.esc(namedQuery.getSummary())).append("</span></li>");
+        }
+        block.append("</ul></div>");
+        return block.toString();
     }
 
     /**

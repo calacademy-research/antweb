@@ -9,7 +9,8 @@ bioregion. For each query, query.do?name=... must
 - show its explanation ("What it shows:"),
 - show no SQL error (the page says "could not run" with the error, class query-error),
 - have as many headings as columns (the page writes both counts in <span class="query-check">).
-The Query Manager page lists every query once, each with its one-line summary.
+The Query Manager page lists every query once, each with its one-line summary, in groups by topic with a
+filter box.
 Static checks of the same (explanation, heading count, read-only, lists) run in CI without a server:
 test/org/calacademy/antweb/util/QueriesReviewTest.java.
 """
@@ -72,12 +73,37 @@ def test_names_are_unique():
     assert not dupes, f"named queries defined twice: {dupes}"
 
 
+ITEM = re.compile(r"""<li class="qm-item"><a href='[^']*/query\.do\?name=(\w+)'>\1</a> <span class="qm-summary">([^<]*)</span></li>""")
+
+
 def test_manager_lists_every_query_once(manager_page):
-    listed = re.findall(r"/query\.do\?name=(\w+)'>\1</a> - ([^<]*)<br>", manager_page)
+    listed = ITEM.findall(manager_page)
     names = [n for n, _ in listed]
     assert sorted(names) == sorted(NAMES), (set(NAMES) - set(names), set(names) - set(NAMES))
     short = [n for n, summary in listed if len(unescape(summary).strip()) < 20]
     assert not short, f"queries without a summary line: {short}"
+
+
+def test_manager_groups_queries_by_topic(manager_page):
+    """Brian Fisher, 2026-10-22 ("there are a lot of queries"): the queries are listed in groups by topic, each
+    with a heading and its count, every query in exactly one group, an intro with the number of queries and a
+    filter box."""
+    groups = re.findall(r'<div class="qm-group" id="(qm-[a-z-]+)"><h3>([^<]+) <span class="qm-count">\((\d+)\)</span></h3>(.*?)</ul></div>',
+                        manager_page, re.S)
+    assert len(groups) >= 5, [g[1] for g in groups]
+    assert "Not yet grouped" not in manager_page, "a query has no group (Queries.QUERY_GROUPS)"
+    seen = []
+    for anchor, title, count, block in groups:
+        in_group = [n for n, _ in ITEM.findall(block)]
+        assert in_group, f"{title}: empty group"
+        assert int(count) == len(in_group), f"{title}: heading says {count}, lists {len(in_group)}"
+        assert f'href="#{anchor}">' in manager_page, f"{title}: no link in the list of groups"
+        seen += in_group
+    assert sorted(seen) == sorted(NAMES), "every query in exactly one group"
+    assert f"There are {len(NAMES)} ready-made database queries, in {len(groups)} groups" in manager_page
+    assert "They only read data" in manager_page
+    assert 'id="qm-filter"' in manager_page and "addEventListener('input'" in manager_page
+    assert 'id="qm-none"' in manager_page
 
 
 def _run(admin, path):
