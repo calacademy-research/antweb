@@ -284,15 +284,16 @@ def test_links_on_every_page_type():
 
     lines = [f"Link check of {BASE_URL}: {len(examples)} example pages, {len(map_pages)} with a map, "
              f"{len(to_check)} links requested, {len(broken)} broken, {time.time() - started:.0f} s."]
+    # Broken links first: the annotation shown on GitHub keeps only the start of this text.
+    if broken:
+        lines.append("Broken links (page -> link -> why):")
+        for page, link, why in broken:
+            lines.append(f"  {lc.short(page) if page.startswith('http') else page} -> {lc.short(link)} -> {why}")
     if popup_note:
         lines.append("Note: " + popup_note)
     if no_example:
         lines.append("No example found (not checked): " + ", ".join(no_example))
     lines.append("Example pages: " + ", ".join(f"{t} {lc.short(u)}" for t, u in examples.items()))
-    if broken:
-        lines.append("Broken links (page -> link -> why):")
-        for page, link, why in broken:
-            lines.append(f"  {lc.short(page) if page.startswith('http') else page} -> {lc.short(link)} -> {why}")
     print("\n".join(lines))
     assert not missing_required, f"no example page found for {missing_required}\n" + "\n".join(lines)
     assert not broken, "\n".join(lines)
