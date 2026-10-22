@@ -273,7 +273,7 @@ jobs:
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:7 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
-                     util.BackgroundJobsTest:14 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
+                     util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:14; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
@@ -366,6 +366,8 @@ jobs:
           # per-taxon image counts of a place, and the count check of those numbers.
           # RegionCountDbTest: region and subregion numbers count the specimens of their countries only.
           # BackgroundJobDbTest: the background_job table (status pages of uploads and admin jobs; interrupted at start-up).
+          # UploadRecordDbTest: a specimen upload's row in the upload table is written for any group name (quote, long,
+          # non-BMP), in the upload's transaction, and a failure is thrown, not only logged (production 2026-10-21).
           # PageTextRenameDbTest: renaming a place (editGeolocale.do) moves its page text and history (object_edit,
           # object_hist) with their dates; a new name that has page text already is refused and nothing changes.
           # SpecimenNameHistoryDbTest: the specimen page's Name History query (applied rows of one specimen, newest first,
@@ -391,8 +393,9 @@ jobs:
               /t/org/calacademy/antweb/util/NumbersTestDb.java \
               /t/org/calacademy/antweb/util/CountInvariantsTest.java \
               /t/org/calacademy/antweb/home/PlaceTotalsDbTest.java \
-              /t/org/calacademy/antweb/home/DownloadGuardsDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6; do
+              /t/org/calacademy/antweb/home/DownloadGuardsDbTest.java \
+              /t/org/calacademy/antweb/home/UploadRecordDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:5; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

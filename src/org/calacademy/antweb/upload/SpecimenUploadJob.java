@@ -119,7 +119,7 @@ public final class SpecimenUploadJob implements BackgroundJobs.Work {
 
             connection.commit();
             notice.complete = true;
-            notice.uploadId = AntwebMgr.getNextSpecimenUploadId();
+            notice.uploadId = uploadDetails.getReportUploadId();   // the upload_id recorded in the upload table
             AntwebUtil.logCount();
 
             return BackgroundJobs.Outcome.ok(successText(uploadDetails, notice.uploadId), reportUrl(uploadDetails), "Your upload report");

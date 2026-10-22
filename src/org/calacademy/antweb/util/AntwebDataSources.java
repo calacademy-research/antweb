@@ -95,6 +95,14 @@ public final class AntwebDataSources {
         return out;
     }
 
+    /**
+     * A pool already built by a page request (conPool, mediumConPool, longConPool), or null before the
+     * first one. For work started without a request (the count check after the nightly run).
+     */
+    public static synchronized DataSource loaded(String key) {
+        return sources == null ? null : sources.get(key);
+    }
+
     /** Close the pools when the application stops (called from AppContextListener). */
     public static synchronized void closeAll() {
         if (sources == null) return;

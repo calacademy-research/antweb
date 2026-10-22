@@ -17,7 +17,7 @@ import re
 import time
 import zipfile
 from io import BytesIO
-from urllib.parse import urlparse
+from urllib.parse import unquote_plus, urlparse
 
 import pytest
 
@@ -185,6 +185,88 @@ def report_url(upload_response):
     assert m, "no upload report link on the result page: " + re.sub(r"<[^>]+>", " ", upload_response.text)[:600]
     url = m.group(1)
     return url if url.startswith("http") else BASE_URL + url
+
+
+def _plain(html):
+    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html or ""))
+
+
+def upload_id_of(upload_response):
+    """The upload id the status page gives ("Upload complete: ... Upload ID N."), or None."""
+    m = re.search(r"Upload ID (\d+)", _plain(upload_response.text))
+    return int(m.group(1)) if m else None
+
+
+def loaded_counts(upload_response):
+    """(specimens loaded, red-flagged) from the status page's "Upload complete" line."""
+    text = _plain(upload_response.text)
+    m = re.search(r"Upload complete: ([\d,]+) specimens? loaded(?:, ([\d,]+) of them red-flagged)?", text)
+    assert m, "no 'Upload complete: N specimens loaded' on the status page: " + text[:600]
+    return int(m.group(1).replace(",", "")), int((m.group(2) or "0").replace(",", ""))
+
+
+def group_row(session, gid):
+    """The cells (plain text, and the raw HTML of the last-upload cell) of the group's row on groups.do,
+    or None when the group is not listed: [name, uploads, first upload, last upload, specimens, ...]."""
+    page = session.get(BASE_URL + "/groups.do", timeout=TIMEOUT).text
+    i = page.find(f"/group.do?id={gid}'")
+    if i < 0:
+        return None, None
+    start = page.rfind("<tr", 0, i)
+    row = page[start: page.find("</tr>", i)]
+    raw = re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)
+    return [_plain(c).strip() for c in raw], raw
+
+
+def _number(cell):
+    return int(re.sub(r"[^\d]", "", cell) or "0")
+
+
+def assert_upload_recorded(session, upload_response, gid, uploads_before=None, check_count=True):
+    """The finished upload has its row in the upload table, as the uploads before 2026-10-20 had
+    (production 2026-10-21: a background upload said "Upload complete" without one):
+      - the status page gives the real upload id, and uploadReport.do?uploadId=N (UploadMgr, read
+        from the upload table) leads to this upload's report;
+      - the group's upload list (listSpecimenUploads.do, the upload table) lists this report first,
+        with the uploaded file;
+      - groups.do shows this report as the group's last upload, with the group's specimen count
+        (loaded minus red-flagged: the counts the upload writes on its row; check_count=False for a
+        file with names the count leaves out), and one upload more than uploads_before when given.
+    Returns the upload id."""
+    rep_name = unquote_plus(report_url(upload_response).rsplit("/", 1)[-1])
+    uid = upload_id_of(upload_response)
+    assert uid, "no 'Upload ID N' on the status page: " + _plain(upload_response.text)[:600]
+
+    r = session.get(f"{BASE_URL}/uploadReport.do?uploadId={uid}", timeout=TIMEOUT, allow_redirects=False)
+    assert r.status_code in (301, 302, 303), \
+        f"uploadReport.do?uploadId={uid}: no upload row with that id (HTTP {r.status_code}: {_plain(r.text)[:300]})"
+    assert unquote_plus(r.headers.get("Location", "").rsplit("/", 1)[-1]) == rep_name, \
+        f"upload {uid} is not this upload: {r.headers.get('Location')} (expected {rep_name})"
+
+    listing = session.get(f"{BASE_URL}/listSpecimenUploads.do?groupId={gid}", timeout=TIMEOUT).text
+    listed = [unquote_plus(h.rsplit("/", 1)[-1]) for h in re.findall(r"/web/log/specimen/[^\"'<>]+", listing)]
+    assert listed and listed[0] == rep_name, \
+        f"listSpecimenUploads.do?groupId={gid} does not list this upload first: {listed[:3]} (expected {rep_name})"
+    first_row = listing[listing.find("/web/log/specimen/"):]
+    first_row = first_row[: first_row.find("</tr>")]
+    assert "uploadFile.do?file=" in first_row, "the upload list has no Download link for this upload's file"
+
+    cells, raw = group_row(session, gid)
+    assert cells, f"group {gid} is not on groups.do (no upload row with its last upload)"
+    loaded, red = loaded_counts(upload_response)
+    assert rep_name in unquote_plus(raw[3]), f"groups.do: the last upload of group {gid} is not this one: {cells[3]}"
+    assert not check_count or _number(cells[4]) == loaded - red, \
+        f"groups.do: group {gid} shows {cells[4]} specimens, the upload loaded {loaded} ({red} red-flagged)"
+    if uploads_before is not None:
+        assert _number(cells[1]) == uploads_before + 1, \
+            f"groups.do: group {gid} has {cells[1]} uploads, expected {uploads_before + 1}"
+    return uid
+
+
+def group_upload_count(session, gid):
+    """The group's number of uploads on groups.do (0 when it is not listed)."""
+    cells, _raw = group_row(session, gid)
+    return _number(cells[1]) if cells else 0
 
 
 def specimen_page(session, c):
