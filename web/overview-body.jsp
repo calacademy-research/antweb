@@ -311,6 +311,15 @@ Images:
 		 out.println("<br><b>List of type specimens from the museum: <a rel='nofollow' href='" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&ownedBy=" + code + "&type=type&resultRank=specimen&output=list'>here</a>");
   }
 
+  // Introduced species project only (Brian Fisher, 2026-10-21): specimens intercepted at ports have the
+  // country "Port of Entry". The search filters on the specimen's country text, so it works whether or not
+  // Port of Entry is a valid (shown) place.
+  if (isProjectOverview && "introducedants".equals(overview.getName())) {
+    out.println("<p id=\"port-of-entry\"><a rel=\"nofollow\" href=\"" + AntwebProps.getDomainApp()
+      + "/advancedSearch.do?searchMethod=advancedSearch&amp;advanced=true&amp;family=Formicidae&amp;country=Port+of+Entry&amp;resultRank=specimen&amp;output=list\">Port of Entry interceptions</a><br>"
+      + "Ants intercepted at ports of entry (quarantine inspections), listed from the specimen records.</p>");
+  }
+
     // For the notes field
     String targetDo = overview.getTargetDo();
     String objectName = overview.getName();  // Used?

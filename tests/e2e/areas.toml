@@ -59,6 +59,7 @@ tests = [
   "test_page_content.py",
   "test_parallel_safety.py",
   "test_place_image_counts.py",
+  "test_port_of_entry_link.py",
   "test_previous_determinations.py",
   "test_privacy.py",
   "test_world_ant_collections.py",
@@ -317,6 +318,7 @@ paths = [
   "web/adm1*",
   "web/bioregion*",
   "web/region*",
+  "web/overview-body.jsp",
 ]
 tests = [
   "test_geolocale_edit.py",
@@ -324,6 +326,7 @@ tests = [
   "test_region_counts.py",
   "test_place_image_counts.py",
   "test_overview_editor.py",
+  "test_port_of_entry_link.py",
 ]
 
 [areas.downloads]

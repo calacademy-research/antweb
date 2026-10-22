@@ -260,6 +260,38 @@ species counts as introduced everywhere.
 **Changed 2026-10-21**: the Curate page and the guide said "where a species is introduced"; the ticks
 are where it is native. Values in the form are escaped and the rows read with bound queries.
 
+**Where the introduced species list comes from**: it is the species list of the project
+introducedants (its `proj_taxon` rows), kept by curators and administrators by hand in the Species
+List Tool (`speciesListTool.do`; saved there with source speciesListTool). This manager page does not
+add or remove species: it only records the native bioregions (`taxon_prop`, prop introducedMap) of
+species already on the list. What the list and the ticks are used for:
+
+- Specimen upload: a specimen of a listed species collected outside its native bioregions gets
+  `specimen.is_introduced = 1` (`SpecimenUploadProcess`, `TaxonPropMgr.isIntroduced`); the nightly
+  name update sets the flag again when a specimen's name changes (`SpecimenNameUpdate`). The flag
+  shows as "Introduced" on the specimen and in the query "introducedSpecimen".
+- Introduced numbers on place pages: the nightly counts (`GeolocaleDb.calcIntroduced`,
+  `BioregionDb.calcIntroduced`) do not read the specimen flag. They take each country, state and
+  bioregion list entry of a listed species and mark it introduced when that place's bioregion is not
+  ticked as native here (`geolocale_taxon.is_introduced`, `bioregion_taxon.is_introduced`); the
+  Introduced number is the count of those rows (the species `introduced.do` shows).
+
+Nothing adds species to introducedants automatically (checked in the code 2026-10-21): the only writes
+to `proj_taxon` are the Species List Tool (`SpeciesListDb.saveTaxonSet`) and the restore of a curator's
+entry that was parked during a name change (`CuratorTaxonSetDb`); the specimen upload writes only to
+allantwebants, the AntCat import only to worldants, allantwebants and fossilants
+(`SpeciesListUpload`, `AntwebUpload.saveTaxonAndProjTaxon`), and the `insert ... select` in
+`ProjTaxonDb.regenerateAllAntweb` only to allantwebants. Automatic changes touch only the names
+already on the list: after the AntCat import a name that became a synonym is replaced by its current valid name
+(`TaxonSetDb.updateTaxonSetTaxonNames`), and the project count crawl sets the source of every
+introducedants row to curator (`ProjTaxonCountDb.fixExceptions`). A third: when a specimen upload corrects the subfamily in a name, the
+list entries of the old spelling move to the corrected name
+(`OrphansDb.moveTaxonSupportingDataToAlternate`). None of these adds a species.
+
+**Content to do (Brian Fisher, 2026-10-21)**: the introduced species list is out of date. Species
+introduced since it was last curated are missing, and their specimens are therefore not flagged and not
+counted as Introduced. Update the list in the Species List Tool, then tick their native bioregions here.
+
 ---
 
 ## Query Manager (`query.do`)
