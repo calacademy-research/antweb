@@ -110,7 +110,7 @@ public class FieldGuide {
 
             if (localityCode != null) {
               //s_log.info("looking up locality code: " + localityCode);
-              result = new LocalityDb(connection).getLocality(localityCode);
+              result = new LocalityDb(connection).getLocalityByCode(localityCode);  // was getLocality(localityCode): the code used as an SQL where clause
             } 
         } catch (SQLException e) {
             s_log.warn("problem getting points " + theQuery + e);

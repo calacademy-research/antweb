@@ -48,6 +48,7 @@ public abstract class Queries {
           , "validsWithCurrentValidName"
           , "missingCurrentValidName"
           , "checkSpecimenStatus"
+          , "encodedLocalityCodes"
           , "spaceInGenusName"
           , "invalidBioregion"
           , "quadrinomialsInSpeciesLists"
@@ -521,6 +522,23 @@ public abstract class Queries {
           , h("Code", "Taxon Name", "Group", "Created")
           , "select s.code, s.taxon_name, g.name, s.created from specimen s left join ant_group g on g.id = s.access_group"
             + " where s.status is null order by g.name, s.code limit 5000"
+          ));
+
+        // 2026-10-22: the specimen upload stored locality codes URL-encoded (HttpUtil.encodePath), 1,117 specimens
+        // in 67 codes on production. Codes are stored plain since then; this lists any that are not.
+        queries.add(new NamedQuery(
+            "encodedLocalityCodes"
+          , "Locality and collection codes stored URL-encoded (with % and two hex digits, for example"
+            + " MontagnedesFran%E7ais_150 for MontagnedesFrançais_150), per group. The upload stored locality codes"
+            + " that way until October 2026; codes are now stored as written. Normally none. Fix: the group's next upload stores them plain (the CAS TaxonWorks upload"
+            + " every night); for other groups see docs/runbook.md, \"Locality codes stored URL-encoded\". A row that"
+            + " comes back after an upload is for the developers."
+          , h("Group", "Field", "Stored Code", "Specimens")
+          , "select g.name, 'locality code', s.localitycode, count(*) from specimen s left join ant_group g on g.id = s.access_group"
+            + " where s.localitycode regexp '%[0-9A-Fa-f]{2}' group by g.name, s.localitycode"
+            + " union all select g.name, 'collection code', s.collectioncode, count(*) from specimen s left join ant_group g on g.id = s.access_group"
+            + " where s.collectioncode regexp '%[0-9A-Fa-f]{2}' group by g.name, s.collectioncode"
+            + " order by 1, 2, 3"
           ));
 
         // Replaces oldBadBioregionsInSpecimen (the same check against a list of names written into the query).
@@ -1295,7 +1313,7 @@ public abstract class Queries {
      */
     public enum QueryGroup {
         NAMES("Names and taxa", "AntWeb's names (from AntCat and from specimen data): missing parts, parents, synonyms, homonyms, odd characters."),
-        SPECIMENS("Specimens", "Specimen records: their names, status, life stage and caste, bioregions and the introduced flag."),
+        SPECIMENS("Specimens", "Specimen records: their names, status, locality codes, life stage and caste, bioregions and the introduced flag."),
         PLACES("Places", "Countries and adm1s (states, provinces): valid or not, names, map coordinates, bioregions."),
         SPECIES_LISTS("Species lists", "Project, place, bioregion and museum species lists, the list exports and the curators' disputes."),
         IMAGES("Images", "Specimen images: counts, the newest images and default images."),
@@ -1324,7 +1342,7 @@ public abstract class Queries {
             "unrecognizedTaxaWithoutSpecimen", "speciesEqualsSubspecies", "indeterminedAndQuestionableMorphoTaxa",
             "badParentTaxonName", "badParentTaxonNameSpecimens", "taxaFromOldSpecimenLists", "homonymWithoutTaxon"});
         QUERY_GROUPS.put(QueryGroup.SPECIMENS, new String[] {
-            "notValidTaxaFromSpecimenList", "specimenCountByOwner", "checkSpecimenStatus", "invalidBioregion",
+            "notValidTaxaFromSpecimenList", "specimenCountByOwner", "checkSpecimenStatus", "encodedLocalityCodes", "invalidBioregion",
             "introducedSpecimen", "nonAnts", "castes", "nullCastes", "nullLifeStage", "nonIntroducedAntsInMultipleBioregions"});
         QUERY_GROUPS.put(QueryGroup.PLACES, new String[] {
             "invalidValidNamelessCountries", "usedAndUnusedCoords", "badSingleQuotes", "geolocaleNameWithQuestionMarks",
