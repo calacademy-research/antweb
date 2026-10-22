@@ -31,10 +31,11 @@
     };
 
     // Localities (name + code)
+    // (Map.java also passes the site address as a last argument; it is not needed here.)
     global.drawGoogleMapLocalities = function (mapType, divName, latArray, lonArray, nameArray, codeArray) {
         var lats = toNumArray(latArray), lons = toNumArray(lonArray);
         var names = toArray(nameArray||[]), codes = toArray(codeArray||[]);
-        if (need("drawMapLocalities")) global.drawMapLocalities(divName, lats, lons, names, codes);
+        if (need("drawMapLocalities")) global.drawMapLocalities(divName, lats, lons, names, codes, "locality");
         else if (need("drawMap"))      global.drawMap(divName, lats, lons);
     };
 
@@ -52,10 +53,12 @@
         else if (need("drawMap"))           global.drawMap(divName, lats, lons);
     };
 
-    // Collections (codes only)
+    // Collections (codes only): the popup links the collection page, not locality.do (a collection
+    // code is not a locality code).
     global.drawGoogleMapCollection = function (mapType, divName, latArray, lonArray, codeArray) {
-        var codes = toArray(codeArray||[]);
-        global.drawGoogleMapLocalities(mapType, divName, latArray, lonArray, codes, codes);
+        var lats = toNumArray(latArray), lons = toNumArray(lonArray), codes = toArray(codeArray||[]);
+        if (need("drawMapLocalities")) global.drawMapLocalities(divName, lats, lons, codes, codes, "collection");
+        else if (need("drawMap"))      global.drawMap(divName, lats, lons);
     };
 
     // Single point
