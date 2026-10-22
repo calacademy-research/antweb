@@ -112,12 +112,41 @@ def test_java_sends_encoded_values():
     print("Map.java sends the values drawMap.js decodes.")
 
 
+LINK_BUILDER = re.compile(r"(locality|collection|place)\.do\?(code|name|placeName)=")
+ENCODE_ONCE = re.compile(r"Html\.url\(|encodeCode|encodeURIComponent\(")
+ENCODE_TWICE = re.compile(r"(Html\.url|HttpUtil\.encode\w*|encodeURIComponent)\(\s*(Html\.url|HttpUtil\.encode\w*|encodeURIComponent)\(")
+
+
+def test_link_builders_encode_once():
+    """Every place that writes a locality.do, collection.do or place.do link in src/ and web/ encodes the
+    value exactly once (Html.url, HttpUtil.encodePath via encodeCode, or encodeURIComponent in drawMap.js).
+    Found 2026-10-22: specimenReport.jsp and locality-body.jsp put collection codes in links unencoded."""
+    bad = []
+    for top in ("src", "web"):
+        for dirpath, _dirs, names in os.walk(os.path.join(ROOT, top)):
+            for name in names:
+                if not name.endswith((".java", ".jsp", ".js")):
+                    continue
+                path = os.path.join(dirpath, name)
+                for n, line in enumerate(open(path, encoding="utf-8", errors="replace"), 1):
+                    code = line.strip()
+                    if not LINK_BUILDER.search(code) or code.startswith(("//", "*", "/*", "<!--")) or "http://localhost" in code:
+                        continue
+                    if "LINKS = {" in code or "DBUtilSimple" in path or "// " in code.split(LINK_BUILDER.search(code).group(0))[0]:
+                        continue
+                    if not ENCODE_ONCE.search(code) or ENCODE_TWICE.search(code):
+                        bad.append(f"{os.path.relpath(path, ROOT)}:{n}: {code[:160]}")
+    assert not bad, "links not encoded exactly once:\n" + "\n".join(bad)
+    print("Every locality/collection/place link builder encodes once.")
+
+
 def main():
     test_group_map_popup()
     test_locality_and_collection_popups()
     test_missing_code_has_no_link()
     test_specimen_popups_unchanged()
     test_java_sends_encoded_values()
+    test_link_builders_encode_once()
 
 
 if __name__ == "__main__":

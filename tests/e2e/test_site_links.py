@@ -16,7 +16,9 @@ What it does (anonymous, read-only, GET only):
     is recorded (Leaflet's bindPopup) and its links are added (up to ANTWEB_POPUP_LINKS, default 15 a map).
  4. Every link is requested once (4 at a time). Broken: an HTTP error, AntWeb's error page or a stack
     trace, a not-found page or an AntWeb "... not found" / "Invalid request" message, and any link
-    encoded twice (%25 followed by two hex digits). Login pages are fine (some pages need a login).
+    encoded twice (%25 followed by two hex digits) that does not open. A %25 link that opens is listed, not
+    failed: the stored code itself holds a "%" (e.g. "Praia_das_Conchas_%3C50"), and encoding it once gives %253C.
+    Login pages are fine (some pages need a login).
  Never requested: logout, login, uploads, saves, deletes, data jobs, downloads, the API, links with a
  form token (linkcheck.skip_reason).
 
@@ -28,7 +30,7 @@ import threading
 import time
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlsplit
 
 import pytest
 
@@ -51,10 +53,18 @@ SEEDS = [
 ]
 # Pages that must be checked whatever the crawl finds: the bug report's page and the map pages.
 ALWAYS = {
+    "list (favourite images)": "/list.do?action=likes",
+    "page (project by short name)": "/page.do?name=california",
+    "place (place name search)": "/place.do?placeName=Madagascar",
     "group (bug report 2026-10-22)": "/group.do?id=80",
     "bigMap (taxon)": "/bigMap.do?taxonName=formicinae&project=allantwebants",
     "advanced search results": "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae"
                                "&country=Burundi&resultRank=specimen",
+}
+# Public page types with no example here, and why (printed in the report).
+NOT_SAMPLED = {
+    "/uploadReport": "needs the id of an upload, linked only from curator pages; tested by test_background_jobs.py "
+                     "and test_specimen_upload_roundtrip.py",
 }
 # Page types that must have an example (the main pages people use).
 REQUIRED = ["/", "/description:subfamily", "/description:genus", "/description:species", "/specimen",
@@ -98,6 +108,7 @@ class Crawl:
         self.session = new_session()
         self.pages = {}          # url -> (problem or None, html)
         self.examples = OrderedDict()   # page type -> url
+        self.types = lc.catalog_page_types()
 
     def fetch(self, url, session=None):
         if url not in self.pages:
@@ -114,13 +125,19 @@ class Crawl:
                 self.pages[url] = (f"no answer ({type(e).__name__})", "")
         return self.pages[url]
 
+    def bare_ok(self, t):
+        """True when the page type answers without parameters (catalog anon_result "ok")."""
+        return self.types.get(t, ("", "", "message"))[2] == "ok"
+
     def discover(self, wanted):
         """Find an example URL for each wanted page type by following links from the seeds."""
         queue = [BASE_URL + s for s in SEEDS]
         for s in SEEDS:
             self.examples.setdefault(lc.page_type(BASE_URL + s), BASE_URL + s)
+        self.seed_types = set(self.examples)
         fetched = 0
-        while queue and fetched < DISCOVERY_BUDGET and not wanted <= set(self.examples):
+        while queue and fetched < DISCOVERY_BUDGET and not (wanted <= set(self.examples) and all(
+                urlsplit(u).query or self.bare_ok(t) or t in self.seed_types for t, u in self.examples.items())):
             url = queue.pop(0)
             if url in self.pages:
                 continue
@@ -130,13 +147,22 @@ class Crawl:
                 continue
             for link, _ in lc.links_in(html, url):
                 t = lc.page_type(link)
-                if t in wanted and t not in self.examples and not lc.skip_reason(link) and not lc.double_encoded(link):
+                if t not in wanted or lc.skip_reason(link) or lc.double_encoded(link):
+                    continue
+                has_query = bool(urlsplit(link).query)
+                current = self.examples.get(t)
+                # Prefer a page with parameters (region.do?name=Africa, not the bare region.do).
+                if current is None and (has_query or t == "/" or self.bare_ok(t)):
+                    self.examples[t] = link
+                    queue.append(link)
+                elif current is not None and has_query and not urlsplit(current).query and t not in self.seed_types:
                     self.examples[t] = link
                     queue.append(link)
         # Not found by following links: an example recorded from staging (expectations.json).
         for p in lc.recorded_pages():
             t = lc.page_type(BASE_URL + p)
-            if t in wanted and t not in self.examples and not lc.skip_reason(BASE_URL + p):
+            if (t in wanted and t not in self.examples and not lc.skip_reason(BASE_URL + p)
+                    and (urlsplit(p).query or self.bare_ok(t))):
                 self.examples[t] = BASE_URL + p
 
 
@@ -215,6 +241,7 @@ def test_links_on_every_page_type():
     types = lc.catalog_page_types()
     wanted = set(types) | set(EXTRA_TYPES)
     wanted -= {"/description", "/browse", "/images", "/index"}  # by rank (description:genus ...); /index is home
+    wanted -= {"/list", "/page", "/place"} | set(NOT_SAMPLED)    # examples in ALWAYS, or not sampled
     crawl = Crawl()
     crawl.discover(wanted)
 
@@ -249,9 +276,10 @@ def test_links_on_every_page_type():
         links = lc.links_in(html, url)
         if MAP_CALL.search(html) and len(map_pages) < MAX_MAP_PAGES and url not in map_pages:
             map_pages.append(url)
+        # Links with %25xx are always requested: broken if they do not open ("encoded twice").
         for link, _ in links:
-            if lc.double_encoded(link):
-                broken.append((url, link, "encoded twice (%25..)"))
+            if lc.double_encoded(link) and not lc.skip_reason(link):
+                to_check.setdefault(link, url)
         candidates = [link for link, _ in links if not lc.skip_reason(link) and not lc.double_encoded(link)]
         # Links written in JavaScript are always taken (they are the ones no other test follows).
         script = [link for link, where in links if where == "script" and link in candidates]
@@ -265,8 +293,8 @@ def test_links_on_every_page_type():
             broken.append((page_url, "(map)", "the page has a map but no marker popup was drawn"))
             continue
         for link in hrefs:
-            if lc.double_encoded(link):
-                broken.append((page_url + " [map popup]", link, "encoded twice (%25..)"))
+            if lc.double_encoded(link) and not lc.skip_reason(link):
+                to_check.setdefault(link, page_url + " [map popup]")
         ok = [h for h in hrefs if not lc.double_encoded(h) and not lc.skip_reason(h)]
         for link in lc.spread(ok, POPUP_LINKS):
             to_check.setdefault(link, page_url + " [map popup]")
@@ -277,10 +305,13 @@ def test_links_on_every_page_type():
         return _check(session(), link)
 
     items = list(to_check.items())
+    percent_ok = []      # links with %25xx that open: the stored value itself holds a "%" (not a fault here)
     with ThreadPoolExecutor(WORKERS) as pool:
         for (link, page), why in zip(items, pool.map(check, [link for link, _ in items])):
             if why:
-                broken.append((page, link, why))
+                broken.append((page, link, ("encoded twice (%25..): " + why) if lc.double_encoded(link) else why))
+            elif lc.double_encoded(link):
+                percent_ok.append((page, link))
 
     lines = [f"Link check of {BASE_URL}: {len(examples)} example pages, {len(map_pages)} with a map, "
              f"{len(to_check)} links requested, {len(broken)} broken, {time.time() - started:.0f} s."]
@@ -291,8 +322,12 @@ def test_links_on_every_page_type():
             lines.append(f"  {lc.short(page) if page.startswith('http') else page} -> {lc.short(link)} -> {why}")
     if popup_note:
         lines.append("Note: " + popup_note)
+    if percent_ok:
+        lines.append("Links with %25 that open (the stored code or name contains a %; check the data): "
+                     + "; ".join(f"{lc.short(p) if p.startswith('http') else p} -> {lc.short(l)}" for p, l in percent_ok))
     if no_example:
         lines.append("No example found (not checked): " + ", ".join(no_example))
+    lines.append("Not sampled: " + "; ".join(f"{t} ({why})" for t, why in NOT_SAMPLED.items()))
     lines.append("Example pages: " + ", ".join(f"{t} {lc.short(u)}" for t, u in examples.items()))
     print("\n".join(lines))
     assert not missing_required, f"no example page found for {missing_required}\n" + "\n".join(lines)
