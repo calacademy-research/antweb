@@ -2,32 +2,46 @@ package org.calacademy.antweb.util;
 
 import java.util.*;
 
-import org.calacademy.antweb.util.*;
-
-import org.apache.commons.logging.Log; 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-
+/**
+ * The named queries of the Query Manager (query.do), the Integrity Check, the Admin Alerts and the
+ * "Relevant Queries" boxes of the manager pages.
+ *
+ * Every query (reviewed one by one on 2026-10-22 at Brian Fisher's request: "make sure they are working and
+ * explained") has
+ *   - a name (its address: query.do?name=...),
+ *   - a plain-language explanation: what it lists, how to read it, what to do about what it finds. The first
+ *     sentence is the one-line summary shown in the Query Manager list and the Relevant Queries boxes;
+ *   - one column heading per column of its select (QueriesReviewTest checks the count);
+ *   - read-only SQL (QueryManager.isReadOnly refuses anything else).
+ * Queries only administrators may run, except the few QueryAction.PUBLIC_QUERIES and CURATOR_QUERIES.
+ * The list of queries, one line each, is in docs/guides/manager-tools.md (Query Manager).
+ *
+ * Links: a query may build a link to an AntWeb page in SQL (link() below); the result page keeps only such
+ * links (QueryManager.cell), every other value is shown as text.
+ */
 public abstract class Queries {
 
     private static final Log s_log = LogFactory.getLog(Queries.class);
-        
+
+    // ---------------- Lists of queries run together ----------------
+
+    /** The Integrity Check (query.do?action=checkIntegrity): checks that should find nothing. */
     public static String[] getIntegrityNames() {
         String[] list = {
-            "geolocaleListMorphotaxa"
-          , "noSpeciesForSpecies"
+            "noSpeciesForSpecies"
           , "noGenusForGenus"
           , "noSubfamilyForSubfamily"
-          , "noFamilyForFamily"
           , "emptyGenus"
           , "emptySubfamily"
           , "generaInMultipleSubfamilies"
-          //, "generaInMultipleSubfamilies2"
           , "taxonNameWithDoubleQuote"
           , "taxonNameWithSingleQuote"
           , "adminLoginIdIsZero"
           // badParentTaxonName (moved from the removed Curate AntCat page, 2026-10-19) lists the taxa that
-          // sourceWithBadParent only counted by source, so it replaces it here.
+          // sourceWithBadParent only counted by source (sourceWithBadParent was removed 2026-10-22).
           , "badParentTaxonName"
           , "unrecognizedWithSynonymParent"
           , "geolocaleTaxaNotUsingCurrentValidName"
@@ -37,7 +51,6 @@ public abstract class Queries {
           , "spaceInGenusName"
           , "invalidBioregion"
           , "quadrinomialsInSpeciesLists"
-          , "oldBadBioregionsInSpecimen"
           , "nonAntsInSpeciesListsProject"
           , "nonAntsInSpeciesListsGeolocale"
           , "badSingleQuotes"
@@ -48,35 +61,34 @@ public abstract class Queries {
           , "projTaxaWithoutTaxonWithoutHomonym"
           , "projTaxaWithoutTaxonWithHomonym"
         };
-        return list;      
+        return list;
     }
     public static ArrayList<NamedQuery> getIntegrityQueries() {
-        String[] list = getIntegrityNames();
-        
-        return Queries.getNamedQueryList(list);
+        return Queries.getNamedQueryList(getIntegrityNames());
     }
 
-
-    // query.do?action=devQueries (QueryManager).
+    /** query.do?action=devQueries (QueryManager): checks whose hits are for the AntWeb developers. */
     public static String[] getDevIntegrityNames() {
         String[] list = {
             "emptySourceTaxonSets"
-          , "brokenTaxaHierarchy"
+          , "noSpeciesForSpecies"
         };
         return list;
     }
 
-    // Highest priority. More so that Integrity queries.
-    public static ArrayList<NamedQuery> getAdminCheckQueries() {
+    /** The Admin Alerts (AdminAlertMgr): checked on every server start; highest priority. */
+    public static String[] getAdminCheckNames() {
         String[] list = {
-            "brokenTaxaHierarchy"
+            "noSpeciesForSpecies"
           , "geolocaleTaxaPresent"
-          //, "missingDefaultSpecimen"
         };
-        
-        return Queries.getNamedQueryList(list);
+        return list;
     }
-    
+    public static ArrayList<NamedQuery> getAdminCheckQueries() {
+        return Queries.getNamedQueryList(getAdminCheckNames());
+    }
+
+    /** query.do?action=curiousQueries: counts and lists for orientation. */
     public static String[] getCuriousNames() {
         String[] list = {
             "speciesEqualsSubspecies"
@@ -84,29 +96,22 @@ public abstract class Queries {
           , "taxonCountBySubfamily"
           , "taxonCountByGenus"
           , "taxonCountBySpecies"
-          , "ancillaryFiles"
           , "speciesListHomonyms"
           , "introducedSpecimen"
           , "morphoProjTaxa"
           , "duplicatedGeolocaleNames"
           , "nonAnts"
           , "nonIntroducedAntsInMultipleBioregions"
-          , "distinctMales"
-          , "distinctWorkers"
-          , "distinctQueens"
-          , "distinctOthers"
           , "geolocaleTaxonDisputes"
           , "projectTaxonDisputes"
-        };    
-        return list;    
-    }        
+        };
+        return list;
+    }
     public static ArrayList<NamedQuery> getCuriousQueries() {
-        String[] list = getCuriousNames();
-        
-        return getNamedQueryList(list);
-    }    
+        return getNamedQueryList(getCuriousNames());
+    }
 
-    // For Geolocale Manager.
+    // For Geolocale Manager (Relevant Queries box).
     public static ArrayList<String> getGeolocaleQueries() {
       String[] list = {
           "invalidValidNamelessCountries"
@@ -116,963 +121,1106 @@ public abstract class Queries {
         , "nonvalidValidNames"
         , "nonLiveValidCountries"
         , "geolocaleTaxaFromInvalidTaxonName"
-        , "geolocaleTaxaInMultipleBioregions"        
+        , "geolocaleTaxaInMultipleBioregions"
         , "geolocaleTaxaWithoutTaxon"
       };
-      ArrayList<String> names = new ArrayList<>(Arrays.asList(list));
-      return names;
+      return new ArrayList<>(Arrays.asList(list));
     }
-    
-    // For Login Manager.
+
+    // For Login Manager (Relevant Queries box).
     public static ArrayList<String> getLoginQueries() {
       String[] list = {
           "uploadingCurators"
         , "curatorEmails"
       };
-      ArrayList<String> names = new ArrayList<>(Arrays.asList(list));
-      return names;
+      return new ArrayList<>(Arrays.asList(list));
     }
 
-    // For Group Manager.
+    // For Group Manager (Relevant Queries box).
     public static ArrayList<String> getGroupQueries() {
       String[] list = {
           "specimenGroups"
       };
-      ArrayList<String> names = new ArrayList<>(Arrays.asList(list));
-      return names;
-    }            
+      return new ArrayList<>(Arrays.asList(list));
+    }
 
-// ----------------
+    /** query.do?action=queryBattery&name=projectTaxonCounts (QueryManager.getBattery). */
+    public static String[] getBatteryNames() {
+        return new String[] {"projectTaxaCount", "projectTaxaCountByProject", "projectTaxaCountByProjectRank"};
+    }
 
-    private static ArrayList<NamedQuery> getTaxaNamedQueries() {  
+    // ---------------- Helpers ----------------
+
+    private static String[] h(String... headings) {
+        return headings;
+    }
+
+    /**
+     * SQL that makes a link to an AntWeb page for each row: page is the address after the domain up to the
+     * value (e.g. "/description.do?taxonName="), column the SQL column. Spaces in the value are written %20,
+     * as QueryManager.cell keeps a link only when its address has no space.
+     */
+    static String link(String page, String column) {
+        return "concat(\"<a href='" + AntwebProps.getDomainApp() + page + "\", replace(" + column + ", ' ', '%20'), \"'>\", "
+            + column + ", \"</a>\")";
+    }
+
+    // Statuses that are not "in use": every AntCat status except valid. AntWeb's own statuses for names AntCat
+    // does not have are morphotaxon (morphospecies), indetermined and unrecognized (Status.java).
+    private static final String ANTWEB_OWN_STATUSES = "'morphotaxon', 'indetermined', 'unrecognized'";
+
+// ---------------- Taxon queries ----------------
+
+    private static ArrayList<NamedQuery> getTaxaNamedQueries() {
         ArrayList<NamedQuery> queries = new ArrayList<>();
 
+        // Replaces brokenTaxaHierarchy (the same check without names containing a parenthesis) and badSpecies
+        // (the same check without empty strings), both removed 2026-10-22.
         queries.add(new NamedQuery(
-            "brokenTaxaHierarchy"
-          , "Broken Taxa Hierarchy:"
-          , ""      
-          , "select taxon_name from taxon where taxarank = 'species' and (species is null or species = '') and taxon_name not like '%(%'"
+            "noSpeciesForSpecies"
+          , "Species-rank names whose species part is empty. Such a name cannot be placed under its genus, so its"
+            + " page and the counts above it are wrong. Normally none (it is also an Admin Alert). Fix: correct the"
+            + " name at its source (Source column: the group's specimen upload file, or AntCat for worldants)."
+          , h("Taxon Name", "Source", "Created")
+          , "select taxon_name, source, created from taxon where taxarank = 'species' and (species is null or species = '')"
+            + " order by source, taxon_name"
         ));
 
-        // SHould be over 57000 records from: select count(*) from geolocale_taxon gt, geolocale g where gt.geolocale_id = g.id and g.georank = 'country';
         queries.add(new NamedQuery(
             "geolocaleTaxaPresent"
-          , "Geolocale Taxa Present: Aught to be at least 50,000 geolocale_taxa country records. If not 0 is returned, that is a problem. Check literature records."
-          , ""
-          // The concat is because the resullts are scanned for "records missing"
-            , "select if (count(*) < 50000, concat('records', ' missing!'), 0) isLow from geolocale_taxon gt, geolocale g where gt.geolocale_id = g.id and g.georank = 'country'"
+          , "Admin Alert check that the country species lists are filled: shows 0 when there are at least 50,000"
+            + " rows (one per name per country; there are normally far more), and \"records missing!\" when there"
+            + " are fewer. Fewer means the lists were emptied and not rebuilt, so country pages show few or no"
+            + " species. Fix: look at the last nightly run (compute.log, sets 2 and 3) and run it again."
+          , h("Result")
+          // The concat is because the Admin Alerts scan the result for "records missing".
+          , "select if (count(*) < 50000, concat('records', ' missing!'), 0) isLow from geolocale_taxon gt, geolocale g"
+            + " where gt.geolocale_id = g.id and g.georank = 'country'"
         ));
- 
+
         queries.add(new NamedQuery(
             "nonAsciiTaxonName"
-          , "These taxa contain non ascii taxon names:"
-          , "<th>Taxon Name</th><th>Source</th><th>Created</th>"      
-          , "SELECT taxon_name, concat('&nbsp;&nbsp;&nbsp;', source), created " 
-            + " FROM taxon WHERE NOT HEX(taxon_name) REGEXP '^([0-7][0-9A-F])*$' order by source, taxon_name"
+          , "Names that contain a character other than plain English letters, digits and punctuation (an accented"
+            + " letter, a curly quote, a non-breaking space), usually pasted into an upload file. Such a name does"
+            + " not match the same name typed plainly, so its specimens can end up under two names. Fix: correct"
+            + " the name at its source (Source column)."
+          , h("Taxon Name", "Source", "Created")
+          , "select taxon_name, source, created from taxon where not hex(taxon_name) regexp '^([0-7][0-9A-F])*$'"
+            + " order by source, taxon_name"
         ));
-        
+
+        // Was: AntCat synonyms with source 'worldants.txt' (AntCat names have source 'worldants') whose taxon name
+        // is the subfamily joined to the current valid name; it found nothing. The current valid name is a full
+        // taxon name (subfamily included).
         queries.add(new NamedQuery(
-              "selfRefSynonyms"
-            , "These are the Antcat synonyms which have current valid names that point to themselves."
-            , "<th>Taxon Name</th><th>Subfamily</th><th>Current Valid Name</th>"      
-            , "select taxon_name, subfamily, current_Valid_name from taxon where source = 'worldants.txt' " 
-            + " and status = 'synonym' and instr(taxon_name, current_Valid_name) + length(current_valid_name) = length(taxon_name) + 1 " 
-            + " and substring(taxon_name, 1, instr(taxon_name, current_Valid_name)-1) = subfamily"
+            "selfRefSynonyms"
+          , "Synonyms whose current valid name is the name itself, so the taxon page sends readers back to the"
+            + " same page. An error in the catalog. Fix: report it to AntCat (antcat.org); AntWeb takes the"
+            + " correction with the next nightly import."
+          , h("Taxon Name", "Source", "Current Valid Name")
+          , "select taxon_name, source, current_valid_name from taxon where status = 'synonym' and current_valid_name = taxon_name"
+            + " order by taxon_name"
         ));
-        
+
         queries.add(new NamedQuery(
             "homonyms"
-          , "This is the complete list of homonyms."
-          , "<th>Taxon Name</th><th>Author Date</th>"      
+          , "Every name in the homonym table: AntCat names spelled exactly like another ant name but with another"
+            + " author and year. AntWeb keeps one of each such pair as the taxon and the others here. For reference;"
+            + " the Homonym Report on the Curate page shows the same with links."
+          , h("Taxon Name", "Author Date")
           , "select taxon_name, author_date from homonym order by taxon_name"
         ));
 
+        // Was: original combinations where concat(subfamily, current_valid_name) is not a name. The current valid
+        // name already holds the subfamily, so it listed every original combination; and longCurrentValidNames
+        // (the same, with three spaces in the name) was removed with it.
         queries.add(new NamedQuery(
             "invalidCurrentValid"
-          , "These are the Antcat original combination taxa with current valid names not found in Antweb."
-          , "<th>Taxon Name</th><th>Current Valid Name</th>"      
-          , "select taxon_name, current_valid_name from taxon where status = 'original combination' and current_valid_name is not null and taxon_name != concat(subfamily, current_valid_name) and concat(subfamily, current_valid_name) not in (select taxon_name from taxon) and concat(subfamily, current_valid_name) not in (select taxon_name from homonym)"
+          , "Names whose current valid name (the name AntCat says to use instead) is not among AntWeb's names or"
+            + " homonyms. The taxon page's link to the valid name leads nowhere, and the specimens filed under the"
+            + " name cannot be moved to it. Fix: look the name up in AntCat; if AntCat is right, the next nightly"
+            + " import should bring the valid name, otherwise report it to AntCat."
+          , h("Taxon Name", "Status", "Current Valid Name", "Source")
+          , "select t.taxon_name, t.status, t.current_valid_name, t.source from taxon t"
+            + " where t.current_valid_name is not null and t.current_valid_name != '' and t.current_valid_name != t.taxon_name"
+            + " and not exists (select 1 from taxon v where v.taxon_name = t.current_valid_name)"
+            + " and not exists (select 1 from homonym h where h.taxon_name = t.current_valid_name)"
+            + " order by t.taxon_name"
         ));
-
-       queries.add(new NamedQuery(
-            "longCurrentValidNames"
-          , "These current valid names contain three spaces."
-          , "<th>Taxon Name</th><th>Current Valid Name</th>"
-          , "select taxon_name, current_valid_name  from taxon where status = 'original combination' and current_valid_name is not null and taxon_name != concat(subfamily, current_valid_name) and concat(subfamily, current_valid_name) not in (select taxon_name from taxon) and concat(subfamily, current_valid_name) not in (select taxon_name from homonym) and ROUND ( ( LENGTH( current_valid_name ) - LENGTH( REPLACE ( current_valid_name , ' ', '') ) ) / LENGTH(' ') ) > 2"
-        ));
-        
-        queries.add(new NamedQuery(
-            "noSpeciesForSpecies"
-          , "There is no Species value for a species."
-          , "<th>Taxon Name</th>"      
-          , "select taxon_name from taxon where taxarank = 'species' and (species is null or species = '')"
-          ));
 
         queries.add(new NamedQuery(
             "noGenusForGenus"
-          , "Null or empty genus name for a genus."
-          , "<th>Taxon Name</th>"      
-          , "select taxon_name from taxon where taxarank = 'genus' and (genus is null or genus = '')"
+          , "Genus-rank names whose genus part is empty. The genus page and every name under it are then"
+            + " misplaced. Normally none. Fix: correct the name at its source (Source column)."
+          , h("Taxon Name", "Source", "Created")
+          , "select taxon_name, source, created from taxon where taxarank = 'genus' and (genus is null or genus = '')"
           ));
 
         queries.add(new NamedQuery(
             "noSubfamilyForSubfamily"
-          , "Null or empty subfamily from a subfamily"
-          , "<th>Taxon Name</th><th>source</th><th>created</th>"      
+          , "Subfamily-rank names whose subfamily part is empty. Normally none. Fix: correct the name at its"
+            + " source (Source column)."
+          , h("Taxon Name", "Source", "Created")
           , "select taxon_name, source, created from taxon where taxarank = 'subfamily' and (subfamily is null or subfamily = '')"
           ));
 
-        /*
-        queries.add(new NamedQuery(
-            "noFamilyForFamily"
-          , "Null or empty family for a family"
-          , "<th>Taxon Name</th>"      
-          , "select taxon_name from taxon where taxarank = 'family' and (family is null or family = '')"
-          ));
-        */
-        
+        // Was: genus = '' only, and tribes (which have no genus) were listed.
         queries.add(new NamedQuery(
             "emptyGenus"
-          , "Genus field is empty for a genus or species"
-          , "<th>Taxon Name</th><th>Subfamily</th><th>Genus</th><th>Rank</th>"      
-          , "select taxon_name, subfamily, genus, taxarank from taxon where genus = '' and taxarank != 'subfamily' and taxon_name != 'formicidae'"
+          , "Names below the genus (genera, species, subspecies) whose genus part is empty, so they do not show"
+            + " under any genus. Normally none. Fix: correct the name at its source (Source column)."
+          , h("Taxon Name", "Subfamily", "Genus", "Rank", "Source")
+          , "select taxon_name, subfamily, genus, taxarank, source from taxon where (genus is null or genus = '')"
+            + " and taxarank in ('genus', 'subgenus', 'species', 'subspecies')"
           ));
-          
-        // contain detail query  
+
+        // Was: statuses other than synonym and original combination (obsolete combinations of genera that moved
+        // subfamily were listed); the detail query used another filter. Both now use the names in use.
         queries.add(new NamedQuery(
             "generaInMultipleSubfamilies"
-          , "Show the genera that are in more than one subfamily"
-          , "<th>Genus</th><th>Subfamily Count</th><th>Source</th><th>Statuses</th>"      
-          , "select genus, count(distinct subfamily), source, group_concat(distinct status) from taxon where taxarank != 'family' and taxarank != 'subfamily' and status not in ('synonym', 'original combination') group by genus, source having count(distinct subfamily) > 1"
+          , "Genera whose names in use (valid names and AntWeb's own morphospecies, indeterminate and unrecognized"
+            + " names) are filed under more than one subfamily. Usually a specimen upload that still uses a genus's"
+            + " old subfamily. Fix: open the detail query to see the names, then correct the subfamily in the"
+            + " upload file (Source column)."
+          , h("Genus", "Subfamily Count", "Source", "Statuses")
+          , "select genus, count(distinct subfamily), source, group_concat(distinct status) from taxon"
+            + " where taxarank in ('genus', 'species', 'subspecies') and status in ('valid', " + ANTWEB_OWN_STATUSES + ")"
+            + " group by genus, source having count(distinct subfamily) > 1"
           , "generaInMultipleSubfamiliesDetail"
           ));
-            
-        // This ran for long time and created trouble for site.    
-        queries.add(new NamedQuery(
-            "generaInMultipleSubfamilies2"
-          , "Show the genera that are in more than one subfamily, 2nd method."
-          , "<th>Taxon Name</th><th>Subfamily</th><th>Genus</th><th>Source</th>"      
-          , "select taxon_name, subfamily, genus, source from taxon where genus in (select genus from taxon where taxarank = 'genus' group by genus having count(*) > 1)"
-          ));
-            
+
         queries.add(new NamedQuery(
           "generaInMultipleSubfamiliesDetail"
-          , "Show the genera that are in more than one subfamily"
-          , "<th>Taxon Name</th><th>Subfamily</th><th>Genus</th><th>Source</th><th>Created</th><th>Insert Method</th>"      
-          , "select taxon_name, subfamily, genus, source, created, insert_method from taxon where genus in (select genus from taxon where taxarank != 'family' and taxarank != 'subfamily' and status != 'synonym' group by genus having count(distinct subfamily) > 1)"
-        ));            
-            
+          , "Detail of generaInMultipleSubfamilies: every name in use of the genera filed under more than one"
+            + " subfamily, with the subfamily each is under and where it came from. The names under the wrong"
+            + " subfamily are the ones to correct at their source."
+          , h("Taxon Name", "Subfamily", "Genus", "Status", "Source", "Created", "Insert Method")
+          , "select taxon_name, subfamily, genus, status, source, created, insert_method from taxon"
+            + " where taxarank in ('genus', 'species', 'subspecies') and status in ('valid', " + ANTWEB_OWN_STATUSES + ")"
+            + " and genus in (select genus from taxon where taxarank in ('genus', 'species', 'subspecies')"
+            + " and status in ('valid', " + ANTWEB_OWN_STATUSES + ") group by genus having count(distinct subfamily) > 1)"
+            + " order by genus, subfamily, taxon_name"
+        ));
+
         queries.add(new NamedQuery(
             "emptySubfamily"
-          , "Subfamily is empty though genus is not."
-          , "<th>Taxon Name</th><th>Rank</th><th>Subfamily</th><th>Genus</th><th>Source</th><th>Created</th>"
-          , "select taxon_name, taxarank, subfamily, genus, source, created from taxon where (subfamily is null or subfamily = '') and (genus is not null and genus != '') order by source, taxon_name"
+          , "Names that have a genus but no subfamily, so they are missing from the subfamily's pages and"
+            + " counts. Normally none. Fix: correct the name at its source (Source column)."
+          , h("Taxon Name", "Rank", "Subfamily", "Genus", "Source", "Created")
+          , "select taxon_name, taxarank, subfamily, genus, source, created from taxon where (subfamily is null or subfamily = '')"
+            + " and (genus is not null and genus != '') order by source, taxon_name"
           ));
-          
+
         queries.add(new NamedQuery(
             "taxonNameWithDoubleQuote"
-          , "There is a double quotation within the taxon name"
-          , "<th>Taxon Name</th><th>Rank</th><th>Status</th><th>Type</th><th>Source</th><th>Insert Method</th><th>Created</th>"      
+          , "Names that contain a double quote (\"), which breaks links and searches. Fix: correct the name at"
+            + " its source (Source column)."
+          , h("Taxon Name", "Rank", "Status", "Type", "Source", "Insert Method", "Created")
           , "select taxon_name, taxarank, status, type, source, insert_method, created from taxon where taxon_name like '%\"%'"
           ));
 
         queries.add(new NamedQuery(
             "taxonNameWithSingleQuote"
-          , "There is a single quotation within the taxon name"
-          , "<th>Taxon Name</th><th>Rank</th><th>Status</th><th>Type</th><th>Source</th><th>Insert Method</th><th>Created</th>"      
+          , "Names that contain an apostrophe ('), which breaks links and searches. Fix: correct the name at its"
+            + " source (Source column)."
+          , h("Taxon Name", "Rank", "Status", "Type", "Source", "Insert Method", "Created")
           , "select taxon_name, taxarank, status, type, source, insert_method, created from taxon where taxon_name like '%''%'"
           ));
-        
+
         queries.add(new NamedQuery(
             "validsWithCurrentValidName"
-          , "Valids with current valid names"
-          , "<th>Taxon Name</th><th>Status</th><th>Rank</th><th>Source</th><th>Current Valid Name</th>"      
-          , "select taxon_name, status, taxarank, source, current_valid_name from taxon where status = 'valid' and current_valid_name is not null"
+          , "Valid names that also have a current valid name. A valid name is its own current valid name, so the"
+            + " field should be empty; pages may send readers to the other name. Fix: report it to AntCat if the"
+            + " name is from AntCat (Source worldants); otherwise correct the source."
+          , h("Taxon Name", "Status", "Rank", "Source", "Current Valid Name")
+          , "select taxon_name, status, taxarank, source, current_valid_name from taxon where status = 'valid'"
+            + " and current_valid_name is not null and current_valid_name != ''"
           ));
 
         queries.add(new NamedQuery(
             "missingCurrentValidName"
-          , "Status which uses Current Valid Name is missing it."
-          , "<th>Taxon Name</th><th>Current Valid Name</th><th>Status</th><th>Created</th><th>Source</th><th>Line Num</th><th>Rank</th>"   
-          , "select taxon_name, current_valid_name, status, created, source, line_num, taxarank from taxon where current_valid_name is null and status in ('unavailable uncategorized', 'original combination', 'unavailable misspelling', 'obsolete combination', 'synonym')"
+          , "Synonyms, combinations and unavailable names without a current valid name. AntWeb cannot say which"
+            + " name to use instead, and cannot move their specimens to it. Fix: report the name to AntCat (Source"
+            + " worldants), which should give each such name a current valid name."
+          , h("Taxon Name", "Current Valid Name", "Status", "Created", "Source", "Line Num", "Rank")
+          , "select taxon_name, current_valid_name, status, created, source, line_num, taxarank from taxon"
+            + " where (current_valid_name is null or current_valid_name = '')"
+            + " and status in ('unavailable uncategorized', 'original combination', 'unavailable misspelling', 'obsolete combination', 'synonym')"
           ));
-        
+
         queries.add(new NamedQuery(
             "spaceInGenusName"
-          , "There is a space in the genus name"
-          , "<th>Taxon Name</th><th>Genus</th>"
-          , "select taxon_name, genus from taxon where genus like '% %'"
-          ));          
-          
-        queries.add(new NamedQuery( 
+          , "Names whose genus part contains a space (for example \"pheidole x\" typed in the genus column of an"
+            + " upload). Such a name makes a genus that does not exist. Fix: correct the genus in the upload file"
+            + " (Source column)."
+          , h("Taxon Name", "Genus", "Source")
+          , "select taxon_name, genus, source from taxon where genus like '% %'"
+          ));
+
+        queries.add(new NamedQuery(
             "unrecognizedWithSynonymParent"
           , "Names that AntCat does not recognize (they came from specimen data) whose genus or species is a synonym in AntCat:"
             + " the specimens were identified under an old name. Fix: change the identification to the current valid name"
             + " in TaxonWorks (CAS) or in the curator's upload file; if the name is right, it is missing from AntCat."
-          , "<th>Taxon Name</th><th>Source</th>"
-          , "select taxon_name, source from taxon where status = 'unrecognized' and parent_taxon_name in (select taxon_name from taxon where status = 'synonym')"
+          , h("Taxon Name", "Source")
+          , "select taxon_name, source from taxon where status = 'unrecognized'"
+            + " and parent_taxon_name in (select taxon_name from taxon where status = 'synonym')"
           ));
-          
+
+        // Was: taxon_name not in (select taxon_name from specimen), which finds nothing as soon as one specimen has
+        // no taxon name.
         queries.add(new NamedQuery(
             "unrecognizedTaxaWithoutSpecimen"
-          , "These taxa remain without correlated specimen.  To be deleted?"
-          , "<th>Source</th><th>Created</th><th>Taxon Name</th>"
-          , "select source, created, taxon_name from taxon where source like 'specimen%' and status = 'unrecognized' and taxon_name not in (select distinct taxon_name from specimen) order by source, created"
+          , "Unrecognized names from specimen uploads that no specimen uses any more (the specimens were"
+            + " re-identified or deleted). The nightly run deletes such names; rows here mean it has not run since"
+            + " the upload that left them. Nothing to fix by hand."
+          , h("Source", "Created", "Taxon Name")
+          , "select t.source, t.created, t.taxon_name from taxon t where t.source like 'specimen%' and t.status = 'unrecognized'"
+            + " and not exists (select 1 from specimen s where s.taxon_name = t.taxon_name) order by t.source, t.created"
           ));
-        
+
         queries.add(new NamedQuery(
             "speciesEqualsSubspecies"
-          , "Species equals subspecies and species of subspecies has parenthesis."
-          , "<th>Taxon 1 Name</th><th>Subfamily</th><th>Genus</th><th>Species</th>Subspecies<th></th><th>Taxon 2 Name</th><th>Subfamily</th><th>Genus</th><th>Species</th><th>Subspecies</th>"      
-          , "select t1.taxon_name, t1.subfamily, t1.genus, t1.species, t1.subspecies, t2.taxon_name, t2.subfamily, t2.genus, t2.species, t2.subspecies from taxon t1, taxon t2 where t1.species = t2.subspecies and t2.species like '(%' and t1.subfamily = t2.subfamily and t1.genus = t2.genus"
+          , "Pairs of names in the same subfamily and genus where the second name's species part is in"
+            + " parentheses (an old way of writing a subgenus) and its subspecies part is the first name's species."
+            + " Both probably mean the same species, written two ways. Fix: correct the second name at its source."
+          , h("Taxon 1 Name", "Subfamily", "Genus", "Species", "Subspecies",
+              "Taxon 2 Name", "Subfamily", "Genus", "Species", "Subspecies")
+          , "select t1.taxon_name, t1.subfamily, t1.genus, t1.species, t1.subspecies, t2.taxon_name, t2.subfamily, t2.genus,"
+            + " t2.species, t2.subspecies from taxon t1, taxon t2 where t1.species = t2.subspecies and t2.species like '(%'"
+            + " and t1.subfamily = t2.subfamily and t1.genus = t2.genus"
           ));
 
         queries.add(new NamedQuery(
             "taxonCountBySubfamily"
-          , "Taxon count by subfamily"
-          , "<th>Subfamily</th><th>Count</th>"      
+          , "The 8 subfamilies with the most names in AntWeb (all ranks and statuses: valid names, synonyms,"
+            + " morphospecies...). For orientation only."
+          , h("Subfamily", "Names")
           , "select subfamily, count(*) from taxon group by subfamily order by count(*) desc limit 8"
           ));
 
         queries.add(new NamedQuery(
             "taxonCountByGenus"
-          , "Taxon count by genus"
-          , "<th>Genus</th><th>Count</th>"      
+          , "The 8 genera with the most names in AntWeb (all ranks and statuses). For orientation only."
+          , h("Genus", "Names")
           , "select genus, count(*) from taxon group by genus order by count(*) desc limit 8"
           ));
 
         queries.add(new NamedQuery(
             "taxonCountBySpecies"
-          , "Taxon count by species"
-          , "<th>Species</th><th>Count</th>"      
+          , "The 8 species epithets used by the most names, across all genera (the empty one counts the names"
+            + " above species rank). For orientation only."
+          , h("Species Epithet", "Names")
           , "select species, count(*) from taxon group by species order by count(*) desc limit 8"
           ));
-        
-        queries.add(new NamedQuery(
-            "badSpecies"
-           , "Species must have not-null species name."         
-           , "<th>Taxon Name</th><th>source</th><th>Created</th>"
-           , "select taxon_name, source, created from taxon where taxarank = 'species' and species is null"
-           ));
 
         queries.add(new NamedQuery(
-            "antwebUniqueValidTaxa"
-          , "The list of valid species and subspecies exist in Antweb but are not contained in the submitted valid taxon set."
-          , "<th>Taxon Name</th>"
-          , "select "
-          // Probably should use domainApp
-            + " concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\") "
-            + " from taxon where taxarank in ('species', 'subspecies') and status = 'valid' and fossil = 0 and taxon_name not in (select taxon_name from antwiki_valid_taxa)"
-          ));
-                  
-        queries.add(new NamedQuery(
            "indeterminedAndQuestionableMorphoTaxa"
-          , "Display indetermined and questionable morphotaxa."
-          , "<th>Taxon Name</th><td>Rank</td><th>Status</th><th>Source</th><th>Created</th>"
-          , "select taxon_name, taxarank, status, source, created from taxon where status = 'indetermined' or (status = 'morphotaxon' and taxon_name like '%(%') order by status desc, source, taxon_name"
+          , "Indeterminate names (status indetermined) and morphospecies whose name contains a parenthesis. For"
+            + " review: they hold specimens not yet identified to species. Nothing to fix unless a name is a typo."
+          , h("Taxon Name", "Rank", "Status", "Source", "Created")
+          , "select taxon_name, taxarank, status, source, created from taxon where status = 'indetermined'"
+            + " or (status = 'morphotaxon' and taxon_name like '%(%') order by status desc, source, taxon_name"
         ));
-                
+
         queries.add(new NamedQuery(
             "badParentTaxonName"
           , "Names whose parent (the genus of a species, the species of a subspecies) is not among AntWeb's names,"
             + " usually a misspelled or outdated genus or species in specimen data. Fix: correct the identification in"
             + " TaxonWorks (CAS) or in the curator's upload file; if the parent name is correct, check it in AntCat."
-          , "<th>TaxonName</th><th>Parent Taxon Name</th><th>Source</th><th>Status</th><th>current_valid_name</th><th>Created</th>"
-          , "select t.taxon_name, t.parent_taxon_name, t.source, t.status, t.current_valid_name, t.created from taxon t where family = 'formicidae' and taxarank != 'family' and status not in ('unavailable misspelling', 'unavailable uncategorized', 'original combination') and parent_taxon_name not in (select taxon_name from taxon) order by created"
+            + " The detail query adds each name's specimen count and groups."
+          , h("Taxon Name", "Parent Taxon Name", "Source", "Status", "Current Valid Name", "Created")
+          , "select t.taxon_name, t.parent_taxon_name, t.source, t.status, t.current_valid_name, t.created from taxon t"
+            + " where t.family = 'formicidae' and t.taxarank != 'family'"
+            + " and t.status not in ('unavailable misspelling', 'unavailable uncategorized', 'original combination')"
+            + " and not exists (select 1 from taxon p where p.taxon_name = t.parent_taxon_name) order by t.created"
+          , "badParentTaxonNameSpecimens"
         ));
-                
-        // This query has a detail query
-        queries.add(new NamedQuery(
-            "sourceWithBadParent"
-          , "Source with taxa with parent taxa not found"
-          , "<th>Source</th>"      
-          , "select distinct source from taxon where parent_taxon_name not in (select taxon_name from taxon) and family = 'formicidae' and taxon_name not in ('formicidae', '(formicidae)')"
-          , "sourceWithBadParentDetail1"
-          ));
 
+        // Replaces sourceWithBadParent and its two detail queries (2026-10-22): the first two listed the same names
+        // as badParentTaxonName; the second detail query had 3 headings for 9 columns.
         queries.add(new NamedQuery(
-            "sourceWithBadParentDetail1"
-          , "Source with taxa with parent taxa not found (Details)"
-          , "<th>Taxon Name</th><th>Parent Taxon Name</th><th>Source</th><th>Status</th><th>Created</th>"      
-          , "select taxon_name, parent_taxon_name, source, status, created from taxon where parent_taxon_name not in (select taxon_name from taxon) and family = 'formicidae' and taxon_name != 'formicidae' order by created"
-          , "sourceWithBadParentDetail2"
-          ));
+            "badParentTaxonNameSpecimens"
+          , "Detail of badParentTaxonName: the same names with the number of specimens filed under each and the"
+            + " groups that uploaded them, so each group can be asked to correct its identifications. Names with"
+            + " 0 specimens disappear with the nightly run."
+          , h("Taxon Name", "Parent Taxon Name", "Source", "Specimens", "Groups")
+          , "select t.taxon_name, t.parent_taxon_name, t.source"
+            + ", (select count(*) from specimen s where s.taxon_name = t.taxon_name)"
+            + ", (select group_concat(distinct g.name) from specimen s, ant_group g where s.taxon_name = t.taxon_name and s.access_group = g.id)"
+            + " from taxon t where t.family = 'formicidae' and t.taxarank != 'family'"
+            + " and t.status not in ('unavailable misspelling', 'unavailable uncategorized', 'original combination')"
+            + " and not exists (select 1 from taxon p where p.taxon_name = t.parent_taxon_name) order by t.source, t.taxon_name"
+        ));
 
-        queries.add(new NamedQuery(
-            "sourceWithBadParentDetail2"
-          , "Source with taxa with parent taxa not found (Details)"
-          , "<th>Source</th><th>Taxon Name</th><th>Groups</th>"      
-          , "select source, taxon_name, (select GROUP_CONCAT(distinct access_group) from specimen where specimen.taxon_name = taxon.taxon_name) as access_groups, (select count(*) from specimen where specimen.taxon_name = taxon.taxon_name) specimen_count, (select count(distinct access_group) from specimen where specimen.taxon_name = taxon.taxon_name) specimen_owner_count, parent_taxon_name, taxarank, created, insert_method from taxon where parent_taxon_name not in (select taxon_name from taxon) and source like 'specimen%' and family = 'formicidae' order by source"
-          ));
-        // Drill into the results with a query like:  select code, taxon_name, access_group, created, subfamily, genus from specimen where taxon_name = "cerapachyinaecerapachys centurio_cf";
-          
         queries.add(new NamedQuery(
            "taxaFromOldSpecimenLists"
-          , "Show the taxa created from species lists that no longer exist, and their specimen counts."
-          , "<th>Taxon Name</th><td>Rank</td><th>Status</th><th>Source</th><th>Created</th><th>Count</th>"
-          , "select t.taxon_name, taxarank, status, source, created, (select count(*) from specimen s where s.taxon_name = t.taxon_name) count from taxon t where (source like '%ants' or source like '%speciesList.txt') and source not in (select project_name from project) order by count desc"
+          , "Names that came from the species list of a project that no longer exists (source ending in \"ants\" or"
+            + " \"speciesList.txt\"), with the number of specimens filed under each. Names with 0 specimens are"
+            + " left-overs; names with specimens are in use and stay."
+          , h("Taxon Name", "Rank", "Status", "Source", "Created", "Specimens")
+          , "select t.taxon_name, t.taxarank, t.status, t.source, t.created, (select count(*) from specimen s where s.taxon_name = t.taxon_name) count"
+            + " from taxon t where (t.source like '%ants' or t.source like '%speciesList.txt')"
+            + " and t.source not in (select project_name from project) order by count desc"
         ));
-                        
-        return queries; // end getTaxonNamedQueries()
+
+        return queries;
     }
-    
-    private static ArrayList<NamedQuery> getHomonymNamedQueries() {  
+
+// ---------------- Homonym queries ----------------
+
+    private static ArrayList<NamedQuery> getHomonymNamedQueries() {
         ArrayList<NamedQuery> queries = new ArrayList<>();
 
         queries.add(new NamedQuery(
            "homonymWithoutTaxon"
-          , "Homonyms without matching records in the taxon table."
-          , "<th>Taxon Name</th>"
-          , "select concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\") from homonym where taxon_name not in (select taxon_name from taxon)"
-        ));    
-        return queries; // end getHomonymNamedQueries()
+          , "Homonyms whose name is not in the taxon table. Each homonym belongs next to a taxon of the same"
+            + " name; without it the homonym's page and the Homonym Report break. The nightly AntCat import deletes"
+            + " these; rows here after a nightly run are for the developers."
+          , h("Taxon Name")
+          , "select " + link("/description.do?taxonName=", "h.taxon_name")
+            + " from homonym h where not exists (select 1 from taxon t where t.taxon_name = h.taxon_name)"
+        ));
+        return queries;
     }
-        
-    private static ArrayList<NamedQuery> getSpecimenNamedQueries() {  
+
+// ---------------- Specimen queries ----------------
+
+    private static ArrayList<NamedQuery> getSpecimenNamedQueries() {
         ArrayList<NamedQuery> queries = new ArrayList<>();
 
+        // Was: select distinct ... order by g.name, sp.taxon_name: an SQL error on MySQL 8 (ORDER BY columns not
+        // in the DISTINCT select list), and a link to http://antweb.org.
         queries.add(new NamedQuery(
               "notValidTaxaFromSpecimenList"
-            , "Taxon name not valid from specimen list."
-            , "<th>Group</th><th>Taxon Name</th><th>Status</th>"
-            , " select distinct g.abbrev, " 
-            + " concat(concat(concat(concat(\"<a href='http://antweb.org/description.do?taxonName=\", t.taxon_name), \"'>\"), t.taxon_name), \"</a>\") "
-            + ", t.status from specimen sp, taxon t, ant_group g"
-            + " where sp.taxon_name = t.taxon_name " 
-            + " and sp.access_group = g.id"
-            + " and t.family = 'formicidae'"
-            + " and t.status != 'valid'"
-            + " and t.status not in ('morphotaxon')"
-            + " order by g.name, sp.taxon_name"
+            , "Specimen records filed under a name AntCat does not consider valid (synonym, homonym, unavailable"
+            + " name...), per group, with the name to use instead and the number of specimens. The nightly name"
+            + " update moves specimens to the current valid name; what is left here it could not move (no current"
+            + " valid name, or a name shared by two AntCat taxa: see the Name updates page). Morphospecies,"
+            + " indeterminate and unrecognized names are not listed. Fix: the group corrects the identification."
+            , h("Group", "Taxon Name", "Status", "Current Valid Name", "Specimens")
+            , "select g.abbrev, " + link("/description.do?taxonName=", "t.taxon_name") + ", t.status, t.current_valid_name, count(*)"
+            + " from specimen sp, taxon t, ant_group g where sp.taxon_name = t.taxon_name and sp.access_group = g.id"
+            + " and t.family = 'formicidae' and t.status not in ('valid', " + ANTWEB_OWN_STATUSES + ")"
+            + " group by g.abbrev, t.taxon_name, t.status, t.current_valid_name order by g.abbrev, t.taxon_name"
         ));
 
         queries.add(new NamedQuery(
           "specimenCountByOwner"
-        , "Count of Specimen by Owner"
-        , "<th>Specimen Count</th><th>Owned By</th>"
-        , "select count(s.code) theCount, s.ownedby from specimen s group by s.ownedBy order by theCount desc"
+        , "Specimen records per \"owned by\" value (the institution that owns the specimen, as written in the"
+          + " upload file), largest first. Different spellings of one institution show as separate rows."
+        , h("Specimens", "Owned By")
+        , "select count(*) theCount, s.ownedby from specimen s group by s.ownedby order by theCount desc"
         ));
 
         queries.add(new NamedQuery(
             "checkSpecimenStatus"
-          , "These specimen have a status of null"
-          , "<th>Code</th><th>Taxon Name</th><th>Group</th><th>Created</th>"
-          , "select code, taxon_name, access_group, created from specimen where status is null"
+          , "Specimens with no status (the status of their name, set at upload). They are left out of the"
+            + " species and specimen counts of place pages. Normally none. Fix: the next upload of the group sets"
+            + " the status; if rows stay after an upload, it is for the developers. At most 5,000 rows."
+          , h("Code", "Taxon Name", "Group", "Created")
+          , "select s.code, s.taxon_name, g.name, s.created from specimen s left join ant_group g on g.id = s.access_group"
+            + " where s.status is null order by g.name, s.code limit 5000"
+          ));
+
+        // Replaces oldBadBioregionsInSpecimen (the same check against a list of names written into the query).
+        queries.add(new NamedQuery(
+            "invalidBioregion"
+          , "Bioregion names in specimen data that are not one of AntWeb's bioregions (bioregion table), with the"
+            + " number of specimens and the groups that uploaded them. These specimens are missing from the"
+            + " bioregion pages and counts. Fix: the bioregion is derived from the country at upload, so correct the"
+            + " country (or the bioregion column) in the group's upload file, or the country's bioregion in the"
+            + " Geolocale Manager."
+          , h("Bioregion", "Specimens", "Groups")
+          , "select s.bioregion, count(*), group_concat(distinct g.name) from specimen s left join ant_group g on g.id = s.access_group"
+            + " where s.bioregion is not null and s.bioregion not in (select name from bioregion) group by s.bioregion"
           ));
 
         queries.add(new NamedQuery(
-            "invalidBioregion"
-          , "Specimen have invalid bioregions"
-          , "<th>Bioregion</th>, <th>Count</th>, <th>Group</th>"
-          , "select bioregion, count(*), group_concat(distinct access_group) from specimen where bioregion not in (select name from bioregion) group by bioregion"
-          ));
-          
-        queries.add(new NamedQuery(
-            "oldBadBioregionsInSpecimen"
-           , "This Bioregions are non standard and still exist in specimen data"         
-           , "<th>Bioregion</th><th>Group</th><th>Count</th>"
-           , "select bioregion, access_group, count(*) from specimen where bioregion not in ('Antarctica', 'Afrotropical', 'Neotropical', 'Malagasy', 'Australasia', 'Oceania', 'Indomalaya', 'Palearctic', 'Nearctic')  group by bioregion, access_group"
-           ));
-           
-        queries.add(new NamedQuery(
             "specimenCountByTaxa"
-          , "Specimen count by taxa"
-          , "<th>Taxon Name</th><th>Count</th>"      
+          , "The 8 names with the most specimen records. For orientation only."
+          , h("Taxon Name", "Specimens")
           , "select taxon_name, count(*) from specimen group by taxon_name order by count(*) desc limit 8"
           ));
-           
+
         queries.add(new NamedQuery(
             "specimenGroups"
-          , "Specimen submissions by group. "
-          , "<th>Group ID</th><th>Group Name</th><th>Count</th>"
-          , "select access_group, (select name from ant_group where id = access_group) name, count(*) from specimen group by access_group order by count(*) desc"
+          , "How many specimen records each upload group has on AntWeb: group number, name and count, largest"
+            + " first. Use it to compare groups or to check a group's total after an upload."
+          , h("Group ID", "Group Name", "Specimens")
+          , "select access_group, (select name from ant_group where id = access_group) name, count(*) from specimen"
+            + " group by access_group order by count(*) desc"
         ));
-          
+
         queries.add(new NamedQuery(
             "introducedSpecimen"
-          , "These are the specimen records flagged as introduced."
-          , "<th>Group</th><th>Bioregion</th><th>code</th><th>taxon_name</th><th>Country</th>"
-          , "select ant_group.name, bioregion, code, taxon_name, country from specimen, ant_group where specimen.access_group = ant_group.id and is_introduced = 1 order by access_group, bioregion, country"
-          ));          
-          
+          , "Specimen records flagged as introduced (a species found outside its native bioregions), by group,"
+            + " bioregion and country. For review: a wrong flag usually means the species' native bioregions need"
+            + " correcting in the Introduced Map Manager. At most 5,000 rows."
+          , h("Group", "Bioregion", "Code", "Taxon Name", "Country")
+          , "select g.name, s.bioregion, s.code, s.taxon_name, s.country from specimen s, ant_group g"
+            + " where s.access_group = g.id and s.is_introduced = 1 order by g.name, s.bioregion, s.country limit 5000"
+          ));
+
+        // Was: only specimens with a label photo (image shot type l), and 5 headings for 6 columns.
         queries.add(new NamedQuery(
             "nonAnts"
-          , "Specimen in Antweb that are not ants."
-          , "<th>Link</th><th>Specimen Code</th><th>Family</th><th>Subfamily</th><th>Genus</th>"
-          , "select concat(concat('<a href=" + AntwebProps.getDomainApp() + "/specimenImages.do?name=', image_of_id),'>link</a>')" 
-            + ", image_of_id, family, subfamily, genus, species from image, specimen where image_of_id = code and family != 'formicidae' and shot_type = 'l' order by family"        
-        ));      
-        
+          , "Specimen records that are not ants (family not Formicidae, or empty), with the group that uploaded"
+            + " them. AntWeb holds a few on purpose (wasps, ant mimics); an empty family is usually an upload"
+            + " mistake. Fix: correct the family in the group's upload file. At most 5,000 rows."
+          , h("Code", "Family", "Subfamily", "Genus", "Species", "Group")
+          , "select " + link("/specimen.do?code=", "s.code") + ", s.family, s.subfamily, s.genus, s.species, g.name"
+            + " from specimen s left join ant_group g on g.id = s.access_group"
+            + " where s.family is null or s.family != 'formicidae' order by s.family, s.code limit 5000"
+        ));
+
         queries.add(new NamedQuery(
             "castes"
-          , "Distinct set of castes along with counts."
-          , "<th>Count</th><th>Life Stage/Sex</th><th>Caste</th><th>Subcaste</th><th>Access Groups</th>"
-          , "select count(*), CONCAT(LEFT(life_stage, 25), IF(LENGTH(life_stage)>25, '...', '')), caste, subcaste, group_concat(distinct access_group) from specimen group by life_stage, caste, subcaste order by count(*) desc"        
-        ));      
+          , "Every combination of life stage/sex, caste and subcaste in specimen data, with the number of"
+            + " specimens and the groups (by number) that use it, most common first. Caste is computed from the"
+            + " life stage; a common life stage with an empty caste means a spelling AntWeb does not recognize."
+          , h("Specimens", "Life Stage/Sex", "Caste", "Subcaste", "Group IDs")
+          , "select count(*), concat(left(life_stage, 25), if(length(life_stage) > 25, '...', '')), caste, subcaste,"
+            + " group_concat(distinct access_group) from specimen group by life_stage, caste, subcaste order by count(*) desc"
+        ));
 
         queries.add(new NamedQuery(
             "nullCastes"
-          , "Distinct set of castes along with counts."
-          , "<th>Count</th><th>Life Stage/Sex</th><th>Access Groups</th>"
-          , "select count(*), life_stage, group_concat(distinct access_group) from specimen where caste is null group by life_stage, caste, subcaste order by count(*) desc"        
+          , "Life stages of specimens that have no caste, with the number of specimens and the groups (by"
+            + " number), most common first. The caste (worker, queen, male...) is computed from the life stage, so"
+            + " these life stages are spellings AntWeb does not recognize. Fix: the group writes a recognized life"
+            + " stage, or the developers add the spelling."
+          , h("Specimens", "Life Stage/Sex", "Group IDs")
+          , "select count(*), life_stage, group_concat(distinct access_group) from specimen where caste is null"
+            + " group by life_stage order by count(*) desc"
         ));
 
         queries.add(new NamedQuery(
             "nullLifeStage"
-          , "List of specimen without a lifestage field."
-          , "<th>Code</th><th>Access Group</a>"
-          , "select code, access_group from specimen where life_stage is null and image_count > 0 order by access_group, code"        
+          , "Imaged specimens with no life stage/sex, by group. Their caste is unknown, so they are missing from"
+            + " the worker/queen/male counts and image choices. Fix: the group adds the life stage in its upload"
+            + " file. At most 5,000 rows."
+          , h("Code", "Group")
+          , "select s.code, g.name from specimen s left join ant_group g on g.id = s.access_group"
+            + " where s.life_stage is null and s.image_count > 0 order by g.name, s.code limit 5000"
         ));
 
-        queries.add(new NamedQuery(
-            "multiBioregionSpecimenTaxa"
-          , "These non-introduced taxa are found in multiple bioregions."
-          , "<th>Taxon Name</th><th>Bioregions</th><th>Bioregion Count</th>"
-          , "select concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/bigMap.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\"), group_concat(distinct bioregion), count(distinct bioregion) from specimen where bioregion is not null and taxon_name not like '%indet%' and country != 'Port of Entry' and taxon_name not in (select distinct taxon_name from proj_taxon where project_name = 'introducedants') group by taxon_name having count(distinct bioregion) > 1 order by count(distinct bioregion) desc, taxon_name"
-        ));
-
+        // Replaces multiBioregionSpecimenTaxa (the same list with fewer columns). Was: country != 'Port of Entry'
+        // also left out specimens without a country.
         queries.add(new NamedQuery(
            "nonIntroducedAntsInMultipleBioregions"
-          , "Specimen that are not on the introduced list found in multiple bioregions."
-          , "<th>Taxon Name</th><th>Bioregions</th><th>Countries...</th><th>Access Groups</th><th>Count</th>"
-          , "select taxon_name, group_concat(distinct bioregion), substring(group_concat(distinct country), 1, 140), group_concat(distinct access_group), count(distinct bioregion) count from specimen where bioregion is not null and taxon_name not in (select distinct taxon_name from proj_taxon where project_name = 'introducedants') and taxon_name not like '%(indet)%' and country != 'Port of Entry' group by taxon_name having count(distinct bioregion) > 1;"
+          , "Names whose specimens come from more than one bioregion and that are not on the introduced species"
+            + " list (project introducedants), with the bioregions, countries (first 140 characters) and groups."
+            + " Either the species is introduced somewhere and the list lacks it, or a specimen is misidentified"
+            + " or has the wrong country. Indeterminate names and Port of Entry specimens are left out. The report"
+            + " \"Taxa outside their native bioregions\" (Curate page) shows a related view."
+          , h("Taxon Name", "Bioregions", "Countries", "Group IDs", "Bioregion Count")
+          , "select taxon_name, group_concat(distinct bioregion), substring(group_concat(distinct country), 1, 140),"
+            + " group_concat(distinct access_group), count(distinct bioregion) count from specimen"
+            + " where bioregion is not null and taxon_name not like '%indet%' and (country is null or country != 'Port of Entry')"
+            + " and taxon_name not in (select taxon_name from proj_taxon where project_name = 'introducedants')"
+            + " group by taxon_name having count(distinct bioregion) > 1 order by count desc, taxon_name"
         ));
-        
-        return queries; // end getSpecimenNamedQueries()
-    }
-        
 
-    private static ArrayList<NamedQuery> getFossilNamedQueries() {  
+        return queries;
+    }
+
+// ---------------- Species list exports ----------------
+
+    // Was "Fossil Queries". Removed 2026-10-22: validNonfossilSpeciesWithMuseums (a subset of
+    // validNonfossilSpeciesWithMuseumsOwnedByLocatedAt), validNonfossilTaxaWithBioregions (an SQL error: taxon_name
+    // ambiguous), antwebUniqueValidTaxa and antwebUniqueFossilTaxa (compared with AntWiki lists loaded once in 2016).
+    private static ArrayList<NamedQuery> getFossilNamedQueries() {
         ArrayList<NamedQuery> queries = new ArrayList<>();
 
         queries.add(new NamedQuery(
            "validNonfossilSpeciesWithBioregions"
-          , "Valid, non-fossil species and their bioregions. Records can be correlated with query: validNonfossilSpeciesWithMuseums"
-          , "<th>Taxon Name</th><th>subfamily</th><th>genus</th><th>species</th><th>bioregions</th>"
-          , "select t.taxon_name, subfamily, genus, species, group_concat(distinct bioregion_name) from taxon t left join bioregion_taxon bt on t.taxon_name = bt.taxon_name where status = 'valid' and fossil = 0 and taxarank in ('species') group by t.taxon_name, subfamily, genus, species"
+          , "Every valid, living (non-fossil) species with the bioregions it is recorded from (bioregion species"
+            + " lists). An export to copy into a spreadsheet; rows match validNonfossilSpeciesWithMuseumsOwnedByLocatedAt"
+            + " by taxon name. A species with no bioregion shows null."
+          , h("Taxon Name", "Subfamily", "Genus", "Species", "Bioregions")
+          , "select t.taxon_name, t.subfamily, t.genus, t.species, group_concat(distinct bt.bioregion_name) from taxon t"
+            + " left join bioregion_taxon bt on t.taxon_name = bt.taxon_name where t.status = 'valid' and t.fossil = 0"
+            + " and t.taxarank = 'species' group by t.taxon_name, t.subfamily, t.genus, t.species order by t.taxon_name"
         ));
 
         queries.add(new NamedQuery(
            "validNonfossilSpeciesWithMuseumsOwnedByLocatedAt"
-          , "Valid, non-fossil species and their museums, owned by, and located at."
-          , "<th>Taxon Name</th><th>Museums</th><th>Owned By</th><th>Located At</th>"
-          , "select t.taxon_name, group_concat(distinct s.museum) museum, group_concat(distinct s.ownedby) ownedBy, group_concat(distinct locatedat) locatedAt from taxon t left join specimen s on t.taxon_name = s.taxon_name where t.status = 'valid' and t.fossil = 0 and t.taxarank in ('species') group by t.taxon_name order by taxon_name"
-        ));
-        
-        queries.add(new NamedQuery(
-           "validNonfossilSpeciesWithMuseums"
-          , "Valid, non-fossil species and their museums."
-          , "<th>Taxon Name</th><th>Museums</th>"
-          , "select t.taxon_name, group_concat(distinct s.museum) from taxon t left join specimen s on t.taxon_name = s.taxon_name where t.status = 'valid' and t.fossil = 0 and t.taxarank in ('species') group by t.taxon_name;"
+          , "Every valid, living (non-fossil) species with the museums, \"owned by\" and \"located at\" values of its"
+            + " specimens. An export to copy into a spreadsheet; a species without specimens shows null. Takes up"
+            + " to a minute."
+          , h("Taxon Name", "Museums", "Owned By", "Located At")
+          , "select t.taxon_name, group_concat(distinct s.museum) museum, group_concat(distinct s.ownedby) ownedBy,"
+            + " group_concat(distinct s.locatedat) locatedAt from taxon t left join specimen s on t.taxon_name = s.taxon_name"
+            + " where t.status = 'valid' and t.fossil = 0 and t.taxarank = 'species' group by t.taxon_name order by t.taxon_name"
         ));
 
-        queries.add(new NamedQuery(
-           "validNonfossilTaxaWithBioregions"
-          , "Valid, non-fossil taxa and their bioregions."
-          , "<th>Taxon Name</th><th>subfamily</th><th>genus</th><th>species</th><th>subspecies</th><th>bioregions</th>"
-          , "select taxon_name, subfamily, genus, species, subspecies, group_concat(distinct bioregion_name) from taxon t left join bioregion_taxon bt on t.taxon_name = bt.taxon_name where status = 'valid' and fossil = 0 and taxarank in ('species', 'subspecies') group by subfamily, genus, species, subspecies"
-        ));        
-        
-        queries.add(new NamedQuery(
-            "antwebUniqueFossilTaxa"
-          , "The list of fossil species and subspecies exist in Antweb but are not contained in the submitted fossil taxon set."
-          , "<th>Taxon Name</th>"
-          , "select "
-            + " concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\") "
-            + " from taxon where taxarank in ('species', 'subspecies') and status= 'valid' and fossil = 1 and taxon_name not in (select taxon_name from antwiki_fossil_taxa)"
-          ));
-          
-        return queries; // end getFossilNamedQueries()
-    }        
-        
+        return queries;
+    }
 
-    private static ArrayList<NamedQuery> getLoginNamedQueries() {  
+// ---------------- Login queries ----------------
+
+    private static ArrayList<NamedQuery> getLoginNamedQueries() {
         ArrayList<NamedQuery> queries = new ArrayList<>();
-                        
+
         queries.add(new NamedQuery(
             "loginProjectMapping"
-          , "These are the logins mapped to projects."
-          , "<th>Group Name</th><th>Login Name</th><th>Login Email</th><th>Project Title</th><th>Project Name</th>"
-          , "select g.name, l.name, l.email, p.project_title, p.project_name from ant_group g, login l, login_project lp, project p where g.id = l.group_id and l.id = lp.login_id and lp.project_name = p.project_name order by g.name, l.name, p.project_title"
+          , "Which logins may edit which project species lists, by group and login. Use it to see who looks after"
+            + " a project's list; change it in the Login Manager."
+          , h("Group Name", "Login Name", "Login Email", "Project Title", "Project Name")
+          , "select g.name, l.name, l.email, p.project_title, p.project_name from ant_group g, login l, login_project lp, project p"
+            + " where g.id = l.group_id and l.id = lp.login_id and lp.project_name = p.project_name order by g.name, l.name, p.project_title"
         ));
 
         queries.add(new NamedQuery(
             "curatorInfoAndProjects"
-          , "These are the emails of curators that manage species lists."
-          , "<th>Name</th><th>Email</th><th>Projects</th>"
-          , "select l.name, l.email, group_concat(lp.project_name) from login l, login_project lp, project p where l.id = lp.login_id and lp.project_name = p.project_name and p.is_live = 1 group by l.name, l.email order by l.name;"
+          , "The logins assigned to at least one live project (the species-list curators), with their email and"
+            + " projects, one row per login."
+          , h("Login Name", "Email", "Projects")
+          , "select l.name, l.email, group_concat(distinct lp.project_name order by lp.project_name) from login l, login_project lp, project p"
+            + " where l.id = lp.login_id and lp.project_name = p.project_name and p.is_live = 1 group by l.id, l.name, l.email order by l.name"
         ));
 
         queries.add(new NamedQuery(
             "curatorEmails"
-          , "These are a comma separated list of the emails of curators that manage species lists."
-          , "<th>Email</th>"
-          , "select group_concat(distinct concat(l.email, ' ')) from login l, login_project lp, project p where l.id = lp.login_id and lp.project_name = p.project_name and p.is_live = 1"
+          , "The emails of the logins assigned to a live project (the species-list curators), in one"
+            + " comma-separated cell to paste into an email. These are not the uploaders: see uploadingCurators for those."
+          , h("Emails")
+          , "select group_concat(distinct concat(l.email, ' ')) from login l, login_project lp, project p"
+            + " where l.id = lp.login_id and lp.project_name = p.project_name and p.is_live = 1"
         ));
-        
+
+        // Inactive added 2026-10-22: an inactive login (InactiveAccountDb) cannot log in until it is reactivated.
         queries.add(new NamedQuery(
             "uploadingCurators"
-          , "Curators who can upload."
-          , "<th>Login ID</th><th>First Name</th><th>Last Name</th><th>Email</th><th>Name</th><th>Group ID</th><th>Is Admin?</th><th>Can Upload Specimen</th><th>Can Upload Images</th>"
-          , "select id, first_name, last_name, email, name, group_id, is_admin, is_upload_specimens, is_upload_images from login where is_upload_specimens = true or is_upload_images = true"
+          , "Every login allowed to upload specimens or images: login ID, first and last name, email, name, upload"
+            + " group number, administrator, the two upload rights (1 = yes) and whether the login is inactive (1 ="
+            + " cannot log in until reactivated). Use it to see who can upload."
+          , h("Login ID", "First Name", "Last Name", "Email", "Name", "Group ID", "Is Admin?",
+              "Can Upload Specimens", "Can Upload Images", "Inactive")
+          , "select id, first_name, last_name, email, name, group_id, is_admin, is_upload_specimens, is_upload_images, inactive"
+            + " from login where is_upload_specimens = true or is_upload_images = true"
         ));
-                
-        return queries; // end getLoginNamedQueries()
-    }        
-   
-    private static ArrayList<NamedQuery> getGroupsNamedQueries() {  
+
+        return queries;
+    }
+
+// ---------------- Group queries ----------------
+
+    private static ArrayList<NamedQuery> getGroupsNamedQueries() {
         ArrayList<NamedQuery> queries = new ArrayList<>();
-         
+
         queries.add(new NamedQuery(
             "adminLoginIdIsZero"
-          , "Admin Login ID is zero"
-          , "<th>Group Name</th>"      
-          , "select name from ant_group where admin_login_id = 0 and id > 0"
+          , "Upload groups that have no administrator login. Specimens loaded for such a group get no access"
+            + " login, which breaks later reloads of the group's files. Normally none. Fix: open the group in the"
+            + " Upload groups page (viewGroups.do) and choose its administrator."
+          , h("Group ID", "Group Name")
+          , "select id, name from ant_group where (admin_login_id = 0 or admin_login_id is null) and id > 0"
           ));
-             
-                                  
-        return queries; // end getGroupsNamedQueries()
-    }                 
-        
-    private static ArrayList<NamedQuery> getGeolocaleNamedQueries() {  
+
+        // Was: "Specimen uploads ordered by date", with a "Last Upload" column that was the date of the newest
+        // specimen record, not of an upload (Brian Fisher, 2026-10-22). Shows both now, labeled.
+        queries.add(new NamedQuery(
+            "lastSpecimenUpload"
+          , "Each group's specimens and two dates: the last specimen upload recorded in the upload table (the"
+            + " Specimen Uploads list) and the creation date of the group's newest specimen record. An upload"
+            + " replaces all of a group's specimens, so the two dates are normally the same day. A newer specimen"
+            + " date means an upload that was not recorded in the upload table (its report is missing from the"
+            + " list); an empty upload date means no upload of the group was ever recorded. Groups with the most"
+            + " recent activity first."
+          , h("Group ID", "Group Name", "Specimens", "Last Upload (upload table)", "Uploads Recorded", "Newest Specimen Record")
+          , "select g.id, g.name, s.specimens, u.last_upload, u.uploads, s.newest from ant_group g"
+            + " join (select access_group, count(*) specimens, max(created) newest from specimen group by access_group) s on s.access_group = g.id"
+            + " left join (select group_id, max(created) last_upload, count(*) uploads from upload group by group_id) u on u.group_id = g.id"
+            + " order by greatest(coalesce(u.last_upload, s.newest), s.newest) desc"
+        ));
+
+        return queries;
+    }
+
+// ---------------- Geolocale (place) queries ----------------
+
+    private static ArrayList<NamedQuery> getGeolocaleNamedQueries() {
         ArrayList<NamedQuery> queries = new ArrayList<>();
 
         queries.add(new NamedQuery(
             "invalidValidNamelessCountries"
-          , "These countries are listed as not valid but do not have a valid_name"
-          , "<th>Name</th>"
-          , "select name from geolocale where georank = 'country' and is_valid = 0 and valid_name is null"
+          , "Countries marked not valid (an old or alternative name) that do not say which valid country they stand"
+            + " for. Specimens with such a country are not counted for any valid country. Fix: set the valid name"
+            + " of each in the Geolocale Manager (Edit Geolocale)."
+          , h("Name")
+          , "select name from geolocale where georank = 'country' and is_valid = 0 and (valid_name is null or valid_name = '')"
           ));
 
+        // Was: (not valid and coords) or (valid and no coords) and country, so the first part was not limited to
+        // countries (AND binds before OR).
         queries.add(new NamedQuery(
             "usedAndUnusedCoords"
-          , "These countries are valid but do not have coords, or are not valid and do have coords."
-          , "<th>Name</th><th>Is Valid</th><th>Is UN</th><th>Coords</th>"
-          , "select name, is_valid, is_un, coords from geolocale where (is_valid = 0 and coords is not null) or (is_valid = 1 and coords is null) and georank = 'country' order by is_valid, name"
+          , "Valid countries without map coordinates (their map is blank) and countries that are not valid but"
+            + " still have coordinates (unused). Fix: add the coordinates of a valid country in the Geolocale"
+            + " Manager; coordinates of a non-valid one can be left or cleared."
+          , h("Name", "Is Valid", "Is UN", "Coords")
+          , "select name, is_valid, is_un, coords from geolocale where georank = 'country'"
+            + " and ((is_valid = 0 and coords is not null) or (is_valid = 1 and coords is null)) order by is_valid, name"
           ));
 
         queries.add(new NamedQuery(
             "nonAntsInSpeciesListsGeolocale"
-           , "Non-formicidae should not be added to geolocale species lists." 
-           , "<th>Taxon Name</th><th>Geolocale</th>"
-           , "select gt.taxon_name, g.name from geolocale_taxon gt, taxon t, geolocale g where gt.geolocale_id = g.id and gt.taxon_name = t.taxon_name and family != 'formicidae'"
+           , "Names on country, adm1 or region species lists that are not ants (family not Formicidae). Place"
+            + " lists are for ants only. Fix: remove the name with the Species List Tool, or correct its family at"
+            + " its source if it is an ant."
+           , h("Taxon Name", "Family", "Place")
+           , "select gt.taxon_name, t.family, g.name from geolocale_taxon gt, taxon t, geolocale g"
+            + " where gt.geolocale_id = g.id and gt.taxon_name = t.taxon_name and t.family != 'formicidae'"
            ));
 
         /*
-          Technique for fixing these is a bit cumbersome. Execute the following, put the resulting dml in text wrangler and do global search and
-          replace on the two kinds of single quotes, replacing them with the proper single quote duplicated.  ''
+          To fix these: run the select below, then in the result replace each curly quote with two straight ones ('').
             select concat(concat(concat("update geolocale set name = '", name),"' where id = "), id) as dml from geolocale where name like '%‘%' or name like '%’%'
         */
         queries.add(new NamedQuery(
             "badSingleQuotes"
-          , "Two kinds of single quotes that are no good."
-          , "<th>ID</th><th>Name</th><th>Source</th><th>Created</th>"
+          , "Place names written with a curly apostrophe (‘ or ’) instead of the straight one ('). Specimen data"
+            + " uses the straight one, so these places do not match their specimens. Fix: rename the place in the"
+            + " Geolocale Manager with a straight apostrophe."
+          , h("ID", "Name", "Source", "Created")
           , "select id, name, source, created from geolocale where name like '%‘%' or name like '%’%'"
            ));
-          
+
         queries.add(new NamedQuery(
             "geolocaleNameWithQuestionMarks"
-          , "Question marks should not be in Geolocale names. Diacritic/UTF8 issue?"
-          , "<th>ID</th><th>Name</th><th>Parent</th><th>Source</th><th>Created</th>"
-		  , "select id, name, parent, source, created from geolocale where name like '%?%'"  
+          , "Place names that contain a question mark, usually an accented letter lost when the name was loaded."
+            + " Such a place does not match its specimens. Fix: correct the name in the Geolocale Manager."
+          , h("ID", "Name", "Parent", "Source", "Created")
+          , "select id, name, parent, source, created from geolocale where name like '%?%'"
            ));
 
         queries.add(new NamedQuery(
             "duplicatedGeolocaleNames"
-          , "Geolocale Name is not unique. Returned in order of Georank descending."
-          , "<th>ID</th><th>Geolocale Name</th><th>Georank</th>"
-          , "select id, name, georank from geolocale where name in (select name from geolocale group by name having count(*) > 1) order by georank desc, is_valid desc, name, valid_name"        
+          , "Place names used by more than one place (for example Georgia, a country and a US state), highest"
+            + " rank first. Often correct; worth checking when a place's specimens or species look wrong, since"
+            + " specimen data names places by name."
+          , h("ID", "Name", "Georank", "Parent", "Is Valid")
+          , "select id, name, georank, parent, is_valid from geolocale where name in (select name from geolocale group by name"
+            + " having count(*) > 1) order by georank desc, is_valid desc, name, valid_name"
         ));
 
+        // Was: "less than 5 proj_taxon records" over 2 headings for 3 columns; it counted geolocale_taxon and listed
+        // countries with 5 or fewer, valid or not.
         queries.add(new NamedQuery(
             "lowGeolocaleTaxonCount"
-          , "These countries have less than 5 proj_taxon records."
-          , "<th>Project Name</th><th>Bioregion</th>"
-          , "select id, name, bioregion from geolocale where georank = 'country' and id not in (select geolocale_id from geolocale_taxon group by geolocale_id having count(*) > 5) order by name"
+          , "Valid countries whose species list has 5 names or fewer (all ranks), with the count. A country with"
+            + " ants recorded should have more; a short list usually means no specimens or literature records have"
+            + " been loaded for it yet. For review."
+          , h("Geolocale ID", "Country", "Bioregion", "Names on List")
+          , "select g.id, g.name, g.bioregion, count(gt.taxon_name) from geolocale g left join geolocale_taxon gt on gt.geolocale_id = g.id"
+            + " where g.georank = 'country' and g.is_valid = 1 group by g.id, g.name, g.bioregion having count(gt.taxon_name) <= 5 order by g.name"
           ));
-          
+
+        // Was: 2 headings for 3 columns, and countries that are not valid were listed.
         queries.add(new NamedQuery(
             "unfinishedBioregions"
-          , "These are geolocales have not had their bioregions set."
-          , "<th>Geolocale Name</th><th>Geolocale - Bioregion</th>"
-          , "select g.name, g.georank, g.bioregion from geolocale g where g.georank = 'country' and g.bioregion is null"   
+          , "Valid countries without a bioregion. Their specimens get no bioregion at upload, so they are missing"
+            + " from the bioregion pages. Fix: set the country's bioregion in the Geolocale Manager."
+          , h("Geolocale ID", "Country")
+          , "select g.id, g.name from geolocale g where g.georank = 'country' and g.is_valid = 1 and (g.bioregion is null or g.bioregion = '')"
         ));
-        
+
         queries.add(new NamedQuery(
             "nonvalidValidNames"
-          , "These 'other' valid names are specified as valid_name, but they are not valid."
-          , "<th>Geolocale ID</th><th>Name</th><th>Parent</th><th>Valid Name</th>"
-          , "select id, name, parent, valid_name from geolocale where valid_name not in (select name from geolocale where is_valid = 1) and valid_name != 'none'"
+          , "Places whose valid name (the place they stand for) is not a valid place. Their specimens are counted"
+            + " for no place. Fix: correct the valid name in the Geolocale Manager."
+          , h("Geolocale ID", "Name", "Parent", "Valid Name")
+          , "select id, name, parent, valid_name from geolocale where valid_name is not null and valid_name != ''"
+            + " and valid_name != 'none' and valid_name not in (select name from geolocale where is_valid = 1)"
         ));
-        
+
         queries.add(new NamedQuery(
             "nonLiveValidCountries"
-          , "These countries are flagged as valid but not live."
-          , "<th>Geolocale ID</th><th>Name</th><th>is_valid</th><th>is_live</th>"
-          , "select id, name, is_valid, is_live from geolocale where georank = 'country' and (is_live = false || is_live is null) and is_valid = 1 order by name"        
+          , "Valid countries that are not live, so they have no public page or list. Check that this is meant"
+            + " (for example a country with no ant records yet); set Is Live in the Geolocale Manager if not."
+          , h("Geolocale ID", "Name", "Is Valid", "Is Live")
+          , "select id, name, is_valid, is_live from geolocale where georank = 'country' and (is_live = 0 or is_live is null)"
+            + " and is_valid = 1 order by name"
         ));
-           
+
+        // Was: one cell with every specimen code of the country.
         queries.add(new NamedQuery(
             "geolocaleCountryTest"
-          , "Show the specimen table countries not in the geolocale table."
-          , "<th>Country</th><th>Codes</th>"
-          , "select country, group_concat(code) from specimen where country not in (select name from geolocale where georank = 'country') group by country;"
+          , "Country names in specimen data that are not a country in AntWeb's place table (valid or not), with"
+            + " the number of specimens and a few of their codes. These specimens are on no country page. Fix:"
+            + " correct the country in the group's upload file, or add the name as a non-valid country with its"
+            + " valid name in the Geolocale Manager."
+          , h("Country", "Specimens", "Example Codes")
+          , "select s.country, s.n, s.codes from (select country, count(*) n, substring(group_concat(code), 1, 120) codes"
+            + " from specimen where country is not null and country != '' group by country) s"
+            + " where not exists (select 1 from geolocale g where g.georank = 'country' and g.name = s.country) order by s.n desc"
           ));
 
+        // Was: 2 headings for 3 columns, every specimen code in one cell, and specimens without an adm1 were listed.
         queries.add(new NamedQuery(
             "geolocaleAdm1Test"
-          , "Show the specimen table adm1 not in the geolocale table."
-          , "<th>Country</th><th>Adm1</th>"
-          , "select country, adm1, group_concat(code) from specimen where (country, adm1) not in (select parent, name from geolocale where georank = 'adm1') group by country, adm1"
+          , "Adm1 names (state, province) in specimen data that are not an adm1 of that country in AntWeb's place"
+            + " table, with the number of specimens and a few codes. These specimens are on no adm1 page. Fix:"
+            + " correct the adm1 in the group's upload file, or add the adm1 in the Geolocale Manager (Adm1 Manager)."
+          , h("Country", "Adm1", "Specimens", "Example Codes")
+          , "select s.country, s.adm1, s.n, s.codes from (select country, adm1, count(*) n, substring(group_concat(code), 1, 120) codes"
+            + " from specimen where adm1 is not null and adm1 != '' group by country, adm1) s"
+            + " where not exists (select 1 from geolocale g where g.georank = 'adm1' and g.parent = s.country and g.name = s.adm1)"
+            + " order by s.country, s.n desc"
           ));
 
+        // extentAndCoords was removed 2026-10-22: it joined project.geolocale_id, a column dropped in 2017
+        // (db/upgrade/6.16), so it could only fail.
+        return queries;
+    }
 
-        queries.add(new NamedQuery(
-            "extentAndCoords"
-          , "To be verified that the extents and coords in the geolocale table are the ones we like."
-          , "<th>Project Name</th><th>P Extent</th><th>P Coords</th><th>Geolocale Name</th><th>G Extent</th><th>G Coords</th>"
-          , "select p.project_name, p.extent, p.coords, g.name, g.extent, g.coords from project p, geolocale g where p.geolocale_id = g.id and (p.extent != g.extent or p.coords != g.coords)"
-          ));
-           
-        return queries; // end getGeolocaleNamedQueries()
-    }        
-            
-    private static ArrayList<NamedQuery> getProjectTaxaNamedQueries() {  
+// ---------------- Project species list queries ----------------
+
+    private static ArrayList<NamedQuery> getProjectTaxaNamedQueries() {
         ArrayList<NamedQuery> queries = new ArrayList<>();
-            
+
         queries.add(new NamedQuery(
            "projTaxaWithoutTaxonWithoutHomonym"
-          , "Project_taxon records without matching records in the taxon table (without homonym) ."
-          , "<th>Project Name</th><th>Taxon Name</th><th>Source</th>"
-          , "select project_name, concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\"), source from proj_taxon where taxon_name not in (select taxon_name from taxon) and source not in ('worldants', 'fossilants') and taxon_name not in (select taxon_name from homonym) order by project_name, source"
+          , "Names on project species lists that are neither among AntWeb's names nor homonyms (the AntCat lists"
+            + " worldants and fossilants are left out). The list shows a name without a page. Fix: correct or"
+            + " remove the name with the Species List Tool."
+          , h("Project Name", "Taxon Name", "Source")
+          , "select pt.project_name, " + link("/description.do?taxonName=", "pt.taxon_name") + ", pt.source from proj_taxon pt"
+            + " where (pt.source is null or pt.source not in ('worldants', 'fossilants'))"
+            + " and not exists (select 1 from taxon t where t.taxon_name = pt.taxon_name)"
+            + " and not exists (select 1 from homonym h where h.taxon_name = pt.taxon_name) order by pt.project_name, pt.source"
         ));
 
         queries.add(new NamedQuery(
            "projTaxaWithoutTaxonWithHomonym"
-          , "Project_taxon records without matching records in the taxon table (with homonym)."
-          , "<th>Project Name</th><th>Taxon Name</th><th>Source</th>"
-          , "select project_name, concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\"), source from proj_taxon where taxon_name not in (select taxon_name from taxon) and source not in ('worldants', 'fossilants') and taxon_name in (select taxon_name from homonym)order by project_name, source"
+          , "Names on project species lists that are homonyms but not among AntWeb's names (the AntCat lists are"
+            + " left out). Each homonym should have a taxon of the same name; without it the list links to no page."
+            + " Fix: replace the name with the valid one in the Species List Tool."
+          , h("Project Name", "Taxon Name", "Source")
+          , "select pt.project_name, " + link("/description.do?taxonName=", "pt.taxon_name") + ", pt.source from proj_taxon pt"
+            + " where (pt.source is null or pt.source not in ('worldants', 'fossilants'))"
+            + " and not exists (select 1 from taxon t where t.taxon_name = pt.taxon_name)"
+            + " and exists (select 1 from homonym h where h.taxon_name = pt.taxon_name) order by pt.project_name, pt.source"
         ));
 
-        queries.add(new NamedQuery(
-            "notValidTaxaFromSpeciesList"
-          , "Taxon name not valid from species list."
-          , "<th>Project Name</th><th>Taxon Name</th><th>Status</th>"
-          , "select pt.project_name, pt.taxon_name, t.status from proj_taxon pt, taxon t "
-            + " where pt.taxon_name = t.taxon_name and t.status != 'valid'" 
-            + " and pt.project_name not in ('allantwebants', 'worldants')" 
-            + " and t.family = 'formicidae'"
-            + " and t.status not in ('morphotaxon')" 
-            + " order by pt.project_name"
-        ));
-
-        // Species lists using incorrect taxon names
-        queries.add(new NamedQuery(
-            "incorrectNameInSpeciesList"
-          , "Not Valid or Morpho taxa in Species list"
-          , "<th>Project Name</th><th>Taxon Name</th><th>Source</th><th>Rank</th><th>Status</th><th>Current Valid Name</th>"      
-          , "select pt.project_name, pt.taxon_name, pt.source, t.taxarank, t.status, t.current_valid_name from taxon t, proj_taxon pt where pt.taxon_name = t.taxon_name and t.status != 'valid' and t.status != 'morphotaxon' and pt.project_name != 'worldants' and pt.project_name != 'allantwebants' order by pt.project_name"
-          ));
-          
         queries.add(new NamedQuery(
             "quadrinomialsInSpeciesLists"
-          , "Quadrinomials are allowed in Allantweb and Worldants, but not in species lists (unless through species list upload?)"
-          , "<th>Taxon Name</th><th>Project Name</th><th>Source</th><th>Created</th>"
-          , "select taxon_name, project_name, source, created from proj_taxon where project_name not in ('worldants', 'allantwebants') and length(taxon_name) - length(replace(taxon_name, ' ', '')) > 2"
+          , "Names with four parts (genus, species, subspecies and one more) on project species lists other than"
+            + " allantwebants and worldants. Species lists should hold species and subspecies only. Fix: replace the"
+            + " name with its species or subspecies in the Species List Tool."
+          , h("Taxon Name", "Project Name", "Source", "Created")
+          , "select taxon_name, project_name, source, created from proj_taxon where project_name not in ('worldants', 'allantwebants')"
+            + " and length(taxon_name) - length(replace(taxon_name, ' ', '')) > 2"
           ));
-         
-                                        
+
         queries.add(new NamedQuery(
             "nonAntsInSpeciesListsProject"
-           , "Non-formicidae should not be added to project species lists (aside from allantwebants)." 
-           , "<th>Taxon Name</th><th>Project Name</th>"
-           , "select pt.taxon_name, pt.project_name from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name and family not like 'form%' and project_name != 'allantwebants'"
+           , "Names on project species lists (other than allantwebants) that are not ants. Project lists are for"
+            + " ants only. Fix: remove the name with the Species List Tool, or correct its family at its source."
+           , h("Taxon Name", "Family", "Project Name")
+           , "select pt.taxon_name, t.family, pt.project_name from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name"
+            + " and t.family not like 'form%' and pt.project_name != 'allantwebants'"
            ));
 
         queries.add(new NamedQuery(
             "speciesListHomonyms"
-          , "These homonyms were included in the following projects:"
-          , "<th>Homonym</th><th>Project</th>"
-          , "select pt.taxon_name, pt.project_name from proj_taxon pt where project_name not in ('allantwebants', 'worldants') " 
-            + " and taxon_name not in ('formicinaecamponotus')" 
-            + " and taxon_name in (select taxon_name from homonym) order by project_name, taxon_name;"
+          , "Homonyms on project species lists (other than allantwebants and worldants; the genus Camponotus is"
+            + " left out). A homonym on a list may be the wrong one of two same-spelled names. For review in the"
+            + " Species List Tool."
+          , h("Homonym", "Project")
+          , "select pt.taxon_name, pt.project_name from proj_taxon pt where pt.project_name not in ('allantwebants', 'worldants')"
+            + " and pt.taxon_name not in ('formicinaecamponotus') and pt.taxon_name in (select taxon_name from homonym)"
+            + " order by pt.project_name, pt.taxon_name"
           ));
 
         queries.add(new NamedQuery(
             "morphoProjTaxa"
-          , "These are morphotaxa in proj_taxon."
-          , "<th>Taxon Name</th><th>Project Name</th><th>Source</th><th>Created</th>"
-          , "select taxon_name, project_name, source, created from proj_taxon where (taxon_name like '%?%' or taxon_name like '%1%' or taxon_name like '%2%' or taxon_name like '%3%' or taxon_name like '%4%' or taxon_name like '%5%' or taxon_name like '%6%' or taxon_name like '%7%' or taxon_name like '%8%' or taxon_name like '%9%' or taxon_name like '%-%' or taxon_name like '%\\_%' or taxon_name like '%(%' or taxon_name like '%)%' or taxon_name like '%.%') and source is null and project_name not in ('worldants', 'allantwebants')"        
+          , "Names on project species lists (other than allantwebants and worldants) that look like morphospecies"
+            + " (they contain a digit, ?, -, _, a parenthesis or a dot) and were added without a source. For review"
+            + " in the Species List Tool."
+          , h("Taxon Name", "Project Name", "Source", "Created")
+          , "select taxon_name, project_name, source, created from proj_taxon where (taxon_name like '%?%' or taxon_name like '%1%'"
+            + " or taxon_name like '%2%' or taxon_name like '%3%' or taxon_name like '%4%' or taxon_name like '%5%' or taxon_name like '%6%'"
+            + " or taxon_name like '%7%' or taxon_name like '%8%' or taxon_name like '%9%' or taxon_name like '%-%' or taxon_name like '%\\_%'"
+            + " or taxon_name like '%(%' or taxon_name like '%)%' or taxon_name like '%.%') and source is null"
+            + " and project_name not in ('worldants', 'allantwebants')"
         ));
-        
-        // These are moved to java code and automated.        
-        // Maybe these are better. Needed for proj_taxon, yes? geolocaleTaxaMorphosWithNoSpecimen is like speciesListMorphotaxa. Need actions...
+
+        // Was: pt.taxon_name not in (select taxon_name from specimen), which finds nothing as soon as one specimen
+        // has no taxon name.
         queries.add(new NamedQuery(
            "projTaxaMorphosWithNoSpecimen"
-          , "Proj_Taxon records that are morphos must have specimen data. Refer to Queries.java for corrective action."
-          , "<th>Taxon Name</th><th>Project Name</th><th>Source</th>"
-          , "select pt.taxon_name, pt.project_name, pt.source from proj_taxon pt where pt.taxon_name in (select taxon_name from taxon t where t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon') and pt.taxon_name not in (select taxon_name from specimen)"
-        //  , "deleteProjTaxaMorphosWithNoSpecimen"
+          , "Morphospecies on project species lists that no specimen is filed under. A morphospecies may be on a"
+            + " list only while AntWeb has a specimen of it. Fix: remove it with the Species List Tool, or upload"
+            + " its specimen."
+          , h("Taxon Name", "Project Name", "Source")
+          , "select pt.taxon_name, pt.project_name, pt.source from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name"
+            + " and t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon'"
+            + " and not exists (select 1 from specimen s where s.taxon_name = pt.taxon_name)"
         ));
-        /* Something like this...     
-        namedQueries.add(new NamedQuery(
-            "deleteProjTaxaMorphosWithNoSpecimen"
-          , "Delete the proj_taxon records for morphotaxa that are in project lists that do not have correlated specimen data."
-          , "<th>Taxon Name</th><th>Project Name</th>"
-          , "delete from proj_taxon where project_name = 'XXX' and taxon_name in (select taxon_name from taxon t where t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon') and taxon_name not in (select taxon_name from specimen)"
-        ));
-        */
 
+        // Replaces notValidTaxaFromSpeciesList and incorrectNameInSpeciesList (the same list), 2026-10-22.
         queries.add(new NamedQuery(
             "notValidProjectTaxonNames"
-          , "These Proj_taxon records have taxon names that are not currently valid."
-          , "<th>Project Name</th><th>Taxon Name</th><th>Status</th><th>Current Valid Name</th>"
-          , "select p.project_name, t.taxon_name, t.status, t.current_valid_name from taxon t, proj_taxon pt, project p where t.taxon_name = pt.taxon_name and pt.project_name = p.project_name and t.status != 'valid' and p.project_name != 'allantwebants' and p.project_name != 'worldants' and t.status != 'morphotaxon' order by project_name, taxon_name"
+          , "Names on project species lists (other than allantwebants and worldants) that are not valid in AntCat"
+            + " (synonyms, unavailable names...; morphospecies left out), with the name to use instead. Fix: replace"
+            + " the name with its current valid name in the Species List Tool."
+          , h("Project Name", "Taxon Name", "Status", "Current Valid Name", "Source")
+          , "select p.project_name, t.taxon_name, t.status, t.current_valid_name, pt.source from taxon t, proj_taxon pt, project p"
+            + " where t.taxon_name = pt.taxon_name and pt.project_name = p.project_name and t.status not in ('valid', 'morphotaxon')"
+            + " and p.project_name not in ('allantwebants', 'worldants') order by p.project_name, t.taxon_name"
         ));
 
-
-        // These queries are to support the bad projTaxon counts bug. Removable down the road...
-        // For the Query Battery: projectTaxonCounts
-        // /query.do?action=queryBattery&name=projectTaxonCounts
+        // The project taxon counts battery (query.do?action=queryBattery&name=projectTaxonCounts).
         queries.add(new NamedQuery(
             "projectTaxaCount"
-          , "The count of proj_taxon records."
-          , "<th>Count</th>"
+          , "The number of rows of all project species lists together. Part of the project taxon counts set"
+            + " (query.do?action=queryBattery&name=projectTaxonCounts), used to check the counts before and after a"
+            + " nightly run."
+          , h("Rows")
           , "select count(*) from proj_taxon"
         ));
         queries.add(new NamedQuery(
             "projectTaxaCountByProject"
-          , "The count of proj_taxon records by project."
-          , "<th>Project Name</th><th>Count</th>"
-          , "select project_name, count(taxon_name) from proj_taxon group by project_name"
+          , "The number of names on each project species list. Part of the project taxon counts set."
+          , h("Project Name", "Names")
+          , "select project_name, count(taxon_name) from proj_taxon group by project_name order by project_name"
         ));
+        // Was: headings in another order than the columns.
         queries.add(new NamedQuery(
             "projectTaxaCountByProjectRank"
-          , "The count of proj_taxon records."
-          , "<th>Project Name</th><th>Rank</th><th>Source</th><th>Count</th>"
-        //  , "select project_name, taxarank, count(pt.taxon_name) from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name group by project_name, taxarank"
-        //  , "select project_name, taxarank, pt.source, count(pt.taxon_name) from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name and project_name = 'allantwebants' group by project_name, taxarank, pt.source"
-          , "select taxarank, project_name, pt.source, count(pt.taxon_name) from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name and project_name in ('worldants', 'allantwebants') group by project_name, taxarank, pt.source order by taxarank, project_name, source"
+          , "The names on the worldants and allantwebants lists by rank and source. worldants holds every AntCat"
+            + " name and allantwebants every name with a specimen; a large drop between two runs means a list was"
+            + " not rebuilt. Part of the project taxon counts set."
+          , h("Project Name", "Rank", "Source", "Names")
+          , "select pt.project_name, t.taxarank, pt.source, count(pt.taxon_name) from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name"
+            + " and pt.project_name in ('worldants', 'allantwebants') group by pt.project_name, t.taxarank, pt.source"
+            + " order by pt.project_name, t.taxarank, pt.source"
         ));
-        
 
+        return queries;
+    }
 
-        // A list of the proj_taxon taxa created from proxyworldants
-        // select taxon_name, status from taxon where taxon_name in (select taxon_name from proj_taxon where source like "proxy%");        
+// ---------------- Geolocale (place) species list queries ----------------
 
-        // This shows that after specimen upload, not all worldants records are existing in allantweb ants. Could affect counts.
-        // select rank, project_name, pt.source, count(pt.taxon_name) from proj_taxon pt, taxon t where pt.taxon_name = t.taxon_name and project_name in ('worldants', 'allantwebants') group by project_name, taxarank, pt.source order by rank, project_name, source;
-
-        
-        /*
-        queries.add(new NamedQuery(
-            "statusSpecimenCount"
-          , "The count of proj_taxon records."
-          , "<th>Status</th><th>Count</th>"
-          , "select status, count(distinct taxon_name) from specimen where access_group = 16 group by status;"
-        ));
-        */
-        
-        return queries; // end getProjectTaxonNamedQueries()
-    }        
-
-    private static ArrayList<NamedQuery> getGeolocaleTaxaNamedQueries() {  
+    private static ArrayList<NamedQuery> getGeolocaleTaxaNamedQueries() {
         ArrayList<NamedQuery> queries = new ArrayList<>();
- 
+
         queries.add(new NamedQuery(
             "badGeolocaleTaxonParentTaxonName"
-          , "These taxa have a parent_taxon_name that does not exist in the geolocale_taxon table. "
-          , "<th>TaxonName</th><th>Geolocale ID</th><th>Geolocale Name</th><th>Source</th><th>Parent Taxon Name</th><th>Created</th>"
-          , "select gt.taxon_name, gt.geolocale_id, (select name from geolocale where id = gt.geolocale_id), gt.source, t.parent_taxon_name, gt.created "
-          + " from geolocale_taxon gt, taxon t   where gt.taxon_name = t.taxon_name "
-          + " and (t.parent_taxon_name, gt.geolocale_id) not in (select taxon_name, geolocale_id from geolocale_taxon) " 
-          + " and t.parent_taxon_name != 'hymenoptera'"
-          + " order by gt.source, gt.taxon_name"
+          , "Names on a place's species list whose parent (the genus of a species, the subfamily of a genus) is"
+            + " not on the same list. The name then does not show under its parent on the place's pages. The"
+            + " nightly run adds missing parents; rows here after a nightly run are for the developers. Takes up"
+            + " to a minute."
+          , h("Taxon Name", "Geolocale ID", "Geolocale Name", "Source", "Parent Taxon Name", "Created")
+          , "select gt.taxon_name, gt.geolocale_id, g.name, gt.source, t.parent_taxon_name, gt.created"
+            + " from geolocale_taxon gt join taxon t on gt.taxon_name = t.taxon_name join geolocale g on g.id = gt.geolocale_id"
+            + " where t.parent_taxon_name != 'hymenoptera'"
+            + " and not exists (select 1 from geolocale_taxon p where p.geolocale_id = gt.geolocale_id and p.taxon_name = t.parent_taxon_name)"
+            + " order by gt.source, gt.taxon_name"
         ));
-        /*
-        select gt.taxon_name, gt.geolocale_id, (select distinct name from geolocale where id = gt.geolocale_id), gt.source, (select distinct id from geolocale where name = g.parent) as parentId 
-        from geolocale_taxon gt, geolocale g where gt.geolocale_id = g.id 
-        and (gt.taxon_name, parentId) not in (select taxon_name, geolocale_id from geolocale_taxon) 
-        order by gt.source, gt.taxon_name;
-        */
-        
+
+        // Replaces geolocaleListMorphotaxa (the same check, also in the Integrity Check), 2026-10-22.
         queries.add(new NamedQuery(
            "geolocaleTaxaMorphosWithNoSpecimen"
-          , "Geolocale_Taxon records that are morphos must have specimen data. Refer to Queries.java for corrective action."
-          , "<th>Taxon Name</th><th>Geolocale Name</th><th>Source</th>"
-          , "select t.taxon_name, g.name, gt.source from geolocale_taxon gt, taxon t, geolocale g where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name and t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon' and t.taxon_name not in (select taxon_name from specimen)"
+          , "Morphospecies on country, adm1 or region species lists that no specimen is filed under. A morphospecies"
+            + " may be on a list only while AntWeb has a specimen of it (from any place). Fix: remove it with the"
+            + " Species List Tool, or upload its specimen."
+          , h("Taxon Name", "Geolocale Name", "Source")
+          , "select " + link("/description.do?taxonName=", "t.taxon_name") + ", g.name, gt.source from geolocale_taxon gt, taxon t, geolocale g"
+            + " where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name and t.taxarank in ('species', 'subspecies')"
+            + " and t.status = 'morphotaxon' and not exists (select 1 from specimen s where s.taxon_name = t.taxon_name)"
+            + " order by g.name, t.taxon_name"
         ));
 
-
-        queries.add(new NamedQuery(
-            "geolocaleListMorphotaxa"
-          , "Show the morphotaxa that are in geolocales that do not have specimen."
-          , "<th>Taxon Name</th><th>Geolocale Name</th><th>Geolocale Id</th><th>Created</th><th>Source</th>"
-          , "select "
-          + " concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/browse.do?taxonName=\", taxon_name), \"'>\"), taxon_name), \"</a>\") "
-          + ", name, geolocale_id, geolocale_taxon.created, geolocale_taxon.source " 
-          + " from geolocale_taxon, geolocale where geolocale_taxon.geolocale_id = geolocale.id and taxon_name in (select taxon_name from taxon where status = 'morphotaxon')  and taxon_name not in (select distinct taxon_name from specimen) order by georank, name"
-          ));
-
+        // Replaces notValidGeolocaleTaxonNames (the same list), 2026-10-22.
         queries.add(new NamedQuery(
            "geolocaleTaxaFromInvalidTaxonName"
-          , "Show the geolocale taxon records that have geolocale records that are not valid or morphos.."
-          , "<th>Taxon Name</th><th>Status</th><th>Current Valid Name</th><th>Source</th><th>Parent</th><th>Name</th><th>Geolocale ID</th>"
-          , "select gt.taxon_name, t.status, t.current_valid_name, gt.source, g.parent, g.name, geolocale_id from geolocale_taxon gt, geolocale g, taxon t where gt.geolocale_id = g.id and gt.taxon_name = t.taxon_name and t.taxon_name not in (select taxon_name from taxon where status in ('valid', 'morphotaxon')) order by taxon_name, parent, name"
+          , "Names on place species lists that are neither valid nor morphospecies (synonyms, unavailable,"
+            + " unrecognized and indeterminate names...), with the name to use instead where AntCat gives one."
+            + " Fix: replace the name with its current valid name in the Species List Tool; a name from specimens"
+            + " follows the specimens' identification."
+          , h("Taxon Name", "Status", "Current Valid Name", "Source", "Parent", "Place", "Geolocale ID")
+          , "select gt.taxon_name, t.status, t.current_valid_name, gt.source, g.parent, g.name, gt.geolocale_id"
+            + " from geolocale_taxon gt, geolocale g, taxon t where gt.geolocale_id = g.id and gt.taxon_name = t.taxon_name"
+            + " and t.status not in ('valid', 'morphotaxon') order by gt.taxon_name, g.parent, g.name"
         ));
- 
+
         queries.add(new NamedQuery(
            "geolocaleTaxaNotUsingCurrentValidName"
           , "Country and region species lists (by geolocale id) that still hold a synonym or other non-valid name"
             + " instead of its current valid name. Fix: in the Species List Tool for that country or region, replace"
             + " the name with the current valid name; names that come from specimens follow the next nightly run."
-          , "<th>Geolocale ID</th><th>Taxon Name</th><th>Status</th><th>Current Valid Name</th>"
-          , "select geolocale_id, gt.taxon_name, t.status, t.current_valid_name from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name and t.taxon_name not in (select taxon_name from taxon where status in ('valid', 'morphotaxon')) and t.current_valid_name is not null and t.taxon_name != t.current_valid_name"
+          , h("Geolocale ID", "Place", "Taxon Name", "Status", "Current Valid Name")
+          , "select gt.geolocale_id, g.name, gt.taxon_name, t.status, t.current_valid_name from geolocale_taxon gt, taxon t, geolocale g"
+            + " where gt.taxon_name = t.taxon_name and g.id = gt.geolocale_id and t.status not in ('valid', 'morphotaxon')"
+            + " and t.current_valid_name is not null and t.current_valid_name != '' and t.taxon_name != t.current_valid_name"
+            + " order by g.name, gt.taxon_name"
         ));
 
         queries.add(new NamedQuery(
            "geolocaleTaxaWithoutTaxon"
-          , "These distinct taxon_names of geolocale_taxon records do not have corresponding taxon records."
-          , "<th>Taxon Name</th><th>Max Created</th><th>Source</th>"
-          , "select taxon_name, max(created), source from geolocale_taxon where taxon_name not in (select taxon_name from taxon) group by taxon_name, source order by source, max(created) desc, taxon_name"
+          , "Names on place species lists that are not among AntWeb's names (renamed or deleted), with the newest"
+            + " date one was added and where it came from. The lists show a name without a page. The nightly run"
+            + " removes most; the detail query lists each place."
+          , h("Taxon Name", "Last Added", "Source")
+          , "select gt.taxon_name, max(gt.created), gt.source from geolocale_taxon gt"
+            + " where not exists (select 1 from taxon t where t.taxon_name = gt.taxon_name)"
+            + " group by gt.taxon_name, gt.source order by gt.source, max(gt.created) desc, gt.taxon_name"
           , "geolocaleTaxaWithoutTaxonDetail"
         ));
-  
+
         queries.add(new NamedQuery(
            "geolocaleTaxaWithoutTaxonDetail"
-          , "These geolocale_taxon records do not have corresponding taxon records."
-          , "<th>Source</th><th>Taxon Name</th><th>Geolocale Name</th><th>Created</th><th>Insert Method</th>"
-          , "select geolocale_taxon.source, taxon_name, name, geolocale_taxon.created, insert_method from geolocale_taxon, geolocale where geolocale_taxon.geolocale_id = geolocale.id and taxon_name not in (select taxon_name from taxon) order by source, taxon_name, geolocale.georank desc"
+          , "Detail of geolocaleTaxaWithoutTaxon: each place species list row whose name is not among AntWeb's"
+            + " names, with the place."
+          , h("Source", "Taxon Name", "Geolocale Name", "Created", "Insert Method")
+          , "select gt.source, gt.taxon_name, g.name, gt.created, gt.insert_method from geolocale_taxon gt, geolocale g"
+            + " where gt.geolocale_id = g.id and not exists (select 1 from taxon t where t.taxon_name = gt.taxon_name)"
+            + " order by gt.source, gt.taxon_name, g.georank desc"
         ));
 
-    
+        // Was described as "multiple" bioregions; it lists three or more.
         queries.add(new NamedQuery(
            "geolocaleTaxaInMultipleBioregions"
-          , "Non-introduced geolocale taxa found in multiple bioregions."
-          , "<th>Taxon Name</th><th>Bioregion Count</th><th>Bioregions</th>"
-          , "select "
-            + " concat(concat(concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=\", t.taxon_name), \"'>\"), t.taxon_name), \"</a>\") "
-            + ", count(distinct g.bioregion), group_concat(distinct concat(' ', g.bioregion)) from geolocale_taxon gt, geolocale g, taxon t where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name " 
+          , "Species and subspecies on the species lists of places in three or more bioregions that are not on"
+            + " the introduced species list (project introducedants), most bioregions first. Either the species is"
+            + " introduced and the list lacks it, or a place's list holds a wrong name. For review."
+          , h("Taxon Name", "Bioregion Count", "Bioregions")
+          , "select " + link("/description.do?taxonName=", "t.taxon_name")
+            + ", count(distinct g.bioregion), group_concat(distinct concat(' ', g.bioregion)) from geolocale_taxon gt, geolocale g, taxon t"
+            + " where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name"
             + " and t.taxon_name not in (select taxon_name from proj_taxon where project_name = 'introducedants')"
-            + " and t.taxarank in ('species', 'subspecies') group by gt.taxon_name having count(distinct g.bioregion) > 2 order by count(distinct g.bioregion) desc"
+            + " and t.taxarank in ('species', 'subspecies') group by t.taxon_name having count(distinct g.bioregion) > 2"
+            + " order by count(distinct g.bioregion) desc"
         ));
-                
+
+        return queries;
+    }
+
+// ---------------- Bioregion and museum species list queries ----------------
+
+    private static ArrayList<NamedQuery> getBioregionTaxaNamedQueries() {
+        ArrayList<NamedQuery> queries = new ArrayList<>();
+
         queries.add(new NamedQuery(
-            "notValidGeolocaleTaxonNames"
-          , "These Geolocale_taxon records have taxon names that are not currently valid."
-          , "<th>Geolocale Name</th><th>Taxon Name</th><th>Status</th><th>Current Valid Name</th>"
-          , "select g.name, t.taxon_name, t.status, t.current_valid_name from taxon t, geolocale_taxon gt, geolocale g where t.taxon_name = gt.taxon_name and gt.geolocale_id = g.id and t.status != 'valid' and status != 'morphotaxon' order by name, taxon_name"
-        ));
-    
-        return queries; // end getGeolocaleTaxaNamedQueries()
-    }                 
-
-    private static ArrayList<NamedQuery> getBioregionTaxaNamedQueries() {  
-        ArrayList<NamedQuery> queries = new ArrayList<>();
- 
-         queries.add(new NamedQuery(
             "notValidBioregionTaxonNames"
-          , "These Bioregion_taxon records have taxon names that are not currently valid."
-          , "<th>Bioregion Name</th><th>Taxon Name</th><th>Status</th><th>Current Valid Name</th>"
-          , "select b.name, t.taxon_name, t.status, t.current_valid_name from taxon t, bioregion_taxon bt, bioregion b where t.taxon_name = bt.taxon_name and bt.bioregion_name = b.name and t.status != 'valid' and status != 'morphotaxon' order by name, taxon_name"
+          , "Names on bioregion species lists that are neither valid nor morphospecies, with the name to use"
+            + " instead. Bioregion lists are built from specimens and AntCat by the nightly run, so these names"
+            + " come from specimens filed under them: the fix is the specimens' identification."
+          , h("Bioregion Name", "Taxon Name", "Status", "Current Valid Name")
+          , "select b.name, t.taxon_name, t.status, t.current_valid_name from taxon t, bioregion_taxon bt, bioregion b"
+            + " where t.taxon_name = bt.taxon_name and bt.bioregion_name = b.name and t.status not in ('valid', 'morphotaxon')"
+            + " order by b.name, t.taxon_name"
         ));
 
-        return queries; // end getBioregionTaxaNamedQueries()
-    }     
+        return queries;
+    }
 
-    private static ArrayList<NamedQuery> getMuseumTaxaNamedQueries() {  
+    private static ArrayList<NamedQuery> getMuseumTaxaNamedQueries() {
         ArrayList<NamedQuery> queries = new ArrayList<>();
-    
+
         queries.add(new NamedQuery(
             "notValidMuseumTaxonNames"
-          , "These Museum_taxon records have taxon names that are not currently valid."
-          , "<th>Museum Name</th><th>Taxon Name</th><th>Status</th><th>Current Valid Name</th>"
-          , "select m.name, t.taxon_name, t.status, t.current_valid_name from taxon t, museum_taxon mt, museum m where t.taxon_name = mt.taxon_name and mt.code = m.code and t.status != 'valid' and status != 'morphotaxon' order by name, taxon_name"
-        ));    
-        return queries; // end getMuseumTaxaNamedQueries()
-    }         
+          , "Names on museum species lists that are neither valid nor morphospecies, with the name to use"
+            + " instead. Museum lists are built from the specimens the museum owns, so the fix is the specimens'"
+            + " identification."
+          , h("Museum Name", "Taxon Name", "Status", "Current Valid Name")
+          , "select m.name, t.taxon_name, t.status, t.current_valid_name from taxon t, museum_taxon mt, museum m"
+            + " where t.taxon_name = mt.taxon_name and mt.code = m.code and t.status not in ('valid', 'morphotaxon')"
+            + " order by m.name, t.taxon_name"
+        ));
+        return queries;
+    }
 
-    private static ArrayList<NamedQuery> getImageNamedQueries() {  
+// ---------------- Image queries ----------------
+
+    private static ArrayList<NamedQuery> getImageNamedQueries() {
         ArrayList<NamedQuery> queries = new ArrayList<>();
- 
+
         queries.add(new NamedQuery(
           "imageCountByOwner"
-        , "Count of Images by Owner"
-        , "<th>Image Count</th><th>Owned By</th>"
-        , "select count(i.id) theCount, s.ownedby from image i, specimen s where i.image_of_id = s.code group by s.ownedBy order by theCount desc"
+        , "Images (one per photo: head, profile, dorsal, label...) per \"owned by\" value of the photographed"
+          + " specimen, largest first. Takes up to a minute."
+        , h("Images", "Owned By")
+        , "select count(i.id) theCount, s.ownedby from image i, specimen s where i.image_of_id = s.code group by s.ownedby order by theCount desc"
         ));
 
+        // Public: the "Newest 5,000 images (table)" link (was "Download All") on the recent images search results. Was every image ever uploaded (about a million
+        // rows, more than a page can show) and 7 headings for 6 columns. Limited to the newest 5,000 (2026-10-22).
         queries.add(new NamedQuery(
            "imageData"
-          , "All Image Data"
-          , "<th>Specimen</th><th>Shot</th><th>Number</th><th>Upload Date</th><th>Photographer</th><th>Uploaded By</th><th></th>"
-          , "select specimen.code, image.shot_type, image.shot_number, image.upload_date, artist.name, ant_group.name from  ant_group, artist, group_image, image left join specimen on  specimen.code = image.image_of_id  where group_image.image_id = image.id  and ant_group.id=group_image.group_id  and image.upload_date is not null   and artist.id = image.artist    order by image.upload_date desc, specimen.code, image.shot_type, image.shot_number"
+          , "The newest 5,000 images with their specimen, shot (h head, p profile, d dorsal, l label...), shot"
+            + " number, upload date, photographer and the group that uploaded them, newest first."
+          , h("Specimen", "Shot", "Number", "Upload Date", "Photographer", "Uploaded By")
+          , "select i.image_of_id, i.shot_type, i.shot_number, i.upload_date, a.name, g.name from image i"
+            + " join group_image gi on gi.image_id = i.id join ant_group g on g.id = gi.group_id"
+            + " left join artist a on a.id = i.artist where i.upload_date is not null"
+            + " order by i.upload_date desc, i.image_of_id, i.shot_type, i.shot_number limit 5000"
         ));
 
+        // Was: "Image Count by Status" with a heading "distinct t.taxon_name"; it counts names, not images.
         queries.add(new NamedQuery(
                 "imageStatusCounts"
-                , "Image Count by Status"
-                , "<th>Status</th><th>distinct t.taxon_name</th></th>"
-                , "select t.status, count(distinct t.taxon_name) from taxon t, specimen, image where t.taxon_name = specimen.taxon_name and specimen.code = image.image_of_id group by t.status order by count(distinct t.taxon_name) desc"
+                , "How many names have at least one photographed specimen, by the name's status (valid,"
+                + " morphotaxon, synonym...). Takes up to a minute."
+                , h("Status", "Names with Images")
+                , "select t.status, count(distinct t.taxon_name) from taxon t, specimen s, image i"
+                + " where t.taxon_name = s.taxon_name and s.code = i.image_of_id group by t.status order by count(distinct t.taxon_name) desc"
         ));
 
-        return queries; // end getImageNamedQueries()
-    }         
+        return queries;
+    }
+
+// ---------------- Assorted queries ----------------
 
     private static ArrayList<NamedQuery> getAssortedNamedQueries() {
-
         ArrayList<NamedQuery> queries = new ArrayList<>();
 
         queries.add(new NamedQuery(
                 "descriptionEditCountByOwner"
-                , "Count of Description Edits by Owner"
-                , "<th>Description Edit Count</th><th>Owned By</th>"
-                , "select count(distinct de.taxon_name, de.title) theCount, g.name from description_edit de, ant_group g where de.access_group = g.id group by de.access_group order by theCount desc"
+                , "Taxon page text sections (one per name and section title) per group of the curator who last"
+                + " edited each, largest first."
+                , h("Text Sections", "Group")
+                , "select count(distinct de.taxon_name, de.title) theCount, g.name from description_edit de, ant_group g"
+                + " where de.access_group = g.id group by g.id, g.name order by theCount desc"
         ));
 
         queries.add(new NamedQuery(
                 "importedCountryData"
-                , "Imported Country Data"
-                , "<th>Country</th><th>UN Region</th><th>UN Subregion</th><th>Bioregion</th>"
-                , "select name, un_region, un_subregion, bioregion from un_country"
+                , "The UN country list loaded once in 2015 (un_country): name, UN region and subregion, and the"
+                + " bioregion given then. Reference only; nothing updates it and no page uses it."
+                , h("Country", "UN Region", "UN Subregion", "Bioregion")
+                , "select name, un_region, un_subregion, bioregion from un_country order by name"
         ));
 
         queries.add(new NamedQuery(
                 "worldantsUploads"
                 , "The last 60 imports of AntCat names (Worldants uploads), newest first."
-                , "<th>Created</th><th>Operation</th><th>Message</th><th>File Size</th><th>Worldants Count</th><th>Exec Time</th><th>Log File</th>"
+                , h("Created", "Operation", "Message", "File Size", "Worldants Count", "Exec Time", "Log File")
                 , "SELECT created, operation, validate_message, file_size, orig_worldants_count, exec_time "
                 + ", concat(concat(\"<a href='" + AntwebProps.getDomainApp() + "/web/log/worldants/\",log_file_name), \"'>Log file</a>\") "
                 + " FROM worldants_upload order by created desc limit 60"
         ));
 
-        queries.add(new NamedQuery(
-                "ancillaryFiles"
-                , "Ancillary file list"
-                , "<th>ID</th><th>Title</th><th>FileName</th><th>Directory</th><th>Last Changed</th><th>Project Name</th>"
-                , "select id, title, fileName, directory, last_changed, project_name, access_login from ancillary"
-        ));
+        // ancillaryFiles was removed 2026-10-22: it listed the "ancillary" pages of before 2011, a feature that is gone.
 
         queries.add(new NamedQuery(
                 "adminAlerts"
-                , "These are all of the Admin Alerts over time."
-                , "<th>ID</th><th>Alert</th><th>Acknowledged</th><th>Created</th>"
+                , "Every Admin Alert so far (warnings AntWeb raises for the administrators: failed imports, low"
+                + " counts...), the ones not yet acknowledged first. Acknowledge them in the Admin Alert Manager."
+                , h("ID", "Alert", "Acknowledged", "Created")
                 , "select id, alert, acknowledged, created from admin_alerts order by acknowledged, created desc, id"
-        ));
-
-
-        queries.add(new NamedQuery(
-                "lastSpecimenUpload"
-                , "Specimen uploads ordered by date."
-                , "<th>Group Name</th><th>Count</th><th>Last Upload</th>"
-                , "select g.name, count(distinct code), max(s.created)"
-                + " from specimen s, ant_group g where s.access_group = g.id group by access_group order by max(s.created) desc"
         ));
 
         queries.add(new NamedQuery(
                 "emptySourceTaxonSets"
-                , "Taxon sets with empty source values."
-                , "<th>Key</th><th>Taxon Name</th><th>Source</th><th>Created</th>"
+                , "Rows of project, place and bioregion species lists with an empty source (where the name came"
+                + " from). Every row should say whether it came from specimens, AntCat or a curator; an empty source"
+                + " points at the code that added it (for the developers). Key is the project, place id or bioregion."
+                , h("Key", "Taxon Name", "Source", "Created")
                 , "select project_name, taxon_name, source, created from proj_taxon where source = '' and taxon_name not in ('incertae_sedis', '(formicidae)')"
                 + " union select geolocale_id, taxon_name, source, created from geolocale_taxon where source = '' and taxon_name not in ('incertae_sedis', '(formicidae)')"
                 + " union select bioregion_name, taxon_name, source, created from bioregion_taxon where source = '' and taxon_name not in ('incertae_sedis', '(formicidae)')"
@@ -1080,103 +1228,106 @@ public abstract class Queries {
 
         queries.add(new NamedQuery(
                 "geolocaleTaxonDisputes"
-                , "Taxa that are thought to not exist in a given geolocale."
-                , "<th>Geolocale</th><th>Geolocale ID</th><th>Taxon Name</th><th>Source</th><th>Curator</th><th>Created</th>"
-                , "select g.name, g.id, gtd.taxon_name, gtd.source, gtd.curator_id, gtd.created from geolocale_taxon_dispute gtd, geolocale g where gtd.geolocale_id = g.id order by created desc"
+                , "Names a curator said do not occur in a place (disputes, set with the Species List Tool), newest"
+                + " first. The nightly run keeps them off that place's list even if specimens say otherwise."
+                , h("Geolocale", "Geolocale ID", "Taxon Name", "Source", "Curator", "Created")
+                , "select g.name, g.id, gtd.taxon_name, gtd.source, l.name, gtd.created from geolocale_taxon_dispute gtd"
+                + " join geolocale g on gtd.geolocale_id = g.id left join login l on l.id = gtd.curator_id order by gtd.created desc"
         ));
         queries.add(new NamedQuery(
                 "projectTaxonDisputes"
-                , "Taxa that are thought to not exist in a given project."
-                , "<th>Project</th><th>Taxon Name</th><th>Source</th><th>Curator</th><th>Created</th>"
-                , "select p.project_name, ptd.taxon_name, ptd.source, ptd.curator_id, ptd.created from proj_taxon_dispute ptd, project p where ptd.project_name = p.project_name order by created desc"
+                , "Names a curator said do not occur in a project (disputes, set with the Species List Tool), newest"
+                + " first."
+                , h("Project", "Taxon Name", "Source", "Curator", "Created")
+                , "select p.project_name, ptd.taxon_name, ptd.source, l.name, ptd.created from proj_taxon_dispute ptd"
+                + " join project p on ptd.project_name = p.project_name left join login l on l.id = ptd.curator_id order by ptd.created desc"
         ));
 
-        // These are now automated to dissappear.
         queries.add(new NamedQuery(
                 "conflictedDefaultImages"
-                , "Taxa that have default images set from specimen of different taxa."
-                , "<th>taxon_name</th><th>prop</th><th>value</th><th>created</th><th>login_id</th><th>Specimen Taxon Name</th>"
-                , "select tp.taxon_name, tp.prop, tp.value, tp.created, tp.login_id, specimen.taxon_name from taxon_prop tp, specimen where tp.value = code and tp.prop like '%Specimen' and tp.taxon_name != specimen.taxon_name"
+                , "Taxa whose default images (chosen on the taxon page) come from a specimen now filed under another"
+                + " name, so the page shows another species' photos. The nightly run (set 5) removes such choices;"
+                + " rows here after a nightly run are for the developers."
+                , h("Taxon Name", "Property", "Specimen", "Created", "Login ID", "Specimen Taxon Name")
+                , "select tp.taxon_name, tp.prop, tp.value, tp.created, tp.login_id, s.taxon_name from taxon_prop tp, specimen s"
+                + " where tp.value = s.code and tp.prop like '%Specimen' and tp.taxon_name != s.taxon_name"
         ));
 
-        return queries; // end getAssortedNamedQueries()
+        return queries;
     }
 
     // Invoke like: /query.do?action=curiousQuery&name=nonAsciiTaxonName
-    public static ArrayList<NamedQuery> getNamedQueries() {        
-        
+    public static ArrayList<NamedQuery> getNamedQueries() {
         ArrayList<NamedQuery> namedQueries = new ArrayList<>();
-
-        namedQueries.addAll(getTaxaNamedQueries());
-        namedQueries.addAll(getHomonymNamedQueries());
-        namedQueries.addAll(getSpecimenNamedQueries());
-        namedQueries.addAll(getFossilNamedQueries());
-        namedQueries.addAll(getLoginNamedQueries());
-        namedQueries.addAll(getGroupsNamedQueries());
-        namedQueries.addAll(getGeolocaleNamedQueries());
-        namedQueries.addAll(getProjectTaxaNamedQueries());
-        namedQueries.addAll(getGeolocaleTaxaNamedQueries());
-        namedQueries.addAll(getBioregionTaxaNamedQueries());
-        namedQueries.addAll(getMuseumTaxaNamedQueries());
-        namedQueries.addAll(getImageNamedQueries());
-        namedQueries.addAll(getAssortedNamedQueries());
+        for (Map.Entry<String, ArrayList<NamedQuery>> block : getBlocks().entrySet()) {
+            namedQueries.addAll(block.getValue());
+        }
         return namedQueries;
     }
 
-    // Invoke like: /query.do?action=curiousQuery&name=nonAsciiTaxonName
-    public static String getQueryManagerPage() {        
+    /** The queries by topic, in the order of the Query Manager page. */
+    static LinkedHashMap<String, ArrayList<NamedQuery>> getBlocks() {
+        LinkedHashMap<String, ArrayList<NamedQuery>> blocks = new LinkedHashMap<>();
+        blocks.put("Taxon Queries", getTaxaNamedQueries());
+        blocks.put("Homonym Queries", getHomonymNamedQueries());
+        blocks.put("Specimen Queries", getSpecimenNamedQueries());
+        blocks.put("Species List Exports (valid living species)", getFossilNamedQueries());
+        blocks.put("Login Queries", getLoginNamedQueries());
+        blocks.put("Group Queries", getGroupsNamedQueries());
+        blocks.put("Geolocale (Place) Queries", getGeolocaleNamedQueries());
+        blocks.put("Project Species List Queries", getProjectTaxaNamedQueries());
+        blocks.put("Place Species List Queries", getGeolocaleTaxaNamedQueries());
+        blocks.put("Bioregion Species List Queries", getBioregionTaxaNamedQueries());
+        blocks.put("Museum Species List Queries", getMuseumTaxaNamedQueries());
+        blocks.put("Image Queries", getImageNamedQueries());
+        blocks.put("Assorted Queries", getAssortedNamedQueries());
+        return blocks;
+    }
+
+    public static String getQueryManagerPage() {
         String page = "<h2>&nbsp;Query Manager</h2>";
         page += "<div class=\"mgr_help\" style=\"max-width:60em;margin:6px 16px 12px 16px\">Ready-made database queries, by topic."
-            + " Click a name to run it: the page shows the query, its rows and how long it took. The queries only read data"
-            + " (nothing is changed); some take a minute on the full database. Most are checks that should find no rows."
-            + " Administrators only, except the few that public pages link to.</div>";
-        page += getQueryManagerBlock("Taxon Queries", getTaxaNamedQueries());
-        page += getQueryManagerBlock("Homonym Queries", getHomonymNamedQueries());
-        page += getQueryManagerBlock("Specimen Queries", getSpecimenNamedQueries());
-        page += getQueryManagerBlock("Fossil Queries", getFossilNamedQueries());
-        page += getQueryManagerBlock("Login Queries", getLoginNamedQueries());
-        page += getQueryManagerBlock("Group Queries", getGroupsNamedQueries());
-        page += getQueryManagerBlock("Geolocale Queries", getGeolocaleNamedQueries());
-        page += getQueryManagerBlock("Project Taxon Queries", getProjectTaxaNamedQueries());
-        page += getQueryManagerBlock("Geolocale Taxon Queries", getGeolocaleTaxaNamedQueries());
-        page += getQueryManagerBlock("Bioregion Taxon Queries", getBioregionTaxaNamedQueries());
-        page += getQueryManagerBlock("Museum Taxon Queries", getMuseumTaxaNamedQueries());
-        page += getQueryManagerBlock("Image Queries", getImageNamedQueries());
-        page += getQueryManagerBlock("Assorted Queries", getAssortedNamedQueries());
-
+            + " Click a name to run it: the page shows what the query is for and what to do about its rows, the query,"
+            + " its rows and how long it took. The queries only read data (nothing is changed); some take a minute on"
+            + " the full database, and none may run longer than " + QueryManager.QUERY_TIMEOUT_SECS + " seconds."
+            + " Most are checks that should find no rows. Administrators only, except the few that public pages link to."
+            + " The checks that should find nothing also run together in the Integrity Check.</div>";
+        for (Map.Entry<String, ArrayList<NamedQuery>> block : getBlocks().entrySet()) {
+            page += getQueryManagerBlock(block.getKey(), block.getValue());
+        }
         return page;
     }
-    public static String getQueryManagerBlock(String title, ArrayList<NamedQuery> queries) {        
+    public static String getQueryManagerBlock(String title, ArrayList<NamedQuery> queries) {
         String block = "";
-        block += "<br><br><h3>&nbsp;<u>" + title + "</u></h3>";
+        block += "<br><br><h3>&nbsp;<u>" + Html.esc(title) + "</u></h3>";
         for (NamedQuery namedQuery : queries) {
-          block += "&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + AntwebProps.getDomainApp() + "/query.do?name=" + namedQuery.getName() + "'>" 
-            + namedQuery.getName() + "</a> - " + namedQuery.getDesc() + "<br>" ;
-        }         
+          block += "&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + AntwebProps.getDomainApp() + "/query.do?name=" + namedQuery.getName() + "'>"
+            + namedQuery.getName() + "</a> - " + Html.esc(namedQuery.getSummary()) + "<br>" ;
+        }
         return block;
     }
-    
- //   http://localhost/antweb/query.do?name=noSubfamilyForSubfamily
 
     /**
      * One plain line next to each query of the "Relevant Queries" boxes of the Upload groups page
      * (viewGroups.do) and the Login Manager (viewLogins.do): what it lists, its columns, when to use it
-     * (Brian Fisher, 2026-10-21).
+     * (Brian Fisher, 2026-10-21). A query without a line here shows the first sentence of its explanation
+     * (Geolocale Manager, 2026-10-22).
      */
     static final Map<String, String> QUERY_LIST_HELP = Map.of(
         "specimenGroups", "How many specimen records each upload group has on AntWeb: group number, name and count, "
             + "largest first. Use it to compare groups or to check a group's total after an upload.",
         "uploadingCurators", "Every login allowed to upload specimens or images: login ID, first and last name, email, "
-            + "name, upload group number, administrator, and the two upload rights (1 = yes). Use it to see who can upload.",
+            + "name, upload group number, administrator, the two upload rights (1 = yes) and whether the login is "
+            + "inactive. Use it to see who can upload.",
         "curatorEmails", "The emails of the logins assigned to a live project (the species-list curators), in one "
             + "comma-separated cell to paste into an email. These are not the uploaders: see uploadingCurators for those.");
 
     public static String getQueryList(String listName) {
       String html = "";
       ArrayList<String> queries = null;
-      if ("Geolocale".equals(listName)) queries = Queries.getGeolocaleQueries();    
-      if ("Login".equals(listName)) queries = Queries.getLoginQueries();    
-      if ("Groups".equals(listName)) queries = Queries.getGroupQueries();    
+      if ("Geolocale".equals(listName)) queries = Queries.getGeolocaleQueries();
+      if ("Login".equals(listName)) queries = Queries.getLoginQueries();
+      if ("Groups".equals(listName)) queries = Queries.getGroupQueries();
       int i = 0;
       if (queries == null) {
         s_log.warn("QueryList:" + listName + " not found.");
@@ -1187,34 +1338,34 @@ public abstract class Queries {
         ++i;
         html += "<li><a href='" + AntwebProps.getDomainApp() + "/query.do?action=curiousQuery&name=" + query +"'>" + query + "</a>";
         String help = QUERY_LIST_HELP.get(query);
+        if (help == null) {
+          NamedQuery namedQuery = getNamedQuery(query);
+          if (namedQuery != null) help = namedQuery.getSummary();
+        }
         if (help != null) html += " <span class=\"query-help\">" + Html.esc(help) + "</span>";
         if (i == queries.size()) html += "</ul>";
       }
       return html;
-    }    
-    
+    }
+
     public static NamedQuery getNamedQuery(String name) {
-      ArrayList<NamedQuery> namedQueries = getNamedQueries();
-      for (NamedQuery namedQuery : namedQueries) {
-        if (name.equals(namedQuery.getName())) return namedQuery;
+      for (NamedQuery namedQuery : getNamedQueries()) {
+        if (namedQuery.getName().equals(name)) return namedQuery;
       }
-      return null;     
-    }    
-    
+      return null;
+    }
+
     public static ArrayList<NamedQuery> getNamedQueryList(String[] list) {
         ArrayList<NamedQuery> namedQueries = new ArrayList<>();
-
-        ArrayList<String> names = new ArrayList<>(Arrays.asList(list));
-        
-        for (String name : names) {
-          for (NamedQuery namedQuery : getNamedQueries()) {
+        ArrayList<NamedQuery> all = getNamedQueries();
+        for (String name : list) {
+          for (NamedQuery namedQuery : all) {
             if (name.equals(namedQuery.getName())) {
-              namedQueries.add(namedQuery);          
+              namedQueries.add(namedQuery);
               break;
             }
           }
         }
-        return namedQueries;    
-    }   
+        return namedQueries;
+    }
 }
-

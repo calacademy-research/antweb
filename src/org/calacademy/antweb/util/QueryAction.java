@@ -84,6 +84,7 @@ public class QueryAction extends AntwebAction {
                 
                 String message = Queries.getQueryManagerPage();
                 request.setAttribute("message", message);
+                request.setAttribute("header", "Query Manager");   // page title (otherwise "message...")
                 returnLoc = mapping.findForward("unboldMessage");
             } else {
             

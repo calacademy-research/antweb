@@ -36,7 +36,8 @@ public class RelevantQueriesTest extends TestCase {
         assertNull("the groups query is removed", Queries.getNamedQuery("groups"));
         assertTrue(logins, logins.contains("These are not the uploaders: see uploadingCurators for those."));
         assertTrue("escaped", groups.contains("a group&#39;s total"));
-        assertFalse("other boxes unchanged", Queries.getQueryList("Geolocale").contains("query-help"));
+        // Since 2026-10-22 the Geolocale Manager box shows the first sentence of each query's explanation.
+        assertTrue("geolocale box explained", Queries.getQueryList("Geolocale").contains("query-help"));
     }
 
     public void testHeadingsMatchTheColumns() {
