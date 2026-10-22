@@ -15,9 +15,11 @@ What you see depends on your login:
 
 ### Help
 
-**Curator Tool Documentation** (top of the page) opens the documentation page: the imaging manual and videos, the guides for submitting images and using the image picker, the specimen data overview and requirements spreadsheet, and the country and region lists.
+**Curator Tool Documentation** (one line at the top of the page) opens the documentation page: the imaging manual and videos, the guides for submitting images and using the image picker, the specimen data overview and requirements spreadsheet, and the country and region lists.
 
 ### Curator Information
+
+This section and Read-Only Tools run the full width of the page; the upload sections below sit in the left column and the admin links in the right one. The AntWeb Statistics box that used to be on the right was removed on 22 October 2026: the same numbers are on the home page and on the statistics page (admins: **Antweb Statistics** under Administrator Functions).
 
 Three short groups, one link per line, each with a one-line explanation on the page.
 
@@ -41,6 +43,13 @@ Three short groups, one link per line, each with a one-line explanation on the p
 
 At the top of this area a red or blue line may appear when the server is busy (an upload or the nightly run is in progress, or uploads are paused). If you see one, wait and try again later.
 
+### Read-Only Tools
+
+These tools never change anything on AntWeb.
+
+- **Check names against AntCat** (formerly "Validate Species List"): upload a list of species names (a tab-delimited text file) to check every name against AntWeb's names from AntCat. You get a report on screen and can download it, or download a corrected copy of your list with the current valid names. Nothing is saved on AntWeb.
+- **Specimen List Lookup**: upload a plain text file of specimen codes, one per line (the file name must contain "specimen", for example my_specimens.txt), and get the AntWeb data for those specimens as a tab-delimited file. If some codes are not in AntWeb, a results page lists them (to copy or download) and still offers the data of the codes that were found. Handy for checking what AntWeb holds for a loan or a batch of material.
+
 ### Specimen Data (curators with the "upload specimens" permission)
 
 **Upload Zip File**: this is how you send your specimen data to AntWeb.
@@ -59,17 +68,6 @@ The optional column **previousDeterminations** lets you send earlier identificat
 ### Upload Specimen Images (curators with the "upload images" permission)
 
 **Specimen Image Upload** opens the Image Uploader. Image files must be named by specimen code and view (the naming rules are on the uploader page and in the "Submitting images" guide). You can add many files at once; each is checked, and you get a report and an email at the end.
-
-### Read-Only Tools
-
-These tools never change anything on AntWeb.
-
-- **Check names against AntCat** (formerly "Validate Species List"): upload a list of species names (a tab-delimited text file) to check every name against AntWeb's names from AntCat. You get a report on screen and can download it, or download a corrected copy of your list with the current valid names. Nothing is saved on AntWeb.
-- **Specimen List Lookup**: upload a plain text file of specimen codes, one per line (the file name must contain "specimen", for example my_specimens.txt), and get the AntWeb data for those specimens as a tab-delimited file. If some codes are not in AntWeb, a results page lists them (to copy or download) and still offers the data of the codes that were found. Handy for checking what AntWeb holds for a loan or a batch of material.
-
-### AntWeb Statistics (right side)
-
-Totals for the whole site (specimens, imaged specimens, species and so on). They are updated after uploads and in the nightly run.
 
 ### Opening a page by its id
 
