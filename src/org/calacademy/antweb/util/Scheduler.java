@@ -140,8 +140,10 @@ public class Scheduler extends AntwebAction {
                 + " (progress in compute.log, Server Status page).");
             String message = doAction(runAction, runNum);
             LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " Scheduler complete. ");
-            return message != null && message.startsWith("Scheduler ") ? BackgroundJobs.Outcome.ok(message)
-                : BackgroundJobs.Outcome.failed(Html.esc(message));
+            // The job keeps one plain sentence (JobSummary), not the pages utilData.do answered with: those are
+            // whole AntWeb pages (header, search, footer), and the job page showed them inside itself (job 186).
+            return message != null && message.startsWith("Scheduler ") ? BackgroundJobs.Outcome.ok(Html.esc(JobSummary.scheduler(message)))
+                : BackgroundJobs.Outcome.failed(Html.esc(JobSummary.isFullPage(message) ? JobSummary.scheduler(message) : message));
         });
         if (submitted.job == null) {
             request.setAttribute("message", Html.esc(submitted.refused));
@@ -274,6 +276,12 @@ public class Scheduler extends AntwebAction {
 
 				if (num == 0) {
 				  // This was the full scheduled tasks, now completed.
+				  // Daily: warn the administrators of a log over 1 GB or a disk over 85% (LogSizeCheck).
+				  try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
+					LogMgr.appendLog("compute.log", "  " + LogSizeCheck.run(connection), true);
+				  } catch (Exception e) {
+					s_log.warn("doAction() log size check e:" + e);
+				  }
 				  if (isNightlyRestartOn()) {
 					s_log.warn("SET REBOOT TRUE");
 					LogMgr.appendLog("compute.log", "Nightly restart requested (nightlyRestart=true in etc/scheduler.properties). " + memoryReport(), true);

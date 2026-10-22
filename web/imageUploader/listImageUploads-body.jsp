@@ -15,15 +15,15 @@
     if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return;
 %>
 
-<div id="page_contents">
-
-<div class=left>
+<%-- Tool-page look (common/tools.css, docs/guides/page-style.md). tests/e2e/test_image_upload.py reads the
+     rows (split at "<tr>", "<td>count</td> <td><a href='...imageUploadReport.do?id=N'") and "Total image uploads:". --%>
+<%@include file="/common/toolsHead.jsp" %>
+<div class="aw-tools" id="image-uploads-page">
 
 <%
     String domainApp = AntwebProps.getDomainApp();
 
     String message = (String) request.getAttribute("message"); 
-    if (message != null) out.println("<h2>&nbsp;" + message + "</h2>");
 
     // Sloppy. If there is a curator or a group there will be a colon in the message (title).
     boolean isAllGroups = !message.contains(":");
@@ -33,15 +33,19 @@
     if (message.contains("group.do")) uploadsBy = "group";
     //AntwebUtil.log("listImageUploads-body.jsp uploadsBy:" + uploadsBy);
 %>
-&nbsp;&nbsp;&nbsp;<a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a><br><br><br>
+<p class="aw-crumbs"><a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a></p>
+<% if (message != null) out.println("<h2 class=\"aw-title\">" + message + "</h2>"); %>
+<div class="aw-intro"><p>One line per batch of uploaded images, newest first: who uploaded it, the photographer, whether it
+finished and how many images it holds. The date opens the batch's report (images saved, and any not saved with the reason).</p></div>
 <%
     ArrayList<ImageUpload> list = (ArrayList) request.getAttribute("imageUploads");
 
-    out.println("<br><h3>&nbsp;&nbsp;&nbsp;Total image uploads: " + list.size() + "</h3><br><br>");
+    out.println("<div class=\"aw-card\" id=\"image-uploads-list\">");
+    out.println("<p><b>Total image uploads: " + list.size() + "</b></p>");
     
     int i = list.size() + 1;
     %>
-    <table cellpadding=10><tr><th>#</th>
+    <table class="aw-uploads"><tr><th>#</th>
     <%
     if ("all".equals(uploadsBy)) { %>
     <th>Group</th>
@@ -53,7 +57,7 @@
     <th>Artist</th>
     <th>Complete</th>
     <th>Image Count</th>
-    <th width='140'>Created</th>
+    <th>Created</th>
     </tr>
     <%
    // ImageUpload t = null;
@@ -83,12 +87,10 @@
     }
     out.println("</tr></table>");
 
-    if (i == 0 && message.contains("curator.do")) out.println("<br> No uploads for this curator");
-    if (i == 0 && message.contains("group.do")) out.println("<br> No uploads for this group");
-
+    if (i == 0 && message.contains("curator.do")) out.println("<p>No uploads for this curator</p>");
+    if (i == 0 && message.contains("group.do")) out.println("<p>No uploads for this group</p>");
+    out.println("</div>");
 %>
 
-</div > 
-
-</div > 
+</div> 
 

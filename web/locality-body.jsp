@@ -219,7 +219,7 @@
 
 	<div class="browse_col_one">
 		<logic:notEmpty name="row" property="collectionCode">
-		<a href="collection.do?name=<bean:write name="row" property="collectionCode"/>">
+		<a href="collection.do?name=<%= Html.escAttr(Html.url((String) prettycode)) %>">
 		<b><%= Html.esc(((String) prettycode).toUpperCase()) %></b>
 		</a>
 		</logic:notEmpty>

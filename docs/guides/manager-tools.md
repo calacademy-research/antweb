@@ -296,7 +296,7 @@ counted as Introduced. Update the list in the Species List Tool, then tick their
 
 ## Query Manager (`query.do`)
 
-**For**: ready-made database queries by topic. Click a name to run it: the page shows **What it shows** (what
+**For**: ready-made database queries (91 on 22 October 2026), in groups by topic. Click a name to run it: the page shows **What it shows** (what
 the query lists, how to read it and what to do about its rows), the query, the rows and the time taken. They
 only read data; some take a minute, and the server stops any query after 90 seconds. Administrators only,
 except the few that public or curator pages link to (the AntCat import history, the species lists with range
@@ -305,8 +305,35 @@ Check** (`query.do?action=checkIntegrity`); `noSpeciesForSpecies` and `geolocale
 Alerts. The queries are defined in `src/org/calacademy/antweb/util/Queries.java` (and
 `QueriesWithParams.java` for the four with a place).
 
+**Groups (2026-10-22)** (Brian Fisher: "there are a lot of queries in the query manager"): the page starts with
+how many queries there are and that they only read data, a **Filter** box (type words from a name or summary;
+only the matching queries and their groups stay; Esc clears it) and a row of links to the groups. Each group is
+a card with its heading, the number of queries and one line on what it covers; each query is its name (the
+link) and its one-line summary. The groups, with their counts on 22 October 2026:
+
+| Group | Queries | Covers |
+|---|---|---|
+| Names and taxa | 24 | AntWeb's names: missing parts, parents, synonyms, homonyms, odd characters |
+| Specimens | 10 | specimen records: names, status, life stage and caste, bioregions, introduced flag |
+| Places | 12 | countries and adm1s: valid or not, names, map coordinates, bioregions |
+| Species lists | 23 | project, place, bioregion and museum species lists, list exports, disputes |
+| Images | 4 | image counts, the newest images, default images |
+| Uploads and groups | 5 | upload groups, their counts and uploads, the AntCat name imports |
+| Accounts and logins | 4 | who may upload, who looks after which project, emails |
+| Site checks and counts | 9 | the Admin Alert checks and history, counts for orientation |
+
+Each query's group is set in one place, `Queries.QUERY_GROUPS` (enum `Queries.QueryGroup`). A new query must
+be added to a group there: `QueriesReviewTest.testEveryQueryHasOneGroup` fails in CI otherwise, and on the page a
+query without a group is listed under "Not yet grouped" so it is never hidden. The Relevant Queries boxes of
+the Geolocale Manager, Login Manager and Upload groups pages are unchanged.
+
 **Changed 2026-10-21**: result values and column headings were written into the page as HTML; they are
 now text, and only the links the queries build to AntWeb pages stay links.
+
+**Page limit 2026-10-22**: a query shows at most 5,000 rows on its page ("Showing the first 5,000 of N rows";
+rowCount is still the full count), so no report page runs to megabytes (each view of the old image data
+query was about 13 MB and was copied whole into the messages log). The bioregion and country species lists
+with range data are shown in full; `imageData` has its own limit of the newest 5,000 (below).
 
 **Reviewed 2026-10-22** (Brian Fisher: "make sure they are working and explained"): every query now has a
 plain explanation and one heading per column; a query that fails shows its error on the page instead of an
@@ -477,6 +504,10 @@ files can be read. Curators reach one line of their own group's upload files fro
 upload reports.
 
 **Changed 2026-10-21**: taxonworksNightly.log and adminAlerts.log are linked in the list.
+
+**Changed 2026-10-22**: a line is shown with at most 2,000 characters ("... [cut, N characters]"), and the
+output stops at 5 MB. messages.txt now holds one short line per message page (runbook, "Log sizes and
+rotation").
 
 ---
 

@@ -333,7 +333,7 @@ if (sortedBy == null) {
                         if (null == collectionCode) {
                            collectionCodeLink = "";
                         } else {
-                           collectionCodeLink = "<a href=" + AntwebProps.getDomainApp() + "/collection.do?name=" + thisChild.getCollectionCode() + ">" + thisChild.getCollectionCode() + "</a>";
+                           collectionCodeLink = "<a href=\"" + AntwebProps.getDomainApp() + "/collection.do?name=" + Html.escAttr(Html.url(collectionCode)) + "\">" + Html.esc(collectionCode) + "</a>";
                            // if (collectionCode == null) A.log("collectionCode:" + collectionCode + " collectionCodeLink:" + collectionCodeLink);
                         }
                    %>

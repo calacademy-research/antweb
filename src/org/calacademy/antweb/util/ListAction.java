@@ -136,6 +136,7 @@ public final class ListAction extends AntwebAction {
                                 return null;
                             }
                             request.setAttribute("message", PartsReport.html(groups, groupId, AntwebProps.getDomainApp()));
+                            request.setAttribute("header", "Specimen parts (-D codes) with different names - AntWeb");
                             return mapping.findForward("adminHtmlMessage");
                         }
 

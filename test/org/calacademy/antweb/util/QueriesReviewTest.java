@@ -133,7 +133,7 @@ public class QueriesReviewTest extends TestCase {
     public void testQueryManagerListsEveryQueryWithItsSummary() {
         String page = Queries.getQueryManagerPage();
         for (NamedQuery q : Queries.getNamedQueries()) {
-            String item = "/query.do?name=" + q.getName() + "'>" + q.getName() + "</a> - ";
+            String item = "/query.do?name=" + q.getName() + "'>" + q.getName() + "</a> <span class=\"qm-summary\">";
             int at = page.indexOf(item);
             assertTrue(q.getName(), at >= 0);
             assertEquals(q.getName() + " listed twice", at, page.lastIndexOf(item));
@@ -141,6 +141,54 @@ public class QueriesReviewTest extends TestCase {
         assertTrue(page.contains(QueryManager.QUERY_TIMEOUT_SECS + " seconds"));
         // tests/e2e/test_named_queries.py skips on a server whose Query Manager lacks this phrase.
         assertTrue(page.contains("none may run longer than " + QueryManager.QUERY_TIMEOUT_SECS + " seconds"));
+        assertTrue(page.contains("There are " + Queries.getNamedQueries().size() + " ready-made database queries"));
+        assertTrue(page.contains("id=\"qm-filter\""));
+    }
+
+    /**
+     * The Query Manager lists the queries by topic (Brian Fisher, 2026-10-22). Every query is in exactly one group
+     * of Queries.QUERY_GROUPS, every name there is a query, and every group has a heading on the page.
+     */
+    public void testEveryQueryHasOneGroup() {
+        Map<String, Integer> seen = new HashMap<>();
+        for (Map.Entry<Queries.QueryGroup, String[]> entry : groups().entrySet()) {
+            assertFalse("NONE is for queries without a group", entry.getKey() == Queries.QueryGroup.NONE);
+            for (String name : entry.getValue()) {
+                assertNotNull(entry.getKey() + ": no query " + name, Queries.getNamedQuery(name));
+                seen.merge(name, 1, Integer::sum);
+            }
+        }
+        List<String> twice = new ArrayList<>();
+        for (Map.Entry<String, Integer> e : seen.entrySet()) if (e.getValue() > 1) twice.add(e.getKey());
+        assertTrue("in more than one group: " + twice, twice.isEmpty());
+        List<String> without = new ArrayList<>();
+        for (NamedQuery q : Queries.getNamedQueries()) {
+            if (q.getGroup() == Queries.QueryGroup.NONE) without.add(q.getName());
+        }
+        assertTrue("queries without a group (add them to Queries.QUERY_GROUPS): " + without, without.isEmpty());
+
+        String page = Queries.getQueryManagerPage();
+        assertFalse(page.contains(Queries.QueryGroup.NONE.getTitle()));
+        int total = 0;
+        for (Map.Entry<Queries.QueryGroup, ArrayList<NamedQuery>> e : Queries.getGroupedQueries().entrySet()) {
+            Queries.QueryGroup g = e.getKey();
+            assertTrue(g.name(), page.contains("<div class=\"qm-group\" id=\"" + g.getAnchor() + "\"><h3>" + g.getTitle()
+                + " <span class=\"qm-count\">(" + e.getValue().size() + ")</span></h3>"));
+            total += e.getValue().size();
+        }
+        assertEquals(Queries.getNamedQueries().size(), total);
+    }
+
+    static Map<Queries.QueryGroup, String[]> groups() {
+        try {
+            java.lang.reflect.Field f = Queries.class.getDeclaredField("QUERY_GROUPS");
+            f.setAccessible(true);
+            @SuppressWarnings("unchecked")
+            Map<Queries.QueryGroup, String[]> map = (Map<Queries.QueryGroup, String[]>) f.get(null);
+            return map;
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(e);
+        }
     }
 
     public void testGeolocaleBoxExplainsEachQuery() {
