@@ -45,6 +45,15 @@ jobs:
         # every count check (CountInvariants.IDS) is named. Fix: edit docs/numbers.md (see its section 1).
         run: python3 tools/numbers/check_numbers_doc.py
 
+      - name: Data model doc has a section for every table (docs/data-model.md)
+        # Replays db/upgrade/**/*.sql and the CREATE TABLE statements in src/; fails when a table or view
+        # has no "### `name`" section in docs/data-model.md, or a section names a table no SQL knows.
+        # Fix: add the section (see the top of docs/data-model.md). The parser's own cases:
+        # tests/unit/test_datamodel_list_tables.py.
+        run: |
+          python3 tests/unit/test_datamodel_list_tables.py
+          python3 tools/datamodel/list_tables.py --check
+
       - name: Test API Build
         run: |
           docker build -t antweb/api:dev -f docker/api/Dockerfile .
@@ -232,6 +241,8 @@ jobs:
         # collapsed list of codes on every upload report line and on the Name updates page (one helper; count, cap of
         # 200 per line and 10,000 per report, escaping, plain codes for lines not uploaded). RelevantQueriesTest: the
         # Relevant Queries boxes of viewGroups.do and viewLogins.do explain each query; headings match the columns.
+        # QueriesReviewTest: every named query of the Query Manager has an explanation, one heading per column of its
+        # select and only reads; every list of queries names queries that exist (tests/e2e/test_named_queries.py runs them).
         # See docs/flows/test-gaps-uploads-nightly.md.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" -v "$PWD/web:/web:ro" \
@@ -257,12 +268,13 @@ jobs:
               /t/org/calacademy/antweb/security/PasswordHashCompatTest.java \
               /t/org/calacademy/antweb/util/BackgroundJobsTest.java \
               /t/org/calacademy/antweb/util/SpecimenCodesTest.java \
-              /t/org/calacademy/antweb/util/RelevantQueriesTest.java
+              /t/org/calacademy/antweb/util/RelevantQueriesTest.java \
+              /t/org/calacademy/antweb/util/QueriesReviewTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:7 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
-                     util.BackgroundJobsTest:14 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
-                     upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2; do
+                     util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
+                     upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:14; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -294,6 +306,9 @@ jobs:
 
       - name: No email tells the reader to ignore it (tests/unit/test_email_texts.py)
         run: python3 tests/unit/test_email_texts.py
+
+      - name: No PHP in the server image or the repository (tests/unit/test_no_php.py)
+        run: python3 tests/unit/test_no_php.py
 
       - name: Login updates keep login.created, no delete of all page text, page titles, admin links on phones (tests/unit/test_small_fixes.py)
         run: python3 tests/unit/test_small_fixes.py
@@ -351,6 +366,8 @@ jobs:
           # per-taxon image counts of a place, and the count check of those numbers.
           # RegionCountDbTest: region and subregion numbers count the specimens of their countries only.
           # BackgroundJobDbTest: the background_job table (status pages of uploads and admin jobs; interrupted at start-up).
+          # UploadRecordDbTest: a specimen upload's row in the upload table is written for any group name (quote, long,
+          # non-BMP), in the upload's transaction, and a failure is thrown, not only logged (production 2026-10-21).
           # PageTextRenameDbTest: renaming a place (editGeolocale.do) moves its page text and history (object_edit,
           # object_hist) with their dates; a new name that has page text already is refused and nothing changes.
           # SpecimenNameHistoryDbTest: the specimen page's Name History query (applied rows of one specimen, newest first,
@@ -377,8 +394,9 @@ jobs:
               /t/org/calacademy/antweb/util/NumbersTestDb.java \
               /t/org/calacademy/antweb/util/CountInvariantsTest.java /t/org/calacademy/antweb/util/NumberChecksTest.java \
               /t/org/calacademy/antweb/home/PlaceTotalsDbTest.java \
-              /t/org/calacademy/antweb/home/DownloadGuardsDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:17 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6; do
+              /t/org/calacademy/antweb/home/DownloadGuardsDbTest.java \
+              /t/org/calacademy/antweb/home/UploadRecordDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:17 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:5; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
@@ -412,7 +430,7 @@ jobs:
         # username, moving only when asked, refusals change nothing, login.created kept, inactive
         # accounts get a link, a group with logins or specimens is not deleted.
         # LoginEditTest: the login form (sections, escaping, admin warning, own admin rights locked,
-        # upload group list, add boxes, change summary). LoginEditDbTest: an administrator's save in
+        # upload group list, add boxes, change summary, empty places text for administrators and curators). LoginEditDbTest: an administrator's save in
         # one step, refused values change nothing, old assignments kept, delete removes assignments.
         # LoginIdDbTest: a new login never gets a number used before (deleted logins, curator folders,
         # login numbers in other tables); password reset steps keep login.created; the upgrade script
@@ -440,7 +458,7 @@ jobs:
               /t/org/calacademy/antweb/curate/UploaderOnboardingTest.java /t/org/calacademy/antweb/curate/UploaderOnboardingDbTest.java \
               /t/org/calacademy/antweb/curate/LoginEditTest.java /t/org/calacademy/antweb/curate/LoginEditDbTest.java \
               /t/org/calacademy/antweb/curate/LoginIdDbTest.java
-            for t in curate.UploaderOnboardingTest:8 curate.UploaderOnboardingDbTest:10 curate.LoginEditTest:10 curate.LoginEditDbTest:6 curate.LoginIdDbTest:8; do
+            for t in curate.UploaderOnboardingTest:8 curate.UploaderOnboardingDbTest:10 curate.LoginEditTest:11 curate.LoginEditDbTest:6 curate.LoginIdDbTest:8; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

@@ -260,18 +260,210 @@ species counts as introduced everywhere.
 **Changed 2026-10-21**: the Curate page and the guide said "where a species is introduced"; the ticks
 are where it is native. Values in the form are escaped and the rows read with bound queries.
 
+**Where the introduced species list comes from**: it is the species list of the project
+introducedants (its `proj_taxon` rows), kept by curators and administrators by hand in the Species
+List Tool (`speciesListTool.do`; saved there with source speciesListTool). This manager page does not
+add or remove species: it only records the native bioregions (`taxon_prop`, prop introducedMap) of
+species already on the list. What the list and the ticks are used for:
+
+- Specimen upload: a specimen of a listed species collected outside its native bioregions gets
+  `specimen.is_introduced = 1` (`SpecimenUploadProcess`, `TaxonPropMgr.isIntroduced`); the nightly
+  name update sets the flag again when a specimen's name changes (`SpecimenNameUpdate`). The flag
+  shows as "Introduced" on the specimen and in the query "introducedSpecimen".
+- Introduced numbers on place pages: the nightly counts (`GeolocaleDb.calcIntroduced`,
+  `BioregionDb.calcIntroduced`) do not read the specimen flag. They take each country, state and
+  bioregion list entry of a listed species and mark it introduced when that place's bioregion is not
+  ticked as native here (`geolocale_taxon.is_introduced`, `bioregion_taxon.is_introduced`); the
+  Introduced number is the count of those rows (the species `introduced.do` shows).
+
+Nothing adds species to introducedants automatically (checked in the code 2026-10-21): the only writes
+to `proj_taxon` are the Species List Tool (`SpeciesListDb.saveTaxonSet`) and the restore of a curator's
+entry that was parked during a name change (`CuratorTaxonSetDb`); the specimen upload writes only to
+allantwebants, the AntCat import only to worldants, allantwebants and fossilants
+(`SpeciesListUpload`, `AntwebUpload.saveTaxonAndProjTaxon`), and the `insert ... select` in
+`ProjTaxonDb.regenerateAllAntweb` only to allantwebants. Automatic changes touch only the names
+already on the list: after the AntCat import a name that became a synonym is replaced by its current valid name
+(`TaxonSetDb.updateTaxonSetTaxonNames`), and the project count crawl sets the source of every
+introducedants row to curator (`ProjTaxonCountDb.fixExceptions`). A third: when a specimen upload corrects the subfamily in a name, the
+list entries of the old spelling move to the corrected name
+(`OrphansDb.moveTaxonSupportingDataToAlternate`). None of these adds a species.
+
+**Content to do (Brian Fisher, 2026-10-21)**: the introduced species list is out of date. Species
+introduced since it was last curated are missing, and their specimens are therefore not flagged and not
+counted as Introduced. Update the list in the Species List Tool, then tick their native bioregions here.
+
 ---
 
 ## Query Manager (`query.do`)
 
-**For**: ready-made database queries by topic (taxa, homonyms, specimens, fossils, logins, groups,
-geolocales, projects, bioregions, museums, images). Click a name to run it: the page shows the query, the
-rows and the time taken. They only read data; some take a minute. Administrators only, except the few
-that public pages link to (the AntCat import history, the bioregion species lists with range data, the
-image data download).
+**For**: ready-made database queries by topic. Click a name to run it: the page shows **What it shows** (what
+the query lists, how to read it and what to do about its rows), the query, the rows and the time taken. They
+only read data; some take a minute, and the server stops any query after 90 seconds. Administrators only,
+except the few that public or curator pages link to (the AntCat import history, the species lists with range
+data, the image data download). The checks that should find nothing also run together in the **Integrity
+Check** (`query.do?action=checkIntegrity`); `noSpeciesForSpecies` and `geolocaleTaxaPresent` are also Admin
+Alerts. The queries are defined in `src/org/calacademy/antweb/util/Queries.java` (and
+`QueriesWithParams.java` for the four with a place).
 
 **Changed 2026-10-21**: result values and column headings were written into the page as HTML; they are
 now text, and only the links the queries build to AntWeb pages stay links.
+
+**Reviewed 2026-10-22** (Brian Fisher: "make sure they are working and explained"): every query now has a
+plain explanation and one heading per column; a query that fails shows its error on the page instead of an
+error page, and a heading/column mismatch is flagged. Fixed: `lastSpecimenUpload` (its "Last Upload" was the
+date of the newest specimen record; it now shows the last upload recorded in the upload table and the newest
+specimen record, labeled), `notValidTaxaFromSpecimenList` (an SQL error on MySQL 8), `invalidCurrentValid`
+and `selfRefSynonyms` (compared the wrong form of the current valid name, so one listed every original
+combination and the other nothing), checks that used `not in (select taxon_name from specimen)` (found
+nothing once one specimen has no name), `usedAndUnusedCoords` (missing parentheses), the links to taxon
+pages (shown as text when the name has a space), the headings of 16 queries (wrong count, wrong order or
+broken), and the permalinks of the country species list queries. `imageData` (public link of the recent images search, formerly "Download All", now "Newest 5,000 images (table)") is limited to the
+newest 5,000 images. CI test: `test/org/calacademy/antweb/util/QueriesReviewTest.java`; every query is run
+on staging by `tests/e2e/test_named_queries.py`.
+
+**Removed 2026-10-22** (duplicates, broken, or comparing with data frozen long ago): `brokenTaxaHierarchy` and
+`badSpecies` (use `noSpeciesForSpecies`), `longCurrentValidNames` (part of `invalidCurrentValid`),
+`generaInMultipleSubfamilies2` (known to overload the site; use the detail query of
+`generaInMultipleSubfamilies`), `sourceWithBadParent` and its two detail queries (use `badParentTaxonName`
+and `badParentTaxonNameSpecimens`), `oldBadBioregionsInSpecimen` (use `invalidBioregion`),
+`multiBioregionSpecimenTaxa` (use `nonIntroducedAntsInMultipleBioregions`), `validNonfossilSpeciesWithMuseums`
+(part of `validNonfossilSpeciesWithMuseumsOwnedByLocatedAt`), `validNonfossilTaxaWithBioregions` (an SQL
+error), `extentAndCoords` (used a column dropped in 2017), `notValidTaxaFromSpeciesList` and
+`incorrectNameInSpeciesList` (use `notValidProjectTaxonNames`), `geolocaleListMorphotaxa` (use
+`geolocaleTaxaMorphosWithNoSpecimen`), `notValidGeolocaleTaxonNames` (use `geolocaleTaxaFromInvalidTaxonName`),
+`antwebUniqueValidTaxa` and `antwebUniqueFossilTaxa` (compared with AntWiki lists loaded once in 2016),
+`ancillaryFiles` (the "ancillary" pages of before 2011).
+
+**The queries** (name: what it shows; the page has the full explanation):
+**Taxon Queries**
+
+- `noSpeciesForSpecies`: Species-rank names whose species part is empty.
+- `geolocaleTaxaPresent`: Admin Alert check that the country species lists are filled: shows 0 when there are at least 50,000 rows (one per name per country; there are normally far more), and "records missing!" when there are fewer.
+- `nonAsciiTaxonName`: Names that contain a character other than plain English letters, digits and punctuation (an accented letter, a curly quote, a non-breaking space), usually pasted into an upload file.
+- `selfRefSynonyms`: Synonyms whose current valid name is the name itself, so the taxon page sends readers back to the same page.
+- `homonyms`: Every name in the homonym table: AntCat names spelled exactly like another ant name but with another author and year.
+- `invalidCurrentValid`: Names whose current valid name (the name AntCat says to use instead) is not among AntWeb's names or homonyms.
+- `noGenusForGenus`: Genus-rank names whose genus part is empty.
+- `noSubfamilyForSubfamily`: Subfamily-rank names whose subfamily part is empty.
+- `emptyGenus`: Names below the genus (genera, species, subspecies) whose genus part is empty, so they do not show under any genus.
+- `generaInMultipleSubfamilies`: Genera whose names in use (valid names and AntWeb's own morphospecies, indeterminate and unrecognized names) are filed under more than one subfamily.
+- `generaInMultipleSubfamiliesDetail`: Detail of generaInMultipleSubfamilies: every name in use of the genera filed under more than one subfamily, with the subfamily each is under and where it came from.
+- `emptySubfamily`: Names that have a genus but no subfamily, so they are missing from the subfamily's pages and counts.
+- `taxonNameWithDoubleQuote`: Names that contain a double quote ("), which breaks links and searches.
+- `taxonNameWithSingleQuote`: Names that contain an apostrophe ('), which breaks links and searches.
+- `validsWithCurrentValidName`: Valid names that also have a current valid name.
+- `missingCurrentValidName`: Synonyms, combinations and unavailable names without a current valid name.
+- `spaceInGenusName`: Names whose genus part contains a space (for example "pheidole x" typed in the genus column of an upload).
+- `unrecognizedWithSynonymParent`: Names that AntCat does not recognize (they came from specimen data) whose genus or species is a synonym in AntCat: the specimens were identified under an old name.
+- `unrecognizedTaxaWithoutSpecimen`: Unrecognized names from specimen uploads that no specimen uses any more (the specimens were re-identified or deleted).
+- `speciesEqualsSubspecies`: Pairs of names in the same subfamily and genus where the second name's species part is in parentheses (an old way of writing a subgenus) and its subspecies part is the first name's species.
+- `taxonCountBySubfamily`: The 8 subfamilies with the most names in AntWeb (all ranks and statuses: valid names, synonyms, morphospecies...).
+- `taxonCountByGenus`: The 8 genera with the most names in AntWeb (all ranks and statuses).
+- `taxonCountBySpecies`: The 8 species epithets used by the most names, across all genera (the empty one counts the names above species rank).
+- `indeterminedAndQuestionableMorphoTaxa`: Indeterminate names (status indetermined) and morphospecies whose name contains a parenthesis.
+- `badParentTaxonName`: Names whose parent (the genus of a species, the species of a subspecies) is not among AntWeb's names, usually a misspelled or outdated genus or species in specimen data.
+- `badParentTaxonNameSpecimens`: Detail of badParentTaxonName: the same names with the number of specimens filed under each and the groups that uploaded them, so each group can be asked to correct its identifications.
+- `taxaFromOldSpecimenLists`: Names that came from the species list of a project that no longer exists (source ending in "ants" or "speciesList.txt"), with the number of specimens filed under each.
+
+**Homonym Queries**
+
+- `homonymWithoutTaxon`: Homonyms whose name is not in the taxon table.
+
+**Specimen Queries**
+
+- `notValidTaxaFromSpecimenList`: Specimen records filed under a name AntCat does not consider valid (synonym, homonym, unavailable name...), per group, with the name to use instead and the number of specimens.
+- `specimenCountByOwner`: Specimen records per "owned by" value (the institution that owns the specimen, as written in the upload file), largest first.
+- `checkSpecimenStatus`: Specimens with no status (the status of their name, set at upload).
+- `invalidBioregion`: Bioregion names in specimen data that are not one of AntWeb's bioregions (bioregion table), with the number of specimens and the groups that uploaded them.
+- `specimenCountByTaxa`: The 8 names with the most specimen records.
+- `specimenGroups`: How many specimen records each upload group has on AntWeb: group number, name and count, largest first.
+- `introducedSpecimen`: Specimen records flagged as introduced (a species found outside its native bioregions), by group, bioregion and country.
+- `nonAnts`: Specimen records that are not ants (family not Formicidae, or empty), with the group that uploaded them.
+- `castes`: Every combination of life stage/sex, caste and subcaste in specimen data, with the number of specimens and the groups (by number) that use it, most common first.
+- `nullCastes`: Life stages of specimens that have no caste, with the number of specimens and the groups (by number), most common first.
+- `nullLifeStage`: Imaged specimens with no life stage/sex, by group.
+- `nonIntroducedAntsInMultipleBioregions`: Names whose specimens come from more than one bioregion and that are not on the introduced species list (project introducedants), with the bioregions, countries (first 140 characters) and groups.
+
+**Species List Exports (valid living species)**
+
+- `validNonfossilSpeciesWithBioregions`: Every valid, living (non-fossil) species with the bioregions it is recorded from (bioregion species lists).
+- `validNonfossilSpeciesWithMuseumsOwnedByLocatedAt`: Every valid, living (non-fossil) species with the museums, "owned by" and "located at" values of its specimens.
+
+**Login Queries**
+
+- `loginProjectMapping`: Which logins may edit which project species lists, by group and login.
+- `curatorInfoAndProjects`: The logins assigned to at least one live project (the species-list curators), with their email and projects, one row per login.
+- `curatorEmails`: The emails of the logins assigned to a live project (the species-list curators), in one comma-separated cell to paste into an email.
+- `uploadingCurators`: Every login allowed to upload specimens or images: login ID, first and last name, email, name, upload group number, administrator, the two upload rights (1 = yes) and whether the login is inactive (1 = cannot log in until reactivated).
+
+**Group Queries**
+
+- `adminLoginIdIsZero`: Upload groups that have no administrator login.
+- `lastSpecimenUpload`: Each group's specimens and two dates: the last specimen upload recorded in the upload table (the Specimen Uploads list) and the creation date of the group's newest specimen record.
+
+**Geolocale (Place) Queries**
+
+- `invalidValidNamelessCountries`: Countries marked not valid (an old or alternative name) that do not say which valid country they stand for.
+- `usedAndUnusedCoords`: Valid countries without map coordinates (their map is blank) and countries that are not valid but still have coordinates (unused).
+- `nonAntsInSpeciesListsGeolocale`: Names on country, adm1 or region species lists that are not ants (family not Formicidae).
+- `badSingleQuotes`: Place names written with a curly apostrophe (‘ or ’) instead of the straight one (').
+- `geolocaleNameWithQuestionMarks`: Place names that contain a question mark, usually an accented letter lost when the name was loaded.
+- `duplicatedGeolocaleNames`: Place names used by more than one place (for example Georgia, a country and a US state), highest rank first.
+- `lowGeolocaleTaxonCount`: Valid countries whose species list has 5 names or fewer (all ranks), with the count.
+- `unfinishedBioregions`: Valid countries without a bioregion.
+- `nonvalidValidNames`: Places whose valid name (the place they stand for) is not a valid place.
+- `nonLiveValidCountries`: Valid countries that are not live, so they have no public page or list.
+- `geolocaleCountryTest`: Country names in specimen data that are not a country in AntWeb's place table (valid or not), with the number of specimens and a few of their codes.
+- `geolocaleAdm1Test`: Adm1 names (state, province) in specimen data that are not an adm1 of that country in AntWeb's place table, with the number of specimens and a few codes.
+
+**Project Species List Queries**
+
+- `projTaxaWithoutTaxonWithoutHomonym`: Names on project species lists that are neither among AntWeb's names nor homonyms (the AntCat lists worldants and fossilants are left out).
+- `projTaxaWithoutTaxonWithHomonym`: Names on project species lists that are homonyms but not among AntWeb's names (the AntCat lists are left out).
+- `quadrinomialsInSpeciesLists`: Names with four parts (genus, species, subspecies and one more) on project species lists other than allantwebants and worldants.
+- `nonAntsInSpeciesListsProject`: Names on project species lists (other than allantwebants) that are not ants.
+- `speciesListHomonyms`: Homonyms on project species lists (other than allantwebants and worldants; the genus Camponotus is left out).
+- `morphoProjTaxa`: Names on project species lists (other than allantwebants and worldants) that look like morphospecies (they contain a digit, ?, -, _, a parenthesis or a dot) and were added without a source.
+- `projTaxaMorphosWithNoSpecimen`: Morphospecies on project species lists that no specimen is filed under.
+- `notValidProjectTaxonNames`: Names on project species lists (other than allantwebants and worldants) that are not valid in AntCat (synonyms, unavailable names...; morphospecies left out), with the name to use instead.
+- `projectTaxaCount`: The number of rows of all project species lists together.
+- `projectTaxaCountByProject`: The number of names on each project species list.
+- `projectTaxaCountByProjectRank`: The names on the worldants and allantwebants lists by rank and source.
+
+**Place Species List Queries**
+
+- `badGeolocaleTaxonParentTaxonName`: Names on a place's species list whose parent (the genus of a species, the subfamily of a genus) is not on the same list.
+- `geolocaleTaxaMorphosWithNoSpecimen`: Morphospecies on country, adm1 or region species lists that no specimen is filed under.
+- `geolocaleTaxaFromInvalidTaxonName`: Names on place species lists that are neither valid nor morphospecies (synonyms, unavailable, unrecognized and indeterminate names...), with the name to use instead where AntCat gives one.
+- `geolocaleTaxaNotUsingCurrentValidName`: Country and region species lists (by geolocale id) that still hold a synonym or other non-valid name instead of its current valid name.
+- `geolocaleTaxaWithoutTaxon`: Names on place species lists that are not among AntWeb's names (renamed or deleted), with the newest date one was added and where it came from.
+- `geolocaleTaxaWithoutTaxonDetail`: Detail of geolocaleTaxaWithoutTaxon: each place species list row whose name is not among AntWeb's names, with the place.
+- `geolocaleTaxaInMultipleBioregions`: Species and subspecies on the species lists of places in three or more bioregions that are not on the introduced species list (project introducedants), most bioregions first.
+
+**Bioregion Species List Queries**
+
+- `notValidBioregionTaxonNames`: Names on bioregion species lists that are neither valid nor morphospecies, with the name to use instead.
+
+**Museum Species List Queries**
+
+- `notValidMuseumTaxonNames`: Names on museum species lists that are neither valid nor morphospecies, with the name to use instead.
+
+**Image Queries**
+
+- `imageCountByOwner`: Images (one per photo: head, profile, dorsal, label...) per "owned by" value of the photographed specimen, largest first.
+- `imageData`: The newest 5,000 images with their specimen, shot (h head, p profile, d dorsal, l label...), shot number, upload date, photographer and the group that uploaded them, newest first.
+- `imageStatusCounts`: How many names have at least one photographed specimen, by the name's status (valid, morphotaxon, synonym...).
+
+**Assorted Queries**
+
+- `descriptionEditCountByOwner`: Taxon page text sections (one per name and section title) per group of the curator who last edited each, largest first.
+- `importedCountryData`: The UN country list loaded once in 2015 (un_country): name, UN region and subregion, and the bioregion given then.
+- `worldantsUploads`: The last 60 imports of AntCat names (Worldants uploads), newest first.
+- `adminAlerts`: Every Admin Alert so far (warnings AntWeb raises for the administrators: failed imports, low counts...), the ones not yet acknowledged first.
+- `emptySourceTaxonSets`: Rows of project, place and bioregion species lists with an empty source (where the name came from).
+- `geolocaleTaxonDisputes`: Names a curator said do not occur in a place (disputes, set with the Species List Tool), newest first.
+- `projectTaxonDisputes`: Names a curator said do not occur in a project (disputes, set with the Species List Tool), newest first.
+- `conflictedDefaultImages`: Taxa whose default images (chosen on the taxon page) come from a specimen now filed under another name, so the page shows another species' photos.
 
 ---
 

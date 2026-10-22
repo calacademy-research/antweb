@@ -1,5 +1,7 @@
 # Every number on AntWeb and the test that checks it
 
+The tables these numbers are stored in and computed from, and the code that writes them: [data-model.md](data-model.md).
+
 Brian Fisher, 2026-10-20: every number shown on the site must be validated by a test, so new code cannot undo
 past progress. This page lists every kind of number AntWeb shows (JSP pages and the v3.1 API), where it is
 shown, how it is computed, and which test validates it. CI checks this page (`tools/numbers/check_numbers_doc.py`,

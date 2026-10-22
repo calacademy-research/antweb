@@ -24,6 +24,7 @@ tests = [
   "test_request_handling.py",   # quote characters, error pages, form token (CSRF) refusals
   "test_curator.py",            # curator login, admin pages refused, CSRF, remember-me
   "test_curate_cleanup.py",     # admin tools refused to anonymous visitors and curators
+  "test_parallel_safety.py",    # answers that must not change while another request or an upload runs
 ]
 
 [full_when]
@@ -56,6 +57,7 @@ tests = [
   "test_jsp_allow_list.py",
   "test_login_needed.py",
   "test_page_content.py",
+  "test_parallel_safety.py",
   "test_place_image_counts.py",
   "test_numbers_live.py",
   "test_api_numbers.py",
@@ -111,6 +113,14 @@ tests = [
   "test_curate_page_clarity.py::test_source_three_groups_one_link_per_line",
   "test_curate_page_clarity.py::test_source_name_update_report_label",
   "test_curate_page_clarity.py::test_source_count_check_wording",
+  "test_curate_page_layout.py::test_source_curate_sections_full_width",
+  "test_curate_page_layout.py::test_source_curate_has_no_statistics_box",
+  "test_curate_page_layout.py::test_source_site_warning_box_three_lines",
+  "test_curate_page_layout.py::test_source_curators_upload_group_column",
+  "test_curate_page_layout.py::test_source_about_nav_links_upload_groups",
+  "test_curate_page_layout.py::test_groups_page_is_public_and_links_groups",
+  "test_curate_page_layout.py::test_curators_page_upload_group_column",
+  "test_curate_page_layout.py::test_about_menu_links_upload_groups",
   "test_curator.py::test_forged_remember_cookie_is_refused",
   "test_display_cleanup.py::test_taxon_page_has_no_stray_distribution_comment",
   "test_exif_view.py::test_jsp_escapes_exif_rows_and_explains",
@@ -186,6 +196,7 @@ paths = [
   "src/org/calacademy/antweb/util/JobStatusAction.java",
   "src/org/calacademy/antweb/util/UploadMgr.java",
   "src/org/calacademy/antweb/util/ListUploadsAction.java",
+  "web/util/listSpecimenUploads*",
   "src/org/calacademy/antweb/util/ImageUtil.java",
   "src/org/calacademy/antweb/curate/UploadAsOptions.java",
   "web/imageUploader/**",
@@ -197,6 +208,7 @@ paths = [
 ]
 tests = [
   "test_specimen_upload_roundtrip.py",
+  "test_upload_list_views.py",
   "test_image_upload.py",
   "test_image_upload_test_group.py",
   "test_browser_image_upload.py",
@@ -241,6 +253,7 @@ tests = [
   "test_curate_followups.py",
   "test_curate_merge.py",
   "test_curate_page_clarity.py",
+  "test_curate_page_layout.py",
   "test_curator_species_lists.py",
   "test_display_cleanup.py",
   "test_group_form_help.py",
@@ -414,6 +427,7 @@ tests = [
   "test_cleanup_batch3.py",
   "test_count_check.py",
   "test_removals_2026_10_21.py",       # added by #217/#218
+  "test_named_queries.py",             # every named query runs, in time, headings = columns (admin, read-only)
 ]
 
 [areas.api]
@@ -464,4 +478,5 @@ tests = [
   "test_display_cleanup.py",
   "test_header_version.py",
   "test_request_limits.py",
+  "test_curate_page_layout.py",       # About menu, Curators page
 ]

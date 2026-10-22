@@ -33,6 +33,11 @@ Weekly refresh from production (tools/staging/refresh-from-prod.sh) uses two mor
                                           keep, with their password hashes (JSON, chmod 600)
     --restore-from FILE                   after the load: put them back with the same hashes, so
                                           the passwords in the GitHub secrets keep working
+    --add-upload-as [FILE]                after the restore: add zztest_uploader's login number to
+                                          the "Upload as" list of the administrator login(s) named
+                                          in FILE (default /root/staging-refresh/upload-as.txt,
+                                          lines adminLogin=NAME; no file: the login antweb), only
+                                          where it is missing
 """
 import argparse
 import base64
@@ -511,6 +516,82 @@ def restore_accounts(db, saved):
     return wrong
 
 
+# ---------- "Upload as" of the administrator after a refresh (tools/staging/refresh-from-prod.sh) ----------
+#
+# Production's database has no zztest_uploader, so after a refresh the test uploader gets a new
+# login number and is missing from the administrator's "Upload as" menu on staging (Brian Fisher,
+# 2026-10-21). --add-upload-as appends its number to login.upload_as of the administrator
+# login(s) named in the config file, only if it is not there already; nothing else is changed.
+
+UPLOAD_AS_CONFIG = "/root/staging-refresh/upload-as.txt"
+DEFAULT_ADMIN_LOGINS = ["antweb"]
+UPLOAD_AS_UPLOADER = "zztest_uploader"
+assert UPLOAD_AS_UPLOADER in [a[0] for a in ACCOUNTS]
+
+
+def read_upload_as_config(path):
+    """Admin login names from lines "adminLogin=NAME" (several allowed; # comments, blank lines
+    ignored). No file: DEFAULT_ADMIN_LOGINS. A file without adminLogin lines: none (switched off)."""
+    if not path or not os.path.isfile(path):
+        return list(DEFAULT_ADMIN_LOGINS)
+    names = []
+    with open(path, encoding="utf-8") as f:
+        for n, line in enumerate(f, 1):
+            line = line.split("#", 1)[0].strip()
+            if not line:
+                continue
+            key, sep, value = line.partition("=")
+            key, value = key.strip(), value.strip()
+            if not sep or key != "adminLogin":
+                sys.exit(f"{path} line {n}: expected adminLogin=NAME, found {line!r}")
+            if not LOGIN_NAME_RE.fullmatch(value):
+                sys.exit(f"{path} line {n}: not a login name: {value!r}")
+            if value not in names:
+                names.append(value)
+    return names
+
+
+def upload_as_with(current, login_id_to_add):
+    """The upload_as value with login_id_to_add appended, or None if it is already there. Pure."""
+    parts = [p.strip() for p in (current or "").split(",") if p.strip()]
+    if str(int(login_id_to_add)) in parts:
+        return None
+    return ",".join(parts + [str(int(login_id_to_add))])
+
+
+def add_upload_as(db, admin_names, uploader=UPLOAD_AS_UPLOADER):
+    """Adds the uploader's login number to each named administrator's upload_as. Returns
+    (changed, usable): the logins changed and the named administrator logins found (changed or
+    already listing it). Missing logins and non-administrators are reported and left alone."""
+    uid = login_id(db, uploader)
+    if not uid:
+        print(f"WARNING: Upload as: no login {uploader} on this server; nothing added.")
+        return 0, 0
+    if not admin_names:
+        print("Upload as: no adminLogin in the config file (switched off); nothing added.")
+        return 0, 0
+    keep_created = ", created = created" if "created" in table_columns(db, "login") else ""
+    changed = usable = 0
+    for name in admin_names:
+        found = db.run(f"select id, is_admin, coalesce(upload_as, '') from login where name = {sql_str(name)}")
+        if not found:
+            print(f"WARNING: Upload as: no login {name} on this server; skipped.")
+            continue
+        lid, is_admin, current = int(found[0][0]), found[0][1], found[0][2] if len(found[0]) > 2 else ""
+        if is_admin != "1":
+            print(f"WARNING: Upload as: {name} (login {lid}) is not an administrator; skipped.")
+            continue
+        usable += 1
+        new = upload_as_with(current, uid)
+        if new is None:
+            print(f"Upload as: {name} (login {lid}) already lists {uploader} ({uid}).")
+            continue
+        db.run(f"update login set upload_as = {sql_str(new)}{keep_created} where id = {lid}")
+        print(f"Upload as: added {uploader} ({uid}) to {name} (login {lid}): {new}")
+        changed += 1
+    return changed, usable
+
+
 # ---------- main ----------
 
 def main(argv=None):
@@ -523,6 +604,9 @@ def main(argv=None):
                     help="save the test group and logins to keep (hashes, rights) to FILE, change nothing")
     ap.add_argument("--restore-from", metavar="FILE",
                     help="put the logins saved with --save-to back (same passwords); no restart")
+    ap.add_argument("--add-upload-as", metavar="FILE", nargs="?", const=UPLOAD_AS_CONFIG,
+                    help="add zztest_uploader to the Upload as list of the admin login(s) in FILE "
+                         f"(default {UPLOAD_AS_CONFIG}; lines adminLogin=NAME; no file: antweb), if missing")
     ap.add_argument("--keep-logins", metavar="FILE",
                     help="with --save-to: more login names to keep, one per line (e.g. the ANTWEB_TEST_USER login)")
     args = ap.parse_args(argv)
@@ -557,6 +641,18 @@ def main(argv=None):
             print("FAILED for: " + ", ".join(wrong))
             return 1
         print("All saved logins are back with their saved passwords. AntWeb loads them when it starts.")
+        return 0
+    if args.add_upload_as:
+        names = read_upload_as_config(args.add_upload_as)
+        if names and not login_id(db, UPLOAD_AS_UPLOADER):
+            print(f"WARNING: no login {UPLOAD_AS_UPLOADER} on this server (were the test logins put back?); "
+                  "nothing added")
+            return 1
+        _changed, usable = add_upload_as(db, names)
+        if names and not usable:
+            print(f"WARNING: none of {', '.join(names)} is an administrator login here; set adminLogin=NAME in "
+                  f"{args.add_upload_as}")
+            return 1
         return 0
     if args.remove:
         if remove(db, args.yes) and not args.no_restart:

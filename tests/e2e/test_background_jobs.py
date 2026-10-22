@@ -8,7 +8,8 @@ which shows the step and reloads itself until the job has ended.
 - anonymous visitors get the log-in page for jobStatus.do (any host);
 - the Curate page no longer tells curators about Cloudflare timeouts (static check of the source);
 - staging, test uploader: the upload POST answers in under 20 seconds with the status page, which
-  ends with "Upload complete" and the report link; a second upload sent while the first is still
+  ends with "Upload complete" and the report link; the upload has its row in the upload table (its
+  upload id, the group's upload list, groups.do with the specimen count and one upload more); a second upload sent while the first is still
   waiting or running goes to the first one's status page ("You already have an upload ...");
 - staging, test admin: a data job (taxonFinish: the subfamily chart colours, part of nightly set 1,
   changes nothing else) answers in under 20 seconds with its status page and finishes; the test
@@ -24,8 +25,9 @@ from pathlib import Path
 import pytest
 
 from antweb import BASE_URL, TIMEOUT, get, new_session
-from staging_accounts import (assert_upload_complete, baseline_text, job_status, job_url, login, needs, post_upload,
-                              report_url, require_test_group, upload_specimens, wait_for_job)
+from staging_accounts import (assert_upload_complete, assert_upload_recorded, baseline_text, group_upload_count, job_status,
+                              job_url, login, needs, post_upload, report_url, require_test_group, upload_specimens,
+                              wait_for_job)
 
 REPO = Path(__file__).resolve().parents[2]
 FAST = 20  # seconds: well under Cloudflare's 100
@@ -59,13 +61,18 @@ def test_curate_page_note_is_accurate():
 @needs("uploader")
 def test_upload_answers_at_once_and_shows_progress():
     s, token, _login_id = login("uploader")
-    require_test_group(s)
+    gid = require_test_group(s)
+    uploads_before = group_upload_count(s, gid)
     r = upload_specimens(s, token, _baseline())
     assert r.job_url, "the upload POST did not answer with a redirect to jobStatus.do: " + _text(r.text)[:400]
     assert r.post_seconds < FAST, f"the upload POST took {r.post_seconds:.1f} s"
     assert_upload_complete(r)
     rep = s.get(report_url(r), timeout=TIMEOUT)
     assert rep.status_code == 200 and "Upload Report" in rep.text, (report_url(r), rep.status_code)
+    # The background upload records itself in the upload table as the upload page did before
+    # 2026-10-20 (production 2026-10-21: "Upload complete" without an upload row).
+    uid = assert_upload_recorded(s, r, gid, uploads_before=uploads_before)
+    assert f"uploadReport.do?uploadId={uid}" in rep.text, "the report's Upload ID is not the recorded upload id"
     # The list of recent uploads has this one.
     listing = s.get(BASE_URL + "/jobStatus.do", timeout=TIMEOUT).text
     job_id = r.job_url.split("id=", 1)[1].split("&", 1)[0]
