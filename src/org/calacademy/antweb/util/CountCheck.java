@@ -193,6 +193,8 @@ public class CountCheck {
         public boolean rulesCounted = true;
         /** The invariants over every place (null when not run). */
         public CountInvariants invariants;
+        /** The live database's tables and columns against the committed snapshot (SchemaCheck, 2026-10-22; null when not run). */
+        public SchemaCheck.Report schema;
         /** The places of today's rotating sample, and how many of them were recounted before the time ran out. */
         public int rotatingPlanned;
         public int rotatingChecked;
@@ -269,6 +271,8 @@ public class CountCheck {
             result.invariants = new CountInvariants(connection, result, changedNames, rulesCounted);
             result.invariants.statsPageValidSpecies = statsPageValidSpecies;
             result.invariants.run();
+            // The database structure against the snapshot (read-only, about 1,400 rows of information_schema).
+            result.schema = SchemaCheck.run(connection);
         }
 
         long recountStart = System.currentTimeMillis();
