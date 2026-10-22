@@ -726,14 +726,14 @@ public class Map {
 //A.log("setGoogleMapFunction() isLocality:" + isLocality + " isCollection:" + isCollection + " isMapLocality:" + isMapLocalities());
 //if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace();
  
+              // Locality names and codes and collection codes are sent form-encoded (HttpUtil.encode), as they
+              // always were and as the maps stored in object_map hold them; drawMap.js decodes them once
+              // before showing them and building the popup link (2026-10-22: the popups showed
+              // "West+Bengal%2C+India" and linked locality.do?code=loc22.8%252C88.3). Missing values are ''.
               if (isLocality) {
-                  String encodedLocalityName = null;
-                  if (localityName != null) encodedLocalityName = HttpUtil.encode(localityName);
-                  String encodedLocalityCode = null;
-                  if (localityCode != null) encodedLocalityCode = HttpUtil.encode(localityCode);
-                  theString.append("new Array('" + encodedLocalityName + "'),new Array('" + encodedLocalityCode + "')");
+                  theString.append("new Array(" + jsString(formEncode(localityName)) + "),new Array(" + jsString(formEncode(localityCode)) + ")");
               } else if (isCollection) {
-                  theString.append("new Array('" + collectionCode + "')");
+                  theString.append("new Array(" + jsString(formEncode(collectionCode)) + ")");
               } else if (isMapLocalities()) {
                 //A.slog("localityNames:" + getJavaScriptSpecimenArray(getMapSpecimens(), "localityname"));
                   theString.append(getJavaScriptSpecimenArray(getMapSpecimens(), "localityname"));
@@ -810,6 +810,11 @@ public class Map {
     }
     
     public String getJavaScriptSpecimenArray(ArrayList<Specimen> specimens, String field) {
+        return javaScriptSpecimenArray(specimens, field);
+    }
+
+    /** new Array('...','...') of one field of each specimen (static: tested without a server). */
+    public static String javaScriptSpecimenArray(ArrayList<Specimen> specimens, String field) {
         
         StringBuffer theArrayString = new StringBuffer();
         boolean foundPoint = false;
@@ -825,6 +830,7 @@ public class Map {
         for (Specimen specimen : specimens) {
 //            thisSpecimen = (Specimen) theIter.next();
             //i = i + 1;
+            value = ""; // not the previous specimen's value when this one has none
             switch (field) {
                 case "name":
                     value = format.capitalizeFirstLetter(specimen.getGenus()) + " " + specimen.getSpecies();
@@ -858,7 +864,7 @@ public class Map {
             } else {
                 foundPoint = true;
             }
-            theArrayString.append("'" + value + "'");
+            theArrayString.append(jsString(value));
         }
 
         theArrayString.append(")");
@@ -868,6 +874,37 @@ public class Map {
         } else {
             return null;
         }
+    }
+
+    /** Form-encoded (spaces as +), the way locality names and codes travel in the map data; null is "". */
+    static String formEncode(String value) {
+        if (value == null) return "";
+        return HttpUtil.encode(value);
+    }
+
+    /**
+     * A JavaScript string literal (single quotes) for the map function: quotes, backslashes, line breaks
+     * and the characters that could end the script element are escaped. null is ''.
+     */
+    public static String jsString(String value) {
+        if (value == null || "null".equals(value)) return "''";
+        StringBuilder sb = new StringBuilder(value.length() + 2).append('\'');
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            switch (c) {
+                case '\\': sb.append("\\\\"); break;
+                case '\'': sb.append("\\'"); break;
+                case '"': sb.append("\\\""); break;
+                case '\n': sb.append("\\n"); break;
+                case '\r': sb.append("\\r"); break;
+                case '<': case '>': case '&': case '\u2028': case '\u2029':
+                    sb.append(String.format("\\u%04x", (int) c)); break;
+                default:
+                    if (c < 0x20) sb.append(String.format("\\u%04x", (int) c));
+                    else sb.append(c);
+            }
+        }
+        return sb.append('\'').toString();
     }
 
     public String getMapName() {
