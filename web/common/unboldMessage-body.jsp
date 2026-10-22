@@ -16,17 +16,26 @@
 <%@ page import="java.util.regex.Pattern" %>
 
 
-<% // See web/common/antweb_style.css:266  %>
-<div class="wide_left">
-
 <% 
 
     String message = (String) request.getAttribute("message"); 
     //A.log("message-body.jsp message:" + message);
     LogMgr.logMessagePage(request, message); // a short record only (MessagePageLog)
 %>
+<%-- Inside the admin layout (layouts/admLayout.jsp sets awAdminLayout): the tool-page look (common/tools.css).
+     In the public layout (common/unboldMessage.jsp, e.g. the Query Manager) the page is as it was. --%>
+<% if (Boolean.TRUE.equals(request.getAttribute("awAdminLayout"))) { %>
+<%@include file="/common/toolsHead.jsp" %>
+<div class="aw-tools" id="admin-message-page">
+<p class="aw-crumbs"><a href="<%= AntwebProps.getDomainApp() %>/curate.do">Curator Tools</a></p>
+<div class="aw-card aw-result" id="admin-message"><%= message %></div>
+</div>
+<% } else { %>
+<% // See web/common/antweb_style.css:266  %>
+<div class="wide_left">
 <br>
 <br>
 <%= message %>
 </div>
+<% } %>
 

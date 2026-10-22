@@ -289,7 +289,9 @@ jobs:
         # 200 per line and 10,000 per report, escaping, plain codes for lines not uploaded). RelevantQueriesTest: the
         # Relevant Queries boxes of viewGroups.do and viewLogins.do explain each query; headings match the columns.
         # QueriesReviewTest: every named query of the Query Manager has an explanation, one heading per column of its
-        # select and only reads; every list of queries names queries that exist (tests/e2e/test_named_queries.py runs them).
+        # select and only reads; every list of queries names queries that exist; every query is in one Query Manager group
+        # (tests/e2e/test_named_queries.py runs them). JobSummaryTest: a nightly set started by hand keeps one plain
+        # sentence as its job result ({operation:...} in plain words), and the job page never shows a whole AntWeb page.
         # See docs/flows/test-gaps-uploads-nightly.md.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" -v "$PWD/web:/web:ro" \
@@ -316,12 +318,14 @@ jobs:
               /t/org/calacademy/antweb/util/BackgroundJobsTest.java \
               /t/org/calacademy/antweb/util/SpecimenCodesTest.java \
               /t/org/calacademy/antweb/util/RelevantQueriesTest.java \
-              /t/org/calacademy/antweb/util/QueriesReviewTest.java
+              /t/org/calacademy/antweb/util/QueriesReviewTest.java \
+              /t/org/calacademy/antweb/util/JobSummaryTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:7 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
-                     upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:14; do
+                     upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
+                     util.JobSummaryTest:6; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }

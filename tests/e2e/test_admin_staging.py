@@ -29,8 +29,8 @@ PAGE_TIMEOUT = 300   # the Integrity Check runs every check
 ADMIN_PAGES = [
     ("/technical.do", "Technical page"),
     ("/query.do?action=checkIntegrity", "Integrity Check"),
-    ("/logMgr.do?action=list", "Log Mgr"),
-    ("/serverStatus.do", "Antweb Server Status"),
+    ("/logMgr.do?action=list", "Log Manager"),
+    ("/serverStatus.do", "Server Status"),
     ("/query.do?action=homonyms", "What this shows:"),
     ("/list.do?action=casentDAnomalies", "What this shows:"),
     ("/listSpecimenUploads.do", "Group"),
