@@ -29,7 +29,8 @@ recorded here and the sections corrected.
 
 **Keeping this page complete.** CI (`.github/workflows/tests.yaml`, step "Data model doc has a section for every
 table") runs `python3 tools/datamodel/list_tables.py --check`: it fails when a table or view that the repository's
-SQL creates has no section here (a heading of the form `### ` followed by the name in backticks), or when a section names a table the SQL does not know.
+SQL creates has no section here (a heading of the form `### ` followed by the name in backticks), when a section names a table the SQL does not know or has dropped (a dropped table goes to "Dropped already" in
+section 13), or when a table has two sections.
 A new table therefore needs its `db/upgrade` file (or its `CREATE TABLE IF NOT EXISTS` in the code) and a section.
 `python3 tools/datamodel/list_tables.py` prints every table with its columns and the file that created it.
 

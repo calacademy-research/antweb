@@ -49,10 +49,13 @@ COLUMN_SKIP = ("primary", "key", "index", "unique", "constraint", "foreign", "fu
 
 
 def version_key(path):
+    """Sort key of an upgrade file: the version folder right under db/upgrade (also for files in subfolders), then
+    the path below it."""
+    rel = path.relative_to(ROOT / "db" / "upgrade").parts
     parts = []
-    for p in path.parent.name.split("."):
+    for p in rel[0].split("."):
         parts.append(int(p) if p.isdigit() else 0)
-    return (parts, path.name)
+    return (parts, "/".join(rel[1:]))
 
 
 def opens_quote(text, i):
@@ -194,6 +197,8 @@ class Schema:
             m = re.match(r"rename\s+(?:to|as)\s+" + NAME, s, re.I)
             if m:
                 self.rename(name, ident(m.group(1)), src)
+                if ident(m.group(1)) not in self.tables:
+                    return
                 t = self.tables[ident(m.group(1))]
                 name = ident(m.group(1))
                 continue
@@ -311,6 +316,8 @@ def apply_statement(schema, stmt, src, origin):
     m = re.match(r"drop\s+view\s+(?:if\s+exists\s+)?(.*)$", s, re.I)
     if m:
         for n in m.group(1).split(","):
+            if not n.strip():
+                continue
             n = ident(n.split()[0])
             if schema.views.pop(n, None):
                 schema.dropped_views[n] = src
@@ -337,7 +344,8 @@ def apply_statement(schema, stmt, src, origin):
     m = re.match(r"drop\s+table\s+(?:if\s+exists\s+)?(.*)$", s, re.I)
     if m:
         for n in m.group(1).split(","):
-            schema.drop(ident(n.split()[0]), src)
+            if n.strip():
+                schema.drop(ident(n.split()[0]), src)
         return
     m = re.match(r"rename\s+table\s+(.*)$", s, re.I)
     if m:
@@ -629,9 +637,14 @@ def main(argv):
         headings = doc_headings()
         sections = set(headings)
         twice = sorted({h for h in headings if headings.count(h) > 1})
-        known = set(schema.tables) | set(schema.dropped) | set(schema.views) | set(schema.dropped_views)
+        known = set(schema.tables) | set(schema.views)
+        gone = {**schema.dropped, **schema.dropped_views}
         missing = [n for n in names + views if n not in sections]
-        unknown = [s for s in sorted(sections) if s not in known]
+        unknown = [s for s in sorted(sections) if s not in known and s not in gone]
+        dropped = [s for s in sorted(sections) if s not in known and s in gone]
+        for s in dropped:
+            print(f"::error file=docs/data-model.md::section `{s}`: the table was dropped by {gone[s]}; move it to "
+                  "\"Dropped already\" (a line, not a section)")
         for n in twice:
             print(f"::error file=docs/data-model.md::table {n} has two sections in docs/data-model.md (keep one)")
         for n in missing:
@@ -643,8 +656,8 @@ def main(argv):
             print(f"::error file=docs/data-model.md::section `{s}` names a table no SQL in the repository creates, "
                   "alters or drops (rename the heading, or remove the section)")
         print(f"{len(names)} tables and {len(views)} views in the repository's SQL, {len(sections)} sections in "
-              f"docs/data-model.md, {len(missing)} missing, {len(unknown)} unknown")
-        return 1 if missing or unknown or twice else 0
+              f"docs/data-model.md, {len(missing)} missing, {len(unknown)} unknown, {len(dropped)} dropped")
+        return 1 if missing or unknown or twice or dropped else 0
     for n in names:
         t = schema.tables[n]
         print(f"{n}\t{t['created'] or '(not created in the repository: ' + t['origin'] + ')'}")

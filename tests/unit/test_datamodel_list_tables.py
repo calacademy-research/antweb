@@ -152,6 +152,38 @@ def test_java_create_table_with_constant():
     assert "*" not in s.tables, "a name made entirely at run time is not listed"
 
 
+def check_output(doc_text):
+    old = L.DOC
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            doc = Path(d) / "data-model.md"
+            doc.write_text(doc_text, encoding="utf-8")
+            L.DOC = doc
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = L.main(["--check"])
+            return code, out.getvalue()
+    finally:
+        L.DOC = old
+
+
+def test_check_reports_missing_unknown_and_dropped_sections():
+    every = "".join(f"### `{n}`\n" for n in sorted(set(L.build().tables) | set(L.build().views)))
+    code, out = check_output(every)
+    assert code == 0, out
+    code, out = check_output(every.replace("### `taxon`\n", ""))
+    assert code == 1 and "table taxon (" in out and "has no section" in out, out
+    code, out = check_output(every + "### `no_such_table`\n")
+    assert code == 1 and "`no_such_table` names a table" in out, out
+    code, out = check_output(every + "### `groups`\n")
+    assert code == 1 and "`groups`: the table was dropped" in out, out
+
+
+def test_empty_names_in_drop_do_not_crash():
+    s = replay("create table a (x int);\ndrop table a, ;\ndrop view if exists ,;\n")
+    assert "a" in s.dropped
+
+
 def test_check_reports_a_heading_written_twice():
     old = L.DOC
     try:
