@@ -12,6 +12,7 @@ The existing links (Home, Curator Tools, and for admins "Each group's last uploa
 Read-only. Staging test logins (admin, and the test uploader: a curator of the test group).
 """
 import re
+from html import unescape
 
 import pytest
 
@@ -24,11 +25,12 @@ VIEW_ALL = "View all groups' uploads"
 
 
 def _text(html):
-    return re.sub(r"\s+", " ", re.sub(r"<[^>]+>", " ", html)).replace("&#39;", "'").replace("&amp;", "&")
+    # Entities (&nbsp; &#39; &amp;) decoded; a no-break space counts as a space.
+    return re.sub(r"\s+", " ", unescape(re.sub(r"<[^>]+>", " ", html)).replace("\xa0", " "))
 
 
 def _h2(html):
-    m = re.search(r"<h2>(.*?)</h2>", html, re.S)
+    m = re.search(r"<h2[^>]*>(.*?)</h2>", html, re.S)
     assert m, "no title on the page"
     return _text(m.group(1)).strip()
 

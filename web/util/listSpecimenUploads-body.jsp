@@ -20,7 +20,7 @@
     String domainApp = AntwebProps.getDomainApp();
 
     String message = (String) request.getAttribute("message"); 
-    if (message != null) out.println("<h2>&nbsp;" + message + "</h2>");
+    if (message != null) out.println("<h2 style=\"margin-left:0.3em\">" + message + "</h2>");
 
     // Which view this is (ListUploadsAction): every group's uploads, one group's, or one login's.
     String uploadsView = (String) request.getAttribute("uploadsView");
