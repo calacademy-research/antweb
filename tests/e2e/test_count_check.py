@@ -202,7 +202,9 @@ def test_no_real_differences_outside_the_known_findings():
         if int(real) and check_id not in KNOWN:
             other[check_id] = other.get(check_id, 0) + int(real)
     if int(m.group(1)) and "Real differences" in r.text:
-        section = r.text[r.text.index("Real differences"):r.text.index("Pending differences")]
+        start = r.text.index("Real differences")
+        end = r.text.find("Pending differences", start)
+        section = r.text[start:end if end > 0 else len(r.text)]
         recounts = sum(1 for row in re.findall(r'<tr class="count-mismatch"><td>.*?</td><td>(.*?)</td>', section, re.S) if row in RECOUNT_CHECKS)
         if recounts:
             other["recounts of the sampled places"] = recounts

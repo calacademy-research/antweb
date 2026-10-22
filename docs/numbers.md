@@ -270,7 +270,9 @@ Found while doing this (2026-10-22):
   `e2e:test_api_numbers.py::test_images_meta_counts_and_specimen_image_count`.
 - **B30** (fixed, trivial) API `/geoSpeciesStats`: `queenErgatoidCount` and `maleErgatoidCount` both counted every
   ergatoid specimen (no caste condition), so a male ergatoid was also counted as a queen ergatoid. Now each counts
-  its caste. Tests: `unit:test_api_counts.py::test_geo_species_stats_counts_ergatoids_of_their_caste`,
+  its caste. The other subcaste counts (alate/dealate, brachypterous, major/soldier, normal, male alate) are
+  not restricted to their caste either; with distinct subcaste names that only matters where a specimen has a
+  subcaste of another caste. Tests: `unit:test_api_counts.py::test_geo_species_stats_counts_ergatoids_of_their_caste`,
   `e2e:test_api_numbers.py::test_geo_species_stats_castes_add_up`.
 - **B31** statsPage Bioregion Data and Museum Data count valid taxa of every family on the lists (no
   `family = 'formicidae'`), while the place pages count ants only since 2026-10-21. `inv:stats.nonants` reports

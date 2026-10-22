@@ -489,6 +489,17 @@ public final class NumberChecks {
             Map<String, String> groups = inv.places.computeIfAbsent("group", x -> CountInvariants.keyMap());
             Map<String, long[]> counts = groupNumbers();
             Map<String, long[]> uploads = inv.rows("select group_id, count(*) from upload where group_id is not null group by group_id");
+            // groups that uploaded after the last nightly run: an upload may be running (its specimens replaced, its row
+            // not written yet), and ant_group.upload_count is written at its end
+            java.util.Set<String> uploadedToday = CountInvariants.keySet();
+            if (has("upload", "created")) {
+                try (PreparedStatement stmt = inv.connection.prepareStatement(inv.track("select distinct group_id from upload where group_id is not null and created >= ?"))) {
+                    stmt.setTimestamp(1, inv.result.countedUntil);
+                    try (ResultSet r = stmt.executeQuery()) {
+                        while (r.next()) uploadedToday.add(r.getString(1));
+                    }
+                }
+            }
             // the last name update of each group's specimens (one query; index by_group_date)
             Map<String, Timestamp> renamed = CountInvariants.keyMap();
             if (has("specimen_name_update", "run_date") && has("specimen_name_update", "access_group")) {
@@ -521,8 +532,8 @@ public final class NumberChecks {
                 long[] recount = {n[1], n[2], n[3], n[4], n[8], n[5], n[6], n[7]};
                 // The numbers are written at the group's upload only: specimens of the group renamed since (the nightly name
                 // update) can change them until its next upload (question Q13 in docs/numbers.md).
-                String p = null;
-                if (created != null && renamed.containsKey(g) && renamed.get(g) != null && renamed.get(g).after(created)) {
+                String p = uploadedToday.contains(g) ? "the group uploaded after the last nightly run (an upload may still be running)" : null;
+                if (p == null && created != null && renamed.containsKey(g) && renamed.get(g) != null && renamed.get(g).after(created)) {
                     p = "specimens of the group were renamed after its last upload (the numbers are from the upload)";
                 }
                 for (int i = 0; i < 8; i++) {
@@ -536,7 +547,8 @@ public final class NumberChecks {
                 for (Map.Entry<String, long[]> e : stored.entrySet()) {
                     groups.putIfAbsent(e.getKey(), "upload group " + e.getKey());
                     inv.compare(c, "group", e.getKey(), "ant_group.upload_count (orders groups.do) = its uploads", e.getValue()[0],
-                        uploads.containsKey(e.getKey()) ? uploads.get(e.getKey())[0] : 0, "=", null);
+                        uploads.containsKey(e.getKey()) ? uploads.get(e.getKey())[0] : 0, "=",
+                        uploadedToday.contains(e.getKey()) ? "the group uploaded after the last nightly run (an upload may still be running)" : null);
                 }
             }
             // groups.do columns: uploads, specimens, ungeoreferenced, flagged, collections, localities, subfamilies, genera, species

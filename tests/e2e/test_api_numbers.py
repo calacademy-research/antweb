@@ -124,8 +124,9 @@ def test_geo_species_stats_castes_add_up():
             wrong.append(f"{r.get('taxonName')}: queen subcastes {q_sub} > queens {queen}")
         if w_sub > worker:
             wrong.append(f"{r.get('taxonName')}: worker subcastes {w_sub} > workers {worker}")
-        if (r.get("maleErgatoidCount") or 0) + (r.get("maleAlateCount") or 0) > (r.get("maleCount") or 0):
-            wrong.append(f"{r.get('taxonName')}: male subcastes > males {r.get('maleCount')}")
+        if (r.get("maleErgatoidCount") or 0) > (r.get("maleCount") or 0):
+            wrong.append(f"{r.get('taxonName')}: male ergatoids {r.get('maleErgatoidCount')} > males {r.get('maleCount')}")
+        # (maleAlateCount counts subcaste 'alate' of any caste, so it is not compared with the males)
     assert not wrong, "/geoSpeciesStats Madagascar:\n" + "\n".join(wrong[:40])
 
 
