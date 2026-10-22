@@ -42,8 +42,9 @@ from urllib.parse import quote, unquote_plus
 import pytest
 
 from antweb import BASE_URL, TIMEOUT, new_session
-from staging_accounts import (BASELINE_HEADER, assert_upload_complete, baseline_text, code, login, needs,
-                              require_test_group, report_url, specimen_page, upload_specimens, IS_STAGING)
+from staging_accounts import (BASELINE_HEADER, assert_upload_complete, assert_upload_recorded, baseline_text, code,
+                              group_upload_count, login, needs, require_test_group, report_url, specimen_page,
+                              upload_specimens, IS_STAGING)
 
 pytestmark = pytest.mark.skipif(not IS_STAGING, reason="specimen uploads run only on staging")
 
@@ -145,8 +146,14 @@ def test_specimen_upload_round_trip(uploader, names):
     with_shared = shared_name_on_server()
     if with_shared:
         lines.append(_row(6, SHARED_NAME))
+    uploads_before = group_upload_count(s, gid)
     r = upload_specimens(s, token, "\n".join(lines) + "\n")
     assert_upload_complete(r)
+    # The upload's row in the upload table (missing for background uploads on production, 2026-10-21):
+    # real upload id, uploadReport.do, the group's upload list, groups.do. The listing check further down
+    # passed then: it checked the report link only, and the test group's short plain name never made the
+    # row's insert fail.
+    assert_upload_recorded(s, r, gid, uploads_before=uploads_before, check_count=False)
     # The upload runs in the background: the page answers at once (Cloudflare cuts at 100 s).
     assert r.post_seconds < 20, f"the upload POST took {r.post_seconds:.1f} s"
     rep_url = report_url(r)
@@ -222,7 +229,8 @@ def test_specimen_upload_round_trip(uploader, names):
         "the new report is not listed on listSpecimenUploads.do for the test group"
 
     # Replacement: the baseline file leaves only zztest0001 and zztest0002.
-    _upload_baseline(s, token, valid)
+    base = _upload_baseline(s, token, valid)
+    assert_upload_recorded(s, base, gid)
     for n, expected in ((1, True), (2, True), (3, False), (5, False), (6, False)):
         exists, _page = specimen_page(s, code(n))
         assert exists == expected, f"after the baseline upload {code(n)} {'is missing' if expected else 'is still there'}"

@@ -137,25 +137,83 @@ public class SpecimenUploadDb extends UploadDb {
     }
 
 
-    public void updateUpload(Login accessLogin, UploadDetails uploadDetails) {
-        //s_log.warn("updateUpload()");
-        String logFileName = uploadDetails.getLogFileName();
-        String backupDirFile = uploadDetails.getBackupDirFile();
+    /** Width of the text columns of the upload table (group_name, log_file_name, backup_dir_file). */
+    public static final int UPLOAD_TEXT_WIDTH = 64;
+
+    /**
+     * Records a specimen upload in the upload table (the Specimen Upload Reports list, each group's
+     * last upload, the curator's uploads, groups.do, the count check) and fills its counts. Returns
+     * the upload_id written, the one the upload's specimens carry (AntwebMgr.getNextSpecimenUploadId()).
+     *
+     * Until 2026-10-22 the row was written with a text-built statement whose SQLException was only
+     * logged: when the insert failed (a group name with a quote, or longer than the column), the
+     * upload still committed and said "Upload complete", without a row. The row is part of the upload:
+     * a failure now throws, so the upload's transaction rolls back and the uploader is told.
+     */
+    public int recordUpload(Login accessLogin, UploadDetails uploadDetails) throws SQLException {
         Group accessGroup = accessLogin.getGroup();
-        String insert = null;
-        Statement stmt = null;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "updateUpload()");
-            insert = "insert into upload(upload_id, login_id, group_name, group_id, log_file_name, backup_dir_file) "
-                    + "values (" + AntwebMgr.getNextSpecimenUploadId() + ", " + accessLogin.getId() + ", '" + accessGroup.getName() + "', " + accessGroup.getId() + ", '" + logFileName + "', '" + backupDirFile + "')";
-            //A.log("updateUpload() insert:" + insert);
-            stmt.executeUpdate(insert);
-        } catch (SQLException e) {
-            s_log.error("updateUpload() logFileName:" + logFileName + " e:" + e);
-        } finally {
-            DBUtil.close(stmt, null, this, "updateUpload()");
-        }
+        if (accessGroup == null) throw new SQLException("recordUpload() login " + accessLogin.getId() + " has no group");
+        int uploadId = AntwebMgr.getNextSpecimenUploadId();
+        insertUploadRow(getConnection(), uploadId, accessLogin.getId(), accessGroup.getId(), accessGroup.getName(),
+                uploadDetails.getLogFileName(), uploadDetails.getBackupDirFile());
+        uploadDetails.setUploadId(uploadId);
         updateCounts(accessGroup.getId());
+        return uploadId;
+    }
+
+    /**
+     * Inserts one upload row (bound values; texts cut to the column width) and checks it is there,
+     * in the caller's transaction. Throws when the row could not be written.
+     */
+    public static void insertUploadRow(Connection connection, int uploadId, int loginId, int groupId, String groupName,
+                                       String logFileName, String backupDirFile) throws SQLException {
+        if (uploadId <= 0) throw new SQLException("insertUploadRow() no upload id (" + uploadId + ")");
+        String insert = "insert into upload(upload_id, login_id, group_name, group_id, log_file_name, backup_dir_file)"
+                + " values (?, ?, ?, ?, ?, ?)";
+        try (PreparedStatement stmt = connection.prepareStatement(insert)) {
+            stmt.setInt(1, uploadId);
+            stmt.setInt(2, loginId);
+            stmt.setString(3, fit(groupName == null ? "" : groupName));   // display only: cut to the column
+            stmt.setInt(4, groupId);
+            // File names are used for links (report, Download): never cut, refuse instead.
+            stmt.setString(5, fileName("log_file_name", logFileName == null ? "" : logFileName));
+            stmt.setString(6, fileName("backup_dir_file", backupDirFile));
+            if (stmt.executeUpdate() != 1) throw new SQLException("insertUploadRow() no row written for upload " + uploadId);
+        } catch (SQLException e) {
+            s_log.error("insertUploadRow() upload_id:" + uploadId + " group:" + groupId + " logFileName:" + logFileName + " e:" + e);
+            throw e;
+        }
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "select count(*) from upload where upload_id = ? and group_id = ?")) {
+            stmt.setInt(1, uploadId);
+            stmt.setInt(2, groupId);
+            try (ResultSet rset = stmt.executeQuery()) {
+                if (!rset.next() || rset.getInt(1) < 1) {
+                    throw new SQLException("insertUploadRow() upload " + uploadId + " of group " + groupId + " not found after the insert");
+                }
+            }
+        }
+    }
+
+    /** A file name for the upload table: refused (SQLException) when longer than the column, never cut. */
+    static String fileName(String column, String name) throws SQLException {
+        if (name != null && name.length() > UPLOAD_TEXT_WIDTH) {
+            throw new SQLException("insertUploadRow() " + column + " longer than " + UPLOAD_TEXT_WIDTH + " characters: " + name);
+        }
+        return name;
+    }
+
+    /**
+     * s as the upload table's text columns hold it (null stays null): cut to the column width, and
+     * characters outside the Basic Multilingual Plane (which a utf8mb3 column refuses) as "?".
+     */
+    public static String fit(String s) {
+        if (s == null) return null;
+        StringBuilder b = new StringBuilder();
+        s.codePoints().limit(UPLOAD_TEXT_WIDTH).forEach(c -> {
+            if (Character.isSupplementaryCodePoint(c)) b.append('?'); else b.appendCodePoint(c);
+        });
+        return b.toString();
     }
 
     
