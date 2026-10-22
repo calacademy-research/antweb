@@ -187,11 +187,18 @@ public final class BackgroundJobs {
         public final Job job;
         public final boolean isNew;
         public final String refused;
+        /** Why the job could not be recorded (exception text, for admin logs only; never shown to curators), or null. */
+        public final String error;
 
         Submitted(Job job, boolean isNew, String refused) {
+            this(job, isNew, refused, null);
+        }
+
+        Submitted(Job job, boolean isNew, String refused, String error) {
             this.job = job;
             this.isNew = isNew;
             this.refused = refused;
+            this.error = error;
         }
     }
 
@@ -235,13 +242,28 @@ public final class BackgroundJobs {
                 job.step = "Waiting to start.";
                 job.id = store.insert(job);
             } catch (Exception e) {
-                s_log.error("submit() " + job + " not recorded e:" + e);
-                return new Submitted(null, false, "The job could not be recorded. Please try again.");
+                String error = describe(e);
+                s_log.error("submit() " + job + " not recorded: " + error, e);
+                return new Submitted(null, false, "The job could not be recorded. Please try again.", error);
             }
             jobs.put(job.id, job);
             trim();
             executor.submit(() -> execute(job, work));
             return new Submitted(job, true, null);
+        }
+
+        /** An exception as one line for the logs: class, message, SQL state and error code, and its causes. */
+        static String describe(Throwable e) {
+            StringBuilder b = new StringBuilder();
+            for (Throwable t = e; t != null && b.length() < 1000; t = t.getCause() == t ? null : t.getCause()) {
+                if (b.length() > 0) b.append(" / caused by ");
+                b.append(t.getClass().getName()).append(": ").append(t.getMessage());
+                if (t instanceof java.sql.SQLException) {
+                    java.sql.SQLException q = (java.sql.SQLException) t;
+                    b.append(" [SQLState ").append(q.getSQLState()).append(", error ").append(q.getErrorCode()).append("]");
+                }
+            }
+            return b.toString();
         }
 
         /** The queued or running job that a new one would duplicate, or null. */
