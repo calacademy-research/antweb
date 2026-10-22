@@ -78,9 +78,9 @@ Coverage after 2026-10-22: **67 validated, 51 partly, 0 not yet** of 118 (2026-1
 | 14 | statsPage.do | Images table: Worker / Male / Queen / Other | live; Other includes images of specimens without a caste (2026-10-21; they were in no column) | yes | inv:stats.images; e2e:test_count_check.py::test_statspage_tables_equal_the_recount; junit:PlaceTotalsDbTest#testStatsPageImageTableAddsUp |
 | 15 | statsPage.do | Images table: Sum row | summed in the JSP over every status in the table (was six fixed statuses); images of specimens without a status are in no row | yes | inv:stats.images; e2e:test_count_check.py::test_statspage_tables_equal_the_recount; junit:NumberChecksTest#testStatsPageImagesSumLeavesOutSpecimensWithoutStatus |
 | 16 | statsPage.do | Imaged Species per taxon status | live (ImageDb.getImageTaxonStats): names of any rank with a specimen that has any image (labels too), by taxon status; only seven statuses shown | yes | inv:stats.imaged; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
-| 17 | statsPage.do | Bioregion Data (4 per bioregion) | live over bioregion_taxon (StatisticsDb.getBioregionData) | yes | inv:stats.bioregions; junit:NumberChecksTest#testStatsPagePlaceQueriesMatchThePageCode; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
-| 18 | statsPage.do | Museum Data, Valid Extant (4 per museum) | live over museum_taxon | yes | inv:stats.museums; junit:NumberChecksTest#testStatsPagePlaceQueriesMatchThePageCode; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
-| 19 | statsPage.do | Museum Data, Valid Fossil (4 per museum) | live over museum_taxon (no independent recount: the check runs the page's query for all museums; relations to the museum page and Global Data) | partly | inv:stats.museums; junit:NumberChecksTest#testStatsPagePlaceQueriesMatchThePageCode; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
+| 17 | statsPage.do | Bioregion Data (4 per bioregion) | live over bioregion_taxon (StatisticsDb.getBioregionData) | yes | inv:stats.bioregions; inv:stats.nonants; junit:NumberChecksTest#testStatsPagePlaceQueriesMatchThePageCode; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
+| 18 | statsPage.do | Museum Data, Valid Extant (4 per museum) | live over museum_taxon | yes | inv:stats.museums; inv:stats.nonants; junit:NumberChecksTest#testStatsPagePlaceQueriesMatchThePageCode; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
+| 19 | statsPage.do | Museum Data, Valid Fossil (4 per museum) | live over museum_taxon (no independent recount: the check runs the page's query for all museums; relations to the museum page and Global Data) | partly | inv:stats.museums; inv:stats.nonants; junit:NumberChecksTest#testStatsPagePlaceQueriesMatchThePageCode; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
 | 20 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Subfamilies | subfamily rows on the place's list, counted status (PlaceTotals.listedCountSql); museums and bioregions were roll-up sums until 2026-10-21 | yes | inv:place.totals.subfamily; cc:place totals; junit:PlaceTotalsDbTest#testFinishWritesEveryTotalFromTheList |
 | 21 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Genera | genus rows on the list, counted status (PlaceTotals); was sum(genus_count) of the subfamily rows | yes | inv:place.totals.genus; junit:PlaceTotalsDbTest#testFinishWritesEveryTotalFromTheList |
 | 22 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Species / subspecies | species and subspecies rows on the list, counted status, ants (PlaceTotals); was sum(species_count) of the genus rows | yes | inv:place.totals.species; junit:PlaceTotalsDbTest#testFinishWritesEveryTotalFromTheList |
@@ -273,8 +273,10 @@ Found while doing this (2026-10-22):
   its caste. Tests: `unit:test_api_counts.py::test_geo_species_stats_counts_ergatoids_of_their_caste`,
   `e2e:test_api_numbers.py::test_geo_species_stats_castes_add_up`.
 - **B31** statsPage Bioregion Data and Museum Data count valid taxa of every family on the lists (no
-  `family = 'formicidae'`), while the place pages count ants only since 2026-10-21; `inv:stats.bioregions` and
-  `inv:stats.museums` report a difference where a non-ant is on a list. Question: section 5 Q7.
+  `family = 'formicidae'`), while the place pages count ants only since 2026-10-21. `inv:stats.nonants` reports
+  each bioregion and museum whose statsPage numbers include other families (real until decided);
+  `inv:stats.bioregions` and `inv:stats.museums` compare the ants among them with the place pages, so they show
+  only other differences. Question: section 5 Q7.
 - **B32** API `/geolocaleTaxa` and `/bioregionTaxa` name their taxon count `geolocaleCount` and `bioregionCount`
   (label only; the number is the taxa returned).
 - **B33** groups.do and group.do "Species" (upload row, UploadDb.getCounts) count distinct species epithets of

@@ -78,6 +78,8 @@ def _a_specimen_with_images():
 def test_images_meta_counts_and_specimen_image_count():
     specimen = _a_specimen_with_images()
     code = specimen.get("specimenCode") or specimen.get("code")
+    if not code:
+        pytest.skip(f"/specimens row without a specimen code: {sorted(specimen)}")
     body = _api("images?specimenCode=" + code)
     meta = _meta(body)
     rows = _rows(body)

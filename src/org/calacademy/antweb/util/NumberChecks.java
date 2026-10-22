@@ -262,13 +262,17 @@ public final class NumberChecks {
         CountInvariants.Check check = new CountInvariants.Check("stats." + type + "s", museum
             ? "statsPage Museum Data (Valid Extant, Valid Fossil) agree with each museum's page and Global Data"
             : "statsPage Bioregion Data agrees with each bioregion's page and Global Data", museum ? "18, 19" : "17");
+        Map<String, long[][]> data = CountInvariants.keyMap();   // every family, as the page counts
+        Map<String, long[][]> ants = CountInvariants.keyMap();   // Formicidae only, as the place pages count
+        String page = museum ? "statsPage Museum Data" : "statsPage Bioregion Data";
         inv.check(check, c -> {
-            Map<String, long[][]> data = CountInvariants.keyMap();
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(statsPlacesSql(type)))) {
                 while (r.next()) {
                     int col = java.util.Arrays.asList(RANKS).indexOf(r.getString(3));
                     if (col < 0) continue;
-                    data.computeIfAbsent(r.getString(1), x -> new long[2][4])[r.getInt(2) == 1 ? 1 : 0][col] += r.getLong(4);
+                    int f = r.getInt(2) == 1 ? 1 : 0;
+                    data.computeIfAbsent(r.getString(1), x -> new long[2][4])[f][col] += r.getLong(4);
+                    ants.computeIfAbsent(r.getString(1), x -> new long[2][4])[f][col] += r.getLong(5);
                 }
             }
             long[][] global = new long[2][4];
@@ -289,16 +293,17 @@ public final class NumberChecks {
                 String place = e.getKey();
                 long[] s = e.getValue();
                 long[][] d = data.getOrDefault(place, new long[2][4]);
+                long[][] a = ants.getOrDefault(place, new long[2][4]);
                 exp.put(place, museum ? d : d[0]);
                 if (!labels.containsKey(place)) continue;
                 String p = inv.why(c, type, place);
-                String page = museum ? "statsPage Museum Data" : "statsPage Bioregion Data";
-                inv.compare(c, type, place, page + (museum ? ", Valid Extant" : "") + ": Species + Subspecies = Valid species of the " + type + " page",
-                    d[0][2] + d[0][3], s[3], "=", p);
-                inv.compare(c, type, place, page + ": valid extant and fossil Subfamilies <= Subfamilies of the " + type + " page", d[0][0] + d[1][0], s[0], "<=", p);
-                inv.compare(c, type, place, page + ": valid extant and fossil Genera <= Genera of the " + type + " page", d[0][1] + d[1][1], s[1], "<=", p);
-                inv.compare(c, type, place, page + ": valid extant and fossil species and subspecies <= Species of the " + type + " page",
-                    d[0][2] + d[0][3] + d[1][2] + d[1][3], s[2], "<=", p);
+                // Against the place page with the ants of the statsPage numbers (the page counts every family: stats.nonants, B31).
+                inv.compare(c, type, place, page + (museum ? ", Valid Extant" : "") + ": Species + Subspecies (ants) = Valid species of the " + type + " page",
+                    a[0][2] + a[0][3], s[3], "=", p);
+                inv.compare(c, type, place, page + ": valid extant and fossil Subfamilies (ants) <= Subfamilies of the " + type + " page", a[0][0] + a[1][0], s[0], "<=", p);
+                inv.compare(c, type, place, page + ": valid extant and fossil Genera (ants) <= Genera of the " + type + " page", a[0][1] + a[1][1], s[1], "<=", p);
+                inv.compare(c, type, place, page + ": valid extant and fossil species and subspecies (ants) <= Species of the " + type + " page",
+                    a[0][2] + a[0][3] + a[1][2] + a[1][3], s[2], "<=", p);
                 for (int f = 0; f < (museum ? 2 : 1); f++) {
                     for (int i = 0; i < 4; i++) {
                         inv.compare(c, type, place, page + (f == 0 ? (museum ? ", Valid Extant " : " ") : ", Valid Fossil ") + what[i]
@@ -308,14 +313,34 @@ public final class NumberChecks {
             }
             expected("statsPage").put(museum ? "museums" : "bioregions", exp);
         });
+        // B31: the statsPage numbers count valid taxa of every family on the list; the place pages count ants only.
+        CountInvariants.Check nonAnts = new CountInvariants.Check("stats.nonants",
+            "B31: statsPage Bioregion and Museum Data count valid taxa of other families (the place pages count ants only)", museum ? "18, 19" : "17");
+        inv.check(nonAnts, c -> {
+            Map<String, String> labels = inv.places.getOrDefault(type, CountInvariants.keyMap());
+            for (Map.Entry<String, long[][]> e : data.entrySet()) {
+                if (!labels.containsKey(e.getKey())) continue;
+                long[][] d = e.getValue();
+                long[][] a = ants.getOrDefault(e.getKey(), new long[2][4]);
+                for (int f = 0; f < (museum ? 2 : 1); f++) {
+                    long all = d[f][0] + d[f][1] + d[f][2] + d[f][3];
+                    long antsOnly = a[f][0] + a[f][1] + a[f][2] + a[f][3];
+                    inv.compare(c, type, e.getKey(), page + (f == 1 ? ", Valid Fossil" : museum ? ", Valid Extant" : "")
+                        + ": valid taxa counted = valid ant taxa (B31)", all, antsOnly, "=", null);
+                }
+            }
+        });
     }
 
-    /** The statsPage queries of Bioregion Data and Museum Data (StatisticsDb), for every place at once: key, fossil, rank, count. */
+    /**
+     * The statsPage queries of Bioregion Data and Museum Data (StatisticsDb), for every place at once: key, fossil, rank,
+     * count (as the page counts: every family), and the ants among them.
+     */
     public static String statsPlacesSql(String type) {
         boolean museum = "museum".equals(type);
         String list = museum ? "museum_taxon" : "bioregion_taxon";
         String key = museum ? "code" : "bioregion_name";
-        return "select l." + key + ", t.fossil, t.taxarank, count(*) from taxon t join " + list + " l on t.taxon_name = l.taxon_name"
+        return "select l." + key + ", t.fossil, t.taxarank, count(*), sum(case when t.family = 'formicidae' then 1 else 0 end) from taxon t join " + list + " l on t.taxon_name = l.taxon_name"
             + " where t.status = 'valid' and t.fossil in (" + (museum ? "0, 1" : "0") + ") and t.taxarank in ('subfamily', 'genus', 'species', 'subspecies')"
             + " group by l." + key + ", t.fossil, t.taxarank";
     }

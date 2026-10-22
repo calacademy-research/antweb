@@ -60,7 +60,7 @@ public final class CountInvariants {
         "place.totals.specimens", "place.totals.endemic", "place.totals.introduced", "place.pies", "place.images.order", "place.images",
         "list.genus", "list.subfamily", "list.family", "list.global", "global.specimens", "home", "taxon.images", "geo.regions",
         // NumberChecks (2026-10-22)
-        "stats.global", "stats.images", "stats.imaged", "stats.bioregions", "stats.museums", "list.images", "admin.statistics", "admin.groups",
+        "stats.global", "stats.images", "stats.imaged", "stats.bioregions", "stats.museums", "stats.nonants", "list.images", "admin.statistics", "admin.groups",
         "admin.curators", "admin.artists", "admin.imageUploads", "api.taxa", "place.endemic.flags", "taxon.parents", "geo.adm1.country"};
 
     /**

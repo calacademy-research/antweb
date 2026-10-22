@@ -109,7 +109,9 @@ public class NumberChecksTest extends TestCase {
         exec("insert into bioregion_taxon (bioregion_name, taxon_name, created) values ('Malagasy', 'vespidaepolistes a', '2020-01-01')");
         exec("update museum set valid_species_count = 1 where code = 'CASC'");
         CountCheck.Result r = check();
-        assertTrue(list(r), real(r, "stats.bioregions") > 0);
+        // the wasp is B31 (stats.nonants), not a difference of the bioregion's own numbers
+        assertEquals(list(r), 0, real(r, "stats.bioregions"));
+        assertEquals(list(r), 1, real(r, "stats.nonants"));
         assertTrue(list(r), real(r, "stats.museums") > 0);
         CountCheck.Mismatch m = first(r, "stats.museums");
         assertEquals("museum CASC", m.place.label);
