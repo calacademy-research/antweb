@@ -24,7 +24,8 @@ SKIP_ACTIONS = set(NEVER) | set(WRITE_ACTIONS) | {
     "/speciesListDownload", "/getSpecimenList", "/specimenList", "/searchList", "/uploadFile",
     "/fieldHistory", "/descEdit", "/description-edit", "/editSession", "/imageUpload",
 }
-SKIP_WORDS = re.compile(r"(^|/)(delete|remove|save|upload|logout|edit|recalc|gen|download)[A-Za-z]*\.do$", re.I)
+# deleteImages.do, saveGroup.do, genGroupMap.do ...: the word, then nothing or a capital (not "genera.do").
+SKIP_WORDS = re.compile(r"(^|/)([Dd]elete|[Rr]emove|[Ss]ave|[Uu]pload|[Ll]ogout|[Ee]dit|[Rr]ecalc|[Gg]en|[Dd]ownload)([A-Z]\w*)?\.do$")
 SKIP_PARAMS = {"csrf", "token", "_csrf", "org.apache.struts.taglib.html.TOKEN", "isSubmit", "action=delete"}
 SKIP_PATH_PARTS = ("/v3.1/", "/api/", "/web/upload/", "/curate", "/util.do", "/utilData.do")
 
