@@ -143,17 +143,6 @@ String serverDetails = (String) request.getAttribute("serverDetails");
 </ul>
 </div>
 
-<div class="aw-card" id="server-form-actions">
-<h2>Form Actions</h2>
-<html:form action="<%= domainApp %>/serverStatus"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-<div class="aw-actions">
-       <input type="submit" name="methodHabitat" value="methodHabitat"/>
-       <input type="submit" name="name" value="holdOpenConnection"/>
-       <!-- input type="submit" name="ugServerRestart" value="ugServerRestart" / -->
-</div>
-</html:form>
-</div>
-
 <div class="aw-card" id="server-page-tracker">
 <h2>Page Tracker</h2>
 <pre>

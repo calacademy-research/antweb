@@ -187,3 +187,10 @@ def test_public_pages_do_not_load_tools_css():
         if r.status_code != 200:
             continue
         assert "/common/tools.css" not in r.text and 'class="aw-tools"' not in r.text, path
+
+
+def test_source_server_status_has_no_developer_test_buttons():
+    """Server Status reports the server's state; the two old developer test buttons ("methodHabitat",
+    "holdOpenConnection", which held a database connection open) were removed on 2026-10-22 (Brian Fisher)."""
+    src = _src("web/util/serverStatus-body.jsp")
+    assert "holdOpenConnection" not in src and "methodHabitat" not in src
