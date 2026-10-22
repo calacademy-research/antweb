@@ -1148,7 +1148,7 @@ public abstract class Queries {
         , "select count(i.id) theCount, s.ownedby from image i, specimen s where i.image_of_id = s.code group by s.ownedby order by theCount desc"
         ));
 
-        // Public: "Download All" on the recent images search results. Was every image ever uploaded (about a million
+        // Public: the "Newest 5,000 images (table)" link (was "Download All") on the recent images search results. Was every image ever uploaded (about a million
         // rows, more than a page can show) and 7 headings for 6 columns. Limited to the newest 5,000 (2026-10-22).
         queries.add(new NamedQuery(
            "imageData"

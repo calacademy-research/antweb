@@ -5,7 +5,7 @@ of your checking of all queries is to make sure they are working and explained".
 The queries are taken from src/org/calacademy/antweb/util/Queries.java (each `new NamedQuery("name"`), plus
 the four species-list queries with a place (QueriesWithParams.java) run for Madagascar and the Malagasy
 bioregion. For each query, query.do?name=... must
-- answer within QUERY_LIMIT seconds (the server stops a named query after 120 s; Cloudflare gives up at 100 s),
+- answer within QUERY_LIMIT seconds (the server stops a named query after 90 s; Cloudflare gives up at 100 s),
 - show its explanation ("What it shows:"),
 - show no SQL error (the page says "could not run" with the error, class query-error),
 - have as many headings as columns (the page writes both counts in <span class="query-check">).
@@ -41,9 +41,10 @@ PARAM_QUERIES = [
 
 def query_names():
     text = QUERIES_JAVA.read_text(encoding="utf-8")
-    # Commented-out queries (// or /* */) are not queries.
+    # Commented-out queries (/* */ blocks and lines starting with //) are not queries. A // inside a string
+    # (https://...) is not a comment, so only whole comment lines are dropped.
     text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
-    text = re.sub(r"//[^\n]*", "", text)
+    text = re.sub(r"(?m)^\s*//.*$", "", text)
     return re.findall(r'new NamedQuery\(\s*"(\w+)"', text)
 
 

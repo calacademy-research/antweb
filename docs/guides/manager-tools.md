@@ -298,7 +298,7 @@ counted as Introduced. Update the list in the Species List Tool, then tick their
 
 **For**: ready-made database queries by topic. Click a name to run it: the page shows **What it shows** (what
 the query lists, how to read it and what to do about its rows), the query, the rows and the time taken. They
-only read data; some take a minute, and the server stops any query after 120 seconds. Administrators only,
+only read data; some take a minute, and the server stops any query after 90 seconds. Administrators only,
 except the few that public or curator pages link to (the AntCat import history, the species lists with range
 data, the image data download). The checks that should find nothing also run together in the **Integrity
 Check** (`query.do?action=checkIntegrity`); `noSpeciesForSpecies` and `geolocaleTaxaPresent` are also Admin
@@ -317,7 +317,7 @@ and `selfRefSynonyms` (compared the wrong form of the current valid name, so one
 combination and the other nothing), checks that used `not in (select taxon_name from specimen)` (found
 nothing once one specimen has no name), `usedAndUnusedCoords` (missing parentheses), the links to taxon
 pages (shown as text when the name has a space), the headings of 16 queries (wrong count, wrong order or
-broken), and the permalinks of the country species list queries. `imageData` (public "Download All" of the recent images search) is limited to the
+broken), and the permalinks of the country species list queries. `imageData` (public link of the recent images search, formerly "Download All", now "Newest 5,000 images (table)") is limited to the
 newest 5,000 images. CI test: `test/org/calacademy/antweb/util/QueriesReviewTest.java`; every query is run
 on staging by `tests/e2e/test_named_queries.py`.
 

@@ -59,6 +59,21 @@ public class QueriesReviewTest extends TestCase {
         }
     }
 
+    /**
+     * "x not in (select taxon_name from specimen)" finds nothing once one specimen has no name (NOT IN with a
+     * NULL), and the current valid name already holds the subfamily (concat(subfamily, current_valid_name) is
+     * never a name). Both were in queries until 2026-10-22.
+     */
+    public void testKnownSqlTrapsStayOut() {
+        for (NamedQuery q : all()) {
+            String sql = q.getQuery().toLowerCase().replaceAll("\\s+", " ");
+            assertFalse(q.getName() + ": NOT IN over a column that can be null: " + sql,
+                sql.matches(".*not in \\(select (distinct )?taxon_name from specimen\\).*"));
+            assertFalse(q.getName() + ": " + sql, sql.contains("concat(subfamily, current_valid_name)"));
+            assertFalse(q.getName() + ": AntCat names have source worldants: " + sql, sql.contains("'worldants.txt'"));
+        }
+    }
+
     public void testNamesAreUnique() {
         Set<String> seen = new HashSet<>();
         for (NamedQuery q : all()) assertTrue("defined twice: " + q.getName(), seen.add(q.getName()));

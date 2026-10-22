@@ -15,8 +15,11 @@ public abstract class QueryManager {
 
     private static final Log s_log = LogFactory.getLog(QueryManager.class); 
 
-    /** No named query may run longer than this (Statement.setQueryTimeout); the page says so. */
-    public static final int QUERY_TIMEOUT_SECS = 120;
+    /**
+     * No named query may run longer than this (Statement.setQueryTimeout); the page says so. Below Cloudflare's
+     * 100 seconds, so the query stops before the visitor's request is dropped.
+     */
+    public static final int QUERY_TIMEOUT_SECS = 90;
 
 // ---------------- 
 
@@ -143,8 +146,12 @@ public abstract class QueryManager {
         } catch (Exception e) {
             s_log.warn("runSection() " + namedQuery.getName() + " e:" + e);
             String desc = namedQuery.getDesc() == null ? "" : namedQuery.getDesc();
+            // The database's error text names tables and columns: only for the queries only administrators run
+            // (public and curator pages link to a few, QueryAction.namedQueryAccess).
+            String detail = "admin".equals(QueryAction.namedQueryAccess(namedQuery.getName()))
+                ? Html.esc(String.valueOf(e.getMessage())) : "please try again later; the administrators can see the error in the log.";
             return "<hr><br><b>Name: </b>" + Html.esc(namedQuery.getName()) + "<br><br><b>What it shows:</b> " + Html.esc(desc)
-                + "<br><br><b class=\"query-error\">This query could not run:</b> " + Html.esc(String.valueOf(e.getMessage())) + "<br><br>\n";
+                + "<br><br><b class=\"query-error\">This query could not run:</b> " + detail + "<br><br>\n";
         }
     }
     
