@@ -40,7 +40,7 @@ public class CollectionDb extends AntwebDb {
             + " left join image on sp.code = image.image_of_id "
                 + " left outer join ant_group on sp.access_group = ant_group.id "
             // + " where sp.collectionCode like '%" + code + "%' "
-            + " where sp.collectionCode = '" + Formatter.escapeQuotes(code) + "' "  // so the new index can function
+            + " where sp.collectionCode = " + DBUtil.sqlLiteral(code) + " "  // so the new index can function; sqlLiteral: a " in a code stays one character
             + " group by sp.code, sp.type_status, sp.country, sp.island_country, sp.localitycode, sp.collectioncode "
             + " , sp.caste, sp.species, sp.genus, sp.localityname, sp.habitat, sp.microhabitat, sp.method " 
             + " , sp.collectedBy, sp.collectionnotes, sp.adm1, sp.adm2, sp.decimal_longitude, sp.decimal_latitude "

@@ -15,6 +15,10 @@ As the test uploader (ANTWEB_TEST_UPLOADER_*, a curator of "ZZ Test Group (stagi
      zztest0006  Pachycondyla sauteri, a name of two -> kept under the uploaded name, report "Needs the
                  AntCat taxa (when this server has it)    curator's decision" with both AntCat taxa linked,
                                                        the same line as on nameUpdates.do (SharedNameReport)
+     zztest0007  locality code zzloc<5m_Français"?    -> stored as written (it was stored URL-encoded until
+                                                       2026-10-22): the specimen page links locality.do with
+                                                       the code encoded once, the locality page shows it, and
+                                                       its "Show All Specimens" search finds zztest0007
    then check the report, the specimen pages and the group's upload list. Every report line ends with
    "N specimens" and the collapsed list of its codes linked to the specimen pages (SpecimenCodes, the
    Name updates page's markup): zztest0002 on its "Recognized invalid species" line, zztest0003 on its
@@ -37,7 +41,8 @@ Every upload first checks that the login's group is the test group: an upload re
 group's specimens. Skips without the secrets, and on any host but staging.
 """
 import re
-from urllib.parse import quote, unquote_plus
+from html import unescape
+from urllib.parse import quote, quote_plus, unquote_plus
 
 import pytest
 
@@ -50,6 +55,10 @@ pytestmark = pytest.mark.skipif(not IS_STAGING, reason="specimen uploads run onl
 
 API_TIMEOUT = max(TIMEOUT, 120)
 UNKNOWN_SPECIES = "zztestunknown"
+# A locality code with characters the upload used to URL-encode (<, ", ?, and a cedilla). Codes keep no
+# spaces (UploadUtil.cleanCode) and lose a leading or trailing quote (the parser trims them).
+LOCALITY_CODE = 'zzloc<5m_Fran\u00e7ais"?'
+HEADER = BASELINE_HEADER + "\tLocalityCode"
 
 
 def _api(path):
@@ -93,9 +102,9 @@ def shared_name_on_server():
     return bool(taxa) and taxa[0].get("status") not in (None, "valid", "unrecognized")
 
 
-def _row(n, taxon, species=None, lat="-18.91", lon="47.52", code_text=None):
+def _row(n, taxon, species=None, lat="-18.91", lon="47.52", code_text=None, locality_code=""):
     return "\t".join([code_text or code(n), (taxon.get("subfamily") or "").capitalize(), taxon["genus"].capitalize(),
-                      species or taxon["species"], "Madagascar", lat, lon, "AntWeb e2e test"])
+                      species or taxon["species"], "Madagascar", lat, lon, "AntWeb e2e test", locality_code])
 
 
 def _text(html):
@@ -136,12 +145,13 @@ def test_specimen_upload_round_trip(uploader, names):
     s, token, gid = uploader
     syn, valid = names
     lines = [
-        BASELINE_HEADER,
+        HEADER,
         _row(1, valid),
         _row(2, syn),
         _row(3, valid, species=UNKNOWN_SPECIES),
         _row(4, valid, code_text=code(4) + "!"),
         _row(5, valid, lat="40.1", lon="10.2"),
+        _row(7, valid, locality_code=LOCALITY_CODE),
     ]
     with_shared = shared_name_on_server()
     if with_shared:
@@ -199,7 +209,7 @@ def test_specimen_upload_round_trip(uploader, names):
                 "zztest0006 was moved to one of the two taxa"
 
     # The specimens.
-    for n in (1, 2, 3, 5) + ((6,) if with_shared else ()):
+    for n in (1, 2, 3, 5, 7) + ((6,) if with_shared else ()):
         exists, _page = specimen_page(s, code(n))
         assert exists, f"{code(n)} was not loaded"
     exists, _page = specimen_page(s, code(4))
@@ -215,6 +225,9 @@ def test_specimen_upload_round_trip(uploader, names):
         if recs:
             assert recs[0].get("antwebTaxonName") == valid["taxonName"], recs[0].get("antwebTaxonName")
 
+    # The locality code is stored as written and linked encoded once (2026-10-22).
+    check_locality_code(s)
+
     # The group's upload list links this report.
     listing = s.get(f"{BASE_URL}/listSpecimenUploads.do?groupId={gid}", timeout=TIMEOUT).text
     listed = {unquote_plus(h.rsplit("/", 1)[-1]) for h in re.findall(r"/web/log/specimen/[^\"'<>]+", listing)}
@@ -224,9 +237,29 @@ def test_specimen_upload_round_trip(uploader, names):
     # Replacement: the baseline file leaves only zztest0001 and zztest0002.
     base = _upload_baseline(s, token, valid)
     assert_upload_recorded(s, base, gid)
-    for n, expected in ((1, True), (2, True), (3, False), (5, False), (6, False)):
+    for n, expected in ((1, True), (2, True), (3, False), (5, False), (6, False), (7, False)):
         exists, _page = specimen_page(s, code(n))
         assert exists == expected, f"after the baseline upload {code(n)} {'is missing' if expected else 'is still there'}"
+
+
+def check_locality_code(s):
+    """zztest0007's locality code: the specimen page links locality.do?code= with the plain code encoded once
+    (Html.url, UTF-8), the locality page opens and shows the code as written, and its "Show All Specimens" link
+    (advancedSearch.do, localityCode="<code>") finds the specimen."""
+    exists, page = specimen_page(s, code(7))
+    assert exists, f"{code(7)} was not loaded"
+    expected = "/locality.do?code=" + quote_plus(LOCALITY_CODE)
+    hrefs = [unescape(h) for h in re.findall(r"""href=["']([^"']*locality\.do\?code=[^"']*)["']""", page)]
+    assert any(h.endswith(expected) for h in hrefs), (expected, hrefs)
+    assert not any(re.search(r"%25[0-9A-Fa-f]{2}", h) for h in hrefs), hrefs
+    loc = s.get(BASE_URL + expected, timeout=TIMEOUT)
+    assert loc.status_code == 200, (expected, loc.status_code)
+    assert "Locality not found" not in loc.text, _text(loc.text)[:400]
+    assert LOCALITY_CODE in unescape(loc.text), "the locality page does not show the code as written"
+    m = re.search(r"""href=['"]([^'"]*advancedSearch\.do\?[^'"]*localityCode=[^'"]*)['"]>Show All Specimens""", loc.text)
+    assert m, "no Show All Specimens link on the locality page"
+    found = s.get(unescape(m.group(1)), timeout=API_TIMEOUT)
+    assert found.status_code == 200 and code(7) in found.text, (m.group(1), _text(found.text)[:400])
 
 
 @needs("uploader")
@@ -237,7 +270,7 @@ def test_all_lines_refused_keeps_the_group(uploader, names):
     _syn, valid = names
     _upload_baseline(s, token, valid)
     try:
-        bad = BASELINE_HEADER + "\n" + _row(1, valid, code_text=code(1) + "!") + "\n" + _row(2, valid, code_text=code(2) + "!") + "\n"
+        bad = HEADER + "\n" + _row(1, valid, code_text=code(1) + "!") + "\n" + _row(2, valid, code_text=code(2) + "!") + "\n"
         upload_specimens(s, token, bad)
         kept = [specimen_page(s, code(n))[0] for n in (1, 2)]
         upload_specimens(s, token, BASELINE_HEADER + "\n")

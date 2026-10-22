@@ -292,6 +292,8 @@ jobs:
         # select and only reads; every list of queries names queries that exist; every query is in one Query Manager group
         # (tests/e2e/test_named_queries.py runs them). JobSummaryTest: a nightly set started by hand keeps one plain
         # sentence as its job result ({operation:...} in plain words), and the job page never shows a whole AntWeb page.
+        # LocalityCodePlainTest: locality codes are stored as written (not URL-encoded, 2026-10-22), links encode them
+        # once in UTF-8, the specimen search for one quoted code takes it whole.
         # See docs/flows/test-gaps-uploads-nightly.md.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" -v "$PWD/web:/web:ro" \
@@ -319,13 +321,14 @@ jobs:
               /t/org/calacademy/antweb/util/SpecimenCodesTest.java \
               /t/org/calacademy/antweb/util/RelevantQueriesTest.java \
               /t/org/calacademy/antweb/util/QueriesReviewTest.java \
-              /t/org/calacademy/antweb/util/JobSummaryTest.java
+              /t/org/calacademy/antweb/util/JobSummaryTest.java \
+              /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:7 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
-                     util.JobSummaryTest:6; do
+                     util.JobSummaryTest:6 upload.LocalityCodePlainTest:5; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -342,7 +345,7 @@ jobs:
           shellcheck -S warning tools/staging/*.sh
           python3 tests/unit/test_staging_refresh.py
 
-      - name: Staging refresh database steps against MySQL 8.4 (scrub.sql; test logins put back with their passwords)
+      - name: Staging refresh database steps against MySQL 8.4 (scrub.sql; test logins put back with their passwords); locality code repair
         run: |
           docker run -d --name refreshmysql -e MYSQL_ROOT_PASSWORD=ci-root -e MYSQL_DATABASE=ant \
             -v "$PWD/docker/mysql/mysql_stage.cnf:/etc/mysql/conf.d/custom.cnf:ro" mysql:8.4 --mysql-native-password=ON
@@ -353,6 +356,9 @@ jobs:
           done
           [ "$ok" = 1 ] || { docker logs refreshmysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
           STAGING_REFRESH_DB_CONTAINER=refreshmysql STAGING_REFRESH_DB_PASSWORD=ci-root python3 tests/unit/test_staging_refresh_db.py
+          # Locality codes stored plain; the one-off repair of the URL-encoded ones (tools/data/locality_codes.py):
+          # preview, repair, second run refused, rollback (tests/unit/test_locality_codes.py).
+          LOCALITY_CODES_DB_CONTAINER=refreshmysql LOCALITY_CODES_DB_PASSWORD=ci-root python3 tests/unit/test_locality_codes.py
           docker rm -f refreshmysql
 
       - name: No email tells the reader to ignore it (tests/unit/test_email_texts.py)

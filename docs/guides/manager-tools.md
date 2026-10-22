@@ -314,7 +314,7 @@ link) and its one-line summary. The groups, with their counts on 22 October 2026
 | Group | Queries | Covers |
 |---|---|---|
 | Names and taxa | 24 | AntWeb's names: missing parts, parents, synonyms, homonyms, odd characters |
-| Specimens | 10 | specimen records: names, status, life stage and caste, bioregions, introduced flag |
+| Specimens | 11 | specimen records: names, status, locality codes, life stage and caste, bioregions, introduced flag |
 | Places | 12 | countries and adm1s: valid or not, names, map coordinates, bioregions |
 | Species lists | 23 | project, place, bioregion and museum species lists, list exports, disputes |
 | Images | 4 | image counts, the newest images, default images |
@@ -401,6 +401,7 @@ error), `extentAndCoords` (used a column dropped in 2017), `notValidTaxaFromSpec
 - `notValidTaxaFromSpecimenList`: Specimen records filed under a name AntCat does not consider valid (synonym, homonym, unavailable name...), per group, with the name to use instead and the number of specimens.
 - `specimenCountByOwner`: Specimen records per "owned by" value (the institution that owns the specimen, as written in the upload file), largest first.
 - `checkSpecimenStatus`: Specimens with no status (the status of their name, set at upload).
+- `encodedLocalityCodes`: Locality and collection codes stored URL-encoded (with % and two hex digits, for example MontagnedesFran%E7ais_150 for MontagnedesFrançais_150), per group.
 - `invalidBioregion`: Bioregion names in specimen data that are not one of AntWeb's bioregions (bioregion table), with the number of specimens and the groups that uploaded them.
 - `specimenCountByTaxa`: The 8 names with the most specimen records.
 - `specimenGroups`: How many specimen records each upload group has on AntWeb: group number, name and count, largest first.

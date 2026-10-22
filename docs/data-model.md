@@ -271,6 +271,7 @@ first deletes the group's specimens (`specimen.access_group`), then inserts the 
 | `country`, `adm1`, `adm2`, `island_country`, `region`, `subregion`, `bioregion` | place names; `region`, `subregion`, `island_country` and (if empty) `bioregion` are derived at upload from the `geolocale` row of the country (`SpecimenUploadParse`) |
 | `museum` | museum code, set by nightly set 3 where the code is a whole word of `ownedby` (`MuseumDb.specimenMuseumDml`, `ownedByPattern`) |
 | `ownedby`, `locatedat`, `collectedby`, `determinedby`, `collectioncode`, `localitycode`, `localityname` | as uploaded |
+| `localitycode`, `collectioncode` (detail) | spaces, `%`, `#` and apostrophes removed; stored as written since 2026-10-22 (locality codes were URL-encoded before: `docs/flows/specimen-upload.md` 3b) |
 | `decimal_latitude`, `decimal_longitude` (float, decimal degrees), `latlonmaxerror` (text), `elevation` (int, metres), `elevationmaxerror` | coordinates and elevation as uploaded |
 | `datecollectedstart`, `datecollectedend`, `datedetermined` | dates as normalised strings (varchar(20)); the `...str` columns keep the text as uploaded |
 | `caste`, `subcaste`, `life_stage`, `medium`, `type_status`, `habitat`, `microhabitat`, `method` | as uploaded; `caste` is also recomputed from `life_stage` (`SpecimenDb.updateCaste`) |
