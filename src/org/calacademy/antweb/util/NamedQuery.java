@@ -81,7 +81,7 @@ public class NamedQuery  //implements Iterable
     for (int i = "select".length(); i < s.length(); i++) {
       char c = s.charAt(i);
       if (quote != 0) {
-        if (c == '\\') i++;
+        if (c == '\\' && quote != '`') i++;
         else if (c == quote) {
           if (i + 1 < s.length() && s.charAt(i + 1) == quote) i++;
           else quote = 0;
@@ -93,7 +93,7 @@ public class NamedQuery  //implements Iterable
       else if (c == ')') depth--;
       else if (c == ',' && depth == 0) count++;
       else if (depth == 0 && Character.isWhitespace(c) && s.regionMatches(true, i + 1, "from", 0, 4)
-          && (i + 5 >= s.length() || Character.isWhitespace(s.charAt(i + 5)))) break;
+          && (i + 5 >= s.length() || Character.isWhitespace(s.charAt(i + 5)) || s.charAt(i + 5) == '(')) break;
     }
     return count;
   }

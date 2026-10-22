@@ -169,6 +169,8 @@ public class QueriesReviewTest extends TestCase {
         assertEquals(2, NamedQuery.selectColumnCount("select (select count(*) from s), y\n from t"));
         assertEquals(4, NamedQuery.selectColumnCount("select a, b, c, d from p union select e, f, g, h from q"));
         assertEquals(1, NamedQuery.selectColumnCount("select fromage from t"));
+        assertEquals(2, NamedQuery.selectColumnCount("select a, b from(select 1 a, 2 b) x"));
+        assertEquals(2, NamedQuery.selectColumnCount("select `a\\`, b from t"));
         assertEquals(-1, NamedQuery.selectColumnCount("delete from t"));
     }
 
