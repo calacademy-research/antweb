@@ -597,8 +597,9 @@ public class UploadAction extends AntwebAction {
 		objectMapDb.genGroupObjectMap(group);
 		s_log.debug("specimenPostProcess() genGroupObjectMap");
 
+		// The upload's row in the upload table: throws when it cannot be written (the upload then rolls back).
 		SpecimenUploadDb uploadDb = new SpecimenUploadDb(connection);
-		uploadDb.updateUpload(curator, uploadDetails);
+		uploadDb.recordUpload(curator, uploadDetails);
 		uploadDb.updateGroup(group);
 		s_log.debug("specimenPostProcess() updateUpload");
 
