@@ -54,9 +54,11 @@ def decode_run(run):
     """'%E7' -> 'ç' (ISO-8859-1), '%C3%A7' -> 'ç' (valid UTF-8), '%22%22' -> '""'."""
     data = bytes(int(run[i + 1:i + 3], 16) for i in range(0, len(run), 3))
     try:
-        return data.decode("utf-8")
+        text = data.decode("utf-8")
     except UnicodeDecodeError:
-        return data.decode("iso-8859-1")
+        text = data.decode("iso-8859-1")
+    # specimen.localitycode is utf8mb3: a character outside the Basic Multilingual Plane would fail the update.
+    return "".join(c if ord(c) <= 0xFFFF else "?" for c in text)
 
 
 def decode(code):
@@ -242,9 +244,13 @@ def repair_sql(rows, skip_groups=(), include_collisions=False):
                      f" where localitycode = {s} and cast(localitycode as binary) = cast({s} as binary)"
                      f" and access_group = {int(r['group_id'])};")
     lines += [
-        f"select count(*) as changed, {expected} as expected from specimen s join {BACKUP_TABLE} b"
+        f"set @changed = (select count(*) from specimen s join {BACKUP_TABLE} b"
         " on b.code = s.code and b.access_group = s.access_group"
-        " where cast(s.localitycode as binary) <> cast(b.localitycode as binary);",
+        " where cast(s.localitycode as binary) <> cast(b.localitycode as binary));",
+        f"select @changed as changed, {expected} as expected;",
+        "-- A different count stops here with an error (\"Subquery returns more than 1 row\"): mysql exits before the",
+        "-- commit and the updates are rolled back. Then drop the backup table and look at the preview again.",
+        f"select if(@changed = {expected}, 'counts match', (select 'mismatch' union all select 'stop')) as check_counts;",
         "commit;",
         "select count(*) as still_encoded_in_repaired_groups from specimen where localitycode regexp " + ENCODED_SQL
         + f" and access_group in (select distinct access_group from {BACKUP_TABLE});",

@@ -68,6 +68,7 @@ def test_decode():
         "Mah%E9%20Mont": "Mahé Mont",
         "plain_code": "plain_code",
         "a%3e%3Cb": "a><b",
+        "ant%F0%9F%90%9C": "ant?",                                       # 4-byte UTF-8: utf8mb3 column
     }
     for stored, decoded in cases.items():
         assert lc.decode(stored) == decoded, (stored, lc.decode(stored), decoded)
@@ -191,6 +192,7 @@ def test_with_mysql():
         text = open(repair, encoding="utf-8").read()
         result = rows_of(text)
         assert ["4", "4"] in result, result            # backed_up = expected, changed = expected
+        assert ["counts match"] in result, result
         assert result[-1] == ["0"], result             # nothing encoded left in group 88
         got = dict((c, l) for c, l in rows_of("select code, localitycode from specimen order by code;"))
         assert got["eco1"] == 'KM55""805' and got["eco3"] == 'KM55"815' and got["eco6"] == "Français", got
@@ -200,6 +202,14 @@ def test_with_mysql():
         again = mysql(text, check=False)
         assert again.returncode != 0 and b"already exists" in again.stderr, again.stderr
         assert rows_of("select count(*) from specimen_localitycode_bak_20261022;") == [["4"]]
+        # A count that differs stops before the commit: nothing changes.
+        mysql("drop table specimen_localitycode_bak_20261022; update specimen set localitycode = 'KM55%22%22805' where code in ('eco1', 'eco2');"
+              " update specimen set localitycode = 'KM55%22815' where code = 'eco3'; update specimen set localitycode = 'Fran%C3%A7ais' where code = 'eco6';")
+        bad = mysql(text.replace("4 as expected", "5 as expected").replace("@changed = 4", "@changed = 5"), check=False)
+        assert bad.returncode != 0 and b"more than 1 row" in bad.stderr, bad.stderr
+        assert rows_of("select localitycode from specimen where code = 'eco1';") == [["KM55%22%22805"]], "rolled back"
+        mysql("drop table specimen_localitycode_bak_20261022;")
+        assert ["4", "4"] in rows_of(text)
         # The locality page's lookup: the plain code.
         assert rows_of("select count(*) from specimen where localitycode = 'KM55\"\"805';") == [["2"]]
         # The Integrity Check query (Queries.java encodedLocalityCodes) lists only group 1 now.

@@ -503,10 +503,13 @@ cd /root/antweb-next && python3 tools/data/locality_codes.py sql --preview /root
 F=/root/antweb-next/etc/db.properties; docker exec -i -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant < /root/loccode-repair-20261022.sql
 ```
 
-   Expect three small results (a heading line and a value line each): `backed_up` equal to `expected`, `changed` equal to `expected`, and
+   Expect four small results (a heading line and a value line each; `check_counts` says `counts match`): `backed_up` equal to `expected`, `changed` equal to `expected`, and
    `still_encoded_in_repaired_groups` 0 (or the number of specimens of collisions left out in those groups).
    `backed_up` can be larger than `expected` when a code left out as a collision differs from a repaired one only in
    upper and lower case (MySQL compares them as equal); those extra rows are only copied, not changed.
+   If `changed` differs from `expected` the script stops with "Subquery returns more than 1 row" before its
+   commit, and nothing is changed. Send the output to Claude; to run it again, first
+   `drop table specimen_localitycode_bak_20261022;` (the backup table is made before the transaction).
 
 4. Check: the Integrity Check query `query.do?name=encodedLocalityCodes` lists no Economo codes any more, and a
    repaired code opens its locality page with its specimens, for example `locality.do?code=KM55%22%22805`
