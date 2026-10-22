@@ -148,17 +148,6 @@ public class UploadAction extends AntwebAction {
 		UploadForm theForm = (UploadForm) form;
 		boolean isBackground = isBackgroundAction(theForm.getAction());
 
-		// A specimen upload is not refused while another upload or the nightly run is running:
-		// it waits in the queue (BackgroundJobs). The AntCat import waits for another upload.
-		if (!isBackground) {
-			ActionForward f = Check.upload(request, mapping);
-			if (f != null) return f;
-		}
-		if (!isBackground || "fetchAndReloadWorldants".equals(theForm.getAction())) {
-			ActionForward g = Check.compute(request, mapping);
-			if (g != null) return g;
-		}
-
 		HttpSession session = request.getSession();
 		//A.log("execute() up:" + theForm.isUp());
 
@@ -197,6 +186,19 @@ public class UploadAction extends AntwebAction {
 				request.setAttribute("message", "This login does not have permission to upload specimens.");
 				return mapping.findForward("message");
 			}
+		}
+
+		// After the login and permission checks: anonymous visitors and logins without the right always
+		// get the same answer, whether or not an upload or data job is running (2026-10-22).
+		// A specimen upload is not refused while another upload or the nightly run is running:
+		// it waits in the queue (BackgroundJobs). The AntCat import waits for another upload.
+		if (!isBackground) {
+			ActionForward f = Check.upload(request, mapping);
+			if (f != null) return f;
+		}
+		if (!isBackground || "fetchAndReloadWorldants".equals(theForm.getAction())) {
+			ActionForward g = Check.compute(request, mapping);
+			if (g != null) return g;
 		}
 
 

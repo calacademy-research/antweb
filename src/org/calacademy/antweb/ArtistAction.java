@@ -193,7 +193,10 @@ public final class ArtistAction extends AntwebAction {
 		  request.setAttribute("artist", artist);
 		  return mapping.findForward("artist");
         } else {
-          ArrayList<Artist> artists = ArtistMgr.getArtists();
+          // A copy: artists-body.jsp sorts the list, and the shared list must not be sorted by two
+          // requests at once (ConcurrentModificationException, the error page; 2026-10-22).
+          ArrayList<Artist> shared = ArtistMgr.getArtists();
+          ArrayList<Artist> artists = shared == null ? null : new ArrayList<>(shared);
 
 /*          
           s_log.warn("execute() UTF check:" + ArtistMgr.getArtist(221));

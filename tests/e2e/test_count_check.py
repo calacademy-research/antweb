@@ -113,11 +113,18 @@ def test_list_counts_match_the_specimen_records():
     # Since 2026-10-21: the invariants over every place (CountInvariants) and the run time (the page must answer
     # well within Cloudflare's 100 seconds; the rotating sample stops at about 50).
     if 'id="count-invariants"' in r.text:
-        ids = set(re.findall(r'<tr class="count-invariant" data-id="([^"]+)"', r.text))
+        # One row at a time (a pattern with several .*? over the whole page took about 20 minutes on a
+        # report with a few thousand pending rows: each lazy group can run to the end of the page).
+        inv_rows = [(i, [c for c in re.findall(r"<td>(.*?)</td>", body, re.S)])
+                    for i, body in re.findall(r'<tr class="count-invariant" data-id="([^"]+)">(.*?)</tr>', r.text, re.S)]
+        ids = {i for i, _cells in inv_rows}
         missing = INVARIANTS - ids
         assert not missing, f"invariants not run: {sorted(missing)}"
-        failed = [(i, unescape(e)) for i, e in re.findall(
-            r'<tr class="count-invariant" data-id="([^"]+)"><td>.*?</td><td>.*? <b>\(failed: (.*?)\)</b></td>', r.text, re.S)]
+        failed = []
+        for i, cells in inv_rows:
+            m_failed = re.search(r" <b>\(failed: (.*?)\)</b>", cells[1], re.S) if len(cells) > 1 else None
+            if m_failed:
+                failed.append((i, unescape(m_failed.group(1))))
         assert not failed, "invariants could not run (check id: exception, code line, SQL):\n" + "\n".join(
             f"{i}: {e}" for i, e in failed)
         t = re.search(r'id="count-check-time" data-seconds="(\d+)"[^>]*>(.*?)</p>', r.text, re.S)
@@ -126,9 +133,9 @@ def test_list_counts_match_the_specimen_records():
         if summary:
             with open(summary, "a", encoding="utf-8") as f:
                 f.write("\n### Count check: every place\n\n| Check | Compared | Real | Pending | ms |\n|---|---|---|---|---|\n")
-                for row in re.findall(r'<tr class="count-invariant" data-id="([^"]+)"><td>.*?</td><td>.*?</td><td>.*?</td>'
-                                      r'<td>(\d+)</td><td>(\d+)</td><td>(\d+)</td><td>(\d+)</td></tr>', r.text, re.S):
-                    f.write("| " + " | ".join(row) + " |\n")
+                for i, cells in inv_rows:
+                    if len(cells) == 7 and all(c.strip().isdigit() for c in cells[3:]):
+                        f.write("| " + " | ".join([i] + [c.strip() for c in cells[3:]]) + " |\n")
     if not nightly:
         pytest.skip(f"compute.log has no completed nightly run, so the stored counts may be older than a day "
                     f"({real} differences, listed in the job summary)")
