@@ -68,6 +68,7 @@ public final class CountCheckJob {
             String html = CountCheckAction.html(result, domainApp);
             keep(job.getId(), html);
             String summary = "Real differences: " + result.real() + ". Pending: " + result.pending() + ". " + CountCheckAction.partsText(result);
+            if (result.schema != null) summary += " " + result.schema.summary();
             LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " count check (job " + job.getId() + "): " + summary);
             return BackgroundJobs.Outcome.ok(Html.esc(summary), domainApp + "/countCheck.do?job=" + job.getId(), "The count check report");
         } finally {

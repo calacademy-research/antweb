@@ -4,13 +4,15 @@ The generator replays the db/upgrade files, which mix SQL with notes and pasted 
 parts of its parser that the real files need: a missing semicolon, an apostrophe in a note, comments, ALTER TABLE
 ... RENAME TO, RENAME TABLE, CREATE TABLE ... LIKE and AS SELECT, views, a table dropped and later altered, and a
 CREATE TABLE built from Java string literals and a constant (and not from a comment). Also --check on a
-duplicate heading.
+duplicate heading, and (2026-10-22) the live snapshot: the catch-up file's guarded procedure calls and DELIMITER
+blocks, the allow-list of differences, and the dated-backup pattern shared with SchemaCheck.java.
 
 Run: python3 tests/unit/test_datamodel_list_tables.py   (also in .github/workflows/tests.yaml)
 """
 import contextlib
 import io
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
@@ -168,7 +170,8 @@ def check_output(doc_text):
 
 
 def test_check_reports_missing_unknown_and_dropped_sections():
-    every = "".join(f"### `{n}`\n" for n in sorted(set(L.build().tables) | set(L.build().views)))
+    live = set(L.read_live(L.latest_snapshot())[1])
+    every = "".join(f"### `{n}`\n" for n in sorted(set(L.build().tables) | set(L.build().views) | live))
     code, out = check_output(every)
     assert code == 0, out
     code, out = check_output(every.replace("### `taxon`\n", ""))
@@ -177,6 +180,8 @@ def test_check_reports_missing_unknown_and_dropped_sections():
     assert code == 1 and "`no_such_table` names a table" in out, out
     code, out = check_output(every + "### `groups`\n")
     assert code == 1 and "`groups`: the table was dropped" in out, out
+    code, out = check_output(every.replace("### `junkspec`\n", ""))
+    assert code == 1 and "table junkspec (live only" in out, "a table only production has needs a section too: " + out
 
 
 def test_empty_names_in_drop_do_not_crash():
@@ -198,6 +203,110 @@ def test_check_reports_a_heading_written_twice():
             assert "table taxon has two sections" in out.getvalue()
     finally:
         L.DOC = old
+
+
+# --- the live snapshot (2026-10-22) -----------------------------------------------------------------------------
+
+def test_parenthesised_add_column_keeps_its_size():
+    s = replay("create table om (id int);\nalter table om add column (title varchar(1000));\n")
+    assert s.tables["om"]["columns"]["title"] == "varchar(1000)", s.tables["om"]["columns"]
+
+
+def test_catch_up_calls_and_delimiter_blocks():
+    s = replay("DELIMITER //\n"
+               "CREATE PROCEDURE schema_add_column(IN t VARCHAR(64))\n"
+               "BEGIN\n"
+               "  SET @schema_sql = CONCAT('ALTER TABLE `', t, '` ADD COLUMN x int');\n"
+               "alter table never add column from_the_body int;\n"
+               "END //\n"
+               "DELIMITER ;\n"
+               "create table c (a int, b int, gone int);\n"
+               "create view v as select 1;\n"
+               "CALL schema_add_column('c', 'New_Col', 'varchar(30)');\n"
+               "CALL schema_modify_column('c', 'a', 'bigint');  -- a note\n"
+               "CALL schema_drop_column('c', 'gone');\n"
+               "CALL schema_drop_view('v');\n"
+               "CALL schema_drop_view('not_a_view');\n"
+               "DROP PROCEDURE IF EXISTS schema_add_column;\n")
+    assert s.tables["c"]["columns"] == {"a": "bigint", "b": "int", "new_col": "varchar(30)"}, s.tables["c"]["columns"]
+    assert "never" not in s.tables, "a procedure body is not a table change"
+    assert "v" not in s.views and "v" in s.dropped_views
+
+
+def test_norm_type():
+    assert L.norm_type("int(11)") == L.norm_type("INT")
+    assert L.norm_type("long") == "mediumtext"
+    assert L.norm_type("int(10) unsigned") == "int unsigned"
+    assert L.norm_type("varchar(100)") != L.norm_type("varchar(128)")
+
+
+def snapshot_file(rows):
+    d = tempfile.mkdtemp()
+    path = Path(d) / "live-schema-2026-10-22.tsv"
+    path.write_text("".join("\t".join(r) + "\n" for r in rows), encoding="utf-8")
+    return path
+
+
+def test_snapshot_errors_and_allow_list():
+    s = replay("create table taxon (taxon_name varchar(128), species_count int);\n"
+               "create table only_repo (a int);\n"
+               "create view v1 as select 1;\n")
+    s.tables["login_inactive_backup_*"] = {"columns": {"id": "int"}, "created": "x", "origin": "code", "history": []}
+    rows = [("taxon", "taxon_name", "varchar(128)", "BASE TABLE"), ("taxon", "species_count", "int(11)", "BASE TABLE"),
+            ("taxon", "extra", "int", "BASE TABLE"), ("v1", "x", "int", "VIEW"),
+            ("ant_group_abbrev_bak_20261020", "id", "int", "BASE TABLE"),
+            ("login_inactive_backup_20261018", "id", "int", "BASE TABLE"),
+            ("junkspec", "code", "varchar(128)", "BASE TABLE"), ("darwin_core_2_test", "x", "int", "VIEW"),
+            ("handmade", "id", "int", "BASE TABLE")]
+    old = (L.LIVE_ONLY_UNUSED, L.LIVE_ONLY_UNUSED_VIEWS)
+    try:
+        L.LIVE_ONLY_UNUSED, L.LIVE_ONLY_UNUSED_VIEWS = {"junkspec"}, {"darwin_core_2_test"}
+        errors = L.snapshot_errors(s, snapshot_file(rows))
+    finally:
+        L.LIVE_ONLY_UNUSED, L.LIVE_ONLY_UNUSED_VIEWS = old
+    text = "\n".join(errors)
+    assert len(errors) == 3, text
+    assert "table handmade is live" in text, text
+    assert "table only_repo is in the repository's SQL but not live" in text, text
+    assert "column taxon.extra is live" in text, text
+    rows[1] = ("taxon", "species_count", "bigint", "BASE TABLE")
+    errors = L.snapshot_errors(s, snapshot_file(rows))
+    assert any("taxon.species_count int -> bigint" in e for e in errors), errors
+    assert any("LIVE_ONLY_UNUSED names" in e for e in errors), "an allow-list entry the snapshot does not have is reported"
+
+
+def test_backup_pattern():
+    for t in ("ant_group_abbrev_bak_20261020", "login_deleted_2026_10_16", "login_project_20261018",
+              "specimen_badcode_backup_20261018", "login_spam_deleted_2026_10_14", "proj_taxon20170422",
+              "description_sanitize_backup_20261016_200412"):
+        assert L.BACKUP.search(t), t
+    for t in ("taxon", "image_backup", "museumbak", "darwin_core_2", "geolocale_taxon"):
+        assert not L.BACKUP.search(t), t
+
+
+def test_backup_pattern_is_the_same_in_schema_check_java():
+    java = (Path(ROOT) / "src/org/calacademy/antweb/util/SchemaCheck.java").read_text(encoding="utf-8")
+    m = re.search(r'Pattern BACKUP = Pattern\.compile\("((?:[^"\\]|\\.)*)"\)', java)
+    assert m, "SchemaCheck.BACKUP not found"
+    assert m.group(1).replace("\\\\", "\\") == L.BACKUP_PATTERN, (m.group(1), L.BACKUP_PATTERN)
+
+
+def test_repository_matches_the_committed_snapshot():
+    snapshot = L.latest_snapshot()
+    assert snapshot is not None and snapshot.parent == Path(ROOT).resolve() / "doc" / "schema", snapshot
+    errors = L.snapshot_errors(L.build(), snapshot)
+    assert errors == [], "\n".join(errors)
+
+
+def test_catch_up_file_says_it_is_safe_on_production():
+    text = (Path(ROOT) / "db/upgrade/8.115/2026-10-22-schema-catch-up.sql").read_text(encoding="utf-8")
+    assert "SAFE TO RUN ON PRODUCTION: IT CHANGES NOTHING THERE" in text
+    body = L.strip_sql_comments(text)
+    # nothing unguarded: every ALTER, DROP and CREATE TABLE goes through a guard
+    assert not re.search(r"(?im)^\s*ALTER\s+TABLE", body)
+    assert not re.search(r"(?im)^\s*DROP\s+TABLE\s+(?!IF\s+EXISTS)", body)
+    assert not re.search(r"(?im)^\s*CREATE\s+TABLE\s+(?!IF\s+NOT\s+EXISTS)", body)
+    assert not re.search(r"(?im)^\s*DROP\s+VIEW", body)
 
 
 def main():

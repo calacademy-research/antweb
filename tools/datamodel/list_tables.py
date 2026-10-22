@@ -31,7 +31,22 @@ Usage:
        WHERE c.table_schema = DATABASE() ORDER BY c.table_name, c.ordinal_position
   python3 tools/datamodel/list_tables.py --check      fail (exit 1) when a table has no section in
                                                       docs/data-model.md, or a section names a table the
-                                                      repository does not know (CI, tests.yaml)
+                                                      repository does not know, or the repository's SQL and the
+                                                      committed live snapshot (doc/schema/live-schema-*.tsv, the
+                                                      newest) differ in a way that is not on the allow-list
+                                                      below (CI, tests.yaml)
+
+The live snapshot (2026-10-22): doc/schema/live-schema-<date>.tsv is the output of the query above on production. The
+catch-up file db/upgrade/8.115/2026-10-22-schema-catch-up.sql brings the repository's SQL to it; its guarded
+procedure calls (CALL schema_add_column / schema_modify_column / schema_drop_column / schema_drop_view) are read
+here like the ALTER TABLE and DROP VIEW they run. What may still differ (--check passes):
+  - tables only live whose names say they are dated backups (BACKUP_PATTERN; the same pattern as SchemaCheck.java),
+  - the old live-only tables and views in LIVE_ONLY_UNUSED / LIVE_ONLY_UNUSED_VIEWS (each has a section in
+    docs/data-model.md, proposed for dropping),
+  - a column whose type the repository does not know ("?", from CREATE TABLE ... AS SELECT),
+  - a table only the repository has whose name contains * (made at run time, e.g. login_inactive_backup_*).
+Everything else fails the check: add the change to a db/upgrade file (and run it on production), or refresh the
+snapshot when production changed (the command in docs/data-model.md).
 Standard library only (Python 3.9 or later).
 """
 import json
@@ -44,6 +59,23 @@ DOC = ROOT / "docs" / "data-model.md"
 
 # Section headings in docs/data-model.md look like:  ### `taxon`   (one table)  or  ### `login_inactive_backup_*`
 HEADING = re.compile(r"^#{2,4} +`([a-z0-9_*]+)`", re.M)
+
+SNAPSHOT_DIR = ROOT / "doc" / "schema"   # doc/ is mounted in the container (/antweb/deploy/doc): SchemaCheck.java reads it
+
+# Dated backup tables (made by hand or by the code before a bulk change). Same pattern as
+# src/org/calacademy/antweb/util/SchemaCheck.java BACKUP (tests/unit/test_datamodel_list_tables.py checks that).
+BACKUP_PATTERN = r"(_bak_|_backup_|_deleted_)|_?([0-9]{8}|[0-9]{4}_[0-9]{2}_[0-9]{2})$"
+BACKUP = re.compile(BACKUP_PATTERN)
+
+# Old tables and views production has and no SQL in the repository creates, that no code reads (search of src/, web/,
+# api/, bin/, 2026-10-22). docs/data-model.md section 13 proposes dropping them (needs Brian's yes, back up first).
+# A table dropped from production after the snapshot is removed from here when the snapshot is refreshed.
+LIVE_ONLY_UNUSED = {
+    "afro_types_tmp", "artist_copy", "description", "favorite_images", "groups_project", "homepage", "image_backup",
+    "image_count", "image_count_materialized", "junkspec", "proj_taxont", "similar_species", "synonymy",
+    "temp_image_artist",
+}
+LIVE_ONLY_UNUSED_VIEWS = {"darwin_core_2_test"}
 
 COLUMN_SKIP = ("primary", "key", "index", "unique", "constraint", "foreign", "fulltext", "check", "spatial")
 
@@ -209,7 +241,9 @@ class Schema:
                 continue
             m = re.match(r"add\s+(?:column\s+)?(?!(?:index|key|unique|primary|constraint|fulltext|foreign|spatial)\b)(?:if\s+not\s+exists\s+)?\(?(.*)$", s, re.I)
             if m and not re.match(r"add\s+(index|key|unique|primary|constraint|fulltext|foreign|spatial)\b", low):
-                rest = m.group(1).rstrip(")") if m.group(1).count(")") > m.group(1).count("(") else m.group(1)
+                rest = m.group(1)
+                if rest.count(")") > rest.count("(") and rest.rstrip().endswith(")"):
+                    rest = rest.rstrip()[:-1]  # "add column (title varchar(1000))": only the one closing parenthesis
                 for c in split_top(rest, ","):
                     col = column_def(c)
                     if col:
@@ -354,6 +388,23 @@ def apply_statement(schema, stmt, src, origin):
             if pm:
                 schema.rename(ident(pm.group(1)), ident(pm.group(2)), src)
         return
+    m = re.match(r"call\s+schema_(add|modify|drop)_column\s*\(\s*'([A-Za-z0-9_]+)'\s*,\s*'([A-Za-z0-9_]+)'\s*"
+                 r"(?:,\s*'([^']*)'\s*)?\)\s*$", s, re.I)
+    if m:  # the catch-up file's guarded procedures (db/upgrade/8.115): read as the ALTER TABLE they run
+        verb, table, column, definition = m.group(1).lower(), m.group(2).lower(), m.group(3), m.group(4) or ""
+        if verb == "drop":
+            schema.alter(table, "drop column " + column, src)
+        elif verb == "add":
+            schema.alter(table, "add column " + column + " " + definition, src)
+        else:
+            schema.alter(table, "modify column " + column + " " + definition, src)
+        return
+    m = re.match(r"call\s+schema_drop_view\s*\(\s*'([A-Za-z0-9_]+)'\s*\)\s*$", s, re.I)
+    if m:
+        n = m.group(1).lower()
+        if schema.views.pop(n, None):
+            schema.dropped_views[n] = src
+        return
     m = re.match(r"alter\s+(?:ignore\s+)?table\s+" + NAME + r"\s+(.*)$", s, re.I)
     if m and ident(m.group(1)) not in ("add", "drop", "modify", "change"):  # "alter table drop column x" (no name)
         schema.alter(ident(m.group(1)), m.group(2), src)
@@ -361,7 +412,7 @@ def apply_statement(schema, stmt, src, origin):
 
 DDL_START = re.compile(r"(?i)(alter|create|drop|rename)\s+(table|view|temporary|or|algorithm|definer|sql|ignore|index|unique)\b")
 STATEMENT_START = re.compile(r"(?i)(alter|create|drop|rename|insert|replace|update|delete|select|set|show|use|load|"
-                             r"truncate|grant|describe|desc|mysql>|source)\b")
+                             r"truncate|grant|describe|desc|mysql>|source|call)\b")
 
 
 def split_semicolons(text):
@@ -392,6 +443,8 @@ def sql_statements(text):
     line that starts (in column 1) with CREATE/ALTER/DROP/RENAME TABLE or VIEW always starts a new statement, and a
     line that starts with another SQL keyword does so outside parentheses."""
     stmts = []
+    # DELIMITER // ... DELIMITER ; holds stored procedures (db/upgrade/8.115): their bodies are not table changes
+    text = re.sub(r"(?ims)^[ \t]*DELIMITER[ \t]+(?!;)\S+[ \t]*$.*?^[ \t]*DELIMITER[ \t]+;[ \t]*$", "", text)
     for chunk in split_semicolons(strip_sql_comments(text)):
         buf, depth = [], 0
         for line in chunk.splitlines():
@@ -572,31 +625,43 @@ def doc_headings():
 def norm_type(t):
     t = t.lower().replace(" ", "")
     t = re.sub(r"^(tinyint|smallint|mediumint|int|bigint)\(\d+\)", r"\1", t)  # MySQL 8 drops display widths
+    if t in ("long", "longvarchar"):  # MySQL's aliases of mediumtext (db/upgrade/7.9 object_map)
+        t = "mediumtext"
     return t.replace("unsigned", " unsigned")
 
 
-def compare(schema, path):
+def read_live(path):
+    """(columns, kinds) of a live schema export: table -> {column: type}, table -> table_type. Names lower case."""
     live, kinds = {}, {}
-    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+    for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines():
         parts = line.split("\t")
         if len(parts) < 3:
             continue
         t, c, ty = parts[0].lower(), parts[1].lower(), parts[2]
         live.setdefault(t, {})[c] = ty
         kinds[t] = parts[3] if len(parts) > 3 else "BASE TABLE"
-    if not live:
-        print(f"--compare: no rows in {path}; the query or the login failed (see the command in docs/data-model.md)")
-        return 2
+    return live, kinds
+
+
+def latest_snapshot(directory=None):
+    """The newest committed live snapshot (doc/schema/live-schema-YYYY-MM-DD.tsv), or None."""
+    files = sorted(Path(directory or SNAPSHOT_DIR).glob("live-schema-*.tsv"))
+    return files[-1] if files else None
+
+
+def diff(schema, live, kinds):
+    """The differences between the repository's schema and a live one, as a dict of lists (names sorted)."""
     repo = {n: t["columns"] for n, t in schema.tables.items() if "*" not in n}
     patterns = [re.compile("^" + re.escape(n).replace(r"\*", ".*") + "$") for n in schema.tables if "*" in n]
     live_tables = {t for t, k in kinds.items() if k != "VIEW"}
     live_views = {t for t, k in kinds.items() if k == "VIEW"}
-    only_live = sorted(t for t in live_tables if t not in repo and not any(p.match(t) for p in patterns))
-    only_repo = sorted(t for t in repo if t not in live_tables)
-    print("Tables in the live database that the repository does not know:", ", ".join(only_live) or "none")
-    print("Tables the repository describes that the live database does not have:", ", ".join(only_repo) or "none")
-    print("Views live but not in the repository:", ", ".join(sorted(live_views - set(schema.views))) or "none")
-    print("Views in the repository but not live:", ", ".join(sorted(set(schema.views) - live_views)) or "none")
+    d = {
+        "only_live": sorted(t for t in live_tables if t not in repo and not any(p.match(t) for p in patterns)),
+        "only_repo": sorted(t for t in repo if t not in live_tables),
+        "views_only_live": sorted(live_views - set(schema.views)),
+        "views_only_repo": sorted(set(schema.views) - live_views),
+        "columns": {},
+    }
     for t in sorted(set(repo) & live_tables):
         r, l = repo[t], live[t]
         if not r:
@@ -605,14 +670,62 @@ def compare(schema, path):
         extra = [c for c in l if c not in r]
         differ = [f"{c} {r[c]} -> {l[c]}" for c in r if c in l and r[c] != "?" and norm_type(r[c]) != norm_type(l[c])]
         if missing or extra or differ:
-            print(f"\n{t}:")
-            if missing:
-                print("  not live:", ", ".join(missing))
-            if extra:
-                print("  live only:", ", ".join(extra))
-            if differ:
-                print("  type differs (repository -> live):", "; ".join(differ))
+            d["columns"][t] = {"missing": missing, "extra": extra, "differ": differ}
+    return d
+
+
+def compare(schema, path):
+    live, kinds = read_live(path)
+    if not live:
+        print(f"--compare: no rows in {path}; the query or the login failed (see the command in docs/data-model.md)")
+        return 2
+    d = diff(schema, live, kinds)
+    print("Tables in the live database that the repository does not know:", ", ".join(d["only_live"]) or "none")
+    print("Tables the repository describes that the live database does not have:", ", ".join(d["only_repo"]) or "none")
+    print("Views live but not in the repository:", ", ".join(d["views_only_live"]) or "none")
+    print("Views in the repository but not live:", ", ".join(d["views_only_repo"]) or "none")
+    for t, c in d["columns"].items():
+        print(f"\n{t}:")
+        if c["missing"]:
+            print("  not live:", ", ".join(c["missing"]))
+        if c["extra"]:
+            print("  live only:", ", ".join(c["extra"]))
+        if c["differ"]:
+            print("  type differs (repository -> live):", "; ".join(c["differ"]))
     return 0
+
+
+def snapshot_errors(schema, path):
+    """Differences between the repository's SQL and the committed snapshot that the allow-list does not explain."""
+    live, kinds = read_live(path)
+    if not live:
+        return [f"{path} has no rows"]
+    d = diff(schema, live, kinds)
+    errors = []
+    for t in d["only_live"]:
+        if not BACKUP.search(t) and t not in LIVE_ONLY_UNUSED:
+            errors.append(f"table {t} is live (snapshot) but no SQL in the repository creates it: add a db/upgrade file, "
+                          "or (an old unused table) add it to LIVE_ONLY_UNUSED with a section in docs/data-model.md")
+    for t in d["only_repo"]:
+        errors.append(f"table {t} is in the repository's SQL but not live (snapshot): run its db/upgrade file on "
+                      "production and refresh the snapshot, or drop it in a db/upgrade file")
+    for v in d["views_only_live"]:
+        if v not in LIVE_ONLY_UNUSED_VIEWS:
+            errors.append(f"view {v} is live (snapshot) but no SQL in the repository creates it")
+    for v in d["views_only_repo"]:
+        errors.append(f"view {v} is in the repository's SQL but not live (snapshot)")
+    for t, c in d["columns"].items():
+        for col in c["missing"]:
+            errors.append(f"column {t}.{col} is in the repository's SQL but not live (snapshot)")
+        for col in c["extra"]:
+            errors.append(f"column {t}.{col} is live (snapshot) but not in the repository's SQL")
+        for x in c["differ"]:
+            errors.append(f"column {t}.{x}: the type differs (repository -> snapshot)")
+    for t in sorted(LIVE_ONLY_UNUSED - set(d["only_live"])):
+        errors.append(f"LIVE_ONLY_UNUSED names {t}, which is not a live-only table of the snapshot: remove it from the list")
+    for v in sorted(LIVE_ONLY_UNUSED_VIEWS - set(d["views_only_live"])):
+        errors.append(f"LIVE_ONLY_UNUSED_VIEWS names {v}, which is not a live-only view of the snapshot: remove it")
+    return errors
 
 
 def main(argv):
@@ -634,12 +747,16 @@ def main(argv):
             return 2
         return compare(schema, path)
     if "--check" in argv:
+        snapshot = latest_snapshot()
+        live_names = set(read_live(snapshot)[1]) if snapshot else set()
         headings = doc_headings()
         sections = set(headings)
         twice = sorted({h for h in headings if headings.count(h) > 1})
-        known = set(schema.tables) | set(schema.views)
+        known = set(schema.tables) | set(schema.views) | live_names
         gone = {**schema.dropped, **schema.dropped_views}
-        missing = [n for n in names + views if n not in sections]
+        missing = [n for n in sorted(set(names + views) | live_names)
+                   if n not in sections and not any(re.match("^" + re.escape(p).replace(r"\*", ".*") + "$", n)
+                                                    for p in sections if "*" in p)]
         unknown = [s for s in sorted(sections) if s not in known and s not in gone]
         dropped = [s for s in sorted(sections) if s not in known and s in gone]
         for s in dropped:
@@ -648,16 +765,25 @@ def main(argv):
         for n in twice:
             print(f"::error file=docs/data-model.md::table {n} has two sections in docs/data-model.md (keep one)")
         for n in missing:
-            kind = "view" if n in schema.views else "table"
-            where = schema.views[n] if n in schema.views else (schema.tables[n]["created"] or schema.tables[n]["origin"])
+            if n in schema.views:
+                kind, where = "view", schema.views[n]
+            elif n in schema.tables:
+                kind, where = "table", schema.tables[n]["created"] or schema.tables[n]["origin"]
+            else:
+                kind, where = "table", "live only, " + snapshot.name
             print(f"::error file=docs/data-model.md::{kind} {n} ({where}) has no section in docs/data-model.md "
                   "(add a heading ### `" + n + "`; see tools/datamodel/list_tables.py)")
         for s in unknown:
             print(f"::error file=docs/data-model.md::section `{s}` names a table no SQL in the repository creates, "
-                  "alters or drops (rename the heading, or remove the section)")
+                  "alters or drops, and the live snapshot does not have (rename the heading, or remove the section)")
+        drift = snapshot_errors(schema, snapshot) if snapshot else ["no snapshot doc/schema/live-schema-*.tsv"]
+        for e in drift:
+            print(f"::error file=db/upgrade::{e}")
         print(f"{len(names)} tables and {len(views)} views in the repository's SQL, {len(sections)} sections in "
-              f"docs/data-model.md, {len(missing)} missing, {len(unknown)} unknown, {len(dropped)} dropped")
-        return 1 if missing or unknown or twice or dropped else 0
+              f"docs/data-model.md, {len(missing)} missing, {len(unknown)} unknown, {len(dropped)} dropped; "
+              f"snapshot {snapshot.name if snapshot else 'none'}: {len(live_names)} tables and views, "
+              f"{len(drift)} unexplained differences")
+        return 1 if missing or unknown or twice or dropped or drift else 0
     for n in names:
         t = schema.tables[n]
         print(f"{n}\t{t['created'] or '(not created in the repository: ' + t['origin'] + ')'}")

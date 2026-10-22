@@ -47,9 +47,11 @@ jobs:
 
       - name: Data model doc has a section for every table (docs/data-model.md)
         # Replays db/upgrade/**/*.sql and the CREATE TABLE statements in src/; fails when a table or view
-        # has no "### `name`" section in docs/data-model.md, or a section names a table no SQL knows.
-        # Fix: add the section (see the top of docs/data-model.md). The parser's own cases:
-        # tests/unit/test_datamodel_list_tables.py.
+        # has no "### `name`" section in docs/data-model.md, or a section names a table no SQL knows, or
+        # (2026-10-22) the repository's SQL and the committed production snapshot doc/schema/live-schema-*.tsv
+        # differ in a way the allow-list in list_tables.py does not explain (dated backups, old unused tables).
+        # Fix: add the section, or the db/upgrade file (see the top of docs/data-model.md). The parser's own
+        # cases: tests/unit/test_datamodel_list_tables.py.
         run: |
           python3 tests/unit/test_datamodel_list_tables.py
           python3 tools/datamodel/list_tables.py --check
@@ -146,6 +148,20 @@ jobs:
             mkdir -p /tmp/tc
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/ExifTextTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.ExifTextTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (8 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the schema check (live database against doc/schema/live-schema-*.tsv)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/doc/schema:/s:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/util/SchemaCheck.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/SchemaCheckTest.java
+            java -Dsnapshot.dir=/s -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.SchemaCheckTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (8 tests)" /tmp/out.txt
           '
