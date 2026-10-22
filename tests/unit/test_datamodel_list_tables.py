@@ -227,10 +227,13 @@ def test_catch_up_calls_and_delimiter_blocks():
                "CALL schema_drop_column('c', 'gone');\n"
                "CALL schema_drop_view('v');\n"
                "CALL schema_drop_view('not_a_view');\n"
+               "create table old_copy (a int);\n"
+               "CALL schema_drop_empty_table('old_copy');\n"
                "DROP PROCEDURE IF EXISTS schema_add_column;\n")
     assert s.tables["c"]["columns"] == {"a": "bigint", "b": "int", "new_col": "varchar(30)"}, s.tables["c"]["columns"]
     assert "never" not in s.tables, "a procedure body is not a table change"
     assert "v" not in s.views and "v" in s.dropped_views
+    assert "old_copy" not in s.tables and "old_copy" in s.dropped
 
 
 def test_norm_type():
@@ -304,7 +307,7 @@ def test_catch_up_file_says_it_is_safe_on_production():
     body = L.strip_sql_comments(text)
     # nothing unguarded: every ALTER, DROP and CREATE TABLE goes through a guard
     assert not re.search(r"(?im)^\s*ALTER\s+TABLE", body)
-    assert not re.search(r"(?im)^\s*DROP\s+TABLE\s+(?!IF\s+EXISTS)", body)
+    assert not re.search(r"(?im)^\s*DROP\s+TABLE", body), "tables are dropped only when empty (schema_drop_empty_table)"
     assert not re.search(r"(?im)^\s*CREATE\s+TABLE\s+(?!IF\s+NOT\s+EXISTS)", body)
     assert not re.search(r"(?im)^\s*DROP\s+VIEW", body)
 

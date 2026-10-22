@@ -38,7 +38,8 @@ Usage:
 
 The live snapshot (2026-10-22): doc/schema/live-schema-<date>.tsv is the output of the query above on production. The
 catch-up file db/upgrade/8.115/2026-10-22-schema-catch-up.sql brings the repository's SQL to it; its guarded
-procedure calls (CALL schema_add_column / schema_modify_column / schema_drop_column / schema_drop_view) are read
+procedure calls (CALL schema_add_column / schema_modify_column / schema_drop_column / schema_drop_empty_table /
+schema_drop_view) are read
 here like the ALTER TABLE and DROP VIEW they run. What may still differ (--check passes):
   - tables only live whose names say they are dated backups (BACKUP_PATTERN; the same pattern as SchemaCheck.java),
   - the old live-only tables and views in LIVE_ONLY_UNUSED / LIVE_ONLY_UNUSED_VIEWS (each has a section in
@@ -398,6 +399,10 @@ def apply_statement(schema, stmt, src, origin):
             schema.alter(table, "add column " + column + " " + definition, src)
         else:
             schema.alter(table, "modify column " + column + " " + definition, src)
+        return
+    m = re.match(r"call\s+schema_drop_empty_table\s*\(\s*'([A-Za-z0-9_]+)'\s*\)\s*$", s, re.I)
+    if m:  # dropped where it holds no rows (a fresh build); production does not have these tables
+        schema.drop(m.group(1).lower(), src)
         return
     m = re.match(r"call\s+schema_drop_view\s*\(\s*'([A-Za-z0-9_]+)'\s*\)\s*$", s, re.I)
     if m:

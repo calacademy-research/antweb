@@ -163,7 +163,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/SchemaCheckTest.java
             java -Dsnapshot.dir=/s -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.SchemaCheckTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (8 tests)" /tmp/out.txt
+            grep -q "^OK (9 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the download guards (genus/species files, 5,000-record cap, paged search list)

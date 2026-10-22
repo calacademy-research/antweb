@@ -25,18 +25,25 @@
 --      give them; docs/data-model.md section 14);
 --   3. adds the columns production has;
 --   4. gives columns production's type (production's is wider, or MySQL converted it: text to mediumtext by the
---      utf8mb4 conversion of 2021, LONG to longtext, float to double);
+--      utf8 conversion of 2021, LONG (mediumtext) widened to longtext by hand, float to double);
 --   5. drops four columns that old upgrade files add but production does not have and no code reads:
 --      bioregion.biogeographicregion (db/upgrade/4.134), geolocale_taxon.modified (7.9),
 --      project.endemic_species_count (6.3; ProjectDb reads it only in commented-out code),
 --      specimen.is_endemic (6.74; endemic flags are on the taxon lists: geolocale_taxon, bioregion_taxon, proj_taxon);
---   6. drops the tables and views the repository describes that production no longer has (old backups from
+--   6. drops (when empty) the tables, and the views, the repository describes that production no longer has (old backups from
 --      2015 to 2021, the unused command table, the TAPIR view tapir_specimen, and the 2012 view image_count,
 --      which production replaced by a table of the same name).
 --
 -- Not changed here, a decision for Brian (needs an ALTER on production): ant_group.name is varchar(100) and
 -- upload.group_name varchar(64); an 81-character group name made an upload row insert fail (PR #232 handles that
 -- in code). Widening upload.group_name to varchar(100) would match them.
+--
+-- Limits on any other database: "matches production" means names and types only (no keys, indexes, NOT NULL or
+-- defaults; see 2). A retype never shortens a varchar or char, and keeps NULL / NOT NULL, the default, ON UPDATE,
+-- AUTO_INCREMENT, the comment and the column's character set and collation; datetime to timestamp
+-- (geolocale_taxon.created) fails under strict mode, rather than changing data, if a value is outside 1970 to 2038.
+-- The old tables of step 6 are dropped only when they hold no rows: a database where one still has data keeps it
+-- (back it up and drop it by hand, docs/data-model.md section 13).
 --
 -- Rollback: none needed on production (nothing changes). On a test database: rebuild it.
 
@@ -62,20 +69,32 @@ BEGIN
   DECLARE cur_null VARCHAR(3);
   DECLARE cur_default TEXT;
   DECLARE cur_extra VARCHAR(255);
+  DECLARE cur_comment TEXT;
+  DECLARE cur_charset VARCHAR(64);
+  DECLARE cur_collation VARCHAR(64);
   DECLARE found INT DEFAULT 0;
   SELECT COUNT(*) INTO found FROM information_schema.columns
    WHERE table_schema = DATABASE() AND table_name = t AND column_name = c;
   IF found = 1 THEN
-    SELECT column_type, is_nullable, column_default, extra INTO cur_type, cur_null, cur_default, cur_extra
+    SELECT column_type, is_nullable, column_default, extra, column_comment, character_set_name, collation_name
+      INTO cur_type, cur_null, cur_default, cur_extra, cur_comment, cur_charset, cur_collation
       FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = t AND column_name = c;
-    IF LOWER(cur_type) <> LOWER(ty) THEN
+    IF LOWER(cur_type) <> LOWER(ty)
+       -- never shorten a varchar or char (that could cut values)
+       AND NOT (cur_type REGEXP '^(var)?char\\([0-9]+\\)$' AND ty REGEXP '^(var)?char\\([0-9]+\\)$'
+                AND CAST(REGEXP_SUBSTR(cur_type, '[0-9]+') AS UNSIGNED) > CAST(REGEXP_SUBSTR(ty, '[0-9]+') AS UNSIGNED)) THEN
       SET @schema_sql = CONCAT('ALTER TABLE `', t, '` MODIFY COLUMN `', c, '` ', ty,
+        -- the column's own character set and collation (text types only; a numeric target has none)
+        IF(cur_charset IS NOT NULL AND ty REGEXP '(char|text|enum|set)', CONCAT(' CHARACTER SET ', cur_charset, ' COLLATE ', cur_collation), ''),
         IF(cur_null = 'NO', ' NOT NULL', ' NULL'),
         CASE WHEN cur_default IS NULL THEN ''
-             WHEN cur_extra LIKE '%DEFAULT_GENERATED%' THEN CONCAT(' DEFAULT ', cur_default)
+             WHEN cur_extra LIKE '%DEFAULT_GENERATED%' AND UPPER(cur_default) REGEXP '^(CURRENT_TIMESTAMP|NOW)(\\([0-9]*\\))?$'
+               THEN CONCAT(' DEFAULT ', cur_default)
+             WHEN cur_extra LIKE '%DEFAULT_GENERATED%' THEN CONCAT(' DEFAULT (', cur_default, ')')
              ELSE CONCAT(' DEFAULT ', QUOTE(cur_default)) END,
         IF(cur_extra LIKE '%on update CURRENT_TIMESTAMP%', ' ON UPDATE CURRENT_TIMESTAMP', ''),
-        IF(cur_extra LIKE '%auto_increment%', ' AUTO_INCREMENT', ''));
+        IF(cur_extra LIKE '%auto_increment%', ' AUTO_INCREMENT', ''),
+        IF(cur_comment IS NOT NULL AND cur_comment <> '', CONCAT(' COMMENT ', QUOTE(cur_comment)), ''));
       PREPARE schema_stmt FROM @schema_sql;
       EXECUTE schema_stmt;
       DEALLOCATE PREPARE schema_stmt;
@@ -85,12 +104,32 @@ END //
 DROP PROCEDURE IF EXISTS schema_drop_column //
 CREATE PROCEDURE schema_drop_column(IN t VARCHAR(64), IN c VARCHAR(64))
 BEGIN
-  IF EXISTS (SELECT 1 FROM information_schema.columns
-              WHERE table_schema = DATABASE() AND table_name = t AND column_name = c) THEN
+  IF EXISTS (SELECT 1 FROM information_schema.columns c2 JOIN information_schema.tables t2 USING (table_schema, table_name)
+              WHERE c2.table_schema = DATABASE() AND c2.table_name = t AND c2.column_name = c AND t2.table_type = 'BASE TABLE') THEN
     SET @schema_sql = CONCAT('ALTER TABLE `', t, '` DROP COLUMN `', c, '`');
     PREPARE schema_stmt FROM @schema_sql;
     EXECUTE schema_stmt;
     DEALLOCATE PREPARE schema_stmt;
+  END IF;
+END //
+DROP PROCEDURE IF EXISTS schema_drop_empty_table //
+CREATE PROCEDURE schema_drop_empty_table(IN t VARCHAR(64))
+BEGIN
+  -- Only a base table with no rows; a table that still holds data is kept and named in the output.
+  IF EXISTS (SELECT 1 FROM information_schema.tables
+              WHERE table_schema = DATABASE() AND table_name = t AND table_type = 'BASE TABLE') THEN
+    SET @schema_sql = CONCAT('SELECT COUNT(*) INTO @schema_rows FROM `', t, '`');
+    PREPARE schema_stmt FROM @schema_sql;
+    EXECUTE schema_stmt;
+    DEALLOCATE PREPARE schema_stmt;
+    IF @schema_rows = 0 THEN
+      SET @schema_sql = CONCAT('DROP TABLE `', t, '`');
+      PREPARE schema_stmt FROM @schema_sql;
+      EXECUTE schema_stmt;
+      DEALLOCATE PREPARE schema_stmt;
+    ELSE
+      SELECT CONCAT('kept ', t, ': it has ', @schema_rows, ' rows (back it up, then drop it by hand)') AS schema_catch_up;
+    END IF;
   END IF;
 END //
 DROP PROCEDURE IF EXISTS schema_drop_view //
@@ -299,13 +338,23 @@ CALL schema_drop_column('geolocale_taxon', 'modified');
 CALL schema_drop_column('project', 'endemic_species_count');
 CALL schema_drop_column('specimen', 'is_endemic');
 
--- 6. Tables and views the repository describes that production does not have (none is read by the code).
-DROP TABLE IF EXISTS command, description_edit_plazi20150601, favorite_images_bak, login_project_bak, museumbak,
-  proj_taxon20170422, project20170422, similar_species_bak, taxon_country_bak, taxon_prop20170617;
+-- 6. Tables and views the repository describes that production does not have (none is read by the code). A
+--    table is dropped only when it is empty.
+CALL schema_drop_empty_table('command');
+CALL schema_drop_empty_table('description_edit_plazi20150601');
+CALL schema_drop_empty_table('favorite_images_bak');
+CALL schema_drop_empty_table('login_project_bak');
+CALL schema_drop_empty_table('museumbak');
+CALL schema_drop_empty_table('proj_taxon20170422');
+CALL schema_drop_empty_table('project20170422');
+CALL schema_drop_empty_table('similar_species_bak');
+CALL schema_drop_empty_table('taxon_country_bak');
+CALL schema_drop_empty_table('taxon_prop20170617');
 CALL schema_drop_view('tapir_specimen');
 CALL schema_drop_view('image_count');
 
 DROP PROCEDURE IF EXISTS schema_add_column;
 DROP PROCEDURE IF EXISTS schema_modify_column;
 DROP PROCEDURE IF EXISTS schema_drop_column;
+DROP PROCEDURE IF EXISTS schema_drop_empty_table;
 DROP PROCEDURE IF EXISTS schema_drop_view;

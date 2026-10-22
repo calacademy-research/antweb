@@ -55,7 +55,9 @@ running site can read it. What it showed, and what was done:
    once the snapshot is refreshed.
 2. Production, daily: the count check (`countCheck.do`, run after the nightly run) compares the live database's
    tables and columns with the snapshot (`SchemaCheck.java`) and lists every table or column added, removed or
-   retyped since then, except dated backups. Read-only. Its summary goes to admin.log with the count check's.
+   retyped since then, except dated backups (and so also a real table whose name ends in a date: name new tables
+   without one). Read-only. Its summary goes to admin.log with the count check's; it sends no email (a possible
+   follow-up: an admin alert when a change is found).
 
 When production changes on purpose (an upgrade file run, a backup table dropped), refresh the snapshot: run the
 command above on antweb-prod, copy `/root/live-schema.tsv` into the repository as

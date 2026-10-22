@@ -53,13 +53,16 @@ public final class SchemaCheck {
 
     private SchemaCheck() {}
 
-    /** A schema: table (lower case) -> column (lower case) -> type, and table -> table type ("BASE TABLE", "VIEW"). */
+    /**
+     * A schema: table -> column (lower case) -> type, and table -> table type ("BASE TABLE", "VIEW"). Table names keep
+     * their case: production's MySQL tells tables apart by case (proj_taxonT is not proj_taxont).
+     */
     public static final class Schema {
         public final Map<String, Map<String, String>> columns = new LinkedHashMap<>();
         public final Map<String, String> kinds = new LinkedHashMap<>();
 
         void add(String table, String column, String type, String kind) {
-            String t = table.toLowerCase(Locale.ROOT);
+            String t = table;
             columns.computeIfAbsent(t, k -> new LinkedHashMap<>()).put(column.toLowerCase(Locale.ROOT), type);
             kinds.put(t, kind == null || kind.isEmpty() ? "BASE TABLE" : kind);
         }
@@ -86,6 +89,10 @@ public final class SchemaCheck {
         }
     }
 
+    /**
+     * Note: a real table whose name ends in a date (8 digits or YYYY_MM_DD) is treated as a backup too and not reported
+     * when it comes or goes; name new tables without a trailing date.
+     */
     public static boolean isBackup(String table) {
         return BACKUP.matcher(table.toLowerCase(Locale.ROOT)).find();
     }
@@ -95,6 +102,7 @@ public final class SchemaCheck {
         if (type == null) return "";
         String t = type.toLowerCase(Locale.ROOT).replace(" ", "");
         t = t.replaceFirst("^(tinyint|smallint|mediumint|int|bigint)\\(\\d+\\)", "$1");
+        if (t.equals("long") || t.equals("longvarchar")) t = "mediumtext";   // MySQL's aliases (as list_tables.py norm_type)
         return t.replace("unsigned", " unsigned");
     }
 

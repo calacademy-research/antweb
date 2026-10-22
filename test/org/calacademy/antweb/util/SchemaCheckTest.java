@@ -40,7 +40,7 @@ public class SchemaCheckTest extends TestCase {
 
     public void testIntegerDisplayWidthAndCaseAreNotDifferences() {
         List<String> live = Arrays.asList(
-            "TAXON\tTaxon_Name\tVARCHAR(128)\tBASE TABLE",
+            "taxon\tTaxon_Name\tVARCHAR(128)\tBASE TABLE",
             "taxon\tspecies_count\tint(11)\tBASE TABLE",
             "specimen\tcode\tvarchar(128)\tBASE TABLE",
             "specimen\thabitat\tvarchar(512)\tBASE TABLE",
@@ -74,6 +74,12 @@ public class SchemaCheckTest extends TestCase {
         List<String> live = new java.util.ArrayList<>(SNAPSHOT);
         live.set(6, "api3_1_specimen\tcode\tvarchar(256)\tVIEW");
         assertTrue(compare(SNAPSHOT, live).differences.isEmpty());
+    }
+
+    public void testTableNamesKeepTheirCase() {
+        List<String> live = new java.util.ArrayList<>(SNAPSHOT);
+        live.add("Taxon\tid\tint\tBASE TABLE");
+        assertEquals(Arrays.asList("table Taxon added (1 columns)"), compare(SNAPSHOT, live).differences);
     }
 
     public void testColumnRemoved() {
