@@ -47,6 +47,8 @@
 <h1>Curators:</h1>
 </div>
 
+<p id="curators-groups-note">The upload group column links to each group's page (its specimens and uploads). <a href="<%= AntwebProps.getDomainApp() %>/groups.do">All upload groups</a></p>
+
 <br>
 
 <table>
@@ -54,7 +56,7 @@
 <tr>
 <th></th>
 <th><a href='<%= AntwebProps.getDomainApp() %>/curators.do?sortBy=name'>Name</a></th>
-<th><a href='<%= AntwebProps.getDomainApp() %>/curators.do?sortBy=group'>Group</a></th>
+<th><a href='<%= AntwebProps.getDomainApp() %>/curators.do?sortBy=group'>Upload group</a></th>
 <th><a href='<%= AntwebProps.getDomainApp() %>/curators.do?sortBy=specimenUploadCount'>Specimen Uploads</a></th>
 <th><a href='<%= AntwebProps.getDomainApp() %>/curators.do?sortBy=descEditCount'>Description Edits</a></th>
 <th>Projects</th>

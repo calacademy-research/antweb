@@ -20,17 +20,30 @@
     String domainApp = AntwebProps.getDomainApp();
 
     String message = (String) request.getAttribute("message"); 
-    if (message != null) out.println("<h2>&nbsp;" + message + "</h2>");
-    
-    // Sloppy. If there is a curator or a group there will be a colon in the message (title).
-    boolean isAllGroups = !message.contains(":");
+    if (message != null) out.println("<h2 style=\"margin-left:0.3em\">" + message + "</h2>");
+
+    // Which view this is (ListUploadsAction): every group's uploads, one group's, or one login's.
+    String uploadsView = (String) request.getAttribute("uploadsView");
+    boolean isAllGroups = uploadsView == null || org.calacademy.antweb.util.ListUploadsAction.UPLOADS_VIEW_ALL.equals(uploadsView);
+    org.calacademy.antweb.Login viewer = LoginMgr.getAccessLogin(request);
+    org.calacademy.antweb.Group ownGroup = viewer == null ? null : viewer.getGroup();
 %>
 &nbsp;&nbsp;&nbsp;<a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a>
 <% if (LoginMgr.isAdmin(request)) { %> | <a href = "<%= domainApp %>/query.do?action=curiousQuery&name=lastSpecimenUpload">Each group's last upload</a><% } %>
-<br><br><br>
-
+<br><br>
 <%
-    if (!isAllGroups) { out.println("&nbsp;&nbsp;&nbsp;Group Uploads: <a href='" + AntwebProps.getDomainApp() + "/listSpecimenUploads.do" + "'>All</a><br><br>"); }
+    if (isAllGroups) {
+        out.println("<p class=\"uploads-view\">&nbsp;&nbsp;&nbsp;<b>" + org.calacademy.antweb.util.ListUploadsAction.ALL_GROUPS_LINE + "</b>");
+        if (ownGroup != null) {
+            out.println(" <a class=\"uploads-own-group\" href=\"" + domainApp + "/listSpecimenUploads.do?groupId=" + ownGroup.getId() + "\">"
+                + org.calacademy.antweb.util.ListUploadsAction.ownGroupLinkText(ownGroup) + "</a>");
+        }
+        out.println("</p>");
+    } else if (LoginMgr.isAdmin(request)) {
+        out.println("<p class=\"uploads-view\">&nbsp;&nbsp;&nbsp;<a class=\"uploads-all-groups\" href=\"" + domainApp + "/listSpecimenUploads.do\">"
+            + org.calacademy.antweb.util.ListUploadsAction.VIEW_ALL_LINK + "</a></p>");
+    }
+    out.println("<br>");
 
     ArrayList<Upload> list = (ArrayList) request.getAttribute("uploads"); 
     int count = 0;

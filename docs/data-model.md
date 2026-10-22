@@ -198,8 +198,8 @@ unused and backup is a search of the code for SQL that names the table (2026-10-
 | `country_bioregion` | [11](#country_bioregion) | unused (2021) |
 | `lookup` | [11](#lookup) | unused |
 | `antwiki_taxon_country` | [11](#antwiki_taxon_country) | unused (reader never called) |
-| `antwiki_valid_taxa`, `antwiki_fossil_taxa` | [11](#antwiki_valid_taxa) | admin query only |
-| `ancillary` | [11](#ancillary) | admin query only |
+| `antwiki_valid_taxa`, `antwiki_fossil_taxa` | [11](#antwiki_valid_taxa) | unused (their admin queries were removed 2026-10-22) |
+| `ancillary` | [11](#ancillary) | unused (its admin query was removed 2026-10-22) |
 | `command` | [11](#command) | unused |
 | `taxon_country` | [11](#taxon_country) | unused; dropped by `db/upgrade/6.16` but still there in 2021 |
 | 9 views | [12](#12-views) | `api3_1_specimen`, `taxon_image` in use (API); the other 7 unused |
@@ -1076,8 +1076,8 @@ list lookup page, not this table). Unused; candidate to drop.
 ### `antwiki_valid_taxa`
 
 Lists of valid (`antwiki_valid_taxa`) and fossil (`antwiki_fossil_taxa`, heading below) names imported from
-AntWiki in 2016 (`db/upgrade/6.10`), compared with AntWeb's names by two admin queries (`Queries.java`). Admin
-query only; nothing updates them, so the comparison is with 2016 data. Candidates to drop with their queries.
+AntWiki in 2016 (`db/upgrade/6.10`). Two admin queries compared them with AntWeb's names; nothing updates them,
+so the comparison was with 2016 data, and the queries were removed on 2026-10-22. Unused; candidates to drop.
 
 ### `antwiki_fossil_taxa`
 
@@ -1085,8 +1085,8 @@ See [`antwiki_valid_taxa`](#antwiki_valid_taxa).
 
 ### `ancillary`
 
-Old "ancillary" pages (title, file name, contents, project), from before 2011. Read only by the admin query
-`ancillaryFiles`. Admin query only; candidate to drop with the query.
+Old "ancillary" pages (title, file name, contents, project), from before 2011. Its only reader, the admin query
+`ancillaryFiles`, was removed on 2026-10-22. Unused; candidate to drop.
 
 ### `command`
 
