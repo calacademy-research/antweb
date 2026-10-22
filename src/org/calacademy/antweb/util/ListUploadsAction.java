@@ -174,24 +174,42 @@ public final class ListUploadsAction extends AntwebAction {
                     
         String message = null;
 
+        // Which view this is (the page says it plainly, 2026-10-22): one group's uploads, one login's, or every group's.
+        String view;
         if (groupIdInt != 0) {
           Group group = GroupMgr.getGroup(groupId);
-          String title = "" + groupId;
-          if (group != null) title = Html.esc(group.getAbbrev());
+          String title = "group " + groupId;
+          if (group != null) title = Html.esc(group.getName());
           title = "<a href='" + AntwebProps.getDomainApp() + "/group.do?id=" + groupId + "'>" + title + "</a>";
-          message = "Specimen Upload Reports for Group: " + title;
+          message = "Specimen uploads of " + title;
+          view = UPLOADS_VIEW_GROUP;
         } else if (loginIdInt != 0) {
           Login login = LoginMgr.getLogin(loginId);
-          String title = "" + loginId;
+          String title = "login " + loginId;
           if (login != null) title = Html.esc(login.getDisplayName());
           title = "<a href='" + AntwebProps.getDomainApp() + "/curator.do?id=" + loginId + "'>" + title + "</a>";
-          message = "Specimen Upload Reports for Login: " + title;
+          message = "Specimen uploads by " + title;
+          view = UPLOADS_VIEW_LOGIN;
         } else {
-          message = "Specimen Upload Reports for All Groups";        
+          message = ALL_GROUPS_TITLE;
+          view = UPLOADS_VIEW_ALL;
         }
 
         request.setAttribute("message", message);
+        request.setAttribute("uploadsView", view);
         request.setAttribute("uploads", uploads);
-    }    
+    }
+
+    public static final String UPLOADS_VIEW_ALL = "all";
+    public static final String UPLOADS_VIEW_GROUP = "group";
+    public static final String UPLOADS_VIEW_LOGIN = "login";
+    public static final String ALL_GROUPS_TITLE = "All groups' specimen uploads";
+    public static final String ALL_GROUPS_LINE = "You are viewing every group's uploads.";
+    public static final String VIEW_ALL_LINK = "View all groups' uploads";
+
+    /** "Show only <group name>'s uploads" (the link from the all-groups view to the login's own group). */
+    public static String ownGroupLinkText(Group group) {
+        return "Show only " + Html.esc(group.getName()) + "'s uploads";
+    }
 
 }

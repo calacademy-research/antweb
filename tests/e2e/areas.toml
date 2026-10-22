@@ -186,6 +186,7 @@ paths = [
   "src/org/calacademy/antweb/util/JobStatusAction.java",
   "src/org/calacademy/antweb/util/UploadMgr.java",
   "src/org/calacademy/antweb/util/ListUploadsAction.java",
+  "web/util/listSpecimenUploads*",
   "src/org/calacademy/antweb/util/ImageUtil.java",
   "src/org/calacademy/antweb/curate/UploadAsOptions.java",
   "web/imageUploader/**",
@@ -197,6 +198,7 @@ paths = [
 ]
 tests = [
   "test_specimen_upload_roundtrip.py",
+  "test_upload_list_views.py",
   "test_image_upload.py",
   "test_image_upload_test_group.py",
   "test_browser_image_upload.py",
