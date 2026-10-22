@@ -87,9 +87,10 @@
         <select name="artist">
 
         <% 
-           ArrayList<Artist> artists = ArtistMgr.getArtists();
+           // A sorted copy: the shared list must not be sorted by two requests at once.
+           ArrayList<Artist> artists = new ArrayList<>(ArtistMgr.getArtists());
            java.util.Collections.sort(artists, Artist.ArtistNameComparator);
-           for (Artist artist : ArtistMgr.getArtists()) { %>
+           for (Artist artist : artists) { %>
 
              <option value="<%= artist.getId() %>"><%= artist.getName() %></option>
 

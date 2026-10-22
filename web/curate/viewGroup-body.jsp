@@ -71,7 +71,7 @@
            selected = "";
            if (thisGroup.getAdminLoginId() == 0) selected = " selected"; else selected = "";
     %>    <option value="0"<%= selected %>>None</option> <%
-           ArrayList<Curator> curatorList = LoginMgr.getCurators();
+           ArrayList<Curator> curatorList = new ArrayList<>(LoginMgr.getCurators());  // a copy: the shared list is never sorted
            Collections.sort(curatorList, Curator.CuratorNameComparator);
            for (Curator curator: curatorList) {
              if (curator.getId() == thisGroup.getAdminLoginId()) {
