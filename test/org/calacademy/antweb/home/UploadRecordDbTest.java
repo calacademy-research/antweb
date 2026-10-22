@@ -21,7 +21,10 @@ import org.calacademy.antweb.home.SpecimenUploadDb;
  * sql_mode (STRICT_TRANS_TABLES, docker/mysql/mysql.cnf):
  *  - the old statement fails for a group name with a quote or longer than the column (the cause);
  *  - the new insert writes the row for any group name (cut to 64 characters), in the caller's
- *    transaction, and throws when it cannot write it (the upload then rolls back).
+ *    transaction, refuses file names longer than the column (links), and throws when it cannot
+ *    write the row (the upload then rolls back).
+ * The test drops and recreates the table upload, and refuses to run on a database whose upload
+ * table looks real.
  *
  * Runs in CI against MySQL 8.4 (host "mysql"), like BackgroundJobDbTest; ANTWEB_TEST_DB_URL overrides.
  */
@@ -46,6 +49,7 @@ public class UploadRecordDbTest extends TestCase {
             System.getenv().getOrDefault("ANTWEB_TEST_DB_PASSWORD", "CHANGE_ME"));
         connection.setAutoCommit(true);
         exec("set session sql_mode = 'STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION'");
+        refuseRealUploadTable();
         exec("drop table if exists upload");
         exec(CREATE);
     }
@@ -59,6 +63,23 @@ public class UploadRecordDbTest extends TestCase {
             } finally {
                 connection.close();
             }
+        }
+    }
+
+    /**
+     * This test drops and recreates the table upload. Refuse when ANTWEB_TEST_DB_URL points at a
+     * database whose upload table looks real (the application's columns and rows in it): the CI
+     * database holds only the small tables the database tests create.
+     */
+    private void refuseRealUploadTable() throws SQLException {
+        try (Statement s = connection.createStatement();
+             ResultSet r = s.executeQuery("select count(*) from information_schema.columns where table_schema = database()"
+                 + " and table_name = 'upload' and column_name = 'log_file_name'")) {
+            r.next();
+            if (r.getInt(1) == 0) return;   // no upload table, or one made by another test
+        }
+        if (count("1 = 1") > 0) {
+            fail("refusing to run: the database at ANTWEB_TEST_DB_URL has a real upload table with rows (this test drops it)");
         }
     }
 
@@ -110,6 +131,14 @@ public class UploadRecordDbTest extends TestCase {
             + " and log_file_name = '20261021-11:28:00-specimenUpload.html'"
             + " and backup_dir_file = 'upload/20261021-11:31:20-specimen57.txt'"));
         assertEquals("Universidade Federal de Viçosa", groupNameOf(2254));
+
+        try {
+            SpecimenUploadDb.insertUploadRow(connection, 2257, 9, 58, "G", "2026-" + LONG_NAME + ".html", null);
+            fail("a report file name longer than the column was cut instead of refused");
+        } catch (SQLException expected) {
+            // a cut name would make the report link point to a file that does not exist
+        }
+        assertEquals(0, count("upload_id = 2257"));
 
         SpecimenUploadDb.insertUploadRow(connection, 2255, 9, 58, LONG_NAME, "x.html", null);
         assertEquals(LONG_NAME.substring(0, SpecimenUploadDb.UPLOAD_TEXT_WIDTH), groupNameOf(2255));

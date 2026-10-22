@@ -180,6 +180,12 @@ public final class BackgroundJobDb implements BackgroundJobs.Store {
 
     private Connection connection(String name) throws SQLException {
         DataSource ds = s_dataSource;
+        if (ds == null) {
+            // No page has handed one over since the start (a job started by the nightly run): the
+            // application's own pool, as the pages use.
+            ds = AntwebDataSources.loaded("conPool");
+            if (ds != null) s_dataSource = ds;
+        }
         if (ds == null) throw new SQLException("no data source for " + TABLE);
         Connection c = DBUtil.getConnection(ds, name);
         if (c == null) throw new SQLException("no connection for " + TABLE);

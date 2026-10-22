@@ -173,10 +173,11 @@ public class SpecimenUploadDb extends UploadDb {
         try (PreparedStatement stmt = connection.prepareStatement(insert)) {
             stmt.setInt(1, uploadId);
             stmt.setInt(2, loginId);
-            stmt.setString(3, fit(groupName == null ? "" : groupName));
+            stmt.setString(3, fit(groupName == null ? "" : groupName));   // display only: cut to the column
             stmt.setInt(4, groupId);
-            stmt.setString(5, fit(logFileName == null ? "" : logFileName));
-            stmt.setString(6, fit(backupDirFile));
+            // File names are used for links (report, Download): never cut, refuse instead.
+            stmt.setString(5, fileName("log_file_name", logFileName == null ? "" : logFileName));
+            stmt.setString(6, fileName("backup_dir_file", backupDirFile));
             if (stmt.executeUpdate() != 1) throw new SQLException("insertUploadRow() no row written for upload " + uploadId);
         } catch (SQLException e) {
             s_log.error("insertUploadRow() upload_id:" + uploadId + " group:" + groupId + " logFileName:" + logFileName + " e:" + e);
@@ -192,6 +193,14 @@ public class SpecimenUploadDb extends UploadDb {
                 }
             }
         }
+    }
+
+    /** A file name for the upload table: refused (SQLException) when longer than the column, never cut. */
+    static String fileName(String column, String name) throws SQLException {
+        if (name != null && name.length() > UPLOAD_TEXT_WIDTH) {
+            throw new SQLException("insertUploadRow() " + column + " longer than " + UPLOAD_TEXT_WIDTH + " characters: " + name);
+        }
+        return name;
     }
 
     /**

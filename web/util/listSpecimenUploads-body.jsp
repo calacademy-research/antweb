@@ -24,7 +24,7 @@
 
     // Which view this is (ListUploadsAction): every group's uploads, one group's, or one login's.
     String uploadsView = (String) request.getAttribute("uploadsView");
-    boolean isAllGroups = ListUploadsAction.UPLOADS_VIEW_ALL.equals(uploadsView);
+    boolean isAllGroups = uploadsView == null || ListUploadsAction.UPLOADS_VIEW_ALL.equals(uploadsView);
     org.calacademy.antweb.Login viewer = LoginMgr.getAccessLogin(request);
     org.calacademy.antweb.Group ownGroup = viewer == null ? null : viewer.getGroup();
 %>
