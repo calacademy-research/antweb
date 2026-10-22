@@ -150,6 +150,23 @@ jobs:
             grep -q "^OK (8 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of the map popup data (locality names and codes encoded once, safe JavaScript strings)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/Map.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/maps/MapPopupDataTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.maps.MapPopupDataTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (2 tests)" /tmp/out.txt
+          '
+
+      - name: Map popups show decoded titles and link once-encoded codes (tests/unit/test_map_popups.py, runs drawMap.js in node)
+        run: python3 tests/unit/test_map_popups.py
+
       - name: Java unit tests of the download guards (genus/species files, 5,000-record cap, paged search list)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '

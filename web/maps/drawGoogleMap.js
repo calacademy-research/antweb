@@ -31,10 +31,13 @@
     };
 
     // Localities (name + code)
-    global.drawGoogleMapLocalities = function (mapType, divName, latArray, lonArray, nameArray, codeArray) {
+    // kind: "collection" for collection maps (links to collection.do); otherwise localities.
+    // (Map.java also passes the site address as a last argument; it is not needed here.)
+    global.drawGoogleMapLocalities = function (mapType, divName, latArray, lonArray, nameArray, codeArray, kind) {
         var lats = toNumArray(latArray), lons = toNumArray(lonArray);
         var names = toArray(nameArray||[]), codes = toArray(codeArray||[]);
-        if (need("drawMapLocalities")) global.drawMapLocalities(divName, lats, lons, names, codes);
+        if (kind !== "collection") kind = "locality";
+        if (need("drawMapLocalities")) global.drawMapLocalities(divName, lats, lons, names, codes, kind);
         else if (need("drawMap"))      global.drawMap(divName, lats, lons);
     };
 
@@ -52,10 +55,11 @@
         else if (need("drawMap"))           global.drawMap(divName, lats, lons);
     };
 
-    // Collections (codes only)
+    // Collections (codes only): the popup links the collection page, not locality.do (a collection
+    // code is not a locality code).
     global.drawGoogleMapCollection = function (mapType, divName, latArray, lonArray, codeArray) {
         var codes = toArray(codeArray||[]);
-        global.drawGoogleMapLocalities(mapType, divName, latArray, lonArray, codes, codes);
+        global.drawGoogleMapLocalities(mapType, divName, latArray, lonArray, codes, codes, "collection");
     };
 
     // Single point

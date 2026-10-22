@@ -61,6 +61,7 @@ tests = [
   "test_place_image_counts.py",
   "test_previous_determinations.py",
   "test_privacy.py",
+  "test_site_links.py",
   "test_world_ant_collections.py",
   # anonymous tests of files that also log in
   "test_add_uploader.py::test_anonymous_gets_login_page",
@@ -451,8 +452,14 @@ paths = [
   "src/org/calacademy/antweb/util/GitCommit.java",
   "src/org/calacademy/antweb/search/**",
   "WEB-INF/struts-config.xml",
+  "web/maps/**",
+  "src/org/calacademy/antweb/Map.java",
+  "src/org/calacademy/antweb/home/ObjectMapDb.java",
+  "docs/catalog/actions.csv",
+  "tests/e2e/linkcheck.py",
 ]
 tests = [
+  "test_site_links.py",                # links on every public page type, map popups included
   "test_home_page_links.py",
   "test_documentation_links.py",
   "test_world_ant_collections.py",
