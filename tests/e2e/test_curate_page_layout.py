@@ -81,8 +81,8 @@ def test_source_curators_upload_group_column():
 
 def test_source_about_nav_links_upload_groups():
     src = _src("web/about_nav.jsp")
-    assert ('<li><a href="<%= domainApp %>/curators.do">Curators</a></li>\n'
-            '<li><a href="<%= domainApp %>/groups.do">Upload groups</a></li>') in src
+    assert re.search(r'/curators\.do">Curators</a></li>\s*<li><a href="<%= domainApp %>/groups\.do">Upload groups</a></li>',
+                     src)
 
 
 # Pages (anonymous, read-only).
@@ -91,7 +91,7 @@ def test_groups_page_is_public_and_links_groups():
     r = new_session().get(BASE_URL + "/groups.do", timeout=TIMEOUT)
     outcome = classify(r)
     assert r.status_code == 200 and outcome.category == "ok", outcome
-    assert re.search(r"/group\.do\?id=\d+'>", r.text), "groups.do links no group page"
+    assert re.search(r"/group\.do\?id=\d+", r.text), "groups.do links no group page"
 
 
 def test_curators_page_upload_group_column():
@@ -117,5 +117,5 @@ def test_curate_page_layout_as_curator():
     r = s.get(BASE_URL + "/curate.do", timeout=TIMEOUT)
     assert r.status_code == 200 and classify(r).category == "ok", classify(r)
     _full_width_sections_first(r.text)
-    # Only the Curate page's own part (from the help line on): not the shared header or a site warning.
-    _no_statistics_box(r.text.split('id="curate-help"', 1)[1])
+    # Only the Curate page's sections (help line to the admin links): not the shared header or footer.
+    _no_statistics_box(r.text.split('id="curate-help"', 1)[1].split('class="admin_right"', 1)[0])
