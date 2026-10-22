@@ -190,8 +190,9 @@ public final class SanitizeDescriptionsAction extends AntwebAction {
                     msg.append("<p>Samples (up to ").append(SAMPLES).append("):</p><ol>");
                     for (int i = 0; i < changes.size() && i < SAMPLES; i++) {
                         Change c = changes.get(i);
-                        msg.append("<li><b>").append(Html.esc(c.id())).append("</b><br>")
-                           .append(Html.esc(c.reasons())).append("<br><code>").append(Html.esc(c.snippet()))
+                        // Each sample at most a few hundred characters (2026-10-22: page and log size).
+                        msg.append("<li><b>").append(Html.esc(clip(c.id()))).append("</b><br>")
+                           .append(Html.esc(clip(c.reasons()))).append("<br><code>").append(Html.esc(c.snippet()))
                            .append("</code><br>").append(c.before.length()).append(" -> ").append(c.after.length())
                            .append(" characters</li>");
                     }
@@ -213,6 +214,10 @@ public final class SanitizeDescriptionsAction extends AntwebAction {
 
         request.setAttribute("message", msg.toString());
         return mapping.findForward("message");
+    }
+
+    static String clip(String s) {
+        return s == null || s.length() <= 300 ? s : s.substring(0, 300) + "...";
     }
 
     private static boolean isMissingTable(SQLException e) {
