@@ -45,8 +45,8 @@ def _own_group_link(html):
 
 
 def _check_kept_links(html, admin):
-    assert 'href = "' in html and "/curate.do\">Curator Tools</a>" in html, "Curator Tools link missing"
-    assert ">Home</a>" in html
+    assert re.search(r'<a href = "https?://[^"]+/curate\.do">Curator Tools</a>', html), "Curator Tools link missing"
+    assert re.search(r'<a href = "https?://[^"/]+[^"]*">Home</a>', html), "Home link missing"
     assert ("name=lastSpecimenUpload\">Each group's last upload</a>" in html) == admin
 
 

@@ -78,6 +78,9 @@ public class UploadRecordDbTest extends TestCase {
             r.next();
             if (r.getInt(1) == 0) return;   // no upload table, or one made by another test
         }
+        if (System.getenv("ANTWEB_TEST_DB_URL") != null) {
+            fail("refusing to run: ANTWEB_TEST_DB_URL points at a database with an application upload table (this test drops it)");
+        }
         if (count("1 = 1") > 0) {
             fail("refusing to run: the database at ANTWEB_TEST_DB_URL has a real upload table with rows (this test drops it)");
         }
