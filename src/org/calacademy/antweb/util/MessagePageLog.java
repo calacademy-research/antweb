@@ -25,7 +25,8 @@ import jakarta.servlet.http.HttpServletRequest;
  *
  * Repeats are counted, not written: each distinct message is written at most PER_DAY times a day;
  * when the day changes, one summary line per repeated message gives the count of the day before.
- * At most MAX_KEYS distinct messages are tracked a day; messages beyond that are only counted.
+ * Messages are told apart by their first KEY_LENGTH characters. At most MAX_KEYS distinct messages
+ * are tracked a day (worst case about 3 x 20,000 lines); messages beyond that are only counted.
  */
 public final class MessagePageLog {
 
@@ -33,7 +34,8 @@ public final class MessagePageLog {
     public static final int SHOWN = 300;
     public static final int TARGET_MAX = 500;
     public static final int PER_DAY = 3;
-    public static final int MAX_KEYS = 2000;
+    public static final int MAX_KEYS = 20000;
+    static final int KEY_LENGTH = 120;
 
     private static final Pattern TAG = Pattern.compile("<[^>]*>");
     private static final Pattern SPACE = Pattern.compile("\\s+");
@@ -49,7 +51,9 @@ public final class MessagePageLog {
         try {
             String target = request == null ? null : HttpUtil.getTarget(request);
             String line = DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + record(message, target);
-            for (String l : COUNTER.add(LocalDate.now().toString(), shortMessage(message), line)) {
+            String key = shortMessage(message);
+            if (key.length() > KEY_LENGTH) key = key.substring(0, KEY_LENGTH);
+            for (String l : COUNTER.add(LocalDate.now().toString(), key, line)) {
                 LogMgr.appendDataLog(FILE, l);
             }
         } catch (RuntimeException e) {

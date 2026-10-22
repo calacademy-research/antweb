@@ -264,13 +264,23 @@ public abstract class QueryManager {
     public static final int MAX_ROWS_SHOWN = 5000;
     static final Set<String> UNCAPPED = Set.of("bioregionSpeciesListWithRangeData", "geolocaleSpeciesListWithRangeData");
 
+    /**
+     * Public named queries (QueryAction.PUBLIC_QUERIES) that are cut: MySQL returns only the rows shown
+     * plus one (setMaxRows), so a visitor or bot never makes it send every row. Their page says
+     * "more than 5,000 rows" instead of the exact count. imageData is ordered newest first.
+     */
+    public static boolean limitAtDatabase(String queryName) {
+        return queryName != null && QueryAction.PUBLIC_QUERIES.contains(queryName) && !UNCAPPED.contains(queryName);
+    }
+
     public static int maxRowsShown(String queryName) {
         return queryName != null && UNCAPPED.contains(queryName) ? Integer.MAX_VALUE : MAX_ROWS_SHOWN;
     }
 
     /** The note under a table that shows only the first rows. */
-    public static String notShownNote(int shown, int total) {
+    public static String notShownNote(int shown, int total, boolean limitedAtDatabase) {
         if (total <= shown) return "";
+        if (limitedAtDatabase) return "<br><b>Showing the first " + String.format("%,d", shown) + " rows</b> (there are more).\n";
         return "<br><b>Showing the first " + String.format("%,d", shown) + " of " + String.format("%,d", total)
             + " rows</b> (" + String.format("%,d", total - shown) + " more not shown on this page).\n";
     }
@@ -315,9 +325,11 @@ public abstract class QueryManager {
             // Stream the rows (MySQL Connector/J: forward-only, read-only, fetch size MIN_VALUE) so rows past
             // the limit are counted without holding the whole result in memory (imageData: every image).
             stmt.setFetchSize(Integer.MIN_VALUE);
+            int maxShown = maxRowsShown(namedQuery.getName());
+            boolean limited = limitAtDatabase(namedQuery.getName());
+            if (limited) stmt.setMaxRows(maxShown + 1);
             rset = stmt.executeQuery(query);
             int i = 0;
-            int maxShown = maxRowsShown(namedQuery.getName());
             while (rset.next()) {
               ++i;
               if (i > maxShown) continue;  // counted, not shown
@@ -335,7 +347,7 @@ public abstract class QueryManager {
             } // end while
 
             message.append("</table>\n");
-            message.append(notShownNote(maxShown, i));
+            message.append(notShownNote(maxShown, i, limited));
             message.append("<br><b>rowCount:</b>" + i + "\n");
 
             long timePassed = AntwebUtil.minsSince(startTime);

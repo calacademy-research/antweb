@@ -93,6 +93,7 @@ public class MessageLogTest extends TestCase {
         assertEquals(MessagePageLog.MAX_KEYS, written);
         List<String> s = c.summary();
         assertTrue(s.toString(), s.get(s.size() - 1).contains("500 more message pages not logged"));
+        assertEquals(20000, MessagePageLog.MAX_KEYS);
     }
 
     public void testLogEntryCap() {
@@ -117,8 +118,12 @@ public class MessageLogTest extends TestCase {
     }
 
     public void testNamedQueryRowLimit() {
-        assertEquals("", QueryManager.notShownNote(5000, 5000));
-        String n = QueryManager.notShownNote(5000, 234567);
+        assertEquals("", QueryManager.notShownNote(5000, 5000, false));
+        assertTrue(QueryManager.notShownNote(5000, 5001, true).contains("Showing the first 5,000 rows</b> (there are more)"));
+        assertTrue(QueryManager.limitAtDatabase("imageData"));
+        assertFalse(QueryManager.limitAtDatabase("bioregionSpeciesListWithRangeData"));
+        assertFalse(QueryManager.limitAtDatabase("checkIntegrity"));
+        String n = QueryManager.notShownNote(5000, 234567, false);
         assertTrue(n, n.contains("Showing the first 5,000 of 234,567 rows"));
         assertEquals(5000, QueryManager.MAX_ROWS_SHOWN);
         assertEquals(5000, QueryManager.maxRowsShown("imageData"));

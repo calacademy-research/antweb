@@ -306,7 +306,8 @@ image data download).
 now text, and only the links the queries build to AntWeb pages stay links.
 
 **Changed 2026-10-22**: a query shows at most 5,000 rows ("Showing the first 5,000 of N rows"; rowCount
-is still the full count). The image data query listed every image, about 13 MB of page each time, and
+is still the full count). The public queries (image data, AntCat import history) ask the database for
+only 5,001 rows and say "Showing the first 5,000 rows (there are more)". The image data query listed every image, about 13 MB of page each time, and
 each view was written whole into the messages log. The bioregion and country species lists with range
 data are shown in full. The image data link on the recent images page now says "Image data of the latest
 5,000 images".

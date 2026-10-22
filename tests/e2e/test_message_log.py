@@ -47,7 +47,7 @@ def test_image_data_query_shows_at_most_5000_rows():
     m = re.search(r"rowCount:</b>(\d+)", r.text)
     assert m, r.text[-500:]
     if int(m.group(1)) > 5000:
-        assert "Showing the first 5,000 of" in r.text
+        assert "Showing the first 5,000 rows" in r.text
 
 
 @pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")
