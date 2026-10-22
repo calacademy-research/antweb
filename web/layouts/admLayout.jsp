@@ -84,6 +84,9 @@ function get_img_name(the_name,to_where) {
 
 <tiles:insert attribute="adminHeader"/>
 
+<%-- Tells shared bodies (common/message-body.jsp, unboldMessage-body.jsp) that they are inside the admin
+     layout, where they take the tool-page look (common/tools.css); in the public layout they stay as they are. --%>
+<% request.setAttribute("awAdminLayout", Boolean.TRUE); %>
 <tiles:insert attribute="body-content"/>
 
 <!-- Footer -->

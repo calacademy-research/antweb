@@ -15,8 +15,6 @@
 <%@ page import="java.util.regex.Matcher" %>
 <%@ page import="java.util.regex.Pattern" %>
 
-<div class="wide_left">
-
 <%
     //AntwebUtil.getRandomNumber();
 
@@ -72,8 +70,19 @@
       LogMgr.appendDataLog("messages.txt", DateUtil.getFormatDateTimeStr(new java.util.Date()) + " - " + message + " " + HttpUtil.getTarget(request));
     }
 %>
+<%-- Inside the admin layout (curate/adminMessage.jsp; layouts/admLayout.jsp sets awAdminLayout): the tool-page
+     look (common/tools.css). In the public layout (common/message.jsp) the page is as it was. --%>
+<% if (Boolean.TRUE.equals(request.getAttribute("awAdminLayout"))) { %>
+<%@include file="/common/toolsHead.jsp" %>
+<div class="aw-tools" id="admin-message-page">
+<p class="aw-crumbs"><a href="<%= AntwebProps.getDomainApp() %>/curate.do">Curator Tools</a></p>
+<div class="aw-card aw-result" id="admin-message"><%= message %></div>
+</div>
+<% } else { %>
+<div class="wide_left">
 <br>
 <br>
 <b><%= message %></b>
 </div>
+<% } %>
 

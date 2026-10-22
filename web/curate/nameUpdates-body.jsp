@@ -6,8 +6,11 @@
     String domainApp = AntwebProps.getDomainApp();
     String html = (String) request.getAttribute("html");
 %>
-<div class=left>
+<%-- Tool-page look (common/tools.css, docs/guides/page-style.md). The explanation at the top is the
+     report-help box (NameUpdatesAction.HELP). --%>
+<%@include file="/common/toolsHead.jsp" %>
+<div class="aw-tools" id="name-updates-page">
+<p class="aw-crumbs"><a href="<%= domainApp %>">Home</a> | <a href="<%= domainApp %>/curate.do">Curator Tools</a></p>
 <h1>Name update report</h1>
-<a href="<%= domainApp %>">Home</a> | <a href="<%= domainApp %>/curate.do">Curator Tools</a>
 <%= html == null ? "" : html %>
 </div>

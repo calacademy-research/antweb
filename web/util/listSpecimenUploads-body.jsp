@@ -15,12 +15,15 @@
     if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return;
 %>
 
-<div class=left>
+<%-- Tool-page look (common/tools.css, docs/guides/page-style.md). Tests read the title (first h2), the
+     "<a href = ...>" links and the rows (split at "<tr>"): tests/e2e/test_upload_list_views.py,
+     test_upload_report_links.py. --%>
+<%@include file="/common/toolsHead.jsp" %>
+<div class="aw-tools" id="specimen-uploads-page">
 <%
     String domainApp = AntwebProps.getDomainApp();
 
     String message = (String) request.getAttribute("message"); 
-    if (message != null) out.println("<h2 style=\"margin-left:0.3em\">" + message + "</h2>");
 
     // Which view this is (ListUploadsAction): every group's uploads, one group's, or one login's.
     String uploadsView = (String) request.getAttribute("uploadsView");
@@ -28,28 +31,30 @@
     org.calacademy.antweb.Login viewer = LoginMgr.getAccessLogin(request);
     org.calacademy.antweb.Group ownGroup = viewer == null ? null : viewer.getGroup();
 %>
-&nbsp;&nbsp;&nbsp;<a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a>
-<% if (LoginMgr.isAdmin(request)) { %> | <a href = "<%= domainApp %>/query.do?action=curiousQuery&name=lastSpecimenUpload">Each group's last upload</a><% } %>
-<br><br>
+<p class="aw-crumbs"><a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a>
+<% if (LoginMgr.isAdmin(request)) { %> | <a href = "<%= domainApp %>/query.do?action=curiousQuery&name=lastSpecimenUpload">Each group's last upload</a><% } %></p>
+<% if (message != null) out.println("<h2 class=\"aw-title\">" + message + "</h2>"); %>
+<div class="aw-intro"><p>One line per specimen upload, newest first: when it was made, its upload report (what was added, changed
+or refused, line by line) and, where you may read it, the file that was uploaded.</p></div>
 <%
     if (isAllGroups) {
-        out.println("<p class=\"uploads-view\">&nbsp;&nbsp;&nbsp;<b>" + org.calacademy.antweb.util.ListUploadsAction.ALL_GROUPS_LINE + "</b>");
+        out.println("<p class=\"uploads-view\"><b>" + org.calacademy.antweb.util.ListUploadsAction.ALL_GROUPS_LINE + "</b>");
         if (ownGroup != null) {
             out.println(" <a class=\"uploads-own-group\" href=\"" + domainApp + "/listSpecimenUploads.do?groupId=" + ownGroup.getId() + "\">"
                 + org.calacademy.antweb.util.ListUploadsAction.ownGroupLinkText(ownGroup) + "</a>");
         }
         out.println("</p>");
     } else if (LoginMgr.isAdmin(request)) {
-        out.println("<p class=\"uploads-view\">&nbsp;&nbsp;&nbsp;<a class=\"uploads-all-groups\" href=\"" + domainApp + "/listSpecimenUploads.do\">"
+        out.println("<p class=\"uploads-view\"><a class=\"uploads-all-groups\" href=\"" + domainApp + "/listSpecimenUploads.do\">"
             + org.calacademy.antweb.util.ListUploadsAction.VIEW_ALL_LINK + "</a></p>");
     }
-    out.println("<br>");
 
     ArrayList<Upload> list = (ArrayList) request.getAttribute("uploads"); 
     int count = 0;
-    out.println("<table cellpadding=10><tr><th>#</th>");
+    out.println("<div class=\"aw-card\" id=\"specimen-uploads-list\">");
+    out.println("<table class=\"aw-uploads\"><tr><th>#</th>");
     if (isAllGroups) out.println("<th>Group</th>");
-    out.println("<th width='100'>Created</th><th>Log File</th><th>Uploaded file</th></tr>");
+    out.println("<th>Created</th><th>Log File</th><th>Uploaded file</th></tr>");
     // The uploaded data file (uploadFile.do): admins any group's, curators their own group's.
     org.calacademy.antweb.Login listLogin = LoginMgr.getAccessLogin(request);
     for (Upload upload : list) {
@@ -73,7 +78,8 @@
       out.println("</tr>");
     }
     out.println("</table>");
-    if (count == 0) out.println("<br> No uploads for this group");
+    if (count == 0) out.println("<p>No uploads for this group</p>");
+    out.println("</div>");
 %>
 
-</div > 
+</div> 

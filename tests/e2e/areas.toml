@@ -240,7 +240,13 @@ paths = [
   "src/org/calacademy/antweb/util/InactiveAccounts.java",
   "src/org/calacademy/antweb/util/OrphanedImages*.java",
   "web/curate/**",
-  "web/common/curate_page.css",
+  "web/common/tools.css",
+  "web/common/tools.js",
+  "web/common/toolsHead.jsp",
+  "web/common/message-body.jsp",
+  "web/common/unboldMessage-body.jsp",
+  "web/layouts/admLayout.jsp",
+  "web/imageUploader/listImageUploads*.jsp",
   "web/login/**",
   "web/curator*",
   "web/common/descEdit/**",
@@ -254,6 +260,7 @@ tests = [
   "test_curate_merge.py",
   "test_curate_page_clarity.py",
   "test_curate_page_layout.py",
+  "test_tool_pages_style.py",           # shared tool-page look (common/tools.css)
   "test_curator_species_lists.py",
   "test_display_cleanup.py",
   "test_group_form_help.py",
@@ -403,6 +410,7 @@ paths = [
   "src/org/calacademy/antweb/util/Report*.java",
   "src/org/calacademy/antweb/util/LogMgr*.java",
   "src/org/calacademy/antweb/util/Scheduler*.java",
+  "src/org/calacademy/antweb/util/JobSummary.java",
   "src/org/calacademy/antweb/util/ServerStatus*.java",
   "src/org/calacademy/antweb/upload/TaxonWorks*.java",
   "src/org/calacademy/antweb/upload/SpecimenNameUpdate*.java",
@@ -424,6 +432,7 @@ tests = [
   "test_count_check.py",
   "test_removals_2026_10_21.py",       # added by #217/#218
   "test_named_queries.py",             # every named query runs, in time, headings = columns (admin, read-only)
+  "test_tool_pages_style.py",          # admin tool pages in the shared look; data job page embeds no whole page
 ]
 
 [areas.api]
