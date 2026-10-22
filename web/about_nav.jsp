@@ -10,5 +10,6 @@
 <li><a href="<%= domainApp %>/tech.do">Technology</a></li>
 <li><a href="<%= domainApp %>/staff.do">Staff</a></li>
 <li><a href="<%= domainApp %>/curators.do">Curators</a></li>
+<li><a href="<%= domainApp %>/groups.do">Upload groups</a></li>
 </ul>
 </div>

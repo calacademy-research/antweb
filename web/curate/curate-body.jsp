@@ -37,15 +37,19 @@
     }    
 %>
 
-Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new">Curator Tool Documentation</a>
-<div class="admin_left">
+<%-- Layout (Brian Fisher, 2026-10-22): the help line, Curator Information and Read-Only Tools run the
+     full page width (they were squeezed into the 560px left column); the upload forms stay in the left
+     column and the administrator links in the right one. The AntWeb Statistics box is gone from this page
+     (same numbers on the home page and statistics.do, linked under Administrator Functions).
+     Tested in tests/e2e/test_curate_page_layout.py. --%>
+<p id="curate-help" style="margin:4px 0 8px 0">Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new">Curator Tool Documentation</a></p>
 
 <html:messages id="message" message="true">
 <font color="red"><b><bean:write name="message"/></b></font><br>
 </html:messages>
 
-<!-- Curator Information -->
-    <div class="admin_action_module">
+<!-- Curator Information (full width) -->
+    <div class="admin_action_module curate-full" id="curate-info" style="width:auto">
         <div class="admin_action_item">
             <div style="float:left;">
               <h2>Curator Information</h2>
@@ -90,6 +94,31 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
         </div>
     </div>
 
+<!-- Read-Only Tools (full width) -->
+<% if (accessLogin.isCurator()) { %>
+    <div class="admin_action_module curate-full" id="curate-readonly" style="width:auto">
+        <div class="admin_action_item">
+            <div style="float:left;">
+                <h2>Read-Only Tools</h2>
+            </div>
+            <div class="clear"></div>
+        </div>
+        <div class="admin_action_item">
+          <div class="action_desc" style="float:none;width:auto">
+            <a href="<%= AntwebProps.getDomainApp() %>/validateSpeciesList.do">Check names against AntCat</a>: upload a list of species names (a text file) to see which are current valid names in AntCat, with a report and a corrected copy to download. Nothing is saved on AntWeb.
+          </div>
+          <div class="clear"></div>
+        </div>
+        <div class="admin_action_item">
+          <div class="action_desc" style="float:none;width:auto">
+            <a href="<%= AntwebProps.getDomainApp() %>/specimenListLookup.do">Specimen List Lookup</a>: upload a text file of specimen codes (one per line) to get AntWeb's data for those specimens as a tab-delimited file; codes that are not in AntWeb are listed. Nothing is changed on AntWeb.
+          </div>
+          <div class="clear"></div>
+        </div>
+    </div>
+<% } %>
+
+<div class="admin_left">
 
 <div>
 <%
@@ -292,30 +321,6 @@ Need Help? Check out the <a href="<%= domainApp %>/documentation.do" target="new
 <!-- Projects -->                
 <!-- Download Species List -->   
 
-<% if (accessLogin.isCurator()) { %>
-    <div class="admin_action_module">
-        <div class="admin_action_item">
-            <div style="float:left;">
-                <h2>Read-Only Tools</h2>
-            </div>
-            <div class="clear"></div>
-        </div>
-        <div class="admin_action_item">
-          <div class="action_desc">
-            &nbsp;&nbsp;&nbsp;<a href="<%= AntwebProps.getDomainApp() %>/validateSpeciesList.do">Check names against AntCat</a>: upload a list of species names (a text file) to see which are current valid names in AntCat, with a report and a corrected copy to download. Nothing is saved on AntWeb.
-          </div>
-          <div class="clear"></div>
-        </div>
-        <div class="admin_action_item">
-          <div class="action_desc">
-            &nbsp;&nbsp;&nbsp;<a href="<%= AntwebProps.getDomainApp() %>/specimenListLookup.do">Specimen List Lookup</a>: upload a text file of specimen codes (one per line) to get AntWeb's data for those specimens as a tab-delimited file; codes that are not in AntWeb are listed. Nothing is changed on AntWeb.
-          </div>
-          <div class="clear"></div>
-        </div>
-    </div>
-<% } %>
-
-
 <!-- Fetch and Reload Worldants List -->
 <% if (accessLogin.isAdmin()) {  %>
 <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "upload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
@@ -399,26 +404,6 @@ if (speciesListList != null && !speciesListList.isEmpty()) { %>
 <div class="admin_right">
 
     <div class="clear"></div>
-<br /><br />
-
-
-    <div class="home_module">
-        <div class="home_module two">
-            <div class="home_grey_module">
-                <div class="home_module_left_curve"></div>
-                <div class="home_module_header">AntWeb Statistics</div>
-                <div class="home_module_right_curve"></div>
-            <div class="clear"></div>
-        </div>
-        <div class="home_module_contents_admin">
-
-        <%= FileUtil.getContent("web/genInc/statistics.jsp") %>
-
-        </div>
-    </div>
-
-</div> <!-- this seems extraneous -->
-<br>
 <%@include file="/curate/curatorLinks.jsp" %>
 	  
 </div>

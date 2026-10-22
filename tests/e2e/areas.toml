@@ -111,6 +111,14 @@ tests = [
   "test_curate_page_clarity.py::test_source_three_groups_one_link_per_line",
   "test_curate_page_clarity.py::test_source_name_update_report_label",
   "test_curate_page_clarity.py::test_source_count_check_wording",
+  "test_curate_page_layout.py::test_source_curate_sections_full_width",
+  "test_curate_page_layout.py::test_source_curate_has_no_statistics_box",
+  "test_curate_page_layout.py::test_source_site_warning_box_three_lines",
+  "test_curate_page_layout.py::test_source_curators_upload_group_column",
+  "test_curate_page_layout.py::test_source_about_nav_links_upload_groups",
+  "test_curate_page_layout.py::test_groups_page_is_public_and_links_groups",
+  "test_curate_page_layout.py::test_curators_page_upload_group_column",
+  "test_curate_page_layout.py::test_about_menu_links_upload_groups",
   "test_curator.py::test_forged_remember_cookie_is_refused",
   "test_display_cleanup.py::test_taxon_page_has_no_stray_distribution_comment",
   "test_exif_view.py::test_jsp_escapes_exif_rows_and_explains",
@@ -243,6 +251,7 @@ tests = [
   "test_curate_followups.py",
   "test_curate_merge.py",
   "test_curate_page_clarity.py",
+  "test_curate_page_layout.py",
   "test_curator_species_lists.py",
   "test_display_cleanup.py",
   "test_group_form_help.py",
@@ -462,4 +471,5 @@ tests = [
   "test_display_cleanup.py",
   "test_header_version.py",
   "test_request_limits.py",
+  "test_curate_page_layout.py",       # About menu, Curators page
 ]
