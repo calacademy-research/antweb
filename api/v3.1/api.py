@@ -897,16 +897,18 @@ def getGeoSpeciesStats():
     georank = geolocale.georank
     extraClause = " s." + georank + " = :geolocaleName"
 
+    # queenErgatoidCount and maleErgatoidCount count the ergatoids of their caste (2026-10-22: both counted every
+    # ergatoid specimen, so a male ergatoid was also a queen ergatoid).
     query = "select s.taxon_name, s.genus, s.species " \
             + " , count(case when caste='queen' then 1 end)" \
-            + " , count(case when subcaste='ergatoid' then 1 end)" \
+            + " , count(case when caste='queen' and subcaste='ergatoid' then 1 end)" \
             + " , count(case when subcaste='alate/dealate' then 1 end)" \
             + " , count(case when subcaste='brachypterous' then 1 end)" \
             + " , count(case when caste='worker' then 1 end)" \
             + " , count(case when subcaste='major/soldier' then 1 end)" \
             + " , count(case when subcaste='normal' then 1 end)" \
             + " , count(case when caste='male' then 1 end)" \
-            + " , count(case when subcaste='ergatoid' then 1 end)" \
+            + " , count(case when caste='male' and subcaste='ergatoid' then 1 end)" \
             + " , count(case when subcaste='alate' then 1 end)" \
             + " from specimen s, taxon t, geolocale_taxon gt, geolocale g" \
             + " where s.taxon_name = t.taxon_name and gt.taxon_name = t.taxon_name " \
@@ -1205,41 +1207,10 @@ class Image(Base):
             self.id, self.shotType, self.code, self.uploadDate, self.shotNumber, self.hasTiff)
 
 
-@application.route('/images', methods=['GET'])
-def getImages():
-    since = request.args.get('since', default='*', type=str)
-    code = request.args.get('specimenCode', default='*', type=str)
-    shotType = request.args.get('shotType', default='*', type=str)
-    shotNumber = request.args.get('shotNumber', default='*', type=str)
-    hasTiff = request.args.get('hasTiff', default='*', type=str)
-    limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
-
-    query = session.query(Image)
-    if since != '*':
-        day_interval_before = datetime.now() - timedelta(days=int(since))
-        query = query.filter(Image.uploadDate >= day_interval_before)
-    if code != '*':
-        query = query.filter(Image.code == code)
-    if shotType != '*':
-        query = query.filter(Image.shotType == shotType)
-    if shotNumber != '*':
-        query = query.filter(Image.shotNumber == shotNumber)
-    if hasTiff != '*':
-        if hasTiff == 'true':
-            query = query.filter(Image.hasTiff == 1)
-        if hasTiff == 'false':
-            query = query.filter(Image.hasTiff == 0)
-    query = query.limit(limit)
-    query = query.offset(offset)
-
-    try:
-        data = query.all()
-    except OperationalError as error:
-        return apiError("images", error)
-    except Exception as error:
-        return apiError("images", error)
-
+def imagesBySpecimen(data):
+    """The /images reply: (one dict per specimen with its images, specimen count, image count). data: the image rows
+    in order of specimen code. 2026-10-22: with no image, no specimen (was specimenCount 1 and one empty dict), and
+    every specimen under 'specimenCode' (all but the last were under 'spefimenCode'); tests/unit/test_api_counts.py."""
     specimenCount = 0
     imageCount = 0
     dataList = []
@@ -1267,7 +1238,7 @@ def getImages():
         if tCode != image.code:
             if tCode != '':  # we have one to insert. (Is not the first record).
                 specimenDict = {
-                    'spefimenCode': tCode
+                    'specimenCode': tCode
                     , 'url': 'http://localhost:5000/specimens?code=' + tCode
                     , 'images': images
                 }
@@ -1281,15 +1252,58 @@ def getImages():
             images.append(imageDict)
 
     # Handle the last instance of the record (due to group by procedural logic). 
+    # 2026-10-22: only when there was one (no images gave specimenCount 1 and an empty specimen), and every
+    # specimen under 'specimenCode' (all but the last were under 'spefimenCode').
     if tCode != '':
         specimenDict = {
             'specimenCode': tCode
             , 'url': 'http://localhost:5000/specimens?code=' + tCode
             , 'images': images
         }
+        specimenCount += 1
+        dataList.append(specimenDict)
+    return dataList, specimenCount, imageCount
 
-    specimenCount += 1
-    dataList.append(specimenDict)
+
+@application.route('/images', methods=['GET'])
+def getImages():
+    since = request.args.get('since', default='*', type=str)
+    code = request.args.get('specimenCode', default='*', type=str)
+    shotType = request.args.get('shotType', default='*', type=str)
+    shotNumber = request.args.get('shotNumber', default='*', type=str)
+    hasTiff = request.args.get('hasTiff', default='*', type=str)
+    limit, offset, log, ndjson, startTime = setGlobals(request)
+    if down(request): return ""
+
+    query = session.query(Image)
+    if since != '*':
+        day_interval_before = datetime.now() - timedelta(days=int(since))
+        query = query.filter(Image.uploadDate >= day_interval_before)
+    if code != '*':
+        query = query.filter(Image.code == code)
+    if shotType != '*':
+        query = query.filter(Image.shotType == shotType)
+    if shotNumber != '*':
+        query = query.filter(Image.shotNumber == shotNumber)
+    if hasTiff != '*':
+        if hasTiff == 'true':
+            query = query.filter(Image.hasTiff == 1)
+        if hasTiff == 'false':
+            query = query.filter(Image.hasTiff == 0)
+    # imagesBySpecimen needs the images of one specimen together (2026-10-22: without an order a specimen could be
+    # split into several entries and counted more than once)
+    query = query.order_by(Image.code, Image.id)
+    query = query.limit(limit)
+    query = query.offset(offset)
+
+    try:
+        data = query.all()
+    except OperationalError as error:
+        return apiError("images", error)
+    except Exception as error:
+        return apiError("images", error)
+
+    dataList, specimenCount, imageCount = imagesBySpecimen(data)
 
     # SELECT id,shot_type,upload_date,shot_number,has_tiff FROM image WHERE image_of_id=? ORDER BY shot_number ASC     
     if isDevMode:

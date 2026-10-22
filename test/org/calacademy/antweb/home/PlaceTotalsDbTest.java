@@ -124,7 +124,7 @@ public class PlaceTotalsDbTest extends TestCase {
         b.setName("Malagasy");
         callPrivate(new BioregionDb(connection), "finish", Bioregion.class, b);
         // the stale row counts the old roll-up summed are still there; the place numbers are right anyway
-        exec("update geolocale_taxon set species_count = 2 where taxon_name = '" + PHEIDOLE + "'");
+        exec("update geolocale_taxon set species_count = 3 where taxon_name = '" + PHEIDOLE + "'");
         exec("update museum_taxon set subfamily_count = 0 where taxon_name = '" + MYRM + "'");
 
         assertEquals("Genera of Madagascar", 2, one("select genus_count from geolocale where id = " + MADAGASCAR));
@@ -198,11 +198,11 @@ public class PlaceTotalsDbTest extends TestCase {
         exec("insert into specimen (code, taxon_name, status, country, museum, bioregion, upload_id, family, subfamily) values"
             + " ('bee1', 'apidaeapis mellifera', 'valid', 'Madagascar', 'CASC', 'Malagasy', 1, 'apidae', 'apinae')");
         exec("insert into geolocale_taxon (geolocale_id, taxon_name, specimen_count, created) values (" + MADAGASCAR + ", 'apidaeapis mellifera', 1, '2020-01-01')");
-        exec("insert into image values (40, 'bee1', 'h', '2020-01-01')");
+        exec("insert into image (id, image_of_id, shot_type, upload_date) values (40, 'bee1', 'h', '2020-01-01')");
         exec("update specimen set image_count = 1 where code = 'bee1'");
         exec("update taxon set image_count = 1 where taxon_name = 'apidaeapis mellifera'");
         clearTotals();
-        exec("update geolocale_taxon set species_count = 2 where taxon_name = '" + PHEIDOLE + "'");
+        exec("update geolocale_taxon set species_count = 3 where taxon_name = '" + PHEIDOLE + "'");
         exec("update museum_taxon set subfamily_count = 0 where taxon_name = '" + MYRM + "'");
         exec("update geolocale set specimen_count = 0 where id = " + MADAGASCAR);
         GeolocaleDb g = new GeolocaleDb(connection);
@@ -250,7 +250,7 @@ public class PlaceTotalsDbTest extends TestCase {
         // Geolocales: the number from the flags, also for a subregion (its flags were set, its number stayed 0).
         exec("update geolocale_taxon set is_endemic = 1 where geolocale_id = " + INDIAN_OCEAN + " and taxon_name = '" + PA + "'");
         PlaceTotals.writeCountsFromFlags(connection, PlaceTotals.GEOLOCALE, "endemic");
-        assertEquals(2, one("select endemic_species_count from geolocale where id = " + MADAGASCAR));
+        assertEquals("pheidole a, pheidole a x, hypoponera b", 3, one("select endemic_species_count from geolocale where id = " + MADAGASCAR));
         assertEquals(1, one("select endemic_species_count from geolocale where id = " + INDIAN_OCEAN));
     }
 
@@ -284,7 +284,7 @@ public class PlaceTotalsDbTest extends TestCase {
     public void testHomeNumbersCountImagesOfTheAnt() throws Exception {
         // a specimen filed under the genus name, with an image: a specimen imaged, not a species imaged
         exec("insert into specimen (code, taxon_name, status, upload_id, image_count) values ('g1', '" + PHEIDOLE + "', 'valid', 1, 1)");
-        exec("insert into image values (20, 'g1', 'h', '2020-01-01 10:00:00')");
+        exec("insert into image (id, image_of_id, shot_type, upload_date) values (20, 'g1', 'h', '2020-01-01 10:00:00')");
         assertEquals("casent1, casent3, g1 (casent5 has a label only)", 3, one(StatisticsDb.IMAGED_SPECIMENS_SQL));
         assertEquals("pheidole a, pheidole b", 2, one(StatisticsDb.IMAGED_SPECIES_SQL));
         assertEquals("pheidole a", 1, one(StatisticsDb.VALID_SPECIES_IMAGED_SQL));
@@ -329,8 +329,7 @@ public class PlaceTotalsDbTest extends TestCase {
     }
 
     public void testHabitatsAreOrderedByTheNumberShown() throws Exception {
-        exec("alter table specimen add column habitat varchar(64), add column microhabitat varchar(64), add column method varchar(64),"
-            + " add column collectioncode varchar(64)");
+        exec("alter table specimen add column habitat varchar(64), add column microhabitat varchar(64), add column method varchar(64)");
         // forest / leaf litter / Winkler: 3 specimens of one collection event (shown "1 times");
         // savanna / soil / pitfall: 2 events.
         exec("update specimen set habitat = 'forest', microhabitat = 'leaf litter', method = 'Winkler', collectioncode = 'c1'"
