@@ -117,4 +117,5 @@ def test_curate_page_layout_as_curator():
     r = s.get(BASE_URL + "/curate.do", timeout=TIMEOUT)
     assert r.status_code == 200 and classify(r).category == "ok", classify(r)
     _full_width_sections_first(r.text)
-    _no_statistics_box(r.text)
+    # Only the Curate page's own part (from the help line on): not the shared header or a site warning.
+    _no_statistics_box(r.text.split('id="curate-help"', 1)[1])
