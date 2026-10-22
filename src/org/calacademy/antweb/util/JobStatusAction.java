@@ -49,11 +49,12 @@ public final class JobStatusAction extends AntwebAction {
         if (idParam == null || idParam.isBlank()) {
             List<BackgroundJobs.Job> jobs = BackgroundJobs.get().recent(isAdmin ? 0 : groupId, LIST_LIMIT);
             boolean anyActive = false;
-            html.append("<h1>Upload status</h1>");
             html.append(navigation(domainApp));
-            html.append("<p>").append(isAdmin ? "Uploads and data jobs started from AntWeb pages, newest first."
-                : "The specimen uploads of your group, newest first.").append("</p>");
-            html.append(listHtml(jobs, accessLogin, isAdmin, groupId, domainApp));
+            html.append("<h1>Upload status</h1>");
+            html.append("<div class=\"aw-intro\"><p>").append(isAdmin ? "Uploads and data jobs started from AntWeb pages, newest first."
+                : "The specimen uploads of your group, newest first.")
+             .append(" Open a job to follow it or to read its result; a job that is waiting or running updates itself.</p></div>");
+            html.append("<div class=\"aw-card\" id=\"job-list-card\">").append(listHtml(jobs, accessLogin, isAdmin, groupId, domainApp)).append("</div>");
             for (BackgroundJobs.Job j : jobs) if (j.isActive() && mayView(j, accessLogin, isAdmin, groupId)) anyActive = true;
             if (anyActive) response.setHeader("Refresh", String.valueOf(REFRESH_SECONDS));
             request.setAttribute("html", html.toString());
@@ -87,7 +88,7 @@ public final class JobStatusAction extends AntwebAction {
     }
 
     static String navigation(String domainApp) {
-        return "<p><a href=\"" + domainApp + "\">Home</a> | <a href=\"" + domainApp + "/curate.do\">Curator Tools</a>"
+        return "<p class=\"aw-crumbs\"><a href=\"" + domainApp + "\">Home</a> | <a href=\"" + domainApp + "/curate.do\">Curator Tools</a>"
             + " | <a href=\"" + domainApp + "/jobStatus.do\">Upload status</a></p>";
     }
 
@@ -111,11 +112,15 @@ public final class JobStatusAction extends AntwebAction {
         boolean isUpload = BackgroundJobs.UPLOAD.equals(job.getKind());
         BackgroundJobs.Status status = job.getStatus();
         StringBuilder h = new StringBuilder();
-        h.append("<h1>").append(isUpload ? "Specimen upload" : "Data job").append(" ").append(job.getId()).append("</h1>");
         h.append(navigation(domainApp));
+        h.append("<h1>").append(isUpload ? "Specimen upload" : "Data job").append(" ").append(job.getId()).append("</h1>");
+        h.append("<div class=\"aw-intro\"><p>").append(isUpload
+            ? "The progress and the result of a specimen upload: the server works through the file in the background."
+            : "The progress and the result of a job started from an AntWeb page: it runs in the background on the server.")
+         .append("</p></div>");
 
         if (already) {
-            h.append("<p style=\"color:#a00;font-weight:bold\">")
+            h.append("<p class=\"aw-warn\" id=\"job-already\">")
              .append(isUpload
                  ? "You already have an upload waiting or running (below). The file you just sent was not used: "
                    + "a group's uploads run one after the other. When this upload has finished, upload again if you need to."
@@ -123,8 +128,9 @@ public final class JobStatusAction extends AntwebAction {
              .append("</p>");
         }
 
-        h.append("<p style=\"font-size:1.2em\">Status: <b><span id=\"job-status\" data-status=\"").append(status.name()).append("\">")
-         .append(statusWord(status)).append("</span></b></p>");
+        h.append("<div class=\"aw-card\" id=\"job-status-card\">");
+        h.append("<p>Status: <b><span id=\"job-status\" data-status=\"").append(status.name()).append("\" class=\"aw-status aw-status-")
+         .append(status.name()).append("\">").append(statusWord(status)).append("</span></b></p>");
 
         switch (status) {
             case queued:
@@ -161,17 +167,19 @@ public final class JobStatusAction extends AntwebAction {
 
         String result = job.getResult();
         if (result != null && !result.isEmpty() && !job.isActive()) {
-            h.append("<div id=\"job-result\" style=\"margin:1em 0\">")
-             .append(isUpload ? Html.esc(result) : result)
+            h.append("<div id=\"job-result\" class=\"aw-sub\">")
+             .append(isUpload ? Html.esc(result) : JobSummary.display(result))   // never a whole page inside the job page
              .append("</div>");
         }
         if (job.getResultLink() != null) {
             String text = job.getResultLinkText() == null ? "Report" : job.getResultLinkText();
-            h.append("<p style=\"font-size:1.2em\"><a id=\"job-report\" href=\"").append(Html.escAttr(job.getResultLink())).append("\">")
+            h.append("<p class=\"aw-sub\"><a id=\"job-report\" class=\"aw-btn\" href=\"").append(Html.escAttr(job.getResultLink())).append("\">")
              .append(Html.esc(text)).append("</a></p>");
         }
 
-        h.append("<table class=\"job_details\" style=\"margin-top:1em\">");
+        h.append("</div>");
+        h.append("<div class=\"aw-card\" id=\"job-details-card\"><h2>Details</h2>");
+        h.append("<table class=\"job_details aw-kv\">");
         row(h, "What", Html.esc(job.getTitle()));
         row(h, "Started by", Html.esc(job.getLoginName()));
         row(h, "Received", time(job.getCreated()));
@@ -182,24 +190,26 @@ public final class JobStatusAction extends AntwebAction {
             h.append("<p><a href=\"").append(domainApp).append("/listSpecimenUploads.do?groupId=").append(job.getGroupId())
              .append("\">Upload reports of this group</a></p>");
         }
+        h.append("</div>");
         return h.toString();
     }
 
     private static void row(StringBuilder h, String label, String value) {
-        h.append("<tr><td style=\"padding-right:1em\"><b>").append(label).append("</b></td><td>").append(value == null ? "" : value).append("</td></tr>");
+        h.append("<tr><th scope=\"row\">").append(label).append("</th><td>").append(value == null ? "" : value).append("</td></tr>");
     }
 
     static String listHtml(List<BackgroundJobs.Job> jobs, Login login, boolean isAdmin, int groupId, String domainApp) {
         StringBuilder h = new StringBuilder();
         int shown = 0;
-        h.append("<table class=\"job_list\" cellpadding=\"4\"><tr><th align=left>Job</th><th align=left>What</th>")
-         .append("<th align=left>Started by</th><th align=left>Status</th><th align=left>Received</th><th align=left>Ended</th></tr>");
+        h.append("<table class=\"job_list\"><tr><th>Job</th><th>What</th>")
+         .append("<th>Started by</th><th>Status</th><th>Received</th><th>Ended</th></tr>");
         for (BackgroundJobs.Job j : jobs) {
             if (!mayView(j, login, isAdmin, groupId)) continue;
             shown++;
             h.append("<tr><td><a href=\"").append(domainApp).append("/jobStatus.do?id=").append(j.getId()).append("\">")
              .append(j.getId()).append("</a></td><td>").append(Html.esc(j.getTitle())).append("</td><td>")
-             .append(Html.esc(j.getLoginName())).append("</td><td>").append(statusWord(j.getStatus())).append("</td><td>")
+             .append(Html.esc(j.getLoginName())).append("</td><td><span class=\"aw-status aw-status-").append(j.getStatus().name()).append("\">")
+             .append(statusWord(j.getStatus())).append("</span></td><td>")
              .append(time(j.getCreated())).append("</td><td>").append(time(j.getFinished())).append("</td></tr>");
         }
         h.append("</table>");

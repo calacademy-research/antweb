@@ -1,0 +1,303 @@
+/* Tool pages: the shared look of the administrator and curator "report" and "form" pages (Curate page,
+   Technical page, Upload status, Server Status, Check the counts, Log Manager, query results, upload
+   lists, admin messages). Brian Fisher, 2026-10-22: "a good style to use for all the 'report' and
+   'form' pages".
+
+   A page opts in: it includes /common/toolsHead.jsp (this stylesheet and tools.js) and wraps its own
+   markup in <div class="aw-tools">. Every rule below is scoped to .aw-tools, so pages that do not opt
+   in (the public taxon, specimen, place and home pages) do not change. The admin layout
+   (layouts/admLayout.jsp) wraps the page in <div align="center">; .aw-tools sets the text back to
+   the left. How to use the classes: docs/guides/page-style.md. Tested in
+   tests/e2e/test_tool_pages_style.py and tests/e2e/test_curate_page_layout.py. */
+
+.aw-tools {
+  text-align: left;
+  max-width: 1100px;
+  margin: 0;
+  padding: 4px 16px 0 16px;
+  box-sizing: border-box;
+  color: #2d3338;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+}
+.aw-tools *, .aw-tools *::before, .aw-tools *::after { box-sizing: border-box; }
+
+.aw-tools a { color: #1f63c6; font-weight: 600; text-decoration: none; }
+.aw-tools a:hover, .aw-tools a:focus { text-decoration: underline; }
+
+/* Page title, the line of links above it, and the explanation under it. */
+.aw-tools h1 {
+  font-size: 22px;
+  line-height: 1.25;
+  font-weight: 650;
+  color: #1f2529;
+  margin: 2px 0 8px 0;
+  padding: 0;
+  text-decoration: none;
+}
+.aw-tools h2.aw-title { font-size: 22px; line-height: 1.25; font-weight: 650; color: #1f2529; margin: 2px 0 8px 0; }
+.aw-tools .aw-crumbs { margin: 0 0 8px 0; font-size: 13px; color: #66707a; }
+.aw-tools .aw-intro {
+  max-width: 62em;
+  margin: 0 0 16px 0;
+  color: #4a545e;
+  font-size: 14px;
+}
+.aw-tools .aw-intro p { margin: 0 0 6px 0; }
+.aw-tools .aw-intro p:last-child { margin-bottom: 0; }
+
+/* Top line: help link, messages from the server. */
+.aw-tools .aw-help { margin: 0 0 14px 0; font-size: 14px; color: #5b6570; }
+.aw-tools .aw-msg { margin: 0 0 14px 0; padding: 10px 14px; border-radius: 8px; background: #fff4f2; border: 1px solid #f3c6bd;
+  color: #a0281a; font-weight: 600; }
+.aw-tools .aw-msg:empty { display: none; }
+/* The server's own busy / down-time line (AntwebMgr.getServerMessage) brings its own colour. */
+.aw-tools .aw-notice { margin: 0 0 14px 0; padding: 8px 14px; border-radius: 8px; background: #fff; border: 1px solid #e1e5ea; }
+.aw-tools .aw-notice h3 { margin: 0; font-size: 14px; letter-spacing: 0; text-transform: none; }
+
+/* Sections: one card each, full width. A wide table scrolls inside its card, never the page. */
+.aw-tools .aw-card {
+  background: #f8f9fb;
+  border: 1px solid #e1e5ea;
+  border-radius: 10px;
+  padding: 16px 20px 14px 20px;
+  margin: 0 0 16px 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.aw-tools .aw-card > h2, .aw-tools h2.aw-h {
+  font-size: 17px;
+  line-height: 1.3;
+  font-weight: 650;
+  color: #1f2529;
+  margin: 0 0 10px 0;
+  padding: 0;
+}
+.aw-tools h2 { font-size: 17px; line-height: 1.3; font-weight: 650; color: #1f2529; margin: 16px 0 10px 0; }
+.aw-tools h3 {
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  color: #66707a;
+  margin: 16px 0 6px 0;
+}
+/* A heading with its own inline style (Java-built reports, e.g. the green section headings of the Name
+   update report) keeps its author's case and spacing. */
+.aw-tools h3[style] { text-transform: none; letter-spacing: 0; }
+.aw-tools h4 { font-size: 14px; font-weight: 650; color: #1f2529; margin: 12px 0 4px 0; }
+.aw-tools .aw-card > h3:first-of-type, .aw-tools .aw-card > h2 + h3 { margin-top: 4px; }
+.aw-tools .aw-card > :last-child { margin-bottom: 0; }
+.aw-tools p { font-size: 14px; margin: 0 0 8px 0; }
+.aw-tools .aw-lead { color: #5b6570; margin: -4px 0 10px 0; }
+.aw-tools ul, .aw-tools ol { margin: 0 0 8px 0; padding-left: 20px; }
+.aw-tools li { margin: 2px 0; }
+.aw-tools hr { border: 0; border-top: 1px solid #e1e5ea; margin: 16px 0; height: 0; }
+.aw-tools pre {
+  font-family: SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  background: #fff;
+  border: 1px solid #e1e5ea;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin: 0 0 10px 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+.aw-tools details > summary { cursor: pointer; }
+
+.aw-tools .aw-badge {
+  display: inline-block;
+  vertical-align: 2px;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #e8edf5;
+  color: #44546a;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.aw-tools .aw-admin { background: #f6f7f9; border-color: #dcdfe4; }
+
+/* Link lists: the link in bold, its explanation in normal weight after it. */
+.aw-tools ul.aw-links { list-style: none; margin: 0; padding: 0; }
+.aw-tools ul.aw-links > li {
+  margin: 0;
+  padding: 7px 0;
+  border-top: 1px solid #e8ebef;
+  font-size: 14px;
+}
+.aw-tools ul.aw-links > li:first-child { border-top: 0; padding-top: 2px; }
+/* Short links side by side (a list of log files, of in-memory lists). */
+.aw-tools ul.aw-inline { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px 8px; }
+.aw-tools ul.aw-inline > li { margin: 0; }
+.aw-tools ul.aw-links ul.aw-inline { margin-top: 6px; }
+.aw-tools ul.aw-inline > li > a {
+  display: inline-block; padding: 3px 10px; border: 1px solid #d5dbe2; border-radius: 999px; background: #fff; font-size: 13px;
+}
+
+/* Forms. */
+.aw-tools .aw-form { margin: 0; }
+.aw-tools .aw-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 8px 0; }
+.aw-tools .aw-row label, .aw-tools .aw-label { font-weight: 600; color: #3a434b; }
+.aw-tools .aw-actions { margin: 12px 0 2px 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.aw-tools select,
+.aw-tools textarea,
+.aw-tools input[type="text"],
+.aw-tools input[type="date"],
+.aw-tools input[type="number"],
+.aw-tools input[type="file"] {
+  font: inherit;
+  font-size: 14px;
+  color: #2d3338;
+  background: #fff;
+  border: 1px solid #c8ced6;
+  border-radius: 6px;
+  padding: 6px 8px;
+  max-width: 100%;
+}
+.aw-tools textarea { display: block; width: 100%; }
+.aw-tools input[type="file"] { padding: 4px 6px; }
+.aw-tools input[type="file"]::file-selector-button {
+  font: inherit;
+  font-size: 13px;
+  margin-right: 10px;
+  padding: 5px 12px;
+  border: 1px solid #c8ced6;
+  border-radius: 5px;
+  background: #f1f3f6;
+  color: #2d3338;
+  cursor: pointer;
+}
+
+/* Buttons: .aw-btn, and every plain submit button inside a tool page. */
+.aw-tools .aw-btn,
+.aw-tools input[type="submit"],
+.aw-tools button[type="submit"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-block;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  padding: 8px 18px;
+  border: 1px solid #1f63c6;
+  border-radius: 6px;
+  background: #1f63c6;
+  color: #fff;
+  cursor: pointer;
+}
+.aw-tools .aw-btn:hover,
+.aw-tools .aw-btn:focus,
+.aw-tools input[type="submit"]:hover,
+.aw-tools input[type="submit"]:focus,
+.aw-tools button[type="submit"]:hover,
+.aw-tools button[type="submit"]:focus { background: #174f9f; border-color: #174f9f; }
+.aw-tools .aw-btn:disabled, .aw-tools input[type="submit"]:disabled { background: #aab3bd; border-color: #aab3bd; cursor: not-allowed; }
+.aw-tools .aw-btn-secondary { background: #fff; color: #1f63c6; }
+.aw-tools .aw-btn-secondary:hover, .aw-tools .aw-btn-secondary:focus { background: #eef3fb; color: #174f9f; }
+/* Small buttons inside a line of text (Csrf.postButton forms on Server Status). */
+.aw-tools form.aw-inline-form, .aw-tools .aw-kv form { display: inline; margin: 0; }
+.aw-tools .aw-kv input[type="submit"] { padding: 3px 10px; font-size: 13px; margin-left: 6px; }
+
+/* Notes next to the forms. */
+.aw-tools .aw-note { font-size: 13px; color: #5b6570; margin: 8px 0 0 0; }
+.aw-tools .aw-note ol, .aw-tools .aw-note ul { margin: 4px 0 0 0; padding-left: 20px; }
+.aw-tools .aw-warn { margin: 8px 0; padding: 8px 12px; border-left: 3px solid #d97706; background: #fff8eb; color: #6b4300;
+  border-radius: 0 6px 6px 0; font-size: 13px; }
+.aw-tools .aw-alert { color: #b42318; font-weight: 600; }
+.aw-tools .aw-progress { display: none; margin: 10px 0; padding: 8px 12px; border-radius: 6px; background: #eaf2fd;
+  color: #174f9f; font-weight: 600; }
+.aw-tools code { font-size: 12.5px; background: #eef0f3; padding: 1px 4px; border-radius: 4px; word-break: break-word; }
+.aw-tools .aw-sub { margin-top: 14px; padding-top: 12px; border-top: 1px solid #e1e5ea; }
+
+/* Status words: a coloured pill (job status, true/false on Server Status). */
+.aw-tools .aw-status {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #e8edf5;
+  color: #44546a;
+}
+.aw-tools .aw-status-queued, .aw-tools .aw-status-running { background: #eaf2fd; color: #174f9f; }
+.aw-tools .aw-status-finished, .aw-tools .aw-ok { background: #e7f5ec; color: #17663a; }
+.aw-tools .aw-status-failed, .aw-tools .aw-status-interrupted, .aw-tools .aw-bad { background: #fdecea; color: #a0281a; }
+.aw-tools .aw-ok, .aw-tools .aw-bad { display: inline-block; padding: 0 8px; border-radius: 999px; font-weight: 700; font-size: 13px; }
+
+/* Tables: a header row, row lines and light zebra stripes; numbers right-aligned (tools.js marks the
+   numeric columns with .aw-num; a page can also set the class itself). A table wider than its card
+   scrolls inside it (.aw-table-wrap, added by tools.js; the card scrolls too if the script is off). */
+.aw-tools .aw-table-wrap { max-width: 100%; overflow-x: auto; margin: 0 0 12px 0; -webkit-overflow-scrolling: touch; }
+.aw-tools .aw-table-wrap > table { margin-bottom: 0; }
+.aw-tools table {
+  border-collapse: collapse !important;
+  border: 0;
+  margin: 0 0 12px 0;
+  font-size: 13px;
+  line-height: 1.4;
+  background: #fff;
+}
+.aw-tools th, .aw-tools td {
+  border: 0;
+  border-bottom: 1px solid #e6e9ee;
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+.aw-tools th {
+  background: #eef1f5;
+  color: #3a434b;
+  font-weight: 650;
+  white-space: nowrap;
+  border-bottom: 1px solid #d5dbe2;
+}
+.aw-tools tr:nth-child(even) > td { background: #fafbfc; }
+.aw-tools tr:hover > td { background: #f2f6fc; }
+.aw-tools th.aw-num, .aw-tools td.aw-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* Label / value tables (job details, server properties): no header row, no stripes. */
+.aw-tools table.aw-kv { background: transparent; }
+.aw-tools table.aw-kv th {
+  background: transparent; border-bottom: 1px solid #e6e9ee; white-space: nowrap; width: 1%; padding-left: 0;
+  color: #3a434b; font-weight: 650;
+}
+.aw-tools table.aw-kv td { background: transparent !important; overflow-wrap: anywhere; }
+.aw-tools table.aw-kv tr:last-child > th, .aw-tools table.aw-kv tr:last-child > td { border-bottom: 0; }
+
+/* The explanation box of the admin reports (ReportHelp.box, also on pages that do not opt in, so its
+   own inline style stays; here it takes the tool-page look). */
+.aw-tools .report-help {
+  background: #f4f7fb !important;
+  border: 1px solid #dbe4f0 !important;
+  border-radius: 8px;
+  padding: 10px 14px !important;
+  margin: 0 0 16px 0 !important;
+  max-width: 62em !important;
+  color: #3a434b;
+}
+.aw-tools .report-help p { margin: 0 0 6px 0; }
+.aw-tools .report-help p:last-child { margin-bottom: 0; }
+.aw-tools .mgr_help { color: #4a545e; margin: 0 0 10px 0; max-width: 62em; }
+
+/* Phone width: cards use the whole width, controls stack. */
+@media (max-width: 760px) {
+  .aw-tools { padding: 0 10px; font-size: 15px; }
+  .aw-tools h1, .aw-tools h2.aw-title { font-size: 20px; }
+  .aw-tools .aw-card { padding: 14px 14px 12px 14px; border-radius: 8px; }
+  .aw-tools select, .aw-tools input[type="file"] { width: 100%; }
+  .aw-tools .aw-row { align-items: stretch; flex-direction: column; gap: 6px; }
+  .aw-tools .aw-btn { width: auto; }
+  .aw-tools table.aw-kv th { white-space: normal; width: 35%; }
+}
+
+/* Result pages built in Java (curate/adminHtmlMessage-body.jsp): the named query output starts with its title, a
+   rule and a line break; the rule and break are not needed under the title in a card. */
+.aw-tools .aw-result > h1 + hr, .aw-tools .aw-result > h1 + hr + br { display: none; }

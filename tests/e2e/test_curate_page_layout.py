@@ -2,7 +2,7 @@
 
 1. Curate page (second pass, same day; Brian: "remove the center align and go back to left align and
    import antcat name is still a short width column ... can you give it a more modern look"): every
-   section is a full-width card in one left-aligned column (div.cp, styles in web/common/curate_page.css,
+   section is a full-width card in one left-aligned column (div.aw-tools, styles in web/common/tools.css,
    loaded only by this page); no left/right columns, no centering, no 215px floated description cells,
    plain Submit buttons instead of the grey image buttons. Curator sections first, admin cards after.
 2. The AntWeb Statistics box is gone from the Curate page (same numbers on the home page and
@@ -38,14 +38,14 @@ OLD_LAYOUT = ("admin_left", "admin_right", "action_desc", "action_dropdown", "ac
 
 def _cards(html):
     """The ids of the section cards, in page order."""
-    return re.findall(r'<div class="cp-card[^"]*"[^>]*\bid="([\w-]+)"', html)
+    return re.findall(r'<div class="aw-card[^"]*"[^>]*\bid="([\w-]+)"', html)
 
 
 def _page_part(html):
-    """The Curate page's own markup (div.cp), without the site header."""
-    assert 'class="cp" id="curate-page"' in html, "no div.cp (the Curate page wrapper)"
-    page = html.split('class="cp" id="curate-page"', 1)[1]
-    assert 'id="curate-page-end"' in page, "no end marker after div.cp"
+    """The Curate page's own markup (div.aw-tools#curate-page), without the site header."""
+    assert 'class="aw-tools" id="curate-page"' in html, "no div.aw-tools#curate-page (the Curate page wrapper)"
+    page = html.split('class="aw-tools" id="curate-page"', 1)[1]
+    assert 'id="curate-page-end"' in page, "no end marker after div.aw-tools"
     return page.split('id="curate-page-end"', 1)[0]
 
 
@@ -54,7 +54,7 @@ def _layout_ok(html):
     curator cards come before the admin cards; Import AntCat names now is a card section with its button."""
     page = _page_part(html)
     # The server's busy line and Struts messages bring their own markup; the page does not control it.
-    own = re.sub(r'<div class="cp-(?:notice|msg)"[^>]*>.*?</div>', "", page, flags=re.S)
+    own = re.sub(r'<div class="aw-(?:notice|msg)"[^>]*>.*?</div>', "", page, flags=re.S)
     assert not CENTERED.search(own), CENTERED.search(own).group(0)
     found = [x for x in OLD_LAYOUT if x in page]
     assert not found, f"old layout left on the Curate page: {found}"
@@ -66,10 +66,10 @@ def _layout_ok(html):
         assert cards.index(present_admin[0]) > cards.index(present_curator[-1]), f"admin cards before curator ones: {cards}"
     assert [c for c in cards if c in CURATOR_CARDS] == [c for c in CURATOR_CARDS if c in cards], f"order: {cards}"
     # No card has a width of its own, and no column of the old layout narrows it.
-    for tag in re.findall(r'<div class="cp-card[^>]*>', page):
+    for tag in re.findall(r'<div class="aw-card[^>]*>', page):
         assert "width" not in tag and "float" not in tag, tag
     help_line = re.search(r'<p id="curate-help"[^>]*>Need help\?.*?/documentation\.do', page, re.S)
-    assert help_line and help_line.start() < page.index('<div class="cp-card'), "Need help? line missing or not at the top"
+    assert help_line and help_line.start() < page.index('<div class="aw-card'), "Need help? line missing or not at the top"
     return page
 
 
@@ -79,7 +79,7 @@ def _antcat_import_ok(page):
     block = re.split(r"</(?:html:)?form>", page.split('id="curate-antcat-import"', 1)[1], maxsplit=1)[0]
     assert "<h3>Import AntCat names now</h3>" in block
     assert "float" not in block and "width:" not in block, block[:400]
-    assert block.index("Downloads the AntCat export") < block.index('<input class="cp-btn" type="submit" value="Import AntCat names now">')
+    assert block.index("Downloads the AntCat export") < block.index('<input class="aw-btn" type="submit" value="Import AntCat names now">')
     assert page.index('id="curate-admin-names"') < page.index('id="curate-antcat-import"')
 
 
@@ -98,30 +98,29 @@ def test_source_curate_layout():
     page = _layout_ok(src)
     assert _cards(page) == CURATOR_CARDS + ADMIN_CARDS, _cards(page)
     _antcat_import_ok(page)
-    # The stylesheet is loaded by this page only.
-    assert 'Asset.url(application, "/common/curate_page.css")' in src
-    others = [p for p in (REPO_ROOT / "web").rglob("*.jsp") if "/common/curate_page.css\")" in p.read_text(encoding="utf-8", errors="replace")]
-    assert [p.name for p in others] == ["curate-body.jsp"], others
+    # The shared tool-page stylesheet (2026-10-22; was curate_page.css, for this page only).
+    assert '<%@include file="/common/toolsHead.jsp" %>' in src
+    assert not (REPO_ROOT / "web/common/curate_page.css").exists()
     # Plain buttons: the upload, the museum recount, the AntCat import, the Species List Tool, the Site Warning.
     for value in ("Upload", "Recalculate", "Import AntCat names now", "Open the Species List Tool", "Save",
                   "Clear the warning"):
-        assert re.search(r'<input class="cp-btn[^"]*" type="submit" value="%s"' % re.escape(value), src) or \
-            re.search(r'<input id="upload-submit-btn" class="cp-btn" type="submit" value="%s"' % re.escape(value), src), value
+        assert re.search(r'<input class="aw-btn[^"]*" type="submit" value="%s"' % re.escape(value), src) or \
+            re.search(r'<input id="upload-submit-btn" class="aw-btn" type="submit" value="%s"' % re.escape(value), src), value
     assert 'type="image"' not in src
     # Hidden until the upload starts, even without the stylesheet.
-    assert '<div id="upload-processing-msg" class="cp-progress" style="display:none">' in src
+    assert '<div id="upload-processing-msg" class="aw-progress" style="display:none">' in src
     # The upload button still starts disabled when the server is busy.
-    assert 'id="upload-submit-btn" class="cp-btn" type="submit" value="Upload" <%= active %>>' in src
+    assert 'id="upload-submit-btn" class="aw-btn" type="submit" value="Upload" <%= active %>>' in src
 
 
 def test_source_curate_stylesheet_is_scoped():
-    css = (REPO_ROOT / "web/common/curate_page.css").read_text(encoding="utf-8")
+    css = (REPO_ROOT / "web/common/tools.css").read_text(encoding="utf-8")
     body = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
     selectors = [sel.strip() for block in re.findall(r"([^{}]+)\{[^{}]*\}", re.sub(r"@media[^{]*\{", "", body))
                  for sel in block.split(",")]
-    unscoped = [sel for sel in selectors if sel and not sel.startswith(".cp")]
+    unscoped = [sel for sel in selectors if sel and not sel.startswith(".aw-tools")]
     assert not unscoped, f"rules that would change other pages: {unscoped}"
-    assert re.search(r"\.cp \{[^}]*text-align:\s*left", body)
+    assert re.search(r"\.aw-tools \{[^}]*text-align:\s*left", body)
     assert "text-align: center" not in body and "text-align:center" not in body
     assert "@media (max-width: 760px)" in body
 
@@ -186,9 +185,9 @@ def test_curate_page_layout_as_curator():
     assert r.status_code == 200 and classify(r).category == "ok", classify(r)
     page = _layout_ok(r.text)
     assert not [c for c in _cards(page) if c in ADMIN_CARDS], "admin cards shown to a curator"
-    assert "/common/curate_page.css?v=" in r.text
-    css = s.get(BASE_URL + "/common/curate_page.css", timeout=TIMEOUT)
-    assert css.status_code == 200 and ".cp-card" in css.text, css.status_code
+    assert "/common/tools.css?v=" in r.text and "/common/tools.js?v=" in r.text
+    css = s.get(BASE_URL + "/common/tools.css", timeout=TIMEOUT)
+    assert css.status_code == 200 and ".aw-tools .aw-card" in css.text, css.status_code
     # The removed box (it sat in div.admin_right), anywhere on the page.
     assert not re.search(r'class="home_module_header">\s*AntWeb Statistics', r.text), "AntWeb Statistics box is back"
     assert "AntWeb Statistics" not in r.text.split('id="curate-help"', 1)[1]

@@ -85,9 +85,12 @@ public final class NameUpdatesAction extends AntwebAction {
             html.append(HELP);
             if (isAdmin) html.append(adminBox(request, SpecimenNameUpdate.readSettings()));
             html.append(filterForm(isAdmin, groupIds, Math.max(groupId, 0), from, to));
+            // The report in one card (tool-page look, common/tools.css).
+            html.append("<div class=\"aw-card\" id=\"name-updates-report\">");
             html.append(sharedHtml(shared, AntwebProps.getDomainApp(), shared.isEmpty() ? SharedNames.none() : SharedNames.load(connection)));
             html.append(keptValidHtml(keptValid, AntwebProps.getDomainApp()));
             html.append(linesHtml(runs, lines, AntwebProps.getDomainApp()));
+            html.append("</div>");
             request.setAttribute("html", html.toString());
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
@@ -120,7 +123,7 @@ public final class NameUpdatesAction extends AntwebAction {
 
     static String adminBox(HttpServletRequest request, SpecimenNameUpdate.Settings settings) {
         String domainApp = AntwebProps.getDomainApp();
-        return "<div style=\"margin:10px 0;max-width:900px\">"
+        return "<div class=\"aw-card aw-admin\" id=\"name-updates-admin\">"
             + "<p><b>Setting on this server:</b> " + Html.esc(settings.mode)
             + (settings.note != null ? " (" + Html.esc(settings.note) + ")" : "")
             + ", maxChanges " + settings.maxChanges
@@ -135,7 +138,7 @@ public final class NameUpdatesAction extends AntwebAction {
     }
 
     static String filterForm(boolean isAdmin, List<Integer> groupIds, int groupId, String from, String to) {
-        StringBuilder b = new StringBuilder("<form method=\"get\" action=\"" + AntwebProps.getDomainApp() + "/nameUpdates.do\" style=\"margin:10px 0\">");
+        StringBuilder b = new StringBuilder("<form method=\"get\" action=\"" + AntwebProps.getDomainApp() + "/nameUpdates.do\" class=\"aw-card aw-row\" id=\"name-updates-filter\">");
         if (isAdmin) {
             b.append("Group: <select name=\"groupId\" aria-label=\"Group\"><option value=\"0\">All groups</option>");
             for (Integer id : groupIds) {

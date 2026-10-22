@@ -296,7 +296,7 @@ public class UtilDataAction extends AntwebAction {
             }
             connection.commit();
             LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " " + action + " (background) by " + loginName + " done");
-            return BackgroundJobs.Outcome.ok(operationDetails.getMessage(), link, "Report");
+            return BackgroundJobs.Outcome.ok(JobSummary.dataJob(operationDetails.getMessage()), link, "Report");
         } catch (Exception e) {
             return BackgroundJobs.Outcome.failed(handleException(e, connection, action, loginName));
         } finally {

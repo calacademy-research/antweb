@@ -42,6 +42,21 @@ public class QueryAction extends AntwebAction {
     static final Set<String> CURATOR_QUERIES = Set.of("geolocaleSpeciesListWithRangeData");
 
     /** Who may run a named query: "public", "curator" or (every other query) "admin". */
+    /** The page title of a result page of this action (plain text; the layout escapes it). */
+    static String pageTitle(String action, String name) {
+        String n = name == null ? "" : name;
+        switch (action == null ? "query" : action) {
+            case "checkIntegrity": return "Integrity Check - AntWeb";
+            case "curiousQueries": return "Curious queries - AntWeb";
+            case "devQueries": return "Development queries - AntWeb";
+            case "queryBattery": return "Query battery: " + n + " - AntWeb";
+            case "homonyms": return "Homonym Report - AntWeb";
+            case "events": return "Curator activity log - AntWeb";
+            case "taxaOutsideOfNativeBioregion": return "Taxa outside their native bioregions - AntWeb";
+            default: return "Query: " + n + " - AntWeb";
+        }
+    }
+
     public static String namedQueryAccess(String name) {
         if (name != null && PUBLIC_QUERIES.contains(name)) return "public";
         if (name != null && CURATOR_QUERIES.contains(name)) return "curator";
@@ -174,6 +189,9 @@ public class QueryAction extends AntwebAction {
 			}
 
 			if (returnLoc != null) {
+			  // A real page title for the admin result pages (curate/adminHtmlMessage.jsp): without one the
+			  // title was "message...", which reads as a message page (tests/e2e/antweb.py classify()).
+			  if (request.getAttribute("header") == null) request.setAttribute("header", pageTitle(action, name));
 			  s_log.debug("execute() end name:" + name + " param:" + param);
 
 			  return returnLoc;

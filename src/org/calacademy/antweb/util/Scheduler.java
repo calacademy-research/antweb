@@ -140,8 +140,10 @@ public class Scheduler extends AntwebAction {
                 + " (progress in compute.log, Server Status page).");
             String message = doAction(runAction, runNum);
             LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " Scheduler complete. ");
-            return message != null && message.startsWith("Scheduler ") ? BackgroundJobs.Outcome.ok(message)
-                : BackgroundJobs.Outcome.failed(Html.esc(message));
+            // The job keeps one plain sentence (JobSummary), not the pages utilData.do answered with: those are
+            // whole AntWeb pages (header, search, footer), and the job page showed them inside itself (job 186).
+            return message != null && message.startsWith("Scheduler ") ? BackgroundJobs.Outcome.ok(Html.esc(JobSummary.scheduler(message)))
+                : BackgroundJobs.Outcome.failed(Html.esc(JobSummary.isFullPage(message) ? JobSummary.scheduler(message) : message));
         });
         if (submitted.job == null) {
             request.setAttribute("message", Html.esc(submitted.refused));

@@ -1374,7 +1374,7 @@ public abstract class Queries {
         + ".qm *{box-sizing:border-box}"
         + ".qm h2{font-size:22px;color:#1f2529;margin:0 0 8px 0}"
         + ".qm a{color:#1f63c6;font-weight:600;text-decoration:none}.qm a:hover{text-decoration:underline}"
-        + ".qm-intro{max-width:60em;margin:0 0 14px 0;color:#4a545e}"
+        + ".qm #qm-intro{max-width:60em;margin:0 0 14px 0;color:#4a545e}"
         + ".qm-filter{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 12px 0}"
         + ".qm-filter label{font-weight:600}"
         + ".qm-filter input{font:inherit;font-size:14px;padding:7px 10px;border:1px solid #c8ced6;border-radius:6px;width:22em;max-width:100%}"
@@ -1417,7 +1417,7 @@ public abstract class Queries {
         page.append(QUERY_MANAGER_STYLE);
         page.append("<div class=\"qm\" id=\"query-manager\">");
         page.append("<h2>Query Manager</h2>");
-        page.append("<div class=\"mgr_help qm-intro\">There are ").append(total).append(" ready-made database queries, in ")
+        page.append("<div class=\"mgr_help\" id=\"qm-intro\">There are ").append(total).append(" ready-made database queries, in ")
             .append(grouped.size()).append(" groups by topic. They only read data (nothing is changed).")
             .append(" Click a name to run it: the page shows what the query is for and what to do about its rows, the query,")
             .append(" its rows and how long it took. Some take a minute on the full database, and none may run longer than ")
