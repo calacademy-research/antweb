@@ -1,4 +1,6 @@
-"""API v3.1 counts (api/v3.1/api.py), 2026-10-21: /unimagedGeolocaleTaxa.
+"""API v3.1 counts (api/v3.1/api.py), 2026-10-21: /unimagedGeolocaleTaxa; 2026-10-22: /images (B29: no specimen
+when nothing is found, every specimen under specimenCode) and /geoSpeciesStats (B30: ergatoid queens and ergatoid
+males counted apart).
 
 A taxon is imaged when one of its specimens has an image of the ant, that is an image whose shot type is
 not 'l' (label). Before, the endpoint used specimen.image_count > 1: a taxon whose specimens had exactly
@@ -53,6 +55,28 @@ def test_endpoint_uses_the_rule():
     source = inspect.getsource(api.getUnimagedGeolocaleTaxa)
     assert "image_count > 1" not in source
     assert source.count("imagedTaxaSql(") == 3, source
+
+
+class _Image:
+    def __init__(self, id, code, shot):
+        self.id, self.code, self.shotType, self.shotNumber, self.uploadDate, self.hasTiff = id, code, shot, 1, None, 0
+
+
+def test_images_of_nothing_are_no_specimen():
+    assert api.imagesBySpecimen([]) == ([], 0, 0), api.imagesBySpecimen([])
+
+
+def test_images_are_grouped_by_specimen():
+    data, specimens, images = api.imagesBySpecimen([_Image(1, 'a', 'h'), _Image(2, 'a', 'p'), _Image(3, 'b', 'h')])
+    assert (specimens, images) == (2, 3), (specimens, images)
+    assert [d.get('specimenCode') for d in data] == ['a', 'b'], data
+    assert [len(d['images']) for d in data] == [2, 1]
+
+
+def test_geo_species_stats_counts_ergatoids_of_their_caste():
+    source = inspect.getsource(api.getGeoSpeciesStats)
+    assert "caste='queen' and subcaste='ergatoid'" in source and "caste='male' and subcaste='ergatoid'" in source
+    assert "count(case when subcaste='ergatoid'" not in source
 
 
 if __name__ == "__main__":

@@ -58,7 +58,16 @@ public final class CountInvariants {
     /** Every check id (docs/numbers.md names them in its Test column as inv:<id>; tools/numbers/check_numbers_doc.py). */
     public static final String[] IDS = {"place.totals.subfamily", "place.totals.genus", "place.totals.species", "place.totals.valid",
         "place.totals.specimens", "place.totals.endemic", "place.totals.introduced", "place.pies", "place.images.order", "place.images",
-        "list.genus", "list.subfamily", "list.family", "list.global", "global.specimens", "home", "taxon.images", "geo.regions"};
+        "list.genus", "list.subfamily", "list.family", "list.global", "global.specimens", "home", "taxon.images", "geo.regions",
+        // NumberChecks (2026-10-22)
+        "stats.global", "stats.images", "stats.imaged", "stats.bioregions", "stats.museums", "stats.nonants", "list.images", "admin.statistics", "admin.groups",
+        "admin.curators", "admin.artists", "admin.imageUploads", "api.taxa", "place.endemic.flags", "taxon.parents", "geo.adm1.country"};
+
+    /**
+     * At most this many differences of one check are listed in the report (2026-10-22: API /taxa, B11, can differ for
+     * every taxon); the others are counted (CountCheck.Result.unlisted) and named in one line.
+     */
+    static final int LIST_CAP = 300;
 
     static final String RULES_PENDING = "this number's rule changed on 2026-10-21; no nightly run has counted it that way yet";
 
@@ -96,7 +105,7 @@ public final class CountInvariants {
     /** The SQL last run by the current check (shown with its error). */
     String lastSql;
 
-    private String track(String sql) {
+    String track(String sql) {
         lastSql = sql;
         return sql;
     }
@@ -117,6 +126,8 @@ public final class CountInvariants {
         public int pending;
         public long millis;
         public String error;
+        /** Differences listed in the report (at most LIST_CAP). */
+        int listed;
 
         Check(String id, String title, String rows) {
             this.id = id;
@@ -133,15 +144,28 @@ public final class CountInvariants {
         }
     }
 
-    private final Connection connection;
-    private final CountCheck.Result result;
+    final Connection connection;
+    final CountCheck.Result result;
     private final Set<String> changedNames;   // KEYS order
     private final boolean rulesCounted;
     /** statsPage's first number (TaxonMgr, in memory); null when not known (tests). */
     public Integer statsPageValidSpecies;
+    /**
+     * The numbers of curators.do and curator.do as the pages show them (LoginMgr): login id -> Specimen Uploads,
+     * Description Edits, image uploads, images uploaded; null when not known (the check is then not run).
+     */
+    public Map<Integer, int[]> curatorNumbers;
+    /** When the pages' curator numbers were read (LoginMgr.getCuratorsRead); null: the last nightly run. */
+    public java.sql.Timestamp curatorsRead;
+    /** artists.do as the page shows it (ArtistMgr): artist id -> Images, Specimen; null when not known. */
+    public Map<Integer, int[]> artistNumbers;
+    /** Numbers the end-to-end tests compare with the pages (report: JSON in the element with id count-check-expected). */
+    public final Map<String, Object> expected = new LinkedHashMap<>();
 
     public final List<Check> checks = new ArrayList<>();
     public long millis;
+    /** Part of millis: the checks of NumberChecks (statsPage, admin pages, API, endemic flags, B25, B26). */
+    public long otherMillis;
 
     /** type -> key -> label of the places in scope (the places whose pages show these numbers). */
     final Map<String, Map<String, String>> places = new LinkedHashMap<>();
@@ -160,11 +184,11 @@ public final class CountInvariants {
 
     // ------------------------------------------------------------------ running
 
-    private interface Body {
+    interface Body {
         void run(Check check) throws SQLException;
     }
 
-    private void check(Check check, Body body) {
+    void check(Check check, Body body) {
         long start = System.currentTimeMillis();
         try {
             body.run(check);
@@ -209,6 +233,9 @@ public final class CountInvariants {
         home();
         taxonImages();
         regions();
+        long other = System.currentTimeMillis();
+        new NumberChecks(this).run();
+        otherMillis = System.currentTimeMillis() - other;
         millis = System.currentTimeMillis() - start;
     }
 
@@ -305,10 +332,14 @@ public final class CountInvariants {
             default: ok = shown == expected;
         }
         if (ok) return true;
+        if (pendingReason == null) ++check.real; else ++check.pending;
+        if (++check.listed > LIST_CAP) {
+            result.unlisted.merge(check.id + (pendingReason == null ? "" : " (pending)"), 1, Integer::sum);
+            return false;
+        }
         String label = places.getOrDefault(type, new HashMap<>()).getOrDefault(key, key);
         String text = "=".equals(relation) ? what : what + " (must be " + relation + " " + expected + ")";
         result.mismatches.add(new CountCheck.Mismatch(place(type, key, label), check.id, text, (int) shown, (int) expected, pendingReason));
-        if (pendingReason == null) ++check.real; else ++check.pending;
         return false;
     }
 
