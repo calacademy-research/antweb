@@ -261,7 +261,8 @@ public final class NumberChecks {
         if (!has(list) || !has(type)) return;
         CountInvariants.Check check = new CountInvariants.Check("stats." + type + "s", museum
             ? "statsPage Museum Data (Valid Extant, Valid Fossil) agree with each museum's page and Global Data"
-            : "statsPage Bioregion Data agrees with each bioregion's page and Global Data", museum ? "18, 19" : "17");
+            : "statsPage Bioregion Data agrees with each bioregion's page and Global Data", museum ? "18, 19" : "17")
+            .pendingOn(true, true, false, false);   // the place pages' numbers follow the rules of 2026-10-21
         Map<String, long[][]> data = CountInvariants.keyMap();   // every family, as the page counts
         Map<String, long[][]> ants = CountInvariants.keyMap();   // Formicidae only, as the place pages count
         String page = museum ? "statsPage Museum Data" : "statsPage Bioregion Data";
@@ -584,7 +585,10 @@ public final class NumberChecks {
             boolean[] since = new boolean[4];
             for (int i = 0; i < 4; i++) {
                 recount.add(sql[i] == null ? null : inv.rows(sql[i]));
-                since[i] = sql[i] != null && createdSince(tables[i], inv.result.countedUntil);
+                // the pages show LoginMgr's numbers as read at its last load (after the nightly run, in a thread that may
+                // finish after this check started): rows added since that load are pending
+                Timestamp read = inv.curatorsRead != null ? inv.curatorsRead : inv.result.countedUntil;
+                since[i] = sql[i] != null && createdSince(tables[i], read);
             }
             Map<String, Object> exp = new TreeMap<>();
             for (Map.Entry<Integer, int[]> e : inv.curatorNumbers.entrySet()) {
@@ -595,7 +599,7 @@ public final class NumberChecks {
                     if (recount.get(i) == null) continue;
                     r[i] = recount.get(i).containsKey(id) ? recount.get(i).get(id)[0] : 0;
                     inv.compare(c, "curator", id, what[i] + " (curators.do, curator.do)", e.getValue()[i], r[i], "=",
-                        since[i] ? "rows were added after the last nightly run (the pages read the numbers at the nightly reload)" : null);
+                        since[i] ? "rows were added after the pages read the numbers (LoginMgr, at the reload after the nightly run)" : null);
                 }
                 exp.put(id, r);
                 shownNumbers.put(id, e.getValue());
@@ -754,11 +758,19 @@ public final class NumberChecks {
      */
     void taxonParents() {
         CountInvariants.Check check = new CountInvariants.Check("taxon.parents",
-            "B25: species and subspecies have their genus as parent (a subspecies under its species changes the species row's Specimens)", "22, 40, 41");
+            "B25: ants of a counted status have their genus as parent (a subspecies under its species changes the species row's Specimens)", "22, 40, 41");
         inv.check(check, c -> {
             site().put("taxa", "taxon table");
-            String sql = "select c.taxon_name, c.taxarank, c.parent_taxon_name, p.taxarank from taxon c left join taxon p on p.taxon_name = c.parent_taxon_name"
-                + " where c.taxarank in ('species', 'subspecies') and c.taxon_name like '% %' and c.family = 'formicidae'";
+            // Only the names the lists count (counted statuses). Synonyms, homonyms and obsolete combinations take the
+            // parent of their current valid name (AntwebUpload.saveTaxon), so their own genus differs by design; and a
+            // name whose current valid name is another name is left out for the same reason (2026-10-22: 6,503 such
+            // rows on staging were not findings).
+            boolean current = has("taxon", "current_valid_name");
+            String sql = "select c.taxon_name, c.taxarank, c.parent_taxon_name, p.taxarank, c.status from taxon c"
+                + " left join taxon p on p.taxon_name = c.parent_taxon_name"
+                + " where c.taxarank in ('species', 'subspecies') and c.taxon_name like '% %' and c.family = 'formicidae'"
+                + " and c.status in " + CountInvariants.COUNTABLE
+                + (current ? " and (c.current_valid_name is null or c.current_valid_name = '' or c.current_valid_name = c.taxon_name)" : "");
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(sql))) {
                 while (r.next()) {
                     String name = r.getString(1);
@@ -767,8 +779,11 @@ public final class NumberChecks {
                     ++c.compared;
                     if (parent != null && CountInvariants.key(parent).equals(CountInvariants.key(byName))) continue;
                     --c.compared;
-                    inv.compare(c, "site", "taxa", name + " (" + r.getString(2) + "): parent " + parent + (r.getString(4) == null ? "" : " (" + r.getString(4) + ")")
-                        + ", by its name " + byName + (("species".equals(r.getString(4))) ? " (B25: its specimens go into the species row)" : ""), 1, 0, "=", null);
+                    boolean b25 = "species".equals(r.getString(4));
+                    inv.compare(c, "site", "taxa", name + " (" + r.getString(2) + ", " + r.getString(5) + "): parent " + parent
+                        + (r.getString(4) == null ? (parent == null ? "" : " (not a taxon)") : " (" + r.getString(4) + ")") + ", genus by its name " + byName
+                        + (b25 ? " (B25: its specimens replace the species row's)" : parent == null ? " (B36: no parent; the genus row does not count it)"
+                            : " (B36: counted under another genus row)"), 1, 0, "=", null);
                 }
             }
             // rows of lists that B25 changes: a species row with a subspecies row whose parent is that species

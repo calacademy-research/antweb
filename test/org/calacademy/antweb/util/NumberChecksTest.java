@@ -219,6 +219,36 @@ public class NumberChecksTest extends TestCase {
         assertTrue(list(r), country);
     }
 
+    /** Staging 2026-10-22 (6,503 differences): a synonym takes the parent of its current valid name, not a finding. */
+    public void testSynonymsKeepTheParentOfTheirValidName() throws Exception {
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family) values"
+            + " ('myrmicinaetetramorium a', 'species', 'synonym', '" + PHEIDOLE + "', 'formicidae')");
+        assertEquals(0, real(check(), "taxon.parents"));
+        exec("update taxon set status = 'valid' where taxon_name = 'myrmicinaetetramorium a'");
+        assertEquals("a counted name under another genus", 1, real(check(), "taxon.parents"));
+    }
+
+    /** Staging 2026-10-22: the curator numbers are read after the nightly run; rows added since are pending. */
+    public void testCuratorRowsAfterTheNumbersWereReadArePending() throws Exception {
+        exec("insert into upload (upload_id, created, login_id, group_id) values (3, '2021-06-01 10:00:00', 5, 2)");
+        CountCheck cc = new CountCheck(connection);
+        cc.curatorNumbers = curatorNumbers();
+        cc.curatorsRead = Timestamp.valueOf("2021-05-01 10:00:00");
+        CountCheck.Result r = cc.run(new ArrayList<>(), new ArrayList<>(), 0, Timestamp.valueOf("2021-01-01 08:15:00"), true, true, true, null);
+        assertEquals(list(r), 0, real(r, "admin.curators"));
+        cc.curatorsRead = Timestamp.valueOf("2021-07-01 10:00:00");
+        r = cc.run(new ArrayList<>(), new ArrayList<>(), 0, Timestamp.valueOf("2021-01-01 08:15:00"), true, true, true, null);
+        assertEquals(list(r), 1, real(r, "admin.curators"));
+    }
+
+    /** Before a nightly run with the rules of 2026-10-21 the place pages' numbers are pending. */
+    public void testStatsPageAgainstPlacePagesIsPendingUntilTheNewRules() throws Exception {
+        exec("update museum set valid_species_count = 1 where code = 'CASC'");
+        CountCheck.Result r = new CountCheck(connection).run(new ArrayList<>(), new ArrayList<>(), 0, Timestamp.valueOf("2021-01-01 08:15:00"),
+            true, false, true, null);
+        assertEquals(list(r), 0, real(r, "stats.museums"));
+    }
+
     /** B25: a subspecies whose parent is its species. */
     public void testSubspeciesUnderItsSpeciesIsFound() throws Exception {
         exec("update taxon set parent_taxon_name = '" + PA + "' where taxon_name = '" + PAX + "'");

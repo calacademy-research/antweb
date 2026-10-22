@@ -87,8 +87,10 @@ def test_list_headers_equal_place_numbers():
             continue
         n, text = header(_get(f"/taxonomicPage.do?rank={rank}&{WHERE}&statusSet={status}"))
         if n != stats[stat]:
-            wrong.append(f"taxonomicPage rank={rank} statusSet={status}: header {text!r}, place page {stat} {stats[stat]}")
-    assert not wrong, "Madagascar list headers differ from the place page:\n" + "\n".join(wrong)
+            wrong.append(f"rank={rank} {status}: list {n}, place page {stat} {stats[stat]}")
+    # One line (the GitHub annotation shows the start only). The place numbers are those of the last nightly run: before
+    # a nightly run with the rules of 2026-10-21 (ants only, counted from the list) they can differ from the live list.
+    assert not wrong, "Madagascar list header vs place page: " + "; ".join(wrong) + " (expected to agree after a nightly run with the 2026-10-21 rules)"
 
 
 def test_unimaged_header_is_within_the_list():

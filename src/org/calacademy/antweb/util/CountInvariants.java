@@ -155,6 +155,8 @@ public final class CountInvariants {
      * Description Edits, image uploads, images uploaded; null when not known (the check is then not run).
      */
     public Map<Integer, int[]> curatorNumbers;
+    /** When the pages' curator numbers were read (LoginMgr.getCuratorsRead); null: the last nightly run. */
+    public java.sql.Timestamp curatorsRead;
     /** artists.do as the page shows it (ArtistMgr): artist id -> Images, Specimen; null when not known. */
     public Map<Integer, int[]> artistNumbers;
     /** Numbers the end-to-end tests compare with the pages (report: JSON in the element with id count-check-expected). */

@@ -98,6 +98,7 @@ public final class CountCheckAction extends AntwebAction {
             List<String> log = computeLog();
             CountCheck countCheck = new CountCheck(connection);
             if (invariants) {
+                countCheck.curatorsRead = LoginMgr.getCuratorsRead();
                 countCheck.curatorNumbers = curatorNumbers();
                 countCheck.artistNumbers = artistNumbers();
             }

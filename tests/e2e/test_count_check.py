@@ -66,6 +66,32 @@ POLL_SECONDS = 10
 _REPORT = {}
 
 
+def real_rows(r):
+    """The listed real differences of the report: [place, check, taxon or number, stored (shown), recount]."""
+    if "Real differences" not in r.text:
+        return []
+    start = r.text.index("Real differences")
+    end = r.text.find("Pending differences", start)
+    section = r.text[start:end if end > 0 else len(r.text)]
+    return [[unescape(re.sub(r"<[^>]+>", "", c)).strip() for c in re.findall(r"<td>(.*?)</td>", row, re.S)]
+            for row in re.findall(r'<tr class="count-mismatch">(.*?)</tr>', section, re.S)]
+
+
+def examples(rows, skip=(), per_check=3):
+    """The first examples of each check (the GitHub annotation shows only the start of the message): one line each,
+    'check | place | what | shown -> must be'; the known findings' checks last, one example each."""
+    by_check = {}
+    for c in rows:
+        if len(c) >= 5:
+            by_check.setdefault(c[1], []).append(c)
+    lines = []
+    for check in sorted(by_check, key=lambda k: (k in skip, k)):
+        n = 1 if check in skip else per_check
+        for c in by_check[check][:n]:
+            lines.append(f"{check} | {c[0]} | {c[2][:160]} | {c[3]} -> {c[4]}")
+    return "Examples (check | place | number | shown -> must be):\n" + "\n".join(lines)
+
+
 def count_check_report():
     """(admin session, report page) of one count check run per test session (the job takes minutes): the tests
     below compare the pages with the numbers of that run."""
@@ -181,7 +207,7 @@ def test_list_counts_match_the_specimen_records():
             per_check["recounts of the sampled places"] = recounts
         summary_line = "; ".join(f"{k}: {v}" + (f" (known: {KNOWN[k]})" if k in KNOWN else "") for k, v in sorted(per_check.items()))
         pytest.fail(f"{real} numbers differ from the records ({pending} more are pending). By check: {summary_line}.\n"
-                    "Place | number | taxon | stored (shown) | recount:\n" + "\n".join(" | ".join(c) for c in rows[:40]))
+                    + examples(rows, skip=KNOWN))
 
 
 @pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")
@@ -208,7 +234,8 @@ def test_no_real_differences_outside_the_known_findings():
         recounts = sum(1 for row in re.findall(r'<tr class="count-mismatch"><td>.*?</td><td>(.*?)</td>', section, re.S) if row in RECOUNT_CHECKS)
         if recounts:
             other["recounts of the sampled places"] = recounts
-    assert not other, "real differences outside the known findings: " + "; ".join(f"{k}: {v}" for k, v in sorted(other.items()))
+    assert not other, ("real differences outside the known findings: " + "; ".join(f"{k}: {v}" for k, v in sorted(other.items()))
+                       + ".\n" + examples(real_rows(r), skip=KNOWN))
 
 
 # ---------------------------------------------------------------------------------------------------------------

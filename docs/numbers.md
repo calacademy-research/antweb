@@ -288,6 +288,31 @@ Found while doing this (2026-10-22):
   only; statsPage "Imaged Species" counts names of any rank and labels (B13 fixed the home number only).
   Question: section 5 Q6.
 
+- **B36** (found by `inv:taxon.parents`, 2026-10-22) an ant name of a counted status whose parent is not its genus
+  (or empty): the nightly crawl counts a list's species and subspecies rows under their parent
+  (`CountDb.countGrandChildren`), so such a name is missing from its genus row's Species and Specimens (and is
+  counted under another genus row if the parent is another genus). `AntwebUpload.saveTaxon` leaves the parent
+  unset when the genus is not yet known (`TaxonMgr.getGenus(parent) == null`) and takes the parent of the current
+  valid name when that differs. Size: the check's report on staging (the first run, 6,503, also counted synonyms
+  and other names that take the parent of their valid name by design; the check now covers counted statuses
+  only). Staging query: `select c.status, p.taxarank, count(*) from taxon c left join taxon p on p.taxon_name =
+  c.parent_taxon_name where c.family = 'formicidae' and c.taxarank in ('species', 'subspecies') and c.taxon_name
+  like '% %' and c.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') and
+  (c.parent_taxon_name is null or c.parent_taxon_name <> substring_index(c.taxon_name, ' ', 1)) group by 1, 2`.
+  Fix: set the parent of these names to their genus (from the name), creating the genus row when missing, in the
+  upload and once for the existing rows.
+
+**First run on staging (2026-10-22, full e2e with #226; the nightly run before it had the code from before #216):**
+
+| Check | Real differences | What it was | Now |
+|---|---|---|---|
+| taxon.parents | 6,503 | mostly a check bug: synonyms, homonyms and obsolete combinations take the parent of their current valid name by design | counted statuses only, names that are their own current valid name; what remains is B36 (or B25 when the parent is a species) |
+| admin.curators | 18 | check timing: the job starts right after the nightly run, LoginMgr reloads the curator numbers in a thread that finishes later, so the job compared the numbers of the previous load | pending when the rows are newer than LoginMgr's read (`LoginMgr.getCuratorsRead`) |
+| stats.bioregions, stats.museums | 5, 11 | check bug: they compare with the place pages' Valid species, Subfamilies, Genera, Species, whose rules changed on 2026-10-21 and were last written by the old code | pending until a nightly run with the 2026-10-21 rules |
+| admin.groups | 5 | probably real: the upload row is a snapshot written at the group's last upload (Q13); specimens changed since (deleted, flagged, statuses changed) or the counting rule changed since an old upload | real; the report lists group, number, stored and recount |
+| api.taxa, geo.adm1.country | 29,910, 3 | known B11, B26 | as before |
+| taxonomicPage headers (e2e) | Madagascar | expected: the place numbers are from the nightly run with the old code (non-ants, roll-up sums) | should agree after the 2026-10-22 nightly; a difference after that is real |
+
 ## 4. Plans for the larger ones
 
 | Id | Plan |

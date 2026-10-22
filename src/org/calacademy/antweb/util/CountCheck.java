@@ -233,6 +233,7 @@ public class CountCheck {
      */
     public java.util.Map<Integer, int[]> curatorNumbers;
     public java.util.Map<Integer, int[]> artistNumbers;
+    public java.sql.Timestamp curatorsRead;
 
     public CountCheck(Connection connection) {
         this.connection = connection;
@@ -288,6 +289,7 @@ public class CountCheck {
             result.invariants = new CountInvariants(connection, result, changedNames, rulesCounted);
             result.invariants.statsPageValidSpecies = statsPageValidSpecies;
             result.invariants.curatorNumbers = curatorNumbers;
+            result.invariants.curatorsRead = curatorsRead;
             result.invariants.artistNumbers = artistNumbers;
             result.invariants.run();
         }
