@@ -350,7 +350,8 @@ public class LoginDb extends AntwebDb {
       try {
 
         UploadDb uploadDb = new UploadDb(getConnection());
-        curator.setLastUpload(uploadDb.getLastUploadByLogin(curator.getId()));
+        // The numbers of the group of the curator's last upload today (GroupCountDb, Q13 2026-10-22); its date apart.
+        curator.setLastUpload(new GroupCountDb(getConnection()).apply(uploadDb.getLastUploadByLogin(curator.getId())));
 
         stmt = DBUtil.getPreparedStatement(getConnection(), "setUploadCounts()", query);
         stmt.setInt(1, curator.getId());
@@ -367,44 +368,40 @@ public class LoginDb extends AntwebDb {
       }
     }    
 
+    /**
+     * The tables of page-text edits a curator's "Description Edits" number counts (curators.do, curator.do): every saved
+     * version of a taxon's texts (description_edit, the current ones, and description_hist, the earlier versions) and,
+     * since 2026-10-22 (Brian Fisher), of a place's or project's texts (object_edit, object_hist). Column access_login.
+     */
+    public static final String[] PAGE_TEXT_EDIT_TABLES = {"description_edit", "description_hist", "object_edit", "object_hist"};
+
+    /** Page-text edits by login (columns access_login, count) over the given tables (some of PAGE_TEXT_EDIT_TABLES). */
+    public static String pageTextEditsByLoginSql(java.util.List<String> tables) {
+        StringBuilder u = new StringBuilder();
+        for (String t : tables) {
+            if (!java.util.Arrays.asList(PAGE_TEXT_EDIT_TABLES).contains(t)) throw new IllegalArgumentException(t);
+            if (u.length() > 0) u.append(" union all ");
+            u.append("select access_login from ").append(t).append(" where access_login is not null");
+        }
+        return "select e.access_login, count(*) from (" + u + ") e group by e.access_login";
+    }
+
     public void setDescEditCounts(Curator curator) {
       int count = 0;
-      
-      String query = "select count(*) count from description_edit where access_login = ?";
-      ResultSet rset = null;
-      PreparedStatement stmt = null;
-      try {
-        stmt = DBUtil.getPreparedStatement(getConnection(), "setDescEditCounts()", query);
-        stmt.setInt(1, curator.getId());
-        stmt.executeQuery();
-        rset = stmt.getResultSet();
-
-        while (rset.next()) {
-            count = rset.getInt("count");
-        }
-      } catch (SQLException e) {
+      for (String table : PAGE_TEXT_EDIT_TABLES) {
+        String query = "select count(*) count from " + table + " where access_login = ?";
+        try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
+          stmt.setInt(1, curator.getId());
+          try (ResultSet rset = stmt.executeQuery()) {
+            while (rset.next()) count += rset.getInt("count");
+          }
+        } catch (SQLException e) {
+          // a table missing on an old database: the other tables still count
           s_log.error("setDescEditCounts() e:" + e + " query:" + query);
-      } finally {
-        DBUtil.close(stmt, rset, "LoginDb", "setDescEditCounts()");
-      }
-
-      query = "select count(*) count from description_hist where access_login = ?";
-      try {
-        stmt = DBUtil.getPreparedStatement(getConnection(), "setDescEditCounts()", query);
-        stmt.setInt(1, curator.getId());
-        stmt.executeQuery();
-        rset = stmt.getResultSet();
-        while (rset.next()) {
-            count += rset.getInt("count");
         }
-      } catch (SQLException e) {
-          s_log.error("setDescEditCounts() e:" + e + " query:" + query);
-      } finally {
-        DBUtil.close(stmt, rset, "LoginDb", "setDescEditCounts()");
       }
-
       curator.setDescEditCount(count);
-    }        
+    }
 
     // Doesn't really need curators. Logins are fetched more quickly.
     public ArrayList<Curator> getCurators(int groupId) throws SQLException {          

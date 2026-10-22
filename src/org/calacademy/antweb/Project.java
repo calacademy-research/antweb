@@ -635,6 +635,12 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     
     // Not overview specific as are Museum, Bioregion and Geolocale.
     public String getCountSpecimensQuery() {
+      // Curated projects: a specimen filed under a synonym counts under the valid name (2026-10-22,
+      // PlaceTotals.specimensByListNameSql); worldants and allantwebants (Global) by the name itself.
+      if (org.calacademy.antweb.home.PlaceTotals.synonymsToValid(org.calacademy.antweb.home.PlaceTotals.PROJECT, getName())) {
+        return org.calacademy.antweb.home.PlaceTotals.specimensByListNameSql(org.calacademy.antweb.home.PlaceTotals.PROJECT,
+            org.calacademy.antweb.home.PlaceTotals.literal(getName()), "");
+      }
       String query = "select count(*) count, specimen.taxon_name taxonName from specimen " 
           + " join proj_taxon on specimen.taxon_name = proj_taxon.taxon_name " 
           + " where proj_taxon.project_name = '" + getName() + "'" 

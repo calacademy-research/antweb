@@ -83,8 +83,15 @@ import org.calacademy.antweb.home.*;
      *  the crawl writes it on the formicidae row, other rows kept old values). */
     public static final String RESET_SQL = "update proj_taxon set specimen_count = 0, species_count = 0, genus_count = 0, subfamily_count = 0 where project_name = ?";
 
-    /** One project list: counts set to 0, then counted again from the specimens. */
+    /**
+     * One project list: rows of synonyms renamed to (merged into) their valid name (2026-10-22: set 3 counted the
+     * projects before its rename; worldants and allantwebants are not renamed), counts set to 0, then counted again
+     * from the specimens (a synonym's specimens under the valid name, Project.getCountSpecimensQuery).
+     */
     public void recount(Project project) throws SQLException {
+        if (PlaceTotals.synonymsToValid(PlaceTotals.PROJECT, project.getName())) {
+            new ProjTaxonDb(getConnection()).renameToValid(PlaceTotals.PROJECT, project.getName());
+        }
         try (PreparedStatement stmt = getConnection().prepareStatement(RESET_SQL)) {
             stmt.setString(1, project.getName());
             stmt.executeUpdate();

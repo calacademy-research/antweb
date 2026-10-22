@@ -201,19 +201,17 @@ public class GroupDb extends AntwebDb {
         if ("firstUpload".equals(orderBy)) orderBy = "first_specimen_upload";
         if ("lastUpload".equals(orderBy)) orderBy = "created desc"; //"last_specimen_upload";
         if ("uploads".equals(orderBy)) orderBy = "upload_count desc";
-        if ("specimens".equals(orderBy)) orderBy = "specimens desc";
-        if ("ungeoreferenced".equals(orderBy)) orderBy = "ungeoreferenced desc";
-        if ("flagged".equals(orderBy)) orderBy = "flagged desc";
-        if ("collections".equals(orderBy)) orderBy = "collections desc";
-        if ("localities".equals(orderBy)) orderBy = "localities desc";
-        if ("subfamilies".equals(orderBy)) orderBy = "subfamilies desc";
-        if ("genera".equals(orderBy)) orderBy = "genera desc";
-        if ("species".equals(orderBy)) orderBy = "species desc";
+        // The numbers shown are today's (group_count, recounted every night since 2026-10-22, Q13); the last upload's
+        // until a nightly run has counted the group.
+        for (String n : new String[] {"specimens", "ungeoreferenced", "flagged", "collections", "localities", "subfamilies", "genera", "species"}) {
+            if (n.equals(orderBy)) orderBy = "coalesce(c." + n + ", u." + n + ") desc";
+        }
 
         // ORDER BY cannot be a bound parameter. Only allow the mapped values above (and name); anything else gets no ordering.
-        List<String> allowedOrderBys = Arrays.asList("name", "first_specimen_upload", "created desc", "upload_count desc"
-          , "specimens desc", "ungeoreferenced desc", "flagged desc", "collections desc", "localities desc"
-          , "subfamilies desc", "genera desc", "species desc");
+        List<String> allowedOrderBys = new ArrayList<>(Arrays.asList("name", "first_specimen_upload", "created desc", "upload_count desc"));
+        for (String n : new String[] {"specimens", "ungeoreferenced", "flagged", "collections", "localities", "subfamilies", "genera", "species"}) {
+            allowedOrderBys.add("coalesce(c." + n + ", u." + n + ") desc");
+        }
         if (orderBy != null && !allowedOrderBys.contains(orderBy)) {
             s_log.debug("getUploadGroups() ignoring orderBy:" + orderBy);
             orderBy = null;
@@ -221,7 +219,10 @@ public class GroupDb extends AntwebDb {
 
         String orderClause = "";
         if (!Utility.isBlank(orderBy)) orderClause = " order by " + orderBy;
-        String query = "select g.id from ant_group g, upload u where g.id = u.group_id and u.upload_id in (" + recentUploadIds + ") " + orderClause;
+        GroupCountDb.ensureTable(getConnection());
+        String query = "select g.id from ant_group g join upload u on g.id = u.group_id"
+            + " left join " + GroupCountDb.TABLE + " c on c.group_id = g.id and c.counted is not null"
+            + " where u.upload_id in (" + recentUploadIds + ") " + orderClause;
         //A.log("getUploadGroups() query:" + query);
         Statement stmt = null;
         ResultSet rset = null;

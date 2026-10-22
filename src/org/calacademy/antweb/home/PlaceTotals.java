@@ -178,6 +178,60 @@ public final class PlaceTotals {
             + " group by " + SLICE + " having sum(l.specimen_count) > 0 order by " + SLICE;
     }
 
+    // ---------------------------------------------------------------------------------------------- synonyms
+
+    /*
+     * Brian Fisher, 2026-10-22: a specimen filed under a junior synonym (or another name AntCat no longer uses, with a
+     * current valid name) belongs to the valid species. The nightly run renames such rows of a place's list to the
+     * valid name (TaxonSetDb.renameToValid, merging when the valid name is there already) before the list is counted,
+     * and the specimen counts of museum, bioregion and project lists count those specimens under the valid name.
+     * Until 2026-10-22 museum and bioregion lists were counted (and their totals written) before the rename, so the
+     * museum AFRC showed 14 valid species rows that its Species number did not count (count check, staging).
+     */
+
+    /** A name (alias t, a taxon row) that list rows are renamed from: not valid, with a current valid name other than itself. */
+    public static String renamedCondition(String t) {
+        return "(" + t + ".status <> 'valid' and coalesce(" + t + ".current_valid_name, '') <> '' and " + t + ".current_valid_name <> " + t + ".taxon_name)";
+    }
+
+    /**
+     * Whether the specimens of a synonym count under its valid name on this place's list: museums, bioregions and
+     * projects, except worldants and allantwebants (they list every name as AntCat has it; allantwebants is the
+     * "Global" column, all specimens filed under that very name). Geolocale lists are renamed before their counts
+     * too (set 2), but their specimen counts are still by the exact name (docs/numbers.md).
+     */
+    public static boolean synonymsToValid(String type, String key) {
+        if (MUSEUM.equals(type) || BIOREGION.equals(type)) return true;
+        return PROJECT.equals(type) && !"worldants".equals(key) && !"allantwebants".equals(key);
+    }
+
+    /**
+     * The specimens of each name on one place's list (columns taxonName, count), a specimen filed under a renamed name
+     * (renamedCondition) counted under its current valid name when that is on the list, never under the old name.
+     * keyLiteral: the place key as SQL (a quoted literal, or "?": then the statement takes the key twice, followed by
+     * the parameters of specimenCriteria). specimenCriteria: more conditions on the specimen (alias s), starting with
+     * " and", or "".
+     */
+    public static String specimensByListNameSql(String type, String keyLiteral, String specimenCriteria) {
+        String l = listTable(type);
+        String k = listKey(type);
+        return "select m.list_name taxonName, count(*) count from ("
+            + "select l.taxon_name list_name, l.taxon_name src from " + l + " l where l." + k + " = " + keyLiteral
+            + " union all select l.taxon_name list_name, st.taxon_name src from " + l + " l"
+            + " join taxon st on st.current_valid_name = l.taxon_name"
+            + " where l." + k + " = " + keyLiteral + " and " + renamedCondition("st")
+            + ") m join specimen s on s.taxon_name = m.src"
+            + " left join taxon sx on sx.taxon_name = s.taxon_name"
+            + " where (m.src <> m.list_name or coalesce(" + renamedCondition("sx") + ", false) = false)"
+            + specimenCriteria
+            + " group by m.list_name";
+    }
+
+    /** A place key as a quoted SQL literal. */
+    public static String literal(String key) {
+        return "'" + (key == null ? "" : key.replace("\\", "\\\\").replace("'", "''")) + "'";
+    }
+
     /** Runs a one-number query with one parameter (the place key). */
     public static int count(Connection connection, String sql, String key) throws SQLException {
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {

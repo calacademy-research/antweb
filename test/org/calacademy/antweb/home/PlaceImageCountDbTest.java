@@ -45,7 +45,7 @@ public class PlaceImageCountDbTest extends TestCase {
             exec("drop table if exists " + t);
         }
         exec("create table taxon (taxon_name varchar(128) primary key, taxarank varchar(20), status varchar(40), parent_taxon_name varchar(128),"
-            + " family varchar(64) default 'formicidae')");   // place numbers count ants only (2026-10-21)
+            + " family varchar(64) default 'formicidae', current_valid_name varchar(128))");   // place numbers count ants only (2026-10-21)
         exec("create table specimen (code varchar(128) primary key, taxon_name varchar(128), status varchar(40), country varchar(64),"
             + " adm1 varchar(64), island_country varchar(64), museum varchar(64), bioregion varchar(64), upload_id int,"
             + " family varchar(64) default 'formicidae', subfamily varchar(64), genus varchar(64), species varchar(64), image_count int default 0)");

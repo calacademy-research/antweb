@@ -104,7 +104,7 @@ Coverage after 2026-10-22: **67 validated, 51 partly, 0 not yet** of 118 (2026-1
 | 38 | taxonomicPage.do, browse.do | List header N [status] Species / Genera / Subfamilies | live: rows shown (session status set) | partly | e2e:test_numbers_live.py::test_list_headers_equal_place_numbers |
 | 39 | taxonomicPage.do, browse.do | N Unimaged X (out of M) | live over list image_count (labels included) | partly | e2e:test_numbers_live.py::test_unimaged_header_is_within_the_list |
 | 40 | taxonomicPage.do, browse.do | Species row N Specimens (place column) | list row specimen_count (nightly crawl); B25 (a subspecies under its species replaces the species' row) checked by taxon.parents | yes | cc:specimens; inv:taxon.parents |
-| 41 | taxonomicPage.do, browse.do | Genus row N Species | list row species_count: its species and subspecies rows | yes | inv:list.genus; cc:species; inv:taxon.parents |
+| 41 | taxonomicPage.do, browse.do | Genus row N Species | list row species_count: its species and subspecies rows of a counted status (country and adm1 genus rows were rewritten after the count by set 2's geolocaleTaxonFix with every row under the genus, any status or rank, until 2026-10-22) | yes | inv:list.genus; cc:species; inv:taxon.parents |
 | 42 | taxonomicPage.do, browse.do | Subfamily row N Genera | list row genus_count: its genus rows | yes | inv:list.subfamily; cc:genera |
 | 43 | taxonomicPage.do, browse.do | Global N Specimens | allantwebants proj_taxon specimen_count: all specimens of the name; rebuilt after uploads and, since 2026-10-21, after the nightly name update | yes | inv:global.specimens; inv:list.global; cc:global; junit:PlaceTotalsDbTest#testGlobalIsRecountedAfterTheNameUpdateMovedSpecimens |
 | 44 | taxonomicPage.do, browse.do | Images column N Images | list row image_count (set 4): images (labels included) of the place's specimens of the name; project rows reset first since 2026-10-21 | partly | cc:images; inv:list.images |
@@ -144,17 +144,17 @@ Coverage after 2026-10-22: **67 validated, 51 partly, 0 not yet** of 118 (2026-1
 | 78 | endemic.do, introduced.do | endemic.do rows | live over is_endemic flags | partly | inv:place.totals.endemic; inv:place.endemic.flags; e2e:test_numbers_live.py::test_endemic_and_introduced_lists_equal_place_numbers |
 | 79 | endemic.do, introduced.do | introduced.do rows | live over is_introduced flags | partly | inv:place.totals.introduced; e2e:test_numbers_live.py::test_endemic_and_introduced_lists_equal_place_numbers |
 | 80 | curators, groups, artists, uploads (admin) | curators.do Specimen Uploads | LoginMgr at startup | yes | inv:admin.curators; e2e:test_count_check.py::test_curator_and_artist_pages_equal_the_recount |
-| 81 | curators, groups, artists, uploads (admin) | curators.do Description Edits | LoginMgr at startup | yes | inv:admin.curators; e2e:test_count_check.py::test_curator_and_artist_pages_equal_the_recount |
+| 81 | curators, groups, artists, uploads (admin) | curators.do Description Edits | LoginMgr at startup: page-text edits, every saved version: taxon texts (description_edit, description_hist) and, since 2026-10-22, place and project texts (object_edit, object_hist); said on curators.do and curator.do | yes | inv:admin.curators; e2e:test_count_check.py::test_curator_and_artist_pages_equal_the_recount |
 | 82 | curators, groups, artists, uploads (admin) | curator.do specimen uploads | LoginMgr at startup | yes | inv:admin.curators; e2e:test_count_check.py::test_curator_and_artist_pages_equal_the_recount |
-| 83 | curators, groups, artists, uploads (admin) | curator.do last upload numbers | the curator's last upload row (written at the upload); groups.do shows the group's last upload row, checked for every group | partly | inv:admin.groups |
+| 83 | curators, groups, artists, uploads (admin) | curator.do last upload numbers | the specimens today of the group of the curator's last upload (group_count, recounted every night since 2026-10-22, Q13); its date apart | partly | inv:admin.groups; junit:NightlyCountOrderDbTest#testGroupNumbersAreRecountedEveryNight |
 | 84 | curators, groups, artists, uploads (admin) | curator.do image uploads, images uploaded | LoginMgr at startup | yes | inv:admin.curators; e2e:test_count_check.py::test_curator_and_artist_pages_equal_the_recount |
 | 85 | curators, groups, artists, uploads (admin) | groups.do Uploads | live count of upload rows (GroupAction); ant_group.upload_count orders the page | yes | inv:admin.groups; e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers |
-| 86 | curators, groups, artists, uploads (admin) | groups.do Specimens | upload row | yes | inv:admin.groups; e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers |
-| 87 | curators, groups, artists, uploads (admin) | groups.do Ungeoreferenced, Flagged, Collections, Localities | upload row | yes | inv:admin.groups; e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers |
-| 88 | curators, groups, artists, uploads (admin) | groups.do Subfamilies, Genera, Species | upload row: count(distinct species) counts epithets, of valid names only (UploadDb.getCounts, getAntwebGenusCriteria) | yes | inv:admin.groups; e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers |
+| 86 | curators, groups, artists, uploads (admin) | groups.do Specimens | the group's specimens today (group_count, nightly set 3, GroupCountDb; the last upload row until a nightly run has counted the group) | yes | inv:admin.groups; e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers |
+| 87 | curators, groups, artists, uploads (admin) | groups.do Ungeoreferenced, Flagged, Collections, Localities | group_count, as #86 | yes | inv:admin.groups; e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers |
+| 88 | curators, groups, artists, uploads (admin) | groups.do Subfamilies, Genera, Species | group_count, as #86, by the rule of the upload row: count(distinct species) counts epithets, of valid names only (UploadDb.getCounts, getAntwebGenusCriteria) | yes | inv:admin.groups; e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers |
 | 89 | curators, groups, artists, uploads (admin) | groups.do Totals row | live sums | yes | e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers; inv:admin.groups |
 | 90 | curators, groups, artists, uploads (admin) | groups.do Totals Subfamilies / Genera / Species | live maximum of the rows, labelled Totals | partly | e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers |
-| 91 | curators, groups, artists, uploads (admin) | group.do uploads, last upload numbers | upload row | yes | e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers; inv:admin.groups |
+| 91 | curators, groups, artists, uploads (admin) | group.do uploads, last upload numbers | group_count, as #86 (the page says so, with the date of the count) | yes | e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers; inv:admin.groups |
 | 92 | curators, groups, artists, uploads (admin) | artists.do Images, Specimen | live / ArtistMgr | yes | inv:admin.artists; e2e:test_count_check.py::test_curator_and_artist_pages_equal_the_recount |
 | 93 | curators, groups, artists, uploads (admin) | listImageUploads totals | live / image_upload | yes | inv:admin.imageUploads; e2e:test_count_check.py::test_image_upload_and_orphan_counts_equal_the_recount |
 | 94 | curators, groups, artists, uploads (admin) | imageUploadReport counts | image_upload.image_count, written when the upload ends; saved and not saved files | partly | inv:admin.imageUploads |
@@ -304,15 +304,50 @@ Found while doing this (2026-10-22):
   Fix: set the parent of these names to their genus (from the name), creating the genus row when missing, in the
   upload and once for the existing rows.
 
+- **B37** (found and fixed 2026-10-22, confirmed on staging by Brian Fisher) Genus rows of country and adm1 lists one too
+  high (US formicinaeformica 104 with `formicinaeformica fuliginothorax`, status unavailable; Czech Republic
+  formicinaecamponotus 8 with the subspecies `formicinaecamponotus ligniperda afer`, unavailable; the subfamily rows,
+  287 and 57, were right). Cause: nightly set 2 ran `geolocaleTaxonFix` (`GeolocaleTaxonDb.geolocaleTaxonFix`) after
+  the count; for every genus row of every country and live adm1 it set Species to the number of list rows whose taxon
+  has the genus as parent, of any status and rank (`getGeolocaleTaxonCount`). The count
+  (`GeolocaleTaxonCountDb.childrenCountCrawl`, from `geolocaleCountCrawl`) covers the same places (valid countries,
+  live valid adm1s; the job also touched countries marked invalid, which the count skips) and writes every genus row by the
+  list rule (species and subspecies of a counted status) after resetting it, so the job did nothing else. Fix:
+  removed from set 2; the admin job (`utilData.do?action=geolocaleTaxonFix`) counts by the list rule. Checks:
+  `inv:list.genus`, `cc:species`.
+- **B38** (found and fixed 2026-10-22, confirmed on staging) Museum and bioregion lists counted before their synonym
+  rows were renamed. Set 3 built and counted each museum's and bioregion's list and wrote its totals
+  (`MuseumDb.populate`, `BioregionDb.populate`), and only afterwards renamed rows of synonyms and other names with a
+  current valid name to that name (`updateTaxonSets`); the renamed rows kept their old counts, and Species did not count
+  them (museum AFRC: 14 valid species rows with no AFRC specimen under that exact name, such as ponerinaeboltonopone
+  ilgii, 52 specimens filed under an older combination; ABS 1; CELC 4 species and 1 genus). Projects too were counted
+  before that rename (set 2 renamed them already). Brian Fisher: a specimen filed under a junior synonym belongs to the
+  valid species. Fix: each museum, bioregion and curated project list is renamed right after it is built and before its
+  higher taxa, counts and totals (`TaxonSetDb.renameToValid`, in `MuseumDb.populate`, `BioregionDb.populate`,
+  `ProjTaxonCountDb.recount`); a synonym whose valid name is on the list already is merged into it (one row); the
+  specimen counts of museum, bioregion and project rows count a synonym's specimens under the valid name
+  (`PlaceTotals.specimensByListNameSql`, used by `Museum`, `Bioregion`, `Project.getCountSpecimensQuery` and by the
+  count check's recount); bioregion endemism runs after the rename. Set 3 no longer renames after the counts (it
+  still updates the list sources). worldants and allantwebants (Global) keep every name as it is. `inv:list.global`
+  compares such a row with the Global specimens of the name and of its synonyms. Geolocale lists are renamed before
+  their counts (set 2, B27), but their specimen counts are still by the exact name: a specimen filed under a synonym is
+  not counted on a country page (open; same rule could be applied there).
+- **B39** (decided 2026-10-22) Curator "Description Edits": the site counted description_edit and description_hist
+  (every saved version of taxon texts), the check description_edit only. Brian Fisher: place and project page texts
+  count too. Site (`LoginDb.setDescEditCounts`) and check (`NumberChecks.adminCurators`) now count description_edit,
+  description_hist, object_edit and object_hist (`LoginDb.PAGE_TEXT_EDIT_TABLES`); curators.do and curator.do say so.
+
 **First run on staging (2026-10-22, full e2e with #226; the nightly run before it had the code from before #216):**
 
 | Check | Real differences | What it was | Now |
 |---|---|---|---|
 | taxon.parents | 6,503 | mostly a check bug: synonyms, homonyms and obsolete combinations take the parent of their current valid name by design | counted statuses only, names that are their own current valid name; what remains is B36 (or B25 when the parent is a species) |
-| admin.curators | 18 | check timing: the job starts right after the nightly run, LoginMgr reloads the curator numbers in a thread that finishes later, so the job compared the numbers of the previous load | pending when the rows are newer than LoginMgr's read (`LoginMgr.getCuratorsRead`) |
-| stats.bioregions, stats.museums | 5, 11 | check bug: they compare with the place pages' Valid species, Subfamilies, Genera, Species, whose rules changed on 2026-10-21 and were last written by the old code | pending until a nightly run with the 2026-10-21 rules |
-| admin.groups | 5 | probably real: the upload row is a snapshot written at the group's last upload (Q13); specimens changed since (deleted, flagged, statuses changed) or the counting rule changed since an old upload | real; the report lists group, number, stored and recount |
+| admin.curators | 18 | check timing: the job starts right after the nightly run, LoginMgr reloads the curator numbers in a thread that finishes later, so the job compared the numbers of the previous load; and (found 2026-10-22) a check bug: Description Edits on the site count description_edit and description_hist, the check counted description_edit only | pending when the rows are newer than LoginMgr's read (`LoginMgr.getCuratorsRead`); **fixed** 2026-10-22: site and check count description_edit, description_hist, object_edit, object_hist (Brian Fisher: place and project texts count too; B39) |
+| stats.bioregions, stats.museums | 5, 11 | check bug: they compare with the place pages' Valid species, Subfamilies, Genera, Species, whose rules changed on 2026-10-21 and were last written by the old code; and (found 2026-10-22) a real cause: museum and bioregion lists were counted, and their totals written, before set 3 renamed their synonym rows (B38) | pending until a nightly run with the 2026-10-21 rules; B38 **fixed** 2026-10-22 |
+| admin.groups | 5 | real: the upload row is a snapshot written at the group's last upload (Q13); specimens changed since (deleted, flagged, statuses changed) or the counting rule changed since an old upload | **fixed** 2026-10-22 (Q13 decided): the pages show the group's specimens today, recounted every night (`group_count`, `GroupCountDb`, set 3); the check compares them with a recount; pending until the first nightly run has counted a group |
 | api.taxa, geo.adm1.country | 29,910, 3 | known B11, B26 | as before |
+| list.genus, place.totals (geolocale genus rows) | US formicinaeformica 104 (right: 103), Czech Republic formicinaecamponotus 8 (right: 7) | real: set 2's `geolocaleTaxonFix` ran after the count and rewrote every country and live adm1 genus row's Species with every list row under the genus, of any status and rank (an unavailable species, a subspecies of an unavailable name) (B37) | **fixed** 2026-10-22: no longer in set 2 (the count writes the same rows, same places, by the counted rule); the admin job counts by that rule too. Test: `NightlyCountOrderDbTest#testAnUnavailableSpeciesDoesNotRaiseItsGenusRow` |
+| place.totals (museums, bioregions) | museum AFRC: 14 valid species rows not in its Species (e.g. ponerinaeboltonopone ilgii 52 specimens filed under an older combination), ABS 1, CELC 4 species and 1 genus | real (B38) | **fixed** 2026-10-22, see B38. Test: `NightlyCountOrderDbTest#testAMuseumListCountsTheSpecimensOfASynonymUnderTheValidName` |
 | taxonomicPage headers (e2e) | Madagascar | expected: the place numbers are from the nightly run with the old code (non-ants, roll-up sums) | should agree after the 2026-10-22 nightly; a difference after that is real |
 
 ## 4. Plans for the larger ones
@@ -329,7 +364,7 @@ Found while doing this (2026-10-22):
 | B23 | `MessageMgr` errors per upload (instance, not static). |
 | B25 | Checked by `inv:taxon.parents`; if it finds any: set the parent of those subspecies to their genus (as uploads do), or make the crawl group species-rank rows by genus. |
 | B26 | Add the country in the six places listed in section 3 and in the count check's recount (`CountCheck.Place` of an adm1: `and s.country = parent`); `inv:geo.adm1.country` then shows no difference. |
-| museum, bioregion lists | set 3 still renames synonym rows of museum and bioregion lists after their counts (rows of a genus may then not add up: `inv:list.genus`). Plan: run the rename before `populateMuseum` and `populateBioregion` count, or recount their lists after it. |
+| museum, bioregion lists | **Done** 2026-10-22 (B38): each list is renamed right after it is built, before it is counted and its totals written; a synonym's specimens count under the valid name. |
 | partly rows | Most are live numbers checked by the end-to-end tests on Madagascar and the genus Pheidole only, or by a consistency rule. Next: a rotating place for the e2e tests (the count check's rotating sample, in its JSON), and recounts in the check for the live numbers that have a SQL definition (taxonomicPage headers, browse counts, the habitat lists of a sample species). |
 
 ## 5. Questions for Brian
@@ -337,7 +372,7 @@ Found while doing this (2026-10-22):
 Where the right number is a scientific choice, the checks test the rule as the code has it now and the question is
 here, with a recommendation. Brian Fisher answered Q1 to Q6 and Q10 on 2026-10-21, and on 2026-10-22 (05:28) that morphospecies and indet
 names never count toward endemism (section 5.1, with the plan);
-Q7, Q8, Q9, Q11, Q12 and Q13 are open. No number is computed differently yet: the plan is implemented after the
+Q7, Q8, Q9, Q11 and Q12 are open; Q13 was decided on 2026-10-22. No number is computed differently yet: the plan is implemented after the
 morning report of 2026-10-22, each change with its check (docs/numbers.md rows) updated in the same pull request.
 
 | # | Question | Now | Recommendation | Rows |
@@ -354,7 +389,7 @@ morning report of 2026-10-22, each change with its check (docs/numbers.md rows) 
 | Q10 (answered 2026-10-21, see 5.1) | Specimens with an adm1 but no country (B26): count them for the state? | Counted for every adm1 of that name. | Not counted for any adm1 (the state is ambiguous without a country); the fix adds `country = parent`. | 26, 27, 29 |
 | Q11 | Port of Entry: a place? | Its page shows 37,430 specimens while its list has no species with specimens; the nightly run does not recount it. | Hide it as a place (is_valid = 0) and keep interceptions searchable. | 26 |
 | Q12 | Unimaged names: unimaged where? | API /unimagedGeolocaleTaxa: no image of the ant anywhere in AntWeb; taxonomicPage "Unimaged": no image (labels included) from this place. | Both: "no image of the ant anywhere" (what a curator needs to photograph), labelled so. | 39, 117 |
-| Q13 | Upload group numbers: the last upload, or now? | groups.do, group.do and curator.do show the numbers written at the group's last upload (UploadDb.updateCounts); the nightly name update can change them afterwards (the check then calls a difference pending, with that reason). | Recount them every night (set 3) for every group, so the page shows the group's specimens now, and label the upload date separately. | 83, 86-88, 91 |
+| Q13 (answered 2026-10-22) | Upload group numbers: the last upload, or now? | Brian Fisher: today's numbers. Since 2026-10-22 groups.do, group.do and curator.do show the group's specimens today, recounted every night in set 3 (`GroupCountDb.recountAll`, table `group_count`) by the rule of the upload counts (`UploadDb.getCounts`); the date of the last upload is shown apart; the upload rows and the upload reports keep each upload's own numbers. `inv:admin.groups` compares the pages' numbers with a recount. | Done. | 83, 86-88, 91 |
 
 ### 5.1 Answers of 2026-10-21 and the plan
 

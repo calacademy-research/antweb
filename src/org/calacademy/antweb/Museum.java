@@ -200,16 +200,12 @@ public class Museum extends LocalityOverview implements Countable {
     
     // -------------------- Countable Implementation ---------------------
     
+    // The museum's specimens of each name on its list, of a countable status; a specimen filed under a synonym
+    // counts under the valid name (2026-10-22, PlaceTotals.specimensByListNameSql).
     public String getCountSpecimensQuery() {
-      String overviewCriteria = " and specimen.museum = '" + getCode() + "'";
-      String query = "select count(*) count, specimen.taxon_name taxonName from specimen " 
-          + " join museum_taxon on specimen.taxon_name = museum_taxon.taxon_name " 
-          + " where museum_taxon.code = '" + getCode() + "'"
-          //+ StatusSet.getAndCriteria(projectName)  // The weird worldants status taxa will not have specimens
-          + overviewCriteria
-          + " and specimen.status in " + StatusSet.getCountables()
-          + " group by taxonName";
-      return query;
+      String code = org.calacademy.antweb.home.PlaceTotals.literal(getCode());
+      return org.calacademy.antweb.home.PlaceTotals.specimensByListNameSql(org.calacademy.antweb.home.PlaceTotals.MUSEUM, code,
+          " and s.museum = " + code + " and s.status in " + StatusSet.getCountables());
     }        
 
     public String getCountChildrenQuery(String rank) {

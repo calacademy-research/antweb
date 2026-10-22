@@ -60,6 +60,8 @@ public class CountCheckTest extends TestCase {
         exec("insert into taxon values ('" + GENUS + "', 'genus', 'valid', '" + SUBFAMILY + "')");
         exec("insert into taxon values ('" + SP_A + "', 'species', 'morphotaxon', '" + GENUS + "')");
         exec("insert into taxon values ('" + SP_B + "', 'species', 'valid', '" + GENUS + "')");
+        // current valid names (2026-10-22: museum, bioregion and project lists count a synonym's specimens under the valid name)
+        exec("alter table taxon add column current_valid_name varchar(128)");
         exec("insert into upload values (1, '2020-01-01 10:00:00')");
         exec("insert into specimen values ('casent1', '" + SP_A + "', 'morphotaxon', 'Madagascar', null, 'Madagascar', null, 'Malagasy', 1)");
         exec("insert into specimen values ('casent2', '" + SP_A + "', 'morphotaxon', 'Madagascar', null, 'Madagascar', null, 'Malagasy', 1)");
@@ -164,7 +166,7 @@ public class CountCheckTest extends TestCase {
     /** The nightly recount of project lists (set 3) makes the stored counts match the recount, stale or missing. */
     public void testProjectRecountFixesStaleCounts() throws Exception {
         exec("update proj_taxon set specimen_count = 1, species_count = 9 where project_name = 'madants'");
-        exec("insert into taxon values ('myrmicinaepheidole gone', 'species', 'valid', '" + GENUS + "')");
+        exec("insert into taxon values ('myrmicinaepheidole gone', 'species', 'valid', '" + GENUS + "', null)");
         exec("insert into proj_taxon values ('madants', 'myrmicinaepheidole gone', 0, 0, 0, 12, '2020-01-01 10:00:00')");
         List<CountCheck.Place> places = new ArrayList<>();
         places.add(project);
@@ -189,7 +191,7 @@ public class CountCheckTest extends TestCase {
 
     public void testListRowAddedAfterTheNightlyIsPending() throws Exception {
         // A curator added a species to the list today: its count and its genus's count wait for the nightly.
-        exec("insert into taxon values ('myrmicinaepheidole new1', 'species', 'morphotaxon', '" + GENUS + "')");
+        exec("insert into taxon values ('myrmicinaepheidole new1', 'species', 'morphotaxon', '" + GENUS + "', null)");
         exec("insert into geolocale_taxon values (7, 'myrmicinaepheidole new1', 0, 0, 0, 0, now())");
         exec("insert into specimen values ('casent6', 'myrmicinaepheidole new1', 'morphotaxon', 'Madagascar', null, 'Madagascar', null, 'Malagasy', 1)");
         CountCheck.Result r = check();

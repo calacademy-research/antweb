@@ -401,7 +401,9 @@ def _groups_rows(html, skip_name=None):
 @pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")
 @needs("admin")
 def test_group_pages_equal_the_stored_upload_numbers():
-    """groups.do and group.do (rows 85 to 91): each group's numbers = the upload row the check recounted (admin.groups);
+    """groups.do and group.do (rows 85 to 91): each group's numbers = the numbers the check compared with a recount
+    (admin.groups: since 2026-10-22 the group's specimens today, group_count, recounted every night; before a nightly
+    run has counted a group, its last upload row);
     the Totals row = the sum of the rows (contributors, uploads, specimens, ungeoreferenced, flagged, collections,
     localities); its Subfamilies, Genera, Species are the largest of the rows (labelled Totals; question in
     docs/numbers.md)."""

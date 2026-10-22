@@ -305,6 +305,11 @@ public class MuseumDb extends AntwebDb {
       // Populate the Museum_taxon table.
       populateSpecies(code);
 
+      // Rows of synonyms renamed to (merged into) their current valid name before the higher taxa are added and the
+      // list is counted (2026-10-22; was nightly set 3's updateTaxonSets, after the totals: the museum AFRC had 14 valid
+      // species rows its Species number did not count). The counts take the synonyms' specimens (Museum.getCountSpecimensQuery).
+      new MuseumTaxonDb(getConnection()).renameToValid(PlaceTotals.MUSEUM, code);
+
       populateHigherTaxa(code);
       
       // Crawl the Museum_taxon table to find the counts.

@@ -59,7 +59,7 @@ public final class NumbersTestDb {
 
     static final String[] TABLES = {"taxon", "specimen", "image", "geolocale", "geolocale_taxon", "project", "proj_taxon", "museum",
         "museum_taxon", "bioregion", "bioregion_taxon", "place_image_count", "statistics", "upload", "specimen_name_update", "ant_group",
-        "description_edit", "image_upload", "image_uploaded"};
+        "description_edit", "image_upload", "image_uploaded", "description_hist", "object_edit", "object_hist", "group_count"};
 
     /** Curator numbers as LoginMgr has them for the fixture (login 5): uploads, description edits, image uploads, images uploaded. */
     public static java.util.Map<Integer, int[]> curatorNumbers() {
@@ -94,6 +94,7 @@ public final class NumbersTestDb {
         for (String t : TABLES) exec(c, "drop table if exists " + t);
         exec(c, "create table taxon (taxon_name varchar(128) primary key, taxarank varchar(20), status varchar(40), parent_taxon_name varchar(128),"
             + " family varchar(40), subfamily varchar(64), genus varchar(64), species varchar(64), fossil tinyint default 0, image_count int default 0,"
+            + " current_valid_name varchar(128),"
             + " chart_color varchar(10), subfamily_count int default 0, genus_count int default 0, species_count int default 0, specimen_count int default 0)");
         exec(c, "create table specimen (code varchar(40) primary key, taxon_name varchar(128), status varchar(40), country varchar(64), adm1 varchar(64),"
             + " island_country varchar(64), museum varchar(64), bioregion varchar(64), upload_id int, image_count int default 0, family varchar(40),"
@@ -124,6 +125,11 @@ public final class NumbersTestDb {
             + " ungeoreferenced int default 0, flagged int default 0)");
         exec(c, "create table ant_group (id int primary key, name varchar(64), upload_count int default 0, upload_specimens int default 0)");
         exec(c, "create table description_edit (id int auto_increment primary key, access_login int, created timestamp null)");
+        // page-text history and place / project texts (2026-10-22: curator Description Edits count all four)
+        exec(c, "create table description_hist (hist_id int auto_increment primary key, access_login int, created timestamp null)");
+        exec(c, "create table object_edit (edit_id int auto_increment primary key, object_key varchar(128), access_login int, created timestamp null)");
+        exec(c, "create table object_hist (hist_id int auto_increment primary key, object_key varchar(128), access_login int, created timestamp null)");
+        exec(c, org.calacademy.antweb.home.GroupCountDb.createTable());
         exec(c, "create table image_upload (id int primary key, curator_id int, group_id int, image_count int, complete tinyint default 0, created timestamp null)");
         exec(c, "create table image_uploaded (id int primary key, image_upload_id int, created timestamp null)");
     }
@@ -293,6 +299,9 @@ public final class NumbersTestDb {
         exec(c, "update upload set login_id = 5, group_id = 1, specimens = 5, collections = 2, localities = 1, ungeoreferenced = 1, flagged = 0,"
             + " subfamilies = 2, genera = 2, species = 2");
         exec(c, "insert into ant_group values (1, 'CAS', 1, 5)");
+        // today's numbers of the group as the nightly recount writes them (GroupCountDb, 2026-10-22)
+        exec(c, "insert into group_count (group_id, specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera, species, counted)"
+            + " values (1, 5, 2, 1, 1, 0, 2, 2, 2, " + OLD + ")");
         exec(c, "insert into description_edit (access_login, created) values (5, " + OLD + ")");
         exec(c, "insert into image_upload values (1, 5, 1, 2, 1, " + OLD + ")");
         exec(c, "insert into image_uploaded values (1, 1, " + OLD + "), (2, 1, " + OLD + ")");

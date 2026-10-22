@@ -183,6 +183,7 @@ unused and backup is a search of the code for SQL that names the table (2026-10-
 | `background_job` | [8](#background_job) | in use (2026-10-20) |
 | `object_map` | [8](#object_map) | in use |
 | `ant_group` | [9](#ant_group) | in use |
+| `group_count` | [9](#group_count) | in use (2026-10-22) |
 | `login` | [9](#login) | in use |
 | `login_project`, `login_country` | [9](#login_project) | in use |
 | `password_reset` | [9](#password_reset) | in use (2026-10-16) |
@@ -927,6 +928,27 @@ pages (`ObjectMapDb.getMap`: `BigMapAction`, `OverviewAction`, `AdvancedSearchAc
 **Numbers.** #85.
 
 **Status.** In use. No CREATE in the repository.
+
+### `group_count`
+
+**Purpose.** Today's numbers of each upload group's specimens (Brian Fisher, 2026-10-22, question Q13 in
+[numbers.md](numbers.md)): what groups.do, group.do and curator.do show, instead of the numbers written at the
+group's last upload (`upload` keeps those, and the upload reports show them).
+
+**Key.** `group_id` (`ant_group.id`), one row per group (0 when it has no specimens).
+
+**Key columns.** `specimens`, `collections`, `localities`, `ungeoreferenced`, `flagged`, `subfamilies`, `genera`,
+`species` (the rule of `UploadDb.getCounts`), `counted` (time of the nightly count).
+
+**Written by.** Nightly set 3 (`GroupCountDb.recountAll`). Created by the application (`CREATE TABLE IF NOT EXISTS`,
+`GroupCountDb.createTable`); to undo, `drop table group_count` (the pages then show the last upload's numbers again).
+
+**Read by.** `GroupCountDb.apply` (groups.do, group.do, curator.do), `GroupDb.getUploadGroups` (order of groups.do),
+`NumberChecks.adminGroups` (`admin.groups`).
+
+**Numbers.** #83, #86 to #88, #91.
+
+**Status.** In use (2026-10-22).
 
 ### `login`
 

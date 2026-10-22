@@ -1431,8 +1431,12 @@ select group_concat( distinct source) from geolocale_taxon order by source;
         String message = "";
         Statement stmt = null;
         ResultSet rset = null;
+        // The rule of the nightly count (Geolocale.getCountChildrenQuery): species and subspecies rows of a counted
+        // status (2026-10-22; before: every row whose parent is the name, any rank and status, so an unavailable name
+        // or a subspecies of an unavailable combination raised the genus row).
         String query = "select count(*) count from geolocale_taxon where taxon_name in "
-                + " (select taxon_name from taxon where parent_taxon_name = " + DBUtil.sqlQuote(parentTaxonName) + ") "
+                + " (select taxon.taxon_name from taxon where taxon.parent_taxon_name = " + DBUtil.sqlQuote(parentTaxonName)
+                + "   and taxon.taxarank in ('species', 'subspecies')" + new StatusSet(StatusSet.ALL).getAndCriteria() + ") "
                 + " and geolocale_id = " + geolocale.getId()
                 ;
         //A.log("testGeolocaleTaxon() query:" + query);

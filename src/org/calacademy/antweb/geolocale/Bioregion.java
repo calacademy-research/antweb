@@ -312,15 +312,12 @@ public class Bioregion extends LocalityOverview implements Countable {
     
     // -------------------- Countable Implementation ---------------------
     
+    // The bioregion's specimens of each name on its list, of a countable status; a specimen filed under a synonym
+    // counts under the valid name (2026-10-22, PlaceTotals.specimensByListNameSql).
     public String getCountSpecimensQuery() {
-      String overviewCriteria = " and specimen.bioregion = '" + getName() + "'";
-      String query = "select count(*) count, specimen.taxon_name taxonName from specimen " 
-          + " join bioregion_taxon bt on specimen.taxon_name = bt.taxon_name " 
-          + " where bt.bioregion_name = '" + getName() + "'"
-          + overviewCriteria
-          + " and specimen.status in " + StatusSet.getCountables()
-	      + " group by taxonName";
-      return query;
+      String name = org.calacademy.antweb.home.PlaceTotals.literal(getName());
+      return org.calacademy.antweb.home.PlaceTotals.specimensByListNameSql(org.calacademy.antweb.home.PlaceTotals.BIOREGION, name,
+          " and s.bioregion = " + name + " and s.status in " + StatusSet.getCountables());
     }        
 
     public String getCountChildrenQuery(String rank) {

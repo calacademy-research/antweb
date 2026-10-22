@@ -99,6 +99,56 @@ public abstract class TaxonSetDb extends AntwebDb {
       return message;   
     }
 
+    /**
+     * Renames the rows of one place's list (key; null: every place of the table) whose name is a synonym or another name
+     * with a current valid name (PlaceTotals.renamedCondition) to that valid name; when the valid name is on the list
+     * already, the old row is deleted (merged: the counts that follow count its specimens under the valid name,
+     * PlaceTotals.specimensByListNameSql). Returns the rows renamed or merged. Runs before the list is counted
+     * (2026-10-22: museum and bioregion lists were renamed after their counts and totals, nightly set 3).
+     */
+    public int renameToValid(String type, String key) throws SQLException {
+        String table = PlaceTotals.listTable(type);
+        String keyColumn = PlaceTotals.listKey(type);
+        String query = "select l." + keyColumn + ", t.taxon_name, t.current_valid_name from " + table + " l"
+            + " join taxon t on t.taxon_name = l.taxon_name where " + PlaceTotals.renamedCondition("t")
+            + (key != null ? " and l." + keyColumn + " = ?" : "")
+            + (PlaceTotals.PROJECT.equals(type) ? " and l.project_name not in ('worldants', 'allantwebants')" : "");
+        List<String[]> rows = new ArrayList<>();
+        try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
+            if (key != null) stmt.setString(1, key);
+            try (ResultSet rset = stmt.executeQuery()) {
+                while (rset.next()) rows.add(new String[] {rset.getString(1), rset.getString(2), rset.getString(3)});
+            }
+        }
+        // Merge explicitly (a list table may have no unique key on place and name, so an update could make a duplicate).
+        String exists = "select count(*) from " + table + " where " + keyColumn + " = ? and taxon_name = ?";
+        String delete = "delete from " + table + " where " + keyColumn + " = ? and taxon_name = ?";
+        String rename = "update " + table + " set taxon_name = ? where " + keyColumn + " = ? and taxon_name = ?";
+        for (String[] row : rows) {
+            boolean there;
+            try (PreparedStatement stmt = getConnection().prepareStatement(exists)) {
+                stmt.setString(1, row[0]);
+                stmt.setString(2, row[2]);
+                try (ResultSet r = stmt.executeQuery()) { there = r.next() && r.getInt(1) > 0; }
+            }
+            if (there) {
+                try (PreparedStatement stmt = getConnection().prepareStatement(delete)) {
+                    stmt.setString(1, row[0]);
+                    stmt.setString(2, row[1]);
+                    stmt.executeUpdate();
+                }
+            } else {
+                try (PreparedStatement stmt = getConnection().prepareStatement(rename)) {
+                    stmt.setString(1, row[2]);
+                    stmt.setString(2, row[0]);
+                    stmt.setString(3, row[1]);
+                    stmt.executeUpdate();
+                }
+            }
+        }
+        return rows.size();
+    }
+
     /*
     public boolean exists(String tableName, String taxonName, String whereClause) throws SQLException {
         Statement stmt = null;

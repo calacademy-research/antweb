@@ -154,7 +154,7 @@ public class NumberChecksTest extends TestCase {
 
     public void testAdminNumbers() throws Exception {
         exec("update statistics set proj_taxa = 1");
-        exec("update upload set specimens = 9");
+        exec("update group_count set specimens = 9");
         exec("update image_upload set image_count = 5");
         exec("update ant_group set upload_count = 3");
         Map<Integer, int[]> curators = curatorNumbers();
@@ -172,7 +172,7 @@ public class NumberChecksTest extends TestCase {
 
     /** Another group's upload does not change this group's numbers; the nightly name update of its specimens may. */
     public void testGroupNumbersArePendingAfterItsSpecimensWereRenamed() throws Exception {
-        exec("update upload set specimens = 9");
+        exec("update group_count set specimens = 9");
         exec("insert into upload (upload_id, created, group_id) values (2, now(), 2)");
         CountCheck.Result r = check();
         assertEquals(list(r), 1, real(r, "admin.groups"));

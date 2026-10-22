@@ -368,10 +368,15 @@ public class UtilDataAction extends AntwebAction {
                 // (2026-10-21). It ran only in set 3, after the geolocale and project totals: a merged synonym row
                 // left its specimens in the total but not in any row, so Specimens was larger than the sum of the
                 // species rows on every country, adm1, region and project (count check, place.totals.specimens).
-                // Set 3 still runs it for the museum and bioregion lists it rebuilds.
+                // Museum, bioregion and project lists are renamed in set 3, each just before it is counted (2026-10-22).
                 message += " " + doAction("updateTaxonSets", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("geolocaleCountCrawl", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 30.48 mins
-                message += " " + doAction("geolocaleTaxonFix", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 1.00 mins
+                // geolocaleTaxonFix no longer runs here (2026-10-22). It rewrote the Species number of every genus row of the
+                // countries and live adm1s AFTER the count, from every list row whose parent is the genus, of any status and
+                // rank: US formicinaeformica showed 104 with an unavailable name, 103 is right (count check inv:list.genus).
+                // The count (GeolocaleTaxonCountDb.childrenCountCrawl, same places) already writes every genus row by the
+                // rule of the lists (species and subspecies of a counted status), after resetting the row. It stays
+                // available as an admin job (utilData.do?action=geolocaleTaxonFix), now by the same rule.
                 //GeolocaleMgr.populate(connection, true, false); // Unnecessary. We reload all in set5.
             }
 
@@ -381,7 +386,13 @@ public class UtilDataAction extends AntwebAction {
                 message += " " + doAction("projectCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);   // Prod: 0.67 mins
                 message += " " + doAction("populateMuseum", form, accessLogin, accessGroup, connection, request, mapping);  // was 12.05 mins now 22.68 mins. Prod: 8.17
                 message += " " + doAction("populateBioregion", form, accessLogin, accessGroup, connection, request, mapping); // was 6.80 mins. Now 15.63 mins. // Prod: 5.52 mins
-                message += " " + doAction("updateTaxonSets", form, accessLogin, accessGroup, connection, request, mapping);
+                // The rename of synonym rows (updateTaxonSets) ran here, after the project, museum and bioregion counts and
+                // totals, so their pages counted lists that changed afterwards (2026-10-22, museum AFRC: 14 valid species rows
+                // not in its Species number). Each list is now renamed right before it is counted (ProjTaxonCountDb.recount,
+                // MuseumDb.populate, BioregionDb.populate; geolocales in set 2); only the source column is updated here.
+                message += " " + TaxonSetDb.updateTaxonSetSources(connection);
+                // Upload groups: today's numbers of each group's specimens (Brian Fisher, 2026-10-22, Q13).
+                message += " " + new GroupCountDb(connection).recountAll();
                 message += " " + doAction("crawlForType", form, accessLogin, accessGroup, connection, request, mapping);
             }
 

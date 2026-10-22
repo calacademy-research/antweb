@@ -460,16 +460,8 @@ public final class NumberChecks {
      * getAntwebSubfamilyCriteria, getAntwebGenusCriteria), and Flagged (any specimen of the group with a red flag).
      */
     public static String groupNumbersSql() {
-        String c1 = "(" + org.calacademy.antweb.home.SpecimenDb.getFlagCriteria() + " and " + org.calacademy.antweb.home.SpecimenDb.getStatusCriteria()
-            + " and " + org.calacademy.antweb.home.SpecimenDb.getTaxaCriteria() + ")";
-        String c2 = c1 + " and (" + org.calacademy.antweb.home.SpecimenDb.getAntwebSubfamilyCriteria() + " and "
-            + org.calacademy.antweb.home.SpecimenDb.getAntwebGenusCriteria() + ")";
-        return "select cast(access_group as signed) g, count(*), count(case when " + c1 + " then code end),"
-            + " count(distinct case when " + c1 + " then collectioncode end), count(distinct case when " + c1 + " then localitycode end),"
-            + " count(case when " + c1 + " and decimal_latitude is null then 1 end),"
-            + " count(distinct case when " + c2 + " then subfamily end), count(distinct case when " + c2 + " then genus end),"
-            + " count(distinct case when " + c2 + " then species end), count(case when flag = 'red' then 1 end)"
-            + " from specimen where access_group is not null group by g";
+        // The rule of the nightly group recount (GroupCountDb, 2026-10-22), written once.
+        return org.calacademy.antweb.home.GroupCountDb.countsSql();
     }
 
     private Map<String, long[]> groupNumbers;
@@ -489,7 +481,7 @@ public final class NumberChecks {
     void adminGroups() {
         if (!has("upload", "group_id") || !has("upload", "specimens") || !has("specimen", "access_group")) return;
         CountInvariants.Check check = new CountInvariants.Check("admin.groups",
-            "groups.do, group.do, curator.do: each group's last upload numbers = a recount of its specimens; ant_group.upload_count = its uploads", "83, 85, 86, 87, 88, 89, 90, 91");
+            "groups.do, group.do, curator.do: each group's numbers (today's, recounted every night since 2026-10-22) = a recount of its specimens; ant_group.upload_count = its uploads", "83, 85, 86, 87, 88, 89, 90, 91");
         inv.check(check, c -> {
             Map<String, String> groups = inv.places.computeIfAbsent("group", x -> CountInvariants.keyMap());
             Map<String, long[]> counts = groupNumbers();
@@ -525,24 +517,43 @@ public final class NumberChecks {
                     rows.add(new Object[] {r.getString(1), r.getInt(2), v, r.getTimestamp(11)});
                 }
             }
+            // Since 2026-10-22 (Q13) the pages show today's numbers of the group's specimens, recounted every night
+            // (group_count, GroupCountDb); a group not counted yet still shows its last upload's numbers.
+            Map<String, long[]> today = CountInvariants.keyMap();
+            Map<String, Timestamp> countedAt = CountInvariants.keyMap();
+            if (has(org.calacademy.antweb.home.GroupCountDb.TABLE, "counted")) {
+                try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
+                        "select group_id, specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera, species, "
+                        + CountInvariants.safeDate("counted") + " from " + org.calacademy.antweb.home.GroupCountDb.TABLE + " where counted is not null"))) {
+                    while (r.next()) {
+                        long[] v = new long[8];
+                        for (int i = 0; i < 8; i++) v[i] = r.getLong(i + 2);
+                        today.put(r.getString(1), v);
+                        countedAt.put(r.getString(1), r.getTimestamp(10));
+                    }
+                }
+            }
             String[] what = {"Specimens", "Collections", "Localities", "Ungeoreferenced", "Flagged", "Subfamilies", "Genera", "Species"};
             for (Object[] row : rows) {
                 String g = (String) row[0];
-                long[] v = (long[]) row[2];
-                Timestamp created = (Timestamp) row[3];
+                boolean counted = today.containsKey(g);
+                long[] v = counted ? today.get(g) : (long[]) row[2];
+                // the moment the numbers shown were counted: the nightly recount, or the group's last upload
+                Timestamp created = counted ? countedAt.get(g) : (Timestamp) row[3];
                 if (v[0] == 0 && !counts.containsKey(g)) continue;   // a group whose specimens are gone and whose last upload counted none
                 groups.putIfAbsent(g, "upload group " + g);
                 long[] n = counts.getOrDefault(g, new long[9]);
                 // upload columns: specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera, species
                 long[] recount = {n[1], n[2], n[3], n[4], n[8], n[5], n[6], n[7]};
-                // The numbers are written at the group's upload only: specimens of the group renamed since (the nightly name
-                // update) can change them until its next upload (question Q13 in docs/numbers.md).
                 String p = uploadedToday.contains(g) ? "the group uploaded after the last nightly run (an upload may still be running)" : null;
                 if (p == null && created != null && renamed.containsKey(g) && renamed.get(g) != null && renamed.get(g).after(created)) {
-                    p = "specimens of the group were renamed after its last upload (the numbers are from the upload)";
+                    p = counted ? "specimens of the group were renamed after the nightly recount"
+                        : "specimens of the group were renamed after its last upload (the numbers are from the upload)";
                 }
+                if (p == null && !counted) p = "no nightly run has recounted the group yet (the page shows its last upload's numbers)";
                 for (int i = 0; i < 8; i++) {
-                    inv.compare(c, "group", g, "last upload (" + row[1] + ") " + what[i] + " = a recount of the group's specimens", v[i], recount[i], "=", p);
+                    inv.compare(c, "group", g, (counted ? "today's " : "last upload (" + row[1] + ") ") + what[i]
+                        + " (groups.do, group.do) = a recount of the group's specimens", v[i], recount[i], "=", p);
                 }
                 long shownUploads = uploads.containsKey(g) ? uploads.get(g)[0] : 0;
                 exp.put(g, new long[] {shownUploads, v[0], v[3], v[4], v[1], v[2], v[5], v[6], v[7]});
@@ -572,9 +583,14 @@ public final class NumberChecks {
             "curators.do, curator.do: Specimen Uploads, Description Edits, image uploads, images uploaded = a recount", "80, 81, 82, 84");
         inv.check(check, c -> {
             Map<String, String> curators = inv.places.computeIfAbsent("curator", x -> CountInvariants.keyMap());
+            // Description Edits = page-text edits, every saved version: taxon texts (description_edit, description_hist) and
+            // place and project texts (object_edit, object_hist) (Brian Fisher, 2026-10-22; the check counted
+            // description_edit only, the site also description_hist).
+            List<String> editTables = new ArrayList<>();
+            for (String t : org.calacademy.antweb.home.LoginDb.PAGE_TEXT_EDIT_TABLES) if (has(t, "access_login")) editTables.add(t);
             String[] sql = {
                 has("upload", "login_id") ? "select login_id, count(*) from upload where login_id is not null group by login_id" : null,
-                has("description_edit", "access_login") ? "select access_login, count(*) from description_edit where access_login is not null group by access_login" : null,
+                editTables.isEmpty() ? null : org.calacademy.antweb.home.LoginDb.pageTextEditsByLoginSql(editTables),
                 has("image_upload", "curator_id") ? "select curator_id, count(*) from image_upload where curator_id is not null group by curator_id" : null,
                 has("image_uploaded", "image_upload_id") && has("image_upload", "curator_id")
                     ? "select u.curator_id, count(*) from image_upload u join image_uploaded d on u.id = d.image_upload_id group by u.curator_id" : null};
@@ -589,6 +605,7 @@ public final class NumberChecks {
                 // finish after this check started): rows added since that load are pending
                 Timestamp read = inv.curatorsRead != null ? inv.curatorsRead : inv.result.countedUntil;
                 since[i] = sql[i] != null && createdSince(tables[i], read);
+                if (i == 1) for (String t : editTables) since[i] |= createdSince(t, read);
             }
             Map<String, Object> exp = new TreeMap<>();
             for (Map.Entry<Integer, int[]> e : inv.curatorNumbers.entrySet()) {
