@@ -897,16 +897,18 @@ def getGeoSpeciesStats():
     georank = geolocale.georank
     extraClause = " s." + georank + " = :geolocaleName"
 
+    # queenErgatoidCount and maleErgatoidCount count the ergatoids of their caste (2026-10-22: both counted every
+    # ergatoid specimen, so a male ergatoid was also a queen ergatoid).
     query = "select s.taxon_name, s.genus, s.species " \
             + " , count(case when caste='queen' then 1 end)" \
-            + " , count(case when subcaste='ergatoid' then 1 end)" \
+            + " , count(case when caste='queen' and subcaste='ergatoid' then 1 end)" \
             + " , count(case when subcaste='alate/dealate' then 1 end)" \
             + " , count(case when subcaste='brachypterous' then 1 end)" \
             + " , count(case when caste='worker' then 1 end)" \
             + " , count(case when subcaste='major/soldier' then 1 end)" \
             + " , count(case when subcaste='normal' then 1 end)" \
             + " , count(case when caste='male' then 1 end)" \
-            + " , count(case when subcaste='ergatoid' then 1 end)" \
+            + " , count(case when caste='male' and subcaste='ergatoid' then 1 end)" \
             + " , count(case when subcaste='alate' then 1 end)" \
             + " from specimen s, taxon t, geolocale_taxon gt, geolocale g" \
             + " where s.taxon_name = t.taxon_name and gt.taxon_name = t.taxon_name " \
@@ -1267,7 +1269,7 @@ def getImages():
         if tCode != image.code:
             if tCode != '':  # we have one to insert. (Is not the first record).
                 specimenDict = {
-                    'spefimenCode': tCode
+                    'specimenCode': tCode
                     , 'url': 'http://localhost:5000/specimens?code=' + tCode
                     , 'images': images
                 }
@@ -1281,15 +1283,16 @@ def getImages():
             images.append(imageDict)
 
     # Handle the last instance of the record (due to group by procedural logic). 
+    # 2026-10-22: only when there was one (no images gave specimenCount 1 and an empty specimen), and every
+    # specimen under 'specimenCode' (all but the last were under 'spefimenCode').
     if tCode != '':
         specimenDict = {
             'specimenCode': tCode
             , 'url': 'http://localhost:5000/specimens?code=' + tCode
             , 'images': images
         }
-
-    specimenCount += 1
-    dataList.append(specimenDict)
+        specimenCount += 1
+        dataList.append(specimenDict)
 
     # SELECT id,shot_type,upload_date,shot_number,has_tiff FROM image WHERE image_of_id=? ORDER BY shot_number ASC     
     if isDevMode:
