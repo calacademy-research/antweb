@@ -14,7 +14,7 @@
 -- when its type is not production's type, dropped only when it exists (production has none of the four); DROP
 -- TABLE IF EXISTS only for tables production does not have; a view is dropped only when a view of that name
 -- exists (on production image_count is a table and tapir_specimen does not exist). Nothing is dropped from
--- production. Running it there is optional (to confirm: it prints nothing and the snapshot query gives the same
+-- production (the helper procedures it creates are removed at its end). Running it there is optional (to confirm: it prints nothing and the snapshot query gives the same
 -- result before and after). Staging is a copy of production, so the same holds there.
 --
 -- What it does on a database built from the repository's SQL (a new or test database):
@@ -39,7 +39,8 @@
 -- in code). Widening upload.group_name to varchar(100) would match them.
 --
 -- Limits on any other database: "matches production" means names and types only (no keys, indexes, NOT NULL or
--- defaults; see 2). A retype acts on base tables only, never shortens a varchar, char, text or integer type, and keeps NULL / NOT NULL, the default, ON UPDATE,
+-- defaults; see 2). A retype acts on base tables only, never shortens a varchar, char, text or integer type (nor turns
+-- text into varchar, or unsigned into signed), and keeps NULL / NOT NULL, the default, ON UPDATE,
 -- AUTO_INCREMENT, the comment and the column's character set and collation; datetime to timestamp
 -- (geolocale_taxon.created) fails under strict mode, rather than changing data, if a value is outside 1970 to 2038.
 -- The columns of step 5 and the old tables of step 6 are dropped only when they hold no values / no rows: a database
@@ -84,6 +85,8 @@ BEGIN
        -- never shorten a varchar or char (that could cut values)
        AND NOT (cur_type REGEXP '^(var)?char\\([0-9]+\\)$' AND ty REGEXP '^(var)?char\\([0-9]+\\)$'
                 AND CAST(REGEXP_SUBSTR(cur_type, '[0-9]+') AS UNSIGNED) > CAST(REGEXP_SUBSTR(ty, '[0-9]+') AS UNSIGNED))
+       -- nor a text type to a varchar or char
+       AND NOT (LOWER(cur_type) REGEXP 'text$' AND LOWER(ty) REGEXP '^(var)?char')
        -- nor an unsigned integer to a signed one, nor a smaller text or integer type (longtext to mediumtext, bigint to int)
        AND NOT (LOWER(cur_type) LIKE '%unsigned%' AND LOWER(ty) NOT LIKE '%unsigned%')
        AND NOT (FIELD(LOWER(cur_type), 'tinytext', 'text', 'mediumtext', 'longtext') > FIELD(LOWER(ty), 'tinytext', 'text', 'mediumtext', 'longtext')

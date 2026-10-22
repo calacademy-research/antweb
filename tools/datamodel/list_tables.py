@@ -46,6 +46,8 @@ here like the ALTER TABLE and DROP VIEW they run. What may still differ (--check
     docs/data-model.md, proposed for dropping),
   - a column whose type the repository does not know ("?", from CREATE TABLE ... AS SELECT),
   - a table only the repository has whose name contains * (made at run time, e.g. login_inactive_backup_*).
+  - a table or column added or changed by a db/upgrade file whose name is dated after the snapshot (pending: it is run
+    on production after the merge; --check prints a notice until the snapshot is refreshed).
 Everything else fails the check: add the change to a db/upgrade file (and run it on production), or refresh the
 snapshot when production changed (the command in docs/data-model.md).
 Standard library only (Python 3.9 or later).
@@ -249,6 +251,7 @@ class Schema:
                     col = column_def(c)
                     if col:
                         t["columns"][col[0]] = col[1]
+                        t.setdefault("column_src", {})[col[0]] = src
                 continue
             m = re.match(r"drop\s+(?:column\s+)?(?!(?:index|key|primary|foreign)\b)" + NAME + r"\s*$", s, re.I)
             if m and not re.match(r"drop\s+(index|key|primary|foreign)\b", low):
@@ -261,12 +264,14 @@ class Schema:
                 if col:
                     t["columns"].pop(old, None)
                     t["columns"][col[0]] = col[1]
+                    t.setdefault("column_src", {})[col[0]] = src
                 continue
             m = re.match(r"modify\s+(?:column\s+)?(.*)$", s, re.I)
             if m:
                 col = column_def(m.group(1))
                 if col:
                     t["columns"][col[0]] = col[1]
+                    t.setdefault("column_src", {})[col[0]] = src
                 continue
 
 
@@ -700,12 +705,48 @@ def compare(schema, path):
     return 0
 
 
+def file_date(src):
+    """The date in an upgrade file's name (db/upgrade/8.116/2026-11-02-x.sql -> 2026-11-02), or ""."""
+    m = re.search(r"db/upgrade/[^/]+/(\d{4}-\d{2}-\d{2})", src or "")
+    return m.group(1) if m else ""
+
+
+def pending_notes(schema, path):
+    """Changes the repository's SQL makes in upgrade files dated after the snapshot: not on production yet (they
+    are run there after the merge), so --check notes them instead of failing. Returns (notes, explained)."""
+    snap_date = re.search(r"(\d{4}-\d{2}-\d{2})", Path(path).name)
+    snap_date = snap_date.group(1) if snap_date else "9999"
+    live, kinds = read_live(path)
+    d = diff(schema, live, kinds)
+    notes, explained = [], set()
+    for t in d["only_repo"]:
+        src = schema.tables[t]["created"] or ""
+        if file_date(src) > snap_date:
+            notes.append(f"table {t} ({src}) is newer than the snapshot")
+            explained.add(("table", t))
+    for t, c in d["columns"].items():
+        srcs = schema.tables[t].get("column_src", {})
+        created = schema.tables[t]["created"] or ""
+        for col in c["missing"] + [x.split(" ")[0] for x in c["differ"]]:
+            src = srcs.get(col) or created
+            if file_date(src) > snap_date:
+                notes.append(f"column {t}.{col} ({src}) is newer than the snapshot")
+                explained.add((t, col))
+    return notes, explained
+
+
 def snapshot_errors(schema, path):
-    """Differences between the repository's SQL and the committed snapshot that the allow-list does not explain."""
+    """Differences between the repository's SQL and the committed snapshot that the allow-list does not explain.
+    Changes made by upgrade files dated after the snapshot are pending (pending_notes), not errors."""
     live, kinds = read_live(path)
     if not live:
         return [f"{path} has no rows"]
     d = diff(schema, live, kinds)
+    _notes, pending = pending_notes(schema, path)
+    d["only_repo"] = [t for t in d["only_repo"] if ("table", t) not in pending]
+    for t, c in d["columns"].items():
+        c["missing"] = [x for x in c["missing"] if (t, x) not in pending]
+        c["differ"] = [x for x in c["differ"] if (t, x.split(" ")[0]) not in pending]
     errors = []
     for t in d["only_live"]:
         if not BACKUP.search(t) and t not in LIVE_ONLY_UNUSED:
@@ -784,6 +825,9 @@ def main(argv):
         drift = snapshot_errors(schema, snapshot) if snapshot else ["no snapshot doc/schema/live-schema-*.tsv"]
         for e in drift:
             print(f"::error file=db/upgrade::{e}")
+        if snapshot:
+            for n in pending_notes(schema, snapshot)[0]:
+                print(f"::notice file=db/upgrade::{n}: run it on production, then refresh the snapshot")
         print(f"{len(names)} tables and {len(views)} views in the repository's SQL, {len(sections)} sections in "
               f"docs/data-model.md, {len(missing)} missing, {len(unknown)} unknown, {len(dropped)} dropped; "
               f"snapshot {snapshot.name if snapshot else 'none'}: {len(live_names)} tables and views, "

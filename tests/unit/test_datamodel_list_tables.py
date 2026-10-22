@@ -278,6 +278,25 @@ def test_snapshot_errors_and_allow_list():
     assert any("LIVE_ONLY_UNUSED names" in e for e in errors), "an allow-list entry the snapshot does not have is reported"
 
 
+def test_upgrade_files_newer_than_the_snapshot_are_pending():
+    s = L.Schema()
+    for stmt, src in (("create table taxon (taxon_name varchar(128))", "db/upgrade/8.0/2020-01-01.sql"),
+                      ("alter table taxon add column old_col int", "db/upgrade/8.0/2020-01-01.sql"),
+                      ("alter table taxon add column new_col int", "db/upgrade/8.116/2026-11-02-new.sql"),
+                      ("create table brand_new (id int)", "db/upgrade/8.116/2026-11-02-new.sql")):
+        L.apply_statement(s, stmt, src, "db/upgrade")
+    path = snapshot_file([("taxon", "taxon_name", "varchar(128)", "BASE TABLE")])
+    old = (L.LIVE_ONLY_UNUSED, L.LIVE_ONLY_UNUSED_VIEWS)
+    try:
+        L.LIVE_ONLY_UNUSED, L.LIVE_ONLY_UNUSED_VIEWS = set(), set()
+        errors = L.snapshot_errors(s, path)
+    finally:
+        L.LIVE_ONLY_UNUSED, L.LIVE_ONLY_UNUSED_VIEWS = old
+    assert errors == ["column taxon.old_col is in the repository's SQL but not live (snapshot)"], errors
+    notes = L.pending_notes(s, path)[0]
+    assert len(notes) == 2 and all("newer than the snapshot" in n for n in notes), notes
+
+
 def test_backup_pattern():
     for t in ("ant_group_abbrev_bak_20261020", "login_deleted_2026_10_16", "login_project_20261018",
               "specimen_badcode_backup_20261018", "login_spam_deleted_2026_10_14", "proj_taxon20170422",

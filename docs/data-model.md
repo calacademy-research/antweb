@@ -51,8 +51,10 @@ running site can read it. What it showed, and what was done:
 1. CI: `list_tables.py --check` (below) also fails when the repository's SQL and the snapshot differ in any way
    not on its allow-list: tables whose names say they are dated backups (`_bak_`, `_backup_`, `_deleted_`, or a
    date at the end: `BACKUP_PATTERN`), and the old unused tables and view of section 13 (`LIVE_ONLY_UNUSED`). So a
-   new table or column needs its `db/upgrade` file in the same pull request, and is checked against production
-   once the snapshot is refreshed.
+   new table or column needs its `db/upgrade` file (named `YYYY-MM-DD-...sql`) in the same pull request. A change in
+   a file dated after the snapshot counts as pending: CI prints a notice, not an error. The order is: merge, run the
+   file on staging and production, then refresh the snapshot (until then the daily check on production lists the
+   change, which is expected).
 2. Production, daily: the count check (`countCheck.do`, run after the nightly run) compares the live database's
    tables and columns with the snapshot (`SchemaCheck.java`) and lists every table or column added, removed or
    retyped since then, except dated backups (and so also a real table whose name ends in a date: name new tables
