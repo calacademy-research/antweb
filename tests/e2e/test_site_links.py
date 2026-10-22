@@ -66,7 +66,9 @@ EXTRA_TYPES = ["/description:subfamily", "/description:genus", "/description:spe
 MAP_CALL = re.compile(r"drawGoogleMap\w*\s*\(")
 
 # Records the HTML of every Leaflet popup the page's map scripts make (L.Layer.bindPopup), before
-# any page script runs: Leaflet sets window.L when it has loaded, and the hook goes in then.
+# any page script runs: Leaflet 1.x sets window.L once it has loaded, and the hook goes in then.
+# A Leaflet that set window.L before filling it would not be hooked: every map page would then fail
+# loudly with "has a map but no marker popup was drawn" (check this hook when upgrading Leaflet).
 POPUP_HOOK = """
 (() => {
   window.__awPopups = [];

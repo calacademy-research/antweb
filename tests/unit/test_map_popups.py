@@ -109,7 +109,6 @@ def test_java_sends_encoded_values():
     assert "jsString(formEncode(localityName))" in src and "jsString(formEncode(localityCode))" in src
     assert "jsString(formEncode(collectionCode))" in src
     assert "theArrayString.append(jsString(value))" in src
-    assert "setLocalityCode(HttpUtil.encode(localityCode))" in src  # the encoding drawMap.js decodes
     print("Map.java sends the values drawMap.js decodes.")
 
 

@@ -171,7 +171,9 @@ def problem(resp):
         return None
     if re.search(r"<title>[^<]*(Not Found|Index of)", body, re.I):
         return f"not-found page ({title})"
+    # The page's text only (no scripts, styles, comments, tags or attributes such as alt="...").
     visible = re.sub(r"<script\b.*?</script>|<style\b.*?</style>|<!--.*?-->", " ", body, flags=re.S | re.I)
+    visible = re.sub(r"\s+", " ", re.sub(r"<[^>]*>", " ", visible))
     nf = NOT_FOUND_TEXT.search(visible)
     if nf:
         return f'"{nf.group(0)}"' + (f" ({_message(body)})" if title.startswith("message") else "")
