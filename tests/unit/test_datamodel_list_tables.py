@@ -283,18 +283,28 @@ def test_upgrade_files_newer_than_the_snapshot_are_pending():
     for stmt, src in (("create table taxon (taxon_name varchar(128))", "db/upgrade/8.0/2020-01-01.sql"),
                       ("alter table taxon add column old_col int", "db/upgrade/8.0/2020-01-01.sql"),
                       ("alter table taxon add column new_col int", "db/upgrade/8.116/2026-11-02-new.sql"),
+                      ("alter table taxon add column gone_col int", "db/upgrade/8.0/2020-01-01.sql"),
+                      ("create table old_t (id int)", "db/upgrade/8.0/2020-01-01.sql"),
+                      ("create view old_v as select 1", "db/upgrade/8.0/2020-01-01.sql"),
+                      ("alter table taxon drop column gone_col", "db/upgrade/8.116/2026-11-02-new.sql"),
+                      ("drop table old_t", "db/upgrade/8.116/2026-11-02-new.sql"),
+                      ("drop view old_v", "db/upgrade/8.116/2026-11-02-new.sql"),
+                      ("create view new_v as select 1", "db/upgrade/8.116/2026-11-02-new.sql"),
+                      ("alter table taxon add column same_day int", "db/upgrade/8.115/2026-10-22-x.sql"),
                       ("create table brand_new (id int)", "db/upgrade/8.116/2026-11-02-new.sql")):
         L.apply_statement(s, stmt, src, "db/upgrade")
-    path = snapshot_file([("taxon", "taxon_name", "varchar(128)", "BASE TABLE")])
+    path = snapshot_file([("taxon", "taxon_name", "varchar(128)", "BASE TABLE"), ("taxon", "gone_col", "int", "BASE TABLE"),
+                          ("old_t", "id", "int", "BASE TABLE"), ("old_v", "x", "int", "VIEW")])
     old = (L.LIVE_ONLY_UNUSED, L.LIVE_ONLY_UNUSED_VIEWS)
     try:
         L.LIVE_ONLY_UNUSED, L.LIVE_ONLY_UNUSED_VIEWS = set(), set()
         errors = L.snapshot_errors(s, path)
     finally:
         L.LIVE_ONLY_UNUSED, L.LIVE_ONLY_UNUSED_VIEWS = old
-    assert errors == ["column taxon.old_col is in the repository's SQL but not live (snapshot)"], errors
+    assert sorted(errors) == ["column taxon.old_col is in the repository's SQL but not live (snapshot)",
+                              "column taxon.same_day is in the repository's SQL but not live (snapshot)"], errors
     notes = L.pending_notes(s, path)[0]
-    assert len(notes) == 2 and all("newer than the snapshot" in n for n in notes), notes
+    assert len(notes) == 6 and all("newer than the snapshot" in n for n in notes), notes
 
 
 def test_backup_pattern():

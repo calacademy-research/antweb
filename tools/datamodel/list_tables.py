@@ -46,7 +46,7 @@ here like the ALTER TABLE and DROP VIEW they run. What may still differ (--check
     docs/data-model.md, proposed for dropping),
   - a column whose type the repository does not know ("?", from CREATE TABLE ... AS SELECT),
   - a table only the repository has whose name contains * (made at run time, e.g. login_inactive_backup_*).
-  - a table or column added or changed by a db/upgrade file whose name is dated after the snapshot (pending: it is run
+  - a table, view or column added, changed or dropped by a db/upgrade file whose name is dated after the snapshot (pending: it is run
     on production after the merge; --check prints a notice until the snapshot is refreshed).
 Everything else fails the check: add the change to a db/upgrade file (and run it on production), or refresh the
 snapshot when production changed (the command in docs/data-model.md).
@@ -256,6 +256,7 @@ class Schema:
             m = re.match(r"drop\s+(?:column\s+)?(?!(?:index|key|primary|foreign)\b)" + NAME + r"\s*$", s, re.I)
             if m and not re.match(r"drop\s+(index|key|primary|foreign)\b", low):
                 t["columns"].pop(ident(m.group(1)), None)
+                t.setdefault("dropped_columns", {})[ident(m.group(1))] = src
                 continue
             m = re.match(r"change\s+(?:column\s+)?" + NAME + r"\s+(.*)$", s, re.I)
             if m:
@@ -713,7 +714,9 @@ def file_date(src):
 
 def pending_notes(schema, path):
     """Changes the repository's SQL makes in upgrade files dated after the snapshot: not on production yet (they
-    are run there after the merge), so --check notes them instead of failing. Returns (notes, explained)."""
+    are run there after the merge), so --check notes them instead of failing. Returns (notes, explained).
+    A file dated on the snapshot's own day counts as already run (the snapshot was taken after it; 8.115's
+    catch-up file has the snapshot's date): name a later file with a later date."""
     snap_date = re.search(r"(\d{4}-\d{2}-\d{2})", Path(path).name)
     snap_date = snap_date.group(1) if snap_date else "9999"
     live, kinds = read_live(path)
@@ -724,7 +727,24 @@ def pending_notes(schema, path):
         if file_date(src) > snap_date:
             notes.append(f"table {t} ({src}) is newer than the snapshot")
             explained.add(("table", t))
+    for t in d["only_live"]:
+        if file_date(schema.dropped.get(t)) > snap_date:
+            notes.append(f"table {t} (dropped by {schema.dropped[t]}) is newer than the snapshot")
+            explained.add(("table", t))
+    for v in d["views_only_repo"]:
+        if file_date(schema.views.get(v)) > snap_date:
+            notes.append(f"view {v} ({schema.views[v]}) is newer than the snapshot")
+            explained.add(("view", v))
+    for v in d["views_only_live"]:
+        if file_date(schema.dropped_views.get(v)) > snap_date:
+            notes.append(f"view {v} (dropped by {schema.dropped_views[v]}) is newer than the snapshot")
+            explained.add(("view", v))
     for t, c in d["columns"].items():
+        dropped_cols = schema.tables[t].get("dropped_columns", {})
+        for col in c["extra"]:
+            if file_date(dropped_cols.get(col)) > snap_date:
+                notes.append(f"column {t}.{col} (dropped by {dropped_cols[col]}) is newer than the snapshot")
+                explained.add((t, col))
         srcs = schema.tables[t].get("column_src", {})
         created = schema.tables[t]["created"] or ""
         for col in c["missing"] + [x.split(" ")[0] for x in c["differ"]]:
@@ -744,7 +764,11 @@ def snapshot_errors(schema, path):
     d = diff(schema, live, kinds)
     _notes, pending = pending_notes(schema, path)
     d["only_repo"] = [t for t in d["only_repo"] if ("table", t) not in pending]
+    d["only_live"] = [t for t in d["only_live"] if ("table", t) not in pending]
+    d["views_only_repo"] = [v for v in d["views_only_repo"] if ("view", v) not in pending]
+    d["views_only_live"] = [v for v in d["views_only_live"] if ("view", v) not in pending]
     for t, c in d["columns"].items():
+        c["extra"] = [x for x in c["extra"] if (t, x) not in pending]
         c["missing"] = [x for x in c["missing"] if (t, x) not in pending]
         c["differ"] = [x for x in c["differ"] if (t, x.split(" ")[0]) not in pending]
     errors = []
