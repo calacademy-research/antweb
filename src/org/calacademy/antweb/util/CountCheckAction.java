@@ -329,7 +329,8 @@ public final class CountCheckAction extends AntwebAction {
             + "artist, image upload and statistics pages, the API's taxon counts, the endemic flags of countries and states, and two "
             + "known suspects (a subspecies filed under its species; a state matched by name only) "
             + "(the list of all numbers and their checks: docs/numbers.md). Every number that "
-            + "differs is listed with the number the site shows (\"Stored\") and the number it must be (\"Recount\").",
+            + "differs is listed with the number the site shows (\"Stored\") and the number it must be (\"Recount\"). "
+            + "It also compares the database's tables and columns with the record of them in the repository (Database structure).",
         "A difference means the site shows a wrong number on that place's page. A \"pending\" difference is expected: "
             + "something changed after the last nightly run (an upload, a name update, a list edit) and the next nightly "
             + "run will count it. A \"real\" difference has no such reason: the nightly count missed something.",
@@ -384,6 +385,7 @@ public final class CountCheckAction extends AntwebAction {
             }
             b.append("</table>");
         }
+        if (result.schema != null) b.append(SchemaCheck.html(result.schema));
         if (result.rotatingPlanned > 0) {
             b.append("<p id=\"count-check-rotation\" data-planned=\"").append(result.rotatingPlanned).append("\" data-checked=\"")
              .append(result.rotatingChecked).append("\">Today's rotating sample (every place is recounted within a week, adm1s within a month): ")
