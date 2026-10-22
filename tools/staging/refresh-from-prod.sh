@@ -21,7 +21,9 @@
 #      and the list of columns, to see afterwards what staging had that production has not.
 #   6. Dumps staging's current database to one safety dump (the rollback).
 #   7. Stops AntWeb, loads the production dump, checks it, scrubs personal data (scrub.sql),
-#      puts the test logins back with their saved hashes, starts AntWeb and waits for it.
+#      puts the test logins back with their saved hashes, adds zztest_uploader to the "Upload as"
+#      list of the administrator login(s) in /root/staging-refresh/upload-as.txt (lines
+#      adminLogin=NAME; no file: the login antweb) if missing, starts AntWeb and waits for it.
 #   8. On any failure in step 7 it loads the safety dump again and starts AntWeb.
 #   9. On success it deletes the downloaded dump and the safety dump (--keep-safety keeps the
 #      safety dump until the next refresh).
@@ -54,6 +56,7 @@ NOT_AFTER=""
 MAX_AGE_DAYS=3
 MARGIN_MB=1024
 KEEP_LOGINS_FILE="$WORK_DIR/keep-logins.txt"
+UPLOAD_AS_FILE="$WORK_DIR/upload-as.txt"
 
 LOG_FILE=""
 SAFETY="$WORK_DIR/staging-before-refresh.sql.gz"
@@ -337,12 +340,16 @@ dry_run_report() {
   keep="none"
   [[ -f "$KEEP_LOGINS_FILE" ]] && keep=$({ grep -v '^[[:space:]]*\(#\|$\)' "$KEEP_LOGINS_FILE" || true; } | tr '\n' ' ')
   log "More logins to keep ($KEEP_LOGINS_FILE): ${keep:-none}"
+  keep="antweb (no $UPLOAD_AS_FILE)"
+  [[ -f "$UPLOAD_AS_FILE" ]] && keep=$({ grep -v '^[[:space:]]*\(#\|$\)' "$UPLOAD_AS_FILE" || true; } | tr '\n' ' ')
+  log "Admin login(s) that get zztest_uploader in \"Upload as\": ${keep:-none}"
   recent=$(sql_value "select coalesce(group_concat(name order by name separator ', '), 'none') from login where last_login > now() - interval 14 day and name not like 'zztest\\_%'")
   log "Logins used on staging in the last 14 days (not zztest): $recent"
   log "  (the ANTWEB_TEST_USER login of the end-to-end tests is probably among them; add its name to $KEEP_LOGINS_FILE)"
   if [[ -s "$SAFETY" ]]; then log "A safety dump from an earlier run exists: $SAFETY (it would be replaced)"; fi
   log "Would: download $DUMP_NAME to $WORK_DIR, save the test logins, dump staging to $SAFETY, stop AntWeb,"
-  log "       load the dump, $( ((SCRUB)) && echo 'scrub emails and passwords (scrub.sql)' || echo 'NOT scrub'), put the test logins back, start AntWeb,"
+  log "       load the dump, $( ((SCRUB)) && echo 'scrub emails and passwords (scrub.sql)' || echo 'NOT scrub'), put the test logins back,"
+  log "       add zztest_uploader to the admin's \"Upload as\" list, start AntWeb,"
   log "       then delete the downloaded dump$( ((KEEP_SAFETY)) && echo '' || echo ' and the safety dump')."
   log "Dry run: nothing was changed."
 }
@@ -423,6 +430,12 @@ refresh() {
 
   log "Putting the test logins back with their saved passwords"
   python3 "$accounts_py" --restore-from "$SAVED" 2>&1 | while IFS= read -r l; do log "  $l"; done
+
+  # The test uploader has a new login number after each refresh: put it back in the admin's
+  # "Upload as" menu. Not worth a rollback if it fails.
+  log "Adding the test uploader to the \"Upload as\" list of the admin login(s) ($UPLOAD_AS_FILE; no file: antweb)"
+  python3 "$accounts_py" --add-upload-as "$UPLOAD_AS_FILE" 2>&1 | while IFS= read -r l; do log "  $l"; done \
+    || log "WARNING: the \"Upload as\" list was not updated; add zztest_uploader by hand on viewLogin.do"
 
   sql_value "select table_name, column_name from information_schema.columns where table_schema = 'ant'" \
     | LC_ALL=C sort > "$WORK_DIR/schema-after.tsv"
