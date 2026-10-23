@@ -18,7 +18,56 @@ import org.apache.commons.logging.LogFactory;
     
 public final class StatsPageAction extends AntwebAction {
 
-    private static final Log s_log = LogFactory.getLog(StatisticsAction.class);
+    private static final Log s_log = LogFactory.getLog(StatsPageAction.class);
+
+    /*
+     * The page's tables are counted once a day, at the end of the nightly run, after the nightly has updated the numbers
+     * (Scheduler calls recount()), and every visit shows that copy (Brian Fisher, 2026-10-23: the page linked from the
+     * home page was slow; counting joins every specimen with every image). After a restart there is no copy until the
+     * first visit, which counts once; that copy is kept until the next nightly run. The page says when the tables were
+     * counted ("statsCountedAt").
+     */
+    private static java.util.Map<String, Object> s_numbers = null;
+
+    /** The kept tables, or null when there are none yet (after a restart). */
+    static synchronized java.util.Map<String, Object> keptNumbers() {
+        return s_numbers;
+    }
+
+    /** Count the tables now and keep them (the nightly run, at its end). Never throws. */
+    public static String recount(Connection connection) {
+        try {
+            long start = System.currentTimeMillis();
+            synchronized (StatsPageAction.class) {
+                s_numbers = count(connection);
+            }
+            return "statistics page tables counted in " + (System.currentTimeMillis() - start) / 1000 + " s";
+        } catch (Exception e) {
+            s_log.warn("recount() e:" + e);
+            return "statistics page tables not counted: " + e;
+        }
+    }
+
+    /** The kept tables, or (none yet) counted now and kept. One count at a time. */
+    static synchronized java.util.Map<String, Object> numbers(Connection connection) throws SQLException {
+        if (s_numbers == null) s_numbers = count(connection);
+        return s_numbers;
+    }
+
+    private static java.util.Map<String, Object> count(Connection connection) throws SQLException {
+        java.util.Map<String, Object> numbers = new HashMap<>();
+        StatisticsDb statisticsDb = new StatisticsDb(connection);
+        ImageDb imageDb = new ImageDb(connection);
+        numbers.put("imageStats", imageDb.getImageStats());
+        numbers.put("imageTaxonStats", imageDb.getImageTaxonStats());
+        numbers.put("extantData", statisticsDb.getExtantData()); // StatSet
+        numbers.put("fossilData", statisticsDb.getFossilData()); // StatSet
+        numbers.put("bioregionData", statisticsDb.getBioregionData()); // ArrayList<StatSet>
+        numbers.put("extantMuseumData", statisticsDb.getExtantMuseumData()); // ArrayList<StatSet>
+        numbers.put("fossilMuseumData", statisticsDb.getFossilMuseumData()); // ArrayList<StatSet>
+        numbers.put("statsCountedAt", new java.util.Date());
+        return Collections.unmodifiableMap(numbers);
+    }
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -26,49 +75,20 @@ public final class StatsPageAction extends AntwebAction {
 
 		boolean success = false;
 
+        java.util.Map<String, Object> kept = keptNumbers();
+        if (kept != null) {
+            for (java.util.Map.Entry<String, Object> e : kept.entrySet()) request.setAttribute(e.getKey(), e.getValue());
+            return mapping.findForward("success");
+        }
+
         Connection connection = null;
         String dbMethodName = DBUtil.getDbMethodName("StatsPageAction.execute()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, dbMethodName);
 
-            StatisticsDb statisticsDb = new StatisticsDb(connection);
-            ImageDb imageDb = new ImageDb(connection);
-
-            HashMap<String, int[]> imageStats = imageDb.getImageStats();
-            for (String status : imageStats.keySet()) {
-              int[] stats = imageStats.get(status);
-              //A.log(" key:" + status + " total:" + stats[0] + " worker:" + stats[1] + " male:" + stats[2] + " queen:" + stats[3] + " other:" + stats[4]); 
-            }
-            request.setAttribute("imageStats", imageStats);
-
-            HashMap<String, Integer> imageTaxonStats = imageDb.getImageTaxonStats();
-            request.setAttribute("imageTaxonStats", imageTaxonStats);
-
-/*
-+----------------+----------+--------+-------+-------+-------+
-| status         |    total | worker | male  | queen | other |
-+----------------+----------+--------+-------+-------+-------+
-| valid          |   187252 | 153469 | 12869 | 19056 |    97 |
-| morphotaxon    |    29372 |  22516 |  3164 |  2926 |    24 |
-| indetermined   |     4001 |   2607 |   940 |   411 |     0 |
-| unrecognized   |      412 |    252 |    66 |    64 |     0 |
-| unavailable    |      141 |    135 |     6 |     0 |     0 |
-| unidentifiable |       29 |     29 |     0 |     0 |     0 |
-+----------------+----------+--------+-------+-------+-------+
-6 rows in set (0.93 sec)
-*/   
-
-            request.setAttribute("extantData", statisticsDb.getExtantData()); // StatSet
-            request.setAttribute("fossilData", statisticsDb.getFossilData()); // StatSet
-            
-            request.setAttribute("bioregionData", statisticsDb.getBioregionData()); // ArrayList<StatSet>
-
-            request.setAttribute("extantMuseumData", statisticsDb.getExtantMuseumData()); // ArrayList<StatSet>
-            request.setAttribute("fossilMuseumData", statisticsDb.getFossilMuseumData()); // ArrayList<StatSet>
-            
-            //request.setAttribute("imageMuseumData", statisticsDb.getImageData()); // ArrayList<StatSet>
-
+            java.util.Map<String, Object> numbers = numbers(connection);
+            for (java.util.Map.Entry<String, Object> e : numbers.entrySet()) request.setAttribute(e.getKey(), e.getValue());
             success = true;            
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
