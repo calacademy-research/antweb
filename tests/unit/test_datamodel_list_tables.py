@@ -180,8 +180,12 @@ def test_check_reports_missing_unknown_and_dropped_sections():
     assert code == 1 and "`no_such_table` names a table" in out, out
     code, out = check_output(every + "### `groups`\n")
     assert code == 1 and "`groups`: the table was dropped" in out, out
-    code, out = check_output(every.replace("### `junkspec`\n", ""))
-    assert code == 1 and "table junkspec (live only" in out, "a table only production has needs a section too: " + out
+    code, out = check_output(every.replace("### `ant_group_abbrev_bak_20261020`\n", ""))
+    assert code == 1 and "table ant_group_abbrev_bak_20261020 (live only" in out, \
+        "a table only production has needs a section too: " + out
+    # the old tables dropped on 2026-10-23 (db/upgrade/8.115/2026-10-23-...) may not keep a section
+    code, out = check_output(every + "### `junkspec`\n")
+    assert code == 1 and "`junkspec`: the table was dropped by db/upgrade/8.115/2026-10-23" in out, out
 
 
 def test_empty_names_in_drop_do_not_crash():
@@ -275,7 +279,12 @@ def test_snapshot_errors_and_allow_list():
     rows[1] = ("taxon", "species_count", "bigint", "BASE TABLE")
     errors = L.snapshot_errors(s, snapshot_file(rows))
     assert any("taxon.species_count int -> bigint" in e for e in errors), errors
-    assert any("LIVE_ONLY_UNUSED names" in e for e in errors), "an allow-list entry the snapshot does not have is reported"
+    try:  # an entry left on the allow-list after its table was dropped from production (and from the snapshot)
+        L.LIVE_ONLY_UNUSED, L.LIVE_ONLY_UNUSED_VIEWS = {"junkspec", "dropped_since"}, {"darwin_core_2_test"}
+        errors = L.snapshot_errors(s, snapshot_file(rows))
+    finally:
+        L.LIVE_ONLY_UNUSED, L.LIVE_ONLY_UNUSED_VIEWS = old
+    assert any("LIVE_ONLY_UNUSED names dropped_since" in e for e in errors), "an allow-list entry the snapshot does not have is reported"
 
 
 def test_upgrade_files_newer_than_the_snapshot_are_pending():

@@ -36,7 +36,7 @@
 --
 -- Not changed here, a decision for Brian (needs an ALTER on production): ant_group.name is varchar(100) and
 -- upload.group_name varchar(64); an 81-character group name made an upload row insert fail (PR #232 handles that
--- in code). Widening upload.group_name to varchar(100) would match them.
+-- in code). Widening upload.group_name to varchar(100) would match them. (Done: 2026-10-23-drop-old-tables-widen-group-name.sql.)
 --
 -- Limits on any other database: "matches production" means names and types only (no keys, indexes, NOT NULL or
 -- defaults; see 2). A retype acts on base tables only, never shortens a varchar, char, text or integer type (nor turns
