@@ -60,7 +60,8 @@ AREAS = [
     ("api", ["api/**/*.py"]),
     ("jsp-curate", ["web/curate/**/*.jsp", "web/util/*.jsp", "web/common/*.jsp", "web/layouts/*.jsp"]),
     ("jsp-public", ["web/*.jsp", "web/search/*.jsp", "web/maps/**/*.js", "web/maps/**/*.jsp"]),
-    ("ops", ["bin/*.sh", "docker/**/*", "tools/staging/*.sh", "tools/data/*.py", ".github/workflows/*.y*ml"]),
+    ("ops", ["bin/*.sh", "docker/**/*.sh", "docker/**/Dockerfile*", "docker/**/*.yml", "docker/**/*.conf", "docker/**/Caddyfile*",
+             "docker-compose*.yml", "tools/staging/*.sh", "tools/data/*.py", ".github/workflows/*.y*ml"]),
 ]
 
 SYSTEM = """You are an independent senior code auditor. You have not seen this code before and you did
@@ -115,7 +116,8 @@ def chunks():
         for f in files:
             length = len((ROOT / f).read_text(encoding="utf-8", errors="replace"))
             if length > CHUNK_CAP:
-                continue  # never happens today; a file this large is left out rather than cut
+                print(f"::warning::{f} is over {CHUNK_CAP:,} characters and is left out of the audit")
+                continue
             if cur and size + length > CHUNK_CAP:
                 out.append((f"{name}-{n}", cur))
                 cur, size, n = [], 0, n + 1
@@ -179,16 +181,23 @@ def main():
               "- The report is encrypted (artifact); it is not shown here because the repository is public."]
 
     text = cr.extract_text(result) or "(no text in the answer)"
-    stamp = datetime.datetime.utcnow().strftime("%Y%m%d-%H%M")
+    stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d-%H%M")
     report = (f"# Claude audit: {name}\n\n{stamp} UTC, model {cr.MODEL}, {tin:,} tokens in, {tout:,} out, "
               f"about ${cost:.2f}.\n\nFiles:\n" + "".join(f"- {f}\n" for f in files) + "\n" + text + "\n")
     plain = out / "report.md"
     plain.write_text(report, encoding="utf-8")
     enc = out / f"audit-{name}-{stamp}.md.cms"
-    subprocess.run(["openssl", "cms", "-encrypt", "-binary", "-aes256", "-in", str(plain), "-out", str(enc),
-                    "-outform", "DER", str(Path(__file__).resolve().parent.parent / "audit-recipient.pem")],
-                   check=True)
-    plain.unlink()
+    try:
+        subprocess.run(["openssl", "cms", "-encrypt", "-binary", "-aes256", "-in", str(plain), "-out", str(enc),
+                        "-outform", "DER", str(Path(__file__).resolve().parent.parent / "audit-recipient.pem")],
+                       check=True)
+    except (OSError, subprocess.CalledProcessError) as e:
+        lines.append(f"- Encryption failed ({e!r}); the report was not kept")
+        cr.summary(lines)
+        print(f"::error::Encryption failed: {e!r}")
+        return 1
+    finally:
+        plain.unlink(missing_ok=True)
     cr.summary(lines)
     print(f"Encrypted report: {enc.name}")
     return 0

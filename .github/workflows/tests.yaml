@@ -361,6 +361,9 @@ jobs:
       - name: No PHP in the server image or the repository (tests/unit/test_no_php.py)
         run: python3 tests/unit/test_no_php.py
 
+      - name: Claude audit rotation (tests/unit/test_claude_audit.py)
+        run: python3 tests/unit/test_claude_audit.py
+
       - name: Login updates keep login.created, no delete of all page text, page titles, admin links on phones (tests/unit/test_small_fixes.py)
         run: python3 tests/unit/test_small_fixes.py
 
