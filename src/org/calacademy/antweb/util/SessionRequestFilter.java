@@ -344,6 +344,8 @@ public class SessionRequestFilter implements Filter {
       // that did not matter while the container restarted every morning (and re-anchored the
       // timer), but the nightly restart is now off by default (Scheduler.isNightlyRestartOn).
       scheduleNextRun(new Timer());
+      // Hourly: the storage mounts /mnt/antweb and /mnt/backup work (MountCheck, 2026-10-23).
+      MountCheck.start();
     }
 
     /** The next LAUNCHTIME:00:00 strictly after now, in the JVM's time zone. */
