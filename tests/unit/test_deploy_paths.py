@@ -26,6 +26,12 @@ def main():
     for p in RESTART:
         assert not pattern.search(p), "should restart for " + p
     print("deploy.sh no-restart list OK:", m.group(1))
+    # One deploy at a time per server (two overlapping production deploys failed on 2026-10-23).
+    for wf, group in (("deploy.yaml", "deploy-production"), ("deploy-staging.yaml", "deploy-staging")):
+        text = open(os.path.join(ROOT, ".github", "workflows", wf), encoding="utf-8").read()
+        assert re.search(r"(?m)^concurrency:\n  group: " + group + r"\n  cancel-in-progress: false$", text), \
+            wf + ": needs a top-level concurrency group " + group + " that does not cancel a running deploy"
+    print("deploy workflows: one deploy at a time OK")
 
 
 if __name__ == "__main__":
