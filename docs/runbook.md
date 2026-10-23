@@ -452,6 +452,84 @@ Undo: `mv taxonworks.properties.off-<date> taxonworks.properties`. Without the f
 
 **Stop all outgoing mail** (for example a mail loop): rename `mail.properties` the same way (`mv mail.properties mail.properties.off-$(date +%Y%m%d)`). Messages are then only written to `logbak/emails.log`.
 
+## One-off data repairs
+
+### Locality codes stored URL-encoded
+
+Found 2026-10-22: until then the specimen upload stored every locality code URL-encoded (`Ahi_<5m` as
+`Ahi_%3C5m`, `KM55""805` as `KM55%22%22805`, `MontagnedesFrançais_150` as `MontagnedesFran%E7ais_150`):
+1,117 specimens in 67 codes on production (Economo Ant Lab 921 in 18 codes, California Academy of Sciences 196 in
+49). The upload now stores codes as written (`docs/flows/specimen-upload.md`, section 3b). The old rows are fixed by:
+
+- **CAS (group 1): nothing to do.** The nightly TaxonWorks upload replaces all CAS specimens every night, so the
+  first nightly run after the fix is deployed stores the CAS codes plain. Check the next day (below). A code whose
+  original had a character outside ISO-8859-1 (a curly apostrophe, stored as `%3F`) comes back with that character.
+- **Every other group (Economo Ant Lab): this repair**, or the group's next upload, whichever comes first. The
+  repair decodes the stored codes; it cannot restore a character that was stored as `%3F`.
+
+Run after the code fix is deployed (the repaired codes need the new lookups), staging first, outside 05:00 to
+08:00 Pacific and not while the group is uploading. The tool is `tools/data/locality_codes.py` (read its header).
+
+1. Preview (read-only). Lists each stored code with its decoded value, group, specimen count and locality names,
+   and marks it `ok`, `merge` (the decoded code already belongs to specimens of the same group and locality name:
+   after the repair they share one locality page) or `collision` (the decoded code belongs to another group or
+   another locality name, ignoring case and accents as MySQL does: left out of the repair, decide by hand).
+
+```
+# ssh root@165.232.136.170   (staging)
+cd /root/antweb-next && python3 tools/data/locality_codes.py preview --project /root/antweb-next --out /root/loccode-preview-20261022.tsv
+```
+
+   Expect a summary (`N stored codes (per group), N specimens`, counts per status and per group) and one line per
+   code. Staging holds production's data as of its last refresh, so the numbers should be close to 67 and 1,117.
+   Send the output to Claude before going on if any line says `collision`.
+
+2. Write the repair SQL, leaving out CAS (no database access):
+
+```
+# ssh root@165.232.136.170   (staging)
+cd /root/antweb-next && python3 tools/data/locality_codes.py sql --preview /root/loccode-preview-20261022.tsv --skip-group 1 --out /root/loccode-repair-20261022.sql
+```
+
+   Expect `Repair SQL written ...: N stored codes, N specimens` (Economo: about 18 codes, 921 specimens), the
+   codes left out, and the rollback statement.
+
+3. Run it. The script first copies `code, access_group, localitycode` of the affected specimens to
+   `specimen_localitycode_bak_20261022` (it stops there with "already exists" if the repair ran before), then
+   updates each code in one transaction.
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; docker exec -i -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant < /root/loccode-repair-20261022.sql
+```
+
+   Expect four small results (a heading line and a value line each; `check_counts` says `counts match`): `backed_up` equal to `expected`, `changed` equal to `expected`, and
+   `still_encoded_in_repaired_groups` 0 (or the number of specimens of collisions left out in those groups).
+   `backed_up` can be larger than `expected` when a code left out as a collision differs from a repaired one only in
+   upper and lower case (MySQL compares them as equal); those extra rows are only copied, not changed.
+   If `changed` differs from `expected` the script stops with "Subquery returns more than 1 row" before its
+   commit, and nothing is changed. Send the output to Claude; to run it again, first
+   `drop table specimen_localitycode_bak_20261022;` (the backup table is made before the transaction).
+
+4. Check: the Integrity Check query `query.do?name=encodedLocalityCodes` lists no Economo codes any more, and a
+   repaired code opens its locality page with its specimens, for example `locality.do?code=KM55%22%22805`
+   (the code `KM55""805`). Map popups of the group link the old code until the next nightly run rebuilds the maps.
+
+5. Then production: the same three commands with `ssh root@165.232.137.86`, `cd /root/antweb`,
+   `--project /root/antweb` and `F=/root/antweb/etc/db.properties`.
+
+Rollback (puts every changed code back, from the backup table). Only before the group uploads again: after an
+upload it would put the old encoded codes over the new plain ones.
+
+```
+# ssh root@165.232.137.86   (antweb-prod; on staging use /root/antweb-next/etc/db.properties)
+F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "update specimen s join specimen_localitycode_bak_20261022 b on b.code = s.code and b.access_group = s.access_group set s.localitycode = b.localitycode;"
+```
+
+The day after the deploy, check CAS: `query.do?name=encodedLocalityCodes` (or the Integrity Check) should list no
+California Academy of Sciences codes once a nightly TaxonWorks upload has run (`taxonworksNightly.log`). Keep the
+backup table until the codes have been checked; drop it later (`drop table specimen_localitycode_bak_20261022;`).
+
 ## Emergencies
 
 ### Site down

@@ -869,7 +869,7 @@ update specimen set other = '
         String localityName = getLocalityName();
         String localityLink = "";
 
-        String encodeCode = HttpUtil.encodePath(localityCode);
+        String encodeCode = (localityCode == null || localityCode.isEmpty()) ? null : Html.url(localityCode);  // the stored code is plain text: encode it once (UTF-8)
         if (encodeCode != null) {  // use the localityCode to link, if there is one.
             String label = Html.esc(localityName != null ? localityName : localityCode);  // but use the localityName to label, if there is one.
             localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?code=" + Html.escAttr(encodeCode) + "\">" + label + "</a>";
@@ -909,7 +909,7 @@ For a locality name without code (this name has special characters:
 
         String linkName = countryColon + " " + adm1Colon + " " + adm2Semicolon;
 
-        String encodeCode = HttpUtil.encodePath(localityCode);
+        String encodeCode = (localityCode == null || localityCode.isEmpty()) ? null : Html.url(localityCode);  // the stored code is plain text: encode it once (UTF-8)
 
         String localityLink = null; // getLocalityName();
 
@@ -919,7 +919,6 @@ For a locality name without code (this name has special characters:
             //if ("locality".equals(sortBy)) localityName =  "<span class=\"sorted_by\">" + localityName + "</span>";
             localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?code=" + Html.escAttr(encodeCode) + "\">" + label + "</a>"; // was name = target
         } else { // use the localityName
-            String encodeName = HttpUtil.encodePath(localityName);
             localityLink = "<a href=\"" + AntwebProps.getDomainApp() + "/locality.do?name=" + Html.escAttr(Html.url(localityName)) + "\">" + Html.esc(localityName) + "</a>"; // was name = target
         }
 
