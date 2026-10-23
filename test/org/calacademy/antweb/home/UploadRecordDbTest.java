@@ -20,8 +20,8 @@ import org.calacademy.antweb.home.SpecimenUploadDb;
  * transaction then committed without it. These tests use the production table definition and
  * sql_mode (STRICT_TRANS_TABLES, docker/mysql/mysql.cnf):
  *  - the old statement fails for a group name with a quote or longer than the column (the cause);
- *  - the new insert writes the row for any group name (cut to 100 characters, the width of
- *    upload.group_name since db/upgrade/8.115/2026-10-23, as ant_group.name), in the caller's
+ *  - the new insert writes the row for any group name (cut to the column: 100 characters, the width of
+ *    upload.group_name since db/upgrade/8.115/2026-10-23, as ant_group.name; 64 before), in the caller's
  *    transaction, refuses file names longer than the column (links), and throws when it cannot
  *    write the row (the upload then rolls back).
  * The test drops and recreates the table upload, and refuses to run on a database whose upload
@@ -133,6 +133,10 @@ public class UploadRecordDbTest extends TestCase {
             }
         }
         assertEquals(0, count("upload_id = 2254"));
+
+        // the new code on a column still 64 wide (deployed before the upgrade file ran): cut to 64, the row is written
+        SpecimenUploadDb.insertUploadRow(connection, 2259, 9, 57, LONG_NAME, "w.html", null);
+        assertEquals(LONG_NAME.substring(0, 64), groupNameOf(2259));
     }
 
     public void testRowWrittenForAnyGroupName() throws Exception {
@@ -196,6 +200,7 @@ public class UploadRecordDbTest extends TestCase {
         assertEquals(LONG_NAME, SpecimenUploadDb.fit(LONG_NAME));
         assertTrue(TOO_LONG_NAME.length() > SpecimenUploadDb.GROUP_NAME_WIDTH);
         assertEquals(SpecimenUploadDb.GROUP_NAME_WIDTH, SpecimenUploadDb.fit(TOO_LONG_NAME).length());
+        assertEquals(LONG_NAME.substring(0, 64), SpecimenUploadDb.fit(LONG_NAME, 64));
         assertEquals("Viçosa", SpecimenUploadDb.fit("Viçosa"));
     }
 }

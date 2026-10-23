@@ -8,8 +8,9 @@
 --      three of them; those statements are removed from it in the same change.
 --   2. Widen upload.group_name from varchar(64) to varchar(100), the width of ant_group.name: an 81-character group
 --      name made an upload row insert fail on 2026-10-21 (PR #232 then cut the name to 64 in the code;
---      SpecimenUploadDb.GROUP_NAME_WIDTH now cuts to 100). NOT NULL and the column's character set and collation
---      (utf8mb3, utf8mb3_general_ci: db/upgrade/8.56/2021-06-21.sql converted the table) are kept; the runbook's
+--      SpecimenUploadDb now cuts to the column's width, read on every upload: 64 before this file, 100 after).
+--      NOT NULL and the column's character set and collation (utf8mb3, utf8mb3_general_ci:
+--      db/upgrade/8.56/2021-06-21.sql converted the table) are kept; the runbook's
 --      archive step prints them first. The table is small (one row per upload); MySQL copies it for this change
 --      (a utf8mb3 varchar over 85 characters needs a two-byte length), which takes a second.
 --

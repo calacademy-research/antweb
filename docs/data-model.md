@@ -890,8 +890,9 @@ counts of what was loaded.
 `genera`, `species`, `collections`, `localities`, `ungeoreferenced`, `flagged`, `created`. `group_name` is
 varchar(100), the width of `ant_group.name` (varchar(64) until 2026-10-23, widened by
 `db/upgrade/8.115/2026-10-23-drop-old-tables-widen-group-name.sql`; an 81-character group name had made an upload row
-insert fail on 2026-10-21). `SpecimenUploadDb.insertUploadRow` cuts a longer group name to 100 characters
-(`GROUP_NAME_WIDTH`) and refuses a file name longer than its 64-character column.
+insert fail on 2026-10-21). `SpecimenUploadDb.insertUploadRow` cuts a longer group name to the column's width (read
+from `information_schema` on every upload, at most 100, `GROUP_NAME_WIDTH`) and refuses a file name longer than its
+64-character column.
 
 **Written by.** `SpecimenUploadDb.updateUpload`, `UploadDb.updateCounts` (end of each upload, `UploadAction`,
 `SpecimenUploadJob`). **Read by.** `listSpecimenUploads`, group and curator pages (`GroupDb`, `LoginDb.setUploadCounts`),

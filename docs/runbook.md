@@ -382,7 +382,7 @@ Expect `staging-refresh` no longer listed. To start it again, step 10.
 
 Brian's yes of 2026-10-22: drop the 14 old tables and 1 view that nothing reads (`docs/data-model.md` section 13, "Dropped already"), each backed up first, and widen `upload.group_name` from varchar(64) to varchar(100) (the width of `ant_group.name`). The SQL is `db/upgrade/8.115/2026-10-23-drop-old-tables-widen-group-name.sql` (pull request #249). The objects: tables `afro_types_tmp`, `artist_copy`, `description`, `favorite_images`, `groups_project`, `homepage`, `image_backup`, `image_count`, `image_count_materialized`, `junkspec`, `proj_taxonT` (capital T), `similar_species`, `synonymy`, `temp_image_artist`; view `darwin_core_2_test`.
 
-**Order.** Staging, then production, on the same day (the weekly staging refresh copies production's database to staging, so a staging-only drop would come back). On production: archive (a), run the file (b) and check (c) first, then Claude merges the pull request (it deploys by itself), then the structure check (c2). Run (b) on the PR's file before the merge because the new code cuts group names at 100 characters: with the column still 64 wide, an upload by a group with a longer name (group 57 has 81 characters) would fail. The old code works with the wider column. Between (b) and the deploy, and in the other order if (b) is late, the count check page (`countCheck.do`, "Database structure") lists the 15 objects as removed and `upload.group_name` as retyped; nothing else shows it. Do it after 08:15 Pacific (not during the nightly run) and not while an upload is running: the ALTER holds the `upload` table for a moment.
+**Order.** Staging, then production, on the same day (the weekly staging refresh copies production's database to staging, so a staging-only drop would come back). On production: archive (a), run the file (b) and check (c) first, then Claude merges the pull request (it deploys by itself), then the structure check (c2). Uploads are safe in either order: the new code cuts a group name to the column's real width (read on every upload: 64 before (b), 100 after), and the old code works with the wider column. Running (b) first keeps the time in which the repository and production differ short: between (b) and the deploy, and in the other order until (b) runs, the count check page (`countCheck.do`, "Database structure") lists the 15 objects as removed and `upload.group_name` as retyped; nothing else shows it. Do it after 08:15 Pacific (not during the nightly run) and not while an upload is running: the ALTER holds the `upload` table for a moment.
 
 Commands (b) and (c2) fetch the pull request's files from GitHub into git's FETCH_HEAD (`git fetch ... pull/249/head`). This changes no file in the checkout, and it works before and after the merge.
 
@@ -404,7 +404,7 @@ Expect: 15 rows (14 `BASE TABLE`, 1 `VIEW`) with their sizes in MB; the number o
 F=/root/antweb-next/etc/db.properties; A=/mnt/backup/archive/old_tables_20261023.sql.gz; install -d -m 700 /mnt/backup/archive && test ! -e "$A" && docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysqldump -u "$(sed -n 's/^user=//p' "$F")" --single-transaction --no-tablespaces --skip-triggers --default-character-set=utf8mb4 ant afro_types_tmp artist_copy description favorite_images groups_project homepage image_backup image_count image_count_materialized junkspec proj_taxonT similar_species synonymy temp_image_artist darwin_core_2_test | gzip -c > "$A" && gzip -t "$A" && ls -l "$A" && zgrep -c '^CREATE TABLE' "$A" && zgrep -c 'VIEW `darwin_core_2_test` AS' "$A" && gunzip -c "$A" | tail -1
 ```
 
-Expect: the file with its size, then `14` (one `CREATE TABLE` per table), `2` (mysqldump writes a stand-in for the view, then its definition) and `-- Dump completed on ...`. Anything else (an error, a number other than 14 and 2, no "Dump completed"): stop, do not run (b), and paste the output to Claude. Nothing in the database has changed.
+Expect: the file with its size, then `14` (one `CREATE TABLE` per table), `2` (mysqldump writes a stand-in for the view, then its definition) and `-- Dump completed on ...`. These numbers were checked with mysqldump 8.0; staging runs 8.4 like production, so staging's output is the check for production: if it differs, paste it to Claude before going on. Anything else (an error, a number other than 14 and 2, no "Dump completed"): stop, do not run (b), and paste the output to Claude. Nothing in the database has changed. A failed archive stays on disk and the command refuses to overwrite it: before running a2 again (and only if (b) has not run), remove it with `rm /mnt/backup/archive/old_tables_20261023.sql.gz`.
 
 **b. Run the upgrade file.**
 
@@ -453,7 +453,7 @@ Expect as on staging; tables and views: 97 and 8 on 2026-10-22 (more tables if d
 F=/root/antweb/etc/db.properties; A=/mnt/backup/archive/old_tables_20261023.sql.gz; install -d -m 700 /mnt/backup/archive && test ! -e "$A" && docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysqldump -u "$(sed -n 's/^user=//p' "$F")" --single-transaction --no-tablespaces --skip-triggers --default-character-set=utf8mb4 ant afro_types_tmp artist_copy description favorite_images groups_project homepage image_backup image_count image_count_materialized junkspec proj_taxonT similar_species synonymy temp_image_artist darwin_core_2_test | gzip -c > "$A" && gzip -t "$A" && ls -l "$A" && zgrep -c '^CREATE TABLE' "$A" && zgrep -c 'VIEW `darwin_core_2_test` AS' "$A" && gunzip -c "$A" | tail -1
 ```
 
-Expect `14`, `2` and `-- Dump completed on ...`, as on staging. Otherwise stop; nothing has changed.
+Expect `14`, `2` and `-- Dump completed on ...`, as on staging. Otherwise stop; nothing has changed (a failed archive: remove it as on staging before trying again, only if (b) has not run).
 
 **b. Run the upgrade file** (before the merge; see "Order").
 
@@ -504,7 +504,7 @@ Expect `RESTORED`. An error about `DEFINER`, `SET_USER_ID` or `SYSTEM_USER` conc
 F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select count(*) as longer_than_64 from upload where char_length(group_name) > 64;"
 ```
 
-**d3. Narrow the column** only if d2 gave 0, and only together with reverting the code change of #249 (the code cuts group names at 100 characters; with a 64-wide column an upload by a group with a longer name would fail). With rows longer than 64 MySQL refuses the ALTER ("Data too long") and changes nothing.
+**d3. Narrow the column** only if d2 gave 0 (the code reads the column's width on every upload and cuts to it, so it needs no change). With rows longer than 64 MySQL refuses the ALTER ("Data too long") and changes nothing.
 
 ```
 # ssh root@165.232.137.86   (antweb-prod)
