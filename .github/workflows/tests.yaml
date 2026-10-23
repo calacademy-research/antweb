@@ -538,6 +538,33 @@ jobs:
           '
           docker rm -f ugmysql
 
+      - name: Every JSP page changed in this pull request compiles (Jasper JspC, as Tomcat 11 does)
+        # 2026-10-23: a page that does not compile (listImageUploads-body.jsp: "Formatter" is ambiguous between
+        # java.util.* and org.calacademy.antweb.*) was found only by the staging end-to-end run, 30 minutes later.
+        run: |
+          git fetch -q --depth=1 origin master
+          files=$(git diff --name-only --diff-filter=AM FETCH_HEAD HEAD -- 'web/*.jsp' | sed 's#^web/##' | tr '\n' ' ')
+          if [ -z "$files" ]; then echo "No JSP page changed"; exit 0; fi
+          echo "Changed JSP pages: $files"
+          docker run --rm --entrypoint sh -e FILES="$files" antweb/antweb:dev -c '
+            set -e
+            A=/usr/local/antweb
+            CP="/usr/local/tomcat/lib/*:/usr/local/tomcat/bin/*:/usr/share/ant/lib/*:$A/WEB-INF/classes:$A/WEB-INF/lib/*"
+            n=0
+            for f in $FILES; do
+              rm -rf /tmp/jspc; mkdir -p /tmp/jspc
+              java -cp "$CP" org.apache.jasper.JspC -uriroot $A -d /tmp/jspc -compile -failFast "$A/$f" > /tmp/jspc.txt 2>&1 || true
+              cls=$(find /tmp/jspc -name "*_jsp.class" | wc -l)
+              if [ "$cls" -lt 1 ] || grep -qiE "^(SEVERE|ERROR)|JasperException|An error occurred" /tmp/jspc.txt; then
+                cat /tmp/jspc.txt
+                echo "::error::$f does not compile:%0A$(grep -v "^\s*at " /tmp/jspc.txt | head -30 | sed "s/%/%25/g" | tr "\n" "\001" | sed "s/\x01/%0A/g")"
+                exit 1
+              fi
+              n=$((n+1))
+            done
+            echo "Changed JSP pages compiled: $n"
+          '
+
       - name: Manager Tools (Museum, Geolocale, Project, Photographers, Admin Alert, map managers, Query and Log Manager)
         # The JSP pages of the Manager Tools compile (Jasper JspC, as Tomcat 11 compiles them).
         # ManagerToolsTest: "None" in Edit Geolocale is no value (a stored "none" bioregion reads as none),
