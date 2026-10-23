@@ -794,8 +794,16 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         return new Coordinate(lon, lat);
     }
 
+    /** A code with a double quote is listed in the upload report with the code it is stored as (UploadUtil.quotesToDash). */
+    private void reportQuotes(String code, String kind) {
+        if (code == null || !code.contains("\"")) return;
+        getMessageMgr().addToMessages(MessageMgr.codeQuoteReplaced,
+            Html.esc(kind + " code " + code + " stored as " + UploadUtil.quotesToDash(code)));
+    }
+
     public void cleanLocalityCode(Hashtable specimenItem, Coordinate coord) {
         String code = (String) specimenItem.get("code");
+        reportQuotes((String) specimenItem.get("localitycode"), "locality");
         String localityCode = plainLocalityCode((String) specimenItem.get("localitycode"), coord);
         if (localityCode != null) {
             specimenItem.put("localitycode", localityCode);
@@ -836,6 +844,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     public void cleanCollectionCode(Hashtable specimenItem) {
         String collectionCode = (String) specimenItem.get("collectioncode");
         String origCollectionCode = collectionCode;
+        reportQuotes(collectionCode, "collection");
 
         collectionCode = UploadUtil.cleanCode(collectionCode);
 

@@ -125,6 +125,7 @@ public class UploadUtil {
     
       String cleanCode = code;
       if (cleanCode != null) {
+        cleanCode = quotesToDash(cleanCode);
         if (cleanCode.contains("%")) cleanCode = Formatter.replace(cleanCode, "%", "");
         if (cleanCode.contains("#")) {
            cleanCode = Formatter.replace(cleanCode, "#", "");
@@ -139,6 +140,16 @@ public class UploadUtil {
 
       //if (!cleanCode.equals(code)) A.log("cleanCode() code:" + code + " cleanCode:" + cleanCode);
       return cleanCode;
+    }
+
+    /**
+     * A double quote in a locality or collection code becomes "-" (two in a row also become one "-"): Brian Fisher,
+     * 2026-10-23. Spreadsheet exports double a quote ("" for "), so the same place arrived as two codes (KM55""805 and
+     * KM55"805); both are now KM55-805. The upload report lists every code changed this way (MessageMgr.codeQuoteReplaced).
+     */
+    public static String quotesToDash(String code) {
+        if (code == null || !code.contains("\"")) return code;
+        return code.replace("\"\"", "-").replace("\"", "-");
     }
 
     public static String createCode() {

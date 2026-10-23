@@ -15,7 +15,7 @@ As the test uploader (ANTWEB_TEST_UPLOADER_*, a curator of "ZZ Test Group (stagi
      zztest0006  Pachycondyla sauteri, a name of two -> kept under the uploaded name, report "Needs the
                  AntCat taxa (when this server has it)    curator's decision" with both AntCat taxa linked,
                                                        the same line as on nameUpdates.do (SharedNameReport)
-     zztest0007  locality code zzloc<5m_Français"?    -> stored as written (it was stored URL-encoded until
+     zztest0007  locality code zzloc<5m_Français"?    -> stored with " as - (zzloc<5m_Français-?; URL-encoded until
                                                        2026-10-22): the specimen page links locality.do with
                                                        the code encoded once, the locality page shows it, and
                                                        its "Show All Specimens" search finds zztest0007
@@ -58,6 +58,8 @@ UNKNOWN_SPECIES = "zztestunknown"
 # A locality code with characters the upload used to URL-encode (<, ", ?, and a cedilla). Codes keep no
 # spaces (UploadUtil.cleanCode) and lose a leading or trailing quote (the parser trims them).
 LOCALITY_CODE = 'zzloc<5m_Fran\u00e7ais"?'
+# Stored with its double quote replaced by "-" (UploadUtil.quotesToDash, Brian Fisher 2026-10-23).
+LOCALITY_CODE_STORED = LOCALITY_CODE.replace('"', '-')
 HEADER = BASELINE_HEADER + "\tLocalityCode"
 
 
@@ -255,7 +257,7 @@ def check_locality_code(s):
     (advancedSearch.do, localityCode="<code>") finds the specimen."""
     exists, page = specimen_page(s, code(7))
     assert exists, f"{code(7)} was not loaded"
-    expected = "/locality.do?code=" + quote_plus(LOCALITY_CODE)
+    expected = "/locality.do?code=" + quote_plus(LOCALITY_CODE_STORED)
     hrefs = [unescape(h) for h in re.findall(r"""href=["']([^"']*locality\.do\?code=[^"']*)["']""", page)]
     assert any(h.endswith(expected) for h in hrefs), (expected, hrefs)
     assert not any(re.search(r"%25[0-9A-Fa-f]{2}", h) for h in hrefs), hrefs
@@ -267,7 +269,7 @@ def check_locality_code(s):
     assert loc.status_code == 200, (expected, loc.status_code)
     assert "Locality not found" not in loc.text, _text(loc.text)[:400]
     shown = re.search(r"<li>Code:</li>\s*<li><b>(.*?)</b></li>", loc.text, re.S)
-    assert LOCALITY_CODE in unescape(loc.text), ("the locality page does not show the code as written",
+    assert LOCALITY_CODE_STORED in unescape(loc.text), ("the locality page does not show the code as stored",
                                                  shown.group(1) if shown else _text(loc.text)[:600])
     assert raw not in loc.text, "the locality page prints the locality code unescaped"
     m = re.search(r"""href=['"]([^'"]*advancedSearch\.do\?[^'"]*localityCode=[^'"]*)['"]>Show All Specimens""", loc.text)
