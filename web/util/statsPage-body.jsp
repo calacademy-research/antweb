@@ -17,6 +17,8 @@
 <div id="page_contents">
 <br>
 <h1> Antweb Statistics</h1>
+<% java.util.Date statsCountedAt = (java.util.Date) request.getAttribute("statsCountedAt"); %>
+<% if (statsCountedAt != null) { %><p id="stats-counted-at">The tables below were counted at <%= new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm z").format(statsCountedAt) %>. They are recounted at most every 6 hours, and after the nightly update.</p><% } %>
 <br><br><br>
 
 <h2>Current Statistics:</h2>                    

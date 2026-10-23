@@ -5,7 +5,8 @@ compares the numbers stored in the database; these tests read the pages themselv
 
   statsPage.do     "N valid species + ssp." counts species and subspecies (it counted valid taxa of every
                    rank): at most the extant and fossil species and subspecies of the Global Data table,
-                   which count the same names
+                   which count the same names; its tables are counted once and kept (at most 6 hours), and
+                   the page says when they were counted
   taxonomicPage.do images view: "N Genera Imaged (out of M Total)" (it printed the same number twice):
                    imaged <= total
   countries.do     the column is labelled "Valid species" (it showed the Valid species number as "Species")
@@ -47,6 +48,23 @@ def test_statspage_valid_species_count_species_and_subspecies():
         # Equal unless some taxa have no fossil flag; before 2026-10-21 the subfamilies and genera were added too.
         assert species <= shown < species + extant[0] + extant[1], (
             f"statsPage: {shown} valid species + ssp.; Global Data species + subspecies {species}")
+
+
+def test_statspage_tables_are_kept_not_recounted_each_visit():
+    """statsPage.do (linked from the home page) joins every specimen with every image to count its tables. Since
+    2026-10-23 the tables are counted once and kept: two visits in a row show the same "counted at" time, and the
+    second visit is quick."""
+    import time
+    first = _ok("/statsPage.do")
+    m1 = re.search(r'id="stats-counted-at">The tables below were counted at ([^.]+)\.', first)
+    if not m1:
+        pytest.skip("statsPage.do without the counted-at line (not deployed yet)")
+    start = time.monotonic()
+    second = _ok("/statsPage.do")
+    elapsed = time.monotonic() - start
+    m2 = re.search(r'id="stats-counted-at">The tables below were counted at ([^.]+)\.', second)
+    assert m2 and m2.group(1) == m1.group(1), (m1.group(1), m2 and m2.group(1))
+    assert elapsed < 15, f"second visit took {elapsed:.1f} s; the kept tables should make it quick"
 
 
 def test_images_view_header_counts_imaged_children():

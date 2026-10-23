@@ -276,6 +276,8 @@ public class Scheduler extends AntwebAction {
 
 				if (num == 0) {
 				  // This was the full scheduled tasks, now completed.
+				  // The statistics page (statsPage.do) recounts its tables at its next visit.
+				  org.calacademy.antweb.StatsPageAction.clearCache();
 				  // Daily: warn the administrators of a log over 1 GB or a disk over 85% (LogSizeCheck).
 				  try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
 					LogMgr.appendLog("compute.log", "  " + LogSizeCheck.run(connection), true);

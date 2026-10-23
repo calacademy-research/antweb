@@ -18,7 +18,54 @@ import org.apache.commons.logging.LogFactory;
     
 public final class StatsPageAction extends AntwebAction {
 
-    private static final Log s_log = LogFactory.getLog(StatisticsAction.class);
+    private static final Log s_log = LogFactory.getLog(StatsPageAction.class);
+
+    /*
+     * The page's numbers are counted once and kept (2026-10-23, Brian Fisher: the page linked from the home page was
+     * slow). Counting them joins every specimen with every image (a few seconds of database work) and they change only
+     * with uploads and the nightly run, so they are recounted at most every MAX_AGE_MS, at the first visit after a
+     * restart, and at the first visit after the nightly run (Scheduler calls clearCache()). The page says when they were
+     * counted ("statsCountedAt").
+     */
+    public static final long MAX_AGE_MS = 6L * 60 * 60 * 1000;
+    private static java.util.Map<String, Object> s_numbers = null;
+    private static long s_countedAt = 0;
+
+    /** Forget the kept numbers: the next visit counts them again (after the nightly run). */
+    public static synchronized void clearCache() {
+        s_numbers = null;
+    }
+
+    /** True when numbers counted at countedAt may still be shown at now. */
+    public static boolean isFresh(long countedAt, long now, long maxAgeMs) {
+        return countedAt > 0 && now >= countedAt && now - countedAt < maxAgeMs;
+    }
+
+    /** The kept numbers while fresh, otherwise null (then the caller opens a connection and calls numbers()). */
+    static synchronized java.util.Map<String, Object> keptNumbers() {
+        return s_numbers != null && isFresh(s_countedAt, System.currentTimeMillis(), MAX_AGE_MS) ? s_numbers : null;
+    }
+
+    /** The kept numbers, or newly counted ones when there are none or they are too old. One count at a time. */
+    static synchronized java.util.Map<String, Object> numbers(Connection connection) throws SQLException {
+        long now = System.currentTimeMillis();
+        if (s_numbers != null && isFresh(s_countedAt, now, MAX_AGE_MS)) return s_numbers;
+        java.util.Map<String, Object> numbers = new HashMap<>();
+        StatisticsDb statisticsDb = new StatisticsDb(connection);
+        ImageDb imageDb = new ImageDb(connection);
+        numbers.put("imageStats", imageDb.getImageStats());
+        numbers.put("imageTaxonStats", imageDb.getImageTaxonStats());
+        numbers.put("extantData", statisticsDb.getExtantData()); // StatSet
+        numbers.put("fossilData", statisticsDb.getFossilData()); // StatSet
+        numbers.put("bioregionData", statisticsDb.getBioregionData()); // ArrayList<StatSet>
+        numbers.put("extantMuseumData", statisticsDb.getExtantMuseumData()); // ArrayList<StatSet>
+        numbers.put("fossilMuseumData", statisticsDb.getFossilMuseumData()); // ArrayList<StatSet>
+        numbers.put("statsCountedAt", new java.util.Date(now));
+        s_numbers = Collections.unmodifiableMap(numbers);
+        s_countedAt = now;
+        s_log.info("numbers() counted in " + (System.currentTimeMillis() - now) + " ms");
+        return s_numbers;
+    }
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -26,49 +73,20 @@ public final class StatsPageAction extends AntwebAction {
 
 		boolean success = false;
 
+        java.util.Map<String, Object> kept = keptNumbers();
+        if (kept != null) {
+            for (java.util.Map.Entry<String, Object> e : kept.entrySet()) request.setAttribute(e.getKey(), e.getValue());
+            return mapping.findForward("success");
+        }
+
         Connection connection = null;
         String dbMethodName = DBUtil.getDbMethodName("StatsPageAction.execute()");
         try {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, dbMethodName);
 
-            StatisticsDb statisticsDb = new StatisticsDb(connection);
-            ImageDb imageDb = new ImageDb(connection);
-
-            HashMap<String, int[]> imageStats = imageDb.getImageStats();
-            for (String status : imageStats.keySet()) {
-              int[] stats = imageStats.get(status);
-              //A.log(" key:" + status + " total:" + stats[0] + " worker:" + stats[1] + " male:" + stats[2] + " queen:" + stats[3] + " other:" + stats[4]); 
-            }
-            request.setAttribute("imageStats", imageStats);
-
-            HashMap<String, Integer> imageTaxonStats = imageDb.getImageTaxonStats();
-            request.setAttribute("imageTaxonStats", imageTaxonStats);
-
-/*
-+----------------+----------+--------+-------+-------+-------+
-| status         |    total | worker | male  | queen | other |
-+----------------+----------+--------+-------+-------+-------+
-| valid          |   187252 | 153469 | 12869 | 19056 |    97 |
-| morphotaxon    |    29372 |  22516 |  3164 |  2926 |    24 |
-| indetermined   |     4001 |   2607 |   940 |   411 |     0 |
-| unrecognized   |      412 |    252 |    66 |    64 |     0 |
-| unavailable    |      141 |    135 |     6 |     0 |     0 |
-| unidentifiable |       29 |     29 |     0 |     0 |     0 |
-+----------------+----------+--------+-------+-------+-------+
-6 rows in set (0.93 sec)
-*/   
-
-            request.setAttribute("extantData", statisticsDb.getExtantData()); // StatSet
-            request.setAttribute("fossilData", statisticsDb.getFossilData()); // StatSet
-            
-            request.setAttribute("bioregionData", statisticsDb.getBioregionData()); // ArrayList<StatSet>
-
-            request.setAttribute("extantMuseumData", statisticsDb.getExtantMuseumData()); // ArrayList<StatSet>
-            request.setAttribute("fossilMuseumData", statisticsDb.getFossilMuseumData()); // ArrayList<StatSet>
-            
-            //request.setAttribute("imageMuseumData", statisticsDb.getImageData()); // ArrayList<StatSet>
-
+            java.util.Map<String, Object> numbers = numbers(connection);
+            for (java.util.Map.Entry<String, Object> e : numbers.entrySet()) request.setAttribute(e.getKey(), e.getValue());
             success = true;            
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
