@@ -33,7 +33,7 @@
     if (message.contains("group.do")) uploadsBy = "group";
     //AntwebUtil.log("listImageUploads-body.jsp uploadsBy:" + uploadsBy);
 %>
-<p class="aw-crumbs"><a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a></p>
+<p class="aw-crumbs"><a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a><% if (!"all".equals(uploadsBy)) { %> | <a id="all-image-uploads" href = "<%= domainApp %>/listImageUploads.do">All groups' image uploads</a><% } %></p>
 <% if (message != null) out.println("<h2 class=\"aw-title\">" + message + "</h2>"); %>
 <div class="aw-intro"><p>One line per batch of uploaded images, newest first: who uploaded it, the photographer, whether it
 finished and how many images it holds. The date opens the batch's report (images saved, and any not saved with the reason).</p></div>

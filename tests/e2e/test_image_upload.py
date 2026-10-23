@@ -359,6 +359,18 @@ def test_upload_list_loads(curator):
     assert re.search(r"imageUploadReport\.do\?id=\d+", page) or "Total image uploads: 0" in page
 
 
+def test_group_list_links_to_all_groups(curator):
+    """A group's or a login's list links the list of all groups' image uploads (asked for by Brian Fisher, 2026-10-23)."""
+    s, _token, login_id = curator
+    for query in ("curatorId=" + str(login_id), "groupId=1"):
+        r = s.get(BASE_URL + "/listImageUploads.do?" + query, timeout=TIMEOUT)
+        assert r.status_code == 200, (query, r.status_code)
+        assert re.search(r'id="all-image-uploads" href\s*=\s*"[^"]*/listImageUploads\.do"', r.text), \
+            "listImageUploads.do?" + query + " has no link to all groups' image uploads"
+    page = _upload_list(s)
+    assert 'id="all-image-uploads"' not in page, "the list of all groups links to itself"
+
+
 # ---------- files not saved (image_upload_refused) ----------
 
 def _supports_not_saved(start_json):
