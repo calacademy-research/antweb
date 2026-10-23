@@ -5,8 +5,8 @@ compares the numbers stored in the database; these tests read the pages themselv
 
   statsPage.do     "N valid species + ssp." counts species and subspecies (it counted valid taxa of every
                    rank): at most the extant and fossil species and subspecies of the Global Data table,
-                   which count the same names; its tables are counted once and kept (at most 6 hours), and
-                   the page says when they were counted
+                   which count the same names; its tables are counted once a day (end of the nightly run),
+                   and the page says when they were counted
   taxonomicPage.do images view: "N Genera Imaged (out of M Total)" (it printed the same number twice):
                    imaged <= total
   countries.do     the column is labelled "Valid species" (it showed the Valid species number as "Species")
@@ -52,7 +52,7 @@ def test_statspage_valid_species_count_species_and_subspecies():
 
 def test_statspage_tables_are_kept_not_recounted_each_visit():
     """statsPage.do (linked from the home page) joins every specimen with every image to count its tables. Since
-    2026-10-23 the tables are counted once and kept: two visits in a row show the same "counted at" time, and the
+    2026-10-23 the tables are counted once a day, at the end of the nightly run: two visits in a row show the same "counted at" time, and the
     second visit is quick."""
     import time
     first = _ok("/statsPage.do")

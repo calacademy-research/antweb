@@ -21,35 +21,40 @@ public final class StatsPageAction extends AntwebAction {
     private static final Log s_log = LogFactory.getLog(StatsPageAction.class);
 
     /*
-     * The page's numbers are counted once and kept (2026-10-23, Brian Fisher: the page linked from the home page was
-     * slow). Counting them joins every specimen with every image (a few seconds of database work) and they change only
-     * with uploads and the nightly run, so they are recounted at most every MAX_AGE_MS, at the first visit after a
-     * restart, and at the first visit after the nightly run (Scheduler calls clearCache()). The page says when they were
+     * The page's tables are counted once a day, at the end of the nightly run, after the nightly has updated the numbers
+     * (Scheduler calls recount()), and every visit shows that copy (Brian Fisher, 2026-10-23: the page linked from the
+     * home page was slow; counting joins every specimen with every image). After a restart there is no copy until the
+     * first visit, which counts once; that copy is kept until the next nightly run. The page says when the tables were
      * counted ("statsCountedAt").
      */
-    public static final long MAX_AGE_MS = 6L * 60 * 60 * 1000;
     private static java.util.Map<String, Object> s_numbers = null;
-    private static long s_countedAt = 0;
 
-    /** Forget the kept numbers: the next visit counts them again (after the nightly run). */
-    public static synchronized void clearCache() {
-        s_numbers = null;
-    }
-
-    /** True when numbers counted at countedAt may still be shown at now. */
-    public static boolean isFresh(long countedAt, long now, long maxAgeMs) {
-        return countedAt > 0 && now >= countedAt && now - countedAt < maxAgeMs;
-    }
-
-    /** The kept numbers while fresh, otherwise null (then the caller opens a connection and calls numbers()). */
+    /** The kept tables, or null when there are none yet (after a restart). */
     static synchronized java.util.Map<String, Object> keptNumbers() {
-        return s_numbers != null && isFresh(s_countedAt, System.currentTimeMillis(), MAX_AGE_MS) ? s_numbers : null;
+        return s_numbers;
     }
 
-    /** The kept numbers, or newly counted ones when there are none or they are too old. One count at a time. */
+    /** Count the tables now and keep them (the nightly run, at its end). Never throws. */
+    public static String recount(Connection connection) {
+        try {
+            long start = System.currentTimeMillis();
+            synchronized (StatsPageAction.class) {
+                s_numbers = count(connection);
+            }
+            return "statistics page tables counted in " + (System.currentTimeMillis() - start) / 1000 + " s";
+        } catch (Exception e) {
+            s_log.warn("recount() e:" + e);
+            return "statistics page tables not counted: " + e;
+        }
+    }
+
+    /** The kept tables, or (none yet) counted now and kept. One count at a time. */
     static synchronized java.util.Map<String, Object> numbers(Connection connection) throws SQLException {
-        long now = System.currentTimeMillis();
-        if (s_numbers != null && isFresh(s_countedAt, now, MAX_AGE_MS)) return s_numbers;
+        if (s_numbers == null) s_numbers = count(connection);
+        return s_numbers;
+    }
+
+    private static java.util.Map<String, Object> count(Connection connection) throws SQLException {
         java.util.Map<String, Object> numbers = new HashMap<>();
         StatisticsDb statisticsDb = new StatisticsDb(connection);
         ImageDb imageDb = new ImageDb(connection);
@@ -60,11 +65,8 @@ public final class StatsPageAction extends AntwebAction {
         numbers.put("bioregionData", statisticsDb.getBioregionData()); // ArrayList<StatSet>
         numbers.put("extantMuseumData", statisticsDb.getExtantMuseumData()); // ArrayList<StatSet>
         numbers.put("fossilMuseumData", statisticsDb.getFossilMuseumData()); // ArrayList<StatSet>
-        numbers.put("statsCountedAt", new java.util.Date(now));
-        s_numbers = Collections.unmodifiableMap(numbers);
-        s_countedAt = now;
-        s_log.info("numbers() counted in " + (System.currentTimeMillis() - now) + " ms");
-        return s_numbers;
+        numbers.put("statsCountedAt", new java.util.Date());
+        return Collections.unmodifiableMap(numbers);
     }
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
