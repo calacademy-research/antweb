@@ -402,7 +402,7 @@ public class Bioregion extends LocalityOverview implements Countable {
 			if (isOverviewPage) {
       	      changeViewOptions += "<li><a href='" + bioregion.getThisPageTarget() + "'>" + bioregion.getTitle() + "</a></li>";
             } else {
-      	      changeViewOptions += "<li><a href='" + otherUrl + "&" + bioregion.getParams() + "'>" + bioregion.getTitle() + "</a></li>";
+      	      changeViewOptions += "<li><a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + bioregion.getParams() + "'>" + bioregion.getTitle() + "</a></li>";
             }
 		  }
 		}

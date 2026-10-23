@@ -768,18 +768,18 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         //A.log("getChangeViewOptions() taxonName:" + taxonName + " otherUrl:" + otherUrl + " regions:" + regions);    
 
 		for (Geolocale region : regions) {
-      	  changeViewOptions += "<li><a href='" + otherUrl + "&" + region.getParams() + "'>" + region.getName() + "</a></li>";
+      	  changeViewOptions += "<li><a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + region.getParams() + "'>" + region.getName() + "</a></li>";
 		  ArrayList<Geolocale> subregions = geolocaleDb.getChildrenWithTaxon(taxonName, "subregion", region);
 		  for (Geolocale subregion : subregions) {
-			changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + "&" + subregion.getParams() + "'>" + subregion.getName() + "</a></li>";
+			changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + subregion.getParams() + "'>" + subregion.getName() + "</a></li>";
 			ArrayList<Geolocale> countries = geolocaleDb.getChildrenWithTaxon(taxonName, "country", subregion);
 			for (Geolocale country : countries) {
-  			  changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + otherUrl + "&" + country.getParams() + "'>" + country.getName() + "</a></li>";
+  			  changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + country.getParams() + "'>" + country.getName() + "</a></li>";
 			  ArrayList<Geolocale> adm1s = geolocaleDb.getChildrenWithTaxon(taxonName, "adm1", country);
 			  for (Geolocale adm1 : adm1s) {
 			    if (adm1.isLive()) {
                     A.log("getChangeViewOptions() options:" + adm1.getName());
-                    changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + otherUrl + "&" + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
+                    changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
 
                 }
 			  }
@@ -802,7 +802,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
  			  if (isOverviewPage) {
 			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + region.getThisPageTarget() + "'>" + region.getName() + "</a></li>";
 			  } else {
-                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + "&" + region.getParams() + "'>" + region.getName() + "</a></li>";
+                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + region.getParams() + "'>" + region.getName() + "</a></li>";
               }
             }
           }
@@ -816,7 +816,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
  			  if (isOverviewPage) {
 			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + subregion.getThisPageTarget() + "'>" + subregion.getName() + "</a></li>";
 			  } else {
-                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + "&" + subregion.getParams() + "'>" + subregion.getName() + "</a></li>";
+                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + subregion.getParams() + "'>" + subregion.getName() + "</a></li>";
               }
             }  
           }
@@ -830,7 +830,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
  			  if (isOverviewPage) {
 			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + country.getThisPageTarget() + "'>" + country.getName() + "</a></li>";
 			  } else {
-                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + "&" + country.getParams() + "'>" + country.getName() + "</a></li>";
+                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + country.getParams() + "'>" + country.getName() + "</a></li>";
               }
             }
           }
@@ -846,7 +846,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
                       if (isOverviewPage) {
                           changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + adm1.getThisPageTarget() + "'>" + adm1.getName() + "</a></li>";
                       } else {
-                          changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + "&" + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
+                          changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
                       }
                   }
               }
