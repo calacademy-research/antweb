@@ -170,6 +170,18 @@ public class NumberChecksTest extends TestCase {
         assertEquals(1, m.recount);
     }
 
+    /** An image upload batch whose artist was deleted (production 2026-10-23: "id 514" on the upload list) is a finding. */
+    public void testImageUploadWithDeletedArtist() throws Exception {
+        exec("alter table image_upload add column artist_id int");
+        exec("create table artist (id int primary key, name varchar(64))");
+        exec("insert into artist values (1, 'A')");
+        exec("update image_upload set artist_id = 1");
+        assertEquals(list(check()), 0, real(check(), "admin.imageUploadArtists"));
+        exec("update image_upload set artist_id = 514");
+        CountCheck.Result r = check();
+        assertEquals(list(r), 1, real(r, "admin.imageUploadArtists"));
+    }
+
     /** Another group's upload does not change this group's numbers; the nightly name update of its specimens may. */
     public void testGroupNumbersArePendingAfterItsSpecimensWereRenamed() throws Exception {
         exec("update group_count set specimens = 9");

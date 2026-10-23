@@ -38,7 +38,7 @@ INVARIANTS = {"place.totals.subfamily", "place.totals.genus", "place.totals.spec
               "global.specimens", "home", "taxon.images", "geo.regions",
               # NumberChecks, 2026-10-22 (admin.curators and admin.artists run when LoginMgr and ArtistMgr are loaded)
               "stats.global", "stats.images", "stats.imaged", "stats.bioregions", "stats.museums", "stats.nonants", "admin.statistics",
-              "admin.groups", "admin.imageUploads", "list.images", "place.endemic.flags", "taxon.parents", "geo.adm1.country"}
+              "admin.groups", "admin.imageUploads", "admin.imageUploadArtists", "list.images", "place.endemic.flags", "taxon.parents", "geo.adm1.country"}
 # api.taxa runs only where the taxon table has the columns API /taxa reads (B11: no code writes them).
 
 # Checks whose real differences are known findings, not yet fixed (docs/numbers.md section 3): named in the failure.
