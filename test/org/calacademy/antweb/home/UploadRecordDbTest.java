@@ -135,11 +135,13 @@ public class UploadRecordDbTest extends TestCase {
         assertEquals(0, count("upload_id = 2254"));
 
         // the new code on a column still 64 wide (deployed before the upgrade file ran): cut to 64, the row is written
+        assertEquals(64, SpecimenUploadDb.groupNameWidth(connection));
         SpecimenUploadDb.insertUploadRow(connection, 2259, 9, 57, LONG_NAME, "w.html", null);
         assertEquals(LONG_NAME.substring(0, 64), groupNameOf(2259));
     }
 
     public void testRowWrittenForAnyGroupName() throws Exception {
+        assertEquals(100, SpecimenUploadDb.groupNameWidth(connection));
         SpecimenUploadDb.insertUploadRow(connection, 2254, 9, 57, "Universidade Federal de Viçosa",
             "20261021-11:28:00-specimenUpload.html", "upload/20261021-11:31:20-specimen57.txt");
         assertEquals(1, count("upload_id = 2254 and group_id = 57 and login_id = 9"
@@ -180,6 +182,7 @@ public class UploadRecordDbTest extends TestCase {
     public void testFailureIsThrownNotLogged() throws Exception {
         exec("drop table upload");
         exec("create table upload (id int NOT NULL AUTO_INCREMENT, upload_id int, PRIMARY KEY (id))");
+        assertEquals("no group_name column: the old width", 64, SpecimenUploadDb.groupNameWidth(connection));
         try {
             SpecimenUploadDb.insertUploadRow(connection, 4001, 9, 57, "G", "c.html", "upload/c.txt");
             fail("no exception although the row could not be written");

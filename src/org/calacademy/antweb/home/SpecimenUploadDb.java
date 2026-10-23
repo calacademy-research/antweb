@@ -154,7 +154,7 @@ public class SpecimenUploadDb extends UploadDb {
      * Characters upload.group_name holds in the connection's database (information_schema; read on every upload,
      * not cached, so a widened column counts at once), at most GROUP_NAME_WIDTH; OLD_GROUP_NAME_WIDTH when unknown.
      */
-    static int groupNameWidth(Connection connection) {
+    public static int groupNameWidth(Connection connection) {
         try (PreparedStatement stmt = connection.prepareStatement("select character_maximum_length from information_schema.columns"
                 + " where table_schema = database() and table_name = 'upload' and column_name = 'group_name'");
              ResultSet rset = stmt.executeQuery()) {
