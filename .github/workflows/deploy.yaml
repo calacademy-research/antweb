@@ -4,6 +4,13 @@ on:
     branches:
       - master
 
+# One deploy at a time: two merges in a row started two deploys that ran git on the server at the same time,
+# and the second failed with exit 128 (2026-10-23). A newer push waits for the running deploy; only the
+# newest waiting one runs (it holds every earlier commit). tests/unit/test_deploy_paths.py checks this.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
