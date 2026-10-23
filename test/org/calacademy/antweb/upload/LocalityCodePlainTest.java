@@ -85,6 +85,19 @@ public class LocalityCodePlainTest extends TestCase {
      * The locality page links its specimens as advancedSearch.do?localityCode="<code>": the code is taken whole
      * (it may hold a double quote or a comma), and a double quote in it stays one character in the SQL.
      */
+    public void testDoubleQuoteAllowedOnlyInCodes() {
+        // locality.do and collection.do: a quote in the code or name is allowed; anywhere else it is still refused.
+        assertFalse(org.calacademy.antweb.util.HttpUtil.queryWithoutCodes("/locality.do", "code=KM55%22%22805").contains("%22"));
+        assertFalse(org.calacademy.antweb.util.HttpUtil.queryWithoutCodes("/collection.do", "name=A%22B").contains("%22"));
+        assertTrue(org.calacademy.antweb.util.HttpUtil.queryWithoutCodes("/locality.do", "code=x&other=%22").contains("%22"));
+        // advancedSearch.do: only the locality and collection code fields.
+        String q = "searchMethod=advancedSearch&localityCodeSearchType=equals&localityCode=%22KM55%22%22805%22";
+        assertFalse(org.calacademy.antweb.util.HttpUtil.queryWithoutCodes("/advancedSearch.do", q).contains("%22"));
+        assertTrue(org.calacademy.antweb.util.HttpUtil.queryWithoutCodes("/advancedSearch.do", "genus=%22x").contains("%22"));
+        // Other pages: unchanged.
+        assertTrue(org.calacademy.antweb.util.HttpUtil.queryWithoutCodes("/description.do", "code=%22").contains("%22"));
+    }
+
     public void testSpecimenSearchByCode() {
         AdvancedSearch search = new AdvancedSearch();
         assertEquals("sp.localitycode = 'KM55\"\"805'", search.getCodeSearchString("sp.localitycode", "equals", "\"KM55\"\"805\""));
