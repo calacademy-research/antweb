@@ -56,8 +56,8 @@ finished and how many images it holds. The date opens the batch's report (images
     }
     java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("yyyy-MM-dd");
     java.text.SimpleDateFormat minute = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm");
-    out.println("<p id=\"image-uploads-total\"><b>" + Formatter.commaFormat(list.size()) + " image upload batches"
-      + (oldest != null ? " since " + day.format(oldest) : "") + ", holding " + Formatter.commaFormat(images) + " images</b>"
+    out.println("<p id=\"image-uploads-total\"><b>" + org.calacademy.antweb.Formatter.commaFormat(list.size()) + " image upload batches"
+      + (oldest != null ? " since " + day.format(oldest) : "") + ", holding " + org.calacademy.antweb.Formatter.commaFormat(images) + " images</b>"
       + " (the oldest batch listed; Image Count added up).</p>");
     
     int i = list.size() + 1;
