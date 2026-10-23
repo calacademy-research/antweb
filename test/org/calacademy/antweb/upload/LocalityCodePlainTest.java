@@ -8,7 +8,7 @@ import org.calacademy.antweb.search.AdvancedSearch;
 import org.calacademy.antweb.upload.SpecimenUploadParse;
 
 /**
- * Locality codes are stored as written (2026-10-22). Until then the specimen upload passed every locality code
+ * Locality codes are stored as written (2026-10-22), except that a double quote becomes - (2026-10-23). Until then the specimen upload passed every locality code
  * through HttpUtil.encodePath, so production held 1,117 specimens in 67 codes such as Ahi_%3C5m (Ahi_<5m),
  * MontagnedesFran%E7ais_150 and KM55%22%22805, and the links encoded them a second time
  * (locality.do?code=Ahi_%253C5m). Now: the code is stored plain (UploadUtil.cleanCode still removes spaces, %, #
@@ -23,7 +23,10 @@ public class LocalityCodePlainTest extends TestCase {
         assertEquals("Ahi_<5m", SpecimenUploadParse.plainLocalityCode("Ahi_<5m", null));
         assertEquals("Nosy_Mangabe_<5", SpecimenUploadParse.plainLocalityCode("Nosy_Mangabe_<5", MADAGASCAR));
         assertEquals("Bequia_Peggy?s_Rock", SpecimenUploadParse.plainLocalityCode("Bequia_Peggy?s_Rock", null));
-        assertEquals("KM55\"\"805", SpecimenUploadParse.plainLocalityCode("KM55\"\"805", null));
+        // A double quote becomes "-" (Brian Fisher, 2026-10-23): KM55""805 and KM55"805 are the same place.
+        assertEquals("KM55-805", SpecimenUploadParse.plainLocalityCode("KM55\"\"805", null));
+        assertEquals("KM55-805", SpecimenUploadParse.plainLocalityCode("KM55\"805", null));
+        assertEquals("a-b-c", org.calacademy.antweb.upload.UploadUtil.quotesToDash("a\"b\"\"c"));
         assertEquals("MontagnedesFrançais_150", SpecimenUploadParse.plainLocalityCode("Montagne des Français_150", null));
         assertEquals("a>b<c", SpecimenUploadParse.plainLocalityCode("a > b < c", null));
         assertEquals("Peggy’s_Rock", SpecimenUploadParse.plainLocalityCode("Peggy’s_Rock", null));   // was %3F

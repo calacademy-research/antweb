@@ -92,6 +92,8 @@ if (advancedSearchResults == null) {
   }
   request.setAttribute("specimenReportFirst", listFirst);
   request.setAttribute("specimenReportNumberOffset", numberOffset);
+  // Formatted here, so not in a class="numbers" span: antweb.jquery.js keeps only the digits of such a span
+  // ("Showing 1–200 of 141,728" was shown as "1,200,141,728" until 2026-10-23).
   String showingHtml = Html.esc(showingText).replace("\u2013", "&ndash;");
   String resultSetModifier = Utility.notBlankValue((String) session.getAttribute("resultSetModifier"));
 %>    
@@ -177,8 +179,8 @@ if (size < 1) { %>
 <div class="page_divider project"></div>
 <div id="totals_and_tools_container">
     <div id="totals_and_tools">
-        <h2 class="display_count"><span class="numbers"><%= showingHtml %></span> Specimens<% if (searchPaging != null) { %> (<span class="numbers"><%= imagedSpecimenCount %></span> imaged on this page)<% } else if (imagedSpecimenCount > 0) { %> (<span class="numbers"><%= imagedSpecimenCount %></span> imaged)<% } %></h2>
-        <div id="totalcount" style="display:none;"><span class="numbers"><%= showingHtml %></span> Specimens</div>
+        <h2 class="display_count"><%= showingHtml %> Specimens<% if (searchPaging != null) { %> (<span class="numbers"><%= imagedSpecimenCount %></span> imaged on this page)<% } else if (imagedSpecimenCount > 0) { %> (<span class="numbers"><%= imagedSpecimenCount %></span> imaged)<% } %></h2>
+        <div id="totalcount" style="display:none;"><%= showingHtml %> Specimens</div>
         <div id="imagecount" style="display:none;"><span class="numbers"><%= imagedSpecimenCount %></span> Imaged Specimens</div>
 <%
    // Rows listFirst .. listFirst + 199 of the session list (specimenReport.jsp: index <= limit).

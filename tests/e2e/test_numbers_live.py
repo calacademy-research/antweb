@@ -18,7 +18,8 @@ The place page numbers (data-stat on /country.do) are checked against the record
                     the count check, taxon.images) (row 64)
   collection.do     "N specimens of M species": N = the specimens listed, M <= N (row 65)
   locality.do       "N collections" = the collections listed (row 66)
-  advancedSearch.do "Showing a-b of N ... (M imaged on this page)": M <= the rows shown; by taxon "S Species
+  advancedSearch.do "Showing a-b of N ... (M imaged on this page)": M <= the rows shown; no "numbers" span holds
+                    text (the browser would keep only its digits); by taxon "S Species
                     (from N specimens)": S <= N, N = the specimen search's N (rows 67, 68)
   recentSearchResults.do  "Showing records a to b of N records": 1 <= a <= b <= N (row 71)
   endemic.do, introduced.do  numbered rows = Endemic and Introduced of the place page (rows 78, 79)
@@ -234,6 +235,10 @@ def test_search_counts_agree():
     if not m:
         pytest.skip("advanced search without 'Showing a-b of N' (not deployed yet)")
     first, last, total = (_n(g) for g in m.groups())
+    # antweb.jquery.js keeps only the digits of a class="numbers" span: text in one is garbled in the browser
+    # ("Showing 1–200 of 141,728" was shown as "1,200,141,728" until 2026-10-23).
+    garbled = [v for v in re.findall(r'<span class="numbers">(.*?)</span>', html, re.S) if not re.fullmatch(r"\s*[\d,]+\s*", v)]
+    assert not garbled, "a numbers span holds more than a number (the browser would show only its digits): " + repr(garbled[:5])
     imaged = re.search(r'\(<span class="numbers">(\d+)</span> imaged on this page\)', html)
     if imaged:
         assert int(imaged.group(1)) <= last - first + 1, imaged.group(0)

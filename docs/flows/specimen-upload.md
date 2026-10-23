@@ -117,7 +117,12 @@ During parse (`SpecimenUploadParse.cleanCollectionCode()` and `cleanLocalityCode
 - A locality code that is missing, `Null` or shorter than 5 characters, on a specimen with coordinates, becomes
   `loc` (or the short code) followed by `lat,lon`, for example `loc-18.91,47.52`. A collection code that is
   missing gets a random `tc<number>`.
-- **Stored as written** (since 2026-10-22). Every other character is kept: `<`, `>`, `?`, `"`, `,`, `/`,
+- **A double quote becomes `-`** (since 2026-10-23, `UploadUtil.quotesToDash()`, called first in `cleanCode()`,
+  so it applies to locality and collection codes). `""` (a spreadsheet export doubles a quote) and `"` both become
+  one `-`: `KM55""805` and `KM55"805`, the same place stored as two codes, are both `KM55-805`. The upload report
+  lists each code changed this way ("Locality or collection code with a double quote", `MessageMgr.codeQuoteReplaced`).
+  Decision: Brian Fisher, 2026-10-23 (the Economo Ant Lab, whose codes these were, could not be reached).
+- **Otherwise stored as written** (since 2026-10-22). Every other character is kept: `<`, `>`, `?`, `,`, `/`,
   accented letters. Until 2026-10-22 the locality code was then URL-encoded (`HttpUtil.encodePath`, ISO-8859-1):
   `Ahi_<5m` was stored as `Ahi_%3C5m`, `MontagnedesFrançais_150` as `MontagnedesFran%E7ais_150`, and a character
   outside ISO-8859-1 (a curly apostrophe) as `%3F`. A character outside the Basic Multilingual Plane (an emoji) is still stored as `?`:
