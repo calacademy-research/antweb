@@ -16,7 +16,9 @@
 %>
 
 <%-- Tool-page look (common/tools.css, docs/guides/page-style.md). tests/e2e/test_image_upload.py reads the
-     rows (split at "<tr>", "<td>count</td> <td><a href='...imageUploadReport.do?id=N'") and "Total image uploads:". --%>
+     rows (split at "<tr>", "<td class="aw-num">count</td> <td class="aw-nowrap"><a href='...imageUploadReport.do?id=N'") and the
+     summary line ("N image upload batches since DATE, holding M images", id image-uploads-total; Brian Fisher 2026-10-23:
+     a total says what it counts and since when). --%>
 <%@include file="/common/toolsHead.jsp" %>
 <div class="aw-tools" id="image-uploads-page">
 
@@ -33,7 +35,11 @@
     if (message.contains("group.do")) uploadsBy = "group";
     //AntwebUtil.log("listImageUploads-body.jsp uploadsBy:" + uploadsBy);
 %>
-<p class="aw-crumbs"><a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a><% if (!"all".equals(uploadsBy)) { %> | <a id="all-image-uploads" href = "<%= domainApp %>/listImageUploads.do">All groups' image uploads</a><% } %></p>
+<%
+    // The way back from the list of all groups to one's own group's list (Brian Fisher, 2026-10-23).
+    Group accessGroup = GroupMgr.getAccessGroup(request);
+%>
+<p class="aw-crumbs"><a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a><% if (!"all".equals(uploadsBy)) { %> | <a id="all-image-uploads" href = "<%= domainApp %>/listImageUploads.do">All groups' image uploads</a><% } else if (accessGroup != null) { %> | <a id="own-group-image-uploads" href = "<%= domainApp %>/listImageUploads.do?groupId=<%= accessGroup.getId() %>"><%= Html.esc(accessGroup.getAbbrev()) %> image uploads</a><% } %></p>
 <% if (message != null) out.println("<h2 class=\"aw-title\">" + message + "</h2>"); %>
 <div class="aw-intro"><p>One line per batch of uploaded images, newest first: who uploaded it, the photographer, whether it
 finished and how many images it holds. The date opens the batch's report (images saved, and any not saved with the reason).</p></div>
@@ -41,7 +47,18 @@ finished and how many images it holds. The date opens the batch's report (images
     ArrayList<ImageUpload> list = (ArrayList) request.getAttribute("imageUploads");
 
     out.println("<div class=\"aw-card\" id=\"image-uploads-list\">");
-    out.println("<p><b>Total image uploads: " + list.size() + "</b></p>");
+    // What the total counts, and since when: batches (not images), from the oldest batch listed; and the images they hold.
+    java.util.Date oldest = null;
+    long images = 0;
+    for (ImageUpload u : list) {
+      if (u.getCreated() != null && (oldest == null || u.getCreated().before(oldest))) oldest = u.getCreated();
+      images += u.getImageCount();
+    }
+    java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("yyyy-MM-dd");
+    java.text.SimpleDateFormat minute = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm");
+    out.println("<p id=\"image-uploads-total\"><b>" + org.calacademy.antweb.Formatter.commaFormat(list.size()) + " image upload batches"
+      + (oldest != null ? " since " + day.format(oldest) : "") + ", holding " + org.calacademy.antweb.Formatter.commaFormat(images) + " images</b>"
+      + " (the oldest batch listed; Image Count added up).</p>");
     
     int i = list.size() + 1;
     %>
@@ -82,8 +99,9 @@ finished and how many images it holds. The date opens the batch's report (images
       Artist artist = ArtistMgr.getArtist(imageUpload.getArtistId());
       out.println("<td>" + (artist != null ? artist.getLink() : "id " + imageUpload.getArtistId()) + "</td>");
       out.println("<td>" + imageUpload.getIsComplete() + "</td>");
-      out.println("<td>" + imageUpload.getImageCount() + "</td>");
-      out.println("<td><a href='" + domainApp + "/imageUploadReport.do?id=" + imageUpload.getId() + "'>" + imageUpload.getCreated() + "</a></td>");
+      out.println("<td class=\"aw-num\">" + imageUpload.getImageCount() + "</td>");
+      out.println("<td class=\"aw-nowrap\"><a href='" + domainApp + "/imageUploadReport.do?id=" + imageUpload.getId() + "'>"
+        + (imageUpload.getCreated() != null ? minute.format(imageUpload.getCreated()) : "") + "</a></td>");
     }
     out.println("</tr></table>");
 

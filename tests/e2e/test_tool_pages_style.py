@@ -133,7 +133,7 @@ PAGES = [
      ["<h1>Log Manager</h1>", "Primary Logs", "fileName=compute&ext=log", "fileName=taxonworksNightly&ext=log"]),
     ("/nameUpdates.do", "name-updates-page", ["What this shows:", 'name="from"', "Preview now (report only)"]),
     ("/listSpecimenUploads.do", "specimen-uploads-page", ["<th>Group</th>", 'class="aw-card"']),
-    ("/listImageUploads.do", "image-uploads-page", ["Total image uploads:", "<th>Created</th>"]),
+    ("/listImageUploads.do", "image-uploads-page", ["image upload batches", "<th>Created</th>"]),
     ("/query.do?name=worldantsUploads", "admin-result-page", ["<h1>Query: worldantsUploads</h1>", 'class="query-check"']),
 ]
 
