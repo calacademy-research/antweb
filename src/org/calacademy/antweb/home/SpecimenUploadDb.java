@@ -137,8 +137,14 @@ public class SpecimenUploadDb extends UploadDb {
     }
 
 
-    /** Width of the text columns of the upload table (group_name, log_file_name, backup_dir_file). */
+    /** Width of the file name columns of the upload table (log_file_name, backup_dir_file). */
     public static final int UPLOAD_TEXT_WIDTH = 64;
+
+    /**
+     * Width of upload.group_name: varchar(100) since db/upgrade/8.115/2026-10-23-drop-old-tables-widen-group-name.sql
+     * (was 64), the width of ant_group.name, so a group name is stored whole.
+     */
+    public static final int GROUP_NAME_WIDTH = 100;
 
     /**
      * Records a specimen upload in the upload table (the Specimen Upload Reports list, each group's
@@ -204,13 +210,13 @@ public class SpecimenUploadDb extends UploadDb {
     }
 
     /**
-     * s as the upload table's text columns hold it (null stays null): cut to the column width, and
+     * s as upload.group_name holds it (null stays null): cut to the column width (GROUP_NAME_WIDTH), and
      * characters outside the Basic Multilingual Plane (which a utf8mb3 column refuses) as "?".
      */
     public static String fit(String s) {
         if (s == null) return null;
         StringBuilder b = new StringBuilder();
-        s.codePoints().limit(UPLOAD_TEXT_WIDTH).forEach(c -> {
+        s.codePoints().limit(GROUP_NAME_WIDTH).forEach(c -> {
             if (Character.isSupplementaryCodePoint(c)) b.append('?'); else b.appendCodePoint(c);
         });
         return b.toString();

@@ -92,7 +92,7 @@ Numbers are the order in which things happen for `upload.do?action=specimenUploa
     - `specimen.status` copied from the taxon (`SpecimenDb.updateSpecimenStatus(groupId)`);
     - `ant_group.upload_specimens` = count (`GroupDb.updateUploadSpecimens`);
     - the group's map (`ObjectMapDb.genGroupObjectMap`);
-    - one row in `upload` (`SpecimenUploadDb.recordUpload()`: upload id, login id of the effective curator, group, report file name, backup file; bound values, texts cut to the 64-character columns, checked after the insert; a failure throws and the upload rolls back, since 2026-10-22) and its counts (`UploadDb.updateCounts`), `ant_group.first_specimen_upload` and `upload_count` (`UploadDb.updateGroup`). The job's "Upload ID N", the email and the report use the id of that row;
+    - one row in `upload` (`SpecimenUploadDb.recordUpload()`: upload id, login id of the effective curator, group, report file name, backup file; bound values, the group name cut to its 100-character column (64 until 2026-10-23), file names refused when longer than their 64-character columns, checked after the insert; a failure throws and the upload rolls back, since 2026-10-22) and its counts (`UploadDb.updateCounts`), `ant_group.first_specimen_upload` and `upload_count` (`UploadDb.updateGroup`). The job's "Upload ID N", the email and the report use the id of that row;
     - one row in `statistics` (`StatisticsDb.populateStatistics`, site totals);
     - the museums found in the file are kept in the session for the "Recalculate Your Museums" button (`museumCalc`).
     - then for the whole site (`specimenPostProcessGlobal()` line 673): `GeolocaleDb.calcEndemic()` and `TaxonDb.removeIndetWithoutSpecimen()`.

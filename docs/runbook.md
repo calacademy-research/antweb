@@ -378,6 +378,143 @@ rm /etc/cron.d/staging-refresh && ls /etc/cron.d/
 
 Expect `staging-refresh` no longer listed. To start it again, step 10.
 
+## Drop the old unused tables (2026-10-23)
+
+Brian's yes of 2026-10-22: drop the 14 old tables and 1 view that nothing reads (`docs/data-model.md` section 13, "Dropped already"), each backed up first, and widen `upload.group_name` from varchar(64) to varchar(100) (the width of `ant_group.name`). The SQL is `db/upgrade/8.115/2026-10-23-drop-old-tables-widen-group-name.sql` (pull request #PRNUM). The objects: tables `afro_types_tmp`, `artist_copy`, `description`, `favorite_images`, `groups_project`, `homepage`, `image_backup`, `image_count`, `image_count_materialized`, `junkspec`, `proj_taxonT` (capital T), `similar_species`, `synonymy`, `temp_image_artist`; view `darwin_core_2_test`.
+
+**Order.** Staging, then production, on the same day (the weekly staging refresh copies production's database to staging, so a staging-only drop would come back). On production: archive (a), run the file (b) and check (c) first, then Claude merges the pull request (it deploys by itself), then the structure check (c2). Run (b) on the PR's file before the merge because the new code cuts group names at 100 characters: with the column still 64 wide, an upload by a group with a longer name (group 57 has 81 characters) would fail. The old code works with the wider column. Between (b) and the deploy, and in the other order if (b) is late, the count check page (`countCheck.do`, "Database structure") lists the 15 objects as removed and `upload.group_name` as retyped; nothing else shows it. Do it after 08:15 Pacific (not during the nightly run) and not while an upload is running: the ALTER holds the `upload` table for a moment.
+
+Commands (b) and (c2) fetch the pull request's files from GitHub into git's FETCH_HEAD (`git fetch ... pull/PRNUM/head`). This changes no file in the checkout, and it works before and after the merge.
+
+### Old tables: staging
+
+**a1. Look before changing anything** (read-only).
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select table_name, table_type, table_rows, round((data_length + index_length) / 1048576, 1) as mb from information_schema.tables where table_schema = database() and table_name in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist','darwin_core_2_test') order by table_name; select table_type, count(*) as n from information_schema.tables where table_schema = database() group by table_type; select column_type, is_nullable, character_set_name, collation_name from information_schema.columns where table_schema = database() and table_name = 'upload' and column_name = 'group_name'; select max(char_length(group_name)) as longest_group_name from upload; select table_name as other_view_using_them from information_schema.views where table_schema = database() and table_name <> 'darwin_core_2_test' and view_definition regexp concat(char(96 using utf8mb4), '(afro_types_tmp|artist_copy|description|favorite_images|groups_project|homepage|image_backup|image_count|image_count_materialized|junkspec|proj_taxonT|similar_species|synonymy|temp_image_artist)', char(96 using utf8mb4)); select table_name, referenced_table_name from information_schema.key_column_usage where table_schema = database() and referenced_table_name in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist'); select trigger_name, event_object_table from information_schema.triggers where trigger_schema = database() and event_object_table in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist'); select definer as view_definer from information_schema.views where table_schema = database() and table_name = 'darwin_core_2_test'; show grants;"; df -h /mnt/backup
+```
+
+Expect: 15 rows (14 `BASE TABLE`, 1 `VIEW`) with their sizes in MB; the number of tables and views (note it: after (b) there are 14 tables and 1 view fewer); `varchar(64) NO utf8mb3 utf8mb3_general_ci`; a longest group name of 64 or less; nothing under `other_view_using_them`, no foreign key and no trigger lines; the view's definer; the login's grants; free space on `/mnt/backup` well above the total MB. Stop and paste the output to Claude if the column is not `utf8mb3` / `utf8mb3_general_ci`, if a view, key or trigger is listed, or if the grants are not `ALL PRIVILEGES ON ant.*` (or more).
+
+**a2. Archive the 15 objects.** On staging `/mnt/backup` is a plain folder on staging's own disk (not production's backup bucket); the archive goes to `/mnt/backup/archive` there too. The command refuses to overwrite an archive that exists.
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; A=/mnt/backup/archive/old_tables_20261023.sql.gz; install -d -m 700 /mnt/backup/archive && test ! -e "$A" && docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysqldump -u "$(sed -n 's/^user=//p' "$F")" --single-transaction --no-tablespaces --skip-triggers --default-character-set=utf8mb4 ant afro_types_tmp artist_copy description favorite_images groups_project homepage image_backup image_count image_count_materialized junkspec proj_taxonT similar_species synonymy temp_image_artist darwin_core_2_test | gzip -c > "$A" && gzip -t "$A" && ls -l "$A" && zgrep -c '^CREATE TABLE' "$A" && zgrep -c 'VIEW `darwin_core_2_test` AS' "$A" && gunzip -c "$A" | tail -1
+```
+
+Expect: the file with its size, then `14` (one `CREATE TABLE` per table), `2` (mysqldump writes a stand-in for the view, then its definition) and `-- Dump completed on ...`. Anything else (an error, a number other than 14 and 2, no "Dump completed"): stop, do not run (b), and paste the output to Claude. Nothing in the database has changed.
+
+**b. Run the upgrade file.**
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; test -s /mnt/backup/archive/old_tables_20261023.sql.gz && git -C /root/antweb-next fetch -q origin pull/PRNUM/head && git -C /root/antweb-next show FETCH_HEAD:db/upgrade/8.115/2026-10-23-drop-old-tables-widen-group-name.sql | docker exec -i -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant && echo DONE
+```
+
+Expect only `DONE`. If an error mentions `SYSTEM_USER` or `DEFINER`, the view could not be dropped (it is the last statement: the column and the 14 tables are done); paste it to Claude. Any other error: paste it to Claude; the file can be run again.
+
+**c. Check.**
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select count(*) as old_objects_left from information_schema.tables where table_schema = database() and table_name in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist','darwin_core_2_test'); select table_type, count(*) as n from information_schema.tables where table_schema = database() group by table_type; show columns from upload like 'group_name'; select character_set_name, collation_name from information_schema.columns where table_schema = database() and table_name = 'upload' and column_name = 'group_name';"
+```
+
+Expect `old_objects_left` 0; 14 tables and 1 view fewer than in a1; `group_name varchar(100) NO`; `utf8mb3 utf8mb3_general_ci`.
+
+**c2. Compare the whole structure with the repository's new snapshot** (read-only; the export command of `docs/data-model.md`).
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties
+sed -n 's/^password=//p' "$F" | docker exec -i antweb_mysql_1 sh -c 'IFS= read -r p; MYSQL_PWD="$p" exec mysql -B -N -u "$1" ant -e "SELECT c.table_name, c.column_name, c.column_type, t.table_type FROM information_schema.columns c JOIN information_schema.tables t USING (table_schema, table_name) WHERE c.table_schema = DATABASE() ORDER BY c.table_name, c.ordinal_position"' sh "$(sed -n 's/^user=//p' "$F")" > /root/live-schema.tsv
+git -C /root/antweb-next fetch -q origin pull/PRNUM/head && git -C /root/antweb-next show FETCH_HEAD:doc/schema/live-schema-2026-10-23.tsv | diff - /root/live-schema.tsv; echo "diff exit $?"
+```
+
+Staging's database is a copy of production from its last weekly refresh, so a few lines may differ (dated backup tables, names with `_bak_`, `_backup_`, `_deleted_` or a date at the end, and anything changed on production since that copy). None of the 15 objects and no `upload group_name` line should appear. Paste the output to Claude.
+
+### Old tables: production
+
+**a1. Look before changing anything** (read-only).
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select table_name, table_type, table_rows, round((data_length + index_length) / 1048576, 1) as mb from information_schema.tables where table_schema = database() and table_name in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist','darwin_core_2_test') order by table_name; select table_type, count(*) as n from information_schema.tables where table_schema = database() group by table_type; select column_type, is_nullable, character_set_name, collation_name from information_schema.columns where table_schema = database() and table_name = 'upload' and column_name = 'group_name'; select max(char_length(group_name)) as longest_group_name from upload; select table_name as other_view_using_them from information_schema.views where table_schema = database() and table_name <> 'darwin_core_2_test' and view_definition regexp concat(char(96 using utf8mb4), '(afro_types_tmp|artist_copy|description|favorite_images|groups_project|homepage|image_backup|image_count|image_count_materialized|junkspec|proj_taxonT|similar_species|synonymy|temp_image_artist)', char(96 using utf8mb4)); select table_name, referenced_table_name from information_schema.key_column_usage where table_schema = database() and referenced_table_name in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist'); select trigger_name, event_object_table from information_schema.triggers where trigger_schema = database() and event_object_table in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist'); select definer as view_definer from information_schema.views where table_schema = database() and table_name = 'darwin_core_2_test'; show grants;"; findmnt /mnt/backup
+```
+
+Expect as on staging; tables and views: 97 and 8 on 2026-10-22 (more tables if dated backups were made since). `findmnt` must show `/mnt/backup` as the rclone mount (`fuse.rclone`), so the archive goes to the Spaces bucket `antweb-dbarchive`. Stop on the same conditions as on staging.
+
+**a2. Archive the 15 objects** to `/mnt/backup/archive/old_tables_20261023.sql.gz` (Spaces bucket `antweb-dbarchive`).
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; A=/mnt/backup/archive/old_tables_20261023.sql.gz; install -d -m 700 /mnt/backup/archive && test ! -e "$A" && docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysqldump -u "$(sed -n 's/^user=//p' "$F")" --single-transaction --no-tablespaces --skip-triggers --default-character-set=utf8mb4 ant afro_types_tmp artist_copy description favorite_images groups_project homepage image_backup image_count image_count_materialized junkspec proj_taxonT similar_species synonymy temp_image_artist darwin_core_2_test | gzip -c > "$A" && gzip -t "$A" && ls -l "$A" && zgrep -c '^CREATE TABLE' "$A" && zgrep -c 'VIEW `darwin_core_2_test` AS' "$A" && gunzip -c "$A" | tail -1
+```
+
+Expect `14`, `2` and `-- Dump completed on ...`, as on staging. Otherwise stop; nothing has changed.
+
+**b. Run the upgrade file** (before the merge; see "Order").
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; test -s /mnt/backup/archive/old_tables_20261023.sql.gz && git -C /root/antweb fetch -q origin pull/PRNUM/head && git -C /root/antweb show FETCH_HEAD:db/upgrade/8.115/2026-10-23-drop-old-tables-widen-group-name.sql | docker exec -i -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant && echo DONE
+```
+
+Expect only `DONE` (errors: as on staging).
+
+**c. Check.**
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select count(*) as old_objects_left from information_schema.tables where table_schema = database() and table_name in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist','darwin_core_2_test'); select table_type, count(*) as n from information_schema.tables where table_schema = database() group by table_type; show columns from upload like 'group_name'; select character_set_name, collation_name from information_schema.columns where table_schema = database() and table_name = 'upload' and column_name = 'group_name';"
+```
+
+Expect `old_objects_left` 0; 14 tables and 1 view fewer than in a1 (83 and 7 if no dated backup was made since 2026-10-22); `group_name varchar(100) NO`; `utf8mb3 utf8mb3_general_ci`. Then tell Claude: Claude merges #PRNUM, and the deploy runs by itself (a few minutes; AntWeb restarts and needs 2 to 4 minutes to load).
+
+**c2. After the deploy: compare the whole structure with the new snapshot** (read-only).
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties
+sed -n 's/^password=//p' "$F" | docker exec -i antweb_mysql_1 sh -c 'IFS= read -r p; MYSQL_PWD="$p" exec mysql -B -N -u "$1" ant -e "SELECT c.table_name, c.column_name, c.column_type, t.table_type FROM information_schema.columns c JOIN information_schema.tables t USING (table_schema, table_name) WHERE c.table_schema = DATABASE() ORDER BY c.table_name, c.ordinal_position"' sh "$(sed -n 's/^user=//p' "$F")" > /root/live-schema.tsv
+cat /root/antweb/etc/git-commit; diff /root/antweb/doc/schema/live-schema-2026-10-23.tsv /root/live-schema.tsv; echo "diff exit $?"
+```
+
+Expect the merged commit, then no diff lines and `diff exit 0` (lines for dated backup tables made since 2026-10-22 may appear; any other line: paste it to Claude). Then open https://www.antweb.org/countCheck.do (admin login): "Database structure" names the snapshot `live-schema-2026-10-23.tsv` and says "No change" (again apart from dated backups, which it leaves out).
+
+### Old tables: rollback
+
+Only if something turns out to need the old tables. Production shown; on staging use `/root/antweb-next/etc/db.properties` and the ssh line `ssh root@165.232.136.170`.
+
+**d1. Restore the 14 tables (with their rows) and the view from the archive.**
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; A=/mnt/backup/archive/old_tables_20261023.sql.gz; gzip -t "$A" && gunzip -c "$A" | docker exec -i -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql --default-character-set=utf8mb4 -u "$(sed -n 's/^user=//p' "$F")" ant && echo RESTORED
+```
+
+Expect `RESTORED`. An error about `DEFINER`, `SET_USER_ID` or `SYSTEM_USER` concerns only the view (it comes last in the archive; the tables are back): the view is not needed by anything. The count check then lists the restored objects as added, until the snapshot is set back (a pull request: Claude).
+
+**d2. Before narrowing `upload.group_name` back to 64:** check that no longer name was stored since (read-only).
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select count(*) as longer_than_64 from upload where char_length(group_name) > 64;"
+```
+
+**d3. Narrow the column** only if d2 gave 0, and only together with reverting the code change of #PRNUM (the code cuts group names at 100 characters; with a 64-wide column an upload by a group with a longer name would fail). With rows longer than 64 MySQL refuses the ALTER ("Data too long") and changes nothing.
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "ALTER TABLE upload MODIFY group_name varchar(64) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL; show columns from upload like 'group_name';"
+```
+
+Expect `group_name varchar(64) NO`.
+
+Tested 2026-10-22 on a local MySQL 8.0.46 with the 14 tables (production's columns), the view and the `upload` table, as a login with `ALL PRIVILEGES ON ant.*`: a1's queries, the archive (14 and 2, "Dump completed"), the file (twice), c, the restore d1 and the ALTER back d3 (refused while a 81-character name was stored). Dropping the view failed with `SYSTEM_USER` when its definer was root, hence the definer check in a1 and the view last in the file.
+
 ## Alerts
 
 All alerts email bfisher@calacademy.org.
