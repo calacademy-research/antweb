@@ -476,15 +476,17 @@ def test_group_pages_equal_the_stored_upload_numbers():
 @pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")
 @needs("admin")
 def test_image_upload_and_orphan_counts_equal_the_recount():
-    """listImageUploads.do "Total image uploads" (row 93) and orphanedImages.do "Found N" (row 99; it counts the
+    """listImageUploads.do "N image upload batches since DATE" (row 93) and orphanedImages.do "Found N" (row 99; it counts the
     specimen codes of orphan images, not the images)."""
     s, exp = expected_numbers()
     wrong = []
     total = (exp.get("imageUploads") or {}).get("total")
     if total is not None:
-        m = re.search(r"Total image uploads: (\d+)", s.get(BASE_URL + "/listImageUploads.do", timeout=max(TIMEOUT, 120)).text)
-        if m and int(m.group(1)) != total:
-            wrong.append(f"listImageUploads.do Total image uploads {m.group(1)}, recount {total}")
+        page = s.get(BASE_URL + "/listImageUploads.do", timeout=max(TIMEOUT, 120)).text
+        m = re.search(r"([\d,]+) image upload batches", page) or re.search(r"Total image uploads: (\d+)", page)
+        assert m, "listImageUploads.do shows no total"
+        if int(m.group(1).replace(",", "")) != total:
+            wrong.append(f"listImageUploads.do {m.group(1)} image upload batches, recount {total}")
     orphans = exp.get("orphanedImages") or {}
     if "codes" in orphans:
         m = re.search(r"Found\s+(\d+) orphaned images", s.get(BASE_URL + "/orphanedImages.do", timeout=max(TIMEOUT, 180)).text)
