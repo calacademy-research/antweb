@@ -31,12 +31,13 @@ public class MountCheckTest extends TestCase {
 
     public void testWorkingMountsAreOk() throws Exception {
         File antweb = tmp(), backup = tmp();
+        new File(antweb, MountCheck.PROBE_DIR).mkdirs();
         long now = System.currentTimeMillis();
         dump(new File(backup, "db/daily"), "2026-10-23.sql.gz", MountCheck.DUMP_MIN_BYTES + 1, now - 2 * HOUR);
         List<String> p = MountCheck.problems(antweb, backup, true, "production", now, 10_000);
         assertTrue(p.toString(), p.isEmpty());
         assertNull(MountCheck.alert(p));
-        assertTrue(new File(antweb, "mountcheck/production.txt").isFile());
+        assertTrue(new File(antweb, MountCheck.PROBE_DIR + "/mountcheck-production.txt").isFile());
     }
 
     public void testMissingMountIsReported() throws Exception {
@@ -46,10 +47,18 @@ public class MountCheckTest extends TestCase {
         File backup = new File(tmp(), "not-mounted");
         List<String> p = MountCheck.problems(antweb, backup, true, "production", System.currentTimeMillis(), 10_000);
         assertEquals(p.toString(), 2, p.size());
-        assertTrue(p.get(0), p.get(0).contains("cannot"));
+        assertTrue(p.get(0), p.get(0).contains("is missing"));
         assertTrue(p.get(1), p.get(1).contains("cannot list"));
         String alert = MountCheck.alert(p);
         assertTrue(alert, alert.startsWith("Mount check: ") && alert.contains("docs/runbook.md"));
+    }
+
+    /** The check never creates folders: a missing upload-report folder means the mount is missing (staging false alarm, 2026-10-23). */
+    public void testDoesNotCreateFolders() throws Exception {
+        File antweb = tmp();
+        String p = MountCheck.writeReadProblem(new File(antweb, MountCheck.PROBE_DIR + "/mountcheck-staging.txt"), "x");
+        assertTrue(p, p.contains("is missing"));
+        assertFalse(new File(antweb, "web").exists());
     }
 
     public void testOldOrSmallDumpIsReported() throws Exception {
@@ -70,7 +79,9 @@ public class MountCheckTest extends TestCase {
     }
 
     public void testStagingSkipsTheDump() throws Exception {
-        List<String> p = MountCheck.problems(tmp(), new File("/nonexistent-mount"), false, "staging", System.currentTimeMillis(), 10_000);
+        File antweb = tmp();
+        new File(antweb, MountCheck.PROBE_DIR).mkdirs();
+        List<String> p = MountCheck.problems(antweb, new File("/nonexistent-mount"), false, "staging", System.currentTimeMillis(), 10_000);
         assertTrue(p.toString(), p.isEmpty());
     }
 }

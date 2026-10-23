@@ -19,7 +19,9 @@ import org.apache.commons.logging.LogFactory;
  * could be read, the CAS file copy failed and the 01:00 database dump was not written.
  *
  * - /mnt/antweb (images, upload files and reports): a small file is written and read back
- *   (/mnt/antweb/mountcheck/<production|staging>.txt).
+ *   (/mnt/antweb/web/log/upload/mountcheck-<production|staging>.txt: the folder the upload reports are written to,
+ *   so the check writes where the app already must; until 2026-10-23 it used /mnt/antweb/mountcheck/, which the app
+ *   may not create on staging, and staging sent a false alarm).
  * - /mnt/backup (database dumps; production only, staging runs no dump): the folder db/daily is listed and its newest
  *   dump (YYYY-MM-DD.sql.gz) must be under 26 hours old and over 1 MB, so a dump that failed is reported too.
  *
@@ -33,6 +35,8 @@ public final class MountCheck {
     private static final Log s_log = LogFactory.getLog(MountCheck.class);
 
     static final String TITLE = "Mount check";
+    /** Where the probe file goes, under /mnt/antweb: the upload reports' folder (the app writes there already). */
+    public static final String PROBE_DIR = "web/log/upload";
     public static final long PERIOD_MS = 60L * 60 * 1000;           // every hour
     static final long FIRST_DELAY_MS = 5L * 60 * 1000;              // 5 minutes after start (caches load first)
     static final long PROBE_TIMEOUT_MS = 60 * 1000;
@@ -55,9 +59,7 @@ public final class MountCheck {
     public static String writeReadProblem(File file, String content) {
         try {
             File dir = file.getParentFile();
-            if (dir != null && !dir.isDirectory() && !dir.mkdirs() && !dir.isDirectory()) {
-                return "cannot create " + dir.getPath();
-            }
+            if (dir != null && !dir.isDirectory()) return dir.getPath() + " is missing (mount missing or failing)";
             Files.write(file.toPath(), content.getBytes(StandardCharsets.UTF_8));
             String back = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
             if (!content.equals(back)) return file.getPath() + " read back differs from what was written";
@@ -113,7 +115,7 @@ public final class MountCheck {
     /** What is wrong, one line each; empty when all is well. */
     public static List<String> problems(File antwebMount, File backupMount, boolean checkDump, String env, long now, long timeoutMs) {
         List<String> out = new ArrayList<>();
-        File probe = new File(antwebMount, "mountcheck/" + env + ".txt");
+        File probe = new File(antwebMount, PROBE_DIR + "/mountcheck-" + env + ".txt");
         String a = withTimeout(antwebMount.getPath(), () -> writeReadProblem(probe, "AntWeb " + env + " mount check " + now + "\n"), timeoutMs);
         if (a != null) out.add(a);
         if (checkDump) {
