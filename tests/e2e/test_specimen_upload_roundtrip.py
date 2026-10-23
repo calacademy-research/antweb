@@ -259,7 +259,9 @@ def check_locality_code(s):
     loc = s.get(BASE_URL + expected, timeout=TIMEOUT)
     assert loc.status_code == 200, (expected, loc.status_code)
     assert "Locality not found" not in loc.text, _text(loc.text)[:400]
-    assert LOCALITY_CODE in unescape(loc.text), "the locality page does not show the code as written"
+    shown = re.search(r"<li>Code:</li>\s*<li><b>(.*?)</b></li>", loc.text, re.S)
+    assert LOCALITY_CODE in unescape(loc.text), ("the locality page does not show the code as written",
+                                                 shown.group(1) if shown else _text(loc.text)[:600])
     assert raw not in loc.text, "the locality page prints the locality code unescaped"
     m = re.search(r"""href=['"]([^'"]*advancedSearch\.do\?[^'"]*localityCode=[^'"]*)['"]>Show All Specimens""", loc.text)
     assert m, "no Show All Specimens link on the locality page"
