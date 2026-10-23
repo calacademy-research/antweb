@@ -660,7 +660,9 @@ group by taxonName
         String projectName = getName();
         String rankClause = " taxon.taxarank = '" + rank + "'";
 	        if (Rank.SPECIES.equals(rank)) { 
-          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
+          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') "
+              // a genus row's Species: names identified to genus only (Brian Fisher, 2026-10-22; PlaceTotals.identifiedToGenus)
+              + " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") + " ";
         }
 
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "

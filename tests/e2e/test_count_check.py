@@ -42,10 +42,12 @@ INVARIANTS = {"place.totals.subfamily", "place.totals.genus", "place.totals.spec
 # api.taxa runs only where the taxon table has the columns API /taxa reads (B11: no code writes them).
 
 # Checks whose real differences are known findings, not yet fixed (docs/numbers.md section 3): named in the failure.
-# Each of these checks reports only its known finding (taxon.parents, B25, is not here: by the code it finds nothing,
-# and any parent it finds is a new finding).
+# Each of these checks reports only its known finding. taxon.parents (B36, 2026-10-22): the nightly repair sets parents
+# only to genus rows that exist and never makes one, so names whose genus row is missing stay in it until the data is
+# fixed (a valid name: AntCat import; others: a new upload with the subfamily, or a non-ant): staging has 5.
 KNOWN = {"api.taxa": "B11, API /taxa counts nobody writes", "geo.adm1.country": "B26, adm1 by name only",
-         "stats.nonants": "B31, statsPage counts every family"}
+         "stats.nonants": "B31, statsPage counts every family",
+         "taxon.parents": "B36 data, names whose genus row is missing (reported, not repaired)"}
 # The recount checks of the sampled places (CountCheck).
 RECOUNT_CHECKS = {"specimens", "species", "genera", "global", "images", "place images", "place specimens", "place totals"}
 
@@ -237,7 +239,7 @@ def test_list_counts_match_the_specimen_records():
 @pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")
 @needs("admin")
 def test_no_real_differences_outside_the_known_findings():
-    """The known findings (KNOWN: B11, B26, B31, not fixed yet) make test_list_counts_match_the_specimen_records fail
+    """The known findings (KNOWN: B11, B26, B31, not fixed yet; B36 data) make test_list_counts_match_the_specimen_records fail
     every day until they are fixed (Brian Fisher, 2026-10-21: a real wrong number fails the test). This test fails only
     on real differences of the other checks, so a new kind of wrong number still changes the state of the run."""
     _s, r = count_check_report()

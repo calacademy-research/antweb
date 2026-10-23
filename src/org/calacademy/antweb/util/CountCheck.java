@@ -819,7 +819,9 @@ public class CountCheck {
         String query = "select taxon.parent_taxon_name, l.taxon_name, " + CountInvariants.safeDate("l.created") + " from taxon"
             + " join " + t + " l on l.taxon_name = taxon.taxon_name and l." + k + " = ?"
             + " where taxon.taxarank in " + childRanks
-            + (place.statusFiltered() ? " and taxon.status in " + COUNTABLE : "");
+            + (place.statusFiltered() ? " and taxon.status in " + COUNTABLE : "")
+            // a genus row's Species: names identified to genus only (2026-10-22, PlaceTotals.identifiedToGenus)
+            + (childRanks.contains("species") ? " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") : "");
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             place.setKey(stmt, 1);
             try (ResultSet r = stmt.executeQuery()) {

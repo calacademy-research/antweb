@@ -580,7 +580,10 @@ public final class CountInvariants {
                         status = childStatus(type, filter);
                     }
                     StringBuilder sel = new StringBuilder("select p." + lk + ", p.taxon_name, p." + level[2] + ", coalesce(x.n, 0)");
-                    StringBuilder sub = new StringBuilder("select c." + lk + " k, t.parent_taxon_name parent, count(*) n");
+                    // a genus row's Species counts the names identified to genus only (Brian Fisher, 2026-10-22,
+                    // PlaceTotals.identifiedToGenus); its Specimens and Images still add up every row under it
+                    String n = "genus".equals(parentRank) ? "sum(case when " + PlaceTotals.identifiedToGenus("t") + " then 1 else 0 end)" : "count(*)";
+                    StringBuilder sub = new StringBuilder("select c." + lk + " k, t.parent_taxon_name parent, " + n + " n");
                     StringBuilder diff = new StringBuilder("p." + level[2] + " <> coalesce(x.n, 0)");
                     int i = 0;
                     for (String s : sums) {

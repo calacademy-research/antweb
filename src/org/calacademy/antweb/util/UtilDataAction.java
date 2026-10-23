@@ -255,7 +255,9 @@ public class UtilDataAction extends AntwebAction {
 
     /**
      * Nightly set 1 (B36, docs/numbers.md): every ant species and subspecies of a counted status that is its own current
-     * valid name gets its genus as parent, and a placeholder genus row when its genus has none (TaxonParentDb.repair).
+     * valid name and is identified to genus gets its genus row as parent, where that genus row exists
+     * (TaxonParentDb.repair). No genus row is ever made (Brian Fisher, 2026-10-22): names whose genus has no row are
+     * reported in the line, and valid ones (an AntCat import problem) in an admin alert, at most once a week.
      * Its own commit and rollback, like the name update. When it changed a row, the AntCat list (worldants, counted by
      * the import before this step) is recounted and the Global column (allantwebants) rebuilt, as after the name update
      * (sets 2 to 5 do neither). Writes one line to compute.log.
@@ -267,6 +269,9 @@ public class UtilDataAction extends AntwebAction {
             org.calacademy.antweb.home.TaxonParentDb.Result result = new org.calacademy.antweb.home.TaxonParentDb(connection).repair();
             connection.commit();
             line = result.line();
+            if (result.alert() != null) {
+                AdminAlertMgr.addIfFresh(result.alert(), org.calacademy.antweb.home.TaxonParentDb.MISSING_VALID_ALERT, AdminAlertMgr.WEEK, connection);
+            }
             if (result.changed()) {
                 try {
                     // the AntCat list (worldants) was counted by the import, before this step; sets 2 to 5 skip it

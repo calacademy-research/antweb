@@ -622,6 +622,7 @@ public class BioregionDb extends AntwebDb {
                 + StatusSet.getAndCriteria(Project.ALLANTWEBANTS)
                 //+ " and  taxon.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')"
                 + " and taxon.family = 'formicidae'"
+                + " and " + PlaceTotals.identifiedToGenus("taxon")   // 2026-10-22: not identified to genus, not a species
                 + " group by bt.taxon_name having count(*) = 1"
                 + " order by bioregionName";
 

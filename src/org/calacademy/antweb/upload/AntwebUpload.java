@@ -239,13 +239,21 @@ or for Worldants upload
         } else {
             parentTaxonName = Taxon.getParentTaxonNameFromName(taxonName);
         }
+        // Not identified to genus (genus indet, (indet), a subfamily in parentheses): not a species (Brian Fisher, 2026-10-22)
+        boolean notIdentifiedToGenus = ("species".equals(rank) || "subspecies".equals(rank))
+            && !org.calacademy.antweb.home.PlaceTotals.isIdentifiedToGenus((String) item.get("genus"));
         if (parentTaxonName != null) {
-            // B36 (2026-10-22): the parent is always the genus by name. It was left empty when TaxonMgr (read before
-            // the upload or the AntCat import) did not know the genus: a genus new in tonight's import, a morphogenus,
-            // an indet genus such as "(indet)decamorium". The lists count a species under its parent, so the genus row
-            // did not count it. A missing genus row is made below (or, for AntCat names, comes with the import;
-            // nightly set 1 makes a placeholder for any still missing: TaxonParentDb).
-            item.put("parent_taxon_name", parentTaxonName);
+            if (notIdentifiedToGenus) {
+                // never given a placeholder genus row (below); as before: the parent only if it is a known genus
+                if (TaxonMgr.getGenus(parentTaxonName) != null) item.put("parent_taxon_name", parentTaxonName);
+            } else {
+                // B36 (2026-10-22): the parent is the genus by name. It was left empty when TaxonMgr (read before the
+                // upload or the AntCat import) did not know the genus: a genus new in tonight's import, a morphogenus.
+                // The lists count a species under its parent, so the genus row did not count it. The genus row of a
+                // morphogenus is made below; AntCat genera come with the import; nightly set 1 sets any parent still
+                // missing to its genus row when that row exists (TaxonParentDb), and reports the rest.
+                item.put("parent_taxon_name", parentTaxonName);
+            }
         }
 
         if (table.equals("taxon") && taxonQueryHashMap.containsKey(taxonName)) {
@@ -313,7 +321,8 @@ or for Worldants upload
         }
 
         // New functionality. Parent taxons are handled.
-        if (!isParent && parentTaxonName != null && !"worldants".equals(source)) {
+        // (no genus row is made for a name not identified to genus: no placeholder genus rows, 2026-10-22)
+        if (!isParent && parentTaxonName != null && !"worldants".equals(source) && !notIdentifiedToGenus) {
 
             if (taxonName.contains("formicinaemyrma iperstriata"))
                 s_log.debug("saveTaxon() 5 BAD currentValidName:" + currentValidName + " taxonName:" + taxonName);
@@ -322,17 +331,11 @@ or for Worldants upload
             // the name's current valid name is not the genus row's (it made the genus its own parent below)
             item.remove("current_valid_name");
             String grandParentTaxonName = Taxon.getParentTaxonNameFromName(parentTaxonName);
-            String parentRank = Taxon.getRankFromName(parentTaxonName);
-            // B36: a genus whose subfamily cannot be read from its name (a morphogenus or indet genus such as
-            // "(indet)decamorium" or "(formicidae)x") was never made, so its species had no genus row. It is made
-            // now, under the subfamily of the item when there is one.
-            if (grandParentTaxonName == null && Rank.GENUS.equals(parentRank) && item.get("subfamily") instanceof String sf
-                    && !sf.isEmpty() && !sf.equals(parentTaxonName)) {
-                grandParentTaxonName = sf;
-            }
-            if (grandParentTaxonName != null || Rank.GENUS.equals(parentRank)) {
-                if (grandParentTaxonName != null) item.put("parent_taxon_name", grandParentTaxonName);
-                else item.remove("parent_taxon_name");
+            // A genus row is made only when its subfamily can be read from its name (no placeholder genus rows such as
+            // "(indet)decamorium" or "(formicidae)(formicidae)", Brian Fisher, 2026-10-22).
+            if (grandParentTaxonName != null) {
+                item.put("parent_taxon_name", grandParentTaxonName);
+                String parentRank = Taxon.getRankFromName(parentTaxonName);
                 item.put("rank", parentRank);
                 if ("family".equals(parentRank)) {
                     item.remove("subfamily");

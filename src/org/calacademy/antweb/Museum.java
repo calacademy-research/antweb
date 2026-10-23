@@ -211,7 +211,9 @@ public class Museum extends LocalityOverview implements Countable {
     public String getCountChildrenQuery(String rank) {
         
         String rankClause = " taxon.taxarank = '" + rank + "'";
-        if (Rank.SPECIES.equals(rank)) rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
+        if (Rank.SPECIES.equals(rank)) rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') "
+              // a genus row's Species: names identified to genus only (Brian Fisher, 2026-10-22; PlaceTotals.identifiedToGenus)
+              + " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") + " ";
 
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
           + " join museum_taxon mt on taxon.taxon_name = mt.taxon_name " 

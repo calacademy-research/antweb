@@ -713,7 +713,8 @@ public final class NumberChecks {
     /**
      * The endemic flags of country and adm1 lists (rows 24, 78, 110): the rows endemic.do lists and the Endemic number
      * counts, recounted by the rule of GeolocaleDb.calcCountryEndemism and calcAdm1Endemism: a species or subspecies of
-     * a counted status other than morphotaxon, not fossil, an ant, on the list of exactly one country (of any validity);
+     * a counted status other than morphotaxon, not fossil, an ant, identified to genus (2026-10-22), on the list of
+     * exactly one country (of any validity);
      * an adm1 row when the name is endemic to the adm1's country and on the list of exactly one adm1. Regions,
      * subregions (calcHigherEndemism) and bioregions are not recounted here.
      */
@@ -724,7 +725,7 @@ public final class NumberChecks {
             .pendingOn(false, true, false, false);
         inv.check(check, c -> {
             String rule = " and t.status != 'morphotaxon' and t.taxarank in ('species', 'subspecies') and t.fossil = 0"
-                + " and t.status in " + CountInvariants.COUNTABLE + " and t.family = 'formicidae'";
+                + " and t.status in " + CountInvariants.COUNTABLE + " and t.family = 'formicidae' and " + PlaceTotals.identifiedToGenus("t");
             String countryEndemic = "select gt.taxon_name from geolocale g join geolocale_taxon gt on g.id = gt.geolocale_id"
                 + " join taxon t on t.taxon_name = gt.taxon_name where g.georank = 'country'" + rule
                 + " group by gt.taxon_name having count(*) = 1";
@@ -775,7 +776,7 @@ public final class NumberChecks {
      */
     void taxonParents() {
         CountInvariants.Check check = new CountInvariants.Check("taxon.parents",
-            "B25, B36: ants of a counted status have their genus as parent, and the genus is a taxon row (nightly set 1 repairs them: TaxonParentDb)", "22, 40, 41");
+            "B25, B36: ants of a counted status, identified to genus, have their genus row as parent (nightly set 1 sets it when the genus row exists: TaxonParentDb; a missing genus row is reported, never made)", "22, 40, 41");
         inv.check(check, c -> {
             site().put("taxa", "taxon table");
             // Only the names the lists count (counted statuses). Synonyms, homonyms and obsolete combinations take the
@@ -787,6 +788,8 @@ public final class NumberChecks {
                 + " left join taxon p on p.taxon_name = c.parent_taxon_name"
                 + " where c.taxarank in ('species', 'subspecies') and c.taxon_name like '% %' and c.family = 'formicidae'"
                 + " and c.status in " + CountInvariants.COUNTABLE
+                // names not identified to genus are not species and have no genus row (Brian Fisher, 2026-10-22)
+                + " and " + PlaceTotals.identifiedToGenus("c")
                 + (current ? " and (c.current_valid_name is null or c.current_valid_name = '' or c.current_valid_name = c.taxon_name)" : "");
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(sql))) {
                 while (r.next()) {
@@ -803,7 +806,10 @@ public final class NumberChecks {
                     inv.compare(c, "site", "taxa", name + " (" + r.getString(2) + ", " + r.getString(5) + "): parent " + parent
                         + (r.getString(4) == null ? (parent == null ? "" : " (not a taxon)") : " (" + r.getString(4) + ")") + ", genus by its name " + byName
                         + (b25 ? " (B25: its specimens replace the species row's)" : parent == null ? " (B36: no parent; the genus row does not count it)"
-                            : isGenus ? " (B36: its genus has no taxon row)" : " (B36: counted under another genus row)"), 1, 0, "=", null);
+                            : isGenus ? (r.getString(4) == null && "valid".equals(r.getString(5))
+                                ? " (B36: its genus has no taxon row: AntCat import problem)"
+                                : " (B36: its genus has no taxon row: subfamily missing in the upload, or not an ant; not repaired)")
+                            : r.getString(4) == null ? " (B36: names a genus that has no taxon row: not repaired)" : " (B36: counted under another genus row)"), 1, 0, "=", null);
                 }
             }
             // rows of lists that B25 changes: a species row with a subspecies row whose parent is that species

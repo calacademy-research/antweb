@@ -319,13 +319,14 @@ jobs:
               /t/org/calacademy/antweb/util/SpecimenCodesTest.java \
               /t/org/calacademy/antweb/util/RelevantQueriesTest.java \
               /t/org/calacademy/antweb/util/QueriesReviewTest.java \
-              /t/org/calacademy/antweb/util/JobSummaryTest.java
+              /t/org/calacademy/antweb/util/JobSummaryTest.java \
+              /t/org/calacademy/antweb/upload/SubfamilyFromGenusTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:7 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
-                     util.JobSummaryTest:6; do
+                     util.JobSummaryTest:6 upload.SubfamilyFromGenusTest:4; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -429,8 +430,10 @@ jobs:
           # home page, Global after the name update, statsPage) as the invariants expect them.
           # NightlyCountOrderDbTest (2026-10-22): an unavailable name does not raise its genus row; a museum list renamed
           # before its count (a synonym's specimens under the valid name); curator page-text edits; group numbers of today.
-          # TaxonTreeCountDbTest (2026-10-22): every counted ant name has its genus row as parent (nightly repair, B36); a
-          # list's genus, subfamily and family rows hold the images of every row under them by the taxon tree (B40).
+          # TaxonTreeCountDbTest (2026-10-22): every counted ant name identified to genus has its genus row as parent where
+          # that row exists (nightly repair, B36; no genus rows made, the rest reported); names not identified to genus are
+          # not species (totals, genus rows, pies, endemism) but their specimens count; a list's genus, subfamily and family
+          # rows hold the images of every row under them by the taxon tree (B40).
           # DownloadGuardsDbTest: a place download holds only the specimens collected there (5,000 cap), the paged
           # search list (COUNT, LIMIT/OFFSET, sort before paging, images/types only), ant specimens only on place pages.
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
@@ -453,7 +456,7 @@ jobs:
               /t/org/calacademy/antweb/home/UploadRecordDbTest.java \
               /t/org/calacademy/antweb/home/NightlyCountOrderDbTest.java \
               /t/org/calacademy/antweb/home/TaxonTreeCountDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:17 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:5 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:4; do
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:17 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:5 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

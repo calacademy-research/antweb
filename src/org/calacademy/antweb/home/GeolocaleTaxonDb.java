@@ -1441,7 +1441,8 @@ select group_concat( distinct source) from geolocale_taxon order by source;
         // or a subspecies of an unavailable combination raised the genus row).
         String query = "select count(*) count from geolocale_taxon where taxon_name in "
                 + " (select taxon.taxon_name from taxon where taxon.parent_taxon_name = " + DBUtil.sqlQuote(parentTaxonName)
-                + "   and taxon.taxarank in ('species', 'subspecies')" + new StatusSet(StatusSet.ALL).getAndCriteria() + ") "
+                + "   and taxon.taxarank in ('species', 'subspecies')" + new StatusSet(StatusSet.ALL).getAndCriteria()
+                + " and " + PlaceTotals.identifiedToGenus("taxon") + ") "
                 + " and geolocale_id = " + geolocale.getId()
                 ;
         //A.log("testGeolocaleTaxon() query:" + query);

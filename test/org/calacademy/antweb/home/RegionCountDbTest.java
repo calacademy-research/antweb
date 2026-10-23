@@ -57,6 +57,9 @@ public class RegionCountDbTest extends TestCase {
         }
         exec("create table taxon (taxon_name varchar(128) primary key, taxarank varchar(20), status varchar(40), parent_taxon_name varchar(128),"
             + " family varchar(64), subfamily varchar(64))");
+        // the genus column of the live table (the species counts read it: PlaceTotals.identifiedToGenus); invisible, so
+        // the inserts by position stay as they are
+        exec("alter table taxon add column genus varchar(64) invisible");
         exec("create table specimen (code varchar(128) primary key, taxon_name varchar(128), status varchar(40), country varchar(64),"
             + " adm1 varchar(64), island_country varchar(64), museum varchar(64), bioregion varchar(64), upload_id int,"
             + " family varchar(64), subfamily varchar(64), genus varchar(64), species varchar(64), image_count int default 0)");

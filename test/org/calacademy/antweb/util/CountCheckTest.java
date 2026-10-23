@@ -62,6 +62,9 @@ public class CountCheckTest extends TestCase {
         exec("insert into taxon values ('" + SP_B + "', 'species', 'valid', '" + GENUS + "')");
         // current valid names (2026-10-22: museum, bioregion and project lists count a synonym's specimens under the valid name)
         exec("alter table taxon add column current_valid_name varchar(128)");
+        // the genus column of the live table (the species counts read it: PlaceTotals.identifiedToGenus); invisible, so
+        // the inserts by position stay as they are
+        exec("alter table taxon add column genus varchar(64) invisible");
         exec("insert into upload values (1, '2020-01-01 10:00:00')");
         exec("insert into specimen values ('casent1', '" + SP_A + "', 'morphotaxon', 'Madagascar', null, 'Madagascar', null, 'Malagasy', 1)");
         exec("insert into specimen values ('casent2', '" + SP_A + "', 'morphotaxon', 'Madagascar', null, 'Madagascar', null, 'Malagasy', 1)");

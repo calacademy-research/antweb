@@ -409,9 +409,21 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                   subfamilyName = subfamily;
 				} else if (keepSynonymGenus) {
 				  subfamilyName = TaxonMgr.getSynonymGenusFromName(genusName).getSubfamily();
+				} else if (!subfamilyFromGenus(subfamilyName, genusName, SpecimenUploadParse::antcatSubfamilyOfGenus).equals(subfamilyName)) {
+				  // Brian Fisher, 2026-10-22: no subfamily in the file, or "(indet)", and the genus is an AntCat genus
+				  // (found above only when it is current valid, or a synonym of one): take the genus's subfamily, so
+				  // '(indet)decamorium decem' is 'myrmicinaedecamorium decem' and counts under its genus.
+				  subfamilyName = subfamilyFromGenus(subfamilyName, genusName, SpecimenUploadParse::antcatSubfamilyOfGenus);
 				} else {
 				  // If we don't find it, maybe it is not an ant. Then insert it, no error message.
 				  if (!("(Formicidae)".equals(subfamilyName) || Subfamily.isValidAntSubfamily(subfamilyName))) {
+					// Brian Fisher, 2026-10-22: kept, but said in the report when the line is given as an ant (family
+					// formicidae, or none) and its genus is not an ant genus in AntCat ('(indet)termes': Termes is a
+					// termite) or is not a name at all.
+					if (isGenusNotInAntcat(genusName, (String) taxonItem.get("family"))) {
+					  getMessageMgr().addToMessages(MessageMgr.genusNotInAntcat, Html.esc(Formatter.initCap(genusName)
+					    + (isMissingSubfamily(subfamilyName) ? " (no subfamily)" : " (subfamily " + subfamilyName + ")")));
+					}
 					if (false && AntwebProps.isDevMode()) {
 					  String displayCode = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.url(code) + "'>" + Html.esc(code) + "</a>";
 					  getMessageMgr().addToMessages(MessageMgr.nonAntTaxa, displayCode); 
@@ -1271,6 +1283,56 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     }
     
     
+
+    /**
+     * A subfamily value that says nothing (Brian Fisher, 2026-10-22): none, AntWeb's placeholder "(formicidae)", or
+     * "indet" / "(indet)" / "undet" typed in the file.
+     */
+    public static boolean isMissingSubfamily(String subfamilyName) {
+        if (subfamilyName == null) return true;
+        String s = subfamilyName.trim().toLowerCase(Locale.ROOT);
+        if (s.startsWith("(") && s.endsWith(")") && s.length() > 2) s = s.substring(1, s.length() - 1).trim();
+        return s.isEmpty() || "formicidae".equals(s) || "indet".equals(s) || "undet".equals(s);
+    }
+
+    /**
+     * The subfamily of an upload line (Brian Fisher, 2026-10-22): when the file gave none or "(indet)" and the genus is
+     * an AntCat genus, the subfamily of that genus ('(indet)decamorium decem' becomes 'myrmicinaedecamorium decem');
+     * otherwise the subfamily as given. antcatSubfamily: genus name -> its subfamily in AntCat, or null.
+     */
+    public static String subfamilyFromGenus(String subfamilyName, String genusName, java.util.function.Function<String, String> antcatSubfamily) {
+        if (!isMissingSubfamily(subfamilyName) || genusName == null || genusName.isBlank()
+            || !org.calacademy.antweb.home.PlaceTotals.isIdentifiedToGenus(genusName)) return subfamilyName;
+        String fromGenus = antcatSubfamily.apply(genusName.trim().toLowerCase(Locale.ROOT));
+        return fromGenus == null || fromGenus.isBlank() ? subfamilyName : fromGenus;
+    }
+
+    /** The subfamily AntCat gives a genus (any status; a valid genus row first), or null when AntCat has no such ant genus. */
+    static String antcatSubfamilyOfGenus(String genusName) {
+        ArrayList<Genus> genera;
+        try {
+            genera = TaxonMgr.getGenera();
+        } catch (RuntimeException e) {
+            return null;   // names not loaded
+        }
+        String found = null;
+        for (Genus g : genera) {
+            if (!genusName.equals(g.getName()) || g.getSubfamily() == null || !Subfamily.isValidAntSubfamily(g.getSubfamily())) continue;
+            if (Status.VALID.equals(g.getStatus())) return g.getSubfamily();
+            if (found == null) found = g.getSubfamily();
+        }
+        return found;
+    }
+
+    /**
+     * Whether an upload line given as an ant (family formicidae, or none) has a genus that is not an ant genus in AntCat
+     * (called once the AntCat lookups found none): not a morphogenus or indet placeholder (those are AntWeb's own).
+     */
+    public static boolean isGenusNotInAntcat(String genusName, String family) {
+        if (genusName == null || genusName.isBlank() || !org.calacademy.antweb.home.PlaceTotals.isIdentifiedToGenus(genusName)
+            || Taxon.isMorphoOrIndet(genusName)) return false;
+        return family == null || family.isBlank() || "formicidae".equalsIgnoreCase(family.trim());
+    }
 
     /** "(Ampulicinae)" -> "Ampulicinae"; "(formicidae)" (AntWeb's placeholder) and other values unchanged. */
     public static String stripSubfamilyParentheses(String subfamilyName) {
