@@ -388,6 +388,7 @@ All alerts email bfisher@calacademy.org.
 | Memory above 90% for 30 minutes | Java heap growth (Java may use up to 40% of RAM), MySQL, or many API bulk requests (API is capped at 1 GB). | `free -h; docker stats --no-stream`; `grep "heap used" /root/antweb/logs/web/compute.log \| tail -5` shows the heap at the end of each nightly run. Restart AntWeb at a quiet time. If it recurs, `nightlyRestart=true` (Switches) brings back the daily restart. |
 | Disk above 85% for 30 minutes | Logs, Docker images or build cache, journal. | "Disk full" below. |
 | "Log size check" (email from antweb@antweb.org and an admin alert, after the nightly run) | A log file over 1 GB, or the disk over 85%. | "A log grows too big" (Logs, above). |
+| "Storage mount problem" (email from antweb@antweb.org, hourly check `MountCheck`, at once and every 6 hours while it lasts; one "working again" email) | `/mnt/antweb` cannot be written and read back, or (production) `/mnt/backup` cannot be listed or its newest daily dump is over 26 hours old or under 1 MB. | "Storage mounts (/mnt/antweb, /mnt/backup)" (Emergencies, below). |
 | Disk read above 90 MB/s for 1 hour (antweb-prod) | The nightly sets, or a long database scan. | If outside 05:00 to 08:00: running queries with the DB pattern and `show full processlist;`. |
 | Uptime: www.antweb.org/v3.1/ down 10 minutes from all regions | Cloudflare cannot reach Caddy or the API (droplet down, Caddy or API stopped, firewall, certificate). This check does not cover Tomcat: AntWeb pages can be down while it passes. | "Site down" below. |
 | Uptime: www.antcat.org/v1/taxa/429011 | antcat.org is down. | AntCat runbook (AntCat repository and project instructions). |
@@ -581,8 +582,31 @@ tail -30 /root/antweb/logs/detail/upload.log; docker logs antweb_antweb_1 --sinc
 
 If the log shows recent progress, wait: large uploads take a long time. If nothing has moved for a long time (no rule yet; judge from the upload's size), restart AntWeb. The upload is rolled back and the curator repeats it. If it was the nightly TaxonWorks upload, it runs again the next night, or an admin starts it by hand at `/utilData.do?action=taxonWorksNightly`.
 
+### Storage mounts (/mnt/antweb, /mnt/backup)
+
+On 2026-10-22 both production mounts stopped working for 26 hours: the Spaces access key they used had been deleted
+(it was believed to be staging's only). Upload reports showed "no longer available", the CAS file copy failed and the
+01:00 dump was not written. Since 2026-10-23 the hourly `MountCheck` emails within the hour.
+
+**Rule: before deleting or rotating a Spaces key, check every server that may use it**
+(`grep access_key_id /root/.config/rclone/rclone.conf` on each droplet shows the key id, never the secret; compare it
+with the Access Key column in the DigitalOcean list). A bucket with a bucket policy (`antweb`) accepts only Full Access keys.
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+systemctl status rclone rclone-dbarchive --no-pager | grep -E "Active|error" ; findmnt /mnt/antweb ; findmnt /mnt/backup ; ls /mnt/antweb/mountcheck/ ; ls -lt /mnt/backup/db/daily | head -3
+```
+
+- "Input/output error" or a hang: the mount is dead. If rclone's log says the key is unknown (`InvalidAccessKeyId`),
+  make a new Full Access key in https://cloud.digitalocean.com/spaces/access_keys, then Brian types it in at a prompt
+  (never in chat or a file in git):
+  `read -rp 'Key id: ' K; read -rsp 'Secret: ' S; echo; rclone config update digitalocean access_key_id="$K" secret_access_key="$S" >/dev/null; unset K S`
+- Then `systemctl restart rclone rclone-dbarchive`, check `findmnt` again, and restart AntWeb
+  (`docker restart antweb_antweb_1`, 2 to 4 minutes): the container keeps the dead mount until it restarts.
+- A dump that was missed: run `/root/antweb/bin/db-daily-dump.sh` by hand (about 2 minutes, about 120 MB).
+
 ## Backup facts checked on 2026-10-18
 
 - Production: `/mnt/backup` is the rclone mount of Spaces bucket `antweb-dbarchive` (service `rclone-dbarchive`), `/mnt/antweb` of bucket `antweb` (service `rclone`); both enabled at boot. Check with `findmnt /mnt/backup` (one folder per call).
 - Staging: `/mnt/backup` is a plain local folder on staging's own disk (last written October 2025); staging runs no daily dump, so it never touches production's backups.
-- `/mnt/backup/db/daily/error.log` holds failures from up to December 2023 only. A failed or skipped dump is written only there and is not reported anywhere yet (an alert is on the to-do list).
+- `/mnt/backup/db/daily/error.log` holds failures from up to December 2023 only. Since 2026-10-23 the hourly mount check emails when the newest dump is over 26 hours old (Alerts, above).

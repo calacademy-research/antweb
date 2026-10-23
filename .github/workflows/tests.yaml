@@ -197,7 +197,7 @@ jobs:
             grep -q "^OK (6 tests)" /tmp/out.txt
           '
 
-      - name: Java unit tests of log growth (short message-page record, entry cap, log viewer cap, row limits, log size check)
+      - name: Java unit tests of log growth (short message-page record, entry cap, log viewer cap, row limits, log size check) and the mount check
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
             set -e
@@ -205,7 +205,9 @@ jobs:
             test -f $C/org/calacademy/antweb/util/MessagePageLog.class
             CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
             mkdir -p /tmp/tc
-            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/MessageLogTest.java
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/MessageLogTest.java /t/org/calacademy/antweb/util/MountCheckTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.MountCheckTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.MessageLogTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (11 tests)" /tmp/out.txt
