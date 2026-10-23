@@ -1267,7 +1267,7 @@ def getImages():
         if tCode != image.code:
             if tCode != '':  # we have one to insert. (Is not the first record).
                 specimenDict = {
-                    'spefimenCode': tCode
+                    'specimenCode': tCode
                     , 'url': 'http://localhost:5000/specimens?code=' + tCode
                     , 'images': images
                 }

@@ -63,7 +63,14 @@ tests = [
   "test_privacy.py",
   "test_site_links.py",
   "test_world_ant_collections.py",
+  "test_taxon_pages.py",                # public page flows (road map step 2), anonymous, read-only
+  "test_specimen_pages.py",
+  "test_search_pages.py",
+  "test_place_pages.py",
+  "test_password_reset_pages.py",
+  "test_home_and_stats.py",
   # anonymous tests of files that also log in
+  "test_field_guide_compare.py::test_comparison_anonymous_asks_to_log_in",
   "test_message_log.py::test_page_shows_the_whole_message",
   "test_message_log.py::test_image_data_query_shows_at_most_5000_rows",
   "test_add_uploader.py::test_anonymous_gets_login_page",
@@ -271,6 +278,7 @@ tests = [
   "test_hardening_2026_10_19.py",
   "test_manager_tools.py",             # added by #215
   "test_browser_admin_phone.py",       # added by #213
+  "test_password_reset_pages.py",      # forgot password and the reset link page (step 2)
 ]
 
 [areas.editor]
@@ -340,8 +348,20 @@ paths = [
   "web/adm1*",
   "web/bioregion*",
   "web/region*",
+  "src/org/calacademy/antweb/OverviewAction.java",
+  "src/org/calacademy/antweb/TaxaPageAction.java",
+  "src/org/calacademy/antweb/TaxaPage.java",
+  "src/org/calacademy/antweb/util/OverviewMgr.java",
+  "web/subregion*",
+  "web/museum*",
+  "web/project*",
+  "web/overview*",
+  "web/taxonomicPage*",
+  "web/taxonReport*",
+  "web/common/overviewHeading.jsp",
 ]
 tests = [
+  "test_place_pages.py",               # place pages, their lists and species lists (step 2)
   "test_geolocale_edit.py",
   "test_geolocale_edit_page.py",
   "test_region_counts.py",
@@ -361,6 +381,8 @@ paths = [
 ]
 tests = [
   "test_download_guards.py",          # added by #222
+  "test_search_pages.py",             # search form, results by taxon, recent images, Places box (step 2)
+  "test_field_guide_compare.py",      # field guides and the compare tools (step 2)
 ]
 
 [areas.images]
@@ -380,6 +402,7 @@ paths = [
   "web/*berlin*",
 ]
 tests = [
+  "test_specimen_pages.py",            # specimen images and image pages (step 2)
   "test_exif_view.py",
   "test_image_picker.py",
   "test_world_ant_collections.py",
@@ -395,8 +418,30 @@ paths = [
   "web/specimen*",
   "web/description*",
   "web/taxon*",
+  "src/org/calacademy/antweb/BrowseAction.java",
+  "src/org/calacademy/antweb/Taxon.java",
+  "src/org/calacademy/antweb/LocalityAction.java",
+  "src/org/calacademy/antweb/CollectionAction.java",
+  "src/org/calacademy/antweb/BigMapAction.java",
+  "src/org/calacademy/antweb/home/CollectionDb.java",
+  "src/org/calacademy/antweb/home/LocalityDb.java",
+  "src/org/calacademy/antweb/util/OverviewMgr.java",
+  "src/org/calacademy/antweb/util/ProjectMgr.java",
+  "web/showBrowse*",
+  "web/imagePage*",
+  "web/locality*",
+  "web/collection*",
+  "web/dynamicMap*",
+  "web/specimenImages*",
+  "web/specimenReport*",
+  "web/common/taxonTitle.jsp",
+  "web/common/pageToolLinks.jsp",
+  "web/common/viewInAntCat.jsp",
+  "tests/e2e/public_pages.py",
 ]
 tests = [
+  "test_taxon_pages.py",               # taxon pages, the place filter, the Taxa box (step 2)
+  "test_specimen_pages.py",            # specimen, images, locality, collection, maps (step 2)
   "test_previous_determinations.py",
   "test_display_cleanup.py",
   "test_upload_report_links.py",
@@ -487,6 +532,8 @@ paths = [
   "src/org/calacademy/antweb/home/ObjectMapDb.java",
   "docs/catalog/actions.csv",
   "tests/e2e/linkcheck.py",
+  "src/org/calacademy/antweb/StatsPageAction.java",
+  "web/util/statsPage*",
 ]
 tests = [
   "test_site_links.py",                # links on every public page type, map popups included
@@ -497,4 +544,6 @@ tests = [
   "test_header_version.py",
   "test_request_limits.py",
   "test_curate_page_layout.py",       # About menu, Curators page
+  "test_home_and_stats.py",            # home page and statsPage.do sections (step 2)
+  "test_field_guide_compare.py",
 ]
