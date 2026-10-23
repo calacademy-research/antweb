@@ -370,7 +370,8 @@ museum
     /** Home and statsPage "species + ssp. imaged": valid, morpho or indetermined (counted statuses), as the statsPage text says. */
     public static final String IMAGED_SPECIES_SQL = "select count(distinct s.taxon_name) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id"
         + " join taxon t on t.taxon_name = s.taxon_name where t.taxarank in ('species', 'subspecies')"
-        + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')";
+        + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')"
+        + " and " + PlaceTotals.identifiedToGenus("t");   // 2026-10-22: names not identified to genus are not species
 
     /** statistics.valid_species_imaged. */
     public static final String VALID_SPECIES_IMAGED_SQL = "select count(distinct s.taxon_name) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id"

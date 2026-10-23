@@ -206,16 +206,36 @@ public class CountCheck {
         public long coreMillis;
         public long rotatingMillis;
 
+        /**
+         * Differences not listed (more than CountInvariants.LIST_CAP of one check), by check id ("id (pending)" for
+         * pending ones), 2026-10-22.
+         */
+        public final Map<String, Integer> unlisted = new java.util.TreeMap<>();
+
         public int real() {
             int n = 0;
             for (Mismatch m : mismatches) if (m.isReal()) ++n;
+            for (Map.Entry<String, Integer> e : unlisted.entrySet()) if (!e.getKey().endsWith(" (pending)")) n += e.getValue();
             return n;
         }
 
-        public int pending() { return mismatches.size() - real(); }
+        public int pending() {
+            int n = mismatches.size();
+            for (Mismatch m : mismatches) if (m.isReal()) --n;
+            for (Map.Entry<String, Integer> e : unlisted.entrySet()) if (e.getKey().endsWith(" (pending)")) n += e.getValue();
+            return n;
+        }
     }
 
     private final Connection connection;
+
+    /**
+     * The curator and artist numbers as curators.do, curator.do and artists.do show them (LoginMgr, ArtistMgr), for
+     * the invariants (NumberChecks); null: not checked.
+     */
+    public java.util.Map<Integer, int[]> curatorNumbers;
+    public java.util.Map<Integer, int[]> artistNumbers;
+    public java.sql.Timestamp curatorsRead;
 
     public CountCheck(Connection connection) {
         this.connection = connection;
@@ -270,6 +290,9 @@ public class CountCheck {
         if (invariants) {
             result.invariants = new CountInvariants(connection, result, changedNames, rulesCounted);
             result.invariants.statsPageValidSpecies = statsPageValidSpecies;
+            result.invariants.curatorNumbers = curatorNumbers;
+            result.invariants.curatorsRead = curatorsRead;
+            result.invariants.artistNumbers = artistNumbers;
             result.invariants.run();
             // The database structure against the snapshot (read-only, about 1,400 rows of information_schema).
             result.schema = SchemaCheck.run(connection);
@@ -599,10 +622,17 @@ public class CountCheck {
             }
         }
         int recount;
-        try (PreparedStatement stmt = connection.prepareStatement("select count(*) from specimen s"
+        // Curated projects (2026-10-22): a synonym's specimens count under the valid name on the list (as the rows).
+        boolean synonyms = org.calacademy.antweb.home.PlaceTotals.synonymsToValid(place.type, place.key);
+        String query = synonyms
+            ? "select coalesce(sum(x.count), 0) from (" + org.calacademy.antweb.home.PlaceTotals.specimensByListNameSql(place.type, "?", "") + ") x"
+                + " join taxon t on t.taxon_name = x.taxonName and t.taxarank in ('species', 'subspecies') and t.family = 'formicidae'"
+            : "select count(*) from specimen s"
                 + " join proj_taxon l on l.taxon_name = s.taxon_name and l.project_name = ?"
-                + " join taxon t on t.taxon_name = s.taxon_name and t.taxarank in ('species', 'subspecies') and t.family = 'formicidae'")) {
+                + " join taxon t on t.taxon_name = s.taxon_name and t.taxarank in ('species', 'subspecies') and t.family = 'formicidae'";
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, place.key);
+            if (synonyms) stmt.setString(2, place.key);
             try (ResultSet r = stmt.executeQuery()) {
                 r.next();
                 recount = r.getInt(1);
@@ -732,7 +762,14 @@ public class CountCheck {
         String t = place.table();
         String k = place.keyColumn();
         Map<String, Integer> recount = CountInvariants.keyMap();   // names as MySQL compares them
-        String query = "select s.taxon_name, count(*) from specimen s"
+        // Museums, bioregions and curated projects (2026-10-22): a specimen filed under a synonym counts under the valid
+        // name on the list (PlaceTotals.specimensByListNameSql; Brian Fisher: it belongs to the valid species).
+        boolean synonyms = !place.isFromCountries() && org.calacademy.antweb.home.PlaceTotals.synonymsToValid(place.type, place.key);
+        String query = synonyms
+            ? org.calacademy.antweb.home.PlaceTotals.specimensByListNameSql(place.type, "?",
+                (place.column() != null ? " and s." + place.column() + " = ?" : "")
+                + (place.statusFiltered() ? " and s.status in " + COUNTABLE : ""))
+            : "select s.taxon_name, count(*) from specimen s"
             + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
             + " join " + t + " l on l.taxon_name = s.taxon_name and l." + k + " = ?"
             + " where 1 = 1"
@@ -742,6 +779,7 @@ public class CountCheck {
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             int i = 1;
             if (place.isFromCountries()) for (int n = 0; n < 4; n++) place.setKey(stmt, i++);
+            if (synonyms) place.setKey(stmt, i++);
             place.setKey(stmt, i++);
             if (place.column() != null) stmt.setString(i, place.specimenValue);
             try (ResultSet r = stmt.executeQuery()) {
@@ -781,7 +819,9 @@ public class CountCheck {
         String query = "select taxon.parent_taxon_name, l.taxon_name, " + CountInvariants.safeDate("l.created") + " from taxon"
             + " join " + t + " l on l.taxon_name = taxon.taxon_name and l." + k + " = ?"
             + " where taxon.taxarank in " + childRanks
-            + (place.statusFiltered() ? " and taxon.status in " + COUNTABLE : "");
+            + (place.statusFiltered() ? " and taxon.status in " + COUNTABLE : "")
+            // a genus row's Species: names identified to genus only (2026-10-22, PlaceTotals.identifiedToGenus)
+            + (childRanks.contains("species") ? " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") : "");
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             place.setKey(stmt, 1);
             try (ResultSet r = stmt.executeQuery()) {

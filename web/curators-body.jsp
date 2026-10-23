@@ -48,6 +48,7 @@
 </div>
 
 <p id="curators-groups-note">The upload group column links to each group's page (its specimens and uploads). <a href="<%= AntwebProps.getDomainApp() %>/groups.do">All upload groups</a></p>
+<p id="curators-edits-note">Description Edits: page-text edits (taxon, place and project texts), every saved version.</p>
 
 <br>
 

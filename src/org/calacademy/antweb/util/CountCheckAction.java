@@ -96,7 +96,13 @@ public final class CountCheckAction extends AntwebAction {
             } catch (NumberFormatException e) { /* default */ }
             boolean invariants = !custom || "1".equals(request.getParameter("invariants"));
             List<String> log = computeLog();
-            CountCheck.Result result = new CountCheck(connection).run(places, rotating, seconds, CountCheck.lastCompletedRun(log),
+            CountCheck countCheck = new CountCheck(connection);
+            if (invariants) {
+                countCheck.curatorsRead = LoginMgr.getCuratorsRead();
+                countCheck.curatorNumbers = curatorNumbers();
+                countCheck.artistNumbers = artistNumbers();
+            }
+            CountCheck.Result result = countCheck.run(places, rotating, seconds, CountCheck.lastCompletedRun(log),
                 CountCheck.regionRuleCounted(log), CountInvariants.rulesCounted(log), invariants, TaxonMgr.getValidSpeciesCount());
             result.notes.addAll(notes);
             request.setAttribute("html", html(result, AntwebProps.getDomainApp()));
@@ -109,6 +115,29 @@ public final class CountCheckAction extends AntwebAction {
             DBUtil.close(connection, this, dbMethodName);
         }
         return mapping.findForward("success");
+    }
+
+    /**
+     * curators.do and curator.do as they show them (LoginMgr, in memory): login id -> Specimen Uploads, Description
+     * Edits, image uploads, images uploaded; null when LoginMgr is not loaded.
+     */
+    static java.util.Map<Integer, int[]> curatorNumbers() {
+        java.util.List<org.calacademy.antweb.Curator> curators = LoginMgr.getCurators();
+        if (curators == null) return null;
+        java.util.Map<Integer, int[]> m = new java.util.TreeMap<>();
+        for (org.calacademy.antweb.Curator c : new ArrayList<>(curators)) {
+            m.put(c.getId(), new int[] {c.getSpecimenUploadCount(), c.getDescEditCount(), c.getImageUploadCount(), c.getImagesUploadedCount()});
+        }
+        return m;
+    }
+
+    /** artists.do as it shows them (ArtistMgr): artist id -> Images, Specimen; null when ArtistMgr is not loaded. */
+    static java.util.Map<Integer, int[]> artistNumbers() {
+        java.util.List<org.calacademy.antweb.Artist> artists = ArtistMgr.getArtists();
+        if (artists == null || artists.isEmpty()) return null;
+        java.util.Map<Integer, int[]> m = new java.util.TreeMap<>();
+        for (org.calacademy.antweb.Artist a : new ArrayList<>(artists)) m.put(a.getId(), new int[] {a.getImageCount(), a.getSpecimenCount()});
+        return m;
     }
 
     /** The lines of web/log/compute.log (empty if it cannot be read). */
@@ -296,7 +325,10 @@ public final class CountCheckAction extends AntwebAction {
             + "And for every place it checks the numbers that must agree: Subfamilies, Genera, Species and Valid species = the rows of "
             + "its list, Specimens = the sum of its species, the pie slices add up, Endemic = the species listed as endemic, image "
             + "numbers in order, every row of every list against the rows under it, the Global specimens, the home page numbers and the "
-            + "image counts of taxa and specimens (the list of all numbers and their checks: docs/numbers.md). Every number that "
+            + "image counts of taxa and specimens. Since 2026-10-22 also the statsPage tables, the numbers of the curator, upload group, "
+            + "artist, image upload and statistics pages, the API's taxon counts, the endemic flags of countries and states, and two "
+            + "known suspects (a subspecies filed under its species; a state matched by name only) "
+            + "(the list of all numbers and their checks: docs/numbers.md). Every number that "
             + "differs is listed with the number the site shows (\"Stored\") and the number it must be (\"Recount\"). "
             + "It also compares the database's tables and columns with the record of them in the repository (Database structure).",
         "A difference means the site shows a wrong number on that place's page. A \"pending\" difference is expected: "
@@ -313,7 +345,8 @@ public final class CountCheckAction extends AntwebAction {
     /** "This check took N s (every place A s, core places B s, rotating sample C s for X of Y places)." */
     static String partsText(CountCheck.Result result) {
         return String.format("This check took %.1f s (every place: %s; core places: %.1f s; rotating sample: %.1f s for %d of %d places).",
-            result.millis / 1000.0, result.invariants == null ? "not run" : String.format("%.1f s", result.invariants.millis / 1000.0),
+            result.millis / 1000.0, result.invariants == null ? "not run" : String.format("%.1f s, of which %.1f s the other pages' numbers",
+                result.invariants.millis / 1000.0, result.invariants.otherMillis / 1000.0),
             result.coreMillis / 1000.0, result.rotatingMillis / 1000.0, result.rotatingChecked, result.rotatingPlanned);
     }
 
@@ -337,7 +370,8 @@ public final class CountCheckAction extends AntwebAction {
         }
         for (String note : result.notes) b.append("<p>Note: ").append(note).append("</p>");
         b.append("<p id=\"count-check-time\" data-seconds=\"").append(result.millis / 1000).append("\" data-invariants=\"")
-         .append(result.invariants == null ? 0 : result.invariants.millis / 1000).append("\" data-core=\"").append(result.coreMillis / 1000)
+         .append(result.invariants == null ? 0 : result.invariants.millis / 1000).append("\" data-other=\"")
+         .append(result.invariants == null ? 0 : result.invariants.otherMillis / 1000).append("\" data-core=\"").append(result.coreMillis / 1000)
          .append("\" data-rotating=\"").append(result.rotatingMillis / 1000).append("\">").append(Html.esc(partsText(result))).append("</p>");
         if (result.invariants != null) {
             b.append("<h3>Every place: numbers that must agree</h3>");
@@ -401,6 +435,19 @@ public final class CountCheckAction extends AntwebAction {
                 b.append("</tr>");
             }
             b.append("</table>");
+        }
+        if (!result.unlisted.isEmpty()) {
+            b.append("<p id=\"count-check-unlisted\">Not listed above (more than ").append(CountInvariants.LIST_CAP).append(" differences of one check): ");
+            int n = 0;
+            for (java.util.Map.Entry<String, Integer> e : result.unlisted.entrySet()) {
+                if (n++ > 0) b.append("; ");
+                b.append(Html.esc(e.getKey())).append(": ").append(e.getValue()).append(" more");
+            }
+            b.append(".</p>");
+        }
+        // The numbers the end-to-end tests compare with the pages (statsPage, admin pages; NumberChecks).
+        if (result.invariants != null) {
+            b.append("<script type=\"application/json\" id=\"count-check-expected\">").append(NumberChecks.json(result.invariants.expected)).append("</script>");
         }
         b.append("<p id=\"count-check-result\" data-real=\"").append(result.real()).append("\" data-pending=\"").append(result.pending())
          .append("\" data-window=\"").append(result.inNightlyWindow ? 1 : 0)

@@ -253,6 +253,47 @@ public class UtilDataAction extends AntwebAction {
         return line;
     }
 
+    /**
+     * Nightly set 1 (B36, docs/numbers.md): every ant species and subspecies of a counted status that is its own current
+     * valid name and is identified to genus gets its genus row as parent, where that genus row exists
+     * (TaxonParentDb.repair). No genus row is ever made (Brian Fisher, 2026-10-22): names whose genus has no row are
+     * reported in the line, and valid ones (an AntCat import problem) in an admin alert, at most once a week.
+     * Its own commit and rollback, like the name update. When it changed a row, the AntCat list (worldants, counted by
+     * the import before this step) is recounted and the Global column (allantwebants) rebuilt, as after the name update
+     * (sets 2 to 5 do neither). Writes one line to compute.log.
+     */
+    static String nightlyTaxonParents(Connection connection) {
+        String line;
+        try {
+            connection.commit();   // what set 1 did so far stays, whatever happens below
+            org.calacademy.antweb.home.TaxonParentDb.Result result = new org.calacademy.antweb.home.TaxonParentDb(connection).repair();
+            connection.commit();
+            line = result.line();
+            if (result.alert() != null) {
+                AdminAlertMgr.addIfFresh(result.alert(), org.calacademy.antweb.home.TaxonParentDb.MISSING_VALID_ALERT, AdminAlertMgr.WEEK, connection);
+            }
+            if (result.changed()) {
+                try {
+                    // the AntCat list (worldants) was counted by the import, before this step; sets 2 to 5 skip it
+                    new ProjTaxonCountDb(connection).childrenCountCrawl(Project.WORLDANTS);
+                    new ProjTaxonDb(connection).regenerateAllAntweb();
+                    connection.commit();
+                    line += "; AntCat list and Global column recounted";
+                } catch (Exception e) {
+                    try { connection.rollback(); } catch (SQLException e2) { s_log.error("nightlyTaxonParents() rollback e:" + e2); }
+                    s_log.error("nightlyTaxonParents() recount e:" + e);
+                    line += "; AntCat list and Global column NOT recounted (" + e + ")";
+                }
+            }
+        } catch (Exception e) {
+            try { connection.rollback(); } catch (SQLException e2) { s_log.error("nightlyTaxonParents() rollback e:" + e2); }
+            s_log.error("nightlyTaxonParents() e:" + e);
+            line = "taxon parents (B36): FAILED, nothing changed (" + e + ")";
+        }
+        LogMgr.appendLog("compute.log", "  " + line, true);
+        return line;
+    }
+
     /** A data job started from a page: runs in the background; the answer is a redirect to its status page. */
     private ActionForward submitDataJob(String action, UtilForm form, Login accessLogin, Group accessGroup, String loginName,
                                         HttpServletRequest request, ActionMapping mapping) {
@@ -356,6 +397,9 @@ public class UtilDataAction extends AntwebAction {
                 // Existing specimens follow AntCat name changes (etc/name-update.properties; off without it).
                 // After the AntCat import and the TaxonWorks upload, before sets 2 to 5 rebuild lists and counts.
                 message += " " + nightlyNameUpdate(connection, worldants == null ? null : worldants.getMessage());
+                // Every counted ant name has its genus as parent, so the genus rows of the lists count it (B36,
+                // 2026-10-22). After the import, the upload and the name update; before sets 2 to 5 build the lists.
+                message += " " + nightlyTaxonParents(connection);
                 TaxonMgr.populate(connection, true, false);
             }
 
@@ -368,10 +412,15 @@ public class UtilDataAction extends AntwebAction {
                 // (2026-10-21). It ran only in set 3, after the geolocale and project totals: a merged synonym row
                 // left its specimens in the total but not in any row, so Specimens was larger than the sum of the
                 // species rows on every country, adm1, region and project (count check, place.totals.specimens).
-                // Set 3 still runs it for the museum and bioregion lists it rebuilds.
+                // Museum, bioregion and project lists are renamed in set 3, each just before it is counted (2026-10-22).
                 message += " " + doAction("updateTaxonSets", form, accessLogin, accessGroup, connection, request, mapping);
                 message += " " + doAction("geolocaleCountCrawl", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 30.48 mins
-                message += " " + doAction("geolocaleTaxonFix", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 1.00 mins
+                // geolocaleTaxonFix no longer runs here (2026-10-22). It rewrote the Species number of every genus row of the
+                // countries and live adm1s AFTER the count, from every list row whose parent is the genus, of any status and
+                // rank: US formicinaeformica showed 104 with an unavailable name, 103 is right (count check inv:list.genus).
+                // The count (GeolocaleTaxonCountDb.childrenCountCrawl, same places) already writes every genus row by the
+                // rule of the lists (species and subspecies of a counted status), after resetting the row. It stays
+                // available as an admin job (utilData.do?action=geolocaleTaxonFix), now by the same rule.
                 //GeolocaleMgr.populate(connection, true, false); // Unnecessary. We reload all in set5.
             }
 
@@ -381,7 +430,13 @@ public class UtilDataAction extends AntwebAction {
                 message += " " + doAction("projectCountCrawl", form, accessLogin, accessGroup, connection, request, mapping);   // Prod: 0.67 mins
                 message += " " + doAction("populateMuseum", form, accessLogin, accessGroup, connection, request, mapping);  // was 12.05 mins now 22.68 mins. Prod: 8.17
                 message += " " + doAction("populateBioregion", form, accessLogin, accessGroup, connection, request, mapping); // was 6.80 mins. Now 15.63 mins. // Prod: 5.52 mins
-                message += " " + doAction("updateTaxonSets", form, accessLogin, accessGroup, connection, request, mapping);
+                // The rename of synonym rows (updateTaxonSets) ran here, after the project, museum and bioregion counts and
+                // totals, so their pages counted lists that changed afterwards (2026-10-22, museum AFRC: 14 valid species rows
+                // not in its Species number). Each list is now renamed right before it is counted (ProjTaxonCountDb.recount,
+                // MuseumDb.populate, BioregionDb.populate; geolocales in set 2); only the source column is updated here.
+                message += " " + TaxonSetDb.updateTaxonSetSources(connection);
+                // Upload groups: today's numbers of each group's specimens (Brian Fisher, 2026-10-22, Q13).
+                message += " " + new GroupCountDb(connection).recountAll();
                 message += " " + doAction("crawlForType", form, accessLogin, accessGroup, connection, request, mapping);
             }
 

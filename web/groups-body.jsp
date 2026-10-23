@@ -22,7 +22,7 @@
 <h1>Specimen Contributors:</h1>
 </div>
 
-<br>
+<p id="groups-numbers-note">Specimens to Species: each group's specimens today, recounted every night. Last Upload: the date of the group's last upload (its report has the numbers of that upload).</p>
 
 <table>
 <%

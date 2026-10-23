@@ -27,7 +27,7 @@
 <br>&nbsp;&nbsp;Specimen records from Antweb's 21 collaborating institutions.
 
 <br><br><b><%= A.commaFormat(AntwebMgr.getImagedSpeciesCount()) %>  species + ssp. imaged </b>
-<br>&nbsp;&nbsp;Valid, morpho or indetermined species and subspecies imaged.
+<br>&nbsp;&nbsp;Valid, morpho or indetermined species and subspecies imaged. Names not identified to genus are not counted as species.
 
 <br><br><b><%= A.commaFormat(AntwebMgr.getImagedSpecimensCount()) %> specimens imaged</b>
 

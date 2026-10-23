@@ -635,6 +635,12 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     
     // Not overview specific as are Museum, Bioregion and Geolocale.
     public String getCountSpecimensQuery() {
+      // Curated projects: a specimen filed under a synonym counts under the valid name (2026-10-22,
+      // PlaceTotals.specimensByListNameSql); worldants and allantwebants (Global) by the name itself.
+      if (org.calacademy.antweb.home.PlaceTotals.synonymsToValid(org.calacademy.antweb.home.PlaceTotals.PROJECT, getName())) {
+        return org.calacademy.antweb.home.PlaceTotals.specimensByListNameSql(org.calacademy.antweb.home.PlaceTotals.PROJECT,
+            org.calacademy.antweb.home.PlaceTotals.literal(getName()), "");
+      }
       String query = "select count(*) count, specimen.taxon_name taxonName from specimen " 
           + " join proj_taxon on specimen.taxon_name = proj_taxon.taxon_name " 
           + " where proj_taxon.project_name = '" + getName() + "'" 
@@ -654,7 +660,9 @@ group by taxonName
         String projectName = getName();
         String rankClause = " taxon.taxarank = '" + rank + "'";
 	        if (Rank.SPECIES.equals(rank)) { 
-          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
+          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') "
+              // a genus row's Species: names identified to genus only (Brian Fisher, 2026-10-22; PlaceTotals.identifiedToGenus)
+              + " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") + " ";
         }
 
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
@@ -699,7 +707,7 @@ group by taxonName
            + " from specimen s join proj_taxon pt on s.taxon_name = pt.taxon_name " 
            + " where pt.project_name = '" + getName() + "'" 
            + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species"
-           + " order by s.family, s.subfamily, s.genus, s.taxon_name";  // CountDb.imageCountCrawl() adds up on a change of genus   
+           + " order by s.family, s.subfamily, s.genus, s.taxon_name";  // CountDb.imageCountCrawl() adds the rows up by the taxon tree
       return query;
     }
 

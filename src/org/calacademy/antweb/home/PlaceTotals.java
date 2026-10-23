@@ -13,7 +13,8 @@ import java.sql.SQLException;
  *
  *   Subfamilies  subfamily rows on the place's list whose taxon has a counted status
  *   Genera       genus rows on the list, counted status
- *   Species      species and subspecies rows on the list, counted status, ants (family formicidae)
+ *   Species      species and subspecies rows on the list, counted status, ants (family formicidae),
+ *                identified to genus (identifiedToGenus, 2026-10-22)
  *   Valid        species and subspecies rows on the list, status valid, not fossil
  *
  * Counted status: valid, unrecognized, morphotaxon, indetermined, unidentifiable (CountCheck.COUNTABLE).
@@ -100,9 +101,41 @@ public final class PlaceTotals {
         switch (rank) {
             case SUBFAMILY: return "t.taxarank = 'subfamily' and t.status in " + COUNTABLE + ANTS;
             case GENUS: return "t.taxarank = 'genus' and t.status in " + COUNTABLE + ANTS;
-            case SPECIES: return "t.taxarank in ('species', 'subspecies') and t.status in " + COUNTABLE + ANTS;
+            case SPECIES: return "t.taxarank in ('species', 'subspecies') and t.status in " + COUNTABLE + ANTS + " and " + identifiedToGenus("t");
             default: throw new IllegalArgumentException(rank);
         }
+    }
+
+    /*
+     * Brian Fisher, 2026-10-22: names not identified to genus (the genus part is indet, (indet), a subfamily in
+     * parentheses, or the whole name is unidentified) do not count as species anywhere: not in species totals, not in
+     * endemism, not in the species counts of lists. Their specimens still count in specimen totals (under their
+     * subfamily where it is known). No placeholder genus rows are ever made for them.
+     *
+     * The one definition, used by every species count and by the count check: the taxon's genus column is not a
+     * placeholder. AntWeb writes these genus placeholders: "(indet)" and "((indet))" (no genus in the file; the
+     * second when the subfamily was "(indet)" too), "(formicinae)" and the like (the subfamily in parentheses),
+     * "(formicidae)" (no subfamily either), and "indet" or "undet" typed in the file. Staging 2026-10-22, for example:
+     * '(indet)((indet)) (indet)', '(indet)(formicinae) (indet)', 'formicinaeindet (indet)', 'indetindet (indet)'.
+     * Morphogenera ('amblyoponinaeamblyoponine_genus8 nz01') are identified to genus and count.
+     */
+
+    /** The genus values that mean "not identified to genus" (compared in lower case), besides any value in parentheses. */
+    public static final String[] UNIDENTIFIED_GENERA = {"indet", "undet", "(indet)", "((indet))"};
+
+    /** SQL: the taxon (alias a) is identified to genus (see above). A row without a genus value counts as before. */
+    public static String identifiedToGenus(String alias) {
+        String g = "coalesce(" + alias + ".genus, '')";
+        return "(" + g + " not like '(%' and lower(" + g + ") not in ('indet', 'undet'))";
+    }
+
+    /** The same rule in Java, for a genus value (taxon.genus or specimen.genus). */
+    public static boolean isIdentifiedToGenus(String genus) {
+        if (genus == null) return true;
+        String g = genus.trim().toLowerCase(java.util.Locale.ROOT);
+        if (g.startsWith("(")) return false;
+        for (String u : UNIDENTIFIED_GENERA) if (u.equals(g)) return false;
+        return true;
     }
 
     /**
@@ -176,6 +209,60 @@ public final class PlaceTotals {
             + " join taxon t on t.taxon_name = l.taxon_name" + sliceJoin("t.subfamily")
             + " where l." + listKey(type) + " = ? and t.taxarank in ('species', 'subspecies')" + ANTS
             + " group by " + SLICE + " having sum(l.specimen_count) > 0 order by " + SLICE;
+    }
+
+    // ---------------------------------------------------------------------------------------------- synonyms
+
+    /*
+     * Brian Fisher, 2026-10-22: a specimen filed under a junior synonym (or another name AntCat no longer uses, with a
+     * current valid name) belongs to the valid species. The nightly run renames such rows of a place's list to the
+     * valid name (TaxonSetDb.renameToValid, merging when the valid name is there already) before the list is counted,
+     * and the specimen counts of museum, bioregion and project lists count those specimens under the valid name.
+     * Until 2026-10-22 museum and bioregion lists were counted (and their totals written) before the rename, so the
+     * museum AFRC showed 14 valid species rows that its Species number did not count (count check, staging).
+     */
+
+    /** A name (alias t, a taxon row) that list rows are renamed from: not valid, with a current valid name other than itself. */
+    public static String renamedCondition(String t) {
+        return "(" + t + ".status <> 'valid' and coalesce(" + t + ".current_valid_name, '') <> '' and " + t + ".current_valid_name <> " + t + ".taxon_name)";
+    }
+
+    /**
+     * Whether the specimens of a synonym count under its valid name on this place's list: museums, bioregions and
+     * projects, except worldants and allantwebants (they list every name as AntCat has it; allantwebants is the
+     * "Global" column, all specimens filed under that very name). Geolocale lists are renamed before their counts
+     * too (set 2), but their specimen counts are still by the exact name (docs/numbers.md).
+     */
+    public static boolean synonymsToValid(String type, String key) {
+        if (MUSEUM.equals(type) || BIOREGION.equals(type)) return true;
+        return PROJECT.equals(type) && !"worldants".equals(key) && !"allantwebants".equals(key);
+    }
+
+    /**
+     * The specimens of each name on one place's list (columns taxonName, count), a specimen filed under a renamed name
+     * (renamedCondition) counted under its current valid name when that is on the list, never under the old name.
+     * keyLiteral: the place key as SQL (a quoted literal, or "?": then the statement takes the key twice, followed by
+     * the parameters of specimenCriteria). specimenCriteria: more conditions on the specimen (alias s), starting with
+     * " and", or "".
+     */
+    public static String specimensByListNameSql(String type, String keyLiteral, String specimenCriteria) {
+        String l = listTable(type);
+        String k = listKey(type);
+        return "select m.list_name taxonName, count(*) count from ("
+            + "select l.taxon_name list_name, l.taxon_name src from " + l + " l where l." + k + " = " + keyLiteral
+            + " union all select l.taxon_name list_name, st.taxon_name src from " + l + " l"
+            + " join taxon st on st.current_valid_name = l.taxon_name"
+            + " where l." + k + " = " + keyLiteral + " and " + renamedCondition("st")
+            + ") m join specimen s on s.taxon_name = m.src"
+            + " left join taxon sx on sx.taxon_name = s.taxon_name"
+            + " where (m.src <> m.list_name or coalesce(" + renamedCondition("sx") + ", false) = false)"
+            + specimenCriteria
+            + " group by m.list_name";
+    }
+
+    /** A place key as a quoted SQL literal. */
+    public static String literal(String key) {
+        return "'" + (key == null ? "" : key.replace("\\", "\\\\").replace("'", "''")) + "'";
     }
 
     /** Runs a one-number query with one parameter (the place key). */

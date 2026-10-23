@@ -61,7 +61,11 @@ public final class CountCheckJob {
             List<String> log = CountCheckAction.computeLog();
             Integer statsPage = null;
             try { statsPage = TaxonMgr.getValidSpeciesCount(); } catch (RuntimeException e) { /* taxa not loaded */ }
-            CountCheck.Result result = new CountCheck(connection).run(places, rotating, seconds, CountCheck.lastCompletedRun(log),
+            CountCheck countCheck = new CountCheck(connection);
+            countCheck.curatorsRead = LoginMgr.getCuratorsRead();
+            countCheck.curatorNumbers = CountCheckAction.curatorNumbers();
+            countCheck.artistNumbers = CountCheckAction.artistNumbers();
+            CountCheck.Result result = countCheck.run(places, rotating, seconds, CountCheck.lastCompletedRun(log),
                 CountCheck.regionRuleCounted(log), CountInvariants.rulesCounted(log), true, statsPage);
             result.notes.addAll(notes);
             String domainApp = AntwebProps.getDomainApp();
