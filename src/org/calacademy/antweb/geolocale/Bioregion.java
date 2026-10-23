@@ -312,22 +312,21 @@ public class Bioregion extends LocalityOverview implements Countable {
     
     // -------------------- Countable Implementation ---------------------
     
+    // The bioregion's specimens of each name on its list, of a countable status; a specimen filed under a synonym
+    // counts under the valid name (2026-10-22, PlaceTotals.specimensByListNameSql).
     public String getCountSpecimensQuery() {
-      String overviewCriteria = " and specimen.bioregion = '" + getName() + "'";
-      String query = "select count(*) count, specimen.taxon_name taxonName from specimen " 
-          + " join bioregion_taxon bt on specimen.taxon_name = bt.taxon_name " 
-          + " where bt.bioregion_name = '" + getName() + "'"
-          + overviewCriteria
-          + " and specimen.status in " + StatusSet.getCountables()
-	      + " group by taxonName";
-      return query;
+      String name = org.calacademy.antweb.home.PlaceTotals.literal(getName());
+      return org.calacademy.antweb.home.PlaceTotals.specimensByListNameSql(org.calacademy.antweb.home.PlaceTotals.BIOREGION, name,
+          " and s.bioregion = " + name + " and s.status in " + StatusSet.getCountables());
     }        
 
     public String getCountChildrenQuery(String rank) {
         
         String rankClause = " taxon.taxarank = '" + rank + "'";
 	        if (Rank.SPECIES.equals(rank)) { 
-          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
+          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') "
+              // a genus row's Species: names identified to genus only (Brian Fisher, 2026-10-22; PlaceTotals.identifiedToGenus)
+              + " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") + " ";
         }
 
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
@@ -381,7 +380,7 @@ public class Bioregion extends LocalityOverview implements Countable {
            + " where bt.bioregion_name = '" + getName() + "'" 
            + " and s.bioregion = '" + getName() + "'"  // 2026-10-20: images of this bioregion's specimens only
            + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species"
-           + " order by s.family, s.subfamily, s.genus, s.taxon_name";  // CountDb.imageCountCrawl() adds up on a change of genus    
+           + " order by s.family, s.subfamily, s.genus, s.taxon_name";  // CountDb.imageCountCrawl() adds the rows up by the taxon tree
       return query;
     }
 

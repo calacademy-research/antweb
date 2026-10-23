@@ -41,6 +41,21 @@ public class StatSet {
       value4 = value;    
     }
     
+    /** The name of the row (Extant, Fossil, a bioregion or museum code). */
+    public String getName() {
+      return name;
+    }
+
+    /** Value 1 to 4, as shown in the row (the count check compares them, 2026-10-22). */
+    public int getValue(int i) {
+      switch (i) {
+        case 1: return value1;
+        case 2: return value2;
+        case 3: return value3;
+        default: return value4;
+      }
+    }
+
     public String getHeader() {
       int col = 0;
       String retVal = "<table border=1><tr><th></th>"; // Start with empty column header (name).

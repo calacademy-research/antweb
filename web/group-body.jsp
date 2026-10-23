@@ -94,6 +94,9 @@
 		   %>
 		<li><%= lastUploadAnchor %></li>
 		</ul>	
+<% if (lastUpload.getCountedAt() != null) { %>
+		<p id="group-numbers-note">The numbers below are the group's specimens today (recounted every night, last on <%= Utility.getSimpleDate(lastUpload.getCountedAt()) %>).</p>
+<% } %>
 		
         <br>
 

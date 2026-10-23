@@ -114,6 +114,10 @@ public class TaxaPage implements Serializable {
 		    taxaQuery += " and taxarank = '" + rank + "' ";
 		  } else {
 		    taxaQuery += " and taxarank in ('species', 'subspecies')";
+		    // Brian Fisher, 2026-10-22: a name not identified to genus is not a species; the species list and its
+		    // header count leave it out, as the place's Species number does (PlaceTotals.identifiedToGenus). Its
+		    // specimens still count in the place's Specimens.
+		    taxaQuery += " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon");
           }
           taxaQuery += statusSet.getAndCriteria();
 
@@ -143,6 +147,7 @@ public class TaxaPage implements Serializable {
           
           // Ant specimens only: non-ant specimens are found by search, not listed on place pages (2026-10-21).
           specimenQuery += " from specimen s where" + org.calacademy.antweb.home.SpecimenDb.getAntSpecimenCriteria("s");
+          if (rank.equals("species")) specimenQuery += " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("s");
           
           if (overview instanceof Country) {
             specimenQuery += " and country = '" + overview+ "'";

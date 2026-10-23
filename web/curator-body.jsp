@@ -106,6 +106,9 @@
 <% } else { %>
   <li><%= lastUpload.getCreated() %> (report no longer available)</li>
 <% } %>
+<% if (lastUpload.getCountedAt() != null) { %>
+  <li id="curator-group-numbers-note">&nbsp;&nbsp;Specimens of the upload's group today (recounted every night):</li>
+<% } %>
   <li>&nbsp;&nbsp;Specimen: <%= Formatter.commaFormat(lastUpload.getSpecimens()) %></li>
   <li>&nbsp;&nbsp;Ungeoreferenced: <%= Formatter.commaFormat(lastUpload.getUngeoreferenced()) %></li>
   <li>&nbsp;&nbsp;Flagged: <%= Formatter.commaFormat(lastUpload.getFlagged()) %></li>
@@ -134,7 +137,8 @@
  <br><b>(Admin only)</b>
         <ul>
         <li><b>Description Edits:</b></li>
-        <li><%= curator.getDescEditCount() %></a></li>
+        <li><%= curator.getDescEditCount() %></li>
+        <li id="curator-edits-note">Page-text edits: taxon, place and project texts, every saved version.</li>
         </ul>
     </div>
     <div id="overview_data" class="plain">

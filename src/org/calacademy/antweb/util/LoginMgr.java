@@ -21,6 +21,12 @@ public class LoginMgr extends Manager {
 
     private static ArrayList<Login> s_logins;
     private static ArrayList<Curator> s_curators;
+    /** When s_curators and their numbers were read (postInitialize; the count check compares them, 2026-10-22). */
+    private static volatile java.sql.Timestamp s_curatorsRead;
+
+    public static java.sql.Timestamp getCuratorsRead() {
+        return s_curatorsRead;
+    }
 
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) {
       if (!forceReload && s_logins != null) return;
@@ -96,7 +102,9 @@ public class LoginMgr extends Manager {
     public static void postInitialize(Connection connection) throws SQLException {
         LoginDb loginDb = new LoginDb(connection);
 
+        java.sql.Timestamp read = new java.sql.Timestamp(System.currentTimeMillis());
         s_curators = loginDb.getAllCurators();
+        s_curatorsRead = read;
 
         // Why can't we loop through s_curators?
         ArrayList<Curator> tempList = new ArrayList<>(s_curators);
