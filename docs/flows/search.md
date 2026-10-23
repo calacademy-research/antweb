@@ -1,0 +1,67 @@
+# Search: the header boxes, advanced search, recent images
+
+Read from the code on master at commit e81a8945 (2026-10-22). Paths are relative to the repo root; Java classes are under `src/org/calacademy/antweb/`. Traffic: production Tomcat log, 2026-10-11 to 2026-10-18 (8 days).
+
+## In plain words
+
+AntWeb has three ways in:
+
+1. **The header boxes** on every page (`common/searchBar.jsp`): **Taxa** (`search/taxonNameSearchBox.jsp`) suggests names as you type (`search/autoCompleteKeys.jsp?q=`, from the names in memory) and opens `description.do?taxonName=<name>`, which redirects to the taxon page ([taxon-pages.md](taxon-pages.md)); **Places** (`search/placeNameSearchBox.jsp`) suggests place names (`search/autoCompletePlaceKeys.jsp?q=`) and opens `place.do?placeName=<name>`, which redirects to the country, adm1, island, region or subregion page ("Antananarivo, Madagascar" finds the adm1). This is the "quick search"; `search.do` itself only redirects to the advanced search form.
+2. **Advanced search** (`advSearch.do`, the form; `advancedSearch.do`, the results, 644 requests in 8 days): any combination of name, place, collector, dates, elevation, habitat, method, museum, owner, type status, images only, upload group ... Results are either a **specimen list** (200 a page, "Showing 1-200 of N", Previous / Next, sortable) or a **list of taxa** (resultRank subfamily, genus or species: "N Genera (from M specimens)"), or a map (output=mapLocality / mapSpecimen). From the results: Map, Compare images and Field Guide of the selected rows (these need a login), and Download Data (genus or species only, at most 5,000 specimens, since 2026-10-21). `advancedSearchResults.do` shows the session's last results again.
+3. **Recent images** (`recentSearchResults.do?searchMethod=recentImageSearch&daysAgo=30`, linked as "More" from the home page): the images uploaded in the last N days.
+
+Search results live in the visitor's HTTP session (`advancedSearchResults`, `advancedSearchPaging`, `searchTitle`, `resultSetModifier`, `taxonList`), so the follow-up pages (paging links, map, compare, download) work on the same search. Nothing is cached between visitors. robots.txt disallows the search and download addresses.
+
+## URLs
+
+| URL | What it does |
+|---|---|
+| `advSearch.do` | The form (`search/advancedSearch.jsp`) |
+| `advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&country=Comoros&resultRank=specimen` | Specimen list, page 1 |
+| `...&page=2`, `...&sortBy=<field>&sortOrder=up|down` | Paging, sorting (applied before paging) |
+| `...&genusSearchType=equals&genus=<genus>` | A criterion; each field has a `<field>SearchType` (equals or contains; dates and elevation: greaterThanOrEqual, lessThanOrEqual) |
+| `...&resultRank=genus` (subfamily, species) | Taxa found, with the number of specimens |
+| `...&output=mapLocality` (mapSpecimen) | Map of the results (`dynamicMap.jsp`) |
+| `advancedSearchResults.do` | The last results of the session again |
+| `recentSearchResults.do?searchMethod=recentImageSearch&daysAgo=30` (`&sortBy=code`, `shotType`) | Recent images |
+| `search.do` | Redirect to `advSearch.do` (`util.RedirectAction`) |
+| `place.do?placeName=<name>` | Redirect to the place's page |
+
+## Code path
+
+- `search.SearchAction.execute()` (a `DispatchAction` on `searchMethod`): sets the session's place to none, `Check.busy()`, then `advancedSearch()`, `descEditSearch()` or `recentImageSearch()`. No or unknown searchMethod: message "Invalid searchType:... Case#:N. Please report behavior to ...". `recentImageSearch` must be followed by another parameter (`&daysAgo=...`), else a message.
+- `advancedSearch()` -> `SearchParameters(form)` -> `doAdvancedSearch()`:
+  - specimen list as a list (the default): `doPagedSpecimenSearch()`: `AdvancedSearchAction.buildSearch()` -> `AdvancedSearch.countPaged()` (COUNT) and `getPage(orderBy, SearchPaging.PAGE_SIZE, offset)`, on the `mediumConPool` connection pool; `SearchPaging` builds Previous / Next; `DownloadLimits.count()` the "N specimens" line. JSP `search/advancedSearchResults.jsp` (title "Advanced Specimen Search - AntWeb", heading "Advanced Search Results").
+  - by taxon or as a map: `AdvancedSearchAction.getSearchResults()` (all matching specimens, up to `SearchAction.getSpecimenSearchLimit()`, 50,000; administrators 1,000,000), `AdvancedSearchResults.setResultsWithFilters()`, then `getSubfamilyList()` / `getGenusList()` / `getSpeciesList()`; JSP `search/advancedSearchResultsByTaxon.jsp` (heading "Advanced Search Genus Results") or `MapResultsAction.getMap()` -> `dynamicMap.jsp`.
+- `search.SearchPageAction` (`advSearch.do`): the form, with the country list (`countryGenInc`).
+- `geolocale.PlaceNameAction` (`place.do`): `GeolocaleMgr.getGeolocale(placeName)` (lower case is capitalised first; "Florida" means Florida, United States), else "<adm1>, <country>" -> `GeolocaleMgr.getAdm1()`; a redirect to `getThisPageTarget()`, or the message "Place not found:<name>".
+- Downloads of a search (`getSearchList.do`) and of a taxon (`getSpecimenList.do`): `util.SpecimenListAction` with `DownloadLimits` (genus or species only, 5,000 records); see #222 and `test_download_guards.py`.
+
+## Tables read
+
+[`specimen`](../data-model.md#specimen) (every criterion), [`taxon`](../data-model.md#taxon) (status, names), [`image`](../data-model.md#image) (images only, counts), [`ant_group`](../data-model.md#ant_group) (upload group), [`description_edit`](../data-model.md#description_edit) (descEditSearch). Places, museums and names for the form and the boxes come from memory.
+
+## Numbers shown
+
+[numbers.md](../numbers.md) #67 (N specimens, M imaged on this page), #68 (N taxa from M specimens), #69 to #72 (compare and map preparation, recent images, Bay Area search).
+
+## Known issues
+
+[public-pages-findings.md](public-pages-findings.md) F13 (an administrator's search raises the result limit for every search running at that moment), F25 (results shown again count only the session's page of 200).
+
+## Tests
+
+| Test | What it pins |
+|---|---|
+| `tests/e2e/test_search_pages.py::test_advanced_search_form` | the form and its main fields |
+| `test_search_pages.py::test_search_by_genus_rank_lists_genera` | results by taxon: heading, "N Genera (from M specimens)", genus links |
+| `test_search_pages.py::test_genus_filter_narrows_the_specimen_list` | a genus found in the country's results narrows the country's specimen list |
+| `test_search_pages.py::test_results_shown_again_from_the_session`, `test_results_shown_again_keep_the_total` (xfail, F25) | advancedSearchResults.do |
+| `test_search_pages.py::test_search_without_a_method`, `test_recent_images_needs_a_following_parameter` | the messages |
+| `test_search_pages.py::test_recent_images` | recent images page |
+| `test_search_pages.py::test_place_name_opens_the_place_page`, `test_place_not_found`, `test_place_autocomplete` | the Places box |
+| `test_taxon_pages.py::test_taxon_name_redirects_to_the_taxon_page`, `test_autocomplete_suggests_names` | the Taxa box |
+| `test_download_guards.py` | 200 a page, Previous / Next, sorting before paging, 5 seconds for Madagascar, download limits, robots.txt |
+| `test_login_needed.py` | map, compare and field guide of results need a login |
+| `test_browser.py` | the header boxes' suggestions in a real browser |
+| `test_check57_merges.py::test_search_redirects_to_advanced_search` | search.do |

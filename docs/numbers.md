@@ -47,7 +47,7 @@ rule; **not yet** = no test (see the plans in section 4).
 
 ## 2. Inventory
 
-Coverage after 2026-10-21: **42 validated, 22 partly, 54 not yet** of 118 (before: 9, 7, 102).
+Coverage after 2026-10-22: **48 validated, 23 partly, 47 not yet** of 118 (2026-10-21: 42, 22, 54; before: 9, 7, 102). The public page flows of road map step 2 added the API meta counts and the locality page's collections ([flows/api.md](flows/api.md), [flows/specimen-and-image-pages.md](flows/specimen-and-image-pages.md)).
 
 | # | Page | Number | How it is computed | Status | Test |
 |---|---|---|---|---|---|
@@ -116,7 +116,7 @@ Coverage after 2026-10-21: **42 validated, 22 partly, 54 not yet** of 118 (befor
 | 63 | specimen, collection, locality pages | Specimen Image Count (admin) | specimen.image_count (set 4) | yes | inv:taxon.images |
 | 64 | specimen, collection, locality pages | specimenImages N Images | live: the specimen's images | not yet | not yet |
 | 65 | specimen, collection, locality pages | collection N specimens of M species | live | not yet | not yet |
-| 66 | specimen, collection, locality pages | locality N collections | live | not yet | not yet |
+| 66 | specimen, collection, locality pages | locality N collections | live | partly | e2e:test_specimen_pages.py::test_locality_page_lists_the_specimens_collection |
 | 67 | search results | Advanced search N specimens (M imaged) | live, HTTP session | not yet | not yet: B20 plan |
 | 68 | search results | Advanced search by taxon N species (from M specimens) | live, session | not yet | not yet: B20 plan |
 | 69 | search results | Compare / map preparation counts | live | not yet | not yet |
@@ -151,21 +151,21 @@ Coverage after 2026-10-21: **42 validated, 22 partly, 54 not yet** of 118 (befor
 | 98 | curators, groups, artists, uploads (admin) | statistics.do breakdowns | live | not yet | not yet |
 | 99 | curators, groups, artists, uploads (admin) | orphanedImages Found N | live | not yet | not yet |
 | 100 | API v3.1 | /specimens imageCount | specimen.image_count | yes | inv:taxon.images |
-| 101 | API v3.1 | /specimens, /geoSpecimens, ... meta count | live: rows in this page | not yet | not yet |
+| 101 | API v3.1 | /specimens, /geoSpecimens, ... meta count | live: rows in this page | yes | e2e:test_api.py::test_reply_shape_and_limit |
 | 102 | API v3.1 | /geoSpeciesStats caste counts | live | not yet | not yet |
 | 103 | API v3.1 | /taxa subfamilyCount, genusCount, speciesCount, specimenCount | taxon columns that no current code writes | not yet | not yet: B11 plan (remove or write them) |
 | 104 | API v3.1 | /taxa imageCount | taxon.image_count (= #54) | yes | inv:taxon.images |
-| 105 | API v3.1 | /taxa meta taxonCount | live | not yet | not yet |
-| 106 | API v3.1 | /images meta counts | live | not yet | not yet |
+| 105 | API v3.1 | /taxa meta taxonCount | live | yes | e2e:test_api.py::test_reply_shape_and_limit |
+| 106 | API v3.1 | /images meta counts | live: count = image rows, specimenCount = records | yes | e2e:test_api.py::test_images_records_name_their_specimen; unit:test_api_counts.py::test_images_records_are_keyed_by_specimen_code |
 | 107 | API v3.1 | /taxaImages meta counts | live | not yet | not yet |
 | 108 | API v3.1 | /geolocales subfamily, genus, species, specimen counts | = #20-#22, #26 | yes | inv:place.totals.subfamily; inv:place.totals.genus; inv:place.totals.species; inv:place.totals.specimens |
 | 109 | API v3.1 | /geolocales imageCount, imagedSpecimenCount | = #29, #27 | yes | inv:place.images; cc:place images |
 | 110 | API v3.1 | /geolocales endemic, introduced counts | = #24, #25 | partly | inv:place.totals.endemic; inv:place.totals.introduced |
-| 111 | API v3.1 | /geolocales meta geolocaleCount | live | not yet | not yet |
+| 111 | API v3.1 | /geolocales meta geolocaleCount | live | yes | e2e:test_api.py::test_reply_shape_and_limit |
 | 112 | API v3.1 | /geolocaleTaxa per row counts | list rows | partly | inv:list.genus; cc:specimens; cc:images |
-| 113 | API v3.1 | /geolocaleTaxa meta count | live | not yet | not yet |
+| 113 | API v3.1 | /geolocaleTaxa meta count | live (metaData geolocaleCount) | yes | e2e:test_api.py::test_reply_shape_and_limit |
 | 114 | API v3.1 | /bioregions 6 counts | bioregion table (= place page) | yes | inv:place.totals.subfamily; inv:place.totals.genus; inv:place.totals.species; inv:place.totals.specimens; inv:place.images |
-| 115 | API v3.1 | /bioregions meta count | live | not yet | not yet |
+| 115 | API v3.1 | /bioregions meta count | live (metaData bioregionCount) | yes | e2e:test_api.py::test_reply_shape_and_limit |
 | 116 | API v3.1 | /bioregionTaxa per row counts | list rows | partly | inv:list.genus; cc:specimens |
 | 117 | API v3.1 | /unimagedGeolocaleTaxa list | live: names without a specimen with an image of the ant (was image_count > 1) | partly | unit:test_api_counts.py::test_a_taxon_with_one_image_of_the_ant_is_imaged; unit:test_api_counts.py::test_endpoint_uses_the_rule |
 | 118 | API v3.1 | /bioregionTaxa, /geolocaleTaxa meta and dev counters | live | not yet | not yet |

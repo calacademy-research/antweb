@@ -10,10 +10,11 @@ AntWeb (https://www.antweb.org) is the California Academy of Sciences' database 
 | [runbook.md](runbook.md) | **Operations runbook.** Deploy and rollback, restart, logs, common checks, backups and restore to staging, what each alert means, weekly reboot, restart checker and watchdog, settings switches, emergencies (site down, disk full, nightly stuck, upload stuck). |
 | [catalog/actions.md](catalog/actions.md) | **Function catalog.** One row per Struts action (`*.do`), per sub-action (`?action=...`) and per API v3.1 route: URL, Java class, JSPs, the access check found in the code, the anonymous result on staging, the e2e tests that request it, recent traffic, purpose and status (keep, check, remove?). |
 | [catalog/actions.csv](catalog/actions.csv) | The same catalog as CSV. The purpose, status and notes columns are written by hand here. |
-| [catalog/coverage-gaps.md](catalog/coverage-gaps.md) | Rows with no functional e2e test, most important first (uploads, curator saves, login, nightly jobs, public pages). |
+| [catalog/coverage-gaps.md](catalog/coverage-gaps.md) | Rows with no functional e2e test, most important first (uploads, curator saves, login, nightly jobs, public pages). Since step 2 every public page with traffic names a test; the remaining public rows are aliases, plain-text reports and the World Ant Collections pages. |
 | [data-model.md](data-model.md) | **Data model.** Every table and view of the database: purpose, key columns, which code writes and reads it, which numbers on the site come from it ([numbers.md](numbers.md)), and its status (in use, unused, backup to drop). Diagram of the core tables. Generator and CI check: `tools/datamodel/list_tables.py`. |
 | [numbers.md](numbers.md) | **Every number on the site** and the test that validates it. |
 | [flows/README.md](flows/README.md) | **Data flows.** Step by step, with class and file names: specimen upload (curator file and TaxonWorks), image upload, AntCat names to AntWeb, the nightly sets 1 to 5; plus the test gaps and findings for these areas. |
+| [flows/taxon-pages.md](flows/taxon-pages.md), [specimen-and-image-pages.md](flows/specimen-and-image-pages.md), [places.md](flows/places.md), [search.md](flows/search.md), [api.md](flows/api.md), [email-and-password-reset.md](flows/email-and-password-reset.md), [home-and-statistics.md](flows/home-and-statistics.md) | **Public pages and the API** (road map step 2), in order of traffic: who uses each page, its URLs, the code path, the tables read, the numbers shown, caching, the answers to unknown names, and the tests. Findings: [flows/public-pages-findings.md](flows/public-pages-findings.md). |
 | [guides/curate-page.md](guides/curate-page.md) | **Curate page guide** for curators and admins: each tool on the Curator Tools page, in page order, what it is for and how to use it. |
 | [guides/manager-tools.md](guides/manager-tools.md) | **Manager Tools guide** for admins: Museum, Geolocale, Project Manager, Photographers, Admin Alert, Bioregion and Introduced Map, Query and Log Manager; fields, what saving does, pitfalls. |
 | [../tests/e2e/README.md](../tests/e2e/README.md) | The end-to-end test suite: what each test file checks and how to run it. |
@@ -53,7 +54,7 @@ In `docs/`:
 | File | Topic |
 |---|---|
 | [INDEX-2026-01.md](INDEX-2026-01.md) | The previous index of this folder (January 2026) |
-| [API.md](API.md) | API documentation |
+| [API.md](API.md) | API documentation (the route list; every route in detail, with its tables and tests: [flows/api.md](flows/api.md)) |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Architecture overview (January 2026; superseded by [architecture-overview.md](architecture-overview.md)) |
 | [DATABASE.md](DATABASE.md) | Database schema |
 | [DEVELOPMENT.md](DEVELOPMENT.md) | Development guide |
