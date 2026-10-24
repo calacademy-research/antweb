@@ -163,6 +163,7 @@ public class MessageMgr {
     public static final String nonAntTaxa = "nonAntTaxa";
     /** 2026-10-22: a line given as an ant whose genus is not an ant genus in AntCat (e.g. Termes), or not a name. Kept. */
     public static final String genusNotInAntcat = "genusNotInAntcat";
+    public static final String codeQuoteReplaced = "codeQuoteReplaced";
     public static final String invalidSpeciesName = "invalidSpeciesName";
     public static final String specialCharacterFound = "specialCharacterFound";
     public static final String specimenIdSpacesRemoved = "specimenIdSpacesRemoved";
@@ -292,6 +293,7 @@ public class MessageMgr {
       testList.add(new Test(badRankList, SET, "<b>Parsing Errors (bad rank) <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(codeNotFoundInLine, SET, "<b>Code not found <font color=red>(fix these)</font></b>"));     
       testList.add(new Test(nonAntTaxa, SET, "<b>Non-ant taxa <font color=green>(uploaded)</font></b>"));     
+      testList.add(new Test(codeQuoteReplaced, SET, "<b>Locality or collection code with a double quote: each quote was replaced by - <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(genusNotInAntcat, SET, "<b>Genus not in AntCat (not an ant?) <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(invalidSpeciesName, SET, "<b>Invalid species name <font color=red>(not uploaded)</font></b>"));
 

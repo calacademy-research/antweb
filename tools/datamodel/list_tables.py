@@ -36,14 +36,15 @@ Usage:
                                                       newest) differ in a way that is not on the allow-list
                                                       below (CI, tests.yaml)
 
-The live snapshot (2026-10-22): doc/schema/live-schema-<date>.tsv is the output of the query above on production. The
+The live snapshot (2026-10-22, refreshed 2026-10-23 for the old tables dropped then): doc/schema/live-schema-<date>.tsv
+is the output of the query above on production. The
 catch-up file db/upgrade/8.115/2026-10-22-schema-catch-up.sql brings the repository's SQL to it; its guarded
 procedure calls (CALL schema_add_column / schema_modify_column / schema_drop_column / schema_drop_empty_table /
 schema_drop_view) are read
 here like the ALTER TABLE and DROP VIEW they run. What may still differ (--check passes):
   - tables only live whose names say they are dated backups (BACKUP_PATTERN; the same pattern as SchemaCheck.java),
   - the old live-only tables and views in LIVE_ONLY_UNUSED / LIVE_ONLY_UNUSED_VIEWS (each has a section in
-    docs/data-model.md, proposed for dropping),
+    docs/data-model.md, proposed for dropping; none since 2026-10-23),
   - a column whose type the repository does not know ("?", from CREATE TABLE ... AS SELECT),
   - a table only the repository has whose name contains * (made at run time, e.g. login_inactive_backup_*).
   - a table the Java code creates itself that production does not have yet (made on first use after the deploy),
@@ -72,14 +73,13 @@ BACKUP_PATTERN = r"(_bak_|_backup_|_deleted_)|_?([0-9]{8}|[0-9]{4}_[0-9]{2}_[0-9
 BACKUP = re.compile(BACKUP_PATTERN)
 
 # Old tables and views production has and no SQL in the repository creates, that no code reads (search of src/, web/,
-# api/, bin/, 2026-10-22). docs/data-model.md section 13 proposes dropping them (needs Brian's yes, back up first).
+# api/, bin/). docs/data-model.md section 13 lists them; dropping one needs Brian's yes and a backup first.
 # A table dropped from production after the snapshot is removed from here when the snapshot is refreshed.
-LIVE_ONLY_UNUSED = {
-    "afro_types_tmp", "artist_copy", "description", "favorite_images", "groups_project", "homepage", "image_backup",
-    "image_count", "image_count_materialized", "junkspec", "proj_taxont", "similar_species", "synonymy",
-    "temp_image_artist",
-}
-LIVE_ONLY_UNUSED_VIEWS = {"darwin_core_2_test"}
+# Empty since 2026-10-23: the 14 tables and 1 view listed here on 2026-10-22 were archived and dropped
+# (db/upgrade/8.115/2026-10-23-drop-old-tables-widen-group-name.sql, docs/runbook.md), and the snapshot
+# doc/schema/live-schema-2026-10-23.tsv no longer has them.
+LIVE_ONLY_UNUSED = set()
+LIVE_ONLY_UNUSED_VIEWS = set()
 
 COLUMN_SKIP = ("primary", "key", "index", "unique", "constraint", "foreign", "fulltext", "check", "spatial")
 

@@ -270,13 +270,13 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
                 where.add(getSearchString("sp.localityname", localityNameSearchType, localityName));
             }
             if (localityCode != null && localityCode.length() > 0) {
-                where.add(getSearchString("sp.localitycode", localityCodeSearchType, localityCode));
+                where.add(getCodeSearchString("sp.localitycode", localityCodeSearchType, localityCode));
             }
             if (locatedAt != null && locatedAt.length() > 0) {
                 where.add(getSearchString("sp.locatedat", locatedAtSearchType, locatedAt));
             }
             if (collectionCode != null && collectionCode.length() > 0) {
-                where.add(getSearchString("sp.collectioncode", collectionCodeSearchType, collectionCode));
+                where.add(getCodeSearchString("sp.collectioncode", collectionCodeSearchType, collectionCode));
             }
             if (collectedBy != null && collectedBy.length() > 0) {
                 where.add(getSearchString("sp.collectedby", collectedBySearchType, collectedBy));

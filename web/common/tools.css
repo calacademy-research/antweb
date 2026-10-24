@@ -263,6 +263,8 @@
 .aw-tools tr:nth-child(even) > td { background: #fafbfc; }
 .aw-tools tr:hover > td { background: #f2f6fc; }
 .aw-tools th.aw-num, .aw-tools td.aw-num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* A cell kept on one line (dates and times). */
+.aw-tools th.aw-nowrap, .aw-tools td.aw-nowrap { white-space: nowrap; }
 /* Label / value tables (job details, server properties): no header row, no stripes. */
 .aw-tools table.aw-kv { background: transparent; }
 .aw-tools table.aw-kv th {

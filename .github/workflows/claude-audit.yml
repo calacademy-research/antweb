@@ -1,0 +1,88 @@
+# Scheduled Claude audit of the code, one area per run (Brian Fisher, 2026-10-23: use the Anthropic API
+# credit before it expires on 2026-11-08). Script: .github/scripts/claude_audit.py.
+# The repository is public: the report is encrypted for .github/audit-recipient.pem and uploaded as an
+# artifact; the job summary shows only the area, size, tokens and estimated cost. Scheduled runs stop
+# by themselves after 2026-11-07. Run one area by hand: Actions, "Claude audit", Run workflow, area name.
+name: Claude audit
+
+on:
+  schedule:
+    # Four runs a day (UTC hours below must match SLOT_HOURS), away from the nightly (12:00-15:30 UTC)
+    # and the daily end-to-end run (20:17 UTC).
+    - cron: "10 1 * * *"
+    - cron: "10 5 * * *"
+    - cron: "10 9 * * *"
+    - cron: "10 17 * * *"
+  workflow_dispatch:
+    inputs:
+      area:
+        description: "Area to audit (e.g. upload-1; empty = next in the rotation)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write   # to push the encrypted report to the audit-reports branch
+
+concurrency:
+  group: claude-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check that the API key secret exists
+        id: key
+        env:
+          HAS_KEY: ${{ secrets.ANTHROPIC_API_KEY != '' }}
+        run: |
+          if [ "$HAS_KEY" = "true" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::ANTHROPIC_API_KEY secret is not set; skipping the audit."
+          fi
+
+      - name: Checkout master
+        if: steps.key.outputs.present == 'true'
+        uses: actions/checkout@v5
+        with:
+          ref: master
+          fetch-depth: 1
+
+      - name: Audit one area
+        if: steps.key.outputs.present == 'true'
+        timeout-minutes: 18
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          AREA: ${{ github.event.inputs.area }}
+          SCHEDULE: ${{ github.event.schedule }}
+          SLOT_HOURS: "1,5,9,17"
+          OUT: audit-out
+        run: python3 .github/scripts/claude_audit.py
+
+      # The encrypted report goes to the branch audit-reports (no code, one file per run), where the key holder
+      # reads it with git; artifacts are stored on a host this project's session cannot reach. Encrypted, so it
+      # can sit in a public repository.
+      - name: Push the encrypted report to the audit-reports branch
+        if: steps.key.outputs.present == 'true' && hashFiles('audit-out/*.cms') != ''
+        run: |
+          set -e
+          git config user.name "claude-audit"
+          git config user.email "claude-audit@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin audit-reports >/dev/null 2>&1; then
+            git fetch -q --depth 1 origin audit-reports
+            git switch -q -c audit-reports FETCH_HEAD
+          else
+            git switch -q --orphan audit-reports
+            git rm -rq --cached . >/dev/null 2>&1 || true
+            git clean -fdqx -e audit-out
+            printf 'Encrypted Claude audit reports (see .github/workflows/claude-audit.yml on master). No code here.\n' > README.md
+            git add README.md
+          fi
+          mkdir -p reports
+          cp audit-out/*.cms reports/
+          git add reports
+          git commit -qm "Claude audit report ${GITHUB_RUN_ID}"
+          git push -q origin audit-reports

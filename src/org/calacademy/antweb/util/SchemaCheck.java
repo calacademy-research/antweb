@@ -23,7 +23,8 @@ import java.util.regex.Pattern;
  * right stays right." Read-only.
  *
  * The production schema (every table and view, with its columns and their types) was exported on 2026-10-22 and
- * committed as doc/schema/live-schema-2026-10-22.tsv; db/upgrade/8.115 brought the repository's SQL to it, and CI
+ * committed as doc/schema/live-schema-2026-10-22.tsv (refreshed as live-schema-2026-10-23.tsv when the old unused
+ * tables were dropped); db/upgrade/8.115 brought the repository's SQL to it, and CI
  * (tools/datamodel/list_tables.py --check) keeps the repository's SQL and the snapshot the same. This check keeps the
  * live database and the snapshot the same: it reads information_schema of the database the site uses and lists every
  * table or view added or removed, and every column added, removed or retyped (views: added or removed), since the

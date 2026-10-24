@@ -378,6 +378,143 @@ rm /etc/cron.d/staging-refresh && ls /etc/cron.d/
 
 Expect `staging-refresh` no longer listed. To start it again, step 10.
 
+## Drop the old unused tables (2026-10-23)
+
+Brian's yes of 2026-10-22: drop the 14 old tables and 1 view that nothing reads (`docs/data-model.md` section 13, "Dropped already"), each backed up first, and widen `upload.group_name` from varchar(64) to varchar(100) (the width of `ant_group.name`). The SQL is `db/upgrade/8.115/2026-10-23-drop-old-tables-widen-group-name.sql` (pull request #249). The objects: tables `afro_types_tmp`, `artist_copy`, `description`, `favorite_images`, `groups_project`, `homepage`, `image_backup`, `image_count`, `image_count_materialized`, `junkspec`, `proj_taxonT` (capital T), `similar_species`, `synonymy`, `temp_image_artist`; view `darwin_core_2_test`.
+
+**Order.** Staging, then production, on the same day (the weekly staging refresh copies production's database to staging, so a staging-only drop would come back). On production: archive (a), run the file (b) and check (c) first, then Claude merges the pull request (it deploys by itself), then the structure check (c2). Uploads are safe in either order: the new code cuts a group name to the column's real width (read on every upload: 64 before (b), 100 after), and the old code works with the wider column. Running (b) first keeps the time in which the repository and production differ short: between (b) and the deploy, and in the other order until (b) runs, the count check page (`countCheck.do`, "Database structure") lists the 15 objects as removed and `upload.group_name` as retyped; nothing else shows it. Do it after 08:15 Pacific (not during the nightly run) and not while an upload is running: the ALTER holds the `upload` table for a moment.
+
+Commands (b) and staging's (c2) fetch the pull request's files from GitHub into git's FETCH_HEAD (`git fetch ... pull/249/head`). This changes no file in the checkout, and it works before and after the merge. (b) copies the SQL file to `/root/drop-old-tables-20261023.sql` and runs it only if its SHA-256 is the one reviewed (pinned in the command).
+
+### Old tables: staging
+
+**a1. Look before changing anything** (read-only).
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select table_name, table_type, table_rows, round((data_length + index_length) / 1048576, 1) as mb from information_schema.tables where table_schema = database() and table_name in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist','darwin_core_2_test') order by table_name; select table_type, count(*) as n from information_schema.tables where table_schema = database() group by table_type; select column_type, is_nullable, character_set_name, collation_name, column_default, column_comment from information_schema.columns where table_schema = database() and table_name = 'upload' and column_name = 'group_name'; select max(char_length(group_name)) as longest_group_name from upload; select table_name as other_view_using_them from information_schema.views where table_schema = database() and table_name <> 'darwin_core_2_test' and view_definition regexp concat(char(96 using utf8mb4), 'ant', char(96 using utf8mb4), '[.]', char(96 using utf8mb4), '(afro_types_tmp|artist_copy|description|favorite_images|groups_project|homepage|image_backup|image_count|image_count_materialized|junkspec|proj_taxonT|similar_species|synonymy|temp_image_artist)', char(96 using utf8mb4)); select table_name, referenced_table_name from information_schema.key_column_usage where table_schema = database() and referenced_table_name in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist'); select trigger_name, event_object_table from information_schema.triggers where trigger_schema = database() and event_object_table in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist'); select definer as view_definer from information_schema.views where table_schema = database() and table_name = 'darwin_core_2_test'; show grants;"; df -h /mnt/backup
+```
+
+Expect: 15 rows (14 `BASE TABLE`, 1 `VIEW`) with their sizes in MB; the number of tables and views (note it: after (b) there are 14 tables and 1 view fewer); `varchar(64) NO utf8mb3 utf8mb3_general_ci NULL` and an empty comment (the ALTER in (b) writes the whole column definition, so a default or comment would be lost); a longest group name of 64 or less; nothing under `other_view_using_them` (a view that reads one of the tables, written `ant`.`name` in its definition; until 2026-10-23 the check also matched columns of the same name, such as `s`.`image_count` in the API views), no foreign key and no trigger lines; the view's definer; the login's grants; free space on `/mnt/backup` well above the total MB. Stop and paste the output to Claude if the column is not `utf8mb3` / `utf8mb3_general_ci`, if it has a default or a comment, if a view, key or trigger is listed, or if the grants are not `ALL PRIVILEGES ON ant.*` (or more).
+
+**a2. Archive the 15 objects.** On staging `/mnt/backup` is a plain folder on staging's own disk (not production's backup bucket); the archive goes to `/mnt/backup/archive` there too. The command refuses to overwrite an archive that exists.
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; A=/mnt/backup/archive/old_tables_20261023.sql.gz; install -d -m 700 /mnt/backup/archive && test ! -e "$A" && (set -o pipefail; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysqldump -u "$(sed -n 's/^user=//p' "$F")" --single-transaction --no-tablespaces --skip-triggers --default-character-set=utf8mb4 ant afro_types_tmp artist_copy description favorite_images groups_project homepage image_backup image_count image_count_materialized junkspec proj_taxonT similar_species synonymy temp_image_artist darwin_core_2_test | gzip -c > "$A") && gzip -t "$A" && ls -l "$A" && zgrep -c '^CREATE TABLE' "$A" && zgrep -c 'VIEW `darwin_core_2_test` AS' "$A" && gunzip -c "$A" | tail -1
+```
+
+Expect: the file with its size, then `14` (one `CREATE TABLE` per table), `2` (mysqldump writes a stand-in for the view, then its definition) and `-- Dump completed on ...`. These numbers were checked with mysqldump 8.0; staging runs 8.4 like production, so staging's output is the check for production: if it differs, paste it to Claude before going on. Anything else (an error, a number other than 14 and 2, no "Dump completed"): stop, do not run (b), and paste the output to Claude. Nothing in the database has changed. A failed archive stays on disk and the command refuses to overwrite it: before running a2 again (and only if (b) has not run), remove it with `rm /mnt/backup/archive/old_tables_20261023.sql.gz`.
+
+**b. Run the upgrade file.**
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; U=/root/drop-old-tables-20261023.sql; test -s /mnt/backup/archive/old_tables_20261023.sql.gz && git -C /root/antweb-next fetch -q origin pull/249/head && git -C /root/antweb-next show FETCH_HEAD:db/upgrade/8.115/2026-10-23-drop-old-tables-widen-group-name.sql > "$U" && echo "2b4a6334c0f5ddbfb2371728fb4bb707bcdefaddc5af33b670e8584045ed01ca  $U" | sha256sum -c && docker exec -i -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant < "$U" && echo DONE
+```
+
+Expect `/root/drop-old-tables-20261023.sql: OK` (the file is the reviewed one: its SHA-256 is pinned here), then `DONE`. `FAILED` there means the file on GitHub changed after review: nothing was run; stop and tell Claude. If an error mentions `SYSTEM_USER` or `DEFINER`, the view could not be dropped (it is the last statement: the column and the 14 tables are done); paste it to Claude. Any other error: paste it to Claude; the file can be run again.
+
+**c. Check.**
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select count(*) as old_objects_left from information_schema.tables where table_schema = database() and table_name in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist','darwin_core_2_test'); select table_type, count(*) as n from information_schema.tables where table_schema = database() group by table_type; show columns from upload like 'group_name'; select character_set_name, collation_name from information_schema.columns where table_schema = database() and table_name = 'upload' and column_name = 'group_name';"
+```
+
+Expect `old_objects_left` 0; 14 tables and 1 view fewer than in a1; `group_name varchar(100) NO`; `utf8mb3 utf8mb3_general_ci`.
+
+**c2. Compare the whole structure with the repository's new snapshot** (read-only; the export command of `docs/data-model.md`).
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties
+sed -n 's/^password=//p' "$F" | docker exec -i antweb_mysql_1 sh -c 'IFS= read -r p; MYSQL_PWD="$p" exec mysql -B -N -u "$1" ant -e "SELECT c.table_name, c.column_name, c.column_type, t.table_type FROM information_schema.columns c JOIN information_schema.tables t USING (table_schema, table_name) WHERE c.table_schema = DATABASE() ORDER BY c.table_name, c.ordinal_position"' sh "$(sed -n 's/^user=//p' "$F")" > /root/live-schema.tsv
+git -C /root/antweb-next fetch -q origin pull/249/head && git -C /root/antweb-next show FETCH_HEAD:doc/schema/live-schema-2026-10-23.tsv | diff - /root/live-schema.tsv; echo "diff exit $?"
+```
+
+Staging's database is a copy of production from its last weekly refresh, so a few lines may differ (dated backup tables, names with `_bak_`, `_backup_`, `_deleted_` or a date at the end, and anything changed on production since that copy). None of the 15 objects and no `upload group_name` line should appear. Paste the output to Claude.
+
+### Old tables: production
+
+**a1. Look before changing anything** (read-only).
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select table_name, table_type, table_rows, round((data_length + index_length) / 1048576, 1) as mb from information_schema.tables where table_schema = database() and table_name in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist','darwin_core_2_test') order by table_name; select table_type, count(*) as n from information_schema.tables where table_schema = database() group by table_type; select column_type, is_nullable, character_set_name, collation_name, column_default, column_comment from information_schema.columns where table_schema = database() and table_name = 'upload' and column_name = 'group_name'; select max(char_length(group_name)) as longest_group_name from upload; select table_name as other_view_using_them from information_schema.views where table_schema = database() and table_name <> 'darwin_core_2_test' and view_definition regexp concat(char(96 using utf8mb4), 'ant', char(96 using utf8mb4), '[.]', char(96 using utf8mb4), '(afro_types_tmp|artist_copy|description|favorite_images|groups_project|homepage|image_backup|image_count|image_count_materialized|junkspec|proj_taxonT|similar_species|synonymy|temp_image_artist)', char(96 using utf8mb4)); select table_name, referenced_table_name from information_schema.key_column_usage where table_schema = database() and referenced_table_name in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist'); select trigger_name, event_object_table from information_schema.triggers where trigger_schema = database() and event_object_table in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist'); select definer as view_definer from information_schema.views where table_schema = database() and table_name = 'darwin_core_2_test'; show grants;"; findmnt /mnt/backup
+```
+
+Expect as on staging; tables and views: 97 and 8 on 2026-10-22 (more tables if dated backups were made since). `findmnt` must show `/mnt/backup` as the rclone mount (`fuse.rclone`), so the archive goes to the Spaces bucket `antweb-dbarchive`. Stop on the same conditions as on staging.
+
+**a2. Archive the 15 objects** to `/mnt/backup/archive/old_tables_20261023.sql.gz` (Spaces bucket `antweb-dbarchive`).
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; A=/mnt/backup/archive/old_tables_20261023.sql.gz; install -d -m 700 /mnt/backup/archive && test ! -e "$A" && (set -o pipefail; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysqldump -u "$(sed -n 's/^user=//p' "$F")" --single-transaction --no-tablespaces --skip-triggers --default-character-set=utf8mb4 ant afro_types_tmp artist_copy description favorite_images groups_project homepage image_backup image_count image_count_materialized junkspec proj_taxonT similar_species synonymy temp_image_artist darwin_core_2_test | gzip -c > "$A") && gzip -t "$A" && ls -l "$A" && zgrep -c '^CREATE TABLE' "$A" && zgrep -c 'VIEW `darwin_core_2_test` AS' "$A" && gunzip -c "$A" | tail -1
+```
+
+Expect `14`, `2` and `-- Dump completed on ...`, as on staging. Otherwise stop; nothing has changed (a failed archive: remove it as on staging before trying again, only if (b) has not run).
+
+**b. Run the upgrade file** (before the merge; see "Order").
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; U=/root/drop-old-tables-20261023.sql; test -s /mnt/backup/archive/old_tables_20261023.sql.gz && git -C /root/antweb fetch -q origin pull/249/head && git -C /root/antweb show FETCH_HEAD:db/upgrade/8.115/2026-10-23-drop-old-tables-widen-group-name.sql > "$U" && echo "2b4a6334c0f5ddbfb2371728fb4bb707bcdefaddc5af33b670e8584045ed01ca  $U" | sha256sum -c && docker exec -i -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant < "$U" && echo DONE
+```
+
+Expect `/root/drop-old-tables-20261023.sql: OK`, then `DONE` (`FAILED` or errors: as on staging).
+
+**c. Check.**
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select count(*) as old_objects_left from information_schema.tables where table_schema = database() and table_name in ('afro_types_tmp','artist_copy','description','favorite_images','groups_project','homepage','image_backup','image_count','image_count_materialized','junkspec','proj_taxonT','similar_species','synonymy','temp_image_artist','darwin_core_2_test'); select table_type, count(*) as n from information_schema.tables where table_schema = database() group by table_type; show columns from upload like 'group_name'; select character_set_name, collation_name from information_schema.columns where table_schema = database() and table_name = 'upload' and column_name = 'group_name';"
+```
+
+Expect `old_objects_left` 0; 14 tables and 1 view fewer than in a1 (83 and 7 if no dated backup was made since 2026-10-22); `group_name varchar(100) NO`; `utf8mb3 utf8mb3_general_ci`. Then tell Claude: Claude merges #249, and the deploy runs by itself (a few minutes; AntWeb restarts and needs 2 to 4 minutes to load).
+
+**c2. After the deploy: compare the whole structure with the new snapshot** (read-only).
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties
+sed -n 's/^password=//p' "$F" | docker exec -i antweb_mysql_1 sh -c 'IFS= read -r p; MYSQL_PWD="$p" exec mysql -B -N -u "$1" ant -e "SELECT c.table_name, c.column_name, c.column_type, t.table_type FROM information_schema.columns c JOIN information_schema.tables t USING (table_schema, table_name) WHERE c.table_schema = DATABASE() ORDER BY c.table_name, c.ordinal_position"' sh "$(sed -n 's/^user=//p' "$F")" > /root/live-schema.tsv
+cat /root/antweb/etc/git-commit; diff /root/antweb/doc/schema/live-schema-2026-10-23.tsv /root/live-schema.tsv; echo "diff exit $?"
+```
+
+Expect the merged commit, then no diff lines and `diff exit 0` (lines for dated backup tables made since 2026-10-22 may appear; any other line: paste it to Claude). Then open https://www.antweb.org/countCheck.do (admin login): "Database structure" names the snapshot `live-schema-2026-10-23.tsv` and says "No change" (again apart from dated backups, which it leaves out).
+
+### Old tables: rollback
+
+Only if something turns out to need the old tables. Production shown; on staging use `/root/antweb-next/etc/db.properties` and the ssh line `ssh root@165.232.136.170`.
+
+**d1. Restore the 14 tables (with their rows) and the view from the archive.**
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; A=/mnt/backup/archive/old_tables_20261023.sql.gz; gzip -t "$A" && gunzip -c "$A" | docker exec -i -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql --default-character-set=utf8mb4 -u "$(sed -n 's/^user=//p' "$F")" ant && echo RESTORED
+```
+
+Expect `RESTORED`. An error about `DEFINER`, `SET_USER_ID` or `SYSTEM_USER` concerns only the view (it comes last in the archive; the tables are back): the view is not needed by anything. The count check then lists the restored objects as added, until the snapshot is set back (a pull request: Claude).
+
+**d2. Before narrowing `upload.group_name` back to 64:** check that no longer name was stored since (read-only).
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select count(*) as longer_than_64 from upload where char_length(group_name) > 64;"
+```
+
+**d3. Narrow the column** only if d2 gave 0 (the code reads the column's width on every upload and cuts to it, so it needs no change). With rows longer than 64 MySQL refuses the ALTER ("Data too long") and changes nothing.
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "ALTER TABLE upload MODIFY group_name varchar(64) CHARACTER SET utf8mb3 COLLATE utf8mb3_general_ci NOT NULL; show columns from upload like 'group_name';"
+```
+
+Expect `group_name varchar(64) NO`.
+
+Tested 2026-10-22 on a local MySQL 8.0.46 with the 14 tables (production's columns), the view and the `upload` table, as a login with `ALL PRIVILEGES ON ant.*`: a1's queries, the archive (14 and 2, "Dump completed"), the file (twice), c, the restore d1 and the ALTER back d3 (refused while a 81-character name was stored). Dropping the view failed with `SYSTEM_USER` when its definer was root, hence the definer check in a1 and the view last in the file.
+
 ## Alerts
 
 All alerts email bfisher@calacademy.org.
@@ -388,6 +525,7 @@ All alerts email bfisher@calacademy.org.
 | Memory above 90% for 30 minutes | Java heap growth (Java may use up to 40% of RAM), MySQL, or many API bulk requests (API is capped at 1 GB). | `free -h; docker stats --no-stream`; `grep "heap used" /root/antweb/logs/web/compute.log \| tail -5` shows the heap at the end of each nightly run. Restart AntWeb at a quiet time. If it recurs, `nightlyRestart=true` (Switches) brings back the daily restart. |
 | Disk above 85% for 30 minutes | Logs, Docker images or build cache, journal. | "Disk full" below. |
 | "Log size check" (email from antweb@antweb.org and an admin alert, after the nightly run) | A log file over 1 GB, or the disk over 85%. | "A log grows too big" (Logs, above). |
+| "Storage mount problem" (email from antweb@antweb.org, hourly check `MountCheck`, at once and every 6 hours while it lasts; one "working again" email) | `/mnt/antweb` cannot be written and read back (file `web/log/upload/mountcheck-<env>.txt`), or (production) `/mnt/backup` cannot be listed or its newest daily dump is over 26 hours old or under 1 MB. | "Storage mounts (/mnt/antweb, /mnt/backup)" (Emergencies, below). |
 | Disk read above 90 MB/s for 1 hour (antweb-prod) | The nightly sets, or a long database scan. | If outside 05:00 to 08:00: running queries with the DB pattern and `show full processlist;`. |
 | Uptime: www.antweb.org/v3.1/ down 10 minutes from all regions | Cloudflare cannot reach Caddy or the API (droplet down, Caddy or API stopped, firewall, certificate). This check does not cover Tomcat: AntWeb pages can be down while it passes. | "Site down" below. |
 | Uptime: www.antcat.org/v1/taxa/429011 | antcat.org is down. | AntCat runbook (AntCat repository and project instructions). |
@@ -452,6 +590,84 @@ Undo: `mv taxonworks.properties.off-<date> taxonworks.properties`. Without the f
 
 **Stop all outgoing mail** (for example a mail loop): rename `mail.properties` the same way (`mv mail.properties mail.properties.off-$(date +%Y%m%d)`). Messages are then only written to `logbak/emails.log`.
 
+## One-off data repairs
+
+### Locality codes stored URL-encoded
+
+Found 2026-10-22: until then the specimen upload stored every locality code URL-encoded (`Ahi_<5m` as
+`Ahi_%3C5m`, `KM55""805` as `KM55%22%22805`, `MontagnedesFrançais_150` as `MontagnedesFran%E7ais_150`):
+1,117 specimens in 67 codes on production (Economo Ant Lab 921 in 18 codes, California Academy of Sciences 196 in
+49). The upload now stores codes as written (`docs/flows/specimen-upload.md`, section 3b). The old rows are fixed by:
+
+- **CAS (group 1): nothing to do.** The nightly TaxonWorks upload replaces all CAS specimens every night, so the
+  first nightly run after the fix is deployed stores the CAS codes plain. Check the next day (below). A code whose
+  original had a character outside ISO-8859-1 (a curly apostrophe, stored as `%3F`) comes back with that character.
+- **Every other group (Economo Ant Lab): this repair**, or the group's next upload, whichever comes first. The
+  repair decodes the stored codes; it cannot restore a character that was stored as `%3F`.
+
+Run after the code fix is deployed (the repaired codes need the new lookups), staging first, outside 05:00 to
+08:00 Pacific and not while the group is uploading. The tool is `tools/data/locality_codes.py` (read its header).
+
+1. Preview (read-only). Lists each stored code with its decoded value, group, specimen count and locality names,
+   and marks it `ok`, `merge` (the decoded code already belongs to specimens of the same group and locality name:
+   after the repair they share one locality page) or `collision` (the decoded code belongs to another group or
+   another locality name, ignoring case and accents as MySQL does: left out of the repair, decide by hand).
+
+```
+# ssh root@165.232.136.170   (staging)
+cd /root/antweb-next && python3 tools/data/locality_codes.py preview --project /root/antweb-next --out /root/loccode-preview-20261022.tsv
+```
+
+   Expect a summary (`N stored codes (per group), N specimens`, counts per status and per group) and one line per
+   code. Staging holds production's data as of its last refresh, so the numbers should be close to 67 and 1,117.
+   Send the output to Claude before going on if any line says `collision`.
+
+2. Write the repair SQL, leaving out CAS (no database access):
+
+```
+# ssh root@165.232.136.170   (staging)
+cd /root/antweb-next && python3 tools/data/locality_codes.py sql --preview /root/loccode-preview-20261022.tsv --skip-group 1 --out /root/loccode-repair-20261022.sql
+```
+
+   Expect `Repair SQL written ...: N stored codes, N specimens` (Economo: about 18 codes, 921 specimens), the
+   codes left out, and the rollback statement.
+
+3. Run it. The script first copies `code, access_group, localitycode` of the affected specimens to
+   `specimen_localitycode_bak_20261022` (it stops there with "already exists" if the repair ran before), then
+   updates each code in one transaction.
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; docker exec -i -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant < /root/loccode-repair-20261022.sql
+```
+
+   Expect four small results (a heading line and a value line each; `check_counts` says `counts match`): `backed_up` equal to `expected`, `changed` equal to `expected`, and
+   `still_encoded_in_repaired_groups` 0 (or the number of specimens of collisions left out in those groups).
+   `backed_up` can be larger than `expected` when a code left out as a collision differs from a repaired one only in
+   upper and lower case (MySQL compares them as equal); those extra rows are only copied, not changed.
+   If `changed` differs from `expected` the script stops with "Subquery returns more than 1 row" before its
+   commit, and nothing is changed. Send the output to Claude; to run it again, first
+   `drop table specimen_localitycode_bak_20261022;` (the backup table is made before the transaction).
+
+4. Check: the Integrity Check query `query.do?name=encodedLocalityCodes` lists no Economo codes any more, and a
+   repaired code opens its locality page with its specimens, for example `locality.do?code=KM55%22%22805`
+   (the code `KM55""805`). Map popups of the group link the old code until the next nightly run rebuilds the maps.
+
+5. Then production: the same three commands with `ssh root@165.232.137.86`, `cd /root/antweb`,
+   `--project /root/antweb` and `F=/root/antweb/etc/db.properties`.
+
+Rollback (puts every changed code back, from the backup table). Only before the group uploads again: after an
+upload it would put the old encoded codes over the new plain ones.
+
+```
+# ssh root@165.232.137.86   (antweb-prod; on staging use /root/antweb-next/etc/db.properties)
+F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "update specimen s join specimen_localitycode_bak_20261022 b on b.code = s.code and b.access_group = s.access_group set s.localitycode = b.localitycode;"
+```
+
+The day after the deploy, check CAS: `query.do?name=encodedLocalityCodes` (or the Integrity Check) should list no
+California Academy of Sciences codes once a nightly TaxonWorks upload has run (`taxonworksNightly.log`). Keep the
+backup table until the codes have been checked; drop it later (`drop table specimen_localitycode_bak_20261022;`).
+
 ## Emergencies
 
 ### Site down
@@ -503,8 +719,31 @@ tail -30 /root/antweb/logs/detail/upload.log; docker logs antweb_antweb_1 --sinc
 
 If the log shows recent progress, wait: large uploads take a long time. If nothing has moved for a long time (no rule yet; judge from the upload's size), restart AntWeb. The upload is rolled back and the curator repeats it. If it was the nightly TaxonWorks upload, it runs again the next night, or an admin starts it by hand at `/utilData.do?action=taxonWorksNightly`.
 
+### Storage mounts (/mnt/antweb, /mnt/backup)
+
+On 2026-10-22 both production mounts stopped working for 26 hours: the Spaces access key they used had been deleted
+(it was believed to be staging's only). Upload reports showed "no longer available", the CAS file copy failed and the
+01:00 dump was not written. Since 2026-10-23 the hourly `MountCheck` emails within the hour.
+
+**Rule: before deleting or rotating a Spaces key, check every server that may use it**
+(`grep access_key_id /root/.config/rclone/rclone.conf` on each droplet shows the key id, never the secret; compare it
+with the Access Key column in the DigitalOcean list). A bucket with a bucket policy (`antweb`) accepts only Full Access keys.
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+systemctl status rclone rclone-dbarchive --no-pager | grep -E "Active|error" ; findmnt /mnt/antweb ; findmnt /mnt/backup ; ls -l /mnt/antweb/web/log/upload/mountcheck-* ; ls -lt /mnt/backup/db/daily | head -3
+```
+
+- "Input/output error" or a hang: the mount is dead. If rclone's log says the key is unknown (`InvalidAccessKeyId`),
+  make a new Full Access key in https://cloud.digitalocean.com/spaces/access_keys, then Brian types it in at a prompt
+  (never in chat or a file in git):
+  `read -rp 'Key id: ' K; read -rsp 'Secret: ' S; echo; rclone config update digitalocean access_key_id="$K" secret_access_key="$S" >/dev/null; unset K S`
+- Then `systemctl restart rclone rclone-dbarchive`, check `findmnt` again, and restart AntWeb
+  (`docker restart antweb_antweb_1`, 2 to 4 minutes): the container keeps the dead mount until it restarts.
+- A dump that was missed: run `/root/antweb/bin/db-daily-dump.sh` by hand (about 2 minutes, about 120 MB).
+
 ## Backup facts checked on 2026-10-18
 
 - Production: `/mnt/backup` is the rclone mount of Spaces bucket `antweb-dbarchive` (service `rclone-dbarchive`), `/mnt/antweb` of bucket `antweb` (service `rclone`); both enabled at boot. Check with `findmnt /mnt/backup` (one folder per call).
 - Staging: `/mnt/backup` is a plain local folder on staging's own disk (last written October 2025); staging runs no daily dump, so it never touches production's backups.
-- `/mnt/backup/db/daily/error.log` holds failures from up to December 2023 only. A failed or skipped dump is written only there and is not reported anywhere yet (an alert is on the to-do list).
+- `/mnt/backup/db/daily/error.log` holds failures from up to December 2023 only. Since 2026-10-23 the hourly mount check emails when the newest dump is over 26 hours old (Alerts, above).

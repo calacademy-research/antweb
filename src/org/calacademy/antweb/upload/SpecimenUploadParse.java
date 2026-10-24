@@ -794,81 +794,57 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         return new Coordinate(lon, lat);
     }
 
+    /** A code with a double quote is listed in the upload report with the code it is stored as (UploadUtil.quotesToDash). */
+    private void reportQuotes(String code, String kind) {
+        if (code == null || !code.contains("\"")) return;
+        getMessageMgr().addToMessages(MessageMgr.codeQuoteReplaced,
+            Html.esc(kind + " code " + code + " stored as " + UploadUtil.quotesToDash(code)));
+    }
+
     public void cleanLocalityCode(Hashtable specimenItem, Coordinate coord) {
-
-        // If the localitycode is null but the decimal_longitude and decimal_latitude are not
-        // then create a temporary localitycode. Store in a static hashtable so can match up.
-        // This is useful for maps so they can link through to find the specimens.
-        // Do similar for collectioncodes.
-
-        //A.iLog("cleanLocalityCode() localityCode:" + localityCode);
         String code = (String) specimenItem.get("code");
-        String localityName = (String) specimenItem.get("localityname");
-        String localityCode = (String) specimenItem.get("localitycode");
-
-        String origLocalityCode = localityCode;
-
-        if (localityCode != null) {
-            localityCode = UploadUtil.cleanCode(localityCode);
-            //A.iLog(1, "cleanLocalityCode() clean localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode, 200);
-        }
-
-        //A.log("cleanLocalityCode() localityCode:" + localityCode + " coord:" + coord);
-
-        String latLon = null;
-
-        if ((("Null".equals(localityCode) || localityCode == null) || localityCode.length() < 5) && coord != null && (coord.getLat() != 0 && coord.getLon() != 0)) {
-            float lat = coord.getLat();
-            float lon = coord.getLon();
-            latLon = "" + lat + "," + lon;
-
-            if ("Null".equals(localityCode) || localityCode == null) localityCode = "loc";
-
-            //localityCode += latLonHash.get(latLon);
-
-            localityCode += latLon;
-            localityCode = UploadUtil.cleanCode(localityCode);
-
-            //if (lat != 0 || lon != 0) latLonHash.put(latLon, localityCode);
-
-            //A.iLog(2, "cleanLocalityCode() coord localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode, 200);
-            //A.log("cleanLocalityCode() code:" + specimenItem.get("code") + " localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode + " latLon:" + latLon);
-        }
-
-        /*
-        if (localityCode == null || localityCode.length() < 5) {
-            // Not a good code. Make a new and better one.
-
-            localityCode = UploadUtil.createCode(localityCode);
-            //A.iLog(3, "cleanLocalityCode() create localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode, 200);
-            A.log("cleanLocalityCode() create localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode);
-        }
-*/
-        localityCode = HttpUtil.encodePath(localityCode);
-
+        reportQuotes((String) specimenItem.get("localitycode"), "locality");
+        String localityCode = plainLocalityCode((String) specimenItem.get("localitycode"), coord);
         if (localityCode != null) {
             specimenItem.put("localitycode", localityCode);
-
-            //if (localityCode.length() < 8) A.log("cleanLocalityCode() short localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode + " latLon:" + latLon);
         } else {
             A.iLog(7, "cleanLocalityCode() null locality for code:" + code, 1000);
         }
+    }
 
-/*
-        // Already encoded above.
-        String encoded = HttpUtil.encodePath(localityCode);
-        if (encoded != null && !encoded.equals(localityCode)) {
-            A.log("cleanLocalityCode() diff localityCode:" + localityCode + " encoded:" + encoded + " code:" + code);
+    /**
+     * The locality code as it is stored: plain text, never URL-encoded (2026-10-22).
+     *
+     * UploadUtil.cleanCode removes spaces, %, # and apostrophes, as before. A code that is missing, "Null" or
+     * shorter than 5 characters, on a specimen with coordinates, becomes "loc" (or the short code) followed by
+     * "lat,lon", as before.
+     *
+     * Until 2026-10-22 the code was then passed through HttpUtil.encodePath (ISO-8859-1), so "Ahi <5m" was
+     * stored as "Ahi%3C5m", "Français" as "Fran%E7ais" and any character outside ISO-8859-1 (a curly
+     * apostrophe) as "%3F". Links encoded that once more (locality.do?code=Ahi%253C5m). Every link builder
+     * encodes the plain code once (Html.url, UTF-8); the database lookups compare the plain code
+     * (LocalityDb.getLocalityByCode). docs/flows/specimen-upload.md, "Locality and collection codes".
+     */
+    public static String plainLocalityCode(String localityCode, Coordinate coord) {
+        if (localityCode != null) {
+            localityCode = UploadUtil.cleanCode(localityCode);
+            // specimen.localitycode is utf8mb3: a character outside the Basic Multilingual Plane (an emoji) would fail
+            // the insert. It becomes "?", as the old encoding made it.
+            localityCode = localityCode.replaceAll("[^\\u0000-\\uFFFF]", "?");
         }
-*/
-
-        //A.log("cleanLocalityCode() localityCode:" + localityCode + " origLocalityCode:" + origLocalityCode + " localityName:" + localityName);
-        //if ("mem89751".equals(specimenItem.get("code"))) A.log("cleanLocalityCode() lat:" + lat + " lon:" + lon + " localityCode:" + localityCode);
+        if (("Null".equals(localityCode) || localityCode == null || localityCode.length() < 5)
+                && coord != null && coord.getLat() != 0 && coord.getLon() != 0) {
+            String latLon = "" + coord.getLat() + "," + coord.getLon();
+            if ("Null".equals(localityCode) || localityCode == null) localityCode = "loc";
+            localityCode = UploadUtil.cleanCode(localityCode + latLon);
+        }
+        return localityCode;
     }
 
     public void cleanCollectionCode(Hashtable specimenItem) {
         String collectionCode = (String) specimenItem.get("collectioncode");
         String origCollectionCode = collectionCode;
+        reportQuotes(collectionCode, "collection");
 
         collectionCode = UploadUtil.cleanCode(collectionCode);
 

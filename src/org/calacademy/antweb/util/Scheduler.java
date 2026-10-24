@@ -279,6 +279,8 @@ public class Scheduler extends AntwebAction {
 				  // Daily: warn the administrators of a log over 1 GB or a disk over 85% (LogSizeCheck).
 				  try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
 					LogMgr.appendLog("compute.log", "  " + LogSizeCheck.run(connection), true);
+					// The statistics page (statsPage.do): its tables are counted once a day, here, after the nightly numbers.
+					LogMgr.appendLog("compute.log", "  " + org.calacademy.antweb.StatsPageAction.recount(connection), true);
 				  } catch (Exception e) {
 					s_log.warn("doAction() log size check e:" + e);
 				  }

@@ -60,7 +60,7 @@ public final class NumbersTestDb {
 
     static final String[] TABLES = {"taxon", "specimen", "image", "geolocale", "geolocale_taxon", "project", "proj_taxon", "museum",
         "museum_taxon", "bioregion", "bioregion_taxon", "place_image_count", "statistics", "upload", "specimen_name_update", "ant_group",
-        "description_edit", "image_upload", "image_uploaded", "description_hist", "object_edit", "object_hist", "group_count"};
+        "description_edit", "image_upload", "image_uploaded", "description_hist", "object_edit", "object_hist", "group_count", "artist"};
 
     /** Curator numbers as LoginMgr has them for the fixture (login 5): uploads, description edits, image uploads, images uploaded. */
     public static java.util.Map<Integer, int[]> curatorNumbers() {

@@ -52,6 +52,7 @@ public final class NumberChecks {
         adminCurators();
         adminArtists();
         adminImageUploads();
+        adminImageUploadArtists();
         apiTaxa();
         endemicFlags();
         taxonParents();
@@ -758,6 +759,29 @@ public final class NumberChecks {
                 }
             }
             expected("imageUploads").put("total", total);
+        });
+    }
+
+    /**
+     * listImageUploads.do Artist (2026-10-23): every image upload batch names an artist that exists. Removing an artist in
+     * the Artist Manager moved the images but not the batches until 2026-10-23, so production showed "id 514" (and 8 other
+     * deleted numbers) in place of a name. One finding per batch whose artist is missing.
+     */
+    void adminImageUploadArtists() {
+        if (!has("image_upload", "artist_id") || !has("artist", "id")) return;
+        CountInvariants.Check check = new CountInvariants.Check("admin.imageUploadArtists",
+            "listImageUploads.do: each image upload's Artist is an artist in AntWeb (not a deleted number)", "93");
+        inv.check(check, c -> {
+            Map<String, String> uploads = inv.places.computeIfAbsent("image upload", x -> CountInvariants.keyMap());
+            String sql = "select u.id, u.artist_id from image_upload u left join artist a on a.id = u.artist_id"
+                + " where u.artist_id is not null and u.artist_id <> 0 and a.id is null";
+            try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(sql))) {
+                while (r.next()) {
+                    String id = r.getString(1);
+                    uploads.putIfAbsent(id, "image upload " + id);
+                    inv.compare(c, "image upload", id, "Artist " + r.getInt(2) + " (listImageUploads.do) exists", 0, 1, "=", null);
+                }
+            }
         });
     }
 
