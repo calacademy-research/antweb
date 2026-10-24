@@ -42,6 +42,8 @@ public class UploadFileAccessTest extends TestCase {
         assertTrue(UploadFileAction.mayReadLine(login(1, true), "20261024-05:05:20-specimenTW1.txt"));
         assertFalse(UploadFileAction.mayReadLine(login(0, false), "20261024-05:05:20-specimenTW1.txt"));   // not a curator
         assertFalse(UploadFileAction.mayReadLine(null, "20261024-05:05:20-specimenTW1.txt"));
+        assertTrue(UploadFileAction.mayReadLine(login(2, false), "2026-01-01-specimen1.txt"));
+        assertFalse("Worldants backups stay admin material", UploadFileAction.mayReadLine(login(2, false), "20240101-05:00:00-worldants_speciesList.txt"));
         // The whole file stays with the group's own curators.
         assertFalse(UploadFileAction.mayRead(login(2, false), "20261024-05:05:20-specimenTW1.txt"));
     }
