@@ -423,9 +423,9 @@ def test_group_pages_equal_the_stored_upload_numbers():
     """groups.do and group.do (rows 85 to 91): each group's numbers = the numbers the check compared with a recount
     (admin.groups: since 2026-10-22 the group's specimens today, group_count, recounted every night; before a nightly
     run has counted a group, its last upload row);
-    the Totals row = the sum of the rows (contributors, uploads, specimens, ungeoreferenced, flagged, collections,
-    localities); its Subfamilies, Genera, Species are the largest of the rows (labelled Totals; question in
-    docs/numbers.md)."""
+    the Totals row: contributors, uploads, specimens, ungeoreferenced and flagged = the sum of the rows; collections,
+    localities, subfamilies, genera and species = all groups' specimens together, distinct over them (Brian Fisher,
+    2026-10-22, Q8: not the largest group), as the check recounted them ("-" before the first nightly count)."""
     s, exp = expected_numbers()
     groups = exp.get("groups") or {}
     if not groups:
@@ -446,13 +446,20 @@ def test_group_pages_equal_the_stored_upload_numbers():
         totals = [cells[0]] + cells[3:]
         if int(tot.group(1)) != len(rows):
             wrong.append(f"groups.do Totals: {tot.group(1)} contributors, {len(rows)} rows")
-        for i, name in enumerate(["Uploads", "Specimens", "Ungeoreferenced", "Flagged", "Collections", "Localities"]):
+        for i, name in enumerate(["Uploads", "Specimens", "Ungeoreferenced", "Flagged"]):
             col = sum(v[i] or 0 for v in rows.values())
             if totals[i] != col:
                 wrong.append(f"groups.do Totals {name} {totals[i]} != sum of the rows {col}")
-        for i, name in ((6, "Subfamilies"), (7, "Genera"), (8, "Species")):
-            if totals[i] != max(v[i] or 0 for v in rows.values()):
-                wrong.append(f"groups.do Totals {name} {totals[i]} is not the largest row (the page's rule)")
+        distinct = (exp.get("groupsTotals") or {}).get("distinct")
+        for j, (i, name) in enumerate(((4, "Collections"), (5, "Localities"), (6, "Subfamilies"), (7, "Genera"), (8, "Species"))):
+            if totals[i] is None:
+                continue   # "-": no nightly run has counted the Totals row yet
+            if distinct and totals[i] != distinct[j]:
+                wrong.append(f"groups.do Totals {name} {totals[i]}, recount over all groups together {distinct[j]} (Q8)")
+            # distinct over all groups: at least the largest row, at most the sum of the rows
+            col = [v[i] or 0 for v in rows.values()]
+            if not (max(col) <= totals[i] <= sum(col)):
+                wrong.append(f"groups.do Totals {name} {totals[i]} not between the largest row {max(col)} and the sum {sum(col)}")
     pick = others or rows
     gid = max(pick, key=lambda g: pick[g][1] or 0)
     page = s.get(BASE_URL + "/group.do?id=" + gid, timeout=TIMEOUT).text
@@ -470,8 +477,8 @@ def test_group_pages_equal_the_stored_upload_numbers():
 @pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")
 @needs("admin")
 def test_image_upload_and_orphan_counts_equal_the_recount():
-    """listImageUploads.do "Total image uploads" (row 93) and orphanedImages.do "Found N" (row 99; it counts the
-    specimen codes of orphan images, not the images)."""
+    """listImageUploads.do "Total image uploads" (row 93) and orphanedImages.do "Found N images of M specimen codes
+    that are not in AntWeb" (row 99; Brian Fisher, 2026-10-22, Q9: both numbers)."""
     s, exp = expected_numbers()
     wrong = []
     total = (exp.get("imageUploads") or {}).get("total")
@@ -481,9 +488,16 @@ def test_image_upload_and_orphan_counts_equal_the_recount():
             wrong.append(f"listImageUploads.do Total image uploads {m.group(1)}, recount {total}")
     orphans = exp.get("orphanedImages") or {}
     if "codes" in orphans:
-        m = re.search(r"Found\s+(\d+) orphaned images", s.get(BASE_URL + "/orphanedImages.do", timeout=max(TIMEOUT, 180)).text)
-        if m and int(m.group(1)) != orphans["codes"]:
-            wrong.append(f"orphanedImages.do Found {m.group(1)}; recount {orphans['codes']} codes ({orphans.get('images')} images)")
+        page = s.get(BASE_URL + "/orphanedImages.do", timeout=max(TIMEOUT, 180)).text
+        m = re.search(r"Found ([\d,]+) images of ([\d,]+) specimen codes that are not in AntWeb", page)
+        if m:
+            images, codes = int(m.group(1).replace(",", "")), int(m.group(2).replace(",", ""))
+            if (images, codes) != (orphans.get("images"), orphans["codes"]):
+                wrong.append(f"orphanedImages.do {images} images of {codes} codes; recount {orphans.get('images')} images of {orphans['codes']} codes")
+        else:
+            old = re.search(r"Found\s+(\d+) orphaned images", page)   # the page before 2026-10-22 (codes only)
+            if old and int(old.group(1)) != orphans["codes"]:
+                wrong.append(f"orphanedImages.do Found {old.group(1)}; recount {orphans['codes']} codes ({orphans.get('images')} images)")
     assert not wrong, "\n".join(wrong)
 
 

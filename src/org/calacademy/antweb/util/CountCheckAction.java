@@ -182,7 +182,8 @@ public final class CountCheckAction extends AntwebAction {
         for (int i = 0; i < regions.size(); i++) if (i % 7 == day % 7) add(places, geolocalePlace(regions.get(i)));
         List<String> projects = new ArrayList<>();
         for (Project p : ProjectMgr.getLiveProjects()) {
-            if (!Project.WORLDANTS.equals(p.getName()) && !Project.ALLANTWEBANTS.equals(p.getName())) projects.add(p.getName());
+            // Port of Entry: a species list only, its numbers not counted (2026-10-22)
+            if (!Project.WORLDANTS.equals(p.getName()) && !Project.ALLANTWEBANTS.equals(p.getName()) && !p.isSpeciesListOnly()) projects.add(p.getName());
         }
         java.util.Collections.sort(projects);
         for (int i = 0; i < projects.size(); i++) {
@@ -274,7 +275,7 @@ public final class CountCheckAction extends AntwebAction {
             // The nightly run recounts only live projects (ProjTaxonCountDb.childrenCountCrawl, ProjectMgr.getLiveProjects):
             // the largest live curated project.
             java.util.Set<String> live = new java.util.HashSet<>();
-            for (Project p : ProjectMgr.getLiveProjects()) live.add(p.getName());
+            for (Project p : ProjectMgr.getLiveProjects()) if (!p.isSpeciesListOnly()) live.add(p.getName());
             query = "select project_name, count(*) n from proj_taxon where project_name not in ('worldants', 'allantwebants', 'fossilants')"
                 + " group by project_name order by n desc";
             try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(query)) {
@@ -294,7 +295,8 @@ public final class CountCheckAction extends AntwebAction {
         }
         if (project != null) {
             Project p = ProjectMgr.getProject(project, false);
-            if (p != null) places.add(new CountCheck.Place(CountCheck.PROJECT, p.getName(), "project " + p.getName(), null, null));
+            if (p != null && p.isSpeciesListOnly()) notes.add(CountInvariants.SPECIES_LIST_ONLY_NOTE);
+            else if (p != null) places.add(new CountCheck.Place(CountCheck.PROJECT, p.getName(), "project " + p.getName(), null, null));
             else notes.add("No project " + Html.esc(project));
         }
         if (museum != null) {

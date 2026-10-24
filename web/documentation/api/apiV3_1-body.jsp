@@ -697,6 +697,7 @@
         <h2>Unimaged Geolocale Taxa</h2>
             <br>
          	<b>Function:</b> Query for taxa (subfamily, genus, species, subspecies) found in given geolocale that are not imaged.
+            <br><b>Unimaged</b> means no photo of the ant anywhere in AntWeb, from any place: no specimen filed under the name has an image other than a label photo. A name whose specimens have only label photos is unimaged. With byCaste=1, the same for each caste (worker, queen, male).
             <p><b>Parameters:</b>
         <table class="arguments">
             <tr>

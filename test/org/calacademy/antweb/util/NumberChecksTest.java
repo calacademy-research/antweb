@@ -109,9 +109,13 @@ public class NumberChecksTest extends TestCase {
         exec("insert into bioregion_taxon (bioregion_name, taxon_name, created) values ('Malagasy', 'vespidaepolistes a', '2020-01-01')");
         exec("update museum set valid_species_count = 1 where code = 'CASC'");
         CountCheck.Result r = check();
-        // the wasp is B31 (stats.nonants), not a difference of the bioregion's own numbers
+        // Q7 (2026-10-22): statsPage counts ants only, so the wasp is in neither the page's numbers nor the bioregion's
+        // (until then it was B31, a difference of stats.nonants)
         assertEquals(list(r), 0, real(r, "stats.bioregions"));
-        assertEquals(list(r), 1, real(r, "stats.nonants"));
+        assertEquals(list(r), 0, real(r, "stats.nonants"));
+        Bioregion b = new Bioregion();
+        b.setName("Malagasy");
+        assertEquals("pheidole a and hypoponera b; not the wasp", 2, new StatisticsDb(connection).getBioregionData(b).getValue(3));
         assertTrue(list(r), real(r, "stats.museums") > 0);
         CountCheck.Mismatch m = first(r, "stats.museums");
         assertEquals("museum CASC", m.place.label);
@@ -154,7 +158,7 @@ public class NumberChecksTest extends TestCase {
 
     public void testAdminNumbers() throws Exception {
         exec("update statistics set proj_taxa = 1");
-        exec("update group_count set specimens = 9");
+        exec("update group_count set specimens = 9 where group_id = 1");
         exec("update image_upload set image_count = 5");
         exec("update ant_group set upload_count = 3");
         Map<Integer, int[]> curators = curatorNumbers();
@@ -172,7 +176,7 @@ public class NumberChecksTest extends TestCase {
 
     /** Another group's upload does not change this group's numbers; the nightly name update of its specimens may. */
     public void testGroupNumbersArePendingAfterItsSpecimensWereRenamed() throws Exception {
-        exec("update group_count set specimens = 9");
+        exec("update group_count set specimens = 9 where group_id = 1");
         exec("insert into upload (upload_id, created, group_id) values (2, now(), 2)");
         CountCheck.Result r = check();
         assertEquals(list(r), 1, real(r, "admin.groups"));

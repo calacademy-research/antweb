@@ -52,6 +52,7 @@ import org.calacademy.antweb.home.*;
          s_log.warn("childrenCountCrawl()");
           ArrayList<Project> projects = ProjectMgr.getLiveProjects();
           for (Project project : projects) {            
+             if (project.isSpeciesListOnly()) continue;   // Port of Entry: no specimen numbers (2026-10-22)
              childrenCountCrawl(project);
           }
           fixExceptions();
@@ -71,7 +72,7 @@ import org.calacademy.antweb.home.*;
         int n = 0;
         for (Project project : ProjectMgr.getLiveProjects()) {
             if (project == null || Project.WORLDANTS.equals(project.getName()) || Project.ALLANTWEBANTS.equals(project.getName())) continue;
-            recount(project);
+            recount(project);   // the Port of Entry project: its numbers are dropped, not counted (recount)
             ++n;
         }
         String message = "Project species-list counts crawled: " + n + " projects";
@@ -89,6 +90,10 @@ import org.calacademy.antweb.home.*;
      * from the specimens (a synonym's specimens under the valid name, Project.getCountSpecimensQuery).
      */
     public void recount(Project project) throws SQLException {
+        if (project.isSpeciesListOnly()) {
+            dropNumbers(project.getName());
+            return;
+        }
         if (PlaceTotals.synonymsToValid(PlaceTotals.PROJECT, project.getName())) {
             new ProjTaxonDb(getConnection()).renameToValid(PlaceTotals.PROJECT, project.getName());
         }
@@ -99,10 +104,28 @@ import org.calacademy.antweb.home.*;
         childrenCountCrawl(project);
     }
 
+    /**
+     * The Port of Entry project (Project.isSpeciesListOnly, Brian Fisher 2026-10-22) is a species list only: its rows'
+     * specimen, image and child counts are set to 0 and never counted (they counted every AntWeb specimen of the species,
+     * not interceptions). The list itself is kept.
+     */
+    public void dropNumbers(String projectName) throws SQLException {
+        try (PreparedStatement stmt = getConnection().prepareStatement(RESET_SQL)) {
+            stmt.setString(1, projectName);
+            stmt.executeUpdate();
+        }
+        try (PreparedStatement stmt = getConnection().prepareStatement("update proj_taxon set image_count = 0 where project_name = ?")) {
+            stmt.setString(1, projectName);
+            stmt.executeUpdate();
+        }
+    }
+
     public void childrenCountCrawl(String projectName) throws SQLException {
         Project project = ProjectMgr.getProject(projectName);
         A.log("childrenCountCrawl:" + project);
-        if (project != null) {
+        if (project != null && project.isSpeciesListOnly()) {
+            dropNumbers(projectName);
+        } else if (project != null) {
             childrenCountCrawl(project);
         } else {
             s_log.warn("childrenCountCrawl() project not found:" + projectName);
@@ -154,6 +177,7 @@ import org.calacademy.antweb.home.*;
           //String project = "tokelauants";  
           ArrayList<Project> projects = ProjectMgr.getLiveProjects();
           for (Project project : projects) {
+             if (project.isSpeciesListOnly()) continue;   // Port of Entry: no image numbers (2026-10-22)
 
              //if (AntwebProps.isDevMode()) s_log.info("startProjTaxonImageCountCrawl() project:" + project);
              imageCountCrawl(project);

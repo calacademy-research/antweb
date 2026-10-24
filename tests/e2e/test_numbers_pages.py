@@ -10,6 +10,11 @@ compares the numbers stored in the database; these tests read the pages themselv
                    imaged <= total
   countries.do     the column is labelled "Valid species" (it showed the Valid species number as "Species")
 
+Brian Fisher's decisions of 2026-10-22 (docs/numbers.md section 5), each page explaining its numbers:
+  statsPage.do     Q7: Global, Bioregion and Museum Data count ants only (Formicidae), said under each heading
+  taxonomicPage.do Q12: isImaged=false lists names with no photo of the ant anywhere in AntWeb, said under the header
+  project.do       Port of Entry: a species list only; the page says what it is and shows no specimen or image numbers
+
 Pages without the new markup (not deployed yet) are skipped.
 """
 import re
@@ -64,3 +69,35 @@ def test_list_of_countries_labels_valid_species():
     if "<th>Valid species</th>" not in html:
         pytest.skip("countries.do with the old column label (not deployed yet)")
     assert "<th>Species</th><th>Specimen" not in html
+
+
+def test_statspage_says_it_counts_ants_only():
+    html = _ok("/statsPage.do")
+    if 'id="stats-global-note"' not in html:
+        pytest.skip("statsPage.do without the Q7 notes (not deployed yet)")
+    for note in ("stats-global-note", "stats-bioregion-note", "stats-museum-note"):
+        m = re.search(r'id="' + note + r'">(.*?)</p>', html, re.S)
+        assert m and "Formicidae" in m.group(1), f"statsPage.do: {note} does not say ants only"
+
+
+def test_unimaged_list_says_anywhere_in_antweb():
+    html = _ok("/taxonomicPage.do?rank=species&countryName=Madagascar&statusSet=all&isImaged=false")
+    if 'id="unimaged-note"' not in html:
+        pytest.skip("taxonomicPage.do without the Q12 note (not deployed yet)")
+    assert "no photo of the ant anywhere in AntWeb" in html
+    m = re.search(r'<span class="numbers">([\d,]+)</span> Unimaged Species \(out of <span class="numbers">([\d,]+)</span>\)', html)
+    assert m, "isImaged=false: no 'N Unimaged Species (out of M)' header (0 is shown too since 2026-10-22)"
+    assert _number(m.group(1)) <= _number(m.group(2))
+
+
+def test_port_of_entry_is_a_species_list_without_numbers():
+    html = _ok("/project.do?name=poeants")
+    if 'id="port-of-entry-note"' not in html:
+        pytest.skip("project.do?name=poeants without the Port of Entry note (not deployed yet, or no such project)")
+    assert "not established introductions" in html
+    for stat in ("specimens", "imaged", "images", "ant-images", "label-images"):
+        assert f'data-stat="{stat}"' not in html, f"Port of Entry shows {stat}"
+    assert "Specimens per Subfamily" not in html
+    listing = _ok("/taxonomicPage.do?rank=species&project=poeants")
+    if 'id="port-of-entry-list-note"' in listing:
+        assert "orderBy=specimens" not in listing and "orderBy=images" not in listing, "Port of Entry list shows count columns"

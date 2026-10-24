@@ -157,6 +157,8 @@ public final class GroupAction extends AntwebAction {
 
 				group.setCuratorList(groupDb.getCuratorList(groupId));
             }
+            // The Totals row (Q8, 2026-10-22): all groups' specimens together, counted every night (null until then).
+            request.setAttribute("groupTotals", groupCountDb.totals());
 		} catch (SQLException e) {
 			s_log.error("getUploadGroups() e:" + e);
 		} finally {	

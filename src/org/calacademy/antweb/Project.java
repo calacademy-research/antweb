@@ -23,6 +23,30 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     public static final String ALLANTWEBANTS = "allantwebants";
     public static final String WORLDANTS = "worldants";
     public static final String FOSSILANTS = "fossilants";
+
+    /*
+     * Brian Fisher, 2026-10-22 (docs/numbers.md, Port of Entry): the Port of Entry project (poeants) is a list of species
+     * recorded at ports of entry, kept as a species list only. Its specimen and image numbers are dropped: they counted
+     * every AntWeb specimen of those species, not interceptions (proj_taxon specimen_count summed to 213,986 on
+     * 2026-10-22). These species are intercepted at ports of entry, not established introductions, and they are not
+     * counted in any place total or in the introduced species list. No nightly step counts their specimens or images
+     * (ProjTaxonCountDb, ProjectDb, PlaceImageCountDb), the project and list pages do not show them, and the count check
+     * skips them with a note.
+     */
+    public static final String PORT_OF_ENTRY = "poeants";
+
+    /** Projects that are species lists only: no specimen or image numbers (the Port of Entry project). SQL list. */
+    public static final String SPECIES_LIST_ONLY_SQL = "('" + PORT_OF_ENTRY + "')";
+
+    /** Whether the project is a species list only, without specimen and image numbers (SPECIES_LIST_ONLY_SQL). */
+    public static boolean isSpeciesListOnly(String projectName) {
+        return PORT_OF_ENTRY.equals(projectName);
+    }
+
+    /** The same for this project. */
+    public boolean isSpeciesListOnly() {
+        return isSpeciesListOnly(getName());
+    }
     public static final String BAYAREAANTS = "bayareaants";
 
     public static final String PROJECT = "PROJECT";
