@@ -209,7 +209,10 @@ public class NumberDecisionsDbTest extends TestCase {
             long[] v = {rs.getLong(3), rs.getLong(4), rs.getLong(5), rs.getLong(6), rs.getLong(10), rs.getLong(7), rs.getLong(8), rs.getLong(9)};
             assertEquals(java.util.Arrays.toString(v), java.util.Arrays.toString(t));
         }
-        for (String sql : GroupCountDb.totalsSqls()) {
+        String ids = GroupCountDb.listedGroupIds(connection, null);
+        assertEquals("the listed groups as numbers", "1,2", ids);
+        for (String sql : GroupCountDb.totalsSqls(ids)) {
+            assertFalse("no subquery on ant_group or upload (2026-10-24: 23 GB of temporary tables): " + sql, sql.contains("upload u"));
             assertTrue("at most one distinct per query: " + sql, sql.split("distinct", -1).length <= 2);
         }
 
@@ -237,6 +240,8 @@ public class NumberDecisionsDbTest extends TestCase {
         new GroupCountDb(connection).recountAll();
         assertTrue("Totals counted, not zeros", one("select specimens from group_count where group_id = " + all) > 0);
         assertNotNull(new GroupCountDb(connection).totals());
+        exec("update group_count set specimens = 0, collections = 0 where group_id = " + all);   // zeros from an older build
+        assertNull("a row of zeros is shown as \"-\", not as numbers", new GroupCountDb(connection).totals());
     }
 
     public void testGroupNumbersOfTheOldRuleArePendingUntilTheNightlyRun() throws Exception {
