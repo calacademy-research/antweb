@@ -136,10 +136,13 @@ public class GroupCountDb extends AntwebDb {
      * about 23 GB of temporary tables for it and filled the disk. Order of the queries and of countTotals:
      * specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera, species (the first query gives
      * specimens, ungeoreferenced and flagged).
+     * groupIds: the listed groups as a list of numbers (listedGroupIds). Until 2026-10-24 the queries had the subquery
+     * LISTED_GROUPS_SQL in place of the list: MySQL joined every specimen to every upload row of its group to answer it
+     * (CAS has thousands of uploads) and that, not the distinct counts, wrote the 23 GB of temporary tables.
      */
-    public static String[] totalsSqls() {
+    public static String[] totalsSqls(String groupIds) {
         String c1 = "(s.flag is null or s.flag != 'red') and s.status in " + PlaceTotals.COUNTABLE + " and s.family = 'formicidae'";
-        String from = " from specimen s where s.access_group in (" + LISTED_GROUPS_SQL + ")";
+        String from = " from specimen s where s.access_group in (" + groupIds + ")";
         return new String[] {
             "select count(case when " + c1 + " then 1 end), count(case when " + c1 + " and s.decimal_latitude is null then 1 end),"
                 + " count(case when s.flag = 'red' then 1 end)" + from,
@@ -147,9 +150,21 @@ public class GroupCountDb extends AntwebDb {
             distinct("s.localitycode", from + " and " + c1),
             distinct("s.subfamily", from + " and " + c1 + " and " + SpecimenDb.getAntSpecimenCriteria("s")),
             distinct("s.genus", from + " and " + c1 + " and " + PlaceTotals.identifiedToGenus("s") + " and coalesce(s.genus, '') <> ''"),
-            distinct("s.taxon_name", " from specimen s join taxon t on t.taxon_name = s.taxon_name where s.access_group in (" + LISTED_GROUPS_SQL
+            distinct("s.taxon_name", " from specimen s join taxon t on t.taxon_name = s.taxon_name where s.access_group in (" + groupIds
                 + ") and " + c1 + " and " + PlaceTotals.rankCondition(PlaceTotals.SPECIES)),
         };
+    }
+
+    /** The ids of the groups groups.do lists (LISTED_GROUPS_SQL), comma separated; empty when there are none. */
+    public static String listedGroupIds(Connection connection, java.util.function.UnaryOperator<String> track) throws SQLException {
+        StringBuilder ids = new StringBuilder();
+        try (Statement q = connection.createStatement(); ResultSet r = q.executeQuery(track == null ? LISTED_GROUPS_SQL + " order by g.id" : track.apply(LISTED_GROUPS_SQL + " order by g.id"))) {
+            while (r.next()) {
+                if (ids.length() > 0) ids.append(',');
+                ids.append(r.getInt(1));
+            }
+        }
+        return ids.toString();
     }
 
     private static String distinct(String column, String fromWhere) {
@@ -161,7 +176,9 @@ public class GroupCountDb extends AntwebDb {
      * species. track, when not null, is given each query first (the count check's query log).
      */
     public static long[] countTotals(Connection connection, java.util.function.UnaryOperator<String> track) throws SQLException {
-        String[] sqls = totalsSqls();
+        String ids = listedGroupIds(connection, track);
+        if (ids.isEmpty()) return new long[8];
+        String[] sqls = totalsSqls(ids);
         long[] one = new long[sqls.length + 2];
         try (Statement q = connection.createStatement()) {
             for (int i = 0; i < sqls.length; i++) {
@@ -270,7 +287,8 @@ public class GroupCountDb extends AntwebDb {
             try (PreparedStatement stmt = getConnection().prepareStatement("select specimens, collections, localities, ungeoreferenced, flagged,"
                     + " subfamilies, genera, species, counted from " + TABLE + " where group_id = " + ALL_GROUPS)) {
                 try (ResultSet r = stmt.executeQuery()) {
-                    if (!r.next() || r.getTimestamp(9) == null) return null;
+                    // no count yet, or a row of zeros (written by a build before 2026-10-24): the page shows "-"
+                    if (!r.next() || r.getTimestamp(9) == null || r.getInt(1) == 0) return null;
                     all.setSpecimens(r.getInt(1));
                     all.setCollections(r.getInt(2));
                     all.setLocalities(r.getInt(3));
