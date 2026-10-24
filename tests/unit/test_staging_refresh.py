@@ -142,10 +142,13 @@ def test_read_only_on_production():
 def test_safe_list():
     yes = ["/root/ant-currentDump.sql.gz", "/root/2025-01-01.sql.gz", "/root/restore/2026-10-18.sql.gz",
            "/root/antweb-next/logs/web/compute.log.1.gz", "/root/antweb-next/logbak/emails.log.2.gz",
-           "/root/antweb-watchdog-dumps/dump-1.txt"]
+           "/root/antweb-watchdog-dumps/dump-1.txt", "/mnt/antweb/images/backup/ANTWEB1041055_D.20261018-153012.tif",
+           "/mnt/antweb/web/bak/2025/specimen1.txt"]
     no = ["/root/antweb-next/etc/db.properties", "/var/lib/docker/volumes/x", "/mnt/backup/db/daily/2026-10-18.sql.gz",
           "/mnt/antweb/images/x.jpg", "/root/staging-refresh/staging-before-refresh.sql.gz", "/root/antweb-next/logs/catalina.out",
-          "/root/restore/../antweb-next/etc/x.sql.gz", "/root/antweb-watchdog-dumps/sub/x", "/root/.ssh/id_rsa", "/etc/passwd"]
+          "/root/restore/../antweb-next/etc/x.sql.gz", "/root/antweb-watchdog-dumps/sub/x", "/root/.ssh/id_rsa", "/etc/passwd",
+          "/mnt/antweb/images/backup/sub/x.tif", "/mnt/antweb/images/casent0001/x.jpg", "/mnt/antweb/web/upload/x.txt",
+          "/mnt/antweb/web/bak/../upload/x.txt"]
     for p in yes:
         assert sh('on_safe_list "$1"', p, source=CLEANUP)[0] == 0, p
     for p in no:
@@ -158,6 +161,7 @@ def test_cleanup_never_touches_volumes_or_spaces():
     assert "volume prune" not in code and "system prune" not in code and "image prune -a" not in code
     assert not re.search(r"rm [^\n]*/mnt/", code)
     assert "APPLY=0" in src and "--dry-run|\"\") APPLY=0" in src, "report-only is the default"
+    assert "antweb_is_local &&" in src, "image and upload backups only while /mnt/antweb is not a mounted bucket"
 
 
 def test_cron_line():
@@ -171,6 +175,16 @@ def test_cron_line():
     assert "--not-after" in f and f[f.index("--not-after") + 1] == "03:15"
     # After production's 01:00 dump; the latest stop point is well before the 04:00 reboot.
     assert 60 < int(hour) * 60 + int(minute) < 3 * 60 + 15 < 4 * 60
+
+
+def test_cleanup_cron_line():
+    """Weekly cleanup (2026-10-24): Sundays 02:00, before the 02:30 refresh and the 04:00 reboot, with --apply."""
+    lines = [line for line in open(os.path.join(STAGING, "staging-cleanup.cron"), encoding="utf-8")
+             if line.strip() and not line.startswith("#") and "=" not in line.split()[0]]
+    assert len(lines) == 1
+    f = lines[0].split()
+    assert f[:6] == ["0", "2", "*", "*", "0", "root"], f
+    assert f[6] == "/root/antweb-next/tools/staging/cleanup-disk.sh" and f[7] == "--apply"
 
 
 def test_scripts_executable():
