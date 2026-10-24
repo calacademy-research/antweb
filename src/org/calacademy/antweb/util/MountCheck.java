@@ -18,9 +18,11 @@ import org.apache.commons.logging.LogFactory;
  * could be read, the CAS file copy failed and the 01:00 database dump was not written.
  *
  * - /mnt/antweb (images, upload files and reports): a small file is written and read back
- *   (/mnt/antweb/web/log/upload/mountcheck-<production|staging>.txt: the folder the upload reports are written to,
- *   so the check writes where the app already must; until 2026-10-23 it used /mnt/antweb/mountcheck/, which the app
- *   may not create on staging, and staging sent a false alarm).
+ *   (/mnt/antweb/web/log/specimen/mountcheck-<production|staging>.txt: the folder the specimen upload reports are
+ *   written to, so the check writes where the app already must. It used /mnt/antweb/mountcheck/ until 2026-10-23
+ *   (the app may not create it on staging) and web/log/upload/ until 2026-10-24 (that folder does not exist on
+ *   production): both sent false alarms. Checked on both servers 2026-10-24: web/log/specimen exists and user
+ *   tomcat (2001) can write there).
  * - the daily database dump to /mnt/backup (production only, staging runs no dump): the app cannot read /mnt/backup
  *   (the rclone mount is root-only; the first check on 2026-10-23 reported "cannot list"), so the host's
  *   bin/db-daily-dump.sh writes one line to web/log/db-dump-status.txt ("ok <time> <bytes> <file>" or
@@ -38,7 +40,7 @@ public final class MountCheck {
 
     static final String TITLE = "Mount check";
     /** Where the probe file goes, under /mnt/antweb: the upload reports' folder (the app writes there already). */
-    public static final String PROBE_DIR = "web/log/upload";
+    public static final String PROBE_DIR = "web/log/specimen";
     public static final long PERIOD_MS = 60L * 60 * 1000;           // every hour
     static final long FIRST_DELAY_MS = 5L * 60 * 1000;              // 5 minutes after start (caches load first)
     static final long PROBE_TIMEOUT_MS = 60 * 1000;
