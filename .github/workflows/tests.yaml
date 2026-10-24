@@ -650,6 +650,9 @@ jobs:
       - name: deploy.sh no-restart list (tests/unit/test_deploy_paths.py)
         run: python3 tests/unit/test_deploy_paths.py
 
+      - name: The daily dump writes its status line for the mount check (tests/unit/test_dump_status.py)
+        run: python3 tests/unit/test_dump_status.py
+
       - name: Every e2e test file is in the quick set or an area (tests/unit/test_e2e_areas.py)
         run: python3 tests/unit/test_e2e_areas.py
 
