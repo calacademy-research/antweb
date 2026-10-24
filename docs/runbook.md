@@ -526,7 +526,7 @@ All alerts email bfisher@calacademy.org.
 | Disk above 85% for 30 minutes | Logs, Docker images or build cache, journal. | "Disk full" below. |
 | "Log size check" (email from antweb@antweb.org and an admin alert, after the nightly run) | A log file over 1 GB, or the disk over 85%. | "A log grows too big" (Logs, above). |
 | "the CAS upload used an older TaxonWorks archive" (email from antweb@antweb.org and an admin alert, after the 05:00 nightly) | TaxonWorks did not build a new archive within 30 minutes of the nightly's request, so the upload used the previous day's archive: edits made in TaxonWorks since then arrive with the next run. | Usually nothing. If it repeats, check TaxonWorks (the archive link in `etc/taxonworks.properties`) or ask its developers. |
-| "Storage mount problem" (email from antweb@antweb.org, hourly check `MountCheck`, at once and every 6 hours while it lasts; one "working again" email) | `/mnt/antweb` cannot be written and read back (file `web/log/upload/mountcheck-<env>.txt`), or (production) the daily dump's status line `logs/web/db-dump-status.txt` (written by `bin/db-daily-dump.sh`; the app cannot read the root-only `/mnt/backup`) says failed, is over 26 hours old or names a dump under 1 MB. | "Storage mounts (/mnt/antweb, /mnt/backup)" (Emergencies, below). |
+| "Storage mount problem" (email from antweb@antweb.org, hourly check `MountCheck`, at once and every 6 hours while it lasts; one "working again" email) | `/mnt/antweb` cannot be written and read back (file `web/log/specimen/mountcheck-<env>.txt`), or (production) the daily dump's status line `logs/web/db-dump-status.txt` (written by `bin/db-daily-dump.sh`; the app cannot read the root-only `/mnt/backup`) says failed, is over 26 hours old or names a dump under 1 MB. | "Storage mounts (/mnt/antweb, /mnt/backup)" (Emergencies, below). |
 | Disk read above 90 MB/s for 1 hour (antweb-prod) | The nightly sets, or a long database scan. | If outside 05:00 to 08:00: running queries with the DB pattern and `show full processlist;`. |
 | Uptime: www.antweb.org/v3.1/ down 10 minutes from all regions | Cloudflare cannot reach Caddy or the API (droplet down, Caddy or API stopped, firewall, certificate). This check does not cover Tomcat: AntWeb pages can be down while it passes. | "Site down" below. |
 | Uptime: www.antcat.org/v1/taxa/429011 | antcat.org is down. | AntCat runbook (AntCat repository and project instructions). |
@@ -732,7 +732,7 @@ with the Access Key column in the DigitalOcean list). A bucket with a bucket pol
 
 ```
 # ssh root@165.232.137.86   (antweb-prod)
-systemctl status rclone rclone-dbarchive --no-pager | grep -E "Active|error" ; findmnt /mnt/antweb ; findmnt /mnt/backup ; ls -l /mnt/antweb/web/log/upload/mountcheck-* ; ls -lt /mnt/backup/db/daily | head -3 ; cat /root/antweb/logs/web/db-dump-status.txt
+systemctl status rclone rclone-dbarchive --no-pager | grep -E "Active|error" ; findmnt /mnt/antweb ; findmnt /mnt/backup ; ls -l /mnt/antweb/web/log/specimen/mountcheck-* ; ls -lt /mnt/backup/db/daily | head -3 ; cat /root/antweb/logs/web/db-dump-status.txt
 ```
 
 - "Input/output error" or a hang: the mount is dead. If rclone's log says the key is unknown (`InvalidAccessKeyId`),
