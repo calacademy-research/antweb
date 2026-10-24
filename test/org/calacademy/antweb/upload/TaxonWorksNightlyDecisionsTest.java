@@ -36,6 +36,7 @@ public class TaxonWorksNightlyDecisionsTest extends TestCase {
     public void testWaitsOnlyForUnchangedArchiveOrHttp422() throws Exception {
         assertTrue(waiting("skipped: archive unchanged since the last upload"));
         assertTrue(waiting("skipped: TaxonWorks answered HTTP 422 {\"error\":\"building\"}"));
+        assertTrue(waiting("skipped: archive built 2026-10-23T12:01:22 UTC, before this run's request (TaxonWorks builds the new one now)"));
         assertFalse(waiting("skipped: TaxonWorks answered HTTP 500 oops"));
         assertFalse(waiting("skipped: TaxonWorks answered HTTP 404 "));
         assertFalse(waiting("SKIPPED BY GUARD: archive has 1 records, group 1 has 100 specimens now (minimum 95%). Nothing changed."));
@@ -111,5 +112,36 @@ public class TaxonWorksNightlyDecisionsTest extends TestCase {
         Field f = TaxonWorksNightly.class.getDeclaredField("WAIT_STEP_MINUTES");
         f.setAccessible(true);
         assertEquals(3, f.getInt(null));
+    }
+
+    /**
+     * 2026-10-24: the 05:00 Pacific run got the archive TaxonWorks built at 2026-10-23 12:01 UTC (05:01 Pacific the day
+     * before) and uploaded it, so a name fixed in TaxonWorks during 10-23 was missing. That archive is "older"; the one
+     * built after this run's request is not; a time zone read wrongly by up to 12 hours does not change the answer.
+     */
+    public void testArchiveBuiltBeforeThisRunIsOlder() throws Exception {
+        Method older = method("isOlderArchive", java.time.LocalDateTime.class, long.class);
+        long request = java.time.ZonedDateTime.of(2026, 10, 24, 5, 0, 0, 0, java.time.ZoneId.of("America/Los_Angeles")).toInstant().toEpochMilli();
+        assertTrue((Boolean) older.invoke(null, java.time.LocalDateTime.of(2026, 10, 23, 12, 1, 22), request));
+        assertFalse((Boolean) older.invoke(null, java.time.LocalDateTime.of(2026, 10, 24, 12, 1, 22), request));
+        assertFalse((Boolean) older.invoke(null, java.time.LocalDateTime.of(2026, 10, 24, 5, 1, 22), request));   // read as Pacific
+        assertFalse((Boolean) older.invoke(null, null, request));
+    }
+
+    /** The build time is the newest file time in the archive. */
+    public void testArchiveBuiltTimeIsNewestEntry() throws Exception {
+        Path zip = Files.createTempFile("tw", ".zip");
+        try (java.util.zip.ZipOutputStream out = new java.util.zip.ZipOutputStream(Files.newOutputStream(zip))) {
+            for (String[] e : new String[][] {{"meta.xml", "2026-10-23T12:01:20"}, {"data.tsv", "2026-10-23T12:01:22"}}) {
+                java.util.zip.ZipEntry z = new java.util.zip.ZipEntry(e[0]);
+                z.setTimeLocal(java.time.LocalDateTime.parse(e[1]));
+                out.putNextEntry(z);
+                out.write(1);
+                out.closeEntry();
+            }
+        }
+        Object built = method("archiveBuiltUtc", Path.class).invoke(null, zip);
+        assertEquals(java.time.LocalDateTime.of(2026, 10, 23, 12, 1, 22), built);
+        Files.delete(zip);
     }
 }
