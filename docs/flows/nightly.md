@@ -54,7 +54,7 @@ The secure code: `Scheduler.doAction()` creates a one-time 128-bit code (`Antweb
 
 Times are from comments in `UtilDataAction.doAction()` (production unless stated) and are old; compute.log has the real ones.
 
-### Set 1 (line 222): names and CAS specimens, about 12 minutes plus up to 90 minutes of waiting plus the upload
+### Set 1 (line 222): names and CAS specimens, about 12 minutes plus up to 30 minutes of waiting plus the upload
 
 | Step | Code | Writes |
 |---|---|---|
@@ -144,6 +144,6 @@ Admins read the web/log files through `logMgr.do`; only the upload report folder
 
 - A set that fails answers "Error. No changes made ..."; the Scheduler only stops on "Unexpected error", a text that appears nowhere else in the code, so it goes on with the next set and nothing reaches compute.log.
 - In the 8-day production traffic sample used by the function catalog (2026-10-11 to 10-18), `utilData.do?action=set1` was requested 8 times but sets 2 to 5 only 3 times each. Something stopped the run after set 1 on about 5 nights (check compute.log for those dates; candidates: deploy restarts during the run, the hourly watchdog, the set 1 connection being closed by the pool after 60 minutes).
-- `longConPool` destroys a connection held longer than 3600 seconds (`WEB-INF/struts-configDbAnt.xml` line 82). Set 1 holds one connection for the AntCat import, up to 90 minutes of TaxonWorks waiting and the upload; set 5 runs about 51 minutes.
+- `longConPool` destroys a connection held longer than 3600 seconds (`WEB-INF/struts-configDbAnt.xml` line 82). Set 1 holds one connection for the AntCat import, up to 30 minutes of TaxonWorks waiting and the upload; set 5 runs about 51 minutes.
 - The hourly watchdog can restart the container in the middle of a set if a set thread is busy at minute 15 and the container has been up for 12 hours (more likely now that the nightly restart is off).
 - `UtilDataAction` does not refuse to start when another compute is running, and clears the shared flag when it ends; an admin running a set by hand during the nightly can let curator uploads in while the nightly is still running, and an admin `schedule.do` during the nightly replaces and then clears the secure code.

@@ -74,8 +74,9 @@ public final class TaxonWorksNightly {
      * TaxonWorks builds a new archive at most once every 24 hours, and only when the
      * download link is requested; the request that starts a build still receives the
      * previous archive. So the nightly run (waitMinutes > 0) keeps checking every few
-     * minutes, up to waitMinutes, while the archive is unchanged or still being built,
-     * and uploads the fresh one as soon as it is there. An admin run (waitMinutes 0)
+     * minutes, up to waitMinutes, while the archive is unchanged, still being built, or
+     * built before this run's request (since 2026-10-24), and uploads the fresh one as soon
+     * as it is there; at the last check it uploads an older archive rather than nothing. An admin run (waitMinutes 0)
      * checks once.
      */
     public static String run(Connection connection, int waitMinutes) {
@@ -90,7 +91,10 @@ public final class TaxonWorksNightly {
             try {
                 while (true) {
                     checks++;
-                    result = runOnce(connection);
+                    // The last check of the wait (or an admin run) uploads an older archive rather than nothing.
+                    long waitedBefore = (System.currentTimeMillis() - start) / 60000;
+                    boolean lastCheck = waitMinutes == 0 || waitedBefore + WAIT_STEP_MINUTES > waitMinutes;
+                    result = runOnce(connection, start, lastCheck);
                     long waited = (System.currentTimeMillis() - start) / 60000;
                     if (!isWaitingForTaxonWorks(result) || waited + WAIT_STEP_MINUTES > waitMinutes) break;
                     if (checks == 1) {
@@ -117,11 +121,23 @@ public final class TaxonWorksNightly {
         }
         LogMgr.appendLog(LOG, DateUtil.getFormatDateTimeStr() + " " + result);
         LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " taxonWorksNightly: " + result);
+        // An older archive was uploaded (TaxonWorks did not build a new one in time): today's TaxonWorks edits are
+        // missing until tomorrow. An admin alert and an email, so it is seen the same morning (2026-10-24).
+        if (isOlderArchiveUploaded(result)) {
+            String alert = "TaxonWorks nightly: " + result + ". Edits made in TaxonWorks since that build arrive with the next run.";
+            try {
+                org.calacademy.antweb.util.AdminAlertMgr.addIfFresh(alert, "TaxonWorks nightly:", "INTERVAL 1 DAY", connection);
+                org.calacademy.antweb.util.Emailer.sendMail(org.calacademy.antweb.util.AntwebUtil.getDevEmail(),
+                    "AntWeb: the CAS upload used an older TaxonWorks archive", alert);
+            } catch (Exception e) {
+                s_log.warn("run() alert e:" + e);
+            }
+        }
         s_log.warn("run() " + result);
         return result;
     }
 
-    private static String runOnce(Connection connection) throws Exception {
+    private static String runOnce(Connection connection, long requestStart, boolean acceptOlderArchive) throws Exception {
         Properties props = new Properties();
         File config = new File(CONFIG);
         if (!config.isFile()) return "skipped: no " + CONFIG;
@@ -166,6 +182,16 @@ public final class TaxonWorksNightly {
             return "skipped: archive unchanged since the last upload";
         }
 
+        // 2b. Built before this run's request? TaxonWorks answers the request that starts a build with the archive it
+        // built the day before (2026-10-24: the 05:00 run uploaded the archive built 2026-10-23 05:01 Pacific, so a
+        // name fixed in TaxonWorks on 10-23 arrived only on 10-25). Wait for the archive this request starts.
+        java.time.LocalDateTime builtUtc = archiveBuiltUtc(zip);
+        if (!acceptOlderArchive && isOlderArchive(builtUtc, requestStart)) {
+            return "skipped: archive built " + builtUtc + " UTC, before this run's request (TaxonWorks builds the new one now)";
+        }
+        String builtNote = builtUtc == null ? "" : "; archive built " + builtUtc + " UTC"
+            + (isOlderArchive(builtUtc, requestStart) ? " (older than this run: TaxonWorks did not build a new one in time)" : "");
+
         // 3. Unzip and transform, then check the record count.
         int groupId = curator.getGroup().getId();
         Path specimenFile = TaxonWorksUploader.prepareFromArchive(zip, curator.getGroup());
@@ -202,7 +228,7 @@ public final class TaxonWorksNightly {
             connection.commit();
             Files.writeString(shaFile, sha);
             return "uploaded " + newCount + " records for group " + groupId + " (was " + currentCount
-                + " specimens) in " + details.getExecTime() + skippedNote;
+                + " specimens) in " + details.getExecTime() + builtNote + skippedNote;
         } catch (Exception e) {
             connection.rollback();
             throw e;
@@ -212,10 +238,44 @@ public final class TaxonWorksNightly {
         }
     }
 
-    /** True when the archive is the one already uploaded, or TaxonWorks is still building it (HTTP 422). */
+    /** True when the archive is the one already uploaded, older than this run's request, or still being built (HTTP 422). */
     static boolean isWaitingForTaxonWorks(String result) {
         return result != null && (result.startsWith("skipped: archive unchanged")
+            || result.startsWith("skipped: archive built ")
             || result.startsWith("skipped: TaxonWorks answered HTTP 422"));
+    }
+
+    /** True when the run uploaded an archive built before its request (the last check of the wait accepted it). */
+    static boolean isOlderArchiveUploaded(String result) {
+        return result != null && result.startsWith("uploaded ") && result.contains("(older than this run");
+    }
+
+    /**
+     * The newest file time in the archive, read as UTC (TaxonWorks writes its times in UTC: the archive of
+     * 2026-10-23 05:01 Pacific has 12:01). null when it cannot be read.
+     */
+    static java.time.LocalDateTime archiveBuiltUtc(Path zip) {
+        java.time.LocalDateTime newest = null;
+        try (java.util.zip.ZipFile z = new java.util.zip.ZipFile(zip.toFile())) {
+            java.util.Enumeration<? extends java.util.zip.ZipEntry> e = z.entries();
+            while (e.hasMoreElements()) {
+                java.time.LocalDateTime t = e.nextElement().getTimeLocal();
+                if (t != null && (newest == null || t.isAfter(newest))) newest = t;
+            }
+        } catch (IOException ex) {
+            s_log.warn("archiveBuiltUtc() e:" + ex);
+        }
+        return newest;
+    }
+
+    /**
+     * True when the archive was built more than 12 hours before this run's request: the day-old archive that
+     * TaxonWorks hands out while it builds the new one. 12 hours leaves room for a wrong time zone in either direction.
+     */
+    static boolean isOlderArchive(java.time.LocalDateTime builtUtc, long requestStartMillis) {
+        if (builtUtc == null) return false;
+        long built = builtUtc.toInstant(java.time.ZoneOffset.UTC).toEpochMilli();
+        return built < requestStartMillis - 12L * 3600 * 1000;
     }
 
     private static boolean isZip(Path file) throws IOException {
