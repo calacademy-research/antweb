@@ -522,15 +522,19 @@ if (casteValue == null) casteValue = "undefined";
 <%= nameHistory %>
 
 <%
-if (LoginMgr.isAdmin(request) || specimen.isCurator(accessLogin)) { %>
+if (LoginMgr.isAdmin(request) || LoginMgr.isCurator(request)) { // any curator, whatever the specimen's group (2026-10-24) %>
 
 <br>
 <h3>Curator Information: </h3> 
 
 <ul>
 <li><b>Upload Record: </b></li>
+<%-- The specimen's line in its upload file: the one place it is shown (the plain "Line Number" under Admin Information
+     was removed 2026-10-24, Brian Fisher). Linked when the upload file is kept. Tested in tests/e2e/test_upload_report_links.py. --%>
 <% if (specimen.getBackupFileName() != null) { %>
-<li>Upload File Line: <a href='<%= AntwebProps.getDomainApp() %>/logMgr.do?action=uploadLog&file=<%= Html.escAttr(Html.url(specimen.getBackupFileName())) %>&line=<%= specimen.getLineNum() %>' title='This specimen&#39;s row as it was uploaded'><%= specimen.getLineNum() %></a> (shows this specimen's data as uploaded)</li>
+<li id="upload-file-line">Upload File Line: <a href='<%= AntwebProps.getDomainApp() %>/logMgr.do?action=uploadLog&file=<%= Html.escAttr(Html.url(specimen.getBackupFileName())) %>&line=<%= specimen.getLineNum() %>' title='This specimen&#39;s row as it was uploaded'><%= specimen.getLineNum() %></a> (shows this specimen's data as uploaded)</li>
+<% } else if (specimen.getLineNum() > 0) { %>
+<li id="upload-file-line">Upload File Line: <%= specimen.getLineNum() %> (the upload file is no longer kept)</li>
 <% } %>
 </ul>
 
@@ -591,10 +595,6 @@ if (LoginMgr.isAdmin(request)) {
 <% } %>
 </ul>
 
-<ul>
-<li><b>Line Number: </b></li>
-<li><%= specimen.getLineNum() %></li>
-</ul>
 
 <ul>
 <li><b>Description: </b></li>

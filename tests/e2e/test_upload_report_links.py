@@ -129,6 +129,10 @@ def test_specimen_page_curator_links(session):
     assert not re.search(r"href=['\"][^'\"]*/images/[^/'\"]+/?['\"]", html), "images folder still linked"
     # A search over the whole upload (265,000 specimens for TaxonWorks) does not belong on a specimen page.
     assert not re.search(r"advancedSearch\.do\?[^'\"]*uploadId=", html), "Upload Search (whole-upload search) still linked"
+    # The specimen's upload line is shown once, under Curator Information, and linked when the file is kept (Brian Fisher,
+    # 2026-10-24: the plain "Line Number" under Admin Information was a second, unlinked copy).
+    assert html.count('id="upload-file-line"') == 1, "Upload File Line missing or shown twice"
+    assert "<b>Line Number: </b>" not in html, "the plain Line Number is still under Admin Information"
 
 
 def test_taxon_page_has_no_dead_sites(session):
