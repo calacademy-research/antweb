@@ -316,7 +316,16 @@ Expect the disk use, the largest folders, Docker's use, and the safe list with s
 /root/antweb-next/tools/staging/cleanup-disk.sh --apply
 ```
 
-Expect "deleted ..." lines, then the report again with a lower `Use%`. Docker volumes (the database), `/mnt` and `etc/` are never touched.
+Expect "deleted ..." lines, then the report again with a lower `Use%`. Docker volumes (the database) and `etc/` are never touched; in `/mnt/antweb` (a plain folder on staging) only image backups older than 14 days (`images/backup`) and upload backups older than 30 days (`web/bak`), and only while `/mnt/antweb` is not a mounted bucket.
+
+**Weekly cleanup (since 2026-10-24).** Staging's disk filled twice in a week (an 11 GB log on 10-22; on 10-24 image and upload backups, build cache and the count check's temporary tables). Install once, on staging only:
+
+```
+# ssh root@165.232.136.170   (staging)
+install -m 644 /root/antweb-next/tools/staging/staging-cleanup.cron /etc/cron.d/staging-cleanup && cat /etc/cron.d/staging-cleanup | tail -1
+```
+
+Expect the cron line (Sundays 02:00). Log: `journalctl -t staging-cleanup`. Remove: `rm /etc/cron.d/staging-cleanup`.
 
 **Step 6. Dry run of the refresh (changes nothing).**
 
