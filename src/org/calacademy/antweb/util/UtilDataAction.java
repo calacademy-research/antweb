@@ -392,8 +392,9 @@ public class UtilDataAction extends AntwebAction {
                 message += worldants;
                 message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
                 // CAS specimens from TaxonWorks (GitHub #27). Does nothing without etc/taxonworks.properties.
-                // Waits up to 90 minutes for TaxonWorks to build a fresh archive (see TaxonWorksNightly.run).
-                message += " taxonWorksNightly: " + org.calacademy.antweb.upload.TaxonWorksNightly.run(connection, 90);
+                // Waits up to 30 minutes (Brian Fisher, 2026-10-24; was 90) for the archive TaxonWorks builds after this run's
+                // request (see TaxonWorksNightly.run); usually a few minutes.
+                message += " taxonWorksNightly: " + org.calacademy.antweb.upload.TaxonWorksNightly.run(connection, 30);
                 // Existing specimens follow AntCat name changes (etc/name-update.properties; off without it).
                 // After the AntCat import and the TaxonWorks upload, before sets 2 to 5 rebuild lists and counts.
                 message += " " + nightlyNameUpdate(connection, worldants == null ? null : worldants.getMessage());

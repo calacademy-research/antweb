@@ -57,6 +57,8 @@ public final class OrphanedImagesAction extends AntwebAction {
         } else {
             session.setAttribute("orphanedImages", searchResults);
         }
+        // Q9 (2026-10-22): the page shows the images as well as their specimen codes.
+        request.setAttribute("orphanedImageCount", orphans.getImageCount());
 
 		// Set a transactional control token to prevent double posting
 

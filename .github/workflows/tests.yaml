@@ -45,6 +45,10 @@ jobs:
         # every count check (CountInvariants.IDS) is named. Fix: edit docs/numbers.md (see its section 1).
         run: python3 tools/numbers/check_numbers_doc.py
 
+      - name: Every workflow step is valid shell, also inside sh -c '...' (tests/unit/test_workflow_shell.py)
+        # 2026-10-24: an apostrophe in a comment ended a quoted sh -c script early; the step failed only on GitHub.
+        run: python3 tests/unit/test_workflow_shell.py
+
       - name: Data model doc has a section for every table (docs/data-model.md)
         # Replays db/upgrade/**/*.sql and the CREATE TABLE statements in src/; fails when a table or view
         # has no "### `name`" section in docs/data-model.md, or a section names a table no SQL knows, or
@@ -136,6 +140,11 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.HardeningSmallFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (1 test)" /tmp/out.txt
+            # Who may read upload files: the whole file (own group) and the line of one specimen (any curator, 2026-10-24).
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/UploadFileAccessTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.UploadFileAccessTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (3 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the EXIF section on the image page (Latin-1 and UTF-8 text, binary fields, escaping)
@@ -326,7 +335,7 @@ jobs:
               /t/org/calacademy/antweb/util/JobSummaryTest.java \
               /t/org/calacademy/antweb/upload/SubfamilyFromGenusTest.java \
               /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java
-            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:7 \
+            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:10 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
@@ -445,6 +454,10 @@ jobs:
           # that row exists (nightly repair, B36; no genus rows made, the rest reported); names not identified to genus are
           # not species (totals, genus rows, pies, endemism) but their specimens count; a list's genus, subfamily and family
           # rows hold the images of every row under them by the taxon tree (B40).
+          # NumberDecisionsDbTest (2026-10-22, Brian Fisher's answers Q7, Q8, Q9, Q12, Port of Entry): statsPage and home
+          # count ants only; upload group Species are full names and the groups.do Totals row is distinct over all groups;
+          # orphaned images counted as images and codes; unimaged = no photo of the ant anywhere; Port of Entry has no
+          # specimen or image numbers and the count check skips it.
           # DownloadGuardsDbTest: a place download holds only the specimens collected there (5,000 cap), the paged
           # search list (COUNT, LIMIT/OFFSET, sort before paging, images/types only), ant specimens only on place pages.
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
@@ -467,8 +480,9 @@ jobs:
               /t/org/calacademy/antweb/home/UploadRecordDbTest.java \
               /t/org/calacademy/antweb/home/NightlyCountOrderDbTest.java \
               /t/org/calacademy/antweb/home/TaxonTreeCountDbTest.java \
-              /t/org/calacademy/antweb/home/ArtistMoveDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:18 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:5 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2; do
+              /t/org/calacademy/antweb/home/ArtistMoveDbTest.java \
+              /t/org/calacademy/antweb/home/NumberDecisionsDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:19 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:5 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
@@ -544,9 +558,13 @@ jobs:
         # java.util.* and org.calacademy.antweb.*) was found only by the staging end-to-end run, 30 minutes later.
         run: |
           git fetch -q --depth=1 origin master
-          files=$(git diff --name-only --diff-filter=AM FETCH_HEAD HEAD -- 'web/*.jsp' | sed 's#^web/##' | tr '\n' ' ')
-          if [ -z "$files" ]; then echo "No JSP page changed"; exit 0; fi
-          echo "Changed JSP pages: $files"
+          changed=$(git diff --name-only --diff-filter=AM FETCH_HEAD HEAD -- 'web/*.jsp' | sed 's#^web/##' | tr '\n' ' ')
+          if [ -z "$changed" ]; then echo "No JSP page changed"; exit 0; fi
+          echo "Changed JSP pages: $changed"
+          # A page included with <%@ include file %> is compiled through the pages that include it (tools/ci/jsp_to_compile.py)
+          python3 tests/unit/test_jsp_to_compile.py
+          files=$(python3 tools/ci/jsp_to_compile.py $changed | tr '\n' ' ')
+          echo "Compiled: $files"
           docker run --rm --entrypoint sh -e FILES="$files" antweb/antweb:dev -c '
             set -e
             A=/usr/local/antweb
@@ -649,6 +667,9 @@ jobs:
 
       - name: deploy.sh no-restart list (tests/unit/test_deploy_paths.py)
         run: python3 tests/unit/test_deploy_paths.py
+
+      - name: The daily dump writes its status line for the mount check (tests/unit/test_dump_status.py)
+        run: python3 tests/unit/test_dump_status.py
 
       - name: Every e2e test file is in the quick set or an area (tests/unit/test_e2e_areas.py)
         run: python3 tests/unit/test_e2e_areas.py

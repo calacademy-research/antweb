@@ -72,8 +72,10 @@ else heading = heading + "s";
           + "<td><a href=\"" + overview.getThisPageTarget() + "\">" + overview.getKeyStr() + "</a></td>");
        if (!titleIsName) out.println("<td>" + org.calacademy.antweb.util.Html.esc(overview.getTitle()) + "</td>");
        out.println("<td>" + overview.getValidSpeciesCount() + "</td>");
-       out.println("<td>" + overview.getSpecimenCount() + "</td>"
-        + "<td>" + overview.getImageCount() + "</td>"
+       // Port of Entry (2026-10-22): a species list only, no specimen or image numbers (Project.isSpeciesListOnly).
+       boolean listOnly = overview instanceof Project && ((Project) overview).isSpeciesListOnly();
+       out.println("<td>" + (listOnly ? "<span title='a list of species intercepted at ports of entry; no specimen numbers'>-</span>" : "" + overview.getSpecimenCount()) + "</td>"
+        + "<td>" + (listOnly ? "-" : "" + overview.getImageCount()) + "</td>"
         + "</tr>");
     }
     out.println("</table>");

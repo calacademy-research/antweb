@@ -61,7 +61,7 @@ public final class CountInvariants {
         "list.genus", "list.subfamily", "list.family", "list.global", "global.specimens", "home", "taxon.images", "geo.regions",
         // NumberChecks (2026-10-22)
         "stats.global", "stats.images", "stats.imaged", "stats.bioregions", "stats.museums", "stats.nonants", "list.images", "admin.statistics", "admin.groups",
-        "admin.curators", "admin.artists", "admin.imageUploads", "api.taxa", "place.endemic.flags", "taxon.parents", "geo.adm1.country"};
+        "admin.curators", "admin.artists", "admin.imageUploads", "admin.imageUploadArtists", "api.taxa", "place.endemic.flags", "taxon.parents", "geo.adm1.country"};
 
     /**
      * At most this many differences of one check are listed in the report (2026-10-22: API /taxa, B11, can differ for
@@ -70,6 +70,12 @@ public final class CountInvariants {
     static final int LIST_CAP = 300;
 
     static final String RULES_PENDING = "this number's rule changed on 2026-10-21; no nightly run has counted it that way yet";
+    /** The note of the report on the projects the check skips (Project.isSpeciesListOnly). */
+    public static final String SPECIES_LIST_ONLY_NOTE = "Port of Entry (project " + org.calacademy.antweb.Project.PORT_OF_ENTRY + ") is not checked: it is a"
+        + " list of species intercepted at ports of entry, kept without specimen or image numbers (Brian Fisher, 2026-10-22), so no nightly"
+        + " step counts them.";
+    /** A number whose rule changed on 2026-10-22 (docs/numbers.md Q7, Q8): it still equals the count by the old rule. */
+    static final String Q7_PENDING = "counted by the rule before 2026-10-22 (ants only, Q7); the next nightly run counts it by the new rule";
 
     public static boolean rulesCounted(List<String> lines) {
         for (String line : lines) if (line.contains(RULES_LOG)) return true;
@@ -248,7 +254,9 @@ public final class CountInvariants {
                     + " and (georank <> 'adm1' or is_live = 1)";
             // the projects whose totals the nightly run counts (ProjectDb.updateCounts: scope PROJECT and GLOBAL) and whose
             // lists it recounts (live projects)
-            case PlaceTotals.PROJECT: return "select project_name, project_name, null from project where is_live = 1 and scope in ('PROJECT', 'GLOBAL')";
+            // The Port of Entry project is a species list only (2026-10-22): its numbers are not counted, so not checked.
+            case PlaceTotals.PROJECT: return "select project_name, project_name, null from project where is_live = 1 and scope in ('PROJECT', 'GLOBAL')"
+                + " and project_name not in " + org.calacademy.antweb.Project.SPECIES_LIST_ONLY_SQL;
             case PlaceTotals.MUSEUM: return "select code, code, null from museum";
             default: return "select name, name, null from bioregion";
         }
@@ -284,6 +292,7 @@ public final class CountInvariants {
                 }
             }
             places.put(type, m);
+            if (PlaceTotals.PROJECT.equals(type)) result.notes.add(SPECIES_LIST_ONLY_NOTE);
             Set<String> changed = keySet();
             if (columnExists(PlaceTotals.listTable(type), "created")) {
                 try (PreparedStatement stmt = connection.prepareStatement(track("select distinct " + PlaceTotals.listKey(type) + " from "
@@ -762,6 +771,14 @@ public final class CountInvariants {
                 }
                 String p = null;
                 if (!nightlyRow && (i == 2 || i == 3)) p = RULES_PENDING;
+                // Q7 (2026-10-22): ants only. A row written before that rule equals the old count: pending until the next nightly run.
+                String before = i == 0 ? org.calacademy.antweb.home.StatisticsDb.VALID_SPECIES_SQL_BEFORE_Q7
+                    : i == 2 ? org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIES_SQL_BEFORE_Q7 : null;
+                if (p == null && before != null && row[i] != live) {
+                    try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(before))) {
+                        if (r.next() && r.getLong(1) == row[i]) p = Q7_PENDING;
+                    }
+                }
                 if (p == null && uploadSince) p = "specimens were uploaded after the numbers were written";
                 if (p == null && imagesSince && i >= 2) p = "images were added after the numbers were written";
                 compare(c, "site", "home", what[i], row[i], live, "=", p);

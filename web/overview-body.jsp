@@ -155,6 +155,8 @@
   org.calacademy.antweb.home.PlaceImageCountDb.PlaceImages placeImages =
       (org.calacademy.antweb.home.PlaceImageCountDb.PlaceImages) request.getAttribute("placeImages");
   boolean isProjectOverview = (overview instanceof Project);
+  // Port of Entry (Brian Fisher, 2026-10-22): a species list only, without specimen and image numbers (Project.isSpeciesListOnly).
+  boolean isSpeciesListOnly = isProjectOverview && ((Project) overview).isSpeciesListOnly();
   String georank = isGeolocale ? geolocale.getGeorank() : null;
   boolean isListOnlyPlace = isGeolocale && geolocale.isCountedFromCountries();   // region or subregion
   String placeWord = "place";
@@ -237,7 +239,7 @@
     specimenListLink += "<br>Names of all specimens collected here, including those not on the list: <a id=\"specimen-taxa-link\" href=\"" + Html.escAttr(specimenTaxaUrl) + "\">Show Specimen Taxa</a>.";
   }
 %>
-<div id="place-stats"<% if (placeImages != null) { %> data-images="<%= placeImages.allImages %>" data-ant="<%= placeImages.antImages %>" data-labels="<%= placeImages.labelImages() %>" data-imaged="<%= placeImages.imagedSpecimens %>" data-label-only="<%= placeImages.labelOnlySpecimens %>"<% } %>>
+<div id="place-stats"<% if (placeImages != null && !isSpeciesListOnly) { %> data-images="<%= placeImages.allImages %>" data-ant="<%= placeImages.antImages %>" data-labels="<%= placeImages.labelImages() %>" data-imaged="<%= placeImages.imagedSpecimens %>" data-label-only="<%= placeImages.labelOnlySpecimens %>"<% } %>>
 <table class="place_stats">
 <tr class="ps_head"><th colspan="3">Taxonomic diversity</th></tr>
 <tr data-stat="subfamilies" data-n="<%= overview.getSubfamilyCount() %>"><td class="ps_name">Subfamilies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getSubfamilyCount()) %></td><td class="ps_def">Subfamilies recorded on <%= listName %>.</td></tr>
@@ -251,6 +253,10 @@
 <tr data-stat="endemic" data-n="<%= overview.getEndemicSpeciesCount() %>"><td class="ps_name">Endemic</td><td class="ps_num"><%= endemicCell %></td><td class="ps_def"><%= endemicDef %></td></tr>
 <tr data-stat="introduced" data-n="<%= overview.getIntroducedSpeciesCount() %>"><td class="ps_name">Introduced</td><td class="ps_num"><%= introducedCell %></td><td class="ps_def"><%= introducedDef %></td></tr>
 <% } %>
+<% if (isSpeciesListOnly) { %>
+<tr class="ps_head"><th colspan="3">About this list</th></tr>
+<tr data-stat="species-list-only"><td colspan="3" class="ps_def" id="port-of-entry-note">These are ant species that have been intercepted at ports of entry (for example in cargo or plant shipments). They are not established introductions, and they are not counted in any place total or in the introduced species list. This page lists the species only; it shows no specimen or image numbers.</td></tr>
+<% } else { %>
 <tr class="ps_head"><th colspan="3">Specimen holdings</th></tr>
 <tr data-stat="specimens" data-n="<%= overview.getSpecimenCount() %>"><td class="ps_name">Specimens</td><td class="ps_num"><%= Formatter.commaFormat(overview.getSpecimenCount()) %></td><td class="ps_def"><%= specimensFullDef %><% if (specimenListLink != null) { %><br><%= specimenListLink %><% } %></td></tr>
 <% if (placeImages != null) { %>
@@ -266,6 +272,7 @@
 <tr class="ps_head"><th colspan="3">Image documentation</th></tr>
 <tr data-stat="images" data-n="<%= imagesShown %>"><td class="ps_name">Images</td><td class="ps_num"><%= Formatter.commaFormat(imagesShown) %></td><td class="ps_def">Images of these specimens, labels included (the breakdown appears after tonight's update).</td></tr>
 <% } %>
+<% } // not a species list only %>
 </table>
 </div>
 <style>
@@ -443,7 +450,7 @@ if (!HttpUtil.isOffline()) {
 <%
    jsonData = overview.getSpecimenSubfamilyDistJson();
    //AntwebUtil.log("overview-body.jsp 2 jsonData:" + jsonData);
-   if (jsonData != null && !"".equals(jsonData)) {
+   if (jsonData != null && !"".equals(jsonData) && !isSpeciesListOnly) {
    
      String title = "Specimens per Subfamily 'Pie Chart'";
      String subtitle = ""; //Distribution of Specimen";

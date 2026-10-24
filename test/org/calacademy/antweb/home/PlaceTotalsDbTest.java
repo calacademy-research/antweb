@@ -356,6 +356,7 @@ public class PlaceTotalsDbTest extends TestCase {
             Taxon x = new Taxon();
             x.setRank(a[0]);
             x.setStatus(a[1]);
+            x.setFamily("formicidae");   // Q7 (2026-10-22): ants only
             taxa.add(x);
         }
         assertEquals(2, TaxonMgr.countValidSpecies(taxa));

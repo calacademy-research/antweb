@@ -472,6 +472,16 @@ geolocale_taxon_log_detail	species_count	int	BASE TABLE
 geolocale_taxon_log_detail	specimen_count	int	BASE TABLE
 geolocale_taxon_log_detail	image_count	int	BASE TABLE
 geolocale_taxon_log_detail	log_id	int	BASE TABLE
+group_count	group_id	int	BASE TABLE
+group_count	specimens	int	BASE TABLE
+group_count	collections	int	BASE TABLE
+group_count	localities	int	BASE TABLE
+group_count	ungeoreferenced	int	BASE TABLE
+group_count	flagged	int	BASE TABLE
+group_count	subfamilies	int	BASE TABLE
+group_count	genera	int	BASE TABLE
+group_count	species	int	BASE TABLE
+group_count	counted	datetime	BASE TABLE
 group_image	group_id	int	BASE TABLE
 group_image	image_id	int	BASE TABLE
 homonym	taxon_name	varchar(128)	BASE TABLE

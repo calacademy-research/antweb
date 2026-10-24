@@ -995,10 +995,14 @@ varchar(100) to match (an 81-character group name had made an upload row insert 
 [numbers.md](numbers.md)): what groups.do, group.do and curator.do show, instead of the numbers written at the
 group's last upload (`upload` keeps those, and the upload reports show them).
 
-**Key.** `group_id` (`ant_group.id`), one row per group (0 when it has no specimens).
+**Key.** `group_id` (`ant_group.id`), one row per group (numbers 0 when it has no specimens). Row `group_id = 0`
+(`GroupCountDb.ALL_GROUPS`, since 2026-10-22, Q8) is the Totals row of groups.do: the specimens of every listed group
+together, so a species, genus, collection or locality found by two groups counts once.
 
 **Key columns.** `specimens`, `collections`, `localities`, `ungeoreferenced`, `flagged`, `subfamilies`, `genera`,
-`species` (the rule of `UploadDb.getCounts`), `counted` (time of the nightly count).
+`species` (the rule of `GroupCountDb.countColumns`, also used by `UploadDb.getCounts`; since 2026-10-22, Q8, `species`
+counts distinct full names of species and subspecies of the five counted statuses, ants, identified to genus), `counted`
+(time of the nightly count).
 
 **Written by.** Nightly set 3 (`GroupCountDb.recountAll`). Created by the application (`CREATE TABLE IF NOT EXISTS`,
 `GroupCountDb.createTable`); to undo, `drop table group_count` (the pages then show the last upload's numbers again).

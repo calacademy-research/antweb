@@ -525,7 +525,8 @@ All alerts email bfisher@calacademy.org.
 | Memory above 90% for 30 minutes | Java heap growth (Java may use up to 40% of RAM), MySQL, or many API bulk requests (API is capped at 1 GB). | `free -h; docker stats --no-stream`; `grep "heap used" /root/antweb/logs/web/compute.log \| tail -5` shows the heap at the end of each nightly run. Restart AntWeb at a quiet time. If it recurs, `nightlyRestart=true` (Switches) brings back the daily restart. |
 | Disk above 85% for 30 minutes | Logs, Docker images or build cache, journal. | "Disk full" below. |
 | "Log size check" (email from antweb@antweb.org and an admin alert, after the nightly run) | A log file over 1 GB, or the disk over 85%. | "A log grows too big" (Logs, above). |
-| "Storage mount problem" (email from antweb@antweb.org, hourly check `MountCheck`, at once and every 6 hours while it lasts; one "working again" email) | `/mnt/antweb` cannot be written and read back (file `web/log/upload/mountcheck-<env>.txt`), or (production) `/mnt/backup` cannot be listed or its newest daily dump is over 26 hours old or under 1 MB. | "Storage mounts (/mnt/antweb, /mnt/backup)" (Emergencies, below). |
+| "the CAS upload used an older TaxonWorks archive" (email from antweb@antweb.org and an admin alert, after the 05:00 nightly) | TaxonWorks did not build a new archive within 30 minutes of the nightly's request, so the upload used the previous day's archive: edits made in TaxonWorks since then arrive with the next run. | Usually nothing. If it repeats, check TaxonWorks (the archive link in `etc/taxonworks.properties`) or ask its developers. |
+| "Storage mount problem" (email from antweb@antweb.org, hourly check `MountCheck`, at once and every 6 hours while it lasts; one "working again" email) | `/mnt/antweb` cannot be written and read back (file `web/log/upload/mountcheck-<env>.txt`), or (production) the daily dump's status line `logs/web/db-dump-status.txt` (written by `bin/db-daily-dump.sh`; the app cannot read the root-only `/mnt/backup`) says failed, is over 26 hours old or names a dump under 1 MB. | "Storage mounts (/mnt/antweb, /mnt/backup)" (Emergencies, below). |
 | Disk read above 90 MB/s for 1 hour (antweb-prod) | The nightly sets, or a long database scan. | If outside 05:00 to 08:00: running queries with the DB pattern and `show full processlist;`. |
 | Uptime: www.antweb.org/v3.1/ down 10 minutes from all regions | Cloudflare cannot reach Caddy or the API (droplet down, Caddy or API stopped, firewall, certificate). This check does not cover Tomcat: AntWeb pages can be down while it passes. | "Site down" below. |
 | Uptime: www.antcat.org/v1/taxa/429011 | antcat.org is down. | AntCat runbook (AntCat repository and project instructions). |
@@ -704,7 +705,7 @@ Safe to free: unused Docker build cache and dangling images (`docker builder pru
 tail -20 /root/antweb/logs/web/compute.log; tail -10 /root/antweb/logs/web/taxonworksNightly.log; /root/antweb/bin/reboot_checker.sh --dry-run
 ```
 
-- `Begin set1` with no end: set 1 may wait up to 90 minutes for TaxonWorks and then upload. After 210 minutes (8:30 AM) the application asks for a restart and `reboot_checker.sh` restarts it within 5 minutes, unless an upload is running.
+- `Begin set1` with no end: set 1 may wait up to 30 minutes for TaxonWorks and then upload. After 210 minutes (8:30 AM) the application asks for a restart and `reboot_checker.sh` restarts it within 5 minutes, unless an upload is running.
 - A later set running far beyond its usual time (2: about 45 min, 3 and 4: about 15, 5: about 50): no automatic restart, except the watchdog for a thread spinning at full CPU. Check that no upload is running (`serverStatus.do`), then restart.
 - `Scheduler FAILED (remaining sets skipped)`: the sets after the failing one did not run. An admin can run one set by hand from the Curate page (`schedule.do?action=run&num=<N>`, confirm page). Avoid busy hours; set 5 is heavy and is skipped on staging.
 
@@ -731,7 +732,7 @@ with the Access Key column in the DigitalOcean list). A bucket with a bucket pol
 
 ```
 # ssh root@165.232.137.86   (antweb-prod)
-systemctl status rclone rclone-dbarchive --no-pager | grep -E "Active|error" ; findmnt /mnt/antweb ; findmnt /mnt/backup ; ls -l /mnt/antweb/web/log/upload/mountcheck-* ; ls -lt /mnt/backup/db/daily | head -3
+systemctl status rclone rclone-dbarchive --no-pager | grep -E "Active|error" ; findmnt /mnt/antweb ; findmnt /mnt/backup ; ls -l /mnt/antweb/web/log/upload/mountcheck-* ; ls -lt /mnt/backup/db/daily | head -3 ; cat /root/antweb/logs/web/db-dump-status.txt
 ```
 
 - "Input/output error" or a hang: the mount is dead. If rclone's log says the key is unknown (`InvalidAccessKeyId`),

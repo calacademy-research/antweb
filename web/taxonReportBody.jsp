@@ -17,6 +17,8 @@
     if (isBioregion) locale = "the " + overview.toString() + " bioregion";
     if (isProject) locale = "the " + org.calacademy.antweb.util.Html.esc(overview.getTitle()) + " project";
     String asterixTitle = "Counts include " + nextPluralRank + " of all statuses contained within " + locale + "."; 
+    // Port of Entry (Brian Fisher, 2026-10-22): a species list only; no specimen, child or image counts per row.
+    boolean listOnly = isProject && overview instanceof Project && ((Project) overview).isSpeciesListOnly();
     String asterixNote = "Counts include " + nextPluralRank + " of all statuses";
     if (displayGlobal){
       asterixNote += ".";
@@ -74,7 +76,8 @@
         <div class="list_extras author_date"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=authorDate" %>'>Author Date</a></b></font></div>
 
 
-     <% if (displayGlobal) { %>
+     <% if (listOnly) { %>
+     <% } else if (displayGlobal) { %>
          <% if ("specimensGlobal".equals(orderBy)) u = underline; else u = "";  %>
             <div class="list_extras specimens"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=specimensGlobal" %>'>Global</a><a title='Counts include specimens of all statuses'>*</a></b></font></div>
 
@@ -100,7 +103,9 @@
 
      <% } %>
      <% if ("images".equals(orderBy)) u = underline; else u = "";  %>        
+     <% if (!listOnly) { %>
         <div class="list_extras images"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=images" %>'>Images</a></b></font></div>
+     <% } %>
 
      <% if ("map".equals(orderBy)) u = underline; else u = ""; %>
      <div class="list_extras map"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=map" %>'>Map</a></u></b></font></div>
@@ -129,7 +134,9 @@
       //A.log("BROWSER PARAMS:" + browserParams);
 	  ++k;
   
-	 if ((!isOnlyShowUnImaged) || (!child.getHasImages())) {
+	 // isImaged=false: only names with no photo of the ant anywhere in AntWeb (Q12, TaxaPage.findUnimaged)
+	 boolean showChild = !isOnlyShowUnImaged || unimagedNames == null || unimagedNames.contains(child.getTaxonName());
+	 if (showChild) {
 
 	   TaxonSet childTaxonSet = child.getTaxonSet();
 
@@ -144,8 +151,7 @@
 		//	   if (projectName != null) projectStr = "&project=" + projectName;
   	   String mapLink = "bigMap.do?taxonName=" + child.getTaxonName(); // + projectStr;
 
-	   if ((!isOnlyShowUnImaged) || "No Images".equals(childTaxonSet.getImageCountStr())) {
-		 // if the &isImaged=false flag, only display the unimaged species
+	   if (true) {   // the unimaged filter is showChild above (was: no image of this place, labels included)
 %>
 <div class="specimen_layout">
 
@@ -178,7 +184,9 @@
             childCountStr = "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "'>" + nextSubtaxon + "</a>";
           } 
 
-          if (displayGlobal) {
+          if (listOnly) {
+            // no counts (Port of Entry)
+          } else if (displayGlobal) {
             String globalChildCountStr = null;
             globalChildCountStr = "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "&global=true'>" + childTaxonSet.getNextGlobalSubtaxon(pageRank) + "</a>"; 
 
@@ -201,7 +209,7 @@
            imageCountStr = "<a href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams() + "'>" + childTaxonSet.getImageCountStr() + "</a>";
          }
      %>
-        <div class="list_extras images"><%= imageCountStr %></div>
+        <% if (!listOnly) { %><div class="list_extras images"><%= imageCountStr %></div><% } %>
 
         <div class="list_extras map">
           <% if (childTaxonSet.getSubtaxonCount(1) > 0) { %>
@@ -246,4 +254,8 @@
 <% if (LoginMgr.isAdmin(request)) { %>
      <br>Subtaxon total: <%= subtaxonTotal %>
 <% } %>
+<% if (listOnly) { %>
+<BR><span id="port-of-entry-list-note">These are ant species intercepted at ports of entry, not established introductions. They are not counted in any place total or in the introduced species list, and this list shows no specimen or image numbers.</span>
+<% } else { %>
 <BR>* <%= asterixNote %>
+<% } %>
