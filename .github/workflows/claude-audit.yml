@@ -7,12 +7,20 @@ name: Claude audit
 
 on:
   schedule:
-    # Four runs a day (UTC hours below must match SLOT_HOURS), away from the nightly (12:00-15:30 UTC)
-    # and the daily end-to-end run (20:17 UTC).
+    # Twelve runs a day since 2026-10-24 (Brian Fisher: use the credit; four before). The UTC hours below must
+    # match SLOT_HOURS; away from the nightly (12:00-15:30 UTC) and the daily end-to-end run (20:17 UTC).
+    - cron: "10 0 * * *"
     - cron: "10 1 * * *"
+    - cron: "10 2 * * *"
+    - cron: "10 4 * * *"
     - cron: "10 5 * * *"
+    - cron: "10 6 * * *"
+    - cron: "10 8 * * *"
     - cron: "10 9 * * *"
+    - cron: "10 10 * * *"
     - cron: "10 17 * * *"
+    - cron: "10 18 * * *"
+    - cron: "10 22 * * *"
   workflow_dispatch:
     inputs:
       area:
@@ -51,6 +59,16 @@ jobs:
           ref: master
           fetch-depth: 1
 
+      - name: Checkout AntCat (public) into ./antcat, for the AntCat areas of the rotation
+        if: steps.key.outputs.present == 'true'
+        uses: actions/checkout@v5
+        with:
+          repository: calacademy-research/antcat
+          ref: master
+          path: antcat
+          fetch-depth: 1
+          persist-credentials: false
+
       - name: Audit one area
         if: steps.key.outputs.present == 'true'
         timeout-minutes: 18
@@ -58,7 +76,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           AREA: ${{ github.event.inputs.area }}
           SCHEDULE: ${{ github.event.schedule }}
-          SLOT_HOURS: "1,5,9,17"
+          SLOT_HOURS: "0,1,2,4,5,6,8,9,10,17,18,22"
           OUT: audit-out
         run: python3 .github/scripts/claude_audit.py
 
