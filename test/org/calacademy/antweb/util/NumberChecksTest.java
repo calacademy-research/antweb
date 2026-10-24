@@ -170,6 +170,14 @@ public class NumberChecksTest extends TestCase {
         assertEquals(1, m.recount);
     }
 
+    /** Between a reload of the artists and their numbers (postInitialize) every artist shows 0: not compared (2026-10-24). */
+    public void testArtistsNotComparedBeforeTheirNumbersAreLoaded() {
+        java.util.List<org.calacademy.antweb.Artist> artists = new java.util.ArrayList<>();
+        artists.add(new org.calacademy.antweb.Artist(1, "A"));
+        assertNull(org.calacademy.antweb.util.CountCheckAction.artistNumbers(artists, false));
+        assertEquals(1, org.calacademy.antweb.util.CountCheckAction.artistNumbers(artists, true).size());
+    }
+
     /** An image upload batch whose artist was deleted (production 2026-10-23: "id 514" on the upload list) is a finding. */
     public void testImageUploadWithDeletedArtist() throws Exception {
         exec("alter table image_upload add column artist_id int");

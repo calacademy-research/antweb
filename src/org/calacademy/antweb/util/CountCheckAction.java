@@ -133,8 +133,12 @@ public final class CountCheckAction extends AntwebAction {
 
     /** artists.do as it shows them (ArtistMgr): artist id -> Images, Specimen; null when ArtistMgr is not loaded. */
     static java.util.Map<Integer, int[]> artistNumbers() {
-        java.util.List<org.calacademy.antweb.Artist> artists = ArtistMgr.getArtists();
-        if (artists == null || artists.isEmpty()) return null;
+        return artistNumbers(ArtistMgr.getArtists(), ArtistMgr.isCounted());
+    }
+
+    /** null when the artists or their numbers are not loaded yet (then the check skips artists.do instead of reporting every artist as 0). */
+    public static java.util.Map<Integer, int[]> artistNumbers(java.util.List<org.calacademy.antweb.Artist> artists, boolean counted) {
+        if (artists == null || artists.isEmpty() || !counted) return null;
         java.util.Map<Integer, int[]> m = new java.util.TreeMap<>();
         for (org.calacademy.antweb.Artist a : new ArrayList<>(artists)) m.put(a.getId(), new int[] {a.getImageCount(), a.getSpecimenCount()});
         return m;
