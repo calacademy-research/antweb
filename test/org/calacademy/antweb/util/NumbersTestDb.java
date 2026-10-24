@@ -130,7 +130,8 @@ public final class NumbersTestDb {
         exec(c, "create table object_edit (edit_id int auto_increment primary key, object_key varchar(128), access_login int, created timestamp null)");
         exec(c, "create table object_hist (hist_id int auto_increment primary key, object_key varchar(128), access_login int, created timestamp null)");
         exec(c, org.calacademy.antweb.home.GroupCountDb.createTable());
-        exec(c, "create table image_upload (id int primary key, curator_id int, group_id int, image_count int, complete tinyint default 0, created timestamp null)");
+        exec(c, "create table image_upload (id int primary key, curator_id int, group_id int, image_count int, complete tinyint default 0, created timestamp null, artist_id int)");
+        exec(c, "create table artist (id int primary key, name varchar(64))");
         exec(c, "create table image_uploaded (id int primary key, image_upload_id int, created timestamp null)");
     }
 
@@ -303,7 +304,8 @@ public final class NumbersTestDb {
         exec(c, "insert into group_count (group_id, specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera, species, counted)"
             + " values (1, 5, 2, 1, 1, 0, 2, 2, 2, " + OLD + ")");
         exec(c, "insert into description_edit (access_login, created) values (5, " + OLD + ")");
-        exec(c, "insert into image_upload values (1, 5, 1, 2, 1, " + OLD + ")");
+        exec(c, "insert into image_upload values (1, 5, 1, 2, 1, " + OLD + ", 1)");
+        exec(c, "insert into artist values (1, 'Artist one')");
         exec(c, "insert into image_uploaded values (1, 1, " + OLD + "), (2, 1, " + OLD + ")");
         exec(c, "update image set artist = 1");
     }

@@ -688,13 +688,14 @@ public final class NumberChecks {
             "listImageUploads.do: each image upload's Artist is an artist in AntWeb (not a deleted number)", "93");
         inv.check(check, c -> {
             Map<String, String> uploads = inv.places.computeIfAbsent("image upload", x -> CountInvariants.keyMap());
-            String sql = "select u.id, u.artist_id from image_upload u left join artist a on a.id = u.artist_id"
-                + " where u.artist_id is not null and u.artist_id <> 0 and a.id is null";
+            // Every batch that names an artist is compared (1 = its artist exists), so the check counts its numbers.
+            String sql = "select u.id, u.artist_id, a.id is not null from image_upload u left join artist a on a.id = u.artist_id"
+                + " where u.artist_id is not null and u.artist_id <> 0";
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(sql))) {
                 while (r.next()) {
                     String id = r.getString(1);
                     uploads.putIfAbsent(id, "image upload " + id);
-                    inv.compare(c, "image upload", id, "Artist " + r.getInt(2) + " (listImageUploads.do) exists", 0, 1, "=", null);
+                    inv.compare(c, "image upload", id, "Artist " + r.getInt(2) + " (listImageUploads.do) exists", r.getInt(3), 1, "=", null);
                 }
             }
         });
