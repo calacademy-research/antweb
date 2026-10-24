@@ -195,6 +195,8 @@ public final class TaxaPageAction extends AntwebAction {
                 request.setAttribute("message", successMsg);
                 return mapping.findForward("message");
             }
+            // Q12 (2026-10-22): "Unimaged" = no photo of the ant anywhere in AntWeb (label photos do not count).
+            if ("false".equals(isImaged)) taxaPage.findUnimaged(connection);
 
 //         if (HttpUtil.getTarget(request).contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) { s_log.warn("MarkNote() break:" + HttpUtil.getTarget(request)); return (mapping.findForward("error"));}
 // Doubled

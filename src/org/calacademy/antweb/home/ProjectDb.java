@@ -599,10 +599,28 @@ public class ProjectDb extends AntwebDb {
         //A.log("project:" + project);
         freshStart(project);
 
+        if (project.isSpeciesListOnly()) {
+            // Port of Entry (2026-10-22): a species list only. Subfamilies, Genera, Species and Valid species of its list
+            // are written; its specimen and image numbers and its pies are dropped, never counted.
+            dropNumbers(project);
+            updateCountableTaxonData(project);
+            updateValidSpeciesCount(project);
+            return;
+        }
+
         updateCountsFromSpecimenData(projectName);
 
         // update fields (subfamily_count, genus_count, species_count, image_count, json fields).
         finish(project);
+    }
+
+    /** The Port of Entry project (Project.isSpeciesListOnly): no specimen or image numbers, no pies. */
+    private void dropNumbers(Project project) throws SQLException {
+        try (PreparedStatement stmt = getConnection().prepareStatement("update project set specimen_count = 0, image_count = 0,"
+                + " imaged_specimen_count = 0, taxon_subfamily_dist_json = null, specimen_subfamily_dist_json = null where project_name = ?")) {
+            stmt.setString(1, project.getName());
+            stmt.executeUpdate();
+        }
     }
 
     private void freshStart(Project project) throws SQLException {
@@ -706,6 +724,12 @@ public class ProjectDb extends AntwebDb {
 
     public String finish() throws SQLException {
       for (Project project : ProjectMgr.getLiveProjects()) {
+        if (project.isSpeciesListOnly()) {   // Port of Entry: list counts only, no pies (2026-10-22)
+          dropNumbers(project);
+          updateCountableTaxonData(project);
+          updateValidSpeciesCount(project);
+          continue;
+        }
         finish(project);
       }  
       return "Projects Finished";
@@ -773,6 +797,7 @@ public class ProjectDb extends AntwebDb {
         
     public void makeCharts() throws SQLException {
       for (Project project : ProjectMgr.getLiveProjects()) {
+        if (project.isSpeciesListOnly()) continue;   // Port of Entry: no pies (2026-10-22)
         makeCharts(project);
       }  
     }         
