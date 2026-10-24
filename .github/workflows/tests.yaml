@@ -45,6 +45,10 @@ jobs:
         # every count check (CountInvariants.IDS) is named. Fix: edit docs/numbers.md (see its section 1).
         run: python3 tools/numbers/check_numbers_doc.py
 
+      - name: Every workflow step is valid shell, also inside sh -c '...' (tests/unit/test_workflow_shell.py)
+        # 2026-10-24: an apostrophe in a comment ended a quoted sh -c script early; the step failed only on GitHub.
+        run: python3 tests/unit/test_workflow_shell.py
+
       - name: Data model doc has a section for every table (docs/data-model.md)
         # Replays db/upgrade/**/*.sql and the CREATE TABLE statements in src/; fails when a table or view
         # has no "### `name`" section in docs/data-model.md, or a section names a table no SQL knows, or
@@ -136,7 +140,7 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.HardeningSmallFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (1 test)" /tmp/out.txt
-            # Who may read upload files: the whole file (own group) and one specimen's line (any curator, 2026-10-24).
+            # Who may read upload files: the whole file (own group) and the line of one specimen (any curator, 2026-10-24).
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/UploadFileAccessTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.UploadFileAccessTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
