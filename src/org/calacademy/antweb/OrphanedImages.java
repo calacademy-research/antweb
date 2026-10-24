@@ -16,7 +16,18 @@ public class OrphanedImages {
 
 	Connection connection;
 	ArrayList<String> orphans = new ArrayList<>();
-	
+	long imageCount = 0;
+
+	/*
+	 * Brian Fisher, 2026-10-22 (docs/numbers.md Q9): the page says how many images and how many specimen codes:
+	 * "N images of M specimen codes that are not in AntWeb". An orphaned image is an image row whose image_of_id is
+	 * no specimen's code. One rule for the page and the count check (NumberChecks stats.images, admin.orphans).
+	 */
+	/** The specimen codes of orphaned images, each once (the list on the page). */
+	public static final String CODES_SQL = "select distinct i.image_of_id from image i left join specimen s on s.code = i.image_of_id where s.code is null";
+	/** Orphaned images and their specimen codes: count(*), count(distinct code). */
+	public static final String COUNTS_SQL = "select count(*), count(distinct i.image_of_id) from image i left join specimen s on s.code = i.image_of_id where s.code is null";
+
 	public ArrayList<String> getOrphans() {
 		return orphans;
 	}
@@ -25,20 +36,21 @@ public class OrphanedImages {
 		this.orphans = orphans;
 	}
 
+	/** Orphaned images (files), as the page says "N images of M specimen codes". */
+	public long getImageCount() {
+		return imageCount;
+	}
+
 	public void setOrphans() {
-		
-		String theQuery = "select distinct image.image_of_id from " + 
-			" image left join specimen on image.image_of_id = specimen.code where " +
-			" code is null";
-		
-		try {
-			Statement stmt = connection.createStatement();
-			ResultSet rset = stmt.executeQuery(theQuery);
-			while (rset.next()) {
-				orphans.add(rset.getString(1));
+		try (Statement stmt = connection.createStatement()) {
+			try (ResultSet rset = stmt.executeQuery(CODES_SQL)) {
+				while (rset.next()) {
+					orphans.add(rset.getString(1));
+				}
 			}
-			rset.close();
-			stmt.close();
+			try (ResultSet rset = stmt.executeQuery(COUNTS_SQL)) {
+				if (rset.next()) imageCount = rset.getLong(1);
+			}
 		} catch (SQLException e) {
 			s_log.error("setOrphans() e: " + e);
 			AntwebUtil.logStackTrace(e);

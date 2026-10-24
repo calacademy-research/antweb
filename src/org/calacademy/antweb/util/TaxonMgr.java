@@ -90,7 +90,8 @@ public class TaxonMgr extends Manager {
     /**
      * Valid species and subspecies (fossils included): the first number of statsPage.do, "valid species + ssp."
      * (2026-10-21; it showed getValidTaxonCount(), valid taxa of every rank). Same rule as the home page's
-     * number (StatisticsDb.populateStatistics).
+     * number (StatisticsDb.populateStatistics). Since 2026-10-22 (Q7) ants only, identified to genus
+     * (PlaceTotals.isValidAntSpecies).
      */
     public static int getValidSpeciesCount() {
         return countValidSpecies(getTaxa());
@@ -99,7 +100,7 @@ public class TaxonMgr extends Manager {
     public static int countValidSpecies(Collection<Taxon> taxa) {
         int n = 0;
         for (Taxon taxon : taxa) {
-            if (taxon.isValid() && ("species".equals(taxon.getRank()) || "subspecies".equals(taxon.getRank()))) ++n;
+            if (taxon.isValid() && org.calacademy.antweb.home.PlaceTotals.isValidAntSpecies("valid", taxon.getRank(), taxon.getFamily(), taxon.getGenus())) ++n;
         }
         return n;
     }

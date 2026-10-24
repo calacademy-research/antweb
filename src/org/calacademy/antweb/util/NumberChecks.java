@@ -117,16 +117,18 @@ public final class NumberChecks {
      */
     void statsGlobal() {
         CountInvariants.Check check = new CountInvariants.Check("stats.global",
-            "statsPage Global Data (Extant, Fossil) = a recount of the taxon table; extant + fossil species and subspecies = home valid species + ssp.", "11, 12");
+            "statsPage Global Data (Extant, Fossil) = a recount of the valid ant taxa of the taxon table (Q7); extant + fossil species and subspecies = home valid species + ssp.", "1, 6, 11, 12");
         inv.check(check, c -> {
             site().put("statsPage", "statsPage.do");
             org.calacademy.antweb.home.StatisticsDb db = new org.calacademy.antweb.home.StatisticsDb(inv.connection);
             StatSet extant = db.getExtantData();
             StatSet fossil = db.getFossilData();
             long[][] recount = new long[2][4];
+            // Q7 (Brian Fisher, 2026-10-22): ants only, and a species or subspecies only when identified to genus
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
-                    "select fossil, taxarank, count(*) from taxon where status = 'valid' and fossil in (0, 1)"
-                    + " and taxarank in ('subfamily', 'genus', 'species', 'subspecies') group by fossil, taxarank"))) {
+                    "select t.fossil, t.taxarank, count(*) from taxon t where t.status = 'valid' and t.fossil in (0, 1)"
+                    + " and t.taxarank in ('subfamily', 'genus', 'species', 'subspecies') and t.family = 'formicidae'"
+                    + " and (t.taxarank in ('subfamily', 'genus') or " + PlaceTotals.identifiedToGenus("t") + ") group by t.fossil, t.taxarank"))) {
                 while (r.next()) {
                     int row = r.getInt(1) == 1 ? 1 : 0;
                     int col = java.util.Arrays.asList(RANKS).indexOf(r.getString(2));
@@ -154,7 +156,7 @@ public final class NumberChecks {
      */
     void statsImages() {
         CountInvariants.Check check = new CountInvariants.Check("stats.images",
-            "statsPage Images table = a recount by status and caste; the four castes add up to Total; Sum = all images minus orphan images", "13, 14, 15, 99");
+            "statsPage Images table = a recount by status and caste; the four castes add up to Total; Sum = all images minus orphan images; orphanedImages.do images and codes = a recount", "13, 14, 15, 99");
         inv.check(check, c -> {
             site().put("statsPage", "statsPage.do");
             Map<String, int[]> page = new org.calacademy.antweb.home.ImageDb(inv.connection).getImageStats();
@@ -203,6 +205,13 @@ public final class NumberChecks {
                     orphanCodes = r.getLong(2);
                 }
             }
+            // orphanedImages.do (row 99, Q9 2026-10-22): "N images of M specimen codes that are not in AntWeb", as the page computes them
+            org.calacademy.antweb.OrphanedImages page2 = new org.calacademy.antweb.OrphanedImages();
+            page2.setConnection(inv.connection);
+            page2.setOrphans();
+            site().put("orphanedImages", "orphanedImages.do");
+            inv.compare(c, "site", "orphanedImages", "orphanedImages.do: images (N images of M specimen codes) = a recount", page2.getImageCount(), orphans, "=", null);
+            inv.compare(c, "site", "orphanedImages", "orphanedImages.do: specimen codes (N images of M specimen codes) = a recount", page2.getOrphans().size(), orphanCodes, "=", null);
             inv.compare(c, "site", "statsPage", "Images table: Sum (statuses shown) + images of specimens without a status = all images (" + all
                 + ") minus orphan images (" + orphans + ")", sum[0] + nullStatus, all - orphans, "=", null);
             // Images of specimens without a status are in no row of the table (so not in its Sum): a data finding.
@@ -264,8 +273,8 @@ public final class NumberChecks {
             ? "statsPage Museum Data (Valid Extant, Valid Fossil) agree with each museum's page and Global Data"
             : "statsPage Bioregion Data agrees with each bioregion's page and Global Data", museum ? "18, 19" : "17")
             .pendingOn(true, true, false, false);   // the place pages' numbers follow the rules of 2026-10-21
-        Map<String, long[][]> data = CountInvariants.keyMap();   // every family, as the page counts
-        Map<String, long[][]> ants = CountInvariants.keyMap();   // Formicidae only, as the place pages count
+        Map<String, long[][]> data = CountInvariants.keyMap();   // as the page counts (Q7: ants only, PlaceTotals.validAntTaxonCondition)
+        Map<String, long[][]> ants = CountInvariants.keyMap();   // an independent recount: Formicidae, identified to genus
         String page = museum ? "statsPage Museum Data" : "statsPage Bioregion Data";
         inv.check(check, c -> {
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(statsPlacesSql(type)))) {
@@ -279,7 +288,7 @@ public final class NumberChecks {
             }
             long[][] global = new long[2][4];
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
-                    "select fossil, taxarank, count(*) from taxon where status = 'valid' and fossil in (0, 1) group by fossil, taxarank"))) {
+                    "select fossil, taxarank, count(*) from taxon where status = 'valid' and fossil in (0, 1) and family = 'formicidae' group by fossil, taxarank"))) {
                 while (r.next()) {
                     int col = java.util.Arrays.asList(RANKS).indexOf(r.getString(2));
                     if (col >= 0) global[r.getInt(1) == 1 ? 1 : 0][col] += r.getLong(3);
@@ -299,7 +308,7 @@ public final class NumberChecks {
                 exp.put(place, museum ? d : d[0]);
                 if (!labels.containsKey(place)) continue;
                 String p = inv.why(c, type, place);
-                // Against the place page with the ants of the statsPage numbers (the page counts every family: stats.nonants, B31).
+                // Against the place page (both count ants only since 2026-10-22, Q7; stats.nonants compares the page's rule with the recount).
                 inv.compare(c, type, place, page + (museum ? ", Valid Extant" : "") + ": Species + Subspecies (ants) = Valid species of the " + type + " page",
                     a[0][2] + a[0][3], s[3], "=", p);
                 inv.compare(c, type, place, page + ": valid extant and fossil Subfamilies (ants) <= Subfamilies of the " + type + " page", a[0][0] + a[1][0], s[0], "<=", p);
@@ -315,9 +324,10 @@ public final class NumberChecks {
             }
             expected("statsPage").put(museum ? "museums" : "bioregions", exp);
         });
-        // B31: the statsPage numbers count valid taxa of every family on the list; the place pages count ants only.
+        // B31, Q7 (Brian Fisher, 2026-10-22): the statsPage numbers count ants only, as the place pages; until then they
+        // counted valid taxa of every family on the list. The page's numbers = an independent recount of the ant taxa.
         CountInvariants.Check nonAnts = new CountInvariants.Check("stats.nonants",
-            "B31: statsPage Bioregion and Museum Data count valid taxa of other families (the place pages count ants only)", museum ? "18, 19" : "17");
+            "Q7, B31: statsPage Bioregion and Museum Data count ant taxa only (identified to genus), as the place pages", museum ? "18, 19" : "17");
         if (check.error != null) return;   // the numbers were not read completely
         inv.check(nonAnts, c -> {
             Map<String, String> labels = inv.places.getOrDefault(type, CountInvariants.keyMap());
@@ -329,7 +339,7 @@ public final class NumberChecks {
                     long all = d[f][0] + d[f][1] + d[f][2] + d[f][3];
                     long antsOnly = a[f][0] + a[f][1] + a[f][2] + a[f][3];
                     inv.compare(c, type, e.getKey(), page + (f == 1 ? ", Valid Fossil" : museum ? ", Valid Extant" : "")
-                        + ": valid taxa counted = valid ant taxa (B31)", all, antsOnly, "=", null);
+                        + ": valid taxa counted = valid ant taxa (Q7, B31)", all, antsOnly, "=", null);
                 }
             }
         });
@@ -337,13 +347,24 @@ public final class NumberChecks {
 
     /**
      * The statsPage queries of Bioregion Data and Museum Data (StatisticsDb), for every place at once: key, fossil, rank,
-     * count (as the page counts: every family), and the ants among them.
+     * count as the page counts (PlaceTotals.validAntTaxonCondition, Q7 2026-10-22: valid ant taxa, species and subspecies
+     * identified to genus), and an independent recount of the same (written out here, so a change of the shared rule
+     * shows as a difference of stats.nonants).
      */
     public static String statsPlacesSql(String type) {
         boolean museum = "museum".equals(type);
         String list = museum ? "museum_taxon" : "bioregion_taxon";
         String key = museum ? "code" : "bioregion_name";
-        return "select l." + key + ", t.fossil, t.taxarank, count(*), sum(case when t.family = 'formicidae' then 1 else 0 end) from taxon t join " + list + " l on t.taxon_name = l.taxon_name"
+        StringBuilder page = new StringBuilder("(");
+        for (int i = 0; i < RANKS.length; i++) {
+            if (i > 0) page.append(" or ");
+            page.append("(").append(PlaceTotals.validAntTaxonCondition("t", RANKS[i], null)).append(")");
+        }
+        page.append(")");
+        String recount = "t.family = 'formicidae' and (t.taxarank in ('subfamily', 'genus') or (coalesce(t.genus, '') not like '(%'"
+            + " and lower(coalesce(t.genus, '')) not in ('indet', 'undet')))";
+        return "select l." + key + ", t.fossil, t.taxarank, sum(case when " + page + " then 1 else 0 end), sum(case when " + recount
+            + " then 1 else 0 end) from taxon t join " + list + " l on t.taxon_name = l.taxon_name"
             + " where t.status = 'valid' and t.fossil in (" + (museum ? "0, 1" : "0") + ") and t.taxarank in ('subfamily', 'genus', 'species', 'subspecies')"
             + " group by l." + key + ", t.fossil, t.taxarank";
     }
@@ -437,7 +458,11 @@ public final class NumberChecks {
                     if (!has(from[i])) continue;
                     String p = listsChanged ? "lists or specimens changed after the row was written"
                         : i == cols.length - 1 && imagesChanged ? "images were added after the row was written" : null;
-                    inv.compare(c, "site", "statistics", "statistics.do latest row: " + cols[i], row[i], count(sql[i]), "=", p);
+                    long live = count(sql[i]);
+                    // valid_species_imaged counts ants only since 2026-10-22 (Q7): a row written before equals the old count
+                    if (p == null && i == cols.length - 1 && row[i] != live
+                            && row[i] == count(org.calacademy.antweb.home.StatisticsDb.VALID_SPECIES_IMAGED_SQL_BEFORE_Q7)) p = CountInvariants.Q7_PENDING;
+                    inv.compare(c, "site", "statistics", "statistics.do latest row: " + cols[i], row[i], live, "=", p);
                 }
             }
             if (has("ant_group", "upload_specimens") && has("specimen", "access_group")) {
@@ -466,6 +491,15 @@ public final class NumberChecks {
     }
 
     private Map<String, long[]> groupNumbers;
+    private Map<String, long[]> oldGroupNumbers;
+
+    static final String Q8_PENDING = "counted by the rule before 2026-10-22 (Q8: species epithets of valid names); the next nightly run counts it by the new rule";
+
+    /** Subfamilies, Genera, Species of every group by the rule before 2026-10-22 (GroupCountDb.countsSqlBeforeQ8), only to tell pending numbers. */
+    private Map<String, long[]> oldGroupNumbers() throws SQLException {
+        if (oldGroupNumbers == null) oldGroupNumbers = inv.rows(org.calacademy.antweb.home.GroupCountDb.countsSqlBeforeQ8());
+        return oldGroupNumbers;
+    }
 
     private Map<String, long[]> groupNumbers() throws SQLException {
         if (groupNumbers == null) groupNumbers = inv.rows(groupNumbersSql());
@@ -525,7 +559,8 @@ public final class NumberChecks {
             if (has(org.calacademy.antweb.home.GroupCountDb.TABLE, "counted")) {
                 try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
                         "select group_id, specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera, species, "
-                        + CountInvariants.safeDate("counted") + " from " + org.calacademy.antweb.home.GroupCountDb.TABLE + " where counted is not null"))) {
+                        + CountInvariants.safeDate("counted") + " from " + org.calacademy.antweb.home.GroupCountDb.TABLE + " where counted is not null"
+                        + " and group_id <> " + org.calacademy.antweb.home.GroupCountDb.ALL_GROUPS))) {
                     while (r.next()) {
                         long[] v = new long[8];
                         for (int i = 0; i < 8; i++) v[i] = r.getLong(i + 2);
@@ -552,7 +587,14 @@ public final class NumberChecks {
                         : "specimens of the group were renamed after its last upload (the numbers are from the upload)";
                 }
                 if (p == null && !counted) p = "no nightly run has recounted the group yet (the page shows its last upload's numbers)";
+                long[] before = oldGroupNumbers().get(g);
                 for (int i = 0; i < 8; i++) {
+                    // Q8 (2026-10-22): Subfamilies, Genera, Species counted by the rule before it: pending until the next nightly run
+                    if (p == null && i >= 5 && before != null && v[i] != recount[i] && v[i] == before[i - 5]) {
+                        inv.compare(c, "group", g, (counted ? "today's " : "last upload (" + row[1] + ") ") + what[i]
+                            + " (groups.do, group.do) = a recount of the group's specimens", v[i], recount[i], "=", Q8_PENDING);
+                        continue;
+                    }
                     inv.compare(c, "group", g, (counted ? "today's " : "last upload (" + row[1] + ") ") + what[i]
                         + " (groups.do, group.do) = a recount of the group's specimens", v[i], recount[i], "=", p);
                 }
@@ -570,7 +612,50 @@ public final class NumberChecks {
             }
             // groups.do columns: uploads, specimens, ungeoreferenced, flagged, collections, localities, subfamilies, genera, species
             expected("groups").putAll(exp);
+            groupTotals(c, uploadedToday, renamed);
         });
+    }
+
+    /**
+     * The Totals row of groups.do (rows 89, 90; Brian Fisher, 2026-10-22, Q8): Collections, Localities, Subfamilies,
+     * Genera and Species of all listed groups' specimens together (distinct over them, not the largest group), stored by
+     * the nightly recount (group_count row GroupCountDb.ALL_GROUPS), against a recount by the same rule
+     * (GroupCountDb.totalsSql). Pending when a group uploaded or had specimens renamed after the count.
+     */
+    private void groupTotals(CountInvariants.Check c, java.util.Set<String> uploadedToday, Map<String, Timestamp> renamed) throws SQLException {
+        String table = org.calacademy.antweb.home.GroupCountDb.TABLE;
+        if (!has(table, "counted")) return;
+        long[] stored = null;
+        Timestamp counted = null;
+        try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
+                "select specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera, species, " + CountInvariants.safeDate("counted")
+                + " from " + table + " where group_id = " + org.calacademy.antweb.home.GroupCountDb.ALL_GROUPS + " and counted is not null"))) {
+            if (r.next()) {
+                stored = new long[8];
+                for (int i = 0; i < 8; i++) stored[i] = r.getLong(i + 1);
+                counted = r.getTimestamp(9);
+            }
+        }
+        long[] recount = new long[8];
+        try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(org.calacademy.antweb.home.GroupCountDb.totalsSql()))) {
+            if (r.next()) {
+                // columns: g, all, specimens, collections, localities, ungeoreferenced, subfamilies, genera, species, flagged
+                long[] v = {r.getLong(3), r.getLong(4), r.getLong(5), r.getLong(6), r.getLong(10), r.getLong(7), r.getLong(8), r.getLong(9)};
+                recount = v;
+            }
+        }
+        // groups.do Totals: collections, localities, subfamilies, genera, species
+        expected("groupsTotals").put("distinct", new long[] {recount[1], recount[2], recount[5], recount[6], recount[7]});
+        if (stored == null) return;   // no nightly run has counted the Totals row yet: the page shows "-"
+        inv.places.computeIfAbsent("group", x -> CountInvariants.keyMap()).putIfAbsent("all", "all upload groups (groups.do Totals)");
+        String p = uploadedToday.isEmpty() ? null : "a group uploaded after the last nightly run (an upload may still be running)";
+        if (p == null && counted != null) {
+            for (Timestamp t : renamed.values()) if (t != null && t.after(counted)) p = "specimens were renamed after the nightly recount";
+        }
+        String[] what = {"Specimens", "Collections", "Localities", "Ungeoreferenced", "Flagged", "Subfamilies", "Genera", "Species"};
+        for (int i = 0; i < 8; i++) {
+            inv.compare(c, "group", "all", "Totals " + what[i] + " (groups.do; all groups' specimens together, Q8) = a recount", stored[i], recount[i], "=", p);
+        }
     }
 
     /**

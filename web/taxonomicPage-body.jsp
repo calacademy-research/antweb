@@ -88,28 +88,25 @@
 
 	String childSizeStr = Formatter.commaFormat(childrenCount) + " " + statusStr + Rank.getPluralRank(pageRank);
 
-	String unImagedCountStr = "";
-	if (isOnlyShowUnImaged) {
+	// Q12 (Brian Fisher, 2026-10-22): "Unimaged" = no photo of the ant anywhere in AntWeb; a name whose specimens have only
+	// label photos is unimaged (TaxaPage.findUnimaged, the rule of the API's /unimagedGeolocaleTaxa). Until then it meant
+	// no image of the name from this place, labels included, and the header fell back to the list size when none (B21).
+	java.util.Set<String> unimagedNames = taxaPage == null ? null : taxaPage.getUnimagedNames();
+	String unImagedNote = "";
+	if (isOnlyShowUnImaged && unimagedNames != null) {
 	    int unImagedCount = 0;
-		if (taxaPage != null) {
-		    for (Taxon child : childrenArray) { 
-	  		    TaxonSet taxonSet = child.getTaxonSet();
-			    if ("No Images".equals(taxonSet.getImageCountStr())) {
-			      ++unImagedCount;     
-			    }
-		    }
-		}
-		if (unImagedCount > 0) {
-		    childSizeStr = "<span class=\"numbers\">" + unImagedCount + "</span> Unimaged " + Rank.getPluralRank(pageRank) + " (out of <span class=\"numbers\">" + childrenCount + "</span>)";
-		    // Not sure this is a problem.
-		    AntwebUtil.log("taxonomicPage-body.jsp target:" + thisTarget + " childSizeStr:" + childSizeStr);
+	    for (Taxon child : childrenArray) {
+	        if (unimagedNames.contains(child.getTaxonName())) ++unImagedCount;
 	    }
+	    childSizeStr = "<span class=\"numbers\">" + unImagedCount + "</span> Unimaged " + Rank.getPluralRank(pageRank) + " (out of <span class=\"numbers\">" + childrenCount + "</span>)";
+	    unImagedNote = "<p id=\"unimaged-note\">Unimaged: no photo of the ant anywhere in AntWeb, from any place. A name whose specimens have only label photos counts as unimaged.</p>";
     }
 %>
 
 <div id="totals_and_tools_container">
     <div id="totals_and_tools">
         <h2 class="display_count"><%= childSizeStr %></h2>
+        <%= unImagedNote %>
 
 <%
       String statusSet = taxaPage.getStatusSetStr();

@@ -13,7 +13,8 @@ import java.sql.Statement;
  * species pheidole a (valid), pheidole b (morphotaxon), subspecies pheidole a x (valid; parent the genus, as uploads write
  * it: Taxon.getParentTaxonNameFromName; 2026-10-22, was pheidole a, the B25 case), hypoponera b (valid).
  *
- * Admin numbers (2026-10-22, NumberChecks): upload group 1 (all five specimens; one upload by login 5), one description
+ * Admin numbers (2026-10-22, NumberChecks): upload group 1 (all five specimens; one upload by login 5; Species 4 = the
+ * full names, Q8; group_count row 0 = the Totals row of groups.do), one description
  * edit by login 5, one image upload by login 5 with 2 files, artist 1 took the four images; statistics row as
  * populateStatistics writes it; the taxon columns the API /taxa reads = the Global rows.
  *
@@ -298,11 +299,14 @@ public final class NumbersTestDb {
             + " decimal_latitude = if(code = 'casent5', null, -18.9), genus = substring_index(substring_index(taxon_name, ' ', 1), 'inae', -1),"
             + " species = substring_index(substring_index(taxon_name, ' ', 2), ' ', -1)");
         exec(c, "update upload set login_id = 5, group_id = 1, specimens = 5, collections = 2, localities = 1, ungeoreferenced = 1, flagged = 0,"
-            + " subfamilies = 2, genera = 2, species = 2");
+            + " subfamilies = 2, genera = 2, species = 4");   // Q8 (2026-10-22): species = full names (pheidole a, b, a x, hypoponera b)
         exec(c, "insert into ant_group values (1, 'CAS', 1, 5)");
         // today's numbers of the group as the nightly recount writes them (GroupCountDb, 2026-10-22)
         exec(c, "insert into group_count (group_id, specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera, species, counted)"
-            + " values (1, 5, 2, 1, 1, 0, 2, 2, 2, " + OLD + ")");
+            + " values (1, 5, 2, 1, 1, 0, 2, 2, 4, " + OLD + ")");
+        // the Totals row of groups.do (group 0: every listed group's specimens together, Q8)
+        exec(c, "insert into group_count (group_id, specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera, species, counted)"
+            + " values (0, 5, 2, 1, 1, 0, 2, 2, 4, " + OLD + ")");
         exec(c, "insert into description_edit (access_login, created) values (5, " + OLD + ")");
         exec(c, "insert into image_upload values (1, 5, 1, 2, 1, " + OLD + ", 1)");
         exec(c, "insert into artist values (1, 'Artist one')");
