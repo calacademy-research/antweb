@@ -326,7 +326,7 @@ jobs:
               /t/org/calacademy/antweb/util/JobSummaryTest.java \
               /t/org/calacademy/antweb/upload/SubfamilyFromGenusTest.java \
               /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java
-            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:9 \
+            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:10 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \

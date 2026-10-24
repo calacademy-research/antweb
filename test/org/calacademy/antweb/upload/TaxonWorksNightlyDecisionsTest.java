@@ -144,4 +144,13 @@ public class TaxonWorksNightlyDecisionsTest extends TestCase {
         assertEquals(java.time.LocalDateTime.of(2026, 10, 23, 12, 1, 22), built);
         Files.delete(zip);
     }
+
+    /** An upload of an older archive (the wait ran out) raises an alert; a fresh upload does not. */
+    public void testOlderArchiveUploadIsAlerted() throws Exception {
+        Method m = method("isOlderArchiveUploaded", String.class);
+        assertTrue((Boolean) m.invoke(null, "uploaded 267630 records for group 1 (was 267350 specimens) in 20 min; archive built 2026-10-23T12:01:22 UTC (older than this run: TaxonWorks did not build a new one in time)"));
+        assertFalse((Boolean) m.invoke(null, "uploaded 267630 records for group 1 (was 267350 specimens) in 20 min; archive built 2026-10-24T12:04:10 UTC"));
+        assertFalse((Boolean) m.invoke(null, "skipped: archive built 2026-10-23T12:01:22 UTC, before this run's request (TaxonWorks builds the new one now)"));
+        assertFalse((Boolean) m.invoke(null, (Object) null));
+    }
 }

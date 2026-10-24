@@ -121,6 +121,18 @@ public final class TaxonWorksNightly {
         }
         LogMgr.appendLog(LOG, DateUtil.getFormatDateTimeStr() + " " + result);
         LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " taxonWorksNightly: " + result);
+        // An older archive was uploaded (TaxonWorks did not build a new one in time): today's TaxonWorks edits are
+        // missing until tomorrow. An admin alert and an email, so it is seen the same morning (2026-10-24).
+        if (isOlderArchiveUploaded(result)) {
+            String alert = "TaxonWorks nightly: " + result + ". Edits made in TaxonWorks since that build arrive with the next run.";
+            try {
+                org.calacademy.antweb.util.AdminAlertMgr.addIfFresh(alert, "TaxonWorks nightly:", "INTERVAL 1 DAY", connection);
+                org.calacademy.antweb.util.Emailer.sendMail(org.calacademy.antweb.util.AntwebUtil.getDevEmail(),
+                    "AntWeb: the CAS upload used an older TaxonWorks archive", alert);
+            } catch (Exception e) {
+                s_log.warn("run() alert e:" + e);
+            }
+        }
         s_log.warn("run() " + result);
         return result;
     }
@@ -231,6 +243,11 @@ public final class TaxonWorksNightly {
         return result != null && (result.startsWith("skipped: archive unchanged")
             || result.startsWith("skipped: archive built ")
             || result.startsWith("skipped: TaxonWorks answered HTTP 422"));
+    }
+
+    /** True when the run uploaded an archive built before its request (the last check of the wait accepted it). */
+    static boolean isOlderArchiveUploaded(String result) {
+        return result != null && result.startsWith("uploaded ") && result.contains("(older than this run");
     }
 
     /**
