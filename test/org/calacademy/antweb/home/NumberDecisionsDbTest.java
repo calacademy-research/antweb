@@ -217,6 +217,15 @@ public class NumberDecisionsDbTest extends TestCase {
         assertEquals(list(r), 1, real(r, "admin.groups"));
     }
 
+    /** The Totals row is never zeros: an ant_group row with id 0, or an older Totals row, does not leave 0 shown (staging 2026-10-24). */
+    public void testTotalsRowIsNeverZeroFilled() throws Exception {
+        int all = GroupCountDb.ALL_GROUPS;
+        exec("insert into ant_group (id, name) values (" + all + ", 'zero')");
+        new GroupCountDb(connection).recountAll();
+        assertTrue("Totals counted, not zeros", one("select specimens from group_count where group_id = " + all) > 0);
+        assertNotNull(new GroupCountDb(connection).totals());
+    }
+
     public void testGroupNumbersOfTheOldRuleArePendingUntilTheNightlyRun() throws Exception {
         exec("update group_count set species = 2 where group_id = 1");   // as the nightly run before 2026-10-22 wrote it
         CountCheck.Result r = check();

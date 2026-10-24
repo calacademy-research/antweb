@@ -166,18 +166,26 @@ public class GroupCountDb extends AntwebDb {
             }
             // Groups without specimens now: 0 (rows are updated in place, so a page never sees a group without numbers)
             try (PreparedStatement stmt = getConnection().prepareStatement("insert into " + TABLE + " (group_id, counted)"
-                    + " select g.id, ? from ant_group g on duplicate key update group_id = " + TABLE + ".group_id")) {
+                    + " select g.id, ? from ant_group g where g.id <> " + ALL_GROUPS + " on duplicate key update group_id = " + TABLE + ".group_id")) {
                 stmt.setTimestamp(1, now);
                 stmt.executeUpdate();
             }
             try (PreparedStatement stmt = getConnection().prepareStatement("update " + TABLE + " set specimens = 0, collections = 0, localities = 0,"
-                    + " ungeoreferenced = 0, flagged = 0, subfamilies = 0, genera = 0, species = 0, counted = ? where counted is null or counted <> ?")) {
+                    + " ungeoreferenced = 0, flagged = 0, subfamilies = 0, genera = 0, species = 0, counted = ? where group_id <> " + ALL_GROUPS
+                    + " and (counted is null or counted <> ?)")) {
                 stmt.setTimestamp(1, now);
                 stmt.setTimestamp(2, now);
                 stmt.executeUpdate();
             }
             try (Statement stmt = getConnection().createStatement()) {
                 stmt.executeUpdate("delete from " + TABLE + " where group_id <> " + ALL_GROUPS + " and group_id not in (select id from ant_group)");
+            }
+            // The Totals row is never set to 0 or left from an older count: written by this count, or removed (the page
+            // then shows "-" until the next count). Staging 2026-10-24: a Totals row of zeros was shown as numbers.
+            try (PreparedStatement stmt = getConnection().prepareStatement("delete from " + TABLE + " where group_id = " + ALL_GROUPS
+                    + " and (counted is null or counted <> ?)")) {
+                stmt.setTimestamp(1, now);
+                stmt.executeUpdate();
             }
             String message = "Group counts: " + groups + " groups with specimens recounted in " + (System.currentTimeMillis() - start) / 1000 + " s";
             LogMgr.appendLog("compute.log", "  " + message, true);
