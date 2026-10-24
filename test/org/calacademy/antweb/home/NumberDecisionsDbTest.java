@@ -200,6 +200,19 @@ public class NumberDecisionsDbTest extends TestCase {
         assertEquals(8, one("select specimens from group_count where group_id = " + all));
         assertEquals(5, new GroupCountDb(connection).totals().getSpecies());
 
+        // The Totals are counted one distinct number per query (staging 2026-10-24: five count(distinct) in one query over
+        // 1 million specimens wrote 23 GB of temporary tables): the same numbers as that one query gave.
+        long[] t = GroupCountDb.countTotals(connection, null);
+        String onePass = "select 0 g," + GroupCountDb.countColumns() + " where s.access_group in (" + GroupCountDb.LISTED_GROUPS_SQL + ")";
+        try (java.sql.Statement q = connection.createStatement(); ResultSet rs = q.executeQuery(onePass)) {
+            assertTrue(rs.next());
+            long[] v = {rs.getLong(3), rs.getLong(4), rs.getLong(5), rs.getLong(6), rs.getLong(10), rs.getLong(7), rs.getLong(8), rs.getLong(9)};
+            assertEquals(java.util.Arrays.toString(v), java.util.Arrays.toString(t));
+        }
+        for (String sql : GroupCountDb.totalsSqls()) {
+            assertTrue("at most one distinct per query: " + sql, sql.split("distinct", -1).length <= 2);
+        }
+
         // an upload's own numbers use the same rule (UploadDb.getCounts runs GroupCountDb.groupCountsSql for its group)
         try (java.sql.PreparedStatement stmt = connection.prepareStatement(GroupCountDb.groupCountsSql())) {
             stmt.setInt(1, 2);

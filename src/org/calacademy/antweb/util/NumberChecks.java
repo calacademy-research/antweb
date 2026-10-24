@@ -620,7 +620,7 @@ public final class NumberChecks {
      * The Totals row of groups.do (rows 89, 90; Brian Fisher, 2026-10-22, Q8): Collections, Localities, Subfamilies,
      * Genera and Species of all listed groups' specimens together (distinct over them, not the largest group), stored by
      * the nightly recount (group_count row GroupCountDb.ALL_GROUPS), against a recount by the same rule
-     * (GroupCountDb.totalsSql). Pending when a group uploaded or had specimens renamed after the count.
+     * (GroupCountDb.countTotals). Pending when a group uploaded or had specimens renamed after the count.
      */
     private void groupTotals(CountInvariants.Check c, java.util.Set<String> uploadedToday, Map<String, Timestamp> renamed) throws SQLException {
         String table = org.calacademy.antweb.home.GroupCountDb.TABLE;
@@ -636,14 +636,7 @@ public final class NumberChecks {
                 counted = r.getTimestamp(9);
             }
         }
-        long[] recount = new long[8];
-        try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(org.calacademy.antweb.home.GroupCountDb.totalsSql()))) {
-            if (r.next()) {
-                // columns: g, all, specimens, collections, localities, ungeoreferenced, subfamilies, genera, species, flagged
-                long[] v = {r.getLong(3), r.getLong(4), r.getLong(5), r.getLong(6), r.getLong(10), r.getLong(7), r.getLong(8), r.getLong(9)};
-                recount = v;
-            }
-        }
+        long[] recount = org.calacademy.antweb.home.GroupCountDb.countTotals(inv.connection, inv::track);
         // groups.do Totals: collections, localities, subfamilies, genera, species
         expected("groupsTotals").put("distinct", new long[] {recount[1], recount[2], recount[5], recount[6], recount[7]});
         if (stored == null) return;   // no nightly run has counted the Totals row yet: the page shows "-"
