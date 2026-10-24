@@ -558,9 +558,13 @@ jobs:
         # java.util.* and org.calacademy.antweb.*) was found only by the staging end-to-end run, 30 minutes later.
         run: |
           git fetch -q --depth=1 origin master
-          files=$(git diff --name-only --diff-filter=AM FETCH_HEAD HEAD -- 'web/*.jsp' | sed 's#^web/##' | tr '\n' ' ')
-          if [ -z "$files" ]; then echo "No JSP page changed"; exit 0; fi
-          echo "Changed JSP pages: $files"
+          changed=$(git diff --name-only --diff-filter=AM FETCH_HEAD HEAD -- 'web/*.jsp' | sed 's#^web/##' | tr '\n' ' ')
+          if [ -z "$changed" ]; then echo "No JSP page changed"; exit 0; fi
+          echo "Changed JSP pages: $changed"
+          # A page included with <%@ include file %> is compiled through the pages that include it (tools/ci/jsp_to_compile.py)
+          python3 tests/unit/test_jsp_to_compile.py
+          files=$(python3 tools/ci/jsp_to_compile.py $changed | tr '\n' ' ')
+          echo "Compiled: $files"
           docker run --rm --entrypoint sh -e FILES="$files" antweb/antweb:dev -c '
             set -e
             A=/usr/local/antweb
