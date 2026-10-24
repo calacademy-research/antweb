@@ -180,10 +180,7 @@ public class NumberChecksTest extends TestCase {
 
     /** An image upload batch whose artist was deleted (production 2026-10-23: "id 514" on the upload list) is a finding. */
     public void testImageUploadWithDeletedArtist() throws Exception {
-        exec("alter table image_upload add column artist_id int");
-        exec("create table artist (id int primary key, name varchar(64))");
-        exec("insert into artist values (1, 'A')");
-        exec("update image_upload set artist_id = 1");
+        // The fixture: image upload 1 by artist 1, who exists.
         assertEquals(list(check()), 0, real(check(), "admin.imageUploadArtists"));
         exec("update image_upload set artist_id = 514");
         CountCheck.Result r = check();
