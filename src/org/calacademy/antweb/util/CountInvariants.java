@@ -61,7 +61,7 @@ public final class CountInvariants {
         "list.genus", "list.subfamily", "list.family", "list.global", "global.specimens", "home", "taxon.images", "geo.regions",
         // NumberChecks (2026-10-22)
         "stats.global", "stats.images", "stats.imaged", "stats.bioregions", "stats.museums", "stats.nonants", "list.images", "admin.statistics", "admin.groups",
-        "admin.curators", "admin.artists", "admin.imageUploads", "api.taxa", "place.endemic.flags", "taxon.parents", "geo.adm1.country"};
+        "admin.curators", "admin.artists", "admin.imageUploads", "admin.imageUploadArtists", "api.taxa", "place.endemic.flags", "taxon.parents", "geo.adm1.country"};
 
     /**
      * At most this many differences of one check are listed in the report (2026-10-22: API /taxa, B11, can differ for
