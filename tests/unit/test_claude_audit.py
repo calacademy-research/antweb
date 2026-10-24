@@ -23,7 +23,7 @@ for n, fs in chunks:
 assert any(n.startswith("api-") for n in names), "the API area found no files"
 assert any(n.startswith("upload-") for n in names) and any(n.startswith("security-") for n in names)
 
-os.environ["SLOT_HOURS"] = "1,5,9,17"
+os.environ["SLOT_HOURS"] = "0,1,2,4,5,6,8,9,10,17,18,22"
 real_date = datetime.date
 
 
@@ -38,9 +38,10 @@ class FakeDate(datetime.date):
 a.datetime.date = FakeDate
 try:
     first = a.pick(chunks, "", "10 1 * * *")[0]
-    second = a.pick(chunks, "", "10 5 * * *")[0]
+    second = a.pick(chunks, "", "10 2 * * *")[0]
     assert first != second, "two slots of one day audit the same area"
-    assert first == names[(1 * a.SLOTS + 0) % len(chunks)]
+    assert first == names[(1 * a.SLOTS + 1) % len(chunks)]   # 10-24, second slot of the day (hour 1)
+    assert a.SLOTS == 12
     FakeDate.today_value = real_date(2026, 11, 8)
     assert a.pick(chunks, "", "10 1 * * *") == (None, None), "scheduled audits must stop after 2026-11-07"
     assert a.pick(chunks, names[0], "")[0] == names[0], "a named area runs on any day"
