@@ -522,7 +522,7 @@ if (casteValue == null) casteValue = "undefined";
 <%= nameHistory %>
 
 <%
-if (LoginMgr.isAdmin(request) || specimen.isCurator(accessLogin)) { %>
+if (LoginMgr.isAdmin(request) || LoginMgr.isCurator(request)) { // any curator, whatever the specimen's group (2026-10-24) %>
 
 <br>
 <h3>Curator Information: </h3> 

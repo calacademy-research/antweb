@@ -52,6 +52,16 @@ public final class UploadFileAction extends AntwebAction {
         return false;
     }
 
+    /**
+     * One specimen's line of an upload file (the specimen page's "Upload File Line", logMgr.do uploadLog and uploadLine):
+     * any curator and any admin, whatever the group (Brian Fisher, 2026-10-24: curators may see other groups' uploaded
+     * rows). The whole file (this action) stays with the group's own curators and admins: mayRead.
+     */
+    public static boolean mayReadLine(Login login, String name) {
+        if (login == null || name == null) return false;
+        return LoginMgr.isAdmin(login) || LoginMgr.isCurator(login);
+    }
+
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws IOException {
 
