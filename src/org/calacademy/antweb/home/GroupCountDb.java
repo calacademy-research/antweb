@@ -91,7 +91,7 @@ public class GroupCountDb extends AntwebDb {
      * Totals row of groups.do showed the largest group's Subfamilies, Genera and Species. Now the Totals row is the same
      * count over the specimens of all listed groups together (ALL_GROUPS).
      */
-    static String countColumns() {
+    public static String countColumns() {
         String c1 = "((s.flag is null or s.flag != 'red') and s.status in " + PlaceTotals.COUNTABLE + " and s.family = 'formicidae')";
         return " count(*), count(case when " + c1 + " then s.code end),"
             + " count(distinct case when " + c1 + " then s.collectioncode end), count(distinct case when " + c1 + " then s.localitycode end),"
@@ -129,9 +129,51 @@ public class GroupCountDb extends AntwebDb {
             + " then genus end), count(distinct case when " + c2 + " then species end) from specimen where access_group is not null group by g";
     }
 
-    /** The Totals row of groups.do: the same numbers over the specimens of every listed group together. */
-    public static String totalsSql() {
-        return "select " + ALL_GROUPS + " g," + countColumns() + " where s.access_group in (" + LISTED_GROUPS_SQL + ")";
+    /**
+     * The Totals row of groups.do: the same numbers over the specimens of every listed group together, one query per
+     * distinct number (each keeps only the distinct values of one column). Until 2026-10-24 this was one query with five
+     * count(distinct case ...) columns over all listed groups' specimens; on staging (1 million specimens) MySQL wrote
+     * about 23 GB of temporary tables for it and filled the disk. Order of the queries and of countTotals:
+     * specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera, species (the first query gives
+     * specimens, ungeoreferenced and flagged).
+     */
+    public static String[] totalsSqls() {
+        String c1 = "(s.flag is null or s.flag != 'red') and s.status in " + PlaceTotals.COUNTABLE + " and s.family = 'formicidae'";
+        String from = " from specimen s where s.access_group in (" + LISTED_GROUPS_SQL + ")";
+        return new String[] {
+            "select count(case when " + c1 + " then 1 end), count(case when " + c1 + " and s.decimal_latitude is null then 1 end),"
+                + " count(case when s.flag = 'red' then 1 end)" + from,
+            distinct("s.collectioncode", from + " and " + c1),
+            distinct("s.localitycode", from + " and " + c1),
+            distinct("s.subfamily", from + " and " + c1 + " and " + SpecimenDb.getAntSpecimenCriteria("s")),
+            distinct("s.genus", from + " and " + c1 + " and " + PlaceTotals.identifiedToGenus("s") + " and coalesce(s.genus, '') <> ''"),
+            distinct("s.taxon_name", " from specimen s join taxon t on t.taxon_name = s.taxon_name where s.access_group in (" + LISTED_GROUPS_SQL
+                + ") and " + c1 + " and " + PlaceTotals.rankCondition(PlaceTotals.SPECIES)),
+        };
+    }
+
+    private static String distinct(String column, String fromWhere) {
+        return "select count(*) from (select distinct " + column + fromWhere + " and " + column + " is not null) x";
+    }
+
+    /**
+     * Counts the Totals row (totalsSqls): specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera,
+     * species. track, when not null, is given each query first (the count check's query log).
+     */
+    public static long[] countTotals(Connection connection, java.util.function.UnaryOperator<String> track) throws SQLException {
+        String[] sqls = totalsSqls();
+        long[] one = new long[sqls.length + 2];
+        try (Statement q = connection.createStatement()) {
+            for (int i = 0; i < sqls.length; i++) {
+                try (ResultSet r = q.executeQuery(track == null ? sqls[i] : track.apply(sqls[i]))) {
+                    if (!r.next()) continue;
+                    if (i == 0) { one[0] = r.getLong(1); one[1] = r.getLong(2); one[2] = r.getLong(3); }
+                    else one[i + 2] = r.getLong(1);
+                }
+            }
+        }
+        // one: specimens, ungeoreferenced, flagged, collections, localities, subfamilies, genera, species
+        return new long[] {one[0], one[3], one[4], one[1], one[2], one[5], one[6], one[7]};
     }
 
     /**
@@ -159,8 +201,12 @@ public class GroupCountDb extends AntwebDb {
                     }
                 }
                 // the Totals row of groups.do (Q8, 2026-10-22): all listed groups' specimens together, distinct over them
-                try (Statement q = getConnection().createStatement(); ResultSet r = q.executeQuery(totalsSql())) {
-                    if (r.next()) addRow(stmt, r, now);
+                long[] t = countTotals(getConnection(), null);
+                if (t[0] > 0) {
+                    stmt.setInt(1, ALL_GROUPS);
+                    for (int i = 0; i < 8; i++) stmt.setLong(i + 2, t[i]);
+                    stmt.setTimestamp(10, now);
+                    stmt.addBatch();
                 }
                 stmt.executeBatch();
             }
@@ -196,7 +242,7 @@ public class GroupCountDb extends AntwebDb {
         }
     }
 
-    /** One row of countsSql / totalsSql (columns: g, all, specimens, collections, localities, ungeoreferenced, subfamilies,
+    /** One row of countsSql (columns: g, all, specimens, collections, localities, ungeoreferenced, subfamilies,
      *  genera, species, flagged) into the upsert. */
     private static void addRow(PreparedStatement stmt, ResultSet r, Timestamp now) throws SQLException {
         stmt.setInt(1, r.getInt(1));
