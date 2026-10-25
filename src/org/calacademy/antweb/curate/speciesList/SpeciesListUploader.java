@@ -48,7 +48,10 @@ public class SpeciesListUploader {
     return worldantsFetchAndReload(false);
   }
 
-  /** nightly: the 05:00 set 1, which tries the download again for up to an hour (FetchRetry); admin runs try once. */
+  /**
+   * nightly: the 05:00 set 1, which uses the file prefetchWorldantsList downloaded before set 1 took its connection
+   * (up to an hour of tries) and alerts and emails when there is none; admin runs download once.
+   */
   public UploadDetails worldantsFetchAndReload(boolean nightly) throws AntwebException, IOException, SQLException {
 
     UploadDetails fetchDetails = fetchWorldantsList(nightly);
@@ -72,43 +75,53 @@ public class SpeciesListUploader {
     return fetchWorldantsList(false);
   }
 
-  /** The failure message: where from, how many tries, and why the last one failed. */
-  public static String fetchFailedMessage(String urlLoc, FetchRetry.Result result) {
-    return "Failed to fetch " + urlLoc + " after " + result.attempts + (result.attempts == 1 ? " try" : " tries")
-      + ": " + result.error;
+  /** The nightly's download before set 1 takes its connection (null until the first nightly since start-up). */
+  private static volatile FetchRetry.Result s_lastPrefetch = null;
+  private static volatile long s_lastPrefetchAt = 0;
+
+  /**
+   * The nightly download (2026-10-25): tries every 10 minutes and makes no new try once an hour has passed
+   * (FetchRetry). Called by UtilDataAction.execute for the scheduler's set 1 BEFORE set 1 takes its database
+   * connection: the long pool closes a connection held over 60 minutes and set 1 already takes up to an hour.
+   * Writes the same file set 1 reads; set 1 then fetches once more (one try) as before.
+   */
+  public static FetchRetry.Result prefetchWorldantsList() {
+    String fileLoc = worldDir + "worldants_speciesList.txt";
+    String urlLoc = fetchWorldantsUrl;
+    FetchRetry.Result result = FetchRetry.run(() -> {
+        String error = HttpUtil.downloadToFile(urlLoc, fileLoc);
+        if (error != null) s_log.warn("prefetchWorldantsList() " + urlLoc + " failed: " + error);
+        return error;
+      }, FetchRetry.NIGHTLY_DEADLINE_MS, FetchRetry.NIGHTLY_WAIT_MS, FetchRetry.SYSTEM_CLOCK, FetchRetry.THREAD_SLEEP);
+    s_lastPrefetch = result;
+    s_lastPrefetchAt = System.currentTimeMillis();
+    s_log.warn("prefetchWorldantsList() " + (result.ok() ? "fetched at try " + result.attempts : FetchRetry.failureMessage(urlLoc, result)));
+    return result;
   }
 
-  public UploadDetails fetchWorldantsList(boolean retry) throws IOException, SQLException {
+  /**
+   * nightly: the 05:00 set 1. Uses the file prefetchWorldantsList fetched within the last 3 hours (or its failure);
+   * without one (set 1 started another way) it downloads once. Alert and email when there is no file.
+   * Admin runs: one download, no alert.
+   */
+  public UploadDetails fetchWorldantsList(boolean nightly) throws IOException, SQLException {
 
     UploadDetails uploadDetails = new UploadDetails("Fetch");  // This one will be thrown away but useful for return values.
     // A.log("execute()  in action:" + action);
 
-	// Here we fetch.  Down below we will reloadSpeciesList for worldants. 
-    Utility.makeDirTree(worldDir);
     String fileLoc = worldDir + "worldants_speciesList.txt";
-    //String urlLoc = "http://localhost/antweb/web/speciesList/world/worldants_speciesList.txt";
-    //String urlLoc = "http://antweb.org/web/speciesList/world/worldants_speciesList.txt";
     String urlLoc = fetchWorldantsUrl;
 
-    FetchRetry.Result result = FetchRetry.run(() -> {
-        String error = HttpUtil.downloadToFile(urlLoc, fileLoc);
-        if (error != null) s_log.warn("fetchWorldantsList() " + urlLoc + " failed: " + error);
-        return error;
-      }, retry ? FetchRetry.NIGHTLY_ATTEMPTS : 1, FetchRetry.NIGHTLY_WAIT_MS, FetchRetry.THREAD_SLEEP);
+    // The nightly downloaded the file just before set 1 (prefetchWorldantsList): use it, no second download.
+    FetchRetry.Result before = s_lastPrefetch;
+    boolean recent = nightly && before != null && System.currentTimeMillis() - s_lastPrefetchAt < 3L * 3600 * 1000;
+    FetchRetry.Result result = recent ? before : FetchRetry.once(() -> HttpUtil.downloadToFile(urlLoc, fileLoc));
     if (!result.ok()) {
-       String message = fetchFailedMessage(urlLoc, result);
+       String message = FetchRetry.failureMessage(urlLoc, result);
        uploadDetails.setMessage(message);
-       if (retry) {
-         // The nightly gave up: tell the admin now rather than at the next look at compute.log.
-         AdminAlertMgr.add("AntCat import: " + message, connection);
-         Emailer.sendMail(AntwebUtil.getDevEmail(), "AntWeb: tonight's AntCat import could not fetch the AntCat file",
-           message + "\n\nThe name update was skipped tonight. AntWeb tries again at the next nightly (05:00);"
-           + " an admin can also run \"Import AntCat names now\" on the Technical page. On antcat-export check:"
-           + " ls -l /root/antcat/database_export/antcat.antweb.txt; ss -ltnp | grep 9090");
-       }
+       if (nightly) notifyNightlyFailure(message, connection);
        return uploadDetails;
     }
-    if (result.attempts > 1) s_log.warn("fetchWorldantsList() worked at try " + result.attempts);
     
     s_log.warn("fetchWorldantsList() Worldants fetched:" + urlLoc + " written here:" + fileLoc + " successfully.");
 
@@ -219,4 +232,24 @@ public class SpeciesListUploader {
   }
 
 
+
+  /**
+   * The nightly could not fetch the AntCat file: an admin alert and an email. Never throws (a failed notice
+   * must not abort set 1: no TaxonWorks upload, no name update).
+   */
+  static void notifyNightlyFailure(String message, Connection connection) {
+    try {
+      AdminAlertMgr.add("AntCat import: " + message, connection);
+    } catch (Exception e) {
+      s_log.warn("notifyNightlyFailure() admin alert not added: " + e);
+    }
+    try {
+      Emailer.sendMail(AntwebUtil.getDevEmail(), "AntWeb: tonight's AntCat import could not fetch the AntCat file",
+        message + "\n\nThe name update was skipped tonight. AntWeb tries again at the next nightly (05:00);"
+        + " an admin can also run \"Import AntCat names now\" on the Technical page. On antcat-export check:"
+        + " ls -l /root/antcat/database_export/antcat.antweb.txt; ss -ltnp | grep 9090");
+    } catch (Exception e) {
+      s_log.warn("notifyNightlyFailure() email not sent: " + e);
+    }
+  }
 }

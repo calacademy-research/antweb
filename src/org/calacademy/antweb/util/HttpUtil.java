@@ -1653,10 +1653,15 @@ public abstract class HttpUtil {
     public static String downloadToFile(String theUrl, String fileName) {
         File target = new File(fileName);
         File part = new File(fileName + ".part");
-        try (InputStream in = openWithTimeouts(theUrl).getInputStream();
-             ReadableByteChannel rbc = Channels.newChannel(in);
-             FileOutputStream fos = new FileOutputStream(part)) {
-            fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+        long expected;
+        try {
+            URLConnection conn = openWithTimeouts(theUrl);
+            try (InputStream in = conn.getInputStream();
+                 ReadableByteChannel rbc = Channels.newChannel(in);
+                 FileOutputStream fos = new FileOutputStream(part)) {
+                expected = conn.getContentLengthLong();   // -1 when the server does not say
+                fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+            }
         } catch (IOException e) {
             part.delete();
             return e.getClass().getSimpleName() + (e.getMessage() != null ? ": " + e.getMessage() : "");
@@ -1664,6 +1669,11 @@ public abstract class HttpUtil {
         if (part.length() == 0) {
             part.delete();
             return "the download was empty";
+        }
+        if (expected >= 0 && part.length() != expected) {
+            long got = part.length();
+            part.delete();
+            return "the download was cut off (" + got + " of " + expected + " bytes)";
         }
         try {
             try {

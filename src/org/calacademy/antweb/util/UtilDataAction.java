@@ -160,6 +160,10 @@ public class UtilDataAction extends AntwebAction {
             try {
                 UtilDataAction.setInComputeProcess(action);
 
+                // The nightly downloads the AntCat file before set 1 takes its connection: it may try for up to an
+                // hour (FetchRetry), and the long pool closes a connection held over 60 minutes (2026-10-25).
+                if (isScheduler && "set1".equals(action)) SpeciesListUploader.prefetchWorldantsList();
+
                 DataSource dataSource = getDataSource(request, "longConPool");
                 connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
                 connection.setAutoCommit(false);
@@ -494,7 +498,8 @@ public class UtilDataAction extends AntwebAction {
 		// 17.67 mins. success in 13.45 mins. success in 12.28 mins (after 1 constraint check removed).
 		// success in 12.97 mins.		
 		if (action.equals("worldantsFetchAndReload")) { 
-		  // The nightly (set 1) tries the download again for up to an hour; an admin's run tries once (FetchRetry).
+		  // The nightly (set 1) uses the file downloaded before it took its connection (prefetchWorldantsList, up to an
+		  // hour of tries) and alerts when there is none; an admin's run downloads once (FetchRetry).
 		  boolean nightly = request != null && SchedulerCall.isScheduler(request);
 		  operationDetails = new SpeciesListUploader(connection).worldantsFetchAndReload(nightly);
 
