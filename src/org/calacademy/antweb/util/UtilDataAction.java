@@ -494,7 +494,9 @@ public class UtilDataAction extends AntwebAction {
 		// 17.67 mins. success in 13.45 mins. success in 12.28 mins (after 1 constraint check removed).
 		// success in 12.97 mins.		
 		if (action.equals("worldantsFetchAndReload")) { 
-		  operationDetails = new SpeciesListUploader(connection).worldantsFetchAndReload();
+		  // The nightly (set 1) tries the download again for up to an hour; an admin's run tries once (FetchRetry).
+		  boolean nightly = request != null && SchedulerCall.isScheduler(request);
+		  operationDetails = new SpeciesListUploader(connection).worldantsFetchAndReload(nightly);
 
 		  // UtilData.do?action=worldantsCount Feb2022
           new ProjTaxonCountDb(connection).childrenCountCrawl("worldants");

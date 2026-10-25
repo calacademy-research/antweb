@@ -47,7 +47,7 @@ Caller: `util/UtilDataAction.doAction()` (`set1`), which runs, in order: `worlda
 
 Steps (`curate/speciesList/SpeciesListUploader.java`, `upload/SpeciesListUpload.java`):
 
-1. **Fetch** (`fetchWorldantsList()` line 66): `HttpUtil.writeUrlContents("http://antcat-export:9090/antcat.antweb.txt", web/speciesList/world/worldants_speciesList.txt)` (line 78). The file is written in place. Failure: message "Failed to fetch: ... Connected to VPN?"; set 1 goes on with TaxonWorks.
+1. **Fetch** (`fetchWorldantsList(retry)`): `HttpUtil.downloadToFile("http://antcat-export:9090/antcat.antweb.txt", web/speciesList/world/worldants_speciesList.txt)`. It downloads to `worldants_speciesList.txt.part` and moves it into place only when complete and not empty, so a failed try keeps the previous file. Since 2026-10-25 the nightly (set 1, called by the scheduler) tries again every 10 minutes for up to an hour (`util/FetchRetry`, 7 tries); an admin run tries once (it runs inside a web request). Failure: message "Failed to fetch <url> after N tries: <reason>" (in compute.log through the name-update skip line and in admin.log); after the nightly gives up it also adds an admin alert and emails antweb@antweb.org. Set 1 goes on with TaxonWorks. Why: on 2026-10-23 one fetch failed and that night's name update was skipped. Test: `test/.../util/FetchRetryTest.java`.
 2. **Size guard** (`validateWorldantsFile()` line 123): 29,000 lines or fewer (`WORLDANTS_LOW_COUNT`, line 121): "Worldants count is low:N origWorldantsCount:M", nothing loaded. **On staging and dev the guard always answers "success"** (line 124), so a short file would be loaded there.
 3. On success a dated copy is kept: `web/upload/<yyyyMMdd-HH:mm:ss>-worldants.txt` (`record()` line 169).
 4. **Delete the old AntCat data** (`SpeciesListUpload.importSpeciesList()`, lines 152 to 182):
@@ -107,7 +107,7 @@ The first point is what the nightly name update (section 7) fixes, once it is in
 | What | Where |
 |---|---|
 | Export ran, line count | `/root/antcat/run-results` on antcat-export |
-| Fetch or size-guard failure | `admin.log` line "worldantsFetchAndReload: <message>" and a report under `web/log/upload/<date>-Fetch.html`; no admin alert from the nightly path |
+| Fetch or size-guard failure | `admin.log` line "worldantsFetchAndReload: <message>" and a report under `web/log/upload/<date>-Fetch.html`; a fetch the nightly gave up on (after an hour) also adds an admin alert and emails antweb@antweb.org (since 2026-10-25) |
 | Load done | `web/log/worldants/<date>-fetchAndReloadWorldants.html`; table `worldants_upload` (admin query `query.do?name=worldantsUploads`) |
 | An exception in set 1 | `UtilDataAction.handleException()`: rolled back, message only in the set's HTTP answer and the Tomcat log (not compute.log) |
 

@@ -1640,21 +1640,43 @@ public abstract class HttpUtil {
       return null;    
     }
 
-    public static boolean writeUrlContents(String theUrl, String fileName) {   //String[] args) {
-        // speedy download that skips application memory, direct to disk
-        // https://stackoverflow.com/questions/921262/how-can-i-download-and-save-a-file-from-the-internet-using-java
-        // https://www.techiedelight.com/download-file-from-url-java/
+    public static boolean writeUrlContents(String theUrl, String fileName) {
+        return downloadToFile(theUrl, fileName) == null;
+    }
+
+    /**
+     * Downloads theUrl straight to disk (skips application memory). Returns null when it worked, otherwise
+     * why it failed (2026-10-25: the reason now reaches compute.log instead of only a stack trace).
+     * Writes to fileName.part first and moves it into place only when complete and not empty, so a failed
+     * try never leaves a half-written file under the real name.
+     */
+    public static String downloadToFile(String theUrl, String fileName) {
+        File target = new File(fileName);
+        File part = new File(fileName + ".part");
         try (InputStream in = openWithTimeouts(theUrl).getInputStream();
              ReadableByteChannel rbc = Channels.newChannel(in);
-             FileOutputStream fos = new FileOutputStream(fileName)) {
-
+             FileOutputStream fos = new FileOutputStream(part)) {
             fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-            return true;
         } catch (IOException e) {
-            e.printStackTrace();
+            part.delete();
+            return e.getClass().getSimpleName() + (e.getMessage() != null ? ": " + e.getMessage() : "");
         }
-
-        return false;
+        if (part.length() == 0) {
+            part.delete();
+            return "the download was empty";
+        }
+        try {
+            try {
+                java.nio.file.Files.move(part.toPath(), target.toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+                java.nio.file.Files.move(part.toPath(), target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (IOException e) {
+            part.delete();
+            return "could not move the download into place: " + e.getMessage();
+        }
+        return null;
     }
 
     private static final int MAX_ITERATION = 60;  // This should cover all adm1

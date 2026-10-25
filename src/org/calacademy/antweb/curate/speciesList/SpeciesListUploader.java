@@ -45,8 +45,13 @@ public class SpeciesListUploader {
   }
 
   public UploadDetails worldantsFetchAndReload() throws AntwebException, IOException, SQLException {
-  
-    UploadDetails fetchDetails = fetchWorldantsList();
+    return worldantsFetchAndReload(false);
+  }
+
+  /** nightly: the 05:00 set 1, which tries the download again for up to an hour (FetchRetry); admin runs try once. */
+  public UploadDetails worldantsFetchAndReload(boolean nightly) throws AntwebException, IOException, SQLException {
+
+    UploadDetails fetchDetails = fetchWorldantsList(nightly);
     if (!"success".equals(fetchDetails.getMessage())) {
       return fetchDetails;
     }
@@ -64,6 +69,16 @@ public class SpeciesListUploader {
   }
 
   public UploadDetails fetchWorldantsList() throws IOException, SQLException {
+    return fetchWorldantsList(false);
+  }
+
+  /** The failure message: where from, how many tries, and why the last one failed. */
+  public static String fetchFailedMessage(String urlLoc, FetchRetry.Result result) {
+    return "Failed to fetch " + urlLoc + " after " + result.attempts + (result.attempts == 1 ? " try" : " tries")
+      + ": " + result.error;
+  }
+
+  public UploadDetails fetchWorldantsList(boolean retry) throws IOException, SQLException {
 
     UploadDetails uploadDetails = new UploadDetails("Fetch");  // This one will be thrown away but useful for return values.
     // A.log("execute()  in action:" + action);
@@ -75,12 +90,25 @@ public class SpeciesListUploader {
     //String urlLoc = "http://antweb.org/web/speciesList/world/worldants_speciesList.txt";
     String urlLoc = fetchWorldantsUrl;
 
-    boolean success = HttpUtil.writeUrlContents(urlLoc, fileLoc);
-    if (!success) {
-	   String message = "Failed to fetch:" + urlLoc + " and write it here:" + fileLoc + ". Connected to VPN?";
+    FetchRetry.Result result = FetchRetry.run(() -> {
+        String error = HttpUtil.downloadToFile(urlLoc, fileLoc);
+        if (error != null) s_log.warn("fetchWorldantsList() " + urlLoc + " failed: " + error);
+        return error;
+      }, retry ? FetchRetry.NIGHTLY_ATTEMPTS : 1, FetchRetry.NIGHTLY_WAIT_MS, FetchRetry.THREAD_SLEEP);
+    if (!result.ok()) {
+       String message = fetchFailedMessage(urlLoc, result);
        uploadDetails.setMessage(message);
+       if (retry) {
+         // The nightly gave up: tell the admin now rather than at the next look at compute.log.
+         AdminAlertMgr.add("AntCat import: " + message, connection);
+         Emailer.sendMail(AntwebUtil.getDevEmail(), "AntWeb: tonight's AntCat import could not fetch the AntCat file",
+           message + "\n\nThe name update was skipped tonight. AntWeb tries again at the next nightly (05:00);"
+           + " an admin can also run \"Import AntCat names now\" on the Technical page. On antcat-export check:"
+           + " ls -l /root/antcat/database_export/antcat.antweb.txt; ss -ltnp | grep 9090");
+       }
        return uploadDetails;
     }
+    if (result.attempts > 1) s_log.warn("fetchWorldantsList() worked at try " + result.attempts);
     
     s_log.warn("fetchWorldantsList() Worldants fetched:" + urlLoc + " written here:" + fileLoc + " successfully.");
 
