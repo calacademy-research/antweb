@@ -1,0 +1,11 @@
+# /etc/cron.d/staging-cleanup -- STAGING droplet only (ssh root@165.232.136.170). Installed by hand,
+# never by a deploy: see docs/runbook.md, "Staging disk". Remove: rm /etc/cron.d/staging-cleanup
+#
+# Sundays 02:00 Pacific, before the staging refresh (02:30) and the 04:00 weekly reboot: deletes the
+# safe list of tools/staging/cleanup-disk.sh (build cache, old dumps and logs, image backups older than
+# 14 days, upload backups older than 30 days). Added 2026-10-24 after staging's disk filled twice in a week.
+# The script refuses to run anywhere but staging. Log: journalctl -t staging-cleanup
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+MAILTO=""
+0 2 * * 0 root /root/antweb-next/tools/staging/cleanup-disk.sh --apply >/dev/null 2>&1
