@@ -22,19 +22,20 @@ public class MountCheckTest extends TestCase {
         return d;
     }
 
-    private static void dump(File daily, String name, long bytes, long modified) throws Exception {
-        daily.mkdirs();
-        File f = new File(daily, name);
-        Files.write(f.toPath(), new byte[(int) bytes]);
+    /** The status line bin/db-daily-dump.sh writes, with the file's time set to modified. */
+    private static File status(File dir, String line, long modified) throws Exception {
+        File f = new File(dir, MountCheck.DUMP_STATUS);
+        Files.write(f.toPath(), (line + "\n").getBytes("UTF-8"));
         assertTrue(f.setLastModified(modified));
+        return f;
     }
 
     public void testWorkingMountsAreOk() throws Exception {
-        File antweb = tmp(), backup = tmp();
+        File antweb = tmp();
         new File(antweb, MountCheck.PROBE_DIR).mkdirs();
         long now = System.currentTimeMillis();
-        dump(new File(backup, "db/daily"), "2026-10-23.sql.gz", MountCheck.DUMP_MIN_BYTES + 1, now - 2 * HOUR);
-        List<String> p = MountCheck.problems(antweb, backup, true, "production", now, 10_000);
+        File st = status(tmp(), "ok 2026-10-24T01:02:00-0700 123456789 /mnt/backup/db/daily/2026-10-24.sql.gz", now - 2 * HOUR);
+        List<String> p = MountCheck.problems(antweb, st, true, "production", now, 10_000);
         assertTrue(p.toString(), p.isEmpty());
         assertNull(MountCheck.alert(p));
         assertTrue(new File(antweb, MountCheck.PROBE_DIR + "/mountcheck-production.txt").isFile());
@@ -44,11 +45,12 @@ public class MountCheckTest extends TestCase {
         File antweb = new File(tmp(), "gone/antweb");   // a file stands where the folder should be: cannot write
         antweb.getParentFile().mkdirs();
         Files.write(antweb.toPath(), new byte[1]);
-        File backup = new File(tmp(), "not-mounted");
-        List<String> p = MountCheck.problems(antweb, backup, true, "production", System.currentTimeMillis(), 10_000);
+        File noStatus = new File(tmp(), MountCheck.DUMP_STATUS);
+        MountCheck.s_startedAt = 0;   // running for a long time: a missing status line is a problem
+        List<String> p = MountCheck.problems(antweb, noStatus, true, "production", System.currentTimeMillis(), 10_000);
         assertEquals(p.toString(), 2, p.size());
         assertTrue(p.get(0), p.get(0).contains("is missing"));
-        assertTrue(p.get(1), p.get(1).contains("cannot list"));
+        assertTrue(p.get(1), p.get(1).startsWith("database dump: no db-dump-status.txt"));
         String alert = MountCheck.alert(p);
         assertTrue(alert, alert.startsWith("Mount check: ") && alert.contains("docs/runbook.md"));
     }
@@ -61,21 +63,22 @@ public class MountCheckTest extends TestCase {
         assertFalse(new File(antweb, "web").exists());
     }
 
-    public void testOldOrSmallDumpIsReported() throws Exception {
-        File daily = new File(tmp(), "db/daily");
+    /** The host's dump writes a status line: an old line, a failure or a small dump is reported (2026-10-24). */
+    public void testDumpStatus() throws Exception {
         long now = System.currentTimeMillis();
-        dump(daily, "2026-10-21.sql.gz", MountCheck.DUMP_MIN_BYTES + 1, now - 50 * HOUR);
-        dump(daily, "2026-10-22.sql.gz", MountCheck.DUMP_MIN_BYTES + 1, now - 30 * HOUR);
-        dump(daily, "ant-notadump.txt", 10, now);
-        String p = MountCheck.dumpProblem(daily, now, MountCheck.DUMP_MAX_AGE_MS, MountCheck.DUMP_MIN_BYTES);
-        assertNotNull(p);
-        assertTrue(p, p.contains("2026-10-22.sql.gz") && p.contains("30 hours"));
-
-        dump(daily, "2026-10-23.sql.gz", 100, now - HOUR);
-        p = MountCheck.dumpProblem(daily, now, MountCheck.DUMP_MAX_AGE_MS, MountCheck.DUMP_MIN_BYTES);
-        assertTrue(p, p.contains("only 100 bytes"));
-
-        assertTrue(MountCheck.dumpProblem(tmp(), now, MountCheck.DUMP_MAX_AGE_MS, MountCheck.DUMP_MIN_BYTES).startsWith("no database dump"));
+        // Just started (the first day after the deploy): no status line yet is not a problem.
+        MountCheck.s_startedAt = now - HOUR;
+        assertNull(MountCheck.dumpStatusProblem(new File(tmp(), MountCheck.DUMP_STATUS), now, MountCheck.DUMP_MAX_AGE_MS, MountCheck.DUMP_MIN_BYTES));
+        MountCheck.s_startedAt = -1;
+        long max = MountCheck.DUMP_MAX_AGE_MS, min = MountCheck.DUMP_MIN_BYTES;
+        File dir = tmp();
+        assertNull(MountCheck.dumpStatusProblem(status(dir, "ok 2026-10-24T01:02:00-0700 123456789 /mnt/backup/db/daily/2026-10-24.sql.gz", now - HOUR), now, max, min));
+        String p = MountCheck.dumpStatusProblem(status(dir, "ok 2026-10-22T01:02:00-0700 123456789 x.sql.gz", now - 30 * HOUR), now, max, min);
+        assertTrue(p, p.contains("30 hours ago"));
+        p = MountCheck.dumpStatusProblem(status(dir, "failed 2026-10-24T01:00:01-0700 /mnt/backup/db/daily is missing (/mnt/backup not mounted?)", now - HOUR), now, max, min);
+        assertTrue(p, p.startsWith("the daily database dump failed") && p.contains("not mounted"));
+        p = MountCheck.dumpStatusProblem(status(dir, "ok 2026-10-24T01:02:00-0700 2048 x.sql.gz", now - HOUR), now, max, min);
+        assertTrue(p, p.contains("only 2048 bytes"));
     }
 
     public void testStagingSkipsTheDump() throws Exception {

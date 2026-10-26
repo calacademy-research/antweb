@@ -23,18 +23,20 @@ $('#sortBy_select').on('change', function () {
     return false;
 });
 
+// purl: $.url() reads this page's address. ($.url(url) with the object returned an empty query, so every sort of a
+// search ran advancedSearch.do with no criteria: "Invalid searchType: not found", 2026-10-26.)
 var url = $.url();
-var all_params = $.url(url).attr('query');
+var all_params = url.attr('query') || '';
 // A new sort starts at the first page of a paged search list.
 var trim_params = all_params.replace(/&sortBy.*/, '').replace(/(^|&)page=\d*/g, '');
 $("#sortby_extras").val(trim_params);
 
-var sort_by = $.url(url).param('sortBy');
+var sort_by = url.param('sortBy');
 if (sort_by) {
     $('html, body').animate({scrollTop: $("#specimen_list_header").offset().top}, 1500);
 }
 
-var open_tool = $.url(url).param('t');
+var open_tool = url.param('t');
 if (open_tool) {
     showTools(open_tool);
     highlightTool();

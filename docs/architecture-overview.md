@@ -119,7 +119,7 @@ Jobs live in four places (host system cron, host root crontab, container cron, a
 
 | Set | What it does | Production time |
 |---|---|---|
-| 1 | AntCat import (`worldantsFetchAndReload`, `taxonFinish`), then the CAS TaxonWorks upload (waits up to 90 minutes for a fresh archive) | 12 min + wait + upload |
+| 1 | AntCat import (`worldantsFetchAndReload`, `taxonFinish`), then the CAS TaxonWorks upload (waits up to 30 minutes for the archive built after its request) | 12 min + wait + upload |
 | 2 | data cleanup; geolocale taxa from specimens; geolocale counts | about 45 min |
 | 3 | project counts; museum and bioregion taxa; taxon sets; type specimens | about 15 min |
 | 4 | image counts | about 15 min |

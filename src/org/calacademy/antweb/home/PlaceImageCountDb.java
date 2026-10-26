@@ -184,6 +184,8 @@ public class PlaceImageCountDb {
                     + " join specimen s on s.taxon_name = pt.taxon_name"
                     + " join image i on i.image_of_id = s.code"
                     + " where t.taxarank in " + SPECIES + ANTS
+                    // the Port of Entry project is a species list only: no image numbers (2026-10-22)
+                    + " and pt.project_name not in " + org.calacademy.antweb.Project.SPECIES_LIST_ONLY_SQL
                     + (one ? " and pt.project_name = ?" : ""), false));
                 break;
             default:

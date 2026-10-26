@@ -102,8 +102,8 @@ public final class LogMgrAction extends AntwebAction {
         UploadLine uploadLine = null;
 
         if ("uploadLog".equals(action)) { // One line of an archived upload file (specimen page, curator section).
-          // Curators see lines of their own group's upload files only (admins any).
-          message = UploadFileAction.mayRead(LoginMgr.getAccessLogin(request), file)
+          // Any curator or admin sees one line of any group's upload file (2026-10-24; the whole file stays own-group).
+          message = UploadFileAction.mayReadLine(LoginMgr.getAccessLogin(request), file)
               ? getUploadLog(file, lineNum) : "Not available.";
         } else if ("worldants".equals(action)) {
             message = getWorldantsLine(lineNum);
@@ -111,7 +111,7 @@ public final class LogMgrAction extends AntwebAction {
           message = getSpecimenDetails(request, code);
           //A.log("execute() specimenDetails:" + message);
         } else if ("uploadLine".equals(action)) { // One stored line of an upload (linked from upload reports).
-          if (!UploadFileAction.mayRead(LoginMgr.getAccessLogin(request), file)) {
+          if (!UploadFileAction.mayReadLine(LoginMgr.getAccessLogin(request), file)) {
             message = "Not available.";
           } else {
 		    uploadLine = getUploadLine(request, file, lineNum);

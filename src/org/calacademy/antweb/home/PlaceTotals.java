@@ -144,6 +144,34 @@ public final class PlaceTotals {
      */
     public static final String ANTS = " and t.family = 'formicidae'";
 
+    /**
+     * Brian Fisher, 2026-10-22 (docs/numbers.md Q7): ants only everywhere. The statsPage tables (Global Data, Bioregion
+     * Data, Museum Data) and the home page's "valid species + ssp." count valid Formicidae taxa only, as the place pages
+     * do, and a species or subspecies must be identified to genus (identifiedToGenus). One rule for those pages, the home
+     * page number written by StatisticsDb.populateStatistics, and the count check (NumberChecks stats.*).
+     *
+     * alias: the taxon table's alias; rank: subfamily, genus, species or subspecies; fossil: 0 (extant), 1 (fossil) or
+     * null (both).
+     */
+    public static String validAntTaxonCondition(String alias, String rank, Integer fossil) {
+        String a = alias + ".";
+        String c = a + "status = 'valid' and " + a + "taxarank = '" + rank + "' and " + a + "family = 'formicidae'";
+        if (fossil != null) c += " and " + a + "fossil = " + fossil;
+        if ("species".equals(rank) || "subspecies".equals(rank)) c += " and " + identifiedToGenus(alias);
+        return c;
+    }
+
+    /** The same rule for species and subspecies together (home and statsPage "valid species + ssp."; fossils included). */
+    public static String validAntSpeciesCondition(String alias) {
+        return "(" + validAntTaxonCondition(alias, "species", null) + " or " + validAntTaxonCondition(alias, "subspecies", null) + ")";
+    }
+
+    /** The same rule in Java (statsPage "valid species + ssp.", TaxonMgr). */
+    public static boolean isValidAntSpecies(String status, String rank, String family, String genus) {
+        return "valid".equals(status) && ("species".equals(rank) || "subspecies".equals(rank)) && "formicidae".equals(family)
+            && isIdentifiedToGenus(genus);
+    }
+
     /** Valid species and subspecies, not fossil (alias t). */
     public static final String VALID_CONDITION = "t.taxarank in ('species', 'subspecies') and t.status = 'valid' and t.fossil = 0" + ANTS;
 
