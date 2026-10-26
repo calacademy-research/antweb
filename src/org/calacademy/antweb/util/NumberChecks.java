@@ -782,9 +782,10 @@ public final class NumberChecks {
     // ------------------------------------------------------------------ API
 
     /**
-     * API /taxa subfamilyCount, genusCount, speciesCount, specimenCount (row 103, B11): read from taxon columns that no
-     * current code writes. What they should be is the Global row (allantwebants, proj_taxon) of the name: the same
-     * numbers as its Global column. Real differences until B11 is fixed (the nightly run does not write them).
+     * API /taxa subfamilyCount, genusCount, speciesCount, specimenCount (row 103, B11): read from taxon columns that the
+     * nightly run copies from the name's Global row (allantwebants, proj_taxon; TaxonApiCountDb, since 2026-10-26): the
+     * same numbers as its Global column. Pending when specimens were uploaded after the last nightly run (an upload
+     * changes the Global row at once; the copy waits for the next night).
      */
     void apiTaxa() {
         if (!has("taxon", "specimen_count")) return;
@@ -799,12 +800,13 @@ public final class NumberChecks {
             String[] fields = {"subfamilyCount", "genusCount", "speciesCount", "specimenCount"};
             boolean[] present = new boolean[cols.length];
             for (int i = 0; i < cols.length; i++) present[i] = has("taxon", cols[i]);
+            String p = inv.result.uploadSinceNightly ? "specimens were uploaded after the last nightly run (the API counts are copied each night)" : null;
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(sql.toString()))) {
                 while (r.next()) {
                     for (int i = 0; i < cols.length; i++) {
                         if (!present[i]) continue;
-                        inv.compare(c, "site", "api.taxa", r.getString(1) + ": /taxa " + fields[i] + " = its Global row (B11)",
-                            r.getLong(3 + 2 * i), r.getLong(4 + 2 * i), "=", null);
+                        inv.compare(c, "site", "api.taxa", r.getString(1) + ": /taxa " + fields[i] + " = its Global row",
+                            r.getLong(3 + 2 * i), r.getLong(4 + 2 * i), "=", p);
                     }
                 }
             }
