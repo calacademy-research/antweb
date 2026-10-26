@@ -52,6 +52,9 @@ jobs:
       - name: The mount check writes into a folder that exists on the servers (tests/unit/test_mountcheck_dir.py)
         run: python3 tests/unit/test_mountcheck_dir.py
 
+      - name: The nightly AntCat download runs before set 1 takes its connection (tests/unit/test_set1_prefetch.py)
+        run: python3 tests/unit/test_set1_prefetch.py
+
       - name: Data model doc has a section for every table (docs/data-model.md)
         # Replays db/upgrade/**/*.sql and the CREATE TABLE statements in src/; fails when a table or view
         # has no "### `name`" section in docs/data-model.md, or a section names a table no SQL knows, or
@@ -223,6 +226,21 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.MessageLogTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (11 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the AntCat file download (nightly tries again for up to an hour before set 1, says why, no half-written or cut-off file)
+        # 2026-10-25: on 10-23 the nightly could not fetch antcat.antweb.txt once and skipped the name update.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/util/FetchRetry.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/FetchRetryTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.FetchRetryTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (12 tests)" /tmp/out.txt
           '
 
       - name: Download guards in the pages (no See all link, nofollow search links, robots.txt) (tests/unit/test_download_guards.py)
