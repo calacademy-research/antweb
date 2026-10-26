@@ -52,6 +52,20 @@ public final class UploadFileAction extends AntwebAction {
         return false;
     }
 
+    /**
+     * One specimen's line of an upload file (the specimen page's "Upload File Line", logMgr.do uploadLog and uploadLine):
+     * any curator and any admin, whatever the group (Brian Fisher, 2026-10-24: curators may see other groups' uploaded
+     * rows). The whole file (this action) stays with the group's own curators and admins: mayRead.
+     */
+    static final java.util.regex.Pattern SPECIMEN_UPLOAD = java.util.regex.Pattern.compile("-specimen(TW|GBIF)?\\d+\\.txt$");
+
+    public static boolean mayReadLine(Login login, String name) {
+        if (login == null || name == null) return false;
+        if (LoginMgr.isAdmin(login)) return true;
+        // a curator: specimen upload files of any group; not Worldants or species list backups (admin material)
+        return LoginMgr.isCurator(login) && SPECIMEN_UPLOAD.matcher(name).find();
+    }
+
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response) throws IOException {
 

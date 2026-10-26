@@ -506,3 +506,32 @@ def test_home_page_at_900px(tablet):
         assert not _unexpected(page.errors), page.errors
     finally:
         page.close()
+
+
+# h. sorting a search result keeps the search (2026-10-26) ------------------------------------
+
+SORT_SEARCH = ("/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&country=Madagascar"
+               "&genus=Mystrium&resultRank=specimen")
+
+
+def _showing(page) -> str:
+    m = re.search(r"Showing [\d,]+[^\d]+[\d,]+ of ([\d,]+)", page.inner_text("body"))
+    return m.group(1) if m else ""
+
+
+def test_sort_dropdown_keeps_the_search(desktop):
+    """The Sort by list runs the same search again, sorted. Until 2026-10-26 the script lost the search criteria
+    ($.url(url) returned an empty query) and every sort showed "Invalid searchType: not found"."""
+    page = desktop.new_page()
+    try:
+        page.goto(BASE_URL + SORT_SEARCH, wait_until="load")
+        before = _showing(page)
+        assert before, "the search shows no 'Showing ... of N'"
+        with page.expect_navigation(wait_until="load"):
+            page.select_option("#sortBy_select", "code")
+        body = page.inner_text("body")
+        assert "Invalid searchType" not in body, page.url
+        assert "sortBy=code" in page.url and "genus=Mystrium" in page.url, page.url
+        assert _showing(page) == before, f"sorted search shows {_showing(page)} specimens, the search {before}"
+    finally:
+        page.close()

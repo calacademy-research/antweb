@@ -23,6 +23,7 @@ public class ArtistMgr extends Manager {
         //A.log("populate()");
         ArtistDb artistDb = new ArtistDb(connection);
         s_artists = artistDb.getArtists();
+        s_counted = false;  // the Images and Specimen numbers come with postInitialize
       } catch (SQLException e) {
         s_log.warn("populate() e:" + e);
       }
@@ -43,6 +44,18 @@ public class ArtistMgr extends Manager {
         ArtistDb artistDb = new ArtistDb(connection);
         ArrayList<Artist> artists = getArtists();
         artistDb.postInstantiate(artists);
+        s_counted = true;
+    }
+
+    /*
+     * True once the artists' Images and Specimen numbers are loaded (postInitialize). Between a reload and
+     * postInitialize every artist shows 0; the count check skips the artists then (2026-10-24: a check during the
+     * nightly run listed 584 artists as 0 while artists.do showed their numbers).
+     */
+    private static volatile boolean s_counted = false;
+
+    public static boolean isCounted() {
+      return s_counted;
     }
 
     public static boolean isInitialized() {

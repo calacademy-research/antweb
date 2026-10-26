@@ -109,9 +109,13 @@ public class NumberChecksTest extends TestCase {
         exec("insert into bioregion_taxon (bioregion_name, taxon_name, created) values ('Malagasy', 'vespidaepolistes a', '2020-01-01')");
         exec("update museum set valid_species_count = 1 where code = 'CASC'");
         CountCheck.Result r = check();
-        // the wasp is B31 (stats.nonants), not a difference of the bioregion's own numbers
+        // Q7 (2026-10-22): statsPage counts ants only, so the wasp is in neither the page's numbers nor the bioregion's
+        // (until then it was B31, a difference of stats.nonants)
         assertEquals(list(r), 0, real(r, "stats.bioregions"));
-        assertEquals(list(r), 1, real(r, "stats.nonants"));
+        assertEquals(list(r), 0, real(r, "stats.nonants"));
+        Bioregion b = new Bioregion();
+        b.setName("Malagasy");
+        assertEquals("pheidole a and hypoponera b; not the wasp", 2, new StatisticsDb(connection).getBioregionData(b).getValue(3));
         assertTrue(list(r), real(r, "stats.museums") > 0);
         CountCheck.Mismatch m = first(r, "stats.museums");
         assertEquals("museum CASC", m.place.label);
@@ -154,7 +158,7 @@ public class NumberChecksTest extends TestCase {
 
     public void testAdminNumbers() throws Exception {
         exec("update statistics set proj_taxa = 1");
-        exec("update group_count set specimens = 9");
+        exec("update group_count set specimens = 9 where group_id = 1");
         exec("update image_upload set image_count = 5");
         exec("update ant_group set upload_count = 3");
         Map<Integer, int[]> curators = curatorNumbers();
@@ -170,12 +174,17 @@ public class NumberChecksTest extends TestCase {
         assertEquals(1, m.recount);
     }
 
+    /** Between a reload of the artists and their numbers (postInitialize) every artist shows 0: not compared (2026-10-24). */
+    public void testArtistsNotComparedBeforeTheirNumbersAreLoaded() {
+        java.util.List<org.calacademy.antweb.Artist> artists = new java.util.ArrayList<>();
+        artists.add(new org.calacademy.antweb.Artist(1, "A"));
+        assertNull(org.calacademy.antweb.util.CountCheckAction.artistNumbers(artists, false));
+        assertEquals(1, org.calacademy.antweb.util.CountCheckAction.artistNumbers(artists, true).size());
+    }
+
     /** An image upload batch whose artist was deleted (production 2026-10-23: "id 514" on the upload list) is a finding. */
     public void testImageUploadWithDeletedArtist() throws Exception {
-        exec("alter table image_upload add column artist_id int");
-        exec("create table artist (id int primary key, name varchar(64))");
-        exec("insert into artist values (1, 'A')");
-        exec("update image_upload set artist_id = 1");
+        // The fixture: image upload 1 by artist 1, who exists.
         assertEquals(list(check()), 0, real(check(), "admin.imageUploadArtists"));
         exec("update image_upload set artist_id = 514");
         CountCheck.Result r = check();
@@ -184,7 +193,7 @@ public class NumberChecksTest extends TestCase {
 
     /** Another group's upload does not change this group's numbers; the nightly name update of its specimens may. */
     public void testGroupNumbersArePendingAfterItsSpecimensWereRenamed() throws Exception {
-        exec("update group_count set specimens = 9");
+        exec("update group_count set specimens = 9 where group_id = 1");
         exec("insert into upload (upload_id, created, group_id) values (2, now(), 2)");
         CountCheck.Result r = check();
         assertEquals(list(r), 1, real(r, "admin.groups"));
@@ -209,6 +218,32 @@ public class NumberChecksTest extends TestCase {
         exec("update taxon set specimen_count = 0 where taxon_name = '" + PA + "'");
         CountCheck.Result r = check();
         assertEquals(list(r), 1, real(r, "api.taxa"));
+    }
+
+    /** B11 (2026-10-26): the nightly copies each name's Global row into the taxon columns the API reads; then none differ. */
+    public void testNightlyCopyMakesApiTaxaCountsTheGlobalRow() throws Exception {
+        exec("update taxon set subfamily_count = 0, genus_count = 0, species_count = 0, specimen_count = 0");
+        exec("update taxon set specimen_count = 7 where taxon_name not in (select taxon_name from proj_taxon where project_name = 'allantwebants') limit 1");
+        assertTrue(real(check(), "api.taxa") > 0);
+        String line = org.calacademy.antweb.home.TaxonApiCountDb.copyGlobalCounts(connection);
+        assertTrue(line, line.startsWith("API taxon counts: ") && line.contains("names updated"));
+        CountCheck.Result r = check();
+        assertEquals(list(r), 0, real(r, "api.taxa"));
+        try (java.sql.Statement q = connection.createStatement(); java.sql.ResultSet rs = q.executeQuery("select count(*) from taxon"
+                + " where specimen_count <> 0 and taxon_name not in (select taxon_name from proj_taxon where project_name = 'allantwebants')")) {
+            rs.next();
+            assertEquals("a name with no Global row gets 0", 0, rs.getInt(1));
+        }
+        assertEquals("a second copy changes nothing", "API taxon counts: 0 names updated",
+            org.calacademy.antweb.home.TaxonApiCountDb.copyGlobalCounts(connection).replaceAll(" from.*", ""));
+    }
+
+    /** The nightly's own check (06:10) is after today's run ended: not "rebuilding the counts now" (2026-10-26). */
+    public void testNightlyEndedTodayIsNotTheWindow() {
+        java.time.LocalDateTime now = java.time.LocalDateTime.of(2026, 10, 26, 6, 12);
+        assertTrue(CountCheck.nightlyEndedToday(java.sql.Timestamp.valueOf("2026-10-26 06:10:28"), now));
+        assertFalse("yesterday's run", CountCheck.nightlyEndedToday(java.sql.Timestamp.valueOf("2026-10-25 06:07:57"), now));
+        assertFalse("no run in compute.log", CountCheck.nightlyEndedToday(null, now));
     }
 
     public void testEndemicFlagsByTheRule() throws Exception {

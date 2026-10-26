@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.regex.Pattern;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -19,11 +18,16 @@ import org.apache.commons.logging.LogFactory;
  * could be read, the CAS file copy failed and the 01:00 database dump was not written.
  *
  * - /mnt/antweb (images, upload files and reports): a small file is written and read back
- *   (/mnt/antweb/web/log/upload/mountcheck-<production|staging>.txt: the folder the upload reports are written to,
- *   so the check writes where the app already must; until 2026-10-23 it used /mnt/antweb/mountcheck/, which the app
- *   may not create on staging, and staging sent a false alarm).
- * - /mnt/backup (database dumps; production only, staging runs no dump): the folder db/daily is listed and its newest
- *   dump (YYYY-MM-DD.sql.gz) must be under 26 hours old and over 1 MB, so a dump that failed is reported too.
+ *   (/mnt/antweb/web/log/specimen/mountcheck-<production|staging>.txt: the folder the specimen upload reports are
+ *   written to, so the check writes where the app already must. It used /mnt/antweb/mountcheck/ until 2026-10-23
+ *   (the app may not create it on staging) and web/log/upload/ until 2026-10-24 (that folder does not exist on
+ *   production): both sent false alarms. Checked on both servers 2026-10-24: web/log/specimen exists and user
+ *   tomcat (2001) can write there).
+ * - the daily database dump to /mnt/backup (production only, staging runs no dump): the app cannot read /mnt/backup
+ *   (the rclone mount is root-only; the first check on 2026-10-23 reported "cannot list"), so the host's
+ *   bin/db-daily-dump.sh writes one line to web/log/db-dump-status.txt ("ok <time> <bytes> <file>" or
+ *   "failed <time> <reason>"). The line must say ok, be under 26 hours old and name a dump over 1 MB, so a dead
+ *   /mnt/backup (the dump cannot be written) and a dump that did not run are both reported.
  *
  * Each probe runs in its own thread with a 60-second limit, so a hung mount is reported instead of blocking.
  * On a problem: an email to antweb@antweb.org (forwarded to Brian) at once and every 6 hours while it lasts, an
@@ -36,14 +40,13 @@ public final class MountCheck {
 
     static final String TITLE = "Mount check";
     /** Where the probe file goes, under /mnt/antweb: the upload reports' folder (the app writes there already). */
-    public static final String PROBE_DIR = "web/log/upload";
+    public static final String PROBE_DIR = "web/log/specimen";
     public static final long PERIOD_MS = 60L * 60 * 1000;           // every hour
     static final long FIRST_DELAY_MS = 5L * 60 * 1000;              // 5 minutes after start (caches load first)
     static final long PROBE_TIMEOUT_MS = 60 * 1000;
     static final long REPEAT_EMAIL_MS = 6L * 60 * 60 * 1000;
     public static final long DUMP_MAX_AGE_MS = 26L * 60 * 60 * 1000;
     public static final long DUMP_MIN_BYTES = 1024L * 1024;
-    static final Pattern DUMP_NAME = Pattern.compile("\\d{4}-\\d{2}-\\d{2}\\.sql\\.gz");
 
     private static volatile String s_lastResult = "not run yet";
     private static long s_lastEmail = 0;
@@ -69,23 +72,35 @@ public final class MountCheck {
         }
     }
 
-    /** The newest dump in dailyDir must be under maxAgeMs old and over minBytes; null when ok. */
-    public static String dumpProblem(File dailyDir, long now, long maxAgeMs, long minBytes) {
-        File[] files = dailyDir.listFiles();
-        if (files == null) return "cannot list " + dailyDir.getPath() + " (mount missing or failing)";
-        File newest = null;
-        for (File f : files) {
-            if (!DUMP_NAME.matcher(f.getName()).matches()) continue;
-            if (newest == null || f.getName().compareTo(newest.getName()) > 0) newest = f;
+    public static final String DUMP_STATUS = "db-dump-status.txt";
+
+    /** When this JVM started (tests can set it). */
+    public static long s_startedAt = -1;
+    static long startedAt() {
+        return s_startedAt >= 0 ? s_startedAt : java.lang.management.ManagementFactory.getRuntimeMXBean().getStartTime();
+    }
+
+    /** The daily dump's status line (bin/db-daily-dump.sh) must say ok, be under maxAgeMs old and name a dump over minBytes; null when ok. */
+    public static String dumpStatusProblem(File status, long now, long maxAgeMs, long minBytes) {
+        if (!status.isFile()) {
+            // Right after the deploy that added the status line, until the next 01:00 dump writes it: not a problem
+            // while the app has run for less than maxAgeMs.
+            if (now - startedAt() < maxAgeMs) return null;
+            return "no " + status.getName() + ": the daily 01:00 database dump has not run since bin/db-daily-dump.sh writes it";
         }
-        if (newest == null) return "no database dump in " + dailyDir.getPath();
-        long age = now - newest.lastModified();
-        if (age > maxAgeMs) {
-            return "the newest database dump " + newest.getName() + " is " + (age / 3600000) + " hours old (the daily 01:00 dump did not run or failed)";
+        String line;
+        try {
+            line = new String(Files.readAllBytes(status.toPath()), StandardCharsets.UTF_8).trim();
+        } catch (Exception e) {
+            return "cannot read " + status.getPath() + ": " + e;
         }
-        if (newest.length() < minBytes) {
-            return "the newest database dump " + newest.getName() + " is only " + newest.length() + " bytes";
-        }
+        String[] w = line.split("\\s+");
+        long age = now - status.lastModified();
+        if (age > maxAgeMs) return "the daily database dump last reported " + (age / 3600000) + " hours ago (" + line + "): the 01:00 dump did not run";
+        if (w.length < 2 || !"ok".equals(w[0])) return "the daily database dump failed: " + line;
+        long bytes = -1;
+        try { bytes = Long.parseLong(w[2]); } catch (Exception e) { /* reported below */ }
+        if (bytes < minBytes) return "the daily database dump is only " + bytes + " bytes: " + line;
         return null;
     }
 
@@ -113,14 +128,14 @@ public final class MountCheck {
     }
 
     /** What is wrong, one line each; empty when all is well. */
-    public static List<String> problems(File antwebMount, File backupMount, boolean checkDump, String env, long now, long timeoutMs) {
+    public static List<String> problems(File antwebMount, File dumpStatus, boolean checkDump, String env, long now, long timeoutMs) {
         List<String> out = new ArrayList<>();
         File probe = new File(antwebMount, PROBE_DIR + "/mountcheck-" + env + ".txt");
         String a = withTimeout(antwebMount.getPath(), () -> writeReadProblem(probe, "AntWeb " + env + " mount check " + now + "\n"), timeoutMs);
         if (a != null) out.add(a);
         if (checkDump) {
-            String b = withTimeout(backupMount.getPath(), () -> dumpProblem(new File(backupMount, "db/daily"), now, DUMP_MAX_AGE_MS, DUMP_MIN_BYTES), timeoutMs);
-            if (b != null) out.add(b);
+            String b = dumpStatusProblem(dumpStatus, now, DUMP_MAX_AGE_MS, DUMP_MIN_BYTES);
+            if (b != null) out.add("database dump: " + b);
         }
         return out;
     }
@@ -143,14 +158,14 @@ public final class MountCheck {
         try {
             String env = AntwebProps.isStageMode() ? "staging" : "production";
             long now = System.currentTimeMillis();
-            List<String> problems = problems(new File("/mnt/antweb"), new File("/mnt/backup"), !AntwebProps.isStageMode(), env, now, PROBE_TIMEOUT_MS);
+            List<String> problems = problems(new File("/mnt/antweb"), new File(LogMgr.getWebLogRoot(), DUMP_STATUS), !AntwebProps.isStageMode(), env, now, PROBE_TIMEOUT_MS);
             String alert = alert(problems);
             boolean failing = alert != null;
             String subject = null;
             if (shouldEmail(s_failing, failing, s_lastEmail, now, REPEAT_EMAIL_MS)) {
                 subject = failing ? "AntWeb " + env + ": storage mount problem" : "AntWeb " + env + ": storage mounts working again";
                 Emailer.sendMail(AntwebUtil.getDevEmail(), subject, failing ? alert : TITLE + ": /mnt/antweb"
-                    + (AntwebProps.isStageMode() ? "" : " and /mnt/backup") + " work again.");
+                    + (AntwebProps.isStageMode() ? "" : " and the daily database dump") + " work again.");
                 s_lastEmail = now;
             }
             if (failing) {

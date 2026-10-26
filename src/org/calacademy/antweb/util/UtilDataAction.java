@@ -160,6 +160,10 @@ public class UtilDataAction extends AntwebAction {
             try {
                 UtilDataAction.setInComputeProcess(action);
 
+                // The nightly downloads the AntCat file before set 1 takes its connection: it may try for up to an
+                // hour (FetchRetry), and the long pool closes a connection held over 60 minutes (2026-10-25).
+                if (isScheduler && "set1".equals(action)) SpeciesListUploader.prefetchWorldantsList();
+
                 DataSource dataSource = getDataSource(request, "longConPool");
                 connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
                 connection.setAutoCommit(false);
@@ -392,8 +396,9 @@ public class UtilDataAction extends AntwebAction {
                 message += worldants;
                 message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
                 // CAS specimens from TaxonWorks (GitHub #27). Does nothing without etc/taxonworks.properties.
-                // Waits up to 90 minutes for TaxonWorks to build a fresh archive (see TaxonWorksNightly.run).
-                message += " taxonWorksNightly: " + org.calacademy.antweb.upload.TaxonWorksNightly.run(connection, 90);
+                // Waits up to 30 minutes (Brian Fisher, 2026-10-24; was 90) for the archive TaxonWorks builds after this run's
+                // request (see TaxonWorksNightly.run); usually a few minutes.
+                message += " taxonWorksNightly: " + org.calacademy.antweb.upload.TaxonWorksNightly.run(connection, 30);
                 // Existing specimens follow AntCat name changes (etc/name-update.properties; off without it).
                 // After the AntCat import and the TaxonWorks upload, before sets 2 to 5 rebuild lists and counts.
                 message += " " + nightlyNameUpdate(connection, worldants == null ? null : worldants.getMessage());
@@ -493,7 +498,10 @@ public class UtilDataAction extends AntwebAction {
 		// 17.67 mins. success in 13.45 mins. success in 12.28 mins (after 1 constraint check removed).
 		// success in 12.97 mins.		
 		if (action.equals("worldantsFetchAndReload")) { 
-		  operationDetails = new SpeciesListUploader(connection).worldantsFetchAndReload();
+		  // The nightly (set 1) uses the file downloaded before it took its connection (prefetchWorldantsList, up to an
+		  // hour of tries) and alerts when there is none; an admin's run downloads once (FetchRetry).
+		  boolean nightly = request != null && SchedulerCall.isScheduler(request);
+		  operationDetails = new SpeciesListUploader(connection).worldantsFetchAndReload(nightly);
 
 		  // UtilData.do?action=worldantsCount Feb2022
           new ProjTaxonCountDb(connection).childrenCountCrawl("worldants");

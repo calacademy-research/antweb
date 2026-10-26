@@ -333,6 +333,7 @@ hierarchy complete).
 | `source`, `insert_method` | which load made the row (e.g. a species list file, `addMissingGenus`, `homononymMirroringTaxon`) |
 | `access_group` | the group whose upload made a non-AntCat name |
 | `image_count` | images of the taxon's specimens and of the taxa under it, set 4 (`ImageCountDb.updateTaxonImageCount`) |
+| `subfamily_count`, `genus_count`, `species_count`, `specimen_count` | what the API's `/taxa` returns: copied at the end of each nightly run from the name's Global row (`proj_taxon`, project `allantwebants`; 0 without one) by `TaxonApiCountDb` (since 2026-10-26; no code wrote them before, finding B11) |
 | `type` | 1 = a species (not a morphospecies) with at least one specimen with a type status, set 3 (`TaxonDb.crawlForType`) |
 | `chart_color` | the subfamily's colour in pie charts, set 1 (`TaxonDb.setSubfamilyChartColor`) |
 | `bioregion`, `country` | AntCat's distribution text, as exported |
@@ -995,10 +996,14 @@ varchar(100) to match (an 81-character group name had made an upload row insert 
 [numbers.md](numbers.md)): what groups.do, group.do and curator.do show, instead of the numbers written at the
 group's last upload (`upload` keeps those, and the upload reports show them).
 
-**Key.** `group_id` (`ant_group.id`), one row per group (0 when it has no specimens).
+**Key.** `group_id` (`ant_group.id`), one row per group (numbers 0 when it has no specimens). Row `group_id = 0`
+(`GroupCountDb.ALL_GROUPS`, since 2026-10-22, Q8) is the Totals row of groups.do: the specimens of every listed group
+together, so a species, genus, collection or locality found by two groups counts once.
 
 **Key columns.** `specimens`, `collections`, `localities`, `ungeoreferenced`, `flagged`, `subfamilies`, `genera`,
-`species` (the rule of `UploadDb.getCounts`), `counted` (time of the nightly count).
+`species` (the rule of `GroupCountDb.countColumns`, also used by `UploadDb.getCounts`; since 2026-10-22, Q8, `species`
+counts distinct full names of species and subspecies of the five counted statuses, ants, identified to genus), `counted`
+(time of the nightly count).
 
 **Written by.** Nightly set 3 (`GroupCountDb.recountAll`). Created by the application (`CREATE TABLE IF NOT EXISTS`,
 `GroupCountDb.createTable`); to undo, `drop table group_count` (the pages then show the last upload's numbers again).

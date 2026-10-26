@@ -495,7 +495,9 @@ Click <b>SHOW | HIDE</b> to add more criteria to your search.
 			</div>
 		
 			<div class=adv_right_col>
-			<html:text styleClass="input_150" property="specimenCode"/>
+			<%-- A box of several lines, so a list pasted from a spreadsheet (one code per line) keeps its line breaks;
+			     codes may be separated by line breaks, tabs, spaces or commas (GenericSearch.getSearchString, 2026-10-26). --%>
+			<html:textarea styleClass="input_150" property="specimenCode" rows="3" title="One or more specimen codes, one per line or separated by spaces or commas"/>
 			</div>
 
 			<br clear=all>
