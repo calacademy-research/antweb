@@ -10,7 +10,8 @@ The Sort by list itself is tested in a browser: tests/e2e/test_browser.py::test_
 Read-only.
 """
 import re
-from urllib.parse import quote_plus
+from html import unescape
+from urllib.parse import quote_plus, unquote
 
 from antweb import BASE_URL, TIMEOUT, new_session
 
@@ -24,8 +25,9 @@ def _codes(n=3):
     html = new_session().get(BASE_URL + SOURCE, timeout=TIMEOUT).text
     codes = []
     for c in CODE.findall(html):
-        if c.lower() not in codes:
-            codes.append(c.lower())
+        c = unquote(unescape(c)).lower()   # links hold codes URL-encoded, e.g. blf1234%2812%29-1 for blf1234(12)-1
+        if c not in codes:
+            codes.append(c)
     assert len(codes) >= n, "the Mystrium search of Madagascar shows fewer than %d specimens" % n
     return codes[:n]
 
