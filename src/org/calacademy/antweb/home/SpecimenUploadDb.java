@@ -137,8 +137,33 @@ public class SpecimenUploadDb extends UploadDb {
     }
 
 
-    /** Width of the text columns of the upload table (group_name, log_file_name, backup_dir_file). */
+    /** Width of the file name columns of the upload table (log_file_name, backup_dir_file). */
     public static final int UPLOAD_TEXT_WIDTH = 64;
+
+    /**
+     * Width of upload.group_name: varchar(100) since db/upgrade/8.115/2026-10-23-drop-old-tables-widen-group-name.sql
+     * (was 64), the width of ant_group.name, so a group name is stored whole. insertUploadRow cuts to the smaller of
+     * this and the column's real width (groupNameWidth), so the code is right before and after that file runs.
+     */
+    public static final int GROUP_NAME_WIDTH = 100;
+
+    /** upload.group_name's width before 2026-10-23, used when information_schema cannot say. */
+    static final int OLD_GROUP_NAME_WIDTH = 64;
+
+    /**
+     * Characters upload.group_name holds in the connection's database (information_schema; read on every upload,
+     * not cached, so a widened column counts at once), at most GROUP_NAME_WIDTH; OLD_GROUP_NAME_WIDTH when unknown.
+     */
+    public static int groupNameWidth(Connection connection) {
+        try (PreparedStatement stmt = connection.prepareStatement("select character_maximum_length from information_schema.columns"
+                + " where table_schema = database() and table_name = 'upload' and column_name = 'group_name'");
+             ResultSet rset = stmt.executeQuery()) {
+            if (rset.next() && rset.getLong(1) > 0) return (int) Math.min(rset.getLong(1), GROUP_NAME_WIDTH);
+        } catch (SQLException e) {
+            s_log.warn("groupNameWidth() e:" + e);
+        }
+        return OLD_GROUP_NAME_WIDTH;
+    }
 
     /**
      * Records a specimen upload in the upload table (the Specimen Upload Reports list, each group's
@@ -173,7 +198,8 @@ public class SpecimenUploadDb extends UploadDb {
         try (PreparedStatement stmt = connection.prepareStatement(insert)) {
             stmt.setInt(1, uploadId);
             stmt.setInt(2, loginId);
-            stmt.setString(3, fit(groupName == null ? "" : groupName));   // display only: cut to the column
+            // display only: cut to the column (100 wide since 2026-10-23; 64 before the upgrade file runs)
+            stmt.setString(3, fit(groupName == null ? "" : groupName, groupNameWidth(connection)));
             stmt.setInt(4, groupId);
             // File names are used for links (report, Download): never cut, refuse instead.
             stmt.setString(5, fileName("log_file_name", logFileName == null ? "" : logFileName));
@@ -204,13 +230,19 @@ public class SpecimenUploadDb extends UploadDb {
     }
 
     /**
-     * s as the upload table's text columns hold it (null stays null): cut to the column width, and
+     * s as upload.group_name holds it (null stays null): cut to GROUP_NAME_WIDTH characters, and
      * characters outside the Basic Multilingual Plane (which a utf8mb3 column refuses) as "?".
+     * Used only for the group name (file names are refused, never cut: fileName).
      */
     public static String fit(String s) {
+        return fit(s, GROUP_NAME_WIDTH);
+    }
+
+    /** As fit(s), cut to width characters. */
+    public static String fit(String s, int width) {
         if (s == null) return null;
         StringBuilder b = new StringBuilder();
-        s.codePoints().limit(UPLOAD_TEXT_WIDTH).forEach(c -> {
+        s.codePoints().limit(width).forEach(c -> {
             if (Character.isSupplementaryCodePoint(c)) b.append('?'); else b.appendCodePoint(c);
         });
         return b.toString();

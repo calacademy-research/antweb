@@ -114,6 +114,10 @@ public class TaxaPage implements Serializable {
 		    taxaQuery += " and taxarank = '" + rank + "' ";
 		  } else {
 		    taxaQuery += " and taxarank in ('species', 'subspecies')";
+		    // Brian Fisher, 2026-10-22: a name not identified to genus is not a species; the species list and its
+		    // header count leave it out, as the place's Species number does (PlaceTotals.identifiedToGenus). Its
+		    // specimens still count in the place's Specimens.
+		    taxaQuery += " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon");
           }
           taxaQuery += statusSet.getAndCriteria();
 
@@ -143,6 +147,7 @@ public class TaxaPage implements Serializable {
           
           // Ant specimens only: non-ant specimens are found by search, not listed on place pages (2026-10-21).
           specimenQuery += " from specimen s where" + org.calacademy.antweb.home.SpecimenDb.getAntSpecimenCriteria("s");
+          if (rank.equals("species")) specimenQuery += " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("s");
           
           if (overview instanceof Country) {
             specimenQuery += " and country = '" + overview+ "'";
@@ -271,6 +276,27 @@ public class TaxaPage implements Serializable {
 		this.children = theseChildren;
 		//A.log("fetchChildren size:" + children.size());
         return null;  // indicating success
+	}
+
+	/*
+	 * Brian Fisher, 2026-10-22 (docs/numbers.md Q12): "Unimaged" always means no photo of the ant anywhere in AntWeb; a
+	 * name whose specimens have only label photos is not imaged. The rule is StatisticsDb.antImagedNames (the API's
+	 * /unimagedGeolocaleTaxa uses the same, imagedTaxaSql). Set by TaxaPageAction for isImaged=false; null otherwise.
+	 */
+	private java.util.Set<String> unimagedNames;
+
+	/** The children with no photo of the ant anywhere in AntWeb (isImaged=false), or null when not asked for. */
+	public java.util.Set<String> getUnimagedNames() {
+		return unimagedNames;
+	}
+
+	/** Marks the children that have no photo of the ant anywhere in AntWeb (StatisticsDb.antImagedNames). */
+	public void findUnimaged(Connection connection) throws SQLException {
+		java.util.Set<String> names = new java.util.HashSet<>();
+		if (children != null) for (Taxon child : children) names.add(child.getTaxonName());
+		java.util.Set<String> imaged = StatisticsDb.antImagedNames(connection, names);
+		unimagedNames = new java.util.HashSet<>(names);
+		unimagedNames.removeAll(imaged);
 	}
 
 	public ArrayList<Taxon> getChildren() {

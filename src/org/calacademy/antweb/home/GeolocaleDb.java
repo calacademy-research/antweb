@@ -1157,6 +1157,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         + new StatusSet().getAndCriteria()
               // Project.ALLANTWEBANTS
 		+ " and taxon.family = 'formicidae'"
+		+ " and " + PlaceTotals.identifiedToGenus("taxon")   // 2026-10-22: not identified to genus, not a species
 		+ " group by gt.taxon_name having count(*) = 1 " 
 		+ " order by geolocale_id";
       
@@ -1175,6 +1176,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         + " and (gt.taxon_name, g.parent) in (select gt.taxon_name, g.name from geolocale g, geolocale_taxon gt where g.id = gt.geolocale_id and gt.is_endemic = 1)"
         + new StatusSet().getAndCriteria()
 		+ " and taxon.family = 'formicidae'"
+		+ " and " + PlaceTotals.identifiedToGenus("taxon")   // 2026-10-22: not identified to genus, not a species
         + " group by gt.taxon_name having count(*) = 1 " 
         + " order by geolocale_id";
 

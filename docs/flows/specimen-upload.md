@@ -75,6 +75,7 @@ Numbers are the order in which things happen for `upload.do?action=specimenUploa
    - **Parse** (`SpecimenUploadParse.parseLine()` line 70). Refusals at this step (line not loaded, listed in the report): whitespace inside subfamily/genus/species/subspecies (line 140); a specimen code with characters other than letters, digits and `. _ : / ( ) # + -` (line 187; spaces are removed and reported); latitude outside -90..90 or longitude outside -180..180 (lines 229, 249); more columns than the header (line 298); a genus AntWeb does not know in an ant subfamily, unless it is a morpho or indet name (line 424); a species name with quotes or a space inside the subspecies (line 448); no name could be built (line 659).
    - Taxonomy cleaning during parse: a subfamily written as `(Name)` loses the parentheses (line 339); the subfamily is replaced by the genus's subfamily in AntWeb (reported as "Preferred Subfamily For Genus"); a synonymised genus is handled per GitHub #95 (line 359): names AntCat knows keep the old genus for step "name resolution" below, morphos and indets move to the valid genus ("Synonymized genus replaced"); `sp.` or empty species becomes `(indet)`; `species subspecies` in one column is split.
    - Geography during parse: a missing country is guessed from `adm1` if possible; country and adm1 names are mapped to AntWeb's valid names (reported "Not Antweb valid countries", "Not valid Antweb adm1" with a link to `adm1Mgr.do`); the bioregion is taken from the country or adm1 and overrides the file's value ("Corrected Biogeographic Regions"); islands become their island country.
+   - Locality and collection codes during parse: see section 3b.
    - Coordinates outside the country's or adm1's bounding box: the specimen **is** loaded but marked `flag = 'red'` (lines 709, 717): "Red Flag", hidden from most AntWeb services until fixed.
    - **Process** (`SpecimenUploadProcess.processLine()` line 45). Refusals: no code (line 83); empty subfamily or genus; a subfamily that is not an ant subfamily for family Formicidae (line 148); a genus filed under a different subfamily than AntWeb's and no AntWeb subfamily found (line 213). A genus/subfamily pair AntWeb does not have but which is not contradicted is created as a taxon with `insert_method = 'addMissingGenus'` (line 246) and reported "not found in Bolton World Catalog (uploaded)".
    - **Name resolution** (`setStatusAndCurrentValidName()` line 431, called at line 270). See section 4.
@@ -92,7 +93,7 @@ Numbers are the order in which things happen for `upload.do?action=specimenUploa
     - `specimen.status` copied from the taxon (`SpecimenDb.updateSpecimenStatus(groupId)`);
     - `ant_group.upload_specimens` = count (`GroupDb.updateUploadSpecimens`);
     - the group's map (`ObjectMapDb.genGroupObjectMap`);
-    - one row in `upload` (`SpecimenUploadDb.recordUpload()`: upload id, login id of the effective curator, group, report file name, backup file; bound values, texts cut to the 64-character columns, checked after the insert; a failure throws and the upload rolls back, since 2026-10-22) and its counts (`UploadDb.updateCounts`), `ant_group.first_specimen_upload` and `upload_count` (`UploadDb.updateGroup`). The job's "Upload ID N", the email and the report use the id of that row;
+    - one row in `upload` (`SpecimenUploadDb.recordUpload()`: upload id, login id of the effective curator, group, report file name, backup file; bound values, the group name cut to the width of its column (100 since 2026-10-23, 64 before; read on every upload), file names refused when longer than their 64-character columns, checked after the insert; a failure throws and the upload rolls back, since 2026-10-22) and its counts (`UploadDb.updateCounts`), `ant_group.first_specimen_upload` and `upload_count` (`UploadDb.updateGroup`). The job's "Upload ID N", the email and the report use the id of that row;
     - one row in `statistics` (`StatisticsDb.populateStatistics`, site totals);
     - the museums found in the file are kept in the session for the "Recalculate Your Museums" button (`museumCalc`).
     - then for the whole site (`specimenPostProcessGlobal()` line 673): `GeolocaleDb.calcEndemic()` and `TaxonDb.removeIndetWithoutSpecimen()`.
@@ -101,6 +102,59 @@ Numbers are the order in which things happen for `upload.do?action=specimenUploa
 13. **Finally** (`SpecimenUploadJob.run()`): the upload flag is released, `UploadMgr.populate()` reloads the upload list, the connection is closed, the email is sent (section 6) and the saved file in `workingDir/jobs/` is deleted. The job's status (finished or failed), result and report link go to the status page and the table `background_job`.
 
 Steps the status page shows while the upload runs ("Now: ..."): "Checking the file (format, columns, encoding).", for TaxonWorks "Converting the TaxonWorks file to an AntWeb specimen file.", "Removing the group's current specimens (the file replaces them).", "Reading and saving specimens: line N of M." (every 500 lines), "All lines read. Checking names and updating species lists.", "Keeping a copy of the uploaded file.", "Updating the group's counts, map and upload record.", "Updating site-wide lists (endemic species, unused indet names).", "Writing the upload report.".
+
+## 3b. Locality and collection codes
+
+A specimen's `LocalityCode` (`specimen.localitycode`) groups the specimens of one collecting site: the locality
+page `locality.do?code=<code>`, the map popups, the "Show All Specimens" search. `CollectionCode`
+(`specimen.collectioncode`) does the same for a collecting event (`collection.do?name=<code>`).
+
+During parse (`SpecimenUploadParse.cleanCollectionCode()` and `cleanLocalityCode()`, which calls
+`plainLocalityCode()`):
+
+- `UploadUtil.cleanCode()` removes spaces, `%`, `#` and apostrophes (straight `'` only). Unchanged since before
+  2026; changing it would change every code at the group's next upload.
+- A locality code that is missing, `Null` or shorter than 5 characters, on a specimen with coordinates, becomes
+  `loc` (or the short code) followed by `lat,lon`, for example `loc-18.91,47.52`. A collection code that is
+  missing gets a random `tc<number>`.
+- **A double quote becomes `-`** (since 2026-10-23, `UploadUtil.quotesToDash()`, called first in `cleanCode()`,
+  so it applies to locality and collection codes). `""` (a spreadsheet export doubles a quote) and `"` both become
+  one `-`: `KM55""805` and `KM55"805`, the same place stored as two codes, are both `KM55-805`. The upload report
+  lists each code changed this way ("Locality or collection code with a double quote", `MessageMgr.codeQuoteReplaced`).
+  Decision: Brian Fisher, 2026-10-23 (the Economo Ant Lab, whose codes these were, could not be reached).
+- **Otherwise stored as written** (since 2026-10-22). Every other character is kept: `<`, `>`, `?`, `,`, `/`,
+  accented letters. Until 2026-10-22 the locality code was then URL-encoded (`HttpUtil.encodePath`, ISO-8859-1):
+  `Ahi_<5m` was stored as `Ahi_%3C5m`, `MontagnedesFrançais_150` as `MontagnedesFran%E7ais_150`, and a character
+  outside ISO-8859-1 (a curly apostrophe) as `%3F`. A character outside the Basic Multilingual Plane (an emoji) is still stored as `?`:
+  the column is `utf8mb3`. On 2026-10-22 production held 1,117 specimens in 67 such codes
+  (Economo Ant Lab 921 in 18 codes, CAS 196 in 49). Collection codes were never encoded.
+
+Readers of the stored code, all of which take the plain code:
+
+| Reader | How it uses the code |
+|---|---|
+| Specimen page and specimen lists (`Specimen.getLocalityLink()`, `getLocalityInfoString()`) | link `locality.do?code=` with the code encoded once (`Html.url`, UTF-8; was `HttpUtil.encodePath`, ISO-8859-1, which a plain `ç` would have broken) |
+| `collection-body.jsp`, `specimen-body.jsp`, `specimenReport.jsp`, `locality-body.jsp` | `Html.url` once (PR #236) |
+| Locality page (`LocalityAction`, `LocalityDb.getLocalityByCode()`) | `where sp.localitycode = <DBUtil.sqlLiteral(code)>`; was `escapeQuotes`, which doubled a `"` so `KM55""805` was never found |
+| Collection page (`CollectionDb.getCollection()`) | the same, `DBUtil.sqlLiteral` |
+| "Show All Specimens" on the locality page, advanced search Locality Code / Collection Code (`GenericSearch.getCodeSearchString()`) | `localityCode="<code>"`: a value in one pair of double quotes with no space is one code, taken whole (it may hold `"` or `,`); a `"` stays one character in the SQL. Several quoted codes must be separated by a space (`"a" "b"`): `"a","b"` is now one code |
+| "Enlarge Map" link under the small map (`maps/googleMapInclude.jsp`) | `bigMap.do?locality=` (or `collection=`) with the code encoded once (`Html.url`) and the link escaped (was printed raw) |
+| Code shown as text (locality page, collection page, specimen lists) | `Html.esc` or `bean:write` (escapes); the end-to-end round trip checks that the raw `<` never reaches the HTML |
+| Maps (`Map.java`, `drawMap.js`) | `Map.java` form-encodes the code once, `drawMap.js` decodes once and builds the link with one `encodeURIComponent` |
+| Field guide (`FieldGuide`) | `LocalityDb.getLocalityByCode()` (was `getLocality(code)`, which used the code as an SQL clause) |
+| TaxonWorks nightly (`TaxonWorksTransformer`) | passes `LocalityCode` through; the parse above applies |
+| API v3.1 | does not return the locality code |
+| `MapLocality` | not used (no caller) |
+
+MySQL compares codes ignoring case and accents (`utf8mb3_general_ci`): `MontagnedesFrançais_150` and
+`MontagnedesFrancais_150` open the same locality page.
+
+Checks: `LocalityCodePlainTest` (JUnit, CI), `tests/unit/test_map_popups.py`, `tests/unit/test_locality_codes.py`,
+the end-to-end upload round trip (`zztest0007` with the code `zzloc<5m_Français"?`), and the Integrity Check query
+`encodedLocalityCodes` (codes holding `%` and two hex digits; normally none). Links saved before a group's codes are stored plain (bookmarks, search engines: `locality.do?code=Ahi_%253C5m`)
+stop finding the locality once the codes are decoded; the new links work. Old rows: the group's next upload
+stores them plain (CAS every night through the TaxonWorks upload); the one-off repair for the others is in
+`docs/runbook.md`, "Locality codes stored URL-encoded".
 
 ## 3a. The status page (`jobStatus.do`)
 
@@ -159,10 +213,10 @@ Settings: `etc/taxonworks.properties` on the host (`/root/antweb/etc/`, containe
    5. Another upload running (line 185): "skipped: another upload is running (...)".
    6. Set the upload flag to "TaxonWorks nightly:<curator>", new upload id, `uploadPreparedFile()` (section 3 steps 5 to 9, as `taxonWorksUpload`), `postProcessSpecimenUpload`, `specimenPostProcessGlobal`, report with "Uploaded by: Nightly TaxonWorks job (automatic)", commit, write the new SHA-256. Result "uploaded N records for group 1 (was M specimens) in <time>".
    7. Any failure: rollback, "FAILED: <exception class>" (the message is not logged because it can contain the download URL with its token).
-3. TaxonWorks builds a new archive at most once a day, and only when the link is requested; the request that starts the build still receives the old archive (HTTP 422 while building). So while the answer is "unchanged" or HTTP 422, the job asks again every 3 minutes (`WAIT_STEP_MINUTES`, line 67) for up to 90 minutes (`isWaitingForTaxonWorks()`, line 216).
+3. TaxonWorks builds a new archive at most once a day, and only when the link is requested; the request that starts the build still receives the old archive (HTTP 422 while building). So while the answer is "unchanged" or HTTP 422, the job asks again every 3 minutes (`WAIT_STEP_MINUTES`, line 67) for up to 30 minutes (90 until 2026-10-24; `isWaitingForTaxonWorks()`, line 216). Since 2026-10-24 it also waits while the archive was built more than 12 hours before the run started (the newest file time in the zip, which TaxonWorks writes in UTC; `isOlderArchive()`): on 2026-10-24 the run uploaded the archive built on 10-23 at 05:01 Pacific at once, so a name Brian Fisher fixed in TaxonWorks during 10-23 (CASENT0904877, *Allomerus villosus*) arrived only a day later. At the last check of the wait it uploads an older archive rather than nothing, and says so in the log line ("archive built ... UTC (older than this run ...)"), with an admin alert and an email to antweb@antweb.org.
 4. Log: one line per run in `web/log/taxonworksNightly.log` and `admin.log` (admins read them through `logMgr.do`), plus the normal upload report and `upload` row when it uploaded.
 
-Timing: a manual TaxonWorks upload of 265,384 records took 23 minutes (upload #2248, 2026-10-16). Set 1 is about 12 minutes of AntCat import, up to 90 minutes of waiting, then the upload.
+Timing: a manual TaxonWorks upload of 265,384 records took 23 minutes (upload #2248, 2026-10-16). Set 1 is about 12 minutes of AntCat import, up to 30 minutes of waiting (usually a few), then the upload.
 
 No email is sent for the nightly job (section 6).
 

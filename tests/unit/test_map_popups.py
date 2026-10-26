@@ -23,6 +23,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+from urllib.parse import quote
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 HARNESS = os.path.join(ROOT, "tests", "unit", "map_popups_harness.js")
@@ -78,6 +79,26 @@ def test_locality_and_collection_popups():
     assert links(loc[0]) == ["/locality.do?code=BLF1234%20a"], loc[0]
     assert links(col[0]) == ["/collection.do?name=BLF%2F01"], col[0]
     print("Locality and collection map popups link their own pages.")
+
+
+def test_plain_codes_with_special_characters():
+    """Locality codes are stored as written since 2026-10-22 (they were stored URL-encoded: Ahi_%3C5m).
+    Map.java form-encodes the plain code once (HttpUtil.encode), drawMap.js decodes it once and builds the
+    link with one encodeURIComponent: <, ", ?, > and \u00e7 each appear once encoded, never as %25."""
+    from urllib.parse import quote_plus
+    codes = ["Ahi_<5m", 'KM55""805', "MontagnedesFran\u00e7ais_150", "Bequia_Peggy?s_Rock", "a>b&c#d"]
+    form = [quote_plus(c, safe="") for c in codes]   # as java.net.URLEncoder (UTF-8) writes them
+    n = len(codes)
+    call = ("drawGoogleMapLocalities('small', 'map6',new Array(" + ",".join(["1.5"] * n) + "),new Array("
+            + ",".join(["2.5"] * n) + "),new Array(" + ",".join("'x%d'" % i for i in range(n)) + "),new Array("
+            + ",".join("'%s'" % f for f in form) + "), " + DOMAIN + ");")
+    (popups,) = run([call])
+    assert len(popups) == n, popups
+    for code, popup in zip(codes, popups):
+        expected = "/locality.do?code=" + quote(code, safe="-_.!~*'()")   # encodeURIComponent
+        assert links(popup) == [expected], (code, popup)
+        assert not DOUBLE_ENCODED.search(expected), expected
+    print("Plain locality codes with <, \", ?, > and \u00e7: map popups link them encoded once.")
 
 
 def test_missing_code_has_no_link():
@@ -143,6 +164,7 @@ def test_link_builders_encode_once():
 def main():
     test_group_map_popup()
     test_locality_and_collection_popups()
+    test_plain_codes_with_special_characters()
     test_missing_code_has_no_link()
     test_specimen_popups_unchanged()
     test_java_sends_encoded_values()

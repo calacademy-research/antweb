@@ -72,12 +72,14 @@ def curator():
     return login("noupload")[0]
 
 
-def test_upload_line_open_to_curator_own_group_only(curator):
-    # Group 1 is CAS; the staging test curator is not in it, so the line is not shown.
+def test_upload_line_open_to_any_curator_file_to_own_group(curator):
+    # Group 1 is CAS; the staging test curator is not in it. Since 2026-10-24 (Brian Fisher) any curator sees one line
+    # of any group's specimen upload file, so the request is not refused (the whole file stays own-group only).
     r = curator.get(BASE_URL + "/logMgr.do?action=uploadLine&file=2026-01-01-specimen1.txt&line=2", timeout=TIMEOUT)
     assert r.status_code == 200, r.status_code
     assert classify(r).category not in ("login", "denied"), classify(r)
-    assert "Not available." in r.text, r.text[:300]
+    r2 = curator.get(BASE_URL + "/uploadFile.do?file=2026-01-01-specimen1.txt", timeout=TIMEOUT)
+    assert r2.status_code == 404, r2.status_code
 
 
 # ---------- source checks ----------

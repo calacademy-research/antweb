@@ -174,6 +174,11 @@ public class ArtistDb extends AntwebDb {
             dml = "update image set artist = " + moveToArtist.getId() + " where artist = " + artist.getId();
             s_log.warn("moveToArtist() dml:" + dml);
     	    int i = stmt.executeUpdate(dml); 
+            // The image upload batches of the removed artist go too (2026-10-23): until then they kept the deleted
+            // artist's number, and the image upload reports showed "id 514" instead of a name.
+            dml = "update image_upload set artist_id = " + moveToArtist.getId() + " where artist_id = " + artist.getId();
+            int batches = stmt.executeUpdate(dml);
+            s_log.warn("moveToArtist() image_upload batches moved:" + batches);
     	    return i;
 		} catch (SQLException e) {
 			s_log.error("moveToArtist() dml" + dml + " e:" + e);
@@ -225,6 +230,11 @@ public class ArtistDb extends AntwebDb {
               returnVal += " Can't delete an artist:" + artist.getLink() + " if images are attributed.";
               return returnVal;
             }
+            // An artist named on image upload batches is not deleted without an artist to move them to.
+            if (getArtistUploadCount(artist.getId()) > 0) {
+              returnVal += " Can't delete an artist:" + artist.getLink() + " named on image upload batches; choose an artist to move them to.";
+              return returnVal;
+            }
  
             boolean deleted = deleteArtist(artist, accessLogin);
             if (deleted) {
@@ -270,6 +280,17 @@ public class ArtistDb extends AntwebDb {
 		}    
 		return false;
     }    
+
+    /** The number of image upload batches (image_upload rows) that name this artist. */
+    public int getArtistUploadCount(int artistId) throws SQLException {
+        try (java.sql.PreparedStatement ps = getConnection().prepareStatement("select count(*) from image_upload where artist_id = ?")) {
+            ps.setInt(1, artistId);
+            try (ResultSet r = ps.executeQuery()) {
+                r.next();
+                return r.getInt(1);
+            }
+        }
+    }
 
     public int getArtistImageCount(int artistId) {
     

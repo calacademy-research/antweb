@@ -18,10 +18,10 @@ kinds; 9 were validated, 7 partly, 102 not, and 24 numbers looked wrong in the c
 
 | Test | What it does | Where it runs |
 |---|---|---|
-| `inv:<id>` | CountInvariants (`src/org/calacademy/antweb/util/CountInvariants.java`): for **every** place of every kind, the stored number against the number it must equal or not exceed, with grouped queries (one per check for all places). | `countCheck.do` (admins, read-only); on staging in the end-to-end suite (`tests/e2e/test_count_check.py`) on every pull request and every day; on production read-only every day. Database behaviour: `CountInvariantsTest` (CI, MySQL 8.4). |
+| `inv:<id>` | CountInvariants (`src/org/calacademy/antweb/util/CountInvariants.java`): for **every** place of every kind, the stored number against the number it must equal or not exceed, with grouped queries (one per check for all places). Since 2026-10-22 also NumberChecks (`NumberChecks.java`, ids `stats.*`, `admin.*`, `api.taxa`, `list.images`, `place.endemic.flags`, `taxon.parents`, `geo.adm1.country`): the statsPage tables, the admin pages, the API's taxon counts, the Images column of every list, the endemic flags, and the suspects B25 and B26; the value a page shows (computed by the page's own code, or read from LoginMgr and ArtistMgr as the pages read it) against an independent recount. | `countCheck.do` (admins, read-only); on staging in the end-to-end suite (`tests/e2e/test_count_check.py`) on every pull request and every day; on production read-only every day. Database behaviour: `CountInvariantsTest`, `NumberChecksTest` (CI, MySQL 8.4). |
 | `cc:<check>` | CountCheck (`CountCheck.java`): recount from the specimen and image records for a sample of places: Madagascar, Reunion, the country with the most morphospecies, the subregion of Madagascar, the largest live project, CASC, Malagasy, plus a rotating slice so every country, subregion, region, project and museum is recounted within a week and every live adm1 within a month (`CountCheckAction.rotatingSample`). | same page and tests; `CountCheckTest` |
 | `junit:<Class>#<method>` | JUnit test against MySQL 8.4 in CI (`test/`). | CI "Tests" |
-| `e2e:<file>::<function>` | end-to-end test of the page on staging (`tests/e2e/`). | e2e workflow |
+| `e2e:<file>::<function>` | end-to-end test of the page on staging (`tests/e2e/`). Since 2026-10-22 the count check's report carries its recounts as JSON (`id="count-check-expected"`), and `test_count_check.py` compares statsPage, curators.do, curator.do, artists.do, groups.do, group.do, listImageUploads.do and orphanedImages.do with them; `test_numbers_live.py` compares live numbers (list headers, browse, images, comparisons, search, collection, locality, endemic.do) with the Madagascar place page, whose numbers the check validates; `test_api_numbers.py` the API's counts with what it returns. | e2e workflow |
 | `unit:<file>::<function>` | unit test (`tests/unit/`). | CI "Tests" |
 
 A difference the check finds is **real** (the site shows a wrong number) or **pending** (something changed after
@@ -41,45 +41,83 @@ geolocales, 380,000 geolocale list rows; MySQL 8.0, 2 cores): every place 29 to 
 rotating places 14 s. A check of given places (`geolocaleId`, `project`, `museum`, `bioregion`) still runs in
 the request.
 
+The checks added on 2026-10-22 (NumberChecks), measured on a synthetic copy of production's size (1,000,000
+specimens, 1,100,000 images, 62,000 taxa, 4,300 geolocales, 370,000 geolocale list rows, 208,000 project rows,
+170,000 museum rows, 150,000 bioregion rows, 5,000 uploads; MySQL 8.0 on the build machine, where the checks that
+existed took 59 s): 49 s together (stats.images 7, stats.imaged 8, list.images 13, admin.statistics 12 including
+the one pass over the specimens of every upload group, place.endemic.flags 4, the others under 1.2 s each; first
+versions of admin.groups and api.taxa took 33 s and 124 s and were rewritten). On staging (2 cores, 4 GB) expect
+about 60 to 90 s more for "every place". The whole job still stops the rotating recount at 300 s, so it stays
+within about 5 minutes; on staging the rotating sample may then reach fewer places a day (those not reached are
+listed). The report prints the time of every check (column ms), and "every place" is split into the place
+numbers and the other pages' numbers (`data-other`).
+
 Status: **yes** = the number is compared with an independent recount or with the number it must equal, on every
-place (or a rotating sample covering every place); **partly** = only some places or parts, or only a consistency
-rule; **not yet** = no test (see the plans in section 4).
+place (or a rotating sample covering every place); **partly** = only some places or parts (for example the
+Madagascar pages of the end-to-end tests), or only a consistency rule (a part at most the whole, a header equal to
+the rows listed); **not yet** = no test (see the plans in section 4).
+
+### Names not identified to genus (rule of 2026-10-22)
+
+Brian Fisher, 2026-10-22: names not identified to genus (the genus part is indet, (indet), or a subfamily in
+parentheses, or the whole name is unidentified) do NOT count as species anywhere (species totals, endemism, the species
+counts of lists). Their specimens still count in the specimen totals (under their subfamily where it is known). No
+placeholder genus rows are ever created for them.
+
+One definition, `PlaceTotals.identifiedToGenus(alias)` (SQL) and `PlaceTotals.isIdentifiedToGenus(genus)` (Java): the
+taxon's `genus` column is not `indet` or `undet` and does not start with "(" (AntWeb's placeholders `(indet)`,
+`((indet))`, `(formicinae)`, `(formicidae)`). Examples on staging: `(indet)((indet)) (indet)` (226 specimens),
+`(indet)(formicinae) (indet)`, `formicinaeindet (indet)`, `indetindet (indet)`. Morphogenera
+(`amblyoponinaeamblyoponine_genus8 nz01`) are identified to genus and count. Used by: place Species and the Species
+per Subfamily pie (`PlaceTotals.rankCondition(SPECIES)`), the Species of genus rows of every list (the nightly crawl,
+`getCountChildrenQuery` of Geolocale, Project, Museum, Bioregion), endemism (`GeolocaleDb.calcCountryEndemism`,
+`calcAdm1Endemism`, `BioregionDb.calcEndemic`), home and statsPage "species + ssp. imaged"
+(`StatisticsDb.IMAGED_SPECIES_SQL`), the species list of taxonomicPage.do and its header (`TaxaPage`), the nightly
+parent repair (`TaxonParentDb`) and uploads (`AntwebUpload.saveTaxon`: no genus row made for them); and by the checks
+(`inv:place.totals.species`, `inv:place.pies`, `inv:list.genus`, `inv:place.endemic.flags`, `inv:taxon.parents`, the
+count check's genus rows `cc:species`). Specimens, Images and the Specimens per Subfamily pie still count them. Not
+changed: list rows of subfamilies hold the specimens of their genus rows only, so a name not identified to genus with
+no genus row as parent is in its place's Specimens (and the pie, under its subfamily) but in no subfamily row's
+Specimens. Test: `TaxonTreeCountDbTest#testANameNotIdentifiedToGenusIsNotASpecies`, `#testANameNotIdentifiedToGenusIsNotEndemic`,
+`#testIdentifiedToGenusSqlAndJavaAgree`.
 
 ## 2. Inventory
 
-Coverage after 2026-10-22: **48 validated, 23 partly, 47 not yet** of 118 (2026-10-21: 42, 22, 54; before: 9, 7, 102). The public page flows of road map step 2 added the API meta counts and the locality page's collections ([flows/api.md](flows/api.md), [flows/specimen-and-image-pages.md](flows/specimen-and-image-pages.md)).
+Coverage after 2026-10-22: **69 validated, 50 partly, 0 not yet** of 119 (row 119, Port of Entry, added with Brian
+Fisher's answers of 2026-10-22, section 5.2; earlier on 2026-10-22: 67, 51, 0 of 118; 2026-10-21: 42, 22, 54; first
+inventory 2026-10-20: 9, 7, 102).
 
 | # | Page | Number | How it is computed | Status | Test |
 |---|---|---|---|---|---|
-| 1 | home page `/` (genInc/statistics.jsp) | N valid species + ssp. | statistics row (StatisticsDb.populateStatistics): valid species and subspecies, fossils included; written after every specimen upload and, since 2026-10-21, every night (set 4) | yes | inv:home |
+| 1 | home page `/` (genInc/statistics.jsp) | N valid species + ssp. | statistics row (StatisticsDb.populateStatistics): valid ant (Formicidae) species and subspecies identified to genus, fossils included (Q7, 2026-10-22: was every family; `PlaceTotals.validAntSpeciesCondition`); explained on hover and on statsPage; written after every specimen upload and, since 2026-10-21, every night (set 4) | yes | inv:home; junit:NumberDecisionsDbTest#testStatsPageAndHomeCountAntsIdentifiedToGenusOnly |
 | 2 | home page `/` (genInc/statistics.jsp) | N specimen records | statistics row: all specimen records | yes | inv:home |
-| 3 | home page `/` (genInc/statistics.jsp) | N species + ssp. imaged | statistics row: species and subspecies names (counted status) with a specimen that has an image of the ant (not a label); was genus/species/subspecies strings, labels and every status counted | yes | inv:home; junit:PlaceTotalsDbTest#testHomeNumbersCountImagesOfTheAnt |
+| 3 | home page `/` (genInc/statistics.jsp) | N species + ssp. imaged | statistics row: ant species and subspecies names (counted status, identified to genus; ants only since 2026-10-22, Q7) with a specimen that has an image of the ant (not a label); was genus/species/subspecies strings, labels and every status counted | yes | inv:home; junit:PlaceTotalsDbTest#testHomeNumbersCountImagesOfTheAnt |
 | 4 | home page `/` (genInc/statistics.jsp) | N specimens imaged | statistics row: specimens with an image of the ant (labels not counted, as Imaged specimens on place pages) | yes | inv:home; junit:PlaceTotalsDbTest#testHomeNumbersCountImagesOfTheAnt |
 | 5 | home page `/` (genInc/statistics.jsp) | N total specimen images | statistics row: all image rows | yes | inv:home |
-| 6 | statsPage.do | N valid species + ssp. | TaxonMgr.getValidSpeciesCount(): valid species and subspecies in memory (was: valid taxa of every rank) | yes | inv:home; junit:PlaceTotalsDbTest#testStatsPageCountsValidSpeciesAndSubspecies; e2e:test_numbers_pages.py::test_statspage_valid_species_count_species_and_subspecies |
+| 6 | statsPage.do | N valid species + ssp. | TaxonMgr.getValidSpeciesCount(): valid species and subspecies in memory, ants identified to genus (`PlaceTotals.isValidAntSpecies`, Q7 2026-10-22; was: valid taxa of every rank, then of every family) | yes | inv:home; junit:PlaceTotalsDbTest#testStatsPageCountsValidSpeciesAndSubspecies; junit:NumberDecisionsDbTest#testStatsPageAndHomeCountAntsIdentifiedToGenusOnly; e2e:test_numbers_pages.py::test_statspage_valid_species_count_species_and_subspecies |
 | 7 | statsPage.do | N specimen records | AntwebMgr, from the latest statistics row (= #2) | yes | inv:home |
-| 8 | statsPage.do | N species + ssp. imaged | AntwebMgr (= #3) | yes | inv:home |
+| 8 | statsPage.do | N species + ssp. imaged | AntwebMgr (= #3) | yes | inv:home; inv:stats.imaged |
 | 9 | statsPage.do | N specimens imaged | AntwebMgr (= #4) | yes | inv:home |
 | 10 | statsPage.do | N total specimen images | AntwebMgr (= #5) | yes | inv:home |
-| 11 | statsPage.do | Global Data, Extant: valid subfamilies, genera, species, subspecies | live count of the taxon table (StatisticsDb.getExtantData) | partly | e2e:test_numbers_pages.py::test_statspage_valid_species_count_species_and_subspecies |
-| 12 | statsPage.do | Global Data, Fossil (4) | live count (getFossilData) | partly | e2e:test_numbers_pages.py::test_statspage_valid_species_count_species_and_subspecies |
-| 13 | statsPage.do | Images table: Total per specimen status | live (ImageDb.getImageStats) | partly | junit:PlaceTotalsDbTest#testStatsPageImageTableAddsUp |
-| 14 | statsPage.do | Images table: Worker / Male / Queen / Other | live; Other includes images of specimens without a caste (2026-10-21; they were in no column) | partly | junit:PlaceTotalsDbTest#testStatsPageImageTableAddsUp |
-| 15 | statsPage.do | Images table: Sum row | summed in the JSP over every status in the table (was six fixed statuses) | not yet | not yet: e2e reading the table (Sum Total = home total images minus orphan images) |
-| 16 | statsPage.do | Imaged Species per taxon status | live (ImageDb.getImageTaxonStats) | not yet | not yet |
-| 17 | statsPage.do | Bioregion Data (4 per bioregion) | live over bioregion_taxon (StatisticsDb.getBioregionData) | not yet | not yet |
-| 18 | statsPage.do | Museum Data, Valid Extant (4 per museum) | live over museum_taxon | not yet | not yet |
-| 19 | statsPage.do | Museum Data, Valid Fossil (4 per museum) | live over museum_taxon | not yet | not yet |
+| 11 | statsPage.do | Global Data, Extant: valid subfamilies, genera, species, subspecies | live count of the taxon table, ants only, species identified to genus (StatisticsDb.globalCountSql, `PlaceTotals.validAntTaxonCondition`; Q7 2026-10-22: was every family); said under the heading | yes | inv:stats.global; junit:NumberDecisionsDbTest#testStatsPageAndHomeCountAntsIdentifiedToGenusOnly; e2e:test_count_check.py::test_statspage_tables_equal_the_recount; e2e:test_numbers_pages.py::test_statspage_valid_species_count_species_and_subspecies; e2e:test_numbers_pages.py::test_statspage_says_it_counts_ants_only |
+| 12 | statsPage.do | Global Data, Fossil (4) | live count, ants only (as #11) | yes | inv:stats.global; e2e:test_count_check.py::test_statspage_tables_equal_the_recount; e2e:test_numbers_pages.py::test_statspage_valid_species_count_species_and_subspecies |
+| 13 | statsPage.do | Images table: Total per specimen status | live (ImageDb.getImageStats) | yes | inv:stats.images; e2e:test_count_check.py::test_statspage_tables_equal_the_recount; junit:PlaceTotalsDbTest#testStatsPageImageTableAddsUp |
+| 14 | statsPage.do | Images table: Worker / Male / Queen / Other | live; Other includes images of specimens without a caste (2026-10-21; they were in no column) | yes | inv:stats.images; e2e:test_count_check.py::test_statspage_tables_equal_the_recount; junit:PlaceTotalsDbTest#testStatsPageImageTableAddsUp |
+| 15 | statsPage.do | Images table: Sum row | summed in the JSP over every status in the table (was six fixed statuses); images of specimens without a status are in no row | yes | inv:stats.images; e2e:test_count_check.py::test_statspage_tables_equal_the_recount; junit:NumberChecksTest#testStatsPageImagesSumLeavesOutSpecimensWithoutStatus |
+| 16 | statsPage.do | Imaged Species per taxon status | live (ImageDb.getImageTaxonStats): names of any rank with a specimen that has any image (labels too), by taxon status; only seven statuses shown | yes | inv:stats.imaged; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
+| 17 | statsPage.do | Bioregion Data (4 per bioregion) | live over bioregion_taxon, ants only (StatisticsDb.listCountSql; Q7 2026-10-22: was every family, B31) | yes | inv:stats.bioregions; inv:stats.nonants; junit:NumberChecksTest#testStatsPagePlaceQueriesMatchThePageCode; junit:NumberChecksTest#testStatsPageBioregionAndMuseumData; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
+| 18 | statsPage.do | Museum Data, Valid Extant (4 per museum) | live over museum_taxon, ants only (as #17) | yes | inv:stats.museums; inv:stats.nonants; junit:NumberChecksTest#testStatsPagePlaceQueriesMatchThePageCode; junit:NumberDecisionsDbTest#testStatsPageAndHomeCountAntsIdentifiedToGenusOnly; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
+| 19 | statsPage.do | Museum Data, Valid Fossil (4 per museum) | live over museum_taxon, ants only (no independent recount of fossils: the check runs the page's rule and its own recount for all museums; relations to the museum page and Global Data) | partly | inv:stats.museums; inv:stats.nonants; junit:NumberChecksTest#testStatsPagePlaceQueriesMatchThePageCode; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
 | 20 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Subfamilies | subfamily rows on the place's list, counted status (PlaceTotals.listedCountSql); museums and bioregions were roll-up sums until 2026-10-21 | yes | inv:place.totals.subfamily; cc:place totals; junit:PlaceTotalsDbTest#testFinishWritesEveryTotalFromTheList |
 | 21 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Genera | genus rows on the list, counted status (PlaceTotals); was sum(genus_count) of the subfamily rows | yes | inv:place.totals.genus; junit:PlaceTotalsDbTest#testFinishWritesEveryTotalFromTheList |
 | 22 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Species / subspecies | species and subspecies rows on the list, counted status, ants (PlaceTotals); was sum(species_count) of the genus rows | yes | inv:place.totals.species; junit:PlaceTotalsDbTest#testFinishWritesEveryTotalFromTheList |
 | 23 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Valid species / subspecies | valid extant species and subspecies rows on the list (PlaceTotals.validSpeciesSql); geolocales: written every night since 2026-10-21 (GeolocaleDb.finish was never called) | yes | inv:place.totals.valid; junit:PlaceTotalsDbTest#testFinishWritesEveryTotalFromTheList |
-| 24 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Endemic | rows flagged is_endemic on the list (PlaceTotals.countsFromFlagsSql); the flags by calcEndemic (geolocales: set 2 and after uploads; bioregions: set 3); the count loop was off by one at each place change | partly | inv:place.totals.endemic; junit:PlaceTotalsDbTest#testEndemicNumbersAreTheFlaggedRows |
-| 25 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Introduced | rows flagged is_introduced on the list (PlaceTotals.countsFromFlagsSql) | partly | inv:place.totals.introduced |
-| 26 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Specimens | geolocales, projects: sum of the species and subspecies rows' specimens (projects: list recounted first since 2026-10-21); museums, bioregions: their specimens (specimen.museum, specimen.bioregion) | yes | inv:place.totals.specimens; inv:geo.regions; cc:place specimens; junit:CountInvariantsTest#testRecountOfASampledPlaceChecksItsImagesColumn |
-| 27 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Imaged specimens | PlaceImageCountDb (set 4): specimens with an image that is not a label | yes | cc:place images; inv:place.images; inv:place.images.order |
+| 24 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Endemic | rows flagged is_endemic on the list (PlaceTotals.countsFromFlagsSql); the flags by calcEndemic (geolocales: set 2 and after uploads; bioregions: set 3); the count loop was off by one at each place change | partly | inv:place.totals.endemic; junit:PlaceTotalsDbTest#testEndemicNumbersAreTheFlaggedRows; inv:place.endemic.flags; e2e:test_numbers_live.py::test_endemic_and_introduced_lists_equal_place_numbers |
+| 25 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Introduced | rows flagged is_introduced on the list (PlaceTotals.countsFromFlagsSql) | partly | inv:place.totals.introduced; e2e:test_numbers_live.py::test_endemic_and_introduced_lists_equal_place_numbers |
+| 26 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Specimens | geolocales, projects: sum of the species and subspecies rows' specimens (projects: list recounted first since 2026-10-21); museums, bioregions: their specimens (specimen.museum, specimen.bioregion) | yes | inv:place.totals.specimens; inv:geo.regions; cc:place specimens; junit:CountInvariantsTest#testRecountOfASampledPlaceChecksItsImagesColumn; inv:geo.adm1.country |
+| 27 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Imaged specimens | PlaceImageCountDb (set 4): specimens with an image that is not a label | yes | cc:place images; inv:place.images; inv:place.images.order; inv:geo.adm1.country |
 | 28 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | (N additional specimens) label only | PlaceImageCountDb: specimens whose only images are labels | partly | inv:place.images |
-| 29 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Images | PlaceImageCountDb: all image files (labels included) | yes | cc:place images; inv:place.images; inv:place.images.order |
+| 29 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Images | PlaceImageCountDb: all image files (labels included) | yes | cc:place images; inv:place.images; inv:place.images.order; inv:geo.adm1.country |
 | 30 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Ant images | PlaceImageCountDb: images that are not labels | yes | cc:place images; inv:place.images |
 | 31 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Views: N head, profile, dorsal, ventral, field, other | PlaceImageCountDb: images per shot type | yes | cc:place images; inv:place.images |
 | 32 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Label images | PlaceImageCountDb: shot type l | yes | cc:place images; inv:place.images |
@@ -88,87 +126,88 @@ Coverage after 2026-10-22: **48 validated, 23 partly, 47 not yet** of 118 (2026-
 | 35 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Specimens per Subfamily pie | PlaceTotals.specimenPieSql: geolocales, projects the species rows' specimens; museums, bioregions their own specimens (were every specimen in AntWeb of their names); one Other slice for names that are not a subfamily; fitted to its column, a chart never stops an upload | yes | inv:place.pies; junit:PlaceTotalsDbTest#testPiesOfMuseumsAndBioregionsCountTheirOwnSpecimens |
 | 36 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Taxa menu N Species | = #22 (getSpeciesCount()) | yes | inv:place.totals.species |
 | 37 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Admin: species count link | = #22 | yes | inv:place.totals.species |
-| 38 | taxonomicPage.do, browse.do | List header N [status] Species / Genera / Subfamilies | live: rows shown (session status set) | not yet | not yet: e2e comparing the header (statusSet=all) with #20-#22 |
-| 39 | taxonomicPage.do, browse.do | N Unimaged X (out of M) | live over list image_count (labels included) | not yet | not yet |
-| 40 | taxonomicPage.do, browse.do | Species row N Specimens (place column) | list row specimen_count (nightly crawl) | yes | cc:specimens |
-| 41 | taxonomicPage.do, browse.do | Genus row N Species | list row species_count: its species and subspecies rows | yes | inv:list.genus; cc:species |
+| 38 | taxonomicPage.do, browse.do | List header N [status] Species / Genera / Subfamilies | live: rows shown (session status set) | partly | e2e:test_numbers_live.py::test_list_headers_equal_place_numbers |
+| 39 | taxonomicPage.do, browse.do | N Unimaged X (out of M) | live: the children with no photo of the ant anywhere in AntWeb (`StatisticsDb.antImagedNames`, the API's rule; Q12 2026-10-22: was no image from this place, labels included); 0 is shown too (B21); said under the header | partly | junit:NumberDecisionsDbTest#testUnimagedMeansNoPhotoOfTheAntAnywhere; e2e:test_numbers_live.py::test_unimaged_header_is_within_the_list; e2e:test_numbers_pages.py::test_unimaged_list_says_anywhere_in_antweb |
+| 40 | taxonomicPage.do, browse.do | Species row N Specimens (place column) | list row specimen_count (nightly crawl); B25 (a subspecies under its species replaces the species' row) checked by taxon.parents | yes | cc:specimens; inv:taxon.parents |
+| 41 | taxonomicPage.do, browse.do | Genus row N Species | list row species_count: its species and subspecies rows of a counted status (country and adm1 genus rows were rewritten after the count by set 2's geolocaleTaxonFix with every row under the genus, any status or rank, until 2026-10-22) | yes | inv:list.genus; cc:species; inv:taxon.parents |
 | 42 | taxonomicPage.do, browse.do | Subfamily row N Genera | list row genus_count: its genus rows | yes | inv:list.subfamily; cc:genera |
 | 43 | taxonomicPage.do, browse.do | Global N Specimens | allantwebants proj_taxon specimen_count: all specimens of the name; rebuilt after uploads and, since 2026-10-21, after the nightly name update | yes | inv:global.specimens; inv:list.global; cc:global; junit:PlaceTotalsDbTest#testGlobalIsRecountedAfterTheNameUpdateMovedSpecimens |
-| 44 | taxonomicPage.do, browse.do | Images column N Images | list row image_count (set 4): images (labels included) of the place's specimens of the name; project rows reset first since 2026-10-21 | partly | cc:images |
-| 45 | taxonomicPage.do, browse.do | Admin Subtaxon total | live sum of the shown rows | not yet | not yet |
-| 46 | taxonomicPage.do, browse.do | browse header N Specimens / Species / Genera (M imaged) | live children (Overview.getOverviewCriteria) | not yet | not yet: B15 plan |
-| 47 | taxonomicPage.do, browse.do | browse (Only the first N of M displayed) | live | not yet | not yet |
-| 48 | taxonomicPage.do, browse.do | browse sub-taxon lines (genus, subfamily, family rows' counts) | list rows of genus, subfamily, family: sums of their child rows (CountDb crawl; every row reset first since 2026-10-21) | yes | inv:list.genus; inv:list.subfamily; inv:list.family |
-| 49 | taxonomicPage.do, browse.do | browse hidden N Imaged X | live | not yet | not yet |
+| 44 | taxonomicPage.do, browse.do | Images column N Images | list row image_count (set 4): images (labels included) of the place's specimens of the name; project rows reset first since 2026-10-21 | partly | cc:images; inv:list.images |
+| 45 | taxonomicPage.do, browse.do | Admin Subtaxon total | live sum of the shown rows | partly | e2e:test_count_check.py::test_subtaxon_totals_equal_the_place_numbers |
+| 46 | taxonomicPage.do, browse.do | browse header N Specimens / Species / Genera (M imaged) | live children (Overview.getOverviewCriteria) | partly | e2e:test_numbers_live.py::test_browse_header_and_hidden_totals_agree |
+| 47 | taxonomicPage.do, browse.do | browse (Only the first N of M displayed) | live | partly | e2e:test_numbers_live.py::test_browse_header_and_hidden_totals_agree |
+| 48 | taxonomicPage.do, browse.do | browse sub-taxon lines (genus, subfamily, family rows' counts) | list rows of genus, subfamily, family: sums of their child rows (CountDb crawl; every row reset first since 2026-10-21) | yes | inv:list.genus; inv:list.subfamily; inv:list.family; inv:list.images |
+| 49 | taxonomicPage.do, browse.do | browse hidden N Imaged X | live | partly | e2e:test_numbers_live.py::test_browse_header_and_hidden_totals_agree |
 | 50 | description.do, images.do, comparisons | N times found in <habitat> | live: collection events per habitat, ordered by that number since 2026-10-21 | partly | junit:PlaceTotalsDbTest#testHabitatsAreOrderedByTheNumberShown |
 | 51 | description.do, images.do, comparisons | N times <microhabitat> | live, as #50 (10 entries, was 11) | partly | junit:PlaceTotalsDbTest#testHabitatsAreOrderedByTheNumberShown |
 | 52 | description.do, images.do, comparisons | N times <method> | live, as #50 (10 entries, was 11) | partly | junit:PlaceTotalsDbTest#testHabitatsAreOrderedByTheNumberShown |
 | 53 | description.do, images.do, comparisons | Field guide: the same three summaries | as #50-#52 | partly | junit:PlaceTotalsDbTest#testHabitatsAreOrderedByTheNumberShown |
 | 54 | description.do, images.do, comparisons | Admin ImageCount (taxon) | taxon.image_count (set 4): images of the taxon's specimens and of the taxa under it (species were never added to their genus) | yes | inv:taxon.images; junit:PlaceTotalsDbTest#testTaxonImageCountsAddTheTaxaUnderThem |
-| 55 | description.do, images.do, comparisons | images.do header N Species Imaged (M total) | live | not yet | not yet |
-| 56 | description.do, images.do, comparisons | images.do child N Images | list image_count, falling back to the worldwide taxon.image_count | partly | cc:images; inv:taxon.images |
+| 55 | description.do, images.do, comparisons | images.do header N Species Imaged (M total) | live | partly | e2e:test_numbers_live.py::test_image_and_comparison_pages_count_the_same_children |
+| 56 | description.do, images.do, comparisons | images.do child N Images | list image_count, falling back to the worldwide taxon.image_count | partly | cc:images; inv:taxon.images; inv:list.images |
 | 57 | description.do, images.do, comparisons | taxonomicPage images view: N X Imaged (out of M Total) | live: children with images, out of all children (printed the same number twice) | partly | e2e:test_numbers_pages.py::test_images_view_header_counts_imaged_children |
-| 58 | description.do, images.do, comparisons | oneView total | live | not yet | not yet |
-| 59 | description.do, images.do, comparisons | mapComparison (N X Mapped) | live: every child, mapped or not | not yet | not yet: B19 plan |
-| 60 | description.do, images.do, comparisons | comparison.do child count | live | not yet | not yet |
-| 61 | description.do, images.do, comparisons | specimenReport N Images | list or taxon image_count | partly | inv:taxon.images |
-| 62 | description.do, images.do, comparisons | unImagedTaxa Non-imaged X (N) | live | not yet | not yet |
+| 58 | description.do, images.do, comparisons | oneView total | live: the pictures of one view of the children (layout total, not printed) | partly | e2e:test_numbers_live.py::test_image_and_comparison_pages_count_the_same_children |
+| 59 | description.do, images.do, comparisons | mapComparison (N X Mapped) | live: every child, mapped or not | partly | e2e:test_numbers_live.py::test_image_and_comparison_pages_count_the_same_children |
+| 60 | description.do, images.do, comparisons | comparison.do child count | live: one checkbox per child with images (layout total, not printed) | partly | e2e:test_numbers_live.py::test_image_and_comparison_pages_count_the_same_children |
+| 61 | description.do, images.do, comparisons | specimenReport N Images | list or taxon image_count | partly | inv:taxon.images; inv:list.images |
+| 62 | description.do, images.do, comparisons | X with no image from this place (N) (labelled Non-imaged X until 2026-10-22) | live: children without images in this place's list (labels included); per place, so labelled so (Q12) | partly | e2e:test_numbers_live.py::test_unimaged_names_listed_match_their_number |
 | 63 | specimen, collection, locality pages | Specimen Image Count (admin) | specimen.image_count (set 4) | yes | inv:taxon.images |
-| 64 | specimen, collection, locality pages | specimenImages N Images | live: the specimen's images | not yet | not yet |
-| 65 | specimen, collection, locality pages | collection N specimens of M species | live | not yet | not yet |
-| 66 | specimen, collection, locality pages | locality N collections | live | partly | e2e:test_specimen_pages.py::test_locality_page_lists_the_specimens_collection |
-| 67 | search results | Advanced search N specimens (M imaged) | live, HTTP session | not yet | not yet: B20 plan |
-| 68 | search results | Advanced search by taxon N species (from M specimens) | live, session | not yet | not yet: B20 plan |
-| 69 | search results | Compare / map preparation counts | live | not yet | not yet |
-| 70 | search results | multiTaxaComparison N specimens | live | not yet | not yet |
-| 71 | search results | Recent images N Images | live | not yet | not yet |
-| 72 | search results | Bay Area search N records | live | not yet | not yet |
+| 64 | specimen, collection, locality pages | specimenImages N Images | live: the specimen's images | partly | e2e:test_numbers_live.py::test_specimen_images_count_equals_the_api |
+| 65 | specimen, collection, locality pages | collection N specimens of M species | live | partly | e2e:test_numbers_live.py::test_collection_and_locality_counts_equal_their_lists |
+| 66 | specimen, collection, locality pages | locality N collections | live | partly | e2e:test_numbers_live.py::test_collection_and_locality_counts_equal_their_lists |
+| 67 | search results | Advanced search N specimens (M imaged) | live, HTTP session | partly | e2e:test_numbers_live.py::test_search_counts_agree; e2e:test_download_guards.py::test_search_list_is_paged_and_fast |
+| 68 | search results | Advanced search by taxon N species (from M specimens) | live, session | partly | e2e:test_numbers_live.py::test_search_counts_agree |
+| 69 | search results | Compare / map preparation counts | live | partly | e2e:test_numbers_live.py::test_search_counts_agree |
+| 70 | search results | multiTaxaComparison N specimens | live | partly | e2e:test_numbers_live.py::test_comparison_of_chosen_specimens_counts_them |
+| 71 | search results | Recent images N Images | live | partly | e2e:test_numbers_live.py::test_recent_images_count_equals_the_rows_shown |
+| 72 | search results | Bay Area search N records | no longer shown: /bayAreaSearch was removed (2026-10-19), so the page cannot be reached | yes | e2e:test_actions.py::test_removed_actions_stay_removed |
 | 73 | countries.do, regions.do, subregions.do, adm1s.do, projects.do, museums.do, bioregions.do | Valid species column (labelled Species until 2026-10-21) | = #23 | yes | inv:place.totals.valid; e2e:test_numbers_pages.py::test_list_of_countries_labels_valid_species |
 | 74 | countries.do, regions.do, subregions.do, adm1s.do, projects.do, museums.do, bioregions.do | Specimens column | = #26 | yes | inv:place.totals.specimens |
 | 75 | countries.do, regions.do, subregions.do, adm1s.do, projects.do, museums.do, bioregions.do | Images column | = #29 | yes | inv:place.images |
 | 76 | countries.do, regions.do, subregions.do, adm1s.do, projects.do, museums.do, bioregions.do | Image Submissions pie | = #75 per place | yes | inv:place.images |
 | 77 | countries.do, regions.do, subregions.do, adm1s.do, projects.do, museums.do, bioregions.do | Specimen Submissions pie | = #74 per place | yes | inv:place.totals.specimens; inv:geo.regions |
-| 78 | endemic.do, introduced.do | endemic.do rows | live over is_endemic flags | partly | inv:place.totals.endemic |
-| 79 | endemic.do, introduced.do | introduced.do rows | live over is_introduced flags | partly | inv:place.totals.introduced |
-| 80 | curators, groups, artists, uploads (admin) | curators.do Specimen Uploads | LoginMgr at startup | not yet | not yet: B22 plan |
-| 81 | curators, groups, artists, uploads (admin) | curators.do Description Edits | LoginMgr at startup | not yet | not yet: B22 plan |
-| 82 | curators, groups, artists, uploads (admin) | curator.do specimen uploads | LoginMgr at startup | not yet | not yet: B22 plan |
-| 83 | curators, groups, artists, uploads (admin) | curator.do last upload numbers | upload row | not yet | not yet: B14 plan |
-| 84 | curators, groups, artists, uploads (admin) | curator.do image uploads, images uploaded | LoginMgr at startup | not yet | not yet: B22 plan |
-| 85 | curators, groups, artists, uploads (admin) | groups.do Uploads | ant_group / UploadDb | not yet | not yet |
-| 86 | curators, groups, artists, uploads (admin) | groups.do Specimens | upload row | not yet | not yet |
-| 87 | curators, groups, artists, uploads (admin) | groups.do Ungeoreferenced, Flagged, Collections, Localities | upload row | not yet | not yet |
-| 88 | curators, groups, artists, uploads (admin) | groups.do Subfamilies, Genera, Species | upload row: count(distinct species) counts epithets | not yet | not yet: B14 plan |
-| 89 | curators, groups, artists, uploads (admin) | groups.do Totals row | live sums | not yet | not yet |
-| 90 | curators, groups, artists, uploads (admin) | groups.do Totals Subfamilies / Genera / Species | live maximum, labelled Totals | not yet | not yet: B14 plan |
-| 91 | curators, groups, artists, uploads (admin) | group.do uploads, last upload numbers | upload row | not yet | not yet |
-| 92 | curators, groups, artists, uploads (admin) | artists.do Images, Specimen | live / ArtistMgr | not yet | not yet |
-| 93 | curators, groups, artists, uploads (admin) | listImageUploads totals | live / image_upload | not yet | not yet |
-| 94 | curators, groups, artists, uploads (admin) | imageUploadReport counts | at upload | not yet | not yet |
-| 95 | curators, groups, artists, uploads (admin) | Upload report Inserted / Updated Species | at upload | not yet | not yet |
-| 96 | curators, groups, artists, uploads (admin) | Upload report message counts | at upload; static error list (B23) | not yet | not yet: B23 plan |
-| 97 | curators, groups, artists, uploads (admin) | Admin statistics.do table | statistics rows; V. Sp. Imaged counts valid species and subspecies imaged since 2026-10-21 (counted images) | partly | inv:home |
-| 98 | curators, groups, artists, uploads (admin) | statistics.do breakdowns | live | not yet | not yet |
-| 99 | curators, groups, artists, uploads (admin) | orphanedImages Found N | live | not yet | not yet |
-| 100 | API v3.1 | /specimens imageCount | specimen.image_count | yes | inv:taxon.images |
-| 101 | API v3.1 | /specimens, /geoSpecimens, ... meta count | live: rows in this page | yes | e2e:test_api.py::test_reply_shape_and_limit |
-| 102 | API v3.1 | /geoSpeciesStats caste counts | live | not yet | not yet |
-| 103 | API v3.1 | /taxa subfamilyCount, genusCount, speciesCount, specimenCount | taxon columns that no current code writes | not yet | not yet: B11 plan (remove or write them) |
+| 78 | endemic.do, introduced.do | endemic.do rows | live over is_endemic flags | partly | inv:place.totals.endemic; inv:place.endemic.flags; e2e:test_numbers_live.py::test_endemic_and_introduced_lists_equal_place_numbers |
+| 79 | endemic.do, introduced.do | introduced.do rows | live over is_introduced flags | partly | inv:place.totals.introduced; e2e:test_numbers_live.py::test_endemic_and_introduced_lists_equal_place_numbers |
+| 80 | curators, groups, artists, uploads (admin) | curators.do Specimen Uploads | LoginMgr at startup | yes | inv:admin.curators; e2e:test_count_check.py::test_curator_and_artist_pages_equal_the_recount |
+| 81 | curators, groups, artists, uploads (admin) | curators.do Description Edits | LoginMgr at startup: page-text edits, every saved version: taxon texts (description_edit, description_hist) and, since 2026-10-22, place and project texts (object_edit, object_hist); said on curators.do and curator.do | yes | inv:admin.curators; e2e:test_count_check.py::test_curator_and_artist_pages_equal_the_recount |
+| 82 | curators, groups, artists, uploads (admin) | curator.do specimen uploads | LoginMgr at startup | yes | inv:admin.curators; e2e:test_count_check.py::test_curator_and_artist_pages_equal_the_recount |
+| 83 | curators, groups, artists, uploads (admin) | curator.do last upload numbers | the specimens today of the group of the curator's last upload (group_count, recounted every night since 2026-10-22, Q13); its date apart | partly | inv:admin.groups; junit:NightlyCountOrderDbTest#testGroupNumbersAreRecountedEveryNight |
+| 84 | curators, groups, artists, uploads (admin) | curator.do image uploads, images uploaded | LoginMgr at startup | yes | inv:admin.curators; e2e:test_count_check.py::test_curator_and_artist_pages_equal_the_recount |
+| 85 | curators, groups, artists, uploads (admin) | groups.do Uploads | live count of upload rows (GroupAction); ant_group.upload_count orders the page | yes | inv:admin.groups; e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers |
+| 86 | curators, groups, artists, uploads (admin) | groups.do Specimens | the group's specimens today (group_count, nightly set 3, GroupCountDb; the last upload row until a nightly run has counted the group) | yes | inv:admin.groups; e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers |
+| 87 | curators, groups, artists, uploads (admin) | groups.do Ungeoreferenced, Flagged, Collections, Localities | group_count, as #86 | yes | inv:admin.groups; e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers |
+| 88 | curators, groups, artists, uploads (admin) | groups.do Subfamilies, Genera, Species | group_count, as #86, by one rule (`GroupCountDb.countColumns`, also each upload's row, UploadDb.getCounts): Species = distinct full names of species and subspecies of the five counted statuses, ants, identified to genus; Subfamilies, Genera = distinct valid ant subfamilies and genera identified to genus of the counted specimens (Q8 2026-10-22: Species counted epithets of valid names); explained on groups.do and group.do | yes | inv:admin.groups; junit:NumberDecisionsDbTest#testGroupSpeciesAreFullNamesAndTotalsAreDistinct; junit:NumberDecisionsDbTest#testGroupNumbersOfTheOldRuleArePendingUntilTheNightlyRun; e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers |
+| 89 | curators, groups, artists, uploads (admin) | groups.do Totals row: contributors, Uploads, Specimens, Ungeoreferenced, Flagged | live sums of the rows (each specimen belongs to one group) | yes | e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers; inv:admin.groups |
+| 90 | curators, groups, artists, uploads (admin) | groups.do Totals Collections, Localities, Subfamilies, Genera, Species | all listed groups' specimens together, distinct over them (group_count row 0, nightly set 3, `GroupCountDb.totalsSql`; Q8 2026-10-22: Subfamilies, Genera, Species were the largest row, Collections and Localities the sum); "-" until the first nightly count | yes | inv:admin.groups; junit:NumberDecisionsDbTest#testGroupSpeciesAreFullNamesAndTotalsAreDistinct; e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers |
+| 91 | curators, groups, artists, uploads (admin) | group.do uploads, last upload numbers | group_count, as #86 (the page says so, with the date of the count) | yes | e2e:test_count_check.py::test_group_pages_equal_the_stored_upload_numbers; inv:admin.groups |
+| 92 | curators, groups, artists, uploads (admin) | artists.do Images, Specimen | live / ArtistMgr | yes | inv:admin.artists; e2e:test_count_check.py::test_curator_and_artist_pages_equal_the_recount |
+| 93 | curators, groups, artists, uploads (admin) | listImageUploads totals | live / image_upload | yes | inv:admin.imageUploads; inv:admin.imageUploadArtists; e2e:test_count_check.py::test_image_upload_and_orphan_counts_equal_the_recount |
+| 94 | curators, groups, artists, uploads (admin) | imageUploadReport counts | image_upload.image_count, written when the upload ends; saved and not saved files | partly | inv:admin.imageUploads |
+| 95 | curators, groups, artists, uploads (admin) | Upload report Inserted / Updated Species | at upload | partly | e2e:test_specimen_upload_roundtrip.py::test_specimen_upload_round_trip |
+| 96 | curators, groups, artists, uploads (admin) | Upload report message counts | at upload; static error list (B23) | partly | e2e:test_specimen_upload_roundtrip.py::test_specimen_upload_round_trip |
+| 97 | curators, groups, artists, uploads (admin) | Admin statistics.do table | statistics rows (latest row checked; older rows are history); V. Sp. Imaged counts valid species and subspecies imaged since 2026-10-21 | yes | inv:home; inv:admin.statistics |
+| 98 | curators, groups, artists, uploads (admin) | statistics.do breakdowns | live; byUpload (specimens per upload group) checked; byProject, byBioregion, byMuseum, byGeolocale are row counts of the lists | partly | inv:admin.statistics |
+| 99 | curators, groups, artists, uploads (admin) | orphanedImages Found N images of M specimen codes that are not in AntWeb | live: images whose specimen code is no specimen record, and their codes (`OrphanedImages.COUNTS_SQL`, Q9 2026-10-22: the page said "N orphaned images" and counted codes); explained on the page | yes | inv:stats.images; junit:NumberDecisionsDbTest#testOrphanedImagesCountImagesAndCodes; e2e:test_count_check.py::test_image_upload_and_orphan_counts_equal_the_recount |
+| 100 | API v3.1 | /specimens imageCount | specimen.image_count | yes | inv:taxon.images; e2e:test_api_numbers.py::test_images_meta_counts_and_specimen_image_count; e2e:test_numbers_live.py::test_specimen_images_count_equals_the_api |
+| 101 | API v3.1 | /specimens, /geoSpecimens, ... meta count | live: rows in this page | partly | e2e:test_api_numbers.py::test_meta_count_is_the_rows_returned |
+| 102 | API v3.1 | /geoSpeciesStats caste counts | live | partly | e2e:test_api_numbers.py::test_geo_species_stats_castes_add_up; unit:test_api_counts.py::test_geo_species_stats_counts_ergatoids_of_their_caste |
+| 103 | API v3.1 | /taxa subfamilyCount, genusCount, speciesCount, specimenCount | taxon columns, copied each night from the name's Global row (`TaxonApiCountDb`, since 2026-10-26; B11) | yes | inv:api.taxa |
 | 104 | API v3.1 | /taxa imageCount | taxon.image_count (= #54) | yes | inv:taxon.images |
-| 105 | API v3.1 | /taxa meta taxonCount | live | yes | e2e:test_api.py::test_reply_shape_and_limit |
-| 106 | API v3.1 | /images meta counts | live: count = image rows, specimenCount = records | yes | e2e:test_api.py::test_images_records_name_their_specimen; unit:test_api_counts.py::test_images_records_are_keyed_by_specimen_code |
-| 107 | API v3.1 | /taxaImages meta counts | live | not yet | not yet |
+| 105 | API v3.1 | /taxa meta taxonCount | live | partly | e2e:test_api_numbers.py::test_meta_count_is_the_rows_returned |
+| 106 | API v3.1 | /images meta counts | live: rows in this page; specimenCount was 1 and one empty specimen when nothing was found, and every specimen but the last was under 'spefimenCode' (fixed 2026-10-22) | partly | e2e:test_api_numbers.py::test_images_meta_counts_and_specimen_image_count; e2e:test_api_numbers.py::test_images_of_an_unknown_specimen_are_none; unit:test_api_counts.py::test_images_of_nothing_are_no_specimen; unit:test_api_counts.py::test_images_are_grouped_by_specimen |
+| 107 | API v3.1 | /taxaImages meta counts | live | partly | e2e:test_api_numbers.py::test_taxa_images_meta_counts |
 | 108 | API v3.1 | /geolocales subfamily, genus, species, specimen counts | = #20-#22, #26 | yes | inv:place.totals.subfamily; inv:place.totals.genus; inv:place.totals.species; inv:place.totals.specimens |
 | 109 | API v3.1 | /geolocales imageCount, imagedSpecimenCount | = #29, #27 | yes | inv:place.images; cc:place images |
-| 110 | API v3.1 | /geolocales endemic, introduced counts | = #24, #25 | partly | inv:place.totals.endemic; inv:place.totals.introduced |
-| 111 | API v3.1 | /geolocales meta geolocaleCount | live | yes | e2e:test_api.py::test_reply_shape_and_limit |
-| 112 | API v3.1 | /geolocaleTaxa per row counts | list rows | partly | inv:list.genus; cc:specimens; cc:images |
-| 113 | API v3.1 | /geolocaleTaxa meta count | live (metaData geolocaleCount) | yes | e2e:test_api.py::test_reply_shape_and_limit |
+| 110 | API v3.1 | /geolocales endemic, introduced counts | = #24, #25 | partly | inv:place.totals.endemic; inv:place.totals.introduced; inv:place.endemic.flags |
+| 111 | API v3.1 | /geolocales meta geolocaleCount | live: geolocales returned | partly | e2e:test_api_numbers.py::test_meta_count_is_the_rows_returned |
+| 112 | API v3.1 | /geolocaleTaxa per row counts | list rows | partly | inv:list.genus; cc:specimens; cc:images; inv:list.images |
+| 113 | API v3.1 | /geolocaleTaxa meta count | live: taxa returned (named geolocaleCount) | partly | e2e:test_api_numbers.py::test_meta_count_is_the_rows_returned |
 | 114 | API v3.1 | /bioregions 6 counts | bioregion table (= place page) | yes | inv:place.totals.subfamily; inv:place.totals.genus; inv:place.totals.species; inv:place.totals.specimens; inv:place.images |
-| 115 | API v3.1 | /bioregions meta count | live (metaData bioregionCount) | yes | e2e:test_api.py::test_reply_shape_and_limit |
-| 116 | API v3.1 | /bioregionTaxa per row counts | list rows | partly | inv:list.genus; cc:specimens |
-| 117 | API v3.1 | /unimagedGeolocaleTaxa list | live: names without a specimen with an image of the ant (was image_count > 1) | partly | unit:test_api_counts.py::test_a_taxon_with_one_image_of_the_ant_is_imaged; unit:test_api_counts.py::test_endpoint_uses_the_rule |
-| 118 | API v3.1 | /bioregionTaxa, /geolocaleTaxa meta and dev counters | live | not yet | not yet |
+| 115 | API v3.1 | /bioregions meta count | live | yes | e2e:test_api_numbers.py::test_meta_count_is_the_rows_returned; e2e:test_api_numbers.py::test_bioregions_count_equals_the_bioregions_page |
+| 116 | API v3.1 | /bioregionTaxa per row counts | list rows | partly | inv:list.genus; cc:specimens; inv:list.images |
+| 117 | API v3.1 | /unimagedGeolocaleTaxa list | live: names without a specimen with an image of the ant anywhere in AntWeb (was image_count > 1); the API page says so (Q12, 2026-10-22) | partly | unit:test_api_counts.py::test_a_taxon_with_one_image_of_the_ant_is_imaged; unit:test_api_counts.py::test_endpoint_uses_the_rule; junit:NumberDecisionsDbTest#testUnimagedMeansNoPhotoOfTheAntAnywhere; e2e:test_api_numbers.py::test_meta_count_is_the_rows_returned |
+| 118 | API v3.1 | /bioregionTaxa, /geolocaleTaxa meta and dev counters | live: taxa returned (geolocaleTaxa: geolocaleCount, bioregionTaxa: bioregionCount, unimagedGeolocaleTaxa: unimagedGeolocaleTaxaCount) | partly | e2e:test_api_numbers.py::test_meta_count_is_the_rows_returned |
+| 119 | project.do?name=poeants (Port of Entry) and its list | Specimens, Imaged specimens, Images, the Specimens pie, the list's Specimens and Images columns, projects.do Specimens and Images | none since 2026-10-22: a species list only (`Project.isSpeciesListOnly`); the nightly run sets them to 0 and counts none (ProjTaxonCountDb.recount, ProjectDb.updateCounts, PlaceImageCountDb); the pages show "-" or no column and say that these species were intercepted at ports of entry, are not established introductions and are not counted in any place total or the introduced species list; the count check skips the project with a note | yes | junit:NumberDecisionsDbTest#testPortOfEntryHasNoNumbersAndIsNotChecked; e2e:test_numbers_pages.py::test_port_of_entry_is_a_species_list_without_numbers |
 
 ## 3. The 24 numbers that looked wrong (inventory of 2026-10-20)
 
@@ -186,17 +225,17 @@ Checked again against master after #189, #191, #192, #204 and #206.
 | B8 | Genera, Species (and museum, bioregion Subfamilies) were roll-up sums of row counts | **Fixed**: counted directly from the list (`PlaceTotals`). Test: `inv:place.totals.*`. |
 | B9 | API /unimagedGeolocaleTaxa used `image_count > 1` and counted labels | **Fixed**: imaged = a specimen with an image that is not a label (`api.imagedTaxaSql`). Test: `unit:test_api_counts.py`. |
 | B10 | Images view header printed the same number twice | **Fixed**: imaged children out of all. Test: `e2e:test_numbers_pages.py::test_images_view_header_counts_imaged_children`. |
-| B11 | taxon image_count of genus and above wrong; API /taxa counts with no writer | image_count **fixed** (species added to genera, each rank added to its parent's own images). Test: `inv:taxon.images`. The /taxa subfamilyCount, genusCount, speciesCount, specimenCount: **planned** (section 4). |
+| B11 | taxon image_count of genus and above wrong; API /taxa counts with no writer | image_count **fixed** (species added to genera, each rank added to its parent's own images). Test: `inv:taxon.images`. The /taxa subfamilyCount, genusCount, speciesCount, specimenCount: **fixed 2026-10-26** (copied each night from the Global row, `TaxonApiCountDb`; pending after an upload until the next night). Test: `inv:api.taxa`, `NumberChecksTest.testNightlyCopyMakesApiTaxaCountsTheGlobalRow`. |
 | B12 | statsPage "valid species + ssp." counted valid taxa of every rank | **Fixed** (`TaxonMgr.getValidSpeciesCount`). Test: `inv:home`, e2e. |
 | B13 | Home and statsPage numbers written only after uploads; labels counted; species by name strings | **Fixed**: also written every night (set 4); imaged = images of the ant; species by name with a counted status; statistics.valid_species_imaged counts species (it counted images). Test: `inv:home`. |
-| B14 | Upload and group Species count epithets; groups.do "Totals" are maxima | **Planned** (section 4). |
+| B14 | Upload and group Species count epithets; groups.do "Totals" are maxima | **Fixed** 2026-10-22 (Q8, section 5.2): Species = distinct full names; Totals = all groups' specimens together. Test: `inv:admin.groups`, `NumberDecisionsDbTest#testGroupSpeciesAreFullNamesAndTotalsAreDistinct`. |
 | B15 | Counts and the pages they link to use different rules | **Planned**. |
 | B16 | Row counts not reset before the crawl (project Images; bioregion AntCat rows; geolocale genus and subfamily rows) | **Fixed**: every count column of a geolocale list, the counts of bioregion AntCat rows, project subfamily_count and project Images reset before the crawl. Test: `inv:list.*`, `cc:images`. |
 | B17 | statsPage image table did not add up (NULL caste; Sum of six statuses) | **Fixed**. Test: `PlaceTotalsDbTest#testStatsPageImageTableAddsUp`. |
 | B18 | List-of-places column labelled Species shows Valid species | **Fixed** (label "Valid species"; the number itself was B1). Test: e2e. |
 | B19 | mapComparison "N X Mapped" counts every child | **Planned**. |
 | B20 | Search counts kept in the HTTP session | **Planned**. |
-| B21 | "Unimaged" header falls back to the total; label-only taxa count as imaged | **Planned**. |
+| B21 | "Unimaged" header falls back to the total; label-only taxa count as imaged | **Fixed** 2026-10-22 (Q12, section 5.2): the header shows 0 too; unimaged = no photo of the ant anywhere in AntWeb. Test: `NumberDecisionsDbTest#testUnimagedMeansNoPhotoOfTheAntAnywhere`. |
 | B22 | Cached counts (curators at startup; place pages if set 5 fails) | **Planned**. |
 | B23 | Upload report error list is static | **Planned**. |
 | B24 | Habitat, microhabitat and method lists ordered by another number than the one shown | **Fixed** (ordered by the number shown; 10 entries each). Test: `PlaceTotalsDbTest#testHabitatsAreOrderedByTheNumberShown`. |
@@ -211,29 +250,282 @@ Found while doing this (not in the 24):
 - **Ants only** (Brian Fisher, 2026-10-21): specimens of other families stay in AntWeb but are not counted on
   place pages. Subfamilies, Genera, Species, Valid species, Specimens, both pies, Images and Imaged specimens
   of every place count Formicidae only (`PlaceTotals.ANTS`), in the nightly run and in the check.
-- **Port of Entry** (open): its page shows 37,430 specimens while its list has no species with specimens
-  (staging). The nightly does not recount it. Decide: hide it as a place (is_valid = 0) or count interceptions
-  as a place; until then the check shows it as a real difference.
+- **Port of Entry** (decided 2026-10-22, section 5.2): its page showed 37,430 specimens while its list has no species
+  with specimens (staging); its list rows counted every AntWeb specimen of its 212 species (213,986), not interceptions.
+  Brian Fisher: keep it as a species list of species recorded at ports of entry, without specimen and image numbers.
+  The count check skips it with a note (row 119).
 
-- **B25** (planned): when a subspecies' parent is its species, the crawl writes the sum of the subspecies'
-  specimens into the species row (`countGrandChildren` for rank species groups by `parent_taxon_name`). To
-  confirm on staging: `select count(*) from taxon where taxarank = 'subspecies' and parent_taxon_name in (select
-  taxon_name from taxon where taxarank = 'species')`. `cc:specimens` shows such rows on sampled places.
-- **B26** (planned): adm1 numbers match specimens by adm1 name only (`specimen.adm1 = name`), so two adm1s of the
-  same name in different countries share specimens. Fix: add the country (`and s.country = parent`).
+- **B25** (investigated 2026-10-22, check `inv:taxon.parents`). The crawl sums the rows of a list by
+  `parent_taxon_name` (`CountDb.countGrandChildren`, rank species: species and subspecies rows grouped by parent),
+  so a subspecies whose parent is its **species** would replace the species row's Specimens by the sum of its
+  subspecies (not add to them: `updateCount` sets the column), and the genus row would not count the subspecies.
+  From the code this does not happen to names that come through an upload or the AntCat import:
+  `AntwebUpload.saveTaxon` sets every parent from the name (`Taxon.getParentTaxonNameFromName`, the part before the
+  first space, so a subspecies' parent is its genus). It can only come from older rows or a hand edit. The check
+  compares every species' and subspecies' parent with its genus by name, and counts per place the species rows a
+  subspecies under its species would change. Affected places on staging: the check's report (0 expected). Staging
+  query: `select count(*) from taxon c join taxon p on p.taxon_name = c.parent_taxon_name where c.taxarank =
+  'subspecies' and p.taxarank = 'species'`. Consequence of the current rule (no bug, but a question, section 5
+  Q1): a species row's Specimens are only the specimens filed under the species name; its subspecies have rows of
+  their own, and the genus row's "N Species" counts species and subspecies.
+- **B26** (confirmed in the code 2026-10-22, check `inv:geo.adm1.country`). An adm1 takes its specimens by name
+  only: `Geolocale.getSpecimenPlaceCriteria` (`s.adm1 = name`; used by the nightly specimen counts of the list rows
+  and so the page's Specimens, and by the place downloads), `PlaceImageCountDb` (adm1 source: `s.adm1 = g.name`;
+  Images, Imaged specimens), `TaxaPage` (the specimen names of an adm1's taxonomic page), `GeolocaleDb
+  .getSpecimenLocaleClause`, and the API `/geoSpeciesStats` (`s.adm1 = :geolocaleName`). The list itself is built
+  per country and adm1 (`GeolocaleTaxonDb`, by country then adm1), so only the numbers are wrong: a state of the
+  same name in another country (or a specimen with that adm1 and no country) adds its specimens to every row of
+  the list that it shares. The count check's own recount of a rotating adm1 (`cc:specimens`, `cc:place images`)
+  uses the same name-only rule, so it agrees with the wrong numbers; `inv:geo.adm1.country` counts, per live adm1,
+  the specimens its page counts that were not collected in its country, and reports the adm1's Specimens against
+  Specimens minus those (real differences until fixed). Estimate on staging: the check's report lists every
+  affected adm1 and the JSON (`b26`) gives the number of adm1s and specimens. Staging queries: `select name,
+  count(*) from geolocale where georank = 'adm1' and is_valid = 1 group by name having count(*) > 1` (shared
+  names) and `select g.name, g.parent, s.country, count(*) from geolocale g join specimen s on s.adm1 = g.name and
+  (s.country is null or s.country <> g.parent) where g.georank = 'adm1' and g.is_valid = 1 group by g.id,
+  s.country order by 4 desc`. Fix (tomorrow): add the country (`and s.country = parent`) in all six places, and in
+  the count check's recount.
+
+Found while doing this (2026-10-22):
+
+- **B28** orphanedImages.do "Found N orphaned images" counts the specimen codes of the orphan images (`select
+  distinct image_of_id`), not the images. The check gives both (JSON `orphanedImages`: codes, images) and the
+  e2e test compares the page with the codes. Label question: section 5 Q9.
+- **B29** (fixed, trivial) API `/images`: with no image found, `metaData.specimenCount` was 1 and the list held
+  one empty specimen; every specimen but the last was under the key `spefimenCode` (now `api.imagesBySpecimen`); the
+  query had no order, so the images of one specimen could be split into several entries (now ordered by code).
+  Tests: `unit:test_api_counts.py::test_images_of_nothing_are_no_specimen`,
+  `e2e:test_api_numbers.py::test_images_of_an_unknown_specimen_are_none`,
+  `e2e:test_api_numbers.py::test_images_meta_counts_and_specimen_image_count`.
+- **B30** (fixed, trivial) API `/geoSpeciesStats`: `queenErgatoidCount` and `maleErgatoidCount` both counted every
+  ergatoid specimen (no caste condition), so a male ergatoid was also counted as a queen ergatoid. Now each counts
+  its caste. The other subcaste counts (alate/dealate, brachypterous, major/soldier, normal, male alate) are
+  not restricted to their caste either; with distinct subcaste names that only matters where a specimen has a
+  subcaste of another caste. Tests: `unit:test_api_counts.py::test_geo_species_stats_counts_ergatoids_of_their_caste`,
+  `e2e:test_api_numbers.py::test_geo_species_stats_castes_add_up`.
+- **B31** statsPage Bioregion Data and Museum Data count valid taxa of every family on the lists (no
+  `family = 'formicidae'`), while the place pages count ants only since 2026-10-21. `inv:stats.nonants` reports
+  each bioregion and museum whose statsPage numbers include other families (real until decided);
+  `inv:stats.bioregions` and `inv:stats.museums` compare the ants among them with the place pages, so they show
+  only other differences. **Fixed** 2026-10-22 (Q7, section 5.2): ants only; `inv:stats.nonants` now compares the
+  page's numbers with an independent recount of the ant taxa.
+- **B32** API `/geolocaleTaxa` and `/bioregionTaxa` name their taxon count `geolocaleCount` and `bioregionCount`
+  (label only; the number is the taxa returned).
+- **B33** groups.do and group.do "Species" (upload row, UploadDb.getCounts) count distinct species epithets of
+  **valid** names only (`getAntwebGenusCriteria` has `status = 'valid'`), and Subfamilies and Genera only AntWeb's
+  extant subfamilies and genera (B14 had the epithets). **Fixed** 2026-10-22 (Q8, section 5.2).
+- **B34** home "N valid species + ssp." (and statsPage Global Data) count valid taxa of every family, not ants
+  only; statsPage "Imaged Species" counts names of any rank and labels (B13 fixed the home number only).
+  Question: section 5 Q6. The families part **fixed** 2026-10-22 (Q7, section 5.2); "Imaged Species" per status
+  still counts any rank and labels (Q6 plan).
+
+- **B36** (found by `inv:taxon.parents`, 2026-10-22; **fixed** 2026-10-22, revised the same day with Brian Fisher's rule
+  on names not identified to genus, section 1) an ant name of a counted status, identified to genus, whose parent is not
+  its genus row (or empty), or whose genus has no taxon row: the nightly crawl counts a list's species and subspecies
+  rows under their parent (`CountDb.countGrandChildren`), so such a name is missing from its genus row's Species and
+  Specimens (and is counted under another genus row if the parent is another genus). Staging preview of 2026-10-22 (the
+  first preview, before the rule, had 14 names): (a) 7 names not identified to genus (`(indet)((indet)) (indet)` 226
+  specimens, `(indet)(formicinae) (indet)` 4, `(indet)(myrmicinae) (indet)` 6, `(indet)(ponerinae) (indet)` 10,
+  `formicinaeindet (indet)` 1, `ponerinaeindet (indet)` 2, `indetindet (indet)` 1): not species, left alone, no genus
+  rows (section 1); (b) `(indet)decamorium decem`, `(indet)paltotyreus tarsatus` (1 specimen each): real species whose
+  upload file lacked the subfamily, so they were filed under subfamily "(indet)"; their genus rows `(indet)decamorium`,
+  `(indet)paltotyreus` do not exist and are not made; a new upload of the file files them under their AntCat genus (see
+  Fix 3), and until then they are reported; (c) `(indet)termes (indet)` (Termes is a termite) and `(indet)dont exist
+  (indet)` (not a name): reported, and flagged in the upload report from now on; (d) `formicinaewilsonia liaoningensis`
+  (valid, 0 specimens): its genus row is missing, an AntCat import problem; Brian fixes it in AntCat; reported, and an
+  admin alert; (e) `amblyoponinaeamblyoponine_genus8 nz01`, `ponerinaeponerine_genus1 ba01` (Université Rennes, 1
+  specimen each): morphotaxa whose genus row exists, parent empty: repaired.
+
+  Causes in `AntwebUpload.saveTaxon`: the parent was left empty when `TaxonMgr` (read before the upload or the AntCat
+  import) did not know the genus (a genus new in tonight's AntCat import, such as Holcoponera or Mycetomoellerius; a
+  morphogenus). Fix: (1) uploads set the parent of a name identified to genus to its genus by name (a name not
+  identified to genus gets a parent only when it is a known genus, as before, and no genus row is made for it); a genus
+  row is made only when its subfamily can be read from its name, as before (no placeholder genus rows); (2) **every
+  night** in set 1, after the AntCat import, the TaxonWorks upload and the name update, before sets 2 to 5 build the
+  lists, `TaxonParentDb.repair` (called by `UtilDataAction.nightlyTaxonParents`) sets the parent of each such name to its
+  genus row **only where that genus row exists**; it never makes a genus row. Names whose genus row is missing are
+  listed in its compute.log line ("taxon parents (B36): N parents set to the genus; M names whose genus has no taxon row,
+  not changed (K valid: AntCat import problem; others: subfamily missing in the upload, or not an ant), e.g. ...", with
+  the AntCat genus row of the same genus when there is one), and valid ones in an admin alert ("Valid ant names whose
+  genus row is missing (AntCat import problem)", at most once a week). When it changed a row it recounts the AntCat list
+  (worldants, counted by the import before this step) and rebuilds the Global column (allantwebants), as the name update
+  does. Only ant species and subspecies of a counted status that are their own current valid name are touched: synonyms
+  and other names keep the parent of their valid name (by design). Names whose genus name is a taxon row of another rank
+  are left alone and stay in the check. This also repairs B25 (a subspecies whose parent is its species) if one appears.
+  (3) Uploads: when the subfamily is missing or "(indet)" and the genus is an AntCat genus, the line takes the genus's
+  subfamily (`SpecimenUploadParse.subfamilyFromGenus`: `(indet)decamorium decem` becomes `myrmicinaedecamorium decem`);
+  a line given as an ant (family formicidae or none) whose genus is not an ant genus in AntCat (Termes) or is not a name
+  is kept and listed in the upload report under "Genus not in AntCat (not an ant?)" (`MessageMgr.genusNotInAntcat`), not
+  refused. The check (`inv:taxon.parents`) leaves out names not identified to genus and says for each finding whether
+  the genus row is missing (AntCat import problem for a valid name; else subfamily missing in the upload, or not an
+  ant). Tests: `TaxonTreeCountDbTest#testRepairSetsParentsOnlyToExistingGenusRows`,
+  `#testNoAlertWithoutAValidNameMissingItsGenus`; `SubfamilyFromGenusTest` (4 tests).
+
+  One-off repair (Brian runs it; staging first: `ssh root@165.232.136.170`, then production: `ssh root@165.232.137.86`
+  with `F=/root/antweb/etc/db.properties` in each block). Nightly set 1 with this code does the same every night; the
+  blocks below do it now, without waiting for set 1. Each block is one line.
+
+  1. Preview (read-only): the names the nightly repair looks at. Staging: expect 7 rows: the 2 Rennes morphotaxa with
+     `genus_row_rank` = genus (repaired by block 3), and 5 with `genus_row_rank` empty (no genus row: reported, not
+     repaired: `(indet)decamorium decem`, `(indet)dont exist (indet)`, `(indet)paltotyreus tarsatus`, `(indet)termes
+     (indet)`, `formicinaewilsonia liaoningensis`). The 7 names not identified to genus are not listed.
+
+     ```
+     F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select c.taxon_name, c.taxarank, c.status, c.parent_taxon_name, substring_index(c.taxon_name, ' ', 1) genus_by_name, g.taxarank genus_row_rank from taxon c left join taxon g on g.taxon_name = substring_index(c.taxon_name, ' ', 1) where c.family = 'formicidae' and c.taxarank in ('species', 'subspecies') and c.taxon_name like '% %' and c.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') and (c.current_valid_name is null or c.current_valid_name = '' or c.current_valid_name = c.taxon_name) and (coalesce(c.genus, '') not like '(%' and lower(coalesce(c.genus, '')) not in ('indet', 'undet')) and (c.parent_taxon_name is null or c.parent_taxon_name <> substring_index(c.taxon_name, ' ', 1) or g.taxon_name is null) order by c.taxon_name"
+     ```
+
+  2. Back up exactly the rows the repair changes (those whose genus row exists) to a dated table (fails if the table
+     exists, so it cannot run twice by mistake); prints them and their number. Staging: expect 2.
+
+     ```
+     F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "create table taxon_parent_bak_20261022 as select c.* from taxon c join taxon g on g.taxon_name = substring_index(c.taxon_name, ' ', 1) and g.taxarank = 'genus' where c.family = 'formicidae' and c.taxarank in ('species', 'subspecies') and c.taxon_name like '% %' and c.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') and (c.current_valid_name is null or c.current_valid_name = '' or c.current_valid_name = c.taxon_name) and (coalesce(c.genus, '') not like '(%' and lower(coalesce(c.genus, '')) not in ('indet', 'undet')) and (c.parent_taxon_name is null or c.parent_taxon_name <> g.taxon_name); select taxon_name, parent_taxon_name from taxon_parent_bak_20261022; select count(*) backed_up from taxon_parent_bak_20261022"
+     ```
+
+  3. Repair: only the rows in the backup table, in one transaction; sets their parent to their genus row; prints the
+     parents set (must equal block 2's number).
+
+     ```
+     F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "start transaction; update taxon c join taxon_parent_bak_20261022 b on b.taxon_name = c.taxon_name join taxon g on g.taxon_name = substring_index(c.taxon_name, ' ', 1) and g.taxarank = 'genus' set c.parent_taxon_name = g.taxon_name; select row_count() parents_set; commit"
+     ```
+
+  4. Check: run the preview again (expect only the rows with `genus_row_rank` empty, 5 on staging).
+
+  Rollback (puts every parent back as backed up):
+
+  ```
+  F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "start transaction; update taxon c join taxon_parent_bak_20261022 b on b.taxon_name = c.taxon_name set c.parent_taxon_name = b.parent_taxon_name; select row_count() parents_restored; commit"
+  ```
+
+  Then the nightly sets 2, 3 and 4 (or the next nightly run) rebuild and count the lists with the new parents; the
+  application's name cache (`TaxonMgr`) reads them at the next set 1 or restart. The AntCat list's Species and Specimens
+  (worldants, counted only in set 1) and the Global column get them at the next set 1 with this code. Drop the backup
+  table after a week: `drop table taxon_parent_bak_20261022`.
+
+- **B37** (found and fixed 2026-10-22, confirmed on staging by Brian Fisher) Genus rows of country and adm1 lists one too
+  high (US formicinaeformica 104 with `formicinaeformica fuliginothorax`, status unavailable; Czech Republic
+  formicinaecamponotus 8 with the subspecies `formicinaecamponotus ligniperda afer`, unavailable; the subfamily rows,
+  287 and 57, were right). Cause: nightly set 2 ran `geolocaleTaxonFix` (`GeolocaleTaxonDb.geolocaleTaxonFix`) after
+  the count; for every genus row of every country and live adm1 it set Species to the number of list rows whose taxon
+  has the genus as parent, of any status and rank (`getGeolocaleTaxonCount`). The count
+  (`GeolocaleTaxonCountDb.childrenCountCrawl`, from `geolocaleCountCrawl`) covers the same places (valid countries,
+  live valid adm1s; the job also touched countries marked invalid, which the count skips) and writes every genus row by the
+  list rule (species and subspecies of a counted status) after resetting it, so the job did nothing else. Fix:
+  removed from set 2; the admin job (`utilData.do?action=geolocaleTaxonFix`) counts by the list rule. Checks:
+  `inv:list.genus`, `cc:species`.
+- **B38** (found and fixed 2026-10-22, confirmed on staging) Museum and bioregion lists counted before their synonym
+  rows were renamed. Set 3 built and counted each museum's and bioregion's list and wrote its totals
+  (`MuseumDb.populate`, `BioregionDb.populate`), and only afterwards renamed rows of synonyms and other names with a
+  current valid name to that name (`updateTaxonSets`); the renamed rows kept their old counts, and Species did not count
+  them (museum AFRC: 14 valid species rows with no AFRC specimen under that exact name, such as ponerinaeboltonopone
+  ilgii, 52 specimens filed under an older combination; ABS 1; CELC 4 species and 1 genus). Projects too were counted
+  before that rename (set 2 renamed them already). Brian Fisher: a specimen filed under a junior synonym belongs to the
+  valid species. Fix: each museum, bioregion and curated project list is renamed right after it is built and before its
+  higher taxa, counts and totals (`TaxonSetDb.renameToValid`, in `MuseumDb.populate`, `BioregionDb.populate`,
+  `ProjTaxonCountDb.recount`); a synonym whose valid name is on the list already is merged into it (one row); the
+  specimen counts of museum, bioregion and project rows count a synonym's specimens under the valid name
+  (`PlaceTotals.specimensByListNameSql`, used by `Museum`, `Bioregion`, `Project.getCountSpecimensQuery` and by the
+  count check's recount); bioregion endemism runs after the rename. Set 3 no longer renames after the counts (it
+  still updates the list sources). worldants and allantwebants (Global) keep every name as it is. `inv:list.global`
+  compares such a row with the Global specimens of the name and of its synonyms. Geolocale lists are renamed before
+  their counts (set 2, B27), but their specimen counts are still by the exact name: a specimen filed under a synonym is
+  not counted on a country page (open; same rule could be applied there).
+- **B39** (decided 2026-10-22) Curator "Description Edits": the site counted description_edit and description_hist
+  (every saved version of taxon texts), the check description_edit only. Brian Fisher: place and project page texts
+  count too. Site (`LoginDb.setDescEditCounts`) and check (`NumberChecks.adminCurators`) now count description_edit,
+  description_hist, object_edit and object_hist (`LoginDb.PAGE_TEXT_EDIT_TABLES`); curators.do and curator.do say so.
+
+- **B40** (found by `inv:list.images`, 2026-10-22; **fixed** 2026-10-22) Images of a list's genus row lower than the sum of
+  the rows under it: staging worldants `ectatomminaeholcoponera` 596, its rows 604; `myrmicinaemycetomoellerius` 337 (345);
+  `myrmicinaeallomerus` 394 (401); 9 rows, all genera with recent name changes (Gnamptogenys names now in Holcoponera,
+  Trachymyrmex names in Mycetomoellerius, Wasmannia in Allomerus). Cause: set 4's image crawl (`CountDb.imageCountCrawl`,
+  for every geolocale, project, museum and bioregion list) wrote each species row from the specimens filed under the name,
+  but added the genus, subfamily and family rows up from the specimens' own columns (genus row = `specimen.subfamily` +
+  `specimen.genus`). A synonym or obsolete combination takes the parent of its current valid name (Wasmannia auropunctata
+  under Allomerus), so the images of specimens still filed under it went to the old genus row (Wasmannia) and not to the
+  genus whose row holds the synonym's row. The specimen counts of the lists already roll up by the taxon tree
+  (`parent_taxon_name`), so a genus row's Specimens and Images followed two different rules. Fix: the higher rows are added
+  up by the taxon tree, the rule of the specimen counts and of the check (a species row still counts only the specimens
+  filed under its own name; labels count as image files, as the column says; the lists of places count ants only as
+  before). So a genus, subfamily or family row holds the images of every row under it by construction. A name that is not
+  in the taxon table falls back to the specimen's columns as before. The check was right. Test:
+  `TaxonTreeCountDbTest#testGenusRowHoldsTheImagesOfASynonymUnderIt` (fails with the old crawl: Pheidole 3, its rows 6),
+  `#testCountryImagesAreUnchanged`. Seen on staging after nightly set 4.
+
+**First run on staging (2026-10-22, full e2e with #226; the nightly run before it had the code from before #216):**
+
+| Check | Real differences | What it was | Now |
+|---|---|---|---|
+| taxon.parents | 6,503 | mostly a check bug: synonyms, homonyms and obsolete combinations take the parent of their current valid name by design | counted statuses only, names that are their own current valid name; what remains is B36 (or B25 when the parent is a species) |
+| admin.curators | 18 | check timing: the job starts right after the nightly run, LoginMgr reloads the curator numbers in a thread that finishes later, so the job compared the numbers of the previous load; and (found 2026-10-22) a check bug: Description Edits on the site count description_edit and description_hist, the check counted description_edit only | pending when the rows are newer than LoginMgr's read (`LoginMgr.getCuratorsRead`); **fixed** 2026-10-22: site and check count description_edit, description_hist, object_edit, object_hist (Brian Fisher: place and project texts count too; B39) |
+| stats.bioregions, stats.museums | 5, 11 | check bug: they compare with the place pages' Valid species, Subfamilies, Genera, Species, whose rules changed on 2026-10-21 and were last written by the old code; and (found 2026-10-22) a real cause: museum and bioregion lists were counted, and their totals written, before set 3 renamed their synonym rows (B38) | pending until a nightly run with the 2026-10-21 rules; B38 **fixed** 2026-10-22 |
+| admin.groups | 5 | real: the upload row is a snapshot written at the group's last upload (Q13); specimens changed since (deleted, flagged, statuses changed) or the counting rule changed since an old upload | **fixed** 2026-10-22 (Q13 decided): the pages show the group's specimens today, recounted every night (`group_count`, `GroupCountDb`, set 3); the check compares them with a recount; pending until the first nightly run has counted a group |
+| api.taxa, geo.adm1.country | 29,910, 3 | known B11, B26 | as before |
+| list.genus, place.totals (geolocale genus rows) | US formicinaeformica 104 (right: 103), Czech Republic formicinaecamponotus 8 (right: 7) | real: set 2's `geolocaleTaxonFix` ran after the count and rewrote every country and live adm1 genus row's Species with every list row under the genus, of any status and rank (an unavailable species, a subspecies of an unavailable name) (B37) | **fixed** 2026-10-22: no longer in set 2 (the count writes the same rows, same places, by the counted rule); the admin job counts by that rule too. Test: `NightlyCountOrderDbTest#testAnUnavailableSpeciesDoesNotRaiseItsGenusRow` |
+| place.totals (museums, bioregions) | museum AFRC: 14 valid species rows not in its Species (e.g. ponerinaeboltonopone ilgii 52 specimens filed under an older combination), ABS 1, CELC 4 species and 1 genus | real (B38) | **fixed** 2026-10-22, see B38. Test: `NightlyCountOrderDbTest#testAMuseumListCountsTheSpecimensOfASynonymUnderTheValidName` |
+| taxon.parents (after the fixes above, full e2e of 2026-10-22) | 6 | real (B36): counted ant names with no parent or with no genus row, e.g. `(indet)decamorium decem` | **fixed** 2026-10-22: uploads set the genus by name; nightly set 1 sets the parent where the genus row exists (`TaxonParentDb`), never makes a genus row and reports the rest; names not identified to genus are not species (section 1); one-off repair in B36. Test: `TaxonTreeCountDbTest#testRepairSetsParentsOnlyToExistingGenusRows` |
+| list.images (same run) | 9 | real (B40): worldants genus rows lower than their rows (Holcoponera 596 against 604) | **fixed** 2026-10-22: the higher rows are added up by the taxon tree. Test: `TaxonTreeCountDbTest#testGenusRowHoldsTheImagesOfASynonymUnderIt` |
+| taxonomicPage headers (e2e) | Madagascar | expected: the place numbers are from the nightly run with the old code (non-ants, roll-up sums) | should agree after the 2026-10-22 nightly; a difference after that is real |
 
 ## 4. Plans for the larger ones
 
 | Id | Plan |
 |---|---|
-| B11 | API /taxa `subfamilyCount`, `genusCount`, `speciesCount`, `specimenCount`: read the allantwebants row (`proj_taxon`) instead of taxon columns nobody writes; add an `inv:` check that /taxa equals the Global row; document in the API page. |
-| B14 | Upload Species: `count(distinct taxon_name)` of species rank at upload; groups.do: real totals (distinct over all groups) or rename the row "Largest"; test against `upload` and `specimen`. |
+| B11 | API /taxa `subfamilyCount`, `genusCount`, `speciesCount`, `specimenCount`: read the allantwebants row (`proj_taxon`) instead of taxon columns nobody writes; document in the API page. The check `inv:api.taxa` (2026-10-22) compares the taxon columns with the Global row for every taxon (where the columns exist; real differences until fixed). |
+| B14 | **Done** 2026-10-22 (Q8): `GroupCountDb.countColumns`, one rule for the nightly recount, each upload's row and the check; groups.do Totals = group_count row 0. |
 | B15 | One place rule for counts and links: `Overview.getOverviewCriteria` uses `Geolocale.getSpecimenPlaceCriteria` (country = X, island_country for islands, the countries of a region); browse filters on `specimen.status` like the counts; e2e: for 3 random species rows of the sampled places, the browse page's count equals the row. |
 | B19 | Count children with coordinates; label "N of M mapped". |
 | B20 | Keep search totals in the request, not the session; count imaged as images of the ant; fix "N specimens Specimens". |
-| B21 | Header says "0 unimaged" instead of falling back; imaged = an image of the ant (list image counts without labels, or a separate column). |
+| B21 | **Done** 2026-10-22 (Q12): the header shows 0 too; unimaged = no photo of the ant anywhere (`StatisticsDb.antImagedNames`). The images view keeps a per-place list, now labelled "with no image from this place". |
 | B22 | Curator counts: recount when an upload or image upload ends; place pages: an e2e test comparing each sampled place's page (`data-stat` numbers) with `countCheck.do?format=json`; alert when set 5 fails. |
 | B23 | `MessageMgr` errors per upload (instance, not static). |
-| B25, B26 | as above, each with an `inv:` or `cc:` check. |
-| museum, bioregion lists | set 3 still renames synonym rows of museum and bioregion lists after their counts (rows of a genus may then not add up: `inv:list.genus`). Plan: run the rename before `populateMuseum` and `populateBioregion` count, or recount their lists after it. |
-| not yet rows | Live numbers (search results, browse headers, collection and locality pages, API meta counts) are counted when shown; next: e2e tests that compare each with a SQL count on staging, starting with #38, #46 and #55. Curator, group and upload numbers: an `inv:` check against `upload` and `image_upload`. |
+| B25 | Checked by `inv:taxon.parents`; **repaired every night** since 2026-10-22: nightly set 1 sets the parent of such a subspecies to its genus (`TaxonParentDb.repair`, B36). |
+| B26 | Add the country in the six places listed in section 3 and in the count check's recount (`CountCheck.Place` of an adm1: `and s.country = parent`); `inv:geo.adm1.country` then shows no difference. |
+| museum, bioregion lists | **Done** 2026-10-22 (B38): each list is renamed right after it is built, before it is counted and its totals written; a synonym's specimens count under the valid name. |
+| partly rows | Most are live numbers checked by the end-to-end tests on Madagascar and the genus Pheidole only, or by a consistency rule. Next: a rotating place for the e2e tests (the count check's rotating sample, in its JSON), and recounts in the check for the live numbers that have a SQL definition (taxonomicPage headers, browse counts, the habitat lists of a sample species). |
+
+## 5. Questions for Brian
+
+Where the right number is a scientific choice, the checks test the rule as the code has it now and the question is
+here, with a recommendation. Brian Fisher answered Q1 to Q6 and Q10 on 2026-10-21, and on 2026-10-22 (05:28) that morphospecies and indet
+names never count toward endemism (section 5.1, with the plan); Q13 was decided on 2026-10-22. On 2026-10-22 he
+answered Q7, Q8, Q9 and Q12 and decided the Port of Entry project (Q11): section 5.2, implemented in the same pull
+request as this text. No question is open.
+
+| # | Question | Now | Recommendation | Rows |
+|---|---|---|---|---|
+| Q1 (answered 2026-10-21, see 5.1) | Do subspecies count in species totals? | Place "Species / subspecies" counts species and subspecies names (a species with two subspecies counts 3); a genus row's "N Species" counts both; a species row's Specimens are only the specimens filed under the species name (its subspecies have rows of their own); statsPage "valid species + ssp." counts both. | Keep counting both, as the label says, and label the genus row "Species / subspecies" too. Keep a species row to its own specimens (the subspecies rows are listed under it), so no specimen is counted twice in a place total. | 20-22, 41, 1, 6 |
+| Q2 (answered 2026-10-21, see 5.1) | Do morphospecies and indet names count as "species"? | Species / subspecies: yes (valid, unrecognized, morphotaxon, indetermined, unidentifiable); Valid species: valid, extant only; statsPage "species + ssp. imaged" counts the same five statuses. | Keep both numbers as they are; they are labelled and defined on the page. | 22, 23, 3 |
+| Q3 (answered 2026-10-21 and 2026-10-22, see 5.1) | Endemic at list edges: which records decide that a name is endemic? | A name is endemic to a country if it is on exactly one country's list, counting lists of any source (specimens, literature, curator lists) and of invalid country rows; morphospecies and fossils excluded. An adm1: endemic to its country and on one adm1 list. A subregion or region shows the names endemic to one of its countries (not the names found only in that subregion). A bioregion includes morphospecies. | Count valid countries only; keep all sources; one rule for all places: exclude morphospecies everywhere (their codes are not comparable between collections), and for subregions and regions "found in no country outside it". Records of introduced populations should not make a native species non-endemic (see Q4). | 24, 78, 110 |
+| Q4 (answered 2026-10-21, see 5.1) | Introduced species: how do they count? | They count in Species, Valid species and Specimens of the place where they are introduced; the Introduced number is the rows flagged from the introduced-species list; an introduced record elsewhere makes a species non-endemic at home. | Keep them in the place totals (they occur there), show "of which N introduced" under Species, and ignore introduced records when computing endemism. | 22-25, 79 |
+| Q5 (answered 2026-10-21, see 5.1) | Fossils: do fossil taxa count in place totals? | Subfamilies, Genera and Species / subspecies of a place count fossil taxa on its list; Valid species excludes them; taxonomicPage counts them too (withFossil). | Exclude fossils from Subfamilies, Genera and Species / subspecies of living places, and show "Fossil taxa: N" as its own row (amber and fossil records stay listed). | 20-22, 38 |
+| Q6 (answered 2026-10-21, see 5.1) | "Imaged": images of the ant only, or labels too; species only, or any name? | Home and place pages: a specimen with an image that is not a label; statsPage "Imaged Species" per status: any rank (genus-level names too) and label images; taxonomicPage "Unimaged" and list Images count labels. | One rule everywhere: imaged = a specimen with an image of the ant (not a label); "Imaged Species" counts species and subspecies names only. | 3, 16, 39, 44, 117 |
+| Q7 (answered 2026-10-22, see 5.2) | Ants only on statsPage? | Before: statsPage Global Data, Bioregion Data and Museum Data, and the home "valid species + ssp.", counted valid taxa of every family on the lists; place pages count ants only (2026-10-21). | Ants only everywhere (Formicidae), as on the place pages. | 1, 3, 6, 11, 12, 17-19 |
+| Q8 (answered 2026-10-22, see 5.2) | Upload group numbers: what is a "species", and what are "Totals"? | Before: groups.do Species = distinct species epithets of valid names of AntWeb's extant genera (Pheidole minor and Camponotus minor count once; morphospecies not counted); Totals of Subfamilies, Genera, Species = the largest group. | Species = distinct names (taxon_name) of species and subspecies of the five counted statuses; Totals = distinct over all groups (or rename the row "Largest"). | 86-90, 83, 91 |
+| Q9 (answered 2026-10-22, see 5.2) | Orphan images: count images or codes? | Before: "Found N orphaned images" counted specimen codes that have images but no specimen record. | Show both: "N images of M specimen codes that are not in AntWeb". | 99 |
+| Q10 (answered 2026-10-21, see 5.1) | Specimens with an adm1 but no country (B26): count them for the state? | Counted for every adm1 of that name. | Not counted for any adm1 (the state is ambiguous without a country); the fix adds `country = parent`. | 26, 27, 29 |
+| Q11 (answered 2026-10-22, see 5.2) | Port of Entry: a place? | Before: its page showed 37,430 specimens while its list had no species with specimens; the nightly run did not recount it. | Hide it as a place (is_valid = 0) and keep interceptions searchable. Decided instead: keep it as a species list without numbers (5.2). | 26, 119 |
+| Q12 (answered 2026-10-22, see 5.2) | Unimaged names: unimaged where? | Before: API /unimagedGeolocaleTaxa: no image of the ant anywhere in AntWeb; taxonomicPage "Unimaged": no image (labels included) from this place. | Both: "no image of the ant anywhere" (what a curator needs to photograph), labelled so. | 39, 62, 117 |
+| Q13 (answered 2026-10-22) | Upload group numbers: the last upload, or now? | Brian Fisher: today's numbers. Since 2026-10-22 groups.do, group.do and curator.do show the group's specimens today, recounted every night in set 3 (`GroupCountDb.recountAll`, table `group_count`) by the rule of the upload counts (`UploadDb.getCounts`); the date of the last upload is shown apart; the upload rows and the upload reports keep each upload's own numbers. `inv:admin.groups` compares the pages' numbers with a recount. | Done. | 83, 86-88, 91 |
+
+### 5.1 Answers of 2026-10-21 and the plan
+
+| Q | Brian Fisher, 2026-10-21 | Change | Pages and API fields affected | Effort |
+|---|---|---|---|---|
+| Q1 subspecies | "maybe we should split it always: how many species and how many subspecies, so it is clear (is that possible)" | Yes, it is possible. Every "species / subspecies" number becomes two numbers, "N species, M subspecies", counted from the same list rows (taxarank species, taxarank subspecies). Stored: new columns `subspecies_count` and `valid_subspecies_count` on geolocale, project, museum, bioregion (db/upgrade, written by `PlaceTotals` with the totals; `species_count` then means species only), and `subspecies_count` on the four list tables for genus, subfamily and family rows (written by the crawl: `countChildren` split by rank). Checks: `inv:place.totals.species` and `inv:list.genus` compare both numbers. | Place pages: Species / subspecies, Valid species / subspecies, Endemic, Introduced; lists of places: Valid species column; taxonomicPage header (rank species: "N Species, M Subspecies"); genus, subfamily, family rows "N Species"; browse.do and images.do headers; home and statsPage "valid species + ssp.", "species + ssp. imaged" (statsPage Global Data, Bioregion and Museum Data are already split); API `/geolocales`, `/bioregions` `speciesCount` (+ new `subspeciesCount`, `validSubspeciesCount`), `/geolocaleTaxa`, `/bioregionTaxa` row `speciesCount` (+ `subspeciesCount`). The species-per-subfamily pie stays one pie (species and subspecies). | 2 days (schema, totals, crawl, 12 JSPs, API, checks, tests); API fields are added, the meaning of `speciesCount` changes (release note). |
+| Q2 morphospecies and indet | "yes [they count as species] but we should indicate when it does" | Each count that includes names other than valid ones says so: "59 species (including 12 morphospecies, 3 indetermined, 1 unidentifiable, 2 unrecognized)" (zero parts left out). The parts are counted from the same list rows by `taxon.status` (one grouped query; stored as a small JSON column `species_status_json` on the place tables by `PlaceTotals`, so the page stays a read). Check: the parts add up to the total (`inv:place.totals.species`). | Place pages: Species (and Subspecies after Q1), Endemic for bioregions (they include morphospecies); taxonomicPage header with every counted status; genus rows "N Species" (a tooltip, not in the cell); home and statsPage "species + ssp. imaged"; API `/geolocales`, `/bioregions` (new `speciesByStatus`). | 1 day |
+| Q3 endemic for regions and subregions | "native species found only in that region" | A name is endemic to a region or subregion when it is on the list of at least one of its countries and on no list of a valid country outside it, counting only native rows (rows not flagged introduced; Q4). Replaces `calcHigherEndemism`, which now flags only the names endemic to one of its countries. Same rule for countries (no other valid country) and adm1s (no other adm1 of any country); valid countries only (lists of invalid country rows no longer make a name non-endemic). Morphospecies and indet names (statuses morphotaxon, indetermined, unidentifiable) never count toward endemism, anywhere: countries, adm1s, regions, subregions and bioregions (Brian Fisher, 2026-10-22 05:28: agreed; a morphospecies code from one collection is not comparable with another's). Today countries and adm1s already leave out morphotaxon only (indetermined and unidentifiable count), and bioregions count all five statuses (`StatusSet.getAndCriteria(ALLANTWEBANTS)` in `BioregionDb.calcEndemic`): the rule becomes `status in ('valid', 'unrecognized')` in all endemic computations, so endemic flags and Endemic numbers of bioregions drop their morphospecies, and those of countries and adm1s their indet names. endemic.do and the bioregion page definition text ("including morphospecies") change with it. Check: `inv:place.endemic.flags` recounts regions and subregions too. | Place pages Endemic (regions, subregions, countries, adm1s, bioregions), endemic.do, API `endemicSpeciesCount`, statistics.do `geolocale_taxa_endemic` | 1 day |
+| Q4 introduced and endemism | "NO" (introduced species never count toward endemism); 2026-10-22: morphospecies and indet names do not count either (Q3) | Endemism is computed after the introduced flags (today `calcEndemic` runs before `calcIntroduced`, in GeolocaleDb and BioregionDb) and counts only rows not flagged introduced: a species introduced in Reunion stays endemic to Madagascar, and an introduced row is never flagged endemic. Check: `inv:place.endemic.flags` adds the rule. | as Q3 | 0.5 day (with Q3) |
+| Q5 fossils | "no" (not in place totals); "do we have a fossil page where someone can view just the fossils?" | Place totals (Subfamilies, Genera, Species, Specimens, pies) count `taxon.fossil = 0` only (`PlaceTotals.ANTS` gets `and t.fossil = 0`; the taxonomicPage header and statusSet "all" follow, or the header names the fossils apart). Place pages get a row "Fossil taxa: N" that links to the place's list with statusSet "valid fossil" (exists: `StatusSet.VALID_FOSSIL`). The fossil page exists: Global menu, project `fossilants` (project.do?name=fossilants): the valid fossil taxa from AntCat's species list (`SpeciesListUpload`: every fossil name goes on it) plus taxa curators added; its list uses statusSet "Valid (with fossils)", so only valid fossil names show (fossil morphospecies do not), with their genera and subfamilies (also extant genera that have a fossil species); its Specimens are all AntWeb specimens of those names. Improvements: say on the page what it lists (the header note says "Antcat fossil records and curator added records"); link each place's "Fossil taxa" to it; make sure it is live (recounted every night). Staging: `select project_name, is_live, scope, species_count, specimen_count from project where project_name = 'fossilants'`. | Place pages (Subfamilies, Genera, Species, Valid species already without fossils, Specimens, pies, new Fossil taxa row), lists of places, taxonomicPage header, API `/geolocales`, `/bioregions` counts | 1 day |
+| Q6 label photos | "a specimen is not imaged, or a species is not imaged, if it has only label images" | This is the rule of the home page, place pages (Imaged specimens) and API /unimagedGeolocaleTaxa since 2026-10-21. Apply it to the rest: statsPage "Imaged Species" (B34), taxonomicPage "Unimaged" (B21: list `image_count` counts labels), browse.do "(M imaged)", search "(M imaged)", comparison pages (`getHasImages`), the worldants "Unimaged Valid Ants" list, the curator imaging progress views. Image counts ("N Images") keep counting every file, labels included, as labelled. Check: an e2e test per page with a label-only specimen on staging (zztest group). | statsPage, taxonomicPage, browse.do, images.do, comparison pages, search results, imaging progress | 1 day |
+| Q10 adm1 without country (B26) | "yes [count for the state], but that is a data problem we need to fix and should be in the specimen reports"; "Reunion species should not count for France" | (a) The upload report gets two data problems for the curator: "Adm1 without a country" (none today: the adm1 check runs only when the country is given) and the existing "Not valid Antweb Adm1" for an adm1 that is not a state of its country. (b) B26: an adm1 takes the specimens with its country and its name (`s.country = parent and s.adm1 = name`) in the six places of section 3; specimens with an adm1 and no country still count for that adm1 only when its name belongs to exactly one country (Brian's "yes"), and are reported. (c) Islands: at upload a specimen of an island geolocale (Reunion) gets `country` = the island's `geolocale.country` and `island_country` = the island, and its adm1 is removed (`SpecimenUploadParse`); if Reunion's `country` is France, every Reunion specimen counts for France (country pages match `s.country`) and France's list gets Reunion's species (`insertGeolocaleTaxaFromSpecimens` adds rows for country and for island_country). Fix: country pages leave out specimens with an island_country (`and s.island_country is null`), the lists likewise. Staging queries: `select id, name, georank, parent, country, is_island, is_valid from geolocale where name in ('Reunion', 'France') or name like 'R%union%'`; `select country, island_country, adm1, count(*) from specimen where island_country like 'R%union%' or country like 'R%union%' or adm1 like 'R%union%' group by 1, 2, 3`. | Country and adm1 pages (Specimens, list rows, Images, Imaged specimens, pies), adm1 taxonomic pages, place downloads, API `/geoSpeciesStats`, the upload report; checks `inv:geo.adm1.country` (then 0) and a new check that no island specimen counts for a country | 1.5 days |
+
+### 5.2 Answers of 2026-10-22 (Q7, Q8, Q9, Q11, Q12)
+
+| Q | Brian Fisher, 2026-10-22 | Change (code, page wording, check) | Visible after |
+|---|---|---|---|
+| Q7 ants only | "ants only everywhere": statsPage Global Data, Bioregion Data, Museum Data and the home "valid species + ssp." count Formicidae only, as the place pages; names not identified to genus never count as species there | One rule, `PlaceTotals.validAntTaxonCondition` / `validAntSpeciesCondition` / `isValidAntSpecies`: StatisticsDb (`globalCountSql`, `listCountSql`, `VALID_SPECIES_SQL`; also "species + ssp. imaged" and statistics.do "V. Sp. Imaged") and TaxonMgr (statsPage first number). statsPage says under each heading that it counts ants (Formicidae) only; the home numbers explain themselves on hover. Checks: `inv:stats.global`, `inv:stats.bioregions`, `inv:stats.museums` recount ants only; `inv:stats.nonants` compares the page's rule with an independent recount; `inv:home` and `inv:admin.statistics` report a stored number that still equals the old rule as pending. Home "specimen records", "specimens imaged" and "total specimen images" still count every record (not part of the decision). | statsPage at once (live); home after the next nightly run (set 4) or upload |
+| Q8 upload groups | Species = distinct full names (taxon_name) of species and subspecies of the five counted statuses, ants only, identified to genus; Totals row = distinct over all groups combined; Subfamilies and Genera totals the same way | `GroupCountDb.countColumns`: one rule for the nightly recount (set 3), each upload's own row (`UploadDb.getCounts`) and the check. Subfamilies = valid ant subfamilies, Genera = genera identified to genus, of the counted specimens (any of the five statuses; were valid names of AntWeb's extant genera). Totals: group_count row 0 (`GroupCountDb.ALL_GROUPS`) = the specimens of every listed group together; groups.do shows it for Collections, Localities, Subfamilies, Genera, Species ("-" until the first nightly count); Uploads, Specimens, Ungeoreferenced, Flagged stay sums of the rows. groups.do and group.do explain the rule. Check: `inv:admin.groups` compares every group and the Totals row with a recount; numbers still by the old rule are pending until the nightly run. | groups.do, group.do after the next nightly run (set 3) |
+| Q9 orphaned images | "N images of M specimen codes that are not in AntWeb" (count both) | `OrphanedImages.COUNTS_SQL` and `CODES_SQL`; the page says both numbers and what an orphaned image is. Check: `inv:stats.images` compares both with a recount. | at once |
+| Q11 Port of Entry | Keep `poeants` ("Port of Entry", 212 names) as a species list of species recorded at ports of entry; drop its specimen and image numbers (page totals and per-row columns); the page says these species were intercepted at ports of entry, are not established introductions, and are not counted in any place total or the introduced species list; no nightly step recounts its numbers; the check skips them with a note | `Project.isSpeciesListOnly` / `SPECIES_LIST_ONLY_SQL`: ProjTaxonCountDb (recount, curated crawl, image crawl), ProjectDb (updateCounts, finish, makeCharts) and PlaceImageCountDb leave it out and set its specimen and image numbers to 0 (list counts of Subfamilies, Genera, Species, Valid species are kept); project page: an "About this list" row instead of Specimen holdings and Image documentation, no Specimens pie; its list: no Specimens, Species, Genera or Images columns, the note under the list; projects.do: "-". Nothing else uses the project: place totals count geolocale, museum and bioregion lists, and the introduced flags come from the introduced-species list. Check: `CountInvariants.scopeSql` and the rotating sample leave it out; the report says so (`SPECIES_LIST_ONLY_NOTE`). | page text at once; numbers set to 0 by the next nightly run (set 3) |
+| Q12 unimaged | "Unimaged" always means no photo of the ant anywhere in AntWeb; label photos never count | `StatisticsDb.antImagedNames` (the rule of the API's `imagedTaxaSql`): taxonomicPage.do?isImaged=false (header "N Unimaged X (out of M)", 0 included, and the list) with a note under the header; the API page says what unimaged means. The images view's per-place list is labelled "X with no image from this place (N)" (row 62). | at once |
+

@@ -604,7 +604,9 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     public String getCountChildrenQuery(String rank) {
         String rankClause = " taxon.taxarank = '" + rank + "'";
         if (Rank.SPECIES.equals(rank)) {
-          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
+          rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') "
+              // a genus row's Species: names identified to genus only (Brian Fisher, 2026-10-22; PlaceTotals.identifiedToGenus)
+              + " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") + " ";
         }
 
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
@@ -732,8 +734,8 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     // pages): since 2026-10-20 only the images of the specimens of this place (before: of all
     // specimens of the name, anywhere), the same specimens as the list's specimen counts (regions and
     // subregions: the specimens of their countries).
-    // Ordered by family, subfamily and genus: CountDb.imageCountCrawl() adds up a genus or subfamily
-    // when the next row belongs to another one.
+    // CountDb.imageCountCrawl() adds the species rows up to their genus, subfamily and family rows by the
+    // taxon tree (parent_taxon_name; 2026-10-22, B40), so the order no longer matters.
     public String getTaxonImageCountQuery() {
       String query = "select s.taxon_name taxonName, s.family family, s.subfamily subfamily " 
            + ", s.genus genus, s.species species, sum(s.image_count) imageSum" 
@@ -768,18 +770,18 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         //A.log("getChangeViewOptions() taxonName:" + taxonName + " otherUrl:" + otherUrl + " regions:" + regions);    
 
 		for (Geolocale region : regions) {
-      	  changeViewOptions += "<li><a href='" + otherUrl + "&" + region.getParams() + "'>" + region.getName() + "</a></li>";
+      	  changeViewOptions += "<li><a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + region.getParams() + "'>" + region.getName() + "</a></li>";
 		  ArrayList<Geolocale> subregions = geolocaleDb.getChildrenWithTaxon(taxonName, "subregion", region);
 		  for (Geolocale subregion : subregions) {
-			changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + "&" + subregion.getParams() + "'>" + subregion.getName() + "</a></li>";
+			changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + subregion.getParams() + "'>" + subregion.getName() + "</a></li>";
 			ArrayList<Geolocale> countries = geolocaleDb.getChildrenWithTaxon(taxonName, "country", subregion);
 			for (Geolocale country : countries) {
-  			  changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + otherUrl + "&" + country.getParams() + "'>" + country.getName() + "</a></li>";
+  			  changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + country.getParams() + "'>" + country.getName() + "</a></li>";
 			  ArrayList<Geolocale> adm1s = geolocaleDb.getChildrenWithTaxon(taxonName, "adm1", country);
 			  for (Geolocale adm1 : adm1s) {
 			    if (adm1.isLive()) {
                     A.log("getChangeViewOptions() options:" + adm1.getName());
-                    changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + otherUrl + "&" + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
+                    changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
 
                 }
 			  }
@@ -802,7 +804,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
  			  if (isOverviewPage) {
 			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + region.getThisPageTarget() + "'>" + region.getName() + "</a></li>";
 			  } else {
-                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + "&" + region.getParams() + "'>" + region.getName() + "</a></li>";
+                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + region.getParams() + "'>" + region.getName() + "</a></li>";
               }
             }
           }
@@ -816,7 +818,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
  			  if (isOverviewPage) {
 			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + subregion.getThisPageTarget() + "'>" + subregion.getName() + "</a></li>";
 			  } else {
-                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + "&" + subregion.getParams() + "'>" + subregion.getName() + "</a></li>";
+                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + subregion.getParams() + "'>" + subregion.getName() + "</a></li>";
               }
             }  
           }
@@ -830,7 +832,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
  			  if (isOverviewPage) {
 			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + country.getThisPageTarget() + "'>" + country.getName() + "</a></li>";
 			  } else {
-                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + "&" + country.getParams() + "'>" + country.getName() + "</a></li>";
+                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + country.getParams() + "'>" + country.getName() + "</a></li>";
               }
             }
           }
@@ -846,7 +848,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
                       if (isOverviewPage) {
                           changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + adm1.getThisPageTarget() + "'>" + adm1.getName() + "</a></li>";
                       } else {
-                          changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + "&" + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
+                          changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
                       }
                   }
               }

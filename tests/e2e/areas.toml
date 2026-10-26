@@ -48,6 +48,7 @@ tests = [
   "test_actions.py",
   "test_api.py",
   "test_browser.py",
+  "test_search_code_lists.py",
   "test_check57_removals.py",
   "test_curator_species_lists.py",
   "test_documentation_links.py",
@@ -59,6 +60,8 @@ tests = [
   "test_page_content.py",
   "test_parallel_safety.py",
   "test_place_image_counts.py",
+  "test_numbers_live.py",
+  "test_api_numbers.py",
   "test_previous_determinations.py",
   "test_privacy.py",
   "test_site_links.py",
@@ -313,6 +316,8 @@ tests = [
 # Numbers: taxon, place, museum and image counts, the count check, the nightly count sets.
 paths = [
   "src/org/calacademy/antweb/util/CountCheck*.java",
+  "src/org/calacademy/antweb/util/CountInvariants.java",
+  "src/org/calacademy/antweb/util/NumberChecks.java",
   "src/org/calacademy/antweb/util/StatSet.java",
   "src/org/calacademy/antweb/home/*Count*.java",
   "src/org/calacademy/antweb/home/StatisticsDb.java",
@@ -331,6 +336,8 @@ tests = [
   "test_region_counts.py",
   "test_place_image_counts.py",
   "test_numbers_pages.py",             # added by #216
+  "test_numbers_live.py",              # live numbers against the place pages (2026-10-22)
+  "test_api_numbers.py",               # API counts (2026-10-22)
 ]
 
 [areas.places]
@@ -378,11 +385,16 @@ paths = [
   "src/org/calacademy/antweb/home/SpecimenDb.java",
   "web/search/**",
   "web/robots.txt",
+  "web/common/specimen_list.js",
+  "web/specimenReport.jsp",
+  "docker/antweb/tomcat/conf/server.xml",
 ]
 tests = [
   "test_download_guards.py",          # added by #222
   "test_search_pages.py",             # search form, results by taxon, recent images, Places box (step 2)
   "test_field_guide_compare.py",      # field guides and the compare tools (step 2)
+  "test_search_code_lists.py",        # pasted code lists, sort, long addresses (2026-10-26)
+  "test_browser.py",
 ]
 
 [areas.images]
@@ -496,6 +508,7 @@ paths = [
 ]
 tests = [
   "test_api.py",
+  "test_api_numbers.py",
   "test_hardening_2026_10_18.py",
 ]
 

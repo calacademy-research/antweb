@@ -248,6 +248,17 @@ public abstract class HttpUtil {
         return isInWhiteList;
     }
 
+    public static String queryWithoutCodes(String uri, String queryString) {
+        if (uri == null || queryString == null) return queryString;
+        if (uri.endsWith("/locality.do") || uri.endsWith("/collection.do")) {
+            return queryString.replaceAll("(^|&)(code|name)=[^&]*", "$1");
+        }
+        if (uri.endsWith("/advancedSearch.do")) {
+            return queryString.replaceAll("(^|&)(localityCode|collectionCode)=[^&]*", "$1");
+        }
+        return queryString;
+    }
+
     public static String isLegitRequest(HttpServletRequest request) {
         boolean botAttackDefence = HttpUtil.isBotAttackDefence(request);
         if (botAttackDefence) {
@@ -260,7 +271,11 @@ public abstract class HttpUtil {
         int reasonCode = 0;
         // Allowed because of locality names: http://localhost/antweb/locality.do?name=Montagne%20d%27Ambre%20975
         //if (queryString.contains("%27")) reasonCode = 1;    // single quote
-        if (queryString.contains("%22")) reasonCode = 2;    // double quote
+        // A double quote is refused, except in the code or name of a locality or collection and in the locality and
+        // collection code fields of the advanced search: since 2026-10-22 codes are stored as written (KM55""805), the
+        // locality page links its specimens as localityCode="<code>", and those values reach the database only as
+        // escaped literals (LocalityDb, CollectionDb: DBUtil.sqlLiteral; GenericSearch.getCodeSearchString).
+        if (queryWithoutCodes(request.getRequestURI(), queryString).contains("%22")) reasonCode = 2;    // double quote
         // Real script injection only: "script" alone also matches "description.do", which the
         // header Login link carries as its target (Invalid query string (3) on 2026-10-16).
         String lowerQuery = queryString.toLowerCase();
@@ -1625,21 +1640,53 @@ public abstract class HttpUtil {
       return null;    
     }
 
-    public static boolean writeUrlContents(String theUrl, String fileName) {   //String[] args) {
-        // speedy download that skips application memory, direct to disk
-        // https://stackoverflow.com/questions/921262/how-can-i-download-and-save-a-file-from-the-internet-using-java
-        // https://www.techiedelight.com/download-file-from-url-java/
-        try (InputStream in = openWithTimeouts(theUrl).getInputStream();
-             ReadableByteChannel rbc = Channels.newChannel(in);
-             FileOutputStream fos = new FileOutputStream(fileName)) {
+    public static boolean writeUrlContents(String theUrl, String fileName) {
+        return downloadToFile(theUrl, fileName) == null;
+    }
 
-            fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
-            return true;
+    /**
+     * Downloads theUrl straight to disk (skips application memory). Returns null when it worked, otherwise
+     * why it failed (2026-10-25: the reason now reaches compute.log instead of only a stack trace).
+     * Writes to fileName.part first and moves it into place only when complete and not empty, so a failed
+     * try never leaves a half-written file under the real name.
+     */
+    public static String downloadToFile(String theUrl, String fileName) {
+        File target = new File(fileName);
+        File part = new File(fileName + ".part");
+        long expected;
+        try {
+            URLConnection conn = openWithTimeouts(theUrl);
+            try (InputStream in = conn.getInputStream();
+                 ReadableByteChannel rbc = Channels.newChannel(in);
+                 FileOutputStream fos = new FileOutputStream(part)) {
+                expected = conn.getContentLengthLong();   // -1 when the server does not say
+                fos.getChannel().transferFrom(rbc, 0, Long.MAX_VALUE);
+            }
         } catch (IOException e) {
-            e.printStackTrace();
+            part.delete();
+            return e.getClass().getSimpleName() + (e.getMessage() != null ? ": " + e.getMessage() : "");
         }
-
-        return false;
+        if (part.length() == 0) {
+            part.delete();
+            return "the download was empty";
+        }
+        if (expected >= 0 && part.length() != expected) {
+            long got = part.length();
+            part.delete();
+            return "the download was cut off (" + got + " of " + expected + " bytes)";
+        }
+        try {
+            try {
+                java.nio.file.Files.move(part.toPath(), target.toPath(),
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+                java.nio.file.Files.move(part.toPath(), target.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (IOException e) {
+            part.delete();
+            return "could not move the download into place: " + e.getMessage();
+        }
+        return null;
     }
 
     private static final int MAX_ITERATION = 60;  // This should cover all adm1

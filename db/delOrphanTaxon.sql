@@ -8,22 +8,9 @@
 #
 # Remaining work.  Automate this (carefully).
 
-delete from favorite_images 
- where taxon_name not in (select distinct taxon_name from proj_taxon) 
-   and taxon_name not in (select distinct taxon_name from specimen);
-
-# These do not seem to occur   
-delete from similar_species where taxon_name not in
-  (select distinct taxon_name from proj_taxon) and taxon_name not in
-  (select distinct taxon_name from specimen);   
-
-delete from similar_species 
- where similar_species not in (select distinct taxon_name from proj_taxon) 
-   and similar_species not in (select distinct taxon_name from specimen);
-
-delete from synonymy where taxon_name not in
-  (select distinct taxon_name from proj_taxon) and taxon_name not in
-  (select distinct taxon_name from specimen);   
+# 2026-10-23: the statements for favorite_images, similar_species and synonymy are removed: those tables were
+# dropped (db/upgrade/8.115/2026-10-23-drop-old-tables-widen-group-name.sql; archived to
+# /mnt/backup/archive/old_tables_20261023.sql.gz).
 
 delete from description_edit where taxon_name
 not in (select distinct taxon_name from proj_taxon) and taxon_name not

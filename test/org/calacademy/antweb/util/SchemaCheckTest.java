@@ -134,7 +134,7 @@ public class SchemaCheckTest extends TestCase {
         Path file = SchemaCheck.latest(Paths.get(d));
         assertNotNull("no live-schema-*.tsv in " + d, file);
         SchemaCheck.Schema s = SchemaCheck.parse(Files.readAllLines(file, StandardCharsets.UTF_8));
-        assertTrue(s.kinds.size() > 90);
+        assertTrue(s.kinds.size() > 80);   // 105 tables and views on 2026-10-22, 90 after the old ones were dropped (2026-10-23)
         assertEquals("VIEW", s.kinds.get("api3_1_specimen"));
         assertTrue(s.columns.get("specimen").containsKey("taxon_name"));
         SchemaCheck.Report r = new SchemaCheck.Report();

@@ -58,9 +58,24 @@ public final class CountInvariants {
     /** Every check id (docs/numbers.md names them in its Test column as inv:<id>; tools/numbers/check_numbers_doc.py). */
     public static final String[] IDS = {"place.totals.subfamily", "place.totals.genus", "place.totals.species", "place.totals.valid",
         "place.totals.specimens", "place.totals.endemic", "place.totals.introduced", "place.pies", "place.images.order", "place.images",
-        "list.genus", "list.subfamily", "list.family", "list.global", "global.specimens", "home", "taxon.images", "geo.regions"};
+        "list.genus", "list.subfamily", "list.family", "list.global", "global.specimens", "home", "taxon.images", "geo.regions",
+        // NumberChecks (2026-10-22)
+        "stats.global", "stats.images", "stats.imaged", "stats.bioregions", "stats.museums", "stats.nonants", "list.images", "admin.statistics", "admin.groups",
+        "admin.curators", "admin.artists", "admin.imageUploads", "admin.imageUploadArtists", "api.taxa", "place.endemic.flags", "taxon.parents", "geo.adm1.country"};
+
+    /**
+     * At most this many differences of one check are listed in the report (2026-10-22: API /taxa, B11, can differ for
+     * every taxon); the others are counted (CountCheck.Result.unlisted) and named in one line.
+     */
+    static final int LIST_CAP = 300;
 
     static final String RULES_PENDING = "this number's rule changed on 2026-10-21; no nightly run has counted it that way yet";
+    /** The note of the report on the projects the check skips (Project.isSpeciesListOnly). */
+    public static final String SPECIES_LIST_ONLY_NOTE = "Port of Entry (project " + org.calacademy.antweb.Project.PORT_OF_ENTRY + ") is not checked: it is a"
+        + " list of species intercepted at ports of entry, kept without specimen or image numbers (Brian Fisher, 2026-10-22), so no nightly"
+        + " step counts them.";
+    /** A number whose rule changed on 2026-10-22 (docs/numbers.md Q7, Q8): it still equals the count by the old rule. */
+    static final String Q7_PENDING = "counted by the rule before 2026-10-22 (ants only, Q7); the next nightly run counts it by the new rule";
 
     public static boolean rulesCounted(List<String> lines) {
         for (String line : lines) if (line.contains(RULES_LOG)) return true;
@@ -96,7 +111,7 @@ public final class CountInvariants {
     /** The SQL last run by the current check (shown with its error). */
     String lastSql;
 
-    private String track(String sql) {
+    String track(String sql) {
         lastSql = sql;
         return sql;
     }
@@ -117,6 +132,8 @@ public final class CountInvariants {
         public int pending;
         public long millis;
         public String error;
+        /** Differences listed in the report (at most LIST_CAP). */
+        int listed;
 
         Check(String id, String title, String rows) {
             this.id = id;
@@ -133,15 +150,28 @@ public final class CountInvariants {
         }
     }
 
-    private final Connection connection;
-    private final CountCheck.Result result;
+    final Connection connection;
+    final CountCheck.Result result;
     private final Set<String> changedNames;   // KEYS order
     private final boolean rulesCounted;
     /** statsPage's first number (TaxonMgr, in memory); null when not known (tests). */
     public Integer statsPageValidSpecies;
+    /**
+     * The numbers of curators.do and curator.do as the pages show them (LoginMgr): login id -> Specimen Uploads,
+     * Description Edits, image uploads, images uploaded; null when not known (the check is then not run).
+     */
+    public Map<Integer, int[]> curatorNumbers;
+    /** When the pages' curator numbers were read (LoginMgr.getCuratorsRead); null: the last nightly run. */
+    public java.sql.Timestamp curatorsRead;
+    /** artists.do as the page shows it (ArtistMgr): artist id -> Images, Specimen; null when not known. */
+    public Map<Integer, int[]> artistNumbers;
+    /** Numbers the end-to-end tests compare with the pages (report: JSON in the element with id count-check-expected). */
+    public final Map<String, Object> expected = new LinkedHashMap<>();
 
     public final List<Check> checks = new ArrayList<>();
     public long millis;
+    /** Part of millis: the checks of NumberChecks (statsPage, admin pages, API, endemic flags, B25, B26). */
+    public long otherMillis;
 
     /** type -> key -> label of the places in scope (the places whose pages show these numbers). */
     final Map<String, Map<String, String>> places = new LinkedHashMap<>();
@@ -160,11 +190,11 @@ public final class CountInvariants {
 
     // ------------------------------------------------------------------ running
 
-    private interface Body {
+    interface Body {
         void run(Check check) throws SQLException;
     }
 
-    private void check(Check check, Body body) {
+    void check(Check check, Body body) {
         long start = System.currentTimeMillis();
         try {
             body.run(check);
@@ -209,6 +239,9 @@ public final class CountInvariants {
         home();
         taxonImages();
         regions();
+        long other = System.currentTimeMillis();
+        new NumberChecks(this).run();
+        otherMillis = System.currentTimeMillis() - other;
         millis = System.currentTimeMillis() - start;
     }
 
@@ -221,7 +254,9 @@ public final class CountInvariants {
                     + " and (georank <> 'adm1' or is_live = 1)";
             // the projects whose totals the nightly run counts (ProjectDb.updateCounts: scope PROJECT and GLOBAL) and whose
             // lists it recounts (live projects)
-            case PlaceTotals.PROJECT: return "select project_name, project_name, null from project where is_live = 1 and scope in ('PROJECT', 'GLOBAL')";
+            // The Port of Entry project is a species list only (2026-10-22): its numbers are not counted, so not checked.
+            case PlaceTotals.PROJECT: return "select project_name, project_name, null from project where is_live = 1 and scope in ('PROJECT', 'GLOBAL')"
+                + " and project_name not in " + org.calacademy.antweb.Project.SPECIES_LIST_ONLY_SQL;
             case PlaceTotals.MUSEUM: return "select code, code, null from museum";
             default: return "select name, name, null from bioregion";
         }
@@ -257,6 +292,7 @@ public final class CountInvariants {
                 }
             }
             places.put(type, m);
+            if (PlaceTotals.PROJECT.equals(type)) result.notes.add(SPECIES_LIST_ONLY_NOTE);
             Set<String> changed = keySet();
             if (columnExists(PlaceTotals.listTable(type), "created")) {
                 try (PreparedStatement stmt = connection.prepareStatement(track("select distinct " + PlaceTotals.listKey(type) + " from "
@@ -305,10 +341,14 @@ public final class CountInvariants {
             default: ok = shown == expected;
         }
         if (ok) return true;
+        if (pendingReason == null) ++check.real; else ++check.pending;
+        if (++check.listed > LIST_CAP) {
+            result.unlisted.merge(check.id + (pendingReason == null ? "" : " (pending)"), 1, Integer::sum);
+            return false;
+        }
         String label = places.getOrDefault(type, new HashMap<>()).getOrDefault(key, key);
         String text = "=".equals(relation) ? what : what + " (must be " + relation + " " + expected + ")";
         result.mismatches.add(new CountCheck.Mismatch(place(type, key, label), check.id, text, (int) shown, (int) expected, pendingReason));
-        if (pendingReason == null) ++check.real; else ++check.pending;
         return false;
     }
 
@@ -549,7 +589,10 @@ public final class CountInvariants {
                         status = childStatus(type, filter);
                     }
                     StringBuilder sel = new StringBuilder("select p." + lk + ", p.taxon_name, p." + level[2] + ", coalesce(x.n, 0)");
-                    StringBuilder sub = new StringBuilder("select c." + lk + " k, t.parent_taxon_name parent, count(*) n");
+                    // a genus row's Species counts the names identified to genus only (Brian Fisher, 2026-10-22,
+                    // PlaceTotals.identifiedToGenus); its Specimens and Images still add up every row under it
+                    String n = "genus".equals(parentRank) ? "sum(case when " + PlaceTotals.identifiedToGenus("t") + " then 1 else 0 end)" : "count(*)";
+                    StringBuilder sub = new StringBuilder("select c." + lk + " k, t.parent_taxon_name parent, " + n + " n");
                     StringBuilder diff = new StringBuilder("p." + level[2] + " <> coalesce(x.n, 0)");
                     int i = 0;
                     for (String s : sums) {
@@ -618,9 +661,17 @@ public final class CountInvariants {
                 if (inScope == null) continue;
                 String l = PlaceTotals.listTable(type);
                 String lk = PlaceTotals.listKey(type);
+                // Museums, bioregions, projects (2026-10-22): a row counts the specimens of the name's synonyms too
+                // (PlaceTotals.specimensByListNameSql), so its bound is the Global specimens of the name and of its synonyms.
+                boolean syn = !PlaceTotals.GEOLOCALE.equals(type);
+                String global = syn
+                    ? " join (select x.list_name, sum(g.specimen_count) specimen_count from (select taxon_name src, taxon_name list_name from taxon"
+                        + " union all select t2.taxon_name, t2.current_valid_name from taxon t2 where " + PlaceTotals.renamedCondition("t2") + ") x"
+                        + " join proj_taxon g on g.project_name = 'allantwebants' and g.taxon_name = x.src group by x.list_name) a on a.list_name = l.taxon_name"
+                    : " join proj_taxon a on a.project_name = 'allantwebants' and a.taxon_name = l.taxon_name";
                 String sql = "select l." + lk + ", l.taxon_name, l.specimen_count, a.specimen_count from " + l + " l"
                     + " join taxon t on t.taxon_name = l.taxon_name"
-                    + " join proj_taxon a on a.project_name = 'allantwebants' and a.taxon_name = l.taxon_name"
+                    + global
                     + " where t.taxarank in " + SP + " and l.specimen_count > a.specimen_count"
                     + (PlaceTotals.PROJECT.equals(type) ? " and l.project_name <> 'allantwebants'" : "");
                 try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(sql))) {
@@ -630,7 +681,8 @@ public final class CountInvariants {
                         String name = r.getString(2);
                         String p = why(c, type, key);
                         if (p == null && changedNames.contains(name)) p = "specimens of this name uploaded or renamed after the last nightly run";
-                        compare(c, type, key, name + ": specimens here <= Global", r.getLong(3), r.getLong(4), "<=", p);
+                        compare(c, type, key, name + (syn ? ": specimens here <= Global (with its synonyms)" : ": specimens here <= Global"),
+                            r.getLong(3), r.getLong(4), "<=", p);
                     }
                 }
             }
@@ -719,6 +771,14 @@ public final class CountInvariants {
                 }
                 String p = null;
                 if (!nightlyRow && (i == 2 || i == 3)) p = RULES_PENDING;
+                // Q7 (2026-10-22): ants only. A row written before that rule equals the old count: pending until the next nightly run.
+                String before = i == 0 ? org.calacademy.antweb.home.StatisticsDb.VALID_SPECIES_SQL_BEFORE_Q7
+                    : i == 2 ? org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIES_SQL_BEFORE_Q7 : null;
+                if (p == null && before != null && row[i] != live) {
+                    try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(before))) {
+                        if (r.next() && r.getLong(1) == row[i]) p = Q7_PENDING;
+                    }
+                }
                 if (p == null && uploadSince) p = "specimens were uploaded after the numbers were written";
                 if (p == null && imagesSince && i >= 2) p = "images were added after the numbers were written";
                 compare(c, "site", "home", what[i], row[i], live, "=", p);

@@ -175,66 +175,40 @@ public class UploadDb extends AntwebDb {
         return upload;
     }
 
+    /**
+     * The numbers of the group's specimens as they are now, by the rule of every upload-group number (GroupCountDb,
+     * Brian Fisher 2026-10-22, docs/numbers.md Q8): Specimens, Collections, Localities, Ungeoreferenced of the counted
+     * specimens; Subfamilies, Genera; Species = distinct full names of species and subspecies of the counted statuses,
+     * ants, identified to genus (until 2026-10-22: distinct species epithets of valid names). Written into the upload
+     * row at the end of an upload (updateCounts); the nightly recount (GroupCountDb.recountAll) uses the same query.
+     */
     private Upload getCounts(Upload upload) throws SQLException {
-        //A.log("getCounts() upload:" + upload.getId() + AntwebUtil.getShortStackTrace());  // Why three times?
         if (upload == null) return null;
-
-        Statement stmt = null;
-        ResultSet rset = null;
-        String query = "select count(code) specimens" 
-          + " , count(distinct collectioncode) collections"
-          + " , count(distinct localitycode) localities"
-          + " , count(if(decimal_latitude is null, 1, null)) ungeoreferenced" 
-          + " from specimen where access_group = " + upload.getGroupId()
-          + " and " + SpecimenDb.getFlagCriteria()
-          + " and " + SpecimenDb.getStatusCriteria()
-          + " and " + SpecimenDb.getTaxaCriteria()
-          ;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "getCounts()");
-            //A.log("getCounts() groupId:" + upload.getGroupId() + " query:" + query);
-            rset = stmt.executeQuery(query);
-
-            while (rset.next()) {
-			  upload.setSpecimens(rset.getInt("specimens"));
-			  upload.setCollections(rset.getInt("collections"));
-			  upload.setLocalities(rset.getInt("localities"));
-			  upload.setUngeoreferenced(rset.getInt("ungeoreferenced"));
-			}
+        try (PreparedStatement stmt = getConnection().prepareStatement(GroupCountDb.groupCountsSql())) {
+            stmt.setInt(1, upload.getGroupId());
+            try (ResultSet rset = stmt.executeQuery()) {
+                if (rset.next()) {
+                    // columns: g, all, specimens, collections, localities, ungeoreferenced, subfamilies, genera, species, flagged
+                    upload.setSpecimens(rset.getInt(3));
+                    upload.setCollections(rset.getInt(4));
+                    upload.setLocalities(rset.getInt(5));
+                    upload.setUngeoreferenced(rset.getInt(6));
+                    upload.setSubfamilies(rset.getInt(7));
+                    upload.setGenera(rset.getInt(8));
+                    upload.setSpecies(rset.getInt(9));
+                } else {
+                    upload.setSpecimens(0);
+                    upload.setCollections(0);
+                    upload.setLocalities(0);
+                    upload.setUngeoreferenced(0);
+                    upload.setSubfamilies(0);
+                    upload.setGenera(0);
+                    upload.setSpecies(0);
+                }
+            }
         } catch (SQLException e) {
             s_log.warn("getCounts() e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, "getCounts()");
         }
-        
-        query = "select "
-          + "   count(distinct subfamily) subfamilies" 
-          + " , count(distinct genus) genera" 
-          + " , count(distinct species) species" 
-          + " from specimen where access_group = " + upload.getGroupId()
-          + " and " + SpecimenDb.getFlagCriteria()
-          + " and " + SpecimenDb.getStatusCriteria()
-          + " and " + SpecimenDb.getTaxaCriteria()
-          + " and " + SpecimenDb.getAntwebSubfamilyCriteria()
-          + " and " + SpecimenDb.getAntwebGenusCriteria()
-          ;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "getCounts()");
-            //A.log("getCounts() groupId:" + upload.getGroupId() + " query:" + query);
-            rset = stmt.executeQuery(query);
-
-            while (rset.next()) {
-			  upload.setSubfamilies(rset.getInt("subfamilies"));
-			  upload.setGenera(rset.getInt("genera"));
-			  upload.setSpecies(rset.getInt("species"));
-			}
-        } catch (SQLException e) {
-            s_log.warn("getCounts() 2 e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, "getCounts()");
-        }
-        
-        //A.log("getCounts() query:" + query);
         return upload;
     }
 

@@ -200,22 +200,20 @@ public class Museum extends LocalityOverview implements Countable {
     
     // -------------------- Countable Implementation ---------------------
     
+    // The museum's specimens of each name on its list, of a countable status; a specimen filed under a synonym
+    // counts under the valid name (2026-10-22, PlaceTotals.specimensByListNameSql).
     public String getCountSpecimensQuery() {
-      String overviewCriteria = " and specimen.museum = '" + getCode() + "'";
-      String query = "select count(*) count, specimen.taxon_name taxonName from specimen " 
-          + " join museum_taxon on specimen.taxon_name = museum_taxon.taxon_name " 
-          + " where museum_taxon.code = '" + getCode() + "'"
-          //+ StatusSet.getAndCriteria(projectName)  // The weird worldants status taxa will not have specimens
-          + overviewCriteria
-          + " and specimen.status in " + StatusSet.getCountables()
-          + " group by taxonName";
-      return query;
+      String code = org.calacademy.antweb.home.PlaceTotals.literal(getCode());
+      return org.calacademy.antweb.home.PlaceTotals.specimensByListNameSql(org.calacademy.antweb.home.PlaceTotals.MUSEUM, code,
+          " and s.museum = " + code + " and s.status in " + StatusSet.getCountables());
     }        
 
     public String getCountChildrenQuery(String rank) {
         
         String rankClause = " taxon.taxarank = '" + rank + "'";
-        if (Rank.SPECIES.equals(rank)) rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') ";
+        if (Rank.SPECIES.equals(rank)) rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') "
+              // a genus row's Species: names identified to genus only (Brian Fisher, 2026-10-22; PlaceTotals.identifiedToGenus)
+              + " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") + " ";
 
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
           + " join museum_taxon mt on taxon.taxon_name = mt.taxon_name " 
@@ -258,7 +256,7 @@ public class Museum extends LocalityOverview implements Countable {
            + " where mt.code = '" + getCode() + "'" 
            + " and s.museum = '" + getCode() + "'"  // 2026-10-20: images of this museum's specimens only
            + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species"
-           + " order by s.family, s.subfamily, s.genus, s.taxon_name";  // CountDb.imageCountCrawl() adds up on a change of genus
+           + " order by s.family, s.subfamily, s.genus, s.taxon_name";  // CountDb.imageCountCrawl() adds the rows up by the taxon tree
       //A.log("getTaxonImageCountQuery() query:" + query);
 
       return query;

@@ -111,7 +111,8 @@ public final class GroupAction extends AntwebAction {
 			}
 
             UploadDb uploadDb = new UploadDb(connection);
-            Upload upload = uploadDb.getLastUploadByGroup(groupId);
+            // Today's numbers of the group's specimens, recounted every night (GroupCountDb, Q13 2026-10-22).
+            Upload upload = new GroupCountDb(connection).apply(uploadDb.getLastUploadByGroup(groupId));
             group.setLastUpload(upload);
             //A.log("GroupAction.getGroup() groupId:" + groupId + " upload:" + upload);
             
@@ -142,9 +143,11 @@ public final class GroupAction extends AntwebAction {
             groups = groupDb.getUploadGroups(orderBy);
             
             UploadDb uploadDb = new UploadDb(connection);
+            GroupCountDb groupCountDb = new GroupCountDb(connection);
             for (Group group : groups) {
                 int groupId = group.getId();
-				Upload lastUpload = uploadDb.getLastUploadByGroup(groupId);
+				// Today's numbers of the group's specimens, recounted every night (GroupCountDb, Q13 2026-10-22).
+				Upload lastUpload = groupCountDb.apply(uploadDb.getLastUploadByGroup(groupId));
 				group.setLastUpload(lastUpload);
 				//A.log("GroupAction.getGroup() groupId:" + groupId + " lastUpload:" + lastUpload.getCreated	()); // + " upload:" + upload.getId());
 			
@@ -154,6 +157,8 @@ public final class GroupAction extends AntwebAction {
 
 				group.setCuratorList(groupDb.getCuratorList(groupId));
             }
+            // The Totals row (Q8, 2026-10-22): all groups' specimens together, counted every night (null until then).
+            request.setAttribute("groupTotals", groupCountDb.totals());
 		} catch (SQLException e) {
 			s_log.error("getUploadGroups() e:" + e);
 		} finally {	

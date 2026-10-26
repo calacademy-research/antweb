@@ -312,7 +312,7 @@ def _report_rows(page):
     rows = []
     for row in page.split("<tr>"):
         g = re.search(r"group\.do\?id=(\d+)", row)
-        u = re.search(r"<td>(\d+)</td>\s*<td><a href='[^']*imageUploadReport\.do\?id=(\d+)'", row)
+        u = re.search(r"<td(?: class=\"aw-num\")?>(\d+)</td>\s*<td(?: class=\"aw-nowrap\")?><a href='[^']*imageUploadReport\.do\?id=(\d+)'", row)
         if g and u:
             rows.append((int(g.group(1)), int(u.group(1)), u.group(2)))
     return rows
@@ -355,8 +355,33 @@ def test_upload_list_loads(curator):
     listed curator. The test login's uploads (test_not_saved_round_trip) made the page fail with
     a NullPointerException on 10-18, so the two tests above only skipped."""
     page = _upload_list(curator[0])
-    assert "Total image uploads:" in page
-    assert re.search(r"imageUploadReport\.do\?id=\d+", page) or "Total image uploads: 0" in page
+    # The total says what it counts and since when (Brian Fisher, 2026-10-23).
+    m = re.search(r'id="image-uploads-total"><b>([\d,]+) image upload batches(?: since (\d{4}-\d\d-\d\d))?, holding ([\d,]+) images</b>', page)
+    assert m, "listImageUploads.do: no 'N image upload batches since DATE, holding M images' line"
+    batches = int(m.group(1).replace(",", ""))
+    assert batches == 0 or m.group(2), "a non-empty list names the date of its oldest batch"
+    assert re.search(r"imageUploadReport\.do\?id=\d+", page) or batches == 0
+    # Dates on one line, to the minute (no ".0" seconds).
+    dates = re.findall(r'<td class="aw-nowrap"><a href=\'[^\']*imageUploadReport\.do\?id=\d+\'>([^<]*)</a>', page)
+    assert batches == 0 or dates, "the Created dates are not in one-line cells"
+    assert all(re.fullmatch(r"\d{4}-\d\d-\d\d \d\d:\d\d", d) for d in dates[:50]), dates[:5]
+
+
+def test_group_list_links_to_all_groups(curator):
+    """A group's or a login's list links the list of all groups' image uploads (asked for by Brian Fisher, 2026-10-23)."""
+    s, _token, login_id = curator
+    for query in ("curatorId=" + str(login_id), "groupId=1"):
+        r = s.get(BASE_URL + "/listImageUploads.do?" + query, timeout=TIMEOUT)
+        assert r.status_code == 200, (query, r.status_code)
+        assert re.search(r'id="all-image-uploads" href\s*=\s*"[^"]*/listImageUploads\.do"', r.text), \
+            "listImageUploads.do?" + query + " has no link to all groups' image uploads"
+    page = _upload_list(s)
+    assert 'id="all-image-uploads"' not in page, "the list of all groups links to itself"
+    # ... and links back to the login's own group's list (Brian Fisher, 2026-10-23), when the login has a group.
+    m = re.search(r'id="own-group-image-uploads" href\s*=\s*"[^"]*/listImageUploads\.do\?groupId=(\d+)"', page)
+    assert m, "the list of all groups has no link back to the login's own group's list"
+    r = s.get(BASE_URL + "/listImageUploads.do?groupId=" + m.group(1), timeout=TIMEOUT)
+    assert r.status_code == 200 and "image upload batches" in r.text
 
 
 # ---------- files not saved (image_upload_refused) ----------

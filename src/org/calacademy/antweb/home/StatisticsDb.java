@@ -45,38 +45,61 @@ museum
 */
 
 
-    public StatSet getExtantData() throws SQLException {
-      UtilDb utilDb = new UtilDb(getConnection());
-    
-      int extantValidSubfamilies = utilDb.getCount("taxon", "fossil = 0 and status = 'valid' and taxarank = 'subfamily'");
-      int extantValidGenera = utilDb.getCount("taxon", "fossil = 0 and status = 'valid' and taxarank = 'genus'");
-      int extantValidSpecies = utilDb.getCount("taxon", "fossil = 0 and status = 'valid' and taxarank = 'species'");
-      int extantValidSubspecies = utilDb.getCount("taxon", "fossil = 0 and status = 'valid' and taxarank = 'subspecies'");
-      
-      StatSet statSet = new StatSet("Extant");
-      statSet.set1("Valid Subfamiles", extantValidSubfamilies);
-      statSet.set2("Valid Genera", extantValidGenera);
-      statSet.set3("Valid Species", extantValidSpecies);
-      statSet.set4("Valid Subspecies", extantValidSubspecies);
+    /*
+     * Brian Fisher, 2026-10-22 (docs/numbers.md Q7): every table of statsPage.do counts ants only (Formicidae), as the
+     * place pages do, and species and subspecies only when identified to genus. The rule is
+     * PlaceTotals.validAntTaxonCondition, shared with the home page number (VALID_SPECIES_SQL) and the count check
+     * (NumberChecks stats.global, stats.bioregions, stats.museums, stats.nonants). Until 2026-10-22 these tables counted
+     * valid taxa of every family on the lists (B31).
+     */
+    static final String[] STAT_RANKS = {"subfamily", "genus", "species", "subspecies"};
 
-      return statSet;      
+    /** Global Data: valid ant taxa of the taxon table of one rank, extant (0) or fossil (1). */
+    public static String globalCountSql(String rank, int fossil) {
+        return "select count(*) from taxon t where " + PlaceTotals.validAntTaxonCondition("t", rank, fossil);
+    }
+
+    /** Bioregion and Museum Data: valid ant taxa of one rank on a list (parameter: the place's key). */
+    public static String listCountSql(String listTable, String keyColumn, String rank, int fossil) {
+        return "select count(*) from taxon t join " + listTable + " l on l.taxon_name = t.taxon_name where l." + keyColumn + " = ? and "
+            + PlaceTotals.validAntTaxonCondition("t", rank, fossil);
+    }
+
+    private int[] globalCounts(int fossil) throws SQLException {
+        UtilDb utilDb = new UtilDb(getConnection());
+        int[] n = new int[4];
+        for (int i = 0; i < 4; i++) n[i] = utilDb.getCount(globalCountSql(STAT_RANKS[i], fossil));
+        return n;
+    }
+
+    private int[] listCounts(String listTable, String keyColumn, String key, int fossil) throws SQLException {
+        int[] n = new int[4];
+        for (int i = 0; i < 4; i++) {
+            try (PreparedStatement stmt = getConnection().prepareStatement(listCountSql(listTable, keyColumn, STAT_RANKS[i], fossil))) {
+                stmt.setString(1, key);
+                try (ResultSet r = stmt.executeQuery()) {
+                    if (r.next()) n[i] = r.getInt(1);
+                }
+            }
+        }
+        return n;
+    }
+
+    private static StatSet statSet(String name, String prefix, int[] n) {
+        StatSet statSet = new StatSet(name);
+        statSet.set1(prefix + "Subfamiles", n[0]);
+        statSet.set2(prefix + "Genera", n[1]);
+        statSet.set3(prefix + "Species", n[2]);
+        statSet.set4(prefix + "Subspecies", n[3]);
+        return statSet;
+    }
+
+    public StatSet getExtantData() throws SQLException {
+      return statSet("Extant", "Valid ", globalCounts(0));
     }
 
     public StatSet getFossilData() throws SQLException {
-      UtilDb utilDb = new UtilDb(getConnection());
-
-      int fossilValidSubfamilies = utilDb.getCount("taxon", "fossil = 1 and status = 'valid' and taxarank = 'subfamily'");
-      int fossilValidGenera = utilDb.getCount("taxon", "fossil = 1 and status = 'valid' and taxarank = 'genus'");
-      int fossilValidSpecies = utilDb.getCount("taxon", "fossil = 1 and status = 'valid' and taxarank = 'species'");
-      int fossilValidSubspecies = utilDb.getCount("taxon", "fossil = 1 and status = 'valid' and taxarank = 'subspecies'");
-        
-      StatSet statSet = new StatSet("Fossil");
-      statSet.set1("Valid Subfamiles", fossilValidSubfamilies);
-      statSet.set2("Valid Genera", fossilValidGenera);
-      statSet.set3("Valid Species", fossilValidSpecies);
-      statSet.set4("Valid Subspecies", fossilValidSubspecies);
-
-      return statSet; 
+      return statSet("Fossil", "Valid ", globalCounts(1));
     }
 
 // Bioregion data
@@ -92,23 +115,7 @@ museum
     }
     
     public StatSet getBioregionData(Bioregion bioregion) throws SQLException {
-
-        A.log("getBioregionData() bioregion:" + bioregion);
-
-      UtilDb utilDb = new UtilDb(getConnection());
-
-      int extantValidSubfamilies = utilDb.getCount("select count(*) from taxon t, bioregion_taxon bt where t.taxon_name = bt.taxon_name and bioregion_name = '" + bioregion.getName() + "' and fossil = 0 and status = 'valid' and taxarank = 'subfamily'");
-      int extantValidGenera = utilDb.getCount("select count(*) from taxon t, bioregion_taxon bt where t.taxon_name = bt.taxon_name and bioregion_name = '" + bioregion.getName() + "' and fossil = 0 and status = 'valid' and taxarank = 'genus'");
-      int extantValidSpecies = utilDb.getCount("select count(*) from taxon t, bioregion_taxon bt where t.taxon_name = bt.taxon_name and bioregion_name = '" + bioregion.getName() + "' and fossil = 0 and status = 'valid' and taxarank = 'species'");
-      int extantValidSubspecies = utilDb.getCount("select count(*) from taxon t, bioregion_taxon bt where t.taxon_name = bt.taxon_name and bioregion_name = '" + bioregion.getName() + "' and fossil = 0 and status = 'valid' and taxarank = 'subspecies'");
-        
-      StatSet statSet = new StatSet(bioregion.getName());
-      statSet.set1("Subfamiles", extantValidSubfamilies);
-      statSet.set2("Genera", extantValidGenera);
-      statSet.set3("Species", extantValidSpecies);
-      statSet.set4("Subspecies", extantValidSubspecies);
-
-      return statSet;
+      return statSet(bioregion.getName(), "", listCounts("bioregion_taxon", "bioregion_name", bioregion.getName(), 0));
     }
 
 // --- Museum Data ---
@@ -123,20 +130,7 @@ museum
     }
     
     public StatSet getExtantMuseumData(Museum museum) throws SQLException {
-      UtilDb utilDb = new UtilDb(getConnection());
-
-      int extantValidSubfamilies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 0 and status = 'valid' and taxarank = 'subfamily'");
-      int extantValidGenera = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 0 and status = 'valid' and taxarank = 'genus'");
-      int extantValidSpecies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 0 and status = 'valid' and taxarank = 'species'");
-      int extantValidSubspecies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 0 and status = 'valid' and taxarank = 'subspecies'");
-        
-      StatSet statSet = new StatSet(museum.getCode());
-      statSet.set1("Subfamiles", extantValidSubfamilies);
-      statSet.set2("Genera", extantValidGenera);
-      statSet.set3("Species", extantValidSpecies);
-      statSet.set4("Subspecies", extantValidSubspecies);
-
-      return statSet;
+      return statSet(museum.getCode(), "", listCounts("museum_taxon", "code", museum.getCode(), 0));
     }
 
     public ArrayList<StatSet> getFossilMuseumData() throws SQLException {
@@ -150,37 +144,11 @@ museum
     }
 
     public StatSet getFossilMuseumData(Museum museum) throws SQLException {
-      UtilDb utilDb = new UtilDb(getConnection());
-
-      int extantValidSubfamilies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subfamily'");
-      int extantValidGenera = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'genus'");
-      int extantValidSpecies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'species'");
-      int extantValidSubspecies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subspecies'");
-        
-      StatSet statSet = new StatSet(museum.getCode());
-      statSet.set1("Valid Subfamiles", extantValidSubfamilies);
-      statSet.set2("Valid Genera", extantValidGenera);
-      statSet.set3("Valid Species", extantValidSpecies);
-      statSet.set4("Valid Subspecies", extantValidSubspecies);
-
-      return statSet;
+      return statSet(museum.getCode(), "Valid ", listCounts("museum_taxon", "code", museum.getCode(), 1));
     }
 
     public StatSet getImageData(Museum museum) throws SQLException {
-      UtilDb utilDb = new UtilDb(getConnection());
-
-      int extantValidSubfamilies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subfamily'");
-      int extantValidGenera = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'genus'");
-      int extantValidSpecies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'species'");
-      int extantValidSubspecies = utilDb.getCount("select count(*) from taxon t, museum_taxon mt where t.taxon_name = mt.taxon_name and code = '" + museum.getCode() + "' and fossil = 1 and status = 'valid' and taxarank = 'subspecies'");
-        
-      StatSet statSet = new StatSet(museum.getCode());
-      statSet.set1("Valid Subfamiles", extantValidSubfamilies);
-      statSet.set2("Valid Genera", extantValidGenera);
-      statSet.set3("Valid Species", extantValidSpecies);
-      statSet.set4("Valid Subspecies", extantValidSubspecies);
-
-      return statSet;
+      return getFossilMuseumData(museum);   // not used; was a copy of getFossilMuseumData
     }
 
 
@@ -364,20 +332,57 @@ museum
     /** Specimen codes with an image of the ant, each once (alias x, column image_of_id). */
     static final String ANT_IMAGED = "(select i.image_of_id from image i where " + ANT_IMAGE + " group by i.image_of_id) x";
 
+    /**
+     * "Imaged" for a name (Brian Fisher, 2026-10-22, docs/numbers.md Q6, Q12): a specimen filed under the name, anywhere
+     * in AntWeb, has a photo of the ant; label photos do not count, so a name with only label photos is unimaged. Used by
+     * taxonomicPage.do?isImaged=false (TaxaPage.findUnimaged) and, in Python, by the API's /unimagedGeolocaleTaxa
+     * (imagedTaxaSql in api/v3.1/api.py). Returns the names of the given ones that are imaged.
+     */
+    public static java.util.Set<String> antImagedNames(Connection connection, java.util.Collection<String> names) throws SQLException {
+        java.util.Set<String> imaged = new java.util.HashSet<>();
+        java.util.List<String> all = new java.util.ArrayList<>(names);
+        for (int from = 0; from < all.size(); from += 500) {
+            java.util.List<String> part = all.subList(from, Math.min(all.size(), from + 500));
+            StringBuilder in = new StringBuilder();
+            for (int i = 0; i < part.size(); i++) in.append(i == 0 ? "?" : ", ?");
+            try (PreparedStatement stmt = connection.prepareStatement(ANT_IMAGED_NAMES_SQL + " and s.taxon_name in (" + in + ")")) {
+                for (int i = 0; i < part.size(); i++) stmt.setString(i + 1, part.get(i));
+                try (ResultSet r = stmt.executeQuery()) {
+                    while (r.next()) imaged.add(r.getString(1));
+                }
+            }
+        }
+        return imaged;
+    }
+
+    /** Names with a photo of the ant anywhere in AntWeb (antImagedNames; add "and s.taxon_name in (...)"). */
+    public static final String ANT_IMAGED_NAMES_SQL = "select distinct s.taxon_name from specimen s join image i on i.image_of_id = s.code where " + ANT_IMAGE;
+
     /** Home and statsPage "specimens imaged". */
     public static final String IMAGED_SPECIMENS_SQL = "select count(*) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id";
 
     /** Home and statsPage "species + ssp. imaged": valid, morpho or indetermined (counted statuses), as the statsPage text says. */
     public static final String IMAGED_SPECIES_SQL = "select count(distinct s.taxon_name) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id"
         + " join taxon t on t.taxon_name = s.taxon_name where t.taxarank in ('species', 'subspecies')"
-        + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')";
+        + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')" + PlaceTotals.ANTS   // Q7 2026-10-22: ants only
+        + " and " + PlaceTotals.identifiedToGenus("t");   // 2026-10-22: names not identified to genus are not species
 
     /** statistics.valid_species_imaged. */
     public static final String VALID_SPECIES_IMAGED_SQL = "select count(distinct s.taxon_name) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id"
-        + " join taxon t on t.taxon_name = s.taxon_name where t.taxarank in ('species', 'subspecies') and t.status = 'valid'";
+        + " join taxon t on t.taxon_name = s.taxon_name where " + PlaceTotals.validAntSpeciesCondition("t");   // Q7 2026-10-22: ants only
 
-    /** Home "valid species + ssp." (statistics.extant_taxa). */
-    public static final String VALID_SPECIES_SQL = "select count(taxon_name) from taxon where status = 'valid' and taxarank in ('species', 'subspecies')";
+    /** Home "valid species + ssp." (statistics.extant_taxa): valid ant species and subspecies, identified to genus, fossils
+     *  included (2026-10-22, Q7: was valid species and subspecies of every family). */
+    public static final String VALID_SPECIES_SQL = "select count(*) from taxon t where " + PlaceTotals.validAntSpeciesCondition("t");
+
+    /** The rules before 2026-10-22 (Q7, every family), only so the count check can tell a number written before the change
+     *  (pending until the next nightly run) from a wrong one. */
+    public static final String VALID_SPECIES_SQL_BEFORE_Q7 = "select count(*) from taxon where status = 'valid' and taxarank in ('species', 'subspecies')";
+    public static final String IMAGED_SPECIES_SQL_BEFORE_Q7 = "select count(distinct s.taxon_name) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id"
+        + " join taxon t on t.taxon_name = s.taxon_name where t.taxarank in ('species', 'subspecies')"
+        + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') and " + PlaceTotals.identifiedToGenus("t");
+    public static final String VALID_SPECIES_IMAGED_SQL_BEFORE_Q7 = "select count(distinct s.taxon_name) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id"
+        + " join taxon t on t.taxon_name = s.taxon_name where t.taxarank in ('species', 'subspecies') and t.status = 'valid'";
 
     public void populateStatistics(String action, int loginId, String execTime, String docBase)
             throws SQLException, IOException {
@@ -455,10 +460,13 @@ museum
                 // here write out the results
                 //outFile.write("number of types imaged: " + imagedTypes + "<br>\n");
             
-                outFile.write("<span class=\"numbers\">" + validSpecies + "</span> valid species + ssp.<br/>\n");
+                // Each number explains itself on hover (Brian Fisher: every page explains its numbers; statsPage.do says more).
+                outFile.write("<span class=\"numbers\" title=\"Valid ant (Formicidae) species and subspecies, fossils included; names not identified to genus are not counted\">"
+                    + validSpecies + "</span> valid species + ssp.<br/>\n");
                 //outFile.write("<span class=\"numbers\">" + numberTotalTaxa + "</span> total species + ssp.<br/>\n");            
                 outFile.write("<span class=\"numbers\">" + specimenRecords + "</span> specimen records<br/>\n");
-                outFile.write("<span class=\"numbers\">" + imagedSpecies + "</span> species + ssp. imaged <br/>\n");
+                outFile.write("<span class=\"numbers\" title=\"Ant species and subspecies (valid, morpho or indetermined) with a photo of the ant; label photos do not count\">"
+                    + imagedSpecies + "</span> species + ssp. imaged <br/>\n");
                 outFile.write("<span class=\"numbers\">" + imagedSpecimens + "</span> specimens imaged<br/>\n");
                 outFile.write("<span class=\"numbers\">" + totalImages + "</span> total specimen images<br/>\n");
 

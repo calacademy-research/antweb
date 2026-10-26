@@ -22,6 +22,7 @@
 
     boolean isWithSpecimen = false;
     boolean isOnlyShowUnImaged = false;    
+    java.util.Set<String> unimagedNames = null;   // taxonomicPage.do?isImaged=false only (Q12)
 %>
 
 <%@ include file="/taxonReportBody.jsp" %>

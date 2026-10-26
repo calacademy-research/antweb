@@ -155,6 +155,8 @@
   org.calacademy.antweb.home.PlaceImageCountDb.PlaceImages placeImages =
       (org.calacademy.antweb.home.PlaceImageCountDb.PlaceImages) request.getAttribute("placeImages");
   boolean isProjectOverview = (overview instanceof Project);
+  // Port of Entry (Brian Fisher, 2026-10-22): a species list only, without specimen and image numbers (Project.isSpeciesListOnly).
+  boolean isSpeciesListOnly = isProjectOverview && ((Project) overview).isSpeciesListOnly();
   String georank = isGeolocale ? geolocale.getGeorank() : null;
   boolean isListOnlyPlace = isGeolocale && geolocale.isCountedFromCountries();   // region or subregion
   String placeWord = "place";
@@ -197,15 +199,15 @@
       String bn = ((Bioregion) overview).getName();
       if (overview.getEndemicSpeciesCount() > 0) endemicCell = "<a href='" + AntwebProps.getDomainApp() + "/endemic.do?bioregionName=" + bn + "'>" + endemicCell + "</a>";
       if (overview.getIntroducedSpeciesCount() > 0) introducedCell = "<a href='" + AntwebProps.getDomainApp() + "/introduced.do?bioregionName=" + bn + "'>" + introducedCell + "</a>";
-      endemicDef = "Species and subspecies, including morphospecies, recorded for this bioregion and no other bioregion in AntWeb. Excludes fossils. Endemism is calculated from AntWeb records only.";
+      endemicDef = "Species and subspecies, including morphospecies, recorded for this bioregion and no other bioregion in AntWeb. Excludes fossils and names not identified to genus. Endemism is calculated from AntWeb records only.";
       introducedDef = "Species introduced by humans that are not native to this bioregion, based on AntWeb's " + introducedListLink + ".";
     } else {
       int gid = ((Geolocale) overview).getId();
       if (overview.getEndemicSpeciesCount() > 0) endemicCell = "<a href='" + AntwebProps.getDomainApp() + "/endemic.do?geolocaleId=" + gid + "'>" + endemicCell + "</a>";
       if (overview.getIntroducedSpeciesCount() > 0) introducedCell = "<a href='" + AntwebProps.getDomainApp() + "/introduced.do?geolocaleId=" + gid + "'>" + introducedCell + "</a>";
       endemicDef = isAdm1
-        ? "Named species and subspecies recorded for this state or province and no other state or province in AntWeb. Excludes morphospecies and fossils. Endemism is calculated from AntWeb records only."
-        : "Named species and subspecies recorded for this country and no other country in AntWeb. Excludes morphospecies and fossils. Endemism is calculated from AntWeb records only.";
+        ? "Named species and subspecies recorded for this state or province and no other state or province in AntWeb. Excludes morphospecies, fossils and names not identified to genus. Endemism is calculated from AntWeb records only."
+        : "Named species and subspecies recorded for this country and no other country in AntWeb. Excludes morphospecies, fossils and names not identified to genus. Endemism is calculated from AntWeb records only.";
       introducedDef = "Species introduced by humans that are not native to this " + pw + "'s bioregion, based on AntWeb's " + introducedListLink + ".";
     }
   }
@@ -237,12 +239,12 @@
     specimenListLink += "<br>Names of all specimens collected here, including those not on the list: <a id=\"specimen-taxa-link\" href=\"" + Html.escAttr(specimenTaxaUrl) + "\">Show Specimen Taxa</a>.";
   }
 %>
-<div id="place-stats"<% if (placeImages != null) { %> data-images="<%= placeImages.allImages %>" data-ant="<%= placeImages.antImages %>" data-labels="<%= placeImages.labelImages() %>" data-imaged="<%= placeImages.imagedSpecimens %>" data-label-only="<%= placeImages.labelOnlySpecimens %>"<% } %>>
+<div id="place-stats"<% if (placeImages != null && !isSpeciesListOnly) { %> data-images="<%= placeImages.allImages %>" data-ant="<%= placeImages.antImages %>" data-labels="<%= placeImages.labelImages() %>" data-imaged="<%= placeImages.imagedSpecimens %>" data-label-only="<%= placeImages.labelOnlySpecimens %>"<% } %>>
 <table class="place_stats">
 <tr class="ps_head"><th colspan="3">Taxonomic diversity</th></tr>
 <tr data-stat="subfamilies" data-n="<%= overview.getSubfamilyCount() %>"><td class="ps_name">Subfamilies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getSubfamilyCount()) %></td><td class="ps_def">Subfamilies recorded on <%= listName %>.</td></tr>
 <tr data-stat="genera" data-n="<%= overview.getGenusCount() %>"><td class="ps_name">Genera</td><td class="ps_num"><%= Formatter.commaFormat(overview.getGenusCount()) %></td><td class="ps_def">Genera recorded on <%= listName %>.</td></tr>
-<tr data-stat="species" data-n="<%= overview.getSpeciesCount() %>"><td class="ps_name">Species / subspecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">All species and subspecies recorded on <%= listName %>, from any source, including valid names, morphospecies, and unidentified taxa.</td></tr>
+<tr data-stat="species" data-n="<%= overview.getSpeciesCount() %>"><td class="ps_name">Species / subspecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">All species and subspecies recorded on <%= listName %>, from any source, including valid names, morphospecies, and indetermined species. Names not identified to genus are not counted as species; their specimens are counted under Specimens.</td></tr>
 <% if (overview.getValidSpeciesCount() > 0) { %>
 <tr data-stat="valid" data-n="<%= overview.getValidSpeciesCount() %>"><td class="ps_name">Valid species / subspecies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getValidSpeciesCount()) %></td><td class="ps_def">Currently valid, formally named, living (non-fossil) species and subspecies recorded on <%= listName %>. Excludes morphospecies and unidentified taxa.</td></tr>
 <% } %>
@@ -251,6 +253,10 @@
 <tr data-stat="endemic" data-n="<%= overview.getEndemicSpeciesCount() %>"><td class="ps_name">Endemic</td><td class="ps_num"><%= endemicCell %></td><td class="ps_def"><%= endemicDef %></td></tr>
 <tr data-stat="introduced" data-n="<%= overview.getIntroducedSpeciesCount() %>"><td class="ps_name">Introduced</td><td class="ps_num"><%= introducedCell %></td><td class="ps_def"><%= introducedDef %></td></tr>
 <% } %>
+<% if (isSpeciesListOnly) { %>
+<tr class="ps_head"><th colspan="3">About this list</th></tr>
+<tr data-stat="species-list-only"><td colspan="3" class="ps_def" id="port-of-entry-note">These are ant species that have been intercepted at ports of entry (for example in cargo or plant shipments). They are not established introductions, and they are not counted in any place total or in the introduced species list. This page lists the species only; it shows no specimen or image numbers.</td></tr>
+<% } else { %>
 <tr class="ps_head"><th colspan="3">Specimen holdings</th></tr>
 <tr data-stat="specimens" data-n="<%= overview.getSpecimenCount() %>"><td class="ps_name">Specimens</td><td class="ps_num"><%= Formatter.commaFormat(overview.getSpecimenCount()) %></td><td class="ps_def"><%= specimensFullDef %><% if (specimenListLink != null) { %><br><%= specimenListLink %><% } %></td></tr>
 <% if (placeImages != null) { %>
@@ -266,6 +272,7 @@
 <tr class="ps_head"><th colspan="3">Image documentation</th></tr>
 <tr data-stat="images" data-n="<%= imagesShown %>"><td class="ps_name">Images</td><td class="ps_num"><%= Formatter.commaFormat(imagesShown) %></td><td class="ps_def">Images of these specimens, labels included (the breakdown appears after tonight's update).</td></tr>
 <% } %>
+<% } // not a species list only %>
 </table>
 </div>
 <style>
@@ -443,7 +450,7 @@ if (!HttpUtil.isOffline()) {
 <%
    jsonData = overview.getSpecimenSubfamilyDistJson();
    //AntwebUtil.log("overview-body.jsp 2 jsonData:" + jsonData);
-   if (jsonData != null && !"".equals(jsonData)) {
+   if (jsonData != null && !"".equals(jsonData) && !isSpeciesListOnly) {
    
      String title = "Specimens per Subfamily 'Pie Chart'";
      String subtitle = ""; //Distribution of Specimen";

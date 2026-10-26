@@ -42,7 +42,10 @@ public class CountInvariantsTest extends TestCase {
 
     /** The invariants only (no recount), with the last nightly run long after the test data was written. */
     private CountCheck.Result run(boolean rulesCounted) throws Exception {
-        return new CountCheck(connection).run(new ArrayList<>(), new ArrayList<>(), 0, Timestamp.valueOf("2021-01-01 08:15:00"),
+        CountCheck check = new CountCheck(connection);
+        check.curatorNumbers = curatorNumbers();
+        check.artistNumbers = artistNumbers();
+        return check.run(new ArrayList<>(), new ArrayList<>(), 0, Timestamp.valueOf("2021-01-01 08:15:00"),
             true, rulesCounted, true, null);
     }
 
@@ -84,7 +87,7 @@ public class CountInvariantsTest extends TestCase {
         exec("update geolocale set valid_species_count = 0 where id = " + MADAGASCAR);               // never recounted
         exec("update project set specimen_count = 4 where project_name = 'madants'");                 // a day behind its list
         exec("update museum set subfamily_count = 2 where code = 'CASC'");
-        exec("update geolocale set endemic_species_count = 3 where id = " + MADAGASCAR);             // off by one
+        exec("update geolocale set endemic_species_count = 4 where id = " + MADAGASCAR);             // off by one
         exec("update bioregion set specimen_subfamily_dist_json = '{\"label\": \"Myrmicinae\",\"value\": 900,\"color\": \"#999999\"}'");
         exec("update museum set imaged_specimen_count = 9 where code = 'MCZC'");                     // more imaged than images
         exec("update place_image_count set image_count = 5 where place_key = '" + MADAGASCAR + "' and shot_type = '*all'");
@@ -134,7 +137,7 @@ public class CountInvariantsTest extends TestCase {
     }
 
     public void testNewImagesMakeImageNumbersPending() throws Exception {
-        exec("insert into image values (9, 'casent2', 'h', now())");
+        exec("insert into image (id, image_of_id, shot_type, upload_date) values (9, 'casent2', 'h', now())");
         exec("update specimen set image_count = 1 where code = 'casent2'");
         CountCheck.Result r = run(true);
         assertEquals(list(r), 0, r.real());
@@ -176,7 +179,7 @@ public class CountInvariantsTest extends TestCase {
     /** Staging, 2026-10-21: an invariant could not run. Keys differ in case between tables; old rows have zero dates. */
     public void testStagingDataCaseAndZeroDates() throws Exception {
         exec("update image set image_of_id = 'CASENT1' where image_of_id = 'casent1'");   // as in image, the code in capitals
-        exec("insert into image values (30, 'CASENT9', 'h', " + "'2020-01-01 10:00:00')");   // an orphan image (no specimen)
+        exec("insert into image (id, image_of_id, shot_type, upload_date) values (30, 'CASENT9', 'h', " + "'2020-01-01 10:00:00')");   // an orphan image (no specimen)
         exec("update museum_taxon set code = 'casc' where code = 'CASC'");
         exec("update specimen set museum = 'casc ' where museum = 'CASC'");
         exec("set session sql_mode = ''");

@@ -20,7 +20,8 @@ import org.calacademy.antweb.home.SpecimenUploadDb;
  * transaction then committed without it. These tests use the production table definition and
  * sql_mode (STRICT_TRANS_TABLES, docker/mysql/mysql.cnf):
  *  - the old statement fails for a group name with a quote or longer than the column (the cause);
- *  - the new insert writes the row for any group name (cut to 64 characters), in the caller's
+ *  - the new insert writes the row for any group name (cut to the column: 100 characters, the width of
+ *    upload.group_name since db/upgrade/8.115/2026-10-23, as ant_group.name; 64 before), in the caller's
  *    transaction, refuses file names longer than the column (links), and throws when it cannot
  *    write the row (the upload then rolls back).
  * The test drops and recreates the table upload, and refuses to run on a database whose upload
@@ -32,9 +33,10 @@ public class UploadRecordDbTest extends TestCase {
 
     private Connection connection;
 
-    // The production table (db/upgrade 4.64, 7.9, 8.56, 8.70), utf8mb3 as in production.
+    // The production table (db/upgrade 4.64, 7.9, 8.56, 8.70, and group_name widened from 64 to 100 by
+    // 8.115/2026-10-23-drop-old-tables-widen-group-name.sql), utf8mb3 as in production.
     static final String CREATE = "create table upload ("
-        + " id int NOT NULL AUTO_INCREMENT, login_id int NOT NULL, group_name varchar(64) NOT NULL,"
+        + " id int NOT NULL AUTO_INCREMENT, login_id int NOT NULL, group_name varchar(100) NOT NULL,"
         + " group_id int NOT NULL, log_file_name varchar(64) NOT NULL,"
         + " created timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, upload_id int,"
         + " specimens int, collections int, subfamilies int, genera int, species int, ungeoreferenced int,"
@@ -114,8 +116,14 @@ public class UploadRecordDbTest extends TestCase {
 
     static final String LONG_NAME = "Universidade Federal de Viçosa - Museu Regional de Entomologia (UFVB) d'Ouro";
 
+    /** Longer than upload.group_name (100) and ant_group.name. */
+    static final String TOO_LONG_NAME = LONG_NAME + " - Coleção Entomológica do Departamento de Biologia Animal";
+
     public void testTheOldStatementLostTheRow() throws Exception {
-        assertTrue(LONG_NAME.length() > SpecimenUploadDb.UPLOAD_TEXT_WIDTH);
+        // the table as it was until 2026-10-23 (group_name varchar(64))
+        exec("drop table upload");
+        exec(CREATE.replace("group_name varchar(100)", "group_name varchar(64)"));
+        assertTrue(LONG_NAME.length() > 64);
         for (String name : new String[] {"Museu d'Entomologia", "Universidade Federal de Viçosa e Museu Regional de Entomologia UFVB"}) {
             try {
                 exec(oldInsert(2254, name));
@@ -125,9 +133,15 @@ public class UploadRecordDbTest extends TestCase {
             }
         }
         assertEquals(0, count("upload_id = 2254"));
+
+        // the new code on a column still 64 wide (deployed before the upgrade file ran): cut to 64, the row is written
+        assertEquals(64, SpecimenUploadDb.groupNameWidth(connection));
+        SpecimenUploadDb.insertUploadRow(connection, 2259, 9, 57, LONG_NAME, "w.html", null);
+        assertEquals(LONG_NAME.substring(0, 64), groupNameOf(2259));
     }
 
     public void testRowWrittenForAnyGroupName() throws Exception {
+        assertEquals(100, SpecimenUploadDb.groupNameWidth(connection));
         SpecimenUploadDb.insertUploadRow(connection, 2254, 9, 57, "Universidade Federal de Viçosa",
             "20261021-11:28:00-specimenUpload.html", "upload/20261021-11:31:20-specimen57.txt");
         assertEquals(1, count("upload_id = 2254 and group_id = 57 and login_id = 9"
@@ -143,9 +157,13 @@ public class UploadRecordDbTest extends TestCase {
         }
         assertEquals(0, count("upload_id = 2257"));
 
+        // a group name longer than 64 (group 57's has 81 characters) is stored whole since the column is 100 wide
         SpecimenUploadDb.insertUploadRow(connection, 2255, 9, 58, LONG_NAME, "x.html", null);
-        assertEquals(LONG_NAME.substring(0, SpecimenUploadDb.UPLOAD_TEXT_WIDTH), groupNameOf(2255));
+        assertEquals(LONG_NAME, groupNameOf(2255));
         assertEquals(1, count("upload_id = 2255 and backup_dir_file is null"));
+
+        SpecimenUploadDb.insertUploadRow(connection, 2258, 9, 58, TOO_LONG_NAME, "z.html", null);
+        assertEquals(TOO_LONG_NAME.substring(0, SpecimenUploadDb.GROUP_NAME_WIDTH), groupNameOf(2258));
 
         SpecimenUploadDb.insertUploadRow(connection, 2256, 9, 59, "Ants 🐜 of Kenya", "y.html", "upload/y.txt");
         assertEquals("Ants ? of Kenya", groupNameOf(2256));
@@ -164,6 +182,7 @@ public class UploadRecordDbTest extends TestCase {
     public void testFailureIsThrownNotLogged() throws Exception {
         exec("drop table upload");
         exec("create table upload (id int NOT NULL AUTO_INCREMENT, upload_id int, PRIMARY KEY (id))");
+        assertEquals("no group_name column: the old width", 64, SpecimenUploadDb.groupNameWidth(connection));
         try {
             SpecimenUploadDb.insertUploadRow(connection, 4001, 9, 57, "G", "c.html", "upload/c.txt");
             fail("no exception although the row could not be written");
@@ -180,7 +199,11 @@ public class UploadRecordDbTest extends TestCase {
     public void testFit() {
         assertNull(SpecimenUploadDb.fit(null));
         assertEquals("", SpecimenUploadDb.fit(""));
-        assertEquals(SpecimenUploadDb.UPLOAD_TEXT_WIDTH, SpecimenUploadDb.fit(LONG_NAME).length());
+        assertEquals(100, SpecimenUploadDb.GROUP_NAME_WIDTH);
+        assertEquals(LONG_NAME, SpecimenUploadDb.fit(LONG_NAME));
+        assertTrue(TOO_LONG_NAME.length() > SpecimenUploadDb.GROUP_NAME_WIDTH);
+        assertEquals(SpecimenUploadDb.GROUP_NAME_WIDTH, SpecimenUploadDb.fit(TOO_LONG_NAME).length());
+        assertEquals(LONG_NAME.substring(0, 64), SpecimenUploadDb.fit(LONG_NAME, 64));
         assertEquals("Viçosa", SpecimenUploadDb.fit("Viçosa"));
     }
 }

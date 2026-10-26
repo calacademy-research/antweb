@@ -1,4 +1,6 @@
-"""API v3.1 counts (api/v3.1/api.py), 2026-10-21: /unimagedGeolocaleTaxa; 2026-10-22: /images records and counts.
+"""API v3.1 counts (api/v3.1/api.py), 2026-10-21: /unimagedGeolocaleTaxa; 2026-10-22: /images (B29: no specimen
+when nothing is found, every specimen under specimenCode) and /geoSpeciesStats (B30: ergatoid queens and ergatoid
+males counted apart).
 
 A taxon is imaged when one of its specimens has an image of the ant, that is an image whose shot type is
 not 'l' (label). Before, the endpoint used specimen.image_count > 1: a taxon whose specimens had exactly
@@ -55,47 +57,26 @@ def test_endpoint_uses_the_rule():
     assert source.count("imagedTaxaSql(") == 3, source
 
 
-class _ImageRow:
-    def __init__(self, image_id, code, shot, number):
-        self.id, self.code, self.shotType, self.shotNumber = image_id, code, shot, number
-        self.uploadDate, self.hasTiff = "2026-10-01", 0
+class _Image:
+    def __init__(self, id, code, shot):
+        self.id, self.code, self.shotType, self.shotNumber, self.uploadDate, self.hasTiff = id, code, shot, 1, None, 0
 
 
-class _Query:
-    """Stands in for session.query(Image): filters and paging return itself, all() the rows."""
-    def __init__(self, rows):
-        self.rows = rows
-
-    def filter(self, *args):
-        return self
-
-    def limit(self, n):
-        return self
-
-    def offset(self, n):
-        return self
-
-    def all(self):
-        return self.rows
+def test_images_of_nothing_are_no_specimen():
+    assert api.imagesBySpecimen([]) == ([], 0, 0), api.imagesBySpecimen([])
 
 
-def test_images_records_are_keyed_by_specimen_code():
-    """/images groups the image rows by specimen; every record names its specimen as specimenCode (every
-    record but the last was keyed 'spefimenCode' until 2026-10-22). metaData: count = image rows,
-    specimenCount = records."""
-    rows = [_ImageRow(1, "casent0000001", "h", 1), _ImageRow(2, "casent0000001", "p", 1),
-            _ImageRow(3, "casent0000002", "h", 1), _ImageRow(4, "casent0000003", "d", 2)]
-    real = api.session.query
-    api.session.query = lambda *a, **k: _Query(rows)
-    try:
-        body = api.application.test_client().get("/images?up=1").get_json()
-    finally:
-        api.session.query = real
-    records = body["images"]
-    assert [r.get("specimenCode") for r in records] == ["casent0000001", "casent0000002", "casent0000003"], records
-    assert all("spefimenCode" not in r for r in records), records
-    assert [len(r["images"]) for r in records] == [2, 1, 1], records
-    assert body["metaData"]["count"] == 4 and body["metaData"]["specimenCount"] == 3, body["metaData"]
+def test_images_are_grouped_by_specimen():
+    data, specimens, images = api.imagesBySpecimen([_Image(1, 'a', 'h'), _Image(2, 'a', 'p'), _Image(3, 'b', 'h')])
+    assert (specimens, images) == (2, 3), (specimens, images)
+    assert [d.get('specimenCode') for d in data] == ['a', 'b'], data
+    assert [len(d['images']) for d in data] == [2, 1]
+
+
+def test_geo_species_stats_counts_ergatoids_of_their_caste():
+    source = inspect.getsource(api.getGeoSpeciesStats)
+    assert "caste='queen' and subcaste='ergatoid'" in source and "caste='male' and subcaste='ergatoid'" in source
+    assert "count(case when subcaste='ergatoid'" not in source
 
 
 if __name__ == "__main__":

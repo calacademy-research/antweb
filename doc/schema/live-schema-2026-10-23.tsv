@@ -3,13 +3,6 @@ admin_alerts	id	int	BASE TABLE
 admin_alerts	alert	varchar(1000)	BASE TABLE
 admin_alerts	acknowledged	tinyint	BASE TABLE
 admin_alerts	created	timestamp	BASE TABLE
-afro_types_tmp	antcat_id	int	BASE TABLE
-afro_types_tmp	valid_genus	varchar(64)	BASE TABLE
-afro_types_tmp	valid_species	varchar(64)	BASE TABLE
-afro_types_tmp	valid_subspecies	varchar(64)	BASE TABLE
-afro_types_tmp	description_year	smallint	BASE TABLE
-afro_types_tmp	type_country	varchar(128)	BASE TABLE
-afro_types_tmp	multi_country_types	tinyint	BASE TABLE
 ancillary	id	int	BASE TABLE
 ancillary	title	varchar(80)	BASE TABLE
 ancillary	fileName	varchar(80)	BASE TABLE
@@ -157,11 +150,6 @@ artist	name	text	BASE TABLE
 artist	created	timestamp	BASE TABLE
 artist	active	tinyint	BASE TABLE
 artist	curator_id	int	BASE TABLE
-artist_copy	uid	int	BASE TABLE
-artist_copy	artist	text	BASE TABLE
-artist_copy	created	timestamp	BASE TABLE
-artist_copy	active	tinyint	BASE TABLE
-artist_copy	artist_orig	text	BASE TABLE
 artist_group	artist_id	int	BASE TABLE
 artist_group	group_id	int	BASE TABLE
 background_job	id	int	BASE TABLE
@@ -264,50 +252,6 @@ darwin_core_2	verbatimEventDate	varchar(41)	VIEW
 darwin_core_2	minimumElevationInMeters	int	VIEW
 darwin_core_2	biogeographicregion	varchar(64)	VIEW
 darwin_core_2	antweb_taxon_name	varchar(128)	VIEW
-darwin_core_2_test	occurrenceId	varchar(139)	VIEW
-darwin_core_2_test	ownerInstitutionCode	varchar(128)	VIEW
-darwin_core_2_test	basisOfRecord	varchar(18)	VIEW
-darwin_core_2_test	institutionCode	varchar(3)	VIEW
-darwin_core_2_test	collectionCode	varchar(6)	VIEW
-darwin_core_2_test	catalogNumber	varchar(128)	VIEW
-darwin_core_2_test	dcterms:modified	datetime	VIEW
-darwin_core_2_test	nomenclaturalCode	varchar(4)	VIEW
-darwin_core_2_test	kingdom	varchar(64)	VIEW
-darwin_core_2_test	phylum	varchar(64)	VIEW
-darwin_core_2_test	class	varchar(64)	VIEW
-darwin_core_2_test	order	varchar(64)	VIEW
-darwin_core_2_test	family	varchar(65)	VIEW
-darwin_core_2_test	subfamily	varchar(64)	VIEW
-darwin_core_2_test	genus	varchar(64)	VIEW
-darwin_core_2_test	subgenus	varchar(64)	VIEW
-darwin_core_2_test	specificEpithet	varchar(64)	VIEW
-darwin_core_2_test	intraspecificEpithet	varchar(64)	VIEW
-darwin_core_2_test	scientific_name	varchar(129)	VIEW
-darwin_core_2_test	higherClassification	varchar(455)	VIEW
-darwin_core_2_test	typeStatus	varchar(512)	VIEW
-darwin_core_2_test	stateProvince	varchar(128)	VIEW
-darwin_core_2_test	country	varchar(64)	VIEW
-darwin_core_2_test	decimalLatitude	double	VIEW
-darwin_core_2_test	decimalLongitude	double	VIEW
-darwin_core_2_test	georeferenceRemarks	varchar(128)	VIEW
-darwin_core_2_test	dateIdentified	varchar(20)	VIEW
-darwin_core_2_test	dateCollected	varchar(20)	VIEW
-darwin_core_2_test	habitat	text	VIEW
-darwin_core_2_test	recordedBy	varchar(256)	VIEW
-darwin_core_2_test	samplingProtocol	varchar(256)	VIEW
-darwin_core_2_test	sex	varchar(128)	VIEW
-darwin_core_2_test	preparations	varchar(80)	VIEW
-darwin_core_2_test	fieldNumber	varchar(128)	VIEW
-darwin_core_2_test	identifiedBy	varchar(80)	VIEW
-darwin_core_2_test	locality	text	VIEW
-darwin_core_2_test	locationRemarks	text	VIEW
-darwin_core_2_test	occurrenceRemarks	text	VIEW
-darwin_core_2_test	fieldNotes	text	VIEW
-darwin_core_2_test	eventDate	varchar(41)	VIEW
-darwin_core_2_test	verbatimEventDate	varchar(41)	VIEW
-darwin_core_2_test	minimumElevationInMeters	int	VIEW
-darwin_core_2_test	biogeographicregion	varchar(64)	VIEW
-darwin_core_2_test	antweb_taxon_name	varchar(128)	VIEW
 darwin_core_3	occurrenceId	varchar(139)	VIEW
 darwin_core_3	specimen_code	varchar(128)	VIEW
 darwin_core_3	taxon_name	varchar(128)	VIEW
@@ -370,11 +314,6 @@ darwin_core_multimedia	title	varchar(153)	VIEW
 darwin_core_multimedia	license	text	VIEW
 darwin_core_multimedia	rightsHolder	mediumtext	VIEW
 darwin_core_multimedia	creator	mediumtext	VIEW
-description	taxon_name	varchar(128)	BASE TABLE
-description	title	varchar(32)	BASE TABLE
-description	content	longtext	BASE TABLE
-description	rankfocus	varchar(32)	BASE TABLE
-description	proj_name	varchar(32)	BASE TABLE
 description_edit	taxon_name	varchar(128)	BASE TABLE
 description_edit	title	varchar(32)	BASE TABLE
 description_edit	content	longtext	BASE TABLE
@@ -421,12 +360,6 @@ event	operation	varchar(64)	BASE TABLE
 event	curator_id	int	BASE TABLE
 event	name	varchar(64)	BASE TABLE
 event	created	timestamp	BASE TABLE
-favorite_images	taxon_name	varchar(128)	BASE TABLE
-favorite_images	specimen	varchar(128)	BASE TABLE
-favorite_images	project_name	varchar(32)	BASE TABLE
-favorite_images	created	timestamp	BASE TABLE
-favorite_images	access_group	int	BASE TABLE
-favorite_images	access_login	int	BASE TABLE
 geolocale	id	int	BASE TABLE
 geolocale	name	varchar(250)	BASE TABLE
 geolocale	georank	varchar(20)	BASE TABLE
@@ -539,12 +472,18 @@ geolocale_taxon_log_detail	species_count	int	BASE TABLE
 geolocale_taxon_log_detail	specimen_count	int	BASE TABLE
 geolocale_taxon_log_detail	image_count	int	BASE TABLE
 geolocale_taxon_log_detail	log_id	int	BASE TABLE
+group_count	group_id	int	BASE TABLE
+group_count	specimens	int	BASE TABLE
+group_count	collections	int	BASE TABLE
+group_count	localities	int	BASE TABLE
+group_count	ungeoreferenced	int	BASE TABLE
+group_count	flagged	int	BASE TABLE
+group_count	subfamilies	int	BASE TABLE
+group_count	genera	int	BASE TABLE
+group_count	species	int	BASE TABLE
+group_count	counted	datetime	BASE TABLE
 group_image	group_id	int	BASE TABLE
 group_image	image_id	int	BASE TABLE
-groups_project	group_id	int	BASE TABLE
-groups_project	project_name	varchar(32)	BASE TABLE
-homepage	content_type	varchar(20)	BASE TABLE
-homepage	content	text	BASE TABLE
 homonym	taxon_name	varchar(128)	BASE TABLE
 homonym	taxarank	varchar(16)	BASE TABLE
 homonym	subfamily	varchar(64)	BASE TABLE
@@ -605,29 +544,6 @@ image	has_tiff	smallint	BASE TABLE
 image	wikimedia_upload_date	datetime	BASE TABLE
 image	modified	timestamp	BASE TABLE
 image	image_upload_id	int	BASE TABLE
-image_backup	id	int	BASE TABLE
-image_backup	shot_type	varchar(8)	BASE TABLE
-image_backup	source_table	varchar(16)	BASE TABLE
-image_backup	image_of_id	varchar(128)	BASE TABLE
-image_backup	shot_number	int	BASE TABLE
-image_backup	artist	int	BASE TABLE
-image_backup	copyright	int	BASE TABLE
-image_backup	license	int	BASE TABLE
-image_backup	upload_date	datetime	BASE TABLE
-image_backup	has_tiff	smallint	BASE TABLE
-image_backup	wikimedia_upload_date	datetime	BASE TABLE
-image_backup	modified	timestamp	BASE TABLE
-image_backup	image_upload_id	int	BASE TABLE
-image_count	subfamily	tinyint	BASE TABLE
-image_count	genus	tinyint	BASE TABLE
-image_count	species	tinyint	BASE TABLE
-image_count	project_name	tinyint	BASE TABLE
-image_count	the_count	tinyint	BASE TABLE
-image_count_materialized	subfamily	varchar(64)	BASE TABLE
-image_count_materialized	genus	varchar(64)	BASE TABLE
-image_count_materialized	species	varchar(64)	BASE TABLE
-image_count_materialized	project_name	varchar(32)	BASE TABLE
-image_count_materialized	the_count	int	BASE TABLE
 image_like	id	int	BASE TABLE
 image_like	image_id	int	BASE TABLE
 image_like	group_id	int	BASE TABLE
@@ -668,17 +584,6 @@ image_uploaded	created	timestamp	BASE TABLE
 image_uploaded	reuploaded	tinyint	BASE TABLE
 image_uploaded	specimen_data_exists	tinyint	BASE TABLE
 image_uploaded	error_message	varchar(200)	BASE TABLE
-junkspec	code	varchar(128)	BASE TABLE
-junkspec	taxon_name	varchar(128)	BASE TABLE
-junkspec	subgenus	varchar(64)	BASE TABLE
-junkspec	tribe	varchar(64)	BASE TABLE
-junkspec	speciesgroup	varchar(64)	BASE TABLE
-junkspec	subfamily	varchar(64)	BASE TABLE
-junkspec	genus	varchar(64)	BASE TABLE
-junkspec	species	varchar(64)	BASE TABLE
-junkspec	other	longtext	BASE TABLE
-junkspec	type	varchar(16)	BASE TABLE
-junkspec	subspecies	varchar(64)	BASE TABLE
 license	id	int	BASE TABLE
 license	license	text	BASE TABLE
 login	id	int	BASE TABLE
@@ -928,19 +833,6 @@ proj_taxon	rev	int	BASE TABLE
 proj_taxon	antwiki_rev	int	BASE TABLE
 proj_taxon	is_endemic	tinyint	BASE TABLE
 proj_taxon	is_introduced	tinyint	BASE TABLE
-proj_taxonT	project_name	varchar(32)	BASE TABLE
-proj_taxonT	taxon_name	varchar(128)	BASE TABLE
-proj_taxonT	created	timestamp	BASE TABLE
-proj_taxonT	subfamily_count	int	BASE TABLE
-proj_taxonT	genus_count	int	BASE TABLE
-proj_taxonT	species_count	int	BASE TABLE
-proj_taxonT	specimen_count	int	BASE TABLE
-proj_taxonT	image_count	int	BASE TABLE
-proj_taxonT	source	varchar(30)	BASE TABLE
-proj_taxonT	rev	int	BASE TABLE
-proj_taxonT	antwiki_rev	int	BASE TABLE
-proj_taxonT	is_endemic	tinyint	BASE TABLE
-proj_taxonT	is_introduced	tinyint	BASE TABLE
 proj_taxon_bak_20261019	project_name	varchar(32)	BASE TABLE
 proj_taxon_bak_20261019	taxon_name	varchar(128)	BASE TABLE
 proj_taxon_bak_20261019	created	timestamp	BASE TABLE
@@ -1023,9 +915,6 @@ remember_token	user_agent	varchar(255)	BASE TABLE
 remember_token	session_version	int	BASE TABLE
 server	is_down_time	tinyint	BASE TABLE
 server	debug	varchar(64)	BASE TABLE
-similar_species	taxon_name	varchar(128)	BASE TABLE
-similar_species	similar_species	varchar(128)	BASE TABLE
-similar_species	proj_name	varchar(32)	BASE TABLE
 specimen	code	varchar(128)	BASE TABLE
 specimen	taxon_name	varchar(128)	BASE TABLE
 specimen	subgenus	varchar(64)	BASE TABLE
@@ -1211,8 +1100,6 @@ statistics	geolocale_taxa_introduced	int	BASE TABLE
 statistics	geolocale_taxa_endemic	int	BASE TABLE
 statistics	bioregion_taxa	int	BASE TABLE
 statistics	museum_taxa	int	BASE TABLE
-synonymy	taxon_name	varchar(128)	BASE TABLE
-synonymy	synonym_name	varchar(128)	BASE TABLE
 taxon	taxon_name	varchar(128)	BASE TABLE
 taxon	taxarank	varchar(16)	BASE TABLE
 taxon	subfamily	varchar(64)	BASE TABLE
@@ -1307,13 +1194,6 @@ team_member	section	int	BASE TABLE
 team_member	teamrank	int	BASE TABLE
 team_member	is_published	bit(1)	BASE TABLE
 team_member	created	timestamp	BASE TABLE
-temp_image_artist	filename	varchar(255)	BASE TABLE
-temp_image_artist	specimencode	varchar(255)	BASE TABLE
-temp_image_artist	author_name	varchar(255)	BASE TABLE
-temp_image_artist	date_upload	varchar(255)	BASE TABLE
-temp_image_artist	image_of_id	varchar(255)	BASE TABLE
-temp_image_artist	shot_type	varchar(50)	BASE TABLE
-temp_image_artist	shot_number	int	BASE TABLE
 tempgeoview	id	int	VIEW
 tempgeoview	name	varchar(250)	VIEW
 tempgeoview	georank	varchar(20)	VIEW
@@ -1373,7 +1253,7 @@ un_country	bioregion	varchar(64)	BASE TABLE
 un_country	created	timestamp	BASE TABLE
 upload	id	int	BASE TABLE
 upload	login_id	int	BASE TABLE
-upload	group_name	varchar(64)	BASE TABLE
+upload	group_name	varchar(100)	BASE TABLE
 upload	group_id	int	BASE TABLE
 upload	log_file_name	varchar(64)	BASE TABLE
 upload	created	timestamp	BASE TABLE

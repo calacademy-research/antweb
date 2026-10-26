@@ -22,7 +22,8 @@
 <h1>Specimen Contributors:</h1>
 </div>
 
-<br>
+<p id="groups-numbers-note">Specimens to Species: each group's specimens today, recounted every night. Last Upload: the date of the group's last upload (its report has the numbers of that upload).</p>
+<p id="groups-species-note">Specimens, Collections, Localities and Ungeoreferenced count the group's ant specimens that are not red-flagged and whose name is valid, unrecognized, a morphospecies, indetermined or unidentifiable. Subfamilies, Genera and Species count the different names among them: Species counts each species and subspecies name once (morphospecies included; names not identified to genus are not species). The Totals row counts all groups' specimens together, so a species found by two groups counts once.</p>
 
 <table>
 <%
@@ -164,7 +165,18 @@ if (lastUpload != null && upload.hasReport()) {
 <% } %>
 
 <%= hrLine %>
-<tr>
+<%
+// Totals (Q8, Brian Fisher 2026-10-22): Collections, Localities, Subfamilies, Genera and Species are counted over all
+// groups' specimens together (GroupCountDb, nightly); before the first nightly count they are not shown.
+Upload groupTotals = (Upload) request.getAttribute("groupTotals");
+String notYet = "<span title='counted tonight'>-</span>";
+String collectionTotStr = groupTotals == null ? notYet : Formatter.commaFormat(groupTotals.getCollections());
+String localityTotStr = groupTotals == null ? notYet : Formatter.commaFormat(groupTotals.getLocalities());
+String subfamilyTotStr = groupTotals == null ? notYet : "" + groupTotals.getSubfamilies();
+String generaTotStr = groupTotals == null ? notYet : "" + groupTotals.getGenera();
+String speciesTotStr = groupTotals == null ? notYet : Formatter.commaFormat(groupTotals.getSpecies());
+%>
+<tr id="groups-totals">
 <td><b>Totals:&nbsp;</b><%= contributorTot %></td>
 <td align="right"><%= Formatter.commaFormat(uploadTot) %></td>
 <td align="right"><%= Utility.getSimpleDate(firstUploadTot) %></td>
@@ -172,11 +184,11 @@ if (lastUpload != null && upload.hasReport()) {
 <td align="right"><%= Formatter.commaFormat(specimenTot) %></td>
 <td align="right"><%= Formatter.commaFormat(ungeoreferencedTot) %></td>
 <td align="right"><%= Formatter.commaFormat(flaggedTot) %></td>
-<td align="right"><%= Formatter.commaFormat(collectionTot) %></td>
-<td align="right"><%= Formatter.commaFormat(localityTot) %></td>
-<td align="right"><%= subfamilyTot %></td>
-<td align="right"><%= generaTot %></td>
-<td align="right"><%= Formatter.commaFormat(speciesTot) %></td>
+<td align="right"><%= collectionTotStr %></td>
+<td align="right"><%= localityTotStr %></td>
+<td align="right"><%= subfamilyTotStr %></td>
+<td align="right"><%= generaTotStr %></td>
+<td align="right"><%= speciesTotStr %></td>
 </tr>
 
 </table>

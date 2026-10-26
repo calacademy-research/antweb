@@ -84,6 +84,12 @@ def _timing_lines(config):
     return head, slow
 
 
+def _annotation(text, limit):
+    """One line for a GitHub workflow command: at most limit characters, % CR LF escaped."""
+    text = text if len(text) <= limit else text[:limit - 3] + "..."
+    return text.replace("%", "%25").replace("\r", "").replace("\n", " ")
+
+
 def pytest_terminal_summary(terminalreporter, exitstatus, config):
     """List failures in the GitHub Actions job summary (easier to read than the log)."""
     if os.environ.get("PYTEST_XDIST_WORKER"):
@@ -98,13 +104,21 @@ def pytest_terminal_summary(terminalreporter, exitstatus, config):
         # Readable through the API (check-runs annotations) when the log cannot be downloaded.
         note = head + ". Slowest files: " + ", ".join(f"{f} {s:.0f}s" for f, s in slow[:12])
         terminalreporter.write_line("::notice title=e2e timing::" + note.replace("%", "%25"))
-        # One annotation per failure (GitHub shows the first 10 of a step): readable through the
-        # API (check-runs annotations) when the log and job summary cannot be downloaded.
-        for rep in failed[:10]:
+        # GitHub keeps only 10 error annotations of a step: first one notice with the number of failures
+        # and every failed test's name (2026-10-22: 10 annotations hid how many tests had failed), then one
+        # annotation per failure, the first 9, each with all its "E" lines (a test's examples follow its
+        # first line). Readable through the API (check-runs annotations) when the log and job summary
+        # cannot be downloaded.
+        if failed:
+            names = sorted({_plain_id(rep.nodeid).split("::", 1)[-1][:120] for rep in failed})
+            listing = f"{len(failed)} failed: " + "; ".join(names)
+            terminalreporter.write_line("::notice title=e2e failed tests::" + _annotation(listing, 6000))
+        for rep in failed[:9]:
             msg = str(getattr(rep, "longrepr", ""))
-            reason = next((l.strip() for l in msg.splitlines() if l.strip().startswith("E ")), msg.splitlines()[-1] if msg else "")
-            text = (_plain_id(rep.nodeid).split("::", 1)[-1][:150] + ": " + reason[:350]).replace("%", "%25").replace("\r", "").replace("\n", " ")
-            terminalreporter.write_line("::error title=e2e failure::" + text)
+            e_lines = [l.strip()[1:].strip() for l in msg.splitlines() if l.strip().startswith("E ")]
+            reason = " / ".join(e_lines) if e_lines else (msg.splitlines()[-1] if msg else "")
+            text = _plain_id(rep.nodeid).split("::", 1)[-1][:150] + ": " + reason
+            terminalreporter.write_line("::error title=e2e failure::" + _annotation(text, 3000))
     path = os.environ.get("GITHUB_STEP_SUMMARY")
     if not path:
         return

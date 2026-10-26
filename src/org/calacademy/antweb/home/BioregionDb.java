@@ -317,6 +317,10 @@ public class BioregionDb extends AntwebDb {
       
       // Populate the bioregion_taxon table.
       populateSpecies(bioregionName);
+      // Rows of synonyms renamed to (merged into) their current valid name before the higher taxa, the counts and the
+      // totals (2026-10-22; was nightly set 3's updateTaxonSets, after them). The counts take the synonyms' specimens
+      // (Bioregion.getCountSpecimensQuery); endemism (calcEndemic, after every bioregion) sees the valid names.
+      new BioregionTaxonDb(getConnection()).renameToValid(PlaceTotals.BIOREGION, bioregionName);
       new BioregionTaxonDb(getConnection()).populateHigherTaxa(bioregionName);
       
       // Crawl the Geolocale_taxon table to find the counts.
@@ -618,6 +622,7 @@ public class BioregionDb extends AntwebDb {
                 + StatusSet.getAndCriteria(Project.ALLANTWEBANTS)
                 //+ " and  taxon.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')"
                 + " and taxon.family = 'formicidae'"
+                + " and " + PlaceTotals.identifiedToGenus("taxon")   // 2026-10-22: not identified to genus, not a species
                 + " group by bt.taxon_name having count(*) = 1"
                 + " order by bioregionName";
 

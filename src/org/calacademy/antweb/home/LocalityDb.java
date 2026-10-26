@@ -28,14 +28,14 @@ public class LocalityDb extends AntwebDb {
     }
   
     public Locality getLocalityByCode(String code) throws SQLException {
-      String safeLocalityCode = AntFormatter.escapeQuotes(code);
-      String clause = "sp.localitycode = '" + safeLocalityCode + "'";
+      // sqlLiteral, not escapeQuotes: escapeQuotes doubles a double quote, which inside a single-quoted literal
+      // stays two characters, so a code such as KM55"805 was never found (2026-10-22).
+      String clause = "sp.localitycode = " + DBUtil.sqlLiteral(code);
       return getLocality(clause);
     }
     
     public Locality getLocalityByName(String name) throws SQLException {
-      String safeLocalityName = AntFormatter.escapeQuotes(name);    
-      String clause = "sp.localityname = '" + safeLocalityName + "'";
+      String clause = "sp.localityname = " + DBUtil.sqlLiteral(name);
       return getLocality(clause);
     }     
     

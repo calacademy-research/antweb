@@ -17,17 +17,19 @@
 <div id="page_contents">
 <br>
 <h1> Antweb Statistics</h1>
+<% java.util.Date statsCountedAt = (java.util.Date) request.getAttribute("statsCountedAt"); %>
+<% if (statsCountedAt != null) { %><p id="stats-counted-at">The tables below were counted at <%= new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm z").format(statsCountedAt) %>. They are counted once a day, at the end of the nightly update.</p><% } %>
 <br><br><br>
 
 <h2>Current Statistics:</h2>                    
 <br><b data-stat="valid-species"><%= A.commaFormat(TaxonMgr.getValidSpeciesCount()) %> valid species + ssp.</b>
-<br>&nbsp;&nbsp;Valid species and subspecies.
+<br>&nbsp;&nbsp;Valid ant (Formicidae) species and subspecies, fossils included. Names of other families and names not identified to genus are not counted.
  
 <br><br><b><%= A.commaFormat(AntwebMgr.getSpecimensCount()) %> specimen records</b>
 <br>&nbsp;&nbsp;Specimen records from Antweb's 21 collaborating institutions.
 
 <br><br><b><%= A.commaFormat(AntwebMgr.getImagedSpeciesCount()) %>  species + ssp. imaged </b>
-<br>&nbsp;&nbsp;Valid, morpho or indetermined species and subspecies imaged.
+<br>&nbsp;&nbsp;Valid, morpho or indetermined ant species and subspecies with at least one photo of the ant (label photos do not count). Names not identified to genus are not counted as species.
 
 <br><br><b><%= A.commaFormat(AntwebMgr.getImagedSpecimensCount()) %> specimens imaged</b>
 
@@ -37,6 +39,7 @@
 
 <br><br><br>
 <h2>Global Data:</h2>
+<p id="stats-global-note">Valid ant (Formicidae) taxa in AntWeb's taxon table, from AntCat: living (Extant) and fossil. Other families are not counted, and a species or subspecies counts only when it is identified to genus.</p>
 <%
 //String statsPageData = (String) request.getAttribute("statsPageData");
 StatSet extantData = (StatSet) request.getAttribute("extantData");
@@ -118,6 +121,7 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
 
 <br><br>
 <h2>Bioregion Data:</h2>
+<p id="stats-bioregion-note">Valid, living ant (Formicidae) taxa on each bioregion's list. Other families are not counted, as on the bioregion pages.</p>
 <% int i = 0;
    String footer = "";
    for (StatSet statSet : bioregionData) {
@@ -131,6 +135,7 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
 
 <br><br>
 <h2>Museum Data:</h2>
+<p id="stats-museum-note">Valid ant (Formicidae) taxa on each museum's list, living (Valid Extant) and fossil (Valid Fossil). Other families are not counted, as on the museum pages.</p>
 
 <br>
 <h3>Valid Extant:</h3>
@@ -161,6 +166,6 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
 
 
 <br><br>
-<b>Unimaged Valid Ants:</b> <a href='<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=species&project=worldants&isImaged=false'>here</a>
+<b>Unimaged Valid Ants:</b> <a href='<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=species&project=worldants&isImaged=false'>here</a> (valid species with no photo of the ant anywhere in AntWeb; a specimen with only label photos is not imaged)
 
 </div>

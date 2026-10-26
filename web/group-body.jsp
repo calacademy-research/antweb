@@ -94,6 +94,10 @@
 		   %>
 		<li><%= lastUploadAnchor %></li>
 		</ul>	
+<% if (lastUpload.getCountedAt() != null) { %>
+		<p id="group-numbers-note">The numbers below are the group's specimens today (recounted every night, last on <%= Utility.getSimpleDate(lastUpload.getCountedAt()) %>).</p>
+		<p id="group-species-note">They count the group's ant specimens that are not red-flagged and whose name is valid, unrecognized, a morphospecies, indetermined or unidentifiable. Species counts each species and subspecies name once (morphospecies included; names not identified to genus are not species).</p>
+<% } %>
 		
         <br>
 

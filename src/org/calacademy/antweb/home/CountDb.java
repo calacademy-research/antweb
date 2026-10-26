@@ -338,117 +338,96 @@ public class CountDb extends AntwebDb {
         }
     }
 
+    /**
+     * The Images column of a list (nightly set 4). Each species or subspecies row (any row with specimens filed under
+     * its name) gets the images of those specimens, from countable.getTaxonImageCountQuery(). The genus, subfamily and
+     * family rows get the images of every row under them, by the taxon tree (taxon.parent_taxon_name), the same tree the
+     * specimen counts of the lists roll up by (countGrandChildren) and the count check reads (list.images).
+     *
+     * Before 2026-10-22 the higher rows were added up from the specimen's own genus and subfamily columns (genus row =
+     * specimen.subfamily + specimen.genus). A synonym or obsolete combination takes the parent of its current valid
+     * name, so the images of specimens filed under it went to its old genus row and not to the genus that holds it:
+     * staging worldants ectatomminaeholcoponera 596 while its rows summed to 604 (Gnamptogenys names now in
+     * Holcoponera), myrmicinaemycetomoellerius 337 (345), myrmicinaeallomerus 394 (401, Wasmannia) (B40).
+     */
     protected void imageCountCrawl(Countable countable) throws SQLException {
         if (countable == null) {
           s_log.warn("imageCountCrawl WST countable is null");
           AntwebUtil.logShortStackTrace();
           return;
         }
-        
+
         String query = countable.getTaxonImageCountQuery();
-       
-        //A.log("imageCountCrawl() countable:" + countable);
-               
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "imageCountCrawl()");
-            rset = stmt.executeQuery(query);
-         
-            //A.log("imageCountCrawl(" + countable + ") query:" + query);
-/*
-select s.taxon_name taxonName, s.family family, s.subfamily subfamily 
-  , s.genus genus, s.species species, sum(s.image_count) imageSum
-  from specimen s join museum_taxon pt on s.taxon_name = mt.taxon_name 
-  where mt.museum_id = 17
-  group by s.taxon_name, s.family, s.subfamily, s.genus, s.species;
-*/         
-        
-			String taxonName = null;
-			String family = null;
-			String subfamily = null;
-			String genus = null;
-			String species = null;
-			int imageSum = 0;
-			int genusImageSum = 0, subfamilyImageSum = 0, familyImageSum = 0;
-			String lastFamily = null, lastSubfamily = null, lastGenus = null;         
-			while (rset.next()) {
-			   taxonName = rset.getString("taxonName");
-			   family = rset.getString("family");
-			   subfamily = rset.getString("subfamily");
-			   genus = rset.getString("genus");
-			   species = rset.getString("species");
-			   imageSum = rset.getInt("imageSum");
-		   
-			   //if (AntwebProps.isDevMode() && taxonName.equals(debugTaxonName)) s_log.warn("imageCountCrawl() query:" + query);
-
-			   if (lastGenus != null && genus != null && !genus.equals(lastGenus)) {
-				 // break on genus             
-				 String genusTaxonName = lastSubfamily + lastGenus;
-				 updateCountableTaxonImageCount(countable, genusTaxonName, genusImageSum, "genus");
-				 genusImageSum = imageSum;
-			   } else {
-				 genusImageSum += imageSum;
-			   }
-			   lastGenus = genus;
-		   
-			   if (lastSubfamily != null && subfamily != null && !subfamily.equals(lastSubfamily)) {
-				 // break on subfamily             
-				 updateCountableTaxonImageCount(countable, lastSubfamily, subfamilyImageSum, "subfamily");
-				 subfamilyImageSum = imageSum;
-			   } else {
-				 subfamilyImageSum += imageSum;
-			   }
-			   lastSubfamily = subfamily;
-		   
-			   if (lastFamily != null && !family.equals(lastFamily)) {
-				 // break on family
-				 updateCountableTaxonImageCount(countable, lastFamily, familyImageSum, "family");
-				 familyImageSum = imageSum;
-			   } else {
-				 familyImageSum += imageSum;
-			   }
-			   lastFamily = family;
-
-			   updateCountableTaxonImageCount(countable, taxonName, imageSum, "species");
-			}
-		 
-			// Once more for good measure...
-			if (lastGenus != null) {
-			   // break on genus             
-			   String genusTaxonName = lastSubfamily + lastGenus;
-			   updateCountableTaxonImageCount(countable, genusTaxonName, genusImageSum, "genus");
-			   genusImageSum = imageSum;
-			} else {
-			   genusImageSum += imageSum;
-			}
-			lastGenus = genus;
-		   
-			if (lastSubfamily != null) {
-			   // break on subfamily             
-			   updateCountableTaxonImageCount(countable, lastSubfamily, subfamilyImageSum, "subfamily");
-			   subfamilyImageSum = imageSum;
-			} else {
-			   subfamilyImageSum += imageSum;
-			}
-			lastSubfamily = subfamily;
-		   
-			if (lastFamily != null) {
-			   // break on family
-			   updateCountableTaxonImageCount(countable, lastFamily, familyImageSum, "family");
-			   familyImageSum = imageSum;
-			} else {
-			   familyImageSum += imageSum;
-			}
-			lastFamily = family;
-		  
-         //if (AntwebProps.isDevMode()) s_log.info("countSpecimen() count:" + count);                               
+        java.util.Map<String, Integer> sums = new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+        try (Statement stmt = DBUtil.getStatement(getConnection(), "imageCountCrawl()");
+             ResultSet rset = stmt.executeQuery(query)) {
+            while (rset.next()) {
+                String taxonName = rset.getString("taxonName");
+                if (taxonName == null) continue;
+                int imageSum = rset.getInt("imageSum");
+                sums.merge(taxonName, imageSum, Integer::sum);
+                for (String ancestor : imageAncestors(taxonName, rset.getString("family"), rset.getString("subfamily"), rset.getString("genus"))) {
+                    sums.merge(ancestor, imageSum, Integer::sum);
+                }
+            }
         } catch (SQLException e) {
-          s_log.warn("imageCountCrawl() query:" + query + " e:" + e);
-          throw e;
-        } finally {
-          DBUtil.close(stmt, rset, this, "imageCountCrawl()");
+            s_log.warn("imageCountCrawl() query:" + query + " e:" + e);
+            throw e;
         }
+        for (java.util.Map.Entry<String, Integer> e : sums.entrySet()) {
+            updateCountableTaxonImageCount(countable, e.getKey(), e.getValue(), null);
+        }
+    }
+
+    /** taxon_name -> {taxarank, parent_taxon_name}, read once per CountDb (one crawl over every place). */
+    private java.util.Map<String, String[]> taxonTree;
+
+    private java.util.Map<String, String[]> taxonTree() throws SQLException {
+        if (taxonTree == null) {
+            java.util.Map<String, String[]> tree = new java.util.TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+            try (Statement stmt = getConnection().createStatement();
+                 ResultSet r = stmt.executeQuery("select taxon_name, taxarank, parent_taxon_name from taxon")) {
+                while (r.next()) tree.put(r.getString(1), new String[] {r.getString(2), r.getString(3)});
+            }
+            taxonTree = tree;
+        }
+        return taxonTree;
+    }
+
+    /** Forgets the taxon tree read by the image crawl (the next crawl reads it again). */
+    public void forgetTaxonTree() {
+        taxonTree = null;
+    }
+
+    /**
+     * The rows above a name that hold its images: its ancestors in the taxon tree of rank genus and above (a species
+     * above a subspecies is skipped: a species row counts only the specimens filed under its own name, B25). A name
+     * that is not in the taxon table falls back to the specimen's columns, as before: subfamily + genus, subfamily,
+     * family.
+     */
+    java.util.List<String> imageAncestors(String taxonName, String family, String subfamily, String genus) throws SQLException {
+        java.util.List<String> ancestors = new java.util.ArrayList<>();
+        java.util.Map<String, String[]> tree = taxonTree();
+        String[] node = tree.get(taxonName);
+        if (node == null) {
+            if (subfamily != null && genus != null && !genus.isEmpty()) ancestors.add(subfamily + genus);
+            if (subfamily != null && !subfamily.isEmpty()) ancestors.add(subfamily);
+            if (family != null && !family.isEmpty()) ancestors.add(family);
+            ancestors.remove(taxonName);
+            return ancestors;
+        }
+        java.util.Set<String> seen = new java.util.TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+        seen.add(taxonName);
+        String parent = node[1];
+        // at most kingdom ... subspecies; a loop in the tree stops at the name seen before
+        for (int depth = 0; depth < 12 && parent != null && !parent.isEmpty() && seen.add(parent); depth++) {
+            String[] p = tree.get(parent);
+            if (p == null) break;
+            if (!Rank.SPECIES.equals(p[0]) && !Rank.SUBSPECIES.equals(p[0])) ancestors.add(parent);
+            if (Rank.FAMILY.equals(p[0])) break;
+            parent = p[1];
+        }
+        return ancestors;
     }
 
      public void updateCountableTaxonImageCount(Countable countable, String taxonName, int sum, String rank)

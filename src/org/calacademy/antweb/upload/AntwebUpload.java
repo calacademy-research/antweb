@@ -239,11 +239,19 @@ or for Worldants upload
         } else {
             parentTaxonName = Taxon.getParentTaxonNameFromName(taxonName);
         }
+        // Not identified to genus (genus indet, (indet), a subfamily in parentheses): not a species (Brian Fisher, 2026-10-22)
+        boolean notIdentifiedToGenus = ("species".equals(rank) || "subspecies".equals(rank))
+            && !org.calacademy.antweb.home.PlaceTotals.isIdentifiedToGenus((String) item.get("genus"));
         if (parentTaxonName != null) {
-            //A.log("saveTaxon() taxonName:" + taxonName + " parentTaxonName:" + parentTaxonName);
-            if (("species".equals(rank) || "subspecies".equals(rank)) && TaxonMgr.getGenus(parentTaxonName) == null) {
-                //A.log("saveTaxon() 2 parent does not exist:" + parentTaxonName + " rank:" + rank + " genus:" + TaxonMgr.getGenus(parentTaxonName));
+            if (notIdentifiedToGenus) {
+                // never given a placeholder genus row (below); as before: the parent only if it is a known genus
+                if (TaxonMgr.getGenus(parentTaxonName) != null) item.put("parent_taxon_name", parentTaxonName);
             } else {
+                // B36 (2026-10-22): the parent is the genus by name. It was left empty when TaxonMgr (read before the
+                // upload or the AntCat import) did not know the genus: a genus new in tonight's import, a morphogenus.
+                // The lists count a species under its parent, so the genus row did not count it. The genus row of a
+                // morphogenus is made below; AntCat genera come with the import; nightly set 1 sets any parent still
+                // missing to its genus row when that row exists (TaxonParentDb), and reports the rest.
                 item.put("parent_taxon_name", parentTaxonName);
             }
         }
@@ -313,13 +321,18 @@ or for Worldants upload
         }
 
         // New functionality. Parent taxons are handled.
-        if (!isParent && parentTaxonName != null && !"worldants".equals(source)) {
+        // (no genus row is made for a name not identified to genus: no placeholder genus rows, 2026-10-22)
+        if (!isParent && parentTaxonName != null && !"worldants".equals(source) && !notIdentifiedToGenus) {
 
             if (taxonName.contains("formicinaemyrma iperstriata"))
                 s_log.debug("saveTaxon() 5 BAD currentValidName:" + currentValidName + " taxonName:" + taxonName);
             // if we save a taxon, we make sure it's parent exists, or we create it.
             item.put("taxon_name", parentTaxonName);
+            // the name's current valid name is not the genus row's (it made the genus its own parent below)
+            item.remove("current_valid_name");
             String grandParentTaxonName = Taxon.getParentTaxonNameFromName(parentTaxonName);
+            // A genus row is made only when its subfamily can be read from its name (no placeholder genus rows such as
+            // "(indet)decamorium" or "(formicidae)(formicidae)", Brian Fisher, 2026-10-22).
             if (grandParentTaxonName != null) {
                 item.put("parent_taxon_name", grandParentTaxonName);
                 String parentRank = Taxon.getRankFromName(parentTaxonName);

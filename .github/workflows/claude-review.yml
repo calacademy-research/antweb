@@ -37,7 +37,7 @@ jobs:
       group: claude-review-${{ github.event.pull_request.number }}
       cancel-in-progress: true
     runs-on: ubuntu-24.04
-    timeout-minutes: 12
+    timeout-minutes: 20
 
     steps:
       - name: Check that the API key secret exists
@@ -70,8 +70,8 @@ jobs:
       - name: Review
         id: review
         if: steps.key.outputs.present == 'true'
-        # Below the job's 12 minutes, so the last step still has time to post a notice.
-        timeout-minutes: 10
+        # Below the job's 20 minutes, so the last step still has time to post a notice.
+        timeout-minutes: 18
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

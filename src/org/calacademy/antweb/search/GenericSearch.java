@@ -729,6 +729,33 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
     }
 
 
+    /**
+     * The value escaped for a single-quoted MySQL literal: backslashes and apostrophes. A double quote stays one
+     * character (AntFormatter.escapeQuotes doubled it, and inside '...' MySQL keeps both, so a value with a
+     * double quote never matched; 2026-10-22).
+     */
+    static String singleQuoted(String value) {
+        return value.replace("\\", "\\\\").replace("'", "''");
+    }
+
+    /**
+     * The search clause for a locality or collection code. Codes have no spaces (UploadUtil.cleanCode), so a
+     * value in one pair of double quotes with no space inside is one code, taken as it is: the locality page
+     * links its specimens as localityCode="<code>", and a code may itself contain a double quote or a comma
+     * (KM55""805, loc-18.9,47.5). Anything else is read as getSearchString reads it.
+     */
+    public String getCodeSearchString(String property, String searchType, String value) {
+        String v = value == null ? "" : value.trim();
+        if (v.length() >= 2 && v.startsWith("\"") && v.endsWith("\"") && !v.matches(".*\\s.*")) {
+            String type = searchType == null ? "equals" : searchType;
+            String operator = getOperator(type);
+            if (operator == null) return " 1=1";
+            return property + " " + operator + " '" + getLeftPercent(type) + singleQuoted(v.substring(1, v.length() - 1))
+                + getRightPercent(type) + "'";
+        }
+        return getSearchString(property, searchType, value);
+    }
+
     protected String getSearchString(String property, String searchType, String value) {
         //A.log("GenericSearch.getSearchString)");
         if (searchType == null) {
@@ -773,7 +800,8 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         // pull quoted stuff out of the string
         String newValue = m.replaceAll("");
         if (newValue.length() > 0) {
-            List<String> newElements = Arrays.asList(newValue.split("[, ]"));
+            // Separated by commas or any white space: a list pasted from a spreadsheet has line breaks or tabs (2026-10-26).
+            List<String> newElements = Arrays.asList(newValue.split("[,\\s]+"));
             elements.addAll(newElements);
         }
         //A.log("getSearchString() 3 property:" + property + " value:" + value);
@@ -786,7 +814,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
                 sb.append(operator);
                 sb.append(" '");
                 sb.append(leftPercent);
-                sb.append(AntFormatter.escapeQuotes(thisElement.trim()));
+                sb.append(singleQuoted(thisElement.trim()));
                 sb.append(rightPercent);
                 sb.append("'");
                 if (thisElement.length() > 0 && loop < elements.size() - 1) {

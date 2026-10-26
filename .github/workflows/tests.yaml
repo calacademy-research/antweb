@@ -45,6 +45,16 @@ jobs:
         # every count check (CountInvariants.IDS) is named. Fix: edit docs/numbers.md (see its section 1).
         run: python3 tools/numbers/check_numbers_doc.py
 
+      - name: Every workflow step is valid shell, also inside sh -c '...' (tests/unit/test_workflow_shell.py)
+        # 2026-10-24: an apostrophe in a comment ended a quoted sh -c script early; the step failed only on GitHub.
+        run: python3 tests/unit/test_workflow_shell.py
+
+      - name: The mount check writes into a folder that exists on the servers (tests/unit/test_mountcheck_dir.py)
+        run: python3 tests/unit/test_mountcheck_dir.py
+
+      - name: The nightly AntCat download runs before set 1 takes its connection (tests/unit/test_set1_prefetch.py)
+        run: python3 tests/unit/test_set1_prefetch.py
+
       - name: Data model doc has a section for every table (docs/data-model.md)
         # Replays db/upgrade/**/*.sql and the CREATE TABLE statements in src/; fails when a table or view
         # has no "### `name`" section in docs/data-model.md, or a section names a table no SQL knows, or
@@ -136,6 +146,11 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.HardeningSmallFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (1 test)" /tmp/out.txt
+            # Who may read upload files: the whole file (own group) and the line of one specimen (any curator, 2026-10-24).
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/UploadFileAccessTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.UploadFileAccessTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (3 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the EXIF section on the image page (Latin-1 and UTF-8 text, binary fields, escaping)
@@ -197,7 +212,7 @@ jobs:
             grep -q "^OK (6 tests)" /tmp/out.txt
           '
 
-      - name: Java unit tests of log growth (short message-page record, entry cap, log viewer cap, row limits, log size check)
+      - name: Java unit tests of log growth (short message-page record, entry cap, log viewer cap, row limits, log size check) and the mount check
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
             set -e
@@ -205,10 +220,27 @@ jobs:
             test -f $C/org/calacademy/antweb/util/MessagePageLog.class
             CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
             mkdir -p /tmp/tc
-            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/MessageLogTest.java
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/MessageLogTest.java /t/org/calacademy/antweb/util/MountCheckTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.MountCheckTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.MessageLogTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (11 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the AntCat file download (nightly tries again for up to an hour before set 1, says why, no half-written or cut-off file)
+        # 2026-10-25: on 10-23 the nightly could not fetch antcat.antweb.txt once and skipped the name update.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/util/FetchRetry.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/FetchRetryTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.FetchRetryTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (12 tests)" /tmp/out.txt
           '
 
       - name: Download guards in the pages (no See all link, nofollow search links, robots.txt) (tests/unit/test_download_guards.py)
@@ -292,6 +324,8 @@ jobs:
         # select and only reads; every list of queries names queries that exist; every query is in one Query Manager group
         # (tests/e2e/test_named_queries.py runs them). JobSummaryTest: a nightly set started by hand keeps one plain
         # sentence as its job result ({operation:...} in plain words), and the job page never shows a whole AntWeb page.
+        # LocalityCodePlainTest: locality codes are stored as written (not URL-encoded, 2026-10-22), links encode them
+        # once in UTF-8, the specimen search for one quoted code takes it whole.
         # See docs/flows/test-gaps-uploads-nightly.md.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" -v "$PWD/web:/web:ro" \
@@ -319,13 +353,15 @@ jobs:
               /t/org/calacademy/antweb/util/SpecimenCodesTest.java \
               /t/org/calacademy/antweb/util/RelevantQueriesTest.java \
               /t/org/calacademy/antweb/util/QueriesReviewTest.java \
-              /t/org/calacademy/antweb/util/JobSummaryTest.java
-            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:7 \
+              /t/org/calacademy/antweb/util/JobSummaryTest.java \
+              /t/org/calacademy/antweb/upload/SubfamilyFromGenusTest.java \
+              /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java
+            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:10 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
-                     util.JobSummaryTest:6; do
+                     util.JobSummaryTest:6 upload.SubfamilyFromGenusTest:4 upload.LocalityCodePlainTest:6; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -342,7 +378,7 @@ jobs:
           shellcheck -S warning tools/staging/*.sh
           python3 tests/unit/test_staging_refresh.py
 
-      - name: Staging refresh database steps against MySQL 8.4 (scrub.sql; test logins put back with their passwords)
+      - name: Staging refresh database steps against MySQL 8.4 (scrub.sql; test logins put back with their passwords); locality code repair
         run: |
           docker run -d --name refreshmysql -e MYSQL_ROOT_PASSWORD=ci-root -e MYSQL_DATABASE=ant \
             -v "$PWD/docker/mysql/mysql_stage.cnf:/etc/mysql/conf.d/custom.cnf:ro" mysql:8.4 --mysql-native-password=ON
@@ -353,6 +389,9 @@ jobs:
           done
           [ "$ok" = 1 ] || { docker logs refreshmysql 2>&1 | tail -30; echo "::error::MySQL did not start"; exit 1; }
           STAGING_REFRESH_DB_CONTAINER=refreshmysql STAGING_REFRESH_DB_PASSWORD=ci-root python3 tests/unit/test_staging_refresh_db.py
+          # Locality codes stored plain; the one-off repair of the URL-encoded ones (tools/data/locality_codes.py):
+          # preview, repair, second run refused, rollback (tests/unit/test_locality_codes.py).
+          LOCALITY_CODES_DB_CONTAINER=refreshmysql LOCALITY_CODES_DB_PASSWORD=ci-root python3 tests/unit/test_locality_codes.py
           docker rm -f refreshmysql
 
       - name: No email tells the reader to ignore it (tests/unit/test_email_texts.py)
@@ -360,6 +399,9 @@ jobs:
 
       - name: No PHP in the server image or the repository (tests/unit/test_no_php.py)
         run: python3 tests/unit/test_no_php.py
+
+      - name: Claude audit rotation (tests/unit/test_claude_audit.py)
+        run: python3 tests/unit/test_claude_audit.py
 
       - name: Login updates keep login.created, no delete of all page text, page titles, admin links on phones (tests/unit/test_small_fixes.py)
         run: python3 tests/unit/test_small_fixes.py
@@ -424,8 +466,19 @@ jobs:
           # SpecimenNameHistoryDbTest: the specimen page's Name History query (applied rows of one specimen, newest first,
           # never report-only rows; index by_code; no history when the table is missing).
           # CountInvariantsTest: the count check's invariants over every place (docs/numbers.md), each wrong number found.
+          # NumberChecksTest: the count check's other numbers (statsPage tables, admin pages, API /taxa, endemic flags, B25, B26).
           # PlaceTotalsDbTest: the numbers the nightly run writes (place totals, pies, endemic, museums, taxon images,
           # home page, Global after the name update, statsPage) as the invariants expect them.
+          # NightlyCountOrderDbTest (2026-10-22): an unavailable name does not raise its genus row; a museum list renamed
+          # before its count (a synonym's specimens under the valid name); curator page-text edits; group numbers of today.
+          # TaxonTreeCountDbTest (2026-10-22): every counted ant name identified to genus has its genus row as parent where
+          # that row exists (nightly repair, B36; no genus rows made, the rest reported); names not identified to genus are
+          # not species (totals, genus rows, pies, endemism) but their specimens count; a list's genus, subfamily and family
+          # rows hold the images of every row under them by the taxon tree (B40).
+          # NumberDecisionsDbTest (2026-10-22, Brian Fisher's answers Q7, Q8, Q9, Q12, Port of Entry): statsPage and home
+          # count ants only; upload group Species are full names and the groups.do Totals row is distinct over all groups;
+          # orphaned images counted as images and codes; unimaged = no photo of the ant anywhere; Port of Entry has no
+          # specimen or image numbers and the count check skips it.
           # DownloadGuardsDbTest: a place download holds only the specimens collected there (5,000 cap), the paged
           # search list (COUNT, LIMIT/OFFSET, sort before paging, images/types only), ant specimens only on place pages.
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
@@ -442,11 +495,15 @@ jobs:
               /t/org/calacademy/antweb/home/RegionCountDbTest.java /t/org/calacademy/antweb/home/PageTextRenameDbTest.java \
               /t/org/calacademy/antweb/upload/SpecimenNameHistoryDbTest.java \
               /t/org/calacademy/antweb/util/NumbersTestDb.java \
-              /t/org/calacademy/antweb/util/CountInvariantsTest.java \
+              /t/org/calacademy/antweb/util/CountInvariantsTest.java /t/org/calacademy/antweb/util/NumberChecksTest.java \
               /t/org/calacademy/antweb/home/PlaceTotalsDbTest.java \
               /t/org/calacademy/antweb/home/DownloadGuardsDbTest.java \
-              /t/org/calacademy/antweb/home/UploadRecordDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:5; do
+              /t/org/calacademy/antweb/home/UploadRecordDbTest.java \
+              /t/org/calacademy/antweb/home/NightlyCountOrderDbTest.java \
+              /t/org/calacademy/antweb/home/TaxonTreeCountDbTest.java \
+              /t/org/calacademy/antweb/home/ArtistMoveDbTest.java \
+              /t/org/calacademy/antweb/home/NumberDecisionsDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:5 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:12 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:5 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
@@ -516,6 +573,37 @@ jobs:
             done
           '
           docker rm -f ugmysql
+
+      - name: Every JSP page changed in this pull request compiles (Jasper JspC, as Tomcat 11 does)
+        # 2026-10-23: a page that does not compile (listImageUploads-body.jsp: "Formatter" is ambiguous between
+        # java.util.* and org.calacademy.antweb.*) was found only by the staging end-to-end run, 30 minutes later.
+        run: |
+          git fetch -q --depth=1 origin master
+          changed=$(git diff --name-only --diff-filter=AM FETCH_HEAD HEAD -- 'web/*.jsp' | sed 's#^web/##' | tr '\n' ' ')
+          if [ -z "$changed" ]; then echo "No JSP page changed"; exit 0; fi
+          echo "Changed JSP pages: $changed"
+          # A page included with <%@ include file %> is compiled through the pages that include it (tools/ci/jsp_to_compile.py)
+          python3 tests/unit/test_jsp_to_compile.py
+          files=$(python3 tools/ci/jsp_to_compile.py $changed | tr '\n' ' ')
+          echo "Compiled: $files"
+          docker run --rm --entrypoint sh -e FILES="$files" antweb/antweb:dev -c '
+            set -e
+            A=/usr/local/antweb
+            CP="/usr/local/tomcat/lib/*:/usr/local/tomcat/bin/*:/usr/share/ant/lib/*:$A/WEB-INF/classes:$A/WEB-INF/lib/*"
+            n=0
+            for f in $FILES; do
+              rm -rf /tmp/jspc; mkdir -p /tmp/jspc
+              java -cp "$CP" org.apache.jasper.JspC -uriroot $A -d /tmp/jspc -compile -failFast "$A/$f" > /tmp/jspc.txt 2>&1 || true
+              cls=$(find /tmp/jspc -name "*_jsp.class" | wc -l)
+              if [ "$cls" -lt 1 ] || grep -qiE "^(SEVERE|ERROR)|JasperException|An error occurred" /tmp/jspc.txt; then
+                cat /tmp/jspc.txt
+                echo "::error::$f does not compile:%0A$(grep -v "^\s*at " /tmp/jspc.txt | head -30 | sed "s/%/%25/g" | tr "\n" "\001" | sed "s/\x01/%0A/g")"
+                exit 1
+              fi
+              n=$((n+1))
+            done
+            echo "Changed JSP pages compiled: $n"
+          '
 
       - name: Manager Tools (Museum, Geolocale, Project, Photographers, Admin Alert, map managers, Query and Log Manager)
         # The JSP pages of the Manager Tools compile (Jasper JspC, as Tomcat 11 compiles them).
@@ -600,6 +688,9 @@ jobs:
 
       - name: deploy.sh no-restart list (tests/unit/test_deploy_paths.py)
         run: python3 tests/unit/test_deploy_paths.py
+
+      - name: The daily dump writes its status line for the mount check (tests/unit/test_dump_status.py)
+        run: python3 tests/unit/test_dump_status.py
 
       - name: Every e2e test file is in the quick set or an area (tests/unit/test_e2e_areas.py)
         run: python3 tests/unit/test_e2e_areas.py

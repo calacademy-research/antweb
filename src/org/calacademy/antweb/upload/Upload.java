@@ -32,6 +32,13 @@ public class Upload {
     private int species;
     private int ungeoreferenced;
     private int flagged;
+
+    // When the numbers above are the group's specimens as the nightly run counted them (GroupCountDb, 2026-10-22), the
+    // time of that count; null when they are the upload's own numbers (as written at the upload).
+    private Date countedAt;
+
+    public Date getCountedAt() { return countedAt; }
+    public void setCountedAt(Date countedAt) { this.countedAt = countedAt; }
     
     public Upload() {
     }
