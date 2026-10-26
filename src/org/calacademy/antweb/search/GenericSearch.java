@@ -800,7 +800,8 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         // pull quoted stuff out of the string
         String newValue = m.replaceAll("");
         if (newValue.length() > 0) {
-            List<String> newElements = Arrays.asList(newValue.split("[, ]"));
+            // Separated by commas or any white space: a list pasted from a spreadsheet has line breaks or tabs (2026-10-26).
+            List<String> newElements = Arrays.asList(newValue.split("[,\\s]+"));
             elements.addAll(newElements);
         }
         //A.log("getSearchString() 3 property:" + property + " value:" + value);
