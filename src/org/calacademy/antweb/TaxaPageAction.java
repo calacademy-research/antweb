@@ -94,7 +94,7 @@ public final class TaxaPageAction extends AntwebAction {
           Connection connection = null;
           String dbMethodName = DBUtil.getDbMethodName("TaxaPageAction.execute()");
 
-          if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+          if (HttpUtil.tooBusyForBots(request)) { return HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
           //int uniqueNumber = AntwebUtil.getRandomNumber();
           try {

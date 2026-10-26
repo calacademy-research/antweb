@@ -31,8 +31,10 @@ public final class FieldGuideAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(FieldGuideAction.class);
     
-    private static int s_simultaneousExecutes = 0;
-    private final static int MAX_SIMULTANEOUS_EXECUTES = 2;
+    // Up to 3 field guides built at the same time for visitors who are not logged in (the old check
+    // "count > 2" before counting let 3 run); thread-safe since 2026-10-26 (finding F2).
+    private final static int MAX_SIMULTANEOUS_EXECUTES = 3;
+    private static final ConcurrencyLimiter s_limiter = new ConcurrencyLimiter(MAX_SIMULTANEOUS_EXECUTES);
     
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response)
@@ -89,13 +91,16 @@ public final class FieldGuideAction extends AntwebAction {
         }
         s_log.debug("FieldGuideAction.execute() caste:" + caste);
         
-        if (s_simultaneousExecutes > MAX_SIMULTANEOUS_EXECUTES) {
-            LogMgr.appendLog("throttle.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + AntwebUtil.getRequestInfo(request));
-            String message = "Only " + s_simultaneousExecutes + " simultaneous field guide creation requests allowed at a time... try again shortly or log in for unrestricted access.";
-            request.setAttribute("message", message);
-            return mapping.findForward("message");
+        boolean held = false;
+        if (LoginMgr.getAccessLogin(request) == null) {
+            held = s_limiter.tryAcquire();
+            if (!held) {
+                LogMgr.appendLog("throttle.txt", DateUtil.getFormatDateTimeStr(new Date()) + " " + AntwebUtil.getRequestInfo(request));
+                String message = "Only " + MAX_SIMULTANEOUS_EXECUTES + " simultaneous field guide creation requests allowed at a time... try again shortly or log in for unrestricted access.";
+                request.setAttribute("message", message);
+                return mapping.findForward("message");
+            }
         }
-        ++s_simultaneousExecutes;
 
 		String results = null;
 		ArrayList<Taxon> theTaxa = null;
@@ -255,7 +260,7 @@ public final class FieldGuideAction extends AntwebAction {
             s_log.error("execute() 3 e:" + e);
             AntwebUtil.logStackTrace(e);
 		} finally {
-		    --s_simultaneousExecutes;
+		    if (held) s_limiter.release();
             QueryProfiler.profile("fieldGuide", startTime);   
             DBUtil.close(connection, this, dbMethodName);
 		}

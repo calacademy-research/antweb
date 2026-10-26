@@ -45,7 +45,7 @@ public final class CollectionAction extends AntwebAction {
         String queryString = request.getQueryString();
         s_log.debug("CollectionAction.execute() queryString:" + queryString + " p:" + request.getParameter("name"));
 
-        if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+        if (HttpUtil.tooBusyForBots(request)) { return HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
 		Collection collection = null;
 		Connection connection = null;

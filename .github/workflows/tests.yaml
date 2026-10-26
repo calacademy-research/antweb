@@ -88,6 +88,10 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_counts.py
 
+      - name: API findings F6, F7, F8, F22 (/images url, valid filters, fixed order, geoSpecimens radius) (tests/unit/test_api_findings.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_findings.py
+
       - name: API container as in docker-compose.yml (only its login file, read-only, workers not root)
         # The login file is root-only (0600) here: gunicorn's master reads it at start
         # (--preload), the workers serve as the user api (uid 2002).
@@ -179,6 +183,20 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.maps.MapPopupDataTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (2 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the limits on simultaneous maps, comparisons and field guides (ConcurrencyLimiter)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/util/ConcurrencyLimiter.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/ConcurrencyLimiterTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.ConcurrencyLimiterTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
       - name: Map popups show decoded titles and link once-encoded codes (tests/unit/test_map_popups.py, runs drawMap.js in node)
@@ -403,7 +421,7 @@ jobs:
       - name: Claude audit rotation (tests/unit/test_claude_audit.py)
         run: python3 tests/unit/test_claude_audit.py
 
-      - name: Login updates keep login.created, no delete of all page text, page titles, admin links on phones (tests/unit/test_small_fixes.py)
+      - name: Login updates keep login.created, no delete of all page text, page titles, admin links on phones, busy answers returned, simultaneous limits (tests/unit/test_small_fixes.py)
         run: python3 tests/unit/test_small_fixes.py
 
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)

@@ -10,6 +10,10 @@
    nothing refers to them.
 5. At phone width the admin pages' column of links (div.right next to div.admin_left) does not
    float: admLayout.jsp sets the viewport, admin_style.css and responsive.css have the rules.
+6. (2026-10-26, public-pages finding F1) Every "Too busy for bots." answer is returned: the
+   ActionForward of HttpUtil.sendMessage() was ignored and the page was built anyway.
+7. (2026-10-26, finding F2) The limits on simultaneous maps, comparisons and field guides use
+   ConcurrencyLimiter (thread-safe), skip logged-in users and release only a slot they took.
 
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -121,6 +125,28 @@ def test_admin_links_column_stacks_on_phones():
     print("Admin link column stacks at phone width.")
 
 
+def test_too_busy_for_bots_is_returned(sources):
+    found = 0
+    for path, src in sources.items():
+        for line in src.splitlines():
+            if "tooBusyForBots(" in line and "sendMessage(" in line:
+                found += 1
+                assert "return HttpUtil.sendMessage(" in line, f"{path}: {line.strip()}"
+    assert found >= 11, found
+    print(f"Too busy for bots: {found} answers returned.")
+
+
+def test_simultaneous_limits(sources):
+    for name in ("BigMapAction.java", "BrowseAction.java", "search/FieldGuideAction.java"):
+        path = "src/org/calacademy/antweb/" + name
+        src = sources[path]
+        assert "ConcurrencyLimiter" in src, path
+        assert "LoginMgr.getAccessLogin(request)" in src, path
+        assert ".release()" in src and ".tryAcquire()" in src, path
+        assert not re.search(r"(\+\+|--)\s*s_\w*(Count|Executes)\b", src), path
+    print("Simultaneous limits are thread-safe and skip logged-in users.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -129,6 +155,8 @@ def main():
     test_titles()
     test_old_manage_login_page_gone()
     test_admin_links_column_stacks_on_phones()
+    test_too_busy_for_bots_is_returned(sources)
+    test_simultaneous_limits(sources)
 
 
 if __name__ == "__main__":

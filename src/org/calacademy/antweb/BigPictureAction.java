@@ -36,7 +36,7 @@ public final class BigPictureAction extends AntwebAction {
 
         HttpSession session = request.getSession();
 
-        if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+        if (HttpUtil.tooBusyForBots(request)) { return HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
         String query = null;
         Connection connection = null;

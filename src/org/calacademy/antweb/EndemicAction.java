@@ -60,7 +60,7 @@ public final class EndemicAction extends AntwebAction {
 
         String dbUtilName = "EndemicAction.execute()";
 
-        if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+        if (HttpUtil.tooBusyForBots(request)) { return HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
         Connection connection = null;
         try {

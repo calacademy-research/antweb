@@ -177,9 +177,12 @@ def test_images_records_name_their_specimen():
     assert body["metaData"]["specimenCount"] == len(records), body["metaData"]
 
 
-@pytest.mark.parametrize("route, id_field", [("geolocales?georank=country", "geolocaleId"), ("bioregions?", "bioregionName")])
+@pytest.mark.parametrize("route, id_field", [("geolocales?georank=country", "geolocaleId"), ("bioregions?", "bioregionName"),
+                                             ("taxa?genus=camponotus", "taxonName"),
+                                             ("bioregionTaxa?bioregionName=Malagasy", "taxonName")])
 def test_offset_pages_follow_on(route, id_field):
-    """Routes with a fixed order (geolocales by id, bioregions by name): offset gives the next page."""
+    """Routes with a fixed order (geolocales by id, bioregions by name, taxa and bioregionTaxa by key since
+    2026-10-26, finding F8): offset gives the next page."""
     sep = "" if route.endswith("?") else "&"
     key = route.split("?")[0]
     first = _get(f"/v3.1/{route}{sep}limit=3&offset=0&up=1").json()[key]
@@ -209,9 +212,8 @@ def test_unknown_route_is_json_404():
     assert r.json() == {"error": "Not Found"}, r.text[:200]
 
 
-@pytest.mark.xfail(strict=False, reason="finding: validGenus=true compares the stored (lower-case) genus with a "
-                                        "capitalised list, so every record is dropped; docs/flows/public-pages-findings.md")
 def test_valid_genus_filter_keeps_valid_genera():
+    """Finding F7 (fixed 2026-10-26): validGenus=true compares in lower case, in SQL before limit."""
     body = _get("/v3.1/specimens?genus=camponotus&validGenus=true&limit=5&up=1").json()
     assert len(body["specimens"]) == 5, body["metaData"]
 
@@ -236,18 +238,17 @@ def _km(lat1, lon1, lat2, lon2):
     return 6371 * 2 * math.asin(math.sqrt(a))
 
 
-@pytest.mark.xfail(strict=False, reason="finding F22: /geoSpecimens adds radius to the coordinates in degrees "
-                                        "(documented as kilometres); docs/flows/public-pages-findings.md")
 def test_geo_specimens_stay_within_the_radius():
+    """Finding F22 (fixed 2026-10-26): radius is in kilometres."""
     body = _get("/v3.1/geoSpecimens?coords=37.77,-122.47&radius=10&limit=20&up=1").json()
     far = [(s["specimenCode"], s["decimalLatitude"], s["decimalLongitude"]) for s in body["specimens"]
            if s.get("decimalLatitude") not in (None, "") and _km(37.77, -122.47, float(s["decimalLatitude"]), float(s["decimalLongitude"])) > 15]
     assert not far, f"specimens more than 15 km from the point for radius=10: {far[:3]}"
 
 
-@pytest.mark.xfail(strict=False, reason="finding F22: /geoSpecimens?distinct= starts a new query without the area; "
-                                        "docs/flows/public-pages-findings.md")
 def test_geo_specimens_distinct_uses_the_area():
-    sf = _get("/v3.1/geoSpecimens?coords=37.77,-122.47&radius=1&distinct=genus&limit=500&up=1").json()["genera"]
-    mg = _get("/v3.1/geoSpecimens?coords=-18.9,47.5&radius=1&distinct=genus&limit=500&up=1").json()["genera"]
+    """Finding F22 (fixed 2026-10-26): the distinct lists are those of the area."""
+    sf = _get("/v3.1/geoSpecimens?coords=37.77,-122.47&radius=25&distinct=genus&limit=500&up=1").json()["genera"]
+    mg = _get("/v3.1/geoSpecimens?coords=-18.9,47.5&radius=25&distinct=genus&limit=500&up=1").json()["genera"]
+    assert sf or mg, "no genus within 25 km of San Francisco or Antananarivo"
     assert sorted(sf) != sorted(mg), "the same genera near San Francisco and near Antananarivo"
