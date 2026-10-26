@@ -76,10 +76,14 @@
          more than 10 languages (default 10), and AntWeb then shows its "Request Error"
          page. Some browsers and corporate email-security proxies send many more
          (a curator could not log in, 2026-10-19). 100 is generous; the header itself
-         stays limited by maxHttpHeaderSize (8 KB). Tested by
-         tests/e2e/test_request_limits.py. -->
+         stays limited by maxHttpHeaderSize. Tested by
+         tests/e2e/test_request_limits.py.
+         maxHttpHeaderSize 32 KB (Tomcat's default 8 KB): a search for a pasted list of about 500 specimen codes
+         makes an address over 8 KB, and its sort and next-page links were refused with "Bad Request"
+         (2026-10-26). Cloudflare allows addresses up to 16 KB, so about 1,000 codes. -->
     <Connector port="8080" protocol="HTTP/1.1"
                connectionTimeout="3600000" scheme="https" secure="true"
+               maxHttpHeaderSize="32768"
                maxParameterCount="10000"
                maxPartCount="1000"
                maxLocaleCount="100" />
