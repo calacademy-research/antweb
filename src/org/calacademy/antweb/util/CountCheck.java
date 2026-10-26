@@ -248,6 +248,11 @@ public class CountCheck {
     static final String LAST_NIGHTLY_SQL = "select if(time(now()) >= '08:15:00', timestamp(curdate(), '08:15:00'),"
         + " timestamp(curdate() - interval 1 day, '08:15:00')), time(now()) >= '05:00:00' and time(now()) < '08:15:00'";
 
+    /** Did the nightly run that started today at 05:00 end (compute.log's last "End run" is at or after it)? */
+    public static boolean nightlyEndedToday(Timestamp lastRunEnd, java.time.LocalDateTime now) {
+        return lastRunEnd != null && !lastRunEnd.toLocalDateTime().isBefore(now.toLocalDate().atTime(5, 0));
+    }
+
     public Result run(List<Place> places) throws SQLException {
         return run(places, null);
     }
@@ -283,6 +288,9 @@ public class CountCheck {
             result.inNightlyWindow = r.getBoolean(2);
         }
         result.lastRunEnd = lastRunEnd;
+        // Between 05:00 and 08:15 the nightly may still be running; once compute.log shows today's run ended, it is not
+        // (2026-10-26: the nightly's own check at 06:10 said "rebuilding the counts now").
+        if (result.inNightlyWindow && nightlyEndedToday(lastRunEnd, java.time.LocalDateTime.now())) result.inNightlyWindow = false;
         if (lastRunEnd != null && !result.inNightlyWindow) result.countedUntil = lastRunEnd;
         Set<String> changedNames = changedNamesSince(result);
         imagesSince(result);

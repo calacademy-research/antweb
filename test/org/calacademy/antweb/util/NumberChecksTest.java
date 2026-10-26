@@ -220,6 +220,32 @@ public class NumberChecksTest extends TestCase {
         assertEquals(list(r), 1, real(r, "api.taxa"));
     }
 
+    /** B11 (2026-10-26): the nightly copies each name's Global row into the taxon columns the API reads; then none differ. */
+    public void testNightlyCopyMakesApiTaxaCountsTheGlobalRow() throws Exception {
+        exec("update taxon set subfamily_count = 0, genus_count = 0, species_count = 0, specimen_count = 0");
+        exec("update taxon set specimen_count = 7 where taxon_name not in (select taxon_name from proj_taxon where project_name = 'allantwebants') limit 1");
+        assertTrue(real(check(), "api.taxa") > 0);
+        String line = org.calacademy.antweb.home.TaxonApiCountDb.copyGlobalCounts(connection);
+        assertTrue(line, line.startsWith("API taxon counts: ") && line.contains("names updated"));
+        CountCheck.Result r = check();
+        assertEquals(list(r), 0, real(r, "api.taxa"));
+        try (java.sql.Statement q = connection.createStatement(); java.sql.ResultSet rs = q.executeQuery("select count(*) from taxon"
+                + " where specimen_count <> 0 and taxon_name not in (select taxon_name from proj_taxon where project_name = 'allantwebants')")) {
+            rs.next();
+            assertEquals("a name with no Global row gets 0", 0, rs.getInt(1));
+        }
+        assertEquals("a second copy changes nothing", "API taxon counts: 0 names updated",
+            org.calacademy.antweb.home.TaxonApiCountDb.copyGlobalCounts(connection).replaceAll(" from.*", ""));
+    }
+
+    /** The nightly's own check (06:10) is after today's run ended: not "rebuilding the counts now" (2026-10-26). */
+    public void testNightlyEndedTodayIsNotTheWindow() {
+        java.time.LocalDateTime now = java.time.LocalDateTime.of(2026, 10, 26, 6, 12);
+        assertTrue(CountCheck.nightlyEndedToday(java.sql.Timestamp.valueOf("2026-10-26 06:10:28"), now));
+        assertFalse("yesterday's run", CountCheck.nightlyEndedToday(java.sql.Timestamp.valueOf("2026-10-25 06:07:57"), now));
+        assertFalse("no run in compute.log", CountCheck.nightlyEndedToday(null, now));
+    }
+
     public void testEndemicFlagsByTheRule() throws Exception {
         exec("update geolocale_taxon set is_endemic = 0 where geolocale_id = " + MADAGASCAR + " and taxon_name = '" + PAX + "'");
         CountCheck.Result r = check();

@@ -48,6 +48,8 @@ API = REPO / "api" / "v3.1" / "api.py"
 OUT = REPO / "docs" / "catalog"
 
 HAND = ["purpose", "status", "notes"]
+# The status values in use: keep, removed, check (a decision still to make), remove? (proposed), or empty for a new row.
+STATUSES = {"keep", "removed", "check", "remove?", ""}
 COLUMNS = ["key", "kind", "url", "class", "jsps", "access", "access_where", "access_evidence",
            "writes", "anon_result", "e2e_tests", "e2e_probe", "hits"] + HAND
 
@@ -1140,7 +1142,12 @@ def main():
             print("::warning::%s is in docs/catalog/actions.csv but no longer in the code" % k)
         for k in nopurpose:
             print("::warning::%s has no purpose in docs/catalog/actions.csv" % k)
-        if missing:
+        # A status other than these means a row's columns moved (2026-10-26: an unquoted comma in two purposes).
+        badstatus = [k for k, r in existing.items() if r.get("status") not in STATUSES]
+        for k in badstatus:
+            print("::error::%s: status %r in docs/catalog/actions.csv is not one of %s (a comma in an unquoted cell?)"
+                  % (k, existing[k].get("status"), ", ".join(sorted(STATUSES))))
+        if missing or badstatus:
             print("Run: python3 tools/catalog/build_catalog.py, fill in the purpose and status of the new rows, "
                   "and commit docs/catalog/.", file=sys.stderr)
             return 1

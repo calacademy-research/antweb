@@ -333,6 +333,7 @@ hierarchy complete).
 | `source`, `insert_method` | which load made the row (e.g. a species list file, `addMissingGenus`, `homononymMirroringTaxon`) |
 | `access_group` | the group whose upload made a non-AntCat name |
 | `image_count` | images of the taxon's specimens and of the taxa under it, set 4 (`ImageCountDb.updateTaxonImageCount`) |
+| `subfamily_count`, `genus_count`, `species_count`, `specimen_count` | what the API's `/taxa` returns: copied at the end of each nightly run from the name's Global row (`proj_taxon`, project `allantwebants`; 0 without one) by `TaxonApiCountDb` (since 2026-10-26; no code wrote them before, finding B11) |
 | `type` | 1 = a species (not a morphospecies) with at least one specimen with a type status, set 3 (`TaxonDb.crawlForType`) |
 | `chart_color` | the subfamily's colour in pie charts, set 1 (`TaxonDb.setSubfamilyChartColor`) |
 | `bioregion`, `country` | AntCat's distribution text, as exported |
