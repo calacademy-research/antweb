@@ -40,6 +40,8 @@ services:
   api:
     volumes:
       - "./api/v3.1:/api"   # Mount the api dir in the container for making edits without rebuilding
+    environment:
+      API_REQUIRE_READONLY_LOGIN: "false"   # development: warning and the main account without etc/api-db.properties
     ports:
     - "127.0.0.1:5000:5000"   #Expose the api outside the container to the local machine for debugging
     command: ["--reload"]

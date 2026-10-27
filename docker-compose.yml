@@ -64,6 +64,10 @@ services:
     # serves requests as the user api.
     volumes:
       - ./etc/api-db.properties:/antweb-etc/api-db.properties:ro
+    # Production and staging: the API does not start without that login file (decided by Brian
+    # Fisher 2026-10-27). docker-compose.dev.yml sets false (warning, main account).
+    environment:
+      API_REQUIRE_READONLY_LOGIN: "true"
 
     # One bulk request holds its records in memory (api.py: at most 10,000 per request, about
     # 150 MB). The limit keeps a burst of them from taking memory Tomcat and MySQL need: the

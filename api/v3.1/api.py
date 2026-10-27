@@ -20,6 +20,8 @@
 # assert os.path.exists('/var/www/html/apiV3/api_db.conf')
 
 import configparser
+import os
+import re
 from flask import Flask, json, request, Response, g
 from flask import jsonify as flaskJsonify
 
@@ -55,13 +57,28 @@ def _apiProperties(path=API_PROPERTIES):
         return {}
 
 
-def _db_credentials(props):
+# Production and staging set API_REQUIRE_READONLY_LOGIN=true for the api service (docker-compose.yml; the dev
+# compose file sets false). Decided by Brian Fisher 2026-10-27: there the API does not start without its read-only
+# login file.
+def _readonlyLoginRequired(env=None):
+    env = os.environ if env is None else env
+    return env.get('API_REQUIRE_READONLY_LOGIN', '').strip().lower() in ('1', 'true', 'yes')
+
+
+def _db_credentials(props, required=None):
     # The API only reads. On the servers it logs in as a read-only MySQL user whose
-    # name and password are in etc/api-db.properties. Without that file it falls back to
-    # the main antweb account, as before.
+    # name and password are in etc/api-db.properties. Without that file the API stops
+    # on production and staging (SystemExit, the container does not start); on a
+    # development machine it prints a warning and uses the main antweb account.
+    if required is None:
+        required = _readonlyLoginRequired()
     user, password = 'antweb', 'CHANGE_ME'
     if props.get('user') and props.get('password'):
         user, password = props['user'], props['password']
+    elif required:
+        print('ERROR: no read-only login (user= and password=) in ' + API_PROPERTIES
+              + '; the API does not start without it on production and staging', flush=True)
+        raise SystemExit(1)
     else:
         print('WARNING: no read-only login in ' + API_PROPERTIES + '; the API uses the main account', flush=True)
     print('API database user:', user, flush=True)
@@ -226,15 +243,22 @@ def numbers(value, count):
 
 
 def down(request):
-    # This code brings the server down. Only accessible if &up=1 is appended to each api call.
+    # The data routes answer only with &up=1 (admin switch, see the documentation page).
     up = request.args.get('up', default='*', type=str)
     if up != '1':
-        print("Down")
-        # raise HaltException("We decided we want to halt the script")
-        # userExit()
-        # exit()
         return 1
     return 0
+
+
+API_DOWN_MESSAGE = "The AntWeb API is not available at the moment. Please try again later."
+
+
+def apiDown():
+    # Without up=1: HTTP 503 with a JSON message (decided by Brian Fisher 2026-10-27; it was an empty page with
+    # HTTP 200). The / route stays open for health checks.
+    response = jsonify(error=API_DOWN_MESSAGE, documentation=prodServer + "/" + apiUri)
+    response.status_code = 503
+    return response
 
 
 # Records per request, for every endpoint, JSON and ndjson alike (2026-10-21: 500, until
@@ -618,7 +642,7 @@ def getSpecimen():
     geolocaleName = request.args.get('geolocaleName', default='*', type=str)
     lifeStageSex = request.args.get('lifeStageSex', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     # Build query criteria
     query = session.query(Specimen)
@@ -656,14 +680,7 @@ def getSpecimen():
             return badRequest('bbox must be four numbers: north,east,south,west latitude and longitude')
         query = query.filter(Specimen.decimalLatitude <= coords[0], Specimen.decimalLatitude >= coords[2])
         query = query.filter(Specimen.decimalLongitude <= coords[1], Specimen.decimalLongitude >= coords[3])
-    if maxDate != '*':
-        query = query.filter(Specimen.dateCollectedStart < maxDate)
-    if minDate != '*':
-        query = query.filter(Specimen.dateCollectedStart > minDate)
-    if minElevation != '*':
-        query = query.filter(Specimen.minimumElevationInMeters > minElevation)
-    if maxElevation != '*':
-        query = query.filter(Specimen.minimumElevationInMeters < maxElevation)
+    query = boundsFilter(query, minDate, maxDate, minElevation, maxElevation)
     if museum != '*':
         query = query.filter(Specimen.museum == museum)
     if ownedby != '*':
@@ -743,6 +760,28 @@ def getSpecimen():
 KM_PER_DEGREE_LATITUDE = 111.32
 
 
+def boundsFilter(query, minDate, maxDate, minElevation, maxElevation):
+    # minDate, maxDate, minElevation and maxElevation include their bounds (decided by Brian Fisher 2026-10-27;
+    # they were exclusive, so minElevation=1200 left out specimens at 1200 m). A maxDate given as a day
+    # (yyyy-mm-dd) includes the whole day. Used by every route with these filters (/specimens, /distinctTaxa).
+    if maxDate != '*':
+        if re.fullmatch(r'\d{4}-\d{2}-\d{2}', maxDate):
+            try:
+                nextDay = (datetime.strptime(maxDate, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
+                query = query.filter(Specimen.dateCollectedStart < nextDay)
+            except ValueError:
+                query = query.filter(Specimen.dateCollectedStart <= maxDate)
+        else:
+            query = query.filter(Specimen.dateCollectedStart <= maxDate)
+    if minDate != '*':
+        query = query.filter(Specimen.dateCollectedStart >= minDate)
+    if minElevation != '*':
+        query = query.filter(Specimen.minimumElevationInMeters >= minElevation)
+    if maxElevation != '*':
+        query = query.filter(Specimen.minimumElevationInMeters <= maxElevation)
+    return query
+
+
 def radiusBox(lat, lon, radiusKm):
     """(minLat, maxLat, minLon, maxLon) of the box around lat, lon that holds a circle of radiusKm kilometres.
     2026-10-26, finding F22: the radius was added to the coordinates as degrees (radius=10 was a box of about
@@ -766,7 +805,7 @@ def getGeoSpecimens():
     radius = request.args.get('radius', default=5.0, type=float)  # in kilometres
     distinct = request.args.get('distinct', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Specimen)
     coordsArray = coords.split(",")
@@ -874,7 +913,7 @@ def getGeoSpeciesStatsDict(row):
 def getGeoSpeciesStats():
     geolocaleName = request.args.get('geolocaleName', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     # add introduced and endemics
 
@@ -887,18 +926,19 @@ def getGeoSpeciesStats():
     extraClause = " s." + georank + " = :geolocaleName"
 
     # queenErgatoidCount and maleErgatoidCount count the ergatoids of their caste (2026-10-22: both counted every
-    # ergatoid specimen, so a male ergatoid was also a queen ergatoid).
+    # ergatoid specimen, so a male ergatoid was also a queen ergatoid). Every subcaste count counts only within its
+    # caste, as the ergatoids do (decided by Brian Fisher 2026-10-27).
     query = "select s.taxon_name, s.genus, s.species " \
             + " , count(case when caste='queen' then 1 end)" \
             + " , count(case when caste='queen' and subcaste='ergatoid' then 1 end)" \
-            + " , count(case when subcaste='alate/dealate' then 1 end)" \
-            + " , count(case when subcaste='brachypterous' then 1 end)" \
+            + " , count(case when caste='queen' and subcaste='alate/dealate' then 1 end)" \
+            + " , count(case when caste='queen' and subcaste='brachypterous' then 1 end)" \
             + " , count(case when caste='worker' then 1 end)" \
-            + " , count(case when subcaste='major/soldier' then 1 end)" \
-            + " , count(case when subcaste='normal' then 1 end)" \
+            + " , count(case when caste='worker' and subcaste='major/soldier' then 1 end)" \
+            + " , count(case when caste='worker' and subcaste='normal' then 1 end)" \
             + " , count(case when caste='male' then 1 end)" \
             + " , count(case when caste='male' and subcaste='ergatoid' then 1 end)" \
-            + " , count(case when subcaste='alate' then 1 end)" \
+            + " , count(case when caste='male' and subcaste='alate' then 1 end)" \
             + " from specimen s, taxon t, geolocale_taxon gt, geolocale g" \
             + " where s.taxon_name = t.taxon_name and gt.taxon_name = t.taxon_name " \
             + "   and gt.geolocale_id = g.id and " \
@@ -984,7 +1024,7 @@ def getTaxa():
     # parent = request.args.get('parentTaxonName', default='*', type=str) # Could do parentTaxonName but not parent.
     status = request.args.get('status', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Taxon)
     if taxonName != '*':
@@ -1098,7 +1138,7 @@ def getDistinctTaxa():
     maxElevation = request.args.get('maxElevation', default='*', type=str)
     status = request.args.get('status', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Specimen)
 
@@ -1117,14 +1157,7 @@ def getDistinctTaxa():
         query = query.filter(countryIs(Specimen.country, country))
     if habitat != '*':
         query = query.filter(Specimen.habitat.contains(habitat))
-    if maxDate != '*':
-        query = query.filter(Specimen.dateCollectedStart < maxDate)
-    if minDate != '*':
-        query = query.filter(Specimen.dateCollectedStart > minDate)
-    if minElevation != '*':
-        query = query.filter(Specimen.minimumElevationInMeters > minElevation)
-    if maxElevation != '*':
-        query = query.filter(Specimen.minimumElevationInMeters < maxElevation)
+    query = boundsFilter(query, minDate, maxDate, minElevation, maxElevation)
     if status != '*':
         query = query.filter(Specimen.status == status)
 
@@ -1266,7 +1299,7 @@ def getImages():
     shotNumber = request.args.get('shotNumber', default='*', type=str)
     hasTiff = request.args.get('hasTiff', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Image)
     if since != '*':
@@ -1479,7 +1512,7 @@ def getMeasurements():
     caste = request.args.get('caste', default='*', type=str)
     taxonStatus = request.args.get('taxonStatus', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Measurement, Specimen).outerjoin(Specimen, Specimen.code == Measurement.code)
 
@@ -1671,7 +1704,7 @@ def getTaxaImages():
     hasTiff = request.args.get('hasTiff', default='*', type=str)
 
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(TaxaImage)
     if taxonName != '*':
@@ -1805,7 +1838,7 @@ def getGeolocales():
     parent = request.args.get('parent', default='*', type=str)
     georank = request.args.get('georank', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Geolocale)
     if id != '*':
@@ -1923,7 +1956,7 @@ def getGeolocaleTaxa():
     species = request.args.get('species', default='*', type=str)
     status = request.args.get('status', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(GeolocaleTaxon)
     query = query.join(Geolocale).join(Taxon)
@@ -2066,7 +2099,7 @@ class Bioregion(Base):
 def getBioregions():
     name = request.args.get('bioregionName', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Bioregion)
     if name != '*':
@@ -2153,7 +2186,7 @@ def getBioregionTaxa():
     species = request.args.get('species', default='*', type=str)
     status = request.args.get('status', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(BioregionTaxon)
     query = query.join(Bioregion).join(Taxon)
@@ -2249,7 +2282,7 @@ def getUnimagedGeolocaleTaxa():
     taxarank = request.args.get('taxarank', default='*', type=str)
     status = request.args.get('status', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     geolocale = getGeolocale(geolocaleName)
     if geolocale is None:
@@ -2442,6 +2475,18 @@ def suggestParams(name, accepted):
         if a not in out:
             out.append(a)
     return out[:3]
+
+
+@application.before_request
+def checkUp():
+    # Before any other check and before the route's own code (some routes answered a missing parameter first):
+    # every data route without up=1 answers 503 (apiDown). The per-route down() lines stay as a second check.
+    endpoint = request.endpoint
+    if endpoint is None or endpoint in UNCHECKED_ENDPOINTS or endpoint not in application.view_functions:
+        return None
+    if down(request):
+        return apiDown()
+    return None
 
 
 @application.before_request
