@@ -9,7 +9,7 @@ import org.calacademy.antweb.util.Html;
 
 /**
  * Which castes of a species are imaged (Brian Fisher, 2026-10-27), for the species page (description.do of a species
- * or subspecies): "Imaged: worker (12 specimens), queen (2), male (1)". A specimen is imaged when it has an image of the
+ * or subspecies): "Imaged: worker (12 specimens: 9 worker, 3 major/soldier), queen (2), male (1)". A specimen is imaged when it has an image of the
  * ant; a specimen with only label images is not (the rule of StatisticsDb.ANT_IMAGE, Q12). Specimens of the name from
  * anywhere in AntWeb (images help identification wherever the specimen came from). One grouped query on the name's
  * specimens (index specimen_taxon_name) joined to their images (image_of_id), as StatisticsDb.ANT_IMAGED_NAMES_SQL.
@@ -38,6 +38,13 @@ public final class ImagedCastes {
             case "other|larva/pupa": return "larvaPupa";
         }
         return null;
+    }
+
+    /** The subcaste as the line shows it: the ordinary worker subcaste ("normal" in the data) is "worker" (Brian Fisher,
+     *  2026-10-27: "9 worker, 3 major/soldier"). */
+    static String subcasteLabel(String caste, String subcaste) {
+        if (Caste.WORKER.equals(caste) && "normal".equals(subcaste)) return "worker";
+        return subcaste;
     }
 
     /** The query: imaged specimens of the name by caste and subcaste. */
@@ -87,7 +94,7 @@ public final class ImagedCastes {
 
     /**
      * The line on the species page. imagesUrl: the species images page (images.do?...) to which "&caste=X" is added;
-     * null for no links. Example: "Imaged: worker (12 specimens: 9 normal, 3 major/soldier), queen (2), male (1)".
+     * null for no links. Example: "Imaged: worker (12 specimens: 9 worker, 3 major/soldier), queen (2), male (1)".
      * The numbers are also in data- attributes for the tests.
      */
     public static String toHtml(LinkedHashMap<String, LinkedHashMap<String, Integer>> counts, String imagesUrl) {
@@ -112,7 +119,7 @@ public final class ImagedCastes {
                 for (java.util.Map.Entry<String, Integer> s : e.getValue().entrySet()) {
                     if ("".equals(s.getKey())) continue;
                     String filter = subcasteFilter(caste, s.getKey());
-                    String sl = Html.esc(s.getKey());
+                    String sl = Html.esc(subcasteLabel(caste, s.getKey()));
                     if (imagesUrl != null && filter != null) sl = "<a href=\"" + Html.escAttr(imagesUrl + "&caste=" + filter) + "\">" + sl + "</a>";
                     subs.add(s.getValue() + " " + sl);
                 }

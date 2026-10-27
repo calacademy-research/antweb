@@ -211,7 +211,7 @@ public class NumberChecksTest extends TestCase {
         assertNotNull(list(r), m);
         assertTrue(m.isReal());
         assertEquals(1, m.stored);
-        assertEquals(3, m.recount);
+        assertEquals("pheidole a 1 and b 1 (ant images; 2026-10-27)", 2, m.recount);
     }
 
     public void testApiTaxaCountsAreTheGlobalRow() throws Exception {

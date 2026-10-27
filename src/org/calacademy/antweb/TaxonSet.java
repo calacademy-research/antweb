@@ -157,7 +157,8 @@ public abstract class TaxonSet {
     }  
     
     // 2026-10-27 (images from anywhere): the images of the name in AntWeb, the allantwebants list row's Images
-    // (nightly set 4, same rule as the place's row: every image of the specimens, labels included); -1 when not known.
+    // (nightly set 4, same rule as the place's row: images of the ant, labels never count, since 2026-10-27); -1 when
+    // not known.
     private int globalImageCount = -1;
     public int getGlobalImageCount() {
         return globalImageCount;

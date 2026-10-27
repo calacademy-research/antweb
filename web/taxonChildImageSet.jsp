@@ -114,8 +114,8 @@ Examples of species with images that don't have h1 images:
             if (thisChild.getHasImages() && !isSpecimen) {
                 // 2026-10-27 (B46): a name shows the same number as in the default view (its Images on this place's
                 // list). It showed the image count kept for specimens only, so every name said "0 Images".
-                String ratioImagesStr = thisChild.getTaxonSet().getImageCountStr();
-                if ("No Images".equals(ratioImagesStr) && thisChild.getImageCount() > 0) ratioImagesStr = thisChild.getImageCount() + " Images"; %>
+                // 2026-10-27 (Brian Fisher): the Images column's numbers, ant images only, in AntWeb and of the place.
+                String ratioImagesStr = org.calacademy.antweb.ImagesAnywhere.childImages(thisChild, overview); %>
                 <%= ratioImagesStr %>
          <% } else if (thisChild.getHasImages()) {
                 int titleStr = 0;
@@ -277,8 +277,10 @@ Examples of species with images that don't have h1 images:
 				 if (!isSpecimen) { %>
 						<span id="next_in_taxon"><%= thisChild.getTaxonSet().getNextSubtaxon(1) %></span>
 			  <% }
-                 String imageCountStr = thisChild.getTaxonSet().getImageCountStr();
-                 if  ("No Images".equals(imageCountStr)) {
+                 // A name: the Images column's numbers (ant images, in AntWeb and of the place; 2026-10-27).
+                 // A specimen: its own images (taxonSet image count of the specimen), as before.
+                 String imageCountStr = isSpecimen ? thisChild.getTaxonSet().getImageCountStr() : org.calacademy.antweb.ImagesAnywhere.childImages(thisChild, overview);
+                 if  (isSpecimen && "No Images".equals(imageCountStr)) {
                    if (thisChild.getImageCount() > 0) {
                      imageCountStr = thisChild.getImageCount() + " Images";
                    }                 

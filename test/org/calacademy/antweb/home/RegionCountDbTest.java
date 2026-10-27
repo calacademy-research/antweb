@@ -289,7 +289,7 @@ public class RegionCountDbTest extends TestCase {
             while (r.next()) images.put(r.getString("taxonName"), r.getInt("imageSum"));
         }
         assertEquals("m2 and z1", 2, (int) images.get(SP_B));
-        assertEquals(3, (int) images.get(SP_A));
+        assertEquals("m1 head and profile, its label left out (ant images, 2026-10-27)", 2, (int) images.get(SP_A));
     }
 
     public void testCountCheckOfASubregion() throws Exception {

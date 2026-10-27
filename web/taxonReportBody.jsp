@@ -21,8 +21,11 @@
     boolean listOnly = isProject && overview instanceof Project && ((Project) overview).isSpeciesListOnly();
     // Images column (2026-10-27): images of the name in AntWeb, and in brackets those of this place when fewer.
     String imagesFromPhrase = org.calacademy.antweb.ImagesAnywhere.fromPhrase(overview);
-    String imagesColumnTitle = "Images of the name in AntWeb, from any specimen (every image, labels included)"
+    String imagesColumnTitle = "Images of the ant of the name in AntWeb, from any specimen (labels are not counted)"
         + (imagesFromPhrase == null ? "." : "; in brackets, those of specimens " + imagesFromPhrase + " when fewer.");
+    // The definition under the list (Brian Fisher, 2026-10-27: every Images column counts images of the ant only).
+    String imagesDefinition = "Images: images of the ant (head, profile, dorsal and other views); label images are not counted."
+        + (imagesFromPhrase == null ? "" : " The first number is the images of the name in AntWeb, from any specimen; in brackets, those of specimens " + imagesFromPhrase + ", when fewer.");
     String asterixNote = "Counts include " + nextPluralRank + " of all statuses";
     if (displayGlobal){
       asterixNote += ".";
@@ -265,4 +268,5 @@
 <BR><span id="port-of-entry-list-note">These are ant species intercepted at ports of entry, not established introductions. They are not counted in any place total or in the introduced species list, and this list shows no specimen or image numbers.</span>
 <% } else { %>
 <BR>* <%= asterixNote %>
+<BR><span id="images-definition"><%= org.calacademy.antweb.util.Html.esc(imagesDefinition) %></span>
 <% } %>

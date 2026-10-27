@@ -669,16 +669,29 @@ public class CountCheck {
         }
     }
 
+    /** False until a nightly run has counted the lists' Images as ant images (compute.log line with
+     *  StatisticsDb.ANT_IMAGES_RULE_LOG); their differences are then pending. Set by the callers from the log. */
+    public boolean antImagesRuleCounted = true;
+
+    public static boolean antImagesRuleCounted(List<String> lines) {
+        for (String line : lines) if (line.contains(org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_RULE_LOG)) return true;
+        return false;
+    }
+
+    static final String ANT_IMAGES_PENDING = "the Images column counts ant images only since 2026-10-27 (labels left out);"
+        + " no nightly run has counted it that way yet";
+
     /**
-     * The Images column of the place's list (2026-10-21), species and subspecies rows: image_count = the images
-     * (labels included) of the specimens of that name in the place, as nightly set 4 counts them
-     * (getTaxonImageCountQuery of Geolocale, Project, Museum, Bioregion): geolocales of a countable status,
+     * The Images column of the place's list (2026-10-21), species and subspecies rows: image_count = the images of the
+     * ant (labels left out since 2026-10-27, Brian Fisher) of the specimens of that name in the place, as nightly set 4
+     * counts them (getTaxonImageCountQuery of Geolocale, Project, Museum, Bioregion): geolocales of a countable status,
      * museums and bioregions their own specimens, projects all specimens of the name.
      */
     int checkRowImages(Place place, Result result, Set<String> changedNames) throws SQLException {
         if (!columnExists(place.table(), "image_count")) return 0;
         Map<String, Integer> recount = CountInvariants.keyMap();   // names as MySQL compares them
-        String query = "select s.taxon_name, sum(s.image_count) from specimen s"
+        String query = "select s.taxon_name, count(i.id) from specimen s"
+            + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_OF_SPECIMEN
             + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
             + " join " + place.table() + " l on l.taxon_name = s.taxon_name and l." + place.keyColumn() + " = ?"
             + " where 1 = 1"
@@ -707,6 +720,7 @@ public class CountCheck {
                     if (s == c) continue;
                     String pending = rowPending(r.getTimestamp(3), result);
                     if (pending == null && place.isFromCountries() && !result.regionRuleCounted) pending = REGION_RULE_PENDING;
+                    if (pending == null && !antImagesRuleCounted) pending = ANT_IMAGES_PENDING;
                     if (pending == null && result.imagesSinceNightly) pending = "images were added after the last nightly run";
                     if (pending == null && changedNames.contains(name)) pending = "specimens of this name uploaded or renamed after the last nightly run";
                     if (pending == null && result.uploadSinceNightly) pending = "specimens were uploaded after the last nightly run";

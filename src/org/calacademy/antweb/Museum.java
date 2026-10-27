@@ -251,8 +251,9 @@ public class Museum extends LocalityOverview implements Countable {
     
     public String getTaxonImageCountQuery() {
       String query = "select s.taxon_name taxonName, s.family family, s.subfamily subfamily " 
-           + ", s.genus genus, s.species species, sum(s.image_count) imageSum" 
-           + " from specimen s join museum_taxon mt on s.taxon_name = mt.taxon_name " 
+           + ", s.genus genus, s.species species, count(i.id) imageSum"   // ant images only (2026-10-27)
+           + " from specimen s join museum_taxon mt on s.taxon_name = mt.taxon_name "
+           + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_OF_SPECIMEN
            + " where mt.code = '" + getCode() + "'" 
            + " and s.museum = '" + getCode() + "'"  // 2026-10-20: images of this museum's specimens only
            + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species"

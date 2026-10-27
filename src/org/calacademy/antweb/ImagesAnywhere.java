@@ -81,9 +81,10 @@ public final class ImagesAnywhere {
     }
 
     /**
-     * The Images cell of a place's list (taxonReportBody.jsp), as text with HTML:
+     * The Images cell of a place's list (taxonReportBody.jsp), as text with HTML. Both numbers are images of the ant
+     * (labels never count; Brian Fisher 2026-10-27, nightly set 4, CountDb.imageCountCrawl):
      *   total     images of the name in AntWeb (the allantwebants list row's Images; -1 when not known),
-     *   place     the place's own list row Images (the number shown until 2026-10-27),
+     *   place     the place's own list row Images,
      *   fromPhrase "from Comoros", "in CASC".
      * "No Images" only when there is no image in AntWeb; "N Images" when the place has them all (or the total is not
      * known); otherwise "4 Images (0 from Comoros)". The place's number keeps the class "numbers" (as before), the
@@ -97,6 +98,34 @@ public final class ImagesAnywhere {
         }
         return "<span class='images_total'>" + total + "</span> Images (<span class='numbers'>" + place + "</span> "
             + Html.esc(fromPhrase) + ")";
+    }
+
+    /**
+     * "N Images" of a name on images.do and the taxonomicPage images view (docs/numbers.md row 56): the same as the
+     * Images column of the place's list (imagesColumn: ant images in AntWeb and of the place). When the list says No
+     * Images but the page shows images of the name (the allantwebants row not read, or counted before the latest
+     * images), the images of the ant of the specimen shown.
+     */
+    public static String childImages(Taxon child, Overview overview) {
+        TaxonSet ts = child.getTaxonSet();
+        String s = ts == null ? "No Images" : imagesColumn(ts.getGlobalImageCount(), ts.getImageCount(), fromPhrase(overview));
+        if (s.startsWith("No ")) {
+            int shown = antImagesShown(child.getImages());
+            if (shown > 0) return "<span class='numbers'>" + shown + "</span> Images";
+        }
+        return s;
+    }
+
+    /** The images of the ant among the images of a specimen shown (shot type not l, the label). */
+    public static int antImagesShown(java.util.Map<String, SpecimenImage> images) {
+        if (images == null) return 0;
+        int n = 0;
+        for (SpecimenImage i : images.values()) {
+            if (i == null) continue;
+            String shot = i.getShot() == null ? "" : i.getShot().trim().toLowerCase();
+            if (!"".equals(shot) && !"null".equals(shot) && !"l".equals(shot) && i.getNumber() > 0) n++;
+        }
+        return n;
     }
 
     /** "from Indonesia" for a place (geolocale or bioregion), "in CASC" for a museum; null for a project (a project's

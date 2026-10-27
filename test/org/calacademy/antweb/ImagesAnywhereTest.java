@@ -58,6 +58,28 @@ public class ImagesAnywhereTest extends TestCase {
         assertFalse(ImagesAnywhere.imagesColumn(1, 0, "from Comoros").startsWith("No "));
     }
 
+    /** Brian Fisher 2026-10-27: every Images column counts images of the ant; labels never count. */
+    public void testAntImagesShownLeaveLabelsOut() {
+        Map<String, org.calacademy.antweb.SpecimenImage> images = new HashMap<>();
+        String[][] shots = {{"h", "1"}, {"p", "1"}, {"l", "1"}, {"L", "2"}, {"d", "0"}};
+        for (String[] s : shots) {
+            org.calacademy.antweb.SpecimenImage i = new org.calacademy.antweb.SpecimenImage();
+            i.setShot(s[0]);
+            i.setNumber(Integer.parseInt(s[1]));
+            images.put(s[0] + s[1], i);
+        }
+        assertEquals("head and profile; the labels and a shot without number left out", 2, ImagesAnywhere.antImagesShown(images));
+        assertEquals(0, ImagesAnywhere.antImagesShown(null));
+        assertTrue(StatisticsDb.ANT_IMAGES_OF_SPECIMEN, StatisticsDb.ANT_IMAGES_OF_SPECIMEN.contains(StatisticsDb.ANT_IMAGE));
+        assertTrue(StatisticsDb.ANT_IMAGES_OF_SPECIMEN.startsWith(" left join image i on i.image_of_id = s.code"));
+    }
+
+    public void testListImagesArePendingUntilANightlyCountsAntImages() {
+        assertFalse(org.calacademy.antweb.util.CountCheck.antImagesRuleCounted(Arrays.asList("  Set 4 done (numbers counted by the rules of 2026-10-21)")));
+        assertTrue(org.calacademy.antweb.util.CountCheck.antImagesRuleCounted(Arrays.asList("x", "  Set 4 done (numbers counted by the rules of 2026-10-21; "
+            + StatisticsDb.ANT_IMAGES_RULE_LOG + ")")));
+    }
+
     public void testImagedCastesQueryLeavesLabelsOut() {
         String sql = ImagedCastes.sql();
         assertTrue(sql, sql.contains(StatisticsDb.ANT_IMAGE));
@@ -76,6 +98,9 @@ public class ImagesAnywhereTest extends TestCase {
         String html = ImagedCastes.toHtml(counts, "/images.do?genus=g&species=s&rank=species");
         assertTrue(html, html.contains("data-worker=\"12\" data-queen=\"2\" data-male=\"1\" data-other=\"0\" data-unknown=\"4\""));
         assertTrue(html, html.contains(">worker</a> (12 specimens: 9 <a"));
+        // the ordinary worker subcaste is shown as "worker", linked to the filter "normal" (Brian Fisher 2026-10-27)
+        assertTrue(html, html.contains("caste=normal\">worker</a>, 3 <a"));
+        assertFalse(html, html.contains(">normal<"));
         assertTrue(html, html.contains("caste=majorSoldier"));
         assertTrue(html, html.contains(">queen</a> (2)"));
         assertTrue(html, html.contains(">male</a> (1)"));      // one subcaste only: not broken down

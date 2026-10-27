@@ -738,8 +738,9 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     // taxon tree (parent_taxon_name; 2026-10-22, B40), so the order no longer matters.
     public String getTaxonImageCountQuery() {
       String query = "select s.taxon_name taxonName, s.family family, s.subfamily subfamily " 
-           + ", s.genus genus, s.species species, sum(s.image_count) imageSum" 
+           + ", s.genus genus, s.species species, count(i.id) imageSum"   // ant images only (2026-10-27)
            + " from specimen s" + getSpecimenPlaceJoin()
+           + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_OF_SPECIMEN
            + " join geolocale_taxon gt on s.taxon_name = gt.taxon_name "
            + " where gt.geolocale_id = " + getId()
            + getSpecimenPlaceCriteria()

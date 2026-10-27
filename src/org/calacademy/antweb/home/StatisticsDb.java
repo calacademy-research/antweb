@@ -329,6 +329,14 @@ museum
     /** An image of the ant: shot type not 'l' (label). Alias i. */
     public static final String ANT_IMAGE = "lower(trim(coalesce(i.shot_type, ''))) <> 'l'";
 
+    /** The images of the ant of specimen s (alias i), labels left out: the Images column of every list counts these
+     *  (Brian Fisher, 2026-10-27: "Images columns count ant images only"); count(i.id) per name. A left join, so a
+     *  name whose specimens have no image of the ant still gets its row written (0), as before. */
+    public static final String ANT_IMAGES_OF_SPECIMEN = " left join image i on i.image_of_id = s.code and " + ANT_IMAGE;
+
+    /** Written to compute.log by nightly set 4 once the lists' Images are counted as ant images (2026-10-27). */
+    public static final String ANT_IMAGES_RULE_LOG = "list Images counted as ant images, 2026-10-27";
+
     /** Specimen codes with an image of the ant, each once (alias x, column image_of_id). */
     static final String ANT_IMAGED = "(select i.image_of_id from image i where " + ANT_IMAGE + " group by i.image_of_id) x";
 

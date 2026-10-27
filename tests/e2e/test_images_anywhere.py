@@ -9,9 +9,10 @@ species. Specimen counts stay per place; images help identification wherever the
      (Leptogenys purpurea, Indonesia: the genus page showed CASENT0270569 from Papua New Guinea, the species page did
      not) against the API's specimen records, and on the day's species of the day's places of each of those kinds:
      the marked specimens are first, and they are exactly the specimens placeOnly=true shows.
-  3. The Images column of a place's list: "T Images (P from Comoros)": T = the images of the name in AntWeb (the
-     allantwebants list row, nightly set 4) = the API recount of every specimen of the name (sum of imageCount), P =
-     the place's own row (row 44, test_numbers_images.py); "N Images" when P = T, "No Images" only when T = 0.
+  3. The Images column of a place's list: "T Images (P from Comoros)", images of the ant only (labels never count,
+     Brian Fisher 2026-10-27): T = the images of the name in AntWeb (the allantwebants list row, nightly set 4) = the
+     API recount of every specimen of the name (/taxaImages, shot types other than l), P = the place's own row (row
+     44, test_numbers_images.py); "N Images" when P = T, "No Images" only when T = 0; the definition under the list.
   5. The species page's line "Imaged: worker (12 specimens), queen (2), male (1)" (row 120) = the API recount: the
      name's specimens with an image of the ant (/taxaImages, label images left out), by caste (/specimens).
 
@@ -25,7 +26,7 @@ from urllib.parse import quote_plus, parse_qs
 import pytest
 
 import numbers_sample as ns
-from test_numbers_images import fetch_all_view, images_cell, list_row_cells
+from test_numbers_images import ant_images_by_code, fetch_all_view, images_cell, list_row_cells
 
 PENDING = "list rows are those of the last nightly run (set 4); after an upload they are pending"
 MICHELE = "/images.do?subfamily=ponerinae&genus=leptogenys&species=purpurea&rank=species&countryName=Indonesia"
@@ -194,13 +195,26 @@ def test_list_images_column_shows_the_images_in_antweb_and_of_the_place():
             if got is None:
                 left_out.append(f"{p} {name}: not recounted (more than 4 API pages)")
                 continue
-            recount = sum(int(s.get("imageCount") or 0) for s in got if (s.get("antwebTaxonName") or "").lower() == name)
+            ant = ant_images_by_code(name)
+            if ant is None:
+                left_out.append(f"{p} {name}: not recounted (more than 500 images)")
+                continue
+            recount = sum(ant.get((s.get("code") or "").lower(), 0) for s in got if (s.get("antwebTaxonName") or "").lower() == name)
             if recount != total:
-                wrong.append(f"{p} {name}: {text!r}, the API's specimens of the name have {recount} images")
+                wrong.append(f"{p} {name}: {text!r}, the API's specimens of the name have {recount} images of the ant")
             checked.append(f"{p} {name}")
     if not checked:
         pytest.skip("no species row recounted " + ns.day_note() + "; left out: " + "; ".join(left_out[:10]))
     assert not wrong, f"{len(checked)} rows {ns.day_note()} ({PENDING}); left out: {left_out[:10]}:\n" + "\n".join(wrong)
+
+
+def test_list_says_what_the_images_column_counts():
+    """The definition under a place's list: images of the ant, label images not counted (Brian Fisher 2026-10-27)."""
+    p = _comoros() or ns.madagascar()
+    html = ns.get(p.list_url("species"))
+    m = re.search(r'<span id="images-definition">(.*?)</span>', html, re.S)
+    assert m, f"{p}: no definition of the Images column under the list"
+    assert "images of the ant" in m.group(1) and "label images are not counted" in m.group(1), m.group(1)
 
 
 # ------------------------------------------------------------------------------------------- 5. imaged castes

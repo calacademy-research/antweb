@@ -3,7 +3,8 @@
 1. images.do of a species reached with a place fetches the name's specimens from anywhere (BrowseAction sets global
    unless placeOnly=true), keeps the codes of the place's specimens (Species.setChildren), shows them first and marks
    them (taxonChildImages.jsp, taxonChildImageSet.jsp); the old "See global set" link is gone.
-3. The Images column of a place's list shows the images of the name in AntWeb and the place's (taxonReportBody.jsp,
+3. The Images column of a place's list shows the images of the name in AntWeb and the place's, images of the ant only
+   (labels never count; nightly set 4 counts the list rows that way, the count check recounts them so) (taxonReportBody.jsp,
    ImagesAnywhere.imagesColumn; the total is the allantwebants row's image_count, TaxonSet.globalImageCountColumn).
 5. The species page shows which castes are imaged (BrowseAction, ImagedCastes, taxonPage-body.jsp).
 
@@ -62,6 +63,29 @@ def test_list_images_column_shows_both_numbers():
     for f in ("geolocale/OverviewTaxon.java", "geolocale/GeolocaleTaxon.java", "geolocale/BioregionTaxon.java"):
         src = read("src/org/calacademy/antweb/" + f)
         assert "+ globalImageCountColumn(taxonName)" in src and "readGlobalImageCount(rset);" in src, f
+
+
+def test_list_images_are_ant_images_only():
+    """Brian Fisher 2026-10-27: every Images column counts images of the ant; label images never count."""
+    for f in ("Project.java", "Museum.java", "geolocale/Bioregion.java", "geolocale/Geolocale.java"):
+        src = read("src/org/calacademy/antweb/" + f)
+        q = src[src.index("public String getTaxonImageCountQuery()"):]
+        q = q[:q.index("return query;")]
+        assert "count(i.id) imageSum" in q and "StatisticsDb.ANT_IMAGES_OF_SPECIMEN" in q, f
+        assert "sum(s.image_count)" not in q, f + " still sums every image file"
+    stats = read("src/org/calacademy/antweb/home/StatisticsDb.java")
+    assert 'ANT_IMAGES_OF_SPECIMEN = " left join image i on i.image_of_id = s.code and " + ANT_IMAGE' in stats
+    check = read("src/org/calacademy/antweb/util/CountCheck.java")
+    rows = check[check.index("int checkRowImages("):]
+    rows = rows[:rows.index("return rows;")]
+    assert "count(i.id)" in rows and "ANT_IMAGES_OF_SPECIMEN" in rows and "pending = ANT_IMAGES_PENDING" in rows
+    for f in ("CountCheckJob.java", "CountCheckAction.java"):
+        assert "countCheck.antImagesRuleCounted = CountCheck.antImagesRuleCounted(log);" in read("src/org/calacademy/antweb/util/" + f), f
+    assert "StatisticsDb.ANT_IMAGES_RULE_LOG" in read("src/org/calacademy/antweb/util/UtilDataAction.java")
+    jsp = read("web/taxonReportBody.jsp")
+    assert "label images are not counted." in jsp and 'id="images-definition"' in jsp
+    cell = read("web/taxonChildImageSet.jsp")
+    assert cell.count("ImagesAnywhere.childImages(thisChild, overview)") == 2, "both views show the list's numbers"
 
 
 def test_species_page_shows_imaged_castes():

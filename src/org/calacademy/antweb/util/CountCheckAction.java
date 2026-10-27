@@ -97,6 +97,7 @@ public final class CountCheckAction extends AntwebAction {
             boolean invariants = !custom || "1".equals(request.getParameter("invariants"));
             List<String> log = computeLog();
             CountCheck countCheck = new CountCheck(connection);
+            countCheck.antImagesRuleCounted = CountCheck.antImagesRuleCounted(log);
             if (invariants) {
                 countCheck.curatorsRead = LoginMgr.getCuratorsRead();
                 countCheck.curatorNumbers = curatorNumbers();
