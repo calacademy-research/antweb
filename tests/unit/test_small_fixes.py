@@ -17,6 +17,9 @@
 8. (2026-10-27, finding B44) The nightly recounts every valid adm1, also those that are not live
    (GeolocaleDb.updateAdm1Counts): their pages showed old numbers next to a current list. The count check covers
    them once a nightly run has recounted them (a later change).
+9. (2026-10-27) A form post counts only when sent as POST (HttpUtil.isPost), the token check in
+   SessionRequestFilter covers every method other than GET, HEAD and OPTIONS (Csrf.methodNeedsCheck), and
+   LoginAction accepts a password only in a post; only administrators create a login in SaveLoginAction. Unit test: test/.../util/PostMethodTest.java.
 
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -160,6 +163,22 @@ def test_adm1_totals_not_only_live(sources):
     print("Every valid adm1 is recounted, live or not.")
 
 
+def test_post_means_post(sources):
+    http = sources["src/org/calacademy/antweb/util/HttpUtil.java"]
+    body = http[http.index("public static boolean isPost("):]
+    body = body[:body.index("\n    }")]
+    assert 'request.getMethod()' in body, "HttpUtil.isPost no longer looks at the method"
+    filt = sql_text(sources["src/org/calacademy/antweb/util/SessionRequestFilter.java"])
+    assert "Csrf.methodNeedsCheck(request.getMethod())" in filt, "the filter checks the token only for some methods again"
+    login = sql_text(sources["src/org/calacademy/antweb/LoginAction.java"])
+    assert re.search(r"password\s*!=\s*null\s*&&\s*!HttpUtil\.isPost\(request\)", login), \
+        "LoginAction accepts a password outside a post again"
+    save = sql_text(sources["src/org/calacademy/antweb/curate/login/SaveLoginAction.java"])
+    assert re.search(r"if \(login == null && !isAdminUser\) \{\s*s_log\.warn\(.*?\);\s*return mapping\.findForward\(\"permissionDenied\"\)", save, re.S), \
+        "SaveLoginAction lets someone other than an administrator create a login again"
+    print("Posts are posts; the token check covers every method that can change something; passwords only by post.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -171,6 +190,7 @@ def main():
     test_too_busy_for_bots_is_returned(sources)
     test_simultaneous_limits(sources)
     test_adm1_totals_not_only_live(sources)
+    test_post_means_post(sources)
 
 
 if __name__ == "__main__":
