@@ -135,7 +135,7 @@ RECORD_FIELDS = {
                   "decimalLatitude", "decimalLongitude", "collectionCode", "ownedBy", "status", "imageCount"},
     "taxa": {"taxonName", "taxarank", "subfamily", "genus", "status", "antcatId", "authorDate", "imageCount"},
     "geolocales": {"geolocaleId", "geolocaleName", "georank", "parent", "speciesCount", "specimenCount", "imageCount",
-                   "imagedSpecimenCount"}  # isValid: not sent (/geolocales returns valid places only),
+                   "imagedSpecimenCount"},  # isValid: not sent (/geolocales returns valid places only)
     "geolocaleTaxa": {"geolocaleId", "geolocaleName", "taxonName", "taxarank", "status", "specimenCount", "imageCount"},
     "bioregions": {"bioregionName", "speciesCount", "specimenCount", "imageCount"},
     "bioregionTaxa": {"bioregionName", "taxonName", "taxarank", "status", "specimenCount"},
