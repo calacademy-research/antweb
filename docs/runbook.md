@@ -690,8 +690,8 @@ the list stay as they are). The other groups' lists get their own decisions file
 
 What it changes: the photo rows (`image`, with their `group_image` and `image_like` rows) and the files in
 `/mnt/antweb/images/<code>/` (the four sizes thumbview, low, med, high and the original .tif or .jpg). A moved photo
-gets the target's name in every size (`casent0005505_h_1_high.jpg` becomes `mcz160.3635w_h_1_high.jpg`, the original
-`CASENT0005505_H_1.tif` becomes `MCZ160.3635W_H_1.tif`). The upload history (`image_uploaded`) is kept as it is. The
+gets the target's name in every size (`casent0005505_h_1_high.jpg` becomes `mcz1603635w_h_1_high.jpg`, the original
+`CASENT0005505_H_1.tif` becomes `MCZ1603635W_H_1.tif`). The upload history (`image_uploaded`) is kept as it is. The
 target's specimen page shows the photos at once; taxon, place and home page image numbers follow at the next nightly
 run (set 4).
 
@@ -739,22 +739,22 @@ cd /root/antweb-next && python3 tools/data/orphan_photos.py run --project /root/
    Expect the check lines with `ok`, `committed`, one line per file (`deleted ...`, `moved ... -> ...`) and
    `Done: 17 codes deleted, 11 moved`.
 
-4. Check one moved code (with the period) and one deleted code. The first query should list 4 rows of
-   `mcz160.3635w` and 4 of `mcz-ent00021675`, none of the old codes; the second `image_count` 4 for both.
+4. Check one moved code and one deleted code. The first query should list 4 rows of
+   `mcz1603635w` and 4 of `mcz-ent00021675`, none of the old codes; the second `image_count` 4 for both.
 
 ```
 # ssh root@165.232.136.170   (staging)
-F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select image_of_id, shot_type, shot_number from image where image_of_id in ('casent0005505', 'mcz160.3635w', 'mczent00021675', 'mcz-ent00021675', 'anic32-066597') order by 1, 2, 3; select code, image_count from specimen where code in ('mcz160.3635w', 'mcz-ent00021675');"
-ls /mnt/antweb/images/mcz160.3635w/ /mnt/antweb/images/anic32-066597/
+F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select image_of_id, shot_type, shot_number from image where image_of_id in ('casent0005505', 'mcz1603635w', 'mczent00021675', 'mcz-ent00021675', 'anic32-066597') order by 1, 2, 3; select code, image_count from specimen where code in ('mcz1603635w', 'mcz-ent00021675');"
+ls /mnt/antweb/images/mcz1603635w/ /mnt/antweb/images/anic32-066597/
 ```
 
    On staging `ls` most likely says "No such file or directory" for both (no files there). Then open
-   https://staging.antweb.org/specimen.do?code=mcz160.3635w (the photo boxes show; the pictures themselves only where
+   https://staging.antweb.org/specimen.do?code=mcz1603635w (the photo boxes show; the pictures themselves only where
    the files exist) and https://staging.antweb.org/orphanedImages.do (none of the 28 codes listed).
 
 5. Then production: the same four blocks with `ssh root@165.232.137.86`, `cd /root/antweb`, `--project /root/antweb`
-   and `F=/root/antweb/etc/db.properties`. On production `ls` should list the files of `mcz160.3635w` (four sizes per photo and the originals) and say
-   "No such file or directory" for `anic32-066597`, and https://www.antweb.org/specimen.do?code=mcz160.3635w shows
+   and `F=/root/antweb/etc/db.properties`. On production `ls` should list the files of `mcz1603635w` (four sizes per photo and the originals) and say
+   "No such file or directory" for `anic32-066597`, and https://www.antweb.org/specimen.do?code=mcz1603635w shows
    the four photos.
 
 Rollback (puts the rows and files back from the backup; the newest backup of the decisions file is used):

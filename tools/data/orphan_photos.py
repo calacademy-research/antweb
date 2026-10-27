@@ -33,8 +33,8 @@ Steps (docs/runbook.md, "Orphan photos"):
   run       needs the backup of today (or --date) made at most --max-age-hours ago, and the same plan as then. Shows
             the SQL, asks for "yes", runs it in one transaction (a count that differs stops it before the commit),
             then deletes or renames the files (log: run.log in the backup folder). Moved files get the target's
-            name in every size: casent0005505_h_1_high.jpg -> mcz160.3635w_h_1_high.jpg, CASENT0005505_H_1.tif ->
-            MCZ160.3635W_H_1.tif. The target's specimen.image_count is set from its rows; taxon, place and home page
+            name in every size: casent0005505_h_1_high.jpg -> mcz1603635w_h_1_high.jpg, CASENT0005505_H_1.tif ->
+            MCZ1603635W_H_1.tif. The target's specimen.image_count is set from its rows; taxon, place and home page
             image numbers follow at the next nightly run (set 4). Running run again after a failure in the file
             step only finishes the files.
   rollback  puts rows and files back from the backup (rows in one transaction, then files).

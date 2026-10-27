@@ -72,7 +72,7 @@ def test_decisions_file():
     assert len(d) == 28
     assert sum(x["action"] == "delete" for x in d) == 17 and sum(x["action"] == "move" for x in d) == 11
     moves = {x["code"]: x["target"] for x in d if x["action"] == "move"}
-    assert moves["casent0005505"] == "mcz160.3635w" and moves["casent0007322"] == "mcz-ent00528501"
+    assert moves["casent0005505"] == "mcz1603635w" and moves["casent0007322"] == "mcz-ent00528501"
     assert moves["mhng-ento-0076668"] == "mhngento0076668"
     assert all(t == t.lower() for t in moves.values())
     assert all(x["group"] == "1" for x in d)
@@ -92,9 +92,9 @@ def test_decisions_file():
 
 
 def test_names():
-    assert op.renamed("casent0005505_h_1_high.jpg", "casent0005505", "mcz160.3635w") == "mcz160.3635w_h_1_high.jpg"
-    assert op.renamed("CASENT0005505_H_1.tif", "casent0005505", "mcz160.3635w") == "MCZ160.3635W_H_1.tif"
-    assert op.renamed("CASENT0005505_H.tif", "casent0005505", "mcz160.3635w") == "MCZ160.3635W_H.tif"
+    assert op.renamed("casent0005505_h_1_high.jpg", "casent0005505", "mcz1603635w") == "mcz1603635w_h_1_high.jpg"
+    assert op.renamed("CASENT0005505_H_1.tif", "casent0005505", "mcz1603635w") == "MCZ1603635W_H_1.tif"
+    assert op.renamed("CASENT0005505_H.tif", "casent0005505", "mcz1603635w") == "MCZ1603635W_H.tif"
     assert op.renamed("mczent00021675_p_1_thumbview.jpg", "mczent00021675", "mcz-ent00021675") == "mcz-ent00021675_p_1_thumbview.jpg"
     assert op.renamed("123_H_1.jpg", "123", "abc-1") == "ABC-1_H_1.jpg"
     assert op.renamed("123_h_1_low.jpg", "123", "abc-1") == "abc-1_h_1_low.jpg"
@@ -111,9 +111,9 @@ def test_plan_as_decided():
     plans = op.plan(decisions, rows, specimens, folders)
     assert all(p["status"] == "ok" for p in plans), [(p["code"], p["reasons"]) for p in plans if p["status"] != "ok"]
     p = by_code(plans)["casent0005505"]
-    assert p["target_code"] == "mcz160.3635w" and len(p["files"]) == 20
-    assert {f["new_name"] for f in p["files"]} >= {"mcz160.3635w_h_1_high.jpg", "MCZ160.3635W_H_1.tif"}
-    assert any("period" in w for w in p["warnings"])
+    assert p["target_code"] == "mcz1603635w" and len(p["files"]) == 20
+    assert {f["new_name"] for f in p["files"]} >= {"mcz1603635w_h_1_high.jpg", "MCZ1603635W_H_1.tif"}
+    assert not any("period" in w for w in p["warnings"])
     c = op.counts(plans)
     assert c["delete_codes"] == 17 and c["move_codes"] == 11
     assert len(c["delete_ids"]) == 72 and len(c["move_ids"]) == 45, (len(c["delete_ids"]), len(c["move_ids"]))
@@ -163,8 +163,8 @@ def test_sql():
     assert "select @n as image_deleted, 72 as expected" in run
     assert "select @n as group_image_deleted, 72 as expected" in run
     assert "select @n as image_like_deleted, 2 as expected" in run
-    assert "update image set image_of_id = 'mcz160.3635w' where id in (" in run
-    assert "update specimen set image_count = (select count(*) from image where image_of_id = 'mcz160.3635w') where code = 'mcz160.3635w';" in run
+    assert "update image set image_of_id = 'mcz1603635w' where id in (" in run
+    assert "update specimen set image_count = (select count(*) from image where image_of_id = 'mcz1603635w') where code = 'mcz1603635w';" in run
     assert run.count("(select 'mismatch' union all select 'stop')") == 3 + 2 * 11
     assert run.rstrip().endswith("select 'committed' as result;")
     bak = op.backup_sql(plans, "orphan_photos_bak_20261027", tables)
@@ -206,11 +206,11 @@ def test_file_steps():
         assert not os.path.exists(os.path.join(images, "anic32-066597"))
         assert os.listdir(os.path.join(images, "casent0102908")) == ["keep.txt"]       # other file left alone
         assert not os.path.exists(os.path.join(images, "casent0005505"))
-        moved = sorted(os.listdir(os.path.join(images, "mcz160.3635w")))
-        assert "MCZ160.3635W_H_1.tif" in moved and "mcz160.3635w_l_1_thumbview.jpg" in moved and len(moved) == 20
+        moved = sorted(os.listdir(os.path.join(images, "mcz1603635w")))
+        assert "MCZ1603635W_H_1.tif" in moved and "mcz1603635w_l_1_thumbview.jpg" in moved and len(moved) == 20
         assert op.apply_files(plans, images, log) == []                               # again: nothing left to do
         assert op.restore_files(plans, images, dest, log) == []
-        assert not os.path.exists(os.path.join(images, "mcz160.3635w"))
+        assert not os.path.exists(os.path.join(images, "mcz1603635w"))
         for code, files in folders.items():
             if files is not None:
                 assert op.list_folder(images, code) == (dict(files, **{"keep.txt": 5}) if code == "casent0102908" else files), code
@@ -338,3 +338,16 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+def test_period_target_warns():
+    decisions, rows, specimens, folders = world()
+    d = [dict(x) for x in decisions]
+    for x in d:
+        if x["code"] == "casent0005505":
+            x["target"] = "mcz160.3635w"
+    specimens["mcz160.3635w"] = ("mcz160.3635w", "16", 0)
+    folders["mcz160.3635w"] = None
+    p = by_code(op.plan(d, rows, specimens, folders))["casent0005505"]
+    assert any("period" in w for w in p["warnings"]), p["warnings"]
+    print("A target code with a period gets a warning.")

@@ -16,7 +16,7 @@ antweb1060472	delete		1	duplicate: the specimen is lfpc000012-01 (curator, 2026-
 casent0269148	delete		1	duplicate: casent0269418 has a record and photos (curator, 2026-10)
 mhng-ento-76668	delete		1	duplicate of mhng-ento-0076668, whose photos move to mhngento0076668 (curator, 2026-10)
 casent0102908	delete		1	the spoof specimen made by Walter Tschinkel; its record no longer exists (curator, 2026-10)
-casent0005505	move	mcz160.3635w	1	same specimen (curator, 2026-10); the target code has a period
+casent0005505	move	mcz1603635w	1	same specimen (curator, 2026-10, v2)
 casent0007322	move	mcz-ent00528501	1	same specimen (curator, 2026-10)
 mczent00021675	move	mcz-ent00021675	1	same specimen, code written without the dash (curator, 2026-10)
 mczent00512567	move	mcz-ent00512567	1	same specimen, code written without the dash (curator, 2026-10)
