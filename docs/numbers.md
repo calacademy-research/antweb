@@ -474,6 +474,21 @@ Found while doing this (2026-10-26, end-to-end tests of rows 24 to 53; each has 
   and 15). Now every valid adm1 is recounted each night (the compute.log line "Adm1s populated" gives how many and
   the time) and checked by the count check. Tests:
   `e2e:test_numbers_lists.py::test_list_headers_equal_place_numbers_of_every_kind`, `tests/unit/test_small_fixes.py` (8).
+- **B65** (fixed 2026-10-27) set 2's clean-up (`dataCleanup`: morphospecies without specimens, names no longer in the
+  taxon table) deletes rows of every project list, the Global column (allantwebants) too, after the specimen upload has
+  counted it; nothing recounted it, so its genus and subfamily rows counted rows they no longer had (production 10-27:
+  Genera 577 against 575, Leptogenys 631 species against 623 rows, 15 genera). Until 10-26 the count check called these
+  pending (it took the nightly's own changes as after the last count; #284 changed that). Now set 2 recounts the Global
+  column after the clean-up (`UtilDataAction.recountGlobal`, a compute.log line). Test: `tests/unit/test_small_fixes.py` (9);
+  the count check's list.genus and place.totals.genus of allantwebants.
+- **B66** (check fixed 2026-10-27) list.global bounded a museum, bioregion or project row by the Global rows of the name
+  and its synonyms, but synonyms have no Global row (the Global column lists counted statuses only), so a row holding a
+  synonym's specimens showed as more than Global (production 10-27: Diacamma solitaria 5 against 1, Carebara diversa 42
+  against 34, 12 rows). The bound is now the specimen records of the name and its synonyms. Test:
+  `tests/unit/test_small_fixes.py` (9).
+- Open (2026-10-27, to look at after B65 is live): fossilants Genera 259 against 258 and four subfamily rows one over
+  (the project is recounted in set 3 after the clean-up, so B65 does not explain it); statistics.do latest row proj_taxa
+  69257 against 69251; the atolants images row "Paráponera clavata" (89 against 0), a name with an accent.
 
 Found while testing the admin and upload report numbers (2026-10-27, rows 83, 94 to 96, 98; all fixed the same day).
 Upload reports are files written once, so a report written before the fix keeps its old numbers; reports of the new

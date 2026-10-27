@@ -16,6 +16,8 @@
    ConcurrencyLimiter (thread-safe), skip logged-in users and release only a slot they took.
 8. (2026-10-27, finding B44) The nightly recounts every valid adm1, also those that are not live
    (GeolocaleDb.updateAdm1Counts), and the count check covers them: their pages showed old numbers next to a current list.
+9. (2026-10-27, B65, B66) Set 2 recounts the Global column after its clean-up; the count check bounds a place's
+   synonym rows by the specimen records of the name and its synonyms.
 
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -161,6 +163,17 @@ def test_adm1_totals_not_only_live(sources):
     print("Every valid adm1 is recounted and checked, live or not.")
 
 
+def test_global_recounted_after_cleanup_and_synonym_bound(sources):
+    src = sources["src/org/calacademy/antweb/util/UtilDataAction.java"]
+    i = src.index('doAction("dataCleanup"')
+    assert "recountGlobal(connection)" in src[i:i + 900], "set 2 no longer recounts the Global column after the clean-up (B65)"
+    inv = sources["src/org/calacademy/antweb/util/CountInvariants.java"]
+    body = inv[inv.index("void globalPerPlace()"):]
+    body = body[:body.index("compare(")]
+    assert "from specimen group by taxon_name" in body, "the Global bound of a synonym is not its specimen records (B66)"
+    print("Global recounted after the clean-up; synonyms bounded by their specimen records.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -172,6 +185,7 @@ def main():
     test_too_busy_for_bots_is_returned(sources)
     test_simultaneous_limits(sources)
     test_adm1_totals_not_only_live(sources)
+    test_global_recounted_after_cleanup_and_synonym_bound(sources)
 
 
 if __name__ == "__main__":
