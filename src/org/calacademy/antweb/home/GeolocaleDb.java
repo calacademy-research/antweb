@@ -944,21 +944,19 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             
     public void updateAdm1Counts() throws SQLException {
       ArrayList<Geolocale> adm1List = GeolocaleMgr.getValidAdm1s();
-      int listedOnly = 0;
+      // Every valid adm1, live or not (2026-10-27, finding B44): until then only live adm1s were recounted, so an
+      // adm1 that is not live kept numbers of years ago next to a current list (production 10-27: Castile-Leon,
+      // Spain, is_live 0, showed 0 subfamilies, 5 species and 39 specimens; its list has 2 subfamilies and 6
+      // species, and a recount gives 15 specimens).
+      long start = System.currentTimeMillis();
+      int notLive = 0;
       for (Geolocale geolocale : adm1List) {
-        if (geolocale.isLive()) {
-          updateCounts(geolocale.getId());
-        } else {
-          // Not live (no full recount): still its Subfamilies, Genera, Species and Valid species from its list, the
-          // numbers its page shows next to that list (2026-10-26, finding B44: Castile-Leon, Spain showed 0
-          // subfamilies and 5 species with 2 subfamilies and 6 species listed). Four counts on its list.
-          updateCountableTaxonData(geolocale.getId());
-          updateValidSpeciesCount(geolocale.getId());
-          ++listedOnly;
-        }
+        if (!geolocale.isLive()) ++notLive;
+        updateCounts(geolocale.getId());
       }
-      s_log.info("updateAdm1Counts() not live, list totals only: " + listedOnly);
-  	  LogMgr.appendLog("compute.log", "    Adm1s populated", true);    
+      String line = adm1List.size() + " adm1s (" + notLive + " not live) in " + (System.currentTimeMillis() - start) / 1000 + " s";
+      s_log.info("updateAdm1Counts() " + line);
+  	  LogMgr.appendLog("compute.log", "    Adm1s populated: " + line, true);
     }
     public void updateCountryCounts() throws SQLException {
       ArrayList<Geolocale> countryList = GeolocaleMgr.getValidCountries();
