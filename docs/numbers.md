@@ -84,7 +84,7 @@ Specimens. Test: `TaxonTreeCountDbTest#testANameNotIdentifiedToGenusIsNotASpecie
 
 ## 2. Inventory
 
-Coverage after 2026-10-26: **81 validated, 38 partly, 0 not yet** of 119 (rows 24, 25, 38, 39, 46, 47, 50 to 53, 78,
+Coverage after 2026-10-27: **118 validated, 1 partly (row 62, B45: needs Brian's choice), 0 not yet** of 119 (2026-10-27: rows 19, 28, 44, 45, 49, 55 to 61, 64 to 71, 83, 94 to 96, 98, 101, 102, 105 to 107, 110 to 113, 116 to 118 by end-to-end tests, findings B45 to B64; 2026-10-26: 81, 38, 0, rows 24, 25, 38, 39, 46, 47, 50 to 53, 78,
 79 by end-to-end tests on a rotating sample, section 1; 2026-10-22: 69, 50, 0 of 119, row 119, Port of Entry, added with
 Brian Fisher's answers of 2026-10-22, section 5.2; earlier on 2026-10-22: 67, 51, 0 of 118; 2026-10-21: 42, 22, 54; first
 inventory 2026-10-20: 9, 7, 102).
