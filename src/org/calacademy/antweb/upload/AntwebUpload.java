@@ -301,7 +301,9 @@ or for Worldants upload
                 int rowCount = stmt.executeUpdate();
 
                 c += rowCount;
-                if (Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)) getUploadDetails().countUpdatedSpecies();
+                // a new row: Inserted Species (was counted as updated until 2026-10-27, B60)
+                if (table.equals("taxon") && rowCount > 0 && (Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)))
+                    getUploadDetails().countInsertedSpecies(taxonName);
 
                 // See TaxonMgr.refreshTaxon() for documentation.
                 //if (TaxonMgr.isUseRefreshing() && c > 0) {
@@ -534,7 +536,8 @@ or for Worldants upload
 
                 DBUtil.close(stmt, "AntwebUpload.updateTaxon()");
 
-                if (Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)) getUploadDetails().countUpdatedSpecies();
+                if ("taxon".equals(table) && (Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)))
+                    getUploadDetails().countUpdatedSpecies(taxonName);   // each name once (B61)
 
                 //if (TaxonMgr.isUseRefreshing() && c > 0) {
                 //    TaxonMgr.refreshTaxon(getConnection(), "update", table, taxonName, item);

@@ -231,6 +231,7 @@ paths = [
 ]
 tests = [
   "test_specimen_upload_roundtrip.py",
+  "test_numbers_uploads.py",
   "test_upload_list_views.py",
   "test_image_upload.py",
   "test_image_upload_test_group.py",
@@ -340,6 +341,9 @@ paths = [
   "src/org/calacademy/antweb/Countable.java",
   "web/countCheck*",
   "web/util/countCheck*",
+  "src/org/calacademy/antweb/StatisticsAction.java",
+  "src/org/calacademy/antweb/TaxaListAction.java",
+  "web/util/statistics*",
   "docs/numbers.md",
   "web/taxonChildImage*",
   "web/unImagedTaxa.jsp",
@@ -358,6 +362,7 @@ tests = [
   "test_numbers_api_meta.py",          # API counts recounted from other replies and pages (2026-10-27)
   "test_numbers_search.py",            # search, compare, map, collection, locality, Subtaxon total, museum fossils (2026-10-27)
   "test_numbers_images.py",            # image, comparison and recent-image counts of every kind of place (2026-10-27)
+  "test_numbers_uploads.py",           # admin and upload report numbers: curator.do, image and specimen upload reports, statistics.do (2026-10-27)
 ]
 
 [areas.places]

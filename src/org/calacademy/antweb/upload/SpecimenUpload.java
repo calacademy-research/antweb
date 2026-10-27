@@ -218,7 +218,9 @@ public class SpecimenUpload extends SpecimenUploadParse {
 				getUploadDetails().setBuildLineTotal(buildLineTotal);
 				getUploadDetails().setProcessLineTotal(processLineTotal);
 
-                getUploadDetails().setRecordCount(lineNum);
+                // the lines after the header (lineNum is one past the last line read; it counted the header until
+                // 2026-10-27, B62)
+                getUploadDetails().setRecordCount(lineNum - 1);
 
                 if (!processedSome) throw new AntwebException("No records processed");
 
