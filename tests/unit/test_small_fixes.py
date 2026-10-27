@@ -88,6 +88,38 @@ def test_titles():
     print("Page titles: no 'Subegion'.")
 
 
+def test_core_util_fixes(sources):
+    """(2026-10-27, core and util fixes) Request and stored values reach SQL quoted (subgenus filter, place names
+    in maps and place criteria, specimen taxa), links built from the request address are escaped, the group page
+    uses the group found by name, the map cache is refreshed by curators only, an administrator's postInstantiate
+    goes through the POST confirmation, and four unused classes that built SQL from their inputs (or tested
+    nothing) are gone."""
+    def code(path):  # without comments
+        text = re.sub(r"/\*.*?\*/", " ", sources[path], flags=re.S)
+        return "\n".join(l for l in text.splitlines() if not l.strip().startswith("//"))
+    p = "src/org/calacademy/antweb/"
+    genus = code(p + "Genus.java")
+    assert "subgenus = '\" + subgenus" not in genus and "DBUtil.sqlLiteral(subgenus)" in genus, "subgenus reaches SQL unquoted"
+    for path in (p + "Map.java", p + "Overview.java", p + "TaxaPage.java"):
+        text = code(path)
+        assert not re.search(r"= '\"\s*\+\s*(overview(\.getName\(\)|\.getTitle\(\))?|getName\(\)|name|\(\(Adm1\) overview\)\.getParent\(\))\s*\+\s*\"'", text), path
+    taxa = code(p + "TaxaPage.java")
+    assert "overview instanceof Country || overview instanceof Adm1 || overview instanceof Project)) withSpecimen = false" in taxa
+    group = code(p + "GroupAction.java")
+    assert "groupId = group.getId();" in group, "group page by name uses the id parameter again"
+    assert "refresh && LoginMgr.isCurator(request)" in code(p + "BigMapAction.java")
+    for path in (p + "Museum.java", p + "Project.java", p + "geolocale/Bioregion.java", p + "geolocale/Geolocale.java"):
+        assert not re.search(r"<a href='\" \+ otherUrl", code(path)), path + ": request address in a link, unescaped"
+    util = code(p + "util/UtilAction.java")
+    assert '"postInstantiate".equals(action) && !SchedulerCall.isPostInitialize(request)))' in util
+    mgr = code(p + "util/AntwebMgr.java")
+    assert "s_oneAtATime.set(false);" in mgr[mgr.index("} finally {"):], "populate() can leave its guard set"
+    assert "where login_id" not in code(p + "util/ListUploadsAction.java").replace('" where") + " login_id', "")
+    for gone in ("MapLocality.java", "SlideShowSearch.java", "SpecimenFieldSummary.java", "test/Rest.java"):
+        assert not os.path.exists(os.path.join(ROOT, p + gone)), gone
+    print("Core and util fixes in place.")
+
+
 def test_old_manage_login_page_gone():
     for name in ("manageLogin.jsp", "manageLogin-body.jsp"):
         assert not os.path.exists(os.path.join(ROOT, "web", "curate", name)), name
@@ -166,6 +198,7 @@ def main():
     test_login_updates_keep_created(sources)
     test_no_delete_all_page_text(sources)
     test_titles()
+    test_core_util_fixes(sources)
     test_old_manage_login_page_gone()
     test_admin_links_column_stacks_on_phones()
     test_too_busy_for_bots_is_returned(sources)

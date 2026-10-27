@@ -11,13 +11,15 @@ import java.util.stream.Collectors;
 public class CommonNames {
 
   private static final Log s_log = LogFactory.getLog(CommonNames.class);
-  private static boolean isInitialized = false;
+  private static volatile boolean isInitialized = false;
   private static HashMap<String, String> nameMap;
   private static ArrayList<String> namesList;
 
-  public static void init() {
-    isInitialized = true;
-    nameMap = new HashMap<>();
+  // Synchronized, and marked initialized only when the map is complete: a request arriving during the first
+  // call no longer sees a null or half-filled map.
+  public static synchronized void init() {
+    if (isInitialized) return;
+    HashMap<String, String> nameMap = new HashMap<>();
 
     nameMap.put("Argentine ant", "dolichoderinaelinepithema humile");
     nameMap.put("Fire ant", "myrmicinaesolenopsis");
@@ -35,7 +37,7 @@ public class CommonNames {
     nameMap.put("Acrobat ant", "myrmicinaecrematogaster");   
     nameMap.put("Big-headed ant", "myrmicinaepheidole megacephala ");   
     nameMap.put("Ghost ant", "dolichoderinaetapinoma melanocephalum");   
-    nameMap.put("Cornfield abnt", "formicinaelasius alienus");   
+    nameMap.put("Cornfield ant", "formicinaelasius alienus");   
     nameMap.put("Crazy ant", "formicinaenylanderia fulva");
     nameMap.put("Rasberry crazy ant", "formicinaenylanderia fulva");
     nameMap.put("Tawny crazy ant", "formicinaenylanderia fulva");
@@ -61,8 +63,10 @@ public class CommonNames {
     
     //nameMap.put("", "");
         
-    namesList = new ArrayList<>();
-      namesList.addAll(nameMap.keySet());
+    nameMap.replaceAll((k, v) -> v.trim());  // some values had a trailing space and matched no taxon
+    CommonNames.nameMap = nameMap;
+    CommonNames.namesList = new ArrayList<>(nameMap.keySet());
+    isInitialized = true;
     //A.log("CommonNames() namesList:" + namesList);
   }
 
@@ -96,6 +100,7 @@ public class CommonNames {
   }  
 
   public static HashMap<String, String> getNameMap() {
+    if (!isInitialized) init();
     return nameMap;
   }
 

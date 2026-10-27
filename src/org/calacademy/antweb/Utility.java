@@ -502,10 +502,13 @@ public class Utility implements Serializable {
     public static boolean deleteDirectory(File dir) {
         //A.log("deletingDirectory() " + dir.getName());
         
+        // A symbolic link is removed, never followed: some folders under web/ link into /mnt (images, logs).
+        if (java.nio.file.Files.isSymbolicLink(dir.toPath())) return dir.delete();
         if (dir.exists() && dir.getName().length() > 1) {
             File[] files = dir.listFiles();
+            if (files == null) files = new File[0];
             for (File file : files) {
-                if (file.isDirectory()) {
+                if (file.isDirectory() && !java.nio.file.Files.isSymbolicLink(file.toPath())) {
                     deleteDirectory(file);
                 } else {
                     file.delete();

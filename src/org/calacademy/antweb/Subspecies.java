@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.geolocale.LocalityOverview;
 import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.DBUtil;
+import org.calacademy.antweb.util.Html;
 
 import java.io.Serializable;
 import java.sql.Connection;
@@ -47,7 +48,7 @@ public final class Subspecies extends Species implements Serializable {
               if (!"".equals(siblingSubspecies)) {
                 siblingSubspecies += ", ";
               }
-              siblingSubspecies += "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.displayTaxonName(taxonName) + "</a>";
+              siblingSubspecies += "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.escAttr(taxonName) + "'>" + Html.esc(Taxon.displayTaxonName(taxonName)) + "</a>";
             }
         } finally {
             DBUtil.close(stmt, rset, this, "getSeeAlsoSiblingSubspecies()");
@@ -140,8 +141,8 @@ public final class Subspecies extends Species implements Serializable {
 		// This one is differerent from setChildren in that it will pull back subspecies as well.  Correct?
 		String query =
 			"select distinct specimen.code from taxon, specimen where " 
-				+ " and taxon.taxon_name = specimen.taxon_name"
-				+ getThisWhereClause()
+				+ " taxon.taxon_name = specimen.taxon_name"  // was "where  and": an SQL error on every call
+				+ getThisWhereClause("taxon")  // genus, species: in both tables, so qualified
 				//+ " taxon.genus = '" + AntFormatter.escapeQuotes(genus) + "'" 
 				//+ " and taxon.species = '" + AntFormatter.escapeQuotes(species) + "'"                     
 				//+ " and taxon.subspecies = '" + AntFormatter.escapeQuotes(subspecies) + "'" 
@@ -152,7 +153,7 @@ public final class Subspecies extends Species implements Serializable {
 		  String locality = ((LocalityOverview) overview).getLocality();                    
 		  s_log.debug("setChildrenLocalized() locality:" + locality);
 		  if (locality != null && locality.length() > 0 && !locality.equals("null"))  {
-			if ("country".equals(locality.substring(0, 7))) {
+			if (locality.startsWith("country")) {
 				locality = "specimen." + locality;
 			}
 			query += " and " + locality;

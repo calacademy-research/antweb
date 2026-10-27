@@ -131,7 +131,7 @@ public class Group implements Comparable {
           links += ", ";
         }
 //        links += curator.getDisplayName() + " [<a href='" + AntwebProps.getDomainApp() + "/login.do?userName=" + curator.getName() + "&password=" + curator.getPassword() + "'>Adm login as</a>]";
-        links += "<a href='" + AntwebProps.getDomainApp() + "/curator.do?id=" + curator.getId() + "'>" + curator.getDisplayName() + "</a>";
+        links += "<a href='" + AntwebProps.getDomainApp() + "/curator.do?id=" + curator.getId() + "'>" + Html.esc(curator.getDisplayName()) + "</a>";
 
       }
       return links;

@@ -109,6 +109,7 @@ public final class GroupAction extends AntwebAction {
 			if (group == null) {        
               return null;
 			}
+            groupId = group.getId();  // also when found by name: the numbers below are this group's
 
             UploadDb uploadDb = new UploadDb(connection);
             // Today's numbers of the group's specimens, recounted every night (GroupCountDb, Q13 2026-10-22).

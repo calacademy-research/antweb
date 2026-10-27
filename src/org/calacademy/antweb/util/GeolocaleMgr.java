@@ -902,7 +902,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         if ("newmexicoants".equals(projectName)) return GeolocaleMgr.getAdm1("New Mexico", "United States");
         if ("newyorkants".equals(projectName)) return GeolocaleMgr.getAdm1("New York", "United States");
         if ("northcarolinaants".equals(projectName)) return GeolocaleMgr.getAdm1("North Carolina", "United States");
-        if ("northdakotaantsants".equals(projectName)) return GeolocaleMgr.getAdm1("North Dakota", "United States");
+        if ("northdakotaants".equals(projectName) || "northdakotaantsants".equals(projectName))  // the project is northdakotaants return GeolocaleMgr.getAdm1("North Dakota", "United States");
         if ("ohioants".equals(projectName)) return GeolocaleMgr.getAdm1("Ohio", "United States");
         if ("oklahomaants".equals(projectName)) return GeolocaleMgr.getAdm1("Oklahoma", "United States");
         if ("oregonants".equals(projectName)) return GeolocaleMgr.getAdm1("Oregon", "United States");
@@ -923,7 +923,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
 
         // Other country adm1s
         if ("newsouthwalesants".equals(projectName)) return GeolocaleMgr.getAdm1("New South Wales", "Australia");
-        if ("southaustrailiaants".equals(projectName)) return GeolocaleMgr.getAdm1("South Australia", "Australia");
+        if ("southaustraliaants".equals(projectName) || "southaustrailiaants".equals(projectName)) return GeolocaleMgr.getAdm1("South Australia", "Australia");
         if ("westernaustraliaants".equals(projectName)) return GeolocaleMgr.getAdm1("Western Australia", "Australia");
         if ("queenslandants".equals(projectName)) return GeolocaleMgr.getAdm1("Queensland", "Australia");
         if ("victoriaants".equals(projectName)) return GeolocaleMgr.getAdm1("Victoria", "Australia");

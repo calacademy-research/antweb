@@ -27,22 +27,18 @@ Nice way to figure what bit of code is calling a method, and how many times, is 
  */
 
 public class ProfileCounter {
-    private static HashMap<String, Integer> s_countMap = new HashMap<>();
+    // Counted from every request thread (TaxonMgr.getSpecies() among others): a concurrent map.
+    private static volatile java.util.concurrent.ConcurrentHashMap<String, Integer> s_countMap = new java.util.concurrent.ConcurrentHashMap<>();
 
     private final static Log s_log = LogFactory.getLog(ProfileCounter.class);
     
     public static void add(String label) {
-        Integer count = s_countMap.get(label);
-        if (count == null) {
-            s_countMap.put(label, 1);
-        } else {
-            count = count + 1;
-            s_countMap.put(label, count);
-        }
+        if (label == null) return;
+        s_countMap.merge(label, 1, Integer::sum);
     }
 
     public static void reset() {
-        s_countMap = new HashMap<>();
+        s_countMap = new java.util.concurrent.ConcurrentHashMap<>();
     }
 
     public static void report() {

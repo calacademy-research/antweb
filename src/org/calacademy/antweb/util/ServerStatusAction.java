@@ -68,7 +68,7 @@ static double getVersion () {
                 if (confirm != null) return confirm;
             }
 
-            if (action.equals("toggleDownTime")) {
+            if ("toggleDownTime".equals(action)) {  // no action: threw, and the page lost its diagnostics
                 String message = ServerDb.toggleDownTime(connection);
                // request.setAttribute("message", message);
                // return (mapping.findForward("message"));
@@ -79,7 +79,7 @@ static double getVersion () {
             request.setAttribute("isServerBusy", DBStatus.isServerBusy(dataSource1, dataSource2, dataSource3));
 //            request.setAttribute("isServerBusy", DBStatus.isServerBusy(dataSource1, dataSource2, dataSource3));
 
-            if (action.equals("email")) {
+            if ("email".equals(action)) {
                 String report = DBStatus.reportServerBusy(dataSource1, dataSource2, dataSource3, true);
                 request.setAttribute("message", "message sent. <br><br>" + report);
                 df.set("action", null);

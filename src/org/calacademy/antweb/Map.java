@@ -54,7 +54,7 @@ public class Map {
 
     private ArrayList<String> chosenList;
     public static int displayMapCount = 0;
-    private static final HashMap<String, Integer> displayMapHash = new HashMap<>();
+    private static final java.util.concurrent.ConcurrentHashMap<String, Integer> displayMapHash = new java.util.concurrent.ConcurrentHashMap<>();  // written by request threads
 
     private String title;
     private String subtitle;
@@ -341,7 +341,6 @@ public class Map {
 			Statement stmt = null;
 			ResultSet rset = null;
 			try {
-				stmt = connection.createStatement();
 				stmt = DBUtil.getStatement(connection, "Map.setPoints(specimens)");
 				rset = stmt.executeQuery(theQuery);            
                 float thisLat, thisLon;
@@ -529,7 +528,7 @@ public class Map {
         //terms.add("sp.decimal_latitude is not null");
 
         if (useBioregion) {
-            terms.add("sp.bioregion = '" + name + "'");
+            terms.add("sp.bioregion = " + DBUtil.sqlLiteral(name));
         }
 
         if (useProject) {
@@ -537,17 +536,17 @@ public class Map {
           if (locality != null && locality.length() > 0 && !locality.equals("null"))  {
             terms.add("sp." + locality);
           }    
-          terms.add("proj_taxon.project_name = '" + name + "'");
+          terms.add("proj_taxon.project_name = " + DBUtil.sqlLiteral(name));
         }
 
         if (useGeolocale) {
           //terms.add("geolocale_taxon.geolocale_id = " + ((Geolocale) overview).getId());
           if (overview instanceof Country) {
-            terms.add("sp.country = '" + overview.getName() + "'");
+            terms.add("sp.country = " + DBUtil.sqlLiteral(overview.getName()));
           }
           if (overview instanceof Adm1) {
-            terms.add("sp.country = '" + ((Adm1) overview).getParent() + "'");          
-            terms.add("sp.adm1 = '" + overview.getName() + "'");
+            terms.add("sp.country = " + DBUtil.sqlQuote(((Adm1) overview).getParent()));
+            terms.add("sp.adm1 = " + DBUtil.sqlLiteral(overview.getName()));
           }
         }
 
@@ -942,13 +941,8 @@ public class Map {
     }
 
     public static void addToDisplayMapCount(String objectName) {
-      Integer count = displayMapHash.get(objectName);
-      if (count == null) {
-        displayMapHash.put(objectName, 1);
-      } else {
-        count = count + 1;
-        displayMapHash.put(objectName, count);
-      }
+      if (objectName == null) return;
+      displayMapHash.merge(objectName, 1, Integer::sum);
       //A.log("addToDisplayMapCount() count:" + count);    
     }
     public static String getDisplayMapHashCounts() {

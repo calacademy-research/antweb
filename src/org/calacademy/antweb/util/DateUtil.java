@@ -123,6 +123,7 @@ public abstract class DateUtil {
     } catch (ParseException e) {
       s_log.error("e:" + e + " theDate:" + dateStr);
     }
+    if (theDate == null) return null;  // format(null) threw
     String formatDate = getFormatDateStr(theDate, "yyyy-MM-dd");
     //A.log("getFormatDateStr() dateStr:" + dateStr + " theDate:" + theDate + " formatDate:" + formatDate);
     return formatDate;
@@ -157,7 +158,13 @@ public abstract class DateUtil {
   // Take an String of unknown date format and return a string in the correct format. Used for Specimen upload.
   public static String getConstructDateStr(String dateStr) {
     if (dateStr == null) return null;
-    Date date = constructDate(dateStr);
+    Date date;
+    try {
+      date = constructDate(dateStr);
+    } catch (RuntimeException e) {  // e.g. "1/2/3x": NumberFormatException out of handleDMYy. Not a date, as for other text.
+      s_log.debug("getConstructDateStr() dateStr:" + dateStr + " e:" + e);
+      return null;
+    }
     if (date == null) return null;
     String formatString = getFormatDateStr(date);
     return formatString;

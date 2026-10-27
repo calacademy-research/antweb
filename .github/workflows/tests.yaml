@@ -246,6 +246,19 @@ jobs:
             grep -q "^OK (11 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of small core and util fixes (specimen XML without DOCTYPE, comparators, common names, folder delete keeps link targets)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/audit/CoreUtilFixesTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.audit.CoreUtilFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (9 tests)" /tmp/out.txt
+          '
+
       - name: Java unit tests of the query string helper (results shown again, F26)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '

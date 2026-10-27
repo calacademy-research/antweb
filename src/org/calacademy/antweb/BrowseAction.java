@@ -678,11 +678,11 @@ We are showin the full map of ponerinae for every adm1.
 
 		  if (fetchTaxon == null) {
 			fetchTaxon = new HomonymDb(connection).getHomonym(browseForm.getAntcatId());
-			taxonName = fetchTaxon.getTaxonName();
+			if (fetchTaxon != null) taxonName = fetchTaxon.getTaxonName();
 		  }
 		}
 		
-		String possibleSpecimen = taxonName.toLowerCase();
+		String possibleSpecimen = taxonName == null ? "" : taxonName.toLowerCase();
 		if (fetchTaxon != null) {
 		  String target = HttpUtil.getTarget(request);
 		  String targetDo = "description.do";
@@ -698,7 +698,7 @@ We are showin the full map of ponerinae for every adm1.
 		    || possibleSpecimen.contains("lacm") || possibleSpecimen.contains("sam-") || possibleSpecimen.contains("fmnhi") 
 		    || possibleSpecimen.contains("inb00") || possibleSpecimen.contains("kbve")) {  
           s_log.debug("execute() taxonName" + taxonName);
-          String url = AntwebProps.getDomainApp() + "/specimen.do?code=" + taxonName;
+          String url = AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.url(taxonName);
 		  HttpUtil.sendRedirect(url, request, response);  
           return null;
         } else {

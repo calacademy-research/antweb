@@ -39,9 +39,9 @@ public class DescEdit {
     public String getAntLink() {
       String base = "<a href=\"" + AntwebProps.getDomainApp();
       if (getCode() == null) {
-         return base + "/description.do?taxonName=" + getTaxonName() + "\">" + getTaxonPrettyName() + "</a>";              
+         return base + "/description.do?taxonName=" + Html.escAttr(Html.url(getTaxonName())) + "\">" + Html.esc(getTaxonPrettyName()) + "</a>";              
       } else {
-         return base + "/specimen.do?code=" + getCode() + "\">" + Formatter.initCap(getCode()) + "</a>";              
+         return base + "/specimen.do?code=" + Html.escAttr(Html.url(getCode())) + "\">" + Html.esc(Formatter.initCap(getCode())) + "</a>";              
       }    
     }
     
@@ -128,6 +128,7 @@ public class DescEdit {
     }
 
     public static String getPrettyTitle(String title) {
+      if (title == null || title.isEmpty()) return "";  // substring below threw on an empty title
       if (title.equals("taxonomichistory")) return "Taxonomic History";
       if (title.equals("taxonomictreatment")) return "Taxonomic Treatment";
       if (title.equals("taxonomicnotes")) return "Taxonomic Notes";

@@ -30,7 +30,13 @@ public abstract class QueryManager {
         // and used for insertion of records (SpecimenUpload.java:309) there is no access_login created, causing problems at loadAllSpecimenFiles times.
         s_log.debug("Running adminAlerts:" + queryList);
         for (NamedQuery namedQuery : queryList) {
-          String results = runNamedQueryHtml(namedQuery, connection);
+          String results;
+          try {
+            results = runNamedQueryHtml(namedQuery, connection);
+          } catch (SQLException e) {  // one failing check no longer stops the others, nor reads as "Success"
+            message += "<br><b>" + Html.esc(namedQuery.getName()) + "</b>: this check could not run.<br>";
+            continue;
+          }
           //A.log("namedQuery:" + namedQuery + " results:" + results);
           if (results != null)
             if ("geolocaleTaxaPresent".equals(namedQuery.getName())) {
@@ -280,7 +286,8 @@ public abstract class QueryManager {
 
             if (stmt == null) {
                 s_log.warn("Failed to getStatement: runNamedQueryHtml()");
-                return null;
+                // Not null: callers read null as "found nothing" ("None.", "Success") for a check that never ran.
+                throw new SQLException("No database statement for query " + namedQuery.getName());
             }
             stmt.setQueryTimeout(QUERY_TIMEOUT_SECS);
 

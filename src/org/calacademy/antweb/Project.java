@@ -623,7 +623,7 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     
     public String getImageCountQuery(String taxonName) {
         String theQuery = " select image_count from proj_taxon " 
-            + " where taxon_name = \"" + taxonName + "\" "
+            + " where taxon_name = " + DBUtil.sqlQuote(taxonName) + " "
 		    + " and project_name ='" + getName() + "'";
         return theQuery;    
     }
@@ -751,7 +751,7 @@ group by taxonName
         ArrayList<Project> antProjects = ProjectMgr.getAntProjects();
         
 		for (Project project : antProjects) {
-      	  changeViewOptions += "<li><a href='" + otherUrl + "&" + project.getParams() + "'>" + project.getTitle() + "</a></li>";
+      	  changeViewOptions += "<li><a href='" + Html.escAttr(otherUrl + "&" + project.getParams()) + "'>" + Html.esc(project.getTitle()) + "</a></li>";
 		}
 */
         return changeViewOptions;
@@ -771,7 +771,7 @@ group by taxonName
     public static String getBoltonLi(String url) {
       if (!Project.isTaxonPage(url)) return "<li><a href=\"" + AntwebProps.getDomainApp() + "/project.do?name=worldants\">Bolton World Catalog</a></li>";
       if (Project.isPerformanceSensitive(url)) return "";
-      return "<li><a href=\"" + url + "&project=worldants\">Bolton World Catalog</a></li>";
+      return "<li><a href=\"" + Html.escAttr(url + "&project=worldants") + "\">Bolton World Catalog</a></li>";
     }
     public static String getAllAntwebLi(String url) {
       //A.log("Project.getAllAntwebLi() url:" + url + " perf:" + Project.isPerformanceSensitive(url) + " taxonPage:" + isTaxonPage(url));
@@ -779,12 +779,12 @@ group by taxonName
       if (!Project.isTaxonPage(url)) return "<li><a href=\"" + AntwebProps.getDomainApp() + "/project.do?name=allantwebants\">All Antweb Ants</a></li>";
       if (Project.isPerformanceSensitive(url)) return "";
 
-      return "<li><a href=\"" + url + "&project=allantwebants\">All AntWeb Ants</a></li>";
+      return "<li><a href=\"" + Html.escAttr(url + "&project=allantwebants") + "\">All AntWeb Ants</a></li>";
     }    
     public static String getFossilLi(String url) {
       if (!Project.isTaxonPage(url)) return "<li><a href=\"" + AntwebProps.getDomainApp() + "/project.do?name=fossilants\">Fossil Ants</a></li>";
       if (Project.isPerformanceSensitive(url)) return "";
-      return "<li><a href=\"" + url + "&project=fossilants\">Fossil Ants</a></li>";
+      return "<li><a href=\"" + Html.escAttr(url + "&project=fossilants") + "\">Fossil Ants</a></li>";
     }
 
     public static boolean isProjectName(String projectName) {

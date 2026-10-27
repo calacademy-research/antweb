@@ -144,7 +144,7 @@ Readers of the stored code, all of which take the plain code:
 | Field guide (`FieldGuide`) | `LocalityDb.getLocalityByCode()` (was `getLocality(code)`, which used the code as an SQL clause) |
 | TaxonWorks nightly (`TaxonWorksTransformer`) | passes `LocalityCode` through; the parse above applies |
 | API v3.1 | does not return the locality code |
-| `MapLocality` | not used (no caller) |
+| `MapLocality` | removed 2026-10-27 (had no caller) |
 
 MySQL compares codes ignoring case and accents (`utf8mb3_general_ci`): `MontagnedesFrançais_150` and
 `MontagnedesFrancais_150` open the same locality page.

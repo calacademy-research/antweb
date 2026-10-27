@@ -220,16 +220,16 @@ public abstract class Overview implements Overviewable, Headerable, Describable 
     public String getOverviewCriteria() {
       String overviewCriteria = "";
       if (this instanceof Adm1) {
-        overviewCriteria = " and specimen.adm1 = '" + getName() + "'";
+        overviewCriteria = " and specimen.adm1 = " + DBUtil.sqlQuote(getName());
       }
       if (this instanceof Country) {
-        overviewCriteria = " and (specimen.country = '" + getName() + "' or specimen.island_country = '" + getName() + "')";
+        overviewCriteria = " and (specimen.country = " + DBUtil.sqlQuote(getName()) + " or specimen.island_country = " + DBUtil.sqlQuote(getName()) + ")";
       }
       if (this instanceof Museum) {
-        overviewCriteria = " and specimen.museum = '" + ((Museum) this).getCode() + "'";
+        overviewCriteria = " and specimen.museum = " + DBUtil.sqlQuote(((Museum) this).getCode());
       }
       if (this instanceof Bioregion) {
-        overviewCriteria = " and specimen.bioregion = '" + getName() + "'";
+        overviewCriteria = " and specimen.bioregion = " + DBUtil.sqlQuote(getName());
       }
       
       //A.log("getOverviewCritieria() this:" + this.getClass() + " criteria:" + overviewCriteria);

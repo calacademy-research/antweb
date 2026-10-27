@@ -74,6 +74,11 @@ public final class BigPictureAction extends AntwebAction {
                     theImage = imageDb.getSpecimenImage(imageId);
 
                     if (theImage == null) notFoundMsg = "Image not found for imageId:" + Html.esc(imageId);
+                    else {  // the delete and the specimen below need these, as in the code/shot branch
+                        code = theImage.getCode();
+                        shot = theImage.getShot();
+                        number = theImage.getNumber();
+                    }
                     //ImageDb.getFormProps(form, connection);
                 }
             } else {

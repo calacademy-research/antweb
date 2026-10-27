@@ -70,7 +70,7 @@ public final class BigMapAction extends AntwebAction {
         String geolocaleFocusVal = (String) df.get("geolocaleFocus");
         boolean geolocaleFocus = "true".equals(geolocaleFocusVal);
         Boolean refresh = (Boolean) df.get("refresh");
-        boolean isRefresh = refresh != null && refresh;
+        boolean isRefresh = refresh != null && refresh && LoginMgr.isCurator(request);  // only curators see the Refresh link
         if (taxonName != null && isRefresh) {
           MapMgr.removeMap(taxonName);
           //request.setAttribute("message", "Map cache has been refreshed");
