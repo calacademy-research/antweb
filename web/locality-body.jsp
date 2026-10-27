@@ -194,7 +194,7 @@
 	<br /><br />
 	<% if (locality.getCollections().size() < 1) { %>
 
-	No specimens in this collection.
+	No collection codes are recorded for the specimens of this locality.
 
 	<% } else {
 	  String pluralStr = (locality.getCollections().size() > 1) ? "s" : "";

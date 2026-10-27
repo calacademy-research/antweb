@@ -280,7 +280,8 @@ No specimens in this collection.
        HashSet speciesSet = new HashSet();
        ArrayList<ResultItem> results = collection.getResults();
        for (ResultItem resultItem : results) {
-         speciesSet.add(resultItem.getFullName());
+         // Names not identified to genus are not species (Brian Fisher, 2026-10-22; B52, 2026-10-27).
+         if (org.calacademy.antweb.home.PlaceTotals.isIdentifiedToGenus(resultItem.getGenus())) speciesSet.add(resultItem.getFullName());
        }
        speciesCount = speciesSet.size();
      }

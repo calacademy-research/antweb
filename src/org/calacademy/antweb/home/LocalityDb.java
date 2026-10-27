@@ -113,12 +113,18 @@ public class LocalityDb extends AntwebDb {
           if (locality != null) {
 			  // This crazy bit... 
 			  // Collection Query - Very bad object design. This should be in Collection.
-			  String collectionQuery = "select distinct sp.collectioncode"
-				+ " , sp.habitat, sp.method, sp.decimal_longitude, sp.decimal_latitude, sp.collectedby "
-				+ ", sp.microhabitat "
-				+ ", datecollectedstart, datecollectedend "            
-				+ " from specimen as sp " 
-				+ " where " + clause;
+			  // One row per collection code (B51, 2026-10-27): "select distinct" over the code and the habitat, method,
+			  // coordinates, collector, microhabitat and dates listed a collection once for every different value of
+			  // these among its specimens, and specimens without a collection code as a collection of their own, so
+			  // "N collections" was higher than the collections of the locality.
+			  String collectionQuery = "select sp.collectioncode"
+				+ ", min(sp.habitat) as habitat, min(sp.method) as method, min(sp.decimal_longitude) as decimal_longitude"
+				+ ", min(sp.decimal_latitude) as decimal_latitude, min(sp.collectedby) as collectedby"
+				+ ", min(sp.microhabitat) as microhabitat"
+				+ ", min(sp.datecollectedstart) as datecollectedstart, max(sp.datecollectedend) as datecollectedend"
+				+ " from specimen as sp "
+				+ " where " + clause + " and sp.collectioncode is not null and sp.collectioncode != ''"
+				+ " group by sp.collectioncode order by sp.collectioncode";
 			  ResultSet collectionRset = null;
 			  colStmt = getConnection().createStatement();
 			  collectionRset = colStmt.executeQuery(collectionQuery);

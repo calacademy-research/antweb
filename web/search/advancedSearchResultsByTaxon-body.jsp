@@ -68,6 +68,10 @@ function selectAll(thisForm) {
 	java.util.ArrayList taxonList = (java.util.ArrayList) session.getAttribute("taxonList");  //advancedSearchResults.getSpeciesList();
 
     String resultSetModifier = Utility.notBlankValue((String) session.getAttribute("resultSetModifier"));
+    // After Compare or Map of a search by species the list holds the imaged or georeferenced species only, and the
+    // preparation counts them (request attribute); the session still has the search's count (B50, 2026-10-27).
+    String preparedModifier = (String) request.getAttribute("resultSetModifier");
+    if ("species".equals(resultRank) && preparedModifier != null && preparedModifier.trim().length() > 0) resultSetModifier = preparedModifier.trim();
 %>
 
 <logic:equal name="mode" value="">
