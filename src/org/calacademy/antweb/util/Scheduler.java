@@ -367,7 +367,7 @@ public class Scheduler extends AntwebAction {
         }
         try {
             Emailer.sendMail(AntwebUtil.getDevEmail(), "AntWeb: tonight's nightly run stopped (a set failed)",
-                line + "\n\nThe set's own changes were rolled back; the sets after it did not run, so tonight's counts"
+                line + "\n\nThe set stopped at its error: steps it had already committed (set 1: the AntCat import, the TaxonWorks upload, the name update) stay, the rest of the set was rolled back; the sets after it did not run, so tonight's counts"
                 + " are not updated. Details: compute.log (Log Manager). The sets run again at the next nightly (05:00);"
                 + " an admin can also start one set with /schedule.do?action=run&num=N.");
         } catch (Exception e) {

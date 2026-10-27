@@ -69,8 +69,12 @@ public final class ImagesAnywhere {
     /** True when the code is one of the place's specimens (case ignored). */
     public static boolean isFromPlace(String code, Set<String> placeCodes) {
         if (code == null || placeCodes == null) return false;
-        if (placeCodes.contains(code)) return true;
-        return lower(placeCodes).contains(code.toLowerCase());
+        // placeCodes is stored in lower case (Taxon.setPlaceCodes), so no copy per call: this runs once per specimen.
+        return placeCodes.contains(code) || placeCodes.contains(code.toLowerCase());
+    }
+
+    public static Set<String> lowerCodes(java.util.Collection<String> codes) {
+        return lower(codes);
     }
 
     private static Set<String> lower(java.util.Collection<String> codes) {

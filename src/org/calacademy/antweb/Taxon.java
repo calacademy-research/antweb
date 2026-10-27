@@ -800,7 +800,8 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         return placeCodes;
     }
     public void setPlaceCodes(Set<String> placeCodes) {
-        this.placeCodes = placeCodes;
+        // Lower case once here; ImagesAnywhere.isFromPlace is called once per specimen on a species images page.
+        this.placeCodes = placeCodes == null ? null : ImagesAnywhere.lowerCodes(placeCodes);
     }
 
     // Convenience method
