@@ -16,20 +16,18 @@ recounted from the API's records:
           "h", "d")).
   row 56  images.do child "N Images" (default view and All view) = the child's Images on the place's list (browse.do
           of the genus lists them) where that is above 0; where it is 0 the page shows the number of pictures of the
-          specimen it shows, from anywhere (B45, xfail).
+          specimen it shows, from anywhere (B45: by design since 2026-10-27, option A: the best pictures in AntWeb).
   row 49  genus browse hidden "M Imaged Species (out of N total)": M = the children with pictures (images.do All
           view; both use the children's pictures, Taxon.getHasImages).
   row 57  taxonomicPage.do images view "I X Imaged (out of M Total)": M = the list header of the same list (row 38),
-          I = the children shown with pictures in the All view, I + U = M with U of "X with no image from this place
-          (U)".
+          I = the children shown with pictures in the All view, I + U = M with U of "X with no picture in AntWeb (U)".
   row 58  getComparison.do&shot=Head (one view): the children shown = the children images.do shows with a head
           picture (default view).
   row 59  mapComparison.do "(N X Mapped)": N = browse.do's N (every child); N = the children with a map is B19
           (xfail).
   row 60  getComparison.do: one checkbox per child with pictures = the children of images.do's All view.
-  row 62  images.do "X with no image from this place (U)": U + the children with pictures = M; the names listed (at
-          most 50) are children without pictures. U = the list rows with No Images (what the label says) is B45
-          (xfail).
+  row 62  images.do "X with no picture in AntWeb (U)" (until 2026-10-27 "with no image from this place", B45):
+          U + the children with pictures = M; the names listed (at most 50) are children without pictures.
   row 61  browse.do of a species: each specimen's "N Images" = the specimen's images in the image table (API
           /images?specimenCode, live); "No Images" and the no-photos mark agree.
   row 64  specimenImages.do "N Images" = the API's /images count of the specimen (live), for the specimens with
@@ -173,7 +171,7 @@ def all_view_children(html):
 
 def no_image_list(html):
     """'X with no image from this place (U):' -> (U, names listed), or (None, [])."""
-    m = re.search(r"<b>(\w+) with no image from this place \(([\d,]+)\):</b>(.*?)(?:<br|</div|<div|$)", html, re.S)
+    m = re.search(r"<b>(\w+) with no (?:image from this place|picture in AntWeb) \(([\d,]+)\):</b>(.*?)(?:<br|</div|<div|$)", html, re.S)
     if not m:
         return None, []
     return ns.n(m.group(2)), [unescape(t).strip().lower() for t in re.findall(r"description\.do\?taxonName=([^'\"]+)['\"]", m.group(3))]
@@ -384,25 +382,6 @@ def test_images_page_child_counts_equal_the_list_rows():
     assert not wrong, f"{checked} children {ns.day_note()} ({PENDING}):\n" + "\n".join(wrong)
 
 
-@pytest.mark.xfail(reason="B45: a child with no image from this place is shown with the pictures of a specimen from"
-                          " elsewhere and the number of those pictures", strict=False)
-def test_images_page_child_without_images_here_says_so():
-    """Row 56 (B45): a child whose row on the place's list says No Images is not shown with "N Images" on images.do."""
-    wrong, checked = [], 0
-    for p, g in each_genus():
-        rows = browse_children(g)
-        for key, name, shown in default_view_children(g["images"]):
-            listed = rows.get(key)
-            if listed is None or listed[1] != 0:
-                continue
-            checked += 1
-            if shown:
-                wrong.append(f"{g['where']} {name}: list row No Images, images.do {shown} Images")
-    if not checked:
-        pytest.skip("no images.do child without images on the place's list " + ns.day_note())
-    assert not wrong, f"{ns.day_note()}:\n" + "\n".join(wrong)
-
-
 def test_no_image_list_names_the_children_without_pictures():
     """Row 62: images.do "X with no image from this place (U)": U + the children shown with pictures (All view) = M
     total; the names listed (at most 50) are none of the children shown."""
@@ -422,24 +401,6 @@ def test_no_image_list_names_the_children_without_pictures():
     if not checked:
         pytest.skip("no images.do All view read " + ns.day_note())
     assert not wrong, f"{len(checked)} genera {ns.day_note()}:\n" + "\n".join(wrong)
-
-
-@pytest.mark.xfail(reason="B45: 'with no image from this place' lists the children without a picture anywhere in AntWeb",
-                   strict=False)
-def test_no_image_list_counts_the_list_rows_without_images():
-    """Row 62 (B45): U of "X with no image from this place (U)" = the children whose row on the place's list says No
-    Images."""
-    wrong, checked = [], []
-    for p, g in each_genus():
-        u, _names = no_image_list(g["images"])
-        rows = browse_children(g)
-        none_here = sum(1 for _n, images in rows.values() if images == 0)
-        if (u or 0) != none_here:
-            wrong.append(f"{g['where']}: with no image from this place ({u or 0}), {none_here} list rows with No Images")
-        checked.append(g["where"])
-    if not checked:
-        pytest.skip("no genus read " + ns.day_note())
-    assert not wrong, f"{ns.day_note()}:\n" + "\n".join(wrong)
 
 
 def test_images_view_header_counts_the_children_with_pictures():

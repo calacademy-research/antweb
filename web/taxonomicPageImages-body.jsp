@@ -72,6 +72,7 @@
   <div id="totals_and_tools_container">
     <div id="totals_and_tools">
         <h2 class="display_count" data-imaged="<%= imagedChildrenCount %>" data-total="<%= childrenCount %>"><%= imagedChildrenCount %> <%= Rank.getPluralRank(pageRank) %> Imaged (out of <%= childrenCount %> Total)</h2>
+        <p class="image_source_note">Each name is shown with its best pictures in AntWeb, which may be of a specimen collected elsewhere.</p>
 <%
     if (false && overview instanceof Geolocale) { 
     %> <font color=red>Page Under Maintenance</font> <% 
