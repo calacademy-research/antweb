@@ -42,6 +42,14 @@ Examples of species with images that don't have h1 images:
        //A.log("taxonChildImageSet.jsp isSpecimen:" + isSpecimen + " isDefault:" + isDefault);		  
     }
 
+    // 2026-10-27 (images from anywhere): on a species images page reached with a place, the place's specimens are
+    // marked "from <place>" (BrowseAction sets the place's codes; other pages have none).
+    String fromPlaceMark = "";
+    if (isSpecimen && request.getAttribute("imagesFromPhrase") != null
+        && org.calacademy.antweb.ImagesAnywhere.isFromPlace(specChild.getCode(), (java.util.Set<String>) request.getAttribute("imagesPlaceCodes"))) {
+      fromPlaceMark = " <span class=\"from_place\" style=\"font-size:smaller; font-style:italic;\">" + org.calacademy.antweb.util.Html.esc((String) request.getAttribute("imagesFromPhrase")) + "</span>";
+    }
+
     String imageRoot = "";
     String picture = "";
     String code = "";  
@@ -78,7 +86,7 @@ Examples of species with images that don't have h1 images:
                 imageRoot = specChild.getName();
 %>
 <div class="data_checkbox" style="float:left; margin-top:2px; display:none;"><input form="getComparison" type="checkbox" name="chosen" value="<%= thisChild.getName() %>"></div>
-<div class="data_overlay"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= code %><%= overviewParams %>"><%= thisChild.getPrettyName() %></a>
+<div class="data_overlay"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= code %><%= overviewParams %>"><%= thisChild.getPrettyName() %></a><%= fromPlaceMark %>
 <%
                 if (specChild.getTypeStatus() != null) { %>
 <img style="margin-top:3px;" src="image/has_type_status.png" title="<%= org.calacademy.antweb.util.Html.escAttr((new Formatter()).capitalizeFirstLetter(specChild.getTypeStatus())) %>">  
@@ -229,7 +237,7 @@ Examples of species with images that don't have h1 images:
                 <div class="slide medium<% if (position == first) { %> first<% } %><% if (position == fourth) { %> last<% } %>" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><%= img.getThumbview() %>');" id="<%= index %>">
                 <div class="hover medium" onclick="window.location='<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= thisChild.getCode() %><%= overviewParams %>';"></div>
                 <div class="top_gradient medium"></div>
-                <div class="name"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= thisChild.getCode() %><%= overviewParams %>"><%= thisChild.getPrettyName() %></a></div>
+                <div class="name"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= thisChild.getCode() %><%= overviewParams %>"><%= thisChild.getPrettyName() %></a><%= fromPlaceMark %></div>
 <%
                   } else {
                     imageRoot = code;

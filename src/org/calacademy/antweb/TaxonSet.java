@@ -156,6 +156,27 @@ public abstract class TaxonSet {
         this.globalChildCount = globalChildCount;
     }  
     
+    // 2026-10-27 (images from anywhere): the images of the name in AntWeb, the allantwebants list row's Images
+    // (nightly set 4, same rule as the place's row: every image of the specimens, labels included); -1 when not known.
+    private int globalImageCount = -1;
+    public int getGlobalImageCount() {
+        return globalImageCount;
+    }
+    public void setGlobalImageCount(int globalImageCount) {
+        this.globalImageCount = globalImageCount;
+    }
+
+    /** A column for a list row's query: the allantwebants row's image_count of the name (read from the table, so it is
+     *  the last nightly run's, unlike the allantwebants rows AllAntwebMgr keeps from the start of the server). */
+    public static String globalImageCountColumn(String escapedTaxonName) {
+        return " , (select g.image_count from proj_taxon g where g.project_name = '" + Project.ALLANTWEBANTS
+            + "' and g.taxon_name = '" + escapedTaxonName + "') global_image_count";
+    }
+    protected void readGlobalImageCount(ResultSet rset) throws SQLException {
+        int n = rset.getInt("global_image_count");
+        setGlobalImageCount(rset.wasNull() ? -1 : n);
+    }
+
     public int getImageCount() {
         return imageCount;
     }

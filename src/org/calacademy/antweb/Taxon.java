@@ -49,6 +49,9 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected String elevations = "";
     protected String collectDateRange = "";
     protected ArrayList<Taxon> children;
+    // 2026-10-27 (images from anywhere): the codes of the children (specimens) from the chosen place, when the
+    // children were fetched from anywhere (Species.setChildren with global); null otherwise.
+    protected Set<String> placeCodes;
     protected ArrayList similar;
     protected String similarComparisonString;
     protected String test;
@@ -793,6 +796,13 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     public void setRank(String rank) {
         this.rank = rank;
     }
+    public Set<String> getPlaceCodes() {
+        return placeCodes;
+    }
+    public void setPlaceCodes(Set<String> placeCodes) {
+        this.placeCodes = placeCodes;
+    }
+
     // Convenience method
     public boolean isSpeciesOrSubspecies() {
       return "species".equals(getRank()) || "subspecies".equals(getRank());

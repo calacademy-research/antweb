@@ -101,6 +101,20 @@ def _num(text):
     return ns.n(m.group(1)) if m else None
 
 
+def images_cell(cell):
+    """The two numbers of a list row's Images cell (since 2026-10-27, Brian Fisher: images from anywhere):
+    (images of the name in AntWeb, images of this place's specimens). 'No Images' -> (0, 0), 'N Images' -> (N, N),
+    'T Images (P from Comoros)' or '(P in CASC)' -> (T, P); (None, None) when it is neither."""
+    t = ns.text_of(cell)
+    if t.startswith("No "):
+        return 0, 0
+    m = re.match(r"([\d,]+) Images(?: \(\s*([\d,]+) (?:from|in) .+?\s*\))?$", t)
+    if not m:
+        return None, None
+    total = ns.n(m.group(1))
+    return total, (ns.n(m.group(2)) if m.group(2) else total)
+
+
 def _params(link):
     """The query of an images.do or browse.do link, unescaped, without the domain and page."""
     return unescape(link.split("?", 1)[1]) if link and "?" in link else None
@@ -114,7 +128,8 @@ def _key(params):
 
 def list_row_cells(row_html):
     """A list row's (taxonReportBody.jsp) place count ("N Species", "N Specimens"; not the Global column), its browse
-    link, its Images number and the browser parameters of its images.do link (None when it says No Images)."""
+    link, its Images number of this place (the number in brackets when the name has more images in AntWeb, since
+    2026-10-27) and the browser parameters of its images.do link (None when it says No Images)."""
     count, link = None, None
     for cell in re.findall(r'<div class="list_extras specimens">(.*?)</div>', row_html, re.S):
         if "global=true" in cell:
@@ -130,7 +145,7 @@ def list_row_cells(row_html):
     images, params = None, None
     m = re.search(r'<div class="list_extras images">(.*?)</div>', row_html, re.S)
     if m:
-        images = _num(m.group(1))
+        images = images_cell(m.group(1))[1]
         lk = re.search(r"href='([^']*images\.do\?[^']*)'", m.group(1))
         params = _params(lk.group(1)) if lk else None
     return count, link, images, params

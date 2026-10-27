@@ -19,6 +19,10 @@
     String asterixTitle = "Counts include " + nextPluralRank + " of all statuses contained within " + locale + "."; 
     // Port of Entry (Brian Fisher, 2026-10-22): a species list only; no specimen, child or image counts per row.
     boolean listOnly = isProject && overview instanceof Project && ((Project) overview).isSpeciesListOnly();
+    // Images column (2026-10-27): images of the name in AntWeb, and in brackets those of this place when fewer.
+    String imagesFromPhrase = org.calacademy.antweb.ImagesAnywhere.fromPhrase(overview);
+    String imagesColumnTitle = "Images of the name in AntWeb, from any specimen (every image, labels included)"
+        + (imagesFromPhrase == null ? "." : "; in brackets, those of specimens " + imagesFromPhrase + " when fewer.");
     String asterixNote = "Counts include " + nextPluralRank + " of all statuses";
     if (displayGlobal){
       asterixNote += ".";
@@ -104,7 +108,7 @@
      <% } %>
      <% if ("images".equals(orderBy)) u = underline; else u = "";  %>        
      <% if (!listOnly) { %>
-        <div class="list_extras images"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=images" %>'>Images</a></b></font></div>
+        <div class="list_extras images"><font size=2><b><a <%= u %> title='<%= org.calacademy.antweb.util.Html.escAttr(imagesColumnTitle) %>' href='<%= sortLink + "&orderBy=images" %>'>Images</a></b></font></div>
      <% } %>
 
      <% if ("map".equals(orderBy)) u = underline; else u = ""; %>
@@ -202,11 +206,14 @@
           }
 
 
+         // 2026-10-27 (Brian Fisher): images help identification wherever the specimen came from. The column shows
+         // the images of the name in AntWeb and, when the place has fewer, the place's own: "4 Images (0 from Comoros)".
+         String imagesCell = org.calacademy.antweb.ImagesAnywhere.imagesColumn(childTaxonSet.getGlobalImageCount(), childTaxonSet.getImageCount(), imagesFromPhrase);
          String imageCountStr = null;
-         if (childTaxonSet.getImageCountStr().contains("No ")) {
-           imageCountStr = childTaxonSet.getImageCountStr();
+         if (imagesCell.startsWith("No ")) {
+           imageCountStr = imagesCell;
          } else {
-           imageCountStr = "<a href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams() + "'>" + childTaxonSet.getImageCountStr() + "</a>";
+           imageCountStr = "<a href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams() + "'>" + imagesCell + "</a>";
          }
      %>
         <% if (!listOnly) { %><div class="list_extras images"><%= imageCountStr %></div><% } %>

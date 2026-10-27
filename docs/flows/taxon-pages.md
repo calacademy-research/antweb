@@ -12,6 +12,13 @@ Every taxon (subfamily, genus, species, subspecies) has three tabs:
 - **Child list** (`browse.do`): the genera of a subfamily, the species of a genus, or the specimens of a species, each with its image, counts and status. The heading names the place: "Browsing genus Camponotus in Madagascar".
 - **Images** (`images.do`): the images of the child taxa, by caste (worker, queen, male) and view.
 
+**Images from anywhere** (decided by Brian Fisher, 2026-10-27). AntWeb exists to help people identify what they found: a visitor picks a place (say Comoros) to see and identify its ants. Specimen counts stay per place (what has been recorded there); images help identification wherever the specimen came from:
+
+- The images page of a **species or subspecies** reached with a place that selects specimens (`countryName`, `adm1Name`, `bioregionName`, `museumCode`) shows every imaged specimen of the name in AntWeb. The place's specimens come first and carry a short mark ("from Indonesia"; "in CASC" for a museum), then the representative specimens (the picked defaults and the specimen shown for the name), then the others, each group by caste. A note above the images says how many of the place's specimens are imaged, or "No specimens from Indonesia are imaged yet". The link "Only specimens from Indonesia" adds `placeOnly=true`, the view before 2026-10-27. Regions, subregions and projects select no specimens, so their species images pages always showed every specimen.
+- The **Images column** of a place's list shows "4 Images (0 from Comoros)": the images of the name in AntWeb, and in brackets those of the place's specimens when fewer; "N Images" when the place has them all; "No Images" only when there is no image of the name in AntWeb. The first number is the allantwebants list row's (nightly set 4), so it follows uploads after the next nightly run.
+- The **species overview** says which castes are imaged, under the head shot: "Imaged: worker (12 specimens: 9 normal, 3 major/soldier), queen (2), male (1)", counted live from the name's specimens anywhere with an image of the ant (label images do not count); each caste links to the images page of that caste. With no such specimen: "no specimen of this name has an image of the ant yet".
+- The species list of specimens (`browse.do` of a species) and every count stay per place.
+
 **The place filter.** Every taxon page is seen "in" a place: all of AntWeb (project `allantwebants`), the World Ants catalog (`worldants`), a country, adm1, region, subregion, island, bioregion, museum or project. The place comes from a parameter (`project=`, `countryName=`, `adm1Name=` with `countryName=`, `regionName=`, `subregionName=`, `bioregionName=`, `museumCode=`, `geolocaleId=`). Without one, the page uses **the place of the visitor's previous page** (kept in the session) and, for a new visitor, all of AntWeb. The place selects which children are listed (the place's species list), which counts are shown and which specimens are mapped. The header search box "Taxa" sends `description.do?taxonName=<name>`, which redirects to the taxon's page.
 
 **Name history.** Taxon pages have no Name History section: the history of a name is AntCat's "Taxonomic History" (from the AntCat import, [antcat-to-antweb.md](antcat-to-antweb.md)). The "Name History" section added in October 2026 (#212) is on specimen pages: see [specimen-and-image-pages.md](specimen-and-image-pages.md).
@@ -30,8 +37,10 @@ Every taxon (subfamily, genus, species, subspecies) has three tabs:
 | `description.do?antcatId=<id>` | Redirect to the taxon of that AntCat id |
 | `browse.do?...` with the same parameters | Child list; at species rank, the specimens |
 | `images.do?...&caste=worker` | Images of the children, by caste |
+| `images.do?...&rank=species&countryName=Indonesia` | Every imaged specimen of the species in AntWeb, Indonesia's first and marked (since 2026-10-27) |
+| `images.do?...&rank=species&countryName=Indonesia&placeOnly=true` | Indonesia's specimens only |
 | any of these `&project=` / `&countryName=` / `&bioregionName=` ... | The same page in that place |
-| `&statusSet=valid` (or `all`, `valid extant` ...), `&global=true` | Which statuses are listed; `global=true` lists every child, not only the place's |
+| `&statusSet=valid` (or `all`, `valid extant` ...), `&global=true` | Which statuses are listed; `global=true` lists every child, not only the place's (on a species images page every specimen is listed since 2026-10-27, unless `placeOnly=true`) |
 | `homonym`: `&status=homonym&authorDate=...` | A homonym's page (`homonymPage.jsp`) |
 
 Without a rank, the rank is inferred from the parameters (`BrowseAction.inferredRank()`); `rank=subgenus` is treated as genus.
@@ -46,7 +55,8 @@ Without a rank, the rank is inferred from the parameters (`BrowseAction.inferred
    - `taxon.initTaxonSet(connection, overview)`: the taxon's row in the place's list (none: "Taxon:x not found for overview:y");
    - page text: `saveDescriptionEdit()` (curator POST, see the editor flow) and `prepareDescriptionEdit()`; the text itself is in `description_edit`;
    - images: `taxon.setImages(connection, overview, caste)`: the default specimen of the taxon for each caste (`taxon_prop`, chosen by curators with the image picker), else a child's default, else a specimen of the taxon with a head shot;
-   - children (`browse.do`, `images.do`): `taxon.setChildren(connection, overview, statusSet, getChildImages, getChildMaps, caste, global, subgenus)` reads the place's list (`proj_taxon`, `geolocale_taxon`, `museum_taxon` or `bioregion_taxon`) and the children's images;
+   - imaged castes (`description.do` of a species or subspecies): `ImagedCastes.count()`, one grouped query of the name's specimens joined to their images (labels left out), `ImagedCastes.toHtml()` -> request attribute `imagedCastes`;
+   - children (`browse.do`, `images.do`): `taxon.setChildren(connection, overview, statusSet, getChildImages, getChildMaps, caste, global, subgenus)` reads the place's list (`proj_taxon`, `geolocale_taxon`, `museum_taxon` or `bioregion_taxon`) and the children's images; on `images.do` of a species with a place that selects specimens, `global` is set unless `placeOnly=true` (`ImagesAnywhere`), `Species.setChildren` keeps the codes of the place's specimens (`Taxon.getPlaceCodes()`) and the request carries `imagesPlaceCodes`, `imagesFromPhrase` and `imagesPlaceOnly` for `taxonChildImages.jsp` (order and note) and `taxonChildImageSet.jsp` (the mark);
    - map (`description.do`, `images.do`): `MapMgr.getMap(taxon, overview)` -> `new Map(taxon, overview, connection)`, the place's georeferenced specimens of the taxon, read live;
    - forward: `success` -> `taxonPage.jsp` / `showBrowse.jsp` / `imagePage.jsp`; `homonym` -> `homonymPage.jsp`; `message` -> `common/message.jsp`.
 2. JSPs: `web/taxonPage.jsp` + `taxonPage-body.jsp` (title `<Rank>: <Name> - AntWeb`; includes `common/taxonTitle.jsp`, `common/viewInAntCat.jsp`, `common/taxonomicHierarchy.jsp`, `common/pageToolLinks.jsp`, `distribution.jsp`, the page-text fields `common/descEdit/taxonEditFieldCK.jsp`, the map `maps/googleMapInclude.jsp`); `web/showBrowse.jsp` + `showBrowse-body.jsp` (title `Browsing <rank> <Name> in <place> - AntWeb`; `taxonReport.jsp` for taxa, `specimenReport.jsp` for specimens); `web/imagePage.jsp` + `imagePage-body.jsp` (title `<Rank>: <Name> - AntWeb`).
@@ -58,7 +68,7 @@ Without a rank, the rank is inferred from the parameters (`BrowseAction.inferred
 
 ## Numbers shown
 
-[numbers.md](../numbers.md) rows #38 to #49 (list headers and row counts of `browse.do`), #50 to #53 (habitat, microhabitat and method summaries), #54 to #57 (image counts), #61 and #62.
+[numbers.md](../numbers.md) rows #38 to #49 (list headers and row counts of `browse.do`), #50 to #53 (habitat, microhabitat and method summaries), #54 to #57 (image counts), #61 and #62, #44 (the Images column, both numbers since 2026-10-27) and #120 (imaged castes).
 
 ## Answers to unknown names and bad parameters (pinned by the tests)
 
@@ -94,3 +104,5 @@ See [public-pages-findings.md](public-pages-findings.md): a `geolocaleId` that i
 | `test_browser.py` | the Taxa box suggestions, no JavaScript errors, phone width |
 | `test_display_cleanup.py`, `test_image_picker.py`, `test_numbers_pages.py` | the distribution text, the image picker's form, the images-view counts |
 | `test_page_editor.py`, `test_field_history.py`, `test_browser_editor.py` | the page-text editor (curators) |
+| `test_images_anywhere.py` | images from anywhere: Michele's Leptogenys purpurea in Indonesia (an image from outside Indonesia, Indonesian specimens first and marked, `placeOnly=true` Indonesia's only), the day's places (marked first = `placeOnly=true`), the Images column's two numbers against the API, the imaged castes line against the API |
+| `test/org/calacademy/antweb/ImagesAnywhereTest.java`, `tests/unit/test_images_anywhere.py` | the order, the column format, the castes line and query (no database); the wiring in the action and JSPs |

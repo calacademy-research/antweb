@@ -796,7 +796,13 @@ Default Images:
         <div class="clear"></div>        
 <% } else {
      if (AntwebProps.isDevMode()) out.print("Dev: images " + taxon.getImages());
-   } %>
+   }
+   // 2026-10-27: which castes are imaged (BrowseAction, ImagedCastes; specimens from anywhere, labels do not count).
+   String imagedCastesLine = (String) request.getAttribute("imagedCastes");
+   if (imagedCastesLine != null) { %>
+        <%= imagedCastesLine %>
+        <div class="clear"></div>
+<% } %>
 
     <!-- % @include file="/curate/defaultSpecimen/defaultSpecimenPanel.jsp" % --> 
 

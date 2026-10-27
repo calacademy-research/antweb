@@ -20,17 +20,19 @@
                 <li><%= taxonSet.getNextSubtaxon(2) %></li>            
                 <li><%= taxonSet.getNextSubtaxon(3) %></li>
                 <li><%= taxonSet.getNextSubtaxon(4) %></li>
-                <% 
-                  //String global = request.getParameter("global");
-                  //boolean isGlobal = "true".equals(global);
-
-                  if (displayGlobal) {
-                     if (isGlobal) { %>
-                       <li><a href="<%= org.calacademy.antweb.util.Html.escAttr(HttpUtil.getTargetReplaceParam(request, "global=true", "")) %>">See <%= org.calacademy.antweb.util.Html.esc(overview) %> only</a></li>
-                     <% } else if (!isGlobal) { %>
-                       <li><a href="<%= org.calacademy.antweb.util.Html.escAttr(HttpUtil.getTarget(request) + "&global=true") %>">See global set</a></li>                
+                <%
+                  // 2026-10-27 (Brian Fisher): a species' images come from anywhere in AntWeb; the place's specimens
+                  // first. The old links to the global set (global=true) and back are replaced by
+                  // placeOnly=true (BrowseAction, ImagesAnywhere).
+                  Boolean imagesPlaceOnlyAttr = (Boolean) request.getAttribute("imagesPlaceOnly");
+                  String imagesFrom = (String) request.getAttribute("imagesFromPhrase");
+                  if (imagesPlaceOnlyAttr != null && imagesFrom != null) {
+                     if (imagesPlaceOnlyAttr) { %>
+                       <li><a class="images_anywhere" href="<%= org.calacademy.antweb.util.Html.escAttr(HttpUtil.getTargetMinusParam(request, ImagesAnywhere.PLACE_ONLY)) %>">All images of this <%= Html.esc(taxon.getRank()) %> in AntWeb</a></li>
+                  <% } else { %>
+                       <li><a class="images_place_only" href="<%= org.calacademy.antweb.util.Html.escAttr(HttpUtil.getTargetMinusParam(request, ImagesAnywhere.PLACE_ONLY) + "&" + ImagesAnywhere.PLACE_ONLY + "=true") %>">Only specimens <%= Html.esc(imagesFrom) %></a></li>
                 <%   }
-                   } %>
+                  } %>
 
             </ul>
         </span>        
@@ -84,6 +86,30 @@
 <div id="page_data">
     <div id="domain" style="display:none;"><%= AntwebProps.getDomainApp() %></div>
 <%
+    // 2026-10-27 (images from anywhere): say where the images come from.
+    java.util.Set<String> imagesPlaceCodes = (java.util.Set<String>) request.getAttribute("imagesPlaceCodes");
+    Boolean imagesPlaceOnlyNote = (Boolean) request.getAttribute("imagesPlaceOnly");
+    String imagesFromNote = (String) request.getAttribute("imagesFromPhrase");
+    if (imagesPlaceOnlyNote != null && imagesFromNote != null) {
+      if (imagesPlaceOnlyNote) { %>
+    <p class="images_place_note" data-place-only="true">Only specimens <%= Html.esc(imagesFromNote) %> are shown.</p>
+   <% } else if (imagesPlaceCodes != null) {
+        int placeImaged = 0;
+        if (childrenList != null) {
+          for (Taxon c : childrenList) {
+            if (c instanceof Specimen && ImagesAnywhere.isFromPlace(((Specimen) c).getCode(), imagesPlaceCodes)
+                && c.getImages() != null && c.getImages().size() > 0) ++placeImaged;
+          }
+        }
+        if (placeImaged == 0) { %>
+    <p class="images_place_note" data-place-imaged="0"><b>No specimens <%= Html.esc(imagesFromNote) %> are imaged yet.</b> The images below are of specimens collected elsewhere, to help identification.</p>
+     <% } else { %>
+    <p class="images_place_note" data-place-imaged="<%= placeImaged %>">Images of this <%= Html.esc(taxon.getRank()) %> from anywhere in AntWeb, to help identification. The <%= placeImaged %> imaged specimen<%= placeImaged == 1 ? "" : "s" %> <%= Html.esc(imagesFromNote) %> come first, marked "<%= Html.esc(imagesFromNote) %>".</p>
+     <% }
+      }
+    }
+
+
    String use_thumb = new String();
    String the_cookie = "thumbs";
    Cookie the_cookies [] = request.getCookies ();
@@ -156,6 +182,19 @@
 
 			if (taxon.isSpeciesOrSubspecies()) {
               theChildren = Caste.sortSpecimenByCasteSubcaste(theChildren);
+              if (imagesPlaceCodes != null) {
+                // The place's specimens first, then the representatives (picked defaults, the specimen shown for
+                // the name), then the others; each group by caste.
+                java.util.List<String> representatives = new java.util.ArrayList<>();
+                for (String rc : new String[] {Caste.WORKER, Caste.QUEEN, Caste.MALE}) {
+                  if (taxon.getDefaultSpecimen(rc) != null) representatives.add(taxon.getDefaultSpecimen(rc));
+                }
+                if (taxon.getImages() != null && !taxon.getImages().isEmpty()) {
+                  String shownCode = ((SpecimenImage) taxon.getImages().elements().nextElement()).getCode();
+                  if (shownCode != null) representatives.add(shownCode);
+                }
+                theChildren = ImagesAnywhere.placeFirstSpecimens(theChildren, imagesPlaceCodes, representatives);
+              }
 			}
 
           //A.log("taxonChildImages.jsp size:" + theChildren.size());
