@@ -5,7 +5,8 @@
    them (taxonChildImages.jsp, taxonChildImageSet.jsp); the old "See global set" link is gone.
 3. The Images column of a place's list shows the images of the name in AntWeb and the place's, images of the ant only
    (labels never count; nightly set 4 counts the list rows that way, the count check recounts them so) (taxonReportBody.jsp,
-   ImagesAnywhere.imagesColumn; the total is the allantwebants row's image_count, TaxonSet.globalImageCountColumn).
+   ImagesAnywhere.imagesColumn; the total of a species or subspecies row is counted live from the image table, of a
+   higher rank the allantwebants row's image_count, TaxonSet.globalImageCountColumn).
 5. The species page shows which castes are imaged (BrowseAction, ImagedCastes, taxonPage-body.jsp).
 
 The logic is tested by test/org/calacademy/antweb/ImagesAnywhereTest.java, the pages on staging by
@@ -55,12 +56,16 @@ def test_images_page_orders_marks_and_narrows():
 
 def test_list_images_column_shows_both_numbers():
     jsp = read("web/taxonReportBody.jsp")
-    assert "ImagesAnywhere.imagesColumn(childTaxonSet.getGlobalImageCount(), childTaxonSet.getImageCount(), imagesFromPhrase)" in jsp
+    assert "ImagesAnywhere.imagesColumn(childTaxonSet, imagesFromPhrase)" in jsp
     assert "childTaxonSet.getImageCountStr()" not in jsp, "the column still shows the place's number only"
-    # the total is the allantwebants row's image_count, read with the place's row (not AllAntwebMgr's copy, which
-    # is loaded once when the server starts)
-    assert "g.project_name = '\" + Project.ALLANTWEBANTS" in read("src/org/calacademy/antweb/TaxonSet.java")
-    for f in ("geolocale/OverviewTaxon.java", "geolocale/GeolocaleTaxon.java", "geolocale/BioregionTaxon.java"):
+    ts = read("src/org/calacademy/antweb/TaxonSet.java")
+    # species and subspecies: counted live (PR #291 run 2: the allantwebants rows were 0 on staging, so the list said
+    # "No Images" for names with images); higher ranks: the allantwebants row, read with the place's row
+    assert "if (countsImagesLive(getRank()))" in ts
+    assert "from specimen s join image i on i.image_of_id = s.code where s.taxon_name = '" in ts
+    assert "g.project_name = '\" + Project.ALLANTWEBANTS" in ts
+    for f in ("geolocale/OverviewTaxon.java", "geolocale/GeolocaleTaxon.java", "geolocale/BioregionTaxon.java",
+              "ProjTaxon.java"):
         src = read("src/org/calacademy/antweb/" + f)
         assert "+ globalImageCountColumn(taxonName)" in src and "readGlobalImageCount(rset);" in src, f
 

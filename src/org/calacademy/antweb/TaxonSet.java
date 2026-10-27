@@ -156,26 +156,58 @@ public abstract class TaxonSet {
         this.globalChildCount = globalChildCount;
     }  
     
-    // 2026-10-27 (images from anywhere): the images of the name in AntWeb, the allantwebants list row's Images
-    // (nightly set 4, same rule as the place's row: images of the ant, labels never count, since 2026-10-27); -1 when
-    // not known.
+    // 2026-10-27 (images from anywhere): the images of the ant (labels never count) of the name in AntWeb; -1 when not
+    // known. Species and subspecies rows: counted live from the image table (globalImageCountColumn), so it is right
+    // before and between nightly runs. Higher ranks: the allantwebants list row's Images (nightly set 4).
     private int globalImageCount = -1;
+    private boolean globalImageCountLive = false;
     public int getGlobalImageCount() {
         return globalImageCount;
     }
     public void setGlobalImageCount(int globalImageCount) {
         this.globalImageCount = globalImageCount;
     }
+    /** True when getGlobalImageCount was counted live from the image table (species and subspecies rows). The place's
+     *  own number cannot be higher; when the place's list row says more, it is an older count (labels included). */
+    public boolean isGlobalImageCountLive() {
+        return globalImageCountLive;
+    }
+    public void setGlobalImageCountLive(boolean globalImageCountLive) {
+        this.globalImageCountLive = globalImageCountLive;
+    }
 
-    /** A column for a list row's query: the allantwebants row's image_count of the name (read from the table, so it is
-     *  the last nightly run's, unlike the allantwebants rows AllAntwebMgr keeps from the start of the server). */
-    public static String globalImageCountColumn(String escapedTaxonName) {
+    /** True for the ranks whose AntWeb-wide images are counted live: species and subspecies (their specimens are
+     *  filed under their own name; a genus row's images roll up by the taxon tree, which only the nightly run does). */
+    public static boolean countsImagesLive(String rank) {
+        return Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank);
+    }
+
+    /**
+     * A column for a list row's query (alias global_image_count): the images of the ant of the name in AntWeb.
+     * Species and subspecies: counted live (globalImageCountSql). Until 2026-10-27 (PR #291, first staging run) every
+     * rank read the allantwebants row's image_count, which on staging was 0 for every name (the allantwebants rows are
+     * zeroed with the other project rows before set 4 recounts the live projects), so the list said "No Images" for
+     * names with images and showed only the place's number. Higher ranks still read the allantwebants row (a genus is
+     * the sum of its names by the taxon tree, nightly set 4); the Images cell then shows at least the place's number.
+     */
+    public String globalImageCountColumn(String escapedTaxonName) {
+        if (countsImagesLive(getRank())) {
+            return " , (" + globalImageCountSql(escapedTaxonName) + ") global_image_count";
+        }
         return " , (select g.image_count from proj_taxon g where g.project_name = '" + Project.ALLANTWEBANTS
             + "' and g.taxon_name = '" + escapedTaxonName + "') global_image_count";
     }
+
+    /** The images of the ant (shot type not l, StatisticsDb.ANT_IMAGE) of every specimen filed under the name. */
+    public static String globalImageCountSql(String escapedTaxonName) {
+        return "select count(i.id) from specimen s join image i on i.image_of_id = s.code where s.taxon_name = '"
+            + escapedTaxonName + "' and " + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE;
+    }
+
     protected void readGlobalImageCount(ResultSet rset) throws SQLException {
         int n = rset.getInt("global_image_count");
         setGlobalImageCount(rset.wasNull() ? -1 : n);
+        setGlobalImageCountLive(countsImagesLive(getRank()) && !rset.wasNull());
     }
 
     public int getImageCount() {

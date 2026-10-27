@@ -224,9 +224,12 @@ public class UploadDetails extends OperationDetails {
 
         //s_log.info("genUploadReport pre:" + preUploadStatistics + " post:" + postUploadStatistics);
         
+        // Every upload's species counts (B60, B61; docs/numbers.md row 95). They were inside the block below, which only
+        // a species list upload reaches (a specimen upload sets no project statistics), so a specimen upload's report
+        // never said how many species it inserted or updated (PR #291, staging run 2).
+        logString += speciesCountsHtml();
+
         if (postUploadStatistics != null) {
-          if (getInsertedSpeciesCount() > 0) logString += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Species:</b> " + getInsertedSpeciesCount() + ".";
-          if (getUpdatedSpeciesCount() > 0) logString += "<br>&nbsp;&nbsp;&nbsp;<b>Updated Species:</b> " + getUpdatedSpeciesCount() + ".";        
 
           logString += "<br><br>Current Taxa Counts:<br>" + ProjectDb.getProjectTableHeader() + ProjectDb.getProjectStatisticsHtml(postUploadStatistics, true) + "</table>"; 
         }
@@ -445,6 +448,15 @@ public class UploadDetails extends OperationDetails {
       return postUploadStatistics;
     }
     
+    /** The report's "Inserted Species: N." and "Updated Species: N." lines (each only when N > 0), for every kind of
+     *  upload, whether or not it has project statistics (genUploadReport). */
+    public String speciesCountsHtml() {
+      String html = "";
+      if (getInsertedSpeciesCount() > 0) html += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Species:</b> " + getInsertedSpeciesCount() + ".";
+      if (getUpdatedSpeciesCount() > 0) html += "<br>&nbsp;&nbsp;&nbsp;<b>Updated Species:</b> " + getUpdatedSpeciesCount() + ".";
+      return html;
+    }
+
     /** A species or subspecies name this upload inserted into the taxon table (counted once). */
     public void countInsertedSpecies(String taxonName) {
       if (taxonName == null) return;

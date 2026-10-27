@@ -30,6 +30,10 @@
 11. (2026-10-27) A form post counts only when sent as POST (HttpUtil.isPost), the token check in
    SessionRequestFilter covers every method other than GET, HEAD and OPTIONS (Csrf.methodNeedsCheck), and
    LoginAction accepts a password only in a post; only administrators create a login in SaveLoginAction. Unit test: test/.../util/PostMethodTest.java.
+12. (2026-10-27, PR #291 staging run 2) No if statement whose action is lost in a trailing comment (GeolocaleMgr: the
+   North Dakota return was inside the comment, so the Ohio line below became its body); the home page slideshow is
+   built before it is written (an error leaves it empty instead of cutting the page off) and TaxonMgr publishes its
+   name list and taxon map only once they are filled (a reload runs after every specimen upload).
 
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -279,6 +283,29 @@ def test_post_means_post(sources):
     print("Posts are posts; the token check covers every method that can change something; passwords only by post.")
 
 
+def test_no_lost_ifs_and_whole_home_page(sources):
+    lost = []
+    for path, src in sources.items():
+        for n, line in enumerate(src.splitlines(), 1):
+            # "if (...)  // ... return x;": the comment holds the statement, the next line becomes the if's body
+            if re.match(r"\s*(if|else if)\s*\(.*\)\s*//.*\breturn\b", line):
+                lost.append(f"{path}:{n}")
+    assert not lost, "an if statement whose return is inside a comment: " + ", ".join(lost)
+    geo = sources["src/org/calacademy/antweb/util/GeolocaleMgr.java"]
+    assert re.search(r'"northdakotaants"\.equals\(projectName\).*\) return GeolocaleMgr\.getAdm1\("North Dakota"', geo)
+    with open(os.path.join(ROOT, "web/common/slideshow_homepage.jsp"), encoding="utf-8") as f:
+        show = f.read()
+    assert "StringBuilder slides" in show and "catch (RuntimeException e)" in show and "<%= slides %>" in show, \
+        "the home page slideshow is written while it is built again"
+    assert "if (subfamilyName == null) continue;" in show
+    mgr = sources["src/org/calacademy/antweb/util/TaxonMgr.java"]
+    body = mgr[mgr.index("public static void populate(Connection connection, boolean forceReload, boolean initialRun)"):]
+    body = body[:body.index("s_populateTime")]
+    assert "prettyTaxaNamesList = new ArrayList" not in body and "s_taxa = new HashMap" not in body, \
+        "TaxonMgr.populate publishes a list or map before filling it"
+    print("No if loses its statement to a comment; the home page slideshow and TaxonMgr's reload are whole.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -295,6 +322,7 @@ def main():
     test_global_recounted_after_cleanup_and_synonym_bound(sources)
     test_copyright_rows_and_compare_by_species(sources)
     test_post_means_post(sources)
+    test_no_lost_ifs_and_whole_home_page(sources)
 
 
 if __name__ == "__main__":

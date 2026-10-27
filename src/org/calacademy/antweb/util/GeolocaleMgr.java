@@ -902,7 +902,8 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         if ("newmexicoants".equals(projectName)) return GeolocaleMgr.getAdm1("New Mexico", "United States");
         if ("newyorkants".equals(projectName)) return GeolocaleMgr.getAdm1("New York", "United States");
         if ("northcarolinaants".equals(projectName)) return GeolocaleMgr.getAdm1("North Carolina", "United States");
-        if ("northdakotaants".equals(projectName) || "northdakotaantsants".equals(projectName))  // the project is northdakotaants return GeolocaleMgr.getAdm1("North Dakota", "United States");
+        // the project is northdakotaants (the return was inside this comment until PR #291 run 2, so Ohio was never found)
+        if ("northdakotaants".equals(projectName) || "northdakotaantsants".equals(projectName)) return GeolocaleMgr.getAdm1("North Dakota", "United States");
         if ("ohioants".equals(projectName)) return GeolocaleMgr.getAdm1("Ohio", "United States");
         if ("oklahomaants".equals(projectName)) return GeolocaleMgr.getAdm1("Oklahoma", "United States");
         if ("oregonants".equals(projectName)) return GeolocaleMgr.getAdm1("Oregon", "United States");

@@ -1,5 +1,10 @@
 package test.org.calacademy.antweb.upload;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import junit.framework.TestCase;
 
 import org.calacademy.antweb.upload.UploadDetails;
@@ -46,5 +51,33 @@ public class UploadReportCountsTest extends TestCase {
         d.countInsertedSpecies(null);
         d.countUpdatedSpecies(null);
         assertEquals(0, d.getInsertedSpeciesCount() + d.getUpdatedSpeciesCount());
+    }
+
+    /** PR #291 staging run 2: a specimen upload's report said nothing about species (the e2e test read "Inserted 0 +
+     *  Updated 0" for a file with one new name): the two lines were printed only with project statistics, which only
+     *  a species list upload sets. */
+    public void testSpecimenUploadReportShowsTheSpeciesCounts() {
+        UploadDetails d = new UploadDetails("specimenUpload");
+        assertNull(d.getPostUploadStatistics());
+        assertEquals("", d.speciesCountsHtml());
+        d.countInsertedSpecies("ponerinaeleptogenys zztestunknown");
+        d.countUpdatedSpecies("ponerinaeleptogenys pavesii");
+        d.countUpdatedSpecies("ponerinaeleptogenys pavesii");
+        assertEquals("<br>&nbsp;&nbsp;&nbsp;<b>Inserted Species:</b> 1.<br>&nbsp;&nbsp;&nbsp;<b>Updated Species:</b> 1.",
+            d.speciesCountsHtml());
+    }
+
+    /** genUploadReport prints the species counts before, not inside, the block that needs project statistics. */
+    public void testReportPrintsTheCountsWithoutProjectStatistics() throws Exception {
+        Path test = Paths.get(System.getProperty("antweb.test", "test"));
+        Path src = test.toAbsolutePath().getParent().resolve("src/org/calacademy/antweb/upload/UploadDetails.java");
+        if (!Files.isRegularFile(src)) return;   // src/ not next to test/ (the method test above still runs)
+        String s = Files.readString(src, StandardCharsets.UTF_8);
+        String report = s.substring(s.indexOf("public void genUploadReport(UploadFile"));
+        int counts = report.indexOf("logString += speciesCountsHtml();");
+        int stats = report.indexOf("if (postUploadStatistics != null) {");
+        assertTrue("genUploadReport does not print speciesCountsHtml()", counts > 0);
+        assertTrue("the species counts are printed inside the project statistics block", stats < 0 || counts < stats);
+        assertFalse(report.substring(Math.max(stats, 0)).contains("getInsertedSpeciesCount() > 0) logString"));
     }
 }

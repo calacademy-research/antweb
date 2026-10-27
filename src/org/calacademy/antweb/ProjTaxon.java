@@ -46,6 +46,7 @@ public class ProjTaxon extends OverviewTaxon {
             projectName = getProjectName();
             query = "select subfamily_count, genus_count, species_count, specimen_count, image_count"  
               + " , created, rev, source " //, is_introduced "          
+              + globalImageCountColumn(taxonName)   // species rows: images of the ant in AntWeb, counted live (2026-10-27)
               + " from " + getTable()
               + " where " + getKeyClause()
               + "   and taxon_name = '" + taxonName + "'";
@@ -60,6 +61,7 @@ public class ProjTaxon extends OverviewTaxon {
                 setSpeciesCount(rset.getInt("species_count"));
                 setSpecimenCount(rset.getInt("specimen_count"));           
                 setImageCount(rset.getInt("image_count"));
+                readGlobalImageCount(rset);
                 //setIsEndemic((rset.getInt("is_endemic") == 1) ? true : false);
                 
                 setCreated(rset.getTimestamp("created"));

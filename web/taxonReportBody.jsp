@@ -213,7 +213,7 @@
 
          // 2026-10-27 (Brian Fisher): images help identification wherever the specimen came from. The column shows
          // the images of the name in AntWeb and, when the place has fewer, the place's own: "4 Images (0 from Comoros)".
-         String imagesCell = org.calacademy.antweb.ImagesAnywhere.imagesColumn(childTaxonSet.getGlobalImageCount(), childTaxonSet.getImageCount(), imagesFromPhrase);
+         String imagesCell = org.calacademy.antweb.ImagesAnywhere.imagesColumn(childTaxonSet, imagesFromPhrase);
          String imageCountStr = null;
          if (imagesCell.startsWith("No ")) {
            imageCountStr = imagesCell;

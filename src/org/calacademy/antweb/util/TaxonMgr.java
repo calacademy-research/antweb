@@ -43,21 +43,24 @@ public class TaxonMgr extends Manager {
 
         s_genera = popGenera(connection);
 
-        // For Taxon Name Search Autocomplete
-        prettyTaxaNamesList = new ArrayList<>();
-        prettyTaxaNamesList.addAll(CommonNames.getNames());
+        // For Taxon Name Search Autocomplete. Each list and map is filled first, then published: a reload (after every
+        // specimen upload) runs while pages are served, and a page that read a half-filled one could fail mid-response.
+        List<String> prettyNames = new ArrayList<>();
+        prettyNames.addAll(CommonNames.getNames());
 
         TaxonDb taxonDb = new TaxonDb(connection);
         List<String> taxaNamesList = taxonDb.getTaxonNames();
         for (String taxonName : taxaNamesList) {
-            prettyTaxaNamesList.add(Taxon.getPrettyTaxonName(taxonName));
+            prettyNames.add(Taxon.getPrettyTaxonName(taxonName));
         }
+        prettyTaxaNamesList = prettyNames;
 
-        s_taxa = new HashMap<>();
+        HashMap<String, Taxon> taxaMap = new HashMap<>();
         ArrayList<Taxon> taxa = taxonDb.getTaxa();
         for (Taxon taxon : taxa) {
-            s_taxa.put(taxon.getTaxonName(), taxon);
+            taxaMap.put(taxon.getTaxonName(), taxon);
         }
+        s_taxa = taxaMap;
 
         s_subgenusHashMap = taxonDb.getSubgenusHashMap();
 

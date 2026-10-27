@@ -105,6 +105,21 @@ public final class ImagesAnywhere {
     }
 
     /**
+     * The Images cell of a list row from its TaxonSet. When the AntWeb-wide number was counted live (species and
+     * subspecies rows, TaxonSet.isGlobalImageCountLive), the place's number cannot be higher: a higher one is the list
+     * row's count from before the ant-only rule (labels included, until the next nightly set 4), so the AntWeb-wide
+     * number is shown for both. A project's list (fromPhrase null) counts the images of its names from anywhere, so
+     * with a live number it shows that. Otherwise imagesColumn(total, place) (the higher of the two).
+     */
+    public static String imagesColumn(TaxonSet ts, String fromPhrase) {
+        if (ts == null) return "No Images";
+        int total = ts.getGlobalImageCount();
+        int place = ts.getImageCount();
+        if (ts.isGlobalImageCountLive() && total >= 0 && (place > total || fromPhrase == null)) place = total;
+        return imagesColumn(total, place, fromPhrase);
+    }
+
+    /**
      * "N Images" of a name on images.do and the taxonomicPage images view (docs/numbers.md row 56): the same as the
      * Images column of the place's list (imagesColumn: ant images in AntWeb and of the place). When the list says No
      * Images but the page shows images of the name (the allantwebants row not read, or counted before the latest
@@ -112,7 +127,7 @@ public final class ImagesAnywhere {
      */
     public static String childImages(Taxon child, Overview overview) {
         TaxonSet ts = child.getTaxonSet();
-        String s = ts == null ? "No Images" : imagesColumn(ts.getGlobalImageCount(), ts.getImageCount(), fromPhrase(overview));
+        String s = imagesColumn(ts, fromPhrase(overview));
         if (s.startsWith("No ")) {
             int shown = antImagesShown(child.getImages());
             if (shown > 0) return "<span class='numbers'>" + shown + "</span> Images";

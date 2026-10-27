@@ -58,6 +58,48 @@ public class ImagesAnywhereTest extends TestCase {
         assertFalse(ImagesAnywhere.imagesColumn(1, 0, "from Comoros").startsWith("No "));
     }
 
+    private static org.calacademy.antweb.TaxonSet row(String rank, int global, boolean live, int place) {
+        org.calacademy.antweb.geolocale.GeolocaleTaxon ts = new org.calacademy.antweb.geolocale.GeolocaleTaxon();
+        ts.setRank(rank);
+        ts.setGlobalImageCount(global);
+        ts.setGlobalImageCountLive(live);
+        ts.setImageCount(place);
+        return ts;
+    }
+
+    /** PR #291 staging run 2: species rows said "No Images" (Comoros Leptogenys pavesii, 20 images in AntWeb) and the
+     *  place's number alone (Monomorium floricola "8 Images", 137 in AntWeb): the allantwebants row read for the first
+     *  number was 0. Species and subspecies rows count it live from the image table. */
+    public void testSpeciesRowsCountTheImagesInAntWebLive() {
+        org.calacademy.antweb.TaxonSet species = row("species", -1, false, 0);
+        String col = species.globalImageCountColumn("ponerinaeleptogenys pavesii");
+        assertTrue(col, col.contains("from specimen s join image i on i.image_of_id = s.code"));
+        assertTrue(col, col.contains("s.taxon_name = 'ponerinaeleptogenys pavesii'"));
+        assertTrue(col, col.contains(StatisticsDb.ANT_IMAGE));
+        assertTrue(col, col.endsWith(" global_image_count"));
+        assertFalse(col, col.contains("allantwebants"));
+        assertFalse(row("subspecies", -1, false, 0).globalImageCountColumn("x").contains("allantwebants"));
+        String genus = row("genus", -1, false, 0).globalImageCountColumn("ponerinaeleptogenys");
+        assertTrue(genus, genus.contains("project_name = 'allantwebants'"));
+    }
+
+    public void testImagesColumnOfARow() {
+        assertEquals("<span class='images_total'>20</span> Images (<span class='numbers'>0</span> from Comoros)",
+            ImagesAnywhere.imagesColumn(row("species", 20, true, 0), "from Comoros"));
+        assertEquals("<span class='images_total'>137</span> Images (<span class='numbers'>8</span> from Anguilla)",
+            ImagesAnywhere.imagesColumn(row("species", 137, true, 8), "from Anguilla"));
+        // the place's row counted before the ant-only rule (labels included) cannot exceed the live AntWeb number
+        assertEquals("<span class='numbers'>49</span> Images",
+            ImagesAnywhere.imagesColumn(row("species", 49, true, 56), "from Comoros"));
+        // a project's list counts images from anywhere: the live number
+        assertEquals("<span class='numbers'>12</span> Images", ImagesAnywhere.imagesColumn(row("species", 12, true, 0), null));
+        // no image of the ant in AntWeb
+        assertEquals("No Images", ImagesAnywhere.imagesColumn(row("species", 0, true, 3), "from Comoros"));
+        // a genus row (allantwebants row, nightly): the higher of the two, as before
+        assertEquals("<span class='numbers'>7</span> Images", ImagesAnywhere.imagesColumn(row("genus", 0, false, 7), "from Comoros"));
+        assertEquals("No Images", ImagesAnywhere.imagesColumn((org.calacademy.antweb.TaxonSet) null, "from Comoros"));
+    }
+
     /** Brian Fisher 2026-10-27: every Images column counts images of the ant; labels never count. */
     public void testAntImagesShownLeaveLabelsOut() {
         Map<String, org.calacademy.antweb.SpecimenImage> images = new HashMap<>();
