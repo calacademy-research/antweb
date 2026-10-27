@@ -192,6 +192,22 @@ public final class TaxonWorksNightly {
         String builtNote = builtUtc == null ? "" : "; archive built " + builtUtc + " UTC"
             + (isOlderArchive(builtUtc, requestStart) ? " (older than this run: TaxonWorks did not build a new one in time)" : "");
 
+        // 3 and 4 hold the upload flag (claimed, not checked then set): a manual upload of the same group writes the same
+        // working files (specimenTW<group>.txt), and only one upload may run at a time. Released only if still ours.
+        String lockName = "TaxonWorks nightly:" + curator.getName();
+        if (!UploadAction.claimUploadProcess(lockName)) {
+            return "skipped: another upload is running (" + UploadAction.getIsInUploadProcess() + ")";
+        }
+        try {
+            return prepareAndUpload(connection, curator, zip, workDir, minRatio, sha, shaFile, builtNote);
+        } finally {
+            UploadAction.releaseUploadProcess(lockName);
+        }
+    }
+
+    /** Steps 3 and 4 of runOnce(); the caller holds the upload flag. */
+    private static String prepareAndUpload(Connection connection, Curator curator, Path zip, Path workDir, double minRatio,
+            String sha, Path shaFile, String builtNote) throws Exception {
         // 3. Unzip and transform, then check the record count.
         int groupId = curator.getGroup().getId();
         Path specimenFile = TaxonWorksUploader.prepareFromArchive(zip, curator.getGroup());
@@ -208,11 +224,7 @@ public final class TaxonWorksNightly {
         }
 
         // 4. Upload, as the manual TaxonWorks upload does.
-        if (UploadAction.getIsInUploadProcess() != null) {
-            return "skipped: another upload is running (" + UploadAction.getIsInUploadProcess() + ")";
-        }
         boolean autoCommit = connection.getAutoCommit();
-        UploadAction.setIsInUploadProcess("TaxonWorks nightly:" + curator.getName());
         try {
             connection.setAutoCommit(false);
             AntwebMgr.incrementSpecimenUploadId(connection);
@@ -233,7 +245,6 @@ public final class TaxonWorksNightly {
             connection.rollback();
             throw e;
         } finally {
-            UploadAction.setIsInUploadProcess(null);
             connection.setAutoCommit(autoCommit);
         }
     }

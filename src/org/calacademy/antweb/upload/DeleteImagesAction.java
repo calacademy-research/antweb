@@ -100,8 +100,10 @@ public final class DeleteImagesAction extends AntwebAction {
                         + " shot:" + thisResult.getShotType() + shot, true);
                 }
             } catch (Exception e) {
-                s_log.error("execute() e:" + e);
-                message = "e:" + e;
+                // A fixed text with a case number: the exception text may hold the submitted values.
+                int caseNumber = AntwebUtil.getCaseNumber();
+                s_log.error("execute() case:" + caseNumber + " e:" + e);
+                message = "The images could not be deleted (case " + caseNumber + "). Deleted before the problem: " + deletedCount + ".";
                 request.setAttribute("message", message);
                 return mapping.findForward("message");
             } finally {

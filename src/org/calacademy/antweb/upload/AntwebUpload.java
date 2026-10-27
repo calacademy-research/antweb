@@ -1020,8 +1020,10 @@ or for Worldants upload
 	  Date date = DateUtil.getDate(formatDate);
 	  if (date != null) {
 		if (date.after(new Date())) {
-			String message = Html.esc("code:" + code + " dateDetermined:" + formatDate);
-			getMessageMgr().addToMessages(MessageMgr.futureDateDetermined, message);
+			// Each date under its own heading (a future collection date was listed as "Date Determined").
+			boolean determined = "datedetermined".equals(dateType);
+			String message = Html.esc("code:" + code + " " + (determined ? "dateDetermined" : dateType) + ":" + formatDate);
+			getMessageMgr().addToMessages(determined ? MessageMgr.futureDateDetermined : MessageMgr.futureDateCollected, message);
 			return false;
 		}
 	  } else {
@@ -1106,7 +1108,8 @@ or for Worldants upload
                 ProfileCounter.add("AntwebUpload.setStatusAndCurrentValidName()B");
                 String currentValidTaxonName = null;
                 if (TaxonMgr.isUseRefreshing()) {
-                    currentValidTaxonName = TaxonMgr.getTaxon(currentValidName).getTaxonName(); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
+                    Taxon currentValid = TaxonMgr.getTaxon(currentValidName); // This is thought to be faster and w/ integrity now that taxa are refreshed. Not a big performance concern as only happens 245 for a CAS specimen upload.
+                    if (currentValid != null) currentValidTaxonName = currentValid.getTaxonName(); // not loaded yet: kept, as below
                 } else {
                     currentValidTaxonName = TaxonDb.getCurrentValidTaxonName(getConnection(), currentValidName);
                 }
@@ -1128,6 +1131,13 @@ or for Worldants upload
                       } else {
                           currentValidTaxon = taxonDb.getTaxon(currentValidTaxonName);
                       }
+                    if (currentValidTaxon == null) {
+                      // The current valid name has no taxon row (yet): the name is kept, as when it has no current valid name.
+                      s_log.warn("AntwebUpload.setStatusAndCurrentValidName() no taxon for currentValidTaxonName:" + currentValidTaxonName + " taxonName:" + taxonName);
+                      taxonItem.put("status", status);
+                      taxonItem.put("taxon_name", taxonName);
+                      return taxonName;
+                    }
 
                     status = Status.VALID;
                     originalTaxonName = taxonName;

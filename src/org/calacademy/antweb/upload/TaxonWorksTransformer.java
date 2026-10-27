@@ -226,17 +226,12 @@ public class TaxonWorksTransformer extends Transformer {
     private void passFieldCheck (CSVRecord line) throws AntwebException {
         String[] fieldArray = {"TW:Internal:otu_name", "TW:DataAttribute:CollectingEvent:Country"
             , "TW:DataAttribute:CollectingEvent:adm1", "TW:DataAttribute:CollectingEvent:adm2"};
-        int c = 0;
-        String notMappedMessage = null;
-        ArrayList<String> fieldList = new ArrayList<>(Arrays.asList(fieldArray));
-        for (String field : fieldList) {
-            c++;
-            if (!line.isMapped(field)) {
-                if (c > 1) notMappedMessage += ", ";
-                notMappedMessage += field;
-            }
+        // The missing columns, comma separated (the text began with "null" until 2026-10-27).
+        List<String> notMapped = new ArrayList<>();
+        for (String field : fieldArray) {
+            if (!line.isMapped(field)) notMapped.add(field);
         }
-        if (notMappedMessage != null) throw new AntwebException(notMappedMessage);
+        if (!notMapped.isEmpty()) throw new AntwebException(String.join(", ", notMapped));
     }
 
 

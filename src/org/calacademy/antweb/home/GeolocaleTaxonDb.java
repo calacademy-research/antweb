@@ -327,10 +327,10 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 
             ResultSet rset2 = stmt2.executeQuery(query);
             while (rset2.next()) {
-              if (rset2.getInt(1) == 0) {
-
-                // Morpho check?  We already know that it is not in Bolton and does not have specimens.
-                // So we will delete the taxon outright.
+              // Only a morphotaxon is deleted outright, as when it is removed from a project list
+              // (ProjTaxonDb.delete): a valid or AntCat name (or a genus, which has no specimens filed under
+              // its own name) stays in the taxon table.
+              if (rset2.getInt(1) == 0 && Taxon.isMorpho(taxonName)) {
                 TaxonDb taxonDb = new TaxonDb(getConnection());
                 taxonDb.deleteTaxon(taxonName);
               }
@@ -668,7 +668,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 
         Date startTime = new Date();
         int deleteTotal = 0;
-        String deleteMorphoStr = null;
+        String deleteMorphoStr = "";
         int insertTotal = 0;
 
         deleteTotal = deleteGeolocaleTaxaFromSpecimens();
@@ -819,15 +819,14 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
                 // Update the country records
                 country = GeolocaleMgr.getValidCountry(countryName);
                 if (country == null) {
-                    unfoundCountries.add(adm1Name);
+                    unfoundCountries.add(countryName);
                     //A.log("insertGeolocaleTaxaFromSpecimens() Country not found:" + countryName);
                     continue;
                 }
 
                 //if ("Colorado".equals(adm1Name)) A.log("insertGeolcoaleTaxaFromSpecimen() country:" + country + " adm1Name:" + adm1Name);
-                count += insert(country, taxonName, "specimen");
-                //A.log("insertGeolocaleTaxaFromSpecimens() country:" + country + " taxonName:" + taxonName + " count:" + count);
-                insertCount += count;
+                // Rows inserted (count was a running total added again on each line: the total grew quadratically).
+                insertCount += insert(country, taxonName, "specimen");
 
                 // Update the Adm1 records
                 if (adm1Name != null) {
@@ -842,8 +841,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
                     }
                     if (adm1 != null && taxonName != null) {
                         //if ("Colorado".equals(adm1Name)) A.log("insertGeolocaleTaxaFromSpecimens() 2 adm1:" + adm1 + " taxonName:" + taxonName + " count:" + count);
-                        count += insert(adm1, taxonName, "specimen");
-                        insertCount += count;
+                        insertCount += insert(adm1, taxonName, "specimen");
                     }
                 }
 

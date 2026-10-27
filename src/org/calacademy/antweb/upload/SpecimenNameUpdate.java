@@ -371,19 +371,17 @@ public class SpecimenNameUpdate {
      * The caller commits.
      */
     public static Summary runLocked(Connection connection, String mode, int maxChanges) throws SQLException {
-        synchronized (UploadAction.class) {
-            if (UploadAction.isInUploadProcess()) {
-                Summary s = new Summary();
-                s.requestedMode = mode;
-                s.note = "skipped: an upload is running (" + UploadAction.getIsInUploadProcess() + ")";
-                return s;
-            }
-            UploadAction.setIsInUploadProcess("nightly name update");
+        String lockName = "nightly name update";
+        if (!UploadAction.claimUploadProcess(lockName)) {
+            Summary s = new Summary();
+            s.requestedMode = mode;
+            s.note = "skipped: an upload is running (" + UploadAction.getIsInUploadProcess() + ")";
+            return s;
         }
         try {
             return run(connection, mode, maxChanges);
         } finally {
-            UploadAction.setIsInUploadProcess(null);
+            UploadAction.releaseUploadProcess(lockName);   // only if still ours
         }
     }
 

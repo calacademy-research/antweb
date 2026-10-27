@@ -151,7 +151,7 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 			} else {
 			  // add to the nonLegit subfamily list
 			  //A.log("processLine() invalid subfamily !isValidSubfamily(" + family + ", " + subfamily + ")");
-			  String offender = "taxonName:" + taxonName + " lineNum:" + lineNum;
+			  String offender = "taxonName:" + taxonName + " lineNum:" + LineNumMgr.getDisplayLineNum(lineNum);   // the line number in the file, as in the other sections
 			  getMessageMgr().addToMapMessages(MessageMgr.invalidSubfamilyMap, Html.esc(Formatter.initCap(subfamily)), Html.esc(offender));
 			  //A.log("processLine() isValidSubfamily failure.  " + offender);
 			  skipRecord = "invalidSubfamily";
@@ -300,7 +300,8 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 			    if (!isFossil) {
    	  	  	      //A.log("processLine() isInvalidBioregion:" + isInvalidBioregion + " bioregion:" + bioregion + " useTaxonName:" + useTaxonName + " isFossil:" + isFossil);
 
-				  String message = Formatter.initCap(Taxon.getGenusFromName(taxonName)) + " not native to " + bioregion + " Region";
+				  // the genus that was checked (the current valid name's), not the uploaded one
+				  String message = Formatter.initCap(Taxon.getGenusFromName(useTaxonName)) + " not native to " + bioregion + " Region";
 				  String displayCode = Specimen.makeReportLink(code);
 				  getMessageMgr().addToMapMessages(MessageMgr.genusOutsideNativeBioregion, Html.esc(message), displayCode);   
 				  specimenItem.put("flag", "red");
