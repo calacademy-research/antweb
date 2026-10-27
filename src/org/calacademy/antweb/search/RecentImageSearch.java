@@ -66,9 +66,11 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
                 theQuery += " and ant_group.id = group_image.group_id and ant_group.name='" + DBUtil.escapeQuotes(group) + "'";
             }
 
+            // One row per image (2026-10-27, B47): grouped by name, shot type, shot number, upload time and group, the
+            // images of two specimens of one name with the same shot, number and upload second were one row, so the
+            // page's "N Images" counted fewer images than were uploaded; an image of two groups was two rows.
             theQuery += 
-               " group by specimen.taxon_name, specimen.subfamily, specimen.genus, specimen.species, specimen.subspecies " 
-               + ", image.shot_type, image.shot_number, image.upload_date, ant_group.name "
+               " group by image.id "
              + " order by image.upload_date desc, specimen.code, image.shot_type, image.shot_number ";
 
         Statement stmt = null;

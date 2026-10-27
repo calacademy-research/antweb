@@ -64,6 +64,7 @@ tests = [
   "test_numbers_endemic.py",
   "test_numbers_lists.py",
   "test_numbers_species.py",
+  "test_numbers_images.py",
   "test_api_numbers.py",
   "test_numbers_api_meta.py",
   "test_previous_determinations.py",
@@ -340,6 +341,9 @@ paths = [
   "web/countCheck*",
   "web/util/countCheck*",
   "docs/numbers.md",
+  "web/taxonChildImage*",
+  "web/unImagedTaxa.jsp",
+  "src/org/calacademy/antweb/search/RecentImageSearch.java",
 ]
 tests = [
   "test_count_check.py",
@@ -353,6 +357,7 @@ tests = [
   "test_numbers_species.py",           # species habitat summaries recounted from the API (2026-10-26)
   "test_numbers_api_meta.py",          # API counts recounted from other replies and pages (2026-10-27)
   "test_numbers_search.py",            # search, compare, map, collection, locality, Subtaxon total, museum fossils (2026-10-27)
+  "test_numbers_images.py",            # image, comparison and recent-image counts of every kind of place (2026-10-27)
 ]
 
 [areas.places]

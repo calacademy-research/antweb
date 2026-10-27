@@ -103,12 +103,17 @@ Examples of species with images that don't have h1 images:
 <%
 //A.log("taxonChildImageSet.jsp hasImages:" + thisChild.getHasImages());
 
-            if (thisChild.getHasImages()) {
+            if (thisChild.getHasImages() && !isSpecimen) {
+                // 2026-10-27 (B46): a name shows the same number as in the default view (its Images on this place's
+                // list). It showed the image count kept for specimens only, so every name said "0 Images".
+                String ratioImagesStr = thisChild.getTaxonSet().getImageCountStr();
+                if ("No Images".equals(ratioImagesStr) && thisChild.getImageCount() > 0) ratioImagesStr = thisChild.getImageCount() + " Images"; %>
+                <%= ratioImagesStr %>
+         <% } else if (thisChild.getHasImages()) {
                 int titleStr = 0;
                 // getHasImagesCount is not calculated for description.do.  Do not include.
                 if (thisChild.getHasImagesCount() > 0) {
                     titleStr = thisChild.getHasImagesCount();
-                    A.log("taxonChildImageSet.jsp titleStr:" + titleStr);
                 } %>
                 <%= titleStr %> Images
          <% } else { %>
