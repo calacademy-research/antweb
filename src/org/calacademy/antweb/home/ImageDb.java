@@ -255,6 +255,25 @@ public class ImageDb extends AntwebDb {
     }
 
     /**
+     * True if an image row exists for this code, shot and number (with or without an owning group).
+     * On a database error: true, so that a check built on it refuses rather than allows.
+     */
+    public boolean imageExists(String code, String shotType, int shotNumber) {
+        String query = "select 1 from image where image_of_id = ? and shot_type = ? and shot_number = ? limit 1";
+        try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
+            stmt.setString(1, code);
+            stmt.setString(2, shotType);
+            stmt.setInt(3, shotNumber);
+            try (ResultSet rset = stmt.executeQuery()) {
+                return rset.next();
+            }
+        } catch (SQLException e) {
+            s_log.error("imageExists() code:" + code + " e:" + e);
+            return true;
+        }
+    }
+
+    /**
      * The access groups that own an image (group_image rows). Empty when the image is
      * not found or has no owner recorded.
      */

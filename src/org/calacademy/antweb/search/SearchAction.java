@@ -214,6 +214,7 @@ public final class SearchAction extends DispatchAction {
         session.setAttribute("fullAdvancedSearchResults", results.getResults());
         session.removeAttribute("searchResults");
         session.setAttribute("searchTitle", title);
+        session.setAttribute(FieldGuideResultsAction.SEARCH_CASTE, searchParameters.getCaste());   // field guide caste (2026-10-27)
         //A.log("SearchAction.doAdvancedSearch() resultRank:" + resultRank);
         
         ActionForward forward = null;
@@ -361,6 +362,7 @@ public final class SearchAction extends DispatchAction {
         session.removeAttribute("searchResults");
         session.removeAttribute("taxonList");
         session.setAttribute("searchTitle", title);
+        session.setAttribute(FieldGuideResultsAction.SEARCH_CASTE, searchParameters.getCaste());   // field guide caste (2026-10-27)
         session.setAttribute("resultSetModifier", DownloadLimits.count(paging.getTotal()));
         session.setAttribute("resultRank", ResultRank.SPECIMEN);
 

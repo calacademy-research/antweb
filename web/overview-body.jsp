@@ -332,10 +332,8 @@ Images:
         <br><br><h2>Curator Info</h2>
         Museum counts are computed daily and may not reflect most recent specimen uploads.
 
-	 <% if (LoginMgr.isAdmin(accessLogin)) { %>
-          <br><b><%= overview.getRecalcButton(request) %></b> (admins: recounts this museum's specimens, images and taxa now instead of in the nightly run; takes a few minutes)
-     <% }
-
+          <br><b><%= overview.getRecalcButton(request) %></b> (curators and admins: recounts this museum's specimens, images and taxa now instead of in the nightly run; takes a few minutes)
+     <%
       }
     }
 

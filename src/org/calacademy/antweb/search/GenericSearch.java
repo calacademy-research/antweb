@@ -756,6 +756,63 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         return getSearchString(property, searchType, value);
     }
 
+    /** Code fields: codes have no spaces (UploadUtil.cleanCode), so a value may be a pasted list of codes. */
+    static final Set<String> CODE_PROPERTIES = Set.of("sp.code", "sp.localitycode", "sp.collectioncode");
+
+    public static boolean isNegative(String searchType) {
+        return "notEquals".equals(searchType) || "notEqual".equals(searchType);
+    }
+
+    /**
+     * The entries of a search box value (decided by Brian Fisher 2026-10-27). Entries are separated by commas;
+     * an entry with several words is one phrase ("Santa Cruz" matches Santa Cruz, not Santa or Cruz). Double
+     * quotes still mark one entry (a phrase that contains a comma). Code fields (CODE_PROPERTIES) also take a
+     * list separated by spaces, tabs or line breaks (a list pasted from a spreadsheet, 2026-10-26). Spaces inside
+     * a phrase are made single; empty entries are dropped.
+     */
+    public static List<String> searchEntries(String property, String value) {
+        ArrayList<String> elements = new ArrayList<>();
+        if (value == null) return elements;
+        Matcher m = Pattern.compile("(\".*?\")").matcher(value);
+        while (m.find()) {
+            String quoted = m.group();
+            elements.add(quoted.substring(1, quoted.length() - 1));
+        }
+        String rest = m.replaceAll(",");
+        String separators = CODE_PROPERTIES.contains(property) ? "[,\\s]+" : ",";
+        for (String e : rest.split(separators)) elements.add(e);
+        ArrayList<String> entries = new ArrayList<>();
+        for (String e : elements) {
+            String entry = e.trim().replaceAll("\\s+", " ");
+            if (!entry.isEmpty()) entries.add(entry);
+        }
+        return entries;
+    }
+
+    /** A value for a MySQL LIKE pattern: %, _ and the backslash match only themselves. */
+    public static String likeLiteral(String value) {
+        return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+    }
+
+    /**
+     * The taxon name box with "equals" or "not equals" (decided 2026-10-27). A specimen's taxon_name starts with
+     * its subfamily ("formicinaeformica rufa"), so before, "equals" was a suffix match and "rufa" also found
+     * "pseudorufa". Now an entry matches the whole name, the name without its subfamily ("formica rufa") or the
+     * last words of the name after a space ("rufa": the species or subspecies part). Not equals: none of them.
+     */
+    public static String getTaxonNameEqualsString(String searchType, String value) {
+        boolean negative = isNegative(searchType);
+        StringBuilder sb = new StringBuilder();
+        for (String entry : searchEntries("sp.taxon_name", value)) {
+            String q = singleQuoted(entry);
+            String one = "(sp.taxon_name = '" + q + "' or sp.taxon_name = concat(sp.subfamily, '" + q + "')"
+                + " or sp.taxon_name like '% " + singleQuoted(likeLiteral(entry)) + "')";
+            if (sb.length() > 0) sb.append(negative ? " and " : " or ");
+            sb.append(negative ? "not " + one : one);
+        }
+        return sb.length() == 0 ? " 1 = 1 " : sb.toString();
+    }
+
     protected String getSearchString(String property, String searchType, String value) {
         //A.log("GenericSearch.getSearchString)");
         if (searchType == null) {
@@ -784,43 +841,20 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
         }
         //A.log("getSearchString() property:" + property + " value:" + value);
 
-        ArrayList<String> elements = new ArrayList<>();
-        Matcher m = inQuotes.matcher(value);
-        String thisElement = "";
-        int length = 0;
-        while (m.find()) {
-            thisElement = m.group();
-
-            // take off the quotes
-            length = thisElement.length();
-            thisElement = thisElement.substring(1, length - 1);
-            elements.add(thisElement);
-        }
-
-        // pull quoted stuff out of the string
-        String newValue = m.replaceAll("");
-        if (newValue.length() > 0) {
-            // Separated by commas or any white space: a list pasted from a spreadsheet has line breaks or tabs (2026-10-26).
-            List<String> newElements = Arrays.asList(newValue.split("[,\\s]+"));
-            elements.addAll(newElements);
-        }
-        //A.log("getSearchString() 3 property:" + property + " value:" + value);
-
-        for (int loop = 0; loop < elements.size(); loop++) {
-            thisElement = elements.get(loop);
-            if (thisElement.length() > 0) {
-                sb.append(property);
-                sb.append(" ");
-                sb.append(operator);
-                sb.append(" '");
-                sb.append(leftPercent);
-                sb.append(singleQuoted(thisElement.trim()));
-                sb.append(rightPercent);
-                sb.append("'");
-                if (thisElement.length() > 0 && loop < elements.size() - 1) {
-                    sb.append(" or ");
-                }
-            }
+        List<String> elements = searchEntries(property, value);
+        // Several entries: any of them may match; for "not equals", none of them may (2026-10-27: was "or",
+        // so "not equals A, B" matched every specimen).
+        String join = isNegative(searchType) ? " and " : " or ";
+        for (String thisElement : elements) {
+            if (sb.length() > 0) sb.append(join);
+            sb.append(property);
+            sb.append(" ");
+            sb.append(operator);
+            sb.append(" '");
+            sb.append(leftPercent);
+            sb.append(singleQuoted(thisElement));
+            sb.append(rightPercent);
+            sb.append("'");
         }
         //sb.append(")");
 

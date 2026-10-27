@@ -21,9 +21,9 @@ public class UserAgentTracker extends AntwebAction {
 
     private static Deque<Request> requestLinkList = new ConcurrentLinkedDeque<>();
 
+    // The recent requests, for the User Agents report. (Blocking a browser by its share of these requests,
+    // threshold 101% so it never fired, was removed 2026-10-27, decided by Brian Fisher.)
     private static int MAX_QUEUE_SIZE    = 100;
-    private static int PERIOD_IN_SECONDS = 100;
-    private static int ALLOWED_PERCENT = 101;
 
     private static int totalCount = 0;
     private static int blockCount = 0;
@@ -73,21 +73,8 @@ public class UserAgentTracker extends AntwebAction {
         if (allowPagesSet.stream().anyMatch(reqPage::contains)) return false;
 
         // https://www.antweb.org/serverDebug.do    This can be set by admin during runtime.
-        if (ServerDebug.isDebug("isBlockUnLoggedIn")) return true;
-
-        // If the queue isn't full, no need to continue. It will fill quickly.
-        if (requestLinkList.size() < MAX_QUEUE_SIZE) return false;
-
-        // If the list is empty, shouldn't happen, given the test above.
-        Request first = requestLinkList.peekFirst();
-        if (first == null) return false;
-
-        // We won't block any unless the server is taxed. Around 1 request per second?
-        long secsSinceFirst = AntwebUtil.secsSince(first.getDate());
-        if (secsSinceFirst > PERIOD_IN_SECONDS) return false;
-
-        // This is what should catch the bots!
-        return getPercentage(request) >= ALLOWED_PERCENT;
+        // The only block left: an administrator's switch for all visitors who are not logged in.
+        return ServerDebug.isDebug("isBlockUnLoggedIn");
     }
 
     private static void addRequest(HttpServletRequest request) {
@@ -142,8 +129,6 @@ public class UserAgentTracker extends AntwebAction {
 
             returnStr += "<br><br>Constants:";
             returnStr += "<br>&nbsp;&nbsp; MAX_QUEUE_SIZE: <b>" + MAX_QUEUE_SIZE + "</b>.  Max Queue size";
-            returnStr += "<br>&nbsp;&nbsp; PERIOD_IN_SECONDS: <b>" + PERIOD_IN_SECONDS + "</b>.  Minimum Full QUEUE timestamp spread for busy threshold ( < seconds)";
-            returnStr += "<br>&nbsp;&nbsp; ALLOWED_PERCENT: <b>" + ALLOWED_PERCENT + "%</b>.  Allowed percentage of list before a bot is blocked";
 
         } catch (Exception e) {
             AntwebUtil.logStackTrace(e);
