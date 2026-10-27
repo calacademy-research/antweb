@@ -24,7 +24,17 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          # Host key check (2026-10-27): the server must answer with one of the keys pinned in .github/known_hosts
+          # (public host keys of production, its reserved IP, and staging). Before, any key that answered was trusted.
+          HOST="${{ secrets.SSH_HOST }}"
+          ssh-keyscan -t ed25519,ecdsa,rsa "$HOST" 2>/dev/null | awk '{print $2" "$3}' | sort -u > /tmp/scanned
+          cut -d" " -f2,3 .github/known_hosts | sort -u > /tmp/pinned
+          if [ -z "$(comm -12 /tmp/scanned /tmp/pinned)" ]; then
+            echo "::error::The server did not answer with a pinned host key (.github/known_hosts). Deploy stopped."
+            exit 1
+          fi
+          comm -12 /tmp/scanned /tmp/pinned | sed "s|^|$HOST |" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Deploy to Remote Server
-        run: ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' < .github/scripts/deploy.sh
+        run: ssh -o StrictHostKeyChecking=yes ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} 'bash -s' < .github/scripts/deploy.sh
