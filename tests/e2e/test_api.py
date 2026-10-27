@@ -259,3 +259,21 @@ def test_geo_specimens_distinct_uses_the_area():
     mg = _get("/v3.1/geoSpecimens?coords=-18.9,47.5&radius=25&distinct=genus&limit=500&up=1").json()["genera"]
     assert sf or mg, "no genus within 25 km of San Francisco or Antananarivo"
     assert sorted(sf) != sorted(mg), "the same genera near San Francisco and near Antananarivo"
+
+
+def test_distinct_taxa_species_are_full_names():
+    """Finding F24 (fixed 2026-10-27): taxarank=species gave bare epithets; now distinct "Genus species"."""
+    names = _get("/v3.1/distinctTaxa?taxarank=species&country=Madagascar&limit=50&up=1").json()["taxarank"]
+    assert names, "no species for Madagascar"
+    bad = [n for n in names if not n or " " not in n or not n[:1].isupper()]
+    assert not bad, f"species without a capitalised genus: {bad[:5]}"
+    assert len(names) == len(set(names)), "the species names repeat"
+
+
+def test_country_matches_the_whole_name():
+    """Finding F24 (fixed 2026-10-27): country matched by "contains", so country=Niger also returned Nigeria."""
+    specimens = _get("/v3.1/specimens?country=Niger&limit=100&up=1").json()["specimens"]
+    others = sorted({s["country"] for s in specimens if (s.get("country") or "").lower() != "niger"})
+    assert not others, f"country=Niger returned other countries: {others}"
+    lower = _get("/v3.1/specimens?country=madagascar&limit=5&up=1").json()["specimens"]
+    assert lower and all(s["country"].lower() == "madagascar" for s in lower), "country=madagascar (lower case) found nothing"

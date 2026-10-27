@@ -92,6 +92,11 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_findings.py
 
+      - name: API finding F24, country is the whole name and distinct species are full names (tests/unit/test_api_country.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" -v "$PWD/web/documentation/api:/docs:ro" \
+            antweb/api:dev /t/test_api_country.py
+
       - name: API container as in docker-compose.yml (only its login file, read-only, workers not root)
         # The login file is root-only (0600) here: gunicorn's master reads it at start
         # (--preload), the workers serve as the user api (uid 2002).
@@ -257,6 +262,19 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.HttpUtilQueryTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (2 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the results shown again for a paged search (F25)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/search/SearchPagingReshowTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.search.SearchPagingReshowTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (4 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the low public-pages findings (geolocaleId not a number F3, old bioregion project links F4, search limit per thread F13)

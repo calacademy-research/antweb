@@ -534,6 +534,12 @@ class Specimen(Base):
         return specDict
 
 
+# country=... matches the whole country name, in any case (2026-10-27, finding F24: it matched by "contains", so
+# country=Niger also returned Nigeria). Used by every route that takes a country.
+def countryIs(column, name):
+    return func.lower(column) == name.lower()
+
+
 def addExtraGeolocaleListCriteria(query, geolocaleName):
     # Because we don't want all specimen from all species on the species list.
     # Just all the specimen from all of the species on the species list that are in the Geolocale.
@@ -547,7 +553,7 @@ def addExtraGeolocaleListCriteria(query, geolocaleName):
     if georank == "subregion":
         query = query.filter(Specimen.subregion.contains(geolocaleName))
     if georank == "country":
-        query = query.filter(Specimen.country.contains(geolocaleName))
+        query = query.filter(countryIs(Specimen.country, geolocaleName))
     if georank == "adm1":
         query = query.filter(Specimen.adm1.contains(geolocaleName))
     return query
@@ -667,7 +673,7 @@ def getSpecimen():
     if subregion != '*':
         query = query.filter(Specimen.subregion ==subregion)
     if country != '*':
-        query = query.filter(Specimen.country.contains(country))
+        query = query.filter(countryIs(Specimen.country, country))
     if adm1 != '*':
         query = query.filter(Specimen.adm1 == adm1)
     if bioregion != '*':
@@ -1144,11 +1150,13 @@ def getDistinctTaxa():
     if 'genus' == taxarank:
         query = session.query(Specimen.genus).distinct()
     if 'species' == taxarank:
-        query = session.query(Specimen.species).distinct()
+        # Distinct "Genus species" names, as /geoSpecimens?distinct=species gives (2026-10-27, finding F24: this
+        # returned the bare epithet, so maculatus came once for every genus).
+        query = session.query(Specimen.genus, Specimen.species).filter(Specimen.species != None).distinct()
 
     # if any of these are used, performance suffers!    
     if country != '*':
-        query = query.filter(Specimen.country.contains(country))
+        query = query.filter(countryIs(Specimen.country, country))
     if habitat != '*':
         query = query.filter(Specimen.habitat.contains(habitat))
     if maxDate != '*':
@@ -1168,7 +1176,7 @@ def getDistinctTaxa():
     elif 'genus' == taxarank:
         query = query.order_by(Specimen.genus)
     elif 'species' == taxarank:
-        query = query.order_by(Specimen.species)
+        query = query.order_by(Specimen.genus, Specimen.species)
     else:
         query = query.order_by(Specimen.code)
     query = query.limit(limit)
@@ -1192,7 +1200,7 @@ def getDistinctTaxa():
             dataList.append(taxa.genus)
             # print("taxarank:" + taxarank + " genus:" + str(taxa.genus))
         if 'species' == taxarank:
-            dataList.append(taxa.species)
+            dataList.append((initCap(taxa.genus) or '') + ' ' + taxa.species)
 
     params = [request.args]
     metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'count': len(dataList)}
@@ -1536,7 +1544,7 @@ def getMeasurements():
     if species != '*':
         query = query.filter(Specimen.species == species)
     if country != '*':
-        query = query.filter(Specimen.country.contains(country))
+        query = query.filter(countryIs(Specimen.country, country))
     if adm1 != '*':
         query = query.filter(Specimen.adm1 == adm1)
     if bioregion != '*':
@@ -1972,7 +1980,7 @@ def getGeolocaleTaxa():
         query = query.filter(Geolocale.name == subregion)
     if country != '*':
         query = query.filter(Geolocale.georank == 'country')
-        query = query.filter(Geolocale.name == country)
+        query = query.filter(countryIs(Geolocale.name, country))
     if island != '*':
         query = query.filter(Geolocale.georank == 'country')
         query = query.filter(Geolocale.name == island)

@@ -123,7 +123,7 @@
             </tr>
             <tr>
                 <td><b>Country</b></td>
-                <td>This uses a wildcard so a query for ?country=land will return any country containing the word land (ex:. England | Ireland | ...)</td>
+                <td>The whole country name, in any case (country=Niger returns Niger, not Nigeria; country=madagascar works). Since 2026-10-27; before, any country containing the text matched.</td>
             </tr>
             <tr>
                 <td><b>Adm1</b></td>
@@ -343,11 +343,11 @@
         <table class="arguments">
             <tr>
                 <td><b>taxarank</b></td>
-                <td>Return a list of unique names for a given rank. (taxarank=genus)</td>
+                <td>Return a list of unique names for a given rank: subfamily, genus or species (taxarank=genus). For species each name is the full name, "Genus species" (Pheidole megacephala), under the key taxarank. Since 2026-10-27; before, only the species epithet was given.</td>
             </tr>
             <tr>
                 <td><b>Country</b></td>
-                <td>This uses a wildcard so a query for ?country=land will return any country containing the word land (e.g. England, Ireland etc)</td>
+                <td>The whole country name, in any case (country=Niger returns Niger, not Nigeria). Since 2026-10-27; before, any country containing the text matched.</td>
             </tr>
             <tr>
                 <td><b>Habitat</b></td>
@@ -553,7 +553,7 @@
             </tr>            
             <tr>
                 <td><b>Country</b></td>
-                <td>Query on the country</td>
+                <td>Query on the country: the whole country name, in any case</td>
             </tr>
             <tr>
                 <td><b>Adm1</b></td>
@@ -731,7 +731,7 @@
             </tr>
             <tr>
                 <td><b>country, adm1, bioregion</b></td>
-                <td>Place of the specimen. country matches any country name that contains the text (country=Madagascar)</td>
+                <td>Place of the specimen. country is the whole country name, in any case (country=Madagascar)</td>
             </tr>
             <tr>
                 <td><b>caste</b></td>

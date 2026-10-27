@@ -7,7 +7,7 @@ Read from the code on master at commit e81a8945 (2026-10-22). Paths are relative
 AntWeb has three ways in:
 
 1. **The header boxes** on every page (`common/searchBar.jsp`): **Taxa** (`search/taxonNameSearchBox.jsp`) suggests names as you type (`search/autoCompleteKeys.jsp?q=`, from the names in memory) and opens `description.do?taxonName=<name>`, which redirects to the taxon page ([taxon-pages.md](taxon-pages.md)); **Places** (`search/placeNameSearchBox.jsp`) suggests place names (`search/autoCompletePlaceKeys.jsp?q=`) and opens `place.do?placeName=<name>`, which redirects to the country, adm1, island, region or subregion page ("Antananarivo, Madagascar" finds the adm1). This is the "quick search"; `search.do` itself only redirects to the advanced search form.
-2. **Advanced search** (`advSearch.do`, the form; `advancedSearch.do`, the results, 644 requests in 8 days): any combination of name, place, collector, dates, elevation, habitat, method, museum, owner, type status, images only, upload group ... Results are either a **specimen list** (200 a page, "Showing 1-200 of N", Previous / Next, sortable) or a **list of taxa** (resultRank subfamily, genus or species: "N Genera (from M specimens)"), or a map (output=mapLocality / mapSpecimen). From the results: Map, Compare images and Field Guide of the selected rows (these need a login), and Download Data (genus or species only, at most 5,000 specimens, since 2026-10-21). `advancedSearchResults.do` shows the session's last results again.
+2. **Advanced search** (`advSearch.do`, the form; `advancedSearch.do`, the results, 644 requests in 8 days): any combination of name, place, collector, dates, elevation, habitat, method, museum, owner, type status, images only, upload group ... Results are either a **specimen list** (200 a page, "Showing 1-200 of N", Previous / Next, sortable) or a **list of taxa** (resultRank subfamily, genus or species: "N Genera (from M specimens)"), or a map (output=mapLocality / mapSpecimen). From the results: Map, Compare images and Field Guide of the selected rows (these need a login), and Download Data (genus or species only, at most 5,000 specimens, since 2026-10-21). `advancedSearchResults.do` shows the session's last results again; for a paged specimen list it sends the browser to that search again at the same page (since 2026-10-27, F25).
 3. **Recent images** (`recentSearchResults.do?searchMethod=recentImageSearch&daysAgo=30`, linked as "More" from the home page): the images uploaded in the last N days.
 
 Search results live in the visitor's HTTP session (`advancedSearchResults`, `advancedSearchPaging`, `searchTitle`, `resultSetModifier`, `taxonList`), so the follow-up pages (paging links, map, compare, download) work on the same search. Nothing is cached between visitors. robots.txt disallows the search and download addresses.
@@ -22,7 +22,7 @@ Search results live in the visitor's HTTP session (`advancedSearchResults`, `adv
 | `...&genusSearchType=equals&genus=<genus>` | A criterion; each field has a `<field>SearchType` (equals or contains; dates and elevation: greaterThanOrEqual, lessThanOrEqual) |
 | `...&resultRank=genus` (subfamily, species) | Taxa found, with the number of specimens |
 | `...&output=mapLocality` (mapSpecimen) | Map of the results (`dynamicMap.jsp`) |
-| `advancedSearchResults.do` | The last results of the session again |
+| `advancedSearchResults.do` | The last results of the session again (`search.AdvancedSearchResultsAction`): a paged specimen search is redirected to `advancedSearch.do?<its query>&page=N` (`SearchPaging.reshowUrl()`, the query kept in `advancedSearchPaging` since 2026-10-27, F25); with parameters (Map, Compare) or without a paged search, the session list |
 | `recentSearchResults.do?searchMethod=recentImageSearch&daysAgo=30` (`&sortBy=code`, `shotType`) | Recent images |
 | `search.do` | Redirect to `advSearch.do` (`util.RedirectAction`) |
 | `place.do?placeName=<name>` | Redirect to the place's page |
@@ -47,7 +47,7 @@ Search results live in the visitor's HTTP session (`advancedSearchResults`, `adv
 
 ## Known issues
 
-[public-pages-findings.md](public-pages-findings.md) F13 (fixed 2026-10-26: an administrator's search raised the result limit for every search running at that moment; the temporary limit is now per thread, `SearchAction.setTempSpecimenSearchLimit()`), F25 (for Brian: results shown again count only the session's page of 200).
+[public-pages-findings.md](public-pages-findings.md) F13 (fixed 2026-10-26: an administrator's search raised the result limit for every search running at that moment; the temporary limit is now per thread, `SearchAction.setTempSpecimenSearchLimit()`), F25 (fixed 2026-10-27: results shown again counted only the session's page of 200; a paged search is now shown again from the database).
 
 ## Tests
 
@@ -56,7 +56,7 @@ Search results live in the visitor's HTTP session (`advancedSearchResults`, `adv
 | `tests/e2e/test_search_pages.py::test_advanced_search_form` | the form and its main fields |
 | `test_search_pages.py::test_search_by_genus_rank_lists_genera` | results by taxon: heading, "N Genera (from M specimens)", genus links |
 | `test_search_pages.py::test_genus_filter_narrows_the_specimen_list` | a genus found in the country's results narrows the country's specimen list |
-| `test_search_pages.py::test_results_shown_again_from_the_session`, `test_results_shown_again_keep_the_total` (xfail, F25) | advancedSearchResults.do |
+| `test_search_pages.py::test_results_shown_again_from_the_session`, `test_results_shown_again_keep_the_total` (F25, xfail removed 2026-10-27); `SearchPagingReshowTest` (JUnit, CI) | advancedSearchResults.do |
 | `test_search_pages.py::test_search_without_a_method`, `test_recent_images_needs_a_following_parameter` | the messages |
 | `test_search_pages.py::test_recent_images` | recent images page |
 | `test_search_pages.py::test_place_name_opens_the_place_page`, `test_place_not_found`, `test_place_autocomplete` | the Places box |

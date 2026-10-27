@@ -347,6 +347,7 @@ public final class SearchAction extends DispatchAction {
             AdvancedSearch search = searchAction.buildSearch(connection, searchParameters);
             int total = search.countPaged();
             paging = new SearchPaging(total, page, sortBy, sortOrder, searchParameters);
+            paging.setQueryString(request.getQueryString());  // for advancedSearchResults.do (F25)
             rows = search.getPage(paging.getOrderBy(), SearchPaging.PAGE_SIZE, paging.getOffset());
         } finally {
             DBUtil.close(connection, this, dbMethodName);
