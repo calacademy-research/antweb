@@ -35,3 +35,6 @@ etc/turnstile.properties
 etc/taxonworks.properties
 etc/flickr.properties
 etc/api-db.properties
+etc/scheduler.properties
+etc/name-update.properties
+etc/upload-email.properties

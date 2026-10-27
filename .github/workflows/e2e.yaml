@@ -42,7 +42,8 @@ jobs:
     # A newer queued run replaces an older queued one; a running one is never cancelled.
     # (On the job, not the workflow, so that a skipped label run never replaces a queued one.)
     concurrency:
-      group: e2e-${{ inputs.antweb_url || 'staging' }}
+      # Same default as ANTWEB_URL below: a manual run on staging and a PR run share one queue.
+      group: e2e-${{ inputs.antweb_url || 'https://staging.antweb.org' }}
       cancel-in-progress: false
     # Full run about 20 minutes, quick run under 10 (tests/e2e/README.md).
     timeout-minutes: 75

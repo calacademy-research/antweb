@@ -362,7 +362,12 @@ do_rollback() {
   docker stop "$APP_CONTAINER" >/dev/null
   APP_STOPPED=1
   log "Rollback: loading $SAFETY"
-  load_dump "$SAFETY"
+  if ! load_dump "$SAFETY"; then
+    # Some tables may be reloaded and others not: do not start AntWeb on that (recover() would, and say "not changed").
+    APP_STOPPED=0
+    log "CRITICAL: the safety dump did not load. AntWeb is left stopped. See docs/runbook.md, Staging refresh, Rollback."
+    exit 1
+  fi
   log "Rollback: starting AntWeb"
   docker start "$APP_CONTAINER" >/dev/null
   APP_STOPPED=0

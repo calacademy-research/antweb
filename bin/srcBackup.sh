@@ -26,7 +26,8 @@ fileDir=$backupDir/$fileName$rel$ext
 echo 'Backing up source to:' $fileDir
 
 if [ -d $backupDir ]; then
-zip -r --exclude=".git/*" --exclude="build/*" $fileDir .
+# Never the server-only settings (passwords, keys) in etc/; see .gitignore.
+zip -r --exclude=".git/*" --exclude="build/*" --exclude="etc/*.properties" --exclude="etc/git-commit*" $fileDir .
 fi
 
 echo ""
