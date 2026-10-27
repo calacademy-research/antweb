@@ -10,9 +10,8 @@ import org.calacademy.antweb.util.Csrf;
 import org.calacademy.antweb.util.HttpUtil;
 
 /**
- * 2026-10-27: a form post counts as a post only when it is sent as POST, and the CSRF check covers every
- * method that can change something. Otherwise a GET with a form content type would be treated as a post
- * by the actions while the filter, looking at the method, would not check it.
+ * 2026-10-27: HttpUtil.isPost and the form token check in SessionRequestFilter agree on what a post is:
+ * a form post is sent as POST, and the token is checked for every method other than GET, HEAD and OPTIONS.
  */
 public class PostMethodTest extends TestCase {
 
