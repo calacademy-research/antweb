@@ -23,14 +23,14 @@
               String browserParams = taxon.getBrowserParams();
               //if (AntwebProps.isDevMode()) AntwebUtil.log("taxonImageEditField.jsp taxonName:" + taxon.getTaxonName() + " browserParams:" + browserParams);       
        %>
-         <p><small style="float:left; margin-top:14px; margin-left:5px;"> <a href="description.do?<%= Utility.stripParams(browserParams, "editField") %>&editField=<%= thisDesc %>#<%= thisDesc %>">[Edit]</a> <%= org.calacademy.antweb.DescHistory.link(request, thisDesc, thisPageTarget) %></small><div class="clear"></div></p>
+         <p><small style="float:left; margin-top:14px; margin-left:5px;"> <a href="description.do?<%= org.calacademy.antweb.util.Html.escAttr(Utility.stripParams(browserParams, "editField")) %>&editField=<%= thisDesc %>#<%= thisDesc %>">[Edit]</a> <%= org.calacademy.antweb.DescHistory.link(request, thisDesc, thisPageTarget) %></small><div class="clear"></div></p>
          <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "descEditImageUpload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
            <input type="hidden" name="homePageDirectory" value="curator" />
 <input type="hidden" name="editField" value="images">
 <input type="hidden" name="isSaveEditField" value="true">
-<input type="hidden" name="rank" value="<%= taxon.getRank() %>">
-<input type="hidden" name="name" value="<%= taxon.getName() %>">
-<input type="hidden" name="target" value="description.do?<%= Utility.stripParams(browserParams, "editField") %>">
+<input type="hidden" name="rank" value="<%= org.calacademy.antweb.util.Html.escAttr(taxon.getRank()) %>">
+<input type="hidden" name="name" value="<%= org.calacademy.antweb.util.Html.escAttr(taxon.getName()) %>">
+<input type="hidden" name="target" value="description.do?<%= org.calacademy.antweb.util.Html.escAttr(Utility.stripParams(browserParams, "editField")) %>">
 <%-- No copy of the field's text: the server adds the image to the text stored at that moment. --%>
 
            <span class="float:left;"><html:file property="theFile2" /></span>

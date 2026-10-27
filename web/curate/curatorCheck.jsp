@@ -9,7 +9,8 @@
     if (accessLoginCheck == null || !accessLoginCheck.isCurator()) {
         AntwebUtil.log("curatorCheck.jsp notLoggedIn redirection:" + HttpUtil.getRequestInfo(request));          
         
-        response.sendRedirect("notLoggedIn.jsp");
+        // Absolute: a page under /curate/ would otherwise go to /curate/notLoggedIn.jsp, which does not exist.
+        response.sendRedirect(AntwebProps.getDomainApp() + "/notLoggedIn.jsp");
         return;
     } else { 
         //AntwebUtil.log("info", "curatorCheck.jsp: accessLogin:" + accessLogin);

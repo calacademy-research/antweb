@@ -207,7 +207,10 @@ for (Geolocale geolocale : geolocaleArray) {
 %>
 
 <td>
+<% // Saving is for administrators (GeolocaleMgrAction refuses others): no Save arrow for curators.
+   if (LoginMgr.isAdmin(request)) { %>
 <input border="0" type="image" src="<%= domainApp %>/image/upGreen.jpg" width="25" value="Submit">
+<% } %>
 </td>
 
 <td><%= Html.esc(parentStr) %></td>

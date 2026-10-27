@@ -26,6 +26,10 @@
    // Say so instead of showing 0 (2026-10-26: a test visit right after a restart saw "0 valid species").
    int liveValidSpecies = TaxonMgr.getValidSpeciesCount();
    int liveSpecimens = AntwebMgr.getSpecimensCount();
+   // The three image numbers come from the same start-up load (AntwebMgr.populateStats): 0 until then too.
+   int liveImagedSpecies = AntwebMgr.getImagedSpeciesCount();
+   int liveImagedSpecimens = AntwebMgr.getImagedSpecimensCount();
+   int liveTotalImages = AntwebMgr.getTotalImagesCount();
    String starting = "<span data-stat=\"starting\">not yet available: AntWeb is starting (a few minutes after a restart); reload in a few minutes</span>"; %>
 <br><b data-stat="valid-species"><%= liveValidSpecies > 0 ? A.commaFormat(liveValidSpecies) : starting %> valid species + ssp.</b>
 <br>&nbsp;&nbsp;Valid ant (Formicidae) species and subspecies, fossils included. Names of other families and names not identified to genus are not counted.
@@ -33,12 +37,12 @@
 <br><br><b><%= liveSpecimens > 0 ? A.commaFormat(liveSpecimens) : starting %> specimen records</b>
 <br>&nbsp;&nbsp;Specimen records from Antweb's 21 collaborating institutions.
 
-<br><br><b><%= A.commaFormat(AntwebMgr.getImagedSpeciesCount()) %>  species + ssp. imaged </b>
+<br><br><b><%= liveImagedSpecies > 0 ? A.commaFormat(liveImagedSpecies) : starting %>  species + ssp. imaged </b>
 <br>&nbsp;&nbsp;Valid, morpho or indetermined ant species and subspecies with at least one photo of the ant (label photos do not count). Names not identified to genus are not counted as species.
 
-<br><br><b><%= A.commaFormat(AntwebMgr.getImagedSpecimensCount()) %> specimens imaged</b>
+<br><br><b><%= liveImagedSpecimens > 0 ? A.commaFormat(liveImagedSpecimens) : starting %> specimens imaged</b>
 
-<br><br><b><%= A.commaFormat(AntwebMgr.getTotalImagesCount()) %> total specimen images</b>
+<br><br><b><%= liveTotalImages > 0 ? A.commaFormat(liveTotalImages) : starting %> total specimen images</b>
 
 
 
@@ -79,7 +83,7 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
           if (stats != null) {
               grandTotal += stats[0]; workers +=  stats[1]; males += stats[2]; queens += stats[3]; others += stats[4];
               %>
-              <tr align=right><td><%= Formatter.initCap(status) %></td><td><%= A.commaFormat(stats[0]) %></td><td><%= A.commaFormat(stats[1]) %></td><td><%= A.commaFormat(stats[2]) %></td><td><%= A.commaFormat(stats[3]) %></td><td><%= A.commaFormat(stats[4]) %></td></tr> 
+              <tr align=right><td><%= Html.esc(Formatter.initCap(status)) %></td><td><%= A.commaFormat(stats[0]) %></td><td><%= A.commaFormat(stats[1]) %></td><td><%= A.commaFormat(stats[2]) %></td><td><%= A.commaFormat(stats[3]) %></td><td><%= A.commaFormat(stats[4]) %></td></tr> 
 <%
           }
         }
@@ -117,7 +121,8 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
       //for (Object status : statuses) {
       for (String status : keys2) {
         Integer count = imageTaxonStats.get(status);
-        out.println("<tr><td align=right>" + Formatter.initCap(status) + "</td><td align=right>" + A.commaFormat(count) + "</td></tr>");
+        // A status with no imaged name shows 0 (a missing one threw a NullPointerException and the page failed).
+        out.println("<tr><td align=right>" + Html.esc(Formatter.initCap(status)) + "</td><td align=right>" + A.commaFormat(count == null ? 0 : count.intValue()) + "</td></tr>");
       }
     }
 %>

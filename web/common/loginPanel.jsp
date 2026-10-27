@@ -51,9 +51,9 @@
      <% } else { 
             String displayNameLink = null;
 			if (tAccessLogin.isCurator()) {
-			  displayNameLink = "<a href=\"" + AntwebProps.getSecureDomainApp() + "/viewLogin.do?id=" + accessLoginId + "\">" + displayName + "</a>";
+			  displayNameLink = "<a href=\"" + AntwebProps.getSecureDomainApp() + "/viewLogin.do?id=" + accessLoginId + "\">" + org.calacademy.antweb.util.Html.esc(displayName) + "</a>";
 			} else {
-			  displayNameLink = "<a href=\"" + AntwebProps.getSecureDomainApp() + "/editLogin.do?id=" + accessLoginId + "\">" + displayName + "</a>";
+			  displayNameLink = "<a href=\"" + AntwebProps.getSecureDomainApp() + "/editLogin.do?id=" + accessLoginId + "\">" + org.calacademy.antweb.util.Html.esc(displayName) + "</a>";
 			} 
 			//AntwebUtil.log("academyHeader.jsp displayNameLink:" + displayNameLink);
 			%>

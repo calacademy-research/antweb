@@ -89,8 +89,8 @@
                            %>
                                 <!-- taxonomicPage.do?rank=genus&project=< %= adm1.getUseName() % -->
                                 <li><a href="<%= adm1.getThisPageTarget() %>"><%= adm1.getName() %></a></li>
-         <% if ("Georgia".equals(adm1.getName())) {
-                        Country hawaii = GeolocaleMgr.getIsland("Hawaii");
+         <% Country hawaii = "Georgia".equals(adm1.getName()) ? GeolocaleMgr.getIsland("Hawaii") : null;
+            if (hawaii != null) {   // the menu is on every page: no Hawaii entry rather than an error
          %>
                                 <li><a href="<%= hawaii.getThisPageTarget() %>">Hawaii</a></li>
         <% } %>

@@ -898,6 +898,22 @@ jobs:
       - name: clearDisk.py skips web/log and links (tests/unit/test_clear_disk.py)
         run: python3 tests/unit/test_clear_disk.py
 
+      - name: Curator, admin and shared page fragments escape request values, do not fail, count right (tests/unit/test_curate_page_fixes.py)
+        run: python3 tests/unit/test_curate_page_fixes.py
+
+      - name: Java unit test of the Species List Tool permalink (list names escaped)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/curate/speciesList/SpeciesListPermaLinkTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.curate.speciesList.SpeciesListPermaLinkTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (2 tests)" /tmp/out.txt
+          '
+
       - name: deploy.sh no-restart list (tests/unit/test_deploy_paths.py)
         run: python3 tests/unit/test_deploy_paths.py
 

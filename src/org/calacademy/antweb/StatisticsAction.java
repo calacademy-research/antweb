@@ -39,6 +39,8 @@ public final class StatisticsAction extends AntwebAction {
         String bodyStr = request.getParameter("body");
         boolean body = "true".equals(bodyStr);
 
+        // The tables go to the page as a request attribute "statistics" (a String for statisticsStr.jsp, rows for
+        // statisticsRealTime): until 2026-10-27 they were kept in the session, which two tabs shared.
         boolean success = false;
 
         Connection connection = null;
@@ -160,7 +162,7 @@ public final class StatisticsAction extends AntwebAction {
             }
             statistics += "</table>";
 
-            session.setAttribute("statistics", statistics);
+            request.setAttribute("statistics", statistics);
             success = true;            
 
         } catch (SQLException e) {
@@ -180,7 +182,7 @@ public final class StatisticsAction extends AntwebAction {
         try {
             ArrayList<ArrayList<String>> statistics = ProjTaxonDb.getStatisticsByProject(connection);
 
-            session.setAttribute("statistics", statistics);
+            request.setAttribute("statistics", statistics);
             session.setAttribute("isLink", isLink);
             success = true;            
 
@@ -200,7 +202,7 @@ public final class StatisticsAction extends AntwebAction {
         try {
             ArrayList<ArrayList<String>> statistics = BioregionTaxonDb.getStatisticsByBioregion(connection);
 
-            session.setAttribute("statistics", statistics);
+            request.setAttribute("statistics", statistics);
             session.setAttribute("isLink", isLink);
             success = true;            
 
@@ -220,7 +222,7 @@ public final class StatisticsAction extends AntwebAction {
         try {
             ArrayList<ArrayList<String>> statistics = MuseumTaxonDb.getStatisticsByMuseum(connection);
 
-            session.setAttribute("statistics", statistics);
+            request.setAttribute("statistics", statistics);
             session.setAttribute("isLink", isLink);
             success = true;            
 
@@ -240,7 +242,7 @@ public final class StatisticsAction extends AntwebAction {
         try {
             ArrayList<ArrayList<String>> statistics = GeolocaleTaxonDb.getStatisticsByGeolocale(connection);
 
-            session.setAttribute("statistics", statistics);
+            request.setAttribute("statistics", statistics);
             session.setAttribute("isLink", isLink);
             success = true;            
 
@@ -261,7 +263,7 @@ public final class StatisticsAction extends AntwebAction {
             ArrayList<ArrayList<String>> statistics = new ArrayList<>();
             statistics.add(ProjTaxonDb.getProjectStatistics(project, connection));
             
-            session.setAttribute("statistics", statistics);
+            request.setAttribute("statistics", statistics);
             session.setAttribute("isLink", isLink);
             success = true;            
 
@@ -292,7 +294,7 @@ public final class StatisticsAction extends AntwebAction {
                 statistics += "<tr><td>" + count + "</td><td>" + Html.esc(groupName) + "(" + id + ")" + "</td></tr>";
             }            
             statistics += "</table>";            
-            session.setAttribute("statistics", statistics);            
+            request.setAttribute("statistics", statistics);            
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
             success = false;

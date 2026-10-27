@@ -15,12 +15,12 @@
          Click "Source" (in the new editor: the &lt;&gt; Source code button) to edit html code.  Contact <%= AntwebUtil.getAdminEmail() %> with any issues.<br>
          <div class="clear"></div><%@ include file="/common/descEdit/ckEditorMinConfigDescEditForm.jsp" %>
        <% } else { %>
-         <p><small style="float:left; margin-top:14px; margin-left:5px;"> <a href="<%= thisPageTarget %>&editField=<%= thisDesc %>#<%= thisDesc %>">[Edit]</a> <%= org.calacademy.antweb.DescHistory.link(request, thisDesc, thisPageTarget) %></small><div class="clear"></div></p>
+         <p><small style="float:left; margin-top:14px; margin-left:5px;"> <a href="<%= org.calacademy.antweb.util.Html.escAttr(thisPageTarget) %>&editField=<%= thisDesc %>#<%= thisDesc %>">[Edit]</a> <%= org.calacademy.antweb.DescHistory.link(request, thisDesc, thisPageTarget) %></small><div class="clear"></div></p>
          <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "descEditImageUpload.do") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
            <input type="hidden" name="homePageDirectory" value="curator" />
            <input type="hidden" name="editField" value="<%= thisDesc %>">
            <input type="hidden" name="isSaveEditField" value="true">
-           <input type="hidden" name="target" value="<%= thisPageTarget %>">
+           <input type="hidden" name="target" value="<%= org.calacademy.antweb.util.Html.escAttr(thisPageTarget) %>">
 
            <span class="float:left;"><html:file property="theFile2" /></span>
            <input type="submit" class="tool_label"  style="float:none;" value="Submit">

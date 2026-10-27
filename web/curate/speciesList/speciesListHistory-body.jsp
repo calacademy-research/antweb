@@ -59,7 +59,7 @@
        String displayName = prettySpeciesListName;
        if (prettySpeciesListName != null && prettySpeciesListName.length() > maxStrLength) displayName = prettySpeciesListName.substring(0, maxStrLength) + "...";      
       %>        
-        <option id="speciesListName" value="<%= value %>" <% if (listKey.equals(speciesListName)) out.print("selected"); %>><%= spacer + prettySpeciesListName %></option> 
+        <option id="speciesListName" value="<%= Html.escAttr(value) %>" <% if (listKey.equals(speciesListName)) out.print("selected"); %>><%= spacer + prettySpeciesListName %></option> 
  <% } %>
       </select>
 
@@ -85,15 +85,16 @@
     
     if (isProject) {
 		ArrayList<ProjTaxonLog> projTaxonLogs = (ArrayList<ProjTaxonLog>) request.getAttribute("projTaxonLogs");
-		ArrayList<ProjTaxonLogDetail> masterLog = projTaxonLogs.get(0).getDetails();
 
-		if (projTaxonLogs.size() == 1) {
-		  String message = SpeciesListMgr.getPrettyName(speciesListName) + " does not have an edit history";      
+		// No logs (or none read): say so instead of the error page.
+		if (projTaxonLogs == null || projTaxonLogs.size() <= 1 || projTaxonLogs.get(0) == null) {
+		  String message = Html.esc(SpeciesListMgr.getPrettyName(speciesListName)) + " does not have an edit history";      
 		  if (historyForm.getProjLogId() > 0) message += ", for projLogId <= " + historyForm.getProjLogId();
 		  message += ".";
 		  out.println("<br><br>" + message);
 		  return;
 		}
+		ArrayList<ProjTaxonLogDetail> masterLog = projTaxonLogs.get(0).getDetails();
 	%> <table> <%
 		// Print out headings
 		for (ProjTaxonLog projTaxonLog : projTaxonLogs) {
@@ -118,11 +119,13 @@
 		</tr>
 		<br> <%
 		int row = 0;
+		int[] projColCounts = new int[projTaxonLogs.size() + 1];
 		for (ProjTaxonLogDetail masterDetail : masterLog) {
 		  out.println("<tr><td>" + Taxon.getPrettyTaxonName(masterDetail.getTaxonName()) + "</td>");
 		  for (int i=1 ; i < projTaxonLogs.size() ; ++i) {
 			boolean contains = projTaxonLogs.get(i).getDetails().contains(new ProjTaxonLogDetail(masterDetail.getTaxonName(), speciesListName)) ;
 			if (contains) {
+			  projColCounts[i] = projColCounts[i] + 1;
 			  %> <td><input type="checkbox" <%= (true ? "checked" : "") %> disabled></td> <%
 			} else {
 			  %> <td><input type="checkbox" <%= (false ? "checked" : "") %> disabled></td> <%
@@ -131,18 +134,25 @@
 		  %> </tr> <%
 		  ++row;
 		} %>
-     <tr><td><%= row %></td><td>2</td><td>3</td></tr>
+     <tr>
+       <td><hr><%= row %></td>
+      <%
+     // The number of names checked in each column (until 2026-10-27 the fixed numbers 2 and 3 were shown here).
+     for (int i = 1 ; i < projTaxonLogs.size() ; ++i) { %>
+       <td><hr><%= projColCounts[i] %></td>
+  <% } %>
+     </tr>
      <%
     } else {  // It is a Geolocale
 
 		ArrayList<GeolocaleTaxonLog> geolocaleTaxonLogs = (ArrayList<GeolocaleTaxonLog>) request.getAttribute("geolocaleTaxonLogs");
 		
-		if (geolocaleTaxonLogs == null || geolocaleTaxonLogs.get(0) == null) return;
+		if (geolocaleTaxonLogs == null || geolocaleTaxonLogs.isEmpty() || geolocaleTaxonLogs.get(0) == null) return;
         
 //A.log("speciesListHistory-body.jsp geolocaleTaxonLogs:" + geolocaleTaxonLogs);
 
 		if (geolocaleTaxonLogs.size() == 1) {
-		  String message = speciesListName + " does not have an edit history";      
+		  String message = Html.esc(speciesListName) + " does not have an edit history";      
 		  if (historyForm.getGeoLogId() > 0) message += ", for geoLogId <= " + historyForm.getGeoLogId();
 		  message += ".";
 		  out.println("<br><br>" + message);

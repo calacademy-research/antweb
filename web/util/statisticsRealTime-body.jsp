@@ -3,7 +3,7 @@
 <%@ page import="org.calacademy.antweb.Utility" %>
 
 <%
-    Boolean isLink = (Boolean) session.getAttribute("isLink");
+    boolean isLink = Boolean.TRUE.equals(session.getAttribute("isLink"));
 
     String target = HttpUtil.getTarget(request);
     //A.log("statisticsRealTime-body.jsp target:" + target);
@@ -46,7 +46,8 @@
 <th>Total Taxa</th></tr>            
 
 <%
-    ArrayList<ArrayList<String>> stats = (ArrayList) session.getAttribute("statistics"); 
+    ArrayList<ArrayList<String>> stats = (ArrayList) request.getAttribute("statistics"); 
+    if (stats == null) stats = new ArrayList<ArrayList<String>>();   // nothing read: an empty table, not an error
     int lineCount = 0;
     for (ArrayList<String> statsLine : stats) {
       ++lineCount;
