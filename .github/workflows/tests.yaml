@@ -88,6 +88,10 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_counts.py
 
+      - name: API images of the ant and label images (antImageCount, labelImageCount; tests/unit/test_api_image_split.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_image_split.py
+
       - name: API findings F6, F7, F8, F22 (/images url, valid filters, fixed order, geoSpecimens radius) (tests/unit/test_api_findings.py)
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_findings.py
@@ -284,7 +288,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/ImagesAnywhereTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.ImagesAnywhereTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (11 tests)" /tmp/out.txt
+            grep -q "^OK (12 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the AntCat file download (nightly tries again for up to an hour before set 1, says why, no half-written or cut-off file)
@@ -491,6 +495,9 @@ jobs:
 
       - name: Images from anywhere, Images column, imaged castes (2026-10-27; tests/unit/test_images_anywhere.py)
         run: python3 tests/unit/test_images_anywhere.py
+
+      - name: One meaning of Images on every page (images of the ant, labels apart, Image files; tests/unit/test_image_counts_defined.py)
+        run: python3 tests/unit/test_image_counts_defined.py
 
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
         run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml

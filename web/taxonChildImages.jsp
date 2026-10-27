@@ -243,4 +243,6 @@
 		}
     } // totalImaged > 0   
 %>
+<div class="clear"></div>
+<%@ include file="/common/imagesDefinition.jsp" %>
 </div>

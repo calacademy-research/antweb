@@ -173,7 +173,7 @@ museum
             resultSet = stmt.executeQuery(query);
 
             statistics += "<table border=1><tr><td>Id</td><td>Action </td><td>Specimens</td><td>V. Sp.</td>" 
-              + "<td>Total Taxa</td><td>Project Taxa</td><td>Bioregion Taxa</td><td>Museum Taxa</td><td>Geolocale Taxa</td><td>Introduced</td><td>Endemic</td><td>Total Images</td><td>Specimens Imaged </td>" 
+              + "<td>Total Taxa</td><td>Project Taxa</td><td>Bioregion Taxa</td><td>Museum Taxa</td><td>Geolocale Taxa</td><td>Introduced</td><td>Endemic</td><td title='Images of the ant since 2026-10-27; rows before counted every image file, labels included'>Total Images</td><td>Specimens Imaged </td>" 
               + "<td>Species Imaged </td><td>V. Sp. Imaged </td><td>Login Id</td><td>Created</td><td>Exec Time</td></tr>";
 
             count = 0;
@@ -367,6 +367,13 @@ museum
     public static final String ANT_IMAGED_NAMES_SQL = "select distinct s.taxon_name from specimen s join image i on i.image_of_id = s.code where " + ANT_IMAGE;
 
     /** Home and statsPage "specimens imaged". */
+    /** Home and statsPage "total specimen images": images of the ant (labels counted apart; Brian Fisher 2026-10-27). */
+    public static final String TOTAL_IMAGES_SQL = "select count(*) from image i where " + ANT_IMAGE;
+    /** The same number before 2026-10-27: every image row, labels included. */
+    public static final String TOTAL_IMAGES_SQL_BEFORE = "select count(*) from image";
+    /** Label images (shown next to the total as "+ N labels"). */
+    public static final String LABEL_IMAGES_SQL = "select count(*) from image i where not (" + ANT_IMAGE + ")";
+
     public static final String IMAGED_SPECIMENS_SQL = "select count(*) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id";
 
     /** Home and statsPage "species + ssp. imaged": valid, morpho or indetermined (counted statuses), as the statsPage text says. */
@@ -423,10 +430,12 @@ museum
             int validSpeciesImaged = utilDb.getCount(query);
             //A.log("populateStatistics 4 query:" + query);
 
-            // total number of image records
-            query = "select count(*) from image";
+            // images of the ant (2026-10-27: every image record, labels included, until then) and label images
+            query = TOTAL_IMAGES_SQL;
             int totalImages = utilDb.getCount(query);
             AntwebMgr.setTotalImagesCount(totalImages);
+            int labelImages = utilDb.getCount(LABEL_IMAGES_SQL);
+            AntwebMgr.setLabelImagesCount(labelImages);
             //A.log("populateStatistics 5 query:" + query);
 
             // number of valid species in database
@@ -476,7 +485,8 @@ museum
                 outFile.write("<span class=\"numbers\" title=\"Ant species and subspecies (valid, morpho or indetermined) with a photo of the ant; label photos do not count\">"
                     + imagedSpecies + "</span> species + ssp. imaged <br/>\n");
                 outFile.write("<span class=\"numbers\">" + imagedSpecimens + "</span> specimens imaged<br/>\n");
-                outFile.write("<span class=\"numbers\">" + totalImages + "</span> total specimen images<br/>\n");
+                outFile.write("<span class=\"numbers\" title=\"Images of the ant; label images are counted separately\">" + totalImages
+                    + "</span> total specimen images" + org.calacademy.antweb.ImageCounts.labels(labelImages) + "<br/>\n");
 
                 outFile.close();
             }

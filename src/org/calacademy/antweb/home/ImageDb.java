@@ -470,14 +470,17 @@ A.log("getFormProps() theQuery:" + theQuery);
 
     public HashMap<String, int[]> getImageStats() throws SQLException {
         HashMap<String, int[]> imageStats = new HashMap<>();
+        // 2026-10-27 (Brian Fisher): Images are images of the ant; label images in their own column (ImageCounts).
+        String ant = StatisticsDb.ANT_IMAGE;
         String theQuery = "select "
           + " status "
-          + ", count(*) total "
-          + ", sum(IF(caste = 'worker', 1, 0)) worker"
-          + ", sum(IF(caste = 'male', 1, 0)) male"
-          + ", sum(IF(caste = 'queen', 1, 0)) queen"
+          + ", sum(IF(" + ant + ", 1, 0)) total "
+          + ", sum(IF(" + ant + " and caste = 'worker', 1, 0)) worker"
+          + ", sum(IF(" + ant + " and caste = 'male', 1, 0)) male"
+          + ", sum(IF(" + ant + " and caste = 'queen', 1, 0)) queen"
           // NULL caste counts as Other (2026-10-21: it fell in no column, so the four did not add up to Total)
-          + ", sum(IF(caste is null or caste not in ('worker', 'male', 'queen'), 1, 0)) as other"
+          + ", sum(IF(" + ant + " and (caste is null or caste not in ('worker', 'male', 'queen')), 1, 0)) as other"
+          + ", sum(IF(" + ant + ", 0, 1)) labels"
           + " from specimen s, image i where s.code = i.image_of_id group by status"
           + " order by total desc";
 
@@ -494,7 +497,8 @@ A.log("getFormProps() theQuery:" + theQuery);
             int male = rset.getInt("male");
             int queen = rset.getInt("queen");
             int other = rset.getInt("other");
-            int[] numbers = {total, worker, male, queen, other};
+            int labels = rset.getInt("labels");
+            int[] numbers = {total, worker, male, queen, other, labels};
             imageStats.put(status, numbers);
           }
         } finally {
@@ -519,8 +523,9 @@ A.log("getFormProps() theQuery:" + theQuery);
 
     public HashMap<String, Integer> getImageTaxonStats() throws SQLException {
         HashMap<String, Integer> imageTaxonStats = new HashMap<>();
-        String theQuery = "select t.status, count(distinct t.taxon_name) count from taxon t, specimen, image "
-                + " where t.taxon_name = specimen.taxon_name and specimen.code = image.image_of_id "
+        // names with a specimen that has an image of the ant (2026-10-27: label images did count)
+        String theQuery = "select t.status, count(distinct t.taxon_name) count from taxon t, specimen, image i "
+                + " where t.taxon_name = specimen.taxon_name and specimen.code = i.image_of_id and " + StatisticsDb.ANT_IMAGE
                 + " group by t.status order by count(distinct t.taxon_name) desc";
 
         Statement stmt = null;

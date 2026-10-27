@@ -453,6 +453,8 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
     }
 
     private static final String IMAGE_COUNT = "(select count(*) from image where image.image_of_id = sp.code)";
+    /** The specimen's label images (2026-10-27: rows show "N Images + label", ImageCounts). */
+    private static final String LABEL_COUNT = "(select count(*) from image where image.image_of_id = sp.code and lower(trim(image.shot_type)) = 'l')";
 
     /**
      * One page of specimens, in the order given (SearchPaging.orderBy), limit rows from offset. Two
@@ -484,7 +486,7 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
                 if (in.length() > 0) in.append(", ");
                 in.append("'").append(code.replace("\\", "\\\\").replace("'", "''")).append("'");
             }
-            query = "select " + FIELD_LIST + ", " + IMAGE_COUNT + " as imagecount"
+            query = "select " + FIELD_LIST + ", " + IMAGE_COUNT + " as imagecount, " + LABEL_COUNT + " as labelcount"
                 + PAGED_FROM + " where sp.code in (" + in + ")";
             s_query = codeQuery;
             stmt = connection.createStatement();

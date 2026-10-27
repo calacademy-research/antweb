@@ -80,7 +80,8 @@ public class NumberChecksTest extends TestCase {
         Map<String, Object> e = r.invariants.expected;
         assertTrue(e.toString(), e.containsKey("statsPage") && e.containsKey("groups") && e.containsKey("curators") && e.containsKey("artists"));
         String json = NumberChecks.json(e);
-        assertTrue(json, json.contains("\"imagesSum\":[4,0,0,0,4]"));
+        // 2 images of the ant, all of specimens without a caste (Other), and 2 label images (2026-10-27)
+        assertTrue(json, json.contains("\"imagesSum\":[2,0,0,0,2,2]"));
         assertTrue(json, json.contains("\"extant\":[2,2,2,1]"));
     }
 

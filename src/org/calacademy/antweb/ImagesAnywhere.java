@@ -118,14 +118,7 @@ public final class ImagesAnywhere {
 
     /** The images of the ant among the images of a specimen shown (shot type not l, the label). */
     public static int antImagesShown(java.util.Map<String, SpecimenImage> images) {
-        if (images == null) return 0;
-        int n = 0;
-        for (SpecimenImage i : images.values()) {
-            if (i == null) continue;
-            String shot = i.getShot() == null ? "" : i.getShot().trim().toLowerCase();
-            if (!"".equals(shot) && !"null".equals(shot) && !"l".equals(shot) && i.getNumber() > 0) n++;
-        }
-        return n;
+        return ImageCounts.of(images)[0];
     }
 
     /** "from Indonesia" for a place (geolocale or bioregion), "in CASC" for a museum; null for a project (a project's

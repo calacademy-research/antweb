@@ -321,11 +321,16 @@ public class PlaceTotalsDbTest extends TestCase {
         exec("update specimen set caste = 'worker' where code = 'casent1'");
         java.util.Map<String, int[]> stats = new org.calacademy.antweb.home.ImageDb(connection).getImageStats();
         int total = 0;
+        int labels = 0;
         for (int[] row : stats.values()) {
             assertEquals("Worker + Male + Queen + Other = Total", row[0], row[1] + row[2] + row[3] + row[4]);
             total += row[0];
+            labels += row[5];
         }
-        assertEquals("every image of a specimen", 4, total);
+        // 2026-10-27 (Brian Fisher): Total counts images of the ant; label images have their own column
+        assertEquals("images of the ant (casent1 head, casent3 profile)", 2, total);
+        assertEquals("label images (casent1, casent5)", 2, labels);
+        assertEquals("every image of a specimen", 4, total + labels);
     }
 
     public void testHabitatsAreOrderedByTheNumberShown() throws Exception {

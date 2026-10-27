@@ -118,12 +118,8 @@ Examples of species with images that don't have h1 images:
                 String ratioImagesStr = org.calacademy.antweb.ImagesAnywhere.childImages(thisChild, overview); %>
                 <%= ratioImagesStr %>
          <% } else if (thisChild.getHasImages()) {
-                int titleStr = 0;
-                // getHasImagesCount is not calculated for description.do.  Do not include.
-                if (thisChild.getHasImagesCount() > 0) {
-                    titleStr = thisChild.getHasImagesCount();
-                } %>
-                <%= titleStr %> Images
+                // A specimen: its images of the ant + label images, "5 Images + label" (ImageCounts, 2026-10-27). %>
+                <%= org.calacademy.antweb.ImageCounts.text(thisChild.getImages()) %>
          <% } else { %>
                 No Images
          <% } %>
@@ -278,13 +274,8 @@ Examples of species with images that don't have h1 images:
 						<span id="next_in_taxon"><%= thisChild.getTaxonSet().getNextSubtaxon(1) %></span>
 			  <% }
                  // A name: the Images column's numbers (ant images, in AntWeb and of the place; 2026-10-27).
-                 // A specimen: its own images (taxonSet image count of the specimen), as before.
-                 String imageCountStr = isSpecimen ? thisChild.getTaxonSet().getImageCountStr() : org.calacademy.antweb.ImagesAnywhere.childImages(thisChild, overview);
-                 if  (isSpecimen && "No Images".equals(imageCountStr)) {
-                   if (thisChild.getImageCount() > 0) {
-                     imageCountStr = thisChild.getImageCount() + " Images";
-                   }                 
-                 }
+                 // A specimen: its images of the ant + label images (ImageCounts, 2026-10-27).
+                 String imageCountStr = isSpecimen ? org.calacademy.antweb.ImageCounts.text(thisChild.getImages()) : org.calacademy.antweb.ImagesAnywhere.childImages(thisChild, overview);
                  // was: thisChild.getTaxonSet().getImageCountStr()%>   
             <span style="float:right; text-align:right;"><%= imageCountStr %></span>
 

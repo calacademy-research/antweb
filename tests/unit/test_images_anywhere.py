@@ -83,7 +83,7 @@ def test_list_images_are_ant_images_only():
         assert "countCheck.antImagesRuleCounted = CountCheck.antImagesRuleCounted(log);" in read("src/org/calacademy/antweb/util/" + f), f
     assert "StatisticsDb.ANT_IMAGES_RULE_LOG" in read("src/org/calacademy/antweb/util/UtilDataAction.java")
     jsp = read("web/taxonReportBody.jsp")
-    assert "label images are not counted." in jsp and 'id="images-definition"' in jsp
+    assert "String imagesDefinition = org.calacademy.antweb.ImageCounts.DEFINITION" in jsp and 'id="images-definition"' in jsp
     cell = read("web/taxonChildImageSet.jsp")
     assert cell.count("ImagesAnywhere.childImages(thisChild, overview)") == 2, "both views show the list's numbers"
 

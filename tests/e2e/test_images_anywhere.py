@@ -209,12 +209,12 @@ def test_list_images_column_shows_the_images_in_antweb_and_of_the_place():
 
 
 def test_list_says_what_the_images_column_counts():
-    """The definition under a place's list: images of the ant, label images not counted (Brian Fisher 2026-10-27)."""
+    """The definition under a place's list: images of the ant, label images counted separately (Brian Fisher 2026-10-27)."""
     p = _comoros() or ns.madagascar()
     html = ns.get(p.list_url("species"))
     m = re.search(r'<span id="images-definition">(.*?)</span>', html, re.S)
     assert m, f"{p}: no definition of the Images column under the list"
-    assert "images of the ant" in m.group(1) and "label images are not counted" in m.group(1), m.group(1)
+    assert "images of the ant" in m.group(1) and "label images are counted separately" in m.group(1), m.group(1)
 
 
 # ------------------------------------------------------------------------------------------- 5. imaged castes

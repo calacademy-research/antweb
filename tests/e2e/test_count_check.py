@@ -325,7 +325,8 @@ def test_statspage_tables_equal_the_recount():
             wrong.append(f"Global Data {row}: page {glob[row]}, recount {stats[key]}")
     images = _section(html, "<h2>Images:</h2>")
     shown = {}
-    for name, cells in re.findall(r"<tr align=right><td>([^<]*)</td>((?:<td>[\d,]+</td>){5})</tr>", images):
+    # Total, Worker, Male, Queen, Other (images of the ant) and Label images (since 2026-10-27, Brian Fisher)
+    for name, cells in re.findall(r"<tr align=right><td>([^<]*)</td>((?:<td>[\d,]+</td>){6})</tr>", images):
         shown[name.strip().lower()] = [int(v.replace(",", "")) for v in re.findall(r"<td>([\d,]+)</td>", cells)]
     for status, values in (stats.get("images") or {}).items():
         if shown.get(status) != values:
@@ -334,12 +335,12 @@ def test_statspage_tables_equal_the_recount():
         wrong.append(f"Images table Sum: page {shown.get('sum')}, recount {stats['imagesSum']} (Sum = images of specimens with a status)")
     if "sum" in shown:
         rows = [v for k, v in shown.items() if k != "sum"]
-        total = [sum(col) for col in zip(*rows)] if rows else [0] * 5
+        total = [sum(col) for col in zip(*rows)] if rows else [0] * 6
         if total != shown["sum"]:
             wrong.append(f"Images table: Sum row {shown['sum']} is not the sum of the rows {total}")
         for k, v in shown.items():
             if v[1] + v[2] + v[3] + v[4] != v[0]:
-                wrong.append(f"Images table {k}: Worker + Male + Queen + Other {v[1:]} != Total {v[0]}")
+                wrong.append(f"Images table {k}: Worker + Male + Queen + Other {v[1:5]} != Total {v[0]}")
     imaged = dict((k.strip().lower(), _int(v)) for k, v in re.findall(
         r"<tr><td align=right>([^<]*)</td><td align=right>([^<]*)</td></tr>", _section(html, "<h2>Imaged Species:</h2>")))
     for status, n in (stats.get("imagedSpecies") or {}).items():
@@ -392,7 +393,7 @@ def test_curator_and_artist_pages_equal_the_recount():
         m = re.search(r"listImageUploads\.do\?curatorId=" + cid + r"'>(\d+)</a>", page)
         if m and int(m.group(1)) != want[2]:
             wrong.append(f"curator.do?id={cid} Image Uploads {m.group(1)}, checked {want[2]}")
-        m = re.search(r"<li><b>Images Uploaded:</b></li>\s*<li>([\d,]+)</li>", page)
+        m = re.search(r"<li><b>Image files uploaded:</b></li>\s*<li>([\d,]+)</li>", page)   # "Images Uploaded" until 2026-10-27
         if m and _int(m.group(1)) != want[3]:
             wrong.append(f"curator.do?id={cid} Images Uploaded {m.group(1)}, checked {want[3]}")
     artists = exp.get("artists") or {}
@@ -497,7 +498,7 @@ def test_image_upload_and_orphan_counts_equal_the_recount():
     orphans = exp.get("orphanedImages") or {}
     if "codes" in orphans:
         page = s.get(BASE_URL + "/orphanedImages.do", timeout=max(TIMEOUT, 180)).text
-        m = re.search(r"Found ([\d,]+) images of ([\d,]+) specimen codes that are not in AntWeb", page)
+        m = re.search(r"Found ([\d,]+) image files of ([\d,]+) specimen codes that are not in AntWeb", page)
         if m:
             images, codes = int(m.group(1).replace(",", "")), int(m.group(2).replace(",", ""))
             if (images, codes) != (orphans.get("images"), orphans["codes"]):

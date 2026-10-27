@@ -557,14 +557,36 @@ def species_browse(p):
     return _SPECIES[key]
 
 
+SPECIMEN_IMAGES = (r"(No Images|Label only(?: \([\d,]+ labels\))?|<span class='numbers'>[\d,]+</span> Images"
+                   r"(?: \+ (?:label|[\d,]+ labels))?|<span class='numbers'>[\d,]+</span> image files?)")
+
+
+def specimen_images(text):
+    """A specimen's images as the pages show them since 2026-10-27 (ImageCounts.text; Brian Fisher: "5 images +
+    label"): (images of the ant, label images). 'No Images' -> (0, 0), 'Label only' -> (0, 1), 'Label only (2
+    labels)' -> (0, 2), '5 Images' -> (5, 0), '5 Images + label' -> (5, 1), '5 Images + 2 labels' -> (5, 2); None
+    when the labels are not known ('N image files') or the text is none of these."""
+    t = ns.text_of(text)
+    if t == "No Images":
+        return 0, 0
+    m = re.fullmatch(r"Label only(?: \(([\d,]+) labels\))?", t)
+    if m:
+        return 0, ns.n(m.group(1)) if m.group(1) else 1
+    m = re.fullmatch(r"([\d,]+) Images(?: \+ (label|([\d,]+) labels))?", t)
+    if not m:
+        return None
+    return ns.n(m.group(1)), (0 if not m.group(2) else 1 if m.group(2) == "label" else ns.n(m.group(3)))
+
+
 def specimen_rows(html):
-    """(code, N Images shown, no-photos mark) of each specimen of a browse page (specimenReport.jsp)."""
+    """(code, (images of the ant, label images) shown, no-photos mark) of each specimen of a browse page
+    (specimenReport.jsp)."""
     out = []
     for r in ns.list_rows(html):
         code = re.search(r'<div class="sd_specimen_code">.*?specimen\.do\?code=([^"&]+)"', r["html"], re.S)
-        cnt = re.search(r'<div class="sd_specimen_code">.*?(No Images|<span class=\'numbers\'>([\d,]+)</span> Images)', r["html"], re.S)
+        cnt = re.search(r'<div class="sd_specimen_code">.*?' + SPECIMEN_IMAGES, r["html"], re.S)
         if code and cnt:
-            out.append((requests.utils.unquote(code.group(1)).lower(), _num(cnt.group(1)), r["no_photos"]))
+            out.append((requests.utils.unquote(code.group(1)).lower(), specimen_images(cnt.group(1)), r["no_photos"]))
     return out
 
 
@@ -576,9 +598,19 @@ def api_image_count(code):
     return int((body.get("metaData") or {}).get("count") or 0)
 
 
+def api_image_counts(code):
+    """(images of the ant, label images) of the specimen in the image table (API /images shot types, live), or None."""
+    body = ns.api("images?specimenCode=" + ns.quote_plus(code))
+    if body is None:
+        return None
+    shots = [(i.get("shotType") or "").strip().lower() for sp in ns.api_rows(body) for i in (sp.get("images") or [])]
+    return sum(1 for s in shots if s != "l"), sum(1 for s in shots if s == "l")
+
+
 def test_specimen_rows_count_the_images_of_each_specimen():
-    """Row 61: browse.do of the day's species of every kind of place: each specimen's "N Images" = its images in the
-    image table (API /images, at most 8 specimens a place); "No Images" exactly where the row has the no-photos mark."""
+    """Row 61: browse.do of the day's species of every kind of place: each specimen's "N Images + label" (since
+    2026-10-27: images of the ant, label images apart) = its images in the image table (API /images shot types, at
+    most 8 specimens a place); "No Images" exactly where the row has the no-photos mark."""
     wrong, checked = [], 0
     for p in places():
         got = species_browse(p)
@@ -587,15 +619,18 @@ def test_specimen_rows_count_the_images_of_each_specimen():
         row, html = got
         rows = specimen_rows(html)
         for code, shown, no_photos in rows:
-            if (shown == 0) != no_photos:
-                wrong.append(f"{p} {code}: '{shown} Images', no-photos mark {no_photos}")
-        for code, shown, _np in ns.pick([r for r in rows if r[1]], 6, "images-specimens" + repr(p)) + ns.pick([r for r in rows if not r[1]], 2, "images-none" + repr(p)):
-            live = api_image_count(code)
+            if shown is None:
+                wrong.append(f"{p} {code}: images not shown as images of the ant + labels")
+            elif (shown == (0, 0)) != no_photos:
+                wrong.append(f"{p} {code}: {shown} (images, labels), no-photos mark {no_photos}")
+        rows = [r for r in rows if r[1] is not None]
+        for code, shown, _np in ns.pick([r for r in rows if r[1] != (0, 0)], 6, "images-specimens" + repr(p)) + ns.pick([r for r in rows if r[1] == (0, 0)], 2, "images-none" + repr(p)):
+            live = api_image_counts(code)
             if live is None:
                 continue
             checked += 1
             if live != shown:
-                wrong.append(f"{p} {code}: browse.do {shown} Images, the image table {live}")
+                wrong.append(f"{p} {code}: browse.do {shown} (images of the ant, labels), the image table {live}")
     if not checked:
         pytest.skip("no species browse page with specimens read " + ns.day_note())
     assert not wrong, f"{checked} specimens {ns.day_note()}:\n" + "\n".join(wrong)
@@ -609,19 +644,20 @@ def test_specimen_images_page_counts_the_images_of_the_specimen():
         got = species_browse(p)
         if not got:
             continue
-        rows = [r for r in specimen_rows(got[1]) if r[1]]
+        rows = [r for r in specimen_rows(got[1]) if r[1] and r[1] != (0, 0)]
         for code, _shown, _np in ns.pick(rows, 3, "specimen-images" + repr(p)):
             html = ns.fetch("/specimenImages.do?code=" + ns.quote_plus(code))
-            live = api_image_count(code)
+            live = api_image_counts(code)
             if html is None or live is None:
                 continue
-            m = re.search(r'<h2 class="display_count">(\d+) Images</h2>', html)
+            m = re.search(r'<h2 class="display_count" data-images="(\d+)" data-labels="(\d+)">(.*?)</h2>', html, re.S)
             if not m:
-                wrong.append(f"{code}: specimenImages.do without 'N Images'")
+                wrong.append(f"{code}: specimenImages.do without 'N Images + label'")
                 continue
             checked += 1
-            if int(m.group(1)) != live:
-                wrong.append(f"{p} {code}: specimenImages.do {m.group(1)} Images, the image table {live}")
+            shown = (int(m.group(1)), int(m.group(2)))
+            if shown != live or specimen_images(m.group(3)) != shown:
+                wrong.append(f"{p} {code}: specimenImages.do {ns.text_of(m.group(3))!r} {shown}, the image table {live}")
     if not checked:
         pytest.skip("no imaged specimen found on the day's species pages " + ns.day_note())
     assert not wrong, f"{checked} specimens {ns.day_note()}:\n" + "\n".join(wrong)
@@ -702,10 +738,11 @@ def test_recent_images_count_equals_the_images_uploaded():
     if classify(r).category != "ok":
         pytest.skip("recentSearchResults.do: " + classify(r).category)
     html = r.text
-    m = (re.search(r"<h2>([\d,]+) Images</h2>", html)
-         or re.search(r'of <span class="numbers">(\d+)</span> records</h2>', html))
-    assert m, "recentSearchResults.do: no 'N Images' or 'of N records'"
-    n = ns.n(m.group(1))
+    # since 2026-10-27: "N Images + M labels" (images of the ant, label images apart); n = every image row
+    both = re.search(r'<h2 data-images="(\d+)" data-labels="(\d+)">', html)
+    m = both or re.search(r'of <span class="numbers">(\d+)</span> records</h2>', html)
+    assert m, "recentSearchResults.do: no 'N Images + labels' or 'of N records'"
+    n = int(both.group(1)) + int(both.group(2)) if both else ns.n(m.group(1))
     rows = len(re.findall(r'<div class="adv_search_recent_image">', html))
     assert rows == min(n, 100), f"recent images: {n}, {rows} rows on the first page of 100"
     low, high = _api_images_since(29), _api_images_since(31)

@@ -74,6 +74,18 @@ public class ImagesAnywhereTest extends TestCase {
         assertTrue(StatisticsDb.ANT_IMAGES_OF_SPECIMEN.startsWith(" left join image i on i.image_of_id = s.code"));
     }
 
+    /** Brian Fisher 2026-10-27: "5 images + label" for a single specimen (ImageCounts). */
+    public void testSpecimenImagesShowLabelsApart() {
+        assertEquals("No Images", org.calacademy.antweb.ImageCounts.text(0, 0));
+        assertEquals("Label only", org.calacademy.antweb.ImageCounts.text(0, 1));
+        assertEquals("Label only (2 labels)", org.calacademy.antweb.ImageCounts.text(0, 2));
+        assertEquals("<span class='numbers'>5</span> Images", org.calacademy.antweb.ImageCounts.text(5, 0));
+        assertEquals("<span class='numbers'>5</span> Images + label", org.calacademy.antweb.ImageCounts.text(5, 1));
+        assertEquals("<span class='numbers'>5</span> Images + 2 labels", org.calacademy.antweb.ImageCounts.text(5, 2));
+        assertTrue(org.calacademy.antweb.ImageCounts.isLabel(" L "));
+        assertFalse(org.calacademy.antweb.ImageCounts.isLabel("h"));
+    }
+
     public void testListImagesArePendingUntilANightlyCountsAntImages() {
         assertFalse(org.calacademy.antweb.util.CountCheck.antImagesRuleCounted(Arrays.asList("  Set 4 done (numbers counted by the rules of 2026-10-21)")));
         assertTrue(org.calacademy.antweb.util.CountCheck.antImagesRuleCounted(Arrays.asList("x", "  Set 4 done (numbers counted by the rules of 2026-10-21; "

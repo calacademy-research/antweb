@@ -262,15 +262,16 @@
 <% if (placeImages != null) { %>
 <tr data-stat="imaged" data-n="<%= placeImages.imagedSpecimens %>"><td class="ps_name">Imaged specimens</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.imagedSpecimens) %></td><td class="ps_def">Specimens with at least one image of the ant.<% if (placeImages.labelOnlySpecimens > 0) { %> Excludes specimens with only label images (<span data-label-only-shown="<%= placeImages.labelOnlySpecimens %>"><%= Formatter.commaFormat(placeImages.labelOnlySpecimens) %></span> additional specimens).<% } %></td></tr>
 <tr class="ps_head"><th colspan="3">Image documentation</th></tr>
-<tr data-stat="images" data-n="<%= placeImages.allImages %>"><td class="ps_name">Images</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.allImages) %></td><td class="ps_def">Total images associated with specimens <%= fromWhere %>, including ant and specimen-label images.</td></tr>
-<tr data-stat="ant-images" data-n="<%= placeImages.antImages %>" class="ps_sub"><td class="ps_name">Ant images</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.antImages) %></td><td class="ps_def" id="image-breakdown">Images showing the ant<%= org.calacademy.antweb.home.PlaceImageCountDb.antViews(placeImages) %>.</td></tr>
+<%-- 2026-10-27 (Brian Fisher): "Images" means images of the ant everywhere (ImageCounts); every file is "Image files". --%>
+<tr data-stat="images" data-n="<%= placeImages.allImages %>"><td class="ps_name">Image files</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.allImages) %></td><td class="ps_def">Every image file of specimens <%= fromWhere %>: images of the ant and label images.</td></tr>
+<tr data-stat="ant-images" data-n="<%= placeImages.antImages %>" class="ps_sub"><td class="ps_name">Images</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.antImages) %></td><td class="ps_def" id="image-breakdown">Images showing the ant<%= org.calacademy.antweb.home.PlaceImageCountDb.antViews(placeImages) %>.</td></tr>
 <tr data-stat="label-images" data-n="<%= placeImages.labelImages() %>" class="ps_sub"><td class="ps_name">Label images</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.labelImages()) %></td><td class="ps_def">Images showing specimen labels rather than the ant.</td></tr>
 <% } else { %>
 <% if (imagedShown != 0) { %>
 <tr data-stat="imaged" data-n="<%= imagedShown %>"><td class="ps_name">Imaged specimens</td><td class="ps_num"><%= Formatter.commaFormat(imagedShown) %></td><td class="ps_def">Specimens with at least one image (labels included until tonight's update).</td></tr>
 <% } %>
 <tr class="ps_head"><th colspan="3">Image documentation</th></tr>
-<tr data-stat="images" data-n="<%= imagesShown %>"><td class="ps_name">Images</td><td class="ps_num"><%= Formatter.commaFormat(imagesShown) %></td><td class="ps_def">Images of these specimens, labels included (the breakdown appears after tonight's update).</td></tr>
+<tr data-stat="images" data-n="<%= imagesShown %>"><td class="ps_name">Image files</td><td class="ps_num"><%= Formatter.commaFormat(imagesShown) %></td><td class="ps_def">Every image file of these specimens, labels included (images of the ant and label images appear apart after tonight's update).</td></tr>
 <% } %>
 <% } // not a species list only %>
 </table>

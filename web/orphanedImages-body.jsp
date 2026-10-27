@@ -16,7 +16,7 @@
   Object imageCountAttr = request.getAttribute("orphanedImageCount");
   long orphanImageCount = imageCountAttr instanceof Long ? (Long) imageCountAttr : 0;
 %>
-<span id="orphan-counts" data-images="<%= orphanImageCount %>" data-codes="<%= orphanedImages.size() %>">Found <%= Formatter.commaFormat(orphanImageCount) %> images of <%= Formatter.commaFormat(orphanedImages.size()) %> specimen codes that are not in AntWeb</span>
+<span id="orphan-counts" data-images="<%= orphanImageCount %>" data-codes="<%= orphanedImages.size() %>">Found <%= Formatter.commaFormat(orphanImageCount) %> image files of <%= Formatter.commaFormat(orphanedImages.size()) %> specimen codes that are not in AntWeb</span>
 <p id="orphan-note">An orphaned image is an image whose specimen code has no specimen record in AntWeb (the specimen was deleted, renamed, or never uploaded). Each specimen code below can have several images.</p>
 <p>
 <ul>

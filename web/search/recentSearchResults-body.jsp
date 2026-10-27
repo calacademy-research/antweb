@@ -145,7 +145,12 @@ function clickrecall(thisfield, defaulttext) {
 
 <% if (searchResults.getResults().size() <= intLength) { %>
 
-<h2><%= searchResults.getResults().size() %> Images</h2>
+<%  // 2026-10-27 (Brian Fisher): images of the ant + label images, counted apart (ImageCounts); one row per image file.
+    int recentLabels = 0;
+    for (Object recentRow : searchResults.getResults()) {
+      if (recentRow instanceof org.calacademy.antweb.search.ResultItem && org.calacademy.antweb.ImageCounts.isLabel(((org.calacademy.antweb.search.ResultItem) recentRow).getShotType())) ++recentLabels;
+    } %>
+<h2 data-images="<%= searchResults.getResults().size() - recentLabels %>" data-labels="<%= recentLabels %>"><%= org.calacademy.antweb.ImageCounts.text(searchResults.getResults().size() - recentLabels, recentLabels) %></h2>
 
 
 <% } else { 
@@ -167,6 +172,7 @@ function clickrecall(thisfield, defaulttext) {
 
 
 <span class="right"><b><a href="<%= AntwebProps.getDomainApp() %>/query.do?name=imageData">Newest 5,000 images (table)</a></b></span>
+<%@ include file="/common/imagesDefinition.jsp" %>
 
 
 

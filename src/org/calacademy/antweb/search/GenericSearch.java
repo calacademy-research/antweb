@@ -634,6 +634,7 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
                     //AntwebUtil.logStackTrace();
                     //A.log("getListFromRSet() code:" + code + " created:" + created + " uploadId:" + resultItem.getUploadId());
                     //A.log("getListFromRset() resultItem.dateCollected:" + resultItem.getDateCollectedStart());
+                    if (theQuery.contains(" as labelcount")) resultItem.setLabelCount(rset.getInt(rset.findColumn("labelcount")));
                     theList.add(resultItem);
                     //A.log("GenericSearch().getListFromRSet() 1st:" + theList.get(0));
                 }

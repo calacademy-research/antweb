@@ -32,7 +32,7 @@ def test_all_view_shows_the_list_images_of_a_name():
     assert "ImagesAnywhere.childImages(thisChild, overview)" in names, "names do not show their Images of this place's list"
     assert "getHasImagesCount" not in names, "names show getHasImagesCount (counted for specimens only)"
     # the default view shows the same number
-    assert "isSpecimen ? thisChild.getTaxonSet().getImageCountStr() : org.calacademy.antweb.ImagesAnywhere.childImages(thisChild, overview)" in jsp
+    assert "isSpecimen ? org.calacademy.antweb.ImageCounts.text(thisChild.getImages()) : org.calacademy.antweb.ImagesAnywhere.childImages(thisChild, overview)" in jsp
 
 
 def test_recent_images_one_row_per_image():

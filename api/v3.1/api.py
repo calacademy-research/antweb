@@ -747,6 +747,7 @@ def getSpecimen():
         # if (specDict['specimenCode'] == 'antweb1038039'):
         #  print("ownedBy:" + specDict['ownedBy'])  # Would appear (only on server) in terminal as SMNG, G\xc3\xb6rlitz, Germany
         dataList.append(specDict)
+    addImageSplit(dataList, 'specimenCode')   # antImageCount, labelImageCount (2026-10-27)
 
     params = [request.args]
     metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'offset': offset,
@@ -858,6 +859,7 @@ def getGeoSpecimens():
         specDict = Specimen.getSpecDict(sp)
 
         dataList.append(specDict)
+    addImageSplit(dataList, 'specimenCode')   # antImageCount, labelImageCount (2026-10-27)
 
     # print(query)
 
@@ -1108,6 +1110,9 @@ def getTaxa():
         # print(taxonDict)
 
         dataList.append(taxonDict)
+    # antImageCount, labelImageCount: the images of the specimens filed under the name (2026-10-27); imageCount is
+    # taxon.image_count, every image file of the name and of the names under it.
+    addImageSplit(dataList, 'taxonName', True)
 
     params = [request.args]
     metaDataDict = {'parameters': params, 'request': str(request), 'taxonCount': taxonCount}
@@ -1333,8 +1338,9 @@ def getImages():
         print(query)
 
     params = [request.args]
+    antImages, labelImages = shotSplit([i.get('shotType') for sp in dataList for i in sp.get('images', [])])
     metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'specimenCount': specimenCount,
-                    'count': imageCount}
+                    'count': imageCount, 'antImageCount': antImages, 'labelImageCount': labelImages}   # 2026-10-27
 
     if ndjson != 'true':
         return jsonify(metaData=metaDataDict, images=dataList)  # return flask Response
@@ -1752,8 +1758,10 @@ def getTaxaImages():
     imageCount = TaxaImage.getImageCount(taxaDict)
     dataList = TaxaImage.getDataList(taxaDict)
     params = [request.args]
+    antImages, labelImages = shotSplit([i.get('shotType') for t in dataList for sp in t.get('specimen', []) for i in sp.get('images', [])])
     metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'taxonCount': taxonCount,
-                    'specimenCount': specimenCount, 'imageCount': imageCount}
+                    'specimenCount': specimenCount, 'imageCount': imageCount,
+                    'antImageCount': antImages, 'labelImageCount': labelImages}   # 2026-10-27
 
     if ndjson != 'true':
         return returnJsonify("taxaImages", jsonify(metaData=metaDataDict, taxaImages=dataList))  # return flask Response
@@ -2261,6 +2269,58 @@ def getBioregionTaxa():
 
 
 # --- Unimaged Geolocale Taxa API -------------------------------------------------------------------------------------    
+
+# --- Images of the ant and label images (Brian Fisher, 2026-10-27) ------------------------------------------------
+# "Images" means images of the ant everywhere on AntWeb; label images are counted separately. Every reply that has an
+# imageCount (every image file, kept as it was so clients do not break) also has antImageCount and labelImageCount.
+
+LABEL_SHOT_SQL = "lower(trim(coalesce(i.shot_type, ''))) = 'l'"
+
+
+def imageSplitSql(byTaxon, n):
+    """One grouped query: key -> images of the ant, label images. byTaxon False: key = specimen code (n codes as
+    :k0 .. :kn-1); True: key = taxon_name, the images of the specimens filed under each name (not the names under it).
+    Runs on MySQL and SQLite (tests/unit/test_api_image_split.py)."""
+    keys = ", ".join(":k%d" % i for i in range(n))
+    split = (" sum(case when " + LABEL_SHOT_SQL + " then 0 else 1 end) ant,"
+             " sum(case when " + LABEL_SHOT_SQL + " then 1 else 0 end) labels")
+    if byTaxon:
+        return ("select s.taxon_name k," + split + " from specimen s join image i on i.image_of_id = s.code"
+                " where s.taxon_name in (" + keys + ") group by s.taxon_name")
+    return "select i.image_of_id k," + split + " from image i where i.image_of_id in (" + keys + ") group by i.image_of_id"
+
+
+def imageSplit(keys, byTaxon=False, execute=None):
+    """{key (lower case): (antImageCount, labelImageCount)} for the keys of one reply; keys without images are absent."""
+    keys = sorted({k for k in keys if k})
+    if not keys:
+        return {}
+    params = {"k%d" % i: k for i, k in enumerate(keys)}
+    run = execute or (lambda sql, p: session.execute(text(sql), p))
+    out = {}
+    for row in run(imageSplitSql(byTaxon, len(keys)), params):
+        out[str(row[0]).lower()] = (int(row[1] or 0), int(row[2] or 0))
+    return out
+
+
+def addImageSplit(dicts, keyField, byTaxon=False):
+    """Adds antImageCount and labelImageCount to each dict of a reply (2026-10-27)."""
+    try:
+        split = imageSplit([d.get(keyField) for d in dicts], byTaxon)
+    except Exception as error:
+        print("addImageSplit() error:" + str(error))
+        return
+    for d in dicts:
+        ant, labels = split.get(str(d.get(keyField) or "").lower(), (0, 0))
+        d['antImageCount'] = ant
+        d['labelImageCount'] = labels
+
+
+def shotSplit(shotTypes):
+    """(images of the ant, label images) of a list of shot types."""
+    labels = sum(1 for s in shotTypes if (s or "").strip().lower() == 'l')
+    return len(shotTypes) - labels, labels
+
 
 def imagedTaxaSql(casteClause=""):
     """Names (taxon_name) that are imaged: a specimen of the name has an image of the ant, that is an image

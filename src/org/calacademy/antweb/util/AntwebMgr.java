@@ -472,6 +472,14 @@ public class AntwebMgr {
     public static int getTotalImagesCount() {
       return totalImagesCount;
     }
+    // Label images, shown apart from the images of the ant (2026-10-27); -1 until counted.
+    static int labelImagesCount = -1;
+    public static void setLabelImagesCount(int c) {
+      labelImagesCount = c;
+    }
+    public static int getLabelImagesCount() {
+      return labelImagesCount;
+    }
 
     public static void setImagedSpecimensCount(int c) {
       imagedSpecimensCount = c;
@@ -511,7 +519,14 @@ public class AntwebMgr {
             s_log.warn("populateStats() query:" + query + " e:" + e);
         } finally {
               DBUtil.close(stmt, rset, "populateStats()");
-        }	
+        }
+        // Label images (not in the statistics row): counted live once.
+        try (Statement s = connection.createStatement();
+             ResultSet r = s.executeQuery(org.calacademy.antweb.home.StatisticsDb.LABEL_IMAGES_SQL)) {
+            if (r.next()) setLabelImagesCount(r.getInt(1));
+        } catch (SQLException e) {
+            s_log.warn("populateStats() label images e:" + e);
+        }
     }  
 
     public String report() { 

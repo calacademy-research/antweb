@@ -280,9 +280,10 @@ public final class NumbersTestDb {
         exec(c, "insert into place_image_count (place_type, place_key, shot_type, image_count, specimen_count) values "
             + k + "'h', 1, 1), " + k + "'l', 2, 2), " + k + "'*all', 3, 2), " + k + "'*ant', 1, 1), " + k + "'*label_only', 1, 1)");
 
-        // Home page numbers: 3 valid species + ssp., 5 specimens, 2 species imaged, 2 specimens imaged, 4 images.
+        // Home page numbers: 3 valid species + ssp., 5 specimens, 2 species imaged, 2 specimens imaged, 2 images of the
+        // ant (and 2 label images, counted apart since 2026-10-27).
         exec(c, "insert into statistics (action, specimens, extant_taxa, total_images, specimens_imaged, species_imaged, created)"
-            + " values ('nightly', 5, 3, 4, 2, 2, " + OLD + ")");
+            + " values ('nightly', 5, 3, 2, 2, 2, " + OLD + ")");
         exec(c, "update statistics set total_taxa = (select count(*) from taxon where taxarank in ('species', 'subspecies')),"
             + " proj_taxa = (select count(*) from proj_taxon), bioregion_taxa = (select count(*) from bioregion_taxon),"
             + " museum_taxa = (select count(*) from museum_taxon), geolocale_taxa = (select count(*) from geolocale_taxon),"

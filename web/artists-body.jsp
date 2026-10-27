@@ -89,7 +89,7 @@ Create artist with name: <input type="text" style="border:1px solid" name="name"
 <th>#</th>
 <th width=40>ID</th>
 <th><a href='<%= AntwebProps.getDomainApp() %>/artists.do?sortBy=name'>Name</a></th>
-<th><a href='<%= AntwebProps.getDomainApp() %>/artists.do?sortBy=imageCount'>Images</a></th>
+<th><a href='<%= AntwebProps.getDomainApp() %>/artists.do?sortBy=imageCount' title='Every image file credited to the photographer, label images included'>Image files</a></th>
 <th><a href='<%= AntwebProps.getDomainApp() %>/artists.do?sortBy=specimenCount'>Specimen</a></th>
 </tr>
 
@@ -115,6 +115,8 @@ for (Artist artist : artistArray) {
        <tr><td><%= i %>.</td><td><%= artist.getId() %></td><td><%= artist.getLink() %></td><td><%= Formatter.commaFormat(artist.getImageCount()) %></td><td><%= Formatter.commaFormat(artist.getSpecimenCount()) %></td></tr>
 <% } %>
 </table>
+<% request.setAttribute("imagesDefinitionFiles", Boolean.TRUE); %>
+<%@ include file="/common/imagesDefinition.jsp" %>
 
 <br>
 

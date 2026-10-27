@@ -84,6 +84,16 @@ class Item {
 	public void setImageCount(int imageCount) {
 	    this.imageCount = imageCount;
 	}
+
+	// 2026-10-27: the specimen's label images (query column labelcount), -1 when the query has none; the rows show
+	// "N Images + label" (ImageCounts).
+	int labelCount = -1;
+	public int getLabelCount() {
+	    return labelCount;
+	}
+	public void setLabelCount(int labelCount) {
+	    this.labelCount = labelCount;
+	}
 	
 	public String getType() {
 		return type;
