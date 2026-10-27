@@ -73,8 +73,6 @@ def _search_then_reshow():
     return first, again
 
 
-@pytest.mark.xfail(strict=False, reason="finding F26: advancedSearchResults.do after a paged search fails with "
-                                        "StringIndexOutOfBoundsException (error page); docs/flows/public-pages-findings.md")
 def test_results_shown_again_from_the_session():
     """advancedSearchResults.do shows the specimens of the session's last search page again."""
     first, again = _search_then_reshow()
