@@ -467,12 +467,13 @@ Found while doing this (2026-10-26, end-to-end tests of rows 24 to 53; each has 
 - **B43** the field guide shows the habitat and method summaries but not the microhabitat one (row 53 says the same
   three summaries): `FieldGuide.setSpecimenData` calls `setHabitats` and `setMethods`, not `setMicrohabitats`. Test:
   `e2e:test_numbers_species.py::test_field_guide_shows_the_microhabitat_summary`.
-- **B44** (fixed 2026-10-27) the nightly recounted the totals only of live adm1s (`GeolocaleDb.updateAdm1Counts`:
-  `if (geolocale.isLive())`); an adm1 that is not live kept old Subfamilies, Genera and Species next to a current
-  list (production 10-27: Castile-Leon, Spain showed 0 subfamilies and 5 species, its lists 2 and 6). Now its list
-  totals and Valid species are written each night. The count check still covers live adm1s only. Tests:
-  `e2e:test_numbers_lists.py::test_list_headers_equal_place_numbers_of_every_kind`,
-  `tests/unit/test_small_fixes.py` (8).
+- **B44** (fixed 2026-10-27) the nightly recounted only live adm1s (`GeolocaleDb.updateAdm1Counts`:
+  `if (geolocale.isLive())`), and the count check checked only live adm1s; an adm1 that is not live kept the numbers
+  of whenever it was last recounted next to a current list (production 10-27: Castile-Leon, Spain, is_live 0, showed
+  0 subfamilies, 5 species and 39 specimens; its list has 2 subfamilies and 6 species; a recount on staging gave 2, 6
+  and 15). Now every valid adm1 is recounted each night (the compute.log line "Adm1s populated" gives how many and
+  the time) and checked by the count check. Tests:
+  `e2e:test_numbers_lists.py::test_list_headers_equal_place_numbers_of_every_kind`, `tests/unit/test_small_fixes.py` (8).
 - Q3 (decided 2026-10-22, plan in 5.1): country and adm1 Endemic still count indetermined and unidentifiable names (the
   page says "Named species and subspecies"). Test: `e2e:test_numbers_endemic.py::test_endemic_names_of_countries_are_named_species`.
 - B15 has a test now: `e2e:test_numbers_lists.py::test_species_browse_counts_the_specimens_of_its_list_row`.

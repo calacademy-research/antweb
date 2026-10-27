@@ -14,8 +14,8 @@
    ActionForward of HttpUtil.sendMessage() was ignored and the page was built anyway.
 7. (2026-10-26, finding F2) The limits on simultaneous maps, comparisons and field guides use
    ConcurrencyLimiter (thread-safe), skip logged-in users and release only a slot they took.
-8. (2026-10-26, finding B44) The nightly writes the list totals of every valid adm1, also those that are not
-   live (GeolocaleDb.updateAdm1Counts): their pages showed numbers years old next to a current list.
+8. (2026-10-27, finding B44) The nightly recounts every valid adm1, also those that are not live
+   (GeolocaleDb.updateAdm1Counts), and the count check covers them: their pages showed old numbers next to a current list.
 
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -153,10 +153,12 @@ def test_adm1_totals_not_only_live(sources):
     src = sources["src/org/calacademy/antweb/home/GeolocaleDb.java"]
     body = src[src.index("public void updateAdm1Counts()"):]
     body = body[:body.index("public void updateCountryCounts()")]
-    assert "isLive()" in body and "} else {" in body, "updateAdm1Counts: no branch for adm1s that are not live"
-    other = body[body.index("} else {"):]
-    assert "updateCountableTaxonData(" in other and "updateValidSpeciesCount(" in other, other[:400]
-    print("Adm1s that are not live get their list totals.")
+    code = "\n".join(l for l in body.splitlines() if not l.strip().startswith("//"))
+    assert "updateCounts(geolocale.getId())" in code, "updateAdm1Counts no longer recounts each adm1"
+    assert not re.search(r"if\s*\(\s*geolocale\.isLive\(\)\s*\)", code), "updateAdm1Counts skips adm1s that are not live again"
+    inv = sources["src/org/calacademy/antweb/util/CountInvariants.java"]
+    assert "is_live = 1)\"" not in inv.split("case PlaceTotals.PROJECT")[0], "the count check skips adm1s that are not live"
+    print("Every valid adm1 is recounted and checked, live or not.")
 
 
 def main():

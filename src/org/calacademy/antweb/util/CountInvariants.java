@@ -250,8 +250,8 @@ public final class CountInvariants {
     static String scopeSql(String type) {
         switch (type) {
             case PlaceTotals.GEOLOCALE:
-                return "select id, name, georank from geolocale where is_valid = 1 and georank in ('country', 'adm1', 'subregion', 'region')"
-                    + " and (georank <> 'adm1' or is_live = 1)";
+                // every valid adm1 since 2026-10-27 (B44: the nightly recounts them all, not only the live ones)
+                return "select id, name, georank from geolocale where is_valid = 1 and georank in ('country', 'adm1', 'subregion', 'region')";
             // the projects whose totals the nightly run counts (ProjectDb.updateCounts: scope PROJECT and GLOBAL) and whose
             // lists it recounts (live projects)
             // The Port of Entry project is a species list only (2026-10-22): its numbers are not counted, so not checked.
