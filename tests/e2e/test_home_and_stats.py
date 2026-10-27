@@ -22,7 +22,7 @@ def test_home_page_sections():
     stats = re.search(r'<div id="stats">(.*?)</div>', r.text, re.S)
     assert stats, "no statistics box"
     for label in HOME_NUMBERS:
-        assert re.search(r'<span class="numbers">[\d,]+</span> ' + re.escape(label), stats.group(1)), \
+        assert re.search(r'<span class="numbers"[^>]*>[\d,]+</span>\s*' + re.escape(label), stats.group(1)), \
             f"home page statistics: no number for {label!r} (web/genInc/statistics.jsp not written?)"
     assert links(stats.group(1), "statsPage"), "no link to statsPage.do"
     for box in ('id="recent_activity"', 'id="contributors"', 'id="promo_container"'):
