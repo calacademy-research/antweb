@@ -49,6 +49,9 @@ jobs:
         # 2026-10-24: an apostrophe in a comment ended a quoted sh -c script early; the step failed only on GitHub.
         run: python3 tests/unit/test_workflow_shell.py
 
+      - name: Deploys check the pinned server host keys (tests/unit/test_deploy_known_hosts.py)
+        run: python3 tests/unit/test_deploy_known_hosts.py
+
       - name: The mount check writes into a folder that exists on the servers (tests/unit/test_mountcheck_dir.py)
         run: python3 tests/unit/test_mountcheck_dir.py
 
