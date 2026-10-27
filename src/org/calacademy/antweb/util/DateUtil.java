@@ -170,14 +170,40 @@ public abstract class DateUtil {
     return formatString;
   }
 
-  private static Date format(String format, String dateStr) {
-    Date returnDate = null;
-    try {
-      returnDate = new SimpleDateFormat(format).parse(dateStr);
-    } catch (ParseException e) {
-      //if ("2010/08/12".equals(dateStr)) A.log("format() NOT found:" + dateStr + " format:" + format + " e:" + e);
-    }
+  /**
+   * The date dateStr gives in this format, or null. Strict (Brian Fisher, 2026-10-27): the whole value must match,
+   * and a month or day out of range is not a date. Before, "19/10/2013" read as month 19 became 2014-07-10, a day
+   * "00" became the last day of the month before, and "2011-05-02 xyz" was read as 2011-05-02.
+   */
+  static Date format(String format, String dateStr) {
+    if (dateStr == null) return null;
+    SimpleDateFormat sdf = new SimpleDateFormat(format, Locale.US);
+    sdf.setLenient(false);
+    ParsePosition pos = new ParsePosition(0);
+    Date returnDate = sdf.parse(dateStr, pos);
+    if (returnDate == null || pos.getErrorIndex() >= 0 || pos.getIndex() != dateStr.length()) return null;
     return returnDate;
+  }
+
+  private static final java.util.regex.Pattern ZERO_DAY = java.util.regex.Pattern.compile("^(\\d{4})([-/])(\\d{1,2})\\2(0{1,2})$");
+  private static final java.util.regex.Pattern DATE_TIME = java.util.regex.Pattern.compile("^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z?$");
+  private static final java.util.regex.Pattern ZERO_MONTH = java.util.regex.Pattern.compile("^(\\d{4})([-/])(0{1,2})(\\2(0{0,2}))?$");
+
+  /**
+   * An upload date as typed, made ready for parsing (Brian Fisher, 2026-10-27): trimmed, a trailing "/" or "-"
+   * dropped ("1986/10/" is "1986/10"), and a day "00" (day not known) stored as the 1st ("2011-05-00" is
+   * 2011-05-01), a time after a full date dropped, a month "00" as January ("1986/00/00" is 1986-01-01), as "2011-05" and "2011" are.
+   */
+  public static String normalizeUploadDate(String dateStr) {
+    if (dateStr == null) return null;
+    String s = dateStr.trim();
+    while (s.length() > 4 && (s.endsWith("/") || s.endsWith("-"))) s = s.substring(0, s.length() - 1).trim();
+    if (DATE_TIME.matcher(s).matches()) s = s.substring(0, 10);  // "2012-03-27 15:48:09.0", "2012-03-27T00:00:00Z"
+    java.util.regex.Matcher m = ZERO_MONTH.matcher(s);
+    if (m.matches()) return m.group(1) + "-01-01";
+    m = ZERO_DAY.matcher(s);
+    if (m.matches() && !"0".equals(m.group(3)) && !"00".equals(m.group(3))) return m.group(1) + "-" + m.group(3) + "-01";
+    return s;
   }
 
   private static Date newFormat(String format, String dateStr) {
@@ -185,7 +211,8 @@ public abstract class DateUtil {
     try {
       //if ("2010/08/12".equals(dateStr)) A.log("newFormat() dateStr:" + dateStr + " date:" + date);
       ZoneId defaultZoneId = ZoneId.systemDefault();
-      DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format);
+      // STRICT: 2010/02/30 is not a date (SMART, the default, made it 2010/02/28). "uuuu": STRICT needs it for the year.
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern(format.replace("yyyy", "uuuu")).withResolverStyle(ResolverStyle.STRICT);
       LocalDate localDate = LocalDate.parse(dateStr, formatter);
       date = Date.from(localDate.atStartOfDay(defaultZoneId).toInstant());
       //A.log("newFormat() dateStr:" + dateStr + " date:" + date);
@@ -204,8 +231,20 @@ public abstract class DateUtil {
     String msg = "testConstructDateStr() dateStr:" + dateStr + " formatted:" + constructedDate + " step:" + s_debugStep;
     return msg;
   }
-  // Method designed to take scrappy user entered dates and return Antweb formatted Date
+  // Method designed to take scrappy user entered dates and return Antweb formatted Date.
+  // Null when the value is not a date (the upload then lists it under "Invalid Date ..." and stores no date).
     public static Date constructDate(String dateStr) {
+      if (dateStr == null) return null;
+      try {
+        return constructDateStrict(normalizeUploadDate(dateStr));
+      } catch (RuntimeException e) {  // e.g. "1/2/3x": NumberFormatException out of handleDMYy
+        s_log.debug("constructDate() dateStr:" + dateStr + " e:" + e);
+        return null;
+      }
+    }
+
+    private static Date constructDateStrict(String dateStr) {
+      if (dateStr == null || dateStr.isEmpty()) return null;
 
       Date returnDate = null;
 
@@ -241,13 +280,13 @@ public abstract class DateUtil {
         if (dateStr.contains("-")) {
           String substring = dateStr.substring(dateStr.indexOf("-") + 1);
           //A.log("constructDate() hypen removed from origDatesCollected:" + dateStr + " substring:" + substring);
-          returnDate = constructDate(substring);
+          returnDate = constructDateStrict(normalizeUploadDate(substring));
           s_debugStep = 7;
         }
       }
 
       if (returnDate == null) {
-        if (DateUtil.getFormatDateShort(dateStr) != null) {  // Like: 2011-05
+        if (format("yyyy-MM", dateStr) != null) {  // Like: 2011-05
           returnDate = getDate(dateStr + "-01");
           s_debugStep = 8;
         }
@@ -272,7 +311,7 @@ public abstract class DateUtil {
 
 
       if (returnDate == null) {
-        if (DateUtil.getFormatDateShortShort(dateStr) != null) {  // Like: 2011
+        if (format("yyyy", dateStr) != null) {  // Like: 2011
           returnDate = getDate(dateStr + "-01-01");
           s_debugStep = 10;
         }
@@ -291,7 +330,7 @@ public abstract class DateUtil {
           DateTimeFormatter formatter = DateTimeFormatter.ofPattern("E MMM dd HH:mm:ss z uuuu").withLocale(Locale.US);
           ZonedDateTime zdt = ZonedDateTime.parse(dateStr, formatter);
           LocalDate ld = zdt.toLocalDate();
-          DateTimeFormatter fLocalDate = DateTimeFormatter.ofPattern("dd/MM/uuuu");
+          DateTimeFormatter fLocalDate = DateTimeFormatter.ofPattern("uuuu-MM-dd");  // what getDate reads
           String output = ld.format(fLocalDate);
           returnDate = getDate(output);
           s_debugStep = 13;
@@ -323,7 +362,7 @@ public abstract class DateUtil {
         return null;
       }
 
-      Date validCutoff = getDate("1700-0-01");
+      Date validCutoff = getDate("1700-01-01");  // was "1700-0-01": month 0, read leniently as December 1699
       if (returnDate.before(validCutoff)) {
           //A.log("constructDate() dateStr:" + dateStr + " returnDate:" + returnDate + " is before validCutoff:" + validCutoff);
 
@@ -435,17 +474,9 @@ public abstract class DateUtil {
 
 
   // Basciallly just for validation. Have a dateStr in our preferred format and want a date object.
+    // Strict, as format(): "2011-02-30" and "2011-05-00" are not dates.
     public static Date getDate(String dateStr) {
-        Date returnDate = null;
-        if (dateStr != null) {
-          try {
-            returnDate = new SimpleDateFormat("yyyy-MM-dd").parse(dateStr);
-            //A.log("constructDate() 2 dateStr:" + dateStr + " returnDate:" + returnDate);
-          } catch (ParseException e) {
-            //A.log("constructDate() 2 dateStr:" + dateStr + " e:" + e);
-          }
-        }
-        return returnDate;
+        return format("yyyy-MM-dd", dateStr);
     }
 
     public static boolean isDate(String dateStr) {
@@ -471,6 +502,7 @@ public abstract class DateUtil {
 
     private static Date romanConvertDate(String theDate) {
       String dateStr = romanConvertDateStr(theDate);
+      if (dateStr != null && dateStr.matches("\\d{4}-\\d{2}")) dateStr += "-01";  // "iv.1976": April 1976
       Date date = getDate(dateStr);
       return date;
     }
