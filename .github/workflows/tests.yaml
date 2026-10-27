@@ -521,6 +521,9 @@ jobs:
       - name: Image counts of images.do All view and recent images (B46, B47; tests/unit/test_image_count_fixes.py)
         run: python3 tests/unit/test_image_count_fixes.py
 
+      - name: Orphan photos tool, plan, SQL and file steps without a database (tests/unit/test_orphan_photos.py)
+        run: python3 tests/unit/test_orphan_photos.py
+
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
         run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml
       - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; place renames keep page text; every place's numbers; specimen name history; download guards)

@@ -680,6 +680,95 @@ The day after the deploy, check CAS: `query.do?name=encodedLocalityCodes` (or th
 California Academy of Sciences codes once a nightly TaxonWorks upload has run (`taxonworksNightly.log`). Keep the
 backup table until the codes have been checked; drop it later (`drop table specimen_localitycode_bak_20261022;`).
 
+### Orphan photos
+
+Orphan photos are photos whose specimen code has no specimen record, so they show on no page (`orphanedImages.do`
+lists them). Curators decided, code by code, to delete them (a duplicate) or to move them to the code of the right
+specimen. The tool `tools/data/orphan_photos.py` (read its header) carries out a decisions file: for the CAS list of
+2026-10 that is `tools/data/orphan_photos_cas_2026-10.tsv` (17 codes to delete, 11 to move; the other 25 codes of
+the list stay as they are). The other groups' lists get their own decisions file and the same commands.
+
+What it changes: the photo rows (`image`, with their `group_image` and `image_like` rows) and the files in
+`/mnt/antweb/images/<code>/` (the four sizes thumbview, low, med, high and the original .tif or .jpg). A moved photo
+gets the target's name in every size (`casent0005505_h_1_high.jpg` becomes `mcz160.3635w_h_1_high.jpg`, the original
+`CASENT0005505_H_1.tif` becomes `MCZ160.3635W_H_1.tif`). The upload history (`image_uploaded`) is kept as it is. The
+target's specimen page shows the photos at once; taxon, place and home page image numbers follow at the next nightly
+run (set 4).
+
+It refuses a code whose state differs from the decision: a code to delete that has a specimen record now, a target
+with no record or with photos already, photos of another group. Refused codes are left alone by every step.
+
+Staging's `/mnt/antweb` is a plain folder that most likely does not hold these photos: there the preview says "no
+files found" and only the rows change. That is expected and still tests the database part.
+
+Run outside 05:00 to 08:00 Pacific (the nightly run). The tool must be in the checkout (deployed to the server).
+
+1. Preview (read-only). One block per code: `DELETE`, `MOVE to <code>`, `REFUSED (...)` with the reason, or
+   `NOTHING TO DO`; its rows (shots and image ids) and its files. Add `--files` to list every file.
+
+```
+# ssh root@165.232.136.170   (staging)
+cd /root/antweb-next && python3 tools/data/orphan_photos.py preview --project /root/antweb-next --decisions tools/data/orphan_photos_cas_2026-10.tsv
+```
+
+   Expect `Accepted: 17 codes to delete (72 rows), 11 to move (45 rows)` (the numbers of the list of 2026-10-24) and no
+   `REFUSED`. Send the output to Claude before going on if a code is refused or the numbers differ.
+
+2. Backup. Copies every file that will change to `/mnt/backup/archive/orphan_photos_<date>/images/<code>/` and the
+   rows to tables `orphan_photos_bak_<date>_image`, `_group_image`, `_image_like`, `_image_uploaded`, `_specimen`
+   (also as TSV files in the `db/` folder next to the images); checks every file size and row count.
+
+```
+# ssh root@165.232.136.170   (staging)
+cd /root/antweb-next && python3 tools/data/orphan_photos.py backup --project /root/antweb-next --decisions tools/data/orphan_photos_cas_2026-10.tsv
+```
+
+   Expect four small checks that each say `ok` (`image_rows 117`, `group_image_rows`, `image_like_rows`,
+   `specimen_rows 11`), one `copied` line per file, and `Backup done: ... Manifest: .../manifest.json`.
+
+3. Run. It only starts with a backup of the same photos made in the last 24 hours, shows the SQL, and asks you to
+   type `yes`. The rows change in one transaction: a count that differs stops it before the commit, and nothing
+   changes. Then the files are deleted or renamed (log: `run.log` in the backup folder). If a file fails, run the
+   same command again: it only finishes the files.
+
+```
+# ssh root@165.232.136.170   (staging)
+cd /root/antweb-next && python3 tools/data/orphan_photos.py run --project /root/antweb-next --decisions tools/data/orphan_photos_cas_2026-10.tsv
+```
+
+   Expect the check lines with `ok`, `committed`, one line per file (`deleted ...`, `moved ... -> ...`) and
+   `Done: 17 codes deleted, 11 moved`.
+
+4. Check one moved code (with the period) and one deleted code. The first query should list 4 rows of
+   `mcz160.3635w` and 4 of `mcz-ent00021675`, none of the old codes; the second `image_count` 4 for both.
+
+```
+# ssh root@165.232.136.170   (staging)
+F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select image_of_id, shot_type, shot_number from image where image_of_id in ('casent0005505', 'mcz160.3635w', 'mczent00021675', 'mcz-ent00021675', 'anic32-066597') order by 1, 2, 3; select code, image_count from specimen where code in ('mcz160.3635w', 'mcz-ent00021675');"
+ls /mnt/antweb/images/mcz160.3635w/ /mnt/antweb/images/anic32-066597/
+```
+
+   On staging `ls` most likely says "No such file or directory" for both (no files there). Then open
+   https://staging.antweb.org/specimen.do?code=mcz160.3635w (the photo boxes show; the pictures themselves only where
+   the files exist) and https://staging.antweb.org/orphanedImages.do (none of the 28 codes listed).
+
+5. Then production: the same four blocks with `ssh root@165.232.137.86`, `cd /root/antweb`, `--project /root/antweb`
+   and `F=/root/antweb/etc/db.properties`. On production `ls` should list the files of `mcz160.3635w` (four sizes per photo and the originals) and say
+   "No such file or directory" for `anic32-066597`, and https://www.antweb.org/specimen.do?code=mcz160.3635w shows
+   the four photos.
+
+Rollback (puts the rows and files back from the backup; the newest backup of the decisions file is used):
+
+```
+# ssh root@165.232.137.86   (antweb-prod; on staging: cd /root/antweb-next and --project /root/antweb-next)
+cd /root/antweb && python3 tools/data/orphan_photos.py rollback --project /root/antweb --decisions tools/data/orphan_photos_cas_2026-10.tsv
+```
+
+   It stops before its commit if an image id was taken by a new upload or a moved row changed since; send the output
+   to Claude then. To start again after a backup that stopped half-way, or for a second backup on the same day, add
+   `--tag b` to backup, run and rollback (the folder and tables get `_b`). Keep the backup folder and tables until the
+   curator has checked the pages; drop the tables later (`drop table orphan_photos_bak_<date>_image, ...`).
+
 ## Emergencies
 
 ### Site down
