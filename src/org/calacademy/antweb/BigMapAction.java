@@ -23,8 +23,8 @@ public final class BigMapAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(BigMapAction.class);
     
-    private static int s_mapCount = 0;
-    private static final int s_mapLimit = 3;
+    // Up to 3 maps built at the same time for visitors who are not logged in (finding F2).
+    private static final ConcurrencyLimiter s_mapLimiter = new ConcurrencyLimiter(3);
     
     public ActionForward execute(ActionMapping mapping, ActionForm form,
         HttpServletRequest request, HttpServletResponse response)
@@ -90,10 +90,11 @@ public final class BigMapAction extends AntwebAction {
 
         Project project = ProjectMgr.getProject(projectName);
 
-        if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+        if (HttpUtil.tooBusyForBots(request)) { return HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
         Connection connection = null;
         String dbMethodName = DBUtil.getDbMethodName("BigMapAction.execute()");
+        boolean mapSlot = false;
         try {
           DataSource dataSource = getDataSource(request, "conPool");
           connection = DBUtil.getConnection(dataSource, dbMethodName, HttpUtil.getTarget(request));
@@ -107,8 +108,9 @@ public final class BigMapAction extends AntwebAction {
               }          
           }
               
-          ++s_mapCount;
-          if (s_mapCount > s_mapLimit) {
+          boolean loggedIn = LoginMgr.getAccessLogin(request) != null;
+          if (!loggedIn) mapSlot = s_mapLimiter.tryAcquire();
+          if (!loggedIn && !mapSlot) {
             String message = "Simultaneous map limit exceeded.  Please try again later, or log in for unrestricted access.";  // message to bots
             request.setAttribute("message", message);
             //s_log.warn("execute() message:" + message);
@@ -131,7 +133,7 @@ public final class BigMapAction extends AntwebAction {
         } catch (Exception e) {
             AntwebUtil.logStackTrace(e);        
         } finally {
-            --s_mapCount;
+            if (mapSlot) s_mapLimiter.release();
             DBUtil.close(connection, this, dbMethodName);
         }
 

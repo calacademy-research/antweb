@@ -986,6 +986,10 @@ public abstract class HttpUtil {
 
         if (queryString == null)
             return null;
+        // An address without a query (advancedSearchResults.do shown again) has an empty query string: until
+        // 2026-10-26 charAt(0) threw StringIndexOutOfBoundsException and the page showed the error page (F26).
+        if (queryString.isEmpty())
+            return "";
 
         if (queryString.charAt(0) == '?') {
             afterQuestionMark = queryString.substring(1);

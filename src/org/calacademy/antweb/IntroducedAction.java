@@ -69,7 +69,7 @@ native bioregions to genera.
 
         String dbUtilName = "IntroducedAction.execute()";
 
-        if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+        if (HttpUtil.tooBusyForBots(request)) { return HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
   		DataSource dataSource = null;
         Connection connection = null;

@@ -22,10 +22,15 @@
 <br><br><br>
 
 <h2>Current Statistics:</h2>                    
-<br><b data-stat="valid-species"><%= A.commaFormat(TaxonMgr.getValidSpeciesCount()) %> valid species + ssp.</b>
+<% // The two live numbers come from the caches AntWeb loads in the minutes after a start; until then they are 0.
+   // Say so instead of showing 0 (2026-10-26: a test visit right after a restart saw "0 valid species").
+   int liveValidSpecies = TaxonMgr.getValidSpeciesCount();
+   int liveSpecimens = AntwebMgr.getSpecimensCount();
+   String starting = "<span data-stat=\"starting\">not yet available: AntWeb is starting (a few minutes after a restart); reload in a few minutes</span>"; %>
+<br><b data-stat="valid-species"><%= liveValidSpecies > 0 ? A.commaFormat(liveValidSpecies) : starting %> valid species + ssp.</b>
 <br>&nbsp;&nbsp;Valid ant (Formicidae) species and subspecies, fossils included. Names of other families and names not identified to genus are not counted.
  
-<br><br><b><%= A.commaFormat(AntwebMgr.getSpecimensCount()) %> specimen records</b>
+<br><br><b><%= liveSpecimens > 0 ? A.commaFormat(liveSpecimens) : starting %> specimen records</b>
 <br>&nbsp;&nbsp;Specimen records from Antweb's 21 collaborating institutions.
 
 <br><br><b><%= A.commaFormat(AntwebMgr.getImagedSpeciesCount()) %>  species + ssp. imaged </b>

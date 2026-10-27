@@ -25,10 +25,9 @@ public class BrowseAction extends DescriptionAction {
 
     private static final Log s_log = LogFactory.getLog(BrowseAction.class);
 
-    public static final int s_mapComparisonLimit = 2;
-    public static int s_mapComparisonCount = 0;
-    public static final int s_getComparisonLimit = 2;
-    public static int s_getComparisonCount = 0;
+    // Up to 2 of each comparison built at the same time for visitors who are not logged in (finding F2).
+    private static final ConcurrencyLimiter s_mapComparisonLimiter = new ConcurrencyLimiter(2);
+    private static final ConcurrencyLimiter s_getComparisonLimiter = new ConcurrencyLimiter(2);
 
     /*
     BrowseAction called with browseForm in session:
@@ -55,7 +54,7 @@ public class BrowseAction extends DescriptionAction {
         //AntwebSystem.cpuCheck();
 
         // 1st check without connection.
-        if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+        if (HttpUtil.tooBusyForBots(request)) { return HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
 
         ActionForward a = Check.init(Check.TAXON, request, mapping); if (a != null) return a;
@@ -238,21 +237,25 @@ public class BrowseAction extends DescriptionAction {
 
         Connection connection = null;
         String dbMethodName = DBUtil.getDbMethodName("BrowseAction.execute()");
+        ConcurrencyLimiter comparisonLimiter = null;
+        boolean loggedIn = LoginMgr.getAccessLogin(request) != null;
 
         try {
         
-          if ("mapComparison".equals(cacheType)) {
-            ++s_mapComparisonCount;
-            if (s_mapComparisonCount > s_mapComparisonLimit) {
+          if ("mapComparison".equals(cacheType) && !loggedIn) {
+            if (s_mapComparisonLimiter.tryAcquire()) {
+              comparisonLimiter = s_mapComparisonLimiter;
+            } else {
               message = "Simultaneous map comparison limit exceeded.  Please try again later, or log in for unrestricted access.";  // message to bots
               request.setAttribute("message", message);
               //s_log.warn("execute() message:" + message);
               return mapping.findForward("message");
             }
           }
-          if ("getComparison".equals(cacheType)) {
-            ++s_getComparisonCount;
-            if (s_getComparisonCount > s_getComparisonLimit) {
+          if ("getComparison".equals(cacheType) && !loggedIn) {
+            if (s_getComparisonLimiter.tryAcquire()) {
+              comparisonLimiter = s_getComparisonLimiter;
+            } else {
               message = "Simultaneous get comparison limit exceeded.  Please try again later, or log in for unrestricted access.";  // message to bots
               request.setAttribute("message", message);
               //s_log.warn("execute() message:" + message);
@@ -278,7 +281,7 @@ public class BrowseAction extends DescriptionAction {
           SessionRequestFilter.processRequest(request, connection);
 
 		  // 2nd check with connection.
-          if (HttpUtil.tooBusyForBots(connection, request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+          if (HttpUtil.tooBusyForBots(connection, request)) { return HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
 		  TaxonDb taxonDb = new TaxonDb(connection);
 
@@ -585,8 +588,7 @@ We are showin the full map of ponerinae for every adm1.
         } finally {
 //		  ResourceTracker.remove(dbMethodName + " " + target);
 
-            if ("mapComparison".equals(cacheType)) --s_mapComparisonCount;
-            if ("getComparison".equals(cacheType)) --s_getComparisonCount;
+            if (comparisonLimiter != null) comparisonLimiter.release();
         
             QueryProfiler.profile(cacheType, startTime);	        
             if (!DBUtil.close(connection, this, dbMethodName)) {
