@@ -204,5 +204,4 @@ if (size < 1) { %>
 </form>
 </logic:equal>
 
-<%= "<!-- AdvancedSearch query:" + AdvancedSearch.getQuery() + "'-->" %>
 

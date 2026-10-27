@@ -232,9 +232,22 @@ public class ImageUploaded {
           }
           setShot(shot.toLowerCase());
         } else {
-          setShot(fileName.substring(u1 + 1, u2).toLowerCase());
+          // The same shot types as without a number, and numbers from 1: an image the site can show.
+          String shot = fileName.substring(u1 + 1, u2);
+          if (!Arrays.asList(SHOT_TYPES).contains(shot)) {
+             message = "Unsupported shot type";
+             setErrorMessage(message);
+             return message;
+          }
+          setShot(shot.toLowerCase());
           String num = fileName.substring(u2 + 1, period);
-          setNumber(Integer.parseInt(num));
+          int number = Integer.parseInt(num);
+          if (number < 1) {
+             message = "Image number must be 1 or more";
+             setErrorMessage(message);
+             return message;
+          }
+          setNumber(number);
         }
         String ext = fileName.substring(period + 1).toLowerCase();
         ext = ext.toLowerCase();
@@ -256,7 +269,15 @@ public class ImageUploaded {
     return message;
   }
 
+  // Set when one of the four sizes could not be made (genImages()); the image is then not saved.
+  private boolean genFailed = false;
+
+  public boolean isGenFailed() {
+      return genFailed;
+  }
+
   public String genImages() {
+        genFailed = false;
         String message = "";
         String specimenDir = imagesDir + getCode();
         File specimenDirFile = new File(specimenDir);
@@ -305,12 +326,16 @@ public class ImageUploaded {
             Files.move(tempFile, Path.of(imagePath), REPLACE_EXISTING);
 
         } catch (CommandException e) {
+            genFailed = true;
             AntwebUtil.log("im4java test e:" + e + " imageName:" + imageName + " imagePath:" + imagePath + " tags:" + tags);
         } catch (IOException e) {
+            genFailed = true;
             AntwebUtil.log("im4java test 2e:" + e);
         } catch (InterruptedException e) {
+            genFailed = true;
             AntwebUtil.log("im4java test 3e:" + e);
         } catch (IM4JavaException e) {
+            genFailed = true;
             AntwebUtil.log("im4java test 4e:" + e);
         }
         return message;

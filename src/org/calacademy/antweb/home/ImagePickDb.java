@@ -69,11 +69,25 @@ public class ImagePickDb extends AntwebDb {
       if (taxon.isSpeciesOrSubspecies()) {
  	    taxonNameClause = " taxon_name = " + DBUtil.sqlQuote(taxon.getTaxonName());
       } else {
- 	    taxonNameClause = " taxon_name like " + DBUtil.sqlQuote(taxon.getTaxonName() + "%");
+ 	    taxonNameClause = higherTaxonClause(taxon.getRank(), taxon.getTaxonName());
         //s_log.warn("getDefaultSpecimen() caste:" + caste + " rank:" + taxon.getRank() + " taxonName:" + taxon.getTaxonName());
         //return null;
       }
       return getDefaultSpecimen(caste, taxonNameClause);
+    }
+
+    /**
+     * The taxon_prop rows of a genus or subfamily and the names under it. A genus is its own name or its name
+     * followed by a space (its species): a plain prefix also matched a longer genus of the same subfamily
+     * (myrmicinaepheidole% matched myrmicinaepheidologeton ...), whose image then stood for the genus.
+     * LIKE wildcards in the name are escaped.
+     */
+    public static String higherTaxonClause(String rank, String taxonName) {
+      String like = taxonName == null ? "" : taxonName.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+      if (org.calacademy.antweb.Rank.GENUS.equals(rank)) {
+        return " (taxon_name = " + DBUtil.sqlQuote(taxonName) + " or taxon_name like " + DBUtil.sqlQuote(like + " %") + ")";
+      }
+      return " taxon_name like " + DBUtil.sqlQuote(like + "%");
     }
     public String getDefaultSpecimenForTaxon(String caste, String taxonName) throws SQLException {
         // Caste.getPropsClause only produces fixed text; the taxon name is bound.

@@ -14,7 +14,8 @@
 <jsp:useBean id="taxon" scope="session" class="org.calacademy.antweb.Taxon" />
 
 <jsp:useBean id="specimen" scope="session" class="org.calacademy.antweb.Specimen" />
-<jsp:setProperty name="specimen" property="*" />
+<%-- No jsp:setProperty property="*" on the taxon and specimen beans: the action fills them, and request
+     values must never overwrite what the page shows. --%>
 
 <logic:present parameter="shot">
   <bean:parameter id="shot" name="shot" />
@@ -34,6 +35,8 @@ if (AntwebProps.isDevMode()) AntwebUtil.log("oneView-body.jsp");
     labelMap.put("Ventral","v");
  
     String shot = (String) pageContext.getAttribute("shot");
+    // Only the five view names: the value is written into the page.
+    if (shot == null || !labelMap.containsKey(shot)) shot = "Head";
 
 if (AntwebProps.isDevMode()) AntwebUtil.log("oneView-body.jsp shot:" + shot); 
 
@@ -66,7 +69,6 @@ function changeView(newView, linkParams, showRank) {
 <!-- oneView-body.jsp -->
 
 <jsp:useBean id="showTaxon" scope="session" class="org.calacademy.antweb.Taxon" />
-<jsp:setProperty name="taxon" property="*" />
 
 <!-- jsp:useBean id="mykids" scope="session" class="java.util.ArrayList"/ -->
 

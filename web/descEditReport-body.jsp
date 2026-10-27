@@ -46,11 +46,11 @@
           antPage = descEdit.getAntPage(); %>
           <div class="browse_col_one"><%= descEdit.getAntLink() %></div>
 <%     } %>
-       <div class="browse_col_two"><%= descEdit.getTitle() %></div>
+       <div class="browse_col_two"><%= org.calacademy.antweb.util.Html.esc(descEdit.getTitle()) %></div>
        <div class="browse_col_three"><%= descEdit.getCreated() %></div>
 <%
        if (descEdit.getAccessLogin() != null) { %>
-           <div class="browse_col_four"><%= descEdit.getAccessLogin().getName() %></div>
+           <div class="browse_col_four"><%= org.calacademy.antweb.util.Html.esc(descEdit.getAccessLogin().getName()) %></div>
 <%        } %>
     <div class="clear"></div>
     <hr></hr>

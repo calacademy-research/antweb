@@ -11,7 +11,7 @@
 <jsp:useBean id="taxon" scope="session" class="org.calacademy.antweb.Taxon" /> 
 
 <jsp:useBean id="specimen" scope="session" class="org.calacademy.antweb.Specimen" />
-<jsp:setProperty name="specimen" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-27): the action fills the bean; request values must not overwrite what the page shows. --%>
 
 <script type="text/javascript">
 <!--

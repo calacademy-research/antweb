@@ -432,7 +432,7 @@ if (casteValue == null) casteValue = "undefined";
 <li><b>Date determined: </b></li>
 <li><%= Html.esc(specimen.getDateDetermined()) %>
   <% if (LoginMgr.isLoggedIn(request) && specimen.getDateDeterminedStr() != null 
-       && !specimen.getDateDetermined().equals(specimen.getDateDeterminedStr())) { %>
+       && !java.util.Objects.equals(specimen.getDateDetermined(), specimen.getDateDeterminedStr())) { %>
        (Input as: <%= Html.esc(specimen.getDateDeterminedStr()) %>)<% } 
    %>
 </li>

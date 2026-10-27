@@ -181,13 +181,13 @@
       }
       if (imageUploaded.getErrorMessage() != null) {
 A.log("imagerUploadReport-body.jsp fileName:" + imageUploaded.getFileName() + " errorMessage:" + imageUploaded.getErrorMessage() + " flag:" + flag);      
-        flag = " <font color=red>" + imageUploaded.getErrorMessage() + "</font>";
+        flag = " <font color=red>" + Html.esc(imageUploaded.getErrorMessage()) + "</font>";
       }
       String specimenLink = ""; //imageUploaded.getDisplayName();
-      String tifLink = imageUploaded.getFileName();
+      String tifLink = Html.esc(imageUploaded.getFileName());
       if (imageUploaded.getIsContinueUpload()) {
         specimenLink = "<a href='" + AntwebProps.getDomainApp() + "/bigPicture.do?code=" + imageUploaded.getCode() + "&shot=" + imageUploaded.getShot() + "&number=" + imageUploaded.getNumber() + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width=13></a>";
-        tifLink = "<a href='" + AntwebProps.getDomainApp() + "/images/" + imageUploaded.getCode() + "/" + imageUploaded.getFileName() + "'>" + imageUploaded.getFileName() + "</a>";
+        tifLink = "<a href='" + AntwebProps.getDomainApp() + "/images/" + Html.escAttr(imageUploaded.getCode()) + "/" + Html.escAttr(imageUploaded.getFileName()) + "'>" + Html.esc(imageUploaded.getFileName()) + "</a>";
       }
 
       %>
@@ -277,7 +277,7 @@ A.log("imagerUploadReport-body.jsp fileName:" + imageUploaded.getFileName() + " 
    %>
     <ul>
         <li><b><%= i %>: </b></li>
-        <li><%= imgDir %></li>        
+        <li><%= Html.esc(imgDir) %></li>        
     </ul>
 <% } %>
         </li>

@@ -92,7 +92,7 @@
            java.util.Collections.sort(artists, Artist.ArtistNameComparator);
            for (Artist artist : artists) { %>
 
-             <option value="<%= artist.getId() %>"><%= artist.getName() %></option>
+             <option value="<%= artist.getId() %>"><%= Html.esc(artist.getName()) %></option>
 
         <% } %>
 

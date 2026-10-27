@@ -47,7 +47,8 @@ for d in \
     /antweb/deploy/dist
 do
   [ -d "$d" ] || continue
-  if ! find "$d" -xdev ! -user "$U" -exec chown -h "$U:$G" {} +; then
+  # A regular file with more than one hard link is skipped: tomcat could link a root file (outside these trees) here.
+  if ! find "$d" -xdev ! -user "$U" \( ! -type f -o -links 1 \) -exec chown -h "$U:$G" {} +; then
     echo "antweb-fix-perms: could not chown everything under $d" >&2
     status=1
   fi

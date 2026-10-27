@@ -81,12 +81,19 @@ java.lang.String length = "50";
 if ((request.getParameter("offset") != null) && (request.getParameter("offset").length() < 8)) {
 	offset = request.getParameter("offset");
 }
-int intOffset = Integer.parseInt(offset);
+// Not a number, negative or zero: the defaults (a length of 0 divided by zero below).
+int intOffset = 0;
+try { intOffset = Math.max(0, Integer.parseInt(offset.trim())); } catch (NumberFormatException e) { intOffset = 0; }
+offset = String.valueOf(intOffset);
 
 if ((request.getParameter("length") != null) && (request.getParameter("length").length() < 8)) {
 	length = request.getParameter("length");
 }
-int intLength = Integer.parseInt(length);
+int intLength = 50;
+try { intLength = Integer.parseInt(length.trim()); } catch (NumberFormatException e) { intLength = 50; }
+if (intLength < 1) intLength = 50;
+if (intLength > 1000) intLength = 1000;
+length = String.valueOf(intLength);
 %>
 
 <div id="page_contents">

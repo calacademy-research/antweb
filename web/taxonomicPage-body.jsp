@@ -127,12 +127,13 @@
       if (canShowSpeciesListTool) { 
         String searchCriteria = "";
         if (overview instanceof Geolocale) {
-          if (overview instanceof org.calacademy.antweb.geolocale.Country) searchCriteria = "&refSpeciesListType=advSearch&doSearch=searchResults&country=" + overview.getName();
-          if (overview instanceof Adm1) searchCriteria = "&refSpeciesListType=advSearch&doSearch=searchResults&country=" + ((Adm1) overview).getParent() + "&adm1=" + overview.getName();
+          // Encoded: a place name such as Cote d'Ivoire must not end the link early.
+          if (overview instanceof org.calacademy.antweb.geolocale.Country) searchCriteria = "&refSpeciesListType=advSearch&doSearch=searchResults&country=" + Html.url(overview.getName());
+          if (overview instanceof Adm1) searchCriteria = "&refSpeciesListType=advSearch&doSearch=searchResults&country=" + Html.url(((Adm1) overview).getParent()) + "&adm1=" + Html.url(overview.getName());
         }
         String mapSpeciesList1Name = (overview instanceof Adm1) ? "" + ((Adm1) overview).getId() : overview.getName();
      %>
-<a href='<%= AntwebProps.getDomainApp() %>/speciesListTool.do?mapSpeciesList1Name=<%= mapSpeciesList1Name %><%= searchCriteria %>&isFreshen=true'>Edit Species List</a>
+<a href='<%= Html.escAttr(AntwebProps.getDomainApp() + "/speciesListTool.do?mapSpeciesList1Name=" + Html.url(mapSpeciesList1Name) + searchCriteria + "&isFreshen=true") %>'>Edit Species List</a>
   <%
 
         thisTarget = HttpUtil.removeParam(thisTarget, "specimen");
@@ -147,11 +148,11 @@
         //A.log("taxonomicPage-body.jsp taxaPage:" + taxaPage + " thisTarget:" + thisTarget);
 
         if (!taxaPage.isWithSpecimen()) { %>
-<a href='<%= thisTarget %>&specimen=true' title='Show additional taxa from specimen data.'>Show Specimen Taxa</a>
+<a href='<%= Html.escAttr(thisTarget + "&specimen=true") %>' title='Show additional taxa from specimen data.'>Show Specimen Taxa</a>
      <% } else { 
           thisTarget = HttpUtil.removeParam(thisTarget, "specimen");
     %>
-<a href='<%= thisTarget %>&specimen=false' title='hide additional taxa from specimen data'>Hide Specimen Taxa</a>
+<a href='<%= Html.escAttr(thisTarget + "&specimen=false") %>' title='hide additional taxa from specimen data'>Hide Specimen Taxa</a>
      <% }
       }
       // Public, as on the overview page (Brian 2026-10-20): the specimen records of this place, any name.

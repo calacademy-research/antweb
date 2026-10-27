@@ -28,7 +28,9 @@ jobs:
         run: |
           for f in Caddyfile Caddyfile.staging; do
             docker run --rm -v "$PWD/docker/caddy:/etc/caddy:ro" antweb/caddy:dev \
-              caddy adapt --config /etc/caddy/$f --adapter caddyfile > /dev/null && echo "$f OK"
+              caddy adapt --config /etc/caddy/$f --adapter caddyfile > /dev/null \
+              || { echo "::error::$f is not a valid Caddyfile"; exit 1; }
+            echo "$f OK"
           done
 
       - name: JSP allow-list is the same in Caddyfile and Caddyfile.common
@@ -140,7 +142,23 @@ jobs:
             CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
             mkdir -p /tmp/tc
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/SecurityBatch7Test.java
-            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.SecurityBatch7Test
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.SecurityBatch7Test > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (" /tmp/out.txt
+          '
+
+      - name: Java unit tests of image saving (one transaction, file name rules, genus default image) (2026-10-27)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/home/ImagePickDb.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/ImageUploadSaveTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.ImageUploadSaveTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the 2026-10-19 hardening (page.do redirect)
@@ -260,6 +278,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/MessageLogTest.java /t/org/calacademy/antweb/util/MountCheckTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.MountCheckTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
+            grep -q "^OK (" /tmp/out.txt
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.MessageLogTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (11 tests)" /tmp/out.txt
@@ -381,7 +400,9 @@ jobs:
             CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
             mkdir -p /tmp/tc
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/UploadSchedulerHardeningTest.java
-            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.UploadSchedulerHardeningTest
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.UploadSchedulerHardeningTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (" /tmp/out.txt
           '
 
       - name: Java unit tests of the Curate page cleanup (named queries, developer role, museum recount, site warning)
@@ -545,6 +566,9 @@ jobs:
 
       - name: Claude audit rotation (tests/unit/test_claude_audit.py)
         run: python3 tests/unit/test_claude_audit.py
+
+      - name: Public pages, search, image upload and server scripts, fixes of 2026-10-27 (tests/unit/test_page_ops_fixes.py)
+        run: python3 tests/unit/test_page_ops_fixes.py
 
       - name: Login updates keep login.created, no delete of all page text, page titles, admin links on phones, busy answers returned, simultaneous limits (tests/unit/test_small_fixes.py)
         run: python3 tests/unit/test_small_fixes.py

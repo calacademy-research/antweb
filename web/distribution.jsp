@@ -35,7 +35,7 @@
           lastRegion = region;
         }
         //A.log("taxonPage-body.jsp aGeolocale:" + aGeolocale + " distributionHtml:" + distributionHtml);        
-        if (overview.equals(aGeolocale.getName())) { 
+        if (overview != null && aGeolocale.getName() != null && aGeolocale.getName().equals(overview.getName())) {   // the page's own place 
           regionHtml += "<font color=green>" + aGeolocale.getName() + "</font>";
         } else {
           regionHtml += "<a href='" + AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&" + aGeolocale.getParams() + "'>" + aGeolocale.getName() + "</a>";
