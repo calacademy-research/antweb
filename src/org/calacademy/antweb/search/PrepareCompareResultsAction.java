@@ -141,7 +141,7 @@ public final class PrepareCompareResultsAction extends PrepareAction {
          This list will have potentially many more images because those images, though they belong to the taxon
          are of specimens not necessarily in the region specified in the criteria.  */
          
-        // B68 (2026-10-27): each name was looked up with Taxon.setHasImages(connection), which has no place to count
+        // B75 (2026-10-27): each name was looked up with Taxon.setHasImages(connection), which has no place to count
         // from and failed (NullPointerException), so Compare of a search by species with any species gave the error
         // page. Imaged now means a photo of the ant anywhere in AntWeb (StatisticsDb.antImagedNames, the Q12 rule),
         // read for all the names at once.

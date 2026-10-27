@@ -349,9 +349,9 @@ def test_compare_and_map_preparations_count_what_they_list():
         m = re.search(pattern, ns.text_of(h.group(1)) if h else "")
         listed = len(ns.list_rows(html))
         if not m:
-            # B68: when the preparation leaves no row the page still prints its count ("0 imaged species").
+            # B75: when the preparation leaves no row the page still prints its count ("0 imaged species").
             title = re.search(r"<title>(.*?)</title>", html, re.S)
-            wrong.append(f"{tool} species: header {ns.text_of(h.group(1)) if h else None!r}, {listed} rows listed (B50, B68);"
+            wrong.append(f"{tool} species: header {ns.text_of(h.group(1)) if h else None!r}, {listed} rows listed (B50, B75);"
                          f" page title {ns.text_of(title.group(1)) if title else None!r}"
                          + ("; 'Sorry, nothing matches'" if "Sorry, nothing matches" in html else ""))
             continue
@@ -520,7 +520,7 @@ def test_subtaxon_total_is_the_sum_of_the_rows_of_every_kind_of_place():
     every kind; rank genus = the place's Species, rank subfamily = Genera (validated by the count check), rank species
     <= Specimens (names not identified to genus are in Specimens only); and on browse.do of a genus of the day's
     country = the sum of its rows, its rows = the genus row's "N Species". A total below the place's number is finding
-    B69 (open, expected failure): names under no row of the list; a total above it fails."""
+    B76 (open, expected failure): names under no row of the list; a total above it fails."""
     s, _token, _id = login("admin")
     wrong, checked, known = [], [], []
     for p in ns.one_place_of_each_kind("subtaxon"):
@@ -540,7 +540,7 @@ def test_subtaxon_total_is_the_sum_of_the_rows_of_every_kind_of_place():
                 wrong.append(f"{p} rank={rank}: Subtaxon total {total}, rows add up to {summed}")
             expected = stats.get(stat, 0)
             if rule == "=" and total < expected:
-                # B69: the place counts every counted row of the rank; a row counts under its parent row only when its
+                # B76: the place counts every counted row of the rank; a row counts under its parent row only when its
                 # parent (taxon.parent_taxon_name) is a row of the list, so names with no parent, or whose parent row
                 # is not on the place's list, are in the place number and under no row of the list.
                 known.append(f"{p} rank={rank}: Subtaxon total {total}, place {stat} {expected}")
@@ -564,7 +564,7 @@ def test_subtaxon_total_is_the_sum_of_the_rows_of_every_kind_of_place():
         pytest.skip("no list with a Subtaxon total " + ns.day_note())
     assert not wrong, f"{len(checked)} lists {ns.day_note()} (place numbers of the last nightly run):\n" + "\n".join(wrong + known)
     if known:
-        pytest.xfail("B69 (open): place numbers count names under no row of the list:\n" + "\n".join(known))
+        pytest.xfail("B76 (open): place numbers count names under no row of the list:\n" + "\n".join(known))
 
 
 # ----------------------------------------------------------------------------------------------- row 19

@@ -197,7 +197,7 @@ def test_image_upload_report_counts_equal_their_files():
         rep = _image_report(report)
         where = f"imageUploadReport.do?id={bid}"
         if rep["images"] is None:
-            # B67: every report of a batch from another year than the newest copyright row failed (error page).
+            # B74: every report of a batch from another year than the newest copyright row failed (error page).
             title = re.search(r"<title>(.*?)</title>", report, re.S)
             title = " ".join(title.group(1).split()) if title else None
             wrong.append(f"{where}: no Images number (page title {title!r})")
