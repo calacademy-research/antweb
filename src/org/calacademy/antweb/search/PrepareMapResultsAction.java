@@ -167,9 +167,13 @@ Request objects:
             rset = stmt.executeQuery(theQuery);
 
             if (rset.next() && !hasInfo) {
-                int lat = rset.getInt(1);
-                int lon = rset.getInt(2);
-                if (lat != 0 && lon != 0)
+                // Read as decimals (B53, 2026-10-27): getInt cut the coordinates to whole degrees, so every specimen
+                // within one degree of the equator or of the prime meridian counted as not georeferenced.
+                double lat = rset.getDouble(1);
+                boolean noLat = rset.wasNull();
+                double lon = rset.getDouble(2);
+                boolean noLon = rset.wasNull();
+                if (!noLat && !noLon && lat != 0 && lon != 0)
                   hasInfo = true;
             }
         } catch (SQLException e) {

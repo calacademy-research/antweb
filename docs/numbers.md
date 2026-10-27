@@ -109,7 +109,7 @@ inventory 2026-10-20: 9, 7, 102).
 | 16 | statsPage.do | Imaged Species per taxon status | live (ImageDb.getImageTaxonStats): names of any rank with a specimen that has any image (labels too), by taxon status; only seven statuses shown | yes | inv:stats.imaged; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
 | 17 | statsPage.do | Bioregion Data (4 per bioregion) | live over bioregion_taxon, ants only (StatisticsDb.listCountSql; Q7 2026-10-22: was every family, B31) | yes | inv:stats.bioregions; inv:stats.nonants; junit:NumberChecksTest#testStatsPagePlaceQueriesMatchThePageCode; junit:NumberChecksTest#testStatsPageBioregionAndMuseumData; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
 | 18 | statsPage.do | Museum Data, Valid Extant (4 per museum) | live over museum_taxon, ants only (as #17) | yes | inv:stats.museums; inv:stats.nonants; junit:NumberChecksTest#testStatsPagePlaceQueriesMatchThePageCode; junit:NumberDecisionsDbTest#testStatsPageAndHomeCountAntsIdentifiedToGenusOnly; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
-| 19 | statsPage.do | Museum Data, Valid Fossil (4 per museum) | live over museum_taxon, ants only (no independent recount of fossils: the check runs the page's rule and its own recount for all museums; relations to the museum page and Global Data) | partly | inv:stats.museums; inv:stats.nonants; junit:NumberChecksTest#testStatsPagePlaceQueriesMatchThePageCode; e2e:test_count_check.py::test_statspage_tables_equal_the_recount |
+| 19 | statsPage.do | Museum Data, Valid Fossil (4 per museum) | live over museum_taxon, ants only; since 2026-10-27 compared end-to-end with the headers of the museum's lists with statusSet valid fossil (TaxaPage, another code path) on a daily sample of museums (two with fossils, one without) | yes | inv:stats.museums; inv:stats.nonants; junit:NumberChecksTest#testStatsPagePlaceQueriesMatchThePageCode; e2e:test_count_check.py::test_statspage_tables_equal_the_recount; e2e:test_numbers_search.py::test_statspage_valid_fossil_equals_the_museum_lists |
 | 20 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Subfamilies | subfamily rows on the place's list, counted status (PlaceTotals.listedCountSql); museums and bioregions were roll-up sums until 2026-10-21 | yes | inv:place.totals.subfamily; cc:place totals; junit:PlaceTotalsDbTest#testFinishWritesEveryTotalFromTheList |
 | 21 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Genera | genus rows on the list, counted status (PlaceTotals); was sum(genus_count) of the subfamily rows | yes | inv:place.totals.genus; junit:PlaceTotalsDbTest#testFinishWritesEveryTotalFromTheList |
 | 22 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Species / subspecies | species and subspecies rows on the list, counted status, ants (PlaceTotals); was sum(species_count) of the genus rows | yes | inv:place.totals.species; junit:PlaceTotalsDbTest#testFinishWritesEveryTotalFromTheList |
@@ -135,7 +135,7 @@ inventory 2026-10-20: 9, 7, 102).
 | 42 | taxonomicPage.do, browse.do | Subfamily row N Genera | list row genus_count: its genus rows | yes | inv:list.subfamily; cc:genera |
 | 43 | taxonomicPage.do, browse.do | Global N Specimens | allantwebants proj_taxon specimen_count: all specimens of the name; rebuilt after uploads and, since 2026-10-21, after the nightly name update | yes | inv:global.specimens; inv:list.global; cc:global; junit:PlaceTotalsDbTest#testGlobalIsRecountedAfterTheNameUpdateMovedSpecimens |
 | 44 | taxonomicPage.do, browse.do | Images column N Images | list row image_count (set 4): images (labels included) of the place's specimens of the name; project rows reset first since 2026-10-21 | partly | cc:images; inv:list.images |
-| 45 | taxonomicPage.do, browse.do | Admin Subtaxon total | live sum of the shown rows | partly | e2e:test_count_check.py::test_subtaxon_totals_equal_the_place_numbers |
+| 45 | taxonomicPage.do, browse.do | Admin Subtaxon total | live sum of the shown rows; end-to-end since 2026-10-27 on the day's place of every kind: = the sum of the rows' numbers, rank genus = Species and rank subfamily = Genera of the place page, rank species at most Specimens; browse.do of a genus = the sum of its rows | yes | e2e:test_count_check.py::test_subtaxon_totals_equal_the_place_numbers; e2e:test_numbers_search.py::test_subtaxon_total_is_the_sum_of_the_rows_of_every_kind_of_place |
 | 46 | taxonomicPage.do, browse.do | browse header N Specimens / Species / Genera (M imaged) | live children (Overview.getOverviewCriteria); since 2026-10-26 on a different place of every kind every day: Species of a genus and Genera of a subfamily = the list row (validated by inv:list.genus, inv:list.subfamily) and the rows listed; Specimens of a species = the rows listed, and = the list row only after B15 (xfail) | yes | e2e:test_numbers_live.py::test_browse_header_and_hidden_totals_agree; e2e:test_numbers_lists.py::test_browse_headers_equal_the_list_rows; e2e:test_numbers_lists.py::test_species_browse_imaged_count_equals_the_specimens_with_images; e2e:test_numbers_lists.py::test_species_browse_counts_the_specimens_of_its_list_row |
 | 47 | taxonomicPage.do, browse.do | browse (Only the first N of M displayed) | live; N of "of N" = the header (2026-10-26); the page shows limit + 1 rows (B42, xfail) | yes | e2e:test_numbers_live.py::test_browse_header_and_hidden_totals_agree; e2e:test_numbers_lists.py::test_browse_limit_note_names_the_header_number; e2e:test_numbers_lists.py::test_browse_limit_shows_that_many_specimens |
 | 48 | taxonomicPage.do, browse.do | browse sub-taxon lines (genus, subfamily, family rows' counts) | list rows of genus, subfamily, family: sums of their child rows (CountDb crawl; every row reset first since 2026-10-21) | yes | inv:list.genus; inv:list.subfamily; inv:list.family; inv:list.images |
@@ -155,12 +155,12 @@ inventory 2026-10-20: 9, 7, 102).
 | 62 | description.do, images.do, comparisons | X with no image from this place (N) (labelled Non-imaged X until 2026-10-22) | live: children without images in this place's list (labels included); per place, so labelled so (Q12) | partly | e2e:test_numbers_live.py::test_unimaged_names_listed_match_their_number |
 | 63 | specimen, collection, locality pages | Specimen Image Count (admin) | specimen.image_count (set 4) | yes | inv:taxon.images |
 | 64 | specimen, collection, locality pages | specimenImages N Images | live: the specimen's images | partly | e2e:test_numbers_live.py::test_specimen_images_count_equals_the_api |
-| 65 | specimen, collection, locality pages | collection N specimens of M species | live | partly | e2e:test_numbers_live.py::test_collection_and_locality_counts_equal_their_lists |
-| 66 | specimen, collection, locality pages | locality N collections | live | partly | e2e:test_numbers_live.py::test_collection_and_locality_counts_equal_their_lists |
-| 67 | search results | Advanced search N specimens (M imaged) | live, HTTP session | partly | e2e:test_numbers_live.py::test_search_counts_agree; e2e:test_download_guards.py::test_search_list_is_paged_and_fast |
-| 68 | search results | Advanced search by taxon N species (from M specimens) | live, session | partly | e2e:test_numbers_live.py::test_search_counts_agree |
-| 69 | search results | Compare / map preparation counts | live | partly | e2e:test_numbers_live.py::test_search_counts_agree |
-| 70 | search results | multiTaxaComparison N specimens | live | partly | e2e:test_numbers_live.py::test_comparison_of_chosen_specimens_counts_them |
+| 65 | specimen, collection, locality pages | collection N specimens of M species | live; N = the search by the collection code and its specimens, M = distinct genus and species of the specimens' API records, names not identified to genus left out (B52, fixed 2026-10-27); daily sample of collections | yes | e2e:test_numbers_live.py::test_collection_and_locality_counts_equal_their_lists; e2e:test_numbers_search.py::test_collection_counts_equal_a_search_and_the_api |
+| 66 | specimen, collection, locality pages | locality N collections | live; one row per collection code since 2026-10-27 (B51); N = the rows = the distinct collection codes of the locality's specimens (search by its locality code); daily sample of localities | yes | e2e:test_numbers_live.py::test_collection_and_locality_counts_equal_their_lists; e2e:test_numbers_search.py::test_locality_collections_equal_the_codes_of_its_specimens |
+| 67 | search results | Advanced search N specimens (M imaged) | live, HTTP session; N = the API's records of the same country, genus and statuses, M = the page's rows whose API imageCount > 0; daily sample of country and genus | yes | e2e:test_numbers_live.py::test_search_counts_agree; e2e:test_download_guards.py::test_search_list_is_paged_and_fast; e2e:test_numbers_search.py::test_search_total_and_imaged_count_equal_the_api |
+| 68 | search results | Advanced search by taxon N species (from M specimens) | live, session; S = the rows = distinct names of the API's records, M = the specimen search's N; names not identified to genus counted (B54, xfail) | yes | e2e:test_numbers_live.py::test_search_counts_agree; e2e:test_numbers_search.py::test_search_by_species_counts_the_names_of_its_specimens; e2e:test_numbers_search.py::test_search_by_species_leaves_out_names_not_identified_to_genus |
+| 69 | search results | Compare / map preparation counts | live (log in needed); specimens: the page's rows with an image or API coordinates; species: the header = the rows listed (B50, fixed 2026-10-27), coordinates read as decimals (B53, fixed 2026-10-27) | yes | e2e:test_numbers_live.py::test_search_counts_agree; e2e:test_numbers_search.py::test_compare_and_map_preparations_count_what_they_list |
+| 70 | search results | multiTaxaComparison N specimens | live (log in needed); N = the specimens chosen, and those are the specimens shown | yes | e2e:test_numbers_live.py::test_comparison_of_chosen_specimens_counts_them; e2e:test_numbers_search.py::test_comparison_counts_the_chosen_specimens |
 | 71 | search results | Recent images N Images | live | partly | e2e:test_numbers_live.py::test_recent_images_count_equals_the_rows_shown |
 | 72 | search results | Bay Area search N records | no longer shown: /bayAreaSearch was removed (2026-10-19), so the page cannot be reached | yes | e2e:test_actions.py::test_removed_actions_stay_removed |
 | 73 | countries.do, regions.do, subregions.do, adm1s.do, projects.do, museums.do, bioregions.do | Valid species column (labelled Species until 2026-10-21) | = #23 | yes | inv:place.totals.valid; e2e:test_numbers_pages.py::test_list_of_countries_labels_valid_species |
@@ -497,6 +497,39 @@ Found while doing this (2026-10-27, end-to-end tests of the API counts, rows 101
 - **B57** (fixed 2026-10-27) `/unimagedGeolocaleTaxa?byCaste=true` was ignored: `true` was turned into the number 1
   and then compared with the text '1' (the documented byCaste=1 worked). Tests:
   `e2e:test_numbers_api_meta.py::test_unimaged_by_caste_counters`, `unit:test_api_counts.py::test_by_caste_true_is_by_caste`.
+
+Found while doing this (2026-10-27, end-to-end tests of rows 19, 45, 65 to 70, `tests/e2e/test_numbers_search.py`):
+
+- **B50** (fixed 2026-10-27) after Compare or Map of a search by species, the list holds the imaged (compare) or
+  georeferenced (map) species only, but the header kept the search's "S Species (from N specimens).":
+  `PrepareCompareResultsAction` and `PrepareMapResultsAction` put their count in a request attribute that
+  `advancedSearchResultsByTaxon-body.jsp` never read. The page now shows the preparation's count for species. Tests:
+  `e2e:test_numbers_search.py::test_compare_and_map_preparations_count_what_they_list`,
+  `tests/unit/test_numbers_search_fixes.py`.
+- **B51** (fixed 2026-10-27) locality.do "N collections": `LocalityDb.getLocality` listed `select distinct` collection
+  code, habitat, method, coordinates, collector, microhabitat and dates, so a collection whose specimens differ in one of
+  these was listed and counted once per value, and specimens without a collection code made a row of their own. Now one
+  row per collection code (`group by sp.collectioncode`, codes only). Tests:
+  `e2e:test_numbers_search.py::test_locality_collections_equal_the_codes_of_its_specimens`,
+  `tests/unit/test_numbers_search_fixes.py`.
+- **B52** (fixed 2026-10-27) collection.do "of M species" counted every genus + species string of its specimens,
+  names not identified to genus included (`(indet) ...`), against the rule of 2026-10-22. `collection-body.jsp` now
+  leaves them out (`PlaceTotals.isIdentifiedToGenus`). Tests:
+  `e2e:test_numbers_search.py::test_collection_counts_equal_a_search_and_the_api`, `tests/unit/test_numbers_search_fixes.py`.
+- **B53** (fixed 2026-10-27) map preparation (`PrepareMapResultsAction.hasGeoRefInfo`) read the coordinates with
+  `getInt`, so a specimen within one degree of the equator or of the prime meridian (latitude or longitude between -1
+  and 1) counted as not georeferenced and was left out of "N georeferenced specimens". Now read as decimals, a missing
+  value is not georeferenced. Tests: `e2e:test_numbers_search.py::test_compare_and_map_preparations_count_what_they_list`,
+  `tests/unit/test_numbers_search_fixes.py`.
+- **B54** (open) the search by species ("S Species (from N specimens).", `AdvancedSearchResults.getSpeciesList`) counts
+  every genus + species (+ subspecies) of the specimens found, names not identified to genus included. Fix: skip names
+  whose genus is not identified (`PlaceTotals.isIdentifiedToGenus`) in `getSpeciesList` (`AdvancedSearchResults.java` line 78); it is also the species list of
+  Compare, Map and the field guide of a search, so decide for all of them together. Test:
+  `e2e:test_numbers_search.py::test_search_by_species_leaves_out_names_not_identified_to_genus` (xfail).
+- Not a number, for the record: `test_numbers_live.py::test_collection_and_locality_counts_equal_their_lists` and
+  `test_comparison_of_chosen_specimens_counts_them` could not fail as written (collection.do links its specimens as
+  `specimen.do?name=`, the search rows' checkboxes have `class` before `name`, and the compare pages need a login), and
+  `test_search_counts_agree` read a compare count that no page prints. The new tests above check these numbers.
 
 **First run on staging (2026-10-22, full e2e with #226; the nightly run before it had the code from before #216):**
 
