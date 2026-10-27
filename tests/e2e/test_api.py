@@ -219,7 +219,7 @@ def test_valid_genus_filter_keeps_valid_genera():
 
 
 # The documentation page does not describe /measurements yet (finding, docs/flows/public-pages-findings.md).
-UNDOCUMENTED = {"measurements", "geoSpeciesStats"}  # geoSpeciesStats: described to admins only (its caste counts, finding F23)
+UNDOCUMENTED = {"geoSpeciesStats"}  # described to admins only; /measurements is described since 2026-10-26 (F16)
 
 
 @pytest.mark.parametrize("path", ["/api.do", "/apiV3.1.do"])
@@ -229,6 +229,13 @@ def test_documentation_page_names_every_route(path):
     assert "<title>AntWeb API" in r.text or "AntWeb API" in r.text[:2000], r.text[:300]
     missing = [name for name in ROUTES if name not in UNDOCUMENTED and f"/{name}?" not in r.text]
     assert not missing, f"{path}: routes not described: {missing}"
+
+
+def test_geo_species_stats_unknown_place_is_json_404():
+    """Finding F23 (fixed 2026-10-26): was the plain text "Geolocale not found" with HTTP 200."""
+    r = new_session().get(BASE_URL + "/v3.1/geoSpeciesStats?geolocaleName=zzAtlantis&up=1", timeout=max(TIMEOUT, 120))
+    assert r.status_code == 404, (r.status_code, r.text[:200])
+    assert r.json() == {"error": "Geolocale not found: zzAtlantis"}, r.text[:200]
 
 
 def _km(lat1, lon1, lat2, lon2):

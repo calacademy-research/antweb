@@ -480,9 +480,9 @@ public final class OverviewAction extends DescriptionAction {
           DBUtil.close(connection, this, dbMethodName);
       }
 
-      // This will not happen
-        s_log.error("execute() This shouold not happen.");
-        return null;
+      // Reached after a database error (2026-10-26, finding F17: it returned null, a blank page with HTTP 200).
+        request.setAttribute("message", "The page could not be built (database error). Please try again later.");
+        return mapping.findForward("message");
     }
 
     /**

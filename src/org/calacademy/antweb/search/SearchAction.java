@@ -24,7 +24,9 @@ public final class SearchAction extends DispatchAction {
     private static final Log s_log = LogFactory.getLog(SearchAction.class);
     private static final Log s_searchLog = LogFactory.getLog("searchLog");
 
-    public static int tempSpecimenSearchLimit = -1;
+    // Per thread (2026-10-26, finding F13): as a plain static int, an administrator's search (or a map built by
+    // the nightly run) raised the limit for every visitor's search running at the same moment.
+    private static final ThreadLocal<Integer> tempSpecimenSearchLimit = ThreadLocal.withInitial(() -> -1);
     public static int specimenSearchLimit = 50000;   // default can be overridden with setTempSpecimenSearchLimit()
     public static final int devSpecimenSearchLimit = 10000;
     public static final int noSpecimenSearchLimit = 1000000;
@@ -446,23 +448,23 @@ public final class SearchAction extends DispatchAction {
       specimenSearchLimit = limit;
     }
     public static void setTempSpecimenSearchLimit(int limit) {
-      tempSpecimenSearchLimit = limit;
+      tempSpecimenSearchLimit.set(limit);
     }
     public static void undoSetTempSpecimenSearchLimit() {
-      tempSpecimenSearchLimit = -1;
+      tempSpecimenSearchLimit.remove();
     }
     public static int getSpecimenSearchLimit() {
-      if (tempSpecimenSearchLimit > 0) return tempSpecimenSearchLimit;
+      int temp = tempSpecimenSearchLimit.get();
+      if (temp > 0) return temp;
       
       if (AntwebProps.isDevMode()) {
         return devSpecimenSearchLimit;
       } else {
-        if (tempSpecimenSearchLimit > 0) return tempSpecimenSearchLimit;
         return specimenSearchLimit;
       }
     }
     public static boolean isTempSpecimenSearchLimit() {
-        return tempSpecimenSearchLimit > 0;
+        return tempSpecimenSearchLimit.get() > 0;
     }    
 
 /*    private void finalizeOldResults(HttpSession session, String searchResultsType) {

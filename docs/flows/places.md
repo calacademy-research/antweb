@@ -30,7 +30,7 @@ Nothing is cached per request: species lists, maps and field guides are built fr
 | `getComparison.do?<taxon>&pr=d` | Images of the children side by side ("Comparison Tool - AntWeb") |
 | `mapComparison.do?<taxon>&pr=d` | Maps of the children ("Map Comparison - AntWeb") |
 | `bigMap.do?taxonName=formicinae&project=allantwebants` (`&countryName=`, `&adm1Name=`, `&geolocaleFocus=true`) | Map of a taxon in a place |
-| `bigMap.do?specimen=<code>`, `?locality=<code>`, `?collection=<code>`, `?countryName=<country>`, `?museumCode=<code>` | Other maps; title "Map of ... from AntWeb" |
+| `bigMap.do?specimen=<code>` (the specimen alone; until 2026-10-26 the first request of a session mapped its whole species, F9), `?locality=<code>`, `?collection=<code>`, `?countryName=<country>`, `?museumCode=<code>` | Other maps; title "Map of ... from AntWeb" |
 | `bigmap.do`, `fieldguide.do`, `mapcomparison.do` | Lower-case aliases |
 
 `pr=d|b|i` records which tab the tool was opened from (description, browse, images).
@@ -40,7 +40,7 @@ Nothing is cached per request: species lists, maps and field guides are built fr
 - **Place pages:** `OverviewAction.execute()` (one class for all place and list pages; form `OverviewForm`): `GeolocaleMgr` / `ProjectMgr` / `MuseumMgr` / `BioregionMgr` (in memory) find the place; `action=recalc` (curators, POST) recounts it (`GeolocaleDb.updateCounts`, `ProjTaxonCountDb`, `MuseumDb.populate`, `BioregionDb.populate`, `PlaceImageCountDb.updatePlace`); `saveDescriptionEdit()` / `prepareDescriptionEdit()` (page text); `ObjectMapDb.getGeolocaleMap()` / `getMuseumMap()` (the map); `setPlaceImages()` (`PlaceImageCountDb.read`, the image numbers). JSPs `country.jsp`, `adm1.jsp`, `region.jsp`, `subregion.jsp`, `bioregion.jsp`, `museum.jsp`, `project.jsp` share `overview-body.jsp` (statistics table `id="place-stats"`, species list links); the lists share `overviews-body.jsp`. `geolocale.do` redirects; `place.do` is `geolocale.PlaceNameAction` (search.md).
 - **Species lists:** `TaxaPageAction.execute()`: the place (`OverviewMgr`), `Rank.isValid(rank)`, `StatusSet.getStatusSet()`, `TaxaPage.fetchChildren(connection, overview, rank, withImages, withTaxa, withSpecimen, ...)` (the place's list joined to `taxon`); subspecies refused. JSP `taxonomicPage.jsp` + `taxonomicPage-body.jsp` (`common/overviewHeading.jsp` with the Field Guides menu, `taxonReportBody.jsp` rows) or `taxonomicPageImages-body.jsp`.
 - **Field guides:** `search.FieldGuideAction.execute()`: `Check.loginForFeature()` (anonymous: the explained log-in page, then back); the place; a taxon (`TaxonDb.getFullTaxon` -> `setChildren` / `setChildrenLocalized`) or a rank of the place (`TaxaPage.fetchChildren`); `FieldGuide.setMembers()` (images, maps, habitat summaries of each taxon). JSP `search/fieldGuide.jsp` + `fieldGuide-body.jsp`. From search results: `FieldGuideResultsAction`.
-- **Compare tools:** `BrowseAction` with `cacheType` getComparison or mapComparison ([taxon-pages.md](taxon-pages.md)): login required (`Login.MUST_LOGIN_MESSAGE`), the simultaneous limit, `setChildren(..., getChildImages, getChildMaps ...)`; mapComparison builds one `Map` per child. JSPs `comparison.jsp` + `comparison-body.jsp`, `mapComparison.jsp` + `mapComparison-body.jsp`. The form is session scope (`browseForm`).
+- **Compare tools:** `BrowseAction` with `cacheType` getComparison or mapComparison ([taxon-pages.md](taxon-pages.md)): login required (anonymous visitors get the explained log-in page with return, `Check.loginForFeature()`, since 2026-10-26, F15; before, `Login.MUST_LOGIN_MESSAGE`), the simultaneous limit, `setChildren(..., getChildImages, getChildMaps ...)`; mapComparison builds one `Map` per child. JSPs `comparison.jsp` + `comparison-body.jsp`, `mapComparison.jsp` + `mapComparison-body.jsp`. The form is session scope (`browseForm`).
 - **Maps:** `BigMapAction.execute()`: the place (`OverviewMgr`); `getMap()`: a taxon (`TaxonDb.getTaxon` -> `MapMgr.getMap(taxon, place)` or `new Map(taxon, place, connection, geolocaleFocus)`), a locality (`LocalityDb`), a collection (`CollectionDb`), a specimen (`SpecimenDb.exists`, `new Map(list)`), a geolocale or museum (`ObjectMapDb`); "No map found for target:..." otherwise. JSP `dynamicMap.jsp` + `dynamicMap-body.jsp` + `maps/googleMapInclude.jsp` (Leaflet; the popups are tested by test_site_links.py and tests/unit/test_map_popups.py). Bots get "Log In to see maps." instead of the map.
 
 ## Tables read
@@ -57,7 +57,7 @@ Message page, HTTP 200: "name:<name> not found." (country, region, subregion, ad
 
 ## Known issues
 
-[public-pages-findings.md](public-pages-findings.md) F2 (site-wide simultaneous limits), F9 (specimen map differs on reload), F11 (place parameters not encoded in tool links), F15 (comparisons' old log-in message), F18 (field guide limit and busy message), F19 (dead "chosen" code of the comparison).
+[public-pages-findings.md](public-pages-findings.md) F11 (place parameters not encoded in tool links, left). Fixed 2026-10-26: F2 (site-wide simultaneous limits), F9 (specimen map differed on reload), F15 (comparisons' old log-in message), F17 (a database error on a place page gave a blank page; now a message), F19 (dead "chosen" code of the comparison); F18 needed no change after F2.
 
 ## Tests
 

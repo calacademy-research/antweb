@@ -47,7 +47,7 @@ Search results live in the visitor's HTTP session (`advancedSearchResults`, `adv
 
 ## Known issues
 
-[public-pages-findings.md](public-pages-findings.md) F13 (an administrator's search raises the result limit for every search running at that moment), F25 (results shown again count only the session's page of 200).
+[public-pages-findings.md](public-pages-findings.md) F13 (fixed 2026-10-26: an administrator's search raised the result limit for every search running at that moment; the temporary limit is now per thread, `SearchAction.setTempSpecimenSearchLimit()`), F25 (for Brian: results shown again count only the session's page of 200).
 
 ## Tests
 

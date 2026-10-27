@@ -198,6 +198,11 @@ def apiError(method, error=None, status=500):
     return jsonify(error="The request could not be completed. Please try again later or simplify the query."), status
 
 
+def apiNotFound(message):
+    # A JSON error with HTTP 404 for an unknown name given as a parameter.
+    return jsonify(error=message), 404
+
+
 @application.errorhandler(Exception)
 def handleUncaught(error):
     from werkzeug.exceptions import HTTPException
@@ -726,7 +731,8 @@ def getSpecimen():
     query = query.limit(limit)
     query = query.offset(offset)
 
-    if log:
+    # log=true only: log defaults to '*', which is true, so these lines were printed for every request (F20).
+    if log == 'true':
         #print(" query:" + str(query))
         print("hasImage:" + hasImage)
         # print("hasImage:" + hasImage + " query:" + str(query))
@@ -737,7 +743,7 @@ def getSpecimen():
     except Exception as error:
         return apiError("specimens", error)
 
-    if log:
+    if log == 'true':
         print('Query complete')
 
     dataList = []
@@ -902,7 +908,8 @@ def getGeoSpeciesStats():
     extraClause = ""
     geolocale = getGeolocale(geolocaleName)
     if geolocale is None:
-        return "Geolocale not found"
+        # JSON with HTTP 404, like the other errors (F23: it was the plain text "Geolocale not found" with 200).
+        return apiNotFound("Geolocale not found: " + geolocaleName)
     georank = geolocale.georank
     extraClause = " s." + georank + " = :geolocaleName"
 

@@ -104,7 +104,8 @@ public final class BigMapAction extends AntwebAction {
               if (specimen == null || !specimenCode.equals(specimen.getCode())) {
                 specimen = new Specimen(specimenCode, connection); //(new SpecimenDb(connection)).getSpecimen(specimenCode);
                 session.setAttribute("specimen", specimen);
-                taxonName = specimen.getTaxonName();
+                // Not taxonName = specimen.getTaxonName(): that mapped the whole species on the first request of a
+                // session and the specimen alone on the next (2026-10-26, finding F9). The map is the specimen's.
               }          
           }
               

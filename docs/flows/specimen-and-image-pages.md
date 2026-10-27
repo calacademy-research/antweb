@@ -28,7 +28,7 @@ Nothing is cached: each request reads the database.
 ## Code path
 
 - **`SpecimenAction.execute()`** (`specimen.do`, `specimenImages.do`; form `SpecimenForm`): `code` (else `name`) lower-cased; `OverviewMgr.getAndSetOverview()` (the place, as for taxon pages); `specimen.isSpecimen(connection, overview)`; `specimen.init()` and `fullInit()` read the specimen, its images, its group and page text; `saveDescriptionEdit()` / `prepareDescriptionEdit()` (the page-text editor); `new Map(specimenList, connection)` (the specimen's point); `TaxonPropDb.getDefaultFor()` (taxa that use it as default image); `upload.SpecimenNameHistory.html()` (Name History, request attribute `nameHistory`). Forward `success` -> `specimen.jsp` + `specimen-body.jsp` (title "AntWeb Specimen: <Genus species> - <CODE>") or `specimenImages.jsp` + `specimenImages-body.jsp` (title "Specimen: <Genus species> - <CODE> - AntWeb").
-- **`BigPictureAction.execute()`** (form `SpecimenImageForm`; its `validate()` sends a request with no code, name or imageId back to the home page): `ImageDb.getSpecimenImage(imageId)` or `(code, shot, number)`; the delete branch (curator of the image's group or admin, POST only, `ImageDb.deleteImage()`); `new Specimen(code, allantwebants, connection, true)`. JSP `bigPicture.jsp` + `bigPicture-body.jsp` (title "Closeup of the <view> of Specimen <code>"), EXIF for admins (`util/Exif*`).
+- **`BigPictureAction.execute()`** (form `SpecimenImageForm`; a request with no code, name or imageId answers "Must specify code and shot, or imageId." before any database work; until 2026-10-26 `validate()` sent it to the home page, F21): `ImageDb.getSpecimenImage(imageId)` or `(code, shot, number)`; the delete branch (curator of the image's group or admin, POST only, `ImageDb.deleteImage()`); `new Specimen(code, allantwebants, connection, true)`. JSP `bigPicture.jsp` + `bigPicture-body.jsp` (title "Closeup of the <view> of Specimen <code>"), EXIF for admins (`util/Exif*`).
 - **`LocalityAction.execute()`**: `LocalityDb.getLocalityByCode(code)`, else `getLocalityByCodeOrName(name)`; a bot asking by name only is refused; `new Map(locality)` in the session for the map link. JSP `locality.jsp` + `locality-body.jsp` (title "Locality - AntWeb", heading "Locality: <name>").
 - **`CollectionAction.execute()`**: `CollectionDb.getCollection(name)` (specimens of the collection with their image counts and groups); the collection is also put in the session as `advancedSearchResults` so that Download Data, Map and Compare work on it. JSP `collection.jsp` + `collection-body.jsp` (title "Collection Search - AntWeb", heading "Collection: <code>").
 
@@ -46,7 +46,7 @@ Message page, HTTP 200: "Specimen:<code> is not in the AntWeb database." (specim
 
 ## Known issues
 
-[public-pages-findings.md](public-pages-findings.md) F1 (busy check unused), F12 (debugging text in the locality and collection not-found messages), F21 (bigPicture.do without a code shows the home page).
+[public-pages-findings.md](public-pages-findings.md), all fixed 2026-10-26: F1 (busy check unused), F12 (debugging text in the locality and collection not-found messages; now in the log only), F21 (bigPicture.do without a code showed the home page; now a message). Tests: `test_specimen_pages.py::test_not_found_message_has_no_request_details`, `test_big_picture_without_parameters_is_a_message`.
 
 ## Tests
 

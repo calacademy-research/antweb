@@ -33,7 +33,7 @@ public class Login implements Comparable {
 
     private Date created;
 
-    public static final String MUST_LOGIN_MESSAGE = "You must log in to access this functionality.  You may create an account, or log in anonymously, <a href='" + AntwebProps.getDomainApp() + "/login.do'>here</a>.";
+    public static final String MUST_LOGIN_MESSAGE = "You must log in to access this functionality.  You may create an account, or log in, <a href='" + AntwebProps.getDomainApp() + "/login.do'>here</a>.";
     
     public Login() {
         super();

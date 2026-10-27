@@ -10,9 +10,9 @@ import re
 
 import pytest
 
-from public_pages import (assert_message, assert_ok, fetch, h1, imaged_specimen, links, params, specimen_page,
-                          title)
-from antweb import new_session
+from public_pages import (assert_message, assert_ok, fetch, h1, imaged_specimen, links, message, params,
+                          specimen_page, title)
+from antweb import BASE_URL, new_session
 
 BIG_PICTURE = re.compile(r"bigPicture\.do\?name=([^&'\"]+)&(?:amp;)?shot=(\w+)&(?:amp;)?number=(\d+)")
 MAP_CALL = "drawGoogleMap"
@@ -63,6 +63,25 @@ def test_specimen_by_name_parameter():
 ])
 def test_unknown_code_message(path, expected):
     assert_message(fetch(path), expected, path)
+
+
+@pytest.mark.parametrize("path", ["/locality.do?code=zzNoSuchLocality0001", "/collection.do?name=zzNoSuchCollection0001",
+                                  "/description.do?genus=camponotus&rank=zzbadrank"])
+def test_not_found_message_has_no_request_details(path):
+    """Finding F12 (fixed 2026-10-26): the request details (requestInfo, isBot) go to the log, not the page.
+    The locality message added them when the request had a Referer."""
+    s = new_session()
+    s.headers["Referer"] = BASE_URL + "/"
+    r = fetch(path, session=s)
+    got = message(r) or ""
+    assert got, f"{path}: not a message page"
+    for debug in ("requestInfo", "RequestInfo", "isBot:", "execute()"):
+        assert debug not in got, f"{path}: {debug!r} in {got[:300]!r}"
+
+
+def test_big_picture_without_parameters_is_a_message():
+    """Finding F21 (fixed 2026-10-26): was the home page (Struts form validation sent it to the input page)."""
+    assert_message(fetch("/bigPicture.do"), "Must specify code and shot, or imageId.")
 
 
 def test_specimen_images_page_and_image_page():
@@ -123,10 +142,8 @@ def test_specimen_map():
     assert MAP_CALL in r.text, f"{path}: no map drawn"
 
 
-@pytest.mark.xfail(strict=False, reason="finding: bigMap.do?specimen= maps the specimen's whole species on the first "
-                                        "request of a session and the specimen alone when repeated "
-                                        "(BigMapAction keeps the specimen in the session); docs/flows/public-pages-findings.md")
 def test_specimen_map_is_the_same_when_reloaded():
+    """Finding F9 (fixed 2026-10-26): the first request of a session mapped the specimen's whole species."""
     code, _ = _specimen()
     s = new_session()
     first = fetch(f"/bigMap.do?specimen={code}", session=s)

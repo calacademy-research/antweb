@@ -88,7 +88,7 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_counts.py
 
-      - name: API findings F6, F7, F8, F22 (/images url, valid filters, fixed order, geoSpecimens radius) (tests/unit/test_api_findings.py)
+      - name: API findings F6, F7, F8, F20, F22, F23 (/images url, valid filters, fixed order, debug lines, geoSpecimens radius, geoSpeciesStats not found) (tests/unit/test_api_findings.py)
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_findings.py
 
@@ -257,6 +257,19 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.HttpUtilQueryTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (2 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the low public-pages findings (geolocaleId not a number F3, old bioregion project links F4, search limit per thread F13)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/PublicPagesLowFindingsTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.PublicPagesLowFindingsTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (3 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the AntCat file download (nightly tries again for up to an hour before set 1, says why, no half-written or cut-off file)

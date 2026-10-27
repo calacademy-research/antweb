@@ -19,6 +19,10 @@ FEATURE_URLS = [
     "/mapResults.do",
     "/compareResults.do",
     "/fieldGuideResults.do",
+    # The comparisons of a taxon's children (finding F15, 2026-10-26; before, a message asking to log in).
+    "/getComparison.do?genus=mystrium&rank=genus&pr=d",
+    "/mapComparison.do?genus=mystrium&rank=genus&pr=d",
+    "/mapcomparison.do?genus=mystrium&rank=genus&pr=d",
 ]
 
 TARGET = re.compile(r'<input type="hidden" name="target" value="([^"]*)"')

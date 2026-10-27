@@ -14,6 +14,11 @@
    ActionForward of HttpUtil.sendMessage() was ignored and the page was built anyway.
 7. (2026-10-26, finding F2) The limits on simultaneous maps, comparisons and field guides use
    ConcurrencyLimiter (thread-safe), skip logged-in users and release only a slot they took.
+8. (2026-10-26, low public-pages findings) F9 bigMap.do?specimen= maps the specimen, not its species;
+   F11 the View in AntCat link is https with the name URL-encoded; F12 not-found messages keep the request
+   details in the log; F15 the comparisons give the explained log-in page; F17 a database error on a place
+   page is a message, not a blank page; F19 the dead "getCompare" line is gone; F21 bigPicture.do without
+   code, name or imageId is a message, not the home page; F13 the specimen search limit is per thread.
 
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -147,6 +152,32 @@ def test_simultaneous_limits(sources):
     print("Simultaneous limits are thread-safe and skip logged-in users.")
 
 
+def test_low_public_pages_findings(sources):
+    a = "src/org/calacademy/antweb/"
+    big_map = sources[a + "BigMapAction.java"]
+    assert "taxonName = specimen.getTaxonName();" not in re.sub(r"//[^\n]*", "", big_map), "F9"
+    antcat = read(os.path.join(ROOT, "web/common/viewInAntCat.jsp"))
+    assert "https://www.antcat.org/catalog/search" in antcat and "URLEncoder.encode(" in antcat, "F11"
+    assert "http://www.antcat.org" not in antcat, "F11"
+    locality, collection = sources[a + "LocalityAction.java"], sources[a + "CollectionAction.java"]
+    browse = sources[a + "BrowseAction.java"]
+    assert 'message = message + "execute() "' not in locality and 'message += " isBot:"' not in locality, "F12"
+    assert 'message += "  No upload in process.  RequestInfo:"' not in collection, "F12"
+    assert 'message = "Bad rank:" + Html.esc(rank);' in browse, "F12"
+    assert "Login.MUST_LOGIN_MESSAGE" not in browse and "Check.loginForFeature(request)" in browse, "F15"
+    assert "log in anonymously" not in sources[a + "Login.java"], "F15"
+    overview = sources[a + "OverviewAction.java"]
+    end = overview[overview.index("} catch (SQLException e) {"):overview.index("static void setPlaceImages(")]
+    assert "return null;" not in end and 'mapping.findForward("message")' in end, "F17"
+    assert '"getCompare".equals(cacheType)' not in browse, "F19"
+    form = sources[a + "SpecimenImageForm.java"]
+    assert "error.name.required" not in form, "F21"
+    assert 'request.setAttribute("message", "Must specify code and shot, or imageId.");' in sources[a + "BigPictureAction.java"], "F21"
+    search = sources[a + "search/SearchAction.java"]
+    assert "ThreadLocal<Integer> tempSpecimenSearchLimit" in search, "F13"
+    print("Low public-pages findings: F9, F11, F12, F13, F15, F17, F19, F21 checked.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -157,6 +188,7 @@ def main():
     test_admin_links_column_stacks_on_phones()
     test_too_busy_for_bots_is_returned(sources)
     test_simultaneous_limits(sources)
+    test_low_public_pages_findings(sources)
 
 
 if __name__ == "__main__":

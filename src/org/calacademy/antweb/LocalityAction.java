@@ -73,19 +73,20 @@ public final class LocalityAction extends AntwebAction {
 		}
 
         if (locality == null) {        
-		  String message = "  Locality not found for name:" + Html.esc(name) + " or code:" + Html.esc(code);
+		  String message = "Locality not found for name:" + Html.esc(name) + " or code:" + Html.esc(code);
 		  if (UploadAction.isInUploadProcess()) {
 			// An upload is currently in process.  Request that this process be re-attempted shortly.
 			message += "  A curator is currently in the process of an Upload.";
 		  } else {
 			String referer = HttpUtil.getRequestReferer(request);
 			if (referer != null && !referer.contains("referer:null")) {
-				message = message + "execute() " + message + " (Not upload). requestInfo:" + Html.esc(HttpUtil.getRequestInfo(request));
-				message += " isBot:" + HttpUtil.isBot(request);
+				// The request details go to the log only, not to the visitor (2026-10-26, finding F12).
+				String logMessage = "execute() " + message + " (Not upload). requestInfo:" + HttpUtil.getRequestInfo(request)
+				  + " isBot:" + HttpUtil.isBot(request);
               if (!HttpUtil.isBot(request)) {
-				  s_log.error(message);
+				  s_log.error(logMessage);
 			  } else {
-				  s_log.info(message);
+				  s_log.info(logMessage);
 			  }
 			}
 		  } 
