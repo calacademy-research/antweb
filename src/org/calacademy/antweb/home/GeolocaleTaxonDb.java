@@ -1301,7 +1301,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
         }
         
         query = "select count(*) from taxon, geolocale_taxon where taxon.taxon_name = geolocale_taxon.taxon_name and geolocale_taxon.geolocale_id = " + geolocaleId 
-          + " and taxon.status = 'valid' and geolocale_taxon.image_count > 0";
+          + " and taxon.status = 'valid' and taxarank in ('species', 'subspecies') and geolocale_taxon.image_count > 0";   // species only (B64)
         resultSet2 = stmt2.executeQuery(query);
         int validImagedSpecies = 0;
         while (resultSet2.next()) {
@@ -1330,6 +1330,7 @@ select group_concat( distinct source) from geolocale_taxon order by source;
        statistics.add("" + validImagedSpecies); 
        statistics.add("" + (extinctSpecies + extantSpecies));  
        statistics.add("" + totalTaxa);
+       statistics.add("" + geolocaleId); // 15: not shown; the links of statistics.do?byGeolocale name the place by id (B64)
 
         // A.log("getProjectStatistics() statistics:" + statistics);                    
         return statistics;

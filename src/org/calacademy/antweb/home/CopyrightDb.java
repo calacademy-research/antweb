@@ -86,14 +86,16 @@ public class CopyrightDb extends AntwebDb {
             stmt = DBUtil.getStatement(getConnection(), "getCopyrights()");
             rset = stmt.executeQuery(theQuery);
 
+            // One list of every row (B74: the list was made anew for each row, so only the last row's year was found).
+            ArrayList<Copyright> all = new ArrayList<>();
             while (rset.next()) {
-                copyrights = new ArrayList<>();
                 copyright = new Copyright();
                 copyright.setId(rset.getInt("id"));
                 copyright.setCopyright(rset.getString("copyright"));
                 copyright.setYear(rset.getInt("year"));
-                copyrights.add(copyright);
+                all.add(copyright);
             }
+            copyrights = all;
         } finally {
             DBUtil.close(stmt, rset, "this", "getCopyrights()");
         }

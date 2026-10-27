@@ -266,6 +266,24 @@ public class UtilDataAction extends AntwebAction {
      * the import before this step) is recounted and the Global column (allantwebants) rebuilt, as after the name update
      * (sets 2 to 5 do neither). Writes one line to compute.log.
      */
+    /** The Global column (allantwebants): rows counted, then the project's totals (B65). One line for compute.log. */
+    static String recountGlobal(Connection connection) {
+        long start = System.currentTimeMillis();
+        String line;
+        try {
+            new ProjTaxonCountDb(connection).childrenCountCrawl(Project.ALLANTWEBANTS);
+            new ProjectDb(connection).updateCounts(Project.ALLANTWEBANTS);
+            connection.commit();
+            line = "Global column recounted after the clean-up in " + (System.currentTimeMillis() - start) / 1000 + " s";
+        } catch (Exception e) {
+            try { connection.rollback(); } catch (SQLException e2) { s_log.error("recountGlobal() rollback e:" + e2); }
+            s_log.error("recountGlobal() e:" + e);
+            line = "Global column NOT recounted after the clean-up (" + e + ")";
+        }
+        LogMgr.appendLog("compute.log", "  " + line, true);
+        return line;
+    }
+
     static String nightlyTaxonParents(Connection connection) {
         String line;
         try {
@@ -412,6 +430,11 @@ public class UtilDataAction extends AntwebAction {
             if ("set2".equals(action)) {
                 message = "set2 - ";
                 message += doAction("dataCleanup", form, accessLogin, accessGroup, connection, request, mapping);
+                // The clean-up deletes list rows (morphospecies without specimens, names no longer in the taxon table) from every
+                // project, the Global column (allantwebants) too, which the specimen upload had counted before it and nothing
+                // recounts after it: its genus and subfamily rows then counted more rows than they have (count check 2026-10-27,
+                // e.g. Leptogenys 631 species with 623 rows; finding B65). Recount it here, as the upload does.
+                message += " " + recountGlobal(connection);
                 message += " " + doAction("generateGeolocaleTaxaFromSpecimens", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 12.30 mins
                 // Synonym rows of the lists renamed to (or merged into) their current valid name BEFORE the counts
                 // (2026-10-21). It ran only in set 3, after the geolocale and project totals: a merged synonym row

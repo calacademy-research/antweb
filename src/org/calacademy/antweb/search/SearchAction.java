@@ -252,6 +252,14 @@ public final class SearchAction extends DispatchAction {
             if (taxonList != null) resultSetModifier += taxonList.size() + " " + Rank.getPluralRank(resultRank);
             resultSetModifier += " (from " + resultSetSize + " specimens)." + greaterThanModifier;
             session.setAttribute("resultSetModifier", resultSetModifier);
+
+            // B54, 2026-10-27: names not identified to genus are not in the species list; their specimens are
+            // still in the search. The page says how many and links to the same search listed by specimen.
+            if (resultRank.equals(ResultRank.SPECIES)) {
+              int notIdentified = results.getSpecimensNotIdentifiedToGenus();
+              request.setAttribute("specimensNotIdentifiedToGenus", notIdentified);
+              if (notIdentified > 0) request.setAttribute("specimenViewQuery", AdvancedSearchResults.specimenViewQuery(request.getParameterMap()));
+            }
           }
 
           if (output == null || "".equals(output)) output = Output.LIST;

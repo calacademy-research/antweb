@@ -165,7 +165,7 @@ def test_image_and_comparison_pages_count_the_same_children():
 def test_unimaged_names_listed_match_their_number():
     html = _get(f"/images.do?genus={GENUS}&rank=genus&{WHERE}")
     # per place, so labelled "with no image from this place" since 2026-10-22 (Q12); "Non-imaged" before
-    m = (re.search(r"<b>(\w+) with no image from this place \(([\d,]+)\):</b>(.*?)(?:<br|</div|$)", html, re.S)
+    m = (re.search(r"<b>(\w+) with no (?:image from this place|image in AntWeb) \(([\d,]+)\):</b>(.*?)(?:<br|</div|$)", html, re.S)
          or re.search(r"<b>Non-imaged (\w+) \(([\d,]+)\):</b>(.*?)(?:<br|</div|$)", html, re.S))
     if not m:
         pytest.skip("no non-imaged children listed")

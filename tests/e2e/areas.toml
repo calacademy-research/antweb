@@ -64,7 +64,9 @@ tests = [
   "test_numbers_endemic.py",
   "test_numbers_lists.py",
   "test_numbers_species.py",
+  "test_numbers_images.py",
   "test_api_numbers.py",
+  "test_numbers_api_meta.py",
   "test_previous_determinations.py",
   "test_privacy.py",
   "test_site_links.py",
@@ -76,6 +78,13 @@ tests = [
   "test_password_reset_pages.py",
   "test_home_and_stats.py",
   # anonymous tests of files that also log in
+  "test_numbers_search.py::test_search_total_and_imaged_count_equal_the_api",
+  "test_numbers_search.py::test_search_by_species_counts_the_names_of_its_specimens",
+  "test_numbers_search.py::test_search_by_species_leaves_out_names_not_identified_to_genus",
+  "test_numbers_search.py::test_search_by_species_note_and_listed_species_add_up_to_the_specimens",
+  "test_numbers_search.py::test_collection_counts_equal_a_search_and_the_api",
+  "test_numbers_search.py::test_locality_collections_equal_the_codes_of_its_specimens",
+  "test_numbers_search.py::test_statspage_valid_fossil_equals_the_museum_lists",
   "test_message_log.py::test_page_shows_the_whole_message",
   "test_message_log.py::test_image_data_query_shows_at_most_5000_rows",
   "test_add_uploader.py::test_anonymous_gets_login_page",
@@ -224,6 +233,7 @@ paths = [
 ]
 tests = [
   "test_specimen_upload_roundtrip.py",
+  "test_numbers_uploads.py",
   "test_upload_list_views.py",
   "test_image_upload.py",
   "test_image_upload_test_group.py",
@@ -334,7 +344,13 @@ paths = [
   "src/org/calacademy/antweb/Countable.java",
   "web/countCheck*",
   "web/util/countCheck*",
+  "src/org/calacademy/antweb/StatisticsAction.java",
+  "src/org/calacademy/antweb/TaxaListAction.java",
+  "web/util/statistics*",
   "docs/numbers.md",
+  "web/taxonChildImage*",
+  "web/unImagedTaxa.jsp",
+  "src/org/calacademy/antweb/search/RecentImageSearch.java",
 ]
 tests = [
   "test_count_check.py",
@@ -346,6 +362,10 @@ tests = [
   "test_numbers_endemic.py",           # Endemic, Introduced, endemic.do, introduced.do on a rotating sample (2026-10-26)
   "test_numbers_lists.py",             # list headers and browse counts of every kind of place (2026-10-26)
   "test_numbers_species.py",           # species habitat summaries recounted from the API (2026-10-26)
+  "test_numbers_api_meta.py",          # API counts recounted from other replies and pages (2026-10-27)
+  "test_numbers_search.py",            # search, compare, map, collection, locality, Subtaxon total, museum fossils (2026-10-27)
+  "test_numbers_images.py",            # image, comparison and recent-image counts of every kind of place (2026-10-27)
+  "test_numbers_uploads.py",           # admin and upload report numbers: curator.do, image and specimen upload reports, statistics.do (2026-10-27)
 ]
 
 [areas.places]
@@ -402,6 +422,7 @@ tests = [
   "test_search_pages.py",             # search form, results by taxon, recent images, Places box (step 2)
   "test_field_guide_compare.py",      # field guides and the compare tools (step 2)
   "test_search_code_lists.py",        # pasted code lists, sort, long addresses (2026-10-26)
+  "test_numbers_search.py",           # search result counts against the API (2026-10-27)
   "test_browser.py",
 ]
 
@@ -517,6 +538,7 @@ paths = [
 tests = [
   "test_api.py",
   "test_api_numbers.py",
+  "test_numbers_api_meta.py",
   "test_hardening_2026_10_18.py",
 ]
 

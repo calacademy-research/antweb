@@ -68,35 +68,41 @@ public final class TaxaListAction extends AntwebAction {
         if (!"".equals(extant) && extant != null) {
           query += " and fossil != " + ("1".equals(extant) ? "1" : "0");
         }
+        // Imaged: in a place, the place's images (its list row's image_count, as statistics.do counts "Imaged v. sp.";
+        // B63, 2026-10-27: was the name's images anywhere); without a place, the name's images.
+        String imageCondition = "";
         if ("1".equals(imaged)) {
-          query += " and image_count > 0";
+          imageCondition = " and image_count > 0";
         } else if ("0".equals(imaged)) {
-          query += " and image_count = 0";        
+          imageCondition = " and image_count = 0";
         }
+        boolean inAPlace = !isEmpty(projectName) || !isEmpty(bioregionName) || !isEmpty(museumCode) || !isEmpty(geolocaleName);
+        if (!inAPlace) query += imageCondition;
 
         String param = "";
         if (!"".equals(projectName) && projectName != null) {
-          query += " and taxon_name in (select taxon_name from proj_taxon where project_name = ?)"; args.add(projectName);
+          query += " and taxon_name in (select taxon_name from proj_taxon where project_name = ?" + imageCondition + ")"; args.add(projectName);
           param = "&project=" + urlEncode(projectName);
           Project project = ProjectMgr.getProject(projectName);
           title += project.getTitle();
         }
         if (!"".equals(bioregionName) && bioregionName != null) {
-          query += " and taxon_name in (select taxon_name from bioregion_taxon where bioregion_name = ?)"; args.add(bioregionName);
+          query += " and taxon_name in (select taxon_name from bioregion_taxon where bioregion_name = ?" + imageCondition + ")"; args.add(bioregionName);
           param = "&bioregionName=" + urlEncode(bioregionName);
           Bioregion bioregion = BioregionMgr.getBioregion(bioregionName);
           title += bioregion;
         }
         if (!"".equals(museumCode) && museumCode != null) {
-          query += " and taxon_name in (select taxon_name from museum_taxon where code = ?)"; args.add(museumCode);
+          query += " and taxon_name in (select taxon_name from museum_taxon where code = ?" + imageCondition + ")"; args.add(museumCode);
           Museum museum = MuseumMgr.getMuseum(museumCode);
           param = "&museumName=" + urlEncode(museumCode);
           title += museum;
         }
         if (!"".equals(geolocaleName) && geolocaleName != null) {
           Geolocale geolocale = GeolocaleMgr.getGeolocale(geolocaleName);
-          int geolocaleId = GeolocaleMgr.getGeolocaleId(geolocaleName);
-          query += " and taxon_name in (select taxon_name from geolocale_taxon where geolocale_id = " + geolocaleId + ")";
+          // by id when given one (statistics.do links geolocales by id: names are not unique, B64)
+          int geolocaleId = geolocaleIdOf(geolocaleName);
+          query += " and taxon_name in (select taxon_name from geolocale_taxon where geolocale_id = " + geolocaleId + imageCondition + ")";
           param = "&geolocaleId=" + geolocaleId;
           title += geolocale;
         }
@@ -133,6 +139,16 @@ public final class TaxaListAction extends AntwebAction {
 	    request.setAttribute("list", taxaList);        
         return mapping.findForward("success");
 	}
+
+    private static boolean isEmpty(String value) {
+        return value == null || value.isEmpty();
+    }
+
+    /** The geolocale's id: the parameter itself when it is a number, else the id of the place of that name. */
+    static int geolocaleIdOf(String geolocaleName) {
+        if (geolocaleName.matches("\\d{1,9}")) return Integer.parseInt(geolocaleName);
+        return GeolocaleMgr.getGeolocaleId(geolocaleName);
+    }
 
     private static String urlEncode(String value) {
         return java.net.URLEncoder.encode(value == null ? "" : value, java.nio.charset.StandardCharsets.UTF_8);

@@ -22,6 +22,11 @@
 9. (2026-10-27, finding B44) The nightly recounts every valid adm1, also those that are not live
    (GeolocaleDb.updateAdm1Counts): their pages showed old numbers next to a current list. The count check covers
    them once a nightly run has recounted them (a later change).
+9. (2026-10-27, B65, B66) Set 2 recounts the Global column after its clean-up; the count check bounds a place's
+   synonym rows by the specimen records of the name and its synonyms.
+10. (2026-10-27, B74, B75) CopyrightDb keeps every copyright row (the image upload report of an earlier year's batch
+   failed); Compare of a search by species does not call Taxon.setHasImages(connection) (it failed) and the page
+   prints the preparation's count when nothing is left.
 
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -196,6 +201,33 @@ def test_adm1_totals_not_only_live(sources):
     print("Every valid adm1 is recounted, live or not.")
 
 
+def test_global_recounted_after_cleanup_and_synonym_bound(sources):
+    src = sources["src/org/calacademy/antweb/util/UtilDataAction.java"]
+    i = src.index('doAction("dataCleanup"')
+    assert "recountGlobal(connection)" in src[i:i + 900], "set 2 no longer recounts the Global column after the clean-up (B65)"
+    inv = sources["src/org/calacademy/antweb/util/CountInvariants.java"]
+    body = inv[inv.index("void globalPerPlace()"):]
+    body = body[:body.index("compare(")]
+    assert "from specimen group by taxon_name" in body, "the Global bound of a synonym is not its specimen records (B66)"
+    print("Global recounted after the clean-up; synonyms bounded by their specimen records.")
+
+
+def test_copyright_rows_and_compare_by_species(sources):
+    db = sql_text(sources["src/org/calacademy/antweb/home/CopyrightDb.java"])
+    body = db[db.index("void getCopyrights()"):]
+    loop = body[body.index("while (rset.next())"):body.index("finally")]
+    assert "new ArrayList" not in loop, "CopyrightDb makes a new list for each row again (B74)"
+    report = read(os.path.join(ROOT, "web/imageUploader/imageUploadReport-body.jsp"))
+    assert "imageUpload.getCopyright() != null" in report, "the image upload report fails on a batch with no copyright (B74)"
+    prep = sql_text(sources["src/org/calacademy/antweb/search/PrepareCompareResultsAction.java"])
+    assert "setHasImages(connection)" not in prep, "Compare by species calls Taxon.setHasImages(connection) again (B75)"
+    assert "antImagedNames(" in prep, "Compare by species no longer uses StatisticsDb.antImagedNames (B75)"
+    jsp = read(os.path.join(ROOT, "web/search/advancedSearchResultsByTaxon-body.jsp"))
+    empty = jsp[jsp.index("getResults().size() < 1"):jsp.index("Sorry, nothing matches your request.")]
+    assert 'class="display_count"' in empty, "a preparation that leaves no species prints no count (B75)"
+    print("Copyright rows kept; Compare by species counts imaged names; an empty preparation prints its count.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -208,6 +240,8 @@ def main():
     test_simultaneous_limits(sources)
     test_low_public_pages_findings(sources)
     test_adm1_totals_not_only_live(sources)
+    test_global_recounted_after_cleanup_and_synonym_bound(sources)
+    test_copyright_rows_and_compare_by_species(sources)
 
 
 if __name__ == "__main__":

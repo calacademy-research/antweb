@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Set;
 
 import org.calacademy.antweb.util.*;
+import org.calacademy.antweb.home.PlaceTotals;
 
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
@@ -86,8 +87,10 @@ public class AdvancedSearchResults extends GenericSearchResults
 		ResultItem thisItem;
 		while (resIter.hasNext()) {
 			thisItem = resIter.next();
+            // B54 (Brian Fisher, 2026-10-22): a name not identified to genus is not a species; its specimens stay in
+            // the search (and in its specimen total), they are counted by getSpecimensNotIdentifiedToGenus().
+            if (!countsAsSpecies(thisItem)) continue;
             String fullName = thisItem.getFullName();	
-            // if (AntwebProps.isDevMode()) if (fullName.contains("rotundata")) s_log.warn("getSpeciesList() fullName:" + fullName);			
 			specHash.put(fullName,thisItem);
 		}
 
@@ -107,6 +110,51 @@ public class AdvancedSearchResults extends GenericSearchResults
 		return specList;
 	}
 
+
+	/**
+	 * B54, 2026-10-27: the species list of a search by species (and of its Compare, Map and field guide, which keep
+	 * this list in the session as taxonList and choose from it by index) leaves out names not identified to genus,
+	 * the rule of the place pages (PlaceTotals.isIdentifiedToGenus).
+	 */
+	public static boolean countsAsSpecies(ResultItem item) {
+		return item != null && PlaceTotals.isIdentifiedToGenus(item.getGenus());
+	}
+
+	/** The specimens of the search whose name is not identified to genus (not counted as species, B54). */
+	public int getSpecimensNotIdentifiedToGenus() {
+		int count = 0;
+		if (results == null) return 0;
+		for (ResultItem item : results) {
+			if (item != null && !countsAsSpecies(item)) ++count;
+		}
+		return count;
+	}
+
+	/**
+	 * The query string of the same search listed by specimen (B54: the link of "N specimens not identified to genus").
+	 * params: the request parameters of the search; the form tokens, resultRank, output and page are dropped.
+	 */
+	public static String specimenViewQuery(java.util.Map<String, String[]> params) {
+		StringBuilder q = new StringBuilder();
+		if (params != null) {
+			java.util.TreeMap<String, String[]> sorted = new java.util.TreeMap<>(params);
+			for (java.util.Map.Entry<String, String[]> e : sorted.entrySet()) {
+				String key = e.getKey();
+				if (key == null || key.isEmpty()) continue;
+				if ("resultRank".equals(key) || "output".equals(key) || "page".equals(key)
+					|| Csrf.PARAM.equals(key) || key.startsWith("org.apache.struts.")) continue;
+				if (e.getValue() == null) continue;
+				for (String v : e.getValue()) {
+					if (q.length() > 0) q.append('&');
+					q.append(java.net.URLEncoder.encode(key, java.nio.charset.StandardCharsets.UTF_8)).append('=')
+					 .append(java.net.URLEncoder.encode(v == null ? "" : v, java.nio.charset.StandardCharsets.UTF_8));
+				}
+			}
+		}
+		if (q.length() > 0) q.append('&');
+		q.append("resultRank=specimen");
+		return q.toString();
+	}
 
 	public static int s_count = 0;
 	public static String s_fieldName;

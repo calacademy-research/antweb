@@ -24,9 +24,17 @@ public class UploadDetails extends OperationDetails {
     public ArrayList<String> preUploadStatistics;
     public ArrayList<String> postUploadStatistics;
 
-    int countInsertedSpecies = 0;
-    int countUpdatedSpecies = 0;
+    // The species and subspecies names this upload wrote to the taxon table (report "Inserted Species", "Updated
+    // Species"; docs/numbers.md row 95): each name once, as inserted (a new row) or as updated (an existing row
+    // rewritten), never both. Until 2026-10-27 a new name was counted as updated (B60) and a name was counted again
+    // each time its lines came back after another name's (B61).
+    private final Set<String> insertedSpecies = new HashSet<>();
+    private final Set<String> updatedSpecies = new HashSet<>();
     int countInsertedSpecimens = 0;
+
+    /** The rule of the report's counts (Record Count, Inserted and Updated Species), written into the report so
+     *  tests can tell a report of today's rule from an older one (reports are files, never rewritten). */
+    public static final String COUNTS_RULE = "2026-10-27";
 
     private String logFileName;
     private String backupDirFile;
@@ -178,6 +186,7 @@ public class UploadDetails extends OperationDetails {
         }
 
         logString += "<br>&nbsp;&nbsp;&nbsp;<b>Record Count:</b> " + getRecordCount();
+        logString += "<span id=\"report-counts-rule\" hidden>" + COUNTS_RULE + "</span>";
 
         if ("specimenUpload".equals(getOperation())) {
             logString += "<br>&nbsp;&nbsp;&nbsp;<b>Parsed:</b> " + getBuildLineTotal();
@@ -216,8 +225,8 @@ public class UploadDetails extends OperationDetails {
         //s_log.info("genUploadReport pre:" + preUploadStatistics + " post:" + postUploadStatistics);
         
         if (postUploadStatistics != null) {
-          if (countInsertedSpecies > 0) logString += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Species:</b> " + countInsertedSpecies + ".";
-          if (countUpdatedSpecies > 0) logString += "<br>&nbsp;&nbsp;&nbsp;<b>Updated Species:</b> " + countUpdatedSpecies + ".";        
+          if (getInsertedSpeciesCount() > 0) logString += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Species:</b> " + getInsertedSpeciesCount() + ".";
+          if (getUpdatedSpeciesCount() > 0) logString += "<br>&nbsp;&nbsp;&nbsp;<b>Updated Species:</b> " + getUpdatedSpeciesCount() + ".";        
 
           logString += "<br><br>Current Taxa Counts:<br>" + ProjectDb.getProjectTableHeader() + ProjectDb.getProjectStatisticsHtml(postUploadStatistics, true) + "</table>"; 
         }
@@ -436,11 +445,23 @@ public class UploadDetails extends OperationDetails {
       return postUploadStatistics;
     }
     
-    public void countInsertedSpecies() {
-      ++countInsertedSpecies;
+    /** A species or subspecies name this upload inserted into the taxon table (counted once). */
+    public void countInsertedSpecies(String taxonName) {
+      if (taxonName == null) return;
+      insertedSpecies.add(taxonName);
+      updatedSpecies.remove(taxonName);
     }
-    public void countUpdatedSpecies() {
-      ++countUpdatedSpecies;
+    /** A species or subspecies name whose existing taxon row this upload rewrote (counted once; a name the upload
+     *  inserted itself stays inserted). */
+    public void countUpdatedSpecies(String taxonName) {
+      if (taxonName == null || insertedSpecies.contains(taxonName)) return;
+      updatedSpecies.add(taxonName);
+    }
+    public int getInsertedSpeciesCount() {
+      return insertedSpecies.size();
+    }
+    public int getUpdatedSpeciesCount() {
+      return updatedSpecies.size();
     }
     public void countInsertedSpecimen() {
       ++countInsertedSpecimens;

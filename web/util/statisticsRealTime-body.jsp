@@ -52,13 +52,15 @@
       ++lineCount;
       %> <tr> <%
       int statCount = 0;
-      String paramValue = "";
+      // The place of the links (taxaList.do): its name, or for geolocales its id (names are not unique, B64).
+      String paramValue = statsLine.isEmpty() || statsLine.get(0) == null ? "" : statsLine.get(0);
+      if ("geolocaleName=".equals(param) && statsLine.size() > 15) paramValue = statsLine.get(15);
+      paramValue = java.net.URLEncoder.encode(paramValue, java.nio.charset.StandardCharsets.UTF_8);
       for (String stat : statsLine) {
         ++statCount;    
 
         if (isLink) {
-          if (statCount == 1) { 
-            paramValue = stat; %> 
+          if (statCount == 1) { %> 
             <td><%= stat %></td> 
        <% } 
           if (statCount == 2) { %> 
@@ -104,8 +106,7 @@
             <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?<%= param %><%= paramValue %>"><%= stat %></a></td>        
        <% }
         } else {
-          if (statCount == 1) { 
-            paramValue = stat; %> 
+          if (statCount == 1) { %> 
             <td><%= stat %></td> 
        <% } 
           if ((statCount >1) && (statCount <= 14)) { %> 

@@ -17,9 +17,10 @@
       if (!Rank.SPECIMEN.equals(unImagedRank)) {
 		String pluralUnImagedRank = Rank.getPluralRank(unImagedRank).toLowerCase();
 		//AntwebUtil.log("taxonomicPageImages-body.jsp unImagedTaxa.size:" + unImagedTaxa.size() + " unImagedTaxa:" + unImagedTaxa);
-		// Per place (the list's Images column, labels included), so labelled as such (Brian Fisher, 2026-10-22, Q12:
-		// "unimaged" alone means no photo of the ant anywhere in AntWeb).
-		unImagedList += "<br><b>" + org.calacademy.antweb.Formatter.initCap(pluralUnImagedRank) + " with no image from this place (" + unImagedTaxa.size() + "):</b> ";
+		// The pictures of a name come from its best specimen anywhere in AntWeb (Taxon.setImages), so a name listed here
+		// has no image in AntWeb at all (Brian Fisher, 2026-10-27, finding B45, option A: "with no image from this
+		// place" said otherwise; a local picture for a list is chosen with the image picker).
+		unImagedList += "<br><b>" + org.calacademy.antweb.Formatter.initCap(pluralUnImagedRank) + " with no image in AntWeb (" + unImagedTaxa.size() + "):</b> ";
 		for (Taxon unImagedTaxon : unImagedTaxa) {      
 		  ++unImagedCount;
 		  String prettyTaxonName = Taxon.getPrettyTaxonName(unImagedTaxon.getTaxonName());

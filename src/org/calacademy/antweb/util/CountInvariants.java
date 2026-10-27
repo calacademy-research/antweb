@@ -662,12 +662,16 @@ public final class CountInvariants {
                 String l = PlaceTotals.listTable(type);
                 String lk = PlaceTotals.listKey(type);
                 // Museums, bioregions, projects (2026-10-22): a row counts the specimens of the name's synonyms too
-                // (PlaceTotals.specimensByListNameSql), so its bound is the Global specimens of the name and of its synonyms.
+                // (PlaceTotals.specimensByListNameSql), so its bound is the specimen records of the name and of its synonyms.
                 boolean syn = !PlaceTotals.GEOLOCALE.equals(type);
                 String global = syn
                     ? " join (select x.list_name, sum(g.specimen_count) specimen_count from (select taxon_name src, taxon_name list_name from taxon"
                         + " union all select t2.taxon_name, t2.current_valid_name from taxon t2 where " + PlaceTotals.renamedCondition("t2") + ") x"
-                        + " join proj_taxon g on g.project_name = 'allantwebants' and g.taxon_name = x.src group by x.list_name) a on a.list_name = l.taxon_name"
+                        // the specimen records of each name: a synonym has no Global row (the Global column lists counted
+                        // statuses only), so its specimens were missing from the bound (2026-10-27, finding B66: e.g.
+                        // Diacamma solitaria 5 specimens in introducedants against a bound of 1)
+                        + " join (select taxon_name, count(*) specimen_count from specimen group by taxon_name) g on g.taxon_name = x.src"
+                        + " group by x.list_name) a on a.list_name = l.taxon_name"
                     : " join proj_taxon a on a.project_name = 'allantwebants' and a.taxon_name = l.taxon_name";
                 String sql = "select l." + lk + ", l.taxon_name, l.specimen_count, a.specimen_count from " + l + " l"
                     + " join taxon t on t.taxon_name = l.taxon_name"

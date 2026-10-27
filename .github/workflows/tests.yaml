@@ -204,6 +204,20 @@ jobs:
             grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of the species list of a search (names not identified to genus left out, B54)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/search/AdvancedSearchResults.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/search/SearchSpeciesListTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.search.SearchSpeciesListTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (3 tests)" /tmp/out.txt
+          '
+
       - name: Map popups show decoded titles and link once-encoded codes (tests/unit/test_map_popups.py, runs drawMap.js in node)
         run: python3 tests/unit/test_map_popups.py
 
@@ -447,6 +461,24 @@ jobs:
             done
           '
 
+      - name: Java unit test of the upload report's species counts (UploadReportCountsTest, docs/numbers.md row 95)
+        # Inserted Species and Updated Species: each species or subspecies name once, a new name as inserted (B60, B61).
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" -v "$PWD/web:/web:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/upload/UploadReportCountsTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadReportCountsTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            grep -v "LogMgr" /tmp/out.txt | tail -3
+            grep -q "^OK (4 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+          '
+
       - name: Staging test accounts tool (tests/unit/test_staging_accounts.py)
         run: python3 tests/unit/test_staging_accounts.py
 
@@ -477,11 +509,17 @@ jobs:
       - name: No PHP in the server image or the repository (tests/unit/test_no_php.py)
         run: python3 tests/unit/test_no_php.py
 
+      - name: Search, collection and locality number fixes B50 to B53 (tests/unit/test_numbers_search_fixes.py)
+        run: python3 tests/unit/test_numbers_search_fixes.py
+
       - name: Claude audit rotation (tests/unit/test_claude_audit.py)
         run: python3 tests/unit/test_claude_audit.py
 
       - name: Login updates keep login.created, no delete of all page text, page titles, admin links on phones, busy answers returned, simultaneous limits (tests/unit/test_small_fixes.py)
         run: python3 tests/unit/test_small_fixes.py
+
+      - name: Image counts of images.do All view and recent images (B46, B47; tests/unit/test_image_count_fixes.py)
+        run: python3 tests/unit/test_image_count_fixes.py
 
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
         run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml

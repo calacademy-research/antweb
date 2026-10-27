@@ -76,7 +76,7 @@
     <div id="overview_data" class="plain">
         <ul>
         <li><b>Copyright: </b></li>
-        <li><%= imageUpload.getCopyright().getCopyright() %> </li>
+        <li><%= imageUpload.getCopyright() != null ? imageUpload.getCopyright().getCopyright() : "" %> </li>
         </ul>
     </div>
 
