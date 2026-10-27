@@ -57,7 +57,7 @@ public final class SpecimenAction extends DescriptionAction {
 
         if (code != null) {
 
-            if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+            if (HttpUtil.tooBusyForBots(request)) { return HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
             Connection connection = null;
             String dbMethodName = DBUtil.getDbMethodName("SpecimenAction.execute()");

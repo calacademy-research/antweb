@@ -50,7 +50,7 @@ public final class LocalityAction extends AntwebAction {
         // name= can still be used for the code and now also for the name.
         Locality locality = null;
 
-		if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+		if (HttpUtil.tooBusyForBots(request)) { return HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
 		Date startTime = new Date();
 		Connection connection = null;

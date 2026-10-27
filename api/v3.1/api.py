@@ -23,7 +23,7 @@ import configparser
 from flask import Flask, json, request, Response, g
 from flask import jsonify as flaskJsonify
 
-from sqlalchemy import create_engine, or_, text
+from sqlalchemy import create_engine, or_, text, func
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Numeric
 from sqlalchemy.orm import sessionmaker, relationship, scoped_session
 
@@ -90,7 +90,9 @@ session = scoped_session(Session)
 
 # import MySQLdb as mysqldb
 
+import math
 import time
+import urllib.parse
 
 from datetime import datetime, timedelta
 
@@ -153,6 +155,13 @@ localPhpServer = "http://localhost:5000"
 localTomcatServer = "http://localhost/antweb"
 apiServer = "http://api.antweb.org"
 prodServer = "https://www.antweb.org"
+# The API's own public address, for links in its replies (2026-10-26, finding F6: /images linked localhost:5000).
+apiPublicBase = prodServer + "/v3.1"
+
+
+def specimenApiUrl(code):
+    """The public /specimens address of one specimen (the accepted parameter is specimenCode)."""
+    return apiPublicBase + "/specimens?specimenCode=" + urllib.parse.quote(str(code), safe="")
 apiUri = "api" + version + ".do"
 
 globalMessage = "Either the server is overloaded or there is an error in the application."
@@ -539,6 +548,65 @@ def addExtraGeolocaleListCriteria(query, geolocaleName):
     return query
 
 
+# validSubfamily=true and validGenus=true on /specimens: the extant valid subfamilies and genera, compared in lower
+# case. 2026-10-26, finding F7: the genus list was capitalised (five names lower case) while the specimen table
+# stores genus in lower case, so validGenus=true dropped every record; both filters ran in Python after limit and
+# offset, so pages came back short. Now both are SQL filters on lower(name), applied before limit and offset.
+# 'heteroponerinae' added (the list had only 'hetero', which matches nothing).
+VALID_SUBFAMILIES = frozenset(n.lower() for n in (
+    'agroecomyrmecinae', 'amblyoponinae', 'aneuretinae', 'apomyrminae', 'dolichoderinae', 'dorylinae',
+    'ectatomminae', 'formicinae', 'hetero', 'leptanillinae', 'martialinae', 'myrmeciinae', 'myrmicinae',
+    'paraponerinae', 'ponerinae', 'proceratiinae', 'pseudomyrmecinae', 'heteroponerinae'))
+
+VALID_GENERA = frozenset(n.lower() for n in (
+    'Ankylomyrma', 'Tatuidris', 'Adetomyrma', 'Amblyopone', 'Fulakora', 'Myopopone', 'Mystrium', 'Onychomyrmex',
+    'Prionopelta', 'Stigmatomma', 'Xymmer', 'Aneuretus', 'Apomyrma', 'Anillidris', 'Anonychomyrma', 'Aptinoma',
+    'Arnoldius', 'Axinidris', 'Azteca', 'Bothriomyrmex', 'Chronoxenus', 'Doleromyrma', 'Dolichoderus',
+    'Dorymyrmex', 'Ecphorella', 'Forelius', 'Froggattella', 'Gracilidris', 'iridomyrmex', 'Leptomyrmex',
+    'Linepithema', 'Liometopum', 'Loweriella', 'Nebothriomyrmex', 'Ochetellus', 'Papyrius', 'Philidris', 'Ravavy',
+    'Tapinoma', 'Technomyrmex', 'Turneria', 'Acanthostichus', 'Aenictogiton', 'Aenictus', 'Cerapachys',
+    'Cheliomyrmex', 'Chrysapace', 'Cylindromyrmex', 'Dorylus', 'Eburopone', 'Eciton', 'Eusphinctus', 'Labidus',
+    'Leptanilloides', 'Lioponera', 'Lividopone', 'Neivamyrmex', 'Neocerapachys', 'Nomamyrmex', 'Ooceraea',
+    'Parasyscia', 'Simopone', 'Sphinctomyrmex', 'Syscia', 'Tanipone', 'Vicinopone', 'Yunodorylus', 'Zasphinctus',
+    'Ectatomma', 'Gnamptogenys', 'Rhytidoponera', 'Typhlomyrmex', 'Acropyga', 'Agraulomyrmex', 'Alloformica',
+    'Anoplolepis', 'Aphomomyrmex', 'Bajcaridris', 'Brachymyrmex', 'Bregmatomyrma', 'Calomyrmex', 'Camponotus',
+    'Cataglyphis', 'Cladomyrma', 'Colobopsis', 'Dinomyrmex', 'Echinopla', 'Euprenolepis', 'Formica', 'Gesomyrmex',
+    'Gigantiops', 'iberoformica', 'Lasiophanes', 'Lasius', 'Lepisiota', 'Melophorus', 'Myrmecocystus',
+    'Myrmecorhynchus', 'Myrmelachista', 'Myrmoteras', 'Notoncus', 'Notostigma', 'Nylanderia', 'Oecophylla',
+    'Opisthopsis', 'Overbeckia', 'Paraparatrechina', 'Paratrechina', 'Petalomyrmex', 'Plagiolepis', 'Polyergus',
+    'Polyrhachis', 'Prenolepis', 'Proformica', 'Prolasius', 'Pseudolasius', 'Pseudonotoncus', 'Rossomyrmex',
+    'Santschiella', 'Stigmacros', 'Tapinolepis', 'Teratomyrmex', 'Zatania', 'Acanthoponera', 'Aulacopone',
+    'Heteroponera', 'Anomalomyrma', 'Leptanilla', 'Noonilla', 'Opamyrma', 'Phaulomyrma', 'Protanilla', 'Scyphodon',
+    'Yavnella', 'Martialis', 'Myrmecia', 'Nothomyrmecia', 'Acanthognathus', 'Acanthomyrmex', 'Acromyrmex',
+    'Adelomyrmex', 'Adlerzia', 'Allomerus', 'Ancyridris', 'Anillomyrma', 'Aphaenogaster', 'Apterostigma',
+    'Aretidris', 'Atopomyrmex', 'Atta', 'Austromorium', 'Baracidris', 'Bariamyrma', 'Basiceros', 'Blepharidatta',
+    'Bondroitia', 'Calyptomyrmex', 'Cardiocondyla', 'Carebara', 'Cataulacus', 'Cephalotes', 'Chimaeridris',
+    'Colobostruma', 'Crematogaster', 'Cryptomyrmex', 'Cyatta', 'Cyphoidris', 'Cyphomyrmex', 'Dacatria',
+    'Dacetinops', 'Daceton', 'Diaphoromyrma', 'Dicroaspis', 'Dilobocondyla', 'Diplomorium', 'Dolopomyrmex',
+    'Epelysidris', 'Epopostruma', 'Erromyrma', 'Eurhopalothrix', 'Eutetramorium', 'Formicoxenus', 'Formosimyrma',
+    'Gaoligongidris', 'Gauromyrmex', 'Goniomma', 'Harpagoxenus', 'Huberia', 'Hylomyrma', 'indomyrma', 'ishakidris',
+    'Kalathomyrmex', 'Kartidris', 'Kempfidris', 'Lachnomyrmex', 'Lasiomyrma', 'Lenomyrmex', 'Leptothorax',
+    'Liomyrmex', 'Lophomyrmex', 'Lordomyrma', 'Malagidris', 'Manica', 'Mayriella', 'Megalomyrmex', 'Melissotarsus',
+    'Meranoplus', 'Mesostruma', 'Messor', 'Metapone', 'Microdaceton', 'Monomorium', 'Mycetagroicus', 'Mycetarotes',
+    'Mycetophylax', 'Mycetosoritis', 'Mycocepurus', 'Myrmecina', 'Myrmica', 'Myrmicaria', 'Myrmicocrypta',
+    'Nesomyrmex', 'Novomessor', 'Ochetomyrmex', 'Octostruma', 'Ocymyrmex', 'Orectognathus', 'Oxyepoecus',
+    'Oxyopomyrmex', 'Paramycetophylax', 'Paratopula', 'Patagonomyrmex', 'Perissomyrmex', 'Peronomyrmex',
+    'Phalacromyrmex', 'Pheidole', 'Pilotrochus', 'Podomyrma', 'Poecilomyrma', 'Pogonomyrmex', 'Pristomyrmex',
+    'Proatta', 'Procryptocerus', 'Propodilobus', 'Protalaridris', 'Pseudoatta', 'Recurvidris', 'Rhopalomastix',
+    'Rhopalothrix', 'Rogeria', 'Romblonella', 'Rostromyrmex', 'Rotastruma', 'Royidris', 'Secostruma',
+    'Sericomyrmex', 'Solenopsis', 'Stegomyrmex', 'Stenamma', 'Stereomyrmex', 'Strongylognathus', 'Strumigenys',
+    'Syllophopsis', 'Talaridris', 'Temnothorax', 'Terataner', 'Tetheamyrma', 'Tetramorium', 'Trachymyrmex',
+    'Tranopelta', 'Trichomyrmex', 'Tropidomyrmex', 'Tyrannomyrmex', 'Veromessor', 'Vitsika', 'Vollenhovia',
+    'Vombisidris', 'Wasmannia', 'Xenomyrmex', 'Paraponera', 'Anochetus', 'Asphinctopone', 'Austroponera',
+    'Belonopelta', 'Boloponera', 'Bothroponera', 'Brachyponera', 'Buniapone', 'Centromyrmex', 'Cryptopone',
+    'Diacamma', 'Dinoponera', 'Dolioponera', 'Ectomomyrmex', 'Emeryopone', 'Euponera', 'Feroponera', 'Fisheropone',
+    'Hagensia', 'Harpegnathos', 'Hypoponera', 'iroponera', 'Leptogenys', 'Loboponera', 'Mayaponera', 'Megaponera',
+    'Mesoponera', 'Myopias', 'Neoponera', 'Odontomachus', 'Odontoponera', 'Ophthalmopone', 'Pachycondyla',
+    'Paltothyreus', 'Parvaponera', 'Phrynoponera', 'Platythyrea', 'Plectroctena', 'Ponera', 'Promyopias',
+    'Psalidomyrmex', 'Pseudoneoponera', 'Pseudoponera', 'Rasopone', 'Simopelta', 'Streblognathus',
+    'Thaumatomyrmex', 'Discothyrea', 'Probolomyrmex', 'Proceratium', 'Myrcidris', 'Pseudomyrmex', 'Tetraponera'))
+
+
 @application.route('/specimens', methods=['GET'])
 def getSpecimen():
     # Process parameters
@@ -647,6 +715,10 @@ def getSpecimen():
     if geolocaleName != '*':
         query = query.join(Taxon).join(GeolocaleTaxon).join(Geolocale).filter(Geolocale.name == geolocaleName)
         query = addExtraGeolocaleListCriteria(query, geolocaleName)
+    if validSubfamily == 'true':
+        query = query.filter(func.lower(Specimen.subfamily).in_(sorted(VALID_SUBFAMILIES)))
+    if validGenus == 'true':
+        query = query.filter(func.lower(Specimen.genus).in_(sorted(VALID_GENERA)))
 
     # A fixed order (specimen code, the specimen table's key) so paging with offset neither
     # repeats nor skips records; with 500 per request, paging is how larger sets are fetched.
@@ -669,97 +741,12 @@ def getSpecimen():
         print('Query complete')
 
     dataList = []
-    skipSubfamily = 0
-    skipGenus = 0
     for sp in data:
-        skip = 0
-        if validSubfamily == 'true':
-            skip = sp.subfamily not in (
-                'agroecomyrmecinae', 'amblyoponinae', 'aneuretinae', 'apomyrminae', 'dolichoderinae', 'dorylinae',
-                'ectatomminae', 'formicinae', 'hetero', 'leptanillinae', 'martialinae', 'myrmeciinae', 'myrmicinae',
-                'paraponerinae', 'ponerinae', 'proceratiinae', 'pseudomyrmecinae')
-            if skip:
-                skipSubfamily = skipSubfamily + 1
-                print("skipping code:" + sp.code + " because in invalid (or fossil) subfamily:" + sp.subfamily)
-        if not skip and validGenus == 'true':
-            # This commented out set would be irregardless of fossil.
-            # skip = sp.genus not in ('Acanthognathus','Acanthomyrmex','Acanthoponera','Acanthostichus','Acromyrmex','Acropyga','Adelomyrmex','Adetomyrma','Adlerzia','Aenictogiton','Aenictus','Afromyrma','Afropone','Agastomyrma','Agraulomyrmex','Agroecomyrmex','Alloformica','Alloiomma','Allomerus','Amblyopone','Ancyridris','Aneuretellus','Aneuretus','Anillidris','Anillomyrma','Ankylomyrma','Anochetus','Anomalomyrma','Anonychomyrma','Anoplolepis','Aphaenogaster','Aphomomyrmex','Apomyrma','Apterostigma','Aptinoma','Archaeopone','Archimyrmex','Archiponera','Aretidris','Armania','Armaniella','Arnoldius','Asphinctopone','Asymphylomyrmex','Atopomyrmex','Atta','Attaichnus','Attopsis','Aulacopone','Austromorium','Austroponera','Avitomyrmex','Axinidris','Azteca','Baikuris','Bajcaridris','Baracidris','Bariamyrma','Basiceros','Belonopelta','Biamomyrma','Bilobomyrma','Blepharidatta','Boloponera','Boltonidris','Boltonimecia','Bondroitia','Bothriomyrmex','Bothroponera','Brachymyrmex','Brachyponera','Brachytarsites','Bradoponera','Bregmatomyrma','Britaneuretus','Brownimecia','Buniapone','Burmomyrma','Calomyrmex','Calyptites','Calyptomyrmex','Camelomecia','Camponotites','Camponotus','Cananeuretus','Canapone','Cardiocondyla','Carebara','Casaleia','Cataglyphis','Cataglyphoides','Cataulacus','Centromyrmex','Cephalomyrmex','Cephalopone','Cephalotes','Cerapachys','Ceratomyrmex','Cheliomyrmex','Chimaeridris','Chimaeromyrma','Chronomyrmex','Chronoxenus','Chrysapace','Cladomyrma','Clavipetiola','Colobopsis','Colobostruma','Conoformica','Crematogaster','Cretomyrma','Cretopone','Cryptomyrmex','Cryptopone','Ctenobethylus','Curticorna','Curtipalpulus','Cyatta','Cylindromyrmex','Cyphoidris','Cyphomyrmex','Cyrtopone','Dacatria','Dacetinops','Daceton','Diacamma','Diaphoromyrma','Dicroaspis','Dilobocondyla','Dinomyrmex','Dinoponera','Diplomorium','Discothyrea','Dlusskyidris','Doleromyrma','Dolichoderus','Dolichomyrma','Dolioponera','Dolopomyrmex','Dorylus','Dorymyrmex','Drymomyrmex','Eburopone','Echinopla','Eciton','Ecphorella','Ectatomma','Ectomomyrmex','Elaeomyrmex','Elaphrodites','Eldermyrmex','Electromyrmex','Electroponera','Emeryopone','Emplastus','Enneamerus','Eoaenictites','Eocenidris','Eocenomyrma','Eoformica','Eogorgites','Eoleptocerites','Eomyrmex','Eoponerites','Eotapinoma','Epelysidris','Epopostruma','Erromyrma','Eulithomyrmex','Euponera','Euprenolepis','Eurhopalothrix','Eurymyrmex','Eurytarsites','Eusphinctus','Eutetramorium','Fallomyrma','Feroponera','Fisheropone','Fonsecahymen','Forelius','Formica','Formicoxenus','Formosimyrma','Froggattella','Fulakora','Furcisutura','Fushuniformica','Fushunomyrmex','Gaoligongidris','Gauromyrmex','Gerontoformica','Gesomyrmex','Gigantiops','Glaphyromyrmex','Gnamptogenys','Goniomma','Gracilidris','Hagensia','Haidomyrmex','Haidomyrmodes','Haidoterminus','Harpagoxenus','Harpegnathos','Heeridris','Heteroponera','Huaxiaformica','Huberia','Hylomyrma','Hypopomyrmex','Hypoponera','Iberoformica','Ilemomyrmex','Imhoffia','Indomyrma','Iridomyrmex','Iroponera','Ishakidris','Kalathomyrmex','Kartidris','Kempfidris','Khetania','Klondikia','Kohlsimyrma','Kotshkorkia','Ktunaxia','Kyromyrma','Labidus','Lachnomyrmex','Lasiomyrma','Lasiophanes','Lasius','Lenomyrmex','Lepisiota','Leptanilla','Leptanilloides','Leptogasteritus','Leptogenys','Leptomyrmex','Leptomyrmula','Leptothorax','Leucotaphus','Liaoformica','Linepithema','Linguamyrmex','Liometopum','Liomyrmex','Lioponera','Lividopone','Loboponera','Lonchomyrmex','Longicapitia','Longiformica','Lophomyrmex','Lordomyrma','Loweriella','Macabeemyrma','Magnogasterites','Malagidris','Manica','Martialis','Mayaponera','Mayriella','Megalomyrmex','Megaponera','Melissotarsus','Melophorus','Meranoplus','Mesoponera','Mesostruma','Messelepone','Messor','Metapone','Mianeuretus','Microdaceton','Miomyrmex','Miosolenopsis','Monomorium','Myanmyrma','Mycetagroicus','Mycetarotes','Mycetophylax','Mycetosoritis','Mycocepurus','Myopias','Myopopone','Myrcidris','Myrmecia','Myrmecina','Myrmecites','Myrmecocystus','Myrmecorhynchus','Myrmelachista','Myrmica','Myrmicaria','Myrmicocrypta','Myrmoteras','Mystrium','Nebothriomyrmex','Neivamyrmex','Neocerapachys','Neoponera','Nesomyrmex','Nomamyrmex','Noonilla','Nothomyrmecia','Notoncus','Notostigma','Novomessor','Nylanderia','Ochetellus','Ochetomyrmex','Octostruma','Ocymyrmex','Odontomachus','Odontoponera','Oecophylla','Onychomyrmex','Ooceraea','Opamyrma','Ophthalmopone','Opisthopsis','Orapia','Orbicapitia','Orbigastrula','Orectognathus','Ovalicapito','Ovaligastrula','Overbeckia','Oxyepoecus','Oxyidris','Oxyopomyrmex','Pachycondyla','Paltothyreus','Papyrius','Parameranoplus','Paramycetophylax','Paraneuretus','Paraparatrechina','Paraphaenogaster','Paraponera','Parasyscia','Paratopula','Paratrechina','Parvaponera','Patagonomyrmex','Perissomyrmex','Peronomyrmex','Petalomyrmex','Petraeomyrmex','Petropone','Phalacromyrmex','Phaulomyrma','Pheidole','Philidris','Phrynoponera','Pilotrochus','Pityomyrmex','Plagiolepis','Platythyrea','Plectroctena','Plesiomyrmex','Podomyrma','Poecilomyrma','Pogonomyrmex','Polyergus','Polyrhachis','Ponera','Ponerites','Poneropterus','Prenolepis','Prionomyrmex','Prionopelta','Pristomyrmex','Proatta','Probolomyrmex','Procerapachys','Proceratium','Procryptocerus','Prodimorphomyrmex','Proformica','Proiridomyrmex','Prolasius','Promyopias','Propodilobus','Protalaridris','Protaneuretus','Protanilla','Protazteca','Protoformica','Protomyrmica','Protopone','Protrechina','Psalidomyrmex','Pseudarmania','Pseudectatomma','Pseudoatta','Pseudocamponotus','Pseudolasius','Pseudomyrmex','Pseudoneoponera','Pseudonotoncus','Pseudoponera','Quadrulicapito','Quineangulicapito','Rasopone','Ravavy','Recurvidris','Rhopalomastix','Rhopalothrix','Rhytidoponera','Rogeria','Romblonella','Rossomyrmex','Rostromyrmex','Rotastruma','Royidris','Santschiella','Scyphodon','Secostruma','Sericomyrmex','Sicilomyrmex','Simopelta','Simopone','Sinoformica','Sinomyrmex','Sinotenuicapito','Solenopsis','Solenopsites','Sphaerogasterites','Sphecomyrma','Sphinctomyrmex','Stegomyrmex','Stenamma','Stereomyrmex','Stigmacros','Stigmatomma','Stigmomyrmex','Stiphromyrmex','Streblognathus','Strongylognathus','Strumigenys','Syllophopsis','Syscia','Talaridris','Tanipone','Taphopone','Tapinolepis','Tapinoma','Tatuidris','Technomyrmex','Temnothorax','Terataner','Teratomyrmex','Tetheamyrma','Tetramorium','Tetraponera','Thaumatomyrmex','Titanomyrma','Trachymyrmex','Tranopelta','Trichomyrmex','Tropidomyrmex','Turneria','Typhlomyrmex','Tyrannomyrmex','Usomyrma','Veromessor','Vicinopone','Vitsika','Vollenhovia','Vombisidris','Wasmannia','Wilsonia','Wumyrmex','Xenomyrmex','Xymmer','Yantaromyrmex','Yavnella','Ypresiomyrma','Yunodorylus','Zasphinctus','Zatania','Zhangidris','Zherichinius','Zigrasimecia')
-            skip = sp.genus not in (
-                'Ankylomyrma', 'Tatuidris', 'Adetomyrma', 'Amblyopone', 'Fulakora', 'Myopopone', 'Mystrium',
-                'Onychomyrmex',
-                'Prionopelta', 'Stigmatomma', 'Xymmer', 'Aneuretus', 'Apomyrma', 'Anillidris', 'Anonychomyrma',
-                'Aptinoma',
-                'Arnoldius', 'Axinidris', 'Azteca', 'Bothriomyrmex', 'Chronoxenus', 'Doleromyrma', 'Dolichoderus',
-                'Dorymyrmex', 'Ecphorella', 'Forelius', 'Froggattella', 'Gracilidris', 'iridomyrmex', 'Leptomyrmex',
-                'Linepithema', 'Liometopum', 'Loweriella', 'Nebothriomyrmex', 'Ochetellus', 'Papyrius', 'Philidris',
-                'Ravavy', 'Tapinoma', 'Technomyrmex', 'Turneria', 'Acanthostichus', 'Aenictogiton', 'Aenictus',
-                'Cerapachys', 'Cheliomyrmex', 'Chrysapace', 'Cylindromyrmex', 'Dorylus', 'Eburopone', 'Eciton',
-                'Eusphinctus', 'Labidus', 'Leptanilloides', 'Lioponera', 'Lividopone', 'Neivamyrmex', 'Neocerapachys',
-                'Nomamyrmex', 'Ooceraea', 'Parasyscia', 'Simopone', 'Sphinctomyrmex', 'Syscia', 'Tanipone',
-                'Vicinopone',
-                'Yunodorylus', 'Zasphinctus', 'Ectatomma', 'Gnamptogenys', 'Rhytidoponera', 'Typhlomyrmex', 'Acropyga',
-                'Agraulomyrmex', 'Alloformica', 'Anoplolepis', 'Aphomomyrmex', 'Bajcaridris', 'Brachymyrmex',
-                'Bregmatomyrma', 'Calomyrmex', 'Camponotus', 'Cataglyphis', 'Cladomyrma', 'Colobopsis', 'Dinomyrmex',
-                'Echinopla', 'Euprenolepis', 'Formica', 'Gesomyrmex', 'Gigantiops', 'iberoformica', 'Lasiophanes',
-                'Lasius',
-                'Lepisiota', 'Melophorus', 'Myrmecocystus', 'Myrmecorhynchus', 'Myrmelachista', 'Myrmoteras',
-                'Notoncus',
-                'Notostigma', 'Nylanderia', 'Oecophylla', 'Opisthopsis', 'Overbeckia', 'Paraparatrechina',
-                'Paratrechina',
-                'Petalomyrmex', 'Plagiolepis', 'Polyergus', 'Polyrhachis', 'Prenolepis', 'Proformica', 'Prolasius',
-                'Pseudolasius', 'Pseudonotoncus', 'Rossomyrmex', 'Santschiella', 'Stigmacros', 'Tapinolepis',
-                'Teratomyrmex', 'Zatania', 'Acanthoponera', 'Aulacopone', 'Heteroponera', 'Anomalomyrma', 'Leptanilla',
-                'Noonilla', 'Opamyrma', 'Phaulomyrma', 'Protanilla', 'Scyphodon', 'Yavnella', 'Martialis', 'Myrmecia',
-                'Nothomyrmecia', 'Acanthognathus', 'Acanthomyrmex', 'Acromyrmex', 'Adelomyrmex', 'Adlerzia',
-                'Allomerus',
-                'Ancyridris', 'Anillomyrma', 'Aphaenogaster', 'Apterostigma', 'Aretidris', 'Atopomyrmex', 'Atta',
-                'Austromorium', 'Baracidris', 'Bariamyrma', 'Basiceros', 'Blepharidatta', 'Bondroitia', 'Calyptomyrmex',
-                'Cardiocondyla', 'Carebara', 'Cataulacus', 'Cephalotes', 'Chimaeridris', 'Colobostruma',
-                'Crematogaster',
-                'Cryptomyrmex', 'Cyatta', 'Cyphoidris', 'Cyphomyrmex', 'Dacatria', 'Dacetinops', 'Daceton',
-                'Diaphoromyrma',
-                'Dicroaspis', 'Dilobocondyla', 'Diplomorium', 'Dolopomyrmex', 'Epelysidris', 'Epopostruma', 'Erromyrma',
-                'Eurhopalothrix', 'Eutetramorium', 'Formicoxenus', 'Formosimyrma', 'Gaoligongidris', 'Gauromyrmex',
-                'Goniomma', 'Harpagoxenus', 'Huberia', 'Hylomyrma', 'indomyrma', 'ishakidris', 'Kalathomyrmex',
-                'Kartidris',
-                'Kempfidris', 'Lachnomyrmex', 'Lasiomyrma', 'Lenomyrmex', 'Leptothorax', 'Liomyrmex', 'Lophomyrmex',
-                'Lordomyrma', 'Malagidris', 'Manica', 'Mayriella', 'Megalomyrmex', 'Melissotarsus', 'Meranoplus',
-                'Mesostruma', 'Messor', 'Metapone', 'Microdaceton', 'Monomorium', 'Mycetagroicus', 'Mycetarotes',
-                'Mycetophylax', 'Mycetosoritis', 'Mycocepurus', 'Myrmecina', 'Myrmica', 'Myrmicaria', 'Myrmicocrypta',
-                'Nesomyrmex', 'Novomessor', 'Ochetomyrmex', 'Octostruma', 'Ocymyrmex', 'Orectognathus', 'Oxyepoecus',
-                'Oxyopomyrmex', 'Paramycetophylax', 'Paratopula', 'Patagonomyrmex', 'Perissomyrmex', 'Peronomyrmex',
-                'Phalacromyrmex', 'Pheidole', 'Pilotrochus', 'Podomyrma', 'Poecilomyrma', 'Pogonomyrmex',
-                'Pristomyrmex',
-                'Proatta', 'Procryptocerus', 'Propodilobus', 'Protalaridris', 'Pseudoatta', 'Recurvidris',
-                'Rhopalomastix',
-                'Rhopalothrix', 'Rogeria', 'Romblonella', 'Rostromyrmex', 'Rotastruma', 'Royidris', 'Secostruma',
-                'Sericomyrmex', 'Solenopsis', 'Stegomyrmex', 'Stenamma', 'Stereomyrmex', 'Strongylognathus',
-                'Strumigenys',
-                'Syllophopsis', 'Talaridris', 'Temnothorax', 'Terataner', 'Tetheamyrma', 'Tetramorium', 'Trachymyrmex',
-                'Tranopelta', 'Trichomyrmex', 'Tropidomyrmex', 'Tyrannomyrmex', 'Veromessor', 'Vitsika', 'Vollenhovia',
-                'Vombisidris', 'Wasmannia', 'Xenomyrmex', 'Paraponera', 'Anochetus', 'Asphinctopone', 'Austroponera',
-                'Belonopelta', 'Boloponera', 'Bothroponera', 'Brachyponera', 'Buniapone', 'Centromyrmex', 'Cryptopone',
-                'Diacamma', 'Dinoponera', 'Dolioponera', 'Ectomomyrmex', 'Emeryopone', 'Euponera', 'Feroponera',
-                'Fisheropone', 'Hagensia', 'Harpegnathos', 'Hypoponera', 'iroponera', 'Leptogenys', 'Loboponera',
-                'Mayaponera', 'Megaponera', 'Mesoponera', 'Myopias', 'Neoponera', 'Odontomachus', 'Odontoponera',
-                'Ophthalmopone', 'Pachycondyla', 'Paltothyreus', 'Parvaponera', 'Phrynoponera', 'Platythyrea',
-                'Plectroctena', 'Ponera', 'Promyopias', 'Psalidomyrmex', 'Pseudoneoponera', 'Pseudoponera', 'Rasopone',
-                'Simopelta', 'Streblognathus', 'Thaumatomyrmex', 'Discothyrea', 'Probolomyrmex', 'Proceratium',
-                'Myrcidris',
-                'Pseudomyrmex', 'Tetraponera')
-            if skip:
-                skipGenus = skipGenus + 1
-                # print("skipping code:" + sp.code + " because in invalid (or fossil) genus:" + sp.genus)
+        specDict = Specimen.getSpecDict(sp)
 
-        if not skip:
-            specDict = Specimen.getSpecDict(sp)
-
-            # if (specDict['specimenCode'] == 'antweb1038039'):
-            #  print("ownedBy:" + specDict['ownedBy'])  # Would appear (only on server) in terminal as SMNG, G\xc3\xb6rlitz, Germany
-            dataList.append(specDict)
-
-    if log:
-        print('skipSubfamil:' + str(skipSubfamily) + ' skipGenus:' + str(skipGenus))
+        # if (specDict['specimenCode'] == 'antweb1038039'):
+        #  print("ownedBy:" + specDict['ownedBy'])  # Would appear (only on server) in terminal as SMNG, G\xc3\xb6rlitz, Germany
+        dataList.append(specDict)
 
     params = [request.args]
     metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'offset': offset,
@@ -774,13 +761,30 @@ def getSpecimen():
 
 # --- Geo Specimens API ------------------------------------------------------------------------------------
 
+KM_PER_DEGREE_LATITUDE = 111.32
+
+
+def radiusBox(lat, lon, radiusKm):
+    """(minLat, maxLat, minLon, maxLon) of the box around lat, lon that holds a circle of radiusKm kilometres.
+    2026-10-26, finding F22: the radius was added to the coordinates as degrees (radius=10 was a box of about
+    2,200 km). One degree of latitude is 111.32 km; one degree of longitude is 111.32 * cos(latitude) km."""
+    radiusKm = abs(float(radiusKm))
+    dLat = radiusKm / KM_PER_DEGREE_LATITUDE
+    cosLat = math.cos(math.radians(lat))
+    if cosLat < 1e-6:
+        dLon = 180.0  # at a pole every longitude is within the radius
+    else:
+        dLon = min(180.0, radiusKm / (KM_PER_DEGREE_LATITUDE * cosLat))
+    return lat - dLat, lat + dLat, lon - dLon, lon + dLon
+
+
 # http://localhost:5000/geoSpecimens?coords=37,%20-122&limit=8000&radius=2
 @application.route('/geoSpecimens', methods=['GET'])
 def getGeoSpecimens():
     coords = request.args.get('coords', default='*', type=str)  # (?coord=37, -122) is cal academy
     if coords == '*':
         return 'Must enter coords for a geoSpecimens request'
-    radius = request.args.get('radius', default='5', type=int)  # in kilometers
+    radius = request.args.get('radius', default=5.0, type=float)  # in kilometres
     distinct = request.args.get('distinct', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return ""
@@ -792,16 +796,21 @@ def getGeoSpecimens():
         lat, lon = float(coordsArray[0]), float(coordsArray[1])
     except (ValueError, IndexError):
         return 'coords must be "latitude,longitude", for example coords=37.77,-122.47', 400
-    query = query.filter(Specimen.decimalLatitude <= (lat + int(radius)),
-                         Specimen.decimalLatitude >= (lat - int(radius)))
-    query = query.filter(Specimen.decimalLongitude <= (lon + int(radius)),
-                         Specimen.decimalLongitude >= (lon - int(radius)))
+    minLat, maxLat, minLon, maxLon = radiusBox(lat, lon, radius)
+    query = query.filter(Specimen.decimalLatitude <= maxLat, Specimen.decimalLatitude >= minLat)
+    query = query.filter(Specimen.decimalLongitude <= maxLon, Specimen.decimalLongitude >= minLon)
 
     if distinct != '*':
+        # The names of the specimens in the area (2026-10-26, F22: a new query without the area was started here).
         if distinct == 'subfamily':
-            query = session.query(Specimen.subfamily).distinct()  # was db.session...
-        if distinct == 'genus':
-            query = session.query(Specimen.genus).distinct()  # was db.session...
+            query = query.with_entities(Specimen.subfamily).distinct().order_by(Specimen.subfamily)
+        elif distinct == 'genus':
+            query = query.with_entities(Specimen.genus).distinct().order_by(Specimen.genus)
+        elif distinct == 'species':
+            query = query.filter(Specimen.species != None).with_entities(Specimen.genus, Specimen.species) \
+                .distinct().order_by(Specimen.genus, Specimen.species)
+        else:
+            return 'distinct must be subfamily, genus or species', 400
 
         query = query.limit(limit)
         query = query.offset(offset)
@@ -820,8 +829,8 @@ def getGeoSpecimens():
             #  specDict = { 'subfamily': sp.subfamily }
             if distinct == 'genus':
                 dataList.append(sp.genus)
-            #  specDict = { 'genus': sp.genus }
-            # dataList.append(specDict)
+            if distinct == 'species':
+                dataList.append(initCap(sp.genus) + ' ' + sp.species)
 
         params = [request.args]
         metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'count': len(dataList)}
@@ -830,7 +839,7 @@ def getGeoSpecimens():
             return jsonify(metaData=metaDataDict, subfamilies=dataList)
         if distinct == 'genus':
             return jsonify(metaData=metaDataDict, genera=dataList)
-        return jsonify(_metaData=metaDataDict, specimens=dataList)
+        return jsonify(metaData=metaDataDict, species=dataList)
 
     # if not distinct. Show everything (in specimen code order, for stable paging).
     query = query.order_by(Specimen.code)
@@ -1034,6 +1043,8 @@ def getTaxa():
         query = query.filter(Taxon.status == status)
 
     # limit and offset (from setGlobals) were ignored here, unlike the other endpoints.
+    # A fixed order (the taxon table's key) so paging with offset neither repeats nor skips (F8).
+    query = query.order_by(Taxon.taxonName)
     query = query.limit(limit)
     query = query.offset(offset)
 
@@ -1144,6 +1155,15 @@ def getDistinctTaxa():
     if status != '*':
         query = query.filter(Specimen.status == status)
 
+    # A fixed order so paging with offset neither repeats nor skips (F8).
+    if 'subfamily' == taxarank:
+        query = query.order_by(Specimen.subfamily)
+    elif 'genus' == taxarank:
+        query = query.order_by(Specimen.genus)
+    elif 'species' == taxarank:
+        query = query.order_by(Specimen.species)
+    else:
+        query = query.order_by(Specimen.code)
     query = query.limit(limit)
     query = query.offset(offset)
 
@@ -1239,7 +1259,7 @@ def imagesBySpecimen(data):
             if tCode != '':  # we have one to insert. (Is not the first record).
                 specimenDict = {
                     'specimenCode': tCode
-                    , 'url': 'http://localhost:5000/specimens?code=' + tCode
+                    , 'url': specimenApiUrl(tCode)
                     , 'images': images
                 }
                 specimenCount += 1
@@ -1257,7 +1277,7 @@ def imagesBySpecimen(data):
     if tCode != '':
         specimenDict = {
             'specimenCode': tCode
-            , 'url': 'http://localhost:5000/specimens?code=' + tCode
+            , 'url': specimenApiUrl(tCode)
             , 'images': images
         }
         specimenCount += 1
@@ -1292,7 +1312,7 @@ def getImages():
             query = query.filter(Image.hasTiff == 0)
     # imagesBySpecimen needs the images of one specimen together (2026-10-22: without an order a specimen could be
     # split into several entries and counted more than once)
-    query = query.order_by(Image.code, Image.id)
+    query = query.order_by(Image.code, Image.shotType, Image.shotNumber, Image.id)
     query = query.limit(limit)
     query = query.offset(offset)
 
@@ -1707,7 +1727,8 @@ def getTaxaImages():
         if hasTiff == 'false':
             query = query.filter(TaxaImage.hasTiff == 0)
 
-    query.order_by(TaxaImage.taxonName, TaxaImage.code)
+    # F8: the order was computed and thrown away (no "query ="); uid (the key) makes it complete.
+    query = query.order_by(TaxaImage.taxonName, TaxaImage.code, TaxaImage.uid)
     query = query.limit(limit)
     query = query.offset(offset)
 
@@ -1975,6 +1996,8 @@ def getGeolocaleTaxa():
 
     # print('id:' + id)
 
+    # A fixed order (the geolocale_taxon key) so paging with offset neither repeats nor skips (F8).
+    query = query.order_by(GeolocaleTaxon.geolocaleId, GeolocaleTaxon.taxonName)
     query = query.limit(limit)
     query = query.offset(offset)
 
@@ -2178,6 +2201,8 @@ def getBioregionTaxa():
         query = query.filter(Taxon.species == species)
     if status != '*':
         query = query.filter(Taxon.status == status)
+    # A fixed order (the bioregion_taxon key) so paging with offset neither repeats nor skips (F8).
+    query = query.order_by(BioregionTaxon.bioregionName, BioregionTaxon.taxonName)
     query = query.limit(limit)
     query = query.offset(offset)
 
