@@ -26,7 +26,7 @@
 
 <%
    if (LoginMgr.isAdmin(accessLogin)) { %>
-        <p><font color=red><b>Admin Note:</font></b> Urls must contain &up=1 or the request will return a blank page ! Automatically added if user is logged in as an admin.</p>
+        <p><font color=red><b>Admin Note:</font></b> Urls must contain &up=1. Without it a request returns HTTP 503 with a JSON error message. Automatically added if user is logged in as an admin.</p>
 <% }
    if (AntwebProps.isDevMode()) { %>
         <p><b>Dev Note:</b>On dev, the urls will contains localhost:5000 but on the live site, they will seamlessly redirect to the api server. To launch the dev server, go to the antweb/api/v3 directory and invoke: python3.6 api.py</p>
@@ -57,7 +57,7 @@
             </tr>
             <tr>
                 <td><b>Up</b></td>
-                <td>Admin only - API is currently down by default. Include the up parameter to access. (up=1)</td>
+                <td>Admin only - API is currently down by default: without the up parameter a request returns HTTP 503 with a JSON error message. Include the up parameter to access. (up=1)</td>
             </tr>            
 <% } %>
         </table>
@@ -150,19 +150,19 @@
             </tr>
             <tr>
                 <td><b>Min Date</b></td>
-                <td>Query for specimen identified on or after a single date (ex: minDate=yyyy-mm-dd)</td>
+                <td>Query for specimen collected on or after a single date, that date included (ex: minDate=yyyy-mm-dd)</td>
             </tr>
              <tr>
                 <td><b>Max Date</b></td>
-                <td>Query for specimen identified on or before a single date (ex: maxDate=yyyy-mm-dd)</td>
+                <td>Query for specimen collected on or before a single date, that whole day included (ex: maxDate=yyyy-mm-dd)</td>
             </tr>
             <tr>
                 <td><b>Min Elevation</b></td>
-                <td>This is measured in meters.  Query on specimen found at or above a specific elevation (ex: minElevation=1200)</td>
+                <td>This is measured in meters.  Query on specimen found at or above a specific elevation, that elevation included (ex: minElevation=1200)</td>
             </tr>
             <tr>
                 <td><b>Max Elevation</b></td>
-                <td>This is measured in meters.  Query on specimen found at or below a specific elevation (ex: maxElevation=1200)</td>
+                <td>This is measured in meters.  Query on specimen found at or below a specific elevation, that elevation included (ex: maxElevation=1200)</td>
             </tr>
             <tr>
                 <td><b>Museum</b></td>
@@ -353,19 +353,19 @@
             </tr>
             <tr>
                 <td><b>Min Date</b></td>
-                <td>Query for specimen identified on or after a single date (minDate=yyyy-mm-dd)</td>
+                <td>Query for specimen collected on or after a single date, that date included (minDate=yyyy-mm-dd)</td>
             </tr>
              <tr>
                 <td><b>Max Date</b></td>
-                <td>Query for specimen identified on or before a single date (maxDate=yyyy-mm-dd)</td>
+                <td>Query for specimen collected on or before a single date, that whole day included (maxDate=yyyy-mm-dd)</td>
             </tr>
             <tr>
                 <td><b>Min Elevation</b></td>
-                <td>This is measured in meters.  Query on specimen found at or above a specific elevation (minElevation=1200)</td>
+                <td>This is measured in meters.  Query on specimen found at or above a specific elevation, that elevation included (minElevation=1200)</td>
             </tr>
             <tr>
                 <td><b>Max Elevation</b></td>
-                <td>This is measured in meters.  Query on specimen found at or below a specific elevation (maxElevation=1200)</td>
+                <td>This is measured in meters.  Query on specimen found at or below a specific elevation, that elevation included (maxElevation=1200)</td>
             </tr>
             <tr>
                 <td><b>Status</b></td>
@@ -607,7 +607,7 @@
 
         <h2>Geolocale Species Stats</h2>
             <br>
-         	<b>Function:</b> Query for the statistics of species (species and subspecies) found in given geolocations (country or adm1).
+         	<b>Function:</b> Query for the statistics of species (species and subspecies) found in given geolocations (country or adm1). Each subcaste count counts only specimens of its caste (for example queenAlateDealateCount counts queens, workerNormalCount workers, maleAlateCount males).
             <p><b>Parameters:</b>
         <table class="arguments">
             <tr>

@@ -96,6 +96,23 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_inputs.py
 
+      - name: API decisions of 2026-10-27 (subcastes within caste, inclusive bounds, 503 without up, login required) (tests/unit/test_api_decisions.py)
+        run: |
+          docker run --rm --entrypoint python -e REPO_DIR=/repo -v "$PWD/tests/unit:/t:ro" \
+            -v "$PWD/docker-compose.yml:/repo/docker-compose.yml:ro" -v "$PWD/docker-compose.dev.yml:/repo/docker-compose.dev.yml:ro" \
+            antweb/api:dev /t/test_api_decisions.py
+
+      - name: API refuses to start without its read-only login (API_REQUIRE_READONLY_LOGIN=true, as on the servers)
+        run: |
+          d=$(mktemp -d)
+          set +e
+          timeout 120 docker run --rm -e API_REQUIRE_READONLY_LOGIN=true -v "$d:/antweb-etc:ro" antweb/api:dev > "$d.log" 2>&1
+          code=$?
+          set -e
+          tail -20 "$d.log"
+          [ "$code" != 0 ] && [ "$code" != 124 ] || { echo "::error::the API did not stop (exit $code)"; exit 1; }
+          grep -q "ERROR: no read-only login" "$d.log" || { echo "::error::no ERROR line about the login file"; exit 1; }
+
       - name: API container as in docker-compose.yml (only its login file, read-only, workers not root)
         # The login file is root-only (0600) here: gunicorn's master reads it at start
         # (--preload), the workers serve as the user api (uid 2002).

@@ -192,7 +192,7 @@ inventory 2026-10-20: 9, 7, 102).
 | 99 | curators, groups, artists, uploads (admin) | orphanedImages Found N images of M specimen codes that are not in AntWeb | live: images whose specimen code is no specimen record, and their codes (`OrphanedImages.COUNTS_SQL`, Q9 2026-10-22: the page said "N orphaned images" and counted codes); explained on the page | yes | inv:stats.images; junit:NumberDecisionsDbTest#testOrphanedImagesCountImagesAndCodes; e2e:test_count_check.py::test_image_upload_and_orphan_counts_equal_the_recount |
 | 100 | API v3.1 | /specimens imageCount | specimen.image_count | yes | inv:taxon.images; e2e:test_api_numbers.py::test_images_meta_counts_and_specimen_image_count; e2e:test_numbers_live.py::test_specimen_images_count_equals_the_api |
 | 101 | API v3.1 | /specimens, /geoSpecimens, ... meta count | live: rows in this page | partly | e2e:test_api_numbers.py::test_meta_count_is_the_rows_returned |
-| 102 | API v3.1 | /geoSpeciesStats caste counts | live | partly | e2e:test_api_numbers.py::test_geo_species_stats_castes_add_up; unit:test_api_counts.py::test_geo_species_stats_counts_ergatoids_of_their_caste |
+| 102 | API v3.1 | /geoSpeciesStats caste counts | live; every subcaste count only within its caste since 2026-10-27 (decided by Brian Fisher) | partly | e2e:test_api_numbers.py::test_geo_species_stats_castes_add_up; unit:test_api_counts.py::test_geo_species_stats_counts_ergatoids_of_their_caste; unit:test_api_decisions.py::test_geo_species_stats_counts_subcastes_within_their_caste |
 | 103 | API v3.1 | /taxa subfamilyCount, genusCount, speciesCount, specimenCount | taxon columns, copied each night from the name's Global row (`TaxonApiCountDb`, since 2026-10-26; B11) | yes | inv:api.taxa |
 | 104 | API v3.1 | /taxa imageCount | taxon.image_count (= #54) | yes | inv:taxon.images |
 | 105 | API v3.1 | /taxa meta taxonCount | live | partly | e2e:test_api_numbers.py::test_meta_count_is_the_rows_returned |
@@ -305,6 +305,15 @@ Found while doing this (2026-10-22):
   not restricted to their caste either; with distinct subcaste names that only matters where a specimen has a
   subcaste of another caste. Tests: `unit:test_api_counts.py::test_geo_species_stats_counts_ergatoids_of_their_caste`,
   `e2e:test_api_numbers.py::test_geo_species_stats_castes_add_up`.
+  **Decided by Brian Fisher 2026-10-27:** the other subcaste counts count only within their caste too
+  (`queenAlateDealateCount`, `queenBrachypterousCount`: queens; `workerMajorSoldierCount`, `workerNormalCount`:
+  workers; `maleAlateCount`: males). Live counts, so the change shows as soon as the API is deployed (no nightly).
+  Test: `unit:test_api_decisions.py::test_geo_species_stats_counts_subcastes_within_their_caste`.
+  Also decided the same day: the API's date and elevation filters (`minDate`, `maxDate`, `minElevation`,
+  `maxElevation`, on /specimens and /distinctTaxa) include their bounds, so the records and meta counts (#101) of a
+  query with them can grow by the records on a bound. Tests: `unit:test_api_decisions.py::test_elevation_bounds_are_inclusive`,
+  `unit:test_api_decisions.py::test_date_bounds_are_inclusive_and_max_date_takes_the_whole_day`,
+  `unit:test_api_decisions.py::test_distinct_taxa_uses_the_same_bounds`.
 - **B31** statsPage Bioregion Data and Museum Data count valid taxa of every family on the lists (no
   `family = 'formicidae'`), while the place pages count ants only since 2026-10-21. `inv:stats.nonants` reports
   each bioregion and museum whose statsPage numbers include other families (real until decided);

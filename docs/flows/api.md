@@ -4,11 +4,13 @@ Read from the code on master at commit e81a8945 (2026-10-22): `api/v3.1/api.py` 
 
 ## In plain words
 
-The API gives the same data as the site as JSON, for scripts: specimens, names, images, places and their species lists, measurements. Users are researchers and other databases (GBIF-style harvesters, R and Python packages, AntMaps-type sites). It only reads: on the servers it logs in to MySQL as a read-only user (`etc/api-db.properties`, mounted as `/antweb-etc/api-db.properties`).
+The API gives the same data as the site as JSON, for scripts: specimens, names, images, places and their species lists, measurements. Users are researchers and other databases (GBIF-style harvesters, R and Python packages, AntMaps-type sites). It only reads: on the servers it logs in to MySQL as a read-only user (`etc/api-db.properties`, mounted as `/antweb-etc/api-db.properties`). On production and staging the API does not start without that file (`API_REQUIRE_READONLY_LOGIN: "true"` in `docker-compose.yml`, decided by Brian Fisher 2026-10-27; the container log says `ERROR: no read-only login` and the container restarts until the file is there). On a development machine (`docker-compose.dev.yml` sets `"false"`) it prints a warning and uses the main account.
 
 Rules common to every route:
 
-- **`up=1` is required.** Without it every data route answers HTTP 200 with an empty body (`down()`, a switch kept from an outage). The documentation's examples add it.
+- **`up=1` is required.** Without it every data route answers HTTP 503 with `{"error": "The AntWeb API is not available at the moment. Please try again later.", "documentation": ...}` (`checkUp()` before every request, `apiDown()`; decided by Brian Fisher 2026-10-27, it was HTTP 200 with an empty body). `/v3.1/` itself stays HTTP 200 (the uptime check and the container health check use it). The documentation's examples add `up=1` for admins.
+- **Date and elevation filters include their bounds** (`boundsFilter()`, `/specimens` and `/distinctTaxa`; decided by Brian Fisher 2026-10-27, they were exclusive): `minDate`/`maxDate` compare the collection start date, `maxDate=1979-12-31` includes the whole of that day; `minElevation`/`maxElevation` compare `minimumElevationInMeters`, so `minElevation=1200` includes specimens at 1200 m.
+- **`/geoSpeciesStats` subcaste counts count only within their caste** (decided by Brian Fisher 2026-10-27, as the ergatoids since B30): `queenAlateDealateCount` and `queenBrachypterousCount` count queens, `workerMajorSoldierCount` and `workerNormalCount` workers, `maleAlateCount` males. Before, a specimen of another caste with the same subcaste name was counted too.
 - **At most 500 records per request** (since 2026-10-21, until registered API keys; it was 10,000). `limit=` asks for fewer; without `limit` a request gets 500. Above the cap, the reply has 500 records, `metaData.limitNotice` and the header `X-AntWeb-Limit-Notice` ("Requests are limited to 500 records while AntWeb moves to registered API keys. For larger data needs contact antweb@antweb.org."). The cap is `maxLimit` in `etc/api-db.properties` (restart the container after a change). `offset=` fetches the next records; only routes with a fixed order page reliably (below).
 - **Unknown parameters are refused:** HTTP 400 with `error`, `unknownParameters`, `acceptedParameters`, `documentation` and, when a name is close, `didYouMean` (`/specimens?code=` -> `specimenCode`). Since 2026-10-21 (#224); before, a misspelt filter was ignored.
 - `ndjson=true`: one JSON line per record (with an index line before each), no metaData; the limit notice is in the header.
@@ -36,7 +38,7 @@ Rules common to every route:
 
 ## Code path
 
-`api.py`: `checkParams()` (before every request: the accepted names are read from each route's `request.args.get()` calls, plus up, limit, offset, ndjson, log) -> the route function -> `setGlobals()` (limit, offset, ndjson, per request in `flask.g`) -> `down()` -> a SQLAlchemy query on a model class (`Specimen`, `Taxon`, `Image`, `Measurement`, `TaxaImage`, `Geolocale`, `GeolocaleTaxon`, `Bioregion`, `BioregionTaxon`) or plain SQL with bound parameters (`/geoSpeciesStats`, `/unimagedGeolocaleTaxa`) -> `jsonify()` (adds the limit notice) or `getNdjson()`. One database session per request (`scoped_session`, released in `remove_session()`); `pool_pre_ping` replaces connections MySQL closed. Uncaught errors: `handleUncaught()` -> `apiError()`.
+`api.py`: `checkUp()` (before every request: 503 without up=1) -> `checkParams()` (before every request: the accepted names are read from each route's `request.args.get()` calls, plus up, limit, offset, ndjson, log) -> the route function -> `setGlobals()` (limit, offset, ndjson, per request in `flask.g`) -> `down()` -> a SQLAlchemy query on a model class (`Specimen`, `Taxon`, `Image`, `Measurement`, `TaxaImage`, `Geolocale`, `GeolocaleTaxon`, `Bioregion`, `BioregionTaxon`) or plain SQL with bound parameters (`/geoSpeciesStats`, `/unimagedGeolocaleTaxa`) -> `jsonify()` (adds the limit notice) or `getNdjson()`. One database session per request (`scoped_session`, released in `remove_session()`); `pool_pre_ping` replaces connections MySQL closed. Uncaught errors: `handleUncaught()` -> `apiError()`.
 
 ## Numbers shown
 
@@ -56,9 +58,11 @@ Rules common to every route:
 | `test_api.py::test_offset_pages_follow_on` | offset paging of /geolocales, /bioregions, /taxa and /bioregionTaxa |
 | `test_api.py::test_limit_1000_returns_500_and_the_notice`, `test_limit_within_the_cap_has_no_notice`, `test_ndjson_is_capped_with_the_notice_header`, `test_offset_pages_past_the_cap`, `test_geolocales_are_capped`, `test_taxa_cap_sends_the_notice_header`, `test_taxa_respects_limit` | the 500 cap and its notice, /specimens paging |
 | `test_api.py::test_unknown_parameter_is_refused`, `test_specimen_code_returns_one_specimen` | unknown parameters, specimenCode |
-| `test_api.py::test_without_up_the_reply_is_empty`, `test_unknown_route_is_json_404` | `up=1`, 404 |
+| `test_api.py::test_without_up_the_reply_is_503_json`, `test_unknown_route_is_json_404` | `up=1` (503 JSON, `/v3.1/` stays 200), 404 |
 | `test_api.py::test_documentation_page_names_every_route` | api.do and apiV3.1.do describe each route (except /measurements, F16) |
 | `test_api.py::test_valid_genus_filter_keeps_valid_genera`, `test_geo_specimens_stay_within_the_radius`, `test_geo_specimens_distinct_uses_the_area` | F7, F22 (xfail removed 2026-10-26) |
 | `test_hardening_2026_10_18.py::test_api_ndjson_lines_are_json`, `test_api_limit_is_capped` | ndjson, cap |
 | `tests/unit/test_api_limits.py`, `test_api_params.py`, `test_api_counts.py` (CI, in the API image) | limits per request, parameter checks and the documented examples, imaged rule, /images records |
+| `tests/unit/test_api_decisions.py` (CI, in the API image; SQLite) | decisions of 2026-10-27: /geoSpeciesStats subcastes within their caste, inclusive date and elevation bounds (/specimens, /distinctTaxa), 503 JSON without up=1 on every data route, the read-only login required with `API_REQUIRE_READONLY_LOGIN` |
+| `.github/workflows/tests.yaml` "API refuses to start without its read-only login" | the API container with `API_REQUIRE_READONLY_LOGIN=true` and no login file exits |
 | `tests/unit/test_api_findings.py` (CI, in the API image; SQLite) | F6 /images url and empty result, F7 valid filters in lower case before limit, F8 ORDER BY on every listed route, F22 radius in km (`radiusBox`), distinct lists of the area, distinct=species |
