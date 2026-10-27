@@ -594,9 +594,8 @@ Found while doing this (2026-10-27, end-to-end tests of the image counts, rows 2
   row says No Images it prints `thisChild.getImageCount()`, the size of the pictures shown; row 56 said the worldwide
   `taxon.image_count`). Fix (needs Brian's choice): either the label says "with no picture in AntWeb" (the Q12 rule,
   then computed by `StatisticsDb.antImagedNames`), or the list and the "N Images" use the list row's Images (`No
-  Images` when it is 0, and a note that the picture is from elsewhere). Tests:
-  `e2e:test_numbers_images.py::test_images_page_child_without_images_here_says_so`,
-  `e2e:test_numbers_images.py::test_no_image_list_counts_the_list_rows_without_images`.
+  Images` when it is 0, and a note that the picture is from elsewhere). Test (option A):
+  `e2e:test_numbers_images.py::test_no_image_list_names_the_children_without_pictures`.
   Brian Fisher 2026-10-27: keep the best pictures from anywhere (people looking at a list want a picture of the
   species); the list is now "with no picture in AntWeb" and the images view says pictures may be of specimens
   collected elsewhere; a local picture for a list is chosen with the image picker.
