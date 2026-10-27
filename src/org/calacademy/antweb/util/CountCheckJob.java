@@ -57,7 +57,7 @@ public final class CountCheckJob {
             connection.setReadOnly(true);
             List<String> notes = new ArrayList<>();
             List<CountCheck.Place> places = CountCheckAction.places(null, null, null, null, connection, notes);
-            List<CountCheck.Place> rotating = CountCheckAction.rotatingSample(connection, java.time.LocalDate.now().getDayOfYear());
+            List<CountCheck.Place> rotating = CountCheckAction.rotatingSample(connection, CountCheckAction.rotationDay());
             List<String> log = CountCheckAction.computeLog();
             Integer statsPage = null;
             try { statsPage = TaxonMgr.getValidSpeciesCount(); } catch (RuntimeException e) { /* taxa not loaded */ }

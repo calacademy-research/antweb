@@ -127,8 +127,17 @@ public class CountCheck {
             }
         }
 
+        /**
+         * Whether the specimens of a row count by status (COUNTABLE): geolocales, museums and bioregions. Projects count
+         * every specimen of the name, the Global column (allantwebants) included (docs/numbers.md #43, inv:global.specimens).
+         */
         boolean statusFiltered() {
-            return !PROJECT.equals(type) || "allantwebants".equals(key);
+            return !PROJECT.equals(type);
+        }
+
+        /** The status condition (alias taxon) of the child rows of a list row, as CountInvariants.childStatus. */
+        String childStatusCondition() {
+            return CountInvariants.childStatus(type, key).replace(" t.status", " taxon.status");
         }
 
         void setKey(PreparedStatement stmt, int i) throws SQLException {
@@ -342,6 +351,8 @@ public class CountCheck {
             if (!PROJECT.equals(place.type)) rows += checkGlobal(place, result, changedNames);
         }
         rows += checkPlaceImages(place, result, changedNames);
+        // The Subfamilies number also when the place image numbers are not computed yet (checkPlaceImages returns early then).
+        if (GEOLOCALE.equals(place.type) || PROJECT.equals(place.type)) rows += checkSubfamilyTotal(place, result, listChangedSince(place, result));
         rows += checkPlaceSpecimens(place, result, changedNames);
         rows += checkRowImages(place, result, changedNames);
         result.rowsChecked.put(place, rows);
@@ -387,7 +398,7 @@ public class CountCheck {
 
     /** Names whose specimens changed since the last nightly start: uploads, and the name update outside the nightly. */
     Set<String> changedNamesSince(Result result) throws SQLException {
-        Set<String> names = new HashSet<>();
+        Set<String> names = CountInvariants.keySet();   // names as MySQL compares them (case, trailing spaces)
         if (tableExists("upload")) {
             try (PreparedStatement stmt = connection.prepareStatement("select count(*) from upload where created >= ?")) {
                 stmt.setTimestamp(1, result.countedUntil);
@@ -559,8 +570,7 @@ public class CountCheck {
                 result.mismatches.add(new Mismatch(place, "place images", "Images smaller than Imaged specimens", storedAll, storedImaged, null));
             }
         }
-        rows += checkSubfamilyTotal(place, result, listChanged);
-        return rows;
+        return rows;   // the Subfamilies number: recount() (checkSubfamilyTotal)
     }
 
     /**
@@ -827,7 +837,7 @@ public class CountCheck {
         String query = "select taxon.parent_taxon_name, l.taxon_name, " + CountInvariants.safeDate("l.created") + " from taxon"
             + " join " + t + " l on l.taxon_name = taxon.taxon_name and l." + k + " = ?"
             + " where taxon.taxarank in " + childRanks
-            + (place.statusFiltered() ? " and taxon.status in " + COUNTABLE : "")
+            + place.childStatusCondition()
             // a genus row's Species: names identified to genus only (2026-10-22, PlaceTotals.identifiedToGenus)
             + (childRanks.contains("species") ? " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") : "");
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
