@@ -82,12 +82,32 @@ def test_results_shown_again_from_the_session():
     assert codes(first.text) and codes(again.text) == codes(first.text)
 
 
-@pytest.mark.xfail(strict=False, reason="finding F25: shown again, the page counts the 200 rows kept in the session, "
-                                        "not the search's total; docs/flows/public-pages-findings.md")
+# More than one page of specimens (200 a page), so the session holds one page of a longer search.
+BIG_SEARCH = ("/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&country=Madagascar"
+              "&genusSearchType=equals&genus=pheidole&resultRank=specimen")
+
+
 def test_results_shown_again_keep_the_total():
-    first, again = _search_then_reshow()
-    m1, m2 = SHOWING.search(first.text), SHOWING.search(again.text)
-    assert m1 and m2 and m1.group(3) == m2.group(3), (m1 and m1.group(0), m2 and m2.group(0))
+    """Finding F25 (fixed 2026-10-27): shown again, the page counted the 200 rows kept in the session ("Showing
+    1-200 of 200", no Next). Now advancedSearchResults.do sends a paged search back to advancedSearch.do with its
+    query and page, so the total, the range and Next are those of the search."""
+    from antweb import new_session
+    s = new_session()
+    first = fetch(BIG_SEARCH + "&page=2", session=s)
+    assert_ok(first)
+    m1 = SHOWING.search(first.text)
+    assert m1, "no 'Showing' line"
+    if _num(m1.group(3)) <= 400:
+        pytest.skip(f"the search has {m1.group(3)} specimens: not enough for a second page and a Next link")
+    hop = fetch("/advancedSearchResults.do", session=s, allow_redirects=False)
+    assert hop.status_code in (301, 302, 303), (hop.status_code, hop.text[:200])
+    location = hop.headers.get("Location", "")
+    assert "/advancedSearch.do?" in location and "page=2" in location and "genus=pheidole" in location, location
+    again = fetch("/advancedSearchResults.do", session=s)
+    assert_ok(again)
+    m2 = SHOWING.search(again.text)
+    assert m2 and m2.group(0) == m1.group(0), (m1.group(0), m2 and m2.group(0))
+    assert "page=3" in again.text, "no link to the next page"
 
 
 def test_search_without_a_method():

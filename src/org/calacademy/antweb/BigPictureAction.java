@@ -52,6 +52,10 @@ public final class BigPictureAction extends AntwebAction {
 
         SpecimenImageForm form = (SpecimenImageForm) theForm;
         String imageId = form.getImageId();
+        if (AntwebUtil.isEmpty(imageId) && AntwebUtil.isEmpty(form.getCode()) && AntwebUtil.isEmpty(form.getName())) {
+            request.setAttribute("message", "Must specify code and shot, or imageId.");
+            return mapping.findForward("message");
+        }
         String code = null;
         String shot = null;
         int number = 0;

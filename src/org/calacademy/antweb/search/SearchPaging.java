@@ -29,6 +29,8 @@ public class SearchPaging implements Serializable {
     private final String sortBy;
     private final String sortOrder;
     private final transient SearchParameters searchParameters;
+    /** The search's query string (advancedSearch.do?...), so that advancedSearchResults.do can show it again (F25). */
+    private String queryString;
 
     public SearchPaging(int total, int page, String sortBy, String sortOrder, SearchParameters searchParameters) {
         this.total = Math.max(0, total);
@@ -43,6 +45,8 @@ public class SearchPaging implements Serializable {
     public String getSortBy() { return sortBy; }
     public String getSortOrder() { return sortOrder; }
     public SearchParameters getSearchParameters() { return searchParameters; }
+    public String getQueryString() { return queryString; }
+    public void setQueryString(String queryString) { this.queryString = queryString; }
 
     public int getOffset() { return offset(page); }
     public int getLastPage() { return lastPage(total); }
@@ -139,6 +143,22 @@ public class SearchPaging implements Serializable {
         }
         if (!"code".equals(key)) sb.append(", sp.code");
         return sb.toString();
+    }
+
+    /**
+     * Where advancedSearchResults.do sends the browser (2026-10-27, finding F25). The session keeps one page of
+     * the search (200 rows), so showing the session list again said "Showing 1-200 of 200" with no Next link
+     * for a search of 3,000. When the session holds a paged search with its query string and the request has
+     * no parameters of its own, the answer is that search again at the same page: path?query&page=N.
+     * Null (show the session list as before) when the request has parameters (Map and Compare views, the
+     * sort of an unpaged list), when there is no paged search, or when its query string is unknown.
+     */
+    public static String reshowUrl(String path, String requestQueryString, SearchPaging paging) {
+        if (requestQueryString != null && !requestQueryString.isEmpty()) return null;
+        if (paging == null) return null;
+        String q = paging.getQueryString();
+        if (q == null || q.isEmpty()) return null;
+        return pageUrl(path, q, paging.getPage());
     }
 
     /**

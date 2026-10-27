@@ -176,8 +176,8 @@ public class BrowseAction extends DescriptionAction {
         }
      
         if (Taxon.getTaxonOfRank(rank) == null) {
-             message = "Bad rank:" + Html.esc(rank) + " " + Html.esc(AntwebUtil.getRequestInfo(request));
-             s_log.info("execute() " + message);
+             message = "Bad rank:" + Html.esc(rank);
+             s_log.info("execute() " + message + " " + AntwebUtil.getRequestInfo(request));  // request details in the log only (F12)
              request.setAttribute("message", message);
              return mapping.findForward("message");
         }
@@ -202,9 +202,9 @@ public class BrowseAction extends DescriptionAction {
         if ("mapComparison".equals(cacheType)
          || "getComparison".equals(cacheType)
            ) {
-            if (accessLogin == null) {        
-              request.setAttribute("message", Login.MUST_LOGIN_MESSAGE);
-              return mapping.findForward("message");
+            if (accessLogin == null) {
+              // The explained log-in page with return, as for field guides (2026-10-26, finding F15).
+              ActionForward loginNeeded = Check.loginForFeature(request); if (loginNeeded != null) return loginNeeded;
             }
         }
 
@@ -503,7 +503,6 @@ We are showin the full map of ponerinae for every adm1.
             }
 
             if ("oneView".equals(cacheType)) chosen = (String[]) session.getAttribute("chosen");
-            if ("getCompare".equals(cacheType)) session.setAttribute("chosen", chosen);
             //A.log("execute() scope:" + mapping.getScope() + " showTaxon:" + taxon + " chosen:" + chosen + " cacheType:" + cacheType);
             if (chosen != null) {
                 taxon.filterChildren(chosen);

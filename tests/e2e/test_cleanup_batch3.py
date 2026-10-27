@@ -139,6 +139,20 @@ def test_kept_sub_actions_still_answer():
     assert get(new_session(), "/utilData.do?action=countReport").category == "login"
 
 
+def test_is_busy_answers_idle_or_busy():
+    """util.do?action=isBusy (2026-10-27): anonymous, read-only, plain text "idle" or "busy: <kinds>".
+    The deploy script asks it before a restart and waits while an upload runs; no login names in it."""
+    r = new_session().get(BASE_URL + "/util.do?action=isBusy", timeout=TIMEOUT)
+    assert r.status_code == 200, r.status_code
+    assert r.headers.get("Content-Type", "").startswith("text/plain"), r.headers.get("Content-Type")
+    text = r.text.strip()
+    assert text == "idle" or text.startswith("busy:"), text[:200]
+    if text.startswith("busy:"):
+        kinds = {"specimen upload", "image upload", "TaxonWorks nightly upload", "nightly name update",
+                 "background job", "data job", "nightly run"}
+        assert {k.strip() for k in text[len("busy:"):].split(",")} <= kinds, text
+
+
 def test_homonym_report_needs_login():
     """query.do?action=homonyms (moved from util.do, admin only there) is not public."""
     if not _deployed():

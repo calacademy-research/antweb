@@ -75,7 +75,10 @@
 			 || (uri.contains("multiTaxaOneView.jsp")) 
 			 || (uri.contains("descEditReport.jsp")) 
 			 || (uri.contains("recentSearchResults.jsp")) 
-			 //|| (uri.contains("login.jsp")) 
+			 // The log-in page (also shown in place of a page that needs a login, Check.loginForFeature): no Change View
+			 // menu. Its links were built from the page asked for, minus name= (removeOverview), so an anonymous
+			 // getComparison.do?name=formicidae&rank=family got a link without the taxon ("Taxon not found"; 2026-10-27).
+			 || (uri.contains("login.jsp")) 
 			 || (uri.contains("notLoggedIn.jsp")) 
 			 || (uri.contains("geneva.jsp")) 
 			 || (uri.contains("genoa.jsp")) 

@@ -50,7 +50,12 @@ def test_list_and_place_page(kind):
     assert t.startswith(TITLE_START[kind]) and t.lower().endswith("antweb"), f"{path}: title {t!r}"
     assert 'id="place-stats"' in r.text, f"{path}: no statistics table"
     lists = [p for p in links(r.text, "taxonomicPage") if params(p).get("rank") in ("subfamily", "genus", "species")]
-    assert {params(p)["rank"] for p in lists} >= {"subfamily", "genus", "species"}, f"{path}: species list links {lists[:6]}"
+    ranks = {params(p)["rank"] for p in lists}
+    # F27 diagnostics: an anonymous visitor on production gets all three (Brian, 2026-10-27: Africa has 2 subfamily,
+    # 200 genus and 1 species link); if the test session does not, say what it got.
+    assert ranks >= {"subfamily", "genus", "species"}, (
+        f"{path}: ranks {sorted(ranks)}, {len(lists)} list links, {r.text.count('taxonomicPage.do')} taxonomicPage.do"
+        f" in {len(r.text)} characters, status {r.status_code}, url {r.url}; first links {lists[:6]}")
 
 
 @pytest.mark.parametrize("rank, plural", [("subfamily", "Subfamilies"), ("genus", "Genera"), ("species", "Species")])

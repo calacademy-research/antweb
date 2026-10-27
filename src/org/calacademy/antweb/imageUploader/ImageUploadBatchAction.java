@@ -197,6 +197,7 @@ public final class ImageUploadBatchAction extends AntwebAction {
             batchId = imageUpload.getId();
             s_log.info("start() batch:" + batchId + " login:" + accessLogin.getId() + " files:" + good + " notSaved:" + notSaved.size());
             recordNotSaved(connection, batchId, notSaved, null);
+            BusyStatus.imageBatchActive(batchId);   // a deploy waits until the upload is finished
         }
         // notSaved: how many files would be listed as not saved (capped like the record).
         return json(response, 200, "{\"ok\":true,\"batchId\":" + batchId + ",\"dryRun\":" + dryRun
@@ -267,6 +268,7 @@ public final class ImageUploadBatchAction extends AntwebAction {
                 drain(request);   // read the file first, so the browser sees the answer
                 return json(response, status, error(refused, false));
             }
+            BusyStatus.imageBatchActive(batchId);   // sending a file can take minutes
         }
 
         ImageUploaded.tempDir.toFile().mkdirs();
@@ -366,6 +368,7 @@ public final class ImageUploadBatchAction extends AntwebAction {
             return json(response, 200, "{\"ok\":true,\"status\":\"" + status + "\",\"name\":\"" + Html.js(name)
                 + "\",\"code\":\"" + Html.js(imageUploaded.getCode()) + "\",\"ms\":" + ms + "}");
         } finally {
+            if (imageUpload != null) BusyStatus.imageBatchActive(imageUpload.getId());
             if (entered) ImageUploadGate.exit();
             ImageUploadGate.release(reserved);
             for (DiskFileItem item : items) {
@@ -409,6 +412,7 @@ public final class ImageUploadBatchAction extends AntwebAction {
             // a file whose sending was cut off part way (it is then listed as not saved, too).
             sendNotice(accessLogin, imageUpload, saved.size(), notSaved);
         }
+        BusyStatus.imageBatchFinished(batchId);
         String reportUrl = AntwebProps.getDomainApp() + "/imageUploadReport.do?id=" + batchId;
         return json(response, 200, "{\"ok\":true,\"batchId\":" + batchId + ",\"images\":" + saved.size()
             + ",\"notSaved\":" + countNotSaved(connection, batchId, saved)

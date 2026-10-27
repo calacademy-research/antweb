@@ -88,9 +88,14 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_counts.py
 
-      - name: API findings F6, F7, F8, F22 (/images url, valid filters, fixed order, geoSpecimens radius) (tests/unit/test_api_findings.py)
+      - name: API findings F6, F7, F8, F20, F22, F23 (/images url, valid filters, fixed order, debug lines, geoSpecimens radius, geoSpeciesStats not found) (tests/unit/test_api_findings.py)
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_findings.py
+
+      - name: API finding F24, country is the whole name and distinct species are full names (tests/unit/test_api_country.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" -v "$PWD/web/documentation/api:/docs:ro" \
+            antweb/api:dev /t/test_api_country.py
 
       - name: API container as in docker-compose.yml (only its login file, read-only, workers not root)
         # The login file is root-only (0600) here: gunicorn's master reads it at start
@@ -271,6 +276,47 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.HttpUtilQueryTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (2 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the results shown again for a paged search (F25)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/search/SearchPagingReshowTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.search.SearchPagingReshowTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (4 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the low public-pages findings (geolocaleId not a number F3, old bioregion project links F4, search limit per thread F13)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/PublicPagesLowFindingsTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.PublicPagesLowFindingsTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (3 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the busy status (a deploy waits for running uploads, isBusy)
+        # 2026-10-26: a deploy restarted AntWeb in the middle of a curator image upload (batch 6667).
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/util/BusyStatus.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/BusyStatusTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.BusyStatusTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the AntCat file download (nightly tries again for up to an hour before set 1, says why, no half-written or cut-off file)

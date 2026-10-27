@@ -152,6 +152,8 @@ To Do
         } catch (SearchException e) {
           s_log.error("setResults() e:" + e);
           message = "<b><font color=red>Search failed:" + Html.esc(e) + "</font></b>";
+        } finally {
+          SearchAction.undoSetTempSpecimenSearchLimit();
         }
          
         if (searchSpeciesList != null && !searchSpeciesList.isEmpty()) {

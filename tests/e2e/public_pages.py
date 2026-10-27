@@ -124,11 +124,13 @@ SMALL_SUBFAMILIES = ("martialinae", "aneuretinae", "paraponerinae", "agroecomyrm
 
 @lru_cache(maxsize=None)
 def genus_example():
-    """A genus page path found on the subfamily browse page of Formicinae (fallback: Camponotus)."""
+    """A genus page path found on the subfamily browse page of Formicinae (fallback: Camponotus). A name not
+    identified to genus, such as the placeholder "(camponotini)", is skipped: it is not a real genus."""
     r = fetch("/browse.do?subfamily=formicinae&rank=subfamily")
     for p in links(r.text, "description"):
         q = params(p)
-        if q.get("rank") == "genus" and q.get("genus"):
+        g = (q.get("genus") or "").lower()
+        if q.get("rank") == "genus" and g and not g.startswith("(") and g not in ("indet", "undet"):
             return f"/description.do?genus={q['genus']}&rank=genus"
     return "/description.do?genus=camponotus&rank=genus"
 

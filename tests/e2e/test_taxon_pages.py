@@ -10,7 +10,7 @@ import re
 
 import pytest
 
-from antweb import BASE_URL, BROKEN, classify, new_session
+from antweb import BASE_URL, new_session
 from public_pages import (assert_message, assert_ok, fetch, genus_example, h1, links, params, species_example,
                           subspecies_example, title)
 
@@ -47,8 +47,28 @@ def test_taxon_page_at_each_rank(rank):
     assert any(h.startswith(rank.capitalize() + ":") for h in h1(r.text)), f"{path}: headings {h1(r.text)}"
     assert links(r.text, "browse"), f"{path}: no link to the child list (browse.do)"
     assert links(r.text, "images"), f"{path}: no link to the images page (images.do)"
+    if name.startswith("("):
+        # a placeholder not identified to genus has no AntCat entry: no View in AntCat link (2026-10-27)
+        assert 'id="antcat_view"' not in r.text, f"{path}: View in AntCat link for a placeholder"
+        return
     assert "antcat.org/catalog" in r.text, f"{path}: no View in AntCat link"
     assert 'id="antcat_view"' in r.text
+    # Finding F11 (fixed 2026-10-26): https, and the name URL-encoded (a subspecies has spaces).
+    m = re.search(r'href="(https?://www\.antcat\.org/catalog/search\?[^"]*)"', r.text)
+    assert m and m.group(1).startswith("https://"), f"{path}: AntCat link {m and m.group(1)!r}"
+    qq = re.search(r"[?&]qq=([^&]*)", m.group(1)).group(1)
+    assert qq and " " not in qq, f"{path}: AntCat name not encoded: {qq!r}"
+
+
+def test_placeholder_genus_has_no_antcat_link():
+    """A genus not identified to genus, such as "(camponotini)", has no AntCat entry and an empty search name, so
+    its page shows no View in AntCat link (it searched AntCat for nothing; staging run of PR #289)."""
+    path = "/description.do?genus=(camponotini)&rank=genus"
+    r = fetch(path)
+    if r.status_code != 200 or not title(r).startswith("Genus:"):
+        pytest.skip(f"{path}: no placeholder genus page on this server")
+    assert 'id="antcat_view"' not in r.text, f"{path}: View in AntCat link for a placeholder"
+    assert "qq=&" not in r.text, f"{path}: an AntCat search for an empty name"
 
 
 def test_genus_page_has_taxonomic_history_and_tools():
@@ -130,10 +150,8 @@ def test_bioregion_filter():
     assert species
 
 
-@pytest.mark.xfail(strict=False, reason="finding: ProjectMgr.hasMoved() rewrites project=africanants (and five other "
-                                        "old bioregion projects) to a bare '&Afrotropical', so the filter is lost; "
-                                        "docs/flows/public-pages-findings.md")
 def test_old_bioregion_project_link_keeps_its_filter():
+    """Finding F4 (fixed 2026-10-26): project=africanants is redirected with bioregionName=Afrotropical."""
     r = fetch("/browse.do?genus=mystrium&rank=genus&project=africanants")
     assert_ok(r)
     assert "Afrotropical" in title(r), (r.url, title(r))
@@ -162,12 +180,10 @@ def test_unknown_place_filter(query, expected):
     assert_message(fetch(path), expected, path)
 
 
-@pytest.mark.xfail(strict=False, reason="finding: geolocaleId that is not a number is not caught "
-                                        "(NumberFormatException in OverviewMgr.findOverview); docs/flows/public-pages-findings.md")
 def test_geolocale_id_not_a_number_gets_a_message():
-    r = fetch("/description.do?genus=camponotus&rank=genus&geolocaleId=abc")
-    assert classify(r).category not in BROKEN, classify(r)
-    assert classify(r).category == "message", classify(r)
+    """Finding F3 (fixed 2026-10-26): was the error page (NumberFormatException)."""
+    path = "/description.do?genus=camponotus&rank=genus&geolocaleId=abc"
+    assert_message(fetch(path), "Geolocale not found for geolocaleId:abc", path)
 
 
 # ---------- the header Taxa box (quick search) and taxonName / antcatId links ----------
