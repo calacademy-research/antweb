@@ -10,7 +10,7 @@ species. Specimen counts stay per place; images help identification wherever the
      not) against the API's specimen records, and on the day's species of the day's places of each of those kinds:
      the marked specimens are first, and they are exactly the specimens placeOnly=true shows.
   3. The Images column of a place's list: "T Images (P from Comoros)", images of the ant only (labels never count,
-     Brian Fisher 2026-10-27): T = the images of the name in AntWeb (counted live from the image table) = the
+     Brian Fisher 2026-10-27): T = the images of the name in AntWeb (the allantwebants list row, nightly set 4) = the
      API recount of every specimen of the name (/taxaImages, shot types other than l), P = the place's own row (row
      44, test_numbers_images.py); "N Images" when P = T, "No Images" only when T = 0; the definition under the list.
   5. The species page's line "Imaged: worker (12 specimens), queen (2), male (1)" (row 120) = the API recount: the
@@ -26,9 +26,13 @@ from urllib.parse import quote_plus, parse_qs
 import pytest
 
 import numbers_sample as ns
-from test_numbers_images import fetch_all_view, images_by_code, images_cell, list_row_cells
+from test_numbers_images import OLD_SET_4, fetch_all_view, images_by_code, images_cell, list_row_cells, old_set_4
 
 PENDING = "list rows are those of the last nightly run (set 4); after an upload they are pending"
+# The allantwebants rows (T) were set to 0 by set 4 and never counted again until 2026-10-27 (PR #291); the cell then
+# shows the place's number only. Pending until the first nightly set 4 with ProjTaxonCountDb.imageCrawlProjects.
+ALLANTWEB_PENDING = ("the AntWeb-wide row (allantwebants) is not counted yet: pending until nightly set 4 counts it "
+                     "(compute.log line 'AntWeb-wide list Images counted')")
 MICHELE = "/images.do?subfamily=ponerinae&genus=leptogenys&species=purpurea&rank=species&countryName=Indonesia"
 MICHELE_SPECIES = "/description.do?subfamily=ponerinae&genus=leptogenys&species=purpurea&rank=species"
 MICHELE_REP = "casent0270569"
@@ -166,7 +170,7 @@ def _comoros():
 def test_list_images_column_shows_the_images_in_antweb_and_of_the_place():
     """Row 44: on Comoros and the day's places of every kind, species rows "T Images (P from X)": T >= P, the format
     follows the numbers, and T = the API's images of the ant of every specimen of the name (/taxaImages, label shots
-    left out). T is counted live (not from the nightly list rows), so no row is pending."""
+    left out). T is the allantwebants list row (nightly set 4), so a row is pending until set 4 counted it."""
     places = [p for p in [_comoros()] + ns.one_place_of_each_kind("anywhere-column") if p is not None]
     wrong, checked, left_out = [], [], []
     for p in places:
@@ -203,8 +207,12 @@ def test_list_images_column_shows_the_images_in_antweb_and_of_the_place():
             ant, every = both
             codes = [ns.specimen_code(s) for s in got if (s.get("antwebTaxonName") or "").lower() == name]
             recount = sum(ant.get(c, 0) for c in codes)
-            # T of a species row is counted live from the image table (TaxonSet.globalImageCountColumn, since PR #291
-            # run 2), so it is never pending: it equals the recount whatever night the list rows were counted.
+            if recount != total and old_set_4(total, ant, every, codes):
+                left_out.append(f"{p} {name}: {text!r}, {OLD_SET_4}")
+                continue
+            if recount > total and total == place:
+                left_out.append(f"{p} {name}: {text!r}, {ALLANTWEB_PENDING}")
+                continue
             if recount != total:
                 wrong.append(f"{p} {name}: {text!r}, the API's specimens of the name have {recount} images of the ant")
             checked.append(f"{p} {name}")

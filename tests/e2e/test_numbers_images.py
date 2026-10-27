@@ -155,17 +155,6 @@ def old_set_4(shown, ant, every, codes):
     return shown == total and total != sum(ant.get(c, 0) for c in codes)
 
 
-CAPPED_OLD = ("the place's old count with label images is above the name's images in AntWeb, so the cell shows the "
-              "AntWeb number (pending until nightly set 4 runs with the ant-only counts)")
-
-
-def capped_old(shown, ant, every, codes):
-    """True when the place's list row still holds the count before 2026-10-27 (labels included) and it was above the
-    name's images of the ant in AntWeb (counted live), so the Images cell shows the AntWeb number for the place too
-    (ImagesAnywhere.imagesColumn(TaxonSet, ...)): the place's ant recount <= shown < the place's every-image count."""
-    return sum(ant.get(c, 0) for c in codes) <= shown < sum(every.get(c, 0) for c in codes)
-
-
 def _params(link):
     """The query of an images.do or browse.do link, unescaped, without the domain and page."""
     return unescape(link.split("?", 1)[1]) if link and "?" in link else None
@@ -557,9 +546,6 @@ def test_list_images_column_equals_the_api_recount():
             recount = sum(ant.get(c, 0) for c in codes)
             if recount != images and old_set_4(images, ant, every, codes):
                 left_out.append(f"{p} {name}: {images} Images, {OLD_SET_4}")
-                continue
-            if recount != images and capped_old(images, ant, every, codes):
-                left_out.append(f"{p} {name}: {images} Images, {CAPPED_OLD}")
                 continue
             if recount != images:
                 wrong.append(f"{p} {name}: list row {images} Images, the API's {len(mine)} specimens have {recount} images of the ant")

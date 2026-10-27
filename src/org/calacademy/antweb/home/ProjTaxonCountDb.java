@@ -175,13 +175,38 @@ import org.calacademy.antweb.home.*;
           resetImageCounts("proj_taxon");
 
           //String project = "tokelauants";  
-          ArrayList<Project> projects = ProjectMgr.getLiveProjects();
-          for (Project project : projects) {
-             if (project.isSpeciesListOnly()) continue;   // Port of Entry: no image numbers (2026-10-22)
-
+          for (Project project : imageCrawlProjects(ProjectMgr.getLiveProjects(), ProjectMgr.getProject(Project.ALLANTWEBANTS))) {
              //if (AntwebProps.isDevMode()) s_log.info("startProjTaxonImageCountCrawl() project:" + project);
              imageCountCrawl(project);
           }
+          LogMgr.appendLog("compute.log", "  " + ALLANTWEB_IMAGES_LOG, true);
+     }
+
+     /** Written to compute.log by nightly set 4 once the allantwebants rows' Images (the first number of every list's
+      *  Images column) are counted with the other lists (2026-10-27). */
+     public static final String ALLANTWEB_IMAGES_LOG = "AntWeb-wide list Images counted (allantwebants), 2026-10-27";
+
+     /**
+      * The lists whose Images set 4 counts: the live projects (not the Port of Entry, which has no image numbers,
+      * 2026-10-22) and, once, allantwebants. The allantwebants rows are set to 0 with the other project rows
+      * (resetImageCounts) but it is not a live project, so until 2026-10-27 nothing counted them again and they stayed 0
+      * (staging, PR #291): every list's AntWeb-wide Images number (TaxonSet.globalImageCountColumn) read 0.
+      */
+     public static ArrayList<Project> imageCrawlProjects(java.util.Collection<Project> live, Project allAntweb) {
+          ArrayList<Project> out = new ArrayList<>();
+          boolean hasAllAntweb = false;
+          if (live != null) {
+              for (Project project : live) {
+                  if (project == null || project.isSpeciesListOnly()) continue;
+                  if (Project.ALLANTWEBANTS.equals(project.getName())) {
+                      if (hasAllAntweb) continue;
+                      hasAllAntweb = true;
+                  }
+                  out.add(project);
+              }
+          }
+          if (!hasAllAntweb && allAntweb != null) out.add(allAntweb);
+          return out;
      }
 
 }    

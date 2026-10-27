@@ -5,8 +5,8 @@
    them (taxonChildImages.jsp, taxonChildImageSet.jsp); the old "See global set" link is gone.
 3. The Images column of a place's list shows the images of the name in AntWeb and the place's, images of the ant only
    (labels never count; nightly set 4 counts the list rows that way, the count check recounts them so) (taxonReportBody.jsp,
-   ImagesAnywhere.imagesColumn; the total of a species or subspecies row is counted live from the image table, of a
-   higher rank the allantwebants row's image_count, TaxonSet.globalImageCountColumn).
+   ImagesAnywhere.imagesColumn; the total is the allantwebants row's image_count of every rank, TaxonSet.globalImageCountColumn,
+   which nightly set 4 counts with the live projects since 2026-10-27, ProjTaxonCountDb.imageCrawlProjects).
 5. The species page shows which castes are imaged (BrowseAction, ImagedCastes, taxonPage-body.jsp).
 
 The logic is tested by test/org/calacademy/antweb/ImagesAnywhereTest.java, the pages on staging by
@@ -59,11 +59,16 @@ def test_list_images_column_shows_both_numbers():
     assert "ImagesAnywhere.imagesColumn(childTaxonSet, imagesFromPhrase)" in jsp
     assert "childTaxonSet.getImageCountStr()" not in jsp, "the column still shows the place's number only"
     ts = read("src/org/calacademy/antweb/TaxonSet.java")
-    # species and subspecies: counted live (PR #291 run 2: the allantwebants rows were 0 on staging, so the list said
-    # "No Images" for names with images); higher ranks: the allantwebants row, read with the place's row
-    assert "if (countsImagesLive(getRank()))" in ts
-    assert "from specimen s join image i on i.image_of_id = s.code where s.taxon_name = '" in ts
+    # every rank reads the allantwebants row with the place's row (one key lookup). PR #291 run 2 counted species rows
+    # live from the image table, one count per row, and list, taxon and browse pages came back cut off on staging.
     assert "g.project_name = '\" + Project.ALLANTWEBANTS" in ts
+    assert "join image" not in ts[ts.index("public String globalImageCountColumn"):ts.index("protected void readGlobalImageCount")]
+    # reading the column never throws (a query without it, or a NULL, leaves -1)
+    assert "protected void readGlobalImageCount(ResultSet rset) {" in ts and "catch (SQLException | RuntimeException e)" in ts
+    # set 4 counts the allantwebants rows (they were set to 0 with the project rows and never counted again)
+    crawl = read("src/org/calacademy/antweb/home/ProjTaxonCountDb.java")
+    assert "imageCrawlProjects(ProjectMgr.getLiveProjects(), ProjectMgr.getProject(Project.ALLANTWEBANTS))" in crawl
+    assert "ALLANTWEB_IMAGES_LOG" in crawl
     for f in ("geolocale/OverviewTaxon.java", "geolocale/GeolocaleTaxon.java", "geolocale/BioregionTaxon.java",
               "ProjTaxon.java"):
         src = read("src/org/calacademy/antweb/" + f)

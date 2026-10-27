@@ -105,18 +105,16 @@ public final class ImagesAnywhere {
     }
 
     /**
-     * The Images cell of a list row from its TaxonSet. When the AntWeb-wide number was counted live (species and
-     * subspecies rows, TaxonSet.isGlobalImageCountLive), the place's number cannot be higher: a higher one is the list
-     * row's count from before the ant-only rule (labels included, until the next nightly set 4), so the AntWeb-wide
-     * number is shown for both. A project's list (fromPhrase null) counts the images of its names from anywhere, so
-     * with a live number it shows that. Otherwise imagesColumn(total, place) (the higher of the two).
+     * The Images cell of a list row from its TaxonSet: imagesColumn(the allantwebants row's images, the place's row's
+     * images, fromPhrase). Never throws (a list row is never lost over its Images cell): on any error "No Images".
      */
     public static String imagesColumn(TaxonSet ts, String fromPhrase) {
         if (ts == null) return "No Images";
-        int total = ts.getGlobalImageCount();
-        int place = ts.getImageCount();
-        if (ts.isGlobalImageCountLive() && total >= 0 && (place > total || fromPhrase == null)) place = total;
-        return imagesColumn(total, place, fromPhrase);
+        try {
+            return imagesColumn(ts.getGlobalImageCount(), ts.getImageCount(), fromPhrase);
+        } catch (RuntimeException e) {
+            return "No Images";
+        }
     }
 
     /**
