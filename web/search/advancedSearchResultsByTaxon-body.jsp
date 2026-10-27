@@ -110,6 +110,11 @@ Select All
 <div class="page_divider"></div>
 <div class="clear"></div>
 <!-- /div -->
+<%-- A Compare or Map preparation that leaves nothing still says its count ("0 georeferenced species (from 0
+     specimens)"), as when it leaves some (B50, B68; 2026-10-27). --%>
+<% if ("species".equals(resultRank) && preparedModifier != null && preparedModifier.trim().length() > 0) { %>
+<h2 class="display_count"><%= preparedModifier.trim() %></h2>
+<% } %>
 <div id="page_data">
 Sorry, nothing matches your request.
 </div>

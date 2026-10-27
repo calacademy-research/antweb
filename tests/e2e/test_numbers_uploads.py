@@ -193,10 +193,14 @@ def test_image_upload_report_counts_equal_their_files():
         wrong.append(f"listImageUploads.do holding {total.group(1)} images; Image Counts add up to "
                      f"{sum(int(c) for _, c, _ in batches)}")
     for complete, count, bid in [batches[0]] + ns.pick(batches[1:], 3, "image-upload-report"):
-        rep = _image_report(page(s, "/imageUploadReport.do?id=" + bid))
+        report = page(s, "/imageUploadReport.do?id=" + bid)
+        rep = _image_report(report)
         where = f"imageUploadReport.do?id={bid}"
         if rep["images"] is None:
-            wrong.append(f"{where}: no Images number")
+            # B67: every report of a batch from another year than the newest copyright row failed (error page).
+            title = re.search(r"<title>(.*?)</title>", report, re.S)
+            title = " ".join(title.group(1).split()) if title else None
+            wrong.append(f"{where}: no Images number (page title {title!r})")
             continue
         if rep["images"] != int(count):
             wrong.append(f"{where}: Images {rep['images']}, listImageUploads.do Image Count {count}")

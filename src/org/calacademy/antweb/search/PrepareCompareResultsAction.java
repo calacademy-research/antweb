@@ -141,43 +141,31 @@ public final class PrepareCompareResultsAction extends PrepareAction {
          This list will have potentially many more images because those images, though they belong to the taxon
          are of specimens not necessarily in the region specified in the criteria.  */
          
+        // B68 (2026-10-27): each name was looked up with Taxon.setHasImages(connection), which has no place to count
+        // from and failed (NullPointerException), so Compare of a search by species with any species gave the error
+        // page. Imaged now means a photo of the ant anywhere in AntWeb (StatisticsDb.antImagedNames, the Q12 rule),
+        // read for all the names at once.
         ArrayList<ResultItem> specList = results.getSpeciesList();
- 	    ArrayList<ResultItem> imagedSpecList = new ArrayList<>();
-		HashMap<String, ResultItem> specHash = new HashMap<>();
-		
-        //s_log.warn("getExtraSpeciesList() results.size:" + results.getResults().size());		
-		Iterator<ResultItem> resIter = specList.iterator();
-		// Go through all of the results (specimens) and put the species fullName/resultItem in specHash
-		ResultItem thisItem;
-		while (resIter.hasNext()) {
-		  thisItem = resIter.next();
-          String name = thisItem.getTaxonName();
-		  specHash.put(name,thisItem);
-
-          Connection connection = null;
-          String dbMethodName = DBUtil.getDbMethodName("PrepareCompareResultsAction.getExtraSpeciesList()");
-          try {
+        ArrayList<ResultItem> imagedSpecList = new ArrayList<>();
+        if (specList.isEmpty()) return imagedSpecList;
+        ArrayList<String> names = new ArrayList<>();
+        for (ResultItem item : specList) names.add(item.getTaxonName());
+        Connection connection = null;
+        String dbMethodName = DBUtil.getDbMethodName("PrepareCompareResultsAction.getExtraSpeciesList()");
+        try {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, dbMethodName);
-            
-            //Taxon fetchTaxon = Taxon.getInstance(connection, name);
-            Taxon fetchTaxon = Taxon.getTaxonOfRank(thisItem.getSubfamily(), thisItem.getGenus(), thisItem.getSpecies(), null);
-            fetchTaxon.setHasImages(connection);
-            if (fetchTaxon != null) {
-                if (fetchTaxon.isImaged()) {
-                    //s_log.warn("getExtraSpeciesList() imaged name:" + name);
-                    imagedSpecList.add(thisItem);
-                }
+            java.util.Set<String> imaged = new java.util.HashSet<>();
+            for (String name : org.calacademy.antweb.home.StatisticsDb.antImagedNames(connection, names)) imaged.add(name.toLowerCase(Locale.ROOT));
+            for (ResultItem item : specList) {
+                if (imaged.contains(item.getTaxonName().toLowerCase(Locale.ROOT))) imagedSpecList.add(item);
             }
-            //s_log.warn("getExtraSpeciesList() name:" + name + " fetched:" + fetchTaxon);		
-
-          } catch (SQLException e) {
-            s_log.warn("getExtraSpeciesList() fetchTaxon e:" + e);
-          } finally {
+        } catch (SQLException e) {
+            s_log.warn("getExtraSpeciesList() e:" + e);
+        } finally {
             DBUtil.close(connection, this, dbMethodName);
-          }
         }
-        
+
         return imagedSpecList;
     }
  }

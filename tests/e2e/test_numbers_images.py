@@ -650,18 +650,25 @@ def test_recent_images_count_equals_the_images_uploaded():
     """Row 71: "N Images" (or "Showing records a to b of N records") of the images uploaded in the last 30 days = the
     images the API counts for that time (between since=29 and since=31: the servers may count days in different time
     zones; until B47 was fixed, images of two specimens of one name with the same shot, number and upload second were
-    one row); the first page lists min(N, 100) rows."""
+    one row); the first page lists the rows its header says (a to b, recentSearchResults-body.jsp: pages of the
+    `length` parameter, 50 by default; numToShow is not the page size)."""
     s = new_session()
-    r = s.get(BASE_URL + "/recentSearchResults.do?searchMethod=recentImageSearch&daysAgo=30&numToShow=100", timeout=ns.SLOW)
+    r = s.get(BASE_URL + "/recentSearchResults.do?searchMethod=recentImageSearch&daysAgo=30", timeout=ns.SLOW)
     if classify(r).category != "ok":
         pytest.skip("recentSearchResults.do: " + classify(r).category)
     html = r.text
-    m = (re.search(r"<h2>([\d,]+) Images</h2>", html)
-         or re.search(r'of <span class="numbers">(\d+)</span> records</h2>', html))
-    assert m, "recentSearchResults.do: no 'N Images' or 'of N records'"
-    n = ns.n(m.group(1))
+    one = re.search(r"<h2>([\d,]+) Images</h2>", html)
+    paged = re.search(r'<h2>Showing records <span class="numbers">(\d+)</span> to <span class="numbers">(\d+)</span> '
+                      r'of <span class="numbers">(\d+)</span> records</h2>', html)
+    assert one or paged, "recentSearchResults.do: no 'N Images' or 'Showing records a to b of N records'"
     rows = len(re.findall(r'<div class="adv_search_recent_image">', html))
-    assert rows == min(n, 100), f"recent images: {n}, {rows} rows on the first page of 100"
+    if one:
+        n = ns.n(one.group(1))
+        assert rows == n, f"recent images: {n}, {rows} rows listed"
+    else:
+        a, b, n = (int(x) for x in paged.groups())
+        assert (a, b) == (1, min(n, 50)), f"recent images: first page shows records {a} to {b} of {n} (pages of 50)"
+        assert rows == b - a + 1, f"recent images: records {a} to {b} of {n}, {rows} rows on the first page"
     low, high = _api_images_since(29), _api_images_since(31)
     if low is None or high is None:
         pytest.skip("API /images?since not read")
