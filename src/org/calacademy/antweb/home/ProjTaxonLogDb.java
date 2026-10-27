@@ -67,7 +67,9 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
 
         if (debug) s_log.warn("archiveSpeciesList() 5 dml:" + dml);
 
-        dml = "update proj_taxon_log_detail set log_id = " + maxLogId + " where log_id = 0";
+        // Only this project's new rows: another project archived at the same moment has its own (2026-10-27).
+        dml = "update proj_taxon_log_detail set log_id = " + maxLogId + " where log_id = 0"
+          + " and project_name = '" + DBUtil.escapeQuotes(projectName) + "'";
         stmt.executeUpdate(dml);        
 
         if (debug) s_log.warn("archiveSpeciesList() 6 dml:" + dml);

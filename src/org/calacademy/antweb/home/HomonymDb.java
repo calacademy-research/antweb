@@ -140,7 +140,7 @@ public class HomonymDb extends AntwebDb {
     
     public boolean isHomonym(String taxonName) {
         boolean isHomonym = false;
-        String query = "select taxon_name from homonym where taxon_name = '" + taxonName + "'";
+        String query = "select taxon_name from homonym where taxon_name = " + DBUtil.sqlLiteral(String.valueOf(taxonName));
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -307,11 +307,11 @@ public class HomonymDb extends AntwebDb {
         String query = "select distinct subfamily from homonym " 
             + " where taxarank = 'genus' and "; // Added Jun 26, 2014";
         if (family != null && !"null".equals(family)) {
-            query += " family = '" + family + "' and ";
+            query += " family = " + DBUtil.sqlLiteral(family) + " and ";
         } else {
             query += " family = 'formicidae' and ";
         }
-        query += "   genus = '" + genus + "'";
+        query += "   genus = " + DBUtil.sqlLiteral(String.valueOf(genus));
 
         isSubfamilyForGenus = isSubfamilyForGenus(query, subfamily);        
 
@@ -329,11 +329,11 @@ public class HomonymDb extends AntwebDb {
          String query = "select distinct subfamily from homonym " 
             + " where ";
         if (family != null && !"null".equals(family)) {
-            query += " family = '" + family + "' and ";
+            query += " family = " + DBUtil.sqlLiteral(family) + " and ";
         } else {
             query += " family = 'formicidae' and ";
         }
-        query += "   genus = '" + genus + "'";
+        query += "   genus = " + DBUtil.sqlLiteral(String.valueOf(genus));
 
         return isSubfamilyForGenus(query, subfamily);  // In AntwebDb.java
     }

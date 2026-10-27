@@ -124,7 +124,7 @@ public class UploadDb extends AntwebDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "addUploadLine()");
             insert = "insert into upload_line(file_name, line_num, display_line_num, line, group_id) " 
-              + "values ('" + fileName + "', " + lineNum + ", " + displayLineNum + ", '" + AntFormatter.escapeQuotes(theLine) + "', " + groupId + ")";  
+              + "values (" + DBUtil.sqlLiteral(fileName) + ", " + lineNum + ", " + displayLineNum + ", '" + AntFormatter.escapeQuotes(theLine) + "', " + groupId + ")";  
             stmt.executeUpdate(insert);
         } catch (SQLException e) {
             s_log.error("addUploadLine() fileName:" + fileName + " lineNum:" + lineNum + " displayLineNum:" + displayLineNum + " e:" + e);
@@ -463,6 +463,7 @@ public class UploadDb extends AntwebDb {
       } else {
       
         Taxon dummyTaxon = new TaxonDb(getConnection()).getTaxon(taxonName);
+        if (dummyTaxon == null) return new Status(Status.UNRECOGNIZED);   // not in AntWeb
         String status = dummyTaxon.getStatus();
         String currentValidName = dummyTaxon.getCurrentValidName();
       
@@ -564,8 +565,8 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
         }
         
         dml = "insert into taxon (taxon_name, family, subfamily, genus, taxarank, source, insert_method, status, access_group) "
-            + " values ('" + taxonName + "', '" + family + "', '" + subfamily + "', '" + genus + "', 'genus', '" 
-            + source + "', '" + insertMethod + "', '" + status + "', " + groupId + ")";
+            + " values (" + lit(taxonName) + ", " + lit(family) + ", " + lit(subfamily) + ", " + lit(genus) + ", 'genus', "
+            + lit(source) + ", " + lit(insertMethod) + ", " + lit(status) + ", " + groupId + ")";
 
         //s_log.warn("insertMorphoGenus() dml:" + dml);
         stmt = DBUtil.getStatement(getConnection(), "UploadDb.insertGenus()");      
@@ -596,14 +597,14 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
         if (new TaxonDb(getConnection()).isExists(taxonName)) return 0;
 
         dml = "insert into taxon (taxon_name, family, subfamily, taxarank, source, insert_method, parent_taxon_name, status) "
-            + " values ('" + taxonName + "', '" + family + "', '" + subfamily + "', 'subfamily', '" 
-            + source + "', '" + insertMethod + "', '" + family + "', '" + status + "')";            
+            + " values (" + lit(taxonName) + ", " + lit(family) + ", " + lit(subfamily) + ", 'subfamily', "
+            + lit(source) + ", " + lit(insertMethod) + ", " + lit(family) + ", " + lit(status) + ")";
         //A.log("insertSubfamily() insert dml:" + dml);
         stmt = DBUtil.getStatement(getConnection(), "UploadDb.insertSubfamily()");      
         c = stmt.executeUpdate(dml);
 
         stmt = getConnection().createStatement();
-        dml = "delete from proj_taxon where project_name = '" + source + "' and taxon_name = '" + taxonName + "'";
+        dml = "delete from proj_taxon where project_name = " + lit(source) + " and taxon_name = " + lit(taxonName);
         //A.log("insertSubfamily() delete proj_taxon dml:" + dml);
         stmt.executeUpdate(dml);
 
@@ -616,6 +617,14 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
         DBUtil.close(stmt, "UploadDb.insertSubfamily()");
       } 
       return c;
+    }
+
+    /**
+     * A value from an uploaded file as a quoted SQL literal (backslash and quote escaped). As before, null is the
+     * text 'null' (these values were concatenated in quotes); a quote in a name no longer breaks or changes the query.
+     */
+    static String lit(String value) {
+        return DBUtil.sqlLiteral(String.valueOf(value));
     }
 
     private static ArrayList<String> s_extantIndetSubfamilies;
@@ -646,7 +655,7 @@ Debug the above method UploadDb.passGenusSubfamilyCheck();
       throws SQLException
     {
         String subfamily = "";
-        String query = "select distinct subfamily from taxon where genus = '" + genus + "' and taxarank = 'genus'";
+        String query = "select distinct subfamily from taxon where genus = " + lit(genus) + " and taxarank = 'genus'";
         Statement stmt = null;
         ResultSet rset = null;
         try {

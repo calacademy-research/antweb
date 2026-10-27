@@ -239,10 +239,13 @@ public class PasswordResetDb extends AntwebDb {
     public Account findAccount(String nameOrEmail) throws SQLException {
         if (nameOrEmail == null || nameOrEmail.trim().isEmpty()) return null;
         String value = nameOrEmail.trim();
-        Account a = findAccountBy("select " + ACCOUNT_COLUMNS + " from login where id > 0 and name = ? order by id limit 1", value);
-        if (a == null && value.contains("@")) {
+        // An email address is looked up as an email first: a username may contain "@" and could otherwise
+        // be another login's email address, and the reset link would go to that login (2026-10-27).
+        Account a = null;
+        if (value.contains("@")) {
             a = findAccountBy("select " + ACCOUNT_COLUMNS + " from login where id > 0 and email = ? order by id limit 1", value);
         }
+        if (a == null) a = findAccountBy("select " + ACCOUNT_COLUMNS + " from login where id > 0 and name = ? order by id limit 1", value);
         return a;
     }
 

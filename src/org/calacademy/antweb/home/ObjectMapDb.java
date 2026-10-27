@@ -70,13 +70,13 @@ public class ObjectMapDb extends AntwebDb {
 		SearchAction.undoSetTempSpecimenSearchLimit();
 
 		if (map != null) {		  
-          deleteMap("museum_code = '" + museum.getCode() + "'"); 
+          deleteMap("museum_code = " + lit(museum.getCode())); 
 		  setMuseumMap(museum.getCode(), map);         
 		}
     }
     
     public Map getMuseumMap(String museumCode) throws SQLException {
-      String clause = " museum_code = '" + museumCode + "'";
+      String clause = " museum_code = " + lit(museumCode);
       return getMap(clause);
     }
     public void setMuseumMap(String code, Map map) throws SQLException {
@@ -135,6 +135,14 @@ public class ObjectMapDb extends AntwebDb {
       setMap(id, "geolocale_id", map);
     }    
 
+    /**
+     * A map text as a quoted SQL literal: a place name with an apostrophe (Cote d'Ivoire, Hawke's Bay) made the insert
+     * fail after the old map was deleted, so the place had no map. null stays the text 'null', as before.
+     */
+    static String lit(String value) {
+        return DBUtil.sqlLiteral(String.valueOf(value));
+    }
+
     public void setMap(int id, String keyCol, Map map) throws SQLException {
 	  //A.log("setMap(int, str, map) id:" + id);
       String googleMapFunction = map.getGoogleMapFunction();
@@ -146,10 +154,10 @@ public class ObjectMapDb extends AntwebDb {
 
       String fields = keyCol + ", google_map_function, title, subtitle, info";
       String values = id 
-        + ", '" + googleMapFunction + "'"
-        + ", '" + map.getTitle() + "'"
-        + ", '" + map.getSubtitle() + "'"
-        + ", '" + map.getInfo() + "'";
+        + ", " + lit(googleMapFunction)
+        + ", " + lit(map.getTitle())
+        + ", " + lit(map.getSubtitle())
+        + ", " + lit(map.getInfo());
       try {
         insertMap(fields, values);    
       } catch (SQLException e) {
@@ -167,11 +175,11 @@ public class ObjectMapDb extends AntwebDb {
       }
       googleMapFunction = HttpUtil.encode(googleMapFunction);
       String fields = keyCol + ", google_map_function, title, subtitle, info";
-      String values = "'" + key + "'" 
-        + ", '" + googleMapFunction + "'"
-        + ", '" + map.getTitle() + "'"
-        + ", '" + map.getSubtitle() + "'"
-        + ", '" + map.getInfo() + "'";
+      String values = lit(key)
+        + ", " + lit(googleMapFunction)
+        + ", " + lit(map.getTitle())
+        + ", " + lit(map.getSubtitle())
+        + ", " + lit(map.getInfo());
       try {
         insertMap(fields, values);    
       } catch (SQLException e) {
@@ -282,31 +290,6 @@ public class ObjectMapDb extends AntwebDb {
 		}
     }
     
-    public void updateGeolocaleMap(int geolocaleId, Map map) throws SQLException {
-
-        String clause = "geolocale_id = " + geolocaleId;
-
-		String dml = "update object_map set" 
-		  + " google_map_function = '" + map.getGoogleMapFunction() + "'" 
-		  + " title = '" + map.getTitle() + "'" 
-		  + " subtitle = '" + map.getSubtitle() + "'" 
-		  + " info = '" + map.getInfo() + "'" 
-		  + " where " + clause;
-				   
-        //A.log("updateGeolocaleMap() dml:" + dml);
-
-		Statement stmt = null;
-		try {
-			stmt = DBUtil.getStatement(getConnection(), "updateGeolocaleMap()");			
-			stmt.executeUpdate(dml);
-		} catch (SQLException e) {
-			s_log.error("setGeolocaleMap() theInsert:" + dml + " e:" + e);
-			throw e;
-		} finally {
-		    DBUtil.close(stmt, "updateGeolocaleMap()");
-		}
-    }
-           
     public void deleteMap(String clause) throws SQLException {
 		//String createdStr = DateUtil.getFormatDateTimeStr(operationLock.getCreated());		
 		//A.slog("deleteMap() clause:" + clause);

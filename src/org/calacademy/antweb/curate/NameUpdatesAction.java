@@ -147,8 +147,8 @@ public final class NameUpdatesAction extends AntwebAction {
             }
             b.append("</select> ");
         }
-        b.append("From: <input type=\"date\" name=\"from\" value=\"").append(from == null ? "" : from).append("\" aria-label=\"From\"> ");
-        b.append("To: <input type=\"date\" name=\"to\" value=\"").append(to == null ? "" : to).append("\" aria-label=\"To\"> ");
+        b.append("From: <input type=\"date\" name=\"from\" value=\"").append(from == null ? "" : Html.escAttr(from)).append("\" aria-label=\"From\"> ");
+        b.append("To: <input type=\"date\" name=\"to\" value=\"").append(to == null ? "" : Html.escAttr(to)).append("\" aria-label=\"To\"> ");
         b.append("<input type=\"submit\" value=\"Show\"></form>");
         return b.toString();
     }

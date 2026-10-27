@@ -54,7 +54,7 @@ public final class Adm1MgrAction extends AntwebAction {
         String query1 = "select id, name, parent, valid_name, is_valid, source from geolocale where parent = ? order by is_valid desc, name"; 
         String groupClause = "";
         if (groupId > 0) groupClause = " and access_group = " + groupId;
-        String query2 = "select code from specimen where adm1 = ? and country = ? " + groupClause + " limit 20";
+        String query2 = "select code from specimen where adm1 = ? and country = ? " + groupClause + " limit 21";   // 21: are there more than 20?
         
         s_log.debug("Adm1MgrAction execute() query1:" + query1);
 
@@ -66,7 +66,7 @@ public final class Adm1MgrAction extends AntwebAction {
             connection = DBUtil.getConnection(dataSource, "SpeciesListToolAction.execute()");
 
             stmt = connection.prepareStatement(query1);
-            stmt.setString(1, countryName);
+            stmt.setString(1, country.getName());   // the adm1s' parent is the valid country name (countryName may be another spelling)
             rset = stmt.executeQuery();
             while (rset.next()) {
               Geolocale geolocale = new Geolocale();
@@ -88,15 +88,15 @@ public final class Adm1MgrAction extends AntwebAction {
             rset = stmt.executeQuery();
             while (rset.next()) {
               ++i;
+              if (i > 20) {
+                codeStr += "...";
+                break;
+              }
               String code = rset.getString("code");
               //A.log("Adm1MgrAction code:" + code);
               String codeTag = " <a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.escAttr(Html.url(code)) + "'>" + Html.esc(code) + "</a>";
               if (i > 1) codeTag = ", " + codeTag;
               codeStr += codeTag;
-              if (i >= 20) {
-                codeStr += "...";
-                break;
-              }
             }
 
         } catch (SQLException e) {

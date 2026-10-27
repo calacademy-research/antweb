@@ -56,6 +56,23 @@ public class ValidateSpeciesReportTest extends TestCase {
         assertTrue(tsv.contains("2\tAcromyrmex  balzani\tAcromyrmex balzani\tAMBIGUOUS\tJunior synonym\tyes\tMatched a synonym.\tAcromyrmex validus\n"));
     }
 
+    public void testCorrectedListHasOnlyTaxonNames() {
+        // 2026-10-27: the validator's messages start with a capital letter too and were written as names.
+        ValidateSpeciesReport report = new ValidateSpeciesReport();
+        report.addResult(new ValidateSpeciesResultItem(2, "Pheidole megacephala", "Pheidole megacephala",
+                ValidateSpeciesResultItem.Status.EXACT_MATCH, "valid", false, "Exact match.", "", false));
+        report.addResult(new ValidateSpeciesResultItem(3, "Pheidole megacefala", "Pheidole megacefala",
+                ValidateSpeciesResultItem.Status.NOT_FOUND, "", true, "Taxon not found.", "Pheidole megacephala", false));
+        report.addResult(new ValidateSpeciesResultItem(4, "Pheidole zzz", "Pheidole zzz",
+                ValidateSpeciesResultItem.Status.NOT_FOUND, "", false, "Taxon not found.", "Check spelling.", false));
+        report.addResult(new ValidateSpeciesResultItem(5, "Nogenus zzz", "Nogenus zzz",
+                ValidateSpeciesResultItem.Status.NOT_FOUND, "", false, "Taxon not found.", "No valid species found for genus nogenus.", false));
+        report.addResult(new ValidateSpeciesResultItem(6, "Acromyrmex balzani", "Acromyrmex balzani",
+                ValidateSpeciesResultItem.Status.AMBIGUOUS, "synonym", true, "Matched a synonym.", "Acromyrmex validus", false));
+
+        assertEquals("taxon_name\nPheidole megacephala\nPheidole megacephala\nAcromyrmex validus\n", report.generateCorrectedTsvReport());
+    }
+
     public void testParserAcceptsUtf16LittleEndianTextFiles() throws Exception {
         String content = "subfamily\tgenus\tspecies\tsubspecies\r\n"
                 + "Myrmicinae\tAcanthognathus\tbrevicornis\t\r\n";

@@ -995,9 +995,9 @@ public class LoginDb extends AntwebDb {
                 String url = AntwebProps.getSecureDomainApp() + "/loginAs.do?id=" + rset.getInt("login.id");
                 String groupStr = "";
                 if (!"Default Group".equals(groupName)) {
-                  groupStr = ":" + groupName;
+                  groupStr = ":" + Html.esc(groupName);
                 }
-                String anchor = "<a href=\"" + url + "\">" + name + "(" + groupId + groupStr + ")" + "</a>";
+                String anchor = "<a href=\"" + url + "\">" + Html.esc(name) + "(" + groupId + groupStr + ")" + "</a>";
                 usrAdmList.add(anchor);
             }
         } catch (SQLException e) {
@@ -1034,9 +1034,9 @@ public class LoginDb extends AntwebDb {
                 String url = AntwebProps.getDomainApp() + "/loginAs.do?id=" + rset.getInt("login.id");
                 String groupStr = "";
                 if (!"Default Group".equals(groupName)) {
-                  groupStr = ":" + groupName;
+                  groupStr = ":" + Html.esc(groupName);
                 }
-                String anchor = "<a href=\"" + url + "\">" + name + "(" + groupId + groupStr + ")" + "</a> " + lastLogin;
+                String anchor = "<a href=\"" + url + "\">" + Html.esc(name) + "(" + groupId + groupStr + ")" + "</a> " + lastLogin;
                 usrAdmList.add(anchor);
             }
         } catch (SQLException e) {

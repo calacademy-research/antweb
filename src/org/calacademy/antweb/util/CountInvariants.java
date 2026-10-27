@@ -390,7 +390,8 @@ public final class CountInvariants {
         check(new Check("place." + type + ".stored", "read the " + t + " table", ""), c -> stored.putAll(rows(
             "select " + k + ", subfamily_count, genus_count, species_count, valid_species_count, specimen_count, image_count,"
             + " imaged_specimen_count" + extra + " from " + t)));
-        checks.remove(checks.size() - 1);   // not a check of its own
+        // not a check of its own, unless it failed: then the table shows it (with the error) instead of 0/0 rows below
+        if (checks.get(checks.size() - 1).error == null) checks.remove(checks.size() - 1);
 
         String[] ranks = {PlaceTotals.SUBFAMILY, PlaceTotals.GENUS, PlaceTotals.SPECIES};
         String[] words = {"Subfamilies", "Genera", "Species"};
@@ -734,7 +735,7 @@ public final class CountInvariants {
             java.sql.Timestamp created = null;
             try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(
                     "select extant_taxa, specimens, species_imaged, specimens_imaged, total_images, " + safeDate("created")
-                    + " from statistics order by created desc limit 1"))) {
+                    + " from statistics order by created desc, id desc limit 1"))) {
                 if (r.next()) {
                     row = new long[] {r.getLong(1), r.getLong(2), r.getLong(3), r.getLong(4), r.getLong(5)};
                     created = r.getTimestamp(6);
