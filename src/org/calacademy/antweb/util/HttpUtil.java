@@ -623,6 +623,8 @@ public abstract class HttpUtil {
     }
 
     public static boolean isPost(HttpServletRequest request) {
+        // A form post must also be sent as POST: the CSRF check in SessionRequestFilter looks at the method.
+        if (!"POST".equalsIgnoreCase(request.getMethod())) return false;
         if (request.getContentType() != null) {
             String contentType = request.getContentType().toLowerCase();
             //A.log("isPost:" + request.getContentType());

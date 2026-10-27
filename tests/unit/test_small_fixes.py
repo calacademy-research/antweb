@@ -27,6 +27,9 @@
 10. (2026-10-27, B74, B75) CopyrightDb keeps every copyright row (the image upload report of an earlier year's batch
    failed); Compare of a search by species does not call Taxon.setHasImages(connection) (it failed) and the page
    prints the preparation's count when nothing is left.
+11. (2026-10-27) A form post counts only when sent as POST (HttpUtil.isPost), the token check in
+   SessionRequestFilter covers every method other than GET, HEAD and OPTIONS (Csrf.methodNeedsCheck), and
+   LoginAction accepts a password only in a post; only administrators create a login in SaveLoginAction. Unit test: test/.../util/PostMethodTest.java.
 
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -260,6 +263,22 @@ def test_copyright_rows_and_compare_by_species(sources):
     print("Copyright rows kept; Compare by species counts imaged names; an empty preparation prints its count.")
 
 
+def test_post_means_post(sources):
+    http = sources["src/org/calacademy/antweb/util/HttpUtil.java"]
+    body = http[http.index("public static boolean isPost("):]
+    body = body[:body.index("\n    }")]
+    assert 'request.getMethod()' in body, "HttpUtil.isPost no longer looks at the method"
+    filt = sql_text(sources["src/org/calacademy/antweb/util/SessionRequestFilter.java"])
+    assert "Csrf.methodNeedsCheck(request.getMethod())" in filt, "the filter checks the token only for some methods again"
+    login = sql_text(sources["src/org/calacademy/antweb/LoginAction.java"])
+    assert re.search(r"password\s*!=\s*null\s*&&\s*!HttpUtil\.isPost\(request\)", login), \
+        "LoginAction accepts a password outside a post again"
+    save = sql_text(sources["src/org/calacademy/antweb/curate/login/SaveLoginAction.java"])
+    assert re.search(r"if \(login == null && !isAdminUser\) \{\s*s_log\.warn\(.*?\);\s*return mapping\.findForward\(\"permissionDenied\"\)", save, re.S), \
+        "SaveLoginAction lets someone other than an administrator create a login again"
+    print("Posts are posts; the token check covers every method that can change something; passwords only by post.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -275,6 +294,7 @@ def main():
     test_adm1_totals_not_only_live(sources)
     test_global_recounted_after_cleanup_and_synonym_bound(sources)
     test_copyright_rows_and_compare_by_species(sources)
+    test_post_means_post(sources)
 
 
 if __name__ == "__main__":

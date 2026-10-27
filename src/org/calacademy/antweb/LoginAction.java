@@ -77,6 +77,13 @@ public final class LoginAction extends AntwebAction {
             }
             return mapping.findForward("failure");
         }
+
+        // A password is only accepted in a POST: the login rate limit counts posts, and a password in the
+        // address ends up in logs and browser history. Otherwise the form is shown again.
+        if (password != null && !HttpUtil.isPost(request)) {
+            s_log.info("execute() password not sent as a form post; showing the login form");
+            return mapping.findForward("failure");
+        }
         
         s_log.debug("execute() value:" + value + " target:" + target + " userNameOrEmail:" + userNameOrEmail);
         //AntwebUtil.logShortStackTrace(10);

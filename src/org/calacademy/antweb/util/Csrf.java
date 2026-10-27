@@ -148,6 +148,13 @@ public final class Csrf {
     }
 
     /** True for the paths that never need a token. */
+    /** Every method that can change something is checked; only GET, HEAD and OPTIONS are not. */
+    public static boolean methodNeedsCheck(String method) {
+        if (method == null) return true;
+        String m = method.toUpperCase();
+        return !("GET".equals(m) || "HEAD".equals(m) || "OPTIONS".equals(m));
+    }
+
     public static boolean isExempt(HttpServletRequest request) {
         String path = request.getServletPath();
         if (path == null) return false;

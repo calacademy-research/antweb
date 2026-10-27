@@ -48,7 +48,9 @@ def _apiProperties(path=API_PROPERTIES):
     # mounted in the api container, as /antweb-etc/api-db.properties). Empty if missing.
     try:
         with open(path) as f:
-            return dict(line.strip().split('=', 1) for line in f if '=' in line and not line.startswith('#'))
+            # Keys and values without surrounding spaces ("user = apiro" works too).
+            pairs = (line.strip().split('=', 1) for line in f if '=' in line and not line.lstrip().startswith('#'))
+            return {k.strip(): v.strip() for k, v in pairs}
     except OSError:
         return {}
 
@@ -60,13 +62,18 @@ def _db_credentials(props):
     user, password = 'antweb', 'CHANGE_ME'
     if props.get('user') and props.get('password'):
         user, password = props['user'], props['password']
+    else:
+        print('WARNING: no read-only login in ' + API_PROPERTIES + '; the API uses the main account', flush=True)
     print('API database user:', user, flush=True)
     return user, password
 
 
 _apiProps = _apiProperties()
 _dbUser, _dbPass = _db_credentials(_apiProps)
-dbUrl = f'mysql+pymysql://{_dbUser}:{_dbPass}@mysql:3306/ant?autocommit=true'
+# URL.create quotes the user and password, so a password with @, : or / still works.
+from sqlalchemy.engine import URL
+dbUrl = URL.create('mysql+pymysql', username=_dbUser, password=_dbPass, host='mysql', port=3306, database='ant',
+                   query={'autocommit': 'true'})
 # dbUrl = 'mysql+mysqldb://antweb:CHANGE_ME@localhost:3306/ant?autocommit=true'
 # pool_pre_ping: check a pooled connection before use, so a connection MySQL closed
 # while idle is replaced instead of failing the request ("MySQL server has gone away").
@@ -124,26 +131,6 @@ application.json = AntwebJSONProvider(application)
 
 isDevMode = 0
 
-# MySQL configurations  
-try:
-    # apiDbConf = '/var/www/html/apiV3/api_db.conf'
-    # apiDbConf = '/antweb/deploy/api/v3/api_db.conf'
-    apiDbConf = 'api_db.conf'
-
-    import os
-
-    assert os.path.exists(apiDbConf)
-
-    # Read config file
-    config = configparser.ConfigParser()
-    # config.read('api_db.conf')
-    # config.read('/var/www/html/apiV3/api_db.conf')
-    config.read(apiDbConf)
-
-    # print(dbUrl)
-except Exception as e:
-    pass
-    # print('Exception e: ' + str(e),' reading configuration file')
 
 # app = Flask(__name__)
 
@@ -220,6 +207,22 @@ def initCap(x):
     except TypeError as error:
         pass  # print("error:" + str(error))
     return val
+
+
+def badRequest(message):
+    # A JSON error with HTTP 400 for a parameter value that cannot be used.
+    return jsonify(error=message), 400
+
+
+def numbers(value, count):
+    # count comma-separated numbers (floats), or None if value is not that.
+    parts = value.split(',')
+    if len(parts) != count:
+        return None
+    try:
+        return [float(p) for p in parts]
+    except ValueError:
+        return None
 
 
 def down(request):
@@ -420,46 +423,8 @@ class Specimen(Base):
     taxon = relationship("Taxon")
 
     def __repr__(self):
-        return "<Specimen(occurrenceId='%s', ownerInstitutionCode='%s' \
-           , institutionCode='%s', collectionCode='%s' \
-           , code='%s', dctermsModified='%s', nomenclaturalCode='%s' \
-           , kingdom='%s', phylum='%s', classVal='%s', order='%s' \
-           , family='%s', subfamily='%s', genus='%s', subgenus='%s' \
-           , species='%s', subspecies='%s', scientific_name='%s' \
-           , higherClassification='%s', typeStatus='%s' \
-           , region='%', subregion='%s', country='%s', adm1='%s' \
-           , bioregion='%s', decimalLatitude='%s', decimalLongitude='%s' \
-           , latLonMaxError='%s', dateDetermined='%s', dateCollectedStart='%s', dateCollectedEnd='%s' \
-           , habitat='%s', microhabitat='%s' \
-           , collectedBy='%s', samplingMethod='%s', lifeStageSex='%s' \
-           , medium='%s', collectionCode='%s', determinedBy='%s' \
-           , localityName='%s', localityNotes='%s', specimenNotes='%s' \
-           , collectionNotes='%s' \
-           , minimumElevationInMeters='%s', bioregion='%s', museum='%s', taxonName='%s' \
-           , ownedBy='%s', locatedAt='%s', collectedBy='%s' \
-           , caste='%s', subcaste='%s', fossil='%s', status='%s' \
-      #     , isMale='%s', isWorker='%s', isQueen='%s', imageCount='%s' \
-       )>" % (
-            self.occurrenceId, self.ownerInstitutionCode
-            , self.basisOfRecord, self.institutionCode, self.collectionCode
-            , self.code, self.dctermsModified, self.nomenclaturalCode
-            , self.kingdom, self.phylum, self.classVal, self.order
-            , self.family, self.subfamily, self.genus, self.subgenus
-            , self.species, self.subspecies, self.scientific_name
-            , self.higherClassification, self.typeStatus
-            , self.region, self.subregion, self.country, self.adm1
-            , self.bioregion, self.decimalLatitude, self.decimalLongitude
-            , self.latLonMaxError, self.dateDetermined, self.dateCollectedStart, self.dateCollectedEnd
-            , self.habitat, self.microhabitat
-            , self.collectedBy, self.samplingMethod, self.lifeStageSex
-            , self.medium, self.collectionCode, self.determinedBy
-            , self.localityName, self.localityNotes, self.specimenNotes
-            , self.collectionNotes
-            , self.minimumElevationInMeters, self.bioregion, self.museum, self.taxonName
-            , self.ownedBy, self.locatedAt, self.collectedBy
-            , self.caste, self.subcaste, self.fossil, self.status, self.imageCount
-            #    , self.isMale, self.isWorker, self.isQueen
-        )
+        return "<Specimen(code=%r, taxonName=%r, country=%r, status=%r)>" % (self.code, self.taxonName, self.country,
+                                                                          self.status)
 
     def getSpecDict(sp):
         coordinates = {
@@ -686,7 +651,9 @@ def getSpecimen():
         query = query.filter(Specimen.decimalLatitude != None)
         query = query.filter(Specimen.decimalLongitude != None)
     if bbox != '*':
-        coords = bbox.split(",")
+        coords = numbers(bbox, 4)
+        if coords is None:
+            return badRequest('bbox must be four numbers: north,east,south,west latitude and longitude')
         query = query.filter(Specimen.decimalLatitude <= coords[0], Specimen.decimalLatitude >= coords[2])
         query = query.filter(Specimen.decimalLongitude <= coords[1], Specimen.decimalLongitude >= coords[3])
     if maxDate != '*':
@@ -700,11 +667,11 @@ def getSpecimen():
     if museum != '*':
         query = query.filter(Specimen.museum == museum)
     if ownedby != '*':
-        query = query.filter(Specimen.ownedby == ownedby)
+        query = query.filter(Specimen.ownedBy == ownedby)
     if locatedat != '*':
-        query = query.filter(Specimen.locatedat == locatedat)
+        query = query.filter(Specimen.locatedAt == locatedat)
     if collectedby != '*':
-        query = query.filter(Specimen.collectedby == collectedby)
+        query = query.filter(Specimen.collectedBy == collectedby)
     if lifeStageSex != '*':
         query = query.filter(Specimen.lifeStageSex.like("%" + lifeStageSex + "%"))
     if caste != '*':
@@ -722,7 +689,7 @@ def getSpecimen():
         if hasImage == 'true':
             query = query.filter(Specimen.imageCount > 0)
         if hasImage == 'false':
-            query = query.filter(Specimen.imageCount <= 0)
+            query = query.filter(or_(Specimen.imageCount <= 0, Specimen.imageCount == None))
     if geolocaleName != '*':
         query = query.join(Taxon).join(GeolocaleTaxon).join(Geolocale).filter(Geolocale.name == geolocaleName)
         query = addExtraGeolocaleListCriteria(query, geolocaleName)
@@ -842,7 +809,7 @@ def getGeoSpecimens():
             if distinct == 'genus':
                 dataList.append(sp.genus)
             if distinct == 'species':
-                dataList.append(initCap(sp.genus) + ' ' + sp.species)
+                dataList.append((initCap(sp.genus) or '') + ' ' + (sp.species or ''))
 
         params = [request.args]
         metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'count': len(dataList)}
@@ -999,32 +966,11 @@ class Taxon(Base):
     country = Column(String)
     currentValidParent = Column('current_valid_parent', String)
     lineNum = Column('line_num', Integer)
-    accessGroup = ('access_group', Integer)
 
     geolocaleTaxa = relationship("GeolocaleTaxon")
 
     def __repr__(self):
-        return "<Taxa( \
-           taxonName='%s', taxarank='%s', subfamily='%s', genus='%s' \
-         , species='%s%', subspecies='%s', parent='%s' \
-         , fossil='%s', source='%s', created='%s' \
-         , family='%s', kingdomName='%s', phylumName='%s' \
-         , className='%s', orderName='%s', antcat='%s', subfamilyCount ='%s' \
-         , genusCount='%s', speciesCount='%s', specimenCount='%s', imageCount='%s' \
-         , parentTaxonName='%s', type='%s', antcatId='%s', authorDate='%s' \
-         , authors='%s', year='%s', status='%s', currentValidName='%s', bioregion='%s' \
-         , country='%s', currentValidParent='%s', lineNum='%s', accessGroup='%s' \
-       )>" % (
-            self.taxonName, self.taxarank, self.subfamily, self.genus
-            , self.species, self.subspecies, self.parent
-            , self.fossil, self.source, self.created
-            , self.family, self.kingdomName, self.phylumName
-            , self.className, self.orderName, self.antcat, self.subfamilyCount
-            , self.genusCount, self.speciesCount, self.subspeciesCount, self.imageCount
-            , self.parentTaxonName, self.type, self.antcatId, self.authorDate
-            , self.authors, self.year, self.status, self.currentValidName, self.bioregion
-            , self.country, self.currentValidParent, self.lineNum, self.accessGroup \
-            )
+        return "<Taxon(taxonName=%r, taxarank=%r, status=%r)>" % (self.taxonName, self.taxarank, self.status)
 
 
 @application.route('/taxa', methods=['GET'])
@@ -1266,8 +1212,8 @@ def imagesBySpecimen(data):
     images = []
     for image in data:
         imageCount += 1
-        base = 'https://www.antweb.org/images/' + image.code + '/' + image.code + '_' \
-               + image.shotType + '_' + str(image.shotNumber)
+        base = 'https://www.antweb.org/images/' + (image.code or '') + '/' + (image.code or '') + '_' \
+               + (image.shotType or '') + '_' + str(image.shotNumber)
         # print('code' + image.code + ' base:' + base)
         urls = [base + '_low.jpg'
             , base + '_med.jpg'
@@ -1324,6 +1270,8 @@ def getImages():
 
     query = session.query(Image)
     if since != '*':
+        if not since.isdigit():
+            return badRequest('since must be a whole number of days')
         day_interval_before = datetime.now() - timedelta(days=int(since))
         query = query.filter(Image.uploadDate >= day_interval_before)
     if code != '*':
@@ -1487,7 +1435,7 @@ class Measurement(Base):
             , 'rulerModel': m.rulerModel
             , 'contributor': m.contributor
             , 'recordDate': str(m.recordDate) if m.recordDate else None
-            , 'specimenUrl': prodServer + '/specimen.do?code=' + m.code
+            , 'specimenUrl': prodServer + '/specimen.do?code=' + urllib.parse.quote(str(m.code), safe='')
         }
         if sp is not None:
             d['specimen'] = {
@@ -1609,7 +1557,7 @@ class TaxaImage(Base):
     hasTiff = Column('has_tiff', String)
 
     def __repr__(self):
-        return "<TaxaImage(taxonName='%s', subfamily='%s', genus='%s', species='%ds', subspecies='%s', code='%s' \
+        return "<TaxaImage(taxonName='%s', subfamily='%s', genus='%s', species='%s', subspecies='%s', code='%s' \
          uid='%s', shotType='%s', code='%s', uploadDate='%s', shotNumber='%s', hasTiff='%s')>" % (
             self.taxonName, self.subfamily, self.genus, self.species, self.subspecies, self.code,
             self.uid, self.shotType, self.code, self.uploadDate, self.shotNumber, self.hasTiff
@@ -1651,9 +1599,9 @@ class TaxaImage(Base):
 
             imagesDict = specimenDict['images']
 
-            if taxaImage.uid not in imagesDict:
-                base = 'https://www.antweb.org/images/' + taxaImage.code + '/' + taxaImage.code + '_' \
-                       + taxaImage.shotType + '_' + str(taxaImage.shotNumber)
+            if all(image['imageId'] != taxaImage.uid for image in imagesDict):
+                base = 'https://www.antweb.org/images/' + (taxaImage.code or '') + '/' + (taxaImage.code or '') + '_' \
+                       + (taxaImage.shotType or '') + '_' + str(taxaImage.shotNumber)
                 urls = [base + '_low.jpg'
                     , base + '_med.jpg'
                     , base + '_high.jpg'
@@ -1662,15 +1610,13 @@ class TaxaImage(Base):
                 imageDict = {
                     'imageId': taxaImage.uid
                     , 'shotType': taxaImage.shotType
+                    , 'urls': urls
                     , "urls:": urls
                     , 'uploadDate': taxaImage.uploadDate
                     , 'shotNumber': taxaImage.shotNumber
                     , 'hasTiff': taxaImage.hasTiff
                 }
                 imagesDict.append(imageDict)
-                # print('getTaxaDict() uid:' + str(taxaImage.uid))
-            else:
-                imageDict = imagesDict[taxaImage.uid]
 
         return taxaDict
 
@@ -1983,7 +1929,7 @@ def getGeolocaleTaxa():
     query = query.join(Geolocale).join(Taxon)
     # Geolocale criteria
     if geolocaleId != '*':
-        query = query.filter(GeolocaleTaxon.id == geolocaleId)
+        query = query.filter(GeolocaleTaxon.geolocaleId == geolocaleId)
     if geolocaleName != '*':
         query = query.filter(Geolocale.name == geolocaleName)
     if georank != '*':
@@ -2292,7 +2238,7 @@ def imagedTaxaSql(casteClause=""):
     image_count > 1, so a name whose specimens had one image each was "unimaged", and label images counted).
     casteClause: "" or " and s.caste = '...'" (specimen alias s)."""
     return ("select s.taxon_name from specimen s join image i on i.image_of_id = s.code"
-            " where lower(trim(coalesce(i.shot_type, ''))) <> 'l'" + casteClause)
+            " where s.taxon_name is not null and lower(trim(coalesce(i.shot_type, ''))) <> 'l'" + casteClause)
 
 
 @application.route('/unimagedGeolocaleTaxa', methods=['GET'])
@@ -2368,9 +2314,10 @@ def getUnimagedGeolocaleTaxa():
     if isDevMode:
         print("query:" + query)
 
-    connection = engine.connect()
     # taxarank and status come from the URL: pass them as bound parameters, never pasted into the SQL.
-    result = connection.execute(text(query), {"taxarank": taxarank, "status": status})
+    # The connection goes back to the pool when the block ends, also after an error.
+    with engine.connect() as connection:
+        result = [row._mapping for row in connection.execute(text(query), {"taxarank": taxarank, "status": status})]
 
     unimagedGeolocaleTaxaCount = 0
     unimagedGeolocaleTaxaCasteCount = 0
@@ -2425,8 +2372,6 @@ def getUnimagedGeolocaleTaxa():
         }
         dataList.append(unimagedGeolocaleTaxaDict)
         unimagedGeolocaleTaxaCount += 1
-
-    connection.close()
 
     params = [request.args]
     metaDataDict = {'parameters': params, 'request': str(request),

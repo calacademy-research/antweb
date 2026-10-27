@@ -121,6 +121,12 @@ public final class SaveLoginAction extends AntwebAction {
                 return mapping.findForward("message");
             }
 
+            if (login == null && !isAdminUser) {
+                // Only administrators create logins. Someone whose own login was deleted while they were
+                // logged in does not get a new one from this form.
+                s_log.warn("execute() denied: login " + id + " does not exist; only administrators create logins");
+                return mapping.findForward("permissionDenied");
+            }
             if (login == null) {
                 isNew = true;
                 // The number is chosen now, not taken from the form: above every login number ever
