@@ -21,6 +21,6 @@
 <a href='<%= domainApp %>/statistics.do'>Refresh</a> | <a href="<%= domainApp %>/upload.do?action=runStatistics">Generate</a> a new Statistics snapshot (usually not necessary).
 
 <%
-  String statistics = (String) session.getAttribute("statistics");
-  out.println(statistics);
+  String statistics = (String) request.getAttribute("statistics");
+  out.println(statistics == null ? "<p>No statistics were read (see the log).</p>" : statistics);
 %>

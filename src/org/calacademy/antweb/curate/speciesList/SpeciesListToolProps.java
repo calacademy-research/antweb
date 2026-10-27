@@ -176,7 +176,8 @@ public class SpeciesListToolProps extends SpeciesListToolForm {
     }
 
     public String getPermaLinkTag() {
-      String tag = "<a href='" + getPermaLink() + "'>[permalink]</a>";
+      // The list names come from the request: escaped, so a quote cannot end the attribute.
+      String tag = "<a href='" + Html.escAttr(getPermaLink()) + "'>[permalink]</a>";
       return tag;
     }
             

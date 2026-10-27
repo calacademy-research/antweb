@@ -17,7 +17,9 @@
                             if (!changeThumbTarget.contains("?") && !browserParams.contains("?")) changeThumbTarget += "?";
                             changeThumbTarget += browserParams + imagesTrueStr;
 
-                            //A.log("imageViewsDisplay changeThumbTarget:" + changeThumbTarget + " imagesTrueStr:" + imagesTrueStr); %>
+                            //A.log("imageViewsDisplay changeThumbTarget:" + changeThumbTarget + " imagesTrueStr:" + imagesTrueStr);
+                            // The address holds the request's parameters: escaped for the JavaScript string and the attribute.
+                            changeThumbTarget = org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(changeThumbTarget)); %>
                             <li><a class="clean_url head" href="#" onclick="changeThumbView('h', '<%= changeThumbTarget %>'); return false;">Head</a></li>
                             <li><a class="clean_url profile" href="#" onclick="changeThumbView('p', '<%= changeThumbTarget %>'); return false;">Profile</a></li>
                             <li><a class="clean_url dorsal" href="#" onclick="changeThumbView('d', '<%= changeThumbTarget %>'); return false;">Dorsal</a></li>

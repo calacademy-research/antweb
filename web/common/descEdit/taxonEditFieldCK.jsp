@@ -29,7 +29,7 @@
               String targetDo = "description.do";
               if (taxon instanceof Specimen) targetDo = "specimen.do";
          %>
-         <small style="float:left; margin-top: 1px; margin-left:5px;"> <a href="<%= targetDo %>?<%= Utility.stripParams(browserParams, "editField") %>&editField=<%= thisDesc %>#<%= thisDesc %>">[Edit]</a> <%= org.calacademy.antweb.DescHistory.link(request, thisDesc, thisPageTarget) %></small><div class="clear"></div>
+         <small style="float:left; margin-top: 1px; margin-left:5px;"> <a href="<%= targetDo %>?<%= org.calacademy.antweb.util.Html.escAttr(Utility.stripParams(browserParams, "editField")) %>&editField=<%= thisDesc %>#<%= thisDesc %>">[Edit]</a> <%= org.calacademy.antweb.DescHistory.link(request, thisDesc, thisPageTarget) %></small><div class="clear"></div>
          <%= (desc.get(thisDesc) != null) ? desc.get(thisDesc) : "" %>       
          <% }
           }

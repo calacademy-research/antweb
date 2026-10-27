@@ -18,12 +18,13 @@ Taxon taxon = new Taxon();
 String thisPageTarget = "thisPageTarget";
 
 String imageUrl = (String) request.getAttribute("imageUrl");
-String tag = "&lt;img src=\"" + imageUrl + "\"&gt;";
+// The address holds the uploaded file's name: escaped wherever it is shown.
+String tag = "&lt;img src=\"" + Html.esc(imageUrl) + "\"&gt;";
 
 DescEditImageUploadForm descForm = (DescEditImageUploadForm) request.getAttribute("descEditImageUploadForm");
 %>
 
-Your uploaded file is here: <a href="<%= imageUrl %>"><%= imageUrl %></a>
+Your uploaded file is here: <a href="<%= Html.escAttr(imageUrl) %>"><%= Html.esc(imageUrl) %></a>
 <br>You may embed this image in a web page with this html tag: <pre><%= tag %></pre>
 <br>
 
@@ -34,7 +35,7 @@ Your uploaded file is here: <a href="<%= imageUrl %>"><%= imageUrl %></a>
 <input type="hidden" name="isSaveEditField" value="true">
 <input type="hidden" name="rank" value="<%= Html.escAttr(descForm.getRank()) %>">
 <input type="hidden" name="name" value="<%= Html.escAttr(descForm.getName()) %>">
-<input type="hidden" name="imageUrl" value="<%= imageUrl %>">
+<input type="hidden" name="imageUrl" value="<%= Html.escAttr(imageUrl) %>">
 
 <input border="0" type="image" src="<%= AntwebProps.getDomainApp() %>/image/orange_done.gif" width="98" height="36" value="Save">
 <!-- a href="<%= Utility.stripParams(thisPageTarget, "editField") %>"><img border="0" src="image/grey_cancel.gif" width="123" height="36"></a -->
@@ -42,7 +43,7 @@ Your uploaded file is here: <a href="<%= imageUrl %>"><%= imageUrl %></a>
 
 <br><br>
 
-<img class="taxon_page_img" src="<%= imageUrl %>">
+<img class="taxon_page_img" src="<%= Html.escAttr(imageUrl) %>">
 
 </div>
 <div class="right">

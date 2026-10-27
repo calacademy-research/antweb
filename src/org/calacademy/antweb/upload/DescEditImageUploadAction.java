@@ -129,6 +129,8 @@ public class DescEditImageUploadAction extends AntwebAction {
                     if (outputFileName != null
                       && !outputFileName.equals("")) {
                         outputFileName2 = docBase + dir + "/" + outputFileName; 
+                        // The link and the image tag point to the file as saved (the checked name), not the uploaded name.
+                        dirFileName = dir + "/" + outputFileName;
                     }
 
                     Utility.backupFile(outputFileName2);

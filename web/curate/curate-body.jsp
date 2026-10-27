@@ -286,7 +286,8 @@ if (speciesListList != null && !speciesListList.isEmpty()) { %>
 	       value = "";
          }
 	%>
-         <option value="<%= org.calacademy.antweb.util.Html.esc(value) %>" disable><%= spacer + org.calacademy.antweb.util.Html.esc(s.getTitle()) %></option>
+         <%-- A list made of its children (value "") is not edited directly: disabled (it said "disable", which does nothing). --%>
+         <option value="<%= org.calacademy.antweb.util.Html.esc(value) %>"<%= "".equals(value) ? " disabled" : "" %>><%= spacer + org.calacademy.antweb.util.Html.esc(s.getTitle()) %></option>
 	<% } %>
   </html:select>
         <input class="aw-btn" type="submit" value="Open the Species List Tool">

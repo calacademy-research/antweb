@@ -149,14 +149,14 @@
                     <% for (ValidateSpeciesResultItem item : needsAttentionRows) { %>
                         <tr style="background-color: #fff3cd;">
                             <td><%= item.getRowNum() %></td>
-                            <td><%= item.getInputRaw() != null ? item.getInputRaw().replace("<", "&lt;").replace(">", "&gt;") : "" %></td>
-                            <td><%= item.getNormalizedName() != null ? item.getNormalizedName() : "" %></td>
+                            <td><%= org.calacademy.antweb.util.Html.esc(item.getInputRaw()) %></td>
+                            <td><%= org.calacademy.antweb.util.Html.esc(item.getNormalizedName()) %></td>
                             <td style="font-weight: bold;"><%= item.getStatus().name() %></td>
-                            <td style="font-weight: bold;"><%= item.getCategory() %></td>
-                            <td><%= item.getFossilDisplay() %></td>
-                            <td><%= item.getMessage() %></td>
+                            <td style="font-weight: bold;"><%= org.calacademy.antweb.util.Html.esc(item.getCategory()) %></td>
+                            <td><%= org.calacademy.antweb.util.Html.esc(item.getFossilDisplay()) %></td>
+                            <td><%= org.calacademy.antweb.util.Html.esc(item.getMessage()) %></td>
                             <% if (item.getSuggestion() != null && !item.getSuggestion().isEmpty()) { %>
-                                <td style="font-weight: bold; color: #000;"><%= item.getSuggestion() %>
+                                <td style="font-weight: bold; color: #000;"><%= org.calacademy.antweb.util.Html.esc(item.getSuggestion()) %>
                                     <% if (item.getStatus() == ValidateSpeciesResultItem.Status.NOT_FOUND) { %>
                                         <div style="font-size: 0.8em; color: green; margin-top: 4px;">↑ Try replacing with this valid name.</div>
                                     <% } %>
@@ -188,14 +188,14 @@
                     %>
                         <tr style="background-color: <%= bg %>;">
                             <td><%= item.getRowNum() %></td>
-                            <td><%= item.getInputRaw() != null ? item.getInputRaw().replace("<", "&lt;").replace(">", "&gt;") : "" %></td>
-                            <td><%= item.getNormalizedName() != null ? item.getNormalizedName() : "" %></td>
+                            <td><%= org.calacademy.antweb.util.Html.esc(item.getInputRaw()) %></td>
+                            <td><%= org.calacademy.antweb.util.Html.esc(item.getNormalizedName()) %></td>
                             <td style="font-weight: bold;"><%= item.getStatus().name() %></td>
-                            <td style="font-weight: bold;"><%= item.getCategory() %></td>
-                            <td><%= item.getFossilDisplay() %></td>
-                            <td><%= item.getMessage() %></td>
+                            <td style="font-weight: bold;"><%= org.calacademy.antweb.util.Html.esc(item.getCategory()) %></td>
+                            <td><%= org.calacademy.antweb.util.Html.esc(item.getFossilDisplay()) %></td>
+                            <td><%= org.calacademy.antweb.util.Html.esc(item.getMessage()) %></td>
                             <% if (item.getSuggestion() != null && !item.getSuggestion().isEmpty()) { %>
-                                <td style="font-weight: bold; color: #000;"><%= item.getSuggestion() %>
+                                <td style="font-weight: bold; color: #000;"><%= org.calacademy.antweb.util.Html.esc(item.getSuggestion()) %>
                                     <% if (item.getStatus() == ValidateSpeciesResultItem.Status.NOT_FOUND) { %>
                                         <div style="font-size: 0.8em; color: green; margin-top: 4px;">↑ Try replacing with this valid name.</div>
                                     <% } %>
@@ -221,7 +221,7 @@
                  <% 
                     int maxPreview = Math.min(100, report.getUnmatchedValidTaxa().size());
                     for (int i=0; i<maxPreview; i++) {
-                         out.println(report.getUnmatchedValidTaxa().get(i) + "<br>");
+                         out.println(org.calacademy.antweb.util.Html.esc(report.getUnmatchedValidTaxa().get(i)) + "<br>");
                     }
                     if (report.getUnmatchedValidTaxa().size() > 100) {
                          out.println("<br><i>... and " + (report.getUnmatchedValidTaxa().size() - 100) + " more (Download TSV for full list)</i>");
