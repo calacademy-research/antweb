@@ -135,7 +135,7 @@ RECORD_FIELDS = {
                   "decimalLatitude", "decimalLongitude", "collectionCode", "ownedBy", "status", "imageCount"},
     "taxa": {"taxonName", "taxarank", "subfamily", "genus", "status", "antcatId", "authorDate", "imageCount"},
     "geolocales": {"geolocaleId", "geolocaleName", "georank", "parent", "speciesCount", "specimenCount", "imageCount",
-                   "imagedSpecimenCount", "isValid"},
+                   "imagedSpecimenCount"},  # isValid: not sent (/geolocales returns valid places only)
     "geolocaleTaxa": {"geolocaleId", "geolocaleName", "taxonName", "taxarank", "status", "specimenCount", "imageCount"},
     "bioregions": {"bioregionName", "speciesCount", "specimenCount", "imageCount"},
     "bioregionTaxa": {"bioregionName", "taxonName", "taxarank", "status", "specimenCount"},
@@ -219,7 +219,7 @@ def test_valid_genus_filter_keeps_valid_genera():
 
 
 # The documentation page does not describe /measurements yet (finding, docs/flows/public-pages-findings.md).
-UNDOCUMENTED = {"measurements"}
+UNDOCUMENTED = {"measurements", "geoSpeciesStats"}  # geoSpeciesStats: described to admins only (its caste counts, finding F23)
 
 
 @pytest.mark.parametrize("path", ["/api.do", "/apiV3.1.do"])

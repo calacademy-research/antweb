@@ -15,7 +15,11 @@
 #   7. Watchdog thread dumps older than 14 days   /root/antweb-watchdog-dumps/
 #   8. The systemd journal above 100 MB           journalctl --vacuum-size=100M
 #   9. Downloaded package files                   apt-get clean
-# Never touched: Docker volumes (the database), running containers' images, /mnt/antweb,
+#  10. Backups of replaced images, older than 14 days   /mnt/antweb/images/backup/ (the image-upload tests
+#      replace the test specimen's images on every run; each replaced file is kept there: 1 GB on 2026-10-24)
+#  11. Upload backups older than 30 days        /mnt/antweb/web/bak/ (3.7 GB on 2026-10-24)
+#      10 and 11 only while /mnt/antweb is a plain folder on staging's disk, never a mounted bucket.
+# Never touched: Docker volumes (the database), running containers' images, the rest of /mnt/antweb,
 # /mnt/backup, etc/ settings, the refresh's own folder /root/staging-refresh.
 # Refuses to run anywhere but staging (same checks as refresh-from-prod.sh).
 # Procedure: docs/runbook.md, "Staging refresh".
@@ -34,7 +38,8 @@ APPLY=0
 on_safe_list() {
   [[ "$1" != *..* ]] || return 1
   [[ "$1" =~ ^/root/[^/]+\.sql\.gz$ || "$1" =~ ^/root/restore/[^/]+\.sql\.gz$ \
-     || "$1" =~ ^/root/antweb-next/(logs|logbak)/.+\.gz$ || "$1" =~ ^/root/antweb-watchdog-dumps/[^/]+$ ]]
+     || "$1" =~ ^/root/antweb-next/(logs|logbak)/.+\.gz$ || "$1" =~ ^/root/antweb-watchdog-dumps/[^/]+$ \
+     || "$1" =~ ^/mnt/antweb/images/backup/[^/]+$ || "$1" =~ ^/mnt/antweb/web/bak/.+$ ]]
 }
 
 size_of() { (( $# )) || { echo "    (none)"; return 0; }; du -sh "$@" 2>/dev/null | sort -h | sed 's/^/    /'; }
@@ -43,6 +48,11 @@ old_dumps() { find /root -maxdepth 1 -type f \( -name 'ant-currentDump.sql.gz' -
 old_restores() { [[ -d /root/restore ]] && find /root/restore -maxdepth 1 -type f -name '*.sql.gz' -mtime +7 2>/dev/null; true; }
 old_logs() { find "$PROJECT_DIR/logs" "$PROJECT_DIR/logbak" -type f -name '*.gz' -mtime +30 2>/dev/null; true; }
 old_thread_dumps() { [[ -d /root/antweb-watchdog-dumps ]] && find /root/antweb-watchdog-dumps -type f -mtime +14 2>/dev/null; true; }
+
+# /mnt/antweb is a plain folder on staging's own disk (production mounts a Spaces bucket there): only then.
+antweb_is_local() { [[ -d /mnt/antweb ]] && ! findmnt -n /mnt/antweb >/dev/null 2>&1; }
+old_image_backups() { antweb_is_local && [[ -d /mnt/antweb/images/backup ]] && find /mnt/antweb/images/backup -xdev -maxdepth 1 -type f -mtime +14 2>/dev/null; true; }
+old_upload_backups() { antweb_is_local && [[ -d /mnt/antweb/web/bak ]] && find /mnt/antweb/web/bak -xdev -type f -mtime +30 2>/dev/null; true; }
 
 old_project_in_use() {
   # A container mount, a running process or the /root/antweb link that points into it.
@@ -77,6 +87,8 @@ report() {
   if (( ${#logs[@]} )); then du -ch "${logs[@]}" 2>/dev/null | tail -1 | sed 's/^/    /'; fi
   echo "  7. watchdog thread dumps older than 14 days: $(old_thread_dumps | wc -l) files"
   echo "  9. apt package cache:"; size_of /var/cache/apt/archives
+  echo " 10. image backups older than 14 days: $(old_image_backups | wc -l) files"
+  echo " 11. upload backups older than 30 days: $(old_upload_backups | wc -l) files"
   echo "== Not on the safe list (for Brian to decide)"
   if [[ -d /mnt/backup ]] && ! findmnt -n /mnt/backup >/dev/null 2>&1; then
     echo "  /mnt/backup is a plain folder on this disk (not Spaces); old copies from 2025:"; size_of /mnt/backup
@@ -95,7 +107,7 @@ apply() {
   echo "== Deleting the safe list"
   echo "  1. build cache:";  docker builder prune -f 2>&1 | tail -1 | sed 's/^/    /'
   echo "  2. dangling images:"; docker image prune -f 2>&1 | tail -1 | sed 's/^/    /'
-  mapfile -t files < <(old_dumps; old_restores; old_logs; old_thread_dumps)
+  mapfile -t files < <(old_dumps; old_restores; old_logs; old_thread_dumps; old_image_backups; old_upload_backups)
   for f in "${files[@]}"; do
     [[ -n "$f" ]] || continue
     if on_safe_list "$f"; then
@@ -120,7 +132,7 @@ cleanup_main() {
   case "${1:-}" in
     --apply) APPLY=1 ;;
     --dry-run|"") APPLY=0 ;;
-    -h|--help) sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h|--help) sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown option: $1 (use --dry-run or --apply)" >&2; exit 64 ;;
   esac
   [[ $(id -u) == 0 ]] || { echo "run as root" >&2; exit 2; }

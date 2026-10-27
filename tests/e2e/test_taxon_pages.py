@@ -52,7 +52,9 @@ def test_taxon_page_at_each_rank(rank):
 
 
 def test_genus_page_has_taxonomic_history_and_tools():
-    path = genus_example()
+    # A large valid AntCat genus: the first genus of a browse page can be a placeholder or fossil genus without a
+    # Taxonomic History or specimens (first staging run, 2026-10-26).
+    path = "/description.do?genus=camponotus&rank=genus"
     r = fetch(path)
     assert_ok(r, path)
     assert "Taxonomic History (provided by Barry Bolton" in r.text, f"{path}: no Taxonomic History section"
