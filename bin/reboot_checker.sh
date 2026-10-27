@@ -19,8 +19,27 @@ base_url="${base_url%/}"
 page_content=$(curl -s --max-time 10 "$base_url/util.do?action=isRestart")
 now=$(date)
 
+# isRestart already answers false during an upload (including an image upload between two files)
+# or a job started from a page. The error page (case#) does not, so ask isBusy too before any
+# restart (2026-10-26, a restart cut a curator image upload short). Uploads and background jobs
+# make it wait for the next run in 5 minutes; a data job or the nightly run do not, because a set 1
+# stuck for 210 minutes is exactly what this script restarts.
+busy=$(curl -s --max-time 10 "$base_url/util.do?action=isBusy" | head -c 200 | tr -d '\r\n')
+is_busy=0
+if [[ "$busy" == busy:* ]]; then
+    IFS=',' read -ra kinds <<< "${busy#busy:}"
+    for kind in "${kinds[@]}"; do
+        kind="${kind# }"
+        case "$kind" in
+            "data job"|"nightly run") ;;
+            *) is_busy=1 ;;
+        esac
+    done
+fi
+
 if [[ $dry_run == 1 ]]; then
     echo "URL: $base_url/util.do?action=isRestart"
+    echo "isBusy: ${busy:-no answer}"
     if [[ "$page_content" == *"<b>false</b>"* ]]; then echo "Answer: false (no restart)"
     elif [[ "$page_content" == *"<b>true</b>"* ]]; then echo "Answer: true (would restart antweb_antweb_1)"
     elif [[ "$page_content" == *"case#"* ]]; then echo "Answer: case# (would restart antweb_antweb_1)"
@@ -33,6 +52,12 @@ fi
 if [[ "$page_content" == *"<b>false</b>"* ]]; then
     str="Diagnostic: 'false' found."
     exit_code=0
+
+elif [[ $is_busy == 1 && ( "$page_content" == *"<b>true</b>"* || "$page_content" == *"case#"* ) ]]; then
+    str="Restart wanted but AntWeb is $busy; not restarting now, asking again in 5 minutes. $now"
+    exit_code=0
+    echo "$str"
+    echo "$str" >> "$log_path"
 
 elif [[ "$page_content" == *"<b>true</b>"* ]]; then
     str="Diagnostic: 'true' found in reboot_checker.sh. Container restart: $now"

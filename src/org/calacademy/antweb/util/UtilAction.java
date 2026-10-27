@@ -30,7 +30,7 @@ public class UtilAction extends AntwebAction {
     // Every sub-action util.do handles. Anything else is answered with 404 before any other check
     // (cleanup batch 3 removed 18 developer tests and reports that duplicated query.do).
     static final Set<String> ACTIONS = Set.of(
-        "postInstantiate", "isRestart", "reloadAntwebMgr", "logQueryStats", "emailTest");
+        "postInstantiate", "isRestart", "isBusy", "reloadAntwebMgr", "logQueryStats", "emailTest");
 
     static final Set<String> CHANGING_ACTIONS = Set.of(
         "reloadAntwebMgr", "emailTest", "logQueryStats");
@@ -49,9 +49,24 @@ public class UtilAction extends AntwebAction {
 			return mapping.findForward("message");
 		}
 
+		// isBusy: is an upload or a data job running? Asked by the deploy script before it restarts
+		// AntWeb (.github/scripts/deploy.sh). Anonymous and read-only: plain text "idle" or
+		// "busy: <kinds of work>", no names. Answered without a database connection (BusyStatus).
+		if ("isBusy".equals(action)) {
+			try {
+				response.setContentType("text/plain;charset=UTF-8");
+				response.setHeader("Cache-Control", "no-store");
+				response.getWriter().print(BusyStatus.current());
+			} catch (IOException e) {
+				s_log.warn("execute() isBusy e:" + e);
+			}
+			return null;
+		}
+
 		// Everything here is an admin tool, except isRestart (polled by the host's
-		// reboot_checker.sh) and postInstantiate (AntWeb's own call after startup).
-		if (!"isRestart".equals(action) && !"postInstantiate".equals(action) && !LoginMgr.isAdmin(request)) {
+		// reboot_checker.sh), isBusy (above) and postInstantiate (AntWeb's own call after startup).
+		if (!"isRestart".equals(action) && !"isBusy".equals(action) && !"postInstantiate".equals(action)
+		    && !LoginMgr.isAdmin(request)) {
 			request.setAttribute("message", "Administrators only.");
 			return mapping.findForward("message");
 		}

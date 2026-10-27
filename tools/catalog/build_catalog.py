@@ -1036,7 +1036,8 @@ TIERS = [
 ACCOUNT = {"/login", "/logout", "/forgotPassword", "/resetPassword", "/editLogin", "/saveLogin", "/loginAs",
            "/passwordResetCampaign", "/inactiveAccounts", "/editSession", "/antwebInvite", "/newLogin", "/viewLogin",
            "/viewLogins"}
-SYSTEM_KEYS = ("/utilData", "/schedule", "/util.do?action=postInstantiate", "/util.do?action=isRestart", "/uptime")
+SYSTEM_KEYS = ("/utilData", "/schedule", "/util.do?action=postInstantiate", "/util.do?action=isRestart",
+               "/util.do?action=isBusy", "/uptime")
 SAVE_SUB = re.compile(r"action=(save|delete|deleteTaxon|remove|removeAll|confirm|mark|send|transfer|moveOrDelete|recalc|setDebug|toggleDownTime|email|refresh)$")
 UPLOAD_KEYS = re.compile(r"^/(upload\.do|imageUploader|imageUploadBatch|descEditImageUpload|worldAuthoritySave|validateSpeciesList|teamMemberImgUpload)")
 
@@ -1065,7 +1066,7 @@ PRIORITY = [r"action=specimenUpload$", r"action=taxonWorksUpload$", r"action=rel
             r"^/descEditImageUpload$", r"^/(editProject|editGeolocale|defaultSpecimen|deleteImages|artist|bigPicture)$",
             r"^/speciesList(Tool|Move|History)\.do\?action=(save|confirm)$", r"action=(save|delete|deleteTaxon|transfer|moveOrDelete|remove)$",
             r"^/(resetPassword|forgotPassword|login|logout|editLogin|saveLogin)$",
-            r"action=set[1-5]$", r"action=(taxonWorksNightly|worldantsFetchAndReload)$", r"action=(postInstantiate|isRestart)$",
+            r"action=set[1-5]$", r"action=(taxonWorksNightly|worldantsFetchAndReload)$", r"action=(postInstantiate|isRestart|isBusy)$",
             r"action=recalc$"]
 
 
