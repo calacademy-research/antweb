@@ -1130,6 +1130,14 @@ def getTaxa():
 
 # --- Distinct Taxon API ------------------------------------------------------------------------------------
 
+def identifiedToGenus(genus):
+    """True (as SQL) for a genus identified to genus: not "(...)" (a placeholder such as "(formicidae)") and not
+    indet or undet. Brian Fisher, 2026-10-22: names not identified to genus never count as species. Same rule as
+    PlaceTotals.identifiedToGenus in the Java code. A missing genus counts as identified, as there."""
+    g = func.coalesce(genus, '')
+    return ~g.like('(%') & func.lower(g).notin_(['indet', 'undet'])
+
+
 @application.route('/distinctTaxa', methods=['GET'])
 def getDistinctTaxa():
     taxarank = request.args.get('taxarank', default='*', type=str)
@@ -1152,7 +1160,8 @@ def getDistinctTaxa():
     if 'species' == taxarank:
         # Distinct "Genus species" names, as /geoSpecimens?distinct=species gives (2026-10-27, finding F24: this
         # returned the bare epithet, so maculatus came once for every genus).
-        query = session.query(Specimen.genus, Specimen.species).filter(Specimen.species != None).distinct()
+        query = session.query(Specimen.genus, Specimen.species).filter(Specimen.species != None) \
+            .filter(identifiedToGenus(Specimen.genus)).distinct()
 
     # if any of these are used, performance suffers!    
     if country != '*':

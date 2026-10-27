@@ -162,12 +162,17 @@ def test_low_public_pages_findings(sources):
     antcat = read(os.path.join(ROOT, "web/common/viewInAntCat.jsp"))
     assert "https://www.antcat.org/catalog/search" in antcat and "URLEncoder.encode(" in antcat, "F11"
     assert "http://www.antcat.org" not in antcat, "F11"
+    assert "isIdentifiedToGenus(taxon.getGenus())" in antcat and "isEmpty()" in antcat, \
+        "F11: no View in AntCat link for a name not identified to genus (empty search name)"
     locality, collection = sources[a + "LocalityAction.java"], sources[a + "CollectionAction.java"]
     browse = sources[a + "BrowseAction.java"]
     assert 'message = message + "execute() "' not in locality and 'message += " isBot:"' not in locality, "F12"
     assert 'message += "  No upload in process.  RequestInfo:"' not in collection, "F12"
     assert 'message = "Bad rank:" + Html.esc(rank);' in browse, "F12"
     assert "Login.MUST_LOGIN_MESSAGE" not in browse and "Check.loginForFeature(request)" in browse, "F15"
+    site_nav = read(os.path.join(ROOT, "web/common/siteNav.jsp"))
+    assert re.search(r'^\s*\|\| \(uri\.contains\("login\.jsp"\)\)', site_nav, re.M), \
+        "F15: the log-in page has a Change View menu (its links drop name= of the page asked for)"
     assert "log in anonymously" not in sources[a + "Login.java"], "F15"
     overview = sources[a + "OverviewAction.java"]
     end = overview[overview.index("} catch (SQLException e) {"):overview.index("static void setPlaceImages(")]

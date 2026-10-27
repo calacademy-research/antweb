@@ -1,7 +1,8 @@
 """API v3.1 (api/v3.1/api.py), public-pages finding F24 fixed 2026-10-27 (docs/flows/public-pages-findings.md):
 
 - /distinctTaxa?taxarank=species returns distinct "Genus species" names (as /geoSpecimens?distinct=species does);
-  it returned the bare epithet, so maculatus came once for every genus.
+  it returned the bare epithet, so maculatus came once for every genus. Names not identified to genus (genus
+  "(...)", indet or undet) are left out of the species list (Brian Fisher's rule of 2026-10-22).
 - country= matches the whole country name, in any case (countryIs()), on /specimens, /distinctTaxa, /measurements,
   /geolocaleTaxa and the geolocaleName filter of /specimens; it matched by "contains", so country=Niger also
   returned Nigeria.
@@ -48,6 +49,9 @@ def setup():
         _specimen("g1", "tetramorium", "sericeiventre", "Nigeria"),
         _specimen("m1", "pheidole", "megacephala", "Madagascar"),
         _specimen("m2", "pheidole", None, "Madagascar"),             # no species: not in the species list
+        _specimen("u1", "(formicidae)", "(indet)", "Madagascar"),    # not identified to genus: not a species
+        _specimen("u2", "indet", "sp1", "Madagascar"),               # the same
+        _specimen("u3", "UNDET", "sp2", "Madagascar"),               # the same, in any case
     ])
     s.add_all([api.Measurement(id=1, code="n1", trait="WL"), api.Measurement(id=2, code="g1", trait="WL")])
     s.commit()
@@ -66,8 +70,17 @@ def test_distinct_species_are_full_names():
 
 
 def test_distinct_genus_and_subfamily_unchanged():
-    assert get("/distinctTaxa?up=1&taxarank=genus")["genera"] == ["camponotus", "pheidole", "tetramorium"]
+    # the genus list is unchanged: it still names the placeholders (only the species list leaves them out)
+    assert get("/distinctTaxa?up=1&taxarank=genus")["genera"] == ["(formicidae)", "UNDET", "camponotus", "indet",
+                                                                  "pheidole", "tetramorium"]
     assert get("/distinctTaxa?up=1&taxarank=subfamily")["subfamilies"] == ["myrmicinae"]
+
+
+def test_distinct_species_leave_out_names_not_identified_to_genus():
+    """Brian Fisher, 2026-10-22: names not identified to genus ("(formicidae) (indet)", indet, undet) never count
+    as species (the staging run listed '(Formicidae) (indet)' and the like)."""
+    names = get("/distinctTaxa?up=1&taxarank=species&country=Madagascar")["taxarank"]
+    assert names == ["Pheidole megacephala"], names
 
 
 def test_distinct_species_by_country_is_the_whole_name():
@@ -120,6 +133,7 @@ def test_documentation_says_whole_name():
     assert "containing the word land" not in page, "the documentation still describes country as contains"
     assert page.count("The whole country name, in any case") >= 2
     assert '"Genus species"' in page
+    assert "not identified to genus" in page, "the documentation does not say species leave out unidentified genera"
 
 
 if __name__ == "__main__":

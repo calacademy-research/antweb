@@ -262,11 +262,14 @@ def test_geo_specimens_distinct_uses_the_area():
 
 
 def test_distinct_taxa_species_are_full_names():
-    """Finding F24 (fixed 2026-10-27): taxarank=species gave bare epithets; now distinct "Genus species"."""
+    """Finding F24 (fixed 2026-10-27): taxarank=species gave bare epithets; now distinct "Genus species", leaving
+    out names not identified to genus such as "(Formicidae) (indet)" (Brian Fisher's rule of 2026-10-22)."""
     names = _get("/v3.1/distinctTaxa?taxarank=species&country=Madagascar&limit=50&up=1").json()["taxarank"]
     assert names, "no species for Madagascar"
     bad = [n for n in names if not n or " " not in n or not n[:1].isupper()]
     assert not bad, f"species without a capitalised genus: {bad[:5]}"
+    unidentified = [n for n in names if n.split(" ")[0].lower() in ("indet", "undet")]
+    assert not unidentified, f"species not identified to genus: {unidentified[:5]}"
     assert len(names) == len(set(names)), "the species names repeat"
 
 

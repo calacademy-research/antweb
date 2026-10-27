@@ -343,7 +343,7 @@
         <table class="arguments">
             <tr>
                 <td><b>taxarank</b></td>
-                <td>Return a list of unique names for a given rank: subfamily, genus or species (taxarank=genus). For species each name is the full name, "Genus species" (Pheidole megacephala), under the key taxarank. Since 2026-10-27; before, only the species epithet was given.</td>
+                <td>Return a list of unique names for a given rank: subfamily, genus or species (taxarank=genus). For species each name is the full name, "Genus species" (Pheidole megacephala), under the key taxarank. Since 2026-10-27; before, only the species epithet was given. Names not identified to genus (a genus in brackets such as "(formicidae)", or indet or undet) are not species and are left out of the species list.</td>
             </tr>
             <tr>
                 <td><b>Country</b></td>
