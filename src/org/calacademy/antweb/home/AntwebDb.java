@@ -75,7 +75,7 @@ public class AntwebDb {
         
     public boolean isExists(String taxonName) {
         boolean retVal = false;
-        String query = "select taxon_name from taxon where taxon_name = '" + taxonName + "'";
+        String query = "select taxon_name from taxon where taxon_name = " + DBUtil.sqlLiteral(String.valueOf(taxonName));
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -96,7 +96,8 @@ public class AntwebDb {
     }
     public boolean isGenusExists(String subfamily, String genus) {
         boolean retVal = false;
-        String query = "select taxon_name from taxon where subfamily = '" + subfamily + "' and genus = '" + genus + "' and taxarank = 'genus'";
+        String query = "select taxon_name from taxon where subfamily = " + DBUtil.sqlLiteral(String.valueOf(subfamily))
+            + " and genus = " + DBUtil.sqlLiteral(String.valueOf(genus)) + " and taxarank = 'genus'";
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -115,7 +116,7 @@ public class AntwebDb {
         return retVal;
     }        
     public int delete(String taxonName) {
-        String dml = "delete from taxon where taxon_name = '" + taxonName + "'";
+        String dml = "delete from taxon where taxon_name = " + DBUtil.sqlLiteral(String.valueOf(taxonName));
         Statement stmt = null;
         try {
           Connection connection = getConnection();

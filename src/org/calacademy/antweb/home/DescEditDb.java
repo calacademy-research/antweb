@@ -157,42 +157,14 @@ Image © <a href="https://www.alexanderwild.com/" target="new">Alex Wild</a>.
         }
     }
 
-    private static String httpSecurify(String value) {
+    /**
+     * Every http:// in the text becomes https:// (2026-10-27: the old loop read the character before the address
+     * and up to the next such character, and threw on text that starts with http:// or has no character after it,
+     * so the taxon page failed).
+     */
+    public static String httpSecurify(String value) {
       if (value == null) return null;
-      if (value.contains("http://")) {
-          int initSize = value.length();
-          int fixes = 0;
-          int notFixes = 0;
-          String httpsString = "https://";
-          while (value.contains("http://")) {
-              int indexOfHttp = value.indexOf("http://");
-              String delimiter = value.substring(indexOfHttp - 1, indexOfHttp);
-              String beginString = value.substring(0, indexOfHttp);
-
-              String newEndString = httpsString + value.substring(indexOfHttp + 7);  // 7 is the length of http://
-              String newUrl = newEndString.substring(0, newEndString.indexOf(delimiter));
-
-              // For debugging
-              if (AntwebProps.isDevMode()) {
-                  boolean newExists = HttpUtil.urlExists(newUrl);
-                  if (!newExists) {
-                      ++notFixes;
-                      String oldEndString = value.substring(indexOfHttp);  // 7 is the length of http://
-                      String oldUrl = oldEndString.substring(0, oldEndString.indexOf(delimiter));
-                      boolean oldExists = HttpUtil.urlExists(oldUrl);
-
-                      s_log.debug("httpSecurify() newExists:" + newExists + " oldExists:" + oldExists + " oldUrl:" + oldUrl);
-                  } else {
-                      ++fixes;
-                      s_log.debug("httpSecurify() newExists:" + newExists);
-                  }
-              }
-
-              value = beginString + newEndString;
-          }
-          s_log.debug("httpSecurify() contains http. fixes:" + fixes + " notFixes:" + notFixes + " initSize:" + initSize + " postSize:" + value.length());
-      }
-      return value;
+      return value.replace("http://", "https://");
     }
 
     public ArrayList<DescEdit> getRecentDescEdits() throws SQLException {

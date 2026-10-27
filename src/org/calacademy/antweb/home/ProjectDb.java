@@ -121,7 +121,7 @@ public class ProjectDb extends AntwebDb {
         project.setName(name);
         
         String theQuery = "select * from project " 
-        + " where project_name='" + name + "'"
+        + " where project_name=" + DBUtil.sqlLiteral(name)
         + " order by project_name"
         ;
 

@@ -28,7 +28,7 @@ public class LatLon {
     }
 
     public boolean isValid() {
-      if (latitude < -90 || latitude > 90 && longitude < -180 || longitude > 180) return false;
+      if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) return false;
 
       if (latitude == 0 && longitude == 0) return false; // Apparently unset.
 

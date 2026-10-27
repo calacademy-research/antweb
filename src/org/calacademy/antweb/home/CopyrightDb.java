@@ -79,6 +79,9 @@ public class CopyrightDb extends AntwebDb {
         
     private void getCopyrights() throws SQLException {    
         Copyright copyright = null;        
+        // One list for all rows (it was made again for each row, so only the last row was kept), shown to
+        // readers only when complete.
+        ArrayList<Copyright> list = new ArrayList<>();
         String theQuery = "select * from copyright";
         ResultSet rset = null;
         Statement stmt = null;
@@ -87,13 +90,13 @@ public class CopyrightDb extends AntwebDb {
             rset = stmt.executeQuery(theQuery);
 
             while (rset.next()) {
-                copyrights = new ArrayList<>();
                 copyright = new Copyright();
                 copyright.setId(rset.getInt("id"));
                 copyright.setCopyright(rset.getString("copyright"));
                 copyright.setYear(rset.getInt("year"));
-                copyrights.add(copyright);
+                list.add(copyright);
             }
+            copyrights = list;
         } finally {
             DBUtil.close(stmt, rset, "this", "getCopyrights()");
         }

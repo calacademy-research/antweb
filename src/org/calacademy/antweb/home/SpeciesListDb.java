@@ -496,7 +496,7 @@ public class SpeciesListDb extends AntwebDb {
 			// Get it before we delete it...
 			// If we didn't need the source and rev we could skip the fetch...
 			TaxonSet taxonSet = taxonSetDb.get(speciesListName, taxonName);
-            taxonSet.setCuratorId(login.getId());
+            if (taxonSet != null) taxonSet.setCuratorId(login.getId());   // null: the name is gone (skipped below)
 
             //if (taxonName.contains("aureocuprea")) s_log.warn("saveTaxonSet() taxonName:" + taxonName + " not in chosenList:" + chosenList.size() + " taxonSet:" + taxonSet);
 

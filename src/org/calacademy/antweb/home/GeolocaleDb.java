@@ -1414,14 +1414,14 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       for (Geolocale subregion : subregionList) {
         //A.log("updateColors() colors:" + colors[i]);    
 
-        updateColor(subregion.getId(), colors[i]);
+        updateColor(subregion.getId(), colors[i % colors.length]);
         ++i;      
       }
 
       ArrayList<Geolocale> regionList = GeolocaleMgr.getGeolocales("region");    
       i = 0;
       for (Geolocale region : regionList) {
-        updateColor(region.getId(), colors[i]);
+        updateColor(region.getId(), colors[i % colors.length]);
         ++i;      
       }
     }
@@ -1640,7 +1640,7 @@ Have parallel methods:
         if (parent == null) {
             //s_log.error("getChildrenWithTaxon() taxonName:" + taxonName + " georank:" + georank + " parent:" + parent);
         } else {
-            parentName = Formatter.escapeQuotes(parent.getName());
+            parentName = parent.getName();   // as the hash keys and the bound query below (no escaping)
         }
         //s_log.info("getChildrenWithTaxon() taxonName:" + taxonName + " georank:" + georank + " parent:" + parent);
 
@@ -1670,26 +1670,28 @@ Have parallel methods:
     // To support Change View options
 	private ArrayList<Geolocale> getChildrenWithTaxonDB(String taxonName, String georank, String parentName) {
         ArrayList<Geolocale> geolocales = new ArrayList<>();
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
+        // Bound values (2026-10-27): a name with an apostrophe (Cote d'Ivoire) made the query fail, so its adm1s
+        // were never offered.
 		String query = "select name, id, georank, parent"
 		   + " from geolocale g, geolocale_taxon gt" 
 		   + " where gt.geolocale_id = g.id"
-		   + "  and gt.taxon_name = '" + taxonName + "'"   
-		   + " and g.georank = '" + georank + "'";
+		   + "  and gt.taxon_name = ?"
+		   + " and g.georank = ?";
          if (parentName != null) {
-             query += " and g.parent = '" + parentName + "'";
+             query += " and g.parent = ?";
          }
 
  	    query += " order by name";
         try {
             Geolocale geolocale = null;
-            taxonName = AntFormatter.escapeQuotes(taxonName);
 
-            //A.log("getChildrenWithTaxon() taxonName:" + taxonName + " georank:" + georank + " parent:" + parentName + " query:" + query);
-
-            stmt = DBUtil.getStatement(getConnection(), "getChildrenWithTaxon()");
-            rset = stmt.executeQuery(query);
+            stmt = getConnection().prepareStatement(query);
+            stmt.setString(1, taxonName);
+            stmt.setString(2, georank);
+            if (parentName != null) stmt.setString(3, parentName);
+            rset = stmt.executeQuery();
 
             while (rset.next()) {
               geolocale = null;
@@ -1720,7 +1722,8 @@ Have parallel methods:
     private static boolean s_buildComplete = false;
 
     public static void buildGetChildrenWithTaxonHash(Connection connection) {
-        childrenWithTaxonHash = new HashMap<String, ArrayList<Geolocale>>();
+        // Built aside and then put in place: pages read the map meanwhile (it was emptied and filled while in use).
+        HashMap<String, ArrayList<Geolocale>> hash = new HashMap<String, ArrayList<Geolocale>>();
 
         GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
 
@@ -1739,8 +1742,9 @@ Have parallel methods:
 
                     ArrayList<Geolocale> childrenArray = geolocaleDb.getChildrenWithTaxonDB(taxonName, georank, parentName);
 
-                    childrenWithTaxonHash.put(key, childrenArray);
+                    hash.put(key, childrenArray);
                 }
+                childrenWithTaxonHash = hash;
                 s_buildComplete = true;
             } catch (Exception e) {
                 s_log.error("buildGetChildrenWithTaxonHash() e:" + e);
@@ -1935,18 +1939,19 @@ Have parallel methods:
         List<String> placeNames = new ArrayList<>();
         String placeName = null;
 
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         ResultSet rset = null;
         String query = "select name, parent, georank from geolocale " 
-          + " where name like '%" + text + "%'"
+          + " where name like ?"
           + "   and is_live = 1"
           + " order by georank desc, name, parent"
           ;
 
-//A.log("getPlaceNames() query:" + query);
         try {            
-            stmt = DBUtil.getStatement(getConnection(), "getPlaceNames()");
-            rset = stmt.executeQuery(query);
+            stmt = getConnection().prepareStatement(query);
+            String t = text == null ? "" : text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+            stmt.setString(1, "%" + t + "%");
+            rset = stmt.executeQuery();
 
             int count = 0;
             while (rset.next()) {
