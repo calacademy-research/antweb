@@ -95,6 +95,7 @@ tests = [
   "test_cleanup_batch3.py::test_removed_files_are_gone",
   "test_cleanup_batch3.py::test_removed_sub_action_is_not_found",
   "test_cleanup_batch3.py::test_kept_sub_actions_still_answer",
+  "test_cleanup_batch3.py::test_is_busy_answers_idle_or_busy",
   "test_cleanup_batch3.py::test_homonym_report_needs_login",
   "test_count_check.py::test_count_check_needs_login",
   "test_curate_cleanup.py::test_removed_sub_action_is_not_found",
@@ -205,6 +206,7 @@ paths = [
   "src/org/calacademy/antweb/home/*Upload*.java",
   "src/org/calacademy/antweb/home/SpecimenDb.java",
   "src/org/calacademy/antweb/util/BackgroundJob*.java",
+  "src/org/calacademy/antweb/util/BusyStatus.java",
   "src/org/calacademy/antweb/util/JobStatusAction.java",
   "src/org/calacademy/antweb/util/UploadMgr.java",
   "src/org/calacademy/antweb/util/ListUploadsAction.java",
@@ -230,6 +232,7 @@ tests = [
   "test_previous_determinations.py",
   "test_dates_pacific.py",
   "test_relevant_queries.py",          # added by #211
+  "test_cleanup_batch3.py::test_is_busy_answers_idle_or_busy",   # deploy waits for uploads (2026-10-27)
 ]
 
 [areas.curator]
