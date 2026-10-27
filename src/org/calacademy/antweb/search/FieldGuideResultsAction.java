@@ -60,9 +60,8 @@ public final class FieldGuideResultsAction extends ResultsAction {
             String resultRank = taxaForm.getResultRank();
 			if (resultRank == null) resultRank = ResultRank.SPECIMEN;
 			
-			String caste = taxaForm.getCaste();
-			if (caste == null) caste = Caste.DEFAULT;
-			caste = Caste.QUEEN;
+			// The caste chosen in the search; worker when none was chosen (decided 2026-10-27; was always queen).
+			String caste = fieldGuideCaste(taxaForm.getCaste(), searchCaste(session.getAttribute(SEARCH_CASTE), session.getAttribute("advancedSearchResults")));
             s_log.debug("FieldGuideResultsAction.execute() caste:" + caste);
 		
 			AdvancedSearchResults searchResults = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");      
@@ -134,6 +133,32 @@ public final class FieldGuideResultsAction extends ResultsAction {
 
         saveToken(request);
         return forward;
+    }
+
+    /** Session attribute: the caste chosen in the last advanced search (SearchAction). */
+    public static final String SEARCH_CASTE = "searchCaste";
+
+    /**
+     * The caste chosen in the last search (male, queen, worker, other), or null: none chosen, or the session's
+     * results are a collection page's specimens (CollectionAction), not that search's.
+     */
+    public static String searchCaste(Object attribute, Object currentResults) {
+        if (currentResults instanceof org.calacademy.antweb.Collection) return null;
+        return attribute instanceof String ? (String) attribute : null;
+    }
+
+    /**
+     * The caste of the field guide's images: a caste given with the request, else the caste chosen in the search,
+     * else worker (decided by Brian Fisher 2026-10-27; before, field guides from a search always showed queens).
+     */
+    public static String fieldGuideCaste(String requestCaste, String searchCaste) {
+        if (isCaste(requestCaste)) return requestCaste;
+        if (isCaste(searchCaste)) return searchCaste;
+        return Caste.WORKER;
+    }
+
+    private static boolean isCaste(String caste) {
+        return Caste.MALE.equals(caste) || Caste.QUEEN.equals(caste) || Caste.WORKER.equals(caste) || Caste.OTHER.equals(caste);
     }
 
     // If we want all specimens for a taxa instead of all qualifiying specimens of a taxa:

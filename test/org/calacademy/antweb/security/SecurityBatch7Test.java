@@ -25,10 +25,23 @@ public class SecurityBatch7Test extends TestCase {
 
     /** ImageDb with fixed owner groups, no database. */
     private static ImageDb owners(Integer... groups) {
+        return image(groups.length > 0, groups);
+    }
+
+    /** An image row that exists but has no owning group (an old image without a group_image row). */
+    private static ImageDb ownerless() {
+        return image(true);
+    }
+
+    private static ImageDb image(boolean exists, Integer... groups) {
         return new ImageDb(null) {
             @Override
             public Set<Integer> getImageGroupIds(String code, String shotType, int shotNumber) {
                 return new java.util.HashSet<>(java.util.Arrays.asList(groups));
+            }
+            @Override
+            public boolean imageExists(String code, String shotType, int shotNumber) {
+                return exists;
             }
         };
     }
@@ -62,6 +75,13 @@ public class SecurityBatch7Test extends TestCase {
 
     public void testAdminMayReplaceAny() {
         assertTrue(ImageUploadBatchAction.mayReplace(image(), owners(1), login(16, true)));
+    }
+
+    /** Decided 2026-10-27: an existing image that belongs to no group is replaced by admins only. */
+    public void testOwnerlessImageAdminsOnly() {
+        assertFalse(ImageUploadBatchAction.mayReplace(image(), ownerless(), login(16, false)));
+        assertFalse(ImageUploadBatchAction.mayReplace(image(), ownerless(), login(0, false)));
+        assertTrue(ImageUploadBatchAction.mayReplace(image(), ownerless(), login(16, true)));
     }
 
     // ---------- backups are never overwritten ----------

@@ -128,13 +128,10 @@ public class AdvancedSearch extends GenericSearch implements Serializable {
                 + " left outer join ant_group on sp.access_group = ant_group.id "
                 + where;
 
-            //String sortString = " sp.genus, sp.species, sp.subspecies";
-            String sortString = " sp.code";
-
-            // Every other search invert the results. This is useful for generating maps.
-            // If we don't like a set of searchResults we can have another.
-            if (flipSort) sortString += " desc";
-            flipSort = !flipSort;
+            // One fixed order (decided 2026-10-27): a search with more matches than the limit
+            // (50,000 specimens) always returns the same specimens. Before, every other search
+            // reversed the order, so the same search alternated between two different sets.
+            String sortString = SPECIMEN_ORDER;
             
             theQuery
                 += " group by " + fieldList 
@@ -195,10 +192,14 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
 
             // Name is taxonName. duh.
             if (name != null && name.length() > 0) {
-                if (searchType.equals("equals")) {
-                    searchType = "ends";
+                // "equals": the whole name or its last part, not a suffix (decided 2026-10-27; was "ends").
+                // A strict list "('a', 'b')" (built by the site) still goes to getSearchString as an IN list.
+                boolean inList = name.trim().startsWith("(");
+                if (!inList && ("equals".equals(searchType) || isNegative(searchType))) {
+                    where.add(getTaxonNameEqualsString(searchType, name));
+                } else {
+                    where.add(getSearchString("sp.taxon_name", searchType, name));
                 }
-                where.add(getSearchString("sp.taxon_name", searchType, name));
             }
 
             if (family != null && family.length() > 0) {
@@ -509,7 +510,8 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
       return s_query;
     }
     
-    private static boolean flipSort = false;    
+    /** The order of the specimen rows (always the same, see createInitialResults). */
+    static final String SPECIMEN_ORDER = " sp.code";
     
 /*
 remove as...

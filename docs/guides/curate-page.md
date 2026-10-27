@@ -33,6 +33,7 @@ Your uploads, Names and checks and Your account list one link per line, each wit
 
 - **Specimen upload reports**: the list of your group's specimen uploads, newest first. Each line opens the upload report (how many specimens were loaded, which names were changed to the current valid name, which lines had problems). Check it after every upload. Line numbers in a report open that line of your upload as AntWeb stored it (your own group's uploads only). Each report also links the file you uploaded (**Uploaded File**), and the list has a **Download** column for each upload's file while it is kept on the server, so you can get a copy of what you sent. Only your group's curators and admins can download a group's files. (This replaces "Your past upload files" and the admins' "Past upload files of" menu, removed on 20 October 2026.)
 - **Image upload reports**: the same for image uploads: one line per upload batch, with its report.
+- Who sees these lists and the curator pages' emails: the lists (`listSpecimenUploads.do`, `listUploads.do`, `listImageUploads.do`) open for curators and admins only (since 2026-10-27, decided by Brian Fisher; before, any logged-in account could list them, the page itself then sent non-curators to the log-in page); a visitor's link to them opens the log-in page. The individual upload reports stay public. A curator's page (`curator.do`) shows the curator's email address and admin flag to curators and admins only (before: to any logged-in account).
 - **Upload status**: uploads waiting or in progress, and the result of each.
 
 **Names and checks**
@@ -144,9 +145,9 @@ Each report page starts with a short box: what it shows, why it matters, and wha
 
 Elsewhere: each group's last specimen upload is linked from the Specimen Upload Reports page (admins); the number of likes per image from the Favorites page (admins); the explanation of taxon status values from the Curator Tool Documentation page.
 
-### Museum pages: Recalculate (admins)
+### Museum pages: Recalculate (curators and admins)
 
-On a museum page (for example `https://www.antweb.org/museum.do?museumCode=BMNH`), admins see a **Recalculate** button under Curator Info. It recounts that one museum now, the same work the nightly run does for every museum (set 3, from 05:00 Pacific). Curators recount the museums of their own last upload with **Recalculate Your Museums** on the Curate page instead.
+On a museum page (for example `https://www.antweb.org/museum.do?museumCode=BMNH`), curators and admins see a **Recalculate** button under Curator Info (curators since 2026-10-27, decided by Brian Fisher; before that admins only). It recounts that one museum now, the same work the nightly run does for every museum (set 3, from 05:00 Pacific). **Recalculate Your Museums** on the Curate page does the same for every museum of your last upload.
 
 What it does, in order:
 

@@ -54,8 +54,9 @@ Examples: `CASENT0123456_H_1.TIF` (code casent0123456, shot h, number 1), `CASEN
 `ImageUploadBatchAction.mayReplace()` (line 233), the same rule as deleting images (`DeleteImagesAction`):
 
 - admins: always;
-- no image row yet for this code, shot and number (`ImageDb.getImageGroupIds()`, line 261, via `group_image`): allowed, whatever group owns the specimen;
-- an image exists: allowed only if every group it belongs to is the curator's group; otherwise "This image already exists and belongs to another group. Ask an AntWeb administrator to replace it."
+- no image row yet for this code, shot and number (`ImageDb.imageExists()`): allowed, whatever group owns the specimen;
+- an image exists (`ImageDb.getImageGroupIds()`, via `group_image`): allowed only if every group it belongs to is the curator's group; otherwise "This image already exists and belongs to another group (or to no group). Ask an AntWeb administrator to replace it."
+- an old image that exists but belongs to no group (no `group_image` row): admins only (since 2026-10-27, decided by Brian Fisher; before, any curator could replace it). Test: `SecurityBatch7Test.testOwnerlessImageAdminsOnly`.
 
 The new image is recorded under the uploader's group (`image_upload.group_id`, then `group_image`).
 

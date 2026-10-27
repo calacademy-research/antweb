@@ -30,6 +30,8 @@ public final class ListUploadsAction extends AntwebAction {
         throws IOException, ServletException {
         
         ActionForward a = Check.initLogin(request, mapping); if (a != null) return a;
+        // Upload lists: curators and admins only (decided 2026-10-27).
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;
         
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();

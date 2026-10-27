@@ -210,7 +210,8 @@ public final class ImageUploadBatchAction extends AntwebAction {
      * Null if the file name is acceptable, its specimen exists and this login may write the
      * image, else the reason. A new image is fine; an image that already exists may be
      * replaced only by a curator of the group that owns it (admins: any), the same rule as
-     * deleting images (DeleteImagesAction).
+     * deleting images (DeleteImagesAction). An old image that belongs to no group: admins only
+     * (decided 2026-10-27).
      */
     private static String checkFile(String fileName, SpecimenDb specimenDb, ImageDb imageDb, Login accessLogin) throws SQLException {
         String reason = ImageUploaded.checkName(fileName);
@@ -221,20 +222,20 @@ public final class ImageUploadBatchAction extends AntwebAction {
         if (!mayReplace(iu, imageDb, accessLogin)) {
             s_log.warn("checkFile() refused replacing image code:" + iu.getCode() + " shot:" + iu.getShot() + iu.getNumber()
                 + " by login:" + accessLogin.getId() + " group:" + accessLogin.getGroupId());
-            return "This image already exists and belongs to another group. Ask an AntWeb administrator to replace it.";
+            return "This image already exists and belongs to another group (or to no group). Ask an AntWeb administrator to replace it.";
         }
         return null;
     }
 
     /**
-     * True if the image is new (no image row with a group for this code, shot and number; the
-     * same test ImageDb.putImage uses to decide whether it replaces one), or every group it
-     * belongs to is this login's group. Admins: always.
+     * True if the image is new (no image row for this code, shot and number), or every group it
+     * belongs to is this login's group. An existing image that belongs to no group (an old image
+     * without a group_image row) only for admins (decided 2026-10-27). Admins: always.
      */
     public static boolean mayReplace(ImageUploaded iu, ImageDb imageDb, Login accessLogin) {
         if (Boolean.TRUE.equals(accessLogin.isAdmin())) return true;
         Set<Integer> ownerGroups = imageDb.getImageGroupIds(iu.getCode(), iu.getShot(), iu.getNumber());
-        if (ownerGroups.isEmpty()) return true;
+        if (ownerGroups.isEmpty()) return !imageDb.imageExists(iu.getCode(), iu.getShot(), iu.getNumber());
         for (Integer ownerGroup : ownerGroups) {
             if (ownerGroup == null || ownerGroup != accessLogin.getGroupId()) return false;
         }
