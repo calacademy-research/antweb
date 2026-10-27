@@ -7,7 +7,9 @@ region, subregion, bioregion, museum, project) is checked on every run, a differ
 
   row 38  taxonomicPage.do header "N Species / Genera / Subfamilies" with every counted status (statusSet=all) = the
           place page's Species / Genera / Subfamilies, and with valid extant = Valid species (one rule:
-          PlaceTotals.rankCondition and TaxaPage.fetchChildren); the header = the rows the page lists.
+          PlaceTotals.rankCondition and TaxaPage.fetchChildren); the header = the rows the page lists. A curated
+          project's Subfamilies counts its subfamily rows of every status (B67, PlaceTotals.listedCondition): the
+          header with counted statuses <= Subfamilies <= the header of the complete list.
   row 39  isImaged=false: "U Unimaged Species (out of N)": U = the rows listed, N = the place's Species, and the
           names listed = the names of the list that the API's /unimagedGeolocaleTaxa returns for the place (the
           same rule written twice: TaxaPage.findUnimaged in Java, imagedTaxaSql in the API) (countries).
@@ -17,8 +19,9 @@ region, subregion, bioregion, museum, project) is checked on every run, a differ
           page and the count use different place rules; xfail until fixed).
   row 47  "(Only the first k of N displayed)" (species browse with limit=k): N = the header's N; the page shows k rows
           (B42: it shows k + 1; xfail until fixed).
-  row 49  species browse "(M imaged)" and the hidden "M Imaged" = the specimens listed that have an image (rows
-          without the no-photos mark, and the API's imageCount of those specimens); genus browse: M <= N only.
+  row 49  species browse "(M imaged)" and the hidden "M Imaged" = the specimens listed that have a photo of the ant
+          (rows without the no-photos mark; label photos do not count, B71), at most the specimens the API's
+          imageCount gives images to; genus browse: M <= N only.
 
 Read-only, anonymous. A number stored by the last nightly run can differ from the live list after an upload until
 the next nightly run; the failure message says so.
@@ -54,6 +57,13 @@ def stats_of(p):
     return _STATS[key]
 
 
+UNCURATED_PROJECTS = {"worldants", "allantwebants"}   # PlaceTotals.UNCURATED_PROJECTS
+
+
+def curated_project(p):
+    return p.kind == "project" and p.name not in UNCURATED_PROJECTS
+
+
 def test_list_headers_equal_place_numbers_of_every_kind():
     """Row 38: for the day's place of every kind, the list header with every counted status = Subfamilies, Genera,
     Species of the place page; with valid extant = Valid species (0 when the page shows no Valid row); every header
@@ -77,7 +87,15 @@ def test_list_headers_equal_place_numbers_of_every_kind():
             if rows != n:
                 wrong.append(f"{p} rank={rank} {status}: header {text!r}, {rows} rows listed")
             expected = stats.get(stat, 0)
-            if n != expected:
+            if rank == "subfamily" and curated_project(p):
+                # B67 (Brian Fisher 2026-10-27): a curated project's Subfamilies counts its subfamily rows of every
+                # status, as its list rows do; the list with counted statuses shows at most that many, the complete
+                # list (every status, other families too) at least that many.
+                complete, _ = ns.header(ns.fetch(p.list_url(rank, "complete")) or "")
+                if n > expected or (complete is not None and complete < expected):
+                    wrong.append(f"{p} rank={rank}: place page {stat} {expected}, list header {n} (counted statuses),"
+                                 f" {complete} (complete); expected {n} <= {expected} <= {complete}")
+            elif n != expected:
                 wrong.append(f"{p} rank={rank} {status}: header {n}, place page {stat} {expected}")
         checked.append(repr(p))
     if not checked:
@@ -258,8 +276,9 @@ def _api_image_counts(link):
 def test_species_browse_imaged_count_equals_the_specimens_with_images():
     """Row 49 (and 46: header = rows): for the day's place of every kind, the day's species row (at most
     ANTWEB_SAMPLE_MAX_SPECIMENS specimens): its browse page says "N specimens (M imaged)"; N = the specimens listed;
-    M = the hidden "M Imaged" = the listed specimens without the no-photos mark = the listed specimens whose API
-    imageCount is above 0 (specimen.image_count, validated by inv:taxon.images)."""
+    M = the hidden "M Imaged" = the listed specimens without the no-photos mark <= the listed specimens whose API
+    imageCount is above 0 (specimen.image_count, validated by inv:taxon.images; it counts label photos too, which
+    never make a specimen imaged, B71)."""
     wrong, checked = [], []
     for p in places():
         got = _species_browse(p)
@@ -277,8 +296,10 @@ def test_species_browse_imaged_count_equals_the_specimens_with_images():
         codes = _specimen_codes(html)
         if counts is not None and codes and all(c in counts for c in codes) and len(codes) == b["n"]:
             api_imaged = sum(1 for c in codes if counts[c] > 0)
-            if api_imaged != b["m"]:
-                wrong.append(f"{where}: {b['m']} imaged, the API gives images to {api_imaged} of the {len(codes)} specimens listed")
+            # B71 (2026-10-27): a specimen with only label photos is not imaged, but the API's imageCount counts
+            # every photo, so the API can give images to more specimens than M, never to fewer.
+            if api_imaged < b["m"]:
+                wrong.append(f"{where}: {b['m']} imaged, the API gives images to only {api_imaged} of the {len(codes)} specimens listed")
         checked.append(where)
     if not checked:
         pytest.skip("no species row with a browse link found " + ns.day_note())

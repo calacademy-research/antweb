@@ -61,3 +61,20 @@ def test_taxa_list_of_a_project():
     r = fetch("/taxaList.do?rank=subfamily&status=valid&project=allantwebants")
     assert_ok(r)
     assert "formicinae" in r.text.lower() and "myrmicinae" in r.text.lower(), r.text[:300]
+
+
+def test_statistics_page_institutions_are_the_museums_listed():
+    """statsPage.do "Specimen records from AntWeb's N collaborating institutions": N = the museums listed on
+    museums.do (MuseumMgr.getMuseumCount; Brian Fisher 2026-10-27, docs/numbers.md row 7 and B73: was the fixed
+    text "21"). Right after a restart the list is not loaded yet and the page says so instead of a number."""
+    r = fetch("/statsPage.do")
+    assert_ok(r)
+    m = re.search(r'<span data-stat="institutions">([\d,]+)</span> collaborating institutions', r.text)
+    if not m:
+        assert 'data-stat="starting"' in r.text, "statsPage.do: no number of collaborating institutions"
+        return
+    shown = int(m.group(1).replace(",", ""))
+    museums = fetch("/museums.do")
+    assert_ok(museums)
+    listed = len(re.findall(r'<tr>\s*<td><a href="[^"]*/museum\.do\?', museums.text))
+    assert shown == listed, f"statsPage.do: {shown} collaborating institutions, museums.do lists {listed} museums"

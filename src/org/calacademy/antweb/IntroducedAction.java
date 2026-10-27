@@ -94,57 +94,22 @@ native bioregions to genera.
 	    return mapping.findForward("introduced");
     }
 
+    /** The names flagged introduced on the geolocale's list, by the one rule of the lists and the numbers
+     *  (PlaceTotals.flaggedNamesSql; Brian Fisher 2026-10-27, docs/numbers.md B70: counted statuses, no synonyms). */
     private ArrayList<String> getGeolocaleIntroduced(int geolocaleId, Connection connection) {
-        ArrayList<String> introduced = new ArrayList<>();
-
-		String query = "select gt.taxon_name from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name " 
-		  + " and gt.geolocale_id = " + geolocaleId + " and gt.is_introduced = 1 order by t.genus, t.species, t.subspecies";
-
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
-          stmt = DBUtil.getStatement(connection, "getGeolocaleIntroduced()");
-
-          rset = stmt.executeQuery(query);
-          String taxonName = null;
-          while (rset.next()) {
-            taxonName = rset.getString("taxon_name");
-              introduced.add(taxonName);
-          }
-          s_log.debug("execute() query:" + query);
-        } catch (SQLException e) {
-          s_log.warn("getGeolocaleIntroduced() query:" + query + " e:" + e);
-        } finally {
-          DBUtil.close(stmt, rset, this, "getGeolocaleIntroduced()");
-        }   
-        return introduced;
+        return flagged(org.calacademy.antweb.home.PlaceTotals.GEOLOCALE, "" + geolocaleId, connection);
     }
 
     private ArrayList<String> getBioregionIntroduced(String bioregionName, Connection connection) {
-        ArrayList<String> introduced = new ArrayList<>();
-
-        String query = "select bt.taxon_name from bioregion_taxon bt, taxon t where bt.taxon_name = t.taxon_name "
-                + " and bt.bioregion_name = ? and bt.is_introduced = 1 order by t.genus, t.species, t.subspecies";
-
-        PreparedStatement stmt = null;
-        ResultSet rset = null;
-        try {
-            stmt = DBUtil.getPreparedStatement(connection, "getBioregionIntroduced()", query);
-            stmt.setString(1, bioregionName);
-
-            rset = stmt.executeQuery();
-            String taxonName = null;
-            while (rset.next()) {
-                taxonName = rset.getString("taxon_name");
-                introduced.add(taxonName);
-            }
-            s_log.debug("execute() query:" + query);
-        } catch (SQLException e) {
-            s_log.warn("getBioregionIntroduced() query:" + query + " e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, this, "getBioregionIntroduced()");
-        }
-        return introduced;
+        return flagged(org.calacademy.antweb.home.PlaceTotals.BIOREGION, bioregionName, connection);
     }
 
+    private ArrayList<String> flagged(String type, String key, Connection connection) {
+        try {
+            return org.calacademy.antweb.home.PlaceTotals.flaggedNames(connection, type, key, "introduced");
+        } catch (SQLException e) {
+            s_log.warn("getGeolocaleIntroduced() " + type + " " + key + " e:" + e);
+            return new ArrayList<>();
+        }
+    }
 }

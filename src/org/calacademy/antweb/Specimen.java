@@ -564,11 +564,36 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
     }
         
         
+    /**
+     * Brian Fisher, 2026-10-27 (docs/numbers.md B71; Q12 of 2026-10-22: labels never count): a specimen with only label
+     * photos is not imaged. Its species page lists it with the no-photos mark, and it does not count in "(M imaged)",
+     * as the unimaged lists (StatisticsDb.ANT_IMAGE) already did. The number of its images (getHasImagesCount) still
+     * counts every photo.
+     */
+    public static boolean isAntShot(String shotType) {
+        return shotType == null || !"l".equalsIgnoreCase(shotType.trim());
+    }
+
+    /** True when one of the images is a photo of the ant (not a label). */
+    static boolean hasAntImage(java.util.Collection<SpecimenImage> images) {
+        if (images == null) return false;
+        for (SpecimenImage image : images) if (image != null && isAntShot(image.getShot())) return true;
+        return false;
+    }
+
+    /** Imaged: a photo of the ant, from the loaded images (setImages) or the image query (setHasImages); labels do not count (B71). */
+    @Override
+    public boolean getHasImages() {
+        if (images != null && !images.isEmpty() && hasAntImage(images.values())) return true;
+        return hasImages;
+    }
+
     public void setHasImages(Connection connection, Overview overview) throws SQLException {
         // We don't use overview here
         boolean hasOne = false;
         String theQuery = null;
         int theImageCount = 0;
+        int antImageCount = 0;
 
 
         Statement stmt = null;
@@ -585,6 +610,7 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
             while (rset.next()) {
                 // Now we always count them.
                 ++theImageCount; // += rset.getInt(1);   // What?  Why.  Increment, no?
+                if (isAntShot(rset.getString(1))) ++antImageCount;
                 /*
                 if (!"l".equals(rset.getString(1))) {
                     // ++theImageCount; // += rset.getInt(1);   // What?  Why.  Increment, no?
@@ -595,9 +621,9 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
             }
 
             if (theImageCount > 0) {
-                hasOne = true;
                 setHasImagesCount(theImageCount);
             }
+            hasOne = antImageCount > 0;   // labels never make a specimen imaged (B71, 2026-10-27)
             
             //A.log("setHasImages() query:" + theQuery);
 

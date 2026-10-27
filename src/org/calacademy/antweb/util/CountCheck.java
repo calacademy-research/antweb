@@ -728,7 +728,8 @@ public class CountCheck {
     }
 
     /** The place's Subfamilies number (2026-10-20: staging's Madagascar page showed 0 with 8 subfamilies on
-     *  its list): stored subfamily_count against the subfamily rows on the place's list with a counted status. */
+     *  its list): stored subfamily_count against the subfamily rows on the place's list with a counted status
+     *  (a curated project: every status, as its list rows; PlaceTotals.listedCondition, 2026-10-27). */
     int checkSubfamilyTotal(Place place, Result result, boolean listChanged) throws SQLException {
         if (!GEOLOCALE.equals(place.type) && !PROJECT.equals(place.type)) return 0;
         if (!columnExists(placeTable(place.type), "subfamily_count")) return 0;
@@ -740,9 +741,9 @@ public class CountCheck {
         }
         if (stored < 0) return 0;
         int recount;
-        try (PreparedStatement stmt = connection.prepareStatement("select count(distinct l.taxon_name) from " + place.table() + " l"
-                + " join taxon t on t.taxon_name = l.taxon_name"
-                + " where l." + place.keyColumn() + " = ? and t.taxarank = 'subfamily' and t.status in " + COUNTABLE + " and t.family = 'formicidae'")) {
+        // the rule of the nightly run that writes the number (PlaceTotals.listedCountSql), so the two cannot differ
+        try (PreparedStatement stmt = connection.prepareStatement(org.calacademy.antweb.home.PlaceTotals.listedCountSql(place.type,
+                org.calacademy.antweb.home.PlaceTotals.SUBFAMILY))) {
             place.setKey(stmt, 1);
             try (ResultSet r = stmt.executeQuery()) { r.next(); recount = r.getInt(1); }
         }

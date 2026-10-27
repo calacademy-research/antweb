@@ -35,7 +35,9 @@
 <br>&nbsp;&nbsp;Valid ant (Formicidae) species and subspecies, fossils included. Names of other families and names not identified to genus are not counted.
  
 <br><br><b><%= liveSpecimens > 0 ? A.commaFormat(liveSpecimens) : starting %> specimen records</b>
-<br>&nbsp;&nbsp;Specimen records from Antweb's 21 collaborating institutions.
+<% // Counted from the Museums list (MuseumMgr, as museums.do), 2026-10-27: was the fixed text "21".
+   int institutions = MuseumMgr.getMuseumCount(); %>
+<br>&nbsp;&nbsp;Specimen records from <% if (institutions > 0) { %>AntWeb's <span data-stat="institutions"><%= A.commaFormat(institutions) %></span> collaborating institutions (the <a href="<%= AntwebProps.getDomainApp() %>/museums.do">Museums</a> list)<% } else { %>AntWeb's collaborating institutions (the <a href="<%= AntwebProps.getDomainApp() %>/museums.do">Museums</a> list; their number is <%= starting %>)<% } %>.
 
 <br><br><b><%= liveImagedSpecies > 0 ? A.commaFormat(liveImagedSpecies) : starting %>  species + ssp. imaged </b>
 <br>&nbsp;&nbsp;Valid, morpho or indetermined ant species and subspecies with at least one photo of the ant (label photos do not count). Names not identified to genus are not counted as species.

@@ -6,7 +6,8 @@ description.do of a species shows, under "Specimen Habitat Summary", up to 10 en
   row 51  "N times <microhabitat>"
   row 52  "N times <method>"
 
-where N is the number of collection events (distinct collection codes) of the specimens filed under the name, with
+where N is the number of collection events (distinct collection codes; since 2026-10-27, B72, each specimen without a
+collection code is an event of its own) of the specimens filed under the name, with
 that value (Species.setHabitats, setMicrohabitats, setMethods), largest first. Row 53: the field guide shows the
 same summaries for each species.
 
@@ -67,16 +68,20 @@ def summaries(html):
 
 
 def recount(specimens, field):
-    """value key -> distinct collection codes of the specimens with that value (none or empty values left out)."""
+    """value key -> collection events of the specimens with that value (none or empty values left out): distinct
+    collection codes, and each specimen without a collection code as an event of its own (B72, Brian Fisher
+    2026-10-27; Species.COLLECTION_EVENTS)."""
     groups = {}
-    for s in specimens:
+    for i, s in enumerate(specimens):
         value = s.get(field)
         if value is None or not str(value).strip():
             continue
         code = s.get("collectionCode")
         bucket = groups.setdefault(_key(str(value)), set())
-        if code is not None:
-            bucket.add(_key(str(code)))
+        if code is not None and str(code).strip():
+            bucket.add(("code", _key(str(code))))
+        else:
+            bucket.add(("specimen", (s.get("specimenCode") or "").lower() or i))
     return {k: len(v) for k, v in groups.items()}
 
 

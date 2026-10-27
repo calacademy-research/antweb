@@ -15,7 +15,7 @@ The home page itself does no database work. Its changing parts are files written
 | Recent Edits | `web/genInc/recentDescEdits.html` | `util.AntwebFunctions.genRecentDescEdits()` (the last manual page-text edits) | after each page-text save (`DescriptionAction`), at start-up, `genRecentContent` |
 | Slideshow, background | `common/slideshow_homepage.jsp`, the page's script | static |
 
-**The statistics page** (`statsPage.do`, "Antweb Statistics") shows: Current Statistics (the same five numbers, from memory: `TaxonMgr.getValidSpeciesCount()` and the latest `statistics` row in `AntwebMgr`), Global Data (valid extant and fossil subfamilies, genera, species, subspecies), Images (per specimen status: total, worker, male, queen, other), Imaged Species (per taxon status), Bioregion Data and Museum Data (valid extant and fossil). These tables are live queries on every request. The table rows link to plain name lists (`taxaList.do?rank=...&project=...`).
+**The statistics page** (`statsPage.do`, "Antweb Statistics") shows: Current Statistics (the same five numbers, from memory: `TaxonMgr.getValidSpeciesCount()` and the latest `statistics` row in `AntwebMgr`; under the specimen records, the number of collaborating institutions = the museums of the Museums list, `MuseumMgr.getMuseumCount()`, linked to museums.do, since 2026-10-27, was the fixed text "21"), Global Data (valid extant and fossil subfamilies, genera, species, subspecies), Images (per specimen status: total, worker, male, queen, other), Imaged Species (per taxon status), Bioregion Data and Museum Data (valid extant and fossil). These tables are live queries on every request. The table rows link to plain name lists (`taxaList.do?rank=...&project=...`).
 
 ## URLs
 
