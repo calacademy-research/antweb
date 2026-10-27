@@ -26,7 +26,7 @@ from urllib.parse import quote_plus, parse_qs
 import pytest
 
 import numbers_sample as ns
-from test_numbers_images import ant_images_by_code, fetch_all_view, images_cell, list_row_cells
+from test_numbers_images import OLD_SET_4, fetch_all_view, images_by_code, images_cell, list_row_cells, old_set_4
 
 PENDING = "list rows are those of the last nightly run (set 4); after an upload they are pending"
 MICHELE = "/images.do?subfamily=ponerinae&genus=leptogenys&species=purpurea&rank=species&countryName=Indonesia"
@@ -80,13 +80,13 @@ def test_species_images_page_shows_images_from_anywhere_with_the_place_first():
     rows = api_specimens("leptogenys", "purpurea")
     if rows is None:
         pytest.skip("the API's specimens of Leptogenys purpurea: more than 6 pages")
-    country = {(r.get("code") or "").lower(): (r.get("country") or "") for r in rows}
+    country = {ns.specimen_code(r): (r.get("country") or "") for r in rows}
     wrong = []
     codes = [c for c, _ in shown]
     marked = [c for c, m in shown if m]
     if not any(country.get(c) and country.get(c) != "Indonesia" for c in codes):
         wrong.append(f"no specimen from outside Indonesia shown: {codes[:10]}")
-    rep = [r for r in rows if (r.get("code") or "").lower() == MICHELE_REP and int(r.get("imageCount") or 0) > 0]
+    rep = [r for r in rows if ns.specimen_code(r) == MICHELE_REP and int(r.get("imageCount") or 0) > 0]
     if rep and MICHELE_REP not in codes:
         wrong.append(f"{MICHELE_REP} (the representative, {rep[0].get('country')}) is not shown")
     first_unmarked = next((i for i, (_, m) in enumerate(shown) if not m), len(shown))
@@ -195,11 +195,16 @@ def test_list_images_column_shows_the_images_in_antweb_and_of_the_place():
             if got is None:
                 left_out.append(f"{p} {name}: not recounted (more than 4 API pages)")
                 continue
-            ant = ant_images_by_code(name)
-            if ant is None:
+            both = images_by_code(name)
+            if both is None:
                 left_out.append(f"{p} {name}: not recounted (more than 500 images)")
                 continue
-            recount = sum(ant.get((s.get("code") or "").lower(), 0) for s in got if (s.get("antwebTaxonName") or "").lower() == name)
+            ant, every = both
+            codes = [ns.specimen_code(s) for s in got if (s.get("antwebTaxonName") or "").lower() == name]
+            recount = sum(ant.get(c, 0) for c in codes)
+            if recount != total and old_set_4(total, ant, every, codes):
+                left_out.append(f"{p} {name}: {text!r}, {OLD_SET_4}")
+                continue
             if recount != total:
                 wrong.append(f"{p} {name}: {text!r}, the API's specimens of the name have {recount} images of the ant")
             checked.append(f"{p} {name}")
@@ -212,7 +217,7 @@ def test_list_says_what_the_images_column_counts():
     """The definition under a place's list: images of the ant, label images counted separately (Brian Fisher 2026-10-27)."""
     p = _comoros() or ns.madagascar()
     html = ns.get(p.list_url("species"))
-    m = re.search(r'<span id="images-definition">(.*?)</span>', html, re.S)
+    m = re.search(r'<span id="images-definition"[^>]*>(.*?)</span>', html, re.S)   # the span also has a class
     assert m, f"{p}: no definition of the Images column under the list"
     assert "images of the ant" in m.group(1) and "label images are counted separately" in m.group(1), m.group(1)
 
@@ -264,7 +269,7 @@ def test_species_page_imaged_castes_equal_a_recount():
             continue
         recount = {c: 0 for c in CASTES + ("unknown",)}
         for r in rows:
-            if (r.get("antwebTaxonName") or "").lower() != name or (r.get("code") or "").lower() not in imaged:
+            if (r.get("antwebTaxonName") or "").lower() != name or ns.specimen_code(r) not in imaged:
                 continue
             caste = (r.get("caste") or "").strip().lower()
             recount[caste if caste in CASTES else "unknown"] += 1

@@ -120,9 +120,9 @@ _CHILD_IMAGES = (r"(No Images|(?:<span[^>]*>)?[\d,]+(?:</span>)? Images"
                  r"(?: \((?:<span[^>]*>)?[\d,]+(?:</span>)? (?:from|in) [^)<]*\))?)")
 
 
-def ant_images_by_code(taxon_name):
-    """Images of the ant (shot type not l) of each specimen of the name, from /taxaImages: code -> count; None when the
-    name has more than one page (500 images). Since 2026-10-27 (Brian Fisher) every Images column counts these."""
+def images_by_code(taxon_name):
+    """Images of each specimen of the name, from /taxaImages: (code -> images of the ant (shot type not l),
+    code -> every image, labels included); None when the name has more than one page (500 images)."""
     body = ns.api(f"taxaImages?taxonName={ns.quote_plus(taxon_name)}&limit=500")
     if body is None:
         return None
@@ -130,11 +130,29 @@ def ant_images_by_code(taxon_name):
               for t in ns.api_rows(body) for sp in (t.get("specimen") or []) for i in (sp.get("images") or [])]
     if len(images) >= 500:
         return None
-    out = {}
+    ant, every = {}, {}
     for code, shot in images:
+        every[code] = every.get(code, 0) + 1
         if shot != "l":
-            out[code] = out.get(code, 0) + 1
-    return out
+            ant[code] = ant.get(code, 0) + 1
+    return ant, every
+
+
+def ant_images_by_code(taxon_name):
+    """Images of the ant (shot type not l) of each specimen of the name, from /taxaImages: code -> count; None when the
+    name has more than one page (500 images). Since 2026-10-27 (Brian Fisher) every Images column counts these."""
+    got = images_by_code(taxon_name)
+    return got[0] if got else None
+
+
+OLD_SET_4 = "the old count with label images (pending until nightly set 4 runs with the ant-only counts)"
+
+
+def old_set_4(shown, ant, every, codes):
+    """True when a list row's Images number is the count before 2026-10-27 (every image, labels included) and differs
+    from the ant-only recount: the row is pending until the nightly set 4 recounts it with images of the ant only."""
+    total = sum(every.get(c, 0) for c in codes)
+    return shown == total and total != sum(ant.get(c, 0) for c in codes)
 
 
 def _params(link):
@@ -519,11 +537,16 @@ def test_list_images_column_equals_the_api_recount():
             if len(mine) != count:
                 left_out.append(f"{p} {name}: {count} Specimens, the API recount {len(mine)} (island, synonym or pending)")
                 continue
-            ant = ant_images_by_code(name)
-            if ant is None:
+            both = images_by_code(name)
+            if both is None:
                 left_out.append(f"{p} {name}: not recounted (more than 500 images)")
                 continue
-            recount = sum(ant.get((s.get("code") or "").lower(), 0) for s in mine)
+            ant, every = both
+            codes = [ns.specimen_code(s) for s in mine]
+            recount = sum(ant.get(c, 0) for c in codes)
+            if recount != images and old_set_4(images, ant, every, codes):
+                left_out.append(f"{p} {name}: {images} Images, {OLD_SET_4}")
+                continue
             if recount != images:
                 wrong.append(f"{p} {name}: list row {images} Images, the API's {len(mine)} specimens have {recount} images of the ant")
             checked.append(f"{p} {name}")
