@@ -16,17 +16,17 @@ recounted from the API's records:
           "h", "d")).
   row 56  images.do child "N Images" (default view and All view) = the child's Images on the place's list (browse.do
           of the genus lists them) where that is above 0; where it is 0 the page shows the number of pictures of the
-          specimen it shows, from anywhere (B45: by design since 2026-10-27, option A: the best pictures in AntWeb).
+          specimen it shows, from anywhere (B45: by design since 2026-10-27, option A: the best images in AntWeb).
   row 49  genus browse hidden "M Imaged Species (out of N total)": M = the children with pictures (images.do All
           view; both use the children's pictures, Taxon.getHasImages).
   row 57  taxonomicPage.do images view "I X Imaged (out of M Total)": M = the list header of the same list (row 38),
-          I = the children shown with pictures in the All view, I + U = M with U of "X with no picture in AntWeb (U)".
+          I = the children shown with pictures in the All view, I + U = M with U of "X with no image in AntWeb (U)".
   row 58  getComparison.do&shot=Head (one view): the children shown = the children images.do shows with a head
           picture (default view).
   row 59  mapComparison.do "(N X Mapped)": N = browse.do's N (every child); N = the children with a map is B19
           (xfail).
   row 60  getComparison.do: one checkbox per child with pictures = the children of images.do's All view.
-  row 62  images.do "X with no picture in AntWeb (U)" (until 2026-10-27 "with no image from this place", B45):
+  row 62  images.do "X with no image in AntWeb (U)" (until 2026-10-27 "with no image from this place", B45):
           U + the children with pictures = M; the names listed (at most 50) are children without pictures.
   row 61  browse.do of a species: each specimen's "N Images" = the specimen's images in the image table (API
           /images?specimenCode, live); "No Images" and the no-photos mark agree.
@@ -171,7 +171,7 @@ def all_view_children(html):
 
 def no_image_list(html):
     """'X with no image from this place (U):' -> (U, names listed), or (None, [])."""
-    m = re.search(r"<b>(\w+) with no (?:image from this place|picture in AntWeb) \(([\d,]+)\):</b>(.*?)(?:<br|</div|<div|$)", html, re.S)
+    m = re.search(r"<b>(\w+) with no (?:image from this place|image in AntWeb) \(([\d,]+)\):</b>(.*?)(?:<br|</div|<div|$)", html, re.S)
     if not m:
         return None, []
     return ns.n(m.group(2)), [unescape(t).strip().lower() for t in re.findall(r"description\.do\?taxonName=([^'\"]+)['\"]", m.group(3))]
