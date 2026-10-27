@@ -38,7 +38,7 @@ public final class OverviewAction extends DescriptionAction {
       OverviewForm overviewForm = (OverviewForm) form;
 	  String action = overviewForm.getAction();
 
-      if (HttpUtil.tooBusyForBots(request)) { HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
+      if (HttpUtil.tooBusyForBots(request)) { return HttpUtil.sendMessage(request, mapping, "Too busy for bots."); }
 
       Connection connection = null;
       String dbMethodName = DBUtil.getDbMethodName("OverviewAction.execute()");
