@@ -79,6 +79,8 @@ public class MountCheckTest extends TestCase {
         assertTrue(p, p.startsWith("the daily database dump failed") && p.contains("not mounted"));
         p = MountCheck.dumpStatusProblem(status(dir, "ok 2026-10-24T01:02:00-0700 2048 x.sql.gz", now - HOUR), now, max, min);
         assertTrue(p, p.contains("only 2048 bytes"));
+        p = MountCheck.dumpStatusProblem(status(dir, "ok 2026-10-24T01:02:00-0700", now - HOUR), now, max, min);
+        assertTrue(p, p.contains("malformed"));
     }
 
     public void testStagingSkipsTheDump() throws Exception {

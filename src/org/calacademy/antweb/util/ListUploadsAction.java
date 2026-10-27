@@ -82,7 +82,7 @@ public final class ListUploadsAction extends AntwebAction {
               criteria += " where group_id = " + groupIdInt;
             }
             if (curatorIdInt != 0) {
-              criteria += " where curator_id = " + curatorIdInt;
+              criteria += (criteria.isEmpty() ? " where" : " and") + " curator_id = " + curatorIdInt;  // both filters: was "where ... where"
             }
             imageUploads = new ImageUploadDb(connection).getImageUploads(criteria);
 
@@ -150,7 +150,7 @@ public final class ListUploadsAction extends AntwebAction {
               query += " where group_id = " + groupIdInt;
             }
             if (loginIdInt != 0) {
-              query += " where login_id = " + loginIdInt;
+              query += (groupIdInt != 0 ? " and" : " where") + " login_id = " + loginIdInt;  // both filters: was "where ... where"
             }
             query += " order by created desc";
             rset = stmt.executeQuery(query);

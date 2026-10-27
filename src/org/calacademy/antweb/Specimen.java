@@ -790,17 +790,17 @@ update specimen set other = '
     public String getMetaString() {
 		String metaString = "<meta name='keywords' content='Specimen ";
 		if (getGenus() != null)
-		  metaString+= new Formatter().capitalizeFirstLetter(getGenus());
+		  metaString+= Html.escAttr(new Formatter().capitalizeFirstLetter(getGenus()));
 		if (getSpecies() != null)
-		  metaString += " " + getSpecies();
-		metaString += " - " + getName().toUpperCase();
+		  metaString += " " + Html.escAttr(getSpecies());
+		metaString += " - " + Html.escAttr(getName().toUpperCase());
 		metaString += ", AntWeb, ants,ant,formicidae '/>";
 		metaString += "<meta name='description' content='Overview of ";
 		if (getGenus() != null)
-		  metaString+= new Formatter().capitalizeFirstLetter(getGenus());
+		  metaString+= Html.escAttr(new Formatter().capitalizeFirstLetter(getGenus()));
 		if (getSpecies() != null)
-		  metaString += " " + getSpecies();
-		metaString += " - " + getName().toUpperCase();
+		  metaString += " " + Html.escAttr(getSpecies());
+		metaString += " - " + Html.escAttr(getName().toUpperCase());
 		metaString += " from AntWeb.'/>";
 		return metaString;
     }

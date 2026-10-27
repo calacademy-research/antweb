@@ -104,8 +104,9 @@ As in Bioregion and Specimen:;
 		if (element.contains("eotropic")) element = "Neotropical";
 		if (element.contains("ndomalayan")) element = "Indomalaya";
 		if (element.contains("ustralasian")) element = "Australasia";
-		if (element.contains("earctical")) element = "Nearctic";
+		// Palearctic first: "Palearctical" also contains "earctical" and became Nearctic.
 		if (element.contains("alearctical")) element = "Palearctic";
+		else if (element.contains("earctical")) element = "Nearctic";
 		boolean validBioregion = BioregionMgr.isValid(element);
         if (validBioregion) {
           return element;		

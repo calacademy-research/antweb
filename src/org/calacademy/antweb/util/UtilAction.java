@@ -82,7 +82,9 @@ public class UtilAction extends AntwebAction {
 
 		// Actions that change state run only by POST from a browser (CSRF-checked);
 		// a GET link shows a Run button instead.
-		if (CHANGING_ACTIONS.contains(action)) {
+		// postInstantiate by an administrator (not AntWeb's own call) is a heavy reload: also POST only.
+		if (CHANGING_ACTIONS.contains(action)
+		    || ("postInstantiate".equals(action) && !SchedulerCall.isPostInitialize(request))) {
 			ActionForward confirm = PostOnly.confirm(request, mapping, "Run admin utility: " + action
 			    + (theForm.getName() == null ? "" : " " + theForm.getName()));
 			if (confirm != null) return confirm;

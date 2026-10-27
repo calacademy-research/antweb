@@ -47,16 +47,18 @@ these other _cf1 etc.
         String cfAndNrTaxaLinks = "";
         String notCfOrNrTaxonName = getTaxonName();
         if (getTaxonName().indexOf("_") > 0) notCfOrNrTaxonName = getTaxonName().substring(0, getTaxonName().indexOf("_"));
-        String cfTaxonName = notCfOrNrTaxonName + "_cf%";
-        String nrTaxonName = notCfOrNrTaxonName + "_nr%";
+        // LIKE patterns: "_" and "%" in the name are literal ("_" alone matched any character: false see-also links)
+        String likeName = notCfOrNrTaxonName.replace("\\", "\\\\").replace("_", "\\_").replace("%", "\\%");
+        String cfTaxonName = likeName + "\\_cf%";
+        String nrTaxonName = likeName + "\\_nr%";
         String notCfOrNrTaxonNameCondition = "";
         if (getTaxonName().contains("_cf") || getTaxonName().contains("_nr")) {
-            notCfOrNrTaxonNameCondition = " or taxon.taxon_name = '" + notCfOrNrTaxonName + "'";
+            notCfOrNrTaxonNameCondition = " or taxon.taxon_name = " + DBUtil.sqlQuote(notCfOrNrTaxonName);
         }                
         String query = "select taxon.taxon_name " 
             + " from taxon " 
-            + " where taxon.taxon_name like '" + cfTaxonName + "'"
-            + "    or taxon.taxon_name like '" + nrTaxonName + "'"
+            + " where taxon.taxon_name like " + DBUtil.sqlQuote(cfTaxonName)
+            + "    or taxon.taxon_name like " + DBUtil.sqlQuote(nrTaxonName)
             + notCfOrNrTaxonNameCondition
           ;
         stmt = DBUtil.getStatement(connection, "getSeeAlsoCfAndNr()");
@@ -326,7 +328,7 @@ these other _cf1 etc.
               String locality = ((LocalityOverview) overview).getLocality();                    
 			  s_log.debug("setChildrenLocalized() locality:" + locality);
               if (locality != null && locality.length() > 0 && !locality.equals("null"))  {
-                if ("country".equals(locality.substring(0, 7))) {
+                if (locality.startsWith("country")) {  // substring(0, 7) threw on a shorter value
                     locality = "specimen." + locality;
                 }
                 query += " and " + locality;
@@ -434,7 +436,7 @@ To fix this proper would involve rewriting Species.sort()
                           Specimen specimenO1 = (Specimen) o1;
                           Specimen specimenO2 = (Specimen) o2;
                           String casteSubcasteO1 = specimenO1.getCaste() + specimenO1.getSubcaste();
-                          String casteSubcasteO2 = specimenO2.getCaste() + specimenO1.getSubcaste();
+                          String casteSubcasteO2 = specimenO2.getCaste() + specimenO2.getSubcaste();
                           // 2nd one first because reverse order
                           return CompareUtil.compareString(casteSubcasteO2, casteSubcasteO1);
                       }
@@ -516,7 +518,7 @@ To fix this proper would involve rewriting Species.sort()
                               o2 = t;
                           }
                           // 2nd one first because reverse order.
-                          return CompareUtil.compareString(((Specimen) o2).getDnaExtractionNotes(), ((Specimen) o2).getDnaExtractionNotes());
+                          return CompareUtil.compareString(((Specimen) o2).getDnaExtractionNotes(), ((Specimen) o1).getDnaExtractionNotes());  // compared o2 with itself: no sort
                       }
                   });
                   break;
@@ -939,16 +941,16 @@ To fix this proper would involve rewriting Species.sort()
             int recordCount = 0;
             while (rset.next()) {
                 ++recordCount;
-                code = rset.getString(1);
+                String code = rset.getString(1);  // a local: it overwrote the species' own code field
                 typeStatus = rset.getString(2);
                 if (!typeStatus.equals(lastTypeStatus)) {
                     if (recordCount > 1) typeString += ";  ";
-                    typeString += typeStatus + ":";
+                    typeString += Html.esc(typeStatus) + ":";
                 } else {
                     if (recordCount > 1) typeString += ", ";                 
                 }
                 lastTypeStatus = typeStatus;
-                typeString += " <a href=" + AntwebProps.getDomainApp() + "/specimen.do?name=" + code + ">" + code + "</a>";
+                typeString += " <a href=\"" + AntwebProps.getDomainApp() + "/specimen.do?name=" + Html.escAttr(Html.url(code)) + "\">" + Html.esc(code) + "</a>";
             }
 
             //A.log("setTypes() recordCount:" + recordCount + " query:" + theQuery);

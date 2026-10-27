@@ -359,7 +359,7 @@ public final class OverviewAction extends DescriptionAction {
             return mapping.findForward("message");
           }
 
-		  if (isRecalc) {
+		  if (isRecalc && geolocale != null) {  // no place given: nothing to recalculate
 			GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
 			geolocaleDb.updateCounts(geolocale.getId());
 			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.GEOLOCALE, "" + geolocale.getId());
@@ -448,7 +448,7 @@ public final class OverviewAction extends DescriptionAction {
             return mapping.findForward("message");
           }
           
-		  if (isRecalc) {
+		  if (isRecalc && geolocale != null) {  // no place given: nothing to recalculate
 			GeolocaleDb geolocaleDb = new GeolocaleDb(connection);
 			geolocaleDb.updateCounts(geolocale.getId());
 			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.GEOLOCALE, "" + geolocale.getId());

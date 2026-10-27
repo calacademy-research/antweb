@@ -35,7 +35,7 @@ public class AsciiUtils {
     if (s == null) return false;
     String ascii = convertNonAscii(s);
     s_log.debug("isNonAscii() s:" + s + " ascii:" + ascii);
-    return s.equals(ascii);
+    return !s.equals(ascii);  // true when converting changed something (it returned the opposite)
   }
 
   // remove accentued from a string and replace with ascii equivalent

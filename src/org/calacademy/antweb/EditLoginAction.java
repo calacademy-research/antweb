@@ -48,7 +48,13 @@ public final class EditLoginAction extends AntwebAction {
 
         String idStr = editForm.getId();
         if (idStr == null) return mapping.findForward("goToLogin");
-        int id = Integer.parseInt(idStr);
+        int id;
+        try {
+            id = Integer.parseInt(idStr.trim());
+        } catch (NumberFormatException e) {  // editLogin.do?id=x gave a 500
+            request.setAttribute("message", "Invalid login id.");
+            return mapping.findForward("message");
+        }
         //s_log.info("looking up login " + id);
 
         if (!(isAdmin || accessLogin.getId() == id)) {

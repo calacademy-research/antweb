@@ -77,6 +77,12 @@ public class SpecimenXML extends DefaultHandler {
         if (spf == null) {
             spf = SAXParserFactory.newInstance();
             spf.setValidating(false);
+            // The XML comes from specimen uploads: no DOCTYPE, so no entities that read files or URLs.
+            spf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            spf.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            spf.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            spf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+            spf.setXIncludeAware(false);
         }
         if (saxParser == null) {
             saxParser = spf.newSAXParser();

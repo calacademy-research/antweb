@@ -46,7 +46,7 @@ public final class ListAction extends AntwebAction {
         String action = (String) df.get("action");
 
         // Removed sub-actions (see REMOVED_ACTIONS).
-        if (action != null && REMOVED_ACTIONS.contains(action)) {
+        if (action == null || REMOVED_ACTIONS.contains(action)) {  // no action: not found (switch(null) gave a 500)
           response.setStatus(HttpServletResponse.SC_NOT_FOUND);
           request.setAttribute("message", "action:" + Html.esc(action) + " not found.");
           return mapping.findForward("message");
@@ -162,7 +162,12 @@ public final class ListAction extends AntwebAction {
                         }
 
                         if (action.equals("multiBioregionTaxaList")) {
-                            int groupId = (Integer) df.get("groupId");
+                            Integer groupIdObj = (Integer) df.get("groupId");
+                            if (groupIdObj == null) {
+                                request.setAttribute("message", "Must enter &groupId= parameter");
+                                return mapping.findForward("message");
+                            }
+                            int groupId = groupIdObj;
                             String message = "Non-introduced taxa in multiple bioregions for groupId:" + groupId;
                             request.setAttribute("message", message);
                             SpecimenDb specimenDb = new SpecimenDb(connection);

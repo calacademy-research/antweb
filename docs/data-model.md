@@ -300,7 +300,7 @@ changes `taxon_name` and `original_taxon_name`. Set 3: `museum` (`MuseumDb.popul
 `updateParsedDates` (admin data jobs, `utilData.do`).
 
 **Read by.** Nearly everything: specimen, collection and locality pages, taxon pages (`Species.setChildren`,
-`Taxon`), maps (`MapLocality`), searches (`AdvancedSearch`, `GenericSearch`), downloads, the place counts
+`Taxon`), maps (`Map`), searches (`AdvancedSearch`, `GenericSearch`), downloads, the place counts
 (`PlaceTotals`, `PlaceImageCountDb`, `GeolocaleTaxonDb.generateGeolocaleTaxaFromSpecimens`, `MuseumDb`,
 `BioregionDb`), `CountCheck` and `CountInvariants`, the API (`/specimens`, `/geoSpecimens` through the view
 [`api3_1_specimen`](#api3_1_specimen)).

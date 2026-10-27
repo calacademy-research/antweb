@@ -164,7 +164,7 @@ public class UserAgentTracker extends AntwebAction {
                 ++i;
                 requests += "<br><b>" + i + ":</b> ";
                 requests += loginName;
-                requests += " " + userAgent + " - " + req.getDate();
+                requests += " " + Html.esc(userAgent) + " - " + req.getDate();  // the User-Agent header is visitor text
             }
         }
         returnStr += requests;
@@ -178,7 +178,7 @@ public class UserAgentTracker extends AntwebAction {
             for (Request req : requestLinkList) {
                 String loginName = req.getLoginName();
                 String userAgent = req.getUserAgent();
-                String key = loginName + " " + userAgent;
+                String key = loginName + " " + Html.esc(userAgent);
 
                 agentHash.merge(key, 1, Integer::sum);
             }
@@ -202,7 +202,7 @@ public class UserAgentTracker extends AntwebAction {
         String name = "";
         if (LoginMgr.isLoggedIn(servletRequest)) {
             Login login = LoginMgr.getLogin(servletRequest);
-            name = "<b>*" + login.getName() + "</b>";
+            name = "<b>*" + Html.esc(login.getName()) + "</b>";
         }
         return name;
     }

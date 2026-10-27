@@ -286,9 +286,9 @@ public class Museum extends LocalityOverview implements Countable {
 
 			if (isOverviewPage) {
 			  //changeViewOptions += "<li><a href='" + museum.getThisPageTarget() + "'>" + museum.getTitle() + "</a></li>";          			
-			  changeViewOptions += "<li><a href='" + otherUrl + "?" + museum.getParams() + "'>" + museum.getTitle() + "</a></li>";          
+			  changeViewOptions += "<li><a href='" + Html.escAttr(otherUrl + "?" + museum.getParams()) + "'>" + Html.esc(museum.getTitle()) + "</a></li>";          
 			} else {
-			  changeViewOptions += "<li><a href='" + otherUrl + "&" + museum.getParams() + "'>" + museum.getTitle() + "</a></li>";
+			  changeViewOptions += "<li><a href='" + Html.escAttr(otherUrl + "&" + museum.getParams()) + "'>" + Html.esc(museum.getTitle()) + "</a></li>";
 			}
           }
  		}
@@ -314,7 +314,7 @@ public class Museum extends LocalityOverview implements Countable {
       
     public String getLink() {
       String link = "";
-      link += "<a href='" + AntwebProps.getDomainApp() + "/museum.do?code=" + getCode() + "'>" + getName() + "</a>";
+      link += "<a href='" + AntwebProps.getDomainApp() + "/museum.do?code=" + Html.escAttr(Html.url(getCode())) + "'>" + Html.esc(getName()) + "</a>";
       //A.log("getLink() link:" + link);
       return link;
     }         

@@ -101,7 +101,7 @@ public class Collection extends AdvancedSearchResults {
         return code;
     }
     public void setCollectionCode(String collectionCode) {
-        this.code = code;
+        this.code = collectionCode;
     }
         
     public String getHabitat() {

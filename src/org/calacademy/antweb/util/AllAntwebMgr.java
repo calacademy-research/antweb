@@ -13,7 +13,7 @@ public class AllAntwebMgr {
 
     private static final Log s_log = LogFactory.getLog(AllAntwebMgr.class);
 
-    private static HashMap<String, ProjTaxon> s_allAntwebMap;
+    private static volatile HashMap<String, ProjTaxon> s_allAntwebMap;
         
     public static void populate(Connection connection) {
       populate(connection, false);
@@ -21,15 +21,18 @@ public class AllAntwebMgr {
     
     public static void populate(Connection connection, boolean forceReload) {
       if (!forceReload && s_allAntwebMap != null) return;
-      s_allAntwebMap = new HashMap<>();
+      // Filled first, then published: readers never see a half-filled map; on an error the last map is kept
+      // (or none, so the next call tries again).
+      HashMap<String, ProjTaxon> map = new HashMap<>();
       
       ProjTaxonDb projTaxonDb = new ProjTaxonDb(connection);
       try {
         //A.log("populate()");
         ArrayList<ProjTaxon> allAntwebList = projTaxonDb.getProjTaxa(Project.ALLANTWEBANTS);
         for (ProjTaxon projTaxon : allAntwebList) {
-          s_allAntwebMap.put(projTaxon.getTaxonName(), projTaxon);
+          map.put(projTaxon.getTaxonName(), projTaxon);
         }
+        s_allAntwebMap = map;
       } catch (SQLException e) {
         s_log.warn("populate() e:" + e);
       }
@@ -37,6 +40,7 @@ public class AllAntwebMgr {
     }
 
     public static ProjTaxon get(String taxonName) {
-        return s_allAntwebMap.get(taxonName);
+        HashMap<String, ProjTaxon> map = s_allAntwebMap;
+        return map == null ? null : map.get(taxonName);  // not loaded (yet): no entry, not a NullPointerException
     }
 }
