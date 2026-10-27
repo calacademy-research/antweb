@@ -944,10 +944,20 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             
     public void updateAdm1Counts() throws SQLException {
       ArrayList<Geolocale> adm1List = GeolocaleMgr.getValidAdm1s();
+      int listedOnly = 0;
       for (Geolocale geolocale : adm1List) {
-        if (geolocale.isLive())
+        if (geolocale.isLive()) {
           updateCounts(geolocale.getId());
+        } else {
+          // Not live (no full recount): still its Subfamilies, Genera, Species and Valid species from its list, the
+          // numbers its page shows next to that list (2026-10-26, finding B44: Castile-Leon, Spain showed 0
+          // subfamilies and 5 species with 2 subfamilies and 6 species listed). Four counts on its list.
+          updateCountableTaxonData(geolocale.getId());
+          updateValidSpeciesCount(geolocale.getId());
+          ++listedOnly;
+        }
       }
+      s_log.info("updateAdm1Counts() not live, list totals only: " + listedOnly);
   	  LogMgr.appendLog("compute.log", "    Adm1s populated", true);    
     }
     public void updateCountryCounts() throws SQLException {

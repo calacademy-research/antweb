@@ -14,6 +14,8 @@
    ActionForward of HttpUtil.sendMessage() was ignored and the page was built anyway.
 7. (2026-10-26, finding F2) The limits on simultaneous maps, comparisons and field guides use
    ConcurrencyLimiter (thread-safe), skip logged-in users and release only a slot they took.
+8. (2026-10-26, finding B44) The nightly writes the list totals of every valid adm1, also those that are not
+   live (GeolocaleDb.updateAdm1Counts): their pages showed numbers years old next to a current list.
 
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -147,6 +149,16 @@ def test_simultaneous_limits(sources):
     print("Simultaneous limits are thread-safe and skip logged-in users.")
 
 
+def test_adm1_totals_not_only_live(sources):
+    src = sources["src/org/calacademy/antweb/home/GeolocaleDb.java"]
+    body = src[src.index("public void updateAdm1Counts()"):]
+    body = body[:body.index("public void updateCountryCounts()")]
+    assert "isLive()" in body and "} else {" in body, "updateAdm1Counts: no branch for adm1s that are not live"
+    other = body[body.index("} else {"):]
+    assert "updateCountableTaxonData(" in other and "updateValidSpeciesCount(" in other, other[:400]
+    print("Adm1s that are not live get their list totals.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -157,6 +169,7 @@ def main():
     test_admin_links_column_stacks_on_phones()
     test_too_busy_for_bots_is_returned(sources)
     test_simultaneous_limits(sources)
+    test_adm1_totals_not_only_live(sources)
 
 
 if __name__ == "__main__":
