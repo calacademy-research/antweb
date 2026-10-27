@@ -19,6 +19,9 @@
    details in the log; F15 the comparisons give the explained log-in page; F17 a database error on a place
    page is a message, not a blank page; F19 the dead "getCompare" line is gone; F21 bigPicture.do without
    code, name or imageId is a message, not the home page; F13 the specimen search limit is per thread.
+9. (2026-10-27, finding B44) The nightly recounts every valid adm1, also those that are not live
+   (GeolocaleDb.updateAdm1Counts): their pages showed old numbers next to a current list. The count check covers
+   them once a nightly run has recounted them (a later change).
 
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -178,6 +181,16 @@ def test_low_public_pages_findings(sources):
     print("Low public-pages findings: F9, F11, F12, F13, F15, F17, F19, F21 checked.")
 
 
+def test_adm1_totals_not_only_live(sources):
+    src = sources["src/org/calacademy/antweb/home/GeolocaleDb.java"]
+    body = src[src.index("public void updateAdm1Counts()"):]
+    body = body[:body.index("public void updateCountryCounts()")]
+    code = "\n".join(l for l in body.splitlines() if not l.strip().startswith("//"))
+    assert "updateCounts(geolocale.getId())" in code, "updateAdm1Counts no longer recounts each adm1"
+    assert not re.search(r"if\s*\(\s*geolocale\.isLive\(\)\s*\)", code), "updateAdm1Counts skips adm1s that are not live again"
+    print("Every valid adm1 is recounted, live or not.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -189,6 +202,7 @@ def main():
     test_too_busy_for_bots_is_returned(sources)
     test_simultaneous_limits(sources)
     test_low_public_pages_findings(sources)
+    test_adm1_totals_not_only_live(sources)
 
 
 if __name__ == "__main__":

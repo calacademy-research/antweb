@@ -61,6 +61,9 @@ tests = [
   "test_parallel_safety.py",
   "test_place_image_counts.py",
   "test_numbers_live.py",
+  "test_numbers_endemic.py",
+  "test_numbers_lists.py",
+  "test_numbers_species.py",
   "test_api_numbers.py",
   "test_previous_determinations.py",
   "test_privacy.py",
@@ -337,6 +340,9 @@ tests = [
   "test_numbers_pages.py",             # added by #216
   "test_numbers_live.py",              # live numbers against the place pages (2026-10-22)
   "test_api_numbers.py",               # API counts (2026-10-22)
+  "test_numbers_endemic.py",           # Endemic, Introduced, endemic.do, introduced.do on a rotating sample (2026-10-26)
+  "test_numbers_lists.py",             # list headers and browse counts of every kind of place (2026-10-26)
+  "test_numbers_species.py",           # species habitat summaries recounted from the API (2026-10-26)
 ]
 
 [areas.places]
