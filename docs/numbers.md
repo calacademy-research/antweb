@@ -472,7 +472,9 @@ Found while doing this (2026-10-26, end-to-end tests of rows 24 to 53; each has 
   of whenever it was last recounted next to a current list (production 10-27: Castile-Leon, Spain, is_live 0, showed
   0 subfamilies, 5 species and 39 specimens; its list has 2 subfamilies and 6 species; a recount on staging gave 2, 6
   and 15). Now every valid adm1 is recounted each night (the compute.log line "Adm1s populated" gives how many and
-  the time) and checked by the count check. Tests:
+  the time). The count check still checks live adm1s only: with every adm1 in scope, staging showed about 25,000
+  differences on the 5,144 adm1s not yet recounted (Valle del Cauca, Colombia: Genera 27 shown, 66 listed); it is widened
+  after the first nightly run with this fix. Tests:
   `e2e:test_numbers_lists.py::test_list_headers_equal_place_numbers_of_every_kind`, `tests/unit/test_small_fixes.py` (8).
 - Q3 (decided 2026-10-22, plan in 5.1): country and adm1 Endemic still count indetermined and unidentifiable names (the
   page says "Named species and subspecies"). Test: `e2e:test_numbers_endemic.py::test_endemic_names_of_countries_are_named_species`.
