@@ -40,8 +40,15 @@ def test_old_home_address():
 
 
 def test_statistics_page_sections():
-    r = fetch("/statsPage.do")
-    assert_ok(r)
+    """statsPage.do: its sections and the live valid species number. Right after a restart the live numbers are
+    not loaded yet and the page says so (data-stat="starting", never 0): wait for them, up to 5 minutes."""
+    import time
+    for _ in range(10):
+        r = fetch("/statsPage.do")
+        assert_ok(r)
+        if 'data-stat="starting"' not in r.text:
+            break
+        time.sleep(30)
     assert title(r) == "Antweb Statistics", title(r)
     for section in STATS_SECTIONS:
         assert f"<h2>{section}</h2>" in r.text, f"statsPage.do: no {section!r} section"
