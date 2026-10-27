@@ -5,6 +5,8 @@ F6  /images: each record's url is the public /v3.1/specimens address with specim
 F7  /specimens validGenus=true / validSubfamily=true: compared in lower case, filtered in SQL before limit and offset.
 F8  /taxa, /distinctTaxa, /images, /geolocaleTaxa, /bioregionTaxa, /taxaImages: every query has an ORDER BY.
 F22 /geoSpecimens: radius in kilometres (radiusBox), the distinct lists keep the area, distinct=species works.
+F20 /specimens prints its debug lines only with log=true (log defaulted to '*', which is true).
+F23 /geoSpeciesStats: an unknown place is a JSON error with HTTP 404 (was plain text with 200).
 
 The routes run against a small SQLite database built from the API's own table definitions (no MySQL needed).
 Run inside the API image (CI, .github/workflows/tests.yaml):
@@ -12,6 +14,8 @@ Run inside the API image (CI, .github/workflows/tests.yaml):
 or locally with Flask and SQLAlchemy 1.4 installed:
   API_DIR=api/v3.1 python3 tests/unit/test_api_findings.py
 """
+import contextlib
+import io
 import math
 import os
 import sys
@@ -148,6 +152,30 @@ def test_geo_specimens_distinct_keeps_the_area():
     body = get("/geoSpecimens?up=1&coords=-18.9,47.5&radius=1&distinct=species")
     assert body["species"] == ["Aulacopone sp1", "Pheidole sp1"], body
     assert client.get("/geoSpecimens?up=1&coords=0,0&distinct=tribe").status_code == 400
+
+
+# --- F20 ---
+
+def _printed(url):
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        get(url)
+    return out.getvalue()
+
+
+def test_specimens_debug_lines_only_with_log_true():
+    quiet = _printed("/specimens?up=1&genus=pheidole")
+    assert "hasImage:" not in quiet and "Query complete" not in quiet, quiet
+    loud = _printed("/specimens?up=1&genus=pheidole&log=true")
+    assert "hasImage:" in loud and "Query complete" in loud, loud
+
+
+# --- F23 ---
+
+def test_geo_species_stats_unknown_place_is_json_404():
+    r = client.get("/geoSpeciesStats?up=1&geolocaleName=Atlantis")
+    assert r.status_code == 404, r.status_code
+    assert r.get_json() == {"error": "Geolocale not found: Atlantis"}, r.data[:200]
 
 
 if __name__ == "__main__":

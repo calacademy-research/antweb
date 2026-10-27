@@ -77,9 +77,10 @@ public final class CollectionAction extends AntwebAction {
                         // An upload is currently in process.  Request that this process be re-attempted shortly.
                 message += "  A curator is currently in the process of an Upload.";
 			  }	else {
-			    message += "  No upload in process.  RequestInfo:" + Html.esc(AntwebUtil.getRequestInfo(request));
-                s_log.debug("execute() " + message);
-                LogMgr.appendLog("badRequest.log", message);
+                // The request details go to the log only, not to the visitor (2026-10-26, finding F12).
+			    String logMessage = message + "  No upload in process.  RequestInfo:" + AntwebUtil.getRequestInfo(request);
+                s_log.debug("execute() " + logMessage);
+                LogMgr.appendLog("badRequest.log", logMessage);
 			  }
               request.setAttribute("message", message);
               return mapping.findForward("message");

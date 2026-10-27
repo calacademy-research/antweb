@@ -81,7 +81,12 @@ public class OverviewMgr {
 				String geolocaleIdStr = request.getParameter("geolocaleId");
 				if (geolocaleIdStr != null) {
                   hasParams = "geolocale overview";
-				  int geolocaleId = Integer.parseInt(geolocaleIdStr);
+				  int geolocaleId;
+				  try {
+				    geolocaleId = Integer.parseInt(geolocaleIdStr.trim());
+				  } catch (NumberFormatException e) {
+				    throw new AntwebException("Geolocale not found for geolocaleId:" + geolocaleIdStr);
+				  }
 				  overview = GeolocaleMgr.getGeolocale(geolocaleId);
                   if (overview == null) throw new AntwebException("Geolocale not found for geolocaleId:" + geolocaleIdStr);
 				} else {

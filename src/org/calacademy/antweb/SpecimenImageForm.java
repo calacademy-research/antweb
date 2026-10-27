@@ -87,11 +87,8 @@ public final class SpecimenImageForm extends ActionForm {
     				HttpServletRequest request) {
 
         ActionErrors errors = new ActionErrors();
-        if (name == null || name.length() < 1)
-          if (code == null || code.length() < 1)
-            if (imageId == null || imageId.length() < 1)
-              errors.add("name", new ActionMessage("error.name.required"));
-              
+        // No "name required" error here (2026-10-26, finding F21): it sent bigPicture.do without code, name or
+        // imageId to the input page (the home page). BigPictureAction and PictureLikeAction answer with a message.
         HttpUtil.blockFishingAttack(request, errors);
                       
         return errors;

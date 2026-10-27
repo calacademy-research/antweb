@@ -219,7 +219,7 @@ def test_valid_genus_filter_keeps_valid_genera():
 
 
 # The documentation page does not describe /measurements yet (finding, docs/flows/public-pages-findings.md).
-UNDOCUMENTED = {"measurements", "geoSpeciesStats"}  # geoSpeciesStats: described to admins only (its caste counts, finding F23)
+UNDOCUMENTED = {"geoSpeciesStats"}  # described to admins only; /measurements is described since 2026-10-26 (F16)
 
 
 @pytest.mark.parametrize("path", ["/api.do", "/apiV3.1.do"])
@@ -229,6 +229,13 @@ def test_documentation_page_names_every_route(path):
     assert "<title>AntWeb API" in r.text or "AntWeb API" in r.text[:2000], r.text[:300]
     missing = [name for name in ROUTES if name not in UNDOCUMENTED and f"/{name}?" not in r.text]
     assert not missing, f"{path}: routes not described: {missing}"
+
+
+def test_geo_species_stats_unknown_place_is_json_404():
+    """Finding F23 (fixed 2026-10-26): was the plain text "Geolocale not found" with HTTP 200."""
+    r = new_session().get(BASE_URL + "/v3.1/geoSpeciesStats?geolocaleName=zzAtlantis&up=1", timeout=max(TIMEOUT, 120))
+    assert r.status_code == 404, (r.status_code, r.text[:200])
+    assert r.json() == {"error": "Geolocale not found: zzAtlantis"}, r.text[:200]
 
 
 def _km(lat1, lon1, lat2, lon2):
@@ -252,3 +259,24 @@ def test_geo_specimens_distinct_uses_the_area():
     mg = _get("/v3.1/geoSpecimens?coords=-18.9,47.5&radius=25&distinct=genus&limit=500&up=1").json()["genera"]
     assert sf or mg, "no genus within 25 km of San Francisco or Antananarivo"
     assert sorted(sf) != sorted(mg), "the same genera near San Francisco and near Antananarivo"
+
+
+def test_distinct_taxa_species_are_full_names():
+    """Finding F24 (fixed 2026-10-27): taxarank=species gave bare epithets; now distinct "Genus species", leaving
+    out names not identified to genus such as "(Formicidae) (indet)" (Brian Fisher's rule of 2026-10-22)."""
+    names = _get("/v3.1/distinctTaxa?taxarank=species&country=Madagascar&limit=50&up=1").json()["taxarank"]
+    assert names, "no species for Madagascar"
+    bad = [n for n in names if not n or " " not in n or not n[:1].isupper()]
+    assert not bad, f"species without a capitalised genus: {bad[:5]}"
+    unidentified = [n for n in names if n.split(" ")[0].lower() in ("indet", "undet")]
+    assert not unidentified, f"species not identified to genus: {unidentified[:5]}"
+    assert len(names) == len(set(names)), "the species names repeat"
+
+
+def test_country_matches_the_whole_name():
+    """Finding F24 (fixed 2026-10-27): country matched by "contains", so country=Niger also returned Nigeria."""
+    specimens = _get("/v3.1/specimens?country=Niger&limit=100&up=1").json()["specimens"]
+    others = sorted({s["country"] for s in specimens if (s.get("country") or "").lower() != "niger"})
+    assert not others, f"country=Niger returned other countries: {others}"
+    lower = _get("/v3.1/specimens?country=madagascar&limit=5&up=1").json()["specimens"]
+    assert lower and all(s["country"].lower() == "madagascar" for s in lower), "country=madagascar (lower case) found nothing"

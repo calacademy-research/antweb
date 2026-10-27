@@ -69,14 +69,14 @@ All are AntWeb's message page (`common/message.jsp`, title "message...", HTTP 20
 | unknown genus, species ... | "Taxon not found." (or "Taxon not found for ...") |
 | `taxonName=` unknown | "<name> does not exist in the database" |
 | `rank=specimen` | "Invalid request.  Description.do requests are for taxa, not specimens." |
-| unknown rank | "Bad rank:<rank> ..." |
+| unknown rank | "Bad rank:<rank>" (the request details go to the log only, since 2026-10-26, F12) |
 | no taxon parameter | "Taxon not found." |
-| unknown place | "Country not found for countryName:X", "Bioregion not found bioregionName:X", "Museum not found for museumCode:X", "Not found:project overview" (with "for <referer> <time>" and a line asking to email AntWeb) |
-| comparisons without a login | "You must log in to access this functionality. ..." |
+| unknown place | "Country not found for countryName:X", "Geolocale not found for geolocaleId:X" (also a `geolocaleId` that is not a number, since 2026-10-26, F3), "Bioregion not found bioregionName:X", "Museum not found for museumCode:X", "Not found:project overview" (with "for <referer> <time>" and a line asking to email AntWeb) |
+| comparisons without a login | not a message: the explained log-in page with return, as for field guides (`Check.loginForFeature()`, since 2026-10-26, F15) |
 
 ## Known issues
 
-See [public-pages-findings.md](public-pages-findings.md): a `geolocaleId` that is not a number gives the error page (F3); old bioregion project names lose their filter on redirect (F4); the busy check for bots does nothing (F1); the place filter carries over from the previous page (by design, pinned, but surprising: F10); the "View in AntCat" link is not encoded (F11).
+See [public-pages-findings.md](public-pages-findings.md): the place filter carries over from the previous page (by design, pinned, but surprising: F10); place parameters in tool links are not URL-encoded (F11, left). Fixed 2026-10-26: a `geolocaleId` that is not a number gave the error page (F3); old bioregion project names (`project=africanants` ...) lost their filter on redirect, now `bioregionName=` (F4, `ProjectMgr.movedBioregionTarget()`); the busy check for bots did nothing (F1); the "View in AntCat" link is https with the name URL-encoded (F11).
 
 ## Tests
 
@@ -88,7 +88,7 @@ See [public-pages-findings.md](public-pages-findings.md): a `geolocaleId` that i
 | `test_taxon_pages.py::test_place_filter_selects_the_list`, `test_bioregion_filter`, `test_last_place_filter_stays_for_the_session`, `test_unknown_place_filter` | the place filter, its session carry-over, unknown places |
 | `test_taxon_pages.py::test_taxon_name_redirects_to_the_taxon_page`, `test_taxon_name_keeps_the_page_type`, `test_taxon_name_of_a_specimen_code_opens_the_specimen`, `test_antcat_id_opens_the_taxon_page`, `test_autocomplete_suggests_names` | the header Taxa box and old links |
 | `test_taxon_pages.py::test_unknown_taxon_or_rank_message` | the messages above |
-| `test_taxon_pages.py::test_geolocale_id_not_a_number_gets_a_message`, `test_old_bioregion_project_link_keeps_its_filter` | xfail: findings F3, F4 |
+| `test_taxon_pages.py::test_geolocale_id_not_a_number_gets_a_message`, `test_old_bioregion_project_link_keeps_its_filter`; `test/.../util/PublicPagesLowFindingsTest` | findings F3, F4 (fixed 2026-10-26, xfail removed) |
 | `test_page_content.py` | fingerprints of the key taxon pages (title, headings, images, links, rows) |
 | `test_site_links.py` | the links of each rank's pages, map popups included |
 | `test_browser.py` | the Taxa box suggestions, no JavaScript errors, phone width |

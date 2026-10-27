@@ -198,6 +198,11 @@ def apiError(method, error=None, status=500):
     return jsonify(error="The request could not be completed. Please try again later or simplify the query."), status
 
 
+def apiNotFound(message):
+    # A JSON error with HTTP 404 for an unknown name given as a parameter.
+    return jsonify(error=message), 404
+
+
 @application.errorhandler(Exception)
 def handleUncaught(error):
     from werkzeug.exceptions import HTTPException
@@ -529,6 +534,12 @@ class Specimen(Base):
         return specDict
 
 
+# country=... matches the whole country name, in any case (2026-10-27, finding F24: it matched by "contains", so
+# country=Niger also returned Nigeria). Used by every route that takes a country.
+def countryIs(column, name):
+    return func.lower(column) == name.lower()
+
+
 def addExtraGeolocaleListCriteria(query, geolocaleName):
     # Because we don't want all specimen from all species on the species list.
     # Just all the specimen from all of the species on the species list that are in the Geolocale.
@@ -542,7 +553,7 @@ def addExtraGeolocaleListCriteria(query, geolocaleName):
     if georank == "subregion":
         query = query.filter(Specimen.subregion.contains(geolocaleName))
     if georank == "country":
-        query = query.filter(Specimen.country.contains(geolocaleName))
+        query = query.filter(countryIs(Specimen.country, geolocaleName))
     if georank == "adm1":
         query = query.filter(Specimen.adm1.contains(geolocaleName))
     return query
@@ -662,7 +673,7 @@ def getSpecimen():
     if subregion != '*':
         query = query.filter(Specimen.subregion ==subregion)
     if country != '*':
-        query = query.filter(Specimen.country.contains(country))
+        query = query.filter(countryIs(Specimen.country, country))
     if adm1 != '*':
         query = query.filter(Specimen.adm1 == adm1)
     if bioregion != '*':
@@ -726,7 +737,8 @@ def getSpecimen():
     query = query.limit(limit)
     query = query.offset(offset)
 
-    if log:
+    # log=true only: log defaults to '*', which is true, so these lines were printed for every request (F20).
+    if log == 'true':
         #print(" query:" + str(query))
         print("hasImage:" + hasImage)
         # print("hasImage:" + hasImage + " query:" + str(query))
@@ -737,7 +749,7 @@ def getSpecimen():
     except Exception as error:
         return apiError("specimens", error)
 
-    if log:
+    if log == 'true':
         print('Query complete')
 
     dataList = []
@@ -902,7 +914,8 @@ def getGeoSpeciesStats():
     extraClause = ""
     geolocale = getGeolocale(geolocaleName)
     if geolocale is None:
-        return "Geolocale not found"
+        # JSON with HTTP 404, like the other errors (F23: it was the plain text "Geolocale not found" with 200).
+        return apiNotFound("Geolocale not found: " + geolocaleName)
     georank = geolocale.georank
     extraClause = " s." + georank + " = :geolocaleName"
 
@@ -1117,6 +1130,14 @@ def getTaxa():
 
 # --- Distinct Taxon API ------------------------------------------------------------------------------------
 
+def identifiedToGenus(genus):
+    """True (as SQL) for a genus identified to genus: not "(...)" (a placeholder such as "(formicidae)") and not
+    indet or undet. Brian Fisher, 2026-10-22: names not identified to genus never count as species. Same rule as
+    PlaceTotals.identifiedToGenus in the Java code. A missing genus counts as identified, as there."""
+    g = func.coalesce(genus, '')
+    return ~g.like('(%') & func.lower(g).notin_(['indet', 'undet'])
+
+
 @application.route('/distinctTaxa', methods=['GET'])
 def getDistinctTaxa():
     taxarank = request.args.get('taxarank', default='*', type=str)
@@ -1137,11 +1158,14 @@ def getDistinctTaxa():
     if 'genus' == taxarank:
         query = session.query(Specimen.genus).distinct()
     if 'species' == taxarank:
-        query = session.query(Specimen.species).distinct()
+        # Distinct "Genus species" names, as /geoSpecimens?distinct=species gives (2026-10-27, finding F24: this
+        # returned the bare epithet, so maculatus came once for every genus).
+        query = session.query(Specimen.genus, Specimen.species).filter(Specimen.species != None) \
+            .filter(identifiedToGenus(Specimen.genus)).distinct()
 
     # if any of these are used, performance suffers!    
     if country != '*':
-        query = query.filter(Specimen.country.contains(country))
+        query = query.filter(countryIs(Specimen.country, country))
     if habitat != '*':
         query = query.filter(Specimen.habitat.contains(habitat))
     if maxDate != '*':
@@ -1161,7 +1185,7 @@ def getDistinctTaxa():
     elif 'genus' == taxarank:
         query = query.order_by(Specimen.genus)
     elif 'species' == taxarank:
-        query = query.order_by(Specimen.species)
+        query = query.order_by(Specimen.genus, Specimen.species)
     else:
         query = query.order_by(Specimen.code)
     query = query.limit(limit)
@@ -1185,7 +1209,7 @@ def getDistinctTaxa():
             dataList.append(taxa.genus)
             # print("taxarank:" + taxarank + " genus:" + str(taxa.genus))
         if 'species' == taxarank:
-            dataList.append(taxa.species)
+            dataList.append((initCap(taxa.genus) or '') + ' ' + taxa.species)
 
     params = [request.args]
     metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'count': len(dataList)}
@@ -1529,7 +1553,7 @@ def getMeasurements():
     if species != '*':
         query = query.filter(Specimen.species == species)
     if country != '*':
-        query = query.filter(Specimen.country.contains(country))
+        query = query.filter(countryIs(Specimen.country, country))
     if adm1 != '*':
         query = query.filter(Specimen.adm1 == adm1)
     if bioregion != '*':
@@ -1965,7 +1989,7 @@ def getGeolocaleTaxa():
         query = query.filter(Geolocale.name == subregion)
     if country != '*':
         query = query.filter(Geolocale.georank == 'country')
-        query = query.filter(Geolocale.name == country)
+        query = query.filter(countryIs(Geolocale.name, country))
     if island != '*':
         query = query.filter(Geolocale.georank == 'country')
         query = query.filter(Geolocale.name == island)

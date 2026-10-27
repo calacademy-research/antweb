@@ -80,6 +80,8 @@
 <% } %>
            <br>&nbsp;&nbsp;<a href="#bioregions">Bioregions</a>
            <br>&nbsp;&nbsp;<a href="#bioregionTaxa">Bioregion Taxa</a>
+
+           <br>&nbsp;&nbsp;<a href="#measurements">Measurements</a>
            
 <br>
 <a name="specimens"></a><br><hr><br>
@@ -121,7 +123,7 @@
             </tr>
             <tr>
                 <td><b>Country</b></td>
-                <td>This uses a wildcard so a query for ?country=land will return any country containing the word land (ex:. England | Ireland | ...)</td>
+                <td>The whole country name, in any case (country=Niger returns Niger, not Nigeria; country=madagascar works). Since 2026-10-27; before, any country containing the text matched.</td>
             </tr>
             <tr>
                 <td><b>Adm1</b></td>
@@ -341,11 +343,11 @@
         <table class="arguments">
             <tr>
                 <td><b>taxarank</b></td>
-                <td>Return a list of unique names for a given rank. (taxarank=genus)</td>
+                <td>Return a list of unique names for a given rank: subfamily, genus or species (taxarank=genus). For species each name is the full name, "Genus species" (Pheidole megacephala), under the key taxarank. Since 2026-10-27; before, only the species epithet was given. Names not identified to genus (a genus in brackets such as "(formicidae)", or indet or undet) are not species and are left out of the species list.</td>
             </tr>
             <tr>
                 <td><b>Country</b></td>
-                <td>This uses a wildcard so a query for ?country=land will return any country containing the word land (e.g. England, Ireland etc)</td>
+                <td>The whole country name, in any case (country=Niger returns Niger, not Nigeria). Since 2026-10-27; before, any country containing the text matched.</td>
             </tr>
             <tr>
                 <td><b>Habitat</b></td>
@@ -551,7 +553,7 @@
             </tr>            
             <tr>
                 <td><b>Country</b></td>
-                <td>Query on the country</td>
+                <td>Query on the country: the whole country name, in any case</td>
             </tr>
             <tr>
                 <td><b>Adm1</b></td>
@@ -691,6 +693,59 @@
             </p>   
 
 
+
+<a name="measurements"></a><br><hr><br>
+
+        <h2>Measurements</h2>
+            <br>
+         	<b>Function:</b> Query for trait measurements made on specimen images (the ant body-size dataset). One record per image, trait and data release, with the measured value, the scale, the keypoints, quality checks and review status, and the specimen's taxonomy, caste and locality from its AntWeb record (specimen is null when the specimen is no longer on AntWeb). Sorted by record, so pages follow on with offset.
+            <p><b>Parameters:</b>
+        <table class="arguments">
+            <tr>
+                <td><b>release</b></td>
+                <td>The data release (release=1.0)</td>
+            </tr>
+            <tr>
+                <td><b>trait</b></td>
+                <td>Trait code, or several separated by commas (trait=WL or trait=WL,HW)</td>
+            </tr>
+            <tr>
+                <td><b>view</b></td>
+                <td>The image view the measurement was made on, as written in the data release</td>
+            </tr>
+            <tr>
+                <td><b>status</b></td>
+                <td>Review status, or several separated by commas (status=reviewed)</td>
+            </tr>
+            <tr>
+                <td><b>hasValue</b></td>
+                <td>Only records with a value (hasValue=true) or without one (hasValue=false)</td>
+            </tr>
+            <tr>
+                <td><b>specimenCode</b></td>
+                <td>The measurements of one specimen (specimenCode=inb0003695883)</td>
+            </tr>
+            <tr>
+                <td><b>subfamily, genus, species</b></td>
+                <td>Taxon of the specimen (genus=pheidole)</td>
+            </tr>
+            <tr>
+                <td><b>country, adm1, bioregion</b></td>
+                <td>Place of the specimen. country is the whole country name, in any case (country=Madagascar)</td>
+            </tr>
+            <tr>
+                <td><b>caste</b></td>
+                <td>Caste of the specimen (caste=worker)</td>
+            </tr>
+            <tr>
+                <td><b>taxonStatus</b></td>
+                <td>Status of the specimen's name (taxonStatus=valid)</td>
+            </tr>
+        </table>
+            <p><b>Examples:</b>
+            <p class="link">Reviewed WL measurements of Pheidole in release 1.0:
+            <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/measurements?genus=pheidole&trait=WL&release=1.0&status=reviewed<%= appendStr %>"><%= apiDomainApp %>/measurements?genus=pheidole&trait=WL&release=1.0&status=reviewed</a>
+            </p>
 
 <a name="unimagedGeolocaleTaxa"></a><br><hr><br>
 

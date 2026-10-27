@@ -227,6 +227,24 @@ public class ProjectMgr {
       return "";
     }
 
+    // The old bioregion projects and their bioregions (2026-10-26, finding F4: all but malagasyants lost the
+    // "bioregionName=" and were redirected with a bare word such as "&Afrotropical").
+    private static final String[][] MOVED_BIOREGION_PROJECTS = {
+        {"malagasyants", "Malagasy"}, {"eurasianants", "Palearctic"}, {"nearcticants", "Nearctic"},
+        {"pacificislandsants", "Oceania"}, {"africanants", "Afrotropical"}, {"neotropicalants", "Neotropical"},
+        {"australianants", "Australasia"}, {"southeastasiaants", "Indomalaya"}
+    };
+
+    /** The target with project=<old bioregion project> replaced by bioregionName=<bioregion>, or null if none. */
+    public static String movedBioregionTarget(String target) {
+        if (target == null) return null;
+        String redirect = null;
+        for (String[] moved : MOVED_BIOREGION_PROJECTS) {
+            if (target.contains(moved[0])) redirect = target.replace("project=" + moved[0], "bioregionName=" + moved[1]);
+        }
+        return redirect;
+    }
+
     public static boolean hasMoved(HttpServletRequest request, HttpServletResponse response) throws IOException {
         // To support projects that have moved.
         String target = HttpUtil.getTarget(request);
@@ -246,14 +264,8 @@ public class ProjectMgr {
 */
 
           // Could be something like this.  Would need to substitute the full project=malagasyants for bioregionName=Malagasy          
-          if (target.contains("malagasyants")) redirect = target.replace("project=malagasyants", "bioregionName=Malagasy");
-          if (target.contains("eurasianants")) redirect = target.replace("project=eurasianants", "Palearctic"); //"/bioregion.do?name=Palearctic";
-          if (target.contains("nearcticants")) redirect = target.replace("project=nearcticants", "Nearctic"); //"/bioregion.do?name=Nearctic";
-          if (target.contains("pacificislandsants")) redirect = target.replace("project=pacificislandsants", "Oceania"); //"/bioregion.do?name=Oceania";
-          if (target.contains("africanants")) redirect = target.replace("project=africanants", "Afrotropical"); //"/bioregion.do?name=Afrotropical";
-          if (target.contains("neotropicalants")) redirect = target.replace("project=neotropicalants", "Neotropical"); //"/bioregion.do?name=Neotropical";
-          if (target.contains("australianants")) redirect = target.replace("project=australianants", "Australasia"); //"/bioregion.do?name=Australasia";
-          if (target.contains("southeastasiaants")) redirect = target.replace("project=southeastasiaants", "Indomalaya"); //"/bioregion.do?name=Indomalaya";
+          String bioregionTarget = movedBioregionTarget(target);
+          if (bioregionTarget != null) redirect = bioregionTarget;
 
 
           if (target.contains("globalants")) redirect = "/project.do?name=allantwebants";

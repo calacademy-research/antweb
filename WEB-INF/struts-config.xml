@@ -721,9 +721,12 @@ We would like to remove getChildImages.  Not needed now in the new UI
     </action>
     <!-- To inactivate, replace with the action below. -->
         
-    <action
-      path="/advancedSearchResults"
-      forward="/search/advancedSearchResults.jsp"/>    
+    <!-- The last results shown again. A paged specimen search is sent to advancedSearch.do with its query and
+         page, so the total and Next are right (F25, 2026-10-27); with parameters (Map, Compare) the session list. -->
+    <action path="/advancedSearchResults"
+            type="org.calacademy.antweb.search.AdvancedSearchResultsAction">
+      <forward name="success" path="/search/advancedSearchResults.jsp"/>
+    </action>
 
     <action path="/recentSearchResults"
             type="org.calacademy.antweb.search.SearchAction"

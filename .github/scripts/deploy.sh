@@ -30,6 +30,42 @@ restart_caddy_if_changed() {
   fi
 }
 
+wait_until_idle() {
+  # Never restart AntWeb in the middle of an upload: on 2026-10-26 a deploy restarted it while a
+  # curator was uploading images, and her upload stopped half way. Ask the running AntWeb
+  # (util.do?action=isBusy, on the local port: the public address goes through Cloudflare) and wait
+  # while it answers "busy: ...", asking every 30 seconds for up to 30 minutes. After that, go ahead
+  # and say so loudly. No answer, or not "idle"/"busy:" (AntWeb down, still starting, or older code
+  # without isBusy): go ahead at once. Call it only right before a step that restarts AntWeb.
+  # The 30 minutes are for the whole deploy (busy_waited), even when it asks twice.
+  # tests/unit/test_deploy_paths.py checks this and runs it with a stand-in curl.
+  local url="${ANTWEB_URL:-http://127.0.0.1:8081}"
+  local poll="${BUSY_POLL_SECONDS:-30}" max="${BUSY_MAX_SECONDS:-1800}" waited=0 answer
+  url="${url%/}/util.do?action=isBusy"
+  while true; do
+    answer=$(curl -s --max-time 10 "$url" < /dev/null 2>/dev/null | head -c 200 | tr -d '\r\n' || true)
+    case "$answer" in
+      idle)
+        [ "$waited" -gt 0 ] && echo "AntWeb is idle now (waited ${waited} seconds); going ahead."
+        return 0 ;;
+      busy:*) ;;
+      *)
+        echo "AntWeb did not say whether it is busy (down, starting, or older code); not waiting."
+        return 0 ;;
+    esac
+    if [ "$busy_waited" -ge "$max" ]; then
+      echo "::warning::AntWeb still $answer after waiting ${busy_waited} seconds; restarting anyway."
+      echo "WARNING: AntWeb still $answer after waiting ${busy_waited} seconds; restarting anyway. Check the upload afterwards." >&2
+      return 0
+    fi
+    echo "AntWeb is $answer; waiting before the restart (${busy_waited} of ${max} seconds so far)..."
+    sleep "$poll"
+    waited=$((waited + poll))
+    busy_waited=$((busy_waited + poll))
+  done
+}
+busy_waited=0
+
 migrate_web_log() {
   # web/log (compute.log, admin.log, taxonworksNightly.log, ...) used to live in the
   # container and was lost when the container was replaced. It is now the host folder
@@ -105,6 +141,7 @@ if ! git diff --quiet "$PREV" HEAD -- docker/antweb docker-compose.yml docker-co
   project=$(docker inspect antweb_antweb_1 --format '{{index .Config.Labels "com.docker.compose.project"}}')
   dc="docker compose -p $project $(echo "$files" | tr ',' '\n' | sed 's/^/-f /')"
   $dc build antweb < /dev/null
+  wait_until_idle   # the old container keeps serving until here
   migrate_web_log "$dc"
   $dc up -d --build api antweb < /dev/null
   restart_caddy_if_changed
@@ -119,6 +156,9 @@ fi
 # library upgrade). ant deploy only adds files, and build.xml is a single-file bind
 # mount the running container may not see updated, so do it here. Two copies of a
 # library (e.g. log4j-web) stop Tomcat from starting.
+# From here on the running AntWeb is changed (jars removed, ant deploy reloads the web app, then a
+# restart): wait until no upload is running.
+wait_until_idle
 echo "Removing stale jars..."
 compose exec -T antweb sh -c 'for d in /usr/local/antweb/WEB-INF/lib /antweb/deploy/build/WEB-INF/lib; do [ -d "$d" ] || continue; for j in "$d"/*.jar; do [ -e "$j" ] || continue; [ -e "/antweb/deploy/WEB-INF/lib/$(basename "$j")" ] || { echo "removing $j"; rm -f "$j"; }; done; done' < /dev/null
 
@@ -148,6 +188,8 @@ else
   compose exec -T antweb ant deploy < /dev/null
 fi
 
+# ant deploy takes a minute or two: ask again in case an upload started meanwhile.
+wait_until_idle
 echo "Restarting antweb container..."
 compose restart antweb
 
