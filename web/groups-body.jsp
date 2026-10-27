@@ -92,7 +92,7 @@ for (Group group: groupArray) {
 <%
 String t1 = ""; String t2 = "";
 if (here.contains("orderBy=name")) { t1 = a; t2 = b; } else { t1 = c; t2 = d; } %>
-<td><%= t1 %><a href='<%= AntwebProps.getDomainApp() %>/group.do?id=<%= group.getId() %>'><%= group.getName() %></a><%= t2 %></td>
+<td><%= t1 %><a href='<%= AntwebProps.getDomainApp() %>/group.do?id=<%= group.getId() %>'><%= Html.esc(group.getName()) %></a><%= t2 %></td>
 <% if (here.contains("orderBy=uploads")) { t1 = a; t2 = b; } else { t1 = c; t2 = d; } 
    uploadTot += group.getUploadCount();
 %>

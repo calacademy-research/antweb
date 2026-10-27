@@ -11,7 +11,7 @@
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 
 <jsp:useBean id="taxon" scope="session" class="org.calacademy.antweb.Taxon" />
-<jsp:setProperty name="taxon" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-27): the action fills the bean; request values must not overwrite what the page shows. --%>
 
 <bean:define id="showNav" value="taxonomic" toScope="request"/>
 

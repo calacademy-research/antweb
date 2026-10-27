@@ -19,7 +19,8 @@ public class ImageUploadDb extends AntwebDb {
     }
 
 
-    public ImageUpload getImageUpload(int id) {
+    /** The upload with its files, or null if there is no such upload. A database error is thrown (it is not "not found"). */
+    public ImageUpload getImageUpload(int id) throws SQLException {
         ImageUpload imageUpload = null;
 
         Statement stmt = null;
@@ -47,6 +48,7 @@ public class ImageUploadDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("getImageUpload() exception:" + e + " theQuery:" + theQuery);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "getImageUpload()");
         }
@@ -54,7 +56,7 @@ public class ImageUploadDb extends AntwebDb {
     }
 
 
-    public ArrayList<ImageUploaded> getImagesUploaded(ImageUpload imageUpload) {
+    public ArrayList<ImageUploaded> getImagesUploaded(ImageUpload imageUpload) throws SQLException {
         ArrayList<ImageUploaded> images = new ArrayList<>();
         Statement stmt = null;
         ResultSet rset = null;
@@ -80,6 +82,7 @@ public class ImageUploadDb extends AntwebDb {
             }
         } catch (SQLException e) {
             s_log.error("getImagesUploaded() exception:" + e + " theQuery:" + theQuery);
+            throw e;
         } finally {
             DBUtil.close(stmt, rset, "this", "getImagesUploaded()");
         }
@@ -138,20 +141,21 @@ public class ImageUploadDb extends AntwebDb {
             if (savedImageUpload == null) {
 
                 dml = "insert into image_upload (curator_id, group_id, created, artist_id, image_count, license, copyright_year) values(?, ?, ?, ?, ?, ?, ?)";
-                PreparedStatement ps=getConnection().prepareStatement(dml, Statement.RETURN_GENERATED_KEYS);
-                ps.setInt(1, imageUpload.getCuratorId());
-                ps.setInt(2, imageUpload.getGroupId());
-                ps.setTimestamp(3, new Timestamp(imageUpload.getCreated().getTime()));
-                ps.setInt(4, imageUpload.getArtistId());
-                ps.setInt(5, imageUpload.getImageCount());
-                ps.setString(6, imageUpload.getLicense());
-                ps.setInt(7, Year.now().getValue()); //imageUpload.getCopyright());
+                try (PreparedStatement ps = getConnection().prepareStatement(dml, Statement.RETURN_GENERATED_KEYS)) {
+                    ps.setInt(1, imageUpload.getCuratorId());
+                    ps.setInt(2, imageUpload.getGroupId());
+                    ps.setTimestamp(3, new Timestamp(imageUpload.getCreated().getTime()));
+                    ps.setInt(4, imageUpload.getArtistId());
+                    ps.setInt(5, imageUpload.getImageCount());
+                    ps.setString(6, imageUpload.getLicense());
+                    ps.setInt(7, Year.now().getValue()); //imageUpload.getCopyright());
 
-                ps.executeUpdate();
-                ResultSet rs=ps.getGeneratedKeys();
-
-                if(rs.next()){
-                    imageUpload.setId(rs.getInt(1));
+                    ps.executeUpdate();
+                    try (ResultSet rs = ps.getGeneratedKeys()) {
+                        if (rs.next()) {
+                            imageUpload.setId(rs.getInt(1));
+                        }
+                    }
                 }
 
             } else {
@@ -168,7 +172,11 @@ public class ImageUploadDb extends AntwebDb {
 		return imageUpload; // May have updated ID.
 	}
 
-    public void completeImageUpload(ImageUpload imageUpload) throws SQLException {    
+    /**
+     * Mark the upload complete. True only for the call that completed it: two finish requests at once (the
+     * page sent it twice) must not both send the completion email.
+     */
+    public boolean completeImageUpload(ImageUpload imageUpload) throws SQLException {    
         Statement stmt = null;
         String dml = null;
     	try {
@@ -176,9 +184,10 @@ public class ImageUploadDb extends AntwebDb {
             
             dml = "update image_upload set " 
                 + "  complete = 1"
-                + " where id = " + imageUpload.getId();
+                + " where id = " + imageUpload.getId()
+                + " and (complete is null or complete != 1)";
      
-            stmt.executeUpdate(dml);
+            return stmt.executeUpdate(dml) > 0;
 
             //A.log("completeImageUpload() dml:" + dml);
 		} catch (SQLException e) {

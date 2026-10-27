@@ -101,12 +101,12 @@ finished and how many images it holds. The date opens the batch's report (images
       out.println("<td>" + imageUpload.getIsComplete() + "</td>");
       out.println("<td class=\"aw-num\">" + imageUpload.getImageCount() + "</td>");
       out.println("<td class=\"aw-nowrap\"><a href='" + domainApp + "/imageUploadReport.do?id=" + imageUpload.getId() + "'>"
-        + (imageUpload.getCreated() != null ? minute.format(imageUpload.getCreated()) : "") + "</a></td>");
+        + (imageUpload.getCreated() != null ? minute.format(imageUpload.getCreated()) : "") + "</a></td></tr>");
     }
-    out.println("</tr></table>");
+    out.println("</table>");
 
-    if (i == 0 && message.contains("curator.do")) out.println("<p>No uploads for this curator</p>");
-    if (i == 0 && message.contains("group.do")) out.println("<p>No uploads for this group</p>");
+    if (list.isEmpty() && message.contains("curator.do")) out.println("<p>No uploads for this curator</p>");
+    if (list.isEmpty() && message.contains("group.do")) out.println("<p>No uploads for this group</p>");
     out.println("</div>");
 %>
 

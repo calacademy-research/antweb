@@ -12,9 +12,11 @@
     session.removeAttribute("taxon");
 
     Login accessLogin = LoginMgr.getAccessLogin(request);
-    if (!(accessLogin.isUploadImages())) {
+    // Same rule as ImageUploaderAction and ImageUploadBatchAction: upload permission, or an administrator.
+    if (!(Boolean.TRUE.equals(accessLogin.isUploadImages()) || Boolean.TRUE.equals(accessLogin.isAdmin()))) {
         org.calacademy.antweb.util.AntwebUtil.log("imageUpload.jsp.  ImageUpload denied for login:" + accessLogin);
         response.sendRedirect("permissionDenied.jsp");
+        return;
     }
 %>
 

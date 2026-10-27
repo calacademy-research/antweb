@@ -276,11 +276,22 @@ public class ImageDb extends AntwebDb {
     }
 
     public boolean deleteImage(String code, String shotType, int shotNumber) {
+        try {
+            return deleteImageRows(code, shotType, shotNumber);
+        } catch (SQLException e) {
+            s_log.error("deleteImage() code:" + code + " shotType:" + shotType + " shotNumber:" + shotNumber + " e:" + e);
+            return false;
+        }
+    }
+
+    /** Delete the image rows (and their group_image rows) of this code, shot and number. Throws on a database error. */
+    private boolean deleteImageRows(String code, String shotType, int shotNumber) throws SQLException {
         boolean deleted = false;
         String dml = "";
         Statement stmt = null;
         try {
             stmt = DBUtil.getStatement(getConnection(), "deleteImage()");
+            if (stmt == null) throw new SQLException("deleteImage() no statement");
 
             //A.log("execute()  deleting:" + code + " " + shotType + " " + shotNumber);
             String whereClause = "where image_of_id = '" + AntFormatter.escapeQuotes(code) + "' and shot_type='" + AntFormatter.escapeQuotes(shotType) + "' and shot_number=" + shotNumber;
@@ -294,71 +305,96 @@ public class ImageDb extends AntwebDb {
             c = stmt.executeUpdate(dml);
             if (c > 0) deleted = true;
             //A.log("delete 2 c:" + c + " query: " + dml);
-        
-            boolean exists = false;
 
             //s_log.warn("deleteImage() Should we remove image from disk? code:" + code + " shotType:" + shotType + " shotNumber:" + shotNumber);
             // No! We use this prior to insertion, after the image has already been copied into place.
             
-            LogMgr.appendLog("deletedImageLog.txt", "code:" + code + " shotType:" + shotType + " shotNumber:" + shotNumber);
-
-		} catch (SQLException e) {
-			s_log.error("deleteImage() dml" + dml + " e:" + e);
-		} finally { 		
-			DBUtil.close(stmt, "deleteImage()");
-		}
-        
+            if (deleted) LogMgr.appendLog("deletedImageLog.txt", "code:" + code + " shotType:" + shotType + " shotNumber:" + shotNumber);
+        } catch (SQLException e) {
+            s_log.error("deleteImage() dml" + dml + " e:" + e);
+            throw e;
+        } finally { 		
+            DBUtil.close(stmt, "deleteImage()");
+        }
         return deleted;
     }
     
+    /**
+     * Save the image row of an uploaded file, replacing the row of the same code, shot and number if there is one.
+     * The delete and the insert are one transaction: if the insert fails, the old row (and its group) is kept.
+     * Returns false if nothing was saved. Every row of that code, shot and number is replaced, also one without a
+     * group_image row (before, such a row was kept and a second row was added).
+     */
     public boolean putImage(ImageUploaded imageUploaded) {
-        boolean success = true;
-        
         String code = imageUploaded.getCode();
         String shot = imageUploaded.getShot();
         int number = imageUploaded.getNumber();
-        
-        SpecimenImage specimenImage = getSpecimenImage(code, shot, number);
-        //A.log("specimenImage:" + specimenImage);
-        if (specimenImage != null) {
-        // We delete first so that we know the insertions will work.
-          deleteImage(code, shot, number);
+
+        Connection connection = getConnection();
+        boolean autoCommit = true;
+        try {
+            autoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+            deleteImageRows(code, shot, number);
+            insertImage(imageUploaded);
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            s_log.error("putImage() code:" + code + " shot:" + shot + " number:" + number + " not saved, e:" + e);
+            try {
+                connection.rollback();
+            } catch (SQLException e2) {
+                s_log.error("putImage() rollback e:" + e2);
+            }
+            return false;
+        } finally {
+            try {
+                connection.setAutoCommit(autoCommit);
+            } catch (SQLException e) {
+                s_log.error("putImage() setAutoCommit e:" + e);
+            }
         }
-        insertImage(imageUploaded);
-        return success;
     }
 
     public int getMaxId() {
+      try {
+        return maxId();
+      } catch (SQLException e) {
+        s_log.error("getMaxId() e:" + e);
+        return 0;
+      }
+    }
+
+    private int maxId() throws SQLException {
       int id = 0;
       String query = "select max(id) id from image";    
       ResultSet rset = null;
       Statement stmt = null;
       try {
         stmt = DBUtil.getStatement(getConnection(), "getMaxId()");
-        stmt.executeQuery(query);
-        rset = stmt.getResultSet();
-
+        if (stmt == null) throw new SQLException("getMaxId() no statement");
+        rset = stmt.executeQuery(query);
         while (rset.next()) {
             id = rset.getInt("id");
         }
-      } catch (SQLException e) {
-          s_log.error("getMaxId() e:" + e + " query:" + query);
       } finally {
         DBUtil.close(stmt, rset, "ImageDb", "getMaxId()");
       }
       return id;
     }
 
-    public void insertImage(ImageUploaded imageUploaded) {
+    /** Insert the image row and its group_image row. Throws on a database error (putImage() then rolls back). */
+    private void insertImage(ImageUploaded imageUploaded) throws SQLException {
 
         ImageUpload imageUpload = imageUploaded.getImageUpload();
         Statement stmt = null;
         String dml = null;
     	try {
-    	    int id = getMaxId();
+    	    int id = maxId();
             ++id;
     	
             stmt = DBUtil.getStatement(getConnection(), "insertImage()");            
+            if (stmt == null) throw new SQLException("insertImage() no statement");
             dml = "insert into image (id, image_of_id, source_table, shot_type, shot_number" 
                   + ", artist, copyright, license" 
                   + ", upload_date, has_tiff, image_upload_id)" 
@@ -378,6 +414,7 @@ public class ImageDb extends AntwebDb {
             //A.log("insertImage() dml:" + dml);
 		} catch (SQLException e) {
 			s_log.error("insertImage() dml" + dml + " e:" + e);
+			throw e;
 		} finally { 		
 			DBUtil.close(stmt, "insertImage()");
 		}    

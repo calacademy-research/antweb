@@ -36,7 +36,8 @@
     <div class="sd_data">
 
 	  <%
-		String sortLink = HttpUtil.removeParam(thisTarget, "orderBy");
+		// Escaped: the link is the request's own address, written into single-quoted attributes below.
+		String sortLink = org.calacademy.antweb.util.Html.escAttr(HttpUtil.removeParam(thisTarget, "orderBy"));
 		String underline = "style='border-bottom:1px solid black;text-decoration:none;color:#000001;'";
 		String u = "";
 

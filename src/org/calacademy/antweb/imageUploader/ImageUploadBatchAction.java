@@ -353,12 +353,23 @@ public final class ImageUploadBatchAction extends AntwebAction {
             }
             imageUploaded.setFileItem(fileItem, false);
             imageUploaded.genImages();   // the four sizes (thumbview, low, med, high)
+            if (imageUploaded.isGenFailed()) {
+                // No image row for a file whose sizes could not be made: it stays "processing", is listed as not saved.
+                String notConverted = "The image could not be converted (damaged or unsupported file).";
+                recordNotSaved(connection, imageUpload.getId(), List.of(new Refused(name, notConverted, ImageUploadRefusedDb.SERVER)), null);
+                return json(response, 422, fileError(name, notConverted));
+            }
+            boolean saved;
             ImageUploadGate.DB_LOCK.lock();
             try {
-                new ImageDb(connection).putImage(imageUploaded);
-                imageUploadDb.markUploadedDone(imageUpload.getId(), name, imageUploaded.getIsReUploaded());
+                saved = new ImageDb(connection).putImage(imageUploaded);
+                if (saved) imageUploadDb.markUploadedDone(imageUpload.getId(), name, imageUploaded.getIsReUploaded());
             } finally {
                 ImageUploadGate.DB_LOCK.unlock();
+            }
+            if (!saved) {
+                // The image row was not written (the old one, if any, is kept): the page tries the file again.
+                return json(response, 500, error("The image could not be recorded in the database. Trying again.", true));
             }
             long ms = System.currentTimeMillis() - t0;
             String status = imageUploaded.getIsReUploaded() ? "replaced" : firstTry ? "saved" : "savedOnRetry";
@@ -401,13 +412,15 @@ public final class ImageUploadBatchAction extends AntwebAction {
             recordNotSaved(connection, batchId,
                 ImageUploadRefusedDb.parse(request.getParameter("refused"), ImageUploadRefusedDb.BROWSER), saved);
             count = imageUploadDb.updateImageCount(batchId);
-            imageUploadDb.completeImageUpload(imageUpload);
-            if (count > 0) new ImageUploaderAction().writeRecentImages(connection);
-            int notSaved = countNotSaved(connection, batchId, saved);
-            s_log.info("finish() batch:" + batchId + " login:" + accessLogin.getId() + " images:" + count + " notSaved:" + notSaved);
-            // Images saved: files whose four sizes and image row were made. image_count also counts
-            // a file whose sending was cut off part way (it is then listed as not saved, too).
-            sendNotice(accessLogin, imageUpload, saved.size(), notSaved);
+            // Only the request that completes the upload sends the email (a second finish at the same moment does not).
+            if (imageUploadDb.completeImageUpload(imageUpload)) {
+                if (count > 0) new ImageUploaderAction().writeRecentImages(connection);
+                int notSaved = countNotSaved(connection, batchId, saved);
+                s_log.info("finish() batch:" + batchId + " login:" + accessLogin.getId() + " images:" + count + " notSaved:" + notSaved);
+                // Images saved: files whose four sizes and image row were made. image_count also counts
+                // a file whose sending was cut off part way (it is then listed as not saved, too).
+                sendNotice(accessLogin, imageUpload, saved.size(), notSaved);
+            }
         }
         String reportUrl = AntwebProps.getDomainApp() + "/imageUploadReport.do?id=" + batchId;
         return json(response, 200, "{\"ok\":true,\"batchId\":" + batchId + ",\"images\":" + saved.size()

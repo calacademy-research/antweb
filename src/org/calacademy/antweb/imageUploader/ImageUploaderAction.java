@@ -76,117 +76,91 @@ public final class ImageUploaderAction extends AntwebAction {
     /** Shown when the page is used without JavaScript (imageUploader-body.jsp has the same line). */
     public static final String NEEDS_JAVASCRIPT = "The Image Uploader needs JavaScript. Please enable it in your browser.";
 
+    /**
+     * The newest images' specimens, one line per name (at most 5), for the home page (web/genInc/recentImages_gen_inc.html).
+     * The list is built first and written to a temporary file that then replaces the include, so an error leaves the
+     * old list in place (before, the file was emptied first and an error left the home page section blank).
+     */
     public void writeRecentImages(Connection connection) {
-        int maxRecent = 5;
-        String docBase = Utility.getDocRoot();
-
-        int currItems = 0;
+        final int homepageMaxRecent = 5;
         String domainApp = AntwebProps.getSecureDomainApp();
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
-			String recentImagesList = getRecentImagesList(connection);
-
-            docBase += "web/genInc";
-            Utility.makeDirTree(docBase);
-            
-            // .html, not .jsp: a .jsp under the web root would be compiled and run by Tomcat.
-            File outputFile = new File(docBase + "/recentImages_gen_inc.html");
-            FileWriter outFile = new FileWriter(outputFile);
-
-            stmt = DBUtil.getStatement(connection, "writeRecentImages()");
-
-            // Can't use distinct because we want it order by a non-distinct column.
-			String query = "select s.code, s.genus, s.species, s.subspecies from specimen s, image i " 
-			+ " where s.code = i.image_of_id " 
-			+ " and code in (" + recentImagesList + ")"
-			+ " order by i.modified desc"
-			;
-
-            //A.log("writeRecentImages() query:" + query);
-
-            rset = stmt.executeQuery(query);
-            String code;
-            String theGenus;
-            String theSpecies;
-            String theSubspecies;
+        // The specimens of the 30 newest images (likely five names), in one query: no codes are pasted into SQL.
+        String query = "select s.code, s.genus, s.species, s.subspecies from specimen s, image i"
+            + " where s.code = i.image_of_id"
+            + " and s.code in (select image_of_id from (select image_of_id from image order by upload_date desc limit 30) recent)"
+            + " order by i.modified desc";
+        StringBuilder out = new StringBuilder();
+        int currItems = 0;
+        try (Statement stmt = connection.createStatement();
+             ResultSet rset = stmt.executeQuery(query)) {
             String lastValue = "";
-            int homepageMaxRecent = 5;
             Formatter format = new Formatter();
             ArrayList<String> distinctTaxa = new ArrayList<>();
-            while (rset.next() && currItems <= homepageMaxRecent) {
-                code = rset.getString("code");
-                theGenus = rset.getString("genus");
-                theSpecies = rset.getString("species");
-                theSubspecies = rset.getString("subspecies");
+            while (rset.next() && currItems < homepageMaxRecent) {
+                String code = rset.getString("code");
+                String theGenus = rset.getString("genus");
+                String theSpecies = rset.getString("species");
+                String theSubspecies = rset.getString("subspecies");
                 String theTaxon = theGenus + " " + theSpecies + " " + theSubspecies;
                 if (distinctTaxa.contains(theTaxon)) continue;
                 distinctTaxa.add(theTaxon);
                 if (code != null && !code.equals("") && !code.equals(lastValue)) {
                     currItems++;
                     lastValue = code;
-                    outFile.write("<a class=\"uppercase\" href=\"" + domainApp 
+                    out.append("<a class=\"uppercase\" href=\"" + domainApp
                         + "/specimenImages.do?code=" + Html.url(code) + "\">" + Html.esc(code) + "</a>");
-                    if (theGenus != null &&
-                            theSpecies != null &&
-                            theGenus.length() > 0 &&
-                            theSpecies.length() > 0
-                       ) {
-						String url = domainApp + "/images.do?" 
-						  + "genus=" + Html.url(theGenus) 
-						  + "&amp;species=" + Html.url(theSpecies);
-						// Decide the rank per row; it used to stay "subspecies" for every
-						// row after the first subspecies in the list.
-						boolean hasSubspecies = theSubspecies != null && theSubspecies.length() > 0;
-						String theRank = Rank.SPECIES;
-						if (hasSubspecies) {
-						  url += "&amp;subspecies=" + Html.url(theSubspecies); 
-						  theRank = Rank.SUBSPECIES;
-						}
-						url += "&amp;rank=" + theRank;
+                    if (theGenus != null && theSpecies != null && theGenus.length() > 0 && theSpecies.length() > 0) {
+                        String url = domainApp + "/images.do?"
+                          + "genus=" + Html.url(theGenus)
+                          + "&amp;species=" + Html.url(theSpecies);
+                        // Decide the rank per row; it used to stay "subspecies" for every
+                        // row after the first subspecies in the list.
+                        boolean hasSubspecies = theSubspecies != null && theSubspecies.length() > 0;
+                        String theRank = Rank.SPECIES;
+                        if (hasSubspecies) {
+                          url += "&amp;subspecies=" + Html.url(theSubspecies);
+                          theRank = Rank.SUBSPECIES;
+                        }
+                        url += "&amp;rank=" + theRank;
 
-						String taxonHrefStr =  ":  <a  href='" + url + "'>" 
-							+ Html.esc(format.capitalizeFirstLetter(theGenus) + " " + theSpecies);
-						if (hasSubspecies) {
-						  taxonHrefStr += " " + Html.esc(theSubspecies);
-						}
-						taxonHrefStr += "</a>";
-						outFile.write(taxonHrefStr);
-						//A.log("writeRecentImages() taxonHrefStr:" + taxonHrefStr);
-					}
-					outFile.write("<br/>\n");
-				}
-			}
-			outFile.close();
-		} catch (Exception e) {
-			s_log.error("writeRecentImages() e:" + e);
-		} finally {
-		    DBUtil.close(stmt, rset, "writeRecentImages()");
-		}
-	}
-
-    private String getRecentImagesList(Connection connection) {
-        String recentImagesList = "";
-        Statement stmt = null;
-        ResultSet rset = null;
-		String query = "select image.image_of_id code from image order by upload_date desc limit 30";
-		  // This will be likely to have five unique casents.
-        try {
-            stmt = DBUtil.getStatement(connection, "getRecentImagesList()");
-            rset = stmt.executeQuery(query);
-            String code;
-            int i = 0;
-            while (rset.next()) {
-                code = rset.getString("code");
-                if (i > 0) recentImagesList += ", ";
-                ++i; 
-                recentImagesList += "'" + code + "'";
+                        String taxonHrefStr = ":  <a  href='" + url + "'>"
+                            + Html.esc(format.capitalizeFirstLetter(theGenus) + " " + theSpecies);
+                        if (hasSubspecies) {
+                          taxonHrefStr += " " + Html.esc(theSubspecies);
+                        }
+                        taxonHrefStr += "</a>";
+                        out.append(taxonHrefStr);
+                    }
+                    out.append("<br/>\n");
+                }
             }
-		} catch (Exception e) {
-			s_log.error("getRecentImagesList() e:" + e);
-		} finally {
-		    DBUtil.close(stmt, rset, "getRecentImagesList()");
-		}
-        return recentImagesList;
-	}
+        } catch (SQLException e) {
+            s_log.error("writeRecentImages() e:" + e);
+            return;
+        }
+        if (currItems == 0) {
+            s_log.warn("writeRecentImages() no recent images found; the list is left as it was");
+            return;
+        }
+        try {
+            String dir = Utility.getDocRoot() + "web/genInc";
+            Utility.makeDirTree(dir);
+            // .html, not .jsp: a .jsp under the web root would be compiled and run by Tomcat.
+            java.nio.file.Path target = java.nio.file.Path.of(dir, "recentImages_gen_inc.html");
+            java.nio.file.Path temp = java.nio.file.Path.of(dir, "recentImages_gen_inc.html." + Thread.currentThread().threadId() + ".tmp");
+            try {
+                java.nio.file.Files.writeString(temp, out.toString(), java.nio.charset.StandardCharsets.UTF_8);
+                try {
+                    java.nio.file.Files.move(temp, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING,
+                        java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+                } catch (java.nio.file.AtomicMoveNotSupportedException e) {
+                    java.nio.file.Files.move(temp, target, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                }
+            } finally {
+                java.nio.file.Files.deleteIfExists(temp);
+            }
+        } catch (IOException e) {
+            s_log.error("writeRecentImages() write e:" + e);
+        }
+    }
 }

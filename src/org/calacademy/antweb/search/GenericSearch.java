@@ -845,6 +845,9 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
             Group group = GroupMgr.getGroup(value);
             if (group != null) {
                 returnStr = "access_group = " + group.getId();
+            } else {
+                // No such group: no specimens (there is no groupName column; the query failed and the page was blank).
+                returnStr = " 1 = 0 ";
             }
         }
 

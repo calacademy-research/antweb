@@ -127,6 +127,7 @@ public final class PictureLikeAction extends AntwebAction {
         } else {     // standard use is session based.
             session.setAttribute("theImage", theImage);
             session.setAttribute("theImageTaxon", theSpecimen);
+            session.setAttribute("specimen", theSpecimen);   // as BigPictureAction: bigPicture-body.jsp reads it
         }
         
         // Set a transactional control token to prevent double posting

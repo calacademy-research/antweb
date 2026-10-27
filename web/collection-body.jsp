@@ -194,7 +194,9 @@ function selectAll(thisForm) {
 		<% 
 		//Locality locality = collection.getLocality();
 		
-		String lat = new Float(locality.getDecimalLatitude()).toString();
+		// 0, 0 is how a locality without coordinates is stored: show none rather than a point in the Gulf of Guinea.
+		boolean noCoordinates = locality.getDecimalLatitude() == 0 && locality.getDecimalLongitude() == 0;
+		String lat = noCoordinates ? "" : new Float(locality.getDecimalLatitude()).toString();
 		if (Utility.displayEmptyOrNotBlank(lat)) { %>
 		<ul>
 		<li>Latitude:</li>
@@ -203,7 +205,7 @@ function selectAll(thisForm) {
 		<% } %>
 
 		<% 
-		String lon = new Float(locality.getDecimalLongitude()).toString();		
+		String lon = noCoordinates ? "" : new Float(locality.getDecimalLongitude()).toString();		
 		if (Utility.displayEmptyOrNotBlank(lon)) { %>
 		<ul>
 		<li>Longitude:</li>

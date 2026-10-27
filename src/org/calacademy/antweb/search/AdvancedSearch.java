@@ -687,7 +687,7 @@ add status to specimen
         return dnaExtractionNotesSearchType;
     }
     public void setDnaExtractionNotesSearchType(String dnaExtractionNotesSearchType) {
-        this.dnaExtractionNotesSearchType = specimenNotesSearchType;
+        this.dnaExtractionNotesSearchType = dnaExtractionNotesSearchType;
     }
                 
     public String getAdm2() {

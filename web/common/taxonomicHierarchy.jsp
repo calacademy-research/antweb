@@ -113,7 +113,7 @@
             targetUrl = domainApp + "/" + targetUrl;
             //A.log("targetUrl:" + targetUrl);
             if (specimen != null && specimen.getName() != null) {
-              out.println("<li>Specimen: <a href=\"" + targetUrl +"?code=" + specimen.getName() + "\">" + specimen.getName().toUpperCase() + "</a></li>"); 
+              out.println("<li>Specimen: <a href=\"" + targetUrl +"?code=" + Html.url(specimen.getName()) + "\">" + Html.esc(specimen.getName().toUpperCase()) + "</a></li>"); 
             }
         }
 %>

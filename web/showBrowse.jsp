@@ -11,7 +11,7 @@
 <bean:define id="showNav" value="browse" toScope="request" />
 
 <jsp:useBean id="taxon" scope="session" class="org.calacademy.antweb.Taxon" />
-<jsp:setProperty name="taxon" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-27): the action fills the bean; request values must not overwrite what the page shows. --%>
 
 <%@include file="/common/antweb-defs.jsp" %>
 

@@ -30,7 +30,8 @@
     labelMap.put("Label","l");
 
     String shot = (String) pageContext.getAttribute("shot");
-    if (shot == null) shot = "Head";
+    // Only the five view names: the value is written into the page.
+    if (shot == null || !labelMap.containsKey(shot)) shot = "Head";
     //String shortHand = (String) labelMap.get(shot);
     //String shortHand = "";
     //pageContext.setAttribute("shortHand",shortHand, PageContext.REQUEST_SCOPE);
