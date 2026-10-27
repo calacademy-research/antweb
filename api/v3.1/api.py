@@ -923,7 +923,7 @@ def getGeoSpeciesStats():
             + " where s.taxon_name = t.taxon_name and gt.taxon_name = t.taxon_name " \
             + "   and gt.geolocale_id = g.id and " \
             + extraClause \
-            + " and g.name = :geolocaleName" \
+            + " and g.id = :geolocaleId" \
             + "  and s.status = 'valid'" \
             + " group by s.taxon_name, s.genus, s.species" \
             + " order by s.taxon_name" \
@@ -931,7 +931,10 @@ def getGeoSpeciesStats():
 
     # print(query)
     dataList = []
-    result = session.execute(text(query), {"geolocaleName": geolocaleName, "limit": limit, "offset": offset})
+    # B55 (2026-10-27): the list of this one geolocale (was every geolocale of the name, joined by name, so a
+    # name shared by two geolocales, a country and an adm1 or two adm1s, counted each specimen once per geolocale).
+    result = session.execute(text(query), {"geolocaleName": geolocaleName, "geolocaleId": geolocale.id,
+                                           "limit": limit, "offset": offset})
     for row in result:
         geoSpeciesStats = getGeoSpeciesStatsDict(row)
         dataList.append(geoSpeciesStats)
@@ -1804,8 +1807,10 @@ class Geolocale(Base):
 
 
 def getGeolocale(geolocaleName):
+    # The geolocale of a name: a valid one first, then the lowest id (B55, 2026-10-27: the first row the database
+    # returned, an invalid one too, so a name shared by several geolocales gave any of them).
     query = session.query(Geolocale)
-    query = query.filter(Geolocale.name == geolocaleName)
+    query = query.filter(Geolocale.name == geolocaleName).order_by(Geolocale.id)
     try:
         data = query.all()
     except OperationalError as error:
@@ -1815,7 +1820,8 @@ def getGeolocale(geolocaleName):
         message = "getGeolocale error:" + str(request)
         print(message)  # # + error.orig.message, error.params
         return
-    for geolocale in data:
+    valid = [geolocale for geolocale in data if str(geolocale.isValid) in ('1', 'True', 'true')]
+    for geolocale in valid or data:
         return geolocale
     return
 
@@ -2282,8 +2288,9 @@ def getUnimagedGeolocaleTaxa():
     # geoClause = georank + " = '" + geolocaleName + "'"
 
     if byCaste != '*':
-        if byCaste == 'true': byCaste = 1
-        if byCaste == 'false': byCaste = 0
+        # B57 (2026-10-27): byCaste=true was turned into the number 1 and then compared with '1', so it was ignored.
+        if byCaste == 'true': byCaste = '1'
+        if byCaste == 'false': byCaste = '0'
 
     rankClause = " and t.taxarank in ('species', 'subspecies')"
     if taxarank != '*':
@@ -2312,6 +2319,9 @@ def getUnimagedGeolocaleTaxa():
     query = f"select gt.taxon_name {casteFieldW} from geolocale_taxon gt, taxon t where gt.taxon_name = t.taxon_name" \
             f" {rankClause}{statusClause} and geolocale_id = {str(geolocale.id)}" \
             f" and gt.taxon_name not in ({imagedTaxaSql(casteClauseW)})"
+    if byCaste != '1':
+        # B56 (2026-10-27): a fixed order, so pages with offset neither repeat nor skip names (there was none).
+        query += " order by gt.taxon_name"
 
     if byCaste == '1':
 

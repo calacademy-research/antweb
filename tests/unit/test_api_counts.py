@@ -79,6 +79,69 @@ def test_geo_species_stats_counts_ergatoids_of_their_caste():
     assert "count(case when subcaste='ergatoid'" not in source
 
 
+# 2026-10-27 (docs/numbers.md rows 102, 117, 118; findings B55, B56, B57)
+
+class _Geo:
+    def __init__(self, id, valid):
+        self.id, self.isValid, self.name = id, valid, "Georgia"
+
+
+class _Query:
+    def __init__(self, rows):
+        self.rows = rows
+
+    def filter(self, *a):
+        return self
+
+    def order_by(self, *a):
+        return _Query(sorted(self.rows, key=lambda g: g.id))
+
+    def all(self):
+        return self.rows
+
+
+class _Session:
+    def __init__(self, rows):
+        self.rows = rows
+
+    def query(self, *a):
+        return _Query(self.rows)
+
+
+def test_get_geolocale_prefers_a_valid_geolocale():
+    """B55: a name shared by several geolocales gives a valid one (lowest id), not whichever row came first."""
+    saved = api.session
+    try:
+        api.session = _Session([_Geo(9, 0), _Geo(7, 1), _Geo(3, 0), _Geo(8, 1)])
+        assert api.getGeolocale("Georgia").id == 7
+        api.session = _Session([_Geo(9, 0), _Geo(4, 0)])
+        assert api.getGeolocale("Georgia").id == 4
+        api.session = _Session([])
+        assert api.getGeolocale("Georgia") is None
+    finally:
+        api.session = saved
+
+
+def test_geo_species_stats_counts_the_list_of_one_geolocale():
+    """B55: joined by the geolocale's id; by name, a name shared by two geolocales counted each specimen twice."""
+    source = inspect.getsource(api.getGeoSpeciesStats)
+    assert "g.id = :geolocaleId" in source and "g.name = :geolocaleName" not in source, source
+    assert '"geolocaleId": geolocale.id' in source
+
+
+def test_unimaged_names_have_a_fixed_order():
+    """B56: without byCaste the names had no order, so pages with offset could repeat or skip names."""
+    source = inspect.getsource(api.getUnimagedGeolocaleTaxa)
+    assert 'order by gt.taxon_name' in source and "order by taxon_name, caste desc" in source, source
+
+
+def test_by_caste_true_is_by_caste():
+    """B57: byCaste=true became the number 1 and was compared with '1', so it was ignored."""
+    source = inspect.getsource(api.getUnimagedGeolocaleTaxa)
+    assert "if byCaste == 'true': byCaste = '1'" in source, source
+    assert "byCaste = 1\n" not in source
+
+
 if __name__ == "__main__":
     failed = 0
     for name, fn in sorted(globals().items()):
