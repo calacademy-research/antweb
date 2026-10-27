@@ -14,6 +14,9 @@
    ActionForward of HttpUtil.sendMessage() was ignored and the page was built anyway.
 7. (2026-10-26, finding F2) The limits on simultaneous maps, comparisons and field guides use
    ConcurrencyLimiter (thread-safe), skip logged-in users and release only a slot they took.
+8. (2026-10-27, finding B44) The nightly recounts every valid adm1, also those that are not live
+   (GeolocaleDb.updateAdm1Counts): their pages showed old numbers next to a current list. The count check covers
+   them once a nightly run has recounted them (a later change).
 
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -147,6 +150,16 @@ def test_simultaneous_limits(sources):
     print("Simultaneous limits are thread-safe and skip logged-in users.")
 
 
+def test_adm1_totals_not_only_live(sources):
+    src = sources["src/org/calacademy/antweb/home/GeolocaleDb.java"]
+    body = src[src.index("public void updateAdm1Counts()"):]
+    body = body[:body.index("public void updateCountryCounts()")]
+    code = "\n".join(l for l in body.splitlines() if not l.strip().startswith("//"))
+    assert "updateCounts(geolocale.getId())" in code, "updateAdm1Counts no longer recounts each adm1"
+    assert not re.search(r"if\s*\(\s*geolocale\.isLive\(\)\s*\)", code), "updateAdm1Counts skips adm1s that are not live again"
+    print("Every valid adm1 is recounted, live or not.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -157,6 +170,7 @@ def main():
     test_admin_links_column_stacks_on_phones()
     test_too_busy_for_bots_is_returned(sources)
     test_simultaneous_limits(sources)
+    test_adm1_totals_not_only_live(sources)
 
 
 if __name__ == "__main__":
