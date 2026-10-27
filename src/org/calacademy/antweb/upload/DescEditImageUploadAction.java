@@ -114,22 +114,18 @@ public class DescEditImageUploadAction extends AntwebAction {
 //                    String docBase = request.getRealPath("/");
                     String docBase = AntwebProps.getDocRoot();
 
-                    // Create the curator's directory if it does not already exist.
+                    // The curator's directory (copyFile creates it if it does not exist yet).
                     if (dir.equals("curator")) {
                       dir = "web/curator/" + accessLogin.getId();
-                      Utility.makeDirTree(dir);
                     }
                     
-                    String fileName = theForm.getTheFile2().getFileName();
+                    // The file is saved, and its link shown, under the checked name: the output file name if one
+                    // was given, otherwise the uploaded file's name (the link used the uploaded name in both cases).
+                    String fileName = requestedName;
                     String dirFileName = dir + "/" + fileName;
                     String outputFileName = theForm.getOutputFileName();
 
                     String outputFileName2 = docBase + dirFileName;
-                    
-                    if (outputFileName != null
-                      && !outputFileName.equals("")) {
-                        outputFileName2 = docBase + dir + "/" + outputFileName; 
-                    }
 
                     Utility.backupFile(outputFileName2);
                     boolean isSuccess = Utility.copyFile(theForm.getTheFile2(), outputFileName2);

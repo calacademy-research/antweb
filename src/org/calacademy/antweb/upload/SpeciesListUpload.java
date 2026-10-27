@@ -149,10 +149,6 @@ public class SpeciesListUpload extends AntwebUpload {
   //LogMgr.logAntQuery(getConnection(), "projectTaxaCountByProjectRank", "Before worldants upload Proj_taxon worldants counts");
   //LogMgr.logAntBattery(getConnection(), "projectTaxonCounts", "before worldants upload Proj_taxon worldants counts");
 
-        if (Project.WORLDANTS.equals(project)) { // always does
-          new BioregionTaxonDb(getConnection()).deleteSource("antcat");
-        }
-
         ArrayList<String> preStats = null;
         try {
           if (singleUpload)
@@ -175,6 +171,11 @@ public class SpeciesListUpload extends AntwebUpload {
                 return uploadDetails;
             }
 		}
+
+        // The AntCat bioregion rows are removed only once the file has passed the check above (was before it).
+        if (Project.WORLDANTS.equals(project)) { // always does
+          new BioregionTaxonDb(getConnection()).deleteSource("antcat");
+        }
 
         // first flag the records that will be updated.  We did delete.  Now we update the 
         // pending flag, and the delete the ones that remain pending after import, so as to 
@@ -833,12 +834,13 @@ public class SpeciesListUpload extends AntwebUpload {
 
         String root = null;
         String query = "";
-		Statement stmt = null;
+		PreparedStatement stmt = null;
 		ResultSet rset = null;
         try {
-            query = "select root from project where project_name = '" + project + "'";
-            stmt = DBUtil.getStatement(getConnection(), "SpeciesListUpload.reloadSpeciesList()");
-            rset = stmt.executeQuery(query);
+            query = "select root from project where project_name = ?";
+            stmt = DBUtil.getPreparedStatement(getConnection(), "SpeciesListUpload.reloadSpeciesList()", query);
+            stmt.setString(1, project);
+            rset = stmt.executeQuery();
             while (rset.next()) {
               root = rset.getString("root");
             }
@@ -911,7 +913,8 @@ public class SpeciesListUpload extends AntwebUpload {
         UploadDetails uploadDetails = importSpeciesList(project, uploadFile, accessGroupId, singleUpload);
         uploadDetails.setOperation("worldantsReload");
 
-        uploadDetails.setMessage("success");
+        // The import's own answer ("success", or why it stopped); it was overwritten with "success" until 2026-10-27.
+        if (uploadDetails.getMessage() == null) uploadDetails.setMessage("success");
         
         return uploadDetails;
     }

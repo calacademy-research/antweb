@@ -632,7 +632,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
           }		  
 
       } catch (SQLException e) {
-        s_log.error("getProjectCount() query:" + query);
+        s_log.error("getProjectCount() query:" + query + " e:" + e);
+        return 1;  // as getSpecimenCount(): on an error never 0, which would allow delete() to delete the taxon
       } finally {
         DBUtil.close(stmt, rset, "this", "getProjectCount()");
       } 

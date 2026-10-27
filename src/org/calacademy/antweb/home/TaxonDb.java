@@ -836,7 +836,7 @@ Code added below on Apr 26 2023:
             int count = 0;
             while (rset.next()) {
                 taxonName = rset.getString("taxon_name");
-                if (asHtml) taxonName = "<br><a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + taxonName + "</a>";
+                if (asHtml) taxonName = "<br><a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.url(taxonName) + "'>" + Html.esc(taxonName) + "</a>";
                 taxonNames.add(taxonName);
             }
         } catch (SQLException e) {

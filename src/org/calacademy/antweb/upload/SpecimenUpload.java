@@ -250,9 +250,17 @@ public class SpecimenUpload extends SpecimenUploadParse {
                 ProfileCounter.reset();
 
             } catch (AntwebException e) {
+              // No line saved, or a line stopped the upload: the group's specimens were already removed above, so the
+              // upload must not be committed. The forward page makes the caller roll back (SpecimenUploadJob,
+              // TaxonWorksNightly), as the report heading "Rollback occurred (not uploaded)" says. Nothing else runs
+              // on the doomed transaction (the caches would be loaded from it).
               s_log.warn("importSpecimens() e:" + e);
               getUploadDetails().getMessageMgr().addToMessages(MessageMgr.noRecordsProcessed, Html.esc(e.getMessage()));
-              //throw e;
+              getUploadDetails().setMessage(rolledBackMessage(e.getMessage()));
+              getUploadDetails().setForwardPage("message");
+              in.close();
+              Profiler.profile("importSpecimens", startTime);
+              return getUploadDetails();
             } catch (TestException e) {
               s_log.warn("TestException thrown");
               try {
@@ -296,6 +304,12 @@ public class SpecimenUpload extends SpecimenUploadParse {
         Profiler.profile("importSpecimens", startTime);
 
         return getUploadDetails();
+    }
+
+    /** The message of an upload that is rolled back because no line was saved or a line stopped it. */
+    public static String rolledBackMessage(String reason) {
+        return "The upload was stopped and nothing was changed (" + Html.esc(reason == null ? "no reason given" : reason)
+            + "). The group's specimens are as they were before the upload.";
     }
 
     private ArrayList<String> getArrayListEmptiesToo(String header) {
