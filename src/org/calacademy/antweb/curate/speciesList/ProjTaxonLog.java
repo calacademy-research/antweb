@@ -90,7 +90,7 @@ public class ProjTaxonLog extends ProjTaxon {
       int curatorId = getCuratorId();
       Login login = LoginMgr.getLogin(curatorId);
       String curatorName = "";
-      if (login != null) curatorName = "(" + login.getName() + ")";
+      if (login != null) curatorName = "(" + Html.esc(login.getName()) + ")";
       heading += "<br>curator:" + getCuratorId() + curatorName;
       
       return heading;

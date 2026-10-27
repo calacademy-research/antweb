@@ -40,7 +40,7 @@ public class ValidateSpeciesListAction extends SpeciesListSuperAction {
             if ("download".equals(toolForm.getAction()) || "downloadCorrected".equals(toolForm.getAction())) {
                 ValidateSpeciesReport cachedReport = (ValidateSpeciesReport) request.getSession().getAttribute("validationReport");
                 if (cachedReport != null) {
-                    response.setContentType("text/tab-separated-values");
+                    response.setContentType("text/tab-separated-values; charset=UTF-8");
                     if ("downloadCorrected".equals(toolForm.getAction())) {
                         response.setHeader("Content-Disposition", "attachment; filename=\"corrected_species_list_for_upload.tsv\"");
                         response.getWriter().write(cachedReport.generateCorrectedTsvReport());

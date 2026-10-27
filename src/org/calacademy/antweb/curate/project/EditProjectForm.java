@@ -247,6 +247,9 @@ public final class EditProjectForm extends ActionForm {
     public void reset(ActionMapping mapping, HttpServletRequest request) {
         this.projectName = "";
         title = "";
+        // A checkbox is sent only when ticked, and this form is kept in the session: without the reset an
+        // unticked "Live" box kept its earlier value, so a project could not be taken off line.
+        isLive = false;
 /*        
         author = "";
         contents = "";

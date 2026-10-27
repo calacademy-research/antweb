@@ -73,7 +73,7 @@ public class ManageMuseumsAction extends AntwebAction {
         }
 
         // Is it new?
-        if ("save".equals(action) && museumCode == null) {
+        if ("save".equals(action) && (museumCode == null || museumCode.isEmpty())) {   // no museum without a code
           return mapping.findForward("success");
         }
 
