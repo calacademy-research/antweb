@@ -50,7 +50,10 @@ public class TaxonWorksTransformer extends Transformer {
             Pair.of("habitat", "Habitat"),
             Pair.of("TW:DataAttribute:CollectingEvent:Microhabitat", "Microhabitat"),
             Pair.of("samplingProtocol", "Method"),
-            Pair.of("TW:DataAttribute:CollectingEvent:CollectionNotes", "CollXYAccuracy"),
+            // Collection notes (Brian Fisher, 2026-10-27). Was "CollXYAccuracy", the old Biota name that the specimen
+            // upload also stores in collectionnotes (SpecimenUploadParse.buildColumnTranslations), so the column was
+            // already right; the name now says what it is.
+            Pair.of("TW:DataAttribute:CollectingEvent:CollectionNotes", "CollectionNotes"),
             Pair.of("verbatimLocality", "LocalityName"),
             Pair.of("TW:DataAttribute:CollectingEvent:LocalityCode", "LocalityCode"),
             Pair.of("TW:DataAttribute:CollectingEvent:adm2", "Adm2"),
