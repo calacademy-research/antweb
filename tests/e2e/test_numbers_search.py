@@ -12,7 +12,9 @@ specimens that the API finds by its country) and a genus of its list with at mos
           without the no-photos mark = the rows whose API imageCount > 0.
   row 68  resultRank=species "S Species (from N specimens).": N = the specimen search's N, S = the rows listed = the
           distinct genus, species (and subspecies) of the API's records (AdvancedSearchResults.getSpeciesList).
-          B54 (xfail): names not identified to genus are counted as species.
+          B54 (fixed 2026-10-27): names not identified to genus are not listed or counted; a line under the list
+          gives their specimens ("N specimens not identified to genus (not counted as species)") with a link to
+          the specimen view, and N + the specimens of the species listed = the search's specimens.
   row 69  prepareCompareResults.do and prepareMapResults.do (log in needed: curator test account): with resultRank
           specimen the page shows the specimens of the search page that have an image (compare) or coordinates (map):
           "Showing 1-k of k Specimens", k = the rows and checkboxes listed = the search page's rows with an image /
@@ -205,29 +207,96 @@ def test_search_by_species_counts_the_names_of_its_specimens():
     assert not wrong, f"{genus} of {country} {ns.day_note()}:\n" + "\n".join(wrong)
 
 
-@pytest.mark.xfail(strict=False, reason="B54: the search by species counts names not identified to genus as species")
+NOT_IDENTIFIED = re.compile(r'<div id="not_identified_to_genus"[^>]*>\s*([\d,]+) specimens? not identified to genus '
+                            r'\(not counted as species\), listed in the <a href="([^"]+)">specimen view</a>')
+SPECIMEN_NAME = re.compile(r'<div class="sd_specimen_name">.*?<a href="[^"]*/description\.do\?[^"]*">\s*<span[^>]*>([^<]*)</span>',
+                           re.S)
+
+
+def indet_url(country, rank):
+    return (SEARCH + "&familySearchType=equals&family=formicidae&genusSearchType=contains&genus=indet"
+            f"&country={quote_plus(country)}&statusSet=all&resultRank={rank}")
+
+
+def indet_countries():
+    return ["Madagascar"] + ns.pick([r.get("geolocaleName") for r in ns.geolocales("country")], 1, "indet")
+
+
+def listed_genera(html):
+    genera = []
+    for r in ns.list_rows(html):
+        g = re.search(r'description\.do\?[^"\'>]*?\bgenus=([^&"\'>]+)', r["html"])
+        genera.append(unquote(unescape(g.group(1))).strip().lower() if g else None)
+    return genera
+
+
 def test_search_by_species_leaves_out_names_not_identified_to_genus():
-    """Row 68 (B54): a search by species of names whose genus is not identified ((indet), indet) finds no species
-    (Brian Fisher, 2026-10-22: such names are not species anywhere)."""
+    """Row 68 (B54, fixed 2026-10-27): a search by species of names whose genus is not identified ((indet), indet)
+    lists no such name and does not count it as a species (Brian Fisher, 2026-10-22: such names are not species
+    anywhere). Its specimens are not hidden: "(from N specimens)" still counts them, and the line under the list says
+    how many are not identified to genus."""
     checked = []
-    for country in ["Madagascar"] + ns.pick([r.get("geolocaleName") for r in ns.geolocales("country")], 1, "indet"):
-        url = (SEARCH + "&familySearchType=equals&family=formicidae&genusSearchType=contains&genus=indet"
-               f"&country={quote_plus(country)}&statusSet=all&resultRank=species")
-        html = ns.fetch(url, new_session())
+    wrong = []
+    for country in indet_countries():
+        html = ns.fetch(indet_url(country, "species"), new_session())
         m = BY_TAXON.search(ns.text_of(html or ""))
         if not m:
             continue
         checked.append(country)
-        genera = []
-        for r in ns.list_rows(html):
-            g = re.search(r'description\.do\?[^"\'>]*?\bgenus=([^&"\'>]+)', r["html"])
-            genera.append(unquote(unescape(g.group(1))).strip().lower() if g else None)
-        identified = sum(1 for g in genera if g and identified_to_genus(g))
-        assert ns.n(m.group(1)) == identified, (
-            f"{country}, genus contains 'indet': {m.group(0)}; {identified} of the {len(genera)} names listed are "
-            f"identified to genus ({sorted(set(g for g in genera if g))[:5]})")
+        species, specimens = ns.n(m.group(1)), ns.n(m.group(2))
+        genera = listed_genera(html)
+        unidentified = sorted(set(g for g in genera if g and not identified_to_genus(g)))
+        if unidentified:
+            wrong.append(f"{country}: names not identified to genus listed: {unidentified[:5]}")
+        if species != len(genera):
+            wrong.append(f"{country}: {m.group(0)} with {len(genera)} rows listed")
+        note = NOT_IDENTIFIED.search(html)
+        if not genera and specimens and not note:
+            wrong.append(f"{country}: {m.group(0)}, no species listed and no 'N specimens not identified to genus' line")
+        if note and not 0 < ns.n(note.group(1)) <= specimens:
+            wrong.append(f"{country}: {note.group(1)} specimens not identified to genus of {specimens}")
     if not checked:
         pytest.skip("no specimens with an unidentified genus found " + ns.day_note())
+    assert not wrong, ns.day_note() + ":\n" + "\n".join(wrong)
+
+
+def test_search_by_species_note_and_listed_species_add_up_to_the_specimens():
+    """Row 68 (B54): "N specimens not identified to genus (not counted as species)" plus the specimens of the species
+    listed = the search's specimens ("from M specimens" and the specimen view the line links to). The specimen view's
+    rows are matched to the species listed by their names; searches of more than 200 specimens (one page) are skipped."""
+    checked = []
+    wrong = []
+    for country in indet_countries():
+        s = new_session()
+        html = ns.fetch(indet_url(country, "species"), s)
+        m = BY_TAXON.search(ns.text_of(html or ""))
+        note = NOT_IDENTIFIED.search(html or "")
+        if not m or not note:
+            continue
+        specimens, n_note = ns.n(m.group(2)), ns.n(note.group(1))
+        view = ns.fetch(unescape(note.group(2)), s)
+        total = search_total(view)
+        if total is None:
+            wrong.append(f"{country}: the line's link does not give a specimen list")
+            continue
+        if "truncated" not in html and total != specimens:
+            wrong.append(f"{country}: specimen view N {total}, the search by species '{m.group(0)}'")
+        if total > 200:
+            continue
+        checked.append(country)
+        listed = {ns.text_of(r["html"].split("description.do?", 1)[1].split(">", 1)[1].split("</a>", 1)[0]).lower()
+                  for r in ns.list_rows(html) if "description.do?" in r["html"]}
+        names = [re.sub(r"\s+", " ", unescape(x)).strip().lower() for x in SPECIMEN_NAME.findall(view)]
+        if len(names) != total:
+            wrong.append(f"{country}: {total} specimens, {len(names)} specimen names read from the specimen view")
+            continue
+        of_listed = sum(1 for x in names if x in listed)
+        if n_note + of_listed != total:
+            wrong.append(f"{country}: {n_note} not identified to genus + {of_listed} of the {len(listed)} species "
+                         f"listed = {n_note + of_listed}, the search has {total} specimens")
+    if not checked and not wrong:
+        pytest.skip("no search with specimens not identified to genus (of at most 200 specimens) " + ns.day_note())
+    assert not wrong, ns.day_note() + ":\n" + "\n".join(wrong)
 
 
 # ----------------------------------------------------------------------------------------------- rows 69, 70 (log in)

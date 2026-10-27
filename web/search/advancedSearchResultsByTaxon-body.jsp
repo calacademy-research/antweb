@@ -242,6 +242,17 @@ Sorry, nothing matches your request.
 	</logic:iterate>
 </div></div><%-- /aw-list, /aw-list-scroll --%>
 </form>
+<%
+    // B54, 2026-10-27: names not identified to genus are not species (PlaceTotals.isIdentifiedToGenus) and are not in
+    // the list above; their specimens are still in the search and in its "(from N specimens)". Search page only (not
+    // the Compare or Map preparation of it). There is no search filter for "not identified to genus", so the link is
+    // the specimen view of the same search.
+    Integer notIdentified = (Integer) request.getAttribute("specimensNotIdentifiedToGenus");
+    String specimenViewQuery = (String) request.getAttribute("specimenViewQuery");
+    if ("species".equals(resultRank) && preparedModifier == null && notIdentified != null && notIdentified > 0 && specimenViewQuery != null) {
+%>
+<div id="not_identified_to_genus" class="not_identified_to_genus"><%= notIdentified %> <%= notIdentified == 1 ? "specimen" : "specimens" %> not identified to genus (not counted as species), listed in the <a href="<%= AntwebProps.getDomainApp() %>/advancedSearch.do?<%= org.calacademy.antweb.util.Html.escAttr(specimenViewQuery) %>">specimen view</a> of this search.</div>
+<% } %>
 
 </div>
 

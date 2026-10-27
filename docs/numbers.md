@@ -158,7 +158,7 @@ inventory 2026-10-20: 9, 7, 102).
 | 65 | specimen, collection, locality pages | collection N specimens of M species | live; N = the search by the collection code and its specimens, M = distinct genus and species of the specimens' API records, names not identified to genus left out (B52, fixed 2026-10-27); daily sample of collections | yes | e2e:test_numbers_live.py::test_collection_and_locality_counts_equal_their_lists; e2e:test_numbers_search.py::test_collection_counts_equal_a_search_and_the_api |
 | 66 | specimen, collection, locality pages | locality N collections | live; one row per collection code since 2026-10-27 (B51); N = the rows = the distinct collection codes of the locality's specimens (search by its locality code); daily sample of localities | yes | e2e:test_numbers_live.py::test_collection_and_locality_counts_equal_their_lists; e2e:test_numbers_search.py::test_locality_collections_equal_the_codes_of_its_specimens |
 | 67 | search results | Advanced search N specimens (M imaged) | live, HTTP session; N = the API's records of the same country, genus and statuses, M = the page's rows whose API imageCount > 0; daily sample of country and genus | yes | e2e:test_numbers_live.py::test_search_counts_agree; e2e:test_download_guards.py::test_search_list_is_paged_and_fast; e2e:test_numbers_search.py::test_search_total_and_imaged_count_equal_the_api |
-| 68 | search results | Advanced search by taxon N species (from M specimens) | live, session; S = the rows = distinct names of the API's records, M = the specimen search's N; names not identified to genus counted (B54, xfail) | yes | e2e:test_numbers_live.py::test_search_counts_agree; e2e:test_numbers_search.py::test_search_by_species_counts_the_names_of_its_specimens; e2e:test_numbers_search.py::test_search_by_species_leaves_out_names_not_identified_to_genus |
+| 68 | search results | Advanced search by taxon N species (from M specimens) | live, session; S = the rows = distinct names of the API's records, M = the specimen search's N; names not identified to genus left out (B54, fixed 2026-10-27), their specimens still in M and given under the list ("N specimens not identified to genus (not counted as species)", linked to the specimen view): that N + the specimens of the species listed = M; the same list feeds Compare, Map and the field guide of the search | yes | e2e:test_numbers_live.py::test_search_counts_agree; e2e:test_numbers_search.py::test_search_by_species_counts_the_names_of_its_specimens; e2e:test_numbers_search.py::test_search_by_species_leaves_out_names_not_identified_to_genus; e2e:test_numbers_search.py::test_search_by_species_note_and_listed_species_add_up_to_the_specimens; junit:SearchSpeciesListTest#testNamesNotIdentifiedToGenusAreNotSpecies; junit:SearchSpeciesListTest#testOnlyUnidentifiedNamesGiveAnEmptyListNotAnError |
 | 69 | search results | Compare / map preparation counts | live (log in needed); specimens: the page's rows with an image or API coordinates; species: the header = the rows listed (B50, fixed 2026-10-27), coordinates read as decimals (B53, fixed 2026-10-27) | yes | e2e:test_numbers_live.py::test_search_counts_agree; e2e:test_numbers_search.py::test_compare_and_map_preparations_count_what_they_list |
 | 70 | search results | multiTaxaComparison N specimens | live (log in needed); N = the specimens chosen, and those are the specimens shown | yes | e2e:test_numbers_live.py::test_comparison_of_chosen_specimens_counts_them; e2e:test_numbers_search.py::test_comparison_counts_the_chosen_specimens |
 | 71 | search results | Recent images N Images | live: one row per image since 2026-10-27 (B47, fixed: images of two specimens of one name with the same shot, number and upload second were one row); = the images the API counts as uploaded in the last 30 days (between its 29 and 31 days) | yes | e2e:test_numbers_live.py::test_recent_images_count_equals_the_rows_shown; e2e:test_numbers_images.py::test_recent_images_count_equals_the_images_uploaded; unit:test_image_count_fixes.py::test_recent_images_one_row_per_image |
@@ -546,11 +546,20 @@ Found while doing this (2026-10-27, end-to-end tests of rows 19, 45, 65 to 70, `
   and 1) counted as not georeferenced and was left out of "N georeferenced specimens". Now read as decimals, a missing
   value is not georeferenced. Tests: `e2e:test_numbers_search.py::test_compare_and_map_preparations_count_what_they_list`,
   `tests/unit/test_numbers_search_fixes.py`.
-- **B54** (open) the search by species ("S Species (from N specimens).", `AdvancedSearchResults.getSpeciesList`) counts
-  every genus + species (+ subspecies) of the specimens found, names not identified to genus included. Fix: skip names
-  whose genus is not identified (`PlaceTotals.isIdentifiedToGenus`) in `getSpeciesList` (`AdvancedSearchResults.java` line 78); it is also the species list of
-  Compare, Map and the field guide of a search, so decide for all of them together. Test:
-  `e2e:test_numbers_search.py::test_search_by_species_leaves_out_names_not_identified_to_genus` (xfail).
+- **B54** (fixed 2026-10-27) the search by species ("S Species (from N specimens).", `AdvancedSearchResults.getSpeciesList`)
+  counted every genus + species (+ subspecies) of the specimens found, names not identified to genus included.
+  `getSpeciesList` now leaves out names whose genus is not identified (`AdvancedSearchResults.countsAsSpecies`, the rule
+  of `PlaceTotals.isIdentifiedToGenus`). The same list is the session's `taxonList` that Compare, Map and the field guide
+  of the search choose from by index (`PrepareCompareResultsAction`, `PrepareMapResultsAction`, `CompareResultsAction`,
+  `MapResultsAction`, `FieldGuideResultsAction`), so they leave these names out too; a search of such names only lists
+  "0 Species (from N specimens)." and no error. The field guide shows no species count. The specimens are not hidden:
+  N still counts them, and a line under the list says "K specimens not identified to genus (not counted as species),
+  listed in the specimen view of this search" (`SearchAction` sets the count and the link, the same search with
+  `resultRank=specimen`; the search has no filter for "not identified to genus"). The curators' Species List Tool
+  ("search results" list) uses the same method and leaves them out as well. Tests:
+  `e2e:test_numbers_search.py::test_search_by_species_leaves_out_names_not_identified_to_genus`,
+  `e2e:test_numbers_search.py::test_search_by_species_note_and_listed_species_add_up_to_the_specimens`,
+  `junit:SearchSpeciesListTest` (no database), `tests/unit/test_numbers_search_fixes.py`.
 - Not a number, for the record: `test_numbers_live.py::test_collection_and_locality_counts_equal_their_lists` and
   `test_comparison_of_chosen_specimens_counts_them` could not fail as written (collection.do links its specimens as
   `specimen.do?name=`, the search rows' checkboxes have `class` before `name`, and the compare pages need a login), and

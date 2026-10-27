@@ -81,6 +81,7 @@ tests = [
   "test_numbers_search.py::test_search_total_and_imaged_count_equal_the_api",
   "test_numbers_search.py::test_search_by_species_counts_the_names_of_its_specimens",
   "test_numbers_search.py::test_search_by_species_leaves_out_names_not_identified_to_genus",
+  "test_numbers_search.py::test_search_by_species_note_and_listed_species_add_up_to_the_specimens",
   "test_numbers_search.py::test_collection_counts_equal_a_search_and_the_api",
   "test_numbers_search.py::test_locality_collections_equal_the_codes_of_its_specimens",
   "test_numbers_search.py::test_statspage_valid_fossil_equals_the_museum_lists",

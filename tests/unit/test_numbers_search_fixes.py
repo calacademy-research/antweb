@@ -7,6 +7,9 @@ B51  The locality page lists one row per collection code (LocalityDb: group by t
      the habitat, method, coordinates and dates; specimens without a code are no collection).
 B52  The collection page's "of M species" leaves out names not identified to genus (PlaceTotals.isIdentifiedToGenus).
 B53  Map preparation reads coordinates as decimals (getDouble), not whole degrees (getInt).
+B54  The species list of a search by species (AdvancedSearchResults.getSpeciesList; also the list of its Compare, Map
+     and field guide) leaves out names not identified to genus; the page says how many specimens that is and links to
+     the specimen view of the same search (the filtering itself: test/.../search/SearchSpeciesListTest.java).
 
 Run: python3 tests/unit/test_numbers_search_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -57,11 +60,41 @@ def test_map_preparation_reads_decimal_coordinates():
     print("B53: map preparation reads coordinates as decimals.")
 
 
+def test_search_species_list_leaves_out_names_not_identified_to_genus():
+    src = read("src/org/calacademy/antweb/search/AdvancedSearchResults.java")
+    body = src[src.index("public ArrayList<ResultItem> getSpeciesList()"):]
+    body = body[:body.index("return specList;")]
+    assert "if (!countsAsSpecies(thisItem)) continue;" in body, "getSpeciesList counts names not identified to genus (B54)"
+    assert "PlaceTotals.isIdentifiedToGenus(item.getGenus())" in src, "countsAsSpecies is not the place pages' rule"
+    # Every consumer takes the same list: the search page, Compare and Map preparations (field guide, Compare and Map
+    # choose from the session's taxonList by index).
+    for rel in ("src/org/calacademy/antweb/search/SearchAction.java",
+                "src/org/calacademy/antweb/search/PrepareCompareResultsAction.java",
+                "src/org/calacademy/antweb/search/PrepareMapResultsAction.java"):
+        assert "getSpeciesList()" in read(rel), rel
+    for rel in ("src/org/calacademy/antweb/search/FieldGuideResultsAction.java",
+                "src/org/calacademy/antweb/search/CompareResultsAction.java"):
+        assert 'session.getAttribute("taxonList")' in read(rel), rel
+    action = read("src/org/calacademy/antweb/search/SearchAction.java")
+    assert 'request.setAttribute("specimensNotIdentifiedToGenus", notIdentified)' in action
+    assert "AdvancedSearchResults.specimenViewQuery(request.getParameterMap())" in action
+    jsp = read("web/search/advancedSearchResultsByTaxon-body.jsp")
+    note = jsp[jsp.index('id="not_identified_to_genus"'):]
+    note = note[:note.index("</div>")]
+    assert "not identified to genus (not counted as species), listed in the" in note, note
+    assert "/advancedSearch.do?<%= org.calacademy.antweb.util.Html.escAttr(specimenViewQuery) %>" in note, note
+    assert jsp.index("/aw-list, /aw-list-scroll") < jsp.index('id="not_identified_to_genus"'), "the note is not under the list"
+    assert "preparedModifier == null" in jsp[jsp.index('getAttribute("specimensNotIdentifiedToGenus")'):jsp.index('id="not_identified_to_genus"')], \
+        "the note shows on the Compare or Map preparation too"
+    print("B54: the search's species list leaves out names not identified to genus and says how many specimens they have.")
+
+
 def main():
     test_by_taxon_header_after_preparation()
     test_locality_lists_each_collection_once()
     test_collection_species_are_identified_to_genus()
     test_map_preparation_reads_decimal_coordinates()
+    test_search_species_list_leaves_out_names_not_identified_to_genus()
 
 
 if __name__ == "__main__":

@@ -199,6 +199,20 @@ jobs:
             grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of the species list of a search (names not identified to genus left out, B54)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/search/AdvancedSearchResults.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/search/SearchSpeciesListTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.search.SearchSpeciesListTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (3 tests)" /tmp/out.txt
+          '
+
       - name: Map popups show decoded titles and link once-encoded codes (tests/unit/test_map_popups.py, runs drawMap.js in node)
         run: python3 tests/unit/test_map_popups.py
 
