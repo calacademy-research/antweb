@@ -777,6 +777,15 @@ To fix this proper would involve rewriting Species.sort()
         return hasSpecimenData;
     }
     
+    /**
+     * The number of the habitat, microhabitat and method summaries: collection events. Brian Fisher, 2026-10-27
+     * (docs/numbers.md B72): a specimen without a collection code is a collection event of its own. Until then the
+     * number was count(distinct collectioncode), so such specimens were not counted (a habitat known only from them
+     * was not shown "1 times" but "0 times"), and an empty code counted as one event.
+     */
+    public static final String COLLECTION_EVENTS = "cast(count(distinct nullif(trim(collectioncode), ''))"
+        + " + sum(nullif(trim(collectioncode), '') is null) as signed)";
+
     public void setHabitats(Connection connection) {
         //Formatter formatter = new Formatter();
         Vector<String> habitats = new Vector<>();
@@ -790,12 +799,12 @@ To fix this proper would involve rewriting Species.sort()
             
             theQuery =
 //                " select count(habitat), habitat " 
-              " select count(distinct collectioncode), habitat "
+              " select " + COLLECTION_EVENTS + ", habitat "
               + " from specimen " 
               + " where taxon_name='" + taxonName + "'"
               + " and habitat is not null and habitat != ''"
               + " group by habitat " 
-              + " order by count(distinct collectioncode) desc, habitat"   // by the number shown (2026-10-21; was by specimens)
+              + " order by " + COLLECTION_EVENTS + " desc, habitat"   // by the number shown (2026-10-21; was by specimens)
               + " limit 25";
 
             stmt = DBUtil.getStatement(connection, "setHabitats()");
@@ -835,12 +844,12 @@ To fix this proper would involve rewriting Species.sort()
             
             theQuery =
 //                " select count(habitat), habitat " 
-              " select count(distinct collectioncode), microhabitat "
+              " select " + COLLECTION_EVENTS + ", microhabitat "
               + " from specimen " 
               + " where taxon_name='" + taxonName + "'"
               + " and microhabitat is not null and microhabitat != ''"
               + " group by microhabitat " 
-              + " order by count(distinct collectioncode) desc, microhabitat"
+              + " order by " + COLLECTION_EVENTS + " desc, microhabitat"
               + " limit 25";
 
 //A.log("setMicrohabitats() query:" + theQuery);
@@ -879,12 +888,12 @@ To fix this proper would involve rewriting Species.sort()
             taxonName = AntFormatter.escapeQuotes(getTaxonName());
             
             String theQuery =
-                " select count(distinct collectioncode), method " 
+                " select " + COLLECTION_EVENTS + ", method " 
               + " from specimen " 
               + " where taxon_name='" + taxonName + "'"
               + " and method is not null and method != ''"
               + " group by method " 
-              + " order by count(distinct collectioncode) desc, method"
+              + " order by " + COLLECTION_EVENTS + " desc, method"
               + " limit 25";
 
             stmt = DBUtil.getStatement(connection, "setMethods()");

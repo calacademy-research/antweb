@@ -17,6 +17,16 @@ public class OrphansDb extends AntwebDb {
       super(connection);
     }
 
+    /** SQL: no taxon names the taxon (the outer query's taxon table, unaliased) as its parent. */
+    public static final String NO_CHILD = "not exists (select 1 from taxon c where c.parent_taxon_name = taxon.taxon_name)";
+
+    /**
+     * Brian Fisher, 2026-10-27: the deletes of orphan genera and subfamilies stay off until he and Claude have reviewed
+     * the list on staging (the Query Manager's orphanGenera and orphanSubfamilies, read-only). Before the NULL fix above
+     * the deletes found nothing, so they never deleted anything; with the fix they would start to.
+     */
+    public static final boolean ORPHAN_GENUS_SUBFAMILY_DELETES_ON = false;
+
     public static String getOrphanedSpeciesQuery() {
       return OrphansDb.getOrphanedSpeciesQuery("specimen");
     }
@@ -48,9 +58,11 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     // Outstanding question.  How to get rid of outdated "addMissingGenera" genera?  See below...
     // This is not yet utilized...
     public static String getOrphanedGeneraQuery(String source) {
+      // 2026-10-27 (docs/numbers.md B68): was "taxon_name not in (select parent_taxon_name from taxon)", which finds
+      // nothing as soon as one taxon has no parent (NOT IN over a list holding a NULL is never true).
       String query = "select source, taxon_name from taxon " 
         + " where taxarank = 'genus'"
-        + " and taxon_name not in (select parent_taxon_name from taxon)";
+        + " and " + NO_CHILD;
       if (source != null) {
         query += " and source like '%" + DBUtil.escapeQuotes(source) + "%'";
       }
@@ -74,7 +86,7 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     private static String getOrphanedSubfamiliesQuery(String source) {
       String query = "select source, subfamily from taxon " 
         + " where taxarank = 'subfamily'"
-        + " and taxon_name not in (select parent_taxon_name from taxon)";   
+        + " and " + NO_CHILD;   // 2026-10-27: was NOT IN, see getOrphanedGeneraQuery
       if (source != null) {
         query += " and source like '%" + DBUtil.escapeQuotes(source) + "%'";
       }
@@ -479,6 +491,10 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     }    
 
     public void deleteOrphanedGeneraFromSource(String source) throws SQLException {  
+        if (!ORPHAN_GENUS_SUBFAMILY_DELETES_ON) {
+            s_log.warn("deleteOrphanedGeneraFromSource(" + source + ") off until the orphan list is reviewed (2026-10-27); nothing deleted");
+            return;
+        }
         Statement stmt = null;
         ResultSet rset = null;
         try {
@@ -507,7 +523,10 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
     }
          
     public void deleteOrphanedSubfamiliesFromSource(String source) throws SQLException {
-          
+       if (!ORPHAN_GENUS_SUBFAMILY_DELETES_ON) {
+           s_log.warn("deleteOrphanedSubfamiliesFromSource(" + source + ") off until the orphan list is reviewed (2026-10-27); nothing deleted");
+           return;
+       }
        Statement stmt = null;
        ResultSet rset = null;
        String query = OrphansDb.getOrphanedSubfamiliesQuery(source);

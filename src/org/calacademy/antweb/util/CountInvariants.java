@@ -30,7 +30,8 @@ import org.calacademy.antweb.home.PlaceTotals;
  *   place.valid              Valid species = valid extant species and subspecies on the list; and Valid <= Species
  *   place.specimens          geolocales, projects: Specimens = sum of the species and subspecies rows' specimens;
  *                            museums, bioregions: = their specimens (specimen.museum, specimen.bioregion)
- *   place.endemic, place.introduced   = the rows flagged on the list (the rows endemic.do and introduced.do show)
+ *   place.endemic, place.introduced   = the rows flagged on the list with a counted status (the rows endemic.do and
+ *                                       introduced.do show; PlaceTotals.flaggedCondition, 2026-10-27)
  *   place.pies               "Species per Subfamily" adds up to Species, "Specimens per Subfamily" to Specimens
  *   place.images             Images >= Imaged specimens <= Specimens; Images = all views + labels; Ant images =
  *                            sum of the views; specimens with images = imaged + label-only; the place table's
@@ -453,7 +454,9 @@ public final class CountInvariants {
                     .pendingOn("endemic".equals(field), true, false, false);
                 check(check, c -> {
                     if (!columnExists(l, "is_" + field)) return;
-                    Map<String, long[]> flagged = rows("select " + lk + ", count(*) from " + l + " where is_" + field + " = 1 group by " + lk);
+                    // the rule of the lists and the numbers: flagged rows of a counted status (B70, 2026-10-27)
+                    Map<String, long[]> flagged = rows("select l." + lk + ", count(*) from " + l + " l where "
+                        + PlaceTotals.flaggedCondition(field) + " group by l." + lk);
                     for (String key : inScope.keySet()) {
                         if (!stored.containsKey(key)) continue;
                         compare(c, type, key, "endemic".equals(field) ? "Endemic" : "Introduced", v(stored, key, col), v(flagged, key, 0), "=", why(c, type, key));

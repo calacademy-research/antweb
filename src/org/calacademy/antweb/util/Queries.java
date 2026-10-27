@@ -312,6 +312,38 @@ public abstract class Queries {
             + " and (genus is not null and genus != '') order by source, taxon_name"
           ));
 
+        // 2026-10-27 (Brian Fisher; docs/numbers.md B68): the orphan genus and subfamily report, read-only. The
+        // removed Orphan Manager and OrphansDb used "taxon_name not in (select parent_taxon_name from taxon)", which
+        // finds nothing as soon as one taxon has no parent. Deletes stay off (OrphansDb.ORPHAN_GENUS_SUBFAMILY_DELETES_ON)
+        // until this list has been reviewed on staging.
+        queries.add(new NamedQuery(
+            "orphanGenera"
+          , "Genera that no name in AntWeb has as its parent (no species or subgenus under them), with the specimens"
+            + " filed under the genus name itself and its description edits. Read-only: AntWeb does not delete them;"
+            + " the deletes are off until Brian Fisher and Claude have reviewed this list on staging."
+          , h("Taxon Name", "Status", "Source", "Created", "Specimens", "Description Edits")
+          , "select t.taxon_name, t.status, t.source, t.created,"
+            + " (select count(*) from specimen s where s.taxon_name = t.taxon_name) specimens,"
+            + " (select count(*) from description_edit d where d.taxon_name = t.taxon_name) edits"
+            + " from taxon t where t.taxarank = 'genus'"
+            + " and not exists (select 1 from taxon c where c.parent_taxon_name = t.taxon_name)"
+            + " order by t.source, t.taxon_name"
+          ));
+
+        queries.add(new NamedQuery(
+            "orphanSubfamilies"
+          , "Subfamilies that no name in AntWeb has as its parent (no genus under them), with the specimens filed under"
+            + " the subfamily and its description edits. Read-only: AntWeb does not delete them; the deletes are off"
+            + " until Brian Fisher and Claude have reviewed this list on staging."
+          , h("Taxon Name", "Status", "Source", "Created", "Specimens", "Description Edits")
+          , "select t.taxon_name, t.status, t.source, t.created,"
+            + " (select count(*) from specimen s where s.subfamily = t.subfamily) specimens,"
+            + " (select count(*) from description_edit d where d.taxon_name = t.taxon_name) edits"
+            + " from taxon t where t.taxarank = 'subfamily'"
+            + " and not exists (select 1 from taxon c where c.parent_taxon_name = t.taxon_name)"
+            + " order by t.source, t.taxon_name"
+          ));
+
         queries.add(new NamedQuery(
             "taxonNameWithDoubleQuote"
           , "Names that contain a double quote (\"), which breaks links and searches. Fix: correct the name at"
@@ -1337,7 +1369,7 @@ public abstract class Queries {
         QUERY_GROUPS.put(QueryGroup.NAMES, new String[] {
             "noSpeciesForSpecies", "nonAsciiTaxonName", "selfRefSynonyms", "homonyms", "invalidCurrentValid",
             "noGenusForGenus", "noSubfamilyForSubfamily", "emptyGenus", "generaInMultipleSubfamilies",
-            "generaInMultipleSubfamiliesDetail", "emptySubfamily", "taxonNameWithDoubleQuote", "taxonNameWithSingleQuote",
+            "generaInMultipleSubfamiliesDetail", "emptySubfamily", "orphanGenera", "orphanSubfamilies", "taxonNameWithDoubleQuote", "taxonNameWithSingleQuote",
             "validsWithCurrentValidName", "missingCurrentValidName", "spaceInGenusName", "unrecognizedWithSynonymParent",
             "unrecognizedTaxaWithoutSpecimen", "speciesEqualsSubspecies", "indeterminedAndQuestionableMorphoTaxa",
             "badParentTaxonName", "badParentTaxonNameSpecimens", "taxaFromOldSpecimenLists", "homonymWithoutTaxon"});

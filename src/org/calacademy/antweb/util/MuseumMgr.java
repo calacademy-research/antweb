@@ -35,6 +35,19 @@ public class MuseumMgr {
       return s_museums;
     }
 
+    /**
+     * The number of collaborating institutions on the statistics page: the museums of the Museums list (museums.do
+     * lists every museum of MuseumMgr). Brian Fisher, 2026-10-27 (docs/numbers.md B73): counted from that list, was
+     * the fixed text "21". 0 until the list is loaded (in the minutes after a start).
+     */
+    public static int getMuseumCount() {
+      return countOf(s_museums);
+    }
+
+    public static int countOf(java.util.List<Museum> museums) {
+      return museums == null ? 0 : museums.size();
+    }
+
 /*
     public static Museum getMuseum(int id) {
       for (Museum museum : getMuseums()) {
