@@ -90,6 +90,10 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_counts.py
 
+      - name: API images of the ant and label images (antImageCount, labelImageCount; tests/unit/test_api_image_split.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_image_split.py
+
       - name: API findings F6, F7, F8, F20, F22, F23 (/images url, valid filters, fixed order, debug lines, geoSpecimens radius, geoSpeciesStats not found) (tests/unit/test_api_findings.py)
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_findings.py
@@ -418,6 +422,20 @@ jobs:
             grep -q "^OK (8 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of images from anywhere (place first, Images column, imaged castes; 2026-10-27)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/ImagesAnywhere.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/ImagesAnywhereTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.ImagesAnywhereTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (12 tests)" /tmp/out.txt
+          '
+
       - name: Java unit tests of the AntCat file download (nightly tries again for up to an hour before set 1, says why, no half-written or cut-off file)
         # 2026-10-25: on 10-23 the nightly could not fetch antcat.antweb.txt once and skipped the name update.
         run: |
@@ -627,6 +645,12 @@ jobs:
 
       - name: Count check rules and rotation, curator tool fixes, SQL values quoted in the database classes (tests/unit/test_admin_data_fixes.py)
         run: python3 tests/unit/test_admin_data_fixes.py
+
+      - name: Images from anywhere, Images column, imaged castes (2026-10-27; tests/unit/test_images_anywhere.py)
+        run: python3 tests/unit/test_images_anywhere.py
+
+      - name: One meaning of Images on every page (images of the ant, labels apart, Image files; tests/unit/test_image_counts_defined.py)
+        run: python3 tests/unit/test_image_counts_defined.py
 
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
         run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml

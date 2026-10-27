@@ -318,7 +318,7 @@ Created:
 
 <div class="clear"></div>
 <div id=data_title2>
-ImageCount (deprecated):
+Image files (taxon.image_count, labels included):
 </div>
 <div id=data_items2>
 <b><%= taxon.getImageCount() %></b> &nbsp;
@@ -326,7 +326,7 @@ ImageCount (deprecated):
 
 <div class="clear"></div>
 <div id=data_title2>
-ImageCount (deprecated):
+Image files (taxon.image_count, labels included):
 </div>
 <div id=data_items2>
 <b><%= taxon.getImageCount() %></b> &nbsp;
@@ -334,7 +334,7 @@ ImageCount (deprecated):
 
 <div class="clear"></div>
 <div id=data_title2>
-HasImageCount (deprecated):
+HasImageCount (deprecated, image files):
 </div>
 <div id=data_items2>
 <b><%= taxon.getHasImagesCount() %></b> &nbsp;

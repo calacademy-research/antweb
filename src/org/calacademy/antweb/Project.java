@@ -727,8 +727,9 @@ group by taxonName
     
     public String getTaxonImageCountQuery() {
        String query = "select s.taxon_name taxonName, s.family family, s.subfamily subfamily " 
-           + ", s.genus genus, s.species species, sum(s.image_count) imageSum" 
-           + " from specimen s join proj_taxon pt on s.taxon_name = pt.taxon_name " 
+           + ", s.genus genus, s.species species, count(i.id) imageSum"   // ant images only (2026-10-27)
+           + " from specimen s join proj_taxon pt on s.taxon_name = pt.taxon_name "
+           + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_OF_SPECIMEN
            + " where pt.project_name = '" + getName() + "'" 
            + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species"
            + " order by s.family, s.subfamily, s.genus, s.taxon_name";  // CountDb.imageCountCrawl() adds the rows up by the taxon tree

@@ -44,7 +44,8 @@
 
 <br><br><b><%= liveImagedSpecimens > 0 ? A.commaFormat(liveImagedSpecimens) : starting %> specimens imaged</b>
 
-<br><br><b><%= liveTotalImages > 0 ? A.commaFormat(liveTotalImages) : starting %> total specimen images</b>
+<br><br><b><%= liveTotalImages > 0 ? A.commaFormat(liveTotalImages) : starting %> total specimen images<%= AntwebMgr.getLabelImagesCount() > 0 ? " + " + A.commaFormat(AntwebMgr.getLabelImagesCount()) + " labels" : "" %></b>
+<br>&nbsp;&nbsp;Images of the ant; label images are counted separately (since 2026-10-27; until then the total counted every image file, labels included).
 
 
 
@@ -68,10 +69,10 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
 <br><br><br>
 <h2>Images:</h2>
 <table border=1>
-<tr><th>Specimen Status</th><th>Total</th><th>Worker</th><th>Male</th><th>Queen</th><th>Other</th></tr>
+<tr><th>Specimen Status</th><th>Total</th><th>Worker</th><th>Male</th><th>Queen</th><th>Other</th><th>Label images</th></tr>
 
 <%
-    int grandTotal = 0, workers = 0, males = 0, queens = 0, others = 0;
+    int grandTotal = 0, workers = 0, males = 0, queens = 0, others = 0, labelImages = 0;
     HashMap<String, int[]> imageStats = (HashMap<String, int[]>) request.getAttribute("imageStats");
     
     // Every status in the table (2026-10-21: six fixed statuses only, so the Sum row left the others out).
@@ -83,16 +84,17 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
         for (String status : keys) {
           int[] stats = imageStats.get(status);
           if (stats != null) {
-              grandTotal += stats[0]; workers +=  stats[1]; males += stats[2]; queens += stats[3]; others += stats[4];
+              grandTotal += stats[0]; workers +=  stats[1]; males += stats[2]; queens += stats[3]; others += stats[4]; labelImages += stats[5];
               %>
-              <tr align=right><td><%= Html.esc(Formatter.initCap(status)) %></td><td><%= A.commaFormat(stats[0]) %></td><td><%= A.commaFormat(stats[1]) %></td><td><%= A.commaFormat(stats[2]) %></td><td><%= A.commaFormat(stats[3]) %></td><td><%= A.commaFormat(stats[4]) %></td></tr> 
+              <tr align=right><td><%= Html.esc(Formatter.initCap(status)) %></td><td><%= A.commaFormat(stats[0]) %></td><td><%= A.commaFormat(stats[1]) %></td><td><%= A.commaFormat(stats[2]) %></td><td><%= A.commaFormat(stats[3]) %></td><td><%= A.commaFormat(stats[4]) %></td><td><%= A.commaFormat(stats[5]) %></td></tr> 
 <%
           }
         }
     } %>
-    <tr><td></td><td>---------------</td><td>---------------</td><td>---------------</td><td>---------------</td><td>---------------</td></tr>
-    <tr align=right><td>Sum</td><td><%= A.commaFormat(grandTotal) %></td><td><%= A.commaFormat(workers) %></td><td><%= A.commaFormat(males) %></td><td><%= A.commaFormat(queens) %></td><td><%= A.commaFormat(others) %></td></tr> 
+    <tr><td></td><td>---------------</td><td>---------------</td><td>---------------</td><td>---------------</td><td>---------------</td><td>---------------</td></tr>
+    <tr align=right><td>Sum</td><td><%= A.commaFormat(grandTotal) %></td><td><%= A.commaFormat(workers) %></td><td><%= A.commaFormat(males) %></td><td><%= A.commaFormat(queens) %></td><td><%= A.commaFormat(others) %></td><td><%= A.commaFormat(labelImages) %></td></tr> 
 </table>
+<%@ include file="/common/imagesDefinition.jsp" %>
 
 <%
 /*

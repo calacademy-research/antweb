@@ -91,7 +91,8 @@ def test_specimen_images_page_and_image_page():
     r = fetch(f"/specimenImages.do?code={code}")
     assert_ok(r)
     assert title(r).startswith("Specimen: ") and title(r).endswith(f"{code.upper()} - AntWeb"), title(r)
-    assert re.search(r'<h2 class="display_count">\d+ Images</h2>', r.text), "no 'N Images' heading"
+    # "N Images", "N Images + label" (images of the ant, labels apart; 2026-10-27)
+    assert re.search(r'<h2 class="display_count" data-images="\d+" data-labels="\d+">.*?(?:Images|Label only)', r.text, re.S), "no 'N Images' heading"
     shots = BIG_PICTURE.findall(r.text)
     assert shots, f"{code}: no image links"
     name, shot, number = shots[0]

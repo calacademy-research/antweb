@@ -62,6 +62,7 @@
 <% } %>
         </table>
         <p><b>Parameter names:</b> parameter names are case sensitive. A request with a parameter the function does not know (for example a misspelt name) is answered with HTTP 400 and a JSON message listing the accepted parameters, instead of ignoring it. When a close name exists, the message suggests it ("did you mean").</p>
+        <p id="image-counts"><b>Image counts</b> (since 2026-10-27): on AntWeb "Images" means images of the ant (head, profile, dorsal and other views); label images are counted separately. <b>imageCount</b> keeps its meaning (every image file, label images included) so existing programs keep working. <b>antImageCount</b> and <b>labelImageCount</b> are added: on /specimens and /geoSpecimens the specimen's images of the ant and label images; on /taxa the images of the specimens filed under the name (imageCount there also counts the names under it); in the metaData of /images and /taxaImages the images of the ant and label images of the reply. On /geolocales, /bioregions, /geolocaleTaxa and /bioregionTaxa, imageCount is the place's number: every image file of a place (imagedSpecimenCount counts specimens with an image of the ant), and on the lists' rows the images of the ant.</p>
         <p><p>
         <p>There are the different ways to access the api, documented below...
            <br>&nbsp;&nbsp;<a href="#specimens">Specimens</a>

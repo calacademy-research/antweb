@@ -492,7 +492,8 @@ public class UtilDataAction extends AntwebAction {
                     message += " statistics not written (" + e + ")";
                 }
                 // countCheck.do reads this line: tonight's numbers follow the rules of 2026-10-21 (PlaceTotals).
-                LogMgr.appendLog("compute.log", "  Set 4 done (" + CountInvariants.RULES_LOG + ")", true);
+                // Since 2026-10-27 also: the lists' Images are ant images (StatisticsDb.ANT_IMAGES_RULE_LOG; CountCheck).
+                LogMgr.appendLog("compute.log", "  Set 4 done (" + CountInvariants.RULES_LOG + "; " + StatisticsDb.ANT_IMAGES_RULE_LOG + ")", true);
                 // message += " " + doAction("calcEndemic", form, accessLogin, accessGroup, connection, request, mapping);
                 // message += " " + doAction("calcIntroduced", form, accessLogin, accessGroup, connection, request, mapping);
             }

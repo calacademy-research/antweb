@@ -55,3 +55,8 @@ Home: none at request time ([`statistics`](../data-model.md#statistics), [`image
 | `test_numbers_pages.py`, count invariants `inv:home` | the numbers (numbers.md #1 to #12) |
 | `test_world_ant_collections.py` | the World Ant Collections pages and photos |
 | `test_header_version.py`, `test_browser.py` | the header, JavaScript, phone width |
+
+**Images (2026-10-27, Brian Fisher).** "Images" means images of the ant on both pages: "N total specimen images + N
+labels" (label images apart; StatisticsDb.TOTAL_IMAGES_SQL, LABEL_IMAGES_SQL; the stored number follows the rule after
+the next nightly run), the statsPage Images table counts images of the ant by status and caste with a Label images
+column, and Imaged Species counts names with an image of the ant. Definitions: docs/numbers.md section 1.

@@ -301,9 +301,41 @@ these other _cf1 etc.
             DBUtil.close(stmt, rset, this, "setChildren()");
         }        
 
-        this.children = overview.sort(theseChildren);
+        // 2026-10-27 (images from anywhere, Brian Fisher): fetched from anywhere for a place that selects specimens:
+        // keep the codes of the place's specimens, so the images page shows them first and marks them.
+        this.placeCodes = null;
+        if (global && ImagesAnywhere.hasPlaceSpecimens(overview)) {
+            this.placeCodes = getPlaceCodes(connection, overview.getOverviewCriteria(), statusSet, caste);
+        }
+        if (this.placeCodes != null) {
+            this.children = new ArrayList<Taxon>(ImagesAnywhere.placeFirst(theseChildren, Specimen::getCode, this.placeCodes, java.util.Collections.<String>emptySet()));
+        } else {
+            this.children = overview.sort(theseChildren);
+        }
         setChildrenCount(theseChildren.size());
         //A.log("setChildren() size:" + getChildrenCount() + " query:" + query);
+    }
+
+    /** The codes of this name's specimens that the place selects (the query of setChildren with the place's criteria). */
+    private java.util.Set<String> getPlaceCodes(Connection connection, String overviewCriteria, StatusSet statusSet, String caste) throws SQLException {
+        java.util.Set<String> codes = new java.util.HashSet<>();
+        String query = "select distinct specimen.code"
+          + " from taxon, specimen"
+          + " where taxon.taxon_name = specimen.taxon_name"
+          + overviewCriteria
+          + getThisWhereClause("taxon")
+          + statusSet.getAndCriteria()
+          + " and " + Caste.getSpecimenClause(caste);
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(connection, "Species.getPlaceCodes()");
+            rset = stmt.executeQuery(query);
+            while (rset.next()) codes.add(rset.getString("code"));
+        } finally {
+            DBUtil.close(stmt, rset, this, "getPlaceCodes()");
+        }
+        return codes;
     }
     
     public void setChildrenLocalized(Connection connection, Overview overview) throws SQLException {

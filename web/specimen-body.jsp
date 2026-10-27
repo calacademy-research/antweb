@@ -588,8 +588,9 @@ if (LoginMgr.isAdmin(request)) {
 </ul>
 
 <ul>
-<li><b>Image Count: </b></li>
-<li><%= specimen.getImageCount() %> &nbsp;</li>
+<li><b>Images: </b></li>
+<%-- 2026-10-27 (Brian Fisher): images of the ant + label images (ImageCounts); was "Image Count", every file. --%>
+<li><span id="specimen-images"><%= specimen.getImagesText() %></span> &nbsp;</li>
 </ul>
 
 <ul>

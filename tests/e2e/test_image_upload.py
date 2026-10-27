@@ -356,7 +356,7 @@ def test_upload_list_loads(curator):
     a NullPointerException on 10-18, so the two tests above only skipped."""
     page = _upload_list(curator[0])
     # The total says what it counts and since when (Brian Fisher, 2026-10-23).
-    m = re.search(r'id="image-uploads-total"><b>([\d,]+) image upload batches(?: since (\d{4}-\d\d-\d\d))?, holding ([\d,]+) images</b>', page)
+    m = re.search(r'id="image-uploads-total"><b>([\d,]+) image upload batches(?: since (\d{4}-\d\d-\d\d))?, holding ([\d,]+) image files</b>', page)
     assert m, "listImageUploads.do: no 'N image upload batches since DATE, holding M images' line"
     batches = int(m.group(1).replace(",", ""))
     assert batches == 0 or m.group(2), "a non-empty list names the date of its oldest batch"

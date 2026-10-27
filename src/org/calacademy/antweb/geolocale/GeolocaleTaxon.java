@@ -38,6 +38,7 @@ public class GeolocaleTaxon extends OverviewTaxon {
         try {
             taxonName = Formatter.escapeQuotes(getTaxonName());   
             query = "select subfamily_count, genus_count, species_count, specimen_count, image_count, created, source, is_introduced, is_endemic " 
+              + globalImageCountColumn(taxonName)   // the Images column's first number (2026-10-27)
               + " from " + getTable()
               + " where " + getKeyClause()
               + "   and taxon_name = '" + taxonName + "'";
@@ -55,6 +56,7 @@ public class GeolocaleTaxon extends OverviewTaxon {
                 setSpeciesCount(rset.getInt("species_count"));
                 setSpecimenCount(rset.getInt("specimen_count"));
                 setImageCount(rset.getInt("image_count"));
+                readGlobalImageCount(rset);
                 setCreated(rset.getTimestamp("created"));
                 setSource(rset.getString("source"));
                 setIsIntroduced(rset.getInt("is_introduced") == 1);

@@ -185,16 +185,20 @@ def _specimen_code():
 def test_specimen_images_count_equals_the_api():
     code = _specimen_code()
     html = _get("/specimenImages.do?code=" + code)
-    m = re.search(r'<h2 class="display_count">(\d+) Images</h2>', html)
-    assert m, "specimenImages.do: no 'N Images'"
+    # images of the ant + label images (2026-10-27); the API's imageCount counts both
+    m = re.search(r'<h2 class="display_count" data-images="(\d+)" data-labels="(\d+)">', html)
+    assert m, "specimenImages.do: no 'N Images + label'"
     api = new_session().get(BASE_URL + "/v3.1/specimens?up=1&specimenCode=" + code, timeout=SLOW)
     if api.status_code != 200 or "json" not in api.headers.get("Content-Type", ""):
         pytest.skip(f"API: HTTP {api.status_code}")
     rows = api.json().get("specimens") or []
     if not rows:
         pytest.skip("API has no row for " + code)
-    assert int(m.group(1)) == int(rows[0].get("imageCount") or 0), (
-        f"{code}: specimenImages.do {m.group(1)} Images, API imageCount {rows[0].get('imageCount')}")
+    assert int(m.group(1)) + int(m.group(2)) == int(rows[0].get("imageCount") or 0), (
+        f"{code}: specimenImages.do {m.group(1)} Images + {m.group(2)} labels, API imageCount {rows[0].get('imageCount')}")
+    if "antImageCount" in rows[0]:
+        assert (int(m.group(1)), int(m.group(2))) == (int(rows[0]["antImageCount"]), int(rows[0].get("labelImageCount") or 0)), (
+            f"{code}: specimenImages.do {m.group(1)} + {m.group(2)}, API antImageCount {rows[0]['antImageCount']} labelImageCount {rows[0].get('labelImageCount')}")
 
 
 def test_collection_and_locality_counts_equal_their_lists():

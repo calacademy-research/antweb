@@ -136,7 +136,7 @@
     
     <div id="overview_data" class="plain">
         <ul>
-        <li><b>Total Images Uploaded: </b></li>
+        <li><b>Total image files uploaded: </b></li>
         <li><%= totalImagesUploaded %></li>
         </ul>
     </div>
@@ -146,7 +146,7 @@
 
     <div id="overview_data" class="plain">
         <ul>
-        <li><b>Images:</b></li>
+        <li><b>Image files:</b></li>
         <li><%= imageUpload.getImageCount() %></li>
         </ul>
     </div>

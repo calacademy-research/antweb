@@ -76,6 +76,7 @@ public final class CountInvariants {
         + " list of species intercepted at ports of entry, kept without specimen or image numbers (Brian Fisher, 2026-10-22), so no nightly"
         + " step counts them.";
     /** A number whose rule changed on 2026-10-22 (docs/numbers.md Q7, Q8): it still equals the count by the old rule. */
+    static final String ANT_IMAGES_PENDING = "counted every image file, labels included, before 2026-10-27; the next nightly run counts images of the ant";
     static final String Q7_PENDING = "counted by the rule before 2026-10-22 (ants only, Q7); the next nightly run counts it by the new rule";
 
     public static boolean rulesCounted(List<String> lines) {
@@ -770,7 +771,7 @@ public final class CountInvariants {
                 "select count(*) from specimen",
                 org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIES_SQL,
                 org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIMENS_SQL,
-                "select count(*) from image"};
+                org.calacademy.antweb.home.StatisticsDb.TOTAL_IMAGES_SQL};   // images of the ant since 2026-10-27
             places.computeIfAbsent("site", x -> keyMap()).put("home", "home page and statsPage");
             for (int i = 0; i < what.length; i++) {
                 long live;
@@ -781,10 +782,11 @@ public final class CountInvariants {
                 if (!nightlyRow && (i == 2 || i == 3)) p = RULES_PENDING;
                 // Q7 (2026-10-22): ants only. A row written before that rule equals the old count: pending until the next nightly run.
                 String before = i == 0 ? org.calacademy.antweb.home.StatisticsDb.VALID_SPECIES_SQL_BEFORE_Q7
-                    : i == 2 ? org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIES_SQL_BEFORE_Q7 : null;
+                    : i == 2 ? org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIES_SQL_BEFORE_Q7
+                    : i == 4 ? org.calacademy.antweb.home.StatisticsDb.TOTAL_IMAGES_SQL_BEFORE : null;
                 if (p == null && before != null && row[i] != live) {
                     try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(before))) {
-                        if (r.next() && r.getLong(1) == row[i]) p = Q7_PENDING;
+                        if (r.next() && r.getLong(1) == row[i]) p = i == 4 ? ANT_IMAGES_PENDING : Q7_PENDING;
                     }
                 }
                 if (p == null && uploadSince) p = "specimens were uploaded after the numbers were written";
