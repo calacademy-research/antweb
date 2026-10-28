@@ -803,6 +803,55 @@ cd /root/antweb && python3 tools/data/orphan_photos.py rollback --project /root/
    `--tag b` to backup, run and rollback (the folder and tables get `_b`). Keep the backup folder and tables until the
    curator has checked the pages; drop the tables later (`drop table orphan_photos_bak_<date>_image, ...`).
 
+### Indet form
+
+Brian Fisher, 2026-10-28: a specimen identified only to genus has one name, `Pheidole (indet)` (in parentheses, so
+it sorts first and is never read as a species epithet). Uploads file `indet`, `Indet`, `indet.` and `undet` that way
+since 2026-10-28; older uploads left names such as `myrmicinaepheidole indet` next to `myrmicinaepheidole (indet)`.
+The tool `tools/data/indet_form.py` (read its header) renames the old form in every table that keys on the name:
+taxon, specimen, proj_taxon, geolocale_taxon, bioregion_taxon, museum_taxon, taxon_country, taxon_set_parked,
+object_map, the description tables, taxon_prop, favorite_images, similar_species and the dispute tables. Where the
+`(indet)` name exists already the two merge: in the taxon and list tables the old row is a duplicate and is deleted
+(counts follow at the nightly run); in the other tables a clash stops the run (preview says `REFUSED`). Names of three
+words (`x indet y`) are only listed. History is not changed: specimen_name_update, the log_detail tables and
+`specimen.original_taxon_name` (the name as uploaded, so `x indet` stays there).
+
+Every step refuses on production without `--production`. Run outside 05:00 to 08:00 Pacific. Staging first.
+
+1. Preview (read-only: select statements only). Per table: rows with an old name, rows that clash, rows deleted
+   (merge) or REFUSED; then the names old -> new with their taxon and specimen counts (`--all` for every name).
+
+```
+# ssh root@165.232.136.170   (staging)
+cd /root/antweb-next && python3 tools/data/indet_form.py preview --project /root/antweb-next
+```
+
+   Send the output to Claude before going on.
+
+2. Run. Backs up every row with an old or new name to tables `indet_form_bak_<date>_<table>` (and the names to
+   `indet_form_bak_<date>_names`), checks each copy, asks for `yes`, then renames in one transaction: a count that
+   differs stops it before the commit. Then restart the app so its name cache sees the change.
+
+```
+# ssh root@165.232.136.170   (staging)
+cd /root/antweb-next && python3 tools/data/indet_form.py run --project /root/antweb-next
+docker restart antweb_antweb_1
+```
+
+   Expect check lines that say `ok`, `committed`, and `Done: N names now in the (indet) form`. The preview run again
+   says `Names in the old form: 0`.
+
+3. Production: the same with `ssh root@165.232.137.86`, `cd /root/antweb`, `--project /root/antweb --production`.
+
+Rollback (one transaction; refuses when rows with these names changed since the run, for example by an upload;
+`--force` to go on anyway):
+
+```
+# ssh root@165.232.136.170   (staging; on production cd /root/antweb, --project /root/antweb --production)
+cd /root/antweb-next && python3 tools/data/indet_form.py rollback --project /root/antweb-next --date YYYYMMDD
+docker restart antweb_antweb_1
+```
+
 ## One-off image exports
 
 ### Pheidole major-worker heads for Jack Longino (2026-10-27)

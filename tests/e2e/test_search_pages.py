@@ -28,6 +28,22 @@ def test_advanced_search_form():
         assert field in r.text, f"advSearch.do: no {field} field"
 
 
+def test_project_parameter_is_ignored():
+    """Brian Fisher, 2026-10-28: advanced search covers all ants. The form sends no project; a project= in an old
+    link is ignored without an error (it never narrowed the search) and is not named in the search description."""
+    plain = fetch(SEARCH + "&resultRank=specimen")
+    old_link = fetch(SEARCH + "&project=madagascarants&resultRank=specimen")
+    for r in (plain, old_link):
+        assert_ok(r)
+        assert "Advanced Search Results" in h1(r.text), h1(r.text)
+        assert "Project is" not in r.text, "the search description names a project"
+    a, b = SHOWING.search(plain.text), SHOWING.search(old_link.text)
+    assert a and b, "no 'Showing' line"
+    assert a.group(3) == b.group(3), (a.group(0), b.group(0))
+    form = fetch("/advSearch.do")
+    assert 'name="project"' not in form.text, "the advanced search form still sends a project"
+
+
 def test_search_by_genus_rank_lists_genera():
     """resultRank=genus: "Advanced Search Genus Results", "N genera (from M specimens)", each genus linked."""
     r = fetch(SEARCH + "&resultRank=genus")

@@ -72,6 +72,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
       throws SQLException, AntwebException {
 
         Group accessGroup = curator.getGroup();
+        identifiedOnlyTo = null;
 
         Date startTime = new Date();
         StringBuilder otherInfo = new StringBuilder(32);
@@ -316,6 +317,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             String genusName = (String) taxonItem.get("genus");
             String speciesName = (String) taxonItem.get("species");
             String subspeciesName = (String) taxonItem.get("subspecies");
+            // Brian Fisher, 2026-10-28: a line identified only to genus or only to subfamily is filed as indet (below)
+            // and listed in the report (SpecimenUploadProcess.processLine).
+            identifiedOnlyTo = identifiedOnlyTo(subfamilyName, genusName, speciesName);
             
 			/*  
 			  (1). if species name blank = change to (indet)
@@ -449,6 +453,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
               speciesName = "(indet)";
             }
             speciesName = Formatter.stripString(speciesName, "?");
+            // Brian Fisher, 2026-10-28: "indet", "Indet", "indet.", "undet" in the species column is filed exactly as a
+            // blank species: "<Genus> (indet)", the one form for a specimen identified only to genus.
+            speciesName = UploadUtil.normalizeIndetEpithet(speciesName);
 			if (speciesName.contains(" ")) {
 			  int spaceIndex = speciesName.indexOf(" ");
 			  String tempSpeciesName = speciesName.substring(0, spaceIndex);
@@ -1262,6 +1269,30 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     }
     
     
+
+    /** identifiedOnlyTo() answers. */
+    public static final String GENUS = "genus";
+    public static final String SUBFAMILY = "subfamily";
+
+    /**
+     * How far a line of the file is identified when it has no species (Brian Fisher, 2026-10-28), from the subfamily,
+     * genus and species columns as given: GENUS when it gives a genus (not a placeholder such as "(indet)") but no
+     * species; SUBFAMILY when it gives a subfamily (not a missing one, see isMissingSubfamily) but no genus and no
+     * species; otherwise null. Both are uploaded with species "(indet)" (status indetermined, as "(indet)" typed in
+     * the species column), the genus or "(Subfamily)" in the genus place: Pheidole (indet), (Myrmicinae) (indet).
+     */
+    public static String identifiedOnlyTo(String subfamilyName, String genusName, String speciesName) {
+        // 2026-10-28: "sp.", "indet", "undet", "(indet)" (any case, trailing period) count as no species: these lines are
+        // filed as "(indet)" too and belong in the same report section.
+        // A trailing "?" is stripped by the parse ("indet?" is filed as "(indet)"), so it is stripped here too.
+        String species = speciesName == null ? null : Formatter.stripString(speciesName, "?").trim();
+        if (!Utility.isBlank(species) && !"sp.".equals(species) && !UploadUtil.isIndetEpithet(species)) return null;
+        boolean hasGenus = !Utility.isBlank(genusName) && org.calacademy.antweb.home.PlaceTotals.isIdentifiedToGenus(genusName.trim());
+        if (hasGenus) return GENUS;
+        boolean noGenus = Utility.isBlank(genusName) || "(indet)".equals(genusName.trim());
+        if (noGenus && !isMissingSubfamily(subfamilyName)) return SUBFAMILY;
+        return null;
+    }
 
     /**
      * A subfamily value that says nothing (Brian Fisher, 2026-10-22): none, AntWeb's placeholder "(formicidae)", or

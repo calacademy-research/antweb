@@ -122,6 +122,8 @@ public class MessageMgr {
     public static final String unavailableQuadrinomial = "unavailableQuadrinomial";
     public static final String unrecognizedInvalidSpecies = "unrecognizedInvalidSpecies";
     public static final String recognizedInvalidSpecies = "recognizedInvalidSpecies";
+    /** 2026-10-28: AntCat's current valid name has no taxon in AntWeb yet; the specimen keeps its uploaded name. */
+    public static final String currentValidNameNotInAntweb = "currentValidNameNotInAntweb";
     public static final String taxonNameNotFoundInBolton = "taxonNameNotFoundInBolton";
     public static final String taxonNameNotFoundInAntcatUpload = "taxonNameNotFoundInAntcatUpload";
     public static final String taxonNamesUpdatedToBeCurrentValidName = "taxonNamesUpdatedToBeCurrentValidName";
@@ -149,8 +151,10 @@ public class MessageMgr {
     public static final String incorrectElevationFormat = "incorrectElevationFormat";
     public static final String codeNotFound = "codeNotFound";
     public static final String emptyStringSubfamily = "emptyStringSubfamily";
-    public static final String emptyStringGenus = "emptyStringGenus";
-    public static final String emptyStringSpecies = "emptyStringSpecies";
+    /** 2026-10-28: genus but no species: filed as "(indet)" (was "Empty String Species (not uploaded)"). */
+    public static final String identifiedOnlyToGenus = "identifiedOnlyToGenus";
+    /** 2026-10-28: subfamily but no genus or species: filed as "(Subfamily) (indet)" (was "Empty String Genus (not uploaded)"). */
+    public static final String identifiedOnlyToSubfamily = "identifiedOnlyToSubfamily";
     public static final String subfamilyForGenusFoundInHomonym = "subfamilyForGenusFoundInHomonym";
     public static final String subfamilyGenusComboNotInBolton = "subfamilyGenusComboNotInBolton";        
     public static final String genusOutsideNativeBioregion = "genusOutsideNativeBioregion";    
@@ -191,9 +195,14 @@ public class MessageMgr {
      */
     public static final int MAX_REPORT_CODES = 10000;
 
+    /** Report section titles of the decisions of 2026-10-28 (Brian Fisher). */
+    public static final String IDENTIFIED_ONLY_TO_GENUS_HEADING = "Identified only to genus: filed as indet";
+    public static final String IDENTIFIED_ONLY_TO_SUBFAMILY_HEADING = "Identified only to subfamily: filed as (Subfamily) indet";
+    public static final String CURRENT_VALID_NAME_NOT_IN_ANTWEB_HEADING = "Current valid name in AntCat not yet in AntWeb: kept under the uploaded name";
+
     /** Sections whose lines already give the specimen code (or line number): no list added. */
     static final Set<String> CODES_IN_LINE = new HashSet<>(Arrays.asList(
-        "codeNotFound", "emptyStringSubfamily", "emptyStringGenus", "emptyStringSpecies", "genusOutsideNativeBioregion",
+        "codeNotFound", "emptyStringSubfamily", "genusOutsideNativeBioregion",
         "invalidLatLon", "invalidColumn", "specimenIdSpacesRemoved", "invalidSpecimenCode", "nonAntTaxa",
         "makeTaxonNameError", "latLonNotInCountryBounds", "latLonNotInAdm1Bounds", "codeNotFoundInLine", "badRankList",
         "databaseErrors", "futureDateDetermined", "futureDateCollected", "noRecordsProcessed", "extraCarriageReturn",
@@ -260,6 +269,7 @@ public class MessageMgr {
       testList.add(new Test(unavailableQuadrinomial, SET, "<b>Unavailable quadrinomial. Submission <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(unrecognizedInvalidSpecies, SET, "<b>Unrecognized Invalid species.  Names not found in AntCat.org. Submission <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(recognizedInvalidSpecies, SET, "<b>Recognized invalid species.  Submission replaced with current valid name from AntCat.org <font color=green>(uploaded)</font></b>"));
+      testList.add(new Test(currentValidNameNotInAntweb, SET, "<b>" + CURRENT_VALID_NAME_NOT_IN_ANTWEB_HEADING + " <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(taxonNameNotFoundInBolton, SET, "<b>Taxon names not found in Bolton World Catalog <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(taxonNameNotFoundInAntcatUpload, SET, "<b>Taxon names not found in Antcat upload <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(taxonNamesUpdatedToBeCurrentValidName, SET, "<b>Taxon names that need to be updated to current valid name<font color=green>(uploaded)</font></b>"));
@@ -285,8 +295,8 @@ public class MessageMgr {
       testList.add(new Test(incorrectElevationFormat, STR, "<b>Incorrect elevation format</b>"));
       testList.add(new Test(codeNotFound, "set", "<b>Code not found <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(emptyStringSubfamily, "set", "<b>Empty String Subfamily <font color=red>(not uploaded)</font></b>"));
-      testList.add(new Test(emptyStringGenus, "set", "<b>Empty String Genus <font color=red>(not uploaded)</font></b>"));
-      testList.add(new Test(emptyStringSpecies, "set", "<b>Empty String Species <font color=red>(not uploaded)</font></b>"));
+      testList.add(new Test(identifiedOnlyToGenus, SET, "<b>" + IDENTIFIED_ONLY_TO_GENUS_HEADING + " <font color=green>(uploaded)</font></b>"));
+      testList.add(new Test(identifiedOnlyToSubfamily, SET, "<b>" + IDENTIFIED_ONLY_TO_SUBFAMILY_HEADING + " <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(subfamilyForGenusFoundInHomonym, "set", "<b>Subfamily For Genus Found in Homonym <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(subfamilyGenusComboNotInBolton, MAP, "<b>Taxon Subfamily / Genus combinations not found in Bolton World Catalog <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(genusOutsideNativeBioregion, MAP, "<b>Genus found outside of known native biogeographic region</b>", "red"));

@@ -1,0 +1,531 @@
+#!/usr/bin/env python3
+"""Indet form: rename existing names "<genus> indet" to the one form "<genus> (indet)".
+
+Decision of Brian Fisher, 2026-10-28: a specimen identified only to genus has ONE name, "Pheidole (indet)" (the
+species epithet in parentheses, so it sorts first and is never read as a species epithet "indet"). Uploads file a
+blank species, "sp.", and since 2026-10-28 also "indet", "Indet", "indet.", "undet" as "(indet)"
+(UploadUtil.normalizeIndetEpithet). Older uploads left names such as "myrmicinaepheidole indet" next to
+"myrmicinaepheidole (indet)": two taxa for the same thing. This tool renames the old form in every table that keys on
+the name.
+
+What is renamed: a name of exactly two words whose second word is indet or undet (any case, with or without a trailing
+period): "myrmicinaepheidole indet" -> "myrmicinaepheidole (indet)", "formicinaecamponotus Undet." ->
+"formicinaecamponotus (indet)". Longer names ending or containing indet ("x indet y", a subspecies "indet") are counted
+and listed as "not handled" (look at them by hand).
+
+Tables (only those present in the database are used):
+  merge   rows are renamed; a row whose unique key (with the new name) exists already is a duplicate of a row of the
+          "(indet)" name and is deleted (counts and lists are recomputed at the next nightly run):
+          taxon (the old taxon row goes when "(indet)" exists: specimens join the "(indet)" taxon), proj_taxon,
+          geolocale_taxon, bioregion_taxon, museum_taxon, taxon_country, taxon_set_parked, object_map
+  rename  rows are renamed; a clash on a unique key refuses the run (preview lists it; a curator decides):
+          specimen, description, description_edit, description_hist, taxon_prop, favorite_images, similar_species,
+          geolocale_taxon_dispute, proj_taxon_dispute
+  history counted, never changed (they record what happened): specimen_name_update, proj_taxon_log_detail,
+          geolocale_taxon_log_detail
+  Renamed taxon and specimen rows get species "(indet)" and status "indetermined" (as an upload gives them).
+  Other name columns that point at a renamed name are renamed too: taxon.current_valid_name, taxon.parent_taxon_name,
+  similar_species.similar_species. specimen.original_taxon_name is not changed: it records the name as uploaded.
+
+Steps (docs/runbook.md, "Indet form"):
+  preview   read-only (select statements only). Per table: rows with an old name, rows that clash with the "(indet)"
+            name, rows changed; the names old -> new with their taxon and specimen counts (--all for every name).
+  run       backs up every row with an old or a new name to tables indet_form_bak_<date>_<table> (and the names to
+            indet_form_bak_<date>_names), checks the copies, then renames in one transaction. A count that differs
+            stops it before the commit. Asks for "yes" first (unless --yes).
+  rollback  puts the rows of the backup back (one transaction): deletes the rows with an old or new name and inserts
+            the backup. Refuses when rows with those names changed since the run (an upload): --force to go on.
+
+Production: every step refuses on production (/root/antweb, or a host named antweb-prod) without --production.
+Run it on staging first.
+
+After run or rollback: restart the app (docker restart antweb_antweb_1; 2 to 4 minutes) so its name cache sees the
+change; species, place and project counts follow at the next nightly run.
+
+Database: mysql in the container antweb_mysql_1 with the login of <project>/etc/db.properties (the password goes to
+docker through the environment, never on a command line or in a prompt).
+
+Usage (checkout in /root/antweb-next on staging, /root/antweb on production):
+  python3 tools/data/indet_form.py preview  --project /root/antweb-next
+  python3 tools/data/indet_form.py run      --project /root/antweb-next
+  python3 tools/data/indet_form.py rollback --project /root/antweb-next --date YYYYMMDD
+
+Tests: tests/unit/test_indet_form.py.
+"""
+import argparse
+import datetime
+import os
+import re
+import socket
+import subprocess
+import sys
+
+INDET = "(indet)"
+# The old form: two words, the second indet or undet, with or without a period (any case).
+OLD_FORM = re.compile(r"^(\S+) (indet|undet)\.?$", re.IGNORECASE)
+# Any name with indet or undet as a word after the first (to count what the tool does not handle).
+ANY_INDET_WORD = re.compile(r" (indet|undet)\.?( |$)", re.IGNORECASE)
+SQL_OLD_FORM = "'^[^ ]+ (indet|undet)[.]?$'"
+SQL_ANY_INDET_WORD = "' (indet|undet)[.]?( |$)'"
+
+MERGE = ("taxon", "proj_taxon", "geolocale_taxon", "bioregion_taxon", "museum_taxon", "taxon_country",
+         "taxon_set_parked", "object_map")
+RENAME = ("specimen", "description", "description_edit", "description_hist", "taxon_prop", "favorite_images",
+          "similar_species", "geolocale_taxon_dispute", "proj_taxon_dispute")
+HISTORY = {"specimen_name_update": ("uploaded_name", "old_name", "new_name"),
+           "proj_taxon_log_detail": ("taxon_name",), "geolocale_taxon_log_detail": ("taxon_name",)}
+# Name columns besides taxon_name (renamed where they hold an old name).
+# specimen.original_taxon_name is left as it is: it records the name as uploaded (history).
+EXTRA_COLUMNS = {"taxon": ("current_valid_name", "parent_taxon_name"), "similar_species": ("similar_species",)}
+# Tables whose renamed rows get species "(indet)" and status "indetermined".
+SET_INDET = ("taxon", "specimen")
+PRODUCTION_PROJECT = "/root/antweb"
+
+
+# ------------------------------------------------------------------ names (no database)
+
+def new_name(old):
+    """The "(indet)" form of an old-form name, or None when the name is not in the old form."""
+    m = OLD_FORM.match(old or "")
+    return f"{m.group(1)} {INDET}" if m else None
+
+
+def name_map(names):
+    """{old: new} of the names in the old form (others left out). MySQL compares names ignoring case, so names that
+    differ only in case are one name (the first in sorted order is kept)."""
+    out, seen = {}, set()
+    for n in sorted(set(names)):
+        nn = new_name(n)
+        if nn and n.lower() not in seen:
+            seen.add(n.lower())
+            out[n] = nn
+    return out
+
+
+def not_handled(names):
+    """Names with an indet word that are not in the old form (more than two words)."""
+    return sorted({n for n in names if ANY_INDET_WORD.search(n or "") and not new_name(n) and INDET not in n})
+
+
+def columns_of(table):
+    return ("taxon_name",) + EXTRA_COLUMNS.get(table, ())
+
+
+# ------------------------------------------------------------------ SQL text
+
+def sql_string(value):
+    """A single-quoted MySQL literal (backslashes and apostrophes escaped)."""
+    return "'" + str(value).replace("\\", "\\\\").replace("'", "''") + "'"
+
+
+def in_list(values):
+    """"('a', 'b')"; '(NULL)' when empty (valid SQL that matches nothing)."""
+    return "(" + ", ".join(sql_string(v) for v in values) + ")" if values else "(NULL)"
+
+
+def check(name, actual_sql, expected):
+    """A check that stops mysql (an error ends the batch before the commit, so the transaction is rolled back)."""
+    return (f"set @n = {actual_sql};\n"
+            f"select @n as {name}, {int(expected)} as expected, if(@n = {int(expected)}, 'ok', "
+            f"(select 'mismatch' union all select 'stop')) as check_{name};")
+
+
+def map_sql(mapping):
+    """A derived table m(seq, old_name, new_name) of the mapping in the order run renames them (no temporary table:
+    preview stays read-only)."""
+    if not mapping:
+        return ("(select 0 as seq, cast(null as char) as old_name, cast(null as char) as new_name"
+                " from dual where 1 = 0)")
+    rows = [f"select {i} as seq, {sql_string(o)} as old_name, {sql_string(n)} as new_name" if i == 0
+            else f"select {i}, {sql_string(o)}, {sql_string(n)}" for i, (o, n) in enumerate(sorted(mapping.items()))]
+    return "(" + " union all ".join(rows) + ")"
+
+
+def name_predicate(table, names, alias=""):
+    """Rows of the table with one of the names in any of its name columns."""
+    a = alias + "." if alias else ""
+    return "(" + " or ".join(f"{a}{c} in {in_list(names)}" for c in columns_of(table)) + ")"
+
+
+def clash_join(key, alias_old="a", alias_new="b"):
+    """The join condition of a unique key: the same values in the other columns of the key."""
+    return " and ".join(f"{alias_new}.{c} <=> {alias_old}.{c}" for c in key if c != "taxon_name")
+
+
+def candidates_sql(tables):
+    """The read-only queries that find the names: per table and name column, distinct names with an indet word."""
+    out = []
+    for t in tables:
+        for c in columns_of(t):
+            out.append(f"select distinct {c} from {t} where {c} regexp {SQL_ANY_INDET_WORD}")
+    return out
+
+
+def clash_sql(table, mapping, keys):
+    """Rows with an old name that clash when renamed, in the order run renames them: on one of the unique keys, a row
+    of the new name exists already, or a row of an earlier old name with the same new name (renamed before it). In a
+    merge table run deletes exactly these rows; in a rename table they refuse the run. None without a unique key."""
+    if not keys:
+        return None
+    m = map_sql(mapping)
+    parts = []
+    for key in keys:
+        cond = clash_join(key)
+        cond = f" and {cond}" if cond else ""
+        parts.append(f"exists (select 1 from {table} b where b.taxon_name = m.new_name{cond})")
+        parts.append(f"exists (select 1 from {table} b join {m} m2 on b.taxon_name = m2.old_name"
+                     f" where m2.new_name = m.new_name and m2.seq < m.seq{cond})")
+    return (f"select count(*) from {table} a join {m} m on a.taxon_name = m.old_name where "
+            + " or ".join(parts))
+
+
+def preview_sql(table, column, mapping, keys):
+    """Counts of one table and column: rows with an old name, and (taxon_name only) the rows that clash."""
+    q = {"rows": f"select count(*) from {table} where {column} in {in_list(sorted(mapping))}"}
+    if column == "taxon_name":
+        c = clash_sql(table, mapping, keys)
+        if c:
+            q["clash"] = c
+    return q
+
+
+def bak_tables(date, tables):
+    return {t: f"indet_form_bak_{date}_{t}" for t in list(tables) + ["names", "after"]}
+
+
+def backup_sql(date, tables, mapping, expected):
+    """Copies every row with an old or new name to dated tables; checks each copy against the preview count."""
+    b = bak_tables(date, tables)
+    names = sorted(set(mapping) | set(mapping.values()))
+    lines = ["-- Indet form: backup (tools/data/indet_form.py run). Stops if the backup tables exist already.",
+             "set names utf8mb4;",
+             f"create table {b['names']} (old_name varchar(128) not null, new_name varchar(128) not null);"]
+    for o, n in sorted(mapping.items()):
+        lines.append(f"insert into {b['names']} values ({sql_string(o)}, {sql_string(n)});")
+    lines.append(check("names", f"(select count(*) from {b['names']})", len(mapping)))
+    for t in tables:
+        lines.append(f"create table {b[t]} as select * from {t} where {name_predicate(t, names)};")
+        lines.append(check(f"bak_{t}", f"(select count(*) from {b[t]})", expected[t]))
+    lines.append(f"create table {b['after']} (table_name varchar(64) not null, row_count int not null);")
+    lines.append("select 'backup tables written' as result;")
+    return "\n".join(lines) + "\n"
+
+
+def run_sql(date, tables, mapping, keys, expected_after):
+    """The renames in one transaction, name by name; the commit only if no old name is left and the counts match."""
+    b = bak_tables(date, tables)
+    olds = sorted(mapping)
+    names = sorted(set(mapping) | set(mapping.values()))
+    lines = [f"-- Indet form: {len(mapping)} names to the (indet) form (tools/data/indet_form.py run).",
+             "set names utf8mb4;", "start transaction;"]
+    for old, new in sorted(mapping.items()):
+        o, n = sql_string(old), sql_string(new)
+        lines.append(f"-- {old} -> {new}")
+        for t in tables:
+            if t in MERGE:
+                for key in keys.get(t, []):
+                    cond = clash_join(key)
+                    lines.append(f"delete a from {t} a join {t} b on b.taxon_name = {n}"
+                                 + (f" and {cond}" if cond else "") + f" where a.taxon_name = {o};")
+            sets = f"taxon_name = {n}"
+            if t in SET_INDET:
+                sets += f", species = {sql_string(INDET)}, status = 'indetermined'"
+            lines.append(f"update {t} set {sets} where taxon_name = {o};")
+            for c in EXTRA_COLUMNS.get(t, ()):
+                lines.append(f"update {t} set {c} = {n} where {c} = {o};")
+    for t in tables:
+        for c in columns_of(t):
+            lines.append(check(f"left_{t}_{c}", f"(select count(*) from {t} where {c} in {in_list(olds)})", 0))
+        lines.append(check(f"after_{t}", f"(select count(*) from {t} where {name_predicate(t, names)})",
+                           expected_after[t]))
+    # the row counts after the run, for rollback to see whether an upload changed them since (the table is made by
+    # the backup: a create table here would commit the transaction early)
+    for t in tables:
+        lines.append(f"insert into {b['after']} select {sql_string(t)}, count(*) from {t} where {name_predicate(t, names)};")
+    lines += ["commit;", "select 'committed' as result;"]
+    return "\n".join(lines) + "\n"
+
+
+def rollback_sql(date, tables, names):
+    """Deletes the rows with an old or new name and puts the backup back, in one transaction."""
+    b = bak_tables(date, tables)
+    lines = ["-- Indet form: rollback from the backup tables (tools/data/indet_form.py rollback).",
+             "set names utf8mb4;", "start transaction;"]
+    for t in tables:
+        lines.append(f"delete from {t} where {name_predicate(t, names)};")
+        lines.append(f"insert into {t} select * from {b[t]};")
+        lines.append(f"set @n = row_count();")
+        lines.append(f"select @n as restored_{t}, (select count(*) from {b[t]}) as expected,"
+                     f" if(@n = (select count(*) from {b[t]}), 'ok', (select 'mismatch' union all select 'stop'))"
+                     f" as check_restored_{t};")
+    lines += ["commit;", "select 'committed' as result;"]
+    return "\n".join(lines) + "\n"
+
+
+def expected_counts(tables, plan):
+    """Rows per table before (old or new name) and after the run (minus the merge duplicates that go)."""
+    before, after = {}, {}
+    for t in tables:
+        before[t] = plan[t]["rows_any"]
+        after[t] = plan[t]["rows_any"] - plan[t]["drop"]
+    return before, after
+
+
+# ------------------------------------------------------------------ report
+
+def print_preview(plan, mapping, samples, unhandled, history, out=None, show_all=False):
+    out = out or sys.stdout
+    w = out.write
+    w(f"Names in the old form: {len(mapping)} (each becomes '<genus> {INDET}').\n")
+    w("\nTable                         old-name rows  clash  -> deleted (merge) / refused   rows changed\n")
+    total_refused = 0
+    for t, p in plan.items():
+        kind = "merge" if t in MERGE else "rename"
+        refused = p["clash"] if t not in MERGE else 0
+        total_refused += refused
+        extra = "".join(f", {c} {p['extra'][c]}" for c in EXTRA_COLUMNS.get(t, ()) if p["extra"].get(c))
+        w(f"  {t:<28}{p['rows']:>12}  {p['clash']:>5}  {kind:>6}: "
+          + (f"{p['drop']} deleted" if t in MERGE else (f"{refused} REFUSED" if refused else "none"))
+          + f"   {p['rows'] - (p['drop'] if t in MERGE else 0)}{extra}\n")
+    for t, n in history.items():
+        w(f"  {t:<28}{n:>12}  (history, not changed)\n")
+    w("\nNames (old -> new: taxon rows, specimens; '+' when the (indet) taxon exists already, merged):\n")
+    shown = samples if show_all else samples[:25]
+    for s in shown:
+        w(f"  {s['old']} -> {s['new']}: {s['taxa']} taxon, {s['specimens']} specimens"
+          + (" +" if s["target_exists"] else "") + "\n")
+    if len(samples) > len(shown):
+        w(f"  ... {len(samples) - len(shown)} more (--all lists them)\n")
+    if unhandled:
+        w(f"\nNot handled (more than two words; look by hand): {len(unhandled)}\n")
+        for n in unhandled[:25]:
+            w(f"  {n}\n")
+    if total_refused:
+        w(f"\nREFUSED: {total_refused} rows would clash with a row of the (indet) name in a table that is not merged."
+          " run stops until they are resolved.\n")
+    return total_refused
+
+
+# ------------------------------------------------------------------ database
+
+def db_login(project):
+    props = {}
+    with open(os.path.join(project, "etc", "db.properties"), encoding="utf-8") as f:
+        for line in f:
+            if "=" in line and not line.lstrip().startswith("#"):
+                k, v = line.rstrip("\n").split("=", 1)
+                props[k.strip()] = v
+    return props.get("user", ""), props.get("password", "")
+
+
+def mysql(args, sql, batch=True):
+    """Runs sql through mysql in the container; returns stdout. Exits with mysql's message on an error."""
+    user, password = db_login(args.project)
+    env = dict(os.environ, MYSQL_PWD=password)
+    cmd = ["docker", "exec", "-i", "-e", "MYSQL_PWD", args.container, "mysql", "-u", user, "ant",
+           "--default-character-set=utf8mb4"] + (["-B", "-N", "--raw"] if batch else ["--table"])
+    r = subprocess.run(cmd, input=sql.encode("utf-8"), capture_output=True, env=env, timeout=3600)
+    text = r.stdout.decode("utf-8", "replace")
+    if r.returncode != 0:
+        if not batch:
+            print(text)
+        sys.exit("mysql stopped: " + r.stderr.decode("utf-8", "replace").strip()
+                 + ("\nNothing was committed." if not batch else ""))
+    return text
+
+
+def rows_of(text):
+    return [line.split("\t") for line in text.split("\n") if line]
+
+
+def one(args, sql):
+    r = rows_of(mysql(args, sql + ";"))
+    return int(r[0][0]) if r else 0
+
+
+def tables_present(args):
+    """{table: [unique keys containing taxon_name, each a tuple of columns]} of the tables in the database."""
+    wanted = list(MERGE) + list(RENAME)
+    q = ("select table_name from information_schema.tables where table_schema = 'ant' and table_type = 'BASE TABLE'"
+         f" and table_name in {in_list(wanted + list(HISTORY))};")
+    found = {r[0] for r in rows_of(mysql(args, q))}
+    q = ("select table_name, index_name, group_concat(column_name order by seq_in_index separator ',')"
+         " from information_schema.statistics where table_schema = 'ant' and non_unique = 0"
+         f" and table_name in {in_list(wanted)} group by table_name, index_name;")
+    keys = {}
+    for t, _, cols in rows_of(mysql(args, q)):
+        cols = tuple(cols.split(","))
+        if "taxon_name" in cols:
+            keys.setdefault(t, []).append(cols)
+    tables = [t for t in wanted if t in found]
+    history = [t for t in HISTORY if t in found]
+    return tables, {t: keys.get(t, []) for t in tables}, history
+
+
+def current_plan(args):
+    tables, keys, history_tables = tables_present(args)
+    if "taxon" not in tables or "specimen" not in tables:
+        sys.exit("Tables taxon and specimen not found in database ant: is this the AntWeb database?")
+    found = set()
+    for q in candidates_sql(tables):
+        found |= {r[0] for r in rows_of(mysql(args, q + ";")) if r and r[0] != "NULL"}
+    mapping = name_map(found)
+    unhandled = not_handled(found)
+    names = sorted(set(mapping) | set(mapping.values()))
+    plan = {}
+    for t in tables:
+        p = dict(rows=0, clash=0, drop=0, extra={}, rows_any=0)
+        if mapping:
+            for c in columns_of(t):
+                qs = preview_sql(t, c, mapping, keys[t])
+                n = one(args, qs["rows"])
+                if c == "taxon_name":
+                    p["rows"] = n
+                    p["clash"] = one(args, qs["clash"]) if "clash" in qs else 0
+                    p["drop"] = p["clash"] if t in MERGE else 0
+                else:
+                    p["extra"][c] = n
+            p["rows_any"] = one(args, f"select count(*) from {t} where {name_predicate(t, names)}")
+        plan[t] = p
+    history = {}
+    for t in history_tables:
+        cols = HISTORY[t]
+        history[t] = one(args, f"select count(*) from {t} where " + " or ".join(
+            f"{c} in {in_list(sorted(mapping))}" for c in cols)) if mapping else 0
+    samples = []
+    if mapping:
+        taxa = {r[0].lower(): int(r[1]) for r in rows_of(mysql(args,
+                f"select taxon_name, count(*) from taxon where taxon_name in {in_list(names)} group by taxon_name;"))}
+        specs = {r[0].lower(): int(r[1]) for r in rows_of(mysql(args,
+                 f"select taxon_name, count(*) from specimen where taxon_name in {in_list(sorted(mapping))} group by taxon_name;"))}
+        for o, n in sorted(mapping.items()):
+            samples.append(dict(old=o, new=n, taxa=taxa.get(o.lower(), 0), specimens=specs.get(o.lower(), 0),
+                                target_exists=n.lower() in taxa))
+    return tables, keys, mapping, plan, samples, unhandled, history
+
+
+# ------------------------------------------------------------------ commands
+
+def is_production(project):
+    return (os.path.realpath(project) == PRODUCTION_PROJECT
+            or socket.gethostname().lower().startswith("antweb-prod"))
+
+
+def start(args):
+    if not os.path.isfile(os.path.join(args.project, "etc", "db.properties")):
+        sys.exit(f"No {os.path.join(args.project, 'etc', 'db.properties')}: is --project the AntWeb checkout "
+                 "(/root/antweb-next on staging, /root/antweb on production)?")
+    if is_production(args.project) and not args.production:
+        sys.exit("This is production. Run on staging first; on production add --production.")
+    user = db_login(args.project)[0]
+    print(f"Database: docker exec -i -e MYSQL_PWD {args.container} mysql -u {user} ant"
+          f"   (password from {os.path.join(args.project, 'etc', 'db.properties')})")
+
+
+def cmd_preview(args):
+    start(args)
+    tables, keys, mapping, plan, samples, unhandled, history = current_plan(args)
+    print()
+    print_preview(plan, mapping, samples, unhandled, history, show_all=args.all)
+    print("\nPreview only: nothing was changed.")
+
+
+def confirm(args, question):
+    if args.yes:
+        return
+    if input(question + " Type yes to go on: ").strip().lower() != "yes":
+        sys.exit("Stopped: nothing was changed.")
+
+
+def cmd_run(args):
+    start(args)
+    tables, keys, mapping, plan, samples, unhandled, history = current_plan(args)
+    print()
+    refused = print_preview(plan, mapping, samples, unhandled, history)
+    if not mapping:
+        print("\nNothing to do: no name in the old form.")
+        return
+    if refused:
+        sys.exit("Stopped: rows clash in a table that is not merged (REFUSED above). Nothing was changed.")
+    before, after = expected_counts(tables, plan)
+    bsql = backup_sql(args.date, tables, mapping, before)
+    rsql = run_sql(args.date, tables, mapping, keys, after)
+    print(f"\nBackup to tables indet_form_bak_{args.date}_*, then {len(mapping)} names renamed in one transaction.")
+    if args.show_sql:
+        print(bsql + "\n" + rsql)
+    confirm(args, "Back up and rename?")
+    print(mysql(args, bsql, batch=False))
+    out = mysql(args, rsql, batch=False)
+    print(out)
+    if "committed" not in out:
+        sys.exit("No commit seen: check the output above.")
+    print(f"\nDone: {len(mapping)} names now in the (indet) form. Backup: tables indet_form_bak_{args.date}_*.\n"
+          "Restart the app (docker restart antweb_antweb_1; 2 to 4 minutes) so its name cache sees the change; "
+          "counts follow at the next nightly run.\n"
+          f"Rollback: python3 tools/data/indet_form.py rollback --project {args.project} --date {args.date}")
+
+
+def cmd_rollback(args):
+    start(args)
+    tables, _, _ = tables_present(args)
+    b = bak_tables(args.date, tables)
+    q = ("select table_name from information_schema.tables where table_schema = 'ant'"
+         f" and table_name like {sql_string('indet_form_bak_' + args.date + '_%')};")
+    present = {r[0] for r in rows_of(mysql(args, q))}
+    if b["names"] not in present:
+        sys.exit(f"No backup {b['names']}: give the --date of the run (YYYYMMDD).")
+    tables = [t for t in tables if b[t] in present]
+    names = set()
+    for o, n in rows_of(mysql(args, f"select old_name, new_name from {b['names']};")):
+        names |= {o, n}
+    names = sorted(names)
+    if b["after"] in present:
+        recorded = {t: int(n) for t, n in rows_of(mysql(args, f"select table_name, row_count from {b['after']};"))}
+        changed = []
+        for t in tables:
+            now = one(args, f"select count(*) from {t} where {name_predicate(t, names)}")
+            if t in recorded and now != recorded[t]:
+                changed.append(f"{t} ({recorded[t]} rows after the run, {now} now)")
+        if changed and not args.force:
+            sys.exit("Rows with these names changed since the run (an upload?): " + "; ".join(changed)
+                     + ". Rollback would undo that too. Add --force to go on anyway.")
+    sql = rollback_sql(args.date, tables, names)
+    if args.show_sql:
+        print(sql)
+    confirm(args, f"Put back {len(tables)} tables from indet_form_bak_{args.date}_*?")
+    out = mysql(args, sql, batch=False)
+    print(out)
+    if "committed" not in out:
+        sys.exit("No commit seen: check the output above.")
+    print("Rollback done. Restart the app (docker restart antweb_antweb_1); counts follow at the next nightly run.")
+
+
+def main(argv=None):
+    here = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    sub = p.add_subparsers(dest="cmd", required=True)
+    for name, func, text in (("preview", cmd_preview, "read-only: per-table counts and the names"),
+                             ("run", cmd_run, "back up the rows, then rename (one transaction)"),
+                             ("rollback", cmd_rollback, "put the rows back from the backup tables")):
+        a = sub.add_parser(name, help=text)
+        a.add_argument("--project", default=here, help="AntWeb checkout with etc/db.properties (default: this checkout)")
+        a.add_argument("--container", default="antweb_mysql_1")
+        a.add_argument("--date", default="", help="backup date YYYYMMDD (run: today; rollback: required)")
+        a.add_argument("--production", action="store_true", help="allow production (run on staging first)")
+        a.add_argument("--yes", action="store_true", help="do not ask before changing anything")
+        a.add_argument("--force", action="store_true", help="rollback even if rows changed since the run")
+        a.add_argument("--all", action="store_true", help="preview: list every name")
+        a.add_argument("--show-sql", action="store_true", help="print the SQL before running it")
+        a.set_defaults(func=func)
+    args = p.parse_args(argv)
+    if args.date and not re.fullmatch(r"\d{8}", args.date):
+        sys.exit("--date must be YYYYMMDD")
+    if args.cmd == "rollback" and not args.date:
+        sys.exit("rollback needs --date (the date of the run, YYYYMMDD)")
+    if not args.date:
+        args.date = datetime.date.today().strftime("%Y%m%d")
+    args.func(args)
+
+
+if __name__ == "__main__":
+    main()

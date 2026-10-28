@@ -595,6 +595,12 @@ public class SpeciesListUpload extends AntwebUpload {
                         } 
                     }                    
                 } else {  // other species lists
+                    // Brian Fisher, 2026-10-28: "indet", "Indet", "indet.", "undet" as the species is "(indet)", the
+                    // one form for identified only to genus (the same name the specimen upload gives).
+                    Object listedSpecies = taxonHash.get(Rank.SPECIES);
+                    if (listedSpecies instanceof String && UploadUtil.isIndetEpithet((String) listedSpecies)) {
+                        taxonHash.put(Rank.SPECIES, UploadUtil.INDET_EPITHET);
+                    }
                     if (taxonHash.get(Rank.GENUS) == null || taxonHash.get(Rank.GENUS).equals("")) {
                         taxonHash.put("rank", Rank.SUBFAMILY);                      
                     } else if (taxonHash.get(Rank.SPECIES) == null || taxonHash.get(Rank.SPECIES).equals("")) {

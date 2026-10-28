@@ -27,7 +27,9 @@ import org.calacademy.antweb.util.TaxonMgr;
  *       no current valid name            -> kept, status as in AntCat
  *       current valid taxon exists       -> REPLACE: filed under it, status valid, uploaded name kept
  *       current valid name is a homonym  -> filed under a placeholder taxon (the upload creates it)
- *       current valid name not found     -> filed under the current valid name anyway (no taxon row)
+ *       current valid name not in AntWeb -> kept under the uploaded name, status as in AntCat, listed in the
+ *                                           upload report (Brian Fisher, 2026-10-28; was: filed under the
+ *                                           current valid name anyway, a name with no taxon row)
  *   any other status (valid, unavailable, homonym, ...) -> kept, status as in AntCat
  *
  * See docs/flows/specimen-upload.md (section 4) and docs/flows/antcat-to-antweb.md.
@@ -73,8 +75,15 @@ public final class CurrentValidNameRule {
         public final String validTaxonName;
         /** Status of the uploaded name in the taxon table (null if no row). */
         public final String uploadedStatus;
+        /** TARGET_MISSING: AntCat's current valid name, which has no taxon in AntWeb yet. Otherwise null. */
+        public final String missingCurrentValidName;
 
         Result(Kind kind, String status, String taxonName, String originalTaxonName, String validTaxonName, String uploadedStatus) {
+            this(kind, status, taxonName, originalTaxonName, validTaxonName, uploadedStatus, null);
+        }
+
+        Result(Kind kind, String status, String taxonName, String originalTaxonName, String validTaxonName, String uploadedStatus, String missingCurrentValidName) {
+            this.missingCurrentValidName = missingCurrentValidName;
             this.kind = kind;
             this.status = status;
             this.taxonName = taxonName;
@@ -117,7 +126,8 @@ public final class CurrentValidNameRule {
             if (lookup.isHomonym(currentValidName)) {
                 return new Result(Kind.TARGET_IS_HOMONYM, Status.UNRECOGNIZED, currentValidName, taxonName, null, status);
             }
-            return new Result(Kind.TARGET_MISSING, status, currentValidName, taxonName, null, status);
+            // Brian Fisher, 2026-10-28: the specimen stays under its uploaded name until AntWeb has the taxon.
+            return new Result(Kind.TARGET_MISSING, status, taxonName, null, null, status, currentValidName);
         }
         if (currentValidTaxonName.equals(taxonName)) {
             return new Result(Kind.TARGET_SAME, status, currentValidName, taxonName, null, status);

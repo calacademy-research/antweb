@@ -28,6 +28,30 @@ public class UploadUtil {
         return code != null && SPECIMEN_CODE.matcher(code).matches();
     }
 
+    /** The one form of a species epithet for a specimen identified only to genus (Brian Fisher, 2026-10-28). */
+    public static final String INDET_EPITHET = "(indet)";
+
+    /**
+     * True when a species epithet says "not identified to species" (Brian Fisher, 2026-10-28): "indet", "undet" or
+     * "(indet)", in any case, with or without a trailing period ("Indet", "indet.", "UNDET."). Blank and "sp." are
+     * handled by the specimen upload itself (SpecimenUploadParse.parseLine).
+     */
+    public static boolean isIndetEpithet(String species) {
+        if (species == null) return false;
+        String s = species.trim().toLowerCase(java.util.Locale.ROOT);
+        if (s.endsWith(".")) s = s.substring(0, s.length() - 1).trim();
+        return "indet".equals(s) || "undet".equals(s) || INDET_EPITHET.equals(s);
+    }
+
+    /**
+     * There is one form for a specimen identified only to genus: "Pheidole (indet)", in parentheses, so it sorts first
+     * and is never read as a species epithet "indet" (Brian Fisher, 2026-10-28). Any isIndetEpithet value becomes
+     * "(indet)"; anything else is returned unchanged.
+     */
+    public static String normalizeIndetEpithet(String species) {
+        return isIndetEpithet(species) ? INDET_EPITHET : species;
+    }
+
     static String getFirstLine(String fileName, String encoding) {
         String theLine = "";
 
