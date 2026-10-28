@@ -5,8 +5,9 @@ An orphan photo is a row of the image table (and its files) whose code (image.im
 specimen record, so it shows on no page (orphanedImages.do lists them). Curators answer, code by code, whether the
 photos are a duplicate (delete) or belong to another code that has a record (move). Their answers go into a decisions
 file, one per group list, for example tools/data/orphan_photos_cas_2026-10.tsv (tab-separated, first line the
-header): code, action (delete or move), target (the code to move to; empty for delete), group (the upload group the
-photos belong to, from group_image), note.
+header): code, action (delete, move or merge), target (the code to move to; empty for delete), group (the upload
+group the photos belong to, from group_image), note. merge (2026-10-28) is a move to a target that has photos already:
+the code's photos of a shot the target has (the same photos, the curator said) are deleted, the others moved.
 
 What a code has (read by preview, checked again by backup and run):
   rows    image rows with image_of_id = the code (MySQL compares ignoring case), their group_image rows and
@@ -60,7 +61,7 @@ import subprocess
 import sys
 
 DECISION_COLUMNS = ["code", "action", "target", "group", "note"]
-ACTIONS = ("delete", "move")
+ACTIONS = ("delete", "move", "merge")
 SIZES = ("thumbview", "low", "med", "high")
 # Codes the tool works with: what the specimen upload accepts (UploadUtil.SPECIMEN_CODE) minus "/" (a path).
 SAFE_CODE = re.compile(r"[a-z0-9._:()#+-]+")
@@ -87,9 +88,9 @@ def read_decisions(path):
         d["action"] = d["action"].lower()
         problem = None
         if d["action"] not in ACTIONS:
-            problem = f"action must be delete or move, not {d['action']!r}"
-        elif d["action"] == "move" and not d["target"]:
-            problem = "move needs a target code"
+            problem = f"action must be delete, move or merge, not {d['action']!r}"
+        elif d["action"] in ("move", "merge") and not d["target"]:
+            problem = f"{d['action']} needs a target code"
         elif d["action"] == "delete" and d["target"]:
             problem = "delete takes no target"
         elif not SAFE_CODE.fullmatch(d["code"]) or d["code"] in (".", ".."):
@@ -169,7 +170,7 @@ def plan(decisions, image_rows, specimens, folders, picks=None):
         rows_by.setdefault(r["code"].lower(), []).append(r)
     targets = {}
     for d in decisions:
-        if d["action"] == "move":
+        if d["action"] in ("move", "merge"):
             targets.setdefault(d["target"], []).append(d["code"])
     codes = {d["code"] for d in decisions}
     out = []
@@ -218,7 +219,7 @@ def plan(decisions, image_rows, specimens, folders, picks=None):
         if loose and rows:
             p["warnings"].append(f"{len(loose)} files have no image row; they go with the others: " + ", ".join(loose[:5]))
 
-        if action == "move":
+        if action in ("move", "merge"):
             tspec = specimens.get(target)
             if target == code:
                 p["reasons"].append("the target is the code itself")
@@ -232,12 +233,19 @@ def plan(decisions, image_rows, specimens, folders, picks=None):
                     p["reasons"].append(f"the target is stored as {tcode!r}: AntWeb stores codes in lower case and "
                                         "the tool handles only letters, digits and . _ : ( ) # + -")
                 trows = rows_by.get(target, [])
-                if trows:
-                    p["reasons"].append(f"the target {tcode} has {len(trows)} photos now")
                 tlisting = folders.get(tcode) or {}
                 tmine = own_files(tcode, tlisting)[0]
-                if tmine:
-                    p["reasons"].append(f"images/{tcode}/ holds {len(tmine)} files of the target already")
+                if action == "move":
+                    if trows:
+                        p["reasons"].append(f"the target {tcode} has {len(trows)} photos now")
+                    if tmine:
+                        p["reasons"].append(f"images/{tcode}/ holds {len(tmine)} files of the target already")
+                else:
+                    # merge (2026-10-28): the target has photos; the code's photos of a shot the target has already are
+                    # the same photos (the curator said so) and are deleted, the others are moved.
+                    p["target_shots"] = sorted({(r["shot"].lower(), int(r["number"])) for r in trows})
+                    p["target_rows_before"] = len(trows)
+                    p["target_files"] = set(tmine)
                 if "." in tcode:
                     p["warnings"].append("the target code has a period: pages and image links handle it, but the "
                                          "Image Uploader cannot take it in a file name (it reads the code up to the "
@@ -248,14 +256,37 @@ def plan(decisions, image_rows, specimens, folders, picks=None):
                     p["reasons"].append("two files would get the same name")
                 for f, n in zip(p["files"], news):
                     f["new_name"] = n
+                if action == "merge":
+                    same = set(map(tuple, p["target_shots"]))
+                    for f in p["files"]:
+                        if shot_of(f["name"], p["folder"]) not in same and f["new_name"] in p["target_files"]:
+                            p["reasons"].append(f"images/{tcode}/{f['new_name']} exists already")
             if len(targets.get(target, [])) > 1:
                 p["reasons"].append(f"{len(targets[target])} codes move to {target}: " + ", ".join(targets[target]))
         if p["reasons"]:
             p["status"] = "refused"
         elif not rows and not p["files"]:
             p["status"] = "nothing"
-        out.append(p)
+        if action == "merge" and p["status"] == "ok":
+            out.extend(split_merge(p))
+        else:
+            out.append(p)
     return out
+
+
+def split_merge(p):
+    """A merge as two plans the other steps already handle: "delete" with the rows and files of the shots the target
+    has already (the same photos), "move" with the rest. Both keep the merge in "merge_of" for the printout."""
+    same = set(map(tuple, p.get("target_shots", [])))
+    dup = lambda r: (r["shot"].lower(), int(r["number"])) in same
+    dupf = lambda f: shot_of(f["name"], p["folder"]) in same
+    base = {k: v for k, v in p.items() if k not in ("rows", "files", "target_files")}
+    dele = dict(base, action="delete", target="", rows=[r for r in p["rows"] if dup(r)],
+                files=[dict(f, new_name="") for f in p["files"] if dupf(f)], merge_of=p["target_code"])
+    dele["target_code"] = dele["target_folder"] = ""
+    move = dict(base, action="move", rows=[r for r in p["rows"] if not dup(r)],
+                files=[f for f in p["files"] if not dupf(f)], merge_of=p["target_code"])
+    return [x for x in (dele, move) if x["rows"] or x["files"]]
 
 
 def accepted(plans):
@@ -277,7 +308,7 @@ def counts(plans):
     move = [p for p in ok if p["action"] == "move"]
     ids = lambda ps: [r["id"] for p in ps for r in p["rows"]]
     return dict(
-        codes=len(ok), delete_codes=len(dele), move_codes=len(move),
+        codes=len({p["code"] for p in ok}), delete_codes=len(dele), move_codes=len(move),
         delete_ids=ids(dele), move_ids=ids(move), all_ids=ids(ok),
         delete_group_rows=sum(len(r["groups"]) for p in dele for r in p["rows"]),
         group_rows=sum(len(r["groups"]) for p in ok for r in p["rows"]),
@@ -294,13 +325,16 @@ def print_plan(plans, images, out=None, verbose=False):
     by = {}
     for p in plans:
         by.setdefault((p["status"], p["action"]), []).append(p)
-    out.write(f"{len(plans)} codes in the decisions file\n")
+    out.write(f"{len({p['code'] for p in plans})} codes in the decisions file\n")
     for (status, action), ps in sorted(by.items()):
         out.write(f"  {status} {action}: {len(ps)} codes, {sum(len(p['rows']) for p in ps)} image rows, "
                   f"{sum(len(p['files']) for p in ps)} files\n")
     out.write("\n")
     for p in plans:
         what = "DELETE" if p["action"] == "delete" else f"MOVE to {p['target_code'] or p['target']}"
+        if p.get("merge_of"):
+            what = (f"MERGE into {p['merge_of']}: DELETE the shots it has already" if p["action"] == "delete"
+                    else f"MERGE into {p['merge_of']}: MOVE the other shots")
         head = {"ok": what, "refused": "REFUSED (" + what + ")", "nothing": "NOTHING TO DO (" + what + ")"}
         out.write(f"{p['code']}: {head[p['status']]}\n")
         for reason in p["reasons"]:
@@ -422,7 +456,8 @@ def run_sql(plans, tables):
         tc = sql_string(p["target_code"])
         name = re.sub(r"[^a-z0-9]", "_", p["code"])[:40]
         lines.append(f"-- {p['folder']} -> {p['target_code']}")
-        lines.append(check(f"target_photos_{name}", f"(select count(*) from image where image_of_id = {tc})", 0))
+        lines.append(check(f"target_photos_{name}", f"(select count(*) from image where image_of_id = {tc})",
+                           p.get("target_rows_before", 0)))
         lines.append(f"update image set image_of_id = {tc} where id in {ids} and image_of_id = {sql_string(p['folder'])};")
         lines.append(check(f"moved_{name}", "row_count()", len(p["rows"])))
         lines.append(f"update specimen set image_count = (select count(*) from image where image_of_id = {tc}) where code = {tc};")
