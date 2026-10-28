@@ -175,11 +175,21 @@ import org.calacademy.antweb.home.*;
           resetImageCounts("proj_taxon");
 
           //String project = "tokelauants";  
-          for (Project project : imageCrawlProjects(ProjectMgr.getLiveProjects(), ProjectMgr.getProject(Project.ALLANTWEBANTS))) {
+          // The AntWeb-wide list is counted even when the project cache has no allantwebants project (staging
+          // 2026-10-28: getProject returned null there, the list was silently skipped and every row stayed 0 while
+          // compute.log said it was counted). Its rows need only the list's name.
+          Project allAntweb = ProjectMgr.getProject(Project.ALLANTWEBANTS);
+          if (allAntweb == null || !Project.ALLANTWEBANTS.equals(allAntweb.getName())) {
+             allAntweb = new Project();
+             allAntweb.setName(Project.ALLANTWEBANTS);
+          }
+          boolean countedAllAntweb = false;
+          for (Project project : imageCrawlProjects(ProjectMgr.getLiveProjects(), allAntweb)) {
              //if (AntwebProps.isDevMode()) s_log.info("startProjTaxonImageCountCrawl() project:" + project);
              imageCountCrawl(project);
+             if (Project.ALLANTWEBANTS.equals(project.getName())) countedAllAntweb = true;
           }
-          LogMgr.appendLog("compute.log", "  " + ALLANTWEB_IMAGES_LOG, true);
+          LogMgr.appendLog("compute.log", "  " + (countedAllAntweb ? ALLANTWEB_IMAGES_LOG : "AntWeb-wide list Images NOT counted (allantwebants missing)"), true);
      }
 
      /** Written to compute.log by nightly set 4 once the allantwebants rows' Images (the first number of every list's
