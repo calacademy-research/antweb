@@ -104,11 +104,12 @@ public class UploadDecisions1028Test extends TestCase {
     }
 
     public void testIndetEpithetIsIdentifiedOnlyToGenus() {
-        for (String s : new String[] {"indet", "Indet", "indet.", "undet", "(indet)", "sp."}) {
+        for (String s : new String[] {"indet", "Indet", "indet.", "undet", "(indet)", "sp.", "indet?", "Indet.?"}) {
             assertEquals(s, SpecimenUploadParse.GENUS, SpecimenUploadParse.identifiedOnlyTo("myrmicinae", "pheidole", s));
             assertEquals(s, SpecimenUploadParse.SUBFAMILY, SpecimenUploadParse.identifiedOnlyTo("myrmicinae", "", s));
         }
         assertNull(SpecimenUploadParse.identifiedOnlyTo("myrmicinae", "pheidole", "indeterminata"));
+        assertNull(SpecimenUploadParse.identifiedOnlyTo("myrmicinae", "pheidole", "megacephala?"));
     }
 
     public void testIdentifiedOnlyToReportSections() {

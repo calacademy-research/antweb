@@ -1284,7 +1284,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     public static String identifiedOnlyTo(String subfamilyName, String genusName, String speciesName) {
         // 2026-10-28: "sp.", "indet", "undet", "(indet)" (any case, trailing period) count as no species: these lines are
         // filed as "(indet)" too and belong in the same report section.
-        if (!Utility.isBlank(speciesName) && !"sp.".equals(speciesName.trim()) && !UploadUtil.isIndetEpithet(speciesName)) return null;
+        // A trailing "?" is stripped by the parse ("indet?" is filed as "(indet)"), so it is stripped here too.
+        String species = speciesName == null ? null : Formatter.stripString(speciesName, "?").trim();
+        if (!Utility.isBlank(species) && !"sp.".equals(species) && !UploadUtil.isIndetEpithet(species)) return null;
         boolean hasGenus = !Utility.isBlank(genusName) && org.calacademy.antweb.home.PlaceTotals.isIdentifiedToGenus(genusName.trim());
         if (hasGenus) return GENUS;
         boolean noGenus = Utility.isBlank(genusName) || "(indet)".equals(genusName.trim());

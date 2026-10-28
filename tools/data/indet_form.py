@@ -25,7 +25,7 @@ Tables (only those present in the database are used):
           geolocale_taxon_log_detail
   Renamed taxon and specimen rows get species "(indet)" and status "indetermined" (as an upload gives them).
   Other name columns that point at a renamed name are renamed too: taxon.current_valid_name, taxon.parent_taxon_name,
-  specimen.original_taxon_name, similar_species.similar_species.
+  similar_species.similar_species. specimen.original_taxon_name is not changed: it records the name as uploaded.
 
 Steps (docs/runbook.md, "Indet form"):
   preview   read-only (select statements only). Per table: rows with an old name, rows that clash with the "(indet)"
@@ -75,8 +75,8 @@ RENAME = ("specimen", "description", "description_edit", "description_hist", "ta
 HISTORY = {"specimen_name_update": ("uploaded_name", "old_name", "new_name"),
            "proj_taxon_log_detail": ("taxon_name",), "geolocale_taxon_log_detail": ("taxon_name",)}
 # Name columns besides taxon_name (renamed where they hold an old name).
-EXTRA_COLUMNS = {"taxon": ("current_valid_name", "parent_taxon_name"), "specimen": ("original_taxon_name",),
-                 "similar_species": ("similar_species",)}
+# specimen.original_taxon_name is left as it is: it records the name as uploaded (history).
+EXTRA_COLUMNS = {"taxon": ("current_valid_name", "parent_taxon_name"), "similar_species": ("similar_species",)}
 # Tables whose renamed rows get species "(indet)" and status "indetermined".
 SET_INDET = ("taxon", "specimen")
 PRODUCTION_PROJECT = "/root/antweb"

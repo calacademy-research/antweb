@@ -68,7 +68,7 @@ def test_sql():
     assert "create table indet_form_bak_20261028_names" in b
     assert "create table indet_form_bak_20261028_taxon as select * from taxon where (taxon_name in (" in b
     assert "or current_valid_name in (" in b and "or parent_taxon_name in (" in b
-    assert "or original_taxon_name in (" in b
+    assert "original_taxon_name" not in b, "original_taxon_name records the uploaded name: never changed"
     assert "create table indet_form_bak_20261028_after" in b
     assert "1 as expected" in b  # description_edit
 
@@ -88,7 +88,8 @@ def test_sql():
     # old names done in sorted order, each one's delete before its update
     olds = re.findall(r"^-- (.+) -> ", r, re.M)
     assert olds == sorted(MAP), olds
-    assert r.count(" as check_left_") == 7, r.count(" as check_left_")  # name columns: taxon 3, proj_taxon 1, specimen 2, description_edit 1
+    assert r.count(" as check_left_") == 6, r.count(" as check_left_")  # name columns: taxon 3, proj_taxon 1, specimen 1, description_edit 1
+    assert "original_taxon_name" not in r
     assert "set @n = (select count(*) from taxon where (taxon_name in" in r and "2 as expected" in r
     assert "insert into indet_form_bak_20261028_after select 'taxon', count(*)" in r
 

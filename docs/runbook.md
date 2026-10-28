@@ -813,7 +813,8 @@ taxon, specimen, proj_taxon, geolocale_taxon, bioregion_taxon, museum_taxon, tax
 object_map, the description tables, taxon_prop, favorite_images, similar_species and the dispute tables. Where the
 `(indet)` name exists already the two merge: in the taxon and list tables the old row is a duplicate and is deleted
 (counts follow at the nightly run); in the other tables a clash stops the run (preview says `REFUSED`). Names of three
-words (`x indet y`) are only listed. History tables (specimen_name_update, the log_detail tables) are not changed.
+words (`x indet y`) are only listed. History is not changed: specimen_name_update, the log_detail tables and
+`specimen.original_taxon_name` (the name as uploaded, so `x indet` stays there).
 
 Every step refuses on production without `--production`. Run outside 05:00 to 08:00 Pacific. Staging first.
 
