@@ -382,3 +382,48 @@ def test_browse_limit_shows_that_many_specimens():
     if not checked:
         pytest.skip("no species with more than 4 specimens found " + ns.day_note())
     assert not wrong, f"{ns.day_note()}:\n" + "\n".join(wrong)
+
+
+# ---------------------------------------------------------------- counting rules of 2026-10-28 (rows 22, 38, 41)
+
+SPECIES_STATUSES = {"valid", "morphotaxon"}   # PlaceTotals.SPECIES_STATUSES
+NAMES = int(os.environ.get("ANTWEB_SAMPLE_NAMES", "6"))
+GENUS_ONLY_NOTE = re.compile(r'<span id="genus-only-note" data-genus-only="(\d+)">([^<]*)')
+
+
+def _status(name):
+    rows = ns.api_rows(ns.api("taxa?taxonName=" + ns.quote_plus(name)))
+    t = next((r for r in rows if (r.get("taxonName") or "").lower() == name), None)
+    return None if t is None else (t.get("status") or "").lower()
+
+
+def test_species_lists_show_valid_names_and_morphospecies_only():
+    """Brian Fisher, 2026-10-28: a specimen counts at each rank it is identified to, and no further. For the day's place
+    of every kind: a sample of the names of its species list (every counted status) are valid names or morphospecies
+    (statuses from the API /taxa); the line under the list, "N specimens identified only to genus are not listed here:
+    Lioponera (1), Pheidole (2).", adds up to its N; on the genus list, a row that says "N specimens identified to genus
+    only" says "No Species" (the genus counts in Genera, it has no species)."""
+    wrong, checked = [], []
+    for p in places():
+        html = ns.fetch(p.list_url("species"))
+        if html is None:
+            continue
+        names = [r["name"] for r in ns.list_rows(html) if r["name"]]
+        for name in ns.pick(names, NAMES, "species-status" + p.name):
+            status = _status(name)
+            if status is not None and status not in SPECIES_STATUSES:
+                wrong.append(f"{p}: {name} ({status}) is listed as a species")
+        m = GENUS_ONLY_NOTE.search(html)
+        if m:
+            parts = [int(x) for x in re.findall(r"\((\d+)\)", m.group(2))]
+            lead = re.match(r"\s*([\d,]+)", m.group(2))
+            if sum(parts) != int(m.group(1)) or not lead or ns.n(lead.group(1)) != int(m.group(1)):
+                wrong.append(f"{p}: the line under the species list does not add up: {m.group(2)!r} ({m.group(1)})")
+        genus_html = ns.fetch(p.list_url("genus"))
+        for row in ns.list_rows(genus_html or ""):
+            if "genus-only" in row["html"] and "No Species" not in row["html"]:
+                wrong.append(f"{p}: a genus row names specimens identified to genus only but has species: {ns.text_of(row['html'])[:120]}")
+        checked.append(repr(p))
+    if not checked:
+        pytest.skip("no species list read " + ns.day_note())
+    assert not wrong, f"{len(checked)} places {ns.day_note()}:\n" + "\n".join(wrong)

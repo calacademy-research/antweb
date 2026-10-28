@@ -394,6 +394,9 @@ public class MuseumDb extends AntwebDb {
         // Subfamilies, Genera and Species counted directly from the list (PlaceTotals, 2026-10-21); were
         // roll-up sums of the list rows' child counts.
         PlaceTotals.writeListedCounts(getConnection(), PlaceTotals.MUSEUM, code);
+        // Specimens = the sum of the list's species and subspecies rows, like countries (Brian Fisher, 2026-10-28);
+        // was every ant specimen of the museum (populateFromSpecimenData, before the list was counted).
+        PlaceTotals.writeListedSpecimens(getConnection(), PlaceTotals.MUSEUM, code);
     }
 
     private void updateImagedSpecimen() throws SQLException {

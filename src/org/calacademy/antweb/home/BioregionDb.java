@@ -422,6 +422,9 @@ public class BioregionDb extends AntwebDb {
         // Subfamilies, Genera and Species counted directly from the list (PlaceTotals, 2026-10-21); were
         // roll-up sums of the list rows' child counts.
         PlaceTotals.writeListedCounts(getConnection(), PlaceTotals.BIOREGION, bioregion.getName());
+        // Specimens = the sum of the list's species and subspecies rows, like countries (Brian Fisher, 2026-10-28);
+        // was every ant specimen of the bioregion (populateFromSpecimenData, before the list was counted).
+        PlaceTotals.writeListedSpecimens(getConnection(), PlaceTotals.BIOREGION, bioregion.getName());
     }    
 
     private void updateImagedSpecimen() throws SQLException {

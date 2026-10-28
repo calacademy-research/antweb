@@ -81,8 +81,14 @@ def test_list_images_are_ant_images_only():
         src = read("src/org/calacademy/antweb/" + f)
         q = src[src.index("public String getTaxonImageCountQuery()"):]
         q = q[:q.index("return query;")]
-        assert "count(i.id) imageSum" in q and "StatisticsDb.ANT_IMAGES_OF_SPECIMEN" in q, f
+        # 2026-10-28: museums, bioregions and curated projects count a synonym's images under the valid name, with the
+        # query written once in PlaceTotals.imagesByListNameSql (checked below)
+        assert ("count(i.id) imageSum" in q and "StatisticsDb.ANT_IMAGES_OF_SPECIMEN" in q) or "PlaceTotals.imagesByListNameSql(" in q, f
         assert "sum(s.image_count)" not in q, f + " still sums every image file"
+    totals = read("src/org/calacademy/antweb/home/PlaceTotals.java")
+    q = totals[totals.index("public static String imagesByListNameSql("):]
+    q = q[:q.index("    }")]
+    assert "count(i.id) imageSum" in q and "StatisticsDb.ANT_IMAGES_OF_SPECIMEN" in q
     stats = read("src/org/calacademy/antweb/home/StatisticsDb.java")
     assert 'ANT_IMAGES_OF_SPECIMEN = " left join image i on i.image_of_id = s.code and " + ANT_IMAGE' in stats
     check = read("src/org/calacademy/antweb/util/CountCheck.java")

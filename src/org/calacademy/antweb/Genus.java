@@ -97,6 +97,8 @@ public class Genus extends Subfamily implements Serializable {
                     + " and (taxarank = 'species' || taxarank = 'subspecies')"
                     + subgenusClause
                     + statusSet.getAndCriteria()
+                    // 2026-10-28: species of a genus are valid names and morphospecies (as the list row's Species, TaxaPage)
+                    + (TaxaPage.hidesNonSpecies(statusSet) ? " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon") : "")
             ;
 //            if (!"default".equals(project))                        
 //              query += " and proj_taxon.project_name = '" + project + "'";

@@ -325,8 +325,10 @@ public class Bioregion extends LocalityOverview implements Countable {
         String rankClause = " taxon.taxarank = '" + rank + "'";
 	        if (Rank.SPECIES.equals(rank)) { 
           rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') "
-              // a genus row's Species: names identified to genus only (Brian Fisher, 2026-10-22; PlaceTotals.identifiedToGenus)
-              + " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") + " ";
+              // a genus row's Species: names identified to genus only (Brian Fisher, 2026-10-22; PlaceTotals.identifiedToGenus),
+              // of status valid or morphotaxon (2026-10-28, PlaceTotals.SPECIES_STATUSES; every list, curated projects too)
+              + " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon")
+              + " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon") + " ";
         }
 
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
@@ -373,15 +375,14 @@ public class Bioregion extends LocalityOverview implements Countable {
         return updateSql;    
     }
 
+    // Images of the ant (2026-10-27) of this bioregion's specimens (2026-10-20) of each name on its list. Brian Fisher,
+    // 2026-10-28: images follow the Specimens rule: a specimen filed under a synonym counts under the valid name (Carebara
+    // polita, a synonym of C. diversa: its images count for C. diversa), and only specimens of a counted status, as the
+    // countries' lists (PlaceTotals.imagesByListNameSql). CountDb.imageCountCrawl() adds the rows up by the taxon tree.
     public String getTaxonImageCountQuery() {
-      String query = "select s.taxon_name taxonName, s.family family, s.subfamily subfamily " 
-           + ", s.genus genus, s.species species, count(i.id) imageSum"   // ant images only (2026-10-27)
-           + " from specimen s join bioregion_taxon bt on s.taxon_name = bt.taxon_name "
-           + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_OF_SPECIMEN
-           + " where bt.bioregion_name = '" + getName() + "'" 
-           + " and s.bioregion = '" + getName() + "'"  // 2026-10-20: images of this bioregion's specimens only
-           + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species"
-           + " order by s.family, s.subfamily, s.genus, s.taxon_name";  // CountDb.imageCountCrawl() adds the rows up by the taxon tree
+      String name = org.calacademy.antweb.home.PlaceTotals.literal(getName());
+      String query = org.calacademy.antweb.home.PlaceTotals.imagesByListNameSql(org.calacademy.antweb.home.PlaceTotals.BIOREGION, name,
+          " and s.bioregion = " + name + " and s.status in " + StatusSet.getCountables());
       return query;
     }
 

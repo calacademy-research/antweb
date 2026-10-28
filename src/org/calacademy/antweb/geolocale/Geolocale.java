@@ -605,8 +605,10 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         String rankClause = " taxon.taxarank = '" + rank + "'";
         if (Rank.SPECIES.equals(rank)) {
           rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') "
-              // a genus row's Species: names identified to genus only (Brian Fisher, 2026-10-22; PlaceTotals.identifiedToGenus)
-              + " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") + " ";
+              // a genus row's Species: names identified to genus only (Brian Fisher, 2026-10-22; PlaceTotals.identifiedToGenus),
+              // of status valid or morphotaxon (2026-10-28, PlaceTotals.SPECIES_STATUSES; every list, curated projects too)
+              + " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon")
+              + " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon") + " ";
         }
 
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "

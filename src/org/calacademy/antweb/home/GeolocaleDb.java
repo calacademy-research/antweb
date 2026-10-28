@@ -1043,6 +1043,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       updateGeolocaleFieldCount("introduced", 0, 0);
       
       int n = calcIntroducedGeolocales();
+      // Subregions and regions (Brian Fisher, 2026-10-28): Introduced counted the way Endemic is for them; until then
+      // their Introduced was 0 (only countries and adm1s were flagged).
+      n += calcHigherIntroduced();
       // The Introduced number of every geolocale = its flagged rows (the rows of introduced.do).
       try {
         PlaceTotals.writeCountsFromFlags(getConnection(), PlaceTotals.GEOLOCALE, "introduced");
@@ -1050,6 +1053,41 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
         s_log.error("calcIntroduced() counts from flags e:" + e);
       }
       return n;
+    }
+
+    /**
+     * Brian Fisher, 2026-10-28: subregions and regions count Introduced the same way they count Endemic
+     * (calcHigherEndemism): a name flagged introduced on the list of one of its countries is flagged introduced on the
+     * subregion's list, and a name flagged on a subregion's list on its region's list. The rows must be on the list.
+     */
+    public static final String[] HIGHER_INTRODUCED_SQL = {
+        higherFlagSql("introduced", "country", "subregion"),
+        higherFlagSql("introduced", "subregion", "region")};
+
+    /**
+     * SQL: flag (is_[field] = 1) the rows of each [upper] geolocale's list whose name is flagged on the list of one of its
+     * [lower] geolocales (lower.parent = upper.name). The derived table is materialized (distinct), so MySQL reads the
+     * table it updates.
+     */
+    public static String higherFlagSql(String field, String lower, String upper) {
+        if (!"introduced".equals(field) && !"endemic".equals(field)) throw new IllegalArgumentException(field);
+        return "update geolocale_taxon gt join (select distinct u.id uid, lgt.taxon_name from geolocale_taxon lgt"
+            + " join geolocale lg on lg.id = lgt.geolocale_id and lg.georank = '" + lower + "' and lg.is_valid = 1"
+            + " join geolocale u on u.name = lg.parent and u.georank = '" + upper + "'"
+            + " where lgt.is_" + field + " = 1) x on x.uid = gt.geolocale_id and x.taxon_name = gt.taxon_name"
+            + " set gt.is_" + field + " = 1";
+    }
+
+    public int calcHigherIntroduced() {
+      int c = 0;
+      for (String dml : HIGHER_INTRODUCED_SQL) {
+        try (Statement stmt = getConnection().createStatement()) {
+          c += stmt.executeUpdate(dml);
+        } catch (SQLException e) {
+          s_log.error("calcHigherIntroduced() dml:" + dml + " e:" + e);
+        }
+      }
+      return c;
     }
 
     public int calcIntroducedGeolocales() {

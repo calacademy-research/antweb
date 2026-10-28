@@ -44,6 +44,7 @@ import numbers_sample as ns
 PER_KIND = int(os.environ.get("ANTWEB_SAMPLE_PLACES", "3"))
 NAMES = int(os.environ.get("ANTWEB_SAMPLE_NAMES", "6"))
 COUNTED = {"valid", "unrecognized", "morphotaxon", "indetermined", "unidentifiable"}
+SPECIES_STATUSES = {"valid", "morphotaxon"}   # what a species list shows (Brian Fisher, 2026-10-28)
 PENDING = "a flag set by the last nightly run is out of date after an upload until the next nightly run"
 
 
@@ -155,14 +156,18 @@ def test_endemic_and_introduced_marks_on_the_species_list_agree():
         e_marked = {r["name"] for r in rows if r["endemic"]}
         i_marked = {r["name"] for r in rows if r["introduced"]}
         endemic, introduced = set(endemic), set(introduced)
+        # Brian Fisher, 2026-10-28: the species list shows valid names and morphospecies only (an unrecognized name is
+        # not a species), while Endemic keeps valid and unrecognized names (unchanged; raised with Brian): an endemic name
+        # that is not a species is on endemic.do but not on the list.
+        not_listed = {x for x in endemic - names if ((taxon(x) or {}).get("status") or "").lower() not in SPECIES_STATUSES}
         if p.kind == "bioregion":
             pass   # bioregion lists show no Endemic mark (BioregionTaxon does not read is_endemic); the rule test checks them
         elif e_marked - endemic:
             wrong.append(f"{p}: marked Endemic on the list but not on endemic.do: {sorted(e_marked - endemic)[:5]}")
-        elif endemic - e_marked - i_marked:
-            wrong.append(f"{p}: on endemic.do but not marked on the list: {sorted(endemic - e_marked - i_marked)[:5]}")
-        if endemic - names:
-            wrong.append(f"{p}: on endemic.do but not on the species list: {sorted(endemic - names)[:5]}")
+        elif endemic - not_listed - e_marked - i_marked:
+            wrong.append(f"{p}: on endemic.do but not marked on the list: {sorted(endemic - not_listed - e_marked - i_marked)[:5]}")
+        if endemic - names - not_listed:
+            wrong.append(f"{p}: on endemic.do but not on the species list: {sorted(endemic - names - not_listed)[:5]}")
         if p.kind != "bioregion" and not p.bioregion:
             pass   # B41: see test_a_place_without_a_bioregion_has_no_introduced_species
         elif intro_list is not None:

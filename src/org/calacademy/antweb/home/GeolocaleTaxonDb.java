@@ -1441,7 +1441,8 @@ select group_concat( distinct source) from geolocale_taxon order by source;
         String query = "select count(*) count from geolocale_taxon where taxon_name in "
                 + " (select taxon.taxon_name from taxon where taxon.parent_taxon_name = " + DBUtil.sqlQuote(parentTaxonName)
                 + "   and taxon.taxarank in ('species', 'subspecies')" + new StatusSet(StatusSet.ALL).getAndCriteria()
-                + " and " + PlaceTotals.identifiedToGenus("taxon") + ") "
+                + " and " + PlaceTotals.identifiedToGenus("taxon")
+                + " and " + PlaceTotals.speciesStatusCondition("taxon") + ") "   // 2026-10-28: valid names and morphospecies
                 + " and geolocale_id = " + geolocale.getId()
                 ;
         //A.log("testGeolocaleTaxon() query:" + query);

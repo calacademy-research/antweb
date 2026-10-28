@@ -154,20 +154,22 @@ public class PlaceTotalsDbTest extends TestCase {
     /** 2026-10-21: specimen uploads rolled back with "Data too long for column 'specimen_subfamily_dist_json'". */
     public void testALongDistributionFitsItsColumnAndNeverStopsTheWork() throws Exception {
         PlaceTotals.clearColumnLengths();
-        // CASC holds specimens of 60 subfamilies (and of names that are no subfamily): far more than 1000 characters of JSON.
+        // CASC's list holds species of 60 subfamilies (and of names that are no subfamily): far more than 1000 characters of
+        // JSON. Since 2026-10-28 the pie counts the specimens of the list's species rows (as the museum's Specimens).
         StringBuilder taxa = new StringBuilder();
-        StringBuilder specimens = new StringBuilder();
+        StringBuilder rows = new StringBuilder();
         for (int i = 1; i <= 60; i++) {
             String sf = "longsubfamilynumber" + i + "inae";
             taxa.append(i == 1 ? "" : ", ").append("('").append(sf).append("', 'subfamily', 'valid', 'formicidae', 'formicidae', '").append(sf).append("')");
-            for (int k = 0; k < i % 3 + 1; k++) {
-                specimens.append(specimens.length() == 0 ? "" : ", ").append("('x").append(i).append("_").append(k).append("', 'CASC', '").append(sf).append("', 'formicidae')");
-            }
-            specimens.append(", ('typo").append(i).append("', 'CASC', 'notasubfamily").append(i).append("', 'formicidae')");
+            taxa.append(", ('").append(sf).append("genus sp").append(i).append("', 'species', 'valid', '").append(sf).append("genus', 'formicidae', '").append(sf).append("')");
+            taxa.append(", ('notasubfamily").append(i).append("genus sp', 'species', 'valid', 'x', 'formicidae', 'notasubfamily").append(i).append("')");
+            rows.append(i == 1 ? "" : ", ").append("('CASC', '").append(sf).append("genus sp").append(i).append("', ").append(i % 3 + 1).append(")");
+            rows.append(", ('CASC', 'notasubfamily").append(i).append("genus sp', 1)");
         }
         exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily) values " + taxa);
-        exec("insert into specimen (code, museum, subfamily, family) values " + specimens);
-        long total = one("select count(*) from specimen where museum = 'CASC' and family = 'formicidae'");
+        exec("insert into museum_taxon (code, taxon_name, specimen_count) values " + rows);
+        long total = one("select sum(l.specimen_count) from museum_taxon l join taxon t on t.taxon_name = l.taxon_name"
+            + " where l.code = 'CASC' and t.taxarank in ('species', 'subspecies') and t.family = 'formicidae'");
         PlaceTotals.writePies(connection, PlaceTotals.MUSEUM, "CASC");
         String json = text("select specimen_subfamily_dist_json from museum where code = 'CASC'");
         assertNotNull(json);
@@ -365,5 +367,51 @@ public class PlaceTotalsDbTest extends TestCase {
             taxa.add(x);
         }
         assertEquals(2, TaxonMgr.countValidSpecies(taxa));
+    }
+
+    /**
+     * Brian Fisher, 2026-10-28: a specimen counts at each rank it is identified to, and no further. A "Lioponera indet"
+     * specimen makes Lioponera count in Genera but is not a species; unidentifiable and unrecognized names are not species
+     * either. The genus rows' Species follow the same rule; the specimens identified to genus only are named by genus
+     * (GenusOnly); a museum's Specimens are the sum of its list rows.
+     */
+    public void testSpecimensCountAtEachRankTheyAreIdentifiedTo() throws Exception {
+        int[] before = PlaceTotals.listedCounts(connection, PlaceTotals.GEOLOCALE, "" + MADAGASCAR);
+        String lio = "ponerinaelioponera";
+        exec("alter table taxon add column subspecies varchar(64)");   // as the live table (GenusOnly reads it)
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species) values"
+            + " ('" + lio + "', 'genus', 'valid', '" + PON + "', 'formicidae', '" + PON + "', 'lioponera', null),"
+            + " ('" + lio + " indet', 'species', 'indetermined', '" + lio + "', 'formicidae', '" + PON + "', 'lioponera', 'indet'),"
+            + " ('" + PHEIDOLE + " zz', 'species', 'unrecognized', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "', 'pheidole', 'zz'),"
+            + " ('" + PHEIDOLE + " yy', 'species', 'unidentifiable', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "', 'pheidole', 'yy')");
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, specimen_count, created) values"
+            + " (" + MADAGASCAR + ", '" + lio + "', 1, '2020-01-01'), (" + MADAGASCAR + ", '" + lio + " indet', 1, '2020-01-01'),"
+            + " (" + MADAGASCAR + ", '" + PHEIDOLE + " zz', 1, '2020-01-01'), (" + MADAGASCAR + ", '" + PHEIDOLE + " yy', 2, '2020-01-01')");
+        int[] after = PlaceTotals.listedCounts(connection, PlaceTotals.GEOLOCALE, "" + MADAGASCAR);
+        assertEquals("Subfamilies: ponerinae was there already", before[0], after[0]);
+        assertEquals("Genera: Lioponera counts (a specimen identified to genus)", before[1] + 1, after[1]);
+        assertEquals("Species: none of the three is a species", before[2], after[2]);
+
+        // the genus rows' Species (the nightly crawl's query): pheidole a, b and a x; not zz (unrecognized) nor yy
+        org.calacademy.antweb.geolocale.Country madagascar = new org.calacademy.antweb.geolocale.Country();
+        madagascar.setId(MADAGASCAR);
+        madagascar.setName("Madagascar");
+        java.util.Map<String, Integer> children = new java.util.HashMap<>();
+        try (Statement st = connection.createStatement(); ResultSet r = st.executeQuery(madagascar.getCountChildrenQuery("species"))) {
+            while (r.next()) children.put(r.getString("parentTaxonName"), r.getInt("count"));
+        }
+        assertEquals(3, (int) children.get(PHEIDOLE));
+        assertNull("Lioponera has no species: " + children, children.get(lio));
+
+        // the names identified to genus only, by genus: the genus row and the line under the species list
+        org.calacademy.antweb.home.GenusOnly g = org.calacademy.antweb.home.GenusOnly.load(connection, madagascar);
+        assertEquals(1, g.specimens(lio));
+        assertEquals("pheidole yy (unidentifiable); not zz (unrecognized: for curators to check against AntCat)", 2, g.specimens(PHEIDOLE));
+        assertEquals("3 specimens identified only to genus are not listed here: Lioponera (1), Pheidole (2).", g.speciesListText());
+
+        // a museum's Specimens: the sum of its species and subspecies rows (fixture: CASC 4)
+        assertEquals(4, PlaceTotals.count(connection, PlaceTotals.listedSpecimensSql(PlaceTotals.MUSEUM), "CASC"));
+        assertEquals(4, PlaceTotals.writeListedSpecimens(connection, PlaceTotals.MUSEUM, "CASC"));
+        assertEquals(4, one("select specimen_count from museum where code = 'CASC'"));
     }
 }

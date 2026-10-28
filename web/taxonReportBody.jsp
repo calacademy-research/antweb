@@ -35,6 +35,21 @@
     String asterixNote = "Numbers marked * count every " + asterixUnit
         + ", whatever the name's status (valid, morphospecies, indetermined and others)"
         + (displayGlobal ? "." : ", in " + locale + ".");
+    // Brian Fisher, 2026-10-28: a species is a valid name or a morphospecies. The Species of a genus row count those only.
+    if (Rank.GENUS.equals(pageRank)) {
+      asterixNote = "Numbers marked * count the species and subspecies of the genus in " + locale
+          + " that are valid names or morphospecies; names identified to genus only (indetermined, unidentifiable)"
+          + " and names not in AntCat (unrecognized) are not species.";
+    }
+    // The specimens identified to genus only, linked to the place's specimen search (as "List all specimens collected in").
+    String genusOnlySearch = null;
+    if (overview instanceof org.calacademy.antweb.geolocale.LocalityOverview && !HttpUtil.isBot(request)) {
+      String genusOnlyCriteria = ((org.calacademy.antweb.geolocale.LocalityOverview) overview).getSearchCriteria();
+      if (genusOnlyCriteria != null && !"".equals(genusOnlyCriteria)) {
+        genusOnlySearch = AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&"
+            + genusOnlyCriteria + "&resultRank=specimen";
+      }
+    }
 %>
 
 <!--  Column Headings -->
@@ -189,6 +204,14 @@
           //A.log("taxonReportBody.jsp nextSubtaxon:" + nextSubtaxon + " Um, nextTaxon should be returning 'No [rank]' instead of :" + childCountStr);
           if (nextSubtaxon != null && nextSubtaxon.contains("No ")) {
             childCountStr = nextSubtaxon; //"No Specimens";
+            // 2026-10-28: a genus known here only from specimens identified to genus: "No Species" and how many.
+            int genusOnlyCount = (Rank.GENUS.equals(pageRank) && genusOnly != null) ? genusOnly.specimens(child.getTaxonName()) : 0;
+            if (genusOnlyCount > 0) {
+              String genusOnlyText = org.calacademy.antweb.home.GenusOnly.genusRowText(genusOnlyCount);
+              if (genusOnlySearch != null) genusOnlyText = "<a rel='nofollow' href='" + org.calacademy.antweb.util.Html.escAttr(genusOnlySearch + "&"
+                  + org.calacademy.antweb.home.GenusOnly.searchParams(genusOnly.genus(child.getTaxonName()))) + "'>" + genusOnlyText + "</a>";
+              childCountStr += "<br><span class='genus-only' data-genus-only='" + genusOnlyCount + "'>" + genusOnlyText + "</span>";
+            }
           } else {
             //if (child.getTaxonName().contains("graulomyrmex")) A.log("init() taxonName:" + taxonName + " childCount:" + projTaxon.getGlobalChildCount());
             //if (child.getTaxonName().contains("graulomyrmex")) A.log("taxonReport.jsp ! nextSubtaxon:" + nextSubtaxon + " globalChildCount:" + childTaxonSet.getGlobalChildCount());
@@ -283,6 +306,10 @@
      }
 %>
      <br><span id="subtaxon-total" data-subtaxon-total="<%= subtaxonTotal %>">Total of the <%= org.calacademy.antweb.util.Html.esc(totalColumn) %> column: <%= Formatter.commaFormat(subtaxonTotal) %> <%= totalUnit %> (administrators only; <%= totalCheck %>).</span>
+<% } %>
+<% String genusOnlyLine = (Rank.SPECIES.equals(pageRank) && genusOnly != null) ? genusOnly.speciesListText() : null;
+   if (genusOnlyLine != null) { %>
+<BR><span id="genus-only-note" data-genus-only="<%= genusOnly.totalSpecimens() %>"><%= org.calacademy.antweb.util.Html.esc(genusOnlyLine) %><% if (genusOnlySearch != null) { %> <a rel='nofollow' href='<%= org.calacademy.antweb.util.Html.escAttr(genusOnlySearch) %>'>Show all specimens.</a><% } %></span>
 <% } %>
 <% if (listOnly) { %>
 <BR><span id="port-of-entry-list-note">These are ant species intercepted at ports of entry, not established introductions. They are not counted in any place total or in the introduced species list, and this list shows no specimen or image numbers.</span>
