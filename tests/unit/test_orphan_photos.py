@@ -335,11 +335,6 @@ def main():
     test_command_flow()
     test_runbook()
 
-
-if __name__ == "__main__":
-    main()
-
-
 def test_period_target_warns():
     decisions, rows, specimens, folders = world()
     d = [dict(x) for x in decisions]
@@ -351,3 +346,8 @@ def test_period_target_warns():
     p = by_code(op.plan(d, rows, specimens, folders))["casent0005505"]
     assert any("period" in w for w in p["warnings"]), p["warnings"]
     print("A target code with a period gets a warning.")
+
+
+if __name__ == "__main__":
+    main()
+

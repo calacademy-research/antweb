@@ -796,6 +796,77 @@ cd /root/antweb && python3 tools/data/orphan_photos.py rollback --project /root/
    `--tag b` to backup, run and rollback (the folder and tables get `_b`). Keep the backup folder and tables until the
    curator has checked the pages; drop the tables later (`drop table orphan_photos_bak_<date>_image, ...`).
 
+## One-off image exports
+
+### Pheidole major-worker heads for Jack Longino (2026-10-27)
+
+Jack sent a list of 1,517 Pheidole species in 41 clades (`tools/data/pheidole_clades_longino_2026-10-27.csv`). The
+tool `tools/export/pheidole_major_heads.py` (read its header) finds the head images (shot type h) of major workers
+(caste `worker`, subcaste `major/soldier`, the site's own major/soldier filter) of each species and writes, per
+clade, a folder with the medium-size images named `<clade>_<Genus_species>_<specimen code>.jpg`, an `index.csv`
+and a contact sheet PDF (4 x 6 tiles per page), then one zip per clade. `index.csv` (all clades: specimen code,
+country, adm1, collection code, locality, photographer, image and specimen links) and `not_found.csv` (species with
+no AntWeb name or no major-worker head image, with the reason and close AntWeb names) go with the zips.
+
+It runs on staging (a copy of production's data as of its last refresh), reads the database once, and downloads
+the images from static.antweb.org, 4 at a time. It uses only the server's own python3; nothing is installed and no
+tracked file changes. Run it outside 05:00 to 08:00 Pacific (staging has 4 GB and the nightly run is heavy then);
+the database query is at the start, the downloads after it do not touch the database.
+
+1. Get the tool and Jack's list (expect `1518 ... .csv`: 1,517 species plus the header line).
+
+```
+# ssh root@165.232.136.170   (staging)
+mkdir -p /root/pheidole_tool/tools/export /root/pheidole_tool/tools/data && cd /root/pheidole_tool && B=https://raw.githubusercontent.com/calacademy-research/antweb/refs/heads/tools/pheidole-export && curl -fsS -o tools/export/pheidole_major_heads.py $B/tools/export/pheidole_major_heads.py && curl -fsS -o tools/data/pheidole_clades_longino_2026-10-27.csv $B/tools/data/pheidole_clades_longino_2026-10-27.csv && wc -l tools/data/*.csv
+```
+
+2. Dry run: queries the database, writes `index.csv` and `not_found.csv`, prints a table per clade (species
+   listed, species with no AntWeb name, species with images, images) and the size estimate and free disk. Nothing
+   is downloaded. Send the output to Claude before going on. If it says "NOT ENOUGH" disk, or that no sample image
+   answered, stop there.
+
+```
+# ssh root@165.232.136.170   (staging)
+cd /root/pheidole_tool && nice python3 tools/export/pheidole_major_heads.py --dry-run
+```
+
+   Optional: `--max-per-species 5` limits each species to 5 specimens (add it to steps 2 and 3).
+
+3. Full run, in the background so a closed terminal does not stop it. Check progress with the `tail` line as often
+   as you like; it ends with `zips: ...` and `done`. If it stops or the server reboots, run the same command
+   again: images already on disk are kept, failed ones are tried again. On a later day add
+   `--out /root/pheidole_export_<first day>` (see `ls -d /root/pheidole_export_*`), or it starts a new folder.
+
+```
+# ssh root@165.232.136.170   (staging)
+cd /root/pheidole_tool && nohup nice -n 10 python3 tools/export/pheidole_major_heads.py > /root/pheidole_export.log 2>&1 &
+sleep 60; tail -5 /root/pheidole_export.log
+```
+
+4. Check the result: one zip per clade that has images, plus `index.csv` and `not_found.csv`. A
+   `download_failures.csv` in the export folder lists images that could not be fetched (run step 3 again).
+
+```
+# ssh root@165.232.136.170   (staging)
+ls -lh /root/pheidole_export_*/zips/ ; ls /root/pheidole_export_*/download_failures.csv 2>/dev/null
+```
+
+5. Copy the zips to the Mac (in Terminal on the Mac, not on the server). They land in `Downloads/pheidole_export`.
+
+```
+# on the Mac
+mkdir -p ~/Downloads/pheidole_export && scp 'root@165.232.136.170:/root/pheidole_export_*/zips/*' ~/Downloads/pheidole_export/
+```
+
+6. Put the folder in Dropbox and share the link with Jack (the zips, `index.csv` and `not_found.csv`).
+
+7. When Jack has the files, free the staging disk:
+
+```
+# ssh root@165.232.136.170   (staging)
+rm -r /root/pheidole_export_* /root/pheidole_tool /root/pheidole_export.log
+```
+
 ## Emergencies
 
 ### Site down
