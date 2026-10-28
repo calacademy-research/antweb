@@ -67,9 +67,11 @@ def test_list_images_column_shows_the_antweb_number_only():
     assert "Math.max(total, place)" in body
     # the title and definition say what the number counts and where the place's own images are
     assert '"Images of the ant of the name in AntWeb, from any specimen (labels are not counted)."' in jsp
-    assert '" The number is the images of the ant of the name in AntWeb, from any specimen."' in jsp
-    assert "in brackets" not in jsp and "The first number" not in jsp
-    assert "come first." in jsp
+    # the Images note under the list (Brian Fisher 2026-10-28, list notes)
+    assert '"Images: the images of the ant (head, profile, dorsal and other views) of that name in all of"' in jsp
+    assert '" AntWeb, from specimens collected anywhere. Specimen label images are not counted."' in jsp
+    assert '" Click the number to see the images; those " + imagesFromPhrase + " come first."' in jsp
+    assert "in brackets" not in jsp and "The first number" not in jsp and "parenthes" not in jsp.lower()
     # sorting by Images follows the number shown
     assert "ImagesAnywhere.shownImages(a.getTaxonSet())" in read("src/org/calacademy/antweb/sort/SortTaxaByImages.java")
     ts = read("src/org/calacademy/antweb/TaxonSet.java")
@@ -107,7 +109,7 @@ def test_list_images_are_ant_images_only():
         assert "countCheck.antImagesRuleCounted = CountCheck.antImagesRuleCounted(log);" in read("src/org/calacademy/antweb/util/" + f), f
     assert "StatisticsDb.ANT_IMAGES_RULE_LOG" in read("src/org/calacademy/antweb/util/UtilDataAction.java")
     jsp = read("web/taxonReportBody.jsp")
-    assert "String imagesDefinition = org.calacademy.antweb.ImageCounts.DEFINITION" in jsp and 'id="images-definition"' in jsp
+    assert "Specimen label images are not counted." in jsp and 'id="images-definition"' in jsp
     cell = read("web/taxonChildImageSet.jsp")
     assert cell.count("ImagesAnywhere.childImages(thisChild, overview)") == 2, "both views show the list's numbers"
 

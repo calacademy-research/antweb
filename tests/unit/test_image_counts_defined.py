@@ -52,7 +52,7 @@ DEFINED = {
     "taxonomicPageImages-body.jsp": "/common/imagesDefinition.jsp",
     "search/recentSearchResults-body.jsp": "/common/imagesDefinition.jsp",
     "util/statsPage-body.jsp": "/common/imagesDefinition.jsp",
-    "taxonReportBody.jsp": "org.calacademy.antweb.ImageCounts.DEFINITION",
+    "taxonReportBody.jsp": "Specimen label images are not counted.",   # the list's own Images note (2026-10-28)
     "imageUploader/listImageUploads-body.jsp": "/common/imagesDefinition.jsp",
     "artists-body.jsp": "/common/imagesDefinition.jsp",
     "overviews-body.jsp": "/common/imagesDefinition.jsp",

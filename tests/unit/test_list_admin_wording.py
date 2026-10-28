@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""The admin check number and the * note under every list say what they are (Brian Fisher, 2026-10-27).
+"""The admin check number and the * note under every list say what they are (Brian Fisher, 2026-10-27; wording of
+2026-10-28, see tests/unit/test_list_notes.py).
 
-"Subtaxon total: 1778" became "Total of the Reunion column: 1,778 specimens (administrators only; ...)"; the tests read
-the number from data-subtaxon-total. "Counts include specimens of all statuses" became "Numbers marked * count every
-specimen filed under the name, whatever the name's status (...)".
+"Subtaxon total: 1778" became "Specimen total (administrators only): the Specimens column adds up to 1,778 specimens.
+..."; the tests read the number from data-subtaxon-total. "Counts include specimens of all statuses" became "Specimen
+counts marked with an asterisk (*) include every specimen filed under that name, whatever its taxonomic status (...)".
 """
 import os
 import sys
@@ -16,8 +17,9 @@ def main():
         jsp = f.read()
     assert "<br>Subtaxon total:" not in jsp, "the old \"Subtaxon total\" line is still shown"
     assert 'data-subtaxon-total="<%= subtaxonTotal %>"' in jsp, "the tests' data-subtaxon-total attribute is missing"
-    assert "Total of the " in jsp and "administrators only;" in jsp, "the plain wording of the column total is missing"
-    assert "Numbers marked * count every " in jsp, "the plain wording of the * note is missing"
+    assert "Total of the " not in jsp and "Numbers marked * count every " not in jsp, "the 10-27 wording is still shown"
+    assert '"Specimen total (administrators only): the "' in jsp, "the plain wording of the column total is missing"
+    assert '" counts marked with an asterisk (*) include every "' in jsp, "the plain wording of the * note is missing"
     assert '"Counts include " + nextPluralRank + " of all statuses";' not in jsp, "the old * note is still built"
     print("List notes: the column total and the * note are in plain words.")
 
