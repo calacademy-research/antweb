@@ -115,7 +115,8 @@ def test_calc_caste_runs_one_scope():
     src = _src("src/org/calacademy/antweb/util/UtilDataAction.java")
     block = src[src.index('if (action.equals("calcCaste"))'):]
     block = block[:block.index("siteWarning")]
-    assert "} else if (code != null) {" in block
+    # 2026-10-28 (audit triage th): a blank code no longer runs one specimen
+    assert "} else if (code != null" in block
 
 
 def test_parentage_repair_checks_null_first():
