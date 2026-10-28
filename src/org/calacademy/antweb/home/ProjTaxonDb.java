@@ -825,6 +825,9 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         // This was in the UtilData.java regenerateAllAntweb
 
         new ProjTaxonCountDb(getConnection()).childrenCountCrawl("allantwebants"); // Proj_taxon counts
+        // The rows were re-inserted with image_count 0: count their Images again now, not at the next nightly set 4
+        // (every list's Images column shows the AntWeb-wide number, 2026-10-28).
+        new ProjTaxonCountDb(getConnection()).allAntwebImageCount();
         finishRegenerateAllAntweb();
         new ProjectDb(getConnection()).updateCounts("allantwebants");      // Project counts
 
@@ -941,4 +944,4 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
     }
 
 
-}
+}
