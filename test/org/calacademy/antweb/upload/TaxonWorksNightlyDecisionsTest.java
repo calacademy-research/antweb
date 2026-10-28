@@ -153,4 +153,24 @@ public class TaxonWorksNightlyDecisionsTest extends TestCase {
         assertFalse((Boolean) m.invoke(null, "skipped: archive built 2026-10-23T12:01:22 UTC, before this run's request (TaxonWorks builds the new one now)"));
         assertFalse((Boolean) m.invoke(null, (Object) null));
     }
+
+    /**
+     * 2026-10-28: when the wait runs out during a check that did not accept an older archive (a slow download),
+     * one more check accepts it, so the day is not left without an upload; the server log keeps no URL.
+     */
+    public void testFinalCheckWhenWaitRunsOut() throws Exception {
+        Method m = method("afterCheck", boolean.class, boolean.class, long.class, int.class);
+        assertEquals("stop", m.invoke(null, false, false, 10L, 60));   // uploaded, or failed: done
+        assertEquals("stop", m.invoke(null, true, true, 62L, 60));     // that check already accepted an older archive
+        assertEquals("stop", m.invoke(null, true, true, 0L, 0));       // admin run: one check
+        assertEquals("wait", m.invoke(null, true, false, 10L, 60));
+        assertEquals("final", m.invoke(null, true, false, 62L, 60));   // slow download ran past the wait
+        assertEquals("final", m.invoke(null, true, false, 58L, 60));
+        Method w = method("withoutUrls", String.class);
+        String text = (String) w.invoke(null, "Illegal character in query at index 40: https://sfg.taxonworks.org/api/v1/x?project_token=abc123 more");
+        assertFalse(text.contains("abc123"));
+        assertTrue(text.contains("<url>"));
+        assertFalse(((String) w.invoke(null, "bad project_token=abc123")).contains("abc123"));
+        assertEquals("", w.invoke(null, (Object) null));
+    }
 }

@@ -190,7 +190,7 @@ Or, if there are stmts and/or rsets...
         } catch (SQLException e) {
           // Fail gracefully, without stacktrace, upon server shutdown
           //AntwebUtil.logShortStackTrace();
-          s_log.error("getStatement() connection:" + connection.toString() + " name:" + name + " isClosed():" + ((NewProxyConnection) connection).isClosed() + " e:" + e);
+          s_log.error("getStatement() connection:" + connection.toString() + " name:" + name + " isClosed():" + connection.isClosed() + " e:" + e);
           throw e;
         }
         if (stmt == null) {
@@ -343,7 +343,9 @@ Or, if there are stmts and/or rsets...
             connectionRequestMap.put((NewProxyConnection) conn, dbRequest);
         }
     }
-    private static boolean removeConn(Connection conn) {
+    static boolean removeConn(Connection conn) {
+        // Only pooled (c3p0) connections are tracked; a plain one (DBUtilSimple) has nothing to remove.
+        if (!(conn instanceof NewProxyConnection)) return false;
         NewProxyConnection newProxyConn = (NewProxyConnection) conn;
         int connMapSize = connectionRequestMap.size();
         //connectionMap.remove();

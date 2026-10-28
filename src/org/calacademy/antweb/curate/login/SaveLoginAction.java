@@ -87,7 +87,10 @@ public final class SaveLoginAction extends AntwebAction {
                     return mapping.findForward("message");
                 }
                 s_log.warn("execute() delete");
+                // Its sessions and "Keep me logged in" tokens end now, not when they expire.
+                new PasswordResetDb(connection).bumpSessionVersion(id);
                 loginDb.deleteById(id);
+                PasswordResetMgr.noteVersion(id, PasswordResetDb.DELETED_LOGIN_VERSION);
                 adminLog("login " + id + " deleted by login " + accessLogin.getId());
                 LoginMgr.populate(connection, true, false);
                 request.setAttribute("message", "Login " + id + " was deleted. <a href=\"" + AntwebProps.getDomainApp() + "/viewLogins.do\">Login Manager</a>");
@@ -352,6 +355,11 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
         if (!result.problems.isEmpty()) return refuse(request, mapping, connection, id, false, result.problems);
 
         List<String> changes = new ArrayList<>(result.changes);
+        if (!isSelf && LoginEdit.removesRights(result.before, result.after)) {
+            // A removed right takes effect at once: the login's sessions end (it logs in again).
+            PasswordResetMgr.noteVersion(id, new PasswordResetDb(connection).bumpSessionVersion(id));
+            changes.add("Rights removed: this login was logged out everywhere, so the change applies at once.");
+        }
         if (storesPassword) {
             loginDb.changePassword(login, newPassword);
             endSessions(connection, request, login, true, accessLogin);
@@ -441,26 +449,6 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
 
         s_log.debug("passPwdCheck errors:" + errors);
         return errors;
-    }
-    private ActionMessages passPwdCheck2(SaveLoginForm form) {
-        ActionMessages messages = new ActionMessages();
-        ActionMessage msg = null;
-                      
-        String newPassword = form.getPassword();
-        String newPassword2 = form.getRetypePassword();
-		
-        if (newPassword == null || newPassword.length() == 0) {
-            msg = new ActionMessage("error.login.needPassword");
-            messages.add("message",msg);
-            s_log.debug("passPwdCheck needPassword");
-        } else if (!newPassword.equals(newPassword2)) {
-            msg = new ActionMessage("error.login.passwordsMustMatch");
-            messages.add("message", msg);
-            s_log.debug("passPwdCheck passwords must match");
-        }
-
-        s_log.debug("passPwdCheck messages:" + messages);
-        return messages;
     }
 
 

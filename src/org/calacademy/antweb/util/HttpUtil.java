@@ -284,7 +284,7 @@ public abstract class HttpUtil {
         if (queryString.contains("..%2f")) reasonCode = 4;
         if (queryString.contains("./")) reasonCode = 5;
         if (queryString.contains("../")) reasonCode = 6;
-        if (queryString.contains("%2e")) reasonCode = 7;
+        if (lowerQuery.contains("%2e")) reasonCode = 7;   // %2e or %2E (an encoded dot)
         if (queryString.contains("0xc")) {
             LogMgr.appendWebLog("nonLegitRequest.log", queryString);
             reasonCode = 8;
@@ -751,7 +751,8 @@ public abstract class HttpUtil {
 
     public static boolean isSecure(HttpServletRequest request) {
         String target = HttpUtil.getTarget(request);
-        if ("https://".equals(target.substring(0, 8))) return true;
+        if (target == null) return true;   // nothing to tell (and nothing for the caller to log)
+        if (target.startsWith("https://")) return true;
         if (!AntwebProps.isDevMode() && target.contains("http://"))
             s_log.warn("isSecure() http found. Target:" + target);
         return false;
@@ -1837,12 +1838,10 @@ public abstract class HttpUtil {
       return url;
     }
     
+    /** The text with &lt; and &gt; escaped (it used to return its input unchanged). */
     public static String verbatimify(String content) {
-      if (content != null) {
-        content.replaceAll("<", "&lt;");
-        content.replaceAll(">", "&gt;");
-      }
-      return content;
+      if (content == null) return null;
+      return content.replace("<", "&lt;").replace(">", "&gt;");
     }
     
 }

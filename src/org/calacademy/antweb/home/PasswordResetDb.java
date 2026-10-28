@@ -153,6 +153,9 @@ public class PasswordResetDb extends AntwebDb {
      * After a password change by its owner or an administrator: clear must_reset,
      * cancel outstanding reset links and end all sessions. Returns the new session_version.
      */
+    /** session_version reported for a deleted login: never equal to a stamp, so its sessions end. */
+    public static final int DELETED_LOGIN_VERSION = -1;
+
     public int afterPasswordChange(int loginId) throws SQLException {
         try (PreparedStatement stmt = getConnection().prepareStatement(
                 "update login set must_reset = 0, session_version = session_version + 1, created = created where id = ?")) {
@@ -164,11 +167,12 @@ public class PasswordResetDb extends AntwebDb {
         return getSessionVersion(loginId);
     }
 
+    /** The login's session_version; DELETED_LOGIN_VERSION if the login no longer exists (its sessions are over). */
     public int getSessionVersion(int loginId) throws SQLException {
         try (PreparedStatement stmt = getConnection().prepareStatement("select session_version from login where id = ?")) {
             stmt.setInt(1, loginId);
             try (ResultSet rset = stmt.executeQuery()) {
-                return rset.next() ? rset.getInt(1) : 0;
+                return rset.next() ? rset.getInt(1) : DELETED_LOGIN_VERSION;
             }
         }
     }

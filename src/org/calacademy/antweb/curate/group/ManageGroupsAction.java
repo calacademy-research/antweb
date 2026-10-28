@@ -42,7 +42,7 @@ public class ManageGroupsAction extends AntwebAction {
             s_log.error("execute() e:" + e);
         } finally {
             try {
-                connection.close();
+                if (connection != null) connection.close();
             } catch (SQLException e) {
                 s_log.error("execute() finally e:" + e);
             }

@@ -197,7 +197,8 @@ public class SaveLoginForm extends ActionForm {
         // Not logged in: no checks here; SaveLoginAction sends the visitor to the log-in page.
         if (LoginMgr.getAccessLogin(request) == null) return null;
 
-        if (!"delete".equals(getStep())) {
+        // A delete comes as delete=delete (the step is not set): no edit checks for it.
+        if (!"delete".equals(getStep()) && !"delete".equals(getDelete())) {
 
             errors = new ActionErrors();
 

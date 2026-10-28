@@ -422,6 +422,23 @@ jobs:
             grep -q "^OK (3 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of logins and sessions of 2026-10-28 (sign-in posts from another site refused, removed rights end sessions, escaped project links, small request helpers)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/audit/LoginSessionFixesTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.audit.LoginSessionFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (4 tests)" /tmp/out.txt
+          '
+
       - name: Java unit tests of the counting rules of 2026-10-27 (project Subfamilies, orphan report, caste, endemic and introduced lists, label photos, habitat events, institutions)
         # Brian Fisher's decisions of 2026-10-27, docs/numbers.md B67 to B73.
         run: |
@@ -581,7 +598,7 @@ jobs:
               /t/org/calacademy/antweb/util/JobSummaryTest.java \
               /t/org/calacademy/antweb/upload/SubfamilyFromGenusTest.java \
               /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java
-            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:10 \
+            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:11 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \

@@ -35,6 +35,12 @@
    built before it is written (an error leaves it empty instead of cutting the page off) and TaxonMgr publishes its
    name list and taxon map only once they are filled (a reload runs after every specimen upload).
 
+13. (2026-10-28) Logins and sessions, curator tools and uploads: deleting a login ends its sessions; sign-in posts
+   from another site are refused; the login list is a request attribute; staging's bot list is production's; an
+   encoded dot is refused in either case; a failed invite link after "Add an uploader" does not say nothing was
+   changed; a curator without a real group sees no name updates; small null checks. Unit test:
+   test/.../audit/LoginSessionFixesTest.java.
+
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
 import os
@@ -306,6 +312,52 @@ def test_no_lost_ifs_and_whole_home_page(sources):
     print("No if loses its statement to a comment; the home page slideshow and TaxonMgr's reload are whole.")
 
 
+def test_triage_20261028(sources):
+    save = sql_text(sources["src/org/calacademy/antweb/curate/login/SaveLoginAction.java"])
+    delete = save[save.index('if ("delete".equals(form.getDelete()))'):save.index("login = loginDb.getLogin(id);")]
+    assert delete.index("bumpSessionVersion(id)") < delete.index("deleteById(id)"), "deleting a login leaves its sessions"
+    assert "LoginEdit.removesRights(result.before, result.after)" in save, "removed rights wait for the next login again"
+    assert "passPwdCheck2" not in save
+    filt = sources["src/org/calacademy/antweb/util/SessionRequestFilter.java"]
+    assert "Csrf.isSignInPath(request)" in filt and "Csrf.crossSite(request)" in filt, "sign-in posts from another site are accepted again"
+    assert "AdminAlertMgr.add(spaceMessage, connection)" not in filt, "the space alert gets a closed connection again"
+    views = sources["src/org/calacademy/antweb/curate/login/ViewLoginsAction.java"]
+    assert 'request.setAttribute("antwebLogins"' in views and 'getSession().setAttribute("antwebLogins"' not in views
+    jsp = read(os.path.join(ROOT, "web/curate/viewLogins-body.jsp"))
+    assert 'request.getAttribute("antwebLogins")' in jsp, "the login list page reads the session again"
+    bots = []
+    for name in ("docker/caddy/Caddyfile", "docker/caddy/Caddyfile.common"):
+        m = re.search(r'header_regexp User-Agent "([^"]*)"', read(os.path.join(ROOT, name)))
+        bots.append(m.group(1))
+    assert bots[0] == bots[1], "the bot list of Caddyfile.common (staging) differs from production's Caddyfile"
+    http = sources["src/org/calacademy/antweb/util/HttpUtil.java"]
+    assert 'lowerQuery.contains("%2e")' in http, "an encoded dot in upper case (%2E) passes again"
+    add = sources["src/org/calacademy/antweb/curate/group/AddUploaderAction.java"]
+    assert "done.lines.add(INVITE_LINK_FAILED)" in add, "a failed invite link after Add an uploader says nothing was changed again"
+    names = sources["src/org/calacademy/antweb/curate/NameUpdatesAction.java"]
+    assert "group.getId() <= 0) ? -1" in names, "a curator with group 0 would see every group's name updates"
+    geo = sources["src/org/calacademy/antweb/curate/geolocale/EditGeolocaleAction.java"]
+    assert 'message += " Updated."' not in geo, '"null Updated." can be shown again'
+    for name in ("ManageGroupsAction", "ViewGroupAction"):
+        src = sources[f"src/org/calacademy/antweb/curate/group/{name}.java"]
+        assert "if (connection != null) connection.close();" in src, name
+    form = sources["src/org/calacademy/antweb/curate/login/SaveLoginForm.java"]
+    assert '!"delete".equals(getDelete())' in form, "the delete form is checked as an edit again"
+    camp = sources["src/org/calacademy/antweb/curate/login/PasswordResetCampaignAction.java"]
+    assert "FAILED after" in camp, "a failed campaign mark leaves no line in admin.log again"
+    login = sources["src/org/calacademy/antweb/LoginAction.java"]
+    created = login[login.index("login = loginDb.createAccount("):]
+    assert created.index("if (login != null)") < created.index("login.setGroupId(-1)")
+    up = sources["src/org/calacademy/antweb/upload/UploadDetails.java"]
+    assert "!uploadDetails.getMessage().equals(" not in up and "accessCurator != getCurator()" not in up
+    util = sources["src/org/calacademy/antweb/upload/UploadUtil.java"]
+    assert 'new SimpleDateFormat("dd MMM yyyy", java.util.Locale.ENGLISH)' in util
+    assert "theLine = theLine == null" in util
+    nightly = sources["src/org/calacademy/antweb/upload/TaxonWorksNightly.java"]
+    assert "(details in the server log)\", e)" not in nightly, "the nightly logs the exception text (it can hold the URL) again"
+    print("Logins, sessions, curator tools and upload fixes of 2026-10-28 in place.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -323,6 +375,7 @@ def main():
     test_copyright_rows_and_compare_by_species(sources)
     test_post_means_post(sources)
     test_no_lost_ifs_and_whole_home_page(sources)
+    test_triage_20261028(sources)
 
 
 if __name__ == "__main__":

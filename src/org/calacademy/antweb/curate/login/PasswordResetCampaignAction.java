@@ -65,11 +65,17 @@ public final class PasswordResetCampaignAction extends AntwebAction {
                     result = "Nothing done: this step needs the form below (POST) with the confirm box ticked.";
                 } else if ("mark".equals(action)) {
                     int marked = 0;
-                    for (PasswordResetDb.Account a : db.getCampaignAccounts()) {
-                        if (a.id == admin.getId()) continue;  // do not log out the administrator running the campaign
-                        db.markMustReset(a.id);
-                        PasswordResetMgr.forgetVersion(a.id);
-                        marked++;
+                    try {
+                        for (PasswordResetDb.Account a : db.getCampaignAccounts()) {
+                            if (a.id == admin.getId()) continue;  // do not log out the administrator running the campaign
+                            db.markMustReset(a.id);
+                            PasswordResetMgr.forgetVersion(a.id);
+                            marked++;
+                        }
+                    } catch (SQLException e) {
+                        // Accounts are marked one by one: say how many were marked before the failure (admin.log).
+                        PasswordResetMgr.logEvent("campaign mark by " + who + " FAILED after " + marked + " accounts: " + e.getMessage());
+                        throw e;
                     }
                     result = "Marked " + marked + " accounts: they must set a new password, and their sessions have ended.";
                     PasswordResetMgr.logEvent("campaign mark by " + who + ": " + marked + " accounts set must_reset=1, sessions ended");

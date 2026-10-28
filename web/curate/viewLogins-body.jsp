@@ -17,7 +17,8 @@
 <jsp:useBean id="antwebGroups" scope="session" class="java.util.ArrayList" />
 
 <%
- ArrayList<Login> logins =   (ArrayList<Login>) session.getAttribute("antwebLogins");
+ ArrayList<Login> logins =   (ArrayList<Login>) request.getAttribute("antwebLogins");
+ if (logins == null) logins = new ArrayList<>();
 %>
 
 <div class="admin_left loginListPage">

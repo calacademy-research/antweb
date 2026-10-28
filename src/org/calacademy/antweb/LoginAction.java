@@ -225,10 +225,12 @@ public final class LoginAction extends AntwebAction {
                 LoginDb loginDb = new LoginDb(connection);
             
                 login = loginDb.createAccount(userNameOrEmail, password);           
-                login.setGroupId(-1);
-                login.setEmail("");
-                login.setIsAdmin(false);
-        
+                if (login != null) {
+                    login.setGroupId(-1);
+                    login.setEmail("");
+                    login.setIsAdmin(false);
+                }
+
                 if (login == null || !PasswordHash.matches(login.getPassword(), password)) {
                     msg = new ActionMessage("error.login.failedLogin");
                     messages.add("message",msg);

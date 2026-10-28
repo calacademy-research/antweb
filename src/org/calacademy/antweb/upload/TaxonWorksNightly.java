@@ -66,6 +66,12 @@ public final class TaxonWorksNightly {
     /** Minutes between checks while waiting for TaxonWorks to build a fresh archive. */
     static final int WAIT_STEP_MINUTES = 3;
 
+    /** Text with every http(s) URL replaced by &lt;url&gt; (a download URL can carry the project token). */
+    static String withoutUrls(String text) {
+        if (text == null) return "";
+        return text.replaceAll("(?i)https?://\\S+", "<url>").replaceAll("(?i)(token=)\\S+", "$1***");
+    }
+
     public static String run(Connection connection) {
         return run(connection, 0);
     }
@@ -79,6 +85,17 @@ public final class TaxonWorksNightly {
      * as it is there; at the last check it uploads an older archive rather than nothing. An admin run (waitMinutes 0)
      * checks once.
      */
+    /**
+     * What to do after a check: "stop" (done, or that was the last check), "wait" (check again after
+     * WAIT_STEP_MINUTES) or "final" (the wait is over but that check did not accept an older archive:
+     * one more check that does).
+     */
+    static String afterCheck(boolean waitingForTaxonWorks, boolean wasLastCheck, long waitedMinutes, int waitMinutes) {
+        if (!waitingForTaxonWorks || wasLastCheck) return "stop";
+        if (waitedMinutes + WAIT_STEP_MINUTES > waitMinutes) return "final";
+        return "wait";
+    }
+
     public static String run(Connection connection, int waitMinutes) {
         String result;
         // One run at a time: a second request (a browser retry, say) would read the
@@ -96,7 +113,15 @@ public final class TaxonWorksNightly {
                     boolean lastCheck = waitMinutes == 0 || waitedBefore + WAIT_STEP_MINUTES > waitMinutes;
                     result = runOnce(connection, start, lastCheck);
                     long waited = (System.currentTimeMillis() - start) / 60000;
-                    if (!isWaitingForTaxonWorks(result) || waited + WAIT_STEP_MINUTES > waitMinutes) break;
+                    String next = afterCheck(isWaitingForTaxonWorks(result), lastCheck, waited, waitMinutes);
+                    if ("final".equals(next)) {
+                        // The wait ran out during a check that did not accept an older archive (a slow download):
+                        // one more check that does, so the day is not left without an upload.
+                        checks++;
+                        result = runOnce(connection, start, true);
+                        break;
+                    }
+                    if ("stop".equals(next)) break;
                     if (checks == 1) {
                         LogMgr.appendLog(LOG, DateUtil.getFormatDateTimeStr() + " " + result
                             + "; waiting for TaxonWorks to build a new archive (checking every "
@@ -114,7 +139,9 @@ public final class TaxonWorksNightly {
             } catch (Exception e) {
                 // Only the exception type in the logs: its text can include the download URL (with its token).
                 result = "FAILED: " + e.getClass().getSimpleName();
-                s_log.error("run() " + result + " (details in the server log)", e);
+                // Server log: the message without any URL (a URL can carry the token), and where it happened.
+                StackTraceElement[] at = e.getStackTrace();
+                s_log.error("run() " + result + ": " + withoutUrls(e.getMessage()) + (at.length > 0 ? " at " + at[0] : ""));
             } finally {
                 s_running.set(false);
             }

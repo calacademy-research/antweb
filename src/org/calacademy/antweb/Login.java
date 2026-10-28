@@ -171,10 +171,17 @@ public class Login implements Comparable {
 		for (SpeciesListable project : projects) {
           ++i;
           if (i > 1) namesStr += ", ";
-		  namesStr += "<a href='" + AntwebProps.getDomainApp() + "/project.do?name=" + project.getName() + "'>" + project.getTitle() + "</a>";
+		  namesStr += projectLink(AntwebProps.getDomainApp(), project.getName(), project.getTitle());
 		}
         return namesStr;
     }
+
+    /** A link to a project page; name and title escaped (they are shown on the public curator pages). */
+    public static String projectLink(String domainApp, String name, String title) {
+        return "<a href='" + org.calacademy.antweb.util.Html.escAttr(domainApp + "/project.do?name=" + org.calacademy.antweb.util.Html.url(name)) + "'>"
+            + org.calacademy.antweb.util.Html.esc(title) + "</a>";
+    }
+
     public String getProjectNamesShort() {
         String namesStr = "";
         int i = 0;
@@ -183,7 +190,7 @@ public class Login implements Comparable {
 		for (SpeciesListable project : projects) {
           ++i;
           if (i > 1) namesStr += ", ";
-		  namesStr += "<a href='" + AntwebProps.getDomainApp() + "/project.do?name=" + project.getName() + "'>" + project.getTitle() + "</a>";
+		  namesStr += projectLink(AntwebProps.getDomainApp(), project.getName(), project.getTitle());
           if (i >= 3) {
             namesStr += "...";
 		    return namesStr;

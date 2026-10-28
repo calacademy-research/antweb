@@ -130,6 +130,17 @@ public final class LoginEdit {
 
     // ------------------------------------------------------------------ pure parts
 
+    /**
+     * True if the change takes a right away (administrator, upload specimen data, upload images).
+     * The login's sessions then end, so the removed right is gone at once and not only at the next login.
+     */
+    public static boolean removesRights(State before, State after) {
+        if (before == null || after == null) return false;
+        return (before.isAdmin && !after.isAdmin)
+            || (before.uploadSpecimens && !after.uploadSpecimens)
+            || (before.uploadImages && !after.uploadImages);
+    }
+
     private static String trim(String s) {
         return s == null ? null : s.trim();
     }

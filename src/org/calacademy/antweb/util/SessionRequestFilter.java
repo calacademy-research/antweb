@@ -148,6 +148,15 @@ public class SessionRequestFilter implements Filter {
                     }
                     if (request.getAttribute(Csrf.REFUSED_ATTR) == null) return;
                 }
+            } else if (Csrf.methodNeedsCheck(request.getMethod()) && Csrf.isSignInPath(request)) {
+                // Sign-in pages have no token yet, but a post from another site is refused.
+                String refused = Csrf.crossSite(request);
+                if (refused != null) {
+                    s_log.warn("doFilter() csrf refused: " + refused + " path:" + request.getServletPath()
+                        + " ip:" + HttpUtil.getClientIpAddress(request));
+                    Csrf.deny(response);
+                    return;
+                }
             }
 
             // To fix the Desc Edit Image Upload
@@ -299,7 +308,12 @@ public class SessionRequestFilter implements Filter {
         long minFreeSpace = 7000000000L; // 12G
         String spaceMessage = "Free space:" + Formatter.formatMB(freeSpace); //Formatter.numberConverter(freeSpace);        
         if (freeSpace < minFreeSpace) {
-          AdminAlertMgr.add(spaceMessage, connection);
+          // The connection above is closed by now: the alert gets its own.
+          try (Connection alertConnection = DBUtilSimple.getDataSource().getConnection()) {
+            AdminAlertMgr.add(spaceMessage, alertConnection);
+          } catch (Exception e) {
+            AdminAlertMgr.add(spaceMessage, null);   // written to adminAlerts.log only
+          }
           message += "warning:" + spaceMessage;
         } else {
           message += spaceMessage;

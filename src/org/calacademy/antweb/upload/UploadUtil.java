@@ -31,13 +31,12 @@ public class UploadUtil {
     static String getFirstLine(String fileName, String encoding) {
         String theLine = "";
 
-        try {
-            BufferedReader in =
-                    new BufferedReader(new InputStreamReader(new FileInputStream(fileName), encoding));
+        try (BufferedReader in =
+                    new BufferedReader(new InputStreamReader(new FileInputStream(fileName), encoding))) {
 
-            // parse the header
+            // parse the header (an empty file has none)
             theLine = in.readLine();
-            theLine = theLine.toLowerCase();
+            theLine = theLine == null ? "" : theLine.toLowerCase();
         } catch (IOException e) {
             s_log.error("getFirstLine(" + fileName + ", " + encoding + ") e: " + e);
             //AntwebUtil.errorStackTrace(e);
@@ -49,7 +48,7 @@ public class UploadUtil {
 
         String newDate = "";
         try {
-            SimpleDateFormat oldFormat = new SimpleDateFormat("dd MMM yyyy");
+            SimpleDateFormat oldFormat = new SimpleDateFormat("dd MMM yyyy", java.util.Locale.ENGLISH);   // English month names, whatever the server's locale
             SimpleDateFormat newFormat = new SimpleDateFormat("yyyy-MM-dd");
             Date date = oldFormat.parse(startDate);
             newDate = newFormat.format(date);

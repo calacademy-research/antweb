@@ -64,7 +64,8 @@ public final class NameUpdatesAction extends AntwebAction {
             }
         } else {
             Group group = accessLogin.getGroup();
-            groupId = group == null ? -1 : group.getId();   // -1: a curator without a group sees nothing
+            // -1: a curator without a group sees nothing (0 would mean every group)
+            groupId = (group == null || group.getId() <= 0) ? -1 : group.getId();
         }
         String from = SpecimenNameUpdateDb.day(request.getParameter("from"));
         String to = SpecimenNameUpdateDb.day(request.getParameter("to"));

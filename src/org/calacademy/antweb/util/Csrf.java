@@ -147,7 +147,6 @@ public final class Csrf {
         return MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), given.getBytes(StandardCharsets.UTF_8));
     }
 
-    /** True for the paths that never need a token. */
     /** Every method that can change something is checked; only GET, HEAD and OPTIONS are not. */
     public static boolean methodNeedsCheck(String method) {
         if (method == null) return true;
@@ -155,10 +154,32 @@ public final class Csrf {
         return !("GET".equals(m) || "HEAD".equals(m) || "OPTIONS".equals(m));
     }
 
+    /** True for the paths that never need a token. */
     public static boolean isExempt(HttpServletRequest request) {
         String path = request.getServletPath();
         if (path == null) return false;
         return EXEMPT_PATHS.contains(path) || path.startsWith("/v3.1/");
+    }
+
+    /**
+     * The sign-in pages (log in, create account, forgot and reset password): they have no session token
+     * yet, but a post to them from another site is still refused (Origin/Referer), so another site can
+     * not log a visitor into an account of its choosing.
+     */
+    public static boolean isSignInPath(HttpServletRequest request) {
+        String path = request.getServletPath();
+        return path != null && EXEMPT_PATHS.contains(path);
+    }
+
+    /** "cross-site Origin" or "cross-site Referer" if the request comes from another site, else null. */
+    public static String crossSite(HttpServletRequest request) {
+        String originHost = hostOf(request.getHeader("Origin"));
+        if (originHost != null && !isOwnHost(originHost, request)) return "cross-site Origin";
+        if (originHost == null) {
+            String refererHost = hostOf(request.getHeader("Referer"));
+            if (refererHost != null && !isOwnHost(refererHost, request)) return "cross-site Referer";
+        }
+        return null;
     }
 
     private static boolean isMultipart(HttpServletRequest request) {
@@ -248,13 +269,8 @@ public final class Csrf {
      */
     public static String check(HttpServletRequest request) {
         // Same-origin check first: a browser sends Origin (and usually Referer) on a POST.
-        String origin = request.getHeader("Origin");
-        String originHost = hostOf(origin);
-        if (originHost != null && !isOwnHost(originHost, request)) return "cross-site Origin";
-        if (originHost == null) {
-            String refererHost = hostOf(request.getHeader("Referer"));
-            if (refererHost != null && !isOwnHost(refererHost, request)) return "cross-site Referer";
-        }
+        String crossSite = crossSite(request);
+        if (crossSite != null) return crossSite;
 
         HttpSession session = request.getSession(false);
         Object expected = session == null ? null : session.getAttribute(SESSION_ATTR);
