@@ -336,6 +336,7 @@ def main():
     test_runbook()
     test_period_target_warns()
     test_ecofog_decisions_file()
+    test_merge()
 
 
 def test_period_target_warns():
@@ -358,10 +359,52 @@ def test_ecofog_decisions_file():
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools", "data",
                         "orphan_photos_ecofog_2026-10.tsv")
     d = op.read_decisions(path)
-    assert len(d) == 147 and all(x["action"] == "delete" for x in d), len(d)
-    assert sum(x["group"] == "1" for x in d) == 25 and sum(x["group"] == "67" for x in d) == 122
-    assert "ecofog-hc-0002" not in {x["code"] for x in d}
-    print("EcoFoG decisions: 147 deletes (25 in the CAS group, 122 in EcoFoG's), no move.")
+    assert len(d) == 148 and sum(x["action"] == "delete" for x in d) == 147, len(d)
+    assert sum(x["group"] == "1" for x in d) == 25 and sum(x["group"] == "67" for x in d) == 123
+    merge = [x for x in d if x["action"] == "merge"]
+    assert [(x["code"], x["target"]) for x in merge] == [("ecofog-hc-0002", "ecofog-hc-0002-01")], merge
+    print("EcoFoG decisions: 147 deletes (25 in the CAS group, 122 in EcoFoG's), 1 merge.")
+
+
+def test_merge():
+    """merge (ecofog-hc-0002 into ecofog-hc-0002-01, Jerome Orivel 2026-10-28): the target has a profile photo already,
+    the same photo; the code's profile is deleted, its head and dorsal are moved, nothing of the target changes."""
+    code, tgt = "ecofog-hc-0002", "ecofog-hc-0002-01"
+    d = [dict(code=code, action="merge", target=tgt, group="67", note="same specimen")]
+    rows = [dict(id=10 + k, code=code, shot=s, number=1, groups=["67"], likes=0, uploaded=0) for k, s in enumerate("hpd")]
+    rows.append(dict(id=99, code=tgt, shot="p", number=1, groups=["67"], likes=0, uploaded=0))
+    specimens = {tgt: (tgt, "67", 1)}
+    mine = {f"{code}_{s}_1_{z}.jpg": 100 for s in "hpd" for z in op.SIZES}
+    mine.update({f"{code.upper()}_{s.upper()}_1.tif": 5000 for s in "hpd"})
+    theirs = {f"{tgt}_p_1_{z}.jpg": 200 for z in op.SIZES}
+    theirs[f"{tgt.upper()}_P_1.tif"] = 6000
+    with tempfile.TemporaryDirectory() as tmp:
+        images, dest = os.path.join(tmp, "images"), os.path.join(tmp, "bak")
+        make_folders(images, {code: mine, tgt: theirs})
+        plans = op.plan(d, rows, specimens, {c: op.list_folder(images, c) for c in (code, tgt)})
+        assert [(p["action"], p["status"]) for p in plans] == [("delete", "ok"), ("move", "ok")], \
+            [(p["action"], p["status"], p["reasons"]) for p in plans]
+        dele, move = plans
+        assert [r["id"] for r in dele["rows"]] == [11] and sorted(r["id"] for r in move["rows"]) == [10, 12]
+        assert len(dele["files"]) == 5 and len(move["files"]) == 10
+        sql = op.run_sql(plans, {"image_like"})
+        assert "delete from image where id in (11)" in sql and "where id in (10, 12)" in sql, sql
+        assert "1 as expected, if(@n = 1, 'ok'" in sql.split("as target_photos_", 1)[1][:60], sql   # its 1 profile
+        log = lambda m: None
+        assert op.backup_files(plans, images, dest, log) == []
+        assert op.apply_files(plans, images, log) == []
+        after = op.list_folder(images, tgt)
+        for z in op.SIZES:
+            assert after[f"{tgt}_p_1_{z}.jpg"] == 200          # the target's own profile untouched
+            assert f"{tgt}_h_1_{z}.jpg" in after and f"{tgt}_d_1_{z}.jpg" in after
+        assert len(after) == 15 and not os.path.exists(os.path.join(images, code))
+        assert op.restore_files(plans, images, dest, log) == []
+        assert op.list_folder(images, code) == mine and op.list_folder(images, tgt) == theirs
+        # a target file in the way of a moved one: refused
+        clash = dict(theirs, **{f"{tgt}_h_1_low.jpg": 1})
+        refused = op.plan(d, [r for r in rows], specimens, {code: mine, tgt: clash})
+        assert refused[0]["status"] == "refused", refused
+    print("Merge: shots the target has are deleted, the others moved; target untouched; restore puts all back.")
 
 
 if __name__ == "__main__":
