@@ -14,6 +14,7 @@ import org.calacademy.antweb.upload.MessageMgr;
 import org.calacademy.antweb.upload.SpecimenUploadParse;
 import org.calacademy.antweb.upload.SpecimenUploadProcess;
 import org.calacademy.antweb.upload.UploadFile;
+import org.calacademy.antweb.upload.UploadUtil;
 
 /**
  * Upload decisions of Brian Fisher, 2026-10-28 (no database):
@@ -22,6 +23,8 @@ import org.calacademy.antweb.upload.UploadFile;
  *  9. A line with a genus but no species, or a subfamily but no genus or species, is filed as indet and listed
  *     ("Identified only to genus: filed as indet", "Identified only to subfamily: filed as (Subfamily) indet").
  * 10. Upload files are UTF-8 only: a file that is not is refused, naming its first line that is not.
+ * One form for identified only to genus: species "indet", "Indet", "indet.", "undet" is filed as "(indet)", the same
+ * name as a blank species ("Pheidole (indet)"), and listed in the same report section.
  */
 public class UploadDecisions1028Test extends TestCase {
 
@@ -70,6 +73,42 @@ public class UploadDecisions1028Test extends TestCase {
         assertNull("no subfamily either", SpecimenUploadParse.identifiedOnlyTo(null, null, null));
         assertNull("no subfamily either", SpecimenUploadParse.identifiedOnlyTo("(formicidae)", "", ""));
         assertNull(SpecimenUploadParse.identifiedOnlyTo("indet", "", ""));
+    }
+
+    public void testIndetEpithetIsTheOneForm() {
+        for (String s : new String[] {"indet", "Indet", "INDET", "indet.", "Indet.", " indet ", "undet", "Undet.", "(indet)", "(Indet)."}) {
+            assertTrue(s, UploadUtil.isIndetEpithet(s));
+            assertEquals(s, "(indet)", UploadUtil.normalizeIndetEpithet(s));
+        }
+        for (String s : new String[] {"megacephala", "indeterminata", "indet1", "sp.", "sp", "", "indet x", "(indet"}) {
+            assertFalse(s, UploadUtil.isIndetEpithet(s));
+            assertEquals(s, s, UploadUtil.normalizeIndetEpithet(s));
+        }
+        assertFalse(UploadUtil.isIndetEpithet(null));
+        assertNull(UploadUtil.normalizeIndetEpithet(null));
+        // the name built from it is the blank-species name
+        java.util.Hashtable<String, Object> typed = new java.util.Hashtable<>();
+        typed.put("subfamily", "myrmicinae");
+        typed.put("genus", "pheidole");
+        typed.put("species", UploadUtil.normalizeIndetEpithet("indet."));
+        assertEquals("myrmicinaepheidole (indet)", UploadUtil.makeName(typed));
+        assertEquals(Status.INDETERMINED, decideStatus(UploadUtil.makeName(typed)));
+    }
+
+    static String decideStatus(String name) {
+        try {
+            return CurrentValidNameRule.decide(name, null).status;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void testIndetEpithetIsIdentifiedOnlyToGenus() {
+        for (String s : new String[] {"indet", "Indet", "indet.", "undet", "(indet)", "sp."}) {
+            assertEquals(s, SpecimenUploadParse.GENUS, SpecimenUploadParse.identifiedOnlyTo("myrmicinae", "pheidole", s));
+            assertEquals(s, SpecimenUploadParse.SUBFAMILY, SpecimenUploadParse.identifiedOnlyTo("myrmicinae", "", s));
+        }
+        assertNull(SpecimenUploadParse.identifiedOnlyTo("myrmicinae", "pheidole", "indeterminata"));
     }
 
     public void testIdentifiedOnlyToReportSections() {

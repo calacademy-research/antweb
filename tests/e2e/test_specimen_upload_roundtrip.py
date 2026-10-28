@@ -23,6 +23,8 @@ As the test uploader (ANTWEB_TEST_UPLOADER_*, a curator of "ZZ Test Group (stagi
                                                        genus: filed as indet (uploaded)" (2026-10-28)
      zztest0009  a subfamily, no genus or species    -> loaded as "(<Subfamily>) (indet)", report "Identified only
                                                        to subfamily: filed as (Subfamily) indet (uploaded)"
+     zztest0010  a genus, species "Indet."           -> the same name as zztest0008, "<Genus> (indet)", in the
+                                                       same report section (one form, 2026-10-28)
    then check the report, the specimen pages and the group's upload list. Every report line ends with
    "N specimens" and the collapsed list of its codes linked to the specimen pages (SpecimenCodes, the
    Name updates page's markup): zztest0002 on its "Recognized invalid species" line, zztest0003 on its
@@ -110,7 +112,7 @@ def shared_name_on_server():
 
 def _row(n, taxon, species=None, lat="-18.91", lon="47.52", code_text=None, locality_code=""):
     return "\t".join([code_text or code(n), (taxon.get("subfamily") or "").capitalize(), taxon["genus"].capitalize(),
-                      species or taxon["species"], "Madagascar", lat, lon, "AntWeb e2e test", locality_code])
+                      taxon["species"] if species is None else species, "Madagascar", lat, lon, "AntWeb e2e test", locality_code])
 
 
 def _text(html):
@@ -159,6 +161,7 @@ def test_specimen_upload_round_trip(uploader, names):
         _row(5, valid, lat="40.1", lon="10.2"),
         _row(7, valid, locality_code=LOCALITY_CODE),
         _row(8, valid, species=""),
+        _row(10, valid, species="Indet."),
     ]
     # Brian Fisher, 2026-10-28: a line with a subfamily only (no genus, no species) is filed as indet too.
     with_subfamily = bool(valid.get("subfamily"))
@@ -211,6 +214,7 @@ def test_specimen_upload_round_trip(uploader, names):
     assert "Empty String Species" not in report and "Empty String Genus" not in report
     genus_only = _section(report, "Identified only to genus: filed as indet")
     assert genus_only and "(uploaded)" in genus_only and code(8) in genus_only, _text(genus_only or report)[:600]
+    assert code(10) in genus_only, ("species Indet. is identified only to genus", _text(genus_only)[:600])
     if with_subfamily:
         subfamily_only = _section(report, "Identified only to subfamily: filed as (Subfamily) indet")
         assert subfamily_only and code(9) in subfamily_only, _text(subfamily_only or report)[:600]
@@ -235,9 +239,17 @@ def test_specimen_upload_round_trip(uploader, names):
                 "zztest0006 was moved to one of the two taxa"
 
     # The specimens.
-    for n in (1, 2, 3, 5, 7, 8) + ((6,) if with_shared else ()) + ((9,) if with_subfamily else ()):
+    for n in (1, 2, 3, 5, 7, 8, 10) + ((6,) if with_shared else ()) + ((9,) if with_subfamily else ()):
         exists, _page = specimen_page(s, code(n))
         assert exists, f"{code(n)} was not loaded"
+    # One form for identified only to genus (2026-10-28): species "Indet." is filed under the blank-species name.
+    indet_names = []
+    for n in (8, 10):
+        _exists, page = specimen_page(s, code(n))
+        found = {unquote_plus(v) for v in re.findall(r"description\.do\?taxonName=([^\"'&<>]+)", page)}
+        indet_names.append(sorted(v for v in found if "indet" in v.lower()))
+    assert indet_names[0] and all(v.endswith(" (indet)") for v in indet_names[0]), indet_names
+    assert indet_names[0] == indet_names[1], indet_names
     exists, _page = specimen_page(s, code(4))
     assert not exists, "the refused line zztest0004! was loaded"
     exists, page = specimen_page(s, code(2))
@@ -263,7 +275,7 @@ def test_specimen_upload_round_trip(uploader, names):
     # Replacement: the baseline file leaves only zztest0001 and zztest0002.
     base = _upload_baseline(s, token, valid)
     assert_upload_recorded(s, base, gid)
-    for n, expected in ((1, True), (2, True), (3, False), (5, False), (6, False), (7, False), (8, False), (9, False)):
+    for n, expected in ((1, True), (2, True), (3, False), (5, False), (6, False), (7, False), (8, False), (9, False), (10, False)):
         exists, _page = specimen_page(s, code(n))
         assert exists == expected, f"after the baseline upload {code(n)} {'is missing' if expected else 'is still there'}"
 

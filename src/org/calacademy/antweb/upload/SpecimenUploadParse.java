@@ -453,6 +453,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
               speciesName = "(indet)";
             }
             speciesName = Formatter.stripString(speciesName, "?");
+            // Brian Fisher, 2026-10-28: "indet", "Indet", "indet.", "undet" in the species column is filed exactly as a
+            // blank species: "<Genus> (indet)", the one form for a specimen identified only to genus.
+            speciesName = UploadUtil.normalizeIndetEpithet(speciesName);
 			if (speciesName.contains(" ")) {
 			  int spaceIndex = speciesName.indexOf(" ");
 			  String tempSpeciesName = speciesName.substring(0, spaceIndex);
@@ -1279,7 +1282,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
      * the species column), the genus or "(Subfamily)" in the genus place: Pheidole (indet), (Myrmicinae) (indet).
      */
     public static String identifiedOnlyTo(String subfamilyName, String genusName, String speciesName) {
-        if (!Utility.isBlank(speciesName)) return null;
+        // 2026-10-28: "sp.", "indet", "undet", "(indet)" (any case, trailing period) count as no species: these lines are
+        // filed as "(indet)" too and belong in the same report section.
+        if (!Utility.isBlank(speciesName) && !"sp.".equals(speciesName.trim()) && !UploadUtil.isIndetEpithet(speciesName)) return null;
         boolean hasGenus = !Utility.isBlank(genusName) && org.calacademy.antweb.home.PlaceTotals.isIdentifiedToGenus(genusName.trim());
         if (hasGenus) return GENUS;
         boolean noGenus = Utility.isBlank(genusName) || "(indet)".equals(genusName.trim());

@@ -100,6 +100,12 @@ no genus row as parent is in its place's Specimens (and the pie, under its subfa
 Specimens. Test: `TaxonTreeCountDbTest#testANameNotIdentifiedToGenusIsNotASpecies`, `#testANameNotIdentifiedToGenusIsNotEndemic`,
 `#testIdentifiedToGenusSqlAndJavaAgree`.
 
+One form for identified only to genus (Brian Fisher, 2026-10-28): `<Genus> (indet)`, the species epithet in parentheses.
+A species written `indet`, `Indet`, `indet.` or `undet` is filed that way by uploads (specimen and species list), so
+`Pheidole indet` and `Pheidole (indet)` are no longer two taxa counted twice in a list. Older names in the old form
+are renamed by `tools/data/indet_form.py` (merged into the `(indet)` taxon where it exists; docs/runbook.md, "Indet
+form").
+
 ## 2. Inventory
 
 Coverage after 2026-10-27: **120 validated, 0 partly, 0 not yet** of 120 (2026-10-27: row 120, imaged castes, added with Brian Fisher's decision on images from anywhere, section 3; rows 19, 28, 44, 45, 49, 55 to 61, 64 to 71, 83, 94 to 96, 98, 101, 102, 105 to 107, 110 to 113, 116 to 118 by end-to-end tests, findings B45 to B64; 2026-10-26: 81, 38, 0, rows 24, 25, 38, 39, 46, 47, 50 to 53, 78,
