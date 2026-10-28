@@ -78,11 +78,11 @@ Request objects:
                 break;
         }
          
-        /* 
+        // No results in the session (expired) or an unknown resultRank: a message, not a NullPointerException (2026-10-28).
         if (results == null) {
-          s_log.error("Stale session?  No results.  resultRank:" + resultRank);
-          return mapping.findForward("error");
-        }*/
+          s_log.info("No results in the session. resultRank:" + resultRank);
+          return mapping.findForward("sessionExpired");
+        }
 
 		session.setAttribute("fullAdvancedSearchResults", results.getResults());  // This is held for PrepareCompareResults, download
 

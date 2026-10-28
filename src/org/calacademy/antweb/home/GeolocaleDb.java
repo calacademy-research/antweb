@@ -105,6 +105,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
               if ("subregion".equals(georank)) geolocale = new Subregion();
               if ("country".equals(georank)) geolocale = new Country();
               if ("adm1".equals(georank)) geolocale = new Adm1();
+              if (geolocale == null) return null;  // another georank (2026-10-28: was a NullPointerException)
 
               geolocale.setGeorank(georank);
               geolocale = popGeolocale(geolocale, rset, false);
@@ -170,7 +171,10 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             stmt.setString(2, georank);
             rset = stmt.executeQuery();
 
-            if (geolocale == null) s_log.warn("getGeolocale() name:" + name + " georank:" + georank + " query:" + query);
+            if (geolocale == null) {
+              s_log.warn("getGeolocale() name:" + name + " georank:" + georank + " query:" + query);
+              return null;  // another georank (2026-10-28: was a NullPointerException)
+            }
 
             geolocale.setGeorank(georank); 
             if (rset.next()) {
@@ -822,7 +826,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
                + " where g.georank = 'adm1'"
                + " and g.is_valid = 1"
                + " and g.is_live = 1"
-               + " and g.parent = '" + parent + "'"
+               + " and g.parent = " + DBUtil.sqlLiteral(parent)  // a country with an apostrophe (2026-10-28)
                + " order by g.name"
                ;
                
@@ -1324,8 +1328,14 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
                 String taxonName = rset.getString("gt.taxon_name");
 
+                // An adm1 or country missing from GeolocaleMgr is skipped (2026-10-28): the NullPointerException
+                // stopped the nightly endemism step.
+                Country country = adm1 == null ? null : GeolocaleMgr.getCountry(adm1.getParent());
+                if (country == null) {
+                    s_log.warn("calcHigherEndemismAdm1() no country for adm1 id:" + geolocaleId + " taxonName:" + taxonName);
+                    continue;
+                }
                 ++c;
-                Country country = GeolocaleMgr.getCountry(adm1.getParent());
 
                 int updated = updateGeolocaleTaxonField("endemic", country.getId(), taxonName);
 
@@ -1352,12 +1362,16 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
             while (rset.next()) {
                 int geolocaleId = rset.getInt("g.id");
-                Country country = (Country) GeolocaleMgr.getGeolocale(geolocaleId);
+                Geolocale country = GeolocaleMgr.getGeolocale(geolocaleId);
 
                 String taxonName = rset.getString("gt.taxon_name");
 
+                Geolocale subregion = country == null ? null : GeolocaleMgr.getGeolocale(country.getParent());
+                if (!(subregion instanceof Subregion)) {
+                    s_log.warn("calcHigherEndemismCountry() no subregion for country id:" + geolocaleId + " taxonName:" + taxonName);
+                    continue;
+                }
                 ++c;
-                Subregion subregion = (Subregion) GeolocaleMgr.getGeolocale(country.getParent());
 
                 int updated = updateGeolocaleTaxonField("endemic", subregion.getId(), taxonName);
 
@@ -1384,12 +1398,16 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
             while (rset.next()) {
                 int geolocaleId = rset.getInt("g.id");
-                Subregion subregion = (Subregion) GeolocaleMgr.getGeolocale(geolocaleId);
+                Geolocale subregion = GeolocaleMgr.getGeolocale(geolocaleId);
 
                 String taxonName = rset.getString("gt.taxon_name");
 
+                Geolocale region = subregion == null ? null : GeolocaleMgr.getGeolocale(subregion.getParent());
+                if (!(region instanceof Region)) {
+                    s_log.warn("calcHigherEndemismSubregion() no region for subregion id:" + geolocaleId + " taxonName:" + taxonName);
+                    continue;
+                }
                 ++c;
-                Region region = (Region) GeolocaleMgr.getGeolocale(subregion.getParent());
 
                 int updated = updateGeolocaleTaxonField("endemic", region.getId(), taxonName);
 

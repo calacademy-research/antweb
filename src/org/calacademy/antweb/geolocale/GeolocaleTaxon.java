@@ -103,7 +103,8 @@ public class GeolocaleTaxon extends OverviewTaxon {
     }
 
     public String getName() {
-      return GeolocaleMgr.getGeolocale(getGeolocaleId()).toString();
+      Geolocale geolocale = GeolocaleMgr.getGeolocale(getGeolocaleId());
+      return geolocale == null ? "geolocale " + getGeolocaleId() : geolocale.toString();  // not in GeolocaleMgr (2026-10-28)
     }
 
     public int getGeolocaleId() {

@@ -27,6 +27,9 @@ public final class SearchAction extends DispatchAction {
     // Per thread (2026-10-26, finding F13): as a plain static int, an administrator's search (or a map built by
     // the nightly run) raised the limit for every visitor's search running at the same moment.
     private static final ThreadLocal<Integer> tempSpecimenSearchLimit = ThreadLocal.withInitial(() -> -1);
+    // Searches that load every matching specimen (by taxon, maps) at once for visitors who are not logged in
+    // (2026-10-28): each holds a connection and up to 50,000 rows; the specimen list is paged and not limited.
+    private static final ConcurrencyLimiter s_fullSearchLimiter = new ConcurrencyLimiter(3);
     public static int specimenSearchLimit = 50000;   // default can be overridden with setTempSpecimenSearchLimit()
     public static final int devSpecimenSearchLimit = 10000;
     public static final int noSpecimenSearchLimit = 1000000;
@@ -50,6 +53,10 @@ public final class SearchAction extends DispatchAction {
           connection = DBUtil.getConnection(dataSource, dbMethodName);
 
           ActionForward b = Check.busy(connection, request, mapping); if (b != null) return b;
+          // Only the busy check uses this connection: the search takes its own (2026-10-28: it was held, idle,
+          // for the whole search, two connections per request).
+          DBUtil.close(connection, this, dbMethodName);
+          connection = null;
 
           String target = HttpUtil.getTarget(request);
 
@@ -95,18 +102,20 @@ public final class SearchAction extends DispatchAction {
           }           
         } catch (SearchException e) {
           s_log.error("execute() se:" + e);
-          return HttpUtil.sendMessage(request, mapping, Html.esc(e.toString()));
+          return HttpUtil.sendMessage(request, mapping, Html.esc(e.getMessage()));
         } catch (NoSuchMethodException e) {
             s_log.error("execute() nsme:" + e);
+            return HttpUtil.sendMessage(request, mapping, "The search could not be run.");  // was a blank page (2026-10-28)
         } catch (SQLException e) {
             s_log.error("execute() e:" + e + " " + HttpUtil.getRequestInfo(request));
+            return HttpUtil.sendMessage(request, mapping, "The search could not be run. Please try again.");
         } catch (Exception e) {
           s_log.error("execute() e:" + e);
           AntwebUtil.logStackTrace(e);
+          return HttpUtil.sendMessage(request, mapping, "The search could not be run.");
         } finally {
             DBUtil.close(connection, this, dbMethodName);
         }
-        return null;
     }
 
     private void searchLog(String str) {
@@ -151,6 +160,7 @@ public final class SearchAction extends DispatchAction {
         , HttpServletRequest request, ActionMapping mapping) 
         throws IOException, ServletException, SearchException, SQLException {
 
+      boolean fullSearchSlot = false;
       try {
         if (LoginMgr.isAdmin(request)) {
           SearchAction.setTempSpecimenSearchLimit(noSpecimenSearchLimit);   
@@ -165,6 +175,12 @@ public final class SearchAction extends DispatchAction {
           return doPagedSpecimenSearch(searchParameters, request, mapping);
         }
         session.removeAttribute("advancedSearchPaging");
+
+        if (LoginMgr.getAccessLogin(request) == null) {
+          fullSearchSlot = s_fullSearchLimiter.tryAcquire();
+          if (!fullSearchSlot) return HttpUtil.sendMessage(request, mapping,
+              "Too many searches of this kind are running. Please try again in a minute, or log in.");
+        }
 
 		Date startTime = new Date();
         String execTime = null;
@@ -181,6 +197,8 @@ public final class SearchAction extends DispatchAction {
         searchAction.setServlet(servlet);
 
         ArrayList<ResultItem> searchResults = searchAction.getSearchResults(request, searchParameters);
+        // Rows the query returned, before "Images only" and "Types only" (2026-10-28): truncation is decided on these.
+        int queryRowCount = searchResults == null ? 0 : searchResults.size();
 
 		//A.log("SearchAction.doAdvancedSearch() 1 list:" + searchResults.get(0).getDateCollectedStart());
 			                 
@@ -229,7 +247,7 @@ public final class SearchAction extends DispatchAction {
           if (ResultRank.SPECIMEN.equals(resultRank)) {
             int resultSetSize = results.getResults().size();
 
-            if (resultSetSize >= SearchAction.getSpecimenSearchLimit()) 
+            if (queryRowCount >= SearchAction.getSpecimenSearchLimit()) 
                 greaterThanModifier = " (Search Results truncated due to result set size).";  
 
             String resultSetModifier = resultSetSize + " specimens" + greaterThanModifier;
@@ -244,7 +262,7 @@ public final class SearchAction extends DispatchAction {
 
             int resultSetSize = results.getResults().size();
 
-            if (resultSetSize >= SearchAction.getSpecimenSearchLimit()) 
+            if (queryRowCount >= SearchAction.getSpecimenSearchLimit()) 
                 greaterThanModifier = "  (Search Results truncated due to result set size).";  
 
             if (taxonList == null || resultRank == null) AntwebUtil.log("SearchAction.doAdvancedSearch() taxonList:" + taxonList + " resultRank:" + resultRank);
@@ -324,6 +342,7 @@ public final class SearchAction extends DispatchAction {
             return mapping.findForward("failure");
         }
       } finally {
+        if (fullSearchSlot) s_fullSearchLimiter.release();
         SearchAction.undoSetTempSpecimenSearchLimit();        
       }
     }

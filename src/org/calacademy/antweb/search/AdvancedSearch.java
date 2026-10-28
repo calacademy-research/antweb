@@ -140,16 +140,30 @@ public class AdvancedSearch extends GenericSearch implements Serializable {
 
             s_query = theQuery;
 
-  		    Statement stmt = connection.createStatement();
-            Date startTime = new Date();
-		    rset = stmt.executeQuery(theQuery);
-            DBUtil.profileQuery("AdvancedSearch", startTime, theQuery);
-		    ArrayList<ResultItem> itemList = getListFromRset(GenericSearch.ADVANCED, rset, null, theQuery);
-		    return itemList;
+            // Statement and result set closed (2026-10-28: they stayed open with up to 50,000 rows).
+  		    try (Statement stmt = connection.createStatement()) {
+              Date startTime = new Date();
+		      rset = stmt.executeQuery(theQuery);
+              DBUtil.profileQuery("AdvancedSearch", startTime, theQuery);
+		      ArrayList<ResultItem> itemList = getListFromRset(GenericSearch.ADVANCED, rset, null, theQuery);
+		      return itemList;
+            } finally {
+              if (rset != null) try { rset.close(); } catch (SQLException e) { s_log.debug("createInitialResults() rset close e:" + e); }
+            }
         } catch (SQLException e) {
             s_log.error("createInitialResults() e:" + e + " query:" + theQuery);
             throw e;
         }
+    }
+
+    /**
+     * The elevation box is one number (meters): "1,000" and "1 000" are 1000 (2026-10-28). The comma made two
+     * entries, "1" and "000", so "at least 1,000 m" matched almost every specimen. Anything else is unchanged.
+     */
+    public static String elevationValue(String value) {
+        if (value == null) return null;
+        String number = value.replaceAll("[,\\s]", "");
+        return number.matches("-?[0-9]{1,6}") ? number : value;
     }
 
     /** The columns of a specimen row of the advanced search (ResultItem, getListFromRset). */
@@ -323,9 +337,7 @@ theQuery += " from taxon left outer join specimen as sp on taxon.taxon_name = sp
 			  AntwebUtil.logStackTrace();
 			}
 
-            if (microhabitat != null && microhabitat.length() > 0) {
-                where.add(getSearchString("sp.microhabitat", microhabitatSearchType, microhabitat));
-            }
+            // (microhabitat is added above; it was added twice, 2026-10-28)
            
             //A.log("createInitialResults() dnaExtractionNotes:" + dnaExtractionNotes);
             if (dnaExtractionNotes != null && dnaExtractionNotes.length() > 0) {
@@ -358,7 +370,7 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
 */
 
             if (getElevation() != null && getElevation().length() > 0) {
-                where.add(getSearchString("sp.elevation", elevationSearchType, elevation));
+                where.add(getSearchString("sp.elevation", elevationSearchType, elevationValue(elevation)));
             }
             // dateCollectedStart?  What about the criteria above?  Reconcile.
             //if ((getDateCollected() != null) && (getDateCollected().length() > 0)) {
@@ -405,8 +417,9 @@ http://localhost/antweb/advancedSearch.do?searchMethod=advancedSearch&advanced=t
 
             if (!isIgnoreInsufficientCriteria() && where.size() < sufficientCriteria) {
               // defaults criteria:[sp.family = 'Formicidae',  sp.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')]
-              String message = "Insufficient criteria in search - sufficientCriteria:" + sufficientCriteria + " insufficient criteria:" + where;
-              throw new SearchException(message);
+              // The criteria go to the log only (2026-10-28): the message is shown on the page.
+              s_log.info("buildWhere() insufficient criteria - sufficientCriteria:" + sufficientCriteria + " criteria:" + where);
+              throw new SearchException("Not enough search criteria. Please add more to the search.");
             }
             return theQuery;
     }

@@ -44,6 +44,17 @@ public final class SearchListAction extends AntwebAction {
         return removed;
     }
 
+    private static final java.security.SecureRandom s_random = new java.security.SecureRandom();
+
+    /** 32 hex characters (128 bits) for the name of a download file. */
+    public static String randomPart() {
+        byte[] b = new byte[16];
+        s_random.nextBytes(b);
+        StringBuilder sb = new StringBuilder();
+        for (byte x : b) sb.append(String.format("%02x", x));
+        return sb.toString();
+    }
+
     public ActionForward execute(
         ActionMapping mapping,
         ActionForm form,
@@ -116,7 +127,9 @@ public final class SearchListAction extends AntwebAction {
 
         String dir = "/web/data/search/";
         removeOldFiles(new java.io.File(AntwebProps.getDocRoot() + dir), System.currentTimeMillis() - KEEP_MILLIS);
-        String fileName = DateUtil.getFormatDateTimeStr(new Date()) + "-" + accessLogin.getId() + "search.txt";
+        // A random part (2026-10-28): the file is served from the web directory, and date, time and login id
+        // alone could be guessed.
+        String fileName = DateUtil.getFormatDateTimeStr(new Date()) + "-" + accessLogin.getId() + "-" + randomPart() + "search.txt";
         AntwebUtil.writeDataFile(dir, fileName, data.toString());
         String url = AntwebProps.getDomainApp() + dir + fileName;
         String message = "<li>&middot; <a href=\"" + url + "\" target=\"new\">Tab-delimited data</a></li>";

@@ -11,7 +11,7 @@
 	  boolean isOverviewPage = (thisPage.contains(subregion.getTargetDo())) || (thisPage.contains("description.do"));
   
 	  if (isOverviewPage) {
-		view = "<a href='" + subregion.getThisPageTarget()  + "'>" + subregion.getName() + "</a>" + view;
+		view = "<a href='" + subregion.getThisPageTarget()  + "'>" + org.calacademy.antweb.util.Html.esc(subregion.getName()) + "</a>" + view;
 	  } else {
 		// used for taxonomic pages. Might be with images.
   	  	  view = subregion.getNavLink(request, thisPage, view);
@@ -20,7 +20,7 @@
 		String regionId = subregion.getParent();
 		Region region = (Region) GeolocaleMgr.getGeolocale(regionId);
 		if (isOverviewPage) {
-		  view = "<a href='" + region.getThisPageTarget() + "'>" + region.getName() + "</a>" + " - " + view;  // was grandParent.getThisPageTarget()
+		  view = "<a href='" + region.getThisPageTarget() + "'>" + org.calacademy.antweb.util.Html.esc(region.getName()) + "</a>" + " - " + view;  // was grandParent.getThisPageTarget()
 		} else {
 		  // used for taxonomic pages. Might be with images.
   	  	  view = region.getNavLink(request, thisPage, view);

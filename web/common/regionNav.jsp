@@ -9,7 +9,7 @@
 	boolean isOverviewPage = (thisPage.contains(region.getTargetDo())) || (thisPage.contains("description.do"));
  
 	if (isOverviewPage) {
-		view = "<a href='" + region.getThisPageTarget() + "'>" + region.getName() + "</a>";
+		view = "<a href='" + region.getThisPageTarget() + "'>" + org.calacademy.antweb.util.Html.esc(region.getName()) + "</a>";
 	    //A.log("regionNav.jsp O view:" + view);
    	} else {
 		// used for taxonomic pages. Might be with images.

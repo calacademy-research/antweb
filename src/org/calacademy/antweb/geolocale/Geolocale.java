@@ -13,14 +13,13 @@ import org.calacademy.antweb.*;
 
 public class Geolocale extends LocalityOverview implements SpeciesListable, Countable, Comparable<Geolocale> {
 
+    // Places without a name sort last, consistently (both null: equal), so a sort never breaks its contract.
     public int compareTo(Geolocale other) {
-        if (getName() == null) return 1;
-        if (other == null) {
-          s_log.warn("compareTo() name:" + getName());
-          return 1;
-        }
-        if (other.getName() == null) return 1;
-        return getName().compareTo(other.getName());
+        String a = getName();
+        String b = other == null ? null : other.getName();
+        if (a == null) return b == null ? 0 : 1;
+        if (b == null) return -1;
+        return a.compareTo(b);
     }
 
     private static final Log s_log = LogFactory.getLog(Geolocale.class);
@@ -74,10 +73,11 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         String delim = "&";
         if (!thisPage.contains("?")) delim = "?";
         String link = thisPage + delim + getParams();
+        // Escaped (2026-10-28): thisPage is the request's own address.
         if (link.contains("images=true") && !LoginMgr.isCurator(request)) {
-            navLink = getName();
+            navLink = Html.esc(getName());
         } else {
-            navLink = "<a href='" + thisPage + delim + getParams() + "'>" + getName() + "</a>";
+            navLink = "<a href='" + Html.escAttr(link) + "'>" + Html.esc(getName()) + "</a>";
         }
         if (view != null && !view.equals("")) navLink += " - " + view;
         //A.log("regionNav.jsp !O view:" + view);
@@ -283,18 +283,19 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
 
         s_log.debug("getLocality() isIsland:" + isIsland());
 
+        // Names quoted as SQL literals (2026-10-28): a name with an apostrophe broke the query.
         if (isIsland()) {
-          return " island_country = '" + getName() + "'";
+          return " island_country = " + DBUtil.sqlLiteral(getName());
       }
 
       if (Georank.country.equals(getGeorank())) {
-        return " country = '" + getName() + "'";
+        return " country = " + DBUtil.sqlLiteral(getName());
       }
       if (Georank.adm1.equals(getGeorank())) {
-        return " adm1 = '" + getName() + "'";
+        return " adm1 = " + DBUtil.sqlLiteral(getName());
       }
       if (Georank.adm2.equals(getGeorank())) {
-        return " adm2 = '" + getName() + "'";
+        return " adm2 = " + DBUtil.sqlLiteral(getName());
       }      
       return "";
     }
@@ -361,7 +362,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     }
 
 	public String getTag() {
-        return "<a href=\"" + getThisPageTarget() + "\">" + getName() + "</a>";
+        return "<a href=\"" + Html.escAttr(getThisPageTarget()) + "\">" + Html.esc(getName()) + "</a>";
 	}
 
     public String getRoot() {
@@ -452,7 +453,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     
     
     public String getLink() {  
-      return "<a href='" + AntwebProps.getDomainApp() + "/geolocale.do?id=" + getId() + "'>" + getName() + "</a>";
+      return "<a href='" + AntwebProps.getDomainApp() + "/geolocale.do?id=" + getId() + "'>" + Html.esc(getName()) + "</a>";
     }
 
     
@@ -503,9 +504,8 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     }
 
 	public String getThisPageTag() {
-      String tag = "<a href=\"" + getThisPageTarget();
-      tag += getDisplayName() + "\">" + getName() + "</a>";
-      return tag;
+      // The address is the page's own (the display name was appended to it: ?name=MadagascarMadagascar).
+      return "<a href=\"" + Html.escAttr(getThisPageTarget()) + "\">" + Html.esc(getName()) + "</a>";
 	}
     
     public String getDisplayName() {
@@ -550,7 +550,9 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
       try {
         taxonSet.init(connection);
       } catch (SQLException e) {
+        // Thrown, as Bioregion.getTaxonSet does (2026-10-28): the page showed the name with every count 0.
         s_log.error("getTaxonSet(taxonName, rank, conn) e:" + e);
+        throw e;
       }
       return taxonSet;      
     }             
@@ -803,7 +805,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
           for (Geolocale region: regions) {
             if (!getName().equals(region.getName())) {            
  			  if (isOverviewPage) {
-			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + region.getThisPageTarget() + "'>" + region.getName() + "</a></li>";
+			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + Html.escAttr(region.getThisPageTarget()) + "'>" + Html.esc(region.getName()) + "</a></li>";
 			  } else {
                 changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + region.getParams()) + "'>" + Html.esc(region.getName()) + "</a></li>";
               }
@@ -817,7 +819,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
           for (Geolocale subregion: subregions) {
             if (!getName().equals(subregion.getName())) {
  			  if (isOverviewPage) {
-			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + subregion.getThisPageTarget() + "'>" + subregion.getName() + "</a></li>";
+			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + Html.escAttr(subregion.getThisPageTarget()) + "'>" + Html.esc(subregion.getName()) + "</a></li>";
 			  } else {
                 changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + subregion.getParams()) + "'>" + Html.esc(subregion.getName()) + "</a></li>";
               }
@@ -831,7 +833,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
           for (Geolocale country : countries) {
             if (!getName().equals(country.getName())) {
  			  if (isOverviewPage) {
-			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + country.getThisPageTarget() + "'>" + country.getName() + "</a></li>";
+			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + Html.escAttr(country.getThisPageTarget()) + "'>" + Html.esc(country.getName()) + "</a></li>";
 			  } else {
                 changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + country.getParams()) + "'>" + Html.esc(country.getName()) + "</a></li>";
               }
@@ -847,7 +849,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
               if (adm1.isLive()) {
                   if (!getName().equals(adm1.getName())) {
                       if (isOverviewPage) {
-                          changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + adm1.getThisPageTarget() + "'>" + adm1.getName() + "</a></li>";
+                          changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + Html.escAttr(adm1.getThisPageTarget()) + "'>" + Html.esc(adm1.getName()) + "</a></li>";
                       } else {
                           changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + adm1.getParams()) + "'>" + Html.esc(adm1.getName()) + "</a></li>";
                       }
@@ -880,10 +882,10 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         if (i == 1) display = "<b>" + getChildrenHeading() + ":</b> ";
         if (i > 1) display += ", ";
         if ("overview".equals(overviewOrList))
-          display += "<a href='" + child.getThisPageTarget() + "'>" + child.getName() + "</a>";
+          display += "<a href='" + Html.escAttr(child.getThisPageTarget()) + "'>" + Html.esc(child.getName()) + "</a>";
         if ("list".equals(overviewOrList))
           if (!georank.equals("country") || getIsUseChildren())
-            display += "<a href='" + AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=" + rank + "&" + child.getParams() + "'>" + child.getName() + "</a>";
+            display += "<a href='" + Html.escAttr(AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=" + rank + "&" + child.getParams()) + "'>" + Html.esc(child.getName()) + "</a>";
       }
       //display += "</b>";
       return display;
