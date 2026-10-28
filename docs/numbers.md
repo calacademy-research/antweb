@@ -593,6 +593,14 @@ Found while doing this (2026-10-26, end-to-end tests of rows 24 to 53; each has 
   add the missing parent rows to the list (the crawl), or count the place's Genera and Species from the rows' sums.
   The test marks these differences as an expected failure (`pytest.xfail`, B76); a total above the place's number
   still fails. Test: `e2e:test_numbers_search.py::test_subtaxon_total_is_the_sum_of_the_rows_of_every_kind_of_place`.
+- **B77** (open, 2026-10-27) a bioregion's subfamily browse page says more genera than the subfamily's row on the
+  bioregion's list (Palearctic Ponerinae: browse.do "18 Genera (14 imaged)", list row "16 Genera"; the same on
+  production, so not caused by PR #291). The browse page counts and lists every genus row of the bioregion
+  (`taxon.getChildrenCount`, any status, including "ponerine"), the list row only the counted statuses
+  (`PlaceTotals.rankCondition`). Fix to decide with Brian: browse pages count the counted statuses only (and list
+  the others under a note), like the list. The test marks bioregion subfamily differences as an expected failure
+  (`pytest.xfail`, B77); any other place or rank still fails. Test:
+  `e2e:test_numbers_lists.py::test_browse_headers_equal_the_list_rows`.
 - Not a number, for the record: the recent images test expected 100 rows on the first page; the page lists 50 per
   page (`recentSearchResults-body.jsp`, parameter `length`; `numToShow` is not the page size). The test now reads the
   page's own "Showing records a to b".
