@@ -58,7 +58,7 @@ public class PlacesSearchFixesTest extends TestCase {
         Collections.shuffle(list, new java.util.Random(1));
         Collections.sort(list);
         assertNull(list.get(list.size() - 1).getName());
-        assertEquals("c1", list.get(0).getName());
+        assertEquals("c0", list.get(0).getName());   // i = 7, 14, 28, 35 give "c0"
         assertEquals(0, country(null).compareTo(country(null)));
         assertTrue(country("a").compareTo(country(null)) < 0);
         assertTrue(country(null).compareTo(country("a")) > 0);
