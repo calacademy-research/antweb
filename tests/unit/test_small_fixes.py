@@ -34,7 +34,26 @@
    North Dakota return was inside the comment, so the Ohio line below became its body); the home page slideshow is
    built before it is written (an error leaves it empty instead of cutting the page off) and TaxonMgr publishes its
    name list and taxon map only once they are filled (a reload runs after every specimen upload).
+13. (2026-10-28, nightly and count check triage) Data job messages escape the place names they repeat and refuse an
+   unknown museum or project; the bulk flag and the specimen search limit are restored in finally; set 4 commits the
+   image counts before the statistics and rolls back only those on a failure; the B36 alert has its own try; the
+   bioregion list rows count each specimen once (not once per image); the group_count table is created at start-up,
+   not inside set 3; the steps after the nightly run each have their own try; a name is deleted outright only when no
+   other list holds it. Unit test (no database): test/.../util/NightlyTriageThTest.java.
 
+13. (2026-10-28) Logins and sessions, curator tools and uploads: deleting a login ends its sessions; sign-in posts
+   from another site are refused; the login list is a request attribute; staging's bot list is production's; an
+   encoded dot is refused in either case; a failed invite link after "Add an uploader" does not say nothing was
+   changed; a curator without a real group sees no name updates; small null checks. Unit test:
+   test/.../audit/LoginSessionFixesTest.java.
+
+13. (2026-10-28, places and search audits) A failure while a museum's list or its specimens' museum code is rebuilt
+   is thrown (the data job is rolled back) and the museum's inserts bind their values; the unused ProjectDb.updateProjects
+   is gone and ProjectDb.update reports a failure; the nightly endemism step skips a place missing from GeolocaleMgr;
+   the place navigation names are escaped; the advanced search closes its statements, holds one connection, counts
+   truncation before the Images only and Types only filters, limits the full searches of visitors not logged in, adds
+   microhabitat once, sorts by caste with each item's own subcaste and gives a message instead of a blank page.
+   Unit test: test/.../audit/PlacesSearchFixesTest.java.
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
 import os
@@ -306,6 +325,137 @@ def test_no_lost_ifs_and_whole_home_page(sources):
     print("No if loses its statement to a comment; the home page slideshow and TaxonMgr's reload are whole.")
 
 
+def test_triage_20261028(sources):
+    save = sql_text(sources["src/org/calacademy/antweb/curate/login/SaveLoginAction.java"])
+    delete = save[save.index('if ("delete".equals(form.getDelete()))'):save.index("login = loginDb.getLogin(id);")]
+    assert delete.index("bumpSessionVersion(id)") < delete.index("deleteById(id)"), "deleting a login leaves its sessions"
+    assert "LoginEdit.removesRights(result.before, result.after)" in save, "removed rights wait for the next login again"
+    assert "passPwdCheck2" not in save
+    filt = sources["src/org/calacademy/antweb/util/SessionRequestFilter.java"]
+    assert "Csrf.isSignInPath(request)" in filt and "Csrf.crossSite(request)" in filt, "sign-in posts from another site are accepted again"
+    assert "AdminAlertMgr.add(spaceMessage, connection)" not in filt, "the space alert gets a closed connection again"
+    views = sources["src/org/calacademy/antweb/curate/login/ViewLoginsAction.java"]
+    assert 'request.setAttribute("antwebLogins"' in views and 'getSession().setAttribute("antwebLogins"' not in views
+    jsp = read(os.path.join(ROOT, "web/curate/viewLogins-body.jsp"))
+    assert 'request.getAttribute("antwebLogins")' in jsp, "the login list page reads the session again"
+    bots = []
+    for name in ("docker/caddy/Caddyfile", "docker/caddy/Caddyfile.common"):
+        m = re.search(r'header_regexp User-Agent "([^"]*)"', read(os.path.join(ROOT, name)))
+        bots.append(m.group(1))
+    assert bots[0] == bots[1], "the bot list of Caddyfile.common (staging) differs from production's Caddyfile"
+    http = sources["src/org/calacademy/antweb/util/HttpUtil.java"]
+    assert 'lowerQuery.contains("%2e")' in http, "an encoded dot in upper case (%2E) passes again"
+    add = sources["src/org/calacademy/antweb/curate/group/AddUploaderAction.java"]
+    assert "done.lines.add(INVITE_LINK_FAILED)" in add, "a failed invite link after Add an uploader says nothing was changed again"
+    names = sources["src/org/calacademy/antweb/curate/NameUpdatesAction.java"]
+    assert "group.getId() <= 0) ? -1" in names, "a curator with group 0 would see every group's name updates"
+    geo = sources["src/org/calacademy/antweb/curate/geolocale/EditGeolocaleAction.java"]
+    assert 'message += " Updated."' not in geo, '"null Updated." can be shown again'
+    for name in ("ManageGroupsAction", "ViewGroupAction"):
+        src = sources[f"src/org/calacademy/antweb/curate/group/{name}.java"]
+        assert "if (connection != null) connection.close();" in src, name
+    form = sources["src/org/calacademy/antweb/curate/login/SaveLoginForm.java"]
+    assert '!"delete".equals(getDelete())' in form, "the delete form is checked as an edit again"
+    camp = sources["src/org/calacademy/antweb/curate/login/PasswordResetCampaignAction.java"]
+    assert "FAILED after" in camp, "a failed campaign mark leaves no line in admin.log again"
+    login = sources["src/org/calacademy/antweb/LoginAction.java"]
+    created = login[login.index("login = loginDb.createAccount("):]
+    assert created.index("if (login != null)") < created.index("login.setGroupId(-1)")
+    up = sources["src/org/calacademy/antweb/upload/UploadDetails.java"]
+    assert "!uploadDetails.getMessage().equals(" not in up and "accessCurator != getCurator()" not in up
+    util = sources["src/org/calacademy/antweb/upload/UploadUtil.java"]
+    assert 'new SimpleDateFormat("dd MMM yyyy", java.util.Locale.ENGLISH)' in util
+    assert "theLine = theLine == null" in util
+    nightly = sources["src/org/calacademy/antweb/upload/TaxonWorksNightly.java"]
+    assert "(details in the server log)\", e)" not in nightly, "the nightly logs the exception text (it can hold the URL) again"
+    print("Logins, sessions, curator tools and upload fixes of 2026-10-28 in place.")
+
+
+def test_nightly_triage_2026_10_28(sources):
+    uda = sources["src/org/calacademy/antweb/util/UtilDataAction.java"]
+    for raw in ('appendStr += ":" + bioregion;', 'appendStr += ":" + museumCode;', 'appendStr += ":" + projectName;'):
+        assert raw not in uda, "a data job message repeats a form value unescaped: " + raw
+    assert '"Museum not found:" + Html.esc(museumCode)' in uda and '"Project not found:" + Html.esc(projectName)' in uda
+    i = uda.index("CountDb.s_isBulk = true;")
+    assert "finally" in uda[i:i + 300], "CountDb.s_isBulk is not reset in finally"
+    i = uda.index("SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);")
+    assert "finally" in uda[i:i + 500], "the specimen search limit is not restored in finally"
+    i = uda.index('populateStatistics("nightly"')
+    assert "connection.commit();" in uda[i - 300:i] and "connection.rollback()" in uda[i:i + 500], "set 4 statistics not isolated"
+    i = uda.index("AdminAlertMgr.addIfFresh(result.alert()")
+    assert "try {" in uda[i - 200:i], "the B36 alert can still skip the recount"
+    assert 'return denied != null ? denied : mapping.findForward("notLoggedIn");' in uda
+    spec = sources["src/org/calacademy/antweb/home/SpecimenDb.java"]
+    assert "\" code = '\" + code + \"'\"" not in spec and 'DBUtil.sqlLiteral(code)' in spec, "calcCaste(code) quotes the code by hand"
+    img = sources["src/org/calacademy/antweb/home/ImageCountDb.java"]
+    assert 'taxonName.replace("\'", "\'\'")' not in img
+    bio = sources["src/org/calacademy/antweb/home/BioregionTaxonDb.java"]
+    assert "count(distinct s.code) specimenCount" in bio and "count(*) specimenCount" not in bio
+    login = sources["src/org/calacademy/antweb/util/LoginMgr.java"]
+    assert "GroupCountDb.ensureTable(conn)" in login, "group_count is created inside nightly set 3 (implicit commit)"
+    sch = sources["src/org/calacademy/antweb/util/Scheduler.java"]
+    i = sch.index("StatsPageAction.recount(connection)")
+    assert "try {" in sch[i - 150:i] and "TaxonApiCountDb.copyGlobalCounts" in sch[i:i + 600]
+    j = sch.index("TaxonApiCountDb.copyGlobalCounts")
+    assert "try {" in sch[j - 150:j], "a failed statistics recount skips the API counts"
+    for f in ("GeolocaleTaxonDb.java", "ProjTaxonDb.java"):
+        s = sources["src/org/calacademy/antweb/home/" + f]
+        i = s.index("deleteTaxon(taxonName);")
+        assert "isOnAnyList(taxonName)" in s[i - 400:i], f + " deletes a name another list still holds"
+    print("Nightly and count check triage of 2026-10-28: messages, finally blocks, set 4, deletions.")
+
+
+def test_places_and_search_fixes_20261028(sources):
+    def body(path, start, end="\n    }\n"):
+        src = sources[path].replace("\r\n", "\n")
+        b = src[src.index(start):]
+        return b[:b.index(end) + len(end)]
+    museum = "src/org/calacademy/antweb/home/MuseumDb.java"
+    for start in ("private void populateSpecies(String museumCode)", "private void populateSpecimenMuseum(String museumCode)"):
+        b = body(museum, start)
+        assert "throws SQLException" in b.splitlines()[0] and re.search(r"catch \(SQLException e\) \{[^}]*throw e;", b), \
+            start + " swallows a failure again"
+    for start in ("private void insertSpecies(", "private boolean insertTaxon("):
+        b = body(museum, start)
+        assert "prepareStatement" in b and "+ taxonName +" not in b, start + " builds its SQL from the name again"
+    project = sources["src/org/calacademy/antweb/home/ProjectDb.java"]
+    assert "updateProjects(" not in project, "ProjectDb.updateProjects is back (unused, built SQL from names)"
+    b = body("src/org/calacademy/antweb/home/ProjectDb.java", "public void update(Project project)")
+    assert "throws SQLException" in b.splitlines()[0] and "throw e;" in b and "createStatement()" not in b
+    geo = sources["src/org/calacademy/antweb/home/GeolocaleDb.java"]
+    for name in ("calcHigherEndemismAdm1", "calcHigherEndemismCountry", "calcHigherEndemismSubregion"):
+        b = body("src/org/calacademy/antweb/home/GeolocaleDb.java", "private int " + name + "()")
+        assert "continue;" in b and "(Subregion) GeolocaleMgr" not in b and "(Region) GeolocaleMgr" not in b, name
+    assert "g.parent = '\" + parent" not in geo
+    for nav in ("regionNav", "subregionNav", "countryNav", "adm1Nav"):
+        with open(os.path.join(ROOT, "web/common", nav + ".jsp"), encoding="utf-8") as f:
+            jsp = f.read()
+        assert not re.search(r"\.getName\(\) \+ \"</a>", jsp), nav + ".jsp prints a place name unescaped"
+    adv = body("src/org/calacademy/antweb/search/AdvancedSearch.java", "protected ArrayList<ResultItem> createInitialResults()")
+    assert "try (Statement stmt = connection.createStatement())" in adv
+    where = sources["src/org/calacademy/antweb/search/AdvancedSearch.java"]
+    assert where.count('getSearchString("sp.microhabitat"') == 1, "microhabitat is added twice"
+    assert "elevationValue(elevation)" in where
+    recent = sources["src/org/calacademy/antweb/search/RecentImageSearch.java"]
+    assert recent.count("executeQuery(theQuery)") == 1, "the recent image search runs its query twice"
+    search = sources["src/org/calacademy/antweb/search/SearchAction.java"].replace("\r\n", "\n")
+    ex = search[search.index("public ActionForward execute("):search.index("private void searchLog(")]
+    assert re.search(r"Check\.busy\(connection, request, mapping\);[^\n]*\n(\s*//[^\n]*\n)*\s*DBUtil\.close\(connection", ex), \
+        "SearchAction keeps the busy-check connection during the search"
+    assert "return null;" not in ex, "SearchAction.execute gives a blank page on an error"
+    assert "queryRowCount >= SearchAction.getSpecimenSearchLimit()" in search and "resultSetSize >= SearchAction.getSpecimenSearchLimit()" not in search
+    assert "s_fullSearchLimiter.tryAcquire()" in search and "s_fullSearchLimiter.release()" in search
+    caste = sources["src/org/calacademy/antweb/search/AdvancedSearchResults.java"]
+    assert "resultItemO2.getCaste() + resultItemO2.getSubcaste()" in caste
+    for path in ("src/org/calacademy/antweb/search/CompareResultsAction.java", "src/org/calacademy/antweb/search/FieldGuideResultsAction.java"):
+        assert "thisItem.getSpecies().equals(" not in sources[path], path
+    prep = sources["src/org/calacademy/antweb/search/PrepareMapResultsAction.java"]
+    assert re.search(r"\n\s*if \(results == null\) \{", prep), "PrepareMapResultsAction has no check for missing results"
+    group = sources["src/org/calacademy/antweb/search/GenericSearchResults.java"]
+    assert "GroupMgr.getGroup(thisItem.getGroupName()).getId()" not in group
+    print("Museum lists, project updates, endemism, place navigation and the advanced search fixes of 2026-10-28 hold.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -323,6 +473,9 @@ def main():
     test_copyright_rows_and_compare_by_species(sources)
     test_post_means_post(sources)
     test_no_lost_ifs_and_whole_home_page(sources)
+    test_triage_20261028(sources)
+    test_nightly_triage_2026_10_28(sources)
+    test_places_and_search_fixes_20261028(sources)
 
 
 if __name__ == "__main__":

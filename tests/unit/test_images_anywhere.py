@@ -3,7 +3,8 @@
 1. images.do of a species reached with a place fetches the name's specimens from anywhere (BrowseAction sets global
    unless placeOnly=true), keeps the codes of the place's specimens (Species.setChildren), shows them first and marks
    them (taxonChildImages.jsp, taxonChildImageSet.jsp); the old "See global set" link is gone.
-3. The Images column of a place's list shows the images of the name in AntWeb and the place's, images of the ant only
+3. The Images column of a place's list shows one number, the images of the name in AntWeb (Brian Fisher 2026-10-28;
+   from 10-27 to 10-28 also the place's in brackets, which wrapped and showed "( from Comoros)"), images of the ant only
    (labels never count; nightly set 4 counts the list rows that way, the count check recounts them so) (taxonReportBody.jsp,
    ImagesAnywhere.imagesColumn; the total is the allantwebants row's image_count of every rank, TaxonSet.globalImageCountColumn,
    which nightly set 4 counts with the live projects since 2026-10-27, ProjTaxonCountDb.imageCrawlProjects).
@@ -54,10 +55,23 @@ def test_images_page_orders_marks_and_narrows():
     assert 'class=\\"from_place\\"' in cell
 
 
-def test_list_images_column_shows_both_numbers():
+def test_list_images_column_shows_the_antweb_number_only():
     jsp = read("web/taxonReportBody.jsp")
     assert "ImagesAnywhere.imagesColumn(childTaxonSet, imagesFromPhrase)" in jsp
-    assert "childTaxonSet.getImageCountStr()" not in jsp, "the column still shows the place's number only"
+    assert "childTaxonSet.getImageCountStr()" not in jsp, "the column shows the place's number only"
+    # Brian Fisher 2026-10-28: one number, never "(0 from Comoros)" (it wrapped; the number script blanked the 0)
+    src = read("src/org/calacademy/antweb/ImagesAnywhere.java")
+    body = src[src.index("public static String imagesColumn(int total, int place, String fromPhrase) {"):]
+    body = body[:body.index("\n    }\n")]
+    assert "images_total" not in body and "fromPhrase" not in body.split("{", 1)[1] and "(" not in body.split('"')[1::2][-1], body
+    assert "Math.max(total, place)" in body
+    # the title and definition say what the number counts and where the place's own images are
+    assert '"Images of the ant of the name in AntWeb, from any specimen (labels are not counted)."' in jsp
+    assert '" The number is the images of the ant of the name in AntWeb, from any specimen."' in jsp
+    assert "in brackets" not in jsp and "The first number" not in jsp
+    assert "come first." in jsp
+    # sorting by Images follows the number shown
+    assert "ImagesAnywhere.shownImages(a.getTaxonSet())" in read("src/org/calacademy/antweb/sort/SortTaxaByImages.java")
     ts = read("src/org/calacademy/antweb/TaxonSet.java")
     # every rank reads the allantwebants row with the place's row (one key lookup). PR #291 run 2 counted species rows
     # live from the image table, one count per row, and list, taxon and browse pages came back cut off on staging.
@@ -67,7 +81,7 @@ def test_list_images_column_shows_both_numbers():
     assert "protected void readGlobalImageCount(ResultSet rset) {" in ts and "catch (SQLException | RuntimeException e)" in ts
     # set 4 counts the allantwebants rows (they were set to 0 with the project rows and never counted again)
     crawl = read("src/org/calacademy/antweb/home/ProjTaxonCountDb.java")
-    assert "imageCrawlProjects(ProjectMgr.getLiveProjects(), ProjectMgr.getProject(Project.ALLANTWEBANTS))" in crawl
+    assert "imageCrawlProjects(ProjectMgr.getLiveProjects(), allAntweb)" in crawl
     assert "ALLANTWEB_IMAGES_LOG" in crawl
     for f in ("geolocale/OverviewTaxon.java", "geolocale/GeolocaleTaxon.java", "geolocale/BioregionTaxon.java",
               "ProjTaxon.java"):

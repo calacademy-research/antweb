@@ -177,7 +177,7 @@ public class UploadDetails extends OperationDetails {
                 */
                 logString += "<br>&nbsp;&nbsp;&nbsp;<b>Group Id:</b> " + getCurator().getGroup().getLink();
                 logString += "<br>&nbsp;&nbsp;&nbsp;<b>Curator:</b> " + getCurator().getLink();
-                if (accessCurator != getCurator())
+                if (accessCurator.getId() != getCurator().getId())
                     logString += "<br>&nbsp;&nbsp;&nbsp;<b>Admin:</b> " + accessCurator.getLink();
             }
         } else {
@@ -407,8 +407,10 @@ public class UploadDetails extends OperationDetails {
     }
 
     public void augment(UploadDetails uploadDetails) {
-      if (!uploadDetails.getMessage().equals("success")) {
-        setMessage(getMessage() + uploadDetails.getMessage());
+      String added = uploadDetails.getMessage();
+      if (added != null && !added.equals("success")) {
+        String own = getMessage();
+        setMessage(own == null || own.equals("success") ? added : own + added);
       }
     }
 

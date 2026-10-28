@@ -145,7 +145,7 @@ public class ImageCountDb extends AntwebDb {
 
           // Added to the parent's own images (rollUpTaxonImageCounts).
           String updateSql = "update taxon set image_count = coalesce(image_count, 0) + " + count
-            + " where taxon_name = '" + taxonName.replace("'", "''") + "'";
+            + " where taxon_name = " + DBUtil.sqlLiteral(taxonName);   // quotes and backslashes
 
           //s_log.info("updateImageCount() update:" + updateSql);
           int taxonUpdateCount = stmt.executeUpdate(updateSql);

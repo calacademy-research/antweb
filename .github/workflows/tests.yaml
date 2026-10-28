@@ -63,6 +63,12 @@ jobs:
       - name: List notes in plain words (tests/unit/test_list_admin_wording.py)
         run: python3 tests/unit/test_list_admin_wording.py
 
+      - name: Admin Alert page buttons and dates (tests/unit/test_admin_alert_page.py)
+        run: python3 tests/unit/test_admin_alert_page.py
+
+      - name: Set 4 counts the AntWeb-wide list's Images (tests/unit/test_allantweb_image_crawl.py)
+        run: python3 tests/unit/test_allantweb_image_crawl.py
+
       - name: Deploys check the pinned server host keys (tests/unit/test_deploy_known_hosts.py)
         run: python3 tests/unit/test_deploy_known_hosts.py
 
@@ -337,6 +343,19 @@ jobs:
             grep -q "^OK (9 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of place and search fixes of 2026-10-28 (place links, place sorting, elevation box, date comparison, download names; PlacesSearchFixesTest)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/audit/PlacesSearchFixesTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.audit.PlacesSearchFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (8 tests)" /tmp/out.txt
+          '
+
       - name: Java unit tests of the query string helper (results shown again, F26)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
@@ -420,6 +439,23 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.PostMethodTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (3 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of logins and sessions of 2026-10-28 (sign-in posts from another site refused, removed rights end sessions, escaped project links, small request helpers)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/audit/LoginSessionFixesTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.audit.LoginSessionFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (4 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the counting rules of 2026-10-27 (project Subfamilies, orphan report, caste, endemic and introduced lists, label photos, habitat events, institutions)
@@ -581,7 +617,7 @@ jobs:
               /t/org/calacademy/antweb/util/JobSummaryTest.java \
               /t/org/calacademy/antweb/upload/SubfamilyFromGenusTest.java \
               /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java
-            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:10 \
+            for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:11 \
                      upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:18 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
@@ -693,6 +729,27 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadSafetyTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (4 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the nightly run and count check fixes of 2026-10-28
+        # NightlyTriageThTest (no database): the Global recount keeps set 2's clean-up when it fails; background data jobs
+        # wait for the nightly run; list rows and names are not deleted on a failed query or while another list holds
+        # the name; a synonym read last does not replace the valid name; group counts roll back to their savepoint; job
+        # results fit their column; the count check without compute.log and with a run still working.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/NightlyTriageThTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.NightlyTriageThTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (10 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the upload and nightly decisions of 2026-10-27 (strict upload dates, day 00 is the 1st, unknown genus without subfamily, TaxonWorks collection notes, failed nightly set stops the run)

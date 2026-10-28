@@ -216,7 +216,7 @@ public class ProjectDb extends AntwebDb {
         }
     }
     // was Project.updateInDb()
-    public void update(Project project) {
+    public void update(Project project) throws SQLException {
         if (project.getName() != null && project.getName().length() > 0) {
             String theQuery = "update project set ";
             theQuery += addSet("project_title", project.getTitle()) + ",";
@@ -253,8 +253,7 @@ public class ProjectDb extends AntwebDb {
             theQuery += " where project_name = " + DBUtil.sqlLiteral(project.getName());
             Statement stmt = null;
             try {
-                stmt = DBUtil.getStatement(getConnection(), "ProjectDb.update()");
-                stmt = getConnection().createStatement();
+                stmt = DBUtil.getStatement(getConnection(), "ProjectDb.update()");  // one statement (a second one leaked)
                 stmt.executeUpdate(theQuery);
 
                 //if ("worldants".equals(project.getName())) A.log("update() scope:" + project.getScope() + " title:" + project.getTitle() + " query:" + theQuery);
@@ -262,6 +261,7 @@ public class ProjectDb extends AntwebDb {
             } catch (SQLException e) {
                 s_log.error("update() scope:" + project.getScope() + " title:" + project.getTitle() + " query: " + theQuery);
                 AntwebUtil.logStackTrace(e);
+                throw e;  // the curator saw "saved" (2026-10-28)
             } finally {
                 DBUtil.close(stmt, null, this, "ProjectDb.update()");
             }
@@ -432,43 +432,11 @@ public class ProjectDb extends AntwebDb {
         if (value == null || value.equals("null")) {
             value = ""; 
         }
-        value =  AntFormatter.escapeQuotes(value);
-        return field + "='" + value + "'";
+        // A MySQL literal (backslashes and single quotes escaped). escapeQuotes also doubled double quotes, which
+        // inside a single-quoted literal stored a title's " as "" (2026-10-28).
+        return field + "=" + DBUtil.sqlLiteral(value);
     }    
           
-    public void updateProjects(Login login) throws SQLException {
-      if (login.isAdmin()) return; // Admins get all options automatically.  No need to store.
-      String dml = "delete from login_project where login_id=" + login.getId();
-      Statement stmt = null;
-      try {
-        stmt = DBUtil.getStatement(getConnection(), "updateProjects");
-        stmt.executeUpdate(dml);
-
-        //From SaveLoginAction, the list of projects comes from a form.  They are strings.
-        String projectName;
-        ArrayList<SpeciesListable> projects = login.getProjects();
-        if (projects == null) return;                
-        //A.log("updateProjects() projects:" + projects);
-        for (SpeciesListable project : projects) {
-        
-
-          projectName = project.getName();
-          dml = "insert into login_project (login_id, project_name) " 
-            + " values (" + login.getId() + ",'" + projectName + "')";            
-
-          if ("worldants".equals(projectName)) s_log.info("updateProjects() dml:" + dml);
-
-          stmt.executeUpdate(dml);        
-        }       
-        stmt.close();
-      } catch (SQLException e) {
-        s_log.error("updateProjects() for login:" + login.getName() + " dml:" + dml);
-        throw e;
-      } finally {
-          DBUtil.close(stmt, "updateProjects()");
-      }
-    }
-    
     public void deleteSpeciesList(String speciesList) {
         if (speciesList == null) return;
         String[] queries = {"delete from project where project_name = ?", "delete from proj_taxon where project_name = ?"};

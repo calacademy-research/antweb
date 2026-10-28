@@ -897,9 +897,10 @@ select specimen.code, specimen.taxon_name, image.shot_type, image.shot_number, i
 
     protected String getDateSearchString(String property, String searchType, String value) {
         String searchStr = null;
-        String operator = getOperator(searchType);
+        String operator = searchType == null ? null : getOperator(searchType);
         // Only plain date characters may reach the SQL; anything else matches nothing (as an unparseable date did before).
-        if (value == null || !value.matches("[0-9A-Za-z/.: -]{1,30}")) return " 1 = 0 ";
+        // An unknown comparison matches nothing too (2026-10-28: "null" in the SQL failed the search).
+        if (operator == null || value == null || !value.matches("[0-9A-Za-z/.: -]{1,30}")) return " 1 = 0 ";
         searchStr = property + " " + operator + " " + "convert('" + AntFormatter.escapeQuotes(value) + "', DATE)";
         return searchStr;
     }

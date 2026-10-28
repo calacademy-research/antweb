@@ -6,17 +6,16 @@ each kind each day (numbers_sample.py), and in it the day's genus of its list (a
 MAX_CHILDREN species). The numbers of one page are compared with another page that counts the same children, or
 recounted from the API's records:
 
-  row 44  a species row's Images of the place on the place's list (list row image_count, nightly set 4; the number in
-          brackets of "T Images (P from X)" since 2026-10-27) = the images of the ant (labels never count, Brian
-          Fisher 2026-10-27) of the place's specimens of that name, recounted from the API (/taxaImages of the name,
-          shot types other than l, of the specimens /specimens files under the name: country = the country, adm1 = the adm1, museum = the museum, bioregion = the bioregion, project =
-          anywhere; countries and adm1s of a counted status), on the species rows whose Specimens the same recount
-          gives (a row it does not reproduce, an island or a synonym, is left out and named).
+  row 44  a species row's Images on the place's list (since 2026-10-28 one number, Brian Fisher: the images of the
+          name in AntWeb, the allantwebants list row's image_count, nightly set 4; from 10-27 to 10-28 also the
+          place's in brackets) = the images of the ant (labels never count, Brian Fisher 2026-10-27) of every
+          specimen of that name in AntWeb, recounted from the API (/taxaImages of the name, shot types other than l,
+          of the specimens /specimens files under the name, anywhere). The cell never shows a second number.
   row 55  images.do "I Species Imaged (M total)": M = browse.do's N = the rows it lists; I = the children shown in the
           All view (cookie thumbs=a) with a head, profile or dorsal picture (Taxon.getUniqueChildImagesCount("p",
           "h", "d")).
   row 56  images.do child Images (default view and All view) = the child's Images cell on the place's list (browse.do
-          of the genus lists them; both numbers, ant images only, since 2026-10-27) where the name has images in
+          of the genus lists them; ant images of the name in AntWeb, one number since 2026-10-28) where the name has images in
           AntWeb; where it has none the page shows the images of the ant of the specimen it shows.
   row 49  genus browse hidden "M Imaged Species (out of N total)": M = the children with pictures (images.do All
           view; both use the children's pictures, Taxon.getHasImages).
@@ -71,7 +70,6 @@ MAX_ROWS = int(os.environ.get("ANTWEB_SAMPLE_MAX_IMAGE_ROWS", "4"))
 MAX_SPECIMENS = int(os.environ.get("ANTWEB_SAMPLE_MAX_SPECIMENS", "300"))
 MAX_GENERA = int(os.environ.get("ANTWEB_SAMPLE_MAX_GENERA", "120"))
 MAX_IMAGED = int(os.environ.get("ANTWEB_SAMPLE_MAX_IMAGED", "3000"))
-COUNTABLE = {"valid", "unrecognized", "morphotaxon", "indetermined", "unidentifiable"}
 
 _PLACES = {}
 
@@ -103,19 +101,17 @@ def _num(text):
 
 
 def images_cell(cell):
-    """The two numbers of a list row's Images cell (since 2026-10-27, Brian Fisher: images from anywhere):
-    (images of the name in AntWeb, images of this place's specimens). 'No Images' -> (0, 0), 'N Images' -> (N, N),
-    'T Images (P from Comoros)' or '(P in CASC)' -> (T, P); (None, None) when it is neither."""
+    """The number of a list row's Images cell (since 2026-10-28, Brian Fisher: one number, the images of the ant of
+    the name in AntWeb): 'No Images' -> 0, 'N Images' -> N; None for anything else, such as the two-number form
+    'T Images (P from Comoros)' of 10-27 (it wrapped, and the number script blanked a 0: "( from Comoros)")."""
     t = ns.text_of(cell)
     if t.startswith("No "):
-        return 0, 0
-    m = re.match(r"([\d,]+) Images(?: \(\s*([\d,]+) (?:from|in) .+?\s*\))?$", t)
-    if not m:
-        return None, None
-    total = ns.n(m.group(1))
-    return total, (ns.n(m.group(2)) if m.group(2) else total)
+        return 0
+    m = re.fullmatch(r"([\d,]+) Images", t)
+    return ns.n(m.group(1)) if m else None
 
 
+# The two-number form is still matched, so a page that shows it again is caught (images_cell gives None).
 _CHILD_IMAGES = (r"(No Images|(?:<span[^>]*>)?[\d,]+(?:</span>)? Images"
                  r"(?: \((?:<span[^>]*>)?[\d,]+(?:</span>)? (?:from|in) [^)<]*\))?)")
 
@@ -168,8 +164,8 @@ def _key(params):
 
 def list_row_cells(row_html):
     """A list row's (taxonReportBody.jsp) place count ("N Species", "N Specimens"; not the Global column), its browse
-    link, its Images number of this place (the number in brackets when the name has more images in AntWeb, since
-    2026-10-27) and the browser parameters of its images.do link (None when it says No Images)."""
+    link, its Images number (the images of the name in AntWeb, since 2026-10-28; None when the cell is not one
+    number) and the browser parameters of its images.do link (None when it says No Images)."""
     count, link = None, None
     for cell in re.findall(r'<div class="list_extras specimens">(.*?)</div>', row_html, re.S):
         if "global=true" in cell:
@@ -185,7 +181,7 @@ def list_row_cells(row_html):
     images, params = None, None
     m = re.search(r'<div class="list_extras images">(.*?)</div>', row_html, re.S)
     if m:
-        images = images_cell(m.group(1))[1]
+        images = images_cell(m.group(1))
         lk = re.search(r"href='([^']*images\.do\?[^']*)'", m.group(1))
         params = _params(lk.group(1)) if lk else None
     return count, link, images, params
@@ -280,16 +276,16 @@ def each_genus():
 
 
 def browse_children(g):
-    """The children rows of the genus' browse page: browser params key -> (name, (Images in AntWeb, Images of this
-    place's list))."""
+    """The children rows of the genus' browse page: browser params key -> (name, Images in AntWeb as the list shows
+    them)."""
     out = {}
     for r in ns.list_rows(g["browse"]):
         _c, link, _images, params = list_row_cells(r["html"])
         params = params or _params(link)   # both links carry the child's browser parameters
         cell = re.search(r'<div class="list_extras images">(.*?)</div>', r["html"], re.S)
-        both = images_cell(cell.group(1)) if cell else (None, None)
-        if params and both[0] is not None:
-            out[_key(params)] = (r["name"], both)
+        shown = images_cell(cell.group(1)) if cell else None
+        if params and shown is not None:
+            out[_key(params)] = (r["name"], shown)
     return out
 
 
@@ -420,8 +416,8 @@ def test_map_comparison_counts_the_children_mapped():
 
 def test_images_page_child_counts_equal_the_list_rows():
     """Row 56: on images.do (default view and All view) a child whose row on the place's list has images in AntWeb
-    shows the same numbers as the list: "T Images (P from X)" or "N Images" (ant images only since 2026-10-27; the All
-    view showed "0 Images" for every name until 2026-10-27, B46)."""
+    shows the same number as the list: "N Images", the images of the ant of the name in AntWeb (one number since
+    2026-10-28; ant images only since 2026-10-27; the All view showed "0 Images" for every name until 2026-10-27, B46)."""
     wrong, checked = [], 0
     for p, g in each_genus():
         rows = browse_children(g)
@@ -431,7 +427,7 @@ def test_images_page_child_counts_equal_the_list_rows():
         for view, children in views:
             for key, name, shown in children:
                 listed = rows.get(key)
-                if not listed or not listed[1][0]:
+                if not listed or not listed[1]:
                     continue   # No Images on the list: the page may show the ant images of the specimen shown
                 checked += 1
                 if shown != listed[1]:
@@ -495,48 +491,31 @@ def test_images_view_header_counts_the_children_with_pictures():
 
 # ------------------------------------------------------------------------------------------- row 44
 
-def _api_specimens(p, genus, species):
-    """The API's specimens of genus and species in the place (as the list counts them), or None."""
-    filt = {"country": "country", "adm1": "adm1", "bioregion": "bioregion", "museum": "museum"}.get(p.kind)
-    if p.kind in ("region", "subregion"):
-        return None   # their countries' specimens: not one API filter
-    path = f"specimens?genus={ns.quote_plus(genus)}&species={ns.quote_plus(species)}"
-    if filt:
-        path += f"&{filt}={ns.quote_plus(p.name)}"
-    rows = ns.api_all(path, max_pages=4)
-    if rows is None:
-        return None
-    if p.kind == "country":
-        rows = [r for r in rows if (r.get("country") or "").lower() == p.name.lower()]
-    if p.kind in ("country", "adm1"):
-        rows = [r for r in rows if (r.get("status") or "").lower() in COUNTABLE]
-    return rows
-
-
 def test_list_images_column_equals_the_api_recount():
-    """Row 44: the species rows (of the day's genus, at most MAX_ROWS) of the place's list: the place's Images = the
-    images of the ant (labels left out, since 2026-10-27) of the place's specimens of that name, recounted from the API
-    (/taxaImages of the name, the specimens of /specimens in the place), on the rows whose Specimens the same recount
-    reproduces."""
+    """Row 44: the species rows (of the day's genus, at most MAX_ROWS) of the place's list: Images (one number since
+    2026-10-28) = the images of the ant (labels left out, since 2026-10-27) of every specimen of that name in AntWeb,
+    recounted from the API (/taxaImages of the name, the name's specimens of /specimens from anywhere). The place's
+    own number is no longer shown: the cell never says "from" or "in" a place."""
     wrong, checked, left_out = [], [], []
     for p, g in each_genus():
         rows = []
         for r in ns.list_rows(g["browse"]):
             count, link, images, params = list_row_cells(r["html"])
-            if r["name"] and count is not None and images is not None and link:
-                rows.append((r["name"], count, images, parse_qs(_params(link) or "")))
-        for name, count, images, q in ns.pick(rows, MAX_ROWS, "images-rows" + repr(p)):
+            cell = re.search(r'<div class="list_extras images">(.*?)</div>', r["html"], re.S)
+            text = ns.text_of(cell.group(1)) if cell else ""
+            if re.search(r"\(|\bfrom |\bin [A-Z]", text):
+                wrong.append(f"{p} {r['name']}: Images cell {text!r} shows a second number")
+            if r["name"] and images is not None and link:
+                rows.append((r["name"], images, parse_qs(_params(link) or "")))
+        for name, images, q in ns.pick(rows, MAX_ROWS, "images-rows" + repr(p)):
             genus, species = (q.get("genus") or [""])[0], (q.get("species") or [""])[0]
             if not genus or not species:
                 continue
-            got = _api_specimens(p, genus, species)
+            got = ns.api_all(f"specimens?genus={ns.quote_plus(genus)}&species={ns.quote_plus(species)}", max_pages=4)
             if got is None:
-                left_out.append(f"{p} {name}: not recounted (region, or more than 4 API pages)")
+                left_out.append(f"{p} {name}: not recounted (more than 4 API pages)")
                 continue
             mine = [s for s in got if (s.get("antwebTaxonName") or "").lower() == name]
-            if len(mine) != count:
-                left_out.append(f"{p} {name}: {count} Specimens, the API recount {len(mine)} (island, synonym or pending)")
-                continue
             both = images_by_code(name)
             if both is None:
                 left_out.append(f"{p} {name}: not recounted (more than 500 images)")
@@ -547,10 +526,14 @@ def test_list_images_column_equals_the_api_recount():
             if recount != images and old_set_4(images, ant, every, codes):
                 left_out.append(f"{p} {name}: {images} Images, {OLD_SET_4}")
                 continue
+            if recount > images and ns.allantweb_images_counted() is False:
+                left_out.append(f"{p} {name}: {images} Images, the AntWeb-wide row is not counted yet on this server"
+                                " (no compute.log line 'AntWeb-wide list Images counted'): pending")
+                continue
             if recount != images:
-                wrong.append(f"{p} {name}: list row {images} Images, the API's {len(mine)} specimens have {recount} images of the ant")
+                wrong.append(f"{p} {name}: list row {images} Images, the API's {len(mine)} specimens of the name in AntWeb have {recount} images of the ant")
             checked.append(f"{p} {name}")
-    if not checked:
+    if not checked and not wrong:
         pytest.skip("no species row recounted " + ns.day_note() + "; left out: " + "; ".join(left_out[:10]))
     assert not wrong, (f"{len(checked)} rows {ns.day_note()} ({PENDING}); left out: {left_out[:10]}:\n" + "\n".join(wrong))
 

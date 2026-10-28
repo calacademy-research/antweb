@@ -108,9 +108,16 @@ public final class AddUploaderAction extends AntwebAction {
                     done.lines.addAll(r.done);
                     String link = null;
                     if (r.needsPasswordLink) {
-                        link = PasswordResetMgr.newInviteLink(connection, r.login.id, admin.getId());
-                        done.lines.add("Made a one-time link (" + days() + " days) for " + r.login.name
-                            + " to choose a password; it is in the draft welcome email below.");
+                        // The login and group are saved (committed) by now: a failure here must not say "nothing was changed".
+                        try {
+                            link = PasswordResetMgr.newInviteLink(connection, r.login.id, admin.getId());
+                            done.lines.add("Made a one-time link (" + days() + " days) for " + r.login.name
+                                + " to choose a password; it is in the draft welcome email below.");
+                        } catch (SQLException e) {
+                            s_log.error("execute() invite link for login:" + r.login.id + " e:" + e);
+                            PasswordResetMgr.logEvent("add uploader: invite link for login:" + r.login.id + " could not be made: " + e.getMessage());
+                            done.lines.add(INVITE_LINK_FAILED);
+                        }
                     }
                     done.email = r.login.email;
                     done.loginId = r.login.id;
@@ -191,6 +198,10 @@ public final class AddUploaderAction extends AntwebAction {
         + "<p>An <b>upload group</b> is the institution, lab or personal collection that owns specimen records on AntWeb."
         + " Each specimen record belongs to one upload group, and <b>an upload replaces all specimens of the uploader's"
         + " upload group</b>. Give two people the same upload group only when they upload one shared data set.</p>";
+
+    /** Shown when the login and group were saved but the one-time password link could not be made. */
+    public static final String INVITE_LINK_FAILED = "The login and upload group were saved, but the one-time link to choose a password"
+        + " could not be made. Make one in the Login Manager (open the login, \"Save and make a set-password link\"), or ask them to use Forgot password.";
 
     static final String SESSION_CHANGED = "Your session changed (AntWeb restarted or you logged in again)."
         + " Nothing was done. Check the form and press Add uploader again.";

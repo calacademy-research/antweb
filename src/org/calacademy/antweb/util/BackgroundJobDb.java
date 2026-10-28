@@ -121,7 +121,7 @@ public final class BackgroundJobDb implements BackgroundJobs.Store {
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setString(1, job.getStatus().name());
             stmt.setString(2, cut(job.getStep(), 500));
-            stmt.setString(3, cut(job.getResult(), 60000));
+            stmt.setString(3, cutUtf8(job.getResult(), 60000));   // a TEXT column holds 65,535 bytes, not characters
             stmt.setString(4, cut(job.getResultLink(), 500));
             stmt.setString(5, cut(job.getResultLinkText(), 255));
             stmt.setTimestamp(6, ts(job.getStarted()));
@@ -169,6 +169,21 @@ public final class BackgroundJobDb implements BackgroundJobs.Store {
 
     private static Date date(Timestamp t) {
         return t == null ? null : new Date(t.getTime());
+    }
+
+    /** At most maxBytes bytes in UTF-8 (whole characters), with "..." at the end when cut. */
+    public static String cutUtf8(String s, int maxBytes) {
+        if (s == null || s.getBytes(java.nio.charset.StandardCharsets.UTF_8).length <= maxBytes) return s;
+        int bytes = 3;   // the "..."
+        int i = 0;
+        while (i < s.length()) {
+            int cp = s.codePointAt(i);
+            int n = new String(Character.toChars(cp)).getBytes(java.nio.charset.StandardCharsets.UTF_8).length;
+            if (bytes + n > maxBytes) break;
+            bytes += n;
+            i += Character.charCount(cp);
+        }
+        return s.substring(0, i) + "...";
     }
 
     private static String cut(String s, int max) {

@@ -200,8 +200,12 @@ public class GroupCountDb extends AntwebDb {
      */
     public String recountAll() {
         long start = System.currentTimeMillis();
+        java.sql.Savepoint savepoint = null;
         try {
             ensureTable(getConnection());
+            // A failure after some of the writes below rolls back to here, so the rest of set 3 is not committed with
+            // half of the group numbers.
+            if (!getConnection().getAutoCommit()) savepoint = getConnection().setSavepoint();
             Timestamp now = new Timestamp(start / 1000 * 1000);   // whole seconds, as the datetime column keeps it
             int groups = 0;
             String upsert = "insert into " + TABLE + " (group_id, specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera,"
@@ -255,6 +259,9 @@ public class GroupCountDb extends AntwebDb {
             return message;
         } catch (SQLException e) {
             s_log.error("recountAll() e:" + e);
+            if (savepoint != null) {
+                try { getConnection().rollback(savepoint); } catch (SQLException e2) { s_log.error("recountAll() rollback e:" + e2); }
+            }
             return "Group counts not written (" + e + ")";
         }
     }

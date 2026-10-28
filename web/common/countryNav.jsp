@@ -14,14 +14,14 @@
 	//A.log("countryNav.jsp thisPage:" + thisPage + " isOverviewPage:" + isOverviewPage);
 
 	if (isOverviewPage) {        
-		view = "<a href='" + country.getThisPageTarget() + "'>" + country.getName() + "</a>";
+		view = "<a href='" + country.getThisPageTarget() + "'>" + org.calacademy.antweb.util.Html.esc(country.getName()) + "</a>";
 	} else if (thisPage.contains("endemic.do") || thisPage.contains("introduced.do")) {
-	  view = "<a href='" + AntwebProps.getDomainApp() + "/country.do?id=" + country.getId() + "'>" +  country.getName() + "</a>";         
+	  view = "<a href='" + AntwebProps.getDomainApp() + "/country.do?id=" + country.getId() + "'>" + org.calacademy.antweb.util.Html.esc(country.getName()) + "</a>";         
 	} else {
 
   	  String delim = "&";
 	  if (!thisPage.contains("?")) delim = "?";
-	  view = "<a href='" + org.calacademy.antweb.util.Html.escAttr(thisPage + delim + country.getParams())  + "'>" + country.getName() + "</a>";
+	  view = "<a href='" + org.calacademy.antweb.util.Html.escAttr(thisPage + delim + country.getParams())  + "'>" + org.calacademy.antweb.util.Html.esc(country.getName()) + "</a>";
 	  //A.log("countryNav view:" + view);
 
 	}
@@ -32,9 +32,9 @@
 
 		if (subregion != null) {
 		  if (isOverviewPage ) {
-			view = "<a href='" + subregion.getThisPageTarget()  + "'>" + subregion.getName() + "</a>" + " - " + view;
+			view = "<a href='" + subregion.getThisPageTarget()  + "'>" + org.calacademy.antweb.util.Html.esc(subregion.getName()) + "</a>" + " - " + view;
 		  } else if (thisPage.contains("endemic.do")) {
-			view = "<a href='" + AntwebProps.getDomainApp() + "/subregion.do?id=" + subregion.getId() + "'>" +  subregion.getName() + "</a> - " + view;         
+			view = "<a href='" + AntwebProps.getDomainApp() + "/subregion.do?id=" + subregion.getId() + "'>" + org.calacademy.antweb.util.Html.esc(subregion.getName()) + "</a> - " + view;         
 		  } else {
 			// used for taxonomic pages. Might be with images.
   	  	    view = subregion.getNavLink(request, thisPage, view);
@@ -43,9 +43,9 @@
 			String subregionId = subregion.getParent();
 			Geolocale region = GeolocaleMgr.getGeolocale(subregionId);
 			if (isOverviewPage) {
-			  view = "<a href='" + region.getThisPageTarget() + "'>" + region.getName() + "</a> - " + view;  // was grandParent.getThisPageTarget()
+			  view = "<a href='" + region.getThisPageTarget() + "'>" + org.calacademy.antweb.util.Html.esc(region.getName()) + "</a> - " + view;  // was grandParent.getThisPageTarget()
 			} else if (thisPage.contains("endemic.do")) {
-			  view = "<a href='" + AntwebProps.getDomainApp() + "/region.do?id=" + region.getId() + "'>" +  region.getName() + "</a> - " + view;         
+			  view = "<a href='" + AntwebProps.getDomainApp() + "/region.do?id=" + region.getId() + "'>" + org.calacademy.antweb.util.Html.esc(region.getName()) + "</a> - " + view;         
 			} else {
 			  // used for taxonomic pages. Might be with images.
   	  	      view = region.getNavLink(request, thisPage, view);

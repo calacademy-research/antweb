@@ -301,8 +301,8 @@ public final class CompareResultsAction extends ResultsAction {
             //A.log("getSpecimensForTaxaFromResults() chosenListNext:" + chosenListNext + " thisItem:" + thisItem);
 
             for (ResultItem resultItem : searchResults) {
-                if (thisItem.getSpecies().equals(resultItem.getSpecies())
-                  && thisItem.getGenus().equals(resultItem.getGenus())
+                if (java.util.Objects.equals(thisItem.getSpecies(), resultItem.getSpecies())   // null-safe (2026-10-28)
+                  && java.util.Objects.equals(thisItem.getGenus(), resultItem.getGenus())
                    ) {
                    //A.log("getSpecimensForTaxaFromResults() added - thisItem.species:" + resultItem.getCode());
                     theSpecimens.add(resultItem);

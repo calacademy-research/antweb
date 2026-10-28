@@ -218,7 +218,7 @@ public class MuseumDb extends AntwebDb {
             
         String theQuery = "select count(distinct code) specimen_count" 
           + " from specimen "
-          + " where specimen.museum = '" + museumCode + "'"
+          + " where specimen.museum = " + DBUtil.sqlLiteral(museumCode)
           + " and specimen.family = 'formicidae'";   // ants only (2026-10-21, PlaceTotals)
 
         rset = stmt.executeQuery(theQuery);
@@ -245,7 +245,7 @@ public class MuseumDb extends AntwebDb {
             
         String theQuery = "select count(distinct id) image_count" 
           + " from specimen left join image on specimen.code = image.image_of_id"
-          + " where specimen.museum = '" + museumCode + "' and specimen.family = 'formicidae'";
+          + " where specimen.museum = " + DBUtil.sqlLiteral(museumCode) + " and specimen.family = 'formicidae'";
 
         rset = stmt.executeQuery(theQuery);
         while (rset.next()) {
@@ -290,7 +290,7 @@ public class MuseumDb extends AntwebDb {
 
     private void freshStart(String code) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
-      utilDb.deleteFrom("museum_taxon", " where code = '" + code + "'");    
+      utilDb.deleteFrom("museum_taxon", " where code = " + DBUtil.sqlLiteral(code));
     }
 
     public void populate(String code) throws SQLException {
@@ -369,7 +369,7 @@ public class MuseumDb extends AntwebDb {
     }   
     private void updateColor(String code, String color) throws SQLException {
       UtilDb utilDb = new UtilDb(getConnection());
-      utilDb.updateField("museum", "chart_color", "'" + color + "'", "code = '" + code + "'");
+      utilDb.updateField("museum", "chart_color", "'" + color + "'", "code = " + DBUtil.sqlLiteral(code));
     }
 
     public String finish() throws SQLException {
@@ -405,7 +405,7 @@ public class MuseumDb extends AntwebDb {
     private void updateImagedSpecimenCount(String code) throws SQLException {
         int count = getImagedSpecimenCount(code);
         UtilDb utilDb = new UtilDb(getConnection());
-        utilDb.updateField("museum", "imaged_specimen_count", Integer.valueOf(count).toString(), "code = '" + code + "'");
+        utilDb.updateField("museum", "imaged_specimen_count", Integer.valueOf(count).toString(), "code = " + DBUtil.sqlLiteral(code));
     }
 
     private int getImagedSpecimenCount(String code) {
@@ -416,7 +416,7 @@ public class MuseumDb extends AntwebDb {
       try {
           stmt = DBUtil.getStatement(getConnection(), "getImagedSpecimenCount()");  
           // Labels not counted (an image of the ant): as PlaceImageCountDb, which nightly set 4 runs after this.
-          query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and museum = '" + code + "' and s.family = 'formicidae'"
+          query = "select count(distinct(code)) count from specimen s, image i where s.code = i.image_of_id and museum = " + DBUtil.sqlLiteral(code) + " and s.family = 'formicidae'"
               + " and lower(trim(coalesce(i.shot_type, ''))) <> 'l'";
 
           rset = stmt.executeQuery(query);
@@ -484,7 +484,7 @@ public class MuseumDb extends AntwebDb {
     // Populate the museum field of the specimen table if can be determined from the ownedby field.
     private void populateSpecimenMuseum(String museumCode) throws SQLException {
       A.log("populateSpecimenMuseum(" + museumCode + ")");
-      String whereClause = "museum = '" + museumCode + "'";
+      String whereClause = "museum = " + DBUtil.sqlLiteral(museumCode);
       
       new UtilDb(getConnection()).updateField("specimen", "museum", null, whereClause);
 
@@ -502,13 +502,16 @@ public class MuseumDb extends AntwebDb {
           if ("AFRC".equals(museumCode)) s_log.debug("populateSpecimenMuseum() updated:" + c);
           
       } catch (SQLException e) {
+        // Thrown (2026-10-28): the code was already cleared from the museum's specimens above, and the run went on
+        // to count the museum with no specimens. The data job's transaction is rolled back instead.
         s_log.error("MuseumDb.populateSpecimenMuseum() e:" + e);
+        throw e;
       } finally {
         DBUtil.close(stmt, null, "MuseumDb.populateSpecimenMuseum()");
       }    
     }
 
-    private String populateSpecies() {
+    private String populateSpecies() throws SQLException {
 
       //A.log("populateMuseumSpecies()");
     
@@ -518,7 +521,7 @@ public class MuseumDb extends AntwebDb {
       return "Museum_Taxon populated";
     }
 
-    private void populateSpecies(String museumCode) {
+    private void populateSpecies(String museumCode) throws SQLException {
 
       Museum museum = null;
 
@@ -538,12 +541,12 @@ public class MuseumDb extends AntwebDb {
             return;
           }
       
-          new UtilDb(getConnection()).deleteFrom("museum_taxon", " where code = '" + museumCode + "'");
+          new UtilDb(getConnection()).deleteFrom("museum_taxon", " where code = " + DBUtil.sqlLiteral(museumCode));
 
           // count(distinct s.code): the join gives one row per image, so count(*) counted a specimen once per image
           String query = "select taxon_name, count(distinct s.code) specimenCount, count(id) imageCount " 
             + " from specimen s left join image i on s.code = i.image_of_id " 
-            + " where museum = '" + museum.getCode() + "'" 
+            + " where museum = " + DBUtil.sqlLiteral(museum.getCode())
             + " and " + SpecimenDb.getFlagCriteria()            
             + " and s.status in " + StatusSet.getCountables()
             + " group by taxon_name";
@@ -566,7 +569,10 @@ public class MuseumDb extends AntwebDb {
           //A.log("populateMuseumSpecies() museum code:" + museum.getCode() + " name:" + museum.getName() + " taxaCount:" + taxaCount + " query:" + query);
 
       } catch (SQLException e) {
+        // Thrown (2026-10-28): the list was deleted above and only partly rebuilt, and the run went on to count it.
+        // The data job's transaction is rolled back instead, so the museum keeps its previous list.
         s_log.error("MuseumDb.populateSpecies() e:" + e);
+        throw e;
       } finally {
         DBUtil.close(stmt, rset, "MuseumDb.populateSpecies()");
       }
@@ -578,7 +584,7 @@ public class MuseumDb extends AntwebDb {
     
     private void populateHigherTaxa(String code) throws SQLException {
         String codeClause = "";
-        if (code != null) codeClause = " and code = '" + code + "'";
+        if (code != null) codeClause = " and code = " + DBUtil.sqlLiteral(code);
         String query = "";
 
         ResultSet rset = null;
@@ -660,14 +666,15 @@ public class MuseumDb extends AntwebDb {
     private boolean insertTaxon(String code, String taxonName, String insertMethod) throws SQLException {
         // for each record, insert into proj_taxon.  Ignore constraint conflicts.    
         String dml = null;
-        Statement stmt = null;
+        PreparedStatement stmt = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "insertTaxon()");
-
-            dml = "insert into museum_taxon(code, taxon_name, insert_method"
-              + " ) values ('" + code + "', '" + taxonName + "','" + insertMethod + "')";
-            //A.log("insertProjTaxon() dml:" + dml);
-            stmt.executeUpdate(dml);
+            // Bound values (2026-10-28).
+            dml = "insert into museum_taxon(code, taxon_name, insert_method) values (?, ?, ?)";
+            stmt = getConnection().prepareStatement(dml);
+            stmt.setString(1, code);
+            stmt.setString(2, taxonName);
+            stmt.setString(3, insertMethod);
+            stmt.executeUpdate();
         } catch (SQLIntegrityConstraintViolationException e) {
             return false;
         } catch (SQLException e) {
@@ -680,15 +687,17 @@ public class MuseumDb extends AntwebDb {
     }     
     
     private void insertSpecies(Museum museum, String taxonName, int specimenCount, int imageCount) throws SQLException {
-      Statement stmt = null;
+      PreparedStatement stmt = null;
       try {
-          
-          String dml = "insert into museum_taxon (code, taxon_name, specimen_count, image_count, insert_method) values ('" 
-            + museum.getCode() + "', '" + taxonName + "', " + specimenCount + ", " + imageCount + ",'insertMuseumSpecies')";
-            
-          stmt = DBUtil.getStatement(getConnection(), "MuseumDb.insertSpecies()");
+          // Bound values (2026-10-28): a name with an apostrophe stopped the museum's list there.
+          String dml = "insert into museum_taxon (code, taxon_name, specimen_count, image_count, insert_method) values (?, ?, ?, ?, 'insertMuseumSpecies')";
+          stmt = getConnection().prepareStatement(dml);
+          stmt.setString(1, museum.getCode());
+          stmt.setString(2, taxonName);
+          stmt.setInt(3, specimenCount);
+          stmt.setInt(4, imageCount);
 
-          int x = stmt.executeUpdate(dml);
+          int x = stmt.executeUpdate();
           
       } catch (SQLException e) {
         s_log.error("MuseumDb.insertSpecies() e:" + e);

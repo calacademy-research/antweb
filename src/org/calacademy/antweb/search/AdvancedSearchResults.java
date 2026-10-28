@@ -234,10 +234,8 @@ public class AdvancedSearchResults extends GenericSearchResults
 						  o1 = o2;
 						  o2 = t;
 					  }
-					  a1 = o1.getType();
-					  a2 = o2.getType();
-					  // 2nd one first because reverse order
-					  return compareVals(a2, a1);
+					  // 2nd one first because reverse order (local values: the static a1, a2 were shared by every request)
+					  return compareVals(o2.getType(), o1.getType());
 				  });
 
 				  // caste atually sorts by caste+subcaste
@@ -252,7 +250,7 @@ public class AdvancedSearchResults extends GenericSearchResults
 					  ResultItem resultItemO1 = o1;
 					  ResultItem resultItemO2 = o2;
 					  String casteSubcasteO1 = resultItemO1.getCaste() + resultItemO1.getSubcaste();
-					  String casteSubcasteO2 = resultItemO2.getCaste() + resultItemO1.getSubcaste();
+					  String casteSubcasteO2 = resultItemO2.getCaste() + resultItemO2.getSubcaste();  // was O1's subcaste
 					  // 2nd one first because reverse order
 					  return CompareUtil.compareString(casteSubcasteO2, casteSubcasteO1);
 				  });

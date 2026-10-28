@@ -95,7 +95,7 @@ def test_image_delete_and_curator_file_messages():
 def test_country_list_removal_deletes_only_morphotaxa():
     src = code(read("home", "GeolocaleTaxonDb.java"))
     d = method(src, "public int delete(String speciesListName, String taxonName)")
-    assert re.search(r"if \(rset2\.getInt\(1\) == 0 && Taxon\.isMorpho\(taxonName\)\)", d)
+    assert re.search(r"if \(rset2\.getInt\(1\) == 0 && Taxon\.isMorpho\(taxonName\)( && !taxonDb\.isOnAnyList\(taxonName\))?\)", d)
     ins = method(src, "private int insertGeolocaleTaxaFromSpecimens()")
     assert "insertCount += count" not in ins and "unfoundCountries.add(countryName)" in ins
 

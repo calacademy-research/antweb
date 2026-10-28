@@ -271,3 +271,27 @@ def numbered_names(html):
     """The names of endemic.do and introduced.do: numbered rows 'N. <a ...description.do?taxonName=X'>'."""
     return [requests.utils.unquote(t).strip().lower()
             for t in re.findall(r"<br>\d+\. <a href='[^']*/description\.do\?taxonName=([^']+)'", html)]
+
+
+_ALLANTWEB_COUNTED = {}
+
+
+def allantweb_images_counted():
+    """True when the server's nightly set 4 has counted the AntWeb-wide list's Images (compute.log line "AntWeb-wide
+    list Images counted", 2026-10-27); False when the log is readable and has no such line (every list's Images cell
+    then shows the place's own number until that night: pending); None when the log can't be read (production, no
+    admin test login). Cached for the run."""
+    if "v" not in _ALLANTWEB_COUNTED:
+        value = None
+        try:
+            from staging_accounts import IS_STAGING, login
+            if IS_STAGING:
+                s, _token, _id = login("admin")
+                r = s.get(f"{BASE_URL}/logMgr.do?action=get&fileName=compute&ext=log&lines=5000", timeout=120)
+                if r.status_code == 200 and "Begin run" in r.text:
+                    value = "AntWeb-wide list Images counted" in r.text
+        except Exception:  # noqa: BLE001
+            value = None
+        _ALLANTWEB_COUNTED["v"] = value
+    return _ALLANTWEB_COUNTED["v"]
+

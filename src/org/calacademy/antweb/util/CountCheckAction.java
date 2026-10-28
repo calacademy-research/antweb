@@ -98,6 +98,7 @@ public final class CountCheckAction extends AntwebAction {
             List<String> log = computeLog();
             CountCheck countCheck = new CountCheck(connection);
             countCheck.antImagesRuleCounted = CountCheck.antImagesRuleCounted(log);
+            countCheck.nightlyInProgress = CountCheck.nightlyInProgress(log, java.time.LocalDateTime.now());
             if (invariants) {
                 countCheck.curatorsRead = LoginMgr.getCuratorsRead();
                 countCheck.curatorNumbers = curatorNumbers();
@@ -107,9 +108,9 @@ public final class CountCheckAction extends AntwebAction {
                 CountCheck.regionRuleCounted(log), CountInvariants.rulesCounted(log), invariants, TaxonMgr.getValidSpeciesCount());
             result.notes.addAll(notes);
             request.setAttribute("html", html(result, AntwebProps.getDomainApp()));
-        } catch (SQLException e) {
+        } catch (SQLException | RuntimeException e) {
             s_log.error("execute() e:" + e);
-            request.setAttribute("message", "The count check failed: " + Html.esc(e.getMessage()));
+            request.setAttribute("message", "The count check failed: " + Html.esc(String.valueOf(e.getMessage())));
             return mapping.findForward("message");
         } finally {
             try { if (connection != null) connection.setReadOnly(false); } catch (SQLException e) { /* closing */ }

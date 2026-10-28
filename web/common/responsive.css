@@ -461,6 +461,9 @@
     #page_data > .left {
         float: none;
     }
+    #imaged_castes {
+        max-width: none;
+    }
     .small_map,
     .small_map.first {
         float: none;

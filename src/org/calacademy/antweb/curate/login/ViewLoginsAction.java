@@ -29,27 +29,17 @@ public class ViewLoginsAction extends AntwebAction {
 
 	public ActionForward execute(ActionMapping mapping, ActionForm form,
 		HttpServletRequest request, HttpServletResponse response) {
-        // Require a logged-in administrator: this action changes data.
+        // Administrators only (the list shows every login).
         ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
 
         ActionForward a = Check.init("geolocale", request, mapping); if (a != null) return a;
 
-		ArrayList<Login> loginList = new ArrayList<>();
-
-        Connection connection = null;
-        try {
-            DataSource dataSource = getDataSource(request, "conPool");
-            connection = DBUtil.getConnection(dataSource, "ViewLoginsAction.execute()");
-
-            loginList = LoginMgr.getLogins(); //(new LoginDb(connection)).getAllLogins();
-        } catch (SQLException e) {
-            s_log.error("execute() e:" + e);            
-        } finally {
-            DBUtil.close(connection, this, "ViewLoginsAction.execute()");
-        }            
+		ArrayList<Login> loginList = LoginMgr.getLogins();   // the in-memory list; no database query here
 
         if (loginList != null) {
-          request.getSession().setAttribute("antwebLogins", loginList);      
+          // For this page only: a request attribute, not the session (the list holds every login).
+          request.getSession().removeAttribute("antwebLogins");
+          request.setAttribute("antwebLogins", loginList);      
           return mapping.findForward("success");
         } else {
           return mapping.findForward("error");

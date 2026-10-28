@@ -1666,6 +1666,15 @@ h2.display_count {
     display:none;
 }
 
+/* The species page's "Imaged:" castes line sits in the image and map column under the head image (2026-10-27). It
+   wraps at the column's width: a long line (many castes and subcastes, e.g. Camponotus strangulatus) widened the
+   floating column until it no longer fit beside the text, and the image and map dropped to the bottom of the page. */
+#imaged_castes {
+    max-width: 240px;
+    margin: 4px 0 6px 0;
+    line-height: 1.35;
+}
+
 .small_map {
     position:relative;
     float:left; 

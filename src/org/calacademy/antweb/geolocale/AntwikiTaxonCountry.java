@@ -25,8 +25,9 @@ public class AntwikiTaxonCountry implements Comparable<AntwikiTaxonCountry> {
         
     public int compareTo(AntwikiTaxonCountry other) {
         //A.log("compareTo() fullName:" + getFullName() + " vs " + other.getFullName());
-        if (getTaxonName() == null) return 1;
-        if (other.getTaxonName() == null) return 1;
+        // Names that are null sort last, consistently (both null: equal), so a sort never breaks its contract.
+        if (getTaxonName() == null) return other.getTaxonName() == null ? 0 : 1;
+        if (other.getTaxonName() == null) return -1;
         return getTaxonName().compareTo(other.getTaxonName());
         //return getTaxonName().compareTo(other.getTaxonName());
     }    

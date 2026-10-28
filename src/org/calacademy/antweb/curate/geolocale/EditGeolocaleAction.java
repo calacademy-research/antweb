@@ -157,7 +157,7 @@ public final class EditGeolocaleAction extends AntwebAction {
 			    if (message != null && message.startsWith(GeolocaleDb.NOT_SAVED)) {
 			      isSaved = false;
 			    } else {
-			      message += " Updated.";
+			      message = (message == null ? "" : message) + " Updated.";
 			    }
 			  }
 			}

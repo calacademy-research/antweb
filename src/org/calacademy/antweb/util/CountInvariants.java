@@ -80,6 +80,7 @@ public final class CountInvariants {
     static final String Q7_PENDING = "counted by the rule before 2026-10-22 (ants only, Q7); the next nightly run counts it by the new rule";
 
     public static boolean rulesCounted(List<String> lines) {
+        if (lines.isEmpty()) return true;   // no compute.log (unreadable, emptied, rotated): not a reason to call differences pending
         for (String line : lines) if (line.contains(RULES_LOG)) return true;
         return false;
     }

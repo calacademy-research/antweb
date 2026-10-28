@@ -400,7 +400,7 @@ public class Bioregion extends LocalityOverview implements Countable {
             //A.log("getChangeViewOptions() isOverviewPage:" + isOverviewPage + " otherUrl:" + otherUrl);
 
 			if (isOverviewPage) {
-      	      changeViewOptions += "<li><a href='" + bioregion.getThisPageTarget() + "'>" + bioregion.getTitle() + "</a></li>";
+      	      changeViewOptions += "<li><a href='" + Html.escAttr(bioregion.getThisPageTarget()) + "'>" + Html.esc(bioregion.getTitle()) + "</a></li>";
             } else {
       	      changeViewOptions += "<li><a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + bioregion.getParams()) + "'>" + Html.esc(bioregion.getTitle()) + "</a></li>";
             }
@@ -419,7 +419,7 @@ public class Bioregion extends LocalityOverview implements Countable {
         ++i;
         if (i == 1) display = "<br><b>Countries:</b> ";
         if (i > 1) display += ", ";
-          display += "<a href='" + AntwebProps.getDomainApp() + "/country.do?name=" + country + "'>" + country + "</a>";
+          display += "<a href='" + Html.escAttr(AntwebProps.getDomainApp() + "/country.do?name=" + HttpUtil.encode(country)) + "'>" + Html.esc(country) + "</a>";
       }
       //display += "</b>";
       return display;

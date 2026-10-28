@@ -14,7 +14,10 @@ import org.calacademy.antweb.util.Html;
  *  - images.do of a species or subspecies reached with a place shows all of the name's imaged specimens; those of the
  *    place come first and are marked ("from Indonesia"), then the representative specimens (the picked defaults and
  *    the specimen shown for the name), then the others. images.do?...&placeOnly=true shows the place's specimens only.
- *  - the Images column of a place's list shows both numbers: "4 Images (0 from Comoros)".
+ *  - the Images column of a place's list shows the images of the ant of the name in AntWeb, from any specimen:
+ *    "153 Images" (Brian Fisher, 2026-10-28; from 10-27 to 10-28 it also said "(0 from Comoros)", which wrapped to two
+ *    lines and showed "( from Comoros)" where the number script blanks a 0). The link goes to the name's images page,
+ *    which says how many imaged specimens are from the place and shows them first.
  *
  * Pure helpers, no database: tested by test.org.calacademy.antweb.ImagesAnywhereTest.
  */
@@ -85,23 +88,26 @@ public final class ImagesAnywhere {
     }
 
     /**
-     * The Images cell of a place's list (taxonReportBody.jsp), as text with HTML. Both numbers are images of the ant
-     * (labels never count; Brian Fisher 2026-10-27, nightly set 4, CountDb.imageCountCrawl):
-     *   total     images of the name in AntWeb (the allantwebants list row's Images; -1 when not known),
-     *   place     the place's own list row Images,
-     *   fromPhrase "from Comoros", "in CASC".
-     * "No Images" only when there is no image in AntWeb; "N Images" when the place has them all (or the total is not
-     * known); otherwise "4 Images (0 from Comoros)". The place's number keeps the class "numbers" (as before), the
-     * total is in class "images_total".
+     * The Images cell of a place's list (taxonReportBody.jsp), as text with HTML: the images of the ant of the name in
+     * AntWeb, from any specimen (labels never count; Brian Fisher 2026-10-27, nightly set 4, CountDb.imageCountCrawl).
+     *   total      images of the name in AntWeb (the allantwebants list row's Images; -1 when not known),
+     *   place      the place's own list row Images, used only when the AntWeb-wide number is not known or lower
+     *              (the two rows counted on different nights),
+     *   fromPhrase "from Comoros", "in CASC": no longer shown (Brian Fisher 2026-10-28: one number, the cell never
+     *              wraps; the name's images page says which images come from the place). Kept for the callers.
+     * "N Images" with N in class "numbers", or "No Images" when N is 0.
      */
     public static String imagesColumn(int total, int place, String fromPhrase) {
-        if (total < place) total = place;    // not known, or the two rows were counted on different nights
-        if (total <= 0) return "No Images";
-        if (total == place || fromPhrase == null) {
-            return "<span class='numbers'>" + place + "</span> Images";
-        }
-        return "<span class='images_total'>" + total + "</span> Images (<span class='numbers'>" + place + "</span> "
-            + Html.esc(fromPhrase) + ")";
+        int n = Math.max(total, place);
+        if (n <= 0) return "No Images";
+        return "<span class='numbers'>" + n + "</span> Images";
+    }
+
+    /** The number the Images cell shows (imagesColumn): the AntWeb-wide images of the name, or the place's when that
+     *  is not known or lower. Used to sort the list by Images (SortTaxaByImages) in the order the cells show. */
+    public static int shownImages(TaxonSet ts) {
+        if (ts == null) return 0;
+        return Math.max(ts.getGlobalImageCount(), ts.getImageCount());
     }
 
     /**
@@ -119,7 +125,7 @@ public final class ImagesAnywhere {
 
     /**
      * "N Images" of a name on images.do and the taxonomicPage images view (docs/numbers.md row 56): the same as the
-     * Images column of the place's list (imagesColumn: ant images in AntWeb and of the place). When the list says No
+     * Images column of the place's list (imagesColumn: ant images of the name in AntWeb). When the list says No
      * Images but the page shows images of the name (the allantwebants row not read, or counted before the latest
      * images), the images of the ant of the specimen shown.
      */
