@@ -526,6 +526,10 @@ def test_list_images_column_equals_the_api_recount():
             if recount != images and old_set_4(images, ant, every, codes):
                 left_out.append(f"{p} {name}: {images} Images, {OLD_SET_4}")
                 continue
+            if recount > images and ns.allantweb_images_counted() is False:
+                left_out.append(f"{p} {name}: {images} Images, the AntWeb-wide row is not counted yet on this server"
+                                " (no compute.log line 'AntWeb-wide list Images counted'): pending")
+                continue
             if recount != images:
                 wrong.append(f"{p} {name}: list row {images} Images, the API's {len(mine)} specimens of the name in AntWeb have {recount} images of the ant")
             checked.append(f"{p} {name}")

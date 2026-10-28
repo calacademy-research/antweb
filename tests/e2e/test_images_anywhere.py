@@ -227,6 +227,11 @@ def test_list_images_column_shows_the_images_in_antweb():
             if recount > total and _in_place(p, {}) is not None and total == sum(ant.get(c, 0) for c in place_codes):
                 left_out.append(f"{p} {name}: {text!r}, {ALLANTWEB_PENDING}")
                 continue
+            if recount > total and ns.allantweb_images_counted() is False:
+                # staging's compute.log has no set 4 that counted the AntWeb-wide list: every cell shows the place's
+                # own number (any kind of place) until it has (2026-10-28, staging after a refresh or a skipped set 4)
+                left_out.append(f"{p} {name}: {text!r}, {ALLANTWEB_PENDING}")
+                continue
             if recount != total:
                 wrong.append(f"{p} {name}: {text!r}, the API's specimens of the name have {recount} images of the ant")
             checked.append(f"{p} {name}")
