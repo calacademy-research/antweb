@@ -199,15 +199,15 @@
       String bn = ((Bioregion) overview).getName();
       if (overview.getEndemicSpeciesCount() > 0) endemicCell = "<a href='" + AntwebProps.getDomainApp() + "/endemic.do?bioregionName=" + bn + "'>" + endemicCell + "</a>";
       if (overview.getIntroducedSpeciesCount() > 0) introducedCell = "<a href='" + AntwebProps.getDomainApp() + "/introduced.do?bioregionName=" + bn + "'>" + introducedCell + "</a>";
-      endemicDef = "Species and subspecies, including morphospecies, recorded for this bioregion and no other bioregion in AntWeb. Excludes fossils and names not identified to genus. Endemism is calculated from AntWeb records only.";
+      endemicDef = "Valid species and subspecies recorded for this bioregion and no other bioregion in AntWeb. Excludes morphospecies, indetermined, unidentifiable and unrecognized names, fossils, and records of introduced populations. Endemism is calculated from AntWeb records only.";
       introducedDef = "Species introduced by humans that are not native to this bioregion, based on AntWeb's " + introducedListLink + ".";
     } else {
       int gid = ((Geolocale) overview).getId();
       if (overview.getEndemicSpeciesCount() > 0) endemicCell = "<a href='" + AntwebProps.getDomainApp() + "/endemic.do?geolocaleId=" + gid + "'>" + endemicCell + "</a>";
       if (overview.getIntroducedSpeciesCount() > 0) introducedCell = "<a href='" + AntwebProps.getDomainApp() + "/introduced.do?geolocaleId=" + gid + "'>" + introducedCell + "</a>";
       endemicDef = isAdm1
-        ? "Named species and subspecies recorded for this state or province and no other state or province in AntWeb. Excludes morphospecies, fossils and names not identified to genus. Endemism is calculated from AntWeb records only."
-        : "Named species and subspecies recorded for this country and no other country in AntWeb. Excludes morphospecies, fossils and names not identified to genus. Endemism is calculated from AntWeb records only.";
+        ? "Valid species and subspecies recorded for this state or province and no other state or province in AntWeb. Excludes morphospecies, indetermined, unidentifiable and unrecognized names, fossils, and records of introduced populations. Endemism is calculated from AntWeb records only."
+        : "Valid species and subspecies recorded for this country and no other country in AntWeb. Excludes morphospecies, indetermined, unidentifiable and unrecognized names, fossils, and records of introduced populations. Endemism is calculated from AntWeb records only.";
       introducedDef = "Species introduced by humans that are not native to this " + pw + "'s bioregion, based on AntWeb's " + introducedListLink + ".";
     }
   }

@@ -31,7 +31,8 @@ import org.calacademy.antweb.home.PlaceTotals;
  *   place.specimens          Specimens = sum of the species and subspecies rows' specimens (every kind of place since
  *                            2026-10-28; museums, bioregions were their specimens, specimen.museum, specimen.bioregion)
  *   place.endemic, place.introduced   = the rows flagged on the list with a counted status (the rows endemic.do and
- *                                       introduced.do show; PlaceTotals.flaggedCondition, 2026-10-27)
+ *                                       introduced.do show; PlaceTotals.flaggedCondition, 2026-10-27; Endemic: valid
+ *                                       names only since 2026-10-28, and Endemic <= Valid species)
  *   place.pies               "Species per Subfamily" adds up to Species, "Specimens per Subfamily" to Specimens
  *   place.images             Images >= Imaged specimens <= Specimens; Images = all views + labels; Ant images =
  *                            sum of the views; specimens with images = imaged + label-only; the place table's
@@ -463,6 +464,10 @@ public final class CountInvariants {
                     for (String key : inScope.keySet()) {
                         if (!stored.containsKey(key)) continue;
                         compare(c, type, key, "endemic".equals(field) ? "Endemic" : "Introduced", v(stored, key, col), v(flagged, key, 0), "=", why(c, type, key));
+                        // Endemic counts valid names only (Brian Fisher, 2026-10-28), so never more than Valid species
+                        if ("endemic".equals(field)) {
+                            compare(c, type, key, "Endemic", v(stored, key, col), v(stored, key, 3), "<=", why(c, type, key));
+                        }
                     }
                 });
             }

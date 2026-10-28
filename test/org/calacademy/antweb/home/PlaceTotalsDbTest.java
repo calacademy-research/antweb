@@ -250,10 +250,84 @@ public class PlaceTotalsDbTest extends TestCase {
                 one("select endemic_species_count from bioregion where name = '" + b + "'"));
         }
         // Geolocales: the number from the flags, also for a subregion (its flags were set, its number stayed 0).
-        exec("update geolocale_taxon set is_endemic = 1 where geolocale_id = " + INDIAN_OCEAN + " and taxon_name = '" + PA + "'");
+        exec("update geolocale_taxon set is_endemic = 0 where geolocale_id = " + INDIAN_OCEAN + " and taxon_name <> '" + PA + "'");
+        exec("update geolocale set endemic_species_count = 0 where id = " + INDIAN_OCEAN);
         PlaceTotals.writeCountsFromFlags(connection, PlaceTotals.GEOLOCALE, "endemic");
         assertEquals("pheidole a, pheidole a x, hypoponera b", 3, one("select endemic_species_count from geolocale where id = " + MADAGASCAR));
         assertEquals(1, one("select endemic_species_count from geolocale where id = " + INDIAN_OCEAN));
+    }
+
+    private static final String UNRECOGNIZED = "myrmicinaepheidole u";
+    private static final String REUNION = "800";
+    private static final String AFRICA = "801";
+
+    /**
+     * Brian Fisher, 2026-10-22 and 2026-10-28 (docs/numbers.md Q3, Q4), every kind of geolocale at once
+     * (GeolocaleDb.calcEndemic): only valid names count toward endemism (pheidole b, a morphospecies, and an unrecognized
+     * name found in Madagascar only are not endemic); rows flagged introduced do not make a name non-endemic (pheidole a,
+     * introduced in Reunion, stays endemic to Madagascar) and are never flagged endemic; a subregion or region has the
+     * names whose native country rows are all in its countries (hypoponera b, native in Madagascar and Reunion, is endemic
+     * to the Indian Ocean and to Africa, not to either country).
+     */
+    public void testEndemismCountsValidNativeNamesOnly() throws Exception {
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily) values ('" + UNRECOGNIZED
+            + "', 'species', 'unrecognized', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "')");
+        exec("insert into geolocale (id, name, georank, parent, is_valid, is_live) values (" + REUNION + ", 'Reunion', 'country', 'Indian Ocean', 1, 1),"
+            + " (" + AFRICA + ", 'Africa', 'region', null, 1, 1)");
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, is_introduced, created) values (" + REUNION + ", '" + PA + "', 1, '2020-01-01'),"
+            + " (" + REUNION + ", '" + HB + "', 0, '2020-01-01'), (" + MADAGASCAR + ", '" + UNRECOGNIZED + "', 0, '2020-01-01'),"
+            + " (" + ATSINANANA + ", '" + PA + "', 0, '2020-01-01'), (" + ATSINANANA + ", '" + HB + "', 0, '2020-01-01'),"
+            + " (" + AFRICA + ", '" + PA + "', 0, '2020-01-01'), (" + AFRICA + ", '" + PAX + "', 0, '2020-01-01'),"
+            + " (" + AFRICA + ", '" + PB + "', 0, '2020-01-01'), (" + AFRICA + ", '" + HB + "', 0, '2020-01-01')");
+        exec("update geolocale_taxon set is_endemic = 1");   // every flag is reset first
+        // Valid species of the new places (the count check: Endemic <= Valid species)
+        exec("update geolocale set valid_species_count = 3 where id = " + AFRICA);
+        exec("update geolocale set valid_species_count = 2 where id in (" + REUNION + ", " + ATSINANANA + ")");
+        new GeolocaleDb(connection).calcEndemic();
+        assertEquals("pheidole a, pheidole a x", names(PA, PAX), flagged(MADAGASCAR));
+        assertEquals("pheidole a introduced in Reunion: never endemic; hypoponera b also in Madagascar", "", flagged(REUNION));
+        assertEquals("pheidole a (endemic to Madagascar, one adm1); not hypoponera b", names(PA), flagged(ATSINANANA));
+        assertEquals(names(PA, PAX, HB), flagged("" + INDIAN_OCEAN));
+        assertEquals(names(PA, PAX, HB), flagged(AFRICA));
+        for (String g : new String[] {"" + MADAGASCAR, REUNION, "" + ATSINANANA, "" + INDIAN_OCEAN, AFRICA}) {
+            assertEquals(g, one("select count(*) from geolocale_taxon where is_endemic = 1 and geolocale_id = " + g),
+                one("select endemic_species_count from geolocale where id = " + g));
+        }
+        // The count check's recount of the flags (NumberChecks.endemicFlags) follows the same rule.
+        CountCheck.Result r = invariants();
+        for (CountCheck.Mismatch m : r.mismatches) {
+            assertFalse(list(r), m.check.equals("place.endemic.flags") || m.check.equals("place.totals.endemic"));
+        }
+        // An introduced row in Reunion of a name endemic to Madagascar no longer counts against it; a native one does.
+        exec("update geolocale_taxon set is_introduced = 0 where geolocale_id = " + REUNION);
+        new GeolocaleDb(connection).calcEndemic();
+        assertEquals(names(PAX), flagged(MADAGASCAR));
+        assertEquals(names(PA, PAX, HB), flagged("" + INDIAN_OCEAN));
+    }
+
+    /** Bioregions (BioregionDb.calcEndemic): valid names only, native rows only (2026-10-28). */
+    public void testBioregionEndemismCountsValidNativeNamesOnly() throws Exception {
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily) values ('" + UNRECOGNIZED
+            + "', 'species', 'unrecognized', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "')");
+        exec("insert into bioregion (name) values ('Afrotropical')");
+        exec("insert into bioregion_taxon (bioregion_name, taxon_name, is_introduced) values ('Malagasy', '" + PB + "', 0),"
+            + " ('Malagasy', '" + UNRECOGNIZED + "', 0), ('Afrotropical', '" + HB + "', 1)");
+        new BioregionDb(connection).calcEndemic();
+        assertEquals("hypoponera b is introduced in the Afrotropics: endemic to Malagasy; not the morphospecies, not the unrecognized name",
+            names(PA, HB), text("select group_concat(taxon_name order by taxon_name separator ', ') from bioregion_taxon where is_endemic = 1 and bioregion_name = 'Malagasy'"));
+        assertEquals(0, one("select count(*) from bioregion_taxon where is_endemic = 1 and bioregion_name = 'Afrotropical'"));
+        assertEquals(2, one("select endemic_species_count from bioregion where name = 'Malagasy'"));
+    }
+
+    private static String names(String... n) {
+        String[] s = n.clone();
+        java.util.Arrays.sort(s);
+        return String.join(", ", s);
+    }
+
+    private String flagged(Object geolocaleId) throws Exception {
+        String t = text("select group_concat(taxon_name order by taxon_name separator ', ') from geolocale_taxon where is_endemic = 1 and geolocale_id = " + geolocaleId);
+        return t == null ? "" : t;
     }
 
     public void testMuseumCodeIsAWholeWordOfOwnedBy() throws Exception {

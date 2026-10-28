@@ -216,9 +216,72 @@ public class CountRules20261028Test extends TestCase {
 
     // ---------------------------------------------------------------- unchanged, and pending until the nightly run
 
-    public void testEndemicKeepsItsRule() {
-        // Endemic is unchanged on 2026-10-28 (valid and unrecognized names; raised with Brian: valid only?)
-        assertTrue(PlaceTotals.flaggedCondition("endemic").contains(PlaceTotals.COUNTABLE));
+    // ---------------------------------------------------------------- Endemic: valid names only (Q3, Q4)
+
+    /**
+     * Brian Fisher, 2026-10-22 and 2026-10-28: a name counts toward endemism only if it is valid; morphospecies,
+     * indetermined, unidentifiable and unrecognized names never count, at any kind of place. One constant
+     * (PlaceTotals.ENDEMIC_STATUSES) in every endemism rule, the lists and the numbers.
+     */
+    public void testEndemicCountsValidNamesOnly() {
+        assertEquals("('valid')", PlaceTotals.ENDEMIC_STATUSES);
+        assertEquals(Arrays.asList("valid"), PlaceTotals.ENDEMIC_STATUS_LIST);
+        String e = PlaceTotals.endemicEligible("t");
+        assertTrue(e, e.contains("t.status in " + PlaceTotals.ENDEMIC_STATUSES));
+        assertTrue(e, e.contains("t.taxarank in ('species', 'subspecies')") && e.contains("t.fossil = 0") && e.contains("t.family = 'formicidae'"));
+        assertTrue("identified to genus: " + e, e.contains(PlaceTotals.identifiedToGenus("t")));
+        String endemic = PlaceTotals.flaggedCondition("endemic");
+        assertTrue(endemic, endemic.contains("ft.status in " + PlaceTotals.ENDEMIC_STATUSES));
+        assertFalse(endemic, endemic.contains(PlaceTotals.COUNTABLE));
+        assertTrue("Introduced keeps the counted statuses", PlaceTotals.flaggedCondition("introduced").contains(PlaceTotals.COUNTABLE));
+        for (String s : new String[] {"morphotaxon", "indetermined", "unidentifiable", "unrecognized"}) {
+            assertFalse(s, PlaceTotals.ENDEMIC_STATUSES.contains(s));
+            assertFalse(s, e.contains(s));
+            assertFalse(s, endemic.contains(s));
+        }
+    }
+
+    /** Every endemism computation (countries, adm1s, subregions, regions, bioregions) uses the rule and native rows only. */
+    public void testEveryEndemismRuleCountsValidNativeRows() {
+        Map<String, String> rules = new LinkedHashMap<>();
+        rules.put("country", GeolocaleDb.COUNTRY_ENDEMIC_SQL);
+        rules.put("adm1", GeolocaleDb.ADM1_ENDEMIC_SQL);
+        rules.put("subregion", GeolocaleDb.HIGHER_ENDEMIC_SQL[0]);
+        rules.put("region", GeolocaleDb.HIGHER_ENDEMIC_SQL[1]);
+        rules.put("bioregion", org.calacademy.antweb.home.BioregionDb.ENDEMIC_SQL);
+        String[] alias = {"taxon", "taxon", "t", "t", "taxon"};
+        String[] row = {"gt", "gt", "ct", "ct", "bt"};
+        int i = 0;
+        for (Map.Entry<String, String> r : rules.entrySet()) {
+            String q = r.getValue();
+            assertTrue(r.getKey() + ": " + q, q.contains(PlaceTotals.endemicEligible(alias[i])));
+            assertTrue(r.getKey() + " counts native rows only (Q4): " + q, q.contains(PlaceTotals.nativeRow(row[i])));
+            assertFalse(r.getKey() + ": no other status rule: " + q, q.contains("morphotaxon") || q.contains("unrecognized"));
+            ++i;
+        }
+        assertEquals("coalesce(gt.is_introduced, 0) = 0", PlaceTotals.nativeRow("gt"));
+    }
+
+    /**
+     * Q3 for regions and subregions ("native species found only in that region"): the names whose native country rows are
+     * all in the subregion's countries (all in its region's subregions), and only rows on the place's list.
+     */
+    public void testRegionsAndSubregionsHaveTheNamesFoundOnlyInThem() {
+        String sub = GeolocaleDb.HIGHER_ENDEMIC_SQL[0];
+        String reg = GeolocaleDb.HIGHER_ENDEMIC_SQL[1];
+        assertTrue(sub, sub.contains("s.name = c.parent and s.georank = 'subregion'") && !sub.contains("georank = 'region'"));
+        assertTrue(reg, reg.contains("r.name = s.parent and r.georank = 'region'"));
+        assertTrue(sub, sub.contains("count(distinct coalesce(s.id, 0)) = 1 and min(coalesce(s.id, 0)) > 0"));
+        assertTrue(reg, reg.contains("count(distinct coalesce(r.id, 0)) = 1 and min(coalesce(r.id, 0)) > 0"));
+        for (String q : GeolocaleDb.HIGHER_ENDEMIC_SQL) {
+            assertTrue("the row must be on the list: " + q, q.startsWith("update geolocale_taxon gt join (") && q.endsWith("set gt.is_endemic = 1"));
+            assertTrue(q, q.contains("c.georank = 'country'"));
+        }
+        try {
+            GeolocaleDb.higherEndemicSql("country");
+            fail("subregion and region only");
+        } catch (IllegalArgumentException expected) {
+        }
     }
 
     public void testNumbersArePendingUntilANightlyRunCountsByTheNewRules() {

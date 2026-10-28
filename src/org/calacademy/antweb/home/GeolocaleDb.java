@@ -934,8 +934,9 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       updateRegionCounts();
 
       // These really should be in GeolocaleTaxonDb, though they operate on both.
-      calcEndemic();
+      // Introduced first (Q4, docs/numbers.md; until 2026-10-28 after endemic): endemism counts native rows only.
       calcIntroduced();
+      calcEndemic();
 
       updateColors();
 
@@ -1192,43 +1193,42 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
 // ----------------
         
+    /**
+     * Brian Fisher, 2026-10-22 and 2026-10-28 (docs/numbers.md Q3, Q4): a name is endemic to a country when it is on the
+     * native rows (not flagged introduced) of exactly one country's list; only valid species and subspecies, not fossil,
+     * ants, identified to genus (PlaceTotals.endemicEligible). Until 2026-10-28: every counted status but morphotaxon, and
+     * introduced rows counted (a species introduced in Reunion was not endemic to Madagascar).
+     */
+    public static final String COUNTRY_ENDEMIC_SQL = "select gt.taxon_name taxon_name, max(gt.geolocale_id) geolocale_id, count(*) count"
+        + " from geolocale g, geolocale_taxon gt, taxon"
+        + " where g.id = gt.geolocale_id and taxon.taxon_name = gt.taxon_name"
+        + " and g.georank = 'country'"
+        + " and " + PlaceTotals.endemicEligible("taxon")
+        + " and " + PlaceTotals.nativeRow("gt")
+        + " group by gt.taxon_name having count(*) = 1"
+        + " order by geolocale_id";
+
+    /**
+     * An adm1: the name is endemic to the adm1's country (its flag, set just before) and on the native rows of exactly one
+     * adm1 list; the same taxon conditions.
+     */
+    public static final String ADM1_ENDEMIC_SQL = "select gt.taxon_name taxon_name, max(gt.geolocale_id) geolocale_id, count(*) count"
+        + " from geolocale g, geolocale_taxon gt, taxon"
+        + " where g.id = gt.geolocale_id and taxon.taxon_name = gt.taxon_name"
+        + " and g.georank = 'adm1'"
+        + " and (gt.taxon_name, g.parent) in (select gt.taxon_name, g.name from geolocale g, geolocale_taxon gt where g.id = gt.geolocale_id and gt.is_endemic = 1)"
+        + " and " + PlaceTotals.endemicEligible("taxon")
+        + " and " + PlaceTotals.nativeRow("gt")
+        + " group by gt.taxon_name having count(*) = 1"
+        + " order by geolocale_id";
+
     private int calcCountryEndemism() {
-      String query = "select gt.taxon_name taxon_name, max(gt.geolocale_id) geolocale_id, count(*) count"
-		+ " from geolocale g, geolocale_taxon gt, taxon"
-		+ " where g.id = gt.geolocale_id and taxon.taxon_name = gt.taxon_name"
-		+ " and taxon.status != 'morphotaxon' and taxon.taxarank in ('species', 'subspecies')"
-        + " and taxon.fossil = 0"
-		+ " and g.georank = 'country'"
-	    //+ " and g.georank in ('country', 'adm1')" // This would half the result set size.
-        + new StatusSet().getAndCriteria()
-              // Project.ALLANTWEBANTS
-		+ " and taxon.family = 'formicidae'"
-		+ " and " + PlaceTotals.identifiedToGenus("taxon")   // 2026-10-22: not identified to genus, not a species
-		+ " group by gt.taxon_name having count(*) = 1 " 
-		+ " order by geolocale_id";
-      
-      s_log.debug("calcCountryEndemism() query:" + query);
-    
-      return calcEndemism(query);
+      s_log.debug("calcCountryEndemism() query:" + COUNTRY_ENDEMIC_SQL);
+      return calcEndemism(COUNTRY_ENDEMIC_SQL);
     }
 
     private int calcAdm1Endemism() {
-      String query = "select gt.taxon_name taxon_name, max(gt.geolocale_id) geolocale_id, count(*) count"
-        + " from geolocale g, geolocale_taxon gt, taxon"  
-        + " where g.id = gt.geolocale_id and taxon.taxon_name = gt.taxon_name"
-        + " and taxon.status != 'morphotaxon' and taxon.taxarank in ('species', 'subspecies') "
-        + " and taxon.fossil = 0"
-        + " and g.georank = 'adm1'"
-        + " and (gt.taxon_name, g.parent) in (select gt.taxon_name, g.name from geolocale g, geolocale_taxon gt where g.id = gt.geolocale_id and gt.is_endemic = 1)"
-        + new StatusSet().getAndCriteria()
-		+ " and taxon.family = 'formicidae'"
-		+ " and " + PlaceTotals.identifiedToGenus("taxon")   // 2026-10-22: not identified to genus, not a species
-        + " group by gt.taxon_name having count(*) = 1 " 
-        + " order by geolocale_id";
-
-      //A.log("calcAdm1Endemism() query:" + query);
-
-      return calcEndemism(query);
+      return calcEndemism(ADM1_ENDEMIC_SQL);
     }
         
     private int calcEndemism(String query) {
@@ -1331,114 +1331,43 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
 
 // ----------------
 
-    // After the Adm1 and Country endemism is calculated from geolocale_taxon data we can make sure that those values
-    // are reflected in the higher georanks (subregion and region).
+    /**
+     * Regions and subregions (Brian Fisher, 2026-10-21, docs/numbers.md Q3: "native species found only in that region"):
+     * a name is endemic to a subregion when its native rows (not flagged introduced) on country lists are all in countries
+     * of that subregion (country.parent), and to a region when they are all in countries of its subregions; the same
+     * taxon conditions as countries (PlaceTotals.endemicEligible) and the same country lists (of any validity, as
+     * COUNTRY_ENDEMIC_SQL). A country without a valid subregion counts as outside every subregion. The row must be on the
+     * subregion's or region's list. Until 2026-10-28 a subregion or region flagged only the names endemic to one of its
+     * countries (calcHigherEndemismCountry, calcHigherEndemismSubregion); a name found in two countries of the same
+     * subregion was not endemic to it. (The adm1-to-country step is gone: a name endemic to an adm1 is endemic to its
+     * country by ADM1_ENDEMIC_SQL.)
+     */
+    public static final String[] HIGHER_ENDEMIC_SQL = {higherEndemicSql("subregion"), higherEndemicSql("region")};
+
+    public static String higherEndemicSql(String upper) {
+        if (!"subregion".equals(upper) && !"region".equals(upper)) throw new IllegalArgumentException(upper);
+        String place = "subregion".equals(upper) ? "s.id" : "r.id";
+        return "update geolocale_taxon gt join (select ct.taxon_name, max(" + place + ") uid from geolocale_taxon ct"
+            + " join geolocale c on c.id = ct.geolocale_id and c.georank = 'country'"
+            + " join taxon t on t.taxon_name = ct.taxon_name"
+            + " left join geolocale s on s.name = c.parent and s.georank = 'subregion' and s.is_valid = 1"
+            + ("region".equals(upper) ? " left join geolocale r on r.name = s.parent and r.georank = 'region' and r.is_valid = 1" : "")
+            + " where " + PlaceTotals.endemicEligible("t") + " and " + PlaceTotals.nativeRow("ct")
+            + " group by ct.taxon_name having count(distinct coalesce(" + place + ", 0)) = 1 and min(coalesce(" + place + ", 0)) > 0) x"
+            + " on x.uid = gt.geolocale_id and x.taxon_name = gt.taxon_name"
+            + " set gt.is_endemic = 1";
+    }
+
     public int calcHigherEndemism() {
-
-        // select all of the geolocale_taxa where endemism = 1
-        int a = calcHigherEndemismAdm1();
-        s_log.debug("calcHigherEndemism() country:" + a);
-        int b = calcHigherEndemismCountry();
-        s_log.debug("calcHigherEndemism() subregion:" + b);
-        int c = calcHigherEndemismSubregion();
-        s_log.debug("calcHigherEndemism() region:" + c);
-
-        return a + b + c;
-    }
-
-    private int calcHigherEndemismAdm1() {
-        String query = "select g.id, g.name, g.georank, gt.taxon_name from geolocale_taxon gt, geolocale g "
-          + " where gt.geolocale_id = g.id and is_endemic = 1 and georank = 'adm1'";
         int c = 0;
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "calcHigherEndemismAdm1()");
-            rset = stmt.executeQuery(query);
-
-            while (rset.next()) {
-                int geolocaleId = rset.getInt("g.id");
-                Adm1 adm1 = GeolocaleMgr.getAdm1(geolocaleId);
-
-                String taxonName = rset.getString("gt.taxon_name");
-
-                ++c;
-                Country country = GeolocaleMgr.getCountry(adm1.getParent());
-
-                int updated = updateGeolocaleTaxonField("endemic", country.getId(), taxonName);
-
-                //A.log("calcHigherEndemismAdm1() c:" + c + " country:" + country + " taxonName:" + taxonName + " updated:" + updated);
+        for (String dml : HIGHER_ENDEMIC_SQL) {
+            try (Statement stmt = getConnection().createStatement()) {
+                c += stmt.executeUpdate(dml);
+            } catch (SQLException e) {
+                s_log.error("calcHigherEndemism() dml:" + dml + " e:" + e);
             }
-            s_log.debug("calcHigherEndemismAdm1() c:" + c);
-        } catch (SQLException e) {
-            s_log.error("calcHigherEndemismAdm1() query:" + query + " e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, this, "calcHigherEndemismAdm1()");
         }
-        return c;
-    }
-
-    private int calcHigherEndemismCountry() {
-        String query = "select g.id, g.name, g.georank, gt.taxon_name from geolocale_taxon gt, geolocale g "
-                + " where gt.geolocale_id = g.id and is_endemic = 1 and georank = 'country'";
-        int c = 0;
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "calcHigherEndemismCountry()");
-            rset = stmt.executeQuery(query);
-
-            while (rset.next()) {
-                int geolocaleId = rset.getInt("g.id");
-                Country country = (Country) GeolocaleMgr.getGeolocale(geolocaleId);
-
-                String taxonName = rset.getString("gt.taxon_name");
-
-                ++c;
-                Subregion subregion = (Subregion) GeolocaleMgr.getGeolocale(country.getParent());
-
-                int updated = updateGeolocaleTaxonField("endemic", subregion.getId(), taxonName);
-
-                //A.log("calcHigherEndemismAdm1() c:" + c + " subregion:" + subregion + " taxonName:" + taxonName + " updated:" + updated);
-            }
-            s_log.debug("calcHigherEndemismCountry() c:" + c);
-        } catch (SQLException e) {
-            s_log.error("calcHigherEndemismCountry() query:" + query + " e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, this, "calcHigherEndemismCountry()");
-        }
-        return c;
-    }
-
-    private int calcHigherEndemismSubregion() {
-        String query = "select g.id, g.name, g.georank, gt.taxon_name from geolocale_taxon gt, geolocale g "
-                + " where gt.geolocale_id = g.id and is_endemic = 1 and georank = 'subregion'";
-        int c = 0;
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "calcHigherEndemismSubregion()");
-            rset = stmt.executeQuery(query);
-
-            while (rset.next()) {
-                int geolocaleId = rset.getInt("g.id");
-                Subregion subregion = (Subregion) GeolocaleMgr.getGeolocale(geolocaleId);
-
-                String taxonName = rset.getString("gt.taxon_name");
-
-                ++c;
-                Region region = (Region) GeolocaleMgr.getGeolocale(subregion.getParent());
-
-                int updated = updateGeolocaleTaxonField("endemic", region.getId(), taxonName);
-
-                //A.log("calcHigherEndemismAdm1() c:" + c + " region:" + region + " taxonName:" + taxonName + " updated:" + updated);
-            }
-            s_log.debug("calcHigherEndemismSubregion() c:" + c);
-        } catch (SQLException e) {
-            s_log.error("calcHigherEndemismSubregion() query:" + query + " e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, this, "calcHigherEndemismSubregion()");
-        }
+        s_log.debug("calcHigherEndemism() c:" + c);
         return c;
     }
     	

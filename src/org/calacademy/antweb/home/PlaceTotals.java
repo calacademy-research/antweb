@@ -17,6 +17,7 @@ import java.sql.SQLException;
  *   Species      species and subspecies rows on the list, status valid or morphotaxon (SPECIES_STATUSES,
  *                2026-10-28), ants (family formicidae), identified to genus (identifiedToGenus, 2026-10-22)
  *   Valid        species and subspecies rows on the list, status valid, not fossil
+ *   Endemic      rows flagged endemic, status valid (ENDEMIC_STATUSES, 2026-10-28; endemicEligible, nativeRow)
  *   Specimens    the specimens of the species and subspecies rows of the list (every kind of place since
  *                2026-10-28; museums and bioregions counted all their specimens before)
  *
@@ -75,6 +76,38 @@ public final class PlaceTotals {
      * name that cannot be recognized, so its specimens are known to genus only).
      */
     public static final String GENUS_ONLY_STATUSES = "('indetermined', 'unidentifiable')";
+
+    /**
+     * The statuses of a name that can be endemic (Brian Fisher, 2026-10-22 and 2026-10-28, docs/numbers.md Q3): valid
+     * names only. Morphospecies (their codes are not comparable between collections, 10-22), indetermined, unidentifiable
+     * and unrecognized names (not species, 10-28) never count toward endemism, at any place: countries, adm1s, regions,
+     * subregions, bioregions. Until 10-28 countries and adm1s took every counted status but morphotaxon, bioregions all
+     * five, and the lists and numbers (flaggedCondition) valid and unrecognized. Every endemism rule takes it from here
+     * (GeolocaleDb, BioregionDb, flaggedCondition, NumberChecks.endemicFlags).
+     */
+    public static final String ENDEMIC_STATUSES = "('valid')";
+
+    /** The same in Java. */
+    public static final java.util.List<String> ENDEMIC_STATUS_LIST = java.util.Arrays.asList("valid");
+
+    /**
+     * SQL: the taxon (alias a) can be endemic: a species or subspecies of an endemic status (ENDEMIC_STATUSES), not
+     * fossil, an ant, identified to genus.
+     */
+    public static String endemicEligible(String alias) {
+        return alias + ".taxarank in ('species', 'subspecies') and " + alias + ".status in " + ENDEMIC_STATUSES
+            + " and " + alias + ".fossil = 0 and " + alias + ".family = 'formicidae' and " + identifiedToGenus(alias);
+    }
+
+    /**
+     * SQL: the list row (alias a, geolocale_taxon or bioregion_taxon) is native, not flagged introduced (Q4, Brian Fisher
+     * 2026-10-21: introduced records never count toward endemism). Endemism counts native rows only, so a species
+     * introduced in Reunion stays endemic to Madagascar, and an introduced row is never flagged endemic. The introduced
+     * flags are set before the endemic ones (GeolocaleDb.updateCounts, BioregionDb.populate).
+     */
+    public static String nativeRow(String alias) {
+        return "coalesce(" + alias + ".is_introduced, 0) = 0";
+    }
 
     /** SQL: the taxon (alias a) has a status that counts as a species. */
     public static String speciesStatusCondition(String alias) {
@@ -619,11 +652,13 @@ public final class PlaceTotals {
      * status rule of the counts: a flagged name counts when it has a counted status (COUNTABLE), so never a synonym
      * (nor another name AntCat no longer uses). Until then the Introduced list and both numbers took every flagged row,
      * and the Endemic list every status. One rule for the lists, the numbers (countsFromFlagsSql) and the count check
-     * (CountInvariants place.totals.endemic and place.totals.introduced).
+     * (CountInvariants place.totals.endemic and place.totals.introduced). Endemic since 2026-10-28: valid names only
+     * (ENDEMIC_STATUSES, Brian Fisher); Introduced keeps the counted statuses.
      */
     public static String flaggedCondition(String field) {
         if (!"endemic".equals(field) && !"introduced".equals(field)) throw new IllegalArgumentException(field);
-        return "l.is_" + field + " = 1 and exists (select 1 from taxon ft where ft.taxon_name = l.taxon_name and ft.status in " + COUNTABLE + ")";
+        String statuses = "endemic".equals(field) ? ENDEMIC_STATUSES : COUNTABLE;
+        return "l.is_" + field + " = 1 and exists (select 1 from taxon ft where ft.taxon_name = l.taxon_name and ft.status in " + statuses + ")";
     }
 
     /** endemic.do, introduced.do: the names flagged on one place's list (parameter: its key), by genus, species, subspecies. */
