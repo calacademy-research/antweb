@@ -50,7 +50,10 @@ KEY_PAGES = {
     "genus": "/description.do?genus=camponotus&rank=genus",
     "species": "/description.do?genus=nesomyrmex&species=clavipilis&rank=species",
     "specimen": "/specimen.do?name=casent0103190",
-    "images": "/images.do?genus=camponotus&rank=genus",
+    # Tetraponera (about 560 images), not Camponotus (8,754 images, 5.8 MB): the browser tests check layout and
+    # scripts, and waiting for every Camponotus thumbnail under the full run's load passed 2 minutes (2026-10-27).
+    # The Camponotus page's speed is its own backlog item (images.do speed).
+    "images": "/images.do?genus=tetraponera&rank=genus",
     "bigMap": "/bigMap.do?taxonName=formicinae&project=allantwebants",
     "advancedSearch": "/advSearch.do",
     "login": "/login.do",
