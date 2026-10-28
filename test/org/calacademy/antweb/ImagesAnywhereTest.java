@@ -38,18 +38,27 @@ public class ImagesAnywhereTest extends TestCase {
         assertFalse(ImagesAnywhere.isFromPlace("casent1", null));
     }
 
-    public void testImagesColumnShowsBothNumbers() {
-        assertEquals("<span class='images_total'>4</span> Images (<span class='numbers'>0</span> from Comoros)",
-            ImagesAnywhere.imagesColumn(4, 0, "from Comoros"));
-        assertEquals("<span class='images_total'>12</span> Images (<span class='numbers'>3</span> in CASC)",
-            ImagesAnywhere.imagesColumn(12, 3, "in CASC"));
+    /** Brian Fisher 2026-10-28: one number, the images of the name in AntWeb ("153 Images"); "153 Images (0 from
+     *  Comoros)" wrapped to two lines and the number script blanked the 0 ("( from Comoros)"). */
+    public void testImagesColumnShowsTheAntWebNumberOnly() {
+        assertEquals("<span class='numbers'>153</span> Images", ImagesAnywhere.imagesColumn(153, 0, "from Comoros"));
+        assertEquals("<span class='numbers'>12</span> Images", ImagesAnywhere.imagesColumn(12, 3, "in CASC"));
+        for (String phrase : new String[] {"from Comoros", "in CASC", null}) {
+            for (int[] n : new int[][] {{153, 0}, {12, 3}, {5, 5}, {-1, 7}, {0, 0}}) {
+                String cell = ImagesAnywhere.imagesColumn(n[0], n[1], phrase);
+                assertFalse(cell, cell.contains("from ") || cell.contains(" in ") || cell.contains("("));
+                assertEquals(cell, cell.startsWith("No ") ? 0 : 1, cell.split("<span", -1).length - 1);
+            }
+        }
     }
 
-    public void testImagesColumnOneNumberWhenThePlaceHasThemAll() {
+    public void testImagesColumnFallsBackToThePlaceNumber() {
         assertEquals("<span class='numbers'>5</span> Images", ImagesAnywhere.imagesColumn(5, 5, "from Comoros"));
-        // a project (no place phrase) and a total not known show the place's number
-        assertEquals("<span class='numbers'>5</span> Images", ImagesAnywhere.imagesColumn(9, 5, null));
+        // a project (no place phrase): the larger of the two
+        assertEquals("<span class='numbers'>9</span> Images", ImagesAnywhere.imagesColumn(9, 5, null));
+        // the AntWeb-wide number not known (-1) or counted on an earlier night (lower): the place's number
         assertEquals("<span class='numbers'>5</span> Images", ImagesAnywhere.imagesColumn(-1, 5, "from Comoros"));
+        assertEquals("<span class='numbers'>5</span> Images", ImagesAnywhere.imagesColumn(3, 5, "from Comoros"));
     }
 
     public void testNoImagesOnlyWhenThereIsNoImageInAntWeb() {
@@ -80,17 +89,19 @@ public class ImagesAnywhereTest extends TestCase {
     }
 
     public void testImagesColumnOfARow() {
-        assertEquals("<span class='images_total'>20</span> Images (<span class='numbers'>0</span> from Comoros)",
-            ImagesAnywhere.imagesColumn(row("species", 20, 0), "from Comoros"));
-        assertEquals("<span class='images_total'>137</span> Images (<span class='numbers'>8</span> from Anguilla)",
-            ImagesAnywhere.imagesColumn(row("species", 137, 8), "from Anguilla"));
+        assertEquals("<span class='numbers'>20</span> Images", ImagesAnywhere.imagesColumn(row("species", 20, 0), "from Comoros"));
+        assertEquals("<span class='numbers'>137</span> Images", ImagesAnywhere.imagesColumn(row("species", 137, 8), "from Anguilla"));
         // the allantwebants row not counted yet (0) or not known (-1): the place's number
         assertEquals("<span class='numbers'>8</span> Images", ImagesAnywhere.imagesColumn(row("species", 0, 8), "from Anguilla"));
         assertEquals("<span class='numbers'>7</span> Images", ImagesAnywhere.imagesColumn(row("genus", -1, 7), "from Comoros"));
-        // a project's list (no place phrase): its own row, one number
+        // a project's list (no place phrase)
         assertEquals("<span class='numbers'>12</span> Images", ImagesAnywhere.imagesColumn(row("species", 12, 12), null));
         assertEquals("No Images", ImagesAnywhere.imagesColumn(row("species", 0, 0), "from Comoros"));
         assertEquals("No Images", ImagesAnywhere.imagesColumn((org.calacademy.antweb.TaxonSet) null, "from Comoros"));
+        // sorting by Images follows the number shown
+        assertEquals(137, ImagesAnywhere.shownImages(row("species", 137, 8)));
+        assertEquals(7, ImagesAnywhere.shownImages(row("genus", -1, 7)));
+        assertEquals(0, ImagesAnywhere.shownImages(null));
     }
 
     /** readGlobalImageCount never throws: a query without the column leaves -1, a NULL (no allantwebants row) too. */

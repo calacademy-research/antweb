@@ -19,14 +19,17 @@
     String asterixTitle = "Counts include " + nextPluralRank + " of all statuses contained within " + locale + "."; 
     // Port of Entry (Brian Fisher, 2026-10-22): a species list only; no specimen, child or image counts per row.
     boolean listOnly = isProject && overview instanceof Project && ((Project) overview).isSpeciesListOnly();
-    // Images column (2026-10-27): images of the name in AntWeb, and in brackets those of this place when fewer.
+    // Images column (Brian Fisher, 2026-10-28): one number, the images of the ant of the name in AntWeb, from any
+    // specimen; the name's images page says which of them come from the place (from 10-27 to 10-28 the cell also
+    // showed the place's number, "(0 from Comoros)").
     String imagesFromPhrase = org.calacademy.antweb.ImagesAnywhere.fromPhrase(overview);
-    String imagesColumnTitle = "Images of the ant of the name in AntWeb, from any specimen (labels are not counted)"
-        + (imagesFromPhrase == null ? "." : "; in brackets, those of specimens " + imagesFromPhrase + " when fewer.");
+    String imagesColumnTitle = "Images of the ant of the name in AntWeb, from any specimen (labels are not counted)."
+        + (imagesFromPhrase == null ? "" : " Click the number to see them; the specimens " + imagesFromPhrase + " come first.");
     // The definition under the list (Brian Fisher, 2026-10-27: every Images column counts images of the ant only).
-    // The definition is ImageCounts.DEFINITION (also web/common/imagesDefinition.jsp), with the two numbers explained.
+    // The definition is ImageCounts.DEFINITION (also web/common/imagesDefinition.jsp), with what the number counts.
     String imagesDefinition = org.calacademy.antweb.ImageCounts.DEFINITION
-        + (imagesFromPhrase == null ? "" : " The first number is the images of the name in AntWeb, from any specimen; in brackets, those of specimens " + imagesFromPhrase + ", when fewer.");
+        + " The number is the images of the ant of the name in AntWeb, from any specimen."
+        + (imagesFromPhrase == null ? "" : " Click it to see them; the specimens " + imagesFromPhrase + " come first.");
     // Brian Fisher, 2026-10-27: plain words for the * note (was "Counts include specimens of all statuses").
     String asterixUnit = "specimens".equals(nextPluralRank) ? "specimen filed under the name"
         : "genera".equals(nextPluralRank) ? "genus under the row"
@@ -214,7 +217,8 @@
 
 
          // 2026-10-27 (Brian Fisher): images help identification wherever the specimen came from. The column shows
-         // the images of the name in AntWeb and, when the place has fewer, the place's own: "4 Images (0 from Comoros)".
+         // the images of the ant of the name in AntWeb, one number ("153 Images", 2026-10-28); the images page it
+         // links to says how many imaged specimens are from the place and shows them first.
          String imagesCell = org.calacademy.antweb.ImagesAnywhere.imagesColumn(childTaxonSet, imagesFromPhrase);
          String imageCountStr = null;
          if (imagesCell.startsWith("No ")) {
