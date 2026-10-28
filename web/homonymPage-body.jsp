@@ -13,10 +13,9 @@
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 
 <jsp:useBean id="taxon" scope="session" class="org.calacademy.antweb.Taxon" />
-<jsp:setProperty name="taxon" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-27): the action fills the bean; request values must not overwrite what the page shows. --%>
 
 <jsp:useBean id="specimen" scope="session" class="org.calacademy.antweb.Specimen" />
-<jsp:setProperty name="specimen" property="*" />
 
 <%  
     //A.log("homonymPage-body.jsp");
@@ -112,6 +111,7 @@
       Homonym homonym = (Homonym) taxon;      
       Taxon seniorHomonym = homonym.getSeniorHomonym();
       Vector<String> homonymAuthorDates = taxon.getHomonymAuthorDates();
+      if (homonymAuthorDates == null) homonymAuthorDates = new Vector<>();   // a senior homonym with no other author dates
       if (seniorHomonym != null || (homonymAuthorDates != null && !homonymAuthorDates.isEmpty())) { %>
         <h2>Homonyms:</h2>
      <%
@@ -318,7 +318,7 @@ Created:
 
 <div class="clear"></div>
 <div id=data_title2>
-ImageCount (deprecated):
+Image files (taxon.image_count, labels included):
 </div>
 <div id=data_items2>
 <b><%= taxon.getImageCount() %></b> &nbsp;
@@ -326,7 +326,7 @@ ImageCount (deprecated):
 
 <div class="clear"></div>
 <div id=data_title2>
-ImageCount (deprecated):
+Image files (taxon.image_count, labels included):
 </div>
 <div id=data_items2>
 <b><%= taxon.getImageCount() %></b> &nbsp;
@@ -334,7 +334,7 @@ ImageCount (deprecated):
 
 <div class="clear"></div>
 <div id=data_title2>
-HasImageCount (deprecated):
+HasImageCount (deprecated, image files):
 </div>
 <div id=data_items2>
 <b><%= taxon.getHasImagesCount() %></b> &nbsp;

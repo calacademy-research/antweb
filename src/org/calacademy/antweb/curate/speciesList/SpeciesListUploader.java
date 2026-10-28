@@ -139,10 +139,11 @@ public class SpeciesListUploader {
   public UploadDetails worldantsReload() throws AntwebException, IOException, SQLException {
     A.log("worldantsReload start");
 
+    // The count before the reload: worldants_upload.orig_worldants_count (it was read after the reload).
+    int origWorldantsCount = new TaxonDb(connection).getWorldantsCount();
+
 	SpeciesListUpload speciesListUpload = new SpeciesListUpload(connection);
 	UploadDetails uploadDetails = speciesListUpload.reloadSpeciesList(Project.WORLDANTS, Group.TESTGROUP);
-
-    int origWorldantsCount = new TaxonDb(connection).getWorldantsCount();
     String fileLoc = worldDir + "worldants_speciesList.txt";
 
 

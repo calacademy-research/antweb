@@ -184,7 +184,7 @@ public class CountInvariantsTest extends TestCase {
         exec("update specimen set museum = 'casc ' where museum = 'CASC'");
         exec("set session sql_mode = ''");
         exec("update proj_taxon set created = '0000-00-00 00:00:00' where project_name = 'allantwebants'");
-        exec("update statistics set created = '0000-00-00 00:00:00', total_images = 5");
+        exec("update statistics set created = '0000-00-00 00:00:00', total_images = 3");   // images of the ant: 1, 3 and 30
         exec("update geolocale_taxon set created = '0000-00-00 00:00:00' where geolocale_id = " + MADAGASCAR);
         CountCheck.Result r = run(true);
         for (CountInvariants.Check c : r.invariants.checks) assertNull(c.id + ": " + c.error, c.error);

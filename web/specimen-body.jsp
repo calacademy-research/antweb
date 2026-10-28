@@ -170,10 +170,16 @@ if (!specimen.getIsFossil()) {
   }      
 }
 
+// The recorded value is shown as it is; a recorded "Native" in a bioregion outside the genus's
+// native range gets a separate note (decided 2026-10-27; before, it was shown as "Possibly introduced").
 String speciesDistStatus = specimen.getDistributionStatus();
-if (bioregionNotNative && "Native".equals(speciesDistStatus)) speciesDistStatus = "Possibly introduced";
+String distStatusNote = (bioregionNotNative && "Native".equals(speciesDistStatus))
+    ? "Note: recorded as Native, but AntWeb does not list this genus as native to the " + Html.esc(specimen.getBioregion()) + " bioregion, so this specimen may be introduced."
+    : null;
 %>
-  <h3>Species Distribution Status: <font size=2><%= speciesDistStatus %></font></h3>
+  <h3>Species Distribution Status: <font size=2><%= Html.esc(speciesDistStatus) %></font></h3>
+<% if (distStatusNote != null) { %>  <p class="dist-status-note"><%= distStatusNote %></p>
+<% } %>
 
 <h3>Locality Information: </h3>
 
@@ -432,7 +438,7 @@ if (casteValue == null) casteValue = "undefined";
 <li><b>Date determined: </b></li>
 <li><%= Html.esc(specimen.getDateDetermined()) %>
   <% if (LoginMgr.isLoggedIn(request) && specimen.getDateDeterminedStr() != null 
-       && !specimen.getDateDetermined().equals(specimen.getDateDeterminedStr())) { %>
+       && !java.util.Objects.equals(specimen.getDateDetermined(), specimen.getDateDeterminedStr())) { %>
        (Input as: <%= Html.esc(specimen.getDateDeterminedStr()) %>)<% } 
    %>
 </li>
@@ -582,8 +588,9 @@ if (LoginMgr.isAdmin(request)) {
 </ul>
 
 <ul>
-<li><b>Image Count: </b></li>
-<li><%= specimen.getImageCount() %> &nbsp;</li>
+<li><b>Images: </b></li>
+<%-- 2026-10-27 (Brian Fisher): images of the ant + label images (ImageCounts); was "Image Count", every file. --%>
+<li><span id="specimen-images"><%= specimen.getImagesText() %></span> &nbsp;</li>
 </ul>
 
 <ul>

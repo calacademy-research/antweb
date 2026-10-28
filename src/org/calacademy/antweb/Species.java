@@ -47,16 +47,18 @@ these other _cf1 etc.
         String cfAndNrTaxaLinks = "";
         String notCfOrNrTaxonName = getTaxonName();
         if (getTaxonName().indexOf("_") > 0) notCfOrNrTaxonName = getTaxonName().substring(0, getTaxonName().indexOf("_"));
-        String cfTaxonName = notCfOrNrTaxonName + "_cf%";
-        String nrTaxonName = notCfOrNrTaxonName + "_nr%";
+        // LIKE patterns: "_" and "%" in the name are literal ("_" alone matched any character: false see-also links)
+        String likeName = notCfOrNrTaxonName.replace("\\", "\\\\").replace("_", "\\_").replace("%", "\\%");
+        String cfTaxonName = likeName + "\\_cf%";
+        String nrTaxonName = likeName + "\\_nr%";
         String notCfOrNrTaxonNameCondition = "";
         if (getTaxonName().contains("_cf") || getTaxonName().contains("_nr")) {
-            notCfOrNrTaxonNameCondition = " or taxon.taxon_name = '" + notCfOrNrTaxonName + "'";
+            notCfOrNrTaxonNameCondition = " or taxon.taxon_name = " + DBUtil.sqlQuote(notCfOrNrTaxonName);
         }                
         String query = "select taxon.taxon_name " 
             + " from taxon " 
-            + " where taxon.taxon_name like '" + cfTaxonName + "'"
-            + "    or taxon.taxon_name like '" + nrTaxonName + "'"
+            + " where taxon.taxon_name like " + DBUtil.sqlQuote(cfTaxonName)
+            + "    or taxon.taxon_name like " + DBUtil.sqlQuote(nrTaxonName)
             + notCfOrNrTaxonNameCondition
           ;
         stmt = DBUtil.getStatement(connection, "getSeeAlsoCfAndNr()");
@@ -299,9 +301,41 @@ these other _cf1 etc.
             DBUtil.close(stmt, rset, this, "setChildren()");
         }        
 
-        this.children = overview.sort(theseChildren);
+        // 2026-10-27 (images from anywhere, Brian Fisher): fetched from anywhere for a place that selects specimens:
+        // keep the codes of the place's specimens, so the images page shows them first and marks them.
+        this.placeCodes = null;
+        if (global && ImagesAnywhere.hasPlaceSpecimens(overview)) {
+            this.placeCodes = getPlaceCodes(connection, overview.getOverviewCriteria(), statusSet, caste);
+        }
+        if (this.placeCodes != null) {
+            this.children = new ArrayList<Taxon>(ImagesAnywhere.placeFirst(theseChildren, Specimen::getCode, this.placeCodes, java.util.Collections.<String>emptySet()));
+        } else {
+            this.children = overview.sort(theseChildren);
+        }
         setChildrenCount(theseChildren.size());
         //A.log("setChildren() size:" + getChildrenCount() + " query:" + query);
+    }
+
+    /** The codes of this name's specimens that the place selects (the query of setChildren with the place's criteria). */
+    private java.util.Set<String> getPlaceCodes(Connection connection, String overviewCriteria, StatusSet statusSet, String caste) throws SQLException {
+        java.util.Set<String> codes = new java.util.HashSet<>();
+        String query = "select distinct specimen.code"
+          + " from taxon, specimen"
+          + " where taxon.taxon_name = specimen.taxon_name"
+          + overviewCriteria
+          + getThisWhereClause("taxon")
+          + statusSet.getAndCriteria()
+          + " and " + Caste.getSpecimenClause(caste);
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+            stmt = DBUtil.getStatement(connection, "Species.getPlaceCodes()");
+            rset = stmt.executeQuery(query);
+            while (rset.next()) codes.add(rset.getString("code"));
+        } finally {
+            DBUtil.close(stmt, rset, this, "getPlaceCodes()");
+        }
+        return codes;
     }
     
     public void setChildrenLocalized(Connection connection, Overview overview) throws SQLException {
@@ -326,7 +360,7 @@ these other _cf1 etc.
               String locality = ((LocalityOverview) overview).getLocality();                    
 			  s_log.debug("setChildrenLocalized() locality:" + locality);
               if (locality != null && locality.length() > 0 && !locality.equals("null"))  {
-                if ("country".equals(locality.substring(0, 7))) {
+                if (locality.startsWith("country")) {  // substring(0, 7) threw on a shorter value
                     locality = "specimen." + locality;
                 }
                 query += " and " + locality;
@@ -434,7 +468,7 @@ To fix this proper would involve rewriting Species.sort()
                           Specimen specimenO1 = (Specimen) o1;
                           Specimen specimenO2 = (Specimen) o2;
                           String casteSubcasteO1 = specimenO1.getCaste() + specimenO1.getSubcaste();
-                          String casteSubcasteO2 = specimenO2.getCaste() + specimenO1.getSubcaste();
+                          String casteSubcasteO2 = specimenO2.getCaste() + specimenO2.getSubcaste();
                           // 2nd one first because reverse order
                           return CompareUtil.compareString(casteSubcasteO2, casteSubcasteO1);
                       }
@@ -516,7 +550,7 @@ To fix this proper would involve rewriting Species.sort()
                               o2 = t;
                           }
                           // 2nd one first because reverse order.
-                          return CompareUtil.compareString(((Specimen) o2).getDnaExtractionNotes(), ((Specimen) o2).getDnaExtractionNotes());
+                          return CompareUtil.compareString(((Specimen) o2).getDnaExtractionNotes(), ((Specimen) o1).getDnaExtractionNotes());  // compared o2 with itself: no sort
                       }
                   });
                   break;
@@ -777,6 +811,15 @@ To fix this proper would involve rewriting Species.sort()
         return hasSpecimenData;
     }
     
+    /**
+     * The number of the habitat, microhabitat and method summaries: collection events. Brian Fisher, 2026-10-27
+     * (docs/numbers.md B72): a specimen without a collection code is a collection event of its own. Until then the
+     * number was count(distinct collectioncode), so such specimens were not counted (a habitat known only from them
+     * was not shown "1 times" but "0 times"), and an empty code counted as one event.
+     */
+    public static final String COLLECTION_EVENTS = "cast(count(distinct nullif(trim(collectioncode), ''))"
+        + " + sum(nullif(trim(collectioncode), '') is null) as signed)";
+
     public void setHabitats(Connection connection) {
         //Formatter formatter = new Formatter();
         Vector<String> habitats = new Vector<>();
@@ -790,12 +833,12 @@ To fix this proper would involve rewriting Species.sort()
             
             theQuery =
 //                " select count(habitat), habitat " 
-              " select count(distinct collectioncode), habitat "
+              " select " + COLLECTION_EVENTS + ", habitat "
               + " from specimen " 
               + " where taxon_name='" + taxonName + "'"
               + " and habitat is not null and habitat != ''"
               + " group by habitat " 
-              + " order by count(distinct collectioncode) desc, habitat"   // by the number shown (2026-10-21; was by specimens)
+              + " order by " + COLLECTION_EVENTS + " desc, habitat"   // by the number shown (2026-10-21; was by specimens)
               + " limit 25";
 
             stmt = DBUtil.getStatement(connection, "setHabitats()");
@@ -835,12 +878,12 @@ To fix this proper would involve rewriting Species.sort()
             
             theQuery =
 //                " select count(habitat), habitat " 
-              " select count(distinct collectioncode), microhabitat "
+              " select " + COLLECTION_EVENTS + ", microhabitat "
               + " from specimen " 
               + " where taxon_name='" + taxonName + "'"
               + " and microhabitat is not null and microhabitat != ''"
               + " group by microhabitat " 
-              + " order by count(distinct collectioncode) desc, microhabitat"
+              + " order by " + COLLECTION_EVENTS + " desc, microhabitat"
               + " limit 25";
 
 //A.log("setMicrohabitats() query:" + theQuery);
@@ -879,12 +922,12 @@ To fix this proper would involve rewriting Species.sort()
             taxonName = AntFormatter.escapeQuotes(getTaxonName());
             
             String theQuery =
-                " select count(distinct collectioncode), method " 
+                " select " + COLLECTION_EVENTS + ", method " 
               + " from specimen " 
               + " where taxon_name='" + taxonName + "'"
               + " and method is not null and method != ''"
               + " group by method " 
-              + " order by count(distinct collectioncode) desc, method"
+              + " order by " + COLLECTION_EVENTS + " desc, method"
               + " limit 25";
 
             stmt = DBUtil.getStatement(connection, "setMethods()");
@@ -939,16 +982,16 @@ To fix this proper would involve rewriting Species.sort()
             int recordCount = 0;
             while (rset.next()) {
                 ++recordCount;
-                code = rset.getString(1);
+                String code = rset.getString(1);  // a local: it overwrote the species' own code field
                 typeStatus = rset.getString(2);
                 if (!typeStatus.equals(lastTypeStatus)) {
                     if (recordCount > 1) typeString += ";  ";
-                    typeString += typeStatus + ":";
+                    typeString += Html.esc(typeStatus) + ":";
                 } else {
                     if (recordCount > 1) typeString += ", ";                 
                 }
                 lastTypeStatus = typeStatus;
-                typeString += " <a href=" + AntwebProps.getDomainApp() + "/specimen.do?name=" + code + ">" + code + "</a>";
+                typeString += " <a href=\"" + AntwebProps.getDomainApp() + "/specimen.do?name=" + Html.escAttr(Html.url(code)) + "\">" + Html.esc(code) + "</a>";
             }
 
             //A.log("setTypes() recordCount:" + recordCount + " query:" + theQuery);

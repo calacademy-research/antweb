@@ -66,3 +66,14 @@ Search results live in the visitor's HTTP session (`advancedSearchResults`, `adv
 | `test_login_needed.py` | map, compare and field guide of results need a login |
 | `test_browser.py` | the header boxes' suggestions in a real browser |
 | `test_check57_merges.py::test_search_redirects_to_advanced_search` | search.do |
+
+## Search rules decided on 2026-10-27
+
+Decided by Brian Fisher on 2026-10-27; in effect as soon as the change is deployed (no nightly run needed).
+
+- **What a value in a search box means** (`GenericSearch.searchEntries()`, `getSearchString()`): entries are separated by commas; an entry of several words is one phrase ("contains Santa Cruz" finds Santa Cruz, no longer every Santa and every Cruz). Double quotes still mark one entry. Several entries: a specimen matches any of them; with "not equals", none of them (before, "not equals A, B" matched every specimen). Specimen, locality and collection codes have no spaces, so those boxes also take a list separated by spaces, tabs or line breaks (a list pasted from a spreadsheet). Every box that has a search type uses these rules: taxon name, family, subfamily, genus, species, subspecies, adm2, locality name, locality code, habitat, elevation, method, microhabitat, collected by, collection code, specimen code, located at, life stage, caste, medium, specimen notes, DNA extraction notes, museum, owned by, determined by, date added. Country, adm1, bioregion and type status are pick lists and match exactly, as before.
+- **"Equals"** is an exact match of the whole entry. The taxon name box (`GenericSearch.getTaxonNameEqualsString()`): a specimen's stored name starts with its subfamily ("formicinaeformica rufa"), so the box matches the whole name, the name without the subfamily ("Formica rufa") or the last words after a space ("rufa": the species or subspecies part). Before, it was a suffix match: "rufa" also found "pseudorufa".
+- **Searches with more than 50,000 specimens** (by taxon, map; the limit `SearchAction.getSpecimenSearchLimit()`): always the first 50,000 by specimen code (`AdvancedSearch.SPECIMEN_ORDER`). Before, every other search reversed the order, so the same search gave two different sets of 50,000.
+- **Field guide from search results** (`FieldGuideResultsAction.fieldGuideCaste()`): the images are of the caste chosen in the search (Caste/Subcaste: male, queen, worker or other; a subcaste counts as its caste); worker when no caste was chosen. Before, field guides from a search always showed queens. The search's caste is kept in the session (`searchCaste`); a collection page's specimens use worker.
+- The help text on the form (`search/instruct.jsp`) says this.
+- Tests: `test/org/calacademy/antweb/search/SearchRulesTest.java` (JUnit, no database: entries, phrases, code lists, "not equals", the taxon name clause, the field guide caste), `tests/unit/test_decided_pages.py` (source checks: one fixed order, the help text).

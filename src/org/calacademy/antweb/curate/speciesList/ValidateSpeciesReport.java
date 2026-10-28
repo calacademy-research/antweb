@@ -115,10 +115,10 @@ public class ValidateSpeciesReport {
             String taxonStr = "";
             if (item.getStatus() == ValidateSpeciesResultItem.Status.EXACT_MATCH) {
                 taxonStr = item.getNormalizedName();
-            } else if (item.getSuggestion() != null && !item.getSuggestion().isEmpty()
-                       && Character.isUpperCase(item.getSuggestion().charAt(0))) {
-                // Only include suggestions that look like actual taxon names (start with uppercase genus).
-                // Excludes messages like "Check spelling.", "No valid species found...", etc.
+            } else if (item.hasSuggestedValidName() && !item.getSuggestion().isEmpty()) {
+                // Only suggestions that are a taxon found in AntWeb (a synonym's valid name, a close spelling).
+                // Not the validator's messages ("Check spelling.", "No valid species found for genus X."),
+                // which also start with a capital letter.
                 taxonStr = item.getSuggestion();
             }
             if (!taxonStr.isEmpty()) {

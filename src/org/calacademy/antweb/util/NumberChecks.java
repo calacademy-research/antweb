@@ -156,33 +156,37 @@ public final class NumberChecks {
      */
     void statsImages() {
         CountInvariants.Check check = new CountInvariants.Check("stats.images",
-            "statsPage Images table = a recount by status and caste; the four castes add up to Total; Sum = all images minus orphan images; orphanedImages.do images and codes = a recount", "13, 14, 15, 99");
+            "statsPage Images table = a recount by status and caste (images of the ant; label images apart); the four castes add up to Total; Sum + labels = all images minus orphan images; orphanedImages.do images and codes = a recount", "13, 14, 15, 99");
         inv.check(check, c -> {
             site().put("statsPage", "statsPage.do");
             Map<String, int[]> page = new org.calacademy.antweb.home.ImageDb(inv.connection).getImageStats();
             Map<String, long[]> recount = new TreeMap<>();
             long nullStatus = 0;
+            // 2026-10-27 (Brian Fisher): Total and the castes count images of the ant; label images have their own column.
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
-                    "select s.status, s.caste, count(*) from image i join specimen s on s.code = i.image_of_id group by s.status, s.caste"))) {
+                    "select s.status, s.caste, " + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + " ant, count(*) from image i join specimen s on s.code = i.image_of_id"
+                    + " group by s.status, s.caste, ant"))) {
                 while (r.next()) {
                     String status = r.getString(1);
                     String caste = r.getString(2);
-                    long n = r.getLong(3);
+                    boolean antImage = r.getBoolean(3);
+                    long n = r.getLong(4);
                     if (status == null) { nullStatus += n; continue; }
-                    long[] a = recount.computeIfAbsent(status.toLowerCase(java.util.Locale.ROOT), x -> new long[5]);
+                    long[] a = recount.computeIfAbsent(status.toLowerCase(java.util.Locale.ROOT), x -> new long[6]);
+                    if (!antImage) { a[5] += n; continue; }
                     a[0] += n;
                     String k = caste == null ? "" : caste.toLowerCase(java.util.Locale.ROOT);
                     a["worker".equals(k) ? 1 : "male".equals(k) ? 2 : "queen".equals(k) ? 3 : 4] += n;
                 }
             }
-            String[] cols = {"Total", "Worker", "Male", "Queen", "Other"};
-            long[] sum = new long[5];
+            String[] cols = {"Total", "Worker", "Male", "Queen", "Other", "Label images"};
+            long[] sum = new long[6];
             for (Map.Entry<String, long[]> e : recount.entrySet()) {
                 int[] shown = null;
                 for (Map.Entry<String, int[]> p : page.entrySet()) if (p.getKey() != null && p.getKey().equalsIgnoreCase(e.getKey())) shown = p.getValue();
                 long[] a = e.getValue();
-                for (int i = 0; i < 5; i++) {
-                    inv.compare(c, "site", "statsPage", "Images table, " + e.getKey() + ": " + cols[i], shown == null ? 0 : shown[i], a[i], "=", null);
+                for (int i = 0; i < 6; i++) {
+                    inv.compare(c, "site", "statsPage", "Images table, " + e.getKey() + ": " + cols[i], shown == null || shown.length <= i ? 0 : shown[i], a[i], "=", null);
                 }
                 if (shown != null) {
                     inv.compare(c, "site", "statsPage", "Images table, " + e.getKey() + ": Worker + Male + Queen + Other = Total",
@@ -212,8 +216,8 @@ public final class NumberChecks {
             site().put("orphanedImages", "orphanedImages.do");
             inv.compare(c, "site", "orphanedImages", "orphanedImages.do: images (N images of M specimen codes) = a recount", page2.getImageCount(), orphans, "=", null);
             inv.compare(c, "site", "orphanedImages", "orphanedImages.do: specimen codes (N images of M specimen codes) = a recount", page2.getOrphans().size(), orphanCodes, "=", null);
-            inv.compare(c, "site", "statsPage", "Images table: Sum (statuses shown) + images of specimens without a status = all images (" + all
-                + ") minus orphan images (" + orphans + ")", sum[0] + nullStatus, all - orphans, "=", null);
+            inv.compare(c, "site", "statsPage", "Images table: Sum (statuses shown, images of the ant + label images) + images of specimens without a status = all images (" + all
+                + ") minus orphan images (" + orphans + ")", sum[0] + sum[5] + nullStatus, all - orphans, "=", null);
             // Images of specimens without a status are in no row of the table (so not in its Sum): a data finding.
             inv.compare(c, "site", "statsPage", "Images table: images of specimens without a status (in no row, not in the Sum)", nullStatus, 0, "=", null);
             Map<String, Object> images = new LinkedHashMap<>();
@@ -233,10 +237,10 @@ public final class NumberChecks {
             site().put("statsPage", "statsPage.do");
             Map<String, Integer> page = new org.calacademy.antweb.home.ImageDb(inv.connection).getImageTaxonStats();
             Map<String, Long> recount = new TreeMap<>();
-            // names with at least one specimen that has an image (labels too, any rank), by taxon status
+            // names with at least one specimen that has an image of the ant (any rank; labels did count until 2026-10-27), by taxon status
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
                     "select t.status, count(*) from taxon t where t.taxon_name in (select s.taxon_name from specimen s"
-                    + " where s.code in (select i.image_of_id from image i)) group by t.status"))) {
+                    + " where s.code in (select i.image_of_id from image i where " + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + ")) group by t.status"))) {
                 while (r.next()) if (r.getString(1) != null) recount.merge(r.getString(1).toLowerCase(java.util.Locale.ROOT), r.getLong(2), Long::sum);
             }
             long countable = 0;
@@ -249,7 +253,7 @@ public final class NumberChecks {
             // the home number as shown (the statistics row; check "home" recounts it)
             if (has("statistics", "species_imaged")) {
                 long homeImaged = count("select species_imaged from statistics order by created desc, id desc limit 1");
-                inv.compare(c, "site", "statsPage", "Imaged Species of counted statuses (any rank, labels too) >= species + ssp. imaged (home)",
+                inv.compare(c, "site", "statsPage", "Imaged Species of counted statuses (any rank) >= species + ssp. imaged (home)",
                     countable, homeImaged, ">=", inv.result.imagesSinceNightly || inv.result.uploadSinceNightly ? "images or specimens were added after the last nightly run" : null);
             }
             expected("statsPage").put("imagedSpecies", recount);

@@ -9,7 +9,9 @@
 # It seems these are wiped away after a restart of the docker container. TBD.
 
 
-rm *
+# Only in a folder named links, and only the links there (before: "rm *" deleted every file of the folder it ran in).
+[ "$(basename "$PWD")" = links ] || { echo "Run this from the links folder (now in $PWD)." >&2; exit 1; }
+find . -maxdepth 1 -type l -exec rm -f {} +
 
 ln -s /usr/local/tomcat tomcat
 ln -s tomcat/logs/antweb.log antweb.log

@@ -15,7 +15,7 @@ The home page itself does no database work. Its changing parts are files written
 | Recent Edits | `web/genInc/recentDescEdits.html` | `util.AntwebFunctions.genRecentDescEdits()` (the last manual page-text edits) | after each page-text save (`DescriptionAction`), at start-up, `genRecentContent` |
 | Slideshow, background | `common/slideshow_homepage.jsp`, the page's script | static |
 
-**The statistics page** (`statsPage.do`, "Antweb Statistics") shows: Current Statistics (the same five numbers, from memory: `TaxonMgr.getValidSpeciesCount()` and the latest `statistics` row in `AntwebMgr`), Global Data (valid extant and fossil subfamilies, genera, species, subspecies), Images (per specimen status: total, worker, male, queen, other), Imaged Species (per taxon status), Bioregion Data and Museum Data (valid extant and fossil). These tables are live queries on every request. The table rows link to plain name lists (`taxaList.do?rank=...&project=...`).
+**The statistics page** (`statsPage.do`, "Antweb Statistics") shows: Current Statistics (the same five numbers, from memory: `TaxonMgr.getValidSpeciesCount()` and the latest `statistics` row in `AntwebMgr`; under the specimen records, the number of collaborating institutions = the museums of the Museums list, `MuseumMgr.getMuseumCount()`, linked to museums.do, since 2026-10-27, was the fixed text "21"), Global Data (valid extant and fossil subfamilies, genera, species, subspecies), Images (per specimen status: total, worker, male, queen, other), Imaged Species (per taxon status), Bioregion Data and Museum Data (valid extant and fossil). These tables are live queries on every request. The table rows link to plain name lists (`taxaList.do?rank=...&project=...`).
 
 ## URLs
 
@@ -55,3 +55,8 @@ Home: none at request time ([`statistics`](../data-model.md#statistics), [`image
 | `test_numbers_pages.py`, count invariants `inv:home` | the numbers (numbers.md #1 to #12) |
 | `test_world_ant_collections.py` | the World Ant Collections pages and photos |
 | `test_header_version.py`, `test_browser.py` | the header, JavaScript, phone width |
+
+**Images (2026-10-27, Brian Fisher).** "Images" means images of the ant on both pages: "N total specimen images + N
+labels" (label images apart; StatisticsDb.TOTAL_IMAGES_SQL, LABEL_IMAGES_SQL; the stored number follows the rule after
+the next nightly run), the statsPage Images table counts images of the ant by status and caste with a Label images
+column, and Imaged Species counts names with an image of the ant. Definitions: docs/numbers.md section 1.

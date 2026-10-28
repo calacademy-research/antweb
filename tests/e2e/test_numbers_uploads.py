@@ -159,15 +159,15 @@ def _image_report(html):
     def li(label):
         m = re.search(r"<li><b>" + re.escape(label) + r"\s*</b></li>\s*<li>(.*?)</li>", html, re.S)
         return m.group(1).strip() if m else None
-    start = html.find("<li><b>Images:</b></li>")
+    start = html.find("<li><b>Image files:</b></li>")   # "Images:" until 2026-10-27 (Image files: labels are files too)
     ends = [html.find(k, start) for k in ('id="notSaved"', "Uploaded Specimen Set", "No Specimen Data Set", "<b>Images Dir</b>")]
     ends = [e for e in ends if e > 0]
     files = html[start: min(ends) if ends else len(html)] if start >= 0 else ""
     not_saved_link = re.search(r'<li><b>Not saved:</b></li>\s*<li><a href="#notSaved">(\d+)</a></li>', html)
     return {
         "complete": li("Upload Completed:"),
-        "total": num(li("Total Images Uploaded:")),
-        "images": num(li("Images:")),
+        "total": num(li("Total image files uploaded:")),
+        "images": num(li("Image files:")),
         "rows": len(re.findall(r"<li><b>\d+:</b></li>", files)),
         "saved_rows": files.count("bigPicture.do?code="),
         "not_saved": int(not_saved_link.group(1)) if not_saved_link else 0,
@@ -188,7 +188,7 @@ def test_image_upload_report_counts_equal_their_files():
     if not batches:
         pytest.skip("listImageUploads.do lists no image upload batch")
     wrong = []
-    total = re.search(r"holding ([\d,]+) images", html)
+    total = re.search(r"holding ([\d,]+) image files", html)
     if total and num(total.group(1)) != sum(int(c) for _, c, _ in batches):
         wrong.append(f"listImageUploads.do holding {total.group(1)} images; Image Counts add up to "
                      f"{sum(int(c) for _, c, _ in batches)}")

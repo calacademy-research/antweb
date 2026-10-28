@@ -21,8 +21,8 @@ import org.apache.commons.logging.LogFactory;
 public class AntwebMgr {
 
     private static final Log s_log = LogFactory.getLog(AntwebMgr.class);
-    private static boolean s_oneAtATime = false;
-    private static boolean s_isPopulated = false;
+    private static final java.util.concurrent.atomic.AtomicBoolean s_oneAtATime = new java.util.concurrent.atomic.AtomicBoolean(false);
+    private static volatile boolean s_isPopulated = false;
     private static boolean isInitializing = false;    
 
     // Specimen upload is incremented at the start of the try block.
@@ -52,39 +52,34 @@ public class AntwebMgr {
     public static void populate(Connection connection, boolean forceReload, boolean inThread) {    
 		if (!s_isPopulated || forceReload) {       
 
-			if (!s_oneAtATime) {
-			  s_oneAtATime = true;
-			} else {
-			  return;
+			if (!s_oneAtATime.compareAndSet(false, true)) {
+			  return;  // another thread is populating
 			}
 
-            setStartTime();
- 		
-			incrementSpecimenUploadId(connection);
-
+            // One exception (a database hiccup) no longer leaves the site "initializing" until a restart, nor
+            // blocks every later reload: the guard is always released, a failed first load is tried again by
+            // the next request, and a failed reload keeps the caches of the last good load.
+            boolean ok = false;
             try {
+                setStartTime();
+                incrementSpecimenUploadId(connection);
+
                 AntwebMgr.serverInitializing();
 
                 //s_log.info("AntwebMgr.populate() 1");
                 AntwebMgr.populateMgrs(connection, forceReload);
                 //s_log.info("AntwebMgr.populate() 2");
-
-                AntwebMgr.initializationComplete();
+                ok = true;
             } catch (Exception e) {
                 s_log.error("error running thread e:" + e.getMessage(), e);
+            } finally {
+                if (ok || s_isPopulated) AntwebMgr.initializationComplete();
+                if (ok && !s_isPopulated) {
+                  s_isPopulated = true;
+                  s_log.warn("populate() server started.");
+                }
+                s_oneAtATime.set(false);
             }
-
-// REFACTOR: Problematic. IsPopulated is not trustworthy. It is set before the thread completes.
-// Instead,  check for null values...
-
-            if (!s_isPopulated) {
-
-              s_isPopulated = true;
-
-              s_log.warn("populate() server started.");
-            }               
-
-			s_oneAtATime = false;          
 		}
     }    
 
@@ -119,7 +114,7 @@ public class AntwebMgr {
         GroupMgr.populate(connection, forceReload);
 
         if (log) s_log.warn("populateMgrs() AllAntwebMgr");
-        AllAntwebMgr.populate(connection);
+        AllAntwebMgr.populate(connection, forceReload);  // without forceReload a reload kept the first load
 
         if (log) s_log.warn("populateMgrs() LoginMgr");
         LoginMgr.populate(connection, forceReload, true);
@@ -177,7 +172,7 @@ public class AntwebMgr {
             GroupMgr.populate(connection, forceReload);
             message = "GroupMgr Reloaded";
         } else if ("allAntweb".equals(name)) {
-            AllAntwebMgr.populate(connection);
+            AllAntwebMgr.populate(connection, forceReload);
             message = "AllAntwebMgr Reloaded.";
         } else if ("login".equals(name)) {
             LoginMgr.populate(connection, forceReload, true);
@@ -407,10 +402,10 @@ public class AntwebMgr {
 		 return ServerDb.getDownTimeMessage();
 	   }
 	   if (UploadAction.isInUploadProcess()) {
-		 return "<h3><font color='red'>Upload Currently In <a title='" + UploadAction.getIsInUploadProcess() + "'>Process</a> (some services are down).</font></h3>";
+		 return "<h3><font color='red'>Upload Currently In <a title='" + Html.escAttr(UploadAction.getIsInUploadProcess()) + "'>Process</a> (some services are down).</font></h3>";
 	   }
 	   if (UtilDataAction.isInComputeProcess()) {
-		 return "<h3><font color='red'>Computation Currently In <a title='" + UtilDataAction.getIsInComputeProcess() + "'>Process</a> (some services are down).</font></h3>";
+		 return "<h3><font color='red'>Computation Currently In <a title='" + Html.escAttr(UtilDataAction.getIsInComputeProcess()) + "'>Process</a> (some services are down).</font></h3>";
 	   }
 	   if (DBStatus.getIsServerBusy()) {
 		 return "<h2><font color='red'>Server is busy.  Service currently inactivated.</font></h2>";
@@ -472,6 +467,14 @@ public class AntwebMgr {
     public static int getTotalImagesCount() {
       return totalImagesCount;
     }
+    // Label images, shown apart from the images of the ant (2026-10-27); -1 until counted.
+    static int labelImagesCount = -1;
+    public static void setLabelImagesCount(int c) {
+      labelImagesCount = c;
+    }
+    public static int getLabelImagesCount() {
+      return labelImagesCount;
+    }
 
     public static void setImagedSpecimensCount(int c) {
       imagedSpecimensCount = c;
@@ -511,7 +514,14 @@ public class AntwebMgr {
             s_log.warn("populateStats() query:" + query + " e:" + e);
         } finally {
               DBUtil.close(stmt, rset, "populateStats()");
-        }	
+        }
+        // Label images (not in the statistics row): counted live once.
+        try (Statement s = connection.createStatement();
+             ResultSet r = s.executeQuery(org.calacademy.antweb.home.StatisticsDb.LABEL_IMAGES_SQL)) {
+            if (r.next()) setLabelImagesCount(r.getInt(1));
+        } catch (SQLException e) {
+            s_log.warn("populateStats() label images e:" + e);
+        }
     }  
 
     public String report() { 

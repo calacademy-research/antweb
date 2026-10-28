@@ -26,19 +26,26 @@
    // Say so instead of showing 0 (2026-10-26: a test visit right after a restart saw "0 valid species").
    int liveValidSpecies = TaxonMgr.getValidSpeciesCount();
    int liveSpecimens = AntwebMgr.getSpecimensCount();
+   // The three image numbers come from the same start-up load (AntwebMgr.populateStats): 0 until then too.
+   int liveImagedSpecies = AntwebMgr.getImagedSpeciesCount();
+   int liveImagedSpecimens = AntwebMgr.getImagedSpecimensCount();
+   int liveTotalImages = AntwebMgr.getTotalImagesCount();
    String starting = "<span data-stat=\"starting\">not yet available: AntWeb is starting (a few minutes after a restart); reload in a few minutes</span>"; %>
 <br><b data-stat="valid-species"><%= liveValidSpecies > 0 ? A.commaFormat(liveValidSpecies) : starting %> valid species + ssp.</b>
 <br>&nbsp;&nbsp;Valid ant (Formicidae) species and subspecies, fossils included. Names of other families and names not identified to genus are not counted.
  
 <br><br><b><%= liveSpecimens > 0 ? A.commaFormat(liveSpecimens) : starting %> specimen records</b>
-<br>&nbsp;&nbsp;Specimen records from Antweb's 21 collaborating institutions.
+<% // Counted from the Museums list (MuseumMgr, as museums.do), 2026-10-27: was the fixed text "21".
+   int institutions = MuseumMgr.getMuseumCount(); %>
+<br>&nbsp;&nbsp;Specimen records from <% if (institutions > 0) { %>AntWeb's <span data-stat="institutions"><%= A.commaFormat(institutions) %></span> collaborating institutions (the <a href="<%= AntwebProps.getDomainApp() %>/museums.do">Museums</a> list)<% } else { %>AntWeb's collaborating institutions (the <a href="<%= AntwebProps.getDomainApp() %>/museums.do">Museums</a> list; their number is <%= starting %>)<% } %>.
 
-<br><br><b><%= A.commaFormat(AntwebMgr.getImagedSpeciesCount()) %>  species + ssp. imaged </b>
+<br><br><b><%= liveImagedSpecies > 0 ? A.commaFormat(liveImagedSpecies) : starting %>  species + ssp. imaged </b>
 <br>&nbsp;&nbsp;Valid, morpho or indetermined ant species and subspecies with at least one photo of the ant (label photos do not count). Names not identified to genus are not counted as species.
 
-<br><br><b><%= A.commaFormat(AntwebMgr.getImagedSpecimensCount()) %> specimens imaged</b>
+<br><br><b><%= liveImagedSpecimens > 0 ? A.commaFormat(liveImagedSpecimens) : starting %> specimens imaged</b>
 
-<br><br><b><%= A.commaFormat(AntwebMgr.getTotalImagesCount()) %> total specimen images</b>
+<br><br><b><%= liveTotalImages > 0 ? A.commaFormat(liveTotalImages) : starting %> total specimen images<%= AntwebMgr.getLabelImagesCount() > 0 ? " + " + A.commaFormat(AntwebMgr.getLabelImagesCount()) + " labels" : "" %></b>
+<br>&nbsp;&nbsp;Images of the ant; label images are counted separately (since 2026-10-27; until then the total counted every image file, labels included).
 
 
 
@@ -62,10 +69,10 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
 <br><br><br>
 <h2>Images:</h2>
 <table border=1>
-<tr><th>Specimen Status</th><th>Total</th><th>Worker</th><th>Male</th><th>Queen</th><th>Other</th></tr>
+<tr><th>Specimen Status</th><th>Total</th><th>Worker</th><th>Male</th><th>Queen</th><th>Other</th><th>Label images</th></tr>
 
 <%
-    int grandTotal = 0, workers = 0, males = 0, queens = 0, others = 0;
+    int grandTotal = 0, workers = 0, males = 0, queens = 0, others = 0, labelImages = 0;
     HashMap<String, int[]> imageStats = (HashMap<String, int[]>) request.getAttribute("imageStats");
     
     // Every status in the table (2026-10-21: six fixed statuses only, so the Sum row left the others out).
@@ -77,16 +84,17 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
         for (String status : keys) {
           int[] stats = imageStats.get(status);
           if (stats != null) {
-              grandTotal += stats[0]; workers +=  stats[1]; males += stats[2]; queens += stats[3]; others += stats[4];
+              grandTotal += stats[0]; workers +=  stats[1]; males += stats[2]; queens += stats[3]; others += stats[4]; labelImages += stats[5];
               %>
-              <tr align=right><td><%= Formatter.initCap(status) %></td><td><%= A.commaFormat(stats[0]) %></td><td><%= A.commaFormat(stats[1]) %></td><td><%= A.commaFormat(stats[2]) %></td><td><%= A.commaFormat(stats[3]) %></td><td><%= A.commaFormat(stats[4]) %></td></tr> 
+              <tr align=right><td><%= Html.esc(Formatter.initCap(status)) %></td><td><%= A.commaFormat(stats[0]) %></td><td><%= A.commaFormat(stats[1]) %></td><td><%= A.commaFormat(stats[2]) %></td><td><%= A.commaFormat(stats[3]) %></td><td><%= A.commaFormat(stats[4]) %></td><td><%= A.commaFormat(stats[5]) %></td></tr> 
 <%
           }
         }
     } %>
-    <tr><td></td><td>---------------</td><td>---------------</td><td>---------------</td><td>---------------</td><td>---------------</td></tr>
-    <tr align=right><td>Sum</td><td><%= A.commaFormat(grandTotal) %></td><td><%= A.commaFormat(workers) %></td><td><%= A.commaFormat(males) %></td><td><%= A.commaFormat(queens) %></td><td><%= A.commaFormat(others) %></td></tr> 
+    <tr><td></td><td>---------------</td><td>---------------</td><td>---------------</td><td>---------------</td><td>---------------</td><td>---------------</td></tr>
+    <tr align=right><td>Sum</td><td><%= A.commaFormat(grandTotal) %></td><td><%= A.commaFormat(workers) %></td><td><%= A.commaFormat(males) %></td><td><%= A.commaFormat(queens) %></td><td><%= A.commaFormat(others) %></td><td><%= A.commaFormat(labelImages) %></td></tr> 
 </table>
+<%@ include file="/common/imagesDefinition.jsp" %>
 
 <%
 /*
@@ -117,7 +125,8 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
       //for (Object status : statuses) {
       for (String status : keys2) {
         Integer count = imageTaxonStats.get(status);
-        out.println("<tr><td align=right>" + Formatter.initCap(status) + "</td><td align=right>" + A.commaFormat(count) + "</td></tr>");
+        // A status with no imaged name shows 0 (a missing one threw a NullPointerException and the page failed).
+        out.println("<tr><td align=right>" + Html.esc(Formatter.initCap(status)) + "</td><td align=right>" + A.commaFormat(count == null ? 0 : count.intValue()) + "</td></tr>");
       }
     }
 %>

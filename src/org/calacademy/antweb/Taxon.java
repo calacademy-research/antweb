@@ -49,6 +49,9 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     protected String elevations = "";
     protected String collectDateRange = "";
     protected ArrayList<Taxon> children;
+    // 2026-10-27 (images from anywhere): the codes of the children (specimens) from the chosen place, when the
+    // children were fetched from anywhere (Species.setChildren with global); null otherwise.
+    protected Set<String> placeCodes;
     protected ArrayList similar;
     protected String similarComparisonString;
     protected String test;
@@ -631,7 +634,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
       try {
         String query = "select author_date " 
             + " from homonym " 
-            + " where taxon_name = '" + taxonName + "'";
+            + " where taxon_name = " + DBUtil.sqlQuote(taxonName);
         stmt = DBUtil.getStatement(connection, "setHomonymAuthorDates()");
         rset = stmt.executeQuery(query);
         //A.log("setHomonymAuthorDates() query:" + query);
@@ -671,7 +674,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
         String query = "select taxon.current_valid_name " 
             + " from taxon " 
-            + " where taxon.taxon_name = '" + taxonName + "'"
+            + " where taxon.taxon_name = " + DBUtil.sqlQuote(taxonName)
             + "   and status = 'synonym'"
           ;
         stmt = DBUtil.getStatement(connection, "setSeeAlsoSynonyms()");
@@ -793,6 +796,14 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     public void setRank(String rank) {
         this.rank = rank;
     }
+    public Set<String> getPlaceCodes() {
+        return placeCodes;
+    }
+    public void setPlaceCodes(Set<String> placeCodes) {
+        // Lower case once here; ImagesAnywhere.isFromPlace is called once per specimen on a species images page.
+        this.placeCodes = placeCodes == null ? null : ImagesAnywhere.lowerCodes(placeCodes);
+    }
+
     // Convenience method
     public boolean isSpeciesOrSubspecies() {
       return "species".equals(getRank()) || "subspecies".equals(getRank());
@@ -1275,7 +1286,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
             if (overview != null) {
               theQuery = overview.getImageCountQuery(getTaxonName());
             } else {
-              s_log.error("setHasImages() unsupported overview type:" + overview.getClass()); 
+              s_log.error("setHasImages() no overview for:" + getTaxonName());  // overview.getClass() threw here
               return;        
             }
 
@@ -2390,7 +2401,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     // TODO don't fetch entire row to see if it exists
     public boolean isExists(Connection connection) {
         // Check with the database.  Useful for OrphanDescEditsAction.java.
-        extant = false;
+        boolean exists = false;  // a local: it overwrote the taxon's extant field
         String taxonName = getTaxonName();
         String theQuery = "";
         PreparedStatement stmt = null;
@@ -2401,7 +2412,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
             stmt.setString(1, taxonName);
             rset = stmt.executeQuery();
 
-            extant = rset.getBoolean(1);    // EXISTS() returns 0 if it doesn't exist
+            if (rset.next()) exists = rset.getBoolean(1);    // EXISTS() returns 0 if it doesn't exist; next() first, or it threw
 
         } catch (SQLException e) {
             s_log.error("isExists() for taxonName:" + taxonName + " exception:" + e + " theQuery:" + theQuery);
@@ -2409,7 +2420,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         } finally {
             DBUtil.close(stmt, rset, this, "isExists()");
         }
-        return extant;
+        return exists;
     }
 
     // This is a slightly sloppy way to pass along a value in the Orphan Manager
@@ -2824,9 +2835,20 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         return false;
     }
 
+    /**
+     * "value:count" as stored by Species.setHabitats() and the like, split at the LAST colon: a habitat may itself
+     * contain a colon ("Forest: primary:2"), which split(":") cut into the wrong label and count.
+     */
+    public static String[] splitValueCount(String valueCount) {
+      if (valueCount == null) return new String[] {"", ""};
+      int i = valueCount.lastIndexOf(':');
+      if (i < 0) return new String[] {valueCount, ""};
+      return new String[] {valueCount.substring(0, i), valueCount.substring(i + 1)};
+    }
+
     public String getSpecimenDataSummary(int maxCount) {
       String summary = "";
-      if (getHabitats().size() > 0) { 
+      if (getHabitats() != null && getHabitats().size() > 0) { 
         summary += "<p><b>Found most commonly in these habitats: </b>";
 
         // Habitats
@@ -2837,11 +2859,11 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           ++habitatI;
           String comma = habitatI > 1 ?", ":"";
           String habitatCount = elements.nextElement();
-          String[] habitatCountArray = habitatCount.split(":");
+          String[] habitatCountArray = splitValueCount(habitatCount);
           String habitatDesc = habitatCountArray[0];
           habitatDesc = habitatDesc.trim();
           String count = habitatCountArray[1];
-          habitatString.append(comma + count + " times found in " + habitatDesc);
+          habitatString.append(comma + count + " times found in " + Html.esc(habitatDesc));
           if (habitatI >= maxCount) break;
         }
         if (getHabitats().size() > maxCount) { 
@@ -2859,11 +2881,11 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           ++i;
           String comma = i > 1 ?", ":"";
           String countStr = elements.nextElement();
-          String[] countStrArray = countStr.split(":");
+          String[] countStrArray = splitValueCount(countStr);
           String desc = countStrArray[0];
           desc = desc.trim();
           String count2 = countStrArray[1];
-          microhabitatString.append(comma + count2 + " times " + desc);
+          microhabitatString.append(comma + count2 + " times " + Html.esc(desc));
           if (i >= maxCount) break;   // maxCount entries, as habitats (2026-10-21: one more)
         }
         if (getMicrohabitats().size() > maxCount) { 
@@ -2881,11 +2903,11 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           ++i;
           String comma = i > 1 ?", ":"";
           String methodCount = elements.nextElement();
-          String[] methodCountArray = methodCount.split(":");
+          String[] methodCountArray = splitValueCount(methodCount);
           String methodDesc = methodCountArray[0];
           methodDesc = methodDesc.trim();
           String count = methodCountArray[1];
-          methodString.append(comma + count + " times " + methodDesc);
+          methodString.append(comma + count + " times " + Html.esc(methodDesc));
           if (i >= maxCount) break;   // maxCount entries, as habitats (2026-10-21: one more)
         }
         if (getMethods().size() > maxCount) { 

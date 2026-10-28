@@ -117,12 +117,12 @@ public class A {
    
 	public static String commaFormat(String num) {
 	  if (num == null) return "0";
-	  return commaFormat(Long.valueOf(num).intValue());
+	  return commaFormat(Long.parseLong(num.trim()));
 	}	
 	
 	public static String commaFormat(long num) {
-	  if (num == 0) return "0";
-	  return commaFormat(Long.valueOf(num).intValue());
+	  if (num == 0) return "0";  // was cut to an int, wrong above 2^31
+	  return NumberFormat.getNumberInstance(Locale.US).format(num);
 	}
 	
 	public static String commaFormat(int num) {

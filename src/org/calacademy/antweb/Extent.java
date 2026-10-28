@@ -36,7 +36,7 @@ public class Extent {
           this.minLat = getExtentFloat(parts[1]);
           this.maxLon = getExtentFloat(parts[2]);
           this.maxLat = getExtentFloat(parts[3]);
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException | ArrayIndexOutOfBoundsException e) {  // also fewer than four parts
           String message = "extent:" + extent + " e:" + e;
           s_log.error("Extent() " + message);
           AdminAlertMgr.log(message);                

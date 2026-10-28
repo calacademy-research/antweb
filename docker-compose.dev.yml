@@ -21,7 +21,7 @@ services:
       args:
         ENV: DEV
     ports:
-      - "5005:5005"
+      - "127.0.0.1:5005:5005"   # the Java debugger: this computer only, never the network
     environment:
       # >- = YAML block chomp operator -- join lines together with space, remove trailing newline (newline breaks JVM)
       JAVA_OPTS: >-
@@ -40,6 +40,8 @@ services:
   api:
     volumes:
       - "./api/v3.1:/api"   # Mount the api dir in the container for making edits without rebuilding
+    environment:
+      API_REQUIRE_READONLY_LOGIN: "false"   # development: warning and the main account without etc/api-db.properties
     ports:
     - "127.0.0.1:5000:5000"   #Expose the api outside the container to the local machine for debugging
     command: ["--reload"]

@@ -18,6 +18,13 @@ public class MessageMgr {
       init();
     }
 
+    /** Only the section headings (getMessageDisplay): leaves the shared error list and message of a running upload alone. */
+    private MessageMgr(boolean headingsOnly) {
+      addTests();
+    }
+    // Built on first use (after the class's other static fields are set).
+    private static final class Headings { static final MessageMgr MGR = new MessageMgr(true); }
+
     private static final Log s_log = LogFactory.getLog(MessageMgr.class);
 
     private Vector<String> s_messages = new Vector<>();
@@ -228,6 +235,10 @@ public class MessageMgr {
         flags = new HashMap<>();
         currentCode = null;
         reportCodesLeft = MAX_REPORT_CODES;
+        addTests();
+    }
+
+    private void addTests() {
 
       testList.add(new Test(noRecordsProcessed, STR, "<b>Rollback occurred. <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(duplicateEntries, SET, "<b>Duplicate Entries <font color=red>(not uploaded)</font></b>"));
@@ -240,7 +251,7 @@ public class MessageMgr {
       testList.add(new Test(preferredSubfamilyForGenusReplaced, SET, "<b>Preferred Subfamily For Genus <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(invalidSubfamilyForGenusReplaced, MAP, "<b>Invalid Subfamily for Genus.  Submitted subfamily replaced with valid subfamily <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(databaseErrors, SET, "<b>Database Errors <font color=red>(not uploaded)</font></b>"));
-      testList.add(new Test(futureDateCollected, SET, "<b>Date Collected Start is in the future <font color=green>(uploaded)</font></b>"));
+      testList.add(new Test(futureDateCollected, SET, "<b>Date Collected (start or end) is in the future <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(futureDateDetermined, SET, "<b>Date Determined is in the future <font color=green>(uploaded)</font></b>"));
       // Names of two or more AntCat taxa, and names AntCat has only as a junior homonym: SharedNameReport,
       // the same lines as the Name updates page (2026-10-20; replaces "Taxon names recognized as Homonyms").
@@ -264,9 +275,9 @@ public class MessageMgr {
       testList.add(new Test(notValidAdm1, STR, "<b>Not valid Antweb adm1</b>"));
       //testList.add(new Test(noCasteNotes, STR, "<b>No life stage/sex data. Undiscernable <a href='" + AntwebProps.getDomainApp() + "/casteDisplayPage.do'>caste</a></b>"));
       testList.add(new Test(unrecognizedCaste, STR, "<b>Unrecognized Caste</b>")); // Not a recognized <a href='" + AntwebProps.getDomainApp() + "/casteList.do'>caste</a>
-      testList.add(new Test(invalidDateCollectedStart, STR, "<b>Invalid Date Collected Start</b>"));
-      testList.add(new Test(invalidDateCollectedEnd, STR, "<b>Invalid Date Collected End</b>"));
-      testList.add(new Test(invalidDateDetermined , STR, "<b>Invalid Date Determined</b>"));
+      testList.add(new Test(invalidDateCollectedStart, STR, "<b>Invalid Date Collected Start <font color=green>(uploaded without this date)</font></b>"));
+      testList.add(new Test(invalidDateCollectedEnd, STR, "<b>Invalid Date Collected End <font color=green>(uploaded without this date)</font></b>"));
+      testList.add(new Test(invalidDateDetermined , STR, "<b>Invalid Date Determined <font color=green>(uploaded without this date)</font></b>"));
       testList.add(new Test(makeTaxonNameError, STR, "<b>Error constructing taxon name <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(latLonNotInCountryBounds, STR, "<b>Lat/Long not within country's bounds</b>", "red"));
       testList.add(new Test(latLonNotInAdm1Bounds, STR, "<b>Lat/Long not within adm1's bounds</b>", "red"));
@@ -304,7 +315,9 @@ public class MessageMgr {
     }     
     
     public static String getMessageDisplay(String key) {
-      Test test = new MessageMgr().getTest(key);
+      // Was new MessageMgr(), whose init() emptied the static error list of an upload running at that moment
+      // (flagInclude.jsp calls this on every red-flagged specimen page).
+      Test test = Headings.MGR.getTest(key);
       if (test != null) return test.getHeading();
       return key;
     }

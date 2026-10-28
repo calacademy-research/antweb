@@ -85,6 +85,9 @@ public class TaxaPage implements Serializable {
         long now = new java.util.Date().getTime();
 	    ArrayList<Taxon> theseChildren = new ArrayList<>();
 
+        // Specimen taxa are filtered by country, adm1 or project only. For other places (bioregion, region,
+        // museum) the specimen half had no place filter and listed every taxon in AntWeb, so it is left out.
+        if (withSpecimen && !(overview instanceof Country || overview instanceof Adm1 || overview instanceof Project)) withSpecimen = false;
         isWithSpecimen = withSpecimen;
 
         String fetchChildrenQuery = "";
@@ -150,15 +153,15 @@ public class TaxaPage implements Serializable {
           if (rank.equals("species")) specimenQuery += " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("s");
           
           if (overview instanceof Country) {
-            specimenQuery += " and country = '" + overview+ "'";
+            specimenQuery += " and country = " + DBUtil.sqlQuote(overview);
           }
           if (overview instanceof Adm1) {
-            specimenQuery += " and adm1 = '" + overview + "'";
+            specimenQuery += " and adm1 = " + DBUtil.sqlQuote(overview);
           }
 
           if (overview instanceof Project) {
-            specimenQuery += " and ( country = '" + overview.getTitle() + "'"
-              + " or adm1 = '" + overview.getTitle() + "' )" ;
+            specimenQuery += " and ( country = " + DBUtil.sqlQuote(overview.getTitle())
+              + " or adm1 = " + DBUtil.sqlQuote(overview.getTitle()) + " )" ;
           }
 
           fetchChildrenQuery += specimenQuery;

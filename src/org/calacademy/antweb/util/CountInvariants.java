@@ -30,7 +30,8 @@ import org.calacademy.antweb.home.PlaceTotals;
  *   place.valid              Valid species = valid extant species and subspecies on the list; and Valid <= Species
  *   place.specimens          geolocales, projects: Specimens = sum of the species and subspecies rows' specimens;
  *                            museums, bioregions: = their specimens (specimen.museum, specimen.bioregion)
- *   place.endemic, place.introduced   = the rows flagged on the list (the rows endemic.do and introduced.do show)
+ *   place.endemic, place.introduced   = the rows flagged on the list with a counted status (the rows endemic.do and
+ *                                       introduced.do show; PlaceTotals.flaggedCondition, 2026-10-27)
  *   place.pies               "Species per Subfamily" adds up to Species, "Specimens per Subfamily" to Specimens
  *   place.images             Images >= Imaged specimens <= Specimens; Images = all views + labels; Ant images =
  *                            sum of the views; specimens with images = imaged + label-only; the place table's
@@ -75,6 +76,7 @@ public final class CountInvariants {
         + " list of species intercepted at ports of entry, kept without specimen or image numbers (Brian Fisher, 2026-10-22), so no nightly"
         + " step counts them.";
     /** A number whose rule changed on 2026-10-22 (docs/numbers.md Q7, Q8): it still equals the count by the old rule. */
+    static final String ANT_IMAGES_PENDING = "counted every image file, labels included, before 2026-10-27; the next nightly run counts images of the ant";
     static final String Q7_PENDING = "counted by the rule before 2026-10-22 (ants only, Q7); the next nightly run counts it by the new rule";
 
     public static boolean rulesCounted(List<String> lines) {
@@ -390,7 +392,8 @@ public final class CountInvariants {
         check(new Check("place." + type + ".stored", "read the " + t + " table", ""), c -> stored.putAll(rows(
             "select " + k + ", subfamily_count, genus_count, species_count, valid_species_count, specimen_count, image_count,"
             + " imaged_specimen_count" + extra + " from " + t)));
-        checks.remove(checks.size() - 1);   // not a check of its own
+        // not a check of its own, unless it failed: then the table shows it (with the error) instead of 0/0 rows below
+        if (checks.get(checks.size() - 1).error == null) checks.remove(checks.size() - 1);
 
         String[] ranks = {PlaceTotals.SUBFAMILY, PlaceTotals.GENUS, PlaceTotals.SPECIES};
         String[] words = {"Subfamilies", "Genera", "Species"};
@@ -453,7 +456,9 @@ public final class CountInvariants {
                     .pendingOn("endemic".equals(field), true, false, false);
                 check(check, c -> {
                     if (!columnExists(l, "is_" + field)) return;
-                    Map<String, long[]> flagged = rows("select " + lk + ", count(*) from " + l + " where is_" + field + " = 1 group by " + lk);
+                    // the rule of the lists and the numbers: flagged rows of a counted status (B70, 2026-10-27)
+                    Map<String, long[]> flagged = rows("select l." + lk + ", count(*) from " + l + " l where "
+                        + PlaceTotals.flaggedCondition(field) + " group by l." + lk);
                     for (String key : inScope.keySet()) {
                         if (!stored.containsKey(key)) continue;
                         compare(c, type, key, "endemic".equals(field) ? "Endemic" : "Introduced", v(stored, key, col), v(flagged, key, 0), "=", why(c, type, key));
@@ -734,7 +739,7 @@ public final class CountInvariants {
             java.sql.Timestamp created = null;
             try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(
                     "select extant_taxa, specimens, species_imaged, specimens_imaged, total_images, " + safeDate("created")
-                    + " from statistics order by created desc limit 1"))) {
+                    + " from statistics order by created desc, id desc limit 1"))) {
                 if (r.next()) {
                     row = new long[] {r.getLong(1), r.getLong(2), r.getLong(3), r.getLong(4), r.getLong(5)};
                     created = r.getTimestamp(6);
@@ -766,7 +771,7 @@ public final class CountInvariants {
                 "select count(*) from specimen",
                 org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIES_SQL,
                 org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIMENS_SQL,
-                "select count(*) from image"};
+                org.calacademy.antweb.home.StatisticsDb.TOTAL_IMAGES_SQL};   // images of the ant since 2026-10-27
             places.computeIfAbsent("site", x -> keyMap()).put("home", "home page and statsPage");
             for (int i = 0; i < what.length; i++) {
                 long live;
@@ -777,10 +782,11 @@ public final class CountInvariants {
                 if (!nightlyRow && (i == 2 || i == 3)) p = RULES_PENDING;
                 // Q7 (2026-10-22): ants only. A row written before that rule equals the old count: pending until the next nightly run.
                 String before = i == 0 ? org.calacademy.antweb.home.StatisticsDb.VALID_SPECIES_SQL_BEFORE_Q7
-                    : i == 2 ? org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIES_SQL_BEFORE_Q7 : null;
+                    : i == 2 ? org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIES_SQL_BEFORE_Q7
+                    : i == 4 ? org.calacademy.antweb.home.StatisticsDb.TOTAL_IMAGES_SQL_BEFORE : null;
                 if (p == null && before != null && row[i] != live) {
                     try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(before))) {
-                        if (r.next() && r.getLong(1) == row[i]) p = Q7_PENDING;
+                        if (r.next() && r.getLong(1) == row[i]) p = i == 4 ? ANT_IMAGES_PENDING : Q7_PENDING;
                     }
                 }
                 if (p == null && uploadSince) p = "specimens were uploaded after the numbers were written";

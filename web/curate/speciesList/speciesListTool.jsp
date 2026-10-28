@@ -12,6 +12,7 @@
 request.getSession().setAttribute("project", null);
 %>
 
+<%@include file="/curate/curatorCheck.jsp" %>
 <%@include file="/common/antweb_admin-defs.jsp" %>
 
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">

@@ -51,7 +51,8 @@ public class LineNumMgr {
 		String theHeader = null;
 		String lastLine = null;
 
-        BufferedReader in = Files.newBufferedReader(Paths.get(uploadFile.getFileLoc()), uploadFile.getCharset());
+        // try-with-resources: the file was left open after every upload.
+        try (BufferedReader in = Files.newBufferedReader(Paths.get(uploadFile.getFileLoc()), uploadFile.getCharset())) {
         theLine = in.readLine();
         int lineNum = 1;
         int componentCount = 0;
@@ -98,6 +99,7 @@ public class LineNumMgr {
           lastLine = theLine;
           theLine = in.readLine();
           ++lineNum; 
+        }
         }
 
 		//A.log("init() componentCountChanges:" + componentCountChanges + " report:" + report());

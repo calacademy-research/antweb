@@ -50,7 +50,10 @@ public class TaxonWorksTransformer extends Transformer {
             Pair.of("habitat", "Habitat"),
             Pair.of("TW:DataAttribute:CollectingEvent:Microhabitat", "Microhabitat"),
             Pair.of("samplingProtocol", "Method"),
-            Pair.of("TW:DataAttribute:CollectingEvent:CollectionNotes", "CollXYAccuracy"),
+            // Collection notes (Brian Fisher, 2026-10-27). Was "CollXYAccuracy", the old Biota name that the specimen
+            // upload also stores in collectionnotes (SpecimenUploadParse.buildColumnTranslations), so the column was
+            // already right; the name now says what it is.
+            Pair.of("TW:DataAttribute:CollectingEvent:CollectionNotes", "CollectionNotes"),
             Pair.of("verbatimLocality", "LocalityName"),
             Pair.of("TW:DataAttribute:CollectingEvent:LocalityCode", "LocalityCode"),
             Pair.of("TW:DataAttribute:CollectingEvent:adm2", "Adm2"),
@@ -226,17 +229,12 @@ public class TaxonWorksTransformer extends Transformer {
     private void passFieldCheck (CSVRecord line) throws AntwebException {
         String[] fieldArray = {"TW:Internal:otu_name", "TW:DataAttribute:CollectingEvent:Country"
             , "TW:DataAttribute:CollectingEvent:adm1", "TW:DataAttribute:CollectingEvent:adm2"};
-        int c = 0;
-        String notMappedMessage = null;
-        ArrayList<String> fieldList = new ArrayList<>(Arrays.asList(fieldArray));
-        for (String field : fieldList) {
-            c++;
-            if (!line.isMapped(field)) {
-                if (c > 1) notMappedMessage += ", ";
-                notMappedMessage += field;
-            }
+        // The missing columns, comma separated (the text began with "null" until 2026-10-27).
+        List<String> notMapped = new ArrayList<>();
+        for (String field : fieldArray) {
+            if (!line.isMapped(field)) notMapped.add(field);
         }
-        if (notMappedMessage != null) throw new AntwebException(notMappedMessage);
+        if (!notMapped.isEmpty()) throw new AntwebException(String.join(", ", notMapped));
     }
 
 

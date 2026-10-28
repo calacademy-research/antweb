@@ -68,7 +68,7 @@ public final class Rank implements Serializable {
     }
     public static boolean isSubspeciesOrBelow(String rank) {
         int rankInt = Rank.getRankLevel(rank);
-        return rankInt <= Rank.getRankLevel(Rank.SUBFAMILY);
+        return rankInt <= Rank.getRankLevel(Rank.SUBSPECIES);  // was SUBFAMILY: true for genus and species
     }
 
 
@@ -86,7 +86,7 @@ public final class Rank implements Serializable {
 			return null;
 		String pluralRank;
 		if (FAMILY.equals(rank)) {
-			pluralRank = "families";
+			pluralRank = "Families";  // capitalized like the other ranks
 		} else if (SUBFAMILY.equals(rank)) {
 			pluralRank = "Subfamilies";
 		} else if (TRIBE.equals(rank)) {

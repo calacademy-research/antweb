@@ -244,10 +244,10 @@
 <tr class="ps_head"><th colspan="3">Taxonomic diversity</th></tr>
 <tr data-stat="subfamilies" data-n="<%= overview.getSubfamilyCount() %>"><td class="ps_name">Subfamilies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getSubfamilyCount()) %></td><td class="ps_def">Subfamilies recorded on <%= listName %>.</td></tr>
 <tr data-stat="genera" data-n="<%= overview.getGenusCount() %>"><td class="ps_name">Genera</td><td class="ps_num"><%= Formatter.commaFormat(overview.getGenusCount()) %></td><td class="ps_def">Genera recorded on <%= listName %>.</td></tr>
-<tr data-stat="species" data-n="<%= overview.getSpeciesCount() %>"><td class="ps_name">Species / subspecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">All species and subspecies recorded on <%= listName %>, from any source, including valid names, morphospecies, and indetermined species. Names not identified to genus are not counted as species; their specimens are counted under Specimens.</td></tr>
 <% if (overview.getValidSpeciesCount() > 0) { %>
 <tr data-stat="valid" data-n="<%= overview.getValidSpeciesCount() %>"><td class="ps_name">Valid species / subspecies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getValidSpeciesCount()) %></td><td class="ps_def">Currently valid, formally named, living (non-fossil) species and subspecies recorded on <%= listName %>. Excludes morphospecies and unidentified taxa.</td></tr>
 <% } %>
+<tr data-stat="species" data-n="<%= overview.getSpeciesCount() %>"><td class="ps_name">Species / subspecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">All species and subspecies recorded on <%= listName %>, from any source, including valid names, morphospecies, and indetermined species. Names not identified to genus are not counted as species; their specimens are counted under Specimens.</td></tr>
 <% if (showEndemism) { %>
 <tr class="ps_head"><th colspan="3">Endemism and introduced species</th></tr>
 <tr data-stat="endemic" data-n="<%= overview.getEndemicSpeciesCount() %>"><td class="ps_name">Endemic</td><td class="ps_num"><%= endemicCell %></td><td class="ps_def"><%= endemicDef %></td></tr>
@@ -262,15 +262,16 @@
 <% if (placeImages != null) { %>
 <tr data-stat="imaged" data-n="<%= placeImages.imagedSpecimens %>"><td class="ps_name">Imaged specimens</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.imagedSpecimens) %></td><td class="ps_def">Specimens with at least one image of the ant.<% if (placeImages.labelOnlySpecimens > 0) { %> Excludes specimens with only label images (<span data-label-only-shown="<%= placeImages.labelOnlySpecimens %>"><%= Formatter.commaFormat(placeImages.labelOnlySpecimens) %></span> additional specimens).<% } %></td></tr>
 <tr class="ps_head"><th colspan="3">Image documentation</th></tr>
-<tr data-stat="images" data-n="<%= placeImages.allImages %>"><td class="ps_name">Images</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.allImages) %></td><td class="ps_def">Total images associated with specimens <%= fromWhere %>, including ant and specimen-label images.</td></tr>
-<tr data-stat="ant-images" data-n="<%= placeImages.antImages %>" class="ps_sub"><td class="ps_name">Ant images</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.antImages) %></td><td class="ps_def" id="image-breakdown">Images showing the ant<%= org.calacademy.antweb.home.PlaceImageCountDb.antViews(placeImages) %>.</td></tr>
+<%-- 2026-10-27 (Brian Fisher): "Images" means images of the ant everywhere (ImageCounts); every file is "Image files". --%>
+<tr data-stat="images" data-n="<%= placeImages.allImages %>"><td class="ps_name">Image files</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.allImages) %></td><td class="ps_def">Every image file of specimens <%= fromWhere %>: images of the ant and label images.</td></tr>
+<tr data-stat="ant-images" data-n="<%= placeImages.antImages %>" class="ps_sub"><td class="ps_name">Images</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.antImages) %></td><td class="ps_def" id="image-breakdown">Images showing the ant<%= org.calacademy.antweb.home.PlaceImageCountDb.antViews(placeImages) %>.</td></tr>
 <tr data-stat="label-images" data-n="<%= placeImages.labelImages() %>" class="ps_sub"><td class="ps_name">Label images</td><td class="ps_num"><%= Formatter.commaFormat(placeImages.labelImages()) %></td><td class="ps_def">Images showing specimen labels rather than the ant.</td></tr>
 <% } else { %>
 <% if (imagedShown != 0) { %>
 <tr data-stat="imaged" data-n="<%= imagedShown %>"><td class="ps_name">Imaged specimens</td><td class="ps_num"><%= Formatter.commaFormat(imagedShown) %></td><td class="ps_def">Specimens with at least one image (labels included until tonight's update).</td></tr>
 <% } %>
 <tr class="ps_head"><th colspan="3">Image documentation</th></tr>
-<tr data-stat="images" data-n="<%= imagesShown %>"><td class="ps_name">Images</td><td class="ps_num"><%= Formatter.commaFormat(imagesShown) %></td><td class="ps_def">Images of these specimens, labels included (the breakdown appears after tonight's update).</td></tr>
+<tr data-stat="images" data-n="<%= imagesShown %>"><td class="ps_name">Image files</td><td class="ps_num"><%= Formatter.commaFormat(imagesShown) %></td><td class="ps_def">Every image file of these specimens, labels included (images of the ant and label images appear apart after tonight's update).</td></tr>
 <% } %>
 <% } // not a species list only %>
 </table>
@@ -323,19 +324,13 @@ Images:
     String objectName = overview.getName();  // Used?
 
     if (LoginMgr.isCurator(request)) {
-      // Settings of a project assigned to this curator (administrators get the link under Admin Info).
-      if (overview instanceof Project && !LoginMgr.isAdmin(accessLogin)
-          && SpeciesListAccess.canEdit(accessLogin, overview.getName())) { %>
-        <br><br><a href="<%= AntwebProps.getDomainApp() %>/editProject.do?projectName=<%= Html.escAttr(Html.url(overview.getName())) %>">Edit project settings</a>
-   <% }
+      // (No "Edit project settings" link for curators: editProject.do is for administrators, who get it under Admin Info.)
       if (overview instanceof Museum) { %>
         <br><br><h2>Curator Info</h2>
         Museum counts are computed daily and may not reflect most recent specimen uploads.
 
-	 <% if (LoginMgr.isAdmin(accessLogin)) { %>
-          <br><b><%= overview.getRecalcButton(request) %></b> (admins: recounts this museum's specimens, images and taxa now instead of in the nightly run; takes a few minutes)
-     <% }
-
+          <br><b><%= overview.getRecalcButton(request) %></b> (curators and admins: recounts this museum's specimens, images and taxa now instead of in the nightly run; takes a few minutes)
+     <%
       }
     }
 

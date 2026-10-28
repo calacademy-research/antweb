@@ -27,6 +27,13 @@
 10. (2026-10-27, B74, B75) CopyrightDb keeps every copyright row (the image upload report of an earlier year's batch
    failed); Compare of a search by species does not call Taxon.setHasImages(connection) (it failed) and the page
    prints the preparation's count when nothing is left.
+11. (2026-10-27) A form post counts only when sent as POST (HttpUtil.isPost), the token check in
+   SessionRequestFilter covers every method other than GET, HEAD and OPTIONS (Csrf.methodNeedsCheck), and
+   LoginAction accepts a password only in a post; only administrators create a login in SaveLoginAction. Unit test: test/.../util/PostMethodTest.java.
+12. (2026-10-27, PR #291 staging run 2) No if statement whose action is lost in a trailing comment (GeolocaleMgr: the
+   North Dakota return was inside the comment, so the Ohio line below became its body); the home page slideshow is
+   built before it is written (an error leaves it empty instead of cutting the page off) and TaxonMgr publishes its
+   name list and taxon map only once they are filled (a reload runs after every specimen upload).
 
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
@@ -96,6 +103,38 @@ def test_titles():
     assert not found, found
     assert 'String titleStr = "Subregion: "' in read(os.path.join(ROOT, "web", "subregion.jsp"))
     print("Page titles: no 'Subegion'.")
+
+
+def test_core_util_fixes(sources):
+    """(2026-10-27, core and util fixes) Request and stored values reach SQL quoted (subgenus filter, place names
+    in maps and place criteria, specimen taxa), links built from the request address are escaped, the group page
+    uses the group found by name, the map cache is refreshed by curators only, an administrator's postInstantiate
+    goes through the POST confirmation, and four unused classes that built SQL from their inputs (or tested
+    nothing) are gone."""
+    def code(path):  # without comments
+        text = re.sub(r"/\*.*?\*/", " ", sources[path], flags=re.S)
+        return "\n".join(l for l in text.splitlines() if not l.strip().startswith("//"))
+    p = "src/org/calacademy/antweb/"
+    genus = code(p + "Genus.java")
+    assert "subgenus = '\" + subgenus" not in genus and "DBUtil.sqlLiteral(subgenus)" in genus, "subgenus reaches SQL unquoted"
+    for path in (p + "Map.java", p + "Overview.java", p + "TaxaPage.java"):
+        text = code(path)
+        assert not re.search(r"= '\"\s*\+\s*(overview(\.getName\(\)|\.getTitle\(\))?|getName\(\)|name|\(\(Adm1\) overview\)\.getParent\(\))\s*\+\s*\"'", text), path
+    taxa = code(p + "TaxaPage.java")
+    assert "overview instanceof Country || overview instanceof Adm1 || overview instanceof Project)) withSpecimen = false" in taxa
+    group = code(p + "GroupAction.java")
+    assert "groupId = group.getId();" in group, "group page by name uses the id parameter again"
+    assert "refresh && LoginMgr.isCurator(request)" in code(p + "BigMapAction.java")
+    for path in (p + "Museum.java", p + "Project.java", p + "geolocale/Bioregion.java", p + "geolocale/Geolocale.java"):
+        assert not re.search(r"<a href='\" \+ otherUrl", code(path)), path + ": request address in a link, unescaped"
+    util = code(p + "util/UtilAction.java")
+    assert '"postInstantiate".equals(action) && !SchedulerCall.isPostInitialize(request)))' in util
+    mgr = code(p + "util/AntwebMgr.java")
+    assert "s_oneAtATime.set(false);" in mgr[mgr.index("} finally {"):], "populate() can leave its guard set"
+    assert "where login_id" not in code(p + "util/ListUploadsAction.java").replace('" where") + " login_id', "")
+    for gone in ("MapLocality.java", "SlideShowSearch.java", "SpecimenFieldSummary.java", "test/Rest.java"):
+        assert not os.path.exists(os.path.join(ROOT, p + gone)), gone
+    print("Core and util fixes in place.")
 
 
 def test_old_manage_login_page_gone():
@@ -228,12 +267,52 @@ def test_copyright_rows_and_compare_by_species(sources):
     print("Copyright rows kept; Compare by species counts imaged names; an empty preparation prints its count.")
 
 
+def test_post_means_post(sources):
+    http = sources["src/org/calacademy/antweb/util/HttpUtil.java"]
+    body = http[http.index("public static boolean isPost("):]
+    body = body[:body.index("\n    }")]
+    assert 'request.getMethod()' in body, "HttpUtil.isPost no longer looks at the method"
+    filt = sql_text(sources["src/org/calacademy/antweb/util/SessionRequestFilter.java"])
+    assert "Csrf.methodNeedsCheck(request.getMethod())" in filt, "the filter checks the token only for some methods again"
+    login = sql_text(sources["src/org/calacademy/antweb/LoginAction.java"])
+    assert re.search(r"password\s*!=\s*null\s*&&\s*!HttpUtil\.isPost\(request\)", login), \
+        "LoginAction accepts a password outside a post again"
+    save = sql_text(sources["src/org/calacademy/antweb/curate/login/SaveLoginAction.java"])
+    assert re.search(r"if \(login == null && !isAdminUser\) \{\s*s_log\.warn\(.*?\);\s*return mapping\.findForward\(\"permissionDenied\"\)", save, re.S), \
+        "SaveLoginAction lets someone other than an administrator create a login again"
+    print("Posts are posts; the token check covers every method that can change something; passwords only by post.")
+
+
+def test_no_lost_ifs_and_whole_home_page(sources):
+    lost = []
+    for path, src in sources.items():
+        for n, line in enumerate(src.splitlines(), 1):
+            # "if (...)  // ... return x;": the comment holds the statement, the next line becomes the if's body
+            if re.match(r"\s*(if|else if)\s*\(.*\)\s*//.*\breturn\b", line):
+                lost.append(f"{path}:{n}")
+    assert not lost, "an if statement whose return is inside a comment: " + ", ".join(lost)
+    geo = sources["src/org/calacademy/antweb/util/GeolocaleMgr.java"]
+    assert re.search(r'"northdakotaants"\.equals\(projectName\).*\) return GeolocaleMgr\.getAdm1\("North Dakota"', geo)
+    with open(os.path.join(ROOT, "web/common/slideshow_homepage.jsp"), encoding="utf-8") as f:
+        show = f.read()
+    assert "StringBuilder slides" in show and "catch (RuntimeException e)" in show and "<%= slides %>" in show, \
+        "the home page slideshow is written while it is built again"
+    assert "if (subfamilyName == null) continue;" in show
+    mgr = sources["src/org/calacademy/antweb/util/TaxonMgr.java"]
+    body = mgr[mgr.index("public static void populate(Connection connection, boolean forceReload, boolean initialRun)"):]
+    body = body[:body.index("s_populateTime")]
+    assert "prettyTaxaNamesList = new ArrayList" not in body and "s_taxa = new HashMap" not in body, \
+        "TaxonMgr.populate publishes a list or map before filling it"
+    print("No if loses its statement to a comment; the home page slideshow and TaxonMgr's reload are whole.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
     test_login_updates_keep_created(sources)
     test_no_delete_all_page_text(sources)
     test_titles()
+    test_core_util_fixes(sources)
     test_old_manage_login_page_gone()
     test_admin_links_column_stacks_on_phones()
     test_too_busy_for_bots_is_returned(sources)
@@ -242,6 +321,8 @@ def main():
     test_adm1_totals_not_only_live(sources)
     test_global_recounted_after_cleanup_and_synonym_bound(sources)
     test_copyright_rows_and_compare_by_species(sources)
+    test_post_means_post(sources)
+    test_no_lost_ifs_and_whole_home_page(sources)
 
 
 if __name__ == "__main__":

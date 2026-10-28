@@ -60,7 +60,12 @@ or refused, line by line) and, where you may read it, the file that was uploaded
     for (Upload upload : list) {
       ++count;
       out.println("<tr><td>" + count + ".</td>");
-      if (isAllGroups) out.println("<td><a href=\"" + domainApp + "/listUploads.do?groupId=" + upload.getGroupId() + "\">" + GroupMgr.getGroup(upload.getGroupId()).getAbbrev() + "</a></td>");
+      if (isAllGroups) {
+        // A group that is gone (deleted) shows its number: until 2026-10-27 it stopped the whole list.
+        org.calacademy.antweb.Group uploadGroup = GroupMgr.getGroup(upload.getGroupId());
+        String groupLabel = uploadGroup == null ? "group " + upload.getGroupId() : uploadGroup.getAbbrev();
+        out.println("<td><a href=\"" + domainApp + "/listUploads.do?groupId=" + upload.getGroupId() + "\">" + Html.esc(groupLabel) + "</a></td>");
+      }
       // Link the report only while it is on the server (most reports from before Nov 2019 are gone).
       if (upload.hasReport()) {
         out.println("<td>" + upload.getCreated() + "</td><td><a href=\"" + Html.escAttr(domainApp + "/web/log/" + upload.getUploadDir() + "/" + Html.url(upload.getLogFileName())) + "\">" + Html.esc(upload.getLogFileName()) + "</a></td>");

@@ -57,8 +57,8 @@ finished and how many images it holds. The date opens the batch's report (images
     java.text.SimpleDateFormat day = new java.text.SimpleDateFormat("yyyy-MM-dd");
     java.text.SimpleDateFormat minute = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm");
     out.println("<p id=\"image-uploads-total\"><b>" + org.calacademy.antweb.Formatter.commaFormat(list.size()) + " image upload batches"
-      + (oldest != null ? " since " + day.format(oldest) : "") + ", holding " + org.calacademy.antweb.Formatter.commaFormat(images) + " images</b>"
-      + " (the oldest batch listed; Image Count added up).</p>");
+      + (oldest != null ? " since " + day.format(oldest) : "") + ", holding " + org.calacademy.antweb.Formatter.commaFormat(images) + " image files</b>"
+      + " (the oldest batch listed; Image files added up; label images are files too).</p>");
     
     int i = list.size() + 1;
     %>
@@ -73,7 +73,7 @@ finished and how many images it holds. The date opens the batch's report (images
  <% } %>
     <th>Artist</th>
     <th>Complete</th>
-    <th>Image Count</th>
+    <th>Image files</th>
     <th>Created</th>
     </tr>
     <%
@@ -101,12 +101,16 @@ finished and how many images it holds. The date opens the batch's report (images
       out.println("<td>" + imageUpload.getIsComplete() + "</td>");
       out.println("<td class=\"aw-num\">" + imageUpload.getImageCount() + "</td>");
       out.println("<td class=\"aw-nowrap\"><a href='" + domainApp + "/imageUploadReport.do?id=" + imageUpload.getId() + "'>"
-        + (imageUpload.getCreated() != null ? minute.format(imageUpload.getCreated()) : "") + "</a></td>");
+        + (imageUpload.getCreated() != null ? minute.format(imageUpload.getCreated()) : "") + "</a></td></tr>");
     }
-    out.println("</tr></table>");
+    out.println("</table>");
+    request.setAttribute("imagesDefinitionFiles", Boolean.TRUE);
+%>
+<%@ include file="/common/imagesDefinition.jsp" %>
+<%
 
-    if (i == 0 && message.contains("curator.do")) out.println("<p>No uploads for this curator</p>");
-    if (i == 0 && message.contains("group.do")) out.println("<p>No uploads for this group</p>");
+    if (list.isEmpty() && message.contains("curator.do")) out.println("<p>No uploads for this curator</p>");
+    if (list.isEmpty() && message.contains("group.do")) out.println("<p>No uploads for this group</p>");
     out.println("</div>");
 %>
 

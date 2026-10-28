@@ -513,7 +513,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 
 <div class="clear"></div>
 <div id=data_title2>
-<b>ImageCount (deprecated):</b>
+<b>Image files (taxon.image_count, labels included):</b>
 </div>
 <div id=data_items2>
 <%= taxon.getImageCount() %> &nbsp;
@@ -521,7 +521,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 
 <div class="clear"></div>
 <div id=data_title2>
-<b>ImageCount (deprecated):</b>
+<b>Image files (taxon.image_count, labels included):</b>
 </div>
 <div id=data_items2>
 <%= taxon.getImageCount() %> &nbsp;
@@ -529,7 +529,7 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 
 <div class="clear"></div>
 <div id=data_title2>
-<b>HasImageCount (deprecated):</b>
+<b>HasImageCount (deprecated, image files):</b>
 </div>
 <div id=data_items2>
 <%= taxon.getHasImagesCount() %> &nbsp;
@@ -796,7 +796,13 @@ Default Images:
         <div class="clear"></div>        
 <% } else {
      if (AntwebProps.isDevMode()) out.print("Dev: images " + taxon.getImages());
-   } %>
+   }
+   // 2026-10-27: which castes are imaged (BrowseAction, ImagedCastes; specimens from anywhere, labels do not count).
+   String imagedCastesLine = (String) request.getAttribute("imagedCastes");
+   if (imagedCastesLine != null) { %>
+        <%= imagedCastesLine %>
+        <div class="clear"></div>
+<% } %>
 
     <!-- % @include file="/curate/defaultSpecimen/defaultSpecimenPanel.jsp" % --> 
 

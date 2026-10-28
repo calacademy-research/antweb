@@ -61,9 +61,11 @@ public final class CountCheckAction extends AntwebAction {
             }
             BackgroundJobs.Job active = CountCheckJob.active();
             if (active != null) return new ActionForward("/jobStatus.do?id=" + active.getId() + "&already=1", true);
-            if (!"1".equals(request.getParameter("run")) && CountCheckJob.latest() > 0) {
-                request.setAttribute("html", runLink(domainApp) + "<p>Latest check: job " + CountCheckJob.latest() + ".</p>"
-                    + CountCheckJob.report(CountCheckJob.latest()));
+            // Read the latest job and its report once: a job finishing in between could change or drop them.
+            int latest = CountCheckJob.latest();
+            String latestReport = latest > 0 ? CountCheckJob.report(latest) : null;
+            if (!"1".equals(request.getParameter("run")) && latestReport != null) {
+                request.setAttribute("html", runLink(domainApp) + "<p>Latest check: job " + latest + ".</p>" + latestReport);
                 return mapping.findForward("success");
             }
             int seconds = CountCheckJob.SECONDS;
@@ -87,16 +89,15 @@ public final class CountCheckAction extends AntwebAction {
             connection = DBUtil.getConnection(dataSource, dbMethodName);
             connection.setReadOnly(true);
             List<String> notes = new ArrayList<>();
+            // A check of given places (the full check returned above): no rotating sample, no time limit;
+            // the checks of every place only with invariants=1.
             List<CountCheck.Place> places = places(request, connection, notes);
-            boolean custom = isCustom(request);
-            List<CountCheck.Place> rotating = custom ? new ArrayList<>() : rotatingSample(connection, java.time.LocalDate.now().getDayOfYear());
-            int seconds = ROTATING_SECONDS;
-            try {
-                if (request.getParameter("seconds") != null) seconds = Math.max(0, Math.min(600, Integer.parseInt(request.getParameter("seconds"))));
-            } catch (NumberFormatException e) { /* default */ }
-            boolean invariants = !custom || "1".equals(request.getParameter("invariants"));
+            List<CountCheck.Place> rotating = new ArrayList<>();
+            int seconds = 0;
+            boolean invariants = "1".equals(request.getParameter("invariants"));
             List<String> log = computeLog();
             CountCheck countCheck = new CountCheck(connection);
+            countCheck.antImagesRuleCounted = CountCheck.antImagesRuleCounted(log);
             if (invariants) {
                 countCheck.curatorsRead = LoginMgr.getCuratorsRead();
                 countCheck.curatorNumbers = curatorNumbers();
@@ -155,13 +156,6 @@ public final class CountCheckAction extends AntwebAction {
         }
     }
 
-    /**
-     * The rotating sample is recounted until the whole check (invariants, core places, rotating places) has run
-     * this many seconds, so the page answers within about a minute (Cloudflare ends requests after 100 s).
-     * Parameter seconds (0 to 600) changes it.
-     */
-    static final int ROTATING_SECONDS = 50;   // a check of given places in the request (the full check: CountCheckJob.SECONDS)
-
     static boolean isCustom(HttpServletRequest request) {
         return request.getParameterValues("geolocaleId") != null || request.getParameter("project") != null
             || request.getParameter("museum") != null || request.getParameter("bioregion") != null;
@@ -170,7 +164,8 @@ public final class CountCheckAction extends AntwebAction {
     /**
      * Today's slice of every kind of place (2026-10-21), so every place is recounted from the specimen records
      * within a cycle: countries 1/7 a day (all in a week), live adm1s 1/30 (all in a month), subregions and
-     * regions 1/7, live projects 1/7, museums 1/7, one bioregion a day. day: day of the year.
+     * regions 1/7, live projects 1/7, museums 1/7, one bioregion a day. day: rotationDay() (days since 1970,
+     * so the cycles run on across the new year; the day of the year restarted at 1 on 1 January).
      */
     static List<CountCheck.Place> rotatingSample(Connection connection, int day) {
         List<CountCheck.Place> places = new ArrayList<>();
@@ -207,6 +202,15 @@ public final class CountCheckAction extends AntwebAction {
             places.add(new CountCheck.Place(CountCheck.BIOREGION, b, b + " bioregion", "bioregion", b));
         }
         return places;
+    }
+
+    /** The day number for rotatingSample: today in Pacific time (as the nightly run), counted from 1970-01-01. */
+    static int rotationDay() {
+        return rotationDay(java.time.LocalDate.now(java.time.ZoneId.of("America/Los_Angeles")));
+    }
+
+    public static int rotationDay(java.time.LocalDate date) {
+        return (int) date.toEpochDay();
     }
 
     private static List<Geolocale> sorted(List<Geolocale> list) {

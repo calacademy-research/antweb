@@ -27,14 +27,15 @@
 
    FieldGuide fieldGuide = (FieldGuide) request.getAttribute("fieldGuide");
 
-   Taxon taxon = fieldGuide.getShowTaxon();
-   if (taxon == null) taxon = new DummyTaxon();
-
    if (fieldGuide == null) {
        AntwebUtil.log("fieldGuide-body.jsp fieldGuide is null for request:" + HttpUtil.getRequestInfo(request));     
        return;
    }  
-   String fgTitle =  fieldGuide.getTitle(); // Sometimes this is null.  After a server restart.  Why?   
+   Taxon taxon = fieldGuide.getShowTaxon();
+   if (taxon == null) taxon = new DummyTaxon();
+
+   // Escaped: a field guide of search results is titled with the search's own values.
+   String fgTitle = Html.esc(fieldGuide.getTitle()); // Sometimes this is null.  After a server restart.  Why?   
 
    String requestUri = HttpUtil.getQueryString(request);
    boolean from_search = false;

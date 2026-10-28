@@ -115,25 +115,26 @@ The SpeciesListTool log is here: <a href="<%= AntwebProps.getDomainApp() %>/logM
 <tr>
 <th>Reference Species List</th>
 <%
-  String header1 = "Species List 1";
-  if (mapSpeciesList1Name != null && !"none".equals(mapSpeciesList1Name)) { 
-    SpeciesListable sl = SpeciesListMgr.getSpeciesList(mapSpeciesList1Name);
-if (sl == null) A.log("speciesListTool-body.jsp sl is null for mapSpeciesList1Name:" + mapSpeciesList1Name);
-    String publicListLink = "<a href='" + sl.getListLink() + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width='11' height='12' border='0' title='Go to " + org.calacademy.antweb.util.Html.esc(sl.getTitle()) + " Ant List'></a>";
-    header1 = "<a href='" + AntwebProps.getDomainApp() + "/speciesListHistory.do?speciesListName=" + mapSpeciesList1Name + "'>Species List 1</a>" + publicListLink;
+  // The column headings: a link to the list's history and to its public page. A list that is not found
+  // (an old link, a renamed project, or "" for a list made of its children) is named "not found":
+  // until 2026-10-27 it stopped the page with an error.
+  String[] mapNames = {mapSpeciesList1Name, mapSpeciesList2Name, mapSpeciesList3Name};
+  String[] headers = new String[3];
+  for (int h = 0; h < 3; ++h) {
+    String mapName = mapNames[h];
+    headers[h] = "Species List " + (h + 1);
+    if (mapName == null || "none".equals(mapName)) continue;
+    SpeciesListable sl = SpeciesListMgr.getSpeciesList(mapName);
+    if (sl == null) {
+      headers[h] += " (" + Html.esc(mapName) + ": not found)";
+      continue;
+    }
+    String publicListLink = "<a href='" + Html.escAttr(sl.getListLink()) + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width='11' height='12' border='0' title='Go to " + Html.escAttr(sl.getTitle()) + " Ant List'></a>";
+    headers[h] = "<a href='" + AntwebProps.getDomainApp() + "/speciesListHistory.do?speciesListName=" + Html.escAttr(Html.url(mapName)) + "'>Species List " + (h + 1) + "</a>" + publicListLink;
   }
-  String header2 = "Species List 2";
-  if (mapSpeciesList2Name != null && !"none".equals(mapSpeciesList2Name)) {
-    SpeciesListable sl = SpeciesListMgr.getSpeciesList(mapSpeciesList2Name);
-    String publicListLink = "<a href='" + sl.getListLink() + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width='11' height='12' border='0' title='Go to " + org.calacademy.antweb.util.Html.esc(sl.getTitle()) + " Ant List'></a>";
-    header2 = "<a href='" + AntwebProps.getDomainApp() + "/speciesListHistory.do?speciesListName=" + mapSpeciesList2Name + "'>Species List 2</a>" + publicListLink;
-  }
-  String header3 = "Species List 3";
-  if (mapSpeciesList3Name != null && !"none".equals(mapSpeciesList3Name)) {
-    SpeciesListable sl = SpeciesListMgr.getSpeciesList(mapSpeciesList3Name);
-    String publicListLink = "<a href='" + sl.getListLink() + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width='11' height='12' border='0' title='Go to " + org.calacademy.antweb.util.Html.esc(sl.getTitle()) + " Ant List'></a>";
-    header3 = "<a href='" + AntwebProps.getDomainApp() + "/speciesListHistory.do?speciesListName=" + mapSpeciesList3Name + "'>Species List 3</a>" + publicListLink;
-  }
+  String header1 = headers[0];
+  String header2 = headers[1];
+  String header3 = headers[2];
 %>
 <th><%= header1 %></th><th><%= header2 %></th><th><%= header3 %></th>
 </tr>
@@ -141,14 +142,14 @@ if (sl == null) A.log("speciesListTool-body.jsp sl is null for mapSpeciesList1Na
 <tr>
 <th>
 <form id="refSpeciesListForm" action="<%= AntwebProps.getDomainApp() %>/speciesListTool.do">
-      <input type="hidden" id="mapSpeciesList1Name" name="mapSpeciesList1Name" value="<%= mapSpeciesList1Name %>"/>
-      <input type="hidden" id="mapSpeciesList2Name" name="mapSpeciesList2Name" value="<%= mapSpeciesList2Name %>"/>
-      <input type="hidden" id="mapSpeciesList3Name" name="mapSpeciesList3Name" value="<%= mapSpeciesList3Name %>"/>
+      <input type="hidden" id="mapSpeciesList1Name" name="mapSpeciesList1Name" value="<%= Html.escAttr(String.valueOf(mapSpeciesList1Name)) %>"/>
+      <input type="hidden" id="mapSpeciesList2Name" name="mapSpeciesList2Name" value="<%= Html.escAttr(String.valueOf(mapSpeciesList2Name)) %>"/>
+      <input type="hidden" id="mapSpeciesList3Name" name="mapSpeciesList3Name" value="<%= Html.escAttr(String.valueOf(mapSpeciesList3Name)) %>"/>
 
       <input type="hidden" id="action" name="action" value="changeRefSpeciesList"/>
       
        <% if (mapSpeciesList1Name != null) { %> 
-        <input type="hidden" id="speciesListName" name="speciesListName" value="<%= mapSpeciesList1Name %>"/>  
+        <input type="hidden" id="speciesListName" name="speciesListName" value="<%= Html.escAttr(mapSpeciesList1Name) %>"/>  
        <% } %>
       
 <!-- /th -->
@@ -241,7 +242,7 @@ if (sl == null) A.log("speciesListTool-body.jsp sl is null for mapSpeciesList1Na
       Geolocale adminEditGeolocale = GeolocaleMgr.getGeolocale(mapSpeciesList1Name);
       if (adminEditGeolocale != null) {
    %>
-        <option id="mapSpeciesList1Name" value="<%= mapSpeciesList1Name %>" selected><%= adminEditGeolocale.getName() %></option>   
+        <option id="mapSpeciesList1Name" value="<%= Html.escAttr(mapSpeciesList1Name) %>" selected><%= Html.esc(adminEditGeolocale.getName()) %></option>   
 <%    }
    } %>
 
@@ -307,13 +308,13 @@ if (sl == null) A.log("speciesListTool-body.jsp sl is null for mapSpeciesList1Na
 </th>
 </tr>
 <html:form method="POST" action='<%= org.calacademy.antweb.util.Csrf.action(request, "speciesListTool") %>' enctype="multipart/form-data"><%= org.calacademy.antweb.util.Csrf.field(request) %>
-    <input type="hidden" name="mapSpeciesList1Name" value="<%= mapSpeciesList1Name %>"/>
-    <input type="hidden" name="mapSpeciesList2Name" value="<%= mapSpeciesList2Name %>"/>
-    <input type="hidden" name="mapSpeciesList3Name" value="<%= mapSpeciesList3Name %>"/>
-    <input type="hidden" name="displaySubfamily" value="<%= displaySubfamily %>"/>
+    <input type="hidden" name="mapSpeciesList1Name" value="<%= Html.escAttr(String.valueOf(mapSpeciesList1Name)) %>"/>
+    <input type="hidden" name="mapSpeciesList2Name" value="<%= Html.escAttr(String.valueOf(mapSpeciesList2Name)) %>"/>
+    <input type="hidden" name="mapSpeciesList3Name" value="<%= Html.escAttr(String.valueOf(mapSpeciesList3Name)) %>"/>
+    <input type="hidden" name="displaySubfamily" value="<%= Html.escAttr(String.valueOf(displaySubfamily)) %>"/>
     <input type="hidden" name="action" value="save"/>
-    <input type="hidden" name="refSpeciesListType" value="<%= refSpeciesListType %>" />
-    <input type="hidden" name="refSpeciesListName" value="<%= refSpeciesListName %>"/>
+    <input type="hidden" name="refSpeciesListType" value="<%= Html.escAttr(String.valueOf(refSpeciesListType)) %>" />
+    <input type="hidden" name="refSpeciesListName" value="<%= Html.escAttr(String.valueOf(refSpeciesListName)) %>"/>
     <input type="submit" name="save" value="Save Changes"> <br><br>    
 
 <%

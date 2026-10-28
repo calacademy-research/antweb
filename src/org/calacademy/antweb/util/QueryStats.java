@@ -22,19 +22,17 @@ public class QueryStats {
     public QueryStats() {
     }
     
-    public void count(long millis) {
+    public synchronized void count(long millis) {
         ++queryCount;
         if (millis > maxMillis) {
           maxMillis = millis;
           maxMillisTimestamp = new Date();
         }
-        if (millis < maxMillis) {
+        if (queryCount == 1 || millis < minMillis) {  // the smallest so far (was: the latest below the max)
           minMillis = millis;
         }
 
-        if (minMillis > 0 && maxMillis > 0) {
-          minMaxDiff = (long)((double)minMillis / (double)maxMillis);          
-        }
+        minMaxDiff = maxMillis - minMillis;  // a difference, as named (the ratio cut to a long was always 0)
     
         //A.log("count() minMillis:" + minMillis + " maxMillis:" + maxMillis + " minMacDiff:" + minMaxDiff);
 

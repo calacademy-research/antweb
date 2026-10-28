@@ -362,6 +362,7 @@ To Do
     if (advSearchTaxa != null) {      
         refSpeciesList = new ArrayList<>();
         for (Taxon searchTaxon : advSearchTaxa) {  // displaySubfamily == null added recently.  Unreplicated or tested.
+        if (searchTaxon == null) continue;   // a name not found: it would be added to the lists as null (sort, save)
         String geoSubfamily = null;
         if (searchTaxon != null) geoSubfamily = searchTaxon.getSubfamily();
         // Why would this be null? ***       

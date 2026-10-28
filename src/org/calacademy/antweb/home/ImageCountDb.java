@@ -77,7 +77,7 @@ public class ImageCountDb extends AntwebDb {
         String query = "update taxon " +
                 "set image_count = " +
                 "(select COALESCE(SUM(specimen.image_count), 0) " +
-                "from ant.specimen " +
+                "from specimen " +   // the connection's own database (was ant.specimen)
                 "where taxon.taxon_name = specimen.taxon_name)";
 
         Statement stmt = null;

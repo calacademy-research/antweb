@@ -166,4 +166,6 @@
    
 
 <input type="text" id="imaged_taxa_count" value="<%= imgCount %>" />
+<div class="clear"></div>
+<%@ include file="/common/imagesDefinition.jsp" %>
 </div>

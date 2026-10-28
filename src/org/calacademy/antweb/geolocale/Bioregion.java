@@ -375,8 +375,9 @@ public class Bioregion extends LocalityOverview implements Countable {
 
     public String getTaxonImageCountQuery() {
       String query = "select s.taxon_name taxonName, s.family family, s.subfamily subfamily " 
-           + ", s.genus genus, s.species species, sum(s.image_count) imageSum" 
-           + " from specimen s join bioregion_taxon bt on s.taxon_name = bt.taxon_name " 
+           + ", s.genus genus, s.species species, count(i.id) imageSum"   // ant images only (2026-10-27)
+           + " from specimen s join bioregion_taxon bt on s.taxon_name = bt.taxon_name "
+           + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_OF_SPECIMEN
            + " where bt.bioregion_name = '" + getName() + "'" 
            + " and s.bioregion = '" + getName() + "'"  // 2026-10-20: images of this bioregion's specimens only
            + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species"
@@ -401,7 +402,7 @@ public class Bioregion extends LocalityOverview implements Countable {
 			if (isOverviewPage) {
       	      changeViewOptions += "<li><a href='" + bioregion.getThisPageTarget() + "'>" + bioregion.getTitle() + "</a></li>";
             } else {
-      	      changeViewOptions += "<li><a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + bioregion.getParams() + "'>" + bioregion.getTitle() + "</a></li>";
+      	      changeViewOptions += "<li><a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + bioregion.getParams()) + "'>" + Html.esc(bioregion.getTitle()) + "</a></li>";
             }
 		  }
 		}

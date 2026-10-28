@@ -322,6 +322,12 @@ link) and its one-line summary. The groups, with their counts on 22 October 2026
 | Accounts and logins | 4 | who may upload, who looks after which project, emails |
 | Site checks and counts | 9 | the Admin Alert checks and history, counts for orientation |
 
+**Orphan genera and subfamilies (2026-10-27)**: `orphanGenera` and `orphanSubfamilies` (Names and taxa) list the
+genera and subfamilies that no name has as its parent, with each one's specimens and page-text edits. They replace
+the report of the Orphan Manager (removed 2026-10-18), which found nothing as soon as one name had no parent. They
+only read: deleting orphan genera and subfamilies stays off (`OrphansDb.ORPHAN_GENUS_SUBFAMILY_DELETES_ON`) until
+Brian Fisher and Claude have reviewed the list on staging (docs/numbers.md B68).
+
 Each query's group is set in one place, `Queries.QUERY_GROUPS` (enum `Queries.QueryGroup`). A new query must
 be added to a group there: `QueriesReviewTest.testEveryQueryHasOneGroup` fails in CI otherwise, and on the page a
 query without a group is listed under "Not yet grouped" so it is never hidden. The Relevant Queries boxes of

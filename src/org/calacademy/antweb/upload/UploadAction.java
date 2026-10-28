@@ -97,7 +97,8 @@ public class UploadAction extends AntwebAction {
 	static int MAXLENGTH = 80;
 
 	//    private static boolean m_isInProcess = false;
-	private static String s_isInProcess;
+	// volatile: read without a lock by the status pages and the image upload gate.
+	private static volatile String s_isInProcess;
 
 	// Due to architectural wankiness this is made public.  Easier than a redesign.
 	// Called from SpecimenListUpload.reloadSpeciesList(), etc...
@@ -415,8 +416,10 @@ public class UploadAction extends AntwebAction {
 		String action = theForm.getAction();
 		String curateAs = theForm.getUploadAs();
 		if (!isAllowedUploadAs(accessLogin, curateAs)) {
+			// Refused, never uploaded to this login's own group instead: the upload replaces the group's specimens.
 			s_log.warn("submitSpecimenUpload() uploadAs:" + curateAs + " not allowed for login:" + accessLogin.getId());
-			curateAs = null;
+			request.setAttribute("message", "You may not upload as that curator. Nothing was uploaded. Ask an AntWeb administrator if you should.");
+			return mapping.findForward("message");
 		}
 		Curator curator = LoginMgr.getCurator(curateAs);
 		if (curator == null) curator = LoginMgr.getCurator(accessLogin);

@@ -5,9 +5,12 @@
     subgeneraTarget = HttpUtil.getTargetMinusParam(subgeneraTarget, "orderBy");    
  
     String displaySubgenera = request.getParameter("subgenus");
+    // Showing the species with no subgenus (subgenus=none). The label below replaces the value, so the checks
+    // further down use this (until 2026-10-27 they compared the label with "none" and the Unassigned option vanished).
+    boolean isUnassignedSubgenus = "none".equals(request.getParameter("subgenus"));
     if (displaySubgenera != null) {
-      if ("none".equals(displaySubgenera)) {
-        displaySubgenera = "Unnassigned";
+      if (isUnassignedSubgenus) {
+        displaySubgenera = "Unassigned";
       } else if (!"all".equals(displaySubgenera)) {
         displaySubgenera = "(" + displaySubgenera + ")";
       }
@@ -25,7 +28,7 @@
     
       List<String> subgenera = new ArrayList<String>();
     
-      if (!"none".equals(displaySubgenera)) {
+      if (!isUnassignedSubgenus) {
         // Remove if not in the childrenList.
         for (String subgenus : fullSetSubgenera) {
           boolean existsOnPage = false;
@@ -54,7 +57,7 @@
                         <li><span style="text-transform:capitalize;">Select</span></li>
                         <li><a href="<%= Html.escAttr(subgeneraTarget + "&subgenus=all") %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;All</span></a></li>
 <%
-      if (subgenera != null && (subgenera.size() > 0 || "none".equals(displaySubgenera))) {
+      if (subgenera != null && (subgenera.size() > 0 || isUnassignedSubgenus)) {
           //A.log("subgeneraDisplay.jsp subgenera:" + subgenera + " genus:" + taxon.getGenus());
 %>
                         <li><a href="<%= Html.escAttr(subgeneraTarget + "&subgenus=none") %>"><span style="text-transform:capitalize;">&nbsp;&nbsp;Unassigned</span></a></li>

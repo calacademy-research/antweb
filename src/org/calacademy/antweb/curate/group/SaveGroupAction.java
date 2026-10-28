@@ -87,7 +87,13 @@ public final class SaveGroupAction extends AntwebAction {
 // Use valueOf(String) to convert a string to an Integer object.
 
             //Integer adminLoginId = new Integer(form.getAdminLoginId());
-            int adminLoginId = Integer.parseInt(form.getAdminLoginId());
+            int adminLoginId;
+            try {
+                adminLoginId = Integer.parseInt(form.getAdminLoginId() == null ? "" : form.getAdminLoginId().trim());
+            } catch (NumberFormatException e) {
+                request.setAttribute("message", "Nothing was saved: the group's administrator must be a login number.");
+                return mapping.findForward("message");
+            }
 
             group.setAdminLoginId(adminLoginId);
             group.setAbbrev(form.getAbbrev());

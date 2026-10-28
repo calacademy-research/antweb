@@ -55,15 +55,15 @@
         out.println("<td>" + event.getOperation() + "</td>");
         Login curator = curators.get(new Integer(event.getCuratorId()));
         if (curator != null) {
-          out.println("<td>" + curator.getName() + "</td>");
+          out.println("<td>" + org.calacademy.antweb.util.Html.esc(curator.getName()) + "</td>");
         } else {
           out.println("<td>null</td>");
         }
         String operation = event.getOperation();
         if (Event.TAXON_PAGE_IMAGES.equals(operation) || Event.TAXON_PAGE_VIDEOS.equals(operation) || Event.TAXON_PAGE_OVERVIEW.equals(operation)) {
-        out.println("<td><a href='" + domainApp + "/description.do?taxonName=" + event.getName() + "'>" + event.getName() + "</a></td>");
+        out.println("<td><a href='" + domainApp + "/description.do?taxonName=" + org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.url(event.getName())) + "'>" + org.calacademy.antweb.util.Html.esc(event.getName()) + "</a></td>");
         } else {
-          out.println("<td>" + event.getName() + "</td>");
+          out.println("<td>" + org.calacademy.antweb.util.Html.esc(event.getName()) + "</td>");
         }
         out.println("<td>" + event.getCreated() + "</td></tr>");
       }

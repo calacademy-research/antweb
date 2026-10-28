@@ -26,6 +26,7 @@ public abstract class OverviewTaxon extends TaxonSet {
         try {
             taxonName = AntFormatter.escapeQuotes(getTaxonName());   
             query = "select subfamily_count, genus_count, species_count, specimen_count, image_count " 
+              + globalImageCountColumn(taxonName)   // the Images column's first number (2026-10-27)
               + " from " + getTable()
               + " where " + getKeyClause()
               + "   and taxon_name = '" + taxonName + "'";
@@ -42,6 +43,7 @@ public abstract class OverviewTaxon extends TaxonSet {
                 setSpeciesCount(rset.getInt("species_count"));
                 setSpecimenCount(rset.getInt("specimen_count"));               
                 setImageCount(rset.getInt("image_count"));
+                readGlobalImageCount(rset);
                 
                 if (AntwebProps.isDevMode() && "myrmicinaepheidole".equals(taxonName)) s_log.warn("init() taxonName:" + taxonName + " keyClause:" + getKeyClause() + " genusCount:" + getGenusCount() + " imageCount:" + imageCount);
                 //if (getTaxonName().contains("humile")) {

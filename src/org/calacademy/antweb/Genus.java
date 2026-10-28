@@ -74,7 +74,7 @@ public class Genus extends Subfamily implements Serializable {
         } else if ("none".equals(subgenus)) {
             subgenusClause = " and subgenus is null ";
         } else {
-            subgenusClause = " and subgenus = '" + subgenus + "' ";
+            subgenusClause = " and subgenus = " + DBUtil.sqlLiteral(subgenus) + " ";  // request value: quoted and escaped
         }
         //A.log("subgenus clause added:" + subgenusClause);
 

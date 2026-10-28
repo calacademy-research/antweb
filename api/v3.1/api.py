@@ -20,6 +20,8 @@
 # assert os.path.exists('/var/www/html/apiV3/api_db.conf')
 
 import configparser
+import os
+import re
 from flask import Flask, json, request, Response, g
 from flask import jsonify as flaskJsonify
 
@@ -48,25 +50,47 @@ def _apiProperties(path=API_PROPERTIES):
     # mounted in the api container, as /antweb-etc/api-db.properties). Empty if missing.
     try:
         with open(path) as f:
-            return dict(line.strip().split('=', 1) for line in f if '=' in line and not line.startswith('#'))
+            # Keys and values without surrounding spaces ("user = apiro" works too).
+            pairs = (line.strip().split('=', 1) for line in f if '=' in line and not line.lstrip().startswith('#'))
+            return {k.strip(): v.strip() for k, v in pairs}
     except OSError:
         return {}
 
 
-def _db_credentials(props):
+# Production and staging set API_REQUIRE_READONLY_LOGIN=true for the api service (docker-compose.yml; the dev
+# compose file sets false). Decided by Brian Fisher 2026-10-27: there the API does not start without its read-only
+# login file.
+def _readonlyLoginRequired(env=None):
+    env = os.environ if env is None else env
+    return env.get('API_REQUIRE_READONLY_LOGIN', '').strip().lower() in ('1', 'true', 'yes')
+
+
+def _db_credentials(props, required=None):
     # The API only reads. On the servers it logs in as a read-only MySQL user whose
-    # name and password are in etc/api-db.properties. Without that file it falls back to
-    # the main antweb account, as before.
+    # name and password are in etc/api-db.properties. Without that file the API stops
+    # on production and staging (SystemExit, the container does not start); on a
+    # development machine it prints a warning and uses the main antweb account.
+    if required is None:
+        required = _readonlyLoginRequired()
     user, password = 'antweb', 'CHANGE_ME'
     if props.get('user') and props.get('password'):
         user, password = props['user'], props['password']
+    elif required:
+        print('ERROR: no read-only login (user= and password=) in ' + API_PROPERTIES
+              + '; the API does not start without it on production and staging', flush=True)
+        raise SystemExit(1)
+    else:
+        print('WARNING: no read-only login in ' + API_PROPERTIES + '; the API uses the main account', flush=True)
     print('API database user:', user, flush=True)
     return user, password
 
 
 _apiProps = _apiProperties()
 _dbUser, _dbPass = _db_credentials(_apiProps)
-dbUrl = f'mysql+pymysql://{_dbUser}:{_dbPass}@mysql:3306/ant?autocommit=true'
+# URL.create quotes the user and password, so a password with @, : or / still works.
+from sqlalchemy.engine import URL
+dbUrl = URL.create('mysql+pymysql', username=_dbUser, password=_dbPass, host='mysql', port=3306, database='ant',
+                   query={'autocommit': 'true'})
 # dbUrl = 'mysql+mysqldb://antweb:CHANGE_ME@localhost:3306/ant?autocommit=true'
 # pool_pre_ping: check a pooled connection before use, so a connection MySQL closed
 # while idle is replaced instead of failing the request ("MySQL server has gone away").
@@ -124,26 +148,6 @@ application.json = AntwebJSONProvider(application)
 
 isDevMode = 0
 
-# MySQL configurations  
-try:
-    # apiDbConf = '/var/www/html/apiV3/api_db.conf'
-    # apiDbConf = '/antweb/deploy/api/v3/api_db.conf'
-    apiDbConf = 'api_db.conf'
-
-    import os
-
-    assert os.path.exists(apiDbConf)
-
-    # Read config file
-    config = configparser.ConfigParser()
-    # config.read('api_db.conf')
-    # config.read('/var/www/html/apiV3/api_db.conf')
-    config.read(apiDbConf)
-
-    # print(dbUrl)
-except Exception as e:
-    pass
-    # print('Exception e: ' + str(e),' reading configuration file')
 
 # app = Flask(__name__)
 
@@ -222,16 +226,39 @@ def initCap(x):
     return val
 
 
+def badRequest(message):
+    # A JSON error with HTTP 400 for a parameter value that cannot be used.
+    return jsonify(error=message), 400
+
+
+def numbers(value, count):
+    # count comma-separated numbers (floats), or None if value is not that.
+    parts = value.split(',')
+    if len(parts) != count:
+        return None
+    try:
+        return [float(p) for p in parts]
+    except ValueError:
+        return None
+
+
 def down(request):
-    # This code brings the server down. Only accessible if &up=1 is appended to each api call.
+    # The data routes answer only with &up=1 (admin switch, see the documentation page).
     up = request.args.get('up', default='*', type=str)
     if up != '1':
-        print("Down")
-        # raise HaltException("We decided we want to halt the script")
-        # userExit()
-        # exit()
         return 1
     return 0
+
+
+API_DOWN_MESSAGE = "The AntWeb API is not available at the moment. Please try again later."
+
+
+def apiDown():
+    # Without up=1: HTTP 503 with a JSON message (decided by Brian Fisher 2026-10-27; it was an empty page with
+    # HTTP 200). The / route stays open for health checks.
+    response = jsonify(error=API_DOWN_MESSAGE, documentation=prodServer + "/" + apiUri)
+    response.status_code = 503
+    return response
 
 
 # Records per request, for every endpoint, JSON and ndjson alike (2026-10-21: 500, until
@@ -420,46 +447,8 @@ class Specimen(Base):
     taxon = relationship("Taxon")
 
     def __repr__(self):
-        return "<Specimen(occurrenceId='%s', ownerInstitutionCode='%s' \
-           , institutionCode='%s', collectionCode='%s' \
-           , code='%s', dctermsModified='%s', nomenclaturalCode='%s' \
-           , kingdom='%s', phylum='%s', classVal='%s', order='%s' \
-           , family='%s', subfamily='%s', genus='%s', subgenus='%s' \
-           , species='%s', subspecies='%s', scientific_name='%s' \
-           , higherClassification='%s', typeStatus='%s' \
-           , region='%', subregion='%s', country='%s', adm1='%s' \
-           , bioregion='%s', decimalLatitude='%s', decimalLongitude='%s' \
-           , latLonMaxError='%s', dateDetermined='%s', dateCollectedStart='%s', dateCollectedEnd='%s' \
-           , habitat='%s', microhabitat='%s' \
-           , collectedBy='%s', samplingMethod='%s', lifeStageSex='%s' \
-           , medium='%s', collectionCode='%s', determinedBy='%s' \
-           , localityName='%s', localityNotes='%s', specimenNotes='%s' \
-           , collectionNotes='%s' \
-           , minimumElevationInMeters='%s', bioregion='%s', museum='%s', taxonName='%s' \
-           , ownedBy='%s', locatedAt='%s', collectedBy='%s' \
-           , caste='%s', subcaste='%s', fossil='%s', status='%s' \
-      #     , isMale='%s', isWorker='%s', isQueen='%s', imageCount='%s' \
-       )>" % (
-            self.occurrenceId, self.ownerInstitutionCode
-            , self.basisOfRecord, self.institutionCode, self.collectionCode
-            , self.code, self.dctermsModified, self.nomenclaturalCode
-            , self.kingdom, self.phylum, self.classVal, self.order
-            , self.family, self.subfamily, self.genus, self.subgenus
-            , self.species, self.subspecies, self.scientific_name
-            , self.higherClassification, self.typeStatus
-            , self.region, self.subregion, self.country, self.adm1
-            , self.bioregion, self.decimalLatitude, self.decimalLongitude
-            , self.latLonMaxError, self.dateDetermined, self.dateCollectedStart, self.dateCollectedEnd
-            , self.habitat, self.microhabitat
-            , self.collectedBy, self.samplingMethod, self.lifeStageSex
-            , self.medium, self.collectionCode, self.determinedBy
-            , self.localityName, self.localityNotes, self.specimenNotes
-            , self.collectionNotes
-            , self.minimumElevationInMeters, self.bioregion, self.museum, self.taxonName
-            , self.ownedBy, self.locatedAt, self.collectedBy
-            , self.caste, self.subcaste, self.fossil, self.status, self.imageCount
-            #    , self.isMale, self.isWorker, self.isQueen
-        )
+        return "<Specimen(code=%r, taxonName=%r, country=%r, status=%r)>" % (self.code, self.taxonName, self.country,
+                                                                          self.status)
 
     def getSpecDict(sp):
         coordinates = {
@@ -653,7 +642,7 @@ def getSpecimen():
     geolocaleName = request.args.get('geolocaleName', default='*', type=str)
     lifeStageSex = request.args.get('lifeStageSex', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     # Build query criteria
     query = session.query(Specimen)
@@ -686,25 +675,20 @@ def getSpecimen():
         query = query.filter(Specimen.decimalLatitude != None)
         query = query.filter(Specimen.decimalLongitude != None)
     if bbox != '*':
-        coords = bbox.split(",")
+        coords = numbers(bbox, 4)
+        if coords is None:
+            return badRequest('bbox must be four numbers: north,east,south,west latitude and longitude')
         query = query.filter(Specimen.decimalLatitude <= coords[0], Specimen.decimalLatitude >= coords[2])
         query = query.filter(Specimen.decimalLongitude <= coords[1], Specimen.decimalLongitude >= coords[3])
-    if maxDate != '*':
-        query = query.filter(Specimen.dateCollectedStart < maxDate)
-    if minDate != '*':
-        query = query.filter(Specimen.dateCollectedStart > minDate)
-    if minElevation != '*':
-        query = query.filter(Specimen.minimumElevationInMeters > minElevation)
-    if maxElevation != '*':
-        query = query.filter(Specimen.minimumElevationInMeters < maxElevation)
+    query = boundsFilter(query, minDate, maxDate, minElevation, maxElevation)
     if museum != '*':
         query = query.filter(Specimen.museum == museum)
     if ownedby != '*':
-        query = query.filter(Specimen.ownedby == ownedby)
+        query = query.filter(Specimen.ownedBy == ownedby)
     if locatedat != '*':
-        query = query.filter(Specimen.locatedat == locatedat)
+        query = query.filter(Specimen.locatedAt == locatedat)
     if collectedby != '*':
-        query = query.filter(Specimen.collectedby == collectedby)
+        query = query.filter(Specimen.collectedBy == collectedby)
     if lifeStageSex != '*':
         query = query.filter(Specimen.lifeStageSex.like("%" + lifeStageSex + "%"))
     if caste != '*':
@@ -722,7 +706,7 @@ def getSpecimen():
         if hasImage == 'true':
             query = query.filter(Specimen.imageCount > 0)
         if hasImage == 'false':
-            query = query.filter(Specimen.imageCount <= 0)
+            query = query.filter(or_(Specimen.imageCount <= 0, Specimen.imageCount == None))
     if geolocaleName != '*':
         query = query.join(Taxon).join(GeolocaleTaxon).join(Geolocale).filter(Geolocale.name == geolocaleName)
         query = addExtraGeolocaleListCriteria(query, geolocaleName)
@@ -759,6 +743,7 @@ def getSpecimen():
         # if (specDict['specimenCode'] == 'antweb1038039'):
         #  print("ownedBy:" + specDict['ownedBy'])  # Would appear (only on server) in terminal as SMNG, G\xc3\xb6rlitz, Germany
         dataList.append(specDict)
+    addImageSplit(dataList, 'specimenCode')   # antImageCount, labelImageCount (2026-10-27)
 
     params = [request.args]
     metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'offset': offset,
@@ -774,6 +759,28 @@ def getSpecimen():
 # --- Geo Specimens API ------------------------------------------------------------------------------------
 
 KM_PER_DEGREE_LATITUDE = 111.32
+
+
+def boundsFilter(query, minDate, maxDate, minElevation, maxElevation):
+    # minDate, maxDate, minElevation and maxElevation include their bounds (decided by Brian Fisher 2026-10-27;
+    # they were exclusive, so minElevation=1200 left out specimens at 1200 m). A maxDate given as a day
+    # (yyyy-mm-dd) includes the whole day. Used by every route with these filters (/specimens, /distinctTaxa).
+    if maxDate != '*':
+        if re.fullmatch(r'\d{4}-\d{2}-\d{2}', maxDate):
+            try:
+                nextDay = (datetime.strptime(maxDate, '%Y-%m-%d') + timedelta(days=1)).strftime('%Y-%m-%d')
+                query = query.filter(Specimen.dateCollectedStart < nextDay)
+            except ValueError:
+                query = query.filter(Specimen.dateCollectedStart <= maxDate)
+        else:
+            query = query.filter(Specimen.dateCollectedStart <= maxDate)
+    if minDate != '*':
+        query = query.filter(Specimen.dateCollectedStart >= minDate)
+    if minElevation != '*':
+        query = query.filter(Specimen.minimumElevationInMeters >= minElevation)
+    if maxElevation != '*':
+        query = query.filter(Specimen.minimumElevationInMeters <= maxElevation)
+    return query
 
 
 def radiusBox(lat, lon, radiusKm):
@@ -799,7 +806,7 @@ def getGeoSpecimens():
     radius = request.args.get('radius', default=5.0, type=float)  # in kilometres
     distinct = request.args.get('distinct', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Specimen)
     coordsArray = coords.split(",")
@@ -842,7 +849,7 @@ def getGeoSpecimens():
             if distinct == 'genus':
                 dataList.append(sp.genus)
             if distinct == 'species':
-                dataList.append(initCap(sp.genus) + ' ' + sp.species)
+                dataList.append((initCap(sp.genus) or '') + ' ' + (sp.species or ''))
 
         params = [request.args]
         metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'count': len(dataList)}
@@ -870,6 +877,7 @@ def getGeoSpecimens():
         specDict = Specimen.getSpecDict(sp)
 
         dataList.append(specDict)
+    addImageSplit(dataList, 'specimenCode')   # antImageCount, labelImageCount (2026-10-27)
 
     # print(query)
 
@@ -907,7 +915,7 @@ def getGeoSpeciesStatsDict(row):
 def getGeoSpeciesStats():
     geolocaleName = request.args.get('geolocaleName', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     # add introduced and endemics
 
@@ -920,18 +928,19 @@ def getGeoSpeciesStats():
     extraClause = " s." + georank + " = :geolocaleName"
 
     # queenErgatoidCount and maleErgatoidCount count the ergatoids of their caste (2026-10-22: both counted every
-    # ergatoid specimen, so a male ergatoid was also a queen ergatoid).
+    # ergatoid specimen, so a male ergatoid was also a queen ergatoid). Every subcaste count counts only within its
+    # caste, as the ergatoids do (decided by Brian Fisher 2026-10-27).
     query = "select s.taxon_name, s.genus, s.species " \
             + " , count(case when caste='queen' then 1 end)" \
             + " , count(case when caste='queen' and subcaste='ergatoid' then 1 end)" \
-            + " , count(case when subcaste='alate/dealate' then 1 end)" \
-            + " , count(case when subcaste='brachypterous' then 1 end)" \
+            + " , count(case when caste='queen' and subcaste='alate/dealate' then 1 end)" \
+            + " , count(case when caste='queen' and subcaste='brachypterous' then 1 end)" \
             + " , count(case when caste='worker' then 1 end)" \
-            + " , count(case when subcaste='major/soldier' then 1 end)" \
-            + " , count(case when subcaste='normal' then 1 end)" \
+            + " , count(case when caste='worker' and subcaste='major/soldier' then 1 end)" \
+            + " , count(case when caste='worker' and subcaste='normal' then 1 end)" \
             + " , count(case when caste='male' then 1 end)" \
             + " , count(case when caste='male' and subcaste='ergatoid' then 1 end)" \
-            + " , count(case when subcaste='alate' then 1 end)" \
+            + " , count(case when caste='male' and subcaste='alate' then 1 end)" \
             + " from specimen s, taxon t, geolocale_taxon gt, geolocale g" \
             + " where s.taxon_name = t.taxon_name and gt.taxon_name = t.taxon_name " \
             + "   and gt.geolocale_id = g.id and " \
@@ -999,32 +1008,11 @@ class Taxon(Base):
     country = Column(String)
     currentValidParent = Column('current_valid_parent', String)
     lineNum = Column('line_num', Integer)
-    accessGroup = ('access_group', Integer)
 
     geolocaleTaxa = relationship("GeolocaleTaxon")
 
     def __repr__(self):
-        return "<Taxa( \
-           taxonName='%s', taxarank='%s', subfamily='%s', genus='%s' \
-         , species='%s%', subspecies='%s', parent='%s' \
-         , fossil='%s', source='%s', created='%s' \
-         , family='%s', kingdomName='%s', phylumName='%s' \
-         , className='%s', orderName='%s', antcat='%s', subfamilyCount ='%s' \
-         , genusCount='%s', speciesCount='%s', specimenCount='%s', imageCount='%s' \
-         , parentTaxonName='%s', type='%s', antcatId='%s', authorDate='%s' \
-         , authors='%s', year='%s', status='%s', currentValidName='%s', bioregion='%s' \
-         , country='%s', currentValidParent='%s', lineNum='%s', accessGroup='%s' \
-       )>" % (
-            self.taxonName, self.taxarank, self.subfamily, self.genus
-            , self.species, self.subspecies, self.parent
-            , self.fossil, self.source, self.created
-            , self.family, self.kingdomName, self.phylumName
-            , self.className, self.orderName, self.antcat, self.subfamilyCount
-            , self.genusCount, self.speciesCount, self.subspeciesCount, self.imageCount
-            , self.parentTaxonName, self.type, self.antcatId, self.authorDate
-            , self.authors, self.year, self.status, self.currentValidName, self.bioregion
-            , self.country, self.currentValidParent, self.lineNum, self.accessGroup \
-            )
+        return "<Taxon(taxonName=%r, taxarank=%r, status=%r)>" % (self.taxonName, self.taxarank, self.status)
 
 
 @application.route('/taxa', methods=['GET'])
@@ -1038,7 +1026,7 @@ def getTaxa():
     # parent = request.args.get('parentTaxonName', default='*', type=str) # Could do parentTaxonName but not parent.
     status = request.args.get('status', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Taxon)
     if taxonName != '*':
@@ -1121,6 +1109,9 @@ def getTaxa():
         # print(taxonDict)
 
         dataList.append(taxonDict)
+    # antImageCount, labelImageCount: the images of the specimens filed under the name (2026-10-27); imageCount is
+    # taxon.image_count, every image file of the name and of the names under it.
+    addImageSplit(dataList, 'taxonName', True)
 
     params = [request.args]
     metaDataDict = {'parameters': params, 'request': str(request), 'taxonCount': taxonCount}
@@ -1152,7 +1143,7 @@ def getDistinctTaxa():
     maxElevation = request.args.get('maxElevation', default='*', type=str)
     status = request.args.get('status', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Specimen)
 
@@ -1171,14 +1162,7 @@ def getDistinctTaxa():
         query = query.filter(countryIs(Specimen.country, country))
     if habitat != '*':
         query = query.filter(Specimen.habitat.contains(habitat))
-    if maxDate != '*':
-        query = query.filter(Specimen.dateCollectedStart < maxDate)
-    if minDate != '*':
-        query = query.filter(Specimen.dateCollectedStart > minDate)
-    if minElevation != '*':
-        query = query.filter(Specimen.minimumElevationInMeters > minElevation)
-    if maxElevation != '*':
-        query = query.filter(Specimen.minimumElevationInMeters < maxElevation)
+    query = boundsFilter(query, minDate, maxDate, minElevation, maxElevation)
     if status != '*':
         query = query.filter(Specimen.status == status)
 
@@ -1266,8 +1250,8 @@ def imagesBySpecimen(data):
     images = []
     for image in data:
         imageCount += 1
-        base = 'https://www.antweb.org/images/' + image.code + '/' + image.code + '_' \
-               + image.shotType + '_' + str(image.shotNumber)
+        base = 'https://www.antweb.org/images/' + (image.code or '') + '/' + (image.code or '') + '_' \
+               + (image.shotType or '') + '_' + str(image.shotNumber)
         # print('code' + image.code + ' base:' + base)
         urls = [base + '_low.jpg'
             , base + '_med.jpg'
@@ -1320,10 +1304,12 @@ def getImages():
     shotNumber = request.args.get('shotNumber', default='*', type=str)
     hasTiff = request.args.get('hasTiff', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Image)
     if since != '*':
+        if not since.isdigit():
+            return badRequest('since must be a whole number of days')
         day_interval_before = datetime.now() - timedelta(days=int(since))
         query = query.filter(Image.uploadDate >= day_interval_before)
     if code != '*':
@@ -1357,8 +1343,9 @@ def getImages():
         print(query)
 
     params = [request.args]
+    antImages, labelImages = shotSplit([i.get('shotType') for sp in dataList for i in sp.get('images', [])])
     metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'specimenCount': specimenCount,
-                    'count': imageCount}
+                    'count': imageCount, 'antImageCount': antImages, 'labelImageCount': labelImages}   # 2026-10-27
 
     if ndjson != 'true':
         return jsonify(metaData=metaDataDict, images=dataList)  # return flask Response
@@ -1487,7 +1474,7 @@ class Measurement(Base):
             , 'rulerModel': m.rulerModel
             , 'contributor': m.contributor
             , 'recordDate': str(m.recordDate) if m.recordDate else None
-            , 'specimenUrl': prodServer + '/specimen.do?code=' + m.code
+            , 'specimenUrl': prodServer + '/specimen.do?code=' + urllib.parse.quote(str(m.code), safe='')
         }
         if sp is not None:
             d['specimen'] = {
@@ -1531,7 +1518,7 @@ def getMeasurements():
     caste = request.args.get('caste', default='*', type=str)
     taxonStatus = request.args.get('taxonStatus', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Measurement, Specimen).outerjoin(Specimen, Specimen.code == Measurement.code)
 
@@ -1609,7 +1596,7 @@ class TaxaImage(Base):
     hasTiff = Column('has_tiff', String)
 
     def __repr__(self):
-        return "<TaxaImage(taxonName='%s', subfamily='%s', genus='%s', species='%ds', subspecies='%s', code='%s' \
+        return "<TaxaImage(taxonName='%s', subfamily='%s', genus='%s', species='%s', subspecies='%s', code='%s' \
          uid='%s', shotType='%s', code='%s', uploadDate='%s', shotNumber='%s', hasTiff='%s')>" % (
             self.taxonName, self.subfamily, self.genus, self.species, self.subspecies, self.code,
             self.uid, self.shotType, self.code, self.uploadDate, self.shotNumber, self.hasTiff
@@ -1651,9 +1638,9 @@ class TaxaImage(Base):
 
             imagesDict = specimenDict['images']
 
-            if taxaImage.uid not in imagesDict:
-                base = 'https://www.antweb.org/images/' + taxaImage.code + '/' + taxaImage.code + '_' \
-                       + taxaImage.shotType + '_' + str(taxaImage.shotNumber)
+            if all(image['imageId'] != taxaImage.uid for image in imagesDict):
+                base = 'https://www.antweb.org/images/' + (taxaImage.code or '') + '/' + (taxaImage.code or '') + '_' \
+                       + (taxaImage.shotType or '') + '_' + str(taxaImage.shotNumber)
                 urls = [base + '_low.jpg'
                     , base + '_med.jpg'
                     , base + '_high.jpg'
@@ -1662,15 +1649,13 @@ class TaxaImage(Base):
                 imageDict = {
                     'imageId': taxaImage.uid
                     , 'shotType': taxaImage.shotType
+                    , 'urls': urls
                     , "urls:": urls
                     , 'uploadDate': taxaImage.uploadDate
                     , 'shotNumber': taxaImage.shotNumber
                     , 'hasTiff': taxaImage.hasTiff
                 }
                 imagesDict.append(imageDict)
-                # print('getTaxaDict() uid:' + str(taxaImage.uid))
-            else:
-                imageDict = imagesDict[taxaImage.uid]
 
         return taxaDict
 
@@ -1725,7 +1710,7 @@ def getTaxaImages():
     hasTiff = request.args.get('hasTiff', default='*', type=str)
 
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(TaxaImage)
     if taxonName != '*':
@@ -1776,8 +1761,10 @@ def getTaxaImages():
     imageCount = TaxaImage.getImageCount(taxaDict)
     dataList = TaxaImage.getDataList(taxaDict)
     params = [request.args]
+    antImages, labelImages = shotSplit([i.get('shotType') for t in dataList for sp in t.get('specimen', []) for i in sp.get('images', [])])
     metaDataDict = {'parameters': params, 'request': str(request), 'limit': limit, 'taxonCount': taxonCount,
-                    'specimenCount': specimenCount, 'imageCount': imageCount}
+                    'specimenCount': specimenCount, 'imageCount': imageCount,
+                    'antImageCount': antImages, 'labelImageCount': labelImages}   # 2026-10-27
 
     if ndjson != 'true':
         return returnJsonify("taxaImages", jsonify(metaData=metaDataDict, taxaImages=dataList))  # return flask Response
@@ -1859,7 +1846,7 @@ def getGeolocales():
     parent = request.args.get('parent', default='*', type=str)
     georank = request.args.get('georank', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Geolocale)
     if id != '*':
@@ -1977,13 +1964,13 @@ def getGeolocaleTaxa():
     species = request.args.get('species', default='*', type=str)
     status = request.args.get('status', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(GeolocaleTaxon)
     query = query.join(Geolocale).join(Taxon)
     # Geolocale criteria
     if geolocaleId != '*':
-        query = query.filter(GeolocaleTaxon.id == geolocaleId)
+        query = query.filter(GeolocaleTaxon.geolocaleId == geolocaleId)
     if geolocaleName != '*':
         query = query.filter(Geolocale.name == geolocaleName)
     if georank != '*':
@@ -2120,7 +2107,7 @@ class Bioregion(Base):
 def getBioregions():
     name = request.args.get('bioregionName', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(Bioregion)
     if name != '*':
@@ -2207,7 +2194,7 @@ def getBioregionTaxa():
     species = request.args.get('species', default='*', type=str)
     status = request.args.get('status', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     query = session.query(BioregionTaxon)
     query = query.join(Bioregion).join(Taxon)
@@ -2286,13 +2273,65 @@ def getBioregionTaxa():
 
 # --- Unimaged Geolocale Taxa API -------------------------------------------------------------------------------------    
 
+# --- Images of the ant and label images (Brian Fisher, 2026-10-27) ------------------------------------------------
+# "Images" means images of the ant everywhere on AntWeb; label images are counted separately. Every reply that has an
+# imageCount (every image file, kept as it was so clients do not break) also has antImageCount and labelImageCount.
+
+LABEL_SHOT_SQL = "lower(trim(coalesce(i.shot_type, ''))) = 'l'"
+
+
+def imageSplitSql(byTaxon, n):
+    """One grouped query: key -> images of the ant, label images. byTaxon False: key = specimen code (n codes as
+    :k0 .. :kn-1); True: key = taxon_name, the images of the specimens filed under each name (not the names under it).
+    Runs on MySQL and SQLite (tests/unit/test_api_image_split.py)."""
+    keys = ", ".join(":k%d" % i for i in range(n))
+    split = (" sum(case when " + LABEL_SHOT_SQL + " then 0 else 1 end) ant,"
+             " sum(case when " + LABEL_SHOT_SQL + " then 1 else 0 end) labels")
+    if byTaxon:
+        return ("select s.taxon_name k," + split + " from specimen s join image i on i.image_of_id = s.code"
+                " where s.taxon_name in (" + keys + ") group by s.taxon_name")
+    return "select i.image_of_id k," + split + " from image i where i.image_of_id in (" + keys + ") group by i.image_of_id"
+
+
+def imageSplit(keys, byTaxon=False, execute=None):
+    """{key (lower case): (antImageCount, labelImageCount)} for the keys of one reply; keys without images are absent."""
+    keys = sorted({k for k in keys if k})
+    if not keys:
+        return {}
+    params = {"k%d" % i: k for i, k in enumerate(keys)}
+    run = execute or (lambda sql, p: session.execute(text(sql), p))
+    out = {}
+    for row in run(imageSplitSql(byTaxon, len(keys)), params):
+        out[str(row[0]).lower()] = (int(row[1] or 0), int(row[2] or 0))
+    return out
+
+
+def addImageSplit(dicts, keyField, byTaxon=False):
+    """Adds antImageCount and labelImageCount to each dict of a reply (2026-10-27)."""
+    try:
+        split = imageSplit([d.get(keyField) for d in dicts], byTaxon)
+    except Exception as error:
+        print("addImageSplit() error:" + str(error))
+        return
+    for d in dicts:
+        ant, labels = split.get(str(d.get(keyField) or "").lower(), (0, 0))
+        d['antImageCount'] = ant
+        d['labelImageCount'] = labels
+
+
+def shotSplit(shotTypes):
+    """(images of the ant, label images) of a list of shot types."""
+    labels = sum(1 for s in shotTypes if (s or "").strip().lower() == 'l')
+    return len(shotTypes) - labels, labels
+
+
 def imagedTaxaSql(casteClause=""):
     """Names (taxon_name) that are imaged: a specimen of the name has an image of the ant, that is an image
     whose shot type is not 'l' (label). Used by /unimagedGeolocaleTaxa (2026-10-21; before: a specimen with
     image_count > 1, so a name whose specimens had one image each was "unimaged", and label images counted).
     casteClause: "" or " and s.caste = '...'" (specimen alias s)."""
     return ("select s.taxon_name from specimen s join image i on i.image_of_id = s.code"
-            " where lower(trim(coalesce(i.shot_type, ''))) <> 'l'" + casteClause)
+            " where s.taxon_name is not null and lower(trim(coalesce(i.shot_type, ''))) <> 'l'" + casteClause)
 
 
 @application.route('/unimagedGeolocaleTaxa', methods=['GET'])
@@ -2303,7 +2342,7 @@ def getUnimagedGeolocaleTaxa():
     taxarank = request.args.get('taxarank', default='*', type=str)
     status = request.args.get('status', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
-    if down(request): return ""
+    if down(request): return apiDown()
 
     geolocale = getGeolocale(geolocaleName)
     if geolocale is None:
@@ -2368,9 +2407,10 @@ def getUnimagedGeolocaleTaxa():
     if isDevMode:
         print("query:" + query)
 
-    connection = engine.connect()
     # taxarank and status come from the URL: pass them as bound parameters, never pasted into the SQL.
-    result = connection.execute(text(query), {"taxarank": taxarank, "status": status})
+    # The connection goes back to the pool when the block ends, also after an error.
+    with engine.connect() as connection:
+        result = [row._mapping for row in connection.execute(text(query), {"taxarank": taxarank, "status": status})]
 
     unimagedGeolocaleTaxaCount = 0
     unimagedGeolocaleTaxaCasteCount = 0
@@ -2425,8 +2465,6 @@ def getUnimagedGeolocaleTaxa():
         }
         dataList.append(unimagedGeolocaleTaxaDict)
         unimagedGeolocaleTaxaCount += 1
-
-    connection.close()
 
     params = [request.args]
     metaDataDict = {'parameters': params, 'request': str(request),
@@ -2497,6 +2535,18 @@ def suggestParams(name, accepted):
         if a not in out:
             out.append(a)
     return out[:3]
+
+
+@application.before_request
+def checkUp():
+    # Before any other check and before the route's own code (some routes answered a missing parameter first):
+    # every data route without up=1 answers 503 (apiDown). The per-route down() lines stay as a second check.
+    endpoint = request.endpoint
+    if endpoint is None or endpoint in UNCHECKED_ENDPOINTS or endpoint not in application.view_functions:
+        return None
+    if down(request):
+        return apiDown()
+    return None
 
 
 @application.before_request

@@ -28,7 +28,9 @@ jobs:
         run: |
           for f in Caddyfile Caddyfile.staging; do
             docker run --rm -v "$PWD/docker/caddy:/etc/caddy:ro" antweb/caddy:dev \
-              caddy adapt --config /etc/caddy/$f --adapter caddyfile > /dev/null && echo "$f OK"
+              caddy adapt --config /etc/caddy/$f --adapter caddyfile > /dev/null \
+              || { echo "::error::$f is not a valid Caddyfile"; exit 1; }
+            echo "$f OK"
           done
 
       - name: JSP allow-list is the same in Caddyfile and Caddyfile.common
@@ -48,6 +50,18 @@ jobs:
       - name: Every workflow step is valid shell, also inside sh -c '...' (tests/unit/test_workflow_shell.py)
         # 2026-10-24: an apostrophe in a comment ended a quoted sh -c script early; the step failed only on GitHub.
         run: python3 tests/unit/test_workflow_shell.py
+
+      - name: Each Java test step expects the number of tests its class has (tests/unit/test_ci_test_counts.py)
+        run: python3 tests/unit/test_ci_test_counts.py
+
+      - name: Every deploy compiles every Java source (tests/unit/test_build_full_compile.py)
+        run: python3 tests/unit/test_build_full_compile.py
+
+      - name: Reading the login never creates a session (tests/unit/test_access_login_no_new_session.py)
+        run: python3 tests/unit/test_access_login_no_new_session.py
+
+      - name: Deploys check the pinned server host keys (tests/unit/test_deploy_known_hosts.py)
+        run: python3 tests/unit/test_deploy_known_hosts.py
 
       - name: The mount check writes into a folder that exists on the servers (tests/unit/test_mountcheck_dir.py)
         run: python3 tests/unit/test_mountcheck_dir.py
@@ -88,6 +102,10 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_counts.py
 
+      - name: API images of the ant and label images (antImageCount, labelImageCount; tests/unit/test_api_image_split.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_image_split.py
+
       - name: API findings F6, F7, F8, F20, F22, F23 (/images url, valid filters, fixed order, debug lines, geoSpecimens radius, geoSpeciesStats not found) (tests/unit/test_api_findings.py)
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_findings.py
@@ -96,6 +114,27 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" -v "$PWD/web/documentation/api:/docs:ro" \
             antweb/api:dev /t/test_api_country.py
+
+      - name: API inputs (filters that failed, 400 for bad bbox and since, unset values, login file) (tests/unit/test_api_inputs.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_inputs.py
+
+      - name: API decisions of 2026-10-27 (subcastes within caste, inclusive bounds, 503 without up, login required) (tests/unit/test_api_decisions.py)
+        run: |
+          docker run --rm --entrypoint python -e REPO_DIR=/repo -v "$PWD/tests/unit:/t:ro" \
+            -v "$PWD/docker-compose.yml:/repo/docker-compose.yml:ro" -v "$PWD/docker-compose.dev.yml:/repo/docker-compose.dev.yml:ro" \
+            antweb/api:dev /t/test_api_decisions.py
+
+      - name: API refuses to start without its read-only login (API_REQUIRE_READONLY_LOGIN=true, as on the servers)
+        run: |
+          d=$(mktemp -d)
+          set +e
+          timeout 120 docker run --rm -e API_REQUIRE_READONLY_LOGIN=true -v "$d:/antweb-etc:ro" antweb/api:dev > "$d.log" 2>&1
+          code=$?
+          set -e
+          tail -20 "$d.log"
+          [ "$code" != 0 ] && [ "$code" != 124 ] || { echo "::error::the API did not stop (exit $code)"; exit 1; }
+          grep -q "ERROR: no read-only login" "$d.log" || { echo "::error::no ERROR line about the login file"; exit 1; }
 
       - name: API container as in docker-compose.yml (only its login file, read-only, workers not root)
         # The login file is root-only (0600) here: gunicorn's master reads it at start
@@ -140,7 +179,23 @@ jobs:
             CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
             mkdir -p /tmp/tc
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/SecurityBatch7Test.java
-            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.SecurityBatch7Test
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.SecurityBatch7Test > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (" /tmp/out.txt
+          '
+
+      - name: Java unit tests of image saving (one transaction, file name rules, genus default image) (2026-10-27)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/home/ImagePickDb.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/ImageUploadSaveTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.ImageUploadSaveTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the 2026-10-19 hardening (page.do redirect)
@@ -260,9 +315,23 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/MessageLogTest.java /t/org/calacademy/antweb/util/MountCheckTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.MountCheckTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
+            grep -q "^OK (" /tmp/out.txt
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.MessageLogTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (11 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of small core and util fixes (specimen XML without DOCTYPE, comparators, common names, folder delete keeps link targets)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/audit/CoreUtilFixesTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.audit.CoreUtilFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (9 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the query string helper (results shown again, F26)
@@ -319,6 +388,66 @@ jobs:
             grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of small admin and data fixes (count check rotation, LatLon range, https in page text, corrected species list)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/util/CountCheckAction.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/AdminDataFixesTest.java \
+              /t/org/calacademy/antweb/curate/speciesList/ValidateSpeciesReportTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.AdminDataFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (3 tests)" /tmp/out.txt
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.curate.speciesList.ValidateSpeciesReportTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (5 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the post check (a form post must be sent as POST; the token check covers every method that can change something)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/PostMethodTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.PostMethodTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (3 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the counting rules of 2026-10-27 (project Subfamilies, orphan report, caste, endemic and introduced lists, label photos, habitat events, institutions)
+        # Brian Fisher's decisions of 2026-10-27, docs/numbers.md B67 to B73.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/home/PlaceTotals.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/CountRules20261027Test.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.CountRules20261027Test > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (8 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of images from anywhere (place first, Images column, imaged castes; 2026-10-27)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/ImagesAnywhere.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/ImagesAnywhereTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.ImagesAnywhereTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (16 tests)" /tmp/out.txt
+          '
+
       - name: Java unit tests of the AntCat file download (nightly tries again for up to an hour before set 1, says why, no half-written or cut-off file)
         # 2026-10-25: on 10-23 the nightly could not fetch antcat.antweb.txt once and skipped the name update.
         run: |
@@ -350,7 +479,9 @@ jobs:
             CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
             mkdir -p /tmp/tc
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/UploadSchedulerHardeningTest.java
-            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.UploadSchedulerHardeningTest
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.UploadSchedulerHardeningTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (" /tmp/out.txt
           '
 
       - name: Java unit tests of the Curate page cleanup (named queries, developer role, museum recount, site warning)
@@ -476,7 +607,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadReportCountsTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             grep -v "LogMgr" /tmp/out.txt | tail -3
-            grep -q "^OK (4 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+            grep -q "^OK (6 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Staging test accounts tool (tests/unit/test_staging_accounts.py)
@@ -515,14 +646,65 @@ jobs:
       - name: Claude audit rotation (tests/unit/test_claude_audit.py)
         run: python3 tests/unit/test_claude_audit.py
 
+      - name: Public pages, search, image upload and server scripts, fixes of 2026-10-27 (tests/unit/test_page_ops_fixes.py)
+        run: python3 tests/unit/test_page_ops_fixes.py
+
       - name: Login updates keep login.created, no delete of all page text, page titles, admin links on phones, busy answers returned, simultaneous limits (tests/unit/test_small_fixes.py)
         run: python3 tests/unit/test_small_fixes.py
 
       - name: Image counts of images.do All view and recent images (B46, B47; tests/unit/test_image_count_fixes.py)
         run: python3 tests/unit/test_image_count_fixes.py
 
+      - name: Count check rules and rotation, curator tool fixes, SQL values quoted in the database classes (tests/unit/test_admin_data_fixes.py)
+        run: python3 tests/unit/test_admin_data_fixes.py
+
+      - name: Images from anywhere, Images column, imaged castes (2026-10-27; tests/unit/test_images_anywhere.py)
+        run: python3 tests/unit/test_images_anywhere.py
+
+      - name: One meaning of Images on every page (images of the ant, labels apart, Image files; tests/unit/test_image_counts_defined.py)
+        run: python3 tests/unit/test_image_counts_defined.py
+
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
         run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml
+
+      - name: Java unit tests of upload safety (upload flag held by one holder, report headings, stopped upload message)
+        # UploadSafetyTest (2026-10-27): the upload flag is released only by its holder; looking up a report heading
+        # (red-flagged specimen pages) keeps the error list of a running upload; a stopped upload says nothing changed.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/upload/UploadSafetyTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadSafetyTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (4 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the upload and nightly decisions of 2026-10-27 (strict upload dates, day 00 is the 1st, unknown genus without subfamily, TaxonWorks collection notes, failed nightly set stops the run)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/upload/UploadNightlyDecisionsTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadNightlyDecisionsTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (8 tests)" /tmp/out.txt
+          '
+
+      - name: Upload and nightly safety (upload flag, refused upload as, stopped upload rolled back, list removals) (tests/unit/test_upload_nightly_safety.py)
+        run: python3 tests/unit/test_upload_nightly_safety.py
       - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; place renames keep page text; every place's numbers; specimen name history; download guards)
         # DbTimeZoneTest: dates written by MySQL and by Java read back as the same moment and are
         # stored as Pacific wall-clock time, for conPool, mediumConPool and longConPool.
@@ -782,6 +964,22 @@ jobs:
           '
           docker rm -f mgrmysql
 
+      - name: Search rules and field guide caste decided 2026-10-27 (phrases, commas, not equals, taxon name equals; SearchRulesTest)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/search/SearchRulesTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.search.SearchRulesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (8 tests)" /tmp/out.txt
+          '
+
+      - name: Page decisions of 2026-10-27 (upload lists, curator emails, museum Recalculate, legacy images, Native, search order, help text, field guide caste, bot blocking, menu label, no Universal Analytics) (tests/unit/test_decided_pages.py)
+        run: python3 tests/unit/test_decided_pages.py
+
       - name: Java unit tests of the image picker (taxon name properties, Pick buttons not inside another form)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/web:/w:ro" antweb/antweb:dev -c '
@@ -800,6 +998,22 @@ jobs:
 
       - name: clearDisk.py skips web/log and links (tests/unit/test_clear_disk.py)
         run: python3 tests/unit/test_clear_disk.py
+
+      - name: Curator, admin and shared page fragments escape request values, do not fail, count right (tests/unit/test_curate_page_fixes.py)
+        run: python3 tests/unit/test_curate_page_fixes.py
+
+      - name: Java unit test of the Species List Tool permalink (list names escaped)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/curate/speciesList/SpeciesListPermaLinkTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.curate.speciesList.SpeciesListPermaLinkTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (2 tests)" /tmp/out.txt
+          '
 
       - name: deploy.sh no-restart list (tests/unit/test_deploy_paths.py)
         run: python3 tests/unit/test_deploy_paths.py

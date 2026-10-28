@@ -122,7 +122,8 @@
 	  }
 	  choice_is = use_thumb;
 	%>
-	  <h2 class="display_count"><%= totalImages %> Images</h2>
+	  <%-- 2026-10-27 (Brian Fisher): images of the ant + label images, "5 Images + label" (ImageCounts). --%>
+	  <h2 class="display_count" data-images="<%= org.calacademy.antweb.ImageCounts.of(specimen.getImages())[0] %>" data-labels="<%= org.calacademy.antweb.ImageCounts.of(specimen.getImages())[1] %>"><%= org.calacademy.antweb.ImageCounts.text(specimen.getImages()) %></h2>
    <% if (choice_is.equals(all)) { %>
         <span id="sub_taxon">Click image for higher resolution.</span>
 
@@ -195,6 +196,7 @@
     } %>
 
 <div class="clear"></div>
+<%@ include file="/common/imagesDefinition.jsp" %>
 
 <logic:present name="specimen" property="typeStatus"><logic:notEqual name="specimen" property="typeStatus" value=""><br>Type status: <img src="<%= AntwebProps.getDomainApp() %>/image/has_type_status_icon.png"></logic:notEqual></logic:present>
 <b><bean:write name="specimen" property="typeStatus"/></b></li>

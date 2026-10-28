@@ -2,7 +2,10 @@
 # Now it is a crontab:
 # 0 21 * * * /antweb/deploy/bin/admin.sh > /antweb/log/adminTask.log
 
-sh unclosedConnections.sh
+# Cron starts this in its own folder (not bin/): run the scripts beside it from here.
+cd "$(dirname "$0")" 2>/dev/null
+mkdir -p /data/antweb/log/unclosedConnections 2>/dev/null
+sh ./unclosedConnections.sh
 
 # Disabled as of 8/11/23 - moving this to system level so we can leverage mysqldump in the 
 # docker database image.

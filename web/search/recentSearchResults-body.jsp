@@ -81,12 +81,19 @@ java.lang.String length = "50";
 if ((request.getParameter("offset") != null) && (request.getParameter("offset").length() < 8)) {
 	offset = request.getParameter("offset");
 }
-int intOffset = Integer.parseInt(offset);
+// Not a number, negative or zero: the defaults (a length of 0 divided by zero below).
+int intOffset = 0;
+try { intOffset = Math.max(0, Integer.parseInt(offset.trim())); } catch (NumberFormatException e) { intOffset = 0; }
+offset = String.valueOf(intOffset);
 
 if ((request.getParameter("length") != null) && (request.getParameter("length").length() < 8)) {
 	length = request.getParameter("length");
 }
-int intLength = Integer.parseInt(length);
+int intLength = 50;
+try { intLength = Integer.parseInt(length.trim()); } catch (NumberFormatException e) { intLength = 50; }
+if (intLength < 1) intLength = 50;
+if (intLength > 1000) intLength = 1000;
+length = String.valueOf(intLength);
 %>
 
 <div id="page_contents">
@@ -145,7 +152,12 @@ function clickrecall(thisfield, defaulttext) {
 
 <% if (searchResults.getResults().size() <= intLength) { %>
 
-<h2><%= searchResults.getResults().size() %> Images</h2>
+<%  // 2026-10-27 (Brian Fisher): images of the ant + label images, counted apart (ImageCounts); one row per image file.
+    int recentLabels = 0;
+    for (Object recentRow : searchResults.getResults()) {
+      if (recentRow instanceof org.calacademy.antweb.search.ResultItem && org.calacademy.antweb.ImageCounts.isLabel(((org.calacademy.antweb.search.ResultItem) recentRow).getShotType())) ++recentLabels;
+    } %>
+<h2 data-images="<%= searchResults.getResults().size() - recentLabels %>" data-labels="<%= recentLabels %>"><%= org.calacademy.antweb.ImageCounts.text(searchResults.getResults().size() - recentLabels, recentLabels) %></h2>
 
 
 <% } else { 
@@ -167,6 +179,7 @@ function clickrecall(thisfield, defaulttext) {
 
 
 <span class="right"><b><a href="<%= AntwebProps.getDomainApp() %>/query.do?name=imageData">Newest 5,000 images (table)</a></b></span>
+<%@ include file="/common/imagesDefinition.jsp" %>
 
 
 

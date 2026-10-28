@@ -27,7 +27,7 @@ import pymysql
 
 DB = dict(host=os.environ.get('AW_DB_HOST', 'mysql'), port=int(os.environ.get('AW_DB_PORT', '3306')),
           user=os.environ.get('AW_DB_USER', 'antweb'), password=os.environ.get('AW_DB_PASS', 'CHANGE_ME'),
-          db=os.environ.get('AW_DB_NAME', 'ant'), charset='utf8')
+          db=os.environ.get('AW_DB_NAME', 'ant'), charset='utf8mb4')
 
 KP_COLS = []
 for _i in range(1, 7):

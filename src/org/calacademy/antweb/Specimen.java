@@ -564,11 +564,62 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
     }
         
         
+    /**
+     * Brian Fisher, 2026-10-27 (docs/numbers.md B71; Q12 of 2026-10-22: labels never count): a specimen with only label
+     * photos is not imaged. Its species page lists it with the no-photos mark, and it does not count in "(M imaged)",
+     * as the unimaged lists (StatisticsDb.ANT_IMAGE) already did. The number of its images (getHasImagesCount) still
+     * counts every photo.
+     */
+    public static boolean isAntShot(String shotType) {
+        return shotType == null || !"l".equalsIgnoreCase(shotType.trim());
+    }
+
+    /** True when one of the images is a photo of the ant (not a label). */
+    static boolean hasAntImage(java.util.Collection<SpecimenImage> images) {
+        if (images == null) return false;
+        for (SpecimenImage image : images) if (image != null && isAntShot(image.getShot())) return true;
+        return false;
+    }
+
+    /** Imaged: a photo of the ant, from the loaded images (setImages) or the image query (setHasImages); labels do not count (B71). */
+    @Override
+    public boolean getHasImages() {
+        if (images != null && !images.isEmpty() && hasAntImage(images.values())) return true;
+        return hasImages;
+    }
+
+    // 2026-10-27 (Brian Fisher): a specimen's images are shown as images of the ant + label images ("5 Images +
+    // label", ImageCounts). The label images of this specimen, -1 when not read (set by setImages, setHasImages and
+    // the advanced search's rows).
+    private int labelImageCount = -1;
+    public void setLabelImageCount(int labelImageCount) {
+        this.labelImageCount = labelImageCount;
+    }
+    /** The specimen's label images; -1 when not known. */
+    public int getLabelImageCount() {
+        if (images != null) return ImageCounts.of(images)[1];
+        return labelImageCount;
+    }
+    /** The specimen's images of the ant; -1 when not known. */
+    public int getAntImageCount() {
+        if (images != null) return ImageCounts.of(images)[0];
+        if (labelImageCount < 0) return -1;
+        return Math.max(0, getImageCount() - labelImageCount);
+    }
+    /** "5 Images + label", "Label only", "No Images" (ImageCounts.text); "N image files" when the labels are not known. */
+    public String getImagesText() {
+        int ant = getAntImageCount();
+        if (ant < 0) return getImageCount() == 0 ? "No Images" : ImageCounts.filesText(getImageCount());
+        return ImageCounts.text(ant, getLabelImageCount());
+    }
+
     public void setHasImages(Connection connection, Overview overview) throws SQLException {
         // We don't use overview here
         boolean hasOne = false;
         String theQuery = null;
         int theImageCount = 0;
+        int antImageCount = 0;
+        int labels = 0;
 
 
         Statement stmt = null;
@@ -585,6 +636,8 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
             while (rset.next()) {
                 // Now we always count them.
                 ++theImageCount; // += rset.getInt(1);   // What?  Why.  Increment, no?
+                if (isAntShot(rset.getString(1))) ++antImageCount;
+                if (ImageCounts.isLabel(rset.getString(1))) ++labels;
                 /*
                 if (!"l".equals(rset.getString(1))) {
                     // ++theImageCount; // += rset.getInt(1);   // What?  Why.  Increment, no?
@@ -595,9 +648,11 @@ public class Specimen extends Taxon implements Serializable, Comparable<Taxon>  
             }
 
             if (theImageCount > 0) {
-                hasOne = true;
                 setHasImagesCount(theImageCount);
             }
+            hasOne = antImageCount > 0;   // labels never make a specimen imaged (B71, 2026-10-27)
+            setImageCount(theImageCount);
+            setLabelImageCount(labels);
             
             //A.log("setHasImages() query:" + theQuery);
 
@@ -790,17 +845,17 @@ update specimen set other = '
     public String getMetaString() {
 		String metaString = "<meta name='keywords' content='Specimen ";
 		if (getGenus() != null)
-		  metaString+= new Formatter().capitalizeFirstLetter(getGenus());
+		  metaString+= Html.escAttr(new Formatter().capitalizeFirstLetter(getGenus()));
 		if (getSpecies() != null)
-		  metaString += " " + getSpecies();
-		metaString += " - " + getName().toUpperCase();
+		  metaString += " " + Html.escAttr(getSpecies());
+		metaString += " - " + Html.escAttr(getName().toUpperCase());
 		metaString += ", AntWeb, ants,ant,formicidae '/>";
 		metaString += "<meta name='description' content='Overview of ";
 		if (getGenus() != null)
-		  metaString+= new Formatter().capitalizeFirstLetter(getGenus());
+		  metaString+= Html.escAttr(new Formatter().capitalizeFirstLetter(getGenus()));
 		if (getSpecies() != null)
-		  metaString += " " + getSpecies();
-		metaString += " - " + getName().toUpperCase();
+		  metaString += " " + Html.escAttr(getSpecies());
+		metaString += " - " + Html.escAttr(getName().toUpperCase());
 		metaString += " from AntWeb.'/>";
 		return metaString;
     }

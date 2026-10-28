@@ -38,7 +38,7 @@ public class UtilDataAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(UtilDataAction.class);
 
-    private static String m_inComputeProcess;
+    private static volatile String m_inComputeProcess;   // volatile: read without the lock (isInComputeProcess)
     private static volatile long m_inComputeProcessSince = 0; // when m_inComputeProcess was set (ms), 0 if none
 
     // Every sub-action utilData.do handles. Anything else is answered with 404 before any other check
@@ -149,6 +149,11 @@ public class UtilDataAction extends AntwebAction {
         // The Scheduler's own calls are part of the running job and go through.
         if (message == null && !isScheduler && isInComputeProcess()) {
             message = "Another data job is running (" + Html.esc(getIsInComputeProcess()) + "). Please try again when it has finished.";
+        }
+        // Between two sets of the nightly run the flag is clear for a moment (each set clears it when it ends):
+        // a job started then would run beside the next set.
+        if (message == null && !isScheduler && Scheduler.isRunning()) {
+            message = "The nightly run is working. Please try again when it has finished.";
         }
 
         if (message == null && runsInBackground(action, isScheduler)) {
@@ -487,7 +492,8 @@ public class UtilDataAction extends AntwebAction {
                     message += " statistics not written (" + e + ")";
                 }
                 // countCheck.do reads this line: tonight's numbers follow the rules of 2026-10-21 (PlaceTotals).
-                LogMgr.appendLog("compute.log", "  Set 4 done (" + CountInvariants.RULES_LOG + ")", true);
+                // Since 2026-10-27 also: the lists' Images are ant images (StatisticsDb.ANT_IMAGES_RULE_LOG; CountCheck).
+                LogMgr.appendLog("compute.log", "  Set 4 done (" + CountInvariants.RULES_LOG + "; " + StatisticsDb.ANT_IMAGES_RULE_LOG + ")", true);
                 // message += " " + doAction("calcEndemic", form, accessLogin, accessGroup, connection, request, mapping);
                 // message += " " + doAction("calcIntroduced", form, accessLogin, accessGroup, connection, request, mapping);
             }

@@ -20,10 +20,9 @@
 %>
 
 <jsp:useBean id="taxon" scope="request" class="org.calacademy.antweb.Taxon" />
-<jsp:setProperty name="taxon" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-27): the action fills the bean; request values must not overwrite what the page shows. --%>
 
 <jsp:useBean id="specimen" scope="request" class="org.calacademy.antweb.Specimen" />
-<jsp:setProperty name="specimen" property="*" />
 
 <% 
 
@@ -145,11 +144,15 @@ if (childrenList != null) {
 
      String limitStr = (String) request.getParameter("limit");
      if (limitStr != null) {
-       limit = Integer.parseInt(limitStr);
+       try {
+         limit = Integer.parseInt(limitStr.trim());
+       } catch (NumberFormatException e) {
+         // not a number: keep the default
+       }
      }
      if (taxon.getChildrenCount() > limit) {
        String allUrl = HttpUtil.getTargetReplaceParam(request, "limit", "limit=10000");
-       String allLink = " See all: <a href='" + allUrl + "'>here</a>";
+       String allLink = " See all: <a href='" + Html.escAttr(allUrl) + "'>here</a>";
        limitNote = "(Only the first " + limit + " of " + taxon.getChildrenCount() + " displayed - " + allLink + ").";
      }
    }
@@ -178,14 +181,14 @@ if (childrenList != null) {
                      String showAllLink = HttpUtil.getTargetReplaceParam(request, "statusSet", "statusSet=all");                
                      A.log("showBrowse-body.jsp displayCount:" + displayCount + " subtaxonCount:" + taxonSet.getSubtaxonCount(1) + " target:" + showAllLink);
                 %>
-                  <li><a href="<%= showAllLink %>">See all</a></li>
+                  <li><a href="<%= Html.escAttr(showAllLink) %>">See all</a></li>
                 <% } %>
 
                 <% if (displayGlobal) {
                      if (isGlobal) { %>
-                       <li><a href="<%= HttpUtil.getTargetReplaceParam(request, "global=true", "") %>">See <%= overview %> only</a></li>
+                       <li><a href="<%= Html.escAttr(HttpUtil.getTargetReplaceParam(request, "global=true", "")) %>">See <%= overview %> only</a></li>
                      <% } else if (!isGlobal) { %>
-                       <li><a href="<%= HttpUtil.getTarget(request) + "&global=true" %>">See global set</a></li>                
+                       <li><a href="<%= Html.escAttr(HttpUtil.getTarget(request) + "&global=true") %>">See global set</a></li>                
                 <%   }
                    } %>
             </ul>

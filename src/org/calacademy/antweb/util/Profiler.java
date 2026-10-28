@@ -25,7 +25,9 @@ public class Profiler {
     public static void profile(String key, Date startTime) {
       Profiler.profile(key, startTime, null);
     }
-    public static void profile(String key, Date startTime, String value) {
+    // synchronized: request threads add while report() reads and clears the shared map
+    // (a ConcurrentModificationException there replaced a visitor's download with an error).
+    public static synchronized void profile(String key, Date startTime, String value) {
 
         if (firstOfPeriodTime == null) {
             firstOfPeriodTime = startTime;
@@ -56,7 +58,7 @@ public class Profiler {
       return report(clear, "profiler.jsp");
     }
     
-    public static String report(boolean clear, String logName) {
+    public static synchronized String report(boolean clear, String logName) {
         /** Called from AntwebUtil.isServerBusy() and serverStatus.do */
         String report = "";
         Set<String> keySet = profiles.keySet();

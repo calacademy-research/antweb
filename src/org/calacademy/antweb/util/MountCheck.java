@@ -98,6 +98,7 @@ public final class MountCheck {
         long age = now - status.lastModified();
         if (age > maxAgeMs) return "the daily database dump last reported " + (age / 3600000) + " hours ago (" + line + "): the 01:00 dump did not run";
         if (w.length < 2 || !"ok".equals(w[0])) return "the daily database dump failed: " + line;
+        if (w.length < 3) return "the daily database dump status line is malformed (no size): " + line;  // was "only -1 bytes"
         long bytes = -1;
         try { bytes = Long.parseLong(w[2]); } catch (Exception e) { /* reported below */ }
         if (bytes < minBytes) return "the daily database dump is only " + bytes + " bytes: " + line;

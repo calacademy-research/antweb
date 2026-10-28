@@ -99,6 +99,9 @@ public final class CollectionAction extends AntwebAction {
             }
 		} catch (SQLException e) {
 			s_log.error("execute() e:" + e);
+			// Not the page with a null collection (a blank page or an error).
+			request.setAttribute("message", "The collection could not be loaded (database error). Please try again later.");
+			return mapping.findForward("message");
 		} finally {
 		    // java.util.Date startTime = new java.util.Date();
             QueryProfiler.profile("collection", startTime);	

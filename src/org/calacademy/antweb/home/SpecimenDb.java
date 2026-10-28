@@ -325,9 +325,10 @@ public class SpecimenDb extends AntwebDb {
                 String taxonName = rset.getString("taxon_name");
                 String country = rset.getString("country");
                 
-                String codeLink = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + code + "'>" + code + "</a>";
-                String taxonLink = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + taxonName + "'>" + Taxon.getPrettyTaxonName(taxonName) + "</a>";
-                introducedSpecimen.add("<tr><td>" + group + "</td><td>" + bioregion + "</td><td>" + codeLink + "</td><td>" + taxonLink + "</td><td>" + country + "</td></tr>");
+                // Values from uploaded files: escaped for the page, encoded in the links.
+                String codeLink = "<a href='" + AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.escAttr(Html.url(code)) + "'>" + Html.esc(code) + "</a>";
+                String taxonLink = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.escAttr(Html.url(taxonName)) + "'>" + Html.esc(Taxon.getPrettyTaxonName(taxonName)) + "</a>";
+                introducedSpecimen.add("<tr><td>" + Html.esc(group) + "</td><td>" + Html.esc(bioregion) + "</td><td>" + codeLink + "</td><td>" + taxonLink + "</td><td>" + Html.esc(country) + "</td></tr>");
             }
             s_log.debug("getIntroducedByGroup() count:" + count + " query:" + query);
 

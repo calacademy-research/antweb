@@ -272,19 +272,23 @@ public class TaxonTreeCountDbTest extends TestCase {
         exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus) values ('" + WASMANNIA
             + "', 'genus', 'synonym', '" + MYRM + "', 'formicidae', '" + MYRM + "', 'wasmannia')");
         exec("insert into specimen (code, taxon_name, status, country, museum, upload_id, image_count, family, subfamily, genus, species, access_group)"
-            + " values ('casent6', '" + SYN + "', 'synonym', 'Madagascar', 'CASC', 1, 3, 'formicidae', '" + MYRM + "', 'wasmannia', 'aurea', 1)");
+            + " values ('casent6', '" + SYN + "', 'synonym', 'Madagascar', 'CASC', 1, 4, 'formicidae', '" + MYRM + "', 'wasmannia', 'aurea', 1)");
+        // three images of the ant and a label (the label is not counted, 2026-10-27)
+        exec("insert into image (id, image_of_id, shot_type) values (10, 'casent6', 'h'), (11, 'casent6', 'p'), (12, 'casent6', 'd'), (13, 'casent6', 'l')");
         exec("insert into proj_taxon (project_name, taxon_name, created) values ('madants', '" + SYN + "', '2020-01-01'), ('madants', '" + WASMANNIA + "', '2020-01-01')");
         exec("update proj_taxon set image_count = 99 where project_name = 'madants'");   // the crawl writes every row it counts
 
         new ProjectImages(connection).crawl(new Project("madants"));
         String m = "'madants'";
-        assertEquals(2, images("proj_taxon", "project_name", m, PA));
+        // images of the ant only (Brian Fisher 2026-10-27): casent1 head (its label left out), casent3 profile,
+        // casent5 has a label only
+        assertEquals(1, images("proj_taxon", "project_name", m, PA));
         assertEquals(3, images("proj_taxon", "project_name", m, SYN));
-        assertEquals("pheidole a 2, b 1, a x 0 and the synonym 3", 6, images("proj_taxon", "project_name", m, PHEIDOLE));
+        assertEquals("pheidole a 1, b 1, a x 0 and the synonym 3", 5, images("proj_taxon", "project_name", m, PHEIDOLE));
         assertEquals("the old genus row holds none of it", 99, images("proj_taxon", "project_name", m, WASMANNIA));
-        assertEquals(6, images("proj_taxon", "project_name", m, MYRM));
-        assertEquals(1, images("proj_taxon", "project_name", m, PON));
-        assertEquals(7, images("proj_taxon", "project_name", m, FAMILY));
+        assertEquals(5, images("proj_taxon", "project_name", m, MYRM));
+        assertEquals("hypoponera b has a label only", 0, images("proj_taxon", "project_name", m, PON));
+        assertEquals(5, images("proj_taxon", "project_name", m, FAMILY));
 
         exec("update proj_taxon set image_count = 0 where project_name = 'madants' and taxon_name = '" + WASMANNIA + "'");   // as the nightly reset leaves it
         CountCheck.Result r = invariants();
@@ -300,15 +304,16 @@ public class TaxonTreeCountDbTest extends TestCase {
         madagascar.setGeorank("country");
         new GeoImages(connection).crawl(madagascar);
         String g = "" + MADAGASCAR;
-        assertEquals(4, images("geolocale_taxon", "geolocale_id", g, FAMILY));
-        assertEquals(3, images("geolocale_taxon", "geolocale_id", g, MYRM));
-        assertEquals(1, images("geolocale_taxon", "geolocale_id", g, PON));
-        assertEquals(3, images("geolocale_taxon", "geolocale_id", g, PHEIDOLE));
-        assertEquals(1, images("geolocale_taxon", "geolocale_id", g, HYPO));
-        assertEquals(2, images("geolocale_taxon", "geolocale_id", g, PA));
+        // images of the ant only (2026-10-27): casent1 head (label left out), casent3 profile; casent5 a label only
+        assertEquals(2, images("geolocale_taxon", "geolocale_id", g, FAMILY));
+        assertEquals(2, images("geolocale_taxon", "geolocale_id", g, MYRM));
+        assertEquals(0, images("geolocale_taxon", "geolocale_id", g, PON));
+        assertEquals(2, images("geolocale_taxon", "geolocale_id", g, PHEIDOLE));
+        assertEquals(0, images("geolocale_taxon", "geolocale_id", g, HYPO));
+        assertEquals(1, images("geolocale_taxon", "geolocale_id", g, PA));
         assertEquals(1, images("geolocale_taxon", "geolocale_id", g, PB));
         assertEquals(0, images("geolocale_taxon", "geolocale_id", g, PAX));
-        assertEquals(1, images("geolocale_taxon", "geolocale_id", g, HB));
+        assertEquals(0, images("geolocale_taxon", "geolocale_id", g, HB));
         CountCheck.Result r = invariants();
         assertEquals(list(r), 0, real(r, "list.images"));
     }

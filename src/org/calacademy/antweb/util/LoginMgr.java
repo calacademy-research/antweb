@@ -162,7 +162,10 @@ public class LoginMgr extends Manager {
         return getAccessLogin(request);
     }
     public static Login getAccessLogin(HttpServletRequest request) {
-		HttpSession session = request.getSession();
+		// getSession(false): reading who is logged in never creates a session. After a session is ended below, a later
+		// call on the same page (the header, after part of the page was sent) made a new one and failed with "Cannot
+		// create a session after the response has been committed": the page was cut off (staging e2e 2026-10-27).
+		HttpSession session = request.getSession(false);
 		if (session == null) return null;
         Login login = (Login) session.getAttribute("accessLogin");
         // Sessions ended by a password reset or by an administrator (login.session_version).
@@ -172,6 +175,15 @@ public class LoginMgr extends Manager {
                 session.invalidate();
             } catch (IllegalStateException e) {
                 // already invalidated
+            }
+            // Start the new (logged-out) session now, usually before any of the page is sent: every JSP of the page
+            // (session="true", the default) asks for a session when it starts, and one asked for after the response
+            // was committed fails ("Cannot create a session after the response has been committed"), cutting the
+            // page off (staging e2e 2026-10-27, the home page in the header).
+            try {
+                request.getSession(true);
+            } catch (IllegalStateException e) {
+                s_log.info("getAccessLogin() no new session: " + e.getMessage());
             }
             return null;
         }
@@ -265,14 +277,6 @@ public class LoginMgr extends Manager {
         return accessLogin != null && accessLogin.isAdmin();
     }
     
-    public static boolean isMichele(HttpServletRequest request) {
-        Login accessLogin = getAccessLogin(request);
-	    return isMichele(accessLogin);
-	}
-	public static boolean isMichele(Login accessLogin) {
-        return accessLogin != null && accessLogin.getId() == 23;
-    }
-
     public static boolean isMingnaUtep(Login accessLogin) {
         return accessLogin != null && accessLogin.getId() == 9716;
     }

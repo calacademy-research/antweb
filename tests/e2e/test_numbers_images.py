@@ -6,17 +6,18 @@ each kind each day (numbers_sample.py), and in it the day's genus of its list (a
 MAX_CHILDREN species). The numbers of one page are compared with another page that counts the same children, or
 recounted from the API's records:
 
-  row 44  a species row's "N Images" on the place's list (list row image_count, nightly set 4) = the images of the
-          place's specimens of that name, recounted from the API (/specimens imageCount of the specimens filed under
-          the name: country = the country, adm1 = the adm1, museum = the museum, bioregion = the bioregion, project =
+  row 44  a species row's Images of the place on the place's list (list row image_count, nightly set 4; the number in
+          brackets of "T Images (P from X)" since 2026-10-27) = the images of the ant (labels never count, Brian
+          Fisher 2026-10-27) of the place's specimens of that name, recounted from the API (/taxaImages of the name,
+          shot types other than l, of the specimens /specimens files under the name: country = the country, adm1 = the adm1, museum = the museum, bioregion = the bioregion, project =
           anywhere; countries and adm1s of a counted status), on the species rows whose Specimens the same recount
           gives (a row it does not reproduce, an island or a synonym, is left out and named).
   row 55  images.do "I Species Imaged (M total)": M = browse.do's N = the rows it lists; I = the children shown in the
           All view (cookie thumbs=a) with a head, profile or dorsal picture (Taxon.getUniqueChildImagesCount("p",
           "h", "d")).
-  row 56  images.do child "N Images" (default view and All view) = the child's Images on the place's list (browse.do
-          of the genus lists them) where that is above 0; where it is 0 the page shows the number of pictures of the
-          specimen it shows, from anywhere (B45: by design since 2026-10-27, option A: the best images in AntWeb).
+  row 56  images.do child Images (default view and All view) = the child's Images cell on the place's list (browse.do
+          of the genus lists them; both numbers, ant images only, since 2026-10-27) where the name has images in
+          AntWeb; where it has none the page shows the images of the ant of the specimen it shows.
   row 49  genus browse hidden "M Imaged Species (out of N total)": M = the children with pictures (images.do All
           view; both use the children's pictures, Taxon.getHasImages).
   row 57  taxonomicPage.do images view "I X Imaged (out of M Total)": M = the list header of the same list (row 38),
@@ -101,6 +102,59 @@ def _num(text):
     return ns.n(m.group(1)) if m else None
 
 
+def images_cell(cell):
+    """The two numbers of a list row's Images cell (since 2026-10-27, Brian Fisher: images from anywhere):
+    (images of the name in AntWeb, images of this place's specimens). 'No Images' -> (0, 0), 'N Images' -> (N, N),
+    'T Images (P from Comoros)' or '(P in CASC)' -> (T, P); (None, None) when it is neither."""
+    t = ns.text_of(cell)
+    if t.startswith("No "):
+        return 0, 0
+    m = re.match(r"([\d,]+) Images(?: \(\s*([\d,]+) (?:from|in) .+?\s*\))?$", t)
+    if not m:
+        return None, None
+    total = ns.n(m.group(1))
+    return total, (ns.n(m.group(2)) if m.group(2) else total)
+
+
+_CHILD_IMAGES = (r"(No Images|(?:<span[^>]*>)?[\d,]+(?:</span>)? Images"
+                 r"(?: \((?:<span[^>]*>)?[\d,]+(?:</span>)? (?:from|in) [^)<]*\))?)")
+
+
+def images_by_code(taxon_name):
+    """Images of each specimen of the name, from /taxaImages: (code -> images of the ant (shot type not l),
+    code -> every image, labels included); None when the name has more than one page (500 images)."""
+    body = ns.api(f"taxaImages?taxonName={ns.quote_plus(taxon_name)}&limit=500")
+    if body is None:
+        return None
+    images = [((sp.get("code") or "").strip().lower(), (i.get("shotType") or "").strip().lower())
+              for t in ns.api_rows(body) for sp in (t.get("specimen") or []) for i in (sp.get("images") or [])]
+    if len(images) >= 500:
+        return None
+    ant, every = {}, {}
+    for code, shot in images:
+        every[code] = every.get(code, 0) + 1
+        if shot != "l":
+            ant[code] = ant.get(code, 0) + 1
+    return ant, every
+
+
+def ant_images_by_code(taxon_name):
+    """Images of the ant (shot type not l) of each specimen of the name, from /taxaImages: code -> count; None when the
+    name has more than one page (500 images). Since 2026-10-27 (Brian Fisher) every Images column counts these."""
+    got = images_by_code(taxon_name)
+    return got[0] if got else None
+
+
+OLD_SET_4 = "the old count with label images (pending until nightly set 4 runs with the ant-only counts)"
+
+
+def old_set_4(shown, ant, every, codes):
+    """True when a list row's Images number is the count before 2026-10-27 (every image, labels included) and differs
+    from the ant-only recount: the row is pending until the nightly set 4 recounts it with images of the ant only."""
+    total = sum(every.get(c, 0) for c in codes)
+    return shown == total and total != sum(ant.get(c, 0) for c in codes)
+
+
 def _params(link):
     """The query of an images.do or browse.do link, unescaped, without the domain and page."""
     return unescape(link.split("?", 1)[1]) if link and "?" in link else None
@@ -114,7 +168,8 @@ def _key(params):
 
 def list_row_cells(row_html):
     """A list row's (taxonReportBody.jsp) place count ("N Species", "N Specimens"; not the Global column), its browse
-    link, its Images number and the browser parameters of its images.do link (None when it says No Images)."""
+    link, its Images number of this place (the number in brackets when the name has more images in AntWeb, since
+    2026-10-27) and the browser parameters of its images.do link (None when it says No Images)."""
     count, link = None, None
     for cell in re.findall(r'<div class="list_extras specimens">(.*?)</div>', row_html, re.S):
         if "global=true" in cell:
@@ -130,7 +185,7 @@ def list_row_cells(row_html):
     images, params = None, None
     m = re.search(r'<div class="list_extras images">(.*?)</div>', row_html, re.S)
     if m:
-        images = _num(m.group(1))
+        images = images_cell(m.group(1))[1]
         lk = re.search(r"href='([^']*images\.do\?[^']*)'", m.group(1))
         params = _params(lk.group(1)) if lk else None
     return count, link, images, params
@@ -149,8 +204,8 @@ def default_view_children(html):
         name = re.search(r'<div class="name">.*?<a href="[^"]*images\.do\?([^"]+)">(.*?)</a>', chunk, re.S)
         if not name:
             continue
-        cnt = re.search(r'float:right; text-align:right;">\s*(No Images|(?:<span class=\'numbers\'>)?[\d,]+(?:</span>)? Images)', chunk)
-        out.append((_key(unescape(name.group(1))), ns.text_of(name.group(2)), _num(cnt.group(1)) if cnt else None))
+        cnt = re.search(r'float:right; text-align:right;">\s*' + _CHILD_IMAGES, chunk)
+        out.append((_key(unescape(name.group(1))), ns.text_of(name.group(2)), images_cell(cnt.group(1)) if cnt else None))
     return out
 
 
@@ -165,7 +220,7 @@ def all_view_children(html):
             continue
         cnt = re.search(r'<div class="ratio_has_images">(.*?)</div>', chunk, re.S)
         shots = set(s.lower() for s in re.findall(r"bigPicture\.do\?name=[^&]+&shot=([^&]+)&number=", chunk))
-        out.append((_key(unescape(name.group(1))), ns.text_of(name.group(2)), _num(cnt.group(1)) if cnt else None, shots))
+        out.append((_key(unescape(name.group(1))), ns.text_of(name.group(2)), images_cell(cnt.group(1)) if cnt else None, shots))
     return out
 
 
@@ -225,13 +280,16 @@ def each_genus():
 
 
 def browse_children(g):
-    """The children rows of the genus' browse page: browser params key -> (name, Images of this place's list)."""
+    """The children rows of the genus' browse page: browser params key -> (name, (Images in AntWeb, Images of this
+    place's list))."""
     out = {}
     for r in ns.list_rows(g["browse"]):
-        _c, link, images, params = list_row_cells(r["html"])
+        _c, link, _images, params = list_row_cells(r["html"])
         params = params or _params(link)   # both links carry the child's browser parameters
-        if params and images is not None:
-            out[_key(params)] = (r["name"], images)
+        cell = re.search(r'<div class="list_extras images">(.*?)</div>', r["html"], re.S)
+        both = images_cell(cell.group(1)) if cell else (None, None)
+        if params and both[0] is not None:
+            out[_key(params)] = (r["name"], both)
     return out
 
 
@@ -361,8 +419,9 @@ def test_map_comparison_counts_the_children_mapped():
 # ------------------------------------------------------------------------------------------- rows 56, 62, 57
 
 def test_images_page_child_counts_equal_the_list_rows():
-    """Row 56: on images.do (default view and All view) a child whose row on the place's list has N Images > 0 shows
-    "N Images" (the All view showed "0 Images" for every name until 2026-10-27, B46)."""
+    """Row 56: on images.do (default view and All view) a child whose row on the place's list has images in AntWeb
+    shows the same numbers as the list: "T Images (P from X)" or "N Images" (ant images only since 2026-10-27; the All
+    view showed "0 Images" for every name until 2026-10-27, B46)."""
     wrong, checked = [], 0
     for p, g in each_genus():
         rows = browse_children(g)
@@ -372,8 +431,8 @@ def test_images_page_child_counts_equal_the_list_rows():
         for view, children in views:
             for key, name, shown in children:
                 listed = rows.get(key)
-                if not listed or not listed[1]:
-                    continue
+                if not listed or not listed[1][0]:
+                    continue   # No Images on the list: the page may show the ant images of the specimen shown
                 checked += 1
                 if shown != listed[1]:
                     wrong.append(f"{g['where']} {view} {name}: images.do {shown} Images, list row {listed[1]}")
@@ -455,9 +514,10 @@ def _api_specimens(p, genus, species):
 
 
 def test_list_images_column_equals_the_api_recount():
-    """Row 44: the species rows (of the day's genus, at most MAX_ROWS) of the place's list: "N Images" = the images of
-    the place's specimens of that name recounted from the API (sum of imageCount), on the rows whose Specimens the
-    same recount reproduces."""
+    """Row 44: the species rows (of the day's genus, at most MAX_ROWS) of the place's list: the place's Images = the
+    images of the ant (labels left out, since 2026-10-27) of the place's specimens of that name, recounted from the API
+    (/taxaImages of the name, the specimens of /specimens in the place), on the rows whose Specimens the same recount
+    reproduces."""
     wrong, checked, left_out = [], [], []
     for p, g in each_genus():
         rows = []
@@ -477,9 +537,18 @@ def test_list_images_column_equals_the_api_recount():
             if len(mine) != count:
                 left_out.append(f"{p} {name}: {count} Specimens, the API recount {len(mine)} (island, synonym or pending)")
                 continue
-            recount = sum(int(s.get("imageCount") or 0) for s in mine)
+            both = images_by_code(name)
+            if both is None:
+                left_out.append(f"{p} {name}: not recounted (more than 500 images)")
+                continue
+            ant, every = both
+            codes = [ns.specimen_code(s) for s in mine]
+            recount = sum(ant.get(c, 0) for c in codes)
+            if recount != images and old_set_4(images, ant, every, codes):
+                left_out.append(f"{p} {name}: {images} Images, {OLD_SET_4}")
+                continue
             if recount != images:
-                wrong.append(f"{p} {name}: list row {images} Images, the API's {len(mine)} specimens have {recount}")
+                wrong.append(f"{p} {name}: list row {images} Images, the API's {len(mine)} specimens have {recount} images of the ant")
             checked.append(f"{p} {name}")
     if not checked:
         pytest.skip("no species row recounted " + ns.day_note() + "; left out: " + "; ".join(left_out[:10]))
@@ -511,14 +580,36 @@ def species_browse(p):
     return _SPECIES[key]
 
 
+SPECIMEN_IMAGES = (r"(No Images|Label only(?: \([\d,]+ labels\))?|<span class='numbers'>[\d,]+</span> Images"
+                   r"(?: \+ (?:label|[\d,]+ labels))?|<span class='numbers'>[\d,]+</span> image files?)")
+
+
+def specimen_images(text):
+    """A specimen's images as the pages show them since 2026-10-27 (ImageCounts.text; Brian Fisher: "5 images +
+    label"): (images of the ant, label images). 'No Images' -> (0, 0), 'Label only' -> (0, 1), 'Label only (2
+    labels)' -> (0, 2), '5 Images' -> (5, 0), '5 Images + label' -> (5, 1), '5 Images + 2 labels' -> (5, 2); None
+    when the labels are not known ('N image files') or the text is none of these."""
+    t = ns.text_of(text)
+    if t == "No Images":
+        return 0, 0
+    m = re.fullmatch(r"Label only(?: \(([\d,]+) labels\))?", t)
+    if m:
+        return 0, ns.n(m.group(1)) if m.group(1) else 1
+    m = re.fullmatch(r"([\d,]+) Images(?: \+ (label|([\d,]+) labels))?", t)
+    if not m:
+        return None
+    return ns.n(m.group(1)), (0 if not m.group(2) else 1 if m.group(2) == "label" else ns.n(m.group(3)))
+
+
 def specimen_rows(html):
-    """(code, N Images shown, no-photos mark) of each specimen of a browse page (specimenReport.jsp)."""
+    """(code, (images of the ant, label images) shown, no-photos mark) of each specimen of a browse page
+    (specimenReport.jsp)."""
     out = []
     for r in ns.list_rows(html):
         code = re.search(r'<div class="sd_specimen_code">.*?specimen\.do\?code=([^"&]+)"', r["html"], re.S)
-        cnt = re.search(r'<div class="sd_specimen_code">.*?(No Images|<span class=\'numbers\'>([\d,]+)</span> Images)', r["html"], re.S)
+        cnt = re.search(r'<div class="sd_specimen_code">.*?' + SPECIMEN_IMAGES, r["html"], re.S)
         if code and cnt:
-            out.append((requests.utils.unquote(code.group(1)).lower(), _num(cnt.group(1)), r["no_photos"]))
+            out.append((requests.utils.unquote(code.group(1)).lower(), specimen_images(cnt.group(1)), r["no_photos"]))
     return out
 
 
@@ -530,9 +621,19 @@ def api_image_count(code):
     return int((body.get("metaData") or {}).get("count") or 0)
 
 
+def api_image_counts(code):
+    """(images of the ant, label images) of the specimen in the image table (API /images shot types, live), or None."""
+    body = ns.api("images?specimenCode=" + ns.quote_plus(code))
+    if body is None:
+        return None
+    shots = [(i.get("shotType") or "").strip().lower() for sp in ns.api_rows(body) for i in (sp.get("images") or [])]
+    return sum(1 for s in shots if s != "l"), sum(1 for s in shots if s == "l")
+
+
 def test_specimen_rows_count_the_images_of_each_specimen():
-    """Row 61: browse.do of the day's species of every kind of place: each specimen's "N Images" = its images in the
-    image table (API /images, at most 8 specimens a place); "No Images" exactly where the row has the no-photos mark."""
+    """Row 61: browse.do of the day's species of every kind of place: each specimen's "N Images + label" (since
+    2026-10-27: images of the ant, label images apart) = its images in the image table (API /images shot types, at
+    most 8 specimens a place); "No Images" exactly where the row has the no-photos mark."""
     wrong, checked = [], 0
     for p in places():
         got = species_browse(p)
@@ -541,15 +642,18 @@ def test_specimen_rows_count_the_images_of_each_specimen():
         row, html = got
         rows = specimen_rows(html)
         for code, shown, no_photos in rows:
-            if (shown == 0) != no_photos:
-                wrong.append(f"{p} {code}: '{shown} Images', no-photos mark {no_photos}")
-        for code, shown, _np in ns.pick([r for r in rows if r[1]], 6, "images-specimens" + repr(p)) + ns.pick([r for r in rows if not r[1]], 2, "images-none" + repr(p)):
-            live = api_image_count(code)
+            if shown is None:
+                wrong.append(f"{p} {code}: images not shown as images of the ant + labels")
+            elif (shown == (0, 0)) != no_photos:
+                wrong.append(f"{p} {code}: {shown} (images, labels), no-photos mark {no_photos}")
+        rows = [r for r in rows if r[1] is not None]
+        for code, shown, _np in ns.pick([r for r in rows if r[1] != (0, 0)], 6, "images-specimens" + repr(p)) + ns.pick([r for r in rows if r[1] == (0, 0)], 2, "images-none" + repr(p)):
+            live = api_image_counts(code)
             if live is None:
                 continue
             checked += 1
             if live != shown:
-                wrong.append(f"{p} {code}: browse.do {shown} Images, the image table {live}")
+                wrong.append(f"{p} {code}: browse.do {shown} (images of the ant, labels), the image table {live}")
     if not checked:
         pytest.skip("no species browse page with specimens read " + ns.day_note())
     assert not wrong, f"{checked} specimens {ns.day_note()}:\n" + "\n".join(wrong)
@@ -563,19 +667,20 @@ def test_specimen_images_page_counts_the_images_of_the_specimen():
         got = species_browse(p)
         if not got:
             continue
-        rows = [r for r in specimen_rows(got[1]) if r[1]]
+        rows = [r for r in specimen_rows(got[1]) if r[1] and r[1] != (0, 0)]
         for code, _shown, _np in ns.pick(rows, 3, "specimen-images" + repr(p)):
             html = ns.fetch("/specimenImages.do?code=" + ns.quote_plus(code))
-            live = api_image_count(code)
+            live = api_image_counts(code)
             if html is None or live is None:
                 continue
-            m = re.search(r'<h2 class="display_count">(\d+) Images</h2>', html)
+            m = re.search(r'<h2 class="display_count" data-images="(\d+)" data-labels="(\d+)">(.*?)</h2>', html, re.S)
             if not m:
-                wrong.append(f"{code}: specimenImages.do without 'N Images'")
+                wrong.append(f"{code}: specimenImages.do without 'N Images + label'")
                 continue
             checked += 1
-            if int(m.group(1)) != live:
-                wrong.append(f"{p} {code}: specimenImages.do {m.group(1)} Images, the image table {live}")
+            shown = (int(m.group(1)), int(m.group(2)))
+            if shown != live or specimen_images(m.group(3)) != shown:
+                wrong.append(f"{p} {code}: specimenImages.do {ns.text_of(m.group(3))!r} {shown}, the image table {live}")
     if not checked:
         pytest.skip("no imaged specimen found on the day's species pages " + ns.day_note())
     assert not wrong, f"{checked} specimens {ns.day_note()}:\n" + "\n".join(wrong)
@@ -657,13 +762,15 @@ def test_recent_images_count_equals_the_images_uploaded():
     if classify(r).category != "ok":
         pytest.skip("recentSearchResults.do: " + classify(r).category)
     html = r.text
-    one = re.search(r"<h2>([\d,]+) Images</h2>", html)
+    # since 2026-10-27: "N Images + M labels" (images of the ant, label images apart) when one page holds them all;
+    # the number of image rows is images + labels
+    both = re.search(r'<h2 data-images="(\d+)" data-labels="(\d+)">', html)
     paged = re.search(r'<h2>Showing records <span class="numbers">(\d+)</span> to <span class="numbers">(\d+)</span> '
                       r'of <span class="numbers">(\d+)</span> records</h2>', html)
-    assert one or paged, "recentSearchResults.do: no 'N Images' or 'Showing records a to b of N records'"
+    assert both or paged, "recentSearchResults.do: no 'N Images + labels' or 'Showing records a to b of N records'"
     rows = len(re.findall(r'<div class="adv_search_recent_image">', html))
-    if one:
-        n = ns.n(one.group(1))
+    if both:
+        n = int(both.group(1)) + int(both.group(2))
         assert rows == n, f"recent images: {n}, {rows} rows listed"
     else:
         a, b, n = (int(x) for x in paged.groups())

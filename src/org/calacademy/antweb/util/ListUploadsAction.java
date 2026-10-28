@@ -30,6 +30,8 @@ public final class ListUploadsAction extends AntwebAction {
         throws IOException, ServletException {
         
         ActionForward a = Check.initLogin(request, mapping); if (a != null) return a;
+        // Upload lists: curators and admins only (decided 2026-10-27).
+        ActionForward c = Check.curator(request, mapping); if (c != null) return c;
         
         Locale locale = getLocale(request);
         HttpSession session = request.getSession();
@@ -82,7 +84,7 @@ public final class ListUploadsAction extends AntwebAction {
               criteria += " where group_id = " + groupIdInt;
             }
             if (curatorIdInt != 0) {
-              criteria += " where curator_id = " + curatorIdInt;
+              criteria += (criteria.isEmpty() ? " where" : " and") + " curator_id = " + curatorIdInt;  // both filters: was "where ... where"
             }
             imageUploads = new ImageUploadDb(connection).getImageUploads(criteria);
 
@@ -150,7 +152,7 @@ public final class ListUploadsAction extends AntwebAction {
               query += " where group_id = " + groupIdInt;
             }
             if (loginIdInt != 0) {
-              query += " where login_id = " + loginIdInt;
+              query += (groupIdInt != 0 ? " and" : " where") + " login_id = " + loginIdInt;  // both filters: was "where ... where"
             }
             query += " order by created desc";
             rset = stmt.executeQuery(query);

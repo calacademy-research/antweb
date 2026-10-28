@@ -1,7 +1,8 @@
 """Curate page follow-ups (2026-10-19).
 
 - Museum page "Recalculate": shown to administrators (was one login id); the museum.do recalc
-  runs only for administrators. The login-id check (LoginMgr.isPeter) is gone.
+  runs only for administrators. The login-id check (LoginMgr.isPeter) is gone. Since 2026-10-27
+  (decided by Brian Fisher) curators may use it too.
 - Orphaned images (orphanedImages.do): administrators only, linked from the admin part of the
   Curate page.
 - Developer debug notes that administrators saw since the developer right became the admin role
@@ -43,10 +44,12 @@ def test_no_login_id_for_museum_recalc():
     assert not bad, bad
     body = _text("web/overview-body.jsp")
     i = body.index("getRecalcButton(request)")
-    assert "LoginMgr.isAdmin(accessLogin)" in body[max(0, i - 200):i]
+    # 2026-10-27: curators and admins (the button sits in the curator-only block, isRecalc needs a curator).
+    assert "LoginMgr.isAdmin(accessLogin)" not in body[max(0, i - 200):i]
     action = _text("src/org/calacademy/antweb/OverviewAction.java")
+    assert '"recalc".equals(action) && LoginMgr.isCurator(request) && HttpUtil.isPost(request)' in action
     museum = action[action.index('uri.contains("/museum.do")'):]
-    assert "isRecalc && LoginMgr.isAdmin(request)" in museum[:600]
+    assert "if (isRecalc) {" in museum[:600]
 
 
 DEBUG_NOTES = ["<b>Dev:</b>", "Dev only", "<h2>Dev Info</h2>", "=== Developer Details ===", "Map Results (Dev)"]
@@ -114,9 +117,10 @@ def test_orphaned_images_refused_for_curator(curator):
 
 
 @staging_only
-def test_museum_page_has_no_recalc_button_for_curator(curator):
+def test_museum_page_has_recalc_button_for_curator(curator):
+    # 2026-10-27: curators may recalculate a museum too (the test only reads the page, it does not press it).
     r = curator.get(BASE_URL + MUSEUM_PAGE, timeout=TIMEOUT)
     assert classify(r).category == "ok", classify(r)
     assert "Curator Info" in r.text
-    assert "action=recalc" not in r.text
+    assert "action=recalc" in r.text
 

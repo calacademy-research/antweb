@@ -14,9 +14,12 @@
 <%
     Login accessLogin = LoginMgr.getAccessLogin(request);
 
-    if (!LoginMgr.isAdmin(accessLogin) && !accessLogin.getProjectNames().contains(thisProject)) {
+    // Project settings are for administrators (EditProjectAction says so too). Until 2026-10-27 this compared
+    // project names with a Project (never equal) and went on building the page after the redirect.
+    if (!LoginMgr.isAdmin(accessLogin)) {
         org.calacademy.antweb.util.AntwebUtil.log("editProject.jsp. Login:" + accessLogin + " does not have access to " + thisProject);        
-        response.sendRedirect("permissionDenied.jsp");
+        response.sendRedirect(AntwebProps.getDomainApp() + "/permissionDenied.jsp");
+        return;
     }
 %>
 

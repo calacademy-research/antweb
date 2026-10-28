@@ -72,7 +72,8 @@ public abstract class AntwebProps {
         return "true".equals(prop);
 	}
 
-    private static final HashMap<String, String> s_propMap = new HashMap<>();
+    // Read and written by every request thread: synchronized (a plain HashMap could be corrupted). Null values allowed.
+    private static final java.util.Map<String, String> s_propMap = java.util.Collections.synchronizedMap(new HashMap<>());
 
 	public static @Nullable String getProp(String prop) {
 
@@ -402,7 +403,7 @@ public abstract class AntwebProps {
 
 	public static Boolean getIsDevMode() {
 		String devModeStr = AntwebProps.getProp("isDevMode");
-        return devModeStr.equals("true");
+        return "true".equals(devModeStr);
 	}
 
 	public static Boolean isStageMode() {
@@ -411,7 +412,7 @@ public abstract class AntwebProps {
 
 	public static Boolean getIsStageMode() {
 		String stageModeStr = AntwebProps.getProp("isStageMode");
-        return stageModeStr.equals("true");
+        return "true".equals(stageModeStr);
 	}
 	
 	public static Boolean isDevOrStageMode() {

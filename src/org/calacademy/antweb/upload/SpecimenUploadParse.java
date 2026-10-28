@@ -401,7 +401,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
  */
 
                     // Should this be: (formicidae) ?
-                  if (!"(Formicidae)".equals(subfamilyName) && !subfamily.equals(subfamilyName)) {                  
+                  // Brian Fisher, 2026-10-27: a line without a subfamily ("(formicidae)") simply takes the genus's
+                  // subfamily; only a subfamily the file gave and AntCat does not use for the genus is listed here
+                  // (the check compared with "(Formicidae)", so every line without a subfamily was listed).
+                  if (isPreferredSubfamilyReplacement(subfamilyName, subfamily)) {
  					  String displayTaxonName = Taxon.makeDescriptionLink(subfamily + genusName, Taxon.displaySubfamilyGenus(subfamily, genusName));
 					  getMessageMgr().addToMapMessages(MessageMgr.preferredSubfamilyForGenusReplaced, Html.esc(subfamilyName), displayTaxonName);                  
                       //A.log("parseLine() preferredSubfamilyForGenusReplaced: subfamily:" + subfamily + " subfamilyName:" + subfamilyName + " genus:" + genus + " genusName:" + genusName + " displayTaxonName:" + displayTaxonName);
@@ -416,7 +419,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				  subfamilyName = subfamilyFromGenus(subfamilyName, genusName, SpecimenUploadParse::antcatSubfamilyOfGenus);
 				} else {
 				  // If we don't find it, maybe it is not an ant. Then insert it, no error message.
-				  if (!("(Formicidae)".equals(subfamilyName) || Subfamily.isValidAntSubfamily(subfamilyName))) {
+				  if (keepsUnknownGenus(subfamilyName, Subfamily::isValidAntSubfamily)) {
 					// Brian Fisher, 2026-10-22: kept, but said in the report when the line is given as an ant (family
 					// formicidae, or none) and its genus is not an ant genus in AntCat ('(indet)termes': Termes is a
 					// termite) or is not a name at all.
@@ -1308,6 +1311,28 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         if (genusName == null || genusName.isBlank() || !org.calacademy.antweb.home.PlaceTotals.isIdentifiedToGenus(genusName)
             || Taxon.isMorphoOrIndet(genusName)) return false;
         return family == null || family.isBlank() || "formicidae".equalsIgnoreCase(family.trim());
+    }
+
+    /**
+     * Whether a line's subfamily is listed under "Preferred Subfamily For Genus" (Brian Fisher, 2026-10-27): the file
+     * gave a subfamily and the genus's subfamily in AntCat (antcatSubfamily) is another one. A missing subfamily
+     * ("(formicidae)", "indet") is not listed: the line just takes the genus's subfamily.
+     */
+    public static boolean isPreferredSubfamilyReplacement(String givenSubfamily, String antcatSubfamily) {
+        if (isMissingSubfamily(givenSubfamily) || antcatSubfamily == null) return false;
+        return !antcatSubfamily.equalsIgnoreCase(givenSubfamily.trim());
+    }
+
+    /**
+     * A line whose genus AntCat does not know (not a synonym, no subfamily from AntCat): whether it is still uploaded
+     * (Brian Fisher, 2026-10-27, curators rely on it). Yes when the file gave no subfamily ("(formicidae)") or a
+     * subfamily that is not a valid ant subfamily (a non-ant); such lines given as ants are listed under "Genus not
+     * in AntCat". No (refused as "No valid Subfamily For Genus", unless the genus is a morpho or indet name) when the
+     * file gave a valid ant subfamily. The old check compared with "(Formicidae)" and reached the same answer only
+     * because "(formicidae)" is not a valid subfamily; this says it.
+     */
+    public static boolean keepsUnknownGenus(String subfamilyName, java.util.function.Predicate<String> isValidAntSubfamily) {
+        return isMissingSubfamily(subfamilyName) || !isValidAntSubfamily.test(subfamilyName);
     }
 
     /** "(Ampulicinae)" -> "Ampulicinae"; "(formicidae)" (AntWeb's placeholder) and other values unchanged. */

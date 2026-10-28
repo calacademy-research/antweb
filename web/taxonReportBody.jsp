@@ -19,6 +19,14 @@
     String asterixTitle = "Counts include " + nextPluralRank + " of all statuses contained within " + locale + "."; 
     // Port of Entry (Brian Fisher, 2026-10-22): a species list only; no specimen, child or image counts per row.
     boolean listOnly = isProject && overview instanceof Project && ((Project) overview).isSpeciesListOnly();
+    // Images column (2026-10-27): images of the name in AntWeb, and in brackets those of this place when fewer.
+    String imagesFromPhrase = org.calacademy.antweb.ImagesAnywhere.fromPhrase(overview);
+    String imagesColumnTitle = "Images of the ant of the name in AntWeb, from any specimen (labels are not counted)"
+        + (imagesFromPhrase == null ? "." : "; in brackets, those of specimens " + imagesFromPhrase + " when fewer.");
+    // The definition under the list (Brian Fisher, 2026-10-27: every Images column counts images of the ant only).
+    // The definition is ImageCounts.DEFINITION (also web/common/imagesDefinition.jsp), with the two numbers explained.
+    String imagesDefinition = org.calacademy.antweb.ImageCounts.DEFINITION
+        + (imagesFromPhrase == null ? "" : " The first number is the images of the name in AntWeb, from any specimen; in brackets, those of specimens " + imagesFromPhrase + ", when fewer.");
     String asterixNote = "Counts include " + nextPluralRank + " of all statuses";
     if (displayGlobal){
       asterixNote += ".";
@@ -36,7 +44,8 @@
     <div class="sd_data">
 
 	  <%
-		String sortLink = HttpUtil.removeParam(thisTarget, "orderBy");
+		// Escaped: the link is the request's own address, written into single-quoted attributes below.
+		String sortLink = org.calacademy.antweb.util.Html.escAttr(HttpUtil.removeParam(thisTarget, "orderBy"));
 		String underline = "style='border-bottom:1px solid black;text-decoration:none;color:#000001;'";
 		String u = "";
 
@@ -104,7 +113,7 @@
      <% } %>
      <% if ("images".equals(orderBy)) u = underline; else u = "";  %>        
      <% if (!listOnly) { %>
-        <div class="list_extras images"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=images" %>'>Images</a></b></font></div>
+        <div class="list_extras images"><font size=2><b><a <%= u %> title='<%= org.calacademy.antweb.util.Html.escAttr(imagesColumnTitle) %>' href='<%= sortLink + "&orderBy=images" %>'>Images</a></b></font></div>
      <% } %>
 
      <% if ("map".equals(orderBy)) u = underline; else u = ""; %>
@@ -202,11 +211,14 @@
           }
 
 
+         // 2026-10-27 (Brian Fisher): images help identification wherever the specimen came from. The column shows
+         // the images of the name in AntWeb and, when the place has fewer, the place's own: "4 Images (0 from Comoros)".
+         String imagesCell = org.calacademy.antweb.ImagesAnywhere.imagesColumn(childTaxonSet, imagesFromPhrase);
          String imageCountStr = null;
-         if (childTaxonSet.getImageCountStr().contains("No ")) {
-           imageCountStr = childTaxonSet.getImageCountStr();
+         if (imagesCell.startsWith("No ")) {
+           imageCountStr = imagesCell;
          } else {
-           imageCountStr = "<a href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams() + "'>" + childTaxonSet.getImageCountStr() + "</a>";
+           imageCountStr = "<a href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams() + "'>" + imagesCell + "</a>";
          }
      %>
         <% if (!listOnly) { %><div class="list_extras images"><%= imageCountStr %></div><% } %>
@@ -258,4 +270,5 @@
 <BR><span id="port-of-entry-list-note">These are ant species intercepted at ports of entry, not established introductions. They are not counted in any place total or in the introduced species list, and this list shows no specimen or image numbers.</span>
 <% } else { %>
 <BR>* <%= asterixNote %>
+<BR><span id="images-definition" class="images-definition"><%= org.calacademy.antweb.util.Html.esc(imagesDefinition) %></span>
 <% } %>

@@ -208,17 +208,32 @@ public final class Caste {
         return str.equals(casteNote.substring(casteNoteLength));
     }
         
-    private static String getCasteNote(String casteNotes) { // casteNotes is the Life Stage field.
-      // return the string up until "and" or a comma. Could be many ants in the notes.
+    /**
+     * The first ant of the Life Stage field: the text up to the first comma, " and ", "&" or "/" (the field can list
+     * several ants, e.g. "2 dealate queens, 12 workers", "male and worker", "queen/male").
+     * Brian Fisher, 2026-10-27 (docs/numbers.md B69): "and" and "/" split the field also when it has no comma. Until
+     * then they split only when a comma came after them, so "male and worker" was read whole and counted as a worker.
+     * A delimiter at the very start is skipped (nothing before it).
+     */
+    static String getCasteNote(String casteNotes) { // casteNotes is the Life Stage field.
       if (casteNotes == null) return null;
-      int delimiterPos = casteNotes.indexOf(",");
-      int andPos = casteNotes.indexOf(" and ");
-      if (andPos > 0 && andPos < delimiterPos) delimiterPos = andPos;
-      int slashPos = casteNotes.indexOf("/");
-      if (slashPos > 0 && slashPos < delimiterPos) delimiterPos = slashPos;
-      if (delimiterPos <= 0) return casteNotes; 
+      String lower = casteNotes.toLowerCase();
+      int delimiterPos = -1;
+      for (String delimiter : new String[] {",", " and ", "&", "/"}) {
+        int pos = lower.indexOf(delimiter);
+        if (pos > 0 && (delimiterPos < 0 || pos < delimiterPos)) delimiterPos = pos;
+      }
+      if (delimiterPos <= 0) return casteNotes;
       return casteNotes.substring(0, delimiterPos);
-    }           
+    }
+
+    /**
+     * The note names a male: the word "male" (not "female"), or m for male as before (isMale).
+     * Brian Fisher, 2026-10-27 (B69): "alate male" is a male, not a queen. isQueen matched "alate" in it ("late").
+     */
+    static boolean namesMale(String casteNote) {
+      return casteNote.matches("(?s).*(^|[^a-z])males?([^a-z]|$).*") && !casteNote.contains("female");
+    }
 
     public static boolean isWorker(String casteNote) {
       if ( casteNote.contains("worker")
@@ -249,6 +264,7 @@ public final class Caste {
       return "normal";
     }
     public static boolean isQueen(String casteNote) {
+      if (namesMale(casteNote)) return false;   // "alate male", "ergatoid male" (B69, 2026-10-27)
       if ( casteNote.contains("q")
         || casteNote.contains("late")
         || casteNote.contains("gyne")

@@ -97,6 +97,7 @@ public class GenericSearchResults implements Serializable {
           //dummySpecimen.setChildrenCount(1);
           dummySpecimen.setHasImages(thisItem.getHasImages());
           dummySpecimen.setImageCount(thisItem.getImageCount());
+          dummySpecimen.setLabelImageCount(thisItem.getLabelCount());   // -1: not read (2026-10-27, ImageCounts)
           // dummySpecimen.setHasImagesCount(thisItem.getImageCount());
           //A.log("getResultsAsTaxon() imageCount:" + dummySpecimen.getImageCount() + " hasImages:" + dummySpecimen.getHasImages() + " thisItem:" + thisItem.getImageCount());   
           

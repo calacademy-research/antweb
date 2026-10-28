@@ -86,60 +86,22 @@ public final class EndemicAction extends AntwebAction {
         return mapping.findForward("endemic");
     }
 
+    /** The names flagged endemic on the geolocale's list, by the one rule of the lists and the numbers
+     *  (PlaceTotals.flaggedNamesSql; Brian Fisher 2026-10-27, docs/numbers.md B70: counted statuses, no synonyms). */
     private ArrayList<String> getGeolocaleEndemics(int geolocaleId, Connection connection) {
-        ArrayList<String> endemics = new ArrayList<>();
-
-		String query = "select gt.taxon_name from geolocale_taxon gt, taxon where gt.taxon_name = taxon.taxon_name " 
-		  + " and gt.geolocale_id = " + geolocaleId 
-		  + new StatusSet().getAndCriteria()
-		  + " and gt.is_endemic = 1 order by genus, species, subspecies";
-
-        Statement stmt = null;
-        ResultSet rset = null;
-        try {
-          stmt = DBUtil.getStatement(connection, "getEndemics()");
-
-          rset = stmt.executeQuery(query);
-          String taxonName = null;
-          while (rset.next()) {
-            taxonName = rset.getString("taxon_name");
-            endemics.add(taxonName);
-          }
-          //A.log("execute() count:" + count);                        
-        } catch (SQLException e) {
-          s_log.warn("getEndemics() query:" + query + " e:" + e);        
-        } finally {
-          DBUtil.close(stmt, rset, this, "getEndemics()");
-        }   
-        return endemics;
+        return flagged(org.calacademy.antweb.home.PlaceTotals.GEOLOCALE, "" + geolocaleId, connection);
     }
 
     private ArrayList<String> getBioregionEndemics(String bioregionName, Connection connection) {
-        ArrayList<String> endemics = new ArrayList<>();
+        return flagged(org.calacademy.antweb.home.PlaceTotals.BIOREGION, bioregionName, connection);
+    }
 
-        String query = "select bt.taxon_name from bioregion_taxon bt, taxon where bt.taxon_name = taxon.taxon_name "
-                + " and bt.bioregion_name = ?"
-                + new StatusSet().getAndCriteria()
-                + " and bt.is_endemic = 1 order by genus, species, subspecies";
-
-        PreparedStatement stmt = null;
-        ResultSet rset = null;
+    private ArrayList<String> flagged(String type, String key, Connection connection) {
         try {
-            stmt = DBUtil.getPreparedStatement(connection, "getBioregionEndemics()", query);
-            stmt.setString(1, bioregionName);
-
-            rset = stmt.executeQuery();
-            String taxonName = null;
-            while (rset.next()) {
-                taxonName = rset.getString("taxon_name");
-                endemics.add(taxonName);
-            }
-            //A.log("execute() count:" + count);
+            return org.calacademy.antweb.home.PlaceTotals.flaggedNames(connection, type, key, "endemic");
         } catch (SQLException e) {
-            s_log.warn("getBioregionEndemics() query:" + query + " e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, this, "getBioregionEndemics()");
+            s_log.warn("getGeolocaleEndemics() " + type + " " + key + " e:" + e);
+            return new ArrayList<>();
         }
-        return endemics;
     }
 }

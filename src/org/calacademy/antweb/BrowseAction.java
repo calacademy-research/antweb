@@ -394,6 +394,17 @@ public class BrowseAction extends DescriptionAction {
 
   		  taxon.setImages(connection, overview, caste);
 
+		  // 2026-10-27 (Brian Fisher): the species page says which castes are imaged (specimens from anywhere,
+		  // label images do not count), each linked to the images page of that caste. docs/numbers.md row 120.
+		  if ("description".equals(cacheType) && taxon.isSpeciesOrSubspecies() && !(taxon instanceof Homonym)) {
+		    try {
+		      request.setAttribute("imagedCastes", ImagedCastes.toHtml(ImagedCastes.count(connection, taxon.getTaxonName()),
+		          AntwebProps.getDomainApp() + "/images.do?" + taxon.getBrowserParams()));
+		    } catch (SQLException e) {
+		      s_log.warn("execute() imagedCastes taxon:" + taxon.getTaxonName() + " e:" + e);
+		    }
+		  }
+
 		  if (logTimes) A.log("execute() statusSetStr:" + statusSetStr);
 
 		  //A.log("execute() cacheType:" + cacheType + " childImages:" + getChildImages + " childMaps:" + getChildMaps);
@@ -414,7 +425,20 @@ public class BrowseAction extends DescriptionAction {
    	  	        http://localhost/antweb/browse.do?subfamily=dolichoderinae&rank=subfamily&bioregionName=Neotropical		
 			*/
               
+			// 2026-10-27 (Brian Fisher): images help identification wherever the specimen came from. The images page of
+			// a species reached with a place shows every imaged specimen of the name, the place's first and marked;
+			// placeOnly=true narrows it to the place's specimens. Specimen counts (browse.do) stay per place.
+			boolean imagesFromAnywhere = "images".equals(cacheType) && taxon.isSpeciesOrSubspecies() && ImagesAnywhere.hasPlaceSpecimens(overview);
+			boolean placeOnly = "true".equals(request.getParameter(ImagesAnywhere.PLACE_ONLY));
+			if (imagesFromAnywhere) global = !placeOnly;
+
 			taxon.setChildren(connection, overview, statusSet, getChildImages, getChildMaps, caste, global, subgenus);
+
+			if (imagesFromAnywhere) {
+			  request.setAttribute("imagesPlaceOnly", placeOnly);
+			  request.setAttribute("imagesFromPhrase", ImagesAnywhere.fromPhrase(overview));
+			  if (!placeOnly) request.setAttribute("imagesPlaceCodes", taxon.getPlaceCodes());
+			}
 
             if (logTimes) A.log("execute() childrenSize:" + taxon.getChildren().size());
 
@@ -677,11 +701,11 @@ We are showin the full map of ponerinae for every adm1.
 
 		  if (fetchTaxon == null) {
 			fetchTaxon = new HomonymDb(connection).getHomonym(browseForm.getAntcatId());
-			taxonName = fetchTaxon.getTaxonName();
+			if (fetchTaxon != null) taxonName = fetchTaxon.getTaxonName();
 		  }
 		}
 		
-		String possibleSpecimen = taxonName.toLowerCase();
+		String possibleSpecimen = taxonName == null ? "" : taxonName.toLowerCase();
 		if (fetchTaxon != null) {
 		  String target = HttpUtil.getTarget(request);
 		  String targetDo = "description.do";
@@ -697,7 +721,7 @@ We are showin the full map of ponerinae for every adm1.
 		    || possibleSpecimen.contains("lacm") || possibleSpecimen.contains("sam-") || possibleSpecimen.contains("fmnhi") 
 		    || possibleSpecimen.contains("inb00") || possibleSpecimen.contains("kbve")) {  
           s_log.debug("execute() taxonName" + taxonName);
-          String url = AntwebProps.getDomainApp() + "/specimen.do?code=" + taxonName;
+          String url = AntwebProps.getDomainApp() + "/specimen.do?code=" + Html.url(taxonName);
 		  HttpUtil.sendRedirect(url, request, response);  
           return null;
         } else {

@@ -127,8 +127,17 @@ public class CountCheck {
             }
         }
 
+        /**
+         * Whether the specimens of a row count by status (COUNTABLE): geolocales, museums and bioregions. Projects count
+         * every specimen of the name, the Global column (allantwebants) included (docs/numbers.md #43, inv:global.specimens).
+         */
         boolean statusFiltered() {
-            return !PROJECT.equals(type) || "allantwebants".equals(key);
+            return !PROJECT.equals(type);
+        }
+
+        /** The status condition (alias taxon) of the child rows of a list row, as CountInvariants.childStatus. */
+        String childStatusCondition() {
+            return CountInvariants.childStatus(type, key).replace(" t.status", " taxon.status");
         }
 
         void setKey(PreparedStatement stmt, int i) throws SQLException {
@@ -342,6 +351,8 @@ public class CountCheck {
             if (!PROJECT.equals(place.type)) rows += checkGlobal(place, result, changedNames);
         }
         rows += checkPlaceImages(place, result, changedNames);
+        // The Subfamilies number also when the place image numbers are not computed yet (checkPlaceImages returns early then).
+        if (GEOLOCALE.equals(place.type) || PROJECT.equals(place.type)) rows += checkSubfamilyTotal(place, result, listChangedSince(place, result));
         rows += checkPlaceSpecimens(place, result, changedNames);
         rows += checkRowImages(place, result, changedNames);
         result.rowsChecked.put(place, rows);
@@ -387,7 +398,7 @@ public class CountCheck {
 
     /** Names whose specimens changed since the last nightly start: uploads, and the name update outside the nightly. */
     Set<String> changedNamesSince(Result result) throws SQLException {
-        Set<String> names = new HashSet<>();
+        Set<String> names = CountInvariants.keySet();   // names as MySQL compares them (case, trailing spaces)
         if (tableExists("upload")) {
             try (PreparedStatement stmt = connection.prepareStatement("select count(*) from upload where created >= ?")) {
                 stmt.setTimestamp(1, result.countedUntil);
@@ -559,8 +570,7 @@ public class CountCheck {
                 result.mismatches.add(new Mismatch(place, "place images", "Images smaller than Imaged specimens", storedAll, storedImaged, null));
             }
         }
-        rows += checkSubfamilyTotal(place, result, listChanged);
-        return rows;
+        return rows;   // the Subfamilies number: recount() (checkSubfamilyTotal)
     }
 
     /**
@@ -669,16 +679,29 @@ public class CountCheck {
         }
     }
 
+    /** False until a nightly run has counted the lists' Images as ant images (compute.log line with
+     *  StatisticsDb.ANT_IMAGES_RULE_LOG); their differences are then pending. Set by the callers from the log. */
+    public boolean antImagesRuleCounted = true;
+
+    public static boolean antImagesRuleCounted(List<String> lines) {
+        for (String line : lines) if (line.contains(org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_RULE_LOG)) return true;
+        return false;
+    }
+
+    static final String ANT_IMAGES_PENDING = "the Images column counts ant images only since 2026-10-27 (labels left out);"
+        + " no nightly run has counted it that way yet";
+
     /**
-     * The Images column of the place's list (2026-10-21), species and subspecies rows: image_count = the images
-     * (labels included) of the specimens of that name in the place, as nightly set 4 counts them
-     * (getTaxonImageCountQuery of Geolocale, Project, Museum, Bioregion): geolocales of a countable status,
+     * The Images column of the place's list (2026-10-21), species and subspecies rows: image_count = the images of the
+     * ant (labels left out since 2026-10-27, Brian Fisher) of the specimens of that name in the place, as nightly set 4
+     * counts them (getTaxonImageCountQuery of Geolocale, Project, Museum, Bioregion): geolocales of a countable status,
      * museums and bioregions their own specimens, projects all specimens of the name.
      */
     int checkRowImages(Place place, Result result, Set<String> changedNames) throws SQLException {
         if (!columnExists(place.table(), "image_count")) return 0;
         Map<String, Integer> recount = CountInvariants.keyMap();   // names as MySQL compares them
-        String query = "select s.taxon_name, sum(s.image_count) from specimen s"
+        String query = "select s.taxon_name, count(i.id) from specimen s"
+            + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_OF_SPECIMEN
             + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
             + " join " + place.table() + " l on l.taxon_name = s.taxon_name and l." + place.keyColumn() + " = ?"
             + " where 1 = 1"
@@ -707,6 +730,7 @@ public class CountCheck {
                     if (s == c) continue;
                     String pending = rowPending(r.getTimestamp(3), result);
                     if (pending == null && place.isFromCountries() && !result.regionRuleCounted) pending = REGION_RULE_PENDING;
+                    if (pending == null && !antImagesRuleCounted) pending = ANT_IMAGES_PENDING;
                     if (pending == null && result.imagesSinceNightly) pending = "images were added after the last nightly run";
                     if (pending == null && changedNames.contains(name)) pending = "specimens of this name uploaded or renamed after the last nightly run";
                     if (pending == null && result.uploadSinceNightly) pending = "specimens were uploaded after the last nightly run";
@@ -718,7 +742,8 @@ public class CountCheck {
     }
 
     /** The place's Subfamilies number (2026-10-20: staging's Madagascar page showed 0 with 8 subfamilies on
-     *  its list): stored subfamily_count against the subfamily rows on the place's list with a counted status. */
+     *  its list): stored subfamily_count against the subfamily rows on the place's list with a counted status
+     *  (a curated project: every status, as its list rows; PlaceTotals.listedCondition, 2026-10-27). */
     int checkSubfamilyTotal(Place place, Result result, boolean listChanged) throws SQLException {
         if (!GEOLOCALE.equals(place.type) && !PROJECT.equals(place.type)) return 0;
         if (!columnExists(placeTable(place.type), "subfamily_count")) return 0;
@@ -730,9 +755,9 @@ public class CountCheck {
         }
         if (stored < 0) return 0;
         int recount;
-        try (PreparedStatement stmt = connection.prepareStatement("select count(distinct l.taxon_name) from " + place.table() + " l"
-                + " join taxon t on t.taxon_name = l.taxon_name"
-                + " where l." + place.keyColumn() + " = ? and t.taxarank = 'subfamily' and t.status in " + COUNTABLE + " and t.family = 'formicidae'")) {
+        // the rule of the nightly run that writes the number (PlaceTotals.listedCountSql), so the two cannot differ
+        try (PreparedStatement stmt = connection.prepareStatement(org.calacademy.antweb.home.PlaceTotals.listedCountSql(place.type,
+                org.calacademy.antweb.home.PlaceTotals.SUBFAMILY))) {
             place.setKey(stmt, 1);
             try (ResultSet r = stmt.executeQuery()) { r.next(); recount = r.getInt(1); }
         }
@@ -827,7 +852,7 @@ public class CountCheck {
         String query = "select taxon.parent_taxon_name, l.taxon_name, " + CountInvariants.safeDate("l.created") + " from taxon"
             + " join " + t + " l on l.taxon_name = taxon.taxon_name and l." + k + " = ?"
             + " where taxon.taxarank in " + childRanks
-            + (place.statusFiltered() ? " and taxon.status in " + COUNTABLE : "")
+            + place.childStatusCondition()
             // a genus row's Species: names identified to genus only (2026-10-22, PlaceTotals.identifiedToGenus)
             + (childRanks.contains("species") ? " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") : "");
         try (PreparedStatement stmt = connection.prepareStatement(query)) {

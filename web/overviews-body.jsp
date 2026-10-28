@@ -64,7 +64,9 @@ else heading = heading + "s";
     out.println("<table><tr><th>Name</th>");
     if (!titleIsName) out.println("<th>Title</th>");
     // The column is the Valid species number of the place pages (2026-10-21: it was labelled "Species").
-    out.println("<th>Valid species</th><th>Specimens</th><th>Images</th></tr>");
+    // "Image files" (2026-10-27, Brian Fisher: "Images" means images of the ant): the place's image_count, every
+    // image file of its specimens, labels included; the place page shows images of the ant and label images apart.
+    out.println("<th>Valid species</th><th>Specimens</th><th title='Every image file of the specimens, label images included'>Image files</th></tr>");
     for (Overview overview : overviews) {
       if ("Antarctica_region".equals(overview.getName())) continue;
       out.println(
@@ -79,6 +81,10 @@ else heading = heading + "s";
         + "</tr>");
     }
     out.println("</table>");
+    request.setAttribute("imagesDefinitionFiles", Boolean.TRUE);
+%>
+<%@ include file="/common/imagesDefinition.jsp" %>
+<%
 
     if (LoginMgr.isAdmin(request)) { %>
       <br><br><b>Admin Note:</b>Data comes from the specimen_count, image_count fields of the appropriate overview table.
@@ -96,7 +102,7 @@ else heading = heading + "s";
 <%
   if (true) {
     String title = "Image Submissions 'Pie Chart'";
-    String subtitle = "Distribution of Images by " + overviews.get(0).getHeading();
+    String subtitle = "Distribution of image files by " + overviews.get(0).getHeading();
     String footer = "Source: Data submitted to Antweb.org";
     String jsonData = "";
     int i = 0;

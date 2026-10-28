@@ -149,7 +149,7 @@ public final class NumbersTestDb {
             + ", 1, " + images + ", 'formicidae', '" + subfamily + "', '" + museum + "')");
     }
 
-    /** One list row: counts as the crawl writes them. */
+    /** One list row: counts as the crawl writes them (Images: images of the ant, labels left out, since 2026-10-27). */
     private static void row(Connection c, String table, String keyColumn, String key, String name, int sub, int gen, int sp, int specimens, int images)
             throws SQLException {
         exec(c, "insert into " + table + " (" + keyColumn + ", taxon_name, subfamily_count, genus_count, species_count, specimen_count, image_count, created)"
@@ -198,15 +198,15 @@ public final class NumbersTestDb {
         for (int g : new int[] {MADAGASCAR, INDIAN_OCEAN}) {
             String t = "geolocale_taxon";
             String k = "geolocale_id";
-            row(c, t, k, "" + g, FAMILY, 2, 2, 4, 5, 4);
-            row(c, t, k, "" + g, MYRM, 0, 1, 3, 4, 3);
-            row(c, t, k, "" + g, PON, 0, 1, 1, 1, 1);
-            row(c, t, k, "" + g, PHEIDOLE, 0, 0, 3, 4, 3);
-            row(c, t, k, "" + g, HYPO, 0, 0, 1, 1, 1);
-            row(c, t, k, "" + g, PA, 0, 0, 0, 2, 2);
+            row(c, t, k, "" + g, FAMILY, 2, 2, 4, 5, 2);
+            row(c, t, k, "" + g, MYRM, 0, 1, 3, 4, 2);
+            row(c, t, k, "" + g, PON, 0, 1, 1, 1, 0);
+            row(c, t, k, "" + g, PHEIDOLE, 0, 0, 3, 4, 2);
+            row(c, t, k, "" + g, HYPO, 0, 0, 1, 1, 0);
+            row(c, t, k, "" + g, PA, 0, 0, 0, 2, 1);
             row(c, t, k, "" + g, PB, 0, 0, 0, 1, 1);
             row(c, t, k, "" + g, PAX, 0, 0, 0, 1, 0);
-            row(c, t, k, "" + g, HB, 0, 0, 0, 1, 1);
+            row(c, t, k, "" + g, HB, 0, 0, 0, 1, 0);
         }
         // A state of Madagascar with no specimens yet (the adm1 checks, B26, have one place to look at).
         exec(c, "insert into geolocale (id, name, georank, parent, is_valid, is_live) values (" + ATSINANANA + ", 'Atsinanana', 'adm1', 'Madagascar', 1, 1)");
@@ -221,15 +221,15 @@ public final class NumbersTestDb {
             String t = "proj_taxon";
             String k = "project_name";
             String key = "'" + p + "'";
-            row(c, t, k, key, FAMILY, 2, 2, 4, 5, 4);
-            row(c, t, k, key, MYRM, 0, 1, 3, 4, 3);
-            row(c, t, k, key, PON, 0, 1, 1, 1, 1);
-            row(c, t, k, key, PHEIDOLE, 0, 0, 3, 4, 3);
-            row(c, t, k, key, HYPO, 0, 0, 1, 1, 1);
-            row(c, t, k, key, PA, 0, 0, 0, 2, 2);
+            row(c, t, k, key, FAMILY, 2, 2, 4, 5, 2);
+            row(c, t, k, key, MYRM, 0, 1, 3, 4, 2);
+            row(c, t, k, key, PON, 0, 1, 1, 1, 0);
+            row(c, t, k, key, PHEIDOLE, 0, 0, 3, 4, 2);
+            row(c, t, k, key, HYPO, 0, 0, 1, 1, 0);
+            row(c, t, k, key, PA, 0, 0, 0, 2, 1);
             row(c, t, k, key, PB, 0, 0, 0, 1, 1);
             row(c, t, k, key, PAX, 0, 0, 0, 1, 0);
-            row(c, t, k, key, HB, 0, 0, 0, 1, 1);
+            row(c, t, k, key, HB, 0, 0, 0, 1, 0);
         }
 
         // Museums.
@@ -237,29 +237,29 @@ public final class NumbersTestDb {
             + " imaged_specimen_count, taxon_subfamily_dist_json, specimen_subfamily_dist_json) values"
             + " ('CASC', 1, 1, 3, 2, 4, 3, 2, '" + json("Myrmicinae", "3") + "', '" + json("Myrmicinae", "4") + "'),"
             + " ('MCZC', 1, 1, 1, 1, 1, 1, 0, '" + json("Ponerinae", "1") + "', '" + json("Ponerinae", "1") + "')");
-        row(c, "museum_taxon", "code", "'CASC'", FAMILY, 1, 1, 3, 4, 3);
-        row(c, "museum_taxon", "code", "'CASC'", MYRM, 0, 1, 3, 4, 3);
-        row(c, "museum_taxon", "code", "'CASC'", PHEIDOLE, 0, 0, 3, 4, 3);
-        row(c, "museum_taxon", "code", "'CASC'", PA, 0, 0, 0, 2, 2);
+        row(c, "museum_taxon", "code", "'CASC'", FAMILY, 1, 1, 3, 4, 2);
+        row(c, "museum_taxon", "code", "'CASC'", MYRM, 0, 1, 3, 4, 2);
+        row(c, "museum_taxon", "code", "'CASC'", PHEIDOLE, 0, 0, 3, 4, 2);
+        row(c, "museum_taxon", "code", "'CASC'", PA, 0, 0, 0, 2, 1);
         row(c, "museum_taxon", "code", "'CASC'", PB, 0, 0, 0, 1, 1);
         row(c, "museum_taxon", "code", "'CASC'", PAX, 0, 0, 0, 1, 0);
-        row(c, "museum_taxon", "code", "'MCZC'", FAMILY, 1, 1, 1, 1, 1);
-        row(c, "museum_taxon", "code", "'MCZC'", PON, 0, 1, 1, 1, 1);
-        row(c, "museum_taxon", "code", "'MCZC'", HYPO, 0, 0, 1, 1, 1);
-        row(c, "museum_taxon", "code", "'MCZC'", HB, 0, 0, 0, 1, 1);
+        row(c, "museum_taxon", "code", "'MCZC'", FAMILY, 1, 1, 1, 1, 0);
+        row(c, "museum_taxon", "code", "'MCZC'", PON, 0, 1, 1, 1, 0);
+        row(c, "museum_taxon", "code", "'MCZC'", HYPO, 0, 0, 1, 1, 0);
+        row(c, "museum_taxon", "code", "'MCZC'", HB, 0, 0, 0, 1, 0);
 
         // Bioregion Malagasy: casent1, casent2, casent5.
         exec(c, "insert into bioregion (name, subfamily_count, genus_count, species_count, valid_species_count, specimen_count, image_count,"
             + " imaged_specimen_count, endemic_species_count, introduced_species_count, taxon_subfamily_dist_json, specimen_subfamily_dist_json) values"
             + " ('Malagasy', 2, 2, 2, 2, 3, 3, 1, 1, 0, '" + json("Myrmicinae", "1", "Ponerinae", "1") + "', '" + json("Myrmicinae", "2", "Ponerinae", "1") + "')");
         String b = "'Malagasy'";
-        row(c, "bioregion_taxon", "bioregion_name", b, FAMILY, 2, 2, 2, 3, 3);
-        row(c, "bioregion_taxon", "bioregion_name", b, MYRM, 0, 1, 1, 2, 2);
-        row(c, "bioregion_taxon", "bioregion_name", b, PON, 0, 1, 1, 1, 1);
-        row(c, "bioregion_taxon", "bioregion_name", b, PHEIDOLE, 0, 0, 1, 2, 2);
-        row(c, "bioregion_taxon", "bioregion_name", b, HYPO, 0, 0, 1, 1, 1);
-        row(c, "bioregion_taxon", "bioregion_name", b, PA, 0, 0, 0, 2, 2);
-        row(c, "bioregion_taxon", "bioregion_name", b, HB, 0, 0, 0, 1, 1);
+        row(c, "bioregion_taxon", "bioregion_name", b, FAMILY, 2, 2, 2, 3, 1);
+        row(c, "bioregion_taxon", "bioregion_name", b, MYRM, 0, 1, 1, 2, 1);
+        row(c, "bioregion_taxon", "bioregion_name", b, PON, 0, 1, 1, 1, 0);
+        row(c, "bioregion_taxon", "bioregion_name", b, PHEIDOLE, 0, 0, 1, 2, 1);
+        row(c, "bioregion_taxon", "bioregion_name", b, HYPO, 0, 0, 1, 1, 0);
+        row(c, "bioregion_taxon", "bioregion_name", b, PA, 0, 0, 0, 2, 1);
+        row(c, "bioregion_taxon", "bioregion_name", b, HB, 0, 0, 0, 1, 0);
         exec(c, "update bioregion_taxon set is_endemic = 1 where taxon_name = '" + PA + "'");
 
         // Place images (PlaceImageCountDb). Madagascar, its subregion and the projects: h 1, p 1, l 2 (casent1, casent5).
@@ -280,9 +280,10 @@ public final class NumbersTestDb {
         exec(c, "insert into place_image_count (place_type, place_key, shot_type, image_count, specimen_count) values "
             + k + "'h', 1, 1), " + k + "'l', 2, 2), " + k + "'*all', 3, 2), " + k + "'*ant', 1, 1), " + k + "'*label_only', 1, 1)");
 
-        // Home page numbers: 3 valid species + ssp., 5 specimens, 2 species imaged, 2 specimens imaged, 4 images.
+        // Home page numbers: 3 valid species + ssp., 5 specimens, 2 species imaged, 2 specimens imaged, 2 images of the
+        // ant (and 2 label images, counted apart since 2026-10-27).
         exec(c, "insert into statistics (action, specimens, extant_taxa, total_images, specimens_imaged, species_imaged, created)"
-            + " values ('nightly', 5, 3, 4, 2, 2, " + OLD + ")");
+            + " values ('nightly', 5, 3, 2, 2, 2, " + OLD + ")");
         exec(c, "update statistics set total_taxa = (select count(*) from taxon where taxarank in ('species', 'subspecies')),"
             + " proj_taxa = (select count(*) from proj_taxon), bioregion_taxa = (select count(*) from bioregion_taxon),"
             + " museum_taxa = (select count(*) from museum_taxon), geolocale_taxa = (select count(*) from geolocale_taxon),"

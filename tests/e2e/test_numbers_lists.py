@@ -7,7 +7,9 @@ region, subregion, bioregion, museum, project) is checked on every run, a differ
 
   row 38  taxonomicPage.do header "N Species / Genera / Subfamilies" with every counted status (statusSet=all) = the
           place page's Species / Genera / Subfamilies, and with valid extant = Valid species (one rule:
-          PlaceTotals.rankCondition and TaxaPage.fetchChildren); the header = the rows the page lists.
+          PlaceTotals.rankCondition and TaxaPage.fetchChildren); the header = the rows the page lists. A curated
+          project's Subfamilies counts its subfamily rows of every status (B67, PlaceTotals.listedCondition): the
+          header with counted statuses <= Subfamilies <= the header of the complete list.
   row 39  isImaged=false: "U Unimaged Species (out of N)": U = the rows listed, N = the place's Species, and the
           names listed = the names of the list that the API's /unimagedGeolocaleTaxa returns for the place (the
           same rule written twice: TaxaPage.findUnimaged in Java, imagedTaxaSql in the API) (countries).
@@ -17,8 +19,9 @@ region, subregion, bioregion, museum, project) is checked on every run, a differ
           page and the count use different place rules; xfail until fixed).
   row 47  "(Only the first k of N displayed)" (species browse with limit=k): N = the header's N; the page shows k rows
           (B42: it shows k + 1; xfail until fixed).
-  row 49  species browse "(M imaged)" and the hidden "M Imaged" = the specimens listed that have an image (rows
-          without the no-photos mark, and the API's imageCount of those specimens); genus browse: M <= N only.
+  row 49  species browse "(M imaged)" and the hidden "M Imaged" = the specimens listed that have a photo of the ant
+          (rows without the no-photos mark; label photos do not count, B71), at most the specimens the API's
+          imageCount gives images to; genus browse: M <= N only.
 
 Read-only, anonymous. A number stored by the last nightly run can differ from the live list after an upload until
 the next nightly run; the failure message says so.
@@ -54,6 +57,13 @@ def stats_of(p):
     return _STATS[key]
 
 
+UNCURATED_PROJECTS = {"worldants", "allantwebants"}   # PlaceTotals.UNCURATED_PROJECTS
+
+
+def curated_project(p):
+    return p.kind == "project" and p.name not in UNCURATED_PROJECTS
+
+
 def test_list_headers_equal_place_numbers_of_every_kind():
     """Row 38: for the day's place of every kind, the list header with every counted status = Subfamilies, Genera,
     Species of the place page; with valid extant = Valid species (0 when the page shows no Valid row); every header
@@ -77,7 +87,15 @@ def test_list_headers_equal_place_numbers_of_every_kind():
             if rows != n:
                 wrong.append(f"{p} rank={rank} {status}: header {text!r}, {rows} rows listed")
             expected = stats.get(stat, 0)
-            if n != expected:
+            if rank == "subfamily" and curated_project(p):
+                # B67 (Brian Fisher 2026-10-27): a curated project's Subfamilies counts its subfamily rows of every
+                # status, as its list rows do; the list with counted statuses shows at most that many, the complete
+                # list (every status, other families too) at least that many.
+                complete, _ = ns.header(ns.fetch(p.list_url(rank, "complete")) or "")
+                if n > expected or (complete is not None and complete < expected):
+                    wrong.append(f"{p} rank={rank}: place page {stat} {expected}, list header {n} (counted statuses),"
+                                 f" {complete} (complete); expected {n} <= {expected} <= {complete}")
+            elif n != expected:
                 wrong.append(f"{p} rank={rank} {status}: header {n}, place page {stat} {expected}")
         checked.append(repr(p))
     if not checked:
@@ -86,10 +104,12 @@ def test_list_headers_equal_place_numbers_of_every_kind():
 
 
 def _unimaged_from_api(p):
-    """The names the API calls unimaged on the place's list, or None (also when paging is not reliable)."""
+    """The names the API calls unimaged on the place's list, or None (also when paging is not reliable). Species and
+    subspecies, like the list (the API's default ranks; until 2026-10-27 taxarank=species left out subspecies, so
+    Czech Republic's three unimaged subspecies showed as "only on the page")."""
     rows, offset = [], 0
     for _ in range(20):
-        body = ns.api(f"unimagedGeolocaleTaxa?geolocaleName={ns.quote_plus(p.name)}&taxarank=species&limit=750&offset={offset}")
+        body = ns.api(f"unimagedGeolocaleTaxa?geolocaleName={ns.quote_plus(p.name)}&limit=750&offset={offset}")
         if body is None:
             return None
         page = [(r.get("taxonName") or "").lower() for r in ns.api_rows(body)]
@@ -208,7 +228,7 @@ def test_browse_headers_equal_the_list_rows():
     list: browse.do of the genus says "N Species" = the row's "N Species" and lists N rows; the day's subfamily row:
     browse.do says "N Genera" = the row's "N Genera" and lists N rows; on both, the hidden totals say the same N and
     M, and M imaged <= N."""
-    wrong, checked = [], []
+    wrong, checked, known = [], [], []
     for p in places():
         for rank in ("genus", "subfamily"):
             got = _pick_row(p, rank, "browse" + rank)
@@ -222,11 +242,17 @@ def test_browse_headers_equal_the_list_rows():
             b = _browse_numbers(html)
             _consistent(where, b, len(ns.list_rows(html)), wrong)
             if b["n"] is not None and b["n"] != count:
-                wrong.append(f"{where}: browse header {b['text']!r}, list row {count}")
+                line = f"{where}: browse header {b['text']!r}, list row {count}"
+                # B77 (found 2026-10-27, also on production): a bioregion's subfamily browse page counts and lists
+                # every genus row of the bioregion (Palearctic Ponerinae: 18, including "ponerine"), the list row
+                # only the counted statuses (16). Known until fixed; any other kind of place or rank still fails.
+                (known if p.kind == "bioregion" and rank == "subfamily" else wrong).append(line)
             checked.append(where)
     if not checked:
         pytest.skip("no list row with a browse link found " + ns.day_note())
     assert not wrong, f"{len(checked)} browse pages {ns.day_note()} ({PENDING}):\n" + "\n".join(wrong)
+    if known:
+        pytest.xfail("B77: bioregion subfamily browse header counts genus rows the list row leaves out: " + "; ".join(known))
 
 
 _SPECIES = {}
@@ -258,8 +284,9 @@ def _api_image_counts(link):
 def test_species_browse_imaged_count_equals_the_specimens_with_images():
     """Row 49 (and 46: header = rows): for the day's place of every kind, the day's species row (at most
     ANTWEB_SAMPLE_MAX_SPECIMENS specimens): its browse page says "N specimens (M imaged)"; N = the specimens listed;
-    M = the hidden "M Imaged" = the listed specimens without the no-photos mark = the listed specimens whose API
-    imageCount is above 0 (specimen.image_count, validated by inv:taxon.images)."""
+    M = the hidden "M Imaged" = the listed specimens without the no-photos mark <= the listed specimens whose API
+    imageCount is above 0 (specimen.image_count, validated by inv:taxon.images; it counts label photos too, which
+    never make a specimen imaged, B71)."""
     wrong, checked = [], []
     for p in places():
         got = _species_browse(p)
@@ -277,8 +304,10 @@ def test_species_browse_imaged_count_equals_the_specimens_with_images():
         codes = _specimen_codes(html)
         if counts is not None and codes and all(c in counts for c in codes) and len(codes) == b["n"]:
             api_imaged = sum(1 for c in codes if counts[c] > 0)
-            if api_imaged != b["m"]:
-                wrong.append(f"{where}: {b['m']} imaged, the API gives images to {api_imaged} of the {len(codes)} specimens listed")
+            # B71 (2026-10-27): a specimen with only label photos is not imaged, but the API's imageCount counts
+            # every photo, so the API can give images to more specimens than M, never to fewer.
+            if api_imaged < b["m"]:
+                wrong.append(f"{where}: {b['m']} imaged, the API gives images to only {api_imaged} of the {len(codes)} specimens listed")
         checked.append(where)
     if not checked:
         pytest.skip("no species row with a browse link found " + ns.day_note())

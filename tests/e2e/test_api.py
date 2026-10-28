@@ -199,11 +199,14 @@ def test_taxa_cap_sends_the_notice_header():
     assert r.headers.get("X-AntWeb-Limit-Notice") == LIMIT_NOTICE, dict(r.headers)
 
 
-def test_without_up_the_reply_is_empty():
-    """Pinned (api.py down()): without up=1 every data route answers 200 with an empty body."""
+def test_without_up_the_reply_is_503_json():
+    """Decided by Brian Fisher 2026-10-27 (api.py checkUp, apiDown): without up=1 every data route answers 503
+    with a JSON message (was 200 with an empty body). The / route stays 200 for health checks."""
     r = new_session().get(BASE_URL + "/v3.1/taxa?genus=camponotus&limit=1", timeout=max(TIMEOUT, 120))
-    assert r.status_code == 200, r.status_code
-    assert r.text == "", r.text[:200]
+    assert r.status_code == 503, r.status_code
+    assert "not available" in r.json()["error"], r.text[:200]
+    r = new_session().get(BASE_URL + "/v3.1/", timeout=max(TIMEOUT, 120))
+    assert r.status_code == 200 and "Antweb API" in r.text, r.status_code
 
 
 def test_unknown_route_is_json_404():

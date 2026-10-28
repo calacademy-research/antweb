@@ -68,7 +68,7 @@ administrators may rename or delete.
 		</ul>
 
 		<ul>
-		<li><b>Image Count:</b></li>
+		<li><b>Image files:</b></li>
 		<li><%= artist.getDisplayCounts() %></li>
 		</ul>
 		

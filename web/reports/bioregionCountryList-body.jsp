@@ -21,7 +21,7 @@
 <a href="<%= AntwebProps.getDomainApp() %>/image/indomalayaPalearctic.jpg"><img src="<%= AntwebProps.getDomainApp() %>/image/indomalayaPalearctic.jpg" border="0" width="300" title="Indomalaya / Palearctic"></a>
 <a href="<%= AntwebProps.getDomainApp() %>/image/mexico.png"><img src="<%= AntwebProps.getDomainApp() %>/image/mexico.png" border="0" width="300" title="Mexico"></a>
 
-<br>Counties in Bold, adm1s in gray.
+<br>Countries in Bold, adm1s in gray.
 <br>
 
 

@@ -19,7 +19,7 @@ public class TaxonMgr extends Manager {
 
     private static HashMap<String, Taxon> s_genera;
 
-    private static HashMap<String, Taxon> s_species;
+    private static volatile HashMap<String, Taxon> s_species;
 
     // Shallow copies
     private static HashMap<String, Taxon> s_taxa;
@@ -38,25 +38,29 @@ public class TaxonMgr extends Manager {
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) throws SQLException {
         if (!forceReload && s_subfamilies != null) return;
 
+        s_species = null;  // built again on first use: kept the names of before an AntCat import until a restart
         s_subfamilies = popSubfamilies(connection);
 
         s_genera = popGenera(connection);
 
-        // For Taxon Name Search Autocomplete
-        prettyTaxaNamesList = new ArrayList<>();
-        prettyTaxaNamesList.addAll(CommonNames.getNames());
+        // For Taxon Name Search Autocomplete. Each list and map is filled first, then published: a reload (after every
+        // specimen upload) runs while pages are served, and a page that read a half-filled one could fail mid-response.
+        List<String> prettyNames = new ArrayList<>();
+        prettyNames.addAll(CommonNames.getNames());
 
         TaxonDb taxonDb = new TaxonDb(connection);
         List<String> taxaNamesList = taxonDb.getTaxonNames();
         for (String taxonName : taxaNamesList) {
-            prettyTaxaNamesList.add(Taxon.getPrettyTaxonName(taxonName));
+            prettyNames.add(Taxon.getPrettyTaxonName(taxonName));
         }
+        prettyTaxaNamesList = prettyNames;
 
-        s_taxa = new HashMap<>();
+        HashMap<String, Taxon> taxaMap = new HashMap<>();
         ArrayList<Taxon> taxa = taxonDb.getTaxa();
         for (Taxon taxon : taxa) {
-            s_taxa.put(taxon.getTaxonName(), taxon);
+            taxaMap.put(taxon.getTaxonName(), taxon);
         }
+        s_taxa = taxaMap;
 
         s_subgenusHashMap = taxonDb.getSubgenusHashMap();
 
@@ -270,16 +274,18 @@ public class TaxonMgr extends Manager {
 
         if (taxonName == null) return null;
 
-      if (s_species == null) {
-        s_species = new HashMap<>();
+      HashMap<String, Taxon> map = s_species;
+      if (map == null) {
+        map = new HashMap<>();  // filled, then published: no thread sees a half-filled map
         TaxonDb taxonDb = new TaxonDb(connection);      
         ArrayList<Taxon> species = taxonDb.getTaxa("taxarank in ('" + Rank.SPECIES + "', '" + Rank.SUBSPECIES + "')");
         s_log.debug("getSpecies() speciesCount:" + species.size());
         for (Taxon taxon : species) {
-          s_species.put(taxon.getTaxonName(), taxon);
+          map.put(taxon.getTaxonName(), taxon);
         } 
+        s_species = map;
       }
-      return (Species) s_species.get(taxonName);
+      return (Species) map.get(taxonName);
     }
 
     // For Taxon Name Search Autocomplete

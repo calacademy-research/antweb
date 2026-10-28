@@ -25,7 +25,7 @@
 java.util.Collection<Tracker> trackers = PageTracker.getTrackers();
 Tracker thisTracker = PageTracker.getTracker(request);
 if (thisTracker != null) { %>
-<br>&nbsp;&nbsp;Target:<%= thisTracker.getTarget() %>
+<br>&nbsp;&nbsp;Target:<%= Html.esc(thisTracker.getTarget()) %>
 <br>&nbsp;&nbsp;Response time:<%= thisTracker.getSinceStartTime() %>
 <% } else { %>
 <br>&nbsp;&nbsp;Tracker not found
@@ -42,7 +42,7 @@ if (thisTracker != null) { %>
     for (Tracker tracker : trackers) {
       if (tracker.getKey().equals(request.getAttribute("trackerKey"))) isThisPage = "isThisPage: *";
 %>
-      <br>&nbsp;&nbsp;&nbsp;&nbsp;<%= tracker.getTarget() %> code:<%= tracker.getCode() %> time:<%= tracker.getSinceStartTime() %> <%= isThisPage %>
+      <br>&nbsp;&nbsp;&nbsp;&nbsp;<%= Html.esc(tracker.getTarget()) %> code:<%= tracker.getCode() %> time:<%= tracker.getSinceStartTime() %> <%= isThisPage %>
 <%
       isThisPage = "";
     }

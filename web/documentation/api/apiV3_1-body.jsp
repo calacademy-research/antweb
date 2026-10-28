@@ -26,7 +26,7 @@
 
 <%
    if (LoginMgr.isAdmin(accessLogin)) { %>
-        <p><font color=red><b>Admin Note:</font></b> Urls must contain &up=1 or the request will return a blank page ! Automatically added if user is logged in as an admin.</p>
+        <p><font color=red><b>Admin Note:</font></b> Urls must contain &up=1. Without it a request returns HTTP 503 with a JSON error message. Automatically added if user is logged in as an admin.</p>
 <% }
    if (AntwebProps.isDevMode()) { %>
         <p><b>Dev Note:</b>On dev, the urls will contains localhost:5000 but on the live site, they will seamlessly redirect to the api server. To launch the dev server, go to the antweb/api/v3 directory and invoke: python3.6 api.py</p>
@@ -57,11 +57,12 @@
             </tr>
             <tr>
                 <td><b>Up</b></td>
-                <td>Admin only - API is currently down by default. Include the up parameter to access. (up=1)</td>
+                <td>Admin only - API is currently down by default: without the up parameter a request returns HTTP 503 with a JSON error message. Include the up parameter to access. (up=1)</td>
             </tr>            
 <% } %>
         </table>
         <p><b>Parameter names:</b> parameter names are case sensitive. A request with a parameter the function does not know (for example a misspelt name) is answered with HTTP 400 and a JSON message listing the accepted parameters, instead of ignoring it. When a close name exists, the message suggests it ("did you mean").</p>
+        <p id="image-counts"><b>Image counts</b> (since 2026-10-27): on AntWeb "Images" means images of the ant (head, profile, dorsal and other views); label images are counted separately. <b>imageCount</b> keeps its meaning (every image file, label images included) so existing programs keep working. <b>antImageCount</b> and <b>labelImageCount</b> are added: on /specimens and /geoSpecimens the specimen's images of the ant and label images; on /taxa the images of the specimens filed under the name (imageCount there also counts the names under it); in the metaData of /images and /taxaImages the images of the ant and label images of the reply. On /geolocales, /bioregions, /geolocaleTaxa and /bioregionTaxa, imageCount is the place's number: every image file of a place (imagedSpecimenCount counts specimens with an image of the ant), and on the lists' rows the images of the ant.</p>
         <p><p>
         <p>There are the different ways to access the api, documented below...
            <br>&nbsp;&nbsp;<a href="#specimens">Specimens</a>
@@ -152,19 +153,19 @@
             </tr>
             <tr>
                 <td><b>Min Date</b></td>
-                <td>Query for specimen identified on or after a single date (ex: minDate=yyyy-mm-dd)</td>
+                <td>Query for specimen collected on or after a single date, that date included (ex: minDate=yyyy-mm-dd)</td>
             </tr>
              <tr>
                 <td><b>Max Date</b></td>
-                <td>Query for specimen identified on or before a single date (ex: maxDate=yyyy-mm-dd)</td>
+                <td>Query for specimen collected on or before a single date, that whole day included (ex: maxDate=yyyy-mm-dd)</td>
             </tr>
             <tr>
                 <td><b>Min Elevation</b></td>
-                <td>This is measured in meters.  Query on specimen found at or above a specific elevation (ex: minElevation=1200)</td>
+                <td>This is measured in meters.  Query on specimen found at or above a specific elevation, that elevation included (ex: minElevation=1200)</td>
             </tr>
             <tr>
                 <td><b>Max Elevation</b></td>
-                <td>This is measured in meters.  Query on specimen found at or below a specific elevation (ex: maxElevation=1200)</td>
+                <td>This is measured in meters.  Query on specimen found at or below a specific elevation, that elevation included (ex: maxElevation=1200)</td>
             </tr>
             <tr>
                 <td><b>Museum</b></td>
@@ -355,19 +356,19 @@
             </tr>
             <tr>
                 <td><b>Min Date</b></td>
-                <td>Query for specimen identified on or after a single date (minDate=yyyy-mm-dd)</td>
+                <td>Query for specimen collected on or after a single date, that date included (minDate=yyyy-mm-dd)</td>
             </tr>
              <tr>
                 <td><b>Max Date</b></td>
-                <td>Query for specimen identified on or before a single date (maxDate=yyyy-mm-dd)</td>
+                <td>Query for specimen collected on or before a single date, that whole day included (maxDate=yyyy-mm-dd)</td>
             </tr>
             <tr>
                 <td><b>Min Elevation</b></td>
-                <td>This is measured in meters.  Query on specimen found at or above a specific elevation (minElevation=1200)</td>
+                <td>This is measured in meters.  Query on specimen found at or above a specific elevation, that elevation included (minElevation=1200)</td>
             </tr>
             <tr>
                 <td><b>Max Elevation</b></td>
-                <td>This is measured in meters.  Query on specimen found at or below a specific elevation (maxElevation=1200)</td>
+                <td>This is measured in meters.  Query on specimen found at or below a specific elevation, that elevation included (maxElevation=1200)</td>
             </tr>
             <tr>
                 <td><b>Status</b></td>
@@ -609,7 +610,7 @@
 
         <h2>Geolocale Species Stats</h2>
             <br>
-         	<b>Function:</b> Query for the statistics of species (species and subspecies) found in given geolocations (country or adm1).
+         	<b>Function:</b> Query for the statistics of species (species and subspecies) found in given geolocations (country or adm1). Each subcaste count counts only specimens of its caste (for example queenAlateDealateCount counts queens, workerNormalCount workers, maleAlateCount males).
             <p><b>Parameters:</b>
         <table class="arguments">
             <tr>

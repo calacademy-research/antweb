@@ -363,7 +363,7 @@ public class MuseumDb extends AntwebDb {
     
       int i = 0;
       for (Museum museum : MuseumMgr.getMuseums()) {
-        updateColor(museum.getCode(), colors[i]);
+        updateColor(museum.getCode(), colors[i % colors.length]);
         ++i;      
       }
     }   
@@ -540,7 +540,8 @@ public class MuseumDb extends AntwebDb {
       
           new UtilDb(getConnection()).deleteFrom("museum_taxon", " where code = '" + museumCode + "'");
 
-          String query = "select taxon_name, count(*) specimenCount, count(id) imageCount " 
+          // count(distinct s.code): the join gives one row per image, so count(*) counted a specimen once per image
+          String query = "select taxon_name, count(distinct s.code) specimenCount, count(id) imageCount " 
             + " from specimen s left join image i on s.code = i.image_of_id " 
             + " where museum = '" + museum.getCode() + "'" 
             + " and " + SpecimenDb.getFlagCriteria()            
@@ -633,6 +634,10 @@ public class MuseumDb extends AntwebDb {
 
         if (!code.equals(s_lastCode)) {
           s_lastCode = code;
+          // A new museum starts its own subfamily and genus rows (its first subfamily was skipped when it was
+          // the previous museum's last one).
+          s_lastSubfamily = "";
+          s_lastGenus = "";
           //A.log("insertHigherTaxon() formicidae");
           boolean inserted = insertTaxon(code, "formicidae", "higherTaxonFamily");
         }

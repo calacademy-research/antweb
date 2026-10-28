@@ -16,10 +16,9 @@
 
 <jsp:useBean id="theImage" scope="session" type="org.calacademy.antweb.SpecimenImage" />
 <jsp:useBean id="theImageTaxon" scope="session" type="org.calacademy.antweb.Specimen" />
-<jsp:setProperty name="theImageTaxon" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-27): the action fills the bean; request values must not overwrite what the page shows. --%>
 
 <jsp:useBean id="specimen" scope="session" class="org.calacademy.antweb.Specimen" />
-<jsp:setProperty name="specimen" property="*" />
 
 <%
     Login accessLogin = LoginMgr.getAccessLogin(request);

@@ -28,10 +28,11 @@ def test_all_view_shows_the_list_images_of_a_name():
     block = block[:block.index("</div>")]
     assert "thisChild.getHasImages() && !isSpecimen" in block, "the All view has no branch for names"
     names = block[block.index("!isSpecimen"):block.index("else if (thisChild.getHasImages())")]
-    assert "getTaxonSet().getImageCountStr()" in names, "names do not show their Images of this place's list"
+    # since 2026-10-27 (Brian Fisher) the Images column's numbers: ant images in AntWeb and of this place's list
+    assert "ImagesAnywhere.childImages(thisChild, overview)" in names, "names do not show their Images of this place's list"
     assert "getHasImagesCount" not in names, "names show getHasImagesCount (counted for specimens only)"
     # the default view shows the same number
-    assert "String imageCountStr = thisChild.getTaxonSet().getImageCountStr();" in jsp
+    assert "isSpecimen ? org.calacademy.antweb.ImageCounts.text(thisChild.getImages()) : org.calacademy.antweb.ImagesAnywhere.childImages(thisChild, overview)" in jsp
 
 
 def test_recent_images_one_row_per_image():

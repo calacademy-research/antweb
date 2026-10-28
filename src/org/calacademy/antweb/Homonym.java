@@ -112,7 +112,7 @@ public class Homonym extends Taxon implements Serializable {
                 if (Utility.notBlank(val)) setSpecies(val);
 
                 val = rset.getString("taxarank");
-                if (Utility.notBlank(val)) setRank(rank);
+                if (Utility.notBlank(val)) setRank(val);
                 
                 setIsType(rset.getInt("type") == 1);
                 val = rset.getString("status");
@@ -281,7 +281,7 @@ public class Homonym extends Taxon implements Serializable {
       try {
         String query = "select author_date " 
             + " from homonym " 
-            + " where taxon_name = '" + taxonName + "'"
+            + " where taxon_name = " + DBUtil.sqlQuote(taxonName)
             + " and author_date != '" + getSqlAuthorDate() + "'"
             ;
         stmt = DBUtil.getStatement(connection, "getHomonymAuthorDates()");

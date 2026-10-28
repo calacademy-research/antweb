@@ -92,12 +92,21 @@ public class ImageUtil {
 
     private static int runExifProcess(String path, SpecimenImage image)  throws InterruptedException, IOException {
         int errorCode = 0;
+        // No stray "z" before the copyright; wait for each exiftool (with a limit) instead of starting one per
+        // file without waiting. Not called by any page or job today (no caller of execute("exifUpdate")).
         ProcessBuilder pb = new ProcessBuilder("exiftool" 
-          , "-Copyright=z" + image.getCopyright() //"-Copyright=California Academy of Sciences 2000-2018"
+          , "-Copyright=" + image.getCopyright() //"-Copyright=California Academy of Sciences 2000-2018"
           , path
         );
+        pb.redirectErrorStream(true);
+        pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
         Process process = pb.start();
-        //errorCode = process.waitFor();
+        if (!process.waitFor(60, java.util.concurrent.TimeUnit.SECONDS)) {
+          process.destroyForcibly();
+          errorCode = -1;
+        } else {
+          errorCode = process.exitValue();
+        }
         if (errorCode != 0) {
           s_log.debug("runExifProcess() path:" + path + " errors:" + (errorCode == 0 ? "No" : "Yes")); // + " output:\n" + output(process.getInputStream()));
         }    

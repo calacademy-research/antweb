@@ -1,6 +1,5 @@
 	
 <%@ page import="org.calacademy.antweb.util.*" %>
-<%@ page import="org.calacademy.antweb.data.*" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.io.*" %>
 <%@ page import="org.calacademy.antweb.*" %>
@@ -146,7 +145,7 @@ String serverDetails = (String) request.getAttribute("serverDetails");
 <div class="aw-card" id="server-page-tracker">
 <h2>Page Tracker</h2>
 <pre>
-<%= PageTracker.showRequests() %>
+<%= org.calacademy.antweb.util.Html.esc(PageTracker.showRequests()) %>
 </pre>
 </div>
 </div>

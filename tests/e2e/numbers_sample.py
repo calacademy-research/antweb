@@ -87,6 +87,11 @@ def api(path):
         return None
 
 
+def specimen_code(row):
+    """The specimen code of a /specimens row (the field is specimenCode; /taxaImages calls it code), lower case."""
+    return (row.get("specimenCode") or row.get("code") or "").strip().lower()
+
+
 def api_rows(body):
     if not body:
         return []

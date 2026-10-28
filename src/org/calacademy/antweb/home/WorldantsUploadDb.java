@@ -42,17 +42,20 @@ public class WorldantsUploadDb extends AntwebDb {
     
     public void insertWorldantsUpload(String backupFileName, int backupFileSize, int origWorldantsCount, String validateMessage, int fileSize) throws SQLException {
 
-        String insert = null;
-        Statement stmt = null;
+        // Bound values: the validation message may quote the downloaded file (a name with an apostrophe).
+        String insert = "insert into worldants_upload(backup_file_name, backup_file_size, orig_worldants_count, validate_message, file_size) "
+              + "values (?, ?, ?, ?, ?)";
+        PreparedStatement stmt = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "insertWorldantsUpload()");
-            insert = "insert into worldants_upload(backup_file_name, backup_file_size, orig_worldants_count, validate_message, file_size) " 
-              + "values ('" + backupFileName + "', " + backupFileSize + ", " + origWorldantsCount + ", '" + validateMessage + "', " + fileSize + ")";  
-            stmt.executeUpdate(insert);
+            stmt = getConnection().prepareStatement(insert);
+            stmt.setString(1, String.valueOf(backupFileName));   // null stays the text 'null', as before
+            stmt.setInt(2, backupFileSize);
+            stmt.setInt(3, origWorldantsCount);
+            stmt.setString(4, String.valueOf(validateMessage));
+            stmt.setInt(5, fileSize);
+            stmt.executeUpdate();
 
-            //A.log("insertWorldantsUpload() insert:" + insert);
-
-            getConnection().commit();
+            if (!getConnection().getAutoCommit()) getConnection().commit();
         } catch (SQLException e) {
             s_log.error("insertWorldantsUpload() e:" + e);
             throw e;
@@ -67,16 +70,20 @@ public class WorldantsUploadDb extends AntwebDb {
         String logFileName = uploadDetails.getLogFileName();
         String execTime = uploadDetails.getExecTime();
         
-        String update = null;
-        Statement stmt = null;
+        String update = "update worldants_upload set log_file_name = ?, exec_time = ?, operation = ? where id = ?";
+        PreparedStatement stmt = null;
         try {
-            stmt = DBUtil.getStatement(getConnection(), "updateWorldantsUpload()");
-            update = "update worldants_upload set log_file_name = '" + logFileName + "', exec_time = '" + execTime + "', operation = '" + uploadDetails.getOperation() + "' where id = " + id; 
-            stmt.executeUpdate(update);
+            stmt = getConnection().prepareStatement(update);
+            // null was written as the text 'null' when these were concatenated: kept
+            stmt.setString(1, String.valueOf(logFileName));
+            stmt.setString(2, String.valueOf(execTime));
+            stmt.setString(3, String.valueOf(uploadDetails.getOperation()));
+            stmt.setInt(4, id);
+            stmt.executeUpdate();
 
-            s_log.debug("updateWorldantsUpload() update:" + update);
+            s_log.debug("updateWorldantsUpload() id:" + id);
 
-            getConnection().commit();
+            if (!getConnection().getAutoCommit()) getConnection().commit();
         } catch (SQLException e) {
             s_log.error("updateWorldantsUpload() e:" + e + " update:" + update);
             throw e;
@@ -92,17 +99,17 @@ public class WorldantsUploadDb extends AntwebDb {
       ResultSet rset = null;
       try {
         String query = "select max(id) id from worldants_upload";
-        stmt = DBUtil.getStatement(getConnection(), "UploadDb.getMaxWorldantsId()");
+        stmt = DBUtil.getStatement(getConnection(), "WorldantsUploadDb.getMaxWorldantsId()");
         stmt.execute(query);
         rset = stmt.getResultSet();
         while (rset.next()) {
           maxWorldantsId = rset.getInt("id");        
         }        
       } catch (SQLException e) {
-        s_log.warn("getMaxUploadId() e:" + e);
+        s_log.warn("getMaxWorldantsId() e:" + e);
         throw e;
       } finally {
-        DBUtil.close(stmt, rset, "UploadDb.getMaxWorldantsId()");      
+        DBUtil.close(stmt, rset, "WorldantsUploadDb.getMaxWorldantsId()");      
       }
       //A.log("getMaxSpecimenUploadId() id:" + maxUploadId);
       return maxWorldantsId;     

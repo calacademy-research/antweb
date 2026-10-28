@@ -142,7 +142,7 @@ public class Scheduler extends AntwebAction {
             LogMgr.appendLog("admin.log", DateUtil.getFormatDateTimeStr() + " Scheduler complete. ");
             // The job keeps one plain sentence (JobSummary), not the pages utilData.do answered with: those are
             // whole AntWeb pages (header, search, footer), and the job page showed them inside itself (job 186).
-            return message != null && message.startsWith("Scheduler ") ? BackgroundJobs.Outcome.ok(Html.esc(JobSummary.scheduler(message)))
+            return message != null && message.startsWith("Scheduler ") && !message.startsWith("Scheduler FAILED") ? BackgroundJobs.Outcome.ok(Html.esc(JobSummary.scheduler(message)))
                 : BackgroundJobs.Outcome.failed(Html.esc(JobSummary.isFullPage(message) ? JobSummary.scheduler(message) : message));
         });
         if (submitted.job == null) {
@@ -216,41 +216,33 @@ public class Scheduler extends AntwebAction {
 				Date startTime = new Date();
 			    String url = null;
 				boolean set5Skipped = false;
+				int currentSet = 0;
+				String failure = null;
 				try {
 					int i = Math.max(num, 0);  // This will invoke one of them if num != 0, otherwise invokes all of them
 
 					// if (AntwebProps.isDevMode()) i = 1;
 					//s_log.warn("doAction() action:" + action + " i:" + i + " num:" + num);
 
-					boolean log = true;
-
 					if (i == 0 || i == 1) {
+						currentSet = 1;
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set1&param=allow";
-						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS, codeHeader);
-						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
-						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
+						output += runSet(currentSet, url, codeHeader);
 					}
 					if (i == 0 || i == 2) {
+						currentSet = 2;
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set2&param=allow";
-						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS, codeHeader);
-						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
-						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
+						output += runSet(currentSet, url, codeHeader);
 					}
 					if (i == 0 || i == 3) {
+						currentSet = 3;
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set3&param=allow";
-						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS, codeHeader);
-						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
-						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
+						output += runSet(currentSet, url, codeHeader);
 					}
 					if (i == 0 || i == 4) {
+						currentSet = 4;
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set4&param=allow";
-						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS, codeHeader);
-						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
-						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
+						output += runSet(currentSet, url, codeHeader);
 					}
 					// set5 (object maps, reload all) needs more memory than staging's 4 GB droplet has:
 					// skip it there in the nightly run (an admin can still request it by hand).
@@ -260,16 +252,22 @@ public class Scheduler extends AntwebAction {
 						LogMgr.appendLog("compute.log", "  set5 skipped on staging (memory)", true);
 					} else
 					if (i == 0 || i == 5) {
+						currentSet = 5;
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow&reload=all";
-						output += HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS, codeHeader);
-						String note = null; if (output != null && output.length() > 20) note = output.substring(0, 20);
-						if (log) s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
-						if (output.contains("Unexpected error")) throw new AntwebException("Unexpected error");
+						output += runSet(currentSet, url, codeHeader);
 					}
 				} catch (AntwebException | IOException e) {
-					s_log.error("doAction() Scheduler failed. Investigate log files. e:" + e + " url:" + url);
-					// Make the failure visible in the web-readable compute.log, not only in catalina.out.
-					LogMgr.appendLog("compute.log", "Scheduler FAILED (remaining sets skipped) url:" + HttpUtil.forLog(url) + " e:" + e, true);
+					failure = String.valueOf(e.getMessage() != null && e instanceof AntwebException ? e.getMessage() : e);
+				}
+				if (failure != null) {
+					// Brian Fisher, 2026-10-27: a failed set stops the run. The remaining sets and the steps after
+					// the run (statistics page, API counts, cache reload, count check) are skipped, compute.log says
+					// FAILED and the administrators get an admin alert and an email.
+					String line = failedLine(currentSet, failure, AntwebUtil.getMinsPassed(startTime));
+					s_log.error("doAction() " + line + " url:" + HttpUtil.forLog(url));
+					LogMgr.appendLog("compute.log", line, true);
+					notifySetFailed(line);
+					return line;
 				}
 				message = "Scheduler " + Html.esc(action) + ":" + num + " completed in " + AntwebUtil.getMinsPassed(startTime) + ". ";
 				s_log.warn("doAction() " + message);
@@ -323,6 +321,58 @@ public class Scheduler extends AntwebAction {
 
         //this shouldn't happen in this example
         return "action:" + action + " not found.";
+    }
+
+    /** The answer utilData.do gives for a set it rolled back (UtilDataAction.handleException). */
+    static final String SET_ROLLED_BACK = "Error. No changes made for action:";
+
+    /**
+     * Why a set failed, from utilData.do's answer to it, or null when it did not fail: an "Unexpected error" page,
+     * or the set's own error (its work rolled back). Unit-tested in NightlySetFailureTest.
+     */
+    public static String setFailure(String setOutput) {
+        if (setOutput == null) return "no answer";
+        if (setOutput.contains("Unexpected error")) return "Unexpected error";
+        int i = setOutput.indexOf(SET_ROLLED_BACK);
+        if (i < 0) return null;
+        String reason = setOutput.substring(i);
+        int tag = reason.indexOf('<');
+        if (tag > 0) reason = reason.substring(0, tag);
+        reason = reason.trim();
+        return reason.length() > 300 ? reason.substring(0, 300) + "..." : reason;
+    }
+
+    /** The compute.log line (also the run's answer) of a run stopped by a failed set. */
+    public static String failedLine(int set, String reason, String minutes) {
+        return "Scheduler FAILED in set " + set + " after " + minutes + ": " + reason
+            + ". The remaining sets and the steps after the run were skipped.";
+    }
+
+    /** One set: its answer, or AntwebException when it failed (the run stops). */
+    private static String runSet(int set, String url, java.util.Map<String, String> codeHeader) throws AntwebException, IOException {
+        String setOutput = HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS, codeHeader);
+        String note = setOutput != null && setOutput.length() > 20 ? setOutput.substring(0, 20) : setOutput;
+        s_log.warn("doAction() url:" + HttpUtil.forLog(url) + " " + note);
+        String failure = setFailure(setOutput);
+        if (failure != null) throw new AntwebException(failure);
+        return setOutput;
+    }
+
+    /** Admin alert and email for a run stopped by a failed set. Never throws. */
+    static void notifySetFailed(String line) {
+        try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
+            AdminAlertMgr.add("Nightly: " + line, connection);
+        } catch (Exception e) {
+            s_log.warn("notifySetFailed() admin alert not added: " + e);
+        }
+        try {
+            Emailer.sendMail(AntwebUtil.getDevEmail(), "AntWeb: tonight's nightly run stopped (a set failed)",
+                line + "\n\nThe set stopped at its error: steps it had already committed (set 1: the AntCat import, the TaxonWorks upload, the name update) stay, the rest of the set was rolled back; the sets after it did not run, so tonight's counts"
+                + " are not updated. Details: compute.log (Log Manager). The sets run again at the next nightly (05:00);"
+                + " an admin can also start one set with /schedule.do?action=run&num=N.");
+        } catch (Exception e) {
+            s_log.warn("notifySetFailed() email not sent: " + e);
+        }
     }
 
     // "Stuck in set1": set1 is still running long after it should have finished, and

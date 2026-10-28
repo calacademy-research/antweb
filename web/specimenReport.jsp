@@ -299,12 +299,9 @@ if (sortedBy == null) {
                           <%= ("code".equals(sortedBy) ? "sorted_by" : "") %>"><%= Html.esc(thisChild.getPrettyName()) %></span></a><br />
                             <span class="<%= ("images".equals(sortedBy) ? "sorted_by" : "") %>">
 
-                   <% if (thisChild instanceof Specimen) {            
-                        if (thisChild.getImageCount() == 0) { %>
-                                 No Images
-                     <% } else { %> 
-                                 <span class='numbers'><%= thisChild.getImageCount() %></span> Images
-                     <% } %>
+                   <% if (thisChild instanceof Specimen) {
+                        // 2026-10-27 (Brian Fisher): images of the ant + label images, "5 Images + label" (ImageCounts). %>
+                                 <%= ((Specimen) thisChild).getImagesText() %>
 
                           <%  // Not sure if this functionality is ever reached. 
                       } else {
@@ -431,7 +428,7 @@ if (sortedBy == null) {
                 if (thisChild.getHasImages()) {
          %>
                     <div class=browse_span_col><a href="description.do?<%= thisChild.getBrowserParams() %>">
-                    <img src="<%= AntwebProps.getDomainApp() %>/image/has_photo.gif" border="0" title="<%= thisChild.getHasImagesCount() %> Images"></a>
+                    <img src="<%= AntwebProps.getDomainApp() %>/image/has_photo.gif" border="0" title="<%= Html.escAttr(((Specimen) thisChild).getImagesText().replaceAll("<[^>]+>", "")) %>"></a>
              <% } else { %>
                     <div class=browse_span_col><img src="<%= AntwebProps.getDomainApp() %>/image/no_photo.gif" border="0">
              <% } 
@@ -461,5 +458,6 @@ if (sortedBy == null) {
 } // For loop
 %>
 </div></div><%-- /aw-list, /aw-list-scroll --%>
+<%@ include file="/common/imagesDefinition.jsp" %>
 
 </form>

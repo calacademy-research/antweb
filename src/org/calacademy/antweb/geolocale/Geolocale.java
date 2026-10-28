@@ -738,8 +738,9 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     // taxon tree (parent_taxon_name; 2026-10-22, B40), so the order no longer matters.
     public String getTaxonImageCountQuery() {
       String query = "select s.taxon_name taxonName, s.family family, s.subfamily subfamily " 
-           + ", s.genus genus, s.species species, sum(s.image_count) imageSum" 
+           + ", s.genus genus, s.species species, count(i.id) imageSum"   // ant images only (2026-10-27)
            + " from specimen s" + getSpecimenPlaceJoin()
+           + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_OF_SPECIMEN
            + " join geolocale_taxon gt on s.taxon_name = gt.taxon_name "
            + " where gt.geolocale_id = " + getId()
            + getSpecimenPlaceCriteria()
@@ -770,18 +771,18 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         //A.log("getChangeViewOptions() taxonName:" + taxonName + " otherUrl:" + otherUrl + " regions:" + regions);    
 
 		for (Geolocale region : regions) {
-      	  changeViewOptions += "<li><a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + region.getParams() + "'>" + region.getName() + "</a></li>";
+      	  changeViewOptions += "<li><a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + region.getParams()) + "'>" + Html.esc(region.getName()) + "</a></li>";
 		  ArrayList<Geolocale> subregions = geolocaleDb.getChildrenWithTaxon(taxonName, "subregion", region);
 		  for (Geolocale subregion : subregions) {
-			changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + subregion.getParams() + "'>" + subregion.getName() + "</a></li>";
+			changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + subregion.getParams()) + "'>" + Html.esc(subregion.getName()) + "</a></li>";
 			ArrayList<Geolocale> countries = geolocaleDb.getChildrenWithTaxon(taxonName, "country", subregion);
 			for (Geolocale country : countries) {
-  			  changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + country.getParams() + "'>" + country.getName() + "</a></li>";
+  			  changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + country.getParams()) + "'>" + Html.esc(country.getName()) + "</a></li>";
 			  ArrayList<Geolocale> adm1s = geolocaleDb.getChildrenWithTaxon(taxonName, "adm1", country);
 			  for (Geolocale adm1 : adm1s) {
 			    if (adm1.isLive()) {
                     A.log("getChangeViewOptions() options:" + adm1.getName());
-                    changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
+                    changeViewOptions += "<li>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + adm1.getParams()) + "'>" + Html.esc(adm1.getName()) + "</a></li>";
 
                 }
 			  }
@@ -804,7 +805,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
  			  if (isOverviewPage) {
 			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + region.getThisPageTarget() + "'>" + region.getName() + "</a></li>";
 			  } else {
-                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + region.getParams() + "'>" + region.getName() + "</a></li>";
+                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + region.getParams()) + "'>" + Html.esc(region.getName()) + "</a></li>";
               }
             }
           }
@@ -818,7 +819,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
  			  if (isOverviewPage) {
 			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + subregion.getThisPageTarget() + "'>" + subregion.getName() + "</a></li>";
 			  } else {
-                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + subregion.getParams() + "'>" + subregion.getName() + "</a></li>";
+                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + subregion.getParams()) + "'>" + Html.esc(subregion.getName()) + "</a></li>";
               }
             }  
           }
@@ -832,7 +833,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
  			  if (isOverviewPage) {
 			    changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + country.getThisPageTarget() + "'>" + country.getName() + "</a></li>";
 			  } else {
-                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + country.getParams() + "'>" + country.getName() + "</a></li>";
+                changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + country.getParams()) + "'>" + Html.esc(country.getName()) + "</a></li>";
               }
             }
           }
@@ -848,7 +849,7 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
                       if (isOverviewPage) {
                           changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + adm1.getThisPageTarget() + "'>" + adm1.getName() + "</a></li>";
                       } else {
-                          changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + adm1.getParams() + "'>" + adm1.getName() + "</a></li>";
+                          changeViewOptions += "<li>&nbsp;&nbsp;<a href='" + Html.escAttr(otherUrl + (otherUrl != null && otherUrl.contains("?") ? "&" : "?") + adm1.getParams()) + "'>" + Html.esc(adm1.getName()) + "</a></li>";
                       }
                   }
               }

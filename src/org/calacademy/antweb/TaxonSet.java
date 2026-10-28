@@ -156,6 +156,52 @@ public abstract class TaxonSet {
         this.globalChildCount = globalChildCount;
     }  
     
+    // 2026-10-27 (images from anywhere): the images of the ant (labels never count) of the name in AntWeb, the
+    // allantwebants list row's Images (nightly set 4, the same rule as the place's row); -1 when not known.
+    private int globalImageCount = -1;
+    public int getGlobalImageCount() {
+        return globalImageCount;
+    }
+    public void setGlobalImageCount(int globalImageCount) {
+        this.globalImageCount = globalImageCount;
+    }
+
+    /**
+     * A column for a list row's query (alias global_image_count): the allantwebants row's image_count of the name, read
+     * from the table (so it is the last nightly run's, unlike the allantwebants rows AllAntwebMgr keeps from the start of
+     * the server). One primary-key lookup per row, for every rank. PR #291's second staging run counted species rows
+     * live from the image table instead (one count over specimen and image per row); list, taxon and browse pages
+     * then came back cut off or empty on staging, so that was taken out (2026-10-27). Nightly set 4 counts the
+     * allantwebants rows with the live projects since then (ProjTaxonCountDb.imageCountCrawl).
+     */
+    public String globalImageCountColumn(String escapedTaxonName) {
+        return " , (select g.image_count from proj_taxon g where g.project_name = '" + Project.ALLANTWEBANTS
+            + "' and g.taxon_name = '" + escapedTaxonName + "' limit 1) global_image_count";
+    }
+
+    /** Reads global_image_count when the query has it; never throws: a result without the column (or any error
+     *  reading it) leaves the number not known (-1), so a list row is never lost over its first Images number. */
+    protected void readGlobalImageCount(ResultSet rset) {
+        int n = -1;
+        try {
+            if (hasColumn(rset, "global_image_count")) {
+                int v = rset.getInt("global_image_count");
+                if (!rset.wasNull()) n = v;
+            }
+        } catch (SQLException | RuntimeException e) {
+            s_log.warn("readGlobalImageCount() taxonName:" + taxonName + " e:" + e);
+        }
+        setGlobalImageCount(n);
+    }
+
+    static boolean hasColumn(ResultSet rset, String label) throws SQLException {
+        ResultSetMetaData md = rset.getMetaData();
+        for (int i = 1; i <= md.getColumnCount(); i++) {
+            if (label.equalsIgnoreCase(md.getColumnLabel(i))) return true;
+        }
+        return false;
+    }
+
     public int getImageCount() {
         return imageCount;
     }

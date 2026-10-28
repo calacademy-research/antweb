@@ -11,7 +11,8 @@ import java.sql.SQLException;
  * ProjectDb, MuseumDb, BioregionDb) and by the count check (CountCheck, CountInvariants) that checks
  * them (Brian Fisher, 2026-10-20: every number on the site validated by a test).
  *
- *   Subfamilies  subfamily rows on the place's list whose taxon has a counted status
+ *   Subfamilies  subfamily rows on the place's list whose taxon has a counted status; a curated project's
+ *                Subfamilies count its subfamily rows of every status, as its list rows do (listedCondition, 2026-10-27)
  *   Genera       genus rows on the list, counted status
  *   Species      species and subspecies rows on the list, counted status, ants (family formicidae),
  *                identified to genus (identifiedToGenus, 2026-10-22)
@@ -175,16 +176,35 @@ public final class PlaceTotals {
     /** Valid species and subspecies, not fossil (alias t). */
     public static final String VALID_CONDITION = "t.taxarank in ('species', 'subspecies') and t.status = 'valid' and t.fossil = 0" + ANTS;
 
+    /** The projects whose Subfamilies number keeps the counted statuses (they are not curated lists). */
+    public static final String[] UNCURATED_PROJECTS = {"worldants", "allantwebants"};
+
+    /**
+     * The list rows (alias l) of one rank that a place's Subfamilies, Genera or Species number counts (alias t: their
+     * taxon). rankCondition, except for the Subfamilies of a curated project: Brian Fisher, 2026-10-27 (docs/numbers.md
+     * B67), the project's Subfamilies number follows the status rule of the project's own list rows. The nightly run
+     * counts the rows of a curated project's list in every status (StatusSet.getAndCriteria(project) is empty; the
+     * count check's checkChildren does the same), so its Subfamilies number counts every subfamily row of an ant
+     * subfamily, whatever its status. worldants and allantwebants keep the counted statuses.
+     */
+    public static String listedCondition(String type, String rank) {
+        if (PROJECT.equals(type) && SUBFAMILY.equals(rank)) {
+            return "t.taxarank = 'subfamily' and (t.status in " + COUNTABLE
+                + " or l.project_name not in ('" + String.join("', '", UNCURATED_PROJECTS) + "'))" + ANTS;
+        }
+        return rankCondition(rank);
+    }
+
     /** One place (parameter: its key): the number of rows of that rank on its list. */
     public static String listedCountSql(String type, String rank) {
         return "select count(distinct l.taxon_name) from " + listTable(type) + " l join taxon t on t.taxon_name = l.taxon_name"
-            + " where l." + listKey(type) + " = ? and " + rankCondition(rank);
+            + " where l." + listKey(type) + " = ? and " + listedCondition(type, rank);
     }
 
     /** All places of a type: place key, number of rows of that rank on its list (places with none are missing). */
     public static String listedCountsByPlaceSql(String type, String rank) {
         return "select l." + listKey(type) + ", count(distinct l.taxon_name) from " + listTable(type) + " l"
-            + " join taxon t on t.taxon_name = l.taxon_name where " + rankCondition(rank) + " group by l." + listKey(type);
+            + " join taxon t on t.taxon_name = l.taxon_name where " + listedCondition(type, rank) + " group by l." + listKey(type);
     }
 
     /** One place (parameter: its key): valid extant species and subspecies on its list. */
@@ -473,7 +493,40 @@ public final class PlaceTotals {
         if (!"endemic".equals(field) && !"introduced".equals(field)) throw new IllegalArgumentException(field);
         if (!GEOLOCALE.equals(type) && !BIOREGION.equals(type)) throw new IllegalArgumentException(type);
         return "update " + placeTable(type) + " p set p." + field + "_species_count = (select count(*) from " + listTable(type) + " l"
-            + " where l." + listKey(type) + " = p." + placeKey(type) + " and l.is_" + field + " = 1)";
+            + " where l." + listKey(type) + " = p." + placeKey(type) + " and " + flaggedCondition(field) + ")";
+    }
+
+    /**
+     * The list rows (alias l) flagged endemic or introduced that the lists and the numbers count. Brian Fisher,
+     * 2026-10-27 (docs/numbers.md B70): endemic.do, introduced.do and the Endemic and Introduced numbers follow the
+     * status rule of the counts: a flagged name counts when it has a counted status (COUNTABLE), so never a synonym
+     * (nor another name AntCat no longer uses). Until then the Introduced list and both numbers took every flagged row,
+     * and the Endemic list every status. One rule for the lists, the numbers (countsFromFlagsSql) and the count check
+     * (CountInvariants place.totals.endemic and place.totals.introduced).
+     */
+    public static String flaggedCondition(String field) {
+        if (!"endemic".equals(field) && !"introduced".equals(field)) throw new IllegalArgumentException(field);
+        return "l.is_" + field + " = 1 and exists (select 1 from taxon ft where ft.taxon_name = l.taxon_name and ft.status in " + COUNTABLE + ")";
+    }
+
+    /** endemic.do, introduced.do: the names flagged on one place's list (parameter: its key), by genus, species, subspecies. */
+    public static String flaggedNamesSql(String type, String field) {
+        if (!GEOLOCALE.equals(type) && !BIOREGION.equals(type)) throw new IllegalArgumentException(type);
+        return "select l.taxon_name from " + listTable(type) + " l join taxon t on t.taxon_name = l.taxon_name"
+            + " where l." + listKey(type) + " = ? and " + flaggedCondition(field) + " order by t.genus, t.species, t.subspecies";
+    }
+
+    /** The names of flaggedNamesSql for one place. */
+    public static java.util.ArrayList<String> flaggedNames(Connection connection, String type, String key, String field) throws SQLException {
+        java.util.ArrayList<String> names = new java.util.ArrayList<>();
+        try (PreparedStatement stmt = connection.prepareStatement(flaggedNamesSql(type, field))) {
+            if (GEOLOCALE.equals(type)) stmt.setInt(1, Integer.parseInt(key));
+            else stmt.setString(1, key);
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) names.add(r.getString(1));
+            }
+        }
+        return names;
     }
 
     public static int writeCountsFromFlags(Connection connection, String type, String field) throws SQLException {

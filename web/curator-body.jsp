@@ -50,7 +50,7 @@
         </ul>
     </div>
 
-<% if (LoginMgr.getAccessLogin(request) != null) { // email and admin flag only for logged-in users %>
+<% if (LoginMgr.isCurator(request)) { // email and admin flag only for curators and admins (decided 2026-10-27) %>
     <div id="overview_data" class="plain">
         <ul>
         <li><b>Email:</b></li>
@@ -126,7 +126,7 @@
     </div>
     <div id="overview_data" class="plain">
         <ul>
-        <li><b>Images Uploaded:</b></li>
+        <li><b>Image files uploaded:</b></li>
         <li><%= curator.getImagesUploadedCount() %></li>
         </ul>
     </div>
@@ -149,7 +149,7 @@
     </div>
     <div id="overview_data" class="plain">
         <ul>
-        <li><b>Images Uploaded:</b></li>
+        <li><b>Image files uploaded:</b></li>
         <li><%= Formatter.commaFormat(curator.getImagesUploadedCount()) %></li>
         </ul>
     </div>

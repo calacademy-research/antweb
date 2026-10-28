@@ -255,6 +255,25 @@ public class ImageDb extends AntwebDb {
     }
 
     /**
+     * True if an image row exists for this code, shot and number (with or without an owning group).
+     * On a database error: true, so that a check built on it refuses rather than allows.
+     */
+    public boolean imageExists(String code, String shotType, int shotNumber) {
+        String query = "select 1 from image where image_of_id = ? and shot_type = ? and shot_number = ? limit 1";
+        try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
+            stmt.setString(1, code);
+            stmt.setString(2, shotType);
+            stmt.setInt(3, shotNumber);
+            try (ResultSet rset = stmt.executeQuery()) {
+                return rset.next();
+            }
+        } catch (SQLException e) {
+            s_log.error("imageExists() code:" + code + " e:" + e);
+            return true;
+        }
+    }
+
+    /**
      * The access groups that own an image (group_image rows). Empty when the image is
      * not found or has no owner recorded.
      */
@@ -276,11 +295,22 @@ public class ImageDb extends AntwebDb {
     }
 
     public boolean deleteImage(String code, String shotType, int shotNumber) {
+        try {
+            return deleteImageRows(code, shotType, shotNumber);
+        } catch (SQLException e) {
+            s_log.error("deleteImage() code:" + code + " shotType:" + shotType + " shotNumber:" + shotNumber + " e:" + e);
+            return false;
+        }
+    }
+
+    /** Delete the image rows (and their group_image rows) of this code, shot and number. Throws on a database error. */
+    private boolean deleteImageRows(String code, String shotType, int shotNumber) throws SQLException {
         boolean deleted = false;
         String dml = "";
         Statement stmt = null;
         try {
             stmt = DBUtil.getStatement(getConnection(), "deleteImage()");
+            if (stmt == null) throw new SQLException("deleteImage() no statement");
 
             //A.log("execute()  deleting:" + code + " " + shotType + " " + shotNumber);
             String whereClause = "where image_of_id = '" + AntFormatter.escapeQuotes(code) + "' and shot_type='" + AntFormatter.escapeQuotes(shotType) + "' and shot_number=" + shotNumber;
@@ -294,71 +324,96 @@ public class ImageDb extends AntwebDb {
             c = stmt.executeUpdate(dml);
             if (c > 0) deleted = true;
             //A.log("delete 2 c:" + c + " query: " + dml);
-        
-            boolean exists = false;
 
             //s_log.warn("deleteImage() Should we remove image from disk? code:" + code + " shotType:" + shotType + " shotNumber:" + shotNumber);
             // No! We use this prior to insertion, after the image has already been copied into place.
             
-            LogMgr.appendLog("deletedImageLog.txt", "code:" + code + " shotType:" + shotType + " shotNumber:" + shotNumber);
-
-		} catch (SQLException e) {
-			s_log.error("deleteImage() dml" + dml + " e:" + e);
-		} finally { 		
-			DBUtil.close(stmt, "deleteImage()");
-		}
-        
+            if (deleted) LogMgr.appendLog("deletedImageLog.txt", "code:" + code + " shotType:" + shotType + " shotNumber:" + shotNumber);
+        } catch (SQLException e) {
+            s_log.error("deleteImage() dml" + dml + " e:" + e);
+            throw e;
+        } finally { 		
+            DBUtil.close(stmt, "deleteImage()");
+        }
         return deleted;
     }
     
+    /**
+     * Save the image row of an uploaded file, replacing the row of the same code, shot and number if there is one.
+     * The delete and the insert are one transaction: if the insert fails, the old row (and its group) is kept.
+     * Returns false if nothing was saved. Every row of that code, shot and number is replaced, also one without a
+     * group_image row (before, such a row was kept and a second row was added).
+     */
     public boolean putImage(ImageUploaded imageUploaded) {
-        boolean success = true;
-        
         String code = imageUploaded.getCode();
         String shot = imageUploaded.getShot();
         int number = imageUploaded.getNumber();
-        
-        SpecimenImage specimenImage = getSpecimenImage(code, shot, number);
-        //A.log("specimenImage:" + specimenImage);
-        if (specimenImage != null) {
-        // We delete first so that we know the insertions will work.
-          deleteImage(code, shot, number);
+
+        Connection connection = getConnection();
+        boolean autoCommit = true;
+        try {
+            autoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(false);
+            deleteImageRows(code, shot, number);
+            insertImage(imageUploaded);
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            s_log.error("putImage() code:" + code + " shot:" + shot + " number:" + number + " not saved, e:" + e);
+            try {
+                connection.rollback();
+            } catch (SQLException e2) {
+                s_log.error("putImage() rollback e:" + e2);
+            }
+            return false;
+        } finally {
+            try {
+                connection.setAutoCommit(autoCommit);
+            } catch (SQLException e) {
+                s_log.error("putImage() setAutoCommit e:" + e);
+            }
         }
-        insertImage(imageUploaded);
-        return success;
     }
 
     public int getMaxId() {
+      try {
+        return maxId();
+      } catch (SQLException e) {
+        s_log.error("getMaxId() e:" + e);
+        return 0;
+      }
+    }
+
+    private int maxId() throws SQLException {
       int id = 0;
       String query = "select max(id) id from image";    
       ResultSet rset = null;
       Statement stmt = null;
       try {
         stmt = DBUtil.getStatement(getConnection(), "getMaxId()");
-        stmt.executeQuery(query);
-        rset = stmt.getResultSet();
-
+        if (stmt == null) throw new SQLException("getMaxId() no statement");
+        rset = stmt.executeQuery(query);
         while (rset.next()) {
             id = rset.getInt("id");
         }
-      } catch (SQLException e) {
-          s_log.error("getMaxId() e:" + e + " query:" + query);
       } finally {
         DBUtil.close(stmt, rset, "ImageDb", "getMaxId()");
       }
       return id;
     }
 
-    public void insertImage(ImageUploaded imageUploaded) {
+    /** Insert the image row and its group_image row. Throws on a database error (putImage() then rolls back). */
+    private void insertImage(ImageUploaded imageUploaded) throws SQLException {
 
         ImageUpload imageUpload = imageUploaded.getImageUpload();
         Statement stmt = null;
         String dml = null;
     	try {
-    	    int id = getMaxId();
+    	    int id = maxId();
             ++id;
     	
             stmt = DBUtil.getStatement(getConnection(), "insertImage()");            
+            if (stmt == null) throw new SQLException("insertImage() no statement");
             dml = "insert into image (id, image_of_id, source_table, shot_type, shot_number" 
                   + ", artist, copyright, license" 
                   + ", upload_date, has_tiff, image_upload_id)" 
@@ -378,6 +433,7 @@ public class ImageDb extends AntwebDb {
             //A.log("insertImage() dml:" + dml);
 		} catch (SQLException e) {
 			s_log.error("insertImage() dml" + dml + " e:" + e);
+			throw e;
 		} finally { 		
 			DBUtil.close(stmt, "insertImage()");
 		}    
@@ -470,14 +526,17 @@ A.log("getFormProps() theQuery:" + theQuery);
 
     public HashMap<String, int[]> getImageStats() throws SQLException {
         HashMap<String, int[]> imageStats = new HashMap<>();
+        // 2026-10-27 (Brian Fisher): Images are images of the ant; label images in their own column (ImageCounts).
+        String ant = StatisticsDb.ANT_IMAGE;
         String theQuery = "select "
           + " status "
-          + ", count(*) total "
-          + ", sum(IF(caste = 'worker', 1, 0)) worker"
-          + ", sum(IF(caste = 'male', 1, 0)) male"
-          + ", sum(IF(caste = 'queen', 1, 0)) queen"
+          + ", sum(IF(" + ant + ", 1, 0)) total "
+          + ", sum(IF(" + ant + " and caste = 'worker', 1, 0)) worker"
+          + ", sum(IF(" + ant + " and caste = 'male', 1, 0)) male"
+          + ", sum(IF(" + ant + " and caste = 'queen', 1, 0)) queen"
           // NULL caste counts as Other (2026-10-21: it fell in no column, so the four did not add up to Total)
-          + ", sum(IF(caste is null or caste not in ('worker', 'male', 'queen'), 1, 0)) as other"
+          + ", sum(IF(" + ant + " and (caste is null or caste not in ('worker', 'male', 'queen')), 1, 0)) as other"
+          + ", sum(IF(" + ant + ", 0, 1)) labels"
           + " from specimen s, image i where s.code = i.image_of_id group by status"
           + " order by total desc";
 
@@ -494,7 +553,8 @@ A.log("getFormProps() theQuery:" + theQuery);
             int male = rset.getInt("male");
             int queen = rset.getInt("queen");
             int other = rset.getInt("other");
-            int[] numbers = {total, worker, male, queen, other};
+            int labels = rset.getInt("labels");
+            int[] numbers = {total, worker, male, queen, other, labels};
             imageStats.put(status, numbers);
           }
         } finally {
@@ -519,8 +579,9 @@ A.log("getFormProps() theQuery:" + theQuery);
 
     public HashMap<String, Integer> getImageTaxonStats() throws SQLException {
         HashMap<String, Integer> imageTaxonStats = new HashMap<>();
-        String theQuery = "select t.status, count(distinct t.taxon_name) count from taxon t, specimen, image "
-                + " where t.taxon_name = specimen.taxon_name and specimen.code = image.image_of_id "
+        // names with a specimen that has an image of the ant (2026-10-27: label images did count)
+        String theQuery = "select t.status, count(distinct t.taxon_name) count from taxon t, specimen, image i "
+                + " where t.taxon_name = specimen.taxon_name and specimen.code = i.image_of_id and " + StatisticsDb.ANT_IMAGE
                 + " group by t.status order by count(distinct t.taxon_name) desc";
 
         Statement stmt = null;

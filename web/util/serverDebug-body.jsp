@@ -1,6 +1,5 @@
 	
 <%@ page import="org.calacademy.antweb.util.*" %>
-<%@ page import="org.calacademy.antweb.data.*" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.io.*" %>
 <%@ page import="org.calacademy.antweb.*" %>
@@ -32,7 +31,7 @@ and will (Correction: should) persist across restarts.
 <br>The available Server Debug Options are defined in ServerDebug.java.
 <br>
 
-<br><b>Set Server Debug:</b> <%= ServerDebug.getDebug() %>
+<br><b>Set Server Debug:</b> <%= org.calacademy.antweb.util.Html.esc(ServerDebug.getDebug()) %>
 <br>(<a href="<%= domainApp %>/serverDebug.do?action=setDebug&param=">unset</a>)
 <br><br><b>Server Debug Options:</b>
 <%

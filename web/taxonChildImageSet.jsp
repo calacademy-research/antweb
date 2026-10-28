@@ -42,6 +42,14 @@ Examples of species with images that don't have h1 images:
        //A.log("taxonChildImageSet.jsp isSpecimen:" + isSpecimen + " isDefault:" + isDefault);		  
     }
 
+    // 2026-10-27 (images from anywhere): on a species images page reached with a place, the place's specimens are
+    // marked "from <place>" (BrowseAction sets the place's codes; other pages have none).
+    String fromPlaceMark = "";
+    if (isSpecimen && request.getAttribute("imagesFromPhrase") != null
+        && org.calacademy.antweb.ImagesAnywhere.isFromPlace(specChild.getCode(), (java.util.Set<String>) request.getAttribute("imagesPlaceCodes"))) {
+      fromPlaceMark = " <span class=\"from_place\" style=\"font-size:smaller; font-style:italic;\">" + org.calacademy.antweb.util.Html.esc((String) request.getAttribute("imagesFromPhrase")) + "</span>";
+    }
+
     String imageRoot = "";
     String picture = "";
     String code = "";  
@@ -78,7 +86,7 @@ Examples of species with images that don't have h1 images:
                 imageRoot = specChild.getName();
 %>
 <div class="data_checkbox" style="float:left; margin-top:2px; display:none;"><input form="getComparison" type="checkbox" name="chosen" value="<%= thisChild.getName() %>"></div>
-<div class="data_overlay"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= code %><%= overviewParams %>"><%= thisChild.getPrettyName() %></a>
+<div class="data_overlay"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= code %><%= overviewParams %>"><%= thisChild.getPrettyName() %></a><%= fromPlaceMark %>
 <%
                 if (specChild.getTypeStatus() != null) { %>
 <img style="margin-top:3px;" src="image/has_type_status.png" title="<%= org.calacademy.antweb.util.Html.escAttr((new Formatter()).capitalizeFirstLetter(specChild.getTypeStatus())) %>">  
@@ -106,16 +114,12 @@ Examples of species with images that don't have h1 images:
             if (thisChild.getHasImages() && !isSpecimen) {
                 // 2026-10-27 (B46): a name shows the same number as in the default view (its Images on this place's
                 // list). It showed the image count kept for specimens only, so every name said "0 Images".
-                String ratioImagesStr = thisChild.getTaxonSet().getImageCountStr();
-                if ("No Images".equals(ratioImagesStr) && thisChild.getImageCount() > 0) ratioImagesStr = thisChild.getImageCount() + " Images"; %>
+                // 2026-10-27 (Brian Fisher): the Images column's numbers, ant images only, in AntWeb and of the place.
+                String ratioImagesStr = org.calacademy.antweb.ImagesAnywhere.childImages(thisChild, overview); %>
                 <%= ratioImagesStr %>
          <% } else if (thisChild.getHasImages()) {
-                int titleStr = 0;
-                // getHasImagesCount is not calculated for description.do.  Do not include.
-                if (thisChild.getHasImagesCount() > 0) {
-                    titleStr = thisChild.getHasImagesCount();
-                } %>
-                <%= titleStr %> Images
+                // A specimen: its images of the ant + label images, "5 Images + label" (ImageCounts, 2026-10-27). %>
+                <%= org.calacademy.antweb.ImageCounts.text(thisChild.getImages()) %>
          <% } else { %>
                 No Images
          <% } %>
@@ -229,7 +233,7 @@ Examples of species with images that don't have h1 images:
                 <div class="slide medium<% if (position == first) { %> first<% } %><% if (position == fourth) { %> last<% } %>" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><%= img.getThumbview() %>');" id="<%= index %>">
                 <div class="hover medium" onclick="window.location='<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= thisChild.getCode() %><%= overviewParams %>';"></div>
                 <div class="top_gradient medium"></div>
-                <div class="name"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= thisChild.getCode() %><%= overviewParams %>"><%= thisChild.getPrettyName() %></a></div>
+                <div class="name"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= thisChild.getCode() %><%= overviewParams %>"><%= thisChild.getPrettyName() %></a><%= fromPlaceMark %></div>
 <%
                   } else {
                     imageRoot = code;
@@ -269,12 +273,9 @@ Examples of species with images that don't have h1 images:
 				 if (!isSpecimen) { %>
 						<span id="next_in_taxon"><%= thisChild.getTaxonSet().getNextSubtaxon(1) %></span>
 			  <% }
-                 String imageCountStr = thisChild.getTaxonSet().getImageCountStr();
-                 if  ("No Images".equals(imageCountStr)) {
-                   if (thisChild.getImageCount() > 0) {
-                     imageCountStr = thisChild.getImageCount() + " Images";
-                   }                 
-                 }
+                 // A name: the Images column's numbers (ant images, in AntWeb and of the place; 2026-10-27).
+                 // A specimen: its images of the ant + label images (ImageCounts, 2026-10-27).
+                 String imageCountStr = isSpecimen ? org.calacademy.antweb.ImageCounts.text(thisChild.getImages()) : org.calacademy.antweb.ImagesAnywhere.childImages(thisChild, overview);
                  // was: thisChild.getTaxonSet().getImageCountStr()%>   
             <span style="float:right; text-align:right;"><%= imageCountStr %></span>
 

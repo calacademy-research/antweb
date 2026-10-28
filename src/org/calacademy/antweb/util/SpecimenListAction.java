@@ -104,7 +104,8 @@ public final class SpecimenListAction extends AntwebAction {
             new Utility().createDirectory(DIR);
             DownloadLimits.removeOldFiles(new File(AntwebProps.getDocRoot() + DIR), ".txt", System.currentTimeMillis() - KEEP_MILLIS);
             String fileName = "/" + new java.text.SimpleDateFormat("yyyyMMdd-HHmmss").format(new Date()) + "-" + accessLogin.getId() + "-"
-                + overview.getName().replaceAll("[^A-Za-z0-9._-]", "_") + "-" + taxonName.replaceAll("[^A-Za-z0-9._-]", "_") + ".txt";
+                + overview.getName().replaceAll("[^A-Za-z0-9._-]", "_") + "-" + taxonName.replaceAll("[^A-Za-z0-9._-]", "_")
+                + "-" + randomToken() + ".txt";  // not guessable, and two requests in one second no longer share a file
             String fullPath = AntwebProps.getDocRoot() + DIR + fileName;
             writeFile(codes, fullPath, connection);
 
@@ -125,6 +126,17 @@ public final class SpecimenListAction extends AntwebAction {
             QueryProfiler.profile("specimenList", startTime);
             DBUtil.close(connection, this, dbMethodName);
         }
+    }
+
+    private static final java.security.SecureRandom RANDOM = new java.security.SecureRandom();
+
+    /** 32 hex characters (128 random bits). */
+    public static String randomToken() {
+        byte[] bytes = new byte[16];
+        RANDOM.nextBytes(bytes);
+        StringBuilder sb = new StringBuilder(32);
+        for (byte b : bytes) sb.append(String.format("%02x", b));
+        return sb.toString();
     }
 
     private void writeFile(ArrayList<String> codes, String fullPath, Connection connection) throws SQLException {

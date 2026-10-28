@@ -8,7 +8,8 @@
     if (accessLogin2 == null) {
         AntwebUtil.log("loginCheck.jsp notLoggedIn redirection:" + HttpUtil.getRequestInfo(request));          
         
-        response.sendRedirect("notLoggedIn.jsp");
+        // Absolute: a page in a sub folder would otherwise go to a notLoggedIn.jsp there, which does not exist.
+        response.sendRedirect(AntwebProps.getDomainApp() + "/notLoggedIn.jsp");
         return;
     } else { 
         //AntwebUtil.log("info", "curatorCheck.jsp: accessGroupId:" + accessGroup1.getId());

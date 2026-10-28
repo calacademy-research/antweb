@@ -28,11 +28,11 @@ public class Formatter implements Serializable {
 	
 	
 	public static String commaFormat(String num) {
-	  return commaFormat(Long.valueOf(num).intValue());
+	  return commaFormat(Long.parseLong(num.trim()));
 	}	
 	
-	public static String commaFormat(long num) {
-	  return commaFormat(Long.valueOf(num).intValue());
+	public static String commaFormat(long num) {  // was cut to an int, wrong above 2^31
+	  return NumberFormat.getNumberInstance(Locale.US).format(num);
 	}
 	
 	public static String commaFormat(int num) {

@@ -20,7 +20,7 @@ public class BioregionDb extends AntwebDb {
     }
 
     public Bioregion getBioregion(String bioregionName) throws SQLException {
-      return getBioregionWithClause(" name = '" + bioregionName + "'");
+      return getBioregionWithClause(" name = " + DBUtil.sqlLiteral(String.valueOf(bioregionName)));
     }
     public Bioregion getBioregionWithClause(String keyClause) throws SQLException {
       Bioregion bioregion = null;
@@ -392,7 +392,7 @@ public class BioregionDb extends AntwebDb {
       ArrayList<Bioregion> bioregionList = BioregionMgr.getBioregions();    
       int i = 0;
       for (Bioregion bioregion : bioregionList) {
-        updateColor(bioregion.getName(), colors[i]);
+        updateColor(bioregion.getName(), colors[i % colors.length]);
         ++i;      
       }
     }
@@ -706,8 +706,11 @@ public class BioregionDb extends AntwebDb {
         String updateDml = "update bioregion_taxon set is_" + field + " = "; // will be is_endemic or is_introduced
         if (bioregionName == null) {
             updateDml += "false";
+        } else if (taxonName == null) {
+            // every row of the bioregion (calcIntroduced: the reset before the flags; it set 'null' rows, none)
+            updateDml += "false where bioregion_name = " + DBUtil.sqlLiteral(bioregionName);
         } else {
-            updateDml += "true where bioregion_name = '" + bioregionName + "' and taxon_name = '" + taxonName + "'";
+            updateDml += "true where bioregion_name = " + DBUtil.sqlLiteral(bioregionName) + " and taxon_name = " + DBUtil.sqlLiteral(taxonName);
         }
 
         Statement stmt = null;
