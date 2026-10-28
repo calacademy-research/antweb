@@ -67,7 +67,8 @@ public class BioregionTaxonDb extends TaxonSetDb {
       //A.log("populateSpeciesFromSpecimen()");
 
       try {
-          String query = "select s.taxon_name, count(*) specimenCount, count(id) imageCount " 
+          // count(*) counted one row per image: a specimen with 6 images was 6 specimens.
+          String query = "select s.taxon_name, count(distinct s.code) specimenCount, count(i.id) imageCount " 
             + " from taxon t, specimen s " 
             + " left join image i on s.code = i.image_of_id " 
             + " where s.taxon_name = t.taxon_name"
@@ -344,6 +345,9 @@ See BioregionDb.java:77 where this call is commented out.
 
         if (!bioregionName.equals(s_lastBioregionName)) {
           s_lastBioregionName = bioregionName;
+          // a new bioregion starts its own subfamily and genus rows (the rows of one bioregion can follow those of another)
+          s_lastSubfamily = "";
+          s_lastGenus = "";
           //A.log("insertHigherTaxon() formicidae");
           boolean inserted = insertTaxon(bioregionName, "formicidae", "higherTaxonFamily", source);
         }
@@ -355,8 +359,8 @@ See BioregionDb.java:77 where this call is commented out.
           if (inserted) ++s_subfamilyCount;
         }
 
-        if (!thisGenus.equals(s_lastGenus)) {
-          s_lastGenus = thisGenus;
+        if (!(thisSubfamily + thisGenus).equals(s_lastGenus)) {
+          s_lastGenus = thisSubfamily + thisGenus;   // the same genus name in two subfamilies is two genera
           boolean inserted = insertTaxon(bioregionName, thisSubfamily + thisGenus, "higherTaxonGenus", source);
           // A.log("insertHigherMusemTaxon() genus bioregionName:" + bioregionName + " taxonName:" + thisSubfamily + thisGenus );
           if (inserted) ++s_generaCount;

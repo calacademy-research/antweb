@@ -296,6 +296,7 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         
         String rank = Taxon.getRankFromName(taxonName);     
            
+        if (rank == null) return c;   // not a name of a known rank: the row is removed, nothing else
         boolean isSubfamily = rank.equals(Rank.SUBFAMILY);
         boolean hasOtherProjects = getProjectCount(taxonName) > 0;
         boolean hasSpecimen = getSpecimenCount(taxonName) > 0;
@@ -309,7 +310,8 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
         if (!"genus".equals(rank) && hasSpecimen) return c;
         
-        if (Taxon.isMorpho(taxonName)) {
+        // Not while a place, bioregion or museum list still holds it (deleteTaxon removes every project row).
+        if (Taxon.isMorpho(taxonName) && !new TaxonDb(getConnection()).isOnAnyList(taxonName)) {
 			// So we will delete the taxon outright.
 			TaxonDb taxonDb = new TaxonDb(getConnection());
 			taxonDb.deleteTaxon(taxonName);
@@ -439,7 +441,9 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
                 count = count + 1;
             }
         } catch (SQLException e) {
-            s_log.error("hasNoChildren() projectName:" + projectName + " taxonName:" + taxonName);
+            // An error is not "no children": the callers delete the row when the answer is true.
+            s_log.error("hasNoChildren() projectName:" + projectName + " taxonName:" + taxonName + " e:" + e);
+            return false;
         } finally {
             DBUtil.close(stmt, rset, "hasNoChildren()");
         }

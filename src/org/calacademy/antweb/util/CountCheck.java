@@ -300,6 +300,8 @@ public class CountCheck {
         // Between 05:00 and 08:15 the nightly may still be running; once compute.log shows today's run ended, it is not
         // (2026-10-26: the nightly's own check at 06:10 said "rebuilding the counts now").
         if (result.inNightlyWindow && nightlyEndedToday(lastRunEnd, java.time.LocalDateTime.now())) result.inNightlyWindow = false;
+        // A run still writing after 08:15 (compute.log: begun, not ended): its numbers are half written, as in the window.
+        if (nightlyInProgress) result.inNightlyWindow = true;
         if (lastRunEnd != null && !result.inNightlyWindow) result.countedUntil = lastRunEnd;
         Set<String> changedNames = changedNamesSince(result);
         imagesSince(result);
@@ -385,8 +387,29 @@ public class CountCheck {
         return last;
     }
 
+    /** Set by the callers from compute.log (nightlyInProgress(lines, now)). */
+    public boolean nightlyInProgress = false;
+
+    /**
+     * Whether a nightly run is still working: compute.log's last "Begin run" has no "End run" and no "Scheduler FAILED"
+     * after it, and began less than 12 hours before now (a run stopped by a restart leaves a Begin without an End).
+     */
+    public static boolean nightlyInProgress(List<String> lines, java.time.LocalDateTime now) {
+        java.time.LocalDateTime begun = null;
+        for (String line : lines) {
+            java.util.regex.Matcher m = LOG_LINE.matcher(line);
+            if (m.find()) {
+                begun = "Begin".equals(m.group(2)) ? Timestamp.valueOf(m.group(1)).toLocalDateTime() : null;
+            } else if (begun != null && line.contains("Scheduler FAILED")) {
+                begun = null;
+            }
+        }
+        return begun != null && !begun.isAfter(now) && begun.isAfter(now.minusHours(12));
+    }
+
     /** Whether compute.log has a line written by the region and subregion counts of the 2026-10-20 rule. */
     public static boolean regionRuleCounted(List<String> lines) {
+        if (lines.isEmpty()) return true;   // no compute.log (unreadable, emptied, rotated): not a reason to call differences pending
         for (String line : lines) {
             if (line.contains(org.calacademy.antweb.home.GeolocaleDb.REGION_RULE_LOG)) return true;
         }
@@ -684,6 +707,7 @@ public class CountCheck {
     public boolean antImagesRuleCounted = true;
 
     public static boolean antImagesRuleCounted(List<String> lines) {
+        if (lines.isEmpty()) return true;   // as regionRuleCounted
         for (String line : lines) if (line.contains(org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_RULE_LOG)) return true;
         return false;
     }

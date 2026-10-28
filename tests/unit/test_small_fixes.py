@@ -34,6 +34,12 @@
    North Dakota return was inside the comment, so the Ohio line below became its body); the home page slideshow is
    built before it is written (an error leaves it empty instead of cutting the page off) and TaxonMgr publishes its
    name list and taxon map only once they are filled (a reload runs after every specimen upload).
+13. (2026-10-28, nightly and count check triage) Data job messages escape the place names they repeat and refuse an
+   unknown museum or project; the bulk flag and the specimen search limit are restored in finally; set 4 commits the
+   image counts before the statistics and rolls back only those on a failure; the B36 alert has its own try; the
+   bioregion list rows count each specimen once (not once per image); the group_count table is created at start-up,
+   not inside set 3; the steps after the nightly run each have their own try; a name is deleted outright only when no
+   other list holds it. Unit test (no database): test/.../util/NightlyTriageThTest.java.
 
 13. (2026-10-28) Logins and sessions, curator tools and uploads: deleting a login ends its sessions; sign-in posts
    from another site are refused; the login list is a request attribute; staging's bot list is production's; an
@@ -358,6 +364,40 @@ def test_triage_20261028(sources):
     print("Logins, sessions, curator tools and upload fixes of 2026-10-28 in place.")
 
 
+def test_nightly_triage_2026_10_28(sources):
+    uda = sources["src/org/calacademy/antweb/util/UtilDataAction.java"]
+    for raw in ('appendStr += ":" + bioregion;', 'appendStr += ":" + museumCode;', 'appendStr += ":" + projectName;'):
+        assert raw not in uda, "a data job message repeats a form value unescaped: " + raw
+    assert '"Museum not found:" + Html.esc(museumCode)' in uda and '"Project not found:" + Html.esc(projectName)' in uda
+    i = uda.index("CountDb.s_isBulk = true;")
+    assert "finally" in uda[i:i + 300], "CountDb.s_isBulk is not reset in finally"
+    i = uda.index("SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);")
+    assert "finally" in uda[i:i + 500], "the specimen search limit is not restored in finally"
+    i = uda.index('populateStatistics("nightly"')
+    assert "connection.commit();" in uda[i - 300:i] and "connection.rollback()" in uda[i:i + 500], "set 4 statistics not isolated"
+    i = uda.index("AdminAlertMgr.addIfFresh(result.alert()")
+    assert "try {" in uda[i - 200:i], "the B36 alert can still skip the recount"
+    assert 'return denied != null ? denied : mapping.findForward("notLoggedIn");' in uda
+    spec = sources["src/org/calacademy/antweb/home/SpecimenDb.java"]
+    assert "\" code = '\" + code + \"'\"" not in spec and 'DBUtil.sqlLiteral(code)' in spec, "calcCaste(code) quotes the code by hand"
+    img = sources["src/org/calacademy/antweb/home/ImageCountDb.java"]
+    assert 'taxonName.replace("\'", "\'\'")' not in img
+    bio = sources["src/org/calacademy/antweb/home/BioregionTaxonDb.java"]
+    assert "count(distinct s.code) specimenCount" in bio and "count(*) specimenCount" not in bio
+    login = sources["src/org/calacademy/antweb/util/LoginMgr.java"]
+    assert "GroupCountDb.ensureTable(conn)" in login, "group_count is created inside nightly set 3 (implicit commit)"
+    sch = sources["src/org/calacademy/antweb/util/Scheduler.java"]
+    i = sch.index("StatsPageAction.recount(connection)")
+    assert "try {" in sch[i - 150:i] and "TaxonApiCountDb.copyGlobalCounts" in sch[i:i + 600]
+    j = sch.index("TaxonApiCountDb.copyGlobalCounts")
+    assert "try {" in sch[j - 150:j], "a failed statistics recount skips the API counts"
+    for f in ("GeolocaleTaxonDb.java", "ProjTaxonDb.java"):
+        s = sources["src/org/calacademy/antweb/home/" + f]
+        i = s.index("deleteTaxon(taxonName);")
+        assert "isOnAnyList(taxonName)" in s[i - 400:i], f + " deletes a name another list still holds"
+    print("Nightly and count check triage of 2026-10-28: messages, finally blocks, set 4, deletions.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -376,6 +416,7 @@ def main():
     test_post_means_post(sources)
     test_no_lost_ifs_and_whole_home_page(sources)
     test_triage_20261028(sources)
+    test_nightly_triage_2026_10_28(sources)
 
 
 if __name__ == "__main__":

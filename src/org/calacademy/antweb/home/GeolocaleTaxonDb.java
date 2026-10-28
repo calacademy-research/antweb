@@ -319,23 +319,23 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
           int count = rset1.getInt(1);
           if (count == 0) {  // Apparently not in worldants or any other project
 
-            Statement stmt2 = getConnection().createStatement();
             query = "select count(code) from specimen "
               + " where taxon_name = " + DBUtil.sqlLiteral(taxonName);
 
             //A.log("delete() 3 query:" + query);
 
-            ResultSet rset2 = stmt2.executeQuery(query);
-            while (rset2.next()) {
-              // Only a morphotaxon is deleted outright, as when it is removed from a project list
-              // (ProjTaxonDb.delete): a valid or AntCat name (or a genus, which has no specimens filed under
-              // its own name) stays in the taxon table.
-              if (rset2.getInt(1) == 0 && Taxon.isMorpho(taxonName)) {
+            try (Statement stmt2 = getConnection().createStatement(); ResultSet rset2 = stmt2.executeQuery(query)) {
+              while (rset2.next()) {
+                // Only a morphotaxon is deleted outright, as when it is removed from a project list
+                // (ProjTaxonDb.delete): a valid or AntCat name (or a genus, which has no specimens filed under
+                // its own name) stays in the taxon table. Nor while a project, bioregion or museum list holds it:
+                // deleteTaxon removes every project row (a curated project lost the name with the country row).
                 TaxonDb taxonDb = new TaxonDb(getConnection());
-                taxonDb.deleteTaxon(taxonName);
+                if (rset2.getInt(1) == 0 && Taxon.isMorpho(taxonName) && !taxonDb.isOnAnyList(taxonName)) {
+                  taxonDb.deleteTaxon(taxonName);
+                }
               }
             }
-            stmt2.close();
           }
         }        
       } catch (SQLException e) {
@@ -826,7 +826,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 
                 //if ("Colorado".equals(adm1Name)) A.log("insertGeolcoaleTaxaFromSpecimen() country:" + country + " adm1Name:" + adm1Name);
                 // Rows inserted (count was a running total added again on each line: the total grew quadratically).
-                insertCount += insert(country, taxonName, "specimen");
+                if (taxonName != null) insertCount += insert(country, taxonName, "specimen");
 
                 // Update the Adm1 records
                 if (adm1Name != null) {

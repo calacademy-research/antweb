@@ -334,11 +334,17 @@ Code added below on Apr 26 2023:
 
             String multiDebug = "";
 
+            String synonymName = null;
             while (rset.next()) {
-                taxonName = rset.getString("taxon_name");
+                String name = rset.getString("taxon_name");
 
                 String status = rset.getString("status");
-                if ("synonym".equals(status)) continue; // Do not count. Ignore.
+                // Do not count. Ignore. (The row order is not fixed: a synonym read last no longer replaces the name.)
+                if ("synonym".equals(status)) {
+                    synonymName = name;
+                    continue;
+                }
+                taxonName = name;
 
                 i = i + 1;
                 if (i < 4) {
@@ -347,6 +353,7 @@ Code added below on Apr 26 2023:
                 }
             }
             if (i > 4) multiDebug += "... (" + i + ")";
+            if (i == 0) taxonName = synonymName;   // only synonyms: as before, the (last) synonym
 
             if (i > 1) {
                 // BrowseAction and FieldGuideAction seem to be calling innappropriately:
@@ -455,6 +462,7 @@ Code added below on Apr 26 2023:
     // Taxa for the TaxonMgr need a couple of extra things.
     public Taxon getTaxonForMgr(String taxonName) throws SQLException {
         Taxon taxon = getTaxon(taxonName);
+        if (taxon == null) return null;   // the caller skips it (was a NullPointerException that stopped the load)
         if (Rank.GENUS.equals(taxon.getRank())) {
             taxon.setBioregionMap(new TaxonPropDb(getConnection()).getBioregionMap(taxonName));
         }
@@ -557,6 +565,28 @@ Code added below on Apr 26 2023:
     }
         
     
+    /**
+     * Whether a name is on any list other than the Global one (allantwebants): a project, a place (geolocale),
+     * a bioregion or a museum list. Removing a name from one list deletes the taxon outright only when it is on
+     * none of them (GeolocaleTaxonDb.delete, ProjTaxonDb.delete); deleteTaxon removes it from every project list.
+     * On an error, true (never delete then).
+     */
+    public static final String ON_OTHER_LIST_SQL = "select (select count(*) from proj_taxon where taxon_name = ? and project_name <> '"
+        + Project.ALLANTWEBANTS + "') + (select count(*) from geolocale_taxon where taxon_name = ?)"
+        + " + (select count(*) from bioregion_taxon where taxon_name = ?) + (select count(*) from museum_taxon where taxon_name = ?)";
+
+    public boolean isOnAnyList(String taxonName) {
+        try (PreparedStatement stmt = getConnection().prepareStatement(ON_OTHER_LIST_SQL)) {
+            for (int i = 1; i <= 4; i++) stmt.setString(i, taxonName);
+            try (ResultSet rset = stmt.executeQuery()) {
+                return !rset.next() || rset.getLong(1) > 0;
+            }
+        } catch (SQLException e) {
+            s_log.error("isOnAnyList() taxonName:" + taxonName + " e:" + e);
+            return true;
+        }
+    }
+
     public void deleteTaxon(String taxonName) throws SQLException {   
       // Called from ProjTaxonDb
       

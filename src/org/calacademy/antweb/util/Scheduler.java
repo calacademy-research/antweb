@@ -169,6 +169,8 @@ public class Scheduler extends AntwebAction {
     public String doAction(String action, int num) {
     
         if (action == null) return "Null action";
+        // Sets 1 to 5, or 0 for all: any other number ran nothing and was reported as completed.
+        if ("run".equals(action) && (num < 0 || num > 5)) return "No set " + num + " (sets are 1 to 5, or 0 for all)";
     
 		String message = "";
 
@@ -275,14 +277,29 @@ public class Scheduler extends AntwebAction {
 				if (num == 0) {
 				  // This was the full scheduled tasks, now completed.
 				  // Daily: warn the administrators of a log over 1 GB or a disk over 85% (LogSizeCheck).
+				  // Each step its own try: a failed step no longer skips the ones after it.
 				  try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
-					LogMgr.appendLog("compute.log", "  " + LogSizeCheck.run(connection), true);
+					try {
+					  LogMgr.appendLog("compute.log", "  " + LogSizeCheck.run(connection), true);
+					} catch (Exception e) {
+					  s_log.warn("doAction() log size check e:" + e);
+					}
 					// The statistics page (statsPage.do): its tables are counted once a day, here, after the nightly numbers.
-					LogMgr.appendLog("compute.log", "  " + org.calacademy.antweb.StatsPageAction.recount(connection), true);
+					try {
+					  LogMgr.appendLog("compute.log", "  " + org.calacademy.antweb.StatsPageAction.recount(connection), true);
+					} catch (Exception e) {
+					  s_log.error("doAction() statistics page recount e:" + e);
+					  LogMgr.appendLog("compute.log", "  statistics page not recounted e:" + e, true);
+					}
 					// The API's /taxa counts (B11, 2026-10-26): copied from each name's Global row, after the nightly counts.
-					LogMgr.appendLog("compute.log", "  " + org.calacademy.antweb.home.TaxonApiCountDb.copyGlobalCounts(connection), true);
+					try {
+					  LogMgr.appendLog("compute.log", "  " + org.calacademy.antweb.home.TaxonApiCountDb.copyGlobalCounts(connection), true);
+					} catch (Exception e) {
+					  s_log.error("doAction() API counts e:" + e);
+					  LogMgr.appendLog("compute.log", "  API taxon counts not copied e:" + e, true);
+					}
 				  } catch (Exception e) {
-					s_log.warn("doAction() log size check e:" + e);
+					s_log.warn("doAction() after-run steps e:" + e);
 				  }
 				  if (isNightlyRestartOn()) {
 					s_log.warn("SET REBOOT TRUE");
