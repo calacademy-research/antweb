@@ -33,19 +33,21 @@ def main():
 
     # 1. the total, in plain words, with the right units per rank
     assert '"Specimen total (administrators only): the " + org.calacademy.antweb.util.Html.esc(totalColumn)' in jsp
-    assert '+ " column adds up to " + Formatter.commaFormat(subtaxonTotal) + " specimens. This can be lower than Specimens on "' in jsp
-    assert ('+ locale + "\'s overview page, which also counts specimens not on this list, such as those identified only to"\n'
+    assert '+ " column adds up to " + Formatter.commaFormat(subtaxonTotal) + " specimens. This can be lower than Specimens on the "' in jsp
+    assert ('+ locale + " overview page, which also counts specimens not on this list, such as those identified only to"\n'
             '           + " subfamily or family."') in jsp
     assert '"Genera total (administrators only): the Genera column adds up to "' in jsp
-    assert '+ " genera; it should equal Genera on " + locale + "\'s overview page."' in jsp
+    assert '+ " genera; it should equal Genera on the " + locale + " overview page."' in jsp
     assert '"Species total (administrators only): the Species column adds up to "' in jsp
-    assert '+ " species and subspecies; it should equal Species / subspecies on " + locale + "\'s overview page."' in jsp
+    assert '+ " species and subspecies; it should equal Species / subspecies on the " + locale + " overview page."' in jsp
 
     # 2. the asterisk note
     assert '"Specimen"' in jsp and '"specimen filed under that name"' in jsp
     assert '"genus under the row"' in jsp and '"subfamily under the row"' in jsp and 'nextPluralRank + " name under the row"' in jsp
     assert ('String asterixNote = asterixCounts + " counts marked with an asterisk (*) include every " + asterixUnit\n'
-            '        + ", whatever its taxonomic status (valid species, morphospecies, indetermined, unidentifiable or unrecognized names)"\n'
+            '        + ("specimens".equals(nextPluralRank)\n'
+            '            ? ", whatever its taxonomic status (valid species, morphospecies, indetermined, unidentifiable or unrecognized names)"\n'
+            '            : ", whatever the name\'s status")\n'
             '        + (displayGlobal ? "." : ", in " + locale + ".");') in jsp
 
     # 3. the Images note: one number, no sentence about parentheses
@@ -56,6 +58,7 @@ def main():
     assert "parenthes" not in jsp.lower() and "in brackets" not in jsp
 
     # the old notes are gone; the Port of Entry note stays
+    assert "'s overview page" not in jsp, "write 'the <place> overview page'"
     for old in ("Total of the ", "Numbers marked * count every ", "<BR>* <%= asterixNote %>",
                 "String imagesDefinition = org.calacademy.antweb.ImageCounts.DEFINITION"):
         assert old not in jsp, "old note still there: " + old

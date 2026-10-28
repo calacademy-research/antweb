@@ -41,7 +41,9 @@
         : "subfamilies".equals(nextPluralRank) ? "subfamily under the row"
         : nextPluralRank + " name under the row";   // species: "species name"
     String asterixNote = asterixCounts + " counts marked with an asterisk (*) include every " + asterixUnit
-        + ", whatever its taxonomic status (valid species, morphospecies, indetermined, unidentifiable or unrecognized names)"
+        + ("specimens".equals(nextPluralRank)
+            ? ", whatever its taxonomic status (valid species, morphospecies, indetermined, unidentifiable or unrecognized names)"
+            : ", whatever the name's status")
         + (displayGlobal ? "." : ", in " + locale + ".");
 %>
 
@@ -282,14 +284,14 @@
      String totalColumn = displayGlobal ? (isMuseum ? ((Museum) overview).getCode() : overview.toString()) : "Specimens";
      if (Rank.SUBFAMILY.equals(pageRank)) {
        totalNote = "Genera total (administrators only): the Genera column adds up to " + Formatter.commaFormat(subtaxonTotal)
-           + " genera; it should equal Genera on " + locale + "'s overview page.";
+           + " genera; it should equal Genera on the " + locale + " overview page.";
      } else if (Rank.GENUS.equals(pageRank)) {
        totalNote = "Species total (administrators only): the Species column adds up to " + Formatter.commaFormat(subtaxonTotal)
-           + " species and subspecies; it should equal Species / subspecies on " + locale + "'s overview page.";
+           + " species and subspecies; it should equal Species / subspecies on the " + locale + " overview page.";
      } else {
        totalNote = "Specimen total (administrators only): the " + org.calacademy.antweb.util.Html.esc(totalColumn)
-           + " column adds up to " + Formatter.commaFormat(subtaxonTotal) + " specimens. This can be lower than Specimens on "
-           + locale + "'s overview page, which also counts specimens not on this list, such as those identified only to"
+           + " column adds up to " + Formatter.commaFormat(subtaxonTotal) + " specimens. This can be lower than Specimens on the "
+           + locale + " overview page, which also counts specimens not on this list, such as those identified only to"
            + " subfamily or family.";
      }
    }
