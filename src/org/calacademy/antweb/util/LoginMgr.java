@@ -162,7 +162,10 @@ public class LoginMgr extends Manager {
         return getAccessLogin(request);
     }
     public static Login getAccessLogin(HttpServletRequest request) {
-		HttpSession session = request.getSession();
+		// getSession(false): reading who is logged in never creates a session. After a session is ended below, a later
+		// call on the same page (the header, after part of the page was sent) made a new one and failed with "Cannot
+		// create a session after the response has been committed": the page was cut off (staging e2e 2026-10-27).
+		HttpSession session = request.getSession(false);
 		if (session == null) return null;
         Login login = (Login) session.getAttribute("accessLogin");
         // Sessions ended by a password reset or by an administrator (login.session_version).

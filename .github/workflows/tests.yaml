@@ -57,6 +57,9 @@ jobs:
       - name: Every deploy compiles every Java source (tests/unit/test_build_full_compile.py)
         run: python3 tests/unit/test_build_full_compile.py
 
+      - name: Reading the login never creates a session (tests/unit/test_access_login_no_new_session.py)
+        run: python3 tests/unit/test_access_login_no_new_session.py
+
       - name: Deploys check the pinned server host keys (tests/unit/test_deploy_known_hosts.py)
         run: python3 tests/unit/test_deploy_known_hosts.py
 
