@@ -241,18 +241,22 @@ def test_list_images_column_shows_the_images_in_antweb():
 
 
 def test_list_says_what_the_images_column_counts():
-    """The definition under a place's list: images of the ant, label images counted separately (Brian Fisher
-    2026-10-27); the number is the name's images in AntWeb, the place's specimens come first on its images page
-    (Brian Fisher 2026-10-28)."""
+    """The Images note under a place's list: images of the ant, label images not counted (Brian Fisher 2026-10-27);
+    the number is the name's images in all of AntWeb, the place's come first on its images page (Brian Fisher
+    2026-10-28, list notes)."""
     p = _comoros() or ns.madagascar()
     html = ns.get(p.list_url("species"))
     m = re.search(r'<span id="images-definition"[^>]*>(.*?)</span>', html, re.S)   # the span also has a class
     assert m, f"{p}: no definition of the Images column under the list"
     text = unescape(m.group(1))
-    assert "images of the ant" in text and "label images are counted separately" in text, text
-    assert "The number is the images of the ant of the name in AntWeb, from any specimen." in text, text
-    assert f"the specimens from {p.name} come first" in text, text
-    assert "in brackets" not in text and "first number" not in text, text
+    # Brian Fisher 2026-10-28 (list notes): one number, label images not counted, the place's images first
+    assert text == ("Images: the images of the ant (head, profile, dorsal and other views) of that name in all of AntWeb,"
+                    " from specimens collected anywhere. Specimen label images are not counted. Click the number to see"
+                    f" the images; those from {p.name} come first."), text
+    assert "in brackets" not in text and "first number" not in text and "parenthes" not in text, text
+    notes = re.search(r'<div id="list-notes">(.*?)</div>', html, re.S)
+    assert notes and "<b>Notes on specimen and image counts</b>" in notes.group(1), f"{p}: no list notes heading"
+    assert "counts marked with an asterisk (*) include every" in unescape(notes.group(1)), notes.group(1)
 
 
 # ------------------------------------------------------------------------------------------- 5. imaged castes
