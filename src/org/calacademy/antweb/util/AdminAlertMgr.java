@@ -125,7 +125,7 @@ public final class AdminAlertMgr {
     public static void removeAll(Connection connection) {
         s_log.debug("AdminAlertMgr.removeAll()");
         Statement stmt = null;
-        String dml = "update admin_alerts set acknowledged = 1";
+        String dml = "update admin_alerts set acknowledged = 1, created = created";   // created has ON UPDATE CURRENT_TIMESTAMP: keep the alert's date (2026-10-28)
         try {
           stmt = DBUtil.getStatement(connection, "AdminAlertMgr.removeAll()");  
           stmt.executeUpdate(dml);
@@ -140,7 +140,7 @@ public final class AdminAlertMgr {
 
     public static void remove(int id, Connection connection) {
         Statement stmt = null;
-        String dml = "update admin_alerts set acknowledged = 1 where id = " + id;
+        String dml = "update admin_alerts set acknowledged = 1, created = created where id = " + id;   // keep the alert's date
         try {
           stmt = DBUtil.getStatement(connection, "AdminAlertMgr.remove()");  
           stmt.executeUpdate(dml);

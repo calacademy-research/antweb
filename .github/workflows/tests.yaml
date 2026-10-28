@@ -63,6 +63,9 @@ jobs:
       - name: List notes in plain words (tests/unit/test_list_admin_wording.py)
         run: python3 tests/unit/test_list_admin_wording.py
 
+      - name: Admin Alert page buttons and dates (tests/unit/test_admin_alert_page.py)
+        run: python3 tests/unit/test_admin_alert_page.py
+
       - name: Deploys check the pinned server host keys (tests/unit/test_deploy_known_hosts.py)
         run: python3 tests/unit/test_deploy_known_hosts.py
 

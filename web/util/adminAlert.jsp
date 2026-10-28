@@ -21,7 +21,7 @@
 <h1>Admin Alert Manager</h1>
 
 <div class="mgr_help" style="max-width:60em;margin:6px 0 12px 0">
-Problems AntWeb has recorded for the administrators: a failed AntCat import, no AntCat changes for a week. The header of administrators' pages shows how many are open. The red X
+Problems AntWeb has recorded for the administrators: a failed AntCat import, no AntCat changes for a week. The header of administrators' pages shows how many are open. The "Dealt with" button
 marks one alert as dealt with (it stays in the full list below); nothing else changes. Reload re-reads the
 alerts and reruns the alert checks (the "Checks" lines below).
 </div>
@@ -34,13 +34,13 @@ alerts and reruns the alert checks (the "Checks" lines below).
         for (AdminAlert adminAlert : adminAlerts) {
 
           // Alert text can quote data (an AntCat import message): shown as text.
-          out.println("<br>&nbsp;&nbsp;&nbsp;" + adminAlert.getCreated() + " &nbsp;&nbsp;&nbsp;" + Html.esc(adminAlert.getAlert()) +  " &nbsp;&nbsp;&nbsp;" + Csrf.postButton(request, AntwebProps.getDomainApp() + "/adminAlert.do?action=remove&id=" + adminAlert.getId(), "<img src='" + AntwebProps.getDomainApp() + "/image/redX.png' width='10' alt='remove' />")); 
+          out.println("<br>&nbsp;&nbsp;&nbsp;" + adminAlert.getCreated() + " &nbsp;&nbsp;&nbsp;" + Html.esc(adminAlert.getAlert()) +  " &nbsp;&nbsp;&nbsp;" + Csrf.postButton(request, AntwebProps.getDomainApp() + "/adminAlert.do?action=remove&id=" + adminAlert.getId(), "Dealt with")); 
         }
 %>
         <br><br>
-        To acknowledge an Admin Alert click: <img src='<%= domainApp %>/image/redX.png' width='10' />
- <br>
-        To acknowledge all Admin Alerts click: <%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/adminAlert.do?action=removeAll", "<img src='" + domainApp + "/image/redX.png' width='15' alt='remove all' />", "Acknowledge all admin alerts?") %>
+        <%-- 2026-10-28 (Brian Fisher): the help line showed a red X that was only a picture, next to the real buttons;
+             clicking it did nothing. Each alert now has a "Dealt with" button, and one button marks them all. --%>
+        Mark every alert above as dealt with: <%= Csrf.postButton(request, AntwebProps.getDomainApp() + "/adminAlert.do?action=removeAll", "All dealt with", "Mark every admin alert as dealt with?") %>
 
  <% } else { %>
         <b>No Admin Alerts.</b>
