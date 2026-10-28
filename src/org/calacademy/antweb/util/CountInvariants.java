@@ -65,6 +65,14 @@ public final class CountInvariants {
      */
     public static final String COUNTING_RULES_LOG = "counting rules of 2026-10-28";
 
+    /**
+     * Written to compute.log by nightly set 2 ("Set 2 done", geolocale endemic flags) and set 3 ("Set 3 done", bioregion
+     * endemic flags) since 2026-10-28: the endemic flags and numbers follow the endemic rule of 2026-10-28 (valid names
+     * only, native rows only; docs/numbers.md section 5). The e2e tests read it (numbers_sample.endemic_rule_counted) to
+     * call a stored Endemic number that differs from endemic.do pending until a nightly run has written both lines.
+     */
+    public static final String ENDEMIC_RULE_LOG = "endemic rule of 2026-10-28";
+
     /** Every check id (docs/numbers.md names them in its Test column as inv:<id>; tools/numbers/check_numbers_doc.py). */
     public static final String[] IDS = {"place.totals.subfamily", "place.totals.genus", "place.totals.species", "place.totals.valid",
         "place.totals.specimens", "place.totals.endemic", "place.totals.introduced", "place.pies", "place.images.order", "place.images",

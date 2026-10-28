@@ -63,6 +63,9 @@ jobs:
       - name: List notes in plain words (tests/unit/test_list_admin_wording.py)
         run: python3 tests/unit/test_list_admin_wording.py
 
+      - name: Numbers of the 2026-10-28 rules pending until the nightly run (tests/unit/test_rules_pending.py)
+        run: python3 tests/unit/test_rules_pending.py
+
       - name: Notes under every list, one block in the 2026-10-28 wording (tests/unit/test_list_notes.py)
         run: python3 tests/unit/test_list_notes.py
 

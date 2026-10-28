@@ -22,7 +22,7 @@
   "status": 200,
   "table_rows": 17,
   "taxon_links": 1,
-  "text_length": 8711,
+  "text_length": 9768,
   "title": "Adm1: Antananarivo, Madagascar - Antweb"
  },
  "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&subregion=Eastern Africa&country=Comoros&resultRank=specimen": {
@@ -76,7 +76,7 @@
   "status": 200,
   "table_rows": 17,
   "taxon_links": 1,
-  "text_length": 8902,
+  "text_length": 9914,
   "title": "Browsing Afrotropical Ants - AntWeb"
  },
  "/bioregions.do": {

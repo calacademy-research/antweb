@@ -90,6 +90,7 @@ def test_endemic_and_introduced_numbers_equal_their_lists():
     geolocales also = the API's endemicSpeciesCount, introducedSpeciesCount (the same stored numbers, row 110)."""
     places = _sample_places()
     wrong, checked = [], []
+    stored = {"endemic": [], "introduced": []}   # stored number vs the live list: pending until a nightly run by the new rules
     for p in places:
         got = _place(p)
         if got is None:
@@ -101,7 +102,7 @@ def test_endemic_and_introduced_numbers_equal_their_lists():
                     wrong.append(f"{p}: page {label} {stats[label]}, {label}.do could not be read")
                 continue
             if len(names) != stats[label]:
-                wrong.append(f"{p}: page {label.capitalize()} {stats[label]}, {label}.do lists {len(names)} names")
+                stored[label].append(f"{p}: page {label.capitalize()} {stats[label]}, {label}.do lists {len(names)} names")
             if len(set(names)) != len(names):
                 wrong.append(f"{p}: {label}.do lists a name twice")
         if p.api_row is not None:
@@ -111,7 +112,19 @@ def test_endemic_and_introduced_numbers_equal_their_lists():
         checked.append(repr(p))
     if not checked:
         pytest.skip("no place page with Endemic and Introduced numbers found " + ns.day_note())
+    # The numbers are stored by the nightly run, endemic.do and introduced.do read the flags by today's rules: the
+    # endemic rule of 2026-10-28 (valid names, native rows; sets 2 and 3) and the counting rules of 2026-10-28
+    # (Introduced of subregions and regions). Until a nightly run has written them, a difference is pending.
+    pending = []
+    for label, counted, what in (("endemic", ns.endemic_rule_counted, "endemic rule of 2026-10-28"),
+                                 ("introduced", ns.counting_rules_counted, "counting rules of 2026-10-28")):
+        if stored[label] and counted() is False:
+            pending.append(ns.rules_pending_note(what) + ":\n" + "\n".join(stored[label]))
+        else:
+            wrong += stored[label]
     assert not wrong, f"{len(wrong)} differences in {len(checked)} places {ns.day_note()} ({PENDING}):\n" + "\n".join(wrong)
+    if pending:
+        pytest.skip("\n".join(pending))
 
 
 _INTRODUCED_LIST = {}

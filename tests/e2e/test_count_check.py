@@ -31,6 +31,8 @@ import pytest
 from antweb import BASE_URL, TIMEOUT, classify, get, new_session
 from staging_accounts import GROUP_NAME, IS_STAGING, login, needs
 
+import numbers_sample as ns
+
 # The checks of CountInvariants (docs/numbers.md names them in its Test column).
 INVARIANTS = {"place.totals.subfamily", "place.totals.genus", "place.totals.species", "place.totals.valid",
               "place.totals.specimens", "place.totals.endemic", "place.totals.introduced", "place.pies",
@@ -443,7 +445,7 @@ def test_group_pages_equal_the_stored_upload_numbers():
     # the staging test group uploads during the suite (test_specimen_upload_roundtrip.py): its numbers can change
     # between the check and this page
     others = _groups_rows(html, skip_name=GROUP_NAME)
-    wrong = []
+    wrong, pending = [], []
     for gid, values in others.items():
         if gid in groups and values != groups[gid]:
             wrong.append(f"groups.do group {gid}: page {values}, stored {groups[gid]}")
@@ -462,7 +464,10 @@ def test_group_pages_equal_the_stored_upload_numbers():
             if totals[i] is None:
                 continue   # "-": no nightly run has counted the Totals row yet
             if distinct and totals[i] != distinct[j]:
-                wrong.append(f"groups.do Totals {name} {totals[i]}, recount over all groups together {distinct[j]} (Q8)")
+                line = f"groups.do Totals {name} {totals[i]}, recount over all groups together {distinct[j]} (Q8)"
+                # Species follows the counting rules of 2026-10-28 (valid names and morphospecies); the stored Totals
+                # row is pending until a nightly run has recounted it by them (inv:admin.groups says the same)
+                (pending if name == "Species" and ns.counting_rules_counted() is False else wrong).append(line)
             # distinct over all groups: at least the largest row, at most the sum of the rows
             col = [v[i] or 0 for v in rows.values()]
             if not (max(col) <= totals[i] <= sum(col)):
@@ -479,6 +484,8 @@ def test_group_pages_equal_the_stored_upload_numbers():
         if label in shown and shown[label] != rows[gid][i]:
             wrong.append(f"group.do?id={gid} {label} {shown[label]}, groups.do {rows[gid][i]}")
     assert not wrong, "upload group numbers:\n" + "\n".join(wrong[:60])
+    if pending:
+        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28") + ": " + "; ".join(pending))
 
 
 @pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")

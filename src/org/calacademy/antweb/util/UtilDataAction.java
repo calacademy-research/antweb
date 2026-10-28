@@ -478,6 +478,8 @@ public class UtilDataAction extends AntwebAction {
                 // rule of the lists (species and subspecies of a counted status), after resetting the row. It stays
                 // available as an admin job (utilData.do?action=geolocaleTaxonFix), now by the same rule.
                 //GeolocaleMgr.populate(connection, true, false); // Unnecessary. We reload all in set5.
+                // The e2e tests read this line: tonight's geolocale endemic flags follow the endemic rule of 2026-10-28.
+                LogMgr.appendLog("compute.log", "  Set 2 done (" + CountInvariants.ENDEMIC_RULE_LOG + ")", true);
             }
 
             // dev: 7.05 mins. Prod: 14.52 mins. Dev2: 12.85
@@ -494,6 +496,8 @@ public class UtilDataAction extends AntwebAction {
                 // Upload groups: today's numbers of each group's specimens (Brian Fisher, 2026-10-22, Q13).
                 message += " " + new GroupCountDb(connection).recountAll();
                 message += " " + doAction("crawlForType", form, accessLogin, accessGroup, connection, request, mapping);
+                // The e2e tests read this line: tonight's bioregion endemic flags follow the endemic rule of 2026-10-28.
+                LogMgr.appendLog("compute.log", "  Set 3 done (" + CountInvariants.ENDEMIC_RULE_LOG + ")", true);
             }
 
             // dev: 6.58 mins. Prod: 15.17 mins. Dev2: 12.97

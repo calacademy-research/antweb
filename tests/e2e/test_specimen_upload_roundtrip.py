@@ -243,12 +243,14 @@ def test_specimen_upload_round_trip(uploader, names):
         exists, _page = specimen_page(s, code(n))
         assert exists, f"{code(n)} was not loaded"
     # One form for identified only to genus (2026-10-28): species "Indet." is filed under the blank-species name.
+    # The name it is filed under: the specimen page's hidden "taxonName:" line (specimen-body.jsp; a curator's page
+    # links the name by its parts, not by taxonName, so the first run of this check found no link: [[], []]).
     indet_names = []
     for n in (8, 10):
         _exists, page = specimen_page(s, code(n))
-        found = {unquote_plus(v) for v in re.findall(r"description\.do\?taxonName=([^\"'&<>]+)", page)}
-        indet_names.append(sorted(v for v in found if "indet" in v.lower()))
-    assert indet_names[0] and all(v.endswith(" (indet)") for v in indet_names[0]), indet_names
+        m = re.search(r"<!--\s*taxonName: ([^\n]*?)\s*\n", page)
+        indet_names.append(unescape(m.group(1)).strip() if m else None)
+    assert indet_names[0] and indet_names[0].endswith(" (indet)"), indet_names
     assert indet_names[0] == indet_names[1], indet_names
     exists, _page = specimen_page(s, code(4))
     assert not exists, "the refused line zztest0004! was loaded"

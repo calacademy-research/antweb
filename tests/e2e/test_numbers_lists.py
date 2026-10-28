@@ -68,7 +68,7 @@ def test_list_headers_equal_place_numbers_of_every_kind():
     """Row 38: for the day's place of every kind, the list header with every counted status = Subfamilies, Genera,
     Species of the place page; with valid extant = Valid species (0 when the page shows no Valid row); every header
     = the rows its page lists."""
-    wrong, checked, slow = [], [], []
+    wrong, stored, checked, slow = [], [], [], []
     for p in places():
         stats = stats_of(p)
         if "species" not in stats:
@@ -93,14 +93,21 @@ def test_list_headers_equal_place_numbers_of_every_kind():
                 # list (every status, other families too) at least that many.
                 complete, _ = ns.header(ns.fetch(p.list_url(rank, "complete")) or "")
                 if n > expected or (complete is not None and complete < expected):
-                    wrong.append(f"{p} rank={rank}: place page {stat} {expected}, list header {n} (counted statuses),"
+                    stored.append(f"{p} rank={rank}: place page {stat} {expected}, list header {n} (counted statuses),"
                                  f" {complete} (complete); expected {n} <= {expected} <= {complete}")
             elif n != expected:
-                wrong.append(f"{p} rank={rank} {status}: header {n}, place page {stat} {expected}")
+                stored.append(f"{p} rank={rank} {status}: header {n}, place page {stat} {expected}")
         checked.append(repr(p))
     if not checked:
         pytest.skip("no place page with data-stat numbers " + ns.day_note())
+    # the place page's numbers are stored by the nightly run, the list header is counted live: until a nightly run has
+    # counted by the counting rules of 2026-10-28 they differ (pending); the header against its own rows stays strict
+    pending_rules = stored and ns.counting_rules_counted() is False
+    if not pending_rules:
+        wrong += stored
     assert not wrong, (f"{len(checked)} places {ns.day_note()} ({PENDING}); not read: {slow}:\n" + "\n".join(wrong))
+    if pending_rules:
+        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28") + ":\n" + "\n".join(stored))
 
 
 def _unimaged_from_api(p):
@@ -228,7 +235,7 @@ def test_browse_headers_equal_the_list_rows():
     list: browse.do of the genus says "N Species" = the row's "N Species" and lists N rows; the day's subfamily row:
     browse.do says "N Genera" = the row's "N Genera" and lists N rows; on both, the hidden totals say the same N and
     M, and M imaged <= N."""
-    wrong, checked, known = [], [], []
+    wrong, stored, checked, known = [], [], [], []
     for p in places():
         for rank in ("genus", "subfamily"):
             got = _pick_row(p, rank, "browse" + rank)
@@ -246,11 +253,18 @@ def test_browse_headers_equal_the_list_rows():
                 # B77 (found 2026-10-27, also on production): a bioregion's subfamily browse page counts and lists
                 # every genus row of the bioregion (Palearctic Ponerinae: 18, including "ponerine"), the list row
                 # only the counted statuses (16). Known until fixed; any other kind of place or rank still fails.
-                (known if p.kind == "bioregion" and rank == "subfamily" else wrong).append(line)
+                # The list row is stored by the nightly run, the browse header counted live (counting rules of
+                # 2026-10-28: pending until a nightly run has counted by them).
+                (known if p.kind == "bioregion" and rank == "subfamily" else stored).append(line)
             checked.append(where)
     if not checked:
         pytest.skip("no list row with a browse link found " + ns.day_note())
+    pending_rules = stored and ns.counting_rules_counted() is False
+    if not pending_rules:
+        wrong += stored
     assert not wrong, f"{len(checked)} browse pages {ns.day_note()} ({PENDING}):\n" + "\n".join(wrong)
+    if pending_rules:
+        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28") + ":\n" + "\n".join(stored + known))
     if known:
         pytest.xfail("B77: bioregion subfamily browse header counts genus rows the list row leaves out: " + "; ".join(known))
 

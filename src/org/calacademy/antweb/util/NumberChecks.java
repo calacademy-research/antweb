@@ -599,8 +599,12 @@ public final class NumberChecks {
                             + " (groups.do, group.do) = a recount of the group's specimens", v[i], recount[i], "=", Q8_PENDING);
                         continue;
                     }
+                    // 2026-10-28 (counting rules, docs/numbers.md section 5): Species counts valid names and morphospecies
+                    // only, as every Species. GroupCountDb follows PlaceTotals.rankCondition, so the recount uses the new
+                    // rule at once; the stored numbers are pending until a nightly run has recounted them by it.
+                    String pi = p == null && i == 7 && v[i] != recount[i] && !inv.result.rulesCounted ? CountInvariants.SPECIES_RULE_PENDING : p;
                     inv.compare(c, "group", g, (counted ? "today's " : "last upload (" + row[1] + ") ") + what[i]
-                        + " (groups.do, group.do) = a recount of the group's specimens", v[i], recount[i], "=", p);
+                        + " (groups.do, group.do) = a recount of the group's specimens", v[i], recount[i], "=", pi);
                 }
                 long shownUploads = uploads.containsKey(g) ? uploads.get(g)[0] : 0;
                 exp.put(g, new long[] {shownUploads, v[0], v[3], v[4], v[1], v[2], v[5], v[6], v[7]});
@@ -651,7 +655,9 @@ public final class NumberChecks {
         }
         String[] what = {"Specimens", "Collections", "Localities", "Ungeoreferenced", "Flagged", "Subfamilies", "Genera", "Species"};
         for (int i = 0; i < 8; i++) {
-            inv.compare(c, "group", "all", "Totals " + what[i] + " (groups.do; all groups' specimens together, Q8) = a recount", stored[i], recount[i], "=", p);
+            // Species: the counting rules of 2026-10-28, pending until a nightly run has recounted by them (see adminGroups)
+            String pi = p == null && i == 7 && stored[i] != recount[i] && !inv.result.rulesCounted ? CountInvariants.SPECIES_RULE_PENDING : p;
+            inv.compare(c, "group", "all", "Totals " + what[i] + " (groups.do; all groups' specimens together, Q8) = a recount", stored[i], recount[i], "=", pi);
         }
     }
 

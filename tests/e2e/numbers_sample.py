@@ -273,7 +273,67 @@ def numbered_names(html):
             for t in re.findall(r"<br>\d+\. <a href='[^']*/description\.do\?taxonName=([^']+)'", html)]
 
 
-_ALLANTWEB_COUNTED = {}
+_COMPUTE_LOG = {}
+
+
+def compute_log():
+    """The last 20000 lines of the server's compute.log (logMgr.do, admin test login; every nightly run writes its lines
+    again, and one night is far fewer lines), or None when it can't be read (production: no admin test login; or no
+    "Begin run" in it). Read once per run."""
+    if "v" not in _COMPUTE_LOG:
+        value = None
+        try:
+            from staging_accounts import IS_STAGING, login
+            if IS_STAGING:
+                s, _token, _id = login("admin")
+                r = s.get(f"{BASE_URL}/logMgr.do?action=get&fileName=compute&ext=log&lines=20000", timeout=120)
+                if r.status_code == 200 and "Begin run" in r.text:
+                    value = r.text
+        except Exception:  # noqa: BLE001
+            value = None
+        _COMPUTE_LOG["v"] = value
+    return _COMPUTE_LOG["v"]
+
+
+def compute_log_has(*parts):
+    """True when one line of compute.log contains every part; False when the log is readable and no line does; None
+    when the log can't be read (then a test compares strictly, as on production)."""
+    text = compute_log()
+    if text is None:
+        return None
+    return any(all(p in line for p in parts) for line in text.splitlines())
+
+
+# The lines the Java nightly writes (CountInvariants.RULES_LOG, COUNTING_RULES_LOG on the "Set 4 done" line;
+# CountInvariants.ENDEMIC_RULE_LOG on "Set 2 done" and "Set 3 done"). Keep in step with the Java constants.
+RULES_LOG = "numbers counted by the rules of 2026-10-21"
+COUNTING_RULES_LOG = "counting rules of 2026-10-28"
+ENDEMIC_RULE_LOG = "endemic rule of 2026-10-28"
+
+
+def counting_rules_counted():
+    """True when a nightly run has counted the place numbers by the counting rules of 2026-10-28 (docs/numbers.md
+    section 5; the same test as CountInvariants.rulesCounted), False when compute.log is readable and has no such line
+    (stored numbers differ from the live lists until then: pending), None when unreadable."""
+    return compute_log_has("Set 4 done", RULES_LOG, COUNTING_RULES_LOG)
+
+
+def endemic_rule_counted():
+    """True when a nightly run has set the endemic flags of geolocales (set 2) and bioregions (set 3) by the endemic
+    rule of 2026-10-28 (valid names, native rows); False when compute.log is readable and lacks either line; None when
+    unreadable."""
+    a = compute_log_has("Set 2 done", ENDEMIC_RULE_LOG)
+    b = compute_log_has("Set 3 done", ENDEMIC_RULE_LOG)
+    if a is None or b is None:
+        return None
+    return a and b
+
+
+def rules_pending_note(what):
+    """The skip message of a test whose stored numbers differ only because no nightly run has counted them by a new
+    rule yet (counting_rules_counted() or endemic_rule_counted() is False)."""
+    return (f"pending: no nightly run has counted these numbers by the {what} yet (compute.log); they compare strictly"
+            f" after the next nightly run")
 
 
 def allantweb_images_counted():
@@ -281,17 +341,5 @@ def allantweb_images_counted():
     list Images counted", 2026-10-27); False when the log is readable and has no such line (every list's Images cell
     then shows the place's own number until that night: pending); None when the log can't be read (production, no
     admin test login). Cached for the run."""
-    if "v" not in _ALLANTWEB_COUNTED:
-        value = None
-        try:
-            from staging_accounts import IS_STAGING, login
-            if IS_STAGING:
-                s, _token, _id = login("admin")
-                r = s.get(f"{BASE_URL}/logMgr.do?action=get&fileName=compute&ext=log&lines=5000", timeout=120)
-                if r.status_code == 200 and "Begin run" in r.text:
-                    value = "AntWeb-wide list Images counted" in r.text
-        except Exception:  # noqa: BLE001
-            value = None
-        _ALLANTWEB_COUNTED["v"] = value
-    return _ALLANTWEB_COUNTED["v"]
+    return compute_log_has("AntWeb-wide list Images counted")
 
