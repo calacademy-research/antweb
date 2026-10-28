@@ -81,7 +81,7 @@ def test_list_images_column_shows_the_antweb_number_only():
     assert "protected void readGlobalImageCount(ResultSet rset) {" in ts and "catch (SQLException | RuntimeException e)" in ts
     # set 4 counts the allantwebants rows (they were set to 0 with the project rows and never counted again)
     crawl = read("src/org/calacademy/antweb/home/ProjTaxonCountDb.java")
-    assert "imageCrawlProjects(ProjectMgr.getLiveProjects(), ProjectMgr.getProject(Project.ALLANTWEBANTS))" in crawl
+    assert "imageCrawlProjects(ProjectMgr.getLiveProjects(), allAntweb)" in crawl
     assert "ALLANTWEB_IMAGES_LOG" in crawl
     for f in ("geolocale/OverviewTaxon.java", "geolocale/GeolocaleTaxon.java", "geolocale/BioregionTaxon.java",
               "ProjTaxon.java"):
