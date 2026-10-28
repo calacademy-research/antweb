@@ -714,7 +714,7 @@ lists them). Curators decided, code by code, to delete them (a duplicate) or to 
 specimen. The tool `tools/data/orphan_photos.py` (read its header) carries out a decisions file: for the CAS list of
 2026-10 that is `tools/data/orphan_photos_cas_2026-10.tsv` (17 codes to delete, 11 to move; the other 25 codes of
 the list stay as they are). The other groups' lists get their own decisions file and the same commands:
-EcoFoG's is `tools/data/orphan_photos_ecofog_2026-10.tsv` (Jerome Orivel's answers of 2026-10-28: 147 duplicates
+casent0005505 (refused on production 2026-10-28: Michele had uploaded mcz1603635w with the same photos at full size) is in `tools/data/orphan_photos_cas_2026-10b.tsv` as a `merge`, run with `--tag c`. EcoFoG's is `tools/data/orphan_photos_ecofog_2026-10.tsv` (Jerome Orivel's answers of 2026-10-28: 147 duplicates
 to delete, 25 of them uploaded under the CAS account in 2018-10, so group 1 for those; preview expects
 `Accepted: 148 codes to delete` (147 plus the merge's profile) and `1 to move`). Jerome uploads the records of 26 more codes himself; their photos then show and
 need nothing. ecofog-hc-0002 (same specimen as ecofog-hc-0002-01, the same photos) is a `merge`: the target has a
