@@ -337,6 +337,7 @@ def main():
     test_period_target_warns()
     test_ecofog_decisions_file()
     test_merge()
+    test_cas_second_file()
 
 
 def test_period_target_warns():
@@ -405,6 +406,22 @@ def test_merge():
         refused = op.plan(d, [r for r in rows], specimens, {code: mine, tgt: clash})
         assert refused[0]["status"] == "refused", refused
     print("Merge: shots the target has are deleted, the others moved; target untouched; restore puts all back.")
+
+
+def test_cas_second_file():
+    """casent0005505 (2026-10-28): production refused the move, because Michele had uploaded mcz1603635w with its
+    photos meanwhile, the same photos at full size. A second CAS file merges it: every old shot is deleted."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools", "data",
+                        "orphan_photos_cas_2026-10b.tsv")
+    d = op.read_decisions(path)
+    assert [(x["code"], x["action"], x["target"], x["group"]) for x in d] == [("casent0005505", "merge", "mcz1603635w", "1")]
+    rows = [dict(id=3843 + k, code="casent0005505", shot=s, number=1, groups=["1"], likes=0, uploaded=0)
+            for k, s in enumerate("dhlp")]
+    rows += [dict(id=900 + k, code="mcz1603635w", shot=s, number=1, groups=["1"], likes=0, uploaded=0)
+             for k, s in enumerate("dhlp")]
+    plans = op.plan(d, rows, {"mcz1603635w": ("mcz1603635w", "1", 4)}, {"casent0005505": {}, "mcz1603635w": {}})
+    assert [(p["action"], p["status"], len(p["rows"])) for p in plans] == [("delete", "ok", 4)], plans
+    print("CAS second file: casent0005505 merges into mcz1603635w; its 4 old shots are deleted, nothing moves.")
 
 
 if __name__ == "__main__":
