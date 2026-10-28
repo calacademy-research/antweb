@@ -51,6 +51,9 @@ jobs:
         # 2026-10-24: an apostrophe in a comment ended a quoted sh -c script early; the step failed only on GitHub.
         run: python3 tests/unit/test_workflow_shell.py
 
+      - name: Each Java test step expects the number of tests its class has (tests/unit/test_ci_test_counts.py)
+        run: python3 tests/unit/test_ci_test_counts.py
+
       - name: Deploys check the pinned server host keys (tests/unit/test_deploy_known_hosts.py)
         run: python3 tests/unit/test_deploy_known_hosts.py
 
@@ -598,7 +601,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadReportCountsTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             grep -v "LogMgr" /tmp/out.txt | tail -3
-            grep -q "^OK (4 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+            grep -q "^OK (6 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Staging test accounts tool (tests/unit/test_staging_accounts.py)
