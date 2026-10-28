@@ -35,6 +35,13 @@
    built before it is written (an error leaves it empty instead of cutting the page off) and TaxonMgr publishes its
    name list and taxon map only once they are filled (a reload runs after every specimen upload).
 
+13. (2026-10-28, places and search audits) A failure while a museum's list or its specimens' museum code is rebuilt
+   is thrown (the data job is rolled back) and the museum's inserts bind their values; the unused ProjectDb.updateProjects
+   is gone and ProjectDb.update reports a failure; the nightly endemism step skips a place missing from GeolocaleMgr;
+   the place navigation names are escaped; the advanced search closes its statements, holds one connection, counts
+   truncation before the Images only and Types only filters, limits the full searches of visitors not logged in, adds
+   microhabitat once, sorts by caste with each item's own subcaste and gives a message instead of a blank page.
+   Unit test: test/.../audit/PlacesSearchFixesTest.java.
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
 import os
@@ -306,6 +313,57 @@ def test_no_lost_ifs_and_whole_home_page(sources):
     print("No if loses its statement to a comment; the home page slideshow and TaxonMgr's reload are whole.")
 
 
+def test_places_and_search_fixes_20261028(sources):
+    def body(path, start, end="\n    }\n"):
+        src = sources[path].replace("\r\n", "\n")
+        b = src[src.index(start):]
+        return b[:b.index(end) + len(end)]
+    museum = "src/org/calacademy/antweb/home/MuseumDb.java"
+    for start in ("private void populateSpecies(String museumCode)", "private void populateSpecimenMuseum(String museumCode)"):
+        b = body(museum, start)
+        assert "throws SQLException" in b.splitlines()[0] and re.search(r"catch \(SQLException e\) \{[^}]*throw e;", b), \
+            start + " swallows a failure again"
+    for start in ("private void insertSpecies(", "private boolean insertTaxon("):
+        b = body(museum, start)
+        assert "prepareStatement" in b and "+ taxonName +" not in b, start + " builds its SQL from the name again"
+    project = sources["src/org/calacademy/antweb/home/ProjectDb.java"]
+    assert "updateProjects(" not in project, "ProjectDb.updateProjects is back (unused, built SQL from names)"
+    b = body("src/org/calacademy/antweb/home/ProjectDb.java", "public void update(Project project)")
+    assert "throws SQLException" in b.splitlines()[0] and "throw e;" in b and "createStatement()" not in b
+    geo = sources["src/org/calacademy/antweb/home/GeolocaleDb.java"]
+    for name in ("calcHigherEndemismAdm1", "calcHigherEndemismCountry", "calcHigherEndemismSubregion"):
+        b = body("src/org/calacademy/antweb/home/GeolocaleDb.java", "private int " + name + "()")
+        assert "continue;" in b and "(Subregion) GeolocaleMgr" not in b and "(Region) GeolocaleMgr" not in b, name
+    assert "g.parent = '\" + parent" not in geo
+    for nav in ("regionNav", "subregionNav", "countryNav", "adm1Nav"):
+        with open(os.path.join(ROOT, "web/common", nav + ".jsp"), encoding="utf-8") as f:
+            jsp = f.read()
+        assert not re.search(r"\.getName\(\) \+ \"</a>", jsp), nav + ".jsp prints a place name unescaped"
+    adv = body("src/org/calacademy/antweb/search/AdvancedSearch.java", "protected ArrayList<ResultItem> createInitialResults()")
+    assert "try (Statement stmt = connection.createStatement())" in adv
+    where = sources["src/org/calacademy/antweb/search/AdvancedSearch.java"]
+    assert where.count('getSearchString("sp.microhabitat"') == 1, "microhabitat is added twice"
+    assert "elevationValue(elevation)" in where
+    recent = sources["src/org/calacademy/antweb/search/RecentImageSearch.java"]
+    assert recent.count("executeQuery(theQuery)") == 1, "the recent image search runs its query twice"
+    search = sources["src/org/calacademy/antweb/search/SearchAction.java"].replace("\r\n", "\n")
+    ex = search[search.index("public ActionForward execute("):search.index("private void searchLog(")]
+    assert re.search(r"Check\.busy\(connection, request, mapping\);[^\n]*\n(\s*//[^\n]*\n)*\s*DBUtil\.close\(connection", ex), \
+        "SearchAction keeps the busy-check connection during the search"
+    assert "return null;" not in ex, "SearchAction.execute gives a blank page on an error"
+    assert "queryRowCount >= SearchAction.getSpecimenSearchLimit()" in search and "resultSetSize >= SearchAction.getSpecimenSearchLimit()" not in search
+    assert "s_fullSearchLimiter.tryAcquire()" in search and "s_fullSearchLimiter.release()" in search
+    caste = sources["src/org/calacademy/antweb/search/AdvancedSearchResults.java"]
+    assert "resultItemO2.getCaste() + resultItemO2.getSubcaste()" in caste
+    for path in ("src/org/calacademy/antweb/search/CompareResultsAction.java", "src/org/calacademy/antweb/search/FieldGuideResultsAction.java"):
+        assert "thisItem.getSpecies().equals(" not in sources[path], path
+    prep = sources["src/org/calacademy/antweb/search/PrepareMapResultsAction.java"]
+    assert re.search(r"\n\s*if \(results == null\) \{", prep), "PrepareMapResultsAction has no check for missing results"
+    group = sources["src/org/calacademy/antweb/search/GenericSearchResults.java"]
+    assert "GroupMgr.getGroup(thisItem.getGroupName()).getId()" not in group
+    print("Museum lists, project updates, endemism, place navigation and the advanced search fixes of 2026-10-28 hold.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -323,6 +381,7 @@ def main():
     test_copyright_rows_and_compare_by_species(sources)
     test_post_means_post(sources)
     test_no_lost_ifs_and_whole_home_page(sources)
+    test_places_and_search_fixes_20261028(sources)
 
 
 if __name__ == "__main__":

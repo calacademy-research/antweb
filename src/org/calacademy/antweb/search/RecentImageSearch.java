@@ -76,11 +76,8 @@ public class RecentImageSearch extends GenericSearch implements Serializable {
         Statement stmt = null;
         ResultSet rset = null;
         try {
-            stmt = connection.createStatement();
-            rset = stmt.executeQuery(theQuery);
-
             A.log("createInitialResults() query:" + theQuery);
-            stmt = connection.createStatement();
+            stmt = connection.createStatement();  // once (2026-10-28: it ran twice and the first was never closed)
             rset = stmt.executeQuery(theQuery);
             
             //return getListFromRset(rset,null, Integer.parseInt(numToShow));

@@ -79,6 +79,9 @@ public final class MapResultsAction extends ResultsAction {
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
             AntwebUtil.logStackTrace(e);
+            // a message (2026-10-28): the page went on with no map and failed
+            request.setAttribute("message", "The map could not be made. Please try again.");
+            return mapping.findForward("message");
         } finally {
 			DBUtil.close(connection, this, dbMethodName);
 		}  

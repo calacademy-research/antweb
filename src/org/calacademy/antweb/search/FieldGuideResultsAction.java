@@ -212,8 +212,8 @@ public final class FieldGuideResultsAction extends ResultsAction {
             thisChosen = Integer.parseInt(chosenListNext);
             thisItem = theTaxa.get(thisChosen);
             for (ResultItem resultItem : searchResults) {
-                if (thisItem.getSpecies().equals(resultItem.getSpecies())
-                  && thisItem.getGenus().equals(resultItem.getGenus())
+                if (java.util.Objects.equals(thisItem.getSpecies(), resultItem.getSpecies())   // null-safe (2026-10-28)
+                  && java.util.Objects.equals(thisItem.getGenus(), resultItem.getGenus())
                    ) {
                    //s_log.info("getSpecimensForTaxaFromResults() added - thisItem.species:" + resultItem.getCode());
                     theSpecimens.add(resultItem);

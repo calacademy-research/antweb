@@ -143,7 +143,8 @@ public class GenericSearchResults implements Serializable {
           //A.log("GenericSearchResults.getResultsAsTaxon() date:" + thisItem.getDateCollectedStart() + " dummy:" + dummySpecimen.getDateCollectedStart());        
   
   
-          dummySpecimen.setGroupId(GroupMgr.getGroup(thisItem.getGroupName()).getId());
+          Group group = GroupMgr.getGroup(thisItem.getGroupName());  // none: id 0 (2026-10-28, was a NullPointerException)
+          dummySpecimen.setGroupId(group == null ? 0 : group.getId());
 
           //A.log("getResultsAsTaxon() child code:" + dummySpecimen.getCode() + " resultItem:" + thisItem.toDebugString());          
           
