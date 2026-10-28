@@ -21,7 +21,14 @@ def main():
     body = re.sub(r"//[^\n]*", "", m.group(1))
     assert "request.getSession(false)" in body, "getAccessLogin must read the session with getSession(false)"
     assert "request.getSession()" not in body, "getAccessLogin must not create a session"
-    print("getAccessLogin never creates a session.")
+    assert "request.getSession(true)" in body.split("invalidate()", 1)[-1], \
+        "after ending a stale session getAccessLogin starts the replacement at once"
+    with open(os.path.join(os.path.dirname(SRC), "RememberMeFilter.java"), encoding="utf-8") as f:
+        flt = f.read()
+    assert flt.find("LoginMgr.getAccessLogin(request)") != -1 and flt.find("LoginMgr.getAccessLogin(request)") < flt.find("chain.doFilter"), \
+        "RememberMeFilter (the home page and .jsp pages) checks the login before the page starts"
+    print("getAccessLogin never creates a session on a plain read, replaces an ended one at once; the home page checks"
+          " it before the page starts.")
 
 
 if __name__ == "__main__":

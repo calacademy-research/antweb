@@ -38,6 +38,14 @@ public class RememberMeFilter implements Filter {
                 // Never let "keep me logged in" break a page.
                 s_log.warn("doFilter() e:" + e);
             }
+            try {
+                // End a stale login session (and start its replacement) before any of the page is sent, as
+                // SessionRequestFilter does for .do pages; otherwise the header's check did it after the home page had
+                // started and the next JSP could not get a session (page cut off, staging e2e 2026-10-27).
+                LoginMgr.getAccessLogin(request);
+            } catch (RuntimeException e) {
+                s_log.warn("doFilter() getAccessLogin e:" + e);
+            }
         }
         chain.doFilter(req, res);
     }

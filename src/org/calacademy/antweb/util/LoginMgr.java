@@ -176,6 +176,15 @@ public class LoginMgr extends Manager {
             } catch (IllegalStateException e) {
                 // already invalidated
             }
+            // Start the new (logged-out) session now, usually before any of the page is sent: every JSP of the page
+            // (session="true", the default) asks for a session when it starts, and one asked for after the response
+            // was committed fails ("Cannot create a session after the response has been committed"), cutting the
+            // page off (staging e2e 2026-10-27, the home page in the header).
+            try {
+                request.getSession(true);
+            } catch (IllegalStateException e) {
+                s_log.info("getAccessLogin() no new session: " + e.getMessage());
+            }
             return null;
         }
         return login;
