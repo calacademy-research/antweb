@@ -244,10 +244,10 @@
 <tr class="ps_head"><th colspan="3">Taxonomic diversity</th></tr>
 <tr data-stat="subfamilies" data-n="<%= overview.getSubfamilyCount() %>"><td class="ps_name">Subfamilies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getSubfamilyCount()) %></td><td class="ps_def">Subfamilies recorded on <%= listName %>.</td></tr>
 <tr data-stat="genera" data-n="<%= overview.getGenusCount() %>"><td class="ps_name">Genera</td><td class="ps_num"><%= Formatter.commaFormat(overview.getGenusCount()) %></td><td class="ps_def">Genera recorded on <%= listName %>.</td></tr>
-<tr data-stat="species" data-n="<%= overview.getSpeciesCount() %>"><td class="ps_name">Species / subspecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">All species and subspecies recorded on <%= listName %>, from any source, including valid names, morphospecies, and indetermined species. Names not identified to genus are not counted as species; their specimens are counted under Specimens.</td></tr>
 <% if (overview.getValidSpeciesCount() > 0) { %>
 <tr data-stat="valid" data-n="<%= overview.getValidSpeciesCount() %>"><td class="ps_name">Valid species / subspecies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getValidSpeciesCount()) %></td><td class="ps_def">Currently valid, formally named, living (non-fossil) species and subspecies recorded on <%= listName %>. Excludes morphospecies and unidentified taxa.</td></tr>
 <% } %>
+<tr data-stat="species" data-n="<%= overview.getSpeciesCount() %>"><td class="ps_name">Species / subspecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">All species and subspecies recorded on <%= listName %>, from any source, including valid names, morphospecies, and indetermined species. Names not identified to genus are not counted as species; their specimens are counted under Specimens.</td></tr>
 <% if (showEndemism) { %>
 <tr class="ps_head"><th colspan="3">Endemism and introduced species</th></tr>
 <tr data-stat="endemic" data-n="<%= overview.getEndemicSpeciesCount() %>"><td class="ps_name">Endemic</td><td class="ps_num"><%= endemicCell %></td><td class="ps_def"><%= endemicDef %></td></tr>

@@ -29,8 +29,8 @@ SECTIONS = ["Taxonomic diversity", "Endemism and introduced species", "Specimen 
 DEFINITIONS = [
     ("subfamilies", "Subfamilies recorded on this country's AntWeb list"),
     ("genera", "Genera recorded on this country's AntWeb list"),
-    ("species", "All species and subspecies recorded on this country's AntWeb list, from any source"),
     ("valid", "Currently valid, formally named, living (non-fossil) species and subspecies"),
+    ("species", "All species and subspecies recorded on this country's AntWeb list, from any source"),
     ("endemic", "Named species and subspecies recorded for this country and no other country in AntWeb"),
     ("introduced", "Species introduced by humans that are not native to this country's bioregion"),
     ("specimens", "Ant specimens collected in this country and identified to a species, morphospecies, or unidentified taxon"),
@@ -58,6 +58,13 @@ def test_sections_in_order(page):
     _html, block, _rows = page
     heads = [_text(h) for h in re.findall(r"<th[^>]*>(.*?)</th>", block, re.S)]
     assert heads == SECTIONS, f"section headings {heads}"
+
+
+def test_diversity_rows_in_order(page):
+    """Brian 2026-10-27: the Taxonomic diversity rows grow downward: subfamilies, genera, valid species, all species."""
+    _html, block, _rows = page
+    order = [m for m in re.findall(r'<tr data-stat="([a-z-]+)"', block) if m in ("subfamilies", "genera", "valid", "species")]
+    assert order == ["subfamilies", "genera", "valid", "species"], f"Taxonomic diversity row order {order}"
 
 
 def test_each_statistic_has_its_definition(page):
