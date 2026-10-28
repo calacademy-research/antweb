@@ -471,7 +471,7 @@ public class UploadAction extends AntwebAction {
 		}
 
 		SpecimenUploadJob work = new SpecimenUploadJob(action, saved, originalName, curator, accessLogin, request.getSession(),
-				getDataSource(request, "longConPool"), request.getHeader("User-Agent"), theForm.getEncoding());
+				getDataSource(request, "longConPool"), request.getHeader("User-Agent"), "UTF-8");   // UTF-8 only (2026-10-28): an encoding sent with the form is ignored
 		BackgroundJobs.Submitted submitted = BackgroundJobs.get().submit(job, work);
 		if (submitted.job == null) {
 			deleteSaved(saved);

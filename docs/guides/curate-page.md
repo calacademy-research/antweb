@@ -55,12 +55,14 @@ These tools never change anything on AntWeb.
 
 This is how you send your specimen data to AntWeb.
 
-1. Put your specimen file (the tab-delimited AntWeb specimen file) in a ZIP file. Only ZIP files are accepted.
+1. Put your specimen file (the tab-delimited AntWeb specimen file) in a ZIP file. Only ZIP files are accepted. Files must be UTF-8 (Excel: Save As, CSV UTF-8). A file that is not is refused before anything changes, and the message names the first line that is not UTF-8.
 2. Click **Choose File** next to **ZIP file**, pick the ZIP, then click **Upload**.
 3. Wait while the file is sent. A large file can take several minutes; the next page shows the progress of your upload (later also under **Upload status**), and you get an email when the upload is finished.
 4. Open the upload report and check it.
 
 Your upload replaces your group's specimen records on AntWeb. Names are matched to the current valid names in AntCat. Counts on country, region and museum pages are brought up to date in the nightly run (from 5 AM Pacific), so new specimens can take until the next morning to show in those counts.
+
+A line with a genus but no species is uploaded as "<Genus> (indet)", and a line with only a subfamily as "(<Subfamily>) (indet)"; the report lists them under "Identified only to genus: filed as indet" and "Identified only to subfamily: filed as (Subfamily) indet". When AntCat's current valid name for a name you sent is not in AntWeb yet, the specimen keeps the name you sent and the report lists it under "Current valid name in AntCat not yet in AntWeb: kept under the uploaded name".
 
 The optional column **previousDeterminations** lets you send earlier identifications of a specimen, newest first, separated by " | " (an example is shown on the page).
 

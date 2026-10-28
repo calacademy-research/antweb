@@ -68,7 +68,6 @@ function setSectionOpens() {
     <script src="<%= AntwebProps.getDomainApp() %><%= org.calacademy.antweb.util.Asset.url(application, "/search/autocomplete.js") %>"></script>
 
 	<html:form method="GET" action="description">
-	  	<input type="hidden" name="project" value="worldants">
 	<table>
 	  <tr>
 	    <td>
@@ -125,9 +124,7 @@ function setSectionOpens() {
 <div id="page_data">
     <div id="overview_data">
 
-<logic:notPresent name="project"> 
 Search the AntWeb database for world ants, including types. 
-</logic:notPresent> 
 Click <b>SHOW | HIDE</b> to add more criteria to your search.
 
 <jsp:include page="/search/instruct.jsp" flush="true"/>

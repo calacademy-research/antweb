@@ -1121,6 +1121,8 @@ or for Worldants upload
                   s_log.debug("AntwebUpload.setStatusAndCurrentValidName() No currentValidTaxonName for"
                     + " currentValidName:" + currentValidName
                     + " taxonName:" + taxonName);
+                  // Kept under the uploaded name and listed (Brian Fisher, 2026-10-28), as in the specimen upload.
+                  getMessageMgr().addToMessages(MessageMgr.currentValidNameNotInAntweb, SpecimenUploadProcess.currentValidNameNotInAntwebLine(taxonName, currentValidName));
                 } else {
                   if (currentValidTaxonName.equals(taxonName)) {
                     s_log.warn("AntwebUpload.setStatusAndCurrentValidTaxonName() currentValidName should be distinct from taxonName:" + taxonName);
@@ -1137,6 +1139,7 @@ or for Worldants upload
                     if (currentValidTaxon == null) {
                       // The current valid name has no taxon row (yet): the name is kept, as when it has no current valid name.
                       s_log.warn("AntwebUpload.setStatusAndCurrentValidName() no taxon for currentValidTaxonName:" + currentValidTaxonName + " taxonName:" + taxonName);
+                      getMessageMgr().addToMessages(MessageMgr.currentValidNameNotInAntweb, SpecimenUploadProcess.currentValidNameNotInAntwebLine(taxonName, currentValidName));
                       taxonItem.put("status", status);
                       taxonItem.put("taxon_name", taxonName);
                       return taxonName;

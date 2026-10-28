@@ -19,6 +19,10 @@ As the test uploader (ANTWEB_TEST_UPLOADER_*, a curator of "ZZ Test Group (stagi
                                                        2026-10-22): the specimen page links locality.do with
                                                        the code encoded once, the locality page shows it, and
                                                        its "Show All Specimens" search finds zztest0007
+     zztest0008  a genus, no species                 -> loaded as "<Genus> (indet)", report "Identified only to
+                                                       genus: filed as indet (uploaded)" (2026-10-28)
+     zztest0009  a subfamily, no genus or species    -> loaded as "(<Subfamily>) (indet)", report "Identified only
+                                                       to subfamily: filed as (Subfamily) indet (uploaded)"
    then check the report, the specimen pages and the group's upload list. Every report line ends with
    "N specimens" and the collapsed list of its codes linked to the specimen pages (SpecimenCodes, the
    Name updates page's markup): zztest0002 on its "Recognized invalid species" line, zztest0003 on its
@@ -154,7 +158,12 @@ def test_specimen_upload_round_trip(uploader, names):
         _row(4, valid, code_text=code(4) + "!"),
         _row(5, valid, lat="40.1", lon="10.2"),
         _row(7, valid, locality_code=LOCALITY_CODE),
+        _row(8, valid, species=""),
     ]
+    # Brian Fisher, 2026-10-28: a line with a subfamily only (no genus, no species) is filed as indet too.
+    with_subfamily = bool(valid.get("subfamily"))
+    if with_subfamily:
+        lines.append(_row(9, dict(valid, genus=""), species=""))
     with_shared = shared_name_on_server()
     if with_shared:
         lines.append(_row(6, SHARED_NAME))
@@ -197,6 +206,14 @@ def test_specimen_upload_round_trip(uploader, names):
         assert '<details class="specimen-codes"' in sec, _text(sec)[:400]
         assert f'/specimen.do?name={code(n)}">{code(n)}</a>' in sec, (code(n), sec[:1500])
         assert re.search(r"<summary>\d[\d,]* specimens?</summary>", sec), sec[:1500]
+    # Lines identified only to genus or only to subfamily: uploaded as indet and listed (2026-10-28; the old
+    # "Empty String Species (not uploaded)" section is gone).
+    assert "Empty String Species" not in report and "Empty String Genus" not in report
+    genus_only = _section(report, "Identified only to genus: filed as indet")
+    assert genus_only and "(uploaded)" in genus_only and code(8) in genus_only, _text(genus_only or report)[:600]
+    if with_subfamily:
+        subfamily_only = _section(report, "Identified only to subfamily: filed as (Subfamily) indet")
+        assert subfamily_only and code(9) in subfamily_only, _text(subfamily_only or report)[:600]
     refused = _section(report, "Specimen code with characters other than")
     assert code(4) in refused and "not uploaded" in refused, _text(report)[:600]
     assert ("Lat/Long not within country" in report or "Lat/Long not within adm1" in report), \
@@ -218,7 +235,7 @@ def test_specimen_upload_round_trip(uploader, names):
                 "zztest0006 was moved to one of the two taxa"
 
     # The specimens.
-    for n in (1, 2, 3, 5, 7) + ((6,) if with_shared else ()):
+    for n in (1, 2, 3, 5, 7, 8) + ((6,) if with_shared else ()) + ((9,) if with_subfamily else ()):
         exists, _page = specimen_page(s, code(n))
         assert exists, f"{code(n)} was not loaded"
     exists, _page = specimen_page(s, code(4))
@@ -246,7 +263,7 @@ def test_specimen_upload_round_trip(uploader, names):
     # Replacement: the baseline file leaves only zztest0001 and zztest0002.
     base = _upload_baseline(s, token, valid)
     assert_upload_recorded(s, base, gid)
-    for n, expected in ((1, True), (2, True), (3, False), (5, False), (6, False), (7, False)):
+    for n, expected in ((1, True), (2, True), (3, False), (5, False), (6, False), (7, False), (8, False), (9, False)):
         exists, _page = specimen_page(s, code(n))
         assert exists == expected, f"after the baseline upload {code(n)} {'is missing' if expected else 'is still there'}"
 
@@ -295,6 +312,22 @@ def test_all_lines_refused_keeps_the_group(uploader, names):
         assert all(kept_after_header_only), "a header-only file emptied the test group"
     finally:
         _upload_baseline(s, token, valid)
+
+
+@needs("uploader")
+def test_file_not_utf8_is_refused(uploader, names):
+    """Brian Fisher, 2026-10-28: upload files are UTF-8 only. A file saved as Latin-1 (an accented letter on its
+    third line) is refused before anything changes, and the message names that line and how to save as UTF-8."""
+    s, token, _gid = uploader
+    _syn, valid = names
+    _upload_baseline(s, token, valid)
+    text = HEADER + "\n" + _row(1, valid) + "\n" + _row(2, valid, locality_code="zzR\u00e9union") + "\n"
+    r = upload_specimens(s, token, text.encode("latin-1"))
+    page = _text(r.text)
+    assert "not UTF-8" in page and "line 3" in page, page[:800]
+    assert "Files must be UTF-8 (Excel: Save As, CSV UTF-8)" in page, page[:800]
+    for n in (1, 2):
+        assert specimen_page(s, code(n))[0], f"{code(n)} is gone after a refused file"
 
 
 @needs("noupload")

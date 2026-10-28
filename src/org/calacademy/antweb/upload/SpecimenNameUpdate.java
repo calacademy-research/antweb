@@ -54,7 +54,8 @@ import org.calacademy.antweb.util.TaxonPropMgr;
  *
  * Left alone: specimens filed under a name AntCat calls valid while their uploaded name points
  * elsewhere (listed per run as mode kept_valid, for a spot check); morphospecies and indets; specimens filed under a homonym placeholder taxon; names
- * whose current valid name is a homonym or has no taxon row (the step never creates taxa); uploaded
+ * whose current valid name is a homonym or has no taxon row (the step never creates taxa; since 2026-10-28 a
+ * specimen filed under such a missing name, by an older upload, goes back to its uploaded name); uploaded
  * names AntCat does not know; names with another non-valid status (unavailable, homonym, ...).
  *
  * Switch: etc/name-update.properties (mode=off|report|apply, maxChanges); no file = off.
@@ -265,7 +266,15 @@ public class SpecimenNameUpdate {
             case INDET:
             case MORPHO:
                 return Decision.of(Outcome.MORPHO_OR_INDET);
-            default:   // NO_CURRENT_VALID_NAME, TARGET_MISSING, TARGET_SAME
+            case TARGET_MISSING:
+                // Brian Fisher, 2026-10-28: the current valid name has no taxon in AntWeb yet, so the specimen
+                // belongs under its uploaded name, as the upload now files it. A specimen an older upload filed
+                // under that missing name (or another name AntCat does not call valid) goes back to the uploaded
+                // name; one filed under a valid name stays (no move away from a valid name).
+                if (currentIsValid || uploadedName.equals(currentName)) return Decision.of(Outcome.NO_TARGET);
+                newName = uploadedName;
+                break;
+            default:   // NO_CURRENT_VALID_NAME, TARGET_SAME
                 return Decision.of(Outcome.NO_TARGET);
         }
         if (newName == null || newName.equals(currentName)) return Decision.of(Outcome.UNCHANGED);
