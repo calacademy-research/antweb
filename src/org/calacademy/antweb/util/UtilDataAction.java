@@ -115,7 +115,7 @@ public class UtilDataAction extends AntwebAction {
         if (!isAdmin && !isScheduler) {
             s_log.warn("execute() refused action:" + action + " for " + loginName + " target:" + HttpUtil.getTarget(request));
             ActionForward denied = LoginMgr.mustBeAdmin(request, mapping);
-            if (denied != null) return denied;
+            return denied != null ? denied : mapping.findForward("notLoggedIn");
         }
         // From a browser, a job runs only by POST (CSRF-checked); a GET link shows a Run button.
         // The Scheduler's own GET calls carry the secureCode and go straight through.
@@ -160,10 +160,16 @@ public class UtilDataAction extends AntwebAction {
             return submitDataJob(action, theForm, accessLogin, accessGroup, loginName, request, mapping);
         }
 
+        // A job run in the request by an admin claims the compute flag (a background job may have claimed it since the
+        // check above) and later clears only its own claim. The Scheduler's sets take it over from the run.
+        if (message == null && !isScheduler && !claimComputeProcess(action)) {
+            message = "Another data job is running (" + Html.esc(getIsInComputeProcess()) + "). Please try again when it has finished.";
+        }
+
         if (message == null) {
             String dbMethodName = DBUtil.getDbMethodName("UtilDataAction.execute()");
             try {
-                UtilDataAction.setInComputeProcess(action);
+                if (isScheduler) UtilDataAction.setInComputeProcess(action);
 
                 // The nightly downloads the AntCat file before set 1 takes its connection: it may try for up to an
                 // hour (FetchRetry), and the long pool closes a connection held over 60 minutes (2026-10-25).
@@ -205,7 +211,7 @@ public class UtilDataAction extends AntwebAction {
             } catch (Exception e) {
                 message = handleException(e, connection, action, loginName);
             } finally {
-                UtilDataAction.setInComputeProcess(null);
+                if (isScheduler) UtilDataAction.setInComputeProcess(null); else releaseComputeProcess(action);
                 DBUtil.close(connection, this, dbMethodName);
             }
         }
@@ -263,19 +269,21 @@ public class UtilDataAction extends AntwebAction {
     }
 
     /**
-     * Nightly set 1 (B36, docs/numbers.md): every ant species and subspecies of a counted status that is its own current
-     * valid name and is identified to genus gets its genus row as parent, where that genus row exists
-     * (TaxonParentDb.repair). No genus row is ever made (Brian Fisher, 2026-10-22): names whose genus has no row are
-     * reported in the line, and valid ones (an AntCat import problem) in an admin alert, at most once a week.
-     * Its own commit and rollback, like the name update. When it changed a row, the AntCat list (worldants, counted by
-     * the import before this step) is recounted and the Global column (allantwebants) rebuilt, as after the name update
-     * (sets 2 to 5 do neither). Writes one line to compute.log.
+     * The Global column (allantwebants): rows counted, then the project's totals (B65). One line for compute.log.
+     * What set 2 did before (the clean-up) is committed first: a failure here rolls back only this recount
+     * (it rolled back the whole clean-up). The rows' counts start at 0, as for the curated projects
+     * (ProjTaxonCountDb.RESET_SQL): the crawl writes only rows it finds, so a genus row whose species rows the
+     * clean-up deleted kept its old Species number.
      */
-    /** The Global column (allantwebants): rows counted, then the project's totals (B65). One line for compute.log. */
     static String recountGlobal(Connection connection) {
         long start = System.currentTimeMillis();
         String line;
         try {
+            connection.commit();
+            try (java.sql.PreparedStatement stmt = connection.prepareStatement(ProjTaxonCountDb.RESET_SQL)) {
+                stmt.setString(1, Project.ALLANTWEBANTS);
+                stmt.executeUpdate();
+            }
             new ProjTaxonCountDb(connection).childrenCountCrawl(Project.ALLANTWEBANTS);
             new ProjectDb(connection).updateCounts(Project.ALLANTWEBANTS);
             connection.commit();
@@ -289,6 +297,15 @@ public class UtilDataAction extends AntwebAction {
         return line;
     }
 
+    /**
+     * Nightly set 1 (B36, docs/numbers.md): every ant species and subspecies of a counted status that is its own current
+     * valid name and is identified to genus gets its genus row as parent, where that genus row exists
+     * (TaxonParentDb.repair). No genus row is ever made (Brian Fisher, 2026-10-22): names whose genus has no row are
+     * reported in the line, and valid ones (an AntCat import problem) in an admin alert, at most once a week.
+     * Its own commit and rollback, like the name update. When it changed a row, the AntCat list (worldants, counted by
+     * the import before this step) is recounted and the Global column (allantwebants) rebuilt, as after the name update
+     * (sets 2 to 5 do neither). Writes one line to compute.log.
+     */
     static String nightlyTaxonParents(Connection connection) {
         String line;
         try {
@@ -297,7 +314,12 @@ public class UtilDataAction extends AntwebAction {
             connection.commit();
             line = result.line();
             if (result.alert() != null) {
-                AdminAlertMgr.addIfFresh(result.alert(), org.calacademy.antweb.home.TaxonParentDb.MISSING_VALID_ALERT, AdminAlertMgr.WEEK, connection);
+                // Its own try: the repair is committed, and the recount below must run even if the alert fails.
+                try {
+                    AdminAlertMgr.addIfFresh(result.alert(), org.calacademy.antweb.home.TaxonParentDb.MISSING_VALID_ALERT, AdminAlertMgr.WEEK, connection);
+                } catch (Exception e) {
+                    s_log.error("nightlyTaxonParents() alert e:" + e);
+                }
             }
             if (result.changed()) {
                 try {
@@ -346,7 +368,8 @@ public class UtilDataAction extends AntwebAction {
     /** The work of a data job started from a page (what execute() does in the request). */
     private BackgroundJobs.Outcome runDataJob(String action, UtilForm form, Login accessLogin, Group accessGroup, String loginName,
                                               DataSource dataSource) throws Exception {
-        while (!claimComputeProcess(action)) {
+        // Not while the nightly run is working: between two of its sets the flag is clear for a moment.
+        while (!claimNotDuringNightly(action)) {
             BackgroundJobs.step("Waiting for the nightly data update (or another data job) to finish. This job starts right after it.");
             Thread.sleep(5000);
         }
@@ -485,9 +508,11 @@ public class UtilDataAction extends AntwebAction {
                 // since were missing. Now also every night, after the image counts. Its own try: a failure here
                 // must not stop set 4.
                 try {
+                    connection.commit();   // the image counts above stay, whatever happens below
                     new StatisticsDb(connection).populateStatistics("nightly", 0, "set4", AntwebProps.getDocRoot());
                     message += " statistics";
                 } catch (Exception e) {
+                    try { connection.rollback(); } catch (SQLException e2) { s_log.error("set4 statistics rollback e:" + e2); }
                     s_log.error("set4 populateStatistics() e:" + e);
                     message += " statistics not written (" + e + ")";
                 }
@@ -653,8 +678,11 @@ public class UtilDataAction extends AntwebAction {
 			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.GEOLOCALE, "" + geolocaleId);
 		  } else {			    
             CountDb.s_isBulk = true;
-			new GeolocaleDb(connection).updateCounts();   // ~13.38 mins.
-            CountDb.s_isBulk = false;
+            try {
+			  new GeolocaleDb(connection).updateCounts();   // ~13.38 mins.
+            } finally {
+              CountDb.s_isBulk = false;
+            }
 		  }                 
 		  message = "Updated Geolocale Counts. ";
 		}
@@ -677,7 +705,7 @@ public class UtilDataAction extends AntwebAction {
 		  String appendStr = "";
 		  if (bioregion != null) {
 		    bioregion = Formatter.initCap(bioregion);
-			appendStr += ":" + bioregion;
+			appendStr += ":" + Html.esc(bioregion);
 			new BioregionDb(connection).populate(bioregion);
 		  } else {
 			new BioregionDb(connection).populate();
@@ -694,8 +722,12 @@ public class UtilDataAction extends AntwebAction {
 
 		  MuseumDb museumDb = new MuseumDb(connection);
 		  String appendStr = "";
+		  if (museumCode != null && !"".equals(museumCode) && MuseumMgr.getMuseum(museumCode) == null) {
+			operationDetails.setMessage("Museum not found:" + Html.esc(museumCode));
+			return operationDetails;
+		  }
 		  if (museumCode != null && !"".equals(museumCode)) {
-			appendStr += ":" + museumCode;
+			appendStr += ":" + Html.esc(museumCode);
 			museumDb.populate(museumCode);
 		  } else {
 			museumDb.populate();
@@ -715,6 +747,10 @@ public class UtilDataAction extends AntwebAction {
 		  ProjectDb projectDb = new ProjectDb(connection);
 		  // The list (proj_taxon counts) first, then the project totals, which sum the list's species rows
 		  // (2026-10-21: the totals ran first and showed the day before's list counts every night).
+		  if (projectName != null && ProjectMgr.getProject(projectName) == null) {
+			operationDetails.setMessage("Project not found:" + Html.esc(projectName));
+			return operationDetails;
+		  }
 		  if (projectName != null) {
 			Project project = ProjectMgr.getProject(projectName);
 			if (project != null && !Project.WORLDANTS.equals(projectName) && !Project.ALLANTWEBANTS.equals(projectName)) {
@@ -722,7 +758,7 @@ public class UtilDataAction extends AntwebAction {
 			}
 			projectDb.updateCounts(projectName);
 			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.PROJECT, projectName);
-			appendStr += ":" + projectName;
+			appendStr += ":" + Html.esc(projectName);
 		  } else {
 			// The counts on the project species lists (proj_taxon), not only the project totals (2026-10).
 			appendStr += " " + new ProjTaxonCountDb(connection).curatedProjectsCountCrawl();
@@ -768,7 +804,7 @@ public class UtilDataAction extends AntwebAction {
 		if (action.equals("countReport")) {
 		  GeolocaleTaxonCountDb geolocaleTaxonCountDb = new GeolocaleTaxonCountDb(connection);
           if (num == 0) {
-            message = "countCrawl expecting num:" + num + ". Running ChildrenCountCrawls for all geolocales.";
+            message = "countReport needs num (a geolocale id). Nothing was run.";
             s_log.info(message);
 		  } else {
 		    message = "Finished Geolocale Count Report (" + form.getNum() + ") " + geolocaleTaxonCountDb.countReport(num);
@@ -823,8 +859,8 @@ public class UtilDataAction extends AntwebAction {
           if (groupId > 0) {
             specimenDb.calcCaste(groupId);
             message = "calcCaste groupId:" + groupId;
-          } else if (code != null) {
-            specimenDb.calcCaste(code);
+          } else if (code != null && !code.trim().isEmpty()) {
+            specimenDb.calcCaste(code.trim());
             message = "calcCaste code:" + Html.esc(code);
           } else {
             specimenDb.calcCaste();
@@ -880,23 +916,28 @@ public class UtilDataAction extends AntwebAction {
               geolocale = GeolocaleMgr.getCountry(country);
             } else if (id != 0) {
               geolocale = GeolocaleMgr.getGeolocale(num);
-              if ("country".equals(geolocale.getGeorank())) {
+              if (geolocale == null) {
+                // unknown id: answered below ("Geolocale not found")
+              } else if ("country".equals(geolocale.getGeorank())) {
                 country = geolocale.getName();
               } else if ("adm1".equals(geolocale.getGeorank())) {
                 country = geolocale.getParent();
                 adm1 = geolocale.getName();                  
               }
-              s_log.debug("UtilDataAction.genGoogleMapFunction georank:" + geolocale.getGeorank() + " geolocale:" + geolocale + " country:" + country + " adm1:" + adm1);
+              if (geolocale != null) s_log.debug("UtilDataAction.genGoogleMapFunction georank:" + geolocale.getGeorank() + " geolocale:" + geolocale + " country:" + country + " adm1:" + adm1);
             }
             if (geolocale == null || !("country".equals(geolocale.getGeorank()) || "adm1".equals(geolocale.getGeorank()))) {
               message = "Geolocale not found for num(id):" + num + " param(country):" + Html.esc(param) + " param2(adm1):" + Html.esc(param2);
             } else {
               s_log.debug("UtilData.genGoogleMapFunction() id:" + id + " country:" + country + " adm1:" + adm1 + " geolocale:" + geolocale);
+              Map map;
               SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);
-
-              Map map = new AdvancedSearchAction().getGoogleMap(country, adm1, ResultRank.SPECIMEN, Output.MAP_LOCALITY, connection);
-
-              SearchAction.undoSetTempSpecimenSearchLimit();
+              try {
+                map = new AdvancedSearchAction().getGoogleMap(country, adm1, ResultRank.SPECIMEN, Output.MAP_LOCALITY, connection);
+              } finally {
+                // every user's specimen search keeps its limit, whatever happens above
+                SearchAction.undoSetTempSpecimenSearchLimit();
+              }
             
               //String googleMapFunction = map.getGoogleMapFunction();
               //A.log("title:" + map.getTitle() + " subtitle:" + map.getSubtitle());
@@ -905,9 +946,11 @@ public class UtilDataAction extends AntwebAction {
               if (map != null) {
                 ObjectMapDb objectMapDb = new ObjectMapDb(connection);     
                 objectMapDb.setGeolocaleMap(geolocale.getId(), map);                     
+                message = "title:" + Html.esc(map.getTitle()) + " subtitle:" + Html.esc(map.getSubtitle()) + " info:" + Html.esc(map.getInfo())
+                    + " googleMapFunction.length:" + (map.getGoogleMapFunction() == null ? 0 : map.getGoogleMapFunction().length());
+              } else {
+                message = "No map made for " + Html.esc(geolocale.getName()) + ".";
               }
-
-              message = "title:" + map.getTitle() + " subtitle:" + map.getSubtitle() + " info:" + map.getInfo() + " googleMapFunction.length:" + map.getGoogleMapFunction().length();
             }
             if (message == null) message = "Map rebuilt.";
         }		
@@ -980,6 +1023,16 @@ public class UtilDataAction extends AntwebAction {
       if (m_inComputeProcess != null) return false;
       setInComputeProcess(inComputeProcess);
       return true;
+    }
+    /**
+     * A background data job's claim of the compute flag: refused while the nightly run is working (Scheduler.isRunning),
+     * whose flag is clear for a moment between two of its sets. A claim made just as the run starts is given back.
+     */
+    public static boolean claimNotDuringNightly(String inComputeProcess) {
+      if (Scheduler.isRunning() || !claimComputeProcess(inComputeProcess)) return false;
+      if (!Scheduler.isRunning()) return true;
+      releaseComputeProcess(inComputeProcess);
+      return false;
     }
     /** Clears the compute flag if the caller still holds it. */
     public static synchronized void releaseComputeProcess(String inComputeProcess) {

@@ -63,6 +63,7 @@ public final class CountCheckJob {
             try { statsPage = TaxonMgr.getValidSpeciesCount(); } catch (RuntimeException e) { /* taxa not loaded */ }
             CountCheck countCheck = new CountCheck(connection);
             countCheck.antImagesRuleCounted = CountCheck.antImagesRuleCounted(log);
+            countCheck.nightlyInProgress = CountCheck.nightlyInProgress(log, java.time.LocalDateTime.now());
             countCheck.curatorsRead = LoginMgr.getCuratorsRead();
             countCheck.curatorNumbers = CountCheckAction.curatorNumbers();
             countCheck.artistNumbers = CountCheckAction.artistNumbers();

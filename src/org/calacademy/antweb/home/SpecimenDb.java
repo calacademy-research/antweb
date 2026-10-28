@@ -439,7 +439,7 @@ public class SpecimenDb extends AntwebDb {
 
     public void calcCaste(String code) throws SQLException {
       s_log.debug("calcCaste() for code:" + code);
-      String clause = " code = '" + code + "'";
+      String clause = " code = " + DBUtil.sqlLiteral(code);
       calcCasteQuery(clause);
     }
     

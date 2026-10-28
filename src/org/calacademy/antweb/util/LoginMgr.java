@@ -86,6 +86,12 @@ public class LoginMgr extends Manager {
           } catch (SQLException e) {
             s_log.error("startPasswordConversion() place_image_count not created e:" + e);
           }
+          try {
+            // group_count, at start-up: CREATE TABLE commits the open transaction, which in nightly set 3 was the set's own.
+            org.calacademy.antweb.home.GroupCountDb.ensureTable(conn);
+          } catch (SQLException e) {
+            s_log.error("startPasswordConversion() group_count not created e:" + e);
+          }
           // background_job (status pages of uploads and admin jobs); jobs of the last run become "interrupted".
           BackgroundJobDb.startup(conn);
           int count = new LoginDb(conn).hashLegacyPasswords();
