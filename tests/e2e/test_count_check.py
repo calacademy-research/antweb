@@ -535,7 +535,7 @@ def test_subtaxon_totals_equal_the_place_numbers():
             wrong.append(f"the Madagascar page has no data-stat {stat}")
             continue
         html = s.get(BASE_URL + LIST + rank, timeout=max(TIMEOUT, 180)).text
-        m = re.search(r"Subtaxon total: (\d+)", html)
+        m = re.search(r'data-subtaxon-total="(-?\d+)"', html)
         if not m:
             continue
         if int(m.group(1)) != stats[stat]:

@@ -27,12 +27,14 @@
     // The definition is ImageCounts.DEFINITION (also web/common/imagesDefinition.jsp), with the two numbers explained.
     String imagesDefinition = org.calacademy.antweb.ImageCounts.DEFINITION
         + (imagesFromPhrase == null ? "" : " The first number is the images of the name in AntWeb, from any specimen; in brackets, those of specimens " + imagesFromPhrase + ", when fewer.");
-    String asterixNote = "Counts include " + nextPluralRank + " of all statuses";
-    if (displayGlobal){
-      asterixNote += ".";
-    } else {
-      asterixNote += " contained within " + locale + "."; 
-    }
+    // Brian Fisher, 2026-10-27: plain words for the * note (was "Counts include specimens of all statuses").
+    String asterixUnit = "specimens".equals(nextPluralRank) ? "specimen filed under the name"
+        : "genera".equals(nextPluralRank) ? "genus under the row"
+        : "subfamilies".equals(nextPluralRank) ? "subfamily under the row"
+        : nextPluralRank + " name under the row";   // species: "species name"
+    String asterixNote = "Numbers marked * count every " + asterixUnit
+        + ", whatever the name's status (valid, morphospecies, indetermined and others)"
+        + (displayGlobal ? "." : ", in " + locale + ".");
 %>
 
 <!--  Column Headings -->
@@ -263,8 +265,24 @@
 
 </div>
 </div></div><%-- /aw-list, /aw-list-scroll --%>
-<% if (LoginMgr.isAdmin(request)) { %>
-     <br>Subtaxon total: <%= subtaxonTotal %>
+<% if (LoginMgr.isAdmin(request)) {
+     // Brian Fisher, 2026-10-27: say what the check number is. It adds up each row's own number for this place (the
+     // column marked *); the tests read data-subtaxon-total. docs/numbers.md row 45.
+     String totalColumn, totalUnit, totalCheck;
+     if (Rank.SUBFAMILY.equals(pageRank)) {
+       totalColumn = "Genera"; totalUnit = "genera";
+       totalCheck = "should equal Genera on " + locale + "'s page";
+     } else if (Rank.GENUS.equals(pageRank)) {
+       totalColumn = "Species"; totalUnit = "species and subspecies";
+       totalCheck = "should equal Species / subspecies on " + locale + "'s page";
+     } else {
+       totalColumn = displayGlobal ? (isMuseum ? ((Museum) overview).getCode() : overview.toString()) : "Specimens";
+       totalUnit = "specimens";
+       totalCheck = "Specimens on " + locale + "'s page can be higher: it also counts specimens of names not on this list,"
+           + " such as those not identified to genus";
+     }
+%>
+     <br><span id="subtaxon-total" data-subtaxon-total="<%= subtaxonTotal %>">Total of the <%= org.calacademy.antweb.util.Html.esc(totalColumn) %> column: <%= Formatter.commaFormat(subtaxonTotal) %> <%= totalUnit %> (administrators only; <%= totalCheck %>).</span>
 <% } %>
 <% if (listOnly) { %>
 <BR><span id="port-of-entry-list-note">These are ant species intercepted at ports of entry, not established introductions. They are not counted in any place total or in the introduced species list, and this list shows no specimen or image numbers.</span>

@@ -171,20 +171,12 @@ public class LoginMgr extends Manager {
         // Sessions ended by a password reset or by an administrator (login.session_version).
         if (login != null && login.getId() > 0 && !PasswordResetMgr.isSessionCurrent(session, login.getId())) {
             s_log.info("getAccessLogin() session ended for login:" + login.getId());
-            try {
-                session.invalidate();
-            } catch (IllegalStateException e) {
-                // already invalidated
-            }
-            // Start the new (logged-out) session now, usually before any of the page is sent: every JSP of the page
-            // (session="true", the default) asks for a session when it starts, and one asked for after the response
-            // was committed fails ("Cannot create a session after the response has been committed"), cutting the
-            // page off (staging e2e 2026-10-27, the home page in the header).
-            try {
-                request.getSession(true);
-            } catch (IllegalStateException e) {
-                s_log.info("getAccessLogin() no new session: " + e.getMessage());
-            }
+            // Log the session out, but do not invalidate it: this runs anywhere in a request, also in the header after
+            // part of the page was sent, and the page's later JSPs need a valid session. Invalidating it there cut
+            // the page off ("Cannot create a session after the response has been committed"; staging e2e
+            // 2026-10-27, a test logging in to the same account while another thread loaded the home page).
+            session.removeAttribute("accessLogin");
+            session.removeAttribute(Csrf.SESSION_ATTR);
             return null;
         }
         return login;

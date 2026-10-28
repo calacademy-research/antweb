@@ -60,6 +60,9 @@ jobs:
       - name: Reading the login never creates a session (tests/unit/test_access_login_no_new_session.py)
         run: python3 tests/unit/test_access_login_no_new_session.py
 
+      - name: List notes in plain words (tests/unit/test_list_admin_wording.py)
+        run: python3 tests/unit/test_list_admin_wording.py
+
       - name: Deploys check the pinned server host keys (tests/unit/test_deploy_known_hosts.py)
         run: python3 tests/unit/test_deploy_known_hosts.py
 
@@ -663,6 +666,12 @@ jobs:
 
       - name: One meaning of Images on every page (images of the ant, labels apart, Image files; tests/unit/test_image_counts_defined.py)
         run: python3 tests/unit/test_image_counts_defined.py
+
+      - name: Orphan photos tool, plan, SQL and file steps without a database (tests/unit/test_orphan_photos.py)
+        run: python3 tests/unit/test_orphan_photos.py
+
+      - name: Pheidole head export, plan and contact sheets without a database (tests/unit/test_pheidole_export.py)
+        run: python3 tests/unit/test_pheidole_export.py
 
       - name: Tomcat connector allows many Accept-Language entries (maxLocaleCount)
         run: grep -q 'maxLocaleCount="100"' docker/antweb/tomcat/conf/server.xml
