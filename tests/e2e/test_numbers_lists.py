@@ -104,10 +104,12 @@ def test_list_headers_equal_place_numbers_of_every_kind():
 
 
 def _unimaged_from_api(p):
-    """The names the API calls unimaged on the place's list, or None (also when paging is not reliable)."""
+    """The names the API calls unimaged on the place's list, or None (also when paging is not reliable). Species and
+    subspecies, like the list (the API's default ranks; until 2026-10-27 taxarank=species left out subspecies, so
+    Czech Republic's three unimaged subspecies showed as "only on the page")."""
     rows, offset = [], 0
     for _ in range(20):
-        body = ns.api(f"unimagedGeolocaleTaxa?geolocaleName={ns.quote_plus(p.name)}&taxarank=species&limit=750&offset={offset}")
+        body = ns.api(f"unimagedGeolocaleTaxa?geolocaleName={ns.quote_plus(p.name)}&limit=750&offset={offset}")
         if body is None:
             return None
         page = [(r.get("taxonName") or "").lower() for r in ns.api_rows(body)]
