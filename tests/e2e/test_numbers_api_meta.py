@@ -452,7 +452,7 @@ def _row_name(row, rank):
 
 def _compare_list(p, rank, api_rows, wrong):
     """The place's list of that rank (every counted status) against the API rows: each name listed has an API row
-    with the same own count and Images. Returns the number of rows compared, or None when the page is not read."""
+    with the same own count, and Images at least the API's (place) imageCount. Returns the number of rows compared, or None when the page is not read."""
     html = ns.fetch(p.list_url(rank))
     if html is None:
         return None
@@ -469,8 +469,12 @@ def _compare_list(p, rank, api_rows, wrong):
             continue
         if own is not None and _int(a.get(OWN_COUNT[rank])) != own:
             wrong.append(f"{p} {rank} {name}: list {own}, API {OWN_COUNT[rank]} {a.get(OWN_COUNT[rank])}")
-        if images is not None and _int(a.get("imageCount")) != images:
-            wrong.append(f"{p} {rank} {name}: list {images} Images, API imageCount {a.get('imageCount')}")
+        # Since 2026-10-28 the list's Images cell shows the AntWeb-wide number (images of the name from any
+        # specimen, ImagesAnywhere.imagesColumn: max of the AntWeb-wide and the place's own count), while the API's
+        # imageCount is the place's own: the cell can only be larger. The AntWeb-wide number itself is checked by
+        # test_numbers_images.py::test_list_images_column_equals_the_api_recount.
+        if images is not None and images < _int(a.get("imageCount")):
+            wrong.append(f"{p} {rank} {name}: list {images} Images, fewer than the place's API imageCount {a.get('imageCount')}")
         n += 1
     return n
 
