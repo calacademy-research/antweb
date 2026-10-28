@@ -39,12 +39,14 @@ public class RememberMeFilter implements Filter {
                 s_log.warn("doFilter() e:" + e);
             }
             try {
-                // End a stale login session (and start its replacement) before any of the page is sent, as
-                // SessionRequestFilter does for .do pages; otherwise the header's check did it after the home page had
-                // started and the next JSP could not get a session (page cut off, staging e2e 2026-10-27).
+                // The session exists before any of the page is sent, as SessionRequestFilter makes it for .do pages
+                // (request.getSession()). The home page's JSPs (session="true") otherwise asked for it in the header,
+                // after part of the page was sent, when the request came without a valid session (a cookie of an ended
+                // session); Tomcat refused and the page was cut off (staging e2e 2026-10-27). Also ends a stale login.
+                request.getSession(true);
                 LoginMgr.getAccessLogin(request);
             } catch (RuntimeException e) {
-                s_log.warn("doFilter() getAccessLogin e:" + e);
+                s_log.warn("doFilter() session e:" + e);
             }
         }
         chain.doFilter(req, res);

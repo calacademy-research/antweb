@@ -25,6 +25,8 @@ def main():
         "after ending a stale session getAccessLogin starts the replacement at once"
     with open(os.path.join(os.path.dirname(SRC), "RememberMeFilter.java"), encoding="utf-8") as f:
         flt = f.read()
+    assert -1 < flt.find("request.getSession(true)") < flt.find("chain.doFilter"), \
+        "RememberMeFilter (the home page and .jsp pages) makes the session before the page starts"
     assert flt.find("LoginMgr.getAccessLogin(request)") != -1 and flt.find("LoginMgr.getAccessLogin(request)") < flt.find("chain.doFilter"), \
         "RememberMeFilter (the home page and .jsp pages) checks the login before the page starts"
     print("getAccessLogin never creates a session on a plain read, replaces an ended one at once; the home page checks"
