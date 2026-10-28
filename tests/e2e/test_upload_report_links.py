@@ -49,6 +49,10 @@ def _links(html, page_url):
         if "/uploadFile.do" in href and "-specimen" not in href:
             continue
         url = urljoin(page_url, href)
+        # Never follow "Log out" (2026-10-27): the links are fetched 4 at a time with one login, so a logout ended the
+        # session while another link's page (the home page) was being sent, and that page was cut off.
+        if urlparse(url).path in ("/logout.do", "/logout.jsp"):
+            continue
         if (urlparse(url).hostname or "") == HOST:
             found.append(url.replace("http://", "https://", 1) if BASE_URL.startswith("https") else url)
     found = list(dict.fromkeys(found))

@@ -21,16 +21,19 @@ def main():
     body = re.sub(r"//[^\n]*", "", m.group(1))
     assert "request.getSession(false)" in body, "getAccessLogin must read the session with getSession(false)"
     assert "request.getSession()" not in body, "getAccessLogin must not create a session"
-    assert "request.getSession(true)" in body.split("invalidate()", 1)[-1], \
-        "after ending a stale session getAccessLogin starts the replacement at once"
+    assert "invalidate()" not in body, "getAccessLogin logs an ended session out; it never invalidates it mid-request"
+    assert 'session.removeAttribute("accessLogin")' in body, "getAccessLogin removes the login of an ended session"
     with open(os.path.join(os.path.dirname(SRC), "RememberMeFilter.java"), encoding="utf-8") as f:
         flt = f.read()
     assert -1 < flt.find("request.getSession(true)") < flt.find("chain.doFilter"), \
         "RememberMeFilter (the home page and .jsp pages) makes the session before the page starts"
     assert flt.find("LoginMgr.getAccessLogin(request)") != -1 and flt.find("LoginMgr.getAccessLogin(request)") < flt.find("chain.doFilter"), \
         "RememberMeFilter (the home page and .jsp pages) checks the login before the page starts"
-    print("getAccessLogin never creates a session on a plain read, replaces an ended one at once; the home page checks"
-          " it before the page starts.")
+    links = os.path.join(os.path.dirname(SRC), *[".."] * 5, "tests", "e2e", "test_upload_report_links.py")
+    with open(links, encoding="utf-8") as f:
+        assert '"/logout.do"' in f.read(), "the link checks must never follow Log out"
+    print("getAccessLogin never creates or invalidates a session; the home page has its session before it starts;"
+          " link checks never log out.")
 
 
 if __name__ == "__main__":
