@@ -54,6 +54,9 @@ jobs:
       - name: Each Java test step expects the number of tests its class has (tests/unit/test_ci_test_counts.py)
         run: python3 tests/unit/test_ci_test_counts.py
 
+      - name: Every deploy compiles every Java source (tests/unit/test_build_full_compile.py)
+        run: python3 tests/unit/test_build_full_compile.py
+
       - name: Deploys check the pinned server host keys (tests/unit/test_deploy_known_hosts.py)
         run: python3 tests/unit/test_deploy_known_hosts.py
 

@@ -79,6 +79,10 @@
 <target name="compile" depends="prepare"
    description="Compile Java sources">
 
+  <!-- Compile every source each time (2026-10-27). javac recompiles only changed files; a class that calls a
+       method whose signature changed (static to instance, PR #291) kept its old .class and failed at run time
+       with IncompatibleClassChangeError, so list pages broke on staging. A full compile takes about a minute. -->
+  <delete dir="${build.home}/WEB-INF/classes" failonerror="false"/>
   <mkdir    dir="${build.home}/WEB-INF/classes"/>
   <javac srcdir="src"
         destdir="${build.home}/WEB-INF/classes"
