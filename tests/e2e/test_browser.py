@@ -344,6 +344,33 @@ def test_desktop_layout_unchanged(desktop, name):
         page.close()
 
 
+SIDE_COLUMN_PAGES = {
+    # many castes and subcastes: the "Imaged:" line is long (Brian Fisher 2026-10-28: image and map at the bottom)
+    "many castes": "/description.do?genus=camponotus&species=strangulatus&rank=species",
+    "one caste": "/description.do?genus=nesomyrmex&species=clavipilis&rank=species",
+}
+
+
+@pytest.mark.parametrize("name", list(SIDE_COLUMN_PAGES))
+def test_species_image_and_map_beside_the_text(desktop, name):
+    """At 1280 px the species page's image and map column (#page_data > .left) floats beside the text, at its top,
+    and the "Imaged:" line wraps inside it instead of widening it."""
+    path = SIDE_COLUMN_PAGES[name]
+    page = _open_settled(desktop, path)
+    try:
+        box = page.evaluate("""() => { const d = document.getElementById('page_data');
+            const l = d && d.querySelector(':scope > .left'); if (!l) return null;
+            const ic = document.getElementById('imaged_castes');
+            return {page: d.getBoundingClientRect().top, left: l.getBoundingClientRect().top,
+                    width: l.getBoundingClientRect().width, line: ic ? ic.getBoundingClientRect().width : null}; }""")
+        if box is None:
+            pytest.skip(f"{path}: no image and map column on this page")
+        assert box["left"] - box["page"] < 200, f"{path}: the image and map column starts {box['left'] - box['page']:.0f} px below the top of the page text: {box}"
+        assert box["width"] <= 300, f"{path}: the image and map column is {box['width']:.0f} px wide: {box}"
+    finally:
+        page.close()
+
+
 # e. wide lists at phone width -----------------------------------------------------------
 
 SPECIES_LIST = "/taxonomicPage.do?rank=species&countryName=Reunion"
