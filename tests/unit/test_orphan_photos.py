@@ -334,6 +334,8 @@ def main():
     test_file_steps()
     test_command_flow()
     test_runbook()
+    test_period_target_warns()
+
 
 def test_period_target_warns():
     decisions, rows, specimens, folders = world()
