@@ -335,6 +335,7 @@ def main():
     test_command_flow()
     test_runbook()
     test_period_target_warns()
+    test_ecofog_decisions_file()
 
 
 def test_period_target_warns():
@@ -348,6 +349,19 @@ def test_period_target_warns():
     p = by_code(op.plan(d, rows, specimens, folders))["casent0005505"]
     assert any("period" in w for w in p["warnings"]), p["warnings"]
     print("A target code with a period gets a warning.")
+
+
+def test_ecofog_decisions_file():
+    """EcoFoG's answers (Jerome Orivel, 2026-10-28): 147 duplicates to delete, 25 of them uploaded under the CAS
+    account in 2018-10 (group 1), the others EcoFoG (group 67). The one move (ecofog-hc-0002 to ecofog-hc-0002-01)
+    is left out: the target has a profile photo already. The 26 codes whose records Jerome will upload are not in it."""
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "tools", "data",
+                        "orphan_photos_ecofog_2026-10.tsv")
+    d = op.read_decisions(path)
+    assert len(d) == 147 and all(x["action"] == "delete" for x in d), len(d)
+    assert sum(x["group"] == "1" for x in d) == 25 and sum(x["group"] == "67" for x in d) == 122
+    assert "ecofog-hc-0002" not in {x["code"] for x in d}
+    print("EcoFoG decisions: 147 deletes (25 in the CAS group, 122 in EcoFoG's), no move.")
 
 
 if __name__ == "__main__":

@@ -713,7 +713,12 @@ Orphan photos are photos whose specimen code has no specimen record, so they sho
 lists them). Curators decided, code by code, to delete them (a duplicate) or to move them to the code of the right
 specimen. The tool `tools/data/orphan_photos.py` (read its header) carries out a decisions file: for the CAS list of
 2026-10 that is `tools/data/orphan_photos_cas_2026-10.tsv` (17 codes to delete, 11 to move; the other 25 codes of
-the list stay as they are). The other groups' lists get their own decisions file and the same commands.
+the list stay as they are). The other groups' lists get their own decisions file and the same commands:
+EcoFoG's is `tools/data/orphan_photos_ecofog_2026-10.tsv` (Jerome Orivel's answers of 2026-10-28: 147 duplicates
+to delete, 25 of them uploaded under the CAS account in 2018-10, so group 1 for those; preview expects
+`Accepted: 147 codes to delete`). Jerome uploads the records of 26 more codes himself; their photos then show and
+need nothing. ecofog-hc-0002 (same specimen as ecofog-hc-0002-01) is not in the file: the target already has a
+profile photo, which the tool refuses to overwrite; it is moved by hand once the curator says which photos to keep.
 
 What it changes: the photo rows (`image`, with their `group_image` and `image_like` rows) and the files in
 `/mnt/antweb/images/<code>/` (the four sizes thumbview, low, med, high and the original .tif or .jpg). A moved photo
