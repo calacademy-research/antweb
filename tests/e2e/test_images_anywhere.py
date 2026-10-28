@@ -9,10 +9,12 @@ species. Specimen counts stay per place; images help identification wherever the
      (Leptogenys purpurea, Indonesia: the genus page showed CASENT0270569 from Papua New Guinea, the species page did
      not) against the API's specimen records, and on the day's species of the day's places of each of those kinds:
      the marked specimens are first, and they are exactly the specimens placeOnly=true shows.
-  3. The Images column of a place's list: "T Images (P from Comoros)", images of the ant only (labels never count,
-     Brian Fisher 2026-10-27): T = the images of the name in AntWeb (the allantwebants list row, nightly set 4) = the
-     API recount of every specimen of the name (/taxaImages, shot types other than l), P = the place's own row (row
-     44, test_numbers_images.py); "N Images" when P = T, "No Images" only when T = 0; the definition under the list.
+  3. The Images column of a place's list: one number, "N Images" (Brian Fisher 2026-10-28; from 10-27 to 10-28
+     "T Images (P from Comoros)", which wrapped and showed "( from Comoros)" where the number script blanks a 0),
+     images of the ant only (labels never count, Brian Fisher 2026-10-27): N = the images of the name in AntWeb (the
+     allantwebants list row, nightly set 4) = the API recount of every specimen of the name (/taxaImages, shot types
+     other than l); "No Images" only when N = 0; never a second number or "from <place>"; the definition under the
+     list says what the number counts and that the place's specimens come first on the images page.
   5. The species page's line "Imaged: worker (12 specimens), queen (2), male (1)" (row 120) = the API recount: the
      name's specimens with an image of the ant (/taxaImages, label images left out), by caste (/specimens).
 
@@ -29,8 +31,9 @@ import numbers_sample as ns
 from test_numbers_images import OLD_SET_4, fetch_all_view, images_by_code, images_cell, list_row_cells, old_set_4
 
 PENDING = "list rows are those of the last nightly run (set 4); after an upload they are pending"
-# The allantwebants rows (T) were set to 0 by set 4 and never counted again until 2026-10-27 (PR #291); the cell then
-# shows the place's number only. Pending until the first nightly set 4 with ProjTaxonCountDb.imageCrawlProjects.
+# The allantwebants rows were set to 0 by set 4 and never counted again until 2026-10-27 (PR #291); the cell then
+# shows the place's number. Pending until the first nightly set 4 with ProjTaxonCountDb.imageCrawlProjects: a country's
+# row whose number is the recount of the country's own specimens.
 ALLANTWEB_PENDING = ("the AntWeb-wide row (allantwebants) is not counted yet: pending until nightly set 4 counts it "
                      "(compute.log line 'AntWeb-wide list Images counted')")
 MICHELE = "/images.do?subfamily=ponerinae&genus=leptogenys&species=purpurea&rank=species&countryName=Indonesia"
@@ -167,10 +170,19 @@ def _comoros():
     return None
 
 
-def test_list_images_column_shows_the_images_in_antweb_and_of_the_place():
-    """Row 44: on Comoros and the day's places of every kind, species rows "T Images (P from X)": T >= P, the format
-    follows the numbers, and T = the API's images of the ant of every specimen of the name (/taxaImages, label shots
-    left out). T is the allantwebants list row (nightly set 4), so a row is pending until set 4 counted it."""
+def _in_place(p, specimen):
+    """True when an API specimen record is of the place, for a country (the one kind whose field is known); None
+    for the other kinds."""
+    if p.kind != "country":
+        return None
+    return (specimen.get("country") or "").lower() == p.name.lower()
+
+
+def test_list_images_column_shows_the_images_in_antweb():
+    """Row 44: on Comoros and the day's places of every kind, species rows show one number (Brian Fisher 2026-10-28):
+    "N Images" or "No Images", never a second number or "from <place>", and N = the API's images of the ant of every
+    specimen of the name (/taxaImages, label shots left out). N is the allantwebants list row (nightly set 4), so a row
+    is pending until set 4 counted it."""
     places = [p for p in [_comoros()] + ns.one_place_of_each_kind("anywhere-column") if p is not None]
     wrong, checked, left_out = [], [], []
     for p in places:
@@ -180,21 +192,21 @@ def test_list_images_column_shows_the_images_in_antweb_and_of_the_place():
         rows = []
         for r in ns.list_rows(html):
             cell = re.search(r'<div class="list_extras images">(.*?)</div>', r["html"], re.S)
+            if cell:
+                text = ns.text_of(cell.group(1))
+                if "from " in text or " in " in text or "(" in text or len(re.findall(r"[\d,]+", text)) > 1:
+                    wrong.append(f"{p} {r['name']}: Images cell {text!r}: one number only, no place")
+                if "images_total" in cell.group(1) or cell.group(1).count("<span") > 1:
+                    wrong.append(f"{p} {r['name']}: Images cell {cell.group(1)!r}: one number span only")
             q = re.search(r"href='[^']*(?:images|browse)\.do\?([^']*)'", r["html"])
             if r["name"] and cell and q:
                 rows.append((r["name"], cell.group(1), parse_qs(unescape(q.group(1)))))
         for name, cell, q in ns.pick(rows, MAX_ROWS, "anywhere-column" + repr(p)):
-            total, place = images_cell(cell)
+            total = images_cell(cell)
             text = ns.text_of(cell)
             if total is None:
-                wrong.append(f"{p} {name}: Images cell {text!r} is neither 'No Images', 'N Images' nor 'T Images (P from X)'")
+                wrong.append(f"{p} {name}: Images cell {text!r} is neither 'No Images' nor 'N Images'")
                 continue
-            if place > total:
-                wrong.append(f"{p} {name}: {text!r}: the place has more than AntWeb")
-            if total == place and "(" in text:
-                wrong.append(f"{p} {name}: {text!r}: both numbers shown though equal")
-            if p.kind == "project" and "(" in text:
-                wrong.append(f"{p} {name}: {text!r}: a project's list counts images from anywhere")
             genus, species = (q.get("genus") or [""])[0], (q.get("species") or [""])[0]
             got = api_specimens(genus, species, max_pages=4) if genus and species else None
             if got is None:
@@ -205,29 +217,37 @@ def test_list_images_column_shows_the_images_in_antweb_and_of_the_place():
                 left_out.append(f"{p} {name}: not recounted (more than 500 images)")
                 continue
             ant, every = both
-            codes = [ns.specimen_code(s) for s in got if (s.get("antwebTaxonName") or "").lower() == name]
+            mine = [s for s in got if (s.get("antwebTaxonName") or "").lower() == name]
+            codes = [ns.specimen_code(s) for s in mine]
             recount = sum(ant.get(c, 0) for c in codes)
             if recount != total and old_set_4(total, ant, every, codes):
                 left_out.append(f"{p} {name}: {text!r}, {OLD_SET_4}")
                 continue
-            if recount > total and total == place:
+            place_codes = [ns.specimen_code(s) for s in mine if _in_place(p, s)]
+            if recount > total and _in_place(p, {}) is not None and total == sum(ant.get(c, 0) for c in place_codes):
                 left_out.append(f"{p} {name}: {text!r}, {ALLANTWEB_PENDING}")
                 continue
             if recount != total:
                 wrong.append(f"{p} {name}: {text!r}, the API's specimens of the name have {recount} images of the ant")
             checked.append(f"{p} {name}")
-    if not checked:
+    if not checked and not wrong:
         pytest.skip("no species row recounted " + ns.day_note() + "; left out: " + "; ".join(left_out[:10]))
     assert not wrong, f"{len(checked)} rows {ns.day_note()} ({PENDING}); left out: {left_out[:10]}:\n" + "\n".join(wrong)
 
 
 def test_list_says_what_the_images_column_counts():
-    """The definition under a place's list: images of the ant, label images counted separately (Brian Fisher 2026-10-27)."""
+    """The definition under a place's list: images of the ant, label images counted separately (Brian Fisher
+    2026-10-27); the number is the name's images in AntWeb, the place's specimens come first on its images page
+    (Brian Fisher 2026-10-28)."""
     p = _comoros() or ns.madagascar()
     html = ns.get(p.list_url("species"))
     m = re.search(r'<span id="images-definition"[^>]*>(.*?)</span>', html, re.S)   # the span also has a class
     assert m, f"{p}: no definition of the Images column under the list"
-    assert "images of the ant" in m.group(1) and "label images are counted separately" in m.group(1), m.group(1)
+    text = unescape(m.group(1))
+    assert "images of the ant" in text and "label images are counted separately" in text, text
+    assert "The number is the images of the ant of the name in AntWeb, from any specimen." in text, text
+    assert f"the specimens from {p.name} come first" in text, text
+    assert "in brackets" not in text and "first number" not in text, text
 
 
 # ------------------------------------------------------------------------------------------- 5. imaged castes

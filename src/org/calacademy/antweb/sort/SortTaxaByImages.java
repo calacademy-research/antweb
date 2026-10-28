@@ -9,8 +9,9 @@ public class SortTaxaByImages implements Comparator<Taxon>
     public int compare(Taxon a, Taxon b) 
     { 
       try {
-        int aC = a.getTaxonSet().getImageCount();
-        int bC = b.getTaxonSet().getImageCount();
+        // the number the Images cell shows (Brian Fisher 2026-10-28: the images of the name in AntWeb)
+        int aC = ImagesAnywhere.shownImages(a.getTaxonSet());
+        int bC = ImagesAnywhere.shownImages(b.getTaxonSet());
         
         int compareInt = 0;
         if (aC > bC) compareInt = -1;
