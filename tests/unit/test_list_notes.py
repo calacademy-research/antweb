@@ -27,7 +27,10 @@ def main():
     i_star = block.index("<%= asterixNote %>")
     i_images = block.index('id="images-definition"')
     assert i_total < i_star < i_images, "the notes are out of order"
-    assert block.count("<%= ++noteNum %>. ") == 3, "the notes are numbered"
+    # four with the species list's "identified only to genus" line (counting rules, 2026-10-28), between total and *
+    assert block.count("<%= ++noteNum %>. ") == 4, "the notes are numbered"
+    i_genus = block.index('id="genus-only-note"')
+    assert i_total < i_genus < i_star, "the genus-only line comes after the total and before the * note"
     assert "<% if (totalNote != null) { %>" in block, "the total is for administrators only"
     assert "String totalNote = null;\n   if (LoginMgr.isAdmin(request)) {" in jsp
 
