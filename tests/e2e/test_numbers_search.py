@@ -509,7 +509,7 @@ def _row_number(chunk):
 
 
 def _subtaxon(html):
-    m = re.search(r"Subtaxon total: (-?\d+)", html or "")
+    m = re.search(r'data-subtaxon-total="(-?\d+)"', html or "")
     return int(m.group(1)) if m else None
 
 
