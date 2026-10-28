@@ -35,6 +35,7 @@
     <div id="overview_data">
 
 <br><h2>Endemics for <%= overview.getHeading() %>: <%= overview.getName() %> </h2>
+<p class="endemic-definition">Valid species and subspecies recorded here and in no other place of the same kind in AntWeb. Morphospecies, indetermined, unidentifiable and unrecognized names, fossils and records of introduced populations are not counted.</p>
 
 <%
     int count = 0;

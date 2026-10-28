@@ -28,7 +28,8 @@ import java.util.Set;
  *              bioregion: specimen.bioregion; project: all specimens), of a countable status
  *              (valid, unrecognized, morphotaxon, indetermined, unidentifiable; projects: any status).
  *   species    genus rows: species_count = species and subspecies rows of that genus in the same list
- *              (taxon status valid, unrecognized, morphotaxon, indetermined or unidentifiable; projects: any).
+ *              that count as species: status valid or morphotaxon (2026-10-28, PlaceTotals.SPECIES_STATUSES;
+ *              before: the five counted statuses, projects any), identified to genus.
  *   genera     subfamily rows: genus_count = genus rows of that subfamily in the same list (same statuses).
  *   global     species rows of the places checked: the allantwebants specimen_count ("Global" column) =
  *              all specimens filed under that name.
@@ -37,7 +38,8 @@ import java.util.Set;
  *              stored by PlaceImageCountDb (place_image_count and the image_count / imaged_specimen_count of
  *              the place table), against a recount from the image table of the place's specimens (the
  *              specimens of the "specimens" check above: geolocale and project by their list, geolocale
- *              of a countable status; museum and bioregion all their specimens). Also: Images is never
+ *              of a countable status; museum and bioregion since 2026-10-28 the specimens of their list rows, of a
+ *              countable status, a synonym's under the valid name, PlaceImageCountDb.listSource). Also: Images is never
  *              smaller than Imaged specimens (a difference there is always "real").
  *   place specimens  (2026-10-20) geolocales: the place's own Specimens number (geolocale.specimen_count)
  *              against a recount of the specimens of its species and subspecies rows.
@@ -495,6 +497,12 @@ public class CountCheck {
             + (GEOLOCALE.equals(place.type) ? " and s.status in " + COUNTABLE : "");
     }
 
+    /** Sets every parameter of the statement to the place key. */
+    private static void setEveryParam(Place place, PreparedStatement stmt) throws SQLException {
+        int n = stmt.getParameterMetaData().getParameterCount();
+        for (int i = 1; i <= n; i++) place.setKey(stmt, i);
+    }
+
     private static int setPlaceImageParams(Place place, PreparedStatement stmt) throws SQLException {
         int i = 1;
         if (place.isFromCountries()) for (int n = 0; n < 4; n++) place.setKey(stmt, i++);
@@ -539,15 +547,23 @@ public class CountCheck {
         }
         String shot = "lower(trim(coalesce(i.shot_type, '')))";
         Map<String, Integer> recount = new java.util.TreeMap<>();
-        try (PreparedStatement stmt = connection.prepareStatement("select " + shot + ", count(distinct i.id)" + placeImageFrom(place) + " group by 1")) {
-            setPlaceImageParams(place, stmt);
+        // Museums, bioregions and projects (2026-10-28): the specimens of their list rows, synonyms under the valid name,
+        // the source nightly set 4 counts (PlaceImageCountDb.listSource); geolocales by their own rules below.
+        boolean listSource = !GEOLOCALE.equals(place.type);
+        String source = listSource ? " from (" + org.calacademy.antweb.home.PlaceImageCountDb.listSource(place.type, true) + ") x" : null;
+        try (PreparedStatement stmt = connection.prepareStatement(listSource
+                ? "select x.shot, count(distinct x.id)" + source + " group by 1"
+                : "select " + shot + ", count(distinct i.id)" + placeImageFrom(place) + " group by 1")) {
+            if (listSource) setEveryParam(place, stmt); else setPlaceImageParams(place, stmt);
             try (ResultSet r = stmt.executeQuery()) {
                 while (r.next()) recount.merge(r.getString(1) == null ? "" : r.getString(1), r.getInt(2), Integer::sum);
             }
         }
         int imagedRecount;
-        try (PreparedStatement stmt = connection.prepareStatement("select count(distinct s.code)" + placeImageFrom(place) + " and " + shot + " <> 'l'")) {
-            setPlaceImageParams(place, stmt);
+        try (PreparedStatement stmt = connection.prepareStatement(listSource
+                ? "select count(distinct x.code)" + source + " where x.shot <> 'l'"
+                : "select count(distinct s.code)" + placeImageFrom(place) + " and " + shot + " <> 'l'")) {
+            if (listSource) setEveryParam(place, stmt); else setPlaceImageParams(place, stmt);
             try (ResultSet r = stmt.executeQuery()) {
                 r.next();
                 imagedRecount = r.getInt(1);
@@ -602,6 +618,7 @@ public class CountCheck {
      */
     int checkPlaceSpecimens(Place place, Result result, Set<String> changedNames) throws SQLException {
         if (PROJECT.equals(place.type)) return checkProjectSpecimens(place, result, changedNames);
+        if (MUSEUM.equals(place.type) || BIOREGION.equals(place.type)) return checkListPlaceSpecimens(place, result, changedNames);
         if (!GEOLOCALE.equals(place.type) || !columnExists("geolocale", "specimen_count")) return 0;
         int stored;
         try (PreparedStatement stmt = connection.prepareStatement("select specimen_count from geolocale where id = ?")) {
@@ -689,6 +706,45 @@ public class CountCheck {
         return 1;
     }
 
+    /**
+     * Museums and bioregions (Brian Fisher, 2026-10-28: Specimens = the sum of their list rows, like countries): the
+     * Specimens number of the page against a recount of the museum's or bioregion's specimens of a counted status filed
+     * under a species or subspecies name of its list, or under a synonym of one (counted under the valid name).
+     */
+    int checkListPlaceSpecimens(Place place, Result result, Set<String> changedNames) throws SQLException {
+        String table = placeTable(place.type);
+        if (place.specimenColumn == null || place.specimenValue == null || !columnExists(table, "specimen_count")) return 0;
+        int stored;
+        try (PreparedStatement stmt = connection.prepareStatement("select specimen_count from " + table + " where " + placeKeyColumn(place.type) + " = ?")) {
+            place.setKey(stmt, 1);
+            try (ResultSet r = stmt.executeQuery()) {
+                if (!r.next()) return 0;
+                stored = r.getInt(1);
+            }
+        }
+        String query = "select coalesce(sum(x.count), 0) from (" + org.calacademy.antweb.home.PlaceTotals.specimensByListNameSql(place.type, "?",
+                " and s." + place.specimenColumn + " = ? and s.status in " + COUNTABLE) + ") x"
+            + " join taxon t on t.taxon_name = x.taxonName and t.taxarank in ('species', 'subspecies') and t.family = 'formicidae'";
+        int recount;
+        try (PreparedStatement stmt = connection.prepareStatement(query)) {
+            place.setKey(stmt, 1);
+            place.setKey(stmt, 2);
+            stmt.setString(3, place.specimenValue);
+            try (ResultSet r = stmt.executeQuery()) {
+                r.next();
+                recount = r.getInt(1);
+            }
+        }
+        if (stored != recount) {
+            String pending = !result.rulesCounted ? CountInvariants.RULES_PENDING
+                : result.uploadSinceNightly ? "specimens were uploaded after the last nightly run"
+                : listChangedSince(place, result) ? "the list got a new row after the last nightly run"
+                : !changedNames.isEmpty() ? "specimens were renamed after the last nightly run" : null;
+            result.mismatches.add(new Mismatch(place, "place specimens", "Specimens", stored, recount, pending));
+        }
+        return 1;
+    }
+
     private boolean listChangedSince(Place place, Result result) throws SQLException {
         if (!columnExists(place.table(), "created")) return false;
         try (PreparedStatement stmt = connection.prepareStatement("select count(*) from " + place.table()
@@ -718,24 +774,35 @@ public class CountCheck {
     /**
      * The Images column of the place's list (2026-10-21), species and subspecies rows: image_count = the images of the
      * ant (labels left out since 2026-10-27, Brian Fisher) of the specimens of that name in the place, as nightly set 4
-     * counts them (getTaxonImageCountQuery of Geolocale, Project, Museum, Bioregion): geolocales of a countable status,
-     * museums and bioregions their own specimens, projects all specimens of the name.
+     * counts them (getTaxonImageCountQuery of Geolocale, Project, Museum, Bioregion): geolocales, museums and bioregions
+     * (since 2026-10-28) of a countable status, museums and bioregions their own specimens, projects all specimens of the
+     * name; museums, bioregions and curated projects a synonym's under the valid name (2026-10-28).
      */
     int checkRowImages(Place place, Result result, Set<String> changedNames) throws SQLException {
         if (!columnExists(place.table(), "image_count")) return 0;
         Map<String, Integer> recount = CountInvariants.keyMap();   // names as MySQL compares them
-        String query = "select s.taxon_name, count(i.id) from specimen s"
+        // Museums, bioregions and curated projects (Brian Fisher, 2026-10-28): images follow the Specimens rule, so the
+        // images of a specimen filed under a synonym count under the valid name (PlaceTotals.imagesByListNameSql), and
+        // museums and bioregions count specimens of a counted status, as countries.
+        boolean synonyms = !place.isFromCountries() && org.calacademy.antweb.home.PlaceTotals.synonymsToValid(place.type, place.key);
+        boolean statusFiltered = !PROJECT.equals(place.type);
+        String query = synonyms
+            ? "select x.taxonName, sum(x.imageSum) from (" + org.calacademy.antweb.home.PlaceTotals.imagesByListNameSql(place.type, "?",
+                (place.column() != null ? " and s." + place.column() + " = ?" : "") + (statusFiltered ? " and s.status in " + COUNTABLE : ""))
+                + ") x group by x.taxonName"
+            : "select s.taxon_name, count(i.id) from specimen s"
             + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_OF_SPECIMEN
             + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
             + " join " + place.table() + " l on l.taxon_name = s.taxon_name and l." + place.keyColumn() + " = ?"
             + " where 1 = 1"
             + (place.column() != null ? " and s." + place.column() + " = ?" : "")
-            + (GEOLOCALE.equals(place.type) ? " and s.status in " + COUNTABLE : "")
+            + (statusFiltered ? " and s.status in " + COUNTABLE : "")
             + " group by s.taxon_name";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             int i = 1;
             if (place.isFromCountries()) for (int n = 0; n < 4; n++) place.setKey(stmt, i++);
             place.setKey(stmt, i++);
+            if (synonyms) place.setKey(stmt, i++);
             if (place.column() != null) stmt.setString(i, place.specimenValue);
             try (ResultSet r = stmt.executeQuery()) {
                 while (r.next()) recount.put(r.getString(1), r.getInt(2));
@@ -877,8 +944,10 @@ public class CountCheck {
             + " join " + t + " l on l.taxon_name = taxon.taxon_name and l." + k + " = ?"
             + " where taxon.taxarank in " + childRanks
             + place.childStatusCondition()
-            // a genus row's Species: names identified to genus only (2026-10-22, PlaceTotals.identifiedToGenus)
-            + (childRanks.contains("species") ? " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") : "");
+            // a genus row's Species: names identified to genus only (2026-10-22, PlaceTotals.identifiedToGenus), valid
+            // names and morphospecies (2026-10-28, PlaceTotals.SPECIES_STATUSES)
+            + (childRanks.contains("species") ? " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon")
+                + " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon") : "");
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             place.setKey(stmt, 1);
             try (ResultSet r = stmt.executeQuery()) {
@@ -907,6 +976,7 @@ public class CountCheck {
                     int c = recount.getOrDefault(name, 0);
                     if (s == c) continue;
                     String pending = rowPending(r.getTimestamp(3), result);
+                    if (pending == null && !result.rulesCounted) pending = CountInvariants.RULES_PENDING;
                     if (pending == null && childPending.containsKey(name)) pending = "a row under it was added, or its specimens changed, after the last nightly run";
                     if (pending == null && result.uploadSinceNightly) pending = "an upload after the last nightly run may have removed list rows";
                     result.mismatches.add(new Mismatch(place, check, name, s, c, pending));

@@ -23,6 +23,7 @@
     boolean isWithSpecimen = false;
     boolean isOnlyShowUnImaged = false;    
     java.util.Set<String> unimagedNames = null;   // taxonomicPage.do?isImaged=false only (Q12)
+    org.calacademy.antweb.home.GenusOnly genusOnly = null;   // taxonomicPage.do only (2026-10-28)
 %>
 
 <%@ include file="/taxonReportBody.jsp" %>

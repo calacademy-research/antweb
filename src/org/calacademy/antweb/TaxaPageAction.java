@@ -197,6 +197,8 @@ public final class TaxaPageAction extends AntwebAction {
             }
             // Q12 (2026-10-22): "Unimaged" = no photo of the ant anywhere in AntWeb (label photos do not count).
             if ("false".equals(isImaged)) taxaPage.findUnimaged(connection);
+            // 2026-10-28: the specimens identified to genus only, for the genus rows and the line under the species list.
+            if (Rank.GENUS.equals(rank) || Rank.SPECIES.equals(rank)) taxaPage.findGenusOnly(connection, overview);
 
 //         if (HttpUtil.getTarget(request).contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) { s_log.warn("MarkNote() break:" + HttpUtil.getTarget(request)); return (mapping.findForward("error"));}
 // Doubled

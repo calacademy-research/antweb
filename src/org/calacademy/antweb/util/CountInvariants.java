@@ -28,10 +28,11 @@ import org.calacademy.antweb.home.PlaceTotals;
  *   place.subfamilies, place.genera, place.species   the place's totals = the rows of that rank on its list
  *                                                    (PlaceTotals: counted status; species: species and subspecies)
  *   place.valid              Valid species = valid extant species and subspecies on the list; and Valid <= Species
- *   place.specimens          geolocales, projects: Specimens = sum of the species and subspecies rows' specimens;
- *                            museums, bioregions: = their specimens (specimen.museum, specimen.bioregion)
+ *   place.specimens          Specimens = sum of the species and subspecies rows' specimens (every kind of place since
+ *                            2026-10-28; museums, bioregions were their specimens, specimen.museum, specimen.bioregion)
  *   place.endemic, place.introduced   = the rows flagged on the list with a counted status (the rows endemic.do and
- *                                       introduced.do show; PlaceTotals.flaggedCondition, 2026-10-27)
+ *                                       introduced.do show; PlaceTotals.flaggedCondition, 2026-10-27; Endemic: valid
+ *                                       names only since 2026-10-28, and Endemic <= Valid species)
  *   place.pies               "Species per Subfamily" adds up to Species, "Specimens per Subfamily" to Specimens
  *   place.images             Images >= Imaged specimens <= Specimens; Images = all views + labels; Ant images =
  *                            sum of the views; specimens with images = imaged + label-only; the place table's
@@ -56,6 +57,14 @@ public final class CountInvariants {
     /** Written to compute.log by nightly set 4 since 2026-10-21; countCheck.do reads it. */
     public static final String RULES_LOG = "numbers counted by the rules of 2026-10-21";
 
+    /**
+     * Written to compute.log by nightly set 4 since 2026-10-28 (the same line as RULES_LOG): the counting rules of
+     * 2026-10-28 (docs/numbers.md section 5): Species are valid names and morphospecies; museum and bioregion Specimens
+     * are the sum of their list rows; images of specimens filed under a synonym count under the valid name; regions and
+     * subregions have Introduced. Until a nightly run has written it, the numbers of those rules are pending.
+     */
+    public static final String COUNTING_RULES_LOG = "counting rules of 2026-10-28";
+
     /** Every check id (docs/numbers.md names them in its Test column as inv:<id>; tools/numbers/check_numbers_doc.py). */
     public static final String[] IDS = {"place.totals.subfamily", "place.totals.genus", "place.totals.species", "place.totals.valid",
         "place.totals.specimens", "place.totals.endemic", "place.totals.introduced", "place.pies", "place.images.order", "place.images",
@@ -70,18 +79,20 @@ public final class CountInvariants {
      */
     static final int LIST_CAP = 300;
 
-    static final String RULES_PENDING = "this number's rule changed on 2026-10-21; no nightly run has counted it that way yet";
+    static final String RULES_PENDING = "this number's rule changed (2026-10-21, 2026-10-28); no nightly run has counted it that way yet";
     /** The note of the report on the projects the check skips (Project.isSpeciesListOnly). */
     public static final String SPECIES_LIST_ONLY_NOTE = "Port of Entry (project " + org.calacademy.antweb.Project.PORT_OF_ENTRY + ") is not checked: it is a"
         + " list of species intercepted at ports of entry, kept without specimen or image numbers (Brian Fisher, 2026-10-22), so no nightly"
         + " step counts them.";
     /** A number whose rule changed on 2026-10-22 (docs/numbers.md Q7, Q8): it still equals the count by the old rule. */
     static final String ANT_IMAGES_PENDING = "counted every image file, labels included, before 2026-10-27; the next nightly run counts images of the ant";
+    static final String SPECIES_RULE_PENDING = "counted by the rule before 2026-10-28 (the five counted statuses); the next nightly run counts valid names and morphospecies only";
     static final String Q7_PENDING = "counted by the rule before 2026-10-22 (ants only, Q7); the next nightly run counts it by the new rule";
 
     public static boolean rulesCounted(List<String> lines) {
         if (lines.isEmpty()) return true;   // no compute.log (unreadable, emptied, rotated): not a reason to call differences pending
-        for (String line : lines) if (line.contains(RULES_LOG)) return true;
+        // both rule changes: a run before 2026-10-28 wrote RULES_LOG only
+        for (String line : lines) if (line.contains(RULES_LOG) && line.contains(COUNTING_RULES_LOG)) return true;
         return false;
     }
 
@@ -425,20 +436,11 @@ public final class CountInvariants {
             }
         });
 
+        // Every kind of place: the sum of the species and subspecies rows (museums and bioregions since 2026-10-28, Brian
+        // Fisher; before: their specimens, specimen.museum, specimen.bioregion). Their rows are recounted by the count check.
         Check specimens = new Check("place.totals.specimens", "Specimens of " + type + " pages", "26, 74, 108");
-        if (PlaceTotals.MUSEUM.equals(type) || PlaceTotals.BIOREGION.equals(type)) {
-            String column = PlaceTotals.MUSEUM.equals(type) ? "museum" : "bioregion";
-            specimens.pendingOn(true, false, true, false);
-            check(specimens, c -> {
-                Map<String, long[]> counted = rows("select " + column + ", count(*) from specimen where " + column + " is not null"
-                    + " and family = 'formicidae' group by " + column);
-                for (String key : inScope.keySet()) {
-                    if (!stored.containsKey(key)) continue;
-                    compare(c, type, key, "Specimens", v(stored, key, 4), v(counted, key, 0), "=", why(c, type, key));
-                }
-            });
-        } else {
-            specimens.pendingOn(true, true, false, false);
+        {
+            specimens.pendingOn(true, true, PlaceTotals.MUSEUM.equals(type) || PlaceTotals.BIOREGION.equals(type), false);
             check(specimens, c -> {
                 Map<String, long[]> summed = rows("select l." + lk + ", sum(l.specimen_count) from " + l + " l join taxon t on t.taxon_name = l.taxon_name"
                     + " where t.taxarank in " + SP + PlaceTotals.ANTS + " group by l." + lk);
@@ -463,6 +465,10 @@ public final class CountInvariants {
                     for (String key : inScope.keySet()) {
                         if (!stored.containsKey(key)) continue;
                         compare(c, type, key, "endemic".equals(field) ? "Endemic" : "Introduced", v(stored, key, col), v(flagged, key, 0), "=", why(c, type, key));
+                        // Endemic counts valid names only (Brian Fisher, 2026-10-28), so never more than Valid species
+                        if ("endemic".equals(field)) {
+                            compare(c, type, key, "Endemic", v(stored, key, col), v(stored, key, 3), "<=", why(c, type, key));
+                        }
                     }
                 });
             }
@@ -597,7 +603,9 @@ public final class CountInvariants {
                     StringBuilder sel = new StringBuilder("select p." + lk + ", p.taxon_name, p." + level[2] + ", coalesce(x.n, 0)");
                     // a genus row's Species counts the names identified to genus only (Brian Fisher, 2026-10-22,
                     // PlaceTotals.identifiedToGenus); its Specimens and Images still add up every row under it
-                    String n = "genus".equals(parentRank) ? "sum(case when " + PlaceTotals.identifiedToGenus("t") + " then 1 else 0 end)" : "count(*)";
+                    // and of status valid or morphotaxon (2026-10-28, PlaceTotals.SPECIES_STATUSES)
+                    String n = "genus".equals(parentRank) ? "sum(case when " + PlaceTotals.identifiedToGenus("t") + " and "
+                        + PlaceTotals.speciesStatusCondition("t") + " then 1 else 0 end)" : "count(*)";
                     StringBuilder sub = new StringBuilder("select c." + lk + " k, t.parent_taxon_name parent, " + n + " n");
                     StringBuilder diff = new StringBuilder("p." + level[2] + " <> coalesce(x.n, 0)");
                     int i = 0;
@@ -788,6 +796,14 @@ public final class CountInvariants {
                 if (p == null && before != null && row[i] != live) {
                     try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(before))) {
                         if (r.next() && r.getLong(1) == row[i]) p = i == 4 ? ANT_IMAGES_PENDING : Q7_PENDING;
+                    }
+                }
+                // 2026-10-28: species + ssp. imaged counts valid names and morphospecies only; a row written before equals
+                // the count of the five counted statuses
+                if (p == null && i == 2 && row[i] != live) {
+                    try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(
+                            org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIES_SQL_BEFORE_20261028))) {
+                        if (r.next() && r.getLong(1) == row[i]) p = SPECIES_RULE_PENDING;
                     }
                 }
                 if (p == null && uploadSince) p = "specimens were uploaded after the numbers were written";

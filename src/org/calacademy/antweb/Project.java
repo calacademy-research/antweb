@@ -685,8 +685,10 @@ group by taxonName
         String rankClause = " taxon.taxarank = '" + rank + "'";
 	        if (Rank.SPECIES.equals(rank)) { 
           rankClause = " (taxon.taxarank = 'species' or taxon.taxarank = 'subspecies') "
-              // a genus row's Species: names identified to genus only (Brian Fisher, 2026-10-22; PlaceTotals.identifiedToGenus)
-              + " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon") + " ";
+              // a genus row's Species: names identified to genus only (Brian Fisher, 2026-10-22; PlaceTotals.identifiedToGenus),
+              // of status valid or morphotaxon (2026-10-28, PlaceTotals.SPECIES_STATUSES; every list, curated projects too)
+              + " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon")
+              + " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon") + " ";
         }
 
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
@@ -726,6 +728,13 @@ group by taxonName
     }
     
     public String getTaxonImageCountQuery() {
+       // Brian Fisher, 2026-10-28: images follow the Specimens rule: on a curated project's list a specimen filed under a
+       // synonym counts under the valid name (PlaceTotals.imagesByListNameSql); worldants and allantwebants (the Images
+       // column's AntWeb-wide number) count the very name.
+       if (org.calacademy.antweb.home.PlaceTotals.synonymsToValid(org.calacademy.antweb.home.PlaceTotals.PROJECT, getName())) {
+           return org.calacademy.antweb.home.PlaceTotals.imagesByListNameSql(org.calacademy.antweb.home.PlaceTotals.PROJECT,
+               org.calacademy.antweb.home.PlaceTotals.literal(getName()), "");
+       }
        String query = "select s.taxon_name taxonName, s.family family, s.subfamily subfamily " 
            + ", s.genus genus, s.species species, count(i.id) imageSum"   // ant images only (2026-10-27)
            + " from specimen s join proj_taxon pt on s.taxon_name = pt.taxon_name "

@@ -14,11 +14,21 @@ import java.sql.SQLException;
  *   Subfamilies  subfamily rows on the place's list whose taxon has a counted status; a curated project's
  *                Subfamilies count its subfamily rows of every status, as its list rows do (listedCondition, 2026-10-27)
  *   Genera       genus rows on the list, counted status
- *   Species      species and subspecies rows on the list, counted status, ants (family formicidae),
- *                identified to genus (identifiedToGenus, 2026-10-22)
+ *   Species      species and subspecies rows on the list, status valid or morphotaxon (SPECIES_STATUSES,
+ *                2026-10-28), ants (family formicidae), identified to genus (identifiedToGenus, 2026-10-22)
  *   Valid        species and subspecies rows on the list, status valid, not fossil
+ *   Endemic      rows flagged endemic, status valid (ENDEMIC_STATUSES, 2026-10-28; endemicEligible, nativeRow)
+ *   Specimens    the specimens of the species and subspecies rows of the list (every kind of place since
+ *                2026-10-28; museums and bioregions counted all their specimens before)
  *
- * Counted status: valid, unrecognized, morphotaxon, indetermined, unidentifiable (CountCheck.COUNTABLE).
+ * Counted status (of list rows and specimens): valid, unrecognized, morphotaxon, indetermined, unidentifiable
+ * (CountCheck.COUNTABLE).
+ *
+ * Counting rules, Brian Fisher 2026-10-28 (docs/numbers.md section 5): a specimen counts at each rank it is
+ * identified to, and no further. A "Lioponera indet" specimen counts in Specimens, makes Lioponera count in Genera
+ * (its genus row is on the list) and its subfamily in Subfamilies, but is not a species: Species counts names of
+ * status valid or morphotaxon only. indetermined, unidentifiable and unrecognized names never count as species
+ * (until 2026-10-28 all five counted statuses did).
  *
  * Until 2026-10-21 Genera and Species (and the Subfamilies of museums and bioregions) were roll-up
  * sums of the per-row child counts of the list (CountDb.getCountableTaxonCount: sum(genus_count) of
@@ -46,8 +56,78 @@ public final class PlaceTotals {
     public static final String BIOREGION = "bioregion";
     public static final String[] TYPES = {GEOLOCALE, PROJECT, MUSEUM, BIOREGION};
 
-    /** Counted statuses (StatusSet.getCountables). */
+    /** Counted statuses (StatusSet.getCountables): of specimens and of list rows of every rank above species. */
     public static final String COUNTABLE = "('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')";
+
+    /**
+     * The statuses of a name that counts as a species (Brian Fisher, 2026-10-28): valid names and morphospecies. Names of
+     * the other counted statuses (indetermined, unidentifiable, unrecognized) are on the lists and their specimens count,
+     * but they are not species: their specimens are identified to genus only (or, unrecognized, to a name AntCat does
+     * not have; those are for curators to check against AntCat).
+     */
+    public static final String SPECIES_STATUSES = "('valid', 'morphotaxon')";
+
+    /** The same in Java. */
+    public static final java.util.List<String> SPECIES_STATUS_LIST = java.util.Arrays.asList("valid", "morphotaxon");
+
+    /**
+     * Statuses of names whose specimens are identified to genus only (the genus lists say "N specimens identified to genus
+     * only", the species lists name them under the list): indetermined ("Lioponera indet") and unidentifiable (an AntCat
+     * name that cannot be recognized, so its specimens are known to genus only).
+     */
+    public static final String GENUS_ONLY_STATUSES = "('indetermined', 'unidentifiable')";
+
+    /**
+     * The statuses of a name that can be endemic (Brian Fisher, 2026-10-22 and 2026-10-28, docs/numbers.md Q3): valid
+     * names only. Morphospecies (their codes are not comparable between collections, 10-22), indetermined, unidentifiable
+     * and unrecognized names (not species, 10-28) never count toward endemism, at any place: countries, adm1s, regions,
+     * subregions, bioregions. Until 10-28 countries and adm1s took every counted status but morphotaxon, bioregions all
+     * five, and the lists and numbers (flaggedCondition) valid and unrecognized. Every endemism rule takes it from here
+     * (GeolocaleDb, BioregionDb, flaggedCondition, NumberChecks.endemicFlags).
+     */
+    public static final String ENDEMIC_STATUSES = "('valid')";
+
+    /** The same in Java. */
+    public static final java.util.List<String> ENDEMIC_STATUS_LIST = java.util.Arrays.asList("valid");
+
+    /**
+     * SQL: the taxon (alias a) can be endemic: a species or subspecies of an endemic status (ENDEMIC_STATUSES), not
+     * fossil, an ant, identified to genus.
+     */
+    public static String endemicEligible(String alias) {
+        return alias + ".taxarank in ('species', 'subspecies') and " + alias + ".status in " + ENDEMIC_STATUSES
+            + " and " + alias + ".fossil = 0 and " + alias + ".family = 'formicidae' and " + identifiedToGenus(alias);
+    }
+
+    /**
+     * SQL: the list row (alias a, geolocale_taxon or bioregion_taxon) is native, not flagged introduced (Q4, Brian Fisher
+     * 2026-10-21: introduced records never count toward endemism). Endemism counts native rows only, so a species
+     * introduced in Reunion stays endemic to Madagascar, and an introduced row is never flagged endemic. The introduced
+     * flags are set before the endemic ones (GeolocaleDb.updateCounts, BioregionDb.populate).
+     */
+    public static String nativeRow(String alias) {
+        return "coalesce(" + alias + ".is_introduced, 0) = 0";
+    }
+
+    /** SQL: the taxon (alias a) has a status that counts as a species. */
+    public static String speciesStatusCondition(String alias) {
+        return alias + ".status in " + SPECIES_STATUSES;
+    }
+
+    /** Java: whether a name of this status counts as a species (SPECIES_STATUSES). */
+    public static boolean isSpeciesStatus(String status) {
+        return status != null && SPECIES_STATUS_LIST.contains(status);
+    }
+
+    /**
+     * SQL: a species or subspecies name (alias a) that counts as a species: rank species or subspecies, status valid or
+     * morphotaxon, identified to genus. Every species count uses it: the place's Species, the genus rows' Species of
+     * every list (the nightly crawl, getCountChildrenQuery), the species lists (TaxaPage), "species + ssp. imaged", the
+     * count check.
+     */
+    public static String countsAsSpecies(String alias) {
+        return alias + ".taxarank in ('species', 'subspecies') and " + speciesStatusCondition(alias) + " and " + identifiedToGenus(alias);
+    }
 
     public static final String SUBFAMILY = "subfamily";
     public static final String GENUS = "genus";
@@ -102,7 +182,8 @@ public final class PlaceTotals {
         switch (rank) {
             case SUBFAMILY: return "t.taxarank = 'subfamily' and t.status in " + COUNTABLE + ANTS;
             case GENUS: return "t.taxarank = 'genus' and t.status in " + COUNTABLE + ANTS;
-            case SPECIES: return "t.taxarank in ('species', 'subspecies') and t.status in " + COUNTABLE + ANTS + " and " + identifiedToGenus("t");
+            // 2026-10-28: valid and morphotaxon only (SPECIES_STATUSES); was the five counted statuses
+            case SPECIES: return "t.taxarank in ('species', 'subspecies') and t.status in " + SPECIES_STATUSES + ANTS + " and " + identifiedToGenus("t");
             default: throw new IllegalArgumentException(rank);
         }
     }
@@ -241,18 +322,13 @@ public final class PlaceTotals {
     }
 
     /**
-     * "Specimens per Subfamily" pie of one place (parameter: its key): subfamily, count. Geolocales and
-     * projects: the specimen counts of the species and subspecies rows of the list (as the Specimens
-     * number); museums and bioregions: the specimens of the museum or bioregion. A slice per subfamily of the
-     * taxon table, one Other slice for the rest (2026-10-21: specimen.subfamily of other families or typos made
-     * one slice each, and the JSON outgrew its column; see pieJson).
+     * "Specimens per Subfamily" pie of one place (parameter: its key): subfamily, count. The specimen counts of the
+     * species and subspecies rows of the list (as the Specimens number; museums and bioregions too since 2026-10-28,
+     * before: the specimens of the museum or bioregion). A slice per subfamily of the taxon table, one Other slice for
+     * the rest (2026-10-21: specimen.subfamily of other families or typos made one slice each, and the JSON outgrew its
+     * column; see pieJson).
      */
     public static String specimenPieSql(String type) {
-        if (MUSEUM.equals(type) || BIOREGION.equals(type)) {
-            String column = MUSEUM.equals(type) ? "museum" : "bioregion";
-            return "select " + SLICE + " subfamily, count(*) count from specimen s" + sliceJoin("s.subfamily")
-                + " where s." + column + " = ? and s.family = 'formicidae' group by " + SLICE + " order by " + SLICE;
-        }
         return "select " + SLICE + " subfamily, sum(l.specimen_count) count from " + listTable(type) + " l"
             + " join taxon t on t.taxon_name = l.taxon_name" + sliceJoin("t.subfamily")
             + " where l." + listKey(type) + " = ? and t.taxarank in ('species', 'subspecies')" + ANTS
@@ -294,18 +370,92 @@ public final class PlaceTotals {
      * " and", or "".
      */
     public static String specimensByListNameSql(String type, String keyLiteral, String specimenCriteria) {
-        String l = listTable(type);
-        String k = listKey(type);
-        return "select m.list_name taxonName, count(*) count from ("
-            + "select l.taxon_name list_name, l.taxon_name src from " + l + " l where l." + k + " = " + keyLiteral
-            + " union all select l.taxon_name list_name, st.taxon_name src from " + l + " l"
-            + " join taxon st on st.current_valid_name = l.taxon_name"
-            + " where l." + k + " = " + keyLiteral + " and " + renamedCondition("st")
-            + ") m join specimen s on s.taxon_name = m.src"
-            + " left join taxon sx on sx.taxon_name = s.taxon_name"
-            + " where (m.src <> m.list_name or coalesce(" + renamedCondition("sx") + ", false) = false)"
+        return "select m.list_name taxonName, count(*) count" + listSpecimensFrom(type, " = " + keyLiteral, "")
             + specimenCriteria
             + " group by m.list_name";
+    }
+
+    /**
+     * The specimens counted under the names of a list, a specimen filed under a renamed name (renamedCondition) under its
+     * current valid name when that is on the list, never under the old name: " from ... where (...)" with the aliases m
+     * (m.pk the place key, m.list_name the list row's name, m.src the name the specimen is filed under) and s (specimen),
+     * sx (the specimen's taxon row, may be null). keyCondition: a condition on the place key such as " = ?" or " = 'X'"
+     * (then the statement takes the key twice), or null for every place. extraJoin: more joins, placed before the where
+     * (for example the images of the specimen). A project's list (all projects at once): worldants and allantwebants count
+     * the very name only (synonymsToValid), so they get no renamed rows. One rule (Brian Fisher, 2026-10-22; images
+     * since 2026-10-28) for the specimens and images of museum, bioregion and curated project lists, the place's images
+     * (PlaceImageCountDb) and the count check.
+     */
+    public static String listSpecimensFrom(String type, String keyCondition, String extraJoin) {
+        String l = listTable(type);
+        String k = listKey(type);
+        String key = keyCondition == null ? "" : " and l." + k + keyCondition;
+        String uncurated = PROJECT.equals(type) ? " and l." + k + " not in ('" + String.join("', '", UNCURATED_PROJECTS) + "')" : "";
+        return " from (select l." + k + " pk, l.taxon_name list_name, l.taxon_name src from " + l + " l where 1 = 1" + key
+            + " union all select l." + k + " pk, l.taxon_name list_name, st.taxon_name src from " + l + " l"
+            + " join taxon st on st.current_valid_name = l.taxon_name"
+            + " where " + renamedCondition("st") + key + uncurated
+            + ") m join specimen s on s.taxon_name = m.src"
+            + " left join taxon sx on sx.taxon_name = s.taxon_name"
+            + (extraJoin == null ? "" : extraJoin)
+            + " where (m.src <> m.list_name or coalesce(" + renamedCondition("sx") + ", false) = false"
+            + (PROJECT.equals(type) ? " or m.pk in ('" + String.join("', '", UNCURATED_PROJECTS) + "')" : "") + ")";
+    }
+
+    /**
+     * The Images column of one museum, bioregion or curated project list (nightly set 4, Countable.getTaxonImageCountQuery):
+     * columns taxonName, family, subfamily, genus, species, imageSum (images of the ant). Brian Fisher, 2026-10-28: images
+     * follow the Specimens rule, so the images of a specimen filed under a synonym count under the valid name (Carebara
+     * polita, a synonym of C. diversa: its 6 images count for C. diversa in the Afrotropical list). keyLiteral as in
+     * specimensByListNameSql; specimenCriteria: the place's own conditions on the specimen (alias s).
+     */
+    public static String imagesByListNameSql(String type, String keyLiteral, String specimenCriteria) {
+        return "select m.list_name taxonName, s.family family, s.subfamily subfamily, s.genus genus, s.species species, count(i.id) imageSum"
+            + listSpecimensFrom(type, " = " + keyLiteral, StatisticsDb.ANT_IMAGES_OF_SPECIMEN)
+            + specimenCriteria
+            + " group by m.list_name, s.family, s.subfamily, s.genus, s.species"
+            + " order by s.family, s.subfamily, s.genus, m.list_name";
+    }
+
+    /**
+     * The Specimens number of one place (parameter: its key): the sum of the specimen counts of the species and subspecies
+     * rows of its list, ants. Every kind of place since 2026-10-28 (Brian Fisher: museum and bioregion "Specimens" = the
+     * sum of their list rows, like countries); museums and bioregions counted every ant specimen of the museum or
+     * bioregion before (any status, names not on the list too).
+     */
+    public static String listedSpecimensSql(String type) {
+        return "select coalesce(sum(l.specimen_count), 0) from " + listTable(type) + " l join taxon t on t.taxon_name = l.taxon_name"
+            + " where l." + listKey(type) + " = ? and t.taxarank in ('species', 'subspecies')" + ANTS;
+    }
+
+    /** Writes the Specimens number of one place (listedSpecimensSql). */
+    public static int writeListedSpecimens(Connection connection, String type, String key) throws SQLException {
+        int n = count(connection, listedSpecimensSql(type), key);
+        try (PreparedStatement stmt = connection.prepareStatement("update " + placeTable(type)
+                + " set specimen_count = ? where " + placeKey(type) + " = ?")) {
+            stmt.setInt(1, n);
+            stmt.setString(2, key);
+            stmt.executeUpdate();
+        }
+        return n;
+    }
+
+    // ---------------------------------------------------------------------------------------------- genus only
+
+    /**
+     * Brian Fisher, 2026-10-28: a genus known at a place only from specimens identified to genus shows "No species" and
+     * "N specimens identified to genus only" on the genus list; the species list has no row for those names and says under
+     * the list how many such specimens there are, by genus. One place (parameter: its key): columns genus (the list row's
+     * parent, the genus taxon name), taxon_name, specimen_count, subfamily, genus_part, species, subspecies, taxarank: the species and subspecies rows of the list whose names are
+     * identified to genus only (GENUS_ONLY_STATUSES, identified to genus), with their specimen counts.
+     */
+    public static String genusOnlySql(String type) {
+        return "select t.parent_taxon_name genus, l.taxon_name, l.specimen_count, t.subfamily, t.genus genus_part, t.species, t.subspecies, t.taxarank"
+            + " from " + listTable(type) + " l"
+            + " join taxon t on t.taxon_name = l.taxon_name"
+            + " where l." + listKey(type) + " = ? and t.taxarank in ('species', 'subspecies') and t.status in " + GENUS_ONLY_STATUSES
+            + ANTS + " and " + identifiedToGenus("t") + " and l.specimen_count > 0"
+            + " order by t.genus, t.parent_taxon_name, l.taxon_name";   // by genus name: "Lioponera (1), Pheidole (2)"
     }
 
     /** A place key as a quoted SQL literal. */
@@ -502,11 +652,13 @@ public final class PlaceTotals {
      * status rule of the counts: a flagged name counts when it has a counted status (COUNTABLE), so never a synonym
      * (nor another name AntCat no longer uses). Until then the Introduced list and both numbers took every flagged row,
      * and the Endemic list every status. One rule for the lists, the numbers (countsFromFlagsSql) and the count check
-     * (CountInvariants place.totals.endemic and place.totals.introduced).
+     * (CountInvariants place.totals.endemic and place.totals.introduced). Endemic since 2026-10-28: valid names only
+     * (ENDEMIC_STATUSES, Brian Fisher); Introduced keeps the counted statuses.
      */
     public static String flaggedCondition(String field) {
         if (!"endemic".equals(field) && !"introduced".equals(field)) throw new IllegalArgumentException(field);
-        return "l.is_" + field + " = 1 and exists (select 1 from taxon ft where ft.taxon_name = l.taxon_name and ft.status in " + COUNTABLE + ")";
+        String statuses = "endemic".equals(field) ? ENDEMIC_STATUSES : COUNTABLE;
+        return "l.is_" + field + " = 1 and exists (select 1 from taxon ft where ft.taxon_name = l.taxon_name and ft.status in " + statuses + ")";
     }
 
     /** endemic.do, introduced.do: the names flagged on one place's list (parameter: its key), by genus, species, subspecies. */

@@ -282,15 +282,18 @@ public class TaxonTreeCountDbTest extends TestCase {
         String m = "'madants'";
         // images of the ant only (Brian Fisher 2026-10-27): casent1 head (its label left out), casent3 profile,
         // casent5 has a label only
-        assertEquals(1, images("proj_taxon", "project_name", m, PA));
-        assertEquals(3, images("proj_taxon", "project_name", m, SYN));
+        // Brian Fisher, 2026-10-28: images follow the Specimens rule: on a curated project's list the synonym's images count
+        // under its valid name (pheidole a: its own head image and the synonym's 3), never under the old name (its row is
+        // not counted; the nightly reset leaves it at 0, and the nightly rename removes it)
+        assertEquals(4, images("proj_taxon", "project_name", m, PA));
+        assertEquals(99, images("proj_taxon", "project_name", m, SYN));
         assertEquals("pheidole a 1, b 1, a x 0 and the synonym 3", 5, images("proj_taxon", "project_name", m, PHEIDOLE));
         assertEquals("the old genus row holds none of it", 99, images("proj_taxon", "project_name", m, WASMANNIA));
         assertEquals(5, images("proj_taxon", "project_name", m, MYRM));
         assertEquals("hypoponera b has a label only", 0, images("proj_taxon", "project_name", m, PON));
         assertEquals(5, images("proj_taxon", "project_name", m, FAMILY));
 
-        exec("update proj_taxon set image_count = 0 where project_name = 'madants' and taxon_name = '" + WASMANNIA + "'");   // as the nightly reset leaves it
+        exec("update proj_taxon set image_count = 0 where project_name = 'madants' and taxon_name in ('" + WASMANNIA + "', '" + SYN + "')");   // as the nightly reset leaves them
         CountCheck.Result r = invariants();
         assertEquals(list(r), 0, real(r, "list.images"));
     }

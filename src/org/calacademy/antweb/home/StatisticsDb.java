@@ -376,11 +376,19 @@ museum
 
     public static final String IMAGED_SPECIMENS_SQL = "select count(*) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id";
 
-    /** Home and statsPage "species + ssp. imaged": valid, morpho or indetermined (counted statuses), as the statsPage text says. */
+    /** Home and statsPage "species + ssp. imaged": ant species and subspecies that are valid names or morphospecies
+     *  (Brian Fisher, 2026-10-28, PlaceTotals.SPECIES_STATUSES; was the five counted statuses), as the statsPage text says. */
     public static final String IMAGED_SPECIES_SQL = "select count(distinct s.taxon_name) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id"
         + " join taxon t on t.taxon_name = s.taxon_name where t.taxarank in ('species', 'subspecies')"
-        + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')" + PlaceTotals.ANTS   // Q7 2026-10-22: ants only
+        + " and t.status in " + PlaceTotals.SPECIES_STATUSES + PlaceTotals.ANTS   // Q7 2026-10-22: ants only
         + " and " + PlaceTotals.identifiedToGenus("t");   // 2026-10-22: names not identified to genus are not species
+
+    /** The same number by the rule before 2026-10-28 (the five counted statuses), so the count check can tell a number
+     *  written before the change (pending until the next nightly run) from a wrong one. */
+    public static final String IMAGED_SPECIES_SQL_BEFORE_20261028 = "select count(distinct s.taxon_name) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id"
+        + " join taxon t on t.taxon_name = s.taxon_name where t.taxarank in ('species', 'subspecies')"
+        + " and t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')" + PlaceTotals.ANTS
+        + " and " + PlaceTotals.identifiedToGenus("t");
 
     /** statistics.valid_species_imaged. */
     public static final String VALID_SPECIES_IMAGED_SQL = "select count(distinct s.taxon_name) from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id"
@@ -482,7 +490,7 @@ museum
                     + validSpecies + "</span> valid species + ssp.<br/>\n");
                 //outFile.write("<span class=\"numbers\">" + numberTotalTaxa + "</span> total species + ssp.<br/>\n");            
                 outFile.write("<span class=\"numbers\">" + specimenRecords + "</span> specimen records<br/>\n");
-                outFile.write("<span class=\"numbers\" title=\"Ant species and subspecies (valid, morpho or indetermined) with a photo of the ant; label photos do not count\">"
+                outFile.write("<span class=\"numbers\" title=\"Ant species and subspecies (valid names and morphospecies) with a photo of the ant; label photos do not count\">"
                     + imagedSpecies + "</span> species + ssp. imaged <br/>\n");
                 outFile.write("<span class=\"numbers\">" + imagedSpecimens + "</span> specimens imaged<br/>\n");
                 outFile.write("<span class=\"numbers\" title=\"Images of the ant; label images are counted separately\">" + totalImages
