@@ -122,6 +122,19 @@ def _is_local_asset(url: str) -> bool:
     return parts.hostname == BASE_HOST and parts.path.lower().endswith((".js", ".css"))
 
 
+def _goto(page, path):
+    """Open a page for the layout and script checks: wait for the document and its scripts and stylesheets
+    (DOMContentLoaded), then up to 30 s more for the images ("load"). Image pages fetch hundreds of thumbnails through
+    the test tunnel; under the full run's load the last one sometimes came after 2 minutes (2026-10-27), although the
+    page finished in 2 s in a browser. The checks do not need the thumbnails."""
+    resp = page.goto(BASE_URL + path, wait_until="domcontentloaded")
+    try:
+        page.wait_for_load_state("load", timeout=30000)
+    except sync_api.TimeoutError:
+        pass
+    return resp
+
+
 def visit(ctx, path: str) -> Visit:
     v = Visit(path)
     page = ctx.new_page()
@@ -136,7 +149,7 @@ def visit(ctx, path: str) -> Visit:
     page.on("pageerror", lambda err: v.errors.append(str(err)))
     page.on("response", on_response)
     try:
-        resp = page.goto(BASE_URL + path, wait_until="load")
+        resp = _goto(page, path)
         v.status = resp.status if resp else None
         page.wait_for_timeout(SETTLE_MS)
         referenced = page.eval_on_selector_all(
@@ -259,7 +272,7 @@ def _open_settled(ctx, path):
     page = ctx.new_page()
     page.errors = []
     page.on("pageerror", lambda err: page.errors.append(str(err)))
-    page.goto(BASE_URL + path, wait_until="load")
+    _goto(page, path)
     page.wait_for_timeout(SETTLE_MS)
     return page
 
