@@ -7,6 +7,12 @@ import org.calacademy.antweb.upload.UploadForm;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Form bean of /descEditImageUpload.do (struts-config name descEditImageUploadForm): the file (theFile2,
+ * from UploadForm), folder and output file name, and the page it came from (target, rank, name, editField).
+ * Filled by the page-text editor's upload field (common/descEdit/taxonImageEditField.jsp, imageDescEditField.jsp)
+ * and read by DescEditImageUploadAction and the confirm pages (common/descEdit/*ImageConfirmForm-body.jsp).
+ */
 public class DescEditImageUploadForm extends UploadForm {
 
     private static final Log s_log = LogFactory.getLog(DescEditImageUploadForm.class);

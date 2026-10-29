@@ -26,6 +26,13 @@ import org.calacademy.antweb.search.RecentImageSearchResults;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * /deleteImages.do: deletes the images ticked on the Recent Images page (recentSearchResults.do,
+ * searchMethod=recentImageSearch, button "Delete Selected Images"). POST only; curators may delete only
+ * images owned by their own group (group_image), admins any. Deletes through ImageDb.deleteImage and
+ * writes one line per image to admin.log. Form: DeleteImagesForm.
+ * Docs: docs/flows/image-upload.md, docs/catalog/actions.csv. Tests: tests/e2e/test_curator.py (POST and CSRF checks).
+ */
 public final class DeleteImagesAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(DeleteImagesAction.class);

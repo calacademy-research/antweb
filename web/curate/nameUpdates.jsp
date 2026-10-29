@@ -1,3 +1,6 @@
+<%-- Name update report page (nameUpdates.do, NameUpdatesAction): specimens moved to the current valid name by
+     the nightly name update (curators see their own group). Tiles wrapper of curate/nameUpdates-body.jsp.
+     Docs: docs/flows/antcat-to-antweb.md. Tests: tests/e2e/test_name_updates.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

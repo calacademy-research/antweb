@@ -22,6 +22,11 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
+/**
+ * Helpers for turning another system's export into an AntWeb specimen file: split a date range, fill adm2,
+ * build the elevation from minimum and maximum, owner code (CAS becomes CASC). Base of TaxonWorksTransformer,
+ * its only subclass.
+ */
 public class Transformer {
 
     private static final Log s_log = LogFactory.getLog(Transformer.class);

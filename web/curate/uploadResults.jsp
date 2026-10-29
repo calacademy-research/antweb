@@ -1,3 +1,7 @@
+<%-- "Successful Upload" page: forward uploadResults of upload.do and utilData.do, used when an operation
+     that returns UploadDetails finishes in the request without a page of its own (UploadDetails.finish());
+     links the report under web/log/. Since 2026-10-20 uploads and most admin data jobs answer with the status
+     page (jobStatus.do) instead, so this page is rarely reached. --%>
 <%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

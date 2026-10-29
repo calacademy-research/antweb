@@ -1,3 +1,11 @@
+<%-- Body of the Curate page (curate.do). "Upload specimen data" (logins with upload rights): the specimen
+     upload form posts the zip to upload.do (action specimenUpload, or taxonWorksUpload through the admins'
+     Upload Type) and the answer is the upload's status page (jobStatus.do); "Recalculate Your Museums"
+     (action museumCalc) after an upload in this session. Then image upload, the curator's upload lists, name
+     and count checks, read-only tools, account links and, for admins, the AntCat import
+     (action fetchAndReloadWorldants), the Species List Tool and the admin cards (curatorLinks.jsp).
+     Reads the login and group from the session; writes nothing itself. Docs: docs/flows/specimen-upload.md (section 1).
+     Tests: tests/e2e/test_curate_page_layout.py, test_curate_page_clarity.py, test_specimen_upload_roundtrip.py. --%>
 <%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>

@@ -8,6 +8,10 @@ import org.apache.struts.action.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Form bean of /deleteImages.do (struts-config name deleteImagesForm): the row numbers ticked in the
+ * Recent Images results (chosen) and the group and daysAgo values of that search. Read by DeleteImagesAction.
+ */
 public final class DeleteImagesForm extends ActionForm {
 
     private static final Log s_log = LogFactory.getLog(DeleteImagesForm.class);

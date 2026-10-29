@@ -12,6 +12,14 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;  
     
+/**
+ * Pre-scan of a specimen file before its lines are loaded (init, called by SpecimenUpload.importSpecimens).
+ * Finds lines broken by an extra carriage return (far fewer columns than the lines before them): they are
+ * skipped, stored in table upload_line (the group's earlier rows are deleted first) so the report can link
+ * each one (logMgr.do?action=uploadLine), and listed under "Extra Carriage Return". Also turns a file line
+ * number into the number shown in the report (getDisplayLineNum). Static state: one specimen upload at a time.
+ * Docs: docs/flows/specimen-upload.md (section 3, step 5).
+ */
 public class LineNumMgr {
 
     private static final Log s_log = LogFactory.getLog(LineNumMgr.class);

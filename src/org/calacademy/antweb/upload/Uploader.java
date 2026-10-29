@@ -22,6 +22,13 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Shared steps of every specimen upload (curator file, manual TaxonWorks, nightly TaxonWorks):
+ * uploadSpecimenFile checks the file (.txt, UTF-8, current header, tab-delimited, a SpecimenCode column) and
+ * refuses it with a message before anything changes, then runs SpecimenUpload.importSpecimens and keeps a
+ * dated copy of the file (UploadFile.backup). Subclasses: SpecimenUploader, TaxonWorksUploader.
+ * Docs: docs/flows/specimen-upload.md (section 3). Tests: UploadDecisions1028Test, UploadSchedulerHardeningTest.
+ */
 public class Uploader {
 
     private static final Log s_log = LogFactory.getLog(Uploader.class);

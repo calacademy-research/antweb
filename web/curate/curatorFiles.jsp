@@ -1,3 +1,6 @@
+<%-- Your Curator Files page (curatorFiles.do, CuratorFilesAction): the logged-in curator's folder
+     web/curator/<login id>/, where page-text images are uploaded (descEditImageUpload.do). Curators and admins
+     (curatorCheck.jsp). Tiles wrapper of curate/curatorFiles-body.jsp. Tests: tests/e2e/test_curator.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

@@ -1,3 +1,7 @@
+<%-- Body of the Image Upload Report (imageUploadReport.do?id=N): the batch (curator, group, artist, date,
+     complete), each saved image with a link to its specimen, and the files not saved with the reason
+     (image_upload, image_upload_refused, read by ImageUploadReport). Read-only.
+     Docs: docs/flows/image-upload.md (section 7). Tests: tests/e2e/test_image_upload.py. --%>
 <%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>
