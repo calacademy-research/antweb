@@ -1134,6 +1134,19 @@ jobs:
             grep -q "^OK (8 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of the genus images of a place (large genera checked in groups of names; TaxonImageNamesTest)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/TaxonImageNamesTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.TaxonImageNamesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (5 tests)" /tmp/out.txt
+          '
+
       - name: Page decisions of 2026-10-27 (upload lists, curator emails, museum Recalculate, legacy images, Native, search order, help text, field guide caste, bot blocking, menu label, no Universal Analytics) (tests/unit/test_decided_pages.py)
         run: python3 tests/unit/test_decided_pages.py
 

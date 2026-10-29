@@ -1621,19 +1621,48 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
     }
 
     // if Genus, see if we can get the pick from a species in our geolocale.
+    /* Large genera (2026-10-29, Brian Fisher: Crematogaster and Pheidole had no image on the Afrotropical genus
+       images page). The names of a genus in a place were put in one "in (...)" list; a list over 10,000 characters
+       was dropped (no image at all) and only the first 50 names were checked for a picked default. The names are
+       now checked in groups of NAMES_PER_QUERY, in their order, up to MAX_NAMES names (the cap keeps homonym pages,
+       which can return 22,000 names, from running hundreds of queries). */
+    public static final int NAMES_PER_QUERY = 250;
+    public static final int MAX_NAMES = 5000;
+
+    /** The names as SQL sets of at most NAMES_PER_QUERY names each, in order, at most MAX_NAMES names in all. */
+    public static ArrayList<String> setStrChunks(java.util.List<String> names) {
+      ArrayList<String> chunks = new ArrayList<>();
+      if (names == null) return chunks;
+      int last = Math.min(names.size(), MAX_NAMES);
+      for (int from = 0; from < last; from += NAMES_PER_QUERY) {
+        String setStr = SqlUtil.getSetStr(new ArrayList<>(names.subList(from, Math.min(from + NAMES_PER_QUERY, last))));
+        if (setStr != null) chunks.add(setStr);
+      }
+      return chunks;
+    }
+
     private String getDefaultFromSpeciesSet(Connection connection, String caste, ArrayList<String> speciesNameSet) throws SQLException {
-      //if (getTaxonName().contains("aenictogiton")) A.log("getDefaultFromSpeciesSet() caste:" + caste + " speciesNameSet:" + speciesNameSet);
-     
-      int maxLoop = 50;  // Some genera can have (camponotus has 1000+ species)... 
-      ImagePickDb imagePickDb = new ImagePickDb(connection);
-      int i = 0;
-      for (String speciesName : speciesNameSet) {
-        ++i;
-        if (i > maxLoop) return null;
-        String pick = imagePickDb.getDefaultSpecimenForTaxon(caste, speciesName);   
-        if (pick != null) {
-          if (taxonDebug()) s_log.debug("getDefaultFromSpeciesSet() caste:" + caste + " pick:" + pick + " taxonName:" + getTaxonName() + " speciesNameSet:" + speciesNameSet);
-          return pick;
+      int last = Math.min(speciesNameSet.size(), MAX_NAMES);
+      for (int from = 0; from < last; from += NAMES_PER_QUERY) {
+        java.util.List<String> names = speciesNameSet.subList(from, Math.min(from + NAMES_PER_QUERY, last));
+        String query = "select taxon_name, value from taxon_prop where taxon_name in " + SqlUtil.getSetStr(new ArrayList<>(names))
+          + " and " + Caste.getPropsClause(caste);
+        java.util.HashMap<String, String> picks = new java.util.HashMap<>();
+        Statement stmt = null;
+        ResultSet rset = null;
+        try {
+          stmt = DBUtil.getStatement(connection, "getDefaultFromSpeciesSet()");
+          rset = stmt.executeQuery(query);
+          while (rset.next()) picks.putIfAbsent(rset.getString("taxon_name"), rset.getString("value"));
+        } finally {
+          DBUtil.close(stmt, rset, this, "getDefaultFromSpeciesSet()");
+        }
+        for (String speciesName : names) {   // first picked name in list order, as before
+          String pick = picks.get(speciesName);
+          if (pick != null) {
+            if (taxonDebug()) s_log.debug("getDefaultFromSpeciesSet() caste:" + caste + " pick:" + pick + " taxonName:" + getTaxonName());
+            return pick;
+          }
         }
       }
       return null;
@@ -1641,18 +1670,24 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
 
     // ??? *** Shouldn't we pass in the view here. To default to H...?
 
-    private String getUnpickedFromSpeciesSet(Connection connection, String caste, String speciesSetStr) {
+    private String getUnpickedFromSpeciesSet(Connection connection, String caste, ArrayList<String> speciesNameSet) {
       String shotClause = " and shot_type = 'h'";
-      return getUnpickedFromSpeciesSet(connection, caste, speciesSetStr, shotClause);
+      return getUnpickedFromSpeciesSet(connection, caste, speciesNameSet, shotClause);
     }
-    private String getUnpickedFromSpeciesSetFlex(Connection connection, String caste, String speciesSetStr) {
+    private String getUnpickedFromSpeciesSetFlex(Connection connection, String caste, ArrayList<String> speciesNameSet) {
       String shotClause = " and (shot_type = 'h' or shot_type = 'p' or shot_type = 'd' or shot_type = 'v')";
-      return getUnpickedFromSpeciesSet(connection, caste, speciesSetStr, shotClause);
+      return getUnpickedFromSpeciesSet(connection, caste, speciesNameSet, shotClause);
+    }
+    private String getUnpickedFromSpeciesSet(Connection connection, String caste, ArrayList<String> speciesNameSet, String shotClause) {
+      for (String speciesSetStr : setStrChunks(speciesNameSet)) {
+        String code = getUnpickedFromSpeciesSet(connection, caste, speciesSetStr, shotClause);
+        if (code != null) return code;
+      }
+      return null;
     }
 
     private String getUnpickedFromSpeciesSet(Connection connection, String caste, String speciesSetStr, String shotClause) {
 
-      if (speciesSetStr.length() > 10000) return null;
         // For homonyms, speiesSetStr can be very long (765892 characters).
         //A.log("getUnpickedFromSpeciesSet() speciesSetString.length: " + speciesSetStr.length()); // + " stackTrace:" + AntwebUtil.getStackTrace());
         /*
@@ -1779,15 +1814,15 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           if (Caste.DEFAULT.equals(caste)) {
             chosenImageCode = getDefaultFromSpeciesSet(connection, Caste.WORKER, speciesNameSet);
             if (chosenImageCode == null)
-              chosenImageCode = getUnpickedFromSpeciesSet(connection, Caste.WORKER, speciesSetStr);
+              chosenImageCode = getUnpickedFromSpeciesSet(connection, Caste.WORKER, speciesNameSet);
             if (chosenImageCode == null)
               chosenImageCode = getDefaultFromSpeciesSet(connection, Caste.QUEEN, speciesNameSet);
             if (chosenImageCode == null)
-              chosenImageCode = getUnpickedFromSpeciesSet(connection, Caste.QUEEN, speciesSetStr);
+              chosenImageCode = getUnpickedFromSpeciesSet(connection, Caste.QUEEN, speciesNameSet);
             if (chosenImageCode == null)
               chosenImageCode = getDefaultFromSpeciesSet(connection, Caste.MALE, speciesNameSet);
             if (chosenImageCode == null)
-              chosenImageCode = getUnpickedFromSpeciesSet(connection, Caste.MALE, speciesSetStr);
+              chosenImageCode = getUnpickedFromSpeciesSet(connection, Caste.MALE, speciesNameSet);
 // DO WE NEED THESE?
 //            if (chosenImageCode == null) 
 //              chosenImageCode = getUnpickedFromSpeciesSetFlex(caste, speciesSetStr);
@@ -1796,7 +1831,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
             chosenImageCode = getDefaultFromSpeciesSet(connection, caste, speciesNameSet);
             if (taxonDebug()) s_log.debug("getUnpickedDefault() chosenImageCode:" + chosenImageCode);
             if (chosenImageCode == null) 
-              chosenImageCode = getUnpickedFromSpeciesSet(connection, caste, speciesSetStr);
+              chosenImageCode = getUnpickedFromSpeciesSet(connection, caste, speciesNameSet);
 // Need these?
 //            if (chosenImageCode == null) 
 //              chosenImageCode = getUnpickedFromSpeciesSetFlex(caste, speciesSetStr);
@@ -1808,7 +1843,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
           return chosenImageCode;          
         }
 
-        chosenImageCode = getUnpickedFromSpeciesSet(connection, caste, speciesSetStr);
+        chosenImageCode = getUnpickedFromSpeciesSet(connection, caste, speciesNameSet);
         // It would be nice here to know what the caste the retuned image code is, and
         // return the taxon's default for that caste if it is different. This would cause
         // us to use a default instead of a random in cases of species. If we request
@@ -1817,7 +1852,7 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
         // This gets us a specimen even though there is no h image. See sculptinodis
         // on: http://localhost/antweb/taxonomicPage.do?rank=species&bioregionName=Malagasy&images=true&statusSetSize=max&statusSet=valid%20extant
         if (chosenImageCode == null) 
-          chosenImageCode = getUnpickedFromSpeciesSetFlex(connection, caste, speciesSetStr);
+          chosenImageCode = getUnpickedFromSpeciesSetFlex(connection, caste, speciesNameSet);
 
 		if (taxonDebug()) s_log.debug("getUnpickedDefault() rank:" + getRank() + " taxonName:" + getTaxonName() + " caste:" + caste + " overview:" + overview + " chosenImageCode:" + chosenImageCode); // + " speciesNameSet:" + speciesNameSet + " speciesSetStr:" + speciesSetStr);
 
