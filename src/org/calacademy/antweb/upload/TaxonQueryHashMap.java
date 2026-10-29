@@ -5,6 +5,11 @@ import java.util.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * The taxon names one specimen upload has already saved, so AntwebUpload.saveTaxon does not save the same
+ * name again for each of its specimens. Not used by the AntCat (WorldAnts) load (source worldants or skip);
+ * holds at most about 3000 names.
+ */
 class TaxonQueryHashMap extends HashMap {
   
   private static final Log s_log = LogFactory.getLog(TaxonQueryHashMap.class);

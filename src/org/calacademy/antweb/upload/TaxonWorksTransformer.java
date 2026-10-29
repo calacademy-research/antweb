@@ -23,6 +23,14 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Turns the data.tsv of a CAS TaxonWorks Darwin Core archive into an AntWeb specimen file (transformFile):
+ * renames columns (directHeaderTranslations), builds the date range, collection code, elevation, owner (CAS
+ * to CASC) and previous determinations, and leaves out records whose column count is wrong (getSkippedRecords).
+ * Used by TaxonWorksUploader (manual TaxonWorks upload and the nightly job). Files only, no database.
+ * Docs: docs/flows/specimen-upload.md (section 2.2).
+ * Tests: TaxonWorksTransformFixtureTest (fixtures/taxonworks-data.tsv), PreviousDeterminationsTest.
+ */
 public class TaxonWorksTransformer extends Transformer {
 
 

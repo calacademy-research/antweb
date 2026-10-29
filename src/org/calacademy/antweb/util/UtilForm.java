@@ -2,6 +2,11 @@ package org.calacademy.antweb.util;
 
 import org.apache.struts.action.ActionForm;
 
+/**
+ * Form bean utilForm of query.do, utilData.do, util.do and schedule.do (WEB-INF/struts-config.xml): action and
+ * its parameters (num, id, groupId, name, code, country, taxonName, prop, param, param2, text, reload) and the
+ * scheduler's secureCode (masked in toString). Read by QueryAction, UtilDataAction, UtilAction and Scheduler.
+ */
 public class UtilForm extends ActionForm {
   protected String action;
   protected String field;

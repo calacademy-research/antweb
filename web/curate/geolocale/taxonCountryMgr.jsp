@@ -1,3 +1,5 @@
+<%-- "Taxon Country Manager" page (forward taxonCountryPage of upload.do). Not used: no code returns that forward.
+     Tiles wrapper of curate/geolocale/taxonCountryMgr-body.jsp. --%>
 <%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

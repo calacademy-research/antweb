@@ -1,3 +1,6 @@
+<%-- Answer of descEditImageUpload.do (DescEditImageUploadAction) for a file uploaded from the text editor of an
+     overview page (project, country, adm1, region, subregion, museum): the file's link and img tag. Tiles wrapper
+     of common/descEdit/overviewImageConfirmForm-body.jsp. No functional e2e test (docs/catalog/actions.csv). --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

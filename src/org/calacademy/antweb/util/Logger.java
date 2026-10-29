@@ -9,6 +9,11 @@ import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Locale;
 
+/**
+ * Logging helpers like A: log (class name of the caller and the message, at info level, on every server), iLog
+ * (every nth call), loopCount and logDev (dev mode or developer logins only). Used by HttpUtil, DBUtil and
+ * OverviewMgr. Writes to the Tomcat log through commons-logging.
+ */
 public class Logger {
 
   /* This lovely little class is for convenience.  Something like this:

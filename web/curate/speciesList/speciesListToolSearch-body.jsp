@@ -1,3 +1,6 @@
+<%-- Body of the Species List Tool's advanced search: name, subfamily, genus, species, subspecies, bioregion,
+     country and adm1 (menus from the action), locality, located at and specimen code, in a POST form with the form
+     token to speciesListTool.do (doSearch=searchResults); the matching names become the reference list. --%>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix=	"html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

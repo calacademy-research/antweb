@@ -14,6 +14,11 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * /projectMgr.do: the Project Manager (curate/projectMgr.jsp), admins only (Check.admin): the live and not-live
+ * projects with links to their settings (editProject.do), Create and Delete. Reads and writes nothing itself.
+ * Docs: docs/guides/manager-tools.md (Project Manager). Tests: tests/e2e/test_manager_tools.py.
+ */
 public final class ProjectMgrAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ProjectMgrAction.class);

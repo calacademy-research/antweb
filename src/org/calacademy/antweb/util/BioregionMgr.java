@@ -10,6 +10,12 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * In-memory list of the bioregions (table bioregion, through BioregionDb, with their projects), loaded by
+ * AntwebMgr at start-up and on util.do?action=reloadAntwebMgr. Lookup by name (AntCat spellings Neotropic and
+ * Afrotropic are mapped to Neotropical and Afrotropical), name validation for uploads, and the bioregion list
+ * for the place pages, endemic lists and count checks. Docs: docs/flows/places.md, docs/flows/taxon-pages.md.
+ */
 public class BioregionMgr {
 
     private static final Log s_log = LogFactory.getLog(BioregionMgr.class);

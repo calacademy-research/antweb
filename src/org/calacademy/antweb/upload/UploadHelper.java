@@ -3,6 +3,11 @@ package org.calacademy.antweb.upload;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.upload.*;
 
+/**
+ * Static holder of the file and group of the specimen upload in progress: set by Uploader.uploadSpecimenFile,
+ * read by LineNumMgr (upload_line rows) and UploadDetails (report). Works only because specimen uploads run
+ * one at a time (BackgroundJobs).
+ */
 public class UploadHelper {
   static Group group;
   static String source;

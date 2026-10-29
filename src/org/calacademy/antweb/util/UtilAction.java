@@ -23,6 +23,14 @@ import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 
 
+/**
+ * /util.do: admin utilities and two system calls by action=. isBusy (plain text idle or busy, BusyStatus; read
+ * by the deploy) and isRestart (true or false, AntwebSystem.isRestart; polled by bin/reboot_checker.sh) answer
+ * anyone. postInstantiate: AntWeb's own call after start-up (AntwebMgr.callPostInitialize, code in a header,
+ * SchedulerCall) to finish loading the managers. Admins, POST only: reloadAntwebMgr (name= one manager, or
+ * all), logQueryStats (web/log/queryStats.log) and emailTest. Form: UtilForm. Docs: docs/runbook.md,
+ * docs/catalog/actions.csv. Tests: tests/e2e/test_cleanup_batch3.py, test_upload_report_links.py.
+ */
 public class UtilAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(UtilAction.class);

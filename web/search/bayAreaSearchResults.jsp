@@ -1,3 +1,6 @@
+<%-- Results page of the old Bay Area search (forward bayAreaSearch of prepareMapResults.do and
+     prepareCompareResults.do with resultRank=bayArea): tiles wrapper of search/bayAreaSearchResults-body.jsp. Dead
+     code: nothing puts Bay Area results in the session (see BayAreaSearchResults). --%>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

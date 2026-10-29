@@ -1,3 +1,6 @@
+<%-- Body of the upload group saved page: the request attribute savedGroupText (escaped) and, for admins, links to
+     add an uploader to the group, reopen it (savedGroupId), the upload group list and the Login Manager.
+     Read-only. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

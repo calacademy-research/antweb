@@ -1,3 +1,6 @@
+<%-- Body of the species list check: instructions, the template file (data/validateSpeciesList_template.txt), the
+     upload form (POST, multipart, with the form token) and the report (request attribute validationReport):
+     summary, problems, format errors and matches, with the two TSV downloads (POST). Read-only. --%>
 <%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>

@@ -54,6 +54,11 @@
    truncation before the Images only and Types only filters, limits the full searches of visitors not logged in, adds
    microhabitat once, sorts by caste with each item's own subcaste and gives a message instead of a blank page.
    Unit test: test/.../audit/PlacesSearchFixesTest.java.
+14. (2026-10-29, audit triage) No public page copies request values onto its session beans (jsp:setProperty
+   property="*"); homonym lookups quote the name; the field guide, specimen images, image picker and map pages
+   escape the names they put in links and scripts; a specimen file's drop and the AntCat preparation stop the upload
+   on a database error; page text is not saved on a homonym page; Server Status is for administrators; the busy
+   check reads working connections. Unit test: test/.../util/AuditTjFixesTest.java.
 Run: python3 tests/unit/test_small_fixes.py   (also in .github/workflows/tests.yaml)
 """
 import os
@@ -460,6 +465,31 @@ def test_places_and_search_fixes_20261028(sources):
     print("Museum lists, project updates, endemism, place navigation and the advanced search fixes of 2026-10-28 hold.")
 
 
+def test_audit_triage_20261029(sources):
+    public = [p for p in files(os.path.join(ROOT, "web"), (".jsp",)) if "/web/curate/" not in p]
+    for path in public:
+        text = read(os.path.relpath(path, ROOT))
+        assert not re.search(r'<jsp:setProperty\s+name="\w+"\s+property="\*"', text), path
+    hom = sources["src/org/calacademy/antweb/home/HomonymDb.java"]
+    assert "\" taxon_name = '\" + taxonName" not in hom and "DBUtil.sqlLiteral(taxonName)" in hom
+    fg = read("web/search/fieldGuide-body.jsp")
+    assert "Html.escAttr(link_params)" in fg and 'requestUri == ""' not in fg
+    si = read("web/specimenImages-body.jsp")
+    assert "details:<%= specimen.getDetails() %>" not in si
+    # imagePickImages.jsp was removed 2026-10-29: nothing included it.
+    assert not os.path.exists(os.path.join(ROOT, "web/search/imagePickImages.jsp"))
+    assert "Html.escAttr(prettyName)" in read("web/dynamicMap.jsp")
+    up = sources["src/org/calacademy/antweb/home/SpecimenUploadDb.java"]
+    assert up.count("throw e;") >= 3, "dropSpecimens and deleteSpecimens rethrow"
+    prep = sources["src/org/calacademy/antweb/home/SpeciesListUploadDb.java"]
+    assert "public void prepareDatabase(String project) throws SQLException" in prep
+    assert "isHomonym(editObject)" in sources["src/org/calacademy/antweb/DescriptionAction.java"]
+    assert "LoginMgr.mustBeAdmin(request, mapping)" in sources["src/org/calacademy/antweb/util/ServerStatusAction.java"]
+    assert "activeProcessCount(processListArray) > 100" in sources["src/org/calacademy/antweb/util/DBStatus.java"]
+    assert "Project.ALLANTWEBANTS.equals(overview.getName())" in sources["src/org/calacademy/antweb/TaxaPageAction.java"]
+    print("Audit triage fixes of 2026-10-29 hold.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -480,6 +510,7 @@ def main():
     test_triage_20261028(sources)
     test_nightly_triage_2026_10_28(sources)
     test_places_and_search_fixes_20261028(sources)
+    test_audit_triage_20261029(sources)
 
 
 if __name__ == "__main__":

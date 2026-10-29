@@ -49,6 +49,12 @@ public class DescriptionAction extends AntwebAction {
           request.setAttribute("message", "Unknown page field: " + Html.esc(editField));
           return false;
         }
+        // A homonym page shares its taxon_name with the valid (senior) name, so a save here would write the
+        // senior name's text. Homonym text comes from AntCat (description_homonym) and is not edited here (2026-10-29).
+        if (isHomonym(editObject)) {
+          request.setAttribute("message", "The page text of a homonym comes from AntCat and cannot be edited on AntWeb.");
+          return false;
+        }
         // Saving changes data: only from the edit form (POST).
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
           request.setAttribute("message", "Please use the edit form to save page text.");
@@ -421,8 +427,13 @@ public class DescriptionAction extends AntwebAction {
      * save): read its stored text fresh from the database, with its fingerprint. A failed read
      * shows a message instead of an editor. Also sets the page key used for browser drafts.
      */
+    /** True for a homonym page (its text is not editable, see saveDescriptionEdit). */
+    static boolean isHomonym(Describable describable) {
+        return describable instanceof Homonym;
+    }
+
     protected void prepareDescriptionEdit(Describable describable, Login accessLogin, HttpServletRequest request, Connection connection) {
-        if (describable == null || !DescEditSafety.canEdit(accessLogin)) return;
+        if (describable == null || !DescEditSafety.canEdit(accessLogin) || isHomonym(describable)) return;
         request.setAttribute(DescEditSafety.PAGE_KEY_ATTR, DescEditSafety.pageKey(describable));
         String field = DescEditSafety.activeEditField(request);
         if ("none".equals(field) || !EDIT_FIELDS.contains(field)) return;

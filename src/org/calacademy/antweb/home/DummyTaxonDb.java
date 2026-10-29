@@ -9,6 +9,11 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
 
+/**
+ * Reads the main columns of one taxon (or, with table "homonym", one homonym) row into a DummyTaxon, a taxon
+ * object that is not fully loaded. Used by the AntCat import (SpeciesListUpload) and OrphansDb. The comment in
+ * the class asks for TaxonDb.getTaxon to be used instead. Tables taxon, homonym.
+ */
 public class DummyTaxonDb extends AntwebDb {
 
     public static int s_dummyTaxonFetchCount = 0;

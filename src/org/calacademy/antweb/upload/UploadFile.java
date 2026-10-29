@@ -13,6 +13,12 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * A file being loaded (specimen file, species list or AntCat file) in the working folder: its location and
+ * encoding (always UTF-8 since 2026-10-28; firstNonUtf8Line finds the first bad line for the refusal), and
+ * backup(), which keeps a dated copy in web/upload/ (the copy curators download through uploadFile.do).
+ * Docs: docs/flows/specimen-upload.md (sections 2.1, 3 step 9). Tests: UploadDecisions1028Test, UploadReportCountsTest.
+ */
 public class UploadFile {
     private static final Log s_log = LogFactory.getLog(UploadFile.class);
 

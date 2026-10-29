@@ -27,6 +27,14 @@ import java.util.regex.*;
 import org.calacademy.antweb.AntFormatter;
 
 
+/**
+ * Request and URL helpers used by the actions and JSPs: the request's address and parameters (getTarget,
+ * getQueryString, getParam...), invalid-request and bot checks (invalidRequest, isLegitRequest, isBot,
+ * isBotAttackDefence, hasIllegalChars; repeat offenders go to BadActorMgr), safe redirects, UTF-8 setup, the
+ * client IP, forLog (hides secret parameters in logs), and HTTP fetches with timeouts (getUrl, fetchUrl,
+ * downloadToFile; used by the AntCat file download, with FetchRetry, and by the Scheduler's calls to
+ * utilData.do). Tests: HttpUtilQueryTest, FetchRetryTest, PostMethodTest, XssEscapingTest.
+ */
 public abstract class HttpUtil {
 
     private static final Log s_log = LogFactory.getLog(HttpUtil.class);

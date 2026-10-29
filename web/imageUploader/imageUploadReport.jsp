@@ -1,3 +1,6 @@
+<%-- Image Upload Report page (imageUploadReport.do?id=N, ImageUploadReport): one batch of uploaded images.
+     Tiles wrapper of imageUploader/imageUploadReport-body.jsp. Docs: docs/flows/image-upload.md (section 7).
+     Tests: tests/e2e/test_image_upload.py. --%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
 <%@ page errorPage = "error.jsp" %>

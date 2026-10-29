@@ -22,6 +22,13 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * TaxonWorks uploads: the manual one (upload.do?action=taxonWorksUpload, the curate page's Upload Type,
+ * run by SpecimenUploadJob) and the nightly CAS job (TaxonWorksNightly calls prepareFromArchive, then
+ * uploadPreparedFile). Takes data.tsv from the archive, converts it with TaxonWorksTransformer to
+ * workingDir/specimenTW<groupId>.txt and runs the shared steps in Uploader.uploadSpecimenFile.
+ * Docs: docs/flows/specimen-upload.md (sections 2.2, 5). Tests: TaxonWorksNightlyDecisionsTest.
+ */
 public class TaxonWorksUploader extends Uploader {
 
     private static final Log s_log = LogFactory.getLog(TaxonWorksUploader.class);

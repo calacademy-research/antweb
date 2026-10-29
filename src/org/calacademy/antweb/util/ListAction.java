@@ -15,6 +15,15 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /list.do (also /favs.do): assorted lists by action=. Public: likes (favourite images, imageLikes.jsp),
+ * pictureLikes and recentDescEdits (util/list.jsp). Curators: introducedSpecimen and multiBioregionTaxaList
+ * (groupId=; util/listTable.jsp, util/listOfLists.jsp). Admins: usrAdm, usrAdmLastLogin (util/list.jsp) and
+ * casentDAnomalies (specimen parts, -D codes, with different names; HTML or CSV, PartsReport). Reads tables
+ * image_like, description_edit, specimen and login; writes nothing. Bots are refused. Docs:
+ * docs/catalog/actions.csv. Tests: tests/e2e/test_parts_by_group.py, test_check57_merges.py,
+ * test_admin_staging.py.
+ */
 public final class ListAction extends AntwebAction {
 
     // countries, bioregions: Curate page cleanup. getTaxonNames (the autocomplete does this),

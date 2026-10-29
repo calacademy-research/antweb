@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- Body of a field guide (fieldGuide.do, fieldGuideResults.do): the request attribute fieldGuide (FieldGuide) with
+     its title, the taxon's heading and tabs when it is of one taxon's children, then per taxon its head and profile
+     images, a small map (maps/googleMapInclude.jsp) and the Specimen Habitat Summary; orderBy= sorts the taxa.
+     Read-only. Docs: docs/flows/places.md. Tests: tests/e2e/test_field_guide_compare.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
@@ -15,7 +18,7 @@
 <%@ page import="org.calacademy.antweb.Formatter" %>
 
 <jsp:useBean id="specimen" scope="session" class="org.calacademy.antweb.Specimen" />
-<jsp:setProperty name="specimen" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-29): the action fills the bean; request values must not overwrite it. --%>
 
 <%
    if (AntwebProps.isDevMode()) {
@@ -40,7 +43,8 @@
    String requestUri = HttpUtil.getQueryString(request);
    boolean from_search = false;
    String search_title = "";
-   if (requestUri == "") {
+   if (requestUri == null) requestUri = "";
+   if ("".equals(requestUri)) {
        from_search = true;
        search_title = "Field Guide of Selected Results";
    }
@@ -80,7 +84,7 @@
     <div id="page_contents">
     <% if (taxon.getRank() != null) { %>
       <h1>
-      <%= new Formatter().capitalizeFirstLetter(taxon.getRank()) %>: <%= dagger %><%= taxon.getPrettyName() %>
+      <%= new Formatter().capitalizeFirstLetter(taxon.getRank()) %>: <%= dagger %><%= Html.esc(taxon.getPrettyName()) %>
       <% if (taxon.getIsValid()) { %>
         <img src="<%= AntwebProps.getDomainApp() %>/image/valid_name.png" border="0" title="Valid Name">
       <% } %>
@@ -93,23 +97,23 @@
 
         String taxonRank = taxon.getRank();
         if (Rank.SUBFAMILY.equals(taxonRank)) {
-            link_params = "subfamily=" + taxon.getSubfamily() + "&name=" + taxon.getSubfamily() + "&rank=subfamily&" + overview.getParams();
+            link_params = "subfamily=" + Html.url(taxon.getSubfamily()) + "&name=" + Html.url(taxon.getSubfamily()) + "&rank=subfamily&" + overview.getParams();
         } else if (Rank.GENUS.equals(taxonRank)) {
-            link_params = "subfamily=" + taxon.getSubfamily() + "&genus=" + taxon.getGenus() + "&name=" + taxon.getGenus() + "&rank=genus&" + overview.getParams();
+            link_params = "subfamily=" + Html.url(taxon.getSubfamily()) + "&genus=" + Html.url(taxon.getGenus()) + "&name=" + Html.url(taxon.getGenus()) + "&rank=genus&" + overview.getParams();
         } else if (Rank.SPECIES.equals(taxonRank)) {
-            link_params = "subfamily=" + taxon.getSubfamily() + "&genus=" + taxon.getGenus() + "&name=" + taxon.getName() + "&rank=species&" + overview.getParams();
+            link_params = "subfamily=" + Html.url(taxon.getSubfamily()) + "&genus=" + Html.url(taxon.getGenus()) + "&name=" + Html.url(taxon.getName()) + "&rank=species&" + overview.getParams();
         } else if (Rank.SPECIMEN.equals(taxonRank)) {
-            link_params = "name=" + specimen.getName().toLowerCase();
+            link_params = "name=" + Html.url(specimen.getName() == null ? "" : specimen.getName().toLowerCase());
         } else {
-            link_params = "name=" + taxon.getName() + "&rank=" + taxon.getRank() + "&" + overview.getParams();
+            link_params = "name=" + Html.url(taxon.getName()) + "&rank=" + Html.url(taxon.getRank()) + "&" + overview.getParams();
         }
     %>
 
         <div class="links">
             <ul>
-                <li><a class="clean_url overview" href="<%= AntwebProps.getDomainApp() %>/description.do?<%=link_params%>">Overview</a></li>
-                <li><a class="clean_url list" href="<%= AntwebProps.getDomainApp() %>/browse.do?<%=link_params%>"><%= Rank.getNextPluralRank(rank) %></a></li>
-                <li><a class="clean_url images" href="<%= AntwebProps.getDomainApp() %>/images.do?<%=link_params%>">Images</a></li>
+                <li><a class="clean_url overview" href="<%= AntwebProps.getDomainApp() %>/description.do?<%= Html.escAttr(link_params) %>">Overview</a></li>
+                <li><a class="clean_url list" href="<%= AntwebProps.getDomainApp() %>/browse.do?<%= Html.escAttr(link_params) %>"><%= Rank.getNextPluralRank(rank) %></a></li>
+                <li><a class="clean_url images" href="<%= AntwebProps.getDomainApp() %>/images.do?<%= Html.escAttr(link_params) %>">Images</a></li>
             </ul>
         </div>
 
@@ -177,7 +181,7 @@
      %>
         <div class="clear"></div>
         <div class="page_spacer"></div>
-        <h3><%= (new Formatter()).capitalizeFirstLetter(fgTaxon.getRank()) %>: <a href="<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= fgTaxon.getTaxonName() %>"><%= fgTaxon.getPrettyName() %></a></h3>
+        <h3><%= (new Formatter()).capitalizeFirstLetter(fgTaxon.getRank()) %>: <a href="<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= Html.escAttr(Html.url(fgTaxon.getTaxonName())) %>"><%= Html.esc(fgTaxon.getPrettyName()) %></a></h3>
     <%
         //if (AntwebProps.isDevMode()) if (map.getGoogleMapFunction() == null) AntwebUtil.log("fieldGuide-body.jsp taxonName:" + fgTaxon.getTaxonName());
 

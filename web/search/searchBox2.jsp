@@ -1,4 +1,5 @@
-
+<%-- Google Custom Search box with a placeholder engine id (cx 123:456) and an example.com results address. Dead
+     code: nothing includes it. --%>
 <div class="search">
 Search!
 

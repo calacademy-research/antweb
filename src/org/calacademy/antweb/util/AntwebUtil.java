@@ -29,6 +29,12 @@ import org.calacademy.antweb.util.AntwebUtil;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * General helpers: logging and stack traces, reading and writing files in the data and web folders, time
+ * arithmetic (millisSince, minsSince, daysSince ...), random and case numbers, the Scheduler's secure code
+ * (getSecureCode, isSecureCode, checked by SchedulerCall), memory statistics, the admin and developer email
+ * addresses, request info for logs, and email address checks. main() is a developer test.
+ */
 public abstract class AntwebUtil {
 
   private static final Log s_log = LogFactory.getLog(AntwebUtil.class);
@@ -81,10 +87,9 @@ public abstract class AntwebUtil {
       return AntwebUtil.getRandomNumber();
     }             
 
-    private static long s_uniqueNum = 0;
-    public static long getUniqueNumber() {
-      s_uniqueNum = s_uniqueNum + 1;
-      return s_uniqueNum;
+    private static final java.util.concurrent.atomic.AtomicLong s_uniqueNum = new java.util.concurrent.atomic.AtomicLong();
+    public static long getUniqueNumber() {   // atomic (2026-10-29): two threads could get the same number
+      return s_uniqueNum.incrementAndGet();
     }
 
     /*

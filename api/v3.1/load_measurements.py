@@ -167,6 +167,14 @@ def main():
     print('release %s: %d rows already in measurement' % (release, existing))
     if existing and not args.replace:
         sys.exit('STOP: release %s already loaded. Use --replace to delete and reload it.' % release)
+    # 2026-10-29: never delete a loaded release to load nothing (every row held, or no release name).
+    if not str(release).strip():
+        sys.exit('STOP: the file names no data release.')
+    if not keep:
+        sys.exit('STOP: no row can be loaded (all %d held). Nothing changed.' % len(rows))
+    if existing and len(keep) < existing:
+        print('NOTE: release %s will have %d rows, %d fewer than now (held rows are not reloaded).' % (
+            release, len(keep), existing - len(keep)))
 
     if args.dry_run:
         print('dry run: would load %d rows for release %s%s' % (

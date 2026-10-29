@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- Body of the image comparison (compareResults.do): the session's taxaToCompare (CompareResultsAction), each
+     specimen or species with its images in a row and a checkbox; the form (POST to compareResults.do with a view:
+     Head, Profile, Dorsal, Ventral or Label) shows one view of the selected rows (multiTaxaOneView.jsp). Read-only.
+     Tests: tests/e2e/test_numbers_search.py::test_comparison_counts_the_chosen_specimens. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.search.*" %>

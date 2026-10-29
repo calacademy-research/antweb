@@ -1,3 +1,5 @@
+<%-- Country Documentation page (countryDoc.do, a forward with no action class; admins only, by adminCheck.jsp in
+     the body). Tiles wrapper of curate/geolocale/countryDoc-body.jsp. Linked from the Geolocale Manager. --%>
 <%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

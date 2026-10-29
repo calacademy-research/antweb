@@ -9,6 +9,13 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Table homonym: AntCat names that are also used by another taxon, with their author and date. Reads one homonym
+ * for its page (description.do, homonymPage.jsp), the list for the admin report (query.do?action=homonyms), the
+ * name of an AntCat id, and which subfamily holds a genus (checks of the specimen upload and the AntCat import).
+ * Rows are written by the AntCat import (AntwebUpload, SpeciesListUploadDb). Docs: docs/flows/taxon-pages.md,
+ * docs/data-model.md (homonym).
+ */
 public class HomonymDb extends AntwebDb {
     
     private static final Log s_log = LogFactory.getLog(HomonymDb.class);
@@ -56,6 +63,7 @@ public class HomonymDb extends AntwebDb {
     } */
     public Homonym getHomonym(int antcatId) {
         Homonym homonym = (Homonym) getInfoHomonym(antcatId);
+        if (homonym == null) return null;   // unknown AntCat id (was a NullPointerException, 2026-10-29)
         try {
             homonym.setSeniorHomonym(getConnection());
         } catch (SQLException e) {
@@ -190,14 +198,12 @@ public class HomonymDb extends AntwebDb {
         Taxon taxon = null;
         if (taxonName == null) return null;
 
-        String criteria = " taxon_name = '" + taxonName + "'";
+        // Quoted and escaped (2026-10-29): the name can come from a page's request (description.do?taxonName=).
+        String criteria = " taxon_name = " + DBUtil.sqlLiteral(taxonName);
 
         // Criteria should not be null.
         if (authorDate != null) {
-
-            authorDate = DBUtil.escapeQuotes(authorDate);
-
-            criteria += " and author_date = '" + authorDate + "'";
+            criteria += " and author_date = " + DBUtil.sqlLiteral(authorDate);
         } else {
             switch (taxonName) {
                 case "myrmicinaecarebara silvestrii":

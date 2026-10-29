@@ -1,3 +1,7 @@
+<%-- Body of the Bioregion Map Manager ("Genera Native Distribution Tool"): one row per valid extant genus
+     (request attribute genusList) with a checkbox per bioregion and totals; sort by subfamily or genus. Admins
+     get a save arrow per row (a POST with the form token to bioregionMapMgr.do); curators only look. Docs:
+     docs/guides/manager-tools.md (Bioregion Map Manager). --%>
 <%@ page import="java.util.*" %>
 
 <%@ page import="org.calacademy.antweb.curate.*" %>

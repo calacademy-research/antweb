@@ -1,3 +1,7 @@
+<%-- Body of the Project Manager (admins): Create (a GET to editProject.do with the new key), Delete (a POST to
+     upload.do with deleteProject; the menu lists the projects assigned to the admin's login), and the live and
+     not-live projects (ProjectMgr) with links to their page and settings. Docs: docs/guides/manager-tools.md
+     (Project Manager). --%>
 <%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

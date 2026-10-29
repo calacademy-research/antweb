@@ -12,6 +12,12 @@ import java.util.regex.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;    
     
+/**
+ * File helpers: read the first lines of a file, grep an upload file, empty the web upload folder, disk use
+ * (getPercentDiskFull, df -h), file attributes, size and last-modified date for the admin pages, make folders
+ * and set permissions, report file names, and getContent, which includes a generated file (web/genInc/..., the
+ * site warning) in a JSP without failing when it is missing.
+ */
 public class FileUtil {
 
   private static final Log s_log = LogFactory.getLog(FileUtil.class);

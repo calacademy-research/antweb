@@ -12,6 +12,14 @@ import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.util.*;
 
 
+/**
+ * Table upload (one row per specimen upload) and upload_line: reads an upload, the list of uploads (UploadMgr,
+ * listSpecimenUploads.do), a group's or login's last upload, the counts of a group's specimens (getCounts) and
+ * the lines of the last file (logMgr.do?action=uploadLine); helpers of the uploads (taxonomic history rows, a
+ * genus's subfamily check). Base class of SpecimenUploadDb, SpeciesListUploadDb, WorldantsUploadDb.
+ * Tables upload, upload_line, ant_group, specimen, taxon. Docs: docs/flows/specimen-upload.md, docs/numbers.md.
+ * Tests: NumberDecisionsDbTest.
+ */
 public class UploadDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(UploadDb.class);

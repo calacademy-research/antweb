@@ -10,6 +10,12 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Meant to keep the specimen maps of subfamilies and genera in memory between requests. Switched off in the
+ * code (persist = false in getMap): every call builds a new Map (taxon pages, BrowseAction; big map,
+ * BigMapAction). refresh() and report() are called by AntwebMgr. Docs: docs/flows/taxon-pages.md,
+ * docs/flows/places.md.
+ */
 public abstract class MapMgr {
 
     private static final Log s_log = LogFactory.getLog(MapMgr.class);

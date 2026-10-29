@@ -36,8 +36,10 @@ public class StatusSet extends Status {
     public final static String[] allStatusSetArray = {    
         WORLDANTS, ALL, ALL_DETERMINED, ALL_INDETERMINED, COMPLETE, VALID_FOSSIL, VALID_EXTANT, TYPE
     };
+    // TYPE is not offered to visitors (2026-10-29): it has no criteria ("1 = 1"), so it listed every name
+    // under a label that promises type taxa only. It stays in allStatusSetArray (curators and admins).
     public final static String[] minimalStatusSetArray = {    
-        ALL, COMPLETE, VALID_FOSSIL, VALID_EXTANT, TYPE
+        ALL, COMPLETE, VALID_FOSSIL, VALID_EXTANT
     };
 
     public static ArrayList<String> getAdminStatusSets() {

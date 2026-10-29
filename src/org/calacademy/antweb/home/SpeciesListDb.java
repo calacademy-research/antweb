@@ -12,6 +12,13 @@ import org.calacademy.antweb.util.*;
 
 import org.calacademy.antweb.curate.speciesList.*;
 
+/**
+ * The Species List Tool (speciesListTool.do, curators): reads the project and geolocale lists a curator may edit
+ * and shows up to three side by side against a reference list, then saveTaxonSet writes the ticked names
+ * (proj_taxon or geolocale_taxon, through ProjTaxonDb or GeolocaleTaxonDb), records disputes and saves a version
+ * of the list (ProjTaxonLogDb, GeolocaleTaxonLogDb). Tables proj_taxon, geolocale_taxon, taxon.
+ * Docs: docs/data-model.md section 5. Tests: tests/e2e/test_curator_species_lists.py.
+ */
 public class SpeciesListDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(SpeciesListDb.class);

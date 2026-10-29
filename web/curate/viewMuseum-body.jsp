@@ -1,3 +1,7 @@
+<%-- Body of one museum's form (request attribute museum): code (fixed once the museum exists), name, title and
+     Active, saved by a POST with the form token to viewMuseum.do; Delete asks on a second page
+     (ManageMuseumsAction.confirmDeleteHtml). Shows the action's message. Docs: docs/guides/manager-tools.md
+     (Museum Manager). --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

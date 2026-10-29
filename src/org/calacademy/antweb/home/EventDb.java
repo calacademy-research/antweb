@@ -10,6 +10,10 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 
+/**
+ * Table event: addEvent (DescriptionAction, when a curator saves a taxon page's images, videos or overview
+ * field) and getEvents (the admin Events report, query.do?action=events). Docs: docs/data-model.md (event).
+ */
 public class EventDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(EventDb.class);

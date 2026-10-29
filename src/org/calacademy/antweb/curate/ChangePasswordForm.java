@@ -3,6 +3,10 @@ package org.calacademy.antweb.curate;
 import org.apache.struts.action.ActionForm;
 
 
+/**
+ * Form of the old /changePassword action: the old password and the new one twice. Not used: that mapping is
+ * commented out in struts-config.xml (see ChangePasswordAction).
+ */
 public class ChangePasswordForm extends ActionForm {
 
 	private String oldPassword;

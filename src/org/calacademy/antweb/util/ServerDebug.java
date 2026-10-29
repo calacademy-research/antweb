@@ -23,6 +23,13 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.*;
 
+/**
+ * /serverDebug.do: the server debug setting (util/serverDebug.jsp; the page itself checks for an admin).
+ * action=setDebug&param=<option> is for admins, POST only: writes the option to table server (column debug,
+ * ServerDb.setServerDebug) and keeps it in memory; isDebug(option) is read by DBUtil, UserAgentTracker and
+ * GeolocaleDb. The options are listed in s_debugs. Docs: docs/catalog/actions.csv. Tests:
+ * tests/e2e/test_curate_merge.py, test_curator.py.
+ */
 public final class ServerDebug extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ServerDebug.class);
@@ -50,6 +57,9 @@ public final class ServerDebug extends AntwebAction {
 
 		HttpUtil.setUtf8(request, response);
 
+		// Administrators only, before any database work (the JSP check ran after this action).
+		ActionForward c = Check.admin(request, mapping); if (c != null) return c;
+
 		DynaActionForm df = (DynaActionForm) form;
 
 		String message = null;
@@ -72,10 +82,6 @@ public final class ServerDebug extends AntwebAction {
 			connection = DBUtil.getConnection(dataSource, dbMethodName);
 
 			if (action != null) {
-				if ("setDebug".equals(action) && !LoginMgr.isAdmin(request)) {
-					request.setAttribute("message", "Administrators only.");
-					return mapping.findForward("message");
-				}
 				if ("setDebug".equals(action)) {
 					ActionForward confirm = PostOnly.confirm(request, mapping, "Set server debug: " + param);
 					if (confirm != null) return confirm;

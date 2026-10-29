@@ -1,3 +1,7 @@
+<%-- Body of the Adm1 Manager: whether the adm1 name matched a valid or invalid adm1 of the country (request
+     attributes form, country, list, codes), the valid name used at upload, specimen codes with the name, and the
+     valid adm1s (admins also the others). Admins get Create (POST) or Edit (editGeolocale.do). Read-only. Docs:
+     docs/guides/manager-tools.md (Adm1 Manager). --%>
 <%@ page import="java.util.*" %>
 
 <%@ page import="org.calacademy.antweb.geolocale.*" %>

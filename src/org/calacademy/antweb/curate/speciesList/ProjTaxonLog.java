@@ -10,6 +10,12 @@ import org.apache.commons.logging.LogFactory;
         
 import org.calacademy.antweb.util.*;
 
+/**
+ * One saved version of a project's species list (table proj_taxon_log, written by
+ * ProjTaxonLogDb.archiveSpeciesList before the Species List Tool saves) with its names (ProjTaxonLogDetail);
+ * getHeading() gives the column heading of the Species List History page (speciesListHistory.do). Log 0 is the
+ * current list ("Master List").
+ */
 public class ProjTaxonLog extends ProjTaxon {
 
     private static final Log s_log = LogFactory.getLog(ProjTaxonLog.class);

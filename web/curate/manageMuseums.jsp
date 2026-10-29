@@ -1,3 +1,6 @@
+<%-- Museum Manager page (manageMuseum.do, ManageMuseumsAction), admins only (adminCheck.jsp). Tiles wrapper of
+     curate/manageMuseums-body.jsp. Docs: docs/guides/manager-tools.md. Tests: tests/e2e/test_manager_tools.py,
+     test_curate_cleanup.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

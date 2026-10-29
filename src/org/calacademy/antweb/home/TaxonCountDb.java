@@ -8,6 +8,11 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * Old image count crawl of the taxon tree (specimen, taxon) and of the lists. Never instantiated: nightly set 4
+ * uses ImageCountDb, and allCountCrawls, countCrawls and startParentCrawl are commented out.
+ * Tables image, specimen, taxon.
+ */
 public class TaxonCountDb extends AntwebDb {
     
     /* 

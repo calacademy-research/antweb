@@ -13,6 +13,15 @@ import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * Second stage of each specimen line (processLine), after it is parsed: refuses lines without a code or
+ * with a subfamily that is not an ant subfamily, adds a missing genus (taxon row, insert_method
+ * addMissingGenus), files the specimen under AntCat's current valid name (setStatusAndCurrentValidName, rule
+ * in CurrentValidNameRule; the uploaded name is kept in original_taxon_name, "Uploaded As"), marks introduced
+ * species and red-flags genera outside their native bioregions, then saves the specimen and its taxon (AntwebUpload).
+ * Docs: docs/flows/specimen-upload.md (section 3 step 7, section 4).
+ * Tests: NameResolutionRuleTest, UploadDecisions1028Test, tests/e2e/test_name_updates.py.
+ */
 public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUploadSupport {
 /* 
     Biota Data is uploaded through the curator interface.  It loads data from the "Biota Database"

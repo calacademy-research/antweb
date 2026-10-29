@@ -19,6 +19,14 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
     
+/**
+ * /compareResults.do: image comparison of the rows chosen (checkboxes "chosen") on a search's or a collection
+ * page's results, logged-in users only (Check.loginForFeature). By specimen: each chosen specimen with its images;
+ * by species: one taxon per chosen species with its images (tables specimen, image). Puts taxaToCompare in the
+ * session and forwards to search/multiTaxaComparison.jsp, or with shot=Head, Profile, ... to multiTaxaOneView.jsp.
+ * Docs: docs/flows/search.md. Tests: tests/e2e/test_login_needed.py,
+ * test_numbers_search.py::test_comparison_counts_the_chosen_specimens.
+ */
 public final class CompareResultsAction extends ResultsAction {
 
     private static final Log s_log = LogFactory.getLog(CompareResultsAction.class);
@@ -60,20 +68,8 @@ public final class CompareResultsAction extends ResultsAction {
 
         Project is used throughout this class. Could be overview instead?
 
-        Brian would like this class fixed according to the inquiry on Nov 30th from Peter Hawkes (peterghawkes@gmail.com)
-
-        I have a couple of questions about AntWeb seaches & comparing images - 
-        if I log in and do an advanced search say for all Afro Lepisiota types with images, 
-        I get a list of specimens sorted by name (i.e. L. affinis first) but if I then choose "compare images", 
-        select all and hit "compare", I get the images ordered by specimen code 
-        (i.e completely random as far as species name goes) even though it still indicated that it is sorting by specimen name 
-        (if it shows any sort options at all - often this dropdown disappears when I go into image comparison).   
-        If it is showing and I try to select any other sort option I get a "sorry, nothing matches your request" message.  
-        Is there a bug of some sort? - I'm not sure how this feature is supposed to work....
-        what I would like to be able to do is get the images sorted by species 
-        (in the view with head/profile/dorsal/label piscs in a row), and ideally I'd then like to be able to 
-        deselect specimens that clearly don't match the specimen I'm looking at and refresh the image set to include a reduced number.  
-        This way I can gradually eliminate options - hopefully until I have a solid match...is this possible?
+        Requested by a user: compared images should keep the search's sort order (by name), the sort
+        choice should stay usable on the comparison page, and specimens should be removable from the set.
         */
 
         // OCT312016

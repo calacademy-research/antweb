@@ -16,6 +16,14 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Writes AntWeb's own log files: appendWebLog under web/log/ (upload reports in subfolders; admins read the
+ * rest through logMgr.do), appendDataLog under the data folder's log/ (not web-reachable), appendLog (older
+ * name, web/log), whole report files (newLog), capped entries (MAX_ENTRY), message-page records, and logQuery /
+ * logAntQuery / logAntBattery (results of named queries to the Tomcat log). At start-up (AppContextListener) it
+ * empties insecure.log and moves the day's logs of data/log/ into data/log/bak/<year>/<date>/ (archiveLogs).
+ * Docs: docs/runbook.md. Tests: test_logmgr.py (tests/e2e), MessageLogTest.
+ */
 public class LogMgr {
 
   private static final Log s_log = LogFactory.getLog(LogMgr.class);

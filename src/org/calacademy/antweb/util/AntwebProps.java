@@ -13,6 +13,12 @@ import java.util.ResourceBundle;
 
 import org.calacademy.antweb.*;
 
+/**
+ * AntWeb's settings from the property files on the class path (ApplicationResources, AntwebResources, platform;
+ * a missing one stops the app): folders (doc root, data, images, working folder), the site's address
+ * (getDomainApp, getThisDomainApp, image domain), the mode (dev, stage, live), the database password, the
+ * Google Maps keys, the version and the TaxonWorks links. Read by nearly every class and many JSPs.
+ */
 public abstract class AntwebProps {
 
   private static final Log s_log = LogFactory.getLog(AntwebProps.class);

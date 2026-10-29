@@ -1,3 +1,5 @@
+<%-- Dispute Manager page (disputeMgr.do, DisputeMgrAction), curators (curatorCheck.jsp). Tiles wrapper of
+     curate/speciesList/disputeMgr-body.jsp. Docs: docs/guides/manager-tools.md (Geolocale Manager links). --%>
 <%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

@@ -1,3 +1,7 @@
+<%-- Plain numbered list (at most 1,000 lines) of the request attribute "list" under the "message" heading:
+     forward of list.do (ListAction: pictureLikes, recentDescEdits, usrAdm, usrAdmLastLogin) and taxaList.do
+     (TaxaListAction, the taxon name lists linked from the statistics page). Read-only. Docs:
+     docs/catalog/actions.csv. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

@@ -5,6 +5,11 @@ import java.io.Serializable;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * A search row without specimen-level data: Item plus synonym and type original combination. No code creates one
+ * (GenericSearch returns ResultItems); it appears only in casts of the left-over Bay Area and descEdit results and
+ * in GenericSearchResults.
+ */
 public class SearchItem extends Item implements Serializable {
 
     private static final Log s_log = LogFactory.getLog(SearchItem.class);

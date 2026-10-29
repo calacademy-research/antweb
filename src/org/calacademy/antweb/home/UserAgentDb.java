@@ -10,6 +10,10 @@ import org.calacademy.antweb.AntFormatter;
 import org.calacademy.antweb.util.DBUtil;
 import org.calacademy.antweb.util.ServerStatusAction;
 
+/**
+ * Tables user_agent and user_agent_whitelist (user agents seen and allowed). Nothing calls it: the only call,
+ * flagWhiteList in SessionRequestFilter, is commented out, so neither table is written or read.
+ */
 public class UserAgentDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(UserAgentDb.class);

@@ -383,7 +383,9 @@ public final class SanitizeDescriptionsAction extends AntwebAction {
                 }
             }
             connection.commit();
-        } catch (SQLException e) {
+        } catch (SQLException | RuntimeException e) {
+            // Any failure rolls back (2026-10-29): before, an unexpected error skipped the rollback and
+            // setAutoCommit(true) below committed the rows already rewritten.
             connection.rollback();
             throw e;
         } finally {

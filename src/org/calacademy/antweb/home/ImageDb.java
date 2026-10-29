@@ -10,6 +10,14 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.imageUploader.*;
 
+/**
+ * Table image (one row per image file of a specimen: code, shot, number) and its owners (group_image). Reads
+ * a specimen's images (specimen pages, bigPicture.do), the image counts of statsPage.do and the likes lists
+ * (list.do?action=likes); saves the row of an uploaded file (putImage, Image Uploader) and deletes images
+ * (deleteImages.do); EXIF and has-tif admin jobs (utilData.do). Tables image, group_image, image_like, specimen,
+ * taxon. Docs: docs/flows/image-upload.md, docs/flows/specimen-and-image-pages.md, docs/numbers.md.
+ * Tests: ImageUploadSaveTest, tests/e2e/test_image_upload.py.
+ */
 public class ImageDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(ImageDb.class);

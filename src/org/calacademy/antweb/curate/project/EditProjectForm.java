@@ -15,6 +15,12 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Form bean editProjectForm of editProject.do (kept in the session; reset() clears the Live box): the project's
+ * settings and page-text fields. getProject() builds the Project to save, freshProject() the empty project of a
+ * new key; plain() drops angle brackets from the text settings (coords, extent, locality). Tests:
+ * test/.../security/SecurityBatch6Test.java.
+ */
 public final class EditProjectForm extends ActionForm {
 
     private static final Log s_log = LogFactory.getLog(EditProjectForm.class);

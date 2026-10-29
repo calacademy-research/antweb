@@ -10,6 +10,13 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.imageUploader.*;
 
+/**
+ * Image upload batches of the Image Uploader (imageUploadBatch.do): image_upload (one row per batch: curator,
+ * group, artist, license, copyright year, image count, completion) and image_uploaded (one row per file and
+ * its state, so a cut-off batch can be resumed). Read by the upload report (ImageUploadReport) and the list of
+ * image uploads (listImageUploads.do). Tables image_upload, image_uploaded. Docs: docs/flows/image-upload.md.
+ * Tests: tests/e2e/test_image_upload.py.
+ */
 public class ImageUploadDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(ImageUploadDb.class);

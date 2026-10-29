@@ -11,6 +11,13 @@ import org.apache.commons.logging.LogFactory;
 
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * Date helpers: formatted date and time strings for logs and pages, and the parsing of collection dates from
+ * uploaded files (normalizeUploadDate, getConstructDateStr, constructDate: full dates, year and month, year
+ * only; day "00" is the 1st, month "00" January; strict, so 2010/02/30 is not a date). Used by the specimen
+ * upload (AntwebUpload) and SpecimenDb. runTests is a manual check called only from AntwebUtil.main. Docs:
+ * docs/flows/specimen-upload.md. Tests: UploadNightlyDecisionsTest.
+ */
 public abstract class DateUtil {
 
   private static final Log s_log = LogFactory.getLog(DateUtil.class);
@@ -447,7 +454,7 @@ public abstract class DateUtil {
           //A.log("constructDate() dateStr:" + dateStr + " returnDate:" + returnDate + " is before validCutoff:" + validCutoff);
 
           // If Ex: 21-Jul-99 misread earlier, here we fix.
-          returnDate = handleDdMmmYy(dateStr);
+          returnDate = notFuture(handleDdMmmYy(dateStr));
           if (returnDate != null) {
             s_debugStep = 18;
             //A.log("constructDate() 1 dateStr:" + dateStr + " returnDate: " + returnDate);
@@ -455,13 +462,13 @@ public abstract class DateUtil {
           }
 
           // If Ex: 4/6/66 misread earlier, here we fix.
-          returnDate = handleDMYy(dateStr);
+          returnDate = notFuture(handleDMYy(dateStr));
           //A.log("constructDate() 2 dateStr:" + dateStr + " returnDate: " + returnDate);
           s_debugStep = 21;
           if (returnDate != null) return returnDate;
 
           // If Ex: 7/94 misread earlier, here we fix.
-          returnDate = handleMYy(dateStr);
+          returnDate = notFuture(handleMYy(dateStr));
           //A.log("constructDate() 2 dateStr:" + dateStr + " returnDate: " + returnDate);
           s_debugStep = 22;
           if (returnDate != null) return returnDate;
@@ -475,18 +482,29 @@ public abstract class DateUtil {
     }
 
 
+  /** The date, or null when it is after now (a collection date cannot be in the future). */
+  private static Date notFuture(Date date) {
+    return date != null && date.after(new Date()) ? null : date;
+  }
+
+  /**
+   * The four-digit year of a two-digit collection year (2026-10-29): 20yy unless that is after this year,
+   * then 19yy. Before, years up to 50 became 20yy, so "3/4/45" (collected 1945) was stored as 2045, a
+   * date in the future. Pure: tested in AuditTjFixesTest.
+   */
+  static int fullYear(int twoDigitYear) {
+    int thisYear = java.time.Year.now().getValue();
+    int year = 2000 + twoDigitYear;
+    return year > thisYear ? year - 100 : year;
+  }
+
   private static Date handleDdMmmYy(String dateStr) {
     //String dateStr = "21-Jul-99"; Because of University of Pretoria
     int indexOfSecondHyphen = dateStr.indexOf('-', 6);
     if (indexOfSecondHyphen < 6) return null;
     if (dateStr.length() > 9) return null;
     String shortYear = dateStr.substring(indexOfSecondHyphen + 1);
-    int year = Integer.parseInt(shortYear);
-    if (year > 50) {
-      year = year + 1900;
-    } else {
-      year = year + 2000;
-    }
+    int year = fullYear(Integer.parseInt(shortYear));
     dateStr = dateStr.substring(0, indexOfSecondHyphen + 1) + year;
     //A.log("message-body.jsp i:" + indexOfSecondHyphen + " year:" + year + " dateStr:" + dateStr + " l:" + dateStr.length());
     Date date = format("dd-MMM-yyyy", dateStr);
@@ -511,12 +529,7 @@ public abstract class DateUtil {
 
     //A.log("handleDMYy() dateStr:" + dateStr + " shortYear:" + shortYear);
 
-    int year = Integer.parseInt(shortYear);
-    if (year > 50) {
-      year = year + 1900;
-    } else {
-      year = year + 2000;
-    }
+    int year = fullYear(Integer.parseInt(shortYear));
     dateStr = dateStr.substring(0, indexOfSecondHyphen + 1) + year;
     String firstNum = dateStr.substring(0, indexOfFirstHyphen);
     int firstNumInt = Integer.parseInt(firstNum);
@@ -540,12 +553,7 @@ public abstract class DateUtil {
     String mon = dateStr.substring(0, indexOfSlash);
     String shortYear = dateStr.substring(indexOfSlash + 1);
     //A.log("handleMYy() mon:" + mon + " year:" + shortYear);
-    int year = Integer.parseInt(shortYear);
-    if (year > 50) {
-      year = year + 1900;
-    } else {
-      year = year + 2000;
-    }
+    int year = fullYear(Integer.parseInt(shortYear));
     dateStr = year + "-" + mon + "-01";
     //A.log("handleMYy year:" + year + " mon:" + mon + " dateStr:" + dateStr + " l:" + dateStr.length());
     Date date = format("yyyy-MM-dd", dateStr);

@@ -21,6 +21,14 @@ import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 
 
+/**
+ * /editProject.do?projectName=..: a project's settings (curate/project/editProject.jsp), admins only. A POST
+ * saves them (title, display key, live, map, centre, extent, species list mapping; table project) and reloads
+ * the project lists (AntwebMgr, ProjectMgr); a new key opens an empty form and the project is created on save.
+ * action=delete (POST) deletes the project and its species list (tables project, proj_taxon). The page text is
+ * edited on the project page. Docs: docs/guides/manager-tools.md (Project settings). Tests:
+ * tests/e2e/test_manager_tools.py, test/.../security/SecurityBatch6Test.java.
+ */
 public final class EditProjectAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(EditProjectAction.class);

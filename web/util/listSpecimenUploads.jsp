@@ -1,3 +1,7 @@
+<%-- Specimen Upload Reports page (listSpecimenUploads.do, also /listUploads.do; ListUploadsAction): one row per
+     specimen upload (table upload) with its report and kept file, for one group or all groups; curators and
+     admins (curatorCheck.jsp). Tiles wrapper of util/listSpecimenUploads-body.jsp.
+     Docs: docs/flows/specimen-upload.md (section 3, step 11). Tests: tests/e2e/test_upload_list_views.py, test_upload_report_links.py. --%>
 <%@ page errorPage = "error.jsp" %>
 <%@ page import = "org.calacademy.antweb.Group" %>
 

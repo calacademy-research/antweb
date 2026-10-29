@@ -23,6 +23,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
+/**
+ * /fieldGuideResults.do: a field guide (search/fieldGuide.jsp) of the rows chosen on a search's results
+ * (common/specimen_list.js), logged-in users only (Check.loginForFeature). Chosen specimens give their species;
+ * chosen taxa (the session's taxonList) give those species, genera or subfamilies; each with a map and the images
+ * of one caste (fieldGuideCaste: the request's, else the search's, session attribute searchCaste, else worker;
+ * decided 2026-10-27). Tables taxon, specimen, image. Docs: docs/flows/search.md. Tests:
+ * test/org/calacademy/antweb/search/SearchRulesTest.java, tests/e2e/test_login_needed.py.
+ */
 public final class FieldGuideResultsAction extends ResultsAction {
 
     private static final Log s_log = LogFactory.getLog(FieldGuideResultsAction.class);

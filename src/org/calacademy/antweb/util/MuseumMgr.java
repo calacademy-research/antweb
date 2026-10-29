@@ -9,6 +9,13 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * In-memory list of the museums (table museum, through MuseumDb), loaded by AntwebMgr at start-up and on
+ * util.do?action=reloadAntwebMgr: lookup by code (getMuseum, getInferredMuseum) and the number of collaborating
+ * institutions on the statistics page (getMuseumCount, docs/numbers.md B73). Docs:
+ * docs/flows/home-and-statistics.md, docs/numbers.md. Tests: CountRules20261027Test,
+ * tests/e2e/test_home_and_stats.py.
+ */
 public class MuseumMgr {
 
     private static final Log s_log = LogFactory.getLog(MuseumMgr.class);

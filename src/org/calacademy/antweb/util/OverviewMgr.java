@@ -12,6 +12,15 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Finds the place or collection a page is about (the "overview"): a project, museum, geolocale (country, adm1,
+ * island), region, subregion or bioregion, from the request parameters (project, museumCode, geolocaleId,
+ * regionName, subregionName, countryName, adm1Name, bioregionName), else the one in the session, else
+ * allantwebants. Sets it on the request and session for the JSPs; an unknown name gives an AntwebException and
+ * the message page. Used by the taxon, list, map, search, specimen and download actions. Reads the in-memory
+ * managers only. Docs: docs/flows/taxon-pages.md, docs/flows/places.md. Tests: PublicPagesLowFindingsTest,
+ * tests/e2e/test_taxon_pages.py.
+ */
 public class OverviewMgr {
 
     private static final Log s_log = LogFactory.getLog(OverviewMgr.class);

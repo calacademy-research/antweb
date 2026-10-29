@@ -16,6 +16,13 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Helper of SearchAction.descEditSearch, left over: reachable only as
+ * recentSearchResults.do?searchMethod=descEditSearch (the /descEditSearch mapping is commented out). Despite the
+ * name it runs DescEditSearch, a copy of the recent-images query (tables image, group_image, ant_group, artist,
+ * specimen), not a search of page-text edits; that query names columns that do not exist (specimen.valid,
+ * artist.artist), so it finds nothing. Also puts the upload group names in the session (groups).
+ */
 public final class DescEditSearchAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(DescEditSearchAction.class);

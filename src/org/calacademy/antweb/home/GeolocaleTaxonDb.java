@@ -13,6 +13,15 @@ import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
+/**
+ * The species lists of countries, adm1s, regions and subregions (table geolocale_taxon). Reads a place's list,
+ * a taxon's countries and per-place statistics (statistics.do); inserts, updates and deletes rows for curators
+ * (Species List Tool, through SpeciesListDb) and the AntCat import (SpeciesListUpload). Nightly set 2:
+ * generateGeolocaleTaxaFromSpecimens rebuilds the specimen rows, without the names in geolocale_taxon_dispute.
+ * Admin repairs through utilData.do (parentage checks, geolocaleTaxonFix). Tables geolocale_taxon,
+ * geolocale_taxon_dispute, specimen, taxon. Docs: docs/flows/nightly.md (set 2), docs/numbers.md.
+ * Tests: CuratorTaxonSetTest, tests/e2e/test_curator_species_lists.py.
+ */
 public class GeolocaleTaxonDb extends EditableTaxonSetDb {
     
     private static final Log s_log = LogFactory.getLog(GeolocaleTaxonDb.class);

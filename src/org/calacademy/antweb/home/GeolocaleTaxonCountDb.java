@@ -12,6 +12,13 @@ import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.geolocale.*;
 
 
+/**
+ * Count crawls of the geolocale species lists (geolocale_taxon); the counting code is in CountDb.
+ * childrenCountCrawl: a list's count columns set to 0, then specimens, species, genera and subfamilies of each
+ * row (GeolocaleDb.updateCounts, nightly set 2). imageCountCrawl: images of the place's specimens per name
+ * (ImageCountDb, set 4). countReport: the counts of one place for an admin (utilData.do?action=countReport).
+ * Docs: docs/flows/nightly.md (sets 2 and 4), docs/numbers.md. Tests: TaxonTreeCountDbTest, RegionCountDbTest.
+ */
 public class GeolocaleTaxonCountDb extends CountDb {
     
     private static final Log s_log = LogFactory.getLog(GeolocaleTaxonCountDb.class);

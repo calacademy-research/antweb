@@ -1,3 +1,7 @@
+<%-- Advanced search form page (advSearch.do, SearchPageAction), public: tiles wrapper of
+     search/advancedSearch-body.jsp, title "Advanced Search - AntWeb"; no-cache headers; removes the session's
+     project and taxon. Docs: docs/flows/search.md. Tests:
+     tests/e2e/test_search_pages.py::test_advanced_search_form. --%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" %>
 <!-- % @ page language="java" % -->
 <%@ page errorPage = "/error.jsp" %>

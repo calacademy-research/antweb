@@ -31,6 +31,13 @@ import org.calacademy.antweb.util.Check;
 import org.calacademy.antweb.util.DBUtil;
 import org.calacademy.antweb.util.HttpUtil;
 
+/**
+ * /specimenListLookup.do: Specimen List Lookup (curate/specimen/specimenListLookup.jsp), curators. A POST of a
+ * .txt file of specimen codes (name contains "specimen", up to 5 MB) returns their specimen data as a TSV file
+ * (table specimen, read-only connection). When some codes are not found the page lists them and keeps the TSV
+ * for ?download=tsv (a temporary file deleted with the session). Docs: docs/guides/curate-page.md (Read-only
+ * tools). Tests: tests/e2e/test_curator.py, test_curate_page_clarity.py.
+ */
 public class SpecimenListLookupAction extends AntwebAction {
     private static final Log s_log = LogFactory.getLog(SpecimenListLookupAction.class);
 

@@ -12,6 +12,14 @@ import org.calacademy.antweb.curate.geolocale.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.Formatter;
 
+/**
+ * The places of table geolocale (regions, subregions, countries, adm1s, islands) and their species lists.
+ * Reads them for GeolocaleMgr (cache) and the place pages (OverviewAction); creates, edits and deletes them
+ * (editGeolocale.do, geolocaleMgr.do); lists them for the Species List Tool. Nightly set 2 (updateCounts): child
+ * counts of geolocale_taxon (GeolocaleTaxonCountDb), specimen counts and totals, endemic and introduced flags,
+ * colours and charts. Tables geolocale, geolocale_taxon, specimen, taxon. Docs: docs/flows/places.md,
+ * docs/flows/nightly.md (set 2), docs/numbers.md. Tests: RegionCountDbTest, PlaceTotalsDbTest, ManagerToolsDbTest.
+ */
 public class GeolocaleDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(GeolocaleDb.class);

@@ -13,6 +13,13 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Image file check over every image (ImageDb.getExifImages): counts which original and derived files exist,
+ * records the images without an original TIFF (notTifList, then table image column has_tiff through
+ * ImageDb.updateHasTif) and, for command exifUpdate, writes the copyright into each file with exiftool.
+ * execute() has no caller (no page or job runs it); SpecimenImage and ImageDb only use notTifList and
+ * hasTifCorrected.
+ */
 public class ImageUtil {
 
     private static final Log s_log = LogFactory.getLog(ImageUtil.class);

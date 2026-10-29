@@ -16,6 +16,12 @@ import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.search.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Pre-computed maps (table object_map, one row per country, adm1, museum or group). Nightly set 5 (genObjectMaps)
+ * makes the country, adm1 and museum maps; a specimen upload makes its group's map (UploadAction). Read by the
+ * place and museum pages (OverviewAction), the group page (group.do) and the big map (bigMap.do).
+ * Docs: docs/flows/places.md, docs/flows/nightly.md (set 5), docs/data-model.md (object_map).
+ */
 public class ObjectMapDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(ObjectMapDb.class);
@@ -64,10 +70,12 @@ public class ObjectMapDb extends AntwebDb {
         String code = museum.getCode();
 
 		SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);
-		
-		Map map = new AdvancedSearchAction().getGoogleMap(museum, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
-
-		SearchAction.undoSetTempSpecimenSearchLimit();
+		Map map;
+		try {   // finally (2026-10-29): a failed map left every search without its limit until restart
+		  map = new AdvancedSearchAction().getGoogleMap(museum, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
+		} finally {
+		  SearchAction.undoSetTempSpecimenSearchLimit();
+		}
 
 		if (map != null) {		  
           deleteMap("museum_code = " + lit(museum.getCode())); 
@@ -120,10 +128,12 @@ public class ObjectMapDb extends AntwebDb {
 	    }
 
 		SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);
-
-		Map map = new AdvancedSearchAction().getGoogleMap(country, adm1, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
-
-		SearchAction.undoSetTempSpecimenSearchLimit();
+		Map map;
+		try {
+		  map = new AdvancedSearchAction().getGoogleMap(country, adm1, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
+		} finally {
+		  SearchAction.undoSetTempSpecimenSearchLimit();
+		}
 
 		if (map != null) {
 		  deleteMap("geolocale_id = " + geolocale.getId()); 
@@ -209,10 +219,12 @@ public class ObjectMapDb extends AntwebDb {
 
     public void genGroupObjectMap(Group group) throws SQLException {
 		SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);
-
-		Map map = new AdvancedSearchAction().getGoogleMap(group, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
-
-		SearchAction.undoSetTempSpecimenSearchLimit();
+		Map map;
+		try {
+		  map = new AdvancedSearchAction().getGoogleMap(group, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
+		} finally {
+		  SearchAction.undoSetTempSpecimenSearchLimit();
+		}
 
 		if (map != null) {
           deleteMap("group_id = " + group.getId()); 

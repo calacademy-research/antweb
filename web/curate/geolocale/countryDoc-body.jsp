@@ -1,3 +1,5 @@
+<%-- Body of the Country Documentation page (admins): old notes on maintaining geolocale data, a to-do list and
+     developer notes (static text). Read-only. --%>
 <%@ page import="org.calacademy.antweb.util.*" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

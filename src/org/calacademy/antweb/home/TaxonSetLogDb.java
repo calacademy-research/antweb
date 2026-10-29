@@ -10,6 +10,10 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
 
+/**
+ * Base class of the history and dispute tables of curated species lists: GeolocaleTaxonLogDb (geolocale lists)
+ * and ProjTaxonLogDb (project lists). Declares archiveSpeciesList and the dispute methods; no code of its own.
+ */
 public abstract class TaxonSetLogDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(TaxonSetLogDb.class);

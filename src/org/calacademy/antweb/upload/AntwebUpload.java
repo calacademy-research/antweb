@@ -21,6 +21,16 @@ import java.util.Date;
 import java.util.Map;
 import java.util.*;
 
+/**
+ * Base class of the loaders that write taxa and specimens: the specimen upload (SpecimenUploadProcess,
+ * SpecimenUploadParse, SpecimenUpload) and the AntCat (WorldAnts) and species-list loads (SpeciesListUpload).
+ * Holds the shared save code: taxon and homonym rows (insert, or update an existing row; parents created as
+ * needed), proj_taxon, specimen rows (saveSpecimen: a code already in the specimen table is refused as a
+ * duplicate, dates are checked) and description_edit / description_homonym (AntCat taxonomic history).
+ * Runs for curators' uploads, admins' imports and the nightly run; no page of its own.
+ * Docs: docs/flows/specimen-upload.md (section 3), docs/flows/antcat-to-antweb.md.
+ * Tests: UploadReportCountsTest, AntcatHistoryTest.
+ */
 public class AntwebUpload {
     /**
      * Extended by SpecimenUpload, and SpeciesListUpload

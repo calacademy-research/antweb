@@ -4,6 +4,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.search.AdvancedSearchAction;
 
+/**
+ * Empty superclass of SpeciesListToolAction and ValidateSpeciesListAction: it only puts AdvancedSearchAction
+ * (the advanced search the Species List Tool runs for its reference list) under them. Its one method is
+ * commented out.
+ */
 public class SpeciesListSuperAction extends AdvancedSearchAction {
 
   private static final Log s_log = LogFactory.getLog(SpeciesListSuperAction.class);

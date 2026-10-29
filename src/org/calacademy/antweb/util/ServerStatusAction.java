@@ -22,6 +22,14 @@ import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.Formatter;
     
+/**
+ * /serverStatus.do: Server Status page (util/serverStatus.jsp; the page checks for an admin): the three
+ * connection pools, the operation lock (table operation_lock), whether the server is busy (DBStatus) and the
+ * operating system, Java, memory and disk details. Admins, POST only: action=toggleDownTime (upload down time,
+ * table server, ServerDb) and action=email (sends the server busy report). isReady and notReadyReason tell the
+ * Scheduler to wait while an upload or compute runs. Docs: docs/catalog/actions.csv. Tests:
+ * tests/e2e/test_admin_staging.py, test_request_handling.py, test_tool_pages_style.py.
+ */
 public final class ServerStatusAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ServerStatusAction.class);
@@ -41,6 +49,10 @@ static double getVersion () {
 		throws IOException, ServletException {
 
         HttpUtil.setUtf8(request, response);
+
+        // Administrators only (2026-10-29): the page is admin-only, and the diagnostics below (busy check,
+        // pool queries) should not run for anyone else before the JSP refuses them.
+        ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
         
         DynaActionForm df = (DynaActionForm) form;
      
@@ -58,10 +70,6 @@ static double getVersion () {
             connection = DBUtil.getConnection(dataSource1, dbMethodName);
  
             boolean isAdminAction = "toggleDownTime".equals(action) || "email".equals(action);
-            if (isAdminAction && !LoginMgr.isAdmin(request)) {
-                request.setAttribute("message", "Administrators only.");
-                return mapping.findForward("message");
-            }
             if (isAdminAction) {
                 ActionForward confirm = PostOnly.confirm(request, mapping,
                     "toggleDownTime".equals(action) ? "Toggle upload down time." : "Email the server status report.");

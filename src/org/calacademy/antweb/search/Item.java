@@ -1,5 +1,10 @@
 package org.calacademy.antweb.search;
 
+/**
+ * Package-private base of the search result rows ResultItem and SearchItem: the fields they share (name, rank,
+ * code, taxonomy, place and locality, caste, collection data, image fields such as shot, artist, group and upload
+ * date, coordinates, upload id) with getters and setters. No logic.
+ */
 class Item {
 	String name;
 	String status;

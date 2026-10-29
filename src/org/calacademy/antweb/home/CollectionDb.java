@@ -13,6 +13,12 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.search.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Reads one collection (the specimens that share a collection code) from table specimen: collecting data, its
+ * locality and one result row per specimen with its number of images. Used by the Collection page
+ * (collection.do, CollectionAction) and the big map (bigMap.do). Tables specimen, image, ant_group.
+ * Docs: docs/flows/specimen-and-image-pages.md, docs/flows/places.md. Tests: tests/e2e/test_specimen_pages.py.
+ */
 public class CollectionDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(CollectionDb.class);

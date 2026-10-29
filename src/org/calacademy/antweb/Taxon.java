@@ -426,12 +426,15 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         noSubfamilyTaxonName = taxonName.substring(inaeIndex + 4);
       }
       if (taxonName.contains("incertae_sedis")) {
-        noSubfamilyTaxonName = taxonName.substring(15);
+        noSubfamilyTaxonName = taxonName.substring(INCERTAE_SEDIS.length());   // 14, was 15: lost the genus's first letter
       }
       s_log.debug("taxonName:" + taxonName + " noSubfamilyTaxonName:" + noSubfamilyTaxonName);
       return noSubfamilyTaxonName;      
     }
     
+    /** The subfamily part of a genus without subfamily (incertae_sedisnoonilla). */
+    static final String INCERTAE_SEDIS = "incertae_sedis";
+
     public String getLongPrettyTaxonName() {
       return Taxon.getLongPrettyTaxonName(getTaxonName());
     }
@@ -442,7 +445,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         longPrettyTaxonName = new Formatter().capitalizeFirstLetter(taxonName.substring(0, inaeIndex + 4)) + " " + new Formatter().capitalizeFirstLetter(taxonName.substring(inaeIndex + 4));
       }
       if (taxonName.contains("incertae_sedis")) {
-        longPrettyTaxonName = "Incertae Sedis " + new Formatter().capitalizeFirstLetter(taxonName.substring(15));
+        longPrettyTaxonName = "Incertae Sedis " + new Formatter().capitalizeFirstLetter(taxonName.substring(INCERTAE_SEDIS.length()));
       }
       //A.log("taxonName:" + taxonName + " prettyTaxonName:" + prettyTaxonName);
       return longPrettyTaxonName;
@@ -592,8 +595,8 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         genus = subfamilyGenus.substring(inaeIndex + 4);
       }
       if (subfamilyGenus.contains("incertae_sedis")) {
-        subfamily = subfamilyGenus.substring(0, 15);
-        genus = subfamilyGenus.substring(15);
+        subfamily = subfamilyGenus.substring(0, INCERTAE_SEDIS.length());
+        genus = subfamilyGenus.substring(INCERTAE_SEDIS.length());
       }
       displaySubfamilyGenus = Formatter.initCap(subfamily) + " " + Formatter.initCap(genus);
       //A.log("taxonName:" + taxonName + " prettyTaxonName:" + prettyTaxonName);
@@ -601,7 +604,7 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
     }
    
     public static String displaySubfamilyGenusLinkToGenus(String subfamily, String genus) {
-      String displaySubfamilyGenus = Html.esc(Formatter.initCap(subfamily))  + " <a href='" + AntwebProps.getDomainApp() + "/genus=" + Html.url(genus) + "'>" + Html.esc(Formatter.initCap(genus)) + "</a>";
+      String displaySubfamilyGenus = Html.esc(Formatter.initCap(subfamily))  + " <a href='" + AntwebProps.getDomainApp() + "/description.do?rank=genus&amp;genus=" + Html.url(genus) + "'>" + Html.esc(Formatter.initCap(genus)) + "</a>";
       //A.log("taxonName:" + taxonName + " prettyTaxonName:" + prettyTaxonName);
       return displaySubfamilyGenus;        
     }
@@ -618,10 +621,10 @@ public class Taxon implements Describable, Serializable, Comparable<Taxon> {
         genus = subfamilyGenus.substring(inaeIndex + 4);
       }
       if (subfamilyGenus.contains("incertae_sedis")) {
-        subfamily = subfamilyGenus.substring(0, 15);
-        genus = subfamilyGenus.substring(15);
+        subfamily = subfamilyGenus.substring(0, INCERTAE_SEDIS.length());
+        genus = subfamilyGenus.substring(INCERTAE_SEDIS.length());
       }
-      displaySubfamilyGenus = Html.esc(Formatter.initCap(subfamily)) + " <a href='" + AntwebProps.getDomainApp() + "/genus=" + Html.url(genus) + "'>" + Html.esc(Formatter.initCap(genus)) + "</a>";
+      displaySubfamilyGenus = Html.esc(Formatter.initCap(subfamily)) + " <a href='" + AntwebProps.getDomainApp() + "/description.do?rank=genus&amp;genus=" + Html.url(genus) + "'>" + Html.esc(Formatter.initCap(genus)) + "</a>";
       //A.log("taxonName:" + taxonName + " prettyTaxonName:" + prettyTaxonName);
       return displaySubfamilyGenus;    
     }    

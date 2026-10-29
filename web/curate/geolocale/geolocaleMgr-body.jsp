@@ -1,3 +1,7 @@
+<%-- Body of the Geolocale Manager (request attributes geolocaleArray, georank, parent, validChildren): a rank
+     menu, one row per place with valid, live and valid name (geolocale/validSelect.jsp) and a save arrow for
+     admins (POST to geolocaleMgr.do), a Create box for admins (POST to editGeolocale.do) and links to related
+     pages and queries. Docs: docs/guides/manager-tools.md (Geolocale Manager). --%>
 <%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>

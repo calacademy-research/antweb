@@ -16,6 +16,13 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.*;
 
+/**
+ * One-line guards for actions: "ActionForward c = Check.admin(request, mapping); if (c != null) return c;".
+ * admin, curator, login (with a return to the page after logging in), notBot, init (a manager still loading
+ * after a start: "Server is initializing"), busy, upload and compute (refuse while one runs), valid
+ * (HttpUtil.invalidRequest), and blockRecursiveCalls for SessionRequestFilter. Returns the message or login
+ * page, or null to go on. Tests: tests/unit/test_decided_pages.py, tests/e2e/test_curate_followups.py.
+ */
 public class Check {
 
     private static final Log s_log = LogFactory.getLog(Check.class);

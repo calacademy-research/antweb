@@ -1,3 +1,7 @@
+<%-- Body of a project's settings form (request attribute thisProject; isNewProject for a new key): display key,
+     title, map image, live, map centre, extent and species list mapping, saved by a POST with the form token to
+     editProject.do; admins also get Delete (POST). The page text is edited on the project page. Docs:
+     docs/guides/manager-tools.md (Project settings). --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

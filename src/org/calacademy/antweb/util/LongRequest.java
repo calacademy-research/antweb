@@ -4,6 +4,11 @@ package org.calacademy.antweb.util;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * One row of table long_request (slow page requests recorded for the page cache). Made only by
+ * AntwebCacheMgr.getLongRequests and getLongRequestDetails, which have no callers since the Cache Manager was
+ * removed on 2026-10-18 (page caching is switched off, AntwebCacheMgr.CACHING_OFF).
+ */
 public class LongRequest {
 
     private static final Log s_log = LogFactory.getLog(LongRequest.class);

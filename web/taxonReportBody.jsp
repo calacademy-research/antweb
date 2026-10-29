@@ -121,15 +121,15 @@
               String heading = overview.toString();
               if (isMuseum) heading = ((Museum)overview).getCode();
          %>
-            <div class="list_extras specimens"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=specimens" %>'><%= heading %><a title='<%= asterixTitle %>'>*</a></a></b></font></div>
+            <div class="list_extras specimens"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=specimens" %>'><%= heading %><a title='<%= Html.escAttr(asterixTitle) %>'>*</a></a></b></font></div>
      <% } else { %>
          <% 
             if (Rank.SUBFAMILY.equals(pageRank)) { %>
              <% if ("genera".equals(orderBy)) u = underline; else u = "";  %>
-                <div class="list_extras specimens"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=genera" %>'>Genera</a><a title='<%= asterixTitle %>'>*</a></a></b></font></div>
+                <div class="list_extras specimens"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=genera" %>'>Genera</a><a title='<%= Html.escAttr(asterixTitle) %>'>*</a></a></b></font></div>
          <% } else if (Rank.GENUS.equals(pageRank)) { %>
              <% if ("species".equals(orderBy)) u = underline; else u = "";  %>
-                <div class="list_extras specimens"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=species" %>'>Species</a><a title='<%= asterixTitle %>'>*</a></b></font></div>        
+                <div class="list_extras specimens"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=species" %>'>Species</a><a title='<%= Html.escAttr(asterixTitle) %>'>*</a></b></font></div>        
          <% } else { %>
 
              <% if ("specimens".equals(orderBy)) u = underline; else u = "";  %>
@@ -273,7 +273,7 @@
           }
           if ("Curator".equals(sourceDisplay)) {
             if (overview instanceof Geolocale) {
-              sourceDisplay = "<a title='" + childTaxonSet.getSource() + "' href='" + AntwebProps.getDomainApp() + "/curation.do?taxonName=" + childTaxonSet.getTaxonName() + "&geolocaleId=" + ((Geolocale) overview).getId() + "'>" + sourceDisplay + "</a>";
+              sourceDisplay = "<a title='" + Html.escAttr(childTaxonSet.getSource()) + "' href='" + AntwebProps.getDomainApp() + "/curation.do?taxonName=" + Html.escAttr(Html.url(childTaxonSet.getTaxonName())) + "&amp;geolocaleId=" + ((Geolocale) overview).getId() + "'>" + sourceDisplay + "</a>";
             }
           }
         %>

@@ -10,6 +10,11 @@ import java.io.Writer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Servlet for the short specimen link /specimen/<code> (web.xml): redirects (301) to specimen.do?name=<code>,
+ * or answers 404 "Specimen not found." for an invalid code. Public. Reads nothing. Tests:
+ * test/org/calacademy/antweb/security/SecurityBatch5Test.java.
+ */
 public class SpecimenFetch extends HttpServlet {
 
   private static final Log s_log = LogFactory.getLog(SpecimenFetch.class);

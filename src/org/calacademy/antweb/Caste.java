@@ -201,6 +201,19 @@ public final class Caste {
       return null;
     }
 
+    /**
+     * The note has the letter on its own (a digit, space or punctuation, or the start or end, on each side): the
+     * abbreviation w or m. Before, any word ending in w ("new queen", "yellow male") read as a worker.
+     */
+    static boolean hasLetterToken(String casteNote, char letter) {
+      for (int i = casteNote.indexOf(letter); i >= 0; i = casteNote.indexOf(letter, i + 1)) {
+        boolean before = i == 0 || !Character.isLetter(casteNote.charAt(i - 1));
+        boolean after = i == casteNote.length() - 1 || !Character.isLetter(casteNote.charAt(i + 1));
+        if (before && after) return true;
+      }
+      return false;
+    }
+
     private static boolean endsWith(String casteNote, String str) {
       int casteNoteLength = casteNote.length() - 1;
       if (casteNoteLength <= 0) return false;
@@ -237,10 +250,9 @@ public final class Caste {
 
     public static boolean isWorker(String casteNote) {
       if ( casteNote.contains("worker")
-        || endsWith(casteNote, "w")
-        || casteNote.contains("w ")
+        || hasLetterToken(casteNote, 'w')   // "w", "1w", "w, q"; not the w ending "new" or "yellow" (2026-10-29)
+        || casteNote.matches("[a-z]w")      // a two-letter code ending in w, as before
         || casteNote.contains("soldier")
-        || "w".equals(casteNote)
         || casteNote.contains("major")
         || casteNote.contains("minor")
          ) return true;
@@ -296,9 +308,7 @@ public final class Caste {
     }        
     private static boolean isMale(String casteNote) {
       if (casteNote.contains("male") && !casteNote.contains("female")
-        || endsWith(casteNote, "m")
-        || casteNote.contains("m ")
-        || "m".equals(casteNote)
+        || hasLetterToken(casteNote, 'm')   // "m", "2m"; not the m ending "worm" (2026-10-29)
          ) return true;
       for (int i=0 ; i < 10 ; ++i) {
         if (casteNote.contains(i + "m")) return true;

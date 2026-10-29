@@ -723,7 +723,7 @@ group by taxonName
 
     public String getUpdateCountSQL(String parentTaxonName, String columnName, int count) {        
         String updateCountSQL = "update proj_taxon set " + columnName + " = '" + count + "'" //, source='" + Source.SPECIMEN + "'" 
-            + " where project_name = '" + getName() + "' and taxon_name = '" + parentTaxonName + "'";
+            + " where project_name = " + org.calacademy.antweb.util.DBUtil.sqlQuote(getName()) + " and taxon_name = " + org.calacademy.antweb.util.DBUtil.sqlQuote(parentTaxonName);   // quoted (2026-10-29): a name with ' broke the update
         return updateCountSQL;
     }
     
@@ -751,7 +751,7 @@ group by taxonName
     
     public String getUpdateImageCountSQL(String taxonName, int sum) { //, String rank) {
         String updateSql = "update proj_taxon set image_count = " + sum 
-            + " where project_name = '" + getName() + "' and taxon_name = '" + taxonName + "'";
+            + " where project_name = " + org.calacademy.antweb.util.DBUtil.sqlQuote(getName()) + " and taxon_name = " + org.calacademy.antweb.util.DBUtil.sqlQuote(taxonName);
         return updateSql;    
     }
     

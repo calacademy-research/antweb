@@ -10,6 +10,11 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * The choices of the search forms' select boxes: bioregion names (table bioregion) and the country and adm1
+ * names of GeolocaleMgr (cache). Used by SearchIncludeFactory (advanced search, advSearch.do, and the Species
+ * List Tool search).
+ */
 public class SearchDb {
     private static final Log s_log = LogFactory.getLog(SearchDb.class);
 

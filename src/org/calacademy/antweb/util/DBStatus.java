@@ -23,6 +23,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.*;
 
+/**
+ * Database and server load checks: the MySQL process list (isServerBusy(connection): over 100 processes is
+ * busy), the three connection pools' diagnostics, and the busy report (written to data/log/serverBusy.html and
+ * emailed to the developer at most every 15 minutes). The pool check isServerBusy(pool1, pool2, pool3) runs in
+ * dev mode only and answers false on the servers. Used by Check.busy, the Database Status and Server Status
+ * pages and some public actions (search, field guide, specimen list). No table.
+ */
 public class DBStatus {
 
     private static final Log s_log = LogFactory.getLog(DBStatus.class);
@@ -102,7 +109,9 @@ public class DBStatus {
 
         try {
             ArrayList<String> processListArray = DBStatus.getMysqlProcessList(connection);
-            if (processListArray.size() > 100) {
+            // Working connections only (2026-10-29): the list also held its two heading lines and every idle
+            // (Sleep) pooled connection, so a large idle pool alone could show visitors "server is busy".
+            if (activeProcessCount(processListArray) > 100) {
                 isBusy = true;
             }
         } catch (SQLException e) {
@@ -392,6 +401,23 @@ public class DBStatus {
         for (String record : list) {
             s_log.warn("getMysqlProcessList() record:" + record);
         }
+    }
+
+    /**
+     * The processes of a getMysqlProcessList() list that are working: not its heading lines, not idle
+     * connections (command Sleep). Pure: tested in AuditTjFixesTest.
+     */
+    static int activeProcessCount(java.util.List<String> processList) {
+        if (processList == null) return 0;
+        int count = 0;
+        for (String line : processList) {
+            if (line == null || line.startsWith("|") || line.startsWith("---")) continue;   // heading lines
+            String[] fields = line.split(" \\| ", -1);
+            String command = fields.length > 4 ? fields[4].trim() : "";
+            if ("Sleep".equalsIgnoreCase(command)) continue;
+            ++count;
+        }
+        return count;
     }
 
     public static ArrayList<String> getMysqlProcessList(Connection connection)

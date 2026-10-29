@@ -15,6 +15,13 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /advSearch.do: the advanced search form (search/advancedSearch.jsp), public. Waits until the places are loaded
+ * (Check.init), sets the session's status set and project back to all (AntwebProps.resetSessionProperties) and
+ * writes the bioregion, country and adm1 pick lists (SearchIncludeFactory; request attributes bioregionGenInc,
+ * countryGenInc, adm1GenInc). Read-only. Docs: docs/flows/search.md. Tests:
+ * tests/e2e/test_search_pages.py::test_advanced_search_form.
+ */
 public final class SearchPageAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(SearchPageAction.class);

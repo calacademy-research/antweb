@@ -17,6 +17,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
     
+/**
+ * /countryAdm1List.do and /bioregionCountryList.do (public): the Countries and Adm1s report
+ * (reports/countryAdm1List.jsp) and the Bioregions report (reports/bioregionCountryList.jsp: each valid country
+ * by bioregion, plus the adm1s whose bioregion differs from their country's, from table geolocale).
+ * action=antwebAdm1s and action=acceptedAdm1s download the adm1 lists as text (GeolocaleMgr). Read-only. Docs:
+ * docs/catalog/actions.csv (no functional e2e test).
+ */
 public final class ReportAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ReportAction.class);

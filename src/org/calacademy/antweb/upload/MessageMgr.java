@@ -12,6 +12,15 @@ import org.calacademy.antweb.util.SpecimenCodes;
 
 import java.util.*;
     
+/**
+ * The sections of an upload report. Each kind of message (lines not uploaded, names replaced, unknown
+ * countries, red flags, ...) is a constant with its heading; the upload adds lines under them (addToMessages)
+ * and, since 2026-10-21, the specimen codes each line concerns. getMessagesReport() builds the sections'
+ * HTML for the report UploadDetails writes; some sections put their details in web/log/detail/. Used by the specimen and
+ * TaxonWorks uploads and the AntCat (WorldAnts) import.
+ * Docs: docs/flows/specimen-upload.md (section 3, step 11), docs/numbers.md.
+ * Tests: UploadDecisions1028Test, SharedNameReportTest, UploadSafetyTest.
+ */
 public class MessageMgr {
 
     public MessageMgr() {

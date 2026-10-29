@@ -13,6 +13,14 @@ import jakarta.servlet.http.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;    
 
+/**
+ * The result of one upload or AntCat (WorldAnts) import: counts (records, inserted and updated species), the
+ * report sections (MessageMgr), museums seen, the report and backup file names. finish() writes the HTML
+ * report to web/log/<specimen|worldants|upload>/<date>-<operation>.html and, for an AntCat import, updates
+ * worldants_upload. Returned to SpecimenUploadJob (status page, email), TaxonWorksNightly and the admin data
+ * jobs. Docs: docs/flows/specimen-upload.md (section 3, step 11), docs/numbers.md.
+ * Tests: UploadReportCountsTest, tests/e2e/test_numbers_uploads.py.
+ */
 public class UploadDetails extends OperationDetails {
 
     private static final Log s_log = LogFactory.getLog(UploadDetails.class);

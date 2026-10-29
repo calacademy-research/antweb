@@ -87,9 +87,9 @@ these other _cf1 etc.
       try {
         String query = "select taxon.taxon_name " 
             + " from taxon " 
-            + " where taxon.subfamily = '" + getSubfamily() + "'"
-            + "   and taxon.genus = '" + getGenus() + "'"
-            + "   and taxon.species = '" + getSpecies() + "'"
+            + " where taxon.subfamily = " + org.calacademy.antweb.util.DBUtil.sqlQuote(getSubfamily())   // quoted (2026-10-29)
+            + "   and taxon.genus = " + org.calacademy.antweb.util.DBUtil.sqlQuote(getGenus())
+            + "   and taxon.species = " + org.calacademy.antweb.util.DBUtil.sqlQuote(getSpecies())
             + "   and taxon.taxarank = 'subspecies'"
             + "   and taxon.status = 'valid'"
           ;

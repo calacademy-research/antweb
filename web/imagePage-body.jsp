@@ -122,7 +122,6 @@
 //A.log("default specimens? rank:" + rank);
  if (rank != null && (rank.equals(Rank.SPECIES) || rank.equals(Rank.SUBSPECIES))) { 
  %>
-      <% // @include file="/curate/defaultSpecimen/defaultSpecimen.jsp" %>
  <% } %>
         <div class="clear"></div>
     </div>
@@ -142,7 +141,6 @@
   if (taxon.getRank().equals(Rank.SPECIES) || taxon.getRank().equals(Rank.SUBSPECIES)) {
     String defaultSpecimenTaxon = (String) session.getAttribute("defaultSpecimenTaxon");
     //if (defaultSpecimenTaxon != null) { %> 
-        <!-- %@ include file="/curate/defaultSpecimen/defaultSpecimenSelectPanel.jsp" % -->
  <% //} else {
       String message = (String) session.getAttribute("message");
       if (message != null) { 

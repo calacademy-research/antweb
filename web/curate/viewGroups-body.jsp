@@ -1,3 +1,6 @@
+<%-- Body of the upload groups list: what an upload group is, a link to Add an uploader, the group queries, a
+     "New upload group" button (POST to newGroup.do) and every group (session attribute antwebGroups, table
+     ant_group) with links to its form and public page. Read-only. Docs: docs/guides/adding-an-uploader.md. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

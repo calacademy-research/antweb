@@ -1,3 +1,6 @@
+<%-- Project settings page (editProject.do, EditProjectAction), admins only (curatorCheck.jsp, then an admin check
+     that redirects to permissionDenied.jsp). Tiles wrapper of curate/project/editProject-body.jsp. Docs:
+     docs/guides/manager-tools.md (Project settings). Tests: tests/e2e/test_manager_tools.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

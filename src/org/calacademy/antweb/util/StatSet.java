@@ -5,6 +5,12 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * One row of a table on the statistics page (statsPage.do): a name (Extant, Fossil, a bioregion or museum code)
+ * and up to four titled numbers; getHeader, toString and getFooter write the HTML table. Filled by StatisticsDb
+ * and StatsPageAction; NumberChecks compares the values (getValue). Tests: NumberChecksTest,
+ * tests/e2e/test_numbers_pages.py, test_count_check.py.
+ */
 public class StatSet {
 
     private static final Log s_log = LogFactory.getLog(StatSet.class);
@@ -81,7 +87,7 @@ public class StatSet {
     
     public String toString() {
       String retVal = "";
-      retVal += "<tr align=right><td>" + name + "</td><td>" + value1 + "</td><td>" + value2 + "</td><td>" + value3 + "</td><td>" + value4 + "</td></tr>"; 
+      retVal += "<tr align=right><td>" + Html.esc(name) + "</td><td>" + value1 + "</td><td>" + value2 + "</td><td>" + value3 + "</td><td>" + value4 + "</td></tr>"; 
       return retVal;
     }
 

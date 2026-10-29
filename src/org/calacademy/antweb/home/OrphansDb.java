@@ -9,6 +9,14 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Taxa that nothing uses any more. Used at the end of a specimen upload: deleteOrphanedSpeciesFromSource
+ * deletes the group's species and subspecies that no specimen uses (not those with page text; refused when too
+ * many), deleteTaxon removes a name with its list rows (curator rows are parked, CuratorTaxonSetDb), and
+ * moveTaxonSupportingDataToAlternate moves a name's data to the name it was changed to. The orphan lists were for
+ * the Orphan Manager pages, removed. Tables taxon, proj_taxon, geolocale_taxon, bioregion_taxon, museum_taxon,
+ * taxon_prop, description_edit, specimen. Docs: docs/flows/specimen-upload.md, docs/numbers.md.
+ */
 public class OrphansDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(OrphansDb.class);
@@ -652,6 +660,20 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
             DBUtil.close(stmt, rset,  "OrphansDB.moveSupportingDataGeneric()");
         }    
     }  
+    /** Copies the old name's page text (one title, or all when title is null) into the history of the new name. */
+    private void keepTextInHistory(String taxonName, String oldTaxonName, String column, String value) throws SQLException {
+        String cols = "taxon_name, title, code, content, edit_id, created, access_group, access_login";
+        String sql = "insert into description_hist (" + cols + ") select ?, title, code, content, edit_id, created, access_group, access_login"
+            + " from description_edit where taxon_name = ?" + ("title".equals(column) && value != null ? " and title = ?" : "");
+        try (PreparedStatement stmt = DBUtil.getPreparedStatement(getConnection(), "OrphansDb.keepTextInHistory()", sql)) {
+            stmt.setString(1, taxonName);
+            stmt.setString(2, oldTaxonName);
+            if ("title".equals(column) && value != null) stmt.setString(3, value);
+            int rows = stmt.executeUpdate();
+            LogMgr.appendLog("moveTaxonAndSupportingTaxa.log", "kept " + rows + " page text(s) of " + oldTaxonName + " in the history of " + taxonName);
+        }
+    }
+
     private void updateFailGraceful(String taxonName, String table, String alternateColumn, String alternateValue
       // Move the records, or if they already exist, just delete them
       , String alternateColumn2, String alternateValue2, String oldTaxonName) throws SQLException {
@@ -667,6 +689,9 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
             //if (true) s_log.warn("updateFailGraceful() update:" + update); else
             stmt.executeUpdate(update);    
           } catch (SQLIntegrityConstraintViolationException e) {
+            // A page text the new name already has: the old name's text is kept in the new name's history
+            // (description_hist) before it is deleted, so a curator's text is never lost (2026-10-29).
+            if ("description_edit".equals(table)) keepTextInHistory(taxonName, oldTaxonName, alternateColumn, alternateValue);
             // If a primary key conflict, then delete the old.
             update = "delete from " + table + " where taxon_name = '" + DBUtil.escapeQuotes(oldTaxonName) + "'";
             if (alternateColumn != null && alternateValue != null) update += " and " + alternateColumn + " = '" + DBUtil.escapeQuotes(alternateValue) + "'";

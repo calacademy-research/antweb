@@ -17,6 +17,14 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /introducedMapMgr.do: the Introduced Map Manager (curate/introducedMapMgr.jsp), admins only (Check.admin): for
+ * each species of project introducedants (table proj_taxon) the bioregions where it is native (table taxon_prop,
+ * prop introducedMap). A POST saves one species (TaxonPropDb.updateIntroducedMap). Opening the page also writes
+ * an empty map for a listed species that has none; after any write TaxonPropMgr is reloaded. Docs:
+ * docs/guides/manager-tools.md (Introduced Map Manager). Tests: tests/e2e/test_manager_tools.py,
+ * test_hardening_2026_10_18.py.
+ */
 public final class IntroducedMapMgrAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(IntroducedMapMgrAction.class);
@@ -30,6 +38,16 @@ public final class IntroducedMapMgrAction extends AntwebAction {
         // Administrators only, like the other managers in the admin list (the page also fills
         // in empty maps when it loads).
         ActionForward c = Check.admin(request, mapping); if (c != null) return c;
+
+        // Adding the empty rows changes data (a species with a row, even an empty one, counts as
+        // introduced): only by POST from the page's button, never on simply opening the page.
+        boolean createEmptyMaps = "createEmptyMaps".equals(request.getParameter("action"));
+        if (createEmptyMaps) {
+            ActionForward confirm = PostOnly.confirm(request, mapping,
+                "Add an empty bioregion row for each listed species that has none.");
+            if (confirm != null) return confirm;
+        }
+        int missingMapCount = 0;
 
 		BioregionMapMgrForm bioregionMapMgrForm = (BioregionMapMgrForm) form;
         String orderBy = bioregionMapMgrForm.getOrderBy();
@@ -49,7 +67,7 @@ public final class IntroducedMapMgrAction extends AntwebAction {
             connection = DBUtil.getConnection(dataSource, "IntroducedMapMgrAction.execute()");
 
 			// (The old "refresh" of this table is disabled; see below.)
-			if (HttpUtil.isPost(request) && !bioregionMapMgrForm.isRefresh()) {
+			if (HttpUtil.isPost(request) && !bioregionMapMgrForm.isRefresh() && !createEmptyMaps) {
 			  s_log.debug("execute POST values:" + bioregionMapMgrForm);
 			  TaxonPropDb taxonPropDb = new TaxonPropDb(connection);
 			  String taxonName = bioregionMapMgrForm.getTaxonName();
@@ -93,10 +111,13 @@ public final class IntroducedMapMgrAction extends AntwebAction {
                 species.setIntroducedMap(introducedMap);
               }
               if (i == 0) {
-                // No fields are flagged. So no map exists? Create the empty Map.
-                //A.log("Introduced Map Mgr. Create empty Map for taxonName:" + taxonName);
-                taxonPropDb.updateIntroducedMap(taxonName, "");
-                reloadTaxonPropMgr = true;
+                // No row yet. Create the empty map only when asked (POST); otherwise count it for the page.
+                if (createEmptyMaps) {
+                  taxonPropDb.updateIntroducedMap(taxonName, "");
+                  reloadTaxonPropMgr = true;
+                } else {
+                  ++missingMapCount;
+                }
               }
               
               speciesList.add(species); 
@@ -116,6 +137,7 @@ public final class IntroducedMapMgrAction extends AntwebAction {
 
         //request.setAttribute("genusBioregionMap", genusBioregionMap);
         request.setAttribute("speciesList", speciesList);
+        request.setAttribute("missingMapCount", missingMapCount);
         request.setAttribute("form", bioregionMapMgrForm);
         
         return mapping.findForward("success");

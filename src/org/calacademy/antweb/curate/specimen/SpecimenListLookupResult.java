@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * The outcome of a Specimen List Lookup: errors that stop it (first 100 shown), the codes not in AntWeb, the
+ * codes with spaces, and the row counts, for curate/specimen/specimenListLookup-body.jsp. Tests:
+ * test/.../curate/specimen/SpecimenListLookupServiceTest.java.
+ */
 public class SpecimenListLookupResult {
     private static final int MAX_DISPLAYED_ERRORS = 100;
 

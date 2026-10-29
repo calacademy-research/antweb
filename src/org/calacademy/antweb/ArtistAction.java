@@ -155,6 +155,13 @@ public final class ArtistAction extends AntwebAction {
                   return mapping.findForward("message");
                 }
                 Artist moveToArtist = ArtistMgr.getArtist(moveTo);
+                // The artist the images move to must exist and be another artist (2026-10-29).
+                if (moveTo != 0 && (moveToArtist == null || moveTo == artistId)) {
+                  request.setAttribute("message", moveTo == artistId
+                      ? "Choose another artist to move the images to: an artist cannot take its own images."
+                      : "Artist with id:" + moveTo + " (to move the images to) does not exist. Nothing was changed.");
+                  return mapping.findForward("message");
+                }
                 String returnVal = artistDb.removeArtist(artist, moveToArtist, accessLogin);
                 if (returnVal == null) {
                   request.setAttribute("message", "Artist with id:" + artistId + " not deleted.");

@@ -149,8 +149,17 @@ def test_link_builders_encode_once():
                 if not name.endswith((".java", ".jsp", ".js")):
                     continue
                 path = os.path.join(dirpath, name)
+                in_comment = False   # inside a JSP <%-- --%> comment (file headers, 2026-10-29): no code there
                 for n, line in enumerate(open(path, encoding="utf-8", errors="replace"), 1):
                     code = line.strip()
+                    if name.endswith(".jsp"):
+                        was = in_comment
+                        if "<%--" in code and "--%>" not in code.split("<%--", 1)[1]:
+                            in_comment = True
+                        if "--%>" in code:
+                            in_comment = False
+                        if was or code.startswith("<%--"):
+                            continue
                     if not LINK_BUILDER.search(code) or code.startswith(("//", "*", "/*", "<!--")) or "http://localhost" in code:
                         continue
                     if "LINKS = {" in code or "DBUtilSimple" in path or "// " in code.split(LINK_BUILDER.search(code).group(0))[0]:

@@ -3,6 +3,11 @@ package org.calacademy.antweb.curate.speciesList;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The result of SpeciesListValidator: rows sorted into exact matches, problems and format errors, plus the
+ * valid species the file lacks; generateTsvReport() and generateCorrectedTsvReport() give the two TSV downloads
+ * of validateSpeciesList.do. Tests: test/.../curate/speciesList/ValidateSpeciesReportTest.java.
+ */
 public class ValidateSpeciesReport {
     private final List<ValidateSpeciesResultItem> exactMatches = new ArrayList<>();
     private final List<ValidateSpeciesResultItem> problems = new ArrayList<>();

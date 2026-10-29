@@ -22,6 +22,12 @@ import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.LoginMgr;
 
+/**
+ * /viewGroup.do?id=N: one upload group's form (curate/viewGroup.jsp), admins only: the group (table ant_group),
+ * its logins (table login) and its last upload (UploadDb), put in the session as thisGroup. Without a number it
+ * redirects to the list (viewGroups.do). Read-only; saving is saveGroup.do. Docs:
+ * docs/guides/adding-an-uploader.md. Tests: tests/e2e/test_add_uploader.py, test_group_form_help.py.
+ */
 public final class ViewGroupAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ViewGroupAction.class);

@@ -7,6 +7,11 @@ import org.apache.struts.action.Action;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * Common parent of PrepareCompareResultsAction and PrepareMapResultsAction (prepareCompareResults.do,
+ * prepareMapResults.do), which narrow a search's results to the imaged or georeferenced rows before the visitor
+ * chooses rows to compare or map. No code of its own; the comment inside is an old design note.
+ */
 public class PrepareAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(PrepareAction.class);

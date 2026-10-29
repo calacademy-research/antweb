@@ -562,15 +562,25 @@ def addExtraGeolocaleListCriteria(query, geolocaleName):
     geolocale = getGeolocale(geolocaleName)
     if geolocale is None:
         return query
+    return geolocaleSpecimenCriteria(query, geolocale)
+
+
+def geolocaleSpecimenCriteria(query, geolocale):
+    # The specimens collected in this one place (2026-10-29): the name exactly (was "contains" for regions,
+    # subregions and adm1s, so adm1=Western also matched Western Cape and Western Australia), and an adm1 only in
+    # its own country (adm1 names such as Western or Central exist in several countries).
+    name = geolocale.name
     georank = geolocale.georank
     if georank == "region":
-        query = query.filter(Specimen.region.contains(geolocaleName))
+        query = query.filter(Specimen.region == name)
     if georank == "subregion":
-        query = query.filter(Specimen.subregion.contains(geolocaleName))
+        query = query.filter(Specimen.subregion == name)
     if georank == "country":
-        query = query.filter(countryIs(Specimen.country, geolocaleName))
+        query = query.filter(countryIs(Specimen.country, name))
     if georank == "adm1":
-        query = query.filter(Specimen.adm1.contains(geolocaleName))
+        query = query.filter(Specimen.adm1 == name)
+        if geolocale.parent:
+            query = query.filter(countryIs(Specimen.country, geolocale.parent))
     return query
 
 
@@ -734,8 +744,15 @@ def getSpecimen():
         if hasImage == 'false':
             query = query.filter(or_(Specimen.imageCount <= 0, Specimen.imageCount == None))
     if geolocaleName != '*':
-        query = query.join(Taxon).join(GeolocaleTaxon).join(Geolocale).filter(Geolocale.name == geolocaleName)
-        query = addExtraGeolocaleListCriteria(query, geolocaleName)
+        # The list of the one geolocale of that name (as /geoSpeciesStats, B55), 2026-10-29: joined by name, the
+        # lists of every geolocale of the name were used (Georgia the country and the US state), and a specimen
+        # on two of them came back twice, so pages held fewer than limit records.
+        geolocale = getGeolocale(geolocaleName)
+        if geolocale is None:
+            query = query.filter(text("1 = 0"))   # no such place: no specimens, as before
+        else:
+            query = query.join(Taxon).join(GeolocaleTaxon).filter(GeolocaleTaxon.geolocaleId == geolocale.id)
+            query = geolocaleSpecimenCriteria(query, geolocale)
     if validSubfamily == 'true':
         query = query.filter(func.lower(Specimen.subfamily).in_(sorted(VALID_SUBFAMILIES)))
     if validGenus == 'true':
@@ -952,6 +969,9 @@ def getGeoSpeciesStats():
         return apiNotFound("Geolocale not found: " + geolocaleName)
     georank = geolocale.georank
     extraClause = " s." + georank + " = :geolocaleName"
+    if georank == "adm1" and geolocale.parent:
+        # An adm1 only in its own country (2026-10-29): adm1 names such as Western exist in several countries.
+        extraClause += " and s.country = :parentName"
 
     # queenErgatoidCount and maleErgatoidCount count the ergatoids of their caste (2026-10-22: both counted every
     # ergatoid specimen, so a male ergatoid was also a queen ergatoid). Every subcaste count counts only within its
@@ -982,7 +1002,7 @@ def getGeoSpeciesStats():
     # B55 (2026-10-27): the list of this one geolocale (was every geolocale of the name, joined by name, so a
     # name shared by two geolocales, a country and an adm1 or two adm1s, counted each specimen once per geolocale).
     result = session.execute(text(query), {"geolocaleName": geolocaleName, "geolocaleId": geolocale.id,
-                                           "limit": limit, "offset": offset})
+                                           "parentName": geolocale.parent, "limit": limit, "offset": offset})
     for row in result:
         geoSpeciesStats = getGeoSpeciesStatsDict(row)
         dataList.append(geoSpeciesStats)
