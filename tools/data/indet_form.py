@@ -283,7 +283,7 @@ def set_columns(table, old, new, statuses=None):
     kind = kind_of(old)
     if kind == TWO_WORD:
         return f", species = {sql_string(INDET)}, status = 'indetermined'"
-    rank = ", `rank` = 'species'" if table == "taxon" else ""
+    rank = ", taxarank = 'species'" if table == "taxon" else ""
     if kind == SPECIES_INDET:
         return f", species = {sql_string(INDET)}, subspecies = null, status = 'indetermined'{rank}"
     status = (statuses or {}).get(old) or species_status(new, None)
@@ -607,7 +607,7 @@ def main(argv=None):
         a = sub.add_parser(name, help=text)
         a.add_argument("--project", default=here, help="AntWeb checkout with etc/db.properties (default: this checkout)")
         a.add_argument("--container", default="antweb_mysql_1")
-        a.add_argument("--date", default="", help="backup date YYYYMMDD (run: today; rollback: required)")
+        a.add_argument("--date", default="", help="backup date YYYYMMDD, or YYYYMMDDb for a second run the same day (run: today; rollback: required)")
         a.add_argument("--production", action="store_true", help="allow production (run on staging first)")
         a.add_argument("--yes", action="store_true", help="do not ask before changing anything")
         a.add_argument("--force", action="store_true", help="rollback even if rows changed since the run")
@@ -615,8 +615,9 @@ def main(argv=None):
         a.add_argument("--show-sql", action="store_true", help="print the SQL before running it")
         a.set_defaults(func=func)
     args = p.parse_args(argv)
-    if args.date and not re.fullmatch(r"\d{8}", args.date):
-        sys.exit("--date must be YYYYMMDD")
+    # A letter after the date names a second run on the same day (20261029b): backup table names never repeat.
+    if args.date and not re.fullmatch(r"\d{8}[a-z]?", args.date):
+        sys.exit("--date must be YYYYMMDD, or YYYYMMDD plus one letter for another run the same day")
     if args.cmd == "rollback" and not args.date:
         sys.exit("rollback needs --date (the date of the run, YYYYMMDD)")
     if not args.date:

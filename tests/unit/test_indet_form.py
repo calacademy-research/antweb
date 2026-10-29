@@ -125,12 +125,12 @@ def test_sql():
     r3 = tf.run_sql("20261029", TABLES, m3, KEYS, after,
                     {"ectatomminaegnamptogenys striatula-complex indet": "morphotaxon"})
     assert ("update taxon set taxon_name = 'ectatomminaegnamptogenys striatula-complex', species = 'striatula-complex',"
-            " subspecies = null, status = 'morphotaxon', `rank` = 'species'"
+            " subspecies = null, status = 'morphotaxon', taxarank = 'species'"
             " where taxon_name = 'ectatomminaegnamptogenys striatula-complex indet';") in r3, r3
     assert ("update specimen set taxon_name = 'ectatomminaegnamptogenys striatula-complex', species = 'striatula-complex',"
             " subspecies = null, status = 'morphotaxon' where taxon_name = 'ectatomminaegnamptogenys striatula-complex indet';") in r3
     assert ("update taxon set taxon_name = 'myrmicinaeocymyrmex (indet)', species = '(indet)', subspecies = null,"
-            " status = 'indetermined', `rank` = 'species' where taxon_name = 'myrmicinaeocymyrmex indet karooicus';") in r3
+            " status = 'indetermined', taxarank = 'species' where taxon_name = 'myrmicinaeocymyrmex indet karooicus';") in r3
     assert ("update specimen set taxon_name = 'myrmicinaeocymyrmex (indet)', species = '(indet)', subspecies = null,"
             " status = 'indetermined' where taxon_name = 'myrmicinaeocymyrmex indet karooicus';") in r3
     # merged into an existing target exactly as the two-word case; other name columns follow
@@ -231,7 +231,7 @@ def test_command_flow():
             tf.main(["run", "--project", project, "--yes", "--date", "20261028"])
         assert len(db.scripts) == 2 and "create table indet_form_bak_20261028_names" in db.scripts[0]
         assert "start transaction;" in db.scripts[1]
-        assert "status = 'morphotaxon', `rank` = 'species' where taxon_name = 'ectatomminaegnamptogenys striatula-complex indet';" in db.scripts[1]
+        assert "status = 'morphotaxon', taxarank = 'species' where taxon_name = 'ectatomminaegnamptogenys striatula-complex indet';" in db.scripts[1]
 
         with quiet():
             tf.main(["rollback", "--project", project, "--yes", "--date", "20261028"])
@@ -288,12 +288,24 @@ def test_runbook():
     print("Runbook section has preview, run and rollback, staging first.")
 
 
+def test_columns_exist_in_the_schema():
+    """Every taxon column the tool sets exists in the live schema snapshot (staging 2026-10-29: `rank` does not;
+    the column is taxarank, and the run stopped before its commit)."""
+    import glob
+    snap = sorted(glob.glob(os.path.join(ROOT, "doc", "schema", "live-schema-*.tsv")))[-1]
+    cols = {l.split("\t")[1] for l in open(snap, encoding="utf-8") if l.startswith("taxon\t")}
+    assert "taxarank" in cols and "rank" not in cols
+    src = open(os.path.join(ROOT, "tools", "data", "indet_form.py"), encoding="utf-8").read()
+    assert "`rank`" not in src and "taxarank = 'species'" in src
+
+
 def main():
     test_names()
     test_sql()
     test_command_flow()
     test_production_guard()
     test_runbook()
+    test_columns_exist_in_the_schema()
     print("OK")
 
 
