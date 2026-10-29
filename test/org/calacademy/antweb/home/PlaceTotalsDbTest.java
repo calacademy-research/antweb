@@ -43,6 +43,7 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *   taxon images   species added to their genus (a genus counted only specimens filed under the genus name)
  *   home page      specimens and species imaged: images of the ant, labels not counted; species by name
  *   Global         recounted after the nightly name update moved specimens
+ *   AntCat list    worldants recounted in set 2, after the TaxonWorks upload and the name update of set 1 (2026-10-29)
  *   statsPage      "valid species + ssp." counts species and subspecies, not every rank
  *
  * Runs in CI against MySQL 8.4 (host "mysql"); ANTWEB_TEST_DB_URL overrides.
@@ -487,5 +488,43 @@ public class PlaceTotalsDbTest extends TestCase {
         assertEquals(4, PlaceTotals.count(connection, PlaceTotals.listedSpecimensSql(PlaceTotals.MUSEUM), "CASC"));
         assertEquals(4, PlaceTotals.writeListedSpecimens(connection, PlaceTotals.MUSEUM, "CASC"));
         assertEquals(4, one("select specimen_count from museum where code = 'CASC'"));
+    }
+    /**
+     * Production count check 2026-10-29 (list.global, 7 species, e.g. worldants Camponotus buchneri 40 specimens, the
+     * name and its synonyms 33): the AntCat import counts worldants first in set 1; the TaxonWorks upload and the name
+     * update then file specimens under other names, and nothing recounted worldants (sets 2 to 5 skip it). Set 2 now
+     * recounts it (UtilDataAction.recountAntCatList), each row by the very name, as the import does.
+     */
+    public void testAntCatListIsRecountedAfterSpecimensMoved() throws Exception {
+        exec("insert into project (project_name, is_live, subfamily_count, genus_count, species_count, valid_species_count, specimen_count,"
+            + " image_count, imaged_specimen_count) select 'worldants', 1, subfamily_count, genus_count, species_count, valid_species_count,"
+            + " specimen_count, image_count, imaged_specimen_count from project where project_name = 'allantwebants'");
+        exec("insert into proj_taxon (project_name, taxon_name, subfamily_count, genus_count, species_count, specimen_count, image_count, created)"
+            + " select 'worldants', taxon_name, subfamily_count, genus_count, species_count, specimen_count, image_count, created"
+            + " from proj_taxon where project_name = 'allantwebants'");
+        long pa = one("select count(*) from specimen where taxon_name = '" + PA + "'");
+        // counted by the import before an upload re-identified specimens: 3 more than the name has now
+        exec("update proj_taxon set specimen_count = " + (pa + 3) + " where project_name = 'worldants' and taxon_name = '" + PA + "'");
+        assertEquals("the check finds the stale row", 1, globalMismatches(invariants(), "worldants"));
+
+        connection.setAutoCommit(false);   // as the nightly run's connection
+        try {
+            String line = UtilDataAction.recountAntCatList(connection);
+            assertTrue(line, line.startsWith(UtilDataAction.ANTCAT_LIST_RECOUNTED));
+        } finally {
+            connection.setAutoCommit(true);
+        }
+        assertEquals("worldants counts the very name", pa,
+            one("select specimen_count from proj_taxon where project_name = 'worldants' and taxon_name = '" + PA + "'"));
+        assertEquals(one("select specimen_count from proj_taxon where project_name = 'allantwebants' and taxon_name = '" + HB + "'"),
+            one("select specimen_count from proj_taxon where project_name = 'worldants' and taxon_name = '" + HB + "'"));
+        CountCheck.Result r = invariants();
+        assertEquals(list(r), 0, globalMismatches(r, "worldants"));
+    }
+
+    private static int globalMismatches(CountCheck.Result r, String project) {
+        int n = 0;
+        for (CountCheck.Mismatch m : r.mismatches) if ("list.global".equals(m.check) && m.toString().contains(project)) ++n;
+        return n;
     }
 }

@@ -263,6 +263,8 @@ def test_global_recounted_after_cleanup_and_synonym_bound(sources):
     src = sources["src/org/calacademy/antweb/util/UtilDataAction.java"]
     i = src.index('doAction("dataCleanup"')
     assert "recountGlobal(connection)" in src[i:i + 900], "set 2 no longer recounts the Global column after the clean-up (B65)"
+    assert "recountAntCatList(connection)" in src[i:i + 1500], \
+        "set 2 no longer recounts the AntCat list (worldants) after set 1 moved specimens (count check 2026-10-29)"
     inv = sources["src/org/calacademy/antweb/util/CountInvariants.java"]
     body = inv[inv.index("void globalPerPlace()"):]
     body = body[:body.index("compare(")]

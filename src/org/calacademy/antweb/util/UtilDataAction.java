@@ -297,6 +297,33 @@ public class UtilDataAction extends AntwebAction {
         return line;
     }
 
+    /** Written to compute.log by set 2 when the AntCat list (worldants) was recounted; the count check's tests read it. */
+    public static final String ANTCAT_LIST_RECOUNTED = "AntCat list (worldants) recounted after set 1";
+
+    /**
+     * The AntCat list (worldants): its rows' counts set to 0 and counted again from the specimens, each by the very name it
+     * is filed under (worldants lists every AntCat name, synonyms too, so a synonym's specimens stay on the synonym's row;
+     * PlaceTotals.synonymsToValid). Set 2, after the clean-up: the AntCat import counted it before the TaxonWorks upload
+     * and the name update of set 1 changed specimens' names (count check 2026-10-29, list.global, 7 species). One line
+     * for compute.log; what set 2 did before is committed first, a failure rolls back only this recount.
+     */
+    public static String recountAntCatList(Connection connection) {
+        long start = System.currentTimeMillis();
+        String line;
+        try {
+            connection.commit();
+            new ProjTaxonCountDb(connection).recount(new Project(Project.WORLDANTS));
+            connection.commit();
+            line = ANTCAT_LIST_RECOUNTED + " in " + (System.currentTimeMillis() - start) / 1000 + " s";
+        } catch (Exception e) {
+            try { connection.rollback(); } catch (SQLException e2) { s_log.error("recountAntCatList() rollback e:" + e2); }
+            s_log.error("recountAntCatList() e:" + e);
+            line = "AntCat list (worldants) NOT recounted after set 1 (" + e + ")";
+        }
+        LogMgr.appendLog("compute.log", "  " + line, true);
+        return line;
+    }
+
     /**
      * Nightly set 1 (B36, docs/numbers.md): every ant species and subspecies of a counted status that is its own current
      * valid name and is identified to genus gets its genus row as parent, where that genus row exists
@@ -463,6 +490,11 @@ public class UtilDataAction extends AntwebAction {
                 // recounts after it: its genus and subfamily rows then counted more rows than they have (count check 2026-10-27,
                 // e.g. Leptogenys 631 species with 623 rows; finding B65). Recount it here, as the upload does.
                 message += " " + recountGlobal(connection);
+                // The AntCat list (worldants) is counted by the AntCat import, the first step of set 1, before the TaxonWorks
+                // upload and the name update move specimens to other names; sets 2 to 5 skip it. Its species rows then held
+                // more specimens than the name has (count check 2026-10-29, list.global: Camponotus buchneri 40, its
+                // specimens and its synonyms' 33). Recount it here, after every step that moves specimens.
+                message += " " + recountAntCatList(connection);
                 message += " " + doAction("generateGeolocaleTaxaFromSpecimens", form, accessLogin, accessGroup, connection, request, mapping); // Prod: 12.30 mins
                 // Synonym rows of the lists renamed to (or merged into) their current valid name BEFORE the counts
                 // (2026-10-21). It ran only in set 3, after the geolocale and project totals: a merged synonym row

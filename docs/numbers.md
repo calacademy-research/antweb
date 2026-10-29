@@ -609,6 +609,16 @@ Found while doing this (2026-10-26, end-to-end tests of rows 24 to 53; each has 
   the others under a note), like the list. The test marks bioregion subfamily differences as an expected failure
   (`pytest.xfail`, B77); any other place or rank still fails. Test:
   `e2e:test_numbers_lists.py::test_browse_headers_equal_the_list_rows`.
+- **B78** (fixed 2026-10-29) the AntCat list (worldants) is counted by the AntCat import, the first step of set 1;
+  the TaxonWorks upload and the name update that follow it in set 1 file specimens under other names, and nothing
+  recounted worldants (sets 2 to 5 skip it), so its species rows kept the specimens counted before (production 10-29,
+  list.global, 7 species: Camponotus buchneri 40 against 33 for the name and its synonyms, C. dufouri,
+  C. immaculatus, C. repens, Technomyrmex fisheri, Plagiolepis madecassa, Hypoponera punctatissima 1 to 3 over).
+  worldants still counts each row by the very name (it lists synonyms as rows of their own, so a synonym's specimens
+  stay on the synonym's row; `PlaceTotals.synonymsToValid`); the check's bound (the name plus its synonyms) is right.
+  Now set 2 recounts worldants after the clean-up, next to the Global column (`UtilDataAction.recountAntCatList`, a
+  compute.log line). Tests: `junit:PlaceTotalsDbTest#testAntCatListIsRecountedAfterSpecimensMoved`,
+  `tests/unit/test_small_fixes.py` (9).
 - Not a number, for the record: the recent images test expected 100 rows on the first page; the page lists 50 per
   page (`recentSearchResults-body.jsp`, parameter `length`; `numToShow` is not the page size). The test now reads the
   page's own "Showing records a to b".
