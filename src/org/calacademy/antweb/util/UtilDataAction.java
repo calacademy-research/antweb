@@ -467,6 +467,10 @@ public class UtilDataAction extends AntwebAction {
                 message = "set1 - ";
                 OperationDetails worldants = doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
                 message += worldants;
+                if (worldants != null && "success".equals(worldants.getMessage())) {
+                    // The e2e tests read this line: the bioregion lists were rebuilt with valid names only (2026-10-29).
+                    LogMgr.appendLog("compute.log", "  AntCat import done (" + org.calacademy.antweb.upload.SpeciesListUpload.BIOREGION_VALID_LOG + ")", true);
+                }
                 message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
                 // CAS specimens from TaxonWorks (GitHub #27). Does nothing without etc/taxonworks.properties.
                 // Waits up to 30 minutes (Brian Fisher, 2026-10-24; was 90) for the archive TaxonWorks builds after this run's

@@ -311,6 +311,16 @@ COUNTING_RULES_LOG = "counting rules of 2026-10-28"
 ENDEMIC_RULE_LOG = "endemic rule of 2026-10-28"
 
 
+# SpeciesListUpload.BIOREGION_VALID_LOG, on the "AntCat import done" line of nightly set 1. Keep in step with Java.
+BIOREGION_VALID_LOG = "bioregion lists from AntCat: valid names only (2026-10-29)"
+
+
+def bioregion_valid_names_imported():
+    """True when a nightly AntCat import has rebuilt the bioregion lists with valid names only (2026-10-29); False when
+    compute.log is readable and has no such line (pending); None when unreadable."""
+    return compute_log_has("AntCat import done", BIOREGION_VALID_LOG)
+
+
 def counting_rules_counted():
     """True when a nightly run has counted the place numbers by the counting rules of 2026-10-28 (docs/numbers.md
     section 5; the same test as CountInvariants.rulesCounted), False when compute.log is readable and has no such line

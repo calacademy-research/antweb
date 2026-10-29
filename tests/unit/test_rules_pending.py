@@ -49,6 +49,18 @@ def test_nightly_writes_the_lines():
     assert src.index('"  Set 3 done (') > src.index('"populateBioregion"')
 
 
+def test_bioregion_lists_take_valid_names_only():
+    """Brian Fisher, 2026-10-29: Formica was an Afrotropical genus through unidentifiable AntCat names (Formica chufejif
+    Forskal, 1775) listed under their own name. Country lists already took valid names only; bioregion lists now too,
+    and set 1 says so in compute.log for the e2e test (tests/e2e/test_images_anywhere.py)."""
+    up = read("src/org/calacademy/antweb/upload/SpeciesListUpload.java")
+    assert java_constant(up, "BIOREGION_VALID_LOG") == py_constant(read("tests/e2e/numbers_sample.py"), "BIOREGION_VALID_LOG")
+    assert "if (bioregion != null && isValidForPlaceList(currentValidName)) {" in up
+    assert "return current != null && current.isValid();" in up
+    nightly = read("src/org/calacademy/antweb/util/UtilDataAction.java")
+    assert '"  AntCat import done (" + org.calacademy.antweb.upload.SpeciesListUpload.BIOREGION_VALID_LOG + ")"' in nightly
+
+
 def test_group_species_is_pending_until_the_nightly_run():
     src = read("src/org/calacademy/antweb/util/NumberChecks.java")
     assert src.count("i == 7 && v[i] != recount[i] && !inv.result.rulesCounted ? CountInvariants.SPECIES_RULE_PENDING") == 1
