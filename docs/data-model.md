@@ -792,7 +792,9 @@ Created by the application; record and undo in `db/upgrade/8.113/2026-10-20-plac
 ### `license`
 
 **Purpose.** Image licences (renamed column `uid` to `id` in `db/upgrade/8.0`). No SQL in the code reads or writes
-it; `image.license` is written as the constant 1 (`ImageDb.insertImage`) and the licence text is in the JSPs.
+it; `image.license` is written as the constant 1 (`ImageDb.insertImage`). The site licence is CC BY 4.0 since
+2026-10-29 (`util/License.java`); `image_upload.license` records `License.LINE` for new uploads, older rows keep the
+BY-SA/GFDL text they were saved with.
 
 **Status.** Unused by the code. Candidate to drop after checking that `image.license` = 1 means the same licence
 everywhere.

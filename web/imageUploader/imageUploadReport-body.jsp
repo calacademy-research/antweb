@@ -69,7 +69,7 @@
     <div id="overview_data" class="plain">
         <ul>
         <li><b>License: </b></li>
-        <li>Attribution-ShareAlike (BY-SA) Creative Commons License and GNU Free Documentation License (GFDL)</li>
+        <li><jsp:include page="/common/licenseStatement.jsp" flush="true"/></li>
         </ul>
     </div>
 

@@ -697,6 +697,9 @@ jobs:
       - name: No email tells the reader to ignore it (tests/unit/test_email_texts.py)
         run: python3 tests/unit/test_email_texts.py
 
+      - name: One licence statement, CC BY 4.0; no older Creative Commons wording (tests/unit/test_license_statement.py)
+        run: python3 tests/unit/test_license_statement.py
+
       - name: No PHP in the server image or the repository (tests/unit/test_no_php.py)
         run: python3 tests/unit/test_no_php.py
 

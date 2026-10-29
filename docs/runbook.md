@@ -574,6 +574,10 @@ SQL
 
 Expect: one line per group that has such specimens (group number and name, the specimens, how many have each blank, an example code), then one line of totals. `blank_name` and `blank_subfamily_or_genus` above 0 are what stopped the old clean-ups.
 
+## Licence of images and data
+
+- 2026-10-29: license CC BY 4.0 for all images and data (Brian Fisher). The text is in one place, `src/org/calacademy/antweb/util/License.java` (pages include `web/common/licenseStatement.jsp`); `tests/unit/test_license_statement.py` fails on older Creative Commons wording.
+
 ## Alerts
 
 All alerts email bfisher@calacademy.org.

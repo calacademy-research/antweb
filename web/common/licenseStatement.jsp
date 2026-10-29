@@ -1,0 +1,1 @@
+<%-- The one AntWeb licence statement (CC BY 4.0, decision of 2026-10-29). Text: org.calacademy.antweb.util.License. --%><%@ page import="org.calacademy.antweb.util.License" %><%= License.html() %>

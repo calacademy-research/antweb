@@ -11,7 +11,8 @@ public class ImageUpload {
 
     private static final Log s_log = LogFactory.getLog(ImageUpload.class);
 
-    public static final String LICENSE = "Attribution-ShareAlike (BY-SA) Creative Commons License and GNU Free Documentation License (GFDL)";
+    /** Recorded in image_upload.license for each new upload (CC BY 4.0 since 2026-10-29; earlier rows keep their text). */
+    public static final String LICENSE = org.calacademy.antweb.util.License.LINE;
 
     private int id = 0;
     private int curatorId = 0;

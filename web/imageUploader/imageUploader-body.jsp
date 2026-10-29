@@ -191,7 +191,7 @@ Additional images (for keys, plates, publications or information) are always wel
     <br>
     <br>
     <div id="note" class="action_hint">
-       <strong>Note:</strong> All images are uploaded under the <a href="http://creativecommons.org/licenses/by-sa/3.0/">Attribution-ShareAlike 3.0 (cc-by-sa-3.0) Creative Commons License</a>.
+       <strong>Note:</strong> <jsp:include page="/common/licenseStatement.jsp" flush="true"/>
     </div> 
 
     <br>

@@ -37,11 +37,11 @@ Information Facility (GBIF) and Wikipedia.
 
 <br><span style="text-decoration:underline"><b>How to Reuse Content and Cite AntWeb:</b></span></p>
 
-<p>AntWeb content is licensed under a <a href="http://creativecommons.org/licenses/by/3.0/" target="new">Creative Commons Attribution License</a>. We encourage use of AntWeb images.</p>
+<p><jsp:include page="/common/licenseStatement.jsp" flush="true"/> We encourage use of AntWeb images.</p>
 
 <p>In print, each image must include attribution, the specimen code of the image, to its photographer and "from <a href="https://www.antweb.org">www.antweb.org</a>" in each figure caption.</p>
 
-<p>For websites, images must include photographer attribution and be clearly identified as coming from www.antweb.org, with a backward link to the respective source page. Photographer and other copyright information is provided on the big image page. Some photos and drawing belong to the indicated persons or organizations and have their own copyright statements. Photos and drawings with CCBY, CC-BY-NC or CC-BY-SA can be used without further permission, as long as guidelines above for attribution are followed.</p>
+<p>For websites, images must include photographer attribution and be clearly identified as coming from www.antweb.org, with a backward link to the respective source page. Photographer and other copyright information is provided on the big image page. Some photos and drawings belong to the indicated persons or organizations and have their own copyright statements; where such a statement differs, follow it.</p>
 
 <p>We've made it easier to cite AntWeb by providing a "Cite this page" tool at the top right of each page. By clicking on that, you'll be able to copy the citation to use.</p>
 

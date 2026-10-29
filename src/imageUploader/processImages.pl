@@ -3,9 +3,9 @@
 # Called like this (for instance):
 # cd /data/antweb/web/imageUploader/
 #   was: /var/www/html/imageUpload/toUpload/
-# $ sudo /home/antweb/antweb_deploy/src/imageUploader/processImages.pl -a "Will Ericson" -c "California Academy of Sciences, 2002-2014" -l "Attribution-ShareAlike (BY-SA) Creative Commons License and GNU Free Documentation License (GFDL)"
+# $ sudo /home/antweb/antweb_deploy/src/imageUploader/processImages.pl -a "Will Ericson" -c "California Academy of Sciences, 2002-2014" -l "CC BY 4.0 (Creative Commons Attribution 4.0 International), https://creativecommons.org/licenses/by/4.0/"
 # was:
-# sudo /Users/mark/dev/calacademy/antweb/src/perl/processImages.pl -a "Will Ericson" -c "California Academy of Sciences, 2002-2014" -l "Attribution-ShareAlike (BY-SA) Creative Commons License and GNU Free Documentation License (GFDL)"
+# sudo /Users/mark/dev/calacademy/antweb/src/perl/processImages.pl -a "Will Ericson" -c "California Academy of Sciences, 2002-2014" -l "CC BY 4.0 (Creative Commons Attribution 4.0 International), https://creativecommons.org/licenses/by/4.0/"
 # from process.php.
 
 
