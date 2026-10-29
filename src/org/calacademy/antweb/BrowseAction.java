@@ -363,6 +363,28 @@ public class BrowseAction extends DescriptionAction {
 			  return mapping.findForward("message");
 		  }
 
+		  // Brian Fisher, 2026-10-29 (PlaceTaxonNotes): a genus page names its specimens identified only to genus ("Not
+		  // identified to species: Lividopone (indet), 45 specimens (4 imaged)"), and a genus or species page opened for a
+		  // place that has no record of it says so ("Lividopone is not recorded from Afrotropical."). Read here, shown by
+		  // web/common/genusIndetLine.jsp and web/common/notRecorded.jsp. A failure costs the note, never the page.
+		  if (("description".equals(cacheType) || "browse".equals(cacheType) || "images".equals(cacheType)) && !(taxon instanceof Homonym)) {
+		    String targetDo = cacheType + ".do";
+		    try {
+		      String notice = PlaceTaxonNotes.notRecorded(connection, taxon, overview, taxon.getTaxonSet().exists(), targetDo);
+		      if (notice != null) request.setAttribute(PlaceTaxonNotes.NOT_RECORDED, notice);
+		      if (Rank.GENUS.equals(taxon.getRank())) {
+		        int[] nm = PlaceTaxonNotes.countIndet(connection, taxon.getTaxonName(), overview);
+		        if (nm != null) {
+		          String line = PlaceTaxonNotes.indetLineHtml(taxon.getPrettyName(), nm[0], nm[1],
+		              PlaceTaxonNotes.indetUrl(targetDo, taxon.getSubfamily(), taxon.getGenus(), overview));
+		          if (line != null) request.setAttribute(PlaceTaxonNotes.INDET_LINE, line);
+		        }
+		      }
+		    } catch (SQLException e) {
+		      s_log.warn("execute() place notes taxon:" + taxon.getTaxonName() + " overview:" + overview + " e:" + e);
+		    }
+		  }
+
 		  String facet = HttpUtil.getFacet(request);
 		  taxon.setChangeViewOptions(connection, overview, facet);
 						

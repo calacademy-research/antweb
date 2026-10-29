@@ -135,6 +135,7 @@
         name:<%= taxon.getName() %>
         execTime:<%= taxon.getExecTime() %>
     -->
+<%@ include file="/common/notRecorded.jsp" %>
 <%@ include file="/common/taxonomicHierarchy.jsp" %>
 
 <%
@@ -157,6 +158,7 @@
 %>
 
 <%@include file="/taxonChildImages.jsp" %>
+<%@ include file="/common/genusIndetLine.jsp" %>
 
 <div class="clear"></div>
 <br /><br />

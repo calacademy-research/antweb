@@ -321,6 +321,17 @@ def bioregion_valid_names_imported():
     return compute_log_has("AntCat import done", BIOREGION_VALID_LOG)
 
 
+# GeolocaleTaxonDb.GENUS_ROWS_LOG, on the "Set 2 done" line of the nightly run. Keep in step with Java.
+GENUS_ROWS_LOG = "genus rows from every specimen identified to genus (2026-10-29)"
+
+
+def genus_rows_from_specimens_built():
+    """True when a nightly set 2 has built the country and adm1 lists with the genus rows of every specimen identified
+    to genus (2026-10-29: Lividopone (indet) puts Lividopone on the Mozambique list); False when compute.log is readable
+    and has no such line (pending); None when unreadable (a test in [parallel] cannot log in to read it)."""
+    return compute_log_has("Set 2 done", GENUS_ROWS_LOG)
+
+
 def counting_rules_counted():
     """True when a nightly run has counted the place numbers by the counting rules of 2026-10-28 (docs/numbers.md
     section 5; the same test as CountInvariants.rulesCounted), False when compute.log is readable and has no such line

@@ -534,7 +534,7 @@ name at that place (`subfamily_count`, `genus_count`, `species_count`, `specimen
 `created`, `modified`; `specimen_local_count` (not named in any SQL of the code).
 
 **Written by.** Set 2: `GeolocaleTaxonDb.generateGeolocaleTaxaFromSpecimens` (deletes and re-inserts the
-specimen-derived rows), `GeolocaleTaxonCountDb.childrenCountCrawl`, `calcEndemic`; set 1: AntCat rows
+specimen-derived rows: valid names, and since 2026-10-29 the genus rows of specimens of the other counted statuses), `GeolocaleTaxonCountDb.childrenCountCrawl`, `calcEndemic`; set 1: AntCat rows
 (`SpeciesListUploadDb.prepareDatabase`); set 3: names moved to the current valid name
 (`TaxonSetDb.updateTaxonSetTaxonNames`); set 4: `image_count`; curators' species list tool (`SpeciesListDb`,
 `GeolocaleTaxonDb.insertItem`, `deleteItem`).

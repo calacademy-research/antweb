@@ -66,6 +66,11 @@ tests = [
   "test_numbers_species.py",
   "test_numbers_images.py",
   "test_images_anywhere.py",            # images from anywhere, Images column, imaged castes (2026-10-27)
+  # indet line and not-recorded notice (2026-10-29); not the list test, which logs in to read compute.log
+  "test_genus_indet_places.py::test_genus_page_names_its_specimens_identified_only_to_genus",
+  "test_genus_indet_places.py::test_day_genus_indet_line",
+  "test_genus_indet_places.py::test_not_recorded_notice",
+  "test_genus_indet_places.py::test_day_genus_not_recorded_notice",
   "test_api_numbers.py",
   "test_numbers_api_meta.py",
   "test_previous_determinations.py",
@@ -378,6 +383,7 @@ paths = [
   "src/org/calacademy/antweb/home/GeolocaleDb.java",
   "src/org/calacademy/antweb/home/Adm1Db.java",
   "src/org/calacademy/antweb/home/BioregionDb.java",
+  "src/org/calacademy/antweb/home/GeolocaleTaxonDb.java",
   "src/org/calacademy/antweb/util/GeolocaleMgr.java",
   "src/org/calacademy/antweb/util/BioregionMgr.java",
   "web/curate/geolocale/**",
@@ -404,6 +410,7 @@ tests = [
   "test_region_counts.py",
   "test_place_image_counts.py",
   "test_overview_editor.py",
+  "test_genus_indet_places.py",        # genus rows of specimens identified only to genus on country lists (2026-10-29)
 ]
 
 [areas.downloads]
@@ -468,6 +475,7 @@ paths = [
   "web/description*",
   "web/taxon*",
   "src/org/calacademy/antweb/BrowseAction.java",
+  "src/org/calacademy/antweb/PlaceTaxonNotes.java",
   "src/org/calacademy/antweb/Taxon.java",
   "src/org/calacademy/antweb/LocalityAction.java",
   "src/org/calacademy/antweb/CollectionAction.java",
@@ -495,6 +503,7 @@ tests = [
   "test_display_cleanup.py",
   "test_upload_report_links.py",
   "test_specimen_name_history.py",     # added by #212
+  "test_genus_indet_places.py",        # genus pages: indet line, not-recorded notice; genus rows of indet specimens (2026-10-29)
 ]
 
 [areas.admin]
