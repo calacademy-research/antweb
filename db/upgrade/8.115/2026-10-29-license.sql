@@ -20,7 +20,8 @@ CREATE TABLE IF NOT EXISTS image_upload_license_bak_20261029 AS
   WHERE license IS NOT NULL
     AND license <> 'CC BY 4.0 (Creative Commons Attribution 4.0 International), https://creativecommons.org/licenses/by/4.0/';
 
-CREATE TABLE IF NOT EXISTS license_bak_20261029 AS SELECT * FROM license;
+CREATE TABLE IF NOT EXISTS license_bak_20261029 AS
+  SELECT id, license FROM license;
 
 UPDATE image_upload
   SET license = 'CC BY 4.0 (Creative Commons Attribution 4.0 International), https://creativecommons.org/licenses/by/4.0/'

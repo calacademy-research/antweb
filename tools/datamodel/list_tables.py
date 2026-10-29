@@ -726,7 +726,7 @@ def pending_notes(schema, path):
     for t in d["only_repo"]:
         src = schema.tables[t]["created"] or ""
         # a table the code creates itself (CREATE TABLE IF NOT EXISTS in src/) appears on production once deployed
-        if file_date(src) > snap_date or schema.tables[t]["origin"] == "code":
+        if file_date(src) > snap_date or schema.tables[t]["origin"] == "code" or src.startswith("src/"):
             notes.append(f"table {t} ({src}) is newer than the snapshot")
             explained.add(("table", t))
     for t in d["only_live"]:
