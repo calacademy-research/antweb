@@ -1,3 +1,8 @@
+<%-- Advanced search results by specimen (advancedSearch.do, advancedSearchResults.do; mode=compare or map from
+     prepareCompareResults.do and prepareMapResults.do), public: tiles wrapper of
+     search/advancedSearchResults-body.jsp, title "Advanced Specimen Search - AntWeb"; a direct request of this JSP
+     is refused (isStaticCallCheck). Docs: docs/flows/search.md. Tests: tests/e2e/test_search_pages.py,
+     test_download_guards.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

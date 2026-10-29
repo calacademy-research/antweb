@@ -19,6 +19,14 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * /prepareMapResults.do?resultRank=...: the Map view of the session's last search, logged-in users only
+ * (Check.loginForFeature): keeps the rows with coordinates (table specimen, decimal_latitude and decimal_longitude
+ * set and not 0; for a taxon row, the first specimen of the taxon found) and counts "N georeferenced specimens" or
+ * "N georeferenced species (from M specimens)". Changes the session's advancedSearchResults and taxonList; forwards
+ * to the results JSPs with mode=map. resultRank=locality gives an empty list. Tests:
+ * tests/e2e/test_numbers_search.py::test_compare_and_map_preparations_count_what_they_list.
+ */
 public final class PrepareMapResultsAction extends PrepareAction {
 
     private static final Log s_log = LogFactory.getLog(PrepareMapResultsAction.class);

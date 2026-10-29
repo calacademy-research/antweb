@@ -1,3 +1,6 @@
+<%-- Image Picker thumbnails (a page for a frame): the images of the session taxon's children, each calling the
+     parent page's get_img_name() when clicked. Dead code: nothing links to it, and Caddy refuses direct JSP
+     requests. --%>
 <%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

@@ -1,4 +1,8 @@
-<%@ page language="java" %>
+<%-- Body of the results by subfamily, genus or species: "N Genera (from M specimens)" (session resultSetModifier,
+     or the Prepare action's count), the session's taxonList with a checkbox each (row numbers used by
+     compareResults.do, mapResults.do and fieldGuideResults.do through common/specimen_list.js), and for a search by
+     species the line on specimens not identified to genus (B54) with a link to the specimen view. Docs:
+     docs/flows/search.md. Tests: tests/e2e/test_numbers_search.py, tests/unit/test_numbers_search_fixes.py. --%><%@ page language="java" %>
 <%@ page import = "org.calacademy.antweb.Formatter" %>
 <%@ page import = "org.calacademy.antweb.*" %>
 <%@ page import = "org.calacademy.antweb.util.*" %>

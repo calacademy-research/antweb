@@ -1,4 +1,8 @@
-<%@ page language="java" %>
+<%-- Body of the recent images page: a GET form (upload group, days ago or a date range) back to
+     recentSearchResults.do, a link to the newest 5,000 images (query.do?name=imageData), and the session's
+     searchResults (RecentImageSearchResults): one row per image, sortable by column, paged with offset and length.
+     Logged-in users get checkboxes and "Delete Selected Images" (POST to deleteImages.do, which allows only the
+     owning group's curators and admins). Docs: docs/flows/search.md. Tests: tests/e2e/test_numbers_images.py. --%><%@ page language="java" %>
 <%@ page import = "org.calacademy.antweb.Formatter" %>
 <%@ page import = "org.calacademy.antweb.search.*" %>
 <%@ page import = "org.calacademy.antweb.*" %>

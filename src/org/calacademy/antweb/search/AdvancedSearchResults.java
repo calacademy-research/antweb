@@ -15,6 +15,14 @@ import org.calacademy.antweb.home.PlaceTotals;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * The results of an advanced search, kept in the visitor's session as advancedSearchResults (SearchAction): the
+ * specimen rows (ResultItem), the "Images only" and "Types only" filters, the subfamily, genus and species lists of
+ * a search by taxon (names not identified to genus left out of the species list, B54), sortBy for a session list
+ * and specimenViewQuery for the "not identified to genus" link. Read by the results pages, Map, Compare, Field
+ * Guide and the download (getSearchList.do); subclass Collection (collection pages). Docs: docs/flows/search.md.
+ * Tests: test/org/calacademy/antweb/search/SearchSpeciesListTest.java, tests/e2e/test_numbers_search.py.
+ */
 public class AdvancedSearchResults extends GenericSearchResults
 	implements Serializable {
 

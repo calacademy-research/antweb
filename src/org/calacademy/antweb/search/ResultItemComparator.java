@@ -2,6 +2,10 @@ package org.calacademy.antweb.search;
 
 import java.util.*;
 
+/**
+ * Orders search result rows by their toString() (the name), ignoring case. Used by BayAreaSearchResults and
+ * GenericSearchResults; parent of GenusSpeciesItemComparator.
+ */
 public class ResultItemComparator implements Comparator {
  
   public static final Comparator INSTANCE = new ResultItemComparator();

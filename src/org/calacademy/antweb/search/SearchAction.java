@@ -19,6 +19,14 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /advancedSearch.do and /recentSearchResults.do (a DispatchAction on searchMethod), public. advancedSearch: the
+ * specimen list one page of 200 at a time (SearchPaging, mediumConPool), or all matching specimens (up to 50,000;
+ * admins 1,000,000) by subfamily, genus or species or as a map, 3 such searches at a time for visitors without a
+ * login; the results stay in the session for the follow-up pages. recentImageSearch: recently uploaded images;
+ * descEditSearch is left over. Reads table specimen (and image, taxon, ant_group); logs to searches.txt. Docs:
+ * docs/flows/search.md. Tests: tests/e2e/test_search_pages.py, test_download_guards.py, test_numbers_search.py.
+ */
 public final class SearchAction extends DispatchAction {
 
     private static final Log s_log = LogFactory.getLog(SearchAction.class);

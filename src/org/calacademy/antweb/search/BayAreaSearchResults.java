@@ -6,6 +6,12 @@ import java.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * Results of the old Bay Area search: one row per species with the counties (adm2) it was found in. Dead code:
+ * nothing creates a BayAreaSearch or puts these results in the session, so prepareMapResults.do and
+ * prepareCompareResults.do with resultRank=bayArea and search/bayAreaSearchResults.jsp have nothing to show. Only
+ * the old mock test test/org/calacademy/antweb/AntWebStrutsTest.java names it.
+ */
 public final class BayAreaSearchResults
     extends GenericSearchResults
 	//extends AdvancedSearchResults

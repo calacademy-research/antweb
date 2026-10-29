@@ -1,4 +1,9 @@
-<%@ page language="java" %>
+<%-- Body of the advanced search specimen list: the session's advancedSearchResults, 200 rows a page ("Showing 1-200
+     of N"; Previous and Next from SearchPaging or, for an older session list, paged here), the imaged count, the
+     page tools and Download Data box (pageToolsSearch.jsp, download_results.jsp) and the rows (specimenReport.jsp).
+     With mode=map or compare (Prepare actions) the rows get checkboxes in a POST form to mapResults.do or
+     compareResults.do. Docs: docs/flows/search.md. Tests: tests/e2e/test_download_guards.py,
+     test_numbers_search.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- Body of a field guide (fieldGuide.do, fieldGuideResults.do): the request attribute fieldGuide (FieldGuide) with
+     its title, the taxon's heading and tabs when it is of one taxon's children, then per taxon its head and profile
+     images, a small map (maps/googleMapInclude.jsp) and the Specimen Habitat Summary; orderBy= sorts the taxa.
+     Read-only. Docs: docs/flows/places.md. Tests: tests/e2e/test_field_guide_compare.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

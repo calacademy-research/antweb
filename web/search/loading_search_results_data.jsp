@@ -1,3 +1,6 @@
+<%-- "Loading results..." page that the Download Data frames (search/download_results.jsp,
+     common/data_download_overlay.jsp) used to load. No longer used: the frames now start blank; Caddy still allows
+     the direct request. --%>
 <style>
 html {
     margin:0;

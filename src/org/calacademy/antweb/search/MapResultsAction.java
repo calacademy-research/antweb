@@ -20,6 +20,14 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /mapResults.do: a map (dynamicMap.jsp) of the rows chosen on a search's or a collection page's results, logged-in
+ * users only (Check.loginForFeature). getMap is also used by SearchAction (output=mapSpecimen or mapLocality) and
+ * AdvancedSearchAction.getGoogleMap: chosen specimens, or the specimens of chosen species (taxonList); with
+ * output=mapLocality or more than 1,000 specimens, one point per locality. Puts map, chosenList and title in the
+ * session. Reads table specimen (org.calacademy.antweb.Map). Docs: docs/flows/search.md. Tests:
+ * tests/e2e/test_login_needed.py.
+ */
 public final class MapResultsAction extends ResultsAction {
 
     private static final Log s_log = LogFactory.getLog(MapResultsAction.class);

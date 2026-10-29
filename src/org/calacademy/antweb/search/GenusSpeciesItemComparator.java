@@ -3,6 +3,10 @@ package org.calacademy.antweb.search;
 import java.util.*;
 import org.calacademy.antweb.*;
 
+/**
+ * Orders Taxon objects by genus + species + subspecies (plain string comparison). Used by CompareResultsAction for
+ * the image comparison of chosen species (the TreeMap taxaToCompare).
+ */
 public class GenusSpeciesItemComparator extends ResultItemComparator {
  
   public static final Comparator INSTANCE = new GenusSpeciesItemComparator();

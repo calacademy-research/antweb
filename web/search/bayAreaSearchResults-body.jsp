@@ -1,4 +1,5 @@
-<%@ page import = "org.calacademy.antweb.Formatter" %>
+<%-- Body of the old Bay Area search results (session searchResults as BayAreaSearchResults: species, counties, Map
+     and Compare tools). Dead code: nothing puts Bay Area results in the session. --%><%@ page import = "org.calacademy.antweb.Formatter" %>
 <%@ page import = "org.calacademy.antweb.util.*" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
