@@ -156,11 +156,21 @@ public abstract class DateUtil {
   }
 
   // Take an String of unknown date format and return a string in the correct format. Used for Specimen upload.
+  // A range ("8-11 Feb 2010") gives its first day (Brian Fisher, 2026-10-29); the end date column uses getConstructEndDateStr.
   public static String getConstructDateStr(String dateStr) {
+    return constructDateStr(dateStr, false);
+  }
+
+  /** As getConstructDateStr, for the end date column (datecollectedend): a range gives its last day ("8-11 Feb 2010" is 2010-02-11). */
+  public static String getConstructEndDateStr(String dateStr) {
+    return constructDateStr(dateStr, true);
+  }
+
+  private static String constructDateStr(String dateStr, boolean end) {
     if (dateStr == null) return null;
     Date date;
     try {
-      date = constructDate(dateStr);
+      date = end ? constructEndDate(dateStr) : constructDate(dateStr);
     } catch (RuntimeException e) {  // e.g. "1/2/3x": NumberFormatException out of handleDMYy. Not a date, as for other text.
       s_log.debug("getConstructDateStr() dateStr:" + dateStr + " e:" + e);
       return null;
@@ -168,6 +178,24 @@ public abstract class DateUtil {
     if (date == null) return null;
     String formatString = getFormatDateStr(date);
     return formatString;
+  }
+
+  private static final java.util.regex.Pattern NUMERIC_DATE = java.util.regex.Pattern.compile("^(\\d{1,2})/(\\d{1,2})/(\\d{2}|\\d{4})$");
+
+  /**
+   * True when dateStr is a date like "05/04/2013" or "5/4/13": both of its first two numbers could be the month (1 to 12)
+   * and they differ, so reading it as month/day (as AntWeb does) is a guess. The upload lists such lines under
+   * "Date read as month/day (please check)" (Brian Fisher, 2026-10-29). "19/10/2013" (day first, the month cannot be 19)
+   * and "05/05/2013" (the same either way) are not ambiguous; neither is a value that is not a date.
+   */
+  public static boolean isAmbiguousMonthDay(String dateStr) {
+    if (dateStr == null) return false;
+    java.util.regex.Matcher m = NUMERIC_DATE.matcher(normalizeUploadDate(dateStr));
+    if (!m.matches()) return false;
+    int a = Integer.parseInt(m.group(1));
+    int b = Integer.parseInt(m.group(2));
+    if (a < 1 || a > 12 || b < 1 || b > 12 || a == b) return false;
+    return constructDate(dateStr) != null;
   }
 
   /**
@@ -233,17 +261,72 @@ public abstract class DateUtil {
   }
   // Method designed to take scrappy user entered dates and return Antweb formatted Date.
   // Null when the value is not a date (the upload then lists it under "Invalid Date ..." and stores no date).
+    // A range gives its first day ("8-11 Feb 2010" is 2010-02-08; Brian Fisher, 2026-10-29).
     public static Date constructDate(String dateStr) {
+      return constructDate(dateStr, false);
+    }
+
+    /** As constructDate, for an end date: a range gives its last day ("8-11 Feb 2010" is 2010-02-11). */
+    public static Date constructEndDate(String dateStr) {
+      return constructDate(dateStr, true);
+    }
+
+    private static Date constructDate(String dateStr, boolean end) {
       if (dateStr == null) return null;
       try {
-        return constructDateStrict(normalizeUploadDate(dateStr));
+        return constructDateStrict(normalizeUploadDate(dateStr), end);
       } catch (RuntimeException e) {  // e.g. "1/2/3x": NumberFormatException out of handleDMYy
         s_log.debug("constructDate() dateStr:" + dateStr + " e:" + e);
         return null;
       }
     }
 
+    /**
+     * A date range ("8-11 Feb 2010", "8\u201311 Feb 2010" with an en dash, "1 Feb - Mar 2010", "11-14.ii.2007", "Jan-Mar 2010",
+     * "2010-2011"): its first day, or with end its last day (Brian Fisher, 2026-10-29; until then always the last day).
+     * The last day is what follows the dash ("11 Feb 2010"); the first day is what comes before it, completed with the
+     * month and year written after the dash ("8" and "11 Feb 2010" give "8 Feb 2010"). When the first day cannot be
+     * read, or would come after the last, the last day is given, as before. Null when the value is not a range of dates.
+     */
+    private static Date rangeDate(String dateStr, boolean end) {
+      String s = dateStr.replace('\u2013', '-').replace('\u2014', '-');
+      int i = s.indexOf(" - ");
+      int len = 3;
+      if (i < 0) {
+        i = s.indexOf('-');
+        len = 1;
+      }
+      if (i < 0) return null;
+      String left = s.substring(0, i).trim();
+      String right = s.substring(i + len).trim();
+      if (right.isEmpty()) return null;
+      Date last = constructDateStrict(normalizeUploadDate(right), end);
+      if (end || last == null || left.isEmpty()) return last;
+      Date first = rangeStart(left, right);
+      if (first == null || first.after(last)) return last;
+      return first;
+    }
+
+    /** The first day of a range: the part before the dash on its own, or completed with the end of the part after it. */
+    private static Date rangeStart(String left, String right) {
+      Date d = constructDateStrict(normalizeUploadDate(left), false);
+      if (d != null) return d;
+      for (int p = 1; p < right.length(); p++) {
+        char c = right.charAt(p);
+        if (c != ' ' && c != '.' && c != '/') continue;
+        String candidate = left + right.substring(p);
+        if (candidate.contains("-")) continue;   // no second range
+        d = constructDateStrict(normalizeUploadDate(candidate), false);
+        if (d != null) return d;
+      }
+      return null;
+    }
+
     private static Date constructDateStrict(String dateStr) {
+      return constructDateStrict(dateStr, false);
+    }
+
+    private static Date constructDateStrict(String dateStr, boolean end) {
       if (dateStr == null || dateStr.isEmpty()) return null;
 
       Date returnDate = null;
@@ -275,12 +358,9 @@ public abstract class DateUtil {
       }
 
       if (returnDate == null) {
-        // Not a simply parsed date.  perhaps it is like: 8-11 Feb 2010   or like: 1 Feb - Mar 2010
-        // Take what is after the hyphen and see if that can work.
-        if (dateStr.contains("-")) {
-          String substring = dateStr.substring(dateStr.indexOf("-") + 1);
-          //A.log("constructDate() hypen removed from origDatesCollected:" + dateStr + " substring:" + substring);
-          returnDate = constructDateStrict(normalizeUploadDate(substring));
+        // Not a simply parsed date.  perhaps it is like: 8-11 Feb 2010   or like: 1 Feb - Mar 2010 (also with an en dash)
+        if (dateStr.contains("-") || dateStr.indexOf('\u2013') >= 0 || dateStr.indexOf('\u2014') >= 0) {
+          returnDate = rangeDate(dateStr, end);
           s_debugStep = 7;
         }
       }

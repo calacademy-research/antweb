@@ -142,6 +142,8 @@ public class MessageMgr {
     public static final String invalidDateCollectedStart = "invalidDateCollectedStart";
     public static final String invalidDateCollectedEnd = "invalidDateCollectedEnd";
     public static final String invalidDateDetermined = "invalidDateDetermined";
+    /** 2026-10-29: a date like 05/04/2013, read as month/day though day/month is possible: listed in the Notes to check. */
+    public static final String dateReadAsMonthDay = "dateReadAsMonthDay";
 
     public static final String makeTaxonNameError = "makeTaxonNameError";
     public static final String correctedBioregion = "correctedBioregion";
@@ -204,6 +206,7 @@ public class MessageMgr {
     public static final String IDENTIFIED_ONLY_TO_SUBFAMILY_HEADING = "Identified only to subfamily: filed as (Subfamily) indet";
     public static final String SUBSPECIES_INDET_DROPPED_HEADING = "Name corrected: 'indet' in the subspecies column dropped";
     public static final String SPECIES_INDET_SUBSPECIES_IGNORED_HEADING = "Name corrected: species indet, subspecies ignored, filed as &lt;Genus&gt; (indet)";
+    public static final String DATE_READ_AS_MONTH_DAY_HEADING = "Date read as month/day (please check)";
     public static final String CURRENT_VALID_NAME_NOT_IN_ANTWEB_HEADING = "Current valid name in AntCat not yet in AntWeb: kept under the uploaded name";
 
     /** Sections whose lines already give the specimen code (or line number): no list added. */
@@ -317,6 +320,7 @@ public class MessageMgr {
       testList.add(new Test(invalidDateCollectedStart, STR, "<b>Invalid Date Collected Start <font color=green>(uploaded without this date)</font></b>"));
       testList.add(new Test(invalidDateCollectedEnd, STR, "<b>Invalid Date Collected End <font color=green>(uploaded without this date)</font></b>"));
       testList.add(new Test(invalidDateDetermined , STR, "<b>Invalid Date Determined <font color=green>(uploaded without this date)</font></b>"));
+      testList.add(new Test(dateReadAsMonthDay, SET, "<b>" + DATE_READ_AS_MONTH_DAY_HEADING + " <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(makeTaxonNameError, STR, "<b>Error constructing taxon name <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(latLonNotInCountryBounds, STR, "<b>Lat/Long not within country's bounds</b>", "red"));
       testList.add(new Test(latLonNotInAdm1Bounds, STR, "<b>Lat/Long not within adm1's bounds</b>", "red"));

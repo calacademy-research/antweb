@@ -36,8 +36,13 @@ public class OrphansDb extends AntwebDb {
     }
     
     public static String getOrphanedSpeciesQuery(String source, String orderBy) {
+      return getOrphanedSpeciesQuery(source, orderBy, BlankNameCleanup.isOn());
+    }
+
+    // blankSafe (BlankNameCleanup, 2026-10-29): the old NOT IN found nothing while any specimen had no taxon name.
+    public static String getOrphanedSpeciesQuery(String source, String orderBy, boolean blankSafe) {
       String query = "select source, taxon_name from taxon " 
-        + " where taxon_name not in (select taxon_name from specimen)";
+        + BlankNameCleanup.orphanedWhere(blankSafe);
       //if (!AntwebProps.isDevMode()) 
       query += " and taxarank in ('species', 'subspecies')";   // Added in Aug 28th 2013
       query += " and source like '%" + DBUtil.escapeQuotes(source) + "%'" // or source like 'addMissingGenera')"

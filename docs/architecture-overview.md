@@ -93,6 +93,7 @@ These files are gitignored and exist only on the droplets, in `etc/` of the proj
 | `editor.properties` | `PageEditor` | `pageEditor=ckeditor` puts every curator edit form back on the old CKEditor 3; `tinymce` or no file = TinyMCE 8. | TinyMCE. |
 | `scheduler.properties` | `Scheduler`, at the end of each nightly run | `nightlyRestart=true` asks for a container restart after the nightly run (the old behaviour). | No restart after the nightly run (since 2026-10-18). |
 | `upload-email.properties` | `UploadNotice` | `enabled=on/off` (default on in production, off on staging), `excludeGroups=` (default 1, CAS), `onlyDomains=` (staging defaults to antweb.org, calacademy.org). | Production: upload-complete emails go to curators except group 1. |
+| `cleanup.properties` | `BlankNameCleanup` (within a minute) | `blankNameCleanup=preview` keeps the old (NOT IN) rules of the name clean-ups and writes their preview to compute.log every night; `on` uses the blank-safe rules at once (2026-10-29). | Automatic: the first nightly run previews, the runs after it use the blank-safe rules. |
 | `flickr.properties` | nothing in the current code | Listed in `.gitignore`; the Flickr code was removed in October 2026. | No effect. |
 | `git-commit` | `GitCommit` | Written by `deploy.sh` on every deploy; the commit shown next to the version in the header. | Header shows the version only. |
 

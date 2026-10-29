@@ -39,4 +39,5 @@ antweb-docs.zip
 /etc/git-commit.tmp
 /etc/scheduler.properties
 /etc/name-update.properties
+/etc/cleanup.properties
 /${sys:catalina.home}/

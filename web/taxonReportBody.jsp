@@ -310,7 +310,7 @@
            + " genera; it should equal Genera on the " + locale + " overview page.";
      } else if (Rank.GENUS.equals(pageRank)) {
        totalNote = "Species total (administrators only): the Species column adds up to " + Formatter.commaFormat(subtaxonTotal)
-           + " species and subspecies; it should equal Species / subspecies on the " + locale + " overview page.";
+           + " species and subspecies; it should equal Species / subspecies / morphospecies on the " + locale + " overview page.";
      } else {
        totalNote = "Specimen total (administrators only): the " + org.calacademy.antweb.util.Html.esc(totalColumn)
            + " column adds up to " + Formatter.commaFormat(subtaxonTotal) + " specimens. This can be lower than Specimens on the "

@@ -42,7 +42,7 @@ def main():
     assert '"Genera total (administrators only): the Genera column adds up to "' in jsp
     assert '+ " genera; it should equal Genera on the " + locale + " overview page."' in jsp
     assert '"Species total (administrators only): the Species column adds up to "' in jsp
-    assert '+ " species and subspecies; it should equal Species / subspecies on the " + locale + " overview page."' in jsp
+    assert '+ " species and subspecies; it should equal Species / subspecies / morphospecies on the " + locale + " overview page."' in jsp
 
     # 2. the asterisk note
     assert '"Specimen"' in jsp and '"specimen filed under that name"' in jsp

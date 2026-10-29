@@ -853,7 +853,7 @@ public class SpecimenDb extends AntwebDb {
                 String startNew = DateUtil.getConstructDateStr(startStr);
                 String endStr = rset.getString("datecollectedendstr");
                 String end = rset.getString("datecollectedend");
-                String endNew = DateUtil.getConstructDateStr(endStr);
+                String endNew = DateUtil.getConstructEndDateStr(endStr);   // a range: its last day
 
 /*
                 // Show the unfixed.

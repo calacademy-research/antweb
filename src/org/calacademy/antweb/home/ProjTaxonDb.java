@@ -381,10 +381,15 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
 
 
     String deleteUncuratedMorphosWithoutSpecimen() throws SQLException {
+        return deleteUncuratedMorphosWithoutSpecimen(BlankNameCleanup.isOn());
+    }
+
+    public String deleteUncuratedMorphosWithoutSpecimen(boolean blankSafe) throws SQLException {
         // Not the curators' rows (as in GeolocaleTaxonDb): a curator's morphospecies stays while its
         // name exists; without specimens the name itself is removed and the row is parked
-        // (CuratorTaxonSetDb).
-        String dml = "delete from proj_taxon where taxon_name in (select taxon_name from taxon t where t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon' and taxon_name not in (select taxon_name from specimen))"
+        // (CuratorTaxonSetDb). blankSafe: BlankNameCleanup (2026-10-29).
+        String dml = "delete from proj_taxon where taxon_name in (select taxon_name from taxon t where t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon' and "
+          + BlankNameCleanup.morphoNoSpecimen(blankSafe) + ")"
           + " and source not in " + CuratorTaxonSetDb.curatorSourceList();
         Statement stmt = null;
         int c = 0;

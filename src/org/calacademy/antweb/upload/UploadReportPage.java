@@ -71,6 +71,7 @@ public final class UploadReportPage {
         ACTIONS.put(MessageMgr.invalidDateCollectedStart, "Loaded without this date.");
         ACTIONS.put(MessageMgr.invalidDateCollectedEnd, "Loaded without this date.");
         ACTIONS.put(MessageMgr.invalidDateDetermined, "Loaded without this date.");
+        ACTIONS.put(MessageMgr.dateReadAsMonthDay, "Loaded with the date read as month/day. If the file means day/month, write the date as 2013-04-05 (year-month-day) or 5 Apr 2013.");
         ACTIONS.put(MessageMgr.subspeciesIndetDropped, "Loaded under genus and species; the subspecies value dropped.");
         ACTIONS.put(MessageMgr.speciesIndetSubspeciesIgnored, "Loaded as <Genus> (indet); the subspecies value ignored.");
         ACTIONS.put(MessageMgr.unrecognizedColumn, "Column ignored.");

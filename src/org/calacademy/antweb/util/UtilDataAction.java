@@ -655,9 +655,14 @@ public class UtilDataAction extends AntwebAction {
 		  // First put back curator list rows parked on an earlier night whose name exists again
 		  // (set 1 has just reloaded the specimens), then clean up (which parks before deleting).
 		  message = new CuratorTaxonSetDb(connection).restore();
-		  message += TaxonDb.deleteSpeciesWithoutSpecimenOrAntcatSource(connection);
-		  message += TaxonDb.deleteGeneraWithoutSpecimenOrAntcatSource(connection);
-          message += TaxonSetDb.dataCleanup(connection);
+		  // Blank names (Brian Fisher, 2026-10-29; BlankNameCleanup): the cleanups below deleted nothing while any
+		  // specimen had no taxon name. Their blank-safe rules start after one run that only previews them in
+		  // compute.log; the mode is decided once here for the whole clean-up.
+		  boolean blankSafe = BlankNameCleanup.isOn();
+		  message += BlankNameCleanup.preview(connection, CuratorTaxonSetDb.curatorSourceList(), blankSafe);
+		  message += TaxonDb.deleteSpeciesWithoutSpecimenOrAntcatSource(connection, blankSafe);
+		  message += TaxonDb.deleteGeneraWithoutSpecimenOrAntcatSource(connection, blankSafe);
+          message += TaxonSetDb.dataCleanup(connection, blankSafe);
 		}
 
 		// The nightly name update by hand (admin, POST): specimenNameUpdate uses the setting in

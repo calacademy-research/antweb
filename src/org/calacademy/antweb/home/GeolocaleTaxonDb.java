@@ -709,6 +709,11 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
     DML below uses an alias to allow deletion from a table that is also in the subquery.
     */    
     String deleteUncuratedMorphosWithoutSpecimen() throws SQLException {
+        return deleteUncuratedMorphosWithoutSpecimen(BlankNameCleanup.isOn());
+    }
+
+    // blankSafe: BlankNameCleanup (2026-10-29); the old NOT IN deleted nothing while any specimen had no taxon name.
+    public String deleteUncuratedMorphosWithoutSpecimen(boolean blankSafe) throws SQLException {
         String dml 
           = " delete from geolocale_taxon where taxon_name in ("
           + "   select taxon_name from ("
@@ -717,11 +722,11 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
           + "     and t.taxarank in ('species', 'subspecies') "
           + "     and t.status = 'morphotaxon' "
           + "     and gt.source = '" + Source.SPECIMEN + "'" // Corrected
-          + "     and t.taxon_name not in ("
-          + "       select taxon_name from specimen"
-          + "     )"
+          + "     and " + BlankNameCleanup.morphoNoSpecimen(blankSafe)
           + "   ) alias"
-          + " )";
+          + " )"
+          // 2026-10-29: only the rows from specimens; it deleted the curators' rows of the name too (on every place).
+          + " and source = '" + Source.SPECIMEN + "'";
         //s_log.warn("deleteUncuratedMorphosWithoutSpecimen() query:" + dml);
         Statement stmt = null;
         int c = 0;

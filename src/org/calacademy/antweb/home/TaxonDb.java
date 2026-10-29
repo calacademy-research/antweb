@@ -911,24 +911,25 @@ Code added below on Apr 26 2023:
 	  }    
     }       
     
-    // Called in Specimen post process.
+    // Called in Specimen post process. Blank-safe once BlankNameCleanup is on (2026-10-29; the old rule deleted nothing
+    // while any specimen had no taxon name).
     public void removeIndetWithoutSpecimen() throws SQLException {
-      new UtilDb(getConnection()).deleteFrom("taxon", "where source like 'specimen%' and status in ('indetermined', 'unrecognized') and taxon_name not in (select taxon_name from specimen)");
+      removeIndetWithoutSpecimen(BlankNameCleanup.isOn());
     }
 
-    public static String deleteSpeciesWithoutSpecimenOrAntcatSource(Connection connection) throws SQLException {
-      String dmlWhereClause = "where taxon_name not in (select taxon_name from proj_taxon where project_name = 'worldants') "
-        + " and taxon_name not in (select taxon_name from specimen) "
-        + " and taxarank in ('species', 'subspecies')";
-      int retVal = new UtilDb(connection).deleteFrom("taxon", dmlWhereClause);
-      return retVal + " deleteSpeciesWithoutSpecimenOrAntcatSource. ";
+    public int removeIndetWithoutSpecimen(boolean blankSafe) throws SQLException {
+      return new UtilDb(getConnection()).deleteFrom("taxon", BlankNameCleanup.indetWhere(blankSafe));
     }
-    public static String deleteGeneraWithoutSpecimenOrAntcatSource(Connection connection) throws SQLException {
-      String dmlWhereClause = "where taxon_name not in (select taxon_name from proj_taxon where project_name = 'worldants') "
-        + " and (subfamily, genus) not in (select subfamily, genus from specimen) "
-        + " and taxarank in ('genus')";
-      int retVal = new UtilDb(connection).deleteFrom("taxon", dmlWhereClause);
-      return retVal + " deletedGeneraWithoutSpecimenOrAntcatSource. ";
+
+    // Nightly set 2 (dataCleanup). blankSafe: BlankNameCleanup's rule (NOT EXISTS, blank names excluded); else the old
+    // NOT IN rule, which deletes nothing while any specimen has no taxon name (or no subfamily or genus, for genera).
+    public static String deleteSpeciesWithoutSpecimenOrAntcatSource(Connection connection, boolean blankSafe) throws SQLException {
+      int retVal = new UtilDb(connection).deleteFrom("taxon", BlankNameCleanup.speciesWhere(blankSafe));
+      return retVal + " deleteSpeciesWithoutSpecimenOrAntcatSource" + (blankSafe ? " (blank-safe)" : "") + ". ";
+    }
+    public static String deleteGeneraWithoutSpecimenOrAntcatSource(Connection connection, boolean blankSafe) throws SQLException {
+      int retVal = new UtilDb(connection).deleteFrom("taxon", BlankNameCleanup.generaWhere(blankSafe));
+      return retVal + " deletedGeneraWithoutSpecimenOrAntcatSource" + (blankSafe ? " (blank-safe)" : "") + ". ";
     }
 
 
