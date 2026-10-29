@@ -253,7 +253,6 @@ web/documentation/release.jsp
 web/documentation/releaseNotes.jsp
 web/documentation/releaseNum.jsp
 web/dynamicMap-body.jsp
-web/dynamicMap.jsp
 web/editLogin-body.jsp
 web/editLogin.jsp
 web/endemic-body.jsp
