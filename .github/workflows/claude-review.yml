@@ -2,10 +2,10 @@ name: Claude review
 
 # An automatic, independent code review of every pull request into master by Claude.
 # .github/scripts/claude_review.py sends the PR diff to the Anthropic Messages API in one
-# request and posts the answer as one PR comment ("Claude review"), edited on every new push.
+# request and posts the answer as one PR comment ("Claude review"), edited on each new review.
 # Skipped for drafts, for "Do not merge" PRs (temporary combined staging builds), for PRs
 # from forks, and when the ANTHROPIC_API_KEY repository secret is missing.
-# Cost guard: one API request per push (diff capped at 150k characters, answer at 16,000
+# Cost guard: one API request per review (diff capped at 150k characters, answer at 16,000
 # tokens); a new push cancels the review still running for the older commit. Editing the PR
 # reruns the review (one paid request) only when the title changed, for example when "Do not
 # merge" is removed, or when the PR was retargeted to master; description-only edits are
@@ -13,9 +13,12 @@ name: Claude review
 # The model is set in the script (MODEL). Model, tokens and estimated cost are in the run's
 # job summary.
 
+# Since 2026-10-29 (Brian Fisher): one review per merge candidate, not one per push. The review
+# runs when the "full-e2e" label is added, which is when the PR goes to its full staging test run
+# before merging (each push used to cost $0.42-0.95; 32 reviews in a day and a half).
 on:
   pull_request:
-    types: [opened, synchronize, ready_for_review, reopened, edited]
+    types: [labeled]
     branches:
       - master
 
@@ -31,7 +34,7 @@ jobs:
       github.event.pull_request.draft == false &&
       !startsWith(github.event.pull_request.title, 'Do not merge') &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      (github.event.action != 'edited' || github.event.changes.title != null || github.event.changes.base != null)
+      github.event.label.name == 'full-e2e'
     # At job level, so a skipped run (draft, description-only edit) does not cancel a running review.
     concurrency:
       group: claude-review-${{ github.event.pull_request.number }}
