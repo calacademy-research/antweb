@@ -230,8 +230,9 @@ def assert_upload_recorded(session, upload_response, gid, uploads_before=None, c
       - the group's upload list (listSpecimenUploads.do, the upload table) lists this report first,
         with the uploaded file;
       - groups.do shows this report as the group's last upload, with the group's specimen count
-        (loaded minus red-flagged: the counts the upload writes on its row; check_count=False for a
-        file with names the count leaves out), and one upload more than uploads_before when given.
+        (loaded minus red-flagged: the upload recounts its group's row of group_count, 2026-10-29;
+        until then groups.do showed the last nightly count, staging run 40940710186; check_count=False
+        for a file with names the count leaves out), and one upload more than uploads_before when given.
     Returns the upload id."""
     rep_name = unquote_plus(report_url(upload_response).rsplit("/", 1)[-1])
     uid = upload_id_of(upload_response)
