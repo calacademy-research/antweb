@@ -228,6 +228,17 @@ public class SpeciesListUpload extends AntwebUpload {
         return uploadDetails;
     }
 
+    /** Written to compute.log after a successful nightly AntCat import; tests/e2e/numbers_sample.py reads it. */
+    public static final String BIOREGION_VALID_LOG = "bioregion lists from AntCat: valid names only (2026-10-29)";
+
+    /** The name is in AntWeb and valid: only such names go on a country or bioregion list from AntCat. */
+    private boolean isValidForPlaceList(String currentValidName) throws SQLException {
+        if (currentValidName == null || currentValidName.isEmpty()) return false;
+        Taxon current = TaxonMgr.getTaxon(currentValidName);
+        if (current == null) current = new TaxonDb(getConnection()).getTaxon(currentValidName);
+        return current != null && current.isValid();
+    }
+
     public UploadDetails importSpeciesList(String project, String fileName, String fileNameBase
         , String encoding, int accessGroupId) throws AntwebException, IOException, SQLException {
           
@@ -776,7 +787,10 @@ public class SpeciesListUpload extends AntwebUpload {
 						  // Use the worldants bioregion to populate bioregion_taxon... 						
 						  if (thisBioregion != null && !"".equals(thisBioregion) && !isFossil) {
                             Bioregion bioregion = BioregionMgr.getBioregion(thisBioregion);           
-						    if (bioregion != null) {
+						    // Only a valid name goes on a bioregion list, as for countries above (Brian Fisher, 2026-10-29: Formica
+						    // was an Afrotropical genus through six unidentifiable or unavailable names, such as Formica chufejif
+						    // Forskal 1775 from Yemen, which have no current valid name and were listed under their own name).
+						    if (bioregion != null && isValidForPlaceList(currentValidName)) {
 						      boolean inserted = new BioregionTaxonDb(getConnection()).insertTaxon(bioregion.getName(), currentValidName, "importSpeciesList", Source.ANTCAT);
                               if (inserted) {
                                 i = i + 1;

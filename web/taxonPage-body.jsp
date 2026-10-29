@@ -110,6 +110,7 @@
         name:<%= Html.esc(taxon.getName()) %>
         execTime:<%= taxon.getExecTime() %>
     -->
+<%@ include file="/common/notRecorded.jsp" %>
 <%@ include file="/common/taxonomicHierarchy.jsp" %>
 
 <%
@@ -123,6 +124,7 @@
         </div>
     </div>
 <!-- /div -->
+<%@ include file="/common/genusIndetLine.jsp" %>
 
 <%@ include file="/common/flagInclude.jsp" %>
 

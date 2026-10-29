@@ -96,6 +96,7 @@
 	<div class="clear"></div>
 </div>
 
+<%@include file="/common/notRecorded.jsp" %>
 <%@include file="/common/taxonomicHierarchy.jsp" %>  
 <%@include file="/common/taxonSetHeaderNotes.jsp" %>  
 
@@ -230,6 +231,7 @@ if (childrenList != null) {
  if (!"species".equals(taxon.getRank()) && !"subspecies".equals(taxon.getRank())) { %>
     <%@include file="/taxonReport.jsp" %>  
 <%  } %>
+<%@include file="/common/genusIndetLine.jsp" %>
 
  <% if (taxon.isBaseTaxon()) { %>
      <% // USED TO HAVE THE TAXONCHILDCOUNT HERE %>

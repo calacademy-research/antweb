@@ -755,6 +755,32 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
     private static int s_insertCount = 0;
     private static int s_constraintCount = 0;
 
+    /**
+     * Brian Fisher, 2026-10-29 (docs/numbers.md section 5, "a specimen counts at each rank it is identified to"): the
+     * country and adm1 lists take valid names only from specimens (the query above), so a genus known in a country only
+     * from specimens identified to genus ("Lividopone (indet)", 45 specimens, some from Mozambique) or from names of the
+     * other counted statuses (morphospecies, unrecognized, unidentifiable) was on no list: not on the Mozambique genus
+     * list, not in its Genera. Its genus row (taxon.parent_taxon_name, an ant genus row of a counted status) is added;
+     * the name itself is not. Columns country, adm1, taxon_name: the genus row's name. Red-flagged specimens are left
+     * out as above.
+     */
+    public static final String GENUS_ROWS_STATUSES = "('unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')";
+
+    public static final String GENUS_ROWS_FROM_SPECIMENS_SQL = genusRowsFromSpecimensSql("country") + " union " + genusRowsFromSpecimensSql("island_country");
+
+    private static String genusRowsFromSpecimensSql(String countryColumn) {
+        return "select distinct s." + countryColumn + " country, s.adm1 adm1, g.taxon_name taxon_name"
+            + " from specimen s join taxon t on t.taxon_name = s.taxon_name join taxon g on g.taxon_name = t.parent_taxon_name"
+            + " where s.status in " + GENUS_ROWS_STATUSES
+            + " and " + SpecimenDb.getAntSpecimenCriteria("s")
+            + " and (s.flag is null or s.flag != 'red') and s." + countryColumn + " is not null"
+            + " and t.taxarank in ('species', 'subspecies') and " + PlaceTotals.identifiedToGenus("t")
+            + " and g.taxarank = 'genus' and g.family = 'formicidae' and g.status in " + PlaceTotals.COUNTABLE;
+    }
+
+    /** On the "Set 2 done" line of compute.log once set 2 has built the lists by this rule; the e2e tests wait for it. */
+    public static final String GENUS_ROWS_LOG = "genus rows from every specimen identified to genus (2026-10-29)";
+
     private int insertGeolocaleTaxaFromSpecimens() throws SQLException {
         
         s_updateCount = 0;
@@ -789,6 +815,13 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
                     + " and " + SpecimenDb.getAntSpecimenCriteria("specimen")
                     + " and " + SpecimenDb.getFlagCriteria() + " and island_country is not null"
                     + clause
+
+                    // Brian Fisher, 2026-10-29: a specimen counts at each rank it is identified to. The genus of a specimen
+                    // identified only to genus (Lividopone (indet) in Mozambique), or to a name that is not on these lists
+                    // (morphospecies, unrecognized), is on the country's and adm1's list: its genus row, with the subfamily
+                    // and family rows above it (insert() adds the parents). The name itself is not added, so no species
+                    // row and no Species or Specimens number changes.
+                    + " union " + GENUS_ROWS_FROM_SPECIMENS_SQL
 
                     + " order by country, adm1, taxon_name"
             ;

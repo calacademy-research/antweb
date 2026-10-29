@@ -41,12 +41,35 @@ def test_python_and_java_log_lines_are_the_same():
 
 def test_nightly_writes_the_lines():
     src = read("src/org/calacademy/antweb/util/UtilDataAction.java")
-    assert '"  Set 2 done (" + CountInvariants.ENDEMIC_RULE_LOG + ")"' in src
+    assert '"  Set 2 done (" + CountInvariants.ENDEMIC_RULE_LOG + "; "' in src
+    assert "+ org.calacademy.antweb.home.GeolocaleTaxonDb.GENUS_ROWS_LOG + \")\"" in src
     assert '"  Set 3 done (" + CountInvariants.ENDEMIC_RULE_LOG + ")"' in src
     assert '"  Set 4 done (" + CountInvariants.RULES_LOG' in src and "CountInvariants.COUNTING_RULES_LOG + \")\"" in src
     # set 2's line after the geolocale counts, set 3's after the bioregions
     assert src.index('"  Set 2 done (') > src.index('"geolocaleCountCrawl"')
     assert src.index('"  Set 3 done (') > src.index('"populateBioregion"')
+
+
+def test_bioregion_lists_take_valid_names_only():
+    """Brian Fisher, 2026-10-29: Formica was an Afrotropical genus through unidentifiable AntCat names (Formica chufejif
+    Forskal, 1775) listed under their own name. Country lists already took valid names only; bioregion lists now too,
+    and set 1 says so in compute.log for the e2e test (tests/e2e/test_images_anywhere.py)."""
+    up = read("src/org/calacademy/antweb/upload/SpeciesListUpload.java")
+    assert java_constant(up, "BIOREGION_VALID_LOG") == py_constant(read("tests/e2e/numbers_sample.py"), "BIOREGION_VALID_LOG")
+    assert "if (bioregion != null && isValidForPlaceList(currentValidName)) {" in up
+    assert "return current != null && current.isValid();" in up
+    nightly = read("src/org/calacademy/antweb/util/UtilDataAction.java")
+    assert '"  AntCat import done (" + org.calacademy.antweb.upload.SpeciesListUpload.BIOREGION_VALID_LOG + ")"' in nightly
+
+
+def test_genus_rows_from_specimens_identified_to_genus():
+    """Brian Fisher, 2026-10-29: Lividopone, known in Mozambique only from "Lividopone (indet)", was not on the Mozambique
+    list. Set 2 adds the genus rows of every specimen identified to genus (not the names) to the country and adm1 lists
+    and says so on its compute.log line, which tests/e2e/test_genus_indet_places.py waits for."""
+    g = read("src/org/calacademy/antweb/home/GeolocaleTaxonDb.java")
+    assert java_constant(g, "GENUS_ROWS_LOG") == py_constant(read("tests/e2e/numbers_sample.py"), "GENUS_ROWS_LOG")
+    assert '+ " union " + GENUS_ROWS_FROM_SPECIMENS_SQL' in g
+    assert "join taxon g on g.taxon_name = t.parent_taxon_name" in g and "g.taxarank = 'genus'" in g
 
 
 def test_group_species_is_pending_until_the_nightly_run():
