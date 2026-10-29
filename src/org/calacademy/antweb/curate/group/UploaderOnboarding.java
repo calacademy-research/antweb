@@ -25,8 +25,8 @@ import org.calacademy.antweb.util.LoginNames;
  *   4. Make the login the group's admin curator when the group has none.
  *
  * Nothing is written when a check fails (all in one transaction). The welcome email
- * (welcomeSubject / welcomeBody) is a draft shown to the administrator, who copies it into their
- * own email and adds what the person needs to know; AntWeb does not send it.
+ * (welcomeSubject / welcomeBody) is a draft shown to the administrator, signed with their name,
+ * who edits it and sends it from the page (AddUploaderAction, step=send) or copies it.
  *
  * Plain JDBC with bound parameters, so the class can be tested against MySQL without the
  * application's in-memory lists (test/.../curate/UploaderOnboardingDbTest.java).
@@ -67,10 +67,29 @@ public final class UploaderOnboarding {
             email = clean(email);
             firstName = clean(firstName);
             lastName = clean(lastName);
-            newGroupName = clean(newGroupName).replaceAll("\\s+", " ");
-            newGroupAbbrev = clean(newGroupAbbrev);
+            newGroupName = stripQuotes(newGroupName).replaceAll("\\s+", " ");
+            newGroupAbbrev = stripQuotes(newGroupAbbrev);
             return this;
         }
+    }
+
+    /** Straight and typographic quotation marks (and backtick, guillemets) that may surround a pasted name. */
+    static final String QUOTES = "\"'`\u2018\u2019\u201A\u201B\u201C\u201D\u201E\u201F\u00AB\u00BB\u2039\u203A";
+
+    /**
+     * Whitespace (also no-break spaces) and quotation marks removed from both ends, e.g. a name pasted
+     * from an email as "Auburn University Museum of Natural History” (2026-10-29). Quotes inside stay.
+     */
+    public static String stripQuotes(String s) {
+        if (s == null) return "";
+        int a = 0, b = s.length();
+        while (a < b && strippable(s.charAt(a))) a++;
+        while (b > a && strippable(s.charAt(b - 1))) b--;
+        return s.substring(a, b);
+    }
+
+    private static boolean strippable(char c) {
+        return Character.isWhitespace(c) || Character.isSpaceChar(c) || QUOTES.indexOf(c) >= 0;
     }
 
     /** Problems with the input itself (nothing looked up yet). Empty: fine. */
@@ -174,6 +193,26 @@ public final class UploaderOnboarding {
             }
         }
         return rows;
+    }
+
+    /** The login with this number, or null. */
+    public static LoginRow loginById(Connection c, int id) throws SQLException {
+        if (id <= 0) return null;
+        try (PreparedStatement s = c.prepareStatement(
+                "select id, name, email, first_name, last_name, group_id from login where id = ?")) {
+            s.setInt(1, id);
+            try (ResultSet r = s.executeQuery()) {
+                if (!r.next()) return null;
+                LoginRow l = new LoginRow();
+                l.id = r.getInt("id");
+                l.name = r.getString("name");
+                l.email = r.getString("email");
+                l.firstName = r.getString("first_name");
+                l.lastName = r.getString("last_name");
+                l.groupId = r.getInt("group_id");
+                return l;
+            }
+        }
     }
 
     public static GroupRow getGroup(Connection c, int id) throws SQLException {
@@ -461,16 +500,26 @@ public final class UploaderOnboarding {
         return WELCOME_SUBJECT;
     }
 
-    /** The line the administrator replaces with their own name before sending. */
+    /** The sign-off when the administrator's login has no first or last name. */
     public static final String SIGNATURE_PLACEHOLDER = "[Your name]";
+
+    /** The administrator's first and last name for the sign-off; SIGNATURE_PLACEHOLDER when both are empty. */
+    public static String signature(String firstName, String lastName) {
+        String n = ((firstName == null ? "" : firstName.trim()) + " " + (lastName == null ? "" : lastName.trim())).trim();
+        return n.isEmpty() ? SIGNATURE_PLACEHOLDER : n;
+    }
 
     /**
      * The draft welcome email, as plain text (the summary page puts it in a read-only text box,
      * escaped there). setPasswordLink is the one-time invitation link (null when the login already
-     * has a password). site is e.g. https://www.antweb.org. The administrator sends it from their
-     * own address, so it is signed with SIGNATURE_PLACEHOLDER for them to replace.
+     * has a password). site is e.g. https://www.antweb.org. signedBy is the administrator's name
+     * (signature()); null or empty: SIGNATURE_PLACEHOLDER.
      */
     public static String welcomeBody(String site, LoginRow login, GroupRow group, String setPasswordLink, int linkDays) {
+        return welcomeBody(site, login, group, setPasswordLink, linkDays, null);
+    }
+
+    public static String welcomeBody(String site, LoginRow login, GroupRow group, String setPasswordLink, int linkDays, String signedBy) {
         // Greet by first and last name; without them (or a username only) a plain "Hello,".
         String name = ((login.firstName == null ? "" : login.firstName.trim()) + " " + (login.lastName == null ? "" : login.lastName.trim())).trim();
         String hello = name.isEmpty() ? "Hello," : "Hello " + name + ",";
@@ -504,7 +553,8 @@ public final class UploaderOnboarding {
              .append(docs).append(".\n\n");
         }
         b.append("More help: ").append(docs).append(". If you have any questions, let me know.\n\n");
-        b.append("Best regards,\n").append(SIGNATURE_PLACEHOLDER).append("\nAntWeb, California Academy of Sciences\n");
+        String sign = signedBy == null || signedBy.trim().isEmpty() ? SIGNATURE_PLACEHOLDER : signedBy.trim();
+        b.append("Best regards,\n").append(sign).append("\nAntWeb, California Academy of Sciences\n");
         return b.toString();
     }
 }
