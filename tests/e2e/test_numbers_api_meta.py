@@ -172,6 +172,16 @@ STAT_RULES = (
 )
 
 
+def _same_place(a, b):
+    """Place names equal as MySQL compares them: case, accents and trailing spaces ignored."""
+    import unicodedata
+
+    def fold(x):
+        x = unicodedata.normalize("NFKD", (x or "").rstrip())
+        return "".join(ch for ch in x if not unicodedata.combining(ch)).casefold()
+    return fold(a) == fold(b)
+
+
 def _recount_castes(stat, column, name):
     """The ten counts of a /geoSpeciesStats row recounted from /specimens (status valid, the place column = name),
     or None when there are too many records."""
@@ -181,7 +191,10 @@ def _recount_castes(stat, column, name):
                      f"&{param}={quote_plus(name)}", "count", max_pages=4)
     if rows is None:
         return None
-    rows = [r for r in rows if (r.get(column) or "").lower() == name.lower() and (r.get("antwebTaxonName") or "").lower() == taxon]
+    # the API matches the place with MySQL's equality (utf8mb4 general/0900 collation: case, accents and trailing spaces
+    # ignored), so the recount compares names the same way (staging 2026-10-28: a gredleri worker of "Dolnośląskie"
+    # whose adm1 is spelled differently was counted by the API and dropped here, 8 vs 7)
+    rows = [r for r in rows if _same_place(r.get(column), name) and (r.get("antwebTaxonName") or "").lower() == taxon]
     out = {}
     for key, rule in STAT_RULES:
         out[key] = sum(1 for r in rows if rule((r.get("caste") or "").lower(), (r.get("subcaste") or "").lower()))
