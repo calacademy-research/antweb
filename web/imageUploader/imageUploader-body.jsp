@@ -1,3 +1,7 @@
+<%-- Body of the Image Uploader (imageUploader.do): pick files, artist and copyright; imageUploader.js sends
+     the files one per request to imageUploadBatch.do (ImageUploadBatchAction: tables image_upload, image,
+     group_image, image_upload_refused) and ends on the report (imageUploadReport.do). Also the naming rules for
+     image files. Docs: docs/flows/image-upload.md. Tests: tests/e2e/test_image_upload.py, test_browser_image_upload.py. --%>
 <%@ page import = "java.util.*"%>
 
 

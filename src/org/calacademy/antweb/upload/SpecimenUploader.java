@@ -17,6 +17,12 @@ import org.apache.commons.logging.LogFactory;
 
 import org.apache.struts.upload.FormFile;
 
+/**
+ * Upload of a curator's AntWeb specimen file (upload.do?action=specimenUpload), run by the background job
+ * SpecimenUploadJob: takes the one .txt file out of the saved zip with SafeUnzip (or copies a saved .txt) to
+ * workingDir/specimen<groupId>.txt, then runs the shared steps in Uploader.uploadSpecimenFile.
+ * Docs: docs/flows/specimen-upload.md (sections 2.1, 3). Tests: tests/e2e/test_specimen_upload_roundtrip.py.
+ */
 public class SpecimenUploader extends Uploader {
 
     private static final Log s_log = LogFactory.getLog(SpecimenUploader.class);

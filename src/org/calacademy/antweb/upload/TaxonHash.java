@@ -5,6 +5,10 @@ import java.util.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * A taxon record as a Hashtable (column name to value), with a log helper. Used by SpeciesListUpload while
+ * it reads the taxa of a species list or of the AntCat (WorldAnts) file.
+ */
 public final class TaxonHash extends Hashtable<String, Object> {
 
     private static final Log s_log = LogFactory.getLog(TaxonHash.class);

@@ -5,6 +5,11 @@ import java.util.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;    
     
+/**
+ * One line of a specimen file kept in table upload_line (file, line number in the file and as shown in the
+ * report, group, text): the lines LineNumMgr found broken by an extra carriage return. Read by
+ * UploadDb.getUploadLine for logMgr.do?action=uploadLine, the report's link to the line.
+ */
 public class UploadLine {
 
     private static final Log s_log = LogFactory.getLog(UploadLine.class);

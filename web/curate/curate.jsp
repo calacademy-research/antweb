@@ -1,3 +1,6 @@
+<%-- Curate page (curate.do, CurateAction): the curator tools home, for logged-in curators and admins
+     (curatorCheck.jsp). Tiles wrapper; the content is curate/curate-body.jsp.
+     Tests: tests/e2e/test_curate_page_layout.py, test_curate_page_clarity.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

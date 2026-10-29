@@ -1,3 +1,6 @@
+<%-- Upload status page (jobStatus.do, JobStatusAction): uploads and admin data jobs run in the background
+     (BackgroundJobs, table background_job), for curators and admins (curatorCheck.jsp). Tiles wrapper of
+     curate/jobStatus-body.jsp. Docs: docs/flows/specimen-upload.md (section 3a). Tests: tests/e2e/test_background_jobs.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

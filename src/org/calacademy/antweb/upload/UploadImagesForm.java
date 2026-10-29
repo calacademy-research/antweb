@@ -2,6 +2,11 @@ package org.calacademy.antweb.upload;
 
 import org.apache.struts.action.ActionForm;
 
+/**
+ * Form bean uploadImagesForm (copyright, artist, license) of the old /uploadImages.do action, which is
+ * commented out in struts-config.xml; nothing uses it. Images are uploaded with the Image Uploader
+ * (imageUploader.do, package imageUploader).
+ */
 public class UploadImagesForm extends ActionForm {
 
   protected String copyright = "";
