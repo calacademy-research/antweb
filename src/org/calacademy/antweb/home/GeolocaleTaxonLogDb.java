@@ -11,6 +11,13 @@ import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.curate.speciesList.*;
 
+/**
+ * History and disputes of curated geolocale species lists. archiveSpeciesList saves a version of a list each
+ * time a curator saves it in the Species List Tool; the history page (speciesListHistory.do) reads the versions
+ * and the curators; a curator's removal of a specimen-based name is kept as a dispute, which the nightly
+ * rebuild honours; CuratorAction shows the curation of one name on one list. Tables geolocale_taxon_log,
+ * geolocale_taxon_log_detail, geolocale_taxon_dispute, geolocale_taxon. Docs: docs/data-model.md section 5.
+ */
 public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
     
     private static final Log s_log = LogFactory.getLog(GeolocaleTaxonLogDb.class);

@@ -10,6 +10,12 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.curate.speciesList.*;
 
+/**
+ * History and disputes of curated project species lists. archiveSpeciesList saves a version of a list each
+ * time a curator saves it in the Species List Tool; the history page (speciesListHistory.do) reads the versions
+ * and the curators; disputes (names a curator removed) are listed and managed on disputeMgr.do. Tables
+ * proj_taxon_log, proj_taxon_log_detail, proj_taxon_dispute, proj_taxon. Docs: docs/data-model.md section 5.
+ */
 public class ProjTaxonLogDb extends TaxonSetLogDb {
     
     private static final Log s_log = LogFactory.getLog(ProjTaxonLogDb.class);

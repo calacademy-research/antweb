@@ -12,6 +12,13 @@ import org.calacademy.antweb.upload.*;
 import java.util.ArrayList;
 
 
+/**
+ * Database steps of a specimen upload (UploadDb plus): deletes the group's specimens before the new file is
+ * loaded (dropSpecimens), sets the group's last upload date, records the upload in table upload with its counts
+ * (recordUpload, insertUploadRow) and names the kept copy of the file (getBackupDirFile).
+ * Used by SpecimenUpload, SpecimenUploadParse, SpecimenUploadProcess, Uploader and UploadAction. Tables upload,
+ * specimen, taxon, proj_taxon, ant_group. Docs: docs/flows/specimen-upload.md. Tests: UploadRecordDbTest.
+ */
 public class SpecimenUploadDb extends UploadDb {
 
     private static final Log s_log = LogFactory.getLog(SpecimenUploadDb.class);

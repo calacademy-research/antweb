@@ -12,6 +12,13 @@ import org.calacademy.antweb.util.*;
 
 import java.sql.*;
 
+/**
+ * Base class of the four species-list tables (geolocale_taxon: GeolocaleTaxonDb, proj_taxon: ProjTaxonDb,
+ * bioregion_taxon: BioregionTaxonDb, museum_taxon: MuseumTaxonDb). Shared nightly steps: dataCleanup (set 2:
+ * parks curator rows and deletes rows whose taxon is gone), updateTaxonSetTaxonNames and renameToValid (rows of a
+ * synonym renamed to or merged into the valid name), updateTaxonSetSources (the source column, set 3).
+ * Docs: docs/flows/nightly.md, docs/numbers.md, docs/data-model.md section 5. Tests: CuratorTaxonSetTest.
+ */
 public abstract class TaxonSetDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(TaxonSetDb.class);

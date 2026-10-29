@@ -10,6 +10,14 @@ import org.calacademy.antweb.geolocale.Geolocale;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * Base class of the count crawls of the four species-list tables (GeolocaleTaxonCountDb, ProjTaxonCountDb,
+ * BioregionTaxonCountDb, MuseumTaxonCountDb). For one place (a Countable): counts the specimens of each name and
+ * adds them up the taxon tree with the species, genus and subfamily counts (childrenCountCrawl), counts images
+ * per name and up the tree (imageCountCrawl), and writes the place's totals and subfamily chart JSON. Run by
+ * nightly sets 2 to 4. Docs: docs/numbers.md, docs/flows/nightly.md.
+ * Tests: TaxonTreeCountDbTest, NightlyCountOrderDbTest, RegionCountDbTest.
+ */
 public class CountDb extends AntwebDb {
     
 /*

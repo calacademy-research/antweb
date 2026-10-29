@@ -9,6 +9,10 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Small SQL helpers on the caller's connection: run a query or DML, count rows, read one value, delete from a
+ * table, set a field. Used by the other Db classes (places, lists, taxa, the AntCat import) and LogMgr.
+ */
 public class UtilDb extends AntwebDb {
     
     private static final Log s_log = LogFactory.getLog(UtilDb.class);

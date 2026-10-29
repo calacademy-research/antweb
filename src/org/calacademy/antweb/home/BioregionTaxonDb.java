@@ -10,6 +10,14 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
+/**
+ * The bioregion species lists (table bioregion_taxon). Reads a bioregion's taxa and the
+ * bioregions of a taxon (taxon pages, Taxon); builds a list from the specimens and from geolocale_taxon and adds
+ * the higher taxa (BioregionDb.populate, nightly set 3); adds and removes the AntCat rows during the AntCat
+ * import (SpeciesListUpload); per-bioregion statistics for statistics.do. Tables bioregion_taxon,
+ * geolocale_taxon, taxon. Docs: docs/data-model.md (bioregion_taxon), docs/flows/nightly.md,
+ * docs/flows/antcat-to-antweb.md.
+ */
 public class BioregionTaxonDb extends TaxonSetDb {
     
     private static final Log s_log = LogFactory.getLog(BioregionTaxonDb.class);

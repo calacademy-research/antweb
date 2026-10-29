@@ -10,6 +10,12 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * Count crawls of the museum species lists (museum_taxon); the counting code is in CountDb.
+ * childrenCountCrawl: specimens, species, genera and subfamilies of each row (MuseumDb.populate, nightly set 3).
+ * imageCountCrawl: images of the museum's specimens per name, rows set to 0 first (ImageCountDb, set 4).
+ * Docs: docs/flows/nightly.md (sets 3 and 4), docs/numbers.md. Tests: NightlyCountOrderDbTest.
+ */
 public class MuseumTaxonCountDb extends CountDb {
     
     private static final Log s_log = LogFactory.getLog(MuseumTaxonCountDb.class);

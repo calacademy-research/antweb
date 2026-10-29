@@ -6,6 +6,11 @@ import java.text.DecimalFormat;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * The last row of table operation_lock: an old lock that kept two long operations from running at the same
+ * time (operation, who, when, how long). Only read: ServerStatusAction shows it on serverStatus.do.
+ * Nothing sets the lock any more. Docs: docs/data-model.md (operation_lock).
+ */
 public class OperationLock {
 
     private static final Log s_log = LogFactory.getLog(OperationLock.class);

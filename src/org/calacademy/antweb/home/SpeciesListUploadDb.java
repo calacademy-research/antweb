@@ -10,6 +10,13 @@ import org.calacademy.antweb.util.*;
 
 //import java.sql.SQLIntegrityConstraintViolationException;
 
+/**
+ * Database steps of the AntCat (WorldAnts) import, used by SpeciesListUpload (nightly set 1).
+ * prepareDatabase: before the new file is loaded, deletes the AntCat rows of taxon and homonym, the taxonomic
+ * history (description_edit and description_homonym, title taxonomichistory), the project's proj_taxon rows
+ * and the AntCat rows of geolocale_taxon and fossilants. updateProjectUploadDate: project.last_changed.
+ * Docs: docs/flows/antcat-to-antweb.md.
+ */
 public class SpeciesListUploadDb extends UploadDb {
     
     private static final Log s_log = LogFactory.getLog(SpeciesListUploadDb.class);

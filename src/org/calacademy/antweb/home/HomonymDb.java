@@ -9,6 +9,13 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Table homonym: AntCat names that are also used by another taxon, with their author and date. Reads one homonym
+ * for its page (description.do, homonymPage.jsp), the list for the admin report (query.do?action=homonyms), the
+ * name of an AntCat id, and which subfamily holds a genus (checks of the specimen upload and the AntCat import).
+ * Rows are written by the AntCat import (AntwebUpload, SpeciesListUploadDb). Docs: docs/flows/taxon-pages.md,
+ * docs/data-model.md (homonym).
+ */
 public class HomonymDb extends AntwebDb {
     
     private static final Log s_log = LogFactory.getLog(HomonymDb.class);

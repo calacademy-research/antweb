@@ -9,6 +9,15 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * The project species lists (table proj_taxon), including worldants (AntCat), allantwebants (every name with
+ * AntWeb specimens, the Global column of every list) and fossilants. Reads a project's list and per-project
+ * statistics (statistics.do); inserts, updates and deletes rows for curators (Species List Tool, through
+ * SpeciesListDb), the AntCat import and the specimen upload; regenerateAllAntweb rebuilds allantwebants after each
+ * upload and in set 1; nightly set 5 cleans up proxy and empty genus rows. Tables proj_taxon, proj_taxon_dispute,
+ * specimen, taxon. Docs: docs/flows/nightly.md, docs/flows/antcat-to-antweb.md, docs/numbers.md.
+ * Tests: CuratorTaxonSetTest, tests/e2e/test_curator_species_lists.py.
+ */
 public class ProjTaxonDb extends EditableTaxonSetDb {
     
     private static final Log s_log = LogFactory.getLog(ProjTaxonDb.class);

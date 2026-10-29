@@ -9,6 +9,12 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.*;
 
+/**
+ * The specimen whose images stand for a taxon on its pages, per caste ("default specimen"), kept in table
+ * taxon_prop. Curators set and unset it on defaultSpecimen.do (DefaultSpecimenAction); Taxon and TaxonDb read it
+ * (for a genus or subfamily also from the names under it). Tables taxon_prop, specimen, taxon.
+ * Docs: docs/data-model.md (taxon_prop). Tests: ImageUploadSaveTest, tests/e2e/test_image_picker.py.
+ */
 public class ImagePickDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(ImagePickDb.class);

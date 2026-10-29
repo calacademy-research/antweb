@@ -5,6 +5,10 @@ import java.sql.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * DescEditDb for homonym pages: reads the page text of a homonym from table description_homonym instead of
+ * description_edit. Used by Homonym.
+ */
 public class HomonymDescEditDb extends DescEditDb{
 
     private static final Log s_log = LogFactory.getLog(HomonymDescEditDb.class);

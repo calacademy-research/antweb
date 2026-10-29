@@ -11,6 +11,12 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Reads one locality (by locality code, by name, or either) from table specimen: place, coordinates, elevation,
+ * groups, and its collections (one per collection code). Used by the Locality page (locality.do,
+ * LocalityAction), the big map (bigMap.do) and the field guide. Tables specimen, ant_group.
+ * Docs: docs/flows/places.md, docs/flows/specimen-and-image-pages.md. Tests: tests/e2e/test_specimen_pages.py.
+ */
 public class LocalityDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(LocalityDb.class);
