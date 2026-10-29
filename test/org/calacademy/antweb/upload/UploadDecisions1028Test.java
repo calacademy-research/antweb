@@ -157,4 +157,73 @@ public class UploadDecisions1028Test extends TestCase {
         assertTrue(m, m.contains("line 3"));
         assertTrue(m, m.contains("Files must be UTF-8 (Excel: Save As, CSV UTF-8)"));
     }
+
+    // ------------------------------------------------------------ indet in the species or subspecies column (2026-10-29)
+
+    public void testSubspeciesIndetIsDropped() {
+        for (String ss : new String[] {"indet", "Indet.", "undet", "(indet)", "sp.", "indet?"}) {
+            UploadUtil.IndetColumns c = UploadUtil.indetColumns("striatula-complex", ss);
+            assertEquals(ss, UploadUtil.SUBSPECIES_INDET_DROPPED, c.kind);
+            assertEquals(ss, "striatula-complex", c.species);
+            assertNull(ss, c.subspecies);
+        }
+        java.util.Hashtable<String, Object> typed = new java.util.Hashtable<>();
+        typed.put("subfamily", "ectatomminae");
+        typed.put("genus", "gnamptogenys");
+        typed.put("species", UploadUtil.indetColumns("striatula-complex", "indet").species);
+        assertEquals("ectatomminaegnamptogenys striatula-complex", UploadUtil.makeName(typed));
+    }
+
+    public void testSpeciesIndetIgnoresTheSubspecies() {
+        for (String sp : new String[] {"indet", "(indet)", "undet.", "sp.", "", null, "Indet?"}) {
+            UploadUtil.IndetColumns c = UploadUtil.indetColumns(sp, "karooicus");
+            assertEquals(sp, UploadUtil.SPECIES_INDET_SUBSPECIES_IGNORED, c.kind);
+            assertEquals(sp, "(indet)", c.species);
+            assertNull(sp, c.subspecies);
+            assertEquals("karooicus", c.droppedSubspecies);
+        }
+        UploadUtil.IndetColumns both = UploadUtil.indetColumns("indet", "indet");
+        assertEquals(UploadUtil.SPECIES_INDET_SUBSPECIES_IGNORED, both.kind);
+        assertEquals("(indet)", both.species);
+        // unchanged
+        for (String[] p : new String[][] {{"striatula", "karooicus"}, {"striatula", null}, {"striatula", ""}, {"indet", null}, {"sp1", "indet1"}}) {
+            UploadUtil.IndetColumns c = UploadUtil.indetColumns(p[0], p[1]);
+            assertNull(p[0] + " " + p[1], c.kind);
+            assertEquals(p[0], c.species);
+            assertEquals(p[1], c.subspecies);
+        }
+    }
+
+    public void testIndetColumnsReportLines() {
+        String a = UploadUtil.indetColumnsLine(3, "UTIC00201495", "Gnamptogenys striatula-complex  indet",
+            UploadUtil.indetColumns("striatula-complex", "indet"), "Gnamptogenys");
+        assertEquals("line 3, UTIC00201495: Gnamptogenys striatula-complex indet -> filed as Gnamptogenys striatula-complex;"
+            + " 'indet' in the subspecies column dropped", a);
+        String b = UploadUtil.indetColumnsLine(7, "SAM-ENT-011940", "Ocymyrmex indet karooicus",
+            UploadUtil.indetColumns("(indet)", "karooicus"), "Ocymyrmex");
+        assertEquals("line 7, SAM-ENT-011940: Ocymyrmex indet karooicus -> Species indet: filed as Ocymyrmex (indet);"
+            + " subspecies 'karooicus' ignored", b);
+        assertEquals("species list (no code): line 9: Ocymyrmex karooicus -> Species indet: filed as Ocymyrmex (indet); subspecies 'karooicus' ignored",
+            "species list (no code): " + UploadUtil.indetColumnsLine(9, null, "Ocymyrmex  karooicus", UploadUtil.indetColumns(null, "karooicus"), "Ocymyrmex"));
+
+        String h1 = MessageMgr.getMessageDisplay(MessageMgr.subspeciesIndetDropped);
+        assertTrue(h1, h1.contains("Name corrected: 'indet' in the subspecies column dropped <font color=green>(uploaded)</font>"));
+        String h2 = MessageMgr.getMessageDisplay(MessageMgr.speciesIndetSubspeciesIgnored);
+        assertTrue(h2, h2.contains("Name corrected: species indet, subspecies ignored, filed as &lt;Genus&gt; (indet) <font color=green>(uploaded)</font>"));
+
+        MessageMgr mgr = new MessageMgr();
+        mgr.setCurrentCode("SAM-ENT-011940");
+        mgr.addToMessages(MessageMgr.speciesIndetSubspeciesIgnored, org.calacademy.antweb.util.Html.esc(b));
+        mgr.setCurrentCode(null);
+        Group group = new Group();
+        group.setName("test");
+        mgr.compileMessages(group);
+        String section = null;
+        for (String m : mgr.getMessages()) if (m.contains("species indet, subspecies ignored")) section = m;
+        assertNotNull(mgr.getMessages().toString(), section);
+        assertTrue(section, section.contains("(total:1)"));
+        assertTrue(section, section.contains("subspecies &#39;karooicus&#39; ignored"));
+        assertTrue(section, section.contains("-&gt; Species indet: filed as Ocymyrmex (indet)"));
+        assertFalse("the code is in the line, no specimen list: " + section, section.contains("1 specimen"));
+    }
 }

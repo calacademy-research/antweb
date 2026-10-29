@@ -6,15 +6,17 @@ Bioregion Map Manager's "Refresh" (its request check is test_request_handling.py
 test_bioregion_map_refresh_is_gone) and the "groups" named query of the Upload groups page
 (test_relevant_queries.py). The museum Title was kept: it is the heading of the public museum pages.
 
-Add an uploader no longer sends the welcome email: the summary page shows a draft (To, Subject, the
-text in a read-only box, a Copy button and a mailto: link) for the administrator to send from their own
-email, signed "[Your name]".
+Add an uploader's welcome email: from 2026-10-21 a draft to copy; since 2026-10-29 (Brian) To, Subject
+and text are editable with a Send button (from antweb@antweb.org, Reply-To and a copy to the
+administrator, only to the address of the login just added) and Copy, signed with the administrator's
+name. The mailto: link ("Open in my email program") was dropped: it did nothing with the long text.
 
-Static (any host): the removed files, fields and links are gone; Add an uploader has no send path.
+Static (any host): the removed files, fields and links are gone, the mailto: link too.
 Test uploader (staging, changing nothing): a POST to upload.do with createProject ends as "Action not found.".
 Test admin (staging): Add an uploader for the test uploader in its own test upload group (nothing to
-change: already in the group with its rights; written to admin.log) shows the draft box and no Send
-button; a POST with step=send sends nothing.
+change: already in the group with its rights; written to admin.log) shows the editable welcome email
+with Send and Copy; Sends that must be refused (another login number, another To address, a stale
+form token) send nothing. No test presses a Send that would go out.
 Java checks in CI: test/org/calacademy/antweb/curate/UploaderOnboardingTest.java (text and draft box),
 test/org/calacademy/antweb/util/RelevantQueriesTest.java.
 """
@@ -41,9 +43,8 @@ GONE = [
     ("src/org/calacademy/antweb/home/TaxonPropDb.java", "public void refreshBioregionMap()"),
     ("src/org/calacademy/antweb/curate/BioregionMapMgrAction.java", "refreshBioregionMap"),
     ("web/curate/bioregionMapMgr-body.jsp", "isRefresh=true"),
-    ("src/org/calacademy/antweb/curate/group/AddUploaderAction.java", "Emailer"),
-    ("src/org/calacademy/antweb/curate/group/AddUploaderAction.java", '"send".equals(step)'),
-    ("src/org/calacademy/antweb/curate/group/AddUploaderAction.java", "Send this email to"),
+    ("src/org/calacademy/antweb/curate/group/AddUploaderAction.java", "mailtoUrl("),
+    ("src/org/calacademy/antweb/curate/group/AddUploaderAction.java", "Open in my email program"),
     ("src/org/calacademy/antweb/curate/group/UploaderOnboarding.java", "reply to this email"),
 ]
 
@@ -78,12 +79,13 @@ def test_no_page_links_queries_do():
     assert not hits, hits
 
 
-def test_welcome_text_is_a_draft_signed_by_the_admin():
+def test_welcome_text_is_signed_by_the_admin():
     src = _text("src/org/calacademy/antweb/curate/group/UploaderOnboarding.java")
     assert 'SIGNATURE_PLACEHOLDER = "[Your name]"' in src
     assert "This link is for you only" in src
     page = _text("src/org/calacademy/antweb/curate/group/AddUploaderAction.java")
-    for text in ("<h2>Draft email</h2>", "navigator.clipboard", "Open in my email program", "mailtoUrl("):
+    for text in ("<h2>Welcome email</h2>", "navigator.clipboard", "Emailer.sendPersonal(",
+                 "UploaderOnboarding.signature(admin.getFirstName(), admin.getLastName())"):
         assert text in page, text
 
 
@@ -120,21 +122,59 @@ def summary():
     return s, token, r.text
 
 
-def test_summary_shows_the_draft_box(summary):
+LOGIN_ID = re.compile(r'name="loginId" value="(\d+)"')
+DRAFT_TO = re.compile(r'id="draft-to" name="to" size="50" maxlength="128" value="([^"]*)"')
+
+
+def test_summary_shows_the_welcome_email(summary):
     _s, _token, html = summary
     assert "was already in this upload group" in html
-    for text in ("<h2>Draft email</h2>", 'id="draft-to" readonly', 'id="draft-subject" readonly',
-                 'value="Your AntWeb upload account"', '<textarea id="draft-body" readonly',
-                 'onclick="awCopyDraft(this)">Copy</button>', "AntWeb does not send this email", "[Your name]"):
+    if "This login has no email address." in html:
+        pytest.skip("the test uploader has no email address on this server")
+    for text in ("<h2>Welcome email</h2>", 'id="draft-to" name="to" size=', 'id="draft-subject" name="subject" size=',
+                 'value="Your AntWeb upload account"', '<textarea id="draft-body" name="body" rows=',
+                 '<input type="hidden" name="step" value="send">', 'name="_csrf"',
+                 '<input type="submit" id="draft-send" value="Send">', 'onclick="awCopyDraft(this)">Copy</button>',
+                 "replies go to you, and you get a copy", "Best regards,"):
         assert text in html, f"'{text}' not on the summary page"
-    if "This login has no email address." not in html:
-        assert 'id="draft-mailto" href="mailto:' in html and ">Open in my email program</a>" in html
-    assert "Send this email to" not in html and 'name="step" value="send"' not in html
+    assert "mailto:" not in html and "Open in my email program" not in html
     assert "reply to this email" not in html.lower()
 
 
-def test_send_step_sends_nothing(summary):
-    s, token, _html = summary
-    r = s.post(BASE_URL + "/addUploader.do", timeout=TIMEOUT, data={"_csrf": token, "step": "send"})
+def _draft(summary):
+    s, token, html = summary
+    m, t = LOGIN_ID.search(html), DRAFT_TO.search(html)
+    if not (m and t):
+        pytest.skip("no sendable welcome email on the summary page")
+    return s, token, int(m.group(1)), t.group(1)
+
+
+def test_send_for_another_login_is_refused(summary):
+    s, token, login_id, to = _draft(summary)
+    r = s.post(BASE_URL + "/addUploader.do", timeout=TIMEOUT,
+               data={"_csrf": token, "step": "send", "loginId": str(login_id + 1), "to": to,
+                     "subject": "Your AntWeb upload account", "body": "Hello"})
     assert classify(r).category == "ok", classify(r)
-    assert "Sent to " not in r.text and "Not sent:" not in r.text
+    assert "Not sent: this welcome email belongs to an earlier Add an uploader" in r.text
+    assert "Sent to " not in r.text
+
+
+def test_send_to_another_address_is_refused(summary):
+    s, token, login_id, _to = _draft(summary)
+    r = s.post(BASE_URL + "/addUploader.do", timeout=TIMEOUT,
+               data={"_csrf": token, "step": "send", "loginId": str(login_id), "to": "zz-not-the-uploader@example.org",
+                     "subject": "Your AntWeb upload account", "body": "Hello"})
+    assert classify(r).category == "ok", classify(r)
+    assert "Not sent: the To address must be the email address of the login just added" in r.text
+    assert "Sent to " not in r.text
+    assert 'value="zz-not-the-uploader@example.org"' in r.text, "what was typed is shown again"
+
+
+def test_send_with_stale_token_sends_nothing(summary):
+    s, _token, login_id, to = _draft(summary)
+    r = s.post(BASE_URL + "/addUploader.do", timeout=TIMEOUT,
+               data={"_csrf": "A" * 43, "step": "send", "loginId": str(login_id), "to": to,
+                     "subject": "Your AntWeb upload account", "body": "Hello zz-stale"})
+    assert r.status_code == 200, (r.status_code, r.text[:300])
+    assert "Nothing was sent" in r.text and "Sent to " not in r.text
+    assert "Hello zz-stale" in r.text and '<input type="submit" id="draft-send"' not in r.text

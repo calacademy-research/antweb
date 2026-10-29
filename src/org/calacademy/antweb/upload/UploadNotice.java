@@ -172,6 +172,8 @@ public class UploadNotice {
         public int uploadId = 0;
         public int specimensLoaded = -1;
         public int redFlagged = -1;
+        public int notLoaded = -1;          // lines in the report's "(not uploaded)" sections (MessageMgr)
+        public int corrected = -1;          // lines AntWeb corrected and loaded (MessageMgr.CORRECTED)
         public int imagesSaved = -1;
         public int imagesNotSaved = -1;     // files the Image Uploader did not save (listed in the report)
         public String reportUrl;            // null: no report was written
@@ -203,6 +205,30 @@ public class UploadNotice {
         return s;
     }
 
+    static String were(int i, String one, String many) {
+        return plural(i, one, many) + (i == 1 ? " was " : " were ");
+    }
+
+    /**
+     * What in the report needs the curator's attention, in one or two sentences (Brian Fisher, 2026-10-29):
+     * "2 lines were corrected and 1 line was not loaded; see the report. Please fix them in your own data
+     * before your next upload." Only counts; "Nothing in the report needs your attention." when there is
+     * nothing. Null when the counts are not known (image uploads, uploads that did not complete).
+     * Which report sections count: MessageMgr.CORRECTED.
+     */
+    public static String attentionSummary(Facts f) {
+        if (f.images || !f.complete || f.notLoaded < 0 || f.corrected < 0) return null;
+        List<String> parts = new ArrayList<>();
+        if (f.corrected > 0) parts.add(were(f.corrected, "line", "lines") + "corrected");
+        if (f.notLoaded > 0) parts.add(were(f.notLoaded, "line", "lines") + "not loaded");
+        if (f.redFlagged > 0) parts.add(were(f.redFlagged, "specimen", "specimens") + "red-flagged");
+        if (parts.isEmpty()) return "Nothing in the report needs your attention.";
+        String list = parts.size() == 1 ? parts.get(0)
+            : String.join(", ", parts.subList(0, parts.size() - 1)) + " and " + parts.get(parts.size() - 1);
+        return list + "; see the report. Please fix " + (f.corrected + f.notLoaded + Math.max(f.redFlagged, 0) == 1 ? "it" : "them")
+            + " in your own data before your next upload.";
+    }
+
     public static String body(Facts f) {
         String kind = f.images ? "image" : "specimen";
         StringBuilder b = new StringBuilder();
@@ -223,6 +249,9 @@ public class UploadNotice {
             b.append("Message: ").append(f.failure).append("\n");
         }
         b.append("\n");
+
+        String summary = f.reportUrl != null ? attentionSummary(f) : null;
+        if (summary != null) b.append(summary).append("\n\n");
 
         if (f.reportUrl != null) {
             if (f.complete && !f.images) {

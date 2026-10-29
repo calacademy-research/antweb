@@ -107,7 +107,7 @@
   <li><%= lastUpload.getCreated() %> (report no longer available)</li>
 <% } %>
 <% if (lastUpload.getCountedAt() != null) { %>
-  <li id="curator-group-numbers-note">&nbsp;&nbsp;Specimens of the upload's group today (recounted every night):</li>
+  <li id="curator-group-numbers-note">&nbsp;&nbsp;Specimens of the upload's group today (recounted every night and after each upload):</li>
 <% } %>
   <li>&nbsp;&nbsp;Specimen: <%= Formatter.commaFormat(lastUpload.getSpecimens()) %></li>
   <li>&nbsp;&nbsp;Ungeoreferenced: <%= Formatter.commaFormat(lastUpload.getUngeoreferenced()) %></li>

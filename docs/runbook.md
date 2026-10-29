@@ -812,14 +812,37 @@ The tool `tools/data/indet_form.py` (read its header) renames the old form in ev
 taxon, specimen, proj_taxon, geolocale_taxon, bioregion_taxon, museum_taxon, taxon_country, taxon_set_parked,
 object_map, the description tables, taxon_prop, favorite_images, similar_species and the dispute tables. Where the
 `(indet)` name exists already the two merge: in the taxon and list tables the old row is a duplicate and is deleted
-(counts follow at the nightly run); in the other tables a clash stops the run (preview says `REFUSED`). Names of three
-words (`x indet y`) are only listed. History is not changed: specimen_name_update, the log_detail tables and
+(counts follow at the nightly run); in the other tables a clash stops the run (preview says `REFUSED`).
+
+Three-word names (Brian Fisher, 2026-10-29; a specimen counts at each rank it is identified to, and no further; the
+same rules as the upload, `UploadUtil.indetColumns`; "indet" is indet, undet, `(indet)` or sp.):
+
+- `<g> indet <x>` becomes `<g> (indet)`: species indet, identified only to genus, the subspecies value dropped
+  (`myrmicinaeocymyrmex indet karooicus`, SAM group 66, becomes `myrmicinaeocymyrmex (indet)`, merged into it).
+- `<g> <sp> indet` becomes `<g> <sp>`: identified to species (`ectatomminaegnamptogenys striatula-complex indet`,
+  UTIC group 12, becomes `ectatomminaegnamptogenys striatula-complex`). Where that taxon does not exist yet the old
+  taxon row is renamed. Its status is what an upload gives the name: `morphotaxon` for a morphospecies name (a digit,
+  `-`, `_`, `( )` or `.`, as striatula-complex), otherwise the old status, except `indetermined` (given only for the
+  word indet), which becomes `unrecognized`. Preview shows each name's status old -> new.
+
+Renamed taxon and specimen rows get subspecies null (three-word names) and taxon rank `species`. Names of four words
+or more are only listed ("Not handled"). The upload files these lines the same way since 2026-10-29 and lists them
+under "Name corrected" (docs/flows/specimen-upload.md), so the next upload of the group does not bring them back.
+History is not changed: specimen_name_update, the log_detail tables and
 `specimen.original_taxon_name` (the name as uploaded, so `x indet` stays there).
 
 Every step refuses on production without `--production`. Run outside 05:00 to 08:00 Pacific. Staging first.
 
 1. Preview (read-only: select statements only). Per table: rows with an old name, rows that clash, rows deleted
-   (merge) or REFUSED; then the names old -> new with their taxon and specimen counts (`--all` for every name).
+   (merge) or REFUSED; then the names old -> new with their taxon and specimen counts and the status the renamed
+   rows get (every three-word name; two-word names up to 25, `--all` for every name). On production (2026-10-29)
+   expect:
+
+```
+  ectatomminaegnamptogenys striatula-complex indet -> ectatomminaegnamptogenys striatula-complex: 1 taxon, 6 specimens; status indetermined -> morphotaxon
+  myrmicinaeocymyrmex indet karooicus -> myrmicinaeocymyrmex (indet): 1 taxon, 1 specimens [+ if that taxon exists]; status indetermined -> indetermined
+```
+
 
 ```
 # ssh root@165.232.136.170   (staging)
@@ -838,7 +861,7 @@ cd /root/antweb-next && python3 tools/data/indet_form.py run --project /root/ant
 docker restart antweb_antweb_1
 ```
 
-   Expect check lines that say `ok`, `committed`, and `Done: N names now in the (indet) form`. The preview run again
+   Expect check lines that say `ok`, `committed`, and `Done: N names renamed`. The preview run again
    says `Names in the old form: 0`.
 
 3. Production: the same with `ssh root@165.232.137.86`, `cd /root/antweb`, `--project /root/antweb --production`.

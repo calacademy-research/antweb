@@ -120,13 +120,13 @@ def _text(html):
 
 
 def _section(report, heading_words):
-    """The text of the report part that starts with a heading containing heading_words."""
+    """The report section whose heading contains heading_words: from the heading to the end of its <section>
+    (UploadReportPage, 2026-10-29: one section element per check that found something)."""
     i = report.find(heading_words)
     if i < 0:
         return ""
-    rest = report[i:]
-    end = re.search(r"<b>", rest[len(heading_words):])
-    return rest[: len(heading_words) + (end.start() if end else 4000)]
+    end = report.find("</section>", i)
+    return report[i: end if end > 0 else i + 4000]
 
 
 @pytest.fixture(scope="module")
@@ -188,9 +188,18 @@ def test_specimen_upload_round_trip(uploader, names):
     # The report's numbers (docs/numbers.md rows 95, 96; 2026-10-22): species inserted or updated by this upload are
     # at most the specimen lines uploaded.
     for label in ("Inserted Species", "Updated Species"):
-        m = re.search(r"<b>" + label + r":</b> (\d+)\.", report)
+        m = re.search(r"<th scope=\"row\">" + label + r"</th><td>(\d+)</td>", report)
         if m:
             assert int(m.group(1)) <= len(lines) - 1, f"{label}: {m.group(1)} for {len(lines) - 1} specimen lines"
+
+    # The report page (UploadReportPage, 2026-10-29): the tool pages' look, the summary box, the refused line among
+    # "Not loaded (fix these)", each row linked to its line of the uploaded file.
+    assert 'class="aw-tools aw-report" id="upload-report"' in report and "/common/tools.css" in report, rep_url
+    assert 'id="rep-summary"' in report and 'id="rep-count-notLoaded" data-count="' in report, rep_url
+    refused_section = re.search(r'<section [^>]*data-key="invalidSpecimenCode" data-kind="([a-zA-Z]+)"', report)
+    assert refused_section and refused_section.group(1) == "notLoaded", "the refused code is not under Not loaded"
+    assert "/logMgr.do?action=uploadLog&amp;file=" in report, "report rows do not link their lines"
+    assert "Passed Tests" not in report
 
     # The report: synonym replaced, unknown name kept, bad code refused, out-of-bounds flagged.
     recognized = _section(report, "Recognized invalid species")

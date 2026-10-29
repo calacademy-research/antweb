@@ -8,10 +8,17 @@ blank species, "sp.", and since 2026-10-28 also "indet", "Indet", "indet.", "und
 "myrmicinaepheidole (indet)": two taxa for the same thing. This tool renames the old form in every table that keys on
 the name.
 
-What is renamed: a name of exactly two words whose second word is indet or undet (any case, with or without a trailing
-period): "myrmicinaepheidole indet" -> "myrmicinaepheidole (indet)", "formicinaecamponotus Undet." ->
-"formicinaecamponotus (indet)". Longer names ending or containing indet ("x indet y", a subspecies "indet") are counted
-and listed as "not handled" (look at them by hand).
+What is renamed (a specimen counts at each rank it is identified to, and no further; the same rules as the upload,
+UploadUtil.indetColumns, Brian Fisher 2026-10-28/29). "indet" here is indet, undet, (indet) or sp., any case, with or
+without a trailing period:
+  "<g> indet"        -> "<g> (indet)"  "myrmicinaepheidole indet" -> "myrmicinaepheidole (indet)"
+  "<g> indet <x>"    -> "<g> (indet)"  species indet: identified only to genus, the subspecies value dropped
+                                       ("myrmicinaeocymyrmex indet karooicus" -> "myrmicinaeocymyrmex (indet)")
+  "<g> <sp> indet"   -> "<g> <sp>"     subspecies indet: identified to species ("ectatomminaegnamptogenys
+                                       striatula-complex indet" -> "ectatomminaegnamptogenys striatula-complex")
+Other names with an indet word (four words or more) are counted and listed as "not handled" (look at them by hand).
+A new name that has no taxon row yet gets the old taxon row, renamed; one that exists already takes the old rows
+(merged, as below).
 
 Tables (only those present in the database are used):
   merge   rows are renamed; a row whose unique key (with the new name) exists already is a duplicate of a row of the
@@ -23,7 +30,11 @@ Tables (only those present in the database are used):
           geolocale_taxon_dispute, proj_taxon_dispute
   history counted, never changed (they record what happened): specimen_name_update, proj_taxon_log_detail,
           geolocale_taxon_log_detail
-  Renamed taxon and specimen rows get species "(indet)" and status "indetermined" (as an upload gives them).
+  Renamed taxon and specimen rows get the columns an upload gives them: "<g> (indet)": species "(indet)", status
+  "indetermined" (three-word names also subspecies null, taxon rank species); "<g> <sp>": species <sp>, subspecies
+  null, taxon rank species, and the status of species_status(): morphotaxon for a morphospecies name (a digit, - _ ( )
+  or ., as striatula-complex), else the old status, except indetermined (given only for the word indet), which becomes
+  unrecognized. Preview shows each name's status old -> new.
   Other name columns that point at a renamed name are renamed too: taxon.current_valid_name, taxon.parent_taxon_name,
   similar_species.similar_species. specimen.original_taxon_name is not changed: it records the name as uploaded.
 
@@ -63,10 +74,20 @@ import sys
 INDET = "(indet)"
 # The old form: two words, the second indet or undet, with or without a period (any case).
 OLD_FORM = re.compile(r"^(\S+) (indet|undet)\.?$", re.IGNORECASE)
-# Any name with indet or undet as a word after the first (to count what the tool does not handle).
-ANY_INDET_WORD = re.compile(r" (indet|undet)\.?( |$)", re.IGNORECASE)
+# An epithet that says "not identified at this rank": indet, undet, (indet), sp. (any case, trailing period).
+_IND = r"(?:(?:indet|undet|sp)\.?|\(indet\))"
+# Three words, the species indet: "<g> indet <x>" (Ocymyrmex indet karooicus). Identified only to genus.
+SPECIES_INDET_3 = re.compile(r"^(\S+) " + _IND + r" (\S+)$", re.IGNORECASE)
+# Three words, the subspecies indet: "<g> <sp> indet" (Gnamptogenys striatula-complex indet). Identified to species.
+SUBSPECIES_INDET_3 = re.compile(r"^(\S+) (\S+) " + _IND + r"$", re.IGNORECASE)
+# Any name with indet or undet as a word after the first, or "(indet)" followed by a word or as the third word (to
+# count what the tool does not handle).
+ANY_INDET_WORD = re.compile(r" (indet|undet)\.?( |$)| \(indet\) |^\S+ \S+ \(indet\)$", re.IGNORECASE)
 SQL_OLD_FORM = "'^[^ ]+ (indet|undet)[.]?$'"
-SQL_ANY_INDET_WORD = "' (indet|undet)[.]?( |$)'"
+SQL_ANY_INDET_WORD = "' (indet|undet)[.]?( |$)| [(]indet[)] |^[^ ]+ [^ ]+ [(]indet[)]$'"
+# What a name is (kind_of): the two-word old form, three words with the species indet, three words with the
+# subspecies indet.
+TWO_WORD, SPECIES_INDET, SUBSPECIES_INDET = "two-word", "species indet", "subspecies indet"
 
 MERGE = ("taxon", "proj_taxon", "geolocale_taxon", "bioregion_taxon", "museum_taxon", "taxon_country",
          "taxon_set_parked", "object_map")
@@ -84,10 +105,56 @@ PRODUCTION_PROJECT = "/root/antweb"
 
 # ------------------------------------------------------------------ names (no database)
 
+def kind_of(old):
+    """TWO_WORD, SPECIES_INDET or SUBSPECIES_INDET (see new_name), or None for a name the tool does not handle."""
+    old = old or ""
+    if OLD_FORM.match(old):
+        return TWO_WORD
+    if SPECIES_INDET_3.match(old):
+        return SPECIES_INDET
+    if SUBSPECIES_INDET_3.match(old):
+        return SUBSPECIES_INDET
+    return None
+
+
 def new_name(old):
-    """The "(indet)" form of an old-form name, or None when the name is not in the old form."""
-    m = OLD_FORM.match(old or "")
-    return f"{m.group(1)} {INDET}" if m else None
+    """The name an old name is filed under, or None when the tool does not handle it. A specimen counts at each rank it
+    is identified to, and no further (Brian Fisher, 2026-10-28/29):
+      "<g> indet"        -> "<g> (indet)"   (two words; also Indet, indet., undet)
+      "<g> indet <x>"    -> "<g> (indet)"   (species indet: identified only to genus; the subspecies value is dropped)
+      "<g> <sp> indet"   -> "<g> <sp>"      (subspecies indet: identified to species)
+    indet here is indet, undet, (indet) or sp., any case, with or without a period. The same rules as the upload
+    (UploadUtil.indetColumns)."""
+    kind = kind_of(old)
+    if kind == TWO_WORD:
+        return f"{OLD_FORM.match(old).group(1)} {INDET}"
+    if kind == SPECIES_INDET:
+        return f"{SPECIES_INDET_3.match(old).group(1)} {INDET}"
+    if kind == SUBSPECIES_INDET:
+        m = SUBSPECIES_INDET_3.match(old)
+        return f"{m.group(1)} {m.group(2)}"
+    return None
+
+
+def is_morpho(taxon_name):
+    """Taxon.isMorpho(): a morphospecies name (status morphotaxon): a one-letter last word, or a digit, - _ ( ) or ."""
+    if not taxon_name or INDET in taxon_name:
+        return False
+    if len(taxon_name.split(" ")[-1]) == 1 and " " in taxon_name:
+        return True
+    return bool(re.search(r"[1-9\-_().]", taxon_name))
+
+
+def species_status(new, old_status):
+    """The status a "<g> <sp>" name gets (SUBSPECIES_INDET), as an upload of that name gives it: morphotaxon for a
+    morphospecies name (striatula-complex); otherwise the old row's status, except indetermined (the old name counted
+    as indet only because of the word indet), which becomes unrecognized (not in AntCat; the next upload of the group
+    checks AntCat again)."""
+    if is_morpho(new):
+        return "morphotaxon"
+    if not old_status or old_status == "indetermined":
+        return "unrecognized"
+    return old_status
 
 
 def name_map(names):
@@ -103,8 +170,8 @@ def name_map(names):
 
 
 def not_handled(names):
-    """Names with an indet word that are not in the old form (more than two words)."""
-    return sorted({n for n in names if ANY_INDET_WORD.search(n or "") and not new_name(n) and INDET not in n})
+    """Names with an indet word that the tool does not rename (four words or more, or the like)."""
+    return sorted({n for n in names if ANY_INDET_WORD.search(n or "") and not new_name(n)})
 
 
 def columns_of(table):
@@ -211,8 +278,21 @@ def backup_sql(date, tables, mapping, expected):
     return "\n".join(lines) + "\n"
 
 
-def run_sql(date, tables, mapping, keys, expected_after):
-    """The renames in one transaction, name by name; the commit only if no old name is left and the counts match."""
+def set_columns(table, old, new, statuses=None):
+    """The columns a renamed taxon or specimen row gets besides taxon_name (as an upload gives them)."""
+    kind = kind_of(old)
+    if kind == TWO_WORD:
+        return f", species = {sql_string(INDET)}, status = 'indetermined'"
+    rank = ", `rank` = 'species'" if table == "taxon" else ""
+    if kind == SPECIES_INDET:
+        return f", species = {sql_string(INDET)}, subspecies = null, status = 'indetermined'{rank}"
+    status = (statuses or {}).get(old) or species_status(new, None)
+    return f", species = {sql_string(new.split(' ', 1)[1])}, subspecies = null, status = {sql_string(status)}{rank}"
+
+
+def run_sql(date, tables, mapping, keys, expected_after, statuses=None):
+    """The renames in one transaction, name by name; the commit only if no old name is left and the counts match.
+    statuses: {old name: status} of the "<g> <sp>" names (species_status), else species_status(new, None)."""
     b = bak_tables(date, tables)
     olds = sorted(mapping)
     names = sorted(set(mapping) | set(mapping.values()))
@@ -229,7 +309,7 @@ def run_sql(date, tables, mapping, keys, expected_after):
                                  + (f" and {cond}" if cond else "") + f" where a.taxon_name = {o};")
             sets = f"taxon_name = {n}"
             if t in SET_INDET:
-                sets += f", species = {sql_string(INDET)}, status = 'indetermined'"
+                sets += set_columns(t, old, new, statuses)
             lines.append(f"update {t} set {sets} where taxon_name = {o};")
             for c in EXTRA_COLUMNS.get(t, ()):
                 lines.append(f"update {t} set {c} = {n} where {c} = {o};")
@@ -276,7 +356,10 @@ def expected_counts(tables, plan):
 def print_preview(plan, mapping, samples, unhandled, history, out=None, show_all=False):
     out = out or sys.stdout
     w = out.write
-    w(f"Names in the old form: {len(mapping)} (each becomes '<genus> {INDET}').\n")
+    kinds = {k: sum(1 for o in mapping if kind_of(o) == k) for k in (TWO_WORD, SPECIES_INDET, SUBSPECIES_INDET)}
+    w(f"Names in the old form: {len(mapping)} ({kinds[TWO_WORD]} '<genus> indet' -> '<genus> {INDET}';"
+      f" {kinds[SPECIES_INDET]} '<genus> indet <x>' -> '<genus> {INDET}'; {kinds[SUBSPECIES_INDET]}"
+      f" '<genus> <species> indet' -> '<genus> <species>').\n")
     w("\nTable                         old-name rows  clash  -> deleted (merge) / refused   rows changed\n")
     total_refused = 0
     for t, p in plan.items():
@@ -289,15 +372,20 @@ def print_preview(plan, mapping, samples, unhandled, history, out=None, show_all
           + f"   {p['rows'] - (p['drop'] if t in MERGE else 0)}{extra}\n")
     for t, n in history.items():
         w(f"  {t:<28}{n:>12}  (history, not changed)\n")
-    w("\nNames (old -> new: taxon rows, specimens; '+' when the (indet) taxon exists already, merged):\n")
-    shown = samples if show_all else samples[:25]
+    w("\nNames (old -> new: taxon rows, specimens; '+' when the new taxon exists already, merged; the status the"
+      " renamed rows get):\n")
+    # every three-word name is listed (few, each worth a look); two-word names up to 25 unless --all
+    shown = samples if show_all else ([x for x in samples if kind_of(x["old"]) != TWO_WORD]
+                                      + [x for x in samples if kind_of(x["old"]) == TWO_WORD][:25])
     for s in shown:
         w(f"  {s['old']} -> {s['new']}: {s['taxa']} taxon, {s['specimens']} specimens"
-          + (" +" if s["target_exists"] else "") + "\n")
+          + (" +" if s["target_exists"] else "")
+          + (f"; status {s.get('old_status') or '-'} -> {s['status']}" if s.get("status") else "") + "\n")
     if len(samples) > len(shown):
         w(f"  ... {len(samples) - len(shown)} more (--all lists them)\n")
     if unhandled:
-        w(f"\nNot handled (more than two words; look by hand): {len(unhandled)}\n")
+        w(f"\nNot handled (not '<genus> indet', '<genus> indet <x>' or '<genus> <species> indet'; look by hand):"
+          f" {len(unhandled)}\n")
         for n in unhandled[:25]:
             w(f"  {n}\n")
     if total_refused:
@@ -398,10 +486,19 @@ def current_plan(args):
                 f"select taxon_name, count(*) from taxon where taxon_name in {in_list(names)} group by taxon_name;"))}
         specs = {r[0].lower(): int(r[1]) for r in rows_of(mysql(args,
                  f"select taxon_name, count(*) from specimen where taxon_name in {in_list(sorted(mapping))} group by taxon_name;"))}
+        old_status = {r[0].lower(): r[1] for r in rows_of(mysql(args,
+                      f"select taxon_name, status from taxon where taxon_name in {in_list(sorted(mapping))};"))}
         for o, n in sorted(mapping.items()):
+            st = old_status.get(o.lower())
+            status = species_status(n, st) if kind_of(o) == SUBSPECIES_INDET else "indetermined"
             samples.append(dict(old=o, new=n, taxa=taxa.get(o.lower(), 0), specimens=specs.get(o.lower(), 0),
-                                target_exists=n.lower() in taxa))
+                                target_exists=n.lower() in taxa, old_status=st, status=status))
     return tables, keys, mapping, plan, samples, unhandled, history
+
+
+def statuses_of(samples):
+    """{old name: status} of the "<g> <sp>" names, for run_sql."""
+    return {s["old"]: s["status"] for s in samples if kind_of(s["old"]) == SUBSPECIES_INDET}
 
 
 # ------------------------------------------------------------------ commands
@@ -449,7 +546,7 @@ def cmd_run(args):
         sys.exit("Stopped: rows clash in a table that is not merged (REFUSED above). Nothing was changed.")
     before, after = expected_counts(tables, plan)
     bsql = backup_sql(args.date, tables, mapping, before)
-    rsql = run_sql(args.date, tables, mapping, keys, after)
+    rsql = run_sql(args.date, tables, mapping, keys, after, statuses_of(samples))
     print(f"\nBackup to tables indet_form_bak_{args.date}_*, then {len(mapping)} names renamed in one transaction.")
     if args.show_sql:
         print(bsql + "\n" + rsql)
@@ -459,7 +556,7 @@ def cmd_run(args):
     print(out)
     if "committed" not in out:
         sys.exit("No commit seen: check the output above.")
-    print(f"\nDone: {len(mapping)} names now in the (indet) form. Backup: tables indet_form_bak_{args.date}_*.\n"
+    print(f"\nDone: {len(mapping)} names renamed. Backup: tables indet_form_bak_{args.date}_*.\n"
           "Restart the app (docker restart antweb_antweb_1; 2 to 4 minutes) so its name cache sees the change; "
           "counts follow at the next nightly run.\n"
           f"Rollback: python3 tools/data/indet_form.py rollback --project {args.project} --date {args.date}")

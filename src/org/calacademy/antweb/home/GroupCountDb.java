@@ -267,6 +267,46 @@ public class GroupCountDb extends AntwebDb {
         }
     }
 
+    /**
+     * The group's row recounted now, by the same rule (groupCountsSql), at the end of each of its specimen uploads
+     * (SpecimenUploadDb.recordUpload, 2026-10-29): groups.do and group.do show the group's specimens as the upload
+     * left them, not as the last nightly run counted them (staging run 40940710186: groups.do showed 1 specimen of the
+     * test group, counted by a set 3 run before the e2e uploads, after an upload that left 0 counted). The Totals row
+     * (ALL_GROUPS, distinct over all groups) stays the nightly run's. In the caller's transaction; never throws:
+     * returns false when the row was not written (the nightly run writes it).
+     */
+    public boolean recountGroup(int groupId) {
+        if (groupId == ALL_GROUPS) return false;
+        try {
+            ensureTable(getConnection());
+            Timestamp now = new Timestamp(System.currentTimeMillis() / 1000 * 1000);
+            String upsert = "insert into " + TABLE + " (group_id, specimens, collections, localities, ungeoreferenced, flagged, subfamilies, genera,"
+                + " species, counted) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) on duplicate key update specimens = values(specimens),"
+                + " collections = values(collections), localities = values(localities), ungeoreferenced = values(ungeoreferenced),"
+                + " flagged = values(flagged), subfamilies = values(subfamilies), genera = values(genera), species = values(species),"
+                + " counted = values(counted)";
+            try (PreparedStatement stmt = getConnection().prepareStatement(upsert);
+                 PreparedStatement q = getConnection().prepareStatement(groupCountsSql())) {
+                q.setInt(1, groupId);
+                try (ResultSet r = q.executeQuery()) {
+                    if (r.next()) {
+                        addRow(stmt, r, now);
+                    } else {   // no specimens now
+                        stmt.setInt(1, groupId);
+                        for (int i = 2; i <= 9; i++) stmt.setInt(i, 0);
+                        stmt.setTimestamp(10, now);
+                        stmt.addBatch();
+                    }
+                }
+                stmt.executeBatch();
+            }
+            return true;
+        } catch (SQLException e) {
+            s_log.warn("recountGroup() group:" + groupId + " e:" + e);
+            return false;
+        }
+    }
+
     /** One row of countsSql (columns: g, all, specimens, collections, localities, ungeoreferenced, subfamilies,
      *  genera, species, flagged) into the upsert. */
     private static void addRow(PreparedStatement stmt, ResultSet r, Timestamp now) throws SQLException {

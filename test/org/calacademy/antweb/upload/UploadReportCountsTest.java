@@ -1,13 +1,10 @@
 package test.org.calacademy.antweb.upload;
 
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import junit.framework.TestCase;
 
+import org.calacademy.antweb.upload.MessageMgr;
 import org.calacademy.antweb.upload.UploadDetails;
+import org.calacademy.antweb.upload.UploadReportPage;
 
 /**
  * The species counts of the specimen upload report (docs/numbers.md row 95), without a database:
@@ -55,29 +52,36 @@ public class UploadReportCountsTest extends TestCase {
 
     /** PR #291 staging run 2: a specimen upload's report said nothing about species (the e2e test read "Inserted 0 +
      *  Updated 0" for a file with one new name): the two lines were printed only with project statistics, which only
-     *  a species list upload sets. */
+     *  a species list upload sets. Since 2026-10-29 the report page (UploadReportPage) lists them in its details. */
     public void testSpecimenUploadReportShowsTheSpeciesCounts() {
         UploadDetails d = new UploadDetails("specimenUpload");
         assertNull(d.getPostUploadStatistics());
-        assertEquals("", d.speciesCountsHtml());
         d.countInsertedSpecies("ponerinaeleptogenys zztestunknown");
         d.countUpdatedSpecies("ponerinaeleptogenys pavesii");
         d.countUpdatedSpecies("ponerinaeleptogenys pavesii");
-        assertEquals("<br>&nbsp;&nbsp;&nbsp;<b>Inserted Species:</b> 1.<br>&nbsp;&nbsp;&nbsp;<b>Updated Species:</b> 1.",
-            d.speciesCountsHtml());
+        String page = UploadReportPage.render(facts(d), new MessageMgr());
+        assertTrue(page, page.contains("<tr><th scope=\"row\">Inserted Species</th><td>1</td></tr>"));
+        assertTrue(page, page.contains("<tr><th scope=\"row\">Updated Species</th><td>1</td></tr>"));
     }
 
-    /** genUploadReport prints the species counts before, not inside, the block that needs project statistics. */
-    public void testReportPrintsTheCountsWithoutProjectStatistics() throws Exception {
-        Path test = Paths.get(System.getProperty("antweb.test", "test"));
-        Path src = test.toAbsolutePath().getParent().resolve("src/org/calacademy/antweb/upload/UploadDetails.java");
-        if (!Files.isRegularFile(src)) return;   // src/ not next to test/ (the method test above still runs)
-        String s = Files.readString(src, StandardCharsets.UTF_8);
-        String report = s.substring(s.indexOf("public void genUploadReport(UploadFile"));
-        int counts = report.indexOf("logString += speciesCountsHtml();");
-        int stats = report.indexOf("if (postUploadStatistics != null) {");
-        assertTrue("genUploadReport does not print speciesCountsHtml()", counts > 0);
-        assertTrue("the species counts are printed inside the project statistics block", stats < 0 || counts < stats);
-        assertFalse(report.substring(Math.max(stats, 0)).contains("getInsertedSpeciesCount() > 0) logString"));
+    /** No species row when the upload inserted or updated none; the counts do not need project statistics. */
+    public void testReportPrintsTheCountsWithoutProjectStatistics() {
+        UploadDetails d = new UploadDetails("specimenUpload");
+        String page = UploadReportPage.render(facts(d), new MessageMgr());
+        assertFalse(page, page.contains("Inserted Species") || page.contains("Updated Species"));
+        assertFalse(page, page.contains("Statistics"));
+        d.countInsertedSpecies("a b");
+        assertTrue(UploadReportPage.render(facts(d), new MessageMgr()).contains("Inserted Species</th><td>1</td>"));
+    }
+
+    private static UploadReportPage.Facts facts(UploadDetails d) {
+        UploadReportPage.Facts f = new UploadReportPage.Facts();
+        f.operation = d.getOperation();
+        f.parsed = 0;
+        f.processed = 0;
+        f.insertedSpecimens = 0;
+        f.insertedSpecies = d.getInsertedSpeciesCount();
+        f.updatedSpecies = d.getUpdatedSpeciesCount();
+        return f;
     }
 }

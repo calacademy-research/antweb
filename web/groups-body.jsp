@@ -22,7 +22,7 @@
 <h1>Specimen Contributors:</h1>
 </div>
 
-<p id="groups-numbers-note">Specimens to Species: each group's specimens today, recounted every night. Last Upload: the date of the group's last upload (its report has the numbers of that upload).</p>
+<p id="groups-numbers-note">Specimens to Species: each group's specimens today, recounted every night and after each of its uploads. Last Upload: the date of the group's last upload (its report has the numbers of that upload).</p>
 <p id="groups-species-note">Specimens, Collections, Localities and Ungeoreferenced count the group's ant specimens that are not red-flagged and whose name is valid, unrecognized, a morphospecies, indetermined or unidentifiable. Subfamilies, Genera and Species count the different names among them: Species counts each species and subspecies name once that is a valid name or a morphospecies; indetermined, unidentifiable and unrecognized names are not species. The Totals row counts all groups' specimens together, so a species found by two groups counts once.</p>
 
 <table>

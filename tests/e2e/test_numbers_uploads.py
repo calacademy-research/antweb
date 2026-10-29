@@ -220,10 +220,12 @@ def test_image_upload_report_counts_equal_their_files():
 
 def report_numbers(html):
     """The numbers of a specimen upload report (UploadDetails.genUploadReport)."""
+    # Reports since 2026-10-29 (UploadReportPage): label / value rows (<th scope="row">Label</th><td>N</td>); older
+    # reports: "<b>Label:</b> N". Reports are files written once, so both are read.
     def b(label):
-        m = re.search(r"<b>" + re.escape(label) + r":</b>\s*([\d,]+)", html)
+        m = re.search(r"(?:<b>" + re.escape(label) + r":</b>|<th scope=\"row\">" + re.escape(label) + r"</th><td>)\s*([\d,]+)", html)
         return num(m.group(1)) if m else None
-    op = re.search(r"<b>Operation: ([A-Za-z]+)</b>", html)
+    op = re.search(r"<b>Operation: ([A-Za-z]+)</b>", html) or re.search(r"<th scope=\"row\">Operation</th><td>([A-Za-z]+)</td>", html)
     return {"operation": op.group(1) if op else None, "record": b("Record Count"), "parsed": b("Parsed"),
             "processed": b("Processed"), "inserted_specimens": b("Inserted Specimens"),
             "inserted_species": b("Inserted Species") or 0, "updated_species": b("Updated Species") or 0,
@@ -236,8 +238,30 @@ MAP_HEADINGS = ("Invalid Subfamily for Genus.  Submitted subfamily replaced", "T
                 "Duplicated record")
 
 
+def section_problems(html):
+    """Reports since 2026-10-29 (UploadReportPage): each section's data-total (the lines it was added to) against its
+    rows (each row a distinct value of those lines: at most data-total) and the specimens its rows list (each specimen
+    once per row: at most data-total; Morpho Genera lists its genera's specimens afterwards, MessageMgr.addCode)."""
+    problems = []
+    for m in re.finditer(r'<section class="aw-card rep-sec" id="sec-[^"]*" data-key="([^"]*)" data-kind="[^"]*" '
+                         r'data-total="(\d+)" data-rows="(\d+)">(.*?)</section>', html, re.S):
+        key, total, rows, body = m.group(1), int(m.group(2)), int(m.group(3)), m.group(4)
+        if rows > total:
+            problems.append(f"{key}: {total} lines, {rows} rows")
+        listed = body.count('<td class="rep-c-file"')
+        if listed != rows:
+            problems.append(f"{key}: data-rows {rows}, {listed} rows listed")
+        specimens = sum(num(c) for c in re.findall(r"<summary>([\d,]+) specimens?</summary>", body))
+        if specimens > total and key != "groupMorphoGenera":
+            problems.append(f"{key}: {total} lines, its rows list {specimens} specimens")
+    return problems
+
+
 def message_problems(html):
-    """Each report line with a "(total:N)" (MessageMgr.getMessagesReport, Test.toString)."""
+    """Each report line with a "(total:N)" (MessageMgr.getMessagesReport, Test.toString); reports since 2026-10-29:
+    section_problems."""
+    if 'id="upload-report"' in html:
+        return section_problems(html)
     i, j = html.find("<h3>Errors:</h3>"), html.find("<h3>Passed Tests:</h3>")
     if i < 0:
         return []
@@ -313,11 +337,14 @@ def distinct_names(lines):
     species = [k for k, h in enumerate(header) if h in ("species", "speciesname", "[species]species")]
     if not cols or not species:
         return None
+    # Lines with a subfamily or genus but no species are filed too ("<Genus> (indet)", "(Subfamily) (indet)",
+    # 2026-10-28): every line with any taxon column counts (each line gives at most one name).
     names = set()
     for line in lines[1:]:
         cells = line.split("\t")
-        if len(cells) > species[0] and cells[species[0]].strip():
-            names.add(tuple(cells[k].strip().lower() if k < len(cells) else "" for k in cols))
+        name = tuple(cells[k].strip().lower() if k < len(cells) else "" for k in cols)
+        if any(name):
+            names.add(name)
     return len(names)
 
 
@@ -326,29 +353,68 @@ def distinct_names(lines):
 NOT_ANTCAT = {None, "unrecognized", "morphotaxon", "indetermined"}
 
 
+# "Not identified at this rank" in the species or subspecies column (UploadUtil.isIndetLike): indet, undet, (indet),
+# sp., any case, a trailing period or "?".
+_INDET_LIKE = re.compile(r"^(?:(?:indet|undet|sp)\.?|\(indet\))$")
+
+
+def _indet_like(epithet):
+    return bool(_INDET_LIKE.match((epithet or "").strip().rstrip("?").strip().lower()))
+
+
+def filed_name(subfamily, genus, species, subspecies=""):
+    """(name, is_indet): the name a specimen line is filed under by the upload's rules, or (None, False) when the line
+    gives no name. A specimen counts at each rank it is identified to, and no further (Brian Fisher, 2026-10-28/29;
+    SpecimenUploadParse.identifiedOnlyTo, UploadUtil.indetColumns):
+      species blank or indet-like, a genus       -> "<subfamily><genus> (indet)" (any subspecies value dropped)
+      no genus or species, a subfamily           -> "(<subfamily>) (indet)"
+      subspecies indet-like                      -> "<subfamily><genus> <species>"
+      otherwise                                  -> "<subfamily><genus> <species>[ <subspecies>]"
+    The "(indet)" names are indetermined: AntCat never gives them. Arguments lower case, stripped."""
+    species_indet = not species or _indet_like(species)
+    genus_given = genus and genus != "(indet)"
+    if species_indet:
+        if genus_given:
+            return (subfamily + genus + " (indet)", True) if subfamily else (None, False)
+        if subfamily and subfamily.strip("()") not in ("", "formicidae", "indet", "undet"):
+            return (f"({subfamily.strip('()')}) (indet)", True)
+        return None, False
+    if not subfamily or not genus:
+        return None, False
+    name = subfamily + genus + " " + species
+    if subspecies and not _indet_like(subspecies):
+        name += " " + subspecies
+    return name, False
+
+
 def expected_species(lines):
     """The species and subspecies names of a small file that an upload writes to the taxon table: the distinct names
-    (subfamily + genus, species[, subspecies]) that AntCat does not give (API /taxa status), or None when a name
-    cannot be made (a column missing or empty)."""
+    the lines are filed under (filed_name: the indet rules of 2026-10-28/29) that AntCat does not give (an "(indet)"
+    name never; others by the API /taxa status), or None when a line with a species has no subfamily or genus, or the
+    header has no such columns."""
     header = [h.strip().strip('"').lower() for h in lines[0].split("\t")]
     def col(*names):
         return next((k for k, h in enumerate(header) if h in names), None)
     sf, g, sp, ssp = col("subfamily"), col("genus", "[species]genus"), col("species", "speciesname"), col("subspecies")
     if None in (sf, g, sp):
         return None
-    names = set()
+    names = {}
     for line in lines[1:]:
         cells = [c.strip().strip('"').lower() for c in line.split("\t")]
-        if len(cells) <= max(sf, g, sp) or not cells[sp]:
+        if len(cells) <= max(sf, g, sp):
             continue
-        if not cells[sf] or not cells[g]:
-            return None
-        name = cells[sf] + cells[g] + " " + cells[sp]
-        if ssp is not None and ssp < len(cells) and cells[ssp]:
-            name += " " + cells[ssp]
-        names.add(name)
+        sub = cells[ssp] if ssp is not None and ssp < len(cells) else ""
+        name, indet = filed_name(cells[sf], cells[g], cells[sp], sub)
+        if name is None:
+            if cells[g] or (cells[sp] and not _indet_like(cells[sp])):
+                return None     # a genus or species without its subfamily (the upload takes AntCat's): not modelled
+            continue
+        names[name] = indet
     count = 0
-    for name in names:
+    for name, indet in names.items():
+        if indet:
+            count += 1
+            continue
         body = ns.api("taxa?taxonName=" + quote(name))
         if body is None:
             return None
