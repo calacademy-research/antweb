@@ -177,9 +177,12 @@ public final class SpecimenUploadJob implements BackgroundJobs.Work {
         int red = d.getMessageMgr().getRedFlagCount();
         if (red > 0) s.append(", ").append(String.format("%,d", red)).append(" of them red-flagged");
         s.append(". Upload ID ").append(uploadId).append(".");
-        if (!d.getMessageMgr().getMessages().isEmpty()) {
-            s.append(" The upload report lists lines that need your attention (some may not have been loaded).");
-        }
+        // The upload-complete email's summary, when lines were corrected or not loaded (red flags are said above).
+        UploadNotice.Facts f = new UploadNotice.Facts();
+        f.complete = true;
+        f.notLoaded = d.getMessageMgr().getNotLoadedCount();
+        f.corrected = d.getMessageMgr().getCorrectedCount();
+        if (f.notLoaded + f.corrected > 0) s.append(" ").append(UploadNotice.attentionSummary(f));
         String note = UploadNotice.plain(d.getMessage());
         if (note != null && !"success".equals(note)) s.append(" Note: ").append(note);
         return s.toString();

@@ -454,6 +454,55 @@ public class MessageMgr {
         }          
     }
     
+    /*
+     * The upload-complete email's summary (Brian Fisher, 2026-10-29; UploadNotice.attentionSummary()): how many
+     * lines of the report need the curator's attention, so no one has to write to curators about small mistakes.
+     *   not loaded: every section marked "(not uploaded)", and "Code not found (fix these)" (a line without a code).
+     *   corrected:  the sections where AntWeb changed what the curator wrote and loaded the line (CORRECTED).
+     * Red-flagged specimens are counted by compileMessages() (getRedFlagCount()). Every other section is a note
+     * (adm1 or country not recognised, names not in AntCat, bioregion filled from the country, ...) and is not
+     * counted: the email links to the report, which lists them.
+     * The counts are the times a section was added to, which is once per line of the file.
+     */
+    public static final Set<String> CORRECTED = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
+        subspeciesIndetDropped, speciesIndetSubspeciesIgnored,      // "Name corrected: ..."
+        synonymGenusReplaced, recognizedInvalidSpecies,             // replaced with the current valid name
+        preferredSubfamilyForGenusReplaced, invalidSubfamilyForGenusReplaced,
+        specimenIdSpacesRemoved, codeQuoteReplaced,                 // code changed
+        invalidDateCollectedStart, invalidDateCollectedEnd, invalidDateDetermined))); // uploaded without the date
+
+    /** "notLoaded", "corrected" or null (a note) for a report section (see CORRECTED). */
+    public static String attention(String key, String heading) {
+      if (CORRECTED.contains(key)) return "corrected";
+      if (codeNotFoundInLine.equals(key) || (heading != null && heading.contains("(not uploaded)"))) return "notLoaded";
+      return null;
+    }
+
+    private int attentionCount(String kind) {
+      int n = 0;
+      for (Test test : getTests()) {
+        if (kind.equals(attention(test.getKey(), test.getHeading()))) n += test.getCount();
+      }
+      return n;
+    }
+
+    /** Lines of the file not loaded, as listed in the report's "(not uploaded)" sections. */
+    public int getNotLoadedCount() {
+      return attentionCount("notLoaded");
+    }
+
+    /** Lines loaded after AntWeb changed what the curator wrote (CORRECTED). */
+    public int getCorrectedCount() {
+      return attentionCount("corrected");
+    }
+
+    /** The section keys and their attention kind (for tests). */
+    public Map<String, String> attentionByKey() {
+      Map<String, String> m = new LinkedHashMap<>();
+      for (Test test : getTests()) m.put(test.getKey(), attention(test.getKey(), test.getHeading()));
+      return m;
+    }
+
     int redFlagCount = 0;
     public void addToRedFlagCount(int c) {
       redFlagCount = redFlagCount + c;
