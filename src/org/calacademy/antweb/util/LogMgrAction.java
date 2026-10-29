@@ -207,8 +207,7 @@ public final class LogMgrAction extends AntwebAction {
             connection = DBUtil.getConnection(dataSource, dbMethodName);
 
             specimenDetailXml = new SpecimenDb(connection).getSpecimenDetailXML(code);
-            specimen = new SpecimenDb(connection).getSpecimen(code);
-            specimen.getDetailHash();
+            specimen = new SpecimenDb(connection).getSpecimen(code);   // null for an unknown code: answered below
 
         } catch (SQLException e) {
             s_log.error("getSpecimenDetails() e:" + e);

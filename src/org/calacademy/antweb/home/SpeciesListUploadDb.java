@@ -21,7 +21,7 @@ public class SpeciesListUploadDb extends UploadDb {
     }
 
     public void updateProjectUploadDate(String projectName) {
-        String query = "update project set last_changed=" + currentDateFunction + " where project_name='" + projectName + "'"  ;
+        String query = "update project set last_changed=" + currentDateFunction + " where project_name=" + DBUtil.sqlQuote(projectName)  ;
 
         try {
             Statement stmt = getConnection().createStatement();
@@ -32,7 +32,7 @@ public class SpeciesListUploadDb extends UploadDb {
         }
     }
     
-    public void prepareDatabase(String project) {
+    public void prepareDatabase(String project) throws SQLException {
         if (!"worldants".equals(project)) {
           s_log.warn("prepareDatabase(). BIG PROBLEM! Only worldants should be uploaded via species list.");
           return;
@@ -92,8 +92,11 @@ public class SpeciesListUploadDb extends UploadDb {
  
             s_log.debug("prepareDatabase() log:" + log);
             
-        } catch (Exception e) {
-            s_log.error("prepareDatabase() problem for project:" + project + " e:" + e);
+        } catch (SQLException e) {
+            // Rethrown (2026-10-29): the AntCat import must stop (and its transaction roll back) rather than load
+            // on top of half-emptied tables.
+            s_log.error("prepareDatabase() problem for project:" + project + " query:" + query + " e:" + e);
+            throw e;
         }
     }
 

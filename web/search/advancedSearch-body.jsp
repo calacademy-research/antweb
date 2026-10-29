@@ -9,7 +9,7 @@
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 
 <jsp:useBean id="advancedSearchForm" scope="session" class="org.calacademy.antweb.search.AdvancedSearchForm" />
-<jsp:setProperty name="advancedSearchForm" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-29): the action fills the bean; request values must not overwrite it. --%>
     
 <% 
 Login accessLogin = LoginMgr.getAccessLogin(request);

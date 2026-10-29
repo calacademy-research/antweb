@@ -115,24 +115,23 @@ public class WorldantsUploadDb extends AntwebDb {
       return maxWorldantsId;     
     }
             
-    // The number of times that the worldants upload file has changed in the last week.        
+    /**
+     * The number of AntCat imports of the last 7 days whose file differed in size from the one before it
+     * (2026-10-29). Before, the distinct sizes of a window of 7 to 13 days were counted minus one: a missing
+     * backup size added one, a file that came back to an earlier size was not counted, and no row gave -1.
+     */
+    public static final String CHANGE_COUNT_SQL = "select count(*) from worldants_upload where created >= now() - interval 7 day"
+        + " and backup_file_size > 0 and file_size <> backup_file_size";   // 0: no earlier file to compare with
+
     public int getWorldantsChangeCount() throws SQLException {
         int count = 0;
-        String query = "SELECT file_size, backup_file_size FROM worldants_upload WHERE created >= curdate() - INTERVAL DAYOFWEEK(curdate())+6 DAY";
+        String query = CHANGE_COUNT_SQL;
         Statement stmt = null;
         ResultSet rset = null;
         try {
-          stmt = DBUtil.getStatement(getConnection(), "UploadDb.getWorldantsAlert()");
-          stmt.execute(query);
-          rset = stmt.getResultSet();
-          HashSet<Integer> intSet = new HashSet<>();
-          while (rset.next()) {
-            int fileSize = rset.getInt("file_size");        
-            intSet.add(fileSize);
-            int backupFileSize = rset.getInt("backup_file_size");        
-            intSet.add(backupFileSize);
-          }
-          count = intSet.size() - 1;
+          stmt = DBUtil.getStatement(getConnection(), "WorldantsUploadDb.getWorldantsChangeCount()");
+          rset = stmt.executeQuery(query);
+          if (rset.next()) count = Math.max(0, rset.getInt(1));
         } catch (SQLException e) {
           s_log.warn("getWorldantsAlert() e:" + e);
           throw e;

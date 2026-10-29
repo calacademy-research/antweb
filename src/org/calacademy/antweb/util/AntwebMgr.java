@@ -23,7 +23,7 @@ public class AntwebMgr {
     private static final Log s_log = LogFactory.getLog(AntwebMgr.class);
     private static final java.util.concurrent.atomic.AtomicBoolean s_oneAtATime = new java.util.concurrent.atomic.AtomicBoolean(false);
     private static volatile boolean s_isPopulated = false;
-    private static boolean isInitializing = false;    
+    private static volatile boolean isInitializing = false;    
 
     // Specimen upload is incremented at the start of the try block.
     // It is reloaded at the end of the upload to support the new log.
@@ -84,16 +84,16 @@ public class AntwebMgr {
     }    
 
 
-    private static boolean isMuseumPopulated = false;
-    private static boolean isBioregionPopulated = false;
-    private static boolean isGeolocalePopulated = false;
-    private static boolean isProjectPopulated = false;
-    private static boolean isLoginMgrPopulated = false;
-    private static boolean isTaxonMgrPopulated = false;
-    private static boolean isTaxonPropMgrPopulated = false;
-    private static boolean isUploadMgrPopulated = false;
-    private static boolean isArtistMgrPopulated = false; 
-    private static boolean isAdminAlertMgrPopulated = false;
+    private static volatile boolean isMuseumPopulated = false;
+    private static volatile boolean isBioregionPopulated = false;
+    private static volatile boolean isGeolocalePopulated = false;
+    private static volatile boolean isProjectPopulated = false;
+    private static volatile boolean isLoginMgrPopulated = false;
+    private static volatile boolean isTaxonMgrPopulated = false;
+    private static volatile boolean isTaxonPropMgrPopulated = false;
+    private static volatile boolean isUploadMgrPopulated = false;
+    private static volatile boolean isArtistMgrPopulated = false; 
+    private static volatile boolean isAdminAlertMgrPopulated = false;
 
     public static boolean isLog() {
       return true; // false;
@@ -149,8 +149,8 @@ public class AntwebMgr {
         isAdminAlertMgrPopulated = true;
 
         if (log) s_log.warn("populateMgrs() GeolocaleMgr");
-        isGeolocalePopulated = true;
         GeolocaleMgr.populate(connection, forceReload, true);  // Slow! local:18 seconds.
+        isGeolocalePopulated = true;   // after the load (2026-10-29): set before it, a failed load let place pages through
 
         if (log) s_log.info("populateMgrs() TaxonMgr");   // Slow! local:37 seconds.
         TaxonMgr.populate(connection, forceReload, true);

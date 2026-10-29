@@ -81,7 +81,7 @@ public class StatSet {
     
     public String toString() {
       String retVal = "";
-      retVal += "<tr align=right><td>" + name + "</td><td>" + value1 + "</td><td>" + value2 + "</td><td>" + value3 + "</td><td>" + value4 + "</td></tr>"; 
+      retVal += "<tr align=right><td>" + Html.esc(name) + "</td><td>" + value1 + "</td><td>" + value2 + "</td><td>" + value3 + "</td><td>" + value4 + "</td></tr>"; 
       return retVal;
     }
 

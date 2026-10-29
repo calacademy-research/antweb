@@ -24,7 +24,7 @@
 	   loggedInGroup = accessGroup.getName();
      }    
      
-     boolean ownerPriv = LoginMgr.isLoggedIn(request) || LoginMgr.isAdmin(accessLogin);
+     boolean ownerPriv = LoginMgr.isCurator(request) || LoginMgr.isAdmin(accessLogin);   // the delete action is for curators (own group) and admins
 	  
      Utility util = new Utility();
      String domainApp = util.getDomainApp();	  
@@ -54,7 +54,7 @@ function checkDate(selectedDate) {
 </script>
 
 <jsp:useBean id="searchResults" scope="session" class="org.calacademy.antweb.search.RecentImageSearchResults" />
-<jsp:setProperty name="searchResults" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-29): the action fills the bean; request values must not overwrite it. --%>
 
 <jsp:useBean id="groups" scope="session" class="java.util.ArrayList" />
 
@@ -137,7 +137,7 @@ function clickrecall(thisfield, defaulttext) {
 }
 </script>
 
-<% if (daysAgo == "") { %>
+<% if ("".equals(daysAgo)) { %>
   <span id="rangeDiv">
 <% } else { %>
   <span id="rangeDiv" style="display:none">
@@ -283,7 +283,7 @@ Sorry, nothing matches your request.
 <logic:notEmpty name="row" property="code">
 
 <%   if (ownerPriv) {   %>
-<input type="checkbox" name="chosen" value="<bean:write name="index"/>"/>
+<input type="checkbox" name="chosen" value="<%= Html.escAttr(org.calacademy.antweb.upload.DeleteImagesAction.chosenValue(prettycode, prettyshot, prettynumber)) %>"/>
 <% } %>
 
 <!-- <a href="specimen.do?name=<bean:write name="row" property="code"/>"> -->

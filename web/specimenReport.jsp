@@ -106,7 +106,7 @@ if (sortedBy == null) {
             <option value="taxonname" <%= ("taxonname".equals(sortedBy) ? "selected" : "") %>>Taxon Name</option>
         <% } %>
           <option value="type" <%= ("type".equals(sortedBy) ? "selected" : "") %>>Type Status</option>
-          <option value="created" <%= ("databy".equals(sortedBy) ? "selected" : "") %>>Uploaded</option>
+          <option value="created" <%= ("created".equals(sortedBy) ? "selected" : "") %>>Uploaded</option>
           <!-- option value="uploadid" < %= ("uploadId".equals(sortedBy) ? "selected" : "") % >>Upload ID</option -->
         </select>
 
@@ -192,7 +192,9 @@ if (sortedBy == null) {
       if (srAccessLogin != null) {
         username = srAccessLogin.getName();
       } 
-      if ((srAccessLogin == null) && ((username != "photo_review") || (srAccessLogin.isUploadImages() == false))) { 
+      // Compared with equals (2026-10-29): "!=" on strings was always true, so only visitors who were not logged
+      // in kept their chosen view (shot) when they compared from a search.
+      if (!("photo_review".equals(username) && Boolean.TRUE.equals(srAccessLogin.isUploadImages()))) { 
 
         if (useShot) { %>
     <input id="thumb_choice" type="hidden" name="shot" value="<%= Html.escAttr(choice_is) %>" checked>
@@ -385,7 +387,7 @@ if (sortedBy == null) {
                         <span class="<%= ("datecollected".equals(sortedBy) ? "sorted_by" : "") %>">Date Collected: <%= Html.esc(Utility.notBlankValue(thisChild.getDateCollectedStart())) %></span><br />
                         <span class="<%= ("created".equals(sortedBy) ? "sorted_by" : "") %>">Uploaded: <%= Utility.notBlankValue(thisChild.getCreated()) %></span><br />
                         <% String groupLink = "";
-                           groupLink = thisChild.getGroup().getLink();
+                           if (thisChild.getGroup() != null) groupLink = thisChild.getGroup().getLink();   // a specimen without a group no longer breaks the list (2026-10-29)
                            //groupLink = thisChild.getGroupName();
                         %>
                         <span class="<%= ("databy".equals(sortedBy) ? "sorted_by" : "") %>">Data Provided By: <%= Utility.notBlankValue(groupLink) %></span>

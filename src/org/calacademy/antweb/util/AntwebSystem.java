@@ -24,43 +24,32 @@ public class AntwebSystem {
     return logData;
   }
     
+  /**
+   * The number of lines of a file, as "wc -l" counts them (newline characters); 0 when it cannot be read.
+   * Read in Java since 2026-10-29: through "wc" in a child process, the output was sometimes read before
+   * the process wrote it, giving 0 (the AntCat import's low-count guard then refused a good file).
+   */
   public static int countLines(String fileName) {
-    String command = "wc " + fileName;
-    String countLinesStr = new AntwebSystem().launchProcess(command, true);
-    if (countLinesStr.length() <= 0) {
-      s_log.error("countLines() Empty string returned from command:" + command);
-      //if (AntwebProps.isDevOrStageMode()) return SpeciesListUploader.WORLDANTS_LOW_COUNT;
-      return 0;
-    } else {
-      if (countLinesStr.length() <= 4) {
-        s_log.warn("countLines() countlines too short:" + countLinesStr + " for command:" + command + ". Warning this should only happen during testing in development! returning 0!");
-        //if (AntwebProps.isDevMode()) AntwebUtil.logShortStackTrace();
-        return 0;
-      }
-    }    countLinesStr = countLinesStr.substring(4).trim();
-    //s_log.warn("countLines:" + countLinesStr);
-
+    if (fileName == null) return 0;
     int count = 0;
-  
-    String countStr = null;
-    //int wcLineLoc = 7;
-    int spaceIndex = countLinesStr.indexOf(" "); //, wcLineLoc);
-    try {
-      countStr = countLinesStr.substring(0, spaceIndex);
-      //s_log.warn("countLines:" + countStr);
-    
-      count = Integer.parseInt(countStr);
-    } catch (NumberFormatException | StringIndexOutOfBoundsException e) {
-      s_log.error("countLines e:" + e + " countStr:" + countStr);
+    byte[] buffer = new byte[1 << 16];
+    try (java.io.InputStream in = java.nio.file.Files.newInputStream(java.nio.file.Paths.get(fileName))) {
+      int n;
+      while ((n = in.read(buffer)) > 0) {
+        for (int i = 0; i < n; i++) if (buffer[i] == '\n') ++count;
+      }
+    } catch (java.io.IOException | java.nio.file.InvalidPathException e) {
+      s_log.error("countLines() could not read " + fileName + " e:" + e);
+      return 0;
     }
-    s_log.info("countLines:" + countStr + " return:" + count + " spaceIndex:" + spaceIndex);
     return count;
-  }	
+  }
 
   private static boolean s_isRestart = false;
   public static boolean getIsRestart() {
     return s_isRestart;
   }
+
   public static void setIsRestart(boolean isRestart) {
     s_isRestart = isRestart;
   }

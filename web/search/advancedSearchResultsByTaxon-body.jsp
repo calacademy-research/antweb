@@ -32,7 +32,7 @@ function selectAll(thisForm) {
 </script>
 
 <jsp:useBean id="advancedSearchResults" scope="session" class="org.calacademy.antweb.search.AdvancedSearchResults" />
-<jsp:setProperty name="advancedSearchResults" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-29): the action fills the bean; request values must not overwrite it. --%>
 
 <!-- jsp:useBean id="map" scope="session" class="org.calacademy.antweb.Map" / -->
 <!-- jsp:setProperty name="map" property="*" / -->
@@ -47,11 +47,12 @@ function selectAll(thisForm) {
 
 <%
     String resultRank = (java.lang.String) session.getAttribute("resultRank");
+    if (resultRank == null) resultRank = "";   // session expired: no NullPointerException below (2026-10-29)
 %>
 
 <!-- Body of Text Begins -->
 <div id="page_contents">
-    <h1>Advanced Search <%= (new Formatter()).capitalizeFirstLetter(resultRank) %> Results</h1>
+    <h1>Advanced Search <%= Html.esc((new Formatter()).capitalizeFirstLetter(resultRank)) %> Results</h1>
     <div class="links"></div>
     <div id="antcat_view"></div>
     <div class="clear"></div>
@@ -188,7 +189,7 @@ Sorry, nothing matches your request.
 <form id="theform" name="taxaFromSearchForm" method="POST"><%= org.calacademy.antweb.util.Csrf.field(request) %>
     <input type="hidden" name="resultRank" value="species"/>
 <% if (useShot) { %>
-    <input id="thumb_choice" type="hidden" name="shot" value="<%= choice_is %>" checked> 
+    <input id="thumb_choice" type="hidden" name="shot" value="<%= Html.escAttr(choice_is) %>" checked> 
 <% } %>
 
 <%-- aw-list-scroll / aw-list: see responsive.css (narrow screens only). --%>

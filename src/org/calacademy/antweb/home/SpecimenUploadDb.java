@@ -28,7 +28,7 @@ public class SpecimenUploadDb extends UploadDb {
         int count = 0;
         for (String code : specimens) {            
             if (code.length() > 0) {
-              codeString.append(",'" + code.toLowerCase() + "'");
+              codeString.append("," + DBUtil.sqlLiteral(code.toLowerCase()));   // quoted (2026-10-29)
             }
         }
         if (codeString.length() > 0) {
@@ -40,6 +40,7 @@ public class SpecimenUploadDb extends UploadDb {
                 count = stmt.executeUpdate(query);
             } catch (SQLException e) {
                 uploadLog.error("problem in deleteSpecimens(connect, specimens) - queryLength:" + query.length() + " " + e);
+                throw e;
             } finally {
                 DBUtil.close(stmt, "SpecimenUploadDb.deleteSpecimens()");
             }
@@ -94,6 +95,7 @@ public class SpecimenUploadDb extends UploadDb {
           uploadLog.info("dropSpecimens() count:" + count + " query completed");
         } catch (SQLException e) {
           uploadLog.error("dropSpecimens() 1 e:" + e + " query:" + query);
+          throw e;   // the upload stops and rolls back (2026-10-29): it used to load on top of the old specimens
         } finally {
           DBUtil.close(stmt, "SpecimenUploadDb.dropSpecimens()");
         }
@@ -107,6 +109,7 @@ public class SpecimenUploadDb extends UploadDb {
           //s_log.warn("dropSpecimens() count:" + count + " query completed");
         } catch (SQLException e) {
           uploadLog.error("dropSpecimens() 2 e:" + e + " query:" + query);
+          throw e;
         } finally {
           DBUtil.close(stmt, "SpecimenUploadDb.dropSpecimens2()");
         }

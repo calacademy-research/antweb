@@ -39,7 +39,7 @@
 
         <div class="links">
             <ul>
-                <li><a href="<%= AntwebProps.getDomainApp() %>/specimen.do?name=<%= specimen.getName() %>">Overview</a></li>
+                <li><a href="<%= AntwebProps.getDomainApp() %>/specimen.do?name=<%= Html.escAttr(Html.url(specimen.getName())) %>">Overview</a></li>
                 <li>Images</li>
 <%                  
     //String showMapLink = map.getGoogleMapFunction();
@@ -54,7 +54,7 @@
     if (taxon.hasMap()) {
         String link_params = "specimen=" + specimen.getName().toLowerCase() + linkOverviewParams;
 %>
-                <li><a href="bigMap.do?specimen=<%= specimen.getName() %>&<%= overview.getParams() %>">Map</a></li>
+                <li><a href="bigMap.do?specimen=<%= Html.escAttr(Html.url(specimen.getName())) %>&amp;<%= Html.escAttr(overview.getParams()) %>">Map</a></li>
 <%          
     }
 %>
@@ -65,15 +65,7 @@
         <div class="clear"></div>
 <%@ include file="/common/taxonomicHierarchy.jsp" %>
 
-    <!-- 
-        taxonName:<%= specimen.getTaxonName() %> 
-        details:<%= specimen.getDetails() %>
-        fullName:<%= specimen.getFullName() %>
-        simpleName:<%= specimen.getSimpleName() %>
-        prettyName:<%= specimen.getPrettyName() %>
-        fullName:<%= specimen.getFullName() %>
-        name:<%= specimen.getName() %>
-    -->
+    <%-- Debug comment with the specimen's raw fields removed (2026-10-29): uploaded text must not reach the page unescaped. --%>
 
 <% 
     java.util.ArrayList<String> shotsToShow = new java.util.ArrayList<String>();
@@ -178,13 +170,13 @@
 
 			  if (choice_is.equals(all)) { %>
 				<div class="slide medium <% if (position == first) { %> first<% } %><% if (position == fourth) { %> last<% } %> ratio">
-				  <div class="adjust"><img class="medres" src="<%= AntwebProps.getImgDomainApp() %><%= theImage.getThumbview() %>" onclick="window.location='bigPicture.do?name=<%= specimen.getName().toLowerCase() %>&shot=<%= (String) shotType %>&number=<%= (String) shotNumber %>'"></div>
+				  <div class="adjust"><img class="medres" src="<%= AntwebProps.getImgDomainApp() %><%= theImage.getThumbview() %>" onclick="window.location='bigPicture.do?name=<%= Html.escAttr(Html.js(Html.url(specimen.getName().toLowerCase()))) %>&amp;shot=<%= Html.escAttr(Html.js(Html.url(shotType))) %>&amp;number=<%= Html.escAttr(Html.js(Html.url(shotNumber))) %>'"></div>
 				</div>
 		   <% } else { %>
 				<div class="slide medium<% if (position == first) { %> first<% } %><% if (position == fourth) { %> last<% } %>" style="background-image:url('<%= AntwebProps.getImgDomainApp() %><%= theImage.getThumbview() %>');">
-				  <div class="hover medium" onclick="window.location='bigPicture.do?name=<%= specimen.getName().toLowerCase() %>&shot=<%= (String) shotType %>&number=<%= (String) shotNumber %>'"></div>
+				  <div class="hover medium" onclick="window.location='bigPicture.do?name=<%= Html.escAttr(Html.js(Html.url(specimen.getName().toLowerCase()))) %>&amp;shot=<%= Html.escAttr(Html.js(Html.url(shotType))) %>&amp;number=<%= Html.escAttr(Html.js(Html.url(shotNumber))) %>'"></div>
 				  <div class="top_gradient medium"></div>
-				  <div class="ratio_icon" onclick="window.location='bigPicture.do?name=<%= specimen.getName().toLowerCase() %>&shot=<%= (String) shotType %>&number=<%= (String) shotNumber %>'"><img src="image/magnify.png" title="Click to see large version"></div>
+				  <div class="ratio_icon" onclick="window.location='bigPicture.do?name=<%= Html.escAttr(Html.js(Html.url(specimen.getName().toLowerCase()))) %>&amp;shot=<%= Html.escAttr(Html.js(Html.url(shotType))) %>&amp;number=<%= Html.escAttr(Html.js(Html.url(shotNumber))) %>'"><img src="image/magnify.png" title="Click to see large version"></div>
 				  <div class="clear"></div>
 				</div>
 		   <% } 

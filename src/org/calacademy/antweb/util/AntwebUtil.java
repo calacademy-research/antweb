@@ -81,10 +81,9 @@ public abstract class AntwebUtil {
       return AntwebUtil.getRandomNumber();
     }             
 
-    private static long s_uniqueNum = 0;
-    public static long getUniqueNumber() {
-      s_uniqueNum = s_uniqueNum + 1;
-      return s_uniqueNum;
+    private static final java.util.concurrent.atomic.AtomicLong s_uniqueNum = new java.util.concurrent.atomic.AtomicLong();
+    public static long getUniqueNumber() {   // atomic (2026-10-29): two threads could get the same number
+      return s_uniqueNum.incrementAndGet();
     }
 
     /*

@@ -360,8 +360,8 @@ public class Bioregion extends LocalityOverview implements Countable {
     
     public String getUpdateCountSQL(String parentTaxonName, String columnName, int count) {
         String updateCountSQL = "update bioregion_taxon set " + columnName + " = '" + count + "'" 
-            + " where bioregion_name = '" + getName() + "'" 
-            + " and taxon_name = '" + parentTaxonName + "'";
+            + " where bioregion_name = " + org.calacademy.antweb.util.DBUtil.sqlQuote(getName())
+            + " and taxon_name = " + org.calacademy.antweb.util.DBUtil.sqlQuote(parentTaxonName);   // quoted (2026-10-29): a name with ' broke the update
         return updateCountSQL;
     }
     public String getOtherUpdateCountSQL(String parentTaxonName, String columnName, int count) {
@@ -370,8 +370,8 @@ public class Bioregion extends LocalityOverview implements Countable {
     
     public String getUpdateImageCountSQL(String taxonName, int sum) { //, String rank) {
         String updateSql = "update bioregion_taxon set image_count = " + sum 
-            + " where bioregion_name = '" + getName() + "'" 
-            + " and taxon_name = '" + taxonName + "'";
+            + " where bioregion_name = " + org.calacademy.antweb.util.DBUtil.sqlQuote(getName())
+            + " and taxon_name = " + org.calacademy.antweb.util.DBUtil.sqlQuote(taxonName);
         return updateSql;    
     }
 

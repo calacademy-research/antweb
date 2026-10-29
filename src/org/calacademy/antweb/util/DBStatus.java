@@ -102,7 +102,9 @@ public class DBStatus {
 
         try {
             ArrayList<String> processListArray = DBStatus.getMysqlProcessList(connection);
-            if (processListArray.size() > 100) {
+            // Working connections only (2026-10-29): the list also held its two heading lines and every idle
+            // (Sleep) pooled connection, so a large idle pool alone could show visitors "server is busy".
+            if (activeProcessCount(processListArray) > 100) {
                 isBusy = true;
             }
         } catch (SQLException e) {
@@ -392,6 +394,23 @@ public class DBStatus {
         for (String record : list) {
             s_log.warn("getMysqlProcessList() record:" + record);
         }
+    }
+
+    /**
+     * The processes of a getMysqlProcessList() list that are working: not its heading lines, not idle
+     * connections (command Sleep). Pure: tested in AuditTjFixesTest.
+     */
+    static int activeProcessCount(java.util.List<String> processList) {
+        if (processList == null) return 0;
+        int count = 0;
+        for (String line : processList) {
+            if (line == null || line.startsWith("|") || line.startsWith("---")) continue;   // heading lines
+            String[] fields = line.split(" \\| ", -1);
+            String command = fields.length > 4 ? fields[4].trim() : "";
+            if ("Sleep".equalsIgnoreCase(command)) continue;
+            ++count;
+        }
+        return count;
     }
 
     public static ArrayList<String> getMysqlProcessList(Connection connection)

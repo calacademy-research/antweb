@@ -23,30 +23,31 @@ public class GeolocaleMgr extends Manager {
     private static final Log s_log = LogFactory.getLog(GeolocaleMgr.class);
 
     // This is a deep copy. Used for menus.
-    private static ArrayList<Region> s_regions;
+    private static volatile ArrayList<Region> s_regions;
 
     // Used for most of the getGeolocale() methods.
-    private static ArrayList<Geolocale> s_geolocales;
+    private static volatile ArrayList<Geolocale> s_geolocales;
 
     // For Taxon Name Search Autocomplete    
-    private static List<String> placeNamesList;
+    private static volatile List<String> placeNamesList;
 
-    private static ArrayList<Adm1> adm1List;
+    private static volatile ArrayList<Adm1> adm1List;
 
     /** map of all country names, not just valid ones
      */
-    private static Map<String, Country> countryNameMap;
+    private static volatile Map<String, Country> countryNameMap;
 
     /**
      * key is pair of adm1Name, countryName, value is the Adm1 object
      */
-    private static final MultiKeyMap<String, Adm1> adm1CountryMap = new MultiKeyMap<>();
+    private static volatile MultiKeyMap<String, Adm1> adm1CountryMap = new MultiKeyMap<>();
 
     public static boolean isInitialized() {
         return s_regions != null;
     }
 
-    private static boolean s_oneAtATime = false;
+    // One reload at a time; released in finally (2026-10-29), so a failed load no longer blocks every later reload.
+    private static final java.util.concurrent.atomic.AtomicBoolean s_oneAtATime = new java.util.concurrent.atomic.AtomicBoolean(false);
 
     public static void populate(Connection connection, boolean forceReload, boolean initialRun) throws SQLException {
         if (!forceReload && s_regions != null) return;
@@ -54,19 +55,16 @@ public class GeolocaleMgr extends Manager {
         Date startTime = new Date();
 
         if (s_regions == null || forceReload) {
-            if (!s_oneAtATime) {
-                s_oneAtATime = true;
-            } else {
-                return;
+            if (!s_oneAtATime.compareAndSet(false, true)) return;
+            try {
+                // about 12 seconds. Maybe move into postInitialize? Probably needed.
+                GeolocaleMgr.populateDeep(connection, true);
+                GeolocaleMgr.populateShallow(connection, true);
+                // For Place Name Search Autocomplete
+                placeNamesList = new GeolocaleDb(connection).getPlaceNames();
+            } finally {
+                s_oneAtATime.set(false);
             }
-
-            // about 12 seconds. Maybe move into postInitialize? Probably needed.
-            GeolocaleMgr.populateDeep(connection, true);
-            GeolocaleMgr.populateShallow(connection, true);
-            // For Place Name Search Autocomplete
-            placeNamesList = new GeolocaleDb(connection).getPlaceNames();
-
-            s_oneAtATime = false;
         }
         logDeep(s_regions);
     }
@@ -92,18 +90,22 @@ public class GeolocaleMgr extends Manager {
 
         //A.log("populateShallow forceReload:" + forceReload + " s_geolocales:" + s_geolocales);
 
-        s_geolocales = new ArrayList<>();
+        // Every structure is built into locals and published at the end (2026-10-29): requests no longer see
+        // a half-filled list during a reload, and islands and the adm1 map no longer keep the previous load's
+        // objects (renamed or deleted adm1s used to stay valid until restart).
+        ArrayList<Geolocale> geolocales = new ArrayList<>();
+        ArrayList<Country> newIslands = new ArrayList<>();
         for (Region region : s_regions) {
-            s_geolocales.add(region);
+            geolocales.add(region);
             for (Subregion subregion : region.getSubregions()) {
-                s_geolocales.add(subregion);
+                geolocales.add(subregion);
                 for (Country country : subregion.getAllCountries()) {
-                    s_geolocales.add(country);
-                    if (country.isIsland()) islands.add(country);
+                    geolocales.add(country);
+                    if (country.isIsland()) newIslands.add(country);
                     //A.log("populateShallow() country:" + country);
                     //if ("Albania".equals(country.toString())) A.log("populateShallow() country:" + country + " id:" + country.getId());
                     //if (adm1.getParent().equals("Venezuela")) A.log("populateShallow() country:" + country + " id:" + adm1.getId() + " adm1:" + adm1.getName());
-                    s_geolocales.addAll(country.getAllAdm1s());
+                    geolocales.addAll(country.getAllAdm1s());
                 }
             }
         }
@@ -112,21 +114,30 @@ public class GeolocaleMgr extends Manager {
         //A.log("populateShallow() 1 c:" + countInstances("Albania", s_geolocales));
 
         // Get all of the countries that don't have parents set, as we won't find them in the above process.
-        s_geolocales.addAll(geolocaleDb.getGeolocales("country", "none", false));
-        //A.log("populateShallow() 2 c:" + countInstances("Albania", s_geolocales));
+        geolocales.addAll(geolocaleDb.getGeolocales("country", "none", false));
+        //A.log("populateShallow() 2 c:" + countInstances("Albania", geolocales));
 
-        adm1List = s_geolocales.stream()
+        ArrayList<Adm1> newAdm1List = geolocales.stream()
                 .filter(Geolocale::isAdm1)
                 .map(adm1 -> (Adm1) adm1)
                 .collect(Collectors.toCollection(ArrayList::new));
 
+        MultiKeyMap<String, Adm1> newAdm1CountryMap = new MultiKeyMap<>();
+        newAdm1List.forEach(adm1 -> newAdm1CountryMap.put(adm1.getName(), adm1.getCountry(), adm1));
 
-        adm1List.forEach(adm1 -> adm1CountryMap.put(adm1.getName(), adm1.getCountry(), adm1));
+        // A country name twice (for example once under its subregion and once without a parent) used to throw
+        // here and stop the load; the first is kept and the duplicate logged.
+        Map<String, Country> newCountryNameMap = geolocales.stream().filter(Geolocale::isCountry)
+            .map(country -> (Country) country).collect(Collectors.toMap(Country::getName, Function.identity(),
+                (a, b) -> { s_log.warn("populateShallow() country name twice:" + a.getName() + " ids:" + a.getId() + "," + b.getId()); return a; }));
 
-        countryNameMap = s_geolocales.stream().filter(Geolocale::isCountry)
-            .map(country -> (Country) country).collect(Collectors.toMap(Country::getName, Function.identity()));
+        Collections.sort(geolocales);
 
-        Collections.sort(s_geolocales);
+        islands = newIslands;
+        adm1List = newAdm1List;
+        adm1CountryMap = newAdm1CountryMap;
+        countryNameMap = newCountryNameMap;
+        s_geolocales = geolocales;
     }
 
     private static int countInstances(String instance, ArrayList<Geolocale> geolocales) {
@@ -833,7 +844,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         (stored in Geolocale table with georank = "country".
     */
 
-    private static final ArrayList<Country> islands = new ArrayList<>();
+    private static volatile ArrayList<Country> islands = new ArrayList<>();
 
     public static ArrayList<Country> getIslands() {
         return islands;

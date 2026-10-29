@@ -64,7 +64,7 @@
 
 <!-- print the rest -->
 <jsp:useBean id="taxon" scope="session" class="org.calacademy.antweb.Taxon" />
-<jsp:setProperty name="taxon" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-29): the action fills the bean; request values must not overwrite it. --%>
 
 <logic:iterate id="child" collection="<%= taxon.getChildren() %>" >
  <bean:define id="thisChild" name="child" type="org.calacademy.antweb.Taxon" />

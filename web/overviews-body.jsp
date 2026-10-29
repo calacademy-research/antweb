@@ -121,7 +121,7 @@ else heading = heading + "s";
       }
 
       jsonData += "{"
-        + "\"label\": \"" + overview.getDisplayName() + "\","
+        + "\"label\": \"" + org.calacademy.antweb.util.Html.js(overview.getDisplayName()) + "\","
         + "\"value\": " + overview.getImageCount() + ","
         + "\"color\": \"" + color + "\""
         + "}"
@@ -147,11 +147,11 @@ else heading = heading + "s";
       String color = overview.getChartColor();
       if (color == null) {
         //if (AntwebProps.isDevMode()) AntwebUtil.log("overviews-body.jsp color is null i:" + i);
-        color = colors[i];
+        color = colors[i % colors.length];   // no exception with more places than colors (2026-10-29)
       }
 
       jsonData += "{"
-        + "\"label\": \"" + overview.getDisplayName() + "\","
+        + "\"label\": \"" + org.calacademy.antweb.util.Html.js(overview.getDisplayName()) + "\","
         + "\"value\": " + overview.getSpecimenCount() + ","
         + "\"color\": \"" + color + "\""
         + "}"

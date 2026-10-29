@@ -41,6 +41,10 @@ static double getVersion () {
 		throws IOException, ServletException {
 
         HttpUtil.setUtf8(request, response);
+
+        // Administrators only (2026-10-29): the page is admin-only, and the diagnostics below (busy check,
+        // pool queries) should not run for anyone else before the JSP refuses them.
+        ActionForward denied = LoginMgr.mustBeAdmin(request, mapping); if (denied != null) return denied;
         
         DynaActionForm df = (DynaActionForm) form;
      

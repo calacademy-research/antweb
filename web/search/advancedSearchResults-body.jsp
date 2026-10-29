@@ -41,7 +41,7 @@ if (advancedSearchResults == null) {
 //A.log("advancedSearchResults-body.jsp advancedSearchResults:" + advancedSearchResults);
 %>
 
-<jsp:setProperty name="advancedSearchResults" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-29): the action fills the bean; request values must not overwrite it. --%>
 
 <logic:present parameter="mode">
   <bean:parameter id="mode" name="mode"/>
@@ -118,7 +118,7 @@ if (advancedSearchResults == null) {
       String resultRank = (String) session.getAttribute("resultRank");
       A.log("advancedSearchResults-body.jsp resultRank:" + resultRank);
       if (resultRank != null) { %>
-<input type="hidden" name="resultRank" value="<%= resultRank %>"/>
+<input type="hidden" name="resultRank" value="<%= Html.escAttr(resultRank) %>"/>
    <% } else { %>
 <input type="hidden" name="resultRank" value="specimen"/>
    <% } 

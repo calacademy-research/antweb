@@ -114,7 +114,7 @@ public class UtilDb extends AntwebDb {
                 if (rowNum == 1) columns += meta.getColumnLabel(i + 1) + " ";
                 o = rs.getObject(i + 1);    // Is SQL the first column is indexed
                 // with 1 not 0
-                row += o.toString() + " ";                
+                row += String.valueOf(o) + " ";   // a NULL column no longer throws (2026-10-29)                
             }
             rowData += newLine + row; 
         }

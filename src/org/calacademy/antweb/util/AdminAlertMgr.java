@@ -129,13 +129,12 @@ public final class AdminAlertMgr {
         try {
           stmt = DBUtil.getStatement(connection, "AdminAlertMgr.removeAll()");  
           stmt.executeUpdate(dml);
+          s_adminAlerts = new ArrayList<>();   // only when the rows were acknowledged (2026-10-29): a failed update kept them
         } catch (Exception e) {
-          s_log.warn("removeAll() e:" + e);
+          s_log.error("removeAll() e:" + e);
         } finally {
           DBUtil.close(stmt, "AdminAlertMgr.removeAll()");        
         }
-
-        s_adminAlerts = new ArrayList<>();
     }
 
     public static void remove(int id, Connection connection) {

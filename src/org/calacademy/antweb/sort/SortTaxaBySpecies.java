@@ -8,20 +8,7 @@ public class SortTaxaBySpecies implements Comparator<Taxon>
 {
     public int compare(Taxon a, Taxon b) 
     { 
-      try {
-        int aC = a.getTaxonSet().getSpeciesCount();
-        int bC = b.getTaxonSet().getSpeciesCount();
-
-        int compareInt = 0;
-        if (aC > bC) compareInt = -1;
-        if (aC == bC) compareInt = 0;
-        if (aC < bC) compareInt = 1;
-
-        //A.log("compare() a:" + aC + " b:" + bC + " compareInt:" + compareInt);
-        return compareInt;
-      } catch (NullPointerException e) {
-        A.log("compare() NPE a:" + a + " b:" + b);
-      }
-      return 0;
+      TaxonSet aS = SortKeys.set(a), bS = SortKeys.set(b);
+      return SortKeys.countDesc(aS == null ? null : aS.getSpeciesCount(), bS == null ? null : bS.getSpeciesCount());
     } 
 } 

@@ -176,11 +176,17 @@ Mostly the UN geolocales, with overrides.
        selected = "";
        if (geolocale.getParent() == null) selected = " selected"; else selected = "";
 %>    <option value="none"<%= selected %>>None</option> <% 
+       boolean parentListed = geolocale.getParent() == null;
        for (Geolocale validGeolocale : GeolocaleMgr.getGeolocales(Georank.getParent(georank), true)) {
-	     if (validGeolocale.getName().equals(geolocale.getParent())) selected = "selected"; else selected = "";
+	     if (validGeolocale.getName().equals(geolocale.getParent())) { selected = "selected"; parentListed = true; } else selected = "";
  	 %>
       <option value='<%= Html.escAttr(validGeolocale) %>' <%= selected %>><%= Html.esc(validGeolocale) %></option>
-	<% } %>	
+	<% }
+       // The stored parent is offered (and kept) even when it is not a valid place (2026-10-29): without it the
+       // browser sent "None", and saving the page for another field detached the place from its parent.
+       if (!parentListed) { %>
+      <option value='<%= Html.escAttr(geolocale.getParent()) %>' selected><%= Html.esc(geolocale.getParent()) %> (not valid)</option>
+	<% } %>
   </select>
   
 <br><br>
@@ -192,11 +198,15 @@ Mostly the UN geolocales, with overrides.
        selected = "";
        if (geolocale.getBioregion() == null) selected = " selected"; else selected = "";
 %>    <option value="none"<%= selected %>>None</option> <%
+       boolean bioregionListed = geolocale.getBioregion() == null;
        for (Bioregion bioregion : BioregionMgr.getBioregions()) {
-	     if (bioregion.getName().equals(geolocale.getBioregion())) selected = "selected"; else selected = "";
+	     if (bioregion.getName().equals(geolocale.getBioregion())) { selected = "selected"; bioregionListed = true; } else selected = "";
  	 %>
-      <option value='<%= bioregion.getName() %>' <%= selected %>><%= bioregion.getName() %></option>
-	<% } %>	
+      <option value='<%= Html.escAttr(bioregion.getName()) %>' <%= selected %>><%= Html.esc(bioregion.getName()) %></option>
+	<% }
+       if (!bioregionListed) { %>
+      <option value='<%= Html.escAttr(geolocale.getBioregion()) %>' selected><%= Html.esc(geolocale.getBioregion()) %> (not in the bioregion list)</option>
+	<% } %>
   </select>
 
 <br><br>
@@ -209,10 +219,14 @@ Mostly the UN geolocales, with overrides.
        selected = "";
        if (geolocale.getAltBioregion() == null) selected = " selected"; else selected = "";
 %>    <option value="none"<%= selected %>>None</option> <%
+       boolean altBioregionListed = geolocale.getAltBioregion() == null;
        for (Bioregion bioregion : BioregionMgr.getBioregions()) {
-	     if (bioregion.getName().equals(geolocale.getAltBioregion())) selected = "selected"; else selected = "";
+	     if (bioregion.getName().equals(geolocale.getAltBioregion())) { selected = "selected"; altBioregionListed = true; } else selected = "";
  	 %>
-      <option value='<%= bioregion.getName() %>' <%= selected %>><%= bioregion.getName() %></option>
+      <option value='<%= Html.escAttr(bioregion.getName()) %>' <%= selected %>><%= Html.esc(bioregion.getName()) %></option>
+	<% }
+       if (!altBioregionListed) { %>
+      <option value='<%= Html.escAttr(geolocale.getAltBioregion()) %>' selected><%= Html.esc(geolocale.getAltBioregion()) %> (not in the bioregion list)</option>
 	<% } %>
   </select>
 <br><br>

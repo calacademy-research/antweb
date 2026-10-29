@@ -50,7 +50,7 @@ public class ServerDb extends AntwebDb {
         ResultSet rset = null;
         try {
             stmt = DBUtil.getStatement(connection, "ServerDb.setServerDebug()");
-            String dml = "update server set debug = '" + value +"'";
+            String dml = "update server set debug = " + DBUtil.sqlQuote(value);   // quoted (2026-10-29)
             stmt.executeUpdate(dml);
         } catch (SQLException e) {
             s_log.error("setServerDebug() " + e);

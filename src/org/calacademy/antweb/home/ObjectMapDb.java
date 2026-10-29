@@ -64,10 +64,12 @@ public class ObjectMapDb extends AntwebDb {
         String code = museum.getCode();
 
 		SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);
-		
-		Map map = new AdvancedSearchAction().getGoogleMap(museum, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
-
-		SearchAction.undoSetTempSpecimenSearchLimit();
+		Map map;
+		try {   // finally (2026-10-29): a failed map left every search without its limit until restart
+		  map = new AdvancedSearchAction().getGoogleMap(museum, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
+		} finally {
+		  SearchAction.undoSetTempSpecimenSearchLimit();
+		}
 
 		if (map != null) {		  
           deleteMap("museum_code = " + lit(museum.getCode())); 
@@ -120,10 +122,12 @@ public class ObjectMapDb extends AntwebDb {
 	    }
 
 		SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);
-
-		Map map = new AdvancedSearchAction().getGoogleMap(country, adm1, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
-
-		SearchAction.undoSetTempSpecimenSearchLimit();
+		Map map;
+		try {
+		  map = new AdvancedSearchAction().getGoogleMap(country, adm1, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
+		} finally {
+		  SearchAction.undoSetTempSpecimenSearchLimit();
+		}
 
 		if (map != null) {
 		  deleteMap("geolocale_id = " + geolocale.getId()); 
@@ -209,10 +213,12 @@ public class ObjectMapDb extends AntwebDb {
 
     public void genGroupObjectMap(Group group) throws SQLException {
 		SearchAction.setTempSpecimenSearchLimit(SearchAction.noSpecimenSearchLimit);
-
-		Map map = new AdvancedSearchAction().getGoogleMap(group, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
-
-		SearchAction.undoSetTempSpecimenSearchLimit();
+		Map map;
+		try {
+		  map = new AdvancedSearchAction().getGoogleMap(group, ResultRank.SPECIMEN, Output.MAP_LOCALITY, getConnection());
+		} finally {
+		  SearchAction.undoSetTempSpecimenSearchLimit();
+		}
 
 		if (map != null) {
           deleteMap("group_id = " + group.getId()); 

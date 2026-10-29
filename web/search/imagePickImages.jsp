@@ -20,7 +20,7 @@
 
 
 <jsp:useBean id="taxon" scope="session" class="org.calacademy.antweb.Taxon" />
-<jsp:setProperty name="taxon" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-29): the action fills the bean; request values must not overwrite it. --%>
 
 <logic:present parameter="project">
   <logic:notEqual parameter="project" value=""> 
@@ -60,7 +60,7 @@ if (Rank.SPECIES.equals(taxon.getRank()) || Rank.SUBSPECIES.equals(taxon.getRank
 //if (AntwebProps.isDevMode()) AntwebUtil.log("imagePickImages.jsp code:" + code);
 
 %>
-<a href="#" onclick="parent.get_img_name('<%= code %>','image_<%= taxon.getTaxonName() %>'); return false;"> <!-- taxon.getFullName() -->
+<a href="#" onclick="parent.get_img_name('<%= Html.escAttr(Html.js(code)) %>','image_<%= Html.escAttr(Html.js(taxon.getTaxonName())) %>'); return false;"> <!-- taxon.getFullName() -->
 <img id=specimen_img_show src="<%= imgDomainApp %><bean:write name="theImage" property="value.lowres" />" border="0"></a>
 <!-- was getFullName() -->
 	</logic:iterate>

@@ -58,7 +58,7 @@ public final class CollectionAction extends AntwebAction {
 
             collection = new CollectionDb(connection).getCollection(name);
 
-			s_log.debug("collection:" + collection + " size:" + collection.getSpecimenResults().getResults().size());
+			// (debug line removed 2026-10-29: it read collection before the null check, so an unknown name gave a 500)
 
 			//if (!success) {
 			if (collection == null || 0 == collection.getSpecimenResults().getResults().size()) {

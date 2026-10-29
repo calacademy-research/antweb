@@ -628,7 +628,16 @@ public class LoginDb extends AntwebDb {
             // A.log("updateLogin() isAdminUpdate:" + isAdminUpdate + " groupId:" + login.getGroupId() + " uploadSpecimens:" + uploadSpecimens + " uploadImages:" + uploadImages);
 
             if (!isAdminUpdate && !isSelfUpdate) {
-                throw new SQLException("name:" + login.getName() + " or email:" + login.getEmail() + " already in use.");
+                throw new SQLException("Only an administrator may change another account. Nothing was saved.");
+            }
+            // A name or email changed to one another account already uses is refused (2026-10-29), as for a new
+            // account (saveLogin): two accounts with one email made logging in by email and password resets pick
+            // either account. Unchanged values are not checked, so an old duplicate does not block other edits.
+            Login stored = getLogin(login.getId());
+            boolean nameChanged = stored == null || !java.util.Objects.equals(stored.getName(), login.getName());
+            boolean emailChanged = stored == null || !java.util.Objects.equals(stored.getEmail(), login.getEmail());
+            if ((nameChanged || emailChanged) && !isLoginTaken(login)) {
+                throw new SQLException("The name or email is already used by another account. Nothing was saved.");
             }
 
             String theUpdate = null;

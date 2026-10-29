@@ -150,10 +150,10 @@
 %>
             <div class="slide thirds" style="background-image:url('<%= AntwebProps.getImgDomainApp() %><%=((org.calacademy.antweb.SpecimenImage) thisChild.getImages().get("h")).getThumbview() %>');">
 <%                      if (thisChild.getRank().equals("specimen")) { %>
-                <div class="hover thirds" onclick="window.location='specimen.do?name=<%= thisChild.getName() %>';"></div>
+                <div class="hover thirds" onclick="window.location='specimen.do?name=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(org.calacademy.antweb.util.Html.url(thisChild.getName()))) %>';"></div>
 <%                      } else { %>
 
-                <div class="hover thirds" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= specImageCode %>&shot=h&number=1';"></div>
+                <div class="hover thirds" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(org.calacademy.antweb.util.Html.url(specImageCode))) %>&amp;shot=h&amp;number=1';"></div>
 <%                      } %>
             </div>
 <%                  } // end contains h 
@@ -162,9 +162,9 @@
 %>
             <div class="slide thirds last" style="background-image:url('<%= AntwebProps.getImgDomainApp() %><%=((org.calacademy.antweb.SpecimenImage) thisChild.getImages().get("p")).getThumbview() %>');">
 <%                      if (thisChild.getRank().equals("specimen")) { %>
-                <div class="hover thirds" onclick="window.location='specimen.do?name=<%= thisChild.getName() %>';"></div>
+                <div class="hover thirds" onclick="window.location='specimen.do?name=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(org.calacademy.antweb.util.Html.url(thisChild.getName()))) %>';"></div>
 <%                      } else { %>
-                <div class="hover thirds" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= specImageCode %>&shot=h&number=1';"></div>
+                <div class="hover thirds" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(org.calacademy.antweb.util.Html.url(specImageCode))) %>&amp;shot=p&amp;number=1';"></div>
 <%                      } %>
             </div>
 <%                  } // end contains p 

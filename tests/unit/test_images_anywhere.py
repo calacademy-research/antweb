@@ -73,7 +73,9 @@ def test_list_images_column_shows_the_antweb_number_only():
     assert '" Click the number to see the images; those " + imagesFromPhrase + " come first."' in jsp
     assert "in brackets" not in jsp and "The first number" not in jsp and "parenthes" not in jsp.lower()
     # sorting by Images follows the number shown
-    assert "ImagesAnywhere.shownImages(a.getTaxonSet())" in read("src/org/calacademy/antweb/sort/SortTaxaByImages.java")
+    # (2026-10-29: through SortKeys, a missing taxon set sorts last)
+    sort_images = read("src/org/calacademy/antweb/sort/SortTaxaByImages.java")
+    assert "ImagesAnywhere.shownImages(aS)" in sort_images and "SortKeys.set(a)" in sort_images
     ts = read("src/org/calacademy/antweb/TaxonSet.java")
     # every rank reads the allantwebants row with the place's row (one key lookup). PR #291 run 2 counted species rows
     # live from the image table, one count per row, and list, taxon and browse pages came back cut off on staging.

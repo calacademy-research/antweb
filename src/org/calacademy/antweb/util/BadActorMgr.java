@@ -15,7 +15,10 @@ public abstract class BadActorMgr {
       return false; // To be...
     }
 
-    private static final HashMap<String, Integer> badActorMap = new HashMap<>();
+    // Request threads add to it at the same time: a concurrent map with atomic counting (2026-10-29), and a cap so
+    // that many distinct addresses cannot grow it without limit (it is cleared, counts start again).
+    private static final java.util.concurrent.ConcurrentHashMap<String, Integer> badActorMap = new java.util.concurrent.ConcurrentHashMap<>();
+    static final int MAX_TRACKED = 50000;
 
     public static void addBadActor(HttpServletRequest request) {
         String ip = HttpUtil.getClientIpAddress(request);
@@ -25,16 +28,11 @@ public abstract class BadActorMgr {
     public static void addBadActor(String ip) {
       A.iLog("addBadActor() ip:" + ip);
       if (ip != null) {
-        if (true || !"http://0:0:0:0:0:0:0:1".equals(ip)) {
-          Integer count = badActorMap.get(ip);
-          if (count == null) {
-              badActorMap.put(ip, 1);
-          } else {
-              badActorMap.put(ip, ++count);
-          }
-        } else {
-          s_log.debug("Not adding ip:" + ip + " to bad actor list");
+        if (badActorMap.size() >= MAX_TRACKED && !badActorMap.containsKey(ip)) {
+          s_log.warn("addBadActor() " + badActorMap.size() + " addresses tracked: list cleared");
+          badActorMap.clear();
         }
+        badActorMap.merge(ip, 1, Integer::sum);
       }
     }
 

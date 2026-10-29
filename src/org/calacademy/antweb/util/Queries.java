@@ -283,10 +283,12 @@ public abstract class Queries {
             + " names) are filed under more than one subfamily. Usually a specimen upload that still uses a genus's"
             + " old subfamily. Fix: open the detail query to see the names, then correct the subfamily in the"
             + " upload file (Source column)."
-          , h("Genus", "Subfamily Count", "Source", "Statuses")
-          , "select genus, count(distinct subfamily), source, group_concat(distinct status) from taxon"
+          , h("Genus", "Subfamily Count", "Sources", "Statuses")
+          // Grouped by genus alone (2026-10-29): grouped by genus and source, the case described above (the
+          // AntCat name from worldants, the upload's name from its specimen file) was never listed.
+          , "select genus, count(distinct subfamily), group_concat(distinct source), group_concat(distinct status) from taxon"
             + " where taxarank in ('genus', 'species', 'subspecies') and status in ('valid', " + ANTWEB_OWN_STATUSES + ")"
-            + " group by genus, source having count(distinct subfamily) > 1"
+            + " group by genus having count(distinct subfamily) > 1"
           , "generaInMultipleSubfamiliesDetail"
           ));
 

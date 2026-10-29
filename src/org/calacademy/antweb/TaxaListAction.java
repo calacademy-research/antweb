@@ -84,17 +84,20 @@ public final class TaxaListAction extends AntwebAction {
           query += " and taxon_name in (select taxon_name from proj_taxon where project_name = ?" + imageCondition + ")"; args.add(projectName);
           param = "&project=" + urlEncode(projectName);
           Project project = ProjectMgr.getProject(projectName);
+          if (project == null) return notFound(request, mapping, "Project", projectName);   // was a 500 (2026-10-29)
           title += project.getTitle();
         }
         if (!"".equals(bioregionName) && bioregionName != null) {
           query += " and taxon_name in (select taxon_name from bioregion_taxon where bioregion_name = ?" + imageCondition + ")"; args.add(bioregionName);
           param = "&bioregionName=" + urlEncode(bioregionName);
           Bioregion bioregion = BioregionMgr.getBioregion(bioregionName);
+          if (bioregion == null) return notFound(request, mapping, "Bioregion", bioregionName);
           title += bioregion;
         }
         if (!"".equals(museumCode) && museumCode != null) {
           query += " and taxon_name in (select taxon_name from museum_taxon where code = ?" + imageCondition + ")"; args.add(museumCode);
           Museum museum = MuseumMgr.getMuseum(museumCode);
+          if (museum == null) return notFound(request, mapping, "Museum", museumCode);
           param = "&museumName=" + urlEncode(museumCode);
           title += museum;
         }
@@ -157,5 +160,11 @@ public final class TaxaListAction extends AntwebAction {
     private static String escapeHtml(String value) {
         if (value == null) return "";
         return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;").replace("'", "&#39;");
+    }
+
+    /** "X not found" for an unknown project, bioregion or museum. */
+    private static ActionForward notFound(HttpServletRequest request, ActionMapping mapping, String kind, String name) {
+        request.setAttribute("message", kind + " not found: " + Html.esc(name));
+        return mapping.findForward("message");
     }
 }

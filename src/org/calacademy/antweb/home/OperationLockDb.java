@@ -33,7 +33,7 @@ Useful query to see how lock the locks have lasted:
 
         String theInsert = "insert into operation_lock (operation, duration_millis, locked, curator_id, curator, created) " 
           + " values (" + operationLock.getOperation() + ", " + operationLock.getDurationMillis() + ", " 
-          + locked + ", " + operationLock.getCuratorId() + ", '" + operationLock.getCurator() + "', " + "'" + createdStr + "')";
+          + locked + ", " + operationLock.getCuratorId() + ", " + DBUtil.sqlQuote(operationLock.getCurator()) + ", " + DBUtil.sqlQuote(createdStr) + ")";   // quoted (2026-10-29): a name with ' failed
                    
         //s_log.info("setOperationLock() insert:" + theInsert);
         Statement stmt = null;

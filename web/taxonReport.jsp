@@ -12,6 +12,7 @@
 */
     //A.log("taxonReport.jsp XXX");
     //ArrayList<Taxon> childrenList = taxon.getChildren();
+    if (childrenList == null) childrenList = new ArrayList<>();   // no children: an empty list (2026-10-29)
     int tChildrenCount = childrenList.size();
     Taxon[] trChildrenArray = new Taxon[tChildrenCount];
     childrenList.toArray(trChildrenArray);

@@ -42,7 +42,7 @@
 <th>Extant all sp.</th>
 <th>V. sp.</th>
 <th>Imaged v. sp.</th>
-<th>All sp.</th> <!-- 12 -->
+<th>All sp.</th> <!-- 14 -->
 <th>Total Taxa</th></tr>            
 
 <%
@@ -62,56 +62,56 @@
 
         if (isLink) {
           if (statCount == 1) { %> 
-            <td><%= stat %></td> 
+            <td><%= org.calacademy.antweb.util.Html.esc(stat) %></td> 
        <% } 
           if (statCount == 2) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?extant=0&<%= param %><%= paramValue %>&rank=subfamily"><%= stat %></a></td>
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?extant=0&<%= param %><%= paramValue %>&rank=subfamily"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td>
        <% } 
           if (statCount == 3) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?extant=1&<%= param %><%= paramValue %>&rank=subfamily"><%= stat %></a></td>
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?extant=1&<%= param %><%= paramValue %>&rank=subfamily"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td>
        <% }
           if (statCount == 4) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?status=valid&<%= param %><%= paramValue %>&rank=subfamily"><%= stat %></a></td> 
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?status=valid&<%= param %><%= paramValue %>&rank=subfamily"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td> 
        <% }
           if (statCount == 5) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?<%= param %><%= paramValue %>&rank=subfamily"><%= stat %></a></td>
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?<%= param %><%= paramValue %>&rank=subfamily"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td>
        <% }
           if (statCount == 6) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?extant=0&<%= param %><%= paramValue %>&rank=genus"><%= stat %></a></td> 
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?extant=0&<%= param %><%= paramValue %>&rank=genus"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td> 
        <% }
           if (statCount == 7) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?extant=1&<%= param %><%= paramValue %>&rank=genus"><%= stat %></a></td> 
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?extant=1&<%= param %><%= paramValue %>&rank=genus"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td> 
        <% }
           if (statCount == 8) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?status=valid&<%= param %><%= paramValue %>&rank=genus"><%= stat %></a></td> 
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?status=valid&<%= param %><%= paramValue %>&rank=genus"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td> 
        <% }
           if (statCount == 9) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?<%= param %><%= paramValue %>&rank=genus"><%= stat %></a></td>  
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?<%= param %><%= paramValue %>&rank=genus"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td>  
        <% }
           if (statCount == 10) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?extant=0&<%= param %><%= paramValue %>&rank=species"><%= stat %></a></td> 
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?extant=0&<%= param %><%= paramValue %>&rank=species"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td> 
        <% }
           if (statCount == 11) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?extant=1&<%= param %><%= paramValue %>&rank=species"><%= stat %></a></td> 
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?extant=1&<%= param %><%= paramValue %>&rank=species"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td> 
        <% }
           if (statCount == 12) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?status=valid&<%= param %><%= paramValue %>&rank=species"><%= stat %></a></td> 
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?status=valid&<%= param %><%= paramValue %>&rank=species"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td> 
        <% }
           if (statCount == 13) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?imaged=1&status=valid&<%= param %><%= paramValue %>&rank=species"><%= stat %></a></td>        
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?imaged=1&status=valid&<%= param %><%= paramValue %>&rank=species"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td>        
        <% }
           if (statCount == 14) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?<%= param %><%= paramValue %>&rank=species"><%= stat %></a></td>  
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?<%= param %><%= paramValue %>&rank=species"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td>  
        <% }
           if (statCount == 15) { %> 
-            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?<%= param %><%= paramValue %>"><%= stat %></a></td>        
+            <td><a href="<%= AntwebProps.getDomainApp()%>/taxaList.do?<%= param %><%= paramValue %>"><%= org.calacademy.antweb.util.Html.esc(stat) %></a></td>        
        <% }
         } else {
           if (statCount == 1) { %> 
-            <td><%= stat %></td> 
+            <td><%= org.calacademy.antweb.util.Html.esc(stat) %></td> 
        <% } 
-          if ((statCount >1) && (statCount <= 14)) { %> 
-            <td><%= stat %></td>
+          if ((statCount >1) && (statCount <= 15)) { %> 
+            <td><%= org.calacademy.antweb.util.Html.esc(stat) %></td>
        <% }
         }
 

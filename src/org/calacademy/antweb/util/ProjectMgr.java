@@ -240,7 +240,9 @@ public class ProjectMgr {
         if (target == null) return null;
         String redirect = null;
         for (String[] moved : MOVED_BIOREGION_PROJECTS) {
-            if (target.contains(moved[0])) redirect = target.replace("project=" + moved[0], "bioregionName=" + moved[1]);
+            // Only the project= parameter (2026-10-29): a target that merely contained the name (projectName=,
+            // a search term) was "redirected" to itself, and the browser looped.
+            if (target.contains("project=" + moved[0])) redirect = target.replace("project=" + moved[0], "bioregionName=" + moved[1]);
         }
         return redirect;
     }
@@ -298,12 +300,14 @@ public class ProjectMgr {
               }       
               //s_log.warn("hasMoved() projStr:" + projStr + " target:" + target);   
             }
-          } catch (Exception e) { // do nothing 
+          } catch (Exception e) {
+            s_log.debug("hasMoved() could not read the project of target:" + target + " e:" + e);
           }
 /*
 http://localhost/antweb/browse.do?genus=pseudomyrmex&rank=genus&project=brazilants
 */
 
+          if (redirect != null && redirect.equals(target)) redirect = null;   // never a redirect to the same URL (loop)
           if (redirect != null) {
             response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
 			response.setHeader("Location", redirect);

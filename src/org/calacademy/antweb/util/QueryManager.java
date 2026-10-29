@@ -32,6 +32,12 @@ public abstract class QueryManager {
         for (NamedQuery namedQuery : queryList) {
           String results;
           try {
+            if ("geolocaleTaxaPresent".equals(namedQuery.getName())) {
+              // Decided on the query's own cell, not on the page HTML: the check's description quotes
+              // "records missing!", so the HTML always contained it and the alert always fired (2026-10-29).
+              runNamedQuery(namedQuery, connection);
+              if (!geolocaleTaxaMissing(namedQuery.getResult())) continue;
+            }
             results = runNamedQueryHtml(namedQuery, connection);
           } catch (SQLException e) {  // one failing check no longer stops the others, nor reads as "Success"
             message += "<br><b>" + Html.esc(namedQuery.getName()) + "</b>: this check could not run.<br>";
@@ -40,10 +46,8 @@ public abstract class QueryManager {
           //A.log("namedQuery:" + namedQuery + " results:" + results);
           if (results != null)
             if ("geolocaleTaxaPresent".equals(namedQuery.getName())) {
-              if (results.contains("records missing")) {
-                  s_log.warn("Investigate: " + results);
-                  message += results;
-              }
+              s_log.warn("Investigate: " + results);
+              message += results;
             } else{
                 if (!results.contains("rowCount:</b>0"))
                     message += results;
@@ -51,6 +55,17 @@ public abstract class QueryManager {
         }
         if ("".equals(message)) message = "Success";
         return message;        
+    }
+
+    /**
+     * True when the geolocaleTaxaPresent result (runNamedQuery's plain text: header line, then the cell)
+     * says the country lists are low. Pure: tested in AuditTjFixesTest.
+     */
+    static boolean geolocaleTaxaMissing(String plainResult) {
+        if (plainResult == null) return false;
+        int newline = plainResult.indexOf('\n');
+        String cells = newline < 0 ? plainResult : plainResult.substring(newline + 1);
+        return cells.contains("records missing");
     }
 
     /**

@@ -344,10 +344,10 @@ public class SpecimenDb extends AntwebDb {
 
  // *** island_country?
     public boolean hasSpecimen(String taxonName, String country) throws SQLException {
-      return hasSpecimenWithClause(taxonName, " and country = '" + country + "'");
+      return hasSpecimenWithClause(taxonName, " and country = " + DBUtil.sqlQuote(country));
     }
     public boolean hasSpecimen(String taxonName, String adm1, String country) throws SQLException {
-      return hasSpecimenWithClause(taxonName, " and country = '" + country + "' and adm1 = '" + adm1 + "'");
+      return hasSpecimenWithClause(taxonName, " and country = " + DBUtil.sqlQuote(country) + " and adm1 = " + DBUtil.sqlQuote(adm1));
     }
     public boolean hasSpecimenWithClause(String taxonName, String clause) throws SQLException {
       String dups = "";
@@ -492,7 +492,7 @@ public class SpecimenDb extends AntwebDb {
         ResultSet rset = null;
         try {
             stmt = DBUtil.getStatement(getConnection(), "updateCaste()");
-            String dml = "update specimen s set s.caste = '" + caste + "', s.subcaste = '" + subcaste + "' where s.code = '" + code + "'";
+            String dml = "update specimen s set s.caste = " + DBUtil.sqlQuote(caste) + ", s.subcaste = " + DBUtil.sqlQuote(subcaste) + " where s.code = " + DBUtil.sqlQuote(code);   // quoted (2026-10-29)
         
             //A.log("updateCaste dml:" + dml);
             stmt.executeUpdate(dml);   
@@ -647,7 +647,7 @@ public class SpecimenDb extends AntwebDb {
         ResultSet rset = null;
         try {
             stmt = DBUtil.getStatement(getConnection(), "updateSpecimenLocalityCode()");
-            String dml = "update specimen set localitycode = '" + localityCode + "' where code = '" + code + "'";
+            String dml = "update specimen set localitycode = " + DBUtil.sqlQuote(localityCode) + " where code = " + DBUtil.sqlQuote(code);   // quoted (2026-10-29)
             //A.slog("updateSpecimenLocalityCode() dml:" + dml);
             stmt.executeUpdate(dml);    
         } catch (SQLException e) {
@@ -912,15 +912,15 @@ public class SpecimenDb extends AntwebDb {
             stmt = DBUtil.getStatement(getConnection(), "updateParsedDates()");
             String updateStart = null;
             String updateEnd = null;
-            if (start != null) updateStart = "datecollectedstart = '" + start + "' ";
-            if (end != null) updateEnd = "datecollectedend = '" + end + "' ";
+            if (start != null) updateStart = "datecollectedstart = " + DBUtil.sqlLiteral(start) + " ";
+            if (end != null) updateEnd = "datecollectedend = " + DBUtil.sqlLiteral(end) + " ";
 
             if (updateStart != null || updateEnd != null) {
                 String dml = "update specimen set ";
                 if (updateStart != null) dml += updateStart;
                 if (updateStart != null && updateEnd != null) dml += ", ";
                 if (updateEnd != null) dml += updateEnd;
-                dml += " where code = '" + code + "'";
+                dml += " where code = " + DBUtil.sqlQuote(code);   // quoted (2026-10-29)
                 //s_log.warn("updateParsedDates() dml:" + dml);
 
                 count = stmt.executeUpdate(dml);
@@ -942,7 +942,7 @@ public class SpecimenDb extends AntwebDb {
         try {
             stmt = DBUtil.getStatement(getConnection(), "updateCollectedStartAsNull()");
             String updateStart = null;
-            String dml = "update specimen set datecollectedstart = null where code = '" + code + "'";
+            String dml = "update specimen set datecollectedstart = null where code = " + DBUtil.sqlQuote(code);   // quoted (2026-10-29)
             s_log.warn("updateParsedDates() dml:" + dml);
 
             count = stmt.executeUpdate(dml);

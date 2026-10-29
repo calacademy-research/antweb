@@ -125,13 +125,14 @@ public final class TaxaPageAction extends AntwebAction {
 
  			if ("species".equals(rank)
 			  && (
-			     Project.ALLANTWEBANTS.equals(overview)
-			  || Project.WORLDANTS.equals(overview)   
+			     Project.ALLANTWEBANTS.equals(overview.getName())
+			  || Project.WORLDANTS.equals(overview.getName())
 			  )
 			  && !"false".equals(isImaged)
 			  && withImages
-			  && overview == null
+			  && !LoginMgr.isLoggedIn(request)
 			  ) {
+			    // Compared by name and without "overview == null" (2026-10-29): before, the check could never be true.
 				String message = "Sorry, due to resultset size, this is an unreasonable request.  Rank:" + Html.esc(rank) + " overview:" + Html.esc(overview);
 				s_log.info("Execute() " + message); 
 				request.setAttribute("message", message);
