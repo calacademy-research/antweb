@@ -3,6 +3,10 @@ package org.calacademy.antweb.home;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * One row of table copyright (id, holder text, year): the copyright an image upload batch records.
+ * Made by CopyrightDb; used by the Image Uploader (ImageUpload, ImageUploadBatchAction) and ImageUploadDb.
+ */
 public class Copyright {
 
     private static final Log s_log = LogFactory.getLog(Copyright.class);

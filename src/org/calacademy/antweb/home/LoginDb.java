@@ -16,6 +16,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * User accounts (table login, with login_project and login_country): read for LoginMgr (cache), log-in,
+ * remember-me and the curator pages; created and saved by admins and users (newLogin.do, saveLogin.do,
+ * editLogin.do); last log-in time; new login numbers that never reuse an old one (nextLoginId); counts of a
+ * curator's uploads, image uploads and page-text edits; hashes old plain-text passwords. Tables login,
+ * login_project, login_country, upload, image_upload, image_uploaded, description_edit and the other page-text
+ * tables. Docs: docs/flows/email-and-password-reset.md, docs/numbers.md. Tests: LoginIdDbTest, LoginEditDbTest.
+ */
 public class LoginDb extends AntwebDb {
     
     private static final Log s_log = LogFactory.getLog(LoginDb.class);

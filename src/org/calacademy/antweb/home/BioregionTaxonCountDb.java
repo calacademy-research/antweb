@@ -11,6 +11,12 @@ import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.geolocale.*;
 
 
+/**
+ * Count crawls of the bioregion species lists (bioregion_taxon); the counting code is in CountDb.
+ * childrenCountCrawl: specimens, species, genera and subfamilies of each row (BioregionDb.populate, nightly
+ * set 3; utilData.do?action=runCountCrawls). imageCountCrawl: images of the bioregion's specimens per name,
+ * rows set to 0 first (ImageCountDb, nightly set 4). Docs: docs/flows/nightly.md (sets 3 and 4), docs/numbers.md.
+ */
 public class BioregionTaxonCountDb extends CountDb {
     
     private static final Log s_log = LogFactory.getLog(BioregionTaxonCountDb.class);

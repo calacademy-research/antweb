@@ -10,6 +10,11 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.Formatter;
 
+/**
+ * Old reader of table adm1 (a plain list of adm1 names), cached in a static list (isValid, getList). Nothing
+ * calls it: adm1s now live in table geolocale and are read through GeolocaleDb and GeolocaleMgr. The comment
+ * inside the class about UploadAction is out of date. Docs: docs/data-model.md section 11 (adm1, unused).
+ */
 public class Adm1Db {
 /* Data from this table is manually fetched in UploadAction to create the search select box. */
 

@@ -5,6 +5,11 @@ import java.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * One row of table event: a curator's edit of a taxon page's images, videos or overview field (operation,
+ * curator id, taxon name, time). Written by DescriptionAction through EventDb; listed on the admin Events report
+ * (query.do?action=events, web/util/events.jsp). The note inside the class names two JSPs that no longer exist.
+ */
 public class Event {
 
     private static final Log s_log = LogFactory.getLog(Event.class);

@@ -10,6 +10,13 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Table worldants_upload: one row per AntCat (WorldAnts) import, nightly set 1 (insertWorldantsUpload when the
+ * file is fetched, updateWorldantsUpload at the end), and getWorldantsChangeCount (how many times the file
+ * changed in the last week). deleteHomonymsWithoutTaxa clears homonym and proj_taxon rows of names gone from
+ * taxon. Used by SpeciesListUploader, SpeciesListUpload, UploadDetails. Tables worldants_upload, homonym,
+ * proj_taxon, taxon. Docs: docs/flows/antcat-to-antweb.md. The comment inside about servers and paths is old.
+ */
 public class WorldantsUploadDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(WorldantsUploadDb.class);

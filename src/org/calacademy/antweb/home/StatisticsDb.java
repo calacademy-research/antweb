@@ -14,6 +14,14 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Site numbers. populateStatistics writes a row of table statistics (specimens, images, imaged species, taxa)
+ * after each specimen upload and AntCat import (UploadAction) and in nightly set 4; the home page and
+ * statsPage.do show the latest row. statsPage.do also reads Global, Bioregion and Museum Data here, and the
+ * "imaged" rule (ANT_IMAGE, antImagedNames: a photo of the ant, not a label) is shared with other pages.
+ * Tables statistics, specimen, image, taxon and the four list tables. Docs: docs/numbers.md,
+ * docs/flows/home-and-statistics.md. Tests: NumberDecisionsDbTest, tests/e2e/test_home_and_stats.py.
+ */
 public class StatisticsDb extends AntwebDb {
     
     private static final Log s_log = LogFactory.getLog(StatisticsDb.class);

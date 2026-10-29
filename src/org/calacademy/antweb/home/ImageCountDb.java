@@ -8,6 +8,13 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * Nightly set 4 (imageCountCrawls): the image counts of the taxon tree, then of every species list. Sets
+ * specimen.image_count from the image table, each taxon's from the specimens filed under its name, adds
+ * subspecies to species, species to genera and so up to the family (by parent_taxon_name), then runs the image
+ * crawls of the project, geolocale, bioregion and museum lists. Tables image, specimen, taxon and the four list
+ * tables. Docs: docs/flows/nightly.md (set 4), docs/numbers.md. Tests: PlaceTotalsDbTest.
+ */
 public class ImageCountDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(ImageCountDb.class);

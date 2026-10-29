@@ -5,6 +5,10 @@ import java.sql.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Old reader of tables country and un_country. Deprecated: its whole body is commented out and nothing calls
+ * it; countries are read from table geolocale (GeolocaleDb, GeolocaleMgr). Docs: docs/data-model.md section 11.
+ */
 public class CountryDb extends AntwebDb {
 
 // Deprecated.  Use GeolocaleDb.

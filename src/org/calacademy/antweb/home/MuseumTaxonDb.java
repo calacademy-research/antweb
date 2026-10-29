@@ -9,6 +9,11 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Reads the museum species lists (table museum_taxon): a museum's taxa (species list download,
+ * speciesListDownload.do) and the statistics per museum for statistics.do. Written by MuseumDb.populate (nightly set 3).
+ * Tables museum_taxon, taxon. Docs: docs/data-model.md (museum_taxon).
+ */
 public class MuseumTaxonDb extends TaxonSetDb {
     
     private static final Log s_log = LogFactory.getLog(MuseumTaxonDb.class);

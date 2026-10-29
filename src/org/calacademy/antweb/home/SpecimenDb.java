@@ -14,6 +14,14 @@ import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.upload.UploadUtil;
 
+/**
+ * Table specimen: reads a specimen (logMgr.do), whether a code exists, the specimens of a Download
+ * Data file (getSpecimenList.do) and of a specimen list lookup (specimenListLookup.do), and curator reports
+ * (list.do: introduced specimens, multi-bioregion taxa, parts with different names). After an upload or as an
+ * admin job (utilData.do): caste and status columns and locality names. Tables specimen, taxon, proj_taxon,
+ * ant_group. Docs: docs/flows/specimen-upload.md, docs/flows/places.md. Tests: DownloadGuardsDbTest,
+ * tests/e2e/test_download_guards.py, tests/e2e/test_parts_by_group.py.
+ */
 public class SpecimenDb extends AntwebDb {
     
     private static final Log s_log = LogFactory.getLog(SpecimenDb.class);

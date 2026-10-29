@@ -10,6 +10,11 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 
+/**
+ * Table operation_lock: getOperationLock (the latest row, for the server status page, serverStatus.do).
+ * setOperationLock, unlock, enable and disable have no callers: nothing sets the lock any more.
+ * Docs: docs/data-model.md (operation_lock, read only).
+ */
 public class OperationLockDb extends AntwebDb {
 
 /* 

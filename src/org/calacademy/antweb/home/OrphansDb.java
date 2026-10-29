@@ -9,6 +9,14 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Taxa that nothing uses any more. Used at the end of a specimen upload: deleteOrphanedSpeciesFromSource
+ * deletes the group's species and subspecies that no specimen uses (not those with page text; refused when too
+ * many), deleteTaxon removes a name with its list rows (curator rows are parked, CuratorTaxonSetDb), and
+ * moveTaxonSupportingDataToAlternate moves a name's data to the name it was changed to. The orphan lists were for
+ * the Orphan Manager pages, removed. Tables taxon, proj_taxon, geolocale_taxon, bioregion_taxon, museum_taxon,
+ * taxon_prop, description_edit, specimen. Docs: docs/flows/specimen-upload.md, docs/numbers.md.
+ */
 public class OrphansDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(OrphansDb.class);

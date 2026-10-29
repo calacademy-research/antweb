@@ -11,6 +11,12 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 
+/**
+ * Table copyright: one row per year with the text "California Academy of Sciences, 2000-<year>", cached in a
+ * static list. getCurrentCopyright inserts the current year's row the first time it is asked for. Used by the
+ * Image Uploader (ImageUploadBatchAction) and ImageUploadDb (an upload batch's copyright_year).
+ * Docs: docs/data-model.md (copyright).
+ */
 public class CopyrightDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(CopyrightDb.class);

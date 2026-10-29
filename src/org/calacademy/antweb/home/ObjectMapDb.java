@@ -16,6 +16,12 @@ import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.search.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Pre-computed maps (table object_map, one row per country, adm1, museum or group). Nightly set 5 (genObjectMaps)
+ * makes the country, adm1 and museum maps; a specimen upload makes its group's map (UploadAction). Read by the
+ * place and museum pages (OverviewAction), the group page (group.do) and the big map (bigMap.do).
+ * Docs: docs/flows/places.md, docs/flows/nightly.md (set 5), docs/data-model.md (object_map).
+ */
 public class ObjectMapDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(ObjectMapDb.class);

@@ -12,6 +12,14 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Museums (table museum) and their species lists (museum_taxon). Reads them for MuseumMgr (cache) and the museum
+ * pages (OverviewAction); admins add, edit and delete them (manageMuseum.do, saveMuseum.do). Nightly set 3
+ * (populate): per museum, sets specimen.museum where specimen.ownedBy names the museum, rebuilds museum_taxon from the
+ * specimens with the higher taxa, counts it (MuseumTaxonCountDb) and writes the totals and charts.
+ * Tables museum, museum_taxon, specimen, taxon. Docs: docs/flows/places.md, docs/flows/nightly.md (set 3).
+ * Tests: PlaceTotalsDbTest, ManagerToolsDbTest, tests/e2e/test_place_pages.py.
+ */
 public class MuseumDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(MuseumDb.class);

@@ -10,6 +10,14 @@ import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.*;
 
+/**
+ * The bioregions (table bioregion) and their species lists. Reads them for BioregionMgr (cache) and the
+ * bioregion pages (OverviewAction). Nightly set 3 (populate): per bioregion, clears its counts, rebuilds
+ * bioregion_taxon from the specimens (rows of source antcat are kept), renames synonym rows to the valid name,
+ * adds the higher taxa, counts (BioregionTaxonCountDb) and writes the totals and charts; then colours, introduced
+ * and endemic flags. Tables bioregion, bioregion_taxon, specimen, taxon. Docs: docs/flows/places.md,
+ * docs/flows/nightly.md (set 3), docs/numbers.md. Tests: PlaceTotalsDbTest, tests/e2e/test_place_pages.py.
+ */
 public class BioregionDb extends AntwebDb {
 /* Data from this table is manually fetched in UploadAction to create the search select box. */
 

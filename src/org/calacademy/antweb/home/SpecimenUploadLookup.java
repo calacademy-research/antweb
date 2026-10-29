@@ -9,6 +9,10 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 
+/**
+ * Old list of "group name: number of specimens" from table specimen, cached in a static list. Nothing calls it;
+ * the comment inside about UploadAction is out of date. Tables specimen, ant_group.
+ */
 public class SpecimenUploadLookup {
 /* Data from this table is manually fetched in UploadAction to create the search select box. */
 

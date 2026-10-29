@@ -7,6 +7,12 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.DBUtil;
 import org.calacademy.antweb.util.ServerStatusAction;
 
+/**
+ * Table server (one row of server switches): is_down_time, set by an admin on serverStatus.do
+ * (toggleDownTime), stops curator uploads with a "down for site maintenance" message (UploadAction,
+ * SpecimenUploadJob); debug, set on serverDebug.do and read by SessionRequestFilter. The downtime message is
+ * kept in a static field. Docs: docs/data-model.md (server), docs/flows/specimen-upload.md.
+ */
 public class ServerDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(ServerDb.class);

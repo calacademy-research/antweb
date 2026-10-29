@@ -10,6 +10,13 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Projects (table project): read for ProjectMgr (cache) and the project pages (OverviewAction); saved by admins
+ * (editProject.do); listed for the Species List Tool. Nightly set 3 (updateCounts): each project's totals and
+ * charts from its species list (proj_taxon); image totals come from set 4 (PlaceImageCountDb).
+ * Tables project, proj_taxon, specimen, taxon. Docs: docs/flows/nightly.md (set 3), docs/numbers.md.
+ * Tests: PlaceTotalsDbTest.
+ */
 public class ProjectDb extends AntwebDb {
     
     private static final Log s_log = LogFactory.getLog(ProjectDb.class);

@@ -18,6 +18,12 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 
 
+/**
+ * Base class of the home package's database classes (the *Db classes). Holds the connection the caller
+ * opened (the caller commits or rolls back) and a few taxon checks shared by the subclasses: isExists,
+ * isGenusExists, isSubfamilyForGenus (TaxonDb, HomonymDb) and delete (one taxon row). Table taxon.
+ * Docs: docs/data-model.md.
+ */
 public class AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(AntwebDb.class);
