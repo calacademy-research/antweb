@@ -32,7 +32,7 @@ String connString = DBUtil.getConnectionList();
       //A.log("connString:" + connString);
 %>
 <pre>
-<br><h3>Connection List:</h3><%= connString%> 
+<br><h3>Connection List:</h3><%= Html.esc(connString).replace("&lt;br&gt;", "\n") %>
 </pre>
 <br>
 <%
@@ -40,7 +40,7 @@ String oldConnString = DBUtil.getOldConnectionList();
       //A.log("connString:" + connString);
 %>
 <pre>
-<br><h3>Old Connection List:</h3><%= oldConnString%> 
+<br><h3>Old Connection List:</h3><%= Html.esc(oldConnString).replace("&lt;br&gt;", "\n") %>
 </pre>
 <br>
 <%

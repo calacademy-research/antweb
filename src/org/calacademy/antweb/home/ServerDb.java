@@ -46,17 +46,16 @@ public class ServerDb extends AntwebDb {
         return debug;
     }
     public static void setServerDebug(String value, Connection connection) throws SQLException {
-        Statement stmt = null;
-        ResultSet rset = null;
+        PreparedStatement stmt = null;
         try {
-            stmt = DBUtil.getStatement(connection, "ServerDb.setServerDebug()");
-            String dml = "update server set debug = " + DBUtil.sqlQuote(value);   // quoted (2026-10-29)
-            stmt.executeUpdate(dml);
+            stmt = DBUtil.getPreparedStatement(connection, "ServerDb.setServerDebug()", "update server set debug = ?");
+            stmt.setString(1, value);   // bound (2026-10-29)
+            stmt.executeUpdate();
         } catch (SQLException e) {
             s_log.error("setServerDebug() " + e);
             throw e;
         } finally {
-            DBUtil.close(stmt, rset, "ServerDb.setServerDebug()");
+            DBUtil.close(stmt, "ServerDb.setServerDebug()");
         }
     }
 

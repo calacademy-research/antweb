@@ -151,11 +151,36 @@ def test_database_classes():
     print("Database classes: escaped admin lists, scoped history, copyrights, museum and bioregion counts.")
 
 
+def test_header_audit_actions():
+    """2026-10-29: admin checks before any work; no write on a GET; bound SQL; load flag after the load."""
+    for rel, check in (("util/ServerDebug.java", "Check.admin(request, mapping)"),
+                       ("util/ServerStatusAction.java", "LoginMgr.mustBeAdmin(request, mapping)")):
+        src = code(read(rel))
+        ex = method(src, "public ActionForward execute(", None)
+        assert check in ex, rel + ": no admin check"
+        assert ex.index(check) < ex.index("DBUtil.getConnection("), rel + ": database work before the admin check"
+    im = code(read("curate/IntroducedMapMgrAction.java"))
+    assert 'PostOnly.confirm(request, mapping' in im, "empty maps written without the POST confirmation"
+    i = im.index('taxonPropDb.updateIntroducedMap(taxonName, "")')
+    assert "if (createEmptyMaps)" in im[max(0, i - 200):i], "empty maps written on every page load"
+    assert "!createEmptyMaps" in im, "the add-rows POST would run the row save"
+    assert "createEmptyMaps" in open(os.path.join(ROOT, "web/curate/introducedMapMgr-body.jsp"), encoding="utf-8").read()
+    cr = read("search/CompareResultsAction.java")
+    assert not re.search(r"[\w.+-]+@[\w-]+\.[\w.]+", cr), "an email address in CompareResultsAction"
+    am = code(read("util/AntwebMgr.java"))
+    assert am.index("GeolocaleMgr.populate(connection") < am.index("isGeolocalePopulated = true"), \
+        "geolocale flag set before the load"
+    sd = method(read("home/ServerDb.java"), "public static void setServerDebug(", "\n    }\n")
+    assert '"update server set debug = ?"' in sd and "stmt.setString(1, value)" in sd, "server debug value not bound"
+    print("Server debug/status admin first, introduced maps POST only, no personal data, geolocale flag, bound debug.")
+
+
 def main():
     test_count_check()
     test_curator_tools()
     test_sql_values_quoted()
     test_database_classes()
+    test_header_audit_actions()
 
 
 if __name__ == "__main__":

@@ -62,10 +62,6 @@ static double getVersion () {
             connection = DBUtil.getConnection(dataSource1, dbMethodName);
  
             boolean isAdminAction = "toggleDownTime".equals(action) || "email".equals(action);
-            if (isAdminAction && !LoginMgr.isAdmin(request)) {
-                request.setAttribute("message", "Administrators only.");
-                return mapping.findForward("message");
-            }
             if (isAdminAction) {
                 ActionForward confirm = PostOnly.confirm(request, mapping,
                     "toggleDownTime".equals(action) ? "Toggle upload down time." : "Email the server status report.");

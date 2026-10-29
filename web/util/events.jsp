@@ -12,7 +12,7 @@
 
 <%@ page import="java.util.*" %>
 
-<%@include file="/curate/curatorCheck.jsp" %>
+<%@include file="/curate/adminCheck.jsp" %>
 
 <% 
     if (org.calacademy.antweb.util.HttpUtil.isStaticCallCheck(request, out)) return;

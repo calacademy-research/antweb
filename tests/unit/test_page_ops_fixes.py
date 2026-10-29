@@ -44,14 +44,20 @@ BEAN_PAGES = [
     "web/specimen.jsp", "web/specimenImages.jsp", "web/showBrowse.jsp", "web/showBrowse-body.jsp",
     "web/taxonPage.jsp", "web/imagePage.jsp", "web/homonymPage.jsp", "web/homonymPage-body.jsp",
     "web/comparison-body.jsp", "web/mapComparison-body.jsp", "web/bigPicture-body.jsp", "web/oneView-body.jsp",
+    # 2026-10-29: the field guide and the search pages (session specimen and search-results beans).
+    "web/search/fieldGuide-body.jsp", "web/search/advancedSearch-body.jsp",
+    "web/search/advancedSearchResults-body.jsp", "web/search/advancedSearchResultsByTaxon-body.jsp",
+    "web/search/recentSearchResults-body.jsp", "web/search/bayAreaSearchResults-body.jsp",
+    "web/dynamicMap.jsp", "web/displayOneShot.jsp", "web/displaySpecimenImage.jsp",
 ]
 
 
 def test_no_request_values_on_beans():
-    pat = re.compile(r'<jsp:setProperty\s+name="(taxon|specimen|theImageTaxon)"\s+property="\*"')
+    # Any bean: these pages' beans (taxon, specimen, search results) are filled by the action.
+    pat = re.compile(r'<jsp:setProperty\s+name="\w+"\s+property="\*"')
     for p in BEAN_PAGES:
-        assert not pat.search(read(p)), p + ": request values are copied onto the taxon/specimen bean again"
-    print("No jsp:setProperty property=* on the taxon and specimen beans of", len(BEAN_PAGES), "pages.")
+        assert not pat.search(read(p)), p + ": request values are copied onto a session bean again"
+    print("No jsp:setProperty property=* on the session beans of", len(BEAN_PAGES), "pages.")
 
 
 def test_pages():

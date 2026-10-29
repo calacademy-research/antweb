@@ -50,6 +50,9 @@ public final class ServerDebug extends AntwebAction {
 
 		HttpUtil.setUtf8(request, response);
 
+		// Administrators only, before any database work (the JSP check ran after this action).
+		ActionForward c = Check.admin(request, mapping); if (c != null) return c;
+
 		DynaActionForm df = (DynaActionForm) form;
 
 		String message = null;
@@ -72,10 +75,6 @@ public final class ServerDebug extends AntwebAction {
 			connection = DBUtil.getConnection(dataSource, dbMethodName);
 
 			if (action != null) {
-				if ("setDebug".equals(action) && !LoginMgr.isAdmin(request)) {
-					request.setAttribute("message", "Administrators only.");
-					return mapping.findForward("message");
-				}
 				if ("setDebug".equals(action)) {
 					ActionForward confirm = PostOnly.confirm(request, mapping, "Set server debug: " + param);
 					if (confirm != null) return confirm;

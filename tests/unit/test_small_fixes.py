@@ -476,7 +476,8 @@ def test_audit_triage_20261029(sources):
     assert "Html.escAttr(link_params)" in fg and 'requestUri == ""' not in fg
     si = read("web/specimenImages-body.jsp")
     assert "details:<%= specimen.getDetails() %>" not in si
-    assert "Html.escAttr(Html.js(code))" in read("web/search/imagePickImages.jsp")
+    # imagePickImages.jsp was removed 2026-10-29: nothing included it.
+    assert not os.path.exists(os.path.join(ROOT, "web/search/imagePickImages.jsp"))
     assert "Html.escAttr(prettyName)" in read("web/dynamicMap.jsp")
     up = sources["src/org/calacademy/antweb/home/SpecimenUploadDb.java"]
     assert up.count("throw e;") >= 3, "dropSpecimens and deleteSpecimens rethrow"

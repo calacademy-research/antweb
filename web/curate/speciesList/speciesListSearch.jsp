@@ -7,6 +7,8 @@
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.curate.speciesList.*" %>
 
+<%@include file="/curate/curatorCheck.jsp" %>
+
 
 <jsp:useBean id="toolForm" scope="session" class="org.calacademy.antweb.curate.speciesList.SpeciesListToolForm" />
 <jsp:setProperty name="toolForm" property="*" />
@@ -33,9 +35,9 @@
 <div id="overview_data">
 
 <form id="refSpeciesListForm" action="<%= AntwebProps.getDomainApp() %>/speciesListTool.do">
-      <input type="hidden" id="mapSpeciesList1Name" name="mapSpeciesList1Name" value="<%= mapSpeciesList1Name %>"/>
-      <input type="hidden" id="mapSpeciesList2Name" name="mapSpeciesList2Name" value="<%= mapSpeciesList2Name %>"/>
-      <input type="hidden" id="mapSpeciesList3Name" name="mapSpeciesList3Name" value="<%= mapSpeciesList3Name %>"/>
+      <input type="hidden" id="mapSpeciesList1Name" name="mapSpeciesList1Name" value="<%= Html.escAttr(mapSpeciesList1Name) %>"/>
+      <input type="hidden" id="mapSpeciesList2Name" name="mapSpeciesList2Name" value="<%= Html.escAttr(mapSpeciesList2Name) %>"/>
+      <input type="hidden" id="mapSpeciesList3Name" name="mapSpeciesList3Name" value="<%= Html.escAttr(mapSpeciesList3Name) %>"/>
       <input type="hidden" id="refSpeciesListType" name="refSpeciesListType" value="speciesList"/>
 
       <!-- Though included in this form, this is printed above. -->
@@ -62,10 +64,8 @@
        if (prettySpeciesListName != null && prettySpeciesListName.length() > maxStrLength) displayName = prettySpeciesListName.substring(0, maxStrLength) + "...";      
 
  %>        
-        <option id="refSpeciesListName" value="<%= listKey %>" <% if (listKey.equals(refSpeciesListName)) out.print("selected"); %>><%= spacer + displayName %></option>
+        <option id="refSpeciesListName" value="<%= Html.escAttr(listKey) %>" <% if (listKey.equals(refSpeciesListName)) out.print("selected"); %>><%= spacer + Html.esc(displayName) %></option>
 <% } %>
-        //AntwebUtil.log("speciesListSearch-body.jsp speciesListNameIter:" + speciesListNameIter + " refSpeciesListName:" + refSpeciesListName);
-     } %>
      
       </select>
       <br><input type="submit" name="go" value="go">      
