@@ -27,11 +27,27 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-# The model is set here and only here. When you change it, update the two prices next to it
-# (US dollars per million input/output tokens, used only for the cost estimate in the job
-# summary; see https://platform.claude.com/docs/en/about-claude/pricing).
+# The model is set here and only here. When you change it, update the prices next to it (US dollars
+# per million tokens; used for the cost in the job summary and, by claude_audit.py, for the spend
+# ledger that pauses the audits before the API credit runs out). Source: Anthropic pricing page,
+# https://platform.claude.com/docs/en/about-claude/pricing (Claude Opus 5.5: input $4, output $20,
+# 5-minute cache write $5, 1-hour cache write $8, cache read $0.20; checked 2026-10-29).
 MODEL = "claude-opus-5-5"
 PRICE_IN, PRICE_OUT = 4.00, 20.00
+PRICE_CACHE_WRITE_5M, PRICE_CACHE_WRITE_1H, PRICE_CACHE_READ = 5.00, 8.00, 0.20
+
+
+def cost(usage):
+    """US dollars for one Messages API answer, from its usage block. input_tokens counts only the
+    uncached input; cache writes and reads are reported separately (the scripts set no cache_control,
+    so these are normally 0). A cache write without the 5m/1h split is priced as 5-minute."""
+    usage = usage or {}
+    n = lambda k: usage.get(k) or 0  # noqa: E731
+    write = usage.get("cache_creation") or {}
+    w1h = write.get("ephemeral_1h_input_tokens") or 0
+    w5m = (write.get("ephemeral_5m_input_tokens") or 0) if write else n("cache_creation_input_tokens") - w1h
+    return (n("input_tokens") * PRICE_IN + n("output_tokens") * PRICE_OUT + w5m * PRICE_CACHE_WRITE_5M
+            + w1h * PRICE_CACHE_WRITE_1H + n("cache_read_input_tokens") * PRICE_CACHE_READ) / 1e6
 
 START = time.monotonic()  # the 17-minute budget counts from the script's start
 COMMENT_LIMIT = 60_000  # GitHub rejects comments over 65,536 characters; room left for the footer
@@ -378,17 +394,17 @@ def review(api_key, token, repo, pr, sha):
 
     usage = result.get("usage", {})
     tin, tout = usage.get("input_tokens", 0), usage.get("output_tokens", 0)
-    cost = f"${tin / 1e6 * PRICE_IN + tout / 1e6 * PRICE_OUT:.3f}"
+    cost_text = f"${cost(usage):.3f}"
     lines.append(f"- Model reported: `{result.get('model', '?')}`; stop reason: {result.get('stop_reason')}")
     lines.append(f"- Tokens: {tin:,} input, {tout:,} output")
-    lines.append(f"- Estimated cost: {cost} (at ${PRICE_IN}/${PRICE_OUT} per million input/output tokens)")
+    lines.append(f"- Estimated cost: {cost_text} (at ${PRICE_IN}/${PRICE_OUT} per million input/output tokens)")
     # Which content blocks came back (type and size only, never their content): shows whether
     # the output budget went to thinking or to the review text.
     blocks = describe_blocks(result.get("content", []))
     lines.append(f"- Content blocks: {blocks}")
     summary(lines)
     print(f"::notice::Claude review: {result.get('model', MODEL)}, {tin} input + {tout} output tokens, "
-          f"estimated {cost}, stop {result.get('stop_reason')}, blocks: {blocks}")
+          f"estimated {cost_text}, stop {result.get('stop_reason')}, blocks: {blocks}")
 
     text = extract_text(result)
     cut_short = result.get("stop_reason") == "max_tokens"
