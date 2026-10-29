@@ -9,15 +9,27 @@ encrypted (openssl cms, AES-256) for the certificate in .github/audit-recipient.
 workflow artifact. Only the holder of the matching private key can read it. The job summary shows the
 area, the size sent, the token use and the estimated cost, never a finding.
 
+Spend guard (Brian Fisher, 2026-10-29; settings and reasons in .github/audit-budget.ini): before calling
+the API, the run estimates the credit left (start_balance, minus the audit costs in the ledger since start,
+minus review_estimate for each Claude review run since start) and pauses, with a line in the job summary,
+when that is at or below the reserve or the credit has expired. After a call it writes its own cost
+(cr.cost: the token counts of the answer times the prices in claude_review.py) to OUT/ledger-line.tsv; the
+workflow appends that line to ledger.tsv on the audit-reports branch.
+
 Environment (set by the workflow):
   ANTHROPIC_API_KEY  API key (repository secret)
   AREA               optional: the chunk to audit (e.g. "upload-1"); empty = the next one in the rotation
   SCHEDULE           the cron string of a scheduled run (picks the slot of the day), empty otherwise
-  OUT                output folder (the encrypted report goes there)
+  OUT                output folder (the encrypted report and the ledger line go there)
+  LEDGER             the ledger.tsv read from the audit-reports branch (missing file = spend unknown = pause)
+  GITHUB_TOKEN, GITHUB_REPOSITORY, GITHUB_RUN_ID  to count the Claude review runs and label the ledger line
 Standard library only, plus the openssl command line tool.
 """
 
+import configparser
 import datetime
+import json
+import urllib.parse
 import fnmatch
 import os
 import subprocess
@@ -160,6 +172,99 @@ def pick(all_chunks, area, schedule):
     return all_chunks[index]
 
 
+BUDGET = Path(__file__).resolve().parent.parent / "audit-budget.ini"
+LEDGER_HEADER = "# utc_time\trun_id\tkind\tcost_usd\tnote\n"
+
+
+def parse_utc(text):
+    return datetime.datetime.fromisoformat(text.strip().replace("Z", "+00:00")).astimezone(datetime.timezone.utc)
+
+
+def load_budget(path=BUDGET):
+    cp = configparser.ConfigParser(inline_comment_prefixes=("#",))
+    if not cp.read(path, encoding="utf-8"):
+        raise FileNotFoundError(path)
+    b = cp["budget"]
+    return {"start": parse_utc(b["start"]), "start_balance": float(b["start_balance"]),
+            "reserve": float(b["reserve"]), "expires": datetime.date.fromisoformat(b["expires"].strip()),
+            "review_estimate": float(b["review_estimate"])}
+
+
+def ledger_spent(text, start):
+    """(dollars, lines) of the ledger lines at or after start. Lines: utc_time, run_id, kind, cost, note
+    (tab-separated); comments and lines that do not parse are ignored."""
+    total, count = 0.0, 0
+    for line in text.splitlines():
+        parts = line.split("\t")
+        if not line.strip() or line.startswith("#") or len(parts) < 4:
+            continue
+        try:
+            when, dollars = parse_utc(parts[0]), float(parts[3])
+        except ValueError:
+            continue
+        if when >= start:
+            total, count = total + dollars, count + 1
+    return total, count
+
+
+def ledger_line(now, run_id, kind, dollars, note):
+    note = " ".join(str(note).split())  # no tabs or newlines inside a field
+    return f"{now.strftime('%Y-%m-%dT%H:%M:%SZ')}\t{run_id}\t{kind}\t{dollars:.4f}\t{note}\n"
+
+
+def count_review_runs(repo, token, start):
+    """Claude review runs (each attempt counts) created since start whose job was not skipped; None when
+    the GitHub API cannot be read. One request per 100 runs."""
+    query = urllib.parse.urlencode({"created": ">=" + start.strftime("%Y-%m-%dT%H:%M:%SZ"), "per_page": 100})
+    url = f"{cr.GH_API}/repos/{repo}/actions/workflows/claude-review.yml/runs?{query}"
+    n = 0
+    try:
+        while url:
+            page, link = cr.gh("GET", url, token)
+            n += sum(max(1, r.get("run_attempt") or 1) for r in page.get("workflow_runs", [])
+                     if r.get("conclusion") != "skipped")
+            url = None
+            for part in link.split(","):
+                if 'rel="next"' in part:
+                    url = part[part.index("<") + 1: part.index(">")]
+    except (OSError, ValueError, json.JSONDecodeError) as e:
+        print(f"::warning::Could not count the Claude review runs: {e!r}")
+        return None
+    return n
+
+
+def budget_decision(budget, audit_spent, review_runs, now):
+    """(run?, estimated dollars left, message). Pauses at or below the reserve and from the expiry day on."""
+    left = budget["start_balance"] - audit_spent - review_runs * budget["review_estimate"]
+    if now.date() >= budget["expires"]:
+        return False, left, (f"Audit paused: the API credit expired on {budget['expires']} "
+                             "(update .github/audit-budget.ini for new credit)")
+    if left <= budget["reserve"]:
+        return False, left, f"Audit paused: estimated credit left ${left:.2f}, reserve ${budget['reserve']:.2f}"
+    return True, left, f"Estimated credit left before this run: ${left:.2f} (audits pause at ${budget['reserve']:.2f})"
+
+
+def budget_check(now):
+    """(run?, summary lines) from the config, the ledger and the review runs."""
+    try:
+        budget = load_budget()
+    except (OSError, KeyError, ValueError) as e:
+        return False, [f"- Audit paused: the budget file {BUDGET.name} could not be read ({e!r})"]
+    ledger = Path(os.environ.get("LEDGER", "ledger.tsv"))
+    if not ledger.is_file():
+        return False, ["- Audit paused: the spend ledger (ledger.tsv on the audit-reports branch) could not be read"]
+    spent, entries = ledger_spent(ledger.read_text(encoding="utf-8", errors="replace"), budget["start"])
+    reviews = count_review_runs(os.environ.get("GITHUB_REPOSITORY", ""), os.environ.get("GITHUB_TOKEN", ""),
+                                budget["start"])
+    review_note = (f"{reviews} Claude review runs at ${budget['review_estimate']:.2f} each" if reviews is not None
+                   else "Claude review runs could not be counted (left out)")
+    go, left, message = budget_decision(budget, spent, reviews or 0, now)
+    lines = [f"- {message}",
+             f"- Since {budget['start']:%Y-%m-%d %H:%M} UTC (balance ${budget['start_balance']:.2f}): "
+             f"audits ${spent:.2f} ({entries} ledger lines); {review_note}"]
+    return go, lines
+
+
 def main():
     api_key = cr.env("ANTHROPIC_API_KEY")
     out = Path(os.environ.get("OUT", "audit-out"))
@@ -168,6 +273,13 @@ def main():
     name, files = pick(all_chunks, os.environ.get("AREA", "").strip(), os.environ.get("SCHEDULE", "").strip())
     if not name:
         cr.summary(["### Claude audit", "", f"- No scheduled audit after {LAST_DAY} (the API credit expires 2026-11-08)."])
+        return 0
+
+    now = datetime.datetime.now(datetime.timezone.utc)
+    go, budget_lines = budget_check(now)
+    if not go:
+        cr.summary(["### Claude audit", "", f"- Area not audited: `{name}`"] + budget_lines)
+        print("::notice::" + budget_lines[0][2:])
         return 0
 
     sfx = cr.secrets.token_hex(6)
@@ -181,15 +293,26 @@ def main():
     result, error = cr.call_claude(api_key, user)
     lines = ["### Claude audit", "", f"- Area: `{name}` ({len(files)} files, {len(body):,} characters sent)",
              f"- Model: `{cr.MODEL}`", f"- Rotation: {len(all_chunks)} areas in all: " + ", ".join(n for n, _ in all_chunks)]
+    lines += budget_lines
+    run_id = os.environ.get("GITHUB_RUN_ID", "local")
     if error:
         lines.append(f"- API error: {error}")
+        if "timed out" in error:
+            # A request that timed out may still have been processed and billed: count the most it can cost.
+            guess = (len(user) / 3.5 * cr.PRICE_IN + cr.MAX_TOKENS * cr.PRICE_OUT) / 1e6
+            (out / "ledger-line.tsv").write_text(ledger_line(now, run_id, "audit-timeout", guess, f"{name} estimate"),
+                                                 encoding="utf-8")
+            lines.append(f"- Ledger: ${guess:.2f} (upper estimate; the request may have been billed)")
         cr.summary(lines)
         print(f"::error::Anthropic API error: {error}")
         return 1
     usage = result.get("usage") or {}
     tin, tout = usage.get("input_tokens", 0), usage.get("output_tokens", 0)
-    cost = tin / 1e6 * cr.PRICE_IN + tout / 1e6 * cr.PRICE_OUT
-    lines += [f"- Tokens: {tin:,} in, {tout:,} out; estimated cost ${cost:.2f}",
+    cost = cr.cost(usage)
+    (out / "ledger-line.tsv").write_text(ledger_line(now, run_id, "audit", cost, name), encoding="utf-8")
+    cache = usage.get("cache_read_input_tokens", 0) or 0, usage.get("cache_creation_input_tokens", 0) or 0
+    lines += [f"- Tokens: {tin:,} in, {tout:,} out" + (f", {cache[0]:,} cache read, {cache[1]:,} cache write" if any(cache) else "")
+              + f"; cost ${cost:.2f} (written to the spend ledger)",
               f"- Stop reason: {result.get('stop_reason')}",
               "- The report is encrypted (artifact); it is not shown here because the repository is public."]
 

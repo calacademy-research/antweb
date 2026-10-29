@@ -703,7 +703,7 @@ jobs:
       - name: Search, collection and locality number fixes B50 to B53 (tests/unit/test_numbers_search_fixes.py)
         run: python3 tests/unit/test_numbers_search_fixes.py
 
-      - name: Claude audit rotation (tests/unit/test_claude_audit.py)
+      - name: Claude audit rotation and spend guard (cost, ledger sum, pause at the reserve; tests/unit/test_claude_audit.py)
         run: python3 tests/unit/test_claude_audit.py
 
       - name: Public pages, search, image upload and server scripts, fixes of 2026-10-27 (tests/unit/test_page_ops_fixes.py)
