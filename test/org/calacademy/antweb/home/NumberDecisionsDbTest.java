@@ -231,6 +231,24 @@ public class NumberDecisionsDbTest extends TestCase {
         exec("update group_count set species = 4 where group_id = " + all);   // the largest group, the old Totals rule
         r = check();
         assertEquals(list(r), 1, real(r, "admin.groups"));
+        exec("update group_count set species = 5 where group_id = " + all);
+
+        // 2026-10-29: an upload recounts its own group's row (SpecimenUploadDb.recordUpload), not the Totals row. Staging
+        // run 40940710186: groups.do showed the nightly count of the test group after an upload that changed it.
+        exec("insert into specimen (code, taxon_name, status, country, family, subfamily, genus, species, access_group, collectioncode, localitycode, decimal_latitude, flag) values"
+            + " ('g2d', '" + CA + "', 'valid', 'Madagascar', 'formicidae', '" + FORM + "', 'camponotus', 'a', 2, 'c9', 'l9', -18.9, null),"
+            + " ('g2e', '" + CA + "', 'valid', 'Madagascar', 'formicidae', '" + FORM + "', 'camponotus', 'a', 2, 'c9', 'l9', -18.9, 'red')");
+        assertTrue(new GroupCountDb(connection).recountGroup(2));
+        assertEquals("group 2 specimens after its upload: 3 + g2d (g2e is red-flagged)", 4, one("select specimens from group_count where group_id = 2"));
+        assertEquals("group 2 flagged", 1, one("select flagged from group_count where group_id = 2"));
+        assertEquals("group 2 collections c1, c3, c9", 3, one("select collections from group_count where group_id = 2"));
+        assertEquals("group 1 unchanged", 4, one("select species from group_count where group_id = 1"));
+        assertEquals("the Totals row stays the nightly count's", 8, one("select specimens from group_count where group_id = " + all));
+        exec("delete from specimen where access_group = 2");
+        assertTrue(new GroupCountDb(connection).recountGroup(2));
+        assertEquals("a group left without specimens: 0", 0, one("select specimens from group_count where group_id = 2"));
+        assertEquals(0, one("select flagged from group_count where group_id = 2"));
+        assertFalse("never the Totals row", new GroupCountDb(connection).recountGroup(all));
     }
 
     /** The Totals row is never zeros: an ant_group row with id 0, or an older Totals row, does not leave 0 shown (staging 2026-10-24). */

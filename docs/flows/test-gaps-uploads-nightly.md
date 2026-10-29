@@ -33,7 +33,7 @@ Rules for every proposed test: it runs against **staging only** (or locally, or 
 | Post-processing (upload row, counts, maps) | none |
 | Report written and linked | e2e `test_upload_report_links.py` (links of existing reports, read-only); unit, not in CI: `UploadReportExistsTest` |
 | Backup file download (`uploadFile.do`) | e2e `test_privacy.py::test_upload_file_download_requires_login`; unit, not in CI: `UploadFileAccessTest` |
-| Upload-complete email | unit, not in CI: `UploadNoticeTest` (settings, texts, exclusions) |
+| Upload-complete email | unit, in CI since 2026-10-29: `UploadNoticeTest` (settings, texts, exclusions, report summary) |
 | Nightly TaxonWorks job | none (only by watching `taxonworksNightly.log`) |
 
 ### Image upload
@@ -51,7 +51,7 @@ Rules for every proposed test: it runs against **staging only** (or locally, or 
 | ImageMagick policy | CI container step `tests/container/imagemagick_policy_check.sh` |
 | Replacement: backup file exists, report link to it | none |
 | ImageMagick failure reported | none |
-| Email | unit, not in CI: `UploadNoticeTest.testImagesComplete*` |
+| Email | unit, in CI: `UploadNoticeTest.testImagesComplete*` |
 
 ### AntCat import and nightly run
 

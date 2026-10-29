@@ -730,6 +730,9 @@ jobs:
       - name: Indet form tool, names, SQL and command flow without a database (tests/unit/test_indet_form.py)
         run: python3 tests/unit/test_indet_form.py
 
+      - name: Names the e2e tests expect a test-group upload to write, by the indet rules (tests/unit/test_upload_expected_names.py)
+        run: python3 tests/unit/test_upload_expected_names.py
+
       - name: Pheidole head export, plan and contact sheets without a database (tests/unit/test_pheidole_export.py)
         run: python3 tests/unit/test_pheidole_export.py
 
@@ -779,7 +782,9 @@ jobs:
       - name: Java unit tests of the upload decisions of 2026-10-28 (current valid name not in AntWeb, lines identified only to genus or subfamily, UTF-8 only)
         # UploadDecisions1028Test: a name whose current valid name has no taxon in AntWeb keeps its uploaded name and is listed;
         # genus-only and subfamily-only lines are filed as indet and listed; species indet, Indet, indet., undet
-        # are filed as (indet), the one form (2026-10-28); a file that is not UTF-8 is refused with its first bad line.
+        # are filed as (indet), the one form (2026-10-28); a file that is not UTF-8 is refused with its first bad line;
+        # species indet with a subspecies is filed as <Genus> (indet), subspecies ignored, and indet as the subspecies is
+        # dropped, each listed under "Name corrected" (2026-10-29).
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
@@ -793,7 +798,47 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadDecisions1028Test > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (8 tests)" /tmp/out.txt
+            grep -q "^OK (11 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the upload-complete email (UploadNoticeTest)
+        # UploadNoticeTest: who gets the email, its texts, and (2026-10-29) the summary of what in the upload report
+        # needs attention: lines not loaded (sections marked not uploaded), lines corrected (MessageMgr.CORRECTED),
+        # red-flagged specimens; other sections are notes and not counted.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/upload/UploadNoticeTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadNoticeTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (19 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the upload report page (UploadReportPageTest)
+        # UploadReportPage (2026-10-29): rendered from fixtures modelled on EcoFoG's and a CAS TaxonWorks report, every
+        # other section, and an empty run: the summary's counts equal the email's (one rule, MessageMgr.attention), the
+        # groups, long sections collapsed, the checks that found nothing in one line, line links, escaping.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/upload/UploadReportPageTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadReportPageTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            grep -v "LogMgr" /tmp/out.txt | tail -3
+            grep -q "^OK (6 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Java unit tests of the upload and nightly decisions of 2026-10-27 (strict upload dates, day 00 is the 1st, unknown genus without subfamily, TaxonWorks collection notes, failed nightly set stops the run)
@@ -935,10 +980,12 @@ jobs:
             grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
-      - name: Add an uploader and the login form (input checks, draft welcome email, page; database steps against MySQL 8.4)
-        # UploaderOnboardingTest: the form's checks, the welcome email text (plain text, signed "[Your name]",
-        # no "ignore", no "reply to this email"), the summary page's Draft email box (escaped, read-only,
-        # Copy and mailto:, no Send button; AntWeb no longer sends it, 2026-10-21), and
+      - name: Add an uploader and the login form (input checks, welcome email and Send, page; database steps against MySQL 8.4)
+        # UploaderOnboardingTest: the form's checks (quotes trimmed from a new group's names, 2026-10-29), the welcome
+        # email text (plain text, signed with the administrator's name, "[Your name]" without one, no "ignore", no
+        # "reply to this email"), the summary page's Welcome email box (escaped, editable, Send and Copy, no mailto:;
+        # read-only after sending), the checks before Send (only to the new login's address, one-time link kept,
+        # length limits, no token in a message), and
         # which refused POSTs are shown again filled in (Csrf.mayRefill: stale token on addUploader.do only).
         # UploaderOnboardingDbTest: new person and new upload group, existing account by email or
         # username, moving only when asked, refusals change nothing, login.created kept, inactive
@@ -972,7 +1019,7 @@ jobs:
               /t/org/calacademy/antweb/curate/UploaderOnboardingTest.java /t/org/calacademy/antweb/curate/UploaderOnboardingDbTest.java \
               /t/org/calacademy/antweb/curate/LoginEditTest.java /t/org/calacademy/antweb/curate/LoginEditDbTest.java \
               /t/org/calacademy/antweb/curate/LoginIdDbTest.java
-            for t in curate.UploaderOnboardingTest:8 curate.UploaderOnboardingDbTest:10 curate.LoginEditTest:11 curate.LoginEditDbTest:6 curate.LoginIdDbTest:8; do
+            for t in curate.UploaderOnboardingTest:11 curate.UploaderOnboardingDbTest:10 curate.LoginEditTest:11 curate.LoginEditDbTest:6 curate.LoginIdDbTest:8; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

@@ -52,6 +52,66 @@ public class UploadUtil {
         return isIndetEpithet(species) ? INDET_EPITHET : species;
     }
 
+    /** IndetColumns.kind values: what indetColumns() corrected. */
+    public static final String SUBSPECIES_INDET_DROPPED = "subspeciesIndetDropped";
+    public static final String SPECIES_INDET_SUBSPECIES_IGNORED = "speciesIndetSubspeciesIgnored";
+
+    /** The species and subspecies a line is filed under, and what was corrected (kind null: nothing). */
+    public static final class IndetColumns {
+        public final String species;
+        public final String subspecies;
+        public final String kind;
+        /** The subspecies value as given, when it was dropped (kind not null). */
+        public final String droppedSubspecies;
+        IndetColumns(String species, String subspecies, String kind, String droppedSubspecies) {
+            this.species = species;
+            this.subspecies = subspecies;
+            this.kind = kind;
+            this.droppedSubspecies = droppedSubspecies == null ? null : droppedSubspecies.trim();
+        }
+    }
+
+    /** "sp.", "indet", "undet", "(indet)" (any case, trailing period or "?"): not identified at this rank. */
+    static boolean isIndetLike(String epithet) {
+        if (epithet == null) return false;
+        String s = epithet.trim();
+        while (s.endsWith("?")) s = s.substring(0, s.length() - 1).trim();
+        return isIndetEpithet(s) || "sp".equalsIgnoreCase(s) || "sp.".equalsIgnoreCase(s);
+    }
+
+    /**
+     * A specimen counts at each rank it is identified to, and no further (Brian Fisher, 2026-10-28/29). With a
+     * subspecies value:
+     *  - species blank or indet-like ("indet", "undet", "sp.", "(indet)"): identified only to genus, filed as
+     *    "(indet)"; the subspecies value is dropped (Ocymyrmex indet karooicus is Ocymyrmex (indet)).
+     *  - subspecies indet-like: identified to species, filed under genus + species; the subspecies value is dropped
+     *    (Gnamptogenys striatula-complex indet is Gnamptogenys striatula-complex).
+     * Anything else is returned unchanged (kind null).
+     */
+    public static IndetColumns indetColumns(String species, String subspecies) {
+        if (subspecies == null || subspecies.trim().isEmpty()) return new IndetColumns(species, subspecies, null, null);
+        if (species == null || species.trim().isEmpty() || isIndetLike(species)) {
+            return new IndetColumns(INDET_EPITHET, null, SPECIES_INDET_SUBSPECIES_IGNORED, subspecies);
+        }
+        if (isIndetLike(subspecies)) return new IndetColumns(species, null, SUBSPECIES_INDET_DROPPED, subspecies);
+        return new IndetColumns(species, subspecies, null, null);
+    }
+
+    /**
+     * The upload report line of an indetColumns() correction: line, code (if any), the name as written, and what it is
+     * filed as. Species indet: "line 7, SAM-ENT-011940: Ocymyrmex indet karooicus -> Species indet: filed as Ocymyrmex
+     * (indet); subspecies 'karooicus' ignored". Subspecies indet: "line 3, UTIC00201495: Gnamptogenys striatula-complex
+     * indet -> filed as Gnamptogenys striatula-complex; 'indet' in the subspecies column dropped".
+     */
+    public static String indetColumnsLine(int displayLineNum, String code, String writtenName, IndetColumns ic, String genus) {
+        String filed = ((genus == null ? "" : genus.trim()) + " " + ic.species).trim();
+        String what = SPECIES_INDET_SUBSPECIES_IGNORED.equals(ic.kind)
+            ? "Species indet: filed as " + filed + "; subspecies '" + ic.droppedSubspecies + "' ignored"
+            : "filed as " + filed + "; '" + ic.droppedSubspecies + "' in the subspecies column dropped";
+        return "line " + displayLineNum + (code == null || code.isEmpty() ? "" : ", " + code) + ": "
+            + writtenName.trim().replaceAll("\\s+", " ") + " -> " + what;
+    }
+
     static String getFirstLine(String fileName, String encoding) {
         String theLine = "";
 

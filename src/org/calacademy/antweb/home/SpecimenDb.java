@@ -44,6 +44,24 @@ public class SpecimenDb extends AntwebDb {
         return false;
     }*/
 
+    /** The access group of the specimen with this code, or null when there is none (one query, as exists()). */
+    public Integer accessGroupOf(String code) throws SQLException {
+        PreparedStatement stmt = null;
+        ResultSet rset = null;
+        String query = "select access_group from specimen where code = ? limit 1";
+        try {
+            stmt = DBUtil.getPreparedStatement(getConnection(), "accessGroupOf()", query);
+            stmt.setString(1, code);
+            rset = stmt.executeQuery();
+            return rset.next() ? Integer.valueOf(rset.getInt(1)) : null;
+        } catch (SQLException e) {
+            s_log.error("accessGroupOf() e:" + e);
+            throw e;
+        } finally {
+            DBUtil.close(stmt, rset, "this", "accessGroupOf()");
+        }
+    }
+
     public boolean exists(String code) throws SQLException {
         PreparedStatement stmt = null;
         ResultSet rset = null;

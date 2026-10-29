@@ -6,6 +6,7 @@ import java.util.Properties;
 import java.util.TimeZone;
 
 import junit.framework.TestCase;
+import org.calacademy.antweb.upload.MessageMgr;
 import org.calacademy.antweb.upload.UploadNotice;
 import org.calacademy.antweb.upload.UploadNotice.Facts;
 import org.calacademy.antweb.upload.UploadNotice.Settings;
@@ -217,5 +218,130 @@ public class UploadNoticeTest extends TestCase {
         assertEquals("Error. Case number:7. No changes made. e:java.io.IOException: x < y",
             UploadNotice.plain("Error. Case number:7. No changes made. e:java.io.IOException: x &lt; y"));
         assertTrue(UploadNotice.plain("x".repeat(900)).length() <= 500);
+    }
+
+    // ---- the summary of what in the report needs attention (2026-10-29) ----
+
+    private static Facts counts(int corrected, int notLoaded, int red) {
+        Facts f = specimenFacts();
+        f.complete = true;
+        f.corrected = corrected;
+        f.notLoaded = notLoaded;
+        f.redFlagged = red;
+        return f;
+    }
+
+    public void testAttentionSummarySentences() {
+        assertEquals("Nothing in the report needs your attention.", UploadNotice.attentionSummary(counts(0, 0, 0)));
+        assertEquals("1 line was corrected; see the report. Please fix it in your own data before your next upload.",
+            UploadNotice.attentionSummary(counts(1, 0, 0)));
+        assertEquals("2 lines were not loaded; see the report. Please fix them in your own data before your next upload.",
+            UploadNotice.attentionSummary(counts(0, 2, 0)));
+        assertEquals("2 lines were corrected and 1 line was not loaded; see the report. Please fix them in your own data before your next upload.",
+            UploadNotice.attentionSummary(counts(2, 1, 0)));
+        assertEquals("1,200 lines were corrected, 3 lines were not loaded and 1 specimen was red-flagged; see the report."
+            + " Please fix them in your own data before your next upload.",
+            UploadNotice.attentionSummary(counts(1200, 3, 1)));
+        // Not known: no summary (image uploads, uploads that did not complete, counts not filled).
+        assertNull(UploadNotice.attentionSummary(counts(-1, -1, 0)));
+        Facts failed = counts(1, 1, 0);
+        failed.complete = false;
+        assertNull(UploadNotice.attentionSummary(failed));
+        Facts images = counts(1, 1, 0);
+        images.images = true;
+        assertNull(UploadNotice.attentionSummary(images));
+        for (Facts f : new Facts[] {counts(0, 0, 0), counts(3, 4, 5)}) {
+            assertFalse(UploadNotice.attentionSummary(f).toLowerCase().contains("ignore"));
+        }
+    }
+
+    /** SAM: one Ocymyrmex line corrected (species indet with a subspecies). The whole email. */
+    public void testSummaryInEmailOneCorrection() {
+        Facts f = counts(1, 0, 0);
+        f.fileName = "SAM_specimens.txt";
+        f.groupName = "Iziko South African Museum";
+        f.uploadId = 5012;
+        f.specimensLoaded = 1840;
+        f.reportUrl = "https://www.antweb.org/web/log/specimen/20261029-10:12:03-specimenUpload.html";
+        f.when = specimenFacts().when;
+        assertEquals(
+            "Your specimen upload to AntWeb is complete.\n\n"
+            + "File: SAM_specimens.txt\n"
+            + "Type: AntWeb specimen file\n"
+            + "Group: Iziko South African Museum\n"
+            + "Finished: 18 Oct 2026, 2:05 PM PDT\n"
+            + "Upload ID: 5012\n"
+            + "Specimens loaded: 1,840\n"
+            + "Red-flagged specimens: 0\n\n"
+            + "1 line was corrected; see the report. Please fix it in your own data before your next upload.\n\n"
+            + "Upload report, with any problems found in your data:\n"
+            + "https://www.antweb.org/web/log/specimen/20261029-10:12:03-specimenUpload.html\n\n"
+            + "Replies to this message go to antweb@antweb.org.\n",
+            UploadNotice.body(f));
+        // No report written: no summary either.
+        f.reportUrl = null;
+        assertFalse(UploadNotice.body(f).contains("corrected"));
+    }
+
+    /** EcoFoG: 2 lines not loaded (no code), 7 adm1 names not recognised (a note: not counted). The whole email. */
+    public void testSummaryInEmailLinesNotLoaded() {
+        Facts f = counts(0, 2, 0);
+        f.fileName = "EcoFoG_specimens.txt";
+        f.groupName = "EcoFoG";
+        f.uploadId = 5013;
+        f.specimensLoaded = 9312;
+        f.reportUrl = "https://www.antweb.org/web/log/specimen/20261029-11:40:51-specimenUpload.html";
+        f.when = specimenFacts().when;
+        assertEquals(
+            "Your specimen upload to AntWeb is complete.\n\n"
+            + "File: EcoFoG_specimens.txt\n"
+            + "Type: AntWeb specimen file\n"
+            + "Group: EcoFoG\n"
+            + "Finished: 18 Oct 2026, 2:05 PM PDT\n"
+            + "Upload ID: 5013\n"
+            + "Specimens loaded: 9,312\n"
+            + "Red-flagged specimens: 0\n\n"
+            + "2 lines were not loaded; see the report. Please fix them in your own data before your next upload.\n\n"
+            + "Upload report, with any problems found in your data:\n"
+            + "https://www.antweb.org/web/log/specimen/20261029-11:40:51-specimenUpload.html\n\n"
+            + "Replies to this message go to antweb@antweb.org.\n",
+            UploadNotice.body(f));
+    }
+
+    /** The counts come from the report's sections: (not uploaded), the corrections, nothing for notes. */
+    public void testCountsFromReportSections() {
+        MessageMgr m = new MessageMgr();
+        assertEquals(0, m.getNotLoadedCount());
+        assertEquals(0, m.getCorrectedCount());
+        // EcoFoG: 2 lines without a code, 7 adm1 names not recognised (a note).
+        m.addToMessages(MessageMgr.codeNotFound, "line:12 code:");
+        m.addToMessages(MessageMgr.codeNotFound, "line:40 code:");
+        for (int i = 0; i < 7; i++) m.addToMessages(MessageMgr.notValidAdm1, "Guyane adm1 " + i);
+        assertEquals(2, m.getNotLoadedCount());
+        assertEquals(0, m.getCorrectedCount());
+        // SAM: one line, species indet with a subspecies.
+        m.setCurrentCode("SAM-ENT-011940");
+        m.addToMessages(MessageMgr.speciesIndetSubspeciesIgnored, "line 7, SAM-ENT-011940: Ocymyrmex indet karooicus -> ...");
+        m.addToMessages(MessageMgr.codeNotFoundInLine, "line:9");
+        m.addToMapMessages(MessageMgr.invalidSubfamilyForGenusReplaced, "Ponerinae Ocymyrmex", "Ocymyrmex");
+        m.addToMessages(MessageMgr.correctedBioregion, "Using Afrotropical for country:South Africa");  // filled in: a note
+        m.addToMessages(MessageMgr.identifiedOnlyToGenus, "Ocymyrmex (indet)");                       // a note
+        assertEquals(3, m.getNotLoadedCount());
+        assertEquals(2, m.getCorrectedCount());
+    }
+
+    public void testEverySectionHasAKind() {
+        java.util.Map<String, String> kinds = new MessageMgr().attentionByKey();
+        for (String key : MessageMgr.CORRECTED) assertEquals(key, "corrected", kinds.get(key));
+        assertEquals("notLoaded", kinds.get(MessageMgr.duplicateEntries));
+        assertEquals("notLoaded", kinds.get(MessageMgr.invalidSpecimenCode));
+        assertEquals("notLoaded", kinds.get(MessageMgr.codeNotFoundInLine));
+        assertNull(kinds.get(MessageMgr.notValidAdm1));
+        assertNull(kinds.get(MessageMgr.countryNotFound));
+        assertNull(kinds.get(MessageMgr.correctedBioregion));
+        assertNull(kinds.get(MessageMgr.sharedNameKept));
+        // A section is never both: no correction section says "(not uploaded)".
+        assertNull(MessageMgr.attention("x", "<b>Something <font color=green>(uploaded)</font></b>"));
+        assertEquals("notLoaded", MessageMgr.attention("x", "<b>Something <font color=red>(not uploaded)</font></b>"));
     }
 }

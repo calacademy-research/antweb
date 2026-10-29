@@ -183,6 +183,8 @@ public class SpecimenUploadDb extends UploadDb {
                 uploadDetails.getLogFileName(), uploadDetails.getBackupDirFile());
         uploadDetails.setUploadId(uploadId);
         updateCounts(accessGroup.getId());
+        // groups.do and group.do: the group's numbers as this upload left them (the nightly run recounts them too)
+        new GroupCountDb(getConnection()).recountGroup(accessGroup.getId());
         return uploadId;
     }
 

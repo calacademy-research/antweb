@@ -601,6 +601,21 @@ public class SpeciesListUpload extends AntwebUpload {
                     if (listedSpecies instanceof String && UploadUtil.isIndetEpithet((String) listedSpecies)) {
                         taxonHash.put(Rank.SPECIES, UploadUtil.INDET_EPITHET);
                     }
+                    // 2026-10-29, as the specimen upload (UploadUtil.indetColumns): species indet with a subspecies is
+                    // "<Genus> (indet)"; "indet" as the subspecies is dropped. Listed in the report.
+                    Object listedSubspecies = taxonHash.get(Rank.SUBSPECIES);
+                    if (listedSubspecies instanceof String && !((String) listedSubspecies).trim().isEmpty()
+                        && taxonHash.get(Rank.GENUS) instanceof String && !((String) taxonHash.get(Rank.GENUS)).isEmpty()) {
+                        Object sp = taxonHash.get(Rank.SPECIES);
+                        UploadUtil.IndetColumns ic = UploadUtil.indetColumns(sp instanceof String ? (String) sp : null, (String) listedSubspecies);
+                        if (ic.kind != null) {
+                            String genus = org.calacademy.antweb.Formatter.initCap((String) taxonHash.get(Rank.GENUS));
+                            String written = genus + " " + (sp == null ? "" : sp) + " " + listedSubspecies;
+                            taxonHash.put(Rank.SPECIES, ic.species);
+                            taxonHash.remove(Rank.SUBSPECIES);
+                            getMessageMgr().addToMessages(ic.kind, Html.esc(UploadUtil.indetColumnsLine(lineNum, null, written, ic, genus)));
+                        }
+                    }
                     if (taxonHash.get(Rank.GENUS) == null || taxonHash.get(Rank.GENUS).equals("")) {
                         taxonHash.put("rank", Rank.SUBFAMILY);                      
                     } else if (taxonHash.get(Rank.SPECIES) == null || taxonHash.get(Rank.SPECIES).equals("")) {

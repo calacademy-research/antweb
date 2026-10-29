@@ -559,6 +559,8 @@ public class UploadAction extends AntwebAction {
 			if (notice.complete) {
 				notice.specimensLoaded = uploadDetails.getInsertedSpecimenCount();
 				notice.redFlagged = uploadDetails.getMessageMgr().getRedFlagCount();
+				notice.notLoaded = uploadDetails.getMessageMgr().getNotLoadedCount();
+				notice.corrected = uploadDetails.getMessageMgr().getCorrectedCount();
 			} else {
 				notice.failure = UploadNotice.failureText(failureMessage);
 				notice.uploadPageUrl = AntwebProps.getDomainApp() + "/curate.do";

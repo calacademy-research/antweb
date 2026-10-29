@@ -32,6 +32,11 @@ import org.apache.commons.logging.LogFactory;
  *
  * Notices to one user (e.g. "your upload is complete") go through sendNotice():
  * plain text, no per-subject limit, at most 20 a day to one address and 500 a day in all.
+ *
+ * A personal email an administrator wrote on a page (the Add an uploader welcome email) goes
+ * through sendPersonal(): plain text, Reply-To and a Bcc copy to the administrator, no
+ * per-subject limit (every welcome email has the same subject), counted with the transactional
+ * mail, and the body is never written to a log (it may hold a one-time set-password link).
  */
 public class Emailer {
 
@@ -196,11 +201,35 @@ public class Emailer {
         return deliver(to, subject, text, false, replyTo);
     }
 
+    /**
+     * A plain-text email an administrator wrote, to one person, with Reply-To and a Bcc copy (both
+     * may be null). No per-subject limit; counted with the transactional mail (throttleTransactional).
+     * The body is never logged. Returns null when handed to the mail server, else why it was not sent.
+     */
+    public static String sendPersonal(String to, String bcc, String subject, String text, String replyTo) {
+        if (!isConfigured()) {
+            s_log.warn("sendPersonal() mail not configured. Email NOT sent to <" + to + "> with subject '" + subject + "'");
+            LogMgr.appendDataLog("emails.log", "NOT SENT (mail not configured) to:" + to + " subject:" + subject + " (content withheld)");
+            return "mail is not configured on this server (no etc/mail.properties)";
+        }
+        String reason = throttleTransactional(System.currentTimeMillis());
+        if (reason != null) {
+            s_log.warn("sendPersonal() not sent (" + reason + ") to <" + to + "> subject '" + subject + "'");
+            LogMgr.appendDataLog("emails.log", "NOT SENT (" + reason + ") to:" + to + " subject:" + subject);
+            return reason;
+        }
+        return deliver(to, subject, text, false, replyTo, bcc) ? null : "the mail server did not accept it (see emails.log)";
+    }
+
     private static boolean deliver(String to, String subject, String content) {
         return deliver(to, subject, content, true, null);
     }
 
     private static boolean deliver(String to, String subject, String content, boolean html, String replyTo) {
+        return deliver(to, subject, content, html, replyTo, null);
+    }
+
+    private static boolean deliver(String to, String subject, String content, boolean html, String replyTo, String bcc) {
 
         // Mark mail from anything but the live site, e.g. "[staging.antweb.org] ...".
         String site = AntwebProps.getDomainApp();
@@ -237,6 +266,7 @@ public class Emailer {
             message.setFrom(new InternetAddress(from, "AntWeb"));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(to));
             if (replyTo != null) message.setReplyTo(InternetAddress.parse(replyTo));
+            if (bcc != null) message.setRecipients(Message.RecipientType.BCC, InternetAddress.parse(bcc));
             message.setSubject(subject);
             if (html) {
                 message.setContent("<html>\n<body>\n" + content + "\n</body>\n</html>", "text/html; charset=UTF-8");
@@ -246,8 +276,8 @@ public class Emailer {
 
             Transport.send(message);
 
-            email_log.info("Email sent to <" + to + "> with subject '" + subject + "'");
-            LogMgr.appendDataLog("emails.log", "SENT to:" + to + " subject:" + subject);
+            email_log.info("Email sent to <" + to + "> with subject '" + subject + "'" + (bcc == null ? "" : " bcc <" + bcc + ">"));
+            LogMgr.appendDataLog("emails.log", "SENT to:" + to + (bcc == null ? "" : " bcc:" + bcc) + " subject:" + subject);
             return true;
 
         } catch (Exception e) {

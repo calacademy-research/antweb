@@ -121,6 +121,7 @@ public class LineNumMgr {
 
     public static int getBadLinesLessThan(int lineNum) {
       int c = 0;
+      if (badCarriageReturnLines == null) return 0;   // before the file is read (unit tests)
 	  for (Integer l : badCarriageReturnLines) {
 		if (l <= lineNum) ++c;
 		//if (l.intValue() > lineNum) break;
