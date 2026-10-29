@@ -193,7 +193,7 @@ public final class NumbersTestDb {
             + " specimen_subfamily_dist_json) values"
             + " (" + MADAGASCAR + ", 'Madagascar', 'country', 'Indian Ocean', 1, 1, 2, 2, 4, 3, 5, 4, 2, 3, 0, '" + json("Myrmicinae", "3", "Ponerinae", "1")
             + "', '" + json("Myrmicinae", "4", "Ponerinae", "1") + "'),"
-            + " (" + INDIAN_OCEAN + ", 'Indian Ocean', 'subregion', 'Africa', 1, 1, 2, 2, 4, 3, 5, 4, 2, 0, 0, '" + json("Myrmicinae", "3", "Ponerinae", "1")
+            + " (" + INDIAN_OCEAN + ", 'Indian Ocean', 'subregion', 'Africa', 1, 1, 2, 2, 4, 3, 5, 4, 2, 3, 0, '" + json("Myrmicinae", "3", "Ponerinae", "1")
             + "', '" + json("Myrmicinae", "4", "Ponerinae", "1") + "')");
         for (int g : new int[] {MADAGASCAR, INDIAN_OCEAN}) {
             String t = "geolocale_taxon";
@@ -210,7 +210,9 @@ public final class NumbersTestDb {
         }
         // A state of Madagascar with no specimens yet (the adm1 checks, B26, have one place to look at).
         exec(c, "insert into geolocale (id, name, georank, parent, is_valid, is_live) values (" + ATSINANANA + ", 'Atsinanana', 'adm1', 'Madagascar', 1, 1)");
-        exec(c, "update geolocale_taxon set is_endemic = 1 where geolocale_id = " + MADAGASCAR + " and taxon_name in ('" + PA + "', '" + PAX + "', '" + HB + "')");
+        // Endemic (Brian Fisher, 2026-10-28): the valid names of Madagascar's list (pheidole b is a morphospecies); the
+        // subregion has the names whose native country rows are all in its countries (GeolocaleDb.HIGHER_ENDEMIC_SQL).
+        exec(c, "update geolocale_taxon set is_endemic = 1 where geolocale_id in (" + MADAGASCAR + ", " + INDIAN_OCEAN + ") and taxon_name in ('" + PA + "', '" + PAX + "', '" + HB + "')");
 
         // Projects: madants (all its specimens, any status) and allantwebants (Global).
         exec(c, "insert into project (project_name, is_live, subfamily_count, genus_count, species_count, valid_species_count, specimen_count, image_count,"

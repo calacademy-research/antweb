@@ -199,15 +199,15 @@
       String bn = ((Bioregion) overview).getName();
       if (overview.getEndemicSpeciesCount() > 0) endemicCell = "<a href='" + AntwebProps.getDomainApp() + "/endemic.do?bioregionName=" + bn + "'>" + endemicCell + "</a>";
       if (overview.getIntroducedSpeciesCount() > 0) introducedCell = "<a href='" + AntwebProps.getDomainApp() + "/introduced.do?bioregionName=" + bn + "'>" + introducedCell + "</a>";
-      endemicDef = "Species and subspecies, including morphospecies, recorded for this bioregion and no other bioregion in AntWeb. Excludes fossils and names not identified to genus. Endemism is calculated from AntWeb records only.";
+      endemicDef = "Valid species and subspecies recorded for this bioregion and no other bioregion in AntWeb. Excludes morphospecies, indetermined, unidentifiable and unrecognized names, fossils, and records of introduced populations. Endemism is calculated from AntWeb records only.";
       introducedDef = "Species introduced by humans that are not native to this bioregion, based on AntWeb's " + introducedListLink + ".";
     } else {
       int gid = ((Geolocale) overview).getId();
       if (overview.getEndemicSpeciesCount() > 0) endemicCell = "<a href='" + AntwebProps.getDomainApp() + "/endemic.do?geolocaleId=" + gid + "'>" + endemicCell + "</a>";
       if (overview.getIntroducedSpeciesCount() > 0) introducedCell = "<a href='" + AntwebProps.getDomainApp() + "/introduced.do?geolocaleId=" + gid + "'>" + introducedCell + "</a>";
       endemicDef = isAdm1
-        ? "Named species and subspecies recorded for this state or province and no other state or province in AntWeb. Excludes morphospecies, fossils and names not identified to genus. Endemism is calculated from AntWeb records only."
-        : "Named species and subspecies recorded for this country and no other country in AntWeb. Excludes morphospecies, fossils and names not identified to genus. Endemism is calculated from AntWeb records only.";
+        ? "Valid species and subspecies recorded for this state or province and no other state or province in AntWeb. Excludes morphospecies, indetermined, unidentifiable and unrecognized names, fossils, and records of introduced populations. Endemism is calculated from AntWeb records only."
+        : "Valid species and subspecies recorded for this country and no other country in AntWeb. Excludes morphospecies, indetermined, unidentifiable and unrecognized names, fossils, and records of introduced populations. Endemism is calculated from AntWeb records only.";
       introducedDef = "Species introduced by humans that are not native to this " + pw + "'s bioregion, based on AntWeb's " + introducedListLink + ".";
     }
   }
@@ -218,8 +218,9 @@
   String specimensFullDef;
   if (isListOnlyPlace) specimensFullDef = "Ant specimens collected in this " + pw + "'s countries and identified to a name on their lists; each specimen counted once.";
   else if (isGeolocale) specimensFullDef = "Ant specimens collected in this " + pw + " and identified to a species, morphospecies, or unidentified taxon on " + listName + ".";
-  else if (isBioregion) specimensFullDef = "Ant specimens collected in this bioregion.";
-  else if (isMuseum) specimensFullDef = "Ant specimens recorded as held by this museum.";
+  // Museums and bioregions (Brian Fisher, 2026-10-28): the sum of their list rows, like countries (PlaceTotals.listedSpecimensSql).
+  else if (isBioregion) specimensFullDef = "Ant specimens collected in this bioregion and identified to a name on " + listName + " (a specimen filed under a synonym counts under the valid name).";
+  else if (isMuseum) specimensFullDef = "Ant specimens recorded as held by this museum and identified to a name on " + listName + " (a specimen filed under a synonym counts under the valid name).";
   else specimensFullDef = "Specimens, collected anywhere, of the species and subspecies on this project's list.";
   String fromWhere = isMuseum ? "held by this museum" : (isProjectOverview ? "of this project's species" : "from this " + pw);
 
@@ -243,11 +244,11 @@
 <table class="place_stats">
 <tr class="ps_head"><th colspan="3">Taxonomic diversity</th></tr>
 <tr data-stat="subfamilies" data-n="<%= overview.getSubfamilyCount() %>"><td class="ps_name">Subfamilies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getSubfamilyCount()) %></td><td class="ps_def">Subfamilies recorded on <%= listName %>.</td></tr>
-<tr data-stat="genera" data-n="<%= overview.getGenusCount() %>"><td class="ps_name">Genera</td><td class="ps_num"><%= Formatter.commaFormat(overview.getGenusCount()) %></td><td class="ps_def">Genera recorded on <%= listName %>.</td></tr>
+<tr data-stat="genera" data-n="<%= overview.getGenusCount() %>"><td class="ps_name">Genera</td><td class="ps_num"><%= Formatter.commaFormat(overview.getGenusCount()) %></td><td class="ps_def">Genera recorded on <%= listName %>, including genera known here only from specimens identified to genus.</td></tr>
 <% if (overview.getValidSpeciesCount() > 0) { %>
 <tr data-stat="valid" data-n="<%= overview.getValidSpeciesCount() %>"><td class="ps_name">Valid species / subspecies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getValidSpeciesCount()) %></td><td class="ps_def">Currently valid, formally named, living (non-fossil) species and subspecies recorded on <%= listName %>. Excludes morphospecies and unidentified taxa.</td></tr>
 <% } %>
-<tr data-stat="species" data-n="<%= overview.getSpeciesCount() %>"><td class="ps_name">Species / subspecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">All species and subspecies recorded on <%= listName %>, from any source, including valid names, morphospecies, and indetermined species. Names not identified to genus are not counted as species; their specimens are counted under Specimens.</td></tr>
+<tr data-stat="species" data-n="<%= overview.getSpeciesCount() %>"><td class="ps_name">Species / subspecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">Species and subspecies recorded on <%= listName %>, from any source, that are valid names or morphospecies. Specimens identified to genus only (indetermined or unidentifiable names) and names not in AntCat (unrecognized) are not counted as species; their specimens are counted under Specimens and their genera under Genera.</td></tr>
 <% if (showEndemism) { %>
 <tr class="ps_head"><th colspan="3">Endemism and introduced species</th></tr>
 <tr data-stat="endemic" data-n="<%= overview.getEndemicSpeciesCount() %>"><td class="ps_name">Endemic</td><td class="ps_num"><%= endemicCell %></td><td class="ps_def"><%= endemicDef %></td></tr>

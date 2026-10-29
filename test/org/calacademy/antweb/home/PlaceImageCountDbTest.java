@@ -95,6 +95,9 @@ public class PlaceImageCountDbTest extends TestCase {
         for (String t : new String[] {GENUS, SP_A, SP_B}) exec("insert into proj_taxon (project_name, taxon_name, created) values ('madants', '" + t + "', " + old + ")");
         exec("insert into museum values ('CASC', 0, 0)");
         exec("insert into bioregion values ('Malagasy', 0, 0)");
+        // their lists (2026-10-28: a museum's or bioregion's images are those of the specimens of its list rows)
+        for (String t : new String[] {GENUS, SP_A, SP_B}) exec("insert into museum_taxon (code, taxon_name, created) values ('CASC', '" + t + "', " + old + ")");
+        for (String t : new String[] {GENUS, SP_A, SP_B, SP_C}) exec("insert into bioregion_taxon (bioregion_name, taxon_name, created) values ('Malagasy', '" + t + "', " + old + ")");
 
         specimen("casent1", SP_A, "morphotaxon", "Madagascar", "Antananarivo", "Madagascar", "CASC", "Malagasy", "h", "p", "d", "l");
         specimen("casent2", SP_A, "morphotaxon", "Madagascar", null, "Madagascar", "CASC", "Malagasy", "l");          // label only
@@ -172,10 +175,12 @@ public class PlaceImageCountDbTest extends TestCase {
         // its country's rule: casent1 to casent4 (more in RegionCountDbTest).
         assertEquals(9, placeRow("geolocale", "id", "1")[0]);
         assertEquals(3, placeRow("geolocale", "id", "1")[1]);
-        // Museum and bioregion: all their specimens, any status.
-        assertEquals(9, placeRow("museum", "code", "CASC")[0]);
-        assertEquals("casent1, 3, 5", 3, placeRow("museum", "code", "CASC")[1]);
-        assertEquals("casent1 to casent6", 11, placeRow("bioregion", "name", "Malagasy")[0]);
+        // Museum and bioregion (Brian Fisher, 2026-10-28, as their Specimens): their specimens of a counted status filed
+        // under a name of their list (before: all their specimens, any status: CASC 9 images, 3 imaged; Malagasy 11).
+        assertEquals("casent1, 2, 3 (not casent5, status synonym)", 8, placeRow("museum", "code", "CASC")[0]);
+        assertEquals("casent1, 3", 2, placeRow("museum", "code", "CASC")[1]);
+        assertEquals("casent1 to casent4 and casent6", 10, placeRow("bioregion", "name", "Malagasy")[0]);
+        assertEquals("casent1, 3, 4, 6", 4, placeRow("bioregion", "name", "Malagasy")[1]);
         // Project: specimens of the names on its list, anywhere, any status: casent1 to casent5.
         assertEquals(10, placeRow("project", "project_name", "madants")[0]);
         assertEquals(4, placeRow("project", "project_name", "madants")[1]);
@@ -248,6 +253,93 @@ public class PlaceImageCountDbTest extends TestCase {
         int real = 0;
         for (CountCheck.Mismatch x : placeImageMismatches(r)) if (x.isReal()) ++real;
         assertEquals(placeImageMismatches(r).toString(), 1, real);
+    }
+
+    /**
+     * Brian Fisher, 2026-10-28: images follow the Specimens rule. A specimen filed under a synonym (Carebara polita, a
+     * synonym of C. diversa) counts under the valid name on museum, bioregion and curated project lists: the place's
+     * Images and Imaged specimens, and the list row's Images column; the count check agrees.
+     */
+    public void testImagesOfASynonymCountUnderTheValidName() throws Exception {
+        String old = "myrmicinaepheidole oldname";
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, current_valid_name) values ('" + old
+            + "', 'species', 'synonym', '" + GENUS + "', '" + SP_B + "')");
+        specimen("casent7", old, "valid", "Madagascar", null, "Madagascar", "CASC", "Malagasy", "h", "p");
+        PlaceImageCountDb db = new PlaceImageCountDb(connection);
+        db.updateAll();
+        assertEquals("CASC: 8 + casent7's 2", 10, placeRow("museum", "code", "CASC")[0]);
+        assertEquals(3, placeRow("museum", "code", "CASC")[1]);
+        assertEquals("Malagasy: 10 + 2", 12, placeRow("bioregion", "name", "Malagasy")[0]);
+        assertEquals("madants: 10 + 2", 12, placeRow("project", "project_name", "madants")[0]);
+        assertEquals("Madagascar: the synonym is not on its list (geolocale lists by the very name)", 8, placeRow("geolocale", "id", "7")[0]);
+
+        // the Images column of the bioregion's list: SP_B gets casent3 (3), casent4 (1) and casent7 (2)
+        org.calacademy.antweb.geolocale.Bioregion malagasy = new org.calacademy.antweb.geolocale.Bioregion();
+        malagasy.setName("Malagasy");
+        int spB = 0;
+        boolean oldRow = false;
+        try (Statement s = connection.createStatement(); ResultSet r = s.executeQuery(malagasy.getTaxonImageCountQuery())) {
+            while (r.next()) {
+                if (SP_B.equals(r.getString("taxonName"))) spB += r.getInt("imageSum");   // one row per specimen name columns
+                if (old.equals(r.getString("taxonName"))) oldRow = true;
+            }
+        }
+        assertEquals("casent3 (H, f, empty), casent4 (h), casent7 (h, p); not casent5 (status synonym)", 6, spB);
+        assertFalse("never under the old name", oldRow);
+
+        List<CountCheck.Place> places = new ArrayList<>();
+        places.add(new CountCheck.Place(CountCheck.MUSEUM, "CASC", "museum CASC", "museum", "CASC"));
+        places.add(new CountCheck.Place(CountCheck.BIOREGION, "Malagasy", "Malagasy bioregion", "bioregion", "Malagasy"));
+        places.add(new CountCheck.Place(CountCheck.PROJECT, "madants", "project madants", null, null));
+        CountCheck.Result r = new CountCheck(connection).run(places, java.sql.Timestamp.valueOf("2021-01-01 08:00:00"));
+        assertEquals(placeImageMismatches(r).toString(), 0, placeImageMismatches(r).size());
+    }
+
+    /**
+     * Decision 3 (Brian Fisher, 2026-10-28) on the AntWeb-wide list (allantwebants, the Images cell of every list): a
+     * specimen filed under a synonym counts under the valid name. allantwebants has rows of the counted statuses only,
+     * so before, those images were counted nowhere and a curated project's row could exceed it (staging run
+     * 40795139086: floridakeysants Camponotus inaequalis 32, allantwebants 29). Each specimen once; the genus row adds
+     * them up once (the taxon tree).
+     */
+    public void testAllAntwebImagesCountASynonymUnderTheValidName() throws Exception {
+        String old = "myrmicinaepheidole oldname";
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, current_valid_name) values ('" + old
+            + "', 'species', 'synonym', '" + GENUS + "', '" + SP_B + "')");
+        specimen("casent7", old, "valid", "Madagascar", null, "Madagascar", "CASC", "Malagasy", "h", "p");
+        for (String t : new String[] {SUBFAMILY, GENUS, SP_A, SP_B, SP_C}) {   // regenerateAllAntweb: counted statuses only
+            exec("insert into proj_taxon (project_name, taxon_name) values ('allantwebants', '" + t + "')");
+        }
+        org.calacademy.antweb.Project all = new org.calacademy.antweb.Project(org.calacademy.antweb.Project.ALLANTWEBANTS);
+        java.util.Map<String, Integer> sums = new java.util.HashMap<>();
+        try (Statement s = connection.createStatement(); ResultSet r = s.executeQuery(all.getTaxonImageCountQuery())) {
+            while (r.next()) sums.merge(r.getString("taxonName"), r.getInt("imageSum"), Integer::sum);
+        }
+        assertEquals("casent3 (3), casent4 (1), casent5 (1, the very name), casent7 (2, the synonym)", Integer.valueOf(7), sums.get(SP_B));
+        assertNull("no row for the synonym", sums.get(old));
+
+        new org.calacademy.antweb.home.ProjTaxonCountDb(connection).allAntwebImageCount();
+        java.util.Map<String, Integer> rows = new java.util.HashMap<>();
+        try (Statement s = connection.createStatement(); ResultSet r = s.executeQuery(
+                "select taxon_name, image_count from proj_taxon where project_name = 'allantwebants'")) {
+            while (r.next()) rows.put(r.getString(1), r.getInt(2));
+        }
+        assertEquals(Integer.valueOf(7), rows.get(SP_B));
+        assertEquals("a1 3 + megacephala 7 + other 1, casent7 once", Integer.valueOf(11), rows.get(GENUS));
+        assertEquals(Integer.valueOf(11), rows.get(SUBFAMILY));
+        assertNull(rows.get(old));
+
+        // the count check recounts the allantwebants rows by the same rule
+        List<CountCheck.Place> places = new ArrayList<>();
+        places.add(new CountCheck.Place(CountCheck.PROJECT, "allantwebants", "project allantwebants", null, null));
+        CountCheck.Result r = new CountCheck(connection).run(places, java.sql.Timestamp.valueOf("2021-01-01 08:00:00"));
+        List<CountCheck.Mismatch> images = new ArrayList<>();
+        for (CountCheck.Mismatch m : r.mismatches) if ("images".equals(m.check)) images.add(m);
+        assertEquals(images.toString(), 0, images.size());
+
+        // worldants keeps the very name (it lists every name as AntCat has it)
+        org.calacademy.antweb.Project world = new org.calacademy.antweb.Project("worldants");
+        assertFalse(world.getTaxonImageCountQuery().contains("current_valid_name"));
     }
 
     public void testCountCheckWaitsForTheFirstRun() throws Exception {

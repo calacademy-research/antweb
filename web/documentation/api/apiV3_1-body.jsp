@@ -324,6 +324,10 @@
                 <td><b>Status</b></td>
                 <td>Taxon status (&status=[valid, morphotaxon, ...])</td>
             </tr>            
+            <tr>
+                <td><b>currentValidName</b></td>
+                <td>The names whose current valid name this is: its synonyms, obsolete combinations etc. (&currentValidName=formicinaecamponotus inaequalis)</td>
+            </tr>
         </table>
             <p><b>Examples:</b>
             <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/taxa?taxonName=myrmicinaecrematogaster modiglianii<%= appendStr %>"><%= apiDomainApp %>/taxa?taxonName=myrmicinaecrematogaster modiglianii</a>                  	

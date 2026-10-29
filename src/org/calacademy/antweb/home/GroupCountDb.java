@@ -82,8 +82,9 @@ public class GroupCountDb extends AntwebDb {
      *   Specimens, Collections, Localities, Ungeoreferenced   of the counted specimens (unchanged)
      *   Subfamilies  distinct subfamilies of the counted specimens that are valid ant subfamilies (SpecimenDb.getAntSpecimenCriteria)
      *   Genera       distinct genera of the counted specimens identified to genus (PlaceTotals.identifiedToGenus)
-     *   Species      distinct full names (taxon_name) of the counted specimens whose name is a species or subspecies of a
-     *                counted status, ant, identified to genus (PlaceTotals.rankCondition(SPECIES), as the place pages)
+     *   Species      distinct full names (taxon_name) of the counted specimens whose name is a species or subspecies of
+     *                status valid or morphotaxon (since 2026-10-28; before: a counted status), ant, identified to genus
+     *                (PlaceTotals.rankCondition(SPECIES), as the place pages)
      *   Flagged      specimens with a red flag
      *
      * Until 2026-10-22 Species counted distinct species epithets (Pheidole minor and Camponotus minor once) of valid names

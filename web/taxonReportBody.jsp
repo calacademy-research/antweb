@@ -25,19 +25,41 @@
     String imagesFromPhrase = org.calacademy.antweb.ImagesAnywhere.fromPhrase(overview);
     String imagesColumnTitle = "Images of the ant of the name in AntWeb, from any specimen (labels are not counted)."
         + (imagesFromPhrase == null ? "" : " Click the number to see them; the specimens " + imagesFromPhrase + " come first.");
-    // The definition under the list (Brian Fisher, 2026-10-27: every Images column counts images of the ant only).
-    // The definition is ImageCounts.DEFINITION (also web/common/imagesDefinition.jsp), with what the number counts.
-    String imagesDefinition = org.calacademy.antweb.ImageCounts.DEFINITION
-        + " The number is the images of the ant of the name in AntWeb, from any specimen."
-        + (imagesFromPhrase == null ? "" : " Click it to see them; the specimens " + imagesFromPhrase + " come first.");
-    // Brian Fisher, 2026-10-27: plain words for the * note (was "Counts include specimens of all statuses").
-    String asterixUnit = "specimens".equals(nextPluralRank) ? "specimen filed under the name"
+    // The Images note under the list (Brian Fisher, 2026-10-28, list notes): what the one number counts; label
+    // images apart (ImageCounts.DEFINITION); where the place's own images are (ImagesAnywhere.fromPhrase).
+    String imagesDefinition = "Images: the images of the ant (head, profile, dorsal and other views) of that name in all of"
+        + " AntWeb, from specimens collected anywhere. Specimen label images are not counted."
+        + (imagesFromPhrase == null ? "" : " Click the number to see the images; those " + imagesFromPhrase + " come first.");
+    // The * note (Brian Fisher, 2026-10-28, list notes). The column marked * is Specimens on a species list, Species on
+    // a genus list and Genera on a subfamily list.
+    String asterixCounts = "specimens".equals(nextPluralRank) ? "Specimen"
+        : "genera".equals(nextPluralRank) ? "Genus"
+        : "subfamilies".equals(nextPluralRank) ? "Subfamily"
+        : "Species";
+    String asterixUnit = "specimens".equals(nextPluralRank) ? "specimen filed under that name"
         : "genera".equals(nextPluralRank) ? "genus under the row"
         : "subfamilies".equals(nextPluralRank) ? "subfamily under the row"
         : nextPluralRank + " name under the row";   // species: "species name"
-    String asterixNote = "Numbers marked * count every " + asterixUnit
-        + ", whatever the name's status (valid, morphospecies, indetermined and others)"
+    String asterixNote = asterixCounts + " counts marked with an asterisk (*) include every " + asterixUnit
+        + ("specimens".equals(nextPluralRank)
+            ? ", whatever its taxonomic status (valid species, morphospecies, indetermined, unidentifiable or unrecognized names)"
+            : ", whatever the name's status")
         + (displayGlobal ? "." : ", in " + locale + ".");
+    // Brian Fisher, 2026-10-28: a species is a valid name or a morphospecies. The Species of a genus row count those only.
+    if (Rank.GENUS.equals(pageRank)) {
+      asterixNote = "Numbers marked * count the species and subspecies of the genus in " + locale
+          + " that are valid names or morphospecies; names identified to genus only (indetermined, unidentifiable)"
+          + " and names not in AntCat (unrecognized) are not species.";
+    }
+    // The specimens identified to genus only, linked to the place's specimen search (as "List all specimens collected in").
+    String genusOnlySearch = null;
+    if (overview instanceof org.calacademy.antweb.geolocale.LocalityOverview && !HttpUtil.isBot(request)) {
+      String genusOnlyCriteria = ((org.calacademy.antweb.geolocale.LocalityOverview) overview).getSearchCriteria();
+      if (genusOnlyCriteria != null && !"".equals(genusOnlyCriteria)) {
+        genusOnlySearch = AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&"
+            + genusOnlyCriteria + "&resultRank=specimen";
+      }
+    }
 %>
 
 <!--  Column Headings -->
@@ -192,6 +214,14 @@
           //A.log("taxonReportBody.jsp nextSubtaxon:" + nextSubtaxon + " Um, nextTaxon should be returning 'No [rank]' instead of :" + childCountStr);
           if (nextSubtaxon != null && nextSubtaxon.contains("No ")) {
             childCountStr = nextSubtaxon; //"No Specimens";
+            // 2026-10-28: a genus known here only from specimens identified to genus: "No Species" and how many.
+            int genusOnlyCount = (Rank.GENUS.equals(pageRank) && genusOnly != null) ? genusOnly.specimens(child.getTaxonName()) : 0;
+            if (genusOnlyCount > 0) {
+              String genusOnlyText = org.calacademy.antweb.home.GenusOnly.genusRowText(genusOnlyCount);
+              if (genusOnlySearch != null) genusOnlyText = "<a rel='nofollow' href='" + org.calacademy.antweb.util.Html.escAttr(genusOnlySearch + "&"
+                  + org.calacademy.antweb.home.GenusOnly.searchParams(genusOnly.genus(child.getTaxonName()))) + "'>" + genusOnlyText + "</a>";
+              childCountStr += "<br><span class='genus-only' data-genus-only='" + genusOnlyCount + "'>" + genusOnlyText + "</span>";
+            }
           } else {
             //if (child.getTaxonName().contains("graulomyrmex")) A.log("init() taxonName:" + taxonName + " childCount:" + projTaxon.getGlobalChildCount());
             //if (child.getTaxonName().contains("graulomyrmex")) A.log("taxonReport.jsp ! nextSubtaxon:" + nextSubtaxon + " globalChildCount:" + childTaxonSet.getGlobalChildCount());
@@ -269,28 +299,42 @@
 
 </div>
 </div></div><%-- /aw-list, /aw-list-scroll --%>
-<% if (LoginMgr.isAdmin(request)) {
-     // Brian Fisher, 2026-10-27: say what the check number is. It adds up each row's own number for this place (the
-     // column marked *); the tests read data-subtaxon-total. docs/numbers.md row 45.
-     String totalColumn, totalUnit, totalCheck;
+<% // Notes under the list (Brian Fisher, 2026-10-28): one block, the admin check number, the * note, the Images note.
+   String totalNote = null;
+   if (LoginMgr.isAdmin(request)) {
+     // The check number adds up each row's own number for this place (the column marked *); the tests read
+     // data-subtaxon-total. docs/numbers.md row 45.
+     String totalColumn = displayGlobal ? (isMuseum ? ((Museum) overview).getCode() : overview.toString()) : "Specimens";
      if (Rank.SUBFAMILY.equals(pageRank)) {
-       totalColumn = "Genera"; totalUnit = "genera";
-       totalCheck = "should equal Genera on " + locale + "'s page";
+       totalNote = "Genera total (administrators only): the Genera column adds up to " + Formatter.commaFormat(subtaxonTotal)
+           + " genera; it should equal Genera on the " + locale + " overview page.";
      } else if (Rank.GENUS.equals(pageRank)) {
-       totalColumn = "Species"; totalUnit = "species and subspecies";
-       totalCheck = "should equal Species / subspecies on " + locale + "'s page";
+       totalNote = "Species total (administrators only): the Species column adds up to " + Formatter.commaFormat(subtaxonTotal)
+           + " species and subspecies; it should equal Species / subspecies on the " + locale + " overview page.";
      } else {
-       totalColumn = displayGlobal ? (isMuseum ? ((Museum) overview).getCode() : overview.toString()) : "Specimens";
-       totalUnit = "specimens";
-       totalCheck = "Specimens on " + locale + "'s page can be higher: it also counts specimens of names not on this list,"
-           + " such as those not identified to genus";
+       totalNote = "Specimen total (administrators only): the " + org.calacademy.antweb.util.Html.esc(totalColumn)
+           + " column adds up to " + Formatter.commaFormat(subtaxonTotal) + " specimens. This can be lower than Specimens on the "
+           + locale + " overview page, which also counts specimens not on this list, such as those identified only to"
+           + " subfamily or family.";
      }
+   }
+   int noteNum = 0;
 %>
-     <br><span id="subtaxon-total" data-subtaxon-total="<%= subtaxonTotal %>">Total of the <%= org.calacademy.antweb.util.Html.esc(totalColumn) %> column: <%= Formatter.commaFormat(subtaxonTotal) %> <%= totalUnit %> (administrators only; <%= totalCheck %>).</span>
-<% } %>
 <% if (listOnly) { %>
+<% if (totalNote != null) { %>
+<br><span id="subtaxon-total" data-subtaxon-total="<%= subtaxonTotal %>"><%= totalNote %></span>
+<% } %>
 <BR><span id="port-of-entry-list-note">These are ant species intercepted at ports of entry, not established introductions. They are not counted in any place total or in the introduced species list, and this list shows no specimen or image numbers.</span>
 <% } else { %>
-<BR>* <%= asterixNote %>
-<BR><span id="images-definition" class="images-definition"><%= org.calacademy.antweb.util.Html.esc(imagesDefinition) %></span>
+<br><div id="list-notes"><b>Notes on specimen and image counts</b>
+<% if (totalNote != null) { %>
+<br><%= ++noteNum %>. <span id="subtaxon-total" data-subtaxon-total="<%= subtaxonTotal %>"><%= totalNote %></span>
+<% } %>
+<% String genusOnlyLine = (Rank.SPECIES.equals(pageRank) && genusOnly != null) ? genusOnly.speciesListText() : null;
+   if (genusOnlyLine != null) { %>
+<br><%= ++noteNum %>. <span id="genus-only-note" data-genus-only="<%= genusOnly.totalSpecimens() %>"><%= org.calacademy.antweb.util.Html.esc(genusOnlyLine) %><% if (genusOnlySearch != null) { %> <a rel='nofollow' href='<%= org.calacademy.antweb.util.Html.escAttr(genusOnlySearch) %>'>Show all specimens.</a><% } %></span>
+<% } %>
+<br><%= ++noteNum %>. <span id="asterisk-note"><%= asterixNote %></span>
+<br><%= ++noteNum %>. <span id="images-definition" class="images-definition"><%= org.calacademy.antweb.util.Html.esc(imagesDefinition) %></span>
+</div>
 <% } %>

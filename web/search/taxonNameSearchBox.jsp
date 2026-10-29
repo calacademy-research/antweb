@@ -2,8 +2,6 @@
             <div class="search">
 
                 <html:form method="GET" action="description">
-                  <!-- input type="hidden" name="project" value="allantwebants" -->
-                  <!-- input type="hidden" name="resetProject" value="true" -->   
                 <table>
                   <tr>
                     <td>

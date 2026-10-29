@@ -123,6 +123,13 @@ public class TaxaPage implements Serializable {
 		    taxaQuery += " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon");
           }
           taxaQuery += statusSet.getAndCriteria();
+          // Brian Fisher, 2026-10-28: only valid names and morphospecies are species. The species list of the counted
+          // statuses (statusSet all, the default of places) shows those, as the place's Species number counts them; the
+          // specimens of the names identified to genus only are named under the list (GenusOnly). A status chosen on
+          // its own (statusSet indetermined, for example) still lists those names.
+          if ("species".equals(rank) && hidesNonSpecies(statusSet)) {
+            taxaQuery += " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon");
+          }
 
  	      //A.log("clause:" + statusSet.getAndCriteria());
 
@@ -151,6 +158,8 @@ public class TaxaPage implements Serializable {
           // Ant specimens only: non-ant specimens are found by search, not listed on place pages (2026-10-21).
           specimenQuery += " from specimen s where" + org.calacademy.antweb.home.SpecimenDb.getAntSpecimenCriteria("s");
           if (rank.equals("species")) specimenQuery += " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("s");
+          // the specimens' names that count as species (2026-10-28, as the taxa above)
+          if (rank.equals("species") && hidesNonSpecies(statusSet)) specimenQuery += " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("s");
           
           if (overview instanceof Country) {
             specimenQuery += " and country = " + DBUtil.sqlQuote(overview);
@@ -294,6 +303,34 @@ public class TaxaPage implements Serializable {
 	}
 
 	/** Marks the children that have no photo of the ant anywhere in AntWeb (StatisticsDb.antImagedNames). */
+	/**
+	 * Whether a species list of this status set leaves out the names that are not species (2026-10-28): the sets that
+	 * mix statuses (all, all determined, all indetermined, complete). valid, valid extant, valid fossil, worldants and
+	 * a single status chosen on its own are left as they are.
+	 */
+	public static boolean hidesNonSpecies(StatusSet statusSet) {
+		if (statusSet == null) return true;
+		String v = statusSet.getValue();
+		return v == null || StatusSet.ALL.equals(v) || StatusSet.ALL_DETERMINED.equals(v) || StatusSet.ALL_INDETERMINED.equals(v)
+			|| StatusSet.COMPLETE.equals(v);
+	}
+
+	private org.calacademy.antweb.home.GenusOnly genusOnly;
+
+	/** The place's specimens identified to genus only (genus and species lists, 2026-10-28). */
+	public void findGenusOnly(Connection connection, Overview overview) {
+		try {
+			genusOnly = org.calacademy.antweb.home.GenusOnly.load(connection, overview);
+		} catch (SQLException | RuntimeException e) {
+			s_log.warn("findGenusOnly() overview:" + overview + " e:" + e);
+			genusOnly = null;
+		}
+	}
+
+	public org.calacademy.antweb.home.GenusOnly getGenusOnly() {
+		return genusOnly;
+	}
+
 	public void findUnimaged(Connection connection) throws SQLException {
 		java.util.Set<String> names = new java.util.HashSet<>();
 		if (children != null) for (Taxon child : children) names.add(child.getTaxonName());

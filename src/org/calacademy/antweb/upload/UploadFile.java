@@ -63,6 +63,7 @@ public class UploadFile {
     }
     
     private void figureEncoding(String fileLoc, String encoding) {
+        // Always UTF-8 (2026-10-28): a file that is not is refused (firstNonUtf8Line); a chosen encoding is ignored.
         setEncoding("UTF-8");
     }
 
@@ -141,80 +142,53 @@ public class UploadFile {
         return Charset.forName(encoding);
     }
 
-    boolean correctEncoding(String encoding) {
-      boolean aLineFound = false;
-      String theLine = null;
-      Date startTime = new Date();
-      String fileLoc = this.base + this.fileName;
-      try {
-        BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(fileLoc), encoding));
+    /** The note shown with the upload form and in the refusal (Brian Fisher, 2026-10-28). */
+    public static final String UTF8_NOTE = "Files must be UTF-8 (Excel: Save As, CSV UTF-8).";
 
-        theLine = in.readLine();
-        while (theLine != null) {
-          if (theLine.contains("0160810")) {
-            aLineFound = true;
-            int startLocCodePos = theLine.indexOf("Mont Copolia") - 5;
-            int endLocCodePos = startLocCodePos + 21;
-            String localityCode = theLine.substring(startLocCodePos, endLocCodePos); // was (211, 232);
-            String localityEncoded = UriEncoder.encodePath(localityCode, "ISO-8859-1");
-            s_log.debug("correctEncoding(): 0160810 localityCode:" + localityCode + " substring(" + startLocCodePos + ", " + endLocCodePos + ") encoded:" + localityEncoded);
-            //s_log.warn("correctEncoding(): substring:" + theLine.substring(277, 298);
-            if (!localityEncoded.equals("Mah%E9%20Mont%20Copolia%20520")) {   // MahÈ Island, Mont Copolia
-              s_log.error("correctEncoding() found false in " + AntwebUtil.secsSince(startTime) + " seconds.  Should be encoded: Mah%E9%20Mont%20Copolia%20520");
-              s_log.error("Line:" + theLine);
-              return false;
+    /**
+     * Upload files are read as UTF-8 only (Brian Fisher, 2026-10-28; the encoding chosen on the old upload form was
+     * ignored, and the old check passed whenever it failed). Returns the number of the first line (the header is
+     * line 1) that is not valid UTF-8, or 0 when the whole file is. A UTF-8 byte order mark is valid.
+     */
+    public static int firstNonUtf8Line(InputStream in) throws IOException {
+        CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT).onUnmappableCharacter(CodingErrorAction.REPORT);
+        BufferedInputStream bin = new BufferedInputStream(in, 1 << 16);
+        ByteArrayOutputStream line = new ByteArrayOutputStream(512);
+        int lineNum = 1;
+        int b;
+        while ((b = bin.read()) != -1) {
+            if (b == '\n') {
+                if (!isUtf8(decoder, line)) return lineNum;
+                line.reset();
+                ++lineNum;
+            } else {
+                line.write(b);
             }
-          }
-
-          if (theLine.contains("0625035")) {  // This is one of Jack's
-            if (encoding == "MacRoman") return true;
-            aLineFound = true;
-            int offset = 36;
-            String localityMatch = "Regi%C3%B3n%20Aut%C3%B3noma%20del%20Atl%C3%A1ntico%20Sur";   // not UTF-8
-            if (encoding.equals("UTF-8")) {
-              offset = 33;
-              localityMatch = "Regi%F3n%20Aut%F3noma%20del%20Atl%E1ntico%20Sur"; 
-            } else if (encoding.equals("MacRoman")) {
-              offset = 33;
-              localityMatch = "Regi%F3n%20Aut%F3noma%20del%20Atl%E1ntico%20Sur";
-            }
-            int startLocCodePos = theLine.indexOf("Reg");
-            int endLocCodePos = startLocCodePos + 33;  // 33 if UTF.  36 in ...
-            String localityCode = theLine.substring(startLocCodePos, endLocCodePos); // was (211, 232);
-            String localityEncoded = UriEncoder.encodePath(localityCode, "ISO-8859-1");
-            s_log.debug("correctEncoding(): 0625035 encoding:" + encoding + " localityCode:" + localityCode + " substring(" + startLocCodePos + ", " + endLocCodePos + ") encoded:" + localityEncoded
-    + " theLine:" + theLine);
-
-            //if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace();
-              // Code is called twice.  Once from constructor (called from UploadAction:720) and once from UploadAction:741
-    
-            //s_log.warn("correctEncoding(): substring:" + theLine.substring(277, 298);
-            //if (!localityEncoded.equals("Regi%C3%B3n%20Aut%C3%B3noma%20del%20Atl%C3%A1ntico%20Sur")) {  
-                                      // Regi%C3%B3n%20Aut%C3%B3noma%20del%20Atl%C3%A1ntico%20
-            if (!localityEncoded.equals(localityMatch)) { //   .  That's the UTF-8 encoding                                      
-              // Región Autónoma del Atlántico Sur    urlEncodes as:Regi%C3%B3n%20Aut%C3%B3noma%20del%20Atl%C3%A1ntico%20Sur
-              s_log.error("correctEncoding:" + encoding + " found false in " + AntwebUtil.secsSince(startTime) + " seconds.");
-              // This would happen if uploaded as Cal Academy
-              //if (AntwebProps.isDevMode()) {
-              //  s_log.warn("Is DevMode returning true despite failure.  FIX.");
-              //  return true;
-              //}
-              return false;
-            }
-          }
-          
-          theLine = in.readLine();
         }
-      } catch (Exception e) {
-        //s_log.error("correctEncoding(" + encoding + ") fileLoc:" + fileLoc + " e:" + e);
-          // Expected, for instance from Jack's upload.
-        // return false; // Not in 6.8.1
-        /* This was added in, reasonably. In tricky release 6.9 (that included a wider rollout of the encoding selector,
-           it caused uploads to be invalid. */
-      }
-      s_log.info("correctEncoding(" + encoding + ") found true in " + AntwebUtil.secsSince(startTime) + " seconds.  LineFound:" + aLineFound);
+        if (line.size() > 0 && !isUtf8(decoder, line)) return lineNum;
+        return 0;
+    }
 
-      return true;
+    public static int firstNonUtf8Line(Path path) throws IOException {
+        try (InputStream in = Files.newInputStream(path)) {
+            return firstNonUtf8Line(in);
+        }
+    }
+
+    private static boolean isUtf8(CharsetDecoder decoder, ByteArrayOutputStream line) {
+        try {
+            decoder.reset();
+            decoder.decode(ByteBuffer.wrap(line.toByteArray()));
+            return true;
+        } catch (CharacterCodingException e) {
+            return false;
+        }
+    }
+
+    /** The refusal of a file that is not UTF-8 (line: firstNonUtf8Line). */
+    public static String notUtf8Message(int line) {
+        return "The file is not UTF-8: line " + line + " (the header is line 1) has a character that is not valid UTF-8. " + UTF8_NOTE;
     }
 
 

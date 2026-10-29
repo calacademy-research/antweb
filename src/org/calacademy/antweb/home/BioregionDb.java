@@ -296,8 +296,9 @@ public class BioregionDb extends AntwebDb {
       }
       updateBioregion();
 
-        calcEndemic(); //bioregion
+        // Introduced first (Q4, docs/numbers.md; until 2026-10-28 after endemic): endemism counts native rows only.
         calcIntroduced();       //bioregion
+        calcEndemic(); //bioregion
 
 	  LogMgr.appendLog("compute.log", "  Bioregions populated", true);                    
     }
@@ -422,6 +423,9 @@ public class BioregionDb extends AntwebDb {
         // Subfamilies, Genera and Species counted directly from the list (PlaceTotals, 2026-10-21); were
         // roll-up sums of the list rows' child counts.
         PlaceTotals.writeListedCounts(getConnection(), PlaceTotals.BIOREGION, bioregion.getName());
+        // Specimens = the sum of the list's species and subspecies rows, like countries (Brian Fisher, 2026-10-28);
+        // was every ant specimen of the bioregion (populateFromSpecimenData, before the list was counted).
+        PlaceTotals.writeListedSpecimens(getConnection(), PlaceTotals.BIOREGION, bioregion.getName());
     }    
 
     private void updateImagedSpecimen() throws SQLException {
@@ -607,24 +611,27 @@ public class BioregionDb extends AntwebDb {
     }
     */
 
+    /**
+     * A name is endemic to a bioregion when it is on the native rows (not flagged introduced, Q4) of exactly one
+     * bioregion's list; only valid species and subspecies, not fossil, ants, identified to genus
+     * (PlaceTotals.endemicEligible; Brian Fisher, 2026-10-22 and 2026-10-28, docs/numbers.md Q3). Until 2026-10-28 every
+     * counted status, morphospecies included (StatusSet ALLANTWEBANTS), and introduced rows counted.
+     */
+    public static final String ENDEMIC_SQL = "select bt.taxon_name taxon_name, max(b.name) bioregionName, count(*) count"
+        + " from bioregion b, bioregion_taxon bt, taxon where b.name = bt.bioregion_name"
+        + " and taxon.taxon_name = bt.taxon_name"
+        + " and " + PlaceTotals.endemicEligible("taxon")
+        + " and " + PlaceTotals.nativeRow("bt")
+        + " group by bt.taxon_name having count(*) = 1"
+        + " order by bioregionName";
+
     public int calcEndemic() throws SQLException { //Bioregion bioregion) {
         int c = 0;
         // Set all to false prior to setting specifics to true below...
         c += updateBioregionTaxonField("endemic", null, null); //bioregion.getName()
         c += updateBioregionFieldCount("endemic", null, 0); //bioregion.getName()
 
-        String query = "select bt.taxon_name taxon_name, max(b.name) bioregionName, count(*) count"
-                + " from bioregion b, bioregion_taxon bt, taxon where b.name = bt.bioregion_name"
-                + " and taxon.taxon_name = bt.taxon_name"
-               // + " and b.name = '" + bioregion.getName() + "'"
-                + " and taxon.taxarank in ('species', 'subspecies')"
-                + " and taxon.fossil = 0"
-                + StatusSet.getAndCriteria(Project.ALLANTWEBANTS)
-                //+ " and  taxon.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable')"
-                + " and taxon.family = 'formicidae'"
-                + " and " + PlaceTotals.identifiedToGenus("taxon")   // 2026-10-22: not identified to genus, not a species
-                + " group by bt.taxon_name having count(*) = 1"
-                + " order by bioregionName";
+        String query = ENDEMIC_SQL;
 
         int n = calcEndemism(query);
         // Endemic number = the flagged rows (endemic.do), PlaceTotals (2026-10-21).

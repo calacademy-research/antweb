@@ -108,7 +108,9 @@ public class CountRules20261027Test extends TestCase {
         for (String field : new String[] {"endemic", "introduced"}) {
             String c = PlaceTotals.flaggedCondition(field);
             assertTrue(c, c.startsWith("l.is_" + field + " = 1 and "));
-            assertTrue("counted statuses, so no synonyms: " + c, c.contains("ft.status in " + PlaceTotals.COUNTABLE));
+            // Endemic: valid names only since 2026-10-28 (Brian Fisher; CountRules20261028Test)
+            String statuses = "endemic".equals(field) ? PlaceTotals.ENDEMIC_STATUSES : PlaceTotals.COUNTABLE;
+            assertTrue("counted statuses, so no synonyms: " + c, c.contains("ft.status in " + statuses));
             assertFalse(PlaceTotals.COUNTABLE.contains("synonym"));
             for (String type : new String[] {PlaceTotals.GEOLOCALE, PlaceTotals.BIOREGION}) {
                 assertTrue("the list: " + type, PlaceTotals.flaggedNamesSql(type, field).contains(c));

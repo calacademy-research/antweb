@@ -35,10 +35,15 @@ import org.calacademy.antweb.geolocale.Geolocale;
  *   subregion    regionSpecimensSql): the specimens that the pages of its countries count (collected in
  *                one of its countries, countable status, name on that country's list), name also on
  *                the region's list; before: specimens of the names on the list, collected anywhere
- *   bioregion    specimen.bioregion = the bioregion, any status (BioregionDb.getSpecimenCount)
- *   museum       specimen.museum = the museum code, any status (MuseumDb.getSpecimenCount)
+ *   bioregion    since 2026-10-28 the specimens of the species and subspecies rows of its list, as its Specimens
+ *   museum       number (Brian Fisher: the sum of the list rows, like countries): specimen.bioregion or
+ *                specimen.museum = the place, counted status, filed under a name on the list or under a synonym
+ *                (renamed name) whose valid name is on it (PlaceTotals.listSpecimensFrom); before: every ant
+ *                specimen of the bioregion or museum, any status, any name
  *   project      specimens, collected anywhere and of any status, of the species and subspecies on
- *                the project's list (proj_taxon; Project.getCountSpecimensQuery)
+ *                the project's list (proj_taxon; Project.getCountSpecimensQuery); since 2026-10-28 a curated
+ *                project's specimens filed under a synonym of a name on its list count too (Brian Fisher:
+ *                images follow the Specimens rule)
  *
  * Stored in place_image_count (created by the application, ensureSchema(); record and undo:
  * db/upgrade/8.113/2026-10-20-place-image-count.sql), one row per place and shot type
@@ -164,34 +169,32 @@ public class PlaceImageCountDb {
                     + " where t.taxarank in " + SPECIES + ANTS, true));
                 break;
             case BIOREGION:
-                list.add(new Source("select b.name k, s.code code, i.id id, " + SHOT + " shot"
-                    + " from bioregion b join specimen s on s.bioregion = b.name"
-                    + " join image i on i.image_of_id = s.code"
-                    + " where s.family = 'formicidae'"
-                    + (one ? " and b.name = ?" : ""), false));
-                break;
             case MUSEUM:
-                list.add(new Source("select m.code k, s.code code, i.id id, " + SHOT + " shot"
-                    + " from museum m join specimen s on s.museum = m.code"
-                    + " join image i on i.image_of_id = s.code"
-                    + " where s.family = 'formicidae'"
-                    + (one ? " and m.code = ?" : ""), false));
-                break;
             case PROJECT:
-                list.add(new Source("select pt.project_name k, s.code code, i.id id, " + SHOT + " shot"
-                    + " from proj_taxon pt"
-                    + " join taxon t on t.taxon_name = pt.taxon_name"
-                    + " join specimen s on s.taxon_name = pt.taxon_name"
-                    + " join image i on i.image_of_id = s.code"
-                    + " where t.taxarank in " + SPECIES + ANTS
-                    // the Port of Entry project is a species list only: no image numbers (2026-10-22)
-                    + " and pt.project_name not in " + org.calacademy.antweb.Project.SPECIES_LIST_ONLY_SQL
-                    + (one ? " and pt.project_name = ?" : ""), false));
+                list.add(new Source(listSource(type, one), false));
                 break;
             default:
                 throw new IllegalArgumentException("place type " + type);
         }
         return list;
+    }
+
+    /**
+     * Museums, bioregions and projects (Brian Fisher, 2026-10-28: images follow the Specimens rule): the images of the
+     * specimens their Specimens number counts, the specimens of the species and subspecies rows of the list, a specimen
+     * filed under a synonym under its valid name (PlaceTotals.listSpecimensFrom). Museums and bioregions: their own
+     * specimens (specimen.museum, specimen.bioregion) of a counted status; projects: every specimen of the name. The count
+     * check recounts with the same source (CountCheck.checkPlaceImages).
+     */
+    public static String listSource(String type, boolean one) {
+        String own = MUSEUM.equals(type) ? " and s.museum = m.pk and s.status in " + COUNTABLE
+            : BIOREGION.equals(type) ? " and s.bioregion = m.pk and s.status in " + COUNTABLE
+            // the Port of Entry project is a species list only: no image numbers (2026-10-22)
+            : " and m.pk not in " + org.calacademy.antweb.Project.SPECIES_LIST_ONLY_SQL;
+        return "select m.pk k, s.code code, i.id id, " + SHOT + " shot"
+            + PlaceTotals.listSpecimensFrom(type, one ? " = ?" : null,
+                " join taxon t on t.taxon_name = m.list_name join image i on i.image_of_id = s.code")
+            + " and t.taxarank in " + SPECIES + ANTS + own;
     }
 
     // ------------------------------------------------------------------ counting

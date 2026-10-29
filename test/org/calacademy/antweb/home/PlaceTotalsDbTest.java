@@ -154,20 +154,22 @@ public class PlaceTotalsDbTest extends TestCase {
     /** 2026-10-21: specimen uploads rolled back with "Data too long for column 'specimen_subfamily_dist_json'". */
     public void testALongDistributionFitsItsColumnAndNeverStopsTheWork() throws Exception {
         PlaceTotals.clearColumnLengths();
-        // CASC holds specimens of 60 subfamilies (and of names that are no subfamily): far more than 1000 characters of JSON.
+        // CASC's list holds species of 60 subfamilies (and of names that are no subfamily): far more than 1000 characters of
+        // JSON. Since 2026-10-28 the pie counts the specimens of the list's species rows (as the museum's Specimens).
         StringBuilder taxa = new StringBuilder();
-        StringBuilder specimens = new StringBuilder();
+        StringBuilder rows = new StringBuilder();
         for (int i = 1; i <= 60; i++) {
             String sf = "longsubfamilynumber" + i + "inae";
             taxa.append(i == 1 ? "" : ", ").append("('").append(sf).append("', 'subfamily', 'valid', 'formicidae', 'formicidae', '").append(sf).append("')");
-            for (int k = 0; k < i % 3 + 1; k++) {
-                specimens.append(specimens.length() == 0 ? "" : ", ").append("('x").append(i).append("_").append(k).append("', 'CASC', '").append(sf).append("', 'formicidae')");
-            }
-            specimens.append(", ('typo").append(i).append("', 'CASC', 'notasubfamily").append(i).append("', 'formicidae')");
+            taxa.append(", ('").append(sf).append("genus sp").append(i).append("', 'species', 'valid', '").append(sf).append("genus', 'formicidae', '").append(sf).append("')");
+            taxa.append(", ('notasubfamily").append(i).append("genus sp', 'species', 'valid', 'x', 'formicidae', 'notasubfamily").append(i).append("')");
+            rows.append(i == 1 ? "" : ", ").append("('CASC', '").append(sf).append("genus sp").append(i).append("', ").append(i % 3 + 1).append(")");
+            rows.append(", ('CASC', 'notasubfamily").append(i).append("genus sp', 1)");
         }
         exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily) values " + taxa);
-        exec("insert into specimen (code, museum, subfamily, family) values " + specimens);
-        long total = one("select count(*) from specimen where museum = 'CASC' and family = 'formicidae'");
+        exec("insert into museum_taxon (code, taxon_name, specimen_count) values " + rows);
+        long total = one("select sum(l.specimen_count) from museum_taxon l join taxon t on t.taxon_name = l.taxon_name"
+            + " where l.code = 'CASC' and t.taxarank in ('species', 'subspecies') and t.family = 'formicidae'");
         PlaceTotals.writePies(connection, PlaceTotals.MUSEUM, "CASC");
         String json = text("select specimen_subfamily_dist_json from museum where code = 'CASC'");
         assertNotNull(json);
@@ -248,10 +250,84 @@ public class PlaceTotalsDbTest extends TestCase {
                 one("select endemic_species_count from bioregion where name = '" + b + "'"));
         }
         // Geolocales: the number from the flags, also for a subregion (its flags were set, its number stayed 0).
-        exec("update geolocale_taxon set is_endemic = 1 where geolocale_id = " + INDIAN_OCEAN + " and taxon_name = '" + PA + "'");
+        exec("update geolocale_taxon set is_endemic = 0 where geolocale_id = " + INDIAN_OCEAN + " and taxon_name <> '" + PA + "'");
+        exec("update geolocale set endemic_species_count = 0 where id = " + INDIAN_OCEAN);
         PlaceTotals.writeCountsFromFlags(connection, PlaceTotals.GEOLOCALE, "endemic");
         assertEquals("pheidole a, pheidole a x, hypoponera b", 3, one("select endemic_species_count from geolocale where id = " + MADAGASCAR));
         assertEquals(1, one("select endemic_species_count from geolocale where id = " + INDIAN_OCEAN));
+    }
+
+    private static final String UNRECOGNIZED = "myrmicinaepheidole u";
+    private static final String REUNION = "800";
+    private static final String AFRICA = "801";
+
+    /**
+     * Brian Fisher, 2026-10-22 and 2026-10-28 (docs/numbers.md Q3, Q4), every kind of geolocale at once
+     * (GeolocaleDb.calcEndemic): only valid names count toward endemism (pheidole b, a morphospecies, and an unrecognized
+     * name found in Madagascar only are not endemic); rows flagged introduced do not make a name non-endemic (pheidole a,
+     * introduced in Reunion, stays endemic to Madagascar) and are never flagged endemic; a subregion or region has the
+     * names whose native country rows are all in its countries (hypoponera b, native in Madagascar and Reunion, is endemic
+     * to the Indian Ocean and to Africa, not to either country).
+     */
+    public void testEndemismCountsValidNativeNamesOnly() throws Exception {
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily) values ('" + UNRECOGNIZED
+            + "', 'species', 'unrecognized', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "')");
+        exec("insert into geolocale (id, name, georank, parent, is_valid, is_live) values (" + REUNION + ", 'Reunion', 'country', 'Indian Ocean', 1, 1),"
+            + " (" + AFRICA + ", 'Africa', 'region', null, 1, 1)");
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, is_introduced, created) values (" + REUNION + ", '" + PA + "', 1, '2020-01-01'),"
+            + " (" + REUNION + ", '" + HB + "', 0, '2020-01-01'), (" + MADAGASCAR + ", '" + UNRECOGNIZED + "', 0, '2020-01-01'),"
+            + " (" + ATSINANANA + ", '" + PA + "', 0, '2020-01-01'), (" + ATSINANANA + ", '" + HB + "', 0, '2020-01-01'),"
+            + " (" + AFRICA + ", '" + PA + "', 0, '2020-01-01'), (" + AFRICA + ", '" + PAX + "', 0, '2020-01-01'),"
+            + " (" + AFRICA + ", '" + PB + "', 0, '2020-01-01'), (" + AFRICA + ", '" + HB + "', 0, '2020-01-01')");
+        exec("update geolocale_taxon set is_endemic = 1");   // every flag is reset first
+        // Valid species of the new places (the count check: Endemic <= Valid species)
+        exec("update geolocale set valid_species_count = 3 where id = " + AFRICA);
+        exec("update geolocale set valid_species_count = 2 where id in (" + REUNION + ", " + ATSINANANA + ")");
+        new GeolocaleDb(connection).calcEndemic();
+        assertEquals("pheidole a, pheidole a x", names(PA, PAX), flagged(MADAGASCAR));
+        assertEquals("pheidole a introduced in Reunion: never endemic; hypoponera b also in Madagascar", "", flagged(REUNION));
+        assertEquals("pheidole a (endemic to Madagascar, one adm1); not hypoponera b", names(PA), flagged(ATSINANANA));
+        assertEquals(names(PA, PAX, HB), flagged("" + INDIAN_OCEAN));
+        assertEquals(names(PA, PAX, HB), flagged(AFRICA));
+        for (String g : new String[] {"" + MADAGASCAR, REUNION, "" + ATSINANANA, "" + INDIAN_OCEAN, AFRICA}) {
+            assertEquals(g, one("select count(*) from geolocale_taxon where is_endemic = 1 and geolocale_id = " + g),
+                one("select endemic_species_count from geolocale where id = " + g));
+        }
+        // The count check's recount of the flags (NumberChecks.endemicFlags) follows the same rule.
+        CountCheck.Result r = invariants();
+        for (CountCheck.Mismatch m : r.mismatches) {
+            assertFalse(list(r), m.check.equals("place.endemic.flags") || m.check.equals("place.totals.endemic"));
+        }
+        // An introduced row in Reunion of a name endemic to Madagascar no longer counts against it; a native one does.
+        exec("update geolocale_taxon set is_introduced = 0 where geolocale_id = " + REUNION);
+        new GeolocaleDb(connection).calcEndemic();
+        assertEquals(names(PAX), flagged(MADAGASCAR));
+        assertEquals(names(PA, PAX, HB), flagged("" + INDIAN_OCEAN));
+    }
+
+    /** Bioregions (BioregionDb.calcEndemic): valid names only, native rows only (2026-10-28). */
+    public void testBioregionEndemismCountsValidNativeNamesOnly() throws Exception {
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily) values ('" + UNRECOGNIZED
+            + "', 'species', 'unrecognized', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "')");
+        exec("insert into bioregion (name) values ('Afrotropical')");
+        exec("insert into bioregion_taxon (bioregion_name, taxon_name, is_introduced) values ('Malagasy', '" + PB + "', 0),"
+            + " ('Malagasy', '" + UNRECOGNIZED + "', 0), ('Afrotropical', '" + HB + "', 1)");
+        new BioregionDb(connection).calcEndemic();
+        assertEquals("hypoponera b is introduced in the Afrotropics: endemic to Malagasy; not the morphospecies, not the unrecognized name",
+            names(PA, HB), text("select group_concat(taxon_name order by taxon_name separator ', ') from bioregion_taxon where is_endemic = 1 and bioregion_name = 'Malagasy'"));
+        assertEquals(0, one("select count(*) from bioregion_taxon where is_endemic = 1 and bioregion_name = 'Afrotropical'"));
+        assertEquals(2, one("select endemic_species_count from bioregion where name = 'Malagasy'"));
+    }
+
+    private static String names(String... n) {
+        String[] s = n.clone();
+        java.util.Arrays.sort(s);
+        return String.join(", ", s);
+    }
+
+    private String flagged(Object geolocaleId) throws Exception {
+        String t = text("select group_concat(taxon_name order by taxon_name separator ', ') from geolocale_taxon where is_endemic = 1 and geolocale_id = " + geolocaleId);
+        return t == null ? "" : t;
     }
 
     public void testMuseumCodeIsAWholeWordOfOwnedBy() throws Exception {
@@ -365,5 +441,51 @@ public class PlaceTotalsDbTest extends TestCase {
             taxa.add(x);
         }
         assertEquals(2, TaxonMgr.countValidSpecies(taxa));
+    }
+
+    /**
+     * Brian Fisher, 2026-10-28: a specimen counts at each rank it is identified to, and no further. A "Lioponera indet"
+     * specimen makes Lioponera count in Genera but is not a species; unidentifiable and unrecognized names are not species
+     * either. The genus rows' Species follow the same rule; the specimens identified to genus only are named by genus
+     * (GenusOnly); a museum's Specimens are the sum of its list rows.
+     */
+    public void testSpecimensCountAtEachRankTheyAreIdentifiedTo() throws Exception {
+        int[] before = PlaceTotals.listedCounts(connection, PlaceTotals.GEOLOCALE, "" + MADAGASCAR);
+        String lio = "ponerinaelioponera";
+        exec("alter table taxon add column subspecies varchar(64)");   // as the live table (GenusOnly reads it)
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species) values"
+            + " ('" + lio + "', 'genus', 'valid', '" + PON + "', 'formicidae', '" + PON + "', 'lioponera', null),"
+            + " ('" + lio + " indet', 'species', 'indetermined', '" + lio + "', 'formicidae', '" + PON + "', 'lioponera', 'indet'),"
+            + " ('" + PHEIDOLE + " zz', 'species', 'unrecognized', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "', 'pheidole', 'zz'),"
+            + " ('" + PHEIDOLE + " yy', 'species', 'unidentifiable', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "', 'pheidole', 'yy')");
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, specimen_count, created) values"
+            + " (" + MADAGASCAR + ", '" + lio + "', 1, '2020-01-01'), (" + MADAGASCAR + ", '" + lio + " indet', 1, '2020-01-01'),"
+            + " (" + MADAGASCAR + ", '" + PHEIDOLE + " zz', 1, '2020-01-01'), (" + MADAGASCAR + ", '" + PHEIDOLE + " yy', 2, '2020-01-01')");
+        int[] after = PlaceTotals.listedCounts(connection, PlaceTotals.GEOLOCALE, "" + MADAGASCAR);
+        assertEquals("Subfamilies: ponerinae was there already", before[0], after[0]);
+        assertEquals("Genera: Lioponera counts (a specimen identified to genus)", before[1] + 1, after[1]);
+        assertEquals("Species: none of the three is a species", before[2], after[2]);
+
+        // the genus rows' Species (the nightly crawl's query): pheidole a, b and a x; not zz (unrecognized) nor yy
+        org.calacademy.antweb.geolocale.Country madagascar = new org.calacademy.antweb.geolocale.Country();
+        madagascar.setId(MADAGASCAR);
+        madagascar.setName("Madagascar");
+        java.util.Map<String, Integer> children = new java.util.HashMap<>();
+        try (Statement st = connection.createStatement(); ResultSet r = st.executeQuery(madagascar.getCountChildrenQuery("species"))) {
+            while (r.next()) children.put(r.getString("parentTaxonName"), r.getInt("count"));
+        }
+        assertEquals(3, (int) children.get(PHEIDOLE));
+        assertNull("Lioponera has no species: " + children, children.get(lio));
+
+        // the names identified to genus only, by genus: the genus row and the line under the species list
+        org.calacademy.antweb.home.GenusOnly g = org.calacademy.antweb.home.GenusOnly.load(connection, madagascar);
+        assertEquals(1, g.specimens(lio));
+        assertEquals("pheidole yy (unidentifiable); not zz (unrecognized: for curators to check against AntCat)", 2, g.specimens(PHEIDOLE));
+        assertEquals("3 specimens identified only to genus are not listed here: Lioponera (1), Pheidole (2).", g.speciesListText());
+
+        // a museum's Specimens: the sum of its species and subspecies rows (fixture: CASC 4)
+        assertEquals(4, PlaceTotals.count(connection, PlaceTotals.listedSpecimensSql(PlaceTotals.MUSEUM), "CASC"));
+        assertEquals(4, PlaceTotals.writeListedSpecimens(connection, PlaceTotals.MUSEUM, "CASC"));
+        assertEquals(4, one("select specimen_count from museum where code = 'CASC'"));
     }
 }

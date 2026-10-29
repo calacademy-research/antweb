@@ -66,6 +66,9 @@ public class CountInvariantsTest extends TestCase {
         log.add("2026-10-21 05:00:00 Begin run");
         assertFalse(CountInvariants.rulesCounted(log));
         log.add("2026-10-21 07:40:00   Set 4 done (" + CountInvariants.RULES_LOG + ")");
+        // the counting rules of 2026-10-28 too (the same line since then)
+        assertFalse(CountInvariants.rulesCounted(log));
+        log.add("2026-10-29 07:40:00   Set 4 done (" + CountInvariants.RULES_LOG + "; " + CountInvariants.COUNTING_RULES_LOG + ")");
         assertTrue(CountInvariants.rulesCounted(log));
     }
 

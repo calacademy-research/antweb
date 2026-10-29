@@ -37,12 +37,6 @@ function selectAll(thisForm) {
 <!-- jsp:useBean id="map" scope="session" class="org.calacademy.antweb.Map" / -->
 <!-- jsp:setProperty name="map" property="*" / -->
 
-<logic:present parameter="project">
-  <bean:parameter id="project" name="project"/>
-</logic:present>
-<logic:notPresent parameter="project">
-  <bean:define id="project" value=""/>
-</logic:notPresent>
 
 <logic:present parameter="mode">
   <bean:parameter id="mode" name="mode"/>

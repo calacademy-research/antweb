@@ -599,8 +599,12 @@ public final class NumberChecks {
                             + " (groups.do, group.do) = a recount of the group's specimens", v[i], recount[i], "=", Q8_PENDING);
                         continue;
                     }
+                    // 2026-10-28 (counting rules, docs/numbers.md section 5): Species counts valid names and morphospecies
+                    // only, as every Species. GroupCountDb follows PlaceTotals.rankCondition, so the recount uses the new
+                    // rule at once; the stored numbers are pending until a nightly run has recounted them by it.
+                    String pi = p == null && i == 7 && v[i] != recount[i] && !inv.result.rulesCounted ? CountInvariants.SPECIES_RULE_PENDING : p;
                     inv.compare(c, "group", g, (counted ? "today's " : "last upload (" + row[1] + ") ") + what[i]
-                        + " (groups.do, group.do) = a recount of the group's specimens", v[i], recount[i], "=", p);
+                        + " (groups.do, group.do) = a recount of the group's specimens", v[i], recount[i], "=", pi);
                 }
                 long shownUploads = uploads.containsKey(g) ? uploads.get(g)[0] : 0;
                 exp.put(g, new long[] {shownUploads, v[0], v[3], v[4], v[1], v[2], v[5], v[6], v[7]});
@@ -651,7 +655,9 @@ public final class NumberChecks {
         }
         String[] what = {"Specimens", "Collections", "Localities", "Ungeoreferenced", "Flagged", "Subfamilies", "Genera", "Species"};
         for (int i = 0; i < 8; i++) {
-            inv.compare(c, "group", "all", "Totals " + what[i] + " (groups.do; all groups' specimens together, Q8) = a recount", stored[i], recount[i], "=", p);
+            // Species: the counting rules of 2026-10-28, pending until a nightly run has recounted by them (see adminGroups)
+            String pi = p == null && i == 7 && stored[i] != recount[i] && !inv.result.rulesCounted ? CountInvariants.SPECIES_RULE_PENDING : p;
+            inv.compare(c, "group", "all", "Totals " + what[i] + " (groups.do; all groups' specimens together, Q8) = a recount", stored[i], recount[i], "=", pi);
         }
     }
 
@@ -820,28 +826,32 @@ public final class NumberChecks {
     // ------------------------------------------------------------------ endemic flags
 
     /**
-     * The endemic flags of country and adm1 lists (rows 24, 78, 110): the rows endemic.do lists and the Endemic number
-     * counts, recounted by the rule of GeolocaleDb.calcCountryEndemism and calcAdm1Endemism: a species or subspecies of
-     * a counted status other than morphotaxon, not fossil, an ant, identified to genus (2026-10-22), on the list of
-     * exactly one country (of any validity);
-     * an adm1 row when the name is endemic to the adm1's country and on the list of exactly one adm1. Regions,
-     * subregions (calcHigherEndemism) and bioregions are not recounted here.
+     * The endemic flags of country, adm1, subregion and region lists (rows 24, 78, 110): the rows endemic.do lists and the
+     * Endemic number counts, recounted by the rule of GeolocaleDb (Brian Fisher, 2026-10-22 and 2026-10-28, docs/numbers.md
+     * Q3, Q4): a valid species or subspecies, not fossil, an ant, identified to genus (PlaceTotals.endemicEligible), counted
+     * on native rows only (not flagged introduced, PlaceTotals.nativeRow); a country row when the name is on the native
+     * rows of exactly one country's list (of any validity); an adm1 row when the name is endemic to the adm1's country and
+     * on the native rows of exactly one adm1 list; a subregion (region) row when the name's native country rows are all in
+     * countries of that subregion (of that region's subregions), whether or not the subregion's row is flagged introduced
+     * (calcHigherIntroduced: introduced in another of its countries). Bioregions are not recounted here.
      */
     void endemicFlags() {
         if (!has("geolocale_taxon", "is_endemic") || !inv.places.containsKey(PlaceTotals.GEOLOCALE)) return;
         CountInvariants.Check check = new CountInvariants.Check("place.endemic.flags",
-            "Endemic flags of country and adm1 lists = a recount by the rule of calcEndemic (rows of endemic.do)", "24, 78, 110")
-            .pendingOn(false, true, false, false);
+            "Endemic flags of country, adm1, subregion and region lists = a recount by the rule of calcEndemic (rows of endemic.do)", "24, 78, 110")
+            .pendingOn(true, true, false, false);
         inv.check(check, c -> {
-            String rule = " and t.status != 'morphotaxon' and t.taxarank in ('species', 'subspecies') and t.fossil = 0"
-                + " and t.status in " + CountInvariants.COUNTABLE + " and t.family = 'formicidae' and " + PlaceTotals.identifiedToGenus("t");
+            boolean flagsIntroduced = has("geolocale_taxon", "is_introduced");
+            String rule = " and " + PlaceTotals.endemicEligible("t") + (flagsIntroduced ? " and " + PlaceTotals.nativeRow("gt") : "");
+            // a country's or adm1's row flagged introduced is never endemic, even when the name is endemic to another place
+            String nativeOnly = flagsIntroduced ? " and " + PlaceTotals.nativeRow("gt") : "";
             String countryEndemic = "select gt.taxon_name from geolocale g join geolocale_taxon gt on g.id = gt.geolocale_id"
                 + " join taxon t on t.taxon_name = gt.taxon_name where g.georank = 'country'" + rule
                 + " group by gt.taxon_name having count(*) = 1";
             // per country: rows flagged, rows that should be, and rows both
             String countries = "select gt.geolocale_id, sum(gt.is_endemic = 1), sum(e.taxon_name is not null), sum(gt.is_endemic = 1 and e.taxon_name is not null)"
                 + " from geolocale g join geolocale_taxon gt on g.id = gt.geolocale_id"
-                + " left join (" + countryEndemic + ") e on e.taxon_name = gt.taxon_name"
+                + " left join (" + countryEndemic + ") e on e.taxon_name = gt.taxon_name" + nativeOnly
                 + " where g.georank = 'country' group by gt.geolocale_id";
             compareFlags(c, inv.rows(countries), "country");
             // names endemic to a country by the recount above (not by the stored country flags, which the country half
@@ -856,9 +866,24 @@ public final class NumberChecks {
                 + " group by gt.taxon_name having count(*) = 1";
             String adm1s = "select gt.geolocale_id, sum(gt.is_endemic = 1), sum(e.taxon_name is not null), sum(gt.is_endemic = 1 and e.taxon_name is not null)"
                 + " from geolocale g join geolocale_taxon gt on g.id = gt.geolocale_id"
-                + " left join (" + adm1Endemic + ") e on e.taxon_name = gt.taxon_name"
+                + " left join (" + adm1Endemic + ") e on e.taxon_name = gt.taxon_name" + nativeOnly
                 + " where g.georank = 'adm1' group by gt.geolocale_id";
             compareFlags(c, inv.rows(adm1s), "adm1");
+            // subregions and regions: the names whose native country rows all lie in one subregion (region), with its name
+            for (String upper : new String[] {"subregion", "region"}) {
+                String placeName = "subregion".equals(upper) ? "s.name" : "r.name";
+                String inOne = "select gt.taxon_name, max(" + placeName + ") place from geolocale g join geolocale_taxon gt on g.id = gt.geolocale_id"
+                    + " join taxon t on t.taxon_name = gt.taxon_name"
+                    + " left join geolocale s on s.name = g.parent and s.georank = 'subregion' and s.is_valid = 1"
+                    + ("region".equals(upper) ? " left join geolocale r on r.name = s.parent and r.georank = 'region' and r.is_valid = 1" : "")
+                    + " where g.georank = 'country'" + rule
+                    + " group by gt.taxon_name having count(distinct coalesce(" + placeName + ", '')) = 1 and min(coalesce(" + placeName + ", '')) <> ''";
+                String uppers = "select gt.geolocale_id, sum(gt.is_endemic = 1), sum(e.taxon_name is not null), sum(gt.is_endemic = 1 and e.taxon_name is not null)"
+                    + " from geolocale g join geolocale_taxon gt on g.id = gt.geolocale_id"
+                    + " left join (" + inOne + ") e on e.taxon_name = gt.taxon_name and e.place = g.name"
+                    + " where g.georank = '" + upper + "' and g.is_valid = 1 group by gt.geolocale_id";
+                compareFlags(c, inv.rows(uppers), upper);
+            }
         });
     }
 

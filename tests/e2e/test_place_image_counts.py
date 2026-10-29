@@ -30,8 +30,10 @@ DEFINITIONS = [
     ("subfamilies", "Subfamilies recorded on this country's AntWeb list"),
     ("genera", "Genera recorded on this country's AntWeb list"),
     ("valid", "Currently valid, formally named, living (non-fossil) species and subspecies"),
-    ("species", "All species and subspecies recorded on this country's AntWeb list, from any source"),
-    ("endemic", "Named species and subspecies recorded for this country and no other country in AntWeb"),
+    # counting rules of 2026-10-28: valid names and morphospecies only
+    ("species", "Species and subspecies recorded on this country's AntWeb list, from any source, that are valid names or"
+                " morphospecies"),
+    ("endemic", "Valid species and subspecies recorded for this country and no other country in AntWeb"),
     ("introduced", "Species introduced by humans that are not native to this country's bioregion"),
     ("specimens", "Ant specimens collected in this country and identified to a species, morphospecies, or unidentified taxon"),
 ]

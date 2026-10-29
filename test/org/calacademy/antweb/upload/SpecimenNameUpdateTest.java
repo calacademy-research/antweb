@@ -103,6 +103,11 @@ public class SpecimenNameUpdateTest extends TestCase {
         CurrentValidNameRule.Result r = rule(NO_TARGET);
         assertEquals(Kind.TARGET_MISSING, r.kind);
         assertEquals("as before: status stays synonym", Status.SYNONYM, r.status);
+        // Brian Fisher, 2026-10-28: kept under the uploaded name (was: filed under the missing name).
+        assertEquals(NO_TARGET, r.taxonName);
+        assertNull(r.originalTaxonName);
+        assertFalse(r.replacesName());
+        assertEquals("ponerinaehypoponera missing", r.missingCurrentValidName);
         r = rule(TO_HOMONYM);
         assertEquals(Kind.TARGET_IS_HOMONYM, r.kind);
         assertEquals("the upload files it under a placeholder", Status.UNRECOGNIZED, r.status);
@@ -268,6 +273,17 @@ public class SpecimenNameUpdateTest extends TestCase {
         assertEquals(Outcome.MORPHO_OR_INDET, nightly(INDET, INDET, false).outcome);
         assertEquals("a morpho filed under it is not touched either", Outcome.MORPHO_OR_INDET, nightly(OLD, MORPHO, false).outcome);
         assertEquals(Outcome.MORPHO_OR_INDET, nightly(MORPHO, "formicinaecamponotus maculatus", false).outcome);
+    }
+
+    public void testSpecimenFiledUnderAMissingValidNameGoesBackToItsUploadedName() throws Exception {
+        // Brian Fisher, 2026-10-28: an older upload filed it under the current valid name, which has no taxon row.
+        SpecimenNameUpdate.Decision d = nightly(NO_TARGET, "ponerinaehypoponera missing", false);
+        assertEquals(Outcome.CHANGE, d.outcome);
+        assertEquals(NO_TARGET, d.newName);
+        assertNull("back on the uploaded name: no original name kept", d.newOriginalName);
+        // filed under a valid name: not moved away from it
+        d = SpecimenNameUpdate.decide(NO_TARGET, NEW, n -> false, rule(NO_TARGET), false, true);
+        assertEquals(Outcome.NO_TARGET, d.outcome);
     }
 
     public void testOtherCasesAreLeftAlone() throws Exception {

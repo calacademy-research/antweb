@@ -49,7 +49,6 @@ public class AdvancedSearchAction extends AntwebAction {
 		addToSearch(sb, "medium", searchParameters.getMedium(), searchParameters.getMediumSearchType());
 		addToSearch(sb, "specimennotes", searchParameters.getSpecimenNotes(), searchParameters.getSpecimenNotesSearchType());
 		addToSearch(sb, "dnaExtractionNotes", searchParameters.getDnaExtractionNotes(), searchParameters.getDnaExtractionNotesSearchType());		
-		addToSearch(sb, "project", searchParameters.getProject(), null);
 		addToSearch(sb, "images", searchParameters.getImagesOnly(), "boolean");
 		addToSearch(sb, "types", searchParameters.getTypes(), "boolean");
 		addToSearch(sb, "country", searchParameters.getCountry(), null);
@@ -281,7 +280,7 @@ public class AdvancedSearchAction extends AntwebAction {
 		search.setRedFlagOption(searchParameters.getRedFlagOption());
 
 		search.setTypes(searchParameters.getTypes());
-		search.setProject(searchParameters.getProject());
+		// Advanced search covers all ants. A project= parameter (old links) is ignored.
 
 		//s_log.warn("getSearchResults() adm2:" + search.getAdm2());
 		search.setCountry(searchParameters.getCountry());

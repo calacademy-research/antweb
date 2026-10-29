@@ -40,7 +40,7 @@
 <br>&nbsp;&nbsp;Specimen records from <% if (institutions > 0) { %>AntWeb's <span data-stat="institutions"><%= A.commaFormat(institutions) %></span> collaborating institutions (the <a href="<%= AntwebProps.getDomainApp() %>/museums.do">Museums</a> list)<% } else { %>AntWeb's collaborating institutions (the <a href="<%= AntwebProps.getDomainApp() %>/museums.do">Museums</a> list; their number is <%= starting %>)<% } %>.
 
 <br><br><b><%= liveImagedSpecies > 0 ? A.commaFormat(liveImagedSpecies) : starting %>  species + ssp. imaged </b>
-<br>&nbsp;&nbsp;Valid, morpho or indetermined ant species and subspecies with at least one photo of the ant (label photos do not count). Names not identified to genus are not counted as species.
+<br>&nbsp;&nbsp;Ant species and subspecies that are valid names or morphospecies, with at least one photo of the ant (label photos do not count). Names identified to genus only (indetermined, unidentifiable) and names not in AntCat (unrecognized) are not counted as species (since 2026-10-28).
 
 <br><br><b><%= liveImagedSpecimens > 0 ? A.commaFormat(liveImagedSpecimens) : starting %> specimens imaged</b>
 

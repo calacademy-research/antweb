@@ -43,12 +43,6 @@ if (advancedSearchResults == null) {
 
 <jsp:setProperty name="advancedSearchResults" property="*" />
 
-<logic:present parameter="project">
-  <bean:parameter id="project" name="project"/>
-</logic:present>
-<logic:notPresent parameter="project">
-  <bean:define id="project" value=""/>
-</logic:notPresent>
 <logic:present parameter="mode">
   <bean:parameter id="mode" name="mode"/>
 </logic:present>

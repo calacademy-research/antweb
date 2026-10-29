@@ -26,6 +26,13 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 
     String currentDateFunction = "now()";  // for mysql 
 
+    /**
+     * Set by SpecimenUploadParse.parseLine() for the line being read (2026-10-28): SpecimenUploadParse.GENUS when the
+     * file gave a genus but no species, SpecimenUploadParse.SUBFAMILY when it gave a subfamily but no genus or
+     * species, otherwise null. processLine() lists such lines in the report.
+     */
+    protected String identifiedOnlyTo;
+
 	SpecimenUploadProcess(Connection connection) {
       super(connection);
 
@@ -93,28 +100,11 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 		  }
 		}
 
-		if (skipRecord == null) {
-		  if (Utility.isBlank(genus)) {
-			  s_log.debug("processLine() genus is empty string line:" + lineNum + " displayLineNum:" + LineNumMgr.getDisplayLineNum(lineNum) + " genus:" + genus + " taxon:" + taxonName);
-			  getMessageMgr().addToMessages(MessageMgr.emptyStringGenus, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + Html.esc(code) + " taxon:" + Html.esc(taxonName));
-			  skipRecord = "genusEmptyString";
-		  }
-		}
+		// Brian Fisher, 2026-10-28: a line with a genus but no species, or with a subfamily but no genus or species, is
+		// not skipped. The parse (SpecimenUploadParse.parseLine) already filed it as "(indet)", with the genus or
+		// "(Subfamily)" in the genus place, status indetermined; the report lists it below (identifiedOnlyTo).
+		// (The skips "Empty String Genus" and "Empty String Species" that stood here could not be reached.)
 
-        //A.log("processLine() species:" + species);
-		if (skipRecord == null) {
-		  if (Utility.isBlank(species) && !Utility.isBlank(genus)) {
-		    if (genus.contains("(")) {
-		      species = genus;
-		    } else {
-		      species = "(" + genus + ")";
-            }
-			//A.log("processLine() species is empty string line:" + lineNum + " taxon:" + taxonName);
-			getMessageMgr().addToMessages(MessageMgr.emptyStringSpecies, "line:" + LineNumMgr.getDisplayLineNum(lineNum) + " code:" + Html.esc(code) + " taxon:" + Html.esc(taxonName));
-			skipRecord = "speciesEmptyString";
-		  }
-		}
-   
 		if ("casent0003145".equals(code)) {     
 		  s_log.debug("processLine() code:" + code + " species:" + species + " subspecies:" + subspecies);
 		}
@@ -268,6 +258,11 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 				Cardiocondyla wroughtoni -> Cardiocondyla wroughtonii
 			*/
 			useTaxonName = setStatusAndCurrentValidName(taxonName, taxonItem, specimenItem, shortFileName);                        
+			if (SpecimenUploadParse.GENUS.equals(identifiedOnlyTo)) {
+			  getMessageMgr().addToMessages(MessageMgr.identifiedOnlyToGenus, Taxon.makeDescriptionLink(useTaxonName));
+			} else if (SpecimenUploadParse.SUBFAMILY.equals(identifiedOnlyTo)) {
+			  getMessageMgr().addToMessages(MessageMgr.identifiedOnlyToSubfamily, Taxon.makeDescriptionLink(useTaxonName));
+			}
 			//if (!makeTaxonName.equals(taxonName)) A.log("buildLineItems() makeTaxonName:" + makeTaxonName + " taxonName:" + taxonName);
 
 			bioregion = (String) specimenItem.get("bioregion");
@@ -494,6 +489,13 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
             s_log.debug("setStatusAndCurrentValidName() shouldn't status:" + status + " have a current valid name?");
             break;
 
+        case TARGET_MISSING:
+            // Brian Fisher, 2026-10-28: AntCat's current valid name has no taxon in AntWeb yet. The specimen stays
+            // under its uploaded name (status as in AntCat) and the report lists it; once AntWeb has the taxon, the
+            // next upload or the nightly name update files it under the current valid name.
+            getMessageMgr().addToMessages(MessageMgr.currentValidNameNotInAntweb, currentValidNameNotInAntwebLine(taxonName, rule.missingCurrentValidName));
+            break;
+
         case KEEP:
             if (!(Status.VALID.equals(status) || Status.UNAVAILABLE.equals(status) || Status.UNIDENTIFIABLE.equals(status))) {
               s_log.debug("setStatusAndCurrentValidName() for taxonName:" + taxonName + " status not found:" + status);
@@ -501,7 +503,7 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
             break;
 
         default: {
-            // REPLACE, TARGET_IS_HOMONYM, TARGET_MISSING, TARGET_SAME: filed under the current valid name.
+            // REPLACE, TARGET_IS_HOMONYM, TARGET_SAME: filed under the current valid name.
             String currentValidName = rule.taxonName;
             originalTaxonName = rule.originalTaxonName;
             taxonName = currentValidName;
@@ -576,6 +578,12 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 	  return taxonName;
     }
   
+    /** The report line of a name kept because its current valid name is not in AntWeb yet: "Uploaded -> Valid (not in AntWeb yet)". */
+    public static String currentValidNameNotInAntwebLine(String uploadedTaxonName, String currentValidName) {
+        String valid = currentValidName == null ? "" : Html.esc(Taxon.getPrettyTaxonName(currentValidName));
+        return Taxon.makeDescriptionLink(uploadedTaxonName) + " -> " + valid + " (not in AntWeb yet)";
+    }
+
     /** The reasons of the "Recognized invalid species" lines of this upload's report (UploadNameReasons). */
     private UploadNameReasons nameReasons;
 

@@ -423,9 +423,11 @@ def test_places_and_search_fixes_20261028(sources):
     b = body("src/org/calacademy/antweb/home/ProjectDb.java", "public void update(Project project)")
     assert "throws SQLException" in b.splitlines()[0] and "throw e;" in b and "createStatement()" not in b
     geo = sources["src/org/calacademy/antweb/home/GeolocaleDb.java"]
+    # The three Java loops (which stopped on a missing place, fixed 10-28 in triage ti) were replaced the same day by
+    # two SQL updates (counting rules, Q3 regions and subregions): no per-place cast or lookup is left to fail.
     for name in ("calcHigherEndemismAdm1", "calcHigherEndemismCountry", "calcHigherEndemismSubregion"):
-        b = body("src/org/calacademy/antweb/home/GeolocaleDb.java", "private int " + name + "()")
-        assert "continue;" in b and "(Subregion) GeolocaleMgr" not in b and "(Region) GeolocaleMgr" not in b, name
+        assert "private int " + name + "()" not in geo, name + " is back"
+    assert "HIGHER_ENDEMIC_SQL" in geo and "(Subregion) GeolocaleMgr" not in geo and "(Region) GeolocaleMgr" not in geo
     assert "g.parent = '\" + parent" not in geo
     for nav in ("regionNav", "subregionNav", "countryNav", "adm1Nav"):
         with open(os.path.join(ROOT, "web/common", nav + ".jsp"), encoding="utf-8") as f:

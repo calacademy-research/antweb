@@ -14,14 +14,17 @@ What must agree, and how it is checked here (read-only, anonymous; staging or pr
                    native bioregions (TaxonPropMgr), so introduced.do = the names marked Introduced that are on the
                    introduced-species list (project introducedants), as nightly calcIntroduced flags them;
                (b) the endemism rule, name by name, from the API (independent of the nightly flags): a name on
-                   endemic.do of a country is on exactly one country's list (/geolocaleTaxa), and is a species or
-                   subspecies, not fossil, an ant, identified to genus, of a counted status other than morphotaxon
-                   (/taxa; GeolocaleDb.calcCountryEndemism); of an adm1: endemic to its country and on one adm1
-                   list of that country (calcAdm1Endemism); of a bioregion: on exactly one bioregion's list, any
-                   counted status (BioregionDb.calcEndemic). And the other way: a valid name on the list that the
-                   rule says is endemic is on endemic.do.
-               Countries and adm1s: the count check also recounts every flag every day (inv:place.endemic.flags);
-               bioregions only here.
+                   endemic.do is a valid species or subspecies, not fossil, an ant, identified to genus (/taxa;
+                   PlaceTotals.endemicEligible: Brian Fisher, 2026-10-22 and 2026-10-28, valid names only, at every
+                   kind of place); of a country it is on exactly one country's list (/geolocaleTaxa;
+                   GeolocaleDb.COUNTRY_ENDEMIC_SQL); of an adm1: endemic to its country and on one adm1 list of that
+                   country (ADM1_ENDEMIC_SQL); of a bioregion: on exactly one bioregion's list (BioregionDb.ENDEMIC_SQL).
+                   And the other way: a valid name on the list that the rule says is endemic is on endemic.do.
+                   Endemism counts native rows only (Q4: rows flagged introduced do not make a name non-endemic); the
+                   API does not show the introduced flags, so names on the introduced-species list are left out of
+                   the list half of (b).
+               Countries, adm1s, subregions and regions: the count check also recounts every flag every day
+               (inv:place.endemic.flags); bioregions only here.
 
 The sample changes every day (numbers_sample.py; ANTWEB_SAMPLE_DAY repeats a day). A flag set by the last nightly
 run can be out of date after an upload until the next one; the failure message says so.
@@ -30,9 +33,6 @@ Found while writing these tests (xfail until fixed, see docs/numbers.md section 
   B41  a country or adm1 without a bioregion gets every name of the introduced-species list on its list flagged
        introduced (TaxonPropMgr.isIntroduced(name, null) is true for every name with a native-bioregion map), while
        its page says "not native to this place's bioregion" and its species list marks none of them.
-  Q3   (decided 2026-10-22, not yet in the code) endemism of countries and adm1s counts named species only; the
-       page says "Named species and subspecies", but calcCountryEndemism still counts indetermined and unidentifiable
-       names.
 """
 import os
 import re
@@ -43,7 +43,7 @@ import numbers_sample as ns
 
 PER_KIND = int(os.environ.get("ANTWEB_SAMPLE_PLACES", "3"))
 NAMES = int(os.environ.get("ANTWEB_SAMPLE_NAMES", "6"))
-COUNTED = {"valid", "unrecognized", "morphotaxon", "indetermined", "unidentifiable"}
+ENDEMIC_STATUSES = {"valid"}   # what can be endemic (Brian Fisher, 2026-10-28; PlaceTotals.ENDEMIC_STATUSES)
 PENDING = "a flag set by the last nightly run is out of date after an upload until the next nightly run"
 
 
@@ -90,6 +90,7 @@ def test_endemic_and_introduced_numbers_equal_their_lists():
     geolocales also = the API's endemicSpeciesCount, introducedSpeciesCount (the same stored numbers, row 110)."""
     places = _sample_places()
     wrong, checked = [], []
+    stored = {"endemic": [], "introduced": []}   # stored number vs the live list: pending until a nightly run by the new rules
     for p in places:
         got = _place(p)
         if got is None:
@@ -101,7 +102,7 @@ def test_endemic_and_introduced_numbers_equal_their_lists():
                     wrong.append(f"{p}: page {label} {stats[label]}, {label}.do could not be read")
                 continue
             if len(names) != stats[label]:
-                wrong.append(f"{p}: page {label.capitalize()} {stats[label]}, {label}.do lists {len(names)} names")
+                stored[label].append(f"{p}: page {label.capitalize()} {stats[label]}, {label}.do lists {len(names)} names")
             if len(set(names)) != len(names):
                 wrong.append(f"{p}: {label}.do lists a name twice")
         if p.api_row is not None:
@@ -111,7 +112,19 @@ def test_endemic_and_introduced_numbers_equal_their_lists():
         checked.append(repr(p))
     if not checked:
         pytest.skip("no place page with Endemic and Introduced numbers found " + ns.day_note())
+    # The numbers are stored by the nightly run, endemic.do and introduced.do read the flags by today's rules: the
+    # endemic rule of 2026-10-28 (valid names, native rows; sets 2 and 3) and the counting rules of 2026-10-28
+    # (Introduced of subregions and regions). Until a nightly run has written them, a difference is pending.
+    pending = []
+    for label, counted, what in (("endemic", ns.endemic_rule_counted, "endemic rule of 2026-10-28"),
+                                 ("introduced", ns.counting_rules_counted, "counting rules of 2026-10-28")):
+        if stored[label] and counted() is False:
+            pending.append(ns.rules_pending_note(what) + ":\n" + "\n".join(stored[label]))
+        else:
+            wrong += stored[label]
     assert not wrong, f"{len(wrong)} differences in {len(checked)} places {ns.day_note()} ({PENDING}):\n" + "\n".join(wrong)
+    if pending:
+        pytest.skip("\n".join(pending))
 
 
 _INTRODUCED_LIST = {}
@@ -155,6 +168,8 @@ def test_endemic_and_introduced_marks_on_the_species_list_agree():
         e_marked = {r["name"] for r in rows if r["endemic"]}
         i_marked = {r["name"] for r in rows if r["introduced"]}
         endemic, introduced = set(endemic), set(introduced)
+        # Endemic names are valid names (Brian Fisher, 2026-10-28), and the species list shows every valid name: every
+        # name on endemic.do is on the list.
         if p.kind == "bioregion":
             pass   # bioregion lists show no Endemic mark (BioregionTaxon does not read is_endemic); the rule test checks them
         elif e_marked - endemic:
@@ -195,13 +210,11 @@ def _identified_to_genus(genus):
 
 
 def _eligible(t, kind):
-    """The taxon conditions of the endemism rule (GeolocaleDb.calcCountryEndemism, calcAdm1Endemism,
-    BioregionDb.calcEndemic): species or subspecies, not fossil, an ant, identified to genus, counted status
-    (geolocales: not morphotaxon)."""
+    """The taxon conditions of the endemism rule (PlaceTotals.endemicEligible, every kind of place): species or
+    subspecies, not fossil, an ant, identified to genus, status valid (Brian Fisher, 2026-10-22 and 2026-10-28)."""
     status = (t.get("status") or "").lower()
-    statuses = COUNTED if kind == "bioregion" else COUNTED - {"morphotaxon"}
     return ((t.get("taxarank") or "").lower() in ("species", "subspecies") and not t.get("fossil")
-            and (t.get("family") or "").lower() == "formicidae" and _identified_to_genus(t.get("genus")) and status in statuses)
+            and (t.get("family") or "").lower() == "formicidae" and _identified_to_genus(t.get("genus")) and status in ENDEMIC_STATUSES)
 
 
 def _geo_lists(name, georank):
@@ -213,7 +226,11 @@ def _geo_lists(name, georank):
 def _endemic_by_rule(name, p):
     """Whether the rule says the (eligible) name is endemic to place p: True, False, or None when the API cannot say.
     Country: on exactly one country's list. Adm1: endemic to its country and on one adm1 list of that country.
-    Bioregion: on exactly one bioregion's list."""
+    Bioregion: on exactly one bioregion's list. Only native rows count (Q4), and the API does not show the introduced
+    flags: for a name on the introduced-species list the API cannot say."""
+    intro = introducedants()
+    if intro is None or name in intro:
+        return None
     if p.kind == "bioregion":
         body = ns.api(f"bioregionTaxa?taxonName={ns.quote_plus(name)}")
         if body is None:
@@ -274,14 +291,13 @@ def test_endemic_names_follow_the_endemism_rule():
         endemic = got[1]
         for name in ns.pick(endemic, NAMES, "flagged" + p.name):
             t = taxon(name)
-            rule = _endemic_by_rule(name, p) if t is not None else None
-            if rule is None:
+            if t is None:
                 continue
             checked += 1
             if not _eligible(t, p.kind):
                 wrong.append(f"{p}: {name} is on endemic.do but is not eligible (status {t.get('status')}, rank"
                              f" {t.get('taxarank')}, fossil {t.get('fossil')}, family {t.get('family')}, genus {t.get('genus')})")
-            elif not rule:
+            elif _endemic_by_rule(name, p) is False:
                 wrong.append(f"{p}: {name} is on endemic.do but the API's lists say it is not endemic here")
         flagged = set(endemic)
         for name in ns.pick([x for x in _valid_names_on(p) if x not in flagged], NAMES, "unflagged" + p.name):
@@ -315,14 +331,12 @@ def test_a_place_without_a_bioregion_has_no_introduced_species():
     assert not rows, f"{len(rows)} places without a bioregion have Introduced species: {shown}"
 
 
-@pytest.mark.xfail(reason="Q3 (decided 2026-10-22, not yet in the code): country and adm1 endemism still counts"
-                          " indetermined and unidentifiable names", strict=False)
 def test_endemic_names_of_countries_are_named_species():
-    """Rows 24, 78 (Q3): the country and adm1 pages define Endemic as "Named species and subspecies"; Brian Fisher
-    (2026-10-22): morphospecies and indet names never count toward endemism. A sample of endemic.do names of Madagascar
-    and the day's country and adm1 must all be valid or unrecognized."""
+    """Rows 24, 78 (Q3): the place pages define Endemic as "Valid species and subspecies"; Brian Fisher (2026-10-22 and
+    2026-10-28): morphospecies, indetermined, unidentifiable and unrecognized names never count toward endemism, at any
+    kind of place. A sample of endemic.do names of Madagascar, the day's country, adm1 and bioregion must all be valid."""
     bad, checked = [], 0
-    for p in [q for q in _rule_places() if q.kind != "bioregion"]:
+    for p in _rule_places():
         got = _place(p)
         if got is None or got[1] is None:
             continue
@@ -331,8 +345,8 @@ def test_endemic_names_of_countries_are_named_species():
             if t is None:
                 continue
             checked += 1
-            if (t.get("status") or "").lower() not in ("valid", "unrecognized"):
+            if (t.get("status") or "").lower() not in ENDEMIC_STATUSES:
                 bad.append(f"{p}: {name} ({t.get('status')})")
     if not checked:
         pytest.skip("no endemic name could be checked through the API " + ns.day_note())
-    assert not bad, f"endemic names that are not named species {ns.day_note()}:\n" + "\n".join(bad)
+    assert not bad, f"endemic names that are not valid {ns.day_note()} ({PENDING}):\n" + "\n".join(bad)

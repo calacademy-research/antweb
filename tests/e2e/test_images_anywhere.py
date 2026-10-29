@@ -12,8 +12,8 @@ species. Specimen counts stay per place; images help identification wherever the
   3. The Images column of a place's list: one number, "N Images" (Brian Fisher 2026-10-28; from 10-27 to 10-28
      "T Images (P from Comoros)", which wrapped and showed "( from Comoros)" where the number script blanks a 0),
      images of the ant only (labels never count, Brian Fisher 2026-10-27): N = the images of the name in AntWeb (the
-     allantwebants list row, nightly set 4) = the API recount of every specimen of the name (/taxaImages, shot types
-     other than l); "No Images" only when N = 0; never a second number or "from <place>"; the definition under the
+     allantwebants list row, nightly set 4) = the API recount of every specimen of the name and, since 2026-10-28
+     (decision 3), of its synonyms (/taxa?currentValidName; /taxaImages, shot types other than l); "No Images" only when N = 0; never a second number or "from <place>"; the definition under the
      list says what the number counts and that the place's specimens come first on the images page.
   5. The species page's line "Imaged: worker (12 specimens), queen (2), male (1)" (row 120) = the API recount: the
      name's specimens with an image of the ant (/taxaImages, label images left out), by caste (/specimens).
@@ -28,7 +28,7 @@ from urllib.parse import quote_plus, parse_qs
 import pytest
 
 import numbers_sample as ns
-from test_numbers_images import OLD_SET_4, fetch_all_view, images_by_code, images_cell, list_row_cells, old_set_4
+from test_numbers_images import OLD_SET_4, fetch_all_view, images_by_code, images_cell, list_row_cells, name_images, old_set_4
 
 PENDING = "list rows are those of the last nightly run (set 4); after an upload they are pending"
 # The allantwebants rows were set to 0 by set 4 and never counted again until 2026-10-27 (PR #291); the cell then
@@ -208,21 +208,22 @@ def test_list_images_column_shows_the_images_in_antweb():
                 wrong.append(f"{p} {name}: Images cell {text!r} is neither 'No Images' nor 'N Images'")
                 continue
             genus, species = (q.get("genus") or [""])[0], (q.get("species") or [""])[0]
-            got = api_specimens(genus, species, max_pages=4) if genus and species else None
-            if got is None:
-                left_out.append(f"{p} {name}: not recounted (more than 4 API pages)")
+            if not genus or not species:
+                left_out.append(f"{p} {name}: not recounted (no genus and species in its link)")
                 continue
-            both = images_by_code(name)
-            if both is None:
-                left_out.append(f"{p} {name}: not recounted (more than 500 images)")
+            got = name_images(name, genus, species)
+            if isinstance(got, str):
+                left_out.append(f"{p} {name}: {got}")
                 continue
-            ant, every = both
-            mine = [s for s in got if (s.get("antwebTaxonName") or "").lower() == name]
-            codes = [ns.specimen_code(s) for s in mine]
+            ant, every, codes, exact = got
             recount = sum(ant.get(c, 0) for c in codes)
+            if not exact and total >= recount:
+                left_out.append(f"{p} {name}: {text!r} >= {recount} (synonyms not listed by the API: '>=' only)")
+                continue
             if recount != total and old_set_4(total, ant, every, codes):
                 left_out.append(f"{p} {name}: {text!r}, {OLD_SET_4}")
                 continue
+            mine = [s for s in (api_specimens(genus, species, max_pages=4) or []) if (s.get("antwebTaxonName") or "").lower() == name]
             place_codes = [ns.specimen_code(s) for s in mine if _in_place(p, s)]
             if recount > total and _in_place(p, {}) is not None and total == sum(ant.get(c, 0) for c in place_codes):
                 left_out.append(f"{p} {name}: {text!r}, {ALLANTWEB_PENDING}")
@@ -233,7 +234,7 @@ def test_list_images_column_shows_the_images_in_antweb():
                 left_out.append(f"{p} {name}: {text!r}, {ALLANTWEB_PENDING}")
                 continue
             if recount != total:
-                wrong.append(f"{p} {name}: {text!r}, the API's specimens of the name have {recount} images of the ant")
+                wrong.append(f"{p} {name}: {text!r}, the API's specimens of the name and its synonyms have {recount} images of the ant")
             checked.append(f"{p} {name}")
     if not checked and not wrong:
         pytest.skip("no species row recounted " + ns.day_note() + "; left out: " + "; ".join(left_out[:10]))
@@ -241,18 +242,22 @@ def test_list_images_column_shows_the_images_in_antweb():
 
 
 def test_list_says_what_the_images_column_counts():
-    """The definition under a place's list: images of the ant, label images counted separately (Brian Fisher
-    2026-10-27); the number is the name's images in AntWeb, the place's specimens come first on its images page
-    (Brian Fisher 2026-10-28)."""
+    """The Images note under a place's list: images of the ant, label images not counted (Brian Fisher 2026-10-27);
+    the number is the name's images in all of AntWeb, the place's come first on its images page (Brian Fisher
+    2026-10-28, list notes)."""
     p = _comoros() or ns.madagascar()
     html = ns.get(p.list_url("species"))
     m = re.search(r'<span id="images-definition"[^>]*>(.*?)</span>', html, re.S)   # the span also has a class
     assert m, f"{p}: no definition of the Images column under the list"
     text = unescape(m.group(1))
-    assert "images of the ant" in text and "label images are counted separately" in text, text
-    assert "The number is the images of the ant of the name in AntWeb, from any specimen." in text, text
-    assert f"the specimens from {p.name} come first" in text, text
-    assert "in brackets" not in text and "first number" not in text, text
+    # Brian Fisher 2026-10-28 (list notes): one number, label images not counted, the place's images first
+    assert text == ("Images: the images of the ant (head, profile, dorsal and other views) of that name in all of AntWeb,"
+                    " from specimens collected anywhere. Specimen label images are not counted. Click the number to see"
+                    f" the images; those from {p.name} come first."), text
+    assert "in brackets" not in text and "first number" not in text and "parenthes" not in text, text
+    notes = re.search(r'<div id="list-notes">(.*?)</div>', html, re.S)
+    assert notes and "<b>Notes on specimen and image counts</b>" in notes.group(1), f"{p}: no list notes heading"
+    assert "counts marked with an asterisk (*) include every" in unescape(notes.group(1)), notes.group(1)
 
 
 # ------------------------------------------------------------------------------------------- 5. imaged castes

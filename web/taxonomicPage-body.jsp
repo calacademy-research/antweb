@@ -170,6 +170,8 @@
 <%
   
   boolean isWithSpecimen = taxaPage.isWithSpecimen();
+  // 2026-10-28: the place's specimens identified to genus only (genus rows, the line under the species list)
+  org.calacademy.antweb.home.GenusOnly genusOnly = taxaPage.getGenusOnly();
 %>
 
     <%@ include file="/taxonReportBody.jsp" %>

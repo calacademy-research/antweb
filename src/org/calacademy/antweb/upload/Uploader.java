@@ -69,13 +69,15 @@ public class Uploader {
             A.log("uploadSpecimenFile() isUpload:" + isUpload + " specimenFileLoc:" + specimenFileLoc);
         }
 
-        if (!uploadFile.correctEncoding(encoding)) messageStr = "The file is not in the chosen encoding (" + Html.esc(uploadFile.getEncoding()) + ").";
-
+        String utf8Problem;
         if (messageStr != null) {
             // No further tests necessary.
         } else if (!fileName.contains(".txt") && !fileName.contains(".TXT")) {
             s_log.warn("uploadSpecimenFile() fileName not txt. fileName:" + fileName);
             messageStr = "Specimen File must be a .txt file.";
+        } else if ((utf8Problem = utf8Problem(specimenFileLoc)) != null) {
+            // UTF-8 only (Brian Fisher, 2026-10-28): refused, naming the first line that is not.
+            messageStr = utf8Problem;
         } else if (isCurrentSpecimenFormat(specimenFileLoc) != null) {
             messageStr = "Specimen File must be in the most current format. " + isCurrentSpecimenFormat(specimenFileLoc);
         } else if (!Utility.isTabDelimited(specimenFileLoc)) {
@@ -137,6 +139,17 @@ public class Uploader {
             return "The header line contains a '/', as in files from before AntWeb 4.13. Please use the current column names.";
         }
         return null;
+    }
+
+    /** Null when the file is UTF-8, otherwise the refusal naming its first line that is not (2026-10-28). */
+    static String utf8Problem(String fileLoc) {
+        try {
+            int badLine = UploadFile.firstNonUtf8Line(Paths.get(fileLoc));
+            return badLine > 0 ? UploadFile.notUtf8Message(badLine) : null;
+        } catch (IOException | RuntimeException e) {
+            s_log.warn("utf8Problem() e:" + e);
+            return "The file could not be read.";
+        }
     }
 
     /** True if a column of the header line is SpecimenCode (any case), the column every upload needs. */
