@@ -354,7 +354,8 @@ public final class PlaceTotals {
     /**
      * Whether the specimens of a synonym count under its valid name on this place's list: museums, bioregions and
      * projects, except worldants and allantwebants (they list every name as AntCat has it; allantwebants is the
-     * "Global" column, all specimens filed under that very name). Geolocale lists are renamed before their counts
+     * "Global" column, all specimens filed under that very name; its Images follow the valid name since 2026-10-28,
+     * allAntwebImagesSql). Geolocale lists are renamed before their counts
      * too (set 2), but their specimen counts are still by the exact name (docs/numbers.md).
      */
     public static boolean synonymsToValid(String type, String key) {
@@ -415,6 +416,36 @@ public final class PlaceTotals {
             + specimenCriteria
             + " group by m.list_name, s.family, s.subfamily, s.genus, s.species"
             + " order by s.family, s.subfamily, s.genus, m.list_name";
+    }
+
+    /**
+     * The Images column of the AntWeb-wide list (allantwebants, the first number of every list's Images cell,
+     * ImagesAnywhere.imagesColumn): columns taxonName, family, subfamily, genus, species, imageSum (images of the ant).
+     * Brian Fisher, 2026-10-28 (decision 3, docs/numbers.md row 44): the images of a specimen filed under a name AntCat
+     * no longer uses (renamedCondition: a synonym, obsolete combination etc. with a current valid name) count under its
+     * valid name, as on the museum, bioregion and curated project lists. allantwebants lists the counted statuses only
+     * (ProjTaxonDb.regenerateAllAntweb), so those specimens were not counted anywhere on it, and a place's row could
+     * show more than the AntWeb-wide one (staging run 40795139086: floridakeysants Camponotus inaequalis 32,
+     * allantwebants 29). Each specimen counts once: under its own name when that is on the list (as before), else
+     * under its current valid name when that is on the list. CountDb.imageCountCrawl adds the rows up by the taxon tree.
+     */
+    public static String allAntwebImagesSql(String projectLiteral) {
+        String cols = " s.family family, s.subfamily subfamily, s.genus genus, s.species species, count(i.id) imageSum";
+        return "select s.taxon_name taxonName," + cols
+            + " from specimen s join proj_taxon pt on s.taxon_name = pt.taxon_name"
+            + StatisticsDb.ANT_IMAGES_OF_SPECIMEN
+            + " where pt.project_name = " + projectLiteral
+            + " group by s.taxon_name, s.family, s.subfamily, s.genus, s.species"
+            + " union all"
+            + " select pt.taxon_name taxonName," + cols
+            + " from specimen s join taxon sx on sx.taxon_name = s.taxon_name"
+            + " join proj_taxon pt on pt.taxon_name = sx.current_valid_name and pt.project_name = " + projectLiteral
+            + StatisticsDb.ANT_IMAGES_OF_SPECIMEN
+            + " where " + renamedCondition("sx")
+            + " and not exists (select 1 from proj_taxon own where own.project_name = " + projectLiteral
+            + " and own.taxon_name = s.taxon_name)"
+            + " group by pt.taxon_name, s.family, s.subfamily, s.genus, s.species"
+            + " order by family, subfamily, genus, taxonName";
     }
 
     /**

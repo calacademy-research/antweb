@@ -729,8 +729,11 @@ group by taxonName
     
     public String getTaxonImageCountQuery() {
        // Brian Fisher, 2026-10-28: images follow the Specimens rule: on a curated project's list a specimen filed under a
-       // synonym counts under the valid name (PlaceTotals.imagesByListNameSql); worldants and allantwebants (the Images
-       // column's AntWeb-wide number) count the very name.
+       // synonym counts under the valid name (PlaceTotals.imagesByListNameSql); so does allantwebants (the Images column's
+       // AntWeb-wide number, decision 3: PlaceTotals.allAntwebImagesSql); worldants counts the very name.
+       if (ALLANTWEBANTS.equals(getName())) {
+           return org.calacademy.antweb.home.PlaceTotals.allAntwebImagesSql(org.calacademy.antweb.home.PlaceTotals.literal(getName()));
+       }
        if (org.calacademy.antweb.home.PlaceTotals.synonymsToValid(org.calacademy.antweb.home.PlaceTotals.PROJECT, getName())) {
            return org.calacademy.antweb.home.PlaceTotals.imagesByListNameSql(org.calacademy.antweb.home.PlaceTotals.PROJECT,
                org.calacademy.antweb.home.PlaceTotals.literal(getName()), "");

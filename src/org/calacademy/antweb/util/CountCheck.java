@@ -786,7 +786,12 @@ public class CountCheck {
         // museums and bioregions count specimens of a counted status, as countries.
         boolean synonyms = !place.isFromCountries() && org.calacademy.antweb.home.PlaceTotals.synonymsToValid(place.type, place.key);
         boolean statusFiltered = !PROJECT.equals(place.type);
-        String query = synonyms
+        // The AntWeb-wide list (decision 3, 2026-10-28): a synonym's specimens under the valid name, each specimen once
+        // (PlaceTotals.allAntwebImagesSql, the query set 4 runs; it takes the key three times).
+        boolean allAntweb = PROJECT.equals(place.type) && org.calacademy.antweb.Project.ALLANTWEBANTS.equals(place.key);
+        String query = allAntweb
+            ? "select x.taxonName, sum(x.imageSum) from (" + org.calacademy.antweb.home.PlaceTotals.allAntwebImagesSql("?") + ") x group by x.taxonName"
+            : synonyms
             ? "select x.taxonName, sum(x.imageSum) from (" + org.calacademy.antweb.home.PlaceTotals.imagesByListNameSql(place.type, "?",
                 (place.column() != null ? " and s." + place.column() + " = ?" : "") + (statusFiltered ? " and s.status in " + COUNTABLE : ""))
                 + ") x group by x.taxonName"
@@ -802,7 +807,8 @@ public class CountCheck {
             int i = 1;
             if (place.isFromCountries()) for (int n = 0; n < 4; n++) place.setKey(stmt, i++);
             place.setKey(stmt, i++);
-            if (synonyms) place.setKey(stmt, i++);
+            if (allAntweb) { place.setKey(stmt, i++); place.setKey(stmt, i++); }
+            else if (synonyms) place.setKey(stmt, i++);
             if (place.column() != null) stmt.setString(i, place.specimenValue);
             try (ResultSet r = stmt.executeQuery()) {
                 while (r.next()) recount.put(r.getString(1), r.getInt(2));

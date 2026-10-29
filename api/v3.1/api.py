@@ -1025,12 +1025,17 @@ def getTaxa():
     subspecies = request.args.get('subspecies', default='*', type=str)
     # parent = request.args.get('parentTaxonName', default='*', type=str) # Could do parentTaxonName but not parent.
     status = request.args.get('status', default='*', type=str)
+    # The names whose current valid name this is (its synonyms, obsolete combinations etc.), 2026-10-28: list rows
+    # count their specimens and images under the valid name (docs/numbers.md row 44).
+    currentValidName = request.args.get('currentValidName', default='*', type=str)
     limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return apiDown()
 
     query = session.query(Taxon)
     if taxonName != '*':
         query = query.filter(Taxon.taxonName == taxonName)
+    if currentValidName != '*':
+        query = query.filter(Taxon.currentValidName == currentValidName)
     if taxarank != '*':
         query = query.filter(Taxon.taxarank == taxarank)
     if subfamily != '*':

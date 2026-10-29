@@ -10,7 +10,9 @@ recounted from the API's records:
           name in AntWeb, the allantwebants list row's image_count, nightly set 4; from 10-27 to 10-28 also the
           place's in brackets) = the images of the ant (labels never count, Brian Fisher 2026-10-27) of every
           specimen of that name in AntWeb, recounted from the API (/taxaImages of the name, shot types other than l,
-          of the specimens /specimens files under the name, anywhere). The cell never shows a second number.
+          of the specimens /specimens files under the name, anywhere), and since 2026-10-28 (decision 3) of the
+          specimens filed under its synonyms (/taxa?currentValidName; when the API cannot list them, Images >= the
+          recount of the name only). The cell never shows a second number.
   row 55  images.do "I Species Imaged (M total)": M = browse.do's N = the rows it lists; I = the children shown in the
           All view (cookie thumbs=a) with a head, profile or dorsal picture (Taxon.getUniqueChildImagesCount("p",
           "h", "d")).
@@ -139,6 +141,55 @@ def ant_images_by_code(taxon_name):
     name has more than one page (500 images). Since 2026-10-27 (Brian Fisher) every Images column counts these."""
     got = images_by_code(taxon_name)
     return got[0] if got else None
+
+
+# The statuses the AntWeb-wide list (allantwebants) has rows for (StatusSet.getCountables): a name of another status with
+# a current valid name (a synonym, an obsolete combination...) has no row; its specimens' images count under the valid
+# name (decision 3, Brian Fisher 2026-10-28; PlaceTotals.allAntwebImagesSql).
+LISTED_STATUSES = {"valid", "unrecognized", "morphotaxon", "indetermined", "unidentifiable"}
+
+
+def synonyms_of(taxon_name):
+    """The names whose images count under taxon_name (decision 3): /taxa?currentValidName (2026-10-28), the names with
+    that current valid name, not themselves, of a status the AntWeb-wide list has no row for. None when the API cannot
+    say (an API without the filter refuses it, HTTP 400, or returns other names too; or more than one page)."""
+    body = ns.api(f"taxa?currentValidName={ns.quote_plus(taxon_name)}&limit=200")
+    if body is None:
+        return None
+    rows = ns.api_rows(body)
+    if len(rows) >= 200 or any((t.get("currentValidName") or "").lower() != taxon_name.lower() for t in rows):
+        return None
+    return [t for t in rows if (t.get("taxonName") or "").lower() != taxon_name.lower()
+            and (t.get("status") or "").lower() not in LISTED_STATUSES]
+
+
+def name_images(name, genus, species, max_pages=4):
+    """The recount of a list row's Images (row 44): the images of every specimen in AntWeb filed under the name and, since
+    2026-10-28 (decision 3), under its synonyms (synonyms_of). Returns (ant, every, codes, exact): images of the ant and
+    every image by code, the specimens' codes, and exact False when the synonyms could not be listed (then the list
+    number may be larger than the recount, never smaller); or a string saying why the name is not recounted."""
+    names = [(name, genus, species)]
+    syn = synonyms_of(name)
+    exact = syn is not None
+    for t in syn or []:
+        if t.get("genus") and t.get("species"):
+            names.append(((t.get("taxonName") or "").lower(), t["genus"], t["species"]))
+        else:
+            exact = False
+    ant, every, codes = {}, {}, []
+    for n, g, sp in names:
+        got = ns.api_all(f"specimens?genus={ns.quote_plus(g)}&species={ns.quote_plus(sp)}", max_pages=max_pages)
+        if got is None:
+            return f"not recounted (more than {max_pages} API pages of {n})"
+        both = images_by_code(n)
+        if both is None:
+            return f"not recounted (more than 500 images of {n})"
+        for code, k in both[0].items():
+            ant[code] = ant.get(code, 0) + k
+        for code, k in both[1].items():
+            every[code] = every.get(code, 0) + k
+        codes += [ns.specimen_code(s) for s in got if (s.get("antwebTaxonName") or "").lower() == n]
+    return ant, every, codes, exact
 
 
 OLD_SET_4 = "the old count with label images (pending until nightly set 4 runs with the ant-only counts)"
@@ -511,18 +562,15 @@ def test_list_images_column_equals_the_api_recount():
             genus, species = (q.get("genus") or [""])[0], (q.get("species") or [""])[0]
             if not genus or not species:
                 continue
-            got = ns.api_all(f"specimens?genus={ns.quote_plus(genus)}&species={ns.quote_plus(species)}", max_pages=4)
-            if got is None:
-                left_out.append(f"{p} {name}: not recounted (more than 4 API pages)")
+            got = name_images(name, genus, species)
+            if isinstance(got, str):
+                left_out.append(f"{p} {name}: {got}")
                 continue
-            mine = [s for s in got if (s.get("antwebTaxonName") or "").lower() == name]
-            both = images_by_code(name)
-            if both is None:
-                left_out.append(f"{p} {name}: not recounted (more than 500 images)")
-                continue
-            ant, every = both
-            codes = [ns.specimen_code(s) for s in mine]
+            ant, every, codes, exact = got
             recount = sum(ant.get(c, 0) for c in codes)
+            if not exact and images >= recount:
+                left_out.append(f"{p} {name}: {images} Images >= {recount} (synonyms not listed by the API: '>=' only)")
+                continue
             if recount != images and old_set_4(images, ant, every, codes):
                 left_out.append(f"{p} {name}: {images} Images, {OLD_SET_4}")
                 continue
@@ -531,7 +579,7 @@ def test_list_images_column_equals_the_api_recount():
                                 " (no compute.log line 'AntWeb-wide list Images counted'): pending")
                 continue
             if recount != images:
-                wrong.append(f"{p} {name}: list row {images} Images, the API's {len(mine)} specimens of the name in AntWeb have {recount} images of the ant")
+                wrong.append(f"{p} {name}: list row {images} Images, the API's {len(codes)} specimens of the name and its synonyms in AntWeb have {recount} images of the ant")
             checked.append(f"{p} {name}")
     if not checked and not wrong:
         pytest.skip("no species row recounted " + ns.day_note() + "; left out: " + "; ".join(left_out[:10]))

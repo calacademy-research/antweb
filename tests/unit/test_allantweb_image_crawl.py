@@ -3,7 +3,8 @@
 
 Staging 2026-10-28: ProjectMgr.getProject("allantwebants") returned null, imageCrawlProjects skipped the list, every
 row stayed 0 (Dacatria templaris: atolants 13, worldants 13, allantwebants 0), and compute.log still said "AntWeb-wide
-list Images counted". The crawl now builds the list by name when it is missing, and logs whether it was counted."""
+list Images counted". The crawl now builds the list by name when it is missing, and logs whether it was counted.
+Decision 3 (2026-10-28): a synonym's specimens' images count under the valid name (PlaceTotals.allAntwebImagesSql)."""
 import os
 import re
 import sys
@@ -26,7 +27,23 @@ def main():
         ptdb = f.read()
     regen = ptdb[ptdb.index("public void regenerateAllAntweb()"):ptdb.index("public void finishRegenerateAllAntweb()")]
     assert regen.index("allAntwebImageCount()") > regen.index("insert into proj_taxon"), "regenerateAllAntweb must recount the AntWeb-wide Images after re-inserting the rows"
-    print("Set 4 and every upload's rebuild count the AntWeb-wide list's Images; compute.log says so.")
+    # Decision 3 (2026-10-28): the AntWeb-wide Images count a synonym's specimens under the valid name, the rule of the
+    # museum, bioregion and curated project lists (staging run 40795139086: floridakeysants Camponotus inaequalis 32,
+    # allantwebants 29). Set 4 and regenerateAllAntweb both go through Project.getTaxonImageCountQuery.
+    with open(os.path.join(os.path.dirname(SRC), "..", "Project.java"), encoding="utf-8") as f:
+        project = f.read()
+    q = project[project.index("public String getTaxonImageCountQuery()"):project.index("public String getUpdateImageCountSQL(")]
+    assert "ALLANTWEBANTS.equals(getName())" in q and "PlaceTotals.allAntwebImagesSql(" in q, "allantwebants Images must follow decision 3"
+    assert q.index("allAntwebImagesSql") < q.index("synonymsToValid"), "the allantwebants branch must come before the very-name query"
+    assert "imageCountCrawl(allAntwebProject())" in java[java.index("public void allAntwebImageCount()"):], "the upload rebuild must use the same query"
+    with open(os.path.join(os.path.dirname(SRC), "PlaceTotals.java"), encoding="utf-8") as f:
+        totals = f.read()
+    sql = totals[totals.index("public static String allAntwebImagesSql("):]
+    sql = sql[:sql.index("\n    }\n")]
+    assert "renamedCondition(\"sx\")" in sql and "current_valid_name" in sql, "a renamed name's images go to its current valid name"
+    assert "StatisticsDb.ANT_IMAGES_OF_SPECIMEN" in sql, "ant images only"
+    assert "not exists" in sql, "each specimen once: not under the valid name when its own name has a row"
+    print("Set 4 and every upload's rebuild count the AntWeb-wide list's Images (a synonym's under the valid name); compute.log says so.")
 
 
 if __name__ == "__main__":

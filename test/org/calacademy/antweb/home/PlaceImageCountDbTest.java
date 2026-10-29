@@ -295,6 +295,53 @@ public class PlaceImageCountDbTest extends TestCase {
         assertEquals(placeImageMismatches(r).toString(), 0, placeImageMismatches(r).size());
     }
 
+    /**
+     * Decision 3 (Brian Fisher, 2026-10-28) on the AntWeb-wide list (allantwebants, the Images cell of every list): a
+     * specimen filed under a synonym counts under the valid name. allantwebants has rows of the counted statuses only,
+     * so before, those images were counted nowhere and a curated project's row could exceed it (staging run
+     * 40795139086: floridakeysants Camponotus inaequalis 32, allantwebants 29). Each specimen once; the genus row adds
+     * them up once (the taxon tree).
+     */
+    public void testAllAntwebImagesCountASynonymUnderTheValidName() throws Exception {
+        String old = "myrmicinaepheidole oldname";
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, current_valid_name) values ('" + old
+            + "', 'species', 'synonym', '" + GENUS + "', '" + SP_B + "')");
+        specimen("casent7", old, "valid", "Madagascar", null, "Madagascar", "CASC", "Malagasy", "h", "p");
+        for (String t : new String[] {SUBFAMILY, GENUS, SP_A, SP_B, SP_C}) {   // regenerateAllAntweb: counted statuses only
+            exec("insert into proj_taxon (project_name, taxon_name) values ('allantwebants', '" + t + "')");
+        }
+        org.calacademy.antweb.Project all = new org.calacademy.antweb.Project(org.calacademy.antweb.Project.ALLANTWEBANTS);
+        java.util.Map<String, Integer> sums = new java.util.HashMap<>();
+        try (Statement s = connection.createStatement(); ResultSet r = s.executeQuery(all.getTaxonImageCountQuery())) {
+            while (r.next()) sums.merge(r.getString("taxonName"), r.getInt("imageSum"), Integer::sum);
+        }
+        assertEquals("casent3 (3), casent4 (1), casent5 (1, the very name), casent7 (2, the synonym)", Integer.valueOf(7), sums.get(SP_B));
+        assertNull("no row for the synonym", sums.get(old));
+
+        new org.calacademy.antweb.home.ProjTaxonCountDb(connection).allAntwebImageCount();
+        java.util.Map<String, Integer> rows = new java.util.HashMap<>();
+        try (Statement s = connection.createStatement(); ResultSet r = s.executeQuery(
+                "select taxon_name, image_count from proj_taxon where project_name = 'allantwebants'")) {
+            while (r.next()) rows.put(r.getString(1), r.getInt(2));
+        }
+        assertEquals(Integer.valueOf(7), rows.get(SP_B));
+        assertEquals("a1 3 + megacephala 7 + other 1, casent7 once", Integer.valueOf(11), rows.get(GENUS));
+        assertEquals(Integer.valueOf(11), rows.get(SUBFAMILY));
+        assertNull(rows.get(old));
+
+        // the count check recounts the allantwebants rows by the same rule
+        List<CountCheck.Place> places = new ArrayList<>();
+        places.add(new CountCheck.Place(CountCheck.PROJECT, "allantwebants", "project allantwebants", null, null));
+        CountCheck.Result r = new CountCheck(connection).run(places, java.sql.Timestamp.valueOf("2021-01-01 08:00:00"));
+        List<CountCheck.Mismatch> images = new ArrayList<>();
+        for (CountCheck.Mismatch m : r.mismatches) if ("images".equals(m.check)) images.add(m);
+        assertEquals(images.toString(), 0, images.size());
+
+        // worldants keeps the very name (it lists every name as AntCat has it)
+        org.calacademy.antweb.Project world = new org.calacademy.antweb.Project("worldants");
+        assertFalse(world.getTaxonImageCountQuery().contains("current_valid_name"));
+    }
+
     public void testCountCheckWaitsForTheFirstRun() throws Exception {
         // Deployed, the table created at startup, no nightly run yet: no rows.
         List<CountCheck.Place> places = new ArrayList<>();
