@@ -20,10 +20,14 @@ For admins. Use this when someone writes "I want to upload specimens to AntWeb".
 4. Tick **Can also upload specimen images** if they will upload images too.
 5. Click **Add uploader**.
 6. Read the summary: what was created or changed.
-7. Below the summary is a **Draft email** box: **To** (the person's address), **Subject**, and the text of the welcome email. AntWeb does not send it: you send it from your own email, so you can add what this person needs to know.
-   - Click **Copy** and paste the text into a new email to the address shown (the main way). Or click **Open in my email program**: it starts a new email with To, Subject and the text filled in, but some email programs cut a long text short, so check it or use Copy.
-   - Add the details for this person, replace **[Your name]** at the end with your name, and send it.
-   - When the person had no password yet, the text holds their one-time link to choose one (it says the link is for them only). Send it only to them. The link is not kept anywhere else: once you leave the page for a new uploader, use "Save and make a set-password link" on the login to make a new one.
+7. Below the summary is the **Welcome email**: **To** (the person's address), **Subject** and the text, all editable, signed with your first and last name from your login ("[Your name]" if your login has none).
+   - Add what this person needs to know and click **Send**. AntWeb sends it from antweb@antweb.org; replies go to you (Reply-To), and you get a copy (Bcc). The page then says "Sent to ... at ...; a copy went to you", the text becomes read-only, and admin.log records who sent it to whom (never the text).
+   - Or click **Copy** and paste the text into a new email in your own email program.
+   - Send goes only to the email address of the login just added. To use another address, change it on the login first. If the one-time link was removed from the text, Send refuses ("Show the original text" brings the draft back).
+   - When the person had no password yet, the text holds their one-time link to choose one (it says the link is for them only). Send it only to them, and do not share a screenshot of the page. The link is not kept anywhere else: once you leave the page for a new uploader, use "Save and make a set-password link" on the login to make a new one.
+   - If AntWeb restarted (or you logged in again) before you pressed Send, nothing is sent: the page shows your text again to copy.
+
+A new upload group's full and short name lose any quotation marks and spaces around them (a name pasted as "Museum X" or with a stray ” is saved as Museum X).
 
 ## What the page does
 
@@ -74,4 +78,4 @@ Removed in October 2026 because they did nothing or were misleading: the greyed-
 
 If AntWeb restarted while the form was open (with "Keep me logged in" you are logged in again at once, in a new session), or you logged in again in another tab, the form's security token no longer matches. Instead of the "Request refused (403)" page, Add an uploader shows the form again with what you typed and the note "Your session changed (AntWeb restarted or you logged in again)". Nothing was done: check the form and press Add uploader again.
 
-Until 21 October 2026 the page had a **Send this email** button that sent the welcome email from antweb@antweb.org. It was replaced by the draft, because each new uploader needs details that only the administrator knows.
+Until 21 October 2026 the page had a **Send this email** button that sent a fixed welcome email from antweb@antweb.org. From 21 to 29 October it showed only a draft to copy (each new uploader needs details only the administrator knows), with an "Open in my email program" link that did nothing in some browsers with the long text. Since 29 October the text is editable on the page and **Send** sends what you wrote; the link was removed.

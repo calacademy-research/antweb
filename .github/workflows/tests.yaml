@@ -977,10 +977,12 @@ jobs:
             grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
-      - name: Add an uploader and the login form (input checks, draft welcome email, page; database steps against MySQL 8.4)
-        # UploaderOnboardingTest: the form's checks, the welcome email text (plain text, signed "[Your name]",
-        # no "ignore", no "reply to this email"), the summary page's Draft email box (escaped, read-only,
-        # Copy and mailto:, no Send button; AntWeb no longer sends it, 2026-10-21), and
+      - name: Add an uploader and the login form (input checks, welcome email and Send, page; database steps against MySQL 8.4)
+        # UploaderOnboardingTest: the form's checks (quotes trimmed from a new group's names, 2026-10-29), the welcome
+        # email text (plain text, signed with the administrator's name, "[Your name]" without one, no "ignore", no
+        # "reply to this email"), the summary page's Welcome email box (escaped, editable, Send and Copy, no mailto:;
+        # read-only after sending), the checks before Send (only to the new login's address, one-time link kept,
+        # length limits, no token in a message), and
         # which refused POSTs are shown again filled in (Csrf.mayRefill: stale token on addUploader.do only).
         # UploaderOnboardingDbTest: new person and new upload group, existing account by email or
         # username, moving only when asked, refusals change nothing, login.created kept, inactive
@@ -1014,7 +1016,7 @@ jobs:
               /t/org/calacademy/antweb/curate/UploaderOnboardingTest.java /t/org/calacademy/antweb/curate/UploaderOnboardingDbTest.java \
               /t/org/calacademy/antweb/curate/LoginEditTest.java /t/org/calacademy/antweb/curate/LoginEditDbTest.java \
               /t/org/calacademy/antweb/curate/LoginIdDbTest.java
-            for t in curate.UploaderOnboardingTest:8 curate.UploaderOnboardingDbTest:10 curate.LoginEditTest:11 curate.LoginEditDbTest:6 curate.LoginIdDbTest:8; do
+            for t in curate.UploaderOnboardingTest:11 curate.UploaderOnboardingDbTest:10 curate.LoginEditTest:11 curate.LoginEditDbTest:6 curate.LoginIdDbTest:8; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
