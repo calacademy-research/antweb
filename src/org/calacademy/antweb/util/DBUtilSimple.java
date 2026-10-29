@@ -19,6 +19,11 @@ import com.mchange.v2.c3p0.impl.*;
 import org.calacademy.antweb.AntFormatter;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * A plain (unpooled) MySQL data source to the ant database, and a close helper, for code that runs outside a
+ * Struts request: SessionRequestFilter, RememberMeMgr, LoginMgr, Scheduler, BackgroundJobDb, CountCheckJob,
+ * PasswordResetMgr, MountCheck. The other code uses the Struts pools through DBUtil.
+ */
 public class DBUtilSimple {
 
     private static ComboPooledDataSource cpds;

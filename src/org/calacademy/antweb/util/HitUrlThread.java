@@ -5,6 +5,11 @@ import java.io.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * Background thread that requests one URL (the thread's name) and ignores the answer, so the caller does not
+ * wait. AntwebMgr uses it at start-up to call util.do?action=postInstantiate on its own server with the
+ * scheduler code in a header (SchedulerCall); HttpUtil.hitUrl also starts one but has no callers.
+ */
 public class HitUrlThread extends Thread {
 
     private static final Log s_log = LogFactory.getLog(HitUrlThread.class);

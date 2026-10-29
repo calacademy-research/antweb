@@ -22,6 +22,14 @@ import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.upload.*;
 import org.calacademy.antweb.Formatter;
     
+/**
+ * /serverStatus.do: Server Status page (util/serverStatus.jsp; the page checks for an admin): the three
+ * connection pools, the operation lock (table operation_lock), whether the server is busy (DBStatus) and the
+ * operating system, Java, memory and disk details. Admins, POST only: action=toggleDownTime (upload down time,
+ * table server, ServerDb) and action=email (sends the server busy report). isReady and notReadyReason tell the
+ * Scheduler to wait while an upload or compute runs. Docs: docs/catalog/actions.csv. Tests:
+ * tests/e2e/test_admin_staging.py, test_request_handling.py, test_tool_pages_style.py.
+ */
 public final class ServerStatusAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ServerStatusAction.class);

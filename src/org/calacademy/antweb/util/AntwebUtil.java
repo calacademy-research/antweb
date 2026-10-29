@@ -29,6 +29,12 @@ import org.calacademy.antweb.util.AntwebUtil;
 
 import java.util.concurrent.ThreadLocalRandom;
 
+/**
+ * General helpers: logging and stack traces, reading and writing files in the data and web folders, time
+ * arithmetic (millisSince, minsSince, daysSince ...), random and case numbers, the Scheduler's secure code
+ * (getSecureCode, isSecureCode, checked by SchedulerCall), memory statistics, the admin and developer email
+ * addresses, request info for logs, and email address checks. main() is a developer test.
+ */
 public abstract class AntwebUtil {
 
   private static final Log s_log = LogFactory.getLog(AntwebUtil.class);

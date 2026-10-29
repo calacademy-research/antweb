@@ -13,6 +13,11 @@ import java.sql.SQLException;
 import com.mchange.v2.c3p0.ComboPooledDataSource;
 import java.beans.PropertyVetoException;
 
+/**
+ * A separate c3p0 connection pool to the ant database (database user from DbCredentials, password from
+ * AntwebProps), used only by TaxonProxy, which works outside a Struts request. The other code uses the Struts
+ * pools (conPool, mediumConPool, longConPool) through DBUtil.
+ */
 public class ConnectionFactory {
 
     private static ComboPooledDataSource dataSource;

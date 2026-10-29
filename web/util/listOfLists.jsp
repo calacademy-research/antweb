@@ -1,3 +1,5 @@
+<%-- Table of the request attribute "listOfLists" (first row is the heading) with a row count: forward
+     listOfLists of list.do (ListAction, action=multiBioregionTaxaList, curators). Read-only. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

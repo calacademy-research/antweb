@@ -1,3 +1,7 @@
+<%-- Homonym Report (query.do?action=homonyms, QueryAction; admins only in the action, this page checks for a
+     curator): the taxa of table homonym (HomonymDb) with author date, AntCat id, current valid name and whether
+     another taxon uses the same name, each linked to its description page. Read-only. Docs:
+     docs/catalog/actions.csv. Tests: tests/e2e/test_reports_plain_language.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

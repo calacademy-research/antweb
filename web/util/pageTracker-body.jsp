@@ -1,3 +1,6 @@
+<%-- Body of the Page Tracker page (pageTracker.do), admins only (adminCheck.jsp): this request's tracker, the
+     busy connection count and the requests being served (PageTracker). PageTracker is switched off in the code
+     (isOn = false), so the list is empty and this request's tracker is "not found". Read-only. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

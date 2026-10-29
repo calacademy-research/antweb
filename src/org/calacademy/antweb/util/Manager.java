@@ -5,6 +5,12 @@ import java.sql.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Base class of some in-memory managers loaded from the database at start-up (TaxonMgr, ArtistMgr,
+ * GeolocaleMgr, LoginMgr); AntwebMgr calls their static populate methods. Static methods are not overridden in
+ * Java, so this populate is never reached through a subclass; it only logs an error and a stack trace if called
+ * directly. No table of its own.
+ */
 public abstract class Manager {
 
     private static final Log s_log = LogFactory.getLog(Manager.class);

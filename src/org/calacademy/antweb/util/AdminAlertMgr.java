@@ -9,6 +9,14 @@ import org.calacademy.antweb.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Admin alerts (table admin_alerts): add() logs the message to web/log/adminAlerts.log and inserts a row;
+ * addIfFresh adds it only when no matching alert exists in the period; remove and removeAll set acknowledged =
+ * 1. Keeps the unacknowledged rows in memory for the Admin Alerts page (adminAlert.do) and the count in the
+ * admins' header, and the alerting queries' results (QueryManager.adminAlerts). Callers: AntCat import,
+ * Scheduler, MountCheck, LogSizeCheck, HttpUtil and others. Tests: tests/unit/test_admin_alert_page.py,
+ * tests/e2e/test_manager_tools.py.
+ */
 public final class AdminAlertMgr {
 
     private static final Log s_log = LogFactory.getLog(AdminAlertMgr.class);

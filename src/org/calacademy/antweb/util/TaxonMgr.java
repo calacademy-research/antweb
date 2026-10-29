@@ -11,6 +11,14 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * In-memory taxa (table taxon, through TaxonDb): subfamilies, genera, every taxon by name, subgenera, and the
+ * names for the taxon name search box (with CommonNames). Loaded by AntwebMgr at start-up, and reloaded after
+ * each specimen upload, after nightly set 1 (AntCat import, TaxonWorks upload) and on
+ * util.do?action=reloadAntwebMgr; each list is built first and then swapped in. Also the valid species count of
+ * the statistics page and synonym genus lookups (GitHub #95). Docs: docs/numbers.md,
+ * docs/flows/antcat-to-antweb.md.
+ */
 public class TaxonMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(TaxonMgr.class);

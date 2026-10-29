@@ -7,6 +7,12 @@ import jakarta.servlet.http.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Counts, per client IP address, the requests HttpUtil found illegal (hasIllegalChars, hasIllegalStr). After
+ * more than 10, HttpUtil.invalidRequest answers that IP with a "blocked" message and appends a line to
+ * web/log/badActorBlocked.txt. In memory only, cleared by a restart. isBadActorBlocked always answers false and
+ * has no callers. The report is written to the log by SessionRequestFilter.
+ */
 public abstract class BadActorMgr {
 
     private static final Log s_log = LogFactory.getLog(BadActorMgr.class);

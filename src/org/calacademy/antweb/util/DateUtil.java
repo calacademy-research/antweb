@@ -11,6 +11,13 @@ import org.apache.commons.logging.LogFactory;
 
 import org.apache.commons.lang3.StringUtils;
 
+/**
+ * Date helpers: formatted date and time strings for logs and pages, and the parsing of collection dates from
+ * uploaded files (normalizeUploadDate, getConstructDateStr, constructDate: full dates, year and month, year
+ * only; day "00" is the 1st, month "00" January; strict, so 2010/02/30 is not a date). Used by the specimen
+ * upload (AntwebUpload) and SpecimenDb. runTests is a manual check called only from AntwebUtil.main. Docs:
+ * docs/flows/specimen-upload.md. Tests: UploadNightlyDecisionsTest.
+ */
 public abstract class DateUtil {
 
   private static final Log s_log = LogFactory.getLog(DateUtil.class);

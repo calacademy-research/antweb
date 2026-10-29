@@ -1,3 +1,6 @@
+<%-- Statistics table page of statistics.do (StatisticsAction, logged-in users) for byProject, byBioregion,
+     byMuseum, byGeolocale or project=: title, links, then util/statisticsRealTime-body.jsp. With body=true the
+     action answers the body alone. --%>
 
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="java.util.*" %>

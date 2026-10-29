@@ -1,3 +1,6 @@
+<%-- Body of the Session Properties page (sessionProps.do): the names and values of the attributes in the
+     admin's own session, escaped (dummyForm and statistics by name only). The "Request Attributes" heading has
+     nothing under it. --%>
 <%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 

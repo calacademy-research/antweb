@@ -1,3 +1,7 @@
+<%-- Table of taxon counts per project, bioregion, museum or geolocale (extinct, extant and valid subfamilies,
+     genera and species, imaged species, total taxa), from the request attribute "statistics" that
+     StatisticsAction reads. Included by util/statisticsRealTime.jsp, or answered alone
+     (statistics.do?...&body=true). Read-only. --%>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.Utility" %>

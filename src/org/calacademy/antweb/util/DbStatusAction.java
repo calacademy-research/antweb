@@ -18,6 +18,12 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.home.*;
     
+/**
+ * /dbStatus.do: database status page (util/dbStatus.jsp), admins only (Check.admin): the MySQL process list and
+ * the three connection pools (conPool, mediumConPool, longConPool) with the server busy report (DBStatus).
+ * name=resetDS (or resetDS1, 2, 3) hard-resets the pools, POST only (PostOnly.confirm). Docs:
+ * docs/catalog/actions.csv. Tests: tests/e2e/test_curate_merge.py, test_curator.py, test_request_handling.py.
+ */
 public final class DbStatusAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(DbStatusAction.class);

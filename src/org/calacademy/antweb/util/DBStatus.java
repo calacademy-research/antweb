@@ -23,6 +23,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.*;
 
+/**
+ * Database and server load checks: the MySQL process list (isServerBusy(connection): over 100 processes is
+ * busy), the three connection pools' diagnostics, and the busy report (written to data/log/serverBusy.html and
+ * emailed to the developer at most every 15 minutes). The pool check isServerBusy(pool1, pool2, pool3) runs in
+ * dev mode only and answers false on the servers. Used by Check.busy, the Database Status and Server Status
+ * pages and some public actions (search, field guide, specimen list). No table.
+ */
 public class DBStatus {
 
     private static final Log s_log = LogFactory.getLog(DBStatus.class);

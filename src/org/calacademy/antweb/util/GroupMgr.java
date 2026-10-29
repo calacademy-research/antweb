@@ -13,6 +13,12 @@ import jakarta.servlet.http.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * In-memory list of the upload groups (table ant_group, through GroupDb): all groups, and the groups with
+ * specimen upload rights (upload_specimens > 0). Loaded by AntwebMgr at start-up and on
+ * util.do?action=reloadAntwebMgr. Also answers whether the logged-in user's group is CAS (id 1) or Davis (id
+ * 16).
+ */
 public class GroupMgr {
 
     private static final Log s_log = LogFactory.getLog(GroupMgr.class);

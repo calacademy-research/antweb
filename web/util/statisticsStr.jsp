@@ -1,3 +1,6 @@
+<%-- Statistics snapshot page of statistics.do without a by... parameter, or with byUpload=true
+     (StatisticsAction, logged-in users): the rows of table statistics as HTML (request attribute "statistics")
+     and a link to make a new snapshot (upload.do?action=runStatistics). --%>
 
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="java.util.*" %>

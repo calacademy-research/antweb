@@ -1,3 +1,6 @@
+<%-- Error page ("Server Error. Apologies.") of the JSPs in web/util/ that name errorPage="error.jsp" (a
+     relative path): serverDebug.jsp, serverStatus.jsp, sessionProps.jsp, statsPage.jsp, statsPage-body.jsp,
+     listSpecimenUploads.jsp. The other pages use the site's /error.jsp. --%>
 <%@ page import="org.calacademy.antweb.Taxon" %>
 
 <%@ page import="org.calacademy.antweb.util.*" %>

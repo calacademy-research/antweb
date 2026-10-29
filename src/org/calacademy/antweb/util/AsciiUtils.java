@@ -3,6 +3,11 @@ package org.calacademy.antweb.util;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Replaces accented Latin letters (grave, acute, circumflex, tilde, umlaut, ring, cedilla, double acute) with
+ * plain ASCII letters (convertNonAscii); isNonAscii says whether a string has such letters. Used only by a
+ * debug log line of AntwebUpload. Tests: test/org/calacademy/antweb/audit/CoreUtilFixesTest.java.
+ */
 public class AsciiUtils {
   private final static Log s_log = LogFactory.getLog(AsciiUtils.class);
 

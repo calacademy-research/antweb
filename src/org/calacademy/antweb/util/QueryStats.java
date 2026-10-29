@@ -7,6 +7,11 @@ import org.apache.commons.logging.LogFactory;
 
 import java.util.Date;
 
+/**
+ * Running statistics of one named database query: count, total, minimum and maximum milliseconds and when the
+ * maximum happened. DBUtil keeps one per query name; util.do?action=logQueryStats writes them to the log
+ * (DBUtil.logQueryStats). In memory only. Tests: test/org/calacademy/antweb/audit/CoreUtilFixesTest.java.
+ */
 public class QueryStats {
 
     private static final Log s_log = LogFactory.getLog(QueryStats.class);

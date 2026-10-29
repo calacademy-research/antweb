@@ -15,6 +15,15 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * /query.do: the Query Manager and the named database queries (Queries, NamedQuery, QueryManager), read-only,
+ * on the long connection pool. Without action or name: the Query Manager page (admins). action=query or
+ * curiousQuery&name=: one named query (admins, except PUBLIC_QUERIES and CURATOR_QUERIES); queryBattery
+ * (admins); checkIntegrity, curiousQueries, devQueries, taxaOutsideOfNativeBioregion (admins, adminHtmlMessage
+ * page); homonyms (util/homonyms.jsp) and events (util/events.jsp), admins. Form: UtilForm. Bots are refused.
+ * Docs: docs/guides/manager-tools.md, docs/catalog/actions.csv. Tests: tests/e2e/test_curate_cleanup.py,
+ * test_actions.py.
+ */
 public class QueryAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(QueryAction.class);

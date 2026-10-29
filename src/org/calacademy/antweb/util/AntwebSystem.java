@@ -12,6 +12,13 @@ import com.sun.management.OperatingSystemMXBean;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Operating system helpers: run a shell command and read its output (launchProcess: log viewer of logMgr.do, df
+ * -h), count lines in a file, free disk space, CPU load and top report (Server Status page, start-up log), and
+ * isRestart, which bin/reboot_checker.sh reads through util.do?action=isRestart: true when asked
+ * (utilData.do?action=setIsRestart, Scheduler) or when nightly set 1 is stuck, but never during an upload,
+ * image upload or background job. restartAntweb has no caller. Docs: docs/runbook.md, docs/flows/nightly.md.
+ */
 public class AntwebSystem {
 
   private static final Log s_log = LogFactory.getLog(AntwebSystem.class);
