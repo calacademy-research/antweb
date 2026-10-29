@@ -155,6 +155,10 @@ public class MessageMgr {
     public static final String identifiedOnlyToGenus = "identifiedOnlyToGenus";
     /** 2026-10-28: subfamily but no genus or species: filed as "(Subfamily) (indet)" (was "Empty String Genus (not uploaded)"). */
     public static final String identifiedOnlyToSubfamily = "identifiedOnlyToSubfamily";
+    /** 2026-10-29: "indet" (undet, sp., (indet)) in the subspecies column: dropped, filed under genus + species. */
+    public static final String subspeciesIndetDropped = UploadUtil.SUBSPECIES_INDET_DROPPED;
+    /** 2026-10-29: species indet (or blank) with a subspecies value: filed as "<Genus> (indet)", subspecies dropped. */
+    public static final String speciesIndetSubspeciesIgnored = UploadUtil.SPECIES_INDET_SUBSPECIES_IGNORED;
     public static final String subfamilyForGenusFoundInHomonym = "subfamilyForGenusFoundInHomonym";
     public static final String subfamilyGenusComboNotInBolton = "subfamilyGenusComboNotInBolton";        
     public static final String genusOutsideNativeBioregion = "genusOutsideNativeBioregion";    
@@ -198,6 +202,8 @@ public class MessageMgr {
     /** Report section titles of the decisions of 2026-10-28 (Brian Fisher). */
     public static final String IDENTIFIED_ONLY_TO_GENUS_HEADING = "Identified only to genus: filed as indet";
     public static final String IDENTIFIED_ONLY_TO_SUBFAMILY_HEADING = "Identified only to subfamily: filed as (Subfamily) indet";
+    public static final String SUBSPECIES_INDET_DROPPED_HEADING = "Name corrected: 'indet' in the subspecies column dropped";
+    public static final String SPECIES_INDET_SUBSPECIES_IGNORED_HEADING = "Name corrected: species indet, subspecies ignored, filed as &lt;Genus&gt; (indet)";
     public static final String CURRENT_VALID_NAME_NOT_IN_ANTWEB_HEADING = "Current valid name in AntCat not yet in AntWeb: kept under the uploaded name";
 
     /** Sections whose lines already give the specimen code (or line number): no list added. */
@@ -206,7 +212,8 @@ public class MessageMgr {
         "invalidLatLon", "invalidColumn", "specimenIdSpacesRemoved", "invalidSpecimenCode", "nonAntTaxa",
         "makeTaxonNameError", "latLonNotInCountryBounds", "latLonNotInAdm1Bounds", "codeNotFoundInLine", "badRankList",
         "databaseErrors", "futureDateDetermined", "futureDateCollected", "noRecordsProcessed", "extraCarriageReturn",
-        "multipleBioregionsForNonIntroducedTaxa", "unrecognizedColumn"));
+        "multipleBioregionsForNonIntroducedTaxa", "unrecognizedColumn", "subspeciesIndetDropped",
+        "speciesIndetSubspeciesIgnored"));
 
     private String currentCode;
     private int reportCodesLeft = MAX_REPORT_CODES;
@@ -297,6 +304,8 @@ public class MessageMgr {
       testList.add(new Test(emptyStringSubfamily, "set", "<b>Empty String Subfamily <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(identifiedOnlyToGenus, SET, "<b>" + IDENTIFIED_ONLY_TO_GENUS_HEADING + " <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(identifiedOnlyToSubfamily, SET, "<b>" + IDENTIFIED_ONLY_TO_SUBFAMILY_HEADING + " <font color=green>(uploaded)</font></b>"));
+      testList.add(new Test(subspeciesIndetDropped, SET, "<b>" + SUBSPECIES_INDET_DROPPED_HEADING + " <font color=green>(uploaded)</font></b>"));
+      testList.add(new Test(speciesIndetSubspeciesIgnored, SET, "<b>" + SPECIES_INDET_SUBSPECIES_IGNORED_HEADING + " <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(subfamilyForGenusFoundInHomonym, "set", "<b>Subfamily For Genus Found in Homonym <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(subfamilyGenusComboNotInBolton, MAP, "<b>Taxon Subfamily / Genus combinations not found in Bolton World Catalog <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(genusOutsideNativeBioregion, MAP, "<b>Genus found outside of known native biogeographic region</b>", "red"));

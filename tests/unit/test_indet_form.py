@@ -2,7 +2,8 @@
 
 Decision of Brian Fisher, 2026-10-28: one form for a specimen identified only to genus, "Pheidole (indet)". The tool
 renames the old form "<genus> indet" (also Indet, indet., undet) in every table that keys on the name. Checked:
-  - which names are in the old form and what they become; names of three words are left for a look by hand;
+  - which names are in the old form and what they become; three-word names (2026-10-29): "<g> indet <x>" becomes
+    "<g> (indet)", "<g> <sp> indet" becomes "<g> <sp>" (status as an upload gives it); four words are left by hand;
   - the clash query counts a row that meets the "(indet)" name, or an earlier old name with the same new name;
   - run deletes clashing rows only in the merge tables, gives taxon and specimen rows species "(indet)" and status
     indetermined, and checks every count before the commit; rollback restores from the dated backup tables;
@@ -30,17 +31,43 @@ def test_names():
     assert tf.new_name("formicinaecamponotus UNDET.") == "formicinaecamponotus (indet)"
     assert tf.new_name("(myrmicinae) indet") == "(myrmicinae) (indet)"
     for keep in ("myrmicinaepheidole (indet)", "myrmicinaepheidole megacephala", "myrmicinaepheidole indetx",
-                 "myrmicinaepheidole indet x", "myrmicinaepheidole sp.", "myrmicinaeindet", None, ""):
+                 "myrmicinaepheidole indet x y", "myrmicinaepheidole sp.", "myrmicinaeindet", None, "",
+                 "myrmicinaepheidole megacephala indetx", "myrmicinaepheidole a b indet"):
         assert tf.new_name(keep) is None, keep
     m = tf.name_map(["myrmicinaepheidole indet", "Myrmicinaepheidole indet", "myrmicinaepheidole indet.",
                      "myrmicinaepheidole (indet)", "myrmicinaepheidole megacephala"])
     # MySQL compares names ignoring case: the two spellings are one name
     assert m == {"Myrmicinaepheidole indet": "Myrmicinaepheidole (indet)",
                  "myrmicinaepheidole indet.": "myrmicinaepheidole (indet)"}, m
-    assert tf.not_handled(["formicinaecamponotus indet x", "myrmicinaepheidole indet", "myrmicinaepheidole (indet)",
-                           "formicinaecamponotus x undet"]) == ["formicinaecamponotus indet x",
-                                                                 "formicinaecamponotus x undet"]
-    print("Names: indet, Indet, indet., undet become (indet); three-word names are left for a look by hand.")
+    assert tf.not_handled(["formicinaecamponotus indet x y", "myrmicinaepheidole indet", "myrmicinaepheidole (indet)",
+                           "formicinaecamponotus x y undet", "formicinaecamponotus x undet",
+                           "formicinaecamponotus (indet) x", "formicinaecamponotus a (indet) b"]) == [
+        "formicinaecamponotus a (indet) b", "formicinaecamponotus indet x y", "formicinaecamponotus x y undet"]
+
+    # three words (2026-10-29): species indet -> "<g> (indet)", subspecies dropped; subspecies indet -> "<g> <sp>"
+    three = {"myrmicinaeocymyrmex indet karooicus": ("myrmicinaeocymyrmex (indet)", tf.SPECIES_INDET),
+             "myrmicinaeocymyrmex Undet. karooicus": ("myrmicinaeocymyrmex (indet)", tf.SPECIES_INDET),
+             "myrmicinaeocymyrmex (indet) karooicus": ("myrmicinaeocymyrmex (indet)", tf.SPECIES_INDET),
+             "myrmicinaeocymyrmex sp. karooicus": ("myrmicinaeocymyrmex (indet)", tf.SPECIES_INDET),
+             "myrmicinaeocymyrmex indet indet": ("myrmicinaeocymyrmex (indet)", tf.SPECIES_INDET),
+             "ectatomminaegnamptogenys striatula-complex indet": ("ectatomminaegnamptogenys striatula-complex", tf.SUBSPECIES_INDET),
+             "ectatomminaegnamptogenys striatula-complex (indet)": ("ectatomminaegnamptogenys striatula-complex", tf.SUBSPECIES_INDET),
+             "myrmicinaepheidole megacephala undet.": ("myrmicinaepheidole megacephala", tf.SUBSPECIES_INDET),
+             "myrmicinaepheidole indet": ("myrmicinaepheidole (indet)", tf.TWO_WORD)}
+    for old, (new, kind) in three.items():
+        assert tf.new_name(old) == new, (old, tf.new_name(old))
+        assert tf.kind_of(old) == kind, (old, tf.kind_of(old))
+    assert tf.not_handled(list(three)) == []
+    # status of a "<g> <sp>" name: as an upload gives it
+    assert tf.is_morpho("ectatomminaegnamptogenys striatula-complex")
+    assert tf.is_morpho("myrmicinaepheidole a") and tf.is_morpho("myrmicinaepheidole jtl001")
+    assert not tf.is_morpho("myrmicinaepheidole megacephala") and not tf.is_morpho("myrmicinaepheidole (indet)")
+    assert tf.species_status("ectatomminaegnamptogenys striatula-complex", "indetermined") == "morphotaxon"
+    assert tf.species_status("myrmicinaepheidole megacephala", "indetermined") == "unrecognized"
+    assert tf.species_status("myrmicinaepheidole megacephala", "valid") == "valid"
+    assert tf.species_status("myrmicinaepheidole megacephala", None) == "unrecognized"
+    print("Names: indet, Indet, indet., undet become (indet); three-word names follow the upload's rules;"
+          " four words are left for a look by hand.")
 
 
 MAP = {"myrmicinaepheidole indet": "myrmicinaepheidole (indet)",
@@ -93,6 +120,29 @@ def test_sql():
     assert "set @n = (select count(*) from taxon where (taxon_name in" in r and "2 as expected" in r
     assert "insert into indet_form_bak_20261028_after select 'taxon', count(*)" in r
 
+    m3 = {"ectatomminaegnamptogenys striatula-complex indet": "ectatomminaegnamptogenys striatula-complex",
+          "myrmicinaeocymyrmex indet karooicus": "myrmicinaeocymyrmex (indet)"}
+    r3 = tf.run_sql("20261029", TABLES, m3, KEYS, after,
+                    {"ectatomminaegnamptogenys striatula-complex indet": "morphotaxon"})
+    assert ("update taxon set taxon_name = 'ectatomminaegnamptogenys striatula-complex', species = 'striatula-complex',"
+            " subspecies = null, status = 'morphotaxon', `rank` = 'species'"
+            " where taxon_name = 'ectatomminaegnamptogenys striatula-complex indet';") in r3, r3
+    assert ("update specimen set taxon_name = 'ectatomminaegnamptogenys striatula-complex', species = 'striatula-complex',"
+            " subspecies = null, status = 'morphotaxon' where taxon_name = 'ectatomminaegnamptogenys striatula-complex indet';") in r3
+    assert ("update taxon set taxon_name = 'myrmicinaeocymyrmex (indet)', species = '(indet)', subspecies = null,"
+            " status = 'indetermined', `rank` = 'species' where taxon_name = 'myrmicinaeocymyrmex indet karooicus';") in r3
+    assert ("update specimen set taxon_name = 'myrmicinaeocymyrmex (indet)', species = '(indet)', subspecies = null,"
+            " status = 'indetermined' where taxon_name = 'myrmicinaeocymyrmex indet karooicus';") in r3
+    # merged into an existing target exactly as the two-word case; other name columns follow
+    assert ("delete a from taxon a join taxon b on b.taxon_name = 'myrmicinaeocymyrmex (indet)'"
+            " where a.taxon_name = 'myrmicinaeocymyrmex indet karooicus';") in r3
+    assert ("update taxon set parent_taxon_name = 'ectatomminaegnamptogenys striatula-complex'"
+            " where parent_taxon_name = 'ectatomminaegnamptogenys striatula-complex indet';") in r3
+    assert "original_taxon_name" not in r3
+    b3 = tf.backup_sql("20261029", TABLES, m3, before)
+    assert "'ectatomminaegnamptogenys striatula-complex'" in b3.split("create table indet_form_bak_20261029_taxon", 1)[1].split(";")[0], \
+        "the backup holds rows of the new names too (a merge target)"
+
     rb = tf.rollback_sql("20261028", TABLES, sorted(set(MAP) | set(MAP.values())))
     assert "delete from taxon where (taxon_name in (" in rb
     assert "insert into taxon select * from indet_form_bak_20261028_taxon;" in rb
@@ -118,13 +168,20 @@ class FakeDb:
         if "information_schema.statistics" in sql:
             return "taxon\tPRIMARY\ttaxon_name\nproj_taxon\tPRIMARY\tproject_name,taxon_name\ndescription_edit\tPRIMARY\ttaxon_name,title\n"
         if sql.startswith("select distinct taxon_name from taxon "):
-            return "myrmicinaepheidole indet\nmyrmicinaepheidole indet.\nformicinaecamponotus indet x\n"
+            return ("myrmicinaepheidole indet\nmyrmicinaepheidole indet.\nformicinaecamponotus indet x y\n"
+                    "ectatomminaegnamptogenys striatula-complex indet\nmyrmicinaeocymyrmex indet karooicus\n")
         if sql.startswith("select distinct"):
             return ""
         if sql.startswith("select taxon_name, count(*) from taxon"):
-            return "myrmicinaepheidole indet\t1\nmyrmicinaepheidole indet.\t1\nmyrmicinaepheidole (indet)\t1\n"
+            return ("myrmicinaepheidole indet\t1\nmyrmicinaepheidole indet.\t1\nmyrmicinaepheidole (indet)\t1\n"
+                    "ectatomminaegnamptogenys striatula-complex indet\t1\nmyrmicinaeocymyrmex indet karooicus\t1\n"
+                    "myrmicinaeocymyrmex (indet)\t1\n")
         if sql.startswith("select taxon_name, count(*) from specimen"):
-            return "myrmicinaepheidole indet\t3\n"
+            return ("myrmicinaepheidole indet\t3\nectatomminaegnamptogenys striatula-complex indet\t6\n"
+                    "myrmicinaeocymyrmex indet karooicus\t1\n")
+        if sql.startswith("select taxon_name, status from taxon"):
+            return ("ectatomminaegnamptogenys striatula-complex indet\tindetermined\n"
+                    "myrmicinaeocymyrmex indet karooicus\tindetermined\nmyrmicinaepheidole indet\tindetermined\n")
         if sql.startswith("select old_name, new_name"):
             return "myrmicinaepheidole indet\tmyrmicinaepheidole (indet)\n"
         if sql.startswith("select table_name, row_count"):
@@ -157,9 +214,14 @@ def test_command_flow():
         assert db.scripts == [], "preview changes nothing"
         for sql in db.reads:
             assert sql.lstrip().lower().startswith("select"), sql
-        assert "Names in the old form: 2" in text, text
-        assert "myrmicinaepheidole indet -> myrmicinaepheidole (indet): 1 taxon, 3 specimens +" in text, text
-        assert "formicinaecamponotus indet x" in text and "Not handled" in text
+        assert "Names in the old form: 4 (2 '<genus> indet'" in text, text
+        assert "myrmicinaepheidole indet -> myrmicinaepheidole (indet): 1 taxon, 3 specimens +; status indetermined -> indetermined" in text, text
+        # the two production names of 2026-10-29
+        assert ("ectatomminaegnamptogenys striatula-complex indet -> ectatomminaegnamptogenys striatula-complex:"
+                " 1 taxon, 6 specimens; status indetermined -> morphotaxon") in text, text
+        assert ("myrmicinaeocymyrmex indet karooicus -> myrmicinaeocymyrmex (indet): 1 taxon, 1 specimens +;"
+                " status indetermined -> indetermined") in text, text
+        assert "formicinaecamponotus indet x y" in text and "Not handled" in text
         assert re.search(r"taxon\s+1\s+1\s+merge: 1 deleted", text), text
         assert "specimen_name_update" in text and "history, not changed" in text
         assert "secret" not in text
@@ -169,6 +231,7 @@ def test_command_flow():
             tf.main(["run", "--project", project, "--yes", "--date", "20261028"])
         assert len(db.scripts) == 2 and "create table indet_form_bak_20261028_names" in db.scripts[0]
         assert "start transaction;" in db.scripts[1]
+        assert "status = 'morphotaxon', `rank` = 'species' where taxon_name = 'ectatomminaegnamptogenys striatula-complex indet';" in db.scripts[1]
 
         with quiet():
             tf.main(["rollback", "--project", project, "--yes", "--date", "20261028"])

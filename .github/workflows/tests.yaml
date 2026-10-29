@@ -779,7 +779,9 @@ jobs:
       - name: Java unit tests of the upload decisions of 2026-10-28 (current valid name not in AntWeb, lines identified only to genus or subfamily, UTF-8 only)
         # UploadDecisions1028Test: a name whose current valid name has no taxon in AntWeb keeps its uploaded name and is listed;
         # genus-only and subfamily-only lines are filed as indet and listed; species indet, Indet, indet., undet
-        # are filed as (indet), the one form (2026-10-28); a file that is not UTF-8 is refused with its first bad line.
+        # are filed as (indet), the one form (2026-10-28); a file that is not UTF-8 is refused with its first bad line;
+        # species indet with a subspecies is filed as <Genus> (indet), subspecies ignored, and indet as the subspecies is
+        # dropped, each listed under "Name corrected" (2026-10-29).
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
@@ -793,7 +795,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadDecisions1028Test > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (8 tests)" /tmp/out.txt
+            grep -q "^OK (11 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the upload and nightly decisions of 2026-10-27 (strict upload dates, day 00 is the 1st, unknown genus without subfamily, TaxonWorks collection notes, failed nightly set stops the run)

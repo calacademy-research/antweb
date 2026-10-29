@@ -317,6 +317,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             String genusName = (String) taxonItem.get("genus");
             String speciesName = (String) taxonItem.get("species");
             String subspeciesName = (String) taxonItem.get("subspecies");
+            // As written in the file, for the "Name corrected" report lines (2026-10-29).
+            String writtenName = Formatter.initCap(genusName == null ? "" : genusName.trim())
+                + " " + (speciesName == null ? "" : speciesName.trim()) + " " + (subspeciesName == null ? "" : subspeciesName.trim());
             // Brian Fisher, 2026-10-28: a line identified only to genus or only to subfamily is filed as indet (below)
             // and listed in the report (SpecimenUploadProcess.processLine).
             identifiedOnlyTo = identifiedOnlyTo(subfamilyName, genusName, speciesName);
@@ -463,6 +466,21 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 			  speciesName = tempSpeciesName;
              // A.log("parseLine() null for speciesName:" + speciesName + " spaceIndex:" + spaceIndex);
   	  	    }
+            // Brian Fisher, 2026-10-29: a specimen counts at each rank it is identified to, and no further. Species indet
+            // (or blank) with a subspecies value: filed as "<Genus> (indet)", the subspecies dropped. "indet" (undet, sp.,
+            // (indet)) as the subspecies: filed under genus + species. Uploads replace all of a group's records, so the
+            // upload itself files these lines correctly; the report lists each one (UploadUtil.indetColumns).
+            UploadUtil.IndetColumns indetColumns = UploadUtil.indetColumns(speciesName, subspeciesName);
+            if (indetColumns.kind != null) {
+              speciesName = indetColumns.species;
+              subspeciesName = null;
+              taxonItem.remove("subspecies");
+              specimenItem.remove("subspecies");
+              if (errorMessage == null) {
+                getMessageMgr().addToMessages(indetColumns.kind, Html.esc(UploadUtil.indetColumnsLine(
+                    LineNumMgr.getDisplayLineNum(lineNum), code, writtenName, indetColumns, Formatter.initCap(genusName))));
+              }
+            }
             if (speciesName.contains("\"") 
               || subspeciesName != null && subspeciesName.contains(" "))
             {
