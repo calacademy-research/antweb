@@ -6,6 +6,11 @@ import org.apache.struts.action.ActionErrors;
 import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 
+/**
+ * Form bean saveGroupForm of saveGroup.do and viewGroup.do: the upload group's number (id), name, short name
+ * (abbrev), admin curator (adminLoginId), newGroup ("true" on the new-group form) and step (delete). validate()
+ * requires a name for a new group.
+ */
 public class SaveGroupForm extends ActionForm {
 
     private String id;

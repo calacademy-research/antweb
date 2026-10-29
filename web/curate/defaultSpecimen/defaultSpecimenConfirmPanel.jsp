@@ -1,4 +1,6 @@
-<!-- defaultSpecimenConfirmPanel.jsp -->
+<%-- Static include of specimen-body.jsp, inside an if block it closes and reopens: the "select as default
+     specimen" form (POST to defaultSpecimen.do) is never shown (if (false && ...)), but the second part shows and
+     clears the session attribute "message" that DefaultSpecimenAction leaves after a redirect. --%><!-- defaultSpecimenConfirmPanel.jsp -->
 
 <div id="page_data">
 

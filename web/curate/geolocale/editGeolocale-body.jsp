@@ -1,3 +1,7 @@
+<%-- Body of Edit Geolocale (request attributes geolocale, form, validChildren): every setting of one place (name,
+     codes, rank, valid, valid name via geolocale/validSelect.jsp, parent, bioregions, live, centroid, bounding
+     box, notes ...) in a POST form with the form token to editGeolocale.do; admins get Submit and Delete. Docs:
+     docs/guides/manager-tools.md (Edit Geolocale). --%>
 <%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>

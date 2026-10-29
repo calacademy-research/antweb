@@ -1,5 +1,10 @@
 package org.calacademy.antweb.curate.speciesList;
 
+/**
+ * One row of a species list check (ValidateSpeciesReport): row number, input line, normalized name, status
+ * (EXACT_MATCH, NOT_FOUND, FORMAT_ERROR, AMBIGUOUS), its category for curators (spelling, junior synonym ...),
+ * the suggestion and whether it is a fossil. Tests: test/.../curate/speciesList/ValidateSpeciesReportTest.java.
+ */
 public final class ValidateSpeciesResultItem {
     public enum Status { EXACT_MATCH, NOT_FOUND, FORMAT_ERROR, AMBIGUOUS }
 

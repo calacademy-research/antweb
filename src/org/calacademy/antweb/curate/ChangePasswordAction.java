@@ -18,6 +18,11 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * Old /changePassword action: checks the old password, then LoginDb.changePassword (table login). Not used:
+ * its mapping in struts-config.xml is commented out. Passwords are changed on the login page (saveLogin.do,
+ * SaveLoginAction) and with a reset link (ResetPasswordAction). Docs: docs/flows/email-and-password-reset.md.
+ */
 public final class ChangePasswordAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ChangePasswordAction.class);

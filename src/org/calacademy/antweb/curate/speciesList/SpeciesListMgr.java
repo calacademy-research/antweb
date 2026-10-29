@@ -6,6 +6,12 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Helpers for species list keys: a project name or a geolocale (name or id). getSpeciesList returns the Project
+ * or Geolocale from memory (ProjectMgr, GeolocaleMgr), getName and getPrettyName its names, and
+ * isDisplayYellowAnt whether a taxon has specimens in that country or adm1 (the yellow ant of the Species List
+ * Tool, curate/speciesList/speciesListTool-body.jsp).
+ */
 public class SpeciesListMgr {
 
     private static final Log s_log = LogFactory.getLog(SpeciesListMgr.class);

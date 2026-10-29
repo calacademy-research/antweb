@@ -1,3 +1,6 @@
+<%-- Login Manager page (viewLogins.do, ViewLoginsAction), admins only (adminCheck.jsp). Tiles wrapper of
+     curate/viewLogins-body.jsp. Docs: docs/guides/curate-page.md (Manager tools). Tests:
+     tests/e2e/test_login_form.py, test_curator.py. --%>
 <%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

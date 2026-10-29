@@ -1,3 +1,5 @@
+<%-- Body of the Dispute Manager: the project species-list disputes (request attribute disputes, table
+     proj_taxon_dispute) with a remove button each (POST with the form token to disputeMgr.do?action=remove). --%>
 <%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>

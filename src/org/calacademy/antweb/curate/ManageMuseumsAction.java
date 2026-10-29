@@ -16,6 +16,13 @@ import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
 
+/**
+ * /manageMuseum.do, /viewMuseum.do and /saveMuseum.do, admins only (LoginMgr.mustBeAdmin): the Museum Manager
+ * list (curate/manageMuseums.jsp) and one museum's form (curate/viewMuseum.jsp). A POST saves the museum (code,
+ * name, title, active) in table museum; step=delete first shows a confirmation (confirmDeleteHtml, with the
+ * number of specimens carrying the code), then deletes. Each change reloads MuseumMgr. Docs:
+ * docs/guides/manager-tools.md (Museum Manager). Tests: tests/e2e/test_manager_tools.py, test_curate_cleanup.py.
+ */
 public class ManageMuseumsAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ManageMuseumsAction.class);

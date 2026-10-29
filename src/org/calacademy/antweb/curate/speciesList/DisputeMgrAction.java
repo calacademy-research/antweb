@@ -14,6 +14,12 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * /disputeMgr.do: the Dispute Manager (curate/speciesList/disputeMgr.jsp), curators: the project species-list
+ * disputes (names a curator said do not occur in a project; table proj_taxon_dispute). action=remove
+ * (POST, a curator who may edit that project: SpeciesListAccess) deletes one. Linked from the Geolocale
+ * Manager. Docs: docs/guides/manager-tools.md (Geolocale Manager links).
+ */
 public class DisputeMgrAction extends AntwebAction {
 
   private static final Log s_log = LogFactory.getLog(DisputeMgrAction.class);

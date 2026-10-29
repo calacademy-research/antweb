@@ -17,6 +17,14 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /introducedMapMgr.do: the Introduced Map Manager (curate/introducedMapMgr.jsp), admins only (Check.admin): for
+ * each species of project introducedants (table proj_taxon) the bioregions where it is native (table taxon_prop,
+ * prop introducedMap). A POST saves one species (TaxonPropDb.updateIntroducedMap). Opening the page also writes
+ * an empty map for a listed species that has none; after any write TaxonPropMgr is reloaded. Docs:
+ * docs/guides/manager-tools.md (Introduced Map Manager). Tests: tests/e2e/test_manager_tools.py,
+ * test_hardening_2026_10_18.py.
+ */
 public final class IntroducedMapMgrAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(IntroducedMapMgrAction.class);

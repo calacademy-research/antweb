@@ -6,6 +6,12 @@ import jakarta.servlet.http.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Form bean bioregionMapMgrForm of bioregionMapMgr.do and introducedMapMgr.do: the taxon name, one checkbox per
+ * bioregion (getValues gives the map text saved in table taxon_prop), orderBy (subfamily or genus) and isRefresh
+ * (left from the removed Refresh: the Bioregion Map Manager ignores it, the Introduced Map Manager saves nothing
+ * when it is set).
+ */
 public final class BioregionMapMgrForm extends ActionForm {
 
     private static final Log s_log = LogFactory.getLog(BioregionMapMgrForm.class);

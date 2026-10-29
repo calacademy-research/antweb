@@ -1,3 +1,6 @@
+<%-- Edit Geolocale page (editGeolocale.do, EditGeolocaleAction), curators look (curatorCheck.jsp). Tiles wrapper
+     of curate/geolocale/editGeolocale-body.jsp. Docs: docs/guides/manager-tools.md (Edit Geolocale). Tests:
+     tests/e2e/test_geolocale_edit.py, test_geolocale_edit_page.py. --%>
 <%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

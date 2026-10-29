@@ -13,6 +13,13 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * /speciesListHistory.do: the Species List History page (curate/speciesList/speciesListHistory.jsp), curators:
+ * the saved versions of one species list (speciesListName; a project's from table proj_taxon_log, a place's from
+ * geolocale_taxon_log) up to projLogId or geoLogId, and the curators who saved them. Read-only; each version's
+ * "Add" link opens it as the reference list in the Species List Tool. Docs: docs/guides/curate-page.md (Species
+ * List Tool).
+ */
 public class SpeciesListHistoryAction extends SpeciesListToolAction {
 
   private static final Log s_log = LogFactory.getLog(SpeciesListHistoryAction.class);

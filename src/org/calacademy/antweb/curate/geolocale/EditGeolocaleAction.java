@@ -18,6 +18,13 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /editGeolocale.do: Edit Geolocale (curate/geolocale/editGeolocale.jsp), one region, subregion, country or adm1
+ * of table geolocale. Curators may open the form (Check.curator); save (isSubmit), create (isCreate) and delete
+ * (isDelete; refused while the place has children) are POST only and admins only. Coordinates are checked
+ * (checkCoords); every change reloads GeolocaleMgr. Docs: docs/guides/manager-tools.md (Edit Geolocale). Tests:
+ * tests/e2e/test_geolocale_edit.py, test_geolocale_edit_page.py, test/.../curate/ManagerToolsTest.java.
+ */
 public final class EditGeolocaleAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(EditGeolocaleAction.class);

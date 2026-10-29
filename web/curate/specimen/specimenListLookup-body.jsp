@@ -1,3 +1,6 @@
+<%-- Body of the Specimen List Lookup: the action's message and errors, the results (request attribute
+     lookupResult: the TSV download link, codes not found and codes with spaces, each downloadable as a text file
+     in the browser), instructions, the template file and the upload form (POST, multipart, with the form token). --%>
 <%@ page language="java" %>
 <%@ page errorPage="/error.jsp" %>
 <%@ page import="org.calacademy.antweb.curate.specimen.SpecimenListLookupResult" %>

@@ -1,3 +1,5 @@
+<%-- Adm1 Manager page (adm1Mgr.do, Adm1MgrAction), curators (curatorCheck.jsp). Tiles wrapper of
+     curate/geolocale/adm1Mgr-body.jsp. Docs: docs/guides/manager-tools.md (Adm1 Manager). --%>
 <%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

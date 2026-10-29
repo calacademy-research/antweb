@@ -14,6 +14,12 @@ import org.calacademy.antweb.util.*;
 
 import org.calacademy.antweb.search.*;
 
+/**
+ * /speciesListToolSearch.do: with action=changeRefSpeciesList, the advanced search form of the Species List
+ * Tool (curate/speciesList/speciesListToolSearch.jsp; its results become the reference list), with the
+ * bioregion, country and adm1 menus (SearchIncludeFactory); otherwise curate/speciesList/speciesListTool.jsp.
+ * Curators. Read-only.
+ */
 public class SpeciesListToolSearchAction extends AntwebAction { //extends SpeciesListToolAction 
 
   private static final Log s_log = LogFactory.getLog(SpeciesListToolSearchAction.class);

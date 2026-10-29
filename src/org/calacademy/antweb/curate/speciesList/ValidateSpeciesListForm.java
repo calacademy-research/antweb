@@ -5,6 +5,10 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.upload.FormFile;
 
+/**
+ * Form bean validateSpeciesListForm of validateSpeciesList.do: the uploaded file, action (download or
+ * downloadCorrected) and showUnmatched (also list the valid species the file lacks).
+ */
 public class ValidateSpeciesListForm extends ActionForm {
     private FormFile file;
     private String action;

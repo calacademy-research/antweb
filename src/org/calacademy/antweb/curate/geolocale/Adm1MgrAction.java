@@ -17,6 +17,13 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /adm1Mgr.do?adm1Name=..&countryName=..[&groupId=N]: the Adm1 Manager (curate/geolocale/adm1Mgr.jsp), curators
+ * (Check.curator). Checks one adm1 name from specimen data against the adm1s of the valid country (table
+ * geolocale) and lists up to 20 specimen codes with that adm1 and country (table specimen; only upload group N
+ * if given). Read-only; admins get a Create or Edit button for editGeolocale.do. Linked from the specimen upload
+ * report (SpecimenUploadParse). Docs: docs/guides/manager-tools.md (Adm1 Manager).
+ */
 public final class Adm1MgrAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(Adm1MgrAction.class);
