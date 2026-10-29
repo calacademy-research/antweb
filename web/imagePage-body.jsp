@@ -140,7 +140,6 @@
   if (taxon.getRank().equals(Rank.SPECIES) || taxon.getRank().equals(Rank.SUBSPECIES)) {
     String defaultSpecimenTaxon = (String) session.getAttribute("defaultSpecimenTaxon");
     //if (defaultSpecimenTaxon != null) { %> 
-        <!-- %@ include file="/curate/defaultSpecimen/defaultSpecimenSelectPanel.jsp" % -->
  <% //} else {
       String message = (String) session.getAttribute("message");
       if (message != null) { 
