@@ -1,3 +1,7 @@
+<%-- Body of the Image Upload Report (imageUploadReport.do?id=N): the batch (curator, group, artist, date,
+     complete), each saved image with a link to its specimen, and the files not saved with the reason
+     (image_upload, image_upload_refused, read by ImageUploadReport). Read-only.
+     Docs: docs/flows/image-upload.md (section 7). Tests: tests/e2e/test_image_upload.py. --%>
 <%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>
@@ -174,7 +178,7 @@
       if (imageUploaded.getIsReUploaded()) {
         backedUpFiles = true;
 //        flag = " <a title='Image already existed. It has been moved to the backup directory. See below.'><img width='12' src='" + AntwebProps.getDomainApp() + "/image/redICircle.png'></a>";
-        flag = " <a href='" + AntwebProps.getDomainApp() + "/images/backup/" + imageUploaded.getFileName() + "' title='Image already existed. It has been moved to the duplicates directory. See below.'><font color=red>Duplicate</font></a>";
+        flag = " <a href='" + AntwebProps.getDomainApp() + "/images/backup/" + Html.escAttr(Html.url(imageUploaded.getFileName())) + "' title='Image already existed. It has been moved to the duplicates directory. See below.'><font color=red>Duplicate</font></a>";
       }
       if (!imageUploaded.getIsSpecimenDataExists()) {
         flag = " <a title='Specimen data does not exist for this image. Upload data and then re-upload images.'><img width='10' src='" + AntwebProps.getDomainApp() + "/image/redX.png'></a>";
@@ -186,7 +190,7 @@ A.log("imagerUploadReport-body.jsp fileName:" + imageUploaded.getFileName() + " 
       String specimenLink = ""; //imageUploaded.getDisplayName();
       String tifLink = Html.esc(imageUploaded.getFileName());
       if (imageUploaded.getIsContinueUpload()) {
-        specimenLink = "<a href='" + AntwebProps.getDomainApp() + "/bigPicture.do?code=" + imageUploaded.getCode() + "&shot=" + imageUploaded.getShot() + "&number=" + imageUploaded.getNumber() + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width=13></a>";
+        specimenLink = "<a href='" + AntwebProps.getDomainApp() + "/bigPicture.do?code=" + Html.escAttr(Html.url(imageUploaded.getCode())) + "&amp;shot=" + Html.escAttr(Html.url(imageUploaded.getShot())) + "&amp;number=" + Html.escAttr(imageUploaded.getNumber()) + "'><img src='" + AntwebProps.getDomainApp() + "/image/upRight.png' width=13></a>";
         tifLink = "<a href='" + AntwebProps.getDomainApp() + "/images/" + Html.escAttr(imageUploaded.getCode()) + "/" + Html.escAttr(imageUploaded.getFileName()) + "'>" + Html.esc(imageUploaded.getFileName()) + "</a>";
       }
 

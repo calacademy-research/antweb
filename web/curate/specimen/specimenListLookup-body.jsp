@@ -1,3 +1,6 @@
+<%-- Body of the Specimen List Lookup: the action's message and errors, the results (request attribute
+     lookupResult: the TSV download link, codes not found and codes with spaces, each downloadable as a text file
+     in the browser), instructions, the template file and the upload form (POST, multipart, with the form token). --%>
 <%@ page language="java" %>
 <%@ page errorPage="/error.jsp" %>
 <%@ page import="org.calacademy.antweb.curate.specimen.SpecimenListLookupResult" %>
@@ -20,11 +23,11 @@
 
     <% if (message != null && !message.isEmpty()) { %>
         <div role="alert" style="border:1px solid #b30000; padding:10px; color:#b30000; background-color:#fee; margin-bottom:20px; font-weight:bold;">
-            <%= message %>
+            <%= org.calacademy.antweb.util.Html.esc(message) %>
             <% if (result != null) { %>
                 <ul style="margin-bottom:0;">
                     <% for (String error : result.getErrors()) { %>
-                        <li><%= error %></li>
+                        <li><%= org.calacademy.antweb.util.Html.esc(error) %></li>
                     <% } %>
                     <% if (result.hasAdditionalErrors()) { %>
                         <li><%= result.getErrorCount() - result.getErrors().size() %> additional errors are not displayed.</li>

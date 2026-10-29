@@ -1,3 +1,6 @@
+<%-- Species List Tool page (speciesListTool.do, SpeciesListToolAction; also forward of speciesListToolSearch.do),
+     curators (curatorCheck.jsp). Tiles wrapper of curate/speciesList/speciesListTool-body.jsp. Docs:
+     docs/guides/curate-page.md (Species List Tool). Tests: tests/e2e/test_curator_species_lists.py. --%>
 <%@ page import="org.calacademy.antweb.Formatter" %>
 <%@ page import="org.calacademy.antweb.Utility" %>
 <%@ page import="org.calacademy.antweb.util.*" %>

@@ -10,6 +10,14 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * Count crawls of the project species lists (proj_taxon); the counting code is in CountDb. childrenCountCrawl
+ * and recount: specimens, species, genera and subfamilies of each row (worldants after the AntCat import, set 1;
+ * every live curated project, curatedProjectsCountCrawl, set 3). imageCountCrawl: images per name of every
+ * project list and of allantwebants (set 4; allAntwebImageCount after each specimen upload). dropNumbers: the
+ * Port of Entry list keeps no numbers. Docs: docs/flows/nightly.md, docs/numbers.md.
+ * Tests: TaxonTreeCountDbTest, PlaceImageCountDbTest, NumberDecisionsDbTest, CountCheckTest.
+ */
  public class ProjTaxonCountDb extends CountDb {
     
     private static final Log s_log = LogFactory.getLog(ProjTaxonCountDb.class);

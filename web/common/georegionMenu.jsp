@@ -20,7 +20,7 @@
             } else { // if (region.getName().equals("Africa")) {
            	  //  titleHTML = "<a class='has_items' href='" + AntwebProps.getDomainApp() + "/region.do?name=Africa' >Africa</a>";
               // } else {
-              titleHTML = "<a class='has_items'>" + region.getName() + "</a>";  // no href
+              titleHTML = "<a class='has_items'>" + org.calacademy.antweb.util.Html.esc(region.getName()) + "</a>";  // no href
             }
             ArrayList<Subregion> subregions = region.getSubregions();
             if (subregions != null && !subregions.isEmpty()) {
@@ -38,9 +38,9 @@
 					String subregionHref = " href='" + AntwebProps.getDomainApp() + "/subregion.do?name=" + subregion.getName() + "'";
 
                     if(subregion.getLiveCountries().isEmpty()) {
-                        titleHTML = "<a>" + subregion.getName() + "</a>";  // no href
+                        titleHTML = "<a>" + org.calacademy.antweb.util.Html.esc(subregion.getName()) + "</a>";  // no href
                     } else {
-                        titleHTML = "<a class='has_items'>" + subregion.getName() + "</a>";  // no href
+                        titleHTML = "<a class='has_items'>" + org.calacademy.antweb.util.Html.esc(subregion.getName()) + "</a>";  // no href
                     }
 
                     //titleHTML += "<a" + subregionHref + ">.</a>";  // This will add a hyperlink but will break the accordion
@@ -63,7 +63,7 @@
                         ArrayList<Adm1> adm1s = country.getLiveAdm1s();                        
                         if (!adm1s.isEmpty()) {
 
-                            titleHTML = "<a class='has_items'>" + country.getName() + "</a>";  // no href
+                            titleHTML = "<a class='has_items'>" + org.calacademy.antweb.util.Html.esc(country.getName()) + "</a>";  // no href
                             //AntwebUtil.log("georegionMenu.jsp title:" + titleHTML + " name:" + country.getName());
 
                         //titleHTML += "<a" + countryHref + ">.</a>";  //This will add a hyperlink but will break the accordion
@@ -81,11 +81,11 @@
                                  String countryName = country.getName();
                                  //A.log("countryName:" + countryName + " adm1:" + adm1);
                                   %>
-                        <li><a href="<%= country.getThisPageTarget() %>"><img src="<%= AntwebProps.getDomainApp() %>/image/flag/16/<%= country.getFlagIcon() %>">&nbsp;<%= countryName %></a></li>
+                        <li><a href="<%= org.calacademy.antweb.util.Html.escAttr(country.getThisPageTarget()) %>"><img src="<%= AntwebProps.getDomainApp() %>/image/flag/16/<%= org.calacademy.antweb.util.Html.escAttr(country.getFlagIcon()) %>">&nbsp;<%= org.calacademy.antweb.util.Html.esc(countryName) %></a></li>
                            <% }
                            %>
                                 <!-- taxonomicPage.do?rank=genus&project=< %= adm1.getUseName() % -->
-                                <li><a href="<%= adm1.getThisPageTarget() %>"><%= adm1.getName() %></a></li>
+                                <li><a href="<%= org.calacademy.antweb.util.Html.escAttr(adm1.getThisPageTarget()) %>"><%= org.calacademy.antweb.util.Html.esc(adm1.getName()) %></a></li>
          <% Country hawaii = "Georgia".equals(adm1.getName()) ? GeolocaleMgr.getIsland("Hawaii") : null;
             if (hawaii != null) {   // the menu is on every page: no Hawaii entry rather than an error
          %>
@@ -101,7 +101,7 @@
 							 String flagIcon = "";
 							 if (false && AntwebProps.isDevOrStageMode()) flagIcon = "<img src=" + AntwebProps.getDomainApp() + "/image/flag/16/" + country.getFlagIcon() + ">&nbsp";
 							  %>
-            <li><a href="<%= country.getThisPageTarget() %>"><%= flagIcon %><%= countryName %></a></li>
+            <li><a href="<%= org.calacademy.antweb.util.Html.escAttr(country.getThisPageTarget()) %>"><%= flagIcon %><%= org.calacademy.antweb.util.Html.esc(countryName) %></a></li>
 	<%
                         }
                     } // end country loop

@@ -1,3 +1,6 @@
+<%-- Recently added images page (recentSearchResults.do?searchMethod=recentImageSearch&daysAgo=N, SearchAction),
+     public: tiles wrapper of search/recentSearchResults-body.jsp, title "Recently Added Specimen Images - AntWeb".
+     Docs: docs/flows/search.md. Tests: tests/e2e/test_search_pages.py::test_recent_images. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

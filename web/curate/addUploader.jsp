@@ -1,3 +1,6 @@
+<%-- Add an uploader page (addUploader.do, AddUploaderAction), admins only (adminCheck.jsp): find or invite the
+     login, choose or create the upload group, give upload rights. Tiles wrapper of curate/addUploader-body.jsp.
+     Docs: docs/guides/adding-an-uploader.md. Tests: tests/e2e/test_add_uploader.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

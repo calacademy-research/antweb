@@ -8,19 +8,8 @@ public class SortTaxaByMap implements Comparator<Taxon>
 {
     public int compare(Taxon a, Taxon b) 
     { 
-      try {
-        int aC = a.getTaxonSet().getSpecimenCount();
-        int bC = b.getTaxonSet().getSpecimenCount();
-        int compareInt = 0;
-        if (aC > bC) compareInt = -1;
-        if (aC == bC) compareInt = 0;
-        if (aC < bC) compareInt = 1;
-
-        //A.log("compare() a:" + aC + " b:" + bC + " compareInt:" + compareInt);
-        return compareInt;
-      } catch (NullPointerException e) {
-        A.log("compare() NPE a:" + a + " b:" + b);
-      }
-      return 0;
+      // Same key as SortTaxaBySpecimens (the specimens of the row).
+      TaxonSet aS = SortKeys.set(a), bS = SortKeys.set(b);
+      return SortKeys.countDesc(aS == null ? null : aS.getSpecimenCount(), bS == null ? null : bS.getSpecimenCount());
     } 
 } 

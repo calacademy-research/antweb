@@ -9,6 +9,11 @@ import org.apache.struts.action.Action;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Common parent of CompareResultsAction, MapResultsAction and FieldGuideResultsAction (the tools run on the rows
+ * chosen on a search's results): getChosenResultsFromResults turns the checked row numbers ("chosen") into the rows
+ * of the session's result list.
+ */
 public class ResultsAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ResultsAction.class);

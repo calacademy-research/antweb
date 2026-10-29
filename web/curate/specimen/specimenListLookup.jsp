@@ -1,3 +1,6 @@
+<%-- Specimen List Lookup page (specimenListLookup.do, SpecimenListLookupAction), curators (curatorCheck.jsp).
+     Tiles wrapper of curate/specimen/specimenListLookup-body.jsp. Docs: docs/guides/curate-page.md (Read-only
+     tools). Tests: tests/e2e/test_curator.py, test_curate_page_clarity.py. --%>
 <%@ page language="java" %>
 <%@ page errorPage="/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

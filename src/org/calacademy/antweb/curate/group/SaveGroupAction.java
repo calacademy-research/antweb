@@ -23,6 +23,13 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.GroupDb;
 
+/**
+ * /saveGroup.do: saves an upload group from the form of curate/viewGroup.jsp (name, short name, admin curator),
+ * admins only, POST only (PostOnly.confirm). A new group gets the next free number; step=delete deletes one
+ * that has no logins and no specimens (GroupDb.whyNotDeletable). Writes table ant_group, reloads GroupMgr, then
+ * curate/saveGroupSuccess.jsp. Docs: docs/guides/adding-an-uploader.md. Tests: tests/e2e/test_curator.py,
+ * test_request_handling.py.
+ */
 public final class SaveGroupAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(SaveGroupAction.class);

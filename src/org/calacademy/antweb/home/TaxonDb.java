@@ -15,6 +15,14 @@ import java.util.HashMap;
 import java.util.List;
 
 
+/**
+ * Table taxon (every name: AntCat, specimen upload and curator names). Reads a taxon for the taxon pages and
+ * TaxonMgr (cache), with its lists, countries and bioregions (getFullTaxon), names for autocomplete, and a
+ * current valid name; deletes a taxon with its list rows. Nightly: subfamily chart colours (set 1), species and
+ * genera with neither specimens nor an AntCat source deleted (set 2), type flags (crawlForType, set 3). Also used
+ * by the uploads and the Species List Tool. Tables taxon, specimen, proj_taxon, geolocale_taxon,
+ * bioregion_taxon, museum_taxon. Docs: docs/flows/taxon-pages.md, docs/flows/nightly.md.
+ */
 public class TaxonDb extends AntwebDb {
     
     private static final Log s_log = LogFactory.getLog(TaxonDb.class);

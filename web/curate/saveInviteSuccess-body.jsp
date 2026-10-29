@@ -1,3 +1,6 @@
+<%-- Body of the invitation page: the login's name and email (request attribute inviteLogin) and the one-time
+     set-password link (inviteLink; valid 14 days, shown only here), or a note that the login already has a
+     password; then the list of changes (LoginEditPage.renderChanges). Read-only. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

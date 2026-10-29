@@ -1,3 +1,7 @@
+<%-- Advanced search results by subfamily, genus or species (advancedSearch.do with resultRank; mode=compare or map
+     from the Prepare actions), public: tiles wrapper of search/advancedSearchResultsByTaxon-body.jsp, title
+     "Advanced Specimen Search - AntWeb". Docs: docs/flows/search.md. Tests:
+     tests/e2e/test_search_pages.py::test_search_by_genus_rank_lists_genera. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

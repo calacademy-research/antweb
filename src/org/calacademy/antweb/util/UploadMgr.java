@@ -10,6 +10,12 @@ import org.calacademy.antweb.upload.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * In-memory list of the specimen uploads (table upload, through UploadDb.getUploads), loaded by AntwebMgr at
+ * start-up and on util.do?action=reloadAntwebMgr; getUpload(id) and hasUpload(id) are used by the upload report
+ * links (UploadReportAction, specimen page, Upload). No writes. Docs: docs/flows/specimen-upload.md,
+ * docs/data-model.md.
+ */
 public class UploadMgr {
 
   private static final Log s_log = LogFactory.getLog(UploadMgr.class);

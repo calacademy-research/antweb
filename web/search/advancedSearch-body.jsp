@@ -1,4 +1,8 @@
-<%@ page language="java" %>
+<%-- Body of the advanced search form (advSearch.do, SearchPageAction; tiles wrapper search/advancedSearch.jsp): the
+     Google search box (searchBox3.jsp), the help text (instruct.jsp) and the form, sent by GET to
+     advancedSearch.do: names, place (pick lists from the action), collection and specimen fields, type status,
+     images only, red flag, "Group by" and output. Admins get subfamily and genus pick lists. Docs:
+     docs/flows/search.md. Tests: tests/e2e/test_search_pages.py::test_advanced_search_form. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="org.calacademy.antweb.search.AdvancedSearchForm" %>
@@ -9,7 +13,7 @@
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 
 <jsp:useBean id="advancedSearchForm" scope="session" class="org.calacademy.antweb.search.AdvancedSearchForm" />
-<jsp:setProperty name="advancedSearchForm" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-29): the action fills the bean; request values must not overwrite it. --%>
     
 <% 
 Login accessLogin = LoginMgr.getAccessLogin(request);

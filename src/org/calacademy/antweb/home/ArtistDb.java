@@ -22,6 +22,13 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * The photographers of images (table artist): list, find by name, create, rename, and remove one (its images
+ * and image upload batches move to another artist first; a curator may delete only an artist they created),
+ * with each artist's image and imaged-specimen counts. Used by artist.do (ArtistAction) and ArtistMgr (cache);
+ * the Image Uploader names an artist for each batch. Tables artist, image, image_upload.
+ * Tests: ArtistMoveDbTest, tests/e2e/test_manager_tools.py.
+ */
 public class ArtistDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(ArtistDb.class);

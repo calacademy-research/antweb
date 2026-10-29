@@ -1,3 +1,7 @@
+<%-- Database Status page (dbStatus.do, DbStatusAction), admins only (adminCheck.jsp): busy connection count,
+     the open and old connections (DBUtil), the three connection pools' diagnostics and the MySQL process list,
+     from request attributes the action sets. Read-only. Docs: docs/catalog/actions.csv. Tests:
+     tests/e2e/test_curate_merge.py, test_request_handling.py. --%>
 
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="java.util.*" %>
@@ -32,7 +36,7 @@ String connString = DBUtil.getConnectionList();
       //A.log("connString:" + connString);
 %>
 <pre>
-<br><h3>Connection List:</h3><%= connString%> 
+<br><h3>Connection List:</h3><%= Html.esc(connString).replace("&lt;br&gt;", "\n") %>
 </pre>
 <br>
 <%
@@ -40,7 +44,7 @@ String oldConnString = DBUtil.getOldConnectionList();
       //A.log("connString:" + connString);
 %>
 <pre>
-<br><h3>Old Connection List:</h3><%= oldConnString%> 
+<br><h3>Old Connection List:</h3><%= Html.esc(oldConnString).replace("&lt;br&gt;", "\n") %>
 </pre>
 <br>
 <%

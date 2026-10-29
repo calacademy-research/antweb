@@ -12,6 +12,12 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Form bean saveLoginForm of saveLogin.do and viewLogin.do: a login's fields (id, name, email, names, admin and
+ * upload rights, upload group, upload-as), the password fields, the projects and countries to add or remove
+ * (editForm=2, the form since 2026-10-20) and the step (invite, delete, Change Password). validate() checks the
+ * email and that the two passwords match.
+ */
 public class SaveLoginForm extends ActionForm {
 
     private static final Log s_log = LogFactory.getLog(SaveLoginForm.class);

@@ -136,7 +136,7 @@ public final class EditLoginAction extends AntwebAction {
           return mapping.findForward("editLogin");
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
-            request.setAttribute("message", Html.esc(e.toString()));
+            request.setAttribute("message", Html.esc(e.getMessage()));
             return mapping.findForward("message");
         } finally { 		
             DBUtil.close(connection, this, dbMethodName);

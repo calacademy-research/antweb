@@ -15,6 +15,15 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
+/**
+ * /descEditImageUpload.do: a curator uploads a file from the page-text editor (an image for taxon or
+ * overview page text, or a PDF, text or spreadsheet file) into their own folder web/curator/<login id>/;
+ * an admin may name another folder under the web root. The folder and file name are checked (isSafeDir,
+ * isSafeFileName: never JSP, class, jar, script or settings files), a file it replaces is backed up, and the
+ * answer gives the link and an img tag (common/descEdit/taxonImageConfirmForm.jsp or overviewImageConfirmForm.jsp).
+ * Writes files only, no table; the folder is listed by curatorFiles.do. Form: DescEditImageUploadForm.
+ * Tests: test/org/calacademy/antweb/security/AccessChecksTest.java (no functional e2e test, docs/catalog/actions.csv).
+ */
 public class DescEditImageUploadAction extends AntwebAction {
 
     //public static int IMG_WIDTH = 500;

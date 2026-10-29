@@ -6,6 +6,10 @@ import java.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * One request in PageTracker's table: page address, a random key, start time and run time. Listed on the Page
+ * Tracker page (util/pageTracker-body.jsp). PageTracker is switched off (isOn = false), so none are made.
+ */
 public class Tracker implements Comparable<Tracker> {
   private static final Log s_log = LogFactory.getLog(Tracker.class);
 

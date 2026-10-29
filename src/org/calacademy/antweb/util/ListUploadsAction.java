@@ -18,6 +18,14 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /listSpecimenUploads.do (also /listUploads.do) and /listImageUploads.do: the Specimen Upload Reports
+ * (util/listSpecimenUploads.jsp; table upload, filtered by groupId= or loginId=) and Image Upload Reports
+ * (imageUploader/listImageUploads.jsp; table image_upload, by groupId= or curatorId=). Curators and admins
+ * (Check.curator). Read-only. Docs: docs/flows/specimen-upload.md (section 3, step 11),
+ * docs/flows/image-upload.md. Tests: tests/e2e/test_upload_list_views.py, test_image_upload.py,
+ * test_curate_page_clarity.py.
+ */
 public final class ListUploadsAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ListUploadsAction.class);

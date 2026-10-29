@@ -1,3 +1,6 @@
+<%-- Body of the Species List History: a menu of the login's species lists and a log id, then the saved versions
+     of the list (request attributes projTaxonLogs or geolocaleTaxonLogs) side by side, each with an "Add" link
+     that opens it as the reference list in the Species List Tool. Read-only. --%>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.*" %>

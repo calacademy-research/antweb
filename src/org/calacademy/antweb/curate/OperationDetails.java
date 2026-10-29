@@ -10,6 +10,12 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
     
+/**
+ * Result of a data job or upload step: operation name, start time, message ("success" or the error), execution
+ * time and an optional forward; findForward and getErrorForward send a failed result to the message page. Used
+ * by UtilDataAction (utilData.do and the nightly sets) and ServerDebug; upload.UploadDetails extends it. Docs:
+ * docs/flows/nightly.md.
+ */
 public class OperationDetails {
 
     private static final Log s_log = LogFactory.getLog(OperationDetails.class);

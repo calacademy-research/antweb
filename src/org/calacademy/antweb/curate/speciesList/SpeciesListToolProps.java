@@ -6,6 +6,12 @@ import org.calacademy.antweb.Taxon;
 import org.calacademy.antweb.util.*;
 
 
+/**
+ * The Species List Tool's state, kept in the session as speciesListToolProps: the form's choices
+ * (SpeciesListToolForm) plus the loaded lists (the three mapped lists, the reference list, their union, the
+ * advanced search result), the names ticked when the page was shown (oldChosenList1-3, compared on save) and the
+ * permalink. Tests: test/.../curate/speciesList/SpeciesListPermaLinkTest.java.
+ */
 public class SpeciesListToolProps extends SpeciesListToolForm {
 
     private ArrayList<String> noPassWorldantsSpeciesList;

@@ -8,6 +8,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
+/**
+ * Times named steps in memory: profile(key, startTime, value) keeps the count, average and maximum time per key
+ * and the value of the slowest call. report() appends the table to a log in web/log/ (default name
+ * profiler.jsp; QueryProfiler uses queryProfile.log); after 100 minutes the next profile() writes a report and
+ * clears the table. Used by the specimen upload steps (SpecimenUploadProcess, SpecimenUploadParse,
+ * SpecimenUpload, UploadAction).
+ */
 public class Profiler {
 
 /* Create a file in the web/log directory called profile.log.  Every hour, write the

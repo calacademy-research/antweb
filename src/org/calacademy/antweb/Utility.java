@@ -417,58 +417,15 @@ public class Utility implements Serializable {
      */
 
     public static boolean makeDirTree(String dirTree) {
-      boolean debug = false;
-
-      // if path already exists, skip walking the tree
-        // this whole function could be replaced with file.mkdirs() if we don't care about debugging
+      // The directories above the last name of the path, or the whole path when it ends with "/" (2026-10-29).
+      // Before, each name was tested and created at the root ("/detail" for .../web/log/detail/x.jsp), the
+      // problem the note above describes. The last name (usually a file) is never created as a directory.
+      if (dirTree == null || dirTree.isEmpty()) return false;
       File file = new File(dirTree);
-      if (file.getParentFile().exists()) {
-          return true;
-      }
-
-      boolean isSuccess = true;
-      String[] splitDirTree = dirTree.split("/");
-      //if (debug) A.log("splitDirTree:" + splitDirTree + " 1:" + splitDirTree[0] + " 2:" + splitDirTree[2]);
-      String thisDir = "";
-      for (int i = 1; i < splitDirTree.length; i++) {
-        thisDir = "/" + splitDirTree[i];
-        File dirFile = new File(thisDir);
-        boolean exists = dirFile.exists();
-
-        if (debug) A.log("makeDirTree() thisDir:" + thisDir + " exists:" + exists);
-
-        //Path path = Paths.get(thisDir);
-        //boolean exists2 = Files.exists(path);
-        //if (debug) A.log("makeDirTree() thisDir:" + thisDir + " exists2:" + exists2);
-
-        if (!exists) {
-
-          if (dirFile.toString().contains(".")) { 
-            // This was contains.  Now equals.  If it is equals, then cached items will be
-            // created as directories (See cacheItem()).  Wish I could remember why I made it equals.
-
-            //s_log.warn("makeDirTree(" + dirTree + ") Contains period. dirFile:" + dirFile);       
-            return true;
-
-          }
-          //if (dirTree.contains("2017")) AntwebUtil.logStackTrace();
-
-          try {
-            isSuccess = dirFile.mkdir();
-            if (isSuccess) {
-                if (debug) A.log("makeDirTree() Success creating dir:" + thisDir);
-            } else {
-                //if (debug)
-                s_log.warn("makeDirTree() Failure creating dir:" + thisDir);
-            }
-          } catch (Exception e1) {
-             s_log.error("makeDirTree() Exception dir:" + thisDir + " e:" + e1);
-             isSuccess = false;
-          }
-        } else {
-            //if (debug) A.log("makeDirTree() already exists:" + thisDir);
-        }
-      }
+      File dir = dirTree.endsWith("/") ? file : file.getParentFile();
+      if (dir == null || dir.isDirectory()) return true;
+      boolean isSuccess = dir.mkdirs() || dir.isDirectory();
+      if (!isSuccess) s_log.warn("makeDirTree() Failure creating dir:" + dir);
       return isSuccess;
     }
     

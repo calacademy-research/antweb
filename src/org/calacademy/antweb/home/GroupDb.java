@@ -12,6 +12,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * Upload groups (table ant_group, usually one per institution): read for GroupMgr (cache) and the group pages
+ * (group.do, groups.do), saved and deleted by admins (newGroup.do, saveGroup.do, viewGroups.do; whyNotDeletable
+ * refuses a group that still has logins or specimens), the curators of a group, and upload_specimens (the
+ * group's specimen count) after an upload. Tables ant_group, login, specimen, upload.
+ * Docs: docs/flows/specimen-upload.md. Tests: UploaderOnboardingDbTest.
+ */
 public class GroupDb extends AntwebDb {
     
     private static final Log s_log = LogFactory.getLog(GroupDb.class);

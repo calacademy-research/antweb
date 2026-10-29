@@ -16,6 +16,16 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.*;
 
+/**
+ * First stage of each specimen line (parseLine): turns a line of the file into a specimen record and a
+ * taxon record. Maps the header's column names to specimen columns (buildHeaderArrayList,
+ * buildColumnTranslations; unknown columns go to the specimen's other XML), checks the specimen code,
+ * coordinates and names, cleans the taxonomy (subfamily from the genus, the one indet form, synonymised
+ * genera), maps country, adm1 and bioregion to AntWeb's names, cleans locality and collection codes, and
+ * red-flags coordinates outside the country or adm1. Refusals and corrections go to the report (MessageMgr).
+ * Docs: docs/flows/specimen-upload.md (sections 2.1, 3 step 7, 3b).
+ * Tests: UploadNightlyDecisionsTest, SubfamilyFromGenusTest, LocalityCodePlainTest, UploadDecisions1028Test.
+ */
 public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
 /* 

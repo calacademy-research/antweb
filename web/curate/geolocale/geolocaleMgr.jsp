@@ -1,3 +1,6 @@
+<%-- Geolocale Manager page (geolocaleMgr.do, GeolocaleMgrAction), curators look (curatorCheck.jsp). Tiles wrapper
+     of curate/geolocale/geolocaleMgr-body.jsp. Docs: docs/guides/manager-tools.md (Geolocale Manager). Tests:
+     tests/e2e/test_geolocale_edit_page.py, test_manager_tools.py. --%>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
 <%@ page errorPage = "error.jsp" %>

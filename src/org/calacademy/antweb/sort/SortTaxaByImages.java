@@ -8,21 +8,8 @@ public class SortTaxaByImages implements Comparator<Taxon>
 {
     public int compare(Taxon a, Taxon b) 
     { 
-      try {
-        // the number the Images cell shows (Brian Fisher 2026-10-28: the images of the name in AntWeb)
-        int aC = ImagesAnywhere.shownImages(a.getTaxonSet());
-        int bC = ImagesAnywhere.shownImages(b.getTaxonSet());
-        
-        int compareInt = 0;
-        if (aC > bC) compareInt = -1;
-        if (aC == bC) compareInt = 0;
-        if (aC < bC) compareInt = 1;
-
-        //A.log("compare() a:" + aC + " b:" + bC + " compareInt:" + compareInt);
-        return compareInt;
-      } catch (NullPointerException e) {
-        A.log("compare() NPE a:" + a + " b:" + b);
-      }
-      return 0;
+      // the number the Images cell shows (Brian Fisher 2026-10-28: the images of the name in AntWeb)
+      TaxonSet aS = SortKeys.set(a), bS = SortKeys.set(b);
+      return SortKeys.countDesc(aS == null ? null : ImagesAnywhere.shownImages(aS), bS == null ? null : ImagesAnywhere.shownImages(bS));
     } 
 } 

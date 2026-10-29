@@ -13,6 +13,12 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
     
+/**
+ * /uploadReport.do?uploadId=N (public): redirects to the report of one specimen upload under web/log/
+ * (the upload as kept by UploadMgr), or says the report is no longer on the server. Linked from the
+ * specimen page and from the header of each report.
+ * Tests: tests/e2e/test_specimen_upload_roundtrip.py, tests/e2e/test_background_jobs.py.
+ */
 public final class UploadReportAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(UploadReportAction.class);

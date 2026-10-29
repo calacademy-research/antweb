@@ -18,6 +18,14 @@ import org.calacademy.antweb.geolocale.*;
 
 import org.calacademy.antweb.search.*;
 
+/**
+ * /speciesListTool.do: the Species List Tool (curate/speciesList/speciesListTool.jsp), curators: up to three
+ * species lists (projects or places) side by side with a reference list (advanced search, AntCat names or a
+ * saved version), kept in the session (SpeciesListToolProps). action=save (POST, lists the curator may edit:
+ * SpeciesListAccess) saves the ticked names (SpeciesListDb.saveTaxonSet: tables proj_taxon or geolocale_taxon,
+ * the previous version archived in the *_log tables, disputes). Docs: docs/guides/curate-page.md (Species List
+ * Tool). Tests: tests/e2e/test_curator_species_lists.py, test_curator.py.
+ */
 public class SpeciesListToolAction extends SpeciesListSuperAction {
 
   private static final Log s_log = LogFactory.getLog(SpeciesListToolAction.class);
@@ -186,12 +194,21 @@ To Do
         if (oldChosenList1 == null && oldChosenList2 == null && oldChosenList3 == null) {
             return mapping.findForward("sessionExpired");       
         }
-        message += speciesListDb.saveTaxonSet(toolForm.getTaxa()
-          , toolForm.getChosen1(), oldChosenList1, mapSpeciesList1Name, accessLogin); 
-        message += speciesListDb.saveTaxonSet(toolForm.getTaxa()
-          , toolForm.getChosen2(), oldChosenList2, mapSpeciesList2Name, accessLogin); 
-        message += speciesListDb.saveTaxonSet(toolForm.getTaxa()
-          , toolForm.getChosen3(), oldChosenList3, mapSpeciesList3Name, accessLogin);
+        // A list made of its children's lists is rebuilt from them, so it is not saved here (as the Curate page
+        // does not offer it for editing); the other lists of the page are saved (2026-10-29).
+        String[] listNames = {mapSpeciesList1Name, mapSpeciesList2Name, mapSpeciesList3Name};
+        String[][] chosen = {toolForm.getChosen1(), toolForm.getChosen2(), toolForm.getChosen3()};
+        java.util.List<ArrayList<String>> oldChosen = java.util.Arrays.asList(oldChosenList1, oldChosenList2, oldChosenList3);
+        for (int n = 0; n < 3; n++) {
+          if (isMadeOfChildren(listNames[n])) {
+            java.util.Set<String> now = chosen[n] == null ? new java.util.HashSet<>() : new java.util.HashSet<>(java.util.Arrays.asList(chosen[n]));
+            java.util.Set<String> before = oldChosen.get(n) == null ? new java.util.HashSet<>() : new java.util.HashSet<>(oldChosen.get(n));
+            if (now.equals(before)) continue;   // nothing changed in that list: nothing to say
+            message += " " + Html.esc(SpeciesListMgr.getPrettyName(listNames[n])) + " is made of its children's lists and was not changed: edit the lists it is made of.";
+            continue;
+          }
+          message += speciesListDb.saveTaxonSet(toolForm.getTaxa(), chosen[n], oldChosen.get(n), listNames[n], accessLogin);
+        }
       } 
 
       if (message != null) request.setAttribute("message", message);
@@ -654,5 +671,12 @@ To Do
       return results.getSpeciesList();
     }
     
+
+    /** True for a list made of its children's lists (getIsUseChildren). */
+    static boolean isMadeOfChildren(String listName) {
+        if (SpeciesListAccess.isNone(listName)) return false;
+        SpeciesListable list = SpeciesListMgr.getSpeciesList(listName);
+        return list != null && list.getIsUseChildren();
+    }
 }
 

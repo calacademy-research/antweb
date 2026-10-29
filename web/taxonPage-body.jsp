@@ -296,7 +296,7 @@ To do:
           out.println(event + "<br>");
         }
         if (!"".equals(toolTip)) {
-          %>  <a title="<%= toolTip %>">...</a><br> <%          
+          %>  <a title="<%= Html.escAttr(toolTip) %>">...</a><br> <%          
         }
       }
     } // end desc edit history

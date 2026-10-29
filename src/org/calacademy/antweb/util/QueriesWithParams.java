@@ -7,6 +7,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
+/**
+ * Named queries that take a parameter (query.do?name=...&param=...): the species list with range data and the
+ * range summary of a place (geolocale) or a bioregion, linked from the place and bioregion species list pages.
+ * The place or bioregion name is quoted into the SQL (sqlText). Run by QueryManager.runQueryWithParam. Tests:
+ * QueriesReviewTest, tests/e2e/test_named_queries.py.
+ */
 public abstract class QueriesWithParams {
 
     private static final Log s_log = LogFactory.getLog(QueriesWithParams.class);

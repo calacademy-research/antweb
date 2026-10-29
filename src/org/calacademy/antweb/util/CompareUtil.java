@@ -7,6 +7,11 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.Utility;
 
+/**
+ * Null-safe compare functions for strings, numbers, dates and floats, used to sort lists (Species,
+ * AdvancedSearchResults): empty and null first, zeros first; equal values give 0 so the Comparator contract
+ * holds. Tests: test/org/calacademy/antweb/audit/CoreUtilFixesTest.java.
+ */
 public class CompareUtil {
 
     private static final Log s_log = LogFactory.getLog(CompareUtil.class);

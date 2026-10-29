@@ -11,6 +11,11 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Meant as the taxon lookup for code outside a Struts request: from TaxonMgr when it is loaded, otherwise from
+ * table taxon through its own connection pool (ConnectionFactory). Nothing calls it (only a comment in
+ * ConnectionFactory names it).
+ */
 public class TaxonProxy {
 
     private Connection m_connection = null;

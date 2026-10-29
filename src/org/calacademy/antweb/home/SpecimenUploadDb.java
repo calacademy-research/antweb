@@ -12,6 +12,13 @@ import org.calacademy.antweb.upload.*;
 import java.util.ArrayList;
 
 
+/**
+ * Database steps of a specimen upload (UploadDb plus): deletes the group's specimens before the new file is
+ * loaded (dropSpecimens), sets the group's last upload date, records the upload in table upload with its counts
+ * (recordUpload, insertUploadRow) and names the kept copy of the file (getBackupDirFile).
+ * Used by SpecimenUpload, SpecimenUploadParse, SpecimenUploadProcess, Uploader and UploadAction. Tables upload,
+ * specimen, taxon, proj_taxon, ant_group. Docs: docs/flows/specimen-upload.md. Tests: UploadRecordDbTest.
+ */
 public class SpecimenUploadDb extends UploadDb {
 
     private static final Log s_log = LogFactory.getLog(SpecimenUploadDb.class);
@@ -28,7 +35,7 @@ public class SpecimenUploadDb extends UploadDb {
         int count = 0;
         for (String code : specimens) {            
             if (code.length() > 0) {
-              codeString.append(",'" + code.toLowerCase() + "'");
+              codeString.append("," + DBUtil.sqlLiteral(code.toLowerCase()));   // quoted (2026-10-29)
             }
         }
         if (codeString.length() > 0) {
@@ -40,6 +47,7 @@ public class SpecimenUploadDb extends UploadDb {
                 count = stmt.executeUpdate(query);
             } catch (SQLException e) {
                 uploadLog.error("problem in deleteSpecimens(connect, specimens) - queryLength:" + query.length() + " " + e);
+                throw e;
             } finally {
                 DBUtil.close(stmt, "SpecimenUploadDb.deleteSpecimens()");
             }
@@ -94,6 +102,7 @@ public class SpecimenUploadDb extends UploadDb {
           uploadLog.info("dropSpecimens() count:" + count + " query completed");
         } catch (SQLException e) {
           uploadLog.error("dropSpecimens() 1 e:" + e + " query:" + query);
+          throw e;   // the upload stops and rolls back (2026-10-29): it used to load on top of the old specimens
         } finally {
           DBUtil.close(stmt, "SpecimenUploadDb.dropSpecimens()");
         }
@@ -107,6 +116,7 @@ public class SpecimenUploadDb extends UploadDb {
           //s_log.warn("dropSpecimens() count:" + count + " query completed");
         } catch (SQLException e) {
           uploadLog.error("dropSpecimens() 2 e:" + e + " query:" + query);
+          throw e;
         } finally {
           DBUtil.close(stmt, "SpecimenUploadDb.dropSpecimens2()");
         }

@@ -24,6 +24,12 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * /viewLogin.do?id=N: one login's form, for admins any login, for others only their own (table login, with its
+ * projects and countries: LoginDb.getDeepLogin). Puts thisLogin, the form data (LoginEditOptions) and the upload
+ * groups in the session; curators and admins get curate/viewLogin.jsp, other users editLogin.jsp. Read-only.
+ * Docs: docs/guides/curate-page.md (Editing a login). Tests: tests/e2e/test_login_form.py, test_curator.py.
+ */
 public final class ViewLoginAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ViewLoginAction.class);

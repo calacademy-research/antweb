@@ -1,3 +1,6 @@
+<%-- Password Reset Campaign page (passwordResetCampaign.do, PasswordResetCampaignAction, admins only; this page has
+     no check of its own). Tiles wrapper of curate/passwordResetCampaign-body.jsp. Docs:
+     docs/flows/email-and-password-reset.md. Tests: tests/e2e/test_upload_report_links.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

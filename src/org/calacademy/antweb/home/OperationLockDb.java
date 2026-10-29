@@ -10,6 +10,11 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 
+/**
+ * Table operation_lock: getOperationLock (the latest row, for the server status page, serverStatus.do).
+ * setOperationLock, unlock, enable and disable have no callers: nothing sets the lock any more.
+ * Docs: docs/data-model.md (operation_lock, read only).
+ */
 public class OperationLockDb extends AntwebDb {
 
 /* 
@@ -33,7 +38,7 @@ Useful query to see how lock the locks have lasted:
 
         String theInsert = "insert into operation_lock (operation, duration_millis, locked, curator_id, curator, created) " 
           + " values (" + operationLock.getOperation() + ", " + operationLock.getDurationMillis() + ", " 
-          + locked + ", " + operationLock.getCuratorId() + ", '" + operationLock.getCurator() + "', " + "'" + createdStr + "')";
+          + locked + ", " + operationLock.getCuratorId() + ", " + DBUtil.sqlQuote(operationLock.getCurator()) + ", " + DBUtil.sqlQuote(createdStr) + ")";   // quoted (2026-10-29): a name with ' failed
                    
         //s_log.info("setOperationLock() insert:" + theInsert);
         Statement stmt = null;

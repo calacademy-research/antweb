@@ -8,7 +8,7 @@
 <%@ page import="org.calacademy.antweb.util.*" %>
 
 <jsp:useBean id="taxon" scope="session" class="org.calacademy.antweb.Taxon"/>
-<jsp:setProperty name="taxon" property="*"/>
+<%-- No jsp:setProperty property="*" here (2026-10-29): the action fills the bean; request values must not overwrite it. --%>
 
 <bean:define id="showNav" value="search" toScope="request"/>
 
@@ -38,8 +38,8 @@
     }
     String titleString = "Map of " + taxonRank + " " + prettyName + " from AntWeb";
 
-    String metaString = "<meta name='keywords' content='" + prettyName + ", AntWeb, ants,ant,formicidae '/>";
-    metaString += "<meta name='description' content='Map of " + taxonRank + " " + prettyName + " from AntWeb.'/>";
+    String metaString = "<meta name='keywords' content='" + Html.escAttr(prettyName) + ", AntWeb, ants,ant,formicidae '/>";
+    metaString += "<meta name='description' content='Map of " + Html.escAttr(taxonRank) + " " + Html.escAttr(prettyName) + " from AntWeb.'/>";
 %>
 <tiles:insert beanName="antweb.default" beanScope="request" flush="true">
     <tiles:put name="title" value="<%= titleString %>"/>

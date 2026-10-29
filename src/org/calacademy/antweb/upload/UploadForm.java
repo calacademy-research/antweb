@@ -4,6 +4,12 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.upload.FormFile;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Form bean of the curate page's upload forms (struts-config name uploadForm, action /upload.do): the file
+ * (theFile), the sub-action (action: specimenUpload, taxonWorksUpload, fetchAndReloadWorldants, museumCalc,
+ * ...), Upload as (uploadAs) and Upload Type. Many fields belong to forms removed in 2026-10 and are ignored.
+ * Read by UploadAction; DescEditImageUploadForm extends it. Docs: docs/flows/specimen-upload.md (section 1).
+ */
 public class UploadForm extends ActionForm {
   protected FormFile theFile;
   protected FormFile theFile2;

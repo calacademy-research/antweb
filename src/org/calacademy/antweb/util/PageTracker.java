@@ -7,6 +7,11 @@ import jakarta.servlet.http.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Meant to list the requests being served right now: SessionRequestFilter adds each request and the page footer
+ * removes it; shown on the Page Tracker and Server Status pages. Switched off in the code (isOn = false), so
+ * add and remove return at once and the list is empty. purge() would write web/log/pageTracker.log.
+ */
 public class PageTracker {
 
 /*

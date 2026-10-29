@@ -1,3 +1,6 @@
+<%-- Species List History page (speciesListHistory.do, SpeciesListHistoryAction), curators (curatorCheck.jsp).
+     Tiles wrapper of curate/speciesList/speciesListHistory-body.jsp. Docs: docs/guides/curate-page.md (Species
+     List Tool). --%>
 <%@ page import="org.calacademy.antweb.Formatter" %>
 <%@ page import="org.calacademy.antweb.Utility" %>
 <%@ page import="org.calacademy.antweb.util.*" %>

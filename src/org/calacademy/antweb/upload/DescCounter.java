@@ -2,6 +2,11 @@ package org.calacademy.antweb.upload;
 
 import java.util.*;
 
+/**
+ * Counts, per title, the description records an AntCat (WorldAnts) or species-list load saves
+ * (AntwebUpload.saveDescription); only its size is used, in a progress log line of AntwebUpload.saveTaxon.
+ * Internal to the upload package: no page and no table of its own.
+ */
 class DescCounter extends HashMap {
 
 

@@ -3,6 +3,12 @@ package org.calacademy.antweb.util;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * One named, read-only query of the Query Manager (Queries, QueriesWithParams): name, plain-language
+ * explanation, column headings, SQL, and after a run its result HTML, row count and time. Run and shown by
+ * QueryManager for query.do and the Integrity Check. Tests: QueriesReviewTest, RelevantQueriesTest,
+ * tests/e2e/test_named_queries.py.
+ */
 public class NamedQuery  //implements Iterable 
 {
 

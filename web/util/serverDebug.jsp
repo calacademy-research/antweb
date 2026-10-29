@@ -1,3 +1,6 @@
+<%-- Server Debug page (serverDebug.do, ServerDebug), admins only (adminCheck.jsp). Tiles wrapper of
+     util/serverDebug-body.jsp. Docs: docs/catalog/actions.csv. Tests: tests/e2e/test_curate_merge.py,
+     test_curator.py. --%>
 <%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

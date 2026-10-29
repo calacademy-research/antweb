@@ -9,6 +9,12 @@ import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Locale;
 
+/**
+ * Short logging helpers used throughout the code and the JSPs: log (dev mode only, with the caller's class
+ * name), slog and iLog (dev and staging only; iLog every nth call), logi (the first n calls of a key), logDev
+ * (dev mode or developer logins), loopCount, and commaFormat for numbers with thousands separators. Writes to
+ * the Tomcat log.
+ */
 public class A {
 
   /* This lovely little class is for convenience.  Something like this:

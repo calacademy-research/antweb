@@ -1,3 +1,6 @@
+<%-- Body of Your Curator Files (curatorFiles.do): lists the entries CuratorFilesAction read from the curator's
+     folder (request attributes curatorFiles, curatorFilesPath, curatorFilesTruncated) with size, date and a
+     link to each file. Read-only; files only, no table. Tests: tests/e2e/test_curator.py (test_curator_files_page). --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.net.URLEncoder" %>

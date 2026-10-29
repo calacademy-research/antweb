@@ -1,3 +1,6 @@
+<%-- Image Uploader page (imageUploader.do, ImageUploaderAction): curators with image upload rights, and admins
+     (checked here and in the actions). Tiles wrapper of imageUploader/imageUploader-body.jsp.
+     Docs: docs/flows/image-upload.md. Tests: tests/e2e/test_image_upload.py, test_browser_image_upload.py. --%>
 <%@ page errorPage = "error.jsp" %>
 <%@ page import = "org.calacademy.antweb.Group" %>
 

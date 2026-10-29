@@ -1,3 +1,7 @@
+<%-- One view of every image comparison row (compareResults.do?shot=..., CompareResultsAction; the view buttons
+     request search/multiTaxaOneView.jsp?shot=... directly, which Caddy allows): tiles wrapper of
+     search/multiTaxaOneView-body.jsp, title "Comparing Images - AntWeb". It only shows the session's taxaToCompare;
+     no login check of its own. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

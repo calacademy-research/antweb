@@ -57,7 +57,7 @@
 
 <!-- print the rest -->
 <jsp:useBean id="taxon" scope="session" class="org.calacademy.antweb.Specimen" />
-<jsp:setProperty name="taxon" property="*" />
+<%-- No jsp:setProperty property="*" here (2026-10-29): the action fills the bean; request values must not overwrite it. --%>
 
  <bean:write name="taxon" property="hasImages" />
  <logic:equal value="true" name="taxon" property="hasImages">

@@ -6,6 +6,9 @@ import org.apache.struts.action.ActionForm;
 import org.apache.struts.action.ActionMapping;
 import org.apache.struts.upload.FormFile;
 
+/**
+ * Form bean specimenListLookupForm of specimenListLookup.do: the uploaded file of specimen codes.
+ */
 public class SpecimenListLookupForm extends ActionForm {
     private FormFile file;
 

@@ -8,6 +8,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
+/**
+ * Times the slow public requests (taxon pages, specimen and collection pages, advanced, recent-image and field
+ * guide searches, specimen list downloads): profile() adds to Profiler's shared in-memory table; report()
+ * appends it to web/log/queryProfile.log. Shown on the server busy report (DBStatus) and the Server Status
+ * page.
+ */
 public class QueryProfiler extends Profiler {
 
 /* Create a file in the web/log directory called queryProfile.log.  Every hour, write the

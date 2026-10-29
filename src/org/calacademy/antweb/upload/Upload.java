@@ -11,6 +11,13 @@ import org.calacademy.antweb.util.AntwebProps;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * One specimen upload as recorded in table upload (upload id, login, group, report file name, kept copy of
+ * the file, counts). Read by UploadDb and kept in memory by UploadMgr; shown on the upload list
+ * (listSpecimenUploads.do), the specimen page and uploadReport.do. Knows where its report is (web/log/specimen/,
+ * or web/log/upload/ before 2019-11-11) and whether the report and the kept file are still on the server.
+ * Tests: UploadReportExistsTest, test/org/calacademy/antweb/home/UploadRecordDbTest.java.
+ */
 public class Upload {
 
     private static final Log s_log = LogFactory.getLog(Upload.class);

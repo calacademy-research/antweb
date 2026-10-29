@@ -15,6 +15,12 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Hashtable;
 
+/**
+ * Helpers of the specimen upload: the specimen code check (isValidSpecimenCode), the one indet form
+ * "(indet)" (normalizeIndetEpithet), locality and collection code cleaning (cleanCode, quotesToDash), taxon
+ * name building (makeName) and date conversion.
+ * Docs: docs/flows/specimen-upload.md (sections 2.1, 3b). Tests: LocalityCodePlainTest, UploadDecisions1028Test.
+ */
 public class UploadUtil {
 
     private static final Log s_log = LogFactory.getLog(UploadUtil.class);

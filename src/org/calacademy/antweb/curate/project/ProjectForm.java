@@ -6,6 +6,10 @@ import org.apache.struts.action.*;
 
 import org.calacademy.antweb.util.*;
 
+/**
+ * Form bean curateProjectForm (one field, project, required). Not used: struts-config.xml declares the bean,
+ * but no action names it.
+ */
 public class ProjectForm extends ActionForm {
 
 /* check name - also make sure to add where clause to update */

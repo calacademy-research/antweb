@@ -1,3 +1,7 @@
+<%-- Body of the upload group form (session attribute thisGroup): number (fixed), full name, short name and admin
+     curator, saved by a POST with the form token to saveGroup.do; Delete (step=delete, refused while the group has
+     logins or specimens); the group's logins and links to add an uploader and its upload logs. Docs:
+     docs/guides/adding-an-uploader.md. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

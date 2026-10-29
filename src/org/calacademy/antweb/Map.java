@@ -77,6 +77,7 @@ public class Map {
     protected String collectionCode = "";
 
     boolean mapLocalities = false;
+    public static final int SPECIMEN_LIST_MAX_POINTS = 8000;   // maps of a list of specimens (search results)
     public static int MAXMAPPOINTS = 5000;  // was safely 1000, but we miss some results from madagasy.  Then was 5000
 
     // Now it is set to allow all again... will we find memory problems?
@@ -325,12 +326,14 @@ public class Map {
             for (String specimen : specimens) {
                 if (i >= 1) theQuery += ",";
                 i = i + 1;
-                theQuery += "'" + specimen + "'";
+                theQuery += DBUtil.sqlLiteral(specimen);   // quoted and escaped (2026-10-29): was pasted in raw
             }
             theQuery += ")";
             theQuery += " order by species";
             
-            MAXMAPPOINTS = 8000;
+            // The cap of a specimen-list map, kept here (2026-10-29): it was written into the shared MAXMAPPOINTS,
+            // so every taxon map made afterwards had a different cap (8000 instead of 5000) until restart.
+            final int maxPoints = SPECIMEN_LIST_MAX_POINTS;
             //MAXMAPPOINTS = 10000;
             
 			//MAXMAPPOINTS = 50000;
@@ -357,7 +360,7 @@ public class Map {
 
                 while (rset.next()) {
                     ++chosenListSize;
-                    if (pointCount >= MAXMAPPOINTS) isDiscard = true;  // to avoid java.lang.OutOfMemoryError: Java heap space
+                    if (pointCount >= maxPoints) isDiscard = true;  // to avoid java.lang.OutOfMemoryError: Java heap space
 
                     thisLat = rset.getFloat("decimal_latitude");
                     thisLon = rset.getFloat("decimal_longitude");
@@ -418,7 +421,7 @@ public class Map {
                 if (specimenCount > 1)  // Looks silly to report Specimens:1, Mappable:1
 			      if (totalPointCount == pointCount) {
 			        String subtitle = "Specimens:" + specimenCount + localityStr + " Unique Mappable:" + pointCount;
-			        if (pointCount == MAXMAPPOINTS) subtitle += " (maximum)";
+			        if (pointCount == maxPoints) subtitle += " (maximum)";
   					setSubtitle(subtitle);
 				  } else {
                     setSubtitle("Specimens:" + specimenCount + localityStr  + " Mapped:" + pointCount + " (of " + totalPointCount + ")");                    

@@ -3,6 +3,10 @@ package org.calacademy.antweb.curate.speciesList;
 import org.apache.struts.action.*;
 import jakarta.servlet.http.*;
 
+/**
+ * Form bean historyForm (species list name, projLogId, geoLogId). Not used: no action names the bean;
+ * speciesListHistory.do uses toolForm (SpeciesListToolForm).
+ */
 public class SpeciesListHistoryForm extends ActionForm {
 
     protected String action;

@@ -15,6 +15,12 @@ import java.util.Map;
 
 import org.calacademy.antweb.Specimen;
 
+/**
+ * Specimen List Lookup logic: reads one code per line (at most 100,000), looks the distinct codes up through a
+ * SpecimenListLookupSource (case-insensitive) and writes the found specimens as tab-delimited rows in file
+ * order (Specimen.getTabDelimString); codes not found or with spaces are reported. validateFilename checks the
+ * file name. Tests: test/.../curate/specimen/SpecimenListLookupServiceTest.java.
+ */
 public class SpecimenListLookupService {
     public static final int MAX_ROWS = 100000;
     public static final int MAX_FILE_SIZE = 5 * 1024 * 1024;

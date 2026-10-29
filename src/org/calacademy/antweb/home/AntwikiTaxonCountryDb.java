@@ -11,6 +11,12 @@ import org.calacademy.antweb.util.DBUtil;
 import java.sql.*;
 import java.util.ArrayList;
 
+/**
+ * setIntroducedSpecimen(): sets specimen.is_introduced = 1 for specimens whose name and country are flagged
+ * introduced in antwiki_taxon_country (AntWiki country records loaded in 2015). Nothing calls it any more:
+ * the upload.do tool that used this class was removed in 2026-10. Tables antwiki_taxon_country, specimen.
+ * Docs: docs/data-model.md section 11 (antwiki_taxon_country, unused).
+ */
 public class AntwikiTaxonCountryDb extends AntwebDb {
     
     private static final Log s_log = LogFactory.getLog(AntwikiTaxonCountryDb.class);

@@ -1,3 +1,6 @@
+<%-- Bioregion Map Manager page (bioregionMapMgr.do, BioregionMapMgrAction), curators (curatorCheck.jsp). Tiles
+     wrapper of curate/bioregionMapMgr-body.jsp. Docs: docs/guides/manager-tools.md. Tests:
+     tests/e2e/test_manager_tools.py. --%>
 <%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

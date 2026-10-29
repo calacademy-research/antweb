@@ -245,8 +245,8 @@ public class Museum extends LocalityOverview implements Countable {
 
     public String getUpdateCountSQL(String parentTaxonName, String columnName, int count) {
         String updateCountSQL = "update museum_taxon set " + columnName + " = '" + count + "'" 
-            + " where code = '" + getCode() + "'" 
-            + " and taxon_name = '" + parentTaxonName + "'";
+            + " where code = " + org.calacademy.antweb.util.DBUtil.sqlQuote(getCode())
+            + " and taxon_name = " + org.calacademy.antweb.util.DBUtil.sqlQuote(parentTaxonName);   // quoted (2026-10-29): a name with ' broke the update
 
         return updateCountSQL;    
     }
@@ -266,8 +266,8 @@ public class Museum extends LocalityOverview implements Countable {
 
     public String getUpdateImageCountSQL(String taxonName, int sum) { //, String rank) {
         String updateSql = "update museum_taxon set image_count = " + sum 
-            + " where code = '" + getCode() + "'" 
-            + " and taxon_name = '" + taxonName + "'";
+            + " where code = " + org.calacademy.antweb.util.DBUtil.sqlQuote(getCode())
+            + " and taxon_name = " + org.calacademy.antweb.util.DBUtil.sqlQuote(taxonName);
         return updateSql;    
     }
 

@@ -1,4 +1,7 @@
-<!-- taxonNameSearchBox.jsp -->
+<%-- Taxa box of the header search bar (static include of common/searchBar.jsp, on every page): a GET form to
+     description.do?taxonName=... (the taxon page) with suggestions from search/autoCompleteKeys.jsp. Docs:
+     docs/flows/search.md, docs/flows/taxon-pages.md. Tests:
+     tests/e2e/test_taxon_pages.py::test_taxon_name_redirects_to_the_taxon_page, test_browser.py. --%><!-- taxonNameSearchBox.jsp -->
             <div class="search">
 
                 <html:form method="GET" action="description">

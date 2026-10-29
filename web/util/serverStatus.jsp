@@ -1,3 +1,6 @@
+<%-- Server Status page (serverStatus.do, ServerStatusAction), admins only (adminCheck.jsp). Tiles wrapper of
+     util/serverStatus-body.jsp. Docs: docs/catalog/actions.csv. Tests: tests/e2e/test_admin_staging.py,
+     test_request_handling.py, test_tool_pages_style.py. --%>
 <%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

@@ -1,3 +1,7 @@
+<%-- Body of the Introduced Map Manager: one row per species of project introducedants (request attribute
+     speciesList) with the bioregions where it is native, a red dot when none is ticked, and a save arrow per row
+     (a POST with the form token to introducedMapMgr.do). Docs: docs/guides/manager-tools.md (Introduced Map
+     Manager). --%>
 <%@ page import="java.util.*" %>
 
 <%@ page import="org.calacademy.antweb.curate.*" %>
@@ -39,7 +43,12 @@ For each species on the <a href='<%= AntwebProps.getDomainApp() %>/taxonomicPage
 from any other bioregion is marked introduced, and these species are not flagged as "not native" by the
 genus check of the Bioregion Map Manager. A red dot means no bioregion is ticked yet (then the species
 counts as introduced everywhere). The green arrow saves that species' row (administrators only); it
-applies to the next upload. Opening this page adds an empty row for a listed species that has none.
+applies to the next upload.
+<% Integer missingMapCount = (Integer) request.getAttribute("missingMapCount");
+   if (missingMapCount != null && missingMapCount > 0) { %>
+<br><br><%= missingMapCount %> listed species have no row yet (until they have one they are not treated as introduced anywhere):
+<%= Csrf.postButton(request, domainApp + "/introducedMapMgr.do?action=createEmptyMaps", "Add empty rows") %>
+<% } %>
 </div>
 <br>
 <br>

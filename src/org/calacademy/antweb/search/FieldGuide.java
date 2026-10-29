@@ -14,6 +14,13 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * The contents of one field guide page (search/fieldGuide-body.jsp): title, place (overview and its map extent),
+ * rank and the taxa, each with its images, distribution map and, for species and subspecies, habitats, methods and
+ * elevations (setMembers; tables taxon, specimen, image). Built by FieldGuideAction (fieldGuide.do) and
+ * FieldGuideResultsAction (fieldGuideResults.do). setLocalityForSpecimen and getStaticMap have no caller. Docs:
+ * docs/flows/places.md. Tests: tests/e2e/test_field_guide_compare.py.
+ */
 public class FieldGuide {
   /* This version of FieldGuide.java does not utilize PDF or XML */
     private static final Log s_log = LogFactory.getLog(FieldGuide.class);

@@ -16,6 +16,14 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+/**
+ * User accounts (table login, with login_project and login_country): read for LoginMgr (cache), log-in,
+ * remember-me and the curator pages; created and saved by admins and users (newLogin.do, saveLogin.do,
+ * editLogin.do); last log-in time; new login numbers that never reuse an old one (nextLoginId); counts of a
+ * curator's uploads, image uploads and page-text edits; hashes old plain-text passwords. Tables login,
+ * login_project, login_country, upload, image_upload, image_uploaded, description_edit and the other page-text
+ * tables. Docs: docs/flows/email-and-password-reset.md, docs/numbers.md. Tests: LoginIdDbTest, LoginEditDbTest.
+ */
 public class LoginDb extends AntwebDb {
     
     private static final Log s_log = LogFactory.getLog(LoginDb.class);
@@ -628,7 +636,16 @@ public class LoginDb extends AntwebDb {
             // A.log("updateLogin() isAdminUpdate:" + isAdminUpdate + " groupId:" + login.getGroupId() + " uploadSpecimens:" + uploadSpecimens + " uploadImages:" + uploadImages);
 
             if (!isAdminUpdate && !isSelfUpdate) {
-                throw new SQLException("name:" + login.getName() + " or email:" + login.getEmail() + " already in use.");
+                throw new SQLException("Only an administrator may change another account. Nothing was saved.");
+            }
+            // A name or email changed to one another account already uses is refused (2026-10-29), as for a new
+            // account (saveLogin): two accounts with one email made logging in by email and password resets pick
+            // either account. Unchanged values are not checked, so an old duplicate does not block other edits.
+            Login stored = getLogin(login.getId());
+            boolean nameChanged = stored == null || !java.util.Objects.equals(stored.getName(), login.getName());
+            boolean emailChanged = stored == null || !java.util.Objects.equals(stored.getEmail(), login.getEmail());
+            if ((nameChanged || emailChanged) && !isLoginTaken(login)) {
+                throw new SQLException("The name or email is already used by another account. Nothing was saved.");
             }
 
             String theUpdate = null;

@@ -16,6 +16,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 
+/**
+ * Table taxon_prop (extra properties of a taxon: bioregion map, introduced map, default specimens). The bioregion
+ * map of a genus (bioregionMapMgr.do) and the introduced map of a species (introducedMapMgr.do), read by
+ * TaxonPropMgr (cache); the taxa a specimen is the default specimen of (specimen page, SpecimenAction); nightly
+ * set 5 deletes default specimens now filed under another name. Tables taxon_prop, taxon, specimen.
+ * Docs: docs/flows/specimen-and-image-pages.md, docs/flows/nightly.md (set 5).
+ */
 public class TaxonPropDb extends AntwebDb {
     
     private static final Log s_log = LogFactory.getLog(TaxonPropDb.class);

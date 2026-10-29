@@ -12,6 +12,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
     
+/**
+ * Struts plug-in named in WEB-INF/struts-config.xml (plug-in className): at start-up it only sets the Java
+ * property jsse.enableSNIExtension=false; at shutdown it logs a line. The real start-up work is in
+ * AppContextListener and AntwebMgr.
+ */
 public class StartupPlugIn implements PlugIn {
 
     private static final Log s_log = LogFactory.getLog(StartupPlugIn.class);

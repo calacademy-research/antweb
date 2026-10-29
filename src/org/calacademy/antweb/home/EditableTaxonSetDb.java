@@ -10,6 +10,11 @@ import org.calacademy.antweb.*;
 
         import java.sql.*;
 
+/**
+ * Base class of the species lists curators can edit, GeolocaleTaxonDb (geolocale_taxon) and ProjTaxonDb
+ * (proj_taxon): the get, insert, delete and has-species / has-genera methods that SpeciesListDb and the
+ * Species List Tool (speciesListTool.do) call on either kind of list. Docs: docs/data-model.md section 5.
+ */
 public abstract class EditableTaxonSetDb extends TaxonSetDb {
 
     private static final Log s_log = LogFactory.getLog(EditableTaxonSetDb.class);

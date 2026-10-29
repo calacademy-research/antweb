@@ -15,6 +15,12 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /adminAlert.do: the Admin Alerts page (util/adminAlert.jsp), admins only (Check.admin). action=remove (one
+ * alert), removeAll and refresh are POST only (PostOnly.confirm); remove and removeAll set acknowledged = 1 in
+ * table admin_alerts (AdminAlertMgr). Docs: docs/catalog/actions.csv. Tests: tests/e2e/test_manager_tools.py,
+ * tests/unit/test_admin_alert_page.py.
+ */
 public final class AdminAlertAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(AdminAlertAction.class);

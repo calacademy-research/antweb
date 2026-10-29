@@ -7,6 +7,12 @@ import java.util.ArrayList;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * Results bean of the left-over descEditSearch (SearchAction, DescEditSearchAction): copies image rows (code, shot,
+ * artist, group, upload date) into ResultItems, with the same sortBy as RecentImageSearchResults. Never holds rows:
+ * the query fails (see DescEditSearchAction), and setResults casts the rows to SearchItem while GenericSearch
+ * returns ResultItems. Dead code.
+ */
 public final class DescEditSearchResults extends GenericSearchResults
     implements Serializable {
 

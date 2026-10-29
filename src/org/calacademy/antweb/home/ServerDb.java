@@ -7,6 +7,12 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.DBUtil;
 import org.calacademy.antweb.util.ServerStatusAction;
 
+/**
+ * Table server (one row of server switches): is_down_time, set by an admin on serverStatus.do
+ * (toggleDownTime), stops curator uploads with a "down for site maintenance" message (UploadAction,
+ * SpecimenUploadJob); debug, set on serverDebug.do and read by SessionRequestFilter. The downtime message is
+ * kept in a static field. Docs: docs/data-model.md (server), docs/flows/specimen-upload.md.
+ */
 public class ServerDb extends AntwebDb {
 
     private static final Log s_log = LogFactory.getLog(ServerDb.class);
@@ -46,17 +52,16 @@ public class ServerDb extends AntwebDb {
         return debug;
     }
     public static void setServerDebug(String value, Connection connection) throws SQLException {
-        Statement stmt = null;
-        ResultSet rset = null;
+        PreparedStatement stmt = null;
         try {
-            stmt = DBUtil.getStatement(connection, "ServerDb.setServerDebug()");
-            String dml = "update server set debug = '" + value +"'";
-            stmt.executeUpdate(dml);
+            stmt = DBUtil.getPreparedStatement(connection, "ServerDb.setServerDebug()", "update server set debug = ?");
+            stmt.setString(1, value);   // bound (2026-10-29)
+            stmt.executeUpdate();
         } catch (SQLException e) {
             s_log.error("setServerDebug() " + e);
             throw e;
         } finally {
-            DBUtil.close(stmt, rset, "ServerDb.setServerDebug()");
+            DBUtil.close(stmt, "ServerDb.setServerDebug()");
         }
     }
 

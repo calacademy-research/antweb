@@ -20,6 +20,12 @@ import org.calacademy.antweb.util.DBUtil;
 import org.calacademy.antweb.util.Check;
 import org.calacademy.antweb.ValidationParseException;
 
+/**
+ * /validateSpeciesList.do: "Check names against AntCat" (curate/speciesList/validateSpeciesList.jsp), curators.
+ * Checks an uploaded .txt or .tsv file of up to 5 MB (SpeciesListValidator, read-only connection), keeps the
+ * report in the session; action=download or downloadCorrected returns it as a TSV file. Writes nothing. Docs:
+ * docs/guides/curate-page.md (Read-only tools), docs/flows/specimen-upload.md. Tests: tests/e2e/test_curator.py.
+ */
 public class ValidateSpeciesListAction extends SpeciesListSuperAction {
 
     private static final Log s_log = LogFactory.getLog(ValidateSpeciesListAction.class);

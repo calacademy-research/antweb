@@ -10,6 +10,13 @@ import org.calacademy.antweb.util.*;
 
 //import java.sql.SQLIntegrityConstraintViolationException;
 
+/**
+ * Database steps of the AntCat (WorldAnts) import, used by SpeciesListUpload (nightly set 1).
+ * prepareDatabase: before the new file is loaded, deletes the AntCat rows of taxon and homonym, the taxonomic
+ * history (description_edit and description_homonym, title taxonomichistory), the project's proj_taxon rows
+ * and the AntCat rows of geolocale_taxon and fossilants. updateProjectUploadDate: project.last_changed.
+ * Docs: docs/flows/antcat-to-antweb.md.
+ */
 public class SpeciesListUploadDb extends UploadDb {
     
     private static final Log s_log = LogFactory.getLog(SpeciesListUploadDb.class);
@@ -21,7 +28,7 @@ public class SpeciesListUploadDb extends UploadDb {
     }
 
     public void updateProjectUploadDate(String projectName) {
-        String query = "update project set last_changed=" + currentDateFunction + " where project_name='" + projectName + "'"  ;
+        String query = "update project set last_changed=" + currentDateFunction + " where project_name=" + DBUtil.sqlQuote(projectName)  ;
 
         try {
             Statement stmt = getConnection().createStatement();
@@ -32,7 +39,7 @@ public class SpeciesListUploadDb extends UploadDb {
         }
     }
     
-    public void prepareDatabase(String project) {
+    public void prepareDatabase(String project) throws SQLException {
         if (!"worldants".equals(project)) {
           s_log.warn("prepareDatabase(). BIG PROBLEM! Only worldants should be uploaded via species list.");
           return;
@@ -92,8 +99,11 @@ public class SpeciesListUploadDb extends UploadDb {
  
             s_log.debug("prepareDatabase() log:" + log);
             
-        } catch (Exception e) {
-            s_log.error("prepareDatabase() problem for project:" + project + " e:" + e);
+        } catch (SQLException e) {
+            // Rethrown (2026-10-29): the AntCat import must stop (and its transaction roll back) rather than load
+            // on top of half-emptied tables.
+            s_log.error("prepareDatabase() problem for project:" + project + " query:" + query + " e:" + e);
+            throw e;
         }
     }
 

@@ -9,6 +9,12 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * In-memory copy of the allantwebants project list (table proj_taxon, project allantwebants: every ant with
+ * AntWeb data), keyed by taxon name; loaded by AntwebMgr at start-up and on util.do?action=reloadAntwebMgr.
+ * Used by the taxon lists of places, bioregions and museums (GeolocaleTaxon, BioregionTaxon, OverviewTaxon,
+ * TaxonSet) to look up a taxon's AntWeb-wide counts.
+ */
 public class AllAntwebMgr {
 
     private static final Log s_log = LogFactory.getLog(AllAntwebMgr.class);

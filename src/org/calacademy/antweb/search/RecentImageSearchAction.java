@@ -18,6 +18,13 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Helper of SearchAction.recentImageSearch (recentSearchResults.do?searchMethod=recentImageSearch&daysAgo=N, the
+ * home page's link to recently added images): runs RecentImageSearch, one row per image uploaded in the last N days
+ * (1 when not given) or between two dates, optionally of one upload group (tables image, group_image, ant_group,
+ * artist, specimen), and puts the upload group names in the session (groups, groupArray). Docs:
+ * docs/flows/search.md. Tests: tests/e2e/test_search_pages.py::test_recent_images, test_numbers_images.py.
+ */
 public final class RecentImageSearchAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(RecentImageSearchAction.class);

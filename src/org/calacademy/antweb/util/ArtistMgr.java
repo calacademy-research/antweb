@@ -10,6 +10,12 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * In-memory list of the image artists (table artist, through ArtistDb), loaded by AntwebMgr; postInitialize
+ * adds each artist's Images and Specimen numbers (isCounted is false until then, and the count check skips
+ * artists). Used by the artist pages, image uploader and count checks. Docs: docs/numbers.md,
+ * docs/data-model.md. Tests: tests/e2e/test_count_check.py.
+ */
 public class ArtistMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(ArtistMgr.class);

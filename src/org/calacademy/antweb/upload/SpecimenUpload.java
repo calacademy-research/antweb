@@ -17,16 +17,16 @@ import org.apache.regexp.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
-/*
-Inheritance hierarchy:
-
-Antwebupload
-  SpecimenUploadSupport
-    SpecimenUploadProcess
-      SpecimenUploadParse
-        SpecimenUpload
-*/
-
+/**
+ * Loads one specimen file for one group (importSpecimens): deletes the group's specimens, reads the file
+ * line by line (parse: SpecimenUploadParse; checks, name resolution and save: SpecimenUploadProcess), then
+ * writes the report sections, deletes the group's orphaned species, regenerates the allantwebants project
+ * list, reloads the taxon cache and sets the group's last upload date. Called by Uploader.uploadSpecimenFile
+ * (curator file, TaxonWorks, nightly TaxonWorks), inside the caller's database transaction.
+ * Class chain: AntwebUpload > SpecimenUploadProcess > SpecimenUploadParse > SpecimenUpload.
+ * Tables: specimen, taxon, upload_line, proj_taxon, ant_group. Docs: docs/flows/specimen-upload.md (sections 3, 8).
+ * Tests: UploadSafetyTest, tests/e2e/test_specimen_upload_roundtrip.py.
+ */
 public class SpecimenUpload extends SpecimenUploadParse {
 /* 
     Biota Data is uploaded through the curator interface.  It loads data from the "Biota Database"

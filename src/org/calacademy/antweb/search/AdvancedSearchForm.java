@@ -6,20 +6,17 @@ import org.apache.struts.action.ActionMapping;
 
 import org.calacademy.antweb.util.*;
 
-/**
- * Form bean for the search page.  This form has the following fields,
- * with default values in square brackets:
- * <ul>
- * <li><b>searchType</b> - the type of search (equals, contains)
- * <li><b>name</b> - the name of the thing to find
- * <li><b>types</b> - show only things that have types
- * <li><b>images</b> - show only things that have images
- * </ul>
-*/
-
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Form bean advancedSearchForm of the advanced search form (advSearch.do, session scope) and of advancedSearch.do:
+ * every criterion with its search type (reset() makes "contains" the default, "greaterThanOrEqual" for elevation
+ * and date collected), caste, images only, types only, red flag, resultRank ("Group by") and output (list or map).
+ * validate() only blocks fishing requests (AntwebUtil.blockFishingAttack). Copied into SearchParameters by
+ * SearchAction; also the parent of the Species List Tool's form (getLinkParams, resetSearch, persist). Docs:
+ * docs/flows/search.md. Tests: tests/e2e/test_search_pages.py::test_advanced_search_form.
+ */
 public class AdvancedSearchForm extends TaxaFromSearchForm {
 
     protected static final Log s_log = LogFactory.getLog(AdvancedSearchForm.class);

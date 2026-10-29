@@ -135,12 +135,30 @@ def test_statistics_in_the_request():
     print("The statistics tables reach the page in the request.")
 
 
+def test_header_audit_pages():
+    """2026-10-29: request and connection values escaped; checks match what the actions require."""
+    sls = "web/curate/speciesList/speciesListSearch.jsp"
+    for i in "123":
+        present(sls, r'value="<%%= Html\.escAttr\(mapSpeciesList%sName\) %%>"' % i, "hidden field raw")
+    present(sls, r'value="<%= Html\.escAttr\(listKey\) %>"', "list key raw")
+    present(sls, r'<%@include file="/curate/curatorCheck\.jsp" %>', "no curator check")
+    db = "web/util/dbStatus.jsp"
+    absent(db, r"<%=\s*(connString|oldConnString)\s*%>", "connection list raw")
+    present(db, r"Html\.esc\(connString\)", "connection list raw")
+    present(db, r"Html\.esc\(oldConnString\)", "old connection list raw")
+    for f in ("web/util/events.jsp", "web/util/homonyms.jsp"):
+        present(f, r'<%@include file="/curate/adminCheck\.jsp" %>', "query.do requires an administrator")
+        absent(f, r'<%@include file="/curate/curatorCheck\.jsp" %>', "curator check only")
+    print("Species list search, DB status, events and homonyms: escaped, and checks as the actions require.")
+
+
 def main():
     test_escaped_outputs()
     test_no_error_pages()
     test_wrong_output()
     test_access_checks()
     test_statistics_in_the_request()
+    test_header_audit_pages()
 
 
 if __name__ == "__main__":

@@ -1,3 +1,6 @@
+<%-- Body of the Museum Manager: the museums (request attribute museums, table museum) with code (link to the
+     form, viewMuseum.do), name (link to the public museum page) and Active, and an "Add a museum" link. Read-only.
+     Docs: docs/guides/manager-tools.md (Museum Manager). --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

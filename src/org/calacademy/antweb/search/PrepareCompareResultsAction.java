@@ -18,6 +18,14 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * /prepareCompareResults.do?resultRank=...: the Compare view of the session's last search, logged-in users only
+ * (Check.loginForFeature). By specimen, genus or subfamily: the rows with images; by species: the species of the
+ * search with a photo of the ant anywhere on AntWeb (StatisticsDb.antImagedNames; tables specimen, image), counted
+ * "N imaged species". Changes the session's advancedSearchResults and taxonList; forwards to the results JSPs with
+ * mode=compare. Docs: docs/flows/search.md. Tests:
+ * tests/e2e/test_numbers_search.py::test_compare_and_map_preparations_count_what_they_list.
+ */
 public final class PrepareCompareResultsAction extends PrepareAction {
 
     private static final Log s_log = LogFactory.getLog(PrepareCompareResultsAction.class);

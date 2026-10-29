@@ -1,3 +1,8 @@
+<%-- Body of the public Statistics page (statsPage.do): the live numbers (valid species, specimens, imaged
+     species and specimens, images and label images, collaborating institutions) from TaxonMgr, AntwebMgr and
+     MuseumMgr ("not yet available" in the minutes after a start), then the Global, bioregion and museum tables
+     (StatSet request attributes from StatsPageAction, table statistics). Read-only. Docs: docs/numbers.md,
+     docs/flows/home-and-statistics.md. Tests: tests/e2e/test_numbers_pages.py, test_count_check.py. --%>
 
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>

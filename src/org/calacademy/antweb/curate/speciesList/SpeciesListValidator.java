@@ -22,6 +22,12 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.commons.text.similarity.LevenshteinDistance;
 import org.calacademy.antweb.ValidationParseException;
 
+/**
+ * Checks a species list file (tab-delimited, a header with genus and species, or taxon_name; at most 50,000
+ * rows) against table taxon for validateSpeciesList.do: exact match, synonym (with the valid name), other
+ * status, or not found (with the closest spelling); optionally the valid species the file lacks. Read-only.
+ * Tests: test/.../curate/speciesList/ValidateSpeciesReportTest.java.
+ */
 public class SpeciesListValidator {
 
     private static final Log s_log = LogFactory.getLog(SpeciesListValidator.class);

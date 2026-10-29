@@ -1,3 +1,6 @@
+<%-- Image Upload Reports page (listImageUploads.do, ListUploadsAction): one row per image upload batch (table
+     image_upload), for a group or a curator; curators and admins (curatorCheck.jsp). Tiles wrapper of
+     imageUploader/listImageUploads-body.jsp. Docs: docs/flows/image-upload.md. Tests: tests/e2e/test_image_upload.py. --%>
 <%@ page errorPage = "error.jsp" %>
 <%@ page import = "org.calacademy.antweb.Group" %>
 

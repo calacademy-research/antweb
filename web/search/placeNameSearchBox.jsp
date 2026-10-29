@@ -1,4 +1,7 @@
-
+<%-- Places box of the header search bar (static include of common/searchBar.jsp, on every page): a GET form to
+     place.do?placeName=... (geolocale.PlaceNameAction opens the place's page) with suggestions from
+     search/autoCompletePlaceKeys.jsp. Docs: docs/flows/search.md. Tests:
+     tests/e2e/test_search_pages.py::test_place_name_opens_the_place_page, test_browser.py. --%>
             <!-- placeNameSearchBox.jsp -->
             <%@page pageEncoding="UTF-8"%>
 

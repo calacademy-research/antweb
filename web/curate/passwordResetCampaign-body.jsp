@@ -1,3 +1,7 @@
+<%-- Body of the Password Reset Campaign (admins; empty for anyone else): the curator and admin accounts (request
+     attribute campaignAccounts) with counts, and two POST forms with the form token: Mark (all must set a new
+     password, sessions end) and Send (email each a reset link, in the background). Docs:
+     docs/flows/email-and-password-reset.md. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.*" %>

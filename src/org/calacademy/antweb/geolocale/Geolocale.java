@@ -644,14 +644,14 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     public String getUpdateCountSQL(String parentTaxonName, String columnName, int count) {
         String updateCountSQL = "update geolocale_taxon set " + columnName + " = '" + count + "'" //, source='" + Source.SPECIMEN + "'" 
             + " where geolocale_id = " + getId() 
-            + " and taxon_name = '" + parentTaxonName + "'";
+            + " and taxon_name = " + org.calacademy.antweb.util.DBUtil.sqlQuote(parentTaxonName);   // quoted (2026-10-29): a name with ' broke the update
         return updateCountSQL;    
     }
 
     public String getUpdateImageCountSQL(String taxonName, int sum) { //, String rank) {
         String updateSql = "update geolocale_taxon set image_count = " + sum 
             + " where geolocale_id = " + getId() 
-            + " and taxon_name = '" + taxonName + "'";
+            + " and taxon_name = " + org.calacademy.antweb.util.DBUtil.sqlQuote(taxonName);
         return updateSql;    
     }
     

@@ -11,6 +11,13 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Page text (the editable fields of taxon, specimen and overview pages). Reads a taxon's or specimen's fields
+ * from description_edit (HomonymDescEditDb: description_homonym), a place's, project's or museum's from
+ * object_edit (getDescription), one field as stored for the editor and its save checks (readFieldForEdit), and
+ * the recent edits for recentDescEdits.do. Saving is done by DescriptionAction. Tables description_edit,
+ * description_homonym, object_edit. Docs: docs/data-model.md section 7. Tests: ManagerToolsTest, AdminDataFixesTest.
+ */
 public class DescEditDb extends AntwebDb{
 
     private static final Log s_log = LogFactory.getLog(DescEditDb.class);
