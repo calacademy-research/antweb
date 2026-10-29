@@ -218,6 +218,26 @@ public class MessageMgr {
     private String currentCode;
     private int reportCodesLeft = MAX_REPORT_CODES;
 
+    /*
+     * The line of the file each report line came from (Brian Fisher, 2026-10-29: the report's rows link to the line
+     * as uploaded, logMgr.do?action=uploadLog, as the specimen page does). The specimen upload sets the line being
+     * read (setCurrentLine); every message added meanwhile records it against its report line. At most
+     * MAX_LINES_PER_ROW lines per report line and MAX_REPORT_LINES for the whole report are linked (a link is about
+     * 150 bytes; a CAS report stays under a megabyte); past that a report line gives its count only.
+     */
+    public static final int MAX_LINES_PER_ROW = 50;
+    public static final int MAX_REPORT_LINES = 5000;
+    private int currentLine = 0;
+    private int reportLinesLeft = MAX_REPORT_LINES;
+
+    /** The line number (as counted by the upload, the specimen's line_num) of the line being read, 0 between lines. */
+    public void setCurrentLine(int lineNum) {
+        currentLine = Math.max(lineNum, 0);
+    }
+    public int getCurrentLine() {
+        return currentLine;
+    }
+
     /** The code of the specimen line being read and saved, or null between lines (see above). */
     public void setCurrentCode(String code) {
         currentCode = code == null || code.isBlank() ? null : code;
@@ -251,6 +271,8 @@ public class MessageMgr {
         flags = new HashMap<>();
         currentCode = null;
         reportCodesLeft = MAX_REPORT_CODES;
+        currentLine = 0;
+        reportLinesLeft = MAX_REPORT_LINES;
         addTests();
     }
 
@@ -363,6 +385,7 @@ public class MessageMgr {
         Test test = getTest(key);
         if (value == null) value = "null";
         test.recordCode(value, currentCode);
+        test.recordLine(value);
         test.add(value);
         test.addDetail(detail);
         test.increment();
@@ -372,6 +395,7 @@ public class MessageMgr {
         Test test = getTest(key);
         if (value == null) value = "null";
         test.recordCode(key2, currentCode);
+        test.recordLine(key2);
         test.add(key2, value);
         test.increment();
     }
@@ -496,6 +520,129 @@ public class MessageMgr {
       return attentionCount("corrected");
     }
 
+    /** Lines in the report's other sections (notes: neither corrected, not loaded nor red-flagged), with the
+     *  specimens flagged as introduced and those whose caste is indiscernible. */
+    public int getNoteCount() {
+      int n = 0;
+      for (Test test : getTests()) {
+        if (NOTE.equals(kind(test))) n += test.getCount();
+      }
+      for (String flag : new String[] {"is_introduced", "noCasteNotes"}) {
+        Integer c = flags.get(flag);
+        if (c != null && c > 0) n += c;
+      }
+      return n;
+    }
+
+    /*
+     * The upload report's groups (UploadReportPage, 2026-10-29), from the same rule as the email's counts:
+     * attention() first ("notLoaded", "corrected"); of the other sections, the red-flagged ones (their specimens
+     * are counted by getRedFlagCount()) and the notes.
+     */
+    public static final String NOT_LOADED = "notLoaded";
+    public static final String CORRECTED_KIND = "corrected";
+    public static final String RED_FLAG = "redFlag";
+    public static final String NOTE = "note";
+
+    private static String kind(Test test) {
+      String a = attention(test.getKey(), test.getHeading());
+      if (a != null) return a;
+      return "red".equals(test.getFlag()) ? RED_FLAG : NOTE;
+    }
+
+    /** One section of the upload report: a check that found something. */
+    public static final class ReportSection {
+      public String key;
+      /** The heading as before 2026-10-29, as HTML (MessageMgr's section texts, with their links). */
+      public String headingHtml;
+      /** NOT_LOADED, CORRECTED_KIND, RED_FLAG or NOTE. */
+      public String kind;
+      /** The times the section was added to: once per line of the file (the email's counts). */
+      public int count;
+      /** A link to the section's details file, or null. */
+      public String detailHref;
+      /** A link that lists the section's specimens (country missing, introduced), or null. */
+      public String listHref;
+      public final List<ReportRow> rows = new ArrayList<>();
+    }
+
+    /** One row of a section: what the file said (and, for some, what AntWeb did), with its lines and specimens. */
+    public static final class ReportRow {
+      /** The report line as MessageMgr has always written it: HTML, escaped where it was added. */
+      public String valueHtml;
+      /** MAP sections: the values listed under the line's key (HTML). */
+      public String detailHtml;
+      /** "N specimens" and the collapsed codes (SpecimenCodes), or "". */
+      public String codesHtml = "";
+      /** {line_num, line as shown} of the first lines of the file this row came from. */
+      public final List<int[]> lines = new ArrayList<>();
+      /** All lines of the file this row came from (lines holds the first of them). */
+      public int lineCount;
+    }
+
+    /**
+     * The upload report's sections (UploadReportPage), in MessageMgr's order: every check that found something, and
+     * the introduced and caste counts. Call after compileMessages(group) (the group, the details files and the
+     * red-flag count are set there). The codes listed are limited again to MAX_REPORT_CODES for the whole report.
+     */
+    public List<ReportSection> reportSections() {
+      reportCodesLeft = MAX_REPORT_CODES;
+      List<ReportSection> sections = new ArrayList<>();
+      for (Test test : getTests()) {
+        if (test.getCount() <= 0 && test.isPassed()) continue;
+        ReportSection sec = new ReportSection();
+        sec.key = test.getKey();
+        sec.headingHtml = test.getHeading();
+        sec.kind = kind(test);
+        sec.count = Math.max(test.getCount(), 1);
+        if (test.getGroup() != null && !test.details.isEmpty()) {
+          sec.detailHref = AntwebProps.getDomainApp() + "/web/log/detail/" + test.getKey() + test.getGroup().getId() + ".html";
+        }
+        if (countryMissing.equals(test.getKey()) && test.getGroup() != null) {
+          String groupName = test.getGroup().getName();
+          sec.listHref = AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&country=null&groupName="
+              + (groupName == null ? "" : HttpUtil.encode(groupName));
+        }
+        test.addRows(sec);
+        sections.add(sec);
+      }
+      Integer introduced = flags.get("is_introduced");
+      if (introduced != null && introduced > 0) {
+        ReportSection sec = new ReportSection();
+        sec.key = "introduced";
+        sec.headingHtml = "Some specimens were flagged as introduced";
+        sec.kind = NOTE;
+        sec.count = introduced;
+        Group group = testList.isEmpty() ? null : testList.get(0).getGroup();
+        if (group != null) sec.listHref = AntwebProps.getDomainApp() + "/list.do?action=introducedSpecimen&groupId=" + group.getId();
+        sections.add(sec);
+      }
+      Integer noCaste = flags.get("noCasteNotes");
+      if (noCaste != null && noCaste > 0) {
+        ReportSection sec = new ReportSection();
+        sec.key = "noCasteNotes";
+        sec.headingHtml = "<a href='" + AntwebProps.getDomainApp() + "/casteDisplayPage.do'>Caste</a> is indiscernable (No life stage/sex data)";
+        sec.kind = NOTE;
+        sec.count = noCaste;
+        sections.add(sec);
+      }
+      return sections;
+    }
+
+    /** The headings of the checks that found nothing, in MessageMgr's order (HTML). */
+    public List<String> passedHeadings() {
+      List<String> list = new ArrayList<>();
+      for (Test test : getTests()) {
+        if (test.isPassed() && test.getCount() <= 0) list.add(test.getHeading());
+      }
+      return list;
+    }
+
+    /** The show-stopper message of the upload (a bad column, for instance), or null. */
+    public static String getStopMessage() {
+      return s_message;
+    }
+
     /** The section keys and their attention kind (for tests). */
     public Map<String, String> attentionByKey() {
       Map<String, String> m = new LinkedHashMap<>();
@@ -531,6 +678,21 @@ public class MessageMgr {
 
       /** Report line (value, or the bold key of a MAP line) -> its specimens. */
       final HashMap<String, SpecimenCodes> codesByLine = new HashMap<>();
+
+      /** Report line -> the lines of the file it came from: {line_num, line as shown}, at most MAX_LINES_PER_ROW each. */
+      final HashMap<String, List<int[]>> fileLinesByLine = new HashMap<>();
+      final HashMap<String, Integer> fileLineCounts = new HashMap<>();
+
+      void recordLine(String line) {
+        if (currentLine <= 0 || line == null) return;
+        List<int[]> lines = fileLinesByLine.computeIfAbsent(line, k -> new ArrayList<>());
+        if (!lines.isEmpty() && lines.get(lines.size() - 1)[0] == currentLine) return;   // the same line twice
+        fileLineCounts.merge(line, 1, Integer::sum);
+        if (lines.size() < MAX_LINES_PER_ROW && reportLinesLeft > 0) {
+          lines.add(new int[] {currentLine, LineNumMgr.getDisplayLineNum(currentLine)});
+          --reportLinesLeft;
+        }
+      }
 
       void recordCode(String line, String code) {
         if (code == null || line == null || CODES_IN_LINE.contains(key)) return;
@@ -687,6 +849,34 @@ public class MessageMgr {
 		  }      
       }
       
+      /** The rows of this section for the upload report (reportSections()), sorted as in toString(). */
+      void addRows(ReportSection sec) {
+        List<String> values = new ArrayList<>();
+        Map<String, HashSet<String>> mapValues = null;
+        if (messageStringHash.containsKey(key)) values.addAll(messageStringHash.get(key));
+        if (messageSetsHash.containsKey(key)) values.addAll(messageSetsHash.get(key));
+        if (messageMapsHash.containsKey(key)) {
+          mapValues = messageMapsHash.get(key);
+          values.addAll(mapValues.keySet());
+        }
+        // By what the reader sees (the values are HTML: a link's address would decide the order otherwise).
+        values.sort(Comparator.comparing((String v) -> v.replaceAll("<[^>]*>", "").toLowerCase()).thenComparing(v -> v));
+        for (String value : values) {
+          ReportRow row = new ReportRow();
+          row.valueHtml = value;
+          if (mapValues != null) {
+            List<String> under = new ArrayList<>(mapValues.get(value));
+            Collections.sort(under);
+            row.detailHtml = String.join(", ", under);
+          }
+          row.codesHtml = codesHtml(this, value);
+          List<int[]> lines = fileLinesByLine.get(value);
+          if (lines != null) row.lines.addAll(lines);
+          row.lineCount = fileLineCounts.getOrDefault(value, row.lines.size());
+          sec.rows.add(row);
+        }
+      }
+
       public String toString() {
         writeDetails();
       

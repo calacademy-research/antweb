@@ -753,6 +753,22 @@ or for Worldants upload
     }
 
 
+    /**
+     * The "Duplicate Entries (not uploaded)" report line of a code AntWeb already has (2026-10-29, the upload report's
+     * rows): who holds it. A CAS upload's ~280 duplicates are codes other groups uploaded first; a code of the uploading
+     * group itself is usually given twice in the file (a full upload first removes the group's specimens; an upload
+     * that adds to them does not). Escaped HTML.
+     */
+    static String duplicateHolder(Integer holderGroupId, Object uploadingGroupId) {
+        if (holderGroupId == null) return "Code already in AntWeb";
+        if (uploadingGroupId != null && String.valueOf(holderGroupId).equals(String.valueOf(uploadingGroupId))) {
+            return "Code already in AntWeb for this group (given twice in the file?)";
+        }
+        org.calacademy.antweb.Group g = GroupMgr.getGroup(holderGroupId);
+        String name = g != null && g.getName() != null ? g.getName() : "group " + holderGroupId;
+        return "Code already in AntWeb, uploaded by " + Html.esc(name);
+    }
+
     private static int maxHabitat = 0;
     private static int maxTypeStatus = 0;
 
@@ -769,9 +785,10 @@ or for Worldants upload
         String code = (String) item.get("code");
 
         // Slightly slower to check for existance but avoids the SQLIntegrityConstrainst below, minimizes logging.
-        if (new SpecimenDb(getConnection()).exists(code)) {
+        Integer holder = new SpecimenDb(getConnection()).accessGroupOf(code);
+        if (holder != null) {
             String message = "Specimen code:" + code;
-            getMessageMgr().addToMessages(MessageMgr.duplicateEntries, "", message);
+            getMessageMgr().addToMessages(MessageMgr.duplicateEntries, duplicateHolder(holder, item.get("access_group")), message);
             return;
         }
 
@@ -981,7 +998,7 @@ or for Worldants upload
         } catch (SQLIntegrityConstraintViolationException e) {
             // Redundant. We are now checking above before the query is run.
             String message = "Specimen code:" + code;
-            getMessageMgr().addToMessages(MessageMgr.duplicateEntries, "", message);       
+            getMessageMgr().addToMessages(MessageMgr.duplicateEntries, duplicateHolder(null, item.get("access_group")), message);
         } catch (SQLException e) {
             // See Note below of fix implemented here...
             // this is a lame hack - if this is the Taxon table, go ahead and update it (Thau).

@@ -17,7 +17,8 @@ addresses (`Asset.url`, so browsers and Cloudflare fetch a changed file at once)
 Pages in this look (batch 1, 2026-10-22): Curate page, Technical page, Upload status and each job's
 page (`jobStatus.do`), Server Status, Check the counts, Log Manager, Name update report, Specimen and
 Image upload lists, named query results and the other admin result pages (`curate/adminHtmlMessage.jsp`),
-admin messages (`common/message-body.jsp`, `unboldMessage-body.jsp` inside the admin layout). The Query
+admin messages (`common/message-body.jsp`, `unboldMessage-body.jsp` inside the admin layout). The upload reports (static files written at upload time, `upload/UploadReportPage`, 2026-10-29) link
+`tools.css` and use its classes, with their own rules inline (scoped to `.aw-report`). The Query
 Manager keeps its own scoped styles (`.qm`, in `Queries.java`).
 
 ## How a page opts in

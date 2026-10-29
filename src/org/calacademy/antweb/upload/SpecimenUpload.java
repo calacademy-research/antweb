@@ -132,6 +132,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
                     }
 
                     LineNumMgr.setLineNum(lineNum);
+                    getMessageMgr().setCurrentLine(lineNum);   // the report's rows link to this line (MessageMgr)
                     org.calacademy.antweb.util.BackgroundJobs.progress(lineNum);
 
                     Date startTimeLoop = new Date();    
@@ -209,6 +210,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
 		
   	  	        } // end while.
                 getMessageMgr().setCurrentCode(null);
+                getMessageMgr().setCurrentLine(0);
 
 				//A.log("importSpecimens() final lineNum:" + lineNum + " okTotal:" + okTotal); 
  

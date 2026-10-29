@@ -220,10 +220,12 @@ def test_image_upload_report_counts_equal_their_files():
 
 def report_numbers(html):
     """The numbers of a specimen upload report (UploadDetails.genUploadReport)."""
+    # Reports since 2026-10-29 (UploadReportPage): label / value rows (<th scope="row">Label</th><td>N</td>); older
+    # reports: "<b>Label:</b> N". Reports are files written once, so both are read.
     def b(label):
-        m = re.search(r"<b>" + re.escape(label) + r":</b>\s*([\d,]+)", html)
+        m = re.search(r"(?:<b>" + re.escape(label) + r":</b>|<th scope=\"row\">" + re.escape(label) + r"</th><td>)\s*([\d,]+)", html)
         return num(m.group(1)) if m else None
-    op = re.search(r"<b>Operation: ([A-Za-z]+)</b>", html)
+    op = re.search(r"<b>Operation: ([A-Za-z]+)</b>", html) or re.search(r"<th scope=\"row\">Operation</th><td>([A-Za-z]+)</td>", html)
     return {"operation": op.group(1) if op else None, "record": b("Record Count"), "parsed": b("Parsed"),
             "processed": b("Processed"), "inserted_specimens": b("Inserted Specimens"),
             "inserted_species": b("Inserted Species") or 0, "updated_species": b("Updated Species") or 0,
@@ -236,8 +238,30 @@ MAP_HEADINGS = ("Invalid Subfamily for Genus.  Submitted subfamily replaced", "T
                 "Duplicated record")
 
 
+def section_problems(html):
+    """Reports since 2026-10-29 (UploadReportPage): each section's data-total (the lines it was added to) against its
+    rows (each row a distinct value of those lines: at most data-total) and the specimens its rows list (each specimen
+    once per row: at most data-total; Morpho Genera lists its genera's specimens afterwards, MessageMgr.addCode)."""
+    problems = []
+    for m in re.finditer(r'<section class="aw-card rep-sec" id="sec-[^"]*" data-key="([^"]*)" data-kind="[^"]*" '
+                         r'data-total="(\d+)" data-rows="(\d+)">(.*?)</section>', html, re.S):
+        key, total, rows, body = m.group(1), int(m.group(2)), int(m.group(3)), m.group(4)
+        if rows > total:
+            problems.append(f"{key}: {total} lines, {rows} rows")
+        listed = body.count('<td class="rep-c-file"')
+        if listed != rows:
+            problems.append(f"{key}: data-rows {rows}, {listed} rows listed")
+        specimens = sum(num(c) for c in re.findall(r"<summary>([\d,]+) specimens?</summary>", body))
+        if specimens > total and key != "groupMorphoGenera":
+            problems.append(f"{key}: {total} lines, its rows list {specimens} specimens")
+    return problems
+
+
 def message_problems(html):
-    """Each report line with a "(total:N)" (MessageMgr.getMessagesReport, Test.toString)."""
+    """Each report line with a "(total:N)" (MessageMgr.getMessagesReport, Test.toString); reports since 2026-10-29:
+    section_problems."""
+    if 'id="upload-report"' in html:
+        return section_problems(html)
     i, j = html.find("<h3>Errors:</h3>"), html.find("<h3>Passed Tests:</h3>")
     if i < 0:
         return []

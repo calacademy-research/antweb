@@ -818,6 +818,26 @@ jobs:
             grep -q "^OK (19 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of the upload report page (UploadReportPageTest)
+        # UploadReportPage (2026-10-29): rendered from fixtures modelled on EcoFoG's and a CAS TaxonWorks report, every
+        # other section, and an empty run: the summary's counts equal the email's (one rule, MessageMgr.attention), the
+        # groups, long sections collapsed, the checks that found nothing in one line, line links, escaping.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/upload/UploadReportPageTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadReportPageTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            grep -v "LogMgr" /tmp/out.txt | tail -3
+            grep -q "^OK (6 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+          '
+
       - name: Java unit tests of the upload and nightly decisions of 2026-10-27 (strict upload dates, day 00 is the 1st, unknown genus without subfamily, TaxonWorks collection notes, failed nightly set stops the run)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \

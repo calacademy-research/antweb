@@ -130,118 +130,10 @@ public class UploadDetails extends OperationDetails {
         //A.log("genUploadReport() uploadFile:" + uploadFile + " accessLogin:" + accessLogin);
 
         boolean hasMessages =! getMessageMgr().getMessages().isEmpty();
-        
-        String hasErrorString = "";
-        if (hasMessages) hasErrorString = ": <font color=red>Check Your Data Errors</font>";
-        String logString = "";
 
-        String warning = "";
-        if (getMessage() != null) warning = "<h3><font color=red>" + getMessage() + "</font></h3><br>";
-        //A.log("genUploadReport() warning:" + warning);
-        
-        logString +=
-            "<head><title>" + getLogFileName() + "</title>" 
-            + "<link rel='shortcut icon' href='" + AntwebProps.getDomainApp() + "/image/favicon.ico' />"
-            + "<meta charset=\"utf-8\"/></head><body>"
-            + "<h2>Upload Report" + hasErrorString + "</h2>"
-            + "<a href = \"" + AntwebProps.getDomainApp() + "\">Home</a> | <a href = \"" 
-            + AntwebProps.getDomainApp() + "/curate.do\">Curator Tools</a><br><br>"
-            + warning
-            + "<h3>Upload Details:</h3>"
-            + "&nbsp;&nbsp;&nbsp;<b>Upload ID:</b> <a href='" + AntwebProps.getDomainApp() + "/uploadReport.do?uploadId=" + getReportUploadId() + "'>" + getReportUploadId() + "</a>"
-            + "<br> &nbsp;&nbsp;&nbsp;<b>Operation: " + getOperation() + "</b>"
-            + "<br>&nbsp;&nbsp;&nbsp;<b>This Log File:</b> " + getLogFileAnchor() 
-            + "<br>&nbsp;&nbsp;&nbsp;<b>Date:</b> " + new Date()
-            + "<br>&nbsp;&nbsp;&nbsp;<b>Encoding:</b> " + encoding   
-            + "<br>&nbsp;&nbsp;&nbsp;<b>Antweb version:</b> " + AntwebUtil.getReleaseNum()
-            + "<br>&nbsp;&nbsp;&nbsp;<b>Uploaded File:</b> " + getBackupFileAnchor();
-
-        if (uploadSource != null) {
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Uploaded by:</b> " + uploadSource;
-        } else if ("specimenUpload".equals(getOperation()) || "taxonWorksUpload".equals(getOperation())) {
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Uploaded by:</b> Upload page (manual)";
-        }
-
-        // AccessGroup should have a getCurator link. Will always be a curator.
-        // Should load properly in the first place.
-        Curator accessCurator = LoginMgr.getCurator(accessLogin.getId());
-        if (accessCurator != null) {
-            if (getCurator() == null) {
-                logString += "<br>&nbsp;&nbsp;&nbsp;<b>Group Id:</b> " + accessCurator.getGroup().getLink();
-                logString += "<br>&nbsp;&nbsp;&nbsp;<b>Curator:</b> " + accessCurator.getLink();
-            } else {
-                /*
-                setCurator() is set during SpecimenUpload.importSpecimens. This curator may be the effective curator and
-                not necessarily the uploader (which could be an admin). At the end of the upload process the accessLogin is
-                utilized. This will be the curator if the curator was not set differently already.
-                */
-                logString += "<br>&nbsp;&nbsp;&nbsp;<b>Group Id:</b> " + getCurator().getGroup().getLink();
-                logString += "<br>&nbsp;&nbsp;&nbsp;<b>Curator:</b> " + getCurator().getLink();
-                if (accessCurator.getId() != getCurator().getId())
-                    logString += "<br>&nbsp;&nbsp;&nbsp;<b>Admin:</b> " + accessCurator.getLink();
-            }
-        } else {
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Group Id:</b> " + accessLogin.getGroup().getLink();
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Login Id:</b> " + accessLogin.getId();
-        }
-
-        logString += "<br>&nbsp;&nbsp;&nbsp;<b>Record Count:</b> " + getRecordCount();
-        logString += "<span id=\"report-counts-rule\" hidden>" + COUNTS_RULE + "</span>";
-
-        if ("specimenUpload".equals(getOperation())) {
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Parsed:</b> " + getBuildLineTotal();
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Processed:</b> " + getProcessLineTotal();
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Museums:</b> <a href='' title='" + Html.escAttr(getMuseumMap().toString()) + "'>" + getMuseumMap().size() + "</a>";
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Specimens:</b> " + countInsertedSpecimens;
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Red Flagged Specimens:</b> " + getMessageMgr().getRedFlagCount();
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Advanced Search:</b><a href=\"" + AntwebProps.getDomainApp() + "/advancedSearch.do?"
-                    + "searchMethod=advancedSearch&advanced=true&uploadId=" + getReportUploadId()
-                    //+ "&groupName=" + accessGroup.getName()
-                    + "\"> This Upload</a><a href='' title='Could be affected/limited by subsequent uploads. No red flagged specimen included in results.'>*</a>";
-        }
-
-        if ("uploadWorldants".equals(getOperation())) {
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Worldants </b><a href='" + AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=subfamily&project=worldants'>Subfamilies</a>";
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Worldants </b><a href='" + AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=genus&project=worldants'>Genera</a>";
-            logString += "<br>&nbsp;&nbsp;&nbsp;<b>Worldants </b><a href='" + AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&project=worldants'>Species</a>";
-        }
-
-        logString += "<br>&nbsp;&nbsp;&nbsp;<b>Exec Time:</b> " + getExecTime() + getExecTimeMin();
-        
-        logString += "\r\r<br><br>";
-        logString += "<h3>Statistics</h3>";
-
-        if (preUploadStatistics != null && postUploadStatistics != null) {
-        //if (!getPreUploadStats().equals(getPostUploadStats())) {
-          if (preUploadStatistics.equals(postUploadStatistics)) {
-            logString += "<br>Prior to Upload:<font color=green>Data set unchanged</font>";  
-          } else {
-            logString += "<br>Prior to Upload:<br>" + ProjectDb.getProjectTableHeader() +  ProjectDb.getProjectStatisticsHtml(preUploadStatistics, false) + "</table>";                                       
-          }  
-        } else {
-          //s_log.warn("genUploadReport pre:" + preUploadStatistics + " post:" + postUploadStatistics);
-        }
-
-        //s_log.info("genUploadReport pre:" + preUploadStatistics + " post:" + postUploadStatistics);
-        
-        // Every upload's species counts (B60, B61; docs/numbers.md row 95). They were inside the block below, which only
-        // a species list upload reaches (a specimen upload sets no project statistics), so a specimen upload's report
-        // never said how many species it inserted or updated (PR #291, staging run 2).
-        logString += speciesCountsHtml();
-
-        if (postUploadStatistics != null) {
-
-          logString += "<br><br>Current Taxa Counts:<br>" + ProjectDb.getProjectTableHeader() + ProjectDb.getProjectStatisticsHtml(postUploadStatistics, true) + "</table>"; 
-        }
-
-        if ("uploadWorldants".equals(getOperation())) {
-            logString += getMessageMgr().getErrorsReport();
-        } else {
-            logString += getMessageMgr().getMessagesReport();
-        }
-
-        logString += "</body>";
-
+        // The report page (UploadReportPage, 2026-10-29): the tool pages' look, a summary box with the email's counts,
+        // the sections in groups, the checks that found nothing in one line, details and statistics at the bottom.
+        String logString = UploadReportPage.render(reportFacts(encoding, accessLogin), getMessageMgr());
         s_log.warn("genUploadReport() logFileDir:" + getLogDir() + " logFileName:" + getLogFileName() + " operation:" + getOperation());
         LogMgr.appendLog(getLogDir(), getLogFileName(), logString);
         
@@ -265,6 +157,79 @@ public class UploadDetails extends OperationDetails {
 
           request.setAttribute("uploadDetails", this);
         }
+    }
+
+    /** What the report page shows besides the sections (genUploadReport). */
+    UploadReportPage.Facts reportFacts(String encoding, Login accessLogin) {
+        UploadReportPage.Facts f = new UploadReportPage.Facts();
+        String app = AntwebProps.getDomainApp();
+        f.domainApp = app;
+        f.cssHref = app + "/common/tools.css";
+        f.title = getLogFileName();
+        f.operation = getOperation();
+        if (getMessage() != null && !"success".equals(getMessage())) f.warningHtml = getMessage();
+        f.uploadId = getReportUploadId();
+        f.date = new Date().toString();
+        f.encoding = encoding;
+        f.version = AntwebUtil.getReleaseNum();
+        f.logFileHtml = getLogFileAnchor();
+        f.uploadedFileHtml = getBackupFileAnchor();
+        String name = getBackupDirFile();
+        if (name != null && "specimen".equals(getLogDir())) {
+            f.uploadFileName = name.startsWith("upload/") ? name.substring("upload/".length()) : name;
+        }
+        if (uploadSource != null) {
+            f.uploadedBy = uploadSource;
+        } else if ("specimenUpload".equals(getOperation()) || "taxonWorksUpload".equals(getOperation())) {
+            f.uploadedBy = "Upload page (manual)";
+        }
+
+        // AccessGroup should have a getCurator link. Will always be a curator.
+        // setCurator() is set during SpecimenUpload.importSpecimens. This curator may be the effective curator and
+        // not necessarily the uploader (which could be an admin).
+        Curator accessCurator = LoginMgr.getCurator(accessLogin.getId());
+        if (accessCurator != null) {
+            Curator effective = getCurator() != null ? getCurator() : accessCurator;
+            f.groupHtml = effective.getGroup().getLink();
+            f.curatorHtml = effective.getLink();
+            if (getCurator() != null && accessCurator.getId() != getCurator().getId()) f.adminHtml = accessCurator.getLink();
+        } else {
+            f.groupHtml = accessLogin.getGroup().getLink();
+            f.loginId = String.valueOf(accessLogin.getId());
+        }
+
+        f.recordCount = getRecordCount();
+        f.countsRule = COUNTS_RULE;
+        if ("specimenUpload".equals(getOperation()) || "taxonWorksUpload".equals(getOperation())) {
+            f.parsed = getBuildLineTotal();
+            f.processed = getProcessLineTotal();
+            f.insertedSpecimens = countInsertedSpecimens;
+            f.museumsHtml = "<span title='" + Html.escAttr(getMuseumMap().toString()) + "'>" + getMuseumMap().size() + "</span>";
+        }
+        if (getOperation() != null && getOperation().contains("orldants")) {
+            f.showChecks = false;   // as before: a Worldants report lists its errors only
+            f.worldantsLinksHtml = "<a href='" + app + "/taxonomicPage.do?rank=subfamily&project=worldants'>Subfamilies</a>, "
+                + "<a href='" + app + "/taxonomicPage.do?rank=genus&project=worldants'>Genera</a>, "
+                + "<a href='" + app + "/taxonomicPage.do?rank=species&project=worldants'>Species</a>";
+            f.errorsHtml = new ArrayList<>(MessageMgr.getErrors());
+        }
+        f.execTime = getExecTime() + getExecTimeMin();
+        f.insertedSpecies = getInsertedSpeciesCount();
+        f.updatedSpecies = getUpdatedSpeciesCount();
+
+        String stats = "";
+        if (preUploadStatistics != null && postUploadStatistics != null) {
+          if (preUploadStatistics.equals(postUploadStatistics)) {
+            stats += "<p>Prior to Upload: data set unchanged.</p>";
+          } else {
+            stats += "<p>Prior to Upload:</p>" + ProjectDb.getProjectTableHeader() + ProjectDb.getProjectStatisticsHtml(preUploadStatistics, false) + "</table>";
+          }
+        }
+        if (postUploadStatistics != null) {
+          stats += "<p>Current Taxa Counts:</p>" + ProjectDb.getProjectTableHeader() + ProjectDb.getProjectStatisticsHtml(postUploadStatistics, true) + "</table>";
+        }
+        f.statisticsHtml = stats.isEmpty() ? null : stats;
+        return f;
     }
 
     public void finish(Login accessLogin, HttpServletRequest request, Connection connection) throws SQLException {
@@ -450,15 +415,6 @@ public class UploadDetails extends OperationDetails {
       return postUploadStatistics;
     }
     
-    /** The report's "Inserted Species: N." and "Updated Species: N." lines (each only when N > 0), for every kind of
-     *  upload, whether or not it has project statistics (genUploadReport). */
-    public String speciesCountsHtml() {
-      String html = "";
-      if (getInsertedSpeciesCount() > 0) html += "<br>&nbsp;&nbsp;&nbsp;<b>Inserted Species:</b> " + getInsertedSpeciesCount() + ".";
-      if (getUpdatedSpeciesCount() > 0) html += "<br>&nbsp;&nbsp;&nbsp;<b>Updated Species:</b> " + getUpdatedSpeciesCount() + ".";
-      return html;
-    }
-
     /** A species or subspecies name this upload inserted into the taxon table (counted once). */
     public void countInsertedSpecies(String taxonName) {
       if (taxonName == null) return;
