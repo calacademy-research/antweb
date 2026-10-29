@@ -1,3 +1,5 @@
+<%-- Project Manager page (projectMgr.do, ProjectMgrAction), admins only (adminCheck.jsp). Tiles wrapper of
+     curate/projectMgr-body.jsp. Docs: docs/guides/manager-tools.md. Tests: tests/e2e/test_manager_tools.py. --%>
 <%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import = "org.calacademy.antweb.Group" %>

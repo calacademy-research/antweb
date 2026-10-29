@@ -1,3 +1,7 @@
+<%-- Body of the login form: the page is built, every value escaped, by curate.login.LoginEditPage (renderAdmin
+     for admins, renderSelf for your own login) from the session's thisLogin and its LoginEditPage data; the form
+     posts to saveLogin.do with the form token. Shows the form's errors. Docs: docs/guides/curate-page.md
+     (Editing a login). --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

@@ -1,3 +1,6 @@
+<%-- Introduced Map Manager page (introducedMapMgr.do, IntroducedMapMgrAction; the action allows admins only, this
+     page checks for a curator). Tiles wrapper of curate/introducedMapMgr-body.jsp. Docs:
+     docs/guides/manager-tools.md. Tests: tests/e2e/test_manager_tools.py, test_hardening_2026_10_18.py. --%>
 <%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

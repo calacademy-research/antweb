@@ -1,3 +1,6 @@
+<%-- Body of the Login Manager: links to the login lists (list.do usrAdm, usrAdmLastLogin), the login queries,
+     Add an uploader, "Add New Login" (POST to newLogin.do), and every login (request attribute antwebLogins) with
+     its upload group. Read-only. Docs: docs/guides/curate-page.md (Manager tools). --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

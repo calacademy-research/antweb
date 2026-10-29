@@ -6,6 +6,11 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * One name in a saved version of a place's species list (table geolocale_taxon_log_detail), for the Species
+ * List History page and as a reference list in the Species List Tool (geoLogId). Compared and sorted by taxon
+ * name only.
+ */
 public class GeolocaleTaxonLogDetail extends GeolocaleTaxon implements Comparable<GeolocaleTaxonLogDetail>  {
 
     private static final Log s_log = LogFactory.getLog(GeolocaleTaxonLogDetail.class);

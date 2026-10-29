@@ -1,4 +1,5 @@
-<!-- defaultSpecimen.jsp -->
+<%-- "Choose Image" link to defaultSpecimen.do for curators (variable taxon). Not used: the include in
+     imagePage-body.jsp is commented out. --%><!-- defaultSpecimen.jsp -->
 
 <% if (LoginMgr.isCurator(request)) { %>
 

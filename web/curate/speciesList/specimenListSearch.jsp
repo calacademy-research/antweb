@@ -1,3 +1,6 @@
+<%-- Page of speciesListTool.do with refSpeciesListType=specimenList (forward specimenListSearch): pick a specimen
+     list as reference list. Not reachable from the tool's menu, and broken: it reads the request attribute
+     refListList, which nothing sets (the action puts the list in SpeciesListToolProps). --%>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

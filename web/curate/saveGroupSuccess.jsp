@@ -1,3 +1,5 @@
+<%-- Answer of saveGroup.do (SaveGroupAction) after an upload group is saved or deleted. Tiles wrapper of
+     curate/saveGroupSuccess-body.jsp. Docs: docs/guides/adding-an-uploader.md. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

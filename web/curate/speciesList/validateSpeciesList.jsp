@@ -1,3 +1,6 @@
+<%-- "Check names against AntCat" page (validateSpeciesList.do, ValidateSpeciesListAction), curators
+     (curatorCheck.jsp). Tiles wrapper of curate/speciesList/validateSpeciesList-body.jsp. Docs:
+     docs/guides/curate-page.md (Read-only tools). Tests: tests/e2e/test_curator.py. --%>
 <%@ page language="java" %>
 <%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

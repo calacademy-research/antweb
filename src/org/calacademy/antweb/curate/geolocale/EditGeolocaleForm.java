@@ -9,6 +9,12 @@ import jakarta.servlet.http.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Form bean editGeolocaleForm of editGeolocale.do and geolocaleMgr.do: every column of a geolocale row (name,
+ * ISO codes, rank, parent, bioregions, valid, live, centroid and bounding box, admin notes ...) plus the
+ * isCreate, isDelete and isSubmit switches and orderBy. EditGeolocaleAction sets clearBioregion and
+ * clearAltBioregion. Saved by GeolocaleDb (table geolocale). Tests: test/.../home/PageTextRenameDbTest.java.
+ */
 public final class EditGeolocaleForm extends ActionForm {
 
     private static final Log s_log = LogFactory.getLog(EditGeolocaleForm.class);

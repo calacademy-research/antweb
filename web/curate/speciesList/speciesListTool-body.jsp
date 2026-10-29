@@ -1,3 +1,7 @@
+<%-- Body of the Species List Tool (session attribute speciesListToolProps): choose up to three species lists and
+     a reference list, then one row per name with a checkbox per list, markers (yellow ant: specimens there) and
+     counts; Save Changes posts the ticked names with the form token to speciesListTool.do (action=save). Docs:
+     docs/guides/curate-page.md (Species List Tool). --%>
 <%@ page import="org.calacademy.antweb.Formatter" %>
 
 <%@ page import="java.net.URLEncoder" %>

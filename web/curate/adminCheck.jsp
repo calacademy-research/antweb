@@ -1,4 +1,6 @@
-
+<%-- Admin check included (static include) at the top of admin pages: not logged in goes to notLoggedIn.jsp, a
+     login that is not an admin to permissionDenied.jsp (logged); otherwise removes the session's taxon. Defines
+     accessLoginCheck. Writes nothing to the page. --%>
 <%@ page import="org.calacademy.antweb.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 

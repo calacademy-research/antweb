@@ -17,6 +17,13 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /bioregionMapMgr.do: the Bioregion Map Manager (curate/bioregionMapMgr.jsp), the bioregions where each valid
+ * extant genus is native (table taxon_prop, prop bioregionMap). Curators look (Check.curator); a POST by an
+ * admin saves one genus (TaxonPropDb.updateBioregionMap) and gives the genus in memory (TaxonMgr) the new map.
+ * Specimen uploads flag specimens collected outside it. Docs: docs/guides/manager-tools.md (Bioregion Map
+ * Manager). Tests: tests/e2e/test_manager_tools.py.
+ */
 public final class BioregionMapMgrAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(BioregionMapMgrAction.class);

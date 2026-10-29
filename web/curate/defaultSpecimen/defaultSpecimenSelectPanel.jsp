@@ -1,4 +1,5 @@
-<!-- defaultSpecimenSelectPanel.jsp 
+<%-- Old menu to pick a taxon's default specimen (POST to defaultSpecimen.do). Not used: the include in
+     imagePage-body.jsp is commented out (the page says "Not currently in use"). --%><!-- defaultSpecimenSelectPanel.jsp 
 
 Not currently in use.
 

@@ -1,4 +1,6 @@
-<!-- Must have defined geolocale and validChildren -->
+<%-- Static include of editGeolocale-body.jsp and geolocaleMgr-body.jsp: the Valid Name menu (validNameId) of a
+     place, from the variables geolocale and validChildren (valid places of the same parent); None, the valid
+     places, or Other when the stored valid name is not among them. Writes no extra output. --%><!-- Must have defined geolocale and validChildren -->
 
     <select name="validNameId" >
 	<%

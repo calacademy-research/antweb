@@ -1,3 +1,6 @@
+<%-- Page of speciesListTool.do with refSpeciesListType=speciesList (forward speciesListSearch): pick one of the
+     login's species lists as reference list (GET to speciesListTool.do). The tool's own menu no longer offers
+     this choice (commented out in speciesListTool-body.jsp); reached only by a typed URL. --%>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

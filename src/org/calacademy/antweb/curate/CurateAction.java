@@ -14,6 +14,12 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 
+/**
+ * /curate.do: the Curate page (curate/curate.jsp), the curators' start page with the upload forms, read-only
+ * tools and, for admins, the manager tools. Curators only (Check.curator); reads and writes nothing itself.
+ * Docs: docs/guides/curate-page.md. Tests: tests/e2e/test_curate_page_clarity.py, test_curate_page_layout.py,
+ * test_curator.py.
+ */
 public final class CurateAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(CurateAction.class);

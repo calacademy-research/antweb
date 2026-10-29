@@ -1,3 +1,5 @@
+<%-- Body of the unused Taxon Country Manager (see taxonCountryMgr.jsp): an older copy of the geolocale list
+     (request attributes geolocaleArray, georank) with a rank menu posting to geolocaleMgr.do. --%>
 <%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>

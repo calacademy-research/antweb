@@ -18,6 +18,14 @@ import org.calacademy.antweb.geolocale.*;
 
 import org.calacademy.antweb.search.*;
 
+/**
+ * /speciesListTool.do: the Species List Tool (curate/speciesList/speciesListTool.jsp), curators: up to three
+ * species lists (projects or places) side by side with a reference list (advanced search, AntCat names or a
+ * saved version), kept in the session (SpeciesListToolProps). action=save (POST, lists the curator may edit:
+ * SpeciesListAccess) saves the ticked names (SpeciesListDb.saveTaxonSet: tables proj_taxon or geolocale_taxon,
+ * the previous version archived in the *_log tables, disputes). Docs: docs/guides/curate-page.md (Species List
+ * Tool). Tests: tests/e2e/test_curator_species_lists.py, test_curator.py.
+ */
 public class SpeciesListToolAction extends SpeciesListSuperAction {
 
   private static final Log s_log = LogFactory.getLog(SpeciesListToolAction.class);

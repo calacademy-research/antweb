@@ -1,3 +1,6 @@
+<%-- One upload group's form (viewGroup.do, ViewGroupAction; newGroup.do, NewGroupAction; saveGroup.do when the
+     form is refused), admins only (adminCheck.jsp). Tiles wrapper of curate/viewGroup-body.jsp. Docs:
+     docs/guides/adding-an-uploader.md. Tests: tests/e2e/test_add_uploader.py, test_group_form_help.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="org.calacademy.antweb.Group" %>
 <%@ page import="org.calacademy.antweb.util.AntwebUtil" %>

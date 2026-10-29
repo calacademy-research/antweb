@@ -1,3 +1,6 @@
+<%-- Answer of saveLogin.do (SaveLoginAction, forward success) after a login is saved. Tiles wrapper of
+     curate/saveLoginSuccess-body.jsp. Docs: docs/guides/curate-page.md (Editing a login). Tests:
+     tests/e2e/test_login_form.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

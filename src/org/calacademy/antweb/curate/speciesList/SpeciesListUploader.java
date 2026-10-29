@@ -13,6 +13,14 @@ import org.calacademy.antweb.upload.*;
 
 import org.apache.struts.upload.FormFile;
 
+/**
+ * The AntCat names import ("worldants"): downloads antcat.antweb.txt from the antcat-export server (port 9090)
+ * to web/speciesList/world/, checks its line count (not on dev or staging), keeps a dated copy in web/upload/
+ * and reloads the names (SpeciesListUpload.reloadSpeciesList; table worldants_upload records each run).
+ * Callers: nightly set 1 (UtilDataAction, with prefetchWorldantsList before set 1) and "Import AntCat names
+ * now" (UploadAction). A nightly failure adds an admin alert and emails. Docs: docs/flows/antcat-to-antweb.md,
+ * docs/flows/nightly.md. Tests: tests/unit/test_set1_prefetch.py, test/.../util/FetchRetryTest.java.
+ */
 public class SpeciesListUploader {
 
   private static final Log s_log = LogFactory.getLog(SpeciesListUploader.class);

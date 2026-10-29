@@ -1,3 +1,7 @@
+<%-- Body of the Introduced Map Manager: one row per species of project introducedants (request attribute
+     speciesList) with the bioregions where it is native, a red dot when none is ticked, and a save arrow per row
+     (a POST with the form token to introducedMapMgr.do). Docs: docs/guides/manager-tools.md (Introduced Map
+     Manager). --%>
 <%@ page import="java.util.*" %>
 
 <%@ page import="org.calacademy.antweb.curate.*" %>

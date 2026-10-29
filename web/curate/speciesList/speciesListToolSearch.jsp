@@ -1,3 +1,5 @@
+<%-- Advanced search form of the Species List Tool (speciesListToolSearch.do, SpeciesListToolSearchAction, which
+     checks for a curator). Tiles wrapper of curate/speciesList/speciesListToolSearch-body.jsp. --%>
 <%@ page import="org.calacademy.antweb.Formatter" %>
 <%@ page import="org.calacademy.antweb.Utility" %>
 <%@ page import="org.calacademy.antweb.util.*" %>

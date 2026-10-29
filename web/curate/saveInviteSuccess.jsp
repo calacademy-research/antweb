@@ -1,3 +1,5 @@
+<%-- Answer of saveLogin.do (SaveLoginAction, forward invite) for a new login without a password. Tiles wrapper of
+     curate/saveInviteSuccess-body.jsp. Docs: docs/flows/email-and-password-reset.md. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

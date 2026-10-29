@@ -1,3 +1,6 @@
+<%-- Body of the login saved page: the changes made (request attribute of LoginEditPage.CHANGES_ATTR, rendered by
+     LoginEditPage.renderChanges) and links back to the login (savedLoginId), the Login Manager and the upload
+     groups for admins, or to the Curate page. Read-only. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

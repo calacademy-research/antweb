@@ -1,3 +1,7 @@
+<%-- A login's form (viewLogin.do, ViewLoginAction; newLogin.do; saveLogin.do when refused), curators
+     (curatorCheck.jsp); shows the session's thisLogin only to its owner or an admin, otherwise redirects to the
+     log-in page. Tiles wrapper of curate/viewLogin-body.jsp. Docs: docs/guides/curate-page.md (Editing a login).
+     Tests: tests/e2e/test_login_form.py, test_curator.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="org.calacademy.antweb.Group" %>
 <%@ page import="org.calacademy.antweb.util.AntwebUtil" %>

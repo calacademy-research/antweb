@@ -21,6 +21,14 @@ import org.calacademy.antweb.geolocale.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * /saveLogin.do: saves the login form (curate/viewLogin.jsp), POST only, logged-in users. Admins create, change
+ * and delete any login (an existing one through LoginEdit in one transaction, saveByAdmin) and set passwords;
+ * others change only their own login and password. Writes tables login, login_project, login_country and, for a
+ * new login without a password, password_reset (one-time set-password link); ends sessions when rights or
+ * passwords change; logs to admin.log. Docs: docs/guides/curate-page.md (Editing a login),
+ * docs/flows/email-and-password-reset.md. Tests: tests/e2e/test_login_form.py, test/.../curate/LoginEditTest.java.
+ */
 public final class SaveLoginAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(SaveLoginAction.class);
