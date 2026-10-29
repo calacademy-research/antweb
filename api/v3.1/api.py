@@ -128,6 +128,30 @@ def remove_session(exception=None):
     session.remove()
 
 
+# Licence of AntWeb images and data: CC BY 4.0 (Brian Fisher, 2026-10-29). The same text as the site
+# (src/org/calacademy/antweb/util/License.java; tests/unit/test_api_license.py keeps them equal).
+# Every reply carries the header Link: <url>; rel="license" (JSON, streamed ndjson, errors, the / page);
+# every JSON data reply also has a top-level "license" object (error replies stay {"error": ...}).
+LICENSE_URL = "https://creativecommons.org/licenses/by/4.0/"
+LICENSE = {
+    "name": "CC BY 4.0",
+    "url": LICENSE_URL,
+    "citation": "Images and data on AntWeb are licensed under CC BY 4.0 (Creative Commons Attribution 4.0"
+                " International). Cite AntWeb and the photographer or collection.",
+}
+LICENSE_LINK = '<' + LICENSE_URL + '>; rel="license"'
+
+
+@application.after_request
+def addLicenseHeader(response):
+    existing = response.headers.get('Link')
+    if not existing:
+        response.headers['Link'] = LICENSE_LINK
+    elif 'rel="license"' not in existing:
+        response.headers['Link'] = existing + ', ' + LICENSE_LINK
+    return response
+
+
 
 # Flask 3 writes Decimal values (e.g. decimalLatitude) as quoted strings.
 # Keep them as plain JSON numbers, as the API has always returned them.
@@ -331,10 +355,12 @@ def limitNotice(count):
 
 
 def jsonify(*args, **kwargs):
-    # flask.jsonify, plus the limit notice: in the reply's metaData (or _metaData) as
+    # flask.jsonify, plus "license" (LICENSE, not on error replies) and the limit notice: in the reply's metaData (or _metaData) as
     # "limitNotice" and in the X-AntWeb-Limit-Notice header. The record count is the length of
     # the reply's list (specimens, taxa, images, ...).
     notice = None
+    if not args and 'error' not in kwargs:
+        kwargs.setdefault('license', LICENSE)   # top-level licence of every data reply (2026-10-29)
     if not args:
         lists = [v for k, v in kwargs.items() if isinstance(v, list)]
         if lists:

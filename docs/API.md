@@ -30,6 +30,20 @@ from this repository on 2026-10-19) and v2.
 The routes are defined in `api/v3.1/api.py`. An unknown parameter is refused with a message that
 suggests the nearest valid name (`tests/unit/test_api_params.py`).
 
+## Licence
+
+Images and data on AntWeb are licensed under CC BY 4.0 (Creative Commons Attribution 4.0 International,
+https://creativecommons.org/licenses/by/4.0/); cite AntWeb and the photographer or collection (decision of
+2026-10-29). Every reply carries the HTTP header `Link: <https://creativecommons.org/licenses/by/4.0/>; rel="license"`
+(ndjson replies, errors and the `/` page too). Every JSON data reply also has a top-level `license` object:
+
+```json
+"license": {"name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/",
+            "citation": "Images and data on AntWeb are licensed under CC BY 4.0 (Creative Commons Attribution 4.0 International). Cite AntWeb and the photographer or collection."}
+```
+
+Error replies (`{"error": ...}`) have only the header. ndjson replies keep their format; the licence is in the header.
+
 ## Paging and limits
 
 `limit` and `offset` page through large results. Since 2026-10-21 every endpoint returns at

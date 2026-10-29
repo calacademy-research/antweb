@@ -15,8 +15,9 @@ Rules common to every route:
 - **Unknown parameters are refused:** HTTP 400 with `error`, `unknownParameters`, `acceptedParameters`, `documentation` and, when a name is close, `didYouMean` (`/specimens?code=` -> `specimenCode`). Since 2026-10-21 (#224); before, a misspelt filter was ignored.
 - **`country=` is the whole country name, in any case** (`countryIs()`), on every route that has it: `country=Niger` finds Niger, not Nigeria. Since 2026-10-27 (F24); before, /specimens, /distinctTaxa and /measurements matched any country containing the text.
 - `ndjson=true`: one JSON line per record (with an index line before each), no metaData; the limit notice is in the header.
+- **Licence** (since 2026-10-29, CC BY 4.0): every reply has the header `Link: <https://creativecommons.org/licenses/by/4.0/>; rel="license"` (`addLicenseHeader`); every JSON data reply has a top-level `license` object (name, url, citation; `LICENSE` in api.py, the site's text in `util/License.java`). Error replies stay `{"error": ...}`. `tests/unit/test_api_license.py`.
 - Errors: a database or code error answers HTTP 500 `{"error": "The request could not be completed. Please try again later or simplify the query."}` (details only in the container log); an unknown route `{"error": "Not Found"}` with 404.
-- Reply: `{"metaData": {"parameters": [...], "request": "...", "limit": N, "offset": N, "count": N, ...}, "<list>": [...]}`. Some routes have no `limit`/`offset` in metaData or a different count name (table below).
+- Reply: `{"license": {...}, "metaData": {"parameters": [...], "request": "...", "limit": N, "offset": N, "count": N, ...}, "<list>": [...]}`. Some routes have no `limit`/`offset` in metaData or a different count name (table below).
 
 ## Routes
 

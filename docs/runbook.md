@@ -577,6 +577,8 @@ Expect: one line per group that has such specimens (group number and name, the s
 ## Licence of images and data
 
 - 2026-10-29: license CC BY 4.0 for all images and data (Brian Fisher). The text is in one place, `src/org/calacademy/antweb/util/License.java` (pages include `web/common/licenseStatement.jsp`); `tests/unit/test_license_statement.py` fails on older Creative Commons wording.
+- The stored texts were updated by the application itself at its first start after the deploy (`LicenseUpdateDb`, from `LoginMgr`): `image_upload.license` and the old `license` table, backups first in `image_upload_license_bak_20261029` and `license_bak_20261029`; the counts are one warning line in the log ("licence set to CC BY 4.0"); later starts change nothing. Record and rollback: `db/upgrade/8.115/2026-10-29-license.sql`.
+- The API (`/v3.1/`) states the licence on every reply: header `Link: <https://creativecommons.org/licenses/by/4.0/>; rel="license"`, and a top-level `license` object in JSON data replies.
 
 ## Alerts
 
