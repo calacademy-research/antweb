@@ -84,6 +84,14 @@ jobs:
       - name: The nightly AntCat download runs before set 1 takes its connection (tests/unit/test_set1_prefetch.py)
         run: python3 tests/unit/test_set1_prefetch.py
 
+      - name: Every Java class and JSP has a header comment, new files included (tools/ci/check_headers.py)
+        # Road map step 4. tools/ci/headers-missing.txt lists the files still without one; it only shrinks.
+        # Fails when a file not listed there has no header, or a listed file now has one (remove its line).
+        # The rules: tests/unit/test_check_headers.py.
+        run: |
+          python3 tests/unit/test_check_headers.py
+          python3 tools/ci/check_headers.py
+
       - name: Data model doc has a section for every table (docs/data-model.md)
         # Replays db/upgrade/**/*.sql and the CREATE TABLE statements in src/; fails when a table or view
         # has no "### `name`" section in docs/data-model.md, or a section names a table no SQL knows, or
