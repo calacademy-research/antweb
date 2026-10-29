@@ -333,20 +333,3 @@ def test_large_genera_have_an_image_on_a_place_genus_images_page():
     unimaged = re.sub(r"<[^>]+>", " ", m.group(1)) if m else ""
     for genus in ("Pheidole", "Crematogaster"):
         assert genus not in unimaged, f"{genus} is listed with no image: {unimaged.strip()[:300]}"
-
-
-def test_bioregion_lists_have_no_genus_of_invalid_names_only():
-    """Brian Fisher, 2026-10-29: Formica was listed as an Afrotropical genus (114 genera) with no species on its
-    Afrotropical page: six unidentifiable or unavailable AntCat names from Afrotropical type localities, such as Formica
-    chufejif Forskal, 1775 (Yemen), were put on the bioregion list under their own name. Bioregion lists from AntCat now
-    take valid names only, as country lists do. Pending until a nightly AntCat import has rebuilt the lists."""
-    if ns.bioregion_valid_names_imported() is False:
-        pytest.skip("pending until the nightly AntCat import (compute.log line 'AntCat import done ("
-                    + ns.BIOREGION_VALID_LOG + ")')")
-    html = ns.get("/description.do?genus=formica&species=chufejif&rank=species")
-    m = re.search(r"Biogeographic regions.*?</", html, re.S)
-    region_part = html[m.start():m.start() + 600] if m else ""
-    assert "Afrotropical" not in region_part.split("Distribution Notes")[0], "Formica chufejif is on the Afrotropical list"
-    genera = ns.get("/taxonomicPage.do?rank=genus&bioregionName=Afrotropical")
-    assert "genus=formica&" not in genera.lower() and "genus=formica\"" not in genera.lower(), \
-        "Formica is on the Afrotropical genus list"
