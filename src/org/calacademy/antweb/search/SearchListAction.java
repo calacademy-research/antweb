@@ -14,6 +14,14 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /getSearchList.do: the Download Data box of the advanced search results (common/antweb.jquery.js), logged-in
+ * users only. Reruns the paged search kept in the session (advancedSearchPaging), else uses the session's result
+ * list, and writes up to 5,000 specimens (admins all; DownloadLimits) from table specimen to a tab-delimited file
+ * web/data/search/<date>-<login id>-<random>search.txt, deleting such files older than a day; answers with the
+ * link. Docs: docs/flows/search.md. Tests: tests/e2e/test_download_guards.py, test_hardening_2026_10_18.py,
+ * test/org/calacademy/antweb/audit/PlacesSearchFixesTest.java.
+ */
 public final class SearchListAction extends AntwebAction {
 /* This class returns a link to the file generated for search results. */
 

@@ -7,6 +7,12 @@ import java.util.ArrayList;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * The rows of the recent images page (search/recentSearchResults.jsp), kept in the session as searchResults by
+ * SearchAction.recentImageSearch: one ResultItem per image (code, shot, number, artist, group, upload date, name),
+ * newest first; sortBy (code, shotType, shotNumber, name, artist, group, uploadDate) for the column headers. Tests:
+ * tests/e2e/test_numbers_images.py::test_recent_images_count_equals_the_images_uploaded.
+ */
 public final class RecentImageSearchResults extends GenericSearchResults
     implements Serializable {
 

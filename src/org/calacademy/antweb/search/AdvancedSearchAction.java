@@ -17,6 +17,14 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Helper of the advanced search, not a Struts action (no mapping in struts-config.xml): buildSearch turns
+ * SearchParameters into an AdvancedSearch query on table specimen, getSearchResults runs it (mediumConPool pool)
+ * and getSearchTitle writes the search's description ("Genus is ..., Country is ..."). Used by SearchAction
+ * (advancedSearch.do) and SearchListAction (getSearchList.do); getGoogleMap builds the locality maps of countries,
+ * adm1s, museums and groups for the nightly object maps (ObjectMapDb) and utilData.do?action=genGoogleMapFunction.
+ * Docs: docs/flows/search.md. Tests: tests/e2e/test_search_pages.py, test_download_guards.py.
+ */
 public class AdvancedSearchAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(AdvancedSearchAction.class);

@@ -1,4 +1,5 @@
-<%@ page language="java" %>
+<%-- Old table of search results by specimen (session attributes results, field, subfamily, genus, species, value,
+     project). Dead code: nothing includes or forwards to it, and Caddy refuses direct JSP requests. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

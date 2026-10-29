@@ -1,3 +1,6 @@
+<%-- Field guide page (fieldGuide.do, FieldGuideAction; fieldGuideResults.do, FieldGuideResultsAction), logged-in
+     users only (checked in the actions): tiles wrapper of search/fieldGuide-body.jsp, title "Field Guide - AntWeb".
+     Docs: docs/flows/places.md. Tests: tests/e2e/test_field_guide_compare.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

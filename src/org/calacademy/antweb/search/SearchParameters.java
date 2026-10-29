@@ -3,6 +3,12 @@ package org.calacademy.antweb.search;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
  
+/**
+ * The criteria of one search, copied from the submitted form (an AdvancedSearchForm, including the Species List
+ * Tool's form, or a RecentImagesForm); maps the caste choice (alateMale, ergatoidQueen, majorSoldier ...) to caste
+ * and subcaste. Made by SearchAction and SpeciesListToolAction and passed to AdvancedSearchAction.buildSearch;
+ * SearchPaging keeps one for the download. The SearchForm constructor and resetSearchParameters have no caller.
+ */
 public final class SearchParameters extends AdvancedSearchForm {
 
     private static final Log s_log = LogFactory.getLog(SearchParameters.class);

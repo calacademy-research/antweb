@@ -27,6 +27,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.exception.TaxonNotFoundException;
 
+/**
+ * /fieldGuide.do: a printable field guide (search/fieldGuide.jsp) of a taxon's children in a place (subfamily,
+ * genus, species parameters; "Create Field Guide" on a taxon page) or of every taxon of one rank in a place (rank=;
+ * the Field Guides menu of a place's species list), with images, maps and habitat summaries (FieldGuide, TaxaPage;
+ * tables taxon, specimen, image). Logged-in users only (Check.loginForFeature); its limit of 3 at a time is for
+ * visitors without a login, who never get that far. Read-only. Docs: docs/flows/places.md. Tests:
+ * tests/e2e/test_field_guide_compare.py, test_login_needed.py.
+ */
 public final class FieldGuideAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(FieldGuideAction.class);

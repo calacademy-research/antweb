@@ -1,3 +1,6 @@
+<%-- Image comparison page of chosen search results (compareResults.do without shot, CompareResultsAction),
+     logged-in users only (checked in the action): tiles wrapper of search/multiTaxaComparison-body.jsp, title
+     "Comparison Tool - AntWeb". Docs: docs/flows/search.md. Tests: tests/e2e/test_login_needed.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

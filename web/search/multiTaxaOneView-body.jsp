@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- Body of the one-view comparison: the session's taxaToCompare (CompareResultsAction), one image of the chosen
+     view (shot, limited to Head, Profile, Dorsal, Ventral, Label) per specimen, three a row, with view buttons
+     (search/multiTaxaOneView.jsp?shot=...) and "Refine Selection" (compareResults.do). Read-only. Tests:
+     tests/unit/test_page_ops_fixes.py::test_pages. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

@@ -19,6 +19,14 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
     
+/**
+ * /compareResults.do: image comparison of the rows chosen (checkboxes "chosen") on a search's or a collection
+ * page's results, logged-in users only (Check.loginForFeature). By specimen: each chosen specimen with its images;
+ * by species: one taxon per chosen species with its images (tables specimen, image). Puts taxaToCompare in the
+ * session and forwards to search/multiTaxaComparison.jsp, or with shot=Head, Profile, ... to multiTaxaOneView.jsp.
+ * Docs: docs/flows/search.md. Tests: tests/e2e/test_login_needed.py,
+ * test_numbers_search.py::test_comparison_counts_the_chosen_specimens.
+ */
 public final class CompareResultsAction extends ResultsAction {
 
     private static final Log s_log = LogFactory.getLog(CompareResultsAction.class);

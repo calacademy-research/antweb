@@ -1,4 +1,6 @@
-<%@page import="java.util.Iterator"%>
+<%-- Suggestions for the header's Taxa box (jQuery autocomplete, ?q=...), public; Caddy allows this JSP directly.
+     Plain text, one taxon name per line, from memory (TaxonMgr.getPrettyTaxaNames). Docs: docs/flows/search.md,
+     docs/flows/taxon-pages.md. Tests: tests/e2e/test_taxon_pages.py::test_autocomplete_suggests_names. --%><%@page import="java.util.Iterator"%>
 <%@page import="java.util.List"%>
 <%@page import="org.calacademy.antweb.home.*"%>
 <%@page import="org.calacademy.antweb.util.*"%>
