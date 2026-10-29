@@ -1268,6 +1268,7 @@ in the name, as no date was set).
 | `geolocale_taxon_bak_20261019`, `proj_taxon_bak_20261019` | the regional and project lists before the lost morphospecies were restored (2026-10-19) | about 2026-11-19 |
 | `image_upload_bak_20261019` | `image_upload.created` before the upload dates were corrected (2026-10-19; the undo is in the to-do list) | about 2026-11-19 |
 | `ant_group_abbrev_bak_20261020` | `ant_group.abbrev` before the group short names were set (2026-10-20) | about 2026-11-20 |
+| `image_upload_license_bak_20261029`, `license_bak_20261029` | the stored licence texts before they were set to CC BY 4.0 (made by the application at its first start with LicenseUpdateDb, 2026-10-29; rollback in db/upgrade/8.115/2026-10-29-license.sql) | about 2026-11-29 |
 
 The run-time backups `login_inactive_backup_20261018` and `description_sanitize_backup_20261016_200412` on
 production are the tables of the two patterns below (to-do list: delete about 2026-11-18 and 2026-11-16).
@@ -1324,6 +1325,14 @@ Backup, see the table above.
 Backup, see the table above.
 
 ### `ant_group_abbrev_bak_20261020`
+
+Backup, see the table above.
+
+### `image_upload_license_bak_20261029`
+
+Backup, see the table above.
+
+### `license_bak_20261029`
 
 Backup, see the table above.
 
