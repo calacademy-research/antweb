@@ -1,3 +1,7 @@
+<%-- Admin Alerts page (adminAlert.do, AdminAlertAction), admins only (adminCheck.jsp): the unacknowledged rows
+     of table admin_alerts (AdminAlertMgr) with a "Dealt with" button each and one for all (POST,
+     Csrf.postButton), a Reload button, and the alert queries' results. Docs: docs/catalog/actions.csv. Tests:
+     tests/unit/test_admin_alert_page.py, tests/e2e/test_manager_tools.py. --%>
 
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="java.util.*" %>

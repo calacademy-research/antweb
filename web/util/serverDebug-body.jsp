@@ -1,3 +1,6 @@
+<%-- Body of the Server Debug page (serverDebug.do): the debug option set now (ServerDebug.getDebug) and links
+     to set one of ServerDebug's options or unset it (serverDebug.do?action=setDebug&param=..., which the action
+     takes by POST only). The option is stored in table server, column debug. --%>
 	
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="java.util.*" %>

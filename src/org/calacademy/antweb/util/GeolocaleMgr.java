@@ -18,6 +18,13 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * In-memory places (table geolocale, through GeolocaleDb): regions, subregions, countries, adm1s and islands,
+ * as a tree (deep) and as a flat list (shallow), plus the place names for the search box. Loaded by AntwebMgr
+ * at start-up (about 12 seconds) and on util.do?action=reloadAntwebMgr. Lookups by name or id, validity of a
+ * country or adm1 for uploads, a place's bioregion, and the adm1 lists of countryAdm1List.do. Docs:
+ * docs/flows/places.md. Tests: PreviousDeterminationsTest, tests/unit/test_small_fixes.py.
+ */
 public class GeolocaleMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(GeolocaleMgr.class);

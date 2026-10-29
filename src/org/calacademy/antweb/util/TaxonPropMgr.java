@@ -10,6 +10,12 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * In-memory table of the introduced maps (table taxon_prop, prop introducedMap): for each taxon, the bioregions
+ * where it is native ("Bioregion:true") or introduced ("Bioregion:false"). Loaded by AntwebMgr; used by the
+ * specimen upload and name update (introduced flags), taxon pages and lists, and the Introduced Map manager.
+ * Docs: docs/numbers.md, docs/guides/manager-tools.md. Tests: tests/e2e/test_numbers_endemic.py.
+ */
 public abstract class TaxonPropMgr {
 
     private static final Log s_log = LogFactory.getLog(TaxonPropMgr.class);

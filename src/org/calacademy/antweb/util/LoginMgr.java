@@ -15,6 +15,16 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * In-memory logins and curators (table login, through LoginDb) and the session login: isAdmin, isCurator,
+ * isLoggedIn, getAccessLogin (logs out a session ended by a password reset or an admin, login.session_version)
+ * and logIn (new session id, CSRF token, 4-hour idle time). Loaded by AntwebMgr; postInitialize loads the
+ * curators (getAllCurators) with their upload numbers. At the first load it also starts a background thread
+ * (startPasswordConversion) that creates missing tables and columns (password reset, remember_token,
+ * image_upload_refused, login.inactive, place_image_count, group_count), marks background jobs of the last run
+ * interrupted and hashes plain-text passwords. Docs: docs/flows/email-and-password-reset.md. Tests:
+ * LoginSessionFixesTest, PasswordResetTest.
+ */
 public class LoginMgr extends Manager {
 
     private static final Log s_log = LogFactory.getLog(LoginMgr.class);

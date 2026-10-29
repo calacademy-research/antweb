@@ -25,6 +25,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.*;
 
+/**
+ * Database helpers used by every action: getConnection (from a Struts pool; tracks open connections for the
+ * "old connections" list and logs the first 1,000 to web/log/getConns.log), getStatement and
+ * getPreparedStatement, the close methods, query timing (profileQuery to web/log/profileQuery.log, QueryStats
+ * per query name, logQueryStats), and SQL quoting (escapeQuotes, sqlLiteral, sqlQuote). Tests: SqlLiteralTest,
+ * SecurityBatch6Test.
+ */
 public class DBUtil {
 
     /* This class helps us manage connection, statements and resultSets.  We open, close,

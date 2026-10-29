@@ -1,3 +1,6 @@
+<%-- Public Statistics page (statsPage.do, StatsPageAction). Tiles wrapper of util/statsPage-body.jsp. Docs:
+     docs/numbers.md, docs/flows/home-and-statistics.md. Tests: tests/e2e/test_numbers_pages.py,
+     test_home_and_stats.py. --%>
 <%@page contentType="text/html; charset=UTF-8" %>
 
 <%@ page import="org.calacademy.antweb.Formatter" %>

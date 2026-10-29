@@ -14,6 +14,12 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * In-memory projects (table project, through ProjectDb): the global and sub-global projects and all projects by
+ * name. Loaded by AntwebMgr at start-up and on util.do?action=reloadAntwebMgr. Lookups by name and title, which
+ * project names are aggregates, and hasMoved, which redirects old project addresses (old bioregion projects to
+ * bioregionName=, country projects to the country page).
+ */
 public class ProjectMgr {
 
     private static final Log s_log = LogFactory.getLog(ProjectMgr.class);

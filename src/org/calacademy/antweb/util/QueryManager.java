@@ -11,6 +11,13 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
+/**
+ * Runs the named queries of Queries and QueriesWithParams for query.do: one query (curiousQuery), a battery,
+ * the Integrity Check and developer checks, the admin alert queries (adminAlerts, for AdminAlertMgr), and
+ * queries with a place or bioregion parameter. Only read-only SQL runs (isReadOnly), with a time limit, and
+ * pages show at most maxRowsShown rows; values are escaped (cell). Docs: docs/guides/manager-tools.md. Tests:
+ * QueriesReviewTest, ManagerToolsTest, tests/e2e/test_named_queries.py, test_reports_plain_language.py.
+ */
 public abstract class QueryManager {
 
     private static final Log s_log = LogFactory.getLog(QueryManager.class); 

@@ -1,3 +1,6 @@
+<%-- Curator activity log (query.do?action=events, QueryAction; admins only in the action, this page checks for
+     a curator): rows of table event (EventDb) with the curator's name, set by the action as request attributes
+     events and curators. Read-only. Docs: docs/catalog/actions.csv. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

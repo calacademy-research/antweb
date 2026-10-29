@@ -11,6 +11,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 
+/**
+ * genRecentDescEdits writes web/genInc/recentDescEdits.html, the home page's "recent page-text edits" box (up
+ * to six links, from table description_edit, manual entries), included by index-body.jsp. Run by
+ * AntwebMgr.genRecentContent (utilData.do?action=genRecentContent) and after a page-text edit
+ * (DescriptionAction, UploadAction). Docs: docs/flows/home-and-statistics.md.
+ */
 public abstract class AntwebFunctions {
 
   private static final Log s_log = LogFactory.getLog(AntwebFunctions.class);

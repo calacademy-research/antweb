@@ -8,6 +8,10 @@ import java.sql.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * One row of table admin_alerts (id, alert text, created, acknowledged), as loaded by AdminAlertMgr and listed
+ * on the Admin Alerts page (adminAlert.do, util/adminAlert.jsp).
+ */
 public class AdminAlert {
 
     private static final Log s_log = LogFactory.getLog(AdminAlert.class);

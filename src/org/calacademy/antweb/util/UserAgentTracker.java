@@ -15,6 +15,13 @@ import org.calacademy.antweb.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Keeps the last 100 requests (user agent, login, time) in memory and answers SessionRequestFilter's
+ * isBlockUser: true only when an admin has set the server debug option isBlockUnLoggedIn (serverDebug.do) and
+ * the visitor is not logged in and not on an always-allowed page (login, home, about, documentation, press,
+ * favs, contact, api); the filter then asks the visitor to log in. Its execute() and report methods are not
+ * mapped or called (the Server Status page lines that used them are switched off).
+ */
 public class UserAgentTracker extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(UserAgentTracker.class);

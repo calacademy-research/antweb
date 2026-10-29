@@ -1,3 +1,6 @@
+<%-- Check the counts page (countCheck.do, CountCheckAction; the action allows admins only, this page checks for
+     a curator): compares the counts on list pages with the database for a sample of places. Tiles wrapper of
+     util/countCheck-body.jsp. Docs: docs/numbers.md. Tests: tests/e2e/test_count_check.py. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

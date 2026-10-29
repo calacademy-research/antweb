@@ -18,6 +18,15 @@ import java.sql.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Loads AntWeb's in-memory managers from the database (populateMgrs): Group, AllAntweb, Login, Project,
+ * Bioregion, Museum, TaxonProp, Upload, Artist, AdminAlert, Geolocale and Taxon, plus the home page numbers
+ * (table statistics). First load at start-up (SessionRequestFilter.init), one at a time; until it ends pages
+ * answer "Server is initializing" (Check.init). Then calls util.do?action=postInstantiate on its own server
+ * (code in a header) for the slower second step (postInitialize, recent content). Also reload(name) for
+ * utilData.do, the site warning file and the server messages on the Curate page. Docs: docs/runbook.md (restart
+ * takes 2 to 4 minutes), docs/flows/nightly.md.
+ */
 public class AntwebMgr {
 
     private static final Log s_log = LogFactory.getLog(AntwebMgr.class);

@@ -19,6 +19,16 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.home.ServerDb;
 
 
+/**
+ * Servlet filter on every *.do request (web.xml). Logs in with a "keep me logged in" cookie (RememberMeMgr),
+ * applies the log-in-only switch (UserAgentTracker), refuses recursive requests, appends the request to
+ * web/log/accessLog.txt, checks the CSRF token of logged-in POSTs (Csrf), then runs the action. An exception
+ * shows a case number and is written to web/log/srfExceptions.txt; requests over 10 seconds go to
+ * data/log/longRequest.log. Its init() loads the managers (AntwebMgr.populate), raises an admin alert under 7
+ * GB free disk, starts MountCheck and schedules the nightly run (CustomTask: Scheduler.doAction at
+ * Scheduler.LAUNCHTIME, 5 AM, then again each day). Docs: docs/flows/nightly.md. Tests: NightlyScheduleTest,
+ * PostMethodTest, tests/e2e/test_hardening_2026_10_18.py.
+ */
 public class SessionRequestFilter implements Filter {
     
     private static final Log s_log = LogFactory.getLog("org.calacademy.antweb.util.SessionRequestFilter.class");

@@ -13,6 +13,13 @@ import java.sql.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * /uptime.do: health check for the uptime monitors. Public. Checks the database (a query on table image, then
+ * AntwebMgr.populate) and the data directory (data/uptime.txt must contain "success"); answers util/uptime.jsp
+ * (OK), or the message page when one fails. Admins can force failures with fail=1 (and stop with fail=0), POST
+ * only; the answer is then util/uptimeFail.jsp. Docs: docs/catalog/actions.csv. Tests:
+ * tests/e2e/test_curate_cleanup.py.
+ */
 public final class UptimeAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(UptimeAction.class);

@@ -1,3 +1,5 @@
+<%-- Table built from the HTML rows in the request attribute "listTable", with a count: forward listTable of
+     list.do (ListAction, action=introducedSpecimen, curators). Read-only. --%>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

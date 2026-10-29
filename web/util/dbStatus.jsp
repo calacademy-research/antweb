@@ -1,3 +1,7 @@
+<%-- Database Status page (dbStatus.do, DbStatusAction), admins only (adminCheck.jsp): busy connection count,
+     the open and old connections (DBUtil), the three connection pools' diagnostics and the MySQL process list,
+     from request attributes the action sets. Read-only. Docs: docs/catalog/actions.csv. Tests:
+     tests/e2e/test_curate_merge.py, test_request_handling.py. --%>
 
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="java.util.*" %>
