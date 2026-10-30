@@ -166,7 +166,9 @@ To do:
     if (LoginMgr.isJack(accessLogin)) hasExtraPrivs = true;
         // We give extra privs to Jack - he can modify notes
 
-    if (taxon.getCurrentValidName() != null && !taxon.getCurrentValidName().equals(taxon.getTaxonName())) {
+    if (taxon.getCurrentValidName() != null && !taxon.getCurrentValidName().strip().isEmpty()
+        && Taxon.displayTaxonName(taxon.getCurrentValidName()) != null && !Taxon.displayTaxonName(taxon.getCurrentValidName()).strip().isEmpty()
+        && !taxon.getCurrentValidName().equals(taxon.getTaxonName())) { // nothing to show: no link (2026-10-30, Nesomyrmex: the stored name shows as empty)
       currentValidNameLink = "<a href='" + AntwebProps.getDomainApp() + "/description.do?taxonName=" + Html.escAttr(taxon.getCurrentValidTaxonName()) + "'>" + Html.esc(Taxon.displayTaxonName(taxon.getCurrentValidName())) + "</a>";
       %> 
       <br><h2>Current Valid Name:</h2>  <%= currentValidNameLink %><br> 

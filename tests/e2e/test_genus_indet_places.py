@@ -166,7 +166,7 @@ def test_genus_rows_of_specimens_identified_only_to_genus():
     # Red-flagged specimens are kept off country lists. Mozambique's Lividopone were flagged "genus outside its native
     # bioregions" until Brian Fisher ticked Afrotropical in the Bioregion Map Manager (production, 2026-10-30); a copy
     # of production made before then, or before the next upload of the group, still has them flagged.
-    if not all(_red_flagged(r.get("code")) for r in moz):
+    if not all(_red_flagged(r.get("specimenCode") or r.get("code")) for r in moz):
         urls.insert(0, "/taxonomicPage.do?rank=genus&countryName=Mozambique&statusSet=all")
     for url in urls:
         assert "genus=lividopone" in ns.get(url).lower(), f"Lividopone is not on {url}"
@@ -183,7 +183,7 @@ def test_genus_rows_of_specimens_identified_only_to_genus():
             continue
         country = max(sorted(by_country), key=lambda c: by_country[c])
         listed = ns.api_rows(ns.api(f"geolocaleTaxa?country={quote_plus(country)}&taxonName={quote_plus(parent)}"))
-        if not listed and all(_red_flagged(r.get("code")) for r in rows if r.get("country") == country):
+        if not listed and all(_red_flagged(r.get("specimenCode") or r.get("code")) for r in rows if r.get("country") == country):
             continue   # red-flagged specimens are kept off country lists
         assert listed, f"{parent} is not on the list of {country} ({by_country[country]} indet specimens) {ns.day_note()}"
 

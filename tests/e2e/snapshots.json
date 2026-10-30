@@ -28,7 +28,7 @@
  "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&subregion=Eastern Africa&country=Comoros&resultRank=specimen": {
   "headings": [
    "h1:Advanced Search Results",
-   "h2:Showing 1–200 of 3,206 Specimens (25 imaged on this page)",
+   "h2:Showing 1\u2013200 of 3,206 Specimens (25 imaged on this page)",
    "h3:Download Specimen Data"
   ],
   "images": 255,
@@ -95,7 +95,7 @@
   "headings": [
    "h3:Citing AntWeb",
    "h1:Family: Formicidae Latreille, 1802",
-   "h2:24 Subfamilies (22 imaged)",
+   "h2:23 Subfamilies (valid names and morphotaxa) (22 imaged)",
    "h3:Download Specimen Data",
    "h3:Download Specimen Data"
   ],
@@ -111,7 +111,7 @@
   "headings": [
    "h3:Citing AntWeb",
    "h1:Subfamily: Formicinae Latreille, 1802",
-   "h2:98 Genera (66 imaged)",
+   "h2:96 Genera (valid genera and morphogenera) (66 imaged)",
    "h3:Download Specimen Data",
    "h3:Download Specimen Data"
   ],
@@ -385,7 +385,7 @@
   "status": 200,
   "table_rows": 14,
   "taxon_links": 1,
-  "text_length": 9494,
+  "text_length": 10459,
   "title": "British Museum of Natural History Ants - AntWeb"
  },
  "/museums.do": {
@@ -506,14 +506,14 @@
   "status": 200,
   "table_rows": 14,
   "taxon_links": 1,
-  "text_length": 8496,
+  "text_length": 9366,
   "title": "Subregion: Polynesia - Antweb"
  },
  "/taxonomicPage.do?rank=genus&project=worldants": {
   "headings": [
    "h3:Citing AntWeb",
    "h1:Project: Bolton World Catalog",
-   "h2:526 Valid (with Fossils) Genera"
+   "h2:526 Valid (with fossils) Genera"
   ],
   "images": 1069,
   "specimen_links": 0,
@@ -528,7 +528,7 @@
    "h3:Citing AntWeb",
    "h1:Country: Algeria",
    "h3:Download Species",
-   "h2:256 Species"
+   "h2:256 Valid species (of 256 species and morphospecies)"
   ],
   "images": 1044,
   "specimen_links": 0,
@@ -542,7 +542,7 @@
   "headings": [
    "h3:Citing AntWeb",
    "h1:Project: All Antweb",
-   "h2:24 Subfamilies"
+   "h2:23 Subfamilies (valid names and morphotaxa)"
   ],
   "images": 65,
   "specimen_links": 0,
