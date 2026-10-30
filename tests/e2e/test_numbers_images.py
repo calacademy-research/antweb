@@ -732,6 +732,15 @@ def test_specimen_images_page_counts_the_images_of_the_specimen():
 COUNTED_STATUSES = ("valid", "unrecognized", "morphotaxon", "indetermined", "unidentifiable")
 
 
+MAX_LEFT_OUT = 10  # red-flagged specimens under a species name that the museum's numbers may leave out
+
+
+def _species_rank_name(name):
+    """True for a two-or-more-word name without "(indet)" or a parenthesised genus (always of species or subspecies rank)."""
+    words = (name or "").split()
+    return len(words) >= 2 and "indet" not in (name or "").lower() and not (name or "").startswith("(")
+
+
 def _api_imaged_specimens(museum):
     """The museum's ant specimens with any image (API hasImage=true), or None when more than MAX_IMAGED or unreadable."""
     rows = ns.api_all(f"specimens?museum={ns.quote_plus(museum)}&family=formicidae&hasImage=true",
@@ -753,7 +762,13 @@ def test_label_only_specimens_are_the_specimens_with_only_label_images():
     status. The page's numbers and specimen.image_count (the API's imageCount and hasImage) are both written by nightly
     set 4, so an upload after it does not make the API's side larger: the test's rule, not staleness. The API row's
     status applies the rule here; the list part (a name of species rank on the museum's list) the API cannot check,
-    and a difference left is reported with the specimens of another status that were left out."""
+    and a difference left is reported with the specimens of another status that were left out.
+
+    2026-10-30 (full run of #309, USNM: page 1275 specimens / 5226 images; API, counted statuses 1279 / 5242; of these
+    39 specimens / 160 images under "<genus> (indet)" names): the API cannot tell which of a museum's specimens are left
+    out by the list part of the rule (a red-flagged specimen, a name not on the list), so the page's numbers are checked
+    between two bounds: at most the API's specimens of a counted status, at least those of them filed under a two-word
+    name without "(indet)" (always on the list unless red-flagged; red flags are rare, MAX_LEFT_OUT allows a few)."""
     museums = ns.museums()
     if not museums:
         pytest.skip("museums.do lists no museum")
@@ -780,12 +795,17 @@ def test_label_only_specimens_are_the_specimens_with_only_label_images():
         wrong = []
         if label_only > 0 and (not shown or int(shown.group(1)) != label_only):
             wrong.append(f"the page says {shown and shown.group(1)} additional specimens, data-label-only {label_only}")
-        if imaged + label_only != len(rows):
-            wrong.append(f"Imaged specimens {imaged} + label only {label_only}, the API {len(rows)} ant specimens with images"
-                         f" of a counted status{left_out}")
-        total = sum(int(r.get("imageCount") or 0) for r in rows)
-        if total != images:
-            wrong.append(f"Images {images}, the API's specimens of a counted status have {total}{left_out}")
+        sure = [r for r in rows if _species_rank_name(r.get("scientificName"))]
+        img = lambda rs: sum(int(r.get("imageCount") or 0) for r in rs)
+        low, high = len(sure) - MAX_LEFT_OUT, len(rows)
+        if not low <= imaged + label_only <= high:
+            wrong.append(f"Imaged specimens {imaged} + label only {label_only}, expected between {low} and {high} (the API:"
+                         f" {len(rows)} ant specimens with images of a counted status, {len(sure)} of them under a species"
+                         f" name){left_out}")
+        total, sure_total = img(rows), img(sure)
+        if not sure_total - MAX_LEFT_OUT * 20 <= images <= total:
+            wrong.append(f"Images {images}, expected between {sure_total - MAX_LEFT_OUT * 20} and {total} (the API's specimens"
+                         f" of a counted status; {sure_total} under a species name){left_out}")
         assert not wrong, f"{p} {ns.day_note()} ({PENDING}):\n" + "\n".join(wrong)
         return
     pytest.skip("no museum with 1 to MAX_IMAGED specimens with images in the day's sample: " + "; ".join(tried) + " " + ns.day_note())

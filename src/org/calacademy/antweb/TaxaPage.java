@@ -141,7 +141,8 @@ public class TaxaPage implements Serializable {
 		if (overview == null || StatusSet.hasOwnStatusSets(overview.getName())) return;
 		try {
 			request.setAttribute(StatusSet.FOSSIL_SUBFAMILIES_ATTR, hasFossilSubfamilies(connection, overview));
-		} catch (SQLException e) {
+		} catch (SQLException | RuntimeException e) {
+			// the page is shown without the fossil-subfamily answer (full selector) rather than failing
 			s_log.warn("setFossilSubfamilies() overview:" + overview + " e:" + e);
 		}
 	}

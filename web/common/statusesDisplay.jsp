@@ -37,11 +37,15 @@
     // without one the list offers no Valid + morphotaxa (same rows and label as Valid subfamilies there)
     boolean sdFossilSubfamilies = StatusSet.fossilSubfamilies(request);
     String[] sdChoices = StatusSet.choicesFor(sdOverviewName, sdRowRank, sdFossilSubfamilies);
+    // the choice shown as current: a default hidden from the list (validmorpho on a subfamily list with no fossil
+    // subfamily) is shown as the Valid choice it equals there, so data-status-set always names a listed choice
+    String sdCurrent = statusSet;
+    if (!java.util.Arrays.asList(sdChoices).contains(sdCurrent) && java.util.Arrays.asList(sdChoices).contains("valid")) sdCurrent = "valid";
 %>
        <div id="status_toggle">
            <div class="left"><a href=<%= AntwebProps.getDomainApp() %>/statusDisplayPage.do target="new"><%= sdDisplayChildRank %> Status</a>:</div>
-           <div id="change_status" class="has_options" data-status-set="<%= Html.escAttr(statusSet) %>">
-               <span id="which_status"><span><%= Html.esc(StatusSet.choiceLabel(statusSet, sdRowRank, sdOverviewName, sdFossilSubfamilies)) %></span></span>
+           <div id="change_status" class="has_options" data-status-set="<%= Html.escAttr(sdCurrent) %>">
+               <span id="which_status"><span><%= Html.esc(StatusSet.choiceLabel(sdCurrent, sdRowRank, sdOverviewName, sdFossilSubfamilies)) %></span></span>
                <div id="status_choice" class="options">
                    <ul>
 <%

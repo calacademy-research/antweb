@@ -366,7 +366,8 @@ public class UploadDb extends AntwebDb {
 			  + ", species = " + upload.getSpecies()
 			  + ", ungeoreferenced = " + upload.getUngeoreferenced()
 			  + ", flagged = " + upload.getFlagged()
-			  + " where upload_id = " + uploadId;
+			  // the row read by getCounts (2026-10-30: a group whose newest row is from before 2018 has no upload_id)
+			  + " where id = " + upload.getId();
 
 			//A.slog("updateCounts() dml:" + dml);
 			stmt.execute(dml);
