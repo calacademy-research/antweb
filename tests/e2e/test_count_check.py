@@ -499,7 +499,9 @@ def test_group_pages_equal_the_stored_upload_numbers():
                 # TEST_GROUP_SPAN specimens), so a difference that small is pending, as the check's own "a group
                 # uploaded after the last nightly run" (staging run 40940710186: Collections and Localities 1 apart).
                 by_test_group = test_group and abs(totals[i] - distinct[j]) <= TEST_GROUP_SPAN
-                (pending if by_test_group or (name == "Species" and ns.counting_rules_counted() is False) else wrong).append(line)
+                # Genera follows the genera rule of 2026-10-30 (valid genera and morphogenera), pending likewise
+                genera_pending = name == "Genera" and ns.genera_rule_counted() is False
+                (pending if by_test_group or genera_pending or (name == "Species" and ns.counting_rules_counted() is False) else wrong).append(line)
             # distinct over all groups: at least the largest row, at most the sum of the rows
             col = [v[i] or 0 for v in rows.values()]
             if not (max(col) <= totals[i] <= sum(col)):
@@ -551,7 +553,10 @@ def test_image_upload_and_orphan_counts_equal_the_recount():
 
 
 PLACE = "/country.do?name=Madagascar"
-LIST = "/taxonomicPage.do?countryName=Madagascar&statusSet=all&rank="
+# 2026-10-30: species lists with "Valid species + morphospecies" (validmorpho, the rows of the Species number; "all"
+# now lists the names that are not species too), genus and subfamily lists with every counted status (all), as before.
+LIST = "/taxonomicPage.do?countryName=Madagascar&rank="
+LIST_STATUS = {"species": "validmorpho", "genus": "all", "subfamily": "all"}
 
 
 def _place_stats(session):
@@ -574,7 +579,7 @@ def test_subtaxon_totals_equal_the_place_numbers():
         if stat not in stats:
             wrong.append(f"the Madagascar page has no data-stat {stat}")
             continue
-        html = s.get(BASE_URL + LIST + rank, timeout=max(TIMEOUT, 180)).text
+        html = s.get(BASE_URL + LIST + rank + "&statusSet=" + LIST_STATUS[rank], timeout=max(TIMEOUT, 180)).text
         m = re.search(r'data-subtaxon-total="(-?\d+)"', html)
         if not m:
             continue

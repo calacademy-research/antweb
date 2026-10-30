@@ -511,6 +511,21 @@ jobs:
             grep -q "^OK (14 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of the rules of 2026-10-30 (Genera are valid genera and morphogenera; Subfamilies are valid subfamilies; Worldants change alert)
+        # Brian Fisher's decisions of 2026-10-30, docs/numbers.md section 5 "Genera and subfamilies rule".
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/home/PlaceTotals.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/CountRules20261030Test.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.CountRules20261030Test > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (7 tests)" /tmp/out.txt
+          '
+
       - name: Java unit tests of images from anywhere (place first, Images column, imaged castes; 2026-10-27)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
@@ -903,11 +918,11 @@ jobs:
             grep -q "^OK (8 tests)" /tmp/out.txt
           '
 
-      - name: Java unit tests of the decisions of 2026-10-29 (upload date ranges and month/day guesses, the default status of place lists, the blank-name-safe cleanups preview first)
+      - name: Java unit tests of the decisions of 2026-10-29 (upload date ranges and month/day guesses, no status kept in the session for place lists, the blank-name-safe cleanups preview first)
         # Decisions1029Test: a range ("8-11 Feb 2010", en dash too) is saved as its first day, the end date column keeps the
         # last day; 05/04/2013 is read as month/day and listed in the report's Notes ("Date read as month/day (please
-        # check)", not counted in the email); a list without a status opens with every counted status (the place's Species
-        # number) and ignores a status kept in the session; BlankNameCleanup previews before it deletes.
+        # check)", not counted in the email); a list ignores a status kept in the session (its defaults: StatusChoiceTest,
+        # 2026-10-30); BlankNameCleanup previews before it deletes.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
@@ -924,12 +939,33 @@ jobs:
             grep -q "^OK (7 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
+      - name: Java unit tests of the status choice of lists decided 2026-10-30 (choices and labels, old values mapped, defaults per kind of place, criteria, headers; StatusChoiceTest)
+        # StatusChoiceTest: four choices (valid, validmorpho, all, fossil) labelled Valid species, Valid species +
+        # morphospecies, All names, Fossil species; all determined -> validmorpho, all indetermined / complete / type ->
+        # all; geolocales and curated projects open with Valid species, bioregions, museums and All AntWeb with Valid
+        # species + morphospecies, the AntCat list and Fossil Ants with their own set; the session is never read.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/StatusChoiceTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.StatusChoiceTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            grep -v "LogMgr" /tmp/out.txt | tail -3
+            grep -q "^OK (8 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+          '
+
       - name: Place pages say Species / subspecies / morphospecies (tests/unit/test_place_species_label.py)
         run: python3 tests/unit/test_place_species_label.py
 
       - name: Upload and nightly safety (upload flag, refused upload as, stopped upload rolled back, list removals) (tests/unit/test_upload_nightly_safety.py)
         run: python3 tests/unit/test_upload_nightly_safety.py
-      - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; place renames keep page text; every place's numbers; specimen name history; download guards)
+      - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; place renames keep page text; every place's numbers; specimen name history; download guards; genera rule)
         # DbTimeZoneTest: dates written by MySQL and by Java read back as the same moment and are
         # stored as Pacific wall-clock time, for conPool, mediumConPool and longConPool.
         run: |
@@ -1004,6 +1040,10 @@ jobs:
           # search list (COUNT, LIMIT/OFFSET, sort before paging, images/types only), ant specimens only on place pages.
           # PlaceTaxonNotesDbTest (2026-10-29): country and adm1 lists get the genus rows of specimens identified to genus
           # (not the names); the genus page's indet line counts the place's specimens; the not-recorded notice's queries.
+          # GeneraRuleDbTest (2026-10-30): Genera count valid genera and morphogenera only (placeholders such as
+          # "(myrmicinae)" and unrecognized genus names are not genera), in the nightly totals, the subfamily rows' Genera,
+          # upload groups and the count check; Subfamilies count valid subfamilies only (not "(formicidae)" or misspelled
+          # names, curated projects too: B67 superseded); the Worldants change alert compares each import with the previous one.
           # BlankNameCleanupDbTest (2026-10-29): with specimens of blank name, the old cleanups delete nothing; the
           # blank-safe ones delete the names and list rows no specimen uses (not AntCat's, not curators' rows, not blank
           # rows) and the preview counts them. Last: it makes its own small tables.
@@ -1032,9 +1072,10 @@ jobs:
               /t/org/calacademy/antweb/home/ArtistMoveDbTest.java \
               /t/org/calacademy/antweb/home/NumberDecisionsDbTest.java \
               /t/org/calacademy/antweb/home/PlaceTaxonNotesDbTest.java \
+              /t/org/calacademy/antweb/home/GeneraRuleDbTest.java \
               /t/org/calacademy/antweb/home/BlankNameCleanupDbTest.java \
               /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:5 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:3 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:5 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:3 home.GeneraRuleDbTest:10 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

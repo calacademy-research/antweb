@@ -67,6 +67,24 @@ public class BioregionTaxonDb extends TaxonSetDb {
       return c + " Bioregion Taxon Names updated to current valid Taxon Names.  ";
     }
 
+    /**
+     * The names of a bioregion's list rows from its specimens, with their specimen and image counts (set 3,
+     * populateSpeciesFromSpecimen): specimens of the bioregion, extant names, counted statuses, not red-flagged
+     * (SpecimenDb.notRedFlagged: decision of 2026-10-30, one rule for red flags on every list, as country and adm1 lists).
+     * count(*) counted one row per image: a specimen with 6 images was 6 specimens.
+     */
+    public static String speciesFromSpecimenSql(String bioregionName) {
+        return "select s.taxon_name, count(distinct s.code) specimenCount, count(i.id) imageCount "
+            + " from taxon t, specimen s "
+            + " left join image i on s.code = i.image_of_id "
+            + " where s.taxon_name = t.taxon_name"
+            + " and t.fossil = 0"
+            + " and s.bioregion = " + DBUtil.sqlQuote(bioregionName)
+            + " and s.status in " + StatusSet.getCountables()
+            + " and " + SpecimenDb.notRedFlagged("s")
+            + " group by s.taxon_name";
+    }
+
     public int populateSpeciesFromSpecimen(Bioregion bioregion) {
       Statement stmt = null;
       ResultSet rset = null;
@@ -75,16 +93,7 @@ public class BioregionTaxonDb extends TaxonSetDb {
       //A.log("populateSpeciesFromSpecimen()");
 
       try {
-          // count(*) counted one row per image: a specimen with 6 images was 6 specimens.
-          String query = "select s.taxon_name, count(distinct s.code) specimenCount, count(i.id) imageCount " 
-            + " from taxon t, specimen s " 
-            + " left join image i on s.code = i.image_of_id " 
-            + " where s.taxon_name = t.taxon_name"
-            + " and t.fossil = 0" 
-            + " and s.bioregion = " + DBUtil.sqlQuote(bioregion.getName()) 
-            + " and s.status in " + StatusSet.getCountables()
-            + " and " + SpecimenDb.getFlagCriteria()
-            + " group by taxon_name";
+          String query = speciesFromSpecimenSql(bioregion.getName());
 
           s_log.debug("populateSpeciesFromSpecimen() query:" + query);
 

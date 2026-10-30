@@ -190,7 +190,7 @@ public final class TaxaPageAction extends AntwebAction {
 // no double
             //taxaPage.setOverview(overview);
             //A.log("execute() overview:" + overview);
-            String successMsg = taxaPage.fetchChildren(connection, overview, rank, withImages, withTaxa, withSpecimen, true, caste, new StatusSet(statusSetStr)); //, orderBy);
+            String successMsg = taxaPage.fetchChildren(connection, overview, rank, withImages, withTaxa, withSpecimen, true, caste, StatusSet.listStatusSet(statusSetStr, overview.getName())); //, orderBy); list choice -> its criteria (2026-10-30)
             // String successMsg = "SUCCESS!";
             if (successMsg != null) {
                 request.setAttribute("message", successMsg);

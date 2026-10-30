@@ -1,79 +1,55 @@
 <%@ page import="org.calacademy.antweb.Group" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
-<!-- statusesDisplay.jsp  Found in showBrowse-body.jsp, taxonomicPage-body.jsp, and taxonomicPageImages-body.jsp -->
+<!-- statusesDisplay.jsp  Found in showBrowse-body.jsp, taxonomicPage-body.jsp, taxonomicPageImages-body.jsp and taxonChildImages.jsp -->
 
-<!-- Must have String statusSet and statusSetSize defined -->
+<!-- Must have String statusSet (the list's choice, StatusSet.getStatusSet) and overview defined -->
 
 <%
-  // Do not display for species if a browse.do request.
+  // The status selector of a list, Brian Fisher 2026-10-30 (docs/numbers.md "Status choice of lists"): four plain
+  // choices (Valid species, Valid species + morphospecies, All names, Fossil species), each the rows of a number of the
+  // place page; the AntCat list and Fossil Ants offer their own sets. A choice links to the same page with statusSet
+  // replaced (statusSetSize, the old "more options", is dropped). Not shown on a species or subspecies page (browse.do,
+  // images.do): it lists the specimens of one name, and the choice does not apply there (BrowseAction).
   String sdRank = (String) request.getParameter("rank");
   String initialTarget = HttpUtil.getTarget(request);
 
+  // getTargetMinusParam removes every parameter that starts with the name: statusSet and statusSetSize both go.
   String sdTarget = HttpUtil.getTargetMinusParams(initialTarget, "statusSet", "statusSetSize");
 
   sdTarget = HttpUtil.getUniquedTarget(request, sdTarget);
-  //A.log("statusesDisplay initialTarget:" + initialTarget + " after:" + sdTarget);
 
-  String sdDisplayChildRank = null;
-  if (initialTarget.contains("taxonomicPage")) {
-    sdDisplayChildRank = Formatter.initCap(sdRank);
-  } else {
-    sdDisplayChildRank = Formatter.initCap(Rank.getNextRank(sdRank));
-    //A.log("*** sdDisplayChildRank:" + sdDisplayChildRank + " sdRank:" + sdRank);
-  }
-  // if no rank parameter, we will be vague. It is for display on a page like: http://localhost/antweb/browse.do?genus=myrmecina&statusSet=all
+  boolean sdListPage = initialTarget.contains("taxonomicPage");
+  String sdRowRank = sdListPage ? sdRank : Rank.getNextRank(sdRank);
+  String sdDisplayChildRank = Formatter.initCap(sdRowRank);
+  // if no rank parameter, we will be vague. It is for display on a page like: http://localhost/antweb/browse.do?genus=myrmecina
   if (sdDisplayChildRank == null) sdDisplayChildRank = "Children";
 
-  if (false && Rank.SPECIES.equals(sdRank) && !(sdTarget.contains("taxonomicPage.do"))) {
-    // Do nothing. False added Oct 14, 2018 to handle missing specimens here:
-    //   http://localhost/antweb/browse.do?genus=hypoponera&species=us-ca01&rank=species&project=allantwebants&statusSet=all
-    //A.log("statusesDisplay.jsp sdRank:" + sdRank);
-  } else {
-    boolean showStatuses = sdTarget.contains("browse.do") 
+  boolean sdSpecimenRows = !sdListPage && (Rank.SPECIES.equals(sdRank) || Rank.SUBSPECIES.equals(sdRank));
+  boolean showStatuses = !sdSpecimenRows && (sdTarget.contains("browse.do")
       || sdTarget.contains("taxonomicPage.do")
-      || sdTarget.contains("images.do");
+      || sdTarget.contains("images.do"));
 
-    if (showStatuses) { %>
-    
+  if (showStatuses) {
+    String sdOverviewName = overview == null ? null : overview.getName();
+    String[] sdChoices = StatusSet.choicesFor(sdOverviewName);
+    String sdJoin = sdTarget.contains("?") ? "&" : "?";
+%>
        <div id="status_toggle">
            <div class="left"><a href=<%= AntwebProps.getDomainApp() %>/statusDisplayPage.do target="new"><%= sdDisplayChildRank %> Status</a>:</div>
-           <div id="change_status" class="has_options">
-               <span id="which_status"><span style="text-transform:capitalize;"><%= Html.esc(statusSet) %></span></span>
+           <div id="change_status" class="has_options" data-status-set="<%= Html.escAttr(statusSet) %>">
+               <span id="which_status"><span><%= Html.esc(StatusSet.choiceLabel(statusSet, sdRowRank, sdOverviewName)) %></span></span>
                <div id="status_choice" class="options">
                    <ul>
- <%
-      ArrayList<String> statusSets = null;
-      if ("min".equals(statusSetSize)) {
-        statusSets = new ArrayList<String>();
-        statusSets.add(StatusSet.VALID_EXTANT);
-        statusSets.add(StatusSet.VALID);
-        if (Project.WORLDANTS.equals(overview.getName())) {
-          statusSets.add(StatusSet.COMPLETE);
-        } else {
-          statusSets.add(StatusSet.ALL);         
-        }
-      } else {
-        statusSets = StatusSet.getStatusSets();
-      }
-      for (String aStatusSet : statusSets) { 
-        if (aStatusSet.equals(Status.VALID)) aStatusSet = "Valid (with fossils)";
+<%
+    for (String aStatusSet : sdChoices) {
 %>
-                     <li><a href="<%= Html.escAttr(sdTarget + "&statusSet=" + aStatusSet) %>"><span style="text-transform:capitalize;"><%= Html.esc(aStatusSet) %></span></a></li>
-   <% }
-      //A.log("statusesDisplay() statusSets:" + statusSets + " showStatus:" + showStatuses + " statusSet:" + statusSet + " statusSetSize:" + statusSetSize + " sdTarget:" + sdTarget);
-
-      if ("min".equals(statusSetSize)) { %>
-                     <li><a href="<%= Html.escAttr(sdTarget + "&statusSetSize=max" + "&statusSet=" + statusSet) %>">Click for more options!</a></li> 
-   <% } else { %>
-                     <li><a href="<%= Html.escAttr(sdTarget + "&statusSetSize=min" + "&statusSet=" + statusSet) %>">Click for less options!</a></li> 
-   <% } %>
+                     <li><a data-status-choice="<%= Html.escAttr(aStatusSet) %>" href="<%= Html.escAttr(sdTarget + sdJoin + "statusSet=" + Html.url(aStatusSet)) %>"><span><%= Html.esc(StatusSet.choiceLabel(aStatusSet, sdRowRank, sdOverviewName)) %></span></a></li>
+<%  } %>
                    </ul>
                </div>
            </div>
        </div>
-  <% 
-    } // end showStatuses
-  }  
- %>
-
+<%
+  } // end showStatuses
+%>

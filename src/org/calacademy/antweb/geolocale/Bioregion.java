@@ -334,6 +334,8 @@ public class Bioregion extends LocalityOverview implements Countable {
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
           + " join bioregion_taxon bt on taxon.taxon_name = bt.taxon_name " 
           + " where " + rankClause
+          // a subfamily row's Genera: valid genera and morphogenera, no placeholders (2026-10-30, PlaceTotals.childCountCondition)
+          + org.calacademy.antweb.home.PlaceTotals.childCountCondition(rank, "taxon")
           + new StatusSet(StatusSet.ALL).getAndCriteria()
 	      + "   and bt.bioregion_name = '" + getName() + "'"
           + " group by parentTaxonName ";
