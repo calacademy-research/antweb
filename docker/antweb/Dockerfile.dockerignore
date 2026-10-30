@@ -37,4 +37,5 @@ etc/flickr.properties
 etc/api-db.properties
 etc/scheduler.properties
 etc/name-update.properties
+etc/cleanup.properties
 etc/upload-email.properties

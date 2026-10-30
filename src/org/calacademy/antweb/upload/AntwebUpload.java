@@ -866,6 +866,7 @@ or for Worldants upload
                         if (validDate("datecollectedstart", formatDate, code)) {
                             fields.append("datecollectedstart,");
                             values.append("'" + formatDate + "',");
+                            noteMonthDayGuess("Date collected start", dateStr, formatDate);
                         } else {
                             getMessageMgr().addToMessages(MessageMgr.invalidDateCollectedStart, Html.esc(dateStr));
                             //LogMgr.appendLog("dateCollected.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
@@ -874,12 +875,14 @@ or for Worldants upload
                     }
                     case "datecollectedend": {
                         String dateStr = (String) item.get("datecollectedend");
-                        String formatDate = DateUtil.getConstructDateStr(dateStr);
+                        // The end date column: a range ("8-11 Feb 2010") gives its last day (2026-10-29).
+                        String formatDate = DateUtil.getConstructEndDateStr(dateStr);
                         fields.append("datecollectedendstr,");
                         values.append(sqlString(dateStr) + ",");
                         if (validDate("datecollectedend", formatDate, code)) {
                             fields.append("datecollectedend,");
                             values.append("'" + formatDate + "',");
+                            noteMonthDayGuess("Date collected end", dateStr, formatDate);
                         } else {
                             getMessageMgr().addToMessages(MessageMgr.invalidDateCollectedEnd, Html.esc(dateStr));
                             A.log("dateCollected - code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
@@ -897,6 +900,7 @@ or for Worldants upload
                         if (validDate("datedetermined", formatDate, code)) {
                             fields.append("datedetermined,");
                             values.append("'" + formatDate + "',");
+                            noteMonthDayGuess("Date determined", dateStr, formatDate);
                         } else {
                             getMessageMgr().addToMessages(MessageMgr.invalidDateDetermined, Html.esc(dateStr));
                             LogMgr.appendLog("dateDetermined.log", "code:" + code + " dateStr:" + dateStr + " formatDate:" + formatDate);
@@ -1041,6 +1045,22 @@ or for Worldants upload
 	}
 
 	private static final java.util.regex.Pattern ISO_DATE = java.util.regex.Pattern.compile("\\d{4}-\\d{2}-\\d{2}");
+
+	/**
+	 * A date like "05/04/2013" (both numbers could be the month) is read as month/day, and the line is listed in the
+	 * report's Notes under "Date read as month/day (please check)" with the date as written and as read (Brian Fisher,
+	 * 2026-10-29). The report row gives the line and the specimen code (MessageMgr records them).
+	 */
+	void noteMonthDayGuess(String field, String dateStr, String formatDate) {
+	  String row = monthDayGuessRow(field, dateStr, formatDate);
+	  if (row != null) getMessageMgr().addToMessages(MessageMgr.dateReadAsMonthDay, row);
+	}
+
+	/** The report row for noteMonthDayGuess (HTML escaped), or null when the date is not a month/day guess. */
+	public static String monthDayGuessRow(String field, String dateStr, String formatDate) {
+	  if (formatDate == null || !DateUtil.isAmbiguousMonthDay(dateStr)) return null;
+	  return Html.esc(field + ": " + dateStr.trim() + " read as " + formatDate + " (month/day)");
+	}
 
 	private boolean validDate(String dateType, String formatDate, String code) {
 	  if (formatDate == null) return false;

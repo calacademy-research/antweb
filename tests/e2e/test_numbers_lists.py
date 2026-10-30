@@ -10,6 +10,8 @@ region, subregion, bioregion, museum, project) is checked on every run, a differ
           PlaceTotals.rankCondition and TaxaPage.fetchChildren); the header = the rows the page lists. A curated
           project's Subfamilies counts its subfamily rows of every status (B67, PlaceTotals.listedCondition): the
           header with counted statuses <= Subfamilies <= the header of the complete list.
+          Without a status in the address (2026-10-29) the list opens with every counted status, so its header equals
+          Species, and a status chosen on an earlier page is not carried over.
   row 39  isImaged=false: "U Unimaged Species (out of N)": U = the rows listed, N = the place's Species, and the
           names listed = the names of the list that the API's /unimagedGeolocaleTaxa returns for the place (the
           same rule written twice: TaxaPage.findUnimaged in Java, imagedTaxaSql in the API) (countries).
@@ -106,6 +108,40 @@ def test_list_headers_equal_place_numbers_of_every_kind():
     if not pending_rules:
         wrong += stored
     assert not wrong, (f"{len(checked)} places {ns.day_note()} ({PENDING}); not read: {slow}:\n" + "\n".join(wrong))
+    if pending_rules:
+        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28") + ":\n" + "\n".join(stored))
+
+
+def test_default_list_shows_the_species_number_and_forgets_the_last_choice():
+    """Brian Fisher, 2026-10-29: a place's species list without a status in the address opens with the statuses of the
+    place's Species number (valid names and morphospecies: the header equals Species / subspecies / morphospecies on
+    the place page and the list with statusSet=all), for every kind of place, and a status chosen on one page is not
+    carried to the next (it was kept in the session): the same session first opens the list with valid extant."""
+    wrong, stored, checked = [], [], []
+    s = ns.new_session()
+    for p in places():
+        stats = stats_of(p)
+        if "species" not in stats:
+            continue
+        if ns.fetch(p.list_url("species", "valid extant"), s) is None:
+            continue
+        html = ns.fetch(f"/taxonomicPage.do?rank=species&{p.params}", s)
+        explicit = ns.fetch(p.list_url("species", "all"), s)
+        if html is None or explicit is None:
+            continue
+        n, text = ns.header(html)
+        n_all, _ = ns.header(explicit)
+        if n is None or n != n_all:
+            wrong.append(f"{p}: the list without a status says {text!r}, with statusSet=all {n_all}")
+        elif n != stats.get("species", 0):
+            stored.append(f"{p}: the list without a status {n}, place page Species {stats.get('species', 0)}")
+        checked.append(repr(p))
+    if not checked:
+        pytest.skip("no place list read " + ns.day_note())
+    pending_rules = stored and ns.counting_rules_counted() is False
+    if not pending_rules:
+        wrong += stored
+    assert not wrong, f"{len(checked)} places {ns.day_note()} ({PENDING}):\n" + "\n".join(wrong)
     if pending_rules:
         pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28") + ":\n" + "\n".join(stored))
 

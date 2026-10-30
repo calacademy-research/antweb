@@ -318,3 +318,18 @@ def test_species_page_imaged_castes_equal_a_recount():
         pytest.skip("no species page recounted (data, or more than one API page) " + ns.day_note())
     assert not wrong, f"{checked} {ns.day_note()}:\n" + "\n".join(wrong)
 
+
+
+# ------------------------------------------------------------------------------------------- 6. large genera
+
+def test_large_genera_have_an_image_on_a_place_genus_images_page():
+    """Brian Fisher, 2026-10-29: the Afrotropical genus images page listed Crematogaster and Pheidole under "Genera with
+    no image in AntWeb", though both have many imaged Afrotropical species. Their name list in the place was over
+    10,000 characters and was dropped (Taxon.getUnpickedFromSpeciesSet); names are now checked in groups
+    (Taxon.setStrChunks, TaxonImageNamesTest)."""
+    html = ns.get("/taxonomicPage.do?rank=genus&bioregionName=Afrotropical&images=true")
+    assert "pheidole" in html.lower(), "Pheidole is not on the Afrotropical genus images page"
+    m = re.search(r"with no image in AntWeb \(\d+\):</b>(.*?)(?:<br|</div>|$)", html, re.S)
+    unimaged = re.sub(r"<[^>]+>", " ", m.group(1)) if m else ""
+    for genus in ("Pheidole", "Crematogaster"):
+        assert genus not in unimaged, f"{genus} is listed with no image: {unimaged.strip()[:300]}"

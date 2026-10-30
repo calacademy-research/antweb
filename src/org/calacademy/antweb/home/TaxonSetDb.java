@@ -77,6 +77,11 @@ public abstract class TaxonSetDb extends AntwebDb {
     // This should only need to be run once. Run from UtilData.
     // Retained in scheduler because a specimen could be removed from a specimen list.
     public static String dataCleanup(Connection connection) throws SQLException {
+      return dataCleanup(connection, BlankNameCleanup.isOn());
+    }
+
+    // blankSafe: the morphospecies cleanups use BlankNameCleanup's rule (decided once by set 2's dataCleanup).
+    public static String dataCleanup(Connection connection, boolean blankSafe) throws SQLException {
       String message = "";
       // Curator rows whose taxon row is gone (for example a morphospecies whose specimens are
       // missing tonight) are parked first and come back when the name exists again
@@ -84,8 +89,8 @@ public abstract class TaxonSetDb extends AntwebDb {
       message += "parked:" + new CuratorTaxonSetDb(connection).parkCuratorRowsWithoutTaxon() + " ";
       // Only operating on the Editable ones.
       GeolocaleTaxonDb geolocaleTaxonDb = new GeolocaleTaxonDb(connection);
-      message += geolocaleTaxonDb.deleteUncuratedMorphosWithoutSpecimen();
-      message += " " + new ProjTaxonDb(connection).deleteUncuratedMorphosWithoutSpecimen();
+      message += geolocaleTaxonDb.deleteUncuratedMorphosWithoutSpecimen(blankSafe);
+      message += " " + new ProjTaxonDb(connection).deleteUncuratedMorphosWithoutSpecimen(blankSafe);
       message += " " + geolocaleTaxonDb.deleteGeolocaleTaxaWithoutTaxon();     
 
       int c = new UtilDb(connection).deleteFrom("proj_taxon", "where taxon_name not in (select taxon_name from taxon) and project_name not in ('worldants')");

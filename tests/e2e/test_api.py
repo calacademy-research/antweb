@@ -146,12 +146,14 @@ RECORD_FIELDS = {
 @pytest.mark.parametrize("name", sorted(ROUTES))
 def test_reply_shape_and_limit(name):
     """JSON with metaData and the route's list, at most `limit` records; the count in metaData is the
-    number of records (docs/numbers.md #101, #105, #111, #113, #115)."""
+    number of records (docs/numbers.md #101, #105, #111, #113, #115); the licence (CC BY 4.0) is in the reply."""
     path, key, count_key = ROUTES[name]
     body = _get(path).json()
     meta = body.get("metaData")
     assert isinstance(meta, dict), f"{name}: no metaData: {list(body)}"
     assert isinstance(body.get(key), list), f"{name}: no {key!r} list: {list(body)}"
+    # Licence CC BY 4.0 on every reply (2026-10-29): the top-level "license" and the Link header.
+    assert (body.get("license") or {}).get("url") == "https://creativecommons.org/licenses/by/4.0/", f"{name}: license {body.get('license')}"
     records = body[key]
     assert len(records) <= 5, f"{name}: {len(records)} records for limit=5"
     if count_key:

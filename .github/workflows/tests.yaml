@@ -142,6 +142,11 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_inputs.py
 
+      - name: API licence CC BY 4.0 on every reply (Link header, top-level license; tests/unit/test_api_license.py)
+        run: |
+          docker run --rm --entrypoint python -e LICENSE_JAVA=/repo/License.java -v "$PWD/tests/unit:/t:ro" \
+            -v "$PWD/src/org/calacademy/antweb/util/License.java:/repo/License.java:ro" antweb/api:dev /t/test_api_license.py
+
       - name: API audit fixes of 2026-10-29 (one geolocale's list for /specimens, adm1s in their own country) (tests/unit/test_api_audit_tj.py)
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_audit_tj.py
@@ -709,6 +714,9 @@ jobs:
       - name: No email tells the reader to ignore it (tests/unit/test_email_texts.py)
         run: python3 tests/unit/test_email_texts.py
 
+      - name: One licence statement, CC BY 4.0; no older Creative Commons wording (tests/unit/test_license_statement.py)
+        run: python3 tests/unit/test_license_statement.py
+
       - name: No PHP in the server image or the repository (tests/unit/test_no_php.py)
         run: python3 tests/unit/test_no_php.py
 
@@ -890,6 +898,30 @@ jobs:
             grep -q "^OK (8 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of the decisions of 2026-10-29 (upload date ranges and month/day guesses, the default status of place lists, the blank-name-safe cleanups preview first)
+        # Decisions1029Test: a range ("8-11 Feb 2010", en dash too) is saved as its first day, the end date column keeps the
+        # last day; 05/04/2013 is read as month/day and listed in the report's Notes ("Date read as month/day (please
+        # check)", not counted in the email); a list without a status opens with every counted status (the place's Species
+        # number) and ignores a status kept in the session; BlankNameCleanup previews before it deletes.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/Decisions1029Test.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.Decisions1029Test > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            grep -v "LogMgr\|constructDateStr" /tmp/out.txt | tail -3
+            grep -q "^OK (7 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+          '
+
+      - name: Place pages say Species / subspecies / morphospecies (tests/unit/test_place_species_label.py)
+        run: python3 tests/unit/test_place_species_label.py
+
       - name: Upload and nightly safety (upload flag, refused upload as, stopped upload rolled back, list removals) (tests/unit/test_upload_nightly_safety.py)
         run: python3 tests/unit/test_upload_nightly_safety.py
       - name: Database tests against MySQL 8.4 (Pacific dates in the connection pools; curator species-list rows kept; name update; count check; place image counts; region counts; place renames keep page text; every place's numbers; specimen name history; download guards)
@@ -965,6 +997,13 @@ jobs:
           # specimen or image numbers and the count check skips it.
           # DownloadGuardsDbTest: a place download holds only the specimens collected there (5,000 cap), the paged
           # search list (COUNT, LIMIT/OFFSET, sort before paging, images/types only), ant specimens only on place pages.
+          # PlaceTaxonNotesDbTest (2026-10-29): country and adm1 lists get the genus rows of specimens identified to genus
+          # (not the names); the genus page's indet line counts the place's specimens; the not-recorded notice's queries.
+          # BlankNameCleanupDbTest (2026-10-29): with specimens of blank name, the old cleanups delete nothing; the
+          # blank-safe ones delete the names and list rows no specimen uses (not AntCat's, not curators' rows, not blank
+          # rows) and the preview counts them. Last: it makes its own small tables.
+          # LicenseUpdateDbTest (2026-10-29): the start-up update of stored licence texts to CC BY 4.0 backs up first,
+          # is a no-op on a second run and skips a missing license table. Last: it makes its own small tables.
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
             set -e
@@ -986,8 +1025,11 @@ jobs:
               /t/org/calacademy/antweb/home/NightlyCountOrderDbTest.java \
               /t/org/calacademy/antweb/home/TaxonTreeCountDbTest.java \
               /t/org/calacademy/antweb/home/ArtistMoveDbTest.java \
-              /t/org/calacademy/antweb/home/NumberDecisionsDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:5 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7; do
+              /t/org/calacademy/antweb/home/NumberDecisionsDbTest.java \
+              /t/org/calacademy/antweb/home/PlaceTaxonNotesDbTest.java \
+              /t/org/calacademy/antweb/home/BlankNameCleanupDbTest.java \
+              /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:5 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:3 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
@@ -1164,6 +1206,33 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.search.SearchRulesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (8 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the genus images of a place (large genera checked in groups of names; TaxonImageNamesTest)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/TaxonImageNamesTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.TaxonImageNamesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (5 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the notes of taxon pages in a place (indet line, not recorded; PlaceTaxonNotesTest, 2026-10-29)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/PlaceTaxonNotes.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/PlaceTaxonNotesTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.PlaceTaxonNotesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (9 tests)" /tmp/out.txt
           '
 
       - name: Page decisions of 2026-10-27 (upload lists, curator emails, museum Recalculate, legacy images, Native, search order, help text, field guide caste, bot blocking, menu label, no Universal Analytics) (tests/unit/test_decided_pages.py)

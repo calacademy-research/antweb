@@ -37,7 +37,7 @@ def _method(text, signature):
 
 
 def test_data_cleanup_parks_curator_rows_before_deleting():
-    body = _method(_code(HOME / "TaxonSetDb.java"), "public static String dataCleanup(")
+    body = _method(_code(HOME / "TaxonSetDb.java"), "public static String dataCleanup(Connection connection, boolean blankSafe)")
     park = body.index("parkCuratorRowsWithoutTaxon")
     assert park < body.index("deleteGeolocaleTaxaWithoutTaxon")
     assert park < body.index('deleteFrom("proj_taxon"')
@@ -58,9 +58,9 @@ def test_upload_orphan_step_parks_curator_rows():
 
 
 def test_morpho_cleanups_spare_curator_rows():
-    proj = _method(_code(HOME / "ProjTaxonDb.java"), "String deleteUncuratedMorphosWithoutSpecimen(")
+    proj = _method(_code(HOME / "ProjTaxonDb.java"), "public String deleteUncuratedMorphosWithoutSpecimen(boolean blankSafe)")
     assert "source not in" in proj and "curatorSourceList()" in proj
-    geo = _method(_code(HOME / "GeolocaleTaxonDb.java"), "String deleteUncuratedMorphosWithoutSpecimen(")
+    geo = _method(_code(HOME / "GeolocaleTaxonDb.java"), "public String deleteUncuratedMorphosWithoutSpecimen(boolean blankSafe)")
     assert "gt.source = '\" + Source.SPECIMEN" in geo
 
 

@@ -543,7 +543,7 @@ Expect: one line per field and reason with the number of specimens, the number o
 
 ### Specimens with an empty name and the set 2 clean-up
 
-Set 2 starts with a clean-up (`UtilDataAction` action `dataCleanup`: `TaxonDb.deleteSpeciesWithoutSpecimenOrAntcatSource` and `deleteGeneraWithoutSpecimenOrAntcatSource`) that deletes species, subspecies and genus rows of the `taxon` table that are not in the AntCat list (worldants) and have no specimen. It uses `taxon_name not in (select taxon_name from specimen)` (genera: `(subfamily, genus) not in (select subfamily, genus from specimen)`), which deletes nothing at all as soon as one specimen has a NULL name (or a NULL subfamily or genus). Brian Fisher, 2026-10-27: count first, then decide; the clean-up itself is not changed. This check counts the specimens with a NULL or empty name, subfamily or genus, the rows the clean-up deletes tonight (NOT IN) and the rows the corrected rule (NOT EXISTS, NULL-safe for genera) would delete.
+Set 2 starts with a clean-up (`UtilDataAction` action `dataCleanup`: `TaxonDb.deleteSpeciesWithoutSpecimenOrAntcatSource` and `deleteGeneraWithoutSpecimenOrAntcatSource`) that deletes species, subspecies and genus rows of the `taxon` table that are not in the AntCat list (worldants) and have no specimen. It used `taxon_name not in (select taxon_name from specimen)` (genera: `(subfamily, genus) not in (select subfamily, genus from specimen)`), which deletes nothing at all as soon as one specimen has a NULL name (or a NULL subfamily or genus); so did four other cleanups (morphospecies list rows, and after each upload the group's orphan names and indets without specimens). Brian Fisher, 2026-10-27: count first, then decide. 2026-10-29: make them safe with blank names and turn them back on (`home/BlankNameCleanup`, [flows/nightly.md](flows/nightly.md) set 2): the first nightly run after the deploy only previews (compute.log, lines starting "blank-name-safe cleanup preview (2026-10-29)": per cleanup the rows the old and the blank-safe rule delete now, with examples); the run after it deletes. To keep previewing, see "Blank-name clean-up kept in preview" under Switches. This check counts the specimens with a NULL or empty name, subfamily or genus, the rows the clean-up deletes tonight (NOT IN) and the rows the corrected rule (NOT EXISTS, NULL-safe for genera) would delete.
 
 ```
 # ssh root@165.232.136.170   (staging)
@@ -551,6 +551,34 @@ F=/root/antweb-next/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^pa
 ```
 
 Expect: first block, seven numbers. If `specimens_null_name` (or `specimens_null_subfamily_or_genus` for genera) is above 0, the `_now` numbers are 0 (the clean-up deletes nothing tonight) and the `_corrected` numbers are the backlog the corrected rule would delete at once. Then up to 50 lines: the names the corrected rule would delete, by rank, status and source, with one example each. Paste the output to Claude; nothing is deleted until Brian decides.
+
+**Specimens with a blank name, by group** (read-only, 2026-10-29): the specimens whose taxon name, subfamily, genus or species is NULL or empty, per upload group, with one example code each. A blank species alone is usual for old lines identified only to genus.
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+F=/root/antweb/etc/db.properties; docker exec -i -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant <<'SQL'
+select s.access_group, g.name as group_name, count(*) as specimens,
+  sum(s.taxon_name is null) as name_null, sum(s.taxon_name is not null and trim(s.taxon_name) = '') as name_empty,
+  sum(s.subfamily is null or trim(s.subfamily) = '') as subfamily_blank, sum(s.genus is null or trim(s.genus) = '') as genus_blank,
+  sum(s.species is null or trim(s.species) = '') as species_blank, min(s.code) as example_code
+from specimen s left join ant_group g on g.id = s.access_group
+where s.taxon_name is null or trim(s.taxon_name) = '' or s.subfamily is null or trim(s.subfamily) = ''
+   or s.genus is null or trim(s.genus) = '' or s.species is null or trim(s.species) = ''
+group by s.access_group, g.name order by specimens desc;
+select count(*) as all_specimens, sum(taxon_name is null or trim(taxon_name) = '') as blank_name,
+  sum(subfamily is null or trim(subfamily) = '' or genus is null or trim(genus) = '') as blank_subfamily_or_genus,
+  sum(species is null or trim(species) = '') as blank_species
+from specimen;
+SQL
+```
+
+Expect: one line per group that has such specimens (group number and name, the specimens, how many have each blank, an example code), then one line of totals. `blank_name` and `blank_subfamily_or_genus` above 0 are what stopped the old clean-ups.
+
+## Licence of images and data
+
+- 2026-10-29: license CC BY 4.0 for all images and data (Brian Fisher). The text is in one place, `src/org/calacademy/antweb/util/License.java` (pages include `web/common/licenseStatement.jsp`); `tests/unit/test_license_statement.py` fails on older Creative Commons wording.
+- The stored texts were updated by the application itself at its first start after the deploy (`LicenseUpdateDb`, from `LoginMgr`): `image_upload.license` and the old `license` table, backups first in `image_upload_license_bak_20261029` and `license_bak_20261029`; the counts are one warning line in the log ("licence set to CC BY 4.0"); later starts change nothing. Record and rollback: `db/upgrade/8.115/2026-10-29-license.sql`.
+- The API (`/v3.1/`) states the licence on every reply: header `Link: <https://creativecommons.org/licenses/by/4.0/>; rel="license"`, and a top-level `license` object in JSON data replies.
 
 ## Alerts
 
@@ -589,7 +617,14 @@ Why did the container restart? `grep -h "restart" /root/antweb/logs/detail/reboo
 
 ## Switches
 
-The files are in `etc/` of the project folder, not tracked by git, read-only for the application. Each file must be readable by group 2000: create it with the commands below. The application re-reads `editor`, `upload-email`, `taxonworks`, `mail` and `turnstile` within a minute; `scheduler.properties` at the end of the next nightly run.
+The files are in `etc/` of the project folder, not tracked by git, read-only for the application. Each file must be readable by group 2000: create it with the commands below. The application re-reads `editor`, `upload-email`, `taxonworks`, `mail`, `turnstile` and `cleanup` within a minute; `scheduler.properties` at the end of the next nightly run.
+
+**Blank-name clean-up kept in preview** (2026-10-29; `home/BlankNameCleanup`): the clean-ups keep their old rules and set 2 writes the preview to compute.log every night. Remove the file to let the blank-safe rules delete from the next run; `blankNameCleanup=on` starts them at once.
+
+```
+# ssh root@165.232.137.86   (antweb-prod)
+cd /root/antweb/etc && printf 'blankNameCleanup=preview\n' > cleanup.properties && chgrp 2000 cleanup.properties && chmod 640 cleanup.properties && cat cleanup.properties
+```
 
 **Upload-complete emails off** (on again: remove the file):
 

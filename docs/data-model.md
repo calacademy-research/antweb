@@ -534,7 +534,7 @@ name at that place (`subfamily_count`, `genus_count`, `species_count`, `specimen
 `created`, `modified`; `specimen_local_count` (not named in any SQL of the code).
 
 **Written by.** Set 2: `GeolocaleTaxonDb.generateGeolocaleTaxaFromSpecimens` (deletes and re-inserts the
-specimen-derived rows), `GeolocaleTaxonCountDb.childrenCountCrawl`, `calcEndemic`; set 1: AntCat rows
+specimen-derived rows: valid names, and since 2026-10-29 the genus rows of specimens of the other counted statuses), `GeolocaleTaxonCountDb.childrenCountCrawl`, `calcEndemic`; set 1: AntCat rows
 (`SpeciesListUploadDb.prepareDatabase`); set 3: names moved to the current valid name
 (`TaxonSetDb.updateTaxonSetTaxonNames`); set 4: `image_count`; curators' species list tool (`SpeciesListDb`,
 `GeolocaleTaxonDb.insertItem`, `deleteItem`).
@@ -792,7 +792,9 @@ Created by the application; record and undo in `db/upgrade/8.113/2026-10-20-plac
 ### `license`
 
 **Purpose.** Image licences (renamed column `uid` to `id` in `db/upgrade/8.0`). No SQL in the code reads or writes
-it; `image.license` is written as the constant 1 (`ImageDb.insertImage`) and the licence text is in the JSPs.
+it; `image.license` is written as the constant 1 (`ImageDb.insertImage`). The site licence is CC BY 4.0 since
+2026-10-29 (`util/License.java`); `image_upload.license` records `License.LINE` for new uploads, older rows keep the
+BY-SA/GFDL text they were saved with.
 
 **Status.** Unused by the code. Candidate to drop after checking that `image.license` = 1 means the same licence
 everywhere.
@@ -1266,6 +1268,7 @@ in the name, as no date was set).
 | `geolocale_taxon_bak_20261019`, `proj_taxon_bak_20261019` | the regional and project lists before the lost morphospecies were restored (2026-10-19) | about 2026-11-19 |
 | `image_upload_bak_20261019` | `image_upload.created` before the upload dates were corrected (2026-10-19; the undo is in the to-do list) | about 2026-11-19 |
 | `ant_group_abbrev_bak_20261020` | `ant_group.abbrev` before the group short names were set (2026-10-20) | about 2026-11-20 |
+| `image_upload_license_bak_20261029`, `license_bak_20261029` | the stored licence texts before they were set to CC BY 4.0 (made by the application at its first start with LicenseUpdateDb, 2026-10-29; rollback in db/upgrade/8.115/2026-10-29-license.sql) | about 2026-11-29 |
 
 The run-time backups `login_inactive_backup_20261018` and `description_sanitize_backup_20261016_200412` on
 production are the tables of the two patterns below (to-do list: delete about 2026-11-18 and 2026-11-16).
@@ -1322,6 +1325,14 @@ Backup, see the table above.
 Backup, see the table above.
 
 ### `ant_group_abbrev_bak_20261020`
+
+Backup, see the table above.
+
+### `image_upload_license_bak_20261029`
+
+Backup, see the table above.
+
+### `license_bak_20261029`
 
 Backup, see the table above.
 

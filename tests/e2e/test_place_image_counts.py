@@ -4,7 +4,7 @@ Brian Fisher, 2026-10-20: the Madagascar country page showed Images 3,435 althou
 about 29,700 image files of Madagascar specimens (the number was the sum of per-taxon image counts that
 nightly set 2 read before set 4 had filled them in). Images now come straight from the image table
 (PlaceImageCountDb, nightly set 4). Brian's layout ("AntWeb Country Pages", 2026-10-20): a table in four
-sections, Taxonomic diversity (Subfamilies, Genera, Species / subspecies, Valid species / subspecies),
+sections, Taxonomic diversity (Subfamilies, Genera, Species / subspecies / morphospecies, Valid species / subspecies),
 Endemism and introduced species (Endemic, Introduced), Specimen holdings (Specimens, Imaged specimens) and
 Image documentation (Images, with Ant images and Label images under it), each row with its definition.
 

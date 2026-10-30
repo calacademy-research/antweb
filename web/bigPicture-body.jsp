@@ -380,5 +380,5 @@ is shown. Camera maker's notes and the embedded thumbnail are binary data and ar
 %>
 <input id="for_print" type="text" value="Photo by <%= Html.escAttr(photographer) %> / From www.antweb.org">
 <input id="for_web" type="text" value="Photo by <%= Html.escAttr(photographer) %> / URL: <%= Html.escAttr(HttpUtil.getFullJspTarget(request)) %>">
-<input id="extra_copyright" type="text" value="Image Copyright &copy; AntWeb 2002 - <%= year %>.  Licensing: Creative Commons Attribution License">
+<input id="extra_copyright" type="text" value="Image Copyright &copy; AntWeb 2002 - <%= year %>.  Licensing: <%= Html.escAttr(org.calacademy.antweb.util.License.LINE) %>">
 </div>

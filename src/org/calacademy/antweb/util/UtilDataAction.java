@@ -467,6 +467,10 @@ public class UtilDataAction extends AntwebAction {
                 message = "set1 - ";
                 OperationDetails worldants = doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
                 message += worldants;
+                if (worldants != null && "success".equals(worldants.getMessage())) {
+                    // The e2e tests read this line: the bioregion lists were rebuilt with valid names only (2026-10-29).
+                    LogMgr.appendLog("compute.log", "  AntCat import done (" + org.calacademy.antweb.upload.SpeciesListUpload.BIOREGION_VALID_LOG + ")", true);
+                }
                 message += " " + doAction("taxonFinish", form, accessLogin, accessGroup, connection, request, mapping);
                 // CAS specimens from TaxonWorks (GitHub #27). Does nothing without etc/taxonworks.properties.
                 // Waits up to 30 minutes (Brian Fisher, 2026-10-24; was 90) for the archive TaxonWorks builds after this run's
@@ -510,8 +514,10 @@ public class UtilDataAction extends AntwebAction {
                 // rule of the lists (species and subspecies of a counted status), after resetting the row. It stays
                 // available as an admin job (utilData.do?action=geolocaleTaxonFix), now by the same rule.
                 //GeolocaleMgr.populate(connection, true, false); // Unnecessary. We reload all in set5.
-                // The e2e tests read this line: tonight's geolocale endemic flags follow the endemic rule of 2026-10-28.
-                LogMgr.appendLog("compute.log", "  Set 2 done (" + CountInvariants.ENDEMIC_RULE_LOG + ")", true);
+                // The e2e tests read this line: tonight's geolocale endemic flags follow the endemic rule of 2026-10-28,
+                // and the country and adm1 lists have the genus rows of every specimen identified to genus (2026-10-29).
+                LogMgr.appendLog("compute.log", "  Set 2 done (" + CountInvariants.ENDEMIC_RULE_LOG + "; "
+                    + org.calacademy.antweb.home.GeolocaleTaxonDb.GENUS_ROWS_LOG + ")", true);
             }
 
             // dev: 7.05 mins. Prod: 14.52 mins. Dev2: 12.85
@@ -655,9 +661,14 @@ public class UtilDataAction extends AntwebAction {
 		  // First put back curator list rows parked on an earlier night whose name exists again
 		  // (set 1 has just reloaded the specimens), then clean up (which parks before deleting).
 		  message = new CuratorTaxonSetDb(connection).restore();
-		  message += TaxonDb.deleteSpeciesWithoutSpecimenOrAntcatSource(connection);
-		  message += TaxonDb.deleteGeneraWithoutSpecimenOrAntcatSource(connection);
-          message += TaxonSetDb.dataCleanup(connection);
+		  // Blank names (Brian Fisher, 2026-10-29; BlankNameCleanup): the cleanups below deleted nothing while any
+		  // specimen had no taxon name. Their blank-safe rules start after one run that only previews them in
+		  // compute.log; the mode is decided once here for the whole clean-up.
+		  boolean blankSafe = BlankNameCleanup.isOn();
+		  message += BlankNameCleanup.preview(connection, CuratorTaxonSetDb.curatorSourceList(), blankSafe);
+		  message += TaxonDb.deleteSpeciesWithoutSpecimenOrAntcatSource(connection, blankSafe);
+		  message += TaxonDb.deleteGeneraWithoutSpecimenOrAntcatSource(connection, blankSafe);
+          message += TaxonSetDb.dataCleanup(connection, blankSafe);
 		}
 
 		// The nightly name update by hand (admin, POST): specimenNameUpdate uses the setting in

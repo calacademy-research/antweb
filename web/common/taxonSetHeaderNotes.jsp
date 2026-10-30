@@ -7,7 +7,7 @@ if (true) {
       boolean isUseChildren = geolocale.getIsUseChildren();       
 
       note = Formatter.initCap(Rank.getPluralRank(pageRank)) + " in the Georegion list are based on the following sources:" 
-          + " a) specimen records of valid species from the region," 
+          + " a) specimen records of valid species from the region (a genus also from specimens identified only to genus, 2026-10-29)," 
           + " b) AntCat.org type locality information, and" 
           + " c) Curator added records.  Curators may add or remove valid species or morphospecies from the list." 
           + " Morphospecies, however,  must have at least one specimen record in Antweb though not necessary from the specific georegion)."; 

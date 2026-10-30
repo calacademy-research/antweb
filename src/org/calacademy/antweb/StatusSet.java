@@ -213,30 +213,27 @@ public class StatusSet extends Status {
       return getStatusSet(requestStatusSet, request, overview);
     }
 
+    /**
+     * The status filter of a list (taxonomicPage.do) or browse page (browse.do): the one in the address (statusSet=...),
+     * else the page's default. Brian Fisher, 2026-10-29: a place's list opens with the statuses its Species number counts
+     * (valid names and morphospecies, the counting rules of 2026-10-28; "all": its header then equals the place page's
+     * Species / subspecies / morphospecies), not "valid extant", and a choice made on one page is no longer carried to
+     * the next (it was kept in the session). Every kind of place alike: country, adm1, region, subregion, bioregion,
+     * museum and curated project.
+     */
     public static String getStatusSet(String requestStatusSet, HttpServletRequest request, Overview overview) {
-        boolean setInSession = true;
-        String statusSetStr = requestStatusSet;
-        //A.log("getStatusSet() 1 overview:" + overview + " statusSetStr:" + statusSetStr);
-        HttpSession session = request.getSession();
-        if (statusSetStr == null) {
-          if (OverviewMgr.isNewOverview(overview, session)) {
-            //setInSession = false;
-            String overviewName = overview.getName();
-            if (Project.WORLDANTS.equals(overviewName)) statusSetStr = StatusSet.VALID_WITH_FOSSIL;
-            if (Project.ALLANTWEBANTS.equals(overviewName)) statusSetStr = StatusSet.ALL;
-            if (Project.FOSSILANTS.equals(overviewName)) statusSetStr = StatusSet.VALID_WITH_FOSSIL;
-            if (Project.BAYAREAANTS.equals(overviewName)) statusSetStr = StatusSet.ALL;
+        if (requestStatusSet != null && !requestStatusSet.trim().isEmpty()) return requestStatusSet;
+        return defaultStatusSet(overview == null ? null : overview.getName());
+    }
 
-            if (overview instanceof Geolocale) statusSetStr = StatusSet.ALL;
-          }
-          if (statusSetStr == null) statusSetStr = (String) session.getAttribute("statusSet");
-          if (statusSetStr == null) statusSetStr = StatusSet.VALID_EXTANT; // ALL;
-        }
-
-        //A.log("getStatusSet() 3 requestStatusSet:" + requestStatusSet + " sessionStatusSet:" + (String) session.getAttribute("statusSet") + " overview:" + overview + " statusSetStr:" + statusSetStr);
-        
-        if (setInSession) session.setAttribute("statusSet", statusSetStr);
-        return statusSetStr;    
+    /**
+     * The status filter a list opens with when the address names none (getStatusSet). The AntCat list (worldants) and
+     * Fossil Ants: valid names with fossils, as before; every other list (places, museums, bioregions, projects, the
+     * AntWeb-wide list): every counted status (ALL), the statuses of the place's Species number.
+     */
+    public static String defaultStatusSet(String overviewName) {
+        if (Project.WORLDANTS.equals(overviewName) || Project.FOSSILANTS.equals(overviewName)) return StatusSet.VALID_WITH_FOSSIL;
+        return StatusSet.ALL;
     }
 
     public static String getAllAntwebClause() {

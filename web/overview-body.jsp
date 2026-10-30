@@ -248,7 +248,7 @@
 <% if (overview.getValidSpeciesCount() > 0) { %>
 <tr data-stat="valid" data-n="<%= overview.getValidSpeciesCount() %>"><td class="ps_name">Valid species / subspecies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getValidSpeciesCount()) %></td><td class="ps_def">Currently valid, formally named, living (non-fossil) species and subspecies recorded on <%= listName %>. Excludes morphospecies and unidentified taxa.</td></tr>
 <% } %>
-<tr data-stat="species" data-n="<%= overview.getSpeciesCount() %>"><td class="ps_name">Species / subspecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">Species and subspecies recorded on <%= listName %>, from any source, that are valid names or morphospecies. Specimens identified to genus only (indetermined or unidentifiable names) and names not in AntCat (unrecognized) are not counted as species; their specimens are counted under Specimens and their genera under Genera.</td></tr>
+<tr data-stat="species" data-n="<%= overview.getSpeciesCount() %>"><td class="ps_name">Species / subspecies / morphospecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">Species and subspecies recorded on <%= listName %>, from any source, that are valid names or morphospecies. Specimens identified to genus only (indetermined or unidentifiable names) and names not in AntCat (unrecognized) are not counted as species; their specimens are counted under Specimens and their genera under Genera.</td></tr>
 <% if (showEndemism) { %>
 <tr class="ps_head"><th colspan="3">Endemism and introduced species</th></tr>
 <tr data-stat="endemic" data-n="<%= overview.getEndemicSpeciesCount() %>"><td class="ps_name">Endemic</td><td class="ps_num"><%= endemicCell %></td><td class="ps_def"><%= endemicDef %></td></tr>
