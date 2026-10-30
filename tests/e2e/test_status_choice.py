@@ -197,8 +197,10 @@ def test_choice_is_kept_in_the_page_links_not_in_the_session():
 
 def test_genus_list_choices():
     """Genus lists offer the same choices on the genus rows; the place page's Genera equals the header of Valid genera +
-    morphogenera or of All names (the Genera definition is being changed separately, 2026-10-30); every header = the
-    rows listed."""
+    morphogenera (2026-10-30, review of #307: that list leaves out the rows Genera does not count, placeholders such as
+    "(myrmicinae)" or "amblyoponinae)" and unrecognized names: StatusSet.listRankCondition, PlaceTotals.countsAsGenus);
+    every header = the rows listed. The place's Genera is stored by the nightly run: pending until a run has counted by
+    the genera and subfamilies rule of 2026-10-30."""
     wrong, stored, checked = [], [], []
     for p in places():
         stats = stats_of(p)
@@ -215,19 +217,19 @@ def test_genus_list_choices():
                 continue
             headers[choice] = n
         if "validmorpho" in headers and "all" in headers:
-            if stats["genera"] not in (headers["validmorpho"], headers["all"]):
-                stored.append(f"{p}: place page Genera {stats['genera']}, genus lists {headers}")
+            if stats["genera"] != headers["validmorpho"]:
+                stored.append(f"{p}: place page Genera {stats['genera']}, Valid genera + morphogenera list {headers['validmorpho']} (lists {headers})")
             if not headers.get("valid", 0) <= headers["validmorpho"] <= headers["all"]:
                 wrong.append(f"{p}: genus list headers {headers}: expected valid <= validmorpho <= all")
         checked.append(repr(p))
     if not checked:
         pytest.skip("no genus list read " + ns.day_note())
-    pending_rules = stored and ns.counting_rules_counted() is False
+    pending_rules = stored and (ns.counting_rules_counted() is False or ns.genera_rule_counted() is False)
     if not pending_rules:
         wrong += stored
     assert not wrong, f"{len(checked)} places {ns.day_note()} ({PENDING}):\n" + "\n".join(wrong)
     if pending_rules:
-        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28") + ":\n" + "\n".join(stored))
+        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28 and the genera and subfamilies rule of 2026-10-30") + ":\n" + "\n".join(stored))
 
 
 def test_genus_browse_and_images_pages_follow_the_choice():

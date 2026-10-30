@@ -146,6 +146,54 @@ public class StatusChoiceTest extends TestCase {
         assertEquals(StatusSet.VALID_EXTANT, StatusSet.listStatusSet("valid", "madants").getValue());
     }
 
+    /**
+     * Review of #307 (2026-10-30): the choices Valid and Valid + morphotaxa list the rows the place page's number of the
+     * rank counts, by its rule (PlaceTotals), so placeholder rows such as genus "amblyoponinae)" or subfamily
+     * "(formicidae)" (status morphotaxon) are not listed under "Valid genera + morphogenera" and the header equals the
+     * number; specimen queries of valid extant, valid fossil and Valid (with fossils) filter by status and the name's
+     * fossil flag (they fell through to the five counted statuses).
+     */
+    public void testListCriteriaFollowTheRulesOfTheNumbersPerRank() {
+        for (String choice : new String[] {"valid", "validmorpho"}) {
+            StatusSet set = StatusSet.listStatusSet(choice);
+            assertEquals(choice, " and " + PlaceTotals.countsAsGenus("taxon"), set.listRankCondition("genus", "taxon"));
+            assertEquals(choice, " and " + PlaceTotals.countsAsSubfamily("taxon"), set.listRankCondition("subfamily", "taxon"));
+            assertEquals(choice, " and " + PlaceTotals.identifiedToGenus("taxon"), set.listRankCondition("species", "taxon"));
+            String genus = set.getAndCriteria("taxon", "genus");
+            assertTrue(genus, genus.startsWith(" and " + set.getCriteria("taxon")) && genus.contains(PlaceTotals.notPlaceholder("taxon")));
+            assertTrue(set.getAndCriteria("taxon", "subfamily").contains("taxon.status = 'valid'"));
+            // specimen rows (TaxaPage's specimen half): the rule on their genus and subfamily values
+            String sg = set.listRankCondition("genus", "specimen");
+            assertTrue(sg, sg.contains(PlaceTotals.genusWithoutParenthesis("specimen")) && sg.contains(PlaceTotals.identifiedToGenus("specimen")));
+            assertTrue(set.listRankCondition("subfamily", "specimen").contains("specimen.subfamily"));
+        }
+        // the Java rule says the same of the placeholders
+        assertFalse(PlaceTotals.isCountedGenus("morphotaxon", "amblyoponinae)", "amblyoponinae)"));
+        assertFalse(PlaceTotals.isCountedSubfamily("morphotaxon", "(formicidae)"));
+        // All names and Fossil add none (All names lists every row, placeholders too)
+        assertEquals("", StatusSet.listStatusSet("all").listRankCondition("genus", "taxon"));
+        assertEquals("", StatusSet.listStatusSet("fossil").listRankCondition("genus", "taxon"));
+        assertEquals("", new StatusSet(StatusSet.ALL).listRankCondition("subfamily", "taxon"));
+        assertEquals(StatusSet.listStatusSet("all").getAndCriteria(), StatusSet.listStatusSet("all").getAndCriteria("taxon", "genus"));
+        // Valid species + morphospecies hides the names that are not species (named in hidesNonSpecies too)
+        assertTrue(TaxaPage.hidesNonSpecies(StatusSet.listStatusSet("validmorpho")));
+        // specimen criteria of the sets with a fossil condition (2026-10-30)
+        for (String table : new String[] {"specimen", "sp"}) {
+            String extant = new StatusSet(StatusSet.VALID_EXTANT).getCriteria(table);
+            assertTrue(extant, extant.contains(table + ".status = 'valid'") && extant.contains("fst.taxon_name = " + table + ".taxon_name and fst.fossil = 0"));
+            String fossil = new StatusSet(StatusSet.VALID_FOSSIL).getCriteria(table);
+            assertTrue(fossil, fossil.contains(table + ".status = 'valid'") && fossil.contains("fst.fossil = 1"));
+            assertEquals(" " + table + ".status = 'valid'", new StatusSet(StatusSet.VALID_WITH_FOSSIL).getCriteria(table));
+            String all = new StatusSet(StatusSet.ALL).getCriteria(table);
+            for (String choice : StatusSet.LIST_CHOICES) {
+                String c = StatusSet.listStatusSet(choice).getCriteria(table);
+                if (!"all".equals(choice)) assertFalse(choice + " " + table + ": not the five counted statuses", all.equals(c));
+            }
+        }
+        // the taxon criteria are unchanged
+        assertEquals(" taxon.status = 'valid' and fossil = 0 ", new StatusSet(StatusSet.VALID_EXTANT).getCriteria("taxon"));
+    }
+
     public void testHeadersSayWhatTheListShows() {
         assertEquals("2,672 Valid species (of 6,960 species and morphospecies)", StatusSet.listHeading("valid", 2672, "Species", "Species", 6960));
         assertEquals("6,960 Species (valid species and morphospecies)", StatusSet.listHeading("validmorpho", 6960, "Species", "Species", 6960));
@@ -153,6 +201,9 @@ public class StatusChoiceTest extends TestCase {
         assertEquals("7,215 Species (all names)", StatusSet.listHeading("all", 7215, "Species", "Species", 6960));
         assertEquals("12 Fossil species", StatusSet.listHeading("fossil", 12, "Species", "Species", 6960));
         assertEquals("98 Valid genera", StatusSet.listHeading("valid", 98, "Genera", "Genus", 6960));
+        // subfamily lists (2026-10-30): the rows of the Subfamilies number (valid subfamilies, extant and fossil)
+        assertEquals("21 Subfamilies (valid subfamilies, extant and fossil)", StatusSet.listHeading("validmorpho", 21, "Subfamilies", "Subfamily", -1));
+        assertEquals("Valid subfamilies, extant and fossil", StatusSet.choiceLabel("validmorpho", "subfamily"));
         assertEquals("1 Valid genus", StatusSet.listHeading("valid", 1, "Genera", "Genus", -1));
         assertEquals("No Valid species", StatusSet.listHeading("valid", 0, "Species", "Species", -1));
         assertEquals("346 Specimens", StatusSet.listHeading(null, 346, "Specimens", "Specimen", -1));
@@ -174,7 +225,8 @@ public class StatusChoiceTest extends TestCase {
         assertEquals("0 Valid species imaged (out of 3 valid species)", StatusSet.imagedHeading("valid", 0, 3, "Species", "Species"));
         assertEquals("5 Species imaged (out of 7 names, all statuses)", StatusSet.imagedHeading("all", 5, 7, "Species", "Species"));
         assertEquals("3 Fossil species imaged (out of 12 fossil species)", StatusSet.imagedHeading("fossil", 3, 12, "Species", "Species"));
-        assertEquals("9 Subfamilies imaged (out of 10 valid names and morphotaxa)",
+        // subfamilies (2026-10-30): the rows of the Subfamilies number, valid subfamilies
+        assertEquals("9 Subfamilies imaged (out of 10 valid subfamilies, extant and fossil)",
             StatusSet.imagedHeading("validmorpho", 9, 10, "Subfamilies", "Subfamily"));
         // the AntCat list keeps its own values
         assertEquals("40 Valid Species imaged (out of 98 valid species)", StatusSet.imagedHeading("valid", 40, 98, "Species", "Species", Project.WORLDANTS));

@@ -187,6 +187,14 @@ public class StatusSet extends Status {
         if (StatusSet.VALID_WITH_FOSSIL.equals(getValue())) criteria = " " + table + ".status = '" + VALID + "'"; // Will be further restricted by the fossilants list.
         if (StatusSet.VALID_FOSSIL.equals(getValue())) criteria = " " + table + ".status = '" + VALID + "' and fossil = 1 ";
         if (StatusSet.VALID_EXTANT.equals(getValue())) criteria = " " + table + ".status = '" + VALID + "' and fossil = 0 ";
+      } else {
+        // specimen and sp (2026-10-30, review of #307): the same three sets for specimen queries. Until then they fell
+        // through to the five counted statuses, and "valid" (valid extant) is the default list choice of geolocales and
+        // curated projects. A specimen has its name's status (specimen.status) but no fossil column: fossil is the
+        // name's (taxon.fossil), so the fossil condition looks the name up (fossilCondition).
+        if (StatusSet.VALID_WITH_FOSSIL.equals(getValue())) criteria = " " + table + ".status = '" + VALID + "'";
+        if (StatusSet.VALID_FOSSIL.equals(getValue())) criteria = " " + table + ".status = '" + VALID + "' and " + fossilCondition(table, 1) + " ";
+        if (StatusSet.VALID_EXTANT.equals(getValue())) criteria = " " + table + ".status = '" + VALID + "' and " + fossilCondition(table, 0) + " ";
       }
         
       if (StatusSet.TYPE.equals(getValue())) {  // type
@@ -223,6 +231,55 @@ public class StatusSet extends Status {
 
       //A.log("getCriteria() table:" + table + " default:" + defaultVal);
       return defaultVal;
+    }
+
+    /**
+     * SQL: the specimen (alias table) is of a name with taxon.fossil = fossil (1 fossil, 0 extant). Specimens have no
+     * fossil column of their own (is_fossil was never added); the name's row decides, as on the taxon lists.
+     */
+    static String fossilCondition(String table, int fossil) {
+        return "exists (select 1 from taxon fst where fst.taxon_name = " + table + ".taxon_name and fst.fossil = " + fossil + ")";
+    }
+
+    /**
+     * The criteria (with a leading " and ") of the rows of one rank on a list of this status set (2026-10-30, review of
+     * #307): getAndCriteria(table) and, for the list choices Valid and Valid + morphotaxa (VALID_EXTANT, VALID_MORPHO),
+     * the rule of the place page's number of that rank (listRankCondition), so that the list's header equals the number.
+     * rank: the rank of the rows (subfamily, genus, species; other values: no rank condition).
+     */
+    public String getAndCriteria(String table, String rank) {
+        return " and " + getCriteria(table) + listRankCondition(rank, table);
+    }
+
+    /**
+     * The extra condition (" and ...", or "") of the rows of a rank on a list of this status set. Brian Fisher, 2026-10-30:
+     * a list of the choices Valid and Valid + morphotaxa shows the rows the place page's number counts, by the same rules
+     * (PlaceTotals): genus rows countsAsGenus (no placeholders such as "(myrmicinae)" or "amblyoponinae)", identified to
+     * genus), subfamily rows countsAsSubfamily (valid, no placeholder "(formicidae)"), species rows identified to genus
+     * (identifiedToGenus; their statuses are the choice's). All names, Fossil, the AntCat list's and Fossil Ants' sets
+     * (other than valid extant, whose valid names are never placeholders) and the internal sets get none. Specimen
+     * rows (table specimen or sp: TaxaPage's specimen half) carry a species-level name, so the rule is applied to their
+     * genus or subfamily value (no parenthesis, identified to genus); their statuses are the choice's.
+     */
+    public String listRankCondition(String rank, String table) {
+        String v = getValue();
+        if (!(VALID_EXTANT.equals(v) || VALID_MORPHO.equals(v)) || rank == null) return "";
+        boolean specimens = "specimen".equals(table) || "sp".equals(table);
+        if (org.calacademy.antweb.home.PlaceTotals.GENUS.equals(rank)) {
+            // a specimen row is a species-level name (its taxon_name is the species'): the rule on its genus value
+            if (specimens) return " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus(table)
+                + " and " + org.calacademy.antweb.home.PlaceTotals.genusWithoutParenthesis(table);
+            return " and " + org.calacademy.antweb.home.PlaceTotals.countsAsGenus(table);
+        }
+        if (org.calacademy.antweb.home.PlaceTotals.SUBFAMILY.equals(rank)) {
+            if (specimens) {
+                String sf = "coalesce(" + table + ".subfamily, '')";
+                return " and (" + sf + " not like '%(%' and " + sf + " not like '%)%')";
+            }
+            return " and " + org.calacademy.antweb.home.PlaceTotals.countsAsSubfamily(table);
+        }
+        if (org.calacademy.antweb.home.PlaceTotals.SPECIES.equals(rank) || "subspecies".equals(rank)) return " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus(table);
+        return "";
     }
 
     public static String getCountables() {
@@ -375,10 +432,11 @@ public class StatusSet extends Status {
         String plural;
         String morpho;
         if ("genus".equals(r) || "genera".equals(r)) { plural = "genera"; morpho = "morphogenera"; }
-        else if ("subfamily".equals(r) || "subfamilies".equals(r)) { plural = "subfamilies"; morpho = "morphotaxa"; }
+        else if ("subfamily".equals(r) || "subfamilies".equals(r)) { plural = "subfamilies"; morpho = null; }
         else { plural = "species"; morpho = "morphospecies"; }
         if (LIST_VALID.equals(choice)) return "Valid " + plural;
-        if (LIST_VALID_MORPHO.equals(choice)) return "Valid " + plural + " + " + morpho;
+        // subfamilies (2026-10-30): the choice lists the rows of the Subfamilies number, valid subfamilies, extant and fossil
+        if (LIST_VALID_MORPHO.equals(choice)) return morpho == null ? "Valid " + plural + ", extant and fossil" : "Valid " + plural + " + " + morpho;
         if (LIST_ALL.equals(choice)) return "All names";
         if (LIST_FOSSIL.equals(choice)) return "Fossil " + plural;
         return ownLabel(choice);
@@ -416,6 +474,8 @@ public class StatusSet extends Status {
         if (LIST_VALID_MORPHO.equals(choice)) {
             if (speciesRows) return num + " " + noun + " (valid species and morphospecies)";
             if (generaRows) return num + " " + noun + " (valid genera and morphogenera)";
+            // other rows (subfamilies): since 2026-10-30 the rows of the Subfamilies number (PlaceTotals.countsAsSubfamily)
+            if ("subfamilies".equals(lower) || "subfamily".equals(lower)) return num + " " + noun + " (valid subfamilies, extant and fossil)";
             return num + " " + noun + " (valid names and morphotaxa)";
         }
         if (LIST_ALL.equals(choice)) return num + " " + noun + " (all names)";
@@ -456,6 +516,7 @@ public class StatusSet extends Status {
         if (LIST_VALID_MORPHO.equals(choice)) {
             if (speciesRows) return num + " " + noun + " imaged" + of + "valid species and morphospecies)";
             if (generaRows) return num + " " + noun + " imaged" + of + "valid genera and morphogenera)";
+            if ("subfamilies".equals(pluralLower)) return num + " " + noun + " imaged" + of + "valid subfamilies, extant and fossil)";
             return num + " " + noun + " imaged" + of + "valid names and morphotaxa)";
         }
         if (LIST_ALL.equals(choice)) return num + " " + noun + " imaged" + of + (total == 1 ? "name" : "names") + ", all statuses)";

@@ -48,7 +48,7 @@ public class Family extends Taxon implements Serializable {
                 + " and taxon.subfamily != '' "
                 + " and taxarank = 'subfamily' "
                 + " and taxon.family = '" + getFamily() + "'"   // added by Mark to avoid non-ants on formicidae page
-                + statusSet.getAndCriteria()
+                + statusSet.getAndCriteria("taxon", "subfamily")   // 2026-10-30: Valid choices, the Subfamilies rule
                 + " order by taxon.subfamily";
 
             stmt = DBUtil.getStatement(connection, "Family.setChildren()");

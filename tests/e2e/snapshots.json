@@ -95,7 +95,7 @@
   "headings": [
    "h3:Citing AntWeb",
    "h1:Family: Formicidae Latreille, 1802",
-   "h2:23 Subfamilies (valid names and morphotaxa) (22 imaged)",
+   "h2:23 Subfamilies (valid subfamilies, extant and fossil) (22 imaged)",
    "h3:Download Specimen Data",
    "h3:Download Specimen Data"
   ],
@@ -197,7 +197,6 @@
    "h1:Genus: Camponotus Mayr, 1861",
    "h3:Download Specimen Data",
    "h3:Download Specimen Data",
-   "h2:Current Valid Name:",
    "h3:Homonyms:",
    "h2:Taxonomic History (provided by Barry Bolton, 2026)",
    "h3:Taxon Page Images:",
@@ -219,7 +218,6 @@
    "h1:Species: Nesomyrmex clavipilis Wheeler, 1910",
    "h3:Download Specimen Data",
    "h3:Download Specimen Data",
-   "h2:Current Valid Name:",
    "h2:Taxonomic History (provided by Barry Bolton, 2026)",
    "h3:Distribution:",
    "h3:Biology:",
@@ -241,7 +239,6 @@
    "h1:Subfamily: Formicinae Latreille, 1802",
    "h3:Download Specimen Data",
    "h3:Download Specimen Data",
-   "h2:Current Valid Name:",
    "h2:Taxonomic History (provided by Barry Bolton, 2026)",
    "h3:Distribution:",
    "h3:Identification:",
@@ -252,7 +249,7 @@
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 8,
+  "taxon_links": 7,
   "text_length": 26007,
   "title": "Subfamily: Formicinae - AntWeb"
  },
@@ -542,7 +539,7 @@
   "headings": [
    "h3:Citing AntWeb",
    "h1:Project: All Antweb",
-   "h2:23 Subfamilies (valid names and morphotaxa)"
+   "h2:23 Subfamilies (valid subfamilies, extant and fossil)"
   ],
   "images": 65,
   "specimen_links": 0,

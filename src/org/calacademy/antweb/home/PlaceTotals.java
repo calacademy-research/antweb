@@ -168,13 +168,29 @@ public final class PlaceTotals {
      * crawl, childCountCondition), upload groups' Genera (GroupCountDb), and the count check.
      */
     public static String countsAsGenus(String alias) {
-        return "(" + alias + ".status in " + GENUS_STATUSES + " and " + identifiedToGenus(alias) + " and " + notPlaceholder(alias) + ")";
+        return "(" + alias + ".status in " + GENUS_STATUSES + " and " + identifiedToGenus(alias) + " and " + notPlaceholder(alias)
+            + " and " + genusWithoutParenthesis(alias) + ")";
     }
 
-    /** The same rule in Java: status and taxon name and genus of a genus row. */
+    /**
+     * The same rule in Java: status and taxon name and genus of a genus row. Identical to countsAsGenus (2026-10-30,
+     * review of #307: the two differed on a genus value with a parenthesis): a status of GENUS_STATUSES, identified to
+     * genus (isIdentifiedToGenus), a taxon name without "(" or ")" (isPlaceholder) and a genus value without "(" or ")".
+     */
     public static boolean isCountedGenus(String status, String taxonName, String genus) {
         return status != null && GENUS_STATUS_LIST.contains(status) && isIdentifiedToGenus(genus) && !isPlaceholder(taxonName)
-            && (genus == null || !genus.contains(")"));
+            && !hasParenthesis(genus);
+    }
+
+    /** SQL: the genus value (alias a) has no "(" or ")" (a value with one is a placeholder, never a genus). */
+    public static String genusWithoutParenthesis(String alias) {
+        String g = "coalesce(" + alias + ".genus, '')";
+        return "(" + g + " not like '%(%' and " + g + " not like '%)%')";
+    }
+
+    /** Java: a value containing "(" or ")". */
+    public static boolean hasParenthesis(String value) {
+        return value != null && (value.contains("(") || value.contains(")"));
     }
 
     /**
@@ -288,7 +304,8 @@ public final class PlaceTotals {
 
     /** SQL: the taxon (alias a) is identified to genus (see above). A row without a genus value counts as before. */
     public static String identifiedToGenus(String alias) {
-        String g = "coalesce(" + alias + ".genus, '')";
+        // trimmed, as isIdentifiedToGenus (2026-10-30: the SQL and the Java rule are the same)
+        String g = "trim(coalesce(" + alias + ".genus, ''))";
         return "(" + g + " not like '(%' and lower(" + g + ") not in ('indet', 'undet'))";
     }
 

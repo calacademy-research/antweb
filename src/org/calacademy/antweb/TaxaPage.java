@@ -61,6 +61,57 @@ public class TaxaPage implements Serializable {
 		fetchChildren(connection, overview, rank, false, true, false, true, Caste.DEFAULT, new StatusSet());
 	}
 
+	/**
+	 * The query of a list's taxa (the rows of the place's list of a rank, with the status choice's criteria; 2026-10-30:
+	 * a static method so the database tests run the list's own query). rank: subfamily, genus or species.
+	 */
+	public static String taxaQuery(Overview overview, String rank, boolean withFossil, StatusSet statusSet) {
+  	      String taxaQuery = "select taxon.family as family, taxon.subfamily as subfamily ";
+				
+	      if (rank.equals("genus")) {
+	      taxaQuery += ", taxon.genus as genus ";
+  	      }
+	      if (rank.equals("species")) {
+	   	    taxaQuery += ", genus, species, subspecies, taxarank";
+	   	  }
+          	      
+  	      taxaQuery += " from taxon";
+  	      
+          taxaQuery += overview.getFetchChildrenClause();
+
+          taxaQuery += " and family = 'formicidae'";				
+
+		  if (!"species".equals(rank)) {
+		    taxaQuery += " and taxarank = '" + rank + "' ";
+		  } else {
+		    taxaQuery += " and taxarank in ('species', 'subspecies')";
+		    // Brian Fisher, 2026-10-22: a name not identified to genus is not a species; the species list and its
+		    // header count leave it out, as the place's Species number does (PlaceTotals.identifiedToGenus). Its
+		    // specimens still count in the place's Specimens.
+		    taxaQuery += " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon");
+          }
+          // 2026-10-30 (review of #307): the choices Valid and Valid + morphotaxa list the rows of the place page's
+          // number of the rank, by its rule (StatusSet.listRankCondition: countsAsGenus, countsAsSubfamily, species
+          // identified to genus), so the list's header equals the number.
+          taxaQuery += statusSet.getAndCriteria("taxon", rank);
+          // Brian Fisher, 2026-10-28: only valid names and morphospecies are species. A species list of the internal
+          // mixed sets (ALL, used by counts and the field guide) shows those, as the place's Species number counts them;
+          // the specimens of the names identified to genus only are named under the list (GenusOnly). The list choice
+          // "All names" (2026-10-30, StatusSet.ALL_NAMES) and a single status still list those names; the choices
+          // Valid species and Valid species + morphospecies are filtered by their own criteria (StatusSet.listStatusSet).
+          if ("species".equals(rank) && hidesNonSpecies(statusSet)) {
+            taxaQuery += " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon");
+          }
+
+ 	      //A.log("clause:" + statusSet.getAndCriteria());
+
+          if (!withFossil) {
+			  taxaQuery += " and taxon.fossil = 0 ";
+		  }
+
+          return taxaQuery;
+	}
+
 	public String fetchChildren(Connection connection, Overview overview, String rank, boolean withImages, boolean withTaxa, boolean withSpecimen, boolean withFossil, String caste, StatusSet statusSet)
 	  throws SQLException 
 	{
@@ -98,46 +149,7 @@ public class TaxaPage implements Serializable {
         String taxonOrderByPhrase = "";
           
         if (withTaxa) {
-  	      taxaQuery = "select taxon.family as family, taxon.subfamily as subfamily ";
-				
-	      if (rank.equals("genus")) {
-	      taxaQuery += ", taxon.genus as genus ";
-  	      }
-	      if (rank.equals("species")) {
-	   	    taxaQuery += ", genus, species, subspecies, taxarank";
-	   	  }
-          	      
-  	      taxaQuery += " from taxon";
-  	      
-          taxaQuery += overview.getFetchChildrenClause();
-
-          taxaQuery += " and family = 'formicidae'";				
-
-		  if (!"species".equals(rank)) {
-		    taxaQuery += " and taxarank = '" + rank + "' ";
-		  } else {
-		    taxaQuery += " and taxarank in ('species', 'subspecies')";
-		    // Brian Fisher, 2026-10-22: a name not identified to genus is not a species; the species list and its
-		    // header count leave it out, as the place's Species number does (PlaceTotals.identifiedToGenus). Its
-		    // specimens still count in the place's Specimens.
-		    taxaQuery += " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon");
-          }
-          taxaQuery += statusSet.getAndCriteria();
-          // Brian Fisher, 2026-10-28: only valid names and morphospecies are species. A species list of the internal
-          // mixed sets (ALL, used by counts and the field guide) shows those, as the place's Species number counts them;
-          // the specimens of the names identified to genus only are named under the list (GenusOnly). The list choice
-          // "All names" (2026-10-30, StatusSet.ALL_NAMES) and a single status still list those names; the choices
-          // Valid species and Valid species + morphospecies are filtered by their own criteria (StatusSet.listStatusSet).
-          if ("species".equals(rank) && hidesNonSpecies(statusSet)) {
-            taxaQuery += " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon");
-          }
-
- 	      //A.log("clause:" + statusSet.getAndCriteria());
-
-          if (!withFossil) {
-			  taxaQuery += " and taxon.fossil = 0 ";
-		  }
-
+          taxaQuery = taxaQuery(overview, rank, withFossil, statusSet);
           fetchChildrenQuery = taxaQuery;
           s_log.debug("FetchChildren() overview:" + overview.getClass() + " query:" + taxaQuery);
         }
@@ -147,20 +159,24 @@ public class TaxaPage implements Serializable {
           if (taxaQuery != null) fetchChildrenQuery += " union ";
 
           // This will add in specimen derived data.
-          specimenQuery = "select distinct s.family as family, s.subfamily as subfamily";
+          specimenQuery = "select distinct specimen.family as family, specimen.subfamily as subfamily";
 
 	      if (rank.equals("genus")) {
-		    specimenQuery += ", s.genus as genus ";
+		    specimenQuery += ", specimen.genus as genus ";
     	  }
   	      if (rank.equals("species")) {
-	   	    specimenQuery += ", s.genus, s.species, s.subspecies, IF(subspecies is null ,'species','subspecies') as taxarank";
+	   	    specimenQuery += ", specimen.genus, specimen.species, specimen.subspecies, IF(subspecies is null ,'species','subspecies') as taxarank";
 	      }          
           
           // Ant specimens only: non-ant specimens are found by search, not listed on place pages (2026-10-21).
-          specimenQuery += " from specimen s where" + org.calacademy.antweb.home.SpecimenDb.getAntSpecimenCriteria("s");
-          if (rank.equals("species")) specimenQuery += " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("s");
+          // alias "specimen": the status criteria (StatusSet.getCriteria) take the table name specimen or sp
+          specimenQuery += " from specimen where" + org.calacademy.antweb.home.SpecimenDb.getAntSpecimenCriteria("specimen");
+          if (rank.equals("species")) specimenQuery += " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("specimen");
+          // 2026-10-30 (review of #307): the specimen half takes the list's status choice too (it took none, so a list of
+          // Valid species listed the names of every specimen), with the same rank rule as the taxa above.
+          specimenQuery += statusSet.getAndCriteria("specimen", rank);
           // the specimens' names that count as species (2026-10-28, as the taxa above)
-          if (rank.equals("species") && hidesNonSpecies(statusSet)) specimenQuery += " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("s");
+          if (rank.equals("species") && hidesNonSpecies(statusSet)) specimenQuery += " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("specimen");
           
           if (overview instanceof Country) {
             specimenQuery += " and country = " + DBUtil.sqlQuote(overview);
@@ -306,14 +322,16 @@ public class TaxaPage implements Serializable {
 	/** Marks the children that have no photo of the ant anywhere in AntWeb (StatisticsDb.antImagedNames). */
 	/**
 	 * Whether a species list of this status set leaves out the names that are not species (2026-10-28): the internal
-	 * sets that mix statuses (all, all determined, all indetermined, complete). valid, valid extant, valid fossil,
-	 * worldants, a single status and the list choice All names (StatusSet.ALL_NAMES, 2026-10-30) are left as they are.
+	 * sets that mix statuses (all, all determined, all indetermined, complete) and the list choice Valid species +
+	 * morphospecies (StatusSet.VALID_MORPHO, 2026-10-30: its criteria are already the species statuses; named here so
+	 * the rule is stated once for every set that mixes statuses). valid, valid extant, valid fossil, worldants, a single
+	 * status and the list choice All names (StatusSet.ALL_NAMES, 2026-10-30) are left as they are.
 	 */
 	public static boolean hidesNonSpecies(StatusSet statusSet) {
 		if (statusSet == null) return true;
 		String v = statusSet.getValue();
 		return v == null || StatusSet.ALL.equals(v) || StatusSet.ALL_DETERMINED.equals(v) || StatusSet.ALL_INDETERMINED.equals(v)
-			|| StatusSet.COMPLETE.equals(v);
+			|| StatusSet.COMPLETE.equals(v) || StatusSet.VALID_MORPHO.equals(v);
 	}
 
 	private org.calacademy.antweb.home.GenusOnly genusOnly;

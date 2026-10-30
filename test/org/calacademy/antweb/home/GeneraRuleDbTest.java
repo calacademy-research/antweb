@@ -13,7 +13,11 @@ import junit.framework.TestCase;
 
 import org.calacademy.antweb.Project;
 import org.calacademy.antweb.geolocale.Country;
+import org.calacademy.antweb.home.BioregionTaxonDb;
+import org.calacademy.antweb.home.GeolocaleTaxonDb;
 import org.calacademy.antweb.home.GroupCountDb;
+import org.calacademy.antweb.home.MuseumDb;
+import org.calacademy.antweb.home.SpecimenDb;
 import org.calacademy.antweb.home.PlaceTotals;
 import org.calacademy.antweb.home.WorldantsUploadDb;
 import org.calacademy.antweb.util.CountCheck;
@@ -293,5 +297,145 @@ public class GeneraRuleDbTest extends TestCase {
         exec("insert into worldants_upload (file_size, backup_file_size, created) values ('139000000', 0, now() - interval 9 day)");
         assertEquals(1, db.getWorldantsChangeCount());
         exec("drop table worldants_upload");
+    }
+
+    // ---- Review of #307 (2026-10-30) ----
+
+    private List<String> column(String sql, String col) throws Exception {
+        List<String> out = new ArrayList<>();
+        try (PreparedStatement s = connection.prepareStatement(sql); ResultSet r = s.executeQuery()) {
+            while (r.next()) out.add(r.getString(col));
+        }
+        return out;
+    }
+
+    /**
+     * The choices Valid and Valid + morphotaxa list the rows the place page's number of the rank counts (StatusSet
+     * .listRankCondition, TaxaPage.taxaQuery: the list's own query): Testland's genus list under Valid genera +
+     * morphogenera has Pheidole and the morphogenus (= Genera 2), not "(myrmicinae)", "(formicidae)polyrachis" or the
+     * morphotaxon "amblyoponinae)"; its subfamily list has Myrmicinae (= Subfamilies 1), not "(formicidae)" (morphotaxon).
+     * All names lists every row.
+     */
+    public void testValidChoicesListTheRowsTheNumbersCount() throws Exception {
+        Country testland = new Country();
+        testland.setId(TESTLAND);
+        testland.setName("Testland");
+        String key = "" + TESTLAND;
+        int genera = PlaceTotals.count(connection, PlaceTotals.listedCountSql(PlaceTotals.GEOLOCALE, PlaceTotals.GENUS), key);
+        int subfamilies = PlaceTotals.count(connection, PlaceTotals.listedCountSql(PlaceTotals.GEOLOCALE, PlaceTotals.SUBFAMILY), key);
+        List<String> g = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "genus", true, org.calacademy.antweb.StatusSet.listStatusSet("validmorpho")), "genus");
+        assertEquals(g.toString(), genera, g.size());
+        assertTrue(g.toString(), g.contains("pheidole") && g.contains("myrm_gen-za01"));
+        g = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "genus", true, org.calacademy.antweb.StatusSet.listStatusSet("valid")), "genus");
+        assertEquals("valid genera: Pheidole " + g, java.util.Arrays.asList("pheidole"), g);
+        g = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "genus", true, org.calacademy.antweb.StatusSet.listStatusSet("all")), "genus");
+        assertEquals("All names: every genus row " + g, 5, g.size());
+        List<String> sf = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "subfamily", true, org.calacademy.antweb.StatusSet.listStatusSet("validmorpho")), "subfamily");
+        assertEquals(sf.toString(), subfamilies, sf.size());
+        assertEquals(java.util.Arrays.asList(MYRM), sf);
+        sf = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "subfamily", true, org.calacademy.antweb.StatusSet.listStatusSet("all")), "subfamily");
+        assertTrue("All names: (formicidae) too " + sf, sf.contains(FORM) && sf.contains(MYRM));
+        // browse.do's Subfamily list (genus rows of a subfamily) by the same rule
+        String browse = "select distinct taxon.genus from taxon" + testland.getFetchChildrenClause() + " and taxon.subfamily = '" + MYRM + "'"
+            + " and taxon.genus != '' and taxarank = 'genus' " + org.calacademy.antweb.StatusSet.listStatusSet("validmorpho").getAndCriteria("taxon", "genus");
+        assertEquals(column(browse, "genus").toString(), 2, column(browse, "genus").size());
+    }
+
+    /**
+     * PlaceTotals.countsAsGenus (SQL) and isCountedGenus (Java) are one rule, and so are countsAsSubfamily and
+     * isCountedSubfamily: the same fixture values, the same answer (2026-10-30: Java rejected a genus value with ")"
+     * while SQL checked only a leading "(" on the genus).
+     */
+    public void testJavaAndSqlGenusRulesAgree() throws Exception {
+        exec("drop table if exists rule_fixture");
+        exec("create table rule_fixture (id int primary key, status varchar(40), taxon_name varchar(128), genus varchar(64))");
+        String[][] values = {
+            {"valid", "myrmicinaepheidole", "pheidole"},
+            {"morphotaxon", "myrmicinaemyrm_gen-za01", "myrm_gen-za01"},
+            {"unrecognized", "myrmicinaepolyrachis", "polyrachis"},
+            {"indetermined", "myrmicinae(myrmicinae)", "(myrmicinae)"},
+            {"morphotaxon", "amblyoponinae)", "amblyoponinae)"},
+            {"morphotaxon", "amblyoponinaex", "x)"},
+            {"morphotaxon", "amblyoponinaey", "y(z"},
+            {"valid", "(formicidae)polyrachis", "polyrachis"},
+            {"valid", "myrmicinaeindet", "indet"},
+            {"valid", "myrmicinaeundet", " Undet "},
+            {"valid", "myrmicinae(indet)", "(indet)"},
+            {"morphotaxon", "(formicidae)", null},
+            {"valid", "myrmicinae", null},
+            {"valid", "myrmicinicinae", ""},
+            {"synonym", "myrmicinaeoldname", "oldname"},
+            {null, "myrmicinaenostatus", "nostatus"},
+        };
+        for (int i = 0; i < values.length; i++) {
+            String[] v = values[i];
+            exec("insert into rule_fixture values (" + i + ", " + q(v[0]) + ", " + q(v[1]) + ", " + q(v[2]) + ")");
+        }
+        for (int i = 0; i < values.length; i++) {
+            String[] v = values[i];
+            int sqlGenus = PlaceTotals.count(connection, "select count(*) from rule_fixture a where a.id = ? and " + PlaceTotals.countsAsGenus("a"), "" + i);
+            assertEquals(java.util.Arrays.toString(v) + " genus", PlaceTotals.isCountedGenus(v[0], v[1], v[2]) ? 1 : 0, sqlGenus);
+            int sqlSubfamily = PlaceTotals.count(connection, "select count(*) from rule_fixture a where a.id = ? and " + PlaceTotals.countsAsSubfamily("a"), "" + i);
+            assertEquals(java.util.Arrays.toString(v) + " subfamily", PlaceTotals.isCountedSubfamily(v[0], v[1]) ? 1 : 0, sqlSubfamily);
+        }
+        // the cases of the review: a genus value with a parenthesis is never a genus, by either rule
+        assertFalse(PlaceTotals.isCountedGenus("morphotaxon", "amblyoponinaex", "x)"));
+        assertFalse(PlaceTotals.isCountedGenus("morphotaxon", "amblyoponinaey", "y(z"));
+        assertTrue(PlaceTotals.isCountedGenus("morphotaxon", "myrmicinaemyrm_gen-za01", "myrm_gen-za01"));
+        exec("drop table rule_fixture");
+    }
+
+    private static String q(String v) {
+        return v == null ? "null" : "'" + v.replace("'", "''") + "'";
+    }
+
+    /**
+     * Brian Fisher, 2026-10-30: one rule for red flags on every list. A red-flagged specimen makes no list row, on a
+     * country or adm1 list (valid names, and the genus rows of specimens identified to genus), a bioregion list or a
+     * museum list (SpecimenDb.notRedFlagged in each query).
+     */
+    public void testListsFromSpecimensLeaveOutRedFlags() throws Exception {
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species) values"
+            + " ('myrmicinaepheidole (indet)', 'species', 'indetermined', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "', 'pheidole', '(indet)'),"
+            + " ('myrmicinaepheidole c', 'species', 'valid', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "', 'pheidole', 'c')");
+        exec("insert into specimen (code, taxon_name, status, country, museum, bioregion, family, subfamily, genus, flag) values"
+            + " ('rf1', 'myrmicinaepheidole (indet)', 'indetermined', 'Mozambique', 'TESTM', 'Afrotropical', 'formicidae', '" + MYRM + "', 'pheidole', 'red'),"
+            + " ('rf2', 'myrmicinaepheidole c', 'valid', 'Mozambique', 'TESTM', 'Afrotropical', 'formicidae', '" + MYRM + "', 'pheidole', 'red'),"
+            + " ('ok1', '" + PB + "', 'morphotaxon', 'Kenya', 'TESTM', 'Afrotropical', 'formicidae', '" + MYRM + "', 'pheidole', 'yellow'),"
+            + " ('ok2', '" + HB + "', 'valid', 'Mozambique', 'TESTM', 'Afrotropical', 'formicidae', '" + PON + "', 'hypoponera', null)");
+        List<String> bioregion = column(BioregionTaxonDb.speciesFromSpecimenSql("Afrotropical"), "taxon_name");
+        assertEquals(bioregion.toString(), new java.util.TreeSet<>(java.util.Arrays.asList(PB, HB)), new java.util.TreeSet<>(bioregion));
+        List<String> museum = column(MuseumDb.speciesFromSpecimenSql("TESTM"), "taxon_name");
+        assertEquals(museum.toString(), new java.util.TreeSet<>(java.util.Arrays.asList(PB, HB)), new java.util.TreeSet<>(museum));
+        // country lists: the genus rows of specimens identified to genus (the indet specimen is red-flagged: no row)
+        String mozambique = "select taxon_name from (" + GeolocaleTaxonDb.GENUS_ROWS_FROM_SPECIMENS_SQL + ") r where r.country = 'Mozambique'";
+        List<String> genusRows = column(mozambique, "taxon_name");
+        assertFalse(genusRows.toString(), genusRows.contains(PHEIDOLE));
+        exec("update specimen set flag = null where code = 'rf1'");
+        assertTrue(column(mozambique, "taxon_name").contains(PHEIDOLE));
+        assertTrue(column(BioregionTaxonDb.speciesFromSpecimenSql("Afrotropical"), "taxon_name").contains("myrmicinaepheidole (indet)"));
+        assertEquals(" (flag is null or flag != 'red') ", SpecimenDb.getFlagCriteria());
+        assertEquals("(s.flag is null or s.flag != 'red')", SpecimenDb.notRedFlagged("s"));
+    }
+
+    /**
+     * Specimen criteria of the sets valid extant, valid fossil and Valid (with fossils) (2026-10-30, review of #307):
+     * specimen.status and the name's taxon.fossil (specimens have no fossil column); they were the five counted statuses.
+     */
+    public void testSpecimenCriteriaOfTheValidSets() throws Exception {
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, fossil) values"
+            + " ('myrmicinaepheidole fossilis', 'species', 'valid', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "', 'pheidole', 1)");
+        exec("insert into specimen (code, taxon_name, status, country, family, subfamily, genus) values"
+            + " ('fo1', 'myrmicinaepheidole fossilis', 'valid', 'Madagascar', 'formicidae', '" + MYRM + "', 'pheidole')");
+        for (String table : new String[] {"specimen", "sp"}) {
+            String from = "select " + table + ".code from specimen " + table + " where ";
+            List<String> extant = column(from + new org.calacademy.antweb.StatusSet(org.calacademy.antweb.StatusSet.VALID_EXTANT).getCriteria(table), "code");
+            List<String> fossil = column(from + new org.calacademy.antweb.StatusSet(org.calacademy.antweb.StatusSet.VALID_FOSSIL).getCriteria(table), "code");
+            List<String> withFossil = column(from + new org.calacademy.antweb.StatusSet(org.calacademy.antweb.StatusSet.VALID_WITH_FOSSIL).getCriteria(table), "code");
+            assertEquals(table, java.util.Arrays.asList("fo1"), fossil);
+            assertFalse(table + " " + extant, extant.contains("fo1") || extant.contains("casent3"));
+            assertTrue(table + " " + extant, extant.contains("casent1") && extant.contains("casent5"));
+            assertTrue(table + " " + withFossil, withFossil.contains("fo1") && withFossil.contains("casent1") && !withFossil.contains("casent3"));
+        }
     }
 }

@@ -67,7 +67,7 @@ def test_list_headers_equal_place_numbers_of_every_kind():
     """Row 38: for the day's place of every kind, the list header with every counted status = Subfamilies, Genera of
     the place page; species with Valid species + morphospecies = Species; with Valid species = Valid species (0 when
     the page shows no Valid row); every header = the rows its page lists."""
-    wrong, stored, checked, slow = [], [], [], []
+    wrong, stored, stored_genera, checked, slow = [], [], [], [], []
     for p in places():
         stats = stats_of(p)
         if "species" not in stats:
@@ -99,20 +99,27 @@ def test_list_headers_equal_place_numbers_of_every_kind():
             # (B67, a curated project's Subfamilies of every status, was superseded on 2026-10-30: every kind of place,
             # curated projects too, counts valid subfamilies only)
             if n != expected:
-                stored.append(f"{p} rank={rank} {status}: {'rows counted' if rank != 'species' else 'header'} {n}, place page {stat} {expected}")
+                # Subfamilies and Genera apart (2026-10-30 review): the genera and subfamilies rule's pending covers them only
+                (stored_genera if rank in ("subfamily", "genus") else stored).append(
+                    f"{p} rank={rank} {status}: {'rows counted' if rank != 'species' else 'header'} {n}, place page {stat} {expected}")
         checked.append(repr(p))
     if not checked:
         pytest.skip("no place page with data-stat numbers " + ns.day_note())
     # the place page's numbers are stored by the nightly run, the list header is counted live: until a nightly run has
     # counted by the counting rules of 2026-10-28 they differ (pending); the header against its own rows stays strict
-    pending_rules = stored and ns.counting_rules_counted() is False
-    # and by the genera and subfamilies rule of 2026-10-30 (Genera, Subfamilies)
-    pending_rules = pending_rules or (stored and ns.genera_rule_counted() is False)
-    if not pending_rules:
+    rules_pending = ns.counting_rules_counted() is False
+    pending_species = bool(stored) and rules_pending
+    # Subfamilies and Genera: also until a nightly run has counted by the genera and subfamilies rule of 2026-10-30
+    # (that pending never hides a species difference: the lists are split, as in test_numbers_live.py)
+    pending_genera = bool(stored_genera) and (rules_pending or ns.genera_rule_counted() is False)
+    if not pending_species:
         wrong += stored
+    if not pending_genera:
+        wrong += stored_genera
     assert not wrong, (f"{len(checked)} places {ns.day_note()} ({PENDING}); not read: {slow}:\n" + "\n".join(wrong))
-    if pending_rules:
-        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28 and the genera and subfamilies rule of 2026-10-30") + ":\n" + "\n".join(stored))
+    if pending_species or pending_genera:
+        pending = (stored if pending_species else []) + (stored_genera if pending_genera else [])
+        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28 and the genera and subfamilies rule of 2026-10-30") + ":\n" + "\n".join(pending))
 
 
 def test_default_list_forgets_the_last_choice():
@@ -267,7 +274,7 @@ def test_browse_headers_equal_the_list_rows():
     list: browse.do of the genus says "N Species" = the row's "N Species" and lists N rows; the day's subfamily row:
     browse.do says "N Genera" = the row's "N Genera" and lists N rows; on both, the hidden totals say the same N and
     M, and M imaged <= N."""
-    wrong, stored, checked, known = [], [], [], []
+    wrong, stored, stored_genera, checked, known = [], [], [], [], []
     for p in places():
         for rank in ("genus", "subfamily"):
             got = _pick_row(p, rank, "browse" + rank)
@@ -296,18 +303,27 @@ def test_browse_headers_equal_the_list_rows():
                 # only the counted statuses (16). Known until fixed; any other kind of place or rank still fails.
                 # The list row is stored by the nightly run, the browse header counted live (counting rules of
                 # 2026-10-28: pending until a nightly run has counted by them).
-                (known if p.kind == "bioregion" and rank == "subfamily" else stored).append(line)
+                # a subfamily row's N Genera apart from a genus row's N Species (2026-10-30 review): the genera and
+                # subfamilies rule's pending covers the N Genera only
+                if p.kind == "bioregion" and rank == "subfamily":
+                    known.append(line)
+                else:
+                    (stored_genera if rank == "subfamily" else stored).append(line)
             checked.append(where)
     if not checked:
         pytest.skip("no list row with a browse link found " + ns.day_note())
-    pending_rules = stored and ns.counting_rules_counted() is False
-    # and by the genera and subfamilies rule of 2026-10-30 (a subfamily row's N Genera)
-    pending_rules = pending_rules or (stored and ns.genera_rule_counted() is False)
-    if not pending_rules:
+    rules_pending = ns.counting_rules_counted() is False
+    pending_species = bool(stored) and rules_pending
+    # a subfamily row's N Genera: also until a nightly run has counted by the genera and subfamilies rule of 2026-10-30
+    pending_genera = bool(stored_genera) and (rules_pending or ns.genera_rule_counted() is False)
+    if not pending_species:
         wrong += stored
+    if not pending_genera:
+        wrong += stored_genera
     assert not wrong, f"{len(checked)} browse pages {ns.day_note()} ({PENDING}):\n" + "\n".join(wrong)
-    if pending_rules:
-        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28 and the genera and subfamilies rule of 2026-10-30") + ":\n" + "\n".join(stored + known))
+    if pending_species or pending_genera:
+        pending = (stored if pending_species else []) + (stored_genera if pending_genera else [])
+        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28 and the genera and subfamilies rule of 2026-10-30") + ":\n" + "\n".join(pending + known))
     if known:
         pytest.xfail("B77: bioregion subfamily browse header counts genus rows the list row leaves out: " + "; ".join(known))
 
