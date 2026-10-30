@@ -551,7 +551,10 @@ def test_image_upload_and_orphan_counts_equal_the_recount():
 
 
 PLACE = "/country.do?name=Madagascar"
-LIST = "/taxonomicPage.do?countryName=Madagascar&statusSet=all&rank="
+# 2026-10-30: species lists with "Valid species + morphospecies" (validmorpho, the rows of the Species number; "all"
+# now lists the names that are not species too), genus and subfamily lists with every counted status (all), as before.
+LIST = "/taxonomicPage.do?countryName=Madagascar&rank="
+LIST_STATUS = {"species": "validmorpho", "genus": "all", "subfamily": "all"}
 
 
 def _place_stats(session):
@@ -574,7 +577,7 @@ def test_subtaxon_totals_equal_the_place_numbers():
         if stat not in stats:
             wrong.append(f"the Madagascar page has no data-stat {stat}")
             continue
-        html = s.get(BASE_URL + LIST + rank, timeout=max(TIMEOUT, 180)).text
+        html = s.get(BASE_URL + LIST + rank + "&statusSet=" + LIST_STATUS[rank], timeout=max(TIMEOUT, 180)).text
         m = re.search(r'data-subtaxon-total="(-?\d+)"', html)
         if not m:
             continue

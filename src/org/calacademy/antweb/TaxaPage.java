@@ -123,10 +123,11 @@ public class TaxaPage implements Serializable {
 		    taxaQuery += " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon");
           }
           taxaQuery += statusSet.getAndCriteria();
-          // Brian Fisher, 2026-10-28: only valid names and morphospecies are species. The species list of the counted
-          // statuses (statusSet all, the default of places) shows those, as the place's Species number counts them; the
-          // specimens of the names identified to genus only are named under the list (GenusOnly). A status chosen on
-          // its own (statusSet indetermined, for example) still lists those names.
+          // Brian Fisher, 2026-10-28: only valid names and morphospecies are species. A species list of the internal
+          // mixed sets (ALL, used by counts and the field guide) shows those, as the place's Species number counts them;
+          // the specimens of the names identified to genus only are named under the list (GenusOnly). The list choice
+          // "All names" (2026-10-30, StatusSet.ALL_NAMES) and a single status still list those names; the choices
+          // Valid species and Valid species + morphospecies are filtered by their own criteria (StatusSet.listStatusSet).
           if ("species".equals(rank) && hidesNonSpecies(statusSet)) {
             taxaQuery += " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon");
           }
@@ -304,9 +305,9 @@ public class TaxaPage implements Serializable {
 
 	/** Marks the children that have no photo of the ant anywhere in AntWeb (StatisticsDb.antImagedNames). */
 	/**
-	 * Whether a species list of this status set leaves out the names that are not species (2026-10-28): the sets that
-	 * mix statuses (all, all determined, all indetermined, complete). valid, valid extant, valid fossil, worldants and
-	 * a single status chosen on its own are left as they are.
+	 * Whether a species list of this status set leaves out the names that are not species (2026-10-28): the internal
+	 * sets that mix statuses (all, all determined, all indetermined, complete). valid, valid extant, valid fossil,
+	 * worldants, a single status and the list choice All names (StatusSet.ALL_NAMES, 2026-10-30) are left as they are.
 	 */
 	public static boolean hidesNonSpecies(StatusSet statusSet) {
 		if (statusSet == null) return true;

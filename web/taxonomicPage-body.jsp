@@ -81,12 +81,13 @@
 	childrenList.toArray(childrenArray);
     ArrayList<Taxon> children = new ArrayList<Taxon>(childrenList);
 
-   String statusStr = "";
-   if (!"all".equals(taxaPage.getStatusSetStr())) statusStr = Formatter.initCap(taxaPage.getStatusSetStr()) + " ";
-
     //A.log("taxonomicPage-body.jsp 4 childrenCount:" + childrenCount);
 
-	String childSizeStr = Formatter.commaFormat(childrenCount) + " " + statusStr + Rank.getPluralRank(pageRank);
+	// Brian Fisher, 2026-10-30: the header says what the list shows, in the words of the place page's numbers
+	// ("2,672 Valid species (of 6,960 species and morphospecies)", "116 Genera (valid genera and morphogenera)").
+	// StatusSet.listHeading; the "of" number is the place page's Species / subspecies / morphospecies.
+	String childSizeStr = Html.esc(StatusSet.listHeading(taxaPage.getStatusSetStr(), childrenCount, Rank.getPluralRank(pageRank),
+	    Rank.getPluralRank(pageRank), overview == null ? -1 : overview.getSpeciesCount(), overview == null ? null : overview.getName()));
 
 	// Q12 (Brian Fisher, 2026-10-22): "Unimaged" = no photo of the ant anywhere in AntWeb; a name whose specimens have only
 	// label photos is unimaged (TaxaPage.findUnimaged, the rule of the API's /unimagedGeolocaleTaxa). Until then it meant

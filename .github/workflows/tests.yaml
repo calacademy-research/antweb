@@ -898,11 +898,11 @@ jobs:
             grep -q "^OK (8 tests)" /tmp/out.txt
           '
 
-      - name: Java unit tests of the decisions of 2026-10-29 (upload date ranges and month/day guesses, the default status of place lists, the blank-name-safe cleanups preview first)
+      - name: Java unit tests of the decisions of 2026-10-29 (upload date ranges and month/day guesses, no status kept in the session for place lists, the blank-name-safe cleanups preview first)
         # Decisions1029Test: a range ("8-11 Feb 2010", en dash too) is saved as its first day, the end date column keeps the
         # last day; 05/04/2013 is read as month/day and listed in the report's Notes ("Date read as month/day (please
-        # check)", not counted in the email); a list without a status opens with every counted status (the place's Species
-        # number) and ignores a status kept in the session; BlankNameCleanup previews before it deletes.
+        # check)", not counted in the email); a list ignores a status kept in the session (its defaults: StatusChoiceTest,
+        # 2026-10-30); BlankNameCleanup previews before it deletes.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
@@ -917,6 +917,27 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.Decisions1029Test > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             grep -v "LogMgr\|constructDateStr" /tmp/out.txt | tail -3
             grep -q "^OK (7 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+          '
+
+      - name: Java unit tests of the status choice of lists decided 2026-10-30 (choices and labels, old values mapped, defaults per kind of place, criteria, headers; StatusChoiceTest)
+        # StatusChoiceTest: four choices (valid, validmorpho, all, fossil) labelled Valid species, Valid species +
+        # morphospecies, All names, Fossil species; all determined -> validmorpho, all indetermined / complete / type ->
+        # all; geolocales and curated projects open with Valid species, bioregions, museums and All AntWeb with Valid
+        # species + morphospecies, the AntCat list and Fossil Ants with their own set; the session is never read.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/StatusChoiceTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.StatusChoiceTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            grep -v "LogMgr" /tmp/out.txt | tail -3
+            grep -q "^OK (6 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Place pages say Species / subspecies / morphospecies (tests/unit/test_place_species_label.py)

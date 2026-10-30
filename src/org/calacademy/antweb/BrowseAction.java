@@ -433,7 +433,12 @@ public class BrowseAction extends DescriptionAction {
 
 		  if (!"description".equals(cacheType)) {
 			//StatusSet statusSet = new StatusSet(StatusSet.ALL); //statusSetStr); // Sep 2017
-			StatusSet statusSet = new StatusSet(statusSetStr);
+			StatusSet statusSet = StatusSet.listStatusSet(statusSetStr, overview.getName());
+			// Brian Fisher, 2026-10-30: the status choice filters the rows of a list (species of a genus, genera of a
+			// subfamily). A species or subspecies page lists the specimens of one name: the choice does not apply there
+			// (with "valid" a morphospecies page listed no specimens at all), every counted status is listed, and the
+			// page shows no selector (statusesDisplay.jsp). The AntCat list and Fossil Ants keep their own sets.
+			if (taxon.isSpeciesOrSubspecies() && !StatusSet.hasOwnStatusSets(overview.getName())) statusSet = new StatusSet(StatusSet.ALL);
 
 			/*  
                 Investigation Sep 20 2018. Bug. If one goes to a worldants page and then searches

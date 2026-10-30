@@ -152,7 +152,7 @@ inventory 2026-10-20: 9, 7, 102).
 | 35 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Specimens per Subfamily pie | PlaceTotals.specimenPieSql: the species rows' specimens (museums and bioregions since 2026-10-28, as their Specimens; before: their own specimens, which were every specimen in AntWeb of their names until 2026-10-21); one Other slice for names that are not a subfamily; fitted to its column, a chart never stops an upload | yes | inv:place.pies; junit:PlaceTotalsDbTest#testPiesOfMuseumsAndBioregionsCountTheirOwnSpecimens |
 | 36 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Taxa menu N Species | = #22 (getSpeciesCount()) | yes | inv:place.totals.species |
 | 37 | place pages (country, adm1, island, region, subregion, project, museum, bioregion) | Admin: species count link | = #22 | yes | inv:place.totals.species |
-| 38 | taxonomicPage.do, browse.do | List header N [status] Species / Genera / Subfamilies | live: rows shown, with the status in the address (statusSet), else the list's default (since 2026-10-29, `StatusSet.defaultStatusSet`: every counted status, "all", on every place, museum, bioregion and project list, so the species list's header equals the place's Species; the AntCat list and Fossil Ants: valid with fossils; a status chosen on one page is no longer kept in the session for the next); since 2026-10-28 a species list of mixed statuses (all, the default of places) shows valid names and morphospecies only, as Species counts them (`TaxaPage.hidesNonSpecies`), and says under the list how many specimens identified only to genus it leaves out, by genus, with a link to the place's specimens (`GenusOnly`); since 2026-10-26 checked on a different place of every kind every day (country, adm1, region, subregion, bioregion, museum, project) against the place page, and against the rows listed | yes | e2e:test_numbers_live.py::test_list_headers_equal_place_numbers; e2e:test_numbers_lists.py::test_list_headers_equal_place_numbers_of_every_kind; e2e:test_numbers_lists.py::test_species_lists_show_valid_names_and_morphospecies_only; junit:CountRules20261028Test#testSpeciesListsLeaveOutNamesThatAreNotSpecies; junit:CountRules20261028Test#testGenusOnlySpecimensAreNamedOnGenusAndSpeciesLists; e2e:test_numbers_lists.py::test_default_list_shows_the_species_number_and_forgets_the_last_choice; junit:Decisions1029Test#testListsOpenWithTheStatusesOfTheSpeciesNumber |
+| 38 | taxonomicPage.do, browse.do | List header, e.g. "2,672 Valid species (of 6,960 species and morphospecies)", "6,960 Species (valid species and morphospecies)", "116 Genera (valid genera and morphogenera)", "N Species (all names)", "N Fossil species" (since 2026-10-30, `StatusSet.listHeading`) | live: rows shown, with the status choice in the address (statusSet), else the list's default (2026-10-30, `StatusSet.defaultChoice`, see "Status choice of lists" in section 5: Valid species on countries, adm1s, regions, subregions and curated projects; Valid species + morphospecies on bioregions, museums and All AntWeb; the AntCat list and Fossil Ants: valid with fossils; 2026-10-29: a status chosen on one page is never kept in the session for the next). Valid species = Valid species / subspecies (row 23), its "of" number = Species / subspecies / morphospecies (row 22); Valid species + morphospecies = Species / subspecies / morphospecies; genus and subfamily lists with All names (every counted status) = Genera / Subfamilies; since 2026-10-28 a species list of valid names and morphospecies says under the list how many specimens identified only to genus it leaves out, by genus, with a link to the place's specimens (`GenusOnly`); since 2026-10-26 checked on a different place of every kind every day (country, adm1, region, subregion, bioregion, museum, project) against the place page, and against the rows listed | yes | e2e:test_numbers_live.py::test_list_headers_equal_place_numbers; e2e:test_numbers_lists.py::test_list_headers_equal_place_numbers_of_every_kind; e2e:test_numbers_lists.py::test_species_lists_show_valid_names_and_morphospecies_only; e2e:test_status_choice.py; junit:CountRules20261028Test#testSpeciesListsLeaveOutNamesThatAreNotSpecies; junit:CountRules20261028Test#testGenusOnlySpecimensAreNamedOnGenusAndSpeciesLists; e2e:test_numbers_lists.py::test_default_list_forgets_the_last_choice; junit:Decisions1029Test#testListsOpenWithTheStatusesOfTheSpeciesNumber; junit:StatusChoiceTest |
 | 39 | taxonomicPage.do, browse.do | N Unimaged X (out of M) | live: the children with no photo of the ant anywhere in AntWeb (`StatisticsDb.antImagedNames`, the API's rule; Q12 2026-10-22: was no image from this place, labels included); 0 is shown too (B21); said under the header; since 2026-10-26 the names listed = the API /unimagedGeolocaleTaxa names of the list (the rule written twice), Madagascar and a country a day | yes | junit:NumberDecisionsDbTest#testUnimagedMeansNoPhotoOfTheAntAnywhere; e2e:test_numbers_live.py::test_unimaged_header_is_within_the_list; e2e:test_numbers_pages.py::test_unimaged_list_says_anywhere_in_antweb; e2e:test_numbers_lists.py::test_unimaged_names_equal_the_api |
 | 40 | taxonomicPage.do, browse.do | Species row N Specimens (place column) | list row specimen_count (nightly crawl); B25 (a subspecies under its species replaces the species' row) checked by taxon.parents | yes | cc:specimens; inv:taxon.parents |
 | 41 | taxonomicPage.do, browse.do | Genus row N Species | list row species_count: its species and subspecies rows of status valid or morphotaxon (2026-10-28; before: a counted status; every list, curated projects too); a genus with none says "No Species" and, when the place has specimens identified to genus only, "N specimens identified to genus only", linked to them (`GenusOnly`) (country and adm1 genus rows were rewritten after the count by set 2's geolocaleTaxonFix with every row under the genus, any status or rank, until 2026-10-22) | yes | inv:list.genus; cc:species; inv:taxon.parents; junit:CountRules20261028Test#testGenusRowsCountTheSameSpeciesOnEveryKindOfList |
@@ -846,10 +846,11 @@ project):
 
 Lists: on a genus list, a genus known at the place only from specimens identified to genus shows "No Species" and
 "N specimens identified to genus only", linked to those specimens (the place's specimen search for the genus and those
-names). On a species list (every counted status, the default of places) there is no row for names that are not species,
+names). On a species list of valid names and morphospecies (the choices Valid species and Valid species +
+morphospecies, 2026-10-30) there is no row for names that are not species,
 and one line under the list: "N specimens identified only to genus are not listed here: Lioponera (1), Pheidole (2).
 Show all specimens." (`GenusOnly`, `PlaceTotals.genusOnlySql`; indetermined and unidentifiable names identified to
-genus). A status chosen on its own (statusSet indetermined, for a curator) still lists those names. The genus rows'
+genus). The choice All names (statusSet=all, 2026-10-30) still lists those names. The genus rows'
 Species of every list (the nightly crawl), the browse page of a genus, "species + ssp. imaged" (home, statsPage) and
 the count check take the same rule. Unrecognized names are not counted; listing them for curators in "Check names
 against AntCat" (validateSpeciesList.do) is not done yet: that page checks an uploaded file, so a list of a place's
@@ -919,6 +920,39 @@ and that Endemic counts valid names only (Q3).
 | Q11 (answered 2026-10-22, see 5.2) | Port of Entry: a place? | Before: its page showed 37,430 specimens while its list had no species with specimens; the nightly run did not recount it. | Hide it as a place (is_valid = 0) and keep interceptions searchable. Decided instead: keep it as a species list without numbers (5.2). | 26, 119 |
 | Q12 (answered 2026-10-22, see 5.2) | Unimaged names: unimaged where? | Before: API /unimagedGeolocaleTaxa: no image of the ant anywhere in AntWeb; taxonomicPage "Unimaged": no image (labels included) from this place. | Both: "no image of the ant anywhere" (what a curator needs to photograph), labelled so. | 39, 62, 117 |
 | Q13 (answered 2026-10-22) | Upload group numbers: the last upload, or now? | Brian Fisher: today's numbers. Since 2026-10-22 groups.do, group.do and curator.do show the group's specimens today, recounted every night in set 3 (`GroupCountDb.recountAll`, table `group_count`) by the rule of the upload counts (`UploadDb.getCounts`); the date of the last upload is shown apart; the upload rows and the upload reports keep each upload's own numbers. `inv:admin.groups` compares the pages' numbers with a recount. | Done. | 83, 86-88, 91 |
+
+### Status choice of lists (Brian Fisher, 2026-10-30)
+
+The status selector of lists (taxonomicPage.do, browse.do, images.do; "Species Status:" / "Genus Status:") offered
+"all", "all determined", "all indetermined", "complete", "valid fossil", "valid extant", "type" and "Valid (with
+fossils)". The labels matched no number on the place pages ("I have no idea what they mean"). Decision: four plain
+choices, each matching a number of the place page (`StatusSet.LIST_CHOICES`):
+
+| Choice (label) | Address value | Rows | Matches |
+|---|---|---|---|
+| Valid species | `valid` | status valid, not fossil | Valid species / subspecies (row 23) |
+| Valid species + morphospecies | `validmorpho` | status valid or morphotaxon (`PlaceTotals.SPECIES_STATUSES`), species identified to genus | Species / subspecies / morphospecies (row 22) |
+| All names | `all` | the five counted statuses (valid, morphotaxon, indetermined, unidentifiable, unrecognized): every name with specimens | (genus and subfamily lists: Genera, Subfamilies) |
+| Fossil species | `fossil` | status valid, fossil | statsPage Valid Fossil (row 19) |
+
+Genus lists ("Genus Status") take the same choices on the genus rows (Valid genera, Valid genera + morphogenera, All
+names, Fossil genera). "all determined", "all indetermined", "complete" and "type" are removed. Old addresses still work
+(`StatusSet.listChoice`): valid extant and Valid (with fossils) -> valid; all determined -> validmorpho; all
+indetermined, complete, type, worldants and a single status -> all; valid fossil -> fossil; an unknown value -> the
+default. "type" never listed type taxa (its criteria were "1 = 1"); type specimens are found by search (types=on) and
+the list's type column (orderBy=type), which do not use statusSet.
+
+Defaults when the address has no statusSet (replaces the rule of 2026-10-29, "every counted status everywhere"):
+country, adm1, region, subregion: Valid species; bioregion, museum: Valid species + morphospecies; curated project:
+Valid species; All AntWeb (allantwebants) and other pages: Valid species + morphospecies. The AntCat list (worldants)
+and Fossil Ants keep their own sets (default Valid (with fossils); choices Valid (with fossils), Valid extant, Valid
+fossil; their old address values are used as they are).
+
+The choice applies to the page it was made on and is kept in that page's links (the Overview, Taxa and Images tabs,
+the selector, sort links), never in the session (2026-10-29). The list header says what it shows: "2,672 Valid species
+(of 6,960 species and morphospecies)", "116 Genera (valid genera and morphogenera)". A species or subspecies page lists
+the specimens of one name: the choice does not apply there and it shows no selector (with "valid extant" a
+morphospecies page listed no specimens). Tests: junit StatusChoiceTest; e2e test_status_choice.py.
 
 ### 5.1 Answers of 2026-10-21 and the plan
 
