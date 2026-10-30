@@ -30,7 +30,7 @@ PASSWORD = os.environ.get("STAGING_REFRESH_DB_PASSWORD", "ci-root")
 db = accounts.Db("root", PASSWORD, CONTAINER)
 
 SCHEMA = """
-drop table if exists login, ant_group, login_project, login_country, remember_token, password_reset;
+drop table if exists login, ant_group, login_project, login_country, remember_token, password_reset, login_deleted_2026_10_16;
 create table login (id int NOT NULL, name varchar(32) NOT NULL, first_name varchar(64) DEFAULT NULL,
   last_name varchar(64) NOT NULL DEFAULT '', email varchar(128) NOT NULL DEFAULT '', password varchar(255) NOT NULL DEFAULT '',
   group_id int DEFAULT NULL, is_admin tinyint DEFAULT 0, is_upload_specimens tinyint DEFAULT 0, is_upload_images tinyint DEFAULT 0,
@@ -48,6 +48,8 @@ create table remember_token (id int NOT NULL AUTO_INCREMENT, login_id int NOT NU
 create table password_reset (id int NOT NULL AUTO_INCREMENT, login_id int NOT NULL, token_hash char(64) NOT NULL,
   created datetime NOT NULL, expires datetime NOT NULL, used_at datetime NULL, requested_ip varchar(64) DEFAULT NULL,
   PRIMARY KEY (id), UNIQUE KEY token_hash (token_hash));
+create table login_deleted_2026_10_16 (id int NOT NULL, name varchar(32) NOT NULL, email varchar(128) NOT NULL DEFAULT '',
+  password varchar(255) NOT NULL DEFAULT '', PRIMARY KEY (id));
 """
 
 H_UPLOADER = accounts.hash_password("uploader-secret")
@@ -82,6 +84,7 @@ insert into login (id, name, first_name, last_name, email, password, group_id, i
 insert into login_project values (12, 'californiaants'), (900, 'madagascarants');
 insert into remember_token (login_id, selector, token_hash, created, expires) values (2, 'abcdefghijklmnop', repeat('a', 64), now(), now() + interval 30 day);
 insert into password_reset (login_id, token_hash, created, expires) values (950, repeat('b', 64), now(), now() + interval 1 hour);
+insert into login_deleted_2026_10_16 values (960, 'gone', 'gone@uni.edu', '{H_BRIAN_PROD}');
 """
 
 
@@ -117,6 +120,11 @@ def check_scrubbed():
     assert value("select count(*) from remember_token") == "0"
     assert value("select count(*) from password_reset") == "0"
     assert value("select count(distinct password) from login where password <> ''") == "4", "a random hash per login"
+    # A dated copy of the login table (left by a clean-up) is scrubbed too (2026-10-30).
+    email, password = rows("select email, password from login_deleted_2026_10_16 where id = 960")[0]
+    assert email == "copy@example.invalid", email
+    assert password.startswith("pbkdf2_sha256$600000$") and password != H_BRIAN_PROD, password
+    assert value("select count(*) from information_schema.routines where routine_schema = 'ant'") == "0"
 
 
 def check_restored(saved):
