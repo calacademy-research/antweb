@@ -350,6 +350,22 @@ public class TaxaPage implements Serializable {
 		return genusOnly;
 	}
 
+	private PlaceTaxonNotes.OtherNames otherNames;
+
+	/** The place's specimens of names not on its species list, by genus (genus lists, 2026-10-30; PlaceTaxonNotes). */
+	public void findOtherNames(Connection connection, Overview overview) {
+		try {
+			otherNames = PlaceTaxonNotes.loadOtherNames(connection, overview, null, null);
+		} catch (SQLException | RuntimeException e) {
+			s_log.warn("findOtherNames() overview:" + overview + " e:" + e);
+			otherNames = null;
+		}
+	}
+
+	public PlaceTaxonNotes.OtherNames getOtherNames() {
+		return otherNames;
+	}
+
 	public void findUnimaged(Connection connection) throws SQLException {
 		java.util.Set<String> names = new java.util.HashSet<>();
 		if (children != null) for (Taxon child : children) names.add(child.getTaxonName());

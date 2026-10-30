@@ -372,7 +372,23 @@ public class BrowseAction extends DescriptionAction {
 		    try {
 		      String notice = PlaceTaxonNotes.notRecorded(connection, taxon, overview, taxon.getTaxonSet().exists(), targetDo);
 		      if (notice != null) request.setAttribute(PlaceTaxonNotes.NOT_RECORDED, notice);
-		      if (Rank.GENUS.equals(taxon.getRank())) {
+		      // 2026-10-30: in a place that selects specimens, the line names every specimen collected there under a name not
+		      // on the species list ("Specimens collected here not on the species list: 3 (names: ...)"), the indet name being
+		      // one of them; elsewhere (all of AntWeb) the indet line as before. A subfamily's browse page in a place: the
+		      // same numbers for its genus rows (web/taxonReport.jsp). One grouped query (PlaceTaxonNotes.otherNamesSql).
+		      PlaceTaxonNotes.OtherNames otherNames = null;
+		      if (Rank.GENUS.equals(taxon.getRank()) || (Rank.SUBFAMILY.equals(taxon.getRank()) && "browse".equals(cacheType))) {
+		        otherNames = PlaceTaxonNotes.loadOtherNames(connection, overview, taxon.getSubfamily(),
+		            Rank.GENUS.equals(taxon.getRank()) ? taxon.getGenus() : null);
+		      }
+		      if (Rank.SUBFAMILY.equals(taxon.getRank()) && otherNames != null) request.setAttribute(PlaceTaxonNotes.OTHER_NAMES, otherNames);
+		      if (Rank.GENUS.equals(taxon.getRank()) && otherNames != null) {
+		        PlaceTaxonNotes.OtherNames.Genus g = otherNames.genus(taxon.getSubfamily(), taxon.getGenus());
+		        String search = HttpUtil.isBot(request) ? null : PlaceTaxonNotes.placeSearchUrl(overview);
+		        String line = g == null ? null : PlaceTaxonNotes.otherNamesLineHtml(g,
+		            search == null ? null : search + "&" + PlaceTaxonNotes.searchParams(g, false), targetDo, overview);
+		        if (line != null) request.setAttribute(PlaceTaxonNotes.INDET_LINE, line);
+		      } else if (Rank.GENUS.equals(taxon.getRank())) {
 		        int[] nm = PlaceTaxonNotes.countIndet(connection, taxon.getTaxonName(), overview);
 		        if (nm != null) {
 		          String line = PlaceTaxonNotes.indetLineHtml(taxon.getPrettyName(), nm[0], nm[1],

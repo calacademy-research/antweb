@@ -299,6 +299,17 @@ $("#accordion a").click(function() {
     $('#status_choice').mouseleave(function(event) {
         $('#status_choice').delay(1000).fadeOut();
     });
+    // "Names from" of a place's list (2026-10-30): the same menu as the status choice.
+    $('#change_names_from').click(function(event) {
+        if ($('#names_from_choice').is(':visible')) {
+            $('#names_from_choice').hide();
+        } else {
+            $('#names_from_choice').show();
+        }
+    });
+    $('#names_from_choice').mouseleave(function(event) {
+        $('#names_from_choice').delay(1000).fadeOut();
+    });
     
 
     $('#change_caste').click(function(event) {

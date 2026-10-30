@@ -430,6 +430,23 @@
         float: none;
         padding-right: 0;
     }
+    /* the list header's selectors (2026-10-30): under the header, wrapping between selectors, never inside one */
+    .list-choices {
+        float: none;
+        flex-wrap: wrap;
+        margin-top: 4px;
+    }
+    .list-choices > div {
+        padding-left: 0;
+        padding-right: 16px;
+        margin-bottom: 4px;
+        white-space: normal;       /* a narrow phone: the label may wrap rather than scroll the page */
+        flex-wrap: wrap;
+        max-width: 100%;
+    }
+    .list-links {
+        overflow-wrap: anywhere;
+    }
     .tool_label {
         margin-bottom: 6px;
     }

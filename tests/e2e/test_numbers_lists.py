@@ -474,8 +474,8 @@ def test_species_lists_show_valid_names_and_morphospecies_only():
     """Brian Fisher, 2026-10-28: a specimen counts at each rank it is identified to, and no further. For the day's place
     of every kind: a sample of the names of its species list (every counted status) are valid names or morphospecies
     (statuses from the API /taxa); the line under the list, "N specimens identified only to genus are not listed here:
-    Lioponera (1), Pheidole (2).", adds up to its N; on the genus list, a row that says "N specimens identified to genus
-    only" says "No Species" (the genus counts in Genera, it has no species)."""
+    Lioponera (1), Pheidole (2).", adds up to its N; on the genus list, a row that says "No species on the list" names
+    the specimens collected here that put it there (2026-10-30; until then "N specimens identified to genus only")."""
     wrong, checked = [], []
     for p in places():
         html = ns.fetch(p.list_url("species"))
@@ -494,8 +494,9 @@ def test_species_lists_show_valid_names_and_morphospecies_only():
                 wrong.append(f"{p}: the line under the species list does not add up: {m.group(2)!r} ({m.group(1)})")
         genus_html = ns.fetch(p.list_url("genus"))
         for row in ns.list_rows(genus_html or ""):
-            if "genus-only" in row["html"] and "No Species" not in row["html"]:
-                wrong.append(f"{p}: a genus row names specimens identified to genus only but has species: {ns.text_of(row['html'])[:120]}")
+            # 2026-10-30: a genus row with no species on the list names the specimens collected here (other names)
+            if "No species on the list" in row["html"] and 'class="other-names"' not in row["html"]:
+                wrong.append(f"{p}: a genus row with no species on the list names no specimens: {ns.text_of(row['html'])[:120]}")
         checked.append(repr(p))
     if not checked:
         pytest.skip("no species list read " + ns.day_note())

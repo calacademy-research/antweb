@@ -5,14 +5,21 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import org.calacademy.antweb.geolocale.Adm1;
 import org.calacademy.antweb.geolocale.Bioregion;
 import org.calacademy.antweb.geolocale.Country;
 import org.calacademy.antweb.geolocale.Geolocale;
+import org.calacademy.antweb.geolocale.LocalityOverview;
 import org.calacademy.antweb.geolocale.Region;
 import org.calacademy.antweb.geolocale.Subregion;
+import org.calacademy.antweb.home.GenusOnly;
+import org.calacademy.antweb.home.PlaceTotals;
+import org.calacademy.antweb.home.SpecimenDb;
 import org.calacademy.antweb.home.StatisticsDb;
 import org.calacademy.antweb.util.AntwebProps;
 import org.calacademy.antweb.util.Html;
@@ -37,6 +44,23 @@ import org.calacademy.antweb.util.Html;
  * but is recorded), the page says at the top: "Lividopone is not recorded from Afrotropical. Recorded from: Malagasy.
  * See Lividopone in all of AntWeb." The bioregions are those whose list has the name (one query of bioregion_taxon).
  *
+ * Specimens collected here not on the species list (Brian Fisher, 2026-10-30: "if there is a specimen that justifies
+ * the presence of a genus in a place, I should be able to click to see the specimen"). A genus can be on a place's genus
+ * list without any species on its species list: Acropyga and Form_gen-afrc-za01 in Mozambique are there from
+ * morphospecies and unrecognized specimens collected in Mozambique, which country lists do not take as species rows
+ * (GeolocaleTaxonDb.GENUS_ROWS_FROM_SPECIMENS_SQL). The specimens "of other names" of a genus in a place are the
+ * place's specimens (placeSpecimenCriteria; red-flagged ones left out, as the lists leave them out,
+ * SpecimenDb.notRedFlagged) filed under a species or subspecies name of the genus, identified to genus, of a counted
+ * status, that is not a species of the place's list (a list row whose status counts as a species: valid or morphotaxon,
+ * PlaceTotals.speciesStatusCondition). The indet name ("Acropyga (indet)") is one such name. One grouped query per page
+ * (otherNamesSql), keyed by genus:
+ *   - genus lists (taxonomicPage.do?rank=genus, browse.do of a subfamily in a place): a genus with no species on the
+ *     list says "No species on the list &middot; 3 specimens collected here" instead of "No Species"; a genus with
+ *     species adds "+ 2 specimens of other names"; both link to the place's specimen search for the genus;
+ *   - the genus page in a place (description.do, browse.do, images.do): "Specimens collected here not on the species
+ *     list: 3 (names: Acropyga mz01, Acropyga mz02)", the number linked to the specimen search, each name to its page
+ *     in the place. In all of AntWeb the indet line stays as it was (there is no place list).
+ *
  * Tested without a database by test.org.calacademy.antweb.PlaceTaxonNotesTest, the SQL against MySQL by
  * test.org.calacademy.antweb.home.PlaceTaxonNotesDbTest.
  */
@@ -51,6 +75,8 @@ public final class PlaceTaxonNotes {
     /** Request attributes read by web/common/genusIndetLine.jsp and web/common/notRecorded.jsp. */
     public static final String INDET_LINE = "genusIndetLine";
     public static final String NOT_RECORDED = "notRecorded";
+    /** Request attribute (an OtherNames) read by web/taxonReport.jsp: the genus rows of a subfamily's browse page in a place. */
+    public static final String OTHER_NAMES = "placeOtherNames";
 
     /** "dorylinaelividopone" -> "dorylinaelividopone (indet)". */
     public static String indetName(String genusTaxonName) {
@@ -194,6 +220,228 @@ public final class PlaceTaxonNotes {
         b.append("<br><a href=\"").append(Html.escAttr(base + "&project=" + Project.ALLANTWEBANTS)).append("\">See ")
             .append(Html.esc(taxonDisplay)).append(" in all of AntWeb</a>");
         return b.append("</div>").toString();
+    }
+
+    // ------------------------------------------------------------------------------------------------- other names
+
+    /** The specimens collected in a place under names not on its species list, by genus (one query, otherNamesSql). */
+    public static final class OtherNames {
+
+        /** One genus: its specimens of other names, and the names ({taxon_name, species, subspecies, taxarank, count}). */
+        public static final class Genus {
+            public final String subfamily;
+            public final String genus;
+            public int specimens;
+            public final List<String[]> names = new ArrayList<>();
+
+            Genus(String subfamily, String genus) {
+                this.subfamily = subfamily;
+                this.genus = genus;
+            }
+
+            /** "Acropyga", "Form_gen-afrc-za01" */
+            public String displayName() {
+                return capitalized(genus);
+            }
+        }
+
+        private final Map<String, Genus> byGenus = new LinkedHashMap<>();
+
+        static String key(String subfamily, String genus) {
+            return (subfamily == null ? "" : subfamily.toLowerCase(Locale.ROOT)) + "|" + (genus == null ? "" : genus.toLowerCase(Locale.ROOT));
+        }
+
+        /** Adds one name's specimens (also for tests). */
+        public void add(String subfamily, String genus, String taxonName, String species, String subspecies, String taxarank, int count) {
+            if (genus == null || count <= 0) return;
+            Genus g = byGenus.computeIfAbsent(key(subfamily, genus), k -> new Genus(subfamily, genus));
+            g.specimens += count;
+            g.names.add(new String[] {taxonName, species, subspecies, taxarank, String.valueOf(count)});
+        }
+
+        /** The genus row's specimens of other names (by the row's subfamily and genus), or null when none. */
+        public Genus genus(String subfamily, String genus) {
+            return byGenus.get(key(subfamily, genus));
+        }
+
+        public boolean isEmpty() { return byGenus.isEmpty(); }
+
+        public java.util.Collection<Genus> genera() { return byGenus.values(); }
+    }
+
+    /**
+     * The query (Brian Fisher, 2026-10-30): the place's specimens grouped by name first (so the list is looked up once per
+     * name), then the names of a counted status, identified to genus, that are not a species of the place's list.
+     * Parameters, in this order: the subfamily (bySubfamily), the genus (byGenus), the subfamily again (bySubfamily), the
+     * list key (geolocale id, project name, museum code, bioregion name).
+     */
+    public static String otherNamesSql(String listType, String placeCriteria, boolean bySubfamily, boolean byGenus) {
+        return "select t.taxon_name, t.subfamily, t.genus, t.species, t.subspecies, t.taxarank, x.n"
+            + " from (select specimen.taxon_name, count(*) n from specimen where" + SpecimenDb.getAntSpecimenCriteria("specimen")
+            + " and " + SpecimenDb.notRedFlagged("specimen")
+            + (bySubfamily ? " and specimen.subfamily = ?" : "") + (byGenus ? " and specimen.genus = ?" : "")
+            + (placeCriteria == null ? "" : placeCriteria)
+            + " group by specimen.taxon_name) x"
+            + " join taxon t on t.taxon_name = x.taxon_name"
+            + " where t.taxarank in ('species', 'subspecies') and t.family = 'formicidae' and t.status in " + PlaceTotals.COUNTABLE
+            + " and " + PlaceTotals.identifiedToGenus("t")
+            + (bySubfamily ? " and t.subfamily = ?" : "")
+            + " and not (" + PlaceTotals.speciesStatusCondition("t") + " and exists (select 1 from " + PlaceTotals.listTable(listType)
+            + " l where l." + PlaceTotals.listKey(listType) + " = ? and l.taxon_name = t.taxon_name))"
+            + " order by t.subfamily, t.genus, t.taxon_name";
+    }
+
+    /**
+     * The place's specimens of other names, by genus; only a subfamily's or one genus's when given. Null for all of AntWeb
+     * and for places that select no specimens (curated projects): there the rows keep "No Species".
+     */
+    public static OtherNames loadOtherNames(Connection connection, Overview overview, String subfamily, String genus) throws SQLException {
+        String criteria = placeSpecimenCriteria(overview);
+        String[] tk = GenusOnly.typeAndKey(overview);
+        if (connection == null || criteria == null || criteria.isEmpty() || tk == null) return null;
+        boolean bySubfamily = subfamily != null && !subfamily.isEmpty();
+        boolean byGenus = genus != null && !genus.isEmpty();
+        OtherNames out = new OtherNames();
+        try (PreparedStatement stmt = connection.prepareStatement(otherNamesSql(tk[0], criteria, bySubfamily, byGenus))) {
+            int i = 0;
+            if (bySubfamily) stmt.setString(++i, subfamily);
+            if (byGenus) stmt.setString(++i, genus);
+            if (bySubfamily) stmt.setString(++i, subfamily);
+            if (PlaceTotals.GEOLOCALE.equals(tk[0])) stmt.setInt(++i, Integer.parseInt(tk[1]));
+            else stmt.setString(++i, tk[1]);
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) {
+                    out.add(r.getString("subfamily"), r.getString("genus"), r.getString("taxon_name"), r.getString("species"),
+                        r.getString("subspecies"), r.getString("taxarank"), r.getInt("n"));
+                }
+            }
+        }
+        return out;
+    }
+
+    /** The genus row with no species on the list: "No species on the list". */
+    public static final String NO_SPECIES_ON_LIST = "No species on the list";
+
+    /** "3 specimens collected here", "1 specimen collected here" */
+    public static String collectedHereText(int n) {
+        return n + (n == 1 ? " specimen" : " specimens") + " collected here";
+    }
+
+    /** "+ 2 specimens of other names", "+ 1 specimen of other names" */
+    public static String otherNamesText(int n) {
+        return "+ " + n + (n == 1 ? " specimen" : " specimens") + " of other names";
+    }
+
+    /** A link (rel=nofollow: a search) or, without a URL (bots), the text alone. */
+    static String link(String text, String url, String cls, int n) {
+        String data = " class=\"" + cls + "\" data-other-specimens=\"" + n + "\"";
+        if (url == null) return "<span" + data + ">" + Html.esc(text) + "</span>";
+        return "<a rel=\"nofollow\"" + data + " href=\"" + Html.escAttr(url) + "\">" + Html.esc(text) + "</a>";
+    }
+
+    /** The genus row with no species on the list: "No species on the list &middot; <a>3 specimens collected here</a>". */
+    public static String genusRowNoSpeciesHtml(int n, String url) {
+        return NO_SPECIES_ON_LIST + " &middot; " + link(collectedHereText(n), url, "other-names", n);
+    }
+
+    /** Under a genus row's "N Species": "<a>+ 2 specimens of other names</a>" (small). */
+    public static String genusRowOtherHtml(int n, String url) {
+        return "<br><small>" + link(otherNamesText(n), url, "other-names", n) + "</small>";
+    }
+
+    /** More names than this: the search takes the genus alone (a search box value is a list of names, docs/numbers.md 5.3). */
+    public static final int MAX_SEARCH_NAMES = 30;
+
+    /**
+     * The search criteria of a genus's specimens of other names, to add to the place's specimen search: the genus, and
+     * unless allNames, the species parts of the names ("genusSearchType=equals&genus=acropyga&speciesSearchType=equals&
+     * species=mz01, mz02"). allNames (no species on the list): every specimen of the genus collected there.
+     */
+    public static String searchParams(OtherNames.Genus g, boolean allNames) {
+        String p = "genusSearchType=equals&genus=" + Html.url(g.genus);
+        if (allNames) return p;
+        java.util.LinkedHashSet<String> species = new java.util.LinkedHashSet<>();
+        for (String[] n : g.names) if (n[1] != null && !n[1].isEmpty()) species.add(n[1]);
+        if (species.isEmpty() || species.size() > MAX_SEARCH_NAMES) return p;
+        return p + "&speciesSearchType=equals&species=" + Html.url(String.join(", ", species));
+    }
+
+    /** The place's specimen search ("List all specimens collected in <place>"), or null (no place search). */
+    public static String placeSearchUrl(Overview overview) {
+        if (!(overview instanceof LocalityOverview) || isAllOfAntWeb(overview)) return null;
+        String c = ((LocalityOverview) overview).getSearchCriteria();
+        if (c == null || c.isEmpty()) return null;
+        return AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&" + c
+            + "&resultRank=specimen";
+    }
+
+    /** "Acropyga mz01", "Acropyga (indet)", "Pheidole a x" */
+    public static String nameDisplay(OtherNames.Genus g, String[] name) {
+        StringBuilder b = new StringBuilder(g.displayName());
+        if (name[1] != null && !name[1].isEmpty()) b.append(" ").append(name[1]);
+        if (name[2] != null && !name[2].isEmpty()) b.append(" ").append(name[2]);
+        return b.toString();
+    }
+
+    /** The page of one name in the place: same page kind (description.do, browse.do, images.do). */
+    public static String nameUrl(String targetDo, OtherNames.Genus g, String[] name, Overview overview) {
+        String rank = Rank.SUBSPECIES.equals(name[3]) ? Rank.SUBSPECIES : Rank.SPECIES;
+        String p = "subfamily=" + Html.url(g.subfamily) + "&genus=" + Html.url(g.genus) + "&species=" + Html.url(name[1]);
+        if (Rank.SUBSPECIES.equals(rank)) p += "&subspecies=" + Html.url(name[2]);
+        return AntwebProps.getDomainApp() + "/" + targetDo + "?" + p + "&rank=" + rank + "&" + placeParams(overview);
+    }
+
+    /** Names shown on the genus page's line; more: "and N more". */
+    public static final int MAX_LINE_NAMES = 12;
+
+    /**
+     * The genus page's line in a place, or null when none: "Specimens collected here not on the species list: <a>3</a>
+     * (names: <a>Acropyga mz01</a>, <a>Acropyga mz02</a>)". searchUrl: the specimen search of those specimens (null:
+     * the number is not linked); targetDo: the page kind the names link to.
+     */
+    public static String otherNamesLineHtml(OtherNames.Genus g, String searchUrl, String targetDo, Overview overview) {
+        if (g == null || g.specimens <= 0) return null;
+        StringBuilder b = new StringBuilder();
+        b.append("<div id=\"genus_other_names\" class=\"genus_indet\" data-other-specimens=\"").append(g.specimens)
+            .append("\" style=\"margin:10px 0;\">Specimens collected here not on the species list: ");
+        if (searchUrl == null) b.append(g.specimens);
+        else b.append("<a rel=\"nofollow\" href=\"").append(Html.escAttr(searchUrl)).append("\">").append(g.specimens).append("</a>");
+        b.append(" (names: ");
+        int shown = 0;
+        for (String[] name : g.names) {
+            if (shown == MAX_LINE_NAMES) break;
+            if (shown > 0) b.append(", ");
+            b.append("<a href=\"").append(Html.escAttr(nameUrl(targetDo, g, name, overview))).append("\">")
+                .append(Html.esc(nameDisplay(g, name))).append("</a>");
+            shown++;
+        }
+        if (g.names.size() > shown) b.append(" and ").append(g.names.size() - shown).append(" more");
+        return b.append(")</div>").toString();
+    }
+
+    // ------------------------------------------------------------------------------------------------- names from
+
+    /** The heading of a list with the specimens' names (specimen=true): "54 Valid species on the list or collected in Mozambique". */
+    public static String withSpecimensHeading(String heading, String placeDisplay) {
+        if (heading == null) return null;
+        // the "(of N species and morphospecies)" of Valid species is the place page's number, not this list's
+        String h = heading.replaceFirst(" \\(of [\\d,]+ species and morphospecies\\)$", "");
+        return h + " on the list or collected in " + placeDisplay;
+    }
+
+    /** The two choices of the "Names from" selector: the place's list (specimen=false), or with the specimens' names too (specimen=true). */
+    public static final String NAMES_FROM_LIST = "Place list";
+    public static final String NAMES_FROM_SPECIMENS = "Specimens collected here";
+
+    /** The label of the current choice. */
+    public static String namesFromLabel(boolean withSpecimens) {
+        return withSpecimens ? NAMES_FROM_SPECIMENS : NAMES_FROM_LIST;
+    }
+
+    /** "acropyga" -> "Acropyga" */
+    static String capitalized(String s) {
+        if (s == null || s.isEmpty()) return s;
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     // ------------------------------------------------------------------------------------------------- helpers

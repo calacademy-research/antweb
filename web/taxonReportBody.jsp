@@ -51,7 +51,8 @@
           + " that are valid names or morphospecies; names identified to genus only (indetermined, unidentifiable)"
           + " and names not in AntCat (unrecognized) are not species.";
     }
-    // The specimens identified to genus only, linked to the place's specimen search (as "List all specimens collected in").
+    // The specimens identified to genus only (species lists) and the genus rows' specimens of other names (genus lists),
+    // linked to the place's specimen search (as "List all specimens collected in").
     String genusOnlySearch = null;
     if (overview instanceof org.calacademy.antweb.geolocale.LocalityOverview && !HttpUtil.isBot(request)) {
       String genusOnlyCriteria = ((org.calacademy.antweb.geolocale.LocalityOverview) overview).getSearchCriteria();
@@ -212,20 +213,26 @@
 
           String nextSubtaxon = childTaxonSet.getNextSubtaxon(1);
           //A.log("taxonReportBody.jsp nextSubtaxon:" + nextSubtaxon + " Um, nextTaxon should be returning 'No [rank]' instead of :" + childCountStr);
+          // 2026-10-30 (Brian Fisher): a genus row of a place says where it comes from. The specimens collected here under
+          // names not on the species list (PlaceTaxonNotes.OtherNames, one query per page): with no species on the list,
+          // "No species on the list &middot; 3 specimens collected here"; with species, "+ 2 specimens of other names". Both
+          // link to the place's specimen search for the genus. (Until 10-30: "N specimens identified to genus only".)
+          org.calacademy.antweb.PlaceTaxonNotes.OtherNames.Genus rowOther = (Rank.GENUS.equals(pageRank) && otherNames != null)
+              ? otherNames.genus(child.getSubfamily(), child.getGenus()) : null;
           if (nextSubtaxon != null && nextSubtaxon.contains("No ")) {
             childCountStr = nextSubtaxon; //"No Specimens";
-            // 2026-10-28: a genus known here only from specimens identified to genus: "No Species" and how many.
-            int genusOnlyCount = (Rank.GENUS.equals(pageRank) && genusOnly != null) ? genusOnly.specimens(child.getTaxonName()) : 0;
-            if (genusOnlyCount > 0) {
-              String genusOnlyText = org.calacademy.antweb.home.GenusOnly.genusRowText(genusOnlyCount);
-              if (genusOnlySearch != null) genusOnlyText = "<a rel='nofollow' href='" + org.calacademy.antweb.util.Html.escAttr(genusOnlySearch + "&"
-                  + org.calacademy.antweb.home.GenusOnly.searchParams(genusOnly.genus(child.getTaxonName()))) + "'>" + genusOnlyText + "</a>";
-              childCountStr += "<br><span class='genus-only' data-genus-only='" + genusOnlyCount + "'>" + genusOnlyText + "</span>";
+            if (rowOther != null) {
+              childCountStr = org.calacademy.antweb.PlaceTaxonNotes.genusRowNoSpeciesHtml(rowOther.specimens, genusOnlySearch == null ? null
+                  : genusOnlySearch + "&" + org.calacademy.antweb.PlaceTaxonNotes.searchParams(rowOther, true));
             }
           } else {
             //if (child.getTaxonName().contains("graulomyrmex")) A.log("init() taxonName:" + taxonName + " childCount:" + projTaxon.getGlobalChildCount());
             //if (child.getTaxonName().contains("graulomyrmex")) A.log("taxonReport.jsp ! nextSubtaxon:" + nextSubtaxon + " globalChildCount:" + childTaxonSet.getGlobalChildCount());
             childCountStr = "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "'>" + nextSubtaxon + "</a>";
+            if (rowOther != null) {
+              childCountStr += org.calacademy.antweb.PlaceTaxonNotes.genusRowOtherHtml(rowOther.specimens, genusOnlySearch == null ? null
+                  : genusOnlySearch + "&" + org.calacademy.antweb.PlaceTaxonNotes.searchParams(rowOther, false));
+            }
           } 
 
           if (listOnly) {

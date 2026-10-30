@@ -733,6 +733,54 @@ Currently on live we show:
     padding-right:20px;
 }
 
+/* A place's list header (taxonomicPage-body.jsp, Brian Fisher 2026-10-30): line 1 the header with the Species Status and
+   Names from selectors on the right, each on one line; line 2 small links; "About this list" closed under them. */
+.list-choices {
+    float:right;
+    display:flex;
+    align-items:baseline;
+}
+.list-choices > div {
+    float:none;
+    display:flex;
+    align-items:baseline;
+    white-space:nowrap;
+    padding-left:20px;
+}
+.list-choices #change_status,
+.list-choices #change_names_from {
+    float:none;
+}
+#names_from_choice.options {
+    left:0;
+    min-width:170px;
+}
+#status_choice.options {
+    min-width:200px;
+}
+#names_from_choice ul, #status_choice ul {
+    text-align:left;
+}
+#names_from_choice ul li {
+    cursor:pointer;
+}
+.list-links {
+    font-weight:normal;
+    font-size:0.9em;
+    margin:2px 0 4px 0;
+}
+.about-list {
+    margin:4px 0 6px 0;
+}
+.about-list summary {
+    cursor:pointer;
+    color:#556b83;
+    font-size:0.9em;
+}
+.about-list p {
+    margin:6px 0;
+}
+
 #download_data, #download_data_search_results {
     cursor:pointer;
 }

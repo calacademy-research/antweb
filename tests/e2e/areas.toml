@@ -96,6 +96,7 @@ tests = [
   "test_genus_indet_places.py::test_day_genus_indet_line",
   "test_genus_indet_places.py::test_not_recorded_notice",
   "test_genus_indet_places.py::test_day_genus_not_recorded_notice",
+  "test_list_sources.py",            # where a place list's names come from (2026-10-30)
   "test_api_numbers.py",
   "test_numbers_api_meta.py",
   "test_previous_determinations.py",
@@ -430,6 +431,8 @@ paths = [
   "web/common/overviewHeading.jsp",
   "src/org/calacademy/antweb/StatusSet.java",
   "web/common/statusesDisplay.jsp",
+  "web/common/taxonSetHeaderNotes.jsp",
+  "src/org/calacademy/antweb/PlaceTaxonNotes.java",
 ]
 tests = [
   "test_place_pages.py",               # place pages, their lists and species lists (step 2)
@@ -440,6 +443,7 @@ tests = [
   "test_overview_editor.py",
   "test_genus_indet_places.py",        # genus rows of specimens identified only to genus on country lists (2026-10-29)
   "test_status_choice.py",             # status choice of lists (2026-10-30)
+  "test_list_sources.py",              # genus rows' specimens collected here, Names from selector, list header (2026-10-30)
 ]
 
 [areas.downloads]

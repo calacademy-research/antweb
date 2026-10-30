@@ -212,7 +212,6 @@ web/common/statusesDisplay.jsp
 web/common/subgeneraDisplay.jsp
 web/common/subregionNav.jsp
 web/common/taxonNav.jsp
-web/common/taxonSetHeaderNotes.jsp
 web/common/taxonTitle.jsp
 web/common/taxonomicHierarchy.jsp
 web/common/tempDown-body.jsp

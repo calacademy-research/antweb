@@ -152,4 +152,70 @@ public class PlaceTaxonNotesDbTest extends TestCase {
             }
         }
     }
+
+    // ---------------------------------------------- specimens collected here not on the species list (2026-10-30)
+
+    static final String CAREBARA_MG01 = "myrmicinaecarebara mg01";
+    static final String PHEIDOLE_ZZ = "myrmicinaepheidole zz";
+
+    /**
+     * Madagascar's list has Pheidole a, b (morphospecies), a x and Hypoponera b. Collected in Madagascar and not species
+     * of the list: Carebara (indet) (1), the morphospecies Carebara mg01 (2, a third red-flagged), the unrecognized
+     * Pheidole zz (1). Pheidole b, a morphospecies on the list, is not one of them.
+     */
+    private void otherNamesFixture() throws Exception {
+        exec("alter table taxon add column subspecies varchar(64)");   // as the live table
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species) values"
+            + " ('" + CAREBARA_MG01 + "', 'species', 'morphotaxon', '" + CAREBARA + "', 'formicidae', '" + MYRM + "', 'carebara', 'mg01'),"
+            + " ('" + PHEIDOLE_ZZ + "', 'species', 'unrecognized', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "', 'pheidole', 'zz')");
+        exec("update taxon set species = 'a' where taxon_name = '" + PA + "'");
+        exec("update taxon set species = 'b' where taxon_name = '" + PB + "'");
+        exec("update specimen set genus = 'pheidole' where taxon_name like 'myrmicinaepheidole%'");
+        specimen("mg1", CAREBARA_MG01, "morphotaxon", "Madagascar", null, "Malagasy", null);
+        specimen("mg2", CAREBARA_MG01, "morphotaxon", "Madagascar", null, "Malagasy", null);
+        specimen("mgred", CAREBARA_MG01, "morphotaxon", "Madagascar", null, "Malagasy", "red");
+        exec("insert into specimen (code, taxon_name, status, country, bioregion, family, subfamily, genus) values"
+            + " ('zz1', '" + PHEIDOLE_ZZ + "', 'unrecognized', 'Madagascar', 'Malagasy', 'formicidae', '" + MYRM + "', 'pheidole')");
+    }
+
+    private static Country madagascar() {
+        Country mad = new Country();
+        mad.setId(MADAGASCAR);
+        mad.setName("Madagascar");
+        return mad;
+    }
+
+    public void testOtherNamesByGenusInOneQuery() throws Exception {
+        otherNamesFixture();
+        PlaceTaxonNotes.OtherNames o = PlaceTaxonNotes.loadOtherNames(connection, madagascar(), null, null);
+        PlaceTaxonNotes.OtherNames.Genus carebara = o.genus(MYRM, "carebara");
+        assertNotNull("Carebara, with no species on the list, has specimens collected here", carebara);
+        assertEquals("Carebara (indet) 1 + mg01 2; the red-flagged one left out", 3, carebara.specimens);
+        List<String> names = new ArrayList<>();
+        for (String[] n : carebara.names) names.add(n[0] + "=" + n[4]);
+        assertEquals("[" + CAREBARA_INDET + "=1, " + CAREBARA_MG01 + "=2]", names.toString());
+        PlaceTaxonNotes.OtherNames.Genus pheidole = o.genus(MYRM, "pheidole");
+        assertNotNull("Pheidole has species on the list and one specimen of another name", pheidole);
+        assertEquals("only Pheidole zz: valid a, a x and the morphospecies b are on the list", 1, pheidole.specimens);
+        assertEquals(PHEIDOLE_ZZ, pheidole.names.get(0)[0]);
+        assertNull("Hypoponera: every specimen under a name on the list", o.genus(PON, "hypoponera"));
+        // Mozambique: no list rows; its two Carebara (indet), not the red-flagged one nor the one not identified to genus
+        Country moz = new Country();
+        moz.setId(40);
+        moz.setName("Mozambique");
+        PlaceTaxonNotes.OtherNames m = PlaceTaxonNotes.loadOtherNames(connection, moz, null, null);
+        assertEquals(2, m.genus(MYRM, "carebara").specimens);
+        assertEquals("one genus only", 1, m.genera().size());
+        assertNull("all of AntWeb: no place list", PlaceTaxonNotes.loadOtherNames(connection, new Project(Project.ALLANTWEBANTS), null, null));
+    }
+
+    public void testOtherNamesOfOneGenusOrSubfamily() throws Exception {
+        otherNamesFixture();
+        PlaceTaxonNotes.OtherNames one = PlaceTaxonNotes.loadOtherNames(connection, madagascar(), MYRM, "carebara");
+        assertEquals("the genus page reads its own genus", 1, one.genera().size());
+        assertEquals(3, one.genus(MYRM, "carebara").specimens);
+        PlaceTaxonNotes.OtherNames sub = PlaceTaxonNotes.loadOtherNames(connection, madagascar(), MYRM, null);
+        assertEquals("a subfamily's browse page: its genera", 2, sub.genera().size());
+        assertTrue(PlaceTaxonNotes.loadOtherNames(connection, madagascar(), PON, null).isEmpty());
+    }
 }

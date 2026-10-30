@@ -6,8 +6,9 @@ imaged), most from Madagascar, some from Mozambique.
 
   1. Indet line. Every genus page (description.do, browse.do, images.do; any place or all of AntWeb) says under its
      species "Not identified to species: Lividopone (indet), N specimens (M imaged)", linked to the indet name's page of
-     the same kind and place; N and M are what that page lists. Checked on Lividopone (all of AntWeb and Mozambique) and
-     on the day's genus of the API's indet names.
+     the same kind and place; N and M are what that page lists. Checked on Lividopone (all of AntWeb) and on the day's
+     genus of the API's indet names. In a place (2026-10-30) the line names every specimen collected there under a
+     name not on the species list, the indet name among them (Lividopone, Mozambique; tests/e2e/test_list_sources.py).
   2. Not recorded. A genus or species page opened for a place whose list does not have it and where it was not
      collected says "<Taxon> is not recorded from <Place>.", "Recorded from: <the bioregions whose list has it>" and
      "See <Taxon> in all of AntWeb". Never on a page whose place has the taxon. Checked on Lividopone (Neotropical, not
@@ -87,6 +88,24 @@ def check_line(page, params, where):
     return n
 
 
+OTHER_LINE = re.compile(r'<div id="genus_other_names"[^>]*data-other-specimens="(\d+)"[^>]*>(.*?)</div>', re.S)
+
+
+def check_other_line(page, params, where):
+    """The genus page's line in a place (2026-10-30): specimens collected there not on the species list; when the indet
+    name is among them, its link is the indet page of the same kind and place. Returns N (0 when no line)."""
+    html = ns.get(f"/{page}.do?{params}")
+    m = OTHER_LINE.search(html)
+    if not m:
+        return 0
+    line = m.group(2)
+    assert "Specimens collected here not on the species list:" in ns.text_of(line), (where, line)
+    for href, name in re.findall(r'<a href="([^"]+)">([^<]+)</a>', line):
+        if unescape(name).endswith(" (indet)"):
+            assert f"/{page}.do?" in unescape(href) and "species=%28indet%29" in href, (where, href)
+    return int(m.group(1))
+
+
 def test_genus_page_names_its_specimens_identified_only_to_genus():
     """Brian Fisher, 2026-10-29: the indet page could be reached from no genus page. Lividopone in all of AntWeb and in
     Mozambique, on the three page kinds; N and M = the indet page's own header."""
@@ -94,7 +113,9 @@ def test_genus_page_names_its_specimens_identified_only_to_genus():
     if n_all == [0, 0, 0]:
         pytest.skip("no Lividopone (indet) specimens on this server")
     assert len(set(n_all)) == 1 and n_all[0] > 0, ("one number on the three pages", n_all)
-    n_moz = [check_line(p, LIVIDOPONE + "&countryName=Mozambique", "Lividopone, Mozambique") for p in ("description", "browse", "images")]
+    # In a place (2026-10-30) the line names every specimen collected there under a name not on the species list; the
+    # indet name is one of them: "Specimens collected here not on the species list: N (names: Lividopone (indet))".
+    n_moz = [check_other_line(p, LIVIDOPONE + "&countryName=Mozambique", "Lividopone, Mozambique") for p in ("description", "browse", "images")]
     assert len(set(n_moz)) == 1, ("one number on the three pages", n_moz)
     assert n_moz[0] < n_all[0], ("Mozambique has some of them, not all", n_moz, n_all)
     # Not a species anywhere: the indet name is no row of the Mozambique list.
