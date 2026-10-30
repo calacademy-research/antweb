@@ -425,6 +425,46 @@ public class StatusSet extends Status {
         return num + " " + statusStr + noun;
     }
 
+    /**
+     * The header of a list's images view (taxonomicPage.do?images=true, h2 display_count): how many of the listed rows are
+     * imaged, out of the rows listed, in the words of the same choice as the list's header (listHeading), so the two
+     * agree (Brian Fisher, 2026-10-30; until then "N Species Imaged (out of M Total)" did not say which names). Examples:
+     * "40 Valid species imaged (out of 98 valid species)", "116 Species imaged (out of 140 valid species and
+     * morphospecies)", "80 Genera imaged (out of 116 valid genera and morphogenera)", "5 Species imaged (out of 7 names,
+     * all statuses)", "3 Fossil species imaged (out of 12 fossil species)". The AntCat list and Fossil Ants: their own
+     * value ("40 Valid Species imaged (out of 98 valid species)"). Numbers with thousands separators, 0 as "0". Plain
+     * text: the JSP escapes it.
+     */
+    public static String imagedHeading(String choice, int imaged, int total, String pluralRank, String singularRank,
+            String overviewName) {
+        if (hasOwnStatusSets(overviewName) && isListChoice(choice)) choice = "own:" + choice;
+        return imagedHeading(choice, imaged, total, pluralRank, singularRank);
+    }
+
+    public static String imagedHeading(String choice, int imaged, int total, String pluralRank, String singularRank) {
+        String plural = pluralRank == null ? "" : pluralRank;
+        String single = singularRank == null ? plural : singularRank;
+        String noun = imaged == 1 ? single : plural;
+        String lower = noun.toLowerCase(Locale.ROOT);
+        String pluralLower = plural.toLowerCase(Locale.ROOT);
+        String totalNoun = (total == 1 ? single : plural).toLowerCase(Locale.ROOT);
+        boolean speciesRows = "species".equals(pluralLower);
+        boolean generaRows = "genera".equals(pluralLower);
+        String num = String.format(Locale.US, "%,d", imaged);
+        String of = " (out of " + String.format(Locale.US, "%,d", total) + " ";
+        if (LIST_VALID.equals(choice)) return num + " Valid " + lower + " imaged" + of + "valid " + totalNoun + ")";
+        if (LIST_VALID_MORPHO.equals(choice)) {
+            if (speciesRows) return num + " " + noun + " imaged" + of + "valid species and morphospecies)";
+            if (generaRows) return num + " " + noun + " imaged" + of + "valid genera and morphogenera)";
+            return num + " " + noun + " imaged" + of + "valid names and morphotaxa)";
+        }
+        if (LIST_ALL.equals(choice)) return num + " " + noun + " imaged" + of + (total == 1 ? "name" : "names") + ", all statuses)";
+        if (LIST_FOSSIL.equals(choice)) return num + " Fossil " + lower + " imaged" + of + "fossil " + totalNoun + ")";
+        if (choice != null && choice.startsWith("own:")) choice = choice.substring(4);
+        String status = (choice == null || ALL.equals(choice)) ? "" : ownLabel(choice) + " ";
+        return num + " " + status + noun + " imaged" + of + status.toLowerCase(Locale.ROOT) + totalNoun + ")";
+    }
+
     public static String getAllAntwebClause() {
        return " status in ('morphotaxon', 'indetermined', 'unrecognized')";
     }

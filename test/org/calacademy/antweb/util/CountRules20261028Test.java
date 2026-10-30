@@ -112,13 +112,14 @@ public class CountRules20261028Test extends TestCase {
 
     // ---------------------------------------------------------------- Genera and Subfamilies
 
-    public void testGeneraAndSubfamiliesCountRowsOfEveryCountedStatus() {
+    public void testGeneraAndSubfamiliesCountTheRowsOfTheirRule() {
         // A "Lioponera indet" specimen puts its name and its genus row on the list (GeolocaleTaxonDb.insert adds the parents);
-        // the genus row counts in Genera, the subfamily row in Subfamilies. Subfamilies: every counted status (no placeholder
-        // rows since 2026-10-30). Genera: valid genera and morphogenera since 2026-10-30 (CountRules20261030Test).
+        // the genus row counts in Genera, the subfamily row in Subfamilies. Since 2026-10-30 Subfamilies count valid
+        // subfamilies only and Genera valid genera and morphogenera (CountRules20261030Test); until then both counted
+        // rows of every counted status.
         String c = PlaceTotals.rankCondition(PlaceTotals.SUBFAMILY);
-        assertTrue(c, c.contains("t.status in " + PlaceTotals.COUNTABLE));
-        assertTrue(c, c.contains(PlaceTotals.notPlaceholder("t")));
+        assertTrue(c, c.contains(PlaceTotals.countsAsSubfamily("t")));
+        assertFalse(c, c.contains(PlaceTotals.COUNTABLE));
         String g = PlaceTotals.rankCondition(PlaceTotals.GENUS);
         assertTrue(g, g.contains(PlaceTotals.countsAsGenus("t")));
         assertFalse(g, g.contains(PlaceTotals.COUNTABLE));

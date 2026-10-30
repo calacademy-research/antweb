@@ -24,21 +24,18 @@ import org.calacademy.antweb.util.Queries;
  */
 public class CountRules20261027Test extends TestCase {
 
-    // ---------------------------------------------------------------- B67 project Subfamilies
+    // ---------------------------------------------------------------- B67 project Subfamilies (superseded 2026-10-30)
 
-    public void testCuratedProjectSubfamiliesCountEveryStatusAsTheirListRows() {
+    public void testB67SupersededCuratedProjectSubfamiliesTakeThePlaceRule() {
+        // B67 (2026-10-27) counted a curated project's subfamily rows of every status. Brian Fisher, 2026-10-30: Subfamilies
+        // count valid subfamilies only on every kind of place (PlaceTotals.countsAsSubfamily), curated projects too.
         String c = PlaceTotals.listedCondition(PlaceTotals.PROJECT, PlaceTotals.SUBFAMILY);
-        assertTrue(c, c.contains("t.taxarank = 'subfamily'"));
-        assertTrue("worldants and allantwebants keep the counted statuses: " + c,
-            c.contains("or l.project_name not in ('worldants', 'allantwebants')"));
+        assertEquals(PlaceTotals.rankCondition(PlaceTotals.SUBFAMILY), c);
+        assertFalse("no exception for curated projects any more: " + c, c.contains("l.project_name"));
         assertTrue("ants only: " + c, c.endsWith(PlaceTotals.ANTS));
-        // every other number keeps its rule
         for (String type : PlaceTotals.TYPES) {
-            for (String rank : new String[] {PlaceTotals.GENUS, PlaceTotals.SPECIES}) {
+            for (String rank : new String[] {PlaceTotals.SUBFAMILY, PlaceTotals.GENUS, PlaceTotals.SPECIES}) {
                 assertEquals(type + " " + rank, PlaceTotals.rankCondition(rank), PlaceTotals.listedCondition(type, rank));
-            }
-            if (!PlaceTotals.PROJECT.equals(type)) {
-                assertEquals(type, PlaceTotals.rankCondition(PlaceTotals.SUBFAMILY), PlaceTotals.listedCondition(type, PlaceTotals.SUBFAMILY));
             }
         }
         // the nightly run (one place, all places) and the count check use the same condition

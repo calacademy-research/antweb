@@ -162,4 +162,30 @@ public class StatusChoiceTest extends TestCase {
         assertEquals("Valid", StatusSet.choiceLabel("valid", "species", Project.WORLDANTS));
         assertEquals("Valid species", StatusSet.choiceLabel("valid", "species", "madants"));
     }
+
+    /** Brian Fisher, 2026-10-30: the images view's header names the status choice, in the words of the list's header. */
+    public void testImagesViewHeaderNamesTheStatusChoice() {
+        assertEquals("40 Valid species imaged (out of 98 valid species)", StatusSet.imagedHeading("valid", 40, 98, "Species", "Species"));
+        assertEquals("1,116 Species imaged (out of 2,140 valid species and morphospecies)",
+            StatusSet.imagedHeading("validmorpho", 1116, 2140, "Species", "Species"));
+        assertEquals("80 Genera imaged (out of 116 valid genera and morphogenera)", StatusSet.imagedHeading("validmorpho", 80, 116, "Genera", "Genus"));
+        assertEquals("70 Valid genera imaged (out of 98 valid genera)", StatusSet.imagedHeading("valid", 70, 98, "Genera", "Genus"));
+        assertEquals("1 Valid genus imaged (out of 1 valid genus)", StatusSet.imagedHeading("valid", 1, 1, "Genera", "Genus"));
+        assertEquals("0 Valid species imaged (out of 3 valid species)", StatusSet.imagedHeading("valid", 0, 3, "Species", "Species"));
+        assertEquals("5 Species imaged (out of 7 names, all statuses)", StatusSet.imagedHeading("all", 5, 7, "Species", "Species"));
+        assertEquals("3 Fossil species imaged (out of 12 fossil species)", StatusSet.imagedHeading("fossil", 3, 12, "Species", "Species"));
+        assertEquals("9 Subfamilies imaged (out of 10 valid names and morphotaxa)",
+            StatusSet.imagedHeading("validmorpho", 9, 10, "Subfamilies", "Subfamily"));
+        // the AntCat list keeps its own values
+        assertEquals("40 Valid Species imaged (out of 98 valid species)", StatusSet.imagedHeading("valid", 40, 98, "Species", "Species", Project.WORLDANTS));
+        // the list header and the images header use the same words for the same choice
+        for (String choice : StatusSet.LIST_CHOICES) {
+            String list = StatusSet.listHeading(choice, 98, "Genera", "Genus", -1);
+            String images = StatusSet.imagedHeading(choice, 40, 98, "Genera", "Genus");
+            assertTrue(choice + ": " + images, images.contains(" imaged (out of 98 "));
+            // the rows named the same way: "Valid genera", "Genera", "Fossil genera"
+            String rows = list.substring(list.indexOf(' ') + 1).replaceAll(" \\(.*$", "");
+            assertTrue(choice + ": " + list + " / " + images, images.startsWith("40 " + rows + " imaged (out of 98 "));
+        }
+    }
 }

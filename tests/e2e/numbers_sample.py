@@ -335,18 +335,37 @@ def genus_rows_from_specimens_built():
 
 
 # CountInvariants.GENERA_RULE_LOG, on the "Set 4 done" line of the nightly run since 2026-10-30. Keep in step with Java.
-GENERA_RULE_LOG = "genera rule of 2026-10-30"
+GENERA_RULE_LOG = "genera and subfamilies rule of 2026-10-30"
 
 
 def genera_rule_counted():
-    """True when a nightly run has counted Genera by the rule of 2026-10-30 (valid genera and morphogenera; no placeholder
-    subfamilies; docs/numbers.md section 5), False when compute.log is readable and has no such line (the stored Genera
+    """True when a nightly run has counted Genera and Subfamilies by the rule of 2026-10-30 (valid genera and
+    morphogenera; valid subfamilies only, curated projects too; docs/numbers.md section 5), False when compute.log is readable and has no such line (the stored Genera
     and Subfamilies, and the subfamily rows' N Genera, are those of the old rule until then: pending), None when
     unreadable."""
     return compute_log_has("Set 4 done", GENERA_RULE_LOG)
 
 
 _GENERA = {}
+_SUBFAMILIES = {}
+
+
+def counted_subfamily_names():
+    """The taxon names (lower case) of the subfamily rows that count as subfamilies (Brian Fisher, 2026-10-30;
+    PlaceTotals.countsAsSubfamily): status valid, Formicidae, no parentheses. From the API /taxa; None when it can't be
+    read whole."""
+    if "v" not in _SUBFAMILIES:
+        rows = api_all("taxa?taxarank=subfamily&status=valid", max_pages=5)
+        names = None
+        if rows is not None:
+            names = set()
+            for r in rows:
+                name = (r.get("taxonName") or "").strip().lower()
+                family = (r.get("family") or "formicidae").strip().lower()
+                if name and family == "formicidae" and not is_placeholder(name):
+                    names.add(name)
+        _SUBFAMILIES["v"] = names
+    return _SUBFAMILIES["v"]
 
 
 def counted_genus_names():
@@ -392,17 +411,15 @@ def row_taxon_name(row, rank):
 
 def counted_rows(rows, rank):
     """How many of these subfamily or genus rows (list_rows) the place's Subfamilies or Genera count (2026-10-30): genus
-    rows that are valid genera or morphogenera, subfamily rows that are not placeholders. None when a row's name or the
-    genera of the API can't be read."""
+    rows that are valid genera or morphogenera, subfamily rows that are valid subfamilies (no placeholder, no
+    unrecognized name). None when a row's name or the genera or subfamilies of the API can't be read."""
     names = [row_taxon_name(r, rank) for r in rows]
     if any(n is None for n in names):
         return None
-    if rank == "subfamily":
-        return sum(1 for n in names if not is_placeholder(n))
-    genera = counted_genus_names()
-    if genera is None:
+    counted = counted_subfamily_names() if rank == "subfamily" else counted_genus_names()
+    if counted is None:
         return None
-    return sum(1 for n in names if n in genera)
+    return sum(1 for n in names if n in counted)
 
 
 def counting_rules_counted():
