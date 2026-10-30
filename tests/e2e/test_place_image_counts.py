@@ -27,8 +27,10 @@ SECTIONS = ["Taxonomic diversity", "Endemism and introduced species", "Specimen 
 
 # data-stat of each row and the start of its definition.
 DEFINITIONS = [
-    ("subfamilies", "Subfamilies recorded on this country's AntWeb list"),
-    ("genera", "Genera recorded on this country's AntWeb list"),
+    # genera and subfamilies rule of 2026-10-30: valid subfamilies only
+    ("subfamilies", "Subfamilies recorded on this country's AntWeb list: valid subfamilies only"),
+    # genera rule of 2026-10-30: valid genera and morphogenera only
+    ("genera", "Genera recorded on this country's AntWeb list: valid genera and morphogenera"),
     ("valid", "Currently valid, formally named, living (non-fossil) species and subspecies"),
     # counting rules of 2026-10-28: valid names and morphospecies only
     ("species", "Species and subspecies recorded on this country's AntWeb list, from any source, that are valid names or"

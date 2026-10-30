@@ -30,7 +30,8 @@ import java.util.Set;
  *   species    genus rows: species_count = species and subspecies rows of that genus in the same list
  *              that count as species: status valid or morphotaxon (2026-10-28, PlaceTotals.SPECIES_STATUSES;
  *              before: the five counted statuses, projects any), identified to genus.
- *   genera     subfamily rows: genus_count = genus rows of that subfamily in the same list (same statuses).
+ *   genera     subfamily rows: genus_count = genus rows of that subfamily in the same list (same statuses) that count
+ *              as a genus: valid genera and morphogenera, no placeholders (2026-10-30, PlaceTotals.countsAsGenus).
  *   global     species rows of the places checked: the allantwebants specimen_count ("Global" column) =
  *              all specimens filed under that name.
  *   place images  (2026-10-20) the place's own numbers: Images (all files, labels too), images of each
@@ -839,8 +840,8 @@ public class CountCheck {
     }
 
     /** The place's Subfamilies number (2026-10-20: staging's Madagascar page showed 0 with 8 subfamilies on
-     *  its list): stored subfamily_count against the subfamily rows on the place's list with a counted status
-     *  (a curated project: every status, as its list rows; PlaceTotals.listedCondition, 2026-10-27). */
+     *  its list): stored subfamily_count against the subfamily rows on the place's list that are valid subfamilies
+     *  (PlaceTotals.countsAsSubfamily, every kind of place, 2026-10-30; B67's every status of curated projects is gone). */
     int checkSubfamilyTotal(Place place, Result result, boolean listChanged) throws SQLException {
         if (!GEOLOCALE.equals(place.type) && !PROJECT.equals(place.type)) return 0;
         if (!columnExists(placeTable(place.type), "subfamily_count")) return 0;
@@ -953,7 +954,9 @@ public class CountCheck {
             // a genus row's Species: names identified to genus only (2026-10-22, PlaceTotals.identifiedToGenus), valid
             // names and morphospecies (2026-10-28, PlaceTotals.SPECIES_STATUSES)
             + (childRanks.contains("species") ? " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon")
-                + " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon") : "");
+                + " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon") : "")
+            // a subfamily row's Genera: valid genera and morphogenera, no placeholders (2026-10-30, as the nightly crawl)
+            + ("('genus')".equals(childRanks) ? org.calacademy.antweb.home.PlaceTotals.childCountCondition("genus", "taxon") : "");
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             place.setKey(stmt, 1);
             try (ResultSet r = stmt.executeQuery()) {

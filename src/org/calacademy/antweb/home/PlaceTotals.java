@@ -11,9 +11,13 @@ import java.sql.SQLException;
  * ProjectDb, MuseumDb, BioregionDb) and by the count check (CountCheck, CountInvariants) that checks
  * them (Brian Fisher, 2026-10-20: every number on the site validated by a test).
  *
- *   Subfamilies  subfamily rows on the place's list whose taxon has a counted status; a curated project's
- *                Subfamilies count its subfamily rows of every status, as its list rows do (listedCondition, 2026-10-27)
- *   Genera       genus rows on the list, counted status
+ *   Subfamilies  subfamily rows on the place's list that count as a subfamily (countsAsSubfamily, Brian Fisher
+ *                2026-10-30): valid subfamilies only, on every kind of place, curated projects too (this replaced B67 of
+ *                2026-10-27, every status for curated projects); the placeholder "(formicidae)" and misspelled subfamily
+ *                names (status unrecognized) are on the list but not counted
+ *   Genera       genus rows on the list that count as a genus (countsAsGenus, Brian Fisher 2026-10-30): valid genera and
+ *                morphogenera; placeholders such as "(myrmicinae)" (identified only to subfamily) and genus names AntCat
+ *                does not know (status unrecognized, "(formicidae)polyrachis") are on the list but not counted
  *   Species      species and subspecies rows on the list, status valid or morphotaxon (SPECIES_STATUSES,
  *                2026-10-28), ants (family formicidae), identified to genus (identifiedToGenus, 2026-10-22)
  *   Valid        species and subspecies rows on the list, status valid, not fossil
@@ -129,6 +133,96 @@ public final class PlaceTotals {
         return alias + ".taxarank in ('species', 'subspecies') and " + speciesStatusCondition(alias) + " and " + identifiedToGenus(alias);
     }
 
+    /**
+     * The statuses of a genus row that counts as a genus (Brian Fisher, 2026-10-30): valid genera and morphogenera
+     * ("Form_gen-afrc-za01", status morphotaxon). Genus names AntCat does not know (misspellings, old names: status
+     * unrecognized) stay in AntWeb with their specimens but are not genera; placeholders such as "(myrmicinae)" or
+     * "(formicidae)" (specimens identified only to subfamily or family) never are.
+     */
+    public static final String GENUS_STATUSES = "('valid', 'morphotaxon')";
+
+    /** The same in Java. */
+    public static final java.util.List<String> GENUS_STATUS_LIST = java.util.Arrays.asList("valid", "morphotaxon");
+
+    /**
+     * SQL: the taxon (alias a) is not one of AntWeb's placeholders: its taxon name has no parenthesis. Placeholders are
+     * the subfamily or family in parentheses in place of a name ("(formicidae)", "(dolichoderinae)", "(dacetini)"), a
+     * genus filed under the placeholder subfamily ("(formicidae)polyrachis"), or a stray parenthesis from an upload file
+     * ("Amblyoponinae)"). Brian Fisher, 2026-10-30: a value with parentheses and a subfamily or family name is
+     * undetermined, never a genus (and never a subfamily).
+     */
+    public static String notPlaceholder(String alias) {
+        String n = "coalesce(" + alias + ".taxon_name, '')";
+        return "(" + n + " not like '%(%' and " + n + " not like '%)%')";
+    }
+
+    /** The same rule in Java, for a taxon name. */
+    public static boolean isPlaceholder(String taxonName) {
+        return taxonName != null && (taxonName.contains("(") || taxonName.contains(")"));
+    }
+
+    /**
+     * SQL: a genus row (alias a) that counts as a genus (Brian Fisher, 2026-10-30): status valid or morphotaxon
+     * (GENUS_STATUSES), identified to genus (identifiedToGenus) and not a placeholder (notPlaceholder). Every Genera
+     * number uses it: the place's Genera (rankCondition(GENUS)), a subfamily row's "N Genera" on every list (the nightly
+     * crawl, childCountCondition), upload groups' Genera (GroupCountDb), and the count check.
+     */
+    public static String countsAsGenus(String alias) {
+        return "(" + alias + ".status in " + GENUS_STATUSES + " and " + identifiedToGenus(alias) + " and " + notPlaceholder(alias)
+            + " and " + genusWithoutParenthesis(alias) + ")";
+    }
+
+    /**
+     * The same rule in Java: status and taxon name and genus of a genus row. Identical to countsAsGenus (2026-10-30,
+     * review of #307: the two differed on a genus value with a parenthesis): a status of GENUS_STATUSES, identified to
+     * genus (isIdentifiedToGenus), a taxon name without "(" or ")" (isPlaceholder) and a genus value without "(" or ")".
+     */
+    public static boolean isCountedGenus(String status, String taxonName, String genus) {
+        return status != null && GENUS_STATUS_LIST.contains(status) && isIdentifiedToGenus(genus) && !isPlaceholder(taxonName)
+            && !hasParenthesis(genus);
+    }
+
+    /** SQL: the genus value (alias a) has no "(" or ")" (a value with one is a placeholder, never a genus). */
+    public static String genusWithoutParenthesis(String alias) {
+        String g = "coalesce(" + alias + ".genus, '')";
+        return "(" + g + " not like '%(%' and " + g + " not like '%)%')";
+    }
+
+    /** Java: a value containing "(" or ")". */
+    public static boolean hasParenthesis(String value) {
+        return value != null && (value.contains("(") || value.contains(")"));
+    }
+
+    /**
+     * SQL: a subfamily row (alias a) that counts as a subfamily (Brian Fisher, 2026-10-30, the same principle as
+     * countsAsGenus): status valid (AntCat's valid subfamilies) and not a placeholder. The placeholder "(formicidae)"
+     * (status morphotaxon) and subfamily names AntCat does not know (misspellings, status unrecognized) are not
+     * subfamilies. Every Subfamilies number uses it: the place's Subfamilies on every kind of place (rankCondition
+     * (SUBFAMILY); curated projects too, replacing B67), the Formicidae row's "N Subfamilies" of every list (the nightly
+     * crawl, childCountCondition) and the count check. Upload groups' Subfamilies already counted valid ant subfamilies
+     * only (SpecimenDb.getAntSpecimenCriteria).
+     */
+    public static String countsAsSubfamily(String alias) {
+        return "(" + alias + ".status = 'valid' and " + notPlaceholder(alias) + ")";
+    }
+
+    /** The same rule in Java: status and taxon name of a subfamily row. */
+    public static boolean isCountedSubfamily(String status, String taxonName) {
+        return "valid".equals(status) && !isPlaceholder(taxonName);
+    }
+
+    /**
+     * The extra condition (alias a) of the child rows the nightly crawl counts for a parent row of a list
+     * (Geolocale, Project, Museum, Bioregion getCountChildrenQuery): a subfamily row's Genera counts its genus rows that
+     * count as a genus (countsAsGenus), the Formicidae row's Subfamilies its subfamily rows that count as a subfamily
+     * (countsAsSubfamily: valid, not a placeholder; 2026-10-30). Other ranks: none here (species: speciesStatusCondition and identifiedToGenus, in the queries).
+     */
+    public static String childCountCondition(String rank, String alias) {
+        if (GENUS.equals(rank)) return " and " + countsAsGenus(alias);
+        if (SUBFAMILY.equals(rank)) return " and " + countsAsSubfamily(alias);
+        return "";
+    }
+
     public static final String SUBFAMILY = "subfamily";
     public static final String GENUS = "genus";
     public static final String SPECIES = "species";
@@ -180,8 +274,11 @@ public final class PlaceTotals {
     /** Taxon conditions (alias t) of the rows a total counts. rank: subfamily, genus or species. */
     public static String rankCondition(String rank) {
         switch (rank) {
-            case SUBFAMILY: return "t.taxarank = 'subfamily' and t.status in " + COUNTABLE + ANTS;
-            case GENUS: return "t.taxarank = 'genus' and t.status in " + COUNTABLE + ANTS;
+            // 2026-10-30: valid subfamilies only, no placeholder (countsAsSubfamily; was the five counted statuses, and
+            // "(formicidae)", a subfamily row of status morphotaxon since 2017, counted)
+            case SUBFAMILY: return "t.taxarank = 'subfamily' and " + countsAsSubfamily("t") + ANTS;
+            // 2026-10-30: valid genera and morphogenera, not placeholders (countsAsGenus); was the five counted statuses
+            case GENUS: return "t.taxarank = 'genus' and " + countsAsGenus("t") + ANTS;
             // 2026-10-28: valid and morphotaxon only (SPECIES_STATUSES); was the five counted statuses
             case SPECIES: return "t.taxarank in ('species', 'subspecies') and t.status in " + SPECIES_STATUSES + ANTS + " and " + identifiedToGenus("t");
             default: throw new IllegalArgumentException(rank);
@@ -207,7 +304,8 @@ public final class PlaceTotals {
 
     /** SQL: the taxon (alias a) is identified to genus (see above). A row without a genus value counts as before. */
     public static String identifiedToGenus(String alias) {
-        String g = "coalesce(" + alias + ".genus, '')";
+        // trimmed, as isIdentifiedToGenus (2026-10-30: the SQL and the Java rule are the same)
+        String g = "trim(coalesce(" + alias + ".genus, ''))";
         return "(" + g + " not like '(%' and lower(" + g + ") not in ('indet', 'undet'))";
     }
 
@@ -257,22 +355,17 @@ public final class PlaceTotals {
     /** Valid species and subspecies, not fossil (alias t). */
     public static final String VALID_CONDITION = "t.taxarank in ('species', 'subspecies') and t.status = 'valid' and t.fossil = 0" + ANTS;
 
-    /** The projects whose Subfamilies number keeps the counted statuses (they are not curated lists). */
+    /** The projects that are not curated lists (they list the names themselves, not renamed ones: listSpecimensFrom). */
     public static final String[] UNCURATED_PROJECTS = {"worldants", "allantwebants"};
 
     /**
      * The list rows (alias l) of one rank that a place's Subfamilies, Genera or Species number counts (alias t: their
-     * taxon). rankCondition, except for the Subfamilies of a curated project: Brian Fisher, 2026-10-27 (docs/numbers.md
-     * B67), the project's Subfamilies number follows the status rule of the project's own list rows. The nightly run
-     * counts the rows of a curated project's list in every status (StatusSet.getAndCriteria(project) is empty; the
-     * count check's checkChildren does the same), so its Subfamilies number counts every subfamily row of an ant
-     * subfamily, whatever its status. worldants and allantwebants keep the counted statuses.
+     * taxon): rankCondition, the same on every kind of place. From 2026-10-27 (docs/numbers.md B67) to 2026-10-30 a
+     * curated project's Subfamilies counted its subfamily rows of every status; Brian Fisher, 2026-10-30: Subfamilies
+     * count valid subfamilies only everywhere (countsAsSubfamily), so B67 is superseded and there is no exception.
      */
     public static String listedCondition(String type, String rank) {
-        if (PROJECT.equals(type) && SUBFAMILY.equals(rank)) {
-            return "t.taxarank = 'subfamily' and (t.status in " + COUNTABLE
-                + " or l.project_name not in ('" + String.join("', '", UNCURATED_PROJECTS) + "'))" + ANTS;
-        }
+        listTable(type);   // an unknown place type is still an error
         return rankCondition(rank);
     }
 

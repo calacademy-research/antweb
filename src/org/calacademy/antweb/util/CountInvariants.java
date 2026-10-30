@@ -66,6 +66,18 @@ public final class CountInvariants {
     public static final String COUNTING_RULES_LOG = "counting rules of 2026-10-28";
 
     /**
+     * Written to compute.log by nightly set 4 since 2026-10-30 (the same line as RULES_LOG): the genera and subfamilies
+     * rule of 2026-10-30 (Brian Fisher, docs/numbers.md section 5): Genera count valid genera and morphogenera only
+     * (PlaceTotals.countsAsGenus), Subfamilies valid subfamilies only (PlaceTotals.countsAsSubfamily; no placeholder rows,
+     * no unrecognized names, curated projects too, replacing B67), on every kind of place, the subfamily and Formicidae
+     * rows of every list and the upload groups. Both rules went live on 2026-10-30 before the same nightly run, so one
+     * marker says both are counted (a line with the earlier "genera rule of 2026-10-30" alone does not). Sets
+     * 2 and 3 count geolocales, projects, museums and bioregions, set 3 the groups, so the line after set 4 says all of
+     * them are counted by it. Until a nightly run has written it, the numbers of the rule are pending (rulesCounted).
+     */
+    public static final String GENERA_RULE_LOG = "genera and subfamilies rule of 2026-10-30";
+
+    /**
      * Written to compute.log by nightly set 2 ("Set 2 done", geolocale endemic flags) and set 3 ("Set 3 done", bioregion
      * endemic flags) since 2026-10-28: the endemic flags and numbers follow the endemic rule of 2026-10-28 (valid names
      * only, native rows only; docs/numbers.md section 5). The e2e tests read it (numbers_sample.endemic_rule_counted) to
@@ -87,7 +99,9 @@ public final class CountInvariants {
      */
     static final int LIST_CAP = 300;
 
-    static final String RULES_PENDING = "this number's rule changed (2026-10-21, 2026-10-28); no nightly run has counted it that way yet";
+    static final String RULES_PENDING = "this number's rule changed (2026-10-21, 2026-10-28, 2026-10-30); no nightly run has counted it that way yet";
+    /** Upload groups' Genera (2026-10-30): counted by the rule before it until the nightly recount (set 3). */
+    static final String GENERA_RULE_PENDING = "counted by the rule before 2026-10-30 (every counted status); the next nightly run counts valid genera and morphogenera only";
     /** The note of the report on the projects the check skips (Project.isSpeciesListOnly). */
     public static final String SPECIES_LIST_ONLY_NOTE = "Port of Entry (project " + org.calacademy.antweb.Project.PORT_OF_ENTRY + ") is not checked: it is a"
         + " list of species intercepted at ports of entry, kept without specimen or image numbers (Brian Fisher, 2026-10-22), so no nightly"
@@ -99,8 +113,10 @@ public final class CountInvariants {
 
     public static boolean rulesCounted(List<String> lines) {
         if (lines.isEmpty()) return true;   // no compute.log (unreadable, emptied, rotated): not a reason to call differences pending
-        // both rule changes: a run before 2026-10-28 wrote RULES_LOG only
-        for (String line : lines) if (line.contains(RULES_LOG) && line.contains(COUNTING_RULES_LOG)) return true;
+        // every rule change: a run before 2026-10-28 wrote RULES_LOG only, one before 2026-10-30 not GENERA_RULE_LOG
+        for (String line : lines) {
+            if (line.contains(RULES_LOG) && line.contains(COUNTING_RULES_LOG) && line.contains(GENERA_RULE_LOG)) return true;
+        }
         return false;
     }
 
@@ -612,8 +628,13 @@ public final class CountInvariants {
                     // a genus row's Species counts the names identified to genus only (Brian Fisher, 2026-10-22,
                     // PlaceTotals.identifiedToGenus); its Specimens and Images still add up every row under it
                     // and of status valid or morphotaxon (2026-10-28, PlaceTotals.SPECIES_STATUSES)
+                    // a subfamily row's Genera counts its genus rows that are genera (valid, morphotaxon, no placeholder),
+                    // the Formicidae row's Subfamilies its subfamily rows that are valid subfamilies (2026-10-30,
+                    // PlaceTotals.countsAsSubfamily, childCountCondition); their Species and Specimens still add up every row under them
                     String n = "genus".equals(parentRank) ? "sum(case when " + PlaceTotals.identifiedToGenus("t") + " and "
-                        + PlaceTotals.speciesStatusCondition("t") + " then 1 else 0 end)" : "count(*)";
+                        + PlaceTotals.speciesStatusCondition("t") + " then 1 else 0 end)"
+                        : "subfamily".equals(parentRank) ? "sum(case when " + PlaceTotals.countsAsGenus("t") + " then 1 else 0 end)"
+                        : "sum(case when " + PlaceTotals.countsAsSubfamily("t") + " then 1 else 0 end)";
                     StringBuilder sub = new StringBuilder("select c." + lk + " k, t.parent_taxon_name parent, " + n + " n");
                     StringBuilder diff = new StringBuilder("p." + level[2] + " <> coalesce(x.n, 0)");
                     int i = 0;

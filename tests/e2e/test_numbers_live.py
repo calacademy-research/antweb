@@ -4,8 +4,10 @@ the same thing, 2026-10-22 (docs/numbers.md, Brian Fisher: "every number checked
 The place page numbers (data-stat on /country.do) are checked against the records every day by the count check
 (countCheck.do, CountInvariants), so a live number that must equal one of them is checked too:
 
-  taxonomicPage.do  "N Species / Genera / Subfamilies" with every counted status (statusSet=all) = Species /
-                    Genera / Subfamilies of the place page; with valid extant = Valid species (row 38)
+  taxonomicPage.do  "N Genera / Subfamilies" with every counted status (statusSet=all) = Genera / Subfamilies of
+                    the place page; species with Valid species + morphospecies (validmorpho) = Species, with Valid
+                    species (valid) = Valid species (row 38; choices of 2026-10-30); Genera and
+                    Subfamilies: the rows listed that are genera and subfamilies (genera and subfamilies rule of 2026-10-30)
                     isImaged=false: "U Unimaged Species (out of N)": U <= N, N = the place's Species (row 39)
   browse.do         "N Species (M imaged)": the hidden totals say the same N, M <= N; "Only the first a of N"
                     names the same N (rows 46, 47, 49)
@@ -34,6 +36,7 @@ from html import unescape
 import pytest
 
 from antweb import BASE_URL, TIMEOUT, classify, new_session
+import numbers_sample as ns
 
 PLACE = "/country.do?name=Madagascar"
 WHERE = "countryName=Madagascar"
@@ -80,23 +83,36 @@ def header(html):
 
 def test_list_headers_equal_place_numbers():
     stats = place_stats()
-    wrong = []
-    for rank, stat, status in (("subfamily", "subfamilies", "all"), ("genus", "genera", "all"), ("species", "species", "all"),
-                               ("species", "valid", "valid%20extant")):
+    wrong, stored = [], []
+    for rank, stat, status in (("subfamily", "subfamilies", "all"), ("genus", "genera", "all"), ("species", "species", "validmorpho"),
+                               ("species", "valid", "valid")):
         if stat not in stats:
             wrong.append(f"the Madagascar page has no data-stat {stat}")
             continue
-        n, text = header(_get(f"/taxonomicPage.do?rank={rank}&{WHERE}&statusSet={status}"))
+        html = _get(f"/taxonomicPage.do?rank={rank}&{WHERE}&statusSet={status}")
+        n, text = header(html)
+        if rank in ("subfamily", "genus"):
+            # Genera rule (Brian Fisher, 2026-10-30): the place counts the listed rows that are subfamilies (no
+            # placeholders) and genera (valid genera and morphogenera); the header counts every row listed.
+            counted = ns.counted_rows(ns.list_rows(html), rank)
+            if counted is None:
+                continue
+            n = counted
         if n != stats[stat]:
-            wrong.append(f"rank={rank} {status}: list {n}, place page {stat} {stats[stat]}")
+            (stored if rank in ("subfamily", "genus") else wrong).append(f"rank={rank} {status}: list {n}, place page {stat} {stats[stat]}")
+    # the place's Genera and Subfamilies are counted by the genera and subfamilies rule of 2026-10-30 at the next nightly run: pending
+    if stored and ns.genera_rule_counted() is not False:
+        wrong += stored
     # One line (the GitHub annotation shows the start only). The place numbers are those of the last nightly run: before
     # a nightly run with the rules of 2026-10-21 (ants only, counted from the list) they can differ from the live list.
     assert not wrong, "Madagascar list header vs place page: " + "; ".join(wrong) + " (expected to agree after a nightly run with the 2026-10-21 rules)"
+    if stored:
+        pytest.skip(ns.rules_pending_note("genera and subfamilies rule of 2026-10-30") + ": " + "; ".join(stored))
 
 
 def test_unimaged_header_is_within_the_list():
     stats = place_stats()
-    html = _get(f"/taxonomicPage.do?rank=species&{WHERE}&statusSet=all&isImaged=false")
+    html = _get(f"/taxonomicPage.do?rank=species&{WHERE}&statusSet=validmorpho&isImaged=false")
     m = re.search(r'<span class="numbers">([\d,]+)</span> Unimaged Species \(out of <span class="numbers">([\d,]+)</span>\)', html)
     if not m:
         # no unimaged species: the header falls back to the list size (B21)
@@ -135,7 +151,7 @@ def test_browse_header_and_hidden_totals_agree():
 def test_image_and_comparison_pages_count_the_same_children():
     _html, n, _imaged, text = browse_numbers()
     wrong = []
-    images = _get(f"/images.do?genus={GENUS}&rank=genus&{WHERE}")
+    images = _get(f"/images.do?genus={GENUS}&rank=genus&{WHERE}&statusSet=all")
     m = re.search(r'<h2 class="display_count">([\d,]+) .*?Imaged \(([\d,]+) total\)</h2>', images, re.S)
     imaged_children = None
     if m:
@@ -144,18 +160,18 @@ def test_image_and_comparison_pages_count_the_same_children():
             wrong.append(f"images.do: {imaged_children} imaged of {total}")
         if total != n:
             wrong.append(f"images.do total {total}, browse.do {text!r}")
-    comparison = _get(f"/getComparison.do?rank=genus&genus={GENUS}&{WHERE}")
+    comparison = _get(f"/getComparison.do?rank=genus&genus={GENUS}&{WHERE}&statusSet=all")
     boxes = len(re.findall(r'<input type="checkbox" name="chosen"', comparison))
     if boxes:
         if boxes > n:
             wrong.append(f"getComparison.do: {boxes} children with images of {n}")
         if imaged_children is not None and boxes < imaged_children:
             wrong.append(f"getComparison.do: {boxes} children with images, images.do {imaged_children} with a head, profile or dorsal view")
-    one = _get(f"/oneView.do?rank=genus&genus={GENUS}&{WHERE}&shot=h")
+    one = _get(f"/oneView.do?rank=genus&genus={GENUS}&{WHERE}&shot=h&statusSet=all")
     pictures = len(set(re.findall(r'<div class="slide half[^"]*"[^>]*onclick="window.location=\'bigPicture\.do\?name=([^&]+)&', one)))
     if pictures > n:
         wrong.append(f"oneView.do: {pictures} head views of {n} children")
-    maps = _get(f"/mapComparison.do?rank=genus&genus={GENUS}&{WHERE}")
+    maps = _get(f"/mapComparison.do?rank=genus&genus={GENUS}&{WHERE}&statusSet=all")
     mm = re.search(r"([\d,]+) [A-Za-z]+ Mapped\)", maps)
     if mm and _n(mm.group(1)) != n:
         wrong.append(f"mapComparison.do: {mm.group(1)} Mapped, browse.do {n} children (it counts every child, B19)")

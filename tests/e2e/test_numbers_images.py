@@ -21,7 +21,8 @@ recounted from the API's records:
           AntWeb; where it has none the page shows the images of the ant of the specimen it shows.
   row 49  genus browse hidden "M Imaged Species (out of N total)": M = the children with pictures (images.do All
           view; both use the children's pictures, Taxon.getHasImages).
-  row 57  taxonomicPage.do images view "I X Imaged (out of M Total)": M = the list header of the same list (row 38),
+  row 57  taxonomicPage.do images view "I Valid genera imaged (out of M valid genera)" (the status choice named in the
+          words of the list's header since 2026-10-30, StatusSet.imagedHeading): M = the list header of the same list (row 38),
           I = the children shown with pictures in the All view, I + U = M with U of "X with no image in AntWeb (U)".
   row 58  getComparison.do&shot=Head (one view): the children shown = the children images.do shows with a head
           picture (default view).
@@ -510,7 +511,7 @@ def test_no_image_list_names_the_children_without_pictures():
 
 
 def test_images_view_header_counts_the_children_with_pictures():
-    """Row 57: taxonomicPage.do images view of the place's genera "I Genera Imaged (out of M Total)": M = the header of
+    """Row 57: taxonomicPage.do images view of the place's genera "I Valid genera imaged (out of M valid genera)": M = the header of
     the same list without images (validated by row 38); I = the children shown with pictures (All view); I + U = M."""
     wrong, checked = [], []
     for p in places():

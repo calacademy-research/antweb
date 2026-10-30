@@ -35,7 +35,7 @@ def py_constant(src, name):
 def test_python_and_java_log_lines_are_the_same():
     java = read("src/org/calacademy/antweb/util/CountInvariants.java")
     py = read("tests/e2e/numbers_sample.py")
-    for name in ("RULES_LOG", "COUNTING_RULES_LOG", "ENDEMIC_RULE_LOG"):
+    for name in ("RULES_LOG", "COUNTING_RULES_LOG", "ENDEMIC_RULE_LOG", "GENERA_RULE_LOG"):
         assert java_constant(java, name) == py_constant(py, name), name
 
 
@@ -44,7 +44,9 @@ def test_nightly_writes_the_lines():
     assert '"  Set 2 done (" + CountInvariants.ENDEMIC_RULE_LOG + "; "' in src
     assert "+ org.calacademy.antweb.home.GeolocaleTaxonDb.GENUS_ROWS_LOG + \")\"" in src
     assert '"  Set 3 done (" + CountInvariants.ENDEMIC_RULE_LOG + ")"' in src
-    assert '"  Set 4 done (" + CountInvariants.RULES_LOG' in src and "CountInvariants.COUNTING_RULES_LOG + \")\"" in src
+    assert '"  Set 4 done (" + CountInvariants.RULES_LOG' in src
+    # since 2026-10-30 the genera rule is the last part of the line (after COUNTING_RULES_LOG)
+    assert '+ "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG + ")"' in src
     # set 2's line after the geolocale counts, set 3's after the bioregions
     assert src.index('"  Set 2 done (') > src.index('"geolocaleCountCrawl"')
     assert src.index('"  Set 3 done (') > src.index('"populateBioregion"')
@@ -72,6 +74,30 @@ def test_genus_rows_from_specimens_identified_to_genus():
     assert "join taxon g on g.taxon_name = t.parent_taxon_name" in g and "g.taxarank = 'genus'" in g
 
 
+def test_genera_rule_is_pending_until_the_nightly_run():
+    """Brian Fisher, 2026-10-30: Genera are valid genera and morphogenera. The count check (rulesCounted) and the e2e tests
+    (genera_rule_counted) call the stored Genera pending until the "Set 4 done" line has GENERA_RULE_LOG; the e2e tests
+    that read compute.log log in, so they are not in [parallel]."""
+    java = read("src/org/calacademy/antweb/util/CountInvariants.java")
+    assert "line.contains(GENERA_RULE_LOG)" in java
+    sample = read("tests/e2e/numbers_sample.py")
+    assert 'return compute_log_has("Set 4 done", GENERA_RULE_LOG)' in sample
+    lists = read("tests/e2e/test_numbers_lists.py")
+    assert lists.count("ns.genera_rule_counted() is False") == 2
+    assert "ns.genera_rule_counted()" in read("tests/e2e/test_numbers_live.py")
+    assert 'name == "Genera" and ns.genera_rule_counted() is False' in read("tests/e2e/test_count_check.py")
+    src = read("src/org/calacademy/antweb/util/NumberChecks.java")
+    assert src.count("i == 6 && v[i] != recount[i] && !inv.result.rulesCounted) pi = CountInvariants.GENERA_RULE_PENDING") == 1
+    assert src.count("i == 6 && stored[i] != recount[i] && !inv.result.rulesCounted) pi = CountInvariants.GENERA_RULE_PENDING") == 1
+    areas = read("tests/e2e/areas.toml")
+    parallel = areas[areas.index("[parallel]"):]
+    parallel = parallel[:parallel.index("\n[", 1)]
+    for entry in ('"test_numbers_lists.py"', '"test_numbers_live.py"', '"test_numbers_live.py::test_list_headers_equal_place_numbers"',
+                  '"test_numbers_lists.py::test_list_headers_equal_place_numbers_of_every_kind"',
+                  '"test_numbers_lists.py::test_browse_headers_equal_the_list_rows"'):
+        assert entry not in parallel, entry
+
+
 def test_group_species_is_pending_until_the_nightly_run():
     src = read("src/org/calacademy/antweb/util/NumberChecks.java")
     assert src.count("i == 7 && v[i] != recount[i] && !inv.result.rulesCounted ? CountInvariants.SPECIES_RULE_PENDING") == 1
@@ -80,7 +106,7 @@ def test_group_species_is_pending_until_the_nightly_run():
 
 def test_e2e_tests_use_the_helpers():
     lists = read("tests/e2e/test_numbers_lists.py")
-    assert lists.count("ns.counting_rules_counted() is False") == 3
+    assert lists.count("ns.counting_rules_counted() is False") == 2   # the default-list test compares with the default choice (2026-10-30)
     endemic = read("tests/e2e/test_numbers_endemic.py")
     assert "ns.endemic_rule_counted" in endemic and "ns.counting_rules_counted" in endemic
     groups = read("tests/e2e/test_count_check.py")

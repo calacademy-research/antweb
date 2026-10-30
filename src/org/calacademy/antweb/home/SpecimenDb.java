@@ -692,6 +692,17 @@ public class SpecimenDb extends AntwebDb {
         return getFlagCriteria(FLAG_EXCLUDE);
     }
 
+    /**
+     * SQL: the specimen (alias) is not red-flagged. Brian Fisher's rule: red-flagged specimens are loaded, hidden from
+     * most pages until fixed. Decision of 2026-10-30: one rule for red flags on every list, the same condition wherever a
+     * list row is made from specimens: country and adm1 lists (GeolocaleTaxonDb: valid names and the genus rows of
+     * specimens identified to genus), bioregion lists (BioregionTaxonDb.speciesFromSpecimenSql) and museum lists
+     * (MuseumDb.speciesFromSpecimenSql). docs/numbers.md section 5, docs/flows/places.md.
+     */
+    public static String notRedFlagged(String alias) {
+        return "(" + alias + ".flag is null or " + alias + ".flag != 'red')";
+    }
+
     public static String getFlagCriteria(String option) {
         if (FLAG_INCLUDE.equals(option)) return " 1 = 1 ";
         if (FLAG_ONLY.equals(option)) return " (flag = 'red') ";

@@ -782,7 +782,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
             + " from specimen s join taxon t on t.taxon_name = s.taxon_name join taxon g on g.taxon_name = t.parent_taxon_name"
             + " where s.status in " + GENUS_ROWS_STATUSES
             + " and " + SpecimenDb.getAntSpecimenCriteria("s")
-            + " and (s.flag is null or s.flag != 'red') and s." + countryColumn + " is not null"
+            + " and " + SpecimenDb.notRedFlagged("s") + " and s." + countryColumn + " is not null"
             + " and t.taxarank in ('species', 'subspecies') and " + PlaceTotals.identifiedToGenus("t")
             + " and g.taxarank = 'genus' and g.family = 'formicidae' and g.status in " + PlaceTotals.COUNTABLE;
     }
@@ -814,7 +814,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
             query = "select distinct country, adm1, taxon_name "
                     + " from specimen where (status = 'valid')"
                     + " and " + SpecimenDb.getAntSpecimenCriteria("specimen")  // non-ants: by search only (2026-10-21)
-                    + " and " + SpecimenDb.getFlagCriteria() + " and country is not null"
+                    + " and " + SpecimenDb.notRedFlagged("specimen") + " and country is not null"
                     + clause
 
                     + " union "
@@ -822,7 +822,7 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
                     + "select distinct island_country, adm1, taxon_name " // adm1 will generally be null
                     + " from specimen where (status = 'valid')"
                     + " and " + SpecimenDb.getAntSpecimenCriteria("specimen")
-                    + " and " + SpecimenDb.getFlagCriteria() + " and island_country is not null"
+                    + " and " + SpecimenDb.notRedFlagged("specimen") + " and island_country is not null"
                     + clause
 
                     // Brian Fisher, 2026-10-29: a specimen counts at each rank it is identified to. The genus of a specimen

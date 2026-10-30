@@ -27,8 +27,8 @@ import org.calacademy.antweb.util.DateUtil;
  * 1. Upload dates: a range ("8-11 Feb 2010", with an en dash too) is saved as its first day; the end date column keeps
  *    the last day; a date like 05/04/2013 is still read as month/day and its line is listed in the report's Notes under
  *    "Date read as month/day (please check)" (not counted in the email's summary).
- * 2. Place lists open with every counted status (the place's Species number) and do not carry a status chosen on an
- *    earlier page; a status in the address still works.
+ * 2. Place lists do not carry a status chosen on an earlier page (session); a status in the address still works. The
+ *    defaults themselves were replaced on 2026-10-30 (StatusChoiceTest).
  * 4. The blank-name-safe cleanups preview first (compute.log), then delete; etc/cleanup.properties overrides.
  */
 public class Decisions1029Test extends TestCase {
@@ -133,25 +133,24 @@ public class Decisions1029Test extends TestCase {
     }
 
     public void testListsOpenWithTheStatusesOfTheSpeciesNumber() {
+        // 2026-10-30 replaced the default ("every counted status everywhere"; StatusChoiceTest has the new defaults):
+        // what stays from 2026-10-29 is that a status kept in the session is never used.
         Map<String, Object> session = new HashMap<>();
         session.put("statusSet", StatusSet.VALID_EXTANT);   // chosen on an earlier page
         Map<String, Object> params = new HashMap<>();
         params.put("session", proxy(HttpSession.class, session));
         HttpServletRequest request = proxy(HttpServletRequest.class, params);
-        assertEquals(StatusSet.ALL, StatusSet.getStatusSet(request, null));
-        assertEquals(StatusSet.ALL, StatusSet.getStatusSet(null, request, null));
-        assertEquals(StatusSet.ALL, StatusSet.getStatusSet(" ", request, null));
-        for (String place : new String[] {"Madagascar", "California Academy of Sciences", "Malagasy", "madants", Project.ALLANTWEBANTS}) {
-            assertEquals(place, StatusSet.ALL, StatusSet.defaultStatusSet(place));
-        }
-        assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.defaultStatusSet(Project.WORLDANTS));
-        assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.defaultStatusSet(Project.FOSSILANTS));
+        assertEquals(StatusSet.LIST_VALID_MORPHO, StatusSet.getStatusSet(request, null));
+        assertEquals(StatusSet.LIST_VALID_MORPHO, StatusSet.getStatusSet(null, request, null));
+        assertEquals(StatusSet.LIST_VALID_MORPHO, StatusSet.getStatusSet(" ", request, null));
+        assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.defaultChoice(org.calacademy.antweb.home.PlaceTotals.PROJECT, Project.WORLDANTS));
+        assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.defaultChoice(org.calacademy.antweb.home.PlaceTotals.PROJECT, Project.FOSSILANTS));
         // a status in the address still works, and is not kept for the next page
         params.put("statusSet", StatusSet.VALID_EXTANT);
-        assertEquals(StatusSet.VALID_EXTANT, StatusSet.getStatusSet(request, null));
+        assertEquals(StatusSet.LIST_VALID, StatusSet.getStatusSet(request, null));
         params.remove("statusSet");
         session.clear();
-        assertEquals(StatusSet.ALL, StatusSet.getStatusSet(request, null));
+        assertEquals(StatusSet.LIST_VALID_MORPHO, StatusSet.getStatusSet(request, null));
         assertTrue(session.isEmpty());
     }
 

@@ -52,12 +52,21 @@ def browse_header(html):
     return ns.n(n.group(1)), ns.n(imaged.group(1)) if imaged else 0
 
 
+ANT_SUBFAMILIES = {"agroecomyrmecinae", "amblyoponinae", "aneuretinae", "apomyrminae", "dolichoderinae", "dorylinae",
+                   "ectatomminae", "formicinae", "heteroponerinae", "leptanillinae", "martialinae", "myrmeciinae",
+                   "myrmicinae", "paraponerinae", "ponerinae", "proceratiinae", "pseudomyrmecinae"}
+
+
 def indet_genera():
     """Genera with an indet name in AntWeb: [(subfamily, genus lower case, genus taxon name)] from the API."""
     rows = ns.api_all("taxa?species=" + quote_plus("(indet)") + "&taxarank=species", max_pages=4) or []
     out = []
     for r in rows:
         name, parent = r.get("taxonName") or "", r.get("parentTaxonName") or ""
+        # ants only: a non-ant genus (e.g. Acrida, a grasshopper, uploaded as "acridinaeacrida (indet)") is never on a list
+        family = (r.get("family") or "formicidae").lower()
+        if family != "formicidae" or (r.get("subfamily") or "").lower() not in ANT_SUBFAMILIES:
+            continue
         if name.endswith(" (indet)") and parent and r.get("subfamily") and r.get("genus") and not parent.startswith("("):
             out.append((r["subfamily"].lower(), r["genus"].lower(), parent))
     return sorted(set(out))
@@ -144,20 +153,47 @@ def test_day_genus_not_recorded_notice():
             assert NOTICE not in ns.text_of(html), (genus, listed[0], ns.day_note())
 
 
+def _red_flagged(code):
+    """True when the specimen page says the specimen has a red flag (kept off every list: country, adm1, bioregion and
+    museum lists, one rule since 2026-10-30, SpecimenDb.notRedFlagged)."""
+    if not code:
+        return False
+    html = ns.fetch(f"/specimen.do?code={quote_plus(code)}") or ""
+    return "Red Flag" in html
+
+
 def test_genus_rows_of_specimens_identified_only_to_genus():
     """Brian Fisher, 2026-10-29 (a specimen counts at each rank it is identified to): Lividopone, known in Mozambique only
     from Lividopone (indet), is on the Mozambique and Afrotropical genus lists, and the day's indet genus is on the list
-    of the country with most of its indet specimens. Pending until nightly set 2 has run with this rule."""
+    of the country with most of its indet specimens. Pending until nightly set 2 has run with this rule.
+
+    Red flags (Brian Fisher, 2026-10-30: one rule for red flags on every list): a red-flagged specimen makes no row on
+    any list, country, adm1, bioregion or museum. The Mozambique and Afrotropical lists are checked only when the
+    Mozambique Lividopone (indet) specimens are not red-flagged; otherwise that part is skipped (staging 2026-10-30: a
+    copy of production from before Brian Fisher ticked Afrotropical in the Bioregion Map Manager, flagged)."""
     if ns.genus_rows_from_specimens_built() is False:
         pytest.skip("pending until nightly set 2 builds the genus rows (compute.log line 'Set 2 done (... "
                     + ns.GENUS_ROWS_LOG + ")')")
-    moz = ns.api_rows(ns.api("specimens?genus=lividopone&species=" + quote_plus("(indet)") + "&country=Mozambique&limit=1"))
+    moz = ns.api_rows(ns.api("specimens?genus=lividopone&species=" + quote_plus("(indet)") + "&country=Mozambique&limit=10"))
     if not moz:
         pytest.skip("no Lividopone (indet) specimen from Mozambique on this server")
-    for url in ("/taxonomicPage.do?rank=genus&countryName=Mozambique&statusSet=all",
-                "/taxonomicPage.do?rank=genus&bioregionName=Afrotropical&statusSet=all"):
-        assert "genus=lividopone" in ns.get(url).lower(), f"Lividopone is not on {url}"
-    assert NOTICE not in ns.text_of(ns.get(f"/images.do?{LIVIDOPONE}&bioregionName=Afrotropical"))
+    # Red-flagged specimens are kept off every list (one rule, 2026-10-30). Mozambique's Lividopone were flagged "genus
+    # outside its native bioregions" until Brian Fisher ticked Afrotropical in the Bioregion Map Manager (production,
+    # 2026-10-30); a copy of production made before then, or before the next upload of the group, still has them flagged.
+    # Only a specimen that is not red-flagged puts Lividopone on the Mozambique and Afrotropical lists (Afrotropical may
+    # also have it from another country's specimens, so with every Mozambique specimen flagged nothing is asserted).
+    flagged = [_red_flagged(r.get("specimenCode") or r.get("code")) for r in moz]
+    skipped_lists = None
+    if all(flagged):
+        skipped_lists = (f"the {len(moz)} Lividopone (indet) specimens of Mozambique read are red-flagged (kept off every"
+                         " list, 2026-10-30): the Mozambique and Afrotropical genus lists are not checked")
+    else:
+        for url in ("/taxonomicPage.do?rank=genus&countryName=Mozambique&statusSet=all",
+                    "/taxonomicPage.do?rank=genus&bioregionName=Afrotropical&statusSet=all"):
+            assert "genus=lividopone" in ns.get(url).lower(), (
+                f"Lividopone is not on {url} ({flagged.count(False)} of {len(moz)} Mozambique Lividopone (indet) specimens"
+                " are not red-flagged)")
+        assert NOTICE not in ns.text_of(ns.get(f"/images.do?{LIVIDOPONE}&bioregionName=Afrotropical"))
     valid_countries = {r.get("geolocaleName") for r in ns.geolocales("country")}
     for subfamily, genus, parent in ns.pick(indet_genera(), 2, "genus-rows"):
         rows = ns.api_all(f"specimens?genus={quote_plus(genus)}&species=" + quote_plus("(indet)"), max_pages=4) or []
@@ -170,7 +206,11 @@ def test_genus_rows_of_specimens_identified_only_to_genus():
             continue
         country = max(sorted(by_country), key=lambda c: by_country[c])
         listed = ns.api_rows(ns.api(f"geolocaleTaxa?country={quote_plus(country)}&taxonName={quote_plus(parent)}"))
+        if not listed and all(_red_flagged(r.get("specimenCode") or r.get("code")) for r in rows if r.get("country") == country):
+            continue   # red-flagged specimens are kept off every list
         assert listed, f"{parent} is not on the list of {country} ({by_country[country]} indet specimens) {ns.day_note()}"
+    if skipped_lists:
+        pytest.skip(skipped_lists)
 
 
 
@@ -186,6 +226,8 @@ def test_bioregion_lists_have_no_genus_of_invalid_names_only():
     m = re.search(r"Biogeographic regions.*?</", html, re.S)
     region_part = html[m.start():m.start() + 600] if m else ""
     assert "Afrotropical" not in region_part.split("Distribution Notes")[0], "Formica chufejif is on the Afrotropical list"
-    genera = ns.get("/taxonomicPage.do?rank=genus&bioregionName=Afrotropical")
-    assert "genus=formica&" not in genera.lower() and "genus=formica\"" not in genera.lower(), \
-        "Formica is on the Afrotropical genus list"
+    # the list rows only: the header's "Change View" menu links the session's last taxon (here Formica chufejif)
+    genera = ns.list_rows(ns.get("/taxonomicPage.do?rank=genus&bioregionName=Afrotropical&statusSet=all"))
+    assert genera, "no rows on the Afrotropical genus list"
+    names = {(r.get("name") or "").lower() for r in genera}
+    assert "formicinaeformica" not in names, "Formica is on the Afrotropical genus list"

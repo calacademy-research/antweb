@@ -554,13 +554,7 @@ public class MuseumDb extends AntwebDb {
       
           new UtilDb(getConnection()).deleteFrom("museum_taxon", " where code = " + DBUtil.sqlLiteral(museumCode));
 
-          // count(distinct s.code): the join gives one row per image, so count(*) counted a specimen once per image
-          String query = "select taxon_name, count(distinct s.code) specimenCount, count(id) imageCount " 
-            + " from specimen s left join image i on s.code = i.image_of_id " 
-            + " where museum = " + DBUtil.sqlLiteral(museum.getCode())
-            + " and " + SpecimenDb.getFlagCriteria()            
-            + " and s.status in " + StatusSet.getCountables()
-            + " group by taxon_name";
+          String query = speciesFromSpecimenSql(museum.getCode());
 
           //A.log("populateSpecies() query:" + query);
 
@@ -587,6 +581,21 @@ public class MuseumDb extends AntwebDb {
       } finally {
         DBUtil.close(stmt, rset, "MuseumDb.populateSpecies()");
       }
+    }
+
+    /**
+     * The names of a museum's list rows from its specimens, with their specimen and image counts (populateSpecies):
+     * specimens of the museum, counted statuses, not red-flagged (SpecimenDb.notRedFlagged: decision of 2026-10-30, one
+     * rule for red flags on every list). count(distinct s.code): the join gives one row per image, so count(*) counted a
+     * specimen once per image.
+     */
+    public static String speciesFromSpecimenSql(String museumCode) {
+        return "select s.taxon_name, count(distinct s.code) specimenCount, count(i.id) imageCount "
+            + " from specimen s left join image i on s.code = i.image_of_id "
+            + " where s.museum = " + DBUtil.sqlLiteral(museumCode)
+            + " and " + SpecimenDb.notRedFlagged("s")
+            + " and s.status in " + StatusSet.getCountables()
+            + " group by s.taxon_name";
     }
 
     private void populateHigherTaxa()throws SQLException  {

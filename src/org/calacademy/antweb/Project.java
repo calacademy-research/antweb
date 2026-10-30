@@ -694,6 +694,8 @@ group by taxonName
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
           + " join proj_taxon pt on taxon.taxon_name = pt.taxon_name " 
           + " where " + rankClause
+          // a subfamily row's Genera: valid genera and morphogenera, no placeholders (2026-10-30, PlaceTotals.childCountCondition)
+          + org.calacademy.antweb.home.PlaceTotals.childCountCondition(rank, "taxon")
 	      + "   and pt.project_name = '" + projectName + "'"
           + StatusSet.getAndCriteria(getName())
                 //+ new StatusSet(StatusSet.ALL).getAndCriteria();

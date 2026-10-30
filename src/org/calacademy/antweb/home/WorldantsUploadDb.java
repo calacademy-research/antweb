@@ -123,12 +123,20 @@ public class WorldantsUploadDb extends AntwebDb {
     }
             
     /**
-     * The number of AntCat imports of the last 7 days whose file differed in size from the one before it
-     * (2026-10-29). Before, the distinct sizes of a window of 7 to 13 days were counted minus one: a missing
-     * backup size added one, a file that came back to an earlier size was not counted, and no row gave -1.
+     * The number of AntCat imports of the last 7 days whose file differed in size from the file of the import before
+     * it (2026-10-30). The previous import is the row before it by created (and id), also when it is older than 7
+     * days; an import with no previous row counts as no change. Rows without a file size (0) are left out.
+     *
+     * 2026-10-29 to 10-30 this compared file_size with backup_file_size of the same row, but backup_file_size is the
+     * size of the dated copy SpeciesListUploader.record makes of that very file (upload/yyyyMMdd-worldants.txt), so the
+     * two were always equal (production 2026-10-30: 139379248 and 139379248) and the admin alert "No Worldants changes
+     * in last week" was raised although the file changed every day. Before 10-29, the distinct sizes of a window of
+     * 7 to 13 days were counted minus one.
      */
-    public static final String CHANGE_COUNT_SQL = "select count(*) from worldants_upload where created >= now() - interval 7 day"
-        + " and backup_file_size > 0 and file_size <> backup_file_size";   // 0: no earlier file to compare with
+    public static final String CHANGE_COUNT_SQL = "select count(*) from (select created, cast(file_size as unsigned) fsize,"   // file_size: varchar
+        + " lag(cast(file_size as unsigned)) over (order by created, id) prev_size from worldants_upload"
+        + " where cast(file_size as unsigned) > 0) x"
+        + " where x.created >= now() - interval 7 day and x.prev_size is not null and x.fsize <> x.prev_size";
 
     public int getWorldantsChangeCount() throws SQLException {
         int count = 0;

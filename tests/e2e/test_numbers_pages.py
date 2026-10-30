@@ -7,8 +7,9 @@ compares the numbers stored in the database; these tests read the pages themselv
                    rank): at most the extant and fossil species and subspecies of the Global Data table,
                    which count the same names; its tables are counted once a day (end of the nightly run),
                    and the page says when they were counted
-  taxonomicPage.do images view: "N Genera Imaged (out of M Total)" (it printed the same number twice):
-                   imaged <= total
+  taxonomicPage.do images view: "N Valid genera imaged (out of M valid genera)" (it printed the same number twice):
+                   imaged <= total; since 2026-10-30 the header names the status choice in the words of the list's
+                   header (StatusSet.imagedHeading; before: "N Genera Imaged (out of M Total)")
   countries.do     the column is labelled "Valid species" (it showed the Valid species number as "Species")
 
 Brian Fisher's decisions of 2026-10-22 (docs/numbers.md section 5), each page explaining its numbers:
@@ -74,12 +75,21 @@ def test_statspage_tables_are_kept_not_recounted_each_visit():
 
 def test_images_view_header_counts_imaged_children():
     html = _ok("/taxonomicPage.do?rank=genus&countryName=Madagascar&images=true")
-    m = re.search(r'class="display_count" data-imaged="(\d+)" data-total="(\d+)">(\d+) \w+ Imaged \(out of (\d+) Total\)', html)
+    m = re.search(r'class="display_count" data-imaged="(\d+)" data-total="(\d+)">([\d,]+) ([^<(]*?) imaged \(out of ([\d,]+) ([^)<]+)\)</h2>', html)
     if not m:
+        if re.search(r'class="display_count" data-imaged="\d+" data-total="\d+">\d+ \w+ Imaged \(out of \d+ Total\)', html):
+            pytest.skip("images view with the header before 2026-10-30 (not deployed yet)")
         pytest.skip("images view without data-imaged (not deployed yet)")
     imaged, total = int(m.group(1)), int(m.group(2))
-    assert int(m.group(3)) == imaged and int(m.group(4)) == total
+    assert int(m.group(3).replace(",", "")) == imaged and int(m.group(5).replace(",", "")) == total
     assert 0 < imaged <= total
+    # Madagascar opens with Valid genera (geolocales: Valid species, StatusSet.defaultChoice): the header names it
+    assert m.group(4) == "Valid genera" and m.group(6) == "valid genera", m.group(0)
+    # the same words as the list's header with the same choice (StatusSet.listHeading: "N Valid genera")
+    listed = _ok("/taxonomicPage.do?rank=genus&countryName=Madagascar")
+    h = re.search(r'<h2 class="display_count"[^>]*>([\d,]+) ([^<(]+?)\s*(?:\(|</h2>)', listed)
+    assert h and h.group(2).strip().lower() == m.group(6), (h and h.group(0), m.group(0))
+    assert int(h.group(1).replace(",", "")) == total
 
 
 def test_list_of_countries_labels_valid_species():

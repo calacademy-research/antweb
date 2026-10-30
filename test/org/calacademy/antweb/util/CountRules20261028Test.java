@@ -81,10 +81,12 @@ public class CountRules20261028Test extends TestCase {
             assertTrue("a genus row's Species count valid names and morphospecies: " + q, q.contains(status));
             assertTrue(q, q.contains(PlaceTotals.identifiedToGenus("taxon")));
         }
-        // the genus rows of a subfamily (its Genera) keep every counted status: a genus known only from "Lioponera indet"
+        // the genus rows of a subfamily (its Genera) count by the genus row's own status: a genus known only from
+        // "Lioponera indet" counts (its genus row is valid), whatever the status of the indet name; since 2026-10-30
+        // valid genera and morphogenera only (PlaceTotals.countsAsGenus, CountRules20261030Test)
         for (String q : new String[] {country().getCountChildrenQuery("genus"), museum().getCountChildrenQuery("genus"),
                 bioregion().getCountChildrenQuery("genus"), curated.getCountChildrenQuery("genus")}) {
-            assertFalse("genera are not limited to species statuses: " + q, q.contains(status));
+            assertTrue(q, q.contains(PlaceTotals.countsAsGenus("taxon")));
         }
     }
 
@@ -110,14 +112,17 @@ public class CountRules20261028Test extends TestCase {
 
     // ---------------------------------------------------------------- Genera and Subfamilies
 
-    public void testGeneraAndSubfamiliesCountRowsOfEveryCountedStatus() {
+    public void testGeneraAndSubfamiliesCountTheRowsOfTheirRule() {
         // A "Lioponera indet" specimen puts its name and its genus row on the list (GeolocaleTaxonDb.insert adds the parents);
-        // the genus row counts in Genera, the subfamily row in Subfamilies. Their rule is unchanged: every counted status.
-        for (String rank : new String[] {PlaceTotals.GENUS, PlaceTotals.SUBFAMILY}) {
-            String c = PlaceTotals.rankCondition(rank);
-            assertTrue(rank + ": " + c, c.contains("t.status in " + PlaceTotals.COUNTABLE));
-            assertFalse(rank + ": " + c, c.contains(PlaceTotals.SPECIES_STATUSES));
-        }
+        // the genus row counts in Genera, the subfamily row in Subfamilies. Since 2026-10-30 Subfamilies count valid
+        // subfamilies only and Genera valid genera and morphogenera (CountRules20261030Test); until then both counted
+        // rows of every counted status.
+        String c = PlaceTotals.rankCondition(PlaceTotals.SUBFAMILY);
+        assertTrue(c, c.contains(PlaceTotals.countsAsSubfamily("t")));
+        assertFalse(c, c.contains(PlaceTotals.COUNTABLE));
+        String g = PlaceTotals.rankCondition(PlaceTotals.GENUS);
+        assertTrue(g, g.contains(PlaceTotals.countsAsGenus("t")));
+        assertFalse(g, g.contains(PlaceTotals.COUNTABLE));
         assertTrue(PlaceTotals.COUNTABLE.contains("indetermined"));
     }
 
@@ -288,7 +293,7 @@ public class CountRules20261028Test extends TestCase {
         List<String> before = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; " + StatisticsDb.ANT_IMAGES_RULE_LOG + ")");
         assertFalse(CountInvariants.rulesCounted(before));
         List<String> after = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; " + StatisticsDb.ANT_IMAGES_RULE_LOG
-            + "; " + CountInvariants.COUNTING_RULES_LOG + ")");
+            + "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG + ")");
         assertTrue(CountInvariants.rulesCounted(after));
     }
 }

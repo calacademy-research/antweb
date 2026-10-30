@@ -441,7 +441,8 @@ public class SpecimenUpload extends SpecimenUploadParse {
           // Create the link to the multiBioregionTaxa
             // One report line per taxon, with its bioregions (2026-10-30: was one line, a bare "list" link; the
             // section links that list, MessageMgr.reportSections).
-            for (int i = 1; i < multiBioregionList.size(); i++) {
+            // At most 200 taxa in the report (review of #306: a CAS nightly can have thousands); the section links the full list.
+            for (int i = 1; i < multiBioregionList.size() && i <= 200; i++) {
                 ArrayList<String> row = multiBioregionList.get(i);
                 getMessageMgr().addToMessages(MessageMgr.multipleBioregionsForNonIntroducedTaxa,
                     MessageMgr.multiBioregionLine(Taxon.makeDescriptionLink(row.get(0)), row.get(1)));

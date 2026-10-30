@@ -81,7 +81,9 @@ public class GroupCountDb extends AntwebDb {
      *                      unidentifiable, family Formicidae (SpecimenDb.getFlagCriteria, getStatusCriteria, getTaxaCriteria)
      *   Specimens, Collections, Localities, Ungeoreferenced   of the counted specimens (unchanged)
      *   Subfamilies  distinct subfamilies of the counted specimens that are valid ant subfamilies (SpecimenDb.getAntSpecimenCriteria)
-     *   Genera       distinct genera of the counted specimens identified to genus (PlaceTotals.identifiedToGenus)
+     *   Genera       distinct genera of the counted specimens identified to genus (PlaceTotals.identifiedToGenus) whose
+     *                genus is a valid genus or a morphogenus (Brian Fisher, 2026-10-30: COUNTED_GENERA; a genus name
+     *                AntCat does not know, status unrecognized, is not a genus)
      *   Species      distinct full names (taxon_name) of the counted specimens whose name is a species or subspecies of
      *                status valid or morphotaxon (since 2026-10-28; before: a counted status), ant, identified to genus
      *                (PlaceTotals.rankCondition(SPECIES), as the place pages)
@@ -92,13 +94,21 @@ public class GroupCountDb extends AntwebDb {
      * Totals row of groups.do showed the largest group's Subfamilies, Genera and Species. Now the Totals row is the same
      * count over the specimens of all listed groups together (ALL_GROUPS).
      */
+    /**
+     * SQL: the specimen (alias s) is of a genus that counts as a genus (Brian Fisher, 2026-10-30): its genus row (taxon name
+     * = subfamily + genus, as uploads name it) counts (PlaceTotals.countsAsGenus: valid or morphotaxon, not a placeholder).
+     * A semi-join on the taxon table's few thousand genus rows, so the groups' one pass over the specimens stays one pass.
+     */
+    public static final String COUNTED_GENERA = "concat(coalesce(s.subfamily, ''), s.genus) in (select g.taxon_name from taxon g"
+        + " where g.taxarank = 'genus' and g.family = 'formicidae' and " + PlaceTotals.countsAsGenus("g") + ")";
+
     public static String countColumns() {
         String c1 = "((s.flag is null or s.flag != 'red') and s.status in " + PlaceTotals.COUNTABLE + " and s.family = 'formicidae')";
         return " count(*), count(case when " + c1 + " then s.code end),"
             + " count(distinct case when " + c1 + " then s.collectioncode end), count(distinct case when " + c1 + " then s.localitycode end),"
             + " count(case when " + c1 + " and s.decimal_latitude is null then 1 end),"
             + " count(distinct case when " + c1 + " and " + SpecimenDb.getAntSpecimenCriteria("s") + " then s.subfamily end),"
-            + " count(distinct case when " + c1 + " and " + PlaceTotals.identifiedToGenus("s") + " and coalesce(s.genus, '') <> '' then s.genus end),"
+            + " count(distinct case when " + c1 + " and " + PlaceTotals.identifiedToGenus("s") + " and coalesce(s.genus, '') <> '' and " + COUNTED_GENERA + " then s.genus end),"
             + " count(distinct case when " + c1 + " and " + PlaceTotals.rankCondition(PlaceTotals.SPECIES) + " then s.taxon_name end),"
             + " count(case when s.flag = 'red' then 1 end)"
             + " from specimen s left join taxon t on t.taxon_name = s.taxon_name";
@@ -150,7 +160,7 @@ public class GroupCountDb extends AntwebDb {
             distinct("s.collectioncode", from + " and " + c1),
             distinct("s.localitycode", from + " and " + c1),
             distinct("s.subfamily", from + " and " + c1 + " and " + SpecimenDb.getAntSpecimenCriteria("s")),
-            distinct("s.genus", from + " and " + c1 + " and " + PlaceTotals.identifiedToGenus("s") + " and coalesce(s.genus, '') <> ''"),
+            distinct("s.genus", from + " and " + c1 + " and " + PlaceTotals.identifiedToGenus("s") + " and coalesce(s.genus, '') <> '' and " + COUNTED_GENERA),
             distinct("s.taxon_name", " from specimen s join taxon t on t.taxon_name = s.taxon_name where s.access_group in (" + groupIds
                 + ") and " + c1 + " and " + PlaceTotals.rankCondition(PlaceTotals.SPECIES)),
         };
