@@ -135,7 +135,7 @@
    <% } %>            
               
    <% if (desc.containsKey("taxonomichistory")) { %>
-        <br><h2>Taxonomic History (provided by Barry Bolton, <%= year %>)</h2>
+        <br><h2>Taxonomic history (from AntCat)</h2>
                     <% new Formatter();
                         String words = Formatter.removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomichistory"),""), "br"); words = words == null ? null : words.replaceAll("(?i)\\s*<a[^>]*hol\\.osu\\.edu[^>]*>[^<]*</a>", ""); /* HOL is offline; AntCat stopped sending the link (#1573), older imports still have it. */ %>
                     <%= HtmlSanitizer.sanitize(new Formatter().removeTag((String) words, "o:p")) %>

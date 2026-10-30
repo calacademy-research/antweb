@@ -213,7 +213,7 @@ To do:
     }
     
     if (desc.containsKey("taxonomichistory")) { %>
-      <br><h2>Taxonomic History (provided by Barry Bolton, <%= year %>)</h2>
+      <br><h2>Taxonomic history (from AntCat)</h2>
                   <% String words = new Formatter().removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomichistory"),""), "br"); words = words == null ? null : words.replaceAll("(?i)\\s*<a[^>]*hol\\.osu\\.edu[^>]*>[^<]*</a>", ""); /* HOL is offline; AntCat stopped sending the link (#1573), older imports still have it. */ %>
                     <%= HtmlSanitizer.sanitize(new Formatter().removeTag((String) words, "o:p")) %>
  <% }
@@ -264,7 +264,7 @@ To do:
  
  <% thisDesc = "taxanomicnotes";       
     descHeader = "Taxonomic Notes"; 
-    descNotes = "Information about taxonomic history, nomenclatural issues, type specimens, etc. that is not already referred to in the &#39;Taxonomic History&#39; section.";   %>
+    descNotes = "Information about taxonomic history, nomenclatural issues, type specimens, etc. that is not already referred to in the &#39;Taxonomic history&#39; section.";   %>
  <%@ include file="/common/descEdit/taxonEditFieldCK.jsp" %>
 
  <!-- to be removed after Eli transfers to comments or Taxonomic Notes -->

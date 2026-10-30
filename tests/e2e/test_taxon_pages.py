@@ -77,7 +77,7 @@ def test_genus_page_has_taxonomic_history_and_tools():
     path = "/description.do?genus=camponotus&rank=genus"
     r = fetch(path)
     assert_ok(r, path)
-    assert "Taxonomic History (provided by Barry Bolton" in r.text, f"{path}: no Taxonomic History section"
+    assert "Taxonomic history (from AntCat)" in r.text, f"{path}: no Taxonomic History section"
     for tool in ("getComparison", "mapComparison", "fieldGuide"):
         assert links(r.text, tool), f"{path}: no {tool}.do link in the page tools"
     assert "getSpecimenList.do?" in r.text, f"{path}: no Download Data box"

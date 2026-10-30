@@ -11,11 +11,13 @@ the name.
 What is renamed (a specimen counts at each rank it is identified to, and no further; the same rules as the upload,
 UploadUtil.indetColumns, Brian Fisher 2026-10-28/29). "indet" here is indet, undet, (indet) or sp., any case, with or
 without a trailing period:
-  "<g> indet"        -> "<g> (indet)"  "myrmicinaepheidole indet" -> "myrmicinaepheidole (indet)"
+  "<g> indet"        -> "<g> (indet)"  "myrmicinaepheidole indet" -> "myrmicinaepheidole (indet)"; also "<g> sp." and
+                                       "<g> sp" (exactly two words, Brian Fisher 2026-10-30)
   "<g> indet <x>"    -> "<g> (indet)"  species indet: identified only to genus, the subspecies value dropped
                                        ("myrmicinaeocymyrmex indet karooicus" -> "myrmicinaeocymyrmex (indet)")
   "<g> <sp> indet"   -> "<g> <sp>"     subspecies indet: identified to species ("ectatomminaegnamptogenys
                                        striatula-complex indet" -> "ectatomminaegnamptogenys striatula-complex")
+A morphospecies is never renamed: "<g> sp 1", "<g> sp-1", "<g> sp. A" (Brian Fisher, 2026-10-30).
 Other names with an indet word (four words or more) are counted and listed as "not handled" (look at them by hand).
 A new name that has no taxon row yet gets the old taxon row, renamed; one that exists already takes the old rows
 (merged, as below).
@@ -72,19 +74,23 @@ import subprocess
 import sys
 
 INDET = "(indet)"
-# The old form: two words, the second indet or undet, with or without a period (any case).
-OLD_FORM = re.compile(r"^(\S+) (indet|undet)\.?$", re.IGNORECASE)
+# The old form: two words, the second indet, undet or sp, with or without a period (any case). "<g> sp." is indet
+# (Brian Fisher, 2026-10-30): exactly two words; a morphospecies such as "<g> sp 1", "<g> sp-1" or "<g> sp. A" never.
+OLD_FORM = re.compile(r"^(\S+) (indet|undet|sp)\.?$", re.IGNORECASE)
 # An epithet that says "not identified at this rank": indet, undet, (indet), sp. (any case, trailing period).
 _IND = r"(?:(?:indet|undet|sp)\.?|\(indet\))"
 # Three words, the species indet: "<g> indet <x>" (Ocymyrmex indet karooicus). Identified only to genus.
 SPECIES_INDET_3 = re.compile(r"^(\S+) " + _IND + r" (\S+)$", re.IGNORECASE)
 # Three words, the subspecies indet: "<g> <sp> indet" (Gnamptogenys striatula-complex indet). Identified to species.
 SUBSPECIES_INDET_3 = re.compile(r"^(\S+) (\S+) " + _IND + r"$", re.IGNORECASE)
+# Three words, the second sp and the third not an indet word: a morphospecies ("<g> sp. A", "<g> sp 1"). Never renamed
+# (Brian Fisher, 2026-10-30), although the upload files species "sp." with a subspecies value as "(indet)".
+SP_MORPHO_3 = re.compile(r"^\S+ sp\.? (?!" + _IND + r"$)\S+$", re.IGNORECASE)
 # Any name with indet or undet as a word after the first, or "(indet)" followed by a word or as the third word (to
 # count what the tool does not handle).
-ANY_INDET_WORD = re.compile(r" (indet|undet)\.?( |$)| \(indet\) |^\S+ \S+ \(indet\)$", re.IGNORECASE)
-SQL_OLD_FORM = "'^[^ ]+ (indet|undet)[.]?$'"
-SQL_ANY_INDET_WORD = "' (indet|undet)[.]?( |$)| [(]indet[)] |^[^ ]+ [^ ]+ [(]indet[)]$'"
+ANY_INDET_WORD = re.compile(r" (indet|undet)\.?( |$)| \(indet\) |^\S+ \S+ \(indet\)$|^\S+ sp\.?$", re.IGNORECASE)
+SQL_OLD_FORM = "'^[^ ]+ (indet|undet|sp)[.]?$'"
+SQL_ANY_INDET_WORD = "' (indet|undet)[.]?( |$)| [(]indet[)] |^[^ ]+ [^ ]+ [(]indet[)]$|^[^ ]+ sp[.]?$'"
 # What a name is (kind_of): the two-word old form, three words with the species indet, three words with the
 # subspecies indet.
 TWO_WORD, SPECIES_INDET, SUBSPECIES_INDET = "two-word", "species indet", "subspecies indet"
@@ -112,6 +118,8 @@ def kind_of(old):
     old = old or ""
     if OLD_FORM.match(old):
         return TWO_WORD
+    if SP_MORPHO_3.match(old):
+        return None
     if SPECIES_INDET_3.match(old):
         return SPECIES_INDET
     if SUBSPECIES_INDET_3.match(old):
@@ -122,11 +130,12 @@ def kind_of(old):
 def new_name(old):
     """The name an old name is filed under, or None when the tool does not handle it. A specimen counts at each rank it
     is identified to, and no further (Brian Fisher, 2026-10-28/29):
-      "<g> indet"        -> "<g> (indet)"   (two words; also Indet, indet., undet)
+      "<g> indet"        -> "<g> (indet)"   (two words; also Indet, indet., undet, sp, sp.)
       "<g> indet <x>"    -> "<g> (indet)"   (species indet: identified only to genus; the subspecies value is dropped)
       "<g> <sp> indet"   -> "<g> <sp>"      (subspecies indet: identified to species)
     indet here is indet, undet, (indet) or sp., any case, with or without a period. The same rules as the upload
-    (UploadUtil.indetColumns)."""
+    (UploadUtil.indetColumns), except that "<g> sp <x>" is a morphospecies ("<g> sp. A") and never renamed (Brian
+    Fisher, 2026-10-30)."""
     kind = kind_of(old)
     if kind == TWO_WORD:
         return f"{OLD_FORM.match(old).group(1)} {INDET}"

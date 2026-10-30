@@ -5,17 +5,22 @@ import java.nio.charset.MalformedInputException;
 import junit.framework.TestCase;
 
 import org.calacademy.antweb.Curator;
+import org.calacademy.antweb.home.GroupCountDb;
 import org.calacademy.antweb.upload.SpecimenNameUpdate;
 import org.calacademy.antweb.upload.SpecimenUpload;
+import org.calacademy.antweb.upload.SpecimenUploadParse;
 import org.calacademy.antweb.upload.UploadAction;
 import org.calacademy.antweb.upload.UploadDetails;
+import org.calacademy.antweb.upload.UploadUtil;
 
 /**
  * Audit fixes of 2026-10-30 (triage tk), no database:
  * - "upload as" an id that is not a curator is refused, never the requester's own group;
  * - a read error part way through a specimen file rolls the upload back (the group's specimens were removed first);
  * - a specimen the nightly name update moves gets the status of the taxon it moves to (was always "valid");
- * - the museum counts of an upload match the museum code as a whole word (CASC was counted for CAS too).
+ * - the museum counts of an upload match the museum code as a whole word (CASC was counted for CAS too);
+ * - a specimen without a collection code is stored without one (no random "tc" + number code) and Collections leaves
+ *   it out (Brian Fisher, 2026-10-30).
  */
 public class AuditTkFixesTest extends TestCase {
 
@@ -53,5 +58,27 @@ public class AuditTkFixesTest extends TestCase {
         assertFalse(UploadDetails.namesMuseum("MCZC", "MCZ"));
         assertFalse(UploadDetails.namesMuseum(null, "CAS"));
         assertFalse(UploadDetails.namesMuseum("CAS", ""));
+    }
+
+    public void testSpecimenWithoutACollectionCodeGetsNone() {
+        assertNull(SpecimenUploadParse.storedCollectionCode(null));
+        assertNull(SpecimenUploadParse.storedCollectionCode(""));
+        assertNull(SpecimenUploadParse.storedCollectionCode("   "));
+        assertNull(SpecimenUploadParse.storedCollectionCode("#%"));
+        assertEquals("BLF1234", SpecimenUploadParse.storedCollectionCode("BLF 1234"));
+        assertEquals("KM55-805", SpecimenUploadParse.storedCollectionCode("KM55\"\"805"));
+        for (java.lang.reflect.Method m : UploadUtil.class.getMethods()) {
+            assertFalse("the random code maker is gone", "createCode".equals(m.getName()));
+        }
+    }
+
+    public void testCollectionsLeaveOutSpecimensWithoutACode() {
+        assertEquals("nullif(trim(s.collectioncode), '')", GroupCountDb.COLLECTION);
+        String columns = GroupCountDb.countColumns();
+        assertTrue(columns, columns.contains(" then " + GroupCountDb.COLLECTION + " end)"));
+        assertFalse(columns, columns.contains("then s.collectioncode end"));
+        String collections = GroupCountDb.totalsSqls("1,2")[1];
+        assertTrue(collections, collections.contains("select distinct " + GroupCountDb.COLLECTION + " from specimen s"));
+        assertTrue(collections, collections.contains(GroupCountDb.COLLECTION + " is not null"));
     }
 }

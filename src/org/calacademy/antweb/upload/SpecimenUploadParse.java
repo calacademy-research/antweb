@@ -887,20 +887,25 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         return localityCode;
     }
 
+    /**
+     * The collection code as it is stored: UploadUtil.cleanCode of the value given. A specimen without a collection code
+     * (none given, or nothing left after cleaning) is stored without one (null) and is in no collection (Brian Fisher,
+     * 2026-10-30). Until then it got a random one-off code ("tc" + a number, UploadUtil.createCode, now removed), a
+     * different one at every upload, and each counted as a collection of its own (groups.do Collections).
+     */
     public void cleanCollectionCode(Hashtable specimenItem) {
         String collectionCode = (String) specimenItem.get("collectioncode");
-        String origCollectionCode = collectionCode;
         reportQuotes(collectionCode, "collection");
+        specimenItem.remove("collectioncode");
+        collectionCode = storedCollectionCode(collectionCode);
+        if (collectionCode != null) specimenItem.put("collectioncode", collectionCode);
+    }
 
-        collectionCode = UploadUtil.cleanCode(collectionCode);
-
-        if (collectionCode != null) {
-            //A.iLog(4, "cleanCollectionCode() clean collectionCode:" + collectionCode + " origCollectionCode:" + origCollectionCode, 200);
-        } else {
-            collectionCode = UploadUtil.createCode(collectionCode);
-            A.iLog(5, "cleanCollectionCode() create collectionCode:" + collectionCode + " origCollectionCode:" + origCollectionCode, 1000);
-        }
-        specimenItem.put("collectioncode", collectionCode);
+    /** The collection code stored for a value given in the upload: cleaned, or null when there is none (2026-10-30). */
+    public static String storedCollectionCode(String given) {
+        String collectionCode = UploadUtil.cleanCode(given);
+        if (collectionCode == null || collectionCode.trim().isEmpty()) return null;
+        return collectionCode;
     }
 
     private String isWithinCountryBounds(Hashtable specimenItem, Coordinate coord) {

@@ -31,7 +31,7 @@ def test_names():
     assert tf.new_name("formicinaecamponotus UNDET.") == "formicinaecamponotus (indet)"
     assert tf.new_name("(myrmicinae) indet") == "(myrmicinae) (indet)"
     for keep in ("myrmicinaepheidole (indet)", "myrmicinaepheidole megacephala", "myrmicinaepheidole indetx",
-                 "myrmicinaepheidole indet x y", "myrmicinaepheidole sp.", "myrmicinaeindet", None, "",
+                 "myrmicinaepheidole indet x y", "myrmicinaeindet", None, "",
                  "myrmicinaepheidole megacephala indetx", "myrmicinaepheidole a b indet"):
         assert tf.new_name(keep) is None, keep
     m = tf.name_map(["myrmicinaepheidole indet", "Myrmicinaepheidole indet", "myrmicinaepheidole indet.",
@@ -48,7 +48,7 @@ def test_names():
     three = {"myrmicinaeocymyrmex indet karooicus": ("myrmicinaeocymyrmex (indet)", tf.SPECIES_INDET),
              "myrmicinaeocymyrmex Undet. karooicus": ("myrmicinaeocymyrmex (indet)", tf.SPECIES_INDET),
              "myrmicinaeocymyrmex (indet) karooicus": ("myrmicinaeocymyrmex (indet)", tf.SPECIES_INDET),
-             "myrmicinaeocymyrmex sp. karooicus": ("myrmicinaeocymyrmex (indet)", tf.SPECIES_INDET),
+             "myrmicinaeocymyrmex sp. indet": ("myrmicinaeocymyrmex (indet)", tf.SPECIES_INDET),
              "myrmicinaeocymyrmex indet indet": ("myrmicinaeocymyrmex (indet)", tf.SPECIES_INDET),
              "ectatomminaegnamptogenys striatula-complex indet": ("ectatomminaegnamptogenys striatula-complex", tf.SUBSPECIES_INDET),
              "ectatomminaegnamptogenys striatula-complex (indet)": ("ectatomminaegnamptogenys striatula-complex", tf.SUBSPECIES_INDET),
@@ -66,8 +66,33 @@ def test_names():
     assert tf.species_status("myrmicinaepheidole megacephala", "indetermined") == "unrecognized"
     assert tf.species_status("myrmicinaepheidole megacephala", "valid") == "valid"
     assert tf.species_status("myrmicinaepheidole megacephala", None) == "unrecognized"
-    print("Names: indet, Indet, indet., undet become (indet); three-word names follow the upload's rules;"
+    print("Names: indet, Indet, indet., undet, sp. become (indet); three-word names follow the upload's rules;"
           " four words are left for a look by hand.")
+
+
+def test_sp_is_indet_but_never_a_morphospecies():
+    """Brian Fisher, 2026-10-30: "<Genus> sp." (exactly two words, the second sp or sp.) is indet; a morphospecies
+    ("sp 1", "sp-1", "sp. A") never is."""
+    for old in ("myrmicinaepheidole sp.", "myrmicinaepheidole sp", "myrmicinaepheidole SP.", "myrmicinaepheidole Sp"):
+        assert tf.new_name(old) == "myrmicinaepheidole (indet)", old
+        assert tf.kind_of(old) == tf.TWO_WORD, old
+    morpho = ("myrmicinaepheidole sp 1", "myrmicinaepheidole sp-1", "myrmicinaepheidole sp. A", "myrmicinaepheidole sp.1",
+              "myrmicinaepheidole sp1", "myrmicinaepheidole sp. a", "myrmicinaepheidole sp_1", "myrmicinaepheidole sp. 12",
+              "myrmicinaepheidole spinosa", "myrmicinaepheidole sp. A indet", "myrmicinaeocymyrmex sp. karooicus",
+              "myrmicinaepheidole sp..", "myrmicinaepheidole sp.(1)")
+    for keep in morpho:
+        assert tf.new_name(keep) is None, keep
+    assert tf.name_map(["myrmicinaepheidole sp.", *morpho]) == {"myrmicinaepheidole sp.": "myrmicinaepheidole (indet)"}
+    assert tf.not_handled(["myrmicinaepheidole sp.", "myrmicinaepheidole sp 1", "myrmicinaepheidole sp. A"]) == []
+    # the SQL that collects the names: the same rule, in MySQL regexp syntax (ICU, case-insensitive collation)
+    sql = re.compile(tf.SQL_ANY_INDET_WORD.strip("'").replace("[.]", r"\.").replace("[(]", r"\(").replace("[)]", r"\)"),
+                     re.IGNORECASE)
+    assert sql.search("myrmicinaepheidole sp.") and sql.search("myrmicinaepheidole Sp")
+    for keep in morpho:
+        if " indet" not in keep:
+            assert not sql.search(keep), keep
+    assert "sp)" in tf.SQL_OLD_FORM
+    print("sp.: \"<g> sp.\" becomes (indet); sp 1, sp-1, sp. A and the like are never renamed.")
 
 
 MAP = {"myrmicinaepheidole indet": "myrmicinaepheidole (indet)",
@@ -327,6 +352,7 @@ def test_columns_exist_in_the_schema():
 
 def main():
     test_names()
+    test_sp_is_indet_but_never_a_morphospecies()
     test_sql()
     test_command_flow()
     test_production_guard()

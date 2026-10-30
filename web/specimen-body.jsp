@@ -313,7 +313,11 @@ if (localityLink != null) { %>
 
 <ul>
 <li><b>Collection code: </b></li>
+<% if (specimen.getCollectionCode() == null || specimen.getCollectionCode().trim().isEmpty()) { /* no collection code: in no collection (2026-10-30) */ %>
+<li>none &nbsp;</li>
+<% } else { %>
 <li><a href="<%= AntwebProps.getDomainApp() %>/collection.do?name=<%= Html.escAttr(Html.url(specimen.getCollectionCode())) %>"><%= Html.esc(specimen.getCollectionCode()) %></a> &nbsp;</li>
+<% } %>
 
 </ul>
 

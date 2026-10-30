@@ -79,7 +79,8 @@ public class GroupCountDb extends AntwebDb {
      *
      *   counted specimens  not red-flagged, specimen status valid, unrecognized, morphotaxon, indetermined or
      *                      unidentifiable, family Formicidae (SpecimenDb.getFlagCriteria, getStatusCriteria, getTaxaCriteria)
-     *   Specimens, Collections, Localities, Ungeoreferenced   of the counted specimens (unchanged)
+     *   Specimens, Collections, Localities, Ungeoreferenced   of the counted specimens (unchanged); Collections leaves out
+     *                specimens without a collection code (COLLECTION; Brian Fisher, 2026-10-30)
      *   Subfamilies  distinct subfamilies of the counted specimens that are valid ant subfamilies (SpecimenDb.getAntSpecimenCriteria)
      *   Genera       distinct genera of the counted specimens identified to genus (PlaceTotals.identifiedToGenus) whose
      *                genus is a valid genus or a morphogenus (Brian Fisher, 2026-10-30: COUNTED_GENERA; a genus name
@@ -102,10 +103,17 @@ public class GroupCountDb extends AntwebDb {
     public static final String COUNTED_GENERA = "concat(coalesce(s.subfamily, ''), s.genus) in (select g.taxon_name from taxon g"
         + " where g.taxarank = 'genus' and g.family = 'formicidae' and " + PlaceTotals.countsAsGenus("g") + ")";
 
+    /**
+     * SQL: the specimen's collection, for Collections: its collection code, null when it has none (null or empty). A
+     * specimen without a collection code is in no collection and not counted (Brian Fisher, 2026-10-30; uploads store
+     * none since then, SpecimenUploadParse.storedCollectionCode).
+     */
+    public static final String COLLECTION = "nullif(trim(s.collectioncode), '')";
+
     public static String countColumns() {
         String c1 = "((s.flag is null or s.flag != 'red') and s.status in " + PlaceTotals.COUNTABLE + " and s.family = 'formicidae')";
         return " count(*), count(case when " + c1 + " then s.code end),"
-            + " count(distinct case when " + c1 + " then s.collectioncode end), count(distinct case when " + c1 + " then s.localitycode end),"
+            + " count(distinct case when " + c1 + " then " + COLLECTION + " end), count(distinct case when " + c1 + " then s.localitycode end),"
             + " count(case when " + c1 + " and s.decimal_latitude is null then 1 end),"
             + " count(distinct case when " + c1 + " and " + SpecimenDb.getAntSpecimenCriteria("s") + " then s.subfamily end),"
             + " count(distinct case when " + c1 + " and " + PlaceTotals.identifiedToGenus("s") + " and coalesce(s.genus, '') <> '' and " + COUNTED_GENERA + " then s.genus end),"
@@ -157,7 +165,7 @@ public class GroupCountDb extends AntwebDb {
         return new String[] {
             "select count(case when " + c1 + " then 1 end), count(case when " + c1 + " and s.decimal_latitude is null then 1 end),"
                 + " count(case when s.flag = 'red' then 1 end)" + from,
-            distinct("s.collectioncode", from + " and " + c1),
+            distinct(COLLECTION, from + " and " + c1),
             distinct("s.localitycode", from + " and " + c1),
             distinct("s.subfamily", from + " and " + c1 + " and " + SpecimenDb.getAntSpecimenCriteria("s")),
             distinct("s.genus", from + " and " + c1 + " and " + PlaceTotals.identifiedToGenus("s") + " and coalesce(s.genus, '') <> '' and " + COUNTED_GENERA),

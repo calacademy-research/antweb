@@ -241,21 +241,8 @@ public class UploadUtil {
         return code.replace("\"\"", "-").replace("\"", "-");
     }
 
-    public static String createCode() {
-      return createCode(null);
-    }
-    public static String createCode(String code) {
-        String cleanCode = null;
-        String prefix = "tc";
-        if (cleanCode == null) {
-            cleanCode = prefix + AntwebUtil.getRandomNumber();
-        } else {
-            String tempCode = prefix + code;
-            if (tempCode.length() == 4) cleanCode = prefix + "0" + cleanCode;
-            if (tempCode.length() == 3) cleanCode = prefix + "00" + cleanCode;
-        }
-        return cleanCode;
-    }
+    // createCode() (a random "tc" + number collection code for a specimen without one) was removed 2026-10-30
+    // (Brian Fisher): such a specimen is stored without a collection code (SpecimenUploadParse.storedCollectionCode).
 
     public static String cleanHtml(String str) {
       int x = 0;
