@@ -280,7 +280,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                         if (!otherColumnFound) {
                             //String heading = "<b>Unrecognized Column <font color=red>(ignored):</font></b>";
                             //getMessageMgr().addToMessageStrings(heading, (String) otherColumns.get(colIndex));
-                            getMessageMgr().addToMessages(MessageMgr.unrecognizedColumn, Html.esc(otherColumns.get(colIndex)));
+                            // Once per column, not per line (2026-10-30): "Columns ignored (not AntWeb columns): N".
+                            getMessageMgr().addToMessagesOnce(MessageMgr.unrecognizedColumn, Html.esc(otherColumns.get(colIndex)));
                         }
                          
                         if (!element.equals("")) {
@@ -421,7 +422,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                   // Brian Fisher, 2026-10-27: a line without a subfamily ("(formicidae)") simply takes the genus's
                   // subfamily; only a subfamily the file gave and AntCat does not use for the genus is listed here
                   // (the check compared with "(Formicidae)", so every line without a subfamily was listed).
-                  if (isPreferredSubfamilyReplacement(subfamilyName, subfamily)) {
+                  // Brian Fisher, 2026-10-30: a genus AntWeb has only as a non-ant ('(schlettereriinae)schlettererius',
+                  // the uploaded subfamily kept in parentheses) is not a replacement: nothing is changed, and the line
+                  // is listed once, under "Not ants (not in AntCat)" (the same test, Taxon.isAnt).
+                  if (isPreferredSubfamilyReplacement(subfamilyName, subfamily, genusName, Taxon::isAnt)) {
  					  String displayTaxonName = Taxon.makeDescriptionLink(subfamily + genusName, Taxon.displaySubfamilyGenus(subfamily, genusName));
 					  getMessageMgr().addToMapMessages(MessageMgr.preferredSubfamilyForGenusReplaced, Html.esc(subfamilyName), displayTaxonName);                  
                       //A.log("parseLine() preferredSubfamilyForGenusReplaced: subfamily:" + subfamily + " subfamilyName:" + subfamilyName + " genus:" + genus + " genusName:" + genusName + " displayTaxonName:" + displayTaxonName);
@@ -440,7 +444,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 					// Brian Fisher, 2026-10-22: kept, but said in the report when the line is given as an ant (family
 					// formicidae, or none) and its genus is not an ant genus in AntCat ('(indet)termes': Termes is a
 					// termite) or is not a name at all.
-					if (isGenusNotInAntcat(genusName, (String) taxonItem.get("family"))) {
+					// Only a line that is still an ant by name (no subfamily: '(formicidae)termes'); a line with a
+					// non-ant subfamily is listed once, under "Not ants (not in AntCat)" (2026-10-30).
+					if (isGenusNotInAntcat(genusName, (String) taxonItem.get("family")) && isAntGenus(subfamilyName, genusName, Taxon::isAnt)) {
 					  getMessageMgr().addToMessages(MessageMgr.genusNotInAntcat, Html.esc(Formatter.initCap(genusName)
 					    + (isMissingSubfamily(subfamilyName) ? " (no subfamily)" : " (subfamily " + subfamilyName + ")")));
 					}
@@ -1380,6 +1386,26 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     public static boolean isPreferredSubfamilyReplacement(String givenSubfamily, String antcatSubfamily) {
         if (isMissingSubfamily(givenSubfamily) || antcatSubfamily == null) return false;
         return !antcatSubfamily.equalsIgnoreCase(givenSubfamily.trim());
+    }
+
+    /**
+     * As above, for the genus row AntWeb found (Brian Fisher, 2026-10-30, Phil Ward's upload): only an ant genus. A
+     * non-ant genus row ('(schlettereriinae)schlettererius': AntCat has no such genus; AntWeb keeps the uploaded
+     * subfamily in parentheses) differs from the file's 'schlettereriinae' only by the parentheses; nothing is
+     * replaced, and the line is listed under "Not ants (not in AntCat)" instead. isAnt: Taxon::isAnt.
+     */
+    public static boolean isPreferredSubfamilyReplacement(String givenSubfamily, String genusSubfamily, String genusName,
+                                                          java.util.function.Predicate<String> isAnt) {
+        return isAntGenus(genusSubfamily, genusName, isAnt) && isPreferredSubfamilyReplacement(givenSubfamily, genusSubfamily);
+    }
+
+    /**
+     * Whether a subfamily + genus is an ant: the test of "Not ants (not in AntCat)" (Taxon.isAnt on the taxon name,
+     * subfamily then genus: its subfamily is an AntCat subfamily, or AntWeb's "(formicidae)" placeholder). Used for the
+     * report's "Preferred Subfamily For Genus", "Genus not in AntCat" and "Morpho Genera" (2026-10-30).
+     */
+    public static boolean isAntGenus(String subfamily, String genusName, java.util.function.Predicate<String> isAnt) {
+        return isAnt.test((subfamily == null ? "" : subfamily) + (genusName == null ? "" : genusName));
     }
 
     /**
