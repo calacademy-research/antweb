@@ -200,6 +200,8 @@ public final class TaxaPageAction extends AntwebAction {
             if ("false".equals(isImaged)) taxaPage.findUnimaged(connection);
             // 2026-10-28: the specimens identified to genus only, for the genus rows and the line under the species list.
             if (Rank.GENUS.equals(rank) || Rank.SPECIES.equals(rank)) taxaPage.findGenusOnly(connection, overview);
+            // 2026-10-30: a subfamily list says "extant and fossil" only when the place has a fossil subfamily
+            if (Rank.SUBFAMILY.equals(rank)) TaxaPage.setFossilSubfamilies(request, connection, overview);
 
 //         if (HttpUtil.getTarget(request).contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) { s_log.warn("MarkNote() break:" + HttpUtil.getTarget(request)); return (mapping.findForward("error"));}
 // Doubled

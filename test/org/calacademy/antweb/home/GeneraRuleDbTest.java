@@ -264,39 +264,43 @@ public class GeneraRuleDbTest extends TestCase {
 
     public void testWorldantsChangeCountComparesWithThePreviousImport() throws Exception {
         exec("drop table if exists worldants_upload");
-        exec("create table worldants_upload (id int not null auto_increment primary key, file_size varchar(200), backup_file_size int,"
-            + " backup_file_name varchar(200), orig_worldants_count int, validate_message varchar(1000),"
-            + " created timestamp default current_timestamp, log_file_name varchar(100), exec_time varchar(100), operation varchar(100))");
-        WorldantsUploadDb db = new WorldantsUploadDb(connection);
-        assertEquals("no imports", 0, db.getWorldantsChangeCount());
-        // 10 days ago (before the week), then daily; the backup size equals the file size on every row (production 10-20 on)
-        String[][] rows = {
-            {"10", "139370000"},   // the previous import of the first row in the week
-            {"6", "139370000"},    // no change
-            {"5", "139376773"},    // change
-            {"4", "139379248"},    // change
-            {"3", "139379248"},    // no change
-            {"2", "0"},            // no file size: left out
-            {"1", "139380000"},    // change (against 139379248, the row before the one without a size)
-        };
-        for (String[] r : rows) {
-            exec("insert into worldants_upload (file_size, backup_file_size, created) values ('" + r[1] + "', " + r[1]
-                + ", now() - interval " + r[0] + " day)");
+        // try/finally (review of #307): a failed assertion leaves no altered table behind
+        try {
+            exec("create table worldants_upload (id int not null auto_increment primary key, file_size varchar(200), backup_file_size int,"
+                + " backup_file_name varchar(200), orig_worldants_count int, validate_message varchar(1000),"
+                + " created timestamp default current_timestamp, log_file_name varchar(100), exec_time varchar(100), operation varchar(100))");
+            WorldantsUploadDb db = new WorldantsUploadDb(connection);
+            assertEquals("no imports", 0, db.getWorldantsChangeCount());
+            // 10 days ago (before the week), then daily; the backup size equals the file size on every row (production 10-20 on)
+            String[][] rows = {
+                {"10", "139370000"},   // the previous import of the first row in the week
+                {"6", "139370000"},    // no change
+                {"5", "139376773"},    // change
+                {"4", "139379248"},    // change
+                {"3", "139379248"},    // no change
+                {"2", "0"},            // no file size: left out
+                {"1", "139380000"},    // change (against 139379248, the row before the one without a size)
+            };
+            for (String[] r : rows) {
+                exec("insert into worldants_upload (file_size, backup_file_size, created) values ('" + r[1] + "', " + r[1]
+                    + ", now() - interval " + r[0] + " day)");
+            }
+            assertEquals(3, db.getWorldantsChangeCount());
+            // a week without changes: the alert's case
+            exec("delete from worldants_upload");
+            exec("insert into worldants_upload (file_size, backup_file_size, created) values ('139379248', 139379248, now() - interval 9 day),"
+                + " ('139379248', 139379248, now() - interval 3 day), ('139379248', 139379248, now() - interval 1 day)");
+            assertEquals(0, db.getWorldantsChangeCount());
+            // the only import has no previous one: no change
+            exec("delete from worldants_upload");
+            exec("insert into worldants_upload (file_size, backup_file_size, created) values ('139379248', 0, now() - interval 1 day)");
+            assertEquals(0, db.getWorldantsChangeCount());
+            // the first import in the week changed against the one before the week
+            exec("insert into worldants_upload (file_size, backup_file_size, created) values ('139000000', 0, now() - interval 9 day)");
+            assertEquals(1, db.getWorldantsChangeCount());
+        } finally {
+            exec("drop table if exists worldants_upload");
         }
-        assertEquals(3, db.getWorldantsChangeCount());
-        // a week without changes: the alert's case
-        exec("delete from worldants_upload");
-        exec("insert into worldants_upload (file_size, backup_file_size, created) values ('139379248', 139379248, now() - interval 9 day),"
-            + " ('139379248', 139379248, now() - interval 3 day), ('139379248', 139379248, now() - interval 1 day)");
-        assertEquals(0, db.getWorldantsChangeCount());
-        // the only import has no previous one: no change
-        exec("delete from worldants_upload");
-        exec("insert into worldants_upload (file_size, backup_file_size, created) values ('139379248', 0, now() - interval 1 day)");
-        assertEquals(0, db.getWorldantsChangeCount());
-        // the first import in the week changed against the one before the week
-        exec("insert into worldants_upload (file_size, backup_file_size, created) values ('139000000', 0, now() - interval 9 day)");
-        assertEquals(1, db.getWorldantsChangeCount());
-        exec("drop table worldants_upload");
     }
 
     // ---- Review of #307 (2026-10-30) ----
@@ -342,47 +346,73 @@ public class GeneraRuleDbTest extends TestCase {
     }
 
     /**
+     * Brian Fisher, 2026-10-30: a subfamily list says "extant and fossil" only when the place's subfamilies of Valid +
+     * morphotaxa include a fossil one (TaxaPage.hasFossilSubfamilies, the list's own query with a fossil row). Testland
+     * lists Myrmicinae (extant) and "(formicidae)": none. A fossil morphotaxon subfamily is not a Subfamily row (valid
+     * only): still none. A valid fossil subfamily on its list: yes.
+     */
+    public void testFossilSubfamiliesOfAPlace() throws Exception {
+        Country testland = new Country();
+        testland.setId(TESTLAND);
+        testland.setName("Testland");
+        assertFalse(org.calacademy.antweb.TaxaPage.hasFossilSubfamilies(connection, testland));
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, fossil) values"
+            + " ('zzfossilmorphinae', 'subfamily', 'morphotaxon', '" + FAMILY + "', 'formicidae', 'zzfossilmorphinae', 1)");
+        row("zzfossilmorphinae", 0, 0);
+        assertFalse(org.calacademy.antweb.TaxaPage.hasFossilSubfamilies(connection, testland));
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, fossil) values"
+            + " ('sphecomyrminae', 'subfamily', 'valid', '" + FAMILY + "', 'formicidae', 'sphecomyrminae', 1)");
+        assertFalse("not on Testland's list yet", org.calacademy.antweb.TaxaPage.hasFossilSubfamilies(connection, testland));
+        row("sphecomyrminae", 0, 0);
+        assertTrue(org.calacademy.antweb.TaxaPage.hasFossilSubfamilies(connection, testland));
+    }
+
+    /**
      * PlaceTotals.countsAsGenus (SQL) and isCountedGenus (Java) are one rule, and so are countsAsSubfamily and
      * isCountedSubfamily: the same fixture values, the same answer (2026-10-30: Java rejected a genus value with ")"
      * while SQL checked only a leading "(" on the genus).
      */
     public void testJavaAndSqlGenusRulesAgree() throws Exception {
         exec("drop table if exists rule_fixture");
-        exec("create table rule_fixture (id int primary key, status varchar(40), taxon_name varchar(128), genus varchar(64))");
-        String[][] values = {
-            {"valid", "myrmicinaepheidole", "pheidole"},
-            {"morphotaxon", "myrmicinaemyrm_gen-za01", "myrm_gen-za01"},
-            {"unrecognized", "myrmicinaepolyrachis", "polyrachis"},
-            {"indetermined", "myrmicinae(myrmicinae)", "(myrmicinae)"},
-            {"morphotaxon", "amblyoponinae)", "amblyoponinae)"},
-            {"morphotaxon", "amblyoponinaex", "x)"},
-            {"morphotaxon", "amblyoponinaey", "y(z"},
-            {"valid", "(formicidae)polyrachis", "polyrachis"},
-            {"valid", "myrmicinaeindet", "indet"},
-            {"valid", "myrmicinaeundet", " Undet "},
-            {"valid", "myrmicinae(indet)", "(indet)"},
-            {"morphotaxon", "(formicidae)", null},
-            {"valid", "myrmicinae", null},
-            {"valid", "myrmicinicinae", ""},
-            {"synonym", "myrmicinaeoldname", "oldname"},
-            {null, "myrmicinaenostatus", "nostatus"},
-        };
-        for (int i = 0; i < values.length; i++) {
-            String[] v = values[i];
-            exec("insert into rule_fixture values (" + i + ", " + q(v[0]) + ", " + q(v[1]) + ", " + q(v[2]) + ")");
+        // try/finally (review of #307): a failed assertion leaves no altered table behind
+        try {
+            exec("create table rule_fixture (id int primary key, status varchar(40), taxon_name varchar(128), genus varchar(64))");
+            String[][] values = {
+                {"valid", "myrmicinaepheidole", "pheidole"},
+                {"morphotaxon", "myrmicinaemyrm_gen-za01", "myrm_gen-za01"},
+                {"unrecognized", "myrmicinaepolyrachis", "polyrachis"},
+                {"indetermined", "myrmicinae(myrmicinae)", "(myrmicinae)"},
+                {"morphotaxon", "amblyoponinae)", "amblyoponinae)"},
+                {"morphotaxon", "amblyoponinaex", "x)"},
+                {"morphotaxon", "amblyoponinaey", "y(z"},
+                {"valid", "(formicidae)polyrachis", "polyrachis"},
+                {"valid", "myrmicinaeindet", "indet"},
+                {"valid", "myrmicinaeundet", " Undet "},
+                {"valid", "myrmicinae(indet)", "(indet)"},
+                {"morphotaxon", "(formicidae)", null},
+                {"valid", "myrmicinae", null},
+                {"valid", "myrmicinicinae", ""},
+                {"synonym", "myrmicinaeoldname", "oldname"},
+                {null, "myrmicinaenostatus", "nostatus"},
+            };
+            for (int i = 0; i < values.length; i++) {
+                String[] v = values[i];
+                exec("insert into rule_fixture values (" + i + ", " + q(v[0]) + ", " + q(v[1]) + ", " + q(v[2]) + ")");
+            }
+            for (int i = 0; i < values.length; i++) {
+                String[] v = values[i];
+                int sqlGenus = PlaceTotals.count(connection, "select count(*) from rule_fixture a where a.id = ? and " + PlaceTotals.countsAsGenus("a"), "" + i);
+                assertEquals(java.util.Arrays.toString(v) + " genus", PlaceTotals.isCountedGenus(v[0], v[1], v[2]) ? 1 : 0, sqlGenus);
+                int sqlSubfamily = PlaceTotals.count(connection, "select count(*) from rule_fixture a where a.id = ? and " + PlaceTotals.countsAsSubfamily("a"), "" + i);
+                assertEquals(java.util.Arrays.toString(v) + " subfamily", PlaceTotals.isCountedSubfamily(v[0], v[1]) ? 1 : 0, sqlSubfamily);
+            }
+            // the cases of the review: a genus value with a parenthesis is never a genus, by either rule
+            assertFalse(PlaceTotals.isCountedGenus("morphotaxon", "amblyoponinaex", "x)"));
+            assertFalse(PlaceTotals.isCountedGenus("morphotaxon", "amblyoponinaey", "y(z"));
+            assertTrue(PlaceTotals.isCountedGenus("morphotaxon", "myrmicinaemyrm_gen-za01", "myrm_gen-za01"));
+        } finally {
+            exec("drop table if exists rule_fixture");
         }
-        for (int i = 0; i < values.length; i++) {
-            String[] v = values[i];
-            int sqlGenus = PlaceTotals.count(connection, "select count(*) from rule_fixture a where a.id = ? and " + PlaceTotals.countsAsGenus("a"), "" + i);
-            assertEquals(java.util.Arrays.toString(v) + " genus", PlaceTotals.isCountedGenus(v[0], v[1], v[2]) ? 1 : 0, sqlGenus);
-            int sqlSubfamily = PlaceTotals.count(connection, "select count(*) from rule_fixture a where a.id = ? and " + PlaceTotals.countsAsSubfamily("a"), "" + i);
-            assertEquals(java.util.Arrays.toString(v) + " subfamily", PlaceTotals.isCountedSubfamily(v[0], v[1]) ? 1 : 0, sqlSubfamily);
-        }
-        // the cases of the review: a genus value with a parenthesis is never a genus, by either rule
-        assertFalse(PlaceTotals.isCountedGenus("morphotaxon", "amblyoponinaex", "x)"));
-        assertFalse(PlaceTotals.isCountedGenus("morphotaxon", "amblyoponinaey", "y(z"));
-        assertTrue(PlaceTotals.isCountedGenus("morphotaxon", "myrmicinaemyrm_gen-za01", "myrm_gen-za01"));
-        exec("drop table rule_fixture");
     }
 
     private static String q(String v) {

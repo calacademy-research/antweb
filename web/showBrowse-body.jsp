@@ -137,7 +137,7 @@ if (childrenList != null) {
    // "12 Valid species"; StatusSet.listHeading). A species or subspecies page lists its specimens: no status words.
    String browseChoice = taxon.isSpeciesOrSubspecies() ? null : taxon.getStatusSetStr();
    displayCount = Html.esc(StatusSet.listHeading(browseChoice, taxon.getChildrenCount(), taxon.getNextRank(),
-       Rank.getSingularRank(taxon.getNextRank()), -1, overview == null ? null : overview.getName()));
+       Rank.getSingularRank(taxon.getNextRank()), -1, overview == null ? null : overview.getName(), StatusSet.fossilSubfamilies(request)));
    if (taxon.getChildrenCount() > 1) {
 
      String limitStr = (String) request.getParameter("limit");

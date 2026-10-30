@@ -13,9 +13,10 @@ recounted from the API's records:
           of the specimens /specimens files under the name, anywhere), and since 2026-10-28 (decision 3) of the
           specimens filed under its synonyms (/taxa?currentValidName; when the API cannot list them, Images >= the
           recount of the name only). The cell never shows a second number.
-  row 55  images.do "I Species Imaged (M total)": M = browse.do's N = the rows it lists; I = the children shown in the
-          All view (cookie thumbs=a) with a head, profile or dorsal picture (Taxon.getUniqueChildImagesCount("p",
-          "h", "d")).
+  row 55  images.do "I Valid species imaged (out of M valid species)" (the status choice named in the words of the
+          list's header since 2026-10-30, StatusSet.imagedHeading; data-imaged I, data-total M; before: "I Species
+          Imaged (M total)"): M = browse.do's N = the rows it lists; I = the children shown in the All view (cookie
+          thumbs=a) with a head, profile or dorsal picture (Taxon.getUniqueChildImagesCount("p", "h", "d")).
   row 56  images.do child Images (default view and All view) = the child's Images cell on the place's list (browse.do
           of the genus lists them; ant images of the name in AntWeb, one number since 2026-10-28) where the name has images in
           AntWeb; where it has none the page shows the images of the ant of the specimen it shows.
@@ -37,8 +38,10 @@ recounted from the API's records:
           images of the species browse pages above.
   row 28  place page "(N additional specimens)" (data-label-only) + Imaged specimens (data-imaged, validated by the
           count check) = the place's specimens with any image (API /specimens hasImage=true, family formicidae:
-          specimen.image_count, every image file), for the day's museum with at most MAX_IMAGED specimens with
-          images; and Images (data-images) = the sum of their image counts.
+          specimen.image_count, every image file) of a counted status (the museum's rule since 2026-10-28,
+          PlaceImageCountDb.listSource: valid, unrecognized, morphotaxon, indetermined, unidentifiable), for the day's
+          museum with at most MAX_IMAGED specimens with images; and Images (data-images) = the sum of their image
+          counts.
   row 71  recentSearchResults.do?searchMethod=recentImageSearch&daysAgo=30 "N Images" (or "of N records") = the
           images uploaded in the last 30 days: between the API's /images?since=29 and since=31 (the two servers may
           count days in different time zones); every row is one image (B47, fixed 2026-10-27: grouped by name, shot,
@@ -240,6 +243,11 @@ def list_row_cells(row_html):
 
 
 def images_header(html):
+    """images.do's header: (I imaged, M total), from data-imaged / data-total (2026-10-30, the header in the words of the
+    status choice, StatusSet.imagedHeading), or the header before ("I Species Imaged (M total)"); (None, None) without."""
+    m = re.search(r'<h2 class="display_count" data-imaged="(\d+)" data-total="(\d+)">', html)
+    if m:
+        return int(m.group(1)), int(m.group(2))
     m = re.search(r'<h2 class="display_count">\s*([\d,]+) .*?Imaged\s*\(([\d,]+) total\)\s*</h2>', html, re.S)
     return (ns.n(m.group(1)), ns.n(m.group(2))) if m else (None, None)
 
@@ -344,14 +352,14 @@ def browse_children(g):
 # ------------------------------------------------------------------------------------------- rows 55, 49, 60, 58, 59
 
 def test_images_page_header_counts_the_children():
-    """Row 55: images.do "I Species Imaged (M total)": M = browse.do's N = the rows browse.do lists; I = the children of
+    """Row 55: images.do "I Valid species imaged (out of M valid species)" (data-imaged, data-total): M = browse.do's N = the rows browse.do lists; I = the children of
     the All view with a head, profile or dorsal picture; I <= M."""
     wrong, checked = [], []
     for p, g in each_genus():
         imaged, total = images_header(g["images"])
         n, text, _m, _of = browse_numbers(g["browse"])
         if total is None:
-            wrong.append(f"{g['where']}: images.do without 'I ... Imaged (M total)'")
+            wrong.append(f"{g['where']}: images.do without the header 'I ... imaged (out of M ...)'")
             continue
         if total != n:
             wrong.append(f"{g['where']}: images.do {total} total, browse.do {text!r}")
@@ -720,6 +728,10 @@ def test_specimen_images_page_counts_the_images_of_the_specimen():
 
 # ------------------------------------------------------------------------------------------- row 28
 
+# The statuses whose specimens a museum's numbers count (PlaceImageCountDb.COUNTABLE, StatusSet.getCountables).
+COUNTED_STATUSES = ("valid", "unrecognized", "morphotaxon", "indetermined", "unidentifiable")
+
+
 def _api_imaged_specimens(museum):
     """The museum's ant specimens with any image (API hasImage=true), or None when more than MAX_IMAGED or unreadable."""
     rows = ns.api_all(f"specimens?museum={ns.quote_plus(museum)}&family=formicidae&hasImage=true",
@@ -731,8 +743,17 @@ def _api_imaged_specimens(museum):
 
 def test_label_only_specimens_are_the_specimens_with_only_label_images():
     """Row 28: museum page "(N additional specimens)" (data-label-only) + Imaged specimens (data-imaged) = the museum's
-    ant specimens with any image (API, specimen.image_count > 0); Images (data-images) = their image count. The day's
-    museum with 1 to MAX_IMAGED specimens with images (up to 8 museums tried)."""
+    ant specimens with any image (API, specimen.image_count > 0) of a counted status; Images (data-images) = their image
+    count. The day's museum with 1 to MAX_IMAGED specimens with images (up to 8 museums tried).
+
+    2026-10-30 (staging, USNM: Imaged 1274 + label only 1, the API 1279; Images 5226, the API 5242): since 2026-10-28
+    (Brian Fisher, "images follow the Specimens rule") a museum's Imaged specimens and Images count only its specimens
+    of a counted status filed under a species or subspecies name of its list (PlaceImageCountDb.listSource, as its
+    Specimens number, Museum.getCountSpecimensQuery); this test still compared every ant specimen of the museum, any
+    status. The page's numbers and specimen.image_count (the API's imageCount and hasImage) are both written by nightly
+    set 4, so an upload after it does not make the API's side larger: the test's rule, not staleness. The API row's
+    status applies the rule here; the list part (a name of species rank on the museum's list) the API cannot check,
+    and a difference left is reported with the specimens of another status that were left out."""
     museums = ns.museums()
     if not museums:
         pytest.skip("museums.do lists no museum")
@@ -751,15 +772,20 @@ def test_label_only_specimens_are_the_specimens_with_only_label_images():
         if rows is None:
             tried.append(f"{p}: API not read")
             continue
+        other_status = [r for r in rows if (r.get("status") or "").lower() not in COUNTED_STATUSES]
+        rows = [r for r in rows if (r.get("status") or "").lower() in COUNTED_STATUSES]
+        left_out = (f" (left out: {len(other_status)} specimens of another status, "
+                    f"{sum(int(r.get('imageCount') or 0) for r in other_status)} images)") if other_status else ""
         shown = re.search(r'<span data-label-only-shown="(\d+)">', html)
         wrong = []
         if label_only > 0 and (not shown or int(shown.group(1)) != label_only):
             wrong.append(f"the page says {shown and shown.group(1)} additional specimens, data-label-only {label_only}")
         if imaged + label_only != len(rows):
-            wrong.append(f"Imaged specimens {imaged} + label only {label_only}, the API {len(rows)} ant specimens with images")
+            wrong.append(f"Imaged specimens {imaged} + label only {label_only}, the API {len(rows)} ant specimens with images"
+                         f" of a counted status{left_out}")
         total = sum(int(r.get("imageCount") or 0) for r in rows)
         if total != images:
-            wrong.append(f"Images {images}, the API's specimens have {total}")
+            wrong.append(f"Images {images}, the API's specimens of a counted status have {total}{left_out}")
         assert not wrong, f"{p} {ns.day_note()} ({PENDING}):\n" + "\n".join(wrong)
         return
     pytest.skip("no museum with 1 to MAX_IMAGED specimens with images in the day's sample: " + "; ".join(tried) + " " + ns.day_note())

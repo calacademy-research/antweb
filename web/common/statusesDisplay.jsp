@@ -34,17 +34,19 @@
     String sdOverviewName = overview == null ? null : overview.getName();
     String[] sdChoices = StatusSet.choicesFor(sdOverviewName);
     String sdJoin = sdTarget.contains("?") ? "&" : "?";
+    // a subfamily list: "Valid subfamilies, extant and fossil" only when the place has a fossil one (2026-10-30)
+    boolean sdFossilSubfamilies = StatusSet.fossilSubfamilies(request);
 %>
        <div id="status_toggle">
            <div class="left"><a href=<%= AntwebProps.getDomainApp() %>/statusDisplayPage.do target="new"><%= sdDisplayChildRank %> Status</a>:</div>
            <div id="change_status" class="has_options" data-status-set="<%= Html.escAttr(statusSet) %>">
-               <span id="which_status"><span><%= Html.esc(StatusSet.choiceLabel(statusSet, sdRowRank, sdOverviewName)) %></span></span>
+               <span id="which_status"><span><%= Html.esc(StatusSet.choiceLabel(statusSet, sdRowRank, sdOverviewName, sdFossilSubfamilies)) %></span></span>
                <div id="status_choice" class="options">
                    <ul>
 <%
     for (String aStatusSet : sdChoices) {
 %>
-                     <li><a data-status-choice="<%= Html.escAttr(aStatusSet) %>" href="<%= Html.escAttr(sdTarget + sdJoin + "statusSet=" + Html.url(aStatusSet)) %>"><span><%= Html.esc(StatusSet.choiceLabel(aStatusSet, sdRowRank, sdOverviewName)) %></span></a></li>
+                     <li><a data-status-choice="<%= Html.escAttr(aStatusSet) %>" href="<%= Html.escAttr(sdTarget + sdJoin + "statusSet=" + Html.url(aStatusSet)) %>"><span><%= Html.esc(StatusSet.choiceLabel(aStatusSet, sdRowRank, sdOverviewName, sdFossilSubfamilies)) %></span></a></li>
 <%  } %>
                    </ul>
                </div>

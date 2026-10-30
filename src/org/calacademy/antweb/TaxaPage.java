@@ -112,6 +112,40 @@ public class TaxaPage implements Serializable {
           return taxaQuery;
 	}
 
+	/**
+	 * Whether the place's subfamilies of the choice Valid + morphotaxa (the rows of its Subfamilies number) include a
+	 * fossil one. Brian Fisher, 2026-10-30: a subfamily list says "extant and fossil" only then (StatusSet.listHeading,
+	 * choiceLabel, imagedHeading; request attribute StatusSet.FOSSIL_SUBFAMILIES_ATTR). The list's own query
+	 * (taxaQuery) with a fossil row; browse.do's subfamilies (Family.setChildren) take the same clause and rule.
+	 */
+	public static boolean hasFossilSubfamilies(Connection connection, Overview overview) throws SQLException {
+		String query = taxaQuery(overview, "subfamily", true, StatusSet.listStatusSet(StatusSet.LIST_VALID_MORPHO))
+		    + " and taxon.fossil = 1 limit 1";
+		Statement stmt = null;
+		ResultSet rset = null;
+		try {
+			stmt = DBUtil.getStatement(connection, "hasFossilSubfamilies()");
+			rset = stmt.executeQuery(query);
+			return rset.next();
+		} finally {
+			DBUtil.close(stmt, rset, "hasFossilSubfamilies()");
+		}
+	}
+
+	/**
+	 * Sets StatusSet.FOSSIL_SUBFAMILIES_ATTR for a list of subfamilies (taxonomicPage.do, browse.do and images.do of the
+	 * family). Not on the AntCat list and Fossil Ants (their own choices). On a database error the attribute is not set
+	 * (the wording that names extant and fossil) and the page is shown.
+	 */
+	public static void setFossilSubfamilies(HttpServletRequest request, Connection connection, Overview overview) {
+		if (overview == null || StatusSet.hasOwnStatusSets(overview.getName())) return;
+		try {
+			request.setAttribute(StatusSet.FOSSIL_SUBFAMILIES_ATTR, hasFossilSubfamilies(connection, overview));
+		} catch (SQLException e) {
+			s_log.warn("setFossilSubfamilies() overview:" + overview + " e:" + e);
+		}
+	}
+
 	public String fetchChildren(Connection connection, Overview overview, String rank, boolean withImages, boolean withTaxa, boolean withSpecimen, boolean withFossil, String caste, StatusSet statusSet)
 	  throws SQLException 
 	{

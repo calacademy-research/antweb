@@ -29,6 +29,15 @@ public class UploadDb extends AntwebDb {
     }
 
     public Upload getUpload(int uploadId) throws SQLException {
+      return getUploadWhere("upload_id = " + uploadId);
+    }
+
+    /** The upload row of this row id (upload.id; rows from before 2018-01 have no upload_id). */
+    public Upload getUploadByRowId(int id) throws SQLException {
+      return getUploadWhere("id = " + id);
+    }
+
+    private Upload getUploadWhere(String where) throws SQLException {
       Upload upload = null;
       Statement stmt = null;
       ResultSet rset = null;
@@ -37,7 +46,7 @@ public class UploadDb extends AntwebDb {
 
         String query = "select *" 
           + " from upload " 
-          + " where upload_id = " + uploadId;
+          + " where " + where;
         rset = stmt.executeQuery(query);
 
         while (rset.next()) {
@@ -252,55 +261,39 @@ public class UploadDb extends AntwebDb {
     }
 
     public Upload getLastUploadByGroup(int groupId) throws SQLException {
-        Upload upload = null;
-        int uploadId = 0;
-        Statement stmt = null;
-        ResultSet rset = null;
-        String query = "select max(upload_id) upload_id from upload where group_id = " + groupId;
-
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "getLastUploadByGroup()");
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-              uploadId = rset.getInt("upload_id");
-			}
-        } catch (SQLException e) {
-            s_log.warn("getLastUploadId() e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, "getLastUploadByGroup()");        
-        }
-        
-		if (uploadId > 0) upload = getUpload(uploadId);
-		
-        //if (upload != null) A.slog("getLastUploadId() uploadId:" + uploadId + " upload:" + upload.getId() + " specimens:" + upload.getSpecimens() + " query:" + query);
-
-        return upload;
+        return getLastUpload("group_id", groupId);
     }   
     public Upload getLastUploadByLogin(int loginId) throws SQLException {
-        Upload upload = null;
-        int uploadId = 0;
-        Statement stmt = null;
-        ResultSet rset = null;
-        String query = "select max(upload_id) upload_id from upload where login_id = " + loginId;
-
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "getLastUploadByLogin()");
-            rset = stmt.executeQuery(query);
-            while (rset.next()) {
-              uploadId = rset.getInt("upload_id");
-			}
-        } catch (SQLException e) {
-            s_log.warn("getLastUploadId() e:" + e);
-        } finally {
-            DBUtil.close(stmt, rset, "getLastUploadByLogin()");        
-        }
-        
-		if (uploadId > 0) upload = getUpload(uploadId);
-		
-        //if (upload != null) A.slog("getLastUploadId() uploadId:" + uploadId + " upload:" + upload.getId() + " specimens:" + upload.getSpecimens() + " query:" + query);
-
-        return upload;
+        return getLastUpload("login_id", loginId);
     }       
+
+    /**
+     * The newest upload row of a group or login (column group_id or login_id): the one with the highest upload_id, or,
+     * when none of the rows has one, the newest row (highest id). 2026-10-30: upload_id was added in 2018-01 (db/upgrade
+     * 7.9/2018-01-11.sql), so the rows of earlier uploads have none, and "max(upload_id)" found nothing for a curator or
+     * group whose uploads are all older: curator.do showed "Specimen Uploads 1" and no Last Upload (James Trager,
+     * curator.do?id=5). Rows with an upload_id are newer than those without; among them the order is as before.
+     */
+    public Upload getLastUpload(String column, int value) throws SQLException {
+        if (!"group_id".equals(column) && !"login_id".equals(column)) throw new IllegalArgumentException(column);
+        String query = lastUploadSql(column);
+        int rowId = 0;
+        try (PreparedStatement stmt = getConnection().prepareStatement(query)) {
+            stmt.setInt(1, value);
+            try (ResultSet rset = stmt.executeQuery()) {
+                if (rset.next()) rowId = rset.getInt(1);
+            }
+        } catch (SQLException e) {
+            s_log.warn("getLastUpload() " + column + ":" + value + " e:" + e);
+        }
+        return rowId > 0 ? getUploadByRowId(rowId) : null;
+    }
+
+    /** The query (one parameter) of getLastUpload: the row id of the newest upload of the group or login. */
+    public static String lastUploadSql(String column) {
+        return "select id from upload where " + column + " = ?"
+            + " order by coalesce(upload_id, 0) = 0, upload_id desc, id desc limit 1";
+    }
     
     public Timestamp getFirstUploadDate(int groupId) {   
       return getUploadDate(groupId, "asc");
