@@ -439,8 +439,13 @@ public class SpecimenUpload extends SpecimenUploadParse {
         ArrayList<ArrayList<String>> multiBioregionList = new SpecimenDb(getConnection()).getMultiBioregionTaxaList(group.getId());
         if (multiBioregionList.size() > 1) { // The first record would be the header.
           // Create the link to the multiBioregionTaxa
-            String message = "<a href='" + AntwebProps.getDomainApp() + "/list.do?action=multiBioregionTaxaList&groupId=" + group.getId() + "'>list</a>";
-            getMessageMgr().addToMessages(MessageMgr.multipleBioregionsForNonIntroducedTaxa, message);         
+            // One report line per taxon, with its bioregions (2026-10-30: was one line, a bare "list" link; the
+            // section links that list, MessageMgr.reportSections).
+            for (int i = 1; i < multiBioregionList.size(); i++) {
+                ArrayList<String> row = multiBioregionList.get(i);
+                getMessageMgr().addToMessages(MessageMgr.multipleBioregionsForNonIntroducedTaxa,
+                    MessageMgr.multiBioregionLine(Taxon.makeDescriptionLink(row.get(0)), row.get(1)));
+            }
         } 
         
         groupMorphoGenera(group);        
@@ -466,6 +471,8 @@ public class SpecimenUpload extends SpecimenUploadParse {
                 //String code = (String) rset.getObject("code");
                 String subfamily = (String) rset.getObject("subfamily");
                 String genus = (String) rset.getObject("genus");
+                // Not an ant ('(schlettereriinae)schlettererius'): listed under "Not ants (not in AntCat)" only (2026-10-30).
+                if (!SpecimenUploadParse.isAntGenus(subfamily, genus, Taxon::isAnt)) continue;
 
                 String prettyName = Formatter.initCap(subfamily) + " " + Formatter.initCap(genus);
                 String taxonName = subfamily + genus;
