@@ -30,7 +30,8 @@ import java.util.Set;
  *   species    genus rows: species_count = species and subspecies rows of that genus in the same list
  *              that count as species: status valid or morphotaxon (2026-10-28, PlaceTotals.SPECIES_STATUSES;
  *              before: the five counted statuses, projects any), identified to genus.
- *   genera     subfamily rows: genus_count = genus rows of that subfamily in the same list (same statuses).
+ *   genera     subfamily rows: genus_count = genus rows of that subfamily in the same list (same statuses) that count
+ *              as a genus: valid genera and morphogenera, no placeholders (2026-10-30, PlaceTotals.countsAsGenus).
  *   global     species rows of the places checked: the allantwebants specimen_count ("Global" column) =
  *              all specimens filed under that name.
  *   place images  (2026-10-20) the place's own numbers: Images (all files, labels too), images of each
@@ -953,7 +954,9 @@ public class CountCheck {
             // a genus row's Species: names identified to genus only (2026-10-22, PlaceTotals.identifiedToGenus), valid
             // names and morphospecies (2026-10-28, PlaceTotals.SPECIES_STATUSES)
             + (childRanks.contains("species") ? " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon")
-                + " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon") : "");
+                + " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon") : "")
+            // a subfamily row's Genera: valid genera and morphogenera, no placeholders (2026-10-30, as the nightly crawl)
+            + ("('genus')".equals(childRanks) ? org.calacademy.antweb.home.PlaceTotals.childCountCondition("genus", "taxon") : "");
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             place.setKey(stmt, 1);
             try (ResultSet r = stmt.executeQuery()) {

@@ -5,7 +5,8 @@ The place page numbers (data-stat on /country.do) are checked against the record
 (countCheck.do, CountInvariants), so a live number that must equal one of them is checked too:
 
   taxonomicPage.do  "N Species / Genera / Subfamilies" with every counted status (statusSet=all) = Species /
-                    Genera / Subfamilies of the place page; with valid extant = Valid species (row 38)
+                    Genera / Subfamilies of the place page; with valid extant = Valid species (row 38); Genera and
+                    Subfamilies: the rows listed that are genera and subfamilies (genera rule of 2026-10-30)
                     isImaged=false: "U Unimaged Species (out of N)": U <= N, N = the place's Species (row 39)
   browse.do         "N Species (M imaged)": the hidden totals say the same N, M <= N; "Only the first a of N"
                     names the same N (rows 46, 47, 49)
@@ -34,6 +35,7 @@ from html import unescape
 import pytest
 
 from antweb import BASE_URL, TIMEOUT, classify, new_session
+import numbers_sample as ns
 
 PLACE = "/country.do?name=Madagascar"
 WHERE = "countryName=Madagascar"
@@ -80,18 +82,31 @@ def header(html):
 
 def test_list_headers_equal_place_numbers():
     stats = place_stats()
-    wrong = []
+    wrong, stored = [], []
     for rank, stat, status in (("subfamily", "subfamilies", "all"), ("genus", "genera", "all"), ("species", "species", "all"),
                                ("species", "valid", "valid%20extant")):
         if stat not in stats:
             wrong.append(f"the Madagascar page has no data-stat {stat}")
             continue
-        n, text = header(_get(f"/taxonomicPage.do?rank={rank}&{WHERE}&statusSet={status}"))
+        html = _get(f"/taxonomicPage.do?rank={rank}&{WHERE}&statusSet={status}")
+        n, text = header(html)
+        if rank in ("subfamily", "genus"):
+            # Genera rule (Brian Fisher, 2026-10-30): the place counts the listed rows that are subfamilies (no
+            # placeholders) and genera (valid genera and morphogenera); the header counts every row listed.
+            counted = ns.counted_rows(ns.list_rows(html), rank)
+            if counted is None:
+                continue
+            n = counted
         if n != stats[stat]:
-            wrong.append(f"rank={rank} {status}: list {n}, place page {stat} {stats[stat]}")
+            (stored if rank in ("subfamily", "genus") else wrong).append(f"rank={rank} {status}: list {n}, place page {stat} {stats[stat]}")
+    # the place's Genera and Subfamilies are counted by the genera rule of 2026-10-30 at the next nightly run: pending
+    if stored and ns.genera_rule_counted() is not False:
+        wrong += stored
     # One line (the GitHub annotation shows the start only). The place numbers are those of the last nightly run: before
     # a nightly run with the rules of 2026-10-21 (ants only, counted from the list) they can differ from the live list.
     assert not wrong, "Madagascar list header vs place page: " + "; ".join(wrong) + " (expected to agree after a nightly run with the 2026-10-21 rules)"
+    if stored:
+        pytest.skip(ns.rules_pending_note("genera rule of 2026-10-30") + ": " + "; ".join(stored))
 
 
 def test_unimaged_header_is_within_the_list():

@@ -220,6 +220,8 @@ public class Museum extends LocalityOverview implements Countable {
         String query = "select count(taxon.parent_taxon_name) count, taxon.parent_taxon_name parentTaxonName from taxon "
           + " join museum_taxon mt on taxon.taxon_name = mt.taxon_name " 
           + " where " + rankClause
+          // a subfamily row's Genera: valid genera and morphogenera, no placeholders (2026-10-30, PlaceTotals.childCountCondition)
+          + org.calacademy.antweb.home.PlaceTotals.childCountCondition(rank, "taxon")
           + new StatusSet(StatusSet.ALL).getAndCriteria()  // Needed for museum?
           + "   and mt.code = '" + getCode() + "'"
           + " group by parentTaxonName ";

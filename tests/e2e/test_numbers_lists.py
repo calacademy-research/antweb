@@ -9,7 +9,10 @@ region, subregion, bioregion, museum, project) is checked on every run, a differ
           place page's Species / Genera / Subfamilies, and with valid extant = Valid species (one rule:
           PlaceTotals.rankCondition and TaxaPage.fetchChildren); the header = the rows the page lists. A curated
           project's Subfamilies counts its subfamily rows of every status (B67, PlaceTotals.listedCondition): the
-          header with counted statuses <= Subfamilies <= the header of the complete list.
+          header with counted statuses <= Subfamilies <= the header of the complete list. Genera rule (2026-10-30):
+          Subfamilies and Genera count only the listed rows that are subfamilies (no placeholders such as "(formicidae)")
+          and genera (valid genera and morphogenera, from the API /taxa), so they are compared with those rows; the
+          header still counts every row listed. A subfamily browse page likewise (row 46).
           Without a status in the address (2026-10-29) the list opens with every counted status, so its header equals
           Species, and a status chosen on an earlier page is not carried over.
   row 39  isImaged=false: "U Unimaged Species (out of N)": U = the rows listed, N = the place's Species, and the
@@ -85,31 +88,43 @@ def test_list_headers_equal_place_numbers_of_every_kind():
             if n is None:
                 wrong.append(f"{p} rank={rank} {status}: no header ({text!r})")
                 continue
-            rows = len(ns.list_rows(html))
+            listed = ns.list_rows(html)
+            rows = len(listed)
             if rows != n:
                 wrong.append(f"{p} rank={rank} {status}: header {text!r}, {rows} rows listed")
             expected = stats.get(stat, 0)
+            # Genera rule (Brian Fisher, 2026-10-30): Subfamilies and Genera count the listed rows that are subfamilies
+            # (not placeholders such as "(formicidae)") and genera (valid genera and morphogenera; not "(myrmicinae)" or
+            # unrecognized genus names, which stay on the list): the header counts every row listed.
+            if rank in ("subfamily", "genus"):
+                counted = ns.counted_rows(listed, rank)
+                if counted is None:
+                    slow.append(f"{p} {rank} {status} (row names or API genera not read)")
+                    continue
+                n = counted
             if rank == "subfamily" and curated_project(p):
                 # B67 (Brian Fisher 2026-10-27): a curated project's Subfamilies counts its subfamily rows of every
                 # status, as its list rows do; the list with counted statuses shows at most that many, the complete
                 # list (every status, other families too) at least that many.
                 complete, _ = ns.header(ns.fetch(p.list_url(rank, "complete")) or "")
                 if n > expected or (complete is not None and complete < expected):
-                    stored.append(f"{p} rank={rank}: place page {stat} {expected}, list header {n} (counted statuses),"
+                    stored.append(f"{p} rank={rank}: place page {stat} {expected}, list rows counted {n} (counted statuses),"
                                  f" {complete} (complete); expected {n} <= {expected} <= {complete}")
             elif n != expected:
-                stored.append(f"{p} rank={rank} {status}: header {n}, place page {stat} {expected}")
+                stored.append(f"{p} rank={rank} {status}: {'rows counted' if rank != 'species' else 'header'} {n}, place page {stat} {expected}")
         checked.append(repr(p))
     if not checked:
         pytest.skip("no place page with data-stat numbers " + ns.day_note())
     # the place page's numbers are stored by the nightly run, the list header is counted live: until a nightly run has
     # counted by the counting rules of 2026-10-28 they differ (pending); the header against its own rows stays strict
     pending_rules = stored and ns.counting_rules_counted() is False
+    # and by the genera rule of 2026-10-30 (Genera, Subfamilies)
+    pending_rules = pending_rules or (stored and ns.genera_rule_counted() is False)
     if not pending_rules:
         wrong += stored
     assert not wrong, (f"{len(checked)} places {ns.day_note()} ({PENDING}); not read: {slow}:\n" + "\n".join(wrong))
     if pending_rules:
-        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28") + ":\n" + "\n".join(stored))
+        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28 and the genera rule of 2026-10-30") + ":\n" + "\n".join(stored))
 
 
 def test_default_list_shows_the_species_number_and_forgets_the_last_choice():
@@ -283,9 +298,18 @@ def test_browse_headers_equal_the_list_rows():
                 continue
             where = f"{p} {rank} {row['name'] or link}"
             b = _browse_numbers(html)
-            _consistent(where, b, len(ns.list_rows(html)), wrong)
-            if b["n"] is not None and b["n"] != count:
-                line = f"{where}: browse header {b['text']!r}, list row {count}"
+            browse_rows = ns.list_rows(html)
+            _consistent(where, b, len(browse_rows), wrong)
+            n = b["n"]
+            if rank == "subfamily" and n is not None:
+                # Genera rule (Brian Fisher, 2026-10-30): the list row's "N Genera" counts the genus rows that are genera
+                # (valid genera and morphogenera); the browse page lists every genus row (placeholders such as
+                # "(myrmicinae)" and unrecognized genus names too) and its header counts them all.
+                n = ns.counted_rows(browse_rows, "genus")
+                if n is None:
+                    continue
+            if n is not None and n != count:
+                line = f"{where}: browse header {b['text']!r}" + (f" ({n} of its rows are genera)" if n != b["n"] else "") + f", list row {count}"
                 # B77 (found 2026-10-27, also on production): a bioregion's subfamily browse page counts and lists
                 # every genus row of the bioregion (Palearctic Ponerinae: 18, including "ponerine"), the list row
                 # only the counted statuses (16). Known until fixed; any other kind of place or rank still fails.
@@ -296,11 +320,13 @@ def test_browse_headers_equal_the_list_rows():
     if not checked:
         pytest.skip("no list row with a browse link found " + ns.day_note())
     pending_rules = stored and ns.counting_rules_counted() is False
+    # and by the genera rule of 2026-10-30 (a subfamily row's N Genera)
+    pending_rules = pending_rules or (stored and ns.genera_rule_counted() is False)
     if not pending_rules:
         wrong += stored
     assert not wrong, f"{len(checked)} browse pages {ns.day_note()} ({PENDING}):\n" + "\n".join(wrong)
     if pending_rules:
-        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28") + ":\n" + "\n".join(stored + known))
+        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28 and the genera rule of 2026-10-30") + ":\n" + "\n".join(stored + known))
     if known:
         pytest.xfail("B77: bioregion subfamily browse header counts genus rows the list row leaves out: " + "; ".join(known))
 

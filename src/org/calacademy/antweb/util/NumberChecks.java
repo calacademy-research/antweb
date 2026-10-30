@@ -603,6 +603,8 @@ public final class NumberChecks {
                     // only, as every Species. GroupCountDb follows PlaceTotals.rankCondition, so the recount uses the new
                     // rule at once; the stored numbers are pending until a nightly run has recounted them by it.
                     String pi = p == null && i == 7 && v[i] != recount[i] && !inv.result.rulesCounted ? CountInvariants.SPECIES_RULE_PENDING : p;
+                    // 2026-10-30: Genera counts valid genera and morphogenera only (GroupCountDb.COUNTED_GENERA); pending likewise
+                    if (pi == null && i == 6 && v[i] != recount[i] && !inv.result.rulesCounted) pi = CountInvariants.GENERA_RULE_PENDING;
                     inv.compare(c, "group", g, (counted ? "today's " : "last upload (" + row[1] + ") ") + what[i]
                         + " (groups.do, group.do) = a recount of the group's specimens", v[i], recount[i], "=", pi);
                 }
@@ -657,6 +659,7 @@ public final class NumberChecks {
         for (int i = 0; i < 8; i++) {
             // Species: the counting rules of 2026-10-28, pending until a nightly run has recounted by them (see adminGroups)
             String pi = p == null && i == 7 && stored[i] != recount[i] && !inv.result.rulesCounted ? CountInvariants.SPECIES_RULE_PENDING : p;
+            if (pi == null && i == 6 && stored[i] != recount[i] && !inv.result.rulesCounted) pi = CountInvariants.GENERA_RULE_PENDING;
             inv.compare(c, "group", "all", "Totals " + what[i] + " (groups.do; all groups' specimens together, Q8) = a recount", stored[i], recount[i], "=", pi);
         }
     }

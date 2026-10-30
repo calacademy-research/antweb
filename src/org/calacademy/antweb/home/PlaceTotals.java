@@ -12,8 +12,11 @@ import java.sql.SQLException;
  * them (Brian Fisher, 2026-10-20: every number on the site validated by a test).
  *
  *   Subfamilies  subfamily rows on the place's list whose taxon has a counted status; a curated project's
- *                Subfamilies count its subfamily rows of every status, as its list rows do (listedCondition, 2026-10-27)
- *   Genera       genus rows on the list, counted status
+ *                Subfamilies count its subfamily rows of every status, as its list rows do (listedCondition, 2026-10-27);
+ *                never the placeholder "(formicidae)" (notPlaceholder, 2026-10-30)
+ *   Genera       genus rows on the list that count as a genus (countsAsGenus, Brian Fisher 2026-10-30): valid genera and
+ *                morphogenera; placeholders such as "(myrmicinae)" (identified only to subfamily) and genus names AntCat
+ *                does not know (status unrecognized, "(formicidae)polyrachis") are on the list but not counted
  *   Species      species and subspecies rows on the list, status valid or morphotaxon (SPECIES_STATUSES,
  *                2026-10-28), ants (family formicidae), identified to genus (identifiedToGenus, 2026-10-22)
  *   Valid        species and subspecies rows on the list, status valid, not fossil
@@ -129,6 +132,62 @@ public final class PlaceTotals {
         return alias + ".taxarank in ('species', 'subspecies') and " + speciesStatusCondition(alias) + " and " + identifiedToGenus(alias);
     }
 
+    /**
+     * The statuses of a genus row that counts as a genus (Brian Fisher, 2026-10-30): valid genera and morphogenera
+     * ("Form_gen-afrc-za01", status morphotaxon). Genus names AntCat does not know (misspellings, old names: status
+     * unrecognized) stay in AntWeb with their specimens but are not genera; placeholders such as "(myrmicinae)" or
+     * "(formicidae)" (specimens identified only to subfamily or family) never are.
+     */
+    public static final String GENUS_STATUSES = "('valid', 'morphotaxon')";
+
+    /** The same in Java. */
+    public static final java.util.List<String> GENUS_STATUS_LIST = java.util.Arrays.asList("valid", "morphotaxon");
+
+    /**
+     * SQL: the taxon (alias a) is not one of AntWeb's placeholders: its taxon name has no parenthesis. Placeholders are
+     * the subfamily or family in parentheses in place of a name ("(formicidae)", "(dolichoderinae)", "(dacetini)"), a
+     * genus filed under the placeholder subfamily ("(formicidae)polyrachis"), or a stray parenthesis from an upload file
+     * ("Amblyoponinae)"). Brian Fisher, 2026-10-30: a value with parentheses and a subfamily or family name is
+     * undetermined, never a genus (and never a subfamily).
+     */
+    public static String notPlaceholder(String alias) {
+        String n = "coalesce(" + alias + ".taxon_name, '')";
+        return "(" + n + " not like '%(%' and " + n + " not like '%)%')";
+    }
+
+    /** The same rule in Java, for a taxon name. */
+    public static boolean isPlaceholder(String taxonName) {
+        return taxonName != null && (taxonName.contains("(") || taxonName.contains(")"));
+    }
+
+    /**
+     * SQL: a genus row (alias a) that counts as a genus (Brian Fisher, 2026-10-30): status valid or morphotaxon
+     * (GENUS_STATUSES), identified to genus (identifiedToGenus) and not a placeholder (notPlaceholder). Every Genera
+     * number uses it: the place's Genera (rankCondition(GENUS)), a subfamily row's "N Genera" on every list (the nightly
+     * crawl, childCountCondition), upload groups' Genera (GroupCountDb), and the count check.
+     */
+    public static String countsAsGenus(String alias) {
+        return "(" + alias + ".status in " + GENUS_STATUSES + " and " + identifiedToGenus(alias) + " and " + notPlaceholder(alias) + ")";
+    }
+
+    /** The same rule in Java: status and taxon name and genus of a genus row. */
+    public static boolean isCountedGenus(String status, String taxonName, String genus) {
+        return status != null && GENUS_STATUS_LIST.contains(status) && isIdentifiedToGenus(genus) && !isPlaceholder(taxonName)
+            && (genus == null || !genus.contains(")"));
+    }
+
+    /**
+     * The extra condition (alias a) of the child rows the nightly crawl counts for a parent row of a list
+     * (Geolocale, Project, Museum, Bioregion getCountChildrenQuery): a subfamily row's Genera counts its genus rows that
+     * count as a genus (countsAsGenus), the Formicidae row's Subfamilies its subfamily rows that are not placeholders
+     * (2026-10-30). Other ranks: none here (species: speciesStatusCondition and identifiedToGenus, in the queries).
+     */
+    public static String childCountCondition(String rank, String alias) {
+        if (GENUS.equals(rank)) return " and " + countsAsGenus(alias);
+        if (SUBFAMILY.equals(rank)) return " and " + notPlaceholder(alias);
+        return "";
+    }
+
     public static final String SUBFAMILY = "subfamily";
     public static final String GENUS = "genus";
     public static final String SPECIES = "species";
@@ -180,8 +239,10 @@ public final class PlaceTotals {
     /** Taxon conditions (alias t) of the rows a total counts. rank: subfamily, genus or species. */
     public static String rankCondition(String rank) {
         switch (rank) {
-            case SUBFAMILY: return "t.taxarank = 'subfamily' and t.status in " + COUNTABLE + ANTS;
-            case GENUS: return "t.taxarank = 'genus' and t.status in " + COUNTABLE + ANTS;
+            // 2026-10-30: not a placeholder ("(formicidae)", a subfamily row of status morphotaxon since 2017)
+            case SUBFAMILY: return "t.taxarank = 'subfamily' and t.status in " + COUNTABLE + " and " + notPlaceholder("t") + ANTS;
+            // 2026-10-30: valid genera and morphogenera, not placeholders (countsAsGenus); was the five counted statuses
+            case GENUS: return "t.taxarank = 'genus' and " + countsAsGenus("t") + ANTS;
             // 2026-10-28: valid and morphotaxon only (SPECIES_STATUSES); was the five counted statuses
             case SPECIES: return "t.taxarank in ('species', 'subspecies') and t.status in " + SPECIES_STATUSES + ANTS + " and " + identifiedToGenus("t");
             default: throw new IllegalArgumentException(rank);
@@ -271,7 +332,7 @@ public final class PlaceTotals {
     public static String listedCondition(String type, String rank) {
         if (PROJECT.equals(type) && SUBFAMILY.equals(rank)) {
             return "t.taxarank = 'subfamily' and (t.status in " + COUNTABLE
-                + " or l.project_name not in ('" + String.join("', '", UNCURATED_PROJECTS) + "'))" + ANTS;
+                + " or l.project_name not in ('" + String.join("', '", UNCURATED_PROJECTS) + "')) and " + notPlaceholder("t") + ANTS;
         }
         return rankCondition(rank);
     }

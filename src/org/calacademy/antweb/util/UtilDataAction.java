@@ -561,8 +561,9 @@ public class UtilDataAction extends AntwebAction {
                 // countCheck.do reads this line: tonight's numbers follow the rules of 2026-10-21 (PlaceTotals).
                 // Since 2026-10-27 also: the lists' Images are ant images (StatisticsDb.ANT_IMAGES_RULE_LOG; CountCheck).
                 // Since 2026-10-28 also: the counting rules of 2026-10-28 (CountInvariants.COUNTING_RULES_LOG; docs/numbers.md section 5).
+                // Since 2026-10-30 also: the genera rule of 2026-10-30 (CountInvariants.GENERA_RULE_LOG; sets 2 and 3 counted by it).
                 LogMgr.appendLog("compute.log", "  Set 4 done (" + CountInvariants.RULES_LOG + "; " + StatisticsDb.ANT_IMAGES_RULE_LOG
-                    + "; " + CountInvariants.COUNTING_RULES_LOG + ")", true);
+                    + "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG + ")", true);
                 // message += " " + doAction("calcEndemic", form, accessLogin, accessGroup, connection, request, mapping);
                 // message += " " + doAction("calcIntroduced", form, accessLogin, accessGroup, connection, request, mapping);
             }

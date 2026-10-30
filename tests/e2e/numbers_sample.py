@@ -332,6 +332,77 @@ def genus_rows_from_specimens_built():
     return compute_log_has("Set 2 done", GENUS_ROWS_LOG)
 
 
+# CountInvariants.GENERA_RULE_LOG, on the "Set 4 done" line of the nightly run since 2026-10-30. Keep in step with Java.
+GENERA_RULE_LOG = "genera rule of 2026-10-30"
+
+
+def genera_rule_counted():
+    """True when a nightly run has counted Genera by the rule of 2026-10-30 (valid genera and morphogenera; no placeholder
+    subfamilies; docs/numbers.md section 5), False when compute.log is readable and has no such line (the stored Genera
+    and Subfamilies, and the subfamily rows' N Genera, are those of the old rule until then: pending), None when
+    unreadable."""
+    return compute_log_has("Set 4 done", GENERA_RULE_LOG)
+
+
+_GENERA = {}
+
+
+def counted_genus_names():
+    """The taxon names (lower case) of the genus rows that count as genera (Brian Fisher, 2026-10-30;
+    PlaceTotals.countsAsGenus): status valid or morphotaxon, Formicidae, no parentheses. From the API /taxa; None when it
+    can't be read whole."""
+    if "v" not in _GENERA:
+        names = set()
+        for status in ("valid", "morphotaxon"):
+            rows = api_all(f"taxa?taxarank=genus&status={status}", max_pages=20)
+            if rows is None:
+                names = None
+                break
+            for r in rows:
+                name = (r.get("taxonName") or "").strip().lower()
+                family = (r.get("family") or "formicidae").strip().lower()
+                if name and family == "formicidae" and not is_placeholder(name):
+                    names.add(name)
+        _GENERA["v"] = names
+    return _GENERA["v"]
+
+
+def is_placeholder(name):
+    """PlaceTotals.isPlaceholder: a taxon name with a parenthesis ("(formicidae)", "myrmicinae(myrmicinae)",
+    "(formicidae)polyrachis", "amblyoponinae)") is never a genus or a subfamily (2026-10-30)."""
+    return "(" in name or ")" in name
+
+
+def row_taxon_name(row, rank):
+    """The taxon name (lower case) of a subfamily or genus row of a list or browse page, from its description.do link
+    (Subfamily: subfamily=X&rank=subfamily; Genus: subfamily=X&genus=Y&rank=genus); None without one."""
+    m = re.search(r'description\.do\?([^"\'>]+)', row["html"])
+    if not m:
+        return None
+    q = unescape(m.group(1))
+    p = {k: requests.utils.unquote(v).replace("+", " ").strip().lower() for k, v in (kv.split("=", 1) for kv in q.split("&") if "=" in kv)}
+    if rank == "subfamily":
+        return p.get("subfamily") or None
+    if not p.get("genus"):
+        return None
+    return (p.get("subfamily") or "") + p["genus"]
+
+
+def counted_rows(rows, rank):
+    """How many of these subfamily or genus rows (list_rows) the place's Subfamilies or Genera count (2026-10-30): genus
+    rows that are valid genera or morphogenera, subfamily rows that are not placeholders. None when a row's name or the
+    genera of the API can't be read."""
+    names = [row_taxon_name(r, rank) for r in rows]
+    if any(n is None for n in names):
+        return None
+    if rank == "subfamily":
+        return sum(1 for n in names if not is_placeholder(n))
+    genera = counted_genus_names()
+    if genera is None:
+        return None
+    return sum(1 for n in names if n in genera)
+
+
 def counting_rules_counted():
     """True when a nightly run has counted the place numbers by the counting rules of 2026-10-28 (docs/numbers.md
     section 5; the same test as CountInvariants.rulesCounted), False when compute.log is readable and has no such line

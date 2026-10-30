@@ -244,7 +244,7 @@
 <table class="place_stats">
 <tr class="ps_head"><th colspan="3">Taxonomic diversity</th></tr>
 <tr data-stat="subfamilies" data-n="<%= overview.getSubfamilyCount() %>"><td class="ps_name">Subfamilies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getSubfamilyCount()) %></td><td class="ps_def">Subfamilies recorded on <%= listName %>.</td></tr>
-<tr data-stat="genera" data-n="<%= overview.getGenusCount() %>"><td class="ps_name">Genera</td><td class="ps_num"><%= Formatter.commaFormat(overview.getGenusCount()) %></td><td class="ps_def">Genera recorded on <%= listName %>, including genera known here only from specimens identified to genus.</td></tr>
+<tr data-stat="genera" data-n="<%= overview.getGenusCount() %>"><td class="ps_name">Genera</td><td class="ps_num"><%= Formatter.commaFormat(overview.getGenusCount()) %></td><td class="ps_def">Genera recorded on <%= listName %>: valid genera and morphogenera, including genera known here only from specimens identified to genus. Names identified only to subfamily and genus names not in AntCat are not counted.</td></tr>
 <% if (overview.getValidSpeciesCount() > 0) { %>
 <tr data-stat="valid" data-n="<%= overview.getValidSpeciesCount() %>"><td class="ps_name">Valid species / subspecies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getValidSpeciesCount()) %></td><td class="ps_def">Currently valid, formally named, living (non-fossil) species and subspecies recorded on <%= listName %>. Excludes morphospecies and unidentified taxa.</td></tr>
 <% } %>
