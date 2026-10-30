@@ -1,8 +1,16 @@
 name: Claude review
 
 # An automatic, independent code review of every pull request into master by Claude.
-# .github/scripts/claude_review.py sends the PR diff to the Anthropic Messages API in one
-# request and posts the answer as one PR comment ("Claude review"), edited on each new review.
+# .github/scripts/claude_review.py sends the PR diff to the Anthropic Message Batches API as a
+# batch of one request and posts the answer as one PR comment ("Claude review"), edited on each
+# new review.
+# Batch API since 2026-10-30 (Brian Fisher; kept after the credit expires): 50% of the standard
+# token price. The comment shows "Review in progress" with the batch id at once; the script polls
+# every 30 s for up to 60 minutes (most batches end within minutes; the full staging test run
+# takes about 40 anyway; the API's limit is 24 hours). Not ended in 60 minutes: the comment says
+# the review is still being processed and the run stops, with no second request. To collect it
+# later: Actions, "Claude review", Run workflow, PR number (or add the full-e2e label again); a
+# run for the same head commit finds the batch id in the comment and sends nothing new.
 # Skipped for drafts, for "Do not merge" PRs (temporary combined staging builds), for PRs
 # from forks, and when the ANTHROPIC_API_KEY repository secret is missing.
 # Cost guard: one API request per review (diff capped at 150k characters, answer at 16,000
@@ -21,6 +29,13 @@ on:
     types: [labeled]
     branches:
       - master
+  # By hand: collect a batch that was still being processed, or review a PR again (one paid request
+  # when the comment names no batch for the PR's current head commit).
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Pull request number"
+        required: true
 
 permissions:
   contents: read
@@ -30,17 +45,20 @@ permissions:
 jobs:
   review:
     name: Claude review
+    # A run by hand (write access only) skips these checks; the script itself refuses a PR from a fork.
     if: >-
+      github.event_name == 'workflow_dispatch' || (
       github.event.pull_request.draft == false &&
       !startsWith(github.event.pull_request.title, 'Do not merge') &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.label.name == 'full-e2e'
+      github.event.label.name == 'full-e2e')
     # At job level, so a skipped run (draft, description-only edit) does not cancel a running review.
     concurrency:
-      group: claude-review-${{ github.event.pull_request.number }}
+      group: claude-review-${{ github.event.pull_request.number || inputs.pr }}
       cancel-in-progress: true
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # The review step waits up to 60 minutes for its batch (REVIEW_WAIT_S in the script).
+    timeout-minutes: 75
 
     steps:
       - name: Check that the API key secret exists
@@ -65,7 +83,7 @@ jobs:
         if: steps.key.outputs.present == 'true'
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.base.ref }}
+          ref: ${{ github.event.pull_request.base.ref || 'master' }}
           sparse-checkout: .github/scripts
           fetch-depth: 1
           persist-credentials: false
@@ -73,13 +91,13 @@ jobs:
       - name: Review
         id: review
         if: steps.key.outputs.present == 'true'
-        # Below the job's 20 minutes, so the last step still has time to post a notice.
-        timeout-minutes: 18
+        # Below the job's 75 minutes, so the last step still has time to post a notice.
+        timeout-minutes: 70
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.pull_request.number }}
+          PR: ${{ github.event.pull_request.number || inputs.pr }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           REPO_CONTEXT: >-
@@ -103,7 +121,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.pull_request.number }}
+          PR: ${{ github.event.pull_request.number || inputs.pr }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           OUTCOME: ${{ steps.review.outcome }}
@@ -112,7 +130,7 @@ jobs:
           grep -q -- '--mark-not-reviewed' "$f" 2>/dev/null || { echo "Script missing or too old; no notice."; exit 0; }
           case "$OUTCOME" in
             cancelled) reason="The review was cancelled." ;;
-            failure)   reason="The review step failed or ran out of time (18-minute limit)." ;;
+            failure)   reason="The review step failed or ran out of time (70-minute limit)." ;;
             *)         reason="The job failed before the review ran." ;;
           esac
           python3 -I "$f" --mark-not-reviewed "$reason"

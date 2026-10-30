@@ -16,6 +16,16 @@ when that is at or below the reserve or the credit has expired. After a call it 
 (cr.cost: the token counts of the answer times the prices in claude_review.py) to OUT/ledger-line.tsv; the
 workflow appends that line to ledger.tsv on the audit-reports branch.
 
+Message Batches API (Brian Fisher, 2026-10-30; client in claude_batch.py): the request is sent as a batch of
+one, at 50% of the standard price (cr.BATCH_FACTOR), and polled every POLL_S seconds for up to WAIT_S (5
+hours; most batches end within an hour, the API's own limit is 24 hours). Ledger lines (columns unchanged;
+the note names the batch):
+  audit          succeeded: the reported usage at the batch price
+  audit-failed   the request errored, expired or was canceled: 0 (the API does not bill these)
+  audit-timeout  not ended within WAIT_S (the batch is then canceled) or the results could not be read, or
+                 the create request got no answer: the most the request can cost at the batch price
+Nothing is sent again automatically; the job fails with the reason in the summary.
+
 Environment (set by the workflow):
   ANTHROPIC_API_KEY  API key (repository secret)
   AREA               optional: the chunk to audit (e.g. "upload-1"); empty = the next one in the rotation
@@ -28,23 +38,27 @@ Standard library only, plus the openssl command line tool.
 
 import configparser
 import datetime
+import http.client
 import json
+import re
 import urllib.parse
 import fnmatch
 import os
 import subprocess
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import claude_review as cr  # noqa: E402  (the HTTP client, model and prices)
+import claude_review as cr  # noqa: E402  (the GitHub client, model and prices)
+import claude_batch as cb  # noqa: E402  (the Message Batches API client)
 
 ROOT = Path(os.environ.get("REPO_ROOT", "."))
 CHUNK_CAP = 450_000  # characters of code per request (about 115,000 tokens)
 FIRST_DAY = datetime.date(2026, 10, 23)
 LAST_DAY = datetime.date(2026, 11, 7)  # the credit expires 2026-11-08; scheduled runs stop after this day
 SLOTS = 12  # scheduled runs per day (twelve cron lines in the workflow; four until 2026-10-24)
+WAIT_S = 5 * 3600  # how long one run waits for its batch (the audit step allows 320 minutes)
+POLL_S = 60
 
 # Areas in audit order; each is split into chunks of at most CHUNK_CAP characters (files in path order).
 AREAS = [
@@ -265,6 +279,29 @@ def budget_check(now):
     return go, lines
 
 
+def run_batch(api_key, name, user):
+    """(Messages API answer or None, error or None, batch id or None, ledger kind for an error or None).
+    One batch of one request; never sent twice."""
+    custom_id = ("audit-" + re.sub(r"[^A-Za-z0-9_-]", "-", name))[:64]
+    try:
+        batch_id = cb.submit(api_key, [(custom_id, cr.request_params(user))])["id"]
+    except cb.BatchError as e:
+        # A refusal with an HTTP status created nothing; a create request with no answer may have.
+        return None, str(e), None, ("audit-timeout" if str(e).startswith("Network error") else None)
+    print(f"Batch {batch_id} sent; waiting up to {WAIT_S // 60} minutes")
+    try:
+        batch, ended = cb.poll(api_key, batch_id, WAIT_S, POLL_S)
+        if not ended:
+            canceled = cb.cancel(api_key, batch_id)
+            return None, (f"the batch had not ended after {WAIT_S // 60} minutes; "
+                          + ("cancel requested" if canceled else "cancel request failed")), batch_id, "audit-timeout"
+        found = cb.results(api_key, batch)
+    except (cb.BatchError, OSError, http.client.HTTPException, ValueError) as e:
+        return None, f"could not collect the batch ({e})", batch_id, "audit-timeout"
+    message, error = cb.outcome(found.get(custom_id))
+    return message, error, batch_id, ("audit-failed" if error else None)
+
+
 def main():
     api_key = cr.env("ANTHROPIC_API_KEY")
     out = Path(os.environ.get("OUT", "audit-out"))
@@ -289,30 +326,38 @@ def main():
 
     cr.SYSTEM = SYSTEM
     cr.MAX_TOKENS = 32000
-    cr.START = time.monotonic()
-    result, error = cr.call_claude(api_key, user)
     lines = ["### Claude audit", "", f"- Area: `{name}` ({len(files)} files, {len(body):,} characters sent)",
-             f"- Model: `{cr.MODEL}`", f"- Rotation: {len(all_chunks)} areas in all: " + ", ".join(n for n, _ in all_chunks)]
+             f"- Model: `{cr.MODEL}` (Message Batches API, {cr.BATCH_FACTOR:.0%} of the standard price)",
+             f"- Rotation: {len(all_chunks)} areas in all: " + ", ".join(n for n, _ in all_chunks)]
     lines += budget_lines
     run_id = os.environ.get("GITHUB_RUN_ID", "local")
+    result, error, batch_id, kind = run_batch(api_key, name, user)
+    if batch_id:
+        lines.append(f"- Batch: `{batch_id}`")
     if error:
         lines.append(f"- API error: {error}")
-        if "timed out" in error:
-            # A request that timed out may still have been processed and billed: count the most it can cost.
-            guess = (len(user) / 3.5 * cr.PRICE_IN + cr.MAX_TOKENS * cr.PRICE_OUT) / 1e6
-            (out / "ledger-line.tsv").write_text(ledger_line(now, run_id, "audit-timeout", guess, f"{name} estimate"),
+        note = f"{name}" + (f" batch {batch_id}" if batch_id else "")
+        if kind == "audit-timeout":
+            guess = cr.upper_estimate(len(user), cr.MAX_TOKENS)
+            (out / "ledger-line.tsv").write_text(ledger_line(now, run_id, kind, guess, f"{note} upper estimate"),
                                                  encoding="utf-8")
-            lines.append(f"- Ledger: ${guess:.2f} (upper estimate; the request may have been billed)")
+            lines.append(f"- Ledger: ${guess:.2f} (upper estimate at the batch price; the request may have been billed)")
+        elif kind == "audit-failed":
+            (out / "ledger-line.tsv").write_text(ledger_line(now, run_id, kind, 0.0, f"{note}: {error[:200]}"),
+                                                 encoding="utf-8")
+            lines.append("- Ledger: $0.00 (errored, expired or canceled requests are not billed)")
+        lines.append("- Not sent again automatically; the next scheduled run audits the next area.")
         cr.summary(lines)
         print(f"::error::Anthropic API error: {error}")
         return 1
     usage = result.get("usage") or {}
     tin, tout = usage.get("input_tokens", 0), usage.get("output_tokens", 0)
-    cost = cr.cost(usage)
-    (out / "ledger-line.tsv").write_text(ledger_line(now, run_id, "audit", cost, name), encoding="utf-8")
+    cost = cr.cost(usage, batch=True)
+    (out / "ledger-line.tsv").write_text(ledger_line(now, run_id, "audit", cost, f"{name} batch {batch_id}"),
+                                         encoding="utf-8")
     cache = usage.get("cache_read_input_tokens", 0) or 0, usage.get("cache_creation_input_tokens", 0) or 0
     lines += [f"- Tokens: {tin:,} in, {tout:,} out" + (f", {cache[0]:,} cache read, {cache[1]:,} cache write" if any(cache) else "")
-              + f"; cost ${cost:.2f} (written to the spend ledger)",
+              + f"; cost ${cost:.2f} at the batch price (written to the spend ledger)",
               f"- Stop reason: {result.get('stop_reason')}",
               "- The report is encrypted (artifact); it is not shown here because the repository is public."]
 

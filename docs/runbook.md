@@ -1055,6 +1055,14 @@ systemctl status rclone rclone-dbarchive --no-pager | grep -E "Active|error" ; f
   (`docker restart antweb_antweb_1`, 2 to 4 minutes): the container keeps the dead mount until it restarts.
 - A dump that was missed: run `/root/antweb/bin/db-daily-dump.sh` by hand (about 2 minutes, about 120 MB).
 
+## Claude audits and PR reviews (Message Batches API, since 2026-10-30)
+
+The scheduled code audits (`.github/workflows/claude-audit.yml`) and the automatic PR reviews (`.github/workflows/claude-review.yml`) send their one request each to the Anthropic Message Batches API (`.github/scripts/claude_batch.py`), which bills all tokens at 50% of the standard price. The price table and the 0.5 factor are in `.github/scripts/claude_review.py` (`PRICE_*`, `BATCH_FACTOR`). Most batches end within minutes to an hour; the API ends a batch at the latest 24 hours after it was sent, and does not bill requests that errored, expired or were canceled.
+
+- **Audit.** The spend guard (`.github/audit-budget.ini`, ledger.tsv on the `audit-reports` branch) is checked first; a paused audit sends nothing. The run then waits up to 5 hours (polls every 60 s; job limit 340 minutes) and encrypts and pushes the report as before. Ledger kinds: `audit` (cost at the batch price; the note names the batch), `audit-failed` ($0: errored or expired, run fails), `audit-timeout` (not ended in 5 hours: the batch is canceled and the most it can cost is booked; also when the results could not be read; run fails). Nothing is sent again automatically; the next scheduled run audits the next area. A long batch delays the next scheduled audit (one runs at a time).
+- **Review** (on the `full-e2e` label). The PR comment shows "Review in progress" with the batch id at once and is replaced by the review when the batch ends (polls every 30 s, up to 60 minutes; job limit 75 minutes). Not ended in 60 minutes: the comment says "Review still being processed" with the batch id and the run stops with no second request. To collect it later: Actions, "Claude review", Run workflow, enter the PR number (or add the `full-e2e` label again). A run for the same head commit finds the batch id in the comment and sends nothing new; after a new push it sends a new request. An errored or expired batch is shown at the top of the comment; the next run sends a new request.
+- **Unit tests** (no network): `tests/unit/test_claude_batch.py` and `tests/unit/test_claude_audit.py` (Tests workflow).
+
 ## Backup facts checked on 2026-10-18
 
 - Production: `/mnt/backup` is the rclone mount of Spaces bucket `antweb-dbarchive` (service `rclone-dbarchive`), `/mnt/antweb` of bucket `antweb` (service `rclone`); both enabled at boot. Check with `findmnt /mnt/backup` (one folder per call).
