@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 """Automatic Claude review of a pull request (run by .github/workflows/claude-review.yml).
 
-Reads the PR through the GitHub REST API, sends one request to the Anthropic Messages API,
+Reads the PR through the GitHub REST API, sends one request to the Anthropic Message Batches API
+(since 2026-10-30, Brian Fisher: half the price of the Messages API; client in claude_batch.py),
 then posts the review as a single PR comment ("Claude review") that is edited on every new
 push instead of adding a new comment. Writes model, token use, estimated cost and any API
 error to the job summary. Standard library only.
+
+Batch flow: the request is sent as a batch of one; the comment gets an "in progress" notice with
+the batch id at once; the script polls every 30 s for up to REVIEW_WAIT_S (60 minutes; most batches
+end within minutes, the API's own limit is 24 hours). If the batch has not ended by then, the notice
+says so and the script stops with no second request. A later run for the same head commit (the
+workflow's "Run workflow" button with the PR number, or adding the full-e2e label again) finds the
+batch id in the comment and collects that batch instead of sending a new one.
 
 Environment (set by the workflow):
   ANTHROPIC_API_KEY  API key (repository secret)
@@ -12,44 +20,64 @@ Environment (set by the workflow):
   REPO               owner/name
   PR                 pull request number
   REPO_CONTEXT       one paragraph describing the repository
-  HEAD_SHA           head commit of the pull request
+  HEAD_SHA           head commit of the pull request (empty for a run started by hand: read from the PR)
   RUN_URL            link to the workflow run (for the comment footer)
 """
 
+import datetime
 import http.client
 import json
 import os
 import re
 import secrets
 import sys
-import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
+
+# The workflow runs this script with python3 -I (no script directory on sys.path); the batch client sits
+# next to it, in the same checkout of the base branch.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import claude_batch as cb  # noqa: E402
 
 # The model is set here and only here. When you change it, update the prices next to it (US dollars
 # per million tokens; used for the cost in the job summary and, by claude_audit.py, for the spend
 # ledger that pauses the audits before the API credit runs out). Source: Anthropic pricing page,
 # https://platform.claude.com/docs/en/about-claude/pricing (Claude Opus 5.5: input $4, output $20,
 # 5-minute cache write $5, 1-hour cache write $8, cache read $0.20; checked 2026-10-29).
+# Both scripts send their requests through the Message Batches API (since 2026-10-30), where "all usage is
+# charged at 50% of the standard API prices" (https://platform.claude.com/docs/en/build-with-claude/message-batches,
+# checked 2026-10-30): BATCH_FACTOR applies to every price above.
 MODEL = "claude-opus-5-5"
 PRICE_IN, PRICE_OUT = 4.00, 20.00
 PRICE_CACHE_WRITE_5M, PRICE_CACHE_WRITE_1H, PRICE_CACHE_READ = 5.00, 8.00, 0.20
+BATCH_FACTOR = 0.5
 
 
-def cost(usage):
-    """US dollars for one Messages API answer, from its usage block. input_tokens counts only the
-    uncached input; cache writes and reads are reported separately (the scripts set no cache_control,
-    so these are normally 0). A cache write without the 5m/1h split is priced as 5-minute."""
+def cost(usage, batch=False):
+    """US dollars for one Messages API answer, from its usage block (batch=True: at the Batch API price).
+    input_tokens counts only the uncached input; cache writes and reads are reported separately (the
+    scripts set no cache_control, so these are normally 0). A cache write without the 5m/1h split is
+    priced as 5-minute."""
     usage = usage or {}
     n = lambda k: usage.get(k) or 0  # noqa: E731
     write = usage.get("cache_creation") or {}
     w1h = write.get("ephemeral_1h_input_tokens") or 0
     w5m = (write.get("ephemeral_5m_input_tokens") or 0) if write else n("cache_creation_input_tokens") - w1h
-    return (n("input_tokens") * PRICE_IN + n("output_tokens") * PRICE_OUT + w5m * PRICE_CACHE_WRITE_5M
-            + w1h * PRICE_CACHE_WRITE_1H + n("cache_read_input_tokens") * PRICE_CACHE_READ) / 1e6
+    dollars = (n("input_tokens") * PRICE_IN + n("output_tokens") * PRICE_OUT + w5m * PRICE_CACHE_WRITE_5M
+               + w1h * PRICE_CACHE_WRITE_1H + n("cache_read_input_tokens") * PRICE_CACHE_READ) / 1e6
+    return dollars * (BATCH_FACTOR if batch else 1.0)
 
-START = time.monotonic()  # the 17-minute budget counts from the script's start
+
+def upper_estimate(chars, max_tokens, batch=True):
+    """The most a request of chars characters can cost (about 3.5 characters per token, the whole answer
+    budget used), for a request whose usage is unknown (it may have been processed and billed)."""
+    return (chars / 3.5 * PRICE_IN + max_tokens * PRICE_OUT) / 1e6 * (BATCH_FACTOR if batch else 1.0)
+
+
+REVIEW_WAIT_S = 3600  # how long one run waits for its batch (the review step allows 70 minutes)
+POLL_S = 30
 COMMENT_LIMIT = 60_000  # GitHub rejects comments over 65,536 characters; room left for the footer
 MAX_TOKENS = 32000  # answer budget; includes any thinking the model does before writing
 DIFF_CAP = 150_000  # characters of diff sent to the model
@@ -217,50 +245,14 @@ def build_diff(files):
     return "".join(b for _, b in chosen), notes, with_text
 
 
-def call_claude(api_key, user_content):
-    payload = json.dumps({
+def request_params(user_content):
+    """The Messages API body of one request (sent inside a batch; the same fields as /v1/messages)."""
+    return {
         "model": MODEL,
         "max_tokens": MAX_TOKENS,
         "system": SYSTEM,
         "messages": [{"role": "user", "content": user_content}],
-    }).encode()
-    # One request may take several minutes for a large answer (no streaming), so the whole call
-    # gets what is left of 17 minutes from the script's start, inside the review step's 18
-    # minutes (the timeout applies to each socket wait, which for a non-streaming answer is
-    # mostly the single wait for the response). A request that timed out is
-    # not retried: it may still have been processed and billed. Quick errors (rate limit,
-    # overloaded, 5xx) are retried once if time remains.
-    deadline = START + 1020
-    last_error = None
-    for attempt in range(2):
-        remaining = deadline - time.monotonic()
-        if remaining < 60:
-            last_error = last_error or "No time left for the API request"
-            break
-        req = urllib.request.Request(API_URL, data=payload, method="POST", headers={
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-        })
-        try:
-            with urllib.request.urlopen(req, timeout=remaining) as resp:
-                return json.loads(resp.read().decode()), None
-        except urllib.error.HTTPError as e:
-            text = e.read().decode("utf-8", "replace")
-            try:
-                err = json.loads(text).get("error", {})
-                last_error = f"HTTP {e.code} {err.get('type', '')}: {err.get('message', text)}"
-            except ValueError:
-                last_error = f"HTTP {e.code}: {text[:500]}"
-            if e.code not in (429, 500, 502, 503, 529):
-                break
-        except (OSError, http.client.HTTPException) as e:  # URLError, timeouts, dropped connections
-            if isinstance(e, TimeoutError) or isinstance(getattr(e, "reason", None), TimeoutError):
-                return None, f"No answer within {int(remaining)} s (request timed out)"
-            last_error = f"Network error: {e!r}"
-        if attempt == 0:
-            time.sleep(20)
-    return None, last_error
+    }
 
 
 def extract_text(result):
@@ -295,6 +287,8 @@ def main():
         return mark_only(sys.argv[2])
     api_key, token = env("ANTHROPIC_API_KEY"), env("GITHUB_TOKEN")
     repo, pr = env("REPO"), env("PR")
+    if not pr.isdigit():
+        sys.exit(f"::error::PR must be a pull request number, not {pr!r}")
     sha = os.environ.get("HEAD_SHA", "")[:7] or "?"
     try:
         return review(api_key, token, repo, pr, sha)
@@ -342,7 +336,11 @@ def review(api_key, token, repo, pr, sha):
         print(f"::error::Could not read the pull request from GitHub: {e!r}")
         mark_not_reviewed(repo, pr, token, sha, "Could not read the pull request from GitHub.")
         return 1
-    sha = pull["head"]["sha"][:7]  # the commit actually read, used in every notice from here on
+    if (pull.get("head", {}).get("repo") or {}).get("full_name") != repo:
+        print("::error::The pull request comes from a fork; it is not sent to the API.")
+        return 1
+    full_sha = pull["head"]["sha"]
+    sha = full_sha[:7]  # the commit actually read, used in every notice from here on
     diff, notes, with_text = build_diff(files)
     file_list = "\n".join(
         f"{f['status']:9} +{f['additions']:<5} -{f['deletions']:<5} {f['filename']}" for f in files
@@ -380,24 +378,31 @@ def review(api_key, token, repo, pr, sha):
         + (f"\n\n<full_files_{sfx}>\n{full}\n</full_files_{sfx}>" if full else "")
     )
 
-    result, error = call_claude(api_key, user_content)
-    lines = ["### Claude review", "", f"- Model: `{MODEL}`",
+    lines = ["### Claude review", "", f"- Model: `{MODEL}` (Message Batches API, 50% price)",
              f"- Files changed: {len(files)}; diff sent: {len(diff):,} characters; full files sent: {len(full):,} characters"]
     if notes and notes[0].startswith("The diff is"):
         lines.append("- Diff truncated to the most-changed files")
+    result, error, batch_id = run_batch(api_key, repo, pr, token, full_sha, user_content, lines)
+    if batch_id:
+        lines.append(f"- Batch: `{batch_id}`")
+    if error == "pending":
+        summary(lines)
+        return 0
     if error:
         lines.append(f"- API error: {error}")
         summary(lines)
         print(f"::error::Anthropic API error: {error}")
-        mark_not_reviewed(repo, pr, token, sha, f"Anthropic API error: {error}")
+        mark_not_reviewed(repo, pr, token, sha, f"Anthropic API error: {error}"
+                          + (f" (batch `{batch_id}`)" if batch_id else ""))
         return 1
 
     usage = result.get("usage", {})
     tin, tout = usage.get("input_tokens", 0), usage.get("output_tokens", 0)
-    cost_text = f"${cost(usage):.3f}"
+    cost_text = f"${cost(usage, batch=True):.3f}"
     lines.append(f"- Model reported: `{result.get('model', '?')}`; stop reason: {result.get('stop_reason')}")
     lines.append(f"- Tokens: {tin:,} input, {tout:,} output")
-    lines.append(f"- Estimated cost: {cost_text} (at ${PRICE_IN}/${PRICE_OUT} per million input/output tokens)")
+    lines.append(f"- Estimated cost: {cost_text} (Batch API: {BATCH_FACTOR:.0%} of ${PRICE_IN}/${PRICE_OUT} "
+                 "per million input/output tokens)")
     # Which content blocks came back (type and size only, never their content): shows whether
     # the output budget went to thinking or to the review text.
     blocks = describe_blocks(result.get("content", []))
@@ -446,6 +451,63 @@ def review(api_key, token, repo, pr, sha):
     return 0
 
 
+def pending_batch(comment, full_sha):
+    """The batch id written in the comment by an earlier run for this same head commit, or None."""
+    m = re.search(r"<!-- claude-review-batch (msgbatch_[A-Za-z0-9_-]{1,120}) ([0-9a-f]{40}) -->",
+                  (comment or {}).get("body") or "")
+    return m.group(1) if m and m.group(2) == full_sha else None
+
+
+def pending_banner(full_sha, batch_id, waited=False):
+    """The notice shown while the batch runs; it carries the batch id so a later run can collect it.
+    "(sha).**" is the form the workflow's last step looks for ("this commit already has a notice")."""
+    run = f" ([run]({os.environ['RUN_URL']}))" if os.environ.get("RUN_URL") else ""
+    if waited:
+        text = (f"> **Review still being processed ({full_sha[:7]}).** Batch `{batch_id}` had not ended after "
+                f"{REVIEW_WAIT_S // 60} minutes{run}. To collect it without a new request: Actions, \"Claude review\", "
+                "Run workflow, with this PR's number (or add the full-e2e label again). The API ends a batch at "
+                "the latest 24 hours after it was sent.")
+    else:
+        stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%H:%M")
+        text = (f"> **Review in progress ({full_sha[:7]}).** Sent at {stamp} UTC to the Anthropic Batch API as batch "
+                f"`{batch_id}`{run}; usually ready within an hour. This comment is replaced by the review.")
+    return f"{STALE_START}\n<!-- claude-review-batch {batch_id} {full_sha} -->\n{text}\n{STALE_END}\n"
+
+
+def run_batch(api_key, repo, pr, token, full_sha, user_content, lines):
+    """(Messages API answer or None, error text or "pending" or None, batch id or None). Collects the batch
+    of an earlier run for the same head commit when the comment names one, else sends a new batch of one."""
+    try:
+        batch_id = pending_batch(find_comment(repo, pr, token), full_sha)
+    except Exception as e:  # noqa: BLE001  (no comment readable: send a new request)
+        print(f"::warning::Could not read the review comment: {e!r}")
+        batch_id = None
+    if batch_id:
+        lines.append("- Collecting the batch sent by an earlier run for this commit (no new request)")
+    else:
+        try:
+            batch_id = cb.submit(api_key, [(f"review-pr{pr}-{full_sha[:12]}", request_params(user_content))])["id"]
+        except cb.BatchError as e:
+            return None, str(e), None
+        print(f"Batch {batch_id} sent")
+        set_banner(repo, pr, token, pending_banner(full_sha, batch_id))
+    try:
+        batch, ended = cb.poll(api_key, batch_id, REVIEW_WAIT_S, POLL_S)
+        if not ended:
+            lines.append(f"- The batch had not ended after {REVIEW_WAIT_S // 60} minutes; the comment says so "
+                         "(no second request)")
+            print(f"::warning::Batch {batch_id} still being processed after {REVIEW_WAIT_S // 60} minutes")
+            set_banner(repo, pr, token, pending_banner(full_sha, batch_id, waited=True))
+            return None, "pending", batch_id
+        found = cb.results(api_key, batch)
+    except (cb.BatchError, OSError, http.client.HTTPException, ValueError) as e:
+        return None, f"could not collect the batch ({e})", batch_id
+    # One request per batch; a batch from an older copy of this script may use another custom_id.
+    result = found.get(f"review-pr{pr}-{full_sha[:12]}") or (next(iter(found.values())) if len(found) == 1 else None)
+    message, error = cb.outcome(result)
+    return message, error, batch_id
+
+
 def find_comment(repo, pr, token):
     for c in gh_paged(f"/repos/{repo}/issues/{pr}/comments", token):
         if c.get("user", {}).get("login") == "github-actions[bot]" and (c.get("body") or "").startswith(MARKER):
@@ -468,7 +530,12 @@ def mark_not_reviewed(repo, pr, token, sha, reason, error=True):
     Never raises: this runs on the failure path."""
     run = f" ([run]({os.environ['RUN_URL']}))" if os.environ.get("RUN_URL") else ""
     lead = "The latest push was not reviewed" if error else "Not reviewed"
-    banner = f"{STALE_START}\n> **{lead} ({sha}).** {reason}{run}\n{STALE_END}\n"
+    set_banner(repo, pr, token, f"{STALE_START}\n> **{lead} ({sha}).** {reason}{run}\n{STALE_END}\n")
+
+
+def set_banner(repo, pr, token, banner):
+    """Put banner (a STALE_START ... STALE_END block) at the top of the "Claude review" comment, in place of
+    an earlier banner, keeping the earlier review below it; post it if there is no comment yet. Never raises."""
     try:
         existing = find_comment(repo, pr, token)
         if existing:

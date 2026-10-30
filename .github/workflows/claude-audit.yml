@@ -6,6 +6,13 @@
 # Spend guard (2026-10-29): every audit, scheduled or by hand, first estimates the API credit left from
 # .github/audit-budget.ini, ledger.tsv on the audit-reports branch (the cost of each audit) and the number of
 # Claude review runs, and pauses (green run, reason in the job summary) at or below the reserve or after expiry.
+# Message Batches API (Brian Fisher, 2026-10-30; kept after the credit expires): the request goes out as a batch of
+# one at 50% of the standard token price (.github/scripts/claude_batch.py). The run polls every 60 s for up to
+# 5 hours (most batches end within minutes to an hour; the API's limit is 24 hours), then encrypts and pushes the
+# report as before. Not ended in 5 hours: the batch is canceled, the most it can cost goes in the ledger
+# (audit-timeout) and the run fails. Errored or expired: $0 in the ledger (not billed) and the run fails. Nothing
+# is sent twice. A long batch delays the next scheduled audit (one at a time; GitHub keeps only the newest
+# waiting run and cancels older waiting ones).
 name: Claude audit
 
 on:
@@ -42,7 +49,8 @@ concurrency:
 jobs:
   audit:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # The audit step waits up to 5 hours for its batch (WAIT_S in the script); room for the checkouts and the push.
+    timeout-minutes: 340
     steps:
       - name: Check that the API key secret exists
         id: key
@@ -92,7 +100,7 @@ jobs:
 
       - name: Audit one area
         if: steps.key.outputs.present == 'true'
-        timeout-minutes: 18
+        timeout-minutes: 320
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           GITHUB_TOKEN: ${{ github.token }}

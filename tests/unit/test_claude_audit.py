@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """The audit rotation (.github/scripts/claude_audit.py): every audited file is in exactly one chunk, no chunk is
 empty or over the cap, the API area is found, and the scheduled slot and the stop date work.
-The spend guard (2026-10-29): the cost of an answer from its usage block, the ledger sum since the start, and the
+The spend guard (2026-10-29): the cost of an answer from its usage block (at the Batch API price since 2026-10-30), the ledger sum since the start, and the
 decision to pause the audit at the reserve or after the credit expires (.github/audit-budget.ini)."""
 import datetime
 import os
@@ -70,6 +70,10 @@ assert close(cr.cost({"cache_creation_input_tokens": 300, "cache_creation":
                       {"ephemeral_5m_input_tokens": 100, "ephemeral_1h_input_tokens": 200}}),
              (100 * cr.PRICE_CACHE_WRITE_5M + 200 * cr.PRICE_CACHE_WRITE_1H) / 1e6)
 assert cr.cost({}) == 0 and cr.cost(None) == 0 and cr.cost({"input_tokens": None}) == 0
+# Since 2026-10-30 both audits and reviews use the Message Batches API: every price at half (one factor, one table).
+assert cr.BATCH_FACTOR == 0.5
+assert close(cr.cost({"input_tokens": 100_000, "output_tokens": 20_000}, batch=True), 0.40)
+assert close(cr.cost({"cache_creation_input_tokens": 1_000_000}, batch=True), cr.PRICE_CACHE_WRITE_5M / 2)
 
 # The config in the repository parses and has the approved values.
 b = a.load_budget()
