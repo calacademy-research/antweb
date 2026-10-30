@@ -1,3 +1,4 @@
 # utc_time	run_id	kind	cost_usd	note (spend ledger: .github/audit-budget.ini on master)
 2026-10-29T22:17:48Z	40964734353	audit	0.6465	antcat-models-1
 2026-10-30T00:43:13Z	40981425573	audit	0.9438	jsp-public-2
+2026-10-30T01:20:49Z	40985270120	audit	0.6327	antcat-controllers-1
