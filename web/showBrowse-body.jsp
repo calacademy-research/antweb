@@ -133,15 +133,12 @@ if (childrenList != null) {
 <% int limit = Taxon.MAX_DISPLAY;
    String displayCount = "";
    String limitNote = "";
-   String statusStr = "";
-   if (!"all".equals(taxon.getStatusSetStr())) statusStr = Formatter.initCap(taxon.getStatusSetStr()) + " ";
-   
-   if (taxon.getChildrenCount() <= 0) {
-     displayCount = "No " + statusStr + taxon.getNextRank();
-   } else if (taxon.getChildrenCount() == 1) {
-     displayCount = "1 " + statusStr + Rank.getSingularRank(taxon.getNextRank());
-   } else {
-     displayCount = Formatter.commaFormat(taxon.getChildrenCount()) + " " + statusStr + taxon.getNextRank();
+   // Brian Fisher, 2026-10-30: the header says what the list shows ("40 Species (valid species and morphospecies)",
+   // "12 Valid species"; StatusSet.listHeading). A species or subspecies page lists its specimens: no status words.
+   String browseChoice = taxon.isSpeciesOrSubspecies() ? null : taxon.getStatusSetStr();
+   displayCount = Html.esc(StatusSet.listHeading(browseChoice, taxon.getChildrenCount(), taxon.getNextRank(),
+       Rank.getSingularRank(taxon.getNextRank()), -1, overview == null ? null : overview.getName()));
+   if (taxon.getChildrenCount() > 1) {
 
      String limitStr = (String) request.getParameter("limit");
      if (limitStr != null) {

@@ -106,7 +106,7 @@ def test_group_species_is_pending_until_the_nightly_run():
 
 def test_e2e_tests_use_the_helpers():
     lists = read("tests/e2e/test_numbers_lists.py")
-    assert lists.count("ns.counting_rules_counted() is False") == 3
+    assert lists.count("ns.counting_rules_counted() is False") == 2   # the default-list test compares with the default choice (2026-10-30)
     endemic = read("tests/e2e/test_numbers_endemic.py")
     assert "ns.endemic_rule_counted" in endemic and "ns.counting_rules_counted" in endemic
     groups = read("tests/e2e/test_count_check.py")

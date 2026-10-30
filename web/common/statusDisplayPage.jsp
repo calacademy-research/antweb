@@ -31,16 +31,13 @@
 <p><img src="<%= AntwebProps.getDomainApp() %>/image/indetermined.png" width="11" height="12" border="0"> <b>Indetermined</b> - This taxon comes from a specimen file and has been flagged in it's name as indet (or undet).
 
 <br><br><br><br>
-<h3><u>Antweb Status Sets</u></h3>
-
-<p><b>Worldants</b> - Ants described by Barry Bolton and contains in the Bolton World Catalog.  Data curated by Antcat.org.
-<p><b>All</b> - All Antweb.  This specification includes all specimen, regardless of status.  Will exclude some taxa without specimen depending on status.
-<p><b>Complete</b> - This will include all taxa, regardless of source or status.
-<p><b>Valid Without Fossil</b> - All valid taxa that are not fossils.
-<a href="#type">
-<p><b>Type</b> - Only display taxa that have a type specimen.
-</a>
-<p><b>All Determined</b> - All valid, unrecognized, not current valid name, and morphotaxa with a name NOT like "(indet)"
-<p><b>All Indetermined</b> - All valid, unrecognized, not current valid name, and morphotaxa with a name LIKE "(indet)"
+<h3><u>Status choices of lists</u></h3>
+<!-- Brian Fisher, 2026-10-30: four choices, each the rows of a number on the place page (StatusSet.LIST_CHOICES). -->
+<p id="status-choices">The lists of species, genera and subfamilies of a place offer four choices. The first two list the names counted by the matching number on the place page.
+<p><b>Valid species</b> - Valid names, not fossils. Matches "Valid species / subspecies" on the place page. Opens first on the lists of countries, states and provinces, regions, subregions and curated projects.
+<p><b>Valid species + morphospecies</b> - Valid names and morphospecies, identified to genus. Matches "Species / subspecies / morphospecies" on the place page. Opens first on the lists of bioregions, museums and All AntWeb.
+<p><b>All names</b> - Every name with specimens: valid, morphospecies, indetermined, unidentifiable and unrecognized.
+<p><b>Fossil species</b> - Valid fossil names.
+<p>On a genus list the same choices apply to the genera (valid genera, valid genera + morphogenera, all names, fossil genera). The AntCat list (Bolton World Catalog) and the Fossil Ants project keep their own choices: Valid (with fossils), Valid extant and Valid fossil.
 
 

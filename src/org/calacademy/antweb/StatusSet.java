@@ -31,7 +31,34 @@ public class StatusSet extends Status {
 
     //public final static String VALID_WITHOUT_FOSSIL = "valid without fossil";
     public final static String TYPE = "type";
-    // If you add to this set, add to theStatusSetArray as well.    
+    // If you add to this set, add to theStatusSetArray as well.
+
+    /*
+     * The status choice of lists (taxonomicPage.do, browse.do, images.do), Brian Fisher 2026-10-30 (docs/numbers.md,
+     * "Status choice of lists"). Four choices with plain labels, each the rows of a number of the place page:
+     *   valid        "Valid species"                 valid, extant          = Valid species / subspecies
+     *   validmorpho  "Valid species + morphospecies" valid and morphotaxon  = Species / subspecies / morphospecies
+     *                                                (PlaceTotals.SPECIES_STATUSES; species rows identified to genus)
+     *   all          "All names"                     the five counted statuses (valid, morphotaxon, indetermined,
+     *                                                unidentifiable, unrecognized): every name with specimens
+     *   fossil       "Fossil species"                valid, fossil
+     * On genus and subfamily lists the same choices apply to the genus and subfamily rows. These are the values of the
+     * address (statusSet=...); listStatusSet() turns one into the StatusSet whose criteria the queries use. The old
+     * choices "all determined", "all indetermined", "complete" and "type" were removed (they matched no number); old
+     * addresses still work (listChoice maps them). The AntCat list (worldants) and Fossil Ants keep their own sets.
+     */
+    public final static String LIST_VALID = "valid";
+    public final static String LIST_VALID_MORPHO = "validmorpho";
+    public final static String LIST_ALL = "all";
+    public final static String LIST_FOSSIL = "fossil";
+    public final static String[] LIST_CHOICES = {LIST_VALID, LIST_VALID_MORPHO, LIST_ALL, LIST_FOSSIL};
+
+    /** Internal set values of the choices validmorpho and all (listStatusSet); not address values. */
+    public final static String VALID_MORPHO = "valid and morphotaxon";
+    public final static String ALL_NAMES = "all names";
+
+    /** The choices of the AntCat list (worldants) and Fossil Ants, which keep their own sets (default VALID_WITH_FOSSIL). */
+    public final static String[] OWN_SET_CHOICES = {VALID_WITH_FOSSIL, VALID_EXTANT, VALID_FOSSIL};
         
     public final static String[] allStatusSetArray = {    
         WORLDANTS, ALL, ALL_DETERMINED, ALL_INDETERMINED, COMPLETE, VALID_FOSSIL, VALID_EXTANT, TYPE
@@ -122,6 +149,10 @@ public class StatusSet extends Status {
         + MORPHOTAXON + "') and " + table + ".taxon_name like '%(indet)%' ";   // + NOT_CURRENT_VALID + "', '" 
 
       if (StatusSet.ALL.equals(getValue())) criteria = defaultVal; //return defaultVal;
+      // List choices of 2026-10-30: "all" (every counted status) and "validmorpho" (the statuses of the Species number,
+      // PlaceTotals.SPECIES_STATUSES: the one rule, not repeated here).
+      if (StatusSet.ALL_NAMES.equals(getValue())) criteria = defaultVal;
+      if (StatusSet.VALID_MORPHO.equals(getValue())) criteria = " " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition(table);
       if (StatusSet.ALL_DETERMINED.equals(getValue())) criteria = allDetermined;
       if (StatusSet.ALL_INDETERMINED.equals(getValue())) criteria = allIndetermined;
 
@@ -214,26 +245,184 @@ public class StatusSet extends Status {
     }
 
     /**
-     * The status filter of a list (taxonomicPage.do) or browse page (browse.do): the one in the address (statusSet=...),
-     * else the page's default. Brian Fisher, 2026-10-29: a place's list opens with the statuses its Species number counts
-     * (valid names and morphospecies, the counting rules of 2026-10-28; "all": its header then equals the place page's
-     * Species / subspecies / morphospecies), not "valid extant", and a choice made on one page is no longer carried to
-     * the next (it was kept in the session). Every kind of place alike: country, adm1, region, subregion, bioregion,
-     * museum and curated project.
+     * The status choice of a list (taxonomicPage.do) or browse page (browse.do, images.do): the one in the address
+     * (statusSet=..., mapped by listChoice), else the page's default (defaultChoice). Brian Fisher, 2026-10-30. The choice
+     * applies to the page it was made on and is kept in that page's own links (tabs, sort links: they carry statusSet);
+     * it is never kept in the session (2026-10-29: no carry-over from page to page). On the AntCat list (worldants) and
+     * Fossil Ants the address value is used as it is (their own sets, as before).
      */
     public static String getStatusSet(String requestStatusSet, HttpServletRequest request, Overview overview) {
-        if (requestStatusSet != null && !requestStatusSet.trim().isEmpty()) return requestStatusSet;
-        return defaultStatusSet(overview == null ? null : overview.getName());
+        String name = overview == null ? null : overview.getName();
+        if (hasOwnStatusSets(name)) {
+            if (requestStatusSet != null && !requestStatusSet.trim().isEmpty()) return requestStatusSet;
+            return VALID_WITH_FOSSIL;
+        }
+        String choice = listChoice(requestStatusSet);
+        if (choice != null) return choice;
+        return defaultChoice(overview);
+    }
+
+    /** The AntCat list (worldants) and Fossil Ants keep their own status sets (default valid names with fossils). */
+    public static boolean hasOwnStatusSets(String overviewName) {
+        return Project.WORLDANTS.equals(overviewName) || Project.FOSSILANTS.equals(overviewName);
     }
 
     /**
-     * The status filter a list opens with when the address names none (getStatusSet). The AntCat list (worldants) and
-     * Fossil Ants: valid names with fossils, as before; every other list (places, museums, bioregions, projects, the
-     * AntWeb-wide list): every counted status (ALL), the statuses of the place's Species number.
+     * The list choice (LIST_CHOICES) of an address value, or null when there is none (no value, or one not known: the
+     * page's default applies). Case and spaces do not matter. Old values of before 2026-10-30 map to the nearest choice:
+     *   valid, valid extant, Valid (with fossils)            -> valid
+     *   validmorpho, all determined                          -> validmorpho
+     *   all, all indetermined, complete, type, worldants,
+     *   a single status (morphotaxon, indetermined, ...)     -> all
+     *   fossil, valid fossil                                 -> fossil
+     * "type" never selected type taxa (its criteria were "1 = 1", every name); type specimens are found by search
+     * (types=on) and the list's type column (orderBy=type), which do not use statusSet.
      */
-    public static String defaultStatusSet(String overviewName) {
-        if (Project.WORLDANTS.equals(overviewName) || Project.FOSSILANTS.equals(overviewName)) return StatusSet.VALID_WITH_FOSSIL;
-        return StatusSet.ALL;
+    public static String listChoice(String value) {
+        if (value == null) return null;
+        String v = value.trim().toLowerCase(Locale.ROOT).replaceAll("\\s+", " ");
+        if (v.isEmpty()) return null;
+        switch (v) {
+            case LIST_VALID: case VALID_EXTANT: case "valid (with fossils)": case "valid species":
+                return LIST_VALID;
+            case LIST_VALID_MORPHO: case ALL_DETERMINED: case VALID_MORPHO:
+                return LIST_VALID_MORPHO;
+            case LIST_ALL: case ALL_INDETERMINED: case COMPLETE: case TYPE: case WORLDANTS: case ALL_NAMES:
+                return LIST_ALL;
+            case LIST_FOSSIL: case VALID_FOSSIL: case "fossil species":
+                return LIST_FOSSIL;
+            default:
+                // a single status chosen on its own (the old "more options"): all names, the nearest choice
+                if (getAllStatuses().contains(v)) return LIST_ALL;
+                return null;
+        }
+    }
+
+    /** The kind of place of an overview for its default choice: PlaceTotals.GEOLOCALE, BIOREGION, MUSEUM, PROJECT or null. */
+    public static String placeType(Overview overview) {
+        if (overview instanceof Geolocale) return org.calacademy.antweb.home.PlaceTotals.GEOLOCALE;
+        if (overview instanceof Bioregion) return org.calacademy.antweb.home.PlaceTotals.BIOREGION;
+        if (overview instanceof Museum) return org.calacademy.antweb.home.PlaceTotals.MUSEUM;
+        if (overview instanceof Project) return org.calacademy.antweb.home.PlaceTotals.PROJECT;
+        return null;
+    }
+
+    public static String defaultChoice(Overview overview) {
+        return defaultChoice(placeType(overview), overview == null ? null : overview.getName());
+    }
+
+    /**
+     * The choice a list opens with when the address names none. Brian Fisher, 2026-10-30 (replaces the rule of
+     * 2026-10-29, "every counted status everywhere"):
+     *   country, adm1, region, subregion (geolocales)     Valid species
+     *   bioregion, museum                                 Valid species + morphospecies
+     *   curated project                                   Valid species
+     *   AntWeb-wide list (allantwebants), other pages     Valid species + morphospecies
+     *   AntCat list (worldants), Fossil Ants              Valid (with fossils), their own set (as before)
+     */
+    public static String defaultChoice(String placeType, String overviewName) {
+        if (hasOwnStatusSets(overviewName)) return VALID_WITH_FOSSIL;
+        if (org.calacademy.antweb.home.PlaceTotals.GEOLOCALE.equals(placeType)) return LIST_VALID;
+        if (org.calacademy.antweb.home.PlaceTotals.PROJECT.equals(placeType) && !Project.ALLANTWEBANTS.equals(overviewName)) return LIST_VALID;
+        return LIST_VALID_MORPHO;
+    }
+
+    /**
+     * The StatusSet whose criteria a list uses for getStatusSet's value on a page of that overview: on the AntCat list
+     * and Fossil Ants the value as it is (their own sets: "valid" there is valid with fossils), elsewhere the choice's.
+     */
+    public static StatusSet listStatusSet(String choice, String overviewName) {
+        if (hasOwnStatusSets(overviewName)) return new StatusSet(choice);
+        return listStatusSet(choice);
+    }
+
+    /** The StatusSet whose criteria a list of this choice uses (getStatusSet's value); other values as they are. */
+    public static StatusSet listStatusSet(String choice) {
+        if (LIST_VALID.equals(choice)) return new StatusSet(VALID_EXTANT);
+        if (LIST_VALID_MORPHO.equals(choice)) return new StatusSet(VALID_MORPHO);
+        if (LIST_ALL.equals(choice)) return new StatusSet(ALL_NAMES);
+        if (LIST_FOSSIL.equals(choice)) return new StatusSet(VALID_FOSSIL);
+        return new StatusSet(choice);
+    }
+
+    public static boolean isListChoice(String value) {
+        return Arrays.asList(LIST_CHOICES).contains(value);
+    }
+
+    /** The choices the selector of a list offers (worldants and Fossil Ants: their own). */
+    public static String[] choicesFor(String overviewName) {
+        return hasOwnStatusSets(overviewName) ? OWN_SET_CHOICES : LIST_CHOICES;
+    }
+
+    /**
+     * The selector's label of a choice for a list of rank (the rank of the rows: species, genus, subfamily). Species:
+     * Valid species, Valid species + morphospecies, All names, Fossil species; genus: Valid genera, Valid genera +
+     * morphogenera, All names, Fossil genera. Other values (worldants, Fossil Ants): the value, first letter capital.
+     */
+    public static String choiceLabel(String choice, String rank, String overviewName) {
+        if (hasOwnStatusSets(overviewName)) return ownLabel(choice);
+        return choiceLabel(choice, rank);
+    }
+
+    /** A value of the AntCat list's or Fossil Ants' own sets as the selector shows it: the value, first letter capital. */
+    static String ownLabel(String value) {
+        if (value == null || value.isEmpty()) return "";
+        return Character.toUpperCase(value.charAt(0)) + value.substring(1);
+    }
+
+    public static String choiceLabel(String choice, String rank) {
+        String r = rank == null ? "species" : rank.toLowerCase(Locale.ROOT);
+        String plural;
+        String morpho;
+        if ("genus".equals(r) || "genera".equals(r)) { plural = "genera"; morpho = "morphogenera"; }
+        else if ("subfamily".equals(r) || "subfamilies".equals(r)) { plural = "subfamilies"; morpho = "morphotaxa"; }
+        else { plural = "species"; morpho = "morphospecies"; }
+        if (LIST_VALID.equals(choice)) return "Valid " + plural;
+        if (LIST_VALID_MORPHO.equals(choice)) return "Valid " + plural + " + " + morpho;
+        if (LIST_ALL.equals(choice)) return "All names";
+        if (LIST_FOSSIL.equals(choice)) return "Fossil " + plural;
+        return ownLabel(choice);
+    }
+
+    /**
+     * The header of a list (h2 display_count): what it shows, its number first. count: the rows listed; pluralRank: the
+     * rows' rank as the page names it (Species, Genera, Subfamilies, Specimens); speciesTotal: the place page's Species /
+     * subspecies / morphospecies (Valid species of a species list name it: "2,672 Valid species (of 6,960 species and
+     * morphospecies)"), or a negative number when not known. Examples: "6,960 Species (valid species and
+     * morphospecies)", "116 Genera (valid genera and morphogenera)", "7,215 Species (all names)", "12 Fossil species".
+     * A value that is not a list choice (worldants, Fossil Ants) keeps the old form "N Valid extant Species". The number
+     * is not escaped HTML (plain text: the JSP escapes it).
+     */
+    public static String listHeading(String choice, int count, String pluralRank, String singularRank, int speciesTotal,
+            String overviewName) {
+        // the AntCat list and Fossil Ants: their own values, in the old form ("N Valid (with fossils) Species")
+        if (hasOwnStatusSets(overviewName) && isListChoice(choice)) return listHeading("own:" + choice, count, pluralRank, singularRank, -1);
+        return listHeading(choice, count, pluralRank, singularRank, speciesTotal);
+    }
+
+    public static String listHeading(String choice, int count, String pluralRank, String singularRank, int speciesTotal) {
+        String plural = pluralRank == null ? "" : pluralRank;
+        String single = singularRank == null ? plural : singularRank;
+        String noun = count == 1 ? single : plural;
+        String num = count <= 0 ? "No" : String.format(Locale.US, "%,d", count);
+        String lower = noun.toLowerCase(Locale.ROOT);
+        boolean speciesRows = "species".equals(lower);
+        boolean generaRows = "genera".equals(lower) || "genus".equals(lower);
+        if (LIST_VALID.equals(choice)) {
+            String h = num + " Valid " + lower;
+            if (speciesRows && speciesTotal >= 0) h += " (of " + String.format(Locale.US, "%,d", speciesTotal) + " species and morphospecies)";
+            return h;
+        }
+        if (LIST_VALID_MORPHO.equals(choice)) {
+            if (speciesRows) return num + " " + noun + " (valid species and morphospecies)";
+            if (generaRows) return num + " " + noun + " (valid genera and morphogenera)";
+            return num + " " + noun + " (valid names and morphotaxa)";
+        }
+        if (LIST_ALL.equals(choice)) return num + " " + noun + " (all names)";
+        if (LIST_FOSSIL.equals(choice)) return num + " Fossil " + lower;
+        if (choice != null && choice.startsWith("own:")) choice = choice.substring(4);
+        String statusStr = (choice == null || ALL.equals(choice)) ? "" : ownLabel(choice) + " ";
+        return num + " " + statusStr + noun;
     }
 
     public static String getAllAntwebClause() {

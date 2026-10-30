@@ -74,13 +74,14 @@ tests = [
   "test_numbers_live.py::test_recent_images_count_equals_the_rows_shown",
   "test_numbers_live.py::test_endemic_and_introduced_lists_equal_place_numbers",
   "test_numbers_endemic.py",
-  "test_numbers_lists.py::test_default_list_shows_the_species_number_and_forgets_the_last_choice",
+  "test_numbers_lists.py::test_default_list_forgets_the_last_choice",
   "test_numbers_lists.py::test_unimaged_names_equal_the_api",
   "test_numbers_lists.py::test_species_browse_imaged_count_equals_the_specimens_with_images",
   "test_numbers_lists.py::test_species_browse_counts_the_specimens_of_its_list_row",
   "test_numbers_lists.py::test_browse_limit_note_names_the_header_number",
   "test_numbers_lists.py::test_browse_limit_shows_that_many_specimens",
   "test_numbers_lists.py::test_species_lists_show_valid_names_and_morphospecies_only",
+  "test_status_choice.py",              # status choice of lists (2026-10-30)
   "test_numbers_species.py",
   "test_numbers_images.py",
   "test_images_anywhere.py",            # images from anywhere, Images column, imaged castes (2026-10-27)
@@ -385,6 +386,7 @@ tests = [
   "test_api_numbers.py",               # API counts (2026-10-22)
   "test_numbers_endemic.py",           # Endemic, Introduced, endemic.do, introduced.do on a rotating sample (2026-10-26)
   "test_numbers_lists.py",             # list headers and browse counts of every kind of place (2026-10-26)
+  "test_status_choice.py",             # status choice of lists: choices, defaults, headers, old values (2026-10-30)
   "test_numbers_species.py",           # species habitat summaries recounted from the API (2026-10-26)
   "test_numbers_api_meta.py",          # API counts recounted from other replies and pages (2026-10-27)
   "test_numbers_search.py",            # search, compare, map, collection, locality, Subtaxon total, museum fossils (2026-10-27)
@@ -420,6 +422,8 @@ paths = [
   "web/taxonomicPage*",
   "web/taxonReport*",
   "web/common/overviewHeading.jsp",
+  "src/org/calacademy/antweb/StatusSet.java",
+  "web/common/statusesDisplay.jsp",
 ]
 tests = [
   "test_place_pages.py",               # place pages, their lists and species lists (step 2)
@@ -429,6 +433,7 @@ tests = [
   "test_place_image_counts.py",
   "test_overview_editor.py",
   "test_genus_indet_places.py",        # genus rows of specimens identified only to genus on country lists (2026-10-29)
+  "test_status_choice.py",             # status choice of lists (2026-10-30)
 ]
 
 [areas.downloads]

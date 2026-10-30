@@ -3,7 +3,12 @@
       AntwebUtil.log("Overview not found in overviewHeading.jsp");
       return;
     }
-    String overviewUrl = overview.getThisPageTarget();
+    // Brian Fisher, 2026-10-30: a status chosen on this page (statusSet in the address) is kept in its tabs (Overview,
+    // Taxa, Images), never in the session: a page opened without statusSet uses its default (StatusSet.getStatusSet).
+    String ohStatusParam = request.getParameter("statusSet");
+    String ohStatus = StatusSet.hasOwnStatusSets(overview.getName()) ? ohStatusParam : StatusSet.listChoice(ohStatusParam);
+    String ohKeep = (ohStatus == null || ohStatus.trim().isEmpty()) ? "" : "&statusSet=" + Html.url(ohStatus.trim());
+    String overviewUrl = overview.getThisPageTarget() + ohKeep;
 
     int maxSpeciesCount = 700;
 
@@ -27,20 +32,20 @@
 			<li><span class="proj_options" id="project_list">Taxa <img src="<%= AntwebProps.getDomainApp() %>/image/options.png">
 				<div class="proj_taxon" id="proj_list">
 					<ul>
-						<li><a href="<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=subfamily&<%= overview.getParams() %>"><span class="numbers"></span> Subfamilies</a></li>
-						<li><a href="<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=genus&<%= overview.getParams() %>"><span class="numbers"></span> Genera</a></li> 
-						<li><a href="<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=species&<%= overview.getParams() %>"><span class="numbers"></span> Species</a></li> 
+						<li><a href="<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=subfamily&<%= overview.getParams() %><%= Html.escAttr(ohKeep) %>"><span class="numbers"></span> Subfamilies</a></li>
+						<li><a href="<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=genus&<%= overview.getParams() %><%= Html.escAttr(ohKeep) %>"><span class="numbers"></span> Genera</a></li> 
+						<li><a href="<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=species&<%= overview.getParams() %><%= Html.escAttr(ohKeep) %>"><span class="numbers"></span> Species</a></li> 
 					</ul>
 				</div>
 			</span></li>
 			<li><span class="proj_options" id="project_images">Images <img src="<%= AntwebProps.getDomainApp() %>/image/options.png">
 				<div class="proj_taxon" id="proj_images">
 					<ul>
-						<li><a href="<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=subfamily&<%= overview.getParams() %>&images=true">Subfamilies</a></li>  
-						<li><a href="<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=genus&<%= overview.getParams() %>&images=true">Genera</a></li> 
+						<li><a href="<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=subfamily&<%= overview.getParams() %>&images=true<%= Html.escAttr(ohKeep) %>">Subfamilies</a></li>  
+						<li><a href="<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=genus&<%= overview.getParams() %>&images=true<%= Html.escAttr(ohKeep) %>">Genera</a></li> 
 
 					  <% if (overview.getSpeciesCount() < maxSpeciesCount) { %>                            
-						<li><a href="<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=species&<%= overview.getParams() %>&images=true">Species</a></li> 
+						<li><a href="<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=species&<%= overview.getParams() %>&images=true<%= Html.escAttr(ohKeep) %>">Species</a></li> 
 					  <% } else {  %>
 						<li><%= Formatter.commaFormat(overview.getSpeciesCount()) %> Species</li>   <!--span class="numbers"></span -->
 					  <% } %>                          

@@ -144,7 +144,9 @@ class Place:
             return f"/{page}.do?bioregionName={quote_plus(self.name)}"
         return f"/{page}.do?geolocaleId={self.gid}"
 
-    def list_url(self, rank, status="all", extra=""):
+    def list_url(self, rank, status="validmorpho", extra=""):
+        # 2026-10-30: the default, "Valid species + morphospecies", lists the rows of the place's Species number (species
+        # lists); "all" (every counted status) lists the names that are not species too.
         return f"/taxonomicPage.do?rank={rank}&{self.params}&statusSet={quote_plus(status)}{extra}"
 
 

@@ -5,16 +5,17 @@ test_numbers_live.py checks these on Madagascar and the genus Pheidole. Here eve
 region, subregion, bioregion, museum, project) is checked on every run, a different place of each kind each day
 (numbers_sample.py), against numbers that the count check validates on every place:
 
-  row 38  taxonomicPage.do header "N Species / Genera / Subfamilies" with every counted status (statusSet=all) = the
-          place page's Species / Genera / Subfamilies, and with valid extant = Valid species (one rule:
+  row 38  taxonomicPage.do header: species list with "Valid species + morphospecies" (statusSet=validmorpho) = the
+          place page's Species / subspecies / morphospecies, with "Valid species" (valid) = Valid species / subspecies;
+          genus and subfamily lists with every counted status (all) = Genera / Subfamilies (one rule:
           PlaceTotals.rankCondition and TaxaPage.fetchChildren); the header = the rows the page lists. A curated
           project's Subfamilies counts its subfamily rows of every status (B67, PlaceTotals.listedCondition): the
           header with counted statuses <= Subfamilies <= the header of the complete list. Genera rule (2026-10-30):
           Subfamilies and Genera count only the listed rows that are subfamilies (no placeholders such as "(formicidae)")
           and genera (valid genera and morphogenera, from the API /taxa), so they are compared with those rows; the
           header still counts every row listed. A subfamily browse page likewise (row 46).
-          Without a status in the address (2026-10-29) the list opens with every counted status, so its header equals
-          Species, and a status chosen on an earlier page is not carried over.
+          The status choices and defaults of 2026-10-30 (Valid species on geolocales and curated projects, Valid
+          species + morphospecies on bioregions and museums) are checked in test_status_choice.py.
   row 39  isImaged=false: "U Unimaged Species (out of N)": U = the rows listed, N = the place's Species, and the
           names listed = the names of the list that the API's /unimagedGeolocaleTaxa returns for the place (the
           same rule written twice: TaxaPage.findUnimaged in Java, imagedTaxaSql in the API) (countries).
@@ -70,16 +71,16 @@ def curated_project(p):
 
 
 def test_list_headers_equal_place_numbers_of_every_kind():
-    """Row 38: for the day's place of every kind, the list header with every counted status = Subfamilies, Genera,
-    Species of the place page; with valid extant = Valid species (0 when the page shows no Valid row); every header
-    = the rows its page lists."""
+    """Row 38: for the day's place of every kind, the list header with every counted status = Subfamilies, Genera of
+    the place page; species with Valid species + morphospecies = Species; with Valid species = Valid species (0 when
+    the page shows no Valid row); every header = the rows its page lists."""
     wrong, stored, checked, slow = [], [], [], []
     for p in places():
         stats = stats_of(p)
         if "species" not in stats:
             continue
         for rank, stat, status in (("subfamily", "subfamilies", "all"), ("genus", "genera", "all"),
-                                   ("species", "species", "all"), ("species", "valid", "valid extant")):
+                                   ("species", "species", "validmorpho"), ("species", "valid", "valid")):
             html = ns.fetch(p.list_url(rank, status))
             if html is None:
                 slow.append(f"{p} {rank} {status}")
@@ -104,12 +105,11 @@ def test_list_headers_equal_place_numbers_of_every_kind():
                 n = counted
             if rank == "subfamily" and curated_project(p):
                 # B67 (Brian Fisher 2026-10-27): a curated project's Subfamilies counts its subfamily rows of every
-                # status, as its list rows do; the list with counted statuses shows at most that many, the complete
-                # list (every status, other families too) at least that many.
-                complete, _ = ns.header(ns.fetch(p.list_url(rank, "complete")) or "")
-                if n > expected or (complete is not None and complete < expected):
-                    stored.append(f"{p} rank={rank}: place page {stat} {expected}, list rows counted {n} (counted statuses),"
-                                 f" {complete} (complete); expected {n} <= {expected} <= {complete}")
+                # status, as its list rows do; the list with counted statuses shows at most that many. (The complete
+                # list that showed every status was removed from the status choice on 2026-10-30.)
+                if n > expected:
+                    stored.append(f"{p} rank={rank}: place page {stat} {expected}, list header {n} (counted statuses);"
+                                 f" expected {n} <= {expected}")
             elif n != expected:
                 stored.append(f"{p} rank={rank} {status}: {'rows counted' if rank != 'species' else 'header'} {n}, place page {stat} {expected}")
         checked.append(repr(p))
@@ -127,38 +127,28 @@ def test_list_headers_equal_place_numbers_of_every_kind():
         pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28 and the genera rule of 2026-10-30") + ":\n" + "\n".join(stored))
 
 
-def test_default_list_shows_the_species_number_and_forgets_the_last_choice():
-    """Brian Fisher, 2026-10-29: a place's species list without a status in the address opens with the statuses of the
-    place's Species number (valid names and morphospecies: the header equals Species / subspecies / morphospecies on
-    the place page and the list with statusSet=all), for every kind of place, and a status chosen on one page is not
-    carried to the next (it was kept in the session): the same session first opens the list with valid extant."""
-    wrong, stored, checked = [], [], []
+def test_default_list_forgets_the_last_choice():
+    """Brian Fisher, 2026-10-29 (kept 2026-10-30): a status chosen on one page is not carried to the next (it was kept
+    in the session). The same session first opens a species list with Fossil species, then the list without a status:
+    its header is that of the place's default choice (test_status_choice.py checks the defaults themselves)."""
+    wrong, checked = [], []
     s = ns.new_session()
     for p in places():
-        stats = stats_of(p)
-        if "species" not in stats:
-            continue
-        if ns.fetch(p.list_url("species", "valid extant"), s) is None:
+        default = "valid" if p.kind in ("country", "adm1", "region", "subregion", "project") else "validmorpho"
+        if ns.fetch(p.list_url("species", "fossil"), s) is None:
             continue
         html = ns.fetch(f"/taxonomicPage.do?rank=species&{p.params}", s)
-        explicit = ns.fetch(p.list_url("species", "all"), s)
+        explicit = ns.fetch(p.list_url("species", default), s)
         if html is None or explicit is None:
             continue
         n, text = ns.header(html)
-        n_all, _ = ns.header(explicit)
-        if n is None or n != n_all:
-            wrong.append(f"{p}: the list without a status says {text!r}, with statusSet=all {n_all}")
-        elif n != stats.get("species", 0):
-            stored.append(f"{p}: the list without a status {n}, place page Species {stats.get('species', 0)}")
+        n_default, text_default = ns.header(explicit)
+        if n is None or n != n_default or text != text_default:
+            wrong.append(f"{p}: the list without a status says {text!r}, with statusSet={default} {text_default!r}")
         checked.append(repr(p))
     if not checked:
         pytest.skip("no place list read " + ns.day_note())
-    pending_rules = stored and ns.counting_rules_counted() is False
-    if not pending_rules:
-        wrong += stored
     assert not wrong, f"{len(checked)} places {ns.day_note()} ({PENDING}):\n" + "\n".join(wrong)
-    if pending_rules:
-        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28") + ":\n" + "\n".join(stored))
 
 
 def _unimaged_from_api(p):
@@ -234,9 +224,12 @@ def _row_count_and_link(row_html):
     return None, None
 
 
-def _browse(link):
+def _browse(link, status="validmorpho"):
+    """The browse page of a list row's link with the status choice that its row count counts (2026-10-30): a genus
+    row's Species counts valid names and morphospecies (validmorpho), a subfamily row's Genera every counted status
+    (all); a species page lists its specimens whatever the choice."""
     path = re.sub(r"^https?://[^/]+", "", link)
-    return path + ("&" if "?" in path else "?") + "statusSet=all"
+    return path + ("&" if "?" in path else "?") + "statusSet=" + status
 
 
 def _browse_numbers(html):
@@ -293,7 +286,7 @@ def test_browse_headers_equal_the_list_rows():
             if not got:
                 continue
             row, count, link = got
-            html = ns.fetch(_browse(link))
+            html = ns.fetch(_browse(link, "validmorpho" if rank == "genus" else "all"))
             if html is None:
                 continue
             where = f"{p} {rank} {row['name'] or link}"
