@@ -70,7 +70,8 @@
     // Brian Fisher, 2026-10-30: the header names the status choice in the words of the list's header (StatusSet.listHeading):
     // "40 Valid species imaged (out of 98 valid species)", "80 Genera imaged (out of 116 valid genera and morphogenera)".
     String imagedHeading = Html.esc(StatusSet.imagedHeading(taxaPage.getStatusSetStr(), imagedChildrenCount, childrenCount,
-        Rank.getPluralRank(pageRank), Rank.getSingularRank(Rank.getPluralRank(pageRank)), overview == null ? null : overview.getName()));
+        Rank.getPluralRank(pageRank), Rank.getSingularRank(Rank.getPluralRank(pageRank)), overview == null ? null : overview.getName(),
+        StatusSet.fossilSubfamilies(request)));
 %>
 
   <div id="totals_and_tools_container">

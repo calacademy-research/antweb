@@ -7,12 +7,21 @@
     int totalImaged = taxon.getUniqueChildImagesCount("p", "h", "d");
     String optionalCaste = "";
     String tCaste = Caste.getDisplayCaste(request);
-    if (!Caste.DEFAULT.equals(tCaste)) optionalCaste = "<font color=red>" + Formatter.initCap(tCaste) + "</font> ";
+    if (!Caste.DEFAULT.equals(tCaste)) optionalCaste = " <font color=red>(" + Html.esc(Formatter.initCap(tCaste)) + " images)</font>";
+    // Brian Fisher, 2026-10-30: the header names the status choice in the words of the list's header, as the images view
+    // of a place's list (StatusSet.imagedHeading): "3 Valid species imaged (out of 5 valid species)", "4 Species imaged
+    // (out of 6 valid species and morphospecies)"; until then "N Species Imaged (M total)". A species or subspecies lists
+    // its specimens: no status words ("12 Specimens imaged (out of 20 specimens)"). data-imaged and data-total carry the
+    // two numbers (as on taxonomicPage.do?images=true).
+    int childTotal = taxon.getChildrenCount();
+    String childChoice = taxon.isSpeciesOrSubspecies() ? null : taxon.getStatusSetStr();
+    String childImagedHeading = Html.esc(StatusSet.imagedHeading(childChoice, totalImaged, childTotal, taxon.getNextRank(),
+        Rank.getSingularRank(taxon.getNextRank()), overview == null ? null : overview.getName(), StatusSet.fossilSubfamilies(request)));
 %>
 
 <div id="totals_and_tools_container">
     <div id="totals_and_tools">
-        <h2 class="display_count"><%=totalImaged%> <%= optionalCaste%><%= Rank.getRankPl(taxon.getNextRank(), totalImaged)%> Imaged <logic:present name="taxon" property="childrenCount">(<bean:write name="taxon" property="childrenCount" /> total)</logic:present></h2> 
+        <h2 class="display_count" data-imaged="<%= totalImaged %>" data-total="<%= childTotal %>"><%= childImagedHeading %><%= optionalCaste %></h2> 
 
         <span id="sub_taxon">
             <ul>
