@@ -81,7 +81,13 @@ tests = [
   "test_numbers_lists.py::test_browse_limit_note_names_the_header_number",
   "test_numbers_lists.py::test_browse_limit_shows_that_many_specimens",
   "test_numbers_lists.py::test_species_lists_show_valid_names_and_morphospecies_only",
-  "test_status_choice.py",              # status choice of lists (2026-10-30)
+  # status choice of lists (2026-10-30); not ::test_genus_list_choices, which logs in to read compute.log (pending
+  # until a nightly run has counted Genera and Subfamilies by the rules of 2026-10-30)
+  "test_status_choice.py::test_lists_open_with_the_default_of_their_kind_of_place",
+  "test_status_choice.py::test_each_choice_header_equals_the_place_page_number",
+  "test_status_choice.py::test_old_values_still_answer_with_the_nearest_choice",
+  "test_status_choice.py::test_choice_is_kept_in_the_page_links_not_in_the_session",
+  "test_status_choice.py::test_genus_browse_and_images_pages_follow_the_choice",
   "test_numbers_species.py",
   "test_numbers_images.py",
   "test_images_anywhere.py",            # images from anywhere, Images column, imaged castes (2026-10-27)

@@ -52,12 +52,21 @@ def browse_header(html):
     return ns.n(n.group(1)), ns.n(imaged.group(1)) if imaged else 0
 
 
+ANT_SUBFAMILIES = {"agroecomyrmecinae", "amblyoponinae", "aneuretinae", "apomyrminae", "dolichoderinae", "dorylinae",
+                   "ectatomminae", "formicinae", "heteroponerinae", "leptanillinae", "martialinae", "myrmeciinae",
+                   "myrmicinae", "paraponerinae", "ponerinae", "proceratiinae", "pseudomyrmecinae"}
+
+
 def indet_genera():
     """Genera with an indet name in AntWeb: [(subfamily, genus lower case, genus taxon name)] from the API."""
     rows = ns.api_all("taxa?species=" + quote_plus("(indet)") + "&taxarank=species", max_pages=4) or []
     out = []
     for r in rows:
         name, parent = r.get("taxonName") or "", r.get("parentTaxonName") or ""
+        # ants only: a non-ant genus (e.g. Acrida, a grasshopper, uploaded as "acridinaeacrida (indet)") is never on a list
+        family = (r.get("family") or "formicidae").lower()
+        if family != "formicidae" or (r.get("subfamily") or "").lower() not in ANT_SUBFAMILIES:
+            continue
         if name.endswith(" (indet)") and parent and r.get("subfamily") and r.get("genus") and not parent.startswith("("):
             out.append((r["subfamily"].lower(), r["genus"].lower(), parent))
     return sorted(set(out))
