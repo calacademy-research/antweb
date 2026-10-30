@@ -437,6 +437,21 @@ public class StatusSet extends Status {
     }
 
     /**
+     * The choices of a list whose rows are of rank (species, genus, subfamily). Brian Fisher, 2026-10-30: a subfamily
+     * list of a place with no fossil subfamily (fossilSubfamilies false) offers no Valid + morphotaxa: its label would
+     * be "Valid subfamilies" twice and it lists the same rows as Valid there. An address that asks for it still works
+     * (same rows, label "Valid subfamilies").
+     */
+    public static String[] choicesFor(String overviewName, String rank, boolean fossilSubfamilies) {
+        String[] choices = choicesFor(overviewName);
+        String r = rank == null ? "" : rank.toLowerCase(Locale.ROOT);
+        if (hasOwnStatusSets(overviewName) || fossilSubfamilies || !("subfamily".equals(r) || "subfamilies".equals(r))) return choices;
+        List<String> out = new ArrayList<>();
+        for (String c : choices) if (!LIST_VALID_MORPHO.equals(c)) out.add(c);
+        return out.toArray(new String[0]);
+    }
+
+    /**
      * The selector's label of a choice for a list of rank (the rank of the rows: species, genus, subfamily). Species:
      * Valid species, Valid species + morphospecies, All names, Fossil species; genus: Valid genera, Valid genera +
      * morphogenera, All names, Fossil genera; subfamily: Valid subfamilies, Valid subfamilies, extant and fossil (only

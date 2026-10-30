@@ -1028,7 +1028,9 @@ Valid + morphotaxa is labelled "Valid subfamilies, extant and fossil" and its he
 subfamilies, extant and fossil)" (subfamilies have no morphotaxa); since 2026-10-30 (Brian Fisher) "extant and fossil"
 only when the place's subfamilies of that choice include a fossil one (`TaxaPage.hasFossilSubfamilies`, request
 attribute `StatusSet.FOSSIL_SUBFAMILIES_ATTR`), else "Valid subfamilies" and "8 Subfamilies (valid subfamilies)"
-(Algeria); the images view header and the selector alike. All names lists every row, placeholders too. The
+(Algeria); the images view header and the selector alike. Such a list (no fossil subfamily) offers no Valid +
+morphotaxa choice (it would repeat "Valid subfamilies" and list the same rows; `StatusSet.choicesFor(name, rank,
+fossilSubfamilies)`); an address asking for it still works, labelled "Valid subfamilies". All names lists every row, placeholders too. The
 specimen half of a list (specimen=true, countries, adm1s, projects) takes the choice too (it took none), and the
 specimen criteria of the sets valid extant, valid fossil and Valid (with fossils) (search, maps) filter by
 specimen.status and the name's taxon.fossil (specimens have no fossil column); they fell through to the five counted

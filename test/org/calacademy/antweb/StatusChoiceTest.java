@@ -278,6 +278,16 @@ public class StatusChoiceTest extends TestCase {
         assertFalse(StatusSet.fossilSubfamilies(request));
         attrs.put(StatusSet.FOSSIL_SUBFAMILIES_ATTR, Boolean.TRUE);
         assertTrue(StatusSet.fossilSubfamilies(request));
+        // no fossil subfamily: one Valid choice on the subfamily list (Valid + morphotaxa hidden); still accepted from the
+        // address, with the same label as Valid
+        assertEquals(java.util.Arrays.asList("valid", "all", "fossil"), java.util.Arrays.asList(StatusSet.choicesFor("algeria", "subfamily", false)));
+        assertEquals(java.util.Arrays.asList("valid", "all", "fossil"), java.util.Arrays.asList(StatusSet.choicesFor("algeria", "Subfamilies", false)));
+        assertEquals(java.util.Arrays.asList(StatusSet.LIST_CHOICES), java.util.Arrays.asList(StatusSet.choicesFor(Project.ALLANTWEBANTS, "subfamily", true)));
+        assertEquals(java.util.Arrays.asList(StatusSet.LIST_CHOICES), java.util.Arrays.asList(StatusSet.choicesFor("algeria", "genus", false)));
+        assertEquals(java.util.Arrays.asList(StatusSet.LIST_CHOICES), java.util.Arrays.asList(StatusSet.choicesFor("algeria", "species", false)));
+        assertEquals(java.util.Arrays.asList(StatusSet.OWN_SET_CHOICES), java.util.Arrays.asList(StatusSet.choicesFor(Project.WORLDANTS, "subfamily", false)));
+        assertEquals("validmorpho", StatusSet.listChoice("validmorpho"));
+        assertEquals(StatusSet.choiceLabel("valid", "subfamily", "algeria", false), StatusSet.choiceLabel("validmorpho", "subfamily", "algeria", false));
         // other ranks and choices do not name fossils either way
         for (boolean f : new boolean[]{true, false}) {
             assertEquals("116 Genera (valid genera and morphogenera)", StatusSet.listHeading("validmorpho", 116, "Genera", "Genus", -1, f));

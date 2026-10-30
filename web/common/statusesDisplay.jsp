@@ -32,10 +32,11 @@
 
   if (showStatuses) {
     String sdOverviewName = overview == null ? null : overview.getName();
-    String[] sdChoices = StatusSet.choicesFor(sdOverviewName);
     String sdJoin = sdTarget.contains("?") ? "&" : "?";
-    // a subfamily list: "Valid subfamilies, extant and fossil" only when the place has a fossil one (2026-10-30)
+    // a subfamily list: "Valid subfamilies, extant and fossil" only when the place has a fossil one (2026-10-30);
+    // without one the list offers no Valid + morphotaxa (same rows and label as Valid subfamilies there)
     boolean sdFossilSubfamilies = StatusSet.fossilSubfamilies(request);
+    String[] sdChoices = StatusSet.choicesFor(sdOverviewName, sdRowRank, sdFossilSubfamilies);
 %>
        <div id="status_toggle">
            <div class="left"><a href=<%= AntwebProps.getDomainApp() %>/statusDisplayPage.do target="new"><%= sdDisplayChildRank %> Status</a>:</div>
