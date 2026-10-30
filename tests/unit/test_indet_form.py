@@ -277,6 +277,32 @@ def test_production_guard():
     print("Production: every step refuses without --production.")
 
 
+def test_production_paths():
+    """/root/antweb may be a link to a dated folder: the link and its target both count as production."""
+    with tempfile.TemporaryDirectory() as tmp:
+        target = os.path.join(tmp, "antweb-2026-10-30")
+        os.mkdir(target)
+        link = os.path.join(tmp, "antweb")
+        os.symlink(target, link)
+        real_project, real_role = tf.PRODUCTION_PROJECT, tf.ROLE_FILE
+        tf.PRODUCTION_PROJECT = link
+        tf.ROLE_FILE = os.path.join(tmp, "no-role-file")
+        try:
+            assert tf.is_production(link) and tf.is_production(target)
+            assert not tf.is_production(tmp)
+            role = os.path.join(tmp, "antweb-role")
+            tf.ROLE_FILE = role
+            with open(role, "w") as f:
+                f.write("staging\n")
+            assert not tf.is_production(tmp)
+            with open(role, "w") as f:
+                f.write("production\n")
+            assert tf.is_production(tmp)
+        finally:
+            tf.PRODUCTION_PROJECT, tf.ROLE_FILE = real_project, real_role
+    print("Production: a linked /root/antweb and a role file other than staging count as production.")
+
+
 def test_runbook():
     text = open(os.path.join(ROOT, "docs", "runbook.md"), encoding="utf-8").read()
     assert "### Indet form" in text
@@ -304,6 +330,7 @@ def main():
     test_sql()
     test_command_flow()
     test_production_guard()
+    test_production_paths()
     test_runbook()
     test_columns_exist_in_the_schema()
     print("OK")

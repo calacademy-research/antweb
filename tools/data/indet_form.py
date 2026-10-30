@@ -101,6 +101,8 @@ EXTRA_COLUMNS = {"taxon": ("current_valid_name", "parent_taxon_name"), "similar_
 # Tables whose renamed rows get species "(indet)" and status "indetermined".
 SET_INDET = ("taxon", "specimen")
 PRODUCTION_PROJECT = "/root/antweb"
+# The server's role (refresh-from-prod.sh reads the same file): anything but "staging" counts as production.
+ROLE_FILE = "/etc/antweb-role"
 
 
 # ------------------------------------------------------------------ names (no database)
@@ -503,9 +505,20 @@ def statuses_of(samples):
 
 # ------------------------------------------------------------------ commands
 
+def server_role():
+    try:
+        with open(ROLE_FILE) as f:
+            return f.read().strip().lower()
+    except OSError:
+        return None
+
+
 def is_production(project):
-    return (os.path.realpath(project) == PRODUCTION_PROJECT
-            or socket.gethostname().lower().startswith("antweb-prod"))
+    """Both paths resolved (/root/antweb may be a link to a dated folder); the host name; /etc/antweb-role."""
+    role = server_role()
+    return (os.path.realpath(project) == os.path.realpath(PRODUCTION_PROJECT)
+            or socket.gethostname().lower().startswith("antweb-prod")
+            or (role is not None and role != "staging"))
 
 
 def start(args):

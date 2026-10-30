@@ -92,6 +92,20 @@ public class UploadAction extends AntwebAction {
 		return false;
 	}
 
+	/**
+	 * The curator a specimen upload goes to: the login's own when uploadAs is blank, otherwise the curator with that
+	 * id, or null when there is none (refused by the caller: never the login's own group instead, because the upload
+	 * replaces the group's specimens).
+	 */
+	public static Curator uploadCurator(String curateAs, java.util.function.Function<String, Curator> curatorById, Curator own) {
+		if (curateAs == null || curateAs.trim().isEmpty()) return own;
+		try {
+			return curatorById.apply(curateAs.trim());
+		} catch (NumberFormatException e) {
+			return null;
+		}
+	}
+
 	private static final Log s_antwebEventLog = LogFactory.getLog("antwebEventLog");
 
 	static int MAXLENGTH = 80;
@@ -255,7 +269,7 @@ public class UploadAction extends AntwebAction {
 		Date worldantsFetchTime = null;
 		String dbMethodName = DBUtil.getDbMethodName("UploadAction.execute()");
 		// Taken only if free: a background upload (BackgroundJobs) may have started since the check above.
-		final String processName = accessLogin.getName() + ":" + accessGroup.getName();
+		final String processName = accessLogin.getName() + ":" + (accessGroup == null ? "" : accessGroup.getName());
 		if (!claimUploadProcess(processName)) {
 			request.setAttribute("message", "Server is currently in an Upload Process. Please try again in a little while.");
 			return mapping.findForward("message");
@@ -386,7 +400,7 @@ public class UploadAction extends AntwebAction {
 		} finally {
 			String finishMessage = "Completion of the Upload Process.";
 			if (errorMessage != null) finishMessage = errorMessage;
-			s_log.warn("execute() finished action:" + action + " group:" + accessGroup.getAbbrev()
+			s_log.warn("execute() finished action:" + action + " group:" + (accessGroup == null ? "" : accessGroup.getAbbrev())
 					+ " in " + AntwebUtil.getMinsPassed(uploadDetails.getStartTime()));
 			releaseUploadProcess(processName);
 
@@ -421,8 +435,12 @@ public class UploadAction extends AntwebAction {
 			request.setAttribute("message", "You may not upload as that curator. Nothing was uploaded. Ask an AntWeb administrator if you should.");
 			return mapping.findForward("message");
 		}
-		Curator curator = LoginMgr.getCurator(curateAs);
-		if (curator == null) curator = LoginMgr.getCurator(accessLogin);
+		Curator curator = uploadCurator(curateAs, LoginMgr::getCurator, LoginMgr.getCurator(accessLogin));
+		if (curator == null && curateAs != null && !curateAs.trim().isEmpty()) {
+			s_log.warn("submitSpecimenUpload() uploadAs:" + curateAs + " is not a curator. login:" + accessLogin.getId());
+			request.setAttribute("message", "There is no curator with the id " + Html.esc(curateAs.trim()) + ". Nothing was uploaded.");
+			return mapping.findForward("message");
+		}
 		if (curator == null || curator.getGroup() == null) {
 			request.setAttribute("message", "This login has no curator group to upload to.");
 			return mapping.findForward("message");

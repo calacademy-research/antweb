@@ -266,7 +266,7 @@ if (sortedBy == null) {
 
       String redFlagged = "";
       // Will not happen. Not yet implemented in GenericSearch resultItem.
-      if ("red".equals(thisChild.getFlag())) redFlagged = "<a title='Red Flag: " + thisChild.getIssue() + "'><font color=red>*</font></a>";
+      if ("red".equals(thisChild.getFlag())) redFlagged = "<a title='Red Flag: " + org.calacademy.antweb.util.Html.escAttr(thisChild.getIssue()) + "'><font color=red>*</font></a>";
 	  //A.log("specimenReport.jsp redFlagged:" + thisChild.getFlag());
 
       if (!thisChild.getName().equals("\"\"")) { 

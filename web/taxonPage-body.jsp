@@ -525,14 +525,6 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 
 <div class="clear"></div>
 <div id=data_title2>
-<b>Image files (taxon.image_count, labels included):</b>
-</div>
-<div id=data_items2>
-<%= taxon.getImageCount() %> &nbsp;
-</div>
-
-<div class="clear"></div>
-<div id=data_title2>
 <b>HasImageCount (deprecated, image files):</b>
 </div>
 <div id=data_items2>
@@ -795,7 +787,7 @@ Default Images:
     <div class="left">
 
 <% if ((taxon.getImages() != null) && (taxon.getImages().containsKey("h"))) { %>
-        <div class="slide medium last" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><%=((org.calacademy.antweb.SpecimenImage) taxon.getImages().get("h")).getThumbview() %>');" onclick="window.location='bigPicture.do?name=<%= ((org.calacademy.antweb.SpecimenImage) taxon.getImages().get("h")).getCode() %>&shot=h&number=1<%= projectStr %>';">
+        <div class="slide medium last" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><%=((org.calacademy.antweb.SpecimenImage) taxon.getImages().get("h")).getThumbview() %>');" onclick="window.location='bigPicture.do?name=<%= Html.escAttr(Html.js(Html.url(((org.calacademy.antweb.SpecimenImage) taxon.getImages().get("h")).getCode()))) %>&shot=h&number=1<%= projectStr %>';">
         </div>
         <div class="clear"></div>        
 <% } else {

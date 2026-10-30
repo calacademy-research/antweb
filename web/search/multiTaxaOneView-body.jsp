@@ -145,14 +145,14 @@ function changeView(newView) {
 		}
 		 
 		// Where is the_name output to display in the corner of the image?
-        String specimenUrl = AntwebProps.getDomainApp() + "/bigPicture.do?name=" + code + "&number=1&shot=" + preShortHand;
-        String taxonUrl = AntwebProps.getDomainApp() + "/images.do?taxonName=" + thisChild.getTaxonName();
+        String specimenUrl = AntwebProps.getDomainApp() + "/bigPicture.do?name=" + Html.url(code) + "&number=1&shot=" + Html.url(preShortHand);
+        String taxonUrl = AntwebProps.getDomainApp() + "/images.do?taxonName=" + Html.url(thisChild.getTaxonName());
 %>
-        <div class="slide half<% if (position == first) { %> first<% } %><% if (position == second) { %> last<% } %>" style="background-image:url('<%= AntwebProps.getImgDomainApp() %><%= picture %>')" onclick="window.location='<%= specimenUrl %>'">
-          <div class="hover half" onclick="window.location='<%= specimenUrl %>'"></div>
+        <div class="slide half<% if (position == first) { %> first<% } %><% if (position == second) { %> last<% } %>" style="background-image:url('<%= AntwebProps.getImgDomainApp() %><%= picture %>')" onclick="window.location='<%= Html.escAttr(Html.js(specimenUrl)) %>'">
+          <div class="hover half" onclick="window.location='<%= Html.escAttr(Html.js(specimenUrl)) %>'"></div>
           <div class="top_gradient half"></div>
           <div class="name half">
-              <a href="<%= taxonUrl %>"><%= Taxon.getPrettyTaxonName(thisChild.getTaxonName()) %></a> <a href="<%= specimenUrl %>"><%= theName %></a>
+              <a href="<%= Html.escAttr(taxonUrl) %>"><%= Html.esc(Taxon.getPrettyTaxonName(thisChild.getTaxonName())) %></a> <a href="<%= Html.escAttr(specimenUrl) %>"><%= Html.esc(theName) %></a>
           </div>
           <div class="clear"></div>
         </div>
