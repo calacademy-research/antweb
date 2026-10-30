@@ -67,11 +67,15 @@
     // Imaged = children with images (2026-10-21: the header printed childrenCount twice).
     int imagedChildrenCount = 0;
     for (Taxon imgChild : new ArrayList<Taxon>(childrenList)) if (imgChild.getHasImages()) ++imagedChildrenCount;
+    // Brian Fisher, 2026-10-30: the header names the status choice in the words of the list's header (StatusSet.listHeading):
+    // "40 Valid species imaged (out of 98 valid species)", "80 Genera imaged (out of 116 valid genera and morphogenera)".
+    String imagedHeading = Html.esc(StatusSet.imagedHeading(taxaPage.getStatusSetStr(), imagedChildrenCount, childrenCount,
+        Rank.getPluralRank(pageRank), Rank.getSingularRank(Rank.getPluralRank(pageRank)), overview == null ? null : overview.getName()));
 %>
 
   <div id="totals_and_tools_container">
     <div id="totals_and_tools">
-        <h2 class="display_count" data-imaged="<%= imagedChildrenCount %>" data-total="<%= childrenCount %>"><%= imagedChildrenCount %> <%= Rank.getPluralRank(pageRank) %> Imaged (out of <%= childrenCount %> Total)</h2>
+        <h2 class="display_count" data-imaged="<%= imagedChildrenCount %>" data-total="<%= childrenCount %>"><%= imagedHeading %></h2>
         <p class="image_source_note">Each name is shown with its best images in AntWeb, which may be of a specimen collected elsewhere.</p>
 <%
     if (false && overview instanceof Geolocale) { 

@@ -66,13 +66,16 @@ public final class CountInvariants {
     public static final String COUNTING_RULES_LOG = "counting rules of 2026-10-28";
 
     /**
-     * Written to compute.log by nightly set 4 since 2026-10-30 (the same line as RULES_LOG): the genera rule of 2026-10-30
-     * (Brian Fisher, docs/numbers.md section 5): Genera count valid genera and morphogenera only (PlaceTotals.countsAsGenus),
-     * Subfamilies no placeholder rows, on every kind of place, the subfamily rows of every list and the upload groups. Sets
+     * Written to compute.log by nightly set 4 since 2026-10-30 (the same line as RULES_LOG): the genera and subfamilies
+     * rule of 2026-10-30 (Brian Fisher, docs/numbers.md section 5): Genera count valid genera and morphogenera only
+     * (PlaceTotals.countsAsGenus), Subfamilies valid subfamilies only (PlaceTotals.countsAsSubfamily; no placeholder rows,
+     * no unrecognized names, curated projects too, replacing B67), on every kind of place, the subfamily and Formicidae
+     * rows of every list and the upload groups. Both rules went live on 2026-10-30 before the same nightly run, so one
+     * marker says both are counted (a line with the earlier "genera rule of 2026-10-30" alone does not). Sets
      * 2 and 3 count geolocales, projects, museums and bioregions, set 3 the groups, so the line after set 4 says all of
      * them are counted by it. Until a nightly run has written it, the numbers of the rule are pending (rulesCounted).
      */
-    public static final String GENERA_RULE_LOG = "genera rule of 2026-10-30";
+    public static final String GENERA_RULE_LOG = "genera and subfamilies rule of 2026-10-30";
 
     /**
      * Written to compute.log by nightly set 2 ("Set 2 done", geolocale endemic flags) and set 3 ("Set 3 done", bioregion
@@ -626,12 +629,12 @@ public final class CountInvariants {
                     // PlaceTotals.identifiedToGenus); its Specimens and Images still add up every row under it
                     // and of status valid or morphotaxon (2026-10-28, PlaceTotals.SPECIES_STATUSES)
                     // a subfamily row's Genera counts its genus rows that are genera (valid, morphotaxon, no placeholder),
-                    // the Formicidae row's Subfamilies its subfamily rows that are not placeholders (2026-10-30,
-                    // PlaceTotals.childCountCondition); their Species and Specimens still add up every row under them
+                    // the Formicidae row's Subfamilies its subfamily rows that are valid subfamilies (2026-10-30,
+                    // PlaceTotals.countsAsSubfamily, childCountCondition); their Species and Specimens still add up every row under them
                     String n = "genus".equals(parentRank) ? "sum(case when " + PlaceTotals.identifiedToGenus("t") + " and "
                         + PlaceTotals.speciesStatusCondition("t") + " then 1 else 0 end)"
                         : "subfamily".equals(parentRank) ? "sum(case when " + PlaceTotals.countsAsGenus("t") + " then 1 else 0 end)"
-                        : "sum(case when " + PlaceTotals.notPlaceholder("t") + " then 1 else 0 end)";
+                        : "sum(case when " + PlaceTotals.countsAsSubfamily("t") + " then 1 else 0 end)";
                     StringBuilder sub = new StringBuilder("select c." + lk + " k, t.parent_taxon_name parent, " + n + " n");
                     StringBuilder diff = new StringBuilder("p." + level[2] + " <> coalesce(x.n, 0)");
                     int i = 0;

@@ -11,6 +11,7 @@ import java.util.TreeMap;
 
 import junit.framework.TestCase;
 
+import org.calacademy.antweb.Project;
 import org.calacademy.antweb.geolocale.Country;
 import org.calacademy.antweb.home.GroupCountDb;
 import org.calacademy.antweb.home.PlaceTotals;
@@ -31,6 +32,10 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *            totals, the subfamily row's "N Genera" written by the crawl, upload groups, and the count check (which
  *            finds a number counted by the old rule, 5, and calls it pending until a nightly run has counted by the rule).
  *            Subfamilies: the placeholder subfamily row "(formicidae)" (status morphotaxon) is not counted: 1.
+ *   Subfamilies   valid subfamilies only (PlaceTotals.countsAsSubfamily; it replaced B67, a curated project's subfamily
+ *            rows of every status). Testland and a curated project "testants" list Myrmicinae, "(formicidae)" (status
+ *            morphotaxon) and a misspelled "myrmicicinae" (status unrecognized): Subfamilies = 1 each, by the nightly
+ *            totals, the Formicidae row's "N Subfamilies" written by the crawl, and the count check.
  *   Worldants alert   WorldantsUploadDb.CHANGE_COUNT_SQL counts the imports of the last 7 days whose file size differs
  *            from the previous import's; equal backup sizes (production since 10-20) do not hide the changes.
  */
@@ -44,6 +49,7 @@ public class GeneraRuleDbTest extends TestCase {
     static final String PLACEHOLDER = "myrmicinae(myrmicinae)";
     static final String POLYRACHIS = "(formicidae)polyrachis";
     static final String STRAY = "amblyoponinae)";
+    static final String MISSPELLED = "myrmicicinae";
 
     @Override
     protected void setUp() throws Exception {
@@ -77,6 +83,61 @@ public class GeneraRuleDbTest extends TestCase {
     private void row(String name, int subfamilies, int genera) throws Exception {
         exec("insert into geolocale_taxon (geolocale_id, taxon_name, subfamily_count, genus_count, created) values (" + TESTLAND + ", '"
             + name + "', " + subfamilies + ", " + genera + ", '2020-01-01 10:00:00')");
+    }
+
+    /** Brian Fisher, 2026-10-30: Subfamilies count valid subfamilies only, on every kind of place, curated projects too. */
+    public void testSubfamiliesCountValidSubfamiliesOnly() throws Exception {
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily) values"
+            + " ('" + MISSPELLED + "', 'subfamily', 'unrecognized', '" + FAMILY + "', 'formicidae', '" + MISSPELLED + "')");
+        row(MISSPELLED, 0, 0);
+        // a curated project with the same three subfamily rows; its numbers as the nightly run writes them by the rule
+        exec("insert into project (project_name, is_live, subfamily_count) values ('testants', 1, 1)");
+        for (String n : new String[] {FAMILY, MYRM, FORM, MISSPELLED}) {
+            exec("insert into proj_taxon (project_name, taxon_name, subfamily_count, created) values ('testants', '" + n + "', "
+                + (FAMILY.equals(n) ? 1 : 0) + ", '2020-01-01 10:00:00')");
+        }
+        String sql = PlaceTotals.listedCountSql(PlaceTotals.GEOLOCALE, PlaceTotals.SUBFAMILY);
+        assertEquals("the country: Myrmicinae only", 1, PlaceTotals.count(connection, sql, "" + TESTLAND));
+        sql = PlaceTotals.listedCountSql(PlaceTotals.PROJECT, PlaceTotals.SUBFAMILY);
+        assertEquals("the curated project: Myrmicinae only (B67 counted all 3)", 1, PlaceTotals.count(connection, sql, "testants"));
+        assertEquals("madants of the fixture: Myrmicinae and Ponerinae", 2, PlaceTotals.count(connection, sql, "madants"));
+        assertEquals(1, PlaceTotals.listedCounts(connection, PlaceTotals.PROJECT, "testants")[0]);
+        // all places at once (the count check's inv:place.totals.subfamily)
+        Map<String, Integer> byPlace = new TreeMap<>();
+        try (PreparedStatement s = connection.prepareStatement(PlaceTotals.listedCountsByPlaceSql(PlaceTotals.PROJECT, PlaceTotals.SUBFAMILY));
+             ResultSet r = s.executeQuery()) {
+            while (r.next()) byPlace.put(r.getString(1), r.getInt(2));
+        }
+        assertEquals(byPlace.toString(), Integer.valueOf(1), byPlace.get("testants"));
+        // the rows stay on the lists
+        assertEquals(3, PlaceTotals.count(connection, "select count(*) from proj_taxon l join taxon t on t.taxon_name = l.taxon_name"
+            + " where l.project_name = ? and t.taxarank = 'subfamily'", "testants"));
+        // the crawl: the Formicidae row's Subfamilies
+        Country testland = new Country();
+        testland.setId(TESTLAND);
+        testland.setName("Testland");
+        assertEquals(Integer.valueOf(1), counts(testland.getCountChildrenQuery("subfamily")).get(FAMILY));
+        Map<String, Integer> project = counts(new Project("testants").getCountChildrenQuery("subfamily"));
+        assertEquals(project.toString(), Integer.valueOf(1), project.get(FAMILY));
+        // the count check: right numbers pass; the number of the old rule (B67: 3) is a real difference
+        CountCheck.Result r = check(true);
+        for (CountCheck.Mismatch m : r.mismatches) {
+            if ("place.totals.subfamily".equals(m.check)) {
+                assertFalse("Subfamilies are right by the rule: " + list(r), "Testland".equals(m.place.label) || "testants".equals(m.place.key));
+            }
+        }
+        exec("update project set subfamily_count = 3 where project_name = 'testants'");
+        r = check(true);
+        boolean found = false;
+        for (CountCheck.Mismatch m : r.mismatches) {
+            if ("place.totals.subfamily".equals(m.check) && "testants".equals(m.place.key)) {
+                assertEquals(3, m.stored);
+                assertEquals(1, m.recount);
+                assertTrue(m.isReal());
+                found = true;
+            }
+        }
+        assertTrue(list(r), found);
     }
 
     private CountCheck.Result check(boolean rulesCounted) throws Exception {

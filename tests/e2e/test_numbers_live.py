@@ -7,7 +7,7 @@ The place page numbers (data-stat on /country.do) are checked against the record
   taxonomicPage.do  "N Genera / Subfamilies" with every counted status (statusSet=all) = Genera / Subfamilies of
                     the place page; species with Valid species + morphospecies (validmorpho) = Species, with Valid
                     species (valid) = Valid species (row 38; choices of 2026-10-30); Genera and
-                    Subfamilies: the rows listed that are genera and subfamilies (genera rule of 2026-10-30)
+                    Subfamilies: the rows listed that are genera and subfamilies (genera and subfamilies rule of 2026-10-30)
                     isImaged=false: "U Unimaged Species (out of N)": U <= N, N = the place's Species (row 39)
   browse.do         "N Species (M imaged)": the hidden totals say the same N, M <= N; "Only the first a of N"
                     names the same N (rows 46, 47, 49)
@@ -100,14 +100,14 @@ def test_list_headers_equal_place_numbers():
             n = counted
         if n != stats[stat]:
             (stored if rank in ("subfamily", "genus") else wrong).append(f"rank={rank} {status}: list {n}, place page {stat} {stats[stat]}")
-    # the place's Genera and Subfamilies are counted by the genera rule of 2026-10-30 at the next nightly run: pending
+    # the place's Genera and Subfamilies are counted by the genera and subfamilies rule of 2026-10-30 at the next nightly run: pending
     if stored and ns.genera_rule_counted() is not False:
         wrong += stored
     # One line (the GitHub annotation shows the start only). The place numbers are those of the last nightly run: before
     # a nightly run with the rules of 2026-10-21 (ants only, counted from the list) they can differ from the live list.
     assert not wrong, "Madagascar list header vs place page: " + "; ".join(wrong) + " (expected to agree after a nightly run with the 2026-10-21 rules)"
     if stored:
-        pytest.skip(ns.rules_pending_note("genera rule of 2026-10-30") + ": " + "; ".join(stored))
+        pytest.skip(ns.rules_pending_note("genera and subfamilies rule of 2026-10-30") + ": " + "; ".join(stored))
 
 
 def test_unimaged_header_is_within_the_list():

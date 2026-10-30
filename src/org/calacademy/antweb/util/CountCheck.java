@@ -840,8 +840,8 @@ public class CountCheck {
     }
 
     /** The place's Subfamilies number (2026-10-20: staging's Madagascar page showed 0 with 8 subfamilies on
-     *  its list): stored subfamily_count against the subfamily rows on the place's list with a counted status
-     *  (a curated project: every status, as its list rows; PlaceTotals.listedCondition, 2026-10-27). */
+     *  its list): stored subfamily_count against the subfamily rows on the place's list that are valid subfamilies
+     *  (PlaceTotals.countsAsSubfamily, every kind of place, 2026-10-30; B67's every status of curated projects is gone). */
     int checkSubfamilyTotal(Place place, Result result, boolean listChanged) throws SQLException {
         if (!GEOLOCALE.equals(place.type) && !PROJECT.equals(place.type)) return 0;
         if (!columnExists(placeTable(place.type), "subfamily_count")) return 0;

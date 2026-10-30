@@ -22,7 +22,11 @@ import org.calacademy.antweb.util.CountInvariants;
  *            genus name AntCat does not know (status unrecognized: "(formicidae)polyrachis", a misspelling, an old name)
  *            is not a genus either (it stays in AntWeb with its specimens); a stray parenthesis ("Amblyoponinae)") neither.
  *            The same rule on every kind of place, the subfamily rows' "N Genera" of every list, upload groups and the
- *            count check. Subfamilies: no placeholder rows ("(formicidae)", status morphotaxon since 2017).
+ *            count check.
+ *   Subfamilies   valid subfamilies only (PlaceTotals.countsAsSubfamily), the same principle: the placeholder
+ *            "(formicidae)" (status morphotaxon since 2017) and misspelled subfamily names (status unrecognized) are not
+ *            subfamilies; every kind of place, curated projects too (this replaced B67 of 2026-10-27), the Formicidae
+ *            row's "N Subfamilies" of every list and the count check. Upload groups already counted valid subfamilies.
  *   Worldants alert   "No Worldants changes in last week" counts the imports whose file size differs from the previous
  *            import's (WorldantsUploadDb.CHANGE_COUNT_SQL), not from its own backup copy (always the same size).
  */
@@ -56,16 +60,33 @@ public class CountRules20261030Test extends TestCase {
         assertTrue(g, g.contains(PlaceTotals.notPlaceholder("t")));
         assertTrue("ants only: " + g, g.endsWith(PlaceTotals.ANTS));
         String s = PlaceTotals.rankCondition(PlaceTotals.SUBFAMILY);
-        assertTrue(s, s.contains("t.status in " + PlaceTotals.COUNTABLE));
-        assertTrue(s, s.contains(PlaceTotals.notPlaceholder("t")));
+        assertTrue(s, s.contains("t.taxarank = 'subfamily'"));
+        assertTrue(s, s.contains(PlaceTotals.countsAsSubfamily("t")));
+        assertFalse("valid subfamilies only, not the counted statuses: " + s, s.contains(PlaceTotals.COUNTABLE));
+        assertTrue("ants only: " + s, s.endsWith(PlaceTotals.ANTS));
         String p = PlaceTotals.listedCondition(PlaceTotals.PROJECT, PlaceTotals.SUBFAMILY);
-        assertTrue("a curated project's Subfamilies: every status (B67) but no placeholder: " + p, p.contains(PlaceTotals.notPlaceholder("t")));
+        assertEquals("a curated project's Subfamilies: the same rule (B67 superseded)", s, p);
         // every kind of place: the nightly totals (one place, all places) and the count check use the same condition
         for (String type : PlaceTotals.TYPES) {
             assertTrue(type, PlaceTotals.listedCountSql(type, PlaceTotals.GENUS).contains(PlaceTotals.countsAsGenus("t")));
             assertTrue(type, PlaceTotals.listedCountsByPlaceSql(type, PlaceTotals.GENUS).contains(PlaceTotals.countsAsGenus("t")));
-            assertTrue(type, PlaceTotals.listedCountSql(type, PlaceTotals.SUBFAMILY).contains(PlaceTotals.notPlaceholder("t")));
+            assertTrue(type, PlaceTotals.listedCountSql(type, PlaceTotals.SUBFAMILY).contains(PlaceTotals.countsAsSubfamily("t")));
+            assertTrue(type, PlaceTotals.listedCountsByPlaceSql(type, PlaceTotals.SUBFAMILY).contains(PlaceTotals.countsAsSubfamily("t")));
         }
+    }
+
+    public void testSubfamiliesAreValidSubfamilies() {
+        assertTrue(PlaceTotals.isCountedSubfamily("valid", "myrmicinae"));
+        assertFalse("the placeholder", PlaceTotals.isCountedSubfamily("morphotaxon", "(formicidae)"));
+        assertFalse("a placeholder is never a subfamily, whatever its status", PlaceTotals.isCountedSubfamily("valid", "(formicidae)"));
+        assertFalse("a misspelled subfamily name", PlaceTotals.isCountedSubfamily("unrecognized", "myrmicicinae"));
+        for (String s : new String[] {"morphotaxon", "indetermined", "unidentifiable", "unrecognized", "synonym", null}) {
+            assertFalse(s, PlaceTotals.isCountedSubfamily(s, "myrmicinae"));
+        }
+        String sql = PlaceTotals.countsAsSubfamily("t");
+        assertTrue(sql, sql.contains("t.status = 'valid'"));
+        assertTrue(sql, sql.contains(PlaceTotals.notPlaceholder("t")));
+        assertEquals(" and " + PlaceTotals.countsAsSubfamily("a"), PlaceTotals.childCountCondition(PlaceTotals.SUBFAMILY, "a"));
     }
 
     public void testSubfamilyRowsGeneraOfEveryListTakeTheRule() {
@@ -81,7 +102,7 @@ public class CountRules20261030Test extends TestCase {
             String genus = list.getCountChildrenQuery("genus");
             assertTrue(list + ": " + genus, genus.contains(PlaceTotals.countsAsGenus("taxon")));
             String subfamily = list.getCountChildrenQuery("subfamily");
-            assertTrue(list + ": " + subfamily, subfamily.contains(PlaceTotals.notPlaceholder("taxon")));
+            assertTrue(list + ": " + subfamily, subfamily.contains(PlaceTotals.countsAsSubfamily("taxon")));
             assertFalse(list + ": species rows keep their rule", list.getCountChildrenQuery("species").contains(PlaceTotals.countsAsGenus("taxon")));
         }
         assertEquals("", PlaceTotals.childCountCondition(PlaceTotals.SPECIES, "taxon"));
@@ -106,7 +127,11 @@ public class CountRules20261030Test extends TestCase {
         List<String> after = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; x; " + CountInvariants.COUNTING_RULES_LOG
             + "; " + CountInvariants.GENERA_RULE_LOG + ")");
         assertTrue(CountInvariants.rulesCounted(after));
-        assertEquals("genera rule of 2026-10-30", CountInvariants.GENERA_RULE_LOG);
+        assertEquals("genera and subfamilies rule of 2026-10-30", CountInvariants.GENERA_RULE_LOG);
+        // a run that wrote the genera rule alone (before the subfamilies rule) is still pending
+        List<String> generaOnly = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; x; " + CountInvariants.COUNTING_RULES_LOG
+            + "; genera rule of 2026-10-30)");
+        assertFalse(CountInvariants.rulesCounted(generaOnly));
     }
 
     public void testWorldantsChangesCompareWithThePreviousImport() {
