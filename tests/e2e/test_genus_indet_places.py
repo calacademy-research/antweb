@@ -144,6 +144,14 @@ def test_day_genus_not_recorded_notice():
             assert NOTICE not in ns.text_of(html), (genus, listed[0], ns.day_note())
 
 
+def _red_flagged(code):
+    """True when the specimen page says the specimen has a red flag (kept off country lists)."""
+    if not code:
+        return False
+    html = ns.fetch(f"/specimen.do?code={quote_plus(code)}") or ""
+    return "Red Flag" in html
+
+
 def test_genus_rows_of_specimens_identified_only_to_genus():
     """Brian Fisher, 2026-10-29 (a specimen counts at each rank it is identified to): Lividopone, known in Mozambique only
     from Lividopone (indet), is on the Mozambique and Afrotropical genus lists, and the day's indet genus is on the list
@@ -151,11 +159,16 @@ def test_genus_rows_of_specimens_identified_only_to_genus():
     if ns.genus_rows_from_specimens_built() is False:
         pytest.skip("pending until nightly set 2 builds the genus rows (compute.log line 'Set 2 done (... "
                     + ns.GENUS_ROWS_LOG + ")')")
-    moz = ns.api_rows(ns.api("specimens?genus=lividopone&species=" + quote_plus("(indet)") + "&country=Mozambique&limit=1"))
+    moz = ns.api_rows(ns.api("specimens?genus=lividopone&species=" + quote_plus("(indet)") + "&country=Mozambique&limit=10"))
     if not moz:
         pytest.skip("no Lividopone (indet) specimen from Mozambique on this server")
-    for url in ("/taxonomicPage.do?rank=genus&countryName=Mozambique&statusSet=all",
-                "/taxonomicPage.do?rank=genus&bioregionName=Afrotropical&statusSet=all"):
+    urls = ["/taxonomicPage.do?rank=genus&bioregionName=Afrotropical&statusSet=all"]
+    # Red-flagged specimens are kept off country lists. Mozambique's Lividopone were flagged "genus outside its native
+    # bioregions" until Brian Fisher ticked Afrotropical in the Bioregion Map Manager (production, 2026-10-30); a copy
+    # of production made before then, or before the next upload of the group, still has them flagged.
+    if not all(_red_flagged(r.get("code")) for r in moz):
+        urls.insert(0, "/taxonomicPage.do?rank=genus&countryName=Mozambique&statusSet=all")
+    for url in urls:
         assert "genus=lividopone" in ns.get(url).lower(), f"Lividopone is not on {url}"
     assert NOTICE not in ns.text_of(ns.get(f"/images.do?{LIVIDOPONE}&bioregionName=Afrotropical"))
     valid_countries = {r.get("geolocaleName") for r in ns.geolocales("country")}
@@ -170,6 +183,8 @@ def test_genus_rows_of_specimens_identified_only_to_genus():
             continue
         country = max(sorted(by_country), key=lambda c: by_country[c])
         listed = ns.api_rows(ns.api(f"geolocaleTaxa?country={quote_plus(country)}&taxonName={quote_plus(parent)}"))
+        if not listed and all(_red_flagged(r.get("code")) for r in rows if r.get("country") == country):
+            continue   # red-flagged specimens are kept off country lists
         assert listed, f"{parent} is not on the list of {country} ({by_country[country]} indet specimens) {ns.day_note()}"
 
 
@@ -186,6 +201,8 @@ def test_bioregion_lists_have_no_genus_of_invalid_names_only():
     m = re.search(r"Biogeographic regions.*?</", html, re.S)
     region_part = html[m.start():m.start() + 600] if m else ""
     assert "Afrotropical" not in region_part.split("Distribution Notes")[0], "Formica chufejif is on the Afrotropical list"
-    genera = ns.get("/taxonomicPage.do?rank=genus&bioregionName=Afrotropical")
-    assert "genus=formica&" not in genera.lower() and "genus=formica\"" not in genera.lower(), \
-        "Formica is on the Afrotropical genus list"
+    # the list rows only: the header's "Change View" menu links the session's last taxon (here Formica chufejif)
+    genera = ns.list_rows(ns.get("/taxonomicPage.do?rank=genus&bioregionName=Afrotropical&statusSet=all"))
+    assert genera, "no rows on the Afrotropical genus list"
+    names = {(r.get("name") or "").lower() for r in genera}
+    assert "formicinaeformica" not in names, "Formica is on the Afrotropical genus list"

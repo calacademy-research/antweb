@@ -446,7 +446,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 					// termite) or is not a name at all.
 					// Only a line that is still an ant by name (no subfamily: '(formicidae)termes'); a line with a
 					// non-ant subfamily is listed once, under "Not ants (not in AntCat)" (2026-10-30).
-					if (isGenusNotInAntcat(genusName, (String) taxonItem.get("family")) && isAntGenus(subfamilyName, genusName, Taxon::isAnt)) {
+					// A missing subfamily ("(indet)", "undet") is still listed here (review of #306: isAntGenus("indet", ...) is false).
+					if (isGenusNotInAntcat(genusName, (String) taxonItem.get("family"))
+					    && (isMissingSubfamily(subfamilyName) || isAntGenus(subfamilyName, genusName, Taxon::isAnt))) {
 					  getMessageMgr().addToMessages(MessageMgr.genusNotInAntcat, Html.esc(Formatter.initCap(genusName)
 					    + (isMissingSubfamily(subfamilyName) ? " (no subfamily)" : " (subfamily " + subfamilyName + ")")));
 					}
