@@ -217,6 +217,13 @@ public class MessageMgr {
     public static final String SPECIES_INDET_SUBSPECIES_IGNORED_HEADING = "Name corrected: species indet, subspecies ignored, filed as &lt;Genus&gt; (indet)";
     public static final String DATE_READ_AS_MONTH_DAY_HEADING = "Date read as month/day (please check)";
     public static final String CURRENT_VALID_NAME_NOT_IN_ANTWEB_HEADING = "Current valid name in AntCat not yet in AntWeb: kept under the uploaded name";
+    /** Brian Fisher, 2026-10-30 (Phil Ward's upload: Schlettererius, Typhoctes, Pepsis...): a line whose name is not an ant
+     *  (Taxon.isAnt: its subfamily is not an AntCat subfamily) is listed here once, a note; not under "Preferred
+     *  Subfamily For Genus" or "Morpho Genera", and not counted as corrected. Was "Names not in Family Formicidae". */
+    public static final String NOT_ANTS_HEADING = "Not ants (not in AntCat): loaded as uploaded";
+    /** 2026-10-30: each column of the file that is not an AntWeb column, once (was "Unrecognized Column (ignored)",
+     *  added once per line and column: 241,821 "lines" for a 24,219-line file with 10 such columns). */
+    public static final String COLUMNS_IGNORED_HEADING = "Columns ignored (not AntWeb columns)";
 
     /** Sections whose lines already give the specimen code (or line number): no list added. */
     static final Set<String> CODES_IN_LINE = new HashSet<>(Arrays.asList(
@@ -321,7 +328,7 @@ public class MessageMgr {
       //testList.add(new Test(adm1UpgradeToIsland, STR, "<b>Adm1 upgraded to Island Country</b>"));
       testList.add(new Test(notValidCountries, STR, "<b>Not Antweb valid countries</b>"));
       testList.add(new Test(invalidLatLon, STR, "<b>Invalid lat/lon <font color=red>(not uploaded)</font></b>"));
-      testList.add(new Test(unrecognizedColumn, STR, "<b>Unrecognized Column <font color=red>(ignored)</font></b>"));
+      testList.add(new Test(unrecognizedColumn, STR, "<b>" + COLUMNS_IGNORED_HEADING + "</b>"));
       testList.add(new Test(invalidColumn, SET, "<b>Invalid Column Count <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(notValidAdm1, STR, "<b>Not valid Antweb adm1</b>"));
       //testList.add(new Test(noCasteNotes, STR, "<b>No life stage/sex data. Undiscernable <a href='" + AntwebProps.getDomainApp() + "/casteDisplayPage.do'>caste</a></b>"));
@@ -347,13 +354,13 @@ public class MessageMgr {
       testList.add(new Test(badQuotations, MAP, "<b>Data field should not be in quotations <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(troubleParsingLines, STR, "<b>Trouble parsing lines</b>"));
       testList.add(new Test(duplicatedRecord, MAP, "<b>Duplicated record</b>"));
-      testList.add(new Test(multipleBioregionsForNonIntroducedTaxa, STR, "<b>Multiple bioregions for non-introduced taxa</b>"));
+      testList.add(new Test(multipleBioregionsForNonIntroducedTaxa, SET, "<b>Multiple bioregions for non-introduced taxa</b>"));
       testList.add(new Test(parsingErrors, STR, "<b>Parsing Errors (bad rank?) - <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(extraCarriageReturn, SET, "<b>Extra Carriage Return? (inconsistent column count) in specimen records <font color=red>(not uploaded)</font></b>"));     
       testList.add(new Test(correctedBioregion, SET, "<b>Corrected <a href='" + AntwebProps.getDomainApp() + "/bioregionCountryList.do'>Biogeographic Regions</a></b>"));
       testList.add(new Test(groupMorphoGenera, SET, "<b>Morpho Genera (containing non-alphabetic characters) <font color=green>(uploaded)</font></b>"));
 // These should be at the end of the report
-      testList.add(new Test(nameNotInFamilyFormicidae, SET, "<b>Names not in Family Formicidae <font color=green>(uploaded)</font></b>"));
+      testList.add(new Test(nameNotInFamilyFormicidae, SET, "<b>" + NOT_ANTS_HEADING + "</b>"));
       testList.add(new Test(nonValidWorldantsDup, SET, "<b>Worldants record is not valid and is duplicated <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(badRankList, SET, "<b>Parsing Errors (bad rank) <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(codeNotFoundInLine, SET, "<b>Code not found <font color=red>(fix these)</font></b>"));     
@@ -404,6 +411,26 @@ public class MessageMgr {
         test.increment();
     }
     
+    /**
+     * Adds a value once for the whole upload: a second add of the same value changes nothing, and no line or code is
+     * recorded (2026-10-30: the columns of the file that are not AntWeb columns, counted as columns, not lines).
+     */
+    public void addToMessagesOnce(String key, String value) {
+        Test test = getTest(key);
+        if (test == null) return;
+        if (value == null) value = "null";
+        if (!test.onceValues.add(value)) return;
+        test.add(value);
+        test.increment();
+    }
+
+    /** A line of "Multiple bioregions for non-introduced taxa" (2026-10-30; was a bare "list" link): the taxon (a
+     *  link, HTML) and its bioregions, as the database gives them ("Afrotropical,Malagasy"). */
+    public static String multiBioregionLine(String taxonLinkHtml, String bioregions) {
+        String regions = bioregions == null ? "" : String.join(", ", bioregions.split("\\s*,\\s*"));
+        return taxonLinkHtml + ": " + Html.esc(regions);
+    }
+
     public void addToMapMessages(String key, String key2, String value) { 
         Test test = getTest(key);
         if (value == null) value = "null";
@@ -570,8 +597,12 @@ public class MessageMgr {
       public String headingHtml;
       /** NOT_LOADED, CORRECTED_KIND, RED_FLAG or NOTE. */
       public String kind;
-      /** The times the section was added to: once per line of the file (the email's counts). */
+      /** The times the section was added to: once per line of the file (the email's counts); for "Columns ignored"
+       *  the columns, for "Multiple bioregions" the taxa (unit). */
       public int count;
+      /** What count counts, singular and plural: "line" (most sections), "column", "taxon". */
+      public String unit = "line";
+      public String units = "lines";
       /** A link to the section's details file, or null. */
       public String detailHref;
       /** A link that lists the section's specimens (country missing, introduced), or null. */
@@ -608,6 +639,14 @@ public class MessageMgr {
         sec.headingHtml = test.getHeading();
         sec.kind = kind(test);
         sec.count = Math.max(test.getCount(), 1);
+        if (unrecognizedColumn.equals(test.getKey())) {
+          sec.unit = "column";
+          sec.units = "columns";
+        } else if (multipleBioregionsForNonIntroducedTaxa.equals(test.getKey())) {
+          sec.unit = "taxon";
+          sec.units = "taxa";
+          if (test.getGroup() != null) sec.listHref = AntwebProps.getDomainApp() + "/list.do?action=multiBioregionTaxaList&groupId=" + test.getGroup().getId();
+        }
         if (test.getGroup() != null && !test.details.isEmpty()) {
           sec.detailHref = AntwebProps.getDomainApp() + "/web/log/detail/" + test.getKey() + test.getGroup().getId() + ".html";
         }
@@ -688,6 +727,9 @@ public class MessageMgr {
       final HashMap<String, HashMap<String, HashSet<String>>> messageMapsHash = new HashMap<>();
 
       final Vector<String> details = new Vector<>();
+
+      /** The values added with addToMessagesOnce. */
+      final HashSet<String> onceValues = new HashSet<>();
 
       /** Report line (value, or the bold key of a MAP line) -> its specimens. */
       final HashMap<String, SpecimenCodes> codesByLine = new HashMap<>();

@@ -20,13 +20,16 @@ import org.calacademy.antweb.util.Html;
  *      counts the email's summary (MessageMgr.attention, MessageMgr.reportSections); there is no second copy here;
  *   3. each row: the lines of the file (linked to the line as uploaded, logMgr.do?action=uploadLog, the specimen
  *      page's curator link), what the file said, what AntWeb did, and the specimens; long sections show their first
- *      rows and the rest under "Show all" (details/summary, no script);
+ *      rows and the rest under "Show all" (details/summary, no script). One line-number column (2026-10-30): a value
+ *      that starts with its line number is shown without it;
  *   4. the checks that found nothing in one collapsed line, "N other checks found nothing";
  *   5. the upload's details and statistics in small tables at the bottom.
  *
  * Old reports are static files and stay as they are; the file names do not change. Every value written here is
  * escaped; the rows' values (MessageMgr) are HTML escaped where each message is added (they carry links).
- * Tested in UploadReportPageTest (the summary's counts equal the email's) and tests/e2e.
+ * Each tile is the sum of its group's section counts (2026-10-30: "Columns ignored" counts columns, not lines;
+ * "Multiple bioregions" counts taxa; non-ants are a note, never corrected).
+ * Tested in UploadReportPageTest (the summary's counts equal the email's and the sections' sums) and tests/e2e.
  */
 public final class UploadReportPage {
 
@@ -74,7 +77,9 @@ public final class UploadReportPage {
         ACTIONS.put(MessageMgr.dateReadAsMonthDay, "Loaded with the date read as month/day. If the file means day/month, write the date as 2013-04-05 (year-month-day) or 5 Apr 2013.");
         ACTIONS.put(MessageMgr.subspeciesIndetDropped, "Loaded under genus and species; the subspecies value dropped.");
         ACTIONS.put(MessageMgr.speciesIndetSubspeciesIgnored, "Loaded as <Genus> (indet); the subspecies value ignored.");
-        ACTIONS.put(MessageMgr.unrecognizedColumn, "Column ignored.");
+        ACTIONS.put(MessageMgr.unrecognizedColumn, "Not read into AntWeb's fields (one row per column, not per line).");
+        ACTIONS.put(MessageMgr.nameNotInFamilyFormicidae, "Loaded under the name as uploaded; nothing changed.");
+        ACTIONS.put(MessageMgr.multipleBioregionsForNonIntroducedTaxa, "Loaded. A taxon not flagged as introduced has specimens in more than one bioregion.");
         ACTIONS.put(MessageMgr.correctedBioregion, "Loaded with the bioregion of the country (or adm1).");
         ACTIONS.put(MessageMgr.identifiedOnlyToGenus, "Loaded as <Genus> (indet).");
         ACTIONS.put(MessageMgr.identifiedOnlyToSubfamily, "Loaded as (Subfamily) (indet).");
@@ -163,13 +168,14 @@ public final class UploadReportPage {
         for (Map.Entry<String, String> g : GROUP_TITLES.entrySet()) {
             List<MessageMgr.ReportSection> in = new ArrayList<>();
             int lines = 0;
+            boolean allLines = true;
             for (MessageMgr.ReportSection s : sections) {
-                if (g.getKey().equals(s.kind)) { in.add(s); lines += s.count; }
+                if (g.getKey().equals(s.kind)) { in.add(s); lines += s.count; allLines &= "line".equals(s.unit); }
             }
             if (in.isEmpty()) continue;
             b.append("<div class=\"rep-group rep-").append(g.getKey()).append("\" id=\"rep-").append(g.getKey()).append("\">\n");
             b.append("<h2 class=\"rep-group-title\">").append(Html.esc(g.getValue()))
-             .append(" <span class=\"rep-pill\">").append(plural(lines, "line")).append("</span></h2>\n");
+             .append(" <span class=\"rep-pill\">").append(allLines ? plural(lines, "line") : plural(lines, "item")).append("</span></h2>\n");
             b.append("<p class=\"aw-lead\">").append(Html.esc(GROUP_LEADS.get(g.getKey()))).append("</p>\n");
             for (MessageMgr.ReportSection s : in) section(b, s, f, app);
             b.append("</div>\n");
@@ -260,8 +266,9 @@ public final class UploadReportPage {
 
         b.append("<section class=\"aw-card rep-sec\" id=\"sec-").append(Html.escAttr(s.key)).append("\" data-key=\"").append(Html.escAttr(s.key))
          .append("\" data-kind=\"").append(s.kind).append("\" data-total=\"").append(s.count).append("\" data-rows=\"").append(s.rows.size()).append("\">\n");
-        b.append("<h3 class=\"rep-sec-title\">").append(headingText(s.headingHtml))
-         .append(" <span class=\"rep-pill\">").append(plural(s.count, "line")).append("</span>");
+        b.append("<h3 class=\"rep-sec-title\">").append(headingText(s.headingHtml));
+        if (MessageMgr.unrecognizedColumn.equals(s.key)) b.append(": ").append(String.format("%,d", s.count));   // "Columns ignored (not AntWeb columns): 10"
+        else b.append(" <span class=\"rep-pill\">").append(plural(s.count, s.unit, s.units)).append("</span>");
         if (s.detailHref != null) b.append(" <a class=\"rep-detail\" href=\"").append(Html.escAttr(s.detailHref)).append("\">details</a>");
         if (s.listHref != null) b.append(" <a class=\"rep-detail\" href=\"").append(Html.escAttr(s.listHref)).append("\">list</a>");
         b.append("</h3>\n");
@@ -296,8 +303,18 @@ public final class UploadReportPage {
             MessageMgr.ReportRow r = s.rows.get(i);
             String[] parts = split.get(i);
             b.append("<tr>");
-            if (anyLines) b.append("<td class=\"rep-c-line\" data-label=\"Line\">").append(lineLinks(r, f, app)).append("</td>");
-            String written = anyLines && !r.lines.isEmpty() ? withoutLineNumber(parts[0]) : parts[0];
+            // One line-number column (2026-10-30): a value that starts with its line number ("line:926 code:x") loses
+            // it; a row whose lines were not recorded (past MAX_REPORT_LINES) shows that number there, unlinked.
+            String written = parts[0];
+            if (anyLines) {
+                String cell = lineLinks(r, f, app);
+                String lead = leadingLineNumber(parts[0]);
+                if (lead != null) {
+                    written = withoutLineNumber(parts[0]);
+                    if (cell.isEmpty()) cell = Html.esc(lead);
+                }
+                b.append("<td class=\"rep-c-line\" data-label=\"Line\">").append(cell).append("</td>");
+            }
             if (written == null || written.isEmpty()) written = "&mdash;";
             b.append("<td class=\"rep-c-file\" data-label=\"In your file\">").append(written).append("</td>");
             if (anyAction) {
@@ -336,6 +353,14 @@ public final class UploadReportPage {
         if (v.isEmpty() || v.trim().equalsIgnoreCase("code:")) return "(no specimen code)";
         return v;
     }
+
+    /** The line number a value starts with ("line:926 code:x", "Line:12 elevation:", "line 7, casent1: ..."), or null. */
+    static String leadingLineNumber(String valueHtml) {
+        if (valueHtml == null) return null;
+        java.util.regex.Matcher m = LEADING_LINE.matcher(valueHtml);
+        return m.find() ? m.group(1) : null;
+    }
+    private static final java.util.regex.Pattern LEADING_LINE = java.util.regex.Pattern.compile("^(?i)line:?\\s*(\\d+)");
 
     /** "old -> new" (or "old -&gt; new") as {old, new}; {value, null} when the value has no arrow. */
     static String[] splitArrow(String valueHtml) {
@@ -400,7 +425,11 @@ public final class UploadReportPage {
     }
 
     static String plural(int n, String word) {
-        return String.format("%,d", n) + " " + word + (n == 1 ? "" : "s");
+        return plural(n, word, word + "s");
+    }
+
+    static String plural(int n, String word, String words) {
+        return String.format("%,d", n) + " " + (n == 1 ? word : words);
     }
 
     /*

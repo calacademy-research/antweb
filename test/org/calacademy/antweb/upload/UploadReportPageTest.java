@@ -13,6 +13,7 @@ import junit.framework.TestCase;
 
 import org.calacademy.antweb.Group;
 import org.calacademy.antweb.upload.MessageMgr;
+import org.calacademy.antweb.upload.SpecimenUploadParse;
 import org.calacademy.antweb.upload.UploadNotice;
 import org.calacademy.antweb.upload.UploadReportPage;
 import org.calacademy.antweb.util.Html;
@@ -335,6 +336,26 @@ public class UploadReportPageTest extends TestCase {
         }
         assertEquals(email.notLoaded, notLoaded);
         assertEquals(email.corrected, corrected);
+        assertTilesAreSectionSums(page);
+    }
+
+    /** Each tile (not loaded, corrected, red-flagged, notes) is the sum of the data-total of its group's sections
+     *  (2026-10-30), and each group's pill says that sum. */
+    static void assertTilesAreSectionSums(String page) {
+        String[][] tiles = {{"notLoaded", MessageMgr.NOT_LOADED}, {"corrected", MessageMgr.CORRECTED_KIND},
+            {"redFlagged", MessageMgr.RED_FLAG}, {"notes", MessageMgr.NOTE}};
+        for (String[] t : tiles) {
+            if (!page.contains("id=\"rep-count-" + t[0] + "\"")) continue;
+            int sum = 0;
+            for (String[] s : sections(page)) if (t[1].equals(s[1])) sum += Integer.parseInt(s[2]);
+            assertEquals("tile " + t[0], count(page, t[0]), sum);
+            int g = page.indexOf("id=\"rep-" + t[1] + "\"");
+            if (sum > 0) {
+                assertTrue("group " + t[1], g > 0);
+                String pill = page.substring(page.indexOf("rep-pill\">", g) + 10, page.indexOf("</span>", g));
+                assertTrue(pill, pill.startsWith(String.format("%,d", sum) + " "));
+            }
+        }
     }
 
     // --------------------------------------------------------------------------------------------- tests
@@ -445,6 +466,127 @@ public class UploadReportPageTest extends TestCase {
         assertFalse(page.contains("<td class=\"rep-c-line\""));
     }
 
+    // ------------------------------------------------------------------ 2026-10-30 (Phil Ward's upload, UC Davis)
+
+    /** Phil Ward's upload of 2026-10-30: 24,219 lines, 10 columns that are not AntWeb columns, non-ant wasps
+     *  (Schlettererius, Typhoctes, Pepsis...), one real "Preferred Subfamily For Genus" ant line, one taxon in two
+     *  bioregions. The parse step's decisions are SpecimenUploadParse's (isAnt here: the subfamily is an ant one). */
+    static final Set<String> ANT_SUBFAMILIES = new HashSet<>(Arrays.asList("myrmicinae", "formicinae", "ponerinae", "dorylinae"));
+    static boolean isAnt(String taxonName) {
+        if (taxonName.contains("(formicidae)")) return true;
+        for (String sf : ANT_SUBFAMILIES) if (taxonName.startsWith(sf)) return true;
+        return false;
+    }
+    static final String[] IGNORED = {"adm1check", "blank", "count", "ew", "iso_3166", "latdeg", "latmin", "londeg", "lonmin", "ns"};
+
+    public static Fixture wardUpload() {
+        Fixture x = new Fixture(41, "UC Davis (Ward lab)", "20261030-10:09:02-specimen41.txt", "specimenUpload");
+        UploadReportPage.Facts f = x.facts;
+        f.uploadId = 2275;
+        f.date = "Fri Oct 30 10:31:40 PDT 2026";
+        f.recordCount = 24_219;
+        f.parsed = 24_219;
+        f.processed = 24_219;
+        f.insertedSpecimens = 24_219;
+        // { file's subfamily, genus, subfamily of AntWeb's genus row, species }
+        String[][] lines = {
+            {"schlettereriinae", "schlettererius", "(schlettereriinae)", "cinctipes"},
+            {"schlettereriinae", "schlettererius", "(schlettereriinae)", "cinctipes"},
+            {"typhoctinae", "typhoctes", "(typhoctinae)", "peculiaris"},
+            {"typhoctinae", "typhoctes", "(typhoctinae)", "peculiaris"},
+            {"pepsinae", "pepsis", "(pepsinae)", "sp"},
+            {"myrmicinae", "aenictus", "dorylinae", "ceylonicus"},          // a real ant: AntCat files Aenictus under Dorylinae
+        };
+        for (int line = 2; line <= 24_220; line++) {
+            x.at(line, String.format("psw%05d", line));
+            for (String c : IGNORED) x.mgr.addToMessagesOnce(MessageMgr.unrecognizedColumn, Html.esc(c));
+            if (line - 2 < lines.length) {
+                String[] l = lines[line - 2];
+                if (SpecimenUploadParse.isPreferredSubfamilyReplacement(l[0], l[2], l[1], UploadReportPageTest::isAnt)) {
+                    x.mgr.addToMapMessages(MessageMgr.preferredSubfamilyForGenusReplaced, Html.esc(l[0]), taxon(l[2] + l[1], l[2] + " " + l[1]));
+                }
+                String taxonName = l[2] + l[1] + " " + l[3];
+                if (!isAnt(taxonName)) x.mgr.addToMessages(MessageMgr.nameNotInFamilyFormicidae, taxon(taxonName, l[1] + " " + l[3]));
+            }
+        }
+        x.done();
+        x.mgr.addToMessages(MessageMgr.multipleBioregionsForNonIntroducedTaxa,
+            MessageMgr.multiBioregionLine(taxon("formicinaecamponotus semitestaceus", "Camponotus semitestaceus"), "Nearctic,Neotropical"));
+        return x;
+    }
+
+    /** A non-ant genus row ('(schlettereriinae)schlettererius') is no "Preferred Subfamily For Genus"; an ant one is. */
+    public void testPreferredSubfamilyOnlyForAnts() {
+        assertFalse(SpecimenUploadParse.isPreferredSubfamilyReplacement("schlettereriinae", "(schlettereriinae)", "schlettererius", UploadReportPageTest::isAnt));
+        assertFalse(SpecimenUploadParse.isPreferredSubfamilyReplacement("ampulicinae", "(ampulicinae)", "ampulex", UploadReportPageTest::isAnt));
+        assertTrue(SpecimenUploadParse.isPreferredSubfamilyReplacement("myrmicinae", "dorylinae", "aenictus", UploadReportPageTest::isAnt));
+        assertFalse(SpecimenUploadParse.isPreferredSubfamilyReplacement("(formicidae)", "dorylinae", "aenictus", UploadReportPageTest::isAnt));
+        assertTrue(SpecimenUploadParse.isAntGenus("(formicidae)", "termes", UploadReportPageTest::isAnt));
+        assertFalse(SpecimenUploadParse.isAntGenus("(typhoctinae)", "typhoctes", UploadReportPageTest::isAnt));
+    }
+
+    /** A non-ant line is listed once, under "Not ants (not in AntCat)", a note; not corrected, not in the email's count. */
+    public void testNonAntListedOnceNotCorrected() {
+        Fixture x = wardUpload();
+        String page = x.render();
+        assertSummaryIsTheEmails(x, page);
+        assertEquals(1, x.mgr.getCorrectedCount());                     // the Aenictus line only
+        assertEquals(1, count(page, "corrected"));
+        assertEquals(1, occurrences(page, MessageMgr.NOT_ANTS_HEADING + " <span"));
+        String notAnts = sectionHtml(page, MessageMgr.nameNotInFamilyFormicidae);
+        assertTrue(notAnts, notAnts.contains("data-kind=\"" + MessageMgr.NOTE + "\" data-total=\"5\" data-rows=\"3\""));
+        assertEquals("Schlettererius named once on the page", 1, occurrences(page, ">schlettererius cinctipes<"));
+        String pref = sectionHtml(page, MessageMgr.preferredSubfamilyForGenusReplaced);
+        assertTrue(pref, pref.contains("data-total=\"1\""));
+        assertFalse(pref, pref.contains("schlettererius") || pref.contains("typhoctes"));
+        assertTrue(pref, pref.contains("aenictus"));
+        assertFalse(page.contains("data-key=\"" + MessageMgr.groupMorphoGenera + "\""));
+        assertFalse(page.contains("Names not in Family Formicidae"));
+    }
+
+    /** 10 ignored columns over 24,219 lines count as 10: one row per column, no line numbers, the Notes tile not inflated. */
+    public void testIgnoredColumnsCountOnce() {
+        Fixture x = wardUpload();
+        String page = x.render();
+        assertSummaryIsTheEmails(x, page);
+        String cols = sectionHtml(page, MessageMgr.unrecognizedColumn);
+        assertTrue(cols, cols.contains("data-total=\"10\" data-rows=\"10\""));
+        assertTrue(cols, cols.contains(MessageMgr.COLUMNS_IGNORED_HEADING + ": 10</h3>"));
+        assertFalse(cols, cols.contains("rep-c-line"));
+        assertFalse(cols, cols.contains("action=uploadLog"));
+        for (String c : IGNORED) assertTrue(c, cols.contains(">" + c + "</td>"));
+        // Notes: 10 columns + 5 non-ant lines + 1 taxon in two bioregions.
+        assertEquals(16, count(page, "notes"));
+        assertEquals(16, x.mgr.getNoteCount());
+        assertTrue(page, page.contains("<span class=\"rep-pill\">16 items</span></h2>"));
+        assertFalse(page.contains("Unrecognized Column"));
+    }
+
+    /** "Multiple bioregions for non-introduced taxa" lists each taxon and its bioregions. */
+    public void testMultipleBioregionsListsNames() {
+        Fixture x = wardUpload();
+        String page = x.render();
+        String mb = sectionHtml(page, MessageMgr.multipleBioregionsForNonIntroducedTaxa);
+        assertTrue(mb, mb.contains("data-total=\"1\" data-rows=\"1\""));
+        assertTrue(mb, mb.contains("1 taxon</span>"));
+        assertTrue(mb, mb.contains(">Camponotus semitestaceus</a>: Nearctic, Neotropical</td>"));
+        assertTrue(mb, mb.contains("action=multiBioregionTaxaList&amp;groupId=41"));
+    }
+
+    /** One line-number column: a value's leading "line:N" moves to the Line column, linked when the line was recorded. */
+    public void testOneLineNumberColumn() {
+        Fixture x = ecofog();
+        // A row whose line was not recorded (the report's link budget used up): its number goes to the Line column.
+        x.mgr.setCurrentLine(0);
+        x.mgr.addToMessages(MessageMgr.codeNotFound, "line:1003 code:");
+        String page = x.render();
+        String sec = sectionHtml(page, MessageMgr.codeNotFound);
+        assertTrue(sec, sec.contains("<td class=\"rep-c-line\" data-label=\"Line\">1003</td>"));
+        assertTrue(sec, sec.contains("line=926\" title=\"This line as uploaded\">926</a></td>"));
+        assertFalse(sec, sec.contains("line:"));
+        assertEquals(1, occurrences(sec, "<th class=\"rep-c-line\">"));
+    }
+
     static String sectionHtml(String page, String key) {
         int i = page.indexOf("data-key=\"" + key + "\"");
         assertTrue("no section " + key, i > 0);
@@ -491,6 +633,7 @@ public class UploadReportPageTest extends TestCase {
         all.put("cas-nightly", casNightly());
         all.put("every-section", everyOtherSection());
         all.put("empty-run", emptyRun());
+        all.put("ward-2026-10-30", wardUpload());
         for (Map.Entry<String, Fixture> e : all.entrySet()) {
             e.getValue().facts.cssHref = "tools.css";
             String page = e.getValue().render();
