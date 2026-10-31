@@ -291,6 +291,7 @@ public class UploadDb extends AntwebDb {
 
     /** The query (one parameter) of getLastUpload: the row id of the newest upload of the group or login. */
     public static String lastUploadSql(String column) {
+        if (!"group_id".equals(column) && !"login_id".equals(column)) throw new IllegalArgumentException(column);
         return "select id from upload where " + column + " = ?"
             + " order by coalesce(upload_id, 0) = 0, upload_id desc, id desc limit 1";
     }
@@ -354,7 +355,6 @@ public class UploadDb extends AntwebDb {
             upload = getCounts(groupId);
             if (upload == null) return null;
             
-            int uploadId = getLastUploadId(groupId);
             stmt = DBUtil.getStatement(getConnection(), "updateCounts()");
 			
 			String dml = "update upload set "

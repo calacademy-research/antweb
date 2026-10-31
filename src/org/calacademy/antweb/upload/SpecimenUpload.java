@@ -301,11 +301,25 @@ public class SpecimenUpload extends SpecimenUploadParse {
         } catch (IOException e) {
             s_log.error("importSpecimens()  (File input error?)  e:" + e);
             AntwebUtil.errorStackTrace(e);
+            // The group's specimens may already have been removed (doPreliminaries): never commit a file read only
+            // in part. The forward page makes the caller roll back (SpecimenUploadJob, TaxonWorksNightly).
+            readFailed(getUploadDetails(), e);
         }
 
         Profiler.profile("importSpecimens", startTime);
 
         return getUploadDetails();
+    }
+
+    /**
+     * A read error (for example a byte that is not UTF-8 in the middle of the file): the upload is rolled back, as
+     * when no line was saved, and the report says why.
+     */
+    public static void readFailed(UploadDetails details, IOException e) {
+        String reason = "the file could not be read to the end: " + (e == null ? "read error" : e.getClass().getSimpleName());
+        details.getMessageMgr().addToMessages(MessageMgr.noRecordsProcessed, Html.esc(reason));
+        details.setMessage(rolledBackMessage(reason));
+        details.setForwardPage("message");
     }
 
     /** The message of an upload that is rolled back because no line was saved or a line stopped it. */

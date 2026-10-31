@@ -1,6 +1,6 @@
 <%-- Suggestions for the header's Places box (jQuery autocomplete, ?q=...), public; Caddy allows this JSP directly.
      Plain text, one place name per line, from memory (GeolocaleMgr.getPlaceNames). Docs: docs/flows/search.md.
-     Tests: tests/e2e/test_search_pages.py::test_place_autocomplete. --%><%@page import="java.util.Iterator"%>
+     Tests: tests/e2e/test_search_pages.py::test_place_autocomplete. --%><%@page contentType="text/plain; charset=UTF-8"%><%@page import="java.util.Iterator"%>
 <%@page import="java.util.List"%>
 <%@page import="org.calacademy.antweb.home.*"%>
 <%@page import="org.calacademy.antweb.util.*"%>

@@ -372,8 +372,8 @@ Sorry, nothing matches your request.
     next = (next*intLength) - intLength;
     prev = (prev*intLength) - intLength;
 
-    Double foo = new Double(searchResults.getResults().size() / intLength);
-    int numNexts = (new Double(java.lang.Math.floor(foo))).intValue() + 1;
+    // Pages needed for all the results (no empty last page when the count is a multiple of the page length).
+    int numNexts = Math.max(1, (searchResults.getResults().size() + intLength - 1) / intLength);
     int nextOffset = 0;
     int index = 1;
     if (numNexts > 1) {
@@ -435,7 +435,7 @@ Sorry, nothing matches your request.
                 }
             }
         }
-        if (the_page < numNexts-1) {
+        if (the_page < numNexts) {
 %>
 <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= next %>&length=<%= length %>&sortBy=<%= Html.escAttr(Html.url(request.getParameter("sortBy"))) %>">NEXT &rsaquo;</a></span> <span class="not_on_page"><a href="<%= domainApp %>/recentSearchResults.do?searchMethod=recentImageSearch&offset=<%= (numNexts-1)*intLength %>&length=<%= length %>&sortBy=<%= Html.escAttr(Html.url(request.getParameter("sortBy"))) %>">LAST &#187;</a></span>
 <%

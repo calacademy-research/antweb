@@ -219,7 +219,7 @@ To do:
     }
     
     if (desc.containsKey("taxonomichistory")) { %>
-      <br><h2>Taxonomic History (provided by Barry Bolton, <%= year %>)</h2>
+      <br><h2>Taxonomic history (from AntCat)</h2>
                   <% String words = new Formatter().removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomichistory"),""), "br"); words = words == null ? null : words.replaceAll("(?i)\\s*<a[^>]*hol\\.osu\\.edu[^>]*>[^<]*</a>", ""); /* HOL is offline; AntCat stopped sending the link (#1573), older imports still have it. */ %>
                     <%= HtmlSanitizer.sanitize(new Formatter().removeTag((String) words, "o:p")) %>
  <% }
@@ -270,7 +270,7 @@ To do:
  
  <% thisDesc = "taxanomicnotes";       
     descHeader = "Taxonomic Notes"; 
-    descNotes = "Information about taxonomic history, nomenclatural issues, type specimens, etc. that is not already referred to in the &#39;Taxonomic History&#39; section.";   %>
+    descNotes = "Information about taxonomic history, nomenclatural issues, type specimens, etc. that is not already referred to in the &#39;Taxonomic history&#39; section.";   %>
  <%@ include file="/common/descEdit/taxonEditFieldCK.jsp" %>
 
  <!-- to be removed after Eli transfers to comments or Taxonomic Notes -->
@@ -519,14 +519,6 @@ TaxonSet taxonSet = taxon.getTaxonSet();
 </div>
 <div id=data_items2>
 <%= (new Formatter()).clearNull(taxon.getCreated()) %> &nbsp;
-</div>
-
-<div class="clear"></div>
-<div id=data_title2>
-<b>Image files (taxon.image_count, labels included):</b>
-</div>
-<div id=data_items2>
-<%= taxon.getImageCount() %> &nbsp;
 </div>
 
 <div class="clear"></div>
@@ -801,7 +793,7 @@ Default Images:
     <div class="left">
 
 <% if ((taxon.getImages() != null) && (taxon.getImages().containsKey("h"))) { %>
-        <div class="slide medium last" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><%=((org.calacademy.antweb.SpecimenImage) taxon.getImages().get("h")).getThumbview() %>');" onclick="window.location='bigPicture.do?name=<%= ((org.calacademy.antweb.SpecimenImage) taxon.getImages().get("h")).getCode() %>&shot=h&number=1<%= projectStr %>';">
+        <div class="slide medium last" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><%=((org.calacademy.antweb.SpecimenImage) taxon.getImages().get("h")).getThumbview() %>');" onclick="window.location='bigPicture.do?name=<%= Html.escAttr(Html.js(Html.url(((org.calacademy.antweb.SpecimenImage) taxon.getImages().get("h")).getCode()))) %>&shot=h&number=1<%= projectStr %>';">
         </div>
         <div class="clear"></div>        
 <% } else {

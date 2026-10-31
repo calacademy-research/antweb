@@ -849,6 +849,9 @@ object_map, the description tables, taxon_prop, favorite_images, similar_species
 `(indet)` name exists already the two merge: in the taxon and list tables the old row is a duplicate and is deleted
 (counts follow at the nightly run); in the other tables a clash stops the run (preview says `REFUSED`).
 
+Two-word `<g> sp.` and `<g> sp` (any case) are indet too and become `<g> (indet)` (Brian Fisher, 2026-10-30;
+exactly two words). A morphospecies is never renamed: `<g> sp 1`, `<g> sp-1`, `<g> sp. A`.
+
 Three-word names (Brian Fisher, 2026-10-29; a specimen counts at each rank it is identified to, and no further; the
 same rules as the upload, `UploadUtil.indetColumns`; "indet" is indet, undet, `(indet)` or sp.):
 

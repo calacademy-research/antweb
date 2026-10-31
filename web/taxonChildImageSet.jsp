@@ -89,7 +89,7 @@ Examples of species with images that don't have h1 images:
             if (isSpecimen) {
                 imageRoot = specChild.getName();
 %>
-<div class="data_checkbox" style="float:left; margin-top:2px; display:none;"><input form="getComparison" type="checkbox" name="chosen" value="<%= thisChild.getName() %>"></div>
+<div class="data_checkbox" style="float:left; margin-top:2px; display:none;"><input form="getComparison" type="checkbox" name="chosen" value="<%= org.calacademy.antweb.util.Html.escAttr(thisChild.getName()) %>"></div>
 <div class="data_overlay"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= code %><%= overviewParams %>"><%= thisChild.getPrettyName() %></a><%= fromPlaceMark %>
 <%
                 if (specChild.getTypeStatus() != null) { %>
@@ -190,7 +190,7 @@ Examples of species with images that don't have h1 images:
                     String shotNumber = (new Integer(specimenImage.getNumber())).toString();
 %>
 <div class="slide medium <% if (position == first) { %> first<% } %><% if (position == fourth) { %> last<% } %> ratio">
-    <div class="adjust"><img class="medres" src="<%= AntwebProps.getImgDomainApp() %><%= specimenImage.getThumbview() %>" loading="lazy" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= imageRoot %>&shot=<%= shotType %>&number=<%= shotNumber %>';" /></div>
+    <div class="adjust"><img class="medres" src="<%= AntwebProps.getImgDomainApp() %><%= specimenImage.getThumbview() %>" loading="lazy" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(org.calacademy.antweb.util.Html.url(imageRoot))) %>&shot=<%= shotType %>&number=<%= shotNumber %>';" /></div>
 </div>
            <%   }
               } // isGoodShot
@@ -235,9 +235,9 @@ Examples of species with images that don't have h1 images:
 %>
 
                 <div class="slide medium<% if (position == first) { %> first<% } %><% if (position == fourth) { %> last<% } %>" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><%= img.getThumbview() %>');" id="<%= index %>">
-                <div class="hover medium" onclick="window.location='<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= thisChild.getCode() %><%= overviewParams %>';"></div>
+                <div class="hover medium" onclick="window.location='<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(org.calacademy.antweb.util.Html.url(thisChild.getCode()))) %><%= overviewParams %>';"></div>
                 <div class="top_gradient medium"></div>
-                <div class="name"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= thisChild.getCode() %><%= overviewParams %>"><%= thisChild.getPrettyName() %></a><%= fromPlaceMark %></div>
+                <div class="name"><a href="<%= AntwebProps.getDomainApp() %>/specimenImages.do?name=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.url(thisChild.getCode())) %><%= overviewParams %>"><%= org.calacademy.antweb.util.Html.esc(thisChild.getPrettyName()) %></a><%= fromPlaceMark %></div>
 <%
                   } else {
                     imageRoot = code;
@@ -285,7 +285,7 @@ Examples of species with images that don't have h1 images:
 
         </div>
 
-        <div class="data_checkbox" style="display:none;"><input form="getComparison" type="checkbox" name="chosen" value="<%= thisChild.getName() %>"></div>
+        <div class="data_checkbox" style="display:none;"><input form="getComparison" type="checkbox" name="chosen" value="<%= org.calacademy.antweb.util.Html.escAttr(thisChild.getName()) %>"></div>
         <div class="clear"></div>
     </div>
     <div class="ratio_overlay<% if (position == first) { %> first<% } %><% if (position == fourth) { %> last<% } %>" id="r<%= index %>" onmouseover="runSlideshow('n<%= index %>');" onmouseleave="hideRatioOverlay('r<%= index %>','s<%= index %>','n<%= index %>');">
@@ -310,7 +310,7 @@ Examples of species with images that don't have h1 images:
                   String shotNumber = (new Integer(specimenImage.getNumber())).toString();
                   %>                    
                     <div class="ratio_adjust">
-                        <img class="ratio_slide" src="<%= AntwebProps.getImgDomainApp() %><%= specimenImage.getThumbview() %>" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= imageRoot %>&shot=<%= shotType %>&number=<%= shotNumber %>';">
+                        <img class="ratio_slide" src="<%= AntwebProps.getImgDomainApp() %><%= specimenImage.getThumbview() %>" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.js(org.calacademy.antweb.util.Html.url(imageRoot))) %>&shot=<%= shotType %>&number=<%= shotNumber %>';">
                     </div>
 <%
                 }

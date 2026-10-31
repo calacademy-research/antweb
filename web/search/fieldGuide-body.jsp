@@ -198,7 +198,7 @@
             if (image != null) {
     %>
                 <div class="slide thirds first" style="background-image:url('<%= AntwebProps.getImgDomainApp() %><%= image.getThumbview() %>');">
-                <div class="hover thirds" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= image.getCode() %>&shot=<%= shot %>&number=1';"></div>
+                <div class="hover thirds" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= Html.escAttr(Html.js(Html.url(image.getCode()))) %>&shot=<%= shot %>&number=1';"></div>
                 </div>
     <%      } else {
                 //if (AntwebProps.isDevMode()) AntwebUtil.log("info" ,"fieldGuide-body.jsp image null for taxon:" + taxon.getTaxonName() + " shot:" + shot);
@@ -208,7 +208,7 @@
             if (image != null) {
     %>
                 <div class="slide thirds" style="background-image:url('<%= AntwebProps.getImgDomainApp() %><%= image.getThumbview() %>');">
-                <div class="hover thirds" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= image.getCode() %>&shot=<%= shot %>&number=1';"></div>
+                <div class="hover thirds" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= Html.escAttr(Html.js(Html.url(image.getCode()))) %>&shot=<%= shot %>&number=1';"></div>
                 </div>
     <%      }
         }

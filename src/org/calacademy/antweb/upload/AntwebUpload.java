@@ -170,6 +170,20 @@ or for Worldants upload
         if (lastTaxonName != null && lastTaxonName.equals(taxonName)) return 0;
         lastTaxonName = taxonName;
 
+        // Before the update branch below (2026-10-30): an existing taxon got the item as it came, unsanitized.
+        String authorDate = (String) item.get("author_date");
+        authorDate = UploadUtil.cleanHtml(authorDate);
+        if (authorDate != null && authorDate.contains("Csősz")) {
+            //A.log("saveTaxon() does not contains authorDate:" + authorDate);
+            authorDate = AntFormatter.replace(authorDate, "Csősz", "Csosz");
+            //A.log("saveTaxon() new authorDate:" + authorDate);
+            item.put("author_date", authorDate);
+        }
+        // AntCat sends author_date_html as HTML; keep only safe markup (shown on taxon pages).
+        if (item.get("author_date_html") instanceof String authorDateHtml && !authorDateHtml.isEmpty()) {
+            item.put("author_date_html", HtmlSanitizer.sanitize(authorDateHtml));
+        }
+
         String source = (String) item.get("source");
         String rank = (String) item.get("rank");
         String lineNum = "" + item.get("line_num");
@@ -227,18 +241,6 @@ or for Worldants upload
         //String lineNum = ((Integer) item.get("line_num")).toString();
 
         String status = (String) item.get("status");
-        String authorDate = (String) item.get("author_date");
-        authorDate = UploadUtil.cleanHtml(authorDate);
-        if (authorDate != null && authorDate.contains("Csősz")) {
-            //A.log("saveTaxon() does not contains authorDate:" + authorDate);
-            authorDate = AntFormatter.replace(authorDate, "Csősz", "Csosz");
-            //A.log("saveTaxon() new authorDate:" + authorDate);
-            item.put("author_date", authorDate);
-        }
-        // AntCat sends author_date_html as HTML; keep only safe markup (shown on taxon pages).
-        if (item.get("author_date_html") instanceof String authorDateHtml && !authorDateHtml.isEmpty()) {
-            item.put("author_date_html", HtmlSanitizer.sanitize(authorDateHtml));
-        }
 
         String parentTaxonName;
         String currentValidName = (String) item.get("current_valid_name");

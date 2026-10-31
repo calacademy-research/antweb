@@ -77,6 +77,13 @@ public class UploadUtil {
         }
     }
 
+    /** "sp." or "sp", any case, surrounding spaces ignored: a species column that names no species (2026-10-30). */
+    public static boolean isSpEpithet(String epithet) {
+        if (epithet == null) return false;
+        String s = epithet.trim();
+        return "sp".equalsIgnoreCase(s) || "sp.".equalsIgnoreCase(s);
+    }
+
     /** "sp.", "indet", "undet", "(indet)" (any case, trailing period or "?"): not identified at this rank. */
     static boolean isIndetLike(String epithet) {
         if (epithet == null) return false;
@@ -241,21 +248,8 @@ public class UploadUtil {
         return code.replace("\"\"", "-").replace("\"", "-");
     }
 
-    public static String createCode() {
-      return createCode(null);
-    }
-    public static String createCode(String code) {
-        String cleanCode = null;
-        String prefix = "tc";
-        if (cleanCode == null) {
-            cleanCode = prefix + AntwebUtil.getRandomNumber();
-        } else {
-            String tempCode = prefix + code;
-            if (tempCode.length() == 4) cleanCode = prefix + "0" + cleanCode;
-            if (tempCode.length() == 3) cleanCode = prefix + "00" + cleanCode;
-        }
-        return cleanCode;
-    }
+    // createCode() (a random "tc" + number collection code for a specimen without one) was removed 2026-10-30
+    // (Brian Fisher): such a specimen is stored without a collection code (SpecimenUploadParse.storedCollectionCode).
 
     public static String cleanHtml(String str) {
       int x = 0;
