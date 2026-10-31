@@ -20,9 +20,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
     
 /**
- * /collection.do?name=<collection code> (collection.jsp, collection-body.jsp): the Collection page, "Collection:
- * <code>", with its collecting data, locality, small map and specimens. Reads CollectionDb.getCollection(name)
- * (table specimen). Without name: "Must enter a collection name."; an unknown code or one without specimens:
+ * /collection.do?name=&lt;collection code&gt; (collection.jsp, collection-body.jsp): the Collection page, "Collection:
+ * &lt;code&gt;", with its collecting data, locality, small map and specimens. Reads CollectionDb.getCollection(name)
+ * (table specimen). Without a name parameter: "Must enter a collection name." (an empty name goes on to "Collection not found"); an unknown code or one without specimens:
  * "Collection not found - name:..." (a link to the cleaned code when UploadUtil.cleanCode changes it; a note when
  * an upload is running); a database error: a message, not the page. Sets the session attributes collection (also
  * as advancedSearchResults, for the Download Data box) and, when it has a locality, map. Docs:

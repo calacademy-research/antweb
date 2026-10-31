@@ -15,7 +15,7 @@ import org.apache.commons.logging.LogFactory;
  * bioregion, museum, coordinates, elevation, their maximum errors and notes, the groups that uploaded the
  * specimens, and its collections (one Collection per collection code). Filled by home/LocalityDb (locality.do,
  * bigMap.do?locality=) and, as a collection's place, by CollectionDb. Shown by locality-body.jsp and
- * collection-body.jsp. getLocalityKey(): the code, else the name. Docs: docs/flows/places.md, docs/numbers.md row
+ * collection-body.jsp. getLocalityKey(): the code (which defaults to "", so the name only when the code was set to null). Docs: docs/flows/places.md, docs/numbers.md row
  * 66.
  */
 public class Locality {

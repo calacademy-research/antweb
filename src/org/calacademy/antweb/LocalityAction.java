@@ -19,7 +19,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * /locality.do?code=<locality code> (or name=, tried as a code and then as a name; locality.jsp,
+ * /locality.do?code=&lt;locality code&gt; (or name=, tried as a code and then as a name; locality.jsp,
  * locality-body.jsp): the Locality page with the place, coordinates, small map, links to search its species and
  * specimens, and its collections. Reads LocalityDb (table specimen). Bots must use code= ("Locality access by name
  * is restricted. Please use the code."). No parameter: "Enter a locality name or code."; not found: "Locality not

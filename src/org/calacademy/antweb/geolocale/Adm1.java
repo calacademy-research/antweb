@@ -9,8 +9,8 @@ import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.*;
 
 /**
- * An adm1 (state or province; geolocale row with georank adm1) of the country named by its parent. Title "<name>,
- * <country>"; page adm1.do?name=..&country=.. (adm1.jsp), list adm1s.do; parameters adm1Name=..&countryName=..
+ * An adm1 (state or province; geolocale row with georank adm1) of the country named by its parent. Title "&lt;name&gt;,
+ * &lt;country&gt;"; page adm1.do?name=..&country=.. (adm1.jsp), list adm1s.do; parameters adm1Name=..&countryName=..
  * (lists, maps) and country=..&adm1=.. (searches). getKey() is the id (an adm1 name alone is not unique). sort()
  * puts the adm1's specimens first. The species list tool (isCanShowSpeciesListTool) needs a login whose countries
  * include the adm1's country, and either that country is built from its adm1s (is_use_children) or the login lists
