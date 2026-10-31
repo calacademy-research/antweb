@@ -202,6 +202,8 @@ public final class TaxaPageAction extends AntwebAction {
             if (Rank.SPECIES.equals(rank)) taxaPage.findGenusOnly(connection, overview);
             // 2026-10-30: the genus rows say which specimens collected here put them on the list (PlaceTaxonNotes.OtherNames).
             if (Rank.GENUS.equals(rank)) taxaPage.findOtherNames(connection, overview);
+            // 2026-10-30: a subfamily list says "extant and fossil" only when the place has a fossil subfamily
+            if (Rank.SUBFAMILY.equals(rank)) TaxaPage.setFossilSubfamilies(request, connection, overview);
 
 //         if (HttpUtil.getTarget(request).contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) { s_log.warn("MarkNote() break:" + HttpUtil.getTarget(request)); return (mapping.findForward("error"));}
 // Doubled

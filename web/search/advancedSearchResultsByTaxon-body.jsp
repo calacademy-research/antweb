@@ -226,13 +226,13 @@ Sorry, nothing matches your request.
 				<%
 				  if (resultRank.equals("species")) { %>
 				<bean:define id="prettyname" name="row" property="fullName"/>
-				<a href="<%= AntwebProps.getDomainApp() %>/description.do?<bean:write name="row" property="pageParams"/>"><%= new Formatter().capitalizeFirstLetter((String) prettyname) %></a>
+				<a href="<%= AntwebProps.getDomainApp() %>/description.do?<bean:write name="row" property="pageParams"/>"><%= org.calacademy.antweb.util.Html.esc(new Formatter().capitalizeFirstLetter((String) prettyname)) %></a>
 				<% } else if (resultRank.equals("genus")) { %>
 				<bean:define id="genus" name="row" property="genus"/>
-				<a href="<%= AntwebProps.getDomainApp() %>/description.do?name=<%= genus %>&rank=genus"><%=  new Formatter().capitalizeFirstLetter((String) genus) %></a>
+				<a href="<%= AntwebProps.getDomainApp() %>/description.do?name=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.url(genus)) %>&rank=genus"><%= org.calacademy.antweb.util.Html.esc(new Formatter().capitalizeFirstLetter((String) genus)) %></a>
 				<% } else if (resultRank.equals("subfamily")) { %>
 				<bean:define id="subfamily" name="row" property="subfamily"/>
-				<a href="<%= AntwebProps.getDomainApp() %>/description.do?name=<%= subfamily %>&rank=subfamily"><%=  new Formatter().capitalizeFirstLetter((String) subfamily) %></a>
+				<a href="<%= AntwebProps.getDomainApp() %>/description.do?name=<%= org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.url(subfamily)) %>&rank=subfamily"><%= org.calacademy.antweb.util.Html.esc(new Formatter().capitalizeFirstLetter((String) subfamily)) %></a>
 				<% } else {
 				  A.log("advancedSearchResultsByTaxon-body.jsp rank not found:" + resultRank);
 				} %>

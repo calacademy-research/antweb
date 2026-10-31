@@ -106,6 +106,15 @@
 <% } else { %>
   <li><%= lastUpload.getCreated() %> (report no longer available)</li>
 <% } %>
+<%
+   // 2026-10-30: the group of the upload (it can differ from the curator's Group above, which is the login's group now);
+   // a group deleted since says so. data-group-id: the upload's group id (the e2e test reads it).
+   Group uploadGroup = GroupMgr.getGroup(lastUpload.getGroupId());
+   if (uploadGroup != null) { %>
+  <li id="curator-last-upload-group" data-group-id="<%= lastUpload.getGroupId() %>">&nbsp;&nbsp;Group: <%= uploadGroup.getLink() %></li>
+<% } else { %>
+  <li id="curator-last-upload-group" data-group-id="<%= lastUpload.getGroupId() %>" data-group-gone="true">&nbsp;&nbsp;Group: <%= Html.esc(lastUpload.getGroupName()) %> (group <%= lastUpload.getGroupId() %>, no longer in AntWeb)</li>
+<% } %>
 <% if (lastUpload.getCountedAt() != null) { %>
   <li id="curator-group-numbers-note">&nbsp;&nbsp;Specimens of the upload's group today (recounted every night and after each upload):</li>
 <% } %>

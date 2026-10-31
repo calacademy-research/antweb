@@ -308,10 +308,26 @@ public class UploadDetails extends OperationDetails {
     }
 
 
+    /**
+     * True if the owned-by value names the museum code as a whole word: "CASC" is not counted for CAS too, as it was
+     * when any value containing the code counted (2026-10-30). Case as in the museum list.
+     */
+    public static boolean namesMuseum(String ownedBy, String code) {
+        if (ownedBy == null || code == null || code.isEmpty()) return false;
+        // no regex: called for every museum on every saved specimen
+        for (int i = ownedBy.indexOf(code); i >= 0; i = ownedBy.indexOf(code, i + 1)) {
+            int end = i + code.length();
+            boolean before = i > 0 && Character.isLetterOrDigit(ownedBy.charAt(i - 1));
+            boolean after = end < ownedBy.length() && Character.isLetterOrDigit(ownedBy.charAt(end));
+            if (!before && !after) return true;
+        }
+        return false;
+    }
+
     public void addToMuseumMap(String element) {
         for (Museum museum : MuseumMgr.getMuseums()) {
             String code = museum.getCode();
-            if (element.contains(code)) {
+            if (namesMuseum(element, code)) {
                 int count = museumMap.getOrDefault(code, 0);
                 museumMap.put(code, ++count);
                 //A.log("addToMuseumSet() element:" + element + " code:" + code + " count:" + count);

@@ -85,7 +85,8 @@
 	// ("2,672 Valid species (of 6,960 species and morphospecies)", "116 Genera (valid genera and morphogenera)").
 	// StatusSet.listHeading; the "of" number is the place page's Species / subspecies / morphospecies.
 	String childHeading = StatusSet.listHeading(taxaPage.getStatusSetStr(), childrenCount, Rank.getPluralRank(pageRank),
-	    Rank.getPluralRank(pageRank), overview == null ? -1 : overview.getSpeciesCount(), overview == null ? null : overview.getName());
+	    Rank.getPluralRank(pageRank), overview == null ? -1 : overview.getSpeciesCount(), overview == null ? null : overview.getName(),
+	    StatusSet.fossilSubfamilies(request));
 	// Names from: Specimens collected here (specimen=true, 2026-10-30): the header says the source.
 	if (taxaPage.isWithSpecimen()) childHeading = PlaceTaxonNotes.withSpecimensHeading(childHeading, PlaceTaxonNotes.placeName(overview));
 	String childSizeStr = Html.esc(childHeading);

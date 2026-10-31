@@ -198,7 +198,7 @@
    "h3:Download Specimen Data",
    "h3:Download Specimen Data",
    "h3:Homonyms:",
-   "h2:Taxonomic History (provided by Barry Bolton, 2026)",
+   "h2:Taxonomic history (from AntCat)",
    "h3:Taxon Page Images:",
    "h3:Overview:",
    "h3:Distribution:",
@@ -218,7 +218,7 @@
    "h1:Species: Nesomyrmex clavipilis Wheeler, 1910",
    "h3:Download Specimen Data",
    "h3:Download Specimen Data",
-   "h2:Taxonomic History (provided by Barry Bolton, 2026)",
+   "h2:Taxonomic history (from AntCat)",
    "h3:Distribution:",
    "h3:Biology:",
    "h3:Identification:",
@@ -239,7 +239,7 @@
    "h1:Subfamily: Formicinae Latreille, 1802",
    "h3:Download Specimen Data",
    "h3:Download Specimen Data",
-   "h2:Taxonomic History (provided by Barry Bolton, 2026)",
+   "h2:Taxonomic history (from AntCat)",
    "h3:Distribution:",
    "h3:Identification:",
    "h3:Notes:",
@@ -297,7 +297,7 @@
   "headings": [
    "h3:Citing AntWeb",
    "h1:Genus: Camponotus Mayr, 1861",
-   "h2:1778 Species Imaged (2666 total)",
+   "h2:1778 Species imaged (out of 2666 valid species and morphospecies)",
    "h3:Download Specimen Data",
    "h3:Download Specimen Data"
   ],
@@ -313,7 +313,7 @@
   "headings": [
    "h3:Citing AntWeb",
    "h1:Species: Dorylus nigricans Illiger, 1802",
-   "h2:18 Specimens Imaged (56 total)",
+   "h2:18 Specimens imaged (out of 56 specimens)",
    "h3:Download Specimen Data",
    "h3:Download Specimen Data"
   ],

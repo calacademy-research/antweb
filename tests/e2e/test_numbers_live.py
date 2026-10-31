@@ -11,7 +11,8 @@ The place page numbers (data-stat on /country.do) are checked against the record
                     isImaged=false: "U Unimaged Species (out of N)": U <= N, N = the place's Species (row 39)
   browse.do         "N Species (M imaged)": the hidden totals say the same N, M <= N; "Only the first a of N"
                     names the same N (rows 46, 47, 49)
-  images.do         "I Species Imaged (N total)": I <= N, N = browse.do's N (row 55)
+  images.do         "I Species imaged (out of N names, all statuses)" (data-imaged, data-total; the status choice named
+                    since 2026-10-30, StatusSet.imagedHeading): I <= N, N = browse.do's N (row 55)
   getComparison.do  one checkbox per child with images: I <= boxes <= N (row 60)
   oneView.do        one picture per child with that view: <= N (row 58)
   mapComparison.do  "(N Species Mapped)" = browse.do's N: it counts every child, mapped or not (B19; row 59)
@@ -152,7 +153,9 @@ def test_image_and_comparison_pages_count_the_same_children():
     _html, n, _imaged, text = browse_numbers()
     wrong = []
     images = _get(f"/images.do?genus={GENUS}&rank=genus&{WHERE}&statusSet=all")
-    m = re.search(r'<h2 class="display_count">([\d,]+) .*?Imaged \(([\d,]+) total\)</h2>', images, re.S)
+    # data-imaged / data-total since 2026-10-30 (the header names the status choice); the header before as a fallback
+    m = (re.search(r'<h2 class="display_count" data-imaged="(\d+)" data-total="(\d+)">', images)
+         or re.search(r'<h2 class="display_count">([\d,]+) .*?Imaged \(([\d,]+) total\)</h2>', images, re.S))
     imaged_children = None
     if m:
         imaged_children, total = _n(m.group(1)), _n(m.group(2))

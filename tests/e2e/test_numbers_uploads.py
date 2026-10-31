@@ -75,8 +75,9 @@ def num(text):
 # ----------------------------------------------------------------------------------------------- row 83
 
 def _curator_last_upload(html):
-    """(report file name or None, counted note shown, [Specimen, Ungeoreferenced, Flagged]) of curator.do's Last
-    Upload, or None when the page shows none (curator-body.jsp)."""
+    """(report file name or None, counted note shown, [Specimen, Ungeoreferenced, Flagged], the upload's group id or
+    None, the group no longer in AntWeb) of curator.do's Last Upload, or None when the page shows none
+    (curator-body.jsp; the group line since 2026-10-30)."""
     i = html.find("<li><b>Last Upload:</b></li>")
     if i < 0:
         return None
@@ -86,8 +87,10 @@ def _curator_last_upload(html):
     for label in ("Specimen", "Ungeoreferenced", "Flagged"):
         m = re.search(r"&nbsp;&nbsp;" + label + r": ([\d,]+)</li>", block)
         values.append(num(m.group(1)) if m else None)
+    group = re.search(r'id="curator-last-upload-group" data-group-id="(\d+)"( data-group-gone="true")?', block)
     return (unquote_plus(unescape(link.group(1))) if link else None,
-            'id="curator-group-numbers-note"' in block, values)
+            'id="curator-group-numbers-note"' in block, values,
+            group.group(1) if group else None, bool(group and group.group(2)))
 
 
 def _report_groups(s):
@@ -110,7 +113,11 @@ def _report_groups(s):
 def test_curator_last_upload_numbers_equal_the_checked_group_numbers():
     """Row 83: curator.do Last Upload Specimen, Ungeoreferenced, Flagged = the numbers of the upload's group the count
     check compared with its recount (test_count_check.py, admin.groups), on the curator with the most uploads and a
-    day's sample of the others; a curator with specimen uploads shows a Last Upload."""
+    day's sample of the others; a curator with specimen uploads shows a Last Upload (2026-10-30: also when every
+    upload is from before 2018, rows without upload_id, UploadDb.getLastUpload). The group is the one the Last Upload
+    block names (data-group-id), not the curator's own group (2026-10-30: the first group.do link of the page is the
+    login's group, Joe MacGown's differs from his last upload's); a curator whose last upload's group no longer exists
+    is skipped, with the reason."""
     import test_count_check as cc
     s, exp = cc.expected_numbers()
     curators, groups = exp.get("curators") or {}, exp.get("groups") or {}
@@ -121,22 +128,27 @@ def test_curator_last_upload_numbers_equal_the_checked_group_numbers():
         pytest.skip("no curator with specimen uploads")
     sample = [max(with_uploads, key=lambda c: curators[c][0])] + ns.pick(with_uploads, 5, "curator-last-upload")
     report_groups, test_gid = _report_groups(s)
-    wrong, checked, pending = [], 0, []
+    wrong, checked, pending, skipped = [], 0, [], []
     for cid in dict.fromkeys(sample):
         html = page(s, "/curator.do?id=" + cid, timeout=TIMEOUT)
         last = _curator_last_upload(html)
         if last is None:
             wrong.append(f"curator.do?id={cid}: {curators[cid][0]} specimen uploads but no Last Upload")
             continue
-        report, counted, shown = last
+        report, counted, shown, gid, gone = last
+        if gone:
+            skipped.append(f"curator.do?id={cid}: last upload's group {gid} no longer exists")
+            continue
         if not counted:
             pending.append(cid)   # the group has not been recounted by a nightly run: its last upload row is shown
             continue
-        gid = report_groups.get(report) if report else None
         if gid is None:
-            g = re.search(r"group\.do\?id=(\d+)", html)
-            gid = g.group(1) if g else None
-        if gid is None or gid == test_gid:
+            # pages before 2026-10-30 name no group in the block: the group of the report on listSpecimenUploads.do
+            gid = report_groups.get(report) if report else None
+        if gid is None:
+            skipped.append(f"curator.do?id={cid}: the Last Upload block names no group")
+            continue
+        if gid == test_gid:
             continue
         want = groups.get(gid)
         if want is None:
@@ -149,7 +161,7 @@ def test_curator_last_upload_numbers_equal_the_checked_group_numbers():
                          f"checked {want[1:4]}")
     assert not wrong, "curator.do Last Upload numbers" + cc.UPLOAD_NOTE + ":\n" + "\n".join(wrong) + "\n" + ns.day_note()
     if not checked:
-        pytest.skip(f"no sampled curator's group counted yet (pending: {pending}) " + ns.day_note())
+        pytest.skip(f"no sampled curator's group counted yet (pending: {pending}; skipped: {skipped}) " + ns.day_note())
 
 
 # ----------------------------------------------------------------------------------------------- row 94

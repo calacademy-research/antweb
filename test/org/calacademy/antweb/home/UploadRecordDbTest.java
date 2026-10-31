@@ -9,6 +9,8 @@ import java.sql.Statement;
 import junit.framework.TestCase;
 
 import org.calacademy.antweb.home.SpecimenUploadDb;
+import org.calacademy.antweb.home.UploadDb;
+import org.calacademy.antweb.upload.Upload;
 
 /**
  * The upload table row of a specimen upload (SpecimenUploadDb.insertUploadRow, 2026-10-22).
@@ -205,5 +207,43 @@ public class UploadRecordDbTest extends TestCase {
         assertEquals(SpecimenUploadDb.GROUP_NAME_WIDTH, SpecimenUploadDb.fit(TOO_LONG_NAME).length());
         assertEquals(LONG_NAME.substring(0, 64), SpecimenUploadDb.fit(LONG_NAME, 64));
         assertEquals("Viçosa", SpecimenUploadDb.fit("Viçosa"));
+    }
+
+    private void row(Integer uploadId, int login, int group, String created, String log) throws SQLException {
+        exec("insert into upload (upload_id, login_id, group_name, group_id, log_file_name, created) values ("
+            + uploadId + ", " + login + ", 'g" + group + "', " + group + ", '" + log + "', '" + created + "')");
+    }
+
+    /**
+     * 2026-10-30 (staging e2e, curator.do?id=5, James Trager): a curator whose only specimen upload is from before
+     * upload_id existed (added 2018-01, db/upgrade 7.9) showed "Specimen Uploads 1" and no Last Upload: the last upload
+     * was "max(upload_id)", null for such rows. UploadDb.getLastUpload: the row with the highest upload_id, else the
+     * newest row; by login (curator.do) and by group (group.do).
+     */
+    public void testLastUploadAlsoWithoutUploadId() throws Exception {
+        row(null, 5, 30, "2016-03-01 10:00:00", "20160301-trager.txt");             // Trager: one old upload
+        row(null, 8, 40, "2015-05-01 10:00:00", "20150501-old.txt");                // MacGown: old, then two with upload_id
+        row(700, 8, 41, "2018-09-05 10:00:00", "20180905-specimen41.txt");
+        row(650, 8, 41, "2018-06-01 10:00:00", "20180601-specimen41.txt");
+        row(null, 9, 50, "2014-01-01 10:00:00", "a.txt");                           // two old rows: the newer (higher id)
+        row(null, 9, 50, "2014-02-01 10:00:00", "b.txt");
+        UploadDb db = new UploadDb(connection);
+        Upload trager = db.getLastUploadByLogin(5);
+        assertNotNull("a curator with an upload has a last upload", trager);
+        assertEquals("20160301-trager.txt", trager.getLogFileName());
+        assertEquals(30, trager.getGroupId());
+        assertEquals(700, db.getLastUploadByLogin(8).getUploadId());
+        assertEquals(41, db.getLastUploadByLogin(8).getGroupId());
+        assertEquals("b.txt", db.getLastUploadByLogin(9).getLogFileName());
+        assertNull(db.getLastUploadByLogin(77));
+        assertEquals("20150501-old.txt", db.getLastUploadByGroup(40).getLogFileName());
+        assertEquals(700, db.getLastUploadByGroup(41).getUploadId());
+        assertEquals("b.txt", db.getLastUploadByGroup(50).getLogFileName());
+        assertNull(db.getLastUploadByGroup(99));
+        try {
+            db.getLastUpload("id; drop table upload", 1);
+            fail("only group_id and login_id");
+        } catch (IllegalArgumentException expected) {
+        }
     }
 }

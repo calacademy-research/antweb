@@ -6,7 +6,10 @@
     // Brian Fisher, 2026-10-30: a status chosen on this page (statusSet in the address) is kept in its tabs (Overview,
     // Taxa, Images), never in the session: a page opened without statusSet uses its default (StatusSet.getStatusSet).
     String ohStatusParam = request.getParameter("statusSet");
-    String ohStatus = StatusSet.hasOwnStatusSets(overview.getName()) ? ohStatusParam : StatusSet.listChoice(ohStatusParam);
+    // the AntCat list and Fossil Ants: one of their own choices (StatusSet.ownChoice; 2026-10-30, no raw value)
+    String ohStatus = StatusSet.hasOwnStatusSets(overview.getName())
+        ? (ohStatusParam == null || ohStatusParam.trim().isEmpty() ? null : StatusSet.ownChoice(ohStatusParam))
+        : StatusSet.listChoice(ohStatusParam);
     String ohKeep = (ohStatus == null || ohStatus.trim().isEmpty()) ? "" : "&statusSet=" + Html.url(ohStatus.trim());
     String overviewUrl = overview.getThisPageTarget() + ohKeep;
 

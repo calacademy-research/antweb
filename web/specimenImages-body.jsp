@@ -140,14 +140,20 @@
 <%
     // To avoid ConcurrentModificationException
     Hashtable imagesHash = specimen.getImages();
+    if (imagesHash == null) imagesHash = new Hashtable();   // a specimen without images: "0 Images", no error page
     int imageCount = imagesHash.size();   
 
     //AntwebUtil.log("specimenImages-body.jsp imageCount:" + imageCount);
     if (imageCount > 0) {
-		String[] keyArray = new String[imageCount];
-		imagesHash.keySet().toArray(keyArray);
-		SpecimenImage[] imageArray = new SpecimenImage[imageCount];
-		imagesHash.values().toArray(imageArray);
+		// Keys and images from one snapshot, so that each image stays paired with its shot.
+		java.util.List<java.util.Map.Entry> entries;
+		synchronized (imagesHash) { entries = new java.util.ArrayList<java.util.Map.Entry>(imagesHash.entrySet()); }
+		String[] keyArray = new String[entries.size()];
+		SpecimenImage[] imageArray = new SpecimenImage[entries.size()];
+		for (int k = 0; k < entries.size(); k++) {
+		  keyArray[k] = (String) entries.get(k).getKey();
+		  imageArray[k] = (SpecimenImage) entries.get(k).getValue();
+		}
  
 		for (String shot : shotsToShow) {
 		  //AntwebUtil.log("specimenImages-body.jsp shot:" + shot);
@@ -198,7 +204,7 @@
    String amissEmail = AntwebUtil.getAdminEmail();
    if (specimen != null && specimen.getGroup() != null) amissEmail = specimen.getGroup().getAdminEmail();  
 %> 
-<a href="mailto:<%= amissEmail %>?subject=Regarding AntWeb page <%= Html.escAttr(thePage) %>">See something amiss? Send us an email.</a>
+<a href="mailto:<%= Html.escAttr(amissEmail) %>?subject=Regarding AntWeb page <%= Html.escAttr(thePage) %>">See something amiss? Send us an email.</a>
 
 </div>
 

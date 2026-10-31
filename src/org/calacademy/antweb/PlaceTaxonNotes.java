@@ -159,11 +159,14 @@ public final class PlaceTaxonNotes {
     }
 
     /**
-     * One query (parameters: the name, then childrenPattern(name)): whether a specimen of the taxon is in the place. A
+     * One query (parameters: the name, then childrenPattern(name)): whether a specimen of the taxon, not red-flagged, is in the place. A
      * genus: its names ("Lividopone (indet)" included); a species: the name and its subspecies; a subspecies: the name.
      */
     public static String placeSpecimenSql(String placeCriteria) {
-        return "select 1 from specimen where (specimen.taxon_name = ? or specimen.taxon_name like ?)" + placeCriteria + " limit 1";
+        // a red-flagged specimen does not record the taxon in the place (one red-flag rule for every list, 2026-10-30;
+        // staging 2026-10-30: the red-flagged Afrotropical Amblyopone specimens hid the notice)
+        return "select 1 from specimen where (specimen.taxon_name = ? or specimen.taxon_name like ?)"
+            + " and " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("specimen") + placeCriteria + " limit 1";
     }
 
     /** name + " %" for LIKE, with LIKE's own characters escaped (morphogenera have "_"). */

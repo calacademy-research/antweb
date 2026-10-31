@@ -146,7 +146,13 @@ def test_not_recorded_notice():
     assert "Neotropical" not in re.sub(r"is not recorded from Neotropical", "", ns.text_of(block)), block
     assert "project=allantwebants" in block and "See Lividopone in all of AntWeb" in ns.text_of(block), block
     # Never where the taxon is recorded: on the list (Malagasy, Madagascar) or collected there (Mozambique: indet only).
-    for params in ("bioregionName=Malagasy", "countryName=Madagascar", "countryName=Mozambique", "project=allantwebants"):
+    # Mozambique only when its Lividopone (indet) specimens are not red-flagged: a red-flagged specimen records nothing
+    # (one red-flag rule, 2026-10-30), and staging's copy of production still has them flagged (see below).
+    places = ["bioregionName=Malagasy", "countryName=Madagascar", "project=allantwebants"]
+    moz = ns.api_rows(ns.api("specimens?genus=lividopone&species=" + quote_plus("(indet)") + "&country=Mozambique&limit=10"))
+    if moz and not _red_flagged((moz[0].get("specimenCode") or "").lower()):
+        places.append("countryName=Mozambique")
+    for params in places:
         for page in ("description", "browse", "images"):
             assert NOTICE not in ns.text_of(ns.get(f"/{page}.do?{LIVIDOPONE}&{params}")), (page, params)
 

@@ -50,6 +50,7 @@
       asterixNote = "Numbers marked * count the species and subspecies of the genus in " + locale
           + " that are valid names or morphospecies; names identified to genus only (indetermined, unidentifiable)"
           + " and names not in AntCat (unrecognized) are not species.";
+      asterixTitle = asterixNote;   // the * tooltip says what the note under the list says (it said "all statuses")
     }
     // The specimens identified to genus only (species lists) and the genus rows' specimens of other names (genus lists),
     // linked to the place's specimen search (as "List all specimens collected in").

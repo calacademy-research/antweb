@@ -112,7 +112,8 @@ public class PlaceTaxonNotesTest extends TestCase {
 
     public void testSpecimenOfTheTaxonInThePlace() {
         String q = PlaceTaxonNotes.placeSpecimenSql(" and specimen.country = 'Mozambique'");
-        assertEquals("select 1 from specimen where (specimen.taxon_name = ? or specimen.taxon_name like ?) and specimen.country = 'Mozambique' limit 1", q);
+        assertEquals("select 1 from specimen where (specimen.taxon_name = ? or specimen.taxon_name like ?)"
+            + " and (specimen.flag is null or specimen.flag != 'red') and specimen.country = 'Mozambique' limit 1", q);
         assertEquals("dorylinaelividopone %", PlaceTaxonNotes.childrenPattern("dorylinaelividopone"));
         assertEquals("a morphogenus's _ is not a wildcard", "amblyoponinaeamblyoponine\\_genus8 %",
             PlaceTaxonNotes.childrenPattern("amblyoponinaeamblyoponine_genus8"));

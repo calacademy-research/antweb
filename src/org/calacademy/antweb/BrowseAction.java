@@ -476,6 +476,8 @@ public class BrowseAction extends DescriptionAction {
 			if (imagesFromAnywhere) global = !placeOnly;
 
 			taxon.setChildren(connection, overview, statusSet, getChildImages, getChildMaps, caste, global, subgenus);
+			// 2026-10-30: the family's subfamily list says "extant and fossil" only when the place has a fossil subfamily
+			if (taxon instanceof Family) TaxaPage.setFossilSubfamilies(request, connection, overview);
 
 			if (imagesFromAnywhere) {
 			  request.setAttribute("imagesPlaceOnly", placeOnly);
