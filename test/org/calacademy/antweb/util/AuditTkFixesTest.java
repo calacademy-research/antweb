@@ -89,4 +89,19 @@ public class AuditTkFixesTest extends TestCase {
         assertTrue(collections, collections.contains("select distinct " + GroupCountDb.COLLECTION + " from specimen s"));
         assertTrue(collections, collections.contains(GroupCountDb.COLLECTION + " is not null"));
     }
+
+    /** Brian Fisher, 2026-10-30: every curator may edit Notes on taxon and specimen pages (taxon Notes were admins and Jack only). */
+    public void testEveryCuratorEditsNotes() {
+        org.calacademy.antweb.Login curator = new org.calacademy.antweb.Login();
+        curator.setId(987654);
+        curator.setGroupId(16);
+        curator.setIsAdmin(false);
+        assertTrue(org.calacademy.antweb.DescEditSafety.canEditField(curator, "taxon", "notes"));
+        assertTrue(org.calacademy.antweb.DescEditSafety.canEditField(curator, "specimen", "notes"));
+        assertTrue(org.calacademy.antweb.DescEditSafety.canEditField(curator, "taxon", "overview"));
+        org.calacademy.antweb.Login visitor = new org.calacademy.antweb.Login();
+        visitor.setIsAdmin(false);
+        assertFalse("not a curator", org.calacademy.antweb.DescEditSafety.canEditField(visitor, "taxon", "notes"));
+        assertFalse("nobody logged in", org.calacademy.antweb.DescEditSafety.canEditField(null, "taxon", "notes"));
+    }
 }

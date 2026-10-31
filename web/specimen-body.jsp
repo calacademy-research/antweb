@@ -126,8 +126,7 @@
       String descHeader = null; 
       String descNotes = null;
       
-      boolean hasExtraPrivs = true;
-      if ( (accessLogin != null) && (accessLogin.getId() == 2) ) hasExtraPrivs = true;
+      boolean hasExtraPrivs = true;   // Notes: every curator who can edit the page, as on taxon pages (2026-10-30)
           // We give extra privs to Jack - he can modify notes
       thisDesc = "notes";       
       descHeader = "Notes"; 

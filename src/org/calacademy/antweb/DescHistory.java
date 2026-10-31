@@ -260,7 +260,7 @@ public final class DescHistory {
         return kept.length() == 0 ? null : p.substring(0, q) + "?" + kept;
     }
 
-    /** Curators and admins see history of the fields they may edit (taxon "notes": admins and Jack only). */
+    /** Curators and admins see history of the fields they may edit (every field, notes included, since 2026-10-30). */
     public static boolean canView(Login login, Key key, String field) {
         return key != null && DescEditSafety.canEditField(login, key.kind, field);
     }

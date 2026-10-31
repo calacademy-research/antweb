@@ -98,7 +98,7 @@
       String descHeader = null; 
       String descNotes = null;
       
-      boolean hasExtraPrivs = false;
+      boolean hasExtraPrivs = true;   // Notes: every curator who can edit the page (2026-10-30), as on taxon pages
 %>
 
    <% String alsoDatabased = taxon.getAlsoDatabased();

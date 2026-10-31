@@ -167,10 +167,8 @@ To do:
     String descHeader = null; 
     String descNotes = null;
       
-    boolean hasExtraPrivs = false;
-    if (LoginMgr.isAdmin(accessLogin)) hasExtraPrivs = true;
-    if (LoginMgr.isJack(accessLogin)) hasExtraPrivs = true;
-        // We give extra privs to Jack - he can modify notes
+    // Notes: every curator who can edit the page (Brian Fisher, 2026-10-30; until then admins and Jack only).
+    boolean hasExtraPrivs = true;
 
     if (taxon.getCurrentValidName() != null && !taxon.getCurrentValidName().strip().isEmpty()
         && Taxon.displayTaxonName(taxon.getCurrentValidName()) != null && !Taxon.displayTaxonName(taxon.getCurrentValidName()).strip().isEmpty()

@@ -134,13 +134,13 @@ public final class DescEditSafety {
     }
 
     /**
-     * May this login edit (and restore) this field? Curators and administrators, except the taxon
-     * page "notes" field, which only administrators and Jack edit (as on the page, taxonPage-body.jsp).
+     * May this login edit (and restore) this field? Curators and administrators, every field, the taxon and specimen
+     * "notes" included (Brian Fisher, 2026-10-30: one rule everywhere; until then a taxon page's Notes were for
+     * administrators and Jack only). Every edit is kept in the field's history and can be restored.
      * kind is the page key kind: "taxon", "specimen" or "object".
      */
     public static boolean canEditField(Login login, String kind, String field) {
         if (!canEdit(login)) return false;
-        if ("taxon".equals(kind) && "notes".equals(field)) return LoginMgr.isAdmin(login) || LoginMgr.isJack(login);
         return true;
     }
 
