@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- Tiles page of bioregion.do?name= (OverviewAction, form overviewForm): a bioregion's page, titled "Browsing
+     <title> Ants - AntWeb", body overview-body.jsp. A direct request of the JSP prints "Invalid URL.  Direct JSP
+     calls unsupported." (HttpUtil.isStaticCallCheck). Docs: docs/flows/places.md, docs/numbers.md rows 20 to 37.
+     Tests: tests/e2e/test_place_pages.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ page import="org.calacademy.antweb.*" %>

@@ -990,7 +990,6 @@ web/
 ├── geolocale.jsp                       - Location page
 ├── countryPage.jsp                     - Country-specific
 ├── worldMap.jsp                        - World distribution map
-└── common/geolocaleNav.jsp             - Geographic navigation
 ```
 
 ### API Endpoints

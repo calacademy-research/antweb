@@ -1,4 +1,6 @@
-<%@ page language="java" %>
+<%-- Unused as of 2026-10-30: a tiles page "Find Collections in a Locality - AntWeb" whose body
+     /localityToCollecion-body.jsp (sic) does not exist. No action forwards here, no page links it, and Caddy answers
+     a direct request with 404 (not on the JSP allow list in docker/caddy/Caddyfile). --%><%@ page language="java" %>
 <%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

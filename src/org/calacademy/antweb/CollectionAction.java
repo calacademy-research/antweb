@@ -19,6 +19,17 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * /collection.do?name=&lt;collection code&gt; (collection.jsp, collection-body.jsp): the Collection page, "Collection:
+ * &lt;code&gt;", with its collecting data, locality, small map and specimens. Reads CollectionDb.getCollection(name)
+ * (table specimen). Without a name parameter: "Must enter a collection name." (an empty name goes on to "Collection not found"); an unknown code or one without specimens:
+ * "Collection not found - name:..." (a link to the cleaned code when UploadUtil.cleanCode changes it; a note when
+ * an upload is running); a database error: a message, not the page. Sets the session attributes collection (also
+ * as advancedSearchResults, for the Download Data box) and, when it has a locality, map. Docs:
+ * docs/flows/places.md, docs/numbers.md row 65. Tests: tests/e2e/test_specimen_pages.py::
+ * test_collection_page_lists_the_specimen,
+ * test_numbers_search.py::test_collection_counts_equal_a_search_and_the_api.
+ */
 public final class CollectionAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(CollectionAction.class);

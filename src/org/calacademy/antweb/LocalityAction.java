@@ -18,6 +18,16 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /locality.do?code=&lt;locality code&gt; (or name=, tried as a code and then as a name; locality.jsp,
+ * locality-body.jsp): the Locality page with the place, coordinates, small map, links to search its species and
+ * specimens, and its collections. Reads LocalityDb (table specimen). Bots must use code= ("Locality access by name
+ * is restricted. Please use the code."). No parameter: "Enter a locality name or code."; not found: "Locality not
+ * found for name:... or code:...". Sets the session attribute map (and removes taxon, so bigMap.do does not reuse
+ * it) and the request attribute locality. Docs: docs/flows/places.md, docs/numbers.md row 66. Tests:
+ * tests/e2e/test_specimen_pages.py::test_locality_page_lists_the_specimens_collection,
+ * test_numbers_search.py::test_locality_collections_equal_the_codes_of_its_specimens.
+ */
 public final class LocalityAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(LocalityAction.class);

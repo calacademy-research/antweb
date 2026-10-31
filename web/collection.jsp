@@ -1,4 +1,6 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Tiles page of collection.do (CollectionAction; also prepareCompareResults.do's collectionSearch forward, with
+     mode=compare): "Collection Search - AntWeb", body collection-body.jsp. Removes the session attribute taxon.
+     Docs: docs/flows/places.md. Tests: tests/e2e/test_specimen_pages.py::test_collection_page_lists_the_specimen. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

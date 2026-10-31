@@ -1,4 +1,6 @@
-<!-- regionNav.jsp -->
+<%-- Static include of common/siteNav.jsp for a region: "Georegion:" and the region's name, linked to its page on
+     region.do or description.do, elsewhere to the same page with its parameters (Geolocale.getNavLink). Uses
+     siteNav's variable overview. Docs: docs/flows/places.md. --%><!-- regionNav.jsp -->
 <div id="view">
 	<div id="current_view">Georegion: 
 	<%

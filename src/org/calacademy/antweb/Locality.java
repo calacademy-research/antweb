@@ -10,6 +10,14 @@ import java.util.Collections;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * One locality: the place of the specimens with one locality code (or locality name): country, island, adm1, adm2,
+ * bioregion, museum, coordinates, elevation, their maximum errors and notes, the groups that uploaded the
+ * specimens, and its collections (one Collection per collection code). Filled by home/LocalityDb (locality.do,
+ * bigMap.do?locality=) and, as a collection's place, by CollectionDb. Shown by locality-body.jsp and
+ * collection-body.jsp. getLocalityKey(): the code (which defaults to "", so the name only when the code was set to null). Docs: docs/flows/places.md, docs/numbers.md row
+ * 66.
+ */
 public class Locality {
     private static final Log s_log = LogFactory.getLog(Locality.class);
 

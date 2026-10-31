@@ -5,6 +5,12 @@ import java.util.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * A region (geolocale row with georank region, e.g. Africa) with its subregions as children. Page region.do?name=
+ * (region.jsp), list regions.do; parameters regionName= (lists, maps) and region= (searches). Its specimens are
+ * those of its countries (Geolocale.regionSpecimensSql). Made by GeolocaleDb, held by GeolocaleMgr (the Georegions
+ * menu). Docs: docs/flows/places.md, docs/data-model.md (geolocale).
+ */
 public class Region extends Geolocale {
 
     private static final Log s_log = LogFactory.getLog(Region.class);

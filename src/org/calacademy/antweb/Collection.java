@@ -8,6 +8,14 @@ import org.calacademy.antweb.search.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * One collection: the specimens that share a collection code (specimen.collectioncode), with the collecting data
+ * (collected by, start and end dates, method, habitat, microhabitat, notes), its Locality, the groups that
+ * uploaded the specimens, and one result row per specimen (getResults(), so CollectionAction can also store it as
+ * the session's search results for the Download Data box). Filled by home/CollectionDb (collection.do,
+ * bigMap.do?collection=); LocalityDb makes one per collection code of a locality (makeCollectionFromRset). Shown
+ * by collection-body.jsp and locality-body.jsp. Docs: docs/flows/places.md, docs/numbers.md rows 65 and 66.
+ */
 public class Collection extends AdvancedSearchResults {
 
     private static final Log s_log = LogFactory.getLog(Collection.class);

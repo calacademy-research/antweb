@@ -1,4 +1,8 @@
-<!-- countryNav.jsp -->
+<%-- Static include of common/siteNav.jsp for a country: the "Georegion:" trail region - subregion - country. On the
+     country page (or description.do) each name links its place's page; on endemic.do the places' pages by id (on
+     introduced.do only the country's); elsewhere (species lists, image views; bigMap.do links geolocale.do) the same
+     page with each place's parameters (Geolocale.getNavLink). Uses siteNav's variable overview. Docs:
+     docs/flows/places.md. --%><!-- countryNav.jsp -->
 
 <div id="view">
 	<div id="current_view">Georegion: 

@@ -11,6 +11,17 @@ import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 import org.calacademy.antweb.*;
 
+/**
+ * A place of the geolocale table: region, subregion, country (or island) or adm1, held in memory by GeolocaleMgr
+ * (subclasses Region, Subregion, Country, Adm1, made by GeolocaleDb by georank). Holds the row (name, parent, ISO
+ * codes, bioregion, valid and live flags, is_use_children, is_island, page text; coordinates in LocalityOverview)
+ * and its species list geolocale_taxon. As an Overview it gives the place's links (geolocale.do?id=, the page of
+ * getTargetDo(), taxonomicPage.do?geolocaleId=), the list SQL and the Countable count queries: a place's specimens
+ * are those collected there (island_country, adm1 or country) of a counted status; regions and subregions count
+ * the specimens of their valid countries (regionCountriesSql, regionSpecimensSql, since 2026-10-20). Docs:
+ * docs/flows/places.md, docs/numbers.md rows 20 to 37, docs/data-model.md (geolocale, geolocale_taxon). Tests:
+ * PlaceTotalsDbTest, tests/e2e/test_place_pages.py, test_region_counts.py.
+ */
 public class Geolocale extends LocalityOverview implements SpeciesListable, Countable, Comparable<Geolocale> {
 
     // Places without a name sort last, consistently (both null: equal), so a sort never breaks its contract.

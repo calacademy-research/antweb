@@ -1,4 +1,7 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Body of bioregionCountryList.do (util.ReportAction): "Antweb Bioregion Country/Adm1 Info", three reference map
+     images, then per bioregion its countries in bold (with "(Primary bioregion: <name>)" when the country's
+     bioregion is a known one) and adm1 rows, from the request attribute bioregionCountryList (ReportAction, table
+     geolocale). Read-only. Docs: docs/catalog/actions.csv. --%><%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
