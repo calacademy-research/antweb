@@ -776,7 +776,6 @@ Click <b>SHOW | HIDE</b> to add more criteria to your search.
 			</div>
 
 		    <p align=center><input src="<%= AntwebProps.getDomainApp() %>/image/magnifyGlassButton.png" border="0" type=image value="Search &#187;"></p>
-       	    <s:reset>
 		
     </div>
 </div>

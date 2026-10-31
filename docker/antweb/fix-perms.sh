@@ -14,6 +14,9 @@
 U=tomcat
 G=antweb
 status=0
+# find -execdir refuses a PATH with relative entries; this script runs only system tools.
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
 
 # web/log is a host folder (docker-compose.yml: ./logs/web), so the links the image
 # made in it are hidden. Make the upload report links here: reports must go to the
@@ -48,7 +51,9 @@ for d in \
 do
   [ -d "$d" ] || continue
   # A regular file with more than one hard link is skipped: tomcat could link a root file (outside these trees) here.
-  if ! find "$d" -xdev ! -user "$U" \( ! -type f -o -links 1 \) -exec chown -h "$U:$G" {} +; then
+  # -execdir (2026-10-30): chown runs in each file's own folder on ./name, so a folder that tomcat swaps for a link
+  # between find and chown is not followed (with -exec the full path was resolved again by chown).
+  if ! find "$d" -xdev ! -user "$U" \( ! -type f -o -links 1 \) -execdir chown -h "$U:$G" {} +; then
     echo "antweb-fix-perms: could not chown everything under $d" >&2
     status=1
   fi

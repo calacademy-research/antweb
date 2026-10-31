@@ -144,6 +144,8 @@ if (childrenList != null) {
      if (limitStr != null) {
        try {
          limit = Integer.parseInt(limitStr.trim());
+         if (limit < 1) limit = 1;           // nothing shown otherwise
+         if (limit > 10000) limit = 10000;   // the "show all" link's value: never more in one page
        } catch (NumberFormatException e) {
          // not a number: keep the default
        }

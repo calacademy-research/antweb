@@ -115,8 +115,11 @@ During parse (`SpecimenUploadParse.cleanCollectionCode()` and `cleanLocalityCode
 - `UploadUtil.cleanCode()` removes spaces, `%`, `#` and apostrophes (straight `'` only). Unchanged since before
   2026; changing it would change every code at the group's next upload.
 - A locality code that is missing, `Null` or shorter than 5 characters, on a specimen with coordinates, becomes
-  `loc` (or the short code) followed by `lat,lon`, for example `loc-18.91,47.52`. A collection code that is
-  missing gets a random `tc<number>`.
+  `loc` (or the short code) followed by `lat,lon`, for example `loc-18.91,47.52`.
+- A specimen without a collection code (none given, or nothing left after cleaning) is stored without one (null)
+  and is in no collection: not counted in Collections (groups.do, group.do), "none" on its specimen page (Brian
+  Fisher, 2026-10-30; `SpecimenUploadParse.storedCollectionCode()`). Until then it got a random `tc<number>`, a new
+  one at every upload. Codes stored that way before 2026-10-30 stay until a one-time cleanup (not done yet).
 - **A double quote becomes `-`** (since 2026-10-23, `UploadUtil.quotesToDash()`, called first in `cleanCode()`,
   so it applies to locality and collection codes). `""` (a spreadsheet export doubles a quote) and `"` both become
   one `-`: `KM55""805` and `KM55"805`, the same place stored as two codes, are both `KM55-805`. The upload report

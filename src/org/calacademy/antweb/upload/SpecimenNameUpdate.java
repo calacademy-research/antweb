@@ -641,19 +641,32 @@ public class SpecimenNameUpdate {
         }
     }
 
+    /**
+     * The status a moved specimen gets: that of the taxon it now belongs to, as an upload gives it. A move back to an
+     * uploaded name that AntCat does not call valid (TARGET_MISSING) keeps that name's status; it was always "valid".
+     * Valid when the taxon has no status.
+     */
+    public static String specimenStatus(String targetTaxonStatus) {
+        return targetTaxonStatus == null || targetTaxonStatus.isBlank() ? Status.VALID : targetTaxonStatus;
+    }
+
     private static void applyChange(Connection connection, Change change) throws SQLException {
         String[] cols = new String[7];
+        String targetStatus = null;
         try (PreparedStatement stmt = connection.prepareStatement(
-                "select family, subfamily, tribe, genus, subgenus, species, subspecies from taxon where taxon_name = ?")) {
+                "select family, subfamily, tribe, genus, subgenus, species, subspecies, status from taxon where taxon_name = ?")) {
             stmt.setString(1, change.newName);
             try (ResultSet r = stmt.executeQuery()) {
-                if (r.next()) for (int i = 0; i < 7; i++) cols[i] = r.getString(i + 1);
+                if (r.next()) {
+                    for (int i = 0; i < 7; i++) cols[i] = r.getString(i + 1);
+                    targetStatus = r.getString(8);
+                }
             }
         }
         try (PreparedStatement stmt = connection.prepareStatement(UPDATE_SQL)) {
             stmt.setString(1, change.newName);
             stmt.setString(2, change.newOriginalName);
-            stmt.setString(3, Status.VALID);
+            stmt.setString(3, specimenStatus(targetStatus));
             for (int i = 0; i < 7; i++) stmt.setString(4 + i, cols[i]);
             stmt.setInt(11, change.groupId);
             stmt.setString(12, change.oldName);

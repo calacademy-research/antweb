@@ -203,11 +203,11 @@ if (localityLink != null) { %>
 
 <%
    Geolocale country = GeolocaleMgr.getCountry(specimen.getCountry());
-   if (country != null) out.println("<ul><li><b>" + country.getHeading() + ":</b></li><li><a href='" + country.getThisPageTarget() + "'>" + country.getName() + "</a></li></ul>");
+   if (country != null) out.println("<ul><li><b>" + country.getHeading() + ":</b></li><li><a href='" + Html.escAttr(country.getThisPageTarget()) + "'>" + Html.esc(country.getName()) + "</a></li></ul>");
    //A.log("specimen-body.jsp islandCountry:" + GeolocaleMgr.getIsland(specimen.getIslandCountry()));
    Geolocale island = GeolocaleMgr.getIsland(specimen.getIslandCountry());
    if (island != null) {
-      out.println("<ul><li><b>" + island.getHeading() + ":</b></li><li><a href='" + island.getThisPageTarget() + "'>" + island.getName() + "</a></li></ul>");
+      out.println("<ul><li><b>" + island.getHeading() + ":</b></li><li><a href='" + Html.escAttr(island.getThisPageTarget()) + "'>" + Html.esc(island.getName()) + "</a></li></ul>");
    }
    //out.println("<ul><li><b>" + specimen.getIslandCountry() + "</b></li><li></ul>");
    Adm1 adm1 = (Adm1) GeolocaleMgr.getAdm1(specimen.getAdm1(), specimen.getCountry());
@@ -217,7 +217,7 @@ if (localityLink != null) { %>
      if (adm1 != null) {
        String warnNote = "";
        if (!GeolocaleMgr.isAccepted(adm1)) warnNote = "&nbsp;<font color=red>(Not Antweb valid Adm1)</font>";
-       out.println("<ul><li><b>Adm1: </b></li><li><a href='" + adm1.getThisPageTarget() + "'>" + adm1.getName() + "</a></li></ul>" + warnNote);
+       out.println("<ul><li><b>Adm1: </b></li><li><a href='" + Html.escAttr(adm1.getThisPageTarget()) + "'>" + Html.esc(adm1.getName()) + "</a></li></ul>" + warnNote);
      } else {
        String unrecognizedAdm1Value = "";
        if (specimen.getAdm1() != null) {
@@ -313,7 +313,11 @@ if (localityLink != null) { %>
 
 <ul>
 <li><b>Collection code: </b></li>
+<% if (specimen.getCollectionCode() == null || specimen.getCollectionCode().trim().isEmpty()) { /* no collection code: in no collection (2026-10-30) */ %>
+<li>none &nbsp;</li>
+<% } else { %>
 <li><a href="<%= AntwebProps.getDomainApp() %>/collection.do?name=<%= Html.escAttr(Html.url(specimen.getCollectionCode())) %>"><%= Html.esc(specimen.getCollectionCode()) %></a> &nbsp;</li>
+<% } %>
 
 </ul>
 
@@ -640,7 +644,7 @@ if (LoginMgr.isAdmin(request)) {
    String amissEmail = AntwebUtil.getAdminEmail();
    if (specimen != null && specimen.getGroup() != null) amissEmail = specimen.getGroup().getAdminEmail();  
 %>
-<a href="mailto: <%= amissEmail %>?subject=Regarding AntWeb page <%= Html.escAttr(thePage) %>">See something amiss? Send us an email.</a>
+<a href="mailto:<%= Html.escAttr(amissEmail) %>?subject=Regarding AntWeb page <%= Html.escAttr(thePage) %>">See something amiss? Send us an email.</a>
 
 </div>
 
@@ -651,7 +655,7 @@ if (!HttpUtil.isBot(request)) {
    if (specimen.getImages() != null) { %>    
 <logic:iterate id="theImage" name="specimen" collection="<%= specimen.getImages() %>">
   <logic:equal name="theImage" property="key" value="p1">
-        <div class="slide medium last" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><bean:write name="theImage" property="value.thumbview" />');" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= specimen.getName() %>&shot=p&number=1';"></div>
+        <div class="slide medium last" style="background-image: url('<%= AntwebProps.getImgDomainApp() %><bean:write name="theImage" property="value.thumbview" />');" onclick="window.location='<%= AntwebProps.getDomainApp() %>/bigPicture.do?name=<%= Html.escAttr(Html.js(Html.url(specimen.getName()))) %>&shot=p&number=1';"></div>
         <div class="clear"></div>
   </logic:equal>
 </logic:iterate>
