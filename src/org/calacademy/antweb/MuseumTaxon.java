@@ -5,6 +5,12 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * A taxon's row in a museum's species list (table museum_taxon, key code and taxon_name): its counts of
+ * subfamilies, genera, species, specimens and images. Made by Museum.getTaxonSet when a taxon page or list is seen
+ * in a museum (museumCode=); OverviewTaxon.init reads the row. The rows are written by nightly set 3
+ * (MuseumDb.populate) and set 4 (image counts). Docs: docs/data-model.md (museum_taxon), docs/flows/taxon-pages.md.
+ */
 public class MuseumTaxon extends OverviewTaxon {
 
     private static final Log s_log = LogFactory.getLog(MuseumTaxon.class);

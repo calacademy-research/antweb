@@ -7,6 +7,14 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * A stand-in Taxon made from a taxon name only (makeDummyTaxon splits the name into subfamily, genus, species and
+ * rank), for code that handles a name without a full taxon page. Used by the Bioregion and Introduced Map Managers
+ * (one row per genus or species with its bioregion map), by the species list import (SpeciesListUpload looks up a
+ * current valid name with DummyTaxonDb.getDummyTaxon), as the empty taxon of a field guide without one, and by the
+ * page-text orphan methods of OrphansDb (with suggested valid names), which nothing calls since the Orphan Manager
+ * was removed. getFullName leaves out the subfamily part of the name.
+ */
 public class DummyTaxon extends Taxon {
     /** This class can be used to populate and manipulate description_edits or other objects that 
      * are keyed on taxonName

@@ -1,4 +1,8 @@
-<% 
+<%-- The note above a place's list on taxonomicPage.do and browse.do (static include of taxonomicPage-body.jsp and
+     showBrowse-body.jsp): what a geolocale, bioregion or museum list is based on (a project list: admins only), the
+     Show Specimen Taxa hint, and on species lists the Species List with Range Data report links (query.do):
+     bioregions for everyone, countries and adm1s for curators, regions and subregions for admins. Uses the
+     including page's overview, pageRank and pageType. Docs: docs/flows/places.md. --%><% 
 if (true) {
     String note = "";
       

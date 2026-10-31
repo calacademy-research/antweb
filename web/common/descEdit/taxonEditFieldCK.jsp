@@ -1,4 +1,10 @@
-<!-- TaxonEditFieldCK.jsp. -->   
+<%-- Static include of taxonPage-body.jsp (overview, distribution, biology, identification, comments, taxonomic
+     notes, notes, references) and specimen-body.jsp (the specimen's page text), once per text field: the heading
+     and the field's text. A curator who may edit (canEditDesc) also gets an [Edit] link (description.do or
+     specimen.do with editField) and the field's history link, and the field being edited gets the editor
+     (ckEditorMinConfigTaxonForm.jsp); the notes field needs hasExtraPrivs. Uses the including page's desc,
+     thisDesc, descHeader, descNotes, editField and taxon. Text in table description_edit. Tests:
+     tests/e2e/test_page_editor.py, test_editor_roundtrip.py. --%><!-- TaxonEditFieldCK.jsp. -->   
   <% /* This jsp is included for each description item.
      accessGroup != null: if curator, allow for the editing of descriptions.
      desc.containsKey(thisDesc): If there is a description in the edit field display to user or empty to curator.

@@ -16,6 +16,14 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
+/**
+ * /taxaList.do (util/list.jsp): a plain list of up to 1000 names, each linked to its page, chosen by rank, status,
+ * extant=1|0, imaged=1|0 and one place (project, bioregionName, museumCode, or geolocaleName as a name or an id).
+ * In a place, imaged uses the image_count of the place's list row (B63, 2026-10-27). Linked from the statistics
+ * breakdowns (statistics.do). Reads tables taxon, proj_taxon, bioregion_taxon, museum_taxon and geolocale_taxon;
+ * request values are bound as parameters. Docs: docs/flows/home-and-statistics.md, docs/numbers.md row 98. Tests:
+ * tests/e2e/test_numbers_uploads.py::test_statistics_breakdown_numbers_equal_their_lists.
+ */
 public final class TaxaListAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(TaxaListAction.class);

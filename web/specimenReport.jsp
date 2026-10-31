@@ -1,4 +1,8 @@
-<%@ page import = "org.calacademy.antweb.Login" %>
+<%-- The specimen rows of a list: static include of showBrowse-body.jsp (browse.do of a species or subspecies),
+     search/advancedSearchResults-body.jsp and collection-body.jsp. The sort form (worked by specimen_list.js), then
+     one row per specimen with its code, name and the other columns, from the rows the including page chose. Docs:
+     docs/flows/taxon-pages.md, docs/flows/search.md, docs/flows/specimen-and-image-pages.md (collection.do). Tests:
+     tests/e2e/test_taxon_pages.py, test_search_pages.py. --%><%@ page import = "org.calacademy.antweb.Login" %>
 <%@ page import = "java.util.ArrayList" %>
 
 <!-- specimenReport.jsp -->

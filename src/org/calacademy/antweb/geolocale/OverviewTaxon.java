@@ -9,6 +9,12 @@ import org.apache.commons.logging.LogFactory;
         
 import org.calacademy.antweb.util.*;
 
+/**
+ * Base class of the list rows read the same way: MuseumTaxon, GeolocaleTaxon, BioregionTaxon and ProjTaxon. init
+ * reads the counts from getTable() where getKeyClause(), the all-of-AntWeb image count (Images column) and the
+ * global child count from the allantwebants row kept by AllAntwebMgr (the Global column). The subclasses override
+ * init where they read more columns. Docs: docs/data-model.md section 5.
+ */
 public abstract class OverviewTaxon extends TaxonSet {
 
     private static final Log s_log = LogFactory.getLog(OverviewTaxon.class);

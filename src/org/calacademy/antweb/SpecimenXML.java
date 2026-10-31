@@ -12,6 +12,12 @@ import javax.xml.parsers.SAXParser;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * SAX handler that turns the XML of a specimen's extra fields (column other of table specimen, built by the
+ * specimen upload) into a Hashtable of element name and text. Used by Specimen.getDetailHash (the extra fields in
+ * the specimen page's Admin Information and in logMgr) and by the specimen upload (SpecimenUploadParse: isInvalid
+ * checks the XML of each row). DOCTYPE declarations are refused, so the XML can read no files or addresses.
+ */
 public class SpecimenXML extends DefaultHandler {
 
     private static final Log s_log = LogFactory.getLog(SpecimenXML.class);

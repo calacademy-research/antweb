@@ -1,4 +1,7 @@
-<!-- unImagedTaxa.jsp -->
+<%-- The line "Species with no image in AntWeb (N): ..." of an images view: the children with no image, at most 50
+     listed, each linked to its page; nothing for specimens. Static include of taxonChildImages.jsp and
+     taxonomicPageImages-body.jsp (variable childrenList). Wording decided by Brian Fisher, 2026-10-27 (finding
+     B45). --%><!-- unImagedTaxa.jsp -->
 
 <%
     ArrayList<Taxon> unImagedTaxa = new ArrayList<Taxon>();

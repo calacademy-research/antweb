@@ -1,4 +1,10 @@
-
+<%-- Body of taxonPage.jsp, a taxon's Overview tab (description.do, BrowseAction): title, links, View in AntCat, the
+     not-recorded notice, classification, page tools and data download, the genus indet line, current valid name,
+     synonyms and homonyms, AntCat's Taxonomic History, the page-text fields (images, videos, overview,
+     distribution, biology, identification, comments, taxonomic notes, notes, references), author history,
+     treatments, habitat summary, Admin Information, the head shot with the imaged castes line and the map. Reads
+     the request attribute taxon. Docs: docs/flows/taxon-pages.md. Tests: tests/e2e/test_taxon_pages.py,
+     test_page_editor.py. --%>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.*" %>

@@ -4,6 +4,11 @@ import java.util.*;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Comparator of Taxon.sortTaxa for orderBy=taxonName: genus, then species of the row's name. Taxon.sortTaxa calls
+ * it when a list is sorted by a column heading: the list rows (taxonReportBody.jsp: taxonomicPage.do, browse.do),
+ * the images view (taxonChildImages.jsp: images.do), comparisons and field guides.
+ */
 public class SortTaxaByGenusSpecies implements Comparator<Taxon> 
 {
     public int compare(Taxon a, Taxon b) 

@@ -1,4 +1,6 @@
-<%@ page import="org.calacademy.antweb.geolocale.*" %>
+<%-- The Change View menu of the site navigation (static include of common/siteNav.jsp) on taxon pages: the same
+     taxon seen in another kind of place, from the taxon's change view options, shown when the page allows it
+     (isChangableView). Uses the including page's taxon, uri and isChangableView. --%><%@ page import="org.calacademy.antweb.geolocale.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 
 <%

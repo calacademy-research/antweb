@@ -1,4 +1,6 @@
-<%@ page language="java" %>
+<%-- Old page that showed one image of the specimen in the session (shot=head, profile, label, dorsal or ventral).
+     Unused as of 2026-10-30: no action, include or reference found, and Caddy does not serve it directly (images
+     are shown by bigPicture.do and specimenImages.do). --%><%@ page language="java" %>
 <%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

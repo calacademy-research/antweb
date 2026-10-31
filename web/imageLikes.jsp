@@ -1,4 +1,5 @@
-
+<%-- Tiles wrapper of imageLikes-body.jsp, the curators' favourite images (title "AntWeb Curator's Favorite
+     Images"): forward likes of /list.do?action=likes (ListAction; also /favs.do). --%>
 <%@include file="common/antweb-defs.jsp" %>
 
 <%

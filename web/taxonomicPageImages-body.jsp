@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- Body of the list with images (taxonomicPage.do?images=true, TaxaPageAction): the place heading, the imaged
+     count header in the words of the status choice, the status, view and caste choices, the names with no image
+     (unImagedTaxa.jsp), one cell per name (taxonChildImageSet.jsp) and the images definition. Each name shows its
+     best images in AntWeb, wherever collected. Reads the request attribute taxaPage. Docs: docs/flows/places.md. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.*" %>

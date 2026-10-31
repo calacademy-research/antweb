@@ -5,6 +5,11 @@ import java.sql.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * A row of table antwiki_taxon_country (AntWiki country records loaded in 2015: taxon name, country, introduced).
+ * Unused as of 2026-10-30: only AntwikiTaxonCountryDb refers to it, and nothing calls that. Docs:
+ * docs/data-model.md section 11 (antwiki_taxon_country).
+ */
 public class AntwikiTaxonCountry implements Comparable<AntwikiTaxonCountry> {
 
     private static final Log s_log = LogFactory.getLog(AntwikiTaxonCountry.class);
