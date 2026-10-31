@@ -77,6 +77,13 @@ public class UploadUtil {
         }
     }
 
+    /** "sp." or "sp", any case, surrounding spaces ignored: a species column that names no species (2026-10-30). */
+    public static boolean isSpEpithet(String epithet) {
+        if (epithet == null) return false;
+        String s = epithet.trim();
+        return "sp".equalsIgnoreCase(s) || "sp.".equalsIgnoreCase(s);
+    }
+
     /** "sp.", "indet", "undet", "(indet)" (any case, trailing period or "?"): not identified at this rank. */
     static boolean isIndetLike(String epithet) {
         if (epithet == null) return false;

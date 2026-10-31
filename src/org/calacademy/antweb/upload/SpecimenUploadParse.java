@@ -470,7 +470,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 				}
             }
         
-            if (Utility.isBlank(speciesName) || "sp.".equals(speciesName)) {
+            // "sp." or "sp", any case (2026-10-30: as the indet tool, tools/data/indet_form.py)
+            if (Utility.isBlank(speciesName) || UploadUtil.isSpEpithet(speciesName)) {
               speciesName = "(indet)";
             }
             speciesName = Formatter.stripString(speciesName, "?");
@@ -1327,7 +1328,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         // filed as "(indet)" too and belong in the same report section.
         // A trailing "?" is stripped by the parse ("indet?" is filed as "(indet)"), so it is stripped here too.
         String species = speciesName == null ? null : Formatter.stripString(speciesName, "?").trim();
-        if (!Utility.isBlank(species) && !"sp.".equals(species) && !UploadUtil.isIndetEpithet(species)) return null;
+        if (!Utility.isBlank(species) && !UploadUtil.isSpEpithet(species) && !UploadUtil.isIndetEpithet(species)) return null;
         boolean hasGenus = !Utility.isBlank(genusName) && org.calacademy.antweb.home.PlaceTotals.isIdentifiedToGenus(genusName.trim());
         if (hasGenus) return GENUS;
         boolean noGenus = Utility.isBlank(genusName) || "(indet)".equals(genusName.trim());

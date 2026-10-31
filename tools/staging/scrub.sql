@@ -54,7 +54,7 @@ BEGIN
     FETCH cols INTO t, c;
     IF done THEN LEAVE scrub; END IF;
     IF c = 'email' THEN
-      SET @antweb_scrub = CONCAT('UPDATE `', t, '` SET email = ''copy@example.invalid'' WHERE email IS NOT NULL AND email <> ''''');
+      SET @antweb_scrub = CONCAT('UPDATE `', t, '` SET email = CONCAT(''copy-'', UUID(), ''@example.invalid'') WHERE email IS NOT NULL AND email <> ''''');
     ELSE
       SET @antweb_scrub = CONCAT('UPDATE `', t, '` SET password = CONCAT(''pbkdf2_sha256$600000$'', TO_BASE64(RANDOM_BYTES(16)), ''$'', TO_BASE64(RANDOM_BYTES(32))) WHERE password IS NOT NULL AND password <> ''''');
     END IF;

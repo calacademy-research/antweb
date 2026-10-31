@@ -122,7 +122,7 @@ def check_scrubbed():
     assert value("select count(distinct password) from login where password <> ''") == "4", "a random hash per login"
     # A dated copy of the login table (left by a clean-up) is scrubbed too (2026-10-30).
     email, password = rows("select email, password from login_deleted_2026_10_16 where id = 960")[0]
-    assert email == "copy@example.invalid", email
+    assert email.startswith("copy-") and email.endswith("@example.invalid"), email
     assert password.startswith("pbkdf2_sha256$600000$") and password != H_BRIAN_PROD, password
     assert value("select count(*) from information_schema.routines where routine_schema = 'ant'") == "0"
 

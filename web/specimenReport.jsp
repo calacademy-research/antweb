@@ -287,12 +287,15 @@ if (sortedBy == null) {
 %>
             <!-- logic:lessThan name="thisSpecimen" property="childrenCount" value="0" --> 
             <!-- specimenReport.jsp search and specimen list -->
-            <div class="specimen_layout<% if (!thisChild.getHasImages()) { %> no_photos<% } %>">
+<%          // no-photos mark exactly where the row says "No Images": a specimen with label images only is not marked (2026-10-30)
+            boolean srNoPhotos = !thisChild.getHasImages()
+                && !(thisChild instanceof Specimen && ((Specimen) thisChild).getLabelImageCount() > 0); %>
+            <div class="specimen_layout<% if (srNoPhotos) { %> no_photos<% } %>">
                 <div class="sd_checkbox">
                 <% String indexNote = "";
                    if (LoginMgr.isAdmin(request)) indexNote = (srNumberOffset + index + 1) + ".&nbsp;&nbsp;";
                 %>
-                    <b><%= indexNote %></b><span class="sdcb<% if (!thisChild.getHasImages()) { %> np<% } %>"><input type="checkbox" class="thecb" name="chosen" value="<%= Html.escAttr(for_chosen) %>"></span>
+                    <b><%= indexNote %></b><span class="sdcb<% if (srNoPhotos) { %> np<% } %>"><input type="checkbox" class="thecb" name="chosen" value="<%= Html.escAttr(for_chosen) %>"></span>
                 </div>
                 <div class="sd_data">
                     <div class="sd_specimen_code">

@@ -54,6 +54,14 @@ public class AuditTkFixesTest extends TestCase {
         assertTrue(UploadDetails.namesMuseum("CASC", "CASC"));
         assertFalse(UploadDetails.namesMuseum("CASC", "CAS"));
         assertTrue(UploadDetails.namesMuseum("CAS, San Francisco", "CAS"));
+        assertTrue(UploadDetails.namesMuseum("ex CAS", "CAS"));
+        assertFalse(UploadDetails.namesMuseum("CASENT", "CAS"));
+        assertTrue("second occurrence counts", UploadDetails.namesMuseum("CASC/CAS", "CAS"));
+        // species "sp." or "sp", any case, names no species; "sp 1" and "spinosa" do
+        assertTrue(org.calacademy.antweb.upload.UploadUtil.isSpEpithet(" Sp. "));
+        assertTrue(org.calacademy.antweb.upload.UploadUtil.isSpEpithet("sp"));
+        assertFalse(org.calacademy.antweb.upload.UploadUtil.isSpEpithet("sp 1"));
+        assertFalse(org.calacademy.antweb.upload.UploadUtil.isSpEpithet("spinosa"));
         assertTrue(UploadDetails.namesMuseum("MCZ:ENT", "MCZ"));
         assertFalse(UploadDetails.namesMuseum("MCZC", "MCZ"));
         assertFalse(UploadDetails.namesMuseum(null, "CAS"));

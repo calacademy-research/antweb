@@ -204,7 +204,7 @@
    String amissEmail = AntwebUtil.getAdminEmail();
    if (specimen != null && specimen.getGroup() != null) amissEmail = specimen.getGroup().getAdminEmail();  
 %> 
-<a href="mailto:<%= amissEmail %>?subject=Regarding AntWeb page <%= Html.escAttr(thePage) %>">See something amiss? Send us an email.</a>
+<a href="mailto:<%= Html.escAttr(amissEmail) %>?subject=Regarding AntWeb page <%= Html.escAttr(thePage) %>">See something amiss? Send us an email.</a>
 
 </div>
 

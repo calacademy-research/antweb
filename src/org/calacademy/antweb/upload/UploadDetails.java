@@ -314,8 +314,14 @@ public class UploadDetails extends OperationDetails {
      */
     public static boolean namesMuseum(String ownedBy, String code) {
         if (ownedBy == null || code == null || code.isEmpty()) return false;
-        return java.util.regex.Pattern.compile("(?<![A-Za-z0-9])" + java.util.regex.Pattern.quote(code) + "(?![A-Za-z0-9])")
-            .matcher(ownedBy).find();
+        // no regex: called for every museum on every saved specimen
+        for (int i = ownedBy.indexOf(code); i >= 0; i = ownedBy.indexOf(code, i + 1)) {
+            int end = i + code.length();
+            boolean before = i > 0 && Character.isLetterOrDigit(ownedBy.charAt(i - 1));
+            boolean after = end < ownedBy.length() && Character.isLetterOrDigit(ownedBy.charAt(end));
+            if (!before && !after) return true;
+        }
+        return false;
     }
 
     public void addToMuseumMap(String element) {
