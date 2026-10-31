@@ -7,6 +7,15 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * A taxon's row in a place's species list. Base class of ProjTaxon (proj_taxon), MuseumTaxon (museum_taxon),
+ * GeolocaleTaxon (geolocale_taxon) and BioregionTaxon (bioregion_taxon). Holds the row's counts (subfamilies,
+ * genera, species, specimens, images), the all-of-AntWeb child count and image count (the Global and Images columns
+ * of lists), endemic flag and source; exists() says whether the place's list has the name. Taxon.initTaxonSet gets
+ * it from the place (Overview.getTaxonSet) for description.do, browse.do, images.do and taxonomicPage.do;
+ * getNextSubtaxon writes the lines such as "12 Species" on those pages. Docs: docs/flows/taxon-pages.md,
+ * docs/data-model.md section 5, docs/numbers.md rows 40 to 44.
+ */
 public abstract class TaxonSet {
 
     private static final Log s_log = LogFactory.getLog(TaxonSet.class);

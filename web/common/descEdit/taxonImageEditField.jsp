@@ -1,4 +1,8 @@
-<!-- TaxonImageEditField.jsp -->
+<%-- Static include of taxonPage-body.jsp for the Images text field: the field's text (images curators added). A
+     curator who may edit (canEditDesc) also gets an [Edit] link, the history link and a form that uploads an image
+     file to descEditImageUpload.do (file field theFile2, target the taxon page), and the field being edited gets
+     the editor. Uses the including page's desc, thisDesc, descHeader, editField and taxon. Text in table
+     description_edit. --%><!-- TaxonImageEditField.jsp -->
   <% /* This jsp is included for each description item.
   
      accessGroup != null: if curator, allow for the editing of descriptions.

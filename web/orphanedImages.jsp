@@ -1,4 +1,5 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Tiles wrapper of orphanedImages-body.jsp (title "Orphaned Images - AntWeb"): forward success of
+     /orphanedImages.do (OrphanedImagesAction), admins only. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

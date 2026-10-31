@@ -1,4 +1,7 @@
-<%@ page import="org.calacademy.antweb.*" %>
+<%-- Body of imageLikes.jsp: one medium image per liked image (request attribute likeObjectList, from table
+     image_like), linked to bigPicture.do and to the specimen page; admins also get the number of likes per image
+     (list.do?action=pictureLikes). Images are liked on bigPicture.do (pictureLike.do). Docs: docs/data-model.md
+     (image_like). Tests: tests/e2e/test_site_links.py. --%><%@ page import="org.calacademy.antweb.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.Utility" %>
 <%@ page import="java.util.*" %>

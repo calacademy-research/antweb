@@ -1,4 +1,7 @@
-
+<%-- Body of taxonImageConfirmForm.jsp, the answer of descEditImageUpload.do for a file uploaded from a taxon page's
+     Images field (taxonImageEditField.jsp): the file's link and img tag, the image, and a Save button that posts
+     editField=images, rank, name and imageUrl back to the taxon page, which adds the image to the field. Curators.
+     No functional e2e test (docs/catalog/actions.csv). --%>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 

@@ -9,6 +9,13 @@ import org.apache.commons.logging.LogFactory;
         
 import org.calacademy.antweb.util.*;
 
+/**
+ * A taxon's row in a country, adm1, region or subregion species list (table geolocale_taxon, key geolocale_id and
+ * taxon_name): counts, created, source, is_introduced and is_endemic. Made by Geolocale.getTaxonSet when a taxon
+ * page or list is seen in that place; init reads the row and the global counts. Written by the nightly sets (set 1
+ * AntCat rows, set 2 from specimens: GeolocaleTaxonDb) and the curators' species list tool. Docs:
+ * docs/data-model.md (geolocale_taxon), docs/flows/places.md.
+ */
 public class GeolocaleTaxon extends OverviewTaxon {
 
     private static final Log s_log = LogFactory.getLog(GeolocaleTaxon.class);

@@ -16,6 +16,15 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 
+/**
+ * /taxonomicPage.do: a place's list of subfamilies, genera or species (taxonomicPage.jsp). images=true gives the
+ * images view, specimen=true adds the names known only from specimens (kept in the session), isImaged=false the
+ * unimaged names, statusSet the status choice. Checks the rank (subspecies refused) and the place (OverviewMgr); a
+ * species list of all of AntWeb or the AntCat list with images (not isImaged=false) needs a login.
+ * TaxaPage.fetchChildren reads the place's list joined to taxon; findUnimaged, findGenusOnly and the fossil
+ * subfamilies add the notes. Request attribute taxaPage. Docs: docs/flows/places.md, docs/numbers.md rows 38 to 42.
+ * Tests: tests/e2e/test_numbers_lists.py, test_status_choice.py, test_numbers_live.py.
+ */
 public final class TaxaPageAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(TaxaPageAction.class);

@@ -1,4 +1,7 @@
-<%@ page import="org.calacademy.antweb.Formatter" %>
+<%-- Body of specimenImages.jsp, a specimen's images (specimenImages.do, SpecimenAction): title, classification, the
+     heading that counts images of the ant and label images apart ("5 Images + label", ImageCounts), and every image
+     of the specimen, each opening bigPicture.do. Reads the request attribute specimen. Docs:
+     docs/flows/specimen-and-image-pages.md, docs/numbers.md row 64. Tests: tests/e2e/test_specimen_pages.py. --%><%@ page import="org.calacademy.antweb.Formatter" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.*" %>
 <%@ page import="java.util.ResourceBundle" %>

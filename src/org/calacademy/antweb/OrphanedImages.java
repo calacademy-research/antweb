@@ -10,6 +10,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.AntwebUtil;
 
+/**
+ * The orphaned images: image rows whose specimen code (image_of_id) is no specimen's code. setOrphans reads the
+ * codes (CODES_SQL, the page's list) and the number of images (COUNTS_SQL). Used by OrphanedImagesAction
+ * (orphanedImages.do) and the count check (NumberChecks). Tables image and specimen. Docs: docs/numbers.md row 99
+ * and Q9.
+ */
 public class OrphanedImages {
 
     private static final Log s_log = LogFactory.getLog(OrphanedImages.class);

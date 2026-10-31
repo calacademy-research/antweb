@@ -9,6 +9,12 @@ import org.apache.struts.action.ActionMapping;
 
 import org.calacademy.antweb.util.*;
 
+/**
+ * Form bean specimenImageForm of /bigPicture.do (BigPictureAction, one image at full size) and /pictureLike.do
+ * (PictureLikeAction, liking an image): imageId, or code (older links: name) with shot and number, and artist and
+ * action. validate() only blocks fishing requests: a request with no code, name or imageId gets a message from the
+ * action (2026-10-26, finding F21). Docs: docs/flows/specimen-and-image-pages.md.
+ */
 public final class SpecimenImageForm extends ActionForm {
 
     private String imageId; // This is a usable alternative.  Primary key.

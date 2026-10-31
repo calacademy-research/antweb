@@ -1,4 +1,7 @@
-            <% 
+<%-- The "View: Head, Profile, Dorsal, All" menu of the images views: a choice calls changeThumbView (common
+     JavaScript), which keeps it in the cookie thumbs and reloads the page address (browserParams and imagesTrueStr
+     of the including page). Static include of taxonChildImages.jsp (images.do) and taxonomicPageImages-body.jsp
+     (taxonomicPage.do?images=true). --%>            <% 
             // Must have defined browerParams and imagesTrueStr
             // taxonomicPageImages-body.jsp is same as taxonChildImages.jsp except uses theTaxaPage instead of taxon and has images=true %>
 

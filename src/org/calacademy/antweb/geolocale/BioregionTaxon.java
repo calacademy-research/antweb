@@ -9,6 +9,12 @@ import org.apache.commons.logging.LogFactory;
         
 import org.calacademy.antweb.util.*;
 
+/**
+ * A taxon's row in a bioregion's species list (table bioregion_taxon, key bioregion_name and taxon_name): counts,
+ * created and source. Made by Bioregion.getTaxonSet when a taxon page or list is seen in a bioregion
+ * (bioregionName=); init reads the row and the global counts. Written by nightly sets 1, 3 and 4 (BioregionDb,
+ * BioregionTaxonDb). Docs: docs/data-model.md (bioregion_taxon), docs/flows/places.md.
+ */
 public class BioregionTaxon extends OverviewTaxon {
 
     private static final Log s_log = LogFactory.getLog(BioregionTaxon.class);

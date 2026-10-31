@@ -1,4 +1,6 @@
-
+<%-- Body of descEditImageConfirm.jsp: an uploaded file's link and img tag, and a Save button that posts the image
+     address back to the page it came from. Unused as of 2026-10-30: only the unused descEditImageConfirm.jsp names
+     it. --%>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 
