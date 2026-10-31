@@ -1,4 +1,7 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Body of countryAdm1List.do (util.ReportAction): the place tree from GeolocaleMgr (regions, subregions, valid
+     countries and their adm1s: valid ones in bold, invalid ones with a valid name in gray followed by that name;
+     invalid ones without one are left out but counted), the totals, and links to the tab-delimited downloads
+     countryAdm1List.do?action=antwebAdm1s and action=acceptedAdm1s. Read-only. Docs: docs/catalog/actions.csv. --%><%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

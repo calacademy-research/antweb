@@ -13,6 +13,16 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * A project (table project, held in memory by ProjectMgr): a named species list such as worldants (the AntCat
+ * names), allantwebants (every AntWeb name), fossilants or a curated list, with its title, page text, scope
+ * (GLOBAL, PROJECT ...) and live flag, and its list proj_taxon. As an Overview it gives the project page
+ * (project.do?name=, list projects.do), the list SQL and the Countable count queries (curated projects count a
+ * synonym's specimens under the valid name, worldants and allantwebants by the name itself; poeants, Port of
+ * Entry, is a species list only: isSpeciesListOnly). Also the project links of common/allNav.jsp (getBoltonLi,
+ * getAllAntwebLi, getFossilLi). Docs: docs/flows/places.md, docs/flows/antcat-to-antweb.md (worldants),
+ * docs/numbers.md rows 20 to 37, docs/data-model.md (project, proj_taxon).
+ */
 public class Project extends LocalityOverview implements SpeciesListable, Comparable<Project>, Countable {      // was LocalityOverview
 
     private static final Log s_log = LogFactory.getLog(Project.class);

@@ -1,4 +1,5 @@
-
+<%-- Static include of common/menuBar.jsp: the Bioregions menu of the header, one link per bioregion (BioregionMgr)
+     to bioregion.do?name=. Docs: docs/flows/places.md. --%>
 <div id="bioregions" class="subnav">
   <ul>
 <%

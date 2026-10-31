@@ -1,4 +1,6 @@
-<%@ page language="java" %>
+<%-- Unused as of 2026-10-30: the old curator preview of a project page (curate/curatorCheck.jsp, title "<title> Ants
+     - AntWeb"; its body insert is commented out). No action forwards here (no PreviewProjectAction in src), no page
+     links it, and Caddy answers a direct request with 404 (not on the JSP allow list in docker/caddy/Caddyfile). --%><%@ page language="java" %>
 <%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

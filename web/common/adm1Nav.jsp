@@ -1,4 +1,8 @@
-<!-- adm1Nav.jsp -->
+<%-- Static include of common/siteNav.jsp for an adm1: the "Georegion:" trail region - subregion - country - adm1. On
+     the adm1 page (adm1.do, or description.do) each name links its place's page; on endemic.do the places' pages by
+     id; elsewhere (species lists, image views; bigMap.do links geolocale.do) the same page with each place's
+     parameters (Geolocale.getNavLink). Nothing on adm1s.do. Uses siteNav's variable overview. Docs:
+     docs/flows/places.md. --%><!-- adm1Nav.jsp -->
 
 <%
   if (HttpUtil.getTarget(request).contains("adm1s.do")) return;

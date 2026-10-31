@@ -7,6 +7,14 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.*;
 
+/**
+ * A country, or an island (is_island: heading "Island", page island.do), of the geolocale table, with its
+ * subregion as parent and its adm1s as children (valid, live or all). Page country.do?name= (country.jsp), list
+ * countries.do; parameters countryName= (lists, maps) and subregion=..&country=.. (searches). sort() puts the
+ * country's specimens first. The species list tool (isCanShowSpeciesListTool): a valid country not built from its
+ * adm1s (is_use_children) whose name is among the login's countries. Made by GeolocaleDb, held by GeolocaleMgr.
+ * Docs: docs/flows/places.md, docs/data-model.md (geolocale).
+ */
 public class Country extends Geolocale {
 
     private static final Log s_log = LogFactory.getLog(Country.class);

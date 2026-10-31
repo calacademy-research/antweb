@@ -1,4 +1,6 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Tiles page of locality.do (LocalityAction): "Locality - AntWeb", body locality-body.jsp. Removes the session
+     attribute taxon. Docs: docs/flows/places.md. Tests: tests/e2e/test_specimen_pages.py::
+     test_locality_page_lists_the_specimens_collection. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

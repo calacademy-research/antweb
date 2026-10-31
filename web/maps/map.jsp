@@ -1,4 +1,7 @@
-<%@ page import="org.calacademy.antweb.util.*" %>
+<%-- Unused as of 2026-10-30: a stand-alone Google Maps V3 demonstration page (a map centred on -34.397, 150.644, key
+     AntwebProps.getGoogleMapKey()). No JSP includes it and nothing links it; Caddy answers a direct request with 404
+     (not on the JSP allow list in docker/caddy/Caddyfile). The site's maps use Leaflet (maps/googleMapInclude.jsp,
+     maps/googleMap.jsp). --%><%@ page import="org.calacademy.antweb.util.*" %>
 
 <%
     // This map is just to demonstrate GoogleMap V3 functionality

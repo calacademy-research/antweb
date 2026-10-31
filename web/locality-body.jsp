@@ -1,4 +1,10 @@
-<%@ page language="java" %>
+<%-- Body of the Locality page (locality.do, LocalityAction; request attribute locality): "Locality: <name>", code,
+     name, bioregion, museum, country, island or adm1 (linked to their pages), coordinates (0, 0 shown as none),
+     elevation, errors and notes; Show All Species and Show All Specimens links to the advanced search by locality
+     code, else name (not for bots); the small map (maps/googleMapInclude.jsp, locality.getMap()); and one row per
+     collection code, linked to collection.do. Docs: docs/flows/places.md, docs/numbers.md row 66. Tests:
+     tests/e2e/test_specimen_pages.py::test_locality_page_lists_the_specimens_collection, test_numbers_search.py::
+     test_locality_collections_equal_the_codes_of_its_specimens. --%><%@ page language="java" %>
 <%@ page import = "java.util.ResourceBundle" %>
 <%@ page import = "java.util.ArrayList" %>
 <%@ page import = "org.calacademy.antweb.*" %>

@@ -1,4 +1,6 @@
-
+<%-- Static include of common/siteNav.jsp for a subregion: the "Georegion:" trail region - subregion, linked to their
+     pages on subregion.do or description.do, elsewhere to the same page with each place's parameters
+     (Geolocale.getNavLink). Uses siteNav's variable overview. Docs: docs/flows/places.md. --%>
 
 <div id="view">
 	<div id="current_view">Georegion: 

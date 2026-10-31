@@ -1,4 +1,6 @@
-
+<%-- Unused as of 2026-10-30: an admin note for the species list of a geolocale (how Georegion lists are made, Show
+     Specimen Taxa), using the variables overview, pageRank and pageType. No JSP includes it, and Caddy answers a
+     direct request with 404 (not on the JSP allow list in docker/caddy/Caddyfile). --%>
 <%
 if (
     LoginMgr.isAdmin(request) 

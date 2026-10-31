@@ -12,6 +12,13 @@ import org.calacademy.antweb.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /place.do?placeName=<name> (form overviewForm): the header's Places box (search/placeNameSearchBox.jsp).
+ * Redirects to the page of the place GeolocaleMgr.getGeolocale(name) finds (a name without capitals is capitalised
+ * first; "Florida" means Florida, United States), else of the adm1 for "<adm1>, <country>"; otherwise the message
+ * "Place not found:<name>". Without placeName: "Must enter a place name for the search."; while GeolocaleMgr is
+ * not loaded: "Server Initializing...". Docs: docs/flows/search.md. Tests: tests/e2e/test_search_pages.py.
+ */
 public final class PlaceNameAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(PlaceNameAction.class);

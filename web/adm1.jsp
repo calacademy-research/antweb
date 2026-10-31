@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- Tiles page of adm1.do (OverviewAction, form overviewForm): an adm1's page, titled "Adm1: <name>, <country> -
+     Antweb", body overview-body.jsp. Prints "Overview not found" without a place. A direct request of the JSP prints
+     "Invalid URL.  Direct JSP calls unsupported." (HttpUtil.isStaticCallCheck). Docs: docs/flows/places.md,
+     docs/numbers.md rows 20 to 37. Tests: tests/e2e/test_place_pages.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ page import="org.calacademy.antweb.Overview" %>

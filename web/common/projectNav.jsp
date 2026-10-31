@@ -1,4 +1,6 @@
-<!-- projectNav.jsp -->
+<%-- Static include of common/siteNav.jsp for a project: "Current View:" and its title, linked to its page on
+     project.do, elsewhere to the same page with project=. Uses siteNav's variable overview. Docs:
+     docs/flows/places.md. --%><!-- projectNav.jsp -->
 
 <div id="current_view">Current View: 
 <%
