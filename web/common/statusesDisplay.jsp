@@ -1,4 +1,8 @@
-<%@ page import="org.calacademy.antweb.Group" %>
+<%-- The status selector of a list (four choices, Brian Fisher 2026-10-30), statically included by
+     showBrowse-body.jsp, taxonomicPage-body.jsp, taxonomicPageImages-body.jsp and taxonChildImages.jsp (uses their
+     statusSet and overview): links to the same page with statusSet replaced (StatusSet.choicesFor, choiceLabel).
+     Shown on browse.do, taxonomicPage.do and images.do, not on a species or subspecies page. Docs: docs/numbers.md
+     section Status choice of lists, docs/flows/places.md. Tests: tests/e2e/test_status_choice.py. --%><%@ page import="org.calacademy.antweb.Group" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <!-- statusesDisplay.jsp  Found in showBrowse-body.jsp, taxonomicPage-body.jsp, taxonomicPageImages-body.jsp and taxonChildImages.jsp -->

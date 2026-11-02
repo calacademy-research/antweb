@@ -1,4 +1,6 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Body of curation.do: the request attribute curation (GeolocaleTaxonLogDb, with its geolocale_taxon row): the
+     taxon linked to description.do, the geolocale, the display source, when it was created and the curator. Tests:
+     tests/e2e/test_request_handling.py. --%><%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

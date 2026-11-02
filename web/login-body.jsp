@@ -1,4 +1,9 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Body of login.jsp: the struts messages, the request attribute loginMessage (Check.loginForFeature), and the form
+     posted to login.do on the secure domain (form token, hidden target from the LoginForm, the request attribute
+     loginTarget or this page; userName, password, Keep me logged in; Login, Create Account with the Turnstile check
+     when enabled, and anonymous access), then Forgot your password? (forgotPassword.do). Docs:
+     docs/flows/email-and-password-reset.md. Tests: tests/e2e/test_login_needed.py, test_curator.py,
+     test_password_reset_pages.py::test_login_page_links_forgot_password. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

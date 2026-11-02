@@ -1,4 +1,8 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Tiles page of bigPicture.do (BigPictureAction) and pictureLike.do's bigPicture forward: "Closeup of the <shot>
+     of Specimen <code>", body bigPicture-body.jsp. Uses the request attributes code (else the name parameter) and
+     shot; ends without output when the session holds no theImage (logged). A direct request of the JSP prints
+     "Invalid URL.  Direct JSP calls unsupported." (HttpUtil.isStaticCallCheck). Docs:
+     docs/flows/specimen-and-image-pages.md. Tests: tests/e2e/test_exif_view.py. --%><%@ page errorPage = "/error.jsp" %>
 <%@ page import = "org.calacademy.antweb.SpecimenImage" %>
 
 <%@ page import = "org.calacademy.antweb.util.*" %>

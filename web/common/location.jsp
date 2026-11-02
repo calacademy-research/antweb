@@ -1,4 +1,6 @@
-
+<%-- Statically included by common/academyHeader.jsp. On production only (not dev or stage mode), writes a script
+     that sends the browser to https when AntwebProps.isProtocolSecure() is false and the page is not https, and from
+     https://antweb.org to https://www.antweb.org. --%>
 <%@ page import="org.calacademy.antweb.util.*" %>
 
  <% //if (HttpUtil.isIphone(request)) return;

@@ -1,4 +1,6 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Unused as of 2026-11-02: body of the unused curator_login.jsp, an old log-in form posted to login.do with a
+     Forgot your password link to forgot_password.jsp. Caddy answers a direct request with 404 (not on the JSP allow
+     list in docker/caddy/Caddyfile). --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

@@ -1,4 +1,11 @@
-<%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
+<%-- The public page layout, statically included by layouts/basicLayout.jsp and secureLayout.jsp (which set
+     domainApp). Writes the head: the escaped tiles title, the optional meta attribute, Open Graph tags (request
+     attributes ogTitle, ogImage, ogDesc), the stylesheets (base.css, antweb.css, responsive.css last;
+     clear_style.css on getSearchList.do and getSpecimenList.do, plazi.css on description.do), jQuery 3.7.1 and
+     Migrate from cdnjs when HttpUtil.isOnline(), the site scripts and the cookie scripts (browse hint, thumbs view,
+     sortBy on browse and search results). Then the tiles attributes academyHeader, siteNav, body-content and
+     copyright (in the footer). The home page (a request URI with index.jsp or without .jsp) gets the home footer
+     classes. Docs: docs/guides/page-style.md. Tests: tests/e2e/test_tool_pages_style.py, tests/e2e/test_browser.py. --%><%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ page import="org.calacademy.antweb.Utility" %>

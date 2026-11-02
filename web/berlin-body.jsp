@@ -1,4 +1,7 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Body of berlin.jsp (berlin.do): the Museum fur Naturkunde Berlin (ZMHB), Roger collection, with photos of the
+     museum, type drawers and specimens from web/wac, each linked to its larger version. A direct request of
+     berlin.jsp prints "Invalid URL.  Direct JSP calls unsupported." here (HttpUtil.isStaticCallCheck). Tests:
+     tests/e2e/test_world_ant_collections.py. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

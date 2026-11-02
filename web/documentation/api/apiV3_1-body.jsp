@@ -1,4 +1,7 @@
- 
+<%-- Body of the API v3.1 documentation (apiV3.1.do): global parameters, licence and image-count notes, each route
+     with its parameters and example links to https://antweb.org/v3.1 (http://localhost/v3.1 in dev mode).
+     Administrators see the admin-only parameters, and the examples get &up=1. Docs: docs/flows/api.md,
+     docs/numbers.md rows 100 to 118. Tests: tests/e2e/test_api.py. --%> 
 <%@ page import="org.calacademy.antweb.*" %> 
 <%@ page import="org.calacademy.antweb.util.*" %>
 

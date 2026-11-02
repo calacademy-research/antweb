@@ -1,4 +1,6 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Body of citing_antweb.jsp: the About menu, the licence (common/licenseStatement.jsp), how to credit images in
+     print and on websites, and the citation of AntWeb as a whole (common/citeInclude.jsp). Tests:
+     tests/unit/test_license_statement.py. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

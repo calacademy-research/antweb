@@ -1,4 +1,7 @@
-<%@ page isErrorPage="true" %>
+<%-- Body of common/message.jsp and curate/adminMessage.jsp: shows the request attribute message (HTML, written
+     unescaped by the actions), in bold in the public layout, as a tool-page card when layouts/admLayout.jsp set
+     awAdminLayout. Logs a short record (LogMgr.logMessagePage) unless the message holds a form token or a Scheduler
+     run. Docs: docs/guides/page-style.md. Tests: tests/e2e/test_message_log.py. --%><%@ page isErrorPage="true" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

@@ -1,4 +1,9 @@
-<%@ page import="java.text.*" %>
+<%-- The log-in corner of the header, statically included by common/academyHeader.jsp. Logged in: the display name
+     (curators link viewLogin.do?id=, other logins editLogin.do?id=, on the secure domain), Curate (not for
+     photo_review logins, Anonymous or groups with a negative id) and Logout (logout.do?target=<this page>). Not
+     logged in: a red dot with the server message (AntwebMgr.getServerMessage) and Login (login.do?target=). Ends
+     with the sanitized text of /data/antweb/web/siteWarning.txt, if that file exists. Tests:
+     tests/e2e/test_curator.py, tests/e2e/test_login_needed.py. --%><%@ page import="java.text.*" %>
 <%
 	String groupName = null;
 	String email = null; 

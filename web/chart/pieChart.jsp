@@ -1,4 +1,6 @@
-
+<%-- A d3pie pie chart (div pieChart), statically included twice by overview-body.jsp (Species and Specimens per
+     Subfamily) and by overviews-body.jsp. Uses the including page's title, subtitle, footer and jsonData (the
+     slices); the including page loads d3 and d3pie.min.js. Docs: docs/numbers.md rows 34 and 35. --%>
 <!-- Pie chart genererated by: http://d3pie.org/#generator -->
 <div id="pieChart"></div>
 

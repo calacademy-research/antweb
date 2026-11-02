@@ -1,4 +1,6 @@
-<%@ page language="java" %>
+<%-- Body of group.do: the request attribute group with its curators, uploads (listUploads.do?groupId=), the last
+     upload's numbers, links to its specimens and localities in the advanced search, the map (request attribute map,
+     maps/googleMapInclude.jsp), and for admins Generate Group Map (utilData.do). Docs: docs/numbers.md row 91. --%><%@ page language="java" %>
 <%@ page import = "java.util.ResourceBundle" %>
 <%@ page import = "java.util.ArrayList" %>
 <%@ page import = "org.calacademy.antweb.*" %>

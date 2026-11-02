@@ -1,4 +1,5 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- Tiles page of curators.do (CuratorAction without name, id or curation parameters): "Curators", body
+     curators-body.jsp. Docs: docs/numbers.md rows 80 and 81. Tests: tests/e2e/test_curate_page_layout.py. --%><%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
 <%@ page errorPage = "error.jsp" %>
 

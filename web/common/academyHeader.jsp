@@ -1,4 +1,10 @@
-<%@ page import="java.util.*" %>
+<%-- The site header (tiles attribute academyHeader of common/antweb-defs.jsp, antwebSecure-defs.jsp and the unused
+     overview-defs.jsp). Prints only Server Initializing and stops while AntwebMgr is not populated. Otherwise:
+     common/location.jsp (https redirect), the release number (documentation/releaseNum.jsp) linked to the GitHub
+     releases with the deployed commit (GitCommit), the admin alert line for administrators
+     (common/adminAlertInc.jsp), the logo, the phone menu button, the site links (About, Participate, Press,
+     Favorites, Contact, AntCat, API ...) and common/loginPanel.jsp. Docs: docs/guides/page-style.md,
+     docs/RELEASING.md. Tests: tests/e2e/test_header_version.py, tests/e2e/test_tool_pages_style.py. --%><%@ page import="java.util.*" %>
 
 <%@ page import="org.calacademy.antweb.Utility" %>
 <%@ page import="org.calacademy.antweb.util.*" %>

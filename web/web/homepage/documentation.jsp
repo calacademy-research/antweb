@@ -1,4 +1,7 @@
-<%@ page errorPage = "/error.jsp" %><%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
+<%-- Page of documentation.do (the header's Participate link): "AntWeb Participation", How to Participate with links
+     to the imaging guides and videos, the specimen data overview and template, statusDisplayPage.do, and the
+     bioregion and country lists, written inline as the tiles body. Writes Illegal characters in input and stops when
+     the query string fails HttpUtil.isInWhiteListCheck. Tests: tests/e2e/test_documentation_links.py. --%><%@ page errorPage = "/error.jsp" %><%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 <%@ page import="org.calacademy.antweb.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>

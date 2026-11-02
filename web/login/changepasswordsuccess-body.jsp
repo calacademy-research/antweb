@@ -1,4 +1,6 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Unused as of 2026-11-02: an old Your password has been successfully changed text. Nothing includes it
+     (login/changepasswordsuccess.jsp names /changepasswordsuccess-body.jsp at the web root), and Caddy answers a
+     direct request with 404 (not on the JSP allow list in docker/caddy/Caddyfile). --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

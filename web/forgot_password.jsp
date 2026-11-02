@@ -1,4 +1,6 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Tiles page of forgotPassword.do (ForgotPasswordAction): "AntWeb - Password Retrieval", body
+     forgot_password-body.jsp. On the JSP allow list in docker/caddy/Caddyfile. Docs:
+     docs/flows/email-and-password-reset.md. Tests: tests/e2e/test_password_reset_pages.py. --%><%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

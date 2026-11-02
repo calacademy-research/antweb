@@ -1,4 +1,5 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Body of permissionDenied.jsp (the global forward permissionDenied, admin layout): Sorry... You don't have
+     permission for this page, with a link to login.do to log in to a different account. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

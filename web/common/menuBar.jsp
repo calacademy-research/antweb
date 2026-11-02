@@ -1,4 +1,8 @@
-<%@ page import="java.util.*" %>
+<%-- The Browse menus and search bar, statically included by common/siteNav.jsp and the unused overviewNav.jsp: opens
+     div navigation (no menus when the request URI contains login.jsp), the Global, Georegions, Bioregions, Projects
+     and Museums menus (common/globalMenu, georegionMenu, regionMenu, projectMenu, bioregionMenu, museumMenu.jsp) and
+     common/searchBar.jsp; then opens div contents (class home on the home page), closed by layouts/layout.jsp. Docs:
+     docs/flows/places.md, docs/flows/search.md. --%><%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.geolocale.*" %>
 

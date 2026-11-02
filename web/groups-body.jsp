@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- Body of groups.do, Specimen Contributors: one row per upload group of the request attribute groups (uploads,
+     first and last upload, specimens, ungeoreferenced, flagged, collections, localities, subfamilies, genera,
+     species), each column sortable through orderBy, and the totals row (request attribute groupTotals, GroupCountDb,
+     nightly). Docs: docs/numbers.md rows 85 to 90. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.sql.Timestamp" %>

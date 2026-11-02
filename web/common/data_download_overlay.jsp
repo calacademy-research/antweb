@@ -1,4 +1,7 @@
-<!-- data_download_overlay.jsp -->
+<%-- The Download Specimen Data overlay of taxon pages, statically included by showBrowse-body.jsp,
+     taxonPage-body.jsp and taxonChildImages.jsp. For visitors not logged in it first writes an overlay with
+     Login.MUST_LOGIN_MESSAGE; then, for everyone, the overlay whose iframe tab_data starts blank and gets the
+     Download Data link's address (antweb.jquery.js). Docs: docs/guides/downloads.md. --%><!-- data_download_overlay.jsp -->
 <%
   if (!LoginMgr.isLoggedIn(request)) {
 %>

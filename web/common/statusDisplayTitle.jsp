@@ -1,4 +1,6 @@
-<!-- statusDisplayTitle.jsp -->
+<%-- The status icon next to a page title: thisStatus from the including page's taxon, then
+     common/statusDisplayCore.jsp. Statically included by common/taxonTitle.jsp and
+     curate/speciesList/speciesListTool-body.jsp. --%><!-- statusDisplayTitle.jsp -->
 <% 
 if (true) {  // This allows multiple includes of statusDisplay on a single page without duplicated thisStatus declarations.
 

@@ -1,4 +1,7 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Tiles page of the log-in form in the secure layout (common/antwebSecure-defs.jsp): login.do's failure forward
+     (also the plain GET of login.do) and Check.loginForFeature (field guides, comparisons and maps of search results
+     for visitors not logged in). "AntWeb - Please Log In", body login-body.jsp. On the JSP allow list in
+     docker/caddy/Caddyfile. Tests: tests/e2e/test_login_needed.py, test_curator.py. --%><%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

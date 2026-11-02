@@ -1,4 +1,6 @@
-
+<%-- Unused as of 2026-11-02: the menubar of the unused tiles definition common/overview-defs.jsp (menuBar.jsp and a
+     fixed Current View: Region - Subregion - Country line). Nothing else includes it, and Caddy answers a direct
+     request with 404 (not on the JSP allow list in docker/caddy/Caddyfile). --%>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

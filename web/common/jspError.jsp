@@ -1,4 +1,6 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Unused as of 2026-11-02: a tiles page (title from the request attribute header) whose body
+     common/jspError-body.jsp, which did not compile, was removed on that date. No action forwards here, no JSP names
+     it, and Caddy answers a direct request with 404 (not on the JSP allow list in docker/caddy/Caddyfile). --%><%@ page errorPage = "/error.jsp" %>
 
 <% // Including pages should comply with this usage or errorPage beginning with slash %>
 
