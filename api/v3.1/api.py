@@ -293,7 +293,7 @@ def down(request):
     return 0
 
 
-API_DOWN_MESSAGE = "The AntWeb API is not available at the moment. Please try again later."
+API_DOWN_MESSAGE = "The AntWeb API is closed while we add free registered API keys. It will reopen in the coming weeks; see antweb.org for news."
 
 
 def apiDown():
