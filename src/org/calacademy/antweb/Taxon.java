@@ -3206,11 +3206,10 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       ArrayList<Taxon> subfamilies = TaxonMgr.getSubfamilies();
       if (subfamilies == null) return null;
       
-      for (Taxon aSubfamily : subfamilies) {
-        if (taxonName.contains(aSubfamily.getSubfamily())) {
-          return aSubfamily.getSubfamily();
-        }
-      }
+      List<String> names = new ArrayList<>();
+      for (Taxon aSubfamily : subfamilies) names.add(aSubfamily.getSubfamily());
+      String known = knownSubfamilyOf(taxonName, names);
+      if (known != null) return known;
 
       // Doesn't seem to be an ant.  Search for "nae"
       if (taxonName.contains("nae")) {
@@ -3224,6 +3223,26 @@ Used to be used by the Taxon hiearchy in setChildren(). Now handled by taxonSets
       }
       return null;
     }
+    /**
+     * The subfamily of the list that taxonName starts with, the longest when several do; else the longest one it
+     * contains; else null. 2026-11-02: the first one contained won, so "paraponerinaeparaponera clavata" and
+     * "heteroponerinae..." could be read as Ponerinae (and the genus as "inaeparaponera"), depending on list order.
+     */
+    public static String knownSubfamilyOf(String taxonName, java.util.Collection<String> subfamilies) {
+      if (taxonName == null || subfamilies == null) return null;
+      String best = null;
+      for (String s : subfamilies) {
+        if (s == null || s.isEmpty() || !taxonName.startsWith(s)) continue;
+        if (best == null || s.length() > best.length()) best = s;
+      }
+      if (best != null) return best;
+      for (String s : subfamilies) {
+        if (s == null || s.isEmpty() || !taxonName.contains(s)) continue;
+        if (best == null || s.length() > best.length()) best = s;
+      }
+      return best;
+    }
+
     public static String getGenusFromName(String taxonName) {
       // Take what comes after the subfamily and before the first space
       String genus = null;

@@ -39,7 +39,7 @@ public final class LoginEdit {
 
     /** group_id of a login without an upload group (as LoginDb.createAccount() stores it). */
     public static final int NO_GROUP = -1;
-    static final int MAX_USERNAME = 32;    // login.name varchar(32)
+    public static final int MAX_USERNAME = 32;    // login.name varchar(32)
     static final int MAX_EMAIL = 128;      // login.email varchar(128)
     static final int MAX_UPLOAD_AS = 100;  // login.upload_as varchar(100)
 
@@ -131,14 +131,20 @@ public final class LoginEdit {
     // ------------------------------------------------------------------ pure parts
 
     /**
-     * True if the change takes a right away (administrator, upload specimen data, upload images).
+     * True if the change takes a right away: administrator, upload specimen data, upload images; since 2026-11-02
+     * also the upload group changed or removed, "upload as" changed, a project or a country removed (a session holds
+     * the whole login, so the old group could still be uploaded to and the old lists edited until logging out).
      * The login's sessions then end, so the removed right is gone at once and not only at the next login.
      */
     public static boolean removesRights(State before, State after) {
         if (before == null || after == null) return false;
         return (before.isAdmin && !after.isAdmin)
             || (before.uploadSpecimens && !after.uploadSpecimens)
-            || (before.uploadImages && !after.uploadImages);
+            || (before.uploadImages && !after.uploadImages)
+            || (before.groupId > 0 && before.groupId != after.groupId)
+            || !norm(before.uploadAs).equals(norm(after.uploadAs))
+            || !after.projects.containsAll(before.projects)
+            || !after.countries.containsAll(before.countries);
     }
 
     private static String trim(String s) {

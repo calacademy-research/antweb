@@ -94,7 +94,12 @@ dbUrl = URL.create('mysql+pymysql', username=_dbUser, password=_dbPass, host='my
 # dbUrl = 'mysql+mysqldb://antweb:CHANGE_ME@localhost:3306/ant?autocommit=true'
 # pool_pre_ping: check a pooled connection before use, so a connection MySQL closed
 # while idle is replaced instead of failing the request ("MySQL server has gone away").
-engine = create_engine(dbUrl, pool_recycle=280, pool_pre_ping=True)
+# max_execution_time (2026-11-02): MySQL stops any read of the API that runs longer than 90 seconds. Cloudflare gives up
+# on the origin after 100 seconds, so a longer query could never reach the client, and it held a worker and a database
+# thread shared with the main site (an unauthenticated API: a large offset or a habitat text search scans everything).
+MAX_EXECUTION_MS = 90000
+engine = create_engine(dbUrl, pool_recycle=280, pool_pre_ping=True,
+                       connect_args={'init_command': 'SET SESSION max_execution_time=%d' % MAX_EXECUTION_MS})
 
 '''
 connection = engine.connect()
@@ -704,12 +709,15 @@ def getSpecimen():
     if bioregion != '*':
         query = query.filter(Specimen.bioregion == bioregion)
     if habitat != '*':
-        query = query.filter(Specimen.habitat.contains(habitat))
+        query = query.filter(Specimen.habitat.contains(habitat, autoescape=True))   # % and _ are plain characters (2026-11-02)
     if type != '*':
         query = query.filter(Specimen.typeStatus == type)
     if georeferenced == 'true':
         query = query.filter(Specimen.decimalLatitude != None)
         query = query.filter(Specimen.decimalLongitude != None)
+    if georeferenced == 'false':
+        # 2026-11-02: false gave every specimen (no filter); now those without coordinates.
+        query = query.filter(or_(Specimen.decimalLatitude == None, Specimen.decimalLongitude == None))
     if bbox != '*':
         coords = numbers(bbox, 4)
         if coords is None:
@@ -726,7 +734,7 @@ def getSpecimen():
     if collectedby != '*':
         query = query.filter(Specimen.collectedBy == collectedby)
     if lifeStageSex != '*':
-        query = query.filter(Specimen.lifeStageSex.like("%" + lifeStageSex + "%"))
+        query = query.filter(Specimen.lifeStageSex.contains(lifeStageSex, autoescape=True))
     if caste != '*':
         query = query.filter(Specimen.caste == caste)
     if subcaste != '*':
@@ -1212,7 +1220,7 @@ def getDistinctTaxa():
     if country != '*':
         query = query.filter(countryIs(Specimen.country, country))
     if habitat != '*':
-        query = query.filter(Specimen.habitat.contains(habitat))
+        query = query.filter(Specimen.habitat.contains(habitat, autoescape=True))   # % and _ are plain characters (2026-11-02)
     query = boundsFilter(query, minDate, maxDate, minElevation, maxElevation)
     if status != '*':
         query = query.filter(Specimen.status == status)
@@ -2600,6 +2608,36 @@ def checkUp():
     return None
 
 
+# Values the filters understand (2026-11-02). Any other value was silently ignored, and the reply held every record as
+# if it were filtered (georeferenced=false, fossil=yes, hasImage=1, minElevation=abc read by MySQL as 0, ...).
+FLAG_VALUES = {'georeferenced': ('true', 'false'), 'hasImage': ('true', 'false'), 'validGenus': ('true', 'false'),
+               'validSubfamily': ('true', 'false'), 'hasTiff': ('true', 'false'),
+               'fossil': ('true', 'false', '1', '0')}
+NUMBER_PARAMS = ('minElevation', 'maxElevation')
+DATE_PARAMS = ('minDate', 'maxDate')
+
+
+def badParamValue(args):
+    """The message for the first filter value that is not understood, or None."""
+    for name, allowed in FLAG_VALUES.items():
+        value = args.get(name)
+        if value is not None and value != '*' and value not in allowed:
+            return "%s must be %s (not %s)." % (name, " or ".join(allowed), value)
+    for name in NUMBER_PARAMS:
+        value = args.get(name)
+        if value is not None and value != '*' and not re.fullmatch(r'-?\d+', value.strip()):
+            return "%s must be a whole number of metres (not %s)." % (name, value)
+    for name in DATE_PARAMS:
+        value = args.get(name)
+        if value is None or value == '*':
+            continue
+        try:
+            datetime.strptime(value.strip(), '%Y-%m-%d')
+        except ValueError:
+            return "%s must be a date written yyyy-mm-dd (not %s)." % (name, value)
+    return None
+
+
 @application.before_request
 def checkParams():
     endpoint = request.endpoint
@@ -2608,6 +2646,9 @@ def checkParams():
     accepted = acceptedParams(endpoint)
     unknown = [k for k in request.args.keys() if k and k not in accepted]
     if not unknown:
+        bad = badParamValue(request.args)
+        if bad:
+            return jsonify({'error': bad, 'documentation': prodServer + "/" + apiUri}), 400
         return None
     message = "Unknown parameter: " + ", ".join(unknown) + "."
     didYouMean = {}

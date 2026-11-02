@@ -151,6 +151,10 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_audit_tj.py
 
+      - name: API audit fixes of 2026-11-02 (bad filter values refused, georeferenced=false, plain LIKE characters, time limit) (tests/unit/test_api_audit_tl.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_audit_tl.py
+
       - name: API decisions of 2026-10-27 (subcastes within caste, inclusive bounds, 503 without up, login required) (tests/unit/test_api_decisions.py)
         run: |
           docker run --rm --entrypoint python -e REPO_DIR=/repo -v "$PWD/tests/unit:/t:ro" \
@@ -768,6 +772,9 @@ jobs:
       - name: Audit fixes of 2026-10-30 in scripts and pages (fix-perms, taxon-set backup, escaping; tests/unit/test_audit_tk.py)
         run: python3 tests/unit/test_audit_tk.py
 
+      - name: Audit fixes of 2026-11-02 in host scripts and the e2e workflow (no writes through links, private dump file, no token left; tests/unit/test_audit_tl.py)
+        run: python3 tests/unit/test_audit_tl.py
+
       - name: Indet form tool, names, SQL and command flow without a database (tests/unit/test_indet_form.py)
         run: python3 tests/unit/test_indet_form.py
 
@@ -858,6 +865,29 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.AuditTkFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (6 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the audit fixes of 2026-11-02
+        # AuditTlFixesTest (no database): a removed group, project, country or "upload as" ends the login's sessions;
+        # "Origin: null" is refused on the sign-in pages; Create Account follows the password and username rules; an
+        # email change needs the current password; caste sort, homonym links, statistics lock, subfamily of a name,
+        # spelling guesses, inactive accounts, image owners, one run of the sets at a time, failed-job wording, upload
+        # line numbers and escaped errors, species lists by key, range reports by id, dashed dates, centroids, and
+        # CREATE TABLE only when the table is missing (2026-11-02).
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/AuditTlFixesTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.AuditTlFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (21 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the upload decisions of 2026-10-28 (current valid name not in AntWeb, lines identified only to genus or subfamily, UTF-8 only)

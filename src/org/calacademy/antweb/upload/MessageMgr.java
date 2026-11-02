@@ -70,7 +70,8 @@ public class MessageMgr {
         int i = 0;
         for (String error : getErrors()) {
           i = i + 1;
-          if (i <= maxI) errorReport += "<br><br>" + error;
+          // Escaped (2026-11-02): an error holds the failed query with values from the uploaded file.
+          if (i <= maxI) errorReport += "<br><br>" + org.calacademy.antweb.util.Html.esc(error);
           if (i == maxI) errorReport += "<br>...";
         }
         return errorReport;

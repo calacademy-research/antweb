@@ -65,7 +65,12 @@ public final class LicenseUpdateDb {
         return r;
     }
 
-    static boolean tableExists(Connection c, String table) throws SQLException {
+    /**
+     * True if the table exists in this database. Also used before a CREATE TABLE IF NOT EXISTS inside a transaction
+     * (GroupCountDb, PlaceImageCountDb, CuratorTaxonSetDb, SpecimenNameUpdateDb): MySQL commits the open transaction
+     * on any CREATE TABLE, even one that finds the table there, so a nightly set or an upload was committed half way.
+     */
+    public static boolean tableExists(Connection c, String table) throws SQLException {
         try (PreparedStatement ps = c.prepareStatement("SELECT 1 FROM information_schema.tables"
                 + " WHERE table_schema = DATABASE() AND table_name = ?")) {
             ps.setString(1, table);

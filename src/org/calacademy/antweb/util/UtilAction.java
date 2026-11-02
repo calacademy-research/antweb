@@ -71,6 +71,21 @@ public class UtilAction extends AntwebAction {
 			return null;
 		}
 
+		// isRestart: polled every 5 minutes by the host's bin/reboot_checker.sh. Answered here, like isBusy, without a
+		// database connection (2026-11-02): when the connection pool was used up, which is when a restart may be
+		// needed, the page failed instead of answering.
+		// "<b>true</b>" or "<b>false</b>", as the message page gave it (the script looks for that).
+		if ("isRestart".equals(action)) {
+			try {
+				response.setContentType("text/html;charset=UTF-8");
+				response.setHeader("Cache-Control", "no-store");
+				response.getWriter().print("<b>" + AntwebSystem.isRestart() + "</b>");
+			} catch (IOException e) {
+				s_log.warn("execute() isRestart e:" + e);
+			}
+			return null;
+		}
+
 		// Everything here is an admin tool, except isRestart (polled by the host's
 		// reboot_checker.sh), isBusy (above) and postInstantiate (AntWeb's own call after startup).
 		if (!"isRestart".equals(action) && !"isBusy".equals(action) && !"postInstantiate".equals(action)
@@ -252,12 +267,6 @@ public class UtilAction extends AntwebAction {
 				returnLoc = mapping.findForward("adminMessage");
 			  }
 
-			  if (action.equals("isRestart")) {
-				  String message = "false";
-				  if (AntwebSystem.isRestart()) message = "true";
-				  request.setAttribute("message", message);
-				  returnLoc = mapping.findForward("message");
-			  }
 
 			  if (returnLoc != null) return returnLoc;
 			}               

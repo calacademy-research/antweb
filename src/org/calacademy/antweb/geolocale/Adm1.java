@@ -130,9 +130,10 @@ public class Adm1 extends Geolocale {
       
       // This will work for Adm1 listed in the login.
       ArrayList<SpeciesListable> geolocales = accessLogin.getGeolocales();
+      // By key (the geolocale id), not by name (2026-11-02): adm1 names repeat across countries ("Distrito Federal"),
+      // so another country's adm1 of the same name was editable too.
       for (SpeciesListable speciesListable : geolocales) {
-        //A.log("isCanShowSpeciesListTool: speciesListable:" + speciesListable);        
-        if (speciesListable.getName().equals(getName())) return true;
+        if (speciesListable != null && getKey().equals(speciesListable.getKey())) return true;
       }
       
       // if (getIsSpeciesListMappable()) ...

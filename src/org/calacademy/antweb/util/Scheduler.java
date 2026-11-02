@@ -154,10 +154,21 @@ public class Scheduler extends AntwebAction {
 
     // True from the start to the end of a run of the sets (nightly or started by an admin). The
     // compute flag is briefly clear between two sets; jobs waiting in BackgroundJobs also check this.
-    private static volatile boolean s_running = false;
+    // Claimed with compareAndSet (2026-11-02): the check of the compute flag and the start of a run were two steps, so
+    // a run started by an admin and the 05:00 run could both start and interleave their sets.
+    private static final java.util.concurrent.atomic.AtomicBoolean s_running = new java.util.concurrent.atomic.AtomicBoolean(false);
 
     public static boolean isRunning() {
-      return s_running;
+      return s_running.get();
+    }
+
+    /** True if this caller may start a run (none is running); it must then call endRun() when done. */
+    public static boolean claimRun() {
+      return s_running.compareAndSet(false, true);
+    }
+
+    public static void endRun() {
+      s_running.set(false);
     }
 
     // Called from SessionRequestFilter
@@ -193,15 +204,14 @@ public class Scheduler extends AntwebAction {
 				
 		// A run already in progress keeps its flag and its code: checked before this run sets
 		// or clears either (the finally block below is only for a run that started here).
-		if (UtilDataAction.isInComputeProcess()) {
-		    String m = "Already in compute proceess:" + UtilDataAction.getIsInComputeProcess();
+		if (UtilDataAction.isInComputeProcess() || !claimRun()) {
+		    String m = "Already in compute proceess:" + UtilDataAction.getIsInComputeProcess() + (isRunning() ? " (a run of the sets is going on)" : "");
 			s_log.warn("doAction() " + m);
 			LogMgr.appendLog("compute.log", m, true);
 			return m;
 		}
 
 		try {
-		    s_running = true;
 		    UtilDataAction.setInComputeProcess(action);
 			// One-time code for this run's calls to utilData.do, sent in a request header (SchedulerCall).
 			java.util.Map<String, String> codeHeader = SchedulerCall.headers(AntwebUtil.getSecureCode());
@@ -328,7 +338,7 @@ public class Scheduler extends AntwebAction {
 				return message + " output:" + output;
 		    }
 		} finally {
-		  s_running = false;
+		  endRun();
 		  UtilDataAction.setInComputeProcess(null);
 
           AntwebUtil.resetSecureCode();
@@ -341,7 +351,7 @@ public class Scheduler extends AntwebAction {
     }
 
     /** The answer utilData.do gives for a set it rolled back (UtilDataAction.handleException). */
-    static final String SET_ROLLED_BACK = "Error. No changes made for action:";
+    static final String SET_ROLLED_BACK = "Error. The work not yet saved was undone for action:";
 
     /**
      * Why a set failed, from utilData.do's answer to it, or null when it did not fail: an "Unexpected error" page,

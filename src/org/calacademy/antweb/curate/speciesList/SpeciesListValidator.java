@@ -180,7 +180,9 @@ public class SpeciesListValidator {
         } catch (SQLException e) {
             s_log.warn("resolveDisplayName() failed for: " + internalTaxonName + " e:" + e.getMessage());
         }
-        return internalTaxonName; // fallback: return raw key
+        // Not found: no suggestion (2026-11-02). The internal key ("myrmicinaepheidole x") went into the corrected
+        // species list for upload as if it were a name.
+        return null;
     }
 
     /**
@@ -260,23 +262,42 @@ public class SpeciesListValidator {
         
         if (candidates.isEmpty()) return new FuzzyMatch("No valid species found for genus " + genus + ".", false, false);
         
-        int bestDistance = Integer.MAX_VALUE;
-        FuzzyMatch bestMatch = null;
+        List<String> names = new ArrayList<>();
+        for (FuzzyMatch candidate : candidates) names.add(candidate.displayText);
+        int best = closeSpelling(displayName, names);
+        if (best >= 0) return candidates.get(best);
+        return new FuzzyMatch("Check spelling.", false, false);
+    }
+
+    /** Largest spelling difference (Levenshtein edits) still offered as the name meant. Was 4 until 2026-11-02. */
+    public static final int MAX_SPELLING_DISTANCE = 2;
+
+    /**
+     * The index of the candidate that is a close spelling of name, or -1. Since 2026-11-02 only one with at most
+     * MAX_SPELLING_DISTANCE edits, with as many words as the name (a species for a species), and nearer than every other
+     * candidate: the guess goes into the "corrected species list for upload", and up to 4 edits or a tie picked another
+     * valid species ("Pheidole rugosa" could come back as a different Pheidole).
+     */
+    public static int closeSpelling(String name, List<String> candidates) {
+        if (name == null || candidates == null) return -1;
+        int words = name.trim().split("\\s+").length;
         LevenshteinDistance ld = new LevenshteinDistance();
-        
-        for (FuzzyMatch candidate : candidates) {
-            int dist = ld.apply(displayName, candidate.displayText);
-            if (dist < bestDistance) {
-                bestDistance = dist;
-                bestMatch = candidate;
+        int best = -1;
+        int bestDistance = Integer.MAX_VALUE;
+        boolean tie = false;
+        for (int i = 0; i < candidates.size(); i++) {
+            String c = candidates.get(i);
+            if (c == null || c.trim().split("\\s+").length != words) continue;
+            int d = ld.apply(name, c);
+            if (d < bestDistance) {
+                bestDistance = d;
+                best = i;
+                tie = false;
+            } else if (d == bestDistance) {
+                tie = true;
             }
         }
-        
-        if (bestDistance <= 4 && bestMatch != null) {
-            return bestMatch;
-        }
-        
-        return new FuzzyMatch("Check spelling.", false, false);
+        return best >= 0 && !tie && bestDistance <= MAX_SPELLING_DISTANCE ? best : -1;
     }
     
     private void populateUnmatched(ValidateSpeciesReport report, Set<String> matchedTaxa) {

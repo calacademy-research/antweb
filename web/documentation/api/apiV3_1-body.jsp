@@ -146,7 +146,7 @@
             </tr>
             <tr>
                 <td><b>Georeferenced</b></td>
-                <td>This is a boolean argument to filter for only geo referenced specimen (ex: georeferenced=true)</td>
+                <td>true: only specimens with coordinates; false: only specimens without coordinates (ex: georeferenced=true). Any other value of this or another true/false filter, an elevation that is not a whole number or a date not written yyyy-mm-dd is refused (HTTP 400)</td>
             </tr>
             <tr>
                 <td><b>Bbox</b></td>
@@ -241,7 +241,7 @@
         <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/specimens?genus=acanthognathus&limit=100&offset=200<%= appendStr %>"><%= apiDomainApp %>/specimens?genus=acanthognathus&limit=100&offset=200</a></p>
             
         <p class="link">A query for the specimen over 100m elevation, in Australian rainforest, that is a hologype, is georeferenced, and collected in the 1970's:
-        <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/specimens?minElevation=0&maxElevation=100&country=Australia&habitat=rainforest&type=holotype&georeferenced=true&minDate=1970-01-01&maxDate=1979-12-31:<%= appendStr %>"><%= apiDomainApp %>/specimens?minElevation=0&maxElevation=100&country=Australia&habitat=rainforest&type=holotype&georeferenced=true&minDate=1970-01-01&maxDate=1979-12-31</a></p>            
+        <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/specimens?minElevation=0&maxElevation=100&country=Australia&habitat=rainforest&type=holotype&georeferenced=true&minDate=1970-01-01&maxDate=1979-12-31<%= appendStr %>"><%= apiDomainApp %>/specimens?minElevation=0&maxElevation=100&country=Australia&habitat=rainforest&type=holotype&georeferenced=true&minDate=1970-01-01&maxDate=1979-12-31</a></p>            
 
 		<p class="link">A query for the Technomyrmex within the bounding box (w, s, e, n):
         <br>&nbsp;&nbsp;&nbsp;<a href="<%= apiDomainApp %>/specimens?bbox=37.77,-122.46,37.76,-122.47&genus=Technomyrmex<%= appendStr %>"><%= apiDomainApp %>/specimens?bbox=37.77,-122.46,37.76,-122.47&genus=Technomyrmex</a></p>

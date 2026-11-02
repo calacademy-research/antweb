@@ -294,6 +294,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
               if ("subregion".equals(georank)) geolocale = new Subregion();
               if ("country".equals(georank)) geolocale = new Country();
               if ("adm1".equals(georank)) geolocale = new Adm1();
+              if (geolocale == null) continue;  // another georank (adm2, ...): left out (2026-11-02: a NullPointerException stopped the load)
               
               geolocale.setGeorank(georank); 
 

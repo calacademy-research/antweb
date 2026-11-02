@@ -314,7 +314,7 @@ def test_production_paths():
         tf.ROLE_FILE = os.path.join(tmp, "no-role-file")
         try:
             assert tf.is_production(link) and tf.is_production(target)
-            assert not tf.is_production(tmp)
+            assert tf.is_production(tmp), "no role file: production (2026-11-02, audit tl)"
             role = os.path.join(tmp, "antweb-role")
             tf.ROLE_FILE = role
             with open(role, "w") as f:
@@ -325,7 +325,7 @@ def test_production_paths():
             assert tf.is_production(tmp)
         finally:
             tf.PRODUCTION_PROJECT, tf.ROLE_FILE = real_project, real_role
-    print("Production: a linked /root/antweb and a role file other than staging count as production.")
+    print("Production: a linked /root/antweb, a missing role file and a role file other than staging count as production.")
 
 
 def test_runbook():
@@ -351,6 +351,16 @@ def test_columns_exist_in_the_schema():
 
 
 def main():
+    # These tests run "on staging": a role file that says so (no role file counts as production since 2026-11-02).
+    with tempfile.TemporaryDirectory() as tmp:
+        role = os.path.join(tmp, "antweb-role")
+        with open(role, "w") as f:
+            f.write("staging\n")
+        tf.ROLE_FILE = role
+        run_all()
+
+
+def run_all():
     test_names()
     test_sp_is_indet_but_never_a_morphospecies()
     test_sql()

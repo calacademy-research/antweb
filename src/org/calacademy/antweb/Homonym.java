@@ -310,7 +310,8 @@ public class Homonym extends Taxon implements Serializable {
         //Formatter format = new Formatter();
         
         String link = super.makeUrl(targetDo, rank, subfamily, genus, species, subspecies);
-        link += "&authorDate=" + authorDate;           
+        // URL-encoded (2026-11-02): author dates hold spaces, commas, parentheses and "&" ("Smith & Jones, 1900").
+        link += "&authorDate=" + org.calacademy.antweb.util.Html.url(authorDate);
 
         return link;
     }

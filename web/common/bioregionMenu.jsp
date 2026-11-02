@@ -11,7 +11,7 @@
             //if (AntwebProps.isDevMode()) AntwebUtil.log("georegionMenu.jsp region:" + region.fullReport());
         
             String titleHTML = "";
-            titleHTML = "<a href='" + AntwebProps.getDomainApp() + "/bioregion.do?name=" + bioregion.getName() + "'>" + bioregion.getName() + "</a>";  // no href  
+            titleHTML = "<a href='" + AntwebProps.getDomainApp() + "/bioregion.do?name=" + org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.Html.url(bioregion.getName())) + "'>" + org.calacademy.antweb.util.Html.esc(bioregion.getName()) + "</a>";  // no href  
 %>
     <li><%= titleHTML %></li>
 <%

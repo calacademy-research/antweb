@@ -523,11 +523,13 @@ def server_role():
 
 
 def is_production(project):
-    """Both paths resolved (/root/antweb may be a link to a dated folder); the host name; /etc/antweb-role."""
+    """Both paths resolved (/root/antweb may be a link to a dated folder); the host name; /etc/antweb-role.
+    Only a server whose role file says staging is not production (2026-11-02: a missing or unreadable role file
+    counted as staging; refresh-from-prod.sh is as strict)."""
     role = server_role()
     return (os.path.realpath(project) == os.path.realpath(PRODUCTION_PROJECT)
             or socket.gethostname().lower().startswith("antweb-prod")
-            or (role is not None and role != "staging"))
+            or role != "staging")
 
 
 def start(args):

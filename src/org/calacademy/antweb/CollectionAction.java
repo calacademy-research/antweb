@@ -72,7 +72,7 @@ public final class CollectionAction extends AntwebAction {
 			// (debug line removed 2026-10-29: it read collection before the null check, so an unknown name gave a 500)
 
 			//if (!success) {
-			if (collection == null || 0 == collection.getSpecimenResults().getResults().size()) {
+			if (collection == null || collection.getSpecimenResults() == null || collection.getResults().isEmpty()) {   // null-safe (2026-11-02)
 			  message = "Collection not found - name:" + Html.esc(name) + ".";
 
 			  String cleanCode = UploadUtil.cleanCode(name);

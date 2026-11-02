@@ -109,8 +109,10 @@ Or, if there are stmts and/or rsets...
     }
 
     private static final Log s_log = LogFactory.getLog(DBUtil.class);
-    private static final ConcurrentHashMap<NewProxyConnection, String> connectionMap = new ConcurrentHashMap<>();
+    // The open pooled connections (removed again in removeConn). A second map that nothing read and nothing emptied
+    // (one entry per connection ever taken, until the restart) was removed on 2026-11-02.
     private static final ConcurrentHashMap<NewProxyConnection, DbRequest> connectionRequestMap = new ConcurrentHashMap<>();
+
 
 
     public static Connection getConnection(DataSource dataSource, String name) throws SQLException {
@@ -344,8 +346,6 @@ Or, if there are stmts and/or rsets...
 
     private static void addConn(Connection conn, String name, String queryString) {
         if (conn instanceof NewProxyConnection) {
-            connectionMap.put((NewProxyConnection) conn, name + " " + new Date());
-
             DbRequest dbRequest = new DbRequest(name, queryString, new java.util.Date());
             connectionRequestMap.put((NewProxyConnection) conn, dbRequest);
         }
@@ -355,7 +355,7 @@ Or, if there are stmts and/or rsets...
         if (!(conn instanceof NewProxyConnection)) return false;
         NewProxyConnection newProxyConn = (NewProxyConnection) conn;
         int connMapSize = connectionRequestMap.size();
-        //connectionMap.remove();
+
         boolean containsConn = connectionRequestMap.containsKey(newProxyConn);
         if (containsConn) {
             connectionRequestMap.remove(newProxyConn);
@@ -392,7 +392,7 @@ Or, if there are stmts and/or rsets...
 
     public static String getConnectionList() {
       String val = "";
-      //s_log.warn("getConnectionList() map:" + connectionMap.toString());
+      //s_log.warn("getConnectionList() map:" + connectionRequestMap.toString());
       int i = 0;
       for (NewProxyConnection conn : connectionRequestMap.keySet()) {
         ++i;

@@ -27,7 +27,7 @@
     }
 %>
 <br>
-<h1><%= "<a href='" + AntwebProps.getDomainApp() + "/" + overview.getPluralTargetDo() + "'>" + overview.getHeading() + ":</a> " + icon + overview.getDisplayName() %> </h1>
+<h1><%= "<a href='" + AntwebProps.getDomainApp() + "/" + overview.getPluralTargetDo() + "'>" + org.calacademy.antweb.util.Html.esc(overview.getHeading()) + ":</a> " + icon + org.calacademy.antweb.util.Html.esc(overview.getDisplayName()) %> </h1>
 
 	<div class="links">
 		<ul>

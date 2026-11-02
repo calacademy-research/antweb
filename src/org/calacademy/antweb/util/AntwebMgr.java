@@ -199,7 +199,9 @@ public class AntwebMgr {
             UploadMgr.populate(connection, forceReload);
             message = "UploadMgr Reloaded.";
         } else if ("artist".equals(name)) {
-            ArtistMgr.populate(connection, forceReload, true);
+            // Not as the first load (2026-11-02): that skips the image and specimen counts (postInitialize), so every
+            // artist showed 0 until the next restart.
+            ArtistMgr.populate(connection, forceReload, false);
             message = "ArtistMgr Reloaded.";
         } else if ("adminAlert".equals(name)) {
             AdminAlertMgr.populate(connection);

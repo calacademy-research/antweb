@@ -24,7 +24,7 @@ region, subregion, bioregion, museum, project) is checked on every run, a differ
           rows the browse page lists; "N Specimens" of a species = the species row's "N Specimens" (B15: the browse
           page and the count use different place rules; xfail until fixed).
   row 47  "(Only the first k of N displayed)" (species browse with limit=k): N = the header's N; the page shows k rows
-          (B42: it shows k + 1; xfail until fixed).
+          (B42: it showed k + 1 until 2026-11-02).
   row 49  species browse "(M imaged)" and the hidden "M Imaged" = the specimens listed that have a photo of the ant
           (rows without the no-photos mark; label photos do not count, B71), at most the specimens the API's
           imageCount gives images to; genus browse: M <= N only.
@@ -438,10 +438,8 @@ def test_browse_limit_note_names_the_header_number():
     assert not wrong, f"{ns.day_note()}:\n" + "\n".join(wrong)
 
 
-@pytest.mark.xfail(reason="B42: specimenReport.jsp shows rows index 0 to limit (limit + 1 rows) under 'Only the first limit'",
-                   strict=False)
 def test_browse_limit_shows_that_many_specimens():
-    """Row 47 (B42): with "(Only the first k of N displayed)" the page lists k specimens."""
+    """Row 47 (B42, fixed 2026-11-02): with "(Only the first k of N displayed)" the page lists k specimens."""
     wrong, checked = [], []
     for p in places():
         got = _limited(p, 3)

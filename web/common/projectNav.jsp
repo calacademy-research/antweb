@@ -11,11 +11,11 @@
     //A.log("projectNav thisPage:" + thisPage + " project:" + project);
 
     if (thisPage.contains(project.getTargetDo())) {
-   	    out.println("<a href='" + project.getThisPageTarget() + "'>" + project.getDisplayName() + "</a>");
+   	    out.println("<a href='" + org.calacademy.antweb.util.Html.escAttr(project.getThisPageTarget()) + "'>" + org.calacademy.antweb.util.Html.esc(project.getDisplayName()) + "</a>");
     } else {
         String delim = "&";
         if (!thisPage.contains("?")) delim = "?";
-	    out.println("<a href='" + org.calacademy.antweb.util.Html.escAttr(thisPage + delim + project.getParams()) + "'>" + project.getDisplayName() + "</a>");
+	    out.println("<a href='" + org.calacademy.antweb.util.Html.escAttr(thisPage + delim + project.getParams()) + "'>" + org.calacademy.antweb.util.Html.esc(project.getDisplayName()) + "</a>");
     }
 
 %>

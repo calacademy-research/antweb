@@ -15,10 +15,19 @@ date=$(date +"%Y-%m-%d")
 # The app cannot read /mnt/backup itself (the rclone mount is root-only), so it reads this line instead,
 # and a line older than 26 hours means the dump did not run.
 statusfile="$(cd "$(dirname "$0")/.." && pwd)/logs/web/db-dump-status.txt"
+# The folder belongs to the container's tomcat user: written through a new file of a unique name (mktemp creates it,
+# never opening a file or link someone put there) and renamed over the status file (a link there is replaced, not
+# followed), so this root script never writes through a link planted in that folder (2026-11-02).
 status() {
   [ -d "$(dirname "$statusfile")" ] || return 0
-  echo "$1 $(date '+%Y-%m-%dT%H:%M:%S%z') $2" > "$statusfile.tmp" && mv -f "$statusfile.tmp" "$statusfile"
+  local tmp
+  tmp=$(mktemp "$(dirname "$statusfile")/.db-dump-status.XXXXXX") || return 0
+  echo "$1 $(date '+%Y-%m-%dT%H:%M:%S%z') $2" > "$tmp" && chmod 644 "$tmp" && mv -fT "$tmp" "$statusfile" || rm -f "$tmp"
 }
+
+# The dump holds every login's email and password hash: readable by root only while it is written (2026-11-02:
+# /tmp/<date>.sql.gz was world-readable, under a name anyone could guess).
+umask 077
 
 dbname="ant"
 if [ $1 ]; then
@@ -38,10 +47,11 @@ rootbackupdir="${ANTWEB_DUMP_ROOT:-/mnt/backup/db}"   # the variable only for te
 backupdir="$rootbackupdir/daily"
 
 curBak="$rootbackupdir"/"$dbname"-currentDump.sql.gz
-tempfile=${ANTWEB_DUMP_TMP:-/tmp}/"$date".sql.gz
+tempfile=""
 datedBackupFile=$backupdir/"$date".sql.gz
 
 if [ -d $backupdir ]; then
+  tempfile=$(mktemp "${ANTWEB_DUMP_TMP:-/tmp}/daily-dump.XXXXXX") || { status failed "no temporary file"; exit 1; }
   # --single-transaction: one consistent snapshot of all tables (the nightly or an upload may be writing).
   if ! docker exec -e MYSQL_PWD antweb_mysql_1 mysqldump -u $dbuser --routines --single-transaction --quick --skip-lock-tables --no-tablespaces --default-character-set=utf8mb4 --databases "$dbname" | tail -n +2 | gzip -c -9 > "$tempfile"; then
     echo "Error: mysqldump failed $(date). Exiting." >> "$backupdir"/error.log

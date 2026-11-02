@@ -108,9 +108,10 @@
             
    <% // Print out the master taxon in bold and the other homonyms
       int i = 0;   
-      Homonym homonym = (Homonym) taxon;      
-      Taxon seniorHomonym = homonym.getSeniorHomonym();
-      Vector<String> homonymAuthorDates = taxon.getHomonymAuthorDates();
+      // The session's taxon can be another page's (a second tab): not a homonym then, so no homonym list.
+      Homonym homonym = (taxon instanceof Homonym) ? (Homonym) taxon : null;
+      Taxon seniorHomonym = homonym == null ? null : homonym.getSeniorHomonym();
+      Vector<String> homonymAuthorDates = homonym == null ? null : taxon.getHomonymAuthorDates();
       if (homonymAuthorDates == null) homonymAuthorDates = new Vector<>();   // a senior homonym with no other author dates
       if (seniorHomonym != null || (homonymAuthorDates != null && !homonymAuthorDates.isEmpty())) { %>
         <h2>Homonyms:</h2>
@@ -156,7 +157,7 @@
             String taxonomicTreatment = (String) desc.get("taxonomictreatment");
             //String taxonomicTreatment = new Formatter().convertFromUTF8((String) desc.get("taxonomictreatment"));
             //if (AntwebProps.isDevOrStageMode()) AntwebUtil.log("taxonPage-body.jsp utf8 taxonomicTreatment:" + taxonomicTreatment); %>
-        <%= taxonomicTreatment %>
+        <%= HtmlSanitizer.sanitize(taxonomicTreatment) %><%-- sanitized like the taxonomic history (2026-11-02) --%>
                     <!-- %= new Formatter().convertFromUTF8((String) desc.get("taxonomictreatment")) % -->
                     <!-- % String words = new Formatter().removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomictreatment"),""), "br"); % -->
                     <!-- %= new Formatter().removeTag((String) words, "o:p") % -->

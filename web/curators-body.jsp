@@ -73,7 +73,7 @@
      //A.log("curators-body curator:" + curator.getName());
      ++i;
    %>   
-     <tr><td><%= i %></td><td><%= curator.getLink() %></td><td><%= curator.getGroup().getLink() %></td><td><%= curator.getSpecimenUploadCount() %></td><td><%= curator.getDescEditCount() %></td>
+     <tr><td><%= i %></td><td><%= curator.getLink() %></td><td><%= curator.getGroup() != null ? curator.getGroup().getLink() : "(group no longer in AntWeb)" %></td><td><%= curator.getSpecimenUploadCount() %></td><td><%= curator.getDescEditCount() %></td>
      <td><%= curator.getProjectNamesShort() %> </td></tr>
 <% } 
 

@@ -55,7 +55,7 @@ public class Subfamily extends Family implements Serializable {
     public void setChildren(Connection connection, Overview overview, StatusSet statusSet, boolean getChildImages, boolean getChildMaps, String caste, boolean global, String subgenus)
             throws SQLException, AntwebException {
 
-        String fetchChildrenClause = "where 1 = 1";
+        String fetchChildrenClause = " where 1 = 1";   // leading space: "from taxonwhere" failed (2026-11-02)
         if (!global && overview != null) fetchChildrenClause = overview.getFetchChildrenClause();
 
         // We only use the subgenus clause when rank is genus.

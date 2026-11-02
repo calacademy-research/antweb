@@ -365,7 +365,8 @@ is shown. Camera maker's notes and the embedded thumbnail are binary data and ar
 
    if (LoginMgr.isCurator(request)) {
      //A.log("execute() group:" + theImage.getGroup().getId());
-     if (LoginMgr.isAdmin(request) || theImage.getGroup().getId() == accessGroup.getId()) { 
+     // Null-safe (2026-11-02): an image without a group, or a curator without one, gave the error page.
+     if (LoginMgr.isAdmin(request) || (theImage.getGroup() != null && accessGroup != null && theImage.getGroup().getId() == accessGroup.getId())) { 
      %>
 <br><form method="POST" action="<%= AntwebProps.getDomainApp() %>/bigPicture.do" style="display:inline" onsubmit="return confirm('Delete this image? This cannot be undone.');"><%= org.calacademy.antweb.util.Csrf.field(request) %>
 <input type="hidden" name="action" value="delete"><input type="hidden" name="code" value="<%= Html.escAttr(theImage.getCode()) %>"><input type="hidden" name="shot" value="<%= Html.escAttr(theImage.getShot()) %>"><input type="hidden" name="number" value="<%= theImage.getNumber() %>">

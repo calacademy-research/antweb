@@ -54,8 +54,14 @@ public class GroupCountDb extends AntwebDb {
     /** Creates the table if it is missing (once per start of the application). */
     public static void ensureTable(Connection connection) throws SQLException {
         if (s_tableMade) return;
+        // Created only when missing: CREATE TABLE commits the caller's transaction (set 3, an upload), 2026-11-02.
         try (Statement stmt = connection.createStatement()) {
-            stmt.executeUpdate(createTable());
+            boolean exists;
+            try (ResultSet r = stmt.executeQuery("select 1 from information_schema.tables where table_schema = database()"
+                    + " and table_name = '" + TABLE + "'")) {
+                exists = r.next();
+            }
+            if (!exists) stmt.executeUpdate(createTable());
         }
         s_tableMade = true;
     }

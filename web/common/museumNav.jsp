@@ -8,11 +8,11 @@
     thisPage = HttpUtil.removeOverview(thisPage);
 
     if (thisPage.contains(museum.getTargetDo())) {
-   	    out.println("<a href='" + museum.getThisPageTarget() + "'>" + museum.getDisplayName() + "</a>");
+   	    out.println("<a href='" + org.calacademy.antweb.util.Html.escAttr(museum.getThisPageTarget()) + "'>" + org.calacademy.antweb.util.Html.esc(museum.getDisplayName()) + "</a>");
     } else {
 		String delim = "&";
 		if (!thisPage.contains("?")) delim = "?";    
-	    out.println("<a href='" + org.calacademy.antweb.util.Html.escAttr(thisPage + delim + museum.getParams()) + "'>" + museum.getDisplayName() + "</a>");
+	    out.println("<a href='" + org.calacademy.antweb.util.Html.escAttr(thisPage + delim + museum.getParams()) + "'>" + org.calacademy.antweb.util.Html.esc(museum.getDisplayName()) + "</a>");
     }
 %>
 </div>

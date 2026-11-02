@@ -362,8 +362,11 @@ public class ImageDb extends AntwebDb {
         try {
             autoCommit = connection.getAutoCommit();
             connection.setAutoCommit(false);
+            // A replaced image keeps its owner groups (2026-11-02): an administrator's replacement of another group's
+            // image made it the administrator's group's, so that group could no longer replace or delete it.
+            Set<Integer> owners = ownerGroups(readImageGroupIds(code, shot, number), imageUploaded.getImageUpload().getGroupId());
             deleteImageRows(code, shot, number);
-            insertImage(imageUploaded);
+            insertImage(imageUploaded, owners);
             connection.commit();
             return true;
         } catch (SQLException e) {
@@ -410,8 +413,28 @@ public class ImageDb extends AntwebDb {
       return id;
     }
 
-    /** Insert the image row and its group_image row. Throws on a database error (putImage() then rolls back). */
-    private void insertImage(ImageUploaded imageUploaded) throws SQLException {
+    /** The owner groups of a replaced image: the ones it had, or (none recorded, a new image) the uploader's group. */
+    public static Set<Integer> ownerGroups(Set<Integer> existing, int uploaderGroupId) {
+        Set<Integer> owners = new java.util.TreeSet<>();
+        if (existing != null) for (Integer g : existing) if (g != null && g > 0) owners.add(g);
+        if (owners.isEmpty()) owners.add(uploaderGroupId);
+        return owners;
+    }
+
+    /** As getImageGroupIds, but a database error is thrown (putImage then saves nothing). */
+    private Set<Integer> readImageGroupIds(String code, String shotType, int shotNumber) throws SQLException {
+        Set<Integer> groupIds = new HashSet<>();
+        String query = "select gi.group_id from image i, group_image gi"
+            + " where i.id = gi.image_id and i.image_of_id = " + DBUtil.sqlLiteral(code) + " and i.shot_type = "
+            + DBUtil.sqlLiteral(shotType) + " and i.shot_number = " + shotNumber;
+        try (Statement stmt = getConnection().createStatement(); ResultSet rset = stmt.executeQuery(query)) {
+            while (rset.next()) groupIds.add(rset.getInt("group_id"));
+        }
+        return groupIds;
+    }
+
+    /** Insert the image row and its group_image rows. Throws on a database error (putImage() then rolls back). */
+    private void insertImage(ImageUploaded imageUploaded, Set<Integer> owners) throws SQLException {
 
         ImageUpload imageUpload = imageUploaded.getImageUpload();
         Statement stmt = null;
@@ -433,10 +456,10 @@ public class ImageDb extends AntwebDb {
     	    stmt.executeUpdate(dml);
     	    //A.log("insertImage() 1 dml:" + dml);
 
-            dml = "insert into group_image (group_id, image_id)" 
-              + " values (" + imageUploaded.getImageUpload().getGroupId() + ", " + id + ")";
-
-    	    stmt.executeUpdate(dml);
+            for (int groupId : owners) {
+                dml = "insert into group_image (group_id, image_id) values (" + groupId + ", " + id + ")";
+                stmt.executeUpdate(dml);
+            }
 
             //A.log("insertImage() dml:" + dml);
 		} catch (SQLException e) {
