@@ -23,7 +23,8 @@ import org.calacademy.antweb.util.*;
  * /bigPicture.do (alias /bigpicture.do; form specimenImageForm; bigPicture.jsp): one image at full size. The image
  * is found by imageId=, else by code= (or name=) and shot= with number= (default 1) through ImageDb; neither: "Must
  * specify code and shot, or imageId."; not found: "Image not found...". Busy server: bots get "Too busy for bots.".
- * A curator whose group owns the image, or an administrator, can delete it with action=delete, POST only
+ * A curator whose group owns the image, or an administrator, can delete it with action=delete, POST only; an image
+ * with no group cannot be deleted here, by anyone
  * (ImageDb.deleteImage). Loads the specimen (allantwebants) and sets the session attributes theImage, theImageTaxon,
  * specimen and taxon and the Open Graph request attributes for bigPicture-body.jsp (which reads the EXIF, util/Exif,
  * for administrators). Docs: docs/flows/specimen-and-image-pages.md. Tests: tests/e2e/test_specimen_pages.py,

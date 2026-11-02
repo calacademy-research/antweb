@@ -53,7 +53,8 @@ import com.zonageek.jpeg.codec.JpegCodec;
  * AdobeBlock (APP13 "Photoshop 3.0"), any other a plain JpegBlock. getExifBlock(), getJfifBlock(), getSofBlock(),
  * getAdobeBlock() return the first block of that kind or null; write() writes the blocks back out (not used by
  * AntWeb). A file that does not start with the JPEG signature throws JpegException ("File is not a JPEG"), as do
- * truncated or malformed blocks. The pixel codec (JpegCodec) is only made by activateCodec(), which AntWeb never
+ * most truncated blocks; a too-short APP0, APP1 or APP13 block is read without a length check and throws
+ * ArrayIndexOutOfBoundsException instead. The pixel codec (JpegCodec) is only made by activateCodec(), which AntWeb never
  * calls. Docs: docs/flows/specimen-and-image-pages.md (EXIF for admins). Tests: ExifTextTest,
  * tests/e2e/test_exif_view.py.
  */
