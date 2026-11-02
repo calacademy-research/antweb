@@ -111,7 +111,7 @@
   "headings": [
    "h3:Citing AntWeb",
    "h1:Subfamily: Formicinae Latreille, 1802",
-   "h2:96 Genera (valid genera and morphogenera) (66 imaged)",
+   "h2:96 Genera (valid and vetted) (66 imaged)",
    "h3:Download Specimen Data",
    "h3:Download Specimen Data"
   ],
@@ -297,7 +297,7 @@
   "headings": [
    "h3:Citing AntWeb",
    "h1:Genus: Camponotus Mayr, 1861",
-   "h2:1778 Species imaged (out of 2666 valid species and morphospecies)",
+   "h2:1778 Species imaged (out of 2666 species, valid and vetted)",
    "h3:Download Specimen Data",
    "h3:Download Specimen Data"
   ],
@@ -525,7 +525,7 @@
    "h3:Citing AntWeb",
    "h1:Country: Algeria",
    "h3:Download Species",
-   "h2:256 Valid species (of 256 species and morphospecies)"
+   "h2:256 Species (valid and vetted)"
   ],
   "images": 1044,
   "specimen_links": 0,
@@ -539,7 +539,7 @@
   "headings": [
    "h3:Citing AntWeb",
    "h1:Project: All Antweb",
-   "h2:23 Subfamilies (valid subfamilies, extant and fossil)"
+   "h2:23 Subfamilies (valid and vetted)"
   ],
   "images": 65,
   "specimen_links": 0,

@@ -144,9 +144,11 @@ class Place:
             return f"/{page}.do?bioregionName={quote_plus(self.name)}"
         return f"/{page}.do?geolocaleId={self.gid}"
 
-    def list_url(self, rank, status="validmorpho", extra=""):
-        # 2026-10-30: the default, "Valid species + morphospecies", lists the rows of the place's Species number (species
-        # lists); "all" (every counted status) lists the names that are not species too.
+    def list_url(self, rank, status="vetted", extra=""):
+        # 2026-11-02 (views): the default, Vetted, lists the valid names and the vetted morphospecies (on countries,
+        # adm1s, regions and subregions also those collected there); "valid" the list's valid names; "all" (All specimen
+        # names) every counted name, on geolocales also every name collected there. (Until 11-02 the default was
+        # "validmorpho", the rows of the place's Species number; that address value now opens All specimen names.)
         return f"/taxonomicPage.do?rank={rank}&{self.params}&statusSet={quote_plus(status)}{extra}"
 
 
@@ -248,6 +250,16 @@ def list_rows(html):
                      "endemic": 'title="Endemic"' in chunk.split("description.do?")[0],
                      "introduced": 'title="Introduced"' in chunk.split("description.do?")[0]})
     return rows
+
+
+# The mark of a row added from specimens collected in the place, not on its list (web/common/isFromSpecimen.jsp; the
+# views Vetted and All specimen names add such rows on countries, adm1s, regions and subregions since 2026-11-02).
+NOT_ON_LIST_MARK = "Not on the place's list: from specimens collected here."
+
+
+def on_list(row_html):
+    """Whether a list row is a row of the place's list (not one added from specimens collected there)."""
+    return NOT_ON_LIST_MARK not in unescape(row_html.split("description.do?")[0])
 
 
 def taxon_name_of(chunk):

@@ -733,8 +733,8 @@ Currently on live we show:
     padding-right:20px;
 }
 
-/* A place's list header (taxonomicPage-body.jsp, Brian Fisher 2026-10-30): line 1 the header with the Species Status and
-   Names from selectors on the right, each on one line; line 2 small links; "About this list" closed under them. */
+/* A place's list header (taxonomicPage-body.jsp, Brian Fisher 2026-10-30): line 1 the header with the view buttons on
+   the right; line 2 small links; "About this list" closed under them. */
 .list-choices {
     float:right;
     display:flex;
@@ -742,27 +742,67 @@ Currently on live we show:
 }
 .list-choices > div {
     float:none;
-    display:flex;
-    align-items:baseline;
     white-space:nowrap;
     padding-left:20px;
 }
-.list-choices #change_status,
-.list-choices #change_names_from {
+/* The view switch (web/common/statusesDisplay.jsp, 2026-11-02): four buttons in one segmented control. */
+#status_toggle.view-switch {
+    display:flex;
+    align-items:center;
+    white-space:nowrap;
+}
+.view-switch-label {
+    font-weight:bold;
+    margin-right:6px;
+}
+#change_status.view-buttons {
     float:none;
+    margin-left:0;
+    display:inline-flex;
+    border:1px solid #8a9bb0;
+    border-radius:4px;
+    overflow:hidden;
+    font-weight:normal;
 }
-#names_from_choice.options {
-    left:0;
-    min-width:170px;
+.view-buttons a.view-btn {
+    padding:3px 10px;
+    font-size:12px;
+    font-weight:normal !important;
+    color:#253035;
+    background:#fff;
+    border-left:1px solid #8a9bb0;
+    text-decoration:none;
 }
-#status_choice.options {
-    min-width:200px;
+.view-buttons a.view-btn:first-child {
+    border-left:0;
 }
-#names_from_choice ul, #status_choice ul {
-    text-align:left;
+.view-buttons a.view-btn:hover {
+    background:#eef2f6;
 }
-#names_from_choice ul li {
-    cursor:pointer;
+.view-buttons a.view-btn.is-current {
+    background:#556b83;
+    color:#fff;
+    font-weight:bold !important;
+}
+.view-buttons a.view-btn:focus-visible {
+    outline:2px solid #253035;
+    outline-offset:-2px;
+}
+/* Source icons of list rows and the legend in About this list (ListView.sourceIconHtml, 2026-11-02). */
+.src-icon {
+    display:inline-block;
+    min-width:14px;
+    text-align:center;
+    font-size:12px;
+    line-height:14px;
+    cursor:default;
+}
+.src-icon.src-specimen { color:#8a5a00; }
+.src-icon.src-curated { color:#2e6b2e; font-weight:bold; }
+.src-icon.src-literature { color:#556b83; }
+.about-views {
+    margin:4px 0 6px 18px;
+    padding:0;
 }
 .list-links {
     font-weight:normal;
@@ -1597,7 +1637,15 @@ h2.display_count {
 
 .list_extras.author_date {
     text-align:left;
-    width:170px; // 170
+    width:130px; /* was 170; narrower since 2026-11-02 (one line per row) */
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+/* Other specimens of a genus row (2026-11-02) */
+.list_extras.other {
+    width: 80px;
 }
 
 .list_extras.images {
@@ -1637,6 +1685,7 @@ h2.display_count {
 
 .list_extras.source {
     width: 20px; //20 
+    min-width: 50px;
 }
 
 .sx_name {

@@ -98,7 +98,7 @@ Downloads the AntCat export and loads the names into AntWeb, as the nightly run 
 
 ### AntCat names and species lists: Species List Tool
 
-Shown when your login looks after project or region species lists. Choose a list and click **Open the Species List Tool** to open the **Species List Tool** for it: compare it with another list and add or remove species.
+Shown when your login looks after project or region species lists. Choose a list and click **Open the Species List Tool** to open the **Species List Tool** for it: compare it with another list and add or remove species. Since 2026-11-02 any curator may edit any place's or project's species list (not only the ones assigned to them): open the place's species list and click **Edit Species List**. Every change is recorded with your name in the list's history. A morphospecies you put on any list becomes "vetted": it then shows in the Vetted view of every place where its specimens were collected.
 
 ### Manager tools
 

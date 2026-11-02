@@ -517,18 +517,19 @@ def _subtaxon(html):
 @needs("admin")
 def test_subtaxon_total_is_the_sum_of_the_rows_of_every_kind_of_place():
     """Row 45: the admin "Subtaxon total" of taxonomicPage.do = the sum of the rows' numbers, for the day's place of
-    every kind; rank genus = the place's Species, rank subfamily = Genera (validated by the count check), rank species
-    <= Specimens (names not identified to genus are in Specimens only); and on browse.do of a genus of the day's
-    country = the sum of its rows, its rows = the genus row's "N Species". A total below the place's number is finding
-    B76 (open, expected failure): names under no row of the list; a total above it fails."""
+    every kind, in the default view (Vetted, 2026-11-02); rank subfamily <= Genera (fossil subfamilies are in the view
+    Fossil), rank genus <= the header of the species list in the same view (a genus row's Species are those of the view;
+    a name whose genus row is not on the list is under no row, B76), rank species <= Specimens (names not identified to
+    genus are in Specimens only); and on browse.do of a genus of the day's country = the sum of its rows, its rows =
+    the genus row's Species (the link keeps the view). A total above the expected number fails."""
     s, _token, _id = login("admin")
     wrong, checked, known = [], [], []
     for p in ns.one_place_of_each_kind("subtaxon"):
         stats = ns.place_stats(ns.fetch(p.page, s) or "")
         if "species" not in stats:
             continue
-        for rank, stat, rule in (("subfamily", "genera", "="), ("genus", "species", "="), ("species", "specimens", "<=")):
-            if rank == "species" and stats.get("species", 0) > 1500:
+        for rank, stat, rule in (("subfamily", "genera", "<="), ("genus", "species list", "<="), ("species", "specimens", "<=")):
+            if rank != "subfamily" and stats.get("species", 0) > 1500:
                 continue   # a list too long for the time of a test
             html = ns.fetch(p.list_url(rank), s)
             total = _subtaxon(html)
@@ -538,7 +539,12 @@ def test_subtaxon_total_is_the_sum_of_the_rows_of_every_kind_of_place():
             summed = sum(_row_number(r["html"]) for r in rows)
             if total != summed:
                 wrong.append(f"{p} rank={rank}: Subtaxon total {total}, rows add up to {summed}")
-            expected = stats.get(stat, 0)
+            if stat == "species list":
+                expected, _text = ns.header(ns.fetch(p.list_url("species"), s) or "")
+                if expected is None:
+                    continue
+            else:
+                expected = stats.get(stat, 0)
             if rule == "=" and total < expected:
                 # B76: the place counts every counted row of the rank; a row counts under its parent row only when its
                 # parent (taxon.parent_taxon_name) is a row of the list, so names with no parent, or whose parent row

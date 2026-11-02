@@ -14,7 +14,14 @@ import org.apache.commons.logging.LogFactory;
 
 import jakarta.servlet.http.*;
 
-/** Class Taxon keeps track of the information about a specific taxon */
+/**
+ * The rows of a list page (taxonomicPage.do, TaxaPageAction): the place's list of subfamilies, genera or species in one of
+ * the four views (StatusSet, ListView; Brian Fisher, 2026-11-02). taxaQuery is the list's own rows; on country, adm1,
+ * region and subregion lists the views Vetted and All specimen names add the names of specimens collected there
+ * (specimenNamesWhere, ListView.specimenNamesSet), so viewQuery is the view's whole set; ListView reads the same queries
+ * for the genus rows' numbers. Tests: test.org.calacademy.antweb.ListViewTest, home.ListViewDbTest,
+ * tests/e2e/test_list_sources.py, test_status_choice.py.
+ */
 public class TaxaPage implements Serializable {
 
     private static final Log s_log = LogFactory.getLog(TaxaPage.class);
@@ -66,16 +73,61 @@ public class TaxaPage implements Serializable {
 	 * a static method so the database tests run the list's own query). rank: subfamily, genus or species.
 	 */
 	public static String taxaQuery(Overview overview, String rank, boolean withFossil, StatusSet statusSet) {
-  	      String taxaQuery = "select taxon.family as family, taxon.subfamily as subfamily ";
-				
-	      if (rank.equals("genus")) {
-	      taxaQuery += ", taxon.genus as genus ";
-  	      }
-	      if (rank.equals("species")) {
-	   	    taxaQuery += ", genus, species, subspecies, taxarank";
-	   	  }
-          	      
-  	      taxaQuery += " from taxon";
+		return "select " + selectColumns(rank) + listWhere(overview, rank, withFossil, statusSet);
+	}
+
+	/** The columns fetchChildren reads, for rows of rank: family, subfamily (, genus) (, genus, species, subspecies, taxarank). */
+	public static String selectColumns(String rank) {
+		String cols = "taxon.family as family, taxon.subfamily as subfamily";
+		if ("genus".equals(rank)) cols += ", taxon.genus as genus";
+		if ("species".equals(rank)) cols += ", taxon.genus as genus, taxon.species as species, taxon.subspecies as subspecies, taxon.taxarank as taxarank";
+		return cols;
+	}
+
+	/**
+	 * The view's whole set of rows (Brian Fisher, 2026-11-02): the list's own rows (listWhere) and, where the view adds
+	 * them, the names of the specimens collected in the place (specimenNamesWhere). select: the columns; extra: a
+	 * condition added to both halves (" and ...", or "").
+	 */
+	public static String viewQuery(Overview overview, String rank, boolean withFossil, StatusSet statusSet, String select, String extra) {
+		String x = extra == null ? "" : extra;
+		String q = "select " + select + listWhere(overview, rank, withFossil, statusSet) + x;
+		String specimenWhere = specimenNamesWhere(overview, rank, withFossil, statusSet);
+		if (specimenWhere != null) q += " union select " + select + specimenWhere + x;
+		return q;
+	}
+
+	/**
+	 * The second half of a view (" from taxon where ..."), or null when the view adds no specimen names here: on
+	 * country, adm1, region and subregion lists (ListView.addsSpecimenNames) the names of the not red-flagged specimens
+	 * collected there that the view takes (ListView.specimenNamesSet: Vetted the vetted morphospecies, All specimen
+	 * names every counted status), not disputed there (a curator removed the name from the list: ListView.notDisputed).
+	 * Genus and subfamily rows: the genus or subfamily of such names, All specimen names only (Vetted's genus rows come
+	 * from the list, ListView.GenusRows).
+	 */
+	public static String specimenNamesWhere(Overview overview, String rank, boolean withFossil, StatusSet statusSet) {
+		StatusSet names = ListView.specimenNamesSet(statusSet);
+		if (names == null || !ListView.addsSpecimenNames(overview)) return null;
+		if (!"species".equals(rank) && !StatusSet.ALL_NAMES.equals(names.getValue())) return null;
+		String w = " from taxon where " + ListView.collectedHere("taxon", PlaceTaxonNotes.placeSpecimenCriteria(overview))
+			+ " and taxon.family = 'formicidae'";
+		if ("species".equals(rank)) {
+			w += " and taxon.taxarank in ('species', 'subspecies') and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon")
+				+ names.getAndCriteria("taxon", rank);
+			if (hidesNonSpecies(names)) w += " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon");
+		} else {
+			// the genus or subfamily of the names collected here (a name at genus rank too)
+			w += " and taxon.taxarank in ('genus', 'species', 'subspecies')" + names.getAndCriteria("taxon", rank);
+			if ("genus".equals(rank)) w += " and coalesce(taxon.genus, '') <> ''";
+		}
+		w += ListView.notDisputed(overview, "taxon");
+		if (!withFossil) w += " and taxon.fossil = 0 ";
+		return w;
+	}
+
+	/** The list's own rows of a view (" from taxon, <list> where ..."): the place's list, the view's criteria. */
+	public static String listWhere(Overview overview, String rank, boolean withFossil, StatusSet statusSet) {
+  	      String taxaQuery = " from taxon";
   	      
           taxaQuery += overview.getFetchChildrenClause();
 
@@ -119,7 +171,7 @@ public class TaxaPage implements Serializable {
 	 * (taxaQuery) with a fossil row; browse.do's subfamilies (Family.setChildren) take the same clause and rule.
 	 */
 	public static boolean hasFossilSubfamilies(Connection connection, Overview overview) throws SQLException {
-		String query = taxaQuery(overview, "subfamily", true, StatusSet.listStatusSet(StatusSet.LIST_VALID_MORPHO))
+		String query = taxaQuery(overview, "subfamily", true, new StatusSet(StatusSet.VALID_MORPHO))
 		    + " and taxon.fossil = 1 limit 1";
 		Statement stmt = null;
 		ResultSet rset = null;
@@ -171,61 +223,17 @@ public class TaxaPage implements Serializable {
         long now = new java.util.Date().getTime();
 	    ArrayList<Taxon> theseChildren = new ArrayList<>();
 
-        // Specimen taxa are filtered by country, adm1 or project only. For other places (bioregion, region,
-        // museum) the specimen half had no place filter and listed every taxon in AntWeb, so it is left out.
-        if (withSpecimen && !(overview instanceof Country || overview instanceof Adm1 || overview instanceof Project)) withSpecimen = false;
-        isWithSpecimen = withSpecimen;
-
+        // The view's rows (Brian Fisher, 2026-11-02): the list's rows and, on country, adm1, region and subregion lists in
+        // the views Vetted and All specimen names, the names of the specimens collected there (viewQuery). withSpecimen
+        // (the old specimen=true, "Names from: Specimens collected here") is now the view All specimen names
+        // (TaxaPageAction); the parameter is kept for the callers.
         String fetchChildrenQuery = "";
-	    String taxaQuery = null;
-        String specimenQuery = null;
-
-        String orderByPhrase = "";
-        String taxonOrderByPhrase = "";
-          
         if (withTaxa) {
-          taxaQuery = taxaQuery(overview, rank, withFossil, statusSet);
-          fetchChildrenQuery = taxaQuery;
-          s_log.debug("FetchChildren() overview:" + overview.getClass() + " query:" + taxaQuery);
-        }
-        //A.log("fetchChildren() withSpecimen:" + withSpecimen + " overview:" + overview.getClass());
-
-        if (withSpecimen) {
-          if (taxaQuery != null) fetchChildrenQuery += " union ";
-
-          // This will add in specimen derived data.
-          specimenQuery = "select distinct specimen.family as family, specimen.subfamily as subfamily";
-
-	      if (rank.equals("genus")) {
-		    specimenQuery += ", specimen.genus as genus ";
-    	  }
-  	      if (rank.equals("species")) {
-	   	    specimenQuery += ", specimen.genus, specimen.species, specimen.subspecies, IF(subspecies is null ,'species','subspecies') as taxarank";
-	      }          
-          
-          // Ant specimens only: non-ant specimens are found by search, not listed on place pages (2026-10-21).
-          // alias "specimen": the status criteria (StatusSet.getCriteria) take the table name specimen or sp
-          specimenQuery += " from specimen where" + org.calacademy.antweb.home.SpecimenDb.getAntSpecimenCriteria("specimen");
-          if (rank.equals("species")) specimenQuery += " and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("specimen");
-          // 2026-10-30 (review of #307): the specimen half takes the list's status choice too (it took none, so a list of
-          // Valid species listed the names of every specimen), with the same rank rule as the taxa above.
-          specimenQuery += statusSet.getAndCriteria("specimen", rank);
-          // the specimens' names that count as species (2026-10-28, as the taxa above)
-          if (rank.equals("species") && hidesNonSpecies(statusSet)) specimenQuery += " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("specimen");
-          
-          if (overview instanceof Country) {
-            specimenQuery += " and country = " + DBUtil.sqlQuote(overview);
-          }
-          if (overview instanceof Adm1) {
-            specimenQuery += " and adm1 = " + DBUtil.sqlQuote(overview);
-          }
-
-          if (overview instanceof Project) {
-            specimenQuery += " and ( country = " + DBUtil.sqlQuote(overview.getTitle())
-              + " or adm1 = " + DBUtil.sqlQuote(overview.getTitle()) + " )" ;
-          }
-
-          fetchChildrenQuery += specimenQuery;
+          String specimenWhere = specimenNamesWhere(overview, rank, withFossil, statusSet);
+          isWithSpecimen = specimenWhere != null;
+          fetchChildrenQuery = taxaQuery(overview, rank, withFossil, statusSet);
+          if (specimenWhere != null) fetchChildrenQuery += " union select " + selectColumns(rank) + specimenWhere;
+          s_log.debug("FetchChildren() overview:" + overview.getClass() + " query:" + fetchChildrenQuery);
         }
 
 		if (rank.equals("species")) {
@@ -385,20 +393,56 @@ public class TaxaPage implements Serializable {
 		return genusOnly;
 	}
 
-	private PlaceTaxonNotes.OtherNames otherNames;
+	private ListView.GenusRows genusRows;
 
-	/** The place's specimens of names not on its species list, by genus (genus lists, 2026-10-30; PlaceTaxonNotes). */
-	public void findOtherNames(Connection connection, Overview overview) {
+	/**
+	 * Genus lists (Brian Fisher, 2026-11-02): the view's numbers of the genus rows (Species, Other specimens) and the rows
+	 * the view shows (ListView.GenusRows.keep: in Valid and Vetted a genus known here only from specimens identified to
+	 * genus is left out). The children are filtered here, so the header counts the rows shown. On a database error the
+	 * rows stay as the list has them, with their stored numbers.
+	 */
+	public void findGenusRows(Connection connection, Overview overview, String choice) {
+		if (!ListView.hasViews(overview)) return;
 		try {
-			otherNames = PlaceTaxonNotes.loadOtherNames(connection, overview, null, null);
+			genusRows = ListView.loadGenusRows(connection, overview, choice, null);
+			if (children != null) children = genusRows.filter(children);
 		} catch (SQLException | RuntimeException e) {
-			s_log.warn("findOtherNames() overview:" + overview + " e:" + e);
-			otherNames = null;
+			s_log.warn("findGenusRows() overview:" + overview + " e:" + e);
+			genusRows = null;
 		}
 	}
 
-	public PlaceTaxonNotes.OtherNames getOtherNames() {
-		return otherNames;
+	public ListView.GenusRows getGenusRows() {
+		return genusRows;
+	}
+
+	private ListView.PlaceSpecimens placeSpecimens;
+
+	/**
+	 * Species lists (2026-11-02): the place's specimens by name (red-flagged never counted), for the source icon
+	 * (specimens trump literature) and the specimens of the rows added from specimens. Only the names that need it:
+	 * the rows whose list entry is not from specimens and the rows not on the list (a row from specimens shows the
+	 * specimen icon anyway). Null when the place selects none.
+	 */
+	public void findPlaceSpecimens(Connection connection, Overview overview) {
+		java.util.List<String> names = new java.util.ArrayList<>();
+		if (children != null) {
+			for (Taxon child : children) {
+				TaxonSet ts = child.getTaxonSet();
+				if (ts == null || !ts.exists() || !Source.SPECIMEN.equals(Source.getSourceCanonical(ts.getSource()))) names.add(child.getTaxonName());
+			}
+		}
+		if (names.isEmpty()) return;
+		try {
+			placeSpecimens = ListView.loadPlaceSpecimens(connection, overview, null, null, names);
+		} catch (SQLException | RuntimeException e) {
+			s_log.warn("findPlaceSpecimens() overview:" + overview + " e:" + e);
+			placeSpecimens = null;
+		}
+	}
+
+	public ListView.PlaceSpecimens getPlaceSpecimens() {
+		return placeSpecimens;
 	}
 
 	public void findUnimaged(Connection connection) throws SQLException {

@@ -444,6 +444,21 @@
         flex-wrap: wrap;
         max-width: 100%;
     }
+    /* the view switch (2026-11-02): the four buttons wrap inside the page width, never scroll it */
+    #status_toggle.view-switch {
+        float: none;
+        padding-left: 0;
+        flex-wrap: wrap;
+        white-space: normal;
+        max-width: 100%;
+    }
+    #change_status.view-buttons {
+        flex-wrap: wrap;
+        max-width: 100%;
+    }
+    .view-buttons a.view-btn {
+        padding: 5px 9px;          /* a larger tap target */
+    }
     .list-links {
         overflow-wrap: anywhere;
     }

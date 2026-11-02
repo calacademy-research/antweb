@@ -27,7 +27,8 @@ import org.apache.commons.logging.LogFactory;
  * /mapComparison.do (mapComparison.jsp; form browseForm in session scope; the oneView.do mapping is commented out).
  * The page type comes from the request URL. Finds the place (OverviewMgr), redirects taxonName= and antcatId= to the
  * taxon's page, reads the taxon (TaxonDb.getFullTaxon, else HomonymDb.getFullHomonym), its row in the place's list,
- * the status choice (StatusSet.getStatusSet), the not-recorded notice and indet line (PlaceTaxonNotes), images,
+ * the view (StatusSet.getStatusSet; ListView for the genus rows of a subfamily and the genus page's line), the
+ * not-recorded notice and indet line (PlaceTaxonNotes), images,
  * children and map. Comparisons need a log-in (Check.loginForFeature); for visitors not logged in, two of each kind
  * run at a time (ConcurrencyLimiter). Page text is saved and prepared by DescriptionAction. Docs:
  * docs/flows/taxon-pages.md (the full code path), docs/flows/places.md (compare tools), docs/numbers.md rows 38 to
@@ -387,16 +388,13 @@ public class BrowseAction extends DescriptionAction {
 		      if (notice != null) request.setAttribute(PlaceTaxonNotes.NOT_RECORDED, notice);
 		      // 2026-10-30: in a place that selects specimens, the line names every specimen collected there under a name not
 		      // on the species list ("Specimens collected here not on the species list: 3 (names: ...)"), the indet name being
-		      // one of them; elsewhere (all of AntWeb) the indet line as before. A subfamily's browse page in a place: the
-		      // same numbers for its genus rows (web/taxonReport.jsp). One grouped query (PlaceTaxonNotes.otherNamesSql).
-		      PlaceTaxonNotes.OtherNames otherNames = null;
-		      if (Rank.GENUS.equals(taxon.getRank()) || (Rank.SUBFAMILY.equals(taxon.getRank()) && "browse".equals(cacheType))) {
-		        otherNames = PlaceTaxonNotes.loadOtherNames(connection, overview, taxon.getSubfamily(),
-		            Rank.GENUS.equals(taxon.getRank()) ? taxon.getGenus() : null);
-		      }
-		      if (Rank.SUBFAMILY.equals(taxon.getRank()) && otherNames != null) request.setAttribute(PlaceTaxonNotes.OTHER_NAMES, otherNames);
-		      if (Rank.GENUS.equals(taxon.getRank()) && otherNames != null) {
-		        PlaceTaxonNotes.OtherNames.Genus g = otherNames.genus(taxon.getSubfamily(), taxon.getGenus());
+		      // one of them; elsewhere (all of AntWeb) the indet line as before. 2026-11-02 (views): names not in the list of
+		      // the current view, shown in Valid and Vetted (in All specimen names those names are on the list itself).
+		      String placeCriteria = PlaceTaxonNotes.placeSpecimenCriteria(overview);
+		      boolean placeSelectsSpecimens = placeCriteria != null && !placeCriteria.isEmpty();
+		      if (Rank.GENUS.equals(taxon.getRank()) && placeSelectsSpecimens) {
+		        PlaceTaxonNotes.OtherNames.Genus g = ListView.hasViews(overview)
+		            ? ListView.genusOtherNames(connection, overview, statusSetStr, taxon.getSubfamily(), taxon.getGenus()) : null;
 		        String search = HttpUtil.isBot(request) ? null : PlaceTaxonNotes.placeSearchUrl(overview);
 		        String line = g == null ? null : PlaceTaxonNotes.otherNamesLineHtml(g,
 		            search == null ? null : search + "&" + PlaceTaxonNotes.searchParams(g, false), targetDo, overview);
@@ -489,8 +487,17 @@ public class BrowseAction extends DescriptionAction {
 			if (imagesFromAnywhere) global = !placeOnly;
 
 			taxon.setChildren(connection, overview, statusSet, getChildImages, getChildMaps, caste, global, subgenus);
-			// 2026-10-30: the family's subfamily list says "extant and fossil" only when the place has a fossil subfamily
-			if (taxon instanceof Family) TaxaPage.setFossilSubfamilies(request, connection, overview);
+			// 2026-11-02 (views): the genus rows of a subfamily in a place, as on the genus list: Species and Other
+			// specimens in the view, and the rows the view shows (ListView.GenusRows; the header counts the rows shown).
+			if (taxon instanceof Subfamily && !global && ListView.hasViews(overview) && org.calacademy.antweb.home.GenusOnly.typeAndKey(overview) != null) {
+			  try {
+			    ListView.GenusRows genusRows = ListView.loadGenusRows(connection, overview, statusSetStr, taxon.getSubfamily());
+			    taxon.setChildren(genusRows.filter(taxon.getChildren()));
+			    request.setAttribute(PlaceTaxonNotes.GENUS_ROWS, genusRows);
+			  } catch (SQLException | RuntimeException e) {
+			    s_log.warn("execute() genus rows taxon:" + taxon.getTaxonName() + " overview:" + overview + " e:" + e);
+			  }
+			}
 
 			if (imagesFromAnywhere) {
 			  request.setAttribute("imagesPlaceOnly", placeOnly);

@@ -8,7 +8,9 @@ import java.util.List;
 
 import junit.framework.TestCase;
 
+import org.calacademy.antweb.ListView;
 import org.calacademy.antweb.PlaceTaxonNotes;
+import org.calacademy.antweb.StatusSet;
 import org.calacademy.antweb.Project;
 import org.calacademy.antweb.geolocale.Bioregion;
 import org.calacademy.antweb.geolocale.Country;
@@ -29,6 +31,9 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *   indet line   N and M of "Not identified to species: Carebara (indet), N specimens (M imaged)" in a country, a
  *                subregion (its countries), a bioregion and all of AntWeb; a label image does not make a specimen imaged
  *   notice       whether a taxon has a specimen in the place, and the bioregions whose list has it
+ *   views        (2026-11-02, ListView) the names of Valid, Vetted and All specimen names in a place; a vetted
+ *                morphospecies follows its specimens; disputes; the genus rows' Species, Other specimens and which
+ *                rows each view shows; the genus page's line; the place's specimens by name (red flags never count)
  *
  * Runs in CI against MySQL 8.4 (host "mysql"); ANTWEB_TEST_DB_URL overrides.
  */
@@ -185,37 +190,123 @@ public class PlaceTaxonNotesDbTest extends TestCase {
         return mad;
     }
 
-    public void testOtherNamesByGenusInOneQuery() throws Exception {
-        otherNamesFixture();
-        PlaceTaxonNotes.OtherNames o = PlaceTaxonNotes.loadOtherNames(connection, madagascar(), null, null);
-        PlaceTaxonNotes.OtherNames.Genus carebara = o.genus(MYRM, "carebara");
-        assertNotNull("Carebara, with no species on the list, has specimens collected here", carebara);
-        assertEquals("Carebara (indet) 1 + mg01 2; the red-flagged one left out", 3, carebara.specimens);
-        List<String> names = new ArrayList<>();
-        for (String[] n : carebara.names) names.add(n[0] + "=" + n[4]);
-        assertEquals("[" + CAREBARA_INDET + "=1, " + CAREBARA_MG01 + "=2]", names.toString());
-        PlaceTaxonNotes.OtherNames.Genus pheidole = o.genus(MYRM, "pheidole");
-        assertNotNull("Pheidole has species on the list and one specimen of another name", pheidole);
-        assertEquals("only Pheidole zz: valid a, a x and the morphospecies b are on the list", 1, pheidole.specimens);
-        assertEquals(PHEIDOLE_ZZ, pheidole.names.get(0)[0]);
-        assertNull("Hypoponera: every specimen under a name on the list", o.genus(PON, "hypoponera"));
-        // Mozambique: no list rows; its two Carebara (indet), not the red-flagged one nor the one not identified to genus
+    private static Country mozambique() {
         Country moz = new Country();
         moz.setId(40);
         moz.setName("Mozambique");
-        PlaceTaxonNotes.OtherNames m = PlaceTaxonNotes.loadOtherNames(connection, moz, null, null);
-        assertEquals(2, m.genus(MYRM, "carebara").specimens);
-        assertEquals("one genus only", 1, m.genera().size());
-        assertNull("all of AntWeb: no place list", PlaceTaxonNotes.loadOtherNames(connection, new Project(Project.ALLANTWEBANTS), null, null));
+        return moz;
     }
 
-    public void testOtherNamesOfOneGenusOrSubfamily() throws Exception {
+    private List<String> names(String sql) throws Exception {
+        List<String> out = new ArrayList<>();
+        try (PreparedStatement s = connection.prepareStatement(sql); ResultSet r = s.executeQuery()) {
+            while (r.next()) out.add(r.getString(1));
+        }
+        java.util.Collections.sort(out);
+        return out;
+    }
+
+    /** The species and subspecies names of a view in a place (the list's own query and its specimen half). */
+    private List<String> viewNames(Country place, String choice) throws Exception {
+        return names(ListView.viewNamesSql(place, StatusSet.listStatusSet(choice), null, null));
+    }
+
+    /**
+     * The views of 2026-11-02 (ListView). Valid: the list's valid names. Vetted: and the morphospecies on a curated
+     * entry of any list (a curator's source in geolocale_taxon or proj_taxon; not a proxy row, not the system lists).
+     * All specimen names: every counted name, on the list or collected here.
+     */
+    public void testViewsOfMadagascar() throws Exception {
         otherNamesFixture();
-        PlaceTaxonNotes.OtherNames one = PlaceTaxonNotes.loadOtherNames(connection, madagascar(), MYRM, "carebara");
-        assertEquals("the genus page reads its own genus", 1, one.genera().size());
-        assertEquals(3, one.genus(MYRM, "carebara").specimens);
-        PlaceTaxonNotes.OtherNames sub = PlaceTaxonNotes.loadOtherNames(connection, madagascar(), MYRM, null);
-        assertEquals("a subfamily's browse page: its genera", 2, sub.genera().size());
-        assertTrue(PlaceTaxonNotes.loadOtherNames(connection, madagascar(), PON, null).isEmpty());
+        Country mad = madagascar();
+        assertEquals("[" + PA + ", " + PAX + "]", viewNames(mad, "valid").toString().replace(", " + HB, "").replace(HB + ", ", ""));
+        assertFalse("Pheidole b, a morphospecies on no curated entry, is not vetted", viewNames(mad, "vetted").contains(PB));
+        exec("update geolocale_taxon set source = 'proxyspeciesListTool' where geolocale_id = " + INDIAN_OCEAN + " and taxon_name = '" + PB + "'");
+        assertFalse("a proxy row of a parent region is not a curator's entry", viewNames(mad, "vetted").contains(PB));
+        exec("update proj_taxon set source = 'curator' where project_name = 'allantwebants' and taxon_name = '" + PB + "'");
+        assertFalse("nor an entry of a system list", viewNames(mad, "vetted").contains(PB));
+        exec("update proj_taxon set source = 'speciesListTool' where project_name = 'madants' and taxon_name = '" + PB + "'");
+        assertTrue("on a curated project list: vetted, on Madagascar's list too", viewNames(mad, "vetted").contains(PB));
+        exec("update proj_taxon set source = null where project_name = 'madants'");
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, source) values (40, '" + PB + "', 'curator')");
+        assertTrue("curated in Mozambique: vetted everywhere", viewNames(mad, "vetted").contains(PB));
+        List<String> all = viewNames(mad, "all");
+        assertTrue(all.toString(), all.contains(PB) && all.contains(PA) && all.contains(CAREBARA_MG01) && all.contains(CAREBARA_INDET)
+            && all.contains(PHEIDOLE_ZZ));
+        assertFalse("never a name not identified to genus", all.contains(NOT_TO_GENUS));
+    }
+
+    /**
+     * A vetted morphospecies is in the Vetted view of every country where its specimens (not red-flagged) were collected,
+     * though not on its list; a curator who removed it from one place's list (a dispute) takes it off that place only.
+     */
+    public void testVettedMorphospeciesFollowsItsSpecimens() throws Exception {
+        otherNamesFixture();
+        exec("update specimen set country = 'Mozambique' where code in ('mg1', 'mgred')");
+        Country moz = mozambique();
+        assertEquals("not vetted yet: All specimen names only", "[]", viewNames(moz, "vetted").toString());
+        assertTrue(viewNames(moz, "all").contains(CAREBARA_MG01));
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, source) values (" + MADAGASCAR + ", '" + CAREBARA_MG01 + "', 'speciesListTool')");
+        assertEquals("vetted in Madagascar: in Mozambique's Vetted view too", "[" + CAREBARA_MG01 + "]", viewNames(moz, "vetted").toString());
+        assertTrue("and Madagascar's", viewNames(madagascar(), "vetted").contains(CAREBARA_MG01));
+        exec("update specimen set flag = 'red' where code = 'mg1'");
+        assertEquals("only red-flagged specimens in Mozambique: not there", "[]", viewNames(moz, "vetted").toString());
+        assertFalse("red flags never count, in any view", viewNames(moz, "all").contains(CAREBARA_MG01));
+        exec("update specimen set flag = null where code = 'mg1'");
+        exec("insert into geolocale_taxon_dispute (geolocale_id, taxon_name, source, curator_id) values (40, '" + CAREBARA_MG01 + "', 'speciesListTool', 5)");
+        assertEquals("disputed in Mozambique: off Mozambique", "[]", viewNames(moz, "vetted").toString());
+        assertTrue("still in Madagascar", viewNames(madagascar(), "vetted").contains(CAREBARA_MG01));
+    }
+
+    /**
+     * The genus rows of each view (ListView.GenusRows, three queries): Species in the view, Other specimens (the
+     * specimens collected here under names not in the view, red-flagged left out) and which rows Valid and Vetted show.
+     */
+    public void testGenusRowsOfEachView() throws Exception {
+        otherNamesFixture();
+        Country mad = madagascar();
+        ListView.GenusRows valid = ListView.loadGenusRows(connection, mad, "valid", null);
+        assertEquals("Pheidole a, a x", 2, valid.species(MYRM, "pheidole"));
+        assertEquals(0, valid.species(MYRM, "carebara"));
+        assertEquals("Carebara (indet) 1 + mg01 2; the red-flagged one left out", 3, valid.other(MYRM, "carebara").specimens);
+        assertEquals("Pheidole b (a morphospecies not vetted) and zz", 2, valid.other(MYRM, "pheidole").specimens);
+        assertNull("Hypoponera: every specimen under a name of the view", valid.other(PON, "hypoponera"));
+        assertTrue(valid.hasSpecimens(MYRM, "carebara"));
+        ListView.GenusRows all = ListView.loadGenusRows(connection, mad, "all", null);
+        assertEquals("All specimen names: Pheidole a, b, a x, zz", 4, all.species(MYRM, "pheidole"));
+        assertNull("its names are in the view", all.other(MYRM, "carebara"));
+        // Which rows: Carebara is known here from a morphospecies (mg01): in Valid with no species
+        org.calacademy.antweb.Genus carebara = new org.calacademy.antweb.Genus();
+        carebara.setSubfamily(MYRM);
+        carebara.setGenus("carebara");
+        carebara.setStatus("valid");
+        assertTrue(valid.keep(carebara));
+        // only specimens identified to genus: All specimen names only
+        exec("update specimen set taxon_name = '" + CAREBARA_INDET + "', status = 'indetermined' where code in ('mg1', 'mg2')");
+        assertFalse(ListView.loadGenusRows(connection, mad, "valid", null).keep(carebara));
+        assertFalse(ListView.loadGenusRows(connection, mad, "vetted", null).keep(carebara));
+        assertTrue(ListView.loadGenusRows(connection, mad, "all", null).keep(carebara));
+        // one subfamily (browse.do of a subfamily): its genera only
+        ListView.GenusRows pon = ListView.loadGenusRows(connection, mad, "valid", PON);
+        assertEquals(1, pon.species(PON, "hypoponera"));
+        assertEquals(0, pon.species(MYRM, "pheidole"));
+    }
+
+    /** The genus page's line (Valid and Vetted only) and the place's specimens by name (source icons). */
+    public void testGenusPageLineAndPlaceSpecimens() throws Exception {
+        otherNamesFixture();
+        Country mad = madagascar();
+        assertEquals(3, ListView.genusOtherNames(connection, mad, "vetted", MYRM, "carebara").specimens);
+        assertNull("All specimen names: the names are on the list", ListView.genusOtherNames(connection, mad, "all", MYRM, "carebara"));
+        assertNull("all of AntWeb: no place specimens", ListView.genusOtherNames(connection, new Project(Project.ALLANTWEBANTS), "valid", MYRM, "carebara"));
+        ListView.PlaceSpecimens ps = ListView.loadPlaceSpecimens(connection, mad, null, null);
+        assertEquals("the red-flagged one never counts", 2, ps.count(CAREBARA_MG01));
+        assertTrue(ps.has(PA));
+        // species lists read only the names whose icon or number needs it
+        ListView.PlaceSpecimens some = ListView.loadPlaceSpecimens(connection, mad, null, null, java.util.Arrays.asList(CAREBARA_MG01, "nothing"));
+        assertNotNull(some);
+        assertEquals(2, some.count(CAREBARA_MG01));
+        assertFalse(some.has(PA));
+        assertEquals("Mozambique: its two Carebara (indet)", 2, ListView.loadPlaceSpecimens(connection, mozambique(), null, null).count(CAREBARA_INDET));
     }
 }

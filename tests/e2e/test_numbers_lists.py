@@ -5,8 +5,9 @@ test_numbers_live.py checks these on Madagascar and the genus Pheidole. Here eve
 region, subregion, bioregion, museum, project) is checked on every run, a different place of each kind each day
 (numbers_sample.py), against numbers that the count check validates on every place:
 
-  row 38  taxonomicPage.do header: species list with "Valid species + morphospecies" (statusSet=validmorpho) = the
-          place page's Species / subspecies / morphospecies, with "Valid species" (valid) = Valid species / subspecies;
+  row 38  taxonomicPage.do header: species list in the view Valid (statusSet=valid) = Valid species / subspecies, and
+          the views nest (Valid <= Vetted <= All specimen names; 2026-11-02: no view lists exactly the rows of Species /
+          subspecies / morphospecies, which counts every morphospecies of the list, vetted or not);
           genus and subfamily lists with every counted status (all) = Genera / Subfamilies (one rule:
           PlaceTotals.rankCondition and TaxaPage.fetchChildren); the header = the rows the page lists. Genera and
           subfamilies rule (2026-10-30, every kind of place, curated projects too; it replaced B67): Subfamilies and
@@ -14,12 +15,11 @@ region, subregion, bioregion, museum, project) is checked on every run, a differ
           unrecognized names) and genera (valid genera and morphogenera), both from the API /taxa, so they are compared
           with those rows; the
           header still counts every row listed. A subfamily browse page likewise (row 46).
-          The status choices and defaults of 2026-10-30 (Valid species on geolocales and curated projects, Valid
-          species + morphospecies on bioregions and museums) are checked in test_status_choice.py.
-  row 39  isImaged=false: "U Unimaged Species (out of N)": U = the rows listed, N = the place's Species, and the
+          The views and their default (Vetted everywhere, 2026-11-02) are checked in test_status_choice.py.
+  row 39  isImaged=false: "U Unimaged Species (out of N)": U = the rows listed, N = the place's Valid species (view Valid), and the
           names listed = the names of the list that the API's /unimagedGeolocaleTaxa returns for the place (the
           same rule written twice: TaxaPage.findUnimaged in Java, imagedTaxaSql in the API) (countries).
-  row 46  browse.do header "N Species" of a genus = the genus row's "N Species" on the place's list (validated by
+  row 46  browse.do header "N Species" of a genus (same view) = the genus row's Species on the place's list (validated by
           inv:list.genus), "N Genera" of a subfamily = the subfamily row's "N Genera" (inv:list.subfamily), and the
           rows the browse page lists; "N Specimens" of a species = the species row's "N Specimens" (B15: the browse
           page and the count use different place rules; xfail until fixed).
@@ -34,6 +34,7 @@ the next nightly run; the failure message says so.
 """
 import os
 import re
+from html import unescape
 
 import pytest
 
@@ -65,15 +66,16 @@ def stats_of(p):
 
 def test_list_headers_equal_place_numbers_of_every_kind():
     """Row 38: for the day's place of every kind, the list header with every counted status = Subfamilies, Genera of
-    the place page; species with Valid species + morphospecies = Species; with Valid species = Valid species (0 when
-    the page shows no Valid row); every header = the rows its page lists."""
+    the place page; species in the view Valid = Valid species (0 when the page shows no Valid row), and Valid <= Vetted
+    <= All specimen names; every header = the rows its page lists."""
     wrong, stored, stored_genera, checked, slow = [], [], [], [], []
     for p in places():
         stats = stats_of(p)
         if "species" not in stats:
             continue
+        headers = {}
         for rank, stat, status in (("subfamily", "subfamilies", "all"), ("genus", "genera", "all"),
-                                   ("species", "species", "validmorpho"), ("species", "valid", "valid")):
+                                   ("species", "valid", "valid"), ("species", None, "vetted"), ("species", None, "all")):
             html = ns.fetch(p.list_url(rank, status))
             if html is None:
                 slow.append(f"{p} {rank} {status}")
@@ -86,6 +88,10 @@ def test_list_headers_equal_place_numbers_of_every_kind():
             rows = len(listed)
             if rows != n:
                 wrong.append(f"{p} rank={rank} {status}: header {text!r}, {rows} rows listed")
+            if rank == "species":
+                headers[status] = n
+            if stat is None:
+                continue
             expected = stats.get(stat, 0)
             # Genera and subfamilies rule (Brian Fisher, 2026-10-30): Subfamilies and Genera count the listed rows that
             # are valid subfamilies (not placeholders such as "(formicidae)", not unrecognized names) and genera (valid genera and morphogenera; not "(myrmicinae)" or
@@ -102,6 +108,9 @@ def test_list_headers_equal_place_numbers_of_every_kind():
                 # Subfamilies and Genera apart (2026-10-30 review): the genera and subfamilies rule's pending covers them only
                 (stored_genera if rank in ("subfamily", "genus") else stored).append(
                     f"{p} rank={rank} {status}: {'rows counted' if rank != 'species' else 'header'} {n}, place page {stat} {expected}")
+        # the views nest: every Valid name is Vetted, every Vetted name in All specimen names
+        if len(headers) == 3 and not (headers["valid"] <= headers["vetted"] <= headers["all"]):
+            wrong.append(f"{p}: species headers Valid {headers['valid']}, Vetted {headers['vetted']}, All {headers['all']}: not nested")
         checked.append(repr(p))
     if not checked:
         pytest.skip("no place page with data-stat numbers " + ns.day_note())
@@ -123,13 +132,13 @@ def test_list_headers_equal_place_numbers_of_every_kind():
 
 
 def test_default_list_forgets_the_last_choice():
-    """Brian Fisher, 2026-10-29 (kept 2026-10-30): a status chosen on one page is not carried to the next (it was kept
-    in the session). The same session first opens a species list with Fossil species, then the list without a status:
-    its header is that of the place's default choice (test_status_choice.py checks the defaults themselves)."""
+    """Brian Fisher, 2026-10-29 (kept 2026-10-30 and 11-02): a view chosen on one page is not carried to the next (it
+    was kept in the session). The same session first opens a species list with Fossil, then the list without a view:
+    its header is that of the default view, Vetted (test_status_choice.py checks the default itself)."""
     wrong, checked = [], []
     s = ns.new_session()
     for p in places():
-        default = "valid" if p.kind in ("country", "adm1", "region", "subregion", "project") else "validmorpho"
+        default = "vetted"
         if ns.fetch(p.list_url("species", "fossil"), s) is None:
             continue
         html = ns.fetch(f"/taxonomicPage.do?rank=species&{p.params}", s)
@@ -167,17 +176,18 @@ def _unimaged_from_api(p):
 
 def test_unimaged_names_equal_the_api():
     """Row 39: on Madagascar and the day's country, isImaged=false lists U names under "U Unimaged Species (out of N)":
-    U = the rows listed, N = the place's Species, and the names = the names of the full list that the API's
-    /unimagedGeolocaleTaxa returns (no photo of the ant anywhere in AntWeb)."""
+    U = the rows listed, N = the place's Valid species (the view Valid; 2026-11-02: no view lists the rows of Species),
+    and the names = the names of the full list that the API's /unimagedGeolocaleTaxa returns (no photo of the ant
+    anywhere in AntWeb)."""
     adm1_names = {r.get("geolocaleName") for r in ns.geolocales("adm1")}
     countries = [r for r in ns.geolocales("country") if r.get("geolocaleName") not in adm1_names]   # the API finds a place by name
     sample = [ns.madagascar()] + [ns.geolocale_place(r) for r in ns.pick(countries, 1, "unimaged")]
     wrong, checked = [], []
     for p in sample:
         stats = stats_of(p)
-        html = ns.fetch(p.list_url("species", extra="&isImaged=false"))
-        full = ns.fetch(p.list_url("species"))
-        if not stats.get("species") or html is None or full is None:
+        html = ns.fetch(p.list_url("species", "valid", extra="&isImaged=false"))
+        full = ns.fetch(p.list_url("species", "valid"))
+        if not stats.get("valid") or html is None or full is None:
             continue
         m = re.search(r'<span class="numbers">([\d,]+)</span> Unimaged Species \(out of <span class="numbers">([\d,]+)</span>\)', html)
         if not m:
@@ -188,8 +198,8 @@ def test_unimaged_names_equal_the_api():
         names = {r["name"] for r in ns.list_rows(full) if r["name"]}
         if len(ns.list_rows(html)) != unimaged:
             wrong.append(f"{p}: {unimaged} Unimaged, {len(ns.list_rows(html))} rows listed")
-        if total != stats["species"]:
-            wrong.append(f"{p}: 'out of {total}', place Species {stats['species']}")
+        if total != stats["valid"]:
+            wrong.append(f"{p}: 'out of {total}', place Valid species {stats['valid']}")
         api = _unimaged_from_api(p)
         if api is not None:
             expected = api & names
@@ -219,11 +229,13 @@ def _row_count_and_link(row_html):
     return None, None
 
 
-def _browse(link, status="validmorpho"):
-    """The browse page of a list row's link with the status choice that its row count counts (2026-10-30): a genus
-    row's Species counts valid names and morphospecies (validmorpho), a subfamily row's Genera every counted status
-    (all); a species page lists its specimens whatever the choice."""
-    path = re.sub(r"^https?://[^/]+", "", link)
+def _browse(link, status="vetted"):
+    """The browse page of a list row's link with the view that its row count counts: a genus row's Species are those of
+    the list's view (2026-11-02; the link carries it, so a statusSet already in the link is kept), a subfamily row's
+    Genera every counted status (all); a species page lists its specimens whatever the view."""
+    path = re.sub(r"^https?://[^/]+", "", unescape(link))
+    if "statusSet=" in path:
+        return path
     return path + ("&" if "?" in path else "?") + "statusSet=" + status
 
 
@@ -281,7 +293,7 @@ def test_browse_headers_equal_the_list_rows():
             if not got:
                 continue
             row, count, link = got
-            html = ns.fetch(_browse(link, "validmorpho" if rank == "genus" else "all"))
+            html = ns.fetch(_browse(link, "vetted" if rank == "genus" else "all"))
             if html is None:
                 continue
             where = f"{p} {rank} {row['name'] or link}"
@@ -474,8 +486,9 @@ def test_species_lists_show_valid_names_and_morphospecies_only():
     """Brian Fisher, 2026-10-28: a specimen counts at each rank it is identified to, and no further. For the day's place
     of every kind: a sample of the names of its species list (every counted status) are valid names or morphospecies
     (statuses from the API /taxa); the line under the list, "N specimens identified only to genus are not listed here:
-    Lioponera (1), Pheidole (2).", adds up to its N; on the genus list, a row that says "No species on the list" names
-    the specimens collected here that put it there (2026-10-30; until then "N specimens identified to genus only")."""
+    Lioponera (1), Pheidole (2).", adds up to its N; on the genus list (view Valid), a row with no species in the view
+    ("-") names the specimens collected here that put it there in its Other specimens (2026-11-02; until then "No species
+    on the list · N specimens collected here"), except on lists that select no specimens (curated projects, All AntWeb)."""
     wrong, checked = [], []
     for p in places():
         html = ns.fetch(p.list_url("species"))
@@ -492,11 +505,14 @@ def test_species_lists_show_valid_names_and_morphospecies_only():
             lead = re.match(r"\s*([\d,]+)", m.group(2))
             if sum(parts) != int(m.group(1)) or not lead or ns.n(lead.group(1)) != int(m.group(1)):
                 wrong.append(f"{p}: the line under the species list does not add up: {m.group(2)!r} ({m.group(1)})")
-        genus_html = ns.fetch(p.list_url("genus"))
+        genus_html = ns.fetch(p.list_url("genus", "valid"))
+        has_column = 'class="list_extras other"' in (genus_html or "")
         for row in ns.list_rows(genus_html or ""):
-            # 2026-10-30: a genus row with no species on the list names the specimens collected here (other names)
-            if "No species on the list" in row["html"] and 'class="other-names"' not in row["html"]:
-                wrong.append(f"{p}: a genus row with no species on the list names no specimens: {ns.text_of(row['html'])[:120]}")
+            # 2026-11-02: a genus row with no species in the view and no entry other than specimens shows its Other specimens
+            no_species = "class='no-species'" in row["html"]
+            if has_column and no_species and 'class="other-names"' not in row["html"] and ns.on_list(row["html"]) \
+                    and 'data-source="specimen"' in row["html"]:
+                wrong.append(f"{p}: a genus row with no species in the view names no specimens: {ns.text_of(row['html'])[:120]}")
         checked.append(repr(p))
     if not checked:
         pytest.skip("no species list read " + ns.day_note())

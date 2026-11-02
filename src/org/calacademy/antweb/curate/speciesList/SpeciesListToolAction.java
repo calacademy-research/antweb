@@ -172,7 +172,7 @@ To Do
       }
       
       if ("save".equals(action)) {
-        // Saving changes data: POST only (the form posts), and only to lists assigned to this curator.
+        // Saving changes data: POST only (the form posts), and only by a curator (any list but the system lists, 2026-11-02).
         if (!HttpUtil.isPost(request)) {
           request.setAttribute("message", "Use the Save Changes button to save.");
           return mapping.findForward("message");

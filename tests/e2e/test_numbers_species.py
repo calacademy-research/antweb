@@ -116,7 +116,8 @@ def sample():
         pytest.skip("Madagascar's genus list not readable")
     genera = []
     for r in ns.list_rows(html):
-        m = re.search(r"<a href='([^']*browse\.do\?[^']*)'><span class='numbers'>(\d+)</span> Species", r["html"])
+        # the genus row's Species: "<span class='numbers'>N</span> Species" until 2026-11-02, the number alone since (views)
+        m = re.search(r"<a href='([^']*browse\.do\?[^']*)'><span class='numbers'>(\d+)</span>(?: Species)?</a>", r["html"])
         if m and 1 <= int(m.group(2)) <= 5:
             genera.append(m.group(1))
     if not genera:

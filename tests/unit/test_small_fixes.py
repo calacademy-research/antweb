@@ -145,7 +145,11 @@ def test_core_util_fixes(sources):
         text = code(path)
         assert not re.search(r"= '\"\s*\+\s*(overview(\.getName\(\)|\.getTitle\(\))?|getName\(\)|name|\(\(Adm1\) overview\)\.getParent\(\))\s*\+\s*\"'", text), path
     taxa = code(p + "TaxaPage.java")
-    assert "overview instanceof Country || overview instanceof Adm1 || overview instanceof Project)) withSpecimen = false" in taxa
+    # the specimen names of a list only for places that select their specimens (2026-11-02, the views: countries,
+    # adm1s, regions, subregions; until then countries, adm1s and projects); never every taxon of AntWeb
+    assert "if (names == null || !ListView.addsSpecimenNames(overview)) return null;" in taxa
+    listview = code(p + "ListView.java")
+    assert "if (!(overview instanceof Country || overview instanceof Adm1 || overview instanceof Region || overview instanceof Subregion)) return false;" in listview
     group = code(p + "GroupAction.java")
     assert "groupId = group.getId();" in group, "group page by name uses the id parameter again"
     assert "refresh && LoginMgr.isCurator(request)" in code(p + "BigMapAction.java")

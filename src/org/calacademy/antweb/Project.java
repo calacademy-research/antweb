@@ -130,9 +130,8 @@ public class Project extends LocalityOverview implements SpeciesListable, Compar
     public boolean isCanShowSpeciesListTool(Login accessLogin) {
       s_log.debug("isCanShowSpeciesListTool() isSpeciesListMappable:" + isSpeciesListMappable() + " useName:" + getUseName());
         //  || PROJECT.equals(getBioregion()   // Now is scope.
-        return isSpeciesListMappable()
-                && accessLogin != null
-                && (accessLogin.getProjectNames().contains(getUseName()) || accessLogin.isAdmin());
+        // Any curator may edit any project's list (Brian Fisher, 2026-11-02; was: the projects assigned to the login).
+        return isSpeciesListMappable() && org.calacademy.antweb.util.SpeciesListAccess.canEdit(accessLogin, getUseName());
     }
 
     public String toString() {

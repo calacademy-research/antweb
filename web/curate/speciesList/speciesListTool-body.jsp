@@ -1,6 +1,7 @@
 <%-- Body of the Species List Tool (session attribute speciesListToolProps): choose up to three species lists and
      a reference list, then one row per name with a checkbox per list, markers (yellow ant: specimens there) and
-     counts; Save Changes posts the ticked names with the form token to speciesListTool.do (action=save). Docs:
+     counts; Save Changes posts the ticked names with the form token to speciesListTool.do (action=save). Any curator
+     may edit any place's or project's list (SpeciesListAccess, 2026-11-02; the page says so). Docs:
      docs/guides/curate-page.md (Species List Tool). --%>
 <%@ page import="org.calacademy.antweb.Formatter" %>
 
@@ -77,6 +78,7 @@
 %>
 
 <h1>Species List Tool </h1>
+<p id="who-may-edit"><%= Html.esc(SpeciesListAccess.WHO_MAY_EDIT) %> The menus below offer the lists assigned to you and the list you opened.</p>
 <%= toolProps.getPermaLinkTag() %>
 <br><br>
 
@@ -243,10 +245,14 @@ The SpeciesListTool log is here: <a href="<%= AntwebProps.getDomainApp() %>/logM
         <option id="mapSpeciesList1Name" value="<%= value %>" <%= selectedStr %>><%= spacer + displayName %></option>
 <% } 
    if (!found) { 
+      // The list opened from a place's or project's Edit Species List link (any curator, any list, 2026-11-02).
       Geolocale adminEditGeolocale = GeolocaleMgr.getGeolocale(mapSpeciesList1Name);
+      Project openedProject = adminEditGeolocale == null && mapSpeciesList1Name != null ? ProjectMgr.getProject(mapSpeciesList1Name, false) : null;
       if (adminEditGeolocale != null) {
    %>
         <option id="mapSpeciesList1Name" value="<%= Html.escAttr(mapSpeciesList1Name) %>" selected><%= Html.esc(adminEditGeolocale.getName()) %></option>   
+<%    } else if (openedProject != null) { %>
+        <option id="mapSpeciesList1Name" value="<%= Html.escAttr(mapSpeciesList1Name) %>" selected><%= Html.esc(openedProject.getTitle()) %></option>
 <%    }
    } %>
 

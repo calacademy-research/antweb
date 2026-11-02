@@ -1,9 +1,11 @@
-<%-- Body of the list without images (taxonomicPage.do, TaxaPageAction): the place heading (overviewHeading.jsp),
-     the list note (taxonSetHeaderNotes.jsp), the header in the words of the status choice (StatusSet), or the
-     unimaged count with isImaged=false, the status choice, the Edit Species List and Show Specimen Taxa links for
-     those who may use them, and the rows (taxonReportBody.jsp). Reads the request attribute taxaPage. Docs:
-     docs/flows/places.md, docs/numbers.md rows 38 and 39. Tests: tests/e2e/test_numbers_lists.py,
-     test_status_choice.py, test_numbers_live.py. --%><%@ page language="java" %>
+<%-- Body of the list without images (taxonomicPage.do, TaxaPageAction): the place heading (overviewHeading.jsp), the
+     header in the words of the view, its number the rows of the view (StatusSet.listHeading), or the unimaged count
+     with isImaged=false, the four view buttons (statusesDisplay.jsp; Brian Fisher, 2026-11-02: they replace the status
+     menu and the "Names from" selector), a line of links (List all specimens collected in <place>; Edit Species List
+     for curators and administrators), "About this list" (taxonSetHeaderNotes.jsp) and the rows (taxonReportBody.jsp,
+     with the genus rows' numbers and the place's specimens of TaxaPage). Reads the request attribute taxaPage. Docs:
+     docs/flows/places.md, docs/numbers.md rows 38 and 39. Tests: tests/e2e/test_list_sources.py,
+     test_numbers_lists.py, test_status_choice.py, test_numbers_live.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.ResourceBundle" %>
 <%@ page import="java.util.*" %>
@@ -86,14 +88,11 @@
 
     //A.log("taxonomicPage-body.jsp 4 childrenCount:" + childrenCount);
 
-	// Brian Fisher, 2026-10-30: the header says what the list shows, in the words of the place page's numbers
-	// ("2,672 Valid species (of 6,960 species and morphospecies)", "116 Genera (valid genera and morphogenera)").
-	// StatusSet.listHeading; the "of" number is the place page's Species / subspecies / morphospecies.
+	// Brian Fisher, 2026-10-30 and 2026-11-02: the header says what the list shows, its number the rows of the view
+	// ("2,672 Valid species (of 6,960 species and morphospecies)", "116 Genera (valid and vetted)"). StatusSet.listHeading.
 	String childHeading = StatusSet.listHeading(taxaPage.getStatusSetStr(), childrenCount, Rank.getPluralRank(pageRank),
 	    Rank.getPluralRank(pageRank), overview == null ? -1 : overview.getSpeciesCount(), overview == null ? null : overview.getName(),
 	    StatusSet.fossilSubfamilies(request));
-	// Names from: Specimens collected here (specimen=true, 2026-10-30): the header says the source.
-	if (taxaPage.isWithSpecimen()) childHeading = PlaceTaxonNotes.withSpecimensHeading(childHeading, PlaceTaxonNotes.placeName(overview));
 	String childSizeStr = Html.esc(childHeading);
 
 	// Q12 (Brian Fisher, 2026-10-22): "Unimaged" = no photo of the ant anywhere in AntWeb; a name whose specimens have only
@@ -110,13 +109,12 @@
 	    unImagedNote = "<p id=\"unimaged-note\">Unimaged: no photo of the ant anywhere in AntWeb, from any place. A name whose specimens have only label photos counts as unimaged.</p>";
     }
 
-	// The header in two lines (Brian Fisher, 2026-10-30): line 1 the header with the Species Status and Names from
-	// selectors on the right; line 2 small links (List all specimens collected in <place>; Edit Species List for the
-	// place's curators and administrators). The notes on the list's sources are under "About this list" (a details
-	// element, web/common/taxonSetHeaderNotes.jsp). "Names from" replaces the Show / Hide Specimen Taxa link and the
-	// sentence that pointed to it; specimen=true / false as before, so old links keep working.
+	// The header in two lines (Brian Fisher, 2026-10-30): line 1 the header with the view buttons on the right; line 2
+	// small links (List all specimens collected in <place>; Edit Species List for curators and administrators: any
+	// curator may edit any place's or project's list, 2026-11-02). The notes on the list's sources, views and icons are
+	// under "About this list" (a details element, web/common/taxonSetHeaderNotes.jsp). The view All specimen names
+	// replaces "Names from: Specimens collected here"; specimen=true still opens it (TaxaPageAction).
 	boolean canShowSpeciesListTool = false;
-	boolean canShowSpecimenTaxa = false;
 	String editSpeciesListUrl = null;
 	String allSpecimensCriteria = null;
 	if (overview instanceof Geolocale || overview instanceof Project) {
@@ -132,7 +130,6 @@
         String mapSpeciesList1Name = (overview instanceof Adm1) ? "" + ((Adm1) overview).getId() : overview.getName();
         editSpeciesListUrl = AntwebProps.getDomainApp() + "/speciesListTool.do?mapSpeciesList1Name=" + Html.url(mapSpeciesList1Name) + searchCriteria + "&isFreshen=true";
       }
-	  canShowSpecimenTaxa = overview.isCanShowSpecimenTaxa();
       // Public, as on the overview page (Brian 2026-10-20): the specimen records of this place, any name.
       if (overview instanceof LocalityOverview && !HttpUtil.isBot(request)) {
         String listCriteria = ((LocalityOverview) overview).getSearchCriteria();
@@ -152,23 +149,6 @@
       //A.log("taxonomicPage-body.jsp statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);
 %>
         <%@ include file="/common/statusesDisplay.jsp" %>
-<%    if (canShowSpecimenTaxa) {
-        boolean namesFromSpecimens = taxaPage.isWithSpecimen();
-        String namesFromBase = thisTarget + (thisTarget.contains("?") ? "&" : "?");
-%>
-       <div id="names_from_toggle" class="list-choice">
-           <div class="left" title="The place's own list, or the list with the names of every specimen collected here">Names from:</div>
-           <div id="change_names_from" class="has_options" data-names-from="<%= namesFromSpecimens ? "specimens" : "list" %>">
-               <span id="which_names_from"><span><%= Html.esc(PlaceTaxonNotes.namesFromLabel(namesFromSpecimens)) %></span></span>
-               <div id="names_from_choice" class="options">
-                   <ul>
-                     <li><a data-names-choice="list" href="<%= Html.escAttr(namesFromBase + "specimen=false") %>"><span><%= Html.esc(PlaceTaxonNotes.NAMES_FROM_LIST) %></span></a></li>
-                     <li><a data-names-choice="specimens" href="<%= Html.escAttr(namesFromBase + "specimen=true") %>"><span><%= Html.esc(PlaceTaxonNotes.NAMES_FROM_SPECIMENS) %></span></a></li>
-                   </ul>
-               </div>
-           </div>
-       </div>
-<%    } %>
         </div>
       </div>
       <div class="clear"></div>
@@ -188,10 +168,12 @@
 <%
   
   boolean isWithSpecimen = taxaPage.isWithSpecimen();
-  // 2026-10-28: the place's specimens identified to genus only (genus rows, the line under the species list)
+  // 2026-10-28: the place's specimens identified to genus only (the line under the species list)
   org.calacademy.antweb.home.GenusOnly genusOnly = taxaPage.getGenusOnly();
-  // 2026-10-30: genus lists, the specimens collected here not on the species list, by genus (the genus rows)
-  PlaceTaxonNotes.OtherNames otherNames = taxaPage.getOtherNames();
+  // 2026-11-02: genus lists, the genus rows' numbers in the view (Species, Other specimens); species lists, the
+  // place's specimens by name (source icons, the rows added from specimens)
+  ListView.GenusRows genusRows = taxaPage.getGenusRows();
+  ListView.PlaceSpecimens placeSpecimens = taxaPage.getPlaceSpecimens();
 %>
 
     <%@ include file="/taxonReportBody.jsp" %>

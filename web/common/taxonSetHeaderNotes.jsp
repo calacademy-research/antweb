@@ -1,11 +1,32 @@
-<%-- The notes on where a list's names come from, above the list of taxonomicPage.do and browse.do in a place (included
-     by web/taxonomicPage-body.jsp and web/showBrowse-body.jsp; reads overview, pageRank and pageType). Since 2026-10-30
-     (Brian Fisher, less crowded header) they sit in one closed line, "About this list", a plain details element that
-     opens on click: the sources of a georegion, bioregion, museum or project list, the range-data report links for
-     curators and administrators, and the administrators' note on georegion species lists. Nothing when no note
-     applies. The "Show Specimen Taxa" sentences are gone: the "Names from" selector of the list header does that. --%>
+<%-- "About this list", one closed line above the list of taxonomicPage.do and browse.do in a place (included by
+     web/taxonomicPage-body.jsp and web/showBrowse-body.jsp; reads overview, pageRank and pageType): a plain details
+     element that opens on click (Brian Fisher, 2026-10-30). Since 2026-11-02 it explains, in plain words, the four
+     views (ListView.viewDescriptions), the columns (Species and Other specimens of genus rows) and the three source
+     icons (ListView.sourceIconHtml), then the sources of a georegion, bioregion, museum or project list, the range-data
+     report links for curators and administrators, and the administrators' note on georegion species lists. Docs:
+     docs/flows/places.md, docs/numbers.md "Views of lists". --%>
 <%
 StringBuilder aboutList = new StringBuilder();
+// The views, columns and source icons (2026-11-02), on every list with the four views (not the AntCat list and Fossil Ants).
+if (org.calacademy.antweb.ListView.hasViews(overview)
+    && (Rank.SUBFAMILY.equals(pageRank) || Rank.GENUS.equals(pageRank) || Rank.SPECIES.equals(pageRank))) {
+    String aboutRowRank = pageRank;   // the rank of the rows (showBrowse-body.jsp: the child rank)
+    aboutList.append("<p><b>Views.</b> The buttons above the list choose which names it shows; the number in the header always counts the names of the chosen view.</p><ul class=\"about-views\">");
+    for (String[] view : org.calacademy.antweb.ListView.viewDescriptions()) {
+        aboutList.append("<li><b>").append(view[0]).append("</b>: ").append(org.calacademy.antweb.util.Html.esc(view[1])).append("</li>");
+    }
+    aboutList.append("</ul><p>Red-flagged specimens never count, in any view.</p>");
+    if (Rank.GENUS.equals(aboutRowRank)) {
+        aboutList.append("<p><b>Columns.</b> <b>Species</b>: the species and subspecies of the genus in the chosen view (a dash when none)."
+            + " <b>Other specimens</b>: the specimens of the genus collected here under names that are not in the chosen view,"
+            + " such as morphospecies that no curator has vetted and specimens identified only to genus; click the number to"
+            + " see them. A genus known here only from specimens identified to genus is listed only in All specimen names.</p>");
+    }
+    aboutList.append("<p><b>Source.</b> ")
+        .append(org.calacademy.antweb.ListView.sourceIconHtml(org.calacademy.antweb.ListView.SOURCE_SPECIMEN)).append(" Specimen: collected here (a name with a specimen collected here shows this even when it is also in the literature); ")
+        .append(org.calacademy.antweb.ListView.sourceIconHtml(org.calacademy.antweb.ListView.SOURCE_CURATED)).append(" Curated: added by a curator; ")
+        .append(org.calacademy.antweb.ListView.sourceIconHtml(org.calacademy.antweb.ListView.SOURCE_LITERATURE)).append(" Literature: published records, including AntCat type localities.</p>");
+}
 if (true) {
     String note = "";
 
@@ -16,24 +37,12 @@ if (true) {
       note = Formatter.initCap(Rank.getPluralRank(pageRank)) + " in the Georegion list are based on the following sources:"
           + " a) specimen records of valid species from the region (a genus also from specimens identified only to genus, 2026-10-29),"
           + " b) AntCat.org type locality information, and"
-          + " c) Curator added records.  Curators may add or remove valid species or morphospecies from the list."
-          + " Morphospecies, however,  must have at least one specimen record in Antweb though not necessary from the specific georegion).";
+          + " c) Curator added records. Any curator may add or remove valid species or morphospecies (Edit Species List);"
+          + " a morphospecies must have at least one specimen record in AntWeb, though not necessarily from this place.";
 
       //A.log("geolocaleTaxaHeaderNotes.jsp geolocale:" + geolocale + " num:" + Georank.getGeorankLevel(pageRank));
       if (Georank.getGeorankLevel(geolocale) >=3 && isUseChildren) {
         note += "This list is based on it's children " + Georank.getChildPluralRank(geolocale).toLowerCase() + ".";
-      }
-
-      if ("taxaPage".equals(pageType) && geolocale.isCanShowSpecimenTaxa()) {
-        // 2026-10-30: the selector replaced the "Show Specimen Taxa" link and the sentence that pointed to it
-        note += "<br><br>Names from: <b>Specimens collected here</b> adds the names of every specimen collected in this "
-          + geolocale.getGeorank() + " that is not on the list; <b>Place list</b> shows the list alone.";
-      }
-      if ("genus".equals(pageRank)) {
-        note += "<br><br>A genus can be on the list from specimens collected here under names that are not species on the list"
-          + " (morphospecies, names not in AntCat, specimens identified only to genus). Its row then says \"No species on the"
-          + " list\" and how many specimens were collected here; a genus with species on the list says \"+ N specimens of"
-          + " other names\" when there are such specimens. Click the number to see the specimens.";
       }
 
     if ("species".equals(pageRank)) {
@@ -111,7 +120,7 @@ if (
     ) {
       boolean isUseChildren = ((Geolocale) overview).getIsUseChildren();
       aboutList.append("<p>(Administrators) Species in the \"Georegion\" lists are based on specimen records of valid species from the region, on literature, and on curation."
-          + " Curators may add or remove valid species from the list and also morphospecies"
+          + " Any curator may add or remove valid species from the list and also morphospecies"
           + " (which must have at least one record in Antweb though not necessary from the specific georegion).");
       if (isUseChildren) {
           aboutList.append(" This list is based on it's children ").append(Georank.getChildPluralRank((Geolocale) overview).toLowerCase()).append(".");

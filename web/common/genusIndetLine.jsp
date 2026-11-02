@@ -5,6 +5,8 @@
      Since 2026-10-30, in a place that selects specimens (country, adm1, region, subregion, bioregion, museum) the line
      names every specimen collected there under a name not on the species list, the indet name being one of them:
      "Specimens collected here not on the species list: 3 (names: Acropyga mz01, Acropyga mz02)", the number linked to
-     the place's specimen search, each name to its page (PlaceTaxonNotes.otherNamesLineHtml). All of AntWeb: as above. --%>
+     the place's specimen search, each name to its page (PlaceTaxonNotes.otherNamesLineHtml). All of AntWeb: as above.
+     Since 2026-11-02 (views) the names are those not in the list of the current view, and the line is shown in Valid and
+     Vetted only: in All specimen names those names are on the list itself (ListView.genusOtherNames). --%>
 <% String genusIndetLine = (String) request.getAttribute(org.calacademy.antweb.PlaceTaxonNotes.INDET_LINE);
    if (genusIndetLine != null) { %><%= genusIndetLine %><% } %>

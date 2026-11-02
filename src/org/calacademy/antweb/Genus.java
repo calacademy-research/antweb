@@ -100,6 +100,18 @@ public class Genus extends Subfamily implements Serializable {
                     // 2026-10-28: species of a genus are valid names and morphospecies (as the list row's Species, TaxaPage)
                     + (TaxaPage.hidesNonSpecies(statusSet) ? " and " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition("taxon") : "")
             ;
+            // 2026-11-02 (views): on a country, adm1, region or subregion, Vetted and All specimen names add the names of
+            // the genus's specimens collected there (vetted morphospecies; every counted name), as the species list does
+            // (TaxaPage.specimenNamesWhere).
+            String specimenWhere = global ? null : TaxaPage.specimenNamesWhere(overview, "species", true, statusSet);
+            if (specimenWhere != null) {
+                query += " union select distinct taxon.species, taxon.subgenus, taxon.speciesgroup, taxon.subspecies, taxon.taxarank"
+                    + specimenWhere
+                    + " and taxon.subfamily = '" + AntFormatter.escapeQuotes(getSubfamily()) + "'"
+                    + " and taxon.genus = '" + AntFormatter.escapeQuotes(genus) + "'"
+                    + " and taxon.species != '' "
+                    + subgenusClause;
+            }
 //            if (!"default".equals(project))                        
 //              query += " and proj_taxon.project_name = '" + project + "'";
 

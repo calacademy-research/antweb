@@ -12,9 +12,9 @@ import org.calacademy.antweb.*;
  * An adm1 (state or province; geolocale row with georank adm1) of the country named by its parent. Title "&lt;name&gt;,
  * &lt;country&gt;"; page adm1.do?name=..&country=.. (adm1.jsp), list adm1s.do; parameters adm1Name=..&countryName=..
  * (lists, maps) and country=..&adm1=.. (searches). getKey() is the id (an adm1 name alone is not unique). sort()
- * puts the adm1's specimens first. The species list tool (isCanShowSpeciesListTool) needs a login whose countries
- * include the adm1's country, and either that country is built from its adm1s (is_use_children) or the login lists
- * an adm1 of this name. Made by GeolocaleDb, held by GeolocaleMgr. Docs: docs/flows/places.md, docs/data-model.md
+ * puts the adm1's specimens first. The species list tool (isCanShowSpeciesListTool): any curator or administrator
+ * (SpeciesListAccess.canEdit, Brian Fisher 2026-11-02; until then a login whose countries included the adm1's
+ * country). Made by GeolocaleDb, held by GeolocaleMgr. Docs: docs/flows/places.md, docs/data-model.md
  * (geolocale).
  */
 public class Adm1 extends Geolocale {
@@ -103,41 +103,9 @@ public class Adm1 extends Geolocale {
         return sortedChildren;
     }      
 
+    /** Any curator may edit any place's list (Brian Fisher, 2026-11-02; was: an adm1 of a country assigned to the login). */
     public boolean isCanShowSpeciesListTool(Login accessLogin) {
-      //A.log("isCanShowSpeciesListTool() ? group:" + accessGroup);
-    
-      if (accessLogin == null) return false;
-      
-      ArrayList<String> countryNames = accessLogin.getCountryNames();
-
-      if (!countryNames.contains(getCountry())) {
-        s_log.debug("isCanShowSpeciesListTool() can't edit country:" + getCountry() + " so can edit adm1:" + getName());
-        return false;
-      }  // If you can't edit the country, you can't edit the adm1. True?
-
-      //A.log("Adm1.isCanShowSpeciesListTool() name:" + getName() + " country:" + getCountry() + " names:" + accessLogin.getCountryNames());
-
-  	  if (countryNames.size() == 0) {
-	    s_log.warn("isCanShowSpeciesListTool() accessLogin:" + accessLogin + " country:" + getCountry()); // + " target:" + HttpUtil.getTarget(request));
-	  }
-	  
-	  Country country = GeolocaleMgr.getCountry(getParent());
-	  if (country != null && country.getIsUseChildren()) {
-	    return true;
-	  }
-      
-      //A.log("isCanShowSpeciesListTool this:" + this + " this.type:" + this.getClass() + " geolocales.type:" + geolocales.getClass() + " contained:" + geolocales.contains(this));
-      
-      // This will work for Adm1 listed in the login.
-      ArrayList<SpeciesListable> geolocales = accessLogin.getGeolocales();
-      for (SpeciesListable speciesListable : geolocales) {
-        //A.log("isCanShowSpeciesListTool: speciesListable:" + speciesListable);        
-        if (speciesListable.getName().equals(getName())) return true;
-      }
-      
-      // if (getIsSpeciesListMappable()) ...
-	  	  
-      return false;
+      return org.calacademy.antweb.util.SpeciesListAccess.canEdit(accessLogin, String.valueOf(getId()));
     }
     
     public String getThisPageTarget() {

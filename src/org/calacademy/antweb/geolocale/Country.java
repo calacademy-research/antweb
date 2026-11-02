@@ -12,7 +12,7 @@ import org.calacademy.antweb.*;
  * subregion as parent and its adm1s as children (valid, live or all). Page country.do?name= (country.jsp), list
  * countries.do; parameters countryName= (lists, maps) and subregion=..&country=.. (searches). sort() puts the
  * country's specimens first. The species list tool (isCanShowSpeciesListTool): a valid country not built from its
- * adm1s (is_use_children) whose name is among the login's countries. Made by GeolocaleDb, held by GeolocaleMgr.
+ * adm1s (is_use_children), for any curator or administrator (SpeciesListAccess.canEdit, 2026-11-02). Made by GeolocaleDb, held by GeolocaleMgr.
  * Docs: docs/flows/places.md, docs/data-model.md (geolocale).
  */
 public class Country extends Geolocale {
@@ -142,8 +142,8 @@ public class Country extends Geolocale {
       
       // A.log("Country.isCanShowSpeciesListTool() isUseChildren:" + getIsUseChildren() + " name:" + getName() + " names:" + accessGroup.getCountryNames());
 
-        return !getIsUseChildren()
-                && accessLogin.getCountryNames().contains(getName());
+        // Any curator may edit any place's list (Brian Fisher, 2026-11-02; was: the countries assigned to the login).
+        return !getIsUseChildren() && org.calacademy.antweb.util.SpeciesListAccess.canEdit(accessLogin, String.valueOf(getId()));
     }
 
     

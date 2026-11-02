@@ -1,33 +1,32 @@
-<%-- The status selector of a list (four choices, Brian Fisher 2026-10-30), statically included by
-     showBrowse-body.jsp, taxonomicPage-body.jsp, taxonomicPageImages-body.jsp and taxonChildImages.jsp (uses their
-     statusSet and overview): links to the same page with statusSet replaced (StatusSet.choicesFor, choiceLabel).
-     Shown on browse.do, taxonomicPage.do and images.do, not on a species or subspecies page. Docs: docs/numbers.md
-     section Status choice of lists, docs/flows/places.md. Tests: tests/e2e/test_status_choice.py. --%><%@ page import="org.calacademy.antweb.Group" %>
+<%-- The view switch of a list (Brian Fisher, 2026-11-02): four buttons, Valid | Vetted | All specimen names | Fossil, a
+     segmented control (not a menu), the same on every list; it replaces the status menu of 2026-10-30 and the "Names
+     from" selector. Statically included by showBrowse-body.jsp, taxonomicPage-body.jsp, taxonomicPageImages-body.jsp and
+     taxonChildImages.jsp (uses their statusSet and overview): each button links to the same page with statusSet
+     replaced (StatusSet.choicesFor, choiceLabel; hover text ListView.choiceTitle); the current one is marked
+     aria-current. The AntCat list and Fossil Ants show their own choices the same way. Shown on browse.do,
+     taxonomicPage.do and images.do, not on a species or subspecies page. Docs: docs/numbers.md "Views of lists",
+     docs/flows/places.md. Tests: tests/e2e/test_status_choice.py. --%><%@ page import="org.calacademy.antweb.Group" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <!-- statusesDisplay.jsp  Found in showBrowse-body.jsp, taxonomicPage-body.jsp, taxonomicPageImages-body.jsp and taxonChildImages.jsp -->
 
-<!-- Must have String statusSet (the list's choice, StatusSet.getStatusSet) and overview defined -->
+<!-- Must have String statusSet (the list's view, StatusSet.getStatusSet) and overview defined -->
 
 <%
-  // The status selector of a list, Brian Fisher 2026-10-30 (docs/numbers.md "Status choice of lists"): four plain
-  // choices (Valid species, Valid species + morphospecies, All names, Fossil species), each the rows of a number of the
-  // place page; the AntCat list and Fossil Ants offer their own sets. A choice links to the same page with statusSet
-  // replaced (statusSetSize, the old "more options", is dropped). Not shown on a species or subspecies page (browse.do,
-  // images.do): it lists the specimens of one name, and the choice does not apply there (BrowseAction).
+  // Not shown on a species or subspecies page (browse.do, images.do): it lists the specimens of one name, and the view
+  // does not apply there (BrowseAction). statusSetSize (the old "more options") and specimen (the old "Names from")
+  // are dropped from the buttons' links.
   String sdRank = (String) request.getParameter("rank");
   String initialTarget = HttpUtil.getTarget(request);
 
-  // getTargetMinusParam removes every parameter that starts with the name: statusSet and statusSetSize both go.
+  // getTargetMinusParams removes every parameter that starts with the name: statusSet and statusSetSize both go.
   String sdTarget = HttpUtil.getTargetMinusParams(initialTarget, "statusSet", "statusSetSize");
+  sdTarget = HttpUtil.removeParam(sdTarget, "specimen");
 
   sdTarget = HttpUtil.getUniquedTarget(request, sdTarget);
 
   boolean sdListPage = initialTarget.contains("taxonomicPage");
   String sdRowRank = sdListPage ? sdRank : Rank.getNextRank(sdRank);
-  String sdDisplayChildRank = Formatter.initCap(sdRowRank);
-  // if no rank parameter, we will be vague. It is for display on a page like: http://localhost/antweb/browse.do?genus=myrmecina
-  if (sdDisplayChildRank == null) sdDisplayChildRank = "Children";
 
   boolean sdSpecimenRows = !sdListPage && (Rank.SPECIES.equals(sdRank) || Rank.SUBSPECIES.equals(sdRank));
   boolean showStatuses = !sdSpecimenRows && (sdTarget.contains("browse.do")
@@ -37,29 +36,21 @@
   if (showStatuses) {
     String sdOverviewName = overview == null ? null : overview.getName();
     String sdJoin = sdTarget.contains("?") ? "&" : "?";
-    // a subfamily list: "Valid subfamilies, extant and fossil" only when the place has a fossil one (2026-10-30);
-    // without one the list offers no Valid + morphotaxa (same rows and label as Valid subfamilies there)
-    boolean sdFossilSubfamilies = StatusSet.fossilSubfamilies(request);
-    String[] sdChoices = StatusSet.choicesFor(sdOverviewName, sdRowRank, sdFossilSubfamilies);
-    // the choice shown as current: a default hidden from the list (validmorpho on a subfamily list with no fossil
-    // subfamily) is shown as the Valid choice it equals there, so data-status-set always names a listed choice
+    String[] sdChoices = StatusSet.choicesFor(sdOverviewName, sdRowRank, true);
     String sdCurrent = statusSet;
-    if (!java.util.Arrays.asList(sdChoices).contains(sdCurrent) && java.util.Arrays.asList(sdChoices).contains("valid")) sdCurrent = "valid";
+    String sdPlural = sdRowRank == null ? null : Rank.getPluralRank(sdRowRank);
 %>
-       <div id="status_toggle">
-           <div class="left"><a href=<%= AntwebProps.getDomainApp() %>/statusDisplayPage.do target="new"><%= sdDisplayChildRank %> Status</a>:</div>
-           <div id="change_status" class="has_options" data-status-set="<%= Html.escAttr(sdCurrent) %>">
-               <span id="which_status"><span><%= Html.esc(StatusSet.choiceLabel(sdCurrent, sdRowRank, sdOverviewName, sdFossilSubfamilies)) %></span></span>
-               <div id="status_choice" class="options">
-                   <ul>
+       <div id="status_toggle" class="view-switch" role="group" aria-label="View">
+           <span class="view-switch-label">View:</span>
+           <span id="change_status" class="view-buttons" data-status-set="<%= Html.escAttr(sdCurrent) %>">
 <%
     for (String aStatusSet : sdChoices) {
+      boolean sdIsCurrent = aStatusSet.equals(sdCurrent);
+      String sdTitle = org.calacademy.antweb.ListView.choiceTitle(aStatusSet, sdPlural);
 %>
-                     <li><a data-status-choice="<%= Html.escAttr(aStatusSet) %>" href="<%= Html.escAttr(sdTarget + sdJoin + "statusSet=" + Html.url(aStatusSet)) %>"><span><%= Html.esc(StatusSet.choiceLabel(aStatusSet, sdRowRank, sdOverviewName, sdFossilSubfamilies)) %></span></a></li>
+             <a class="view-btn<%= sdIsCurrent ? " is-current" : "" %>" data-status-choice="<%= Html.escAttr(aStatusSet) %>"<%= sdIsCurrent ? " aria-current=\"true\"" : "" %><%= sdTitle == null ? "" : " title=\"" + Html.escAttr(sdTitle) + "\"" %> href="<%= Html.escAttr(sdTarget + sdJoin + "statusSet=" + Html.url(aStatusSet)) %>"><%= Html.esc(StatusSet.choiceLabel(aStatusSet, sdRowRank, sdOverviewName, true)) %></a>
 <%  } %>
-                   </ul>
-               </div>
-           </div>
+           </span>
        </div>
 <%
   } // end showStatuses

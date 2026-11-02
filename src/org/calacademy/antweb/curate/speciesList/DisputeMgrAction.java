@@ -43,7 +43,7 @@ public class DisputeMgrAction extends AntwebAction {
        String taxonName = (String) df.get("taxonName");  
        String action = (String) df.get("action");
        if ("remove".equals(action)) {
-         // Changes data: POST only (CSRF filter), and only for a list assigned to this curator.
+         // Changes data: POST only (CSRF filter), and only by a curator (any project, SpeciesListAccess, 2026-11-02).
          if (!HttpUtil.isPost(request)) {
            request.setAttribute("message", "Use the remove button on the Dispute Manager page.");
            return mapping.findForward("message");

@@ -5,13 +5,14 @@ The place page numbers (data-stat on /country.do) are checked against the record
 (countCheck.do, CountInvariants), so a live number that must equal one of them is checked too:
 
   taxonomicPage.do  "N Genera / Subfamilies" with every counted status (statusSet=all) = Genera / Subfamilies of
-                    the place page; species with Valid species + morphospecies (validmorpho) = Species, with Valid
-                    species (valid) = Valid species (row 38; choices of 2026-10-30); Genera and
+                    the place page; species with Valid (valid) = Valid species (row 38; views of 2026-11-02: no view
+                    lists the rows of Species, which counts every morphospecies on the list); Genera and
                     Subfamilies: the rows listed that are genera and subfamilies (genera and subfamilies rule of 2026-10-30)
-                    isImaged=false: "U Unimaged Species (out of N)": U <= N, N = the place's Species (row 39)
+                    isImaged=false: "U Unimaged Species (out of N)": U <= N, N = the place's Valid species (view
+                    Valid; row 39)
   browse.do         "N Species (M imaged)": the hidden totals say the same N, M <= N; "Only the first a of N"
                     names the same N (rows 46, 47, 49)
-  images.do         "I Species imaged (out of N names, all statuses)" (data-imaged, data-total; the status choice named
+  images.do         "I Species imaged (out of N species, all specimen names)" (data-imaged, data-total; the view named
                     since 2026-10-30, StatusSet.imagedHeading): I <= N, N = browse.do's N (row 55)
   getComparison.do  one checkbox per child with images: I <= boxes <= N (row 60)
   oneView.do        one picture per child with that view: <= N (row 58)
@@ -85,8 +86,7 @@ def header(html):
 def test_list_headers_equal_place_numbers():
     stats = place_stats()
     wrong, stored = [], []
-    for rank, stat, status in (("subfamily", "subfamilies", "all"), ("genus", "genera", "all"), ("species", "species", "validmorpho"),
-                               ("species", "valid", "valid")):
+    for rank, stat, status in (("subfamily", "subfamilies", "all"), ("genus", "genera", "all"), ("species", "valid", "valid")):
         if stat not in stats:
             wrong.append(f"the Madagascar page has no data-stat {stat}")
             continue
@@ -113,16 +113,16 @@ def test_list_headers_equal_place_numbers():
 
 def test_unimaged_header_is_within_the_list():
     stats = place_stats()
-    html = _get(f"/taxonomicPage.do?rank=species&{WHERE}&statusSet=validmorpho&isImaged=false")
+    html = _get(f"/taxonomicPage.do?rank=species&{WHERE}&statusSet=valid&isImaged=false")
     m = re.search(r'<span class="numbers">([\d,]+)</span> Unimaged Species \(out of <span class="numbers">([\d,]+)</span>\)', html)
     if not m:
         # no unimaged species: the header falls back to the list size (B21)
         n, text = header(html)
-        assert n == stats["species"], f"isImaged=false header {text!r}, place Species {stats['species']}"
+        assert n == stats["valid"], f"isImaged=false header {text!r}, place Valid species {stats['valid']}"
         return
     unimaged, total = _n(m.group(1)), _n(m.group(2))
     assert unimaged <= total, m.group(0)
-    assert total == stats["species"], f"'out of {total}', place Species {stats['species']}"
+    assert total == stats["valid"], f"'out of {total}', place Valid species {stats['valid']}"
 
 
 def browse_numbers():

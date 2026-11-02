@@ -5,6 +5,7 @@ import java.util.Collections;
 
 import junit.framework.TestCase;
 
+import org.calacademy.antweb.ListView;
 import org.calacademy.antweb.Museum;
 import org.calacademy.antweb.PlaceTaxonNotes;
 import org.calacademy.antweb.Project;
@@ -131,19 +132,15 @@ public class PlaceTaxonNotesTest extends TestCase {
         return o.genus("formicinae", "acropyga");
     }
 
-    public void testGenusRowWording() {
-        assertEquals("1 specimen collected here", PlaceTaxonNotes.collectedHereText(1));
-        assertEquals("3 specimens collected here", PlaceTaxonNotes.collectedHereText(3));
-        assertEquals("+ 1 specimen of other names", PlaceTaxonNotes.otherNamesText(1));
-        assertEquals("+ 2 specimens of other names", PlaceTaxonNotes.otherNamesText(2));
-        String row = PlaceTaxonNotes.genusRowNoSpeciesHtml(3, "/advancedSearch.do?country=Mozambique&genus=acropyga");
-        assertEquals("No species on the list &middot; <a rel=\"nofollow\" class=\"other-names\" data-other-specimens=\"3\""
-            + " href=\"/advancedSearch.do?country=Mozambique&amp;genus=acropyga\">3 specimens collected here</a>", row);
-        assertEquals("a bot: the text, no search link", "No species on the list &middot; <span class=\"other-names\""
-            + " data-other-specimens=\"1\">1 specimen collected here</span>", PlaceTaxonNotes.genusRowNoSpeciesHtml(1, null));
-        String other = PlaceTaxonNotes.genusRowOtherHtml(2, "/s?g=x");
-        assertTrue(other, other.startsWith("<br><small><a rel=\"nofollow\" class=\"other-names\" data-other-specimens=\"2\""));
-        assertTrue(other, other.endsWith(">+ 2 specimens of other names</a></small>"));
+    /** The Other specimens cell of a genus row (2026-11-02): the number, linked; empty when 0; the text alone for bots. */
+    public void testOtherSpecimensCell() {
+        assertEquals("1 specimen collected here under names not on this list", PlaceTaxonNotes.otherSpecimensTitle(1));
+        assertEquals("", PlaceTaxonNotes.otherSpecimensCellHtml(0, "/s"));
+        String cell = PlaceTaxonNotes.otherSpecimensCellHtml(1234, "/advancedSearch.do?country=Mozambique&genus=acropyga");
+        assertEquals("<a rel=\"nofollow\" class=\"other-names\" data-other-specimens=\"1234\" title=\"1234 specimens collected here"
+            + " under names not on this list\" href=\"/advancedSearch.do?country=Mozambique&amp;genus=acropyga\">1,234</a>", cell);
+        assertEquals("<span class=\"other-names\" data-other-specimens=\"3\" title=\"3 specimens collected here under names not on"
+            + " this list\">3</span>", PlaceTaxonNotes.otherSpecimensCellHtml(3, null));
     }
 
     public void testOtherNamesSearchAndLine() {
@@ -177,26 +174,16 @@ public class PlaceTaxonNotesTest extends TestCase {
         assertTrue(ml, ml.endsWith(" and " + (PlaceTaxonNotes.MAX_SEARCH_NAMES + 1 - PlaceTaxonNotes.MAX_LINE_NAMES) + " more)</div>"));
     }
 
-    public void testNamesFromHeadingAndLabels() {
-        assertEquals("54 Valid species on the list or collected in Mozambique",
-            PlaceTaxonNotes.withSpecimensHeading("54 Valid species (of 1,203 species and morphospecies)", "Mozambique"));
-        assertEquals("289 Species (all names) on the list or collected in Mozambique",
-            PlaceTaxonNotes.withSpecimensHeading("289 Species (all names)", "Mozambique"));
-        assertEquals("Place list", PlaceTaxonNotes.namesFromLabel(false));
-        assertEquals("Specimens collected here", PlaceTaxonNotes.namesFromLabel(true));
-    }
-
     public void testOtherNamesOnlyWherePlacesSelectSpecimens() throws Exception {
-        assertNull("all of AntWeb: no place list", PlaceTaxonNotes.loadOtherNames(null, new Project(Project.ALLANTWEBANTS), null, null));
-        assertNull("a curated project selects no specimens", PlaceTaxonNotes.loadOtherNames(null, new Project("madants"), null, null));
+        assertNull("all of AntWeb: no place specimens", ListView.loadPlaceSpecimens(null, new Project(Project.ALLANTWEBANTS), null, null));
+        assertNull("a curated project selects no specimens", ListView.loadPlaceSpecimens(null, new Project("madants"), null, null));
         assertNull(PlaceTaxonNotes.placeSearchUrl(new Project(Project.ALLANTWEBANTS)));
         Country moz = mozambique();
         moz.setParent("Eastern Africa");
         String url = PlaceTaxonNotes.placeSearchUrl(moz);
         assertTrue(url, url.endsWith("/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&subregion=Eastern Africa&country=Mozambique&resultRank=specimen"));
-        String q = PlaceTaxonNotes.otherNamesSql("geolocale", " and specimen.country = 'Mozambique'", false, true);
+        String q = ListView.placeSpecimensSql(" and specimen.country = 'Mozambique'", false, true);
         assertTrue(q, q.contains("(specimen.flag is null or specimen.flag != 'red') and specimen.genus = ? and specimen.country = 'Mozambique' group by specimen.taxon_name"));
-        assertTrue(q, q.contains("and not (t.status in ('valid', 'morphotaxon') and exists (select 1 from geolocale_taxon l where l.geolocale_id = ? and l.taxon_name = t.taxon_name))"));
-        assertFalse("no subfamily parameter", q.contains("t.subfamily = ?"));
+        assertFalse("no subfamily parameter", q.contains("specimen.subfamily = ?"));
     }
 }
