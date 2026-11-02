@@ -2,18 +2,19 @@
 status choice of 2026-10-30 and the "Names from" selector.
 
 List pages (taxonomicPage.do, browse.do, images.do) show four buttons, a segmented control (not a menu), the same on
-every kind of list:
+every kind of list; Fossil only when the list has fossil names in the place (2026-11-02, hidden otherwise):
 
   valid   Valid               names AntCat calls valid ("N Valid species (of M species and morphospecies)", N = Valid
                               species / subspecies of the place page)
-  vetted  Vetted (default)    Valid + vetted morphospecies ("N Species (valid and vetted)")
-  all     All specimen names  Vetted + every other morphospecies and indet name ("N Species (all specimen names)")
+  curated Curated (default)   Valid + curated morphospecies ("N Species (valid and curated)"); vetted, its first
+                              name, still opens it
+  all     All specimen names  Curated + every other morphospecies and indet name ("N Species (all specimen names)")
   fossil  Fossil              valid fossil names ("N Fossil species")
 
-The header counts the rows of the view, and the views nest (Valid <= Vetted <= All specimen names). Old values still
+The header counts the rows of the view, and the views nest (Valid <= Curated <= All specimen names). Old values still
 answer: validmorpho (Valid + morphospecies of 10-30), all determined, all indetermined, complete, type -> all; valid
 extant -> valid; valid fossil -> fossil; specimen=true (the old Names from) -> all. A view is kept in the page's own links
-(the Overview, Taxa and Images tabs, the buttons) and never in the session: a page opened without statusSet is Vetted.
+(the Overview, Taxa and Images tabs, the buttons) and never in the session: a page opened without statusSet is Curated.
 
 For the day's place of every kind (numbers_sample): the default, each view's header against the place page's Valid
 species and the rows listed, the tab links; on Madagascar: the old values; the genus list and the browse and images
@@ -27,11 +28,12 @@ import pytest
 import numbers_sample as ns
 
 PENDING = "the place numbers are those of the last nightly run; after an upload they are pending"
-CHOICES = ("valid", "vetted", "all", "fossil")
-LABELS = {"valid": "Valid", "vetted": "Vetted", "all": "All specimen names", "fossil": "Fossil"}
+CHOICES = ("valid", "curated", "all", "fossil")
+LABELS = {"valid": "Valid", "curated": "Curated", "all": "All specimen names", "fossil": "Fossil"}
 GEOLOCALE_KINDS = ("country", "adm1", "region", "subregion")
 OLD_VALUES = {"valid extant": "valid", "valid fossil": "fossil", "all determined": "all", "validmorpho": "all",
-              "all indetermined": "all", "complete": "all", "type": "all", "Valid (with fossils)": "valid"}
+              "all indetermined": "all", "complete": "all", "type": "all", "Valid (with fossils)": "valid",
+              "vetted": "curated"}
 SWITCH = re.compile(r'<span id="change_status" class="view-buttons" data-status-set="([^"]*)">(.*?)</span>\s*</div>', re.S)
 BUTTON = re.compile(r'<a class="view-btn( is-current)?" data-status-choice="([^"]+)"[^>]*href="([^"]+)">([^<]*)</a>')
 
@@ -47,8 +49,8 @@ def places():
 
 
 def default_of(p):
-    """The default view of the place's lists (StatusSet.defaultChoice): Vetted everywhere (2026-11-02)."""
-    return "vetted"
+    """The default view of the place's lists (StatusSet.defaultChoice): Curated everywhere (2026-11-02)."""
+    return "curated"
 
 
 def buttons(html):
@@ -57,6 +59,17 @@ def buttons(html):
     if not m:
         return []
     return [(unescape(b[1]), unescape(b[3]), unescape(b[2]), bool(b[0])) for b in BUTTON.findall(m.group(2))]
+
+
+def expected_buttons(fossil_rows):
+    """The views a list offers: Fossil only when its Fossil view has rows (2026-11-02)."""
+    return list(CHOICES) if fossil_rows else [c for c in CHOICES if c != "fossil"]
+
+
+def fossil_rows(p, rank="species"):
+    """The header number of the place's list in the view Fossil (0 when none), or None when not read."""
+    html = ns.fetch(p.list_url(rank, "fossil"))
+    return None if html is None else (ns.header(html)[0] or 0)
 
 
 def selector(html):
@@ -83,8 +96,8 @@ def default_list(p, rank="species"):
 
 
 def test_lists_open_with_the_default_of_their_kind_of_place():
-    """Without statusSet a list opens with the default view, Vetted, on every kind of place; its header equals the list
-    with that view named. The switch is four buttons (not a menu), in the order Valid, Vetted, All specimen names,
+    """Without statusSet a list opens with the default view, Curated, on every kind of place; its header equals the list
+    with that view named. The switch is four buttons (not a menu), in the order Valid, Curated, All specimen names,
     Fossil, one marked current; the "Names from" selector is gone."""
     wrong, checked = [], []
     for p in places():
@@ -95,8 +108,11 @@ def test_lists_open_with_the_default_of_their_kind_of_place():
         if choice != default_of(p) or label != LABELS[default_of(p)]:
             wrong.append(f"{p}: the list without statusSet shows {choice!r} ({label!r}), expected {default_of(p)!r}")
             continue
-        if [b[0] for b in buttons(html)] != list(CHOICES) or [b[1] for b in buttons(html)] != [LABELS[c] for c in CHOICES]:
-            wrong.append(f"{p}: the buttons are {[(b[0], b[1]) for b in buttons(html)]}")
+        fossils = fossil_rows(p)
+        if fossils is not None:
+            want = expected_buttons(fossils)
+            if [b[0] for b in buttons(html)] != want or [b[1] for b in buttons(html)] != [LABELS[c] for c in want]:
+                wrong.append(f"{p}: the buttons are {[(b[0], b[1]) for b in buttons(html)]}, expected {want} ({fossils} fossil rows)")
         if 'id="status_choice"' in html or 'id="names_from_toggle"' in html:
             wrong.append(f"{p}: a menu (status or Names from) is still shown")
         explicit = ns.fetch(p.list_url("species", default_of(p)))
@@ -110,10 +126,10 @@ def test_lists_open_with_the_default_of_their_kind_of_place():
 
 def test_each_choice_header_equals_the_place_page_number():
     """Valid = Valid species / subspecies (and its "of M" = Species / subspecies / morphospecies); the views nest
-    (Valid <= Vetted <= All specimen names); every header = the rows its page lists; the switch marks the view; its
+    (Valid <= Curated <= All specimen names); every header = the rows its page lists; the switch marks the view; its
     words say what the list shows."""
     wrong, stored, checked = [], [], []
-    words = {"valid": "Valid species", "vetted": "(valid and vetted)", "all": "(all specimen names)",
+    words = {"valid": "Valid species", "curated": "(valid and curated)", "all": "(all specimen names)",
              "fossil": "Fossil species"}
     for p in places():
         stats = stats_of(p)
@@ -142,8 +158,8 @@ def test_each_choice_header_equals_the_place_page_number():
                 of = re.search(r"\(of ([\d,]+) species and morphospecies\)", text)
                 if n and (not of or ns.n(of.group(1)) != stats["species"]):
                     wrong.append(f"{p} valid: header {text!r}, place page Species {stats['species']}")
-        if {"valid", "vetted", "all"} <= set(headers) and not headers["valid"] <= headers["vetted"] <= headers["all"]:
-            wrong.append(f"{p}: species headers {headers}: expected valid <= vetted <= all")
+        if {"valid", "curated", "all"} <= set(headers) and not headers["valid"] <= headers["curated"] <= headers["all"]:
+            wrong.append(f"{p}: species headers {headers}: expected valid <= curated <= all")
         checked.append(repr(p))
     if not checked:
         pytest.skip("no place page with data-stat numbers " + ns.day_note())
@@ -160,6 +176,7 @@ def test_old_values_still_answer_with_the_nearest_choice():
     view; only the four views are offered."""
     p = ns.madagascar()
     wrong = []
+    fossils = fossil_rows(p)
     for old, new in OLD_VALUES.items():
         r = ns.session().get(ns.BASE_URL + p.list_url("species", old), timeout=ns.SLOW)
         if r.status_code != 200:
@@ -168,7 +185,8 @@ def test_old_values_still_answer_with_the_nearest_choice():
         if selector(r.text)[0] != new:
             wrong.append(f"statusSet={old!r}: the selector shows {selector(r.text)}, expected {new!r}")
         offered = [b[0] for b in buttons(r.text)]
-        if offered != list(CHOICES):
+        want = expected_buttons(fossils or new == "fossil")
+        if fossils is not None and offered != want:
             wrong.append(f"statusSet={old!r}: the switch offers {offered}")
     r = ns.session().get(ns.BASE_URL + f"/taxonomicPage.do?rank=species&{p.params}&specimen=true", timeout=ns.SLOW)
     if r.status_code != 200 or selector(r.text)[0] != "all":
@@ -214,10 +232,10 @@ def test_choice_is_kept_in_the_page_links_not_in_the_session():
 
 
 def test_genus_list_choices():
-    """Genus lists offer the same views on the genus rows; the views nest (Valid <= Vetted <= All specimen names: a genus
-    known here only from specimens identified to genus is in All specimen names only, ListView.keepGenus); Vetted lists
-    no more genera than the place page's Genera counts (valid genera and morphogenera of the list; Vetted leaves out
-    placeholders such as "(myrmicinae)", genera known only from "(indet)" specimens and morphogenera with no vetted
+    """Genus lists offer the same views on the genus rows; the views nest (Valid <= Curated <= All specimen names: a genus
+    known here only from specimens identified to genus is in All specimen names only, ListView.keepGenus); Curated lists
+    no more genera than the place page's Genera counts (valid genera and morphogenera of the list; Curated leaves out
+    placeholders such as "(myrmicinae)", genera known only from "(indet)" specimens and morphogenera with no curated
     morphospecies); every header = the rows listed. The place's Genera is stored by the nightly run: pending until a run
     has counted by the genera and subfamilies rule of 2026-10-30."""
     wrong, stored, checked = [], [], []
@@ -235,11 +253,11 @@ def test_genus_list_choices():
                 wrong.append(f"{p} genus {choice}: header {text!r}, {len(ns.list_rows(html))} rows listed")
                 continue
             headers[choice] = n
-        if "vetted" in headers and "all" in headers:
-            if headers["vetted"] > stats["genera"]:
-                stored.append(f"{p}: place page Genera {stats['genera']}, Vetted list {headers['vetted']} (lists {headers})")
-            if not headers.get("valid", 0) <= headers["vetted"] <= headers["all"]:
-                wrong.append(f"{p}: genus list headers {headers}: expected valid <= vetted <= all")
+        if "curated" in headers and "all" in headers:
+            if headers["curated"] > stats["genera"]:
+                stored.append(f"{p}: place page Genera {stats['genera']}, Curated list {headers['curated']} (lists {headers})")
+            if not headers.get("valid", 0) <= headers["curated"] <= headers["all"]:
+                wrong.append(f"{p}: genus list headers {headers}: expected valid <= curated <= all")
         checked.append(repr(p))
     if not checked:
         pytest.skip("no genus list read " + ns.day_note())
@@ -252,9 +270,9 @@ def test_genus_list_choices():
 
 
 def test_genus_browse_and_images_pages_follow_the_choice():
-    """The day's genus of Madagascar: browse.do and images.do open with the default (Vetted), each view changes the
-    list (valid <= vetted <= all species), and browse.do's header in Vetted equals the genus row's Species on the
-    Vetted list (its link keeps the view). A species page (its specimens) shows no switch."""
+    """The day's genus of Madagascar: browse.do and images.do open with the default (Curated), each view changes the
+    list (valid <= curated <= all species), and browse.do's header in Curated equals the genus row's Species on the
+    Curated list (its link keeps the view). A species page (its specimens) shows no switch."""
     p = ns.madagascar()
     html = ns.fetch(p.list_url("genus"))
     if html is None:
@@ -273,8 +291,8 @@ def test_genus_browse_and_images_pages_follow_the_choice():
         plain = ns.fetch(url)
         if plain is None:
             continue
-        if selector(plain)[0] != "vetted":
-            wrong.append(f"{url}: opens with {selector(plain)}, expected vetted")
+        if selector(plain)[0] != "curated":
+            wrong.append(f"{url}: opens with {selector(plain)}, expected curated")
         if page == "browse":
             n = {}
             for c in CHOICES:
@@ -284,11 +302,11 @@ def test_genus_browse_and_images_pages_follow_the_choice():
                 n[c] = ns.header(b)[0]
                 if selector(b)[0] != c:
                     wrong.append(f"{url} {c}: the selector shows {selector(b)}")
-            if {"valid", "vetted", "all"} <= set(n) and not n["valid"] <= n["vetted"] <= n["all"]:
-                wrong.append(f"{url}: headers {n}: expected valid <= vetted <= all")
-            if n.get("vetted") is not None and n["vetted"] != count:
-                wrong.append(f"{url}: Vetted header {n['vetted']}, the genus row says {count} Species")
-            species = re.search(r'href="[^"]*description\.do\?([^"]*rank=species[^"]*)"', ns.fetch(url + "&statusSet=vetted") or "")
+            if {"valid", "curated", "all"} <= set(n) and not n["valid"] <= n["curated"] <= n["all"]:
+                wrong.append(f"{url}: headers {n}: expected valid <= curated <= all")
+            if n.get("curated") is not None and n["curated"] != count:
+                wrong.append(f"{url}: Curated header {n['curated']}, the genus row says {count} Species")
+            species = re.search(r'href="[^"]*description\.do\?([^"]*rank=species[^"]*)"', ns.fetch(url + "&statusSet=curated") or "")
             if species:
                 sp = ns.fetch("/browse.do?" + unescape(species.group(1)))
                 if sp is not None and selector(sp)[0] is not None:

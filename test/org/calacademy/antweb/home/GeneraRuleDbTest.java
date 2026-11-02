@@ -335,9 +335,9 @@ public class GeneraRuleDbTest extends TestCase {
         assertEquals("valid genera: Pheidole " + g, java.util.Arrays.asList("pheidole"), g);
         g = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "genus", true, org.calacademy.antweb.StatusSet.listStatusSet("all")), "genus");
         assertEquals("All names: every genus row " + g, 5, g.size());
-        // the view Vetted (2026-11-02): valid genera, and morphotaxa only when vetted (the morphogenus is on no curated entry)
-        g = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "genus", true, org.calacademy.antweb.StatusSet.listStatusSet("vetted")), "genus");
-        assertEquals("Vetted genera: Pheidole " + g, java.util.Arrays.asList("pheidole"), g);
+        // the view Curated (2026-11-02): valid genera, and morphotaxa only when curated (the morphogenus is on no curated entry)
+        g = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "genus", true, org.calacademy.antweb.StatusSet.listStatusSet("curated")), "genus");
+        assertEquals("Curated genera: Pheidole " + g, java.util.Arrays.asList("pheidole"), g);
         List<String> sf = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "subfamily", true, new org.calacademy.antweb.StatusSet(org.calacademy.antweb.StatusSet.VALID_MORPHO)), "subfamily");
         assertEquals(sf.toString(), subfamilies, sf.size());
         assertEquals(java.util.Arrays.asList(MYRM), sf);

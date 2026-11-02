@@ -49,7 +49,7 @@ import org.calacademy.antweb.util.Html;
  * (indet)" is one such name outside All specimen names), kept by genus in OtherNames:
  *   - genus lists (taxonomicPage.do?rank=genus, browse.do of a subfamily in a place): the Other specimens column, the
  *     number linked to the place's specimen search for those specimens (otherSpecimensCellHtml; ListView.GenusRows);
- *   - the genus page in a place (description.do, browse.do, images.do), views Valid and Vetted: "Specimens collected
+ *   - the genus page in a place (description.do, browse.do, images.do), views Valid and Curated: "Specimens collected
  *     here not on the species list: 3 (names: Acropyga mz01, Acropyga mz02)", the number linked to the specimen
  *     search, each name to its page in the place. In all of AntWeb the indet line stays as it was (no place list).
  *

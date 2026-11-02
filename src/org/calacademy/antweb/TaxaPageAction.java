@@ -18,7 +18,7 @@ import org.calacademy.antweb.util.*;
 
 /**
  * /taxonomicPage.do: a place's list of subfamilies, genera or species (taxonomicPage.jsp). images=true gives the
- * images view, isImaged=false the unimaged names, statusSet the view (Valid, Vetted, All specimen names, Fossil;
+ * images view, isImaged=false the unimaged names, statusSet the view (Valid, Curated, All specimen names, Fossil;
  * StatusSet, ListView; Brian Fisher 2026-11-02). The old specimen=true ("Show Specimen Taxa", later "Names from:
  * Specimens collected here") opens All specimen names when no statusSet is given; nothing is kept in the session.
  * Checks the rank (subspecies refused) and the place (OverviewMgr); a species list of all of AntWeb or the AntCat list
@@ -198,6 +198,8 @@ public final class TaxaPageAction extends AntwebAction {
 // no double
             //taxaPage.setOverview(overview);
             //A.log("execute() overview:" + overview);
+            // 2026-11-02: the Fossil button only when the list has fossil names here (one EXISTS query)
+            ListView.setHasFossil(request, connection, overview, rank, null, null);
             // 2026-11-02 (speed): a genus list reads the place's specimens once, for its specimen half and its genus rows
             if (Rank.GENUS.equals(rank)) taxaPage.loadCollected(connection, overview);
             String successMsg = taxaPage.fetchChildren(connection, overview, rank, withImages, withTaxa, withSpecimen, true, caste, StatusSet.listStatusSet(statusSetStr, overview.getName())); //, orderBy); list choice -> its criteria (2026-10-30)

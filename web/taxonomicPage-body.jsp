@@ -89,7 +89,7 @@
     //A.log("taxonomicPage-body.jsp 4 childrenCount:" + childrenCount);
 
 	// Brian Fisher, 2026-10-30 and 2026-11-02: the header says what the list shows, its number the rows of the view
-	// ("2,672 Valid species (of 6,960 species and morphospecies)", "116 Genera (valid and vetted)"). StatusSet.listHeading.
+	// ("2,672 Valid species (of 6,960 species and morphospecies)", "116 Genera (valid and curated)"). StatusSet.listHeading.
 	String childHeading = StatusSet.listHeading(taxaPage.getStatusSetStr(), childrenCount, Rank.getPluralRank(pageRank),
 	    Rank.getPluralRank(pageRank), overview == null ? -1 : overview.getSpeciesCount(), overview == null ? null : overview.getName(),
 	    StatusSet.fossilSubfamilies(request));

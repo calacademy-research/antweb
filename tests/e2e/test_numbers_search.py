@@ -517,7 +517,7 @@ def _subtaxon(html):
 @needs("admin")
 def test_subtaxon_total_is_the_sum_of_the_rows_of_every_kind_of_place():
     """Row 45: the admin "Subtaxon total" of taxonomicPage.do = the sum of the rows' numbers, for the day's place of
-    every kind, in the default view (Vetted, 2026-11-02); rank subfamily <= Genera (fossil subfamilies are in the view
+    every kind, in the default view (Curated, 2026-11-02); rank subfamily <= Genera (fossil subfamilies are in the view
     Fossil), rank genus <= the header of the species list in the same view (a genus row's Species are those of the view;
     a name whose genus row is not on the list is under no row, B76), rank species <= Specimens (names not identified to
     genus are in Specimens only); and on browse.do of a genus of the day's country = the sum of its rows, its rows =

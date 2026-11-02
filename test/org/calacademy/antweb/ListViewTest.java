@@ -19,7 +19,7 @@ import org.calacademy.antweb.geolocale.Country;
 import org.calacademy.antweb.geolocale.Region;
 
 /**
- * The views of lists (Brian Fisher, 2026-11-02; ListView), without a database: the vetted rule's SQL, which places add
+ * The views of lists (Brian Fisher, 2026-11-02; ListView), without a database: the curated rule's SQL, which places add
  * the names of specimens collected there, the genus rows each view shows (a genus known only from specimens identified
  * to genus: All specimen names only), the Other specimens of a view, the source icons (specimens trump literature) and
  * the words of About this list. The queries run against MySQL in home.PlaceTaxonNotesDbTest. Runs in CI
@@ -70,20 +70,20 @@ public class ListViewTest extends TestCase {
         assertFalse("a curated project selects no specimens", ListView.addsSpecimenNames(new Project("madants")));
         assertNull(ListView.specimenNamesSet(StatusSet.listStatusSet("valid")));
         assertNull(ListView.specimenNamesSet(StatusSet.listStatusSet("fossil")));
-        assertEquals(StatusSet.VETTED_MORPHO, ListView.specimenNamesSet(StatusSet.listStatusSet("vetted")).getValue());
+        assertEquals(StatusSet.VETTED_MORPHO, ListView.specimenNamesSet(StatusSet.listStatusSet("curated")).getValue());
         assertEquals(StatusSet.ALL_NAMES, ListView.specimenNamesSet(StatusSet.listStatusSet("all")).getValue());
     }
 
     public void testViewQueriesAddTheSpecimensCollectedHere() {
         Country moz = mozambique();
         assertNull("Valid: the list alone", TaxaPage.specimenNamesWhere(moz, "species", true, StatusSet.listStatusSet("valid")));
-        String vetted = TaxaPage.specimenNamesWhere(moz, "species", true, StatusSet.listStatusSet("vetted"));
-        assertTrue(vetted, vetted.contains("taxon.taxon_name in (select specimen.taxon_name from specimen where"));
-        assertTrue("red flags never count: " + vetted, vetted.contains("(specimen.flag is null or specimen.flag != 'red')"));
-        assertTrue(vetted, vetted.contains("specimen.country = 'Mozambique'"));
-        assertTrue("the vetted morphospecies: " + vetted, vetted.contains("taxon.status = 'morphotaxon' and " + ListView.vettedCondition("taxon")));
-        assertTrue("not where a curator removed it: " + vetted, vetted.contains("geolocale_taxon_dispute gtd where gtd.geolocale_id = 40"));
-        assertNull("Vetted genus rows come from the list", TaxaPage.specimenNamesWhere(moz, "genus", true, StatusSet.listStatusSet("vetted")));
+        String curated = TaxaPage.specimenNamesWhere(moz, "species", true, StatusSet.listStatusSet("curated"));
+        assertTrue(curated, curated.contains("taxon.taxon_name in (select specimen.taxon_name from specimen where"));
+        assertTrue("red flags never count: " + curated, curated.contains("(specimen.flag is null or specimen.flag != 'red')"));
+        assertTrue(curated, curated.contains("specimen.country = 'Mozambique'"));
+        assertTrue("the curated morphospecies: " + curated, curated.contains("taxon.status = 'morphotaxon' and " + ListView.vettedCondition("taxon")));
+        assertTrue("not where a curator removed it: " + curated, curated.contains("geolocale_taxon_dispute gtd where gtd.geolocale_id = 40"));
+        assertNull("Curated genus rows come from the list", TaxaPage.specimenNamesWhere(moz, "genus", true, StatusSet.listStatusSet("curated")));
         assertNotNull(TaxaPage.specimenNamesWhere(moz, "genus", true, StatusSet.listStatusSet("all")));
         String q = TaxaPage.viewQuery(moz, "species", true, StatusSet.listStatusSet("all"), "taxon.taxon_name", " and taxon.genus = 'acropyga'");
         assertTrue(q, q.contains(" union select taxon.taxon_name from taxon where "));
@@ -95,20 +95,20 @@ public class ListViewTest extends TestCase {
 
     /**
      * Genus rows: Acropyga in Mozambique (no species on the list, morphospecies collected there) is in Valid with no
-     * species; a genus known only from "(indet)" specimens is in All specimen names only; a morphogenus is in Vetted only
-     * with a vetted morphospecies; a genus entered by a curator or from the literature stays.
+     * species; a genus known only from "(indet)" specimens is in All specimen names only; a morphogenus is in Curated only
+     * with a curated morphospecies; a genus entered by a curator or from the literature stays.
      */
     public void testWhichGenusRowsEachViewShows() {
         String sp = ListView.SOURCE_SPECIMEN;
         assertTrue("known from a morphospecies", ListView.keepGenus("valid", "valid", sp, 0, 1));
         assertFalse("known only from specimens identified to genus", ListView.keepGenus("valid", "valid", sp, 0, 0));
-        assertFalse(ListView.keepGenus("vetted", "valid", sp, 0, 0));
+        assertFalse(ListView.keepGenus("curated", "valid", sp, 0, 0));
         assertTrue(ListView.keepGenus("all", "valid", sp, 0, 0));
         assertTrue(ListView.keepGenus("fossil", "valid", sp, 0, 0));
         assertTrue("a curator's entry", ListView.keepGenus("valid", "valid", ListView.SOURCE_CURATED, 0, 0));
-        assertTrue("the literature", ListView.keepGenus("vetted", "valid", ListView.SOURCE_LITERATURE, 0, 0));
-        assertTrue("species in the view", ListView.keepGenus("vetted", "morphotaxon", sp, 2, 2));
-        assertFalse("a morphogenus with no vetted morphospecies", ListView.keepGenus("vetted", "morphotaxon", sp, 0, 3));
+        assertTrue("the literature", ListView.keepGenus("curated", "valid", ListView.SOURCE_LITERATURE, 0, 0));
+        assertTrue("species in the view", ListView.keepGenus("curated", "morphotaxon", sp, 2, 2));
+        assertFalse("a morphogenus with no curated morphospecies", ListView.keepGenus("curated", "morphotaxon", sp, 0, 3));
 
         Map<String, Integer> species = new HashMap<>();
         species.put("formicinae|camponotus", 12);
@@ -168,7 +168,13 @@ public class ListViewTest extends TestCase {
         assertEquals("specimens trump literature", ListView.SOURCE_SPECIMEN, ListView.sourceKind("antwiki", true));
         assertEquals(ListView.SOURCE_LITERATURE, ListView.sourceKind("literature", false));
         assertEquals(ListView.SOURCE_LITERATURE, ListView.sourceKind("antwiki", false));
-        assertEquals("AntCat type localities: literature", ListView.SOURCE_LITERATURE, ListView.sourceKind("worldants", false));
+        // the AntCat import has its own label; literature is Bolton's catalogue only (Brian Fisher, 2026-11-02)
+        assertEquals("the AntCat import", ListView.SOURCE_ANTCAT, ListView.sourceKind("worldants", false));
+        assertEquals(ListView.SOURCE_ANTCAT, ListView.sourceKind("antcat", false));
+        assertEquals(ListView.SOURCE_SPECIMEN, ListView.sourceKind("worldants", true));
+        String antcat = ListView.sourceIconHtml(ListView.SOURCE_ANTCAT);
+        assertEquals("<span class=\"src-icon src-antcat\" data-source=\"antcat\" title=\"From the AntCat import\" role=\"img\""
+            + " aria-label=\"AntCat\">AntCat</span>", antcat);
         assertEquals(ListView.SOURCE_CURATED, ListView.sourceKind("speciesListTool", false));
         assertEquals(ListView.SOURCE_CURATED, ListView.sourceKind("proxyspeciesListTool", false));
         assertEquals(ListView.SOURCE_SPECIMEN, ListView.sourceKind("adm1Specimen", false));
@@ -179,11 +185,22 @@ public class ListViewTest extends TestCase {
         assertEquals("Specimen", ListView.sourceWord(ListView.SOURCE_SPECIMEN));
     }
 
+    /** The Fossil button only where the list has fossil names (2026-11-02): one EXISTS query; shown when not known. */
+    public void testFossilButton() {
+        String q = ListView.hasFossilSql(mozambique(), "genus", "formicinae", null);
+        assertTrue(q, q.startsWith("select 1 from taxon, geolocale_taxon where geolocale_taxon.taxon_name = taxon.taxon_name"));
+        assertTrue(q, q.contains("fossil = 1") && q.contains("taxon.subfamily = 'formicinae'") && q.endsWith(" limit 1"));
+        assertTrue(ListView.showsFossilButton(null, "curated"));
+        assertTrue(ListView.showsFossilButton(Boolean.TRUE, "curated"));
+        assertFalse(ListView.showsFossilButton(Boolean.FALSE, "curated"));
+        assertTrue("the current view stays visible", ListView.showsFossilButton(Boolean.FALSE, "fossil"));
+    }
+
     public void testAboutThisListNamesTheFourViews() {
         String[][] d = ListView.viewDescriptions();
         assertEquals(4, d.length);
         for (int i = 0; i < 4; i++) assertEquals(StatusSet.choiceLabel(StatusSet.LIST_CHOICES[i], "species"), d[i][0]);
-        assertTrue(d[1][1].contains("vetted once a curator has put it on any species list"));
+        assertTrue(d[1][1].contains("curated once a curator has put it on any species list"));
         assertTrue(d[2][1].contains("listed only in this view"));
         assertTrue(ListView.hasViews(mozambique()));
         assertFalse(ListView.hasViews(new Project(Project.WORLDANTS)));

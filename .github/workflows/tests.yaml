@@ -964,10 +964,10 @@ jobs:
             grep -q "^OK (7 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
-      - name: Java unit tests of the views of lists (2026-11-02; views and labels, old values mapped, Vetted the default, criteria, headers; StatusChoiceTest)
-        # StatusChoiceTest: four views (valid, vetted, all, fossil) labelled Valid, Vetted, All specimen names, Fossil on
+      - name: Java unit tests of the views of lists (2026-11-02; views and labels, old values mapped, Curated the default, criteria, headers; StatusChoiceTest)
+        # StatusChoiceTest: four views (valid, curated, all, fossil) labelled Valid, Curated, All specimen names, Fossil on
         # every list and rank; validmorpho (Valid + morphospecies of 2026-10-30), all determined, all indetermined,
-        # complete, type -> all; every list opens with Vetted, the AntCat list and Fossil Ants with their own set; the
+        # complete, type -> all; every list opens with Curated, the AntCat list and Fossil Ants with their own set; the
         # session is never read.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
@@ -985,8 +985,8 @@ jobs:
             grep -q "^OK (9 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
-      - name: Java unit tests of the views' rules (2026-11-02; vetted morphospecies, specimen names of geolocale lists, genus rows, Other specimens, source icons; ListViewTest)
-        # ListViewTest: a morphospecies is vetted by a curator's entry on any list (not proxy rows, not the system lists);
+      - name: Java unit tests of the views' rules (2026-11-02; curated morphospecies, specimen names of geolocale lists, genus rows, Other specimens, source icons; ListViewTest)
+        # ListViewTest: a morphospecies is curated by a curator's entry on any list (not proxy rows, not the system lists);
         # country, adm1, region and subregion lists add the names of specimens collected there (red flags never count,
         # disputes respected); a genus known only from specimens identified to genus is in All specimen names only;
         # Other specimens are the names not in the view; specimens trump literature for the source icon.
@@ -1003,7 +1003,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.ListViewTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             grep -v "LogMgr" /tmp/out.txt | tail -3
-            grep -q "^OK (8 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+            grep -q "^OK (9 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Java unit tests of who may edit species lists (2026-11-02; any curator any list, not the system lists; projects stay with their curators; SecurityBatch5Test)
@@ -1104,7 +1104,7 @@ jobs:
           # PlaceTaxonNotesDbTest (2026-10-29): country and adm1 lists get the genus rows of specimens identified to genus
           # (not the names); the genus page's indet line counts the place's specimens; the not-recorded notice's queries;
           # 2026-10-30: the specimens collected in a place under names not on its species list, by genus; 2026-11-02:
-          # the views (Valid, Vetted, All specimen names): vetted morphospecies, the names of specimens collected there,
+          # the views (Valid, Curated, All specimen names): curated morphospecies, the names of specimens collected there,
           # disputes, red flags, the genus rows' Species and Other specimens and which rows each view shows.
           # GeneraRuleDbTest (2026-10-30): Genera count valid genera and morphogenera only (placeholders such as
           # "(myrmicinae)" and unrecognized genus names are not genera), in the nightly totals, the subfamily rows' Genera,
@@ -1141,7 +1141,7 @@ jobs:
               /t/org/calacademy/antweb/home/GeneraRuleDbTest.java \
               /t/org/calacademy/antweb/home/BlankNameCleanupDbTest.java \
               /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:8 home.GeneraRuleDbTest:11 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:9 home.GeneraRuleDbTest:11 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

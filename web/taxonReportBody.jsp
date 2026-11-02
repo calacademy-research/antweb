@@ -78,7 +78,7 @@
             + genusOnlyCriteria + "&resultRank=specimen";
       }
     }
-    // 2026-11-02: the Other specimens column of genus rows (ListView.GenusRows): Valid, Vetted, All specimen names.
+    // 2026-11-02: the Other specimens column of genus rows (ListView.GenusRows): Valid, Curated, All specimen names.
     boolean showOtherColumn = Rank.GENUS.equals(pageRank) && genusRows != null && genusRows.showsOtherSpecimens() && genusRows.otherNames != null;
 %>
 
@@ -315,7 +315,7 @@
         </div>
         <% } %>
     <% } else {
-         // A row added from specimens collected here (views Vetted and All specimen names, 2026-11-02): not on the list,
+         // A row added from specimens collected here (views Curated and All specimen names, 2026-11-02): not on the list,
          // so no list numbers; a species row says how many specimens were collected here, a genus row its Species and
          // Other specimens in the view.
          String addedCount = "&ndash;";
@@ -375,6 +375,9 @@
    }
    int noteNum = 0;
 %>
+<%-- The genus page's line in a place (browse.do; request attribute set by BrowseAction, none on taxonomicPage.do):
+     above the notes (Brian Fisher, 2026-11-02; it was under them, from showBrowse-body.jsp). --%>
+<%@include file="/common/genusIndetLine.jsp" %>
 <% if (listOnly) { %>
 <% if (totalNote != null) { %>
 <br><span id="subtaxon-total" data-subtaxon-total="<%= subtaxonTotal %>"><%= totalNote %></span>

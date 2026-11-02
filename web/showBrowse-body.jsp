@@ -235,7 +235,6 @@ if (childrenList != null) {
  if (!"species".equals(taxon.getRank()) && !"subspecies".equals(taxon.getRank())) { %>
     <%@include file="/taxonReport.jsp" %>  
 <%  } %>
-<%@include file="/common/genusIndetLine.jsp" %>
 
  <% if (taxon.isBaseTaxon()) { %>
      <% // USED TO HAVE THE TAXONCHILDCOUNT HERE %>

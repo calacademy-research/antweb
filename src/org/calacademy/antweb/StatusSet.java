@@ -15,10 +15,10 @@ import jakarta.servlet.http.HttpSession;
 
 /**
  * A set of statuses and its SQL criteria (extends Status): the four views of the lists, browse and images pages
- * (Valid, Vetted, All specimen names, Fossil; address values valid, vetted, all, fossil; old values mapped by
- * listChoice; Vetted is the default everywhere, defaultChoice; never kept in the session), the AntCat list's and Fossil
+ * (Valid, Curated, All specimen names, Fossil; address values valid, curated, all, fossil; old values mapped by
+ * listChoice; Curated is the default everywhere, defaultChoice; never kept in the session), the AntCat list's and Fossil
  * Ants' own sets, the counted statuses (getCountables), and the per-rank conditions of the views (listRankCondition).
- * Vetted morphospecies: ListView.vettedCondition. Used by TaxaPageAction, BrowseAction, ListView, the taxon classes'
+ * Curated morphospecies: ListView.vettedCondition. Used by TaxaPageAction, BrowseAction, ListView, the taxon classes'
  * setChildren and the count code. Docs: docs/numbers.md "Views of lists", docs/flows/taxon-pages.md. Tests:
  * StatusChoiceTest, ListViewTest, tests/e2e/test_status_choice.py, test_list_sources.py.
  */
@@ -48,20 +48,24 @@ public class StatusSet extends Status {
      * every kind of list (countries, adm1s, regions, subregions, bioregions, museums, projects, All AntWeb):
      *   valid   "Valid"               names AntCat calls valid, extant: from specimens (not red-flagged), curated
      *                                 entries or literature (the list's rows of status valid)
-     *   vetted  "Vetted" (default)    Valid + vetted morphospecies (ListView.vettedCondition: a morphospecies on any
+     *   curated "Curated" (default)   Valid + curated morphospecies (ListView.vettedCondition: a morphospecies on any
      *                                 curated list entry, anywhere); on country, adm1, region and subregion lists also
-     *                                 the vetted morphospecies whose specimens were collected there (ListView)
-     *   all     "All specimen names"  Vetted + every other morphospecies, indet name ("Acropyga (indet)") and other
+     *                                 the curated morphospecies whose specimens were collected there (ListView)
+     *   all     "All specimen names"  Curated + every other morphospecies, indet name ("Acropyga (indet)") and other
      *                                 counted status (the five, PlaceTotals.COUNTABLE); geolocale lists add the names of
      *                                 every specimen collected there (not red-flagged)
      *   fossil  "Fossil"              valid, fossil
      * These are the values of the address (statusSet=...); listStatusSet() turns one into the StatusSet whose criteria
      * the queries use (VETTED, ALL_NAMES, ...). Old addresses still work (listChoice maps them: validmorpho, the choice
-     * "Valid + morphospecies" of 2026-10-30, and specimen=true give All specimen names). The AntCat list (worldants) and
-     * Fossil Ants keep their own sets.
+     * "Valid + morphospecies" of 2026-10-30, and specimen=true give All specimen names; vetted, the first name of
+     * Curated, gives Curated). The AntCat list (worldants) and Fossil Ants keep their own sets. Brian Fisher, 2026-11-02:
+     * the view is called Curated (it was Vetted for a few hours on staging); code names (LIST_VETTED, VETTED,
+     * ListView.vettedCondition) keep the first name.
      */
     public final static String LIST_VALID = "valid";
-    public final static String LIST_VETTED = "vetted";
+    public final static String LIST_VETTED = "curated";
+    /** The first address value of Curated (staging, 2026-11-02): old links still open Curated. */
+    public final static String LIST_VETTED_OLD = "vetted";
     public final static String LIST_ALL = "all";
     public final static String LIST_FOSSIL = "fossil";
     public final static String[] LIST_CHOICES = {LIST_VALID, LIST_VETTED, LIST_ALL, LIST_FOSSIL};
@@ -69,13 +73,13 @@ public class StatusSet extends Status {
     public final static String LIST_VALID_MORPHO = "validmorpho";
 
     /**
-     * Internal set values (listStatusSet; not address values): VETTED the rows of the Vetted view, VETTED_MORPHO the
-     * vetted morphospecies alone (the specimen names a geolocale's Vetted view adds, ListView.specimenNamesSet),
+     * Internal set values (listStatusSet; not address values): VETTED the rows of the Curated view, VETTED_MORPHO the
+     * curated morphospecies alone (the specimen names a geolocale's Curated view adds, ListView.specimenNamesSet),
      * ALL_NAMES the five counted statuses (All specimen names), VALID_MORPHO valid names and morphotaxa (the place
      * page's Species and Genera numbers; TaxaPage.hasFossilSubfamilies).
      */
-    public final static String VETTED = "valid and vetted";
-    public final static String VETTED_MORPHO = "vetted morphotaxon";
+    public final static String VETTED = "valid and curated";
+    public final static String VETTED_MORPHO = "curated morphotaxon";
     public final static String VALID_MORPHO = "valid and morphotaxon";
     public final static String ALL_NAMES = "all names";
 
@@ -189,7 +193,7 @@ public class StatusSet extends Status {
       // PlaceTotals.SPECIES_STATUSES: the one rule, not repeated here).
       if (StatusSet.ALL_NAMES.equals(getValue())) criteria = defaultVal;
       if (StatusSet.VALID_MORPHO.equals(getValue())) criteria = " " + org.calacademy.antweb.home.PlaceTotals.speciesStatusCondition(table);
-      // Views of 2026-11-02: Vetted = valid extant names and vetted morphospecies; the vetted morphospecies alone
+      // Views of 2026-11-02: Curated = valid extant names and curated morphospecies; the curated morphospecies alone
       if (StatusSet.VETTED.equals(getValue())) {
           String extant = "taxon".equals(table) ? table + ".fossil = 0" : fossilCondition(table, 0);
           criteria = " ((" + table + ".status = '" + VALID + "' and " + extant + ") or (" + table + ".status = '" + MORPHOTAXON
@@ -288,7 +292,7 @@ public class StatusSet extends Status {
 
     /**
      * The criteria (with a leading " and ") of the rows of one rank on a list of this status set (2026-10-30, review of
-     * #307): getAndCriteria(table) and, for the views Valid and Vetted (VALID_EXTANT, VETTED) and the set VALID_MORPHO,
+     * #307): getAndCriteria(table) and, for the views Valid and Curated (VALID_EXTANT, VETTED) and the set VALID_MORPHO,
      * the rule of the place page's number of that rank (listRankCondition): no placeholders, identified to genus.
      * rank: the rank of the rows (subfamily, genus, species; other values: no rank condition).
      */
@@ -298,7 +302,7 @@ public class StatusSet extends Status {
 
     /**
      * The extra condition (" and ...", or "") of the rows of a rank on a list of this status set. Brian Fisher, 2026-10-30
-     * (and the Vetted view of 2026-11-02): a list of Valid, Vetted or VALID_MORPHO shows the rows the place page's number
+     * (and the Curated view of 2026-11-02): a list of Valid, Curated or VALID_MORPHO shows the rows the place page's number
      * counts, by the same rules
      * (PlaceTotals): genus rows countsAsGenus (no placeholders such as "(myrmicinae)" or "amblyoponinae)", identified to
      * genus), subfamily rows countsAsSubfamily (valid, no placeholder "(formicidae)"), species rows identified to genus
@@ -385,7 +389,7 @@ public class StatusSet extends Status {
      * The view (LIST_CHOICES) of an address value, or null when there is none (no value, or one not known: the page's
      * default applies). Case and spaces do not matter. Old values map to the nearest view (Brian Fisher, 2026-11-02):
      *   valid, valid extant, Valid (with fossils)            -> valid
-     *   vetted                                               -> vetted
+     *   curated                                               -> curated
      *   validmorpho (Valid + morphospecies, 2026-10-30),
      *   all determined, all, all indetermined, complete,
      *   type, worldants, a single status                     -> all (All specimen names)
@@ -400,7 +404,7 @@ public class StatusSet extends Status {
         switch (v) {
             case LIST_VALID: case VALID_EXTANT: case "valid (with fossils)": case "valid species":
                 return LIST_VALID;
-            case LIST_VETTED: case VETTED:
+            case LIST_VETTED: case VETTED: case LIST_VETTED_OLD: case "valid and vetted":
                 return LIST_VETTED;
             case LIST_VALID_MORPHO: case ALL_DETERMINED: case VALID_MORPHO: case "all specimen names":
             case LIST_ALL: case ALL_INDETERMINED: case COMPLETE: case TYPE: case WORLDANTS: case ALL_NAMES:
@@ -428,7 +432,7 @@ public class StatusSet extends Status {
     }
 
     /**
-     * The view a list opens with when the address names none: Vetted, on every kind of list (Brian Fisher, 2026-11-02;
+     * The view a list opens with when the address names none: Curated, on every kind of list (Brian Fisher, 2026-11-02;
      * replaces the defaults of 2026-10-30, Valid species on geolocales and curated projects, Valid species +
      * morphospecies elsewhere). The AntCat list (worldants) and Fossil Ants: Valid (with fossils), their own set.
      */
@@ -475,7 +479,7 @@ public class StatusSet extends Status {
     }
 
     /**
-     * The button label of a view (the segmented control, web/common/statusesDisplay.jsp): Valid, Vetted, All specimen
+     * The button label of a view (the segmented control, web/common/statusesDisplay.jsp): Valid, Curated, All specimen
      * names, Fossil, on every list and rank (Brian Fisher, 2026-11-02). The AntCat list and Fossil Ants: their choice
      * (ownChoice), first letter capital. ListView.choiceTitle gives the hover text.
      */
@@ -500,7 +504,7 @@ public class StatusSet extends Status {
 
     public static String choiceLabel(String choice, String rank, boolean fossilSubfamilies) {
         if (LIST_VALID.equals(choice)) return "Valid";
-        if (LIST_VETTED.equals(choice)) return "Vetted";
+        if (LIST_VETTED.equals(choice)) return "Curated";
         if (LIST_ALL.equals(choice) || LIST_VALID_MORPHO.equals(choice)) return "All specimen names";
         if (LIST_FOSSIL.equals(choice)) return "Fossil";
         return ownLabel(choice);
@@ -511,7 +515,7 @@ public class StatusSet extends Status {
      * chosen view (Brian Fisher, 2026-11-02). count: the rows listed; pluralRank: the rows' rank as the page names it
      * (Species, Genera, Subfamilies, Specimens); speciesTotal: the place page's Species / subspecies / morphospecies
      * (Valid species of a species list name it: "2,672 Valid species (of 6,960 species and morphospecies)"), or a
-     * negative number when not known. Examples: "2,700 Species (valid and vetted)", "116 Genera (valid and vetted)",
+     * negative number when not known. Examples: "2,700 Species (valid and curated)", "116 Genera (valid and curated)",
      * "7,215 Species (all specimen names)", "12 Fossil species".
      * A value that is not a list choice (worldants, Fossil Ants) keeps the old form "N Valid extant Species". The number
      * is not escaped HTML (plain text: the JSP escapes it).
@@ -547,7 +551,7 @@ public class StatusSet extends Status {
             if (speciesRows && speciesTotal >= 0) h += " (of " + String.format(Locale.US, "%,d", speciesTotal) + " species and morphospecies)";
             return h;
         }
-        if (LIST_VETTED.equals(choice)) return num + " " + noun + " (valid and vetted)";
+        if (LIST_VETTED.equals(choice)) return num + " " + noun + " (valid and curated)";
         if (LIST_ALL.equals(choice) || LIST_VALID_MORPHO.equals(choice)) return num + " " + noun + " (all specimen names)";
         if (LIST_FOSSIL.equals(choice)) return num + " Fossil " + lower;
         if (choice != null && choice.startsWith("own:")) choice = choice.substring(4);
@@ -559,8 +563,8 @@ public class StatusSet extends Status {
      * The header of a list's images view (taxonomicPage.do?images=true, h2 display_count): how many of the listed rows are
      * imaged, out of the rows listed, in the words of the same view as the list's header (listHeading), so the two
      * agree (Brian Fisher, 2026-10-30; views of 2026-11-02). Examples: "40 Valid species imaged (out of 98 valid
-     * species)", "116 Species imaged (out of 140 species, valid and vetted)", "80 Genera imaged (out of 116 genera, valid
-     * and vetted)", "5 Species imaged (out of 7 species, all specimen names)", "3 Fossil species imaged (out of 12 fossil
+     * species)", "116 Species imaged (out of 140 species, valid and curated)", "80 Genera imaged (out of 116 genera, valid
+     * and curated)", "5 Species imaged (out of 7 species, all specimen names)", "3 Fossil species imaged (out of 12 fossil
      * species)". The
      * AntCat list and Fossil Ants: their own
      * value ("40 Valid Species imaged (out of 98 valid species)"). Numbers with thousands separators, 0 as "0". Plain
@@ -592,7 +596,7 @@ public class StatusSet extends Status {
         String num = String.format(Locale.US, "%,d", imaged);
         String of = " (out of " + String.format(Locale.US, "%,d", total) + " ";
         if (LIST_VALID.equals(choice)) return num + " Valid " + lower + " imaged" + of + "valid " + totalNoun + ")";
-        if (LIST_VETTED.equals(choice)) return num + " " + noun + " imaged" + of + totalNoun + ", valid and vetted)";
+        if (LIST_VETTED.equals(choice)) return num + " " + noun + " imaged" + of + totalNoun + ", valid and curated)";
         if (LIST_ALL.equals(choice) || LIST_VALID_MORPHO.equals(choice)) return num + " " + noun + " imaged" + of + totalNoun + ", all specimen names)";
         if (LIST_FOSSIL.equals(choice)) return num + " Fossil " + lower + " imaged" + of + "fossil " + totalNoun + ")";
         if (choice != null && choice.startsWith("own:")) choice = choice.substring(4);

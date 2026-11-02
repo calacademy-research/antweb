@@ -1,5 +1,5 @@
 <%-- The yellow ant mark of a list row (static include of taxonReportBody.jsp, variable thisChild): shown when the
-     name is not on the place's species list and comes from specimens collected there (the views Vetted and All
+     name is not on the place's species list and comes from specimens collected there (the views Curated and All
      specimen names add such names, 2026-11-02), else a blank spacer of the same size. --%><% 
   //if (AntwebProps.isDevMode()) AntwebUtil.log("isType.jsp isType:" + thisChild.getIsType());
   if (!thisChild.getTaxonSet().exists()) { %>

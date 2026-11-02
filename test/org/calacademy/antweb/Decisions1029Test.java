@@ -133,7 +133,7 @@ public class Decisions1029Test extends TestCase {
     }
 
     public void testListsOpenWithTheStatusesOfTheSpeciesNumber() {
-        // 2026-10-30 replaced the default ("every counted status everywhere"), 2026-11-02 again (Vetted everywhere;
+        // 2026-10-30 replaced the default ("every counted status everywhere"), 2026-11-02 again (Curated everywhere;
         // StatusChoiceTest has the defaults): what stays from 2026-10-29 is that a status kept in the session is never used.
         Map<String, Object> session = new HashMap<>();
         session.put("statusSet", StatusSet.VALID_EXTANT);   // chosen on an earlier page

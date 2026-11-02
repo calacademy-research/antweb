@@ -144,8 +144,8 @@ class Place:
             return f"/{page}.do?bioregionName={quote_plus(self.name)}"
         return f"/{page}.do?geolocaleId={self.gid}"
 
-    def list_url(self, rank, status="vetted", extra=""):
-        # 2026-11-02 (views): the default, Vetted, lists the valid names and the vetted morphospecies (on countries,
+    def list_url(self, rank, status="curated", extra=""):
+        # 2026-11-02 (views): the default, Curated, lists the valid names and the curated morphospecies (on countries,
         # adm1s, regions and subregions also those collected there); "valid" the list's valid names; "all" (All specimen
         # names) every counted name, on geolocales also every name collected there. (Until 11-02 the default was
         # "validmorpho", the rows of the place's Species number; that address value now opens All specimen names.)
@@ -253,7 +253,7 @@ def list_rows(html):
 
 
 # The mark of a row added from specimens collected in the place, not on its list (web/common/isFromSpecimen.jsp; the
-# views Vetted and All specimen names add such rows on countries, adm1s, regions and subregions since 2026-11-02).
+# views Curated and All specimen names add such rows on countries, adm1s, regions and subregions since 2026-11-02).
 NOT_ON_LIST_MARK = "Not on the place's list: from specimens collected here."
 
 

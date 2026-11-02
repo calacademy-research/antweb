@@ -6,8 +6,8 @@ region, subregion, bioregion, museum, project) is checked on every run, a differ
 (numbers_sample.py), against numbers that the count check validates on every place:
 
   row 38  taxonomicPage.do header: species list in the view Valid (statusSet=valid) = Valid species / subspecies, and
-          the views nest (Valid <= Vetted <= All specimen names; 2026-11-02: no view lists exactly the rows of Species /
-          subspecies / morphospecies, which counts every morphospecies of the list, vetted or not);
+          the views nest (Valid <= Curated <= All specimen names; 2026-11-02: no view lists exactly the rows of Species /
+          subspecies / morphospecies, which counts every morphospecies of the list, curated or not);
           genus and subfamily lists with every counted status (all) = Genera / Subfamilies (one rule:
           PlaceTotals.rankCondition and TaxaPage.fetchChildren); the header = the rows the page lists. Genera and
           subfamilies rule (2026-10-30, every kind of place, curated projects too; it replaced B67): Subfamilies and
@@ -15,7 +15,7 @@ region, subregion, bioregion, museum, project) is checked on every run, a differ
           unrecognized names) and genera (valid genera and morphogenera), both from the API /taxa, so they are compared
           with those rows; the
           header still counts every row listed. A subfamily browse page likewise (row 46).
-          The views and their default (Vetted everywhere, 2026-11-02) are checked in test_status_choice.py.
+          The views and their default (Curated everywhere, 2026-11-02) are checked in test_status_choice.py.
   row 39  isImaged=false: "U Unimaged Species (out of N)": U = the rows listed, N = the place's Valid species (view Valid), and the
           names listed = the names of the list that the API's /unimagedGeolocaleTaxa returns for the place (the
           same rule written twice: TaxaPage.findUnimaged in Java, imagedTaxaSql in the API) (countries).
@@ -66,7 +66,7 @@ def stats_of(p):
 
 def test_list_headers_equal_place_numbers_of_every_kind():
     """Row 38: for the day's place of every kind, the list header with every counted status = Subfamilies, Genera of
-    the place page; species in the view Valid = Valid species (0 when the page shows no Valid row), and Valid <= Vetted
+    the place page; species in the view Valid = Valid species (0 when the page shows no Valid row), and Valid <= Curated
     <= All specimen names; every header = the rows its page lists."""
     wrong, stored, stored_genera, checked, slow = [], [], [], [], []
     for p in places():
@@ -75,7 +75,7 @@ def test_list_headers_equal_place_numbers_of_every_kind():
             continue
         headers = {}
         for rank, stat, status in (("subfamily", "subfamilies", "all"), ("genus", "genera", "all"),
-                                   ("species", "valid", "valid"), ("species", None, "vetted"), ("species", None, "all")):
+                                   ("species", "valid", "valid"), ("species", None, "curated"), ("species", None, "all")):
             html = ns.fetch(p.list_url(rank, status))
             if html is None:
                 slow.append(f"{p} {rank} {status}")
@@ -108,9 +108,9 @@ def test_list_headers_equal_place_numbers_of_every_kind():
                 # Subfamilies and Genera apart (2026-10-30 review): the genera and subfamilies rule's pending covers them only
                 (stored_genera if rank in ("subfamily", "genus") else stored).append(
                     f"{p} rank={rank} {status}: {'rows counted' if rank != 'species' else 'header'} {n}, place page {stat} {expected}")
-        # the views nest: every Valid name is Vetted, every Vetted name in All specimen names
-        if len(headers) == 3 and not (headers["valid"] <= headers["vetted"] <= headers["all"]):
-            wrong.append(f"{p}: species headers Valid {headers['valid']}, Vetted {headers['vetted']}, All {headers['all']}: not nested")
+        # the views nest: every Valid name is Curated, every Curated name in All specimen names
+        if len(headers) == 3 and not (headers["valid"] <= headers["curated"] <= headers["all"]):
+            wrong.append(f"{p}: species headers Valid {headers['valid']}, Curated {headers['curated']}, All {headers['all']}: not nested")
         checked.append(repr(p))
     if not checked:
         pytest.skip("no place page with data-stat numbers " + ns.day_note())
@@ -134,11 +134,11 @@ def test_list_headers_equal_place_numbers_of_every_kind():
 def test_default_list_forgets_the_last_choice():
     """Brian Fisher, 2026-10-29 (kept 2026-10-30 and 11-02): a view chosen on one page is not carried to the next (it
     was kept in the session). The same session first opens a species list with Fossil, then the list without a view:
-    its header is that of the default view, Vetted (test_status_choice.py checks the default itself)."""
+    its header is that of the default view, Curated (test_status_choice.py checks the default itself)."""
     wrong, checked = [], []
     s = ns.new_session()
     for p in places():
-        default = "vetted"
+        default = "curated"
         if ns.fetch(p.list_url("species", "fossil"), s) is None:
             continue
         html = ns.fetch(f"/taxonomicPage.do?rank=species&{p.params}", s)
@@ -229,7 +229,7 @@ def _row_count_and_link(row_html):
     return None, None
 
 
-def _browse(link, status="vetted"):
+def _browse(link, status="curated"):
     """The browse page of a list row's link with the view that its row count counts: a genus row's Species are those of
     the list's view (2026-11-02; the link carries it, so a statusSet already in the link is kept), a subfamily row's
     Genera every counted status (all); a species page lists its specimens whatever the view."""
@@ -293,7 +293,7 @@ def test_browse_headers_equal_the_list_rows():
             if not got:
                 continue
             row, count, link = got
-            html = ns.fetch(_browse(link, "vetted" if rank == "genus" else "all"))
+            html = ns.fetch(_browse(link, "curated" if rank == "genus" else "all"))
             if html is None:
                 continue
             where = f"{p} {rank} {row['name'] or link}"

@@ -24,26 +24,26 @@ import org.calacademy.antweb.home.SpecimenDb;
 import org.calacademy.antweb.util.DBUtil;
 
 /**
- * The four views of a list (Brian Fisher, 2026-11-02; docs/numbers.md "Views of lists"): Valid, Vetted (the default
+ * The four views of a list (Brian Fisher, 2026-11-02; docs/numbers.md "Views of lists"): Valid, Curated (the default
  * everywhere), All specimen names and Fossil, the same on every kind of list (countries, adm1s, regions, subregions,
  * bioregions, museums, projects, All AntWeb). StatusSet holds the address values and each view's criteria; this class
  * holds what the views add to them:
  *
- *  - Vetted morphospecies (vettedCondition). A morphospecies (status morphotaxon) is vetted when it is on any curated
+ *  - Curated morphospecies (vettedCondition). A morphospecies (status morphotaxon) is curated when it is on any curated
  *    list entry: a geolocale_taxon or proj_taxon row whose source is one a curator writes with the Species List Tool or a
  *    list upload (CuratorTaxonSetDb.CURATOR_SOURCES: curator, speciesList, speciesListTool, speciesListUpload; not the
  *    proxy rows of parent regions, not the system lists worldants and allantwebants). Vetting belongs to the
- *    morphospecies: once vetted it is in the Vetted view of every place where it is on the list or, on country, adm1,
+ *    morphospecies: once curated it is in the Curated view of every place where it is on the list or, on country, adm1,
  *    region and subregion lists, where its not red-flagged specimens were collected (bioregion, museum and All AntWeb
  *    lists already take every specimen name). A curator who removes it from one place's list (a dispute,
  *    geolocale_taxon_dispute or proj_taxon_dispute) takes it off that place only (notDisputed). Computed at query time:
  *    one indexed lookup of geolocale_taxon by taxon_name per morphospecies row, then one primary-key lookup of
  *    proj_taxon per curated project; no stored flag, so a curator's change shows at once.
  *  - The specimen names of geolocale lists (addsSpecimenNames, specimenNamesSet, collectedHere): country and adm1 lists
- *    take valid names from specimens but not morphospecies or indet names, so Vetted adds the vetted morphospecies and
+ *    take valid names from specimens but not morphospecies or indet names, so Curated adds the curated morphospecies and
  *    All specimen names every counted name collected there (TaxaPage.specimenNamesWhere).
  *  - The genus rows (GenusRows): each row's Species in the view, its Other specimens (the specimens collected here under
- *    names not in the view, PlaceTaxonNotes.OtherNames), and which genus rows the views Valid and Vetted show: a genus
+ *    names not in the view, PlaceTaxonNotes.OtherNames), and which genus rows the views Valid and Curated show: a genus
  *    known in the place only from specimens identified to genus ("Acropyga (indet)": indetermined, unidentifiable)
  *    appears only in All specimen names (keepGenus).
  *  - The place's specimens by name (PlaceSpecimens), red-flagged ones never counted: the Other specimens, the specimen
@@ -65,7 +65,7 @@ public final class ListView {
     public static String choiceTitle(String choice, String pluralRank) {
         String r = pluralRank == null ? "names" : pluralRank.toLowerCase(Locale.ROOT);
         if (StatusSet.LIST_VALID.equals(choice)) return "Valid " + r + ": names AntCat calls valid, from specimens, curated entries or literature";
-        if (StatusSet.LIST_VETTED.equals(choice)) return "Valid " + r + " and vetted morphospecies (morphospecies a curator has put on a species list)";
+        if (StatusSet.LIST_VETTED.equals(choice)) return "Valid " + r + " and curated morphospecies (morphospecies a curator has put on a species list)";
         if (StatusSet.LIST_ALL.equals(choice)) return "Every name with specimens here: also the other morphospecies and the specimens identified only to genus";
         if (StatusSet.LIST_FOSSIL.equals(choice)) return "Fossil " + r;
         return null;
@@ -76,10 +76,10 @@ public final class ListView {
         return new String[][] {
             {"Valid", "names AntCat calls valid, from specimens collected here (red-flagged specimens never count), from"
                 + " curators' entries or from the literature."},
-            {"Vetted", "Valid plus the vetted morphospecies. A morphospecies is vetted once a curator has put it on any"
+            {"Curated", "Valid plus the curated morphospecies. A morphospecies is curated once a curator has put it on any"
                 + " species list; it then shows wherever its specimens were collected, unless a curator removed it from"
                 + " that place's list. This is the view a list opens with."},
-            {"All specimen names", "Vetted plus every other morphospecies and the specimens identified only to genus"
+            {"All specimen names", "Curated plus every other morphospecies and the specimens identified only to genus"
                 + " (\"Acropyga (indet)\"). A genus known here only from such specimens is listed only in this view."},
             {"Fossil", "fossil names."},
         };
@@ -90,7 +90,7 @@ public final class ListView {
     /**
      * SQL: the name (alias a: taxon, specimen, or another table with taxon_name) is on a curated entry of some list: a
      * geolocale_taxon or proj_taxon row with a curator's source (CuratorTaxonSetDb.CURATOR_SOURCES), outside the system
-     * lists (CuratorTaxonSetDb.SYSTEM_PROJECTS). With status morphotaxon: a vetted morphospecies.
+     * lists (CuratorTaxonSetDb.SYSTEM_PROJECTS). With status morphotaxon: a curated morphospecies.
      */
     public static String vettedCondition(String alias) {
         String sources = CuratorTaxonSetDb.curatorSourceList();
@@ -113,8 +113,8 @@ public final class ListView {
     }
 
     /**
-     * The set of the specimen names a view adds (TaxaPage.specimenNamesWhere), or null when it adds none: Vetted the
-     * vetted morphospecies (StatusSet.VETTED_MORPHO), All specimen names every counted status (StatusSet.ALL_NAMES).
+     * The set of the specimen names a view adds (TaxaPage.specimenNamesWhere), or null when it adds none: Curated the
+     * curated morphospecies (StatusSet.VETTED_MORPHO), All specimen names every counted status (StatusSet.ALL_NAMES).
      */
     public static StatusSet specimenNamesSet(StatusSet viewSet) {
         if (viewSet == null) return null;
@@ -161,6 +161,52 @@ public final class ListView {
     /** Whether the overview has the four views (not the AntCat list and Fossil Ants, which keep their own sets). */
     public static boolean hasViews(Overview overview) {
         return overview != null && !StatusSet.hasOwnStatusSets(overview.getName());
+    }
+
+    // ------------------------------------------------------------------------------------------------- fossil button
+
+    /**
+     * Request attribute (Boolean) read by web/common/statusesDisplay.jsp: whether the list has fossil names in the place,
+     * so the Fossil button is shown (Brian Fisher, 2026-11-02: hide it otherwise, not greyed). Not set: shown.
+     */
+    public static final String HAS_FOSSIL_ATTR = "listHasFossil";
+
+    /**
+     * One EXISTS query: the rows of the view Fossil (the list's valid fossil names of rank rowRank: subfamily, genus or
+     * species), of one subfamily or genus when given (a browse page's children).
+     */
+    public static String hasFossilSql(Overview overview, String rowRank, String subfamily, String genus) {
+        String q = "select 1" + TaxaPage.listWhere(overview, rowRank, true, StatusSet.listStatusSet(StatusSet.LIST_FOSSIL));
+        if (subfamily != null && !subfamily.isEmpty()) q += " and taxon.subfamily = " + DBUtil.sqlLiteral(subfamily);
+        if (genus != null && !genus.isEmpty()) q += " and taxon.genus = " + DBUtil.sqlLiteral(genus);
+        return q + " limit 1";
+    }
+
+    public static boolean hasFossil(Connection connection, Overview overview, String rowRank, String subfamily, String genus) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement(hasFossilSql(overview, rowRank, subfamily, genus));
+             ResultSet r = stmt.executeQuery()) {
+            return r.next();
+        }
+    }
+
+    /**
+     * Sets HAS_FOSSIL_ATTR for a list with the four views (not the AntCat list and Fossil Ants: their own choices). On a
+     * database error the attribute is not set and the button is shown.
+     */
+    public static void setHasFossil(jakarta.servlet.http.HttpServletRequest request, Connection connection, Overview overview,
+            String rowRank, String subfamily, String genus) {
+        if (!hasViews(overview) || rowRank == null) return;
+        if (!(Rank.SUBFAMILY.equals(rowRank) || Rank.GENUS.equals(rowRank) || Rank.SPECIES.equals(rowRank))) return;
+        try {
+            request.setAttribute(HAS_FOSSIL_ATTR, hasFossil(connection, overview, rowRank, subfamily, genus));
+        } catch (SQLException | RuntimeException e) {
+            org.apache.commons.logging.LogFactory.getLog(ListView.class).warn("setHasFossil() overview:" + overview + " e:" + e);
+        }
+    }
+
+    /** Whether the Fossil button is shown: the list has fossil names, or not known, or Fossil is the current view. */
+    public static boolean showsFossilButton(Object hasFossilAttr, String current) {
+        return StatusSet.LIST_FOSSIL.equals(current) || !Boolean.FALSE.equals(hasFossilAttr);
     }
 
     // ------------------------------------------------------------------------------------------------- place specimens
@@ -347,11 +393,11 @@ public final class ListView {
 
     /**
      * Whether a genus row is shown in a view (Brian Fisher, 2026-11-02). All specimen names and Fossil: every row of the
-     * view's SQL. Valid and Vetted: a row with species in the view; else a valid genus known here from more than
+     * view's SQL. Valid and Curated: a row with species in the view; else a valid genus known here from more than
      * specimens identified to genus: a list entry that is not from specimens (curator, literature, AntCat), or a name of
      * the genus on the list or collected here that is valid, a morphospecies or unrecognized (evidence). So Acropyga in
      * Mozambique, known from morphospecies, is in Valid with no species and its Other specimens; a genus known only from
-     * "(indet)" specimens is only in All specimen names; a morphogenus is in Vetted only with a vetted morphospecies.
+     * "(indet)" specimens is only in All specimen names; a morphogenus is in Curated only with a curated morphospecies.
      */
     public static boolean keepGenus(String choice, String status, String sourceKind, int speciesInView, int evidence) {
         if (!(StatusSet.LIST_VALID.equals(choice) || StatusSet.LIST_VETTED.equals(choice))) return true;
@@ -360,37 +406,53 @@ public final class ListView {
         return !SOURCE_SPECIMEN.equals(sourceKind) || evidence > 0;
     }
 
-    /** The three source icons of a row (rule of 2026-11-02): specimen, curated, literature. */
+    /**
+     * The source icons of a row (rule of 2026-11-02): specimen, curated, literature and AntCat. Literature is the
+     * literature entries of the list (source literature); a row from the AntCat import (source worldants, the AntCat type
+     * localities) has its own label, "AntCat" (Brian Fisher, 2026-11-02: literature means Bolton's catalogue only).
+     */
     public static final String SOURCE_SPECIMEN = "specimen";
     public static final String SOURCE_CURATED = "curated";
     public static final String SOURCE_LITERATURE = "literature";
+    public static final String SOURCE_ANTCAT = "antcat";
 
     /**
      * The source of a row as one of the three icons: specimen when the name has a specimen collected here (not
      * red-flagged; "specimens trump literature", even when its list entry is from the literature), else by the list
-     * entry's source (Source.getSourceCanonical): specimen; curator -> curated; literature and AntCat (type localities,
-     * from the literature) -> literature. A row with no source (museum lists, rows added from specimens): specimen.
+     * entry's source (Source.getSourceCanonical): specimen; curator -> curated; literature -> literature; the AntCat
+     * import (worldants, antcat) -> antcat. A row with no source (museum lists, rows added from specimens): specimen.
      */
     public static String sourceKind(String rowSource, boolean hasPlaceSpecimen) {
         if (hasPlaceSpecimen) return SOURCE_SPECIMEN;
         String c = Source.getSourceCanonical(rowSource);
         if (Source.CURATOR.equals(c)) return SOURCE_CURATED;
-        if (Source.LITERATURE.equals(c) || Source.ANTCAT.equals(c)) return SOURCE_LITERATURE;
+        if (Source.LITERATURE.equals(c)) return SOURCE_LITERATURE;
+        if (Source.ANTCAT.equals(c)) return SOURCE_ANTCAT;
         return SOURCE_SPECIMEN;
     }
 
-    /** The word of a source icon (title attribute, legend): "Specimen", "Curated", "Literature". */
+    /** The word of a source icon (legend, screen readers): "Specimen", "Curated", "Literature", "AntCat". */
     public static String sourceWord(String kind) {
         if (SOURCE_CURATED.equals(kind)) return "Curated";
         if (SOURCE_LITERATURE.equals(kind)) return "Literature";
+        if (SOURCE_ANTCAT.equals(kind)) return "AntCat";
         return "Specimen";
     }
 
-    /** The icon of a source (an inline mark, styled by .src-icon in antweb.css), with the word as title and for screen readers. */
+    /** The hover text of a source icon: the word, or "From the AntCat import" for AntCat. */
+    public static String sourceTitle(String kind) {
+        return SOURCE_ANTCAT.equals(kind) ? "From the AntCat import" : sourceWord(kind);
+    }
+
+    /**
+     * The icon of a source (an inline mark, styled by .src-icon in antweb.css), its hover text as title and its word
+     * for screen readers. AntCat is shown as the word itself (a small label), not a symbol.
+     */
     public static String sourceIconHtml(String kind) {
         String word = sourceWord(kind);
-        String glyph = SOURCE_CURATED.equals(kind) ? "&#10003;" : SOURCE_LITERATURE.equals(kind) ? "&#128214;" : "&#9673;";
-        return "<span class=\"src-icon src-" + kind + "\" data-source=\"" + kind + "\" title=\"" + word + "\" role=\"img\" aria-label=\""
+        String glyph = SOURCE_CURATED.equals(kind) ? "&#10003;" : SOURCE_LITERATURE.equals(kind) ? "&#128214;"
+            : SOURCE_ANTCAT.equals(kind) ? "AntCat" : "&#9673;";
+        return "<span class=\"src-icon src-" + kind + "\" data-source=\"" + kind + "\" title=\"" + sourceTitle(kind) + "\" role=\"img\" aria-label=\""
             + word + "\">" + glyph + "</span>";
     }
 
@@ -436,7 +498,7 @@ public final class ListView {
             return otherNames.genus(subfamily, genus);
         }
 
-        /** Valid and Vetted (and All specimen names, which names them itself: none there in practice). Not Fossil. */
+        /** Valid and Curated (and All specimen names, which names them itself: none there in practice). Not Fossil. */
         public boolean showsOtherSpecimens() {
             return !StatusSet.LIST_FOSSIL.equals(choice);
         }
@@ -461,7 +523,7 @@ public final class ListView {
 
     /**
      * The genus rows' numbers of a view in a place (one subfamily when given): the view's names (Species), for Valid and
-     * Vetted the names of All specimen names (the evidence of keepGenus), and the place's specimens (Other specimens).
+     * Curated the names of All specimen names (the evidence of keepGenus), and the place's specimens (Other specimens).
      * Three queries, none per row.
      */
     public static GenusRows loadGenusRows(Connection connection, Overview overview, String choice, String subfamily) throws SQLException {
@@ -488,7 +550,7 @@ public final class ListView {
 
     /**
      * The specimens of one genus collected here under names not in the view (the genus page's line, rule of
-     * 2026-10-30, kept 2026-11-02), or null: in Valid and Vetted only (in All specimen names those names are on the list).
+     * 2026-10-30, kept 2026-11-02), or null: in Valid and Curated only (in All specimen names those names are on the list).
      */
     public static PlaceTaxonNotes.OtherNames.Genus genusOtherNames(Connection connection, Overview overview, String choice,
             String subfamily, String genus) throws SQLException {

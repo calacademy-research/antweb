@@ -389,7 +389,7 @@ public class BrowseAction extends DescriptionAction {
 		      // 2026-10-30: in a place that selects specimens, the line names every specimen collected there under a name not
 		      // on the species list ("Specimens collected here not on the species list: 3 (names: ...)"), the indet name being
 		      // one of them; elsewhere (all of AntWeb) the indet line as before. 2026-11-02 (views): names not in the list of
-		      // the current view, shown in Valid and Vetted (in All specimen names those names are on the list itself).
+		      // the current view, shown in Valid and Curated (in All specimen names those names are on the list itself).
 		      String placeCriteria = PlaceTaxonNotes.placeSpecimenCriteria(overview);
 		      boolean placeSelectsSpecimens = placeCriteria != null && !placeCriteria.isEmpty();
 		      if (Rank.GENUS.equals(taxon.getRank()) && placeSelectsSpecimens) {
@@ -487,6 +487,11 @@ public class BrowseAction extends DescriptionAction {
 			if (imagesFromAnywhere) global = !placeOnly;
 
 			taxon.setChildren(connection, overview, statusSet, getChildImages, getChildMaps, caste, global, subgenus);
+			// 2026-11-02: the Fossil button only when the children of the list have fossil names here (one EXISTS query)
+			if (!global && !taxon.isSpeciesOrSubspecies()) {
+			  ListView.setHasFossil(request, connection, overview, Rank.getNextRank(taxon.getRank()),
+			      taxon instanceof Family ? null : taxon.getSubfamily(), taxon instanceof Genus ? taxon.getGenus() : null);
+			}
 			// 2026-11-02 (views): the genus rows of a subfamily in a place, as on the genus list: Species and Other
 			// specimens in the view, and the rows the view shows (ListView.GenusRows; the header counts the rows shown).
 			if (taxon instanceof Subfamily && !global && ListView.hasViews(overview) && org.calacademy.antweb.home.GenusOnly.typeAndKey(overview) != null) {

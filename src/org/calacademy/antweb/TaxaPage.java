@@ -17,7 +17,7 @@ import jakarta.servlet.http.*;
 /**
  * The rows of a list page (taxonomicPage.do, TaxaPageAction): the place's list of subfamilies, genera or species in one of
  * the four views (StatusSet, ListView; Brian Fisher, 2026-11-02). taxaQuery is the list's own rows; on country, adm1,
- * region and subregion lists the views Vetted and All specimen names add the names of specimens collected there
+ * region and subregion lists the views Curated and All specimen names add the names of specimens collected there
  * (specimenNamesWhere, ListView.specimenNamesSet), so viewQuery is the view's whole set; ListView reads the same queries
  * for the genus rows' numbers. Tests: test.org.calacademy.antweb.ListViewTest, home.ListViewDbTest,
  * tests/e2e/test_list_sources.py, test_status_choice.py.
@@ -106,9 +106,9 @@ public class TaxaPage implements Serializable {
 	/**
 	 * The second half of a view (" from taxon where ..."), or null when the view adds no specimen names here: on
 	 * country, adm1, region and subregion lists (ListView.addsSpecimenNames) the names of the not red-flagged specimens
-	 * collected there that the view takes (ListView.specimenNamesSet: Vetted the vetted morphospecies, All specimen
+	 * collected there that the view takes (ListView.specimenNamesSet: Curated the curated morphospecies, All specimen
 	 * names every counted status), not disputed there (a curator removed the name from the list: ListView.notDisputed).
-	 * Genus and subfamily rows: the genus or subfamily of such names, All specimen names only (Vetted's genus rows come
+	 * Genus and subfamily rows: the genus or subfamily of such names, All specimen names only (Curated's genus rows come
 	 * from the list, ListView.GenusRows).
 	 */
 	public static String specimenNamesWhere(Overview overview, String rank, boolean withFossil, StatusSet statusSet) {
@@ -242,7 +242,7 @@ public class TaxaPage implements Serializable {
 	    ArrayList<Taxon> theseChildren = new ArrayList<>();
 
         // The view's rows (Brian Fisher, 2026-11-02): the list's rows and, on country, adm1, region and subregion lists in
-        // the views Vetted and All specimen names, the names of the specimens collected there (viewQuery). withSpecimen
+        // the views Curated and All specimen names, the names of the specimens collected there (viewQuery). withSpecimen
         // (the old specimen=true, "Names from: Specimens collected here") is now the view All specimen names
         // (TaxaPageAction); the parameter is kept for the callers.
         String fetchChildrenQuery = "";
@@ -432,7 +432,7 @@ public class TaxaPage implements Serializable {
 
 	/**
 	 * Genus lists (Brian Fisher, 2026-11-02): the view's numbers of the genus rows (Species, Other specimens) and the rows
-	 * the view shows (ListView.GenusRows.keep: in Valid and Vetted a genus known here only from specimens identified to
+	 * the view shows (ListView.GenusRows.keep: in Valid and Curated a genus known here only from specimens identified to
 	 * genus is left out). The children are filtered here, so the header counts the rows shown. On a database error the
 	 * rows stay as the list has them, with their stored numbers.
 	 */
