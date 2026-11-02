@@ -95,16 +95,16 @@
   "headings": [
    "h3:Citing AntWeb",
    "h1:Family: Formicidae Latreille, 1802",
-   "h2:23 Subfamilies (valid subfamilies, extant and fossil) (22 imaged)",
+   "h2:23 Subfamilies (valid and curated) (22 imaged)",
    "h3:Download Specimen Data",
    "h3:Download Specimen Data"
   ],
-  "images": 64,
+  "images": 48,
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 63,
-  "text_length": 9457,
+  "taxon_links": 49,
+  "text_length": 10440,
   "title": "Browsing family Formicidae in All Antweb - AntWeb"
  },
  "/browse.do?subfamily=formicinae&rank=subfamily": {
@@ -115,11 +115,11 @@
    "h3:Download Specimen Data",
    "h3:Download Specimen Data"
   ],
-  "images": 212,
+  "images": 126,
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 214,
+  "taxon_links": 128,
   "text_length": 13762,
   "title": "Browsing subfamily Formicinae in All Antweb - AntWeb"
  },
@@ -301,12 +301,12 @@
    "h3:Download Specimen Data",
    "h3:Download Specimen Data"
   ],
-  "images": 8747,
+  "images": 6132,
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
   "taxon_links": 53,
-  "text_length": 102316,
+  "text_length": 81272,
   "title": "Genus: Camponotus - AntWeb"
  },
  "/images.do?genus=dorylus&species=nigricans&rank=species": {
@@ -541,12 +541,12 @@
    "h1:Project: All Antweb",
    "h2:23 Subfamilies (valid and curated)"
   ],
-  "images": 65,
+  "images": 49,
   "specimen_links": 0,
   "status": 200,
   "table_rows": 2,
-  "taxon_links": 47,
-  "text_length": 9005,
+  "taxon_links": 33,
+  "text_length": 10046,
   "title": "All Antweb Ants (Subfamilies) - Antweb"
  }
 }

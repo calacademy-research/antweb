@@ -58,6 +58,10 @@ ANT_SUBFAMILIES = {"agroecomyrmecinae", "amblyoponinae", "aneuretinae", "apomyrm
                    "myrmicinae", "paraponerinae", "ponerinae", "proceratiinae", "pseudomyrmecinae"}
 
 
+# PlaceTotals.UNIDENTIFIED_GENERA: genus values that mean "not identified to genus"
+UNIDENTIFIED_GENERA = ("indet", "undet", "(indet)", "((indet))")
+
+
 def indet_genera():
     """Genera with an indet name in AntWeb: [(subfamily, genus lower case, genus taxon name)] from the API."""
     rows = ns.api_all("taxa?species=" + quote_plus("(indet)") + "&taxarank=species", max_pages=4) or []
@@ -67,6 +71,11 @@ def indet_genera():
         # ants only: a non-ant genus (e.g. Acrida, a grasshopper, uploaded as "acridinaeacrida (indet)") is never on a list
         family = (r.get("family") or "formicidae").lower()
         if family != "formicidae" or (r.get("subfamily") or "").lower() not in ANT_SUBFAMILIES:
+            continue
+        # identified to genus only (PlaceTotals.isIdentifiedToGenus, 2026-10-30): "formicinaeindet (indet)" (genus "indet"
+        # or "undet") is identified to subfamily, makes no genus row anywhere and is no sample here
+        genus = (r.get("genus") or "").strip().lower()
+        if genus in UNIDENTIFIED_GENERA or genus.startswith("("):
             continue
         if name.endswith(" (indet)") and parent and r.get("subfamily") and r.get("genus") and not parent.startswith("("):
             out.append((r["subfamily"].lower(), r["genus"].lower(), parent))

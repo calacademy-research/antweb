@@ -244,7 +244,7 @@
             int viewSpecies = genusRows.species(child.getSubfamily(), child.getGenus());
             subtaxonTotal += viewSpecies - nextSubtaxonCount;
             childCountStr = viewSpecies <= 0 ? "<span class='no-species' title='No species of this genus in this view'>&ndash;</span>"
-                : "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "&statusSet=" + Html.url(genusRows.choice) + "'>" + viewSpecies + "</a>";
+                : "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "&statusSet=" + Html.url(genusRows.choice) + "'><span class='numbers'>" + viewSpecies + "</span></a>";
             org.calacademy.antweb.PlaceTaxonNotes.OtherNames.Genus rowOther = genusRows.other(child.getSubfamily(), child.getGenus());
             if (showOtherColumn) {
               otherCell = rowOther == null ? "" : org.calacademy.antweb.PlaceTaxonNotes.otherSpecimensCellHtml(rowOther.specimens, genusOnlySearch == null ? null

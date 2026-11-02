@@ -42,7 +42,7 @@
     String sdPlural = sdRowRank == null ? null : Rank.getPluralRank(sdRowRank);
 %>
        <div id="status_toggle" class="view-switch" role="group" aria-label="View">
-           <span class="view-switch-label">View:</span>
+           <span class="view-switch-label"><a href="<%= AntwebProps.getDomainApp() %>/statusDisplayPage.do" target="new" title="What the name statuses (valid, morphospecies, indet ...) mean">View</a>:</span>
            <span id="change_status" class="view-buttons" data-status-set="<%= Html.escAttr(sdCurrent) %>">
 <%
     // the Fossil button only when the list has fossil names here (Brian Fisher, 2026-11-02; ListView.HAS_FOSSIL_ATTR)

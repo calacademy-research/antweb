@@ -38,7 +38,9 @@ if (true) {
       note = Formatter.initCap(Rank.getPluralRank(pageRank)) + " in the Georegion list are based on the following sources:"
           + " a) specimen records of valid species from the region (a genus also from specimens identified only to genus, 2026-10-29),"
           + " b) AntCat.org type locality information, and"
-          + " c) Curator added records. Any curator may add or remove valid species or morphospecies (Edit Species List);"
+          + " c) Curator added records. Any curator may add or remove valid species or morphospecies"
+          // the name of the curators' tool only for those who can use it (anonymous pages never show it, 2026-11-02)
+          + (LoginMgr.isCurator(request) ? " (Edit Species List)" : "") + ";"
           + " a morphospecies must have at least one specimen record in AntWeb, though not necessarily from this place.";
 
       //A.log("geolocaleTaxaHeaderNotes.jsp geolocale:" + geolocale + " num:" + Georank.getGeorankLevel(pageRank));
