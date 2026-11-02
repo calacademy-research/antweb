@@ -1,4 +1,6 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Page Distribution Status Display (no layout, opened in a new window from the introduced and endemic marks,
+     common/distStatus.jsp and specimenReport.jsp): Native, Introduced and Endemic explained. On the JSP allow list
+     in docker/caddy/Caddyfile. --%><%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

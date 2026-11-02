@@ -1,4 +1,6 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Tiles page of editLogin.do and viewLogin.do's editLogin forward (secure layout): "Edit Login Info - AntWeb",
+     body editLogin-body.jsp. Shows the session attribute thisLogin only to that login or an administrator; anyone
+     else is sent to login.do and thisLogin is removed. Tests: tests/e2e/test_login_form.py. --%><%@ page errorPage = "/error.jsp" %>
 <%@ page import="org.calacademy.antweb.Group" %>
 <%@ page import="org.calacademy.antweb.util.AntwebUtil" %>
 <%@ page import="org.calacademy.antweb.Utility" %>

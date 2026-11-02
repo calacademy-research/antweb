@@ -1,4 +1,5 @@
-<%@ page language="java" %>
+<%-- Unused as of 2026-11-02: body of the unused contributors.jsp, page imports and an empty page. Nothing else names
+     it, and Caddy answers a direct request with 404 (not on the JSP allow list in docker/caddy/Caddyfile). --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.sql.Timestamp" %>

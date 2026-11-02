@@ -91,6 +91,8 @@ jobs:
         run: |
           python3 tests/unit/test_check_headers.py
           python3 tools/ci/check_headers.py
+          # releaseNum.jsp's header must not hold a quote: the release number is its first quoted text
+          python3 tests/unit/test_release_num.py
 
       - name: Data model doc has a section for every table (docs/data-model.md)
         # Replays db/upgrade/**/*.sql and the CREATE TABLE statements in src/; fails when a table or view

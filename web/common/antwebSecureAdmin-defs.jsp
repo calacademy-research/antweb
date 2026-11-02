@@ -1,4 +1,6 @@
-<!-- antwebSecureAdmin-defs.jsp  This page defines the elements of the layout that are common to a majority
+<%-- The tiles definition antweb.default of three admin pages reached over the secure domain
+     (curate/passwordResetCampaign.jsp, curate/viewLogin.jsp, curate/saveLoginSuccess.jsp): layout
+     layouts/secureAdminLayout.jsp (admLayout.jsp) with adminHeader common/adminHeader.jsp. --%><!-- antwebSecureAdmin-defs.jsp  This page defines the elements of the layout that are common to a majority
     of the pages: the navigation bar, header and copyright information-->
     
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

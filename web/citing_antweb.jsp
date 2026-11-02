@@ -1,4 +1,5 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Tiles page Citing AntWeb, requested directly (on the JSP allow list in docker/caddy/Caddyfile; linked from
+     about_nav.jsp and the footer), body citing_antweb-body.jsp. Removes the session attribute taxon. --%><%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

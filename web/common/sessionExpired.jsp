@@ -1,4 +1,6 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Tiles page of the global forward sessionExpired (the compare, map and field guide results actions and
+     SpeciesListToolAction, when the session lost their search results): "AntWeb - Please Log In", body
+     common/sessionExpired-body.jsp. --%><%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

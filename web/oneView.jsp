@@ -1,4 +1,6 @@
-<%@ page language="java" %>
+<%-- Tiles page of getComparison.do's oneView forward (BrowseAction): one view of the children's images, "Comparison
+     Tool - AntWeb", body oneView-body.jsp. Puts the project parameter (or "") in the session attribute project.
+     Docs: docs/flows/places.md (Compare tools). Tests: tests/e2e/test_field_guide_compare.py. --%><%@ page language="java" %>
 <%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

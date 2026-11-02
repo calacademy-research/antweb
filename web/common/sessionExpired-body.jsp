@@ -1,4 +1,5 @@
-<%@ page isErrorPage="true" %>
+<%-- Body of common/sessionExpired.jsp (the global forward sessionExpired): explains that the session seems to have
+     expired, that AntWeb remembers a visitor's search for a short time only, and to try the search again. --%><%@ page isErrorPage="true" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

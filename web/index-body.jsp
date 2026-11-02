@@ -1,4 +1,8 @@
-<%@ page language="java" %>
+<%-- Body of the home page (index.jsp): the generated Current Statistics (web/genInc/statistics.jsp), Recent Images
+     and Recent Edits (genInc/*.html) pasted in by FileUtil.getContent(), the mission text, the subfamily slideshow
+     (common/slideshow_homepage.jsp), the AntWeb Community links (groups, curators, museums, artists, staff), and the
+     World Ant Collections box. No database work at request time. Docs: docs/flows/home-and-statistics.md,
+     docs/numbers.md rows 1 to 5. Tests: tests/e2e/test_home_and_stats.py, test_home_page_links.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

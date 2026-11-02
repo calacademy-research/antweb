@@ -1,4 +1,6 @@
-<!-- pageToolsSearch.jsp -->
+<%-- The Tools bar of the advanced search results, statically included by search/advancedSearchResults-body.jsp:
+     Compare Images, Map Results, Create Field Guide (each with a select-all row and a button) and Download Data
+     (loadSearchResultsData). Docs: docs/flows/search.md. --%><!-- pageToolsSearch.jsp -->
         <div class="clear"></div>
         <div id="tools">
             <div class="tool_label"><a href="#" onclick="showTools('compare_tools'); return false;">Compare Images</a></div>

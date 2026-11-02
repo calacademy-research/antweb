@@ -1,4 +1,7 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Page of worldants.do: "World Ants Collections", the six museum collections photographed by AntWeb (Geneva,
+     Genoa, Basel, Oxford, Berlin, Copenhagen) with a photo and a link to each page (geneva.do ...), written inline
+     as the tiles body. A direct request of the JSP prints "Invalid URL.  Direct JSP calls unsupported."
+     (HttpUtil.isStaticCallCheck). Tests: tests/e2e/test_world_ant_collections.py, test_browser.py. --%><%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 <%@ page import="java.util.*" %>

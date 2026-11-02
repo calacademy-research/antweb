@@ -1,4 +1,6 @@
-<%@ page language="java" %>
+<%-- Tiles page of curator.do?id= (or name=) (CuratorAction): "Curator: <name> - AntWeb", body curator-body.jsp. A
+     direct request of the JSP prints "Invalid URL.  Direct JSP calls unsupported." (HttpUtil.isStaticCallCheck).
+     Docs: docs/numbers.md rows 82 to 84. Tests: tests/e2e/test_curator.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ page import="org.calacademy.antweb.*" %>

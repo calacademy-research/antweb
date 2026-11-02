@@ -1,4 +1,8 @@
-<!-- TaxonEditFieldCK.jsp. -->   
+<%-- One page-text field of a place page, statically included by overview-body.jsp once per field (uses thisDesc,
+     descHeader, descNotes, desc, editField, canEditDesc, hasExtraPrivs, thisPageTarget): curators and admins
+     (DescEditSafety.canEdit) get the heading with [Edit] and the history link, or the editor
+     (ckEditorMinConfigProjectForm.jsp) when it is the field being edited; others see the text when there is one. The
+     notes field is editable only with hasExtraPrivs. Docs: docs/flows/places.md. --%><!-- TaxonEditFieldCK.jsp. -->   
   <% 
   if (true) {
      boolean turnedOn = true; // AntwebProps.isDevOrStageMode();

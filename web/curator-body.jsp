@@ -1,4 +1,8 @@
-<%@ page language="java" %>
+<%-- Body of curator.do: the request attribute curator: upload group, email and admin flag (curators and admins
+     only), specimen uploads (listUploads.do?loginId=) and the last upload, image uploads
+     (listImageUploads.do?curatorId=); administrators also see the description edits, image uploads and image files
+     uploaded. A Curations section is switched off in the code. Docs: docs/numbers.md rows 82 to 84. Tests:
+     tests/e2e/test_curator.py. --%><%@ page language="java" %>
 <%@ page import = "java.util.ResourceBundle" %>
 <%@ page import = "java.util.ArrayList" %>
 <%@ page import = "org.calacademy.antweb.*" %>

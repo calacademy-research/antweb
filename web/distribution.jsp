@@ -1,4 +1,6 @@
-
+<%-- The Distribution section of a taxon page, statically included by taxonPage-body.jsp (uses taxon and overview):
+     the countries of the curated lists by region (linked to their species lists, the page's own place in green),
+     then the bioregions of the curated bioregion lists. Docs: docs/flows/taxon-pages.md. --%>
 <%      
   // Distribution
     ArrayList<Country> countries = taxon.getCountries();

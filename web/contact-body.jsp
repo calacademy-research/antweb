@@ -1,4 +1,5 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Body of Contact AntWeb (contact.do, contact.jsp): one line asking visitors to write to antweb@antweb.org (a
+     mailto link) with questions about AntWeb. Tests: tests/e2e/test_actions.py::test_public_page. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

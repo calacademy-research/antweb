@@ -1,4 +1,5 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Body of user_guide.jsp: the About menu and an old guide to the site's navigation (page context, Current View,
+     Cite this page, Overview, Images, List, Map, tools) in collapsible sections. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

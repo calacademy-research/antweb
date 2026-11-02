@@ -1,4 +1,5 @@
-<%@page contentType="text/html; charset=UTF-8" %>
+<%-- Tiles page of apiV3.1.do (api.do forwards to it): "AntWeb API", body documentation/api/apiV3_1-body.jsp. On the
+     JSP allow list in docker/caddy/Caddyfile. Docs: docs/flows/api.md, docs/API.md. Tests: tests/e2e/test_api.py. --%><%@page contentType="text/html; charset=UTF-8" %>
 
 <%@ page import="org.calacademy.antweb.Formatter" %>
 <%@ page import="org.calacademy.antweb.Utility" %>

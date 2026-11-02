@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- Body of artist.do?id=: the request attribute artist (id, name, image files, active, created, curator); the
+     artist's curator or an admin gets the name as a form posted to artist.do (form token) with rename and remove,
+     admins a link to the artist's images query (query.do?name=specimenOfArtist). Tests:
+     tests/e2e/test_manager_tools.py. --%><%@ page language="java" %>
 <%@ page import = "java.util.ResourceBundle" %>
 <%@ page import = "java.util.ArrayList" %>
 <%@ page import = "org.calacademy.antweb.*" %>

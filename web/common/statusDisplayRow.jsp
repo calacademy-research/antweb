@@ -1,4 +1,5 @@
-<% 
+<%-- The status icon of a search result row: thisStatus from the including page's row (ResultItem), then
+     common/statusDisplayCore.jsp. Statically included by search/advancedSearchResultsByTaxon-body.jsp. --%><% 
 
 if (true) {  // This allows multiple includes of statusDisplay on a single page without duplicated thisStatus declarations.
 

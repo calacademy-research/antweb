@@ -1,4 +1,6 @@
-<%@ page language="java" %>
+<%-- Unused as of 2026-11-02: an old page showing one view (shot parameter) of the images of the session taxon's
+     children. No action forwards here, no page links it, and Caddy answers a direct request with 404 (not on the JSP
+     allow list in docker/caddy/Caddyfile). --%><%@ page language="java" %>
 <%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- The header of the admin layout (tiles attribute adminHeader of common/antweb_admin-defs.jsp and
+     antwebSecureAdmin-defs.jsp). Prints only Server Initializing and stops while AntwebMgr is not populated. Empty
+     bar on login.jsp and notLoggedIn.jsp; without a login: Page has expired with a Login link back to this page (and
+     stops); else the display name and Logout. Docs: docs/guides/page-style.md. --%><%@ page language="java" %>
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Arrays" %>

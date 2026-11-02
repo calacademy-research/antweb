@@ -1,4 +1,6 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Body of About AntWeb (about.do): the About menu (about_nav.jsp), what AntWeb is, examples, how to reuse and cite
+     (common/licenseStatement.jsp, common/citeInclude.jsp), and how names are managed. Tests:
+     tests/unit/test_license_statement.py. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
