@@ -1,7 +1,7 @@
-<%-- Unused as of 2026-11-02: the Temporarily Down page that comments in struts-config.xml suggest forwarding an
-     action to while it is switched off; no action does. Its body common/tempDown-body.jsp did not compile and was
-     removed on that date. Caddy answers a direct request with 404 (not on the JSP allow list in
-     docker/caddy/Caddyfile). --%><%@ page errorPage = "/error.jsp" %>
+<%-- The Temporarily Down page ("This functionality is temporarily down."): the comments in WEB-INF/struts-config.xml
+     say to forward an action here to switch it off (e.g. taxonomicPage, mapComparison); no action does at present.
+     Its body common/tempDown-body.jsp did not compile until 2026-11-02 (missing import), when it was fixed. Caddy
+     answers a direct request with 404 (not on the JSP allow list in docker/caddy/Caddyfile). --%><%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
