@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Every Java class and JSP starts with a short header comment saying what the file does.
+"""Every Java class, JSP and Python script starts with a short header comment saying what the file does.
 
 Road map step 4 (docs/flows, claude/code-documentation-phase-plan.md deliverable 7): a new developer
 reads the header and knows what the file does, who uses it, what it reads or writes, and where its
@@ -11,6 +11,8 @@ Rules
       a line of three or more words that is not only a license, author, date, "Created by" or
       commented-out code line.
   JSP (web/**/*.jsp): a <%-- ... --%> comment that opens in the first 20 lines, with such a sentence.
+  Python (every *.py outside tests/, since 2026-11-02: api/, bin/, tools/, .github/scripts/): a module
+      docstring with such a sentence.
 
 Baseline: tools/ci/headers-missing.txt lists the files that still have no header. The check fails when
   (1) a file not in the baseline has no header (new files must have one), or
@@ -22,6 +24,7 @@ A baseline line for a file that no longer exists also fails (remove it).
   python3 tools/ci/check_headers.py --counts     print the counts only
 Unit test: tests/unit/test_check_headers.py
 """
+import ast
 import os
 import re
 import sys
@@ -126,14 +129,31 @@ def jsp_header(text):
     return None
 
 
+def python_header(text):
+    """The module docstring lines, or None (also None when the file does not parse)."""
+    try:
+        doc = ast.get_docstring(ast.parse(text))
+    except SyntaxError:
+        return None
+    return doc.splitlines() if doc else None
+
+
 def has_header(path, text):
-    hdr = java_header(text) if path.endswith(".java") else jsp_header(text)
+    if path.endswith(".java"):
+        hdr = java_header(text)
+    elif path.endswith(".py"):
+        hdr = python_header(text)
+    else:
+        hdr = jsp_header(text)
     return bool(hdr) and any(is_sentence(x) for x in hdr)
+
+
+PY_DIRS = ("api", "bin", "tools", os.path.join(".github", "scripts"))
 
 
 def all_files(root):
     found = []
-    for base, ext in (("src", ".java"), ("web", ".jsp")):
+    for base, ext in [("src", ".java"), ("web", ".jsp")] + [(d, ".py") for d in PY_DIRS]:
         for d, _, names in os.walk(os.path.join(root, base)):
             for n in names:
                 if n.endswith(ext):
@@ -172,7 +192,7 @@ def problems(res, baseline):
 def counts(res):
     c = {}
     for p, ok in res.items():
-        kind = "Java" if p.endswith(".java") else "JSP"
+        kind = "Java" if p.endswith(".java") else "Python" if p.endswith(".py") else "JSP"
         t = c.setdefault(kind, [0, 0])
         t[0 if ok else 1] += 1
     return c

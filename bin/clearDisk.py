@@ -2,6 +2,12 @@
 # To be execute:
 #   python3 clearDisk.py
 
+"""Deletes old Tomcat log files inside the antweb container: dated logs 7 to 14 days old and numbered copies
+(log.3 to log.9) under /usr/local/tomcat/logs/. Run every night at 21:00 by bin/admin.sh (container cron, as root).
+Never walks the app's own web/log (managed by logrotate, docker/antweb/logrotate.conf) and never follows or
+deletes symbolic links. Docs: docs/architecture-overview.md (logs). Test: tests/unit/test_clear_disk.py.
+"""
+
 import os
 #from shutil import copyfile
 import shutil
