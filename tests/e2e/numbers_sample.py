@@ -111,7 +111,14 @@ def api_all(path, max_pages=8):
             return None
         page = api_rows(body)
         meta = body.get("metaData") or body.get("_metaData") or {}
-        limit = int(meta.get("limit") or 0)
+        params = meta.get("parameters") if isinstance(meta.get("parameters"), dict) else {}
+        limit = int(meta.get("limit") or params.get("limit") or 0)
+        # /taxa says no limit but a limitNotice and returns 500 rows a page (found 2026-11-02: the genus list was cut at
+        # 500 names, so 5 of Madagascar's 62 genera were "not counted"): a full page means there may be more.
+        if not limit and meta.get("limitNotice") and page:
+            limit = len(page)
+        if offset and page and page[0] in rows:
+            return None   # a row seen before: the API ignored offset
         rows.extend(page)
         if not limit or len(page) < limit:
             return rows
