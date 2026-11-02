@@ -1685,7 +1685,7 @@ h2.display_count {
 }
 
 .list_extras.source {
-    width: 20px; //20 
+    width: 20px; /* was 20 */
     min-width: 50px;
 }
 

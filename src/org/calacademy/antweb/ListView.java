@@ -90,7 +90,8 @@ public final class ListView {
     /**
      * SQL: the name (alias a: taxon, specimen, or another table with taxon_name) is on a curated entry of some list: a
      * geolocale_taxon or proj_taxon row with a curator's source (CuratorTaxonSetDb.CURATOR_SOURCES), outside the system
-     * lists (CuratorTaxonSetDb.SYSTEM_PROJECTS). With status morphotaxon: a curated morphospecies.
+     * lists (CuratorTaxonSetDb.SYSTEM_PROJECTS). With status morphotaxon: a curated morphospecies; for a genus row (a
+     * morphogenus), also a curated entry of one of its species.
      */
     public static String vettedCondition(String alias) {
         String sources = CuratorTaxonSetDb.curatorSourceList();
@@ -100,9 +101,18 @@ public final class ListView {
             sys.append("'").append(CuratorTaxonSetDb.SYSTEM_PROJECTS.get(i)).append("'");
         }
         sys.append(")");
-        return "(exists (select 1 from geolocale_taxon vgt where vgt.taxon_name = " + alias + ".taxon_name and vgt.source in " + sources + ")"
+        String own = "(exists (select 1 from geolocale_taxon vgt where vgt.taxon_name = " + alias + ".taxon_name and vgt.source in " + sources + ")"
             + " or exists (select 1 from project vp join proj_taxon vpt on vpt.project_name = vp.project_name"
             + " where vpt.taxon_name = " + alias + ".taxon_name and vpt.source in " + sources + " and vp.project_name not in " + sys + "))";
+        // A morphogenus (a genus row: no space in its taxon name) is curated when a curated morphospecies of it is
+        // (rule of 2026-11-02; review of #316: its own genus row is rarely a curator's entry). Only genus rows pay for
+        // the prefix lookup.
+        String under = "(instr(" + alias + ".taxon_name, ' ') = 0 and (exists (select 1 from geolocale_taxon vgs"
+            + " where vgs.taxon_name like concat(" + alias + ".taxon_name, ' %') and vgs.source in " + sources + ")"
+            + " or exists (select 1 from project vps join proj_taxon vpts on vpts.project_name = vps.project_name"
+            + " where vpts.taxon_name like concat(" + alias + ".taxon_name, ' %') and vpts.source in " + sources
+            + " and vps.project_name not in " + sys + ")))";
+        return "(" + own + " or " + under + ")";
     }
 
     /** Whether the view adds the names of specimens collected in the place: country, adm1, region and subregion lists. */

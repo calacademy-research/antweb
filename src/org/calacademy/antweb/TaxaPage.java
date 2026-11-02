@@ -415,8 +415,9 @@ public class TaxaPage implements Serializable {
 	private ListView.GenusRows genusRows;
 
 	/**
-	 * Genus lists of a place that selects specimens (2026-11-02, speed): the place's specimens by name, read once before
-	 * fetchChildren (loadCollected) and used by its specimen half and by findGenusRows, instead of a scan per query.
+	 * Genus and species lists of a place that selects specimens (2026-11-02, speed): the place's specimens by name, read
+	 * once before fetchChildren (loadCollected) and used by its specimen half, findGenusRows and findPlaceSpecimens,
+	 * instead of a scan per query.
 	 */
 	private ListView.PlaceSpecimens collectedPlaceSpecimens;
 
@@ -468,6 +469,11 @@ public class TaxaPage implements Serializable {
 			}
 		}
 		if (names.isEmpty()) return;
+		// the place's specimens already read for the list (loadCollected): no second query
+		if (collectedPlaceSpecimens != null) {
+			placeSpecimens = collectedPlaceSpecimens;
+			return;
+		}
 		try {
 			placeSpecimens = ListView.loadPlaceSpecimens(connection, overview, null, null, names);
 		} catch (SQLException | RuntimeException e) {

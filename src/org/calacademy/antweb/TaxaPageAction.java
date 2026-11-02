@@ -200,8 +200,9 @@ public final class TaxaPageAction extends AntwebAction {
             //A.log("execute() overview:" + overview);
             // 2026-11-02: the Fossil button only when the list has fossil names here (one EXISTS query)
             ListView.setHasFossil(request, connection, overview, rank, null, null);
-            // 2026-11-02 (speed): a genus list reads the place's specimens once, for its specimen half and its genus rows
-            if (Rank.GENUS.equals(rank)) taxaPage.loadCollected(connection, overview);
+            // 2026-11-02 (speed): a genus or species list reads the place's specimens once, for its specimen half, its genus
+            // rows and its source icons (review of #316: the species lists' Curated default had a specimen scan per query)
+            if (Rank.GENUS.equals(rank) || Rank.SPECIES.equals(rank)) taxaPage.loadCollected(connection, overview);
             String successMsg = taxaPage.fetchChildren(connection, overview, rank, withImages, withTaxa, withSpecimen, true, caste, StatusSet.listStatusSet(statusSetStr, overview.getName())); //, orderBy); list choice -> its criteria (2026-10-30)
             // String successMsg = "SUCCESS!";
             if (successMsg != null) {

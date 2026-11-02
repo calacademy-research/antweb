@@ -325,6 +325,35 @@ public class PlaceTaxonNotesDbTest extends TestCase {
     }
 
     /** The Fossil button (2026-11-02): only when the list has valid fossil names of the rows' rank (one EXISTS query). */
+    /**
+     * Review of #316 (2026-11-02): a morphogenus is curated when a curated morphospecies of it is, even though its own
+     * genus row is not a curator's entry (ListView.vettedCondition); a morphogenus with no curated morphospecies is not.
+     */
+    public void testMorphogenusCuratedThroughItsMorphospecies() throws Exception {
+        String genus = "myrmicinaegen01", sp = "myrmicinaegen01 mg01";
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species) values"
+            + " ('" + genus + "', 'genus', 'morphotaxon', '" + MYRM + "', 'formicidae', '" + MYRM + "', 'gen01', null),"
+            + " ('" + sp + "', 'species', 'morphotaxon', '" + genus + "', 'formicidae', '" + MYRM + "', 'gen01', 'mg01')");
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, source) values (" + MADAGASCAR + ", '" + genus + "', 'specimen'),"
+            + " (" + MADAGASCAR + ", '" + sp + "', 'specimen')");
+        String q = "select count(*) from taxon t where t.taxon_name = '" + genus + "' and " + ListView.vettedCondition("t");
+        assertEquals("no curated morphospecies: not curated", 0, count(q));
+        exec("update geolocale_taxon set source = 'speciesListTool' where taxon_name = '" + sp + "'");
+        assertEquals("its morphospecies curated: the morphogenus is curated", 1, count(q));
+        assertEquals("the morphospecies itself", 1, count("select count(*) from taxon t where t.taxon_name = '" + sp + "' and "
+            + ListView.vettedCondition("t")));
+        exec("update geolocale_taxon set source = 'specimen' where taxon_name = '" + sp + "'");
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, source) values (" + MADAGASCAR + ", 'myrmicinaegen01x mg01', 'curator')");
+        assertEquals("a curated name of another genus that starts the same: not curated", 0, count(q));
+    }
+
+    private int count(String sql) throws Exception {
+        try (PreparedStatement s = connection.prepareStatement(sql); ResultSet r = s.executeQuery()) {
+            r.next();
+            return r.getInt(1);
+        }
+    }
+
     public void testFossilButtonOnlyWithFossilNames() throws Exception {
         Country mad = madagascar();
         assertFalse(ListView.hasFossil(connection, mad, "species", null, null));
