@@ -173,7 +173,9 @@ public class UploadNotice {
         public int specimensLoaded = -1;
         public int redFlagged = -1;
         public int notLoaded = -1;          // lines in the report's "(not uploaded)" sections (MessageMgr)
-        public int corrected = -1;          // lines AntWeb corrected and loaded (MessageMgr.CORRECTED)
+        public int corrected = -1;          // lines AntWeb corrected and loaded (MessageMgr.CORRECTED, not name changes)
+        public int nameChanges = 0;         // lines filed under AntCat's current name (MessageMgr.NAME_CHANGES)
+        public int alreadyInAntweb = 0;     // codes another group uploaded first: not loaded, nothing to do
         public int imagesSaved = -1;
         public int imagesNotSaved = -1;     // files the Image Uploader did not save (listed in the report)
         public String reportUrl;            // null: no report was written
@@ -219,13 +221,16 @@ public class UploadNotice {
     public static String attentionSummary(Facts f) {
         if (f.images || !f.complete || f.notLoaded < 0 || f.corrected < 0) return null;
         List<String> parts = new ArrayList<>();
+        // Name changes first (Brian Fisher, 2026-11-02: they matter most); codes other groups uploaded first are
+        // not a problem in the curator's data and are not counted here.
+        if (f.nameChanges > 0) parts.add(were(f.nameChanges, "line", "lines") + "filed under a name AntCat has changed");
         if (f.corrected > 0) parts.add(were(f.corrected, "line", "lines") + "corrected");
         if (f.notLoaded > 0) parts.add(were(f.notLoaded, "line", "lines") + "not loaded");
         if (f.redFlagged > 0) parts.add(were(f.redFlagged, "specimen", "specimens") + "red-flagged");
         if (parts.isEmpty()) return "Nothing in the report needs your attention.";
         String list = parts.size() == 1 ? parts.get(0)
             : String.join(", ", parts.subList(0, parts.size() - 1)) + " and " + parts.get(parts.size() - 1);
-        return list + "; see the report. Please fix " + (f.corrected + f.notLoaded + Math.max(f.redFlagged, 0) == 1 ? "it" : "them")
+        return list + "; see the report. Please fix " + (f.nameChanges + f.corrected + f.notLoaded + Math.max(f.redFlagged, 0) == 1 ? "it" : "them")
             + " in your own data before your next upload.";
     }
 

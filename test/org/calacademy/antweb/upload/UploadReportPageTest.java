@@ -76,6 +76,8 @@ public class UploadReportPageTest extends TestCase {
             f.complete = true;
             f.notLoaded = mgr.getNotLoadedCount();
             f.corrected = mgr.getCorrectedCount();
+            f.nameChanges = mgr.getNameChangeCount();
+            f.alreadyInAntweb = mgr.getAlreadyInAntwebCount();
             f.redFlagged = mgr.getRedFlagCount();
             f.specimensLoaded = facts.insertedSpecimens;
             return f;
@@ -310,6 +312,12 @@ public class UploadReportPageTest extends TestCase {
         return list;
     }
 
+    /** The data-key of the first section in html. */
+    static String firstKey(String html) {
+        Matcher m = Pattern.compile("data-key=\"([^\"]*)\"").matcher(html);
+        return m.find() ? m.group(1) : "";
+    }
+
     static int occurrences(String s, String sub) {
         return s.split(Pattern.quote(sub), -1).length - 1;
     }
@@ -327,15 +335,19 @@ public class UploadReportPageTest extends TestCase {
         assertNotNull(sentence);
         assertTrue(page, page.contains("<p class=\"rep-sentence\" id=\"rep-sentence\">" + Html.esc(sentence) + "</p>"));
         // Each section is in the group of its kind, and the groups add up to the tiles.
-        int notLoaded = 0, corrected = 0;
+        int notLoaded = 0, corrected = 0, nameChanges = 0, already = 0;
         for (String[] s : sections(page)) {
             if (MessageMgr.NOT_LOADED.equals(s[1])) notLoaded += Integer.parseInt(s[2]);
             if (MessageMgr.CORRECTED_KIND.equals(s[1])) corrected += Integer.parseInt(s[2]);
+            if (MessageMgr.NAME_CHANGE.equals(s[1])) nameChanges += Integer.parseInt(s[2]);
+            if (MessageMgr.ALREADY_IN_ANTWEB.equals(s[1])) already += Integer.parseInt(s[2]);
             String attention = x.mgr.attentionByKey().get(s[0]);
             if (attention != null) assertEquals(s[0], attention, s[1]);
         }
         assertEquals(email.notLoaded, notLoaded);
         assertEquals(email.corrected, corrected);
+        assertEquals(email.nameChanges, nameChanges);
+        assertEquals(email.alreadyInAntweb, already);
         assertTilesAreSectionSums(page);
     }
 
@@ -343,7 +355,8 @@ public class UploadReportPageTest extends TestCase {
      *  (2026-10-30), and each group's pill says that sum. */
     static void assertTilesAreSectionSums(String page) {
         String[][] tiles = {{"notLoaded", MessageMgr.NOT_LOADED}, {"corrected", MessageMgr.CORRECTED_KIND},
-            {"redFlagged", MessageMgr.RED_FLAG}, {"notes", MessageMgr.NOTE}};
+            {"redFlagged", MessageMgr.RED_FLAG}, {"notes", MessageMgr.NOTE}, {"nameChanges", MessageMgr.NAME_CHANGE},
+            {"alreadyInAntweb", MessageMgr.ALREADY_IN_ANTWEB}};
         for (String[] t : tiles) {
             if (!page.contains("id=\"rep-count-" + t[0] + "\"")) continue;
             int sum = 0;
@@ -394,16 +407,33 @@ public class UploadReportPageTest extends TestCase {
         Fixture x = casNightly();
         String page = x.render();
         assertSummaryIsTheEmails(x, page);
-        assertEquals(280, count(page, "notLoaded"));
+        // Brian Fisher, 2026-11-02: codes other collections uploaded first are "Already in AntWeb (nothing to do)",
+        // at the bottom and closed; name changes come first and open.
+        // A code given twice in the group's own file (12 lines) stays "Not loaded".
+        assertEquals(12, count(page, "notLoaded"));
+        assertEquals(268, count(page, "alreadyInAntweb"));
         assertEquals(3, count(page, "redFlagged"));
         assertTrue(page.contains("id=\"rep-redFlag\""));
+        int names = page.indexOf("id=\"rep-nameChange\""), notLoaded = page.indexOf("id=\"rep-notLoaded\""),
+            red = page.indexOf("id=\"rep-redFlag\""), notes = page.indexOf("id=\"rep-note\""),
+            already = page.indexOf("id=\"rep-alreadyInAntweb\"");
+        assertTrue(names + " " + notLoaded + " " + red + " " + notes + " " + already,
+            names > 0 && notLoaded > names && red > notLoaded && notes > red && already > notes);
+        String own = sectionHtml(page, MessageMgr.duplicateEntries);
+        assertTrue(own, own.contains("data-kind=\"" + MessageMgr.NOT_LOADED + "\" data-total=\"12\" data-rows=\"1\""));
+        assertTrue(own, own.contains("given twice in the file"));
+        assertTrue(page.contains("Name changes (please update your data)"));
+        assertFalse("name changes open", sectionHtml(page, MessageMgr.recognizedInvalidSpecies).contains("rep-fold"));
+        assertTrue("red flags closed", sectionHtml(page, firstKey(page.substring(red))).contains("<details class=\"rep-fold\"><summary>"));
         // Duplicates: one row per holder, each with its lines and codes collapsed.
-        String dup = sectionHtml(page, MessageMgr.duplicateEntries);
-        assertTrue(dup, dup.contains("data-total=\"280\" data-rows=\"4\""));
+        String dup = sectionHtml(page, UploadReportPage.OTHER_GROUP_DUPLICATES);
+        assertTrue(dup, dup.contains("data-kind=\"" + MessageMgr.ALREADY_IN_ANTWEB + "\" data-total=\"268\" data-rows=\"3\""));
+        assertFalse(dup, dup.contains("given twice"));
+        assertTrue(dup, dup.contains("<details class=\"rep-fold\"><summary>"));
         assertTrue(dup, dup.contains("Code already in AntWeb, uploaded by UC Davis (Ward lab)"));
         assertTrue(dup, dup.contains("<summary>171 specimens</summary>"));
         assertTrue(dup, dup.contains("<summary>+168 more</summary>"));
-        // 46 recognized invalid names: 10 rows, then the rest under "Show all 46 rows".
+        // 46 recognized invalid names (open): 10 rows, then the rest under "Show all 46 rows".
         String rec = sectionHtml(page, MessageMgr.recognizedInvalidSpecies);
         assertTrue(rec, rec.contains("<details class=\"rep-more\"><summary>Show all 46 rows</summary>"));
         String first = rec.substring(0, rec.indexOf("rep-more"));
@@ -530,8 +560,9 @@ public class UploadReportPageTest extends TestCase {
         Fixture x = wardUpload();
         String page = x.render();
         assertSummaryIsTheEmails(x, page);
-        assertEquals(1, x.mgr.getCorrectedCount());                     // the Aenictus line only
-        assertEquals(1, count(page, "corrected"));
+        assertEquals(1, x.mgr.getNameChangeCount());                    // the Aenictus line only (a name change since 11-02)
+        assertEquals(1, count(page, "nameChanges"));
+        assertEquals(0, x.mgr.getCorrectedCount());
         assertEquals(1, occurrences(page, MessageMgr.NOT_ANTS_HEADING + " <span"));
         String notAnts = sectionHtml(page, MessageMgr.nameNotInFamilyFormicidae);
         assertTrue(notAnts, notAnts.contains("data-kind=\"" + MessageMgr.NOTE + "\" data-total=\"5\" data-rows=\"3\""));
