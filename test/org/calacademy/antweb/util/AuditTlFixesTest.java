@@ -38,6 +38,8 @@ import org.calacademy.antweb.util.QueriesWithParams;
 import org.calacademy.antweb.util.Scheduler;
 import org.calacademy.antweb.util.SpeciesListAccess;
 import org.calacademy.antweb.util.UtilDataAction;
+import org.calacademy.antweb.util.ListUploadsAction;
+import org.calacademy.antweb.util.TaxonPropMgr;
 
 /**
  * Audit fixes of 2026-11-02 (triage tl), no database:
@@ -52,7 +54,9 @@ import org.calacademy.antweb.util.UtilDataAction;
  *   "No changes made"; carriage-return fragments are checked by their file line; upload errors are escaped;
  * - species lists are edited by key, a name only when it stands for that list; range reports by place id;
  * - "10-12-2012" is read as a month/day date (was 2012-01-01); centroids in parentheses are read;
- * - CREATE TABLE runs only when the table is missing (it commits the caller's transaction).
+ * - CREATE TABLE runs only when the table is missing (it commits the caller's transaction);
+ * - upload lists: a curator sees their own group's uploads, admins every group's (Brian Fisher, 2026-11-02);
+ * - no (or an unknown) bioregion is never introduced, in the nightly flags and on the species list (2026-11-02).
  */
 public class AuditTlFixesTest extends TestCase {
 
@@ -351,5 +355,37 @@ public class AuditTlFixesTest extends TestCase {
         for (String s : ran) created |= s.toUpperCase().contains("CREATE TABLE");
         assertTrue("created when missing: " + ran, created);
         GroupCountDb.forgetTable();
+    }
+
+    // ------------------------------------------------------------------ upload lists, introduced rule (2026-11-02)
+
+    public void testCuratorsListOnlyTheirOwnGroupsUploads() {
+        // Admin: what was asked (0 = every group).
+        assertEquals(0, ListUploadsAction.scopeGroupId(true, 5, 0));
+        assertEquals(7, ListUploadsAction.scopeGroupId(true, 5, 7));
+        // Curator: their own group, whatever was asked.
+        assertEquals(5, ListUploadsAction.scopeGroupId(false, 5, 0));
+        assertEquals(5, ListUploadsAction.scopeGroupId(false, 5, 7));
+        assertEquals(5, ListUploadsAction.scopeGroupId(false, 5, 5));
+        // A login without a group sees no upload (-1 matches no group_id).
+        assertEquals(-1, ListUploadsAction.scopeGroupId(false, 0, 0));
+        assertEquals(-1, ListUploadsAction.scopeGroupId(false, -1, 3));
+    }
+
+    public void testNoBioregionIsNotIntroduced() {
+        String map = "Neotropical:true Afrotropical:false Malagasy:false";
+        assertTrue(TaxonPropMgr.isIntroducedIn(map, "Malagasy"));
+        assertTrue("a bioregion missing from the map is not native", TaxonPropMgr.isIntroducedIn(map, "Palearctic"));
+        assertFalse(TaxonPropMgr.isIntroducedIn(map, "Neotropical"));
+        // No bioregion, blank, or a name that is not a bioregion: not introduced (was introduced in the nightly flags).
+        assertFalse(TaxonPropMgr.isIntroducedIn(map, null));
+        assertFalse(TaxonPropMgr.isIntroducedIn(map, ""));
+        assertFalse(TaxonPropMgr.isIntroducedIn(map, "Malgasy"));
+        assertFalse(TaxonPropMgr.isIntroducedIn(map, "malagasy"));
+        // No introduced map: never introduced.
+        assertFalse(TaxonPropMgr.isIntroducedIn(null, "Malagasy"));
+        assertFalse(TaxonPropMgr.isIntroducedIn(" ", "Malagasy"));
+        // A map with no native bioregion: introduced everywhere (the species list said native before).
+        assertTrue(TaxonPropMgr.isIntroducedIn("Malagasy:false", "Nearctic"));
     }
 }

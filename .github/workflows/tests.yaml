@@ -875,7 +875,8 @@ jobs:
         # email change needs the current password; caste sort, homonym links, statistics lock, subfamily of a name,
         # spelling guesses, inactive accounts, image owners, one run of the sets at a time, failed-job wording, upload
         # line numbers and escaped errors, species lists by key, range reports by id, dashed dates, centroids, and
-        # CREATE TABLE only when the table is missing (2026-11-02).
+        # CREATE TABLE only when the table is missing; upload lists of a curator's own group only (admins: all groups);
+        # no or an unknown bioregion is never introduced (2026-11-02).
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
@@ -889,7 +890,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.AuditTlFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (21 tests)" /tmp/out.txt
+            grep -q "^OK (23 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the upload decisions of 2026-10-28 (current valid name not in AntWeb, lines identified only to genus or subfamily, UTF-8 only)
@@ -1075,6 +1076,8 @@ jobs:
           # non-BMP), in the upload's transaction, and a failure is thrown, not only logged (production 2026-10-21).
           # PageTextRenameDbTest: renaming a place (editGeolocale.do) moves its page text and history (object_edit,
           # object_hist) with their dates; a new name that has page text already is refused and nothing changes.
+          # The rename also carries the new name to child places, the region/subregion columns below, synonyms and a
+          # country's curator assignments (login_country), in the same transaction; an ambiguous old name carries nothing.
           # SpecimenNameHistoryDbTest: the specimen page's Name History query (applied rows of one specimen, newest first,
           # never report-only rows; index by_code; no history when the table is missing).
           # CountInvariantsTest: the count check's invariants over every place (docs/numbers.md), each wrong number found.
@@ -1130,7 +1133,7 @@ jobs:
               /t/org/calacademy/antweb/home/GeneraRuleDbTest.java \
               /t/org/calacademy/antweb/home/BlankNameCleanupDbTest.java \
               /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:3 home.GeneraRuleDbTest:11 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:3 home.GeneraRuleDbTest:11 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

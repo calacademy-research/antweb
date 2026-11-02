@@ -17,6 +17,9 @@ import org.calacademy.antweb.home.PageTextKeys;
  * editGeolocale.do form with a new name (GeolocaleDb.updateGeolocale) moves both, in the same
  * transaction, with their dates; a rename onto a name that already has page text saves nothing;
  * when another place still has the old name, the text stays with it.
+ * Since 2026-11-02 the rename also carries the new name to the child places (parent), the region and
+ * subregion columns below a region or subregion, synonyms (valid_name) and a country's curator
+ * assignments (login_country), in the same transaction (GeolocaleDb.carryRename).
  *
  * The tables are made here with the columns the code uses (object_hist.created is ON UPDATE
  * CURRENT_TIMESTAMP, as in production). Runs in CI against MySQL 8.4 (host "mysql");
@@ -38,7 +41,8 @@ public class PageTextRenameDbTest extends TestCase {
         c = DriverManager.getConnection(url, System.getenv().getOrDefault("ANTWEB_TEST_DB_USER", "antweb"),
             System.getenv().getOrDefault("ANTWEB_TEST_DB_PASSWORD", "CHANGE_ME"));
         c.setAutoCommit(true);
-        for (String t : new String[] {"geolocale", "object_edit", "object_hist"}) exec("drop table if exists " + t);
+        for (String t : new String[] {"geolocale", "object_edit", "object_hist", "login_country"}) exec("drop table if exists " + t);
+        exec("create table login_country (login_id int, country varchar(250))");
         exec("create table geolocale (id int primary key, name varchar(128), georank varchar(20), georank_type varchar(40),"
             + " is_valid tinyint default 1, valid_name varchar(128), isoCode varchar(10), iso3Code varchar(10), is_un tinyint default 0,"
             + " is_live tinyint default 0, source varchar(64), admin_notes varchar(255), parent varchar(128), region varchar(128),"
@@ -184,5 +188,63 @@ public class PageTextRenameDbTest extends TestCase {
         assertEquals(1, moved[1]);
         assertEquals("2018-01-01 00:00:00\n", rows("select " + D + " from object_hist where object_key = 'Other Land'"));
         assertEquals("2021-01-01 00:00:00\n", rows("select " + D + " from object_edit where object_key = 'Other Land'"));
+    }
+
+    public void testCountryRenameCarriesToAdm1sAndCurators() throws Exception {
+        exec("insert into geolocale (id, name, georank, parent, country) values (10, 'Alpha', 'adm1', 'Old Land', 'Old Land'),"
+            + " (11, 'Beta', 'adm1', 'Old Land', null), (12, 'Gamma', 'adm1', 'Plain', null),"
+            + " (13, 'Old Land', 'adm1', 'Plain', null), (14, 'Old Lande', 'country', 'Eastern Africa', null)");
+        exec("update geolocale set is_valid = 0, valid_name = 'Old Land' where id = 14");
+        exec("insert into login_country values (7, 'Old Land'), (8, 'Old Land'), (8, 'New Land'), (9, 'Plain')");
+        String msg = save(OLD_LAND, "New Land");
+        assertFalse(msg, msg.startsWith(GeolocaleDb.NOT_SAVED));
+        assertTrue(msg, msg.contains("The new name was carried to 2 adm1s (their parent), 1 place that name it as valid name, 2 curator assignments."));
+        assertEquals("10|New Land|New Land\n11|New Land|null\n12|Plain|null\n13|Plain|null\n",
+            rows("select id, parent, country from geolocale where georank = 'adm1' and id >= 10 order by id"));
+        assertEquals("New Land\n", rows("select valid_name from geolocale where id = 14"));
+        // Login 8 had both names: one row left. Other countries untouched.
+        assertEquals("7|New Land\n8|New Land\n9|Plain\n", rows("select login_id, country from login_country order by login_id, country"));
+        assertTrue(c.getAutoCommit());
+    }
+
+    public void testRegionAndSubregionRenameCarryDown() throws Exception {
+        exec("insert into geolocale (id, name, georank, parent, region, subregion) values"
+            + " (20, 'Africa', 'region', null, null, null), (21, 'Eastern Africa', 'subregion', 'Africa', 'Africa', null),"
+            + " (22, 'Western Africa', 'subregion', 'Africa', 'Africa', null)");
+        exec("update geolocale set region = 'Africa', subregion = 'Eastern Africa' where georank = 'country'");
+        exec("insert into geolocale (id, name, georank, parent, region, subregion) values (23, 'Kiwi', 'adm1', 'Plain', 'Africa', 'Eastern Africa')");
+        String msg = save(21, "East Africa");
+        assertTrue(msg, msg.contains("The new name was carried to 3 countries (their parent), 5 places below it (their subregion)."));
+        assertEquals("1|East Africa|East Africa\n2|East Africa|East Africa\n4|Western Asia|East Africa\n5|East Africa|East Africa\n",
+            rows("select id, parent, subregion from geolocale where georank = 'country' order by id"));
+        msg = save(20, "Afrika");
+        assertTrue(msg, msg.contains("The new name was carried to 2 subregions (their parent), 7 places below it (their region)."));
+        assertEquals("0\n", rows("select count(*) from geolocale where parent = 'Africa' or region = 'Africa'"));
+        assertEquals("Afrika\n", rows("select region from geolocale where id = 23"));
+    }
+
+    public void testAmbiguousOrFailedRenameCarriesNothing() throws Exception {
+        // Two adm1s named Georgia would be ambiguous only in the same country: the country Georgia's adm1s
+        // keep their parent when the adm1 Georgia (United States) is renamed.
+        exec("insert into geolocale (id, name, georank, parent) values (30, 'Tbilisi', 'adm1', 'Georgia')");
+        exec("insert into login_country values (7, 'Georgia')");
+        String msg = save(GEORGIA_ADM1, "Georgia (state)");
+        assertFalse(msg, msg.contains("carried"));
+        assertEquals("Georgia\n", rows("select parent from geolocale where id = 30"));
+        assertEquals("Georgia\n", rows("select country from login_country"));
+        // A second country with the same name: nothing is carried, and the message says so.
+        exec("insert into geolocale (id, name, georank, parent) values (31, 'Plain', 'country', 'Western Asia'), (32, 'Delta', 'adm1', 'Plain')");
+        msg = save(PLAIN, "Flat");
+        assertTrue(msg, msg.contains("Another country is still named Plain"));
+        assertEquals("Plain\n", rows("select parent from geolocale where id = 32"));
+        // A failure inside the carry rolls the whole save back (one transaction).
+        exec("drop table login_country");
+        try {
+            save(OLD_LAND, "New Land");
+            fail("expected the missing login_country table to fail the save");
+        } catch (java.sql.SQLException expected) { }
+        assertEquals("Old Land\n", rows("select name from geolocale where id = 1"));
+        assertEquals("2\n", rows("select count(*) from object_edit where object_key = 'Old Land'"));
+        assertTrue(c.getAutoCommit());
     }
 }

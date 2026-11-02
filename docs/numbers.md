@@ -495,6 +495,11 @@ Found while doing this (2026-10-26, end-to-end tests of rows 24 to 53; each has 
   `TaxonPropMgr.isIntroduced(name, null)` is true (`isMapped(map, null)` is false). The page says "not native to this
   place's bioregion", and its species list marks none of them Introduced (`TaxonPropMgr.isBioregionNative` treats no
   bioregion as native). Test: `e2e:test_numbers_endemic.py::test_a_place_without_a_bioregion_has_no_introduced_species`.
+  Fixed 2026-11-02 (Brian Fisher: no bioregion = not introduced, everywhere): one rule, `TaxonPropMgr.isIntroducedIn`
+  (no, blank or unknown bioregion: not introduced; a bioregion the map does not mark native: introduced), used by the
+  upload and name update (`specimen.is_introduced`), the nightly flags and the species list's mark and sort. The stored
+  flags and numbers change at the next nightly run (set 2); the xfail stays until then. Test:
+  `junit:AuditTlFixesTest#testNoBioregionIsNotIntroduced`.
 - **B42** browse.do of a species with more specimens than the limit says "(Only the first k of N displayed)" and lists
   k + 1 specimens: `specimenReport.jsp` shows rows with index 0 to limit (`index <= limit`, index starts at 0); with the
   default limit, 2,001 of a species with more than 2,000 specimens. Fixed 2026-11-02 (showBrowse-body.jsp and

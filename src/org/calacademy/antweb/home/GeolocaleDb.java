@@ -715,6 +715,7 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
                 returnVal += " Another place is still named " + Html.esc(oldName)
                     + ", so the page text under that name stays with it; this place starts without page text.";
             }
+            if (renamed) returnVal += carryRename(conn, geolocale, oldName, newName);
             conn.commit();
         } catch (SQLException e) {
             try { conn.rollback(); } catch (SQLException e2) { /* the first error is the one to report */ }
@@ -724,6 +725,79 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
             try { conn.setAutoCommit(autoCommit); } catch (SQLException e) { /* ignore */ }
         }
         return returnVal;
+    }
+
+    /**
+     * The places under a renamed place and the curators assigned to it refer to it by name, so a rename
+     * carries the new name to them, in updateGeolocale()'s transaction (2026-11-02):
+     * - its child places' parent (region: subregions; subregion: countries; country: adm1s);
+     * - the region and subregion columns of the places below a renamed region or subregion, and the
+     *   country column of a renamed country's adm1s;
+     * - places that name it as their valid name (same rank; for an adm1, same country);
+     * - a renamed country's curator assignments (login_country.country).
+     * If another place of the same rank still has the old name (for an adm1: in the same country), the
+     * old name is ambiguous and nothing is carried; the message says so.
+     * Returns the text added to the save message ("" when there was nothing to carry).
+     */
+    String carryRename(Connection conn, Geolocale place, String oldName, String newName) throws SQLException {
+        String rank = place.getGeorank();
+        if (rank == null) return "";
+        boolean isAdm1 = "adm1".equals(rank);
+        String sameRankSql = "select count(*) from geolocale where name = ? and georank = ? and id <> ?"
+            + (isAdm1 ? " and parent <=> ?" : "");
+        try (PreparedStatement s = conn.prepareStatement(sameRankSql)) {
+            s.setString(1, oldName);
+            s.setString(2, rank);
+            s.setInt(3, place.getId());
+            if (isAdm1) s.setString(4, place.getParent());
+            try (ResultSet r = s.executeQuery()) {
+                if (r.next() && r.getInt(1) > 0) {
+                    s_log.warn("carryRename() id:" + place.getId() + " another " + rank + " is still named " + oldName + "; nothing carried");
+                    return " Another " + Html.esc(rank) + " is still named " + Html.esc(oldName)
+                        + ", so places and curators that refer to that name were left unchanged.";
+                }
+            }
+        }
+        List<String> done = new ArrayList<>();
+        String childRank = Georank.getChild(rank);
+        if (childRank != null && !"".equals(childRank) && !isAdm1) {
+            int n = carry(conn, "update geolocale set parent = ? where parent = ? and georank = ?", newName, oldName, childRank);
+            if (n > 0) done.add(n + " " + (n == 1 ? childRank : Georank.getPluralRank(childRank)) + " (their parent)");
+        }
+        if ("region".equals(rank)) {
+            int n = carry(conn, "update geolocale set region = ? where region = ? and georank in ('subregion', 'country', 'adm1')", newName, oldName);
+            if (n > 0) done.add(n + (n == 1 ? " place" : " places") + " below it (their region)");
+        }
+        if ("subregion".equals(rank)) {
+            int n = carry(conn, "update geolocale set subregion = ? where subregion = ? and georank in ('country', 'adm1')", newName, oldName);
+            if (n > 0) done.add(n + (n == 1 ? " place" : " places") + " below it (their subregion)");
+        }
+        if ("country".equals(rank)) {
+            carry(conn, "update geolocale set country = ? where country = ? and georank = 'adm1'", newName, oldName);
+        }
+        int synonyms = isAdm1
+            ? carry(conn, "update geolocale set valid_name = ? where valid_name = ? and georank = ? and parent <=> ? and id <> ?",
+                newName, oldName, rank, place.getParent(), place.getId())
+            : carry(conn, "update geolocale set valid_name = ? where valid_name = ? and georank = ? and id <> ?",
+                newName, oldName, rank, place.getId());
+        if (synonyms > 0) done.add(synonyms + (synonyms == 1 ? " place" : " places") + " that name it as valid name");
+        if ("country".equals(rank)) {
+            // A curator who has both names keeps one row.
+            int n = carry(conn, "delete a from login_country a join login_country b on a.login_id = b.login_id"
+                + " where a.country = ? and b.country = ?", oldName, newName);
+            n += carry(conn, "update login_country set country = ? where country = ?", newName, oldName);
+            if (n > 0) done.add(n + (n == 1 ? " curator assignment" : " curator assignments"));
+        }
+        s_log.info("carryRename() id:" + place.getId() + " " + oldName + " -> " + newName + ": " + done);
+        if (done.isEmpty()) return "";
+        return " The new name was carried to " + String.join(", ", done) + ".";
+    }
+
+    private static int carry(Connection conn, String sql, Object... params) throws SQLException {
+        try (PreparedStatement s = conn.prepareStatement(sql)) {
+            for (int i = 0; i < params.length; i++) s.setObject(i + 1, params[i]);
+            return s.executeUpdate();
+        }
     }
 
     /** Start of updateGeolocale()'s message when nothing was saved. */

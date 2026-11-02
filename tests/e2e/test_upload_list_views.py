@@ -8,6 +8,8 @@ heading that did not make that clear. Now:
 - one group (listSpecimenUploads.do?groupId=N): title "Specimen uploads of <group name>", and for
   admins the link "View all groups' uploads".
 The existing links (Home, Curator Tools, and for admins "Each group's last upload") stay.
+Since 2026-11-02 only admins see every group's uploads (and the links to them); a curator's list is
+always their own group's, whatever groupId= asks for.
 
 Read-only. Staging test logins (admin, and the test uploader: a curator of the test group).
 """
@@ -76,19 +78,41 @@ def test_admin_sees_which_view():
 
 
 @needs("uploader")
-def test_curator_sees_which_view():
-    s, _token, _login_id = login("uploader")
+def test_curator_sees_only_own_group():
+    """A curator sees only their own group's uploads (Brian Fisher, 2026-11-02): the all-groups list and
+    another group's list (groupId=1) show the curator's own group, with no link to every group's uploads."""
+    s, _token, login_id = login("uploader")
     gid, name = group_of(s)
     assert name == GROUP_NAME, (gid, name)
 
-    group_page = _get(s, f"/listSpecimenUploads.do?groupId={gid}")
-    assert _h2(group_page) == "Specimen uploads of " + GROUP_NAME, _h2(group_page)
-    assert VIEW_ALL not in _text(group_page), "the 'View all groups' uploads' link is for admins only"
-    _check_kept_links(group_page, admin=False)
+    for path in (f"/listSpecimenUploads.do?groupId={gid}", "/listSpecimenUploads.do", "/listSpecimenUploads.do?groupId=1",
+                 "/listUploads.do?groupId=0"):
+        page = _get(s, path)
+        assert _h2(page) == "Specimen uploads of " + GROUP_NAME, (path, _h2(page))
+        assert ALL_LINE not in _text(page), path
+        assert VIEW_ALL not in _text(page), (path, "the 'View all groups' uploads' link is for admins only")
+        assert "<th>Group</th>" not in page, path
+        assert not re.findall(r'/listUploads\.do\?groupId=(\d+)', page), path
+        _check_kept_links(page, admin=False)
 
-    all_page = _get(s, "/listSpecimenUploads.do")
-    assert _h2(all_page) == ALL_TITLE, _h2(all_page)
-    assert ALL_LINE in _text(all_page)
-    own_id, own_text = _own_group_link(all_page)
-    assert own_id == gid and own_text == f"Show only {GROUP_NAME}'s uploads", (own_id, own_text)
-    _check_kept_links(all_page, admin=False)
+    # The image upload lists: the same rule, and no link to all groups' image uploads.
+    for path in ("/listImageUploads.do", "/listImageUploads.do?groupId=1", f"/listImageUploads.do?groupId={gid}"):
+        page = _get(s, path)
+        assert re.search(r"<h2[^>]*>Image Uploads Reports for Group: <a href='[^']*/group\.do\?id=" + str(gid) + "'>", page), \
+            (path, _h2(page))
+        assert 'id="all-image-uploads"' not in page, path
+    # One login's list stays within the curator's group.
+    page = _get(s, f"/listImageUploads.do?curatorId={login_id}")
+    assert 'id="all-image-uploads"' not in page
+
+
+@needs("admin")
+def test_admin_sees_every_group():
+    s, _token, _login_id = login("admin")
+    gid, _name = group_of(s)
+    page = _get(s, "/listImageUploads.do")
+    assert _h2(page) == "Image Upload Reports for All Groups", _h2(page)
+    page = _get(s, f"/listImageUploads.do?groupId={gid}")
+    assert re.search(r'id="all-image-uploads" href\s*=\s*"[^"]*/listImageUploads\.do"', page), "admin: no link to all groups' image uploads"
+    page = _get(s, "/listSpecimenUploads.do")
+    assert _h2(page) == ALL_TITLE, _h2(page)
