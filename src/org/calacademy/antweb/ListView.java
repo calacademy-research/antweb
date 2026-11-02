@@ -129,6 +129,22 @@ public final class ListView {
             + " and " + SpecimenDb.notRedFlagged("specimen") + (placeCriteria == null ? "" : placeCriteria) + ")";
     }
 
+    /**
+     * SQL: the name (alias) is one of these (the names of the specimens collected in a place, read once by
+     * loadPlaceSpecimens; the same rows as collectedHere without another scan of the specimen table). "1 = 0" when none.
+     */
+    public static String namedIn(String alias, java.util.Collection<String> names) {
+        if (names == null || names.isEmpty()) return "1 = 0";
+        StringBuilder b = new StringBuilder(alias).append(".taxon_name in (");
+        boolean first = true;
+        for (String n : names) {
+            if (!first) b.append(", ");
+            b.append(DBUtil.sqlLiteral(n));
+            first = false;
+        }
+        return b.append(")").toString();
+    }
+
     /** SQL (" and ...", or ""): the name (alias) is not disputed in the place (removed from its list by a curator). */
     public static String notDisputed(Overview overview, String alias) {
         if (overview instanceof Geolocale) {
@@ -279,16 +295,27 @@ public final class ListView {
 
     /** The query of a view's species and subspecies names (TaxaPage.viewQuery), of one subfamily or genus when given. */
     public static String viewNamesSql(Overview overview, StatusSet viewSet, String subfamily, String genus) {
+        return viewNamesSql(overview, viewSet, subfamily, genus, null);
+    }
+
+    /** The same, the specimen half on the names collected here given (null: a subquery). */
+    public static String viewNamesSql(Overview overview, StatusSet viewSet, String subfamily, String genus, java.util.Collection<String> collected) {
         String extra = "";
         if (subfamily != null && !subfamily.isEmpty()) extra += " and taxon.subfamily = " + DBUtil.sqlQuote(subfamily);
         if (genus != null && !genus.isEmpty()) extra += " and taxon.genus = " + DBUtil.sqlQuote(genus);
         return TaxaPage.viewQuery(overview, Rank.SPECIES, true, viewSet,
-            "taxon.taxon_name as taxon_name, taxon.subfamily as subfamily, taxon.genus as genus, taxon.status as status", extra);
+            "taxon.taxon_name as taxon_name, taxon.subfamily as subfamily, taxon.genus as genus, taxon.status as status", extra, collected);
     }
 
     public static ViewNames loadViewNames(Connection connection, Overview overview, StatusSet viewSet, String subfamily, String genus) throws SQLException {
+        return loadViewNames(connection, overview, viewSet, subfamily, genus, null);
+    }
+
+    public static ViewNames loadViewNames(Connection connection, Overview overview, StatusSet viewSet, String subfamily, String genus,
+            PlaceSpecimens collected) throws SQLException {
         ViewNames out = new ViewNames();
-        try (PreparedStatement stmt = connection.prepareStatement(viewNamesSql(overview, viewSet, subfamily, genus));
+        try (PreparedStatement stmt = connection.prepareStatement(viewNamesSql(overview, viewSet, subfamily, genus,
+                collected == null ? null : collected.taxonNames()));
              ResultSet r = stmt.executeQuery()) {
             while (r.next()) out.add(r.getString("taxon_name"), r.getString("subfamily"), r.getString("genus"), r.getString("status"));
         }
@@ -438,13 +465,24 @@ public final class ListView {
      * Three queries, none per row.
      */
     public static GenusRows loadGenusRows(Connection connection, Overview overview, String choice, String subfamily) throws SQLException {
+        return loadGenusRows(connection, overview, choice, subfamily, null);
+    }
+
+    /**
+     * The same; placeSpecimens: the place's specimens by name already read for the page (all subfamilies), or null to read
+     * them here. The specimen table is scanned once per page (2026-11-02, speed: three scans made country genus lists
+     * take 6 to 11 s); the view queries take the names collected here from it (namedIn).
+     */
+    public static GenusRows loadGenusRows(Connection connection, Overview overview, String choice, String subfamily,
+            PlaceSpecimens placeSpecimens) throws SQLException {
+        PlaceSpecimens specimens = placeSpecimens != null ? placeSpecimens : loadPlaceSpecimens(connection, overview, subfamily, null);
         StatusSet viewSet = StatusSet.listStatusSet(choice);
-        ViewNames view = loadViewNames(connection, overview, viewSet, subfamily, null);
+        ViewNames view = loadViewNames(connection, overview, viewSet, subfamily, null, specimens);
         Map<String, Integer> evidence = null;
         if (StatusSet.LIST_VALID.equals(choice) || StatusSet.LIST_VETTED.equals(choice)) {
-            evidence = loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_ALL), subfamily, null).countByGenus(BEYOND_GENUS_STATUSES);
+            evidence = loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_ALL), subfamily, null, specimens)
+                .countByGenus(BEYOND_GENUS_STATUSES);
         }
-        PlaceSpecimens specimens = loadPlaceSpecimens(connection, overview, subfamily, null);
         return new GenusRows(choice, view.countByGenus(null), evidence, otherNames(specimens, view)).withSpecimens(specimens);
     }
 
@@ -457,7 +495,7 @@ public final class ListView {
         if (!(StatusSet.LIST_VALID.equals(choice) || StatusSet.LIST_VETTED.equals(choice))) return null;
         PlaceSpecimens specimens = loadPlaceSpecimens(connection, overview, subfamily, genus);
         if (specimens == null) return null;
-        ViewNames view = loadViewNames(connection, overview, StatusSet.listStatusSet(choice), subfamily, genus);
+        ViewNames view = loadViewNames(connection, overview, StatusSet.listStatusSet(choice), subfamily, genus, specimens);
         return otherNames(specimens, view).genus(subfamily, genus);
     }
 

@@ -198,6 +198,8 @@ public final class TaxaPageAction extends AntwebAction {
 // no double
             //taxaPage.setOverview(overview);
             //A.log("execute() overview:" + overview);
+            // 2026-11-02 (speed): a genus list reads the place's specimens once, for its specimen half and its genus rows
+            if (Rank.GENUS.equals(rank)) taxaPage.loadCollected(connection, overview);
             String successMsg = taxaPage.fetchChildren(connection, overview, rank, withImages, withTaxa, withSpecimen, true, caste, StatusSet.listStatusSet(statusSetStr, overview.getName())); //, orderBy); list choice -> its criteria (2026-10-30)
             // String successMsg = "SUCCESS!";
             if (successMsg != null) {

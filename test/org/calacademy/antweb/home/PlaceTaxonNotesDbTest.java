@@ -292,6 +292,38 @@ public class PlaceTaxonNotesDbTest extends TestCase {
         assertEquals(0, pon.species(MYRM, "pheidole"));
     }
 
+    /**
+     * Speed (2026-11-02): a genus list reads the place's specimens once and gives their names to the view queries
+     * (ListView.namedIn) instead of a subquery per query; the rows are the same either way, in every view.
+     */
+    public void testNamesReadOnceGiveTheSameRows() throws Exception {
+        otherNamesFixture();
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, source) values (" + MADAGASCAR + ", '" + CAREBARA_MG01 + "', 'speciesListTool')");
+        exec("update specimen set country = 'Mozambique' where code = 'mg1'");
+        for (Country place : new Country[] {madagascar(), mozambique()}) {
+            ListView.PlaceSpecimens ps = ListView.loadPlaceSpecimens(connection, place, null, null);
+            for (String choice : StatusSet.LIST_CHOICES) {
+                StatusSet set = StatusSet.listStatusSet(choice);
+                assertEquals(place.getName() + " " + choice, names(ListView.viewNamesSql(place, set, null, null)),
+                    names(ListView.viewNamesSql(place, set, null, null, ps.taxonNames())));
+                for (String rank : new String[] {"genus", "subfamily"}) {
+                    String sub = org.calacademy.antweb.TaxaPage.viewQuery(place, rank, true, set, "taxon.subfamily", "");
+                    String named = org.calacademy.antweb.TaxaPage.viewQuery(place, rank, true, set, "taxon.subfamily", "", ps.taxonNames());
+                    assertEquals(place.getName() + " " + choice + " " + rank, names(sub), names(named));
+                }
+                ListView.GenusRows once = ListView.loadGenusRows(connection, place, choice, null, ps);
+                ListView.GenusRows again = ListView.loadGenusRows(connection, place, choice, null);
+                for (String g : new String[] {"carebara", "pheidole"}) {
+                    assertEquals(choice + " " + g, again.species(MYRM, g), once.species(MYRM, g));
+                    PlaceTaxonNotes.OtherNames.Genus a = again.other(MYRM, g), b = once.other(MYRM, g);
+                    assertEquals(choice + " " + g, a == null ? 0 : a.specimens, b == null ? 0 : b.specimens);
+                }
+            }
+        }
+        assertTrue(names(ListView.viewNamesSql(mozambique(), StatusSet.listStatusSet("vetted"), null, null,
+            ListView.loadPlaceSpecimens(connection, mozambique(), null, null).taxonNames())).contains(CAREBARA_MG01));
+    }
+
     /** The genus page's line (Valid and Vetted only) and the place's specimens by name (source icons). */
     public void testGenusPageLineAndPlaceSpecimens() throws Exception {
         otherNamesFixture();

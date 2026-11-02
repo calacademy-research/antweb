@@ -90,9 +90,15 @@ public class TaxaPage implements Serializable {
 	 * condition added to both halves (" and ...", or "").
 	 */
 	public static String viewQuery(Overview overview, String rank, boolean withFossil, StatusSet statusSet, String select, String extra) {
+		return viewQuery(overview, rank, withFossil, statusSet, select, extra, null);
+	}
+
+	/** The same, the specimen half on the names collected here given (specimenNamesWhere's collected; null: a subquery). */
+	public static String viewQuery(Overview overview, String rank, boolean withFossil, StatusSet statusSet, String select, String extra,
+			java.util.Collection<String> collected) {
 		String x = extra == null ? "" : extra;
 		String q = "select " + select + listWhere(overview, rank, withFossil, statusSet) + x;
-		String specimenWhere = specimenNamesWhere(overview, rank, withFossil, statusSet);
+		String specimenWhere = specimenNamesWhere(overview, rank, withFossil, statusSet, collected);
 		if (specimenWhere != null) q += " union select " + select + specimenWhere + x;
 		return q;
 	}
@@ -106,11 +112,23 @@ public class TaxaPage implements Serializable {
 	 * from the list, ListView.GenusRows).
 	 */
 	public static String specimenNamesWhere(Overview overview, String rank, boolean withFossil, StatusSet statusSet) {
+		return specimenNamesWhere(overview, rank, withFossil, statusSet, null);
+	}
+
+	/**
+	 * The same; collected: the names of the specimens collected here (ListView.PlaceSpecimens, already read by the page),
+	 * or null to select them with a subquery. Same rows either way (2026-11-02, speed: a country's specimens are found by
+	 * "country = X or island_country = X", which no index serves, so each subquery scanned the specimen table; a genus
+	 * list now scans it once, ListView.loadPlaceSpecimens, and passes the names).
+	 */
+	public static String specimenNamesWhere(Overview overview, String rank, boolean withFossil, StatusSet statusSet,
+			java.util.Collection<String> collected) {
 		StatusSet names = ListView.specimenNamesSet(statusSet);
 		if (names == null || !ListView.addsSpecimenNames(overview)) return null;
 		if (!"species".equals(rank) && !StatusSet.ALL_NAMES.equals(names.getValue())) return null;
-		String w = " from taxon where " + ListView.collectedHere("taxon", PlaceTaxonNotes.placeSpecimenCriteria(overview))
-			+ " and taxon.family = 'formicidae'";
+		String here = collected == null ? ListView.collectedHere("taxon", PlaceTaxonNotes.placeSpecimenCriteria(overview))
+			: ListView.namedIn("taxon", collected);
+		String w = " from taxon where " + here + " and taxon.family = 'formicidae'";
 		if ("species".equals(rank)) {
 			w += " and taxon.taxarank in ('species', 'subspecies') and " + org.calacademy.antweb.home.PlaceTotals.identifiedToGenus("taxon")
 				+ names.getAndCriteria("taxon", rank);
@@ -229,7 +247,8 @@ public class TaxaPage implements Serializable {
         // (TaxaPageAction); the parameter is kept for the callers.
         String fetchChildrenQuery = "";
         if (withTaxa) {
-          String specimenWhere = specimenNamesWhere(overview, rank, withFossil, statusSet);
+          String specimenWhere = specimenNamesWhere(overview, rank, withFossil, statusSet,
+              collectedPlaceSpecimens == null ? null : collectedPlaceSpecimens.taxonNames());
           isWithSpecimen = specimenWhere != null;
           fetchChildrenQuery = taxaQuery(overview, rank, withFossil, statusSet);
           if (specimenWhere != null) fetchChildrenQuery += " union select " + selectColumns(rank) + specimenWhere;
@@ -396,6 +415,22 @@ public class TaxaPage implements Serializable {
 	private ListView.GenusRows genusRows;
 
 	/**
+	 * Genus lists of a place that selects specimens (2026-11-02, speed): the place's specimens by name, read once before
+	 * fetchChildren (loadCollected) and used by its specimen half and by findGenusRows, instead of a scan per query.
+	 */
+	private ListView.PlaceSpecimens collectedPlaceSpecimens;
+
+	public void loadCollected(Connection connection, Overview overview) {
+		if (!ListView.hasViews(overview)) return;
+		try {
+			collectedPlaceSpecimens = ListView.loadPlaceSpecimens(connection, overview, null, null);
+		} catch (SQLException | RuntimeException e) {
+			s_log.warn("loadCollected() overview:" + overview + " e:" + e);
+			collectedPlaceSpecimens = null;
+		}
+	}
+
+	/**
 	 * Genus lists (Brian Fisher, 2026-11-02): the view's numbers of the genus rows (Species, Other specimens) and the rows
 	 * the view shows (ListView.GenusRows.keep: in Valid and Vetted a genus known here only from specimens identified to
 	 * genus is left out). The children are filtered here, so the header counts the rows shown. On a database error the
@@ -404,7 +439,7 @@ public class TaxaPage implements Serializable {
 	public void findGenusRows(Connection connection, Overview overview, String choice) {
 		if (!ListView.hasViews(overview)) return;
 		try {
-			genusRows = ListView.loadGenusRows(connection, overview, choice, null);
+			genusRows = ListView.loadGenusRows(connection, overview, choice, null, collectedPlaceSpecimens);
 			if (children != null) children = genusRows.filter(children);
 		} catch (SQLException | RuntimeException e) {
 			s_log.warn("findGenusRows() overview:" + overview + " e:" + e);

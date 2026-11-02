@@ -1028,6 +1028,12 @@ is on the list or (geolocales) where its specimens were collected, up the hierar
 `geolocale_taxon_dispute`, `proj_taxon_dispute`) takes it off that place only. Computed at query time
 (`ListView.vettedCondition`): per morphospecies row one indexed lookup of `geolocale_taxon` by taxon_name and, when that
 finds none, one primary-key lookup of `proj_taxon` per project; no stored flag, so a curator's change shows at once.
+Speed (2026-11-02, staging): a country's specimens are selected by `country = X or island_country = X`, which no index
+serves (there is an index on country, adm1 only), so each query that selected them scanned the specimen table (900,000
+rows); the first build of the views made three such scans per genus list (Mozambique 6 to 11 s, was 1.6 s). A genus list
+now reads the place's specimens once (`ListView.loadPlaceSpecimens`, grouped by name) and gives their names to the other
+queries (`ListView.namedIn`, `TaxaPage.specimenNamesWhere` with the names); the rows are the same
+(`junit:PlaceTaxonNotesDbTest#testNamesReadOnceGiveTheSameRows`).
 
 Genus rows (`ListView.GenusRows`): Species = the species and subspecies of the genus in the view, or "&ndash;"; Other
 specimens = the specimens collected here under names not in the view (row 41). In Valid and Vetted a genus known in

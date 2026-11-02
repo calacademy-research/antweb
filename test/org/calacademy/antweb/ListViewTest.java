@@ -42,6 +42,15 @@ public class ListViewTest extends TestCase {
         assertFalse("not the proxy rows of parent regions", v.contains("proxy"));
     }
 
+    /** The names collected here, read once, in place of the subquery (2026-11-02, speed): quoted; none: no rows. */
+    public void testNamedIn() {
+        assertEquals("1 = 0", ListView.namedIn("taxon", java.util.Collections.emptyList()));
+        assertEquals("taxon.taxon_name in ('a b', 'o''brien')", ListView.namedIn("taxon", Arrays.asList("a b", "o'brien")));
+        String w = TaxaPage.specimenNamesWhere(mozambique(), "species", true, StatusSet.listStatusSet("all"), Arrays.asList("x"));
+        assertTrue(w, w.startsWith(" from taxon where taxon.taxon_name in ('x') and taxon.family = 'formicidae'"));
+        assertFalse("no scan of the specimen table: " + w, w.contains("from specimen"));
+    }
+
     public void testWhichPlacesAddSpecimenNames() {
         assertTrue(ListView.addsSpecimenNames(mozambique()));
         Adm1 adm1 = new Adm1();
