@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Every Java class and JSP starts with a short header comment saying what the file does.
+"""Every Java class, JSP and Python script starts with a short header comment saying what the file does.
 
 Road map step 4 (docs/flows, claude/code-documentation-phase-plan.md deliverable 7): a new developer
 reads the header and knows what the file does, who uses it, what it reads or writes, and where its
@@ -11,6 +11,9 @@ Rules
       a line of three or more words that is not only a license, author, date, "Created by" or
       commented-out code line.
   JSP (web/**/*.jsp): a <%-- ... --%> comment that opens in the first 20 lines, with such a sentence.
+  Python (since 2026-11-02, every *.py in the repository except under tests/, dot-folders such as .git
+      or .venv, node_modules, site-packages and __pycache__; .github/scripts/ is included): a module
+      docstring with such a sentence (comments and blank lines may come before it).
 
 Baseline: tools/ci/headers-missing.txt lists the files that still have no header. The check fails when
   (1) a file not in the baseline has no header (new files must have one), or
@@ -22,6 +25,7 @@ A baseline line for a file that no longer exists also fails (remove it).
   python3 tools/ci/check_headers.py --counts     print the counts only
 Unit test: tests/unit/test_check_headers.py
 """
+import ast
 import os
 import re
 import sys
@@ -126,13 +130,45 @@ def jsp_header(text):
     return None
 
 
+def python_header(text):
+    """The module docstring lines, or None (also None when the file does not parse)."""
+    try:
+        doc = ast.get_docstring(ast.parse(text))
+    except (SyntaxError, ValueError):   # ValueError: a NUL byte (Python before 3.12)
+        return None
+    return doc.splitlines() if doc else None
+
+
 def has_header(path, text):
-    hdr = java_header(text) if path.endswith(".java") else jsp_header(text)
+    if path.endswith(".java"):
+        hdr = java_header(text)
+    elif path.endswith(".py"):
+        hdr = python_header(text)
+    else:
+        hdr = jsp_header(text)
     return bool(hdr) and any(is_sentence(x) for x in hdr)
+
+
+PY_SKIP = {"tests", "node_modules", "site-packages", "__pycache__", "venv"}
+
+
+def python_files(root):
+    """Every *.py under root, except under tests/ and folders that hold no project code (see PY_SKIP and dot-folders;
+    .github is walked, for .github/scripts)."""
+    found = []
+    for d, dirs, names in os.walk(root):
+        rel = os.path.relpath(d, root)
+        dirs[:] = sorted(x for x in dirs if x not in PY_SKIP and (not x.startswith(".") or x == ".github")
+                         and not (rel == "." and x in ("src", "web")))
+        for n in names:
+            if n.endswith(".py"):
+                found.append(os.path.relpath(os.path.join(d, n), root).replace(os.sep, "/"))
+    return found
 
 
 def all_files(root):
     found = []
+    found.extend(python_files(root))
     for base, ext in (("src", ".java"), ("web", ".jsp")):
         for d, _, names in os.walk(os.path.join(root, base)):
             for n in names:
@@ -172,7 +208,7 @@ def problems(res, baseline):
 def counts(res):
     c = {}
     for p, ok in res.items():
-        kind = "Java" if p.endswith(".java") else "JSP"
+        kind = "Java" if p.endswith(".java") else "Python" if p.endswith(".py") else "JSP"
         t = c.setdefault(kind, [0, 0])
         t[0 if ok else 1] += 1
     return c
