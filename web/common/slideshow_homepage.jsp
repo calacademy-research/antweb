@@ -1,4 +1,6 @@
-<%@ page import="org.calacademy.antweb.*" %>
+<%-- The home page's subfamily slideshow, jsp:included by index-body.jsp: one slide per valid subfamily (or
+     incertae_sedis) of TaxonMgr.getSubfamilies() that has an image/<subfamily>.jpg, linking to its images.do page;
+     built in full first, so an error leaves the slideshow empty (logged). Docs: docs/flows/home-and-statistics.md. --%><%@ page import="org.calacademy.antweb.*" %>
 <%@ page import="org.calacademy.antweb.Formatter" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="java.util.*" %>

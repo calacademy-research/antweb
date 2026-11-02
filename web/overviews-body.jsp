@@ -1,4 +1,8 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Body of the place list pages (countries.do, regions.do, subregions.do, adm1s.do, projects.do, museums.do,
+     bioregions.do): one row per place of the request attribute overviews with valid species, specimens and image
+     files (common/imagesDefinition.jsp), what a museum is on the museums list, an admin note, and the pies
+     (chart/pieChart.jsp). Docs: docs/flows/places.md, docs/numbers.md rows 73 to 77. Tests:
+     tests/e2e/test_place_pages.py. --%><%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

@@ -16,6 +16,11 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /logout.do (form loginForm): forgets "Keep me logged in" for this browser (RememberMeMgr.forget), removes the
+ * login and invalidates the session, then redirects to a safe target= (not login.do) or forwards to index.jsp. Docs:
+ * docs/flows/email-and-password-reset.md. Tests: tests/e2e/test_curator.py (test_logout, remember-me tests).
+ */
 public final class LogoutAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(LogoutAction.class);

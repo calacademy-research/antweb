@@ -1,4 +1,6 @@
-<%@ page language="java" %>
+<%-- Body of AntWeb Press (press.do, press.jsp): In the News, a fixed list of articles and press releases about
+     AntWeb, each with its date, publication and a link (HTML or PDF). Tests:
+     tests/e2e/test_actions.py::test_public_page. --%><%@ page language="java" %>
 <%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

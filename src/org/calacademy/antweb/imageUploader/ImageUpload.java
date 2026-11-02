@@ -7,6 +7,13 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * One image upload (a row of table image_upload): curator, group, artist, copyright, license, image count and
+ * complete, with its saved files (ImageUploaded, table image_uploaded) and the files not saved (table
+ * image_upload_refused). Written and read by ImageUploadDb for the Image Uploader (imageUploadBatch.do), the upload
+ * report (imageUploadReport.do) and the list of image uploads (listImageUploads.do). Docs:
+ * docs/flows/image-upload.md, docs/data-model.md (image_upload).
+ */
 public class ImageUpload {
 
     private static final Log s_log = LogFactory.getLog(ImageUpload.class);

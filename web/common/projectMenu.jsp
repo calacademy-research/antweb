@@ -1,4 +1,6 @@
-
+<%-- Static include of common/menuBar.jsp: the Projects menu of the header, the live projects of scope PROJECT other
+     than allantwebants and worldants (ProjectMgr.getSubglobalProjects, by project name), each its title linked to
+     project.do. Docs: docs/flows/places.md. --%>
 <div id="projects" class="subnav">
   <ul> <!-- open subglobalProjects ("projectants") -->
 <%

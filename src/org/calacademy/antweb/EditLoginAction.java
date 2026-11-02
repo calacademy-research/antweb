@@ -20,6 +20,17 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+/**
+ * /editLogin.do?id= (form editLoginForm, session scope, validate="false"; editLogin.jsp): a user edits their own
+ * account, an administrator any account. Not logged in: "Must be logged in..."; another user's id: "Insufficient
+ * privileges...". A GET shows the form; a POST saves user name, email, first and last name and, when given, a new
+ * password (LoginDb.updateLogin) after checks: valid email, LoginNames.problem, passwords match, PasswordPolicy, and
+ * the current password when users change their own password or email. A user's own password change keeps this
+ * session and ends the others (PasswordResetDb.afterPasswordChange). Linked from the login panel
+ * (common/loginPanel.jsp) for logins that are not curators; LoginAction sends new accounts here. Docs:
+ * docs/flows/email-and-password-reset.md, docs/data-model.md (login). Tests: tests/e2e/test_curator.py,
+ * tests/e2e/test_hardening_2026_10_18.py.
+ */
 public final class EditLoginAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(EditLoginAction.class);

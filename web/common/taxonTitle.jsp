@@ -1,4 +1,7 @@
-<!-- taxonTitle.jsp -->
+<%-- The h1 title of taxon and specimen pages: rank and name (a dagger for fossils), for a specimen also its taxon
+     name, then author and date, the status icon (statusDisplayTitle.jsp) and the type specimen icon. Static include
+     of taxonPage-body, showBrowse-body, imagePage-body, specimen-body, specimenImages-body, homonymPage-body,
+     oneView-body, dynamicMap-body and mapComparison-body. Uses the including page's taxon and dagger. --%><!-- taxonTitle.jsp -->
 <br>
 <!-- functionality unnecessarily replicated in specimen-body.jsp --> 
 <h1><%

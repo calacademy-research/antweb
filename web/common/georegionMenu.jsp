@@ -1,4 +1,7 @@
-
+<%-- Static include of common/menuBar.jsp: the Georegions menu of the header, an accordion of the live regions, their
+     live subregions and their live countries (GeolocaleMgr.getDeepRegions). A country with live adm1s opens to the
+     country (with its flag) and its adm1s, Hawaii (an island) listed after the adm1 Georgia; other countries link
+     their page. Regions and subregions are not links. Docs: docs/flows/places.md. --%>
 <div id="georegions" class="subnav">
   <ul id="accordion">
 <!-- begin listing available projects -->

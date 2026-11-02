@@ -5,6 +5,15 @@ import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
+/**
+ * Comparator of Taxon.sortTaxa for orderBy=ie. Each name gets the key "ei" (endemic and introduced), "e", "i" or "";
+ * the keys are compared in descending order, so the rows come as: introduced only, endemic and introduced, endemic,
+ * then the others (introduced only above endemic: probably not what was meant, unchanged here). Endemic is the row's flag; introduced means the name's introduced map does not count the place's
+ * bioregion as native (TaxonPropMgr). The place's bioregion comes from the bioregion or geolocale given to the
+ * constructor. Taxon.sortTaxa calls it when a list is sorted by a column heading: the list rows
+ * (taxonReportBody.jsp: taxonomicPage.do, browse.do), the images view (taxonChildImages.jsp: images.do),
+ * comparisons and field guides.
+ */
 public class SortTaxaByIE implements Comparator<Taxon> 
 { 
     String bioregion;

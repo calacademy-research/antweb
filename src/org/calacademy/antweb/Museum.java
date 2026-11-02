@@ -10,6 +10,15 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.geolocale.*;
 
+/**
+ * A museum (table museum, held in memory by MuseumMgr): code, name, title, active flag (the Museums menu shows the
+ * active ones) and page text, with its species list museum_taxon (rebuilt from the specimens in nightly set 3,
+ * MuseumDb.populate). As an Overview it gives the museum page (museum.do?museumCode=, list museums.do), the list
+ * SQL and the Countable count queries (specimens and images of a counted status, a synonym's specimens counted
+ * under the valid name: PlaceTotals). sort() puts the museum's own specimens first. Docs: docs/flows/places.md,
+ * docs/numbers.md rows 20 to 37, docs/data-model.md (museum, museum_taxon). Tests: PlaceTotalsDbTest,
+ * tests/e2e/test_place_pages.py.
+ */
 public class Museum extends LocalityOverview implements Countable {
     
     private static final Log s_log = LogFactory.getLog(Museum.class);

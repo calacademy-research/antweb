@@ -1,4 +1,12 @@
-<%@ page import="org.calacademy.antweb.Map" %>
+<%-- Static include that draws a map: the including page's variable map (org.calacademy.antweb.Map), by running its
+     JavaScript call map.getGoogleMapFunction() in a Leaflet container 400 ms after the page loads. Size by object:
+     dynamic (974 x 650, with the map's subtitle), thirds (262 x 262), else small (232 x 232) with an "Enlarge Map"
+     link to bigMap.do (the taxon, specimen, locality or collection, plus the place's parameters except for
+     localities and collections). Bots get "Log In to see maps." instead. Counts the maps shown
+     (Map.addToDisplayMapCount). Included, after maps/googleMapPreInclude.jsp, by overview-body, specimen-body,
+     collection-body, locality-body, group-body, search/fieldGuide-body and dynamicMap-body; uses their variables
+     map, object, objectName, mapType and overview. Docs: docs/flows/places.md (Maps). Tests:
+     tests/unit/test_map_popups.py, tests/e2e/test_site_links.py. --%><%@ page import="org.calacademy.antweb.Map" %>
 <%@ page import="org.calacademy.antweb.util.UserAgentTracker" %>
 
 <%

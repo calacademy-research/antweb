@@ -1,4 +1,6 @@
-<%@ page language="java" %>
+<%-- Tiles page of taxonomicPage.do (TaxaPageAction), a place's list of subfamilies, genera or species, titled like
+     "Madagascar Ants (Genera) - Antweb": body taxonomicPageImages-body.jsp with images=true, else
+     taxonomicPage-body.jsp. Docs: docs/flows/places.md. --%><%@ page language="java" %>
 <%@ page errorPage = "error.jsp" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.calacademy.antweb.*" %>

@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- Body of the Orphaned Images page (orphanedImages.do, admins): "Found N image files of M specimen codes that are
+     not in AntWeb" (request attribute orphanedImageCount and the list orphanedImages), what an orphaned image is,
+     and one line per specimen code linked to its images folder. Docs: docs/numbers.md row 99,
+     docs/guides/curate-page.md. Tests: tests/e2e/test_count_check.py. --%><%@ page language="java" %>
 <%@ page import = "org.calacademy.antweb.Formatter" %>
 <%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>

@@ -20,6 +20,16 @@ import org.calacademy.antweb.upload.UploadAction;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * /specimen.do (specimen.jsp) and /specimenImages.do (specimenImages.jsp): a specimen's page and its images. The
+ * code (else name) is lower-cased; the place comes from OverviewMgr; Specimen.isSpecimen, init and fullInit read
+ * the specimen, its images and group. Also the page-text editor (saveDescriptionEdit, prepareDescriptionEdit, from
+ * DescriptionAction), the map point, the taxa that use the specimen as default image (TaxonPropDb.getDefaultFor),
+ * the Name History (SpecimenNameHistory, request attribute nameHistory) and the Open Graph title and image. An
+ * unknown code gets "Specimen:<code> is not in the AntWeb database" (also logged to notFound.txt). Tables specimen,
+ * image, taxon_prop, description_edit, specimen_name_update. Docs: docs/flows/specimen-and-image-pages.md. Tests:
+ * tests/e2e/test_specimen_pages.py, test_specimen_name_history.py, test_page_editor.py.
+ */
 public final class SpecimenAction extends DescriptionAction {
 
     private static final Log s_log = LogFactory.getLog(SpecimenAction.class);

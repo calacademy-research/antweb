@@ -1,4 +1,9 @@
-<%@ page language="java" %>
+<%-- Body of the list without images (taxonomicPage.do, TaxaPageAction): the place heading (overviewHeading.jsp),
+     the list note (taxonSetHeaderNotes.jsp), the header in the words of the status choice (StatusSet), or the
+     unimaged count with isImaged=false, the status choice, the Edit Species List and Show Specimen Taxa links for
+     those who may use them, and the rows (taxonReportBody.jsp). Reads the request attribute taxaPage. Docs:
+     docs/flows/places.md, docs/numbers.md rows 38 and 39. Tests: tests/e2e/test_numbers_lists.py,
+     test_status_choice.py, test_numbers_live.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.ResourceBundle" %>
 <%@ page import="java.util.*" %>

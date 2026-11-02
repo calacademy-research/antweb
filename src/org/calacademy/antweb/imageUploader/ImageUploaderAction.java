@@ -20,6 +20,14 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /imageUploader.do: the Image Uploader page (imageUploader/imageUploader.jsp) for curators who may upload images
+ * (Login.isUploadImages) and admins. The files go through imageUploadBatch.do (ImageUploadBatchAction), one per
+ * request; a form post without JavaScript gets a message (NEEDS_JAVASCRIPT). action=regenerate, like the end of
+ * every image upload, rebuilds the home page's recent images list (writeRecentImages:
+ * web/genInc/recentImages_gen_inc.html, from tables image and specimen). Docs: docs/flows/image-upload.md. Tests:
+ * tests/e2e/test_image_upload.py, test_browser_image_upload.py.
+ */
 public final class ImageUploaderAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ImageUploaderAction.class);

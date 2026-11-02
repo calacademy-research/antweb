@@ -1,4 +1,7 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Page of statusDisplayPage.do (no layout, opened in a new window from the status icons and lists): the AntCat and
+     AntWeb taxon statuses with their icons, and the four status choices of lists. On the JSP allow list in
+     docker/caddy/Caddyfile. Docs: docs/numbers.md section Status choice of lists. Tests:
+     tests/e2e/test_check57_merges.py::test_status_links_use_the_action, tests/e2e/test_documentation_links.py. --%><%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

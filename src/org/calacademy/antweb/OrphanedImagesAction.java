@@ -15,6 +15,12 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /orphanedImages.do, admins only (Check.admin): the Orphaned Images page (orphanedImages.jsp), linked from the
+ * curator links (curate/curatorLinks.jsp). Lists the specimen codes of images whose specimen record does not exist,
+ * and their number of images (OrphanedImages). Reads tables image and specimen, writes nothing. Docs:
+ * docs/guides/curate-page.md, docs/numbers.md row 99. Tests: tests/e2e/test_count_check.py.
+ */
 public final class OrphanedImagesAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(OrphanedImagesAction.class);

@@ -2,6 +2,9 @@ package org.calacademy.antweb;
 
 import java.util.*;
 
+/**
+ * Orders objects by their toString() text. Unused as of 2026-10-30: no action, include or reference found.
+ */
 public class TaxonComparator implements Comparator {
  
   public static final Comparator INSTANCE = new TaxonComparator();

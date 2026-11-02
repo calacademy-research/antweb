@@ -1,4 +1,5 @@
-
+<%-- Static include of common/menuBar.jsp: the Museums menu of the header, the active museums (MuseumMgr), each
+     linked to museum.do?museumCode=. Docs: docs/flows/places.md. --%>
 <div id="museums" class="subnav">
   <ul> <!-- open museums -->
 

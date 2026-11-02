@@ -7,6 +7,12 @@ import org.apache.commons.logging.LogFactory;
 
 import org.calacademy.antweb.util.*;
 
+/**
+ * A bounding box: minimum and maximum longitude and latitude, read from text "minLon minLat maxLon maxLat"
+ * (separated by spaces, a comma is dropped from each number; a bad value is logged to the admin alerts) or from a
+ * query; modifyByPercent() and conform() widen it. Made by search/FieldGuide.setExtent(String) from the place's
+ * extent text (LocalityOverview.getExtent()); nothing reads FieldGuide.getExtent() as of 2026-11-02.
+ */
 public class Extent {
 
     private static final Log s_log = LogFactory.getLog(Extent.class);

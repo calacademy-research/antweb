@@ -1,4 +1,8 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Tiles page of the home page: / (Tomcat's welcome file) and index.do, also the input page of several actions and
+     logout.do's success forward. Title AntWeb with keywords and description meta, body index-body.jsp. Removes the
+     session attribute taxon and resets the session properties (AntwebProps.resetSessionProperties). On the JSP allow
+     list in docker/caddy/Caddyfile. Docs: docs/flows/home-and-statistics.md. Tests:
+     tests/e2e/test_home_and_stats.py, test_home_page_links.py. --%><%@ page errorPage = "/error.jsp" %>
 
 <%@ page import="org.calacademy.antweb.util.*" %>
 

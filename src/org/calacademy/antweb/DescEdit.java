@@ -7,6 +7,14 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * One saved page-text edit (a row of description_edit): taxon name or specimen code, title (the field), content,
+ * created, manual-entry flag, group and login of the editor. Made by home/DescEditDb.getRecentDescEdits for the
+ * Recent Description Edits page (recentDescEdits.do, util/RecentDescEditsAction, descEditReport-body.jsp) and
+ * list.do?action=recentDescEdits (util/ListAction). getAntLink() links description.do?taxonName= or
+ * specimen.do?code=; getPrettyTitle() turns a field name into its label (taxonomichistory: "Taxonomic History",
+ * ...), also used by DescriptionAction's edit history. Docs: docs/data-model.md (description_edit).
+ */
 public class DescEdit {
 
     private static final Log s_log = LogFactory.getLog(DescEdit.class);

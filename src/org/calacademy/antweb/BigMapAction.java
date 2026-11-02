@@ -19,6 +19,18 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * /bigMap.do (alias /bigmap.do; dynamicMap.jsp): the large map, opened by "Enlarge Map" under the small maps. One
+ * target, tried in this order: taxonName (in the country or adm1 given, else the project; cached by MapMgr unless
+ * geolocaleFocus=true; curators' refresh=true drops the cached map), locality (code or name, LocalityDb),
+ * collection (CollectionDb), specimen (that specimen alone, finding F9), a country or adm1 (countryName, adm1Name
+ * with countryName) or museumCode, the last two read pre-computed from object_map (ObjectMapDb, nightly set 5). No
+ * parameter: "Enter parameters for a map"; nothing found: "No map found for target:...". Visitors who are not
+ * logged in share 3 map slots ("Simultaneous map limit exceeded...", finding F2). Sets the session attributes map
+ * and title (and taxon for a taxon map, specimen for a specimen map) for dynamicMap-body.jsp. Docs:
+ * docs/flows/places.md (Maps). Tests: tests/e2e/test_specimen_pages.py (test_specimen_map,
+ * test_taxon_and_place_maps, test_map_needs_parameters, test_lower_case_map_alias).
+ */
 public final class BigMapAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(BigMapAction.class);

@@ -1,4 +1,6 @@
-<% 
+<%-- The status icon of one name (valid, synonym, homonym, morphotaxon ...) linked to statusDisplayPage.do, with
+     statusNote in its title. Statically included by common/statusDisplayChild.jsp, statusDisplayTitle.jsp and
+     statusDisplayRow.jsp, which set thisStatus and statusNote. --%><% 
 
 //   String thisStatus = ..
 //   Must be defined by including class...

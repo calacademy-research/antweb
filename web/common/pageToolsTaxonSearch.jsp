@@ -1,4 +1,6 @@
-        <div class="clear"></div>
+<%-- Page tools of the search results by taxon (static include of search/advancedSearchResultsByTaxon-body.jsp): the
+     Compare Images, Map Results, Create Field Guide and Download Data buttons and the three select panels the
+     page's JavaScript opens. Uses the including page's util. Docs: docs/flows/search.md. --%>        <div class="clear"></div>
         <div id="tools">
             <div class="tool_label"><a href="#" onclick="showTools('compare_tools'); return false;">Compare Images</a></div>
             <div class="tool_label"><a href="#" onclick="showTools('map_tools'); return false;">Map Results</a></div>

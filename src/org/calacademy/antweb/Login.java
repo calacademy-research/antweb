@@ -8,6 +8,15 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * A user account (table login): id, user name, first and last name, email, password, group, administrator flag,
+ * upload rights (specimens, images), created, and the species lists the user may edit: projects (login_project),
+ * countries and geolocales (login_country). isCurator() is true for an administrator, a login with a group id above
+ * 0, or one with an upload right. Made by home/LoginDb, held by util/LoginMgr (the session's login is
+ * LoginMgr.getAccessLogin); Curator extends it. getDisplayName() is first and last name, else the name; getLink()
+ * links login.do?id=. MUST_LOGIN_MESSAGE is the message of the download box. Docs: docs/data-model.md (login,
+ * login_project, login_country), docs/flows/email-and-password-reset.md.
+ */
 public class Login implements Comparable {
 
     private static final Log s_log = LogFactory.getLog(Login.class);

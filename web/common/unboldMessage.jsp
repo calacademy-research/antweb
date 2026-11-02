@@ -1,4 +1,5 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Tiles page of the global forward unboldMessage (used by util.QueryAction): like common/message.jsp, title from
+     the request attribute header, body common/unboldMessage-body.jsp. --%><%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

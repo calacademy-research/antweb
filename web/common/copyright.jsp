@@ -1,4 +1,8 @@
-<%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
+<%-- The page footer (tiles attribute copyright of common/antweb-defs.jsp, antwebSecure-defs.jsp and the unused
+     overview-defs.jsp; also jsp:included by displayOneShot.jsp and displaySpecimenImage.jsp): the year, the citation
+     (common/citeInclude.jsp), the Academy privacy and terms links, the licence (common/licenseStatement.jsp) and
+     image-use text with a link to citing_antweb.jsp, the funding line and the hosting note. Tests:
+     tests/unit/test_license_statement.py. --%><%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 <%@ page import="org.calacademy.antweb.Utility" %>

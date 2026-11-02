@@ -1,4 +1,6 @@
-<%@ page import="org.calacademy.antweb.util.*" %>
+<%-- Unused as of 2026-11-02: a fragment that redirects visitors without a login to /notLoggedIn.jsp. No JSP includes
+     it (editLogin.jsp has only a commented-out include; tools/catalog/build_catalog.py still knows the name), and
+     Caddy answers a direct request with 404 (not on the JSP allow list in docker/caddy/Caddyfile). --%><%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.Utility" %>
 <%@ page import="org.calacademy.antweb.*" %>
 

@@ -1,4 +1,6 @@
-<div id="regions" class="subnav">
+<%-- Static include of common/menuBar.jsp: a submenu "regions" listing the bioregions (BioregionMgr), each with its
+     projects linked to taxonomicPage.do?rank=genus&project=..&images=true. Never shown as of 2026-10-30: the menu
+     bar has no button for it (data-submenu regions) and common/antweb.css hides #regions. --%><div id="regions" class="subnav">
   <ul id="accordion">
 <%
 if (true) { // to create nesting of variables...

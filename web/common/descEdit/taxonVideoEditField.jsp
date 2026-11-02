@@ -1,4 +1,7 @@
-  <% /* TaxonImageEditField.jsp.  This jsp is included for each description item.
+<%-- Static include of taxonPage-body.jsp for the Videos text field: the field's text (an html embed code a curator
+     pasted, shown as the video). A curator who may edit (canEditDesc) also gets an [Edit] link and the history
+     link, a saved notice after a save, and the field being edited gets the editor. Uses the including page's desc,
+     thisDesc, descHeader, editField and taxon. Text in table description_edit. --%>  <% /* TaxonImageEditField.jsp.  This jsp is included for each description item.
   
      accessGroup != null: if curator, allow for the editing of descriptions.
      desc.containsKey(thisDesc): If there is a description in the edit field display to user or empty to curator.

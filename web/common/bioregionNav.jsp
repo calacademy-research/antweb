@@ -1,4 +1,6 @@
-<!-- bioregionNav.jsp -->
+<%-- Static include of common/siteNav.jsp for a bioregion: "Current View:" and its name, linked to its page on
+     bioregion.do, elsewhere to the same page with its parameters. Uses siteNav's variable overview. Docs:
+     docs/flows/places.md. --%><!-- bioregionNav.jsp -->
 
 <div id="view">
 

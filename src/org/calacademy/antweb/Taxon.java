@@ -14,6 +14,17 @@ import java.sql.*;
 import java.util.Date;
 import java.util.*;
 
+/**
+ * A name in AntWeb and the base class behind the taxon pages: Family, Specimen, Homonym, DummyTaxon and the
+ * Kingdom, Phylum, Class and Order placeholders extend it, and Subfamily, Genus and Species (subspecies too) extend
+ * Family in turn. Holds the name's fields from table taxon (rank, status, author and date, fossil, type, current
+ * valid name), its row in the place's list (initTaxonSet, TaxonSet), its images (setImages: the default specimen of
+ * each caste from taxon_prop, else a child's, else a specimen with a head shot), its children (setChildren, from
+ * the place's list), the page text (description_edit), habitat summaries, map, the page addresses (browser params)
+ * and the sorting of child lists (sortTaxa, package sort). Loaded by TaxonDb; used by the taxon pages
+ * (BrowseAction: description.do, browse.do, images.do), lists, search and uploads. Docs: docs/flows/taxon-pages.md,
+ * docs/data-model.md (taxon).
+ */
 public class Taxon implements Describable, Serializable, Comparable<Taxon> {
 
     public final static int MAX_DISPLAY = 2000;

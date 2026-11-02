@@ -1,4 +1,6 @@
-<%@ page language="java" %>
+<%-- Tiles page of group.do?id= (or name=) (GroupAction): the group's page, title "Ant Group" + the group, body
+     group-body.jsp. A direct request of the JSP prints "Invalid URL.  Direct JSP calls unsupported."
+     (HttpUtil.isStaticCallCheck). Docs: docs/numbers.md row 91. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ page import="org.calacademy.antweb.*" %>

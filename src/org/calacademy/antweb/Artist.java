@@ -10,6 +10,16 @@ import org.apache.commons.logging.LogFactory;
 import java.util.Comparator;
 import org.apache.commons.text.StringEscapeUtils;
     
+/**
+ * An image artist (photographer; table artist): id, name, created, active flag, the curator who created it
+ * (curator_id, getCurator()) and its numbers: image files and specimens credited to it (getDisplayCounts(): "N (from
+ * M specimen)"). Made by home/ArtistDb, held in memory by util/ArtistMgr; shown by artist.do and artists.do
+ * (ArtistAction, artist-body.jsp, artists-body.jsp), the Image Uploader (artist of a batch) and bigPicture-body.jsp.
+ * getLink() links artist.do?id=. Comparators for artists-body.jsp: ArtistNameComparator by name A to Z (case
+ * ignored), ArtistImageCountComparator and ArtistSpecimenCountComparator largest count first. Docs:
+ * docs/data-model.md (artist), docs/numbers.md row 92. Tests: tests/e2e/test_manager_tools.py,
+ * tests/e2e/test_count_check.py.
+ */
 public class Artist {
 
     private static final Log s_log = LogFactory.getLog(Artist.class);

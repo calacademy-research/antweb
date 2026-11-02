@@ -1,4 +1,11 @@
-
+<%-- The navigation under the header (tiles attribute siteNav of common/antweb-defs.jsp and antwebSecure-defs.jsp).
+     Reads the session taxon and the request's overview (OverviewMgr.getOverview), includes common/menuBar.jsp, then:
+     nothing more on the home page (request URI with index.jsp or without .jsp); an empty page_context on the pages
+     in its list (about, login, the World Ant Collections pages, the list pages, search pages ...); elsewhere the
+     place navigation (projectNav, bioregionNav, museumNav, regionNav, subregionNav, countryNav or adm1Nav.jsp), then
+     taxonNav.jsp when the session holds a taxon, else allNav.jsp, and the Cite this page overlay
+     (common/citeInclude.jsp). Exceptions are logged, not shown. Docs: docs/flows/places.md,
+     docs/flows/taxon-pages.md. Tests: tests/e2e/test_login_needed.py. --%>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

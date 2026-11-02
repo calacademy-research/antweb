@@ -1,4 +1,6 @@
-<!-- taxonReport.jsp -->
+<%-- The child rows of browse.do for a family, subfamily or genus (static include of showBrowse-body.jsp; a species
+     lists its specimens with specimenReport.jsp): copies the including page's childrenList and sets the variables
+     that taxonReportBody.jsp expects, then includes it. --%><!-- taxonReport.jsp -->
 
 
 <%@ page import="org.calacademy.antweb.geolocale.*" %>

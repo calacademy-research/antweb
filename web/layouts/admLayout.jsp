@@ -1,4 +1,9 @@
-<!--This defines the basic layout of the antweb site. It defines five main tiles elements:
+<%-- The admin page layout, statically included by layouts/adminLayout.jsp and secureAdminLayout.jsp (which set
+     domainApp): head with the escaped tiles title, the device-width viewport, antweb_style.css and admin_style.css
+     and a few toggle scripts; then the tiles attribute adminHeader, the request attribute awAdminLayout = TRUE
+     (shared bodies such as common/message-body.jsp take the tool-page look) and body-content. Docs:
+     docs/guides/page-style.md. Tests: tests/e2e/test_tool_pages_style.py, tests/unit/test_small_fixes.py,
+     tests/e2e/test_browser_admin_phone.py. --%><!--This defines the basic layout of the antweb site. It defines five main tiles elements:
     * title: the page title
     * adminHeader: the header for the page, which covers the first row.
     * body-content: the main body content that appears in the main portion of the page, below the header to the right of the menu bar

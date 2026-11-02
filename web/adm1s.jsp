@@ -1,4 +1,6 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Tiles page of adm1s.do (OverviewAction): the list of every such place with its counts, "Adm1s - AntWeb", body
+     overviews-body.jsp. Docs: docs/flows/places.md, docs/numbers.md rows 73 to 77. Tests:
+     tests/e2e/test_place_pages.py::test_list_and_place_page. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

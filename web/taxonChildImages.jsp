@@ -1,4 +1,10 @@
-<!-- taxonChildImages.jsp -->
+<%-- The images of a taxon's children on images.do (static include of imagePage-body.jsp): the imaged count header
+     in the words of the status choice, the counts of the lower ranks, the images-from-anywhere note, the subgenus,
+     status, view and caste choices, page tools, the names with no image (unImagedTaxa.jsp) and one cell per child
+     (taxonChildImageSet.jsp), sorted by orderBy; on a species seen in a place the place's specimens come first.
+     Reads the request attributes imagesPlaceCodes, imagesFromPhrase and imagesPlaceOnly (BrowseAction). Docs:
+     docs/flows/taxon-pages.md, docs/numbers.md rows 54 to 57. Tests: tests/e2e/test_images_anywhere.py,
+     test_numbers_images.py, test_status_choice.py. --%><!-- taxonChildImages.jsp -->
 
 <%
 	ArrayList<Taxon> childrenList = taxon.getChildren();

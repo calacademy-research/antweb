@@ -1,4 +1,6 @@
-<%@ page language="java" %>
+<%-- Body of recentDescEdits.do, Recent Description Edits: one row per edit of the request attribute descEdits
+     (DescEditDb.getRecentDescEdits): ant page, title, created, curator; ends without rows when the attribute is
+     missing. Tests: tests/e2e/test_check57_merges.py::test_recent_desc_edits_page. --%><%@ page language="java" %>
 <%@ page import = "org.calacademy.antweb.*" %>
 <%@ page import = "org.calacademy.antweb.util.*" %>
 <%@ page import = "java.util.*" %>

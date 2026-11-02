@@ -1,4 +1,6 @@
-<%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
+<%-- Unused as of 2026-11-02: a tiles definition antweb.default (basicLayout.jsp, academyHeader.jsp, menubar
+     common/overviewNav.jsp, copyright.jsp) that no JSP includes; layout.jsp inserts siteNav, not menubar. Caddy
+     answers a direct request with 404 (not on the JSP allow list in docker/caddy/Caddyfile). --%><%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 
 <tiles:definition
 	id="antweb.default"

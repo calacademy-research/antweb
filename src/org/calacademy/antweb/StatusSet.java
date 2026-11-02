@@ -13,6 +13,14 @@ import org.calacademy.antweb.geolocale.*;
 import jakarta.servlet.http.HttpSession;
 
 
+/**
+ * A set of statuses and its SQL criteria (extends Status): the status choice of the lists, browse and images pages
+ * (valid, validmorpho, all, fossil; old address values mapped by listChoice; the place's default by defaultChoice;
+ * never kept in the session), the AntCat list's and Fossil Ants' own sets, the counted statuses (getCountables), and
+ * the per-rank conditions that make a list's header equal the place page's number (listRankCondition). Used by
+ * TaxaPageAction, BrowseAction, the taxon classes' setChildren and the count code. Docs: docs/numbers.md "Status
+ * choice of lists", docs/flows/taxon-pages.md. Tests: StatusChoiceTest, tests/e2e/test_status_choice.py.
+ */
 public class StatusSet extends Status {
     private static final Log s_log = LogFactory.getLog(StatusSet.class);
 

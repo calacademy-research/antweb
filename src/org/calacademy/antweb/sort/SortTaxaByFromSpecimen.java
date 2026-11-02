@@ -4,6 +4,12 @@ import java.util.*;
 import org.calacademy.antweb.*;
 import org.calacademy.antweb.util.*;
 
+/**
+ * Comparator of Taxon.sortTaxa for orderBy=fromSpecimen: the names not on the place's list (known only from
+ * specimens, the yellow ant mark) first, then the names on the list, each by genus and species. Taxon.sortTaxa
+ * calls it when a list is sorted by a column heading: the list rows (taxonReportBody.jsp: taxonomicPage.do,
+ * browse.do), the images view (taxonChildImages.jsp: images.do), comparisons and field guides.
+ */
 public class SortTaxaByFromSpecimen implements Comparator<Taxon> 
 {
     public int compare(Taxon a, Taxon b) 

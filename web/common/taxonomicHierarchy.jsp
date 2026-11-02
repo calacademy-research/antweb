@@ -1,4 +1,9 @@
-<%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
+<%-- The Classification line of taxon, specimen and image pages: order, family, subfamily, genus, species,
+     subspecies and specimen, each linked to the same kind of page (this request's facet) at that rank in the
+     current place. Static include of taxonPage-body, showBrowse-body, imagePage-body, specimen-body,
+     specimenImages-body, bigPicture-body, homonymPage-body, comparison-body, mapComparison-body, dynamicMap-body,
+     oneView-body and the field guide page. Uses the including page's taxon, overview and specimen. Docs:
+     docs/flows/taxon-pages.md. --%><%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>
 <%@ page import="java.io.File" %>

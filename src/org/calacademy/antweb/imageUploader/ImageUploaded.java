@@ -28,6 +28,14 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 //import org.apache.commons.fileupload.servlet.*;
 //import org.im4java.core.ETOperation
 
+/**
+ * One file of an image upload (a row of table image_uploaded). checkName and init check the file name
+ * (CODE_SHOT_NUMBER.ext, shot D, P, H, L, V or F, extension jpg, tif or png) and split it into code, shot and
+ * number; backupExisting copies an image it replaces to images/backup/ under a dated name; setFileItem writes the
+ * original to the specimen's folder under images/; genImages makes the four JPEG sizes with ImageMagick (im4java).
+ * Used by ImageUploadBatchAction (imageUploadBatch.do) and the upload report. Docs: docs/flows/image-upload.md
+ * sections 2, 4 and 5. Tests: tests/e2e/test_image_upload.py, test_browser_image_upload.py.
+ */
 public class ImageUploaded {
 
   public static String[] SHOT_TYPES = new String[]{"D", "P", "H", "L", "V", "F"};

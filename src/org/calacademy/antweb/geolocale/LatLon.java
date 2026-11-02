@@ -8,6 +8,11 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.*;
 
+/**
+ * A latitude and longitude pair; isValid() refuses values out of range and 0, 0 (unset). Unused as of 2026-10-30:
+ * only LocalityOverview.isWithinBounds(LatLon) and correctIntoBounds(LatLon) take or make one, and nothing calls
+ * either of them (search of src and web); the upload's bounds check calls isWithinBounds(double, double).
+ */
 public class LatLon {
 
     private static final Log s_log = LogFactory.getLog(LatLon.class);

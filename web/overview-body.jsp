@@ -1,4 +1,11 @@
-<%@ page language="java" %>
+<%-- Body of every place page (country, island, adm1, region, subregion, bioregion, museum and project pages; their
+     tiles pages adm1.jsp, country.jsp ...). For the request's overview (OverviewMgr.getOverview): the heading with
+     Overview, Taxa and Images menus (common/overviewHeading.jsp), the statistics table (each number with its
+     definition; request attribute placeImages), the Species and Specimens per Subfamily pies (chart/pieChart.jsp),
+     curator and admin sections, the page-text fields with [Edit] for curators and admins
+     (common/descEdit/descEditFieldCK.jsp, imageDescEditField.jsp), and the map. A direct request of a place JSP
+     prints "Invalid URL.  Direct JSP calls unsupported." (HttpUtil.isStaticCallCheck). Docs: docs/flows/places.md,
+     docs/numbers.md rows 20 to 37. Tests: tests/e2e/test_place_pages.py, test_numbers_pages.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

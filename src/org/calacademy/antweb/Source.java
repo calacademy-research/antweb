@@ -3,6 +3,13 @@ package org.calacademy.antweb;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * The source of a row on a geolocale species list (geolocale_taxon.source): specimen, antcat, literature or curator,
+ * with the old and proxy values mapped to these four (getSourceCanonical). aTrumpsB(): specimen beats antcat, antcat
+ * beats literature, literature beats curator; a curator source never replaces an existing one; any source beats none
+ * (GeolocaleTaxonDb, when it sets a row). getSourceDisplay() and getSourceStr() give the text of the list's source
+ * column (TaxonSet, SortTaxaBySource). Docs: docs/data-model.md (geolocale_taxon).
+ */
 public class Source {
 
     private static final Log s_log = LogFactory.getLog(Source.class);

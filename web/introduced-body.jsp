@@ -1,4 +1,5 @@
-
+<%-- Body of introduced.do: Introduced for <place>, the names flagged introduced on the place's list (request
+     attributes introduced and overview), each linked to description.do. Docs: docs/numbers.md row 79. --%>
 
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>

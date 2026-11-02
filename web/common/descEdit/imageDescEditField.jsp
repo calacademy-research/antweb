@@ -1,4 +1,8 @@
-  <%
+<%-- Static include of overview-body.jsp (project and place overview pages), once per image field (Project Page
+     Image 1 to 3, Author Image): shows the field's text; a curator who may edit (canEditDesc) also gets an [Edit]
+     link, the field's history link and a form that uploads a file to descEditImageUpload.do
+     (DescEditImageUploadAction, file field theFile2), and the field being edited (editField) gets the editor. Uses
+     the including page's desc, thisDesc, descHeader, editField and thisPageTarget. Text in table description_edit. --%>  <%
   if (true) {
       boolean turnedOn =  true; //AntwebProps.isDevOrStageMode();
       

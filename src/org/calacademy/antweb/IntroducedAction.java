@@ -15,6 +15,13 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * /introduced.do?geolocaleId= or ?bioregionName= (form overviewForm; introduced.jsp): the names flagged introduced
+ * on the place's species list, by the rule of the lists and the place page's Introduced number
+ * (PlaceTotals.flaggedNames; B70). geolocaleId wins when both are given. Bots are refused (Check.notBot); an unknown
+ * place gives a message. Sets the request attributes introduced (the names) and overview. Docs: docs/numbers.md rows
+ * 25 and 79, B70. Tests: tests/e2e/test_numbers_endemic.py, tests/e2e/test_numbers_live.py.
+ */
 public final class IntroducedAction extends AntwebAction {
 
 /*

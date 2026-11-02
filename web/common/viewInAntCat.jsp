@@ -1,4 +1,7 @@
-<%
+<%-- The View in AntCat link (an AntCat search for taxon.getPrettyConciseName()), statically included by the taxon,
+     image, comparison and map bodies (showBrowse-body.jsp, taxonPage-body.jsp, imagePage-body.jsp,
+     comparison-body.jsp ...). Not shown for names not identified to genus (PlaceTotals.isIdentifiedToGenus). Docs:
+     docs/flows/taxon-pages.md. --%><%
     // The View in AntCat link searches AntCat for the name. A name not identified to genus (a placeholder such as
     // "(camponotini)", or indet / undet) has no AntCat entry and its concise name is empty, so no link is shown
     // (PlaceTotals.isIdentifiedToGenus, Brian Fisher's rule of 2026-10-22).

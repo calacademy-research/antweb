@@ -1,4 +1,8 @@
- <!-- pageToolLinks.jsp -->
+<%-- The Tools bar of taxon pages, statically included by showBrowse-body.jsp, taxonPage-body.jsp and
+     taxonChildImages.jsp (uses taxon, overview, util): Compare Images (getComparison.do), Map (mapComparison.do, not
+     for species), Field Guide (fieldGuide.do, genus and subfamily), Download Data (getSpecimenList.do, when the
+     taxon has a genus) and, for admins on a genus images.do page, Image Search. Docs: docs/flows/taxon-pages.md,
+     docs/guides/downloads.md. --%> <!-- pageToolLinks.jsp -->
 <%
   String coming_from = null;
   if (request.getRequestURI().contains("showBrowse.jsp")) {

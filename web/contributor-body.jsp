@@ -1,4 +1,5 @@
-<%@ page language="java" %>
+<%-- Unused as of 2026-11-02: body of the unused contributor.jsp, an unfinished Curation heading with a link to
+     groups.do. --%><%@ page language="java" %>
 <%@ page import = "java.util.ResourceBundle" %>
 <%@ page import = "java.util.ArrayList" %>
 <%@ page import = "org.calacademy.antweb.*" %>

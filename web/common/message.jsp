@@ -1,4 +1,6 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Tiles page of the global forward message (struts-config.xml; about 290 findForward("message") calls): title from
+     the request attribute header (else message...), body common/message-body.jsp. Removes the session attribute
+     taxon. Tests: tests/e2e/test_message_log.py. --%><%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

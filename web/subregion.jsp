@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- Tiles page of subregion.do (OverviewAction, form overviewForm): a subregion's page, titled "Subregion: <name> -
+     Antweb", body overview-body.jsp. A direct request of the JSP prints "Invalid URL.  Direct JSP calls
+     unsupported." (HttpUtil.isStaticCallCheck). Docs: docs/flows/places.md, docs/numbers.md rows 20 to 37. Tests:
+     tests/e2e/test_place_pages.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

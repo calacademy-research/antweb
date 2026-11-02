@@ -1,4 +1,6 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Page of staff.do: "AntWeb Staff", with the staff list written inline as the tiles body. Writes Illegal
+     characters in input and stops when the query string fails HttpUtil.isInWhiteListCheck. Tests:
+     tests/e2e/test_actions.py::test_public_page. --%><%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 <%@ page import="org.calacademy.antweb.Login" %>

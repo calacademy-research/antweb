@@ -1,4 +1,6 @@
-<%@ page language="java" %>
+<%-- Tiles page of artist.do?id= (or name=) (ArtistAction): "AntWeb artist <name>", body artist-body.jsp. A direct
+     request of the JSP prints "Invalid URL.  Direct JSP calls unsupported." (HttpUtil.isStaticCallCheck). Tests:
+     tests/e2e/test_manager_tools.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ page import="org.calacademy.antweb.*" %>

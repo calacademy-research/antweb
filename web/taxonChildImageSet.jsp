@@ -1,4 +1,8 @@
-<%@ page import="org.calacademy.antweb.Specimen" %>
+<%-- One cell of an images view, for one child taxon or specimen (variable thisChild): its images (the view chosen),
+     its name linked to its images page, its image count; for a specimen the type and default marks and the mark of
+     images from the place, and for curators the image picker button (defaultSpecimen.do). Static include of
+     taxonChildImages.jsp (images.do) and taxonomicPageImages-body.jsp (taxonomicPage.do?images=true). Docs:
+     docs/flows/taxon-pages.md (images from anywhere). --%><%@ page import="org.calacademy.antweb.Specimen" %>
 <%@ page import="org.calacademy.antweb.SpecimenImage" %>
 <%@ page import="org.calacademy.antweb.Taxon" %>
 <%@ page import="org.calacademy.antweb.Formatter" %>

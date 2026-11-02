@@ -3,6 +3,12 @@ package org.calacademy.antweb.geolocale;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * The ranks of the geolocale table (region, subregion, country, adm1, adm2) as constants, in lower and upper case
+ * with the same values, and helpers for the place tree: the child and parent rank, the parent's heading, plural
+ * names (countries, adm1s ...) and a level (region 5 down to adm2 1). Used by GeolocaleDb, GeolocaleMgr,
+ * Geolocale, the curator place tools and the count check (CountCheckAction). Docs: docs/data-model.md (geolocale).
+ */
 public class Georank {
 
     private static final Log s_log = LogFactory.getLog(Georank.class);

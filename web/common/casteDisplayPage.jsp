@@ -1,4 +1,5 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Page of casteDisplayPage.do (no layout; linked from the Caste selector, common/casteViewsDisplay.jsp): the caste
+     values of AntWeb's caste selector and search explained. On the JSP allow list in docker/caddy/Caddyfile. --%><%@ page errorPage = "/error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

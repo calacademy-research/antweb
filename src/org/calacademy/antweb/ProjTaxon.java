@@ -9,6 +9,14 @@ import org.apache.commons.logging.LogFactory;
         
 import org.calacademy.antweb.util.*;
 
+/**
+ * A taxon's row in a project's species list (table proj_taxon, key project_name and taxon_name): all of AntWeb
+ * (allantwebants), the AntCat list (worldants), Fossil Ants and the curated projects. init reads the counts
+ * (subfamilies, genera, species, specimens, images), created, rev and source, and the all-of-AntWeb image count of
+ * the Images column. Made by Project.getTaxonSet for taxon pages and lists seen in a project; AllAntwebMgr keeps
+ * the allantwebants rows in memory for the global counts of the other lists. Written by the nightly sets, specimen
+ * uploads and the curators' species list tool (ProjTaxonDb). Docs: docs/data-model.md (proj_taxon).
+ */
 public class ProjTaxon extends OverviewTaxon {
 
     private static final Log s_log = LogFactory.getLog(ProjTaxon.class);

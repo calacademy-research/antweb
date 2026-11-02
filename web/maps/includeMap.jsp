@@ -1,4 +1,8 @@
-		  <!-- includeMap.jsp -->
+<%-- Static include of overview-body.jsp: the small place map when the place page has no map object but the place has
+     a centroid (variable mapOverview, a LocalityOverview): hidden fields for the bounding box (useBoundingBox():
+     west, south, east, north), the zoom (2 for Russia, the United States and Canada, 5 for the Marshall Islands,
+     else 0: fit the box) and the centroid (useCentroid()); maps/googleMap.jsp draws it with Leaflet. Docs:
+     docs/flows/places.md. --%>		  <!-- includeMap.jsp -->
 		 <% 
             // Must have LocalityOverview mapOverview defined.
 		    int zoom = 0;

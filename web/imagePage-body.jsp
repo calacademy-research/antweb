@@ -1,4 +1,9 @@
-<%@ page import="org.calacademy.antweb.Formatter" %>
+<%-- Body of imagePage.jsp, a taxon's Images tab (images.do, BrowseAction): title, the Overview, child list, Images
+     and Map links, View in AntCat, the not-recorded notice, the classification, a message left in the session after
+     choosing a default specimen, the images of the children (taxonChildImages.jsp) and the genus indet line. Reads
+     the request attribute taxon, the place (OverviewMgr) and the cookie thumbs (the view chosen). Docs:
+     docs/flows/taxon-pages.md. Tests: tests/e2e/test_taxon_pages.py, test_images_anywhere.py,
+     test_numbers_images.py. --%><%@ page import="org.calacademy.antweb.Formatter" %>
 
 <%@ page import="java.util.ResourceBundle" %>
 <%@ page import="org.calacademy.antweb.util.*" %>

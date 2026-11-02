@@ -1,4 +1,6 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Body of forgotPassword.do: Forgot Your Password?, by the request attributes resetState (form or sent) and
+     resetError; the form posts identifier to forgotPassword.do on the secure domain. Docs:
+     docs/flows/email-and-password-reset.md. Tests: tests/e2e/test_password_reset_pages.py. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

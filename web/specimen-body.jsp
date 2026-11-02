@@ -1,4 +1,9 @@
-<%@ page import="org.calacademy.antweb.Formatter" %>
+<%-- Body of specimen.jsp, the specimen page (specimen.do, SpecimenAction): title and classification, persistent
+     identifier, the page text (taxonEditFieldCK.jsp) and its author history, Species Distribution Status, Locality,
+     Collection and Specimen Information, the Name History (request attribute nameHistory), Curator and Admin
+     Information, the profile image and the map. Reads the request attribute specimen. Docs:
+     docs/flows/specimen-and-image-pages.md. Tests: tests/e2e/test_specimen_pages.py, test_specimen_name_history.py,
+     test_previous_determinations.py. --%><%@ page import="org.calacademy.antweb.Formatter" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.*" %>
 <%@ page import="org.calacademy.antweb.geolocale.*" %>

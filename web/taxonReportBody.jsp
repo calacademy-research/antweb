@@ -1,4 +1,10 @@
-<!-- taxonReportBody.jsp -->
+<%-- The rows of a place's list of taxa, shared by taxonomicPage.do (taxonomicPage-body.jsp) and browse.do
+     (taxonReport.jsp): sorts the children by orderBy (Taxon.sortTaxa), writes the sortable headings (status, type,
+     endemic and introduced, from specimen, name, author and date, counts, Images, map, source), one row per child
+     with its counts, marks and Images number, and the notes under the list (the asterisk counts, Images, specimens
+     identified only to genus). Uses the including page's children, overview, pageRank, displayGlobal and place
+     flags. Docs: docs/flows/places.md, docs/flows/taxon-pages.md, docs/numbers.md rows 38 to 44. Tests:
+     tests/e2e/test_numbers_lists.py, test_numbers_live.py, test_status_choice.py. --%><!-- taxonReportBody.jsp -->
 <%
     // Included by showBrowse-body.jsp and 
 

@@ -1,4 +1,10 @@
-<%@ page language="java" %>
+<%-- Body of the large map page (dynamicMap.jsp) of bigMap.do (BigMapAction), mapResults.do and advancedSearch.do's
+     map: a heading by kind (search results with searchMethod, country or adm1, locality, collection, specimen,
+     museum, else taxon), the taxon's or specimen's links and hierarchy, the map (maps/googleMapInclude.jsp, large),
+     a link to the same map limited to the country or adm1 (geolocaleFocus=true), and, unless the map was made in the
+     last minute, the cache note with Refresh map for curators. Reads the session attributes map, taxon, specimen and
+     title; ends without output when the session holds no taxon. Docs: docs/flows/places.md (Maps). Tests:
+     tests/e2e/test_specimen_pages.py (test_specimen_map, test_taxon_and_place_maps), tests/unit/test_map_popups.py. --%><%@ page language="java" %>
 <%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>

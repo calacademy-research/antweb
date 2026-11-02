@@ -17,6 +17,13 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /speciesListDownload.do (form dummyForm): the Tab-delimited link of a place's Download Species box
+ * (common/overviewHeading.jsp). Logged-in users only (Check.initLogin). Writes the species list of the place
+ * (OverviewMgr: a project, geolocale or museum; ProjTaxonDb, GeolocaleTaxonDb, MuseumTaxonDb) as plain text:
+ * Subfamily, Genus, Species, Subspecies, Author Date, each line ending with a carriage return. A bioregion or an
+ * empty list gives "Overview:... not found.". Disallowed for robots. Tests: tests/unit/test_download_guards.py.
+ */
 public class SpeciesListDownloadAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(SpeciesListDownloadAction.class);

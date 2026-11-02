@@ -1,4 +1,12 @@
-<%@ page language="java" %>
+<%-- Body of the Collection page (collection.do, CollectionAction; session attribute collection): "Collection:
+     <code>", the collecting data, the locality (bioregion, locality code and name linked to locality.do, country,
+     island or adm1 linked to their pages, coordinates with 0, 0 shown as none, elevation, notes), the small map
+     (maps/googleMapInclude.jsp, collection.getMap()), "N specimens of M species" (names not identified to genus are
+     not species) and one row per specimen: image flag, code, name, type status, caste. mode=map or mode=compare adds
+     checkboxes and a button posting to mapResults.do or compareResults.do. Stops after the collecting data when the
+     collection has no locality. Docs: docs/flows/places.md, docs/numbers.md row 65. Tests:
+     tests/e2e/test_specimen_pages.py::test_collection_page_lists_the_specimen, test_numbers_search.py::
+     test_collection_counts_equal_a_search_and_the_api. --%><%@ page language="java" %>
 <%@ page import = "java.util.*" %>
 <%@ page import = "org.calacademy.antweb.*" %>
 <%@ page import = "org.calacademy.antweb.geolocale.*" %>

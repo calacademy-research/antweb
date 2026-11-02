@@ -1,4 +1,5 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Body of AntWeb Tools (tools.do): the About menu and short descriptions with example links of the advanced
+     search, regional lists, description pages, the image comparison, field guides and maps. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

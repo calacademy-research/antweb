@@ -1,4 +1,6 @@
-<%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
+<%-- The tiles definition antweb.default for the log-in and account pages (login.jsp, editLogin.jsp,
+     resetPassword.jsp): the same parts as common/antweb-defs.jsp (academyHeader, siteNav, copyright) in
+     layouts/secureLayout.jsp, which builds its links with AntwebProps.getSecureDomainApp(). --%><%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>
 
 <%@ page import="org.calacademy.antweb.util.*" %>
 

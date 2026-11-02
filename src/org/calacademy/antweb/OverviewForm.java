@@ -8,6 +8,11 @@ import org.apache.struts.action.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Form bean overviewForm (extends DescriptionForm, so it also carries the page-text editor fields) of the place
+ * pages (OverviewAction), endemic.do, introduced.do and place.do (geolocale/PlaceNameAction): id, name, title, code
+ * (also museumCode), action (recalc), country, countryName, adm1Name, subregionName, regionName and placeName.
+ */
 public final class OverviewForm extends DescriptionForm {
 
     private static final Log s_log = LogFactory.getLog(OverviewForm.class);

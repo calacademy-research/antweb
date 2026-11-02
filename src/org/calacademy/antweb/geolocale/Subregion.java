@@ -5,6 +5,13 @@ import java.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * A subregion (geolocale row with georank subregion, e.g. Polynesia) of the region named by its parent, with its
+ * countries as children (getLiveCountries for the Georegions menu, or all). Page subregion.do?name=
+ * (subregion.jsp), list subregions.do; parameters subregionName= (lists, maps) and subregion= (searches). Its
+ * specimens are those of its valid countries (Geolocale.regionSpecimensSql). Made by GeolocaleDb, held by
+ * GeolocaleMgr. Docs: docs/flows/places.md, docs/data-model.md (geolocale).
+ */
 public class Subregion extends Geolocale {
 
     private static final Log s_log = LogFactory.getLog(Subregion.class);

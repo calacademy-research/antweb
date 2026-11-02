@@ -9,6 +9,11 @@ import org.apache.struts.action.ActionMapping;
 
 import org.calacademy.antweb.util.*;
 
+/**
+ * Form bean taxaPageForm of /taxonomicPage.do (TaxaPageAction): caste, which the action reads, and rank (the action
+ * reads rank from the request parameter itself). validate() asks for a rank and blocks fishing requests. The older
+ * comment in the class says it is not used, but the caste is read from it.
+ */
 public final class TaxaPageForm extends ActionForm {
 
 // This class is not used.  Parameters are used.
