@@ -1,4 +1,5 @@
-
+<%-- Body of endemic.do: Endemics for <place>, the names flagged endemic on the place's list (request attributes
+     endemic and overview), each linked to description.do. Docs: docs/numbers.md row 78. --%>
 
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.*" %>

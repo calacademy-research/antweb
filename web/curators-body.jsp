@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- Body of curators.do: the list of curators (request attribute curators, a copy of LoginMgr.getCurators()),
+     sortable by sortBy (name, group, specimenUploadCount, descEditCount ...), with upload group, specimen uploads,
+     description edits and projects. Docs: docs/numbers.md rows 80 and 81. Tests:
+     tests/e2e/test_curate_page_layout.py::test_curators_page_upload_group_column. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.sql.Timestamp" %>

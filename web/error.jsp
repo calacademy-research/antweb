@@ -1,4 +1,8 @@
-<%@ page isErrorPage="true" %>
+<%-- The error page: the global forwards error and failure, the errorPage of most JSPs, and the redirect target of
+     CustomExceptionServlet (web.xml maps every Throwable to /error). A new session gets We'll be right back, else
+     Oops ... Perhaps your session has gone stale. With an exception: a case number is shown and logged with the
+     exception, administrators also see the text; without one the reason is logged. On the JSP allow list in
+     docker/caddy/Caddyfile. Tests: tests/e2e/test_request_handling.py, tests/e2e/test_hardening_2026_10_19.py. --%><%@ page isErrorPage="true" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

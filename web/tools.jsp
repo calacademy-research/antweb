@@ -1,4 +1,5 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Tiles page of tools.do: "AntWeb Tools", body tools-body.jsp. Removes the session attribute taxon. Tests:
+     tests/e2e/test_actions.py::test_public_page. --%><%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

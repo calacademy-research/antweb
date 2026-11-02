@@ -1,4 +1,7 @@
-<%@ page import="org.calacademy.antweb.util.*" %>
+<%-- The Subgenera selector of a genus's lists, statically included by showBrowse-body.jsp and taxonChildImages.jsp
+     (uses taxon and childrenList): sort by subgenera or species (orderBy), and select all, Unassigned
+     (subgenus=none) or one of the genus's subgenera found on the page (TaxonMgr.getSubgenera). Shown only when the
+     genus has subgenera. Docs: docs/flows/taxon-pages.md. --%><%@ page import="org.calacademy.antweb.util.*" %>
 
 <% 
     String subgeneraTarget = HttpUtil.getTargetMinusParam(request, "subgenus"); 

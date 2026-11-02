@@ -1,4 +1,6 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Tiles page of the global forward permissionDenied (SaveLoginAction, DescEditImageUploadAction) in the admin
+     layout (common/antweb_admin-defs.jsp): "AntWeb - Permission Denied", body permissionDenied-body.jsp. On the JSP
+     allow list in docker/caddy/Caddyfile. --%><%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-tiles.tld" prefix="tiles" %>

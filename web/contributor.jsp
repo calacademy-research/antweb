@@ -1,4 +1,6 @@
-<%@ page language="java" %>
+<%-- Unused as of 2026-11-02: a tiles page for one contributing group (request attribute group), body
+     contributor-body.jsp. No action forwards here (group.do uses group.jsp), and Caddy answers a direct request with
+     404 (not on the JSP allow list in docker/caddy/Caddyfile). --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 
 <%@ page import="org.calacademy.antweb.*" %>

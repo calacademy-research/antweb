@@ -1,4 +1,7 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Tiles page of getComparison.do's success forward (BrowseAction getChildImages, for logged-in users): the image
+     comparison of a taxon's children, "Comparison Tool - AntWeb", body comparison-body.jsp. Puts the project
+     parameter (or "") in the session attribute project. Docs: docs/flows/places.md (Compare tools). Tests:
+     tests/e2e/test_field_guide_compare.py. --%><%@ page errorPage = "error.jsp" %>
 
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

@@ -1,4 +1,5 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Body of notLoggedIn.jsp (the global forward notLoggedIn): Please log in to access this resource, with a link to
+     login.do. Tests: tests/e2e/test_login_needed.py. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

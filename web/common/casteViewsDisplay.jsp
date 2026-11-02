@@ -1,4 +1,6 @@
-<%@ page import="org.calacademy.antweb.util.*" %>
+<%-- The Caste selector of the image pages, statically included by taxonChildImages.jsp and
+     taxonomicPageImages-body.jsp: links to the same page with caste= (all, male, worker, queen, other and their
+     sub-castes), and Caste: linked to common/casteDisplayPage.jsp. Docs: docs/flows/taxon-pages.md. --%><%@ page import="org.calacademy.antweb.util.*" %>
 
 <% 
 // taxonomicPageImages-body.jsp is same as taxonChildImages.jsp except uses theTaxaPage instead of taxon and has images=true 

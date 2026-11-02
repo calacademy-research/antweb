@@ -1,4 +1,6 @@
-<%@ page isErrorPage="true" %>
+<%-- Body of common/unboldMessage.jsp: the request attribute message, not bold (the Query Manager's results), or as a
+     tool-page card inside the admin layout (awAdminLayout); logs a short record (LogMgr.logMessagePage). Docs:
+     docs/guides/page-style.md. --%><%@ page isErrorPage="true" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

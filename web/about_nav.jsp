@@ -1,4 +1,6 @@
-<%
+<%-- The About menu (About AntWeb, Citing AntWeb, User Guide, Tools, Technology, Staff, Curators, Upload groups),
+     jsp:included by about-body.jsp, citing_antweb-body.jsp, user_guide-body.jsp, tools-body.jsp and tech-body.jsp.
+     Tests: tests/e2e/test_curate_page_layout.py. --%><%
         String domainApp = (new org.calacademy.antweb.Utility()).getDomainApp();
 %>
 <div class="links">

@@ -1,4 +1,6 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- Tiles page of artist.do's artists forward (artists.do forwards to artist.do; no id or name, or the Artist
+     Manager after a change): "Artists", body artists-body.jsp. Docs: docs/numbers.md row 92. Tests:
+     tests/e2e/test_manager_tools.py::test_photographers_public. --%><%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
 <%@ page errorPage = "error.jsp" %>
 

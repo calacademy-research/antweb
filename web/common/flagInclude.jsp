@@ -1,4 +1,6 @@
-
+<%-- Notes at the top of taxon and specimen pages, statically included by specimen-body.jsp and taxonPage-body.jsp:
+     Not an ant, Not a Valid Taxon Name (taxon.addNotValidWarning()), and Red Flag with the specimen's issue
+     (MessageMgr.getMessageDisplay) for a specimen flagged red. Docs: docs/flows/specimen-and-image-pages.md. --%>
 <%@ page import="org.calacademy.antweb.upload.MessageMgr" %>
 
 <%

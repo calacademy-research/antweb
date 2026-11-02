@@ -1,4 +1,5 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Unused as of 2026-11-02: body of the unused send_to_academy.jsp, how to send ant specimens to the Academy for
+     the old Ant Collector app. --%><%@ page errorPage = "error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

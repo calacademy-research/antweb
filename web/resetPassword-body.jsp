@@ -1,4 +1,7 @@
-<%@ page errorPage = "error.jsp" %>
+<%-- Body of resetPassword.do: by the request attributes resetState (invalid, form or done), resetToken, resetError
+     and reactivated: the new-password form posted to resetPassword.do on the secure domain, Password set, or This
+     link is not valid with Ask for a new link. Docs: docs/flows/email-and-password-reset.md. Tests:
+     tests/e2e/test_password_reset_pages.py. --%><%@ page errorPage = "error.jsp" %>
 <%@ page import = "org.calacademy.antweb.util.*" %>
 
 <!-- resetPassword-body.jsp (ResetPasswordAction) -->

@@ -1,4 +1,5 @@
-    <div id="share">
+<%-- Unused as of 2026-11-02: old Facebook like, Tweet and Google +1 buttons. No JSP includes it, no action forwards
+     here, and Caddy answers a direct request with 404 (not on the JSP allow list in docker/caddy/Caddyfile). --%>    <div id="share">
         <span style="margin-right:30px;" class="fb-like" data-send="false" data-layout="button_count" data-width="200" data-show-faces="false"></span>
         <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
 <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>

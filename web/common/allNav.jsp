@@ -1,4 +1,7 @@
-<%@ page import="org.calacademy.antweb.geolocale.*" %>
+<%-- The Change View menu of a page without a session taxon, statically included by common/siteNav.jsp (uses its
+     overview and isChangableView): links to the same page in All AntWeb (Project.getAllAntwebLi) and in the AntCat
+     list (Project.getBoltonLi), plus overview.getChangeViewOptions(); skipped on performance-sensitive pages
+     (Project.isPerformanceSensitive) unless the address has countryName=. Docs: docs/flows/places.md. --%><%@ page import="org.calacademy.antweb.geolocale.*" %>
 
 <%@ page import="org.calacademy.antweb.*" %>
 <%@ page import="org.calacademy.antweb.util.*" %>

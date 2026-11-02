@@ -1,4 +1,7 @@
-<%@ page language="java" %>
+<%-- Body of the photographers list (artists.do): the request attribute artists sorted by sortBy (name, imageCount,
+     specimenCount), with Image files and Specimen columns; curators also get the form posted to artist.do to add a
+     photographer and see photographers without images, admins a non-UTF-8 name check. Docs: docs/numbers.md row 92
+     (common/imagesDefinition.jsp). Tests: tests/unit/test_image_counts_defined.py, tests/e2e/test_manager_tools.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.sql.Timestamp" %>

@@ -1,4 +1,9 @@
-<%
+<%-- The heading of a place page and its lists, statically included by overview-body.jsp, taxonomicPage-body.jsp and
+     taxonomicPageImages-body.jsp (uses their overview): the place's name linked to its list page, the Overview, Taxa
+     and Images menus (taxonomicPage.do by rank, the statusSet of the address kept, never the session), and, for
+     museums, adm1s, countries and projects other than All AntWeb and the AntCat list, Field Guides and Download Data
+     (speciesListDownload.do). Species links are left out above 700 species (2000 for admins). Stops when there is no
+     overview. Docs: docs/flows/places.md, docs/numbers.md rows 36 and 37. --%><%
     if (overview == null) {
       AntwebUtil.log("Overview not found in overviewHeading.jsp");
       return;

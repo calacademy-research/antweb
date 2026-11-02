@@ -1,4 +1,6 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%-- Unused as of 2026-11-02: a tiles page "Groups" with the body contributors-body.jsp. No action forwards here
+     (groups.do uses groups.jsp), and Caddy answers a direct request with 404 (not on the JSP allow list in
+     docker/caddy/Caddyfile). --%><%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 
 <%@ page errorPage = "error.jsp" %>
 

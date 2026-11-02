@@ -1,4 +1,5 @@
-<div id="global" class="subnav">
+<%-- The Global submenu of the Browse menus, statically included by common/menuBar.jsp: one link to project.do?name=
+     per project of ProjectMgr.getGlobalProjects(). Docs: docs/flows/places.md. --%><div id="global" class="subnav">
   <ul> <!-- open global -->
 <%
     ArrayList<Project> globalProjects = ProjectMgr.getGlobalProjects();

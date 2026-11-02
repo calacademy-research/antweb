@@ -18,7 +18,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 /**
- * getSpecimenList.do: the Download Data button of a taxon page (pageToolLinks.jsp, pageTools.jsp).
+ * getSpecimenList.do: the Download Data button of a taxon page (pageToolLinks.jsp).
  * Writes a tab-delimited file of the specimens of the taxon on that page and returns a link to it
  * (shown in the download box, an iframe).
  *

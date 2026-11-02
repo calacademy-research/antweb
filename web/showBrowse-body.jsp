@@ -1,4 +1,9 @@
-<%@ page language="java" %>
+<%-- Body of browse.do (showBrowse.jsp): the taxon title, View in AntCat, classification and notes; for a taxon above
+     species the list of its children (subgenera and status selectors, Tools, taxonReport.jsp), for a species or
+     subspecies its specimens (specimenReport.jsp, sortable by sortBy and sortOrder). A direct request of the JSP
+     prints "Invalid URL.  Direct JSP calls unsupported." (HttpUtil.isStaticCallCheck). Docs:
+     docs/flows/taxon-pages.md, docs/numbers.md rows 38 to 49. Tests: tests/e2e/test_numbers_lists.py,
+     test_status_choice.py. --%><%@ page language="java" %>
 <%@ page errorPage = "error.jsp" %>
 <%@ page import="java.util.ResourceBundle" %>
 <%@ page import="org.calacademy.antweb.Formatter" %>

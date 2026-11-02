@@ -1,4 +1,7 @@
-<%@ page errorPage = "/error.jsp" %>
+<%-- Body of editLogin.jsp: the form posted to editLogin.do?id= on the secure domain for the session's thisLogin
+     (username, current password when editing one's own login, new password twice with PasswordPolicy.MIN_LENGTH,
+     email, first and last name), with the struts error messages and the request attribute message. Tests:
+     tests/e2e/test_login_form.py. --%><%@ page errorPage = "/error.jsp" %>
 <%@ taglib uri="/WEB-INF/struts-bean.tld" prefix="bean" %>
 <%@ taglib uri="/WEB-INF/struts-html.tld" prefix="html" %>
 <%@ taglib uri="/WEB-INF/struts-logic.tld" prefix="logic" %>

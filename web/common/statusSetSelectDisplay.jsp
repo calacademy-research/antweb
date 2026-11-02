@@ -1,4 +1,6 @@
-<%@ page import="org.calacademy.antweb.Login" %>
+<%-- The Statuses select of the advanced search form, statically included by search/advancedSearch-body.jsp (uses its
+     statusSetDefault and accessLogin): every StatusSet.getStatusSets() choice for logged-in users, only All and
+     Valid otherwise; preselects statusSetDefault, else All (Complete for login id 23). Docs: docs/flows/search.md. --%><%@ page import="org.calacademy.antweb.Login" %>
 <%@ page import="org.calacademy.antweb.util.*" %>
 <%@ page import="org.calacademy.antweb.*" %>
           
