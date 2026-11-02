@@ -56,12 +56,18 @@ JSP_MISSING = [
 PY_OK = [
     '"""Deletes old Tomcat log files inside the antweb container."""\nimport os\n',
     '#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n"""The AntWeb public API, version 3.1."""\nimport os\n',
+    # a blank line and a block of comments before the docstring (api.py, clearDisk.py)
+    '\n# ! /usr/bin/python3\n# Can be run locally as:\n#     python3 api.py\n\n# import os\n"""Deletes old Tomcat log files."""\nimport os\n',
 ]
 PY_MISSING = [
     "import os\nprint('x')\n",
     "# Deletes old Tomcat log files inside the antweb container.\nimport os\n",
     '"""Helper."""\n',
     "this is not python (\n",
+    # a string after an import is not a docstring
+    'import os\n"""Deletes old Tomcat log files inside the antweb container."""\n',
+    # a NUL byte
+    '"""Deletes old Tomcat log files.\x00"""\n',
 ]
 
 
@@ -91,11 +97,13 @@ def test_baseline():
         write(root, "api/v3.1/api.py", PY_OK[1])
         write(root, "tools/x/run.py", PY_MISSING[0])
         write(root, "tests/unit/test_x.py", PY_MISSING[0])  # tests/ is not checked
+        write(root, "tools/.venv/lib/x.py", PY_MISSING[0])  # nor dot-folders
+        write(root, "docker/api/serve.py", PY_OK[0])  # any other folder is
         res = c.scan(root)
         assert res == {"src/a/Has.java": True, "src/a/New.java": False, "src/a/Old.java": False,
                        "web/p.jsp": True, "web/q.jsp": False,
-                       "api/v3.1/api.py": True, "tools/x/run.py": False}, res
-        assert c.counts(res) == {"Java": [1, 2], "JSP": [1, 1], "Python": [1, 1]}
+                       "api/v3.1/api.py": True, "tools/x/run.py": False, "docker/api/serve.py": True}, res
+        assert c.counts(res) == {"Java": [1, 2], "JSP": [1, 1], "Python": [2, 1]}
         # complete baseline: no problems
         assert c.problems(res, {"src/a/New.java", "src/a/Old.java", "web/q.jsp", "tools/x/run.py"}) == []
         # (1) a new file without a header fails
