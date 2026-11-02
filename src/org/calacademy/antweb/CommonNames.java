@@ -8,6 +8,13 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * A fixed list, in the code, of common English ant names ("Fire ant", "Carpenter ant", ...) and the taxon name each
+ * stands for (subfamily and genus, or subfamily, genus and species). TaxonMgr adds the common names to the names of
+ * the header search box; BrowseAction redirects description.do?taxonName= with a common name through get();
+ * taxonPage-body.jsp shows a taxon's common names (getCommonNames). Filled once, on first use (init, synchronized).
+ * Docs: docs/flows/taxon-pages.md.
+ */
 public class CommonNames {
 
   private static final Log s_log = LogFactory.getLog(CommonNames.class);

@@ -41,6 +41,23 @@ import com.zonageek.jpeg.codec.JpegCodec;
 
 //=============================================================================
 //=============================================================================
+/**
+ * Part of the bundled third-party JPEG/EXIF reader com.zonageek.jpeg (Sebastian Delmont, 2002, BSD-style licence in
+ * the comment at the top of this file, kept as it is). AntWeb uses the package only to read EXIF data: util/Exif
+ * calls Jpeg.readHeaders() and getExifBlock() for the image page (bigPicture-body.jsp: the EXIF section for
+ * administrators, and the photographer when the image has no artist); SpecimenImage.setMetadata() and
+ * ImageDb.getExifData() also read it, but nothing calls them (2026-11-02). This class is the entry point: one JPEG
+ * file as its list of blocks (markers). read() parses every block, including the compressed image data (SOS);
+ * readHeaders() (added by AntWeb 2026-10-19) stops at the start of scan, so the image data is not read into memory.
+ * Recognised blocks become SofBlock, DqtBlock, DhtBlock, SosBlock, JfifBlock (APP0 "JFIF"), ExifBlock (APP1 "Exif"),
+ * AdobeBlock (APP13 "Photoshop 3.0"), any other a plain JpegBlock. getExifBlock(), getJfifBlock(), getSofBlock(),
+ * getAdobeBlock() return the first block of that kind or null; write() writes the blocks back out (not used by
+ * AntWeb). A file that does not start with the JPEG signature throws JpegException ("File is not a JPEG"), as do
+ * most truncated blocks; a too-short APP0, APP1 or APP13 block is read without a length check and throws
+ * ArrayIndexOutOfBoundsException instead. The pixel codec (JpegCodec) is only made by activateCodec(), which AntWeb never
+ * calls. Docs: docs/flows/specimen-and-image-pages.md (EXIF for admins). Tests: ExifTextTest,
+ * tests/e2e/test_exif_view.py.
+ */
 public class Jpeg {
   public final static int MARKER_HEADER = 0xFF; // All markers start with this
 

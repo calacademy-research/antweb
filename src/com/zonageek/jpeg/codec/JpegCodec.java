@@ -38,6 +38,16 @@ import java.util.Iterator;
 
 //=============================================================================
 //=============================================================================
+/**
+ * Part of the bundled third-party JPEG/EXIF reader com.zonageek.jpeg (Sebastian Delmont, 2002, BSD-style licence in
+ * the comment at the top of this file, kept as it is). AntWeb uses the package only to read EXIF data: util/Exif
+ * calls Jpeg.readHeaders() and getExifBlock() for the image page (bigPicture-body.jsp: the EXIF section for
+ * administrators, and the photographer when the image has no artist); SpecimenImage.setMetadata() and
+ * ImageDb.getExifData() also read it, but nothing calls them (2026-11-02). The pixel codec state: encoding, image
+ * size, channels, quantization and Huffman tables, scan parameters, filled by the SOF, DQT, DHT and SOS blocks. It
+ * exists only after Jpeg.activateCodec(), which AntWeb never calls, so it is not used when AntWeb reads EXIF. Docs:
+ * docs/flows/specimen-and-image-pages.md (EXIF for admins). Tests: ExifTextTest, tests/e2e/test_exif_view.py.
+ */
 public class JpegCodec {
   public final static int ENCODING_UNKNOWN = -1;
   public final static int ENCODING_BASELINE = 0;

@@ -8,6 +8,14 @@ import org.calacademy.antweb.upload.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * A login with curator numbers (extends Login): specimen uploads, image uploads (batches), image files uploaded,
+ * page-text edits and the last upload. Made by home/LoginDb (getCurator, getCurators) and held by util/LoginMgr;
+ * shown by curator.do and curators.do (CuratorAction) and by group.do (a group's curators). getLink() links
+ * curator.do?id=. Comparators for curators.jsp: by display name and by group name A to Z (case ignored), by specimen
+ * uploads and by page-text edits largest first (curators-body.jsp; viewGroup-body.jsp by name). Docs:
+ * docs/numbers.md rows 80 to 84, docs/data-model.md (login). Tests: tests/e2e/test_count_check.py.
+ */
 public class Curator extends Login {
 
     private static final Log s_log = LogFactory.getLog(Curator.class);

@@ -14,6 +14,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 
+/**
+ * A subspecies (extends Species): its name, children (setChildren: the specimens of the subspecies, by status set
+ * and caste, not limited to the place), the specimens of a place for field guides (setChildrenLocalized), the
+ * see-also line (getSeeAlsoSiblingSubspecies: the taxon rows of rank species with the same subfamily, genus and
+ * species), full name, link parameters (rank=subspecies) and the authority-file row (getDataHeader, getData). Made
+ * by Taxon.getTaxonOfRank. Docs: docs/flows/taxon-pages.md.
+ */
 public final class Subspecies extends Species implements Serializable {
 
     private static final Log s_log = LogFactory.getLog(Subspecies.class);

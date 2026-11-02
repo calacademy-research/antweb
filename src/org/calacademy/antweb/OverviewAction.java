@@ -17,6 +17,18 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * The place pages and their lists (form overviewForm): /project.do, /projects.do, /museum.do, /museums.do,
+ * /bioregion.do, /bioregions.do, /region.do, /regions.do, /subregion.do, /subregions.do, /country.do, /island.do,
+ * /countries.do, /adm1.do, /adm1s.do (overview-body.jsp, overviews-body.jsp), and /geolocale.do, which redirects to
+ * a geolocale's page: id=, regionName=, subregionName=, countryName=, adm1Name= (with countryName, else a unique
+ * adm1 name) are read in this order, each one given replacing the one before; an unknown one gives a message. The
+ * page type comes from the request URL; places come from memory (GeolocaleMgr, ProjectMgr, MuseumMgr, BioregionMgr).
+ * action=recalc, by a curator and POST only, recounts the place (long connection pool). Page text through
+ * DescriptionAction; the image numbers through setPlaceImages (PlaceImageCountDb). Docs: docs/flows/places.md,
+ * docs/numbers.md rows 20 to 37. Tests: tests/e2e/test_place_pages.py, tests/e2e/test_place_image_counts.py,
+ * tests/e2e/test_overview_editor.py.
+ */
 public final class OverviewAction extends DescriptionAction {
 
     private static final Log s_log = LogFactory.getLog(OverviewAction.class);
