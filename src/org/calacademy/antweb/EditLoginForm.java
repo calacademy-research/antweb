@@ -12,6 +12,11 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Form bean editLoginForm of /editLogin.do (EditLoginAction): id, user name, email, first and last name, new
+ * password, retyped password and current password. reset() clears the passwords (the form lives in the session). Its
+ * validate() is not run: the mapping has validate="false" and EditLoginAction checks the fields itself.
+ */
 public class EditLoginForm extends ActionForm {
 
     private static final Log s_log = LogFactory.getLog(EditLoginForm.class);

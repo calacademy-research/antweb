@@ -5,6 +5,12 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Who added one name to one geolocale species list: the geolocale_taxon row (geolocale id, taxon name, source;
+ * inherited from GeolocaleTaxon) and the curator id from geolocale_taxon_log (GeolocaleTaxonLogDb.getCuration). Made
+ * by CuratorAction for /curation.do?taxonName=&amp;geolocaleId= (curation-body.jsp), the link on the source of a
+ * list row (taxonReportBody.jsp). Docs: docs/data-model.md (geolocale_taxon, geolocale_taxon_log).
+ */
 public class Curation extends GeolocaleTaxon {
 
     private static final Log s_log = LogFactory.getLog(Curation.class);

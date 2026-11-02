@@ -21,6 +21,19 @@ import org.calacademy.antweb.geolocale.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * The taxon pages: /description.do (Overview, taxonPage.jsp; homonymPage.jsp for a homonym), /browse.do (the child
+ * list, showBrowse.jsp), /images.do (imagePage.jsp), and the compare tools /getComparison.do (comparison.jsp) and
+ * /mapComparison.do (mapComparison.jsp; form browseForm in session scope; the oneView.do mapping is commented out).
+ * The page type comes from the request URL. Finds the place (OverviewMgr), redirects taxonName= and antcatId= to the
+ * taxon's page, reads the taxon (TaxonDb.getFullTaxon, else HomonymDb.getFullHomonym), its row in the place's list,
+ * the status choice (StatusSet.getStatusSet), the not-recorded notice and indet line (PlaceTaxonNotes), images,
+ * children and map. Comparisons need a log-in (Check.loginForFeature); for visitors not logged in, two of each kind
+ * run at a time (ConcurrencyLimiter). Page text is saved and prepared by DescriptionAction. Docs:
+ * docs/flows/taxon-pages.md (the full code path), docs/flows/places.md (compare tools), docs/numbers.md rows 38 to
+ * 57. Tests: tests/e2e/test_taxon_pages.py, tests/e2e/test_page_content.py, tests/e2e/test_field_guide_compare.py,
+ * tests/e2e/test_login_needed.py.
+ */
 public class BrowseAction extends DescriptionAction {
 
     private static final Log s_log = LogFactory.getLog(BrowseAction.class);

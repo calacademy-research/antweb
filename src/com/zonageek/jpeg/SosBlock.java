@@ -38,6 +38,16 @@ import com.zonageek.jpeg.codec.JpegCodec;
 
 //=============================================================================
 //=============================================================================
+/**
+ * Part of the bundled third-party JPEG/EXIF reader com.zonageek.jpeg (Sebastian Delmont, 2002, BSD-style licence in
+ * the comment at the top of this file, kept as it is). AntWeb uses the package only to read EXIF data: util/Exif
+ * calls Jpeg.readHeaders() and getExifBlock() for the image page (bigPicture-body.jsp: the EXIF section for
+ * administrators, and the photographer when the image has no artist); SpecimenImage.setMetadata() and
+ * ImageDb.getExifData() also read it, but nothing calls them (2026-11-02). The Start Of Scan block (SOS): the last
+ * block, holding the compressed image data to the end of the file. Jpeg.read() reads it; Jpeg.readHeaders(), which
+ * util/Exif uses, stops before it. Scan parameters go to the codec only when one was activated (never in AntWeb).
+ * Docs: docs/flows/specimen-and-image-pages.md (EXIF for admins). Tests: ExifTextTest, tests/e2e/test_exif_view.py.
+ */
 public class SosBlock extends JpegBlock {
   //===========================================================================
   public SosBlock() throws JpegException {

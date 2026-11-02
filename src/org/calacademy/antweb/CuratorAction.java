@@ -21,6 +21,14 @@ import org.apache.commons.logging.LogFactory;
 //import org.apache.commons.collections.*;
 //import com.google.common.collect.*;
 
+/**
+ * /curator.do, /curators.do and /curation.do (form dummyForm; curator.jsp, curators.jsp, curation.jsp). With id= (or
+ * name=, which only selects this branch: the lookup is by id) one curator from LoginDb.getCurator(id) ("Curator not
+ * found..." otherwise); with geolocaleId= and taxonName= the curation of that name on that geolocale's list
+ * (GeolocaleTaxonDb, GeolocaleTaxonLogDb.getCuration); with neither the list of curators (a copy of
+ * LoginMgr.getCurators()). Read only. Docs: docs/numbers.md rows 80 to 84. Tests: tests/e2e/test_count_check.py,
+ * tests/e2e/test_curator.py, tests/e2e/test_request_handling.py.
+ */
 public final class CuratorAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(CuratorAction.class);

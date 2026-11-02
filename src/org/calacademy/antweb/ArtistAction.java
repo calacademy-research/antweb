@@ -17,6 +17,17 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * /artist.do (forward of /artists.do; artist.jsp, artists.jsp): one artist (photographer) or the list. artist.do?id=
+ * (or name=; with both, the id is used) shows the artist from ArtistMgr; no id and no name: the list of all artists
+ * (a copy of ArtistMgr's list). Curators (LoginMgr.isCurator) may also, by POST only ("Use the form on the artist
+ * page..." for a GET): isCreate (name required, refused if the name exists; ArtistDb.createArtist with the curator),
+ * isEdit (rename; refused if another artist has the name) and isRemove (moveTo=: the artist that takes its images;
+ * ArtistDb.removeArtist). Rename and remove: only the artist's curator or an administrator (mayChange). After a
+ * change ArtistMgr is reloaded. Reads and writes table artist (and image, image_upload when images move) through
+ * home/ArtistDb. Docs: docs/data-model.md (artist), docs/numbers.md row 92, docs/guides/manager-tools.md. Tests:
+ * tests/e2e/test_manager_tools.py, tests/e2e/test_count_check.py.
+ */
 public final class ArtistAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(ArtistAction.class);

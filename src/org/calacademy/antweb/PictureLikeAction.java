@@ -20,6 +20,14 @@ import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
 
+/**
+ * /pictureLike.do?code=&amp;shot=&amp;number= (form specimenImageForm; forward bigPicture): the Add to Favorites
+ * button of the image page. Logged-in users only; confirmed by POST (PostOnly.confirm). Inserts a row in image_like
+ * (image id, group id, login id) and shows the image page again (the like button is hidden there). Not found:
+ * "BigPicture not found.". The likes are listed on the image likes page and, for admins,
+ * list.do?action=pictureLikes. Docs: docs/data-model.md (image_like). Tests: tests/e2e/policy.py lists it as a write
+ * action.
+ */
 public final class PictureLikeAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(PictureLikeAction.class);

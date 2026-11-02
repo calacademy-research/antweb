@@ -5,6 +5,10 @@ import java.io.Serializable;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * A tribe (extends Genus): its name is the tribe, next rank Genus, link parameters rank=tribe&amp;name=. Made only
+ * by Taxon.getTaxonOfRank("tribe"); AntWeb has no tribe pages.
+ */
 public class Tribe extends Genus implements Serializable {
 
     private static final Log s_log = LogFactory.getLog(Tribe.class);
