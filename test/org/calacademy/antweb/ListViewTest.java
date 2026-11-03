@@ -59,7 +59,10 @@ public class ListViewTest extends TestCase {
         Region africa = new Region();
         africa.setId(2);
         africa.setName("Africa");
-        assertTrue(ListView.addsSpecimenNames(africa));
+        // 2026-11-02 (speed, review of #316): a region's list holds its countries' specimen names already (proxy rows)
+        assertFalse(ListView.addsSpecimenNames(africa));
+        assertFalse("no whole-region specimen read (Other specimens)", ListView.readsPlaceSpecimens(africa));
+        assertTrue(ListView.readsPlaceSpecimens(mozambique()));
         Bioregion afro = new Bioregion();
         afro.setName("Afrotropical");
         assertFalse("a bioregion's list takes every specimen name already", ListView.addsSpecimenNames(afro));

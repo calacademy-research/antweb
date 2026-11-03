@@ -120,7 +120,9 @@ public final class ListView {
 
     /** Whether the view adds the names of specimens collected in the place: country, adm1, region and subregion lists. */
     public static boolean addsSpecimenNames(Overview overview) {
-        if (!(overview instanceof Country || overview instanceof Adm1 || overview instanceof Region || overview instanceof Subregion)) return false;
+        // Countries and adm1s. A region's or subregion's list already holds its countries' specimen names (proxy rows of
+        // the nightly), and reading every specimen of Africa per page took 3 to 6 s on staging (2026-11-02, review of #316).
+        if (!(overview instanceof Country || overview instanceof Adm1)) return false;
         String c = PlaceTaxonNotes.placeSpecimenCriteria(overview);
         return c != null && !c.isEmpty();
     }
@@ -172,6 +174,11 @@ public final class ListView {
     }
 
     /** Whether the overview has the four views (not the AntCat list and Fossil Ants, which keep their own sets). */
+    /** Whether a list reads the place's specimens as a whole (Other specimens, source icons): not regions or subregions. */
+    public static boolean readsPlaceSpecimens(Overview overview) {
+        return !(overview instanceof Region || overview instanceof Subregion);
+    }
+
     public static boolean hasViews(Overview overview) {
         return overview != null && !StatusSet.hasOwnStatusSets(overview.getName());
     }
@@ -550,7 +557,9 @@ public final class ListView {
      */
     public static GenusRows loadGenusRows(Connection connection, Overview overview, String choice, String subfamily,
             PlaceSpecimens placeSpecimens) throws SQLException {
-        PlaceSpecimens specimens = placeSpecimens != null ? placeSpecimens : loadPlaceSpecimens(connection, overview, subfamily, null);
+        // Regions and subregions: no Other specimens column (a scan of the whole region's specimens; see addsSpecimenNames)
+        PlaceSpecimens specimens = placeSpecimens != null ? placeSpecimens
+            : readsPlaceSpecimens(overview) ? loadPlaceSpecimens(connection, overview, subfamily, null) : null;
         StatusSet viewSet = StatusSet.listStatusSet(choice);
         ViewNames view = loadViewNames(connection, overview, viewSet, subfamily, null, specimens);
         Map<String, Integer> evidence = null;
