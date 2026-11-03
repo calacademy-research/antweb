@@ -4,7 +4,8 @@
      taxonChildImages.jsp (uses their statusSet and overview): each button links to the same page with statusSet
      replaced (StatusSet.choicesFor, choiceLabel; hover text ListView.choiceTitle); the current one is marked
      aria-current. The Fossil button is shown only when the list has fossil names here (ListView.HAS_FOSSIL_ATTR, one
-     EXISTS query; 2026-11-02). The AntCat list and Fossil Ants show their own choices the same way. Shown on browse.do,
+     EXISTS query; 2026-11-02). In the view Not curated (reached from a genus row's Not curated number, 2026-11-02) a
+     fifth mark, not a link, shows it as the current view. The AntCat list and Fossil Ants show their own choices the same way. Shown on browse.do,
      taxonomicPage.do and images.do, not on a species or subspecies page. Docs: docs/numbers.md "Views of lists",
      docs/flows/places.md. Tests: tests/e2e/test_status_choice.py. --%><%@ page import="org.calacademy.antweb.Group" %>
 <%@ page import="java.util.ArrayList" %>
@@ -53,6 +54,11 @@
       String sdTitle = org.calacademy.antweb.ListView.choiceTitle(aStatusSet, sdPlural);
 %>
              <a class="view-btn<%= sdIsCurrent ? " is-current" : "" %>" data-status-choice="<%= Html.escAttr(aStatusSet) %>"<%= sdIsCurrent ? " aria-current=\"true\"" : "" %><%= sdTitle == null ? "" : " title=\"" + Html.escAttr(sdTitle) + "\"" %> href="<%= Html.escAttr(sdTarget + sdJoin + "statusSet=" + Html.url(aStatusSet)) %>"><%= Html.esc(StatusSet.choiceLabel(aStatusSet, sdRowRank, sdOverviewName, true)) %></a>
+<%  }
+    // The view Not curated (2026-11-02) is not one of the four buttons: it is reached from a genus row's Not curated
+    // number. Shown as the current view (a mark, not a link), the four buttons leading back.
+    if (StatusSet.LIST_NOT_CURATED.equals(sdCurrent)) { %>
+             <span class="view-btn is-current view-extra" data-status-current="<%= StatusSet.LIST_NOT_CURATED %>" aria-current="true" title="<%= Html.escAttr(org.calacademy.antweb.ListView.choiceTitle(StatusSet.LIST_NOT_CURATED, sdPlural)) %>"><%= Html.esc(StatusSet.choiceLabel(StatusSet.LIST_NOT_CURATED, sdRowRank)) %></span>
 <%  } %>
            </span>
        </div>

@@ -36,6 +36,7 @@ import org.calacademy.antweb.home.PlaceTotals;
  * 4. Criteria: valid = valid, not fossil; curated = valid extant or a morphotaxon on a curated entry
  *    (ListView.vettedCondition); all = the five counted statuses, non-species names not hidden; fossil = valid fossil.
  * 5. Headers say what the list shows, the number of the view ("2,700 Species (valid and curated)").
+ * 6. The view Not curated (2026-11-02): reached from a genus row's Not curated number, not one of the four buttons.
  */
 public class StatusChoiceTest extends TestCase {
 
@@ -295,5 +296,34 @@ public class StatusChoiceTest extends TestCase {
                 assertTrue(v, offered.contains(StatusSet.choiceLabel(v, "species", list)));
             }
         }
+    }
+
+    /**
+     * The view Not curated (Brian Fisher, 2026-11-02, 19:44): address value notcurated, reached from a genus row's Not
+     * curated number; not one of the four buttons; criteria the counted names that are neither valid nor curated
+     * morphospecies (ListView.notCuratedCondition), the indet names included; its own label and headers.
+     */
+    public void testNotCuratedView() {
+        assertEquals(StatusSet.LIST_NOT_CURATED, StatusSet.listChoice("notcurated"));
+        assertEquals(StatusSet.LIST_NOT_CURATED, StatusSet.listChoice(" Not Curated "));
+        assertFalse("not one of the four buttons", java.util.Arrays.asList(StatusSet.LIST_CHOICES).contains(StatusSet.LIST_NOT_CURATED));
+        assertFalse(java.util.Arrays.asList(StatusSet.choicesFor("madants")).contains(StatusSet.LIST_NOT_CURATED));
+        Country moz = new Country();
+        moz.setId(40);
+        moz.setName("Mozambique");
+        assertEquals(StatusSet.LIST_NOT_CURATED, StatusSet.getStatusSet("notcurated", null, moz));
+        assertEquals("the AntCat list keeps its own sets", StatusSet.VALID_WITH_FOSSIL, StatusSet.getStatusSet("notcurated", null, new Project(Project.WORLDANTS)));
+        StatusSet set = StatusSet.listStatusSet(StatusSet.LIST_NOT_CURATED);
+        assertEquals(StatusSet.NOT_CURATED, set.getValue());
+        assertEquals(" " + ListView.notCuratedCondition("taxon"), set.getCriteria("taxon"));
+        assertEquals(" " + ListView.notCuratedCondition("specimen"), set.getCriteria("specimen"));
+        assertFalse("indet names are listed (not hidden as non-species)", TaxaPage.hidesNonSpecies(set));
+        assertTrue("species rows identified to genus", set.listRankCondition("species", "taxon").contains(PlaceTotals.identifiedToGenus("taxon")));
+        assertEquals("Not curated", StatusSet.choiceLabel(StatusSet.LIST_NOT_CURATED, "species"));
+        assertEquals("12 Species (not curated)", StatusSet.listHeading(StatusSet.LIST_NOT_CURATED, 12, "Species", "Species", -1));
+        assertEquals("3 Species imaged (out of 12 species, not curated)", StatusSet.imagedHeading(StatusSet.LIST_NOT_CURATED, 3, 12, "Species", "Species"));
+        // old values still open their views
+        assertEquals(StatusSet.LIST_VETTED, StatusSet.listChoice("vetted"));
+        assertEquals(StatusSet.LIST_ALL, StatusSet.listChoice("validmorpho"));
     }
 }

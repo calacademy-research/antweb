@@ -97,6 +97,12 @@ public class LoginMgr extends Manager {
             s_log.error("startPasswordConversion() place_image_count not created e:" + e);
           }
           try {
+            // place_genus_curation, place_specimen_name (the Not curated column of genus lists, 2026-11-02)
+            new org.calacademy.antweb.home.PlaceGenusCurationDb(conn).ensureSchema();
+          } catch (SQLException e) {
+            s_log.error("startPasswordConversion() place_genus_curation not created e:" + e);
+          }
+          try {
             // Stored licence texts to CC BY 4.0 (decision of 2026-10-29), backup first; no-op once done.
             org.calacademy.antweb.home.LicenseUpdateDb.run(conn);
           } catch (SQLException e) {

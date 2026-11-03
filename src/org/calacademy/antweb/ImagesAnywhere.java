@@ -17,7 +17,8 @@ import org.calacademy.antweb.util.Html;
  *  - the Images column of a place's list shows the images of the ant of the name in AntWeb, from any specimen:
  *    "153 Images" (Brian Fisher, 2026-10-28; from 10-27 to 10-28 it also said "(0 from Comoros)", which wrapped to two
  *    lines and showed "( from Comoros)" where the number script blanks a 0). The link goes to the name's images page,
- *    which says how many imaged specimens are from the place and shows them first.
+ *    which says how many imaged specimens are from the place and shows them first. Genus rows in a place show "N species
+ *    imaged" instead (speciesImagedCell, 2026-11-02).
  *
  * Pure helpers, no database: tested by test.org.calacademy.antweb.ImagesAnywhereTest.
  */
@@ -101,6 +102,18 @@ public final class ImagesAnywhere {
         int n = Math.max(total, place);
         if (n <= 0) return "No Images";
         return "<span class='numbers'>" + n + "</span> Images";
+    }
+
+    /**
+     * The Images cell of a genus row in a place (Brian Fisher, 2026-11-02, 18:40): of the species and subspecies of the
+     * genus in the view, how many have at least one image of the ant anywhere in AntWeb (labels never count;
+     * ListView.GenusRows.imaged): "<span class='numbers'>12</span> species imaged", "No species imaged". Replaces "N Images"
+     * on genus rows (every image of the genus in AntWeb). The link (taxonReportBody.jsp) opens the genus's images page in
+     * the same view; a genus images page has no place-first order (placeFirst is for species pages).
+     */
+    public static String speciesImagedCell(int n) {
+        if (n <= 0) return "No species imaged";
+        return "<span class='numbers'>" + n + "</span> species imaged";
     }
 
     /** The number the Images cell shows (imagesColumn): the AntWeb-wide images of the name, or the place's when that

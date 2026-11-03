@@ -486,9 +486,12 @@ def test_species_lists_show_valid_names_and_morphospecies_only():
     """Brian Fisher, 2026-10-28: a specimen counts at each rank it is identified to, and no further. For the day's place
     of every kind: a sample of the names of its species list (every counted status) are valid names or morphospecies
     (statuses from the API /taxa); the line under the list, "N specimens identified only to genus are not listed here:
-    Lioponera (1), Pheidole (2).", adds up to its N; on the genus list (view Valid), a row with no species in the view
-    ("-") names the specimens collected here that put it there in its Other specimens (2026-11-02; until then "No species
-    on the list · N specimens collected here"), except on lists that select no specimens (curated projects, All AntWeb)."""
+    Lioponera (1), Pheidole (2).", adds up to its N; on the genus list (view Curated), a row from specimens with no
+    species in the view ("-") shows the specimens collected here that put it there in its Not curated number (2026-11-02:
+    in Curated every valid extant name and curated morphospecies is a species of the view, so what keeps such a row is an
+    uncurated morphospecies or an unrecognized name, which Not curated counts; until then the Other specimens of Valid,
+    and before 2026-11-02 "No species on the list · N specimens collected here"). Not checked: fossil genus rows (a
+    valid fossil species is curated but not in Curated) and places without the column (regions, subregions, projects)."""
     wrong, checked = [], []
     for p in places():
         html = ns.fetch(p.list_url("species"))
@@ -505,14 +508,16 @@ def test_species_lists_show_valid_names_and_morphospecies_only():
             lead = re.match(r"\s*([\d,]+)", m.group(2))
             if sum(parts) != int(m.group(1)) or not lead or ns.n(lead.group(1)) != int(m.group(1)):
                 wrong.append(f"{p}: the line under the species list does not add up: {m.group(2)!r} ({m.group(1)})")
-        genus_html = ns.fetch(p.list_url("genus", "valid"))
+        genus_html = ns.fetch(p.list_url("genus", "curated"))
         has_column = 'class="list_extras other"' in (genus_html or "")
+        counted = 'class="not-curated"' in (genus_html or "")   # the nightly count has run for this place
         for row in ns.list_rows(genus_html or ""):
-            # 2026-11-02: a genus row with no species in the view and no entry other than specimens shows its Other specimens
+            # 2026-11-02: a genus row from specimens with no species in the view shows its Not curated number
             no_species = "class='no-species'" in row["html"]
-            if has_column and no_species and 'class="other-names"' not in row["html"] and ns.on_list(row["html"]) \
-                    and 'data-source="specimen"' in row["html"]:
-                wrong.append(f"{p}: a genus row with no species in the view names no specimens: {ns.text_of(row['html'])[:120]}")
+            fossil = "&dagger;" in row["html"] or "\u2020" in row["html"]
+            if has_column and counted and no_species and not fossil and 'class="not-curated"' not in row["html"] \
+                    and ns.on_list(row["html"]) and 'data-source="specimen"' in row["html"]:
+                wrong.append(f"{p}: a genus row with no species in the view has no Not curated number: {ns.text_of(row['html'])[:120]}")
         checked.append(repr(p))
     if not checked:
         pytest.skip("no species list read " + ns.day_note())

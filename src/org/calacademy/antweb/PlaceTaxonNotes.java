@@ -47,11 +47,15 @@ import org.calacademy.antweb.util.Html;
  * never count, SpecimenDb.notRedFlagged) filed under a species or subspecies name of the genus, identified to genus, of
  * a counted status, that is not a name of the list in the current view (ListView.otherNames; the indet name "Acropyga
  * (indet)" is one such name outside All specimen names), kept by genus in OtherNames:
- *   - genus lists (taxonomicPage.do?rank=genus, browse.do of a subfamily in a place): the Other specimens column, the
- *     number linked to the place's specimen search for those specimens (otherSpecimensCellHtml; ListView.GenusRows);
+ *   - genus lists: until 2026-11-02 the Other specimens column; replaced by the Not curated column (below);
  *   - the genus page in a place (description.do, browse.do, images.do), views Valid and Curated: "Specimens collected
  *     here not on the species list: 3 (names: Acropyga mz01, Acropyga mz02)", the number linked to the specimen
  *     search, each name to its page in the place. In all of AntWeb the indet line stays as it was (no place list).
+ *
+ * Not curated (Brian Fisher, 2026-11-02, 19:44): the genus rows of a place's list (countries, adm1s, museums, bioregions;
+ * views Valid and Curated) show the specimens of the genus collected there whose name is not curated, counted nightly
+ * (home.PlaceGenusCurationDb), linked to the genus page in the place in the view Not curated (notCuratedCellHtml,
+ * notCuratedUrl), whose header gives the breakdown (NOT_CURATED_HEADER).
  *
  * Tested without a database by test.org.calacademy.antweb.PlaceTaxonNotesTest, the SQL against MySQL by
  * test.org.calacademy.antweb.home.PlaceTaxonNotesDbTest.
@@ -69,6 +73,10 @@ public final class PlaceTaxonNotes {
     public static final String NOT_RECORDED = "notRecorded";
     /** Request attribute (a ListView.GenusRows) read by web/taxonReport.jsp: the genus rows of a subfamily's browse page in a place. */
     public static final String GENUS_ROWS = "placeGenusRows";
+    /** Request attribute (String) read by web/showBrowse-body.jsp: the header of a genus page in the view Not curated. */
+    public static final String NOT_CURATED_HEADER = "notCuratedHeader";
+    /** Request attribute (a ListView.PlaceSpecimens) read by web/taxonReport.jsp: one genus's specimens collected here, by name. */
+    public static final String PLACE_SPECIMENS = "placeSpecimens";
 
     /** "dorylinaelividopone" -> "dorylinaelividopone (indet)". */
     public static String indetName(String genusTaxonName) {
@@ -264,26 +272,27 @@ public final class PlaceTaxonNotes {
         public java.util.Collection<Genus> genera() { return byGenus.values(); }
     }
 
-    /** "3 specimens collected here under names not on this list" (the Other specimens cell's title). */
-    public static String otherSpecimensTitle(int n) {
-        return n + (n == 1 ? " specimen" : " specimens") + " collected here under names not on this list";
-    }
-
-    /** A link (rel=nofollow: a search) or, without a URL (bots), the text alone. */
-    static String link(String text, String url, String cls, int n, String title) {
-        String data = " class=\"" + cls + "\" data-other-specimens=\"" + n + "\"" + (title == null ? "" : " title=\"" + Html.escAttr(title) + "\"");
-        if (url == null) return "<span" + data + ">" + Html.esc(text) + "</span>";
-        return "<a rel=\"nofollow\"" + data + " href=\"" + Html.escAttr(url) + "\">" + Html.esc(text) + "</a>";
+    /** "3 specimens not curated" (the Not curated cell's title, Brian Fisher, 2026-11-02). */
+    public static String notCuratedTitle(int n) {
+        return String.format(Locale.US, "%,d", n) + (n == 1 ? " specimen" : " specimens") + " not curated";
     }
 
     /**
-     * The Other specimens cell of a genus row (Brian Fisher, 2026-11-02; replaces "No species on the list &middot; 3
-     * specimens collected here" and "+ 2 specimens of other names"): the number, linked to the place's specimen search
-     * for those specimens; "" when 0.
+     * The Not curated cell of a genus row (Brian Fisher, 2026-11-02; replaces Other specimens): the stored number, linked
+     * to the genus page in the place in the view Not curated (notCuratedUrl); "" when 0 or not counted.
      */
-    public static String otherSpecimensCellHtml(int n, String url) {
+    public static String notCuratedCellHtml(int n, String url) {
         if (n <= 0) return "";
-        return link(String.format(java.util.Locale.US, "%,d", n), url, "other-names", n, otherSpecimensTitle(n));
+        String data = " class=\"not-curated\" data-not-curated=\"" + n + "\" title=\"" + Html.escAttr(notCuratedTitle(n)) + "\"";
+        String text = String.format(Locale.US, "%,d", n);
+        if (url == null) return "<span" + data + ">" + text + "</span>";
+        return "<a" + data + " href=\"" + Html.escAttr(url) + "\">" + text + "</a>";
+    }
+
+    /** The genus page in the place in the view Not curated: browse.do?subfamily=..&genus=..&rank=genus&<place>&statusSet=notcurated. */
+    public static String notCuratedUrl(String subfamily, String genus, Overview overview) {
+        return AntwebProps.getDomainApp() + "/browse.do?subfamily=" + Html.url(subfamily) + "&genus=" + Html.url(genus) + "&rank=genus&"
+            + placeParams(overview) + "&statusSet=" + StatusSet.LIST_NOT_CURATED;
     }
 
     /** More names than this: the search takes the genus alone (a search box value is a list of names, docs/numbers.md 5.3). */

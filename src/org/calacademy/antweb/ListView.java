@@ -42,12 +42,17 @@ import org.calacademy.antweb.util.DBUtil;
  *  - The specimen names of geolocale lists (addsSpecimenNames, specimenNamesSet, collectedHere): country and adm1 lists
  *    take valid names from specimens but not morphospecies or indet names, so Curated adds the curated morphospecies and
  *    All specimen names every counted name collected there (TaxaPage.specimenNamesWhere).
- *  - The genus rows (GenusRows): each row's Species in the view, its Other specimens (the specimens collected here under
- *    names not in the view, PlaceTaxonNotes.OtherNames), and which genus rows the views Valid and Curated show: a genus
- *    known in the place only from specimens identified to genus ("Acropyga (indet)": indetermined, unidentifiable)
- *    appears only in All specimen names (keepGenus).
- *  - The place's specimens by name (PlaceSpecimens), red-flagged ones never counted: the Other specimens, the specimen
- *    numbers of rows added from specimens, and the source icon (specimens trump literature: sourceKind).
+ *  - The genus rows (GenusRows): each row's Species in the view, its Not curated number (counted nightly,
+ *    home.PlaceGenusCurationDb; the specimens of the genus collected here whose name is not curated:
+ *    notCuratedCondition), its species imaged (Images: "N species imaged", StatisticsDb.antImagedNames), and which genus
+ *    rows the views Valid and Curated show: a genus known in the place only from specimens identified to genus
+ *    ("Acropyga (indet)": indetermined, unidentifiable) appears only in All specimen names (keepGenus).
+ *  - The place's specimens by name (PlaceSpecimens), red-flagged ones never counted: the specimen numbers of rows added
+ *    from specimens, the source icon (specimens trump literature: sourceKind) and the names the views add. Genus lists
+ *    read them from place_specimen_name (stored nightly with the Not curated numbers: loadStoredPlaceSpecimens; 2026-11-02,
+ *    speed: reading the place's specimens took 1.4 to 2.2 s per genus list), species lists from the specimen table.
+ *  - The view Not curated (StatusSet.LIST_NOT_CURATED, reached from a genus row's Not curated number, not one of the four
+ *    buttons): the names whose specimens that number counts.
  *
  * Tests without a database: test.org.calacademy.antweb.ListViewTest; SQL against MySQL: home.PlaceTaxonNotesDbTest.
  */
@@ -68,6 +73,7 @@ public final class ListView {
         if (StatusSet.LIST_VETTED.equals(choice)) return "Valid " + r + " and curated morphospecies (morphospecies a curator has put on a species list)";
         if (StatusSet.LIST_ALL.equals(choice)) return "Every name with specimens here: also the other morphospecies and the specimens identified only to genus";
         if (StatusSet.LIST_FOSSIL.equals(choice)) return "Fossil " + r;
+        if (StatusSet.LIST_NOT_CURATED.equals(choice)) return "Names with specimens here that are not curated: morphospecies no curator has put on a list, specimens identified only to genus, names not in AntCat";
         return null;
     }
 
@@ -118,6 +124,18 @@ public final class ListView {
         return "(" + own + " or " + under + ")";
     }
 
+    /**
+     * SQL: the name (alias a: taxon, specimen) is counted and not curated (Brian Fisher, 2026-11-02, the Not curated column
+     * and view): of a counted status (StatusSet.getCountables) and neither a valid name nor a curated morphospecies
+     * (vettedCondition). So uncurated morphospecies, names identified only to genus ("(indet)", indetermined,
+     * unidentifiable) and names AntCat does not know (unrecognized). The nightly count (home.PlaceGenusCurationDb) and the
+     * view use this one condition.
+     */
+    public static String notCuratedCondition(String alias) {
+        return "(" + alias + ".status in " + StatusSet.getCountables().trim() + " and not (" + alias + ".status = '" + Status.VALID + "' or ("
+            + alias + ".status = '" + Status.MORPHOTAXON + "' and " + vettedCondition(alias) + ")))";
+    }
+
     /** Whether the view adds the names of specimens collected in the place: country, adm1, region and subregion lists. */
     public static boolean addsSpecimenNames(Overview overview) {
         // Countries and adm1s. A region's or subregion's list already holds its countries' specimen names (proxy rows of
@@ -135,6 +153,7 @@ public final class ListView {
         if (viewSet == null) return null;
         if (StatusSet.VETTED.equals(viewSet.getValue())) return new StatusSet(StatusSet.VETTED_MORPHO);
         if (StatusSet.ALL_NAMES.equals(viewSet.getValue())) return new StatusSet(StatusSet.ALL_NAMES);
+        if (StatusSet.NOT_CURATED.equals(viewSet.getValue())) return new StatusSet(StatusSet.NOT_CURATED);
         return null;
     }
 
@@ -173,9 +192,24 @@ public final class ListView {
         return "";
     }
 
-    /** Whether a list reads the place's specimens as a whole (Other specimens, source icons): not regions or subregions. */
+    /** Whether a list reads the place's specimens as a whole (source icons, rows from specimens): not regions or subregions. */
     public static boolean readsPlaceSpecimens(Overview overview) {
         return !(overview instanceof Region || overview instanceof Subregion);
+    }
+
+    /**
+     * SQL: the name (alias) was collected in the place, from the names already read (collected), or null to select them
+     * with a subquery of the specimen table (collectedHere): stored names (place_specimen_name) by a subquery of that
+     * table (indexed, no IN list limit); names read from the specimen table as an IN list up to TaxaPage.MAX_NAMED_IN.
+     */
+    public static String hereCondition(String alias, PlaceSpecimens collected) {
+        if (collected == null) return null;
+        if (collected.storedType != null) {
+            return alias + ".taxon_name in (select psn.taxon_name from place_specimen_name psn where psn.list_type = "
+                + DBUtil.sqlLiteral(collected.storedType) + " and psn.list_key = " + DBUtil.sqlLiteral(collected.storedKey) + ")";
+        }
+        if (collected.taxonNames().size() > TaxaPage.MAX_NAMED_IN) return null;
+        return namedIn(alias, collected.taxonNames());
     }
 
     /** Whether the overview has the four views (not the AntCat list and Fossil Ants, which keep their own sets). */
@@ -238,6 +272,20 @@ public final class ListView {
     public static final class PlaceSpecimens {
         final Map<String, String[]> names = new LinkedHashMap<>();
         final Map<String, Integer> counts = new HashMap<>();
+        /** Read from place_specimen_name (the nightly count): its list_type and list_key; null when read from the specimens. */
+        String storedType;
+        String storedKey;
+
+        /** Marks the names as those stored for the place (hereCondition then selects them from place_specimen_name). */
+        public PlaceSpecimens stored(String type, String key) {
+            this.storedType = type;
+            this.storedKey = key;
+            return this;
+        }
+
+        public boolean isStored() {
+            return storedType != null;
+        }
 
         /** Adds one name (also for tests). */
         public void add(String taxonName, String subfamily, String genus, String species, String subspecies, String taxarank,
@@ -308,11 +356,6 @@ public final class ListView {
         if (connection == null || criteria == null || criteria.isEmpty()) return null;
         boolean bySubfamily = subfamily != null && !subfamily.isEmpty();
         boolean byGenus = genus != null && !genus.isEmpty();
-        boolean wholePlace = names == null && !bySubfamily && !byGenus;
-        if (wholePlace) {
-            PlaceSpecimens cached = cachedPlaceSpecimens(criteria);
-            if (cached != null) return cached;
-        }
         PlaceSpecimens out = new PlaceSpecimens();
         List<List<String>> chunks = new ArrayList<>();
         if (names == null) {
@@ -336,38 +379,58 @@ public final class ListView {
                 }
             }
         }
-        if (wholePlace) cachePlaceSpecimens(criteria, out);
         return out;
     }
 
-    /*
-     * The whole place's specimens by name, kept for an hour (2026-11-02, speed: staging's genus lists of CASC, the
-     * Neotropical bioregion and Madagascar took 1.4 to 2.2 s against production's 0.07 to 0.26 s, nearly all of it this
-     * grouped read of the place's specimens). At most PLACE_CACHE_MAX places, least recently used dropped; emptied when an
-     * upload finishes (UploadDetails.finish). After the nightly run the numbers may lag by up to an hour. Read-only use:
-     * callers never add to a PlaceSpecimens they did not build.
+    /**
+     * The query of the stored names of a place (place_specimen_name, written by the nightly count with the Not curated
+     * numbers): the same columns as placeSpecimensSql. Parameters: list_type, list_key, the subfamily (bySubfamily).
      */
-    public static final long PLACE_CACHE_MS = 60L * 60 * 1000;
-    public static final int PLACE_CACHE_MAX = 300;
-    private static final Map<String, Object[]> PLACE_CACHE = java.util.Collections.synchronizedMap(
-        new java.util.LinkedHashMap<String, Object[]>(64, 0.75f, true) {
-            @Override protected boolean removeEldestEntry(Map.Entry<String, Object[]> e) { return size() > PLACE_CACHE_MAX; }
-        });
-
-    public static PlaceSpecimens cachedPlaceSpecimens(String criteria) {
-        Object[] e = PLACE_CACHE.get(criteria);
-        if (e == null) return null;
-        if (System.currentTimeMillis() - (Long) e[0] > PLACE_CACHE_MS) { PLACE_CACHE.remove(criteria); return null; }
-        return (PlaceSpecimens) e[1];
+    public static String storedPlaceSpecimensSql(boolean bySubfamily) {
+        return "select t.taxon_name, t.subfamily, t.genus, t.species, t.subspecies, t.taxarank, t.status, p.specimens n"
+            + " from place_specimen_name p join taxon t on t.taxon_name = p.taxon_name"
+            + " where p.list_type = ? and p.list_key = ? and t.family = 'formicidae'" + (bySubfamily ? " and t.subfamily = ?" : "");
     }
 
-    public static void cachePlaceSpecimens(String criteria, PlaceSpecimens p) {
-        PLACE_CACHE.put(criteria, new Object[] {System.currentTimeMillis(), p});
+    /**
+     * The place's names as stored by the nightly count (one indexed read; 2026-11-02, speed: genus lists no longer read
+     * the specimen table), only a subfamily's when given; null when the place has no stored names (regions,
+     * subregions, projects) or its kind was never counted (table missing or empty: the caller reads the specimens).
+     * After an upload the names catch up the next morning.
+     */
+    public static PlaceSpecimens loadStoredPlaceSpecimens(Connection connection, Overview overview, String subfamily) {
+        String[] tk = org.calacademy.antweb.home.PlaceGenusCurationDb.typeAndKey(overview);
+        if (connection == null || tk == null) return null;
+        if (!org.calacademy.antweb.home.PlaceGenusCurationDb.namesFilled(connection, tk[0])) return null;
+        boolean bySubfamily = subfamily != null && !subfamily.isEmpty();
+        PlaceSpecimens out = new PlaceSpecimens().stored(tk[0], tk[1]);
+        try (PreparedStatement stmt = connection.prepareStatement(storedPlaceSpecimensSql(bySubfamily))) {
+            stmt.setString(1, tk[0]);
+            stmt.setString(2, tk[1]);
+            if (bySubfamily) stmt.setString(3, subfamily);
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) {
+                    out.add(r.getString("taxon_name"), r.getString("subfamily"), r.getString("genus"), r.getString("species"),
+                        r.getString("subspecies"), r.getString("taxarank"), r.getString("status"), r.getInt("n"));
+                }
+            }
+        } catch (SQLException e) {
+            org.apache.commons.logging.LogFactory.getLog(ListView.class).warn("loadStoredPlaceSpecimens() overview:" + overview + " e:" + e);
+            return null;
+        }
+        return out;
     }
 
-    /** Empties the cache of the places' specimens (an upload changed them). */
-    public static void clearPlaceSpecimensCache() {
-        PLACE_CACHE.clear();
+    /**
+     * The place's specimens by name for a genus list (one subfamily when given): the stored names; when there are none
+     * yet, on country and adm1 lists (whose views add the names collected there) the specimen table, elsewhere none
+     * (museum and bioregion lists hold their specimen names; the source icon then comes from the list row).
+     */
+    public static PlaceSpecimens genusListSpecimens(Connection connection, Overview overview, String subfamily) throws SQLException {
+        PlaceSpecimens stored = loadStoredPlaceSpecimens(connection, overview, subfamily);
+        if (stored != null) return stored;
+        if (addsSpecimenNames(overview)) return loadPlaceSpecimens(connection, overview, subfamily, null);
+        return null;
     }
 
     // ------------------------------------------------------------------------------------------------- view names
@@ -382,6 +445,21 @@ public final class ListView {
 
         public boolean contains(String taxonName) {
             return names.containsKey(taxonName);
+        }
+
+        public Set<String> taxonNames() {
+            return names.keySet();
+        }
+
+        /** Of the names given (imaged ones), how many by genus (key OtherNames.key(subfamily, genus)). */
+        public Map<String, Integer> countByGenusOf(java.util.Collection<String> which) {
+            Map<String, Integer> out = new HashMap<>();
+            if (which == null) return out;
+            for (String n : which) {
+                String[] v = names.get(n);
+                if (v != null) out.merge(PlaceTaxonNotes.OtherNames.key(v[0], v[1]), 1, Integer::sum);
+            }
+            return out;
         }
 
         /** Names by genus (key OtherNames.key(subfamily, genus)); statuses: null for any, else only those. */
@@ -413,12 +491,22 @@ public final class ListView {
         return loadViewNames(connection, overview, viewSet, subfamily, genus, null);
     }
 
+    /** The same, the specimen half on the names collected here as hereCondition gives them (null: a subquery). */
+    public static String viewNamesSqlHere(Overview overview, StatusSet viewSet, String subfamily, String genus, String here) {
+        String extra = "";
+        if (subfamily != null && !subfamily.isEmpty()) extra += " and taxon.subfamily = " + DBUtil.sqlQuote(subfamily);
+        if (genus != null && !genus.isEmpty()) extra += " and taxon.genus = " + DBUtil.sqlQuote(genus);
+        return TaxaPage.viewQueryHere(overview, Rank.SPECIES, true, viewSet,
+            "taxon.taxon_name as taxon_name, taxon.subfamily as subfamily, taxon.genus as genus, taxon.status as status", extra, here);
+    }
+
     public static ViewNames loadViewNames(Connection connection, Overview overview, StatusSet viewSet, String subfamily, String genus,
             PlaceSpecimens collected) throws SQLException {
         ViewNames out = new ViewNames();
-        // above MAX_NAMED_IN names the specimen half keeps its subquery (no very long IN list; review of #316)
-        try (PreparedStatement stmt = connection.prepareStatement(viewNamesSql(overview, viewSet, subfamily, genus,
-                collected == null || collected.taxonNames().size() > TaxaPage.MAX_NAMED_IN ? null : collected.taxonNames()));
+        // stored names: a subquery of place_specimen_name; names read here: an IN list, above MAX_NAMED_IN names the
+        // specimen half keeps its subquery (no very long IN list; review of #316)
+        try (PreparedStatement stmt = connection.prepareStatement(viewNamesSqlHere(overview, viewSet, subfamily, genus,
+                hereCondition("taxon", collected)));
              ResultSet r = stmt.executeQuery()) {
             while (r.next()) out.add(r.getString("taxon_name"), r.getString("subfamily"), r.getString("genus"), r.getString("status"));
         }
@@ -431,9 +519,9 @@ public final class ListView {
     public static final List<String> BEYOND_GENUS_STATUSES = java.util.Arrays.asList(Status.VALID, Status.MORPHOTAXON, Status.UNRECOGNIZED);
 
     /**
-     * The specimens collected here under names not in the view, by genus (the Other specimens column, the line under a
-     * genus page's species): the place's names of species or subspecies rank, of a counted status, identified to genus,
-     * that are not names of the view.
+     * The specimens collected here under names not in the view, by genus (the line under a genus page's species; the
+     * Other specimens column of genus lists until 2026-11-02, replaced by Not curated): the place's names of species or
+     * subspecies rank, of a counted status, identified to genus, that are not names of the view.
      */
     public static PlaceTaxonNotes.OtherNames otherNames(PlaceSpecimens specimens, ViewNames view) {
         if (specimens == null) return null;
@@ -453,7 +541,7 @@ public final class ListView {
      * view's SQL. Valid and Curated: a row with species in the view; else a valid genus known here from more than
      * specimens identified to genus: a list entry that is not from specimens (curator, literature, AntCat), or a name of
      * the genus on the list or collected here that is valid, a morphospecies or unrecognized (evidence). So Acropyga in
-     * Mozambique, known from morphospecies, is in Valid with no species and its Other specimens; a genus known only from
+     * Mozambique, known from morphospecies, is in Valid with no species and its Not curated number; a genus known only from
      * "(indet)" specimens is only in All specimen names; a morphogenus is in Curated only with a curated morphospecies.
      */
     public static boolean keepGenus(String choice, String status, String sourceKind, int speciesInView, int evidence) {
@@ -520,21 +608,40 @@ public final class ListView {
         public final String choice;
         final Map<String, Integer> speciesInView;
         final Map<String, Integer> evidence;
-        /** The specimens collected here under names not in the view, by genus; null when the place selects none. */
-        public final PlaceTaxonNotes.OtherNames otherNames;
         /** The genera (OtherNames.key) with a specimen collected here, not red-flagged (the specimen source icon). */
         final Set<String> generaWithSpecimens = new HashSet<>();
+        /** The stored Not curated numbers by genus (home.PlaceGenusCurationDb), or null (not counted, or no column). */
+        Map<String, org.calacademy.antweb.home.PlaceGenusCurationDb.Row> curation;
+        /** Whether the place has the Not curated column (countries, adm1s, museums, bioregions). */
+        boolean placeHasCuration;
+        /** The species in the view with an image of the ant, by genus (the Images cell); null when not read. */
+        Map<String, Integer> imaged;
 
-        public GenusRows(String choice, Map<String, Integer> speciesInView, Map<String, Integer> evidence, PlaceTaxonNotes.OtherNames otherNames) {
+        public GenusRows(String choice, Map<String, Integer> speciesInView, Map<String, Integer> evidence) {
             this.choice = choice;
             this.speciesInView = speciesInView == null ? new HashMap<>() : speciesInView;
             this.evidence = evidence == null ? new HashMap<>() : evidence;
-            this.otherNames = otherNames;
         }
 
         /** Marks the genera of the place's specimens (loadGenusRows; also for tests). */
         public GenusRows withSpecimens(PlaceSpecimens specimens) {
             if (specimens != null) for (String[] v : specimens.names.values()) generaWithSpecimens.add(PlaceTaxonNotes.OtherNames.key(v[0], v[1]));
+            return this;
+        }
+
+        /** The stored Not curated numbers (null: cells empty); placeHasColumn: the place shows the column. */
+        public GenusRows withCuration(boolean placeHasColumn, Map<String, org.calacademy.antweb.home.PlaceGenusCurationDb.Row> rows) {
+            this.placeHasCuration = placeHasColumn;
+            this.curation = rows;
+            if (rows != null) for (org.calacademy.antweb.home.PlaceGenusCurationDb.Row r : rows.values()) {
+                if (r.specimens > 0) generaWithSpecimens.add(PlaceTaxonNotes.OtherNames.key(r.subfamily, r.genus));
+            }
+            return this;
+        }
+
+        /** The species of the view with an image of the ant, by genus (also for tests). */
+        public GenusRows withImaged(Map<String, Integer> imagedByGenus) {
+            this.imaged = imagedByGenus;
             return this;
         }
 
@@ -549,15 +656,26 @@ public final class ListView {
             return n == null ? 0 : n;
         }
 
-        /** The genus row's Other specimens (0 when none; Fossil and All specimen names: never shown). */
-        public PlaceTaxonNotes.OtherNames.Genus other(String subfamily, String genus) {
-            if (otherNames == null || !showsOtherSpecimens()) return null;
-            return otherNames.genus(subfamily, genus);
+        /**
+         * The Not curated column (Brian Fisher, 2026-11-02): in the views Valid and Curated (the same number in both), on
+         * countries, adm1s, museums and bioregions; not in All specimen names (those names are all on the list there) or
+         * Fossil, not on regions, subregions or projects.
+         */
+        public boolean showsNotCurated() {
+            return placeHasCuration && (StatusSet.LIST_VALID.equals(choice) || StatusSet.LIST_VETTED.equals(choice));
         }
 
-        /** Valid and Curated (and All specimen names, which names them itself: none there in practice). Not Fossil. */
-        public boolean showsOtherSpecimens() {
-            return !StatusSet.LIST_FOSSIL.equals(choice);
+        /** The genus row's stored Not curated numbers, or null (column not shown, not counted, or none). */
+        public org.calacademy.antweb.home.PlaceGenusCurationDb.Row notCurated(String subfamily, String genus) {
+            if (!showsNotCurated() || curation == null) return null;
+            return curation.get(org.calacademy.antweb.home.PlaceGenusCurationDb.key(subfamily, genus));
+        }
+
+        /** The genus row's species in the view with an image of the ant, or -1 when not read. */
+        public int imaged(String subfamily, String genus) {
+            if (imaged == null) return -1;
+            Integer n = imaged.get(PlaceTaxonNotes.OtherNames.key(subfamily, genus));
+            return n == null ? 0 : n;
         }
 
         public boolean keep(Taxon genusRow) {
@@ -579,24 +697,20 @@ public final class ListView {
     }
 
     /**
-     * The genus rows' numbers of a view in a place (one subfamily when given): the view's names (Species), for Valid and
-     * Curated the names of All specimen names (the evidence of keepGenus), and the place's specimens (Other specimens).
-     * Three queries, none per row.
+     * The genus rows' numbers of a view in a place (one subfamily when given): the view's names (Species, and their images:
+     * the Images cell), for Valid and Curated the names of All specimen names (the evidence of keepGenus), and the stored
+     * Not curated numbers. No query per row; the place's specimens come from place_specimen_name (genusListSpecimens).
      */
     public static GenusRows loadGenusRows(Connection connection, Overview overview, String choice, String subfamily) throws SQLException {
-        return loadGenusRows(connection, overview, choice, subfamily, null);
+        return loadGenusRows(connection, overview, choice, subfamily, genusListSpecimens(connection, overview, subfamily));
     }
 
     /**
-     * The same; placeSpecimens: the place's specimens by name already read for the page (all subfamilies), or null to read
-     * them here. The specimen table is scanned once per page (2026-11-02, speed: three scans made country genus lists
-     * take 6 to 11 s); the view queries take the names collected here from it (namedIn).
+     * The same; specimens: the place's names collected there (genusListSpecimens: stored, or read from the specimen table
+     * when not counted yet), or null (regions, subregions, projects, or not counted on museums and bioregions).
      */
     public static GenusRows loadGenusRows(Connection connection, Overview overview, String choice, String subfamily,
-            PlaceSpecimens placeSpecimens) throws SQLException {
-        // Regions and subregions: no Other specimens column (a scan of the whole region's specimens; see addsSpecimenNames)
-        PlaceSpecimens specimens = placeSpecimens != null ? placeSpecimens
-            : readsPlaceSpecimens(overview) ? loadPlaceSpecimens(connection, overview, subfamily, null) : null;
+            PlaceSpecimens specimens) throws SQLException {
         StatusSet viewSet = StatusSet.listStatusSet(choice);
         ViewNames view = loadViewNames(connection, overview, viewSet, subfamily, null, specimens);
         Map<String, Integer> evidence = null;
@@ -604,7 +718,13 @@ public final class ListView {
             evidence = loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_ALL), subfamily, null, specimens)
                 .countByGenus(BEYOND_GENUS_STATUSES);
         }
-        return new GenusRows(choice, view.countByGenus(null), evidence, otherNames(specimens, view)).withSpecimens(specimens);
+        GenusRows rows = new GenusRows(choice, view.countByGenus(null), evidence).withSpecimens(specimens);
+        boolean hasColumn = org.calacademy.antweb.home.PlaceGenusCurationDb.typeAndKey(overview) != null;
+        rows.withCuration(hasColumn, hasColumn ? org.calacademy.antweb.home.PlaceGenusCurationDb.read(connection, overview) : null);
+        // Images: of the species of the genus in the view, those with an image of the ant anywhere in AntWeb (labels never
+        // count; Brian Fisher, 2026-11-02, 18:40). One query per 500 names (StatisticsDb.antImagedNames).
+        rows.withImaged(view.countByGenusOf(org.calacademy.antweb.home.StatisticsDb.antImagedNames(connection, view.taxonNames())));
+        return rows;
     }
 
     /**

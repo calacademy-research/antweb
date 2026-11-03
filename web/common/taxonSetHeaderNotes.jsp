@@ -1,7 +1,7 @@
 <%-- "About this list", one closed line above the list of taxonomicPage.do and browse.do in a place (included by
      web/taxonomicPage-body.jsp and web/showBrowse-body.jsp; reads overview, pageRank and pageType): a plain details
      element that opens on click (Brian Fisher, 2026-10-30). Since 2026-11-02 it explains, in plain words, the four
-     views (ListView.viewDescriptions), the columns (Species and Other specimens of genus rows) and the four source
+     views (ListView.viewDescriptions), the columns (Species, Not curated and Images of genus rows; the view Not curated) and the four source
      icons (ListView.sourceIconHtml), then the sources of a georegion, bioregion, museum or project list, the range-data
      report links for curators and administrators, and the administrators' note on georegion species lists. Docs:
      docs/flows/places.md, docs/numbers.md "Views of lists". --%>
@@ -17,10 +17,22 @@ if (org.calacademy.antweb.ListView.hasViews(overview)
     }
     aboutList.append("</ul><p>Red-flagged specimens never count, in any view.</p>");
     if (Rank.GENUS.equals(aboutRowRank)) {
-        aboutList.append("<p><b>Columns.</b> <b>Species</b>: the species and subspecies of the genus in the chosen view (a dash when none)."
-            + " <b>Other specimens</b>: the specimens of the genus collected here under names that are not in the chosen view,"
-            + " such as morphospecies no curator has put on a species list and specimens identified only to genus; click the number to"
-            + " see them. A genus known here only from specimens identified to genus is listed only in All specimen names.</p>");
+        // 2026-11-02 (19:44 and 18:40): Not curated replaces Other specimens; Images on genus rows is "N species imaged".
+        aboutList.append("<p><b>Columns.</b> <b>Species</b>: the species and subspecies of the genus in the chosen view (a dash when none).");
+        if (org.calacademy.antweb.home.PlaceGenusCurationDb.typeAndKey(overview) != null) {
+            aboutList.append(" <b>Not curated</b> (views Valid and Curated): the specimens of the genus collected here (not red-flagged) whose"
+                + " name is not curated: morphospecies no curator has put on a species list, specimens identified only to genus and names"
+                + " not in AntCat. It shows how much of the genus collected here is not yet identified to a curated name. Counted once a day,"
+                + " so after an upload it catches up the next morning; click the number to see those names and their specimens.");
+        }
+        aboutList.append(" <b>Images</b>: of the species of the genus in the chosen view, how many have at least one image of the ant"
+            + " (from a specimen collected anywhere; label images do not count); click it to see the genus's images."
+            + " A genus known here only from specimens identified to genus is listed only in All specimen names.</p>");
+    }
+    if (StatusSet.LIST_NOT_CURATED.equals(request.getParameter("statusSet") == null ? null : StatusSet.listChoice(request.getParameter("statusSet")))) {
+        aboutList.append("<p><b>Not curated.</b> This view, opened from a genus's Not curated number, lists the names of the genus"
+            + " collected here that are not curated (neither valid names nor curated morphospecies), each with its specimens collected here."
+            + " The number in the header was counted last night.</p>");
     }
     aboutList.append("<p><b>Source.</b> ")
         .append(org.calacademy.antweb.ListView.sourceIconHtml(org.calacademy.antweb.ListView.SOURCE_SPECIMEN)).append(" Specimen: collected here (a name with a specimen collected here shows this even when it is also in the literature); ")

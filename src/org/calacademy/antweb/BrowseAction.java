@@ -27,7 +27,8 @@ import org.apache.commons.logging.LogFactory;
  * /mapComparison.do (mapComparison.jsp; form browseForm in session scope; the oneView.do mapping is commented out).
  * The page type comes from the request URL. Finds the place (OverviewMgr), redirects taxonName= and antcatId= to the
  * taxon's page, reads the taxon (TaxonDb.getFullTaxon, else HomonymDb.getFullHomonym), its row in the place's list,
- * the view (StatusSet.getStatusSet; ListView for the genus rows of a subfamily and the genus page's line), the
+ * the view (StatusSet.getStatusSet; ListView for the genus rows of a subfamily and the genus page's line; the view Not
+ * curated of a genus, home.PlaceGenusCurationDb), the
  * not-recorded notice and indet line (PlaceTaxonNotes), images,
  * children and map. Comparisons need a log-in (Check.loginForFeature); for visitors not logged in, two of each kind
  * run at a time (ConcurrencyLimiter). Page text is saved and prepared by DescriptionAction. Docs:
@@ -492,8 +493,8 @@ public class BrowseAction extends DescriptionAction {
 			  ListView.setHasFossil(request, connection, overview, Rank.getNextRank(taxon.getRank()),
 			      taxon instanceof Family ? null : taxon.getSubfamily(), taxon instanceof Genus ? taxon.getGenus() : null);
 			}
-			// 2026-11-02 (views): the genus rows of a subfamily in a place, as on the genus list: Species and Other
-			// specimens in the view, and the rows the view shows (ListView.GenusRows; the header counts the rows shown).
+			// 2026-11-02 (views): the genus rows of a subfamily in a place, as on the genus list: Species, Not curated and
+			// species imaged in the view, and the rows the view shows (ListView.GenusRows; the header counts the rows shown).
 			if (taxon instanceof Subfamily && !global && ListView.hasViews(overview) && org.calacademy.antweb.home.GenusOnly.typeAndKey(overview) != null) {
 			  try {
 			    ListView.GenusRows genusRows = ListView.loadGenusRows(connection, overview, statusSetStr, taxon.getSubfamily());
@@ -501,6 +502,21 @@ public class BrowseAction extends DescriptionAction {
 			    request.setAttribute(PlaceTaxonNotes.GENUS_ROWS, genusRows);
 			  } catch (SQLException | RuntimeException e) {
 			    s_log.warn("execute() genus rows taxon:" + taxon.getTaxonName() + " overview:" + overview + " e:" + e);
+			  }
+			}
+
+			// 2026-11-02: a genus in a place in the view Not curated (reached from the genus row's Not curated number): the
+			// header gives the stored breakdown ("3,392 specimens not curated: 298 morphospecies (2,820 specimens), 572
+			// identified only to genus"); the rows added from specimens collected here show their specimens (one genus read).
+			if (taxon instanceof Genus && !global && StatusSet.LIST_NOT_CURATED.equals(statusSetStr)) {
+			  org.calacademy.antweb.home.PlaceGenusCurationDb.Row ncRow = org.calacademy.antweb.home.PlaceGenusCurationDb.read(connection, overview,
+			      taxon.getSubfamily(), taxon.getGenus());
+			  if (ncRow != null) request.setAttribute(PlaceTaxonNotes.NOT_CURATED_HEADER, ncRow.breakdown());
+			  try {
+			    ListView.PlaceSpecimens ncSpecimens = ListView.loadPlaceSpecimens(connection, overview, taxon.getSubfamily(), taxon.getGenus());
+			    if (ncSpecimens != null) request.setAttribute(PlaceTaxonNotes.PLACE_SPECIMENS, ncSpecimens);
+			  } catch (SQLException | RuntimeException e) {
+			    s_log.warn("execute() not curated specimens taxon:" + taxon.getTaxonName() + " overview:" + overview + " e:" + e);
 			  }
 			}
 

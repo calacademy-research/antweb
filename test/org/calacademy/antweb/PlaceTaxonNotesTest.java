@@ -132,15 +132,25 @@ public class PlaceTaxonNotesTest extends TestCase {
         return o.genus("formicinae", "acropyga");
     }
 
-    /** The Other specimens cell of a genus row (2026-11-02): the number, linked; empty when 0; the text alone for bots. */
-    public void testOtherSpecimensCell() {
-        assertEquals("1 specimen collected here under names not on this list", PlaceTaxonNotes.otherSpecimensTitle(1));
-        assertEquals("", PlaceTaxonNotes.otherSpecimensCellHtml(0, "/s"));
-        String cell = PlaceTaxonNotes.otherSpecimensCellHtml(1234, "/advancedSearch.do?country=Mozambique&genus=acropyga");
-        assertEquals("<a rel=\"nofollow\" class=\"other-names\" data-other-specimens=\"1234\" title=\"1234 specimens collected here"
-            + " under names not on this list\" href=\"/advancedSearch.do?country=Mozambique&amp;genus=acropyga\">1,234</a>", cell);
-        assertEquals("<span class=\"other-names\" data-other-specimens=\"3\" title=\"3 specimens collected here under names not on"
-            + " this list\">3</span>", PlaceTaxonNotes.otherSpecimensCellHtml(3, null));
+    /**
+     * The Not curated cell of a genus row (Brian Fisher, 2026-11-02, 19:44; replaces Other specimens): the stored number,
+     * hover "N specimens not curated", linked to the genus page in the place in the view Not curated; empty when 0.
+     */
+    public void testNotCuratedCell() {
+        assertEquals("1 specimen not curated", PlaceTaxonNotes.notCuratedTitle(1));
+        assertEquals("3,392 specimens not curated", PlaceTaxonNotes.notCuratedTitle(3392));
+        assertEquals("", PlaceTaxonNotes.notCuratedCellHtml(0, "/s"));
+        String url = PlaceTaxonNotes.notCuratedUrl("formicinae", "acropyga", mozambique());
+        assertTrue(url, url.endsWith("/browse.do?subfamily=formicinae&genus=acropyga&rank=genus&countryName=Mozambique&statusSet=notcurated"));
+        assertEquals("<a class=\"not-curated\" data-not-curated=\"1234\" title=\"1,234 specimens not curated\" href=\"/b?x=1&amp;y=2\">1,234</a>",
+            PlaceTaxonNotes.notCuratedCellHtml(1234, "/b?x=1&y=2"));
+        assertEquals("<span class=\"not-curated\" data-not-curated=\"3\" title=\"3 specimens not curated\">3</span>",
+            PlaceTaxonNotes.notCuratedCellHtml(3, null));
+        // the header of the view Not curated (the stored breakdown)
+        assertEquals("3,392 specimens not curated: 298 morphospecies (2,820 specimens), 572 identified only to genus",
+            org.calacademy.antweb.home.PlaceGenusCurationDb.breakdownText(3392, 298, 2820, 572, 0));
+        assertEquals("5 specimens not curated: 1 morphospecies (1 specimen), 4 under other names (not in AntCat)",
+            org.calacademy.antweb.home.PlaceGenusCurationDb.breakdownText(5, 1, 1, 0, 4));
     }
 
     public void testOtherNamesSearchAndLine() {

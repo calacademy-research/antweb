@@ -21,7 +21,8 @@ import org.calacademy.antweb.geolocale.Region;
 /**
  * The views of lists (Brian Fisher, 2026-11-02; ListView), without a database: the curated rule's SQL, which places add
  * the names of specimens collected there, the genus rows each view shows (a genus known only from specimens identified
- * to genus: All specimen names only), the Other specimens of a view, the source icons (specimens trump literature) and
+ * to genus: All specimen names only), the Not curated column and the view Not curated (2026-11-02, counted nightly),
+ * the genus rows' species imaged, the names of a genus page's line, the source icons (specimens trump literature) and
  * the words of About this list. The queries run against MySQL in home.PlaceTaxonNotesDbTest. Runs in CI
  * (.github/workflows/tests.yaml).
  */
@@ -61,7 +62,7 @@ public class ListViewTest extends TestCase {
         africa.setName("Africa");
         // 2026-11-02 (speed, review of #316): a region's list holds its countries' specimen names already (proxy rows)
         assertFalse(ListView.addsSpecimenNames(africa));
-        assertFalse("no whole-region specimen read (Other specimens)", ListView.readsPlaceSpecimens(africa));
+        assertFalse("no whole-region specimen read", ListView.readsPlaceSpecimens(africa));
         assertTrue(ListView.readsPlaceSpecimens(mozambique()));
         Bioregion afro = new Bioregion();
         afro.setName("Afrotropical");
@@ -118,14 +119,14 @@ public class ListViewTest extends TestCase {
         Map<String, Integer> evidence = new HashMap<>();
         evidence.put("formicinae|camponotus", 14);
         evidence.put("formicinae|acropyga", 1);
-        ListView.GenusRows rows = new ListView.GenusRows("valid", species, evidence, new PlaceTaxonNotes.OtherNames());
+        ListView.GenusRows rows = new ListView.GenusRows("valid", species, evidence);
         assertEquals(12, rows.species("Formicinae", "Camponotus"));
         assertEquals(0, rows.species("formicinae", "acropyga"));
         Genus acropyga = genus("acropyga", "valid");
         Genus lividopone = genus("lividopone", "valid");
         Genus camponotus = genus("camponotus", "valid");
         assertEquals(Arrays.asList(camponotus, acropyga), rows.filter(Arrays.asList(camponotus, acropyga, lividopone)));
-        ListView.GenusRows all = new ListView.GenusRows("all", species, null, null);
+        ListView.GenusRows all = new ListView.GenusRows("all", species, null);
         assertEquals(3, all.filter(Arrays.asList(camponotus, acropyga, lividopone)).size());
     }
 
@@ -137,8 +138,12 @@ public class ListViewTest extends TestCase {
         return g;
     }
 
-    /** Other specimens: the place's names of the genus that are not names of the view; red flags are left out by the query. */
-    public void testOtherSpecimensAreTheNamesNotInTheView() {
+    /**
+     * The genus page's line (specimens collected here not on the species list): the place's names of the genus that are not
+     * names of the view; red flags are left out by the query. (The Other specimens column of genus lists, which used the
+     * same names, is replaced by Not curated, 2026-11-02.)
+     */
+    public void testOtherNamesAreTheNamesNotInTheView() {
         ListView.PlaceSpecimens ps = new ListView.PlaceSpecimens();
         ps.add("formicinaeacropyga mz01", "formicinae", "acropyga", "mz01", null, "species", "morphotaxon", 2);
         ps.add("formicinaeacropyga (indet)", "formicinae", "acropyga", "(indet)", null, "species", "indetermined", 1);
@@ -159,10 +164,63 @@ public class ListViewTest extends TestCase {
         assertEquals(2, ps.count("formicinaeacropyga mz01"));
         assertEquals(0, ps.count("nothing"));
         assertEquals(1, all.countByGenus(ListView.BEYOND_GENUS_STATUSES).get("formicinae|acropyga").intValue());
-        ListView.GenusRows rows = new ListView.GenusRows("fossil", null, null, o).withSpecimens(ps);
-        assertNull("Fossil shows no Other specimens", rows.other("formicinae", "acropyga"));
+        ListView.GenusRows rows = new ListView.GenusRows("fossil", null, null).withSpecimens(ps);
         assertTrue(rows.hasSpecimens("formicinae", "acropyga"));
         assertFalse(rows.hasSpecimens("formicinae", "lividopone"));
+    }
+
+    private static org.calacademy.antweb.home.PlaceGenusCurationDb.Row ncRow(String subfamily, String genus, int specimens, int notCurated) {
+        org.calacademy.antweb.home.PlaceGenusCurationDb.Row r = new org.calacademy.antweb.home.PlaceGenusCurationDb.Row();
+        r.subfamily = subfamily;
+        r.genus = genus;
+        r.specimens = specimens;
+        r.notCurated = notCurated;
+        return r;
+    }
+
+    /**
+     * Not curated (Brian Fisher, 2026-11-02, 19:44): the stored number in Valid and Curated (the same in both), on places
+     * that have the column; not in All specimen names or Fossil; the cell empty when not counted. A genus with stored
+     * specimens shows the specimen source icon.
+     */
+    public void testNotCuratedColumnInValidAndCuratedOnly() {
+        Map<String, org.calacademy.antweb.home.PlaceGenusCurationDb.Row> stored = new HashMap<>();
+        stored.put(org.calacademy.antweb.home.PlaceGenusCurationDb.key("formicinae", "acropyga"), ncRow("formicinae", "acropyga", 9, 7));
+        for (String choice : new String[] {"valid", "curated"}) {
+            ListView.GenusRows rows = new ListView.GenusRows(choice, null, null).withCuration(true, stored);
+            assertTrue(choice, rows.showsNotCurated());
+            assertEquals(choice, 7, rows.notCurated("Formicinae", "Acropyga").notCurated);
+            assertNull("no stored row: empty cell", rows.notCurated("formicinae", "camponotus"));
+            assertTrue("stored specimens: the specimen icon", rows.hasSpecimens("formicinae", "acropyga"));
+        }
+        for (String choice : new String[] {"all", "fossil"}) {
+            ListView.GenusRows rows = new ListView.GenusRows(choice, null, null).withCuration(true, stored);
+            assertFalse(choice, rows.showsNotCurated());
+            assertNull(choice, rows.notCurated("formicinae", "acropyga"));
+        }
+        ListView.GenusRows region = new ListView.GenusRows("curated", null, null).withCuration(false, null);
+        assertFalse("regions, subregions and projects: no column", region.showsNotCurated());
+        ListView.GenusRows notCounted = new ListView.GenusRows("curated", null, null).withCuration(true, null);
+        assertTrue("not counted yet: the column, empty cells", notCounted.showsNotCurated());
+        assertNull(notCounted.notCurated("formicinae", "acropyga"));
+        assertEquals(StatusSet.NOT_CURATED, ListView.specimenNamesSet(StatusSet.listStatusSet(StatusSet.LIST_NOT_CURATED)).getValue());
+        assertNotNull(ListView.choiceTitle(StatusSet.LIST_NOT_CURATED, "species"));
+    }
+
+    /** Images of genus rows (2026-11-02, 18:40): of the species of the view, those with an image of the ant, by genus. */
+    public void testGenusRowsSpeciesImaged() {
+        ListView.ViewNames view = new ListView.ViewNames();
+        view.add("formicinaeacropyga mz01", "formicinae", "acropyga", "morphotaxon");
+        view.add("formicinaeacropyga a", "formicinae", "acropyga", "valid");
+        view.add("formicinaecamponotus b", "formicinae", "camponotus", "valid");
+        Map<String, Integer> imaged = view.countByGenusOf(Arrays.asList("formicinaeacropyga a", "formicinaeacropyga mz01", "not in the view"));
+        ListView.GenusRows rows = new ListView.GenusRows("curated", null, null).withImaged(imaged);
+        assertEquals(2, rows.imaged("formicinae", "acropyga"));
+        assertEquals("a genus with no imaged species", 0, rows.imaged("formicinae", "camponotus"));
+        assertEquals("not read", -1, new ListView.GenusRows("curated", null, null).imaged("formicinae", "acropyga"));
+        assertEquals(3, view.taxonNames().size());
+        assertEquals("<span class='numbers'>2</span> species imaged", org.calacademy.antweb.ImagesAnywhere.speciesImagedCell(2));
+        assertEquals("No species imaged", org.calacademy.antweb.ImagesAnywhere.speciesImagedCell(0));
     }
 
     /** Source icons: specimen, curated, literature; a name with a specimen collected here shows specimen. */
@@ -211,20 +269,40 @@ public class ListViewTest extends TestCase {
         assertNull(ListView.choiceTitle("valid extant", "species"));
     }
 
-    /** 2026-11-02 (speed): a place's specimens are kept for an hour and emptied when an upload finishes. */
-    public void testPlaceSpecimensCache() {
-        ListView.clearPlaceSpecimensCache();
-        ListView.PlaceSpecimens p = new ListView.PlaceSpecimens();
-        p.add("myrmicinaecarebara mg01", "myrmicinae", "carebara", "mg01", null, "species", "morphotaxon", 2);
-        assertNull(ListView.cachedPlaceSpecimens(" and specimen.country = 'Madagascar'"));
-        ListView.cachePlaceSpecimens(" and specimen.country = 'Madagascar'", p);
-        assertSame(p, ListView.cachedPlaceSpecimens(" and specimen.country = 'Madagascar'"));
-        assertNull("another place", ListView.cachedPlaceSpecimens(" and specimen.country = 'Mozambique'"));
-        ListView.clearPlaceSpecimensCache();
-        assertNull("emptied after an upload", ListView.cachedPlaceSpecimens(" and specimen.country = 'Madagascar'"));
-        for (int k = 0; k <= ListView.PLACE_CACHE_MAX; k++) ListView.cachePlaceSpecimens("c" + k, p);
-        assertNull("at most PLACE_CACHE_MAX places: the oldest dropped", ListView.cachedPlaceSpecimens("c0"));
-        assertSame(p, ListView.cachedPlaceSpecimens("c" + ListView.PLACE_CACHE_MAX));
-        ListView.clearPlaceSpecimensCache();
+    /**
+     * 2026-11-02 (speed): genus lists read the names collected in a place from place_specimen_name (stored nightly), so
+     * the views' specimen half is a subquery of that table, not of the specimen table; the in-memory cache of the place's
+     * specimens is gone. The view Not curated: counted names, neither valid nor curated morphospecies.
+     */
+    public void testStoredNamesAndTheNotCuratedCondition() {
+        ListView.PlaceSpecimens stored = new ListView.PlaceSpecimens().stored("country", "Mozambique");
+        assertTrue(stored.isStored());
+        assertEquals("taxon.taxon_name in (select psn.taxon_name from place_specimen_name psn where psn.list_type = 'country'"
+            + " and psn.list_key = 'Mozambique')", ListView.hereCondition("taxon", stored));
+        assertNull("nothing read: a subquery of the specimen table", ListView.hereCondition("taxon", null));
+        ListView.PlaceSpecimens read = new ListView.PlaceSpecimens();
+        read.add("x", "formicinae", "acropyga", "x", null, "species", "morphotaxon", 1);
+        assertEquals("taxon.taxon_name in ('x')", ListView.hereCondition("taxon", read));
+        String w = TaxaPage.specimenNamesWhereHere(mozambique(), "species", true, StatusSet.listStatusSet("curated"), ListView.hereCondition("taxon", stored));
+        assertTrue(w, w.contains("from place_specimen_name psn") && !w.contains("from specimen "));
+        String nc = ListView.notCuratedCondition("t");
+        assertTrue(nc, nc.startsWith("(t.status in ('valid', 'unrecognized', 'morphotaxon', 'indetermined', 'unidentifiable') and not (t.status = 'valid' or (t.status = 'morphotaxon' and "));
+        assertTrue(nc, nc.contains(ListView.vettedCondition("t")));
+        // the view Not curated on a country genus page adds the names collected there that are not curated
+        String ncWhere = TaxaPage.specimenNamesWhere(mozambique(), "species", true, StatusSet.listStatusSet(StatusSet.LIST_NOT_CURATED));
+        assertTrue(ncWhere, ncWhere.contains(ListView.notCuratedCondition("taxon")) && ncWhere.contains("specimen.country = 'Mozambique'"));
+        assertNull("the view Not curated adds no genus rows from specimens", TaxaPage.specimenNamesWhere(mozambique(), "genus", true,
+            StatusSet.listStatusSet(StatusSet.LIST_NOT_CURATED)));
+        Museum casc = new Museum();
+        casc.setCode("CASC");
+        assertArrayEqualsStr(new String[] {"museum", "CASC"}, org.calacademy.antweb.home.PlaceGenusCurationDb.typeAndKey(casc));
+        Region africa = new Region();
+        africa.setName("Africa");
+        assertNull("regions have no column", org.calacademy.antweb.home.PlaceGenusCurationDb.typeAndKey(africa));
+        assertNull("projects neither", org.calacademy.antweb.home.PlaceGenusCurationDb.typeAndKey(new Project("madants")));
+    }
+
+    private static void assertArrayEqualsStr(String[] a, String[] b) {
+        assertEquals(Arrays.toString(a), Arrays.toString(b));
     }
 }

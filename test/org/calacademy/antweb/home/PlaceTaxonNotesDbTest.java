@@ -32,8 +32,9 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *                subregion (its countries), a bioregion and all of AntWeb; a label image does not make a specimen imaged
  *   notice       whether a taxon has a specimen in the place, and the bioregions whose list has it
  *   views        (2026-11-02, ListView) the names of Valid, Curated and All specimen names in a place; a curated
- *                morphospecies follows its specimens; disputes; the genus rows' Species, Other specimens and which
- *                rows each view shows; the genus page's line; the place's specimens by name (red flags never count)
+ *                morphospecies follows its specimens; disputes; the genus rows' Species and which rows each view
+ *                shows, from the specimen table or from the names stored nightly (place_specimen_name); the genus
+ *                page's line; the place's specimens by name (red flags never count)
  *
  * Runs in CI against MySQL 8.4 (host "mysql"); ANTWEB_TEST_DB_URL overrides.
  */
@@ -259,8 +260,8 @@ public class PlaceTaxonNotesDbTest extends TestCase {
     }
 
     /**
-     * The genus rows of each view (ListView.GenusRows, three queries): Species in the view, Other specimens (the
-     * specimens collected here under names not in the view, red-flagged left out) and which rows Valid and Curated show.
+     * The genus rows of each view (ListView.GenusRows): Species in the view, species imaged (an image of the ant, labels
+     * not counted), the Not curated column (empty until counted) and which rows Valid and Curated show.
      */
     public void testGenusRowsOfEachView() throws Exception {
         otherNamesFixture();
@@ -268,13 +269,15 @@ public class PlaceTaxonNotesDbTest extends TestCase {
         ListView.GenusRows valid = ListView.loadGenusRows(connection, mad, "valid", null);
         assertEquals("Pheidole a, a x", 2, valid.species(MYRM, "pheidole"));
         assertEquals(0, valid.species(MYRM, "carebara"));
-        assertEquals("Carebara (indet) 1 + mg01 2; the red-flagged one left out", 3, valid.other(MYRM, "carebara").specimens);
-        assertEquals("Pheidole b (a morphospecies not curated) and zz", 2, valid.other(MYRM, "pheidole").specimens);
-        assertNull("Hypoponera: every specimen under a name of the view", valid.other(PON, "hypoponera"));
+        assertEquals("Pheidole a imaged (casent1 h); a x not", 1, valid.imaged(MYRM, "pheidole"));
+        assertEquals("Hypoponera b: a label image only", 0, valid.imaged(PON, "hypoponera"));
+        assertTrue("the column on a country", valid.showsNotCurated());
+        assertNull("not counted yet: empty cell", valid.notCurated(MYRM, "carebara"));
         assertTrue(valid.hasSpecimens(MYRM, "carebara"));
         ListView.GenusRows all = ListView.loadGenusRows(connection, mad, "all", null);
         assertEquals("All specimen names: Pheidole a, b, a x, zz", 4, all.species(MYRM, "pheidole"));
-        assertNull("its names are in the view", all.other(MYRM, "carebara"));
+        assertEquals("Pheidole a and b (casent3 p)", 2, all.imaged(MYRM, "pheidole"));
+        assertFalse("no Not curated column in All specimen names", all.showsNotCurated());
         // Which rows: Carebara is known here from a morphospecies (mg01): in Valid with no species
         org.calacademy.antweb.Genus carebara = new org.calacademy.antweb.Genus();
         carebara.setSubfamily(MYRM);
@@ -294,7 +297,8 @@ public class PlaceTaxonNotesDbTest extends TestCase {
 
     /**
      * Speed (2026-11-02): a genus list reads the place's specimens once and gives their names to the view queries
-     * (ListView.namedIn) instead of a subquery per query; the rows are the same either way, in every view.
+     * (ListView.namedIn, or the names stored nightly in place_specimen_name) instead of a subquery per query; the rows
+     * are the same every way, in every view.
      */
     public void testNamesReadOnceGiveTheSameRows() throws Exception {
         otherNamesFixture();
@@ -312,16 +316,40 @@ public class PlaceTaxonNotesDbTest extends TestCase {
                     assertEquals(place.getName() + " " + choice + " " + rank, names(sub), names(named));
                 }
                 ListView.GenusRows once = ListView.loadGenusRows(connection, place, choice, null, ps);
-                ListView.GenusRows again = ListView.loadGenusRows(connection, place, choice, null);
+                ListView.GenusRows again = ListView.loadGenusRows(connection, place, choice, null, null);
                 for (String g : new String[] {"carebara", "pheidole"}) {
                     assertEquals(choice + " " + g, again.species(MYRM, g), once.species(MYRM, g));
-                    PlaceTaxonNotes.OtherNames.Genus a = again.other(MYRM, g), b = once.other(MYRM, g);
-                    assertEquals(choice + " " + g, a == null ? 0 : a.specimens, b == null ? 0 : b.specimens);
+                    assertEquals(choice + " " + g, again.imaged(MYRM, g), once.imaged(MYRM, g));
+                }
+            }
+        }
+        // the names stored by the nightly count give the same rows (place_specimen_name; the genus lists read them)
+        new org.calacademy.antweb.home.PlaceGenusCurationDb(connection).fillAll();
+        for (Country place : new Country[] {madagascar(), mozambique()}) {
+            ListView.PlaceSpecimens live = ListView.loadPlaceSpecimens(connection, place, null, null);
+            ListView.PlaceSpecimens stored = ListView.loadStoredPlaceSpecimens(connection, place, null);
+            assertTrue(stored.isStored());
+            assertEquals(place.getName(), new java.util.TreeSet<>(live.taxonNames()), new java.util.TreeSet<>(stored.taxonNames()));
+            for (String n : live.taxonNames()) assertEquals(n, live.count(n), stored.count(n));
+            for (String choice : StatusSet.LIST_CHOICES) {
+                ListView.GenusRows fromStored = ListView.loadGenusRows(connection, place, choice, null);
+                ListView.GenusRows fromSpecimens = ListView.loadGenusRows(connection, place, choice, null, live);
+                for (String g : new String[] {"carebara", "pheidole"}) {
+                    assertEquals(place.getName() + " " + choice + " " + g, fromSpecimens.species(MYRM, g), fromStored.species(MYRM, g));
+                    assertEquals(fromSpecimens.keep(genusRow(g)), fromStored.keep(genusRow(g)));
                 }
             }
         }
         assertTrue(names(ListView.viewNamesSql(mozambique(), StatusSet.listStatusSet("curated"), null, null,
             ListView.loadPlaceSpecimens(connection, mozambique(), null, null).taxonNames())).contains(CAREBARA_MG01));
+    }
+
+    private static org.calacademy.antweb.Genus genusRow(String genus) {
+        org.calacademy.antweb.Genus g = new org.calacademy.antweb.Genus();
+        g.setSubfamily(MYRM);
+        g.setGenus(genus);
+        g.setStatus("valid");
+        return g;
     }
 
     /**

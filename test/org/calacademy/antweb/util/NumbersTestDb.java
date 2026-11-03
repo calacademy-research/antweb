@@ -61,7 +61,7 @@ public final class NumbersTestDb {
     static final String[] TABLES = {"taxon", "specimen", "image", "geolocale", "geolocale_taxon", "project", "proj_taxon", "museum",
         "museum_taxon", "bioregion", "bioregion_taxon", "place_image_count", "statistics", "upload", "specimen_name_update", "ant_group",
         "description_edit", "image_upload", "image_uploaded", "description_hist", "object_edit", "object_hist", "group_count", "artist",
-        "geolocale_taxon_dispute", "proj_taxon_dispute"};
+        "geolocale_taxon_dispute", "proj_taxon_dispute", "place_genus_curation", "place_specimen_name"};
 
     /** Curator numbers as LoginMgr has them for the fixture (login 5): uploads, description edits, image uploads, images uploaded. */
     public static java.util.Map<Integer, int[]> curatorNumbers() {
@@ -123,6 +123,9 @@ public final class NumbersTestDb {
         exec(c, "create table bioregion_taxon (bioregion_name varchar(64), " + LIST_COLUMNS + ", is_endemic tinyint default 0,"
             + " is_introduced tinyint default 0, source varchar(30), primary key (bioregion_name, taxon_name))");
         exec(c, org.calacademy.antweb.home.PlaceImageCountDb.createTable(null, null));
+        // the Not curated column of genus lists and the names collected in each place (2026-11-02; empty until filled)
+        exec(c, org.calacademy.antweb.home.PlaceGenusCurationDb.createGenusTable(null, null));
+        exec(c, org.calacademy.antweb.home.PlaceGenusCurationDb.createNameTable(null, null));
         exec(c, "create table statistics (id int auto_increment primary key, action varchar(40), specimens int, extant_taxa int, total_taxa int,"
             + " proj_taxa int, bioregion_taxa int, museum_taxa int, geolocale_taxa int, geolocale_taxa_introduced int, geolocale_taxa_endemic int,"
             + " total_images int, specimens_imaged int, species_imaged int, valid_species_imaged int, login_id int,"

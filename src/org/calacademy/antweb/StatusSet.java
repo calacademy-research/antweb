@@ -71,6 +71,13 @@ public class StatusSet extends Status {
     public final static String[] LIST_CHOICES = {LIST_VALID, LIST_VETTED, LIST_ALL, LIST_FOSSIL};
     /** The choice "Valid + morphospecies" of 2026-10-30: no longer offered; an address with it gets All specimen names. */
     public final static String LIST_VALID_MORPHO = "validmorpho";
+    /**
+     * The view Not curated (Brian Fisher, 2026-11-02, 19:44): the names whose specimens a genus row's Not curated number
+     * counts (ListView.notCuratedCondition: counted, neither valid nor a curated morphospecies), reached from that number
+     * (a genus page in the place, statusSet=notcurated) and its images page; not one of the four view buttons
+     * (LIST_CHOICES). Its criteria: NOT_CURATED.
+     */
+    public final static String LIST_NOT_CURATED = "notcurated";
 
     /**
      * Internal set values (listStatusSet; not address values): VETTED the rows of the Curated view, VETTED_MORPHO the
@@ -82,6 +89,8 @@ public class StatusSet extends Status {
     public final static String VETTED_MORPHO = "curated morphotaxon";
     public final static String VALID_MORPHO = "valid and morphotaxon";
     public final static String ALL_NAMES = "all names";
+    /** The rows of the view Not curated (LIST_NOT_CURATED). */
+    public final static String NOT_CURATED = "not curated";
 
     /** The choices of the AntCat list (worldants) and Fossil Ants, which keep their own sets (default VALID_WITH_FOSSIL). */
     public final static String[] OWN_SET_CHOICES = {VALID_WITH_FOSSIL, VALID_EXTANT, VALID_FOSSIL};
@@ -202,6 +211,8 @@ public class StatusSet extends Status {
       if (StatusSet.VETTED_MORPHO.equals(getValue())) {
           criteria = " (" + table + ".status = '" + MORPHOTAXON + "' and " + ListView.vettedCondition(table) + ")";
       }
+      // The view Not curated (2026-11-02): counted names that are neither valid nor curated morphospecies
+      if (StatusSet.NOT_CURATED.equals(getValue())) criteria = " " + ListView.notCuratedCondition(table);
       if (StatusSet.ALL_DETERMINED.equals(getValue())) criteria = allDetermined;
       if (StatusSet.ALL_INDETERMINED.equals(getValue())) criteria = allIndetermined;
 
@@ -313,7 +324,7 @@ public class StatusSet extends Status {
      */
     public String listRankCondition(String rank, String table) {
         String v = getValue();
-        if (!(VALID_EXTANT.equals(v) || VALID_MORPHO.equals(v) || VETTED.equals(v)) || rank == null) return "";
+        if (!(VALID_EXTANT.equals(v) || VALID_MORPHO.equals(v) || VETTED.equals(v) || NOT_CURATED.equals(v)) || rank == null) return "";
         boolean specimens = "specimen".equals(table) || "sp".equals(table);
         if (org.calacademy.antweb.home.PlaceTotals.GENUS.equals(rank)) {
             // a specimen row is a species-level name (its taxon_name is the species'): the rule on its genus value
@@ -394,6 +405,7 @@ public class StatusSet extends Status {
      *   all determined, all, all indetermined, complete,
      *   type, worldants, a single status                     -> all (All specimen names)
      *   fossil, valid fossil                                 -> fossil
+     *   notcurated, not curated                              -> notcurated (the view Not curated, 2026-11-02)
      * "type" never selected type taxa (its criteria were "1 = 1", every name); type specimens are found by search
      * (types=on) and the list's type column (orderBy=type), which do not use statusSet.
      */
@@ -411,6 +423,8 @@ public class StatusSet extends Status {
                 return LIST_ALL;
             case LIST_FOSSIL: case VALID_FOSSIL: case "fossil species":
                 return LIST_FOSSIL;
+            case LIST_NOT_CURATED: case NOT_CURATED: case "not-curated":
+                return LIST_NOT_CURATED;
             default:
                 // a single status chosen on its own (the old "more options"): all names, the nearest choice
                 if (getAllStatuses().contains(v)) return LIST_ALL;
@@ -457,6 +471,7 @@ public class StatusSet extends Status {
         if (LIST_VALID_MORPHO.equals(choice)) return new StatusSet(ALL_NAMES);   // an old address: All specimen names
         if (LIST_ALL.equals(choice)) return new StatusSet(ALL_NAMES);
         if (LIST_FOSSIL.equals(choice)) return new StatusSet(VALID_FOSSIL);
+        if (LIST_NOT_CURATED.equals(choice)) return new StatusSet(NOT_CURATED);
         return new StatusSet(choice);
     }
 
@@ -507,6 +522,7 @@ public class StatusSet extends Status {
         if (LIST_VETTED.equals(choice)) return "Curated";
         if (LIST_ALL.equals(choice) || LIST_VALID_MORPHO.equals(choice)) return "All specimen names";
         if (LIST_FOSSIL.equals(choice)) return "Fossil";
+        if (LIST_NOT_CURATED.equals(choice)) return "Not curated";
         return ownLabel(choice);
     }
 
@@ -554,6 +570,7 @@ public class StatusSet extends Status {
         if (LIST_VETTED.equals(choice)) return num + " " + noun + " (valid and curated)";
         if (LIST_ALL.equals(choice) || LIST_VALID_MORPHO.equals(choice)) return num + " " + noun + " (all specimen names)";
         if (LIST_FOSSIL.equals(choice)) return num + " Fossil " + lower;
+        if (LIST_NOT_CURATED.equals(choice)) return num + " " + noun + " (not curated)";
         if (choice != null && choice.startsWith("own:")) choice = choice.substring(4);
         String statusStr = (choice == null || ALL.equals(choice)) ? "" : ownLabel(choice) + " ";
         return num + " " + statusStr + noun;
@@ -599,6 +616,7 @@ public class StatusSet extends Status {
         if (LIST_VETTED.equals(choice)) return num + " " + noun + " imaged" + of + totalNoun + ", valid and curated)";
         if (LIST_ALL.equals(choice) || LIST_VALID_MORPHO.equals(choice)) return num + " " + noun + " imaged" + of + totalNoun + ", all specimen names)";
         if (LIST_FOSSIL.equals(choice)) return num + " Fossil " + lower + " imaged" + of + "fossil " + totalNoun + ")";
+        if (LIST_NOT_CURATED.equals(choice)) return num + " " + noun + " imaged" + of + totalNoun + ", not curated)";
         if (choice != null && choice.startsWith("own:")) choice = choice.substring(4);
         String status = (choice == null || ALL.equals(choice)) ? "" : ownLabel(choice) + " ";
         return num + " " + status + noun + " imaged" + of + status.toLowerCase(Locale.ROOT) + totalNoun + ")";

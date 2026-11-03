@@ -117,6 +117,16 @@ def images_cell(cell):
     return ns.n(m.group(1)) if m else None
 
 
+def species_imaged_cell(cell):
+    """The Images cell of a genus row in a place (Brian Fisher, 2026-11-02, 18:40): "N species imaged" (the species of
+    the genus in the view with an image of the ant) -> N, "No species imaged" -> 0; None for anything else."""
+    t = ns.text_of(cell)
+    if t == "No species imaged":
+        return 0
+    m = re.fullmatch(r"([\d,]+) species imaged", t)
+    return ns.n(m.group(1)) if m else None
+
+
 # The two-number form is still matched, so a page that shows it again is caught (images_cell gives None).
 _CHILD_IMAGES = (r"(No Images|(?:<span[^>]*>)?[\d,]+(?:</span>)? Images"
                  r"(?: \((?:<span[^>]*>)?[\d,]+(?:</span>)? (?:from|in) [^)<]*\))?)")
@@ -311,6 +321,10 @@ def genus_pages(p):
     rows = []
     for r in ns.list_rows(html):
         count, link, images, params = list_row_cells(r["html"])
+        # genus rows in a place say "N species imaged" since 2026-11-02 (the genus with images: N > 0)
+        cell = re.search(r'<div class="list_extras images">(.*?)</div>', r["html"], re.S)
+        if images is None and cell:
+            images = species_imaged_cell(cell.group(1))
         if count and 1 <= count <= MAX_CHILDREN and images and params:
             rows.append((r, count, params))
     got = ns.pick(rows, 1, "images-genus" + key)

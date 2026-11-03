@@ -467,7 +467,7 @@ def _compare_list(p, rank, api_rows, wrong):
     """The place's list of that rank (every counted status: the view All specimen names, its rows of the list only)
     against the API rows: each name listed has an API row with the same own count, and Images at least the API's
     (place) imageCount. Since 2026-11-02 a genus row's Species are those of the view (ListView), not the stored count
-    the API gives, so genus rows are compared by name and Images only. Rows added from specimens collected there (not
+    the API gives, so genus rows are compared by name only (their Images is "N species imaged" since then). Rows added from specimens collected there (not
     on the list, ns.on_list) are not API rows. Returns the number of rows compared, or None when the page is not read."""
     html = ns.fetch(p.list_url(rank, "all"))
     if html is None:
@@ -489,7 +489,10 @@ def _compare_list(p, rank, api_rows, wrong):
         # specimen, ImagesAnywhere.imagesColumn: max of the AntWeb-wide and the place's own count), while the API's
         # imageCount is the place's own: the cell can only be larger. The AntWeb-wide number itself is checked by
         # test_numbers_images.py::test_list_images_column_equals_the_api_recount.
-        if images is not None and images < _int(a.get("imageCount")):
+        # Genus rows in a place show "N species imaged" since 2026-11-02 (species of the genus in the view with an
+        # image of the ant, ListView.GenusRows.imaged), not an image count, so only subfamily and species rows are
+        # compared here; test_list_sources.py checks the genus rows' cell (at most the row's Species).
+        if images is not None and rank != "genus" and images < _int(a.get("imageCount")):
             wrong.append(f"{p} {rank} {name}: list {images} Images, fewer than the place's API imageCount {a.get('imageCount')}")
         n += 1
     return n

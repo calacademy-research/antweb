@@ -242,8 +242,6 @@ public class UploadDetails extends OperationDetails {
 
     public void finish(Login accessLogin, HttpServletRequest request, Connection connection) throws SQLException {
         A.log("finish() operation:" +  getOperation());
-        // the lists' cached place specimens (ListView) are out of date now
-        org.calacademy.antweb.ListView.clearPlaceSpecimensCache();
         String execTime = HttpUtil.finish(request, getStartTime());
         setExecTime(execTime);
 

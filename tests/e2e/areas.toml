@@ -443,7 +443,7 @@ tests = [
   "test_overview_editor.py",
   "test_genus_indet_places.py",        # genus rows of specimens identified only to genus on country lists (2026-10-29)
   "test_status_choice.py",             # views of lists (2026-11-02)
-  "test_list_sources.py",              # views, genus rows (Species, Other specimens), source icons, About this list (2026-11-02)
+  "test_list_sources.py",              # views, genus rows (Species, Not curated, species imaged), the view Not curated, source icons, About this list (2026-11-02)
 ]
 
 [areas.downloads]

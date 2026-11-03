@@ -5,11 +5,14 @@ docs/flows/places.md "Where the names come from"; the design of 2026-10-30 it re
      the "Names from" selector (and Show Specimen Taxa before it); old links (specimen=true, statusSet=validmorpho)
      open All specimen names. A genus known in a place only from specimens identified to genus ("Lividopone (indet)"
      in Mozambique) is on the genus list in All specimen names only.
-  2. Genus rows, one line each: Taxon name | Author date | Species (in the view, or "-") | Other specimens (the
-     specimens collected here under names not in the view, linked to them; empty when 0) | Images | Map | Source (an
-     icon: specimen, curated, literature). Acropyga in Mozambique (morphospecies collected there, no species on the
-     list): in Valid with no species and its Other specimens, the link listing Acropyga specimens. ("No species on the
-     list · N specimens collected here" and "+ N specimens of other names" are gone.)
+  2. Genus rows, one line each: Taxon name | Author date | Species (in the view, or "-") | Not curated (views Valid and
+     Curated: the specimens of the genus collected here whose name is not curated, counted nightly, hover "N specimens
+     not curated", linked to the genus page in the view Not curated; empty when 0; it replaced Other specimens on
+     2026-11-02) | Images ("N species imaged": the species of the view with an image of the ant, linked to the genus's
+     images page) | Map | Source (an icon: specimen, curated, literature). Acropyga in Mozambique (morphospecies
+     collected there, no species on the list): in Valid with no species and its Not curated number; the click opens
+     Acropyga in Mozambique in the view Not curated, whose header gives the same number and its parts. ("No species on
+     the list · N specimens collected here", "+ N specimens of other names" and the Other specimens search link are gone.)
   3. Genus page in a place, Valid and Curated: "Specimens collected here not on the species list: N (names: ...)",
      above the notes on specimen and image counts. Source icons: specimen, curated, literature (Bolton's catalogue)
      and AntCat (the AntCat import, title "From the AntCat import"). The view Curated was first called Vetted:
@@ -31,7 +34,7 @@ from antweb import new_session
 
 MOZ_GENERA = "/taxonomicPage.do?rank=genus&countryName=Mozambique"
 MOZ_SPECIES = "/taxonomicPage.do?rank=species&countryName=Mozambique"
-OTHER_LINK = re.compile(r'<a rel="nofollow" class="other-names" data-other-specimens="(\d+)" title="[^"]*" href="([^"]+)">([^<]+)</a>')
+NOT_CURATED_LINK = re.compile(r'<a class="not-curated" data-not-curated="(\d+)" title="([^"]*)" href="([^"]+)">([^<]+)</a>')
 GONE = ("No species on the list", "specimens of other names", 'id="names_from_toggle"', "Show Specimen Taxa</a>",
         "Hide Specimen Taxa", "click on Show Specimen Taxa")
 
@@ -44,37 +47,50 @@ def genus_row(html, genus):
     return None
 
 
-def specimens_listed(html):
-    """The specimen links of an advanced search result page."""
-    return re.findall(r"specimen\.do\?(?:name|code)=([^\"'&>]+)", html)
-
-
 def current_view(html):
     m = re.search(r'<span id="change_status" class="view-buttons" data-status-set="([^"]*)"', html or "")
     return m.group(1) if m else None
 
 
-def test_mozambique_acropyga_row_links_its_specimens():
+def test_mozambique_acropyga_row_links_its_names_not_curated():
+    """Acropyga in Mozambique (Valid): its Not curated number, the same in Curated, links to Acropyga in Mozambique in
+    the view Not curated, whose header starts with the same number ("N specimens not curated: ...") and lists Acropyga
+    names only, none of them valid."""
     html = ns.get(MOZ_GENERA + "&statusSet=valid", new_session())
     row = genus_row(html, "acropyga")
     if row is None:
         pytest.skip("Acropyga is not on the Mozambique genus list (Valid) on this server")
-    m = OTHER_LINK.search(row)
-    assert m, f"the Acropyga row has no Other specimens link: {ns.text_of(row)[:200]}"
-    n, href, text = int(m.group(1)), unescape(m.group(2)), m.group(3)
+    m = NOT_CURATED_LINK.search(row)
+    if m is None and '<div class="list_extras other"></div>' in row:
+        pytest.skip("Acropyga has no Not curated number in Mozambique on this server (not counted yet, or none)")
+    assert m, f"the Acropyga row has no Not curated link: {ns.text_of(row)[:200]}"
+    n, title, href, text = int(m.group(1)), unescape(m.group(2)), unescape(m.group(3)), m.group(4)
     assert n > 0 and ns.n(text) == n, text
-    assert "advancedSearch.do?" in href and "country=Mozambique" in href and "genus=acropyga" in href, href
-    result = ns.get(href.replace(ns.BASE_URL, "") if href.startswith(ns.BASE_URL) else href)
-    assert specimens_listed(result), f"the Acropyga link lists no specimen: {href}"
-    assert "acropyga" in ns.text_of(result).lower(), href
+    assert title == f"{n:,} specimen{'' if n == 1 else 's'} not curated", title
+    assert "browse.do?" in href and "genus=acropyga" in href and "countryName=Mozambique" in href and "statusSet=notcurated" in href, href
+    curated = NOT_CURATED_LINK.search(genus_row(ns.get(MOZ_GENERA, new_session()), "acropyga") or "")
+    assert curated and int(curated.group(1)) == n, "Valid and Curated show the same Not curated number"
+    page = ns.get(href.replace(ns.BASE_URL, "") if href.startswith(ns.BASE_URL) else href, new_session())
+    assert current_view(page) == "notcurated", current_view(page)
+    head = re.search(r'<h2 class="display_count">(.*?)</h2>', page, re.S)
+    assert head and ns.text_of(head.group(1)).startswith(f"{n:,} specimen"), head and ns.text_of(head.group(1))
+    assert "not curated" in ns.text_of(head.group(1)), ns.text_of(head.group(1))
+    names = [r["name"] for r in ns.list_rows(page) if r["name"]]
+    assert names, "the view Not curated lists no name"
+    assert all(nm.startswith("formicinaeacropyga ") for nm in names), names
 
 
 def test_genus_rows_have_the_columns_of_the_views():
-    """The Mozambique genus list (Curated): the Other specimens column, a Species cell that is a number or a dash, a
-    source icon with its word as title; none of the texts of 2026-10-30."""
+    """The Mozambique genus list (Curated): the Not curated column (not in All specimen names), a Species cell that is
+    a number or a dash, an Images cell "N species imaged" with N at most the row's Species, linked to the genus's
+    images page in the view, a source icon with its word as title; none of the texts of 2026-10-30."""
     html = ns.get(MOZ_GENERA, new_session())
     assert current_view(html) == "curated", current_view(html)
-    assert '<div class="list_extras other">' in html, "no Other specimens column"
+    assert '<div class="list_extras other">' in html, "no Not curated column"
+    assert ">Not curated</span>" in html, "no Not curated heading"
+    assert "Other specimens" not in html and 'class="other-names"' not in html, "Other specimens is gone (2026-11-02)"
+    assert '<div class="list_extras other">' not in ns.get(MOZ_GENERA + "&statusSet=all", new_session()), \
+        "All specimen names has no Not curated column"
     for gone in GONE:
         assert gone not in html, gone
     rows = ns.list_rows(html)
@@ -85,6 +101,14 @@ def test_genus_rows_have_the_columns_of_the_views():
         assert cells, ns.text_of(r["html"])[:120]
         species = ns.text_of(cells[-1])
         assert re.fullmatch(r"[\d,]+|–", species), f"Species cell {species!r}: {ns.text_of(r['html'])[:120]}"
+        img = re.search(r'<div class="list_extras images">(.*?)</div>', r["html"], re.S)
+        if img and ns.on_list(r["html"]):
+            t = ns.text_of(img.group(1))
+            m = re.fullmatch(r"([\d,]+) species imaged|No species imaged", t)
+            assert m, f"Images cell {t!r}: {ns.text_of(r['html'])[:120]}"
+            if m.group(1):
+                assert ns.n(m.group(1)) <= (0 if species == "–" else ns.n(species)), f"more species imaged than species: {ns.text_of(r['html'])[:120]}"
+                assert "images.do?" in img.group(1) and "statusSet=curated" in img.group(1), img.group(1)
         src = re.search(r'<span class="src-icon src-(\w+)" data-source="(\w+)" title="([^"]+)"', r["html"])
         titles = {"specimen": "Specimen", "curated": "Curated", "literature": "Literature", "antcat": "From the AntCat import"}
         assert src and src.group(1) == src.group(2) and titles.get(src.group(1)) == src.group(3), ns.text_of(r["html"])[:120]
@@ -109,7 +133,7 @@ def test_genus_page_names_specimens_not_on_the_list():
     m = re.search(r'<div id="genus_other_names"[^>]*data-other-specimens="(\d+)"[^>]*>(.*?)</div>', html, re.S)
     if m is None:
         listed = genus_row(ns.get(MOZ_GENERA + "&statusSet=valid", new_session()), "acropyga")
-        if listed is None or "other-names" not in listed:
+        if listed is None or 'class="not-curated"' not in listed:
             pytest.skip("no Acropyga specimens of other names in Mozambique on this server")
     assert m, "the Acropyga page in Mozambique has no line for its specimens not on the species list"
     line = m.group(2)
