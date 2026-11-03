@@ -60,7 +60,8 @@ public final class NumbersTestDb {
 
     static final String[] TABLES = {"taxon", "specimen", "image", "geolocale", "geolocale_taxon", "project", "proj_taxon", "museum",
         "museum_taxon", "bioregion", "bioregion_taxon", "place_image_count", "statistics", "upload", "specimen_name_update", "ant_group",
-        "description_edit", "image_upload", "image_uploaded", "description_hist", "object_edit", "object_hist", "group_count", "artist"};
+        "description_edit", "image_upload", "image_uploaded", "description_hist", "object_edit", "object_hist", "group_count", "artist",
+        "geolocale_taxon_dispute", "proj_taxon_dispute", "place_genus_curation", "place_specimen_name"};
 
     /** Curator numbers as LoginMgr has them for the fixture (login 5): uploads, description edits, image uploads, images uploaded. */
     public static java.util.Map<Integer, int[]> curatorNumbers() {
@@ -104,10 +105,15 @@ public final class NumbersTestDb {
         exec(c, "create table image (id int primary key, image_of_id varchar(40), shot_type varchar(4), upload_date datetime, artist int)");
         exec(c, "create table geolocale (id int primary key, name varchar(128), georank varchar(20), parent varchar(128), is_valid tinyint, is_live tinyint,"
             + " is_island tinyint default 0, endemic_species_count int default 0, introduced_species_count int default 0, " + PLACE_COLUMNS + ")");
+        // source (2026-11-02, the views): a curator's entry vets a morphospecies (ListView.vettedCondition)
         exec(c, "create table geolocale_taxon (geolocale_id int, " + LIST_COLUMNS + ", is_endemic tinyint default 0, is_introduced tinyint default 0,"
-            + " primary key (geolocale_id, taxon_name))");
+            + " source varchar(30), primary key (geolocale_id, taxon_name), key taxon_name (taxon_name))");
+        exec(c, "create table geolocale_taxon_dispute (geolocale_id int, taxon_name varchar(128), source varchar(30), rev int, curator_id int,"
+            + " created timestamp null)");
         exec(c, "create table project (project_name varchar(64) primary key, is_live tinyint, scope varchar(20) default 'PROJECT', " + PLACE_COLUMNS + ")");
-        exec(c, "create table proj_taxon (project_name varchar(64), " + LIST_COLUMNS + ", primary key (project_name, taxon_name))");
+        exec(c, "create table proj_taxon (project_name varchar(64), " + LIST_COLUMNS + ", source varchar(30), primary key (project_name, taxon_name))");
+        exec(c, "create table proj_taxon_dispute (project_name varchar(64), taxon_name varchar(128), source varchar(30), rev int, curator_id int,"
+            + " created timestamp null)");
         // museum: varchar(10000) in db/upgrade/6.2, which also has a commented-out change to varchar(1000); staging and
         // production evidently have the smaller one (2026-10-21 "Data too long" on uploads). The smaller one here.
         exec(c, "create table museum (code varchar(64) primary key, " + placeColumns(1000) + ")");
@@ -117,6 +123,9 @@ public final class NumbersTestDb {
         exec(c, "create table bioregion_taxon (bioregion_name varchar(64), " + LIST_COLUMNS + ", is_endemic tinyint default 0,"
             + " is_introduced tinyint default 0, source varchar(30), primary key (bioregion_name, taxon_name))");
         exec(c, org.calacademy.antweb.home.PlaceImageCountDb.createTable(null, null));
+        // the Not curated column of genus lists and the names collected in each place (2026-11-02; empty until filled)
+        exec(c, org.calacademy.antweb.home.PlaceGenusCurationDb.createGenusTable(null, null));
+        exec(c, org.calacademy.antweb.home.PlaceGenusCurationDb.createNameTable(null, null));
         exec(c, "create table statistics (id int auto_increment primary key, action varchar(40), specimens int, extant_taxa int, total_taxa int,"
             + " proj_taxa int, bioregion_taxa int, museum_taxa int, geolocale_taxa int, geolocale_taxa_introduced int, geolocale_taxa_endemic int,"
             + " total_images int, specimens_imaged int, species_imaged int, valid_species_imaged int, login_id int,"

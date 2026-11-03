@@ -15,7 +15,7 @@ production, so no fixed numbers):
   the Specimens of its countries (the country pages listed on the subregion page for curators, valid
   countries, islands included). Before that run the stored number is still the old one: skipped.
 Country pages (Comoros): the Specimens row says "identified to ... on this country's AntWeb list" and,
-under "List all specimens collected in ...", points to Show Specimen Taxa of the species list.
+under "List all specimens collected in ...", points to the view All specimen names of the species list (2026-11-02).
 Read-only. Database behaviour: test/org/calacademy/antweb/home/RegionCountDbTest.java (CI).
 """
 import re
@@ -84,7 +84,8 @@ COUNTRY_DEFINITION = ("Ant specimens collected in this country and identified to
 
 def test_country_specimens_row_points_to_specimen_taxa():
     """A country's Specimens row: its definition (names on its list) and, under the link to all its specimen
-    records, Show Specimen Taxa of the species list for the names of every specimen collected there."""
+    records, the view All specimen names of the species list (2026-11-02; was Show Specimen Taxa) for the names of
+    every specimen collected there."""
     r = new_session().get(BASE_URL + COUNTRY_PAGE, timeout=max(TIMEOUT, 120))
     assert r.status_code == 200, f"{COUNTRY_PAGE}: HTTP {r.status_code}"
     rows = _rows(r.text)
@@ -94,9 +95,10 @@ def test_country_specimens_row_points_to_specimen_taxa():
     assert COUNTRY_DEFINITION in _text(row), _text(row)
     assert "List all specimens collected in Comoros" in _text(row), _text(row)
     m = re.search(r'id="specimen-taxa-link" href="([^"]+)"', row)
-    assert m, f"no Show Specimen Taxa link in the Specimens row: {row}"
+    assert m, f"no All specimen names link in the Specimens row: {row}"
     href = unescape(m.group(1))
-    assert "taxonomicPage.do?rank=species" in href and "countryName=Comoros" in href and "specimen=true" in href, href
+    assert "taxonomicPage.do?rank=species" in href and "countryName=Comoros" in href, href
+    assert "statusSet=all" in href or "specimen=true" in href, href   # specimen=true: before 2026-11-02
 
 
 @pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")

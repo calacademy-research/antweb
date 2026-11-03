@@ -72,9 +72,10 @@ public final class EditProjectAction extends AntwebAction {
               request.setAttribute("message", "Use the Delete button on the project edit page.");
               return mapping.findForward("message");
             }
-            // A curator may edit only a project assigned to them; administrators any project.
-            if (!SpeciesListAccess.canEdit(LoginMgr.getAccessLogin(request), projectName)) {
-              request.setAttribute("message", SpeciesListAccess.NOT_ASSIGNED);
+            // A curator may edit only a project assigned to them; administrators any project. (Its species list: any
+            // curator, SpeciesListAccess.canEdit, 2026-11-02.)
+            if (!SpeciesListAccess.canEditProject(LoginMgr.getAccessLogin(request), projectName)) {
+              request.setAttribute("message", SpeciesListAccess.PROJECT_NOT_ASSIGNED);
               return mapping.findForward("message");
             }
             if ("delete".equals(editProjectForm.getAction())) {

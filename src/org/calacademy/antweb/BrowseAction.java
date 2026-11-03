@@ -27,7 +27,9 @@ import org.apache.commons.logging.LogFactory;
  * /mapComparison.do (mapComparison.jsp; form browseForm in session scope; the oneView.do mapping is commented out).
  * The page type comes from the request URL. Finds the place (OverviewMgr), redirects taxonName= and antcatId= to the
  * taxon's page, reads the taxon (TaxonDb.getFullTaxon, else HomonymDb.getFullHomonym), its row in the place's list,
- * the status choice (StatusSet.getStatusSet), the not-recorded notice and indet line (PlaceTaxonNotes), images,
+ * the view (StatusSet.getStatusSet; ListView for the genus rows of a subfamily and the genus page's line; the view Not
+ * curated of a genus, home.PlaceGenusCurationDb), the
+ * not-recorded notice and indet line (PlaceTaxonNotes), images,
  * children and map. Comparisons need a log-in (Check.loginForFeature); for visitors not logged in, two of each kind
  * run at a time (ConcurrencyLimiter). Page text is saved and prepared by DescriptionAction. Docs:
  * docs/flows/taxon-pages.md (the full code path), docs/flows/places.md (compare tools), docs/numbers.md rows 38 to
@@ -385,7 +387,20 @@ public class BrowseAction extends DescriptionAction {
 		    try {
 		      String notice = PlaceTaxonNotes.notRecorded(connection, taxon, overview, taxon.getTaxonSet().exists(), targetDo);
 		      if (notice != null) request.setAttribute(PlaceTaxonNotes.NOT_RECORDED, notice);
-		      if (Rank.GENUS.equals(taxon.getRank())) {
+		      // 2026-10-30: in a place that selects specimens, the line names every specimen collected there under a name not
+		      // on the species list ("Specimens collected here not on the species list: 3 (names: ...)"), the indet name being
+		      // one of them; elsewhere (all of AntWeb) the indet line as before. 2026-11-02 (views): names not in the list of
+		      // the current view, shown in Valid and Curated (in All specimen names those names are on the list itself).
+		      String placeCriteria = PlaceTaxonNotes.placeSpecimenCriteria(overview);
+		      boolean placeSelectsSpecimens = placeCriteria != null && !placeCriteria.isEmpty();
+		      if (Rank.GENUS.equals(taxon.getRank()) && placeSelectsSpecimens) {
+		        PlaceTaxonNotes.OtherNames.Genus g = ListView.hasViews(overview)
+		            ? ListView.genusOtherNames(connection, overview, statusSetStr, taxon.getSubfamily(), taxon.getGenus()) : null;
+		        String search = HttpUtil.isBot(request) ? null : PlaceTaxonNotes.placeSearchUrl(overview);
+		        String line = g == null ? null : PlaceTaxonNotes.otherNamesLineHtml(g,
+		            search == null ? null : search + "&" + PlaceTaxonNotes.searchParams(g, false), targetDo, overview);
+		        if (line != null) request.setAttribute(PlaceTaxonNotes.INDET_LINE, line);
+		      } else if (Rank.GENUS.equals(taxon.getRank())) {
 		        int[] nm = PlaceTaxonNotes.countIndet(connection, taxon.getTaxonName(), overview);
 		        if (nm != null) {
 		          String line = PlaceTaxonNotes.indetLineHtml(taxon.getPrettyName(), nm[0], nm[1],
@@ -473,8 +488,37 @@ public class BrowseAction extends DescriptionAction {
 			if (imagesFromAnywhere) global = !placeOnly;
 
 			taxon.setChildren(connection, overview, statusSet, getChildImages, getChildMaps, caste, global, subgenus);
-			// 2026-10-30: the family's subfamily list says "extant and fossil" only when the place has a fossil subfamily
-			if (taxon instanceof Family) TaxaPage.setFossilSubfamilies(request, connection, overview);
+			// 2026-11-02: the Fossil button only when the children of the list have fossil names here (one EXISTS query)
+			if (!global && !taxon.isSpeciesOrSubspecies()) {
+			  ListView.setHasFossil(request, connection, overview, Rank.getNextRank(taxon.getRank()),
+			      taxon instanceof Family ? null : taxon.getSubfamily(), taxon instanceof Genus ? taxon.getGenus() : null);
+			}
+			// 2026-11-02 (views): the genus rows of a subfamily in a place, as on the genus list: Species, Not curated and
+			// species imaged in the view, and the rows the view shows (ListView.GenusRows; the header counts the rows shown).
+			if (taxon instanceof Subfamily && !global && ListView.hasViews(overview) && org.calacademy.antweb.home.GenusOnly.typeAndKey(overview) != null) {
+			  try {
+			    ListView.GenusRows genusRows = ListView.loadGenusRows(connection, overview, statusSetStr, taxon.getSubfamily());
+			    taxon.setChildren(genusRows.filter(taxon.getChildren()));
+			    request.setAttribute(PlaceTaxonNotes.GENUS_ROWS, genusRows);
+			  } catch (SQLException | RuntimeException e) {
+			    s_log.warn("execute() genus rows taxon:" + taxon.getTaxonName() + " overview:" + overview + " e:" + e);
+			  }
+			}
+
+			// 2026-11-02: a genus in a place in the view Not curated (reached from the genus row's Not curated number): the
+			// header gives the stored breakdown ("3,392 specimens not curated: 298 morphospecies (2,820 specimens), 572
+			// identified only to genus"); the rows added from specimens collected here show their specimens (one genus read).
+			if (taxon instanceof Genus && !global && StatusSet.LIST_NOT_CURATED.equals(statusSetStr)) {
+			  org.calacademy.antweb.home.PlaceGenusCurationDb.Row ncRow = org.calacademy.antweb.home.PlaceGenusCurationDb.read(connection, overview,
+			      taxon.getSubfamily(), taxon.getGenus());
+			  if (ncRow != null) request.setAttribute(PlaceTaxonNotes.NOT_CURATED_HEADER, ncRow.breakdown());
+			  try {
+			    ListView.PlaceSpecimens ncSpecimens = ListView.loadPlaceSpecimens(connection, overview, taxon.getSubfamily(), taxon.getGenus());
+			    if (ncSpecimens != null) request.setAttribute(PlaceTaxonNotes.PLACE_SPECIMENS, ncSpecimens);
+			  } catch (SQLException | RuntimeException e) {
+			    s_log.warn("execute() not curated specimens taxon:" + taxon.getTaxonName() + " overview:" + overview + " e:" + e);
+			  }
+			}
 
 			if (imagesFromAnywhere) {
 			  request.setAttribute("imagesPlaceOnly", placeOnly);

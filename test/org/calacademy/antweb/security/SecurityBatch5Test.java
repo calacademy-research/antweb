@@ -41,19 +41,35 @@ public class SecurityBatch5Test extends TestCase {
         return l;
     }
 
-    public void testCuratorEditsOnlyAssignedLists() {
+    /**
+     * Brian Fisher, 2026-11-02 ("encourage participation"): any curator may edit any place's or project's species list;
+     * a login that is not a curator none; the system lists (worldants, allantwebants) administrators only. Editing a
+     * project itself (EditProjectAction) stays with the curators it is assigned to (canEditProject).
+     */
+    public void testCuratorEditsEveryList() {
         Login c = curator(false, "madants", 392, "Madagascar");
         assertTrue(SpeciesListAccess.canEdit(c, "madants"));
         assertTrue(SpeciesListAccess.canEdit(c, "392"));
         assertTrue(SpeciesListAccess.canEdit(c, "Madagascar"));
-        assertFalse(SpeciesListAccess.canEdit(c, "fijiants"));
-        assertFalse(SpeciesListAccess.canEdit(c, "393"));
+        assertTrue("a list not assigned to the curator", SpeciesListAccess.canEdit(c, "fijiants"));
+        assertTrue(SpeciesListAccess.canEdit(c, "393"));
+        assertFalse("a system list", SpeciesListAccess.canEdit(c, "worldants"));
+        assertFalse(SpeciesListAccess.canEdit(c, "allantwebants"));
         assertFalse(SpeciesListAccess.canEdit(c, null));
         assertFalse(SpeciesListAccess.canEdit(null, "madants"));
+        Login visitor = new Login();
+        visitor.setId(43);
+        assertFalse("not a curator: no list", SpeciesListAccess.canEdit(visitor, "madants"));
+        // the project itself: only the projects assigned to the curator
+        assertTrue(SpeciesListAccess.canEditProject(c, "madants"));
+        assertFalse(SpeciesListAccess.canEditProject(c, "fijiants"));
+        assertFalse(SpeciesListAccess.canEditProject(null, "madants"));
     }
 
     public void testAdminEditsAnyList() {
         assertTrue(SpeciesListAccess.canEdit(curator(true, null, 0, null), "fijiants"));
+        assertTrue(SpeciesListAccess.canEdit(curator(true, null, 0, null), "worldants"));
+        assertTrue(SpeciesListAccess.canEditProject(curator(true, null, 0, null), "fijiants"));
     }
 
     public void testNone() {

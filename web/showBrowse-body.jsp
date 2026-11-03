@@ -143,6 +143,11 @@ if (childrenList != null) {
    String browseChoice = taxon.isSpeciesOrSubspecies() ? null : taxon.getStatusSetStr();
    displayCount = Html.esc(StatusSet.listHeading(browseChoice, taxon.getChildrenCount(), taxon.getNextRank(),
        Rank.getSingularRank(taxon.getNextRank()), -1, overview == null ? null : overview.getName(), StatusSet.fossilSubfamilies(request)));
+   // A genus in a place in the view Not curated (Brian Fisher, 2026-11-02): the stored breakdown of the genus row's Not
+   // curated number ("3,392 specimens not curated: 298 morphospecies (2,820 specimens), 572 identified only to genus"),
+   // then the rows listed (BrowseAction, home.PlaceGenusCurationDb).
+   String notCuratedHeader = StatusSet.LIST_NOT_CURATED.equals(browseChoice) ? (String) request.getAttribute(org.calacademy.antweb.PlaceTaxonNotes.NOT_CURATED_HEADER) : null;
+   if (notCuratedHeader != null) displayCount = Html.esc(notCuratedHeader) + "<br><span class=\"not-curated-rows\" style=\"font-size:smaller;font-weight:normal;\">" + displayCount + "</span>";
    if (taxon.getChildrenCount() > 1) {
 
      String limitStr = (String) request.getParameter("limit");
@@ -235,7 +240,6 @@ if (childrenList != null) {
  if (!"species".equals(taxon.getRank()) && !"subspecies".equals(taxon.getRank())) { %>
     <%@include file="/taxonReport.jsp" %>  
 <%  } %>
-<%@include file="/common/genusIndetLine.jsp" %>
 
  <% if (taxon.isBaseTaxon()) { %>
      <% // USED TO HAVE THE TAXONCHILDCOUNT HERE %>

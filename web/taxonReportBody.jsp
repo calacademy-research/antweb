@@ -1,10 +1,16 @@
 <%-- The rows of a place's list of taxa, shared by taxonomicPage.do (taxonomicPage-body.jsp) and browse.do
-     (taxonReport.jsp): sorts the children by orderBy (Taxon.sortTaxa), writes the sortable headings (status, type,
-     endemic and introduced, from specimen, name, author and date, counts, Images, map, source), one row per child
-     with its counts, marks and Images number, and the notes under the list (the asterisk counts, Images, specimens
-     identified only to genus). Uses the including page's children, overview, pageRank, displayGlobal and place
-     flags. Docs: docs/flows/places.md, docs/flows/taxon-pages.md, docs/numbers.md rows 38 to 44. Tests:
-     tests/e2e/test_numbers_lists.py, test_numbers_live.py, test_status_choice.py. --%><!-- taxonReportBody.jsp -->
+     (taxonReport.jsp): sorts the children by orderBy (Taxon.sortTaxa), writes the sortable headings, one line per
+     row, and the notes under the list (the asterisk counts, Images, specimens identified only to genus). Columns
+     (Brian Fisher, 2026-11-02): Taxon name | Author date (narrow) | Species of a genus row in the view (number, or
+     "&ndash;") or the row's counts | Not curated (genus rows, views Valid and Curated, countries, adm1s, museums,
+     bioregions: the specimens of the genus collected here whose name is not curated, counted nightly, linked to the
+     genus page in the view Not curated; empty when 0; ListView.GenusRows, PlaceTaxonNotes.notCuratedCellHtml) | Images
+     (genus rows in a place: "N species imaged", the species of the view with an image of the ant) | Map |
+     Source (an icon, ListView.sourceIconHtml: specimen, curated, literature; a name with a specimen collected here
+     shows specimen even with a literature entry, ListView.sourceKind). Uses the including page's children, overview,
+     pageRank, displayGlobal, place flags, genusRows and placeSpecimens. Docs: docs/flows/places.md,
+     docs/flows/taxon-pages.md, docs/numbers.md rows 38 to 44. Tests: tests/e2e/test_list_sources.py,
+     test_numbers_lists.py, test_numbers_live.py, test_status_choice.py. --%><!-- taxonReportBody.jsp -->
 <%
     // Included by showBrowse-body.jsp and 
 
@@ -36,6 +42,31 @@
     String imagesDefinition = "Images: the images of the ant (head, profile, dorsal and other views) of that name in all of"
         + " AntWeb, from specimens collected anywhere. Specimen label images are not counted."
         + (imagesFromPhrase == null ? "" : " Click the number to see the images; those " + imagesFromPhrase + " come first.");
+    // Genus rows in a place (Brian Fisher, 2026-11-02, 18:40): "N species imaged", of the species of the genus in this
+    // view, those with at least one image of the ant anywhere in AntWeb (labels never count; ListView.GenusRows.imaged);
+    // it replaces "N Images" (every image of the genus in AntWeb, e.g. Camponotus 20,663). The link opens the genus's
+    // images page in the same view (no place-first order there: that is for species pages).
+    boolean genusImagedCells = Rank.GENUS.equals(pageRank) && genusRows != null;
+    if (genusImagedCells) {
+      imagesColumnTitle = "Species of the genus in this view with at least one image of the ant, from any specimen in AntWeb (labels are not counted).";
+      imagesDefinition = "Sp. imaged: of the species and subspecies of the genus in this view, how many have at least one image of"
+          + " the ant (head, profile, dorsal or another view) from a specimen collected anywhere in AntWeb. Specimen label"
+          + " images are not counted. Click the number to see the genus's images.";
+      // sorting by Images follows the number shown (most species imaged first; Taxon.sortTaxa sorted by image counts)
+      if ("images".equals(orderBy)) {
+        final org.calacademy.antweb.ListView.GenusRows sortRows = genusRows;
+        children.sort((a, b) -> Integer.compare(sortRows.imaged(b.getSubfamily(), b.getGenus()), sortRows.imaged(a.getSubfamily(), a.getGenus())));
+      }
+      // sorting by Not curated (2026-11-02, 21:21: the heading is a sort link like the others): most first
+      if ("notCurated".equals(orderBy)) {
+        final org.calacademy.antweb.ListView.GenusRows sortRows = genusRows;
+        java.util.function.ToIntFunction<Taxon> nc = t -> {
+          org.calacademy.antweb.home.PlaceGenusCurationDb.Row row = sortRows.notCurated(t.getSubfamily(), t.getGenus());
+          return row == null ? 0 : row.notCurated;
+        };
+        children.sort((a, b) -> Integer.compare(nc.applyAsInt(b), nc.applyAsInt(a)));
+      }
+    }
     // The * note (Brian Fisher, 2026-10-28, list notes). The column marked * is Specimens on a species list, Species on
     // a genus list and Genera on a subfamily list.
     String asterixCounts = "specimens".equals(nextPluralRank) ? "Specimen"
@@ -52,13 +83,23 @@
             : ", whatever the name's status")
         + (displayGlobal ? "." : ", in " + locale + ".");
     // Brian Fisher, 2026-10-28: a species is a valid name or a morphospecies. The Species of a genus row count those only.
-    if (Rank.GENUS.equals(pageRank)) {
+    // 2026-11-02: in a place with the views, the Species of a genus row are the species and subspecies of the view.
+    if (Rank.GENUS.equals(pageRank) && genusRows != null) {
+      asterixNote = "Species: the species and subspecies of the genus in " + locale + " in this view ("
+          + StatusSet.choiceLabel(genusRows.choice, "species") + "); a dash when none."
+          + (genusRows.showsNotCurated() ? " Not curated: the specimens of the genus collected here (not red-flagged) whose"
+              + " name is not curated: morphospecies no curator has put on a species list, specimens identified only to genus"
+              + " and names not in AntCat. Counted once a day (after an upload it catches up the next morning); click the"
+              + " number to see those names and their specimens." : "");
+      asterixTitle = "The species and subspecies of the genus in this view";
+    } else if (Rank.GENUS.equals(pageRank)) {
       asterixNote = "Numbers marked * count the species and subspecies of the genus in " + locale
           + " that are valid names or morphospecies; names identified to genus only (indetermined, unidentifiable)"
           + " and names not in AntCat (unrecognized) are not species.";
       asterixTitle = asterixNote;   // the * tooltip says what the note under the list says (it said "all statuses")
     }
-    // The specimens identified to genus only, linked to the place's specimen search (as "List all specimens collected in").
+    // The specimens identified to genus only (species lists), linked to the place's specimen search (as "List all
+    // specimens collected in").
     String genusOnlySearch = null;
     if (overview instanceof org.calacademy.antweb.geolocale.LocalityOverview && !HttpUtil.isBot(request)) {
       String genusOnlyCriteria = ((org.calacademy.antweb.geolocale.LocalityOverview) overview).getSearchCriteria();
@@ -67,6 +108,9 @@
             + genusOnlyCriteria + "&resultRank=specimen";
       }
     }
+    // 2026-11-02: the Not curated column of genus rows (ListView.GenusRows.showsNotCurated): Valid and Curated, on
+    // countries, adm1s, museums and bioregions (stored nightly; replaces Other specimens).
+    boolean showNotCuratedColumn = Rank.GENUS.equals(pageRank) && genusRows != null && genusRows.showsNotCurated();
 %>
 
 <!--  Column Headings -->
@@ -116,7 +160,7 @@
            <font size=2><a <%= u %> href='<%= sortLink + "&orderBy=taxonName" %>'>Taxon Name</a></b></font>
         </div>        
      <% if ("authorDate".equals(orderBy)) u = underline; else u = "";  %>        
-        <div class="list_extras author_date"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=authorDate" %>'>Author Date</a></b></font></div>
+        <div class="list_extras author_date"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=authorDate" %>'>Author date</a></b></font></div>
 
 
      <% if (listOnly) { %>
@@ -136,7 +180,13 @@
                 <div class="list_extras specimens"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=genera" %>'>Genera</a><a title='<%= Html.escAttr(asterixTitle) %>'>*</a></a></b></font></div>
          <% } else if (Rank.GENUS.equals(pageRank)) { %>
              <% if ("species".equals(orderBy)) u = underline; else u = "";  %>
-                <div class="list_extras specimens"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=species" %>'>Species</a><a title='<%= Html.escAttr(asterixTitle) %>'>*</a></b></font></div>        
+                <div class="list_extras specimens<%= genusImagedCells ? " genus-col" : "" %>"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=species" %>'>Species</a><a title='<%= Html.escAttr(asterixTitle) %>'>*</a></b></font></div>
+             <% if (genusImagedCells && !listOnly) { u = "images".equals(orderBy) ? underline : ""; %>
+                <div class="list_extras images genus-col"><font size=2><b><a <%= u %> title='<%= org.calacademy.antweb.util.Html.escAttr(imagesColumnTitle) %>' href='<%= sortLink + "&orderBy=images" %>'>Sp. imaged</a></b></font></div>
+             <% } %>
+             <% if (showNotCuratedColumn) { u = "notCurated".equals(orderBy) ? underline : ""; %>
+                <div class="list_extras other genus-col"><font size=2><b><a <%= u %> title="Specimens of the genus collected here whose name is not curated: uncurated morphospecies and specimens identified only to genus (counted once a day)" href='<%= sortLink + "&orderBy=notCurated" %>'>Not curated</a></b></font></div>
+             <% } %>
          <% } else { %>
 
              <% if ("specimens".equals(orderBy)) u = underline; else u = "";  %>
@@ -146,7 +196,7 @@
 
      <% } %>
      <% if ("images".equals(orderBy)) u = underline; else u = "";  %>        
-     <% if (!listOnly) { %>
+     <% if (!listOnly && !genusImagedCells) { %>
         <div class="list_extras images"><font size=2><b><a <%= u %> title='<%= org.calacademy.antweb.util.Html.escAttr(imagesColumnTitle) %>' href='<%= sortLink + "&orderBy=images" %>'>Images</a></b></font></div>
      <% } %>
 
@@ -154,7 +204,7 @@
      <div class="list_extras map"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=map" %>'>Map</a></u></b></font></div>
 	 <% if (!isMuseum) { %>        
 		  <% if ("source".equals(orderBy)) u = underline; else u = "";  %>
-		  <div class="list_extras source"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=source" %>'>Source</a></b></font></div>
+		  <div class="list_extras source"><font size=2><b><a <%= u %> title="Specimen, curated or literature; see About this list" href='<%= sortLink + "&orderBy=source" %>'>Source</a></b></font></div>
 	 <% } %>
 
     </div>
@@ -219,21 +269,26 @@
 
           String nextSubtaxon = childTaxonSet.getNextSubtaxon(1);
           //A.log("taxonReportBody.jsp nextSubtaxon:" + nextSubtaxon + " Um, nextTaxon should be returning 'No [rank]' instead of :" + childCountStr);
-          if (nextSubtaxon != null && nextSubtaxon.contains("No ")) {
-            childCountStr = nextSubtaxon; //"No Specimens";
-            // 2026-10-28: a genus known here only from specimens identified to genus: "No Species" and how many.
-            int genusOnlyCount = (Rank.GENUS.equals(pageRank) && genusOnly != null) ? genusOnly.specimens(child.getTaxonName()) : 0;
-            if (genusOnlyCount > 0) {
-              String genusOnlyText = org.calacademy.antweb.home.GenusOnly.genusRowText(genusOnlyCount);
-              if (genusOnlySearch != null) genusOnlyText = "<a rel='nofollow' href='" + org.calacademy.antweb.util.Html.escAttr(genusOnlySearch + "&"
-                  + org.calacademy.antweb.home.GenusOnly.searchParams(genusOnly.genus(child.getTaxonName()))) + "'>" + genusOnlyText + "</a>";
-              childCountStr += "<br><span class='genus-only' data-genus-only='" + genusOnlyCount + "'>" + genusOnlyText + "</span>";
+          // 2026-11-02 (Brian Fisher, views): a genus row's Species are its species and subspecies in the view (a number
+          // linked to the genus page in the same view, or a dash), and Not curated the stored number of its specimens
+          // collected here whose name is not curated, linked to the genus page in the view Not curated (ListView.GenusRows;
+          // replaces Other specimens).
+          String notCuratedCell = null;
+          if (Rank.GENUS.equals(pageRank) && genusRows != null) {
+            int viewSpecies = genusRows.species(child.getSubfamily(), child.getGenus());
+            subtaxonTotal += viewSpecies - nextSubtaxonCount;
+            childCountStr = viewSpecies <= 0 ? "<span class='no-species' title='No species of this genus in this view'>&ndash;</span>"
+                : "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "&statusSet=" + Html.url(genusRows.choice) + "'><span class='numbers'>" + viewSpecies + "</span></a>";
+            if (showNotCuratedColumn) {
+              org.calacademy.antweb.home.PlaceGenusCurationDb.Row ncRow = genusRows.notCurated(child.getSubfamily(), child.getGenus());
+              notCuratedCell = ncRow == null ? "" : org.calacademy.antweb.PlaceTaxonNotes.notCuratedCellHtml(ncRow.notCurated,
+                  org.calacademy.antweb.PlaceTaxonNotes.notCuratedUrl(child.getSubfamily(), child.getGenus(), overview));
             }
+          } else if (nextSubtaxon != null && nextSubtaxon.contains("No ")) {
+            childCountStr = nextSubtaxon; //"No Specimens";
           } else {
-            //if (child.getTaxonName().contains("graulomyrmex")) A.log("init() taxonName:" + taxonName + " childCount:" + projTaxon.getGlobalChildCount());
-            //if (child.getTaxonName().contains("graulomyrmex")) A.log("taxonReport.jsp ! nextSubtaxon:" + nextSubtaxon + " globalChildCount:" + childTaxonSet.getGlobalChildCount());
             childCountStr = "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "'>" + nextSubtaxon + "</a>";
-          } 
+          }
 
           if (listOnly) {
             // no counts (Port of Entry)
@@ -248,7 +303,8 @@
 
           } else {
             %>                
-            <div class="list_extras specimens"> <%= childCountStr %></div>     
+            <div class="list_extras specimens<%= genusImagedCells ? " genus-col" : "" %>"> <%= childCountStr %></div>     
+            <% if (showNotCuratedColumn && !genusImagedCells) { %><div class="list_extras other"><%= notCuratedCell == null ? "" : notCuratedCell %></div><% } %>
             <%
           }
 
@@ -258,40 +314,79 @@
          // links to says how many imaged specimens are from the place and shows them first.
          String imagesCell = org.calacademy.antweb.ImagesAnywhere.imagesColumn(childTaxonSet, imagesFromPhrase);
          String imageCountStr = null;
-         if (imagesCell.startsWith("No ")) {
+         // genus rows in a place (2026-11-02): "N species imaged", linked to the genus's images page in this view
+         int genusImaged = genusImagedCells ? genusRows.imaged(child.getSubfamily(), child.getGenus()) : -1;
+         if (genusImaged >= 0) {
+           String gi = org.calacademy.antweb.ImagesAnywhere.speciesImagedCell(genusImaged);
+           imageCountStr = genusImaged == 0 ? gi : "<a title='" + genusImaged + (genusImaged == 1 ? " species" : " species") + " of this genus in this view with an image; click to see the images' href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams()
+               + "&statusSet=" + Html.url(genusRows.choice) + "'>" + gi + "</a>";
+         } else if (imagesCell.startsWith("No ")) {
            imageCountStr = imagesCell;
          } else {
            imageCountStr = "<a href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams() + "'>" + imagesCell + "</a>";
          }
      %>
-        <% if (!listOnly) { %><div class="list_extras images"><%= imageCountStr %></div><% } %>
+        <% if (!listOnly) { %><div class="list_extras images<%= genusImagedCells ? " genus-col" : "" %>"><%= imageCountStr %></div><% } %>
+        <% if (showNotCuratedColumn && genusImagedCells) { %><div class="list_extras other genus-col"><%= notCuratedCell == null ? "" : notCuratedCell %></div><% } %>
 
         <div class="list_extras map">
           <% if (childTaxonSet.getSubtaxonCount(1) > 0) { %>
             <a href="<%= mapLink %>">Map</a>
           <% } %>
         </div>
+        <% if (!isMuseum) { %>
         <div class="list_extras source">
         <%
-          String sourceDisplay = childTaxonSet.getSourceDisplay();
-          //A.log("taxonReportBody.jsp sourceDisplay:" + sourceDisplay);
-          if ("Antcat".equals(sourceDisplay)) {
-            sourceDisplay = "<a target='new' href='http://www.antcat.org/catalog/" + child.getAntcatId() + "'>Antcat</a>";
+          // 2026-11-02: an icon (specimen, curated, literature; AntCat as a word) with the word as title; specimens trump literature
+          // (a name with a specimen collected here, not red-flagged, shows specimen). AntCat entries (type localities)
+          // have their own AntCat label and link to AntCat; curated entries of a geolocale link to their curation history.
+          boolean rowHasSpecimen = (placeSpecimens != null && placeSpecimens.has(child.getTaxonName()))
+              || (Rank.GENUS.equals(pageRank) && genusRows != null && genusRows.hasSpecimens(child.getSubfamily(), child.getGenus()));
+          String sourceKind = org.calacademy.antweb.ListView.sourceKind(childTaxonSet.getSource(), rowHasSpecimen);
+          String sourceDisplay = org.calacademy.antweb.ListView.sourceIconHtml(sourceKind);
+          String canonicalSource = Source.getSourceCanonical(childTaxonSet.getSource());
+          if (!rowHasSpecimen && Source.ANTCAT.equals(canonicalSource) && child.getAntcatId() > 0) {
+            sourceDisplay = "<a target='new' href='https://www.antcat.org/catalog/" + child.getAntcatId() + "'>" + sourceDisplay + "</a>";
           }
-          if ("Curator".equals(sourceDisplay)) {
-            if (overview instanceof Geolocale) {
-              sourceDisplay = "<a title='" + Html.escAttr(childTaxonSet.getSource()) + "' href='" + AntwebProps.getDomainApp() + "/curation.do?taxonName=" + Html.escAttr(Html.url(childTaxonSet.getTaxonName())) + "&amp;geolocaleId=" + ((Geolocale) overview).getId() + "'>" + sourceDisplay + "</a>";
-            }
+          if (!rowHasSpecimen && Source.CURATOR.equals(canonicalSource) && overview instanceof Geolocale) {
+            sourceDisplay = "<a href='" + AntwebProps.getDomainApp() + "/curation.do?taxonName=" + Html.escAttr(Html.url(childTaxonSet.getTaxonName())) + "&amp;geolocaleId=" + ((Geolocale) overview).getId() + "'>" + sourceDisplay + "</a>";
           }
         %>
-            <%= sourceDisplay %>         
+            <%= sourceDisplay %>
         </div>
-    <% } else { %>
-        <div class="list_extras specimens"><a title="From specimen data">n/a</a></div>
-        <div class="list_extras localSpecimens"><a title="From specimen data">n/a</a></div>
-        <div class="list_extras images"><a title="From specimen data">n/a</a></div>
-        <div class="list_extras map"><a title="From specimen data">n/a</a></div>
-        <div class="list_extras source">AntWeb&nbsp;specimen</div>
+        <% } %>
+    <% } else {
+         // A row added from specimens collected here (views Curated, All specimen names and Not curated, 2026-11-02): not
+         // on the list, so no list numbers; a species row says how many specimens were collected here (linked to them), a
+         // genus row its Species, Not curated and species imaged in the view.
+         String addedCount = "&ndash;";
+         String addedOther = "";
+         String addedImages = "&ndash;";
+         if (placeSpecimens != null && placeSpecimens.has(child.getTaxonName())) {
+           addedCount = Formatter.commaFormat(placeSpecimens.count(child.getTaxonName())) + " here";
+           // on a genus page (rows of species), linked to the name's specimens in the place (its page in the place)
+           if (!Rank.GENUS.equals(pageRank)) {
+             addedCount = "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "'>" + addedCount + "</a>";
+           }
+         }
+         if (Rank.GENUS.equals(pageRank) && genusRows != null) {
+           int addedSpecies = genusRows.species(child.getSubfamily(), child.getGenus());
+           if (addedSpecies > 0) addedCount = "" + addedSpecies;
+           org.calacademy.antweb.home.PlaceGenusCurationDb.Row addedNc = genusRows.notCurated(child.getSubfamily(), child.getGenus());
+           if (addedNc != null) addedOther = org.calacademy.antweb.PlaceTaxonNotes.notCuratedCellHtml(addedNc.notCurated,
+               org.calacademy.antweb.PlaceTaxonNotes.notCuratedUrl(child.getSubfamily(), child.getGenus(), overview));
+           int addedImaged = genusRows.imaged(child.getSubfamily(), child.getGenus());
+           if (addedImaged > 0) addedImages = "<a href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams()
+               + "&statusSet=" + Html.url(genusRows.choice) + "'>" + org.calacademy.antweb.ImagesAnywhere.speciesImagedCell(addedImaged) + "</a>";
+         }
+    %>
+        <% if (displayGlobal) { %><div class="list_extras specimens">&ndash;</div><% } %>
+        <div class="list_extras specimens<%= genusImagedCells ? " genus-col" : "" %>" title="Not on the list: from specimens collected here"><%= addedCount %></div>
+        <% if (showNotCuratedColumn && !genusImagedCells) { %><div class="list_extras other"><%= addedOther %></div><% } %>
+        <% if (!listOnly) { %><div class="list_extras images<%= genusImagedCells ? " genus-col" : "" %>"><%= addedImages %></div><% } %>
+        <% if (showNotCuratedColumn && genusImagedCells) { %><div class="list_extras other genus-col"><%= addedOther %></div><% } %>
+        <div class="list_extras map"></div>
+        <% if (!isMuseum) { %><div class="list_extras source"><%= org.calacademy.antweb.ListView.sourceIconHtml(org.calacademy.antweb.ListView.SOURCE_SPECIMEN) %></div><% } %>
     <% } %>
     </div>
     <div class="clear"></div>
@@ -315,6 +410,9 @@
      if (Rank.SUBFAMILY.equals(pageRank)) {
        totalNote = "Genera total (administrators only): the Genera column adds up to " + Formatter.commaFormat(subtaxonTotal)
            + " genera; it should equal Genera on the " + locale + " overview page.";
+     } else if (Rank.GENUS.equals(pageRank) && genusRows != null) {
+       totalNote = "Species total (administrators only): the Species column adds up to " + Formatter.commaFormat(subtaxonTotal)
+           + " species and subspecies of this view; it should equal the header of the species list in the same view.";
      } else if (Rank.GENUS.equals(pageRank)) {
        totalNote = "Species total (administrators only): the Species column adds up to " + Formatter.commaFormat(subtaxonTotal)
            + " species and subspecies; it should equal Species / subspecies / morphospecies on the " + locale + " overview page.";
@@ -327,6 +425,9 @@
    }
    int noteNum = 0;
 %>
+<%-- The genus page's line in a place (browse.do; request attribute set by BrowseAction, none on taxonomicPage.do):
+     above the notes (Brian Fisher, 2026-11-02; it was under them, from showBrowse-body.jsp). --%>
+<%@include file="/common/genusIndetLine.jsp" %>
 <% if (listOnly) { %>
 <% if (totalNote != null) { %>
 <br><span id="subtaxon-total" data-subtaxon-total="<%= subtaxonTotal %>"><%= totalNote %></span>

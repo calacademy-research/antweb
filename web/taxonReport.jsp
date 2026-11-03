@@ -27,6 +27,10 @@
     boolean isOnlyShowUnImaged = false;    
     java.util.Set<String> unimagedNames = null;   // taxonomicPage.do?isImaged=false only (Q12)
     org.calacademy.antweb.home.GenusOnly genusOnly = null;   // taxonomicPage.do only (2026-10-28)
+    // the genus rows of a subfamily in a place, in the view: Species, Not curated, species imaged (BrowseAction, ListView, 2026-11-02)
+    org.calacademy.antweb.ListView.GenusRows genusRows = (org.calacademy.antweb.ListView.GenusRows) request.getAttribute(org.calacademy.antweb.PlaceTaxonNotes.GENUS_ROWS);
+    // a genus page in the view Not curated: the genus's specimens collected here by name, for the rows added from them (BrowseAction)
+    org.calacademy.antweb.ListView.PlaceSpecimens placeSpecimens = (org.calacademy.antweb.ListView.PlaceSpecimens) request.getAttribute(org.calacademy.antweb.PlaceTaxonNotes.PLACE_SPECIMENS);
 %>
 
 <%@ include file="/taxonReportBody.jsp" %>

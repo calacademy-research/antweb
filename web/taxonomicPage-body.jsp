@@ -1,9 +1,11 @@
-<%-- Body of the list without images (taxonomicPage.do, TaxaPageAction): the place heading (overviewHeading.jsp),
-     the list note (taxonSetHeaderNotes.jsp), the header in the words of the status choice (StatusSet), or the
-     unimaged count with isImaged=false, the status choice, the Edit Species List and Show Specimen Taxa links for
-     those who may use them, and the rows (taxonReportBody.jsp). Reads the request attribute taxaPage. Docs:
-     docs/flows/places.md, docs/numbers.md rows 38 and 39. Tests: tests/e2e/test_numbers_lists.py,
-     test_status_choice.py, test_numbers_live.py. --%><%@ page language="java" %>
+<%-- Body of the list without images (taxonomicPage.do, TaxaPageAction): the place heading (overviewHeading.jsp), the
+     header in the words of the view, its number the rows of the view (StatusSet.listHeading), or the unimaged count
+     with isImaged=false, the four view buttons (statusesDisplay.jsp; Brian Fisher, 2026-11-02: they replace the status
+     menu and the "Names from" selector), a line of links (List all specimens collected in <place>; Edit Species List
+     for curators and administrators), "About this list" (taxonSetHeaderNotes.jsp) and the rows (taxonReportBody.jsp,
+     with the genus rows' numbers and the place's specimens of TaxaPage). Reads the request attribute taxaPage. Docs:
+     docs/flows/places.md, docs/numbers.md rows 38 and 39. Tests: tests/e2e/test_list_sources.py,
+     test_numbers_lists.py, test_status_choice.py, test_numbers_live.py. --%><%@ page language="java" %>
 <%@ page errorPage = "/error.jsp" %>
 <%@ page import="java.util.ResourceBundle" %>
 <%@ page import="java.util.*" %>
@@ -76,8 +78,6 @@
 
 <div class="page_divider taxonomic"></div>
 
-<%@include file="/common/taxonSetHeaderNotes.jsp" %>
-
 <%
 	// To avoid ConcurrentModificationException
 	ArrayList<Taxon> childrenList = taxaPage.getChildren();
@@ -88,12 +88,12 @@
 
     //A.log("taxonomicPage-body.jsp 4 childrenCount:" + childrenCount);
 
-	// Brian Fisher, 2026-10-30: the header says what the list shows, in the words of the place page's numbers
-	// ("2,672 Valid species (of 6,960 species and morphospecies)", "116 Genera (valid genera and morphogenera)").
-	// StatusSet.listHeading; the "of" number is the place page's Species / subspecies / morphospecies.
-	String childSizeStr = Html.esc(StatusSet.listHeading(taxaPage.getStatusSetStr(), childrenCount, Rank.getPluralRank(pageRank),
+	// Brian Fisher, 2026-10-30 and 2026-11-02: the header says what the list shows, its number the rows of the view
+	// ("2,672 Valid species (of 6,960 species and morphospecies)", "116 Genera (valid and curated)"). StatusSet.listHeading.
+	String childHeading = StatusSet.listHeading(taxaPage.getStatusSetStr(), childrenCount, Rank.getPluralRank(pageRank),
 	    Rank.getPluralRank(pageRank), overview == null ? -1 : overview.getSpeciesCount(), overview == null ? null : overview.getName(),
-	    StatusSet.fossilSubfamilies(request)));
+	    StatusSet.fossilSubfamilies(request));
+	String childSizeStr = Html.esc(childHeading);
 
 	// Q12 (Brian Fisher, 2026-10-22): "Unimaged" = no photo of the ant anywhere in AntWeb; a name whose specimens have only
 	// label photos is unimaged (TaxaPage.findUnimaged, the rule of the API's /unimagedGeolocaleTaxa). Until then it meant
@@ -108,30 +108,19 @@
 	    childSizeStr = "<span class=\"numbers\">" + unImagedCount + "</span> Unimaged " + Rank.getPluralRank(pageRank) + " (out of <span class=\"numbers\">" + childrenCount + "</span>)";
 	    unImagedNote = "<p id=\"unimaged-note\">Unimaged: no photo of the ant anywhere in AntWeb, from any place. A name whose specimens have only label photos counts as unimaged.</p>";
     }
-%>
 
-<div id="totals_and_tools_container">
-    <div id="totals_and_tools">
-        <h2 class="display_count"><%= childSizeStr %></h2>
-        <%= unImagedNote %>
-
-<%
-      String statusSet = taxaPage.getStatusSetStr();
-      String statusSetSize = taxaPage.getStatusSetSize();
-      //A.log("taxonomicPage-body.jsp statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);
-%>
-        <%@ include file="/common/statusesDisplay.jsp" %>
-<%
-  	 // Edit Species List   |   Show Specimen Taxa     
-	  // if isMappable and curator is curator there.  
+	// The header in two lines (Brian Fisher, 2026-10-30): line 1 the header with the view buttons on the right; line 2
+	// small links (List all specimens collected in <place>; Edit Species List for curators and administrators: any
+	// curator may edit any place's or project's list, 2026-11-02). The notes on the list's sources, views and icons are
+	// under "About this list" (a details element, web/common/taxonSetHeaderNotes.jsp). The view All specimen names
+	// replaces "Names from: Specimens collected here"; specimen=true still opens it (TaxaPageAction).
 	boolean canShowSpeciesListTool = false;
-	boolean canShowSpecimenTaxa = false;
+	String editSpeciesListUrl = null;
+	String allSpecimensCriteria = null;
 	if (overview instanceof Geolocale || overview instanceof Project) {
       canShowSpeciesListTool = overview.isCanShowSpeciesListTool(accessLogin) || LoginMgr.isAdmin(accessLogin);
-      //A.log("taxonomicPage-body.jsp overview:" + overview.getName() + " isCanShowSpeciesListTool:" + canShowSpeciesListTool + " parent:" + ((Adm1)overview).getParent());
-      //A.log("taxonomicPage-body.jsp geolocales:" + accessLogin.getGeolocales());
       thisTarget = HttpUtil.removeParam(thisTarget, "specimen");
-      if (canShowSpeciesListTool) { 
+      if (canShowSpeciesListTool) {
         String searchCriteria = "";
         if (overview instanceof Geolocale) {
           // Encoded: a place name such as Cote d'Ivoire must not end the link early.
@@ -139,46 +128,52 @@
           if (overview instanceof Adm1) searchCriteria = "&refSpeciesListType=advSearch&doSearch=searchResults&country=" + Html.url(((Adm1) overview).getParent()) + "&adm1=" + Html.url(overview.getName());
         }
         String mapSpeciesList1Name = (overview instanceof Adm1) ? "" + ((Adm1) overview).getId() : overview.getName();
-     %>
-<a href='<%= Html.escAttr(AntwebProps.getDomainApp() + "/speciesListTool.do?mapSpeciesList1Name=" + Html.url(mapSpeciesList1Name) + searchCriteria + "&isFreshen=true") %>'>Edit Species List</a>
-  <%
-
-        thisTarget = HttpUtil.removeParam(thisTarget, "specimen");
-        //A.log("taxonomicPage-body.jsp thisTarget:" + thisTarget);
-      }
-
-	  canShowSpecimenTaxa = overview.isCanShowSpecimenTaxa();
-      if (canShowSpeciesListTool && canShowSpecimenTaxa) { %>
-&nbsp; | &nbsp;
-   <% }
-      if (canShowSpecimenTaxa) {
-        //A.log("taxonomicPage-body.jsp taxaPage:" + taxaPage + " thisTarget:" + thisTarget);
-
-        if (!taxaPage.isWithSpecimen()) { %>
-<a href='<%= Html.escAttr(thisTarget + "&specimen=true") %>' title='Show additional taxa from specimen data.'>Show Specimen Taxa</a>
-     <% } else { 
-          thisTarget = HttpUtil.removeParam(thisTarget, "specimen");
-    %>
-<a href='<%= Html.escAttr(thisTarget + "&specimen=false") %>' title='hide additional taxa from specimen data'>Hide Specimen Taxa</a>
-     <% }
+        editSpeciesListUrl = AntwebProps.getDomainApp() + "/speciesListTool.do?mapSpeciesList1Name=" + Html.url(mapSpeciesList1Name) + searchCriteria + "&isFreshen=true";
       }
       // Public, as on the overview page (Brian 2026-10-20): the specimen records of this place, any name.
       if (overview instanceof LocalityOverview && !HttpUtil.isBot(request)) {
         String listCriteria = ((LocalityOverview) overview).getSearchCriteria();
-        if (listCriteria != null && !"".equals(listCriteria)) { %>
-&nbsp; | &nbsp;<a rel='nofollow' href='<%= AntwebProps.getDomainApp() %>/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&<%= listCriteria %>&resultRank=specimen' title='Every specimen record collected here, under any name'>List all specimens collected in <%= Html.esc(overview.getName()) %></a>
-     <% }
+        if (listCriteria != null && !"".equals(listCriteria)) allSpecimensCriteria = listCriteria;
       }
-    } %>
+    }
+%>
 
+<div id="totals_and_tools_container">
+    <div id="totals_and_tools">
+      <div id="list-head" class="list-head">
+        <h2 class="display_count"><%= childSizeStr %></h2>
+        <div id="list-choices" class="list-choices">
+<%
+      String statusSet = taxaPage.getStatusSetStr();
+      String statusSetSize = taxaPage.getStatusSetSize();
+      //A.log("taxonomicPage-body.jsp statusSetStr:" + statusSet + " statusSetSize:" + statusSetSize);
+%>
+        <%@ include file="/common/statusesDisplay.jsp" %>
+        </div>
+      </div>
+      <div class="clear"></div>
+        <%= unImagedNote %>
+<%    if (allSpecimensCriteria != null || editSpeciesListUrl != null) { %>
+      <div id="list-links" class="list-links">
+<%      if (allSpecimensCriteria != null) { %><a rel='nofollow' href='<%= AntwebProps.getDomainApp() %>/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&<%= Html.escAttr(allSpecimensCriteria) %>&resultRank=specimen' title='Every specimen record collected here, under any name'>List all specimens collected in <%= Html.esc(overview.getName()) %></a><% } %>
+<%      if (allSpecimensCriteria != null && editSpeciesListUrl != null) { %> &nbsp;|&nbsp; <% } %>
+<%      if (editSpeciesListUrl != null) { %><a href='<%= Html.escAttr(editSpeciesListUrl) %>'>Edit Species List</a><% } %>
+      </div>
+<%    } %>
     </div>
     <div class="clear"></div>
 </div>
+
+<%@include file="/common/taxonSetHeaderNotes.jsp" %>
 <%
   
   boolean isWithSpecimen = taxaPage.isWithSpecimen();
-  // 2026-10-28: the place's specimens identified to genus only (genus rows, the line under the species list)
+  // 2026-10-28: the place's specimens identified to genus only (the line under the species list)
   org.calacademy.antweb.home.GenusOnly genusOnly = taxaPage.getGenusOnly();
+  // 2026-11-02: genus lists, the genus rows' numbers in the view (Species, Other specimens); species lists, the
+  // place's specimens by name (source icons, the rows added from specimens)
+  ListView.GenusRows genusRows = taxaPage.getGenusRows();
+  ListView.PlaceSpecimens placeSpecimens = taxaPage.getPlaceSpecimens();
 %>
 
     <%@ include file="/taxonReportBody.jsp" %>

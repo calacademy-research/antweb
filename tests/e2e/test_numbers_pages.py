@@ -83,12 +83,13 @@ def test_images_view_header_counts_imaged_children():
     imaged, total = int(m.group(1)), int(m.group(2))
     assert int(m.group(3).replace(",", "")) == imaged and int(m.group(5).replace(",", "")) == total
     assert 0 < imaged <= total
-    # Madagascar opens with Valid genera (geolocales: Valid species, StatusSet.defaultChoice): the header names it
-    assert m.group(4) == "Valid genera" and m.group(6) == "valid genera", m.group(0)
-    # the same words as the list's header with the same choice (StatusSet.listHeading: "N Valid genera")
+    # Madagascar opens with the view Curated (the default on every list, Brian Fisher 2026-11-02, StatusSet.defaultChoice;
+    # until then Valid on geolocales): the header names it, "59 Genera imaged (out of 62 genera, valid and curated)"
+    assert m.group(4) == "Genera" and m.group(6) == "genera, valid and curated", m.group(0)
+    # the same view and words as the list's header (StatusSet.listHeading: "62 Genera (valid and curated)"), same total
     listed = _ok("/taxonomicPage.do?rank=genus&countryName=Madagascar")
-    h = re.search(r'<h2 class="display_count"[^>]*>([\d,]+) ([^<(]+?)\s*(?:\(|</h2>)', listed)
-    assert h and h.group(2).strip().lower() == m.group(6), (h and h.group(0), m.group(0))
+    h = re.search(r'<h2 class="display_count"[^>]*>([\d,]+) ([^<(]+?)\s*\(([^)<]+)\)', listed)
+    assert h and h.group(2).strip() == "Genera" and h.group(3) == "valid and curated", (h and h.group(0), m.group(0))
     assert int(h.group(1).replace(",", "")) == total
 
 

@@ -208,6 +208,8 @@ unused and backup is a search of the code for SQL that names the table (2026-10-
 | `geolocale_taxon_log`, `geolocale_taxon_log_detail` | [5](#geolocale_taxon_log) | in use |
 | `proj_taxon_log`, `proj_taxon_log_detail` | [5](#proj_taxon_log) | in use |
 | `taxon_set_parked` | [5](#taxon_set_parked) | in use (2026-10-19) |
+| `place_genus_curation` | [5](#place_genus_curation) | in use (2026-11-02) |
+| `place_specimen_name` | [5](#place_specimen_name) | in use (2026-11-02) |
 | `image` | [6](#image) | in use |
 | `group_image` | [6](#group_image) | in use |
 | `image_upload`, `image_uploaded` | [6](#image_upload) | in use |
@@ -672,6 +674,40 @@ The rows of a project list at one saved version. Written and read by `ProjTaxonL
 **Read by.** The same classes.
 
 **Status.** In use.
+
+### `place_genus_curation`
+
+**Purpose.** The Not curated column of genus lists (Brian Fisher, 2026-11-02; replaces Other specimens): per place and
+genus, the specimens of the genus collected there (not red-flagged, ants) and those whose name is not curated (neither
+a valid name nor a curated morphospecies, `ListView.notCuratedCondition`), split into uncurated morphospecies (names and
+specimens), specimens identified only to genus, and other names (unrecognized).
+
+**Key.** (`list_type`, `list_key`, `taxon_name`). `list_type`: `country`, `adm1`, `museum`, `bioregion`; `list_key`:
+the country's or adm1's name (as `specimen.country`/`island_country`, `specimen.adm1`), the museum's code, the
+bioregion's name; `taxon_name`: the genus row's (subfamily + genus).
+
+**Key columns.** `specimens`, `not_curated`, `morpho_names`, `morpho_specimens`, `indet_specimens`, `other_specimens`,
+`counted`.
+
+**Written by.** Set 4 and `utilData.do?action=placeGenusCuration` (`PlaceGenusCurationDb.fillAll`, one kind per
+transaction). Created by the application; record and undo in `db/upgrade/8.115/2026-11-02-place-genus-curation.sql`.
+
+**Read by.** Genus lists (`ListView.loadGenusRows`, `PlaceGenusCurationDb.read`), the genus page in the view Not curated
+(`BrowseAction`).
+
+**Status.** In use (2026-11-02).
+
+### `place_specimen_name`
+
+**Purpose.** The not red-flagged ant specimens collected in each place, by name, counted with `place_genus_curation`
+(same `list_type`, `list_key`): the genus lists read the names collected in a place from here, not from the specimen
+table (2026-11-02, speed).
+
+**Key.** (`list_type`, `list_key`, `taxon_name`). **Key columns.** `specimens`, `counted`.
+
+**Written by.** As `place_genus_curation`. **Read by.** `ListView.loadStoredPlaceSpecimens`, `ListView.hereCondition`.
+
+**Status.** In use (2026-11-02).
 
 ## 6. Images
 

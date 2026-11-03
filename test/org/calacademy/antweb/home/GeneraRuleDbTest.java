@@ -314,7 +314,8 @@ public class GeneraRuleDbTest extends TestCase {
     }
 
     /**
-     * The choices Valid and Valid + morphotaxa list the rows the place page's number of the rank counts (StatusSet
+     * The choices Valid and Valid + morphotaxa (the set VALID_MORPHO, since 2026-11-02 no longer a view) list the rows
+     * the place page's number of the rank counts (StatusSet
      * .listRankCondition, TaxaPage.taxaQuery: the list's own query): Testland's genus list under Valid genera +
      * morphogenera has Pheidole and the morphogenus (= Genera 2), not "(myrmicinae)", "(formicidae)polyrachis" or the
      * morphotaxon "amblyoponinae)"; its subfamily list has Myrmicinae (= Subfamilies 1), not "(formicidae)" (morphotaxon).
@@ -327,21 +328,24 @@ public class GeneraRuleDbTest extends TestCase {
         String key = "" + TESTLAND;
         int genera = PlaceTotals.count(connection, PlaceTotals.listedCountSql(PlaceTotals.GEOLOCALE, PlaceTotals.GENUS), key);
         int subfamilies = PlaceTotals.count(connection, PlaceTotals.listedCountSql(PlaceTotals.GEOLOCALE, PlaceTotals.SUBFAMILY), key);
-        List<String> g = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "genus", true, org.calacademy.antweb.StatusSet.listStatusSet("validmorpho")), "genus");
+        List<String> g = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "genus", true, new org.calacademy.antweb.StatusSet(org.calacademy.antweb.StatusSet.VALID_MORPHO)), "genus");
         assertEquals(g.toString(), genera, g.size());
         assertTrue(g.toString(), g.contains("pheidole") && g.contains("myrm_gen-za01"));
         g = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "genus", true, org.calacademy.antweb.StatusSet.listStatusSet("valid")), "genus");
         assertEquals("valid genera: Pheidole " + g, java.util.Arrays.asList("pheidole"), g);
         g = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "genus", true, org.calacademy.antweb.StatusSet.listStatusSet("all")), "genus");
         assertEquals("All names: every genus row " + g, 5, g.size());
-        List<String> sf = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "subfamily", true, org.calacademy.antweb.StatusSet.listStatusSet("validmorpho")), "subfamily");
+        // the view Curated (2026-11-02): valid genera, and morphotaxa only when curated (the morphogenus is on no curated entry)
+        g = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "genus", true, org.calacademy.antweb.StatusSet.listStatusSet("curated")), "genus");
+        assertEquals("Curated genera: Pheidole " + g, java.util.Arrays.asList("pheidole"), g);
+        List<String> sf = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "subfamily", true, new org.calacademy.antweb.StatusSet(org.calacademy.antweb.StatusSet.VALID_MORPHO)), "subfamily");
         assertEquals(sf.toString(), subfamilies, sf.size());
         assertEquals(java.util.Arrays.asList(MYRM), sf);
         sf = column(org.calacademy.antweb.TaxaPage.taxaQuery(testland, "subfamily", true, org.calacademy.antweb.StatusSet.listStatusSet("all")), "subfamily");
         assertTrue("All names: (formicidae) too " + sf, sf.contains(FORM) && sf.contains(MYRM));
         // browse.do's Subfamily list (genus rows of a subfamily) by the same rule
         String browse = "select distinct taxon.genus from taxon" + testland.getFetchChildrenClause() + " and taxon.subfamily = '" + MYRM + "'"
-            + " and taxon.genus != '' and taxarank = 'genus' " + org.calacademy.antweb.StatusSet.listStatusSet("validmorpho").getAndCriteria("taxon", "genus");
+            + " and taxon.genus != '' and taxarank = 'genus' " + new org.calacademy.antweb.StatusSet(org.calacademy.antweb.StatusSet.VALID_MORPHO).getAndCriteria("taxon", "genus");
         assertEquals(column(browse, "genus").toString(), 2, column(browse, "genus").size());
     }
 

@@ -100,6 +100,8 @@ def test_check_dump():
         "cut.sql.gz": (good.rsplit("--", 1)[0], 1),
         "other.sql.gz": (good.replace("USE `ant`;", "USE `mysql`;"), 1),
         "two.sql.gz": (good.replace(body, body + "USE `mysql`;\n"), 1),
+        # mysqldump --routines repeats "USE `ant`;" before the routines (production's dump of 2026-11-02)
+        "routines.sql.gz": (good.replace(body, body + "USE `ant`;\n"), 0),
         "tiny.sql.gz": ("USE `ant`;\n-- Dump completed\n", 1),
     }
     with tempfile.TemporaryDirectory() as d:
