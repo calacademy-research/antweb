@@ -373,7 +373,10 @@
          }
          if (Rank.GENUS.equals(pageRank) && genusRows != null) {
            int addedSpecies = genusRows.species(child.getSubfamily(), child.getGenus());
-           if (addedSpecies > 0) addedCount = "" + addedSpecies;
+           // linked to the genus page in the same view, as on the list's own rows (it was a bare number, 11-03: Phyracaces
+           // in Madagascar)
+           if (addedSpecies > 0) addedCount = "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams()
+               + "&statusSet=" + Html.url(genusRows.choice) + "'><span class='numbers'>" + addedSpecies + "</span></a>";
            org.calacademy.antweb.home.PlaceGenusCurationDb.Row addedNc = genusRows.notCurated(child.getSubfamily(), child.getGenus());
            if (addedNc != null) addedOther = org.calacademy.antweb.PlaceTaxonNotes.notCuratedCellHtml(addedNc.notCurated,
                org.calacademy.antweb.PlaceTaxonNotes.notCuratedUrl(child.getSubfamily(), child.getGenus(), overview));
