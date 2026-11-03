@@ -7,6 +7,7 @@ pages recorded from staging (fingerprint.py, expectations.json) as fallbacks. Ev
 """
 import html
 import re
+from html.parser import HTMLParser
 import time
 from functools import lru_cache
 from urllib.parse import parse_qs, urlsplit
@@ -86,10 +87,35 @@ def site_path(link):
     return path + ("?" + parts.query if parts.query else "")
 
 
+class _Anchors(HTMLParser):
+    """The href of every <a> in a page, in order (an HTML parser: a regex over the whole page paired quotes across
+    the region page's map script and found none of its links, finding F27, 2026-11-03)."""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.hrefs = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "a":
+            for k, v in attrs:
+                if k == "href" and v:
+                    self.hrefs.append(v)
+
+
+def _anchor_hrefs(page):
+    parser = _Anchors()
+    try:
+        parser.feed(page or "")
+        parser.close()
+    except Exception:  # a page the parser cannot read: the old regex
+        return [h for _, h in HREF.findall(page or "")]
+    return parser.hrefs
+
+
 def links(page, action):
     """Same-site links to <action>.do in the page, as site paths, in page order, without repeats."""
     out = []
-    for _, href in HREF.findall(page):
+    for href in _anchor_hrefs(page):
         if re.search(r"(^|/)" + re.escape(action) + r"\.do(\?|$)", href) and not href.startswith(("mailto:", "javascript:")):
             host = urlsplit(html.unescape(href)).hostname
             if host and host != urlsplit(BASE_URL).hostname and not host.endswith("antweb.org"):

@@ -108,7 +108,10 @@ public final class ListUploadsAction extends AntwebAction {
                     
         String message = null;
 
-        if (groupIdInt != 0 && curatorIdInt == 0) {
+        if (groupIdInt < 0) {
+          // a curator without an upload group sees no uploads (2026-11-02, B3); say so instead of "Group: -1"
+          message = "Image Uploads Reports for Group: none (your login has no upload group)";
+        } else if (groupIdInt != 0 && curatorIdInt == 0) {
           Group group = GroupMgr.getGroup(groupId);
           String title = "" + groupId;
           if (group != null) title = Html.esc(group.getAbbrev());

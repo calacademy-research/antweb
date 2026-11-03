@@ -399,7 +399,7 @@ def test_group_list_links_to_all_groups(curator):
         assert has_link == is_all, ("listImageUploads.do?" + query, "all-groups link", has_link, "admin", is_all)
     assert 'id="all-image-uploads"' not in page, "the list of all groups (or a curator's own list) links to all groups"
     if not is_all:
-        assert re.search(r"Image Uploads Reports for Group: <a href='[^']*/group\.do\?id=\d+'>", page), \
+        assert re.search(r"Image Uploads Reports for Group: (<a href='[^']*/group\.do\?id=\d+'>|none \(your login has no upload group\))", page), \
             "a curator's listImageUploads.do does not show their own group"
         return
     # ... and links back to the login's own group's list (Brian Fisher, 2026-10-23), when the login has a group.
