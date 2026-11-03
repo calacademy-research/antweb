@@ -232,7 +232,7 @@ def list_row_cells(row_html):
     link, its Images number (the images of the name in AntWeb, since 2026-10-28; None when the cell is not one
     number) and the browser parameters of its images.do link (None when it says No Images)."""
     count, link = None, None
-    for cell in re.findall(r'<div class="list_extras specimens">(.*?)</div>', row_html, re.S):
+    for cell in re.findall(r'<div class="list_extras specimens[^"]*">(.*?)</div>', row_html, re.S):
         if "global=true" in cell:
             continue
         lk = re.search(r"href='([^']*browse\.do\?[^']*)'", cell)
@@ -244,7 +244,7 @@ def list_row_cells(row_html):
             count = 0
             break
     images, params = None, None
-    m = re.search(r'<div class="list_extras images">(.*?)</div>', row_html, re.S)
+    m = re.search(r'<div class="list_extras images[^"]*">(.*?)</div>', row_html, re.S)
     if m:
         images = images_cell(m.group(1))
         lk = re.search(r"href='([^']*images\.do\?[^']*)'", m.group(1))
@@ -322,7 +322,7 @@ def genus_pages(p):
     for r in ns.list_rows(html):
         count, link, images, params = list_row_cells(r["html"])
         # genus rows in a place say "N species imaged" since 2026-11-02 (the genus with images: N > 0)
-        cell = re.search(r'<div class="list_extras images">(.*?)</div>', r["html"], re.S)
+        cell = re.search(r'<div class="list_extras images[^"]*">(.*?)</div>', r["html"], re.S)
         if images is None and cell:
             images = species_imaged_cell(cell.group(1))
         if count and 1 <= count <= MAX_CHILDREN and images and params:
@@ -358,7 +358,7 @@ def browse_children(g):
     for r in ns.list_rows(g["browse"]):
         _c, link, _images, params = list_row_cells(r["html"])
         params = params or _params(link)   # both links carry the child's browser parameters
-        cell = re.search(r'<div class="list_extras images">(.*?)</div>', r["html"], re.S)
+        cell = re.search(r'<div class="list_extras images[^"]*">(.*?)</div>', r["html"], re.S)
         shown = images_cell(cell.group(1)) if cell else None
         if params and shown is not None:
             out[_key(params)] = (r["name"], shown)
@@ -577,7 +577,7 @@ def test_list_images_column_equals_the_api_recount():
         rows = []
         for r in ns.list_rows(g["browse"]):
             count, link, images, params = list_row_cells(r["html"])
-            cell = re.search(r'<div class="list_extras images">(.*?)</div>', r["html"], re.S)
+            cell = re.search(r'<div class="list_extras images[^"]*">(.*?)</div>', r["html"], re.S)
             text = ns.text_of(cell.group(1)) if cell else ""
             if re.search(r"\(|\bfrom |\bin [A-Z]", text):
                 wrong.append(f"{p} {r['name']}: Images cell {text!r} shows a second number")

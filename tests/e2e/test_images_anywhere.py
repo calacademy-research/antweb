@@ -191,7 +191,7 @@ def test_list_images_column_shows_the_images_in_antweb():
             continue
         rows = []
         for r in ns.list_rows(html):
-            cell = re.search(r'<div class="list_extras images">(.*?)</div>', r["html"], re.S)
+            cell = re.search(r'<div class="list_extras images[^"]*">(.*?)</div>', r["html"], re.S)
             if cell:
                 text = ns.text_of(cell.group(1))
                 if "from " in text or " in " in text or "(" in text or len(re.findall(r"[\d,]+", text)) > 1:

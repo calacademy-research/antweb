@@ -180,9 +180,12 @@
                 <div class="list_extras specimens"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=genera" %>'>Genera</a><a title='<%= Html.escAttr(asterixTitle) %>'>*</a></a></b></font></div>
          <% } else if (Rank.GENUS.equals(pageRank)) { %>
              <% if ("species".equals(orderBy)) u = underline; else u = "";  %>
-                <div class="list_extras specimens"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=species" %>'>Species</a><a title='<%= Html.escAttr(asterixTitle) %>'>*</a></b></font></div>
-             <% if (showNotCuratedColumn) { %>
-                <div class="list_extras other"><font size=2><b><a <%= u %> title="Specimens of the genus collected here whose name is not curated: uncurated morphospecies and specimens identified only to genus (counted once a day)" href='<%= sortLink + "&orderBy=notCurated" %>'>Not curated</a></b></font></div>
+                <div class="list_extras specimens<%= genusImagedCells ? " genus-col" : "" %>"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=species" %>'>Species</a><a title='<%= Html.escAttr(asterixTitle) %>'>*</a></b></font></div>
+             <% if (genusImagedCells && !listOnly) { u = "images".equals(orderBy) ? underline : ""; %>
+                <div class="list_extras images genus-col"><font size=2><b><a <%= u %> title='<%= org.calacademy.antweb.util.Html.escAttr(imagesColumnTitle) %>' href='<%= sortLink + "&orderBy=images" %>'>Sp. imaged</a></b></font></div>
+             <% } %>
+             <% if (showNotCuratedColumn) { u = "notCurated".equals(orderBy) ? underline : ""; %>
+                <div class="list_extras other genus-col"><font size=2><b><a <%= u %> title="Specimens of the genus collected here whose name is not curated: uncurated morphospecies and specimens identified only to genus (counted once a day)" href='<%= sortLink + "&orderBy=notCurated" %>'>Not curated</a></b></font></div>
              <% } %>
          <% } else { %>
 
@@ -193,8 +196,8 @@
 
      <% } %>
      <% if ("images".equals(orderBy)) u = underline; else u = "";  %>        
-     <% if (!listOnly) { %>
-        <div class="list_extras images"><font size=2><b><a <%= u %> title='<%= org.calacademy.antweb.util.Html.escAttr(imagesColumnTitle) %>' href='<%= sortLink + "&orderBy=images" %>'><%= genusImagedCells ? "Sp. imaged" : "Images" %></a></b></font></div>
+     <% if (!listOnly && !genusImagedCells) { %>
+        <div class="list_extras images"><font size=2><b><a <%= u %> title='<%= org.calacademy.antweb.util.Html.escAttr(imagesColumnTitle) %>' href='<%= sortLink + "&orderBy=images" %>'>Images</a></b></font></div>
      <% } %>
 
      <% if ("map".equals(orderBy)) u = underline; else u = ""; %>
@@ -300,8 +303,8 @@
 
           } else {
             %>                
-            <div class="list_extras specimens"> <%= childCountStr %></div>     
-            <% if (showNotCuratedColumn) { %><div class="list_extras other"><%= notCuratedCell == null ? "" : notCuratedCell %></div><% } %>
+            <div class="list_extras specimens<%= genusImagedCells ? " genus-col" : "" %>"> <%= childCountStr %></div>     
+            <% if (showNotCuratedColumn && !genusImagedCells) { %><div class="list_extras other"><%= notCuratedCell == null ? "" : notCuratedCell %></div><% } %>
             <%
           }
 
@@ -323,7 +326,8 @@
            imageCountStr = "<a href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams() + "'>" + imagesCell + "</a>";
          }
      %>
-        <% if (!listOnly) { %><div class="list_extras images"><%= imageCountStr %></div><% } %>
+        <% if (!listOnly) { %><div class="list_extras images<%= genusImagedCells ? " genus-col" : "" %>"><%= imageCountStr %></div><% } %>
+        <% if (showNotCuratedColumn && genusImagedCells) { %><div class="list_extras other genus-col"><%= notCuratedCell == null ? "" : notCuratedCell %></div><% } %>
 
         <div class="list_extras map">
           <% if (childTaxonSet.getSubtaxonCount(1) > 0) { %>
@@ -377,9 +381,10 @@
          }
     %>
         <% if (displayGlobal) { %><div class="list_extras specimens">&ndash;</div><% } %>
-        <div class="list_extras specimens" title="Not on the list: from specimens collected here"><%= addedCount %></div>
-        <% if (showNotCuratedColumn) { %><div class="list_extras other"><%= addedOther %></div><% } %>
-        <% if (!listOnly) { %><div class="list_extras images"><%= addedImages %></div><% } %>
+        <div class="list_extras specimens<%= genusImagedCells ? " genus-col" : "" %>" title="Not on the list: from specimens collected here"><%= addedCount %></div>
+        <% if (showNotCuratedColumn && !genusImagedCells) { %><div class="list_extras other"><%= addedOther %></div><% } %>
+        <% if (!listOnly) { %><div class="list_extras images<%= genusImagedCells ? " genus-col" : "" %>"><%= addedImages %></div><% } %>
+        <% if (showNotCuratedColumn && genusImagedCells) { %><div class="list_extras other genus-col"><%= addedOther %></div><% } %>
         <div class="list_extras map"></div>
         <% if (!isMuseum) { %><div class="list_extras source"><%= org.calacademy.antweb.ListView.sourceIconHtml(org.calacademy.antweb.ListView.SOURCE_SPECIMEN) %></div><% } %>
     <% } %>

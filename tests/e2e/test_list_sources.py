@@ -61,11 +61,11 @@ def test_mozambique_acropyga_row_links_its_names_not_curated():
     if row is None:
         pytest.skip("Acropyga is not on the Mozambique genus list (Valid) on this server")
     m = NOT_CURATED_LINK.search(row)
-    if m is None and '<div class="list_extras other"></div>' in row:
+    if m is None and re.search(r'<div class="list_extras other[^"]*"></div>', row):
         pytest.skip("Acropyga has no Not curated number in Mozambique on this server (not counted yet, or none)")
     assert m, f"the Acropyga row has no Not curated link: {ns.text_of(row)[:200]}"
     n, title, href, text = int(m.group(1)), unescape(m.group(2)), unescape(m.group(3)), m.group(4)
-    assert n > 0 and ns.n(text) == n, text
+    assert n > 0 and text == f"{n:,} Specimen{'' if n == 1 else 's'}", text   # "N Specimens" since 2026-11-03
     assert title == f"{n:,} specimen{'' if n == 1 else 's'} not curated", title
     assert "browse.do?" in href and "genus=acropyga" in href and "countryName=Mozambique" in href and "statusSet=notcurated" in href, href
     curated = NOT_CURATED_LINK.search(genus_row(ns.get(MOZ_GENERA, new_session()), "acropyga") or "")
@@ -86,10 +86,10 @@ def test_genus_rows_have_the_columns_of_the_views():
     images page in the view, a source icon with its word as title; none of the texts of 2026-10-30."""
     html = ns.get(MOZ_GENERA, new_session())
     assert current_view(html) == "curated", current_view(html)
-    assert '<div class="list_extras other">' in html, "no Not curated column"
+    assert re.search(r'<div class="list_extras other[^"]*">', html), "no Not curated column"
     assert re.search(r">Not curated</(span|a)>", html), "no Not curated heading"   # a sort link since 2026-11-02 21:30
     assert "Other specimens" not in html and 'class="other-names"' not in html, "Other specimens is gone (2026-11-02)"
-    assert '<div class="list_extras other">' not in ns.get(MOZ_GENERA + "&statusSet=all", new_session()), \
+    assert not re.search(r'<div class="list_extras other[^"]*">', ns.get(MOZ_GENERA + "&statusSet=all", new_session())), \
         "All specimen names has no Not curated column"
     for gone in GONE:
         assert gone not in html, gone
@@ -97,11 +97,11 @@ def test_genus_rows_have_the_columns_of_the_views():
     if not rows:
         pytest.skip("no genus on the Mozambique list on this server")
     for r in rows:
-        cells = re.findall(r'<div class="list_extras specimens">(.*?)</div>', r["html"], re.S)
+        cells = re.findall(r'<div class="list_extras specimens[^"]*">(.*?)</div>', r["html"], re.S)
         assert cells, ns.text_of(r["html"])[:120]
         species = ns.text_of(cells[-1])
         assert re.fullmatch(r"[\d,]+|–", species), f"Species cell {species!r}: {ns.text_of(r['html'])[:120]}"
-        img = re.search(r'<div class="list_extras images">(.*?)</div>', r["html"], re.S)
+        img = re.search(r'<div class="list_extras images[^"]*">(.*?)</div>', r["html"], re.S)
         if img and ns.on_list(r["html"]):
             t = ns.text_of(img.group(1))
             m = re.fullmatch(r"([\d,]+)|–", t)   # "Sp. imaged" column: the number alone, a dash when none (2026-11-02, 21:12)

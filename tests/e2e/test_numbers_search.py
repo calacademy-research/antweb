@@ -501,7 +501,7 @@ def test_locality_collections_equal_the_codes_of_its_specimens():
 def _row_number(chunk):
     """The place's number in a taxon list row: the last "list_extras specimens" cell (the first is Global on lists
     that show it), 0 for "No ..."."""
-    cells = re.findall(r'<div class="list_extras specimens">(.*?)</div>', chunk, re.S)
+    cells = re.findall(r'<div class="list_extras specimens[^"]*">(.*?)</div>', chunk, re.S)
     if not cells:
         return 0
     m = re.search(r"<span class='numbers'>(\d+)</span>", cells[-1])

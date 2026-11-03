@@ -1653,6 +1653,15 @@ h2.display_count {
     width: 80px;
 }
 
+/* Genus lists in a place (Brian Fisher, 2026-11-03): Species | Sp. imaged | Not curated, numbers centred under their
+   headings; Not curated says "N Specimens", like the species lists. */
+.list_extras.genus-col {
+    text-align: center;
+}
+.list_extras.other.genus-col {
+    width: 110px;
+}
+
 .list_extras.specimens {
     width: 90px; // 80    
 }

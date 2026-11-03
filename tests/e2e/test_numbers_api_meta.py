@@ -436,13 +436,13 @@ def _row_numbers(row_html):
     """The row's own count ("N Genera", "N Species", "N Specimens" of this place, not the Global one) and its
     Images, as taxonReportBody.jsp writes them (TaxonSet.getNextSubtaxon, getImageCountStr)."""
     own = None
-    for cell in re.findall(r'<div class="list_extras specimens">(.*?)</div>', row_html, re.S):
+    for cell in re.findall(r'<div class="list_extras specimens[^"]*">(.*?)</div>', row_html, re.S):
         if "global=true" in cell:
             continue
         num = re.search(r"<span class='numbers'>(\d+)</span>", cell)
         own = int(num.group(1)) if num else (0 if "No " in cell else None)
         break
-    img = re.search(r'<div class="list_extras images">(.*?)</div>', row_html, re.S)
+    img = re.search(r'<div class="list_extras images[^"]*">(.*?)</div>', row_html, re.S)
     images = None
     if img:
         num = re.search(r"<span class='numbers'>(\d+)</span>", img.group(1))

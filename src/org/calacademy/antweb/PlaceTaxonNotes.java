@@ -284,7 +284,8 @@ public final class PlaceTaxonNotes {
     public static String notCuratedCellHtml(int n, String url) {
         if (n <= 0) return "";
         String data = " class=\"not-curated\" data-not-curated=\"" + n + "\" title=\"" + Html.escAttr(notCuratedTitle(n)) + "\"";
-        String text = String.format(Locale.US, "%,d", n);
+        // "762 Specimens", like the species lists' specimen counts (Brian Fisher, 2026-11-03)
+        String text = String.format(Locale.US, "%,d", n) + (n == 1 ? " Specimen" : " Specimens");
         if (url == null) return "<span" + data + ">" + text + "</span>";
         return "<a" + data + " href=\"" + Html.escAttr(url) + "\">" + text + "</a>";
     }

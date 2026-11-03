@@ -217,7 +217,7 @@ def test_unimaged_names_equal_the_api():
 def _row_count_and_link(row_html):
     """A list row's own count ("N Species", "N Genera", "N Specimens" of this place, not the Global column) and the
     browse.do link it carries; (None, None) when the row has none."""
-    for cell in re.findall(r'<div class="list_extras specimens">(.*?)</div>', row_html, re.S):
+    for cell in re.findall(r'<div class="list_extras specimens[^"]*">(.*?)</div>', row_html, re.S):
         if "global=true" in cell:
             continue
         link = re.search(r"href='([^']*browse\.do\?[^']*)'", cell)
@@ -509,7 +509,7 @@ def test_species_lists_show_valid_names_and_morphospecies_only():
             if sum(parts) != int(m.group(1)) or not lead or ns.n(lead.group(1)) != int(m.group(1)):
                 wrong.append(f"{p}: the line under the species list does not add up: {m.group(2)!r} ({m.group(1)})")
         genus_html = ns.fetch(p.list_url("genus", "curated"))
-        has_column = 'class="list_extras other"' in (genus_html or "")
+        has_column = bool(re.search(r'class="list_extras other[^"]*"', genus_html or ""))
         counted = 'class="not-curated"' in (genus_html or "")   # the nightly count has run for this place
         for row in ns.list_rows(genus_html or ""):
             # 2026-11-02: a genus row from specimens with no species in the view shows its Not curated number

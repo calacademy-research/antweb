@@ -142,9 +142,9 @@ public class PlaceTaxonNotesTest extends TestCase {
         assertEquals("", PlaceTaxonNotes.notCuratedCellHtml(0, "/s"));
         String url = PlaceTaxonNotes.notCuratedUrl("formicinae", "acropyga", mozambique());
         assertTrue(url, url.endsWith("/browse.do?subfamily=formicinae&genus=acropyga&rank=genus&countryName=Mozambique&statusSet=notcurated"));
-        assertEquals("<a class=\"not-curated\" data-not-curated=\"1234\" title=\"1,234 specimens not curated\" href=\"/b?x=1&amp;y=2\">1,234</a>",
+        assertEquals("<a class=\"not-curated\" data-not-curated=\"1234\" title=\"1,234 specimens not curated\" href=\"/b?x=1&amp;y=2\">1,234 Specimens</a>",
             PlaceTaxonNotes.notCuratedCellHtml(1234, "/b?x=1&y=2"));
-        assertEquals("<span class=\"not-curated\" data-not-curated=\"3\" title=\"3 specimens not curated\">3</span>",
+        assertEquals("<span class=\"not-curated\" data-not-curated=\"3\" title=\"3 specimens not curated\">3 Specimens</span>",
             PlaceTaxonNotes.notCuratedCellHtml(3, null));
         // the header of the view Not curated (the stored breakdown)
         assertEquals("3,392 specimens not curated: 298 morphospecies (2,820 specimens), 572 identified only to genus",
