@@ -324,7 +324,6 @@ public class PlaceTaxonNotesDbTest extends TestCase {
             ListView.loadPlaceSpecimens(connection, mozambique(), null, null).taxonNames())).contains(CAREBARA_MG01));
     }
 
-    /** The Fossil button (2026-11-02): only when the list has valid fossil names of the rows' rank (one EXISTS query). */
     /**
      * Review of #316 (2026-11-02): a morphogenus is curated when a curated morphospecies of it is, even though its own
      * genus row is not a curator's entry (ListView.vettedCondition); a morphogenus with no curated morphospecies is not.
@@ -343,8 +342,16 @@ public class PlaceTaxonNotesDbTest extends TestCase {
         assertEquals("the morphospecies itself", 1, count("select count(*) from taxon t where t.taxon_name = '" + sp + "' and "
             + ListView.vettedCondition("t")));
         exec("update geolocale_taxon set source = 'specimen' where taxon_name = '" + sp + "'");
-        exec("insert into geolocale_taxon (geolocale_id, taxon_name, source) values (" + MADAGASCAR + ", 'myrmicinaegen01x mg01', 'curator')");
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species) values"
+            + " ('myrmicinaegen01x mg01', 'species', 'morphotaxon', 'myrmicinaegen01x', 'formicidae', '" + MYRM + "', 'gen01x', 'mg01'),"
+            + " ('myrmicinaegenx01 mg01', 'species', 'morphotaxon', 'myrmicinaegen_01', 'formicidae', '" + MYRM + "', 'genx01', 'mg01')");
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, source) values (" + MADAGASCAR + ", 'myrmicinaegen01x mg01', 'curator'),"
+            + " (" + MADAGASCAR + ", 'myrmicinaegenx01 mg01', 'curator')");
         assertEquals("a curated name of another genus that starts the same: not curated", 0, count(q));
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species) values"
+            + " ('myrmicinaegen_01', 'genus', 'morphotaxon', '" + MYRM + "', 'formicidae', '" + MYRM + "', 'gen_01', null)");
+        assertEquals("'_' is not a wildcard: gen_01 is not genx01", 0, count("select count(*) from taxon t where t.taxon_name = 'myrmicinaegen_01' and "
+            + ListView.vettedCondition("t")));
     }
 
     private int count(String sql) throws Exception {
@@ -354,6 +361,7 @@ public class PlaceTaxonNotesDbTest extends TestCase {
         }
     }
 
+    /** The Fossil button (2026-11-02): only when the list has valid fossil names of the rows' rank (one EXISTS query). */
     public void testFossilButtonOnlyWithFossilNames() throws Exception {
         Country mad = madagascar();
         assertFalse(ListView.hasFossil(connection, mad, "species", null, null));

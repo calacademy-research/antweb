@@ -49,7 +49,7 @@ import org.calacademy.antweb.util.DBUtil;
  *  - The place's specimens by name (PlaceSpecimens), red-flagged ones never counted: the Other specimens, the specimen
  *    numbers of rows added from specimens, and the source icon (specimens trump literature: sourceKind).
  *
- * Tests without a database: test.org.calacademy.antweb.ListViewTest; SQL against MySQL: home.ListViewDbTest.
+ * Tests without a database: test.org.calacademy.antweb.ListViewTest; SQL against MySQL: home.PlaceTaxonNotesDbTest.
  */
 public final class ListView {
 
@@ -105,13 +105,16 @@ public final class ListView {
             + " or exists (select 1 from project vp join proj_taxon vpt on vpt.project_name = vp.project_name"
             + " where vpt.taxon_name = " + alias + ".taxon_name and vpt.source in " + sources + " and vp.project_name not in " + sys + "))";
         // A morphogenus (a genus row: no space in its taxon name) is curated when a curated morphospecies of it is
-        // (rule of 2026-11-02; review of #316: its own genus row is rarely a curator's entry). Only genus rows pay for
-        // the prefix lookup.
-        String under = "(instr(" + alias + ".taxon_name, ' ') = 0 and (exists (select 1 from geolocale_taxon vgs"
-            + " where vgs.taxon_name like concat(" + alias + ".taxon_name, ' %') and vgs.source in " + sources + ")"
-            + " or exists (select 1 from project vps join proj_taxon vpts on vpts.project_name = vps.project_name"
-            + " where vpts.taxon_name like concat(" + alias + ".taxon_name, ' %') and vpts.source in " + sources
-            + " and vps.project_name not in " + sys + ")))";
+        // (rule of 2026-11-02; review of #316: its own genus row is rarely a curator's entry). Matched by subfamily and
+        // genus (taxon's genus_species_subspecies index, then geolocale_taxon and proj_taxon by taxon_name), not by a
+        // name prefix: no LIKE wildcards ("_" in morphogenus names), no scan. Only genus rows pay for it.
+        String sameGenus = "vts.genus = " + alias + ".genus and vts.subfamily = " + alias + ".subfamily and vts.status = 'morphotaxon'"
+            + " and vts.taxarank in ('species', 'subspecies')";
+        String under = "(instr(" + alias + ".taxon_name, ' ') = 0 and coalesce(" + alias + ".genus, '') <> '' and ("
+            + "exists (select 1 from taxon vts join geolocale_taxon vgs on vgs.taxon_name = vts.taxon_name where " + sameGenus
+            + " and vgs.source in " + sources + ")"
+            + " or exists (select 1 from taxon vts join proj_taxon vpts on vpts.taxon_name = vts.taxon_name where " + sameGenus
+            + " and vpts.source in " + sources + " and vpts.project_name not in " + sys + ")))";
         return "(" + own + " or " + under + ")";
     }
 

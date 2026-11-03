@@ -296,9 +296,9 @@
         <% if (!isMuseum) { %>
         <div class="list_extras source">
         <%
-          // 2026-11-02: an icon (specimen, curated, literature) with the word as title; specimens trump literature
+          // 2026-11-02: an icon (specimen, curated, literature; AntCat as a word) with the word as title; specimens trump literature
           // (a name with a specimen collected here, not red-flagged, shows specimen). AntCat entries (type localities)
-          // are literature and link to AntCat; curated entries of a geolocale link to their curation history.
+          // have their own AntCat label and link to AntCat; curated entries of a geolocale link to their curation history.
           boolean rowHasSpecimen = (placeSpecimens != null && placeSpecimens.has(child.getTaxonName()))
               || (Rank.GENUS.equals(pageRank) && genusRows != null && genusRows.hasSpecimens(child.getSubfamily(), child.getGenus()));
           String sourceKind = org.calacademy.antweb.ListView.sourceKind(childTaxonSet.getSource(), rowHasSpecimen);

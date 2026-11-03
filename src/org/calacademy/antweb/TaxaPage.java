@@ -19,7 +19,7 @@ import jakarta.servlet.http.*;
  * the four views (StatusSet, ListView; Brian Fisher, 2026-11-02). taxaQuery is the list's own rows; on country, adm1,
  * region and subregion lists the views Curated and All specimen names add the names of specimens collected there
  * (specimenNamesWhere, ListView.specimenNamesSet), so viewQuery is the view's whole set; ListView reads the same queries
- * for the genus rows' numbers. Tests: test.org.calacademy.antweb.ListViewTest, home.ListViewDbTest,
+ * for the genus rows' numbers. Tests: test.org.calacademy.antweb.ListViewTest, home.PlaceTaxonNotesDbTest,
  * tests/e2e/test_list_sources.py, test_status_choice.py.
  */
 public class TaxaPage implements Serializable {
@@ -248,7 +248,7 @@ public class TaxaPage implements Serializable {
         String fetchChildrenQuery = "";
         if (withTaxa) {
           String specimenWhere = specimenNamesWhere(overview, rank, withFossil, statusSet,
-              collectedPlaceSpecimens == null ? null : collectedPlaceSpecimens.taxonNames());
+              collectedPlaceSpecimens == null || collectedPlaceSpecimens.taxonNames().size() > MAX_NAMED_IN ? null : collectedPlaceSpecimens.taxonNames());
           isWithSpecimen = specimenWhere != null;
           fetchChildrenQuery = taxaQuery(overview, rank, withFossil, statusSet);
           if (specimenWhere != null) fetchChildrenQuery += " union select " + selectColumns(rank) + specimenWhere;
@@ -420,6 +420,10 @@ public class TaxaPage implements Serializable {
 	 * instead of a scan per query.
 	 */
 	private ListView.PlaceSpecimens collectedPlaceSpecimens;
+
+	/** Above this many names collected here (a region such as Africa), the specimen half keeps its subquery instead of a
+	 *  long IN list (review of #316). */
+	static final int MAX_NAMED_IN = 5000;
 
 	public void loadCollected(Connection connection, Overview overview) {
 		if (!ListView.hasViews(overview)) return;
