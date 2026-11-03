@@ -104,7 +104,7 @@ def test_genus_rows_have_the_columns_of_the_views():
         img = re.search(r'<div class="list_extras images">(.*?)</div>', r["html"], re.S)
         if img and ns.on_list(r["html"]):
             t = ns.text_of(img.group(1))
-            m = re.fullmatch(r"([\d,]+) species imaged|No species imaged", t)
+            m = re.fullmatch(r"([\d,]+)|–", t)   # "Sp. imaged" column: the number alone, a dash when none (2026-11-02, 21:12)
             assert m, f"Images cell {t!r}: {ns.text_of(r['html'])[:120]}"
             if m.group(1):
                 assert ns.n(m.group(1)) <= (0 if species == "–" else ns.n(species)), f"more species imaged than species: {ns.text_of(r['html'])[:120]}"

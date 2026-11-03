@@ -49,7 +49,7 @@
     boolean genusImagedCells = Rank.GENUS.equals(pageRank) && genusRows != null;
     if (genusImagedCells) {
       imagesColumnTitle = "Species of the genus in this view with at least one image of the ant, from any specimen in AntWeb (labels are not counted).";
-      imagesDefinition = "Images: of the species and subspecies of the genus in this view, how many have at least one image of"
+      imagesDefinition = "Sp. imaged: of the species and subspecies of the genus in this view, how many have at least one image of"
           + " the ant (head, profile, dorsal or another view) from a specimen collected anywhere in AntWeb. Specimen label"
           + " images are not counted. Click the number to see the genus's images.";
       // sorting by Images follows the number shown (most species imaged first; Taxon.sortTaxa sorted by image counts)
@@ -185,7 +185,7 @@
      <% } %>
      <% if ("images".equals(orderBy)) u = underline; else u = "";  %>        
      <% if (!listOnly) { %>
-        <div class="list_extras images"><font size=2><b><a <%= u %> title='<%= org.calacademy.antweb.util.Html.escAttr(imagesColumnTitle) %>' href='<%= sortLink + "&orderBy=images" %>'>Images</a></b></font></div>
+        <div class="list_extras images"><font size=2><b><a <%= u %> title='<%= org.calacademy.antweb.util.Html.escAttr(imagesColumnTitle) %>' href='<%= sortLink + "&orderBy=images" %>'><%= genusImagedCells ? "Sp. imaged" : "Images" %></a></b></font></div>
      <% } %>
 
      <% if ("map".equals(orderBy)) u = underline; else u = ""; %>

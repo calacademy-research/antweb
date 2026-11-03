@@ -219,8 +219,8 @@ public class ListViewTest extends TestCase {
         assertEquals("a genus with no imaged species", 0, rows.imaged("formicinae", "camponotus"));
         assertEquals("not read", -1, new ListView.GenusRows("curated", null, null).imaged("formicinae", "acropyga"));
         assertEquals(3, view.taxonNames().size());
-        assertEquals("<span class='numbers'>2</span> species imaged", org.calacademy.antweb.ImagesAnywhere.speciesImagedCell(2));
-        assertEquals("No species imaged", org.calacademy.antweb.ImagesAnywhere.speciesImagedCell(0));
+        assertEquals("<span class='numbers'>2</span>", org.calacademy.antweb.ImagesAnywhere.speciesImagedCell(2));
+        assertTrue(org.calacademy.antweb.ImagesAnywhere.speciesImagedCell(0).contains("&ndash;"));
     }
 
     /** Source icons: specimen, curated, literature; a name with a specimen collected here shows specimen. */

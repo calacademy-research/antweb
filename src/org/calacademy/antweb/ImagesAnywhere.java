@@ -107,13 +107,14 @@ public final class ImagesAnywhere {
     /**
      * The Images cell of a genus row in a place (Brian Fisher, 2026-11-02, 18:40): of the species and subspecies of the
      * genus in the view, how many have at least one image of the ant anywhere in AntWeb (labels never count;
-     * ListView.GenusRows.imaged): "<span class='numbers'>12</span> species imaged", "No species imaged". Replaces "N Images"
+     * ListView.GenusRows.imaged): "<span class='numbers'>12</span>", a dash when none; the column is headed "Sp. imaged"
+     * (Brian Fisher, 2026-11-02, 21:12: the number alone, the words in the heading). Replaces "N Images"
      * on genus rows (every image of the genus in AntWeb). The link (taxonReportBody.jsp) opens the genus's images page in
      * the same view; a genus images page has no place-first order (placeFirst is for species pages).
      */
     public static String speciesImagedCell(int n) {
-        if (n <= 0) return "No species imaged";
-        return "<span class='numbers'>" + n + "</span> species imaged";
+        if (n <= 0) return "<span class='no-species' title='No species of this genus in this view has an image'>&ndash;</span>";
+        return "<span class='numbers'>" + n + "</span>";
     }
 
     /** The number the Images cell shows (imagesColumn): the AntWeb-wide images of the name, or the place's when that

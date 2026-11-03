@@ -118,12 +118,12 @@ def images_cell(cell):
 
 
 def species_imaged_cell(cell):
-    """The Images cell of a genus row in a place (Brian Fisher, 2026-11-02, 18:40): "N species imaged" (the species of
-    the genus in the view with an image of the ant) -> N, "No species imaged" -> 0; None for anything else."""
+    """The "Sp. imaged" cell of a genus row in a place (Brian Fisher, 2026-11-02, 18:40; the number alone since 21:12):
+    N (the species of the genus in the view with an image of the ant) -> N, a dash -> 0; None for anything else."""
     t = ns.text_of(cell)
-    if t == "No species imaged":
+    if t == "–":
         return 0
-    m = re.fullmatch(r"([\d,]+) species imaged", t)
+    m = re.fullmatch(r"([\d,]+)", t)
     return ns.n(m.group(1)) if m else None
 
 
