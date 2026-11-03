@@ -47,9 +47,15 @@ public final class CurrentValidNameRule {
     public static final class TaxonRow {
         public final String status;
         public final String currentValidName;
+        /** taxon.taxarank, or null when not read (GenusSynonymRule needs it: Brian Fisher, 2026-11-03). */
+        public final String rank;
         public TaxonRow(String status, String currentValidName) {
+            this(status, currentValidName, null);
+        }
+        public TaxonRow(String status, String currentValidName, String rank) {
             this.status = status;
             this.currentValidName = currentValidName;
+            this.rank = rank;
         }
     }
 
@@ -140,7 +146,7 @@ public final class CurrentValidNameRule {
         return new Lookup() {
             public TaxonRow getTaxon(String taxonName) throws SQLException {
                 Taxon taxon = TaxonMgr.isUseRefreshing() ? TaxonMgr.getTaxon(taxonName) : new TaxonDb(connection).getTaxon(taxonName);
-                return taxon == null ? null : new TaxonRow(taxon.getStatus(), taxon.getCurrentValidName());
+                return taxon == null ? null : new TaxonRow(taxon.getStatus(), taxon.getCurrentValidName(), taxon.getRank());
             }
             public String getCurrentValidTaxonName(String currentValidName) {
                 return TaxonDb.getCurrentValidTaxonName(connection, currentValidName);
@@ -161,11 +167,11 @@ public final class CurrentValidNameRule {
             public TaxonRow getTaxon(String taxonName) throws SQLException {
                 if (taxonName == null || taxonName.contains("'")) return null;
                 try (PreparedStatement stmt = connection.prepareStatement(
-                        "select status, current_valid_name from taxon where taxon_name = ?")) {
+                        "select status, current_valid_name, taxarank from taxon where taxon_name = ?")) {
                     stmt.setString(1, taxonName);
                     try (ResultSet rset = stmt.executeQuery()) {
                         if (!rset.next()) return null;
-                        return new TaxonRow(rset.getString(1), rset.getString(2));
+                        return new TaxonRow(rset.getString(1), rset.getString(2), rset.getString(3));
                     }
                 }
             }

@@ -620,7 +620,9 @@ jobs:
         # TaxonWorks transform. TaxonWorksNightlyDecisionsTest: wait/skip decisions, one run at a
         # time, no settings file. NameResolutionRuleTest: statuses that use the current valid name,
         # indet and morpho names. SpecimenNameUpdateTest: the upload's name rule with a fake taxon table
-        # and the nightly name update's decisions, cap, settings and page line. AntcatHistoryTest: AntCat's
+        # and the nightly name update's decisions, cap, settings and page line. GenusSynonymRuleTest: morphospecies and
+        # indets of a synonym genus, names without subfamily ("(formicidae)pyramica ludovici"), combinations AntCat does
+        # not have (never guessed), the second pass's decision and the genus reasons (2026-11-03). AntcatHistoryTest: AntCat's
         # taxonomic history (fixtures/antcat-history.tsv) and the wording of each move's reason. SharedNamesTest: names
         # of two or more AntCat taxa (fixtures/antcat-shared-names.tsv), held for the curator. SharedNameReportTest: the
         # upload report and the Name updates page give the same "Needs the curator's decision" line (one code path; homonyms included). PasswordHashCompatTest: hashes made by
@@ -657,6 +659,7 @@ jobs:
               /t/org/calacademy/antweb/upload/TaxonWorksNightlyDecisionsTest.java \
               /t/org/calacademy/antweb/upload/NameResolutionRuleTest.java \
               /t/org/calacademy/antweb/upload/SpecimenNameUpdateTest.java \
+              /t/org/calacademy/antweb/upload/GenusSynonymRuleTest.java \
               /t/org/calacademy/antweb/upload/AntcatHistoryTest.java \
               /t/org/calacademy/antweb/upload/SharedNamesTest.java \
               /t/org/calacademy/antweb/upload/SharedNameReportTest.java \
@@ -673,7 +676,7 @@ jobs:
               /t/org/calacademy/antweb/upload/SubfamilyFromGenusTest.java \
               /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:11 \
-                     upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:19 \
+                     upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:19 upload.GenusSynonymRuleTest:16 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
@@ -1074,7 +1077,8 @@ jobs:
           '
           # SpecimenNameUpdateDbTest: the nightly name update (report, apply, cap, parked list entries, names kept on a
           # valid name), the upload report's reason read from the same tables, and the same shared-name line in the
-          # upload report and on the page.
+          # upload report and on the page; the second pass (2026-11-03): synonym-genus morphospecies and indets, names
+          # without subfamily, taxon rows made in apply only, the no_genus and no_combo lists.
           # CountCheckTest: list counts against a recount from specimens (real and pending differences).
           # PlaceImageCountDbTest: Images, images per view and Imaged specimens of places (labels apart),
           # per-taxon image counts of a place, and the count check of those numbers.
@@ -1147,7 +1151,7 @@ jobs:
               /t/org/calacademy/antweb/home/GeneraRuleDbTest.java \
               /t/org/calacademy/antweb/home/BlankNameCleanupDbTest.java \
               /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:10 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:11 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
+            for t in upload.SpecimenNameUpdateDbTest:14 util.CountCheckTest:7 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:10 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:11 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

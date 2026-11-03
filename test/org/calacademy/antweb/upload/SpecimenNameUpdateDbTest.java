@@ -53,7 +53,8 @@ public class SpecimenNameUpdateDbTest extends TestCase {
             s.executeUpdate("create table taxon (taxon_name varchar(128) not null primary key, taxarank varchar(20),"
                 + " status varchar(40), current_valid_name varchar(128), insert_method varchar(30), family varchar(64),"
                 + " subfamily varchar(64), tribe varchar(64), genus varchar(64), subgenus varchar(64), species varchar(64),"
-                + " subspecies varchar(64), parent_taxon_name varchar(128), antcat_id int, author_date varchar(128))");
+                + " subspecies varchar(64), parent_taxon_name varchar(128), antcat_id int, author_date varchar(128),"
+                + " source varchar(64), access_group int)");
             s.executeUpdate("create table description_edit (taxon_name varchar(128) not null, title varchar(128), content mediumtext,"
                 + " code varchar(128), is_manual_entry tinyint, author_date varchar(128))");
             s.executeUpdate("create table homonym (taxon_name varchar(128) not null, author_date varchar(128))");
@@ -418,6 +419,152 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         assertEquals(2, count("select count(*) from information_schema.columns where table_schema = database()"
             + " and table_name = 'specimen_name_update_old' and column_name in ('reason', 'antcat_id')"));
         exec("drop table specimen_name_update_old");
+    }
+
+    private void history(String taxonName, String text) throws SQLException {
+        exec("insert into description_edit (taxon_name, title, content, is_manual_entry) values ('" + taxonName + "', 'taxonomichistory',"
+            + " '<p><b>Taxonomic history</b></p><div><div>" + text + "</div></div>', 0)");
+    }
+
+    /**
+     * Brian Fisher, 2026-11-03: a morphospecies or indet filed under a synonym genus moves to the valid genus with
+     * its code, the uploaded name kept, the reason from the old genus's AntCat history; its taxon row is made in
+     * apply mode only. A morphospecies in a valid genus, and one in a synonym genus whose valid genus has no row, stay.
+     */
+    public void testGenusSynonymMovesMorphospeciesAndIndets() throws Exception {
+        taxon("dorylinaephyracaces", "genus", "synonym", "dorylinaelioponera", null, "dorylinae", "phyracaces", null, null);
+        taxon("dorylinaelioponera", "genus", "valid", null, null, "dorylinae", "lioponera", null, null);
+        taxon("myrmicinaewasmannia", "genus", "synonym", "Allomerus", null, "myrmicinae", "wasmannia", null, null);
+        taxon("myrmicinaeallomerus", "genus", "valid", null, null, "myrmicinae", "allomerus", null, null);
+        taxon("myrmicinaelostgenus", "genus", "synonym", "myrmicinaenowhere", null, "myrmicinae", "lostgenus", null, null);
+        taxon("formicinaecamponotus", "genus", "valid", null, null, "formicinae", "camponotus", null, null);
+        taxon("dorylinaephyracaces (indet)", "species", "indetermined", null, "specimenUpload", "dorylinae", "phyracaces", "(indet)", null);
+        exec("update taxon set antcat_id = 201, tribe = 'lioponerini' where taxon_name = 'dorylinaephyracaces'");
+        exec("update taxon set tribe = 'lioponerini' where taxon_name = 'dorylinaelioponera'");
+        history("dorylinaephyracaces", "Junior synonym of <i>Cerapachys</i>: Brown, 1975 PDF: 4.</div><div>Junior synonym of <i>Lioponera</i>: Borowiec, 2016: 18.");
+        history("myrmicinaewasmannia", "Junior synonym of <i>Allomerus</i>: Longino &amp; Branstetter, 2026 PDF: 12.");
+        specimen("fmnhins0000118007", "dorylinaephyracaces (indet)", null, 21);
+        specimen("alw0000002", "myrmicinaewasmannia alw02", null, 21);
+        specimen("casent0000040", "myrmicinaelostgenus (indet)", null, CAS);
+
+        SpecimenNameUpdate.Summary report = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.REPORT, 50000);
+        assertEquals("4 as before + 2", 6, report.specimens);
+        assertEquals(2, report.genusSpecimens);
+        assertEquals("report changes nothing", "dorylinaephyracaces (indet)", nameOf("fmnhins0000118007"));
+        assertEquals("no taxon row made in report mode", 0, count("select count(*) from taxon where taxon_name = 'dorylinaelioponera (indet)'"));
+        assertEquals("genus synonym: Phyracaces is a junior synonym of Lioponera (Borowiec 2016)",
+            one("select reason from specimen_name_update where code = 'fmnhins0000118007' and mode = 'would_change'"));
+        assertEquals("201", one("select antcat_id from specimen_name_update where code = 'fmnhins0000118007'"));
+        assertEquals("dorylinaelioponera (indet)", one("select new_name from specimen_name_update where code = 'fmnhins0000118007'"));
+        assertEquals("synonym", one("select antcat_status from specimen_name_update where code = 'fmnhins0000118007'"));
+
+        SpecimenNameUpdate.Summary s = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000);
+        assertEquals(6, s.specimens);
+        assertEquals(2, s.taxaCreated);
+        assertTrue(s.line(), s.line().contains("of these, by genus synonym or missing subfamily: 2 (2 morphospecies/indet taxa added)"));
+        assertEquals("dorylinaelioponera (indet)", nameOf("fmnhins0000118007"));
+        assertEquals("Uploaded As", "dorylinaephyracaces (indet)", one("select original_taxon_name from specimen where code = 'fmnhins0000118007'"));
+        assertEquals("indetermined", one("select status from specimen where code = 'fmnhins0000118007'"));
+        assertEquals("dorylinae lioponerini lioponera (indet)",
+            one("select concat(subfamily, ' ', tribe, ' ', genus, ' ', species) from specimen where code = 'fmnhins0000118007'"));
+        assertEquals("myrmicinaeallomerus alw02", nameOf("alw0000002"));
+        assertEquals("morphotaxon", one("select status from specimen where code = 'alw0000002'"));
+        // The taxon rows, as the upload makes a morphospecies/indet row.
+        assertEquals("species indetermined formicidae dorylinae lioponera (indet) dorylinaelioponera genusSynonymMove 21",
+            one("select concat_ws(' ', taxarank, status, family, subfamily, genus, species, parent_taxon_name, insert_method, access_group)"
+                + " from taxon where taxon_name = 'dorylinaelioponera (indet)'"));
+        assertEquals("morphotaxon", one("select status from taxon where taxon_name = 'myrmicinaeallomerus alw02'"));
+        assertEquals("genus synonym: Wasmannia is a junior synonym of Allomerus (Longino & Branstetter 2026)",
+            one("select reason from specimen_name_update where code = 'alw0000002' and mode = 'changed'"));
+
+        assertEquals("a morphospecies in a valid genus stays", MORPHO, nameOf("casent0000007"));
+        assertEquals("valid genus has no row: stays", "myrmicinaelostgenus (indet)", nameOf("casent0000040"));
+        assertEquals(1, (int) s.skipped.get(SpecimenNameUpdate.Outcome.NO_VALID_GENUS));
+
+        SpecimenNameUpdate.Summary again = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000);
+        assertEquals("nothing more, and not moved back", 0, again.specimens);
+        assertEquals("dorylinaelioponera (indet)", nameOf("fmnhins0000118007"));
+        assertEquals(0, again.taxaCreated);
+    }
+
+    /**
+     * Brian Fisher, 2026-11-03: names filed without a subfamily ("(formicidae)pyramica ludovici", SAM-HYM-C003105).
+     * A combination AntCat has goes to its current valid name; a morphospecies or indet to the valid genus or, in a
+     * valid genus, to its subfamily; a genus AntCat does not have (a misspelling) and a combination AntCat does not
+     * have are left and listed, replaced each run; once AntCat has the combination, it moves.
+     */
+    public void testNoSubfamilyPlaceholders() throws Exception {
+        taxon("myrmicinaepyramica", "genus", "synonym", "myrmicinaestrumigenys", null, "myrmicinae", "pyramica", null, null);
+        taxon("myrmicinaestrumigenys", "genus", "valid", null, null, "myrmicinae", "strumigenys", null, null);
+        taxon("myrmicinaepyramica ludovici", "species", "obsolete combination", "myrmicinaestrumigenys ludovici", null, "myrmicinae", "pyramica", "ludovici", null);
+        taxon("myrmicinaestrumigenys ludovici", "species", "valid", null, null, "myrmicinae", "strumigenys", "ludovici", null);
+        taxon("myrmicinaestrumigenys emmae", "species", "valid", null, null, "myrmicinae", "strumigenys", "emmae", null);
+        // The upload's placeholder rows (status morphotaxon by the parentheses).
+        taxon("(formicidae)pyramica", "genus", "unrecognized", null, "addMissingGenus", "(formicidae)", "pyramica", null, null);
+        taxon("(formicidae)pyramica ludovici", "species", "morphotaxon", null, "specimenUpload", "(formicidae)", "pyramica", "ludovici", null);
+        exec("update taxon set antcat_id = 301 where taxon_name = 'myrmicinaestrumigenys ludovici'");
+        exec("update taxon set antcat_id = 302 where taxon_name = 'myrmicinaestrumigenys'");
+        history("myrmicinaestrumigenys ludovici", "Combination in <i>Pyramica</i>: Bolton, 1999 PDF: 1673.</div><div>Combination in <i>Strumigenys</i>: Baroni Urbani &amp; De Andrade, 2007 PDF: 128.");
+        specimen("sam-hym-c003105", "(formicidae)pyramica ludovici", null, 66);
+        specimen("sam-hym-c000001", "(formicidae)pyramica (indet)", null, 66);
+        specimen("sam-hym-c000002", "(formicidae)strumigenys mg01", null, 66);
+        specimen("sam-hym-c000003", "(formicidae)stumigenys ludovici", null, 66);
+        specimen("sam-hym-c000004", "(formicidae)pyramica emmae", null, 66);
+        specimen("sam-hym-c000005", "(formicidae)pyramica emmae", null, 81);
+
+        SpecimenNameUpdate.Summary s = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000);
+        assertEquals(3, s.genusSpecimens);
+        assertEquals("myrmicinaestrumigenys ludovici", nameOf("sam-hym-c003105"));
+        assertEquals("Uploaded As", "(formicidae)pyramica ludovici", one("select original_taxon_name from specimen where code = 'sam-hym-c003105'"));
+        assertEquals("valid", one("select status from specimen where code = 'sam-hym-c003105'"));
+        assertEquals("new combination: Strumigenys ludovici (Baroni Urbani & De Andrade 2007)",
+            one("select reason from specimen_name_update where code = 'sam-hym-c003105' and mode = 'changed'"));
+        assertEquals("myrmicinaestrumigenys (indet)", nameOf("sam-hym-c000001"));
+        assertEquals("indetermined", one("select status from taxon where taxon_name = 'myrmicinaestrumigenys (indet)'"));
+        assertEquals("myrmicinaestrumigenys mg01", nameOf("sam-hym-c000002"));
+        assertEquals("placed in its subfamily: Strumigenys is in Myrmicinae (the upload gave no subfamily)",
+            one("select reason from specimen_name_update where code = 'sam-hym-c000002' and mode = 'changed'"));
+
+        // Left and listed: a misspelled genus (never corrected by guess) ...
+        assertEquals("(formicidae)stumigenys ludovici", nameOf("sam-hym-c000003"));
+        assertEquals(1, s.noGenusSpecimens);
+        assertEquals(1, count("select count(*) from specimen_name_update where mode = 'no_genus' and code = 'sam-hym-c000003'"));
+        // ... and a combination AntCat does not have, with the senior genus (never moved by guess into it).
+        assertEquals("(formicidae)pyramica emmae", nameOf("sam-hym-c000004"));
+        assertEquals(2, s.noCombinationSpecimens);
+        assertEquals("myrmicinaestrumigenys", one("select new_name from specimen_name_update where mode = 'no_combo' and code = 'sam-hym-c000004'"));
+        assertTrue(s.line(), s.line().contains("combination not in AntCat, for the AntCat editors: 2 specimens"));
+        assertTrue(s.line(), s.line().contains("genus not in AntCat (no subfamily), for the curator: 1 specimens"));
+        SpecimenNameUpdateDb db = new SpecimenNameUpdateDb(connection);
+        java.util.List<String[]> forAntcat = db.getCombinationsForAntcat();
+        assertEquals(1, forAntcat.size());
+        assertEquals("Pyramica|emmae|Strumigenys|2|66,81", String.join("|", forAntcat.get(0)));
+        assertEquals(1, db.getNoGenus(66).size());
+        assertTrue("other groups do not see it", db.getNoGenus(81).isEmpty());
+        for (SpecimenNameUpdateDb.Run run : db.getRuns(0, null, null, 30)) {
+            assertFalse("not a run of moves", SpecimenNameUpdate.NO_GENUS.equals(run.mode) || SpecimenNameUpdate.NO_COMBINATION.equals(run.mode));
+        }
+        String html = org.calacademy.antweb.curate.NameUpdatesAction.noCombinationHtml(db.getNoCombination(0), forAntcat, "");
+        assertTrue(html, html.contains("Not moved: combination not in AntCat (2 names)"));
+        assertTrue(html, html.contains("<td><i>Pyramica</i></td><td>emmae</td><td><i>Strumigenys</i></td><td>2</td><td>66,81</td>"));
+        assertTrue(html, html.contains(", genus now <i>Strumigenys</i>"));
+        String noGenusHtml = org.calacademy.antweb.curate.NameUpdatesAction.noGenusHtml(db.getNoGenus(0), "");
+        assertTrue(noGenusHtml, noGenusHtml.contains("Not moved: genus not in AntCat (1 name)"));
+
+        // AntCat adds the past combination: the next night moves it, and the list is replaced.
+        taxon("myrmicinaepyramica emmae", "species", "obsolete combination", "myrmicinaestrumigenys emmae", null, "myrmicinae", "pyramica", "emmae", null);
+        SpecimenNameUpdate.Summary next = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000);
+        assertEquals(2, next.genusSpecimens);
+        assertEquals("myrmicinaestrumigenys emmae", nameOf("sam-hym-c000004"));
+        assertEquals(0, count("select count(*) from specimen_name_update where mode = 'no_combo'"));
+
+        // Later AntCat changes the name again: the specimen follows from the name it was uploaded as.
+        taxon("myrmicinaestrumigenys newname", "species", "valid", null, null, "myrmicinae", "strumigenys", "newname", null);
+        exec("update taxon set status = 'synonym', current_valid_name = 'myrmicinaestrumigenys newname' where taxon_name = 'myrmicinaestrumigenys ludovici'");
+        exec("update taxon set current_valid_name = 'myrmicinaestrumigenys newname' where taxon_name = 'myrmicinaepyramica ludovici'");
+        SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000);
+        assertEquals("myrmicinaestrumigenys newname", nameOf("sam-hym-c003105"));
+        assertEquals("(formicidae)pyramica ludovici", one("select original_taxon_name from specimen where code = 'sam-hym-c003105'"));
     }
 
     public void testMaxChangesStopsApply() throws Exception {
