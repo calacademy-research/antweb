@@ -209,6 +209,8 @@ public class MessageMgr {
      * (about 265,000 records) stays small; past that a line gives its count only.
      */
     public static final int MAX_REPORT_CODES = 10000;
+    /** The most lines a section's details page lists; the rest are counted ("… and N more"). */
+    public static final int MAX_DETAILS = 10000;
 
     /** Report section titles of the decisions of 2026-10-28 (Brian Fisher). */
     public static final String IDENTIFIED_ONLY_TO_GENUS_HEADING = "Identified only to genus: filed as indet";
@@ -272,14 +274,15 @@ public class MessageMgr {
         if (test != null) test.recordCode(line, code);
     }
 
-    /** The "N specimens" list of one report line, within the report's limit. */
-    /** Specimen code links (HTML) folded under "N specimens", like SpecimenCodes.html. */
+    /** Specimen code links (HTML) folded under "N specimens", like SpecimenCodes.html. One code per value: the only
+     *  caller, SpecimenUploadProcess, adds the specimen's code link for each genusOutsideNativeBioregion line. */
     static String foldedSpecimens(List<String> codeLinks) {
         int n = codeLinks.size();
         return "<details class=\"specimen-codes\" style=\"display:inline\"><summary>" + String.format("%,d", n)
             + (n == 1 ? " specimen" : " specimens") + "</summary>" + String.join(", ", codeLinks) + "</details>";
     }
 
+    /** The "N specimens" list of one report line, within the report's limit. */
     private String codesHtml(Test test, String line) {
         SpecimenCodes codes = test.codesByLine.get(line);
         if (codes == null || codes.count() == 0) return "";
@@ -397,6 +400,12 @@ public class MessageMgr {
       }
       s_log.warn("getTest() Not supposed to happen. It did. Key:" + key);
       return null; // Never happen.
+    }
+
+    /** For tests: {lines kept for the details page, lines only counted}. */
+    public int[] detailSizes(String key) {
+      Test test = getTest(key);
+      return new int[] {test.details.size(), test.detailsMore};
     }
 
     public void addToMessages(String key) { 
@@ -691,7 +700,7 @@ public class MessageMgr {
         }
         if (test.getGroup() != null && !test.details.isEmpty()) {
           sec.detailHref = AntwebProps.getDomainApp() + "/web/log/detail/" + test.getKey() + test.getGroup().getId() + ".html";
-          test.writeDetails();   // the page the link opens (also written by toString; written once more here, 2026-11-03)
+          test.writeDetails();   // the page the link opens; written once per upload (toString may have written it already)
         }
         if (countryMissing.equals(test.getKey()) && test.getGroup() != null) {
           String groupName = test.getGroup().getName();
@@ -770,6 +779,8 @@ public class MessageMgr {
       final HashMap<String, HashMap<String, HashSet<String>>> messageMapsHash = new HashMap<>();
 
       final Vector<String> details = new Vector<>();
+      int detailsMore = 0;            // details past MAX_DETAILS, counted only
+      boolean detailsWritten = false; // the details page is written once (toString and reportSections both ask)
 
       /** The values added with addToMessagesOnce. */
       final HashSet<String> onceValues = new HashSet<>();
@@ -846,21 +857,28 @@ public class MessageMgr {
       These are allowed to get long without mussing up the report.      
       */
       void addDetail(String detail) {
-        if (detail != null) details.add(detail);
-      }            
+        if (detail == null) return;
+        detailsWritten = false;
+        // At most MAX_DETAILS lines (a CAS upload has ~270,000 lines; 2026-11-03 review): the rest only counted.
+        if (details.size() < MAX_DETAILS) details.add(detail);
+        else detailsMore++;
+      }
 
       void writeDetails() {
+        if (detailsWritten) return;
         if (details.size() > 0) {
+            detailsWritten = true;
             // Written as .html (never .jsp: a .jsp under the web root is compiled and run by
             // Tomcat), with each curator-supplied detail HTML-escaped.
             String fileName = "detail/" + getKey() + getGroup().getId() + ".html";
             LogMgr.emptyLog(fileName);
             LogMgr.emptyLog("detail/" + getKey() + getGroup().getId() + ".jsp"); // old-style copy
-            LogMgr.appendLog(fileName, "<html><head><meta charset=\"utf-8\"/></head><body>");
-            for (String detail : details) {
-              LogMgr.appendLog(fileName, Html.esc(detail) + "<br>");
-            }
-            LogMgr.appendLog(fileName, "</body></html>");
+            // one write for the whole page (was one per line)
+            StringBuilder page = new StringBuilder("<html><head><meta charset=\"utf-8\"/></head><body>\n");
+            for (String detail : details) page.append(Html.esc(detail)).append("<br>\n");
+            if (detailsMore > 0) page.append(String.format("… and %,d more", detailsMore)).append("<br>\n");
+            page.append("</body></html>");
+            LogMgr.appendLog(fileName, page.toString());
         }
       }
       String getDetailLink() {

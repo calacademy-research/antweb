@@ -630,6 +630,16 @@ public class UploadReportPageTest extends TestCase {
         assertEquals("list", UploadReportPage.listLabel("https://www.antweb.org/list.do?action=introducedSpecimen&groupId=1"));
     }
 
+    /** A details page keeps at most MAX_DETAILS lines; the rest are counted, and the section still counts them all
+     *  (Claude review of #322: a CAS upload without countries would hold every line in memory). */
+    public void testDetailsAreCapped() {
+        Fixture x = wardUpload();
+        for (int i = 0; i < MessageMgr.MAX_DETAILS + 5; i++) x.mgr.addCountWithDetail(MessageMgr.countryMissing, "zzc" + i);
+        int[] sizes = x.mgr.detailSizes(MessageMgr.countryMissing);
+        assertEquals(MessageMgr.MAX_DETAILS, sizes[0]);
+        assertEquals(5, sizes[1]);
+    }
+
     /** "Multiple bioregions for non-introduced taxa" lists each taxon and its bioregions. */
     public void testMultipleBioregionsListsNames() {
         Fixture x = wardUpload();

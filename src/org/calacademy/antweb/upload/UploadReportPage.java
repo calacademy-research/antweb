@@ -420,7 +420,6 @@ public final class UploadReportPage {
     }
     private static final java.util.regex.Pattern LEADING_LINE = java.util.regex.Pattern.compile("^(?i)line:?\\s*(\\d+)");
 
-    /** "old -> new" (or "old -&gt; new") as {old, new}; {value, null} when the value has no arrow. */
     /** The label of a section's detail page: the specimen codes for the sections that list them, else "details". */
     public static String detailLabel(String key) {
         return MessageMgr.countryMissing.equals(key) || MessageMgr.adm1Missing.equals(key) ? "specimen codes" : "details";
@@ -431,6 +430,7 @@ public final class UploadReportPage {
         return href != null && href.contains("/advancedSearch.do") ? "open in Advanced Search" : "list";
     }
 
+    /** "old -> new" (or "old -&gt; new") as {old, new}; {value, null} when the value has no arrow. */
     static String[] splitArrow(String valueHtml) {
         if (valueHtml == null) return new String[] {"", null};
         for (String arrow : new String[] {" -> ", " -&gt; "}) {
