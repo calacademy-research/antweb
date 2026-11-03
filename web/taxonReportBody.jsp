@@ -57,6 +57,15 @@
         final org.calacademy.antweb.ListView.GenusRows sortRows = genusRows;
         children.sort((a, b) -> Integer.compare(sortRows.imaged(b.getSubfamily(), b.getGenus()), sortRows.imaged(a.getSubfamily(), a.getGenus())));
       }
+      // sorting by Not curated (2026-11-02, 21:21: the heading is a sort link like the others): most first
+      if ("notCurated".equals(orderBy)) {
+        final org.calacademy.antweb.ListView.GenusRows sortRows = genusRows;
+        java.util.function.ToIntFunction<Taxon> nc = t -> {
+          org.calacademy.antweb.home.PlaceGenusCurationDb.Row row = sortRows.notCurated(t.getSubfamily(), t.getGenus());
+          return row == null ? 0 : row.notCurated;
+        };
+        children.sort((a, b) -> Integer.compare(nc.applyAsInt(b), nc.applyAsInt(a)));
+      }
     }
     // The * note (Brian Fisher, 2026-10-28, list notes). The column marked * is Specimens on a species list, Species on
     // a genus list and Genera on a subfamily list.
@@ -173,7 +182,7 @@
              <% if ("species".equals(orderBy)) u = underline; else u = "";  %>
                 <div class="list_extras specimens"><font size=2><b><a <%= u %> href='<%= sortLink + "&orderBy=species" %>'>Species</a><a title='<%= Html.escAttr(asterixTitle) %>'>*</a></b></font></div>
              <% if (showNotCuratedColumn) { %>
-                <div class="list_extras other not-curated-col"><font size=2><b><span title="Specimens of the genus collected here whose name is not curated (counted once a day)">Not curated</span></b></font></div>
+                <div class="list_extras other"><font size=2><b><a <%= u %> title="Specimens of the genus collected here whose name is not curated: uncurated morphospecies and specimens identified only to genus (counted once a day)" href='<%= sortLink + "&orderBy=notCurated" %>'>Not curated</a></b></font></div>
              <% } %>
          <% } else { %>
 
@@ -306,7 +315,7 @@
          int genusImaged = genusImagedCells ? genusRows.imaged(child.getSubfamily(), child.getGenus()) : -1;
          if (genusImaged >= 0) {
            String gi = org.calacademy.antweb.ImagesAnywhere.speciesImagedCell(genusImaged);
-           imageCountStr = genusImaged == 0 ? gi : "<a href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams()
+           imageCountStr = genusImaged == 0 ? gi : "<a title='" + genusImaged + (genusImaged == 1 ? " species" : " species") + " of this genus in this view with an image; click to see the images' href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams()
                + "&statusSet=" + Html.url(genusRows.choice) + "'>" + gi + "</a>";
          } else if (imagesCell.startsWith("No ")) {
            imageCountStr = imagesCell;
