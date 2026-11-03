@@ -315,11 +315,36 @@ public class ListViewTest extends TestCase {
         assertFalse(all, all.contains("geolocale_taxon_dispute"));
         String curated = TaxaPage.specimenNamesWhere(mozambique(), "species", true, StatusSet.listStatusSet("curated"), Arrays.asList("x"));
         assertTrue(curated, curated.contains("geolocale_taxon_dispute"));
-        java.util.Map<String, java.util.Date> d = new java.util.HashMap<>();
-        d.put("formicinaelepisiota capensis", java.sql.Timestamp.valueOf("2018-11-16 01:37:48"));
+        java.util.Map<String, ListView.Removal> d = new java.util.HashMap<>();
+        d.put("formicinaelepisiota capensis", new ListView.Removal(java.sql.Timestamp.valueOf("2018-11-16 01:37:48"), null, null));
         String mark = ListView.removedMarkHtml(d, "formicinaelepisiota capensis");
         assertTrue(mark, mark.contains("removed from the list (2018-11-16)") && mark.contains("class=\"removed-from-list\""));
         assertEquals("", ListView.removedMarkHtml(d, "ponerinaeparvaponera darwinii"));
         assertEquals("", ListView.removedMarkHtml(null, "formicinaelepisiota capensis"));
+    }
+
+    /**
+     * Brian Fisher, 2026-11-03 (transparency): the mark says who removed the name and why, on one line (a long reason cut,
+     * the whole text in the title), everything escaped.
+     */
+    public void testRemovedMarkSaysWhoAndWhyEscaped() {
+        java.util.Map<String, ListView.Removal> d = new java.util.HashMap<>();
+        java.util.Date day = java.sql.Timestamp.valueOf("2026-11-03 10:00:00");
+        d.put("a", new ListView.Removal(day, "Jack Longino", "not in Mozambique: <b>misidentified</b> & \"moved\""));
+        String mark = ListView.removedMarkHtml(d, "a");
+        assertTrue(mark, mark.contains(">removed from the list by Jack Longino (2026-11-03): not in Mozambique: &lt;b&gt;misidentified&lt;/b&gt; &amp;"));
+        assertFalse(mark, mark.contains("<b>"));
+        assertTrue(mark, mark.contains("title=\"removed from the list by Jack Longino (2026-11-03): not in Mozambique: &lt;b&gt;"));
+        assertFalse("quotes escaped in the title", mark.matches(".*title=\"[^\"]*\"moved.*"));
+        d.put("b", new ListView.Removal(day, "nightly clean-up: morphospecies with no specimens", null));
+        assertTrue(ListView.removedMarkHtml(d, "b").contains(">removed from the list by nightly clean-up: morphospecies with no specimens (2026-11-03)</span>"));
+        StringBuilder longReason = new StringBuilder();
+        for (int i = 0; i < 30; i++) longReason.append("reason ");
+        d.put("c", new ListView.Removal(day, "Brian Fisher", longReason.toString().trim()));
+        String c = ListView.removedMarkHtml(d, "c");
+        String shown = c.substring(c.indexOf('>') + 1, c.lastIndexOf("</span>"));
+        assertTrue(shown, shown.endsWith("...") && shown.length() < longReason.length());
+        assertTrue("the whole reason in the title", c.contains(longReason.toString().trim() + ". Shown here"));
+        assertEquals("a name with no date or curator", "removed from the list", new ListView.Removal(null, null, null).text());
     }
 }

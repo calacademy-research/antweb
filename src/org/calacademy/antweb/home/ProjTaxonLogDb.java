@@ -313,6 +313,10 @@ public class ProjTaxonLogDb extends TaxonSetLogDb {
  
 // ----------------- Dispute ----------------------------------------    
      
+    public String[] listTypeAndKey(TaxonSet taxonSet) {
+        return new String[] {ListRemovalLog.PROJECT, ((ProjTaxon) taxonSet).getProjectName()};
+    }
+
     public void insertDispute(TaxonSet taxonSet) throws SQLException {
     
         ProjTaxon projTaxon = (ProjTaxon) taxonSet;

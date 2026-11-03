@@ -528,22 +528,23 @@ public class TaxaPage implements Serializable {
 		return placeSpecimens;
 	}
 
-	private java.util.Map<String, java.util.Date> disputes;
+	private java.util.Map<String, ListView.Removal> disputes;
 
 	/**
 	 * All specimen names (2026-11-03): the names removed from this place's list (geolocale_taxon_dispute,
-	 * proj_taxon_dispute) with the date, so the page marks them "removed from the list (date)". Null when none.
+	 * proj_taxon_dispute, list_removal_log) with the date, who and why, so the page marks them "removed from the list by
+	 * ... (date): reason" (ListView.loadRemovals; Brian Fisher, 2026-11-03: transparency). Null when none.
 	 */
 	public void findDisputes(Connection connection, Overview overview) {
 		try {
-			disputes = ListView.loadDisputes(connection, overview);
+			disputes = ListView.loadRemovals(connection, overview);
 		} catch (SQLException | RuntimeException e) {
 			s_log.warn("findDisputes() overview:" + overview + " e:" + e);
 			disputes = null;
 		}
 	}
 
-	public java.util.Map<String, java.util.Date> getDisputes() {
+	public java.util.Map<String, ListView.Removal> getDisputes() {
 		return disputes;
 	}
 

@@ -93,6 +93,9 @@ public abstract class TaxonSetDb extends AntwebDb {
       message += " " + new ProjTaxonDb(connection).deleteUncuratedMorphosWithoutSpecimen(blankSafe);
       message += " " + geolocaleTaxonDb.deleteGeolocaleTaxaWithoutTaxon();     
 
+      // 2026-11-03 (transparency): recorded before the delete (ListRemovalLog); curators' rows were parked above
+      ListRemovalLog.recordWhere(connection, ListRemovalLog.PROJECT, "l.taxon_name not in (select taxon_name from taxon) and l.project_name not in ('worldants')",
+          ListRemovalLog.JOB_NO_TAXON, ListRemovalLog.REASON_NO_TAXON);
       int c = new UtilDb(connection).deleteFrom("proj_taxon", "where taxon_name not in (select taxon_name from taxon) and project_name not in ('worldants')");
       s_log.debug("dataCleanup() records deleted:" + c);
 

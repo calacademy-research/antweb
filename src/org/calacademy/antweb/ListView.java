@@ -193,32 +193,131 @@ public final class ListView {
     }
 
     /**
-     * The names removed from the place's list (disputes) with the date they were removed (Brian Fisher, 2026-11-03: All
-     * specimen names shows them, marked). Null for places without disputes (museums, bioregions) or when there are none.
+     * A name removed from a place's list (Brian Fisher, 2026-11-03: transparency): when, by whom (a curator's name, or the
+     * job that removed it), and why (the curator's reason, or the job's; may be null).
      */
-    public static Map<String, java.util.Date> loadDisputes(Connection connection, Overview overview) throws SQLException {
-        String q;
+    public static final class Removal {
+        public final java.util.Date date;
+        public final String by;
+        public final String reason;
+
+        public Removal(java.util.Date date, String by, String reason) {
+            this.date = date;
+            this.by = by;
+            this.reason = reason;
+        }
+
+        /** The full text: "removed from the list by Jack Longino (2018-11-16): not in Mozambique". */
+        public String text() {
+            StringBuilder b = new StringBuilder("removed from the list");
+            if (by != null && !by.isEmpty()) b.append(" by ").append(by);
+            if (date != null) b.append(" (").append(new java.text.SimpleDateFormat("yyyy-MM-dd").format(date)).append(")");
+            if (reason != null && !reason.isEmpty()) b.append(": ").append(reason);
+            return b.toString();
+        }
+    }
+
+    /** The name shown for a curator (LoginMgr's logins in memory): first and last name, else "a curator". */
+    static String curatorName(int loginId) {
+        org.calacademy.antweb.Login login = org.calacademy.antweb.util.LoginMgr.getLogin(loginId);
+        if (login == null) return "a curator";
+        String n = ((login.getFirstName() == null ? "" : login.getFirstName()) + " " + (login.getLastName() == null ? "" : login.getLastName())).trim();
+        if (n.isEmpty() && login.getName() != null) n = login.getName();
+        return n.isEmpty() ? "a curator" : n;
+    }
+
+    /**
+     * The names removed from the place's list, by name (2026-11-03, the view All specimen names shows them marked): the
+     * disputes (a curator removed the name with the Species List Tool; geolocale_taxon_dispute, proj_taxon_dispute: date,
+     * curator, reason) and the newest list_removal_log row of each name that is not on the list now (removed by a
+     * curator or a job); of the two the newer, the dispute when they are of the same save. Two queries per page, none per
+     * row. Null for places without curated lists (museums, bioregions) or when there are none.
+     */
+    public static Map<String, Removal> loadRemovals(Connection connection, Overview overview) throws SQLException {
+        String type, key, disputeTable, keyColumn, listTable;
         if (overview instanceof Geolocale) {
-            q = "select taxon_name, created from geolocale_taxon_dispute where geolocale_id = " + ((Geolocale) overview).getId();
+            type = "geolocale"; key = String.valueOf(((Geolocale) overview).getId());
+            disputeTable = "geolocale_taxon_dispute"; keyColumn = "geolocale_id"; listTable = "geolocale_taxon";
         } else if (overview instanceof Project) {
-            q = "select taxon_name, created from proj_taxon_dispute where project_name = " + DBUtil.sqlQuote(overview.getName());
+            type = "project"; key = overview.getName();
+            disputeTable = "proj_taxon_dispute"; keyColumn = "project_name"; listTable = "proj_taxon";
         } else {
             return null;
         }
-        Map<String, java.util.Date> out = new HashMap<>();
-        try (java.sql.Statement s = connection.createStatement(); java.sql.ResultSet r = s.executeQuery(q)) {
-            while (r.next()) out.put(r.getString(1), r.getTimestamp(2));
+        Map<String, Removal> out = new HashMap<>();
+        boolean reasonColumn = columnExists(connection, disputeTable, "reason");
+        try (PreparedStatement stmt = connection.prepareStatement("select taxon_name, created, curator_id, "
+                + (reasonColumn ? "reason" : "null") + " from " + disputeTable + " where " + keyColumn + " = ? order by created")) {
+            stmt.setString(1, key);
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) {
+                    int curator = r.getInt(3);
+                    out.put(r.getString(1), new Removal(r.getTimestamp(2), r.wasNull() || curator <= 0 ? null : curatorName(curator), r.getString(4)));
+                }
+            }
+        }
+        if (tableExists(connection, "list_removal_log")) {
+            try (PreparedStatement stmt = connection.prepareStatement("select g.taxon_name, g.removed_at, g.removed_by_login, g.removed_by_job, g.reason"
+                    + " from list_removal_log g where g.list_type = ? and g.list_key = ?"
+                    + " and not exists (select 1 from " + listTable + " x where x." + keyColumn + " = ? and x.taxon_name = g.taxon_name)"
+                    + " order by g.removed_at, g.id")) {
+                stmt.setString(1, type);
+                stmt.setString(2, key);
+                stmt.setString(3, key);
+                try (ResultSet r = stmt.executeQuery()) {
+                    while (r.next()) {
+                        String name = r.getString(1);
+                        java.util.Date at = r.getTimestamp(2);
+                        int login = r.getInt(3);
+                        String by = !r.wasNull() && login > 0 ? curatorName(login) : r.getString(4);
+                        Removal had = out.get(name);
+                        // the same save writes the dispute and the log row: keep the dispute (with the log's reason if it has none)
+                        if (had != null && had.date != null && at != null && Math.abs(at.getTime() - had.date.getTime()) < 120000L) {
+                            if (had.reason == null && r.getString(5) != null) out.put(name, new Removal(had.date, had.by, r.getString(5)));
+                            continue;
+                        }
+                        if (had == null || had.date == null || (at != null && at.after(had.date))) out.put(name, new Removal(at, by, r.getString(5)));
+                    }
+                }
+            }
         }
         return out.isEmpty() ? null : out;
     }
 
-    /** The mark of a name removed from the list, after its name in All specimen names ("" when not removed). */
-    public static String removedMarkHtml(Map<String, java.util.Date> disputes, String taxonName) {
-        if (disputes == null || taxonName == null || !disputes.containsKey(taxonName)) return "";
-        java.util.Date d = disputes.get(taxonName);
-        String date = d == null ? "" : " (" + new java.text.SimpleDateFormat("yyyy-MM-dd").format(d) + ")";
-        return " <span class=\"removed-from-list\" title=\"Removed from this list with the Species List Tool; shown here because"
-            + " specimens of this name were collected here\">removed from the list" + date + "</span>";
+    private static boolean tableExists(Connection connection, String table) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "select 1 from information_schema.tables where table_schema = database() and table_name = ?")) {
+            stmt.setString(1, table);
+            try (ResultSet r = stmt.executeQuery()) { return r.next(); }
+        }
+    }
+
+    private static boolean columnExists(Connection connection, String table, String column) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "select 1 from information_schema.columns where table_schema = database() and table_name = ? and column_name = ?")) {
+            stmt.setString(1, table);
+            stmt.setString(2, column);
+            try (ResultSet r = stmt.executeQuery()) { return r.next(); }
+        }
+    }
+
+    /** Characters of the reason shown on the line (the whole text is in the title). */
+    static final int MARK_REASON_CHARS = 80;
+
+    /**
+     * The mark of a name removed from the list, after its name in All specimen names ("" when not removed): one line,
+     * "removed from the list by <curator or job> (<date>): <reason>", the reason cut to MARK_REASON_CHARS, the whole text
+     * in the title; everything escaped (Brian Fisher, 2026-11-03: transparency).
+     */
+    public static String removedMarkHtml(Map<String, Removal> removals, String taxonName) {
+        if (removals == null || taxonName == null) return "";
+        Removal r = removals.get(taxonName);
+        if (r == null) return "";
+        String shown = r.reason != null && r.reason.length() > MARK_REASON_CHARS
+            ? new Removal(r.date, r.by, r.reason.substring(0, MARK_REASON_CHARS) + "...").text() : r.text();
+        String title = r.text() + ". Shown here because specimens of this name were collected here.";
+        return " <span class=\"removed-from-list\" title=\"" + org.calacademy.antweb.util.Html.escAttr(title) + "\">"
+            + org.calacademy.antweb.util.Html.esc(shown) + "</span>";
     }
 
     /** Whether a list reads the place's specimens as a whole (source icons, rows from specimens): not regions or subregions. */

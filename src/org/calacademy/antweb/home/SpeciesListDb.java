@@ -403,6 +403,17 @@ public class SpeciesListDb extends AntwebDb {
     public String saveTaxonSet(String[] taxa, String[] chosen
       , ArrayList<String> oldChosenList, String speciesListName, Login login)
       throws SQLException {
+        return saveTaxonSet(taxa, chosen, oldChosenList, speciesListName, login, null);
+    }
+
+    /**
+     * The same, with the curator's reason for the names removed in this save (Brian Fisher, 2026-11-03: transparency;
+     * the Species List Tool's "Reason for removing", optional): kept on each dispute row and in list_removal_log
+     * (ListRemovalLog), and shown with the name in the view All specimen names.
+     */
+    public String saveTaxonSet(String[] taxa, String[] chosen
+      , ArrayList<String> oldChosenList, String speciesListName, Login login, String removeReason)
+      throws SQLException {
 
         String message = "";
         if (chosen == null) chosen = new String[0];
@@ -494,6 +505,7 @@ public class SpeciesListDb extends AntwebDb {
 
 		// if an oldChosen taxon is not in the chosenList, remove it.
 		int i = 0;
+		ArrayList<ListRemovalLog.Entry> removals = new ArrayList<>();   // 2026-11-03: the record of this save's removals
 		for (String taxonName : oldChosenList) {
 		  if (!chosenList.contains(taxonName)) {
 
@@ -509,7 +521,9 @@ public class SpeciesListDb extends AntwebDb {
 
 			if (taxonSet != null) {
 			  //A.log("saveTaxonSet() insertDispute curatorId:" + login.getId());
-			  taxonSetLogDb.insertDispute(taxonSet);
+			  taxonSetLogDb.insertDispute(taxonSet, removeReason);
+			  String[] tk = taxonSetLogDb.listTypeAndKey(taxonSet);
+			  removals.add(new ListRemovalLog.Entry(tk[0], tk[1], taxonName, taxonSet.getSource(), login.getId(), null, removeReason));
 			} else {
 			  s_log.warn("saveTaxonSet() TaxonSet not found to make a dispute.  Skip.  TaxonName:" + taxonName + " speciesListName:" + speciesListName + " taxonSetDb:" + taxonSetDb.getClass());
 			  continue;
@@ -538,6 +552,8 @@ public class SpeciesListDb extends AntwebDb {
 		  }
 		  ++i;
 		}
+
+        ListRemovalLog.record(getConnection(), removals);
 
         // Recount this list now, so that a name just added shows its species and specimen counts
         // (the genus row said "No Species" and the species "No Specimens" until the nightly run).

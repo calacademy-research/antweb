@@ -177,7 +177,7 @@
   ListView.SubfamilyRows subfamilyRows = taxaPage.getSubfamilyRows();
   ListView.PlaceSpecimens placeSpecimens = taxaPage.getPlaceSpecimens();
   // 2026-11-03: All specimen names, the names removed from the list (marked "removed from the list (date)")
-  java.util.Map<String, java.util.Date> listDisputes = taxaPage.getDisputes();
+  java.util.Map<String, ListView.Removal> listDisputes = taxaPage.getDisputes();
 %>
 
     <%@ include file="/taxonReportBody.jsp" %>

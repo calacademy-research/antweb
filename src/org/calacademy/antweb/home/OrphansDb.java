@@ -434,6 +434,10 @@ Genera not yet well thought out.  What should source be?  addMissingGenera?
           stmt.executeUpdate(delete);    
           // Keep the curators' list rows of this name: they return when the name exists again.
           new CuratorTaxonSetDb(getConnection()).parkCuratorRows(taxonName);
+          // 2026-11-03 (transparency): the list rows of the name are recorded before they go (ListRemovalLog)
+          String named = "l.taxon_name = " + DBUtil.sqlLiteral(taxonName);
+          ListRemovalLog.recordWhere(getConnection(), ListRemovalLog.PROJECT, named, ListRemovalLog.JOB_ORPHAN);
+          ListRemovalLog.recordWhere(getConnection(), ListRemovalLog.GEOLOCALE, named, ListRemovalLog.JOB_ORPHAN);
           delete = "delete from proj_taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
           stmt.executeUpdate(delete);    
           delete = "delete from geolocale_taxon where taxon_name = '" + DBUtil.escapeQuotes(taxonName) + "'"; 
