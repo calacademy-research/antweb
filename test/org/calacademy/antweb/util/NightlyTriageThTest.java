@@ -1,6 +1,5 @@
 package test.org.calacademy.antweb.util;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
@@ -125,19 +124,17 @@ public class NightlyTriageThTest extends TestCase {
     }
 
     public void testBackgroundJobWaitsForTheNightlyRun() throws Exception {
-        Field running = Scheduler.class.getDeclaredField("s_running");
-        running.setAccessible(true);
         UtilDataAction.setInComputeProcess(null);
         try {
-            running.set(null, true);
+            assertTrue(Scheduler.claimRun());   // a run of the sets is going on
             assertFalse(UtilDataAction.claimNotDuringNightly("populateMuseum"));
             assertNull("the flag is not taken", UtilDataAction.getIsInComputeProcess());
-            running.set(null, false);
+            Scheduler.endRun();
             assertTrue(UtilDataAction.claimNotDuringNightly("populateMuseum"));
             assertEquals("populateMuseum", UtilDataAction.getIsInComputeProcess());
             assertFalse("another job waits", UtilDataAction.claimNotDuringNightly("populateBioregion"));
         } finally {
-            running.set(null, false);
+            Scheduler.endRun();
             UtilDataAction.setInComputeProcess(null);
         }
     }
@@ -186,6 +183,7 @@ public class NightlyTriageThTest extends TestCase {
     public void testGroupRecountRollsBackToItsSavepoint() {
         GroupCountDb.forgetTable();
         prepareFails = true;
+        rows = new ArrayList<>();   // information_schema: no group_count table yet (it is created, then the recount fails)
         String message = new GroupCountDb(connection()).recountAll();
         GroupCountDb.forgetTable();
         assertTrue(message, message.startsWith("Group counts not written"));

@@ -107,6 +107,7 @@ public final class SaveLoginAction extends AntwebAction {
 
             login = loginDb.getLogin(id);
             String storedPassword = login == null ? null : login.getPassword();
+            String storedEmail = login == null ? null : login.getEmail();
 
             // An administrator changes an existing login (also their own): LoginEdit, in one step.
             if (isAdminUser && login != null) {
@@ -249,6 +250,12 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
                 || isOwnLogin) {        // as is for users logged in through the invite page
                 // Accepting an invite requires a password; editing your own login may leave it blank (unchanged).
                 ActionErrors errors = accessLogin == null ? passPwdCheck(form) : passPwdMatch(form);
+                // The email receives password links: changing your own needs your current password (2026-11-02),
+                // so someone with a stolen session or an unlocked browser can not take the account over.
+                if (errors.isEmpty() && isSelf && emailChanges(storedEmail, form.getEmail())
+                        && !PasswordHash.matches(storedPassword, form.getCurrentPassword())) {
+                    errors.add("error", new ActionMessage(EMAIL_NEEDS_PASSWORD, false));
+                }
                 if (!errors.isEmpty()) {
                     saveErrors(request, errors);
                     return mapping.findForward("failure");
@@ -363,20 +370,34 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
         if (!result.problems.isEmpty()) return refuse(request, mapping, connection, id, false, result.problems);
 
         List<String> changes = new ArrayList<>(result.changes);
-        if (!isSelf && LoginEdit.removesRights(result.before, result.after)) {
-            // A removed right takes effect at once: the login's sessions end (it logs in again).
-            PasswordResetMgr.noteVersion(id, new PasswordResetDb(connection).bumpSessionVersion(id));
-            changes.add("Rights removed: this login was logged out everywhere, so the change applies at once.");
-        }
-        if (storesPassword) {
-            loginDb.changePassword(login, newPassword);
-            endSessions(connection, request, login, true, accessLogin);
-            changes.add("Password: changed");
-        }
-        if (!changes.isEmpty()) {
-            adminLog("login " + id + " changed by login " + accessLogin.getId() + ": " + LoginEdit.join(changes));
+        // LoginEdit.apply has committed the field changes: logged now, so a failure in a later step (ending the
+        // sessions, the new password) does not leave a saved change out of admin.log or report it as unsaved.
+        if (!changes.isEmpty()) adminLog("login " + id + " changed by login " + accessLogin.getId() + ": " + LoginEdit.join(changes));
+        String step = null;
+        try {
+            if (!isSelf && LoginEdit.removesRights(result.before, result.after)) {
+                step = "ending the login's sessions";
+                // A removed right takes effect at once: the login's sessions end (it logs in again).
+                PasswordResetMgr.noteVersion(id, new PasswordResetDb(connection).bumpSessionVersion(id));
+                changes.add("Rights removed: this login was logged out everywhere, so the change applies at once.");
+                adminLog("login " + id + " logged out everywhere (rights removed) by login " + accessLogin.getId());
+            }
+            if (storesPassword) {
+                step = "saving the new password";
+                loginDb.changePassword(login, newPassword);
+                endSessions(connection, request, login, true, accessLogin);
+                changes.add("Password: changed");
+                adminLog("login " + id + " password changed by login " + accessLogin.getId());
+            }
+        } catch (SQLException e) {
+            s_log.error("saveByAdmin() login:" + id + " failed while " + step + " e:" + e);
+            adminLog("login " + id + ": FAILED while " + step + " (the changes above were saved)");
             LoginMgr.populate(connection, true, false);
+            return refuse(request, mapping, connection, id, false, List.of("These changes were saved: "
+                + (result.changes.isEmpty() ? "none" : LoginEdit.join(result.changes)) + ". Then a database error stopped "
+                + step + ": please try that again."), false);
         }
+        if (!changes.isEmpty()) LoginMgr.populate(connection, true, false);
         if (result.after != null && result.after.uploadSpecimens && result.after.groupId == LoginEdit.NO_GROUP) {
             changes.add("Note: this login may upload specimen data but has no upload group, so its uploads are refused until it has one.");
         }
@@ -397,15 +418,30 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
     /** Back to the form with the problems; nothing was changed. */
     private ActionForward refuse(HttpServletRequest request, ActionMapping mapping, Connection connection, int id, boolean isNew,
                                  List<String> problems) throws SQLException {
+        return refuse(request, mapping, connection, id, isNew, problems, true);
+    }
+
+    /** As refuse(), saying "Nothing was changed." only when nothingChanged (not after a part of the save was committed). */
+    private ActionForward refuse(HttpServletRequest request, ActionMapping mapping, Connection connection, int id, boolean isNew,
+                                 List<String> problems, boolean nothingChanged) throws SQLException {
         ActionErrors errors = new ActionErrors();
         for (String p : problems) errors.add("error", new ActionMessage(p, false));
-        errors.add("error", new ActionMessage("Nothing was changed.", false));
+        if (nothingChanged) errors.add("error", new ActionMessage("Nothing was changed.", false));
         saveErrors(request, errors);
         // The form shows this login again (also if another login was opened in another tab meanwhile).
         Login shown = isNew ? null : new LoginDb(connection).getLogin(id);
         if (shown != null) request.getSession().setAttribute("thisLogin", shown);
         LoginEditOptions.prepare(connection, request, id, isNew);
         return mapping.findForward("failure");
+    }
+
+    public static final String EMAIL_NEEDS_PASSWORD = "To change your email address, please enter your current password.";
+
+    /** True when a save changes the stored email address (case and surrounding spaces do not count). */
+    public static boolean emailChanges(String stored, String typed) {
+        String a = stored == null ? "" : stored.trim();
+        String b = typed == null ? "" : typed.trim();
+        return !a.equalsIgnoreCase(b);
     }
 
     private static void adminLog(String text) {

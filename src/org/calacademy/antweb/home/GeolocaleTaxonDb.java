@@ -295,6 +295,8 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 
     // Preferred method
     public int delete(Overview overview, String taxonName) throws SQLException {
+      // By id (2026-11-02): a place found again by its name could be another place of that name (an adm1 "Georgia").
+      if (overview instanceof Geolocale) return delete("" + ((Geolocale) overview).getId(), taxonName);
       return delete(overview.getName(), taxonName);
     }
 

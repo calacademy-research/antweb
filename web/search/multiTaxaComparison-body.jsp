@@ -101,7 +101,7 @@ int fourth = 4;
  %>
             <div class="data_checkbox" style="float:left; margin-top:2px;"><input type="checkbox" name="chosen" value="<%= entry.getValue() %>"></div>
 
-            <div class="ratio_name"> <a href="<%= AntwebProps.getDomainApp() %>/specimen.do?name=<%= taxon.getFullName() %>"><%= taxon.getPrettyName() %></a>
+            <div class="ratio_name"> <a href="<%= AntwebProps.getDomainApp() %>/specimen.do?name=<%= Html.escAttr(Html.url(taxon.getFullName())) %>"><%= Html.esc(taxon.getPrettyName()) %></a>
 			<% Formatter format = new Formatter();
 			   String genus, species, niceGenus, subspecies;
 			   if ((taxon.getGenus() != null) && (taxon.getSpecies() != null)) {
@@ -110,8 +110,8 @@ int fourth = 4;
 				 //Where is the subspecies?  How to replicate this.  Let's find out...    
 				 //  the_name = taxon.getTaxonNameDisplay();
 			%>
-				   <a href="<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= taxon.getTaxonName() %>"> : <%= taxon.getTaxonNameDisplay() %></a>
-                   &nbsp<font size=3><%= ((Specimen) taxon).getCasteStr() %></font>
+				   <a href="<%= AntwebProps.getDomainApp() %>/description.do?taxonName=<%= Html.escAttr(Html.url(taxon.getTaxonName())) %>"> : <%= Html.esc(taxon.getTaxonNameDisplay()) %></a>
+                   &nbsp<font size=3><%= Html.esc(((Specimen) taxon).getCasteStr()) %></font>
 			<% } %>
             </div> 
             <div class="clear"></div>
@@ -130,9 +130,9 @@ int fourth = 4;
 					<div class="slide medium <% if (position == first) { %> first<% } %><% if (position == fourth) { %> last<% } %> ratio">
 						<bean:define id="imgCode" name="element" property="value.code" />
 						<%
-						String bigImgLink = AntwebProps.getDomainApp() + "/bigPicture.do?name=" + imgCode + "&shot=" + ((String) shot).substring(0, 1) + "&number=" + ((String) shot).substring(1);
+						String bigImgLink = AntwebProps.getDomainApp() + "/bigPicture.do?name=" + Html.url(imgCode) + "&shot=" + ((String) shot).substring(0, 1) + "&number=" + ((String) shot).substring(1);
 						%>
-						<div class="adjust"><img class="medres" src="<%= AntwebProps.getImgDomainApp() %><bean:write name="element" property="value.thumbview" />" onclick="window.location='<%= bigImgLink %>';"></div>
+						<div class="adjust"><img class="medres" src="<%= AntwebProps.getImgDomainApp() %><bean:write name="element" property="value.thumbview" />" onclick="window.location='<%= Html.escAttr(Html.js(bigImgLink)) %>';"></div>
 					</div>
 				  </logic:equal>
 				</logic:iterate>
@@ -144,7 +144,7 @@ int fourth = 4;
         <% }  else { %>
         
           <div class="data_checkbox" style="float:left; margin-top:2px;"><input type="checkbox" name="chosen" value="<%= entry.getValue() %>"></div> 
-          <div class="ratio_name"><a href="<%= AntwebProps.getDomainApp() %>/description.do?<%= taxon.getBrowserParams() %>"><%= taxon.getPrettyName() %></a></div>
+          <div class="ratio_name"><a href="<%= AntwebProps.getDomainApp() %>/description.do?<%= Html.escAttr(taxon.getBrowserParams()) %>"><%= Html.esc(taxon.getPrettyName()) %></a></div>
 
           <div class="clear"></div>
         

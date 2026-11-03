@@ -77,7 +77,7 @@ public abstract class QueriesWithParams {
             s_log.warn("getGeolocaleSpeciesListWithRangeData() geolocale not found:" + geolocaleName);
             return null;
         }
-        query = geolocaleSpeciesListWithRangeData(geolocaleName, geolocale.getGeorank());
+        query = geolocaleSpeciesListWithRangeData(geolocaleName, geolocale.getGeorank(), geolocale.getId());
         s_log.debug("getNamedQuery() geolocale:" + geolocale + " query:" + query);
         return query;
     }
@@ -85,6 +85,18 @@ public abstract class QueriesWithParams {
     // The query's name is the name pages link to (query.do?name=...&param=...): the permalink on the result page
     // uses it. Was "speciesListWithRangeData" and "speciesListRangeSummary", names no page could open (2026-10-22).
     public static NamedQuery geolocaleSpeciesListWithRangeData(String geolocaleName, String georank) {
+        return geolocaleSpeciesListWithRangeData(geolocaleName, georank, 0);
+    }
+
+    /**
+     * The place's own list when geolocaleId is above 0 (2026-11-02): by name, every place of that rank and name was
+     * merged into one table (Distrito Federal of Mexico and of Brazil). 0: by name, as before.
+     */
+    public static String placeCondition(String geolocaleName, int geolocaleId) {
+        return geolocaleId > 0 ? " and g.id = " + geolocaleId : " and g.name = '" + sqlText(geolocaleName) + "'";
+    }
+
+    public static NamedQuery geolocaleSpeciesListWithRangeData(String geolocaleName, String georank, int geolocaleId) {
         return new NamedQuery(
                 "geolocaleSpeciesListWithRangeData"
                 , geolocaleName
@@ -96,7 +108,7 @@ public abstract class QueriesWithParams {
                 , "select initcap(t.subfamily), initcap(t.genus), t.species, IFNULL(t.subspecies, ''), t.author_date, t.status, gt.is_introduced, gt.is_endemic, "
                   + " (select group_concat(' ', g2.name order by g2.name) from geolocale_taxon gt2, geolocale g2 where gt2.geolocale_id = g2.id and g2.georank = '" + sqlText(georank) + "' and gt2.taxon_name = t.taxon_name) "
                   + " from taxon t, geolocale_taxon gt, geolocale g where t.taxon_name = gt.taxon_name and gt.geolocale_id = g.id and t.taxarank in ('species', 'subspecies') "
-                  + " and g.georank = '" + sqlText(georank) + "' and g.name = '" + sqlText(geolocaleName) + "' order by t.subfamily, t.genus, t.species, t.subspecies"
+                  + " and g.georank = '" + sqlText(georank) + "'" + placeCondition(geolocaleName, geolocaleId) + " order by t.subfamily, t.genus, t.species, t.subspecies"
         );
     }
 
@@ -109,12 +121,16 @@ public abstract class QueriesWithParams {
             s_log.warn("getGeolocaleSpeciesListRangeSummary() geolocale not found:" + geolocaleName);
             return null;
         }
-        query = geolocaleSpeciesListRangeSummary(geolocaleName, geolocale.getGeorank());
+        query = geolocaleSpeciesListRangeSummary(geolocaleName, geolocale.getGeorank(), geolocale.getId());
         s_log.debug("getNamedQuery() geolocale:" + geolocale + " query:" + query);
         return query;
     }
 
     public static NamedQuery geolocaleSpeciesListRangeSummary(String geolocaleName, String georank) {
+        return geolocaleSpeciesListRangeSummary(geolocaleName, georank, 0);
+    }
+
+    public static NamedQuery geolocaleSpeciesListRangeSummary(String geolocaleName, String georank, int geolocaleId) {
         return new NamedQuery(
                 "geolocaleSpeciesListRangeSummary"
                 , geolocaleName
@@ -124,7 +140,7 @@ public abstract class QueriesWithParams {
                 , new String[] {"Names", "Status", "Introduced", "Endemic"}
                 , "select count(*), t.status, gt.is_introduced, gt.is_endemic from geolocale g, geolocale_taxon gt, taxon t "
                 + " where g.id = gt.geolocale_id and gt.taxon_name = t.taxon_name and g.georank = '" + sqlText(georank) + "' and t.taxarank in ('species', 'subspecies') "
-                + " and g.name = '" + sqlText(geolocaleName) + "' group by t.status, gt.is_introduced, gt.is_endemic order by count(*) desc"
+                + placeCondition(geolocaleName, geolocaleId) + " group by t.status, gt.is_introduced, gt.is_endemic order by count(*) desc"
         );
     }
 

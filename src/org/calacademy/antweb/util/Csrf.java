@@ -171,6 +171,22 @@ public final class Csrf {
         return path != null && EXEMPT_PATHS.contains(path);
     }
 
+    // Sign-in pages whose own forms are on pages that send a real Origin. The reset password page sends "Origin: null"
+    // itself (ResetPasswordAction sets Referrer-Policy: no-referrer), and its post carries a one-time token.
+    private static final Set<String> NO_NULL_ORIGIN_PATHS = Set.of("/login.do", "/forgotPassword.do");
+
+    /**
+     * "null Origin" for a post to the log-in or forgot-password page with the header "Origin: null" (a sandboxed frame
+     * or a data: page of another site; the Referer is then usually absent too), else null. Since 2026-11-02: before,
+     * "null" counted as no Origin, so another site could log a visitor into an account of its choosing that way.
+     */
+    public static String nullOrigin(HttpServletRequest request) {
+        String path = request.getServletPath();
+        String origin = request.getHeader("Origin");
+        if (path == null || origin == null || !NO_NULL_ORIGIN_PATHS.contains(path)) return null;
+        return "null".equals(origin.trim()) ? "null Origin" : null;
+    }
+
     /** "cross-site Origin" or "cross-site Referer" if the request comes from another site, else null. */
     public static String crossSite(HttpServletRequest request) {
         String originHost = hostOf(request.getHeader("Origin"));

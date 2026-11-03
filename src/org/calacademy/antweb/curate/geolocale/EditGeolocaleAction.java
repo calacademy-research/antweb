@@ -171,6 +171,12 @@ public final class EditGeolocaleAction extends AntwebAction {
    	        // Every save reloads the places in memory (the "Fast" option that skipped this was removed 2026-10-21).
    	        if (isSaved) {
 			    GeolocaleMgr.populate(connection, true, false);
+			    // A renamed country's curator assignments (login_country) carry the new name
+			    // (GeolocaleDb.carryRename), so the logins in memory are read again.
+			    if (!editGeolocaleForm.getIsCreate() && tempGeolocale != null && "country".equals(tempGeolocale.getGeorank())
+			        && name != null && !name.equals(tempGeolocale.getName())) {
+			      LoginMgr.populate(connection, true, false);
+			    }
             }
 			
           }

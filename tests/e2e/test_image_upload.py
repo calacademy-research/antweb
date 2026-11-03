@@ -307,11 +307,21 @@ def test_report_specimen_links_open_specimen_pages(curator):
     assert r.status_code == 200 and "is not in the AntWeb database" not in r.text, (codes[0], r.status_code)
 
 
+def _title_group(page):
+    """The group of a one-group list (a curator's list is always their own group's, 2026-11-02), or None."""
+    m = re.search(r"Image Uploads Reports for Group: <a href='[^']*/group\.do\?id=(\d+)'>", page)
+    return int(m.group(1)) if m else None
+
+
 def _report_rows(page):
-    """(group id, image count, upload id) for every row of listImageUploads.do."""
+    """(group id, image count, upload id) for every row of listImageUploads.do (a one-group list has no Group
+    column: its rows are the title's group)."""
     rows = []
+    title_group = _title_group(page)
     for row in page.split("<tr>"):
         g = re.search(r"group\.do\?id=(\d+)", row)
+        if not g and title_group is not None:
+            g = re.match(r"(\d+)", str(title_group))
         u = re.search(r"<td(?: class=\"aw-num\")?>(\d+)</td>\s*<td(?: class=\"aw-nowrap\")?><a href='[^']*imageUploadReport\.do\?id=(\d+)'", row)
         if g and u:
             rows.append((int(g.group(1)), int(u.group(1)), u.group(2)))
@@ -320,6 +330,8 @@ def _report_rows(page):
 
 def _own_group_ids(page, login_id):
     """Groups of the uploads made by this login (its own group)."""
+    if _title_group(page) is not None:
+        return {_title_group(page)}
     own = set()
     for row in page.split("<tr>"):
         g = re.search(r"group\.do\?id=(\d+)", row)
@@ -339,11 +351,18 @@ def test_report_of_other_group_refused(curator):
     if not own:
         pytest.skip("the test login has no image uploads listed (own group unknown)")
     other = next((u for g, _c, u in _report_rows(page) if g not in own), None)
-    if not other:
-        pytest.skip("no upload of another group listed on listImageUploads.do")
-    r = s.get(BASE_URL + f"/imageUploadReport.do?id={other}", timeout=TIMEOUT)
-    assert r.status_code == 200, r.status_code
-    assert "This image upload report belongs to another group." in r.text, r.text[:300]
+    if other:
+        r = s.get(BASE_URL + f"/imageUploadReport.do?id={other}", timeout=TIMEOUT)
+        assert r.status_code == 200, r.status_code
+        assert "This image upload report belongs to another group." in r.text, r.text[:300]
+    else:
+        # A curator's list shows only their own group (2026-11-02): try a few numbers it does not list.
+        listed = {int(u) for _g, _c, u in _report_rows(page)}
+        top = max(listed) if listed else 50
+        tried = [i for i in range(top, 0, -1) if i not in listed][:5]
+        texts = [s.get(BASE_URL + f"/imageUploadReport.do?id={i}", timeout=TIMEOUT).text for i in tried]
+        if not any("belongs to another group" in t for t in texts):
+            pytest.skip("no upload of another group found")
     mine = next((u for g, _c, u in _report_rows(page) if g in own), None)
     r = s.get(BASE_URL + f"/imageUploadReport.do?id={mine}", timeout=TIMEOUT)
     assert r.status_code == 200 and "belongs to another group" not in r.text, r.text[:300]
@@ -368,15 +387,21 @@ def test_upload_list_loads(curator):
 
 
 def test_group_list_links_to_all_groups(curator):
-    """A group's or a login's list links the list of all groups' image uploads (asked for by Brian Fisher, 2026-10-23)."""
+    """For an admin, a group's or a login's list links the list of all groups' image uploads (asked for by Brian
+    Fisher, 2026-10-23); a curator sees only their own group's uploads and gets no such link (2026-11-02)."""
     s, _token, login_id = curator
+    page = _upload_list(s)
+    is_all = "Image Upload Reports for All Groups" in page
     for query in ("curatorId=" + str(login_id), "groupId=1"):
         r = s.get(BASE_URL + "/listImageUploads.do?" + query, timeout=TIMEOUT)
         assert r.status_code == 200, (query, r.status_code)
-        assert re.search(r'id="all-image-uploads" href\s*=\s*"[^"]*/listImageUploads\.do"', r.text), \
-            "listImageUploads.do?" + query + " has no link to all groups' image uploads"
-    page = _upload_list(s)
-    assert 'id="all-image-uploads"' not in page, "the list of all groups links to itself"
+        has_link = bool(re.search(r'id="all-image-uploads" href\s*=\s*"[^"]*/listImageUploads\.do"', r.text))
+        assert has_link == is_all, ("listImageUploads.do?" + query, "all-groups link", has_link, "admin", is_all)
+    assert 'id="all-image-uploads"' not in page, "the list of all groups (or a curator's own list) links to all groups"
+    if not is_all:
+        assert re.search(r"Image Uploads Reports for Group: <a href='[^']*/group\.do\?id=\d+'>", page), \
+            "a curator's listImageUploads.do does not show their own group"
+        return
     # ... and links back to the login's own group's list (Brian Fisher, 2026-10-23), when the login has a group.
     m = re.search(r'id="own-group-image-uploads" href\s*=\s*"[^"]*/listImageUploads\.do\?groupId=(\d+)"', page)
     assert m, "the list of all groups has no link back to the login's own group's list"

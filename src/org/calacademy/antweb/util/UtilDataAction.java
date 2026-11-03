@@ -423,8 +423,18 @@ public class UtilDataAction extends AntwebAction {
         }
     }
 
+    /**
+     * The answer for a data job that failed (Scheduler.SET_ROLLED_BACK starts it). Until 2026-11-02 it said "No changes
+     * made", but some steps commit part way (set 1 name update and taxon parents, set 2 Global and AntCat list
+     * recounts, set 4 statistics): only the work after the last such step is undone.
+     */
+    public static String failureMessage(String action, String loginName, Exception e) {
+        return Scheduler.SET_ROLLED_BACK + Html.esc(action) + " user:" + Html.esc(loginName) + " e:" + Html.esc(e)
+            + " (steps of the job that save part way may have saved their part; see compute.log)";
+    }
+
     private static String handleException(Exception e, Connection connection, String action, String loginName) {
-        String message = "Error. No changes made for action:" + Html.esc(action) + " user:" + Html.esc(loginName) + " e:" + Html.esc(e);
+        String message = failureMessage(action, loginName, e);
         s_log.error("handleException() " + message);
         if (e instanceof NullPointerException) s_log.error(AntwebUtil.getShortStackTrace(e));
         try {

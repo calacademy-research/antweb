@@ -48,7 +48,7 @@ public abstract class LocalityOverview extends Overview {
     private transient double right = 0;
     private transient double top = 0;
     
-    private boolean boundingBoxLoaded = false;
+    private volatile boolean boundingBoxLoaded = false;
     
     public abstract String getLocality();
     public abstract void setLocality(String locality);
@@ -154,17 +154,27 @@ specimen country:United States adm1:Maine lat:44.78 lon:-68.42
            //A.log("loadBoundingBox() possibly extraneous? name:" + getName());
            return;
         }
-        boundingBoxLoaded = true;
-
         String bounds = useBoundingBox();
 
-        left = LocalityOverview.getDoubleListVal(bounds, 1);
-        bottom = LocalityOverview.getDoubleListVal(bounds, 2);
-        right = LocalityOverview.getDoubleListVal(bounds, 3);
-        top = LocalityOverview.getDoubleListVal(bounds, 4);
+        // The four values first, the flag last (2026-11-02): places are shared by all requests, and with the flag set
+        // first another upload could read a half-loaded box and call a correct specimen out of bounds.
+        double l = LocalityOverview.getDoubleListVal(bounds, 1);
+        double b = LocalityOverview.getDoubleListVal(bounds, 2);
+        double r = LocalityOverview.getDoubleListVal(bounds, 3);
+        double t = LocalityOverview.getDoubleListVal(bounds, 4);
+        left = l;
+        bottom = b;
+        right = r;
+        top = t;
+        boundingBoxLoaded = true;   // volatile, written last: a reader that sees it true sees the four values
     }
     
-    private static double getDoubleListVal(String list, int i) {
+    /**
+     * The i-th (1 to 4) number of a list "a, b, c, d" (a bounding box, or a centroid "lat, lon"), or 0. Parentheses
+     * are ignored (2026-11-02): a centroid stored as "(37.1679, -95.8450)" gave 0 for both numbers.
+     */
+    public static double getDoubleListVal(String list, int i) {
+        if (list != null) list = list.replace("(", " ").replace(")", " ");
         // list will be a comma separated list (with spaces). Could be a bounding box or a centroid.
         //if (AntwebProps.isDevMode()) AntwebUtil.logStackTrace();
 

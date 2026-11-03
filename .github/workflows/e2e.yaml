@@ -68,6 +68,9 @@ jobs:
       - uses: actions/checkout@v5
         with:
           ref: ${{ github.head_ref || github.ref }}
+          # The job's token is not left in .git/config, where the tests (the pull request's own code) could read it.
+          # Only "Record baseline" pushes, with the token passed to that step alone.
+          persist-credentials: false
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
@@ -131,6 +134,8 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           sudo ssh -i ~/.ssh/id_rsa -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o StrictHostKeyChecking=yes -o ExitOnForwardFailure=yes \
             -o ServerAliveInterval=30 -o ConnectTimeout=30 -f -N -L 443:127.0.0.1:443 "$SSH_USER@$SSH_HOST"
+          # The tunnel is up (ssh -f returns after logging in): the key file goes before any test code runs.
+          rm -f ~/.ssh/id_rsa
           echo "127.0.0.1 staging.antweb.org" | sudo tee -a /etc/hosts
           # Staging may use a Cloudflare Origin Certificate: trust Cloudflare's origin CA too.
           curl -sSf --max-time 30 -o /tmp/cf-origin-ca.pem https://developers.cloudflare.com/ssl/static/origin_ca_rsa_root.pem
@@ -158,13 +163,18 @@ jobs:
         run: python tests/e2e/survey.py
       - name: Record baseline (first run, or mode=record)
         if: ${{ env.MODE == 'record' || hashFiles('tests/e2e/expectations.json') == '' || hashFiles('tests/e2e/snapshots.json') == '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
           [ -f tests/e2e/expectations.json ] && [ "$MODE" != record ] || cp tests/e2e/out/expectations.json tests/e2e/expectations.json
           [ -f tests/e2e/snapshots.json ] && [ "$MODE" != record ] || cp tests/e2e/out/snapshots.json tests/e2e/snapshots.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add tests/e2e/expectations.json tests/e2e/snapshots.json
-          git commit -m "e2e: record baseline from $ANTWEB_URL" && git push
+          git commit -m "e2e: record baseline from $ANTWEB_URL" \
+            && git push "https://x-access-token:${GH_TOKEN}@github.com/${REPO}.git" "HEAD:refs/heads/${BRANCH}"
       # Anonymous read-only tests run side by side in E2E_WORKERS workers; every other test runs one
       # at a time in one worker (xdist group "serial", tests/e2e/conftest.py). The full run is the
       # whole suite; the quick run is the files chosen above.

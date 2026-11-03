@@ -142,8 +142,8 @@ public class UploadNightlyDecisionsTest extends TestCase {
     public void testFailedSetIsRecognised() {
         assertNull(Scheduler.setFailure("<html><div class=\"wide_left\">set2 - data cleanup done in 3 mins</div></html>"));
         assertEquals("Unexpected error", Scheduler.setFailure("<html>Unexpected error</html>"));
-        assertEquals("Error. No changes made for action:set3 user:null e:java.sql.SQLException: lock wait",
-            Scheduler.setFailure("<div class=\"wide_left\">Error. No changes made for action:set3 user:null e:java.sql.SQLException: lock wait</div>"));
+        assertEquals("Error. The work not yet saved was undone for action:set3 user:null e:java.sql.SQLException: lock wait",
+            Scheduler.setFailure("<div class=\"wide_left\">Error. The work not yet saved was undone for action:set3 user:null e:java.sql.SQLException: lock wait</div>"));
         assertEquals("no answer", Scheduler.setFailure(null));
         String line = Scheduler.failedLine(3, "Unexpected error", "12 mins");
         assertTrue(line, line.startsWith("Scheduler FAILED in set 3 "));

@@ -9,7 +9,7 @@
       for (Museum museum : museums) {
         if (museum.getIsActive()) {
           String a = "";
-          a = "<a href='" + AntwebProps.getDomainApp() + "/museum.do?" + museum.getParams() + "'>" + museum.getDisplayName() + "</a>";
+          a = "<a href='" + AntwebProps.getDomainApp() + "/museum.do?" + org.calacademy.antweb.util.Html.escAttr(museum.getParams()) + "'>" + org.calacademy.antweb.util.Html.esc(museum.getDisplayName()) + "</a>";
 
           out.println("<li>"+ a + "</li>");
         }

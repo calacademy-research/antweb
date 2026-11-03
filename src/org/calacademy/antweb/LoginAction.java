@@ -225,6 +225,11 @@ public final class LoginAction extends AntwebAction {
         if (password == null || password.length() == 0) {
             msg = new ActionMessage("error.login.needPassword");
             messages.add("message", msg);
+        } else if (messages.isEmpty()) {
+            // The same rules as every other new password and username (2026-11-02): any password was accepted, and a
+            // name longer than login.name (32 characters) failed or was cut, so the person could not log in with it.
+            String problem = newAccountProblem(userNameOrEmail, password);
+            if (problem != null) messages.add("message", new ActionMessage(problem, false));
         }
         
         if (messages.isEmpty()) {
@@ -257,6 +262,10 @@ public final class LoginAction extends AntwebAction {
                   msg = new ActionMessage("error.login.nameInUse");
                   s_log.debug("createAccount() msg:" + msg);
                   messages.add("message",msg);
+                } else {
+                  // Any other refusal: say so (the visitor went on to the home page as if the account had been made).
+                  s_log.warn("createAccount() e:" + e);
+                  messages.add("message", new ActionMessage("error.login.dbFailure"));
                 }
                 return null;
             } catch (SQLException e) {
@@ -369,9 +378,26 @@ public final class LoginAction extends AntwebAction {
         try {
             return new PasswordResetDb(connection).isMustReset(login.getId());
         } catch (SQLException e) {
-            s_log.warn("isMustReset() login:" + login.getId() + " e:" + e);  // e.g. column not created yet
-            return false;
+            s_log.warn("isMustReset() login:" + login.getId() + " e:" + e);
+            return mustResetOnError(e);
         }
+    }
+
+    /**
+     * After a database error reading must_reset: false only when the column does not exist yet (MySQL error 1054,
+     * SQL state 42S22); any other error refuses the log-in (a reset link is sent), since 2026-11-02. Before, any error
+     * let an account marked by the password reset campaign log in with its old password.
+     */
+    public static boolean mustResetOnError(SQLException e) {
+        return !(e.getErrorCode() == 1054 || "42S22".equals(e.getSQLState()));
+    }
+
+    /** Why a new account (Create Account) is refused, or null: username length, then PasswordPolicy. */
+    public static String newAccountProblem(String name, String password) {
+        if (name != null && name.trim().length() > org.calacademy.antweb.curate.login.LoginEdit.MAX_USERNAME) {
+            return "A username may have at most " + org.calacademy.antweb.curate.login.LoginEdit.MAX_USERNAME + " characters.";
+        }
+        return PasswordPolicy.check(password, password, name, "");
     }
     
 }

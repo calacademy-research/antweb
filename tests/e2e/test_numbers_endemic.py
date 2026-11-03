@@ -316,7 +316,8 @@ def test_endemic_names_follow_the_endemism_rule():
 
 
 @pytest.mark.xfail(reason="B41: a place without a bioregion gets every introduced-species-list name with a native-bioregion"
-                          " map flagged introduced (TaxonPropMgr.isIntroduced(name, null) is true)", strict=False)
+                          " map flagged introduced; fixed 2026-11-02 (TaxonPropMgr.isIntroducedIn), the stored flags change"
+                          " at the next nightly run (remove this mark once it has run)", strict=False)
 def test_a_place_without_a_bioregion_has_no_introduced_species():
     """Row 25 (B41): Introduced means "not native to this place's bioregion". A country or adm1 without a bioregion
     cannot have such names; the nightly flags give it every name of the introduced-species list that is on its list and

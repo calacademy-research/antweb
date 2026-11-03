@@ -14,6 +14,7 @@ import org.apache.commons.logging.LogFactory;
  * In-memory table of the introduced maps (table taxon_prop, prop introducedMap): for each taxon, the bioregions
  * where it is native ("Bioregion:true") or introduced ("Bioregion:false"). Loaded by AntwebMgr; used by the
  * specimen upload and name update (introduced flags), taxon pages and lists, and the Introduced Map manager.
+ * The introduced rule is isIntroducedIn (no or unknown bioregion: not introduced).
  * Docs: docs/numbers.md, docs/guides/manager-tools.md. Tests: tests/e2e/test_numbers_endemic.py.
  */
 public abstract class TaxonPropMgr {
@@ -49,11 +50,20 @@ public abstract class TaxonPropMgr {
     }
     
     public static boolean isIntroduced(String taxonName, String bioregion) {
-      String introducedMap = TaxonPropMgr.getIntroducedMap(taxonName);
-      if (introducedMap == null) return false;
-      boolean isMapped = TaxonPropMgr.isMapped(introducedMap, bioregion);
-      //A.log("TaxonPropMgr.isIntroduced() taxonName:" + taxonName + " bioregion:" + bioregion + " isMapped:" + isMapped + " introducedMap:" + introducedMap);
-      return !isMapped;  // The checkmarks indicate where they are native. So not mapped is introduced.
+      return isIntroducedIn(TaxonPropMgr.getIntroducedMap(taxonName), bioregion);
+    }
+
+    /**
+     * The one rule for "introduced" (2026-11-02, Brian Fisher): a taxon is introduced in a bioregion when it has an
+     * introduced map and the map does not mark that bioregion native ("Bioregion:true"). No bioregion (null or blank)
+     * or a name that is not one of the bioregions (Bioregion.list, a misspelling) is never introduced. Used by the
+     * specimen upload and name update (specimen.is_introduced), the nightly flags (GeolocaleDb.calcIntroducedGeolocales,
+     * BioregionDb) and the species list's Introduced mark (common/distStatus.jsp, SortTaxaByIE), so they agree.
+     */
+    public static boolean isIntroducedIn(String introducedMap, String bioregion) {
+      if (introducedMap == null || "".equals(introducedMap.trim())) return false;
+      if (bioregion == null || !Arrays.asList(Bioregion.list).contains(bioregion)) return false;
+      return !TaxonPropMgr.isMapped(introducedMap, bioregion);  // The checkmarks indicate where they are native.
     }
 
     public static boolean isIntroducedSomewhere(String taxonName) {

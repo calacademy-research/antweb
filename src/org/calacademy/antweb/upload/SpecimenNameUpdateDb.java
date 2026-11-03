@@ -70,7 +70,10 @@ public class SpecimenNameUpdateDb {
                     collation = rset.getString(2);
                 }
             }
-            stmt.executeUpdate(createTable(charset, collation));
+            // Created only when missing: CREATE TABLE commits the caller's transaction (the name update), 2026-11-02.
+            if (!org.calacademy.antweb.home.LicenseUpdateDb.tableExists(connection, "specimen_name_update")) {
+                stmt.executeUpdate(createTable(charset, collation));
+            }
             // Added 2026-10-20 (reason and AntCat id of each move): tables made before get the columns.
             boolean hasReason;
             try (ResultSet rset = stmt.executeQuery("select count(*) from information_schema.columns"

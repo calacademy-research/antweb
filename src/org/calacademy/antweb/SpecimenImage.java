@@ -146,7 +146,7 @@ public class SpecimenImage implements Serializable {
           String testPath = getHighResJpgPath();
           //A.log("getTiffPath() test:" + testPath);
           if (AntwebUtil.fileFound(testPath)) {   // REMOVE this check for performance
-            path = testPath;
+            path = getHighResJpgUrl();   // the URL, not the server path (2026-11-02: the page linked /data/antweb/...)
             LogMgr.appendLog("OJNotOT.txt", testPath);
             //ImageUtil.getNotTifList().add(this);
             // Update the is_tif flag in the images table. This is an error condition.
@@ -212,7 +212,7 @@ public class SpecimenImage implements Serializable {
       ArrayList<String> paths = new ArrayList<>();
       //String imgPath = "/data/antweb";
       String imgPath = AntwebProps.getDocRoot();  // Probably has extra slash. Remove from get methods.
-      paths.add(imgPath + getOrigPath());
+      paths.add(getOrigPath());   // already holds the doc root (it was added twice until 2026-11-02)
       paths.add(imgPath + getThumbview());
       paths.add(imgPath + getLowres());
       paths.add(imgPath + getMedres());

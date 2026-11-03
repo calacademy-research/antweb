@@ -127,6 +127,11 @@ public class CuratorTaxonSetDb extends AntwebDb {
     /** Create taxon_set_parked if missing. Safe to run repeatedly. */
     public void ensureSchema() throws SQLException {
         if (s_schemaChecked) return;
+        // Created only when missing: CREATE TABLE commits the caller's transaction (the name update), 2026-11-02.
+        if (LicenseUpdateDb.tableExists(getConnection(), "taxon_set_parked")) {
+            s_schemaChecked = true;
+            return;
+        }
         String charset = null;
         String collation = null;
         String query = "select character_set_name, collation_name from information_schema.columns"
