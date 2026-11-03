@@ -596,6 +596,21 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 	  return taxonName;
     }
   
+    /** The approved old genus concepts (genus_concept_rule), read once per upload; none when the table cannot be read (the nightly then moves). */
+    private java.util.List<GenusConceptRule.Rule> conceptRules;
+
+    private java.util.List<GenusConceptRule.Rule> getConceptRules() {
+        if (conceptRules == null) {
+            try {
+                conceptRules = new GenusConceptRuleDb(getConnection()).approved();
+            } catch (SQLException e) {
+                s_log.warn("getConceptRules() genus_concept_rule not read, no old genus concepts in this upload. e:" + e);
+                conceptRules = java.util.List.of();
+            }
+        }
+        return conceptRules;
+    }
+
     /**
      * The new name of a morphospecies or indet that an approved old genus concept moves (GenusConceptRule), with the
      * name columns of the line set from the new genus row, and the report line; null when no rule applies. Only names
@@ -603,8 +618,8 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
      */
     private String genusConceptMove(String taxonName, String bioregion, Hashtable<String, Object> taxonItem, Hashtable<String, Object> specimenItem)
       throws SQLException {
-        if (GenusConceptRule.ruleFor(GenusConceptRule.RULES, GenusSynonymRule.genusPart(taxonName), bioregion) == null) return null;
-        GenusConceptRule.Move move = GenusConceptRule.decide(taxonName, bioregion, CurrentValidNameRule.plainLookup(getConnection()));
+        if (GenusConceptRule.ruleFor(getConceptRules(), GenusSynonymRule.genusPart(taxonName), bioregion) == null) return null;
+        GenusConceptRule.Move move = GenusConceptRule.decide(getConceptRules(), taxonName, bioregion, CurrentValidNameRule.plainLookup(getConnection()));
         if (move == null) return null;
         Taxon genus = new TaxonDb(getConnection()).getTaxon(move.rule.newGenus);
         if (genus == null) return null;

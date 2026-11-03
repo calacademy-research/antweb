@@ -20,7 +20,10 @@ import org.calacademy.antweb.Taxon;
  * never (AntCat places those); the new genus must be a valid genus row. Used by the nightly name update
  * (SpecimenNameUpdate, third pass) and the specimen upload (SpecimenUploadProcess.setStatusAndCurrentValidName).
  *
- * To add a rule: one line in RULES, with who approved it and when. Tested in GenusConceptRuleTest.
+ * The approved rules are rows of table genus_concept_rule (GenusConceptRuleDb), one per old genus and bioregion,
+ * approved or rejected on genusConceptRules.do from the proposals AntCat's data gives (GenusConceptProposals;
+ * Brian Fisher, 2026-11-03: "many genera need this treatment"). SEED is only the first approved rule, put in the
+ * table when it is created. Tested in GenusConceptRuleTest.
  */
 public final class GenusConceptRule {
 
@@ -45,8 +48,8 @@ public final class GenusConceptRule {
         public String toString() { return oldGenus + " " + bioregions + " -> " + newGenus + " (" + approvedBy + ", " + approvedOn + ")"; }
     }
 
-    /** The approved rules, one per line. */
-    public static final List<Rule> RULES = List.of(
+    /** The first approved rule, put in genus_concept_rule when the table is created (GenusConceptRuleDb.ensureSchema). */
+    public static final List<Rule> SEED = List.of(
         new Rule("ponerinaemesoponera", Set.of("Afrotropical", "Malagasy"), "ponerinaexiphopelta", "Brian Fisher", "2026-11-03",
             "AntCat moved every Afrotropical and Malagasy species of Mesoponera to Xiphopelta")
     );
@@ -89,10 +92,6 @@ public final class GenusConceptRule {
      * Where a specimen filed under taxonName in bioregion goes, or null: no rule for its genus and bioregion, not
      * a morphospecies or indet, or the new genus is not a valid genus row.
      */
-    public static Move decide(String taxonName, String bioregion, CurrentValidNameRule.Lookup lookup) throws SQLException {
-        return decide(RULES, taxonName, bioregion, lookup);
-    }
-
     public static Move decide(List<Rule> rules, String taxonName, String bioregion, CurrentValidNameRule.Lookup lookup) throws SQLException {
         String genus = GenusSynonymRule.genusPart(taxonName);
         Rule rule = ruleFor(rules, genus, bioregion);

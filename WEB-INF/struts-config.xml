@@ -595,6 +595,13 @@ We would like to remove getChildImages.  Not needed now in the new UI
           <forward name="success" path="/curate/nameUpdates.jsp"/>
       </action>
 
+      <!-- Old genus concepts: proposals from AntCat's data, approve / reject (admins; genus_concept_rule). -->
+      <action path="/genusConceptRules"
+              type="org.calacademy.antweb.curate.GenusConceptRulesAction"
+              scope="request">
+          <forward name="success" path="/curate/genusConceptRules.jsp"/>
+      </action>
+
       <!-- Count check: list counts recomputed from the specimen table (admins, read-only). -->
       <action path="/countCheck"
               type="org.calacademy.antweb.util.CountCheckAction"

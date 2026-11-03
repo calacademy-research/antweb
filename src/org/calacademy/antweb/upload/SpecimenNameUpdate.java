@@ -753,8 +753,9 @@ public class SpecimenNameUpdate {
 
         // Third pass (Brian Fisher, 2026-11-03): approved old genus concepts (GenusConceptRule), e.g. Mesoponera in the
         // Afrotropical and Malagasy regions is Xiphopelta. Morphospecies and indets of those bioregions only.
+        List<GenusConceptRule.Rule> conceptRules = new GenusConceptRuleDb(connection).approved();   // read once per run
         List<Object[]> conceptCandidates = new ArrayList<>();
-        try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(conceptCandidatesSql(GenusConceptRule.RULES))) {
+        try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(conceptCandidatesSql(conceptRules))) {
             while (r.next()) conceptCandidates.add(new Object[] {r.getInt(1), r.getString(2), r.getString(3), r.getString(4)});
         }
         Map<String, NameUpdateReason> conceptReasons = new java.util.HashMap<>();
@@ -764,7 +765,7 @@ public class SpecimenNameUpdate {
             String current = (String) c[2];
             String bioregion = (String) c[3];
             if (uploaded == null || current == null || bioregion == null) continue;
-            GenusConceptRule.Move move = GenusConceptRule.decide(current, bioregion, lookup);
+            GenusConceptRule.Move move = GenusConceptRule.decide(conceptRules, current, bioregion, lookup);
             if (move == null || move.newName.equals(current)) continue;
             String key = move.rule.oldGenus + "\t" + bioregion;
             NameUpdateReason reason = conceptReasons.get(key);

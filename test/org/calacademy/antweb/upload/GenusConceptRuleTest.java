@@ -38,13 +38,14 @@ public class GenusConceptRuleTest extends TestCase {
     };
 
     static String move(String name, String bioregion) throws Exception {
-        GenusConceptRule.Move m = GenusConceptRule.decide(name, bioregion, LOOKUP);
+        GenusConceptRule.Move m = GenusConceptRule.decide(GenusConceptRule.SEED, name, bioregion, LOOKUP);
         return m == null ? null : m.newName;
     }
 
-    public void testRuleOneIsApproved() {
-        assertEquals(1, GenusConceptRule.RULES.size());
-        GenusConceptRule.Rule r = GenusConceptRule.RULES.get(0);
+    /** The seed of table genus_concept_rule: rule 1, approved by Brian Fisher, 2026-11-03. */
+    public void testRuleOneIsTheSeed() {
+        assertEquals(1, GenusConceptRule.SEED.size());
+        GenusConceptRule.Rule r = GenusConceptRule.SEED.get(0);
         assertEquals("ponerinaemesoponera", r.oldGenus);
         assertEquals("ponerinaexiphopelta", r.newGenus);
         assertEquals(Set.of("Afrotropical", "Malagasy"), r.bioregions);
@@ -81,7 +82,7 @@ public class GenusConceptRuleTest extends TestCase {
     }
 
     public void testReason() throws Exception {
-        GenusConceptRule.Rule r = GenusConceptRule.RULES.get(0);
+        GenusConceptRule.Rule r = GenusConceptRule.SEED.get(0);
         assertEquals("Old genus concept: Mesoponera in the Afrotropical region is Xiphopelta (rule approved by Brian Fisher, 2026-11-03)",
             GenusConceptRule.reason(r, "Afrotropical", null).text);
         assertEquals(Integer.valueOf(7), GenusConceptRule.reason(r, "Malagasy", 7).antcatId);

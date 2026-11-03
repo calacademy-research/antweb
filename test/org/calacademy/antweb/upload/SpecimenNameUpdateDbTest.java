@@ -49,7 +49,7 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         connection = connect();
         connection.setAutoCommit(true);
         try (Statement s = connection.createStatement()) {
-            for (String t : new String[] {"specimen", "taxon", "homonym", "description_edit"}) s.executeUpdate("drop table if exists " + t);
+            for (String t : new String[] {"specimen", "taxon", "homonym", "description_edit", "genus_concept_rule"}) s.executeUpdate("drop table if exists " + t);
             s.executeUpdate("create table taxon (taxon_name varchar(128) not null primary key, taxarank varchar(20),"
                 + " status varchar(40), current_valid_name varchar(128), insert_method varchar(30), family varchar(64),"
                 + " subfamily varchar(64), tribe varchar(64), genus varchar(64), subgenus varchar(64), species varchar(64),"
@@ -62,7 +62,7 @@ public class SpecimenNameUpdateDbTest extends TestCase {
                 + " original_taxon_name varchar(128), access_group int, status varchar(40), family varchar(64), subfamily varchar(64),"
                 + " tribe varchar(64), genus varchar(64), subgenus varchar(64), species varchar(64), subspecies varchar(64),"
                 + " bioregion varchar(64), is_introduced tinyint default 0, country varchar(64), adm1 varchar(64),"
-                + " island_country varchar(64), museum varchar(64), upload_id int)");
+                + " island_country varchar(64), museum varchar(64), upload_id int, flag varchar(20))");
             // The application creates these once per run (ensureSchema); here they are emptied.
             s.executeUpdate(SpecimenNameUpdateDb.createTable(null, null));
             s.executeUpdate("delete from specimen_name_update");
@@ -622,6 +622,98 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         SpecimenNameUpdate.Summary again = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000);
         assertEquals("nothing more, nothing moved back", 0, again.specimens);
         assertEquals("ponerinaexiphopelta (indet)", nameOf("kg0000001"));
+    }
+
+    /**
+     * Brian Fisher, 2026-11-03: old genus concepts proposed from AntCat's data (GenusConceptRuleDb.loadPairs, the three
+     * grouped queries) on a small fixture, then an approved row of genus_concept_rule driving the nightly move.
+     *   Alpha, Afrotropical: both AntCat species known there went to Beta, no valid Alpha left -> PROPOSE
+     *   Alpha, Malagasy: one to Beta, one to Gamma -> SPLIT
+     *   Alpha, Neotropical: one to Beta, a valid Alpha species left -> MIXED
+     *   Alpha, Indomalaya: only red-flagged specimens -> not listed
+     *   Syn (a synonym genus) and Mesoponera (the seed rule) -> not listed
+     */
+    public void testGenusConceptProposalsAndApprovedRule() throws Exception {
+        exec("drop table if exists bioregion_taxon");
+        exec("create table bioregion_taxon (bioregion_name varchar(64), taxon_name varchar(128))");
+        try {
+            for (String g : new String[] {"alpha", "beta", "gamma", "mesoponera", "xiphopelta"}) {
+                taxon("ponerinae" + g, "genus", "valid", null, null, "ponerinae", g, null, null);
+            }
+            taxon("ponerinaesyn", "genus", "synonym", "ponerinaebeta", null, "ponerinae", "syn", null, null);
+            String[][] moved = {   // old, current valid name, bioregions of the valid name
+                {"ponerinaealpha one", "ponerinaebeta one", "Afrotropical,Malagasy"},
+                {"ponerinaealpha two", "ponerinaebeta two", "Afrotropical,Neotropical"},
+                {"ponerinaealpha three", "ponerinaegamma three", "Malagasy"},
+                {"ponerinaealpha five", "ponerinaealpha four", "Neotropical"},    // within the genus: not a move; Alpha four is valid
+                {"ponerinaesyn six", "ponerinaebeta six", "Afrotropical"},
+                {"ponerinaemesoponera seven", "ponerinaexiphopelta seven", "Afrotropical"}};
+            for (String[] m : moved) {
+                String[] t = m[1].substring("ponerinae".length()).split(" ");
+                if (count("select count(*) from taxon where taxon_name = '" + m[1] + "'") == 0) {
+                    taxon(m[1], "species", "valid", null, null, "ponerinae", t[0], t[1], null);
+                }
+                String[] o = m[0].substring("ponerinae".length()).split(" ");
+                taxon(m[0], "species", "obsolete combination", m[1], null, "ponerinae", o[0], o[1], null);
+                for (String b : m[2].split(",")) exec("insert into bioregion_taxon values ('" + b + "', '" + m[1] + "')");
+            }
+            String[][] specimens = {   // code, name, group, bioregion, status, flag
+                {"pa0001", "ponerinaealpha (indet)", "40", "Afrotropical", "indetermined", null},
+                {"pa0002", "ponerinaealpha af01", "40", "Afrotropical", "morphotaxon", null},
+                {"pa0003", "ponerinaealpha af01", "41", "Afrotropical", "morphotaxon", null},
+                {"pa0004", "ponerinaealpha (indet)", "40", "Malagasy", "indetermined", null},
+                {"pa0005", "ponerinaealpha (indet)", "40", "Neotropical", "indetermined", null},
+                {"pa0006", "ponerinaealpha (indet)", "40", "Indomalaya", "indetermined", "red"},
+                {"pa0007", "ponerinaesyn (indet)", "40", "Afrotropical", "indetermined", null},
+                {"pa0008", "ponerinaemesoponera (indet)", "40", "Afrotropical", "indetermined", null},
+                {"pa0009", "ponerinaealpha four", "40", "Afrotropical", "valid", null}};
+            for (String[] sp : specimens) {
+                exec("insert into specimen (code, taxon_name, access_group, status, flag, subfamily, genus, species, bioregion) values ("
+                    + q(sp[0]) + ", " + q(sp[1]) + ", " + sp[2] + ", " + q(sp[4]) + ", " + q(sp[5]) + ", 'ponerinae', 'alpha', 'x', " + q(sp[3]) + ")");
+            }
+
+            org.calacademy.antweb.upload.GenusConceptRuleDb rules = new org.calacademy.antweb.upload.GenusConceptRuleDb(connection);
+            rules.ensureSchema();
+            assertEquals("the seed: Mesoponera in two bioregions", 2, rules.approved().size());
+            java.util.List<org.calacademy.antweb.upload.GenusConceptProposals.Pair> listed = rules.proposals();
+            java.util.Map<String, String> kinds = new java.util.TreeMap<>();
+            for (org.calacademy.antweb.upload.GenusConceptProposals.Pair p : listed) kinds.put(p.genus + " " + p.bioregion, p.kind.toString());
+            assertEquals("{ponerinaealpha Afrotropical=PROPOSE, ponerinaealpha Malagasy=SPLIT, ponerinaealpha Neotropical=MIXED}", kinds.toString());
+            org.calacademy.antweb.upload.GenusConceptProposals.Pair propose = listed.get(0);
+            assertEquals("ponerinaebeta", propose.newGenus());
+            assertEquals(3, propose.specimens());
+            assertEquals("{40=2, 41=1}", propose.specimensByGroup.toString());
+            assertEquals("2 of 2 species of Alpha in Afrotropical moved to Beta",
+                org.calacademy.antweb.upload.GenusConceptProposals.evidence(propose));
+            assertEquals(java.util.List.of("Alpha one -> Beta one", "Alpha two -> Beta two"),
+                org.calacademy.antweb.upload.GenusConceptProposals.examples(propose, 5));
+
+            // The page's decision: approve only what is proposed.
+            String refused = org.calacademy.antweb.curate.GenusConceptRulesAction.decide(rules, listed, "approve",
+                "ponerinaealpha", "Malagasy", "ponerinaebeta", null, "test");
+            assertTrue(refused, refused.startsWith("Nothing changed"));
+            String approved = org.calacademy.antweb.curate.GenusConceptRulesAction.decide(rules, listed, "approve",
+                "ponerinaealpha", "Afrotropical", "ponerinaebeta", "AntCat moved both", "Brian Fisher");
+            assertTrue(approved, approved.startsWith("Approved: Alpha in the Afrotropical region is Beta"));
+            org.calacademy.antweb.curate.GenusConceptRulesAction.decide(rules, listed, "reject", "ponerinaealpha", "Malagasy", null, null, "Brian Fisher");
+            assertEquals("approved and rejected pairs are not proposed again", 1, rules.proposals().size());
+            assertEquals("rejected", one("select status from genus_concept_rule where old_genus = 'ponerinaealpha' and bioregion = 'Malagasy'"));
+            assertEquals(3, rules.approved().size());
+
+            // The approved row drives the nightly move: Afrotropical only, morphospecies and indets only.
+            SpecimenNameUpdate.Summary s = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000);
+            assertEquals("ponerinaebeta (indet)", nameOf("pa0001"));
+            assertEquals("ponerinaebeta af01", nameOf("pa0002"));
+            assertEquals("ponerinaebeta af01", nameOf("pa0003"));
+            assertEquals("ponerinaealpha (indet)", nameOf("pa0004"));
+            assertEquals("ponerinaealpha four", nameOf("pa0009"));
+            assertEquals("and the seed rule", "ponerinaexiphopelta (indet)", nameOf("pa0008"));
+            assertEquals(4, s.conceptSpecimens);
+            assertEquals("Old genus concept: Alpha in the Afrotropical region is Beta (rule approved by Brian Fisher, " + new java.sql.Date(System.currentTimeMillis()) + ")",
+                one("select reason from specimen_name_update where code = 'pa0001' and mode = 'changed'"));
+        } finally {
+            exec("drop table if exists bioregion_taxon");
+        }
     }
 
     public void testMaxChangesStopsApply() throws Exception {
