@@ -382,6 +382,58 @@ public class PlaceTaxonNotesDbTest extends TestCase {
             + ListView.vettedCondition("t")));
     }
 
+    /**
+     * The genus rows a subfamily's browse page shows in a view (BrowseAction: Subfamily.setChildren's query with the view's
+     * criteria, then ListView.GenusRows.filter of that subfamily), counted here without the page.
+     */
+    private int browseGenera(Country place, String choice, String subfamily) throws Exception {
+        StatusSet set = StatusSet.listStatusSet(choice, place.getName());
+        String q = "select distinct taxon.genus, taxon.status, geolocale_taxon.source from taxon" + place.getFetchChildrenClause()
+            + " and taxon.subfamily = '" + subfamily + "' and taxon.genus != '' and taxarank = 'genus'" + set.getAndCriteria("taxon", "genus");
+        ListView.GenusRows rows = ListView.loadGenusRows(connection, place, choice, subfamily);
+        int n = 0;
+        try (PreparedStatement s = connection.prepareStatement(q); ResultSet r = s.executeQuery()) {
+            while (r.next()) if (rows.keep(subfamily, r.getString(1), r.getString(2), r.getString(3))) ++n;
+        }
+        return n;
+    }
+
+    /**
+     * B77 (Brian Fisher, 2026-11-03: "browse header counts the view's rows"): a subfamily row's Genera on the place's
+     * subfamily list are the genus rows of its browse page in the same view (ListView.SubfamilyRows), in every view; the
+     * stored genus_count (production: Palearctic Ponerinae 14 against 15 on its browse page in Curated, with the curated
+     * morphogenus Ponerine_genus2) is no longer shown in a place with the views.
+     */
+    public void testSubfamilyRowsCountTheGenusRowsOfTheirBrowsePage() throws Exception {
+        otherNamesFixture();
+        // Carebara on Madagascar's list (from specimens: its morphospecies mg01); a curated morphogenus of Ponerinae
+        String morphogenus = "ponerinaeponerine_genus2", morpho = "ponerinaeponerine_genus2 mg01";
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species) values"
+            + " ('" + morphogenus + "', 'genus', 'morphotaxon', '" + PON + "', 'formicidae', '" + PON + "', 'ponerine_genus2', null),"
+            + " ('" + morpho + "', 'species', 'morphotaxon', '" + morphogenus + "', 'formicidae', '" + PON + "', 'ponerine_genus2', 'mg01')");
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, source) values (" + MADAGASCAR + ", '" + CAREBARA + "', 'specimen'),"
+            + " (" + MADAGASCAR + ", '" + morphogenus + "', 'specimen'), (" + MADAGASCAR + ", '" + morpho + "', 'speciesListTool')");
+        Country mad = madagascar();
+        int[][] expected = {{2, 1}, {2, 2}, {2, 2}, {0, 0}};   // valid, curated, all, fossil: Myrmicinae, Ponerinae
+        for (int i = 0; i < StatusSet.LIST_CHOICES.length; i++) {
+            String choice = StatusSet.LIST_CHOICES[i];
+            ListView.SubfamilyRows rows = ListView.loadSubfamilyRows(connection, mad, choice);
+            assertEquals(choice, rows.choice);
+            assertEquals(choice + " Myrmicinae", expected[i][0], rows.genera(MYRM));
+            assertEquals(choice + " Ponerinae", expected[i][1], rows.genera(PON));
+            assertEquals(choice + " Myrmicinae = its browse page", browseGenera(mad, choice, MYRM), rows.genera(MYRM));
+            assertEquals(choice + " Ponerinae = its browse page", browseGenera(mad, choice, PON), rows.genera(PON));
+        }
+        // a genus known here only from specimens identified to genus is not a row of Valid or Curated
+        exec("update specimen set taxon_name = '" + CAREBARA_INDET + "', status = 'indetermined' where code in ('mg1', 'mg2')");
+        assertEquals(1, ListView.loadSubfamilyRows(connection, mad, "valid").genera(MYRM));
+        assertEquals(2, ListView.loadSubfamilyRows(connection, mad, "all").genera(MYRM));
+        // the AntCat list and Fossil Ants keep their own sets and stored numbers
+        org.calacademy.antweb.Project fossil = new org.calacademy.antweb.Project();
+        fossil.setName("fossilants");
+        assertNull(ListView.loadSubfamilyRows(connection, fossil, "valid"));
+    }
+
     private int count(String sql) throws Exception {
         try (PreparedStatement s = connection.prepareStatement(sql); ResultSet r = s.executeQuery()) {
             r.next();

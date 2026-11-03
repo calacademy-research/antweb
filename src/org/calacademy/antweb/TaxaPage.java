@@ -472,6 +472,26 @@ public class TaxaPage implements Serializable {
 		return genusRows;
 	}
 
+	private ListView.SubfamilyRows subfamilyRows;
+
+	/**
+	 * Subfamily lists (B77, Brian Fisher, 2026-11-03): each subfamily row's Genera are the genus rows its browse page shows
+	 * in the same view (ListView.SubfamilyRows), not the stored genus_count. On a database error the rows keep their stored
+	 * numbers.
+	 */
+	public void findSubfamilyRows(Connection connection, Overview overview, String choice) {
+		try {
+			subfamilyRows = ListView.loadSubfamilyRows(connection, overview, choice);
+		} catch (SQLException | RuntimeException e) {
+			s_log.warn("findSubfamilyRows() overview:" + overview + " e:" + e);
+			subfamilyRows = null;
+		}
+	}
+
+	public ListView.SubfamilyRows getSubfamilyRows() {
+		return subfamilyRows;
+	}
+
 	private ListView.PlaceSpecimens placeSpecimens;
 
 	/**

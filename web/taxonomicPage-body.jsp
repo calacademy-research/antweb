@@ -173,6 +173,8 @@
   // 2026-11-02: genus lists, the genus rows' numbers in the view (Species, Other specimens); species lists, the
   // place's specimens by name (source icons, the rows added from specimens)
   ListView.GenusRows genusRows = taxaPage.getGenusRows();
+  // 2026-11-03 (B77): subfamily lists, the subfamily rows' Genera in the view (the genus rows of their browse pages)
+  ListView.SubfamilyRows subfamilyRows = taxaPage.getSubfamilyRows();
   ListView.PlaceSpecimens placeSpecimens = taxaPage.getPlaceSpecimens();
 %>
 

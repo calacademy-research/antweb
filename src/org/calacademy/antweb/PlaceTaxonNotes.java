@@ -73,6 +73,9 @@ public final class PlaceTaxonNotes {
     public static final String NOT_RECORDED = "notRecorded";
     /** Request attribute (a ListView.GenusRows) read by web/taxonReport.jsp: the genus rows of a subfamily's browse page in a place. */
     public static final String GENUS_ROWS = "placeGenusRows";
+
+    /** Request attribute (a ListView.SubfamilyRows) read by web/taxonReport.jsp: the subfamily rows of the family's browse page in a place (B77, 2026-11-03). */
+    public static final String SUBFAMILY_ROWS = "placeSubfamilyRows";
     /** Request attribute (String) read by web/showBrowse-body.jsp: the header of a genus page in the view Not curated. */
     public static final String NOT_CURATED_HEADER = "notCuratedHeader";
     /** Request attribute (a ListView.PlaceSpecimens) read by web/taxonReport.jsp: one genus's specimens collected here, by name. */

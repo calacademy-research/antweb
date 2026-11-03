@@ -679,12 +679,14 @@ public final class ListView {
         }
 
         public boolean keep(Taxon genusRow) {
-            String sf = genusRow.getSubfamily();
-            String g = genusRow.getGenus();
-            Integer ev = evidence.get(PlaceTaxonNotes.OtherNames.key(sf, g));
             TaxonSet ts = genusRow.getTaxonSet();
-            String kind = sourceKind(ts == null ? null : ts.getSource(), false);
-            return keepGenus(choice, genusRow.getStatus(), kind, species(sf, g), ev == null ? 0 : ev);
+            return keep(genusRow.getSubfamily(), genusRow.getGenus(), genusRow.getStatus(), ts == null ? null : ts.getSource());
+        }
+
+        /** The same, from the genus row's subfamily, genus, status and list source (subfamilyRows: no Taxon per row). */
+        public boolean keep(String subfamily, String genus, String status, String listSource) {
+            Integer ev = evidence.get(PlaceTaxonNotes.OtherNames.key(subfamily, genus));
+            return keepGenus(choice, status, sourceKind(listSource, false), species(subfamily, genus), ev == null ? 0 : ev);
         }
 
         /** The genus rows the view shows (keep), in their order. */
@@ -725,6 +727,85 @@ public final class ListView {
         // count; Brian Fisher, 2026-11-02, 18:40). One query per 500 names (StatisticsDb.antImagedNames).
         rows.withImaged(view.countByGenusOf(org.calacademy.antweb.home.StatisticsDb.antImagedNames(connection, view.taxonNames())));
         return rows;
+    }
+
+    /**
+     * The numbers of a view's genus rows that decide which rows the view shows (Species in the view and the evidence of
+     * keepGenus), without the Not curated and Images numbers (subfamilyRows: the rows are counted, not shown).
+     */
+    static GenusRows loadGenusRowsToKeep(Connection connection, Overview overview, String choice, PlaceSpecimens specimens) throws SQLException {
+        StatusSet viewSet = StatusSet.listStatusSet(choice);
+        ViewNames view = loadViewNames(connection, overview, viewSet, null, null, specimens);
+        Map<String, Integer> evidence = null;
+        if (StatusSet.LIST_VALID.equals(choice) || StatusSet.LIST_VETTED.equals(choice)) {
+            evidence = loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_ALL), null, null, specimens)
+                .countByGenus(BEYOND_GENUS_STATUSES);
+        }
+        return new GenusRows(choice, view.countByGenus(null), evidence);
+    }
+
+    // ------------------------------------------------------------------------------------------------- subfamily rows
+
+    /**
+     * The Genera of a view's subfamily rows in a place (B77; Brian Fisher, 2026-11-03: "browse header counts the view's
+     * rows"). Since 2026-11-02 the browse page of a subfamily in a place lists and counts the genus rows of the chosen view
+     * (Subfamily.setChildren with the view's criteria, then GenusRows.filter); the subfamily's row on the place's list
+     * showed the stored genus_count of the nightly count instead (production: Palearctic Ponerinae 14, its browse page in
+     * the default view Curated 15, with the curated morphogenus Ponerine_genus2). Now the row shows the genus rows its
+     * browse page shows in the same view, linked to that page in that view, as a genus row's Species (GenusRows).
+     */
+    public static final class SubfamilyRows {
+        public final String choice;
+        /** subfamily (lower case) -> the genus rows of the view under it. */
+        final Map<String, Integer> genera;
+
+        public SubfamilyRows(String choice, Map<String, Integer> genera) {
+            this.choice = choice;
+            this.genera = genera == null ? new HashMap<>() : genera;
+        }
+
+        /** The subfamily row's genera in the view (0 when none). */
+        public int genera(String subfamily) {
+            Integer n = subfamily == null ? null : genera.get(subfamily.toLowerCase(Locale.ROOT));
+            return n == null ? 0 : n;
+        }
+    }
+
+    /**
+     * The query of the genus rows of a view in a place, as the subfamily's browse page selects them (Subfamily.setChildren:
+     * the list's genus rows, the view's criteria, a genus value), every subfamily at once: subfamily, genus, status and the
+     * list row's source (null on museum lists, which have none).
+     */
+    public static String subfamilyGenusRowsSql(Overview overview, String listTable, StatusSet viewSet) {
+        String source = "museum_taxon".equals(listTable) ? "null" : listTable + ".source";
+        return "select taxon.subfamily, taxon.genus, taxon.status, " + source + " source"
+            + TaxaPage.listWhere(overview, Rank.GENUS, true, viewSet) + " and taxon.genus != ''";
+    }
+
+    /**
+     * The Genera of the subfamily rows of a place's list in a view: two or three queries per page (the view's names, the
+     * evidence for Valid and Curated, the genus rows), none per row. Null for an overview without the views or that is not
+     * a place (the rows keep their stored numbers).
+     */
+    public static SubfamilyRows loadSubfamilyRows(Connection connection, Overview overview, String choice) throws SQLException {
+        if (!hasViews(overview) || choice == null) return null;
+        String[] tk = org.calacademy.antweb.home.GenusOnly.typeAndKey(overview);
+        if (tk == null) return null;
+        StatusSet viewSet = StatusSet.listStatusSet(choice);
+        // which genus rows the browse page keeps (BrowseAction: GenusRows.filter, in Valid and Curated only)
+        GenusRows keep = loadGenusRowsToKeep(connection, overview, choice, genusListSpecimens(connection, overview, null));
+        Map<String, Integer> genera = new HashMap<>();
+        try (PreparedStatement stmt = connection.prepareStatement(subfamilyGenusRowsSql(overview, PlaceTotals.listTable(tk[0]), viewSet));
+             ResultSet r = stmt.executeQuery()) {
+            java.util.Set<String> seen = new HashSet<>();   // a genus once (the browse page selects distinct genera)
+            while (r.next()) {
+                String sf = r.getString(1);
+                String g = r.getString(2);
+                if (sf == null || g == null || !seen.add(PlaceTaxonNotes.OtherNames.key(sf, g))) continue;
+                if (keep.keep(sf, g, r.getString(3), r.getString(4))) genera.merge(sf.toLowerCase(Locale.ROOT), 1, Integer::sum);
+            }
+        }
+        return new SubfamilyRows(choice, genera);
     }
 
     /**

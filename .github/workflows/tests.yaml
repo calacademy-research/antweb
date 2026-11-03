@@ -1107,7 +1107,8 @@ jobs:
           # 2026-10-30: the specimens collected in a place under names not on its species list, by genus; 2026-11-02:
           # the views (Valid, Curated, All specimen names): curated morphospecies, the names of specimens collected there,
           # disputes, red flags, the genus rows' Species, species imaged and which rows each view shows, the same from the
-          # names stored nightly. PlaceGenusCurationDbTest (2026-11-02): the nightly Not curated count per place and genus
+          # names stored nightly; 2026-11-03 (B77): a subfamily row's Genera = the genus rows of its browse page in the
+          # same view. PlaceGenusCurationDbTest (2026-11-02): the nightly Not curated count per place and genus
           # (valid names and curated morphospecies left out; uncurated morphospecies, indet and unrecognized names counted;
           # red flags never; country and island_country once; adm1s, museums, bioregions), the page's read (no table: no
           # error), the view Not curated's names.
@@ -1115,6 +1116,9 @@ jobs:
           # "(myrmicinae)" and unrecognized genus names are not genera), in the nightly totals, the subfamily rows' Genera,
           # upload groups and the count check; Subfamilies count valid subfamilies only (not "(formicidae)" or misspelled
           # names, curated projects too: B67 superseded); the Worldants change alert compares each import with the previous one.
+          # ParentRowsDbTest (2026-11-03, B76): the nightly count adds the missing genus and subfamily rows of every kind
+          # of list (not placeholders, other statuses, names without a taxon row or parents a curator removed), so the rows
+          # add up to the place's Genera and Species.
           # BlankNameCleanupDbTest (2026-10-29): with specimens of blank name, the old cleanups delete nothing; the
           # blank-safe ones delete the names and list rows no specimen uses (not AntCat's, not curators' rows, not blank
           # rows) and the preview counts them. Last: it makes its own small tables.
@@ -1146,8 +1150,9 @@ jobs:
               /t/org/calacademy/antweb/home/PlaceGenusCurationDbTest.java \
               /t/org/calacademy/antweb/home/GeneraRuleDbTest.java \
               /t/org/calacademy/antweb/home/BlankNameCleanupDbTest.java \
-              /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:10 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:11 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
+              /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java \
+              /t/org/calacademy/antweb/home/ParentRowsDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:11 home.ParentRowsDbTest:4 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

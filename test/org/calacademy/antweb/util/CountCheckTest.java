@@ -65,6 +65,8 @@ public class CountCheckTest extends TestCase {
         // the genus column of the live table (the species counts read it: PlaceTotals.identifiedToGenus); invisible, so
         // the inserts by position stay as they are
         exec("alter table taxon add column genus varchar(64) invisible");
+        // and its family (the nightly count adds missing parent rows of ant names, ParentRows, 2026-11-03)
+        exec("alter table taxon add column family varchar(40) invisible default 'formicidae'");
         exec("insert into upload values (1, '2020-01-01 10:00:00')");
         exec("insert into specimen values ('casent1', '" + SP_A + "', 'morphotaxon', 'Madagascar', null, 'Madagascar', null, 'Malagasy', 1)");
         exec("insert into specimen values ('casent2', '" + SP_A + "', 'morphotaxon', 'Madagascar', null, 'Madagascar', null, 'Malagasy', 1)");

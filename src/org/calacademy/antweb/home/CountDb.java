@@ -13,7 +13,8 @@ import org.calacademy.antweb.home.*;
 /**
  * Base class of the count crawls of the four species-list tables (GeolocaleTaxonCountDb, ProjTaxonCountDb,
  * BioregionTaxonCountDb, MuseumTaxonCountDb). For one place (a Countable): counts the specimens of each name and
- * adds them up the taxon tree with the species, genus and subfamily counts (childrenCountCrawl), counts images
+ * adds them up the taxon tree with the species, genus and subfamily counts (childrenCountCrawl; first the missing genus
+ * and subfamily rows are added, ParentRows, B76 2026-11-03), counts images
  * per name and up the tree (imageCountCrawl), and writes the place's totals and subfamily chart JSON. Run by
  * nightly sets 2 to 4. Docs: docs/numbers.md, docs/flows/nightly.md.
  * Tests: TaxonTreeCountDbTest, NightlyCountOrderDbTest, RegionCountDbTest.
@@ -75,12 +76,29 @@ public class CountDb extends AntwebDb {
         return "<br><br>count: " + count + " <br><br>query: " + s_query + " <br><br>report: " + s_report;
     }
 
+    /** Adds the missing parent rows of each list this crawl counts (one per crawl: its table lookups are kept). */
+    private ParentRows parentRows;
+
+    /** The parent rows this crawl added (B76, ParentRows), for its log line. */
+    protected int parentRowsAdded = 0;
+
+    public int getParentRowsAdded() {
+        return parentRowsAdded;
+    }
+
     // Countables include Geolocale, Bioregion, Museum, Project.
     protected void childrenCountCrawl(Countable countable) throws SQLException {
         //A.log("childrenCountCrawl countable:" + countable);
 
         if (countable == null) A.log("childrenCountCrawl() why is countable null?");
         debug = AntwebProps.isDevMode();
+        // B76 (Brian Fisher, 2026-11-03: "missing parent rows: add them"): the genus row of every counted species and the
+        // subfamily row of every counted genus on the list, before the rows are counted, so every name the place's
+        // numbers count is under a row of its list (ParentRows).
+        if (countable != null) {
+            if (parentRows == null) parentRows = new ParentRows(getConnection());
+            parentRowsAdded += parentRows.add(countable);
+        }
 		int specimenCount = countSpecimens(countable);
 
 		int speciesSpeciesCount = countChildren(countable, "species", "species_count");

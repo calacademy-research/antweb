@@ -365,6 +365,17 @@ def genera_rule_counted():
     return compute_log_has("Set 4 done", GENERA_RULE_LOG)
 
 
+# ParentRows.LOG, on the "Set 3 done" line of the nightly run since 2026-11-03. Keep in step with Java.
+PARENT_ROWS_LOG = "missing parent rows added (2026-11-03)"
+
+
+def parent_rows_added():
+    """True when a nightly run has added the missing parent rows of every list (B76, 2026-11-03: the genus row of every
+    counted species, the subfamily row of every counted genus; ParentRows), False when compute.log is readable and has no
+    such line (the admin column totals can still be below the place numbers until then: pending), None when unreadable."""
+    return compute_log_has("Set 3 done", PARENT_ROWS_LOG)
+
+
 _GENERA = {}
 _SUBFAMILIES = {}
 

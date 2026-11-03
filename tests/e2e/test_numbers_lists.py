@@ -20,8 +20,9 @@ region, subregion, bioregion, museum, project) is checked on every run, a differ
           names listed = the names of the list that the API's /unimagedGeolocaleTaxa returns for the place (the
           same rule written twice: TaxaPage.findUnimaged in Java, imagedTaxaSql in the API) (countries).
   row 46  browse.do header "N Species" of a genus (same view) = the genus row's Species on the place's list (validated by
-          inv:list.genus), "N Genera" of a subfamily = the subfamily row's "N Genera" (inv:list.subfamily), and the
-          rows the browse page lists; "N Specimens" of a species = the species row's "N Specimens" (B15: the browse
+          inv:list.genus), "N Genera" of a subfamily = the subfamily row's "N Genera" in the same view, Valid, Curated
+          and All specimen names (B77, fixed 2026-11-03: the row counts the genus rows of its browse page in the view),
+          and the rows the browse page lists; "N Specimens" of a species = the species row's "N Specimens" (B15: the browse
           page and the count use different place rules; xfail until fixed).
   row 47  "(Only the first k of N displayed)" (species browse with limit=k): N = the header's N; the page shows k rows
           (B42: it shows k + 1; xfail until fixed).
@@ -267,9 +268,10 @@ def _consistent(where, b, rows, wrong):
         wrong.append(f"{where}: header {b['text']!r}, {rows} rows listed")
 
 
-def _pick_row(p, rank, salt, max_count=None):
-    """The day's row (with a count above 0 and a browse link) of the place's list of that rank: (row, count, link)."""
-    html = ns.fetch(p.list_url(rank))
+def _pick_row(p, rank, salt, max_count=None, view="curated"):
+    """The day's row (with a count above 0 and a browse link) of the place's list of that rank in a view (default
+    Curated): (row, count, link)."""
+    html = ns.fetch(p.list_url(rank, view))
     if html is None:
         return None
     rows = []
@@ -283,61 +285,44 @@ def _pick_row(p, rank, salt, max_count=None):
 
 def test_browse_headers_equal_the_list_rows():
     """Row 46 (Species, Genera) and 49 (consistency): for the day's place of every kind, the day's genus row of its
-    list: browse.do of the genus says "N Species" = the row's "N Species" and lists N rows; the day's subfamily row:
-    browse.do says "N Genera" = the row's "N Genera" and lists N rows; on both, the hidden totals say the same N and
-    M, and M imaged <= N."""
-    wrong, stored, stored_genera, checked, known = [], [], [], [], []
+    list (Curated): browse.do of the genus says "N Species" = the row's "N Species" and lists N rows; the day's subfamily
+    row in each of the views Valid, Curated and All specimen names: browse.do of the subfamily in that view says
+    "N Genera" = the row's "N Genera" and lists N rows (B77, fixed 2026-11-03: a subfamily row's Genera are the genus
+    rows its browse page shows in the same view, ListView.SubfamilyRows; until then the row showed the stored count of
+    the nightly run); on both, the hidden totals say the same N and M, and M imaged <= N."""
+    wrong, stored, checked = [], [], []
     for p in places():
-        for rank in ("genus", "subfamily"):
-            got = _pick_row(p, rank, "browse" + rank)
-            if not got:
-                continue
-            row, count, link = got
-            html = ns.fetch(_browse(link, "curated" if rank == "genus" else "all"))
-            if html is None:
-                continue
-            where = f"{p} {rank} {row['name'] or link}"
-            b = _browse_numbers(html)
-            browse_rows = ns.list_rows(html)
-            _consistent(where, b, len(browse_rows), wrong)
-            n = b["n"]
-            if rank == "subfamily" and n is not None:
-                # Genera rule (Brian Fisher, 2026-10-30): the list row's "N Genera" counts the genus rows that are genera
-                # (valid genera and morphogenera); the browse page lists every genus row (placeholders such as
-                # "(myrmicinae)" and unrecognized genus names too) and its header counts them all.
-                n = ns.counted_rows(browse_rows, "genus")
-                if n is None:
+        for rank, views in (("genus", ("curated",)), ("subfamily", ("valid", "curated", "all"))):
+            for view in views:
+                got = _pick_row(p, rank, "browse" + rank + view, view=view)
+                if not got:
                     continue
-            if n is not None and n != count:
-                line = f"{where}: browse header {b['text']!r}" + (f" ({n} of its rows are genera)" if n != b["n"] else "") + f", list row {count}"
-                # B77 (found 2026-10-27, also on production): a bioregion's subfamily browse page counts and lists
-                # every genus row of the bioregion (Palearctic Ponerinae: 18, including "ponerine"), the list row
-                # only the counted statuses (16). Known until fixed; any other kind of place or rank still fails.
-                # The list row is stored by the nightly run, the browse header counted live (counting rules of
-                # 2026-10-28: pending until a nightly run has counted by them).
-                # a subfamily row's N Genera apart from a genus row's N Species (2026-10-30 review): the genera and
-                # subfamilies rule's pending covers the N Genera only
-                if p.kind == "bioregion" and rank == "subfamily":
-                    known.append(line)
-                else:
-                    (stored_genera if rank == "subfamily" else stored).append(line)
-            checked.append(where)
+                row, count, link = got
+                # the row's link carries its view (2026-11-02 genus rows, 2026-11-03 subfamily rows)
+                if rank == "subfamily" and f"statusSet={view}" not in unescape(link):
+                    wrong.append(f"{p} subfamily {row['name'] or link} ({view}): the row's link {link!r} does not keep the view")
+                html = ns.fetch(_browse(link, view))
+                if html is None:
+                    continue
+                where = f"{p} {rank} {row['name'] or link} ({view})"
+                b = _browse_numbers(html)
+                browse_rows = ns.list_rows(html)
+                _consistent(where, b, len(browse_rows), wrong)
+                n = b["n"]
+                if n is not None and n != count:
+                    line = f"{where}: browse header {b['text']!r}, list row {count}"
+                    # a genus row's Species: pending until a nightly run has counted by the counting rules of 2026-10-28;
+                    # a subfamily row's Genera are counted live from the same rows as the page (strict)
+                    (stored if rank == "genus" else wrong).append(line)
+                checked.append(where)
     if not checked:
         pytest.skip("no list row with a browse link found " + ns.day_note())
-    rules_pending = ns.counting_rules_counted() is False
-    pending_species = bool(stored) and rules_pending
-    # a subfamily row's N Genera: also until a nightly run has counted by the genera and subfamilies rule of 2026-10-30
-    pending_genera = bool(stored_genera) and (rules_pending or ns.genera_rule_counted() is False)
+    pending_species = bool(stored) and ns.counting_rules_counted() is False
     if not pending_species:
         wrong += stored
-    if not pending_genera:
-        wrong += stored_genera
     assert not wrong, f"{len(checked)} browse pages {ns.day_note()} ({PENDING}):\n" + "\n".join(wrong)
-    if pending_species or pending_genera:
-        pending = (stored if pending_species else []) + (stored_genera if pending_genera else [])
-        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28 and the genera and subfamilies rule of 2026-10-30") + ":\n" + "\n".join(pending + known))
-    if known:
-        pytest.xfail("B77: bioregion subfamily browse header counts genus rows the list row leaves out: " + "; ".join(known))
+    if pending_species:
+        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28") + ":\n" + "\n".join(stored))
 
 
 _SPECIES = {}
