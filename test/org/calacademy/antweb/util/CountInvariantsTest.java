@@ -152,6 +152,36 @@ public class CountInvariantsTest extends TestCase {
         assertTrue(r.imagesSinceNightly);
     }
 
+    /**
+     * Brian Fisher, 2026-11-03 (audit of 2026-11-02): an upload makes a place's numbers pending only when it touched that
+     * place. A wrong number of the museum MCZC stays real after an upload of a specimen owned elsewhere (another country,
+     * museum, bioregion, a name on no list); the same upload of an MCZC specimen makes it pending.
+     */
+    public void testAnUploadElsewhereLeavesAPlaceDifferenceReal() throws Exception {
+        exec("update museum set imaged_specimen_count = 9 where code = 'MCZC'");   // more imaged than images: place.images.order
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily) values"
+            + " ('myrmicinaepheidole ke1', 'species', 'morphotaxon', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "')");
+        exec("insert into upload (upload_id, created) values (2, now())");
+        exec("insert into specimen (code, taxon_name, status, country, museum, bioregion, upload_id, family, subfamily, ownedBy) values"
+            + " ('casent9', 'myrmicinaepheidole ke1', 'morphotaxon', 'Kenya', 'NMK', 'Afrotropical', 2, 'formicidae', '" + MYRM + "', 'NMK')");
+        CountCheck.Result r = run(true);
+        assertTrue(r.uploadSinceNightly);
+        assertNotNull(r.changed);
+        assertFalse(r.changed.specimens(CountCheck.MUSEUM, "MCZC"));
+        assertTrue(r.changed.specimens(CountCheck.MUSEUM, "NMK"));
+        assertTrue(r.changed.specimens(CountCheck.BIOREGION, "Afrotropical"));
+        assertFalse(r.changed.specimens(CountCheck.GEOLOCALE, "" + MADAGASCAR));
+        assertEquals(list(r), 2, real(r, "place.images.order"));   // Imaged <= Images, Imaged <= Specimens
+        assertEquals(list(r), 1, real(r, "place.images"));
+
+        // the specimen owned by MCZC (specimen.museum is set at night; ownedBy names the museum now)
+        exec("update specimen set museum = null, ownedBy = 'MCZC, Harvard' where code = 'casent9'");
+        r = run(true);
+        assertTrue(r.changed.specimens(CountCheck.MUSEUM, "MCZC"));
+        assertEquals(list(r), 0, real(r, "place.images.order"));
+        assertEquals(list(r), 0, r.real());
+    }
+
     public void testRotatingPlacesStopAtTheTimeLimit() throws Exception {
         List<CountCheck.Place> rotating = new ArrayList<>();
         rotating.add(new CountCheck.Place(CountCheck.MUSEUM, "CASC", "museum CASC", "museum", "CASC"));
