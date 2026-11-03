@@ -423,10 +423,10 @@ public class TaxaPage implements Serializable {
 
 	/** Above this many names collected here (a region such as Africa), the specimen half keeps its subquery instead of a
 	 *  long IN list (review of #316). */
-	static final int MAX_NAMED_IN = 5000;
+	public static final int MAX_NAMED_IN = 5000;
 
 	public void loadCollected(Connection connection, Overview overview) {
-		if (!ListView.hasViews(overview)) return;
+		if (!ListView.hasViews(overview) || !ListView.readsPlaceSpecimens(overview)) return;
 		try {
 			collectedPlaceSpecimens = ListView.loadPlaceSpecimens(connection, overview, null, null);
 		} catch (SQLException | RuntimeException e) {

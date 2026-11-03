@@ -173,12 +173,12 @@ public final class ListView {
         return "";
     }
 
-    /** Whether the overview has the four views (not the AntCat list and Fossil Ants, which keep their own sets). */
     /** Whether a list reads the place's specimens as a whole (Other specimens, source icons): not regions or subregions. */
     public static boolean readsPlaceSpecimens(Overview overview) {
         return !(overview instanceof Region || overview instanceof Subregion);
     }
 
+    /** Whether the overview has the four views (not the AntCat list and Fossil Ants, which keep their own sets). */
     public static boolean hasViews(Overview overview) {
         return overview != null && !StatusSet.hasOwnStatusSets(overview.getName());
     }
@@ -380,8 +380,9 @@ public final class ListView {
     public static ViewNames loadViewNames(Connection connection, Overview overview, StatusSet viewSet, String subfamily, String genus,
             PlaceSpecimens collected) throws SQLException {
         ViewNames out = new ViewNames();
+        // above MAX_NAMED_IN names the specimen half keeps its subquery (no very long IN list; review of #316)
         try (PreparedStatement stmt = connection.prepareStatement(viewNamesSql(overview, viewSet, subfamily, genus,
-                collected == null ? null : collected.taxonNames()));
+                collected == null || collected.taxonNames().size() > TaxaPage.MAX_NAMED_IN ? null : collected.taxonNames()));
              ResultSet r = stmt.executeQuery()) {
             while (r.next()) out.add(r.getString("taxon_name"), r.getString("subfamily"), r.getString("genus"), r.getString("status"));
         }
