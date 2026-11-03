@@ -76,6 +76,26 @@ def _check_all(session, report_url, after=None):
     return r.text
 
 
+# Staging's database is a weekly copy of production's (2026-11-02, tools/staging/refresh-from-prod.sh), but the report
+# files of production's uploads stay on production: a report link of such an upload is a 404 on staging only. Those
+# links are left out on staging (only when the answer is a 404 for a report under /web/log/), never on production.
+STAGING = "staging" in HOST
+
+
+def _missing_report_on_staging(url, status):
+    return STAGING and status == 404 and "/web/log/" in urlparse(url).path
+
+
+def _first_report_on_server(session, logs):
+    """The first of these report addresses that the server has (staging: production's reports are not copied)."""
+    for log in logs[:20]:
+        url = urljoin(BASE_URL + "/", log)
+        r = session.get(url, timeout=TIMEOUT)
+        if r.status_code == 200 and _links(r.text, url):
+            return url
+    return None
+
+
 def _check_links(session, report_url, links):
 
     def check(url):
@@ -84,6 +104,8 @@ def _check_links(session, report_url, links):
         except Exception as e:  # noqa: BLE001
             return f"{urlparse(url).path}: {type(e).__name__}"
         body = resp.text[:200000]
+        if _missing_report_on_staging(url, resp.status_code):
+            return None
         if resp.status_code != 200:
             return f"{urlparse(url).path}: HTTP {resp.status_code}"
         if "is not in the AntWeb database" in body:
@@ -107,7 +129,10 @@ def test_specimen_upload_report_links(session):
     logs = re.findall(r"""href=["']([^"']*/web/log/specimen/[^"']+\.html)["']""", "<tr>".join(rows))
     if not logs:
         pytest.skip("no specimen upload reports listed on listSpecimenUploads.do")
-    _check_all(session, urljoin(BASE_URL + "/", logs[0]))
+    report = _first_report_on_server(session, logs)
+    if report is None:
+        pytest.skip("none of the first 20 listed specimen upload reports is on this server (staging: production's reports are not copied)")
+    _check_all(session, report)
 
 
 def test_worldants_upload_report_links(session):
@@ -115,7 +140,10 @@ def test_worldants_upload_report_links(session):
     logs = re.findall(r"/web/log/worldants/\d{8}[^'\"<]+\.html", page)
     if not logs:
         pytest.skip("no Worldants upload reports listed")
-    _check_all(session, BASE_URL + logs[0])
+    report = _first_report_on_server(session, logs)
+    if report is None:
+        pytest.skip("none of the first 20 listed Worldants upload reports is on this server (staging: production's reports are not copied)")
+    _check_all(session, report)
 
 
 SPECIMEN = os.environ.get("ANTWEB_LINK_TEST_SPECIMEN", "casent0922067")

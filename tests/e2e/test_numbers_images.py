@@ -331,6 +331,8 @@ def genus_pages(p):
     if not got:
         return None
     row, count, params = got[0]
+    # the genus row's images link carries the list's view since 2026-11-02 (statusSet=curated): one view only
+    params = re.sub(r"(^|&)statusSet=[^&]*", "", params).lstrip("&")
     q = params + "&statusSet=all"
     pages = {"row": row, "count": count, "params": params, "where": f"{p} {row['name'] or params}",
              "browse": ns.fetch("/browse.do?" + q),

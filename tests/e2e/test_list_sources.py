@@ -87,7 +87,7 @@ def test_genus_rows_have_the_columns_of_the_views():
     html = ns.get(MOZ_GENERA, new_session())
     assert current_view(html) == "curated", current_view(html)
     assert '<div class="list_extras other">' in html, "no Not curated column"
-    assert ">Not curated</span>" in html, "no Not curated heading"
+    assert re.search(r">Not curated</(span|a)>", html), "no Not curated heading"   # a sort link since 2026-11-02 21:30
     assert "Other specimens" not in html and 'class="other-names"' not in html, "Other specimens is gone (2026-11-02)"
     assert '<div class="list_extras other">' not in ns.get(MOZ_GENERA + "&statusSet=all", new_session()), \
         "All specimen names has no Not curated column"

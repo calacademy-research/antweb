@@ -120,7 +120,7 @@
   "status": 200,
   "table_rows": 2,
   "taxon_links": 128,
-  "text_length": 13762,
+  "text_length": 12242,
   "title": "Browsing subfamily Formicinae in All Antweb - AntWeb"
  },
  "/collection.do?name=ANTC2113": {
@@ -186,9 +186,9 @@
   "images": 14,
   "specimen_links": 0,
   "status": 200,
-  "table_rows": 108,
+  "table_rows": 69,
   "taxon_links": 1,
-  "text_length": 12161,
+  "text_length": 10867,
   "title": "Curators"
  },
  "/description.do?genus=camponotus&rank=genus": {
@@ -413,7 +413,7 @@
   "status": 200,
   "table_rows": 14,
   "taxon_links": 1,
-  "text_length": 11278,
+  "text_length": 12411,
   "title": "Fossil Ants - AntWeb"
  },
  "/projects.do": {
