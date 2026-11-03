@@ -1,6 +1,6 @@
 -- READ-ONLY (2026-11-03). Why the nightly (set 2, GeolocaleTaxonDb.insertGeolocaleTaxaFromSpecimens) did not put
 -- Parvaponera darwinii (CAS specimens, re-identified from P. madecassa 2025-12-21) on Madagascar's list.
-SELECT id, name, georank, is_valid, is_live, valid_name, bioregion FROM geolocale WHERE name = 'Madagascar';
+SELECT id, name, georank, is_valid, is_live, is_use_children, bioregion FROM geolocale WHERE name = 'Madagascar';
 SELECT id INTO @gid FROM geolocale WHERE name = 'Madagascar' AND georank = 'country' LIMIT 1;
 -- 1. Madagascar's list rows by source (does the nightly add specimen rows to this list at all?)
 SELECT source, COUNT(*) n FROM geolocale_taxon WHERE geolocale_id = @gid GROUP BY source ORDER BY n DESC;
