@@ -15,6 +15,13 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * /endemic.do?geolocaleId= or ?bioregionName= (form overviewForm; endemic.jsp): the names flagged endemic on the
+ * place's species list, by the rule of the lists and the place page's Endemic number (PlaceTotals.flaggedNames:
+ * counted statuses, no synonyms; B70). geolocaleId wins when both are given. Bots are refused (Check.notBot); an
+ * unknown place gives a message. Sets the request attributes endemic (the names) and overview. Docs: docs/numbers.md
+ * rows 24 and 78, B70. Tests: tests/e2e/test_numbers_endemic.py, tests/e2e/test_numbers_live.py.
+ */
 public final class EndemicAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(EndemicAction.class);

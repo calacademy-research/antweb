@@ -13,6 +13,19 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Base class of the actions whose pages carry curator page text: BrowseAction (taxon pages), SpecimenAction and
+ * OverviewAction (place pages); not mapped in struts-config.xml itself. saveDescriptionEdit() saves a field
+ * (EDIT_FIELDS only) under the safety rules of DescEditSafety: curators and administrators only, POST, the editor
+ * fully loaded, no overwrite of a newer text, no empty save over text (clearing is clearField=1), history copy and
+ * write in one locked transaction; also restore of a version (fieldHistory.do) and the image upload confirmation.
+ * prepareDescriptionEdit() reads the field being edited fresh from the database; homonym pages are not editable.
+ * getDescEditHistory() lists who edited a taxon or specimen (description_edit, description_hist). Writes
+ * description_edit and description_hist (through home/DescEditDb), an event for some taxon fields, and, for taxon
+ * pages, regenerates the home page's Recent Edits. Docs: docs/data-model.md (description_edit, description_hist),
+ * docs/flows/home-and-statistics.md. Tests: tests/e2e/test_page_editor.py, tests/e2e/test_editor_roundtrip.py,
+ * tests/e2e/test_field_history.py, tests/e2e/test_overview_editor.py.
+ */
 public class DescriptionAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(DescriptionAction.class);

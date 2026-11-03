@@ -19,6 +19,25 @@
 # import os
 # assert os.path.exists('/var/www/html/apiV3/api_db.conf')
 
+"""The AntWeb public API, version 3.1: https://www.antweb.org/v3.1/ (Flask, served by gunicorn in the container
+antweb_api_1, docker/api/Dockerfile; Caddy sends /v3.1/ to it; Cloudflare lets /v3.1/ through Under Attack Mode
+and rate-limits it per visitor).
+
+Routes (all GET, JSON, or one record per line with ndjson=true): / (the documentation page link and health
+check, always open), /specimens, /geoSpecimens, /geoSpeciesStats, /taxa, /distinctTaxa, /images, /measurements,
+/taxaImages, /geolocales, /geolocaleTaxa, /bioregions, /bioregionTaxa and /unimagedGeolocaleTaxa. The data routes
+answer only with up=1 (an admin switch, see down()); without it HTTP 503 with a JSON message. Unknown parameters
+get HTTP 400 naming the accepted ones. Records per request are capped
+(MAX_LIMIT, maxLimit= in etc/api-db.properties); every reply carries the CC BY 4.0 licence in a Link header,
+and JSON data replies also in a license field.
+
+Reads the AntWeb MySQL database with a read-only login (antweb_api: SELECT on the tables it serves) from
+etc/api-db.properties on the server, mounted alone as /antweb-etc/api-db.properties; without that file the API
+cannot reach the database. Writes nothing. The counts /taxa serves are written into the taxon table by the
+nightly (TaxonApiCountDb). User documentation: https://www.antweb.org/apiV3.1.do; developer documentation:
+docs/flows/api.md. Tests: tests/unit/test_api_*.py, tests/e2e (API tests).
+"""
+
 import configparser
 import os
 import re

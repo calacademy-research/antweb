@@ -10,6 +10,11 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Form bean loginForm of /login.do (LoginAction) and /logout.do (LogoutAction): user name (or email), password,
+ * target (where to go afterwards) and value (the button: Login, Create Account, Browse). validate() only blocks
+ * fishing requests (AntwebUtil.blockFishingAttack).
+ */
 public class LoginForm extends ActionForm {
 
 

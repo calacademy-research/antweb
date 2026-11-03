@@ -221,7 +221,7 @@
 
   // Regions and subregions (since 2026-10-20): the specimens counted on the pages of their countries, each once
   // (Geolocale.regionSpecimensSql). Countries, islands and states: only specimens under a name on the list; the
-  // "Show Specimen Taxa" view of the species list (Geolocale.isCanShowSpecimenTaxa) shows the other names.
+  // view All specimen names of the species list (2026-11-02; was "Show Specimen Taxa") shows the other names.
   String specimensFullDef;
   if (isListOnlyPlace) specimensFullDef = "Ant specimens collected in this " + pw + "'s countries and identified to a name on their lists; each specimen counted once.";
   else if (isGeolocale) specimensFullDef = "Ant specimens collected in this " + pw + " and identified to a species, morphospecies, or unidentified taxon on " + listName + ".";
@@ -238,13 +238,14 @@
       specimenListLink = "<a rel=\"nofollow\" href=\"" + AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&" + listCriteria + "&resultRank=specimen\">List all specimens collected in " + Html.esc(overview.getName()) + "</a> (every record, under any name, including those not counted above)";
     }
   }
-  // Countries, islands and states: every name their specimens are filed under (Show Specimen Taxa of the species list).
+  // Countries, islands and states: every name their specimens are filed under (the view All specimen names of the
+  // species list, 2026-11-02; it replaces Show Specimen Taxa).
   if (specimenListLink != null && isGeolocale && geolocale.isCanShowSpecimenTaxa()) {
     String listParams = isAdm1
         ? "countryName=" + Html.url(geolocale.getParent()) + "&adm1Name=" + Html.url(geolocale.getName())
         : "countryName=" + Html.url(geolocale.getName());
-    String specimenTaxaUrl = AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&" + listParams + "&specimen=true";
-    specimenListLink += "<br>Names of all specimens collected here, including those not on the list: <a id=\"specimen-taxa-link\" href=\"" + Html.escAttr(specimenTaxaUrl) + "\">Show Specimen Taxa</a>.";
+    String specimenTaxaUrl = AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&" + listParams + "&statusSet=" + org.calacademy.antweb.StatusSet.LIST_ALL;
+    specimenListLink += "<br>Names of all specimens collected here, including those not on the list: <a id=\"specimen-taxa-link\" href=\"" + Html.escAttr(specimenTaxaUrl) + "\">All specimen names</a>.";
   }
 %>
 <div id="place-stats"<% if (placeImages != null && !isSpeciesListOnly) { %> data-images="<%= placeImages.allImages %>" data-ant="<%= placeImages.antImages %>" data-labels="<%= placeImages.labelImages() %>" data-imaged="<%= placeImages.imagedSpecimens %>" data-label-only="<%= placeImages.labelOnlySpecimens %>"<% } %>>

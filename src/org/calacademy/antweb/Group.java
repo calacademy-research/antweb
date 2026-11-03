@@ -11,6 +11,14 @@ import java.util.Comparator;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * An upload group (table ant_group, usually one institution): id, name, short name (getAbbrev(): the abbreviation,
+ * else the admin login's name, else the id), admin login, the curators, and the upload numbers set by GroupAction
+ * (first and last upload dates, upload count, last upload). ADMINGROUP is 1 (CAS), TESTGROUP 25. Made by
+ * home/GroupDb, held by util/GroupMgr; a login's group is Login.getGroup(). getLink() and getLinkAbbrev() link
+ * group.do?id=; getGroupNameComparator sorts by name A to Z (case ignored); compareTo orders by id. Docs:
+ * docs/data-model.md (ant_group), docs/flows/specimen-upload.md, docs/numbers.md rows 85 to 91.
+ */
 public class Group implements Comparable {
 
     private static final Log s_log = LogFactory.getLog(Group.class);

@@ -10,6 +10,15 @@ import org.calacademy.antweb.home.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * A taxon page of a homonym: an AntCat name also used by another taxon, told apart by its author and date (table
+ * homonym). Made by home/HomonymDb (getFullHomonym, used by BrowseAction when no taxon row matches) and TaxonDb.
+ * finishInstance() reads the homonym row, its page text from description_homonym (HomonymDescEditDb; not editable:
+ * DescriptionAction.isHomonym), habitats, methods, types, elevations and dates, the senior homonym (the taxon row of
+ * the same name, getSeniorHomonym) and the other author dates of the name. getUrl() is the description.do link with
+ * authorDate=. Shown by homonymPage.jsp. Docs: docs/flows/taxon-pages.md, docs/data-model.md (homonym,
+ * description_homonym).
+ */
 public class Homonym extends Taxon implements Serializable {
 
     private static final Log s_log = LogFactory.getLog(Homonym.class);

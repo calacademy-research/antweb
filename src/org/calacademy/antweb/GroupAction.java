@@ -21,6 +21,15 @@ import org.apache.commons.logging.LogFactory;
 //import org.apache.commons.collections.*;
 //import com.google.common.collect.*;
 
+/**
+ * /group.do and /groups.do (form dummyForm; group.jsp, groups.jsp). group.do?id= (or name=: the id is tried first,
+ * then the name) shows one group: upload dates and count, last upload with its numbers (GroupCountDb), curators
+ * (LoginDb.getCurators) and its map (ObjectMapDb.getGroupMap, request attribute map); "Group not found" otherwise.
+ * Without id and name: the upload groups (GroupDb.getUploadGroups(orderBy); an orderBy containing "select" is
+ * refused) with the same numbers and the totals row (request attribute groupTotals). Read only. Docs:
+ * docs/numbers.md rows 85 to 91, docs/data-model.md (ant_group). Tests: tests/e2e/test_count_check.py,
+ * tests/e2e/test_numbers_uploads.py.
+ */
 public final class GroupAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(GroupAction.class);

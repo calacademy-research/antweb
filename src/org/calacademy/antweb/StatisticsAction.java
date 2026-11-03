@@ -16,6 +16,16 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * /statistics.do (form dummyForm), the statistics report linked under Administrator Functions; logged-in users
+ * (Check.login). No parameter: the specimen count and the statistics rows (table statistics, newest first, at most
+ * 1000) as an HTML table (statisticsStr.jsp), the first row's numbers linking to the breakdowns. byUpload=true:
+ * specimens per upload group; project=: one project; byProject, byMuseum, byBioregion, byGeolocale=true: the list
+ * statistics of each place (ProjTaxonDb, MuseumTaxonDb, BioregionTaxonDb, GeolocaleTaxonDb) on
+ * statisticsRealTime.jsp (body=true: the body only; isLink=false: no links). Read only. Docs: docs/numbers.md rows
+ * 97 and 98, docs/data-model.md (statistics). Tests: tests/e2e/test_numbers_uploads.py,
+ * tests/e2e/test_curate_page_layout.py.
+ */
 public final class StatisticsAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(StatisticsAction.class);

@@ -38,6 +38,7 @@ public final class JobSummary {
         OPERATIONS.put("crawlForType", "type specimens");
         OPERATIONS.put("imageCountCrawl", "image counts");
         OPERATIONS.put("placeImageCounts", "place image counts");
+        OPERATIONS.put("placeGenusCuration", "not curated counts of genus lists");
         OPERATIONS.put("deleteConflictedDefaultImages", "conflicting default images removed");
         OPERATIONS.put("genObjectMaps", "maps");
         OPERATIONS.put("cleanupSpeciesListProxyRecords", "species list clean-up");

@@ -37,6 +37,16 @@ import com.zonageek.jpeg.*;
 
 //=============================================================================
 //=============================================================================
+/**
+ * Part of the bundled third-party JPEG/EXIF reader com.zonageek.jpeg (Sebastian Delmont, 2002, BSD-style licence in
+ * the comment at the top of this file, kept as it is). AntWeb uses the package only to read EXIF data: util/Exif
+ * calls Jpeg.readHeaders() and getExifBlock() for the image page (bigPicture-body.jsp: the EXIF section for
+ * administrators, and the photographer when the image has no artist); SpecimenImage.setMetadata() and
+ * ImageDb.getExifData() also read it, but nothing calls them (2026-11-02). Meant for lossless transformations; its
+ * only method, flipHorizontal(Jpeg), is empty. Unused as of 2026-11-02: nothing refers to JpegTransformations (no
+ * caller in src, web or test, not in struts-config.xml or web.xml). Docs: docs/flows/specimen-and-image-pages.md
+ * (EXIF for admins). Tests: ExifTextTest, tests/e2e/test_exif_view.py.
+ */
 public class JpegTransformations {
   //===========================================================================
   public static void flipHorizontal(Jpeg jpeg) {

@@ -9,6 +9,15 @@ import org.apache.commons.logging.LogFactory;
         
 import org.calacademy.antweb.util.*;
 
+/**
+ * Castes: the constants default, worker, queen, male, other; the caste filter of the taxon and list pages
+ * (getCaste(request): the caste= parameter, else the session's, else default; kept in the session; used by
+ * BrowseAction and TaxaPageAction), display names, the SQL clauses of a caste (getSpecimenClause, getPropsClause),
+ * and the caste and subcaste of a specimen read from its Life Stage field (getCasteValues: the first ant named, up
+ * to a comma, " and ", "&amp;" or "/"; tried as worker, then queen, then male, then other), used by the specimen upload
+ * (SpecimenUploadParse) and SpecimenDb. sortSpecimenByCasteSubcaste orders specimens for the images pages
+ * (taxonChildImages.jsp). Docs: docs/numbers.md B69 and rows 14 and 102. Tests: CountRules20261027Test.
+ */
 public final class Caste {
 
     private static final Log s_log = LogFactory.getLog(Caste.class);

@@ -111,7 +111,14 @@ def api_all(path, max_pages=8):
             return None
         page = api_rows(body)
         meta = body.get("metaData") or body.get("_metaData") or {}
-        limit = int(meta.get("limit") or 0)
+        params = meta.get("parameters") if isinstance(meta.get("parameters"), dict) else {}
+        limit = int(meta.get("limit") or params.get("limit") or 0)
+        # /taxa says no limit but a limitNotice and returns 500 rows a page (found 2026-11-02: the genus list was cut at
+        # 500 names, so 5 of Madagascar's 62 genera were "not counted"): a full page means there may be more.
+        if not limit and meta.get("limitNotice") and page:
+            limit = len(page)
+        if offset and page and page[0] in rows:
+            return None   # a row seen before: the API ignored offset
         rows.extend(page)
         if not limit or len(page) < limit:
             return rows
@@ -144,9 +151,11 @@ class Place:
             return f"/{page}.do?bioregionName={quote_plus(self.name)}"
         return f"/{page}.do?geolocaleId={self.gid}"
 
-    def list_url(self, rank, status="validmorpho", extra=""):
-        # 2026-10-30: the default, "Valid species + morphospecies", lists the rows of the place's Species number (species
-        # lists); "all" (every counted status) lists the names that are not species too.
+    def list_url(self, rank, status="curated", extra=""):
+        # 2026-11-02 (views): the default, Curated, lists the valid names and the curated morphospecies (on countries,
+        # adm1s, regions and subregions also those collected there); "valid" the list's valid names; "all" (All specimen
+        # names) every counted name, on geolocales also every name collected there. (Until 11-02 the default was
+        # "validmorpho", the rows of the place's Species number; that address value now opens All specimen names.)
         return f"/taxonomicPage.do?rank={rank}&{self.params}&statusSet={quote_plus(status)}{extra}"
 
 
@@ -248,6 +257,16 @@ def list_rows(html):
                      "endemic": 'title="Endemic"' in chunk.split("description.do?")[0],
                      "introduced": 'title="Introduced"' in chunk.split("description.do?")[0]})
     return rows
+
+
+# The mark of a row added from specimens collected in the place, not on its list (web/common/isFromSpecimen.jsp; the
+# views Curated and All specimen names add such rows on countries, adm1s, regions and subregions since 2026-11-02).
+NOT_ON_LIST_MARK = "Not on the place's list: from specimens collected here."
+
+
+def on_list(row_html):
+    """Whether a list row is a row of the place's list (not one added from specimens collected there)."""
+    return NOT_ON_LIST_MARK not in unescape(row_html.split("description.do?")[0])
 
 
 def taxon_name_of(chunk):

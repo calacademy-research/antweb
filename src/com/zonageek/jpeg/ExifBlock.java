@@ -39,6 +39,19 @@ import java.util.Iterator;
 
 //=============================================================================
 //=============================================================================
+/**
+ * Part of the bundled third-party JPEG/EXIF reader com.zonageek.jpeg (Sebastian Delmont, 2002, BSD-style licence in
+ * the comment at the top of this file, kept as it is). AntWeb uses the package only to read EXIF data: util/Exif
+ * calls Jpeg.readHeaders() and getExifBlock() for the image page (bigPicture-body.jsp: the EXIF section for
+ * administrators, and the photographer when the image has no artist); SpecimenImage.setMetadata() and
+ * ImageDb.getExifData() also read it, but nothing calls them (2026-11-02). The APP1 block that starts with "Exif":
+ * parses the TIFF header (byte order) and the IFDs: IFD0, IFD1 (the embedded thumbnail), the Exif sub-IFD, the
+ * Interop IFD (tag 0xA005) and the GPS IFD, into a map of field name to value (getExifFields(), getExifField(name), isBigEndian()). Text and binary
+ * fields come back as strings with one char per byte; util/ExifText decodes them (UTF-8, else Windows-1252) and
+ * summarizes binary ones. This is the class AntWeb reads: util/Exif (image page) and SpecimenImage.setMetadata
+ * (Artist, Copyright; no caller). It can also set fields and write the block (not used by AntWeb). Docs:
+ * docs/flows/specimen-and-image-pages.md (EXIF for admins). Tests: ExifTextTest, tests/e2e/test_exif_view.py.
+ */
 public class ExifBlock extends JpegBlock {
   public final static int UNKNOWN_VALUE = -1;
   

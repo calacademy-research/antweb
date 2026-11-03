@@ -5,6 +5,15 @@ import java.util.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Taxon statuses: the AntCat values (valid, synonym, homonym, original combination, unavailable, ...) and the AntWeb
+ * ones (unrecognized, morphotaxon, indetermined), the full and minimal lists, the statuses whose specimens are filed
+ * under the current valid name (USES_CURRENT_VALID_NAME, also as an SQL list), which statuses come from AntCat
+ * (isWorldantsStatus) or only from AntWeb (isAllAntwebStatus), the statuses that pass the species check of uploads
+ * (isPassWorldAntsSpeciesCheck: valid, morphotaxon, unidentifiable, indetermined; AntwebUpload), and the SQL
+ * condition of one status on taxon or specimen (getCriteria). StatusSet extends it for sets of statuses. Docs:
+ * docs/data-model.md (taxon), docs/flows/antcat-to-antweb.md, docs/numbers.md.
+ */
 public class Status {
 
     private static final Log s_log = LogFactory.getLog(Status.class);

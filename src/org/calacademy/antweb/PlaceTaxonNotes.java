@@ -5,12 +5,16 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import org.calacademy.antweb.geolocale.Adm1;
 import org.calacademy.antweb.geolocale.Bioregion;
 import org.calacademy.antweb.geolocale.Country;
 import org.calacademy.antweb.geolocale.Geolocale;
+import org.calacademy.antweb.geolocale.LocalityOverview;
 import org.calacademy.antweb.geolocale.Region;
 import org.calacademy.antweb.geolocale.Subregion;
 import org.calacademy.antweb.home.StatisticsDb;
@@ -37,6 +41,22 @@ import org.calacademy.antweb.util.Html;
  * but is recorded), the page says at the top: "Lividopone is not recorded from Afrotropical. Recorded from: Malagasy.
  * See Lividopone in all of AntWeb." The bioregions are those whose list has the name (one query of bioregion_taxon).
  *
+ * Specimens collected here not on the species list (Brian Fisher, 2026-10-30: "if there is a specimen that justifies
+ * the presence of a genus in a place, I should be able to click to see the specimen"; views of 2026-11-02). The
+ * specimens "of other names" of a genus in a place are the place's specimens (placeSpecimenCriteria; red-flagged ones
+ * never count, SpecimenDb.notRedFlagged) filed under a species or subspecies name of the genus, identified to genus, of
+ * a counted status, that is not a name of the list in the current view (ListView.otherNames; the indet name "Acropyga
+ * (indet)" is one such name outside All specimen names), kept by genus in OtherNames:
+ *   - genus lists: until 2026-11-02 the Other specimens column; replaced by the Not curated column (below);
+ *   - the genus page in a place (description.do, browse.do, images.do), views Valid and Curated: "Specimens collected
+ *     here not on the species list: 3 (names: Acropyga mz01, Acropyga mz02)", the number linked to the specimen
+ *     search, each name to its page in the place. In all of AntWeb the indet line stays as it was (no place list).
+ *
+ * Not curated (Brian Fisher, 2026-11-02, 19:44): the genus rows of a place's list (countries, adm1s, museums, bioregions;
+ * views Valid and Curated) show the specimens of the genus collected there whose name is not curated, counted nightly
+ * (home.PlaceGenusCurationDb), linked to the genus page in the place in the view Not curated (notCuratedCellHtml,
+ * notCuratedUrl), whose header gives the breakdown (NOT_CURATED_HEADER).
+ *
  * Tested without a database by test.org.calacademy.antweb.PlaceTaxonNotesTest, the SQL against MySQL by
  * test.org.calacademy.antweb.home.PlaceTaxonNotesDbTest.
  */
@@ -51,6 +71,12 @@ public final class PlaceTaxonNotes {
     /** Request attributes read by web/common/genusIndetLine.jsp and web/common/notRecorded.jsp. */
     public static final String INDET_LINE = "genusIndetLine";
     public static final String NOT_RECORDED = "notRecorded";
+    /** Request attribute (a ListView.GenusRows) read by web/taxonReport.jsp: the genus rows of a subfamily's browse page in a place. */
+    public static final String GENUS_ROWS = "placeGenusRows";
+    /** Request attribute (String) read by web/showBrowse-body.jsp: the header of a genus page in the view Not curated. */
+    public static final String NOT_CURATED_HEADER = "notCuratedHeader";
+    /** Request attribute (a ListView.PlaceSpecimens) read by web/taxonReport.jsp: one genus's specimens collected here, by name. */
+    public static final String PLACE_SPECIMENS = "placeSpecimens";
 
     /** "dorylinaelividopone" -> "dorylinaelividopone (indet)". */
     public static String indetName(String genusTaxonName) {
@@ -197,6 +223,153 @@ public final class PlaceTaxonNotes {
         b.append("<br><a href=\"").append(Html.escAttr(base + "&project=" + Project.ALLANTWEBANTS)).append("\">See ")
             .append(Html.esc(taxonDisplay)).append(" in all of AntWeb</a>");
         return b.append("</div>").toString();
+    }
+
+    // ------------------------------------------------------------------------------------------------- other names
+
+    /** The specimens collected in a place under names not on its species list, by genus (one query, otherNamesSql). */
+    public static final class OtherNames {
+
+        /** One genus: its specimens of other names, and the names ({taxon_name, species, subspecies, taxarank, count}). */
+        public static final class Genus {
+            public final String subfamily;
+            public final String genus;
+            public int specimens;
+            public final List<String[]> names = new ArrayList<>();
+
+            Genus(String subfamily, String genus) {
+                this.subfamily = subfamily;
+                this.genus = genus;
+            }
+
+            /** "Acropyga", "Form_gen-afrc-za01" */
+            public String displayName() {
+                return capitalized(genus);
+            }
+        }
+
+        private final Map<String, Genus> byGenus = new LinkedHashMap<>();
+
+        static String key(String subfamily, String genus) {
+            return (subfamily == null ? "" : subfamily.toLowerCase(Locale.ROOT)) + "|" + (genus == null ? "" : genus.toLowerCase(Locale.ROOT));
+        }
+
+        /** Adds one name's specimens (also for tests). */
+        public void add(String subfamily, String genus, String taxonName, String species, String subspecies, String taxarank, int count) {
+            if (genus == null || count <= 0) return;
+            Genus g = byGenus.computeIfAbsent(key(subfamily, genus), k -> new Genus(subfamily, genus));
+            g.specimens += count;
+            g.names.add(new String[] {taxonName, species, subspecies, taxarank, String.valueOf(count)});
+        }
+
+        /** The genus row's specimens of other names (by the row's subfamily and genus), or null when none. */
+        public Genus genus(String subfamily, String genus) {
+            return byGenus.get(key(subfamily, genus));
+        }
+
+        public boolean isEmpty() { return byGenus.isEmpty(); }
+
+        public java.util.Collection<Genus> genera() { return byGenus.values(); }
+    }
+
+    /** "3 specimens not curated" (the Not curated cell's title, Brian Fisher, 2026-11-02). */
+    public static String notCuratedTitle(int n) {
+        return String.format(Locale.US, "%,d", n) + (n == 1 ? " specimen" : " specimens") + " not curated";
+    }
+
+    /**
+     * The Not curated cell of a genus row (Brian Fisher, 2026-11-02; replaces Other specimens): the stored number, linked
+     * to the genus page in the place in the view Not curated (notCuratedUrl); "" when 0 or not counted.
+     */
+    public static String notCuratedCellHtml(int n, String url) {
+        if (n <= 0) return "";
+        String data = " class=\"not-curated\" data-not-curated=\"" + n + "\" title=\"" + Html.escAttr(notCuratedTitle(n)) + "\"";
+        // "762 Specimens", like the species lists' specimen counts (Brian Fisher, 2026-11-03)
+        String text = String.format(Locale.US, "%,d", n) + (n == 1 ? " Specimen" : " Specimens");
+        if (url == null) return "<span" + data + ">" + text + "</span>";
+        return "<a" + data + " href=\"" + Html.escAttr(url) + "\">" + text + "</a>";
+    }
+
+    /** The genus page in the place in the view Not curated: browse.do?subfamily=..&genus=..&rank=genus&<place>&statusSet=notcurated. */
+    public static String notCuratedUrl(String subfamily, String genus, Overview overview) {
+        return AntwebProps.getDomainApp() + "/browse.do?subfamily=" + Html.url(subfamily) + "&genus=" + Html.url(genus) + "&rank=genus&"
+            + placeParams(overview) + "&statusSet=" + StatusSet.LIST_NOT_CURATED;
+    }
+
+    /** More names than this: the search takes the genus alone (a search box value is a list of names, docs/numbers.md 5.3). */
+    public static final int MAX_SEARCH_NAMES = 30;
+
+    /**
+     * The search criteria of a genus's specimens of other names, to add to the place's specimen search: the genus, and
+     * unless allNames, the species parts of the names ("genusSearchType=equals&genus=acropyga&speciesSearchType=equals&
+     * species=mz01, mz02"). allNames (no species on the list): every specimen of the genus collected there.
+     */
+    public static String searchParams(OtherNames.Genus g, boolean allNames) {
+        String p = "genusSearchType=equals&genus=" + Html.url(g.genus);
+        if (allNames) return p;
+        java.util.LinkedHashSet<String> species = new java.util.LinkedHashSet<>();
+        for (String[] n : g.names) if (n[1] != null && !n[1].isEmpty()) species.add(n[1]);
+        if (species.isEmpty() || species.size() > MAX_SEARCH_NAMES) return p;
+        return p + "&speciesSearchType=equals&species=" + Html.url(String.join(", ", species));
+    }
+
+    /** The place's specimen search ("List all specimens collected in <place>"), or null (no place search). */
+    public static String placeSearchUrl(Overview overview) {
+        if (!(overview instanceof LocalityOverview) || isAllOfAntWeb(overview)) return null;
+        String c = ((LocalityOverview) overview).getSearchCriteria();
+        if (c == null || c.isEmpty()) return null;
+        return AntwebProps.getDomainApp() + "/advancedSearch.do?searchMethod=advancedSearch&advanced=true&family=formicidae&" + c
+            + "&resultRank=specimen";
+    }
+
+    /** "Acropyga mz01", "Acropyga (indet)", "Pheidole a x" */
+    public static String nameDisplay(OtherNames.Genus g, String[] name) {
+        StringBuilder b = new StringBuilder(g.displayName());
+        if (name[1] != null && !name[1].isEmpty()) b.append(" ").append(name[1]);
+        if (name[2] != null && !name[2].isEmpty()) b.append(" ").append(name[2]);
+        return b.toString();
+    }
+
+    /** The page of one name in the place: same page kind (description.do, browse.do, images.do). */
+    public static String nameUrl(String targetDo, OtherNames.Genus g, String[] name, Overview overview) {
+        String rank = Rank.SUBSPECIES.equals(name[3]) ? Rank.SUBSPECIES : Rank.SPECIES;
+        String p = "subfamily=" + Html.url(g.subfamily) + "&genus=" + Html.url(g.genus) + "&species=" + Html.url(name[1]);
+        if (Rank.SUBSPECIES.equals(rank)) p += "&subspecies=" + Html.url(name[2]);
+        return AntwebProps.getDomainApp() + "/" + targetDo + "?" + p + "&rank=" + rank + "&" + placeParams(overview);
+    }
+
+    /** Names shown on the genus page's line; more: "and N more". */
+    public static final int MAX_LINE_NAMES = 12;
+
+    /**
+     * The genus page's line in a place, or null when none: "Specimens collected here not on the species list: <a>3</a>
+     * (names: <a>Acropyga mz01</a>, <a>Acropyga mz02</a>)". searchUrl: the specimen search of those specimens (null:
+     * the number is not linked); targetDo: the page kind the names link to.
+     */
+    public static String otherNamesLineHtml(OtherNames.Genus g, String searchUrl, String targetDo, Overview overview) {
+        if (g == null || g.specimens <= 0) return null;
+        StringBuilder b = new StringBuilder();
+        b.append("<div id=\"genus_other_names\" class=\"genus_indet\" data-other-specimens=\"").append(g.specimens)
+            .append("\" style=\"margin:10px 0;\">Specimens collected here not on the species list: ");
+        if (searchUrl == null) b.append(g.specimens);
+        else b.append("<a rel=\"nofollow\" href=\"").append(Html.escAttr(searchUrl)).append("\">").append(g.specimens).append("</a>");
+        b.append(" (names: ");
+        int shown = 0;
+        for (String[] name : g.names) {
+            if (shown == MAX_LINE_NAMES) break;
+            if (shown > 0) b.append(", ");
+            b.append("<a href=\"").append(Html.escAttr(nameUrl(targetDo, g, name, overview))).append("\">")
+                .append(Html.esc(nameDisplay(g, name))).append("</a>");
+            shown++;
+        }
+        if (g.names.size() > shown) b.append(" and ").append(g.names.size() - shown).append(" more");
+        return b.append(")</div>").toString();
+    }
+
+    /** "acropyga" -> "Acropyga" */
+    static String capitalized(String s) {
+        if (s == null || s.isEmpty()) return s;
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1);
     }
 
     // ------------------------------------------------------------------------------------------------- helpers

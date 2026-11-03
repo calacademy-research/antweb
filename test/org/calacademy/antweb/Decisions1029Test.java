@@ -133,16 +133,16 @@ public class Decisions1029Test extends TestCase {
     }
 
     public void testListsOpenWithTheStatusesOfTheSpeciesNumber() {
-        // 2026-10-30 replaced the default ("every counted status everywhere"; StatusChoiceTest has the new defaults):
-        // what stays from 2026-10-29 is that a status kept in the session is never used.
+        // 2026-10-30 replaced the default ("every counted status everywhere"), 2026-11-02 again (Curated everywhere;
+        // StatusChoiceTest has the defaults): what stays from 2026-10-29 is that a status kept in the session is never used.
         Map<String, Object> session = new HashMap<>();
         session.put("statusSet", StatusSet.VALID_EXTANT);   // chosen on an earlier page
         Map<String, Object> params = new HashMap<>();
         params.put("session", proxy(HttpSession.class, session));
         HttpServletRequest request = proxy(HttpServletRequest.class, params);
-        assertEquals(StatusSet.LIST_VALID_MORPHO, StatusSet.getStatusSet(request, null));
-        assertEquals(StatusSet.LIST_VALID_MORPHO, StatusSet.getStatusSet(null, request, null));
-        assertEquals(StatusSet.LIST_VALID_MORPHO, StatusSet.getStatusSet(" ", request, null));
+        assertEquals(StatusSet.LIST_VETTED, StatusSet.getStatusSet(request, null));
+        assertEquals(StatusSet.LIST_VETTED, StatusSet.getStatusSet(null, request, null));
+        assertEquals(StatusSet.LIST_VETTED, StatusSet.getStatusSet(" ", request, null));
         assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.defaultChoice(org.calacademy.antweb.home.PlaceTotals.PROJECT, Project.WORLDANTS));
         assertEquals(StatusSet.VALID_WITH_FOSSIL, StatusSet.defaultChoice(org.calacademy.antweb.home.PlaceTotals.PROJECT, Project.FOSSILANTS));
         // a status in the address still works, and is not kept for the next page
@@ -150,7 +150,7 @@ public class Decisions1029Test extends TestCase {
         assertEquals(StatusSet.LIST_VALID, StatusSet.getStatusSet(request, null));
         params.remove("statusSet");
         session.clear();
-        assertEquals(StatusSet.LIST_VALID_MORPHO, StatusSet.getStatusSet(request, null));
+        assertEquals(StatusSet.LIST_VETTED, StatusSet.getStatusSet(request, null));
         assertTrue(session.isEmpty());
     }
 

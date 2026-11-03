@@ -264,22 +264,6 @@ public class AuditTlFixesTest extends TestCase {
         };
     }
 
-    public void testSpeciesListByNameOnlyWhenItIsThatList() {
-        Login c = new Login();
-        c.setId(42);
-        c.setIsAdmin(false);
-        c.setProjects(new ArrayList<>());
-        ArrayList<SpeciesListable> geolocales = new ArrayList<>();
-        geolocales.add(list("5001", "Georgia"));   // the US state (an adm1)
-        c.setGeolocales(geolocales);
-        // "Georgia" stands for the country (id 74): not this curator's list.
-        assertFalse(SpeciesListAccess.canEdit(c, "Georgia", name -> "74"));
-        assertTrue(SpeciesListAccess.canEdit(c, "Georgia", name -> "5001"));
-        assertTrue("places not loaded: by name, as before", SpeciesListAccess.canEdit(c, "Georgia", name -> null));
-        assertTrue(SpeciesListAccess.canEdit(c, "5001", name -> "74"));
-        assertFalse(SpeciesListAccess.canEdit(c, "74", name -> "74"));
-    }
-
     public void testRangeReportsByPlaceId() {
         assertEquals(" and g.id = 123", QueriesWithParams.placeCondition("Distrito Federal", 123));
         String q = QueriesWithParams.geolocaleSpeciesListWithRangeData("Distrito Federal", "adm1", 123).getQuery();

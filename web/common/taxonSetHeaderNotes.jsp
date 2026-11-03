@@ -1,30 +1,63 @@
-<%-- The note above a place's list on taxonomicPage.do and browse.do (static include of taxonomicPage-body.jsp and
-     showBrowse-body.jsp): what a geolocale, bioregion or museum list is based on (a project list: admins only), the
-     Show Specimen Taxa hint, and on species lists the Species List with Range Data report links (query.do):
-     bioregions for everyone, countries and adm1s for curators, regions and subregions for admins. Uses the
-     including page's overview, pageRank and pageType. Docs: docs/flows/places.md. --%><% 
+<%-- "About this list", one closed line above the list of taxonomicPage.do and browse.do in a place (included by
+     web/taxonomicPage-body.jsp and web/showBrowse-body.jsp; reads overview, pageRank and pageType): a plain details
+     element that opens on click (Brian Fisher, 2026-10-30). Since 2026-11-02 it explains, in plain words, the four
+     views (ListView.viewDescriptions), the columns (Species, Not curated and Images of genus rows; the view Not curated) and the four source
+     icons (ListView.sourceIconHtml), then the sources of a georegion, bioregion, museum or project list, the range-data
+     report links for curators and administrators, and the administrators' note on georegion species lists. Docs:
+     docs/flows/places.md, docs/numbers.md "Views of lists". --%>
+<%
+StringBuilder aboutList = new StringBuilder();
+// The views, columns and source icons (2026-11-02), on every list with the four views (not the AntCat list and Fossil Ants).
+if (org.calacademy.antweb.ListView.hasViews(overview)
+    && (Rank.SUBFAMILY.equals(pageRank) || Rank.GENUS.equals(pageRank) || Rank.SPECIES.equals(pageRank))) {
+    String aboutRowRank = pageRank;   // the rank of the rows (showBrowse-body.jsp: the child rank)
+    aboutList.append("<p><b>Views.</b> The buttons above the list choose which names it shows; the number in the header always counts the names of the chosen view. Fossil is offered only where this list has fossil names.</p><ul class=\"about-views\">");
+    for (String[] view : org.calacademy.antweb.ListView.viewDescriptions()) {
+        aboutList.append("<li><b>").append(view[0]).append("</b>: ").append(org.calacademy.antweb.util.Html.esc(view[1])).append("</li>");
+    }
+    aboutList.append("</ul><p>Red-flagged specimens never count, in any view.</p>");
+    if (Rank.GENUS.equals(aboutRowRank)) {
+        // 2026-11-02 (19:44 and 18:40): Not curated replaces Other specimens; Images on genus rows is "N species imaged".
+        aboutList.append("<p><b>Columns.</b> <b>Species</b>: the species and subspecies of the genus in the chosen view (a dash when none).");
+        if (org.calacademy.antweb.home.PlaceGenusCurationDb.typeAndKey(overview) != null) {
+            aboutList.append(" <b>Not curated</b> (views Valid and Curated): the specimens of the genus collected here (not red-flagged) whose"
+                + " name is not curated: morphospecies no curator has put on a species list, specimens identified only to genus and names"
+                + " not in AntCat. It shows how much of the genus collected here is not yet identified to a curated name. Counted once a day,"
+                + " so after an upload it catches up the next morning; click the number to see those names and their specimens.");
+        }
+        aboutList.append(" <b>Images</b>: of the species of the genus in the chosen view, how many have at least one image of the ant"
+            + " (from a specimen collected anywhere; label images do not count); click it to see the genus's images."
+            + " A genus known here only from specimens identified to genus is listed only in All specimen names.</p>");
+    }
+    if (StatusSet.LIST_NOT_CURATED.equals(request.getParameter("statusSet") == null ? null : StatusSet.listChoice(request.getParameter("statusSet")))) {
+        aboutList.append("<p><b>Not curated.</b> This view, opened from a genus's Not curated number, lists the names of the genus"
+            + " collected here that are not curated (neither valid names nor curated morphospecies), each with its specimens collected here."
+            + " The number in the header was counted last night.</p>");
+    }
+    aboutList.append("<p><b>Source.</b> ")
+        .append(org.calacademy.antweb.ListView.sourceIconHtml(org.calacademy.antweb.ListView.SOURCE_SPECIMEN)).append(" Specimen: collected here (a name with a specimen collected here shows this even when it is also in the literature); ")
+        .append(org.calacademy.antweb.ListView.sourceIconHtml(org.calacademy.antweb.ListView.SOURCE_CURATED)).append(" Curated: added by a curator; ")
+        .append(org.calacademy.antweb.ListView.sourceIconHtml(org.calacademy.antweb.ListView.SOURCE_LITERATURE)).append(" Literature: from Bolton's catalogue; ")
+        .append(org.calacademy.antweb.ListView.sourceIconHtml(org.calacademy.antweb.ListView.SOURCE_ANTCAT)).append(" AntCat: from the AntCat import (type localities).</p>");
+}
 if (true) {
     String note = "";
-      
+
     if (overview instanceof Geolocale ) {
       Geolocale geolocale = (Geolocale) overview;
-      boolean isUseChildren = geolocale.getIsUseChildren();       
+      boolean isUseChildren = geolocale.getIsUseChildren();
 
-      note = Formatter.initCap(Rank.getPluralRank(pageRank)) + " in the Georegion list are based on the following sources:" 
-          + " a) specimen records of valid species from the region (a genus also from specimens identified only to genus, 2026-10-29)," 
-          + " b) AntCat.org type locality information, and" 
-          + " c) Curator added records.  Curators may add or remove valid species or morphospecies from the list." 
-          + " Morphospecies, however,  must have at least one specimen record in Antweb though not necessary from the specific georegion)."; 
+      note = Formatter.initCap(Rank.getPluralRank(pageRank)) + " in the Georegion list are based on the following sources:"
+          + " a) specimen records of valid species from the region (a genus also from specimens identified only to genus, 2026-10-29),"
+          + " b) AntCat.org type locality information, and"
+          + " c) Curator added records. Any curator may add or remove valid species or morphospecies"
+          // the name of the curators' tool only for those who can use it (anonymous pages never show it, 2026-11-02)
+          + (LoginMgr.isCurator(request) ? " (Edit Species List)" : "") + ";"
+          + " a morphospecies must have at least one specimen record in AntWeb, though not necessarily from this place.";
 
       //A.log("geolocaleTaxaHeaderNotes.jsp geolocale:" + geolocale + " num:" + Georank.getGeorankLevel(pageRank));
       if (Georank.getGeorankLevel(geolocale) >=3 && isUseChildren) {
         note += "This list is based on it's children " + Georank.getChildPluralRank(geolocale).toLowerCase() + ".";
-      } 
-     
-      if ("taxaPage".equals(pageType) && !isUseChildren) {
-        note += "<br><br>To see all " + Rank.getPluralRank(pageRank).toLowerCase() + " from specimen records in this " 
-          + geolocale.getGeorank() + ", click on <b>Show Specimen Taxa</b> at the top of the list."
-          ;
       }
 
     if ("species".equals(pageRank)) {
@@ -46,18 +79,13 @@ if (true) {
               note += "<br>";
           }
       }
-    %>
-
-      <%= note %>
-      <div class="page_divider taxonomic"></div>
-<%  }
+      aboutList.append("<p>").append(note).append("</p>");
+    }
 
     if (overview instanceof Bioregion) {
-      Bioregion headerBioregion = (Bioregion) overview;    
-
-      note = Formatter.initCap(Rank.getPluralRank(pageRank)) + " in the Bioregion list are based on the following sources:" 
+      note = Formatter.initCap(Rank.getPluralRank(pageRank)) + " in the Bioregion list are based on the following sources:"
           + " a) specimen records of any species from the bioregion,"
-          + " b) AntCat.org type locality information. Bioregion lists are not managed by curators."; 
+          + " b) AntCat.org type locality information. Bioregion lists are not managed by curators.";
 
       if ("species".equals(pageRank)) {
 
@@ -72,40 +100,53 @@ if (true) {
           note += speciesListWithRangeDataNote;
           note += "<br>";
       }
-%>
-      <%= note %>
-      <div class="page_divider taxonomic"></div>
-<%  }
- 
-    if (overview instanceof Museum) {
-      Museum headerMuseum = (Museum) overview;    
+      aboutList.append("<p>").append(note).append("</p>");
+    }
 
-      note = Formatter.initCap(Rank.getPluralRank(pageRank)) + " in the Museum list are based on" 
+    if (overview instanceof Museum) {
+      note = Formatter.initCap(Rank.getPluralRank(pageRank)) + " in the Museum list are based on"
           + " specimen records of any species from the museum as indicated by the 'Owned by' field. Museum lists are not managed by curators."
       ;
-%>
-      <%= note %>
-      <div class="page_divider taxonomic"></div>
-<%  }
-    
+      aboutList.append("<p>").append(note).append("</p>");
+    }
+
     if (LoginMgr.isAdmin(request) && overview instanceof Project) {
       Project headerProject = (Project) overview;
 
       note = Formatter.initCap(Rank.getPluralRank(pageRank)) + " in the Project: " + org.calacademy.antweb.util.Html.esc(headerProject.getTitle()) + " are based on ";
-      if ("worldants".equals(headerProject.getName())) { 
-          note += "data from Antcat.org."; 
-      } else if ("allantwebants".equals(headerProject.getName())) { 
+      if ("worldants".equals(headerProject.getName())) {
+          note += "data from Antcat.org.";
+      } else if ("allantwebants".equals(headerProject.getName())) {
           note += " a) specimen records of any species,"
-          + " b) AntCat.org type locality information. All Antweb list is not managed by curators."; 
-      } else if ("fossilants".equals(headerProject.getName())) { 
-          note += " Antcat fossil records and curator added records."; 
+          + " b) AntCat.org type locality information. All Antweb list is not managed by curators.";
+      } else if ("fossilants".equals(headerProject.getName())) {
+          note += " Antcat fossil records and curator added records.";
       } else {
           note += "curator added records.";
-      }      
-%>
-      <%= note %>
-      <div class="page_divider taxonomic"></div>
-<%  } 
-}   
- %>
+      }
+      aboutList.append("<p>").append(note).append("</p>");
+    }
+}
 
+if (
+    LoginMgr.isAdmin(request)
+    && overview instanceof Geolocale
+    && Rank.SPECIES.equals(pageRank)
+    ) {
+      boolean isUseChildren = ((Geolocale) overview).getIsUseChildren();
+      aboutList.append("<p>(Administrators) Species in the \"Georegion\" lists are based on specimen records of valid species from the region, on literature, and on curation."
+          + " Any curator may add or remove valid species from the list and also morphospecies"
+          + " (which must have at least one record in Antweb though not necessary from the specific georegion).");
+      if (isUseChildren) {
+          aboutList.append(" This list is based on it's children ").append(Georank.getChildPluralRank((Geolocale) overview).toLowerCase()).append(".");
+      }
+      aboutList.append("</p>");
+}
+
+if (aboutList.length() > 0) { %>
+<details id="about-list" class="about-list">
+<summary>About this list</summary>
+<%= aboutList %>
+</details>
+<div class="page_divider taxonomic"></div>
+<% } %>

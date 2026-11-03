@@ -38,6 +38,16 @@ import com.zonageek.jpeg.codec.JpegCodec;
 
 //=============================================================================
 //=============================================================================
+/**
+ * Part of the bundled third-party JPEG/EXIF reader com.zonageek.jpeg (Sebastian Delmont, 2002, BSD-style licence in
+ * the comment at the top of this file, kept as it is). AntWeb uses the package only to read EXIF data: util/Exif
+ * calls Jpeg.readHeaders() and getExifBlock() for the image page (bigPicture-body.jsp: the EXIF section for
+ * administrators, and the photographer when the image has no artist); SpecimenImage.setMetadata() and
+ * ImageDb.getExifData() also read it, but nothing calls them (2026-11-02). A Start Of Frame block (markers SOF0 to
+ * SOF15, without SOF4 and SOF12): encoding, image width and height, number of channels, bits per channel. Passes the
+ * frame data to the codec only when one was activated (Jpeg.activateCodec(), never called by AntWeb). Docs:
+ * docs/flows/specimen-and-image-pages.md (EXIF for admins). Tests: ExifTextTest, tests/e2e/test_exif_view.py.
+ */
 public class SofBlock extends JpegBlock {
   public final static int ENCODING_UNKNOWN = -1;
   public final static int ENCODING_BASELINE = 0;

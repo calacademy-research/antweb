@@ -53,6 +53,22 @@ JSP_MISSING = [
     # opens after the first 20 lines
     "\n" * 25 + "<%-- Upload report: the lines of one upload. --%>\n",
 ]
+PY_OK = [
+    '"""Deletes old Tomcat log files inside the antweb container."""\nimport os\n',
+    '#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n"""The AntWeb public API, version 3.1."""\nimport os\n',
+    # a blank line and a block of comments before the docstring (api.py, clearDisk.py)
+    '\n# ! /usr/bin/python3\n# Can be run locally as:\n#     python3 api.py\n\n# import os\n"""Deletes old Tomcat log files."""\nimport os\n',
+]
+PY_MISSING = [
+    "import os\nprint('x')\n",
+    "# Deletes old Tomcat log files inside the antweb container.\nimport os\n",
+    '"""Helper."""\n',
+    "this is not python (\n",
+    # a string after an import is not a docstring
+    'import os\n"""Deletes old Tomcat log files inside the antweb container."""\n',
+    # a NUL byte
+    '"""Deletes old Tomcat log files.\x00"""\n',
+]
 
 
 def test_rules():
@@ -64,6 +80,10 @@ def test_rules():
         assert c.has_header("a.jsp", t), ("jsp ok", i, t)
     for i, t in enumerate(JSP_MISSING):
         assert not c.has_header("a.jsp", t), ("jsp missing", i, t)
+    for i, t in enumerate(PY_OK):
+        assert c.has_header("a.py", t), ("python ok", i, t)
+    for i, t in enumerate(PY_MISSING):
+        assert not c.has_header("a.py", t), ("python missing", i, t)
 
 
 def test_baseline():
@@ -74,20 +94,26 @@ def test_baseline():
         write(root, "web/p.jsp", JSP_OK[0])
         write(root, "web/q.jsp", JSP_MISSING[0])
         write(root, "web/notes.txt", "not checked")
+        write(root, "api/v3.1/api.py", PY_OK[1])
+        write(root, "tools/x/run.py", PY_MISSING[0])
+        write(root, "tests/unit/test_x.py", PY_MISSING[0])  # tests/ is not checked
+        write(root, "tools/.venv/lib/x.py", PY_MISSING[0])  # nor dot-folders
+        write(root, "docker/api/serve.py", PY_OK[0])  # any other folder is
         res = c.scan(root)
         assert res == {"src/a/Has.java": True, "src/a/New.java": False, "src/a/Old.java": False,
-                       "web/p.jsp": True, "web/q.jsp": False}, res
-        assert c.counts(res) == {"Java": [1, 2], "JSP": [1, 1]}
+                       "web/p.jsp": True, "web/q.jsp": False,
+                       "api/v3.1/api.py": True, "tools/x/run.py": False, "docker/api/serve.py": True}, res
+        assert c.counts(res) == {"Java": [1, 2], "JSP": [1, 1], "Python": [2, 1]}
         # complete baseline: no problems
-        assert c.problems(res, {"src/a/New.java", "src/a/Old.java", "web/q.jsp"}) == []
+        assert c.problems(res, {"src/a/New.java", "src/a/Old.java", "web/q.jsp", "tools/x/run.py"}) == []
         # (1) a new file without a header fails
-        errs = c.problems(res, {"src/a/Old.java", "web/q.jsp"})
+        errs = c.problems(res, {"src/a/Old.java", "web/q.jsp", "tools/x/run.py"})
         assert len(errs) == 1 and errs[0].startswith("src/a/New.java: no header"), errs
         # (2) a baseline file that now has a header fails, naming the line to remove
-        errs = c.problems(res, {"src/a/New.java", "src/a/Old.java", "web/q.jsp", "web/p.jsp"})
+        errs = c.problems(res, {"src/a/New.java", "src/a/Old.java", "web/q.jsp", "tools/x/run.py", "web/p.jsp"})
         assert len(errs) == 1 and "Remove this line" in errs[0] and errs[0].endswith("web/p.jsp"), errs
         # a baseline line for a deleted file fails
-        errs = c.problems(res, {"src/a/New.java", "src/a/Old.java", "web/q.jsp", "web/gone.jsp"})
+        errs = c.problems(res, {"src/a/New.java", "src/a/Old.java", "web/q.jsp", "tools/x/run.py", "web/gone.jsp"})
         assert len(errs) == 1 and "no longer exists" in errs[0], errs
         # baseline file format: comments and blank lines ignored
         bl = os.path.join(root, "b.txt")

@@ -84,7 +84,7 @@ jobs:
       - name: The nightly AntCat download runs before set 1 takes its connection (tests/unit/test_set1_prefetch.py)
         run: python3 tests/unit/test_set1_prefetch.py
 
-      - name: Every Java class and JSP has a header comment, new files included (tools/ci/check_headers.py)
+      - name: Every Java class, JSP and Python script has a header comment, new files included (tools/ci/check_headers.py)
         # Road map step 4. tools/ci/headers-missing.txt lists the files still without one; it only shrinks.
         # Fails when a file not listed there has no header, or a listed file now has one (remove its line).
         # The rules: tests/unit/test_check_headers.py.
@@ -890,7 +890,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.AuditTlFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (23 tests)" /tmp/out.txt
+            grep -q "^OK (22 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the upload decisions of 2026-10-28 (current valid name not in AntWeb, lines identified only to genus or subfamily, UTF-8 only)
@@ -995,11 +995,11 @@ jobs:
             grep -q "^OK (7 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
-      - name: Java unit tests of the status choice of lists decided 2026-10-30 (choices and labels, old values mapped, defaults per kind of place, criteria, headers; StatusChoiceTest)
-        # StatusChoiceTest: four choices (valid, validmorpho, all, fossil) labelled Valid species, Valid species +
-        # morphospecies, All names, Fossil species; all determined -> validmorpho, all indetermined / complete / type ->
-        # all; geolocales and curated projects open with Valid species, bioregions, museums and All AntWeb with Valid
-        # species + morphospecies, the AntCat list and Fossil Ants with their own set; the session is never read.
+      - name: Java unit tests of the views of lists (2026-11-02; views and labels, old values mapped, Curated the default, criteria, headers; StatusChoiceTest)
+        # StatusChoiceTest: four views (valid, curated, all, fossil) labelled Valid, Curated, All specimen names, Fossil on
+        # every list and rank; validmorpho (Valid + morphospecies of 2026-10-30), all determined, all indetermined,
+        # complete, type -> all; every list opens with Curated, the AntCat list and Fossil Ants with their own set; the
+        # session is never read; the view Not curated (notcurated, 2026-11-02): not a button, its criteria, label, headers.
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
             -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
@@ -1014,6 +1014,45 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.StatusChoiceTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             grep -v "LogMgr" /tmp/out.txt | tail -3
             grep -q "^OK (10 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+          '
+
+      - name: Java unit tests of the views' rules (2026-11-02; curated morphospecies, specimen names of geolocale lists, genus rows, Not curated, species imaged, source icons; ListViewTest)
+        # ListViewTest: a morphospecies is curated by a curator's entry on any list (not proxy rows, not the system lists);
+        # country, adm1, region and subregion lists add the names of specimens collected there (red flags never count,
+        # disputes respected); a genus known only from specimens identified to genus is in All specimen names only;
+        # the Not curated column in Valid and Curated only (stored nightly), "N species imaged", the stored names
+        # (place_specimen_name) in the views' specimen half; specimens trump literature for the source icon.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/ListViewTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.ListViewTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            grep -v "LogMgr" /tmp/out.txt | tail -3
+            grep -q "^OK (12 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+          '
+
+      - name: Java unit tests of who may edit species lists (2026-11-02; any curator any list, not the system lists; projects stay with their curators; SecurityBatch5Test)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/SecurityBatch5Test.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.SecurityBatch5Test > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            grep -v "LogMgr" /tmp/out.txt | tail -3
+            grep -q "^OK (7 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Place pages say Species / subspecies / morphospecies (tests/unit/test_place_species_label.py)
@@ -1097,7 +1136,14 @@ jobs:
           # DownloadGuardsDbTest: a place download holds only the specimens collected there (5,000 cap), the paged
           # search list (COUNT, LIMIT/OFFSET, sort before paging, images/types only), ant specimens only on place pages.
           # PlaceTaxonNotesDbTest (2026-10-29): country and adm1 lists get the genus rows of specimens identified to genus
-          # (not the names); the genus page's indet line counts the place's specimens; the not-recorded notice's queries.
+          # (not the names); the genus page's indet line counts the place's specimens; the not-recorded notice's queries;
+          # 2026-10-30: the specimens collected in a place under names not on its species list, by genus; 2026-11-02:
+          # the views (Valid, Curated, All specimen names): curated morphospecies, the names of specimens collected there,
+          # disputes, red flags, the genus rows' Species, species imaged and which rows each view shows, the same from the
+          # names stored nightly. PlaceGenusCurationDbTest (2026-11-02): the nightly Not curated count per place and genus
+          # (valid names and curated morphospecies left out; uncurated morphospecies, indet and unrecognized names counted;
+          # red flags never; country and island_country once; adm1s, museums, bioregions), the page's read (no table: no
+          # error), the view Not curated's names.
           # GeneraRuleDbTest (2026-10-30): Genera count valid genera and morphogenera only (placeholders such as
           # "(myrmicinae)" and unrecognized genus names are not genera), in the nightly totals, the subfamily rows' Genera,
           # upload groups and the count check; Subfamilies count valid subfamilies only (not "(formicidae)" or misspelled
@@ -1130,10 +1176,11 @@ jobs:
               /t/org/calacademy/antweb/home/ArtistMoveDbTest.java \
               /t/org/calacademy/antweb/home/NumberDecisionsDbTest.java \
               /t/org/calacademy/antweb/home/PlaceTaxonNotesDbTest.java \
+              /t/org/calacademy/antweb/home/PlaceGenusCurationDbTest.java \
               /t/org/calacademy/antweb/home/GeneraRuleDbTest.java \
               /t/org/calacademy/antweb/home/BlankNameCleanupDbTest.java \
               /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:3 home.GeneraRuleDbTest:11 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
+            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:10 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:11 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
@@ -1325,7 +1372,7 @@ jobs:
             grep -q "^OK (5 tests)" /tmp/out.txt
           '
 
-      - name: Java unit tests of the notes of taxon pages in a place (indet line, not recorded; PlaceTaxonNotesTest, 2026-10-29)
+      - name: Java unit tests of the notes of taxon pages in a place (indet line, not recorded, specimens collected here not on the list, the Not curated cell; PlaceTaxonNotesTest, 2026-10-29 to 11-02)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
             set -e
@@ -1336,7 +1383,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/PlaceTaxonNotesTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.PlaceTaxonNotesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (9 tests)" /tmp/out.txt
+            grep -q "^OK (12 tests)" /tmp/out.txt
           '
 
       - name: Page decisions of 2026-10-27 (upload lists, curator emails, museum Recalculate, legacy images, Native, search order, help text, field guide caste, bot blocking, menu label, no Universal Analytics) (tests/unit/test_decided_pages.py)

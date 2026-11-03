@@ -53,7 +53,7 @@ public class UtilDataAction extends AntwebAction {
         "generateGeolocaleTaxaFromSpecimens", "geolocaleCountCrawl", "geolocaleTaxonFix",
         "fixGeolocaleTaxonParentage", "updateGeolocaleParentHierarchy",
         "projectCountCrawl", "populateMuseum", "populateBioregion", "updateTaxonSets", "crawlForType",
-        "imageCountCrawl", "placeImageCounts", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
+        "imageCountCrawl", "placeImageCounts", "placeGenusCuration", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
         "verifyProjTaxon", "regenerateAllAntweb", "runCountCrawls", "countReport",
         "genGoogleMapFunction", "delGoogleMapFunction", "genGroupObjectMaps",
         "calcCaste", "setIsRestart", "siteWarning", "genRecentContent");
@@ -556,6 +556,17 @@ public class UtilDataAction extends AntwebAction {
                 // Images and imaged specimens of each place, from the image table (2026-10-20). After the
                 // per-taxon image counts, so set 4 leaves every image number of the day in place.
                 message += " " + doAction("placeImageCounts", form, accessLogin, accessGroup, connection, request, mapping);
+                // The Not curated column of genus lists and the names collected in each place (2026-11-02,
+                // PlaceGenusCurationDb): after sets 1 to 3 have uploaded, renamed and red-flagged the specimens. Its own try:
+                // a failure costs the column (empty cells), never the rest of set 4.
+                try {
+                    connection.commit();
+                    message += " " + doAction("placeGenusCuration", form, accessLogin, accessGroup, connection, request, mapping);
+                } catch (Exception e) {
+                    s_log.error("set4 placeGenusCuration e:" + e);
+                    LogMgr.appendLog("compute.log", "  " + PlaceGenusCurationDb.LOG + ": failed (" + e + ")", true);
+                    message += " not curated not counted (" + e + ")";
+                }
                 // Home page and statsPage numbers (2026-10-21): written only after specimen uploads, so images added
                 // since were missing. Now also every night, after the image counts. Its own try: a failure here
                 // must not stop set 4.
@@ -887,6 +898,22 @@ public class UtilDataAction extends AntwebAction {
 		    message = "Place image counts: " + type + " " + placeImageCountDb.updateType(type) + " places with images";
 		  } else {
 		    message = placeImageCountDb.updateAll();
+		  }
+		  LogMgr.appendLog("compute.log", "  " + message, true);
+		}
+
+		// The Not curated column of genus lists (Brian Fisher, 2026-11-02): per place and genus, the specimens collected
+		// there whose name is not curated, and the names collected in each place (place_genus_curation,
+		// place_specimen_name; PlaceGenusCurationDb). Nightly set 4; admins: utilData.do?action=placeGenusCuration
+		// (name=country, adm1, museum or bioregion does one kind). Writes "Not curated counted: ..." to compute.log.
+		if (action.equals("placeGenusCuration")) {
+		  PlaceGenusCurationDb placeGenusCurationDb = new PlaceGenusCurationDb(connection);
+		  String type = form.getName();
+		  if (type != null && java.util.Arrays.asList(PlaceGenusCurationDb.TYPES).contains(type)) {
+		    int[] n = placeGenusCurationDb.fill(type);
+		    message = PlaceGenusCurationDb.LOG + ": " + type + " " + n[0] + " places, " + n[1] + " genus rows";
+		  } else {
+		    message = placeGenusCurationDb.fillAll();
 		  }
 		  LogMgr.appendLog("compute.log", "  " + message, true);
 		}

@@ -19,6 +19,18 @@ import org.apache.commons.logging.LogFactory;
 import org.calacademy.antweb.util.*;
 import org.calacademy.antweb.home.*;
 
+/**
+ * /login.do (form loginForm; failure: login.jsp, success: a redirect): log in and create an account. No fields: the
+ * log-in page (or, after "Keep me logged in" logged the user in, a redirect to target=). A password sent by GET
+ * shows the form. value="Create Account": Cloudflare Turnstile check, then LoginDb.createAccount (valid name and
+ * password; "already in use"), log in, redirect to editLogin.do. Log in (value Login or none): by user name, else
+ * email; PasswordHash.matches; an inactive account gets a reactivation link instead, an account marked must-reset a
+ * reset link (PasswordResetMgr); success: LoginMgr.logIn (new session id), last log-in time, rehash of an old
+ * password, "Keep me logged in" (RememberMeMgr). Redirects to a safe target= (not the log-in, password reset or
+ * curate.do pages; fieldGuideResults.do goes to the home page), else the home page. Docs:
+ * docs/flows/email-and-password-reset.md. Tests: tests/e2e/test_curator.py, tests/e2e/test_password_reset_pages.py,
+ * tests/e2e/test_login_needed.py.
+ */
 public final class LoginAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(LoginAction.class);

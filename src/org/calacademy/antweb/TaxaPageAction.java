@@ -18,12 +18,14 @@ import org.calacademy.antweb.util.*;
 
 /**
  * /taxonomicPage.do: a place's list of subfamilies, genera or species (taxonomicPage.jsp). images=true gives the
- * images view, specimen=true adds the names known only from specimens (kept in the session), isImaged=false the
- * unimaged names, statusSet the status choice. Checks the rank (subspecies refused) and the place (OverviewMgr); a
- * species list of all of AntWeb or the AntCat list with images (not isImaged=false) needs a login.
- * TaxaPage.fetchChildren reads the place's list joined to taxon; findUnimaged, findGenusOnly and the fossil
- * subfamilies add the notes. Request attribute taxaPage. Docs: docs/flows/places.md, docs/numbers.md rows 38 to 42.
- * Tests: tests/e2e/test_numbers_lists.py, test_status_choice.py, test_numbers_live.py.
+ * images view, isImaged=false the unimaged names, statusSet the view (Valid, Curated, All specimen names, Fossil;
+ * StatusSet, ListView; Brian Fisher 2026-11-02). The old specimen=true ("Show Specimen Taxa", later "Names from:
+ * Specimens collected here") opens All specimen names when no statusSet is given; nothing is kept in the session.
+ * Checks the rank (subspecies refused) and the place (OverviewMgr); a species list of all of AntWeb or the AntCat list
+ * with images (not isImaged=false) needs a login. TaxaPage.fetchChildren reads the view's rows; findUnimaged,
+ * findGenusOnly, findPlaceSpecimens (species lists) and findGenusRows (genus lists: Species in the view, Not curated
+ * (stored nightly, home.PlaceGenusCurationDb), species imaged, the genus rows the view shows) add the rest. Request attribute taxaPage. Docs: docs/flows/places.md,
+ * docs/numbers.md rows 38 to 42. Tests: tests/e2e/test_numbers_lists.py, test_status_choice.py, test_list_sources.py.
  */
 public final class TaxaPageAction extends AntwebAction {
 
@@ -57,15 +59,10 @@ public final class TaxaPageAction extends AntwebAction {
 
         boolean withTaxa = true;
 
-        boolean withSpecimen = false;
-        if ("true".equals(request.getParameter("specimen")) || "true".equals((String) session.getAttribute("specimenTaxa"))) {
-          withSpecimen = true;
-          session.setAttribute("specimenTaxa", "true");
-        }   
-        if ("false".equals(request.getParameter("specimen"))) {
-          withSpecimen = false;
-          session.removeAttribute("specimenTaxa");
-        }   
+        // specimen=true (old links): the view All specimen names, unless the address names a view (2026-11-02). The
+        // session no longer keeps it (a choice made on one page never carries to the next, 2026-10-29).
+        boolean withSpecimen = "true".equals(request.getParameter("specimen"));
+        session.removeAttribute("specimenTaxa");
 
         String simpleStr = request.getParameter("simple");
         boolean simple = "true".equals(simpleStr);
@@ -183,7 +180,9 @@ public final class TaxaPageAction extends AntwebAction {
                   }
               }
 
-            String statusSetStr = StatusSet.getStatusSet(request, overview);
+            String requestStatusSet = request.getParameter("statusSet");
+            if (withSpecimen && (requestStatusSet == null || requestStatusSet.isEmpty())) requestStatusSet = StatusSet.LIST_ALL;
+            String statusSetStr = StatusSet.getStatusSet(requestStatusSet, request, overview);
 			String statusSetSize = StatusSet.getStatusSetSize(request);
             taxaPage.setStatusSetStr(statusSetStr);
             taxaPage.setStatusSetSize(statusSetSize);
@@ -199,6 +198,13 @@ public final class TaxaPageAction extends AntwebAction {
 // no double
             //taxaPage.setOverview(overview);
             //A.log("execute() overview:" + overview);
+            // 2026-11-02: the Fossil button only when the list has fossil names here (one EXISTS query)
+            ListView.setHasFossil(request, connection, overview, rank, null, null);
+            // 2026-11-02 (speed): a genus or species list reads the place's specimens once, for its specimen half, its genus
+            // rows and its source icons (review of #316: the species lists' Curated default had a specimen scan per query)
+            // (species lists only where the view adds the names of specimens collected there: not museums or bioregions).
+            // Genus lists read the names stored by the nightly count (place_specimen_name), not the specimen table.
+            if ((Rank.GENUS.equals(rank) && ListView.readsPlaceSpecimens(overview)) || (Rank.SPECIES.equals(rank) && ListView.addsSpecimenNames(overview))) taxaPage.loadCollected(connection, overview, rank);
             String successMsg = taxaPage.fetchChildren(connection, overview, rank, withImages, withTaxa, withSpecimen, true, caste, StatusSet.listStatusSet(statusSetStr, overview.getName())); //, orderBy); list choice -> its criteria (2026-10-30)
             // String successMsg = "SUCCESS!";
             if (successMsg != null) {
@@ -207,10 +213,14 @@ public final class TaxaPageAction extends AntwebAction {
             }
             // Q12 (2026-10-22): "Unimaged" = no photo of the ant anywhere in AntWeb (label photos do not count).
             if ("false".equals(isImaged)) taxaPage.findUnimaged(connection);
-            // 2026-10-28: the specimens identified to genus only, for the genus rows and the line under the species list.
-            if (Rank.GENUS.equals(rank) || Rank.SPECIES.equals(rank)) taxaPage.findGenusOnly(connection, overview);
-            // 2026-10-30: a subfamily list says "extant and fossil" only when the place has a fossil subfamily
-            if (Rank.SUBFAMILY.equals(rank)) TaxaPage.setFossilSubfamilies(request, connection, overview);
+            // 2026-10-28: the specimens identified to genus only, for the line under the species list (not in All
+            // specimen names, which lists those names itself); 2026-11-02: the place's specimens by name (source icons).
+            if (Rank.SPECIES.equals(rank)) {
+              if (!StatusSet.LIST_ALL.equals(statusSetStr) && !StatusSet.LIST_NOT_CURATED.equals(statusSetStr)) taxaPage.findGenusOnly(connection, overview);
+              taxaPage.findPlaceSpecimens(connection, overview);
+            }
+            // 2026-11-02: the genus rows in the view: Species, Not curated, species imaged, and the rows the view shows.
+            if (Rank.GENUS.equals(rank)) taxaPage.findGenusRows(connection, overview, statusSetStr);
 
 //         if (HttpUtil.getTarget(request).contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) { s_log.warn("MarkNote() break:" + HttpUtil.getTarget(request)); return (mapping.findForward("error"));}
 // Doubled

@@ -6,6 +6,13 @@ import java.io.Serializable;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+/**
+ * Taxon ranks: the constants kingdom to specimen (and locality), their order (getRankLevel: kingdom 11 down to
+ * specimen 1; subgenus and locality have no level, so isValid() is false for them), the tests isGenusOrBelow and
+ * similar, the child rank (family to subfamily, subfamily to genus, genus to species, species and subspecies to
+ * specimen), plural and singular names for headings, the rank of a set of name parts and the SQL rank clause. Used
+ * throughout the taxon pages, lists, search and uploads. Docs: docs/flows/taxon-pages.md.
+ */
 public final class Rank implements Serializable {
 
     private static final Log s_log = LogFactory.getLog(Rank.class);

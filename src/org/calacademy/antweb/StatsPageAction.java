@@ -16,6 +16,14 @@ import org.calacademy.antweb.util.*;
 import org.apache.commons.logging.Log; 
 import org.apache.commons.logging.LogFactory;
     
+/**
+ * /statsPage.do (form dummyForm; util/statsPage.jsp), the statistics page linked from the home page: the images
+ * tables (ImageDb.getImageStats, getImageTaxonStats), global extant and fossil data, bioregion data and museum data
+ * (StatisticsDb), and when they were counted (statsCountedAt). The tables are counted once at the end of the nightly
+ * run (Scheduler calls recount()) and every visit shows that copy; after a restart the first visit counts them.
+ * Docs: docs/flows/home-and-statistics.md, docs/numbers.md rows 6 to 19. Tests: tests/e2e/test_home_and_stats.py,
+ * tests/e2e/test_count_check.py, tests/e2e/test_numbers_pages.py.
+ */
 public final class StatsPageAction extends AntwebAction {
 
     private static final Log s_log = LogFactory.getLog(StatsPageAction.class);
