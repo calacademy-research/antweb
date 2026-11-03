@@ -181,7 +181,9 @@ check_dump() {
   local f=$1 summary
   [[ -s "$f" && $(stat -c %s "$f") -ge 1024 ]] || { log "$f is missing or smaller than 1 KB"; return 1; }
   gzip -t "$f" || { log "$f is not a complete gzip file"; return 1; }
-  summary=$(gunzip -c "$f" | awk '/^USE `/ { uses = uses $0 " " } { last = $0 } END { print uses "|" last }')
+  # mysqldump --routines writes "USE `ant`;" again before the routines: count each database once (2026-11-02,
+  # production's dump of that day was refused as "USE `ant`; USE `ant`;")
+  summary=$(gunzip -c "$f" | awk '/^USE `/ { if (!($0 in seen)) { seen[$0] = 1; uses = uses $0 " " } } { last = $0 } END { print uses "|" last }')
   [[ "${summary%%|*}" == 'USE `ant`; ' ]] || { log "$f: expected only the database ant, found: ${summary%%|*}"; return 1; }
   [[ "${summary#*|}" == "-- Dump completed"* ]] || { log "$f does not end with \"-- Dump completed\""; return 1; }
 }
