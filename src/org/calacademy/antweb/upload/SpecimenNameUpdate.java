@@ -58,6 +58,23 @@ import org.calacademy.antweb.util.TaxonPropMgr;
  * specimen filed under such a missing name, by an older upload, goes back to its uploaded name); uploaded
  * names AntCat does not know; names with another non-valid status (unavailable, homonym, ...).
  *
+ * Second pass (Brian Fisher, 2026-11-03; GenusSynonymRule): a morphospecies or indet filed under a genus
+ * AntCat makes a junior synonym of one valid genus moves to that genus with its code ("dorylinaephyracaces
+ * (indet)" -> "dorylinaelioponera (indet)"), its reason the old genus's AntCat history; a name filed without
+ * a subfamily ("(formicidae)pyramica ludovici") is filed as the upload would file it now (Strumigenys
+ * ludovici), or, a morphospecies or indet, under its genus's subfamily. The uploaded name stays as
+ * original_taxon_name. The one exception to "never creates taxa": the taxon row of such a morphospecies or
+ * indet name (insert_method genusSynonymMove, apply mode only). Left: a species name AntCat does not know in a
+ * synonym genus (AntCat has no record of most past combinations; never moved by guess), listed per run as mode
+ * no_combo for the AntCat editors, with the senior genus; a species AntCat does not know without subfamily in a
+ * valid genus, and a genus name in two subfamilies (counted); a genus AntCat does not have (often a
+ * misspelling, never corrected by guess), listed per run as mode no_genus for the curator.
+ *
+ * Third pass (Brian Fisher, 2026-11-03; GenusConceptRule): an approved old genus concept moves a bioregion's
+ * morphospecies and indets of an old genus that stays valid elsewhere to the new genus (Mesoponera in the
+ * Afrotropical and Malagasy regions is Xiphopelta), the code part kept, the uploaded name kept, the reason
+ * naming the rule and who approved it. Only the specimens of the rule's bioregions move.
+ *
  * Switch: etc/name-update.properties (mode=off|report|apply, maxChanges); no file = off.
  * Docs: docs/flows/antcat-to-antweb.md, docs/flows/nightly.md. Table: db/upgrade/8.113/2026-10-20-specimen-name-update.sql.
  */
@@ -83,6 +100,20 @@ public class SpecimenNameUpdate {
      * be spot-checked before apply). new_name is where the uploaded name points. Replaced at each run.
      */
     public static final String KEPT_VALID = "kept_valid";
+    /**
+     * Specimens filed without a subfamily ("(formicidae)stumigenys ...") whose genus AntCat does not have under
+     * that name, often a misspelling (Brian Fisher, 2026-11-03): never corrected by guess, listed for the
+     * curator. Replaced at each run.
+     */
+    public static final String NO_GENUS = "no_genus";
+    /**
+     * Specimens left under a synonym genus with a species name AntCat does not know (Brian Fisher, 2026-11-03:
+     * AntCat has no record of most past combinations, "(formicidae)pyramica ludovici"; the epithet is never moved
+     * into the senior genus by guess). new_name is the senior genus AntCat gives (its genus row), or empty. The
+     * list goes to the AntCat editors; once AntCat has the combination the species rule moves the specimens.
+     * Replaced at each run.
+     */
+    public static final String NO_COMBINATION = "no_combo";
 
     public static final String PLACEHOLDER_INSERT_METHOD = SharedNameReport.PLACEHOLDER_INSERT_METHOD;
 
@@ -163,7 +194,13 @@ public class SpecimenNameUpdate {
         CURRENT_VALID("filed under a name AntCat still calls valid"),
         NOT_IN_ANTCAT("uploaded name not in AntCat"),
         NO_TARGET("current valid name has no taxon row"),
-        OTHER_STATUS("other status");
+        OTHER_STATUS("other status"),
+        // Second pass (GenusSynonymRule; Brian Fisher, 2026-11-03).
+        GENUS_NOT_IN_ANTCAT("genus not in AntCat (no subfamily), for the curator"),
+        GENUS_AMBIGUOUS("genus name in two or more subfamilies"),
+        SPECIES_NOT_IN_ANTCAT("species not in AntCat, filed without subfamily"),
+        COMBINATION_NOT_IN_ANTCAT("combination with a synonym genus not in AntCat, for the AntCat editors"),
+        NO_VALID_GENUS("genus without a valid genus to go to");
 
         public final String label;
         Outcome(String label) { this.label = label; }
@@ -281,6 +318,108 @@ public class SpecimenNameUpdate {
         return new Decision(Outcome.CHANGE, newName, newName.equals(uploadedName) ? null : uploadedName);
     }
 
+    // ---------------------------------------------------------------- the second pass: genera (Brian Fisher, 2026-11-03)
+
+    /** What the second pass does with the specimens of one group uploaded as uploadedName and filed under currentName. */
+    public static final class GenusDecision {
+        public final Outcome outcome;
+        /** The rule's answer that decided (for the reason), or null. */
+        public final GenusSynonymRule.Result rule;
+        public final String newName;            // CHANGE only
+        public final String newOriginalName;    // CHANGE only: the uploaded name, or null when the specimen goes to it
+        GenusDecision(Outcome outcome, GenusSynonymRule.Result rule, String newName, String newOriginalName) {
+            this.outcome = outcome;
+            this.rule = rule;
+            this.newName = newName;
+            this.newOriginalName = newOriginalName;
+        }
+        public String toString() { return outcome + (newName != null ? " -> " + newName : ""); }
+    }
+
+    /**
+     * onUploaded, onCurrent: GenusSynonymRule.decide for the uploaded and the filed name (the same object when
+     * they are the same name). A move worked out from the uploaded name comes first, so that a specimen moved
+     * from "(formicidae)pyramica ludovici" to Strumigenys ludovici follows AntCat later on (the first pass does
+     * not: the uploaded name is a morphospecies name by its parentheses). As in the first pass, a specimen filed
+     * under a name AntCat calls valid is not moved away from it by its uploaded name (CURRENT_VALID, not listed).
+     * Anything else is said by the filed name's answer. Pure: tested in GenusSynonymRuleTest.
+     */
+    public static GenusDecision decideGenus(String uploadedName, String currentName, GenusSynonymRule.Result onUploaded,
+                                            GenusSynonymRule.Result onCurrent, boolean currentIsValid) {
+        GenusSynonymRule.Result g = null;
+        boolean fromUploaded = false;
+        if (onUploaded != null && onUploaded.moves()) {
+            g = onUploaded;
+            fromUploaded = !uploadedName.equals(currentName);
+        } else if (onCurrent != null && onCurrent.moves()) {
+            g = onCurrent;
+        }
+        if (g == null) {
+            GenusSynonymRule.Result r = onCurrent != null ? onCurrent : onUploaded;
+            return new GenusDecision(r == null ? Outcome.UNCHANGED : genusOutcome(r.kind), r, null, null);
+        }
+        if (g.newName.equals(currentName)) return new GenusDecision(Outcome.UNCHANGED, g, null, null);
+        if (fromUploaded && currentIsValid) return new GenusDecision(Outcome.CURRENT_VALID, g, null, null);
+        return new GenusDecision(Outcome.CHANGE, g, g.newName, g.newName.equals(uploadedName) ? null : uploadedName);
+    }
+
+    static Outcome genusOutcome(GenusSynonymRule.Kind kind) {
+        switch (kind) {
+            case GENUS_NOT_IN_ANTCAT: return Outcome.GENUS_NOT_IN_ANTCAT;
+            case GENUS_AMBIGUOUS: return Outcome.GENUS_AMBIGUOUS;
+            case NOT_IN_ANTCAT: return Outcome.SPECIES_NOT_IN_ANTCAT;
+            case COMBINATION_NOT_IN_ANTCAT: return Outcome.COMBINATION_NOT_IN_ANTCAT;
+            case NO_VALID_GENUS: return Outcome.NO_VALID_GENUS;
+            case SHARED_NAME: return Outcome.SHARED_NAME;
+            default: return Outcome.UNCHANGED;   // NONE: nothing for this pass
+        }
+    }
+
+    /**
+     * Second-pass candidates: specimens whose filed or uploaded name is in a synonym genus (the genus row,
+     * subfamily+genus, is the part of the name before the first space) or has a placeholder subfamily
+     * (GenusSynonymRule.PLACEHOLDER_SUBFAMILIES). One scan of specimen, as candidatesSql().
+     */
+    static String genusCandidatesSql() {
+        StringBuilder placeholders = new StringBuilder();
+        for (String p : GenusSynonymRule.PLACEHOLDER_SUBFAMILIES) {
+            placeholders.append(" or s.taxon_name like '").append(p).append("%' or s.original_taxon_name like '").append(p).append("%'");
+        }
+        return "select s.access_group, coalesce(nullif(s.original_taxon_name, ''), s.taxon_name) uploaded, s.taxon_name, count(*) n"
+            + " from specimen s"
+            + " left join taxon g on g.taxon_name = substring_index(s.taxon_name, ' ', 1)"
+            + " left join taxon gu on gu.taxon_name = substring_index(s.original_taxon_name, ' ', 1)"
+            + " where s.taxon_name like '% %' and ("
+            + "    (g.taxarank = 'genus' and g.status = '" + Status.SYNONYM + "')"
+            + " or (gu.taxarank = 'genus' and gu.status = '" + Status.SYNONYM + "')"
+            + placeholders + ")"
+            + " group by s.access_group, uploaded, s.taxon_name"
+            + " order by s.access_group, uploaded, s.taxon_name";
+    }
+
+    /**
+     * Third-pass candidates (GenusConceptRule): specimens filed under a morphospecies or indet name of an old genus
+     * that has a rule, in a bioregion some rule names (the rule itself decides per genus and bioregion), grouped
+     * by bioregion too. The genus names and bioregions come from the code (GenusConceptRule.RULES), quoted.
+     */
+    static String conceptCandidatesSql(List<GenusConceptRule.Rule> rules) {
+        StringBuilder genera = new StringBuilder();
+        for (String g : GenusConceptRule.oldGenera(rules)) {
+            genera.append(genera.length() == 0 ? "" : " or ").append("s.taxon_name like '").append(g.replace("'", "''")).append(" %'");
+        }
+        StringBuilder bioregions = new StringBuilder();
+        for (String b : GenusConceptRule.bioregions(rules)) {
+            bioregions.append(bioregions.length() == 0 ? "" : ", ").append("'").append(b.replace("'", "''")).append("'");
+        }
+        if (genera.length() == 0) genera.append("1 = 0");
+        if (bioregions.length() == 0) bioregions.append("''");
+        return "select s.access_group, coalesce(nullif(s.original_taxon_name, ''), s.taxon_name) uploaded, s.taxon_name, s.bioregion, count(*) n"
+            + " from specimen s"
+            + " where (" + genera + ") and s.bioregion in (" + bioregions + ")"
+            + " group by s.access_group, uploaded, s.taxon_name, s.bioregion"
+            + " order by s.access_group, uploaded, s.taxon_name, s.bioregion";
+    }
+
     /** Apply mode changes nothing when more specimens than maxChanges would move in one run. */
     public static boolean overCap(int specimens, int maxChanges) {
         return specimens > maxChanges;
@@ -298,6 +437,13 @@ public class SpecimenNameUpdate {
         public final String antcatStatus;
         public final NameUpdateReason reason;
         public final List<String[]> specimens = new ArrayList<>();   // code, bioregion
+        /**
+         * Second pass: the genus row (e.g. dorylinaelioponera) of a morphospecies or indet name that has no taxon
+         * row yet; apply mode makes it (createMovedTaxon). Null otherwise.
+         */
+        String newTaxonGenus;
+        /** Third pass (GenusConceptRule): only the specimens of this bioregion. Null: any bioregion. */
+        String bioregion;
         Change(int groupId, String uploadedName, String oldName, String newName, String newOriginalName, String antcatStatus) {
             this(groupId, uploadedName, oldName, newName, newOriginalName, antcatStatus, null);
         }
@@ -324,6 +470,11 @@ public class SpecimenNameUpdate {
         public int parkedRenamed;
         public int sharedSpecimens;     // held back: name shared by two or more AntCat taxa
         public int keptValidSpecimens;  // left on a name AntCat calls valid (listed on the page)
+        public int genusSpecimens;      // of specimens: moved by the second pass (genus synonym or no subfamily, GenusSynonymRule)
+        public int noGenusSpecimens;    // left: no subfamily and a genus AntCat does not have (listed on the page)
+        public int noCombinationSpecimens;  // left: species not in AntCat under a synonym genus (listed for the AntCat editors)
+        public int conceptSpecimens;    // of specimens: moved by an approved old genus concept (GenusConceptRule)
+        public int taxaCreated;         // taxon rows made for moved morphospecies and indets (apply only)
         public long millis;
         public String note;             // skipped / failed
 
@@ -354,7 +505,12 @@ public class SpecimenNameUpdate {
                 s.append(e.getValue()).append(" ").append(e.getKey().label);
             }
             if (skippedTotal > 0) b.append("; left alone (names): ").append(s);
+            if (genusSpecimens > 0) b.append("; of these, by genus synonym or missing subfamily: ").append(String.format("%,d", genusSpecimens))
+                .append(taxaCreated > 0 ? " (" + taxaCreated + " morphospecies/indet taxa added)" : "");
+            if (conceptSpecimens > 0) b.append("; of these, by an approved old genus concept: ").append(String.format("%,d", conceptSpecimens));
             if (sharedSpecimens > 0) b.append("; for the curator to confirm (shared name): ").append(sharedSpecimens).append(" specimens");
+            if (noGenusSpecimens > 0) b.append("; genus not in AntCat (no subfamily), for the curator: ").append(noGenusSpecimens).append(" specimens");
+            if (noCombinationSpecimens > 0) b.append("; combination not in AntCat, for the AntCat editors: ").append(noCombinationSpecimens).append(" specimens");
             if (parkedRenamed > 0) b.append("; parked list entries moved: ").append(parkedRenamed);
             b.append("; ").append(String.format("%.1f", millis / 60000.0)).append(" min. See the Name update report (nameUpdates.do).");
             if (note != null) b.append(" ").append(note);
@@ -407,6 +563,9 @@ public class SpecimenNameUpdate {
 
     static final String SPECIMENS_SQL = "select code, bioregion from specimen"
         + " where access_group = ? and taxon_name = ? and coalesce(nullif(original_taxon_name, ''), taxon_name) = ?";
+
+    /** Added to SPECIMENS_SQL and UPDATE_SQL for a third-pass move (one bioregion). */
+    static final String BIOREGION_SQL = " and bioregion = ?";
 
     static final String UPDATE_SQL = "update specimen set taxon_name = ?, original_taxon_name = ?, status = ?,"
         + " family = ?, subfamily = ?, tribe = ?, genus = ?, subgenus = ?, species = ?, subspecies = ?"
@@ -506,6 +665,127 @@ public class SpecimenNameUpdate {
             summary.byGroup.merge(groupId, change.specimens.size(), Integer::sum);
             names.add(current + "\t" + d.newName);
         }
+
+        // Second pass (Brian Fisher, 2026-11-03): a morphospecies or indet in a synonym genus goes to the valid
+        // genus; a name filed without a subfamily ("(formicidae)pyramica ludovici") goes where the upload would
+        // file it now. GenusSynonymRule decides; the moves go through the same cap, rows and update as above.
+        List<Change> noGenus = new ArrayList<>();
+        List<Change> noCombination = new ArrayList<>();
+        GenusSynonymRule.Genera genera = GenusSynonymRule.plainGenera(connection);
+        Map<String, GenusSynonymRule.Result> genusCache = new java.util.HashMap<>();
+        List<Object[]> genusCandidates = new ArrayList<>();
+        try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(genusCandidatesSql())) {
+            while (r.next()) genusCandidates.add(new Object[] {r.getInt(1), r.getString(2), r.getString(3)});
+        }
+        for (Object[] c : genusCandidates) {
+            int groupId = (Integer) c[0];
+            String uploaded = (String) c[1];
+            String current = (String) c[2];
+            if (uploaded == null || current == null) continue;
+            GenusSynonymRule.Result onUploaded = genusRule(uploaded, lookup, genera, genusCache);
+            GenusSynonymRule.Result onCurrent = uploaded.equals(current) ? onUploaded : genusRule(current, lookup, genera, genusCache);
+            Boolean currentValid = currentValidCache.get(current);
+            if (currentValid == null) {
+                CurrentValidNameRule.TaxonRow cur = lookup.getTaxon(current);
+                currentValid = cur != null && Status.VALID.equals(cur.status);
+                currentValidCache.put(current, currentValid);
+            }
+            GenusDecision gd = decideGenus(uploaded, current, onUploaded, onCurrent, currentValid);
+            GenusSynonymRule.Result g = gd.rule;
+            if (gd.outcome == Outcome.CHANGE && g.kind == GenusSynonymRule.Kind.SPECIES_RULE) {
+                // A species name: the shared-name hold of the first pass and of the upload (SharedNameReport).
+                SharedNameReport.Held h = SharedNameReport.involved(g.rebuiltName, g.rebuiltName, g.speciesRule,
+                    lookup.isHomonym(g.rebuiltName), placeholders::contains, shared);
+                if (h != null) gd = new GenusDecision(Outcome.SHARED_NAME, g, null, null);
+            }
+            if (gd.outcome == Outcome.SHARED_NAME) {
+                summary.skipped.merge(gd.outcome, 1, Integer::sum);
+                SharedNameReport.Held h = SharedNameReport.involved(g.rebuiltName, g.rebuiltName, g.speciesRule,
+                    lookup.isHomonym(g.rebuiltName), placeholders::contains, shared);
+                String why = h != null ? SharedNameReport.reason(h, g.rebuiltName, g.rebuiltName)
+                    : "name is shared by two or more AntCat taxa; please confirm the identification";
+                Change hc = new Change(groupId, uploaded, current, "", null, null, new NameUpdateReason(why, null));
+                addSpecimens(connection, hc);
+                if (!hc.specimens.isEmpty()) held.add(hc);
+                continue;
+            }
+            if (gd.outcome == Outcome.GENUS_NOT_IN_ANTCAT) {
+                summary.skipped.merge(gd.outcome, 1, Integer::sum);
+                Change nc = new Change(groupId, uploaded, current, "", null, null, null);
+                addSpecimens(connection, nc);
+                if (!nc.specimens.isEmpty()) noGenus.add(nc);
+                continue;
+            }
+            if (gd.outcome == Outcome.COMBINATION_NOT_IN_ANTCAT) {
+                summary.skipped.merge(gd.outcome, 1, Integer::sum);
+                CurrentValidNameRule.TaxonRow genusRow = g.genus == null ? null : lookup.getTaxon(g.genus);
+                Change cc = new Change(groupId, uploaded, current, g.validGenus == null ? "" : g.validGenus, null,
+                    genusRow == null ? null : genusRow.status, null);
+                addSpecimens(connection, cc);
+                if (!cc.specimens.isEmpty()) noCombination.add(cc);
+                continue;
+            }
+            if (gd.outcome != Outcome.CHANGE) {
+                summary.skipped.merge(gd.outcome, 1, Integer::sum);
+                continue;
+            }
+            CurrentValidNameRule.TaxonRow target = lookup.getTaxon(gd.newName);
+            String newTaxonGenus = null;
+            if (target == null) {
+                // Only a morphospecies or indet gets a new taxon row, under its (valid) genus row.
+                if (!Taxon.isMorphoOrIndet(gd.newName)) {
+                    summary.skipped.merge(Outcome.NO_TARGET, 1, Integer::sum);
+                    continue;
+                }
+                newTaxonGenus = GenusSynonymRule.genusPart(gd.newName);
+            }
+            Change change = new Change(groupId, uploaded, current, gd.newName, gd.newOriginalName, genusStatus(g, lookup),
+                genusReason(reasons, g, uploaded, current, gd.newName));
+            change.newTaxonGenus = newTaxonGenus;
+            addSpecimens(connection, change);
+            if (change.specimens.isEmpty()) continue;
+            changes.add(change);
+            summary.specimens += change.specimens.size();
+            summary.genusSpecimens += change.specimens.size();
+            summary.byGroup.merge(groupId, change.specimens.size(), Integer::sum);
+            names.add(current + "\t" + gd.newName);
+        }
+
+        // Third pass (Brian Fisher, 2026-11-03): approved old genus concepts (GenusConceptRule), e.g. Mesoponera in the
+        // Afrotropical and Malagasy regions is Xiphopelta. Morphospecies and indets of those bioregions only.
+        List<GenusConceptRule.Rule> conceptRules = new GenusConceptRuleDb(connection).approved();   // read once per run
+        List<Object[]> conceptCandidates = new ArrayList<>();
+        try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(conceptCandidatesSql(conceptRules))) {
+            while (r.next()) conceptCandidates.add(new Object[] {r.getInt(1), r.getString(2), r.getString(3), r.getString(4)});
+        }
+        Map<String, NameUpdateReason> conceptReasons = new java.util.HashMap<>();
+        for (Object[] c : conceptCandidates) {
+            int groupId = (Integer) c[0];
+            String uploaded = (String) c[1];
+            String current = (String) c[2];
+            String bioregion = (String) c[3];
+            if (uploaded == null || current == null || bioregion == null) continue;
+            GenusConceptRule.Move move = GenusConceptRule.decide(conceptRules, current, bioregion, lookup);
+            if (move == null || move.newName.equals(current)) continue;
+            String key = move.rule.oldGenus + "\t" + bioregion;
+            NameUpdateReason reason = conceptReasons.get(key);
+            if (reason == null) {
+                reason = GenusConceptRule.reason(move.rule, bioregion, reasons.info(move.rule.newGenus).antcatId);
+                conceptReasons.put(key, reason);
+            }
+            CurrentValidNameRule.TaxonRow oldGenusRow = lookup.getTaxon(move.rule.oldGenus);
+            Change change = new Change(groupId, uploaded, current, move.newName, move.newName.equals(uploaded) ? null : uploaded,
+                oldGenusRow == null ? null : oldGenusRow.status, reason);
+            change.bioregion = bioregion;
+            if (lookup.getTaxon(move.newName) == null) change.newTaxonGenus = move.rule.newGenus;
+            addSpecimens(connection, change);
+            if (change.specimens.isEmpty()) continue;
+            changes.add(change);
+            summary.specimens += change.specimens.size();
+            summary.conceptSpecimens += change.specimens.size();
+            summary.byGroup.merge(groupId, change.specimens.size(), Integer::sum);
+            names.add(current + "\t" + move.newName);
+        }
         summary.names = names.size();
 
         boolean apply = APPLY.equals(mode);
@@ -518,7 +798,14 @@ public class SpecimenNameUpdate {
         SpecimenNameUpdateDb db = new SpecimenNameUpdateDb(connection);
         db.deletePreview();   // the page shows only the latest preview; changed rows are the history
         if (apply) {
-            for (Change change : changes) applyChange(connection, change);
+            Set<String> created = new HashSet<>();
+            for (Change change : changes) {
+                if (change.newTaxonGenus != null && created.add(change.newName)
+                        && createMovedTaxon(connection, change.newName, change.newTaxonGenus, change.groupId)) {
+                    summary.taxaCreated++;
+                }
+                applyChange(connection, change);
+            }
         }
         db.insert(runDate, summary.rowMode, changes);
         db.deleteShared();   // the list for the curators is the latest run's
@@ -527,6 +814,12 @@ public class SpecimenNameUpdate {
         db.deleteMode(KEPT_VALID);   // likewise the list of names kept on a valid name
         db.insert(runDate, KEPT_VALID, keptValid);
         for (Change k : keptValid) summary.keptValidSpecimens += k.specimens.size();
+        db.deleteMode(NO_GENUS);   // and the list of genera AntCat does not have
+        db.insert(runDate, NO_GENUS, noGenus);
+        for (Change n : noGenus) summary.noGenusSpecimens += n.specimens.size();
+        db.deleteMode(NO_COMBINATION);   // and the list of combinations for the AntCat editors
+        db.insert(runDate, NO_COMBINATION, noCombination);
+        for (Change n : noCombination) summary.noCombinationSpecimens += n.specimens.size();
         summary.parkedRenamed = moveParkedListEntries(connection, lookup, apply);
 
         summary.millis = System.currentTimeMillis() - start;
@@ -536,11 +829,99 @@ public class SpecimenNameUpdate {
         return summary;
     }
 
+    private static GenusSynonymRule.Result genusRule(String name, CurrentValidNameRule.Lookup lookup, GenusSynonymRule.Genera genera,
+                                                     Map<String, GenusSynonymRule.Result> cache) throws SQLException {
+        GenusSynonymRule.Result r = cache.get(name);
+        if (r == null) {
+            r = GenusSynonymRule.decide(name, lookup, genera);
+            cache.put(name, r);
+        }
+        return r;
+    }
+
+    /** specimen_name_update.antcat_status of a second-pass move: the uploaded species name's status, else the genus's. */
+    private static String genusStatus(GenusSynonymRule.Result g, CurrentValidNameRule.Lookup lookup) throws SQLException {
+        if (g.kind == GenusSynonymRule.Kind.SPECIES_RULE && g.speciesRule != null) return g.speciesRule.uploadedStatus;
+        CurrentValidNameRule.TaxonRow row = g.genus == null ? null : lookup.getTaxon(g.genus);
+        return row == null ? null : row.status;
+    }
+
+    /**
+     * The reason of a second-pass move: a genus move, the old genus's AntCat history (Wasmannia as junior synonym
+     * of Allomerus); a species name, the first pass's reason from the name it stood for (myrmicinaepyramica
+     * ludovici, or the name it is filed under once it had a subfamily) to the new name; a name only placed in its
+     * subfamily, that.
+     */
+    private static NameUpdateReason genusReason(Reasons reasons, GenusSynonymRule.Result g, String uploaded, String current, String newName) {
+        switch (g.kind) {
+            case GENUS_MOVE:
+                return reasons.genus(g.genus, g.validGenus);
+            case SPECIES_RULE: {
+                boolean placeholderFiled = GenusSynonymRule.placeholderGenus(GenusSynonymRule.genusPart(current)) != null;
+                String old = placeholderFiled ? g.rebuiltName : current;
+                return reasons.get(old.equals(newName) ? uploaded : g.rebuiltName, old, newName);
+            }
+            default:
+                return reasons.subfamilyPlaced(g.genus);
+        }
+    }
+
+    /**
+     * The taxon row of a moved morphospecies or indet (Brian Fisher, 2026-11-03), as the specimen upload makes one
+     * for a new morphospecies/indet name (saveTaxon of the line's taxon item): status morphotaxon or indetermined
+     * by the name, family, subfamily, tribe and genus of its genus row, the parent that genus row, species and
+     * subspecies the code part of the name; insert_method genusSynonymMove. False when it exists already or the
+     * genus row is gone.
+     */
+    static boolean createMovedTaxon(Connection connection, String taxonName, String genusTaxonName, int groupId) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement("select 1 from taxon where taxon_name = ?")) {
+            stmt.setString(1, taxonName);
+            try (ResultSet r = stmt.executeQuery()) { if (r.next()) return false; }
+        }
+        String family = null, subfamily = null, tribe = null, genus = null;
+        boolean found = false;
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "select family, subfamily, tribe, genus from taxon where taxon_name = ? and taxarank = 'genus'")) {
+            stmt.setString(1, genusTaxonName);
+            try (ResultSet r = stmt.executeQuery()) {
+                if (r.next()) {
+                    found = true;
+                    family = r.getString(1);
+                    subfamily = r.getString(2);
+                    tribe = r.getString(3);
+                    genus = r.getString(4);
+                }
+            }
+        }
+        if (!found) return false;
+        String[] parts = GenusSynonymRule.speciesParts(taxonName);
+        String status = Taxon.isIndet(taxonName) ? Status.INDETERMINED : Status.MORPHOTAXON;   // as CurrentValidNameRule.decide
+        try (PreparedStatement stmt = connection.prepareStatement("insert into taxon (taxon_name, taxarank, status, family, subfamily, tribe,"
+                + " genus, species, subspecies, parent_taxon_name, insert_method, source, access_group) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            int i = 1;
+            stmt.setString(i++, taxonName);
+            stmt.setString(i++, parts[1] == null ? org.calacademy.antweb.Rank.SPECIES : org.calacademy.antweb.Rank.SUBSPECIES);
+            stmt.setString(i++, status);
+            stmt.setString(i++, family == null ? "formicidae" : family);
+            stmt.setString(i++, subfamily);
+            stmt.setString(i++, tribe);
+            stmt.setString(i++, genus);
+            stmt.setString(i++, parts[0]);
+            stmt.setString(i++, parts[1]);
+            stmt.setString(i++, genusTaxonName);
+            stmt.setString(i++, GenusSynonymRule.INSERT_METHOD);
+            stmt.setString(i++, "nightly name update");
+            stmt.setInt(i, groupId);
+            return stmt.executeUpdate() > 0;
+        }
+    }
+
     private static void addSpecimens(Connection connection, Change change) throws SQLException {
-        try (PreparedStatement stmt = connection.prepareStatement(SPECIMENS_SQL)) {
+        try (PreparedStatement stmt = connection.prepareStatement(SPECIMENS_SQL + (change.bioregion != null ? BIOREGION_SQL : ""))) {
             stmt.setInt(1, change.groupId);
             stmt.setString(2, change.oldName);
             stmt.setString(3, change.uploadedName);
+            if (change.bioregion != null) stmt.setString(4, change.bioregion);
             try (ResultSet r = stmt.executeQuery()) {
                 while (r.next()) change.specimens.add(new String[] {r.getString(1), r.getString(2)});
             }
@@ -588,6 +969,37 @@ public class SpecimenNameUpdate {
             NameUpdateReason r = byNames.get(key);
             if (r == null) {
                 r = back ? NameUpdateReason.validAgain(info(oldName), info(newName)) : NameUpdateReason.of(info(oldName), info(newName));
+                byNames.put(key, r);
+            }
+            return r;
+        }
+
+        /** The reason of a genus move (GenusSynonymRule), one per pair of genera: the old genus's AntCat history. */
+        NameUpdateReason genus(String oldGenus, String newGenus) {
+            String key = "genus\t" + oldGenus + "\t" + newGenus;
+            NameUpdateReason r = byNames.get(key);
+            if (r == null) {
+                r = NameUpdateReason.genusSynonym(info(oldGenus), info(newGenus));
+                byNames.put(key, r);
+            }
+            return r;
+        }
+
+        /** A name filed without a subfamily, now in its genus's subfamily. */
+        NameUpdateReason subfamilyPlaced(String genus) {
+            String key = "subfamily\t" + genus;
+            NameUpdateReason r = byNames.get(key);
+            if (r == null) {
+                String subfamily = null;
+                if (!failed) {
+                    try (PreparedStatement stmt = connection.prepareStatement("select subfamily from taxon where taxon_name = ?")) {
+                        stmt.setString(1, genus);
+                        try (ResultSet rs = stmt.executeQuery()) { if (rs.next()) subfamily = rs.getString(1); }
+                    } catch (SQLException e) {
+                        s_log.warn("Reasons.subfamilyPlaced() subfamily not read. e:" + e);
+                    }
+                }
+                r = NameUpdateReason.subfamilyPlaced(info(genus), subfamily);
                 byNames.put(key, r);
             }
             return r;
@@ -663,7 +1075,7 @@ public class SpecimenNameUpdate {
                 }
             }
         }
-        try (PreparedStatement stmt = connection.prepareStatement(UPDATE_SQL)) {
+        try (PreparedStatement stmt = connection.prepareStatement(UPDATE_SQL + (change.bioregion != null ? BIOREGION_SQL : ""))) {
             stmt.setString(1, change.newName);
             stmt.setString(2, change.newOriginalName);
             stmt.setString(3, specimenStatus(targetStatus));
@@ -671,6 +1083,7 @@ public class SpecimenNameUpdate {
             stmt.setInt(11, change.groupId);
             stmt.setString(12, change.oldName);
             stmt.setString(13, change.uploadedName);
+            if (change.bioregion != null) stmt.setString(14, change.bioregion);
             stmt.executeUpdate();
         }
         // As the upload does (processLine): introduced or not depends on the name and the bioregion.

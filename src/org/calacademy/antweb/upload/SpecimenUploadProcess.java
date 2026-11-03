@@ -465,8 +465,17 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
         getMessageMgr().addToMessages(MessageMgr.sharedNameKept, keptLine);
       } else switch (rule.kind) {
         case INDET:
-        case MORPHO:
+        case MORPHO: {
+          // Brian Fisher, 2026-11-03: an approved old genus concept (GenusConceptRule; Mesoponera in the Afrotropical
+          // and Malagasy regions is Xiphopelta) files a morphospecies or indet of that bioregion under the new genus,
+          // the uploaded name kept, as the nightly name update moves older specimens.
+          String moved = genusConceptMove(taxonName, (String) specimenItem.get("bioregion"), taxonItem, specimenItem);
+          if (moved != null) {
+            originalTaxonName = taxonName;
+            taxonName = moved;
+          }
           break;
+        }
 
         case NOT_IN_ANTCAT: {
             /*
@@ -587,6 +596,44 @@ public class SpecimenUploadProcess extends AntwebUpload {   //extends SpecimenUp
 	  return taxonName;
     }
   
+    /** The approved old genus concepts (genus_concept_rule), read once per upload; none when the table cannot be read (the nightly then moves). */
+    private java.util.List<GenusConceptRule.Rule> conceptRules;
+
+    private java.util.List<GenusConceptRule.Rule> getConceptRules() {
+        if (conceptRules == null) {
+            try {
+                conceptRules = new GenusConceptRuleDb(getConnection()).approved();
+            } catch (SQLException e) {
+                s_log.warn("getConceptRules() genus_concept_rule not read, no old genus concepts in this upload. e:" + e);
+                conceptRules = java.util.List.of();
+            }
+        }
+        return conceptRules;
+    }
+
+    /**
+     * The new name of a morphospecies or indet that an approved old genus concept moves (GenusConceptRule), with the
+     * name columns of the line set from the new genus row, and the report line; null when no rule applies. Only names
+     * of a genus that has a rule are looked up.
+     */
+    private String genusConceptMove(String taxonName, String bioregion, Hashtable<String, Object> taxonItem, Hashtable<String, Object> specimenItem)
+      throws SQLException {
+        if (GenusConceptRule.ruleFor(getConceptRules(), GenusSynonymRule.genusPart(taxonName), bioregion) == null) return null;
+        GenusConceptRule.Move move = GenusConceptRule.decide(getConceptRules(), taxonName, bioregion, CurrentValidNameRule.plainLookup(getConnection()));
+        if (move == null) return null;
+        Taxon genus = new TaxonDb(getConnection()).getTaxon(move.rule.newGenus);
+        if (genus == null) return null;
+        for (Hashtable<String, Object> item : java.util.List.of(taxonItem, specimenItem)) {
+          if (genus.getFamily() != null) item.put("family", genus.getFamily());
+          item.put("subfamily", genus.getSubfamily());
+          if (genus.getTribe() != null) item.put("tribe", genus.getTribe()); else item.remove("tribe");
+          item.put("genus", genus.getGenus());
+        }
+        getMessageMgr().addToMessages(MessageMgr.genusConceptReplaced, Html.esc(Taxon.getPrettyTaxonName(taxonName) + " -> "
+            + Taxon.getPrettyTaxonName(move.newName) + " (" + bioregion + ")"));
+        return move.newName;
+    }
+
     /** The report line of a name kept because its current valid name is not in AntWeb yet: "Uploaded -> Valid (not in AntWeb yet)". */
     public static String currentValidNameNotInAntwebLine(String uploadedTaxonName, String currentValidName) {
         String valid = currentValidName == null ? "" : Html.esc(Taxon.getPrettyTaxonName(currentValidName));

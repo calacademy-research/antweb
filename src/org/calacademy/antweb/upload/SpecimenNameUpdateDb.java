@@ -15,8 +15,11 @@ import java.util.List;
  * (SpecimenNameUpdate), and per specimen held back for the curator because its name belongs to two or
  * more AntCat taxa (mode 'shared_name', new_name empty; replaced at each run), and per specimen left on a
  * name AntCat calls valid while its uploaded name points elsewhere (mode 'kept_valid', new_name where the
- * uploaded name points; replaced at each run). Read by the Name
- * updates page (nameUpdates.do).
+ * uploaded name points; replaced at each run), and per specimen filed without a subfamily under a genus
+ * AntCat does not have (mode 'no_genus', new_name empty), and per specimen left under a synonym genus with a
+ * species name AntCat does not know (mode 'no_combo', new_name the senior genus or empty); both replaced at each
+ * run (Brian Fisher, 2026-11-03).
+ * Read by the Name updates page (nameUpdates.do).
  *
  * ensureSchema() creates the table when missing (same DDL: db/upgrade/8.113/2026-10-20-specimen-name-update.sql),
  * in the character set and collation of taxon.taxon_name, as CuratorTaxonSetDb does for taxon_set_parked.
@@ -253,7 +256,8 @@ public class SpecimenNameUpdateDb {
         fromDay = day(fromDay);
         toDay = day(toDay);
         List<String> where = new ArrayList<>();
-        where.add("mode not in ('" + SpecimenNameUpdate.SHARED + "', '" + SpecimenNameUpdate.KEPT_VALID + "')");   // listed apart: getShared, getKeptValid
+        where.add("mode not in ('" + SpecimenNameUpdate.SHARED + "', '" + SpecimenNameUpdate.KEPT_VALID + "', '"
+            + SpecimenNameUpdate.NO_GENUS + "', '" + SpecimenNameUpdate.NO_COMBINATION + "')");   // listed apart: getShared, getKeptValid, getNoGenus, getNoCombination
         if (groupId > 0) where.add("access_group = ?");
         if (fromDay != null) where.add("run_date >= ?");
         if (toDay != null) where.add("run_date < date_add(?, interval 1 day)");
@@ -293,6 +297,54 @@ public class SpecimenNameUpdateDb {
      */
     public List<Line> getKeptValid(int groupId) throws SQLException {
         return getLatest(groupId, SpecimenNameUpdate.KEPT_VALID, true);
+    }
+
+    /**
+     * The names the latest run left because they have no subfamily and AntCat has no genus of that name (no_genus;
+     * often a misspelled genus, "(formicidae)stumigenys"): one line per group and name. groupId 0 = all groups.
+     */
+    public List<Line> getNoGenus(int groupId) throws SQLException {
+        return getLatest(groupId, SpecimenNameUpdate.NO_GENUS, true);
+    }
+
+    /**
+     * The names the latest run left under a synonym genus because AntCat does not have the combination (no_combo):
+     * one line per group, name and uploaded name; newName is the senior genus row, or empty. groupId 0 = all groups.
+     */
+    public List<Line> getNoCombination(int groupId) throws SQLException {
+        return getLatest(groupId, SpecimenNameUpdate.NO_COMBINATION, true);
+    }
+
+    /**
+     * The list for the AntCat editors (Brian Fisher, 2026-11-03): per old genus and epithet of the latest no_combo
+     * run, the senior genus, the number of specimens and the groups. Each row: old genus (display), epithet part,
+     * senior genus (display, or empty), specimens, groups (comma separated ids).
+     */
+    public List<String[]> getCombinationsForAntcat() throws SQLException {
+        List<String[]> rows = new ArrayList<>();
+        java.util.Map<String, String[]> byName = new java.util.LinkedHashMap<>();
+        java.util.Map<String, java.util.TreeSet<Integer>> groups = new java.util.HashMap<>();
+        java.util.Map<String, Integer> counts = new java.util.HashMap<>();
+        for (Line line : getNoCombination(0)) {
+            String rebuilt = line.oldName;
+            String genus = GenusSynonymRule.genusPart(rebuilt);
+            if (genus == null) continue;
+            String g = GenusSynonymRule.placeholderGenus(genus);
+            String oldGenus = org.calacademy.antweb.Taxon.getPrettyTaxonName(g != null ? g : genus);
+            String epithet = rebuilt.substring(genus.length()).trim();
+            String senior = line.newName == null || line.newName.isEmpty() ? "" : org.calacademy.antweb.Taxon.getPrettyTaxonName(line.newName);
+            String key = oldGenus + "\t" + epithet;
+            byName.putIfAbsent(key, new String[] {oldGenus, epithet, senior});
+            counts.merge(key, line.count, Integer::sum);
+            groups.computeIfAbsent(key, k -> new java.util.TreeSet<>()).add(line.groupId);
+        }
+        for (java.util.Map.Entry<String, String[]> e : byName.entrySet()) {
+            String[] v = e.getValue();
+            StringBuilder gs = new StringBuilder();
+            for (Integer id : groups.get(e.getKey())) gs.append(gs.length() > 0 ? "," : "").append(id);
+            rows.add(new String[] {v[0], v[1], v[2], String.valueOf(counts.get(e.getKey())), gs.toString()});
+        }
+        return rows;
     }
 
     private List<Line> getLatest(int groupId, String mode, boolean byUploadedName) throws SQLException {

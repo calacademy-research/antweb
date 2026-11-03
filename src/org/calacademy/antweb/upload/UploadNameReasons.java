@@ -83,8 +83,17 @@ public final class UploadNameReasons {
 
     public static String reasonPart(String text, Integer antcatId, String uploadedTaxonName, String oldTaxonName, String newTaxonName) {
         if (text == null || text.isEmpty()) return "";
-        return ": <span class=\"name-update-reason\">" + NameUpdateReason.toHtml(text, antcatId,
-            Taxon.getPrettyTaxonName(uploadedTaxonName), Taxon.getPrettyTaxonName(oldTaxonName), Taxon.getPrettyTaxonName(newTaxonName))
-            + "</span>";
+        String[] names = {Taxon.getPrettyTaxonName(uploadedTaxonName), Taxon.getPrettyTaxonName(oldTaxonName), Taxon.getPrettyTaxonName(newTaxonName)};
+        if (text.startsWith(NameUpdateReason.GENUS_SYNONYM) || text.startsWith(NameUpdateReason.SUBFAMILY_PLACED)
+                || text.startsWith(NameUpdateReason.OLD_GENUS_CONCEPT)) {
+            // A genus-level reason names genera alone (Brian Fisher, 2026-11-03): their genus names in italics too.
+            java.util.List<String> all = new java.util.ArrayList<>(java.util.Arrays.asList(names));
+            for (String n : names) {
+                String g = n.replaceFirst("^\\([a-z]+\\)", "").split(" ", 2)[0];
+                if (!g.isEmpty()) all.add(Character.toUpperCase(g.charAt(0)) + g.substring(1));
+            }
+            names = all.toArray(new String[0]);
+        }
+        return ": <span class=\"name-update-reason\">" + NameUpdateReason.toHtml(text, antcatId, names) + "</span>";
     }
 }
