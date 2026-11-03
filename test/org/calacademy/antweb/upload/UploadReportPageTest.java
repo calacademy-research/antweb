@@ -412,6 +412,11 @@ public class UploadReportPageTest extends TestCase {
         // A code given twice in the group's own file (12 lines) stays "Not loaded".
         assertEquals(12, count(page, "notLoaded"));
         assertEquals(268, count(page, "alreadyInAntweb"));
+        // the 268 lines are listed under "Already in AntWeb", not counted again as "other lines ... not listed" (review of #318)
+        java.util.regex.Matcher unlisted = java.util.regex.Pattern.compile("id=\"rep-unlisted\">([\\d,]+) other line").matcher(page);
+        // the fixture's lines read, less loaded, less the 12 not loaded and the 268 already in AntWeb (621 before the fix)
+        assertTrue("rep-unlisted", unlisted.find());
+        assertEquals(353, Integer.parseInt(unlisted.group(1).replace(",", "")));
         assertEquals(3, count(page, "redFlagged"));
         assertTrue(page.contains("id=\"rep-redFlag\""));
         int names = page.indexOf("id=\"rep-nameChange\""), notLoaded = page.indexOf("id=\"rep-notLoaded\""),

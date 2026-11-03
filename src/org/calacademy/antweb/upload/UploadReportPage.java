@@ -249,7 +249,8 @@ public final class UploadReportPage {
         String sentence = UploadNotice.attentionSummary(c);
         if (sentence != null) b.append("<p class=\"rep-sentence\" id=\"rep-sentence\">").append(Html.esc(sentence)).append("</p>\n");
         if (specimen && f.insertedSpecimens >= 0) {
-            int unlisted = f.recordCount - f.insertedSpecimens - c.notLoaded;
+            // the codes another group holds are listed under "Already in AntWeb" (2026-11-03, review of #318)
+            int unlisted = f.recordCount - f.insertedSpecimens - c.notLoaded - c.alreadyInAntweb;
             if (unlisted > 0) {
                 b.append("<p class=\"aw-note\" id=\"rep-unlisted\">").append(plural(unlisted, "other line"))
                  .append(unlisted == 1 ? " was" : " were").append(" read but not loaded and ")

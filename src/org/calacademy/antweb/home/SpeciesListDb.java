@@ -443,7 +443,7 @@ public class SpeciesListDb extends AntwebDb {
 
         if (Utility.sameList(oldChosenList, chosen)) {
           s_log.debug("saveTaxonSet() 2 speciesListName:" + speciesListName + " chosen:" + chosen.length + " oldChosen:" + oldChosenList.size());
-          return "";
+          return message;   // nothing else changed: still say what was refused (2026-11-03, review of #318)
         }
 
         ArrayList<String> chosenList = new ArrayList<>(Arrays.asList(chosen));
