@@ -598,6 +598,38 @@ public class UploadReportPageTest extends TestCase {
         assertFalse(page.contains("Unrecognized Column"));
     }
 
+    /**
+     * Michele Esposito, 2026-11-03: each section link says what it opens ("specimen codes", "open in Advanced Search"),
+     * Country is missing links its codes like Adm1 is missing, and a genus outside its native region shows its
+     * specimens folded under their number ("3 specimens"), not a block of codes.
+     */
+    public void testLinkLabelsAndFoldedSpecimens() {
+        Fixture x = wardUpload();
+        x.at(500, "zzcode1");
+        x.mgr.addCountWithDetail(MessageMgr.countryMissing, "zzcode1");
+        x.at(501, "zzcode2");
+        x.mgr.addCountWithDetail(MessageMgr.countryMissing, "zzcode2");
+        x.at(502, "zzcode3");
+        x.mgr.addToMessages(MessageMgr.adm1Missing, "Madagascar", "zzcode3");
+        for (String c : new String[] {"zza", "zzb", "zzc"}) {
+            x.at(503, c);
+            x.mgr.addToMapMessages(MessageMgr.genusOutsideNativeBioregion, "Allomerus not native to Australasia Region", "<a href='x'>" + c + "</a>");
+        }
+        x.done();
+        String page = x.render();
+        String country = sectionHtml(page, MessageMgr.countryMissing);
+        assertTrue(country, country.contains(">specimen codes</a>") && country.contains(">open in Advanced Search</a>"));
+        assertFalse(country, country.contains(">details</a>") || country.contains(">list</a>"));
+        String adm1 = sectionHtml(page, MessageMgr.adm1Missing);
+        assertTrue(adm1, adm1.contains(">specimen codes</a>"));
+        String gen = sectionHtml(page, MessageMgr.genusOutsideNativeBioregion);
+        assertTrue(gen, gen.contains("<summary>3 specimens</summary>"));
+        assertEquals("specimen codes", UploadReportPage.detailLabel(MessageMgr.adm1Missing));
+        assertEquals("details", UploadReportPage.detailLabel(MessageMgr.duplicateEntries));
+        assertEquals("open in Advanced Search", UploadReportPage.listLabel("https://www.antweb.org/advancedSearch.do?country=null"));
+        assertEquals("list", UploadReportPage.listLabel("https://www.antweb.org/list.do?action=introducedSpecimen&groupId=1"));
+    }
+
     /** "Multiple bioregions for non-introduced taxa" lists each taxon and its bioregions. */
     public void testMultipleBioregionsListsNames() {
         Fixture x = wardUpload();

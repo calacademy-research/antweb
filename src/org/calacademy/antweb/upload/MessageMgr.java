@@ -273,6 +273,13 @@ public class MessageMgr {
     }
 
     /** The "N specimens" list of one report line, within the report's limit. */
+    /** Specimen code links (HTML) folded under "N specimens", like SpecimenCodes.html. */
+    static String foldedSpecimens(List<String> codeLinks) {
+        int n = codeLinks.size();
+        return "<details class=\"specimen-codes\" style=\"display:inline\"><summary>" + String.format("%,d", n)
+            + (n == 1 ? " specimen" : " specimens") + "</summary>" + String.join(", ", codeLinks) + "</details>";
+    }
+
     private String codesHtml(Test test, String line) {
         SpecimenCodes codes = test.codesByLine.get(line);
         if (codes == null || codes.count() == 0) return "";
@@ -397,6 +404,13 @@ public class MessageMgr {
       test.increment();
     }
     
+    /** A counted message (NUM) whose detail page lists one line per occurrence (the specimen code; 2026-11-03). */
+    public void addCountWithDetail(String key, String detail) {
+      Test test = getTest(key);
+      test.addDetail(detail);
+      test.increment();
+    }
+
     public void addToMessages(String key, String value) { 
         addToMessages(key, value, null);
     }
@@ -677,6 +691,7 @@ public class MessageMgr {
         }
         if (test.getGroup() != null && !test.details.isEmpty()) {
           sec.detailHref = AntwebProps.getDomainApp() + "/web/log/detail/" + test.getKey() + test.getGroup().getId() + ".html";
+          test.writeDetails();   // the page the link opens (also written by toString; written once more here, 2026-11-03)
         }
         if (countryMissing.equals(test.getKey()) && test.getGroup() != null) {
           String groupName = test.getGroup().getName();
@@ -951,6 +966,9 @@ public class MessageMgr {
             List<String> under = new ArrayList<>(mapValues.get(value));
             Collections.sort(under);
             row.detailHtml = String.join(", ", under);
+            // The specimens of a genus outside its native region folded under their number, as the other sections'
+            // specimens (Michele Esposito, 2026-11-03: a block of codes then "+N more" was hard to read).
+            if (genusOutsideNativeBioregion.equals(key) && !under.isEmpty()) row.detailHtml = foldedSpecimens(under);
           }
           row.codesHtml = codesHtml(this, value);
           List<int[]> lines = fileLinesByLine.get(value);

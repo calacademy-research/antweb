@@ -322,8 +322,11 @@ public final class UploadReportPage {
         b.append("<h3 class=\"rep-sec-title\">").append(headingText(s.headingHtml));
         if (MessageMgr.unrecognizedColumn.equals(s.key)) b.append(": ").append(String.format("%,d", s.count));   // "Columns ignored (not AntWeb columns): 10"
         else b.append(" <span class=\"rep-pill\">").append(plural(s.count, s.unit, s.units)).append("</span>");
-        if (s.detailHref != null) b.append(" <a class=\"rep-detail\" href=\"").append(Html.escAttr(s.detailHref)).append("\">details</a>");
-        if (s.listHref != null) b.append(" <a class=\"rep-detail\" href=\"").append(Html.escAttr(s.listHref)).append("\">list</a>");
+        // Each link says what it opens (Michele Esposito, 2026-11-03: "details" and "list" did not say which was which).
+        if (s.detailHref != null) b.append(" <a class=\"rep-detail\" href=\"").append(Html.escAttr(s.detailHref)).append("\">")
+            .append(detailLabel(s.key)).append("</a>");
+        if (s.listHref != null) b.append(" <a class=\"rep-detail\" href=\"").append(Html.escAttr(s.listHref)).append("\">")
+            .append(listLabel(s.listHref)).append("</a>");
         b.append("</h3>");
         if (!open) b.append("</summary>");
         b.append("\n");
@@ -418,6 +421,16 @@ public final class UploadReportPage {
     private static final java.util.regex.Pattern LEADING_LINE = java.util.regex.Pattern.compile("^(?i)line:?\\s*(\\d+)");
 
     /** "old -> new" (or "old -&gt; new") as {old, new}; {value, null} when the value has no arrow. */
+    /** The label of a section's detail page: the specimen codes for the sections that list them, else "details". */
+    public static String detailLabel(String key) {
+        return MessageMgr.countryMissing.equals(key) || MessageMgr.adm1Missing.equals(key) ? "specimen codes" : "details";
+    }
+
+    /** The label of a section's list link: what it opens. */
+    public static String listLabel(String href) {
+        return href != null && href.contains("/advancedSearch.do") ? "open in Advanced Search" : "list";
+    }
+
     static String[] splitArrow(String valueHtml) {
         if (valueHtml == null) return new String[] {"", null};
         for (String arrow : new String[] {" -> ", " -&gt; "}) {
