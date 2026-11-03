@@ -310,6 +310,9 @@ jobs:
       - name: Map popups show decoded titles and link once-encoded codes (tests/unit/test_map_popups.py, runs drawMap.js in node)
         run: python3 tests/unit/test_map_popups.py
 
+      - name: Sorting a search keeps every search parameter (tests/unit/test_sort_extras.py, runs specimen_list.js in node)
+        run: python3 tests/unit/test_sort_extras.py
+
       - name: Java unit tests of the schema check (live database against doc/schema/live-schema-*.tsv)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/doc/schema:/s:ro" antweb/antweb:dev -c '
