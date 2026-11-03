@@ -26,4 +26,12 @@ public class SpeciesListPermaLinkTest extends TestCase {
         props.setMapSpeciesList1Name("madagascarants");
         assertTrue(props.getPermaLinkTag(), props.getPermaLinkTag().contains("mapSpeciesList1Name=madagascarants&amp;"));
     }
+
+    /** "(indet)" names are not added to a place's list (2026-11-03); morphospecies and valid names are. */
+    public void testIndetRefusedOnPlaceList() {
+        assertTrue(org.calacademy.antweb.home.SpeciesListDb.refusesOnPlaceList("dorylinaelividopone (indet)"));
+        assertFalse(org.calacademy.antweb.home.SpeciesListDb.refusesOnPlaceList("ponerinaeanochetus casc_mz01"));
+        assertFalse(org.calacademy.antweb.home.SpeciesListDb.refusesOnPlaceList("ponerinaeanochetus madagascarensis"));
+        assertFalse(org.calacademy.antweb.home.SpeciesListDb.refusesOnPlaceList(null));
+    }
 }

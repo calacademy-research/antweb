@@ -256,6 +256,7 @@ public class PlaceGenusCurationDbTest extends TestCase {
         assertTrue(names, names.contains("group by left(x.place, 128), x.taxon_name"));
         assertTrue(names, names.contains("union all select specimen.island_country place"));
         assertTrue(names, names.contains("(specimen.flag is null or specimen.flag != 'red')"));
+        assertTrue("two spellings of one key add up, not fail", names.contains("on duplicate key update specimens = specimens + values(specimens)"));
         String genus = PlaceGenusCurationDb.fillGenusSql(PlaceGenusCurationDb.MUSEUM);
         assertTrue(genus, genus.contains(ListView.notCuratedCondition("t")));
         assertTrue(genus, genus.contains("group by p.list_type, p.list_key, t.subfamily, t.genus"));

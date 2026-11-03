@@ -206,7 +206,8 @@ def test_without_up_the_reply_is_503_json():
     with a JSON message (was 200 with an empty body). The / route stays 200 for health checks."""
     r = new_session().get(BASE_URL + "/v3.1/taxa?genus=camponotus&limit=1", timeout=max(TIMEOUT, 120))
     assert r.status_code == 503, r.status_code
-    assert "not available" in r.json()["error"], r.text[:200]
+    # wording of 2026-11-03 (Brian Fisher): closed while free registered API keys are added
+    assert "closed while we add free registered API keys" in r.json()["error"], r.text[:200]
     r = new_session().get(BASE_URL + "/v3.1/", timeout=max(TIMEOUT, 120))
     assert r.status_code == 200 and "Antweb API" in r.text, r.status_code
 

@@ -512,11 +512,16 @@ public class BrowseAction extends DescriptionAction {
 			  org.calacademy.antweb.home.PlaceGenusCurationDb.Row ncRow = org.calacademy.antweb.home.PlaceGenusCurationDb.read(connection, overview,
 			      taxon.getSubfamily(), taxon.getGenus());
 			  if (ncRow != null) request.setAttribute(PlaceTaxonNotes.NOT_CURATED_HEADER, ncRow.breakdown());
+			}
+			// The rows added from specimens collected here (not on the list) say how many were collected here, linked to them:
+			// in the view Not curated, and (2026-11-03: they showed a dash) in Curated and All specimen names on country and
+			// adm1 pages, the places whose lists take those names from specimens (ListView.addsSpecimenNames). One genus read.
+			if (taxon instanceof Genus && !global && (StatusSet.LIST_NOT_CURATED.equals(statusSetStr) || ListView.addsSpecimenNames(overview))) {
 			  try {
-			    ListView.PlaceSpecimens ncSpecimens = ListView.loadPlaceSpecimens(connection, overview, taxon.getSubfamily(), taxon.getGenus());
-			    if (ncSpecimens != null) request.setAttribute(PlaceTaxonNotes.PLACE_SPECIMENS, ncSpecimens);
+			    ListView.PlaceSpecimens genusSpecimens = ListView.loadPlaceSpecimens(connection, overview, taxon.getSubfamily(), taxon.getGenus());
+			    if (genusSpecimens != null) request.setAttribute(PlaceTaxonNotes.PLACE_SPECIMENS, genusSpecimens);
 			  } catch (SQLException | RuntimeException e) {
-			    s_log.warn("execute() not curated specimens taxon:" + taxon.getTaxonName() + " overview:" + overview + " e:" + e);
+			    s_log.warn("execute() place specimens taxon:" + taxon.getTaxonName() + " overview:" + overview + " e:" + e);
 			  }
 			}
 

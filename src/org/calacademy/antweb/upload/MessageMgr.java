@@ -404,6 +404,7 @@ public class MessageMgr {
     public void addToMessages(String key, String value, String detail) { 
         Test test = getTest(key);
         if (value == null) value = "null";
+        if (duplicateEntries.equals(key) && value.startsWith(DUPLICATE_OTHER_GROUP)) otherGroupDuplicates++;
         test.recordCode(value, currentCode);
         test.recordLine(value);
         test.add(value);
@@ -535,8 +536,24 @@ public class MessageMgr {
         specimenIdSpacesRemoved, codeQuoteReplaced,                 // code changed
         invalidDateCollectedStart, invalidDateCollectedEnd, invalidDateDetermined))); // uploaded without the date
 
-    /** "notLoaded", "corrected" or null (a note) for a report section (see CORRECTED). */
+    /*
+     * Brian Fisher, 2026-11-02 (Michele Esposito found the report overwhelming): name changes matter most, duplicates
+     * of other collections' codes do not. Lines filed under AntCat's current name (or genus, or the genus's subfamily)
+     * are "name changes", reported first and counted on their own; a duplicate of a code another group uploaded is
+     * "already in AntWeb": nothing the curator can do, so it is not counted as not loaded (DUPLICATE_OTHER_GROUP).
+     * A code given twice in the curator's own file stays "not loaded".
+     */
+    public static final Set<String> NAME_CHANGES = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
+        recognizedInvalidSpecies, synonymGenusReplaced, preferredSubfamilyForGenusReplaced, invalidSubfamilyForGenusReplaced)));
+    public static final String NAME_CHANGE = "nameChange";
+    public static final String ALREADY_IN_ANTWEB = "alreadyInAntweb";
+    /** The start of a duplicate row whose code another group uploaded (AntwebUpload.duplicateHolder). */
+    public static final String DUPLICATE_OTHER_GROUP = "Code already in AntWeb, uploaded by ";
+    private int otherGroupDuplicates = 0;
+
+    /** "nameChange", "notLoaded", "corrected" or null (a note) for a report section (see CORRECTED, NAME_CHANGES). */
     public static String attention(String key, String heading) {
+      if (NAME_CHANGES.contains(key)) return NAME_CHANGE;
       if (CORRECTED.contains(key)) return "corrected";
       if (codeNotFoundInLine.equals(key) || (heading != null && heading.contains("(not uploaded)"))) return "notLoaded";
       return null;
@@ -550,12 +567,23 @@ public class MessageMgr {
       return n;
     }
 
-    /** Lines of the file not loaded, as listed in the report's "(not uploaded)" sections. */
+    /** Lines of the file not loaded, as listed in the report's "(not uploaded)" sections, without the codes other
+     *  groups uploaded first (getAlreadyInAntwebCount). */
     public int getNotLoadedCount() {
-      return attentionCount("notLoaded");
+      return Math.max(attentionCount("notLoaded") - otherGroupDuplicates, 0);
     }
 
-    /** Lines loaded after AntWeb changed what the curator wrote (CORRECTED). */
+    /** Lines not loaded because another group already uploaded the code (nothing for the curator to do). */
+    public int getAlreadyInAntwebCount() {
+      return otherGroupDuplicates;
+    }
+
+    /** Lines filed under AntCat's current valid name, genus or subfamily (NAME_CHANGES). */
+    public int getNameChangeCount() {
+      return attentionCount(NAME_CHANGE);
+    }
+
+    /** Lines loaded after AntWeb changed what the curator wrote (CORRECTED), other than name changes. */
     public int getCorrectedCount() {
       return attentionCount("corrected");
     }

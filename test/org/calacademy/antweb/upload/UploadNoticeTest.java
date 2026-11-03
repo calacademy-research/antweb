@@ -327,12 +327,39 @@ public class UploadNoticeTest extends TestCase {
         m.addToMessages(MessageMgr.correctedBioregion, "Using Afrotropical for country:South Africa");  // filled in: a note
         m.addToMessages(MessageMgr.identifiedOnlyToGenus, "Ocymyrmex (indet)");                       // a note
         assertEquals(3, m.getNotLoadedCount());
-        assertEquals(2, m.getCorrectedCount());
+        assertEquals(1, m.getCorrectedCount());
+        assertEquals("subfamily for the genus replaced: a name change (2026-11-02)", 1, m.getNameChangeCount());
+    }
+
+    /** Brian Fisher, 2026-11-02: a code another group uploaded first is "already in AntWeb", not "not loaded";
+     *  a code given twice in the curator's own file stays not loaded. Name changes come first in the sentence. */
+    public void testOtherGroupDuplicatesAndNameChanges() {
+        MessageMgr m = new MessageMgr();
+        m.addToMessages(MessageMgr.duplicateEntries, MessageMgr.DUPLICATE_OTHER_GROUP + "University of Utah", "Specimen code:a");
+        m.addToMessages(MessageMgr.duplicateEntries, MessageMgr.DUPLICATE_OTHER_GROUP + "University of Utah", "Specimen code:b");
+        m.addToMessages(MessageMgr.duplicateEntries, "Code already in AntWeb for this group (given twice in the file?)", "Specimen code:c");
+        m.addToMessages(MessageMgr.recognizedInvalidSpecies, "Tapinoma indicum -> Ravavy indicus");
+        assertEquals(1, m.getNotLoadedCount());
+        assertEquals(2, m.getAlreadyInAntwebCount());
+        assertEquals(1, m.getNameChangeCount());
+        assertEquals(0, m.getCorrectedCount());
+
+        UploadNotice.Facts f = new UploadNotice.Facts();
+        f.complete = true;
+        f.redFlagged = 0;
+        f.notLoaded = m.getNotLoadedCount();
+        f.corrected = m.getCorrectedCount();
+        f.nameChanges = m.getNameChangeCount();
+        f.alreadyInAntweb = m.getAlreadyInAntwebCount();
+        assertEquals("1 line was filed under a name AntCat has changed and 1 line was not loaded; see the report."
+            + " Please fix them in your own data before your next upload.", UploadNotice.attentionSummary(f));
     }
 
     public void testEverySectionHasAKind() {
         java.util.Map<String, String> kinds = new MessageMgr().attentionByKey();
-        for (String key : MessageMgr.CORRECTED) assertEquals(key, "corrected", kinds.get(key));
+        for (String key : MessageMgr.CORRECTED) {
+            assertEquals(key, MessageMgr.NAME_CHANGES.contains(key) ? MessageMgr.NAME_CHANGE : "corrected", kinds.get(key));
+        }
         assertEquals("notLoaded", kinds.get(MessageMgr.duplicateEntries));
         assertEquals("notLoaded", kinds.get(MessageMgr.invalidSpecimenCode));
         assertEquals("notLoaded", kinds.get(MessageMgr.codeNotFoundInLine));

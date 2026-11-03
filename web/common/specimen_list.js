@@ -26,9 +26,11 @@ $('#sortBy_select').on('change', function () {
 // purl: $.url() reads this page's address. ($.url(url) with the object returned an empty query, so every sort of a
 // search ran advancedSearch.do with no criteria: "Invalid searchType: not found", 2026-10-26.)
 var url = $.url();
-var all_params = url.attr('query') || '';
-// A new sort starts at the first page of a paged search list.
-var trim_params = all_params.replace(/&sortBy.*/, '').replace(/(^|&)page=\d*/g, '');
+// The address's own (still encoded) query, without sortBy, t and page: a new sort starts at the first page of a paged
+// search list. (2026-11-03, Michele Esposito: a search whose sortBy came early in the address, with a pasted code list,
+// lost every parameter up to the first line break, because the decoded query was cut with /&sortBy.*/ and "."
+// stops at a line break: "Not enough search criteria".)
+var trim_params = sortExtras(window.location.search);
 $("#sortby_extras").val(trim_params);
 
 var sort_by = url.param('sortBy');
@@ -187,3 +189,12 @@ function hideTools(whichone) {
     });
 }
 
+/** The query of a search address (location.search) without its sortBy, t and page parameters, still encoded. */
+function sortExtras(search) {
+    var q = (search || '').replace(/^\?/, '');
+    if (q === '') return '';
+    return q.split('&').filter(function (p) {
+        var name = p.split('=')[0];
+        return p !== '' && name !== 'sortBy' && name !== 't' && name !== 'page';
+    }).join('&');
+}

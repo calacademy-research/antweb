@@ -778,7 +778,7 @@ or for Worldants upload
         }
         org.calacademy.antweb.Group g = GroupMgr.getGroup(holderGroupId);
         String name = g != null && g.getName() != null ? g.getName() : "group " + holderGroupId;
-        return "Code already in AntWeb, uploaded by " + Html.esc(name);
+        return MessageMgr.DUPLICATE_OTHER_GROUP + Html.esc(name);
     }
 
     private static int maxHabitat = 0;

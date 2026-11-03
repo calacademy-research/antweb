@@ -134,6 +134,11 @@ def test_compose_files_set_the_requirement():
     assert 'API_REQUIRE_READONLY_LOGIN: "true"' in base, "docker-compose.yml"
     assert 'API_REQUIRE_READONLY_LOGIN: "false"' in dev, "docker-compose.dev.yml"
 
+def test_closed_message_says_why_and_is_not_an_outage():
+    # Brian Fisher 2026-11-02: callers took the old "not available at the moment" for an outage.
+    msg = api.API_DOWN_MESSAGE
+    assert "registered API keys" in msg and "reopen" in msg, msg
+    assert "at the moment" not in msg and "try again later" not in msg.lower(), msg
 
 if __name__ == "__main__":
     setup()
@@ -147,3 +152,4 @@ if __name__ == "__main__":
                 failed += 1
                 print("FAIL", name, repr(e))
     sys.exit(1 if failed else 0)
+

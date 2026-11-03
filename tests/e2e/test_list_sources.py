@@ -201,3 +201,19 @@ def test_every_kind_of_list_has_the_four_views():
             assert labels[:3] == want[:3], (path, labels)
         for gone in GONE:
             assert gone not in html, (path, gone)
+
+
+@pytest.mark.parametrize("country", ["Madagascar", "Mozambique"])
+def test_every_species_number_on_genus_lists_is_a_link(country):
+    """Every number in the Species column of a country's genus list links to the genus page in the same view, rows
+    added from specimens too (2026-11-03: Phyracaces in Madagascar, known there from one specimen, showed a bare 1)."""
+    for view in ("valid", "curated", "all"):
+        html = ns.get(f"/taxonomicPage.do?rank=genus&countryName={country}&statusSet={view}", new_session())
+        for r in ns.list_rows(html):
+            cells = re.findall(r'<div class="list_extras specimens[^"]*"[^>]*>(.*?)</div>', r["html"], re.S)
+            if not cells:
+                continue
+            cell = cells[-1]
+            if re.fullmatch(r"[\d,]+", ns.text_of(cell)):
+                assert "<a " in cell and "browse.do?" in unescape(cell) and f"statusSet={view}" in unescape(cell), \
+                    f"{view}: bare Species number: {ns.text_of(r['html'])[:120]}"

@@ -45,24 +45,37 @@ public final class UploadReportPage {
     /** The report's group titles, in order (tests read them). */
     public static final Map<String, String> GROUP_TITLES = new LinkedHashMap<>();
     static {
+        GROUP_TITLES.put(MessageMgr.NAME_CHANGE, "Name changes (please update your data)");
         GROUP_TITLES.put(MessageMgr.NOT_LOADED, "Not loaded (fix these)");
-        GROUP_TITLES.put(MessageMgr.CORRECTED_KIND, "Corrected by AntWeb (please fix in your data)");
+        GROUP_TITLES.put(MessageMgr.CORRECTED_KIND, "Other corrections (please fix in your data)");
         GROUP_TITLES.put(MessageMgr.RED_FLAG, "Red-flagged (loaded, hidden from most pages until fixed)");
         GROUP_TITLES.put(MessageMgr.NOTE, "Notes");
+        GROUP_TITLES.put(MessageMgr.ALREADY_IN_ANTWEB, "Already in AntWeb (nothing to do)");
     }
+
+    /** The groups whose sections open by default (Brian Fisher, 2026-11-02: what to act on first; the rest is one
+     *  closed line per section, with its count, as in the report before 2026-10-29). */
+    public static final java.util.Set<String> OPEN_GROUPS = java.util.Set.of(
+        MessageMgr.NAME_CHANGE, MessageMgr.NOT_LOADED, MessageMgr.CORRECTED_KIND);
+
+    /** The key of the section of duplicates whose codes other groups uploaded first (split from duplicateEntries). */
+    public static final String OTHER_GROUP_DUPLICATES = "duplicateEntriesOtherGroups";
 
     private static final Map<String, String> GROUP_LEADS = new LinkedHashMap<>();
     static {
+        GROUP_LEADS.put(MessageMgr.NAME_CHANGE, "AntCat has a newer name for these names. AntWeb filed the lines under the current name; please change them in your own data.");
         GROUP_LEADS.put(MessageMgr.NOT_LOADED, "These lines of your file are not in AntWeb. Fix them in your data and upload again.");
         GROUP_LEADS.put(MessageMgr.CORRECTED_KIND, "AntWeb changed what these lines said and loaded them. Please make the same change in your own data, so the next upload does not need it.");
-        GROUP_LEADS.put(MessageMgr.RED_FLAG, "These specimens were loaded with a red flag: until the problem is fixed they do not appear in most of AntWeb.");
-        GROUP_LEADS.put(MessageMgr.NOTE, "Loaded. Worth a look: names AntCat does not know, places AntWeb does not recognise, and similar.");
+        GROUP_LEADS.put(MessageMgr.RED_FLAG, "These specimens were loaded with a red flag: until the problem is fixed they do not appear in most of AntWeb. Open a line to see them.");
+        GROUP_LEADS.put(MessageMgr.NOTE, "Loaded. Worth a look: names AntCat does not know, places AntWeb does not recognise, and similar. Open a line to see it.");
+        GROUP_LEADS.put(MessageMgr.ALREADY_IN_ANTWEB, "Another collection uploaded these codes first; AntWeb keeps their record. Nothing to fix in your data.");
     }
 
     /** What AntWeb did with the lines of a section, when the heading does not say it plainly. */
     private static final Map<String, String> ACTIONS = new LinkedHashMap<>();
     static {
         ACTIONS.put(MessageMgr.duplicateEntries, "Not loaded: AntWeb already has a specimen with this code.");
+        ACTIONS.put(OTHER_GROUP_DUPLICATES, "Not loaded: another collection's record of this code stays.");
         ACTIONS.put(MessageMgr.codeNotFoundInLine, "Not loaded: the line has no specimen code.");
         ACTIONS.put(MessageMgr.codeNotFound, "Not loaded.");
         ACTIONS.put(MessageMgr.recognizedInvalidSpecies, "Filed under the current valid name from AntCat.");
@@ -136,13 +149,15 @@ public final class UploadReportPage {
         f.redFlagged = m.getRedFlagCount();
         f.notLoaded = m.getNotLoadedCount();
         f.corrected = m.getCorrectedCount();
+        f.nameChanges = m.getNameChangeCount();
+        f.alreadyInAntweb = m.getAlreadyInAntwebCount();
         return f;
     }
 
     public static String render(Facts f, MessageMgr m) {
         String app = f.domainApp == null ? "" : f.domainApp;
         boolean specimen = f.parsed >= 0;
-        List<MessageMgr.ReportSection> sections = f.showChecks ? m.reportSections() : new ArrayList<>();
+        List<MessageMgr.ReportSection> sections = f.showChecks ? splitDuplicates(m.reportSections(), m.getAlreadyInAntwebCount()) : new ArrayList<>();
         UploadNotice.Facts counts = noticeFacts(m, f.insertedSpecimens);
         int notes = m.getNoteCount();
 
@@ -177,7 +192,8 @@ public final class UploadReportPage {
             b.append("<h2 class=\"rep-group-title\">").append(Html.esc(g.getValue()))
              .append(" <span class=\"rep-pill\">").append(allLines ? plural(lines, "line") : plural(lines, "item")).append("</span></h2>\n");
             b.append("<p class=\"aw-lead\">").append(Html.esc(GROUP_LEADS.get(g.getKey()))).append("</p>\n");
-            for (MessageMgr.ReportSection s : in) section(b, s, f, app);
+            boolean open = OPEN_GROUPS.contains(g.getKey());
+            for (MessageMgr.ReportSection s : in) section(b, s, f, app, open);
             b.append("</div>\n");
         }
 
@@ -218,9 +234,11 @@ public final class UploadReportPage {
         tile(b, "read", "Lines read", f.recordCount, false);
         if (specimen) {
             tile(b, "loaded", "Loaded", Math.max(f.insertedSpecimens, 0), false);
+            if (c.nameChanges > 0) tile(b, "nameChanges", "Name changes", c.nameChanges, true);
             tile(b, "notLoaded", "Not loaded", c.notLoaded, c.notLoaded > 0);
             tile(b, "corrected", "Corrected", c.corrected, c.corrected > 0);
             tile(b, "redFlagged", "Red-flagged", c.redFlagged, c.redFlagged > 0);
+            if (c.alreadyInAntweb > 0) tile(b, "alreadyInAntweb", "Already in AntWeb", c.alreadyInAntweb, false);
         } else {
             tile(b, "notLoaded", "Not loaded", c.notLoaded, c.notLoaded > 0);
             tile(b, "corrected", "Corrected", c.corrected, c.corrected > 0);
@@ -231,7 +249,8 @@ public final class UploadReportPage {
         String sentence = UploadNotice.attentionSummary(c);
         if (sentence != null) b.append("<p class=\"rep-sentence\" id=\"rep-sentence\">").append(Html.esc(sentence)).append("</p>\n");
         if (specimen && f.insertedSpecimens >= 0) {
-            int unlisted = f.recordCount - f.insertedSpecimens - c.notLoaded;
+            // the codes another group holds are listed under "Already in AntWeb" (2026-11-03, review of #318)
+            int unlisted = f.recordCount - f.insertedSpecimens - c.notLoaded - c.alreadyInAntweb;
             if (unlisted > 0) {
                 b.append("<p class=\"aw-note\" id=\"rep-unlisted\">").append(plural(unlisted, "other line"))
                  .append(unlisted == 1 ? " was" : " were").append(" read but not loaded and ")
@@ -252,7 +271,39 @@ public final class UploadReportPage {
         b.append("<tr><th scope=\"row\">").append(Html.esc(label)).append("</th><td>").append(valueHtml).append("</td></tr>");
     }
 
-    private static void section(StringBuilder b, MessageMgr.ReportSection s, Facts f, String app) {
+    /**
+     * The duplicates whose codes another group uploaded first move from "Not loaded" to their own section in "Already
+     * in AntWeb" (Brian Fisher, 2026-11-02: nothing the curator can do). A code given twice in the curator's own file,
+     * or a duplicate whose holder is unknown, stays under "Not loaded".
+     */
+    static List<MessageMgr.ReportSection> splitDuplicates(List<MessageMgr.ReportSection> sections, int otherGroupLines) {
+        List<MessageMgr.ReportSection> out = new ArrayList<>();
+        MessageMgr.ReportSection already = null;
+        for (MessageMgr.ReportSection s : sections) {
+            if (!MessageMgr.duplicateEntries.equals(s.key) || otherGroupLines <= 0) { out.add(s); continue; }
+            already = new MessageMgr.ReportSection();
+            already.key = OTHER_GROUP_DUPLICATES;
+            already.headingHtml = "Codes already in AntWeb from other collections (not uploaded)";
+            already.kind = MessageMgr.ALREADY_IN_ANTWEB;
+            already.count = otherGroupLines;
+            already.detailHref = s.detailHref;
+            MessageMgr.ReportSection own = new MessageMgr.ReportSection();
+            own.key = s.key;
+            own.headingHtml = s.headingHtml;
+            own.kind = s.kind;
+            own.count = s.count - otherGroupLines;
+            own.detailHref = s.detailHref;
+            for (MessageMgr.ReportRow r : s.rows) {
+                String v = r.valueHtml == null ? "" : r.valueHtml;
+                (v.startsWith(MessageMgr.DUPLICATE_OTHER_GROUP) ? already : own).rows.add(r);
+            }
+            if (own.count > 0) out.add(own);
+        }
+        if (already != null) out.add(already);
+        return out;
+    }
+
+    private static void section(StringBuilder b, MessageMgr.ReportSection s, Facts f, String app, boolean open) {
         boolean anyLines = false, anyCodes = false, anyAction = false;
         List<String[]> split = new ArrayList<>();
         for (MessageMgr.ReportRow r : s.rows) {
@@ -266,28 +317,32 @@ public final class UploadReportPage {
 
         b.append("<section class=\"aw-card rep-sec\" id=\"sec-").append(Html.escAttr(s.key)).append("\" data-key=\"").append(Html.escAttr(s.key))
          .append("\" data-kind=\"").append(s.kind).append("\" data-total=\"").append(s.count).append("\" data-rows=\"").append(s.rows.size()).append("\">\n");
+        // A closed section (red flags, notes, codes already in AntWeb) is one line with its count; it opens to the rows.
+        if (!open) b.append("<details class=\"rep-fold\"><summary>");
         b.append("<h3 class=\"rep-sec-title\">").append(headingText(s.headingHtml));
         if (MessageMgr.unrecognizedColumn.equals(s.key)) b.append(": ").append(String.format("%,d", s.count));   // "Columns ignored (not AntWeb columns): 10"
         else b.append(" <span class=\"rep-pill\">").append(plural(s.count, s.unit, s.units)).append("</span>");
         if (s.detailHref != null) b.append(" <a class=\"rep-detail\" href=\"").append(Html.escAttr(s.detailHref)).append("\">details</a>");
         if (s.listHref != null) b.append(" <a class=\"rep-detail\" href=\"").append(Html.escAttr(s.listHref)).append("\">list</a>");
-        b.append("</h3>\n");
+        b.append("</h3>");
+        if (!open) b.append("</summary>");
+        b.append("\n");
         String action = ACTIONS.get(s.key);
         if (action == null) action = defaultAction(s);
         if (action != null) b.append("<p class=\"rep-did\"><span>AntWeb:</span> ").append(Html.esc(action)).append("</p>\n");
 
-        if (s.rows.isEmpty()) {
-            b.append("</section>\n");
-            return;
+        if (!s.rows.isEmpty()) {
+            int n = s.rows.size();
+            // A closed section shows all its rows when opened; an open one its first rows and the rest under "Show all".
+            int shown = !open || n <= COLLAPSE_AFTER ? n : SHOWN_ROWS;
+            table(b, s, split, 0, shown, anyLines, anyAction, anyCodes, f, app);
+            if (shown < n) {
+                b.append("<details class=\"rep-more\"><summary>Show all ").append(String.format("%,d", n)).append(" rows</summary>\n");
+                table(b, s, split, shown, n, anyLines, anyAction, anyCodes, f, app);
+                b.append("</details>\n");
+            }
         }
-        int n = s.rows.size();
-        int shown = n > COLLAPSE_AFTER ? SHOWN_ROWS : n;
-        table(b, s, split, 0, shown, anyLines, anyAction, anyCodes, f, app);
-        if (shown < n) {
-            b.append("<details class=\"rep-more\"><summary>Show all ").append(String.format("%,d", n)).append(" rows</summary>\n");
-            table(b, s, split, shown, n, anyLines, anyAction, anyCodes, f, app);
-            b.append("</details>\n");
-        }
+        if (!open) b.append("</details>");
         b.append("</section>\n");
     }
 
@@ -456,6 +511,10 @@ public final class UploadReportPage {
         + ".aw-report h2.rep-group-title{font-size:18px;margin:0 0 4px 0;padding-left:10px;border-left:4px solid #8a96a3;}"
         + ".aw-report .rep-notLoaded h2.rep-group-title{border-left-color:#c0392b;}"
         + ".aw-report .rep-corrected h2.rep-group-title{border-left-color:#d97706;}"
+        + ".aw-report .rep-nameChange h2.rep-group-title{border-left-color:#1f63c6;}"
+        + ".aw-report details.rep-fold > summary{cursor:pointer;list-style-position:outside;margin-left:16px;}"
+        + ".aw-report details.rep-fold > summary h3{display:inline;}"
+        + ".aw-report details.rep-fold[open] > summary{margin-bottom:6px;}"
         + ".aw-report .rep-redFlag h2.rep-group-title{border-left-color:#e11d48;}"
         + ".aw-report .rep-group > .aw-lead{margin:0 0 10px 14px;color:#5b6570;}"
         + ".aw-report .rep-pill{display:inline-block;vertical-align:2px;margin-left:6px;padding:1px 9px;border-radius:999px;background:#e8edf5;"

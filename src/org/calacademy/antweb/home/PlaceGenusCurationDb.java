@@ -161,7 +161,10 @@ public class PlaceGenusCurationDb {
         return "insert into place_specimen_name (list_type, list_key, taxon_name, specimens, counted)"
             + " select '" + type + "', left(x.place, 128), x.taxon_name, count(*), now() from (" + placeSource(type) + ") x"
             + " join taxon t on t.taxon_name = x.taxon_name where t.family = 'formicidae'"
-            + " group by left(x.place, 128), x.taxon_name";
+            + " group by left(x.place, 128), x.taxon_name"
+            // two spellings the key's collation holds equal ("Sao Tome", "São Tomé"; or two places cut to the same 128
+            // characters) add up instead of failing the whole kind (review of #316)
+            + " on duplicate key update specimens = specimens + values(specimens)";
     }
 
     /** The statuses of ListView's counted names (StatusSet.getCountables). */

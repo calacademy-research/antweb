@@ -562,6 +562,34 @@ def _showing(page) -> str:
     return m.group(1) if m else ""
 
 
+# Michele Esposito's search of 2026-11-03: a pasted list of specimen codes and sortBy early in the address.
+SORT_CODES_SEARCH = ("/advancedSearch.do?searchMethod=advancedSearch&advanced=true&isIgnoreInsufficientCriteria=false"
+                     "&sortBy=taxonname&collGroupOpen=none&family=Formicidae&subfamily=none&genus=none"
+                     "&specimenCodeSearchType=contains&specimenCode=casent0040404%0D%0Acasent0040404-d01%0D%0A"
+                     "casent0063687%0D%0Acasent0063687-d11%0D%0A&statusSet=complete&redFlagOption=exclude"
+                     "&resultRank=specimen&output=list&sortOrder=down")
+
+
+def test_sort_of_a_pasted_code_list_keeps_the_codes(desktop):
+    """Sorting by specimen code a search of pasted codes whose address has sortBy near the start: the same specimens,
+    sorted (2026-11-03: "Not enough search criteria"; the script cut the decoded query at its first line break)."""
+    page = desktop.new_page()
+    try:
+        page.goto(BASE_URL + SORT_CODES_SEARCH, wait_until="load")
+        before = _showing(page)
+        if not before:
+            pytest.skip("none of the four specimens is on this server")
+        with page.expect_navigation(wait_until="load"):
+            page.select_option("#sortBy_select", "code")
+        body = page.inner_text("body")
+        assert "Not enough search criteria" not in body and "Invalid searchType" not in body, page.url
+        assert "sortBy=code" in page.url and page.url.count("sortBy=") == 1, page.url
+        assert "casent0040404%0D%0Acasent0040404-d01" in page.url, page.url
+        assert _showing(page) == before, f"sorted search shows {_showing(page)} specimens, the search {before}"
+    finally:
+        page.close()
+
+
 def test_sort_dropdown_keeps_the_search(desktop):
     """The Sort by list runs the same search again, sorted. Until 2026-10-26 the script lost the search criteria
     ($.url(url) returned an empty query) and every sort showed "Invalid searchType: not found"."""
