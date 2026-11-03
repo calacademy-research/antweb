@@ -364,8 +364,10 @@
          String addedImages = "&ndash;";
          if (placeSpecimens != null && placeSpecimens.has(child.getTaxonName())) {
            addedCount = Formatter.commaFormat(placeSpecimens.count(child.getTaxonName())) + " here";
-           // the admin check number adds these up too (Not curated view: every row is added; Note 1 read 0, 11-03)
-           if (!Rank.GENUS.equals(pageRank)) subtaxonTotal += placeSpecimens.count(child.getTaxonName());
+           // the admin check number adds these up in the view Not curated (every row is added there; its Note 1 read 0,
+           // 11-03); in the other views it stays the specimens of the list's rows, as the place's Specimens number
+           if (!Rank.GENUS.equals(pageRank) && org.calacademy.antweb.StatusSet.LIST_NOT_CURATED.equals(request.getParameter("statusSet")))
+             subtaxonTotal += placeSpecimens.count(child.getTaxonName());
            // on a genus page (rows of species), linked to the name's specimens in the place (its page in the place)
            if (!Rank.GENUS.equals(pageRank)) {
              addedCount = "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "'>" + addedCount + "</a>";
