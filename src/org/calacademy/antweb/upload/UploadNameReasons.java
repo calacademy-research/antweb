@@ -84,7 +84,8 @@ public final class UploadNameReasons {
     public static String reasonPart(String text, Integer antcatId, String uploadedTaxonName, String oldTaxonName, String newTaxonName) {
         if (text == null || text.isEmpty()) return "";
         String[] names = {Taxon.getPrettyTaxonName(uploadedTaxonName), Taxon.getPrettyTaxonName(oldTaxonName), Taxon.getPrettyTaxonName(newTaxonName)};
-        if (text.startsWith(NameUpdateReason.GENUS_SYNONYM) || text.startsWith(NameUpdateReason.SUBFAMILY_PLACED)) {
+        if (text.startsWith(NameUpdateReason.GENUS_SYNONYM) || text.startsWith(NameUpdateReason.SUBFAMILY_PLACED)
+                || text.startsWith(NameUpdateReason.OLD_GENUS_CONCEPT)) {
             // A genus-level reason names genera alone (Brian Fisher, 2026-11-03): their genus names in italics too.
             java.util.List<String> all = new java.util.ArrayList<>(java.util.Arrays.asList(names));
             for (String n : names) {

@@ -567,6 +567,63 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         assertEquals("(formicidae)pyramica ludovici", one("select original_taxon_name from specimen where code = 'sam-hym-c003105'"));
     }
 
+    private void specimenIn(String code, String taxonName, int group, String bioregion) throws SQLException {
+        exec("insert into specimen (code, taxon_name, original_taxon_name, access_group, status, subfamily, genus, species, bioregion)"
+            + " values (" + q(code) + ", " + q(taxonName) + ", null, " + group + ", 'indetermined', 'ponerinae', 'mesoponera', 'x', " + q(bioregion) + ")");
+    }
+
+    /**
+     * Brian Fisher, 2026-11-03, rule 1 of the old genus concepts (GenusConceptRule): Mesoponera in the Afrotropical and
+     * Malagasy regions is Xiphopelta. Only the morphospecies and indets of those bioregions move (the same name in
+     * another bioregion, in the same group, stays); a species name stays; the taxon row is made in apply mode only.
+     */
+    public void testOldGenusConceptMovesOneBioregion() throws Exception {
+        taxon("ponerinaemesoponera", "genus", "valid", null, null, "ponerinae", "mesoponera", null, null);
+        taxon("ponerinaexiphopelta", "genus", "valid", null, null, "ponerinae", "xiphopelta", null, null);
+        taxon("ponerinaemesoponera (indet)", "species", "indetermined", null, "specimenUpload", "ponerinae", "mesoponera", "(indet)", null);
+        taxon("ponerinaemesoponera ambigua", "species", "valid", null, null, "ponerinae", "mesoponera", "ambigua", null);
+        exec("update taxon set antcat_id = 601, tribe = 'ponerini' where taxon_name = 'ponerinaexiphopelta'");
+        specimenIn("kg0000001", "ponerinaemesoponera (indet)", 30, "Afrotropical");
+        specimenIn("kg0000002", "ponerinaemesoponera (indet)", 30, "Afrotropical");
+        specimenIn("kg0000003", "ponerinaemesoponera (indet)", 30, "Indomalaya");
+        specimenIn("kg0000004", "ponerinaemesoponera kg01", 30, "Afrotropical");
+        specimenIn("kg0000005", "ponerinaemesoponera ambigua", 30, "Afrotropical");
+        specimenIn("mracfor001128", "ponerinaemesoponera (indet)", 31, "Malagasy");
+
+        SpecimenNameUpdate.Summary report = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.REPORT, 50000);
+        assertEquals("4 as before + 4", 8, report.specimens);
+        assertEquals(4, report.conceptSpecimens);
+        assertEquals("ponerinaemesoponera (indet)", nameOf("kg0000001"));
+        assertEquals(0, count("select count(*) from taxon where taxon_name like 'ponerinaexiphopelta %'"));
+        assertEquals("Old genus concept: Mesoponera in the Afrotropical region is Xiphopelta (rule approved by Brian Fisher, 2026-11-03)",
+            one("select reason from specimen_name_update where code = 'kg0000001'"));
+        assertEquals("601", one("select antcat_id from specimen_name_update where code = 'kg0000001'"));
+        assertEquals(0, count("select count(*) from specimen_name_update where code = 'kg0000003'"));
+
+        SpecimenNameUpdate.Summary s = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000);
+        assertEquals(4, s.conceptSpecimens);
+        assertTrue(s.line(), s.line().contains("of these, by an approved old genus concept: 4"));
+        assertEquals("ponerinaexiphopelta (indet)", nameOf("kg0000001"));
+        assertEquals("ponerinaexiphopelta (indet)", nameOf("kg0000002"));
+        assertEquals("another bioregion stays", "ponerinaemesoponera (indet)", nameOf("kg0000003"));
+        assertEquals("ponerinaexiphopelta kg01", nameOf("kg0000004"));
+        assertEquals("a species name stays", "ponerinaemesoponera ambigua", nameOf("kg0000005"));
+        assertEquals("ponerinaexiphopelta (indet)", nameOf("mracfor001128"));
+        assertEquals("Uploaded As", "ponerinaemesoponera (indet)", one("select original_taxon_name from specimen where code = 'kg0000001'"));
+        assertNull(one("select original_taxon_name from specimen where code = 'kg0000003'"));
+        assertEquals("ponerinae ponerini xiphopelta indetermined",
+            one("select concat_ws(' ', subfamily, tribe, genus, status) from specimen where code = 'kg0000001'"));
+        assertEquals("species indetermined xiphopelta (indet) ponerinaexiphopelta genusSynonymMove",
+            one("select concat_ws(' ', taxarank, status, genus, species, parent_taxon_name, insert_method) from taxon where taxon_name = 'ponerinaexiphopelta (indet)'"));
+        assertEquals("morphotaxon", one("select status from taxon where taxon_name = 'ponerinaexiphopelta kg01'"));
+        assertEquals("Old genus concept: Mesoponera in the Malagasy region is Xiphopelta (rule approved by Brian Fisher, 2026-11-03)",
+            one("select reason from specimen_name_update where code = 'mracfor001128' and mode = 'changed'"));
+
+        SpecimenNameUpdate.Summary again = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000);
+        assertEquals("nothing more, nothing moved back", 0, again.specimens);
+        assertEquals("ponerinaexiphopelta (indet)", nameOf("kg0000001"));
+    }
+
     public void testMaxChangesStopsApply() throws Exception {
         SpecimenNameUpdate.Summary s = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 3);
         assertTrue(s.capped);

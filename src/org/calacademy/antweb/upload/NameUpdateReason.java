@@ -177,6 +177,8 @@ public final class NameUpdateReason {
     /** The start of a genus-level reason (GenusSynonymRule); UploadNameReasons italicizes the genus names of such a reason. */
     public static final String GENUS_SYNONYM = "genus synonym: ";
     public static final String SUBFAMILY_PLACED = "placed in its subfamily: ";
+    /** GenusConceptRule.reason (2026-11-03). */
+    public static final String OLD_GENUS_CONCEPT = "Old genus concept: ";
 
     /**
      * Why a morphospecies or indet moved with its genus (Brian Fisher, 2026-11-03): the old genus's AntCat

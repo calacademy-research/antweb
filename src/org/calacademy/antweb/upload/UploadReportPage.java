@@ -67,6 +67,7 @@ public final class UploadReportPage {
         ACTIONS.put(MessageMgr.codeNotFound, "Not loaded.");
         ACTIONS.put(MessageMgr.recognizedInvalidSpecies, "Filed under the current valid name from AntCat.");
         ACTIONS.put(MessageMgr.synonymGenusReplaced, "Filed under the current valid genus from AntCat.");
+        ACTIONS.put(MessageMgr.genusConceptReplaced, "Filed under the genus AntCat now uses for this region (an approved old genus concept).");
         ACTIONS.put(MessageMgr.preferredSubfamilyForGenusReplaced, "Filed under AntCat's subfamily for the genus.");
         ACTIONS.put(MessageMgr.invalidSubfamilyForGenusReplaced, "Filed under AntCat's subfamily for the genus.");
         ACTIONS.put(MessageMgr.specimenIdSpacesRemoved, "Spaces removed from the code; loaded.");

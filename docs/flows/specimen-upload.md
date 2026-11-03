@@ -181,7 +181,7 @@ Not done at upload time (waits for the nightly run): geolocale (country/adm1) ta
 
 ## 4. Name resolution: current valid name and "Uploaded As"
 
-`SpecimenUploadProcess.setStatusAndCurrentValidName()`, per line. Since 2026-10 the decision itself is `upload/CurrentValidNameRule.decide()` (unchanged behaviour), shared with the nightly name update ([antcat-to-antweb.md](antcat-to-antweb.md) section 7); the report lines, the placeholder taxon and the name columns stay in the upload:
+`SpecimenUploadProcess.setStatusAndCurrentValidName()`, per line. Since 2026-10 the decision itself is `upload/CurrentValidNameRule.decide()` (unchanged behaviour), shared with the nightly name update ([antcat-to-antweb.md](antcat-to-antweb.md) section 7); the report lines, the placeholder taxon and the name columns stay in the upload. Since 2026-11-03 a morphospecies or indet whose genus and bioregion have an approved old genus concept (`upload/GenusConceptRule`, e.g. Mesoponera in the Afrotropical and Malagasy regions is Xiphopelta) is filed under the new genus, the uploaded name kept as `original_taxon_name`, and listed under "Old genus concept" (corrected):
 
 1. A name that is an indet (`(indet)`, `(genus)`) gets status `indetermined`; a morphospecies name (non-alphabetic characters, e.g. `jtl-001`) gets `morphotaxon`. Both are kept as uploaded.
 2. Otherwise the taxon is read from the database (`TaxonDb.getTaxon`; `TaxonMgr.isUseRefreshing()` is false), so the upload sees the AntCat import of that morning.
