@@ -901,7 +901,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.upload.UploadNoticeTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (19 tests)" /tmp/out.txt
+            grep -q "^OK (20 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the upload report page (UploadReportPageTest)
