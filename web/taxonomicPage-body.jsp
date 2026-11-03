@@ -176,6 +176,8 @@
   // 2026-11-03 (B77): subfamily lists, the subfamily rows' Genera in the view (the genus rows of their browse pages)
   ListView.SubfamilyRows subfamilyRows = taxaPage.getSubfamilyRows();
   ListView.PlaceSpecimens placeSpecimens = taxaPage.getPlaceSpecimens();
+  // 2026-11-03: All specimen names, the names removed from the list (marked "removed from the list (date)")
+  java.util.Map<String, java.util.Date> listDisputes = taxaPage.getDisputes();
 %>
 
     <%@ include file="/taxonReportBody.jsp" %>

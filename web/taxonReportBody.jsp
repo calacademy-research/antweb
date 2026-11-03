@@ -264,7 +264,7 @@
 <% } %>
         <%@include file="/common/isFromSpecimen.jsp" %> 
 
-          <a href="<%= AntwebProps.getDomainApp() %>/description.do?<%= browserParams %>"><%= childDagger %><%= child.getPrettyName() %></a>
+          <a href="<%= AntwebProps.getDomainApp() %>/description.do?<%= browserParams %>"><%= childDagger %><%= child.getPrettyName() %></a><%= org.calacademy.antweb.ListView.removedMarkHtml(listDisputes, child.getTaxonName()) %>
         </div> 
         <div class="list_extras author_date"><%= (new Formatter()).clearNull(child.getAuthorDate()) %></div>
     <% if (childTaxonSet.exists()) {         

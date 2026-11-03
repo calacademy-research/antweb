@@ -33,6 +33,7 @@
     org.calacademy.antweb.ListView.SubfamilyRows subfamilyRows = (org.calacademy.antweb.ListView.SubfamilyRows) request.getAttribute(org.calacademy.antweb.PlaceTaxonNotes.SUBFAMILY_ROWS);
     // a genus page in the view Not curated: the genus's specimens collected here by name, for the rows added from them (BrowseAction)
     org.calacademy.antweb.ListView.PlaceSpecimens placeSpecimens = (org.calacademy.antweb.ListView.PlaceSpecimens) request.getAttribute(org.calacademy.antweb.PlaceTaxonNotes.PLACE_SPECIMENS);
+    java.util.Map<String, java.util.Date> listDisputes = null;   // removed names are marked on species lists (taxonomicPage-body.jsp)
 %>
 
 <%@ include file="/taxonReportBody.jsp" %>

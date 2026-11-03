@@ -192,6 +192,35 @@ public final class ListView {
         return "";
     }
 
+    /**
+     * The names removed from the place's list (disputes) with the date they were removed (Brian Fisher, 2026-11-03: All
+     * specimen names shows them, marked). Null for places without disputes (museums, bioregions) or when there are none.
+     */
+    public static Map<String, java.util.Date> loadDisputes(Connection connection, Overview overview) throws SQLException {
+        String q;
+        if (overview instanceof Geolocale) {
+            q = "select taxon_name, created from geolocale_taxon_dispute where geolocale_id = " + ((Geolocale) overview).getId();
+        } else if (overview instanceof Project) {
+            q = "select taxon_name, created from proj_taxon_dispute where project_name = " + DBUtil.sqlQuote(overview.getName());
+        } else {
+            return null;
+        }
+        Map<String, java.util.Date> out = new HashMap<>();
+        try (java.sql.Statement s = connection.createStatement(); java.sql.ResultSet r = s.executeQuery(q)) {
+            while (r.next()) out.put(r.getString(1), r.getTimestamp(2));
+        }
+        return out.isEmpty() ? null : out;
+    }
+
+    /** The mark of a name removed from the list, after its name in All specimen names ("" when not removed). */
+    public static String removedMarkHtml(Map<String, java.util.Date> disputes, String taxonName) {
+        if (disputes == null || taxonName == null || !disputes.containsKey(taxonName)) return "";
+        java.util.Date d = disputes.get(taxonName);
+        String date = d == null ? "" : " (" + new java.text.SimpleDateFormat("yyyy-MM-dd").format(d) + ")";
+        return " <span class=\"removed-from-list\" title=\"Removed from this list with the Species List Tool; shown here because"
+            + " specimens of this name were collected here\">removed from the list" + date + "</span>";
+    }
+
     /** Whether a list reads the place's specimens as a whole (source icons, rows from specimens): not regions or subregions. */
     public static boolean readsPlaceSpecimens(Overview overview) {
         return !(overview instanceof Region || overview instanceof Subregion);

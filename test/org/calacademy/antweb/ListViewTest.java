@@ -305,4 +305,21 @@ public class ListViewTest extends TestCase {
     private static void assertArrayEqualsStr(String[] a, String[] b) {
         assertEquals(Arrays.toString(a), Arrays.toString(b));
     }
+
+    /**
+     * All specimen names shows a name removed from the list (Brian Fisher, 2026-11-03: "this is the transparency we
+     * need"), marked with its date; Curated and Not curated still leave it out.
+     */
+    public void testAllSpecimenNamesShowsRemovedNamesMarked() {
+        String all = TaxaPage.specimenNamesWhere(mozambique(), "species", true, StatusSet.listStatusSet("all"), Arrays.asList("x"));
+        assertFalse(all, all.contains("geolocale_taxon_dispute"));
+        String curated = TaxaPage.specimenNamesWhere(mozambique(), "species", true, StatusSet.listStatusSet("curated"), Arrays.asList("x"));
+        assertTrue(curated, curated.contains("geolocale_taxon_dispute"));
+        java.util.Map<String, java.util.Date> d = new java.util.HashMap<>();
+        d.put("formicinaelepisiota capensis", java.sql.Timestamp.valueOf("2018-11-16 01:37:48"));
+        String mark = ListView.removedMarkHtml(d, "formicinaelepisiota capensis");
+        assertTrue(mark, mark.contains("removed from the list (2018-11-16)") && mark.contains("class=\"removed-from-list\""));
+        assertEquals("", ListView.removedMarkHtml(d, "ponerinaeparvaponera darwinii"));
+        assertEquals("", ListView.removedMarkHtml(null, "formicinaelepisiota capensis"));
+    }
 }

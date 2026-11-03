@@ -153,7 +153,9 @@ public class TaxaPage implements Serializable {
 			w += " and taxon.taxarank in ('genus', 'species', 'subspecies')" + names.getAndCriteria("taxon", rank);
 			if ("genus".equals(rank)) w += " and coalesce(taxon.genus, '') <> ''";
 		}
-		w += ListView.notDisputed(overview, "taxon");
+		// Brian Fisher, 2026-11-03 ("this is the transparency we need"): All specimen names shows every name collected
+		// here, a name removed from the list too (marked on the page: TaxaPage.findDisputes); the other views leave it out.
+		if (!StatusSet.ALL_NAMES.equals(names.getValue())) w += ListView.notDisputed(overview, "taxon");
 		if (!withFossil) w += " and taxon.fossil = 0 ";
 		return w;
 	}
@@ -524,6 +526,25 @@ public class TaxaPage implements Serializable {
 
 	public ListView.PlaceSpecimens getPlaceSpecimens() {
 		return placeSpecimens;
+	}
+
+	private java.util.Map<String, java.util.Date> disputes;
+
+	/**
+	 * All specimen names (2026-11-03): the names removed from this place's list (geolocale_taxon_dispute,
+	 * proj_taxon_dispute) with the date, so the page marks them "removed from the list (date)". Null when none.
+	 */
+	public void findDisputes(Connection connection, Overview overview) {
+		try {
+			disputes = ListView.loadDisputes(connection, overview);
+		} catch (SQLException | RuntimeException e) {
+			s_log.warn("findDisputes() overview:" + overview + " e:" + e);
+			disputes = null;
+		}
+	}
+
+	public java.util.Map<String, java.util.Date> getDisputes() {
+		return disputes;
 	}
 
 	public void findUnimaged(Connection connection) throws SQLException {
