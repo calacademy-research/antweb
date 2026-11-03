@@ -217,3 +217,15 @@ def test_every_species_number_on_genus_lists_is_a_link(country):
             if re.fullmatch(r"[\d,]+", ns.text_of(cell)):
                 assert "<a " in cell and "browse.do?" in unescape(cell) and f"statusSet={view}" in unescape(cell), \
                     f"{view}: bare Species number: {ns.text_of(r['html'])[:120]}"
+
+
+def test_rows_added_from_specimens_say_specimens():
+    """A row added from specimens collected here says "N Specimens" like the list's own rows (2026-11-03: it said
+    "N here"). Only the added rows (title "Not on the list: from specimens collected here") are checked."""
+    html = ns.get("/taxonomicPage.do?rank=species&countryName=Madagascar&statusSet=all", new_session())
+    added = [ns.text_of(c) for c in re.findall(
+        r'<div class="list_extras specimens[^"]*" title="Not on the list: from specimens collected here">(.*?)</div>', html, re.S)]
+    if not added:
+        pytest.skip("no rows added from specimens on the Madagascar list (All specimen names) today")
+    wrong = [c for c in added if not re.fullmatch(r"[\d,]+ Specimens?", c.strip())]
+    assert not wrong, wrong[:5]

@@ -377,7 +377,9 @@
          String addedOther = "";
          String addedImages = "&ndash;";
          if (placeSpecimens != null && placeSpecimens.has(child.getTaxonName())) {
-           addedCount = Formatter.commaFormat(placeSpecimens.count(child.getTaxonName())) + " here";
+           // "N specimens", as on the list's own rows (Brian Fisher, 2026-11-03: was "N here")
+           int addedN = placeSpecimens.count(child.getTaxonName());
+           addedCount = Formatter.commaFormat(addedN) + (addedN == 1 ? " Specimen" : " Specimens");
            // the admin check number adds these up in the view Not curated (every row is added there; its Note 1 read 0,
            // 11-03); in the other views it stays the specimens of the list's rows, as the place's Specimens number
            if (!Rank.GENUS.equals(pageRank) && org.calacademy.antweb.StatusSet.LIST_NOT_CURATED.equals(request.getParameter("statusSet")))
