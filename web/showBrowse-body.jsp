@@ -184,9 +184,13 @@ if (childrenList != null) {
             <ul>
             <% TaxonSet taxonSet = taxon.getTaxonSet(); 
             %>
+                <% // In the view Not curated the header gives the specimens counted (2026-11-03): the list's own Specimens
+                   // number (specimens of the names on the list) contradicted it ("255 specimens not curated" / "24 Specimens").
+                   if (notCuratedHeader == null) { %>
                 <li><%= taxonSet.getNextSubtaxon(2) %></li>
                 <li><%= taxonSet.getNextSubtaxon(3) %></li>
                 <li><%= taxonSet.getNextSubtaxon(4) %></li>
+                <% } %>
                 <% if (displayCount.contains("No ") && taxonSet.getSubtaxonCount(1) > 0) { 
                      String showAllLink = HttpUtil.getTargetReplaceParam(request, "statusSet", "statusSet=all");                
                      A.log("showBrowse-body.jsp displayCount:" + displayCount + " subtaxonCount:" + taxonSet.getSubtaxonCount(1) + " target:" + showAllLink);

@@ -400,6 +400,11 @@ public class SpeciesListDb extends AntwebDb {
 
     // When we delete a proj_taxon record and it is the last project taxon, we would like to
     // delete the taxon (it should be a morpho species).
+    /** A name the Species List Tool does not add to a place's list: one identified only to genus ("... (indet)"). */
+    public static boolean refusesOnPlaceList(String taxonName) {
+        return taxonName != null && taxonName.contains("(indet)");
+    }
+
     public String saveTaxonSet(String[] taxa, String[] chosen
       , ArrayList<String> oldChosenList, String speciesListName, Login login)
       throws SQLException {
@@ -409,7 +414,16 @@ public class SpeciesListDb extends AntwebDb {
 
         // Only names of existing taxa are saved (the form sends taxon names; anything else is dropped).
         ArrayList<String> knownChosen = new ArrayList<>();
+        boolean placeList = speciesListName != null && !Project.isProjectName(speciesListName);
         for (String name : chosen) {
+          if (placeList && refusesOnPlaceList(name) && (oldChosenList == null || !oldChosenList.contains(name))) {
+            // "(indet)" names are never rows of a place's list (Brian Fisher, 2026-10-29 and 11-03): such specimens go on
+            // a list once they have a morphospecies code. Names already on the list are left as they are.
+            s_log.warn("saveTaxonSet() indet name refused:" + name + " list:" + speciesListName);
+            message += "<br><font color=red>Not added</font>: <b>" + Html.esc(Taxon.getPrettyTaxonName(name)) + "</b>. Specimens identified"
+                + " only to genus are not put on a place's species list: give them a morphospecies code, then add that name.";
+            continue;
+          }
           if (isTaxon(name)) {
             knownChosen.add(name);
           } else {

@@ -364,6 +364,8 @@
          String addedImages = "&ndash;";
          if (placeSpecimens != null && placeSpecimens.has(child.getTaxonName())) {
            addedCount = Formatter.commaFormat(placeSpecimens.count(child.getTaxonName())) + " here";
+           // the admin check number adds these up too (Not curated view: every row is added; Note 1 read 0, 11-03)
+           if (!Rank.GENUS.equals(pageRank)) subtaxonTotal += placeSpecimens.count(child.getTaxonName());
            // on a genus page (rows of species), linked to the name's specimens in the place (its page in the place)
            if (!Rank.GENUS.equals(pageRank)) {
              addedCount = "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "'>" + addedCount + "</a>";
