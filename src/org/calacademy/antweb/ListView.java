@@ -308,6 +308,11 @@ public final class ListView {
         if (connection == null || criteria == null || criteria.isEmpty()) return null;
         boolean bySubfamily = subfamily != null && !subfamily.isEmpty();
         boolean byGenus = genus != null && !genus.isEmpty();
+        boolean wholePlace = names == null && !bySubfamily && !byGenus;
+        if (wholePlace) {
+            PlaceSpecimens cached = cachedPlaceSpecimens(criteria);
+            if (cached != null) return cached;
+        }
         PlaceSpecimens out = new PlaceSpecimens();
         List<List<String>> chunks = new ArrayList<>();
         if (names == null) {
@@ -331,7 +336,38 @@ public final class ListView {
                 }
             }
         }
+        if (wholePlace) cachePlaceSpecimens(criteria, out);
         return out;
+    }
+
+    /*
+     * The whole place's specimens by name, kept for an hour (2026-11-02, speed: staging's genus lists of CASC, the
+     * Neotropical bioregion and Madagascar took 1.4 to 2.2 s against production's 0.07 to 0.26 s, nearly all of it this
+     * grouped read of the place's specimens). At most PLACE_CACHE_MAX places, least recently used dropped; emptied when an
+     * upload finishes (UploadDetails.finish). After the nightly run the numbers may lag by up to an hour. Read-only use:
+     * callers never add to a PlaceSpecimens they did not build.
+     */
+    public static final long PLACE_CACHE_MS = 60L * 60 * 1000;
+    public static final int PLACE_CACHE_MAX = 300;
+    private static final Map<String, Object[]> PLACE_CACHE = java.util.Collections.synchronizedMap(
+        new java.util.LinkedHashMap<String, Object[]>(64, 0.75f, true) {
+            @Override protected boolean removeEldestEntry(Map.Entry<String, Object[]> e) { return size() > PLACE_CACHE_MAX; }
+        });
+
+    public static PlaceSpecimens cachedPlaceSpecimens(String criteria) {
+        Object[] e = PLACE_CACHE.get(criteria);
+        if (e == null) return null;
+        if (System.currentTimeMillis() - (Long) e[0] > PLACE_CACHE_MS) { PLACE_CACHE.remove(criteria); return null; }
+        return (PlaceSpecimens) e[1];
+    }
+
+    public static void cachePlaceSpecimens(String criteria, PlaceSpecimens p) {
+        PLACE_CACHE.put(criteria, new Object[] {System.currentTimeMillis(), p});
+    }
+
+    /** Empties the cache of the places' specimens (an upload changed them). */
+    public static void clearPlaceSpecimensCache() {
+        PLACE_CACHE.clear();
     }
 
     // ------------------------------------------------------------------------------------------------- view names

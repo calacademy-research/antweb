@@ -210,4 +210,21 @@ public class ListViewTest extends TestCase {
         assertFalse(ListView.hasViews(null));
         assertNull(ListView.choiceTitle("valid extant", "species"));
     }
+
+    /** 2026-11-02 (speed): a place's specimens are kept for an hour and emptied when an upload finishes. */
+    public void testPlaceSpecimensCache() {
+        ListView.clearPlaceSpecimensCache();
+        ListView.PlaceSpecimens p = new ListView.PlaceSpecimens();
+        p.add("myrmicinaecarebara mg01", "myrmicinae", "carebara", "mg01", null, "species", "morphotaxon", 2);
+        assertNull(ListView.cachedPlaceSpecimens(" and specimen.country = 'Madagascar'"));
+        ListView.cachePlaceSpecimens(" and specimen.country = 'Madagascar'", p);
+        assertSame(p, ListView.cachedPlaceSpecimens(" and specimen.country = 'Madagascar'"));
+        assertNull("another place", ListView.cachedPlaceSpecimens(" and specimen.country = 'Mozambique'"));
+        ListView.clearPlaceSpecimensCache();
+        assertNull("emptied after an upload", ListView.cachedPlaceSpecimens(" and specimen.country = 'Madagascar'"));
+        for (int k = 0; k <= ListView.PLACE_CACHE_MAX; k++) ListView.cachePlaceSpecimens("c" + k, p);
+        assertNull("at most PLACE_CACHE_MAX places: the oldest dropped", ListView.cachedPlaceSpecimens("c0"));
+        assertSame(p, ListView.cachedPlaceSpecimens("c" + ListView.PLACE_CACHE_MAX));
+        ListView.clearPlaceSpecimensCache();
+    }
 }
