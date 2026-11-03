@@ -112,6 +112,8 @@ def _check_links(session, report_url, links):
             return f"{urlparse(url).path}: not in the AntWeb database"
         if re.search(r"<title>[^<]*(Not Found|Index of)", body, re.I):
             return f"{urlparse(url).path}: not found page"
+        if STAGING and "/logMgr.do" in url and "action=uploadLog" in url and re.search(r"Log not available|Unable to find the file", body):
+            return None   # the uploaded file of a production upload is not copied to staging (weekly refresh)
         if re.search(r"Log not available|Unable to find the file|Specimen not found", body):
             return f"{urlparse(url).path}: log or record not found"
         return None
