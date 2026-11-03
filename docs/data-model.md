@@ -231,6 +231,7 @@ unused and backup is a search of the code for SQL that names the table (2026-10-
 | `upload_line` | [8](#upload_line) | in use |
 | `worldants_upload` | [8](#worldants_upload) | in use |
 | `specimen_name_update` | [8](#specimen_name_update) | in use (2026-10-20) |
+| `genus_concept_rule` | [8](#genus_concept_rule) | in use (2026-11-03) |
 | `background_job` | [8](#background_job) | in use (2026-10-20) |
 | `object_map` | [8](#object_map) | in use |
 | `ant_group` | [9](#ant_group) | in use |
@@ -1008,6 +1009,21 @@ from `information_schema` on every upload, at most 100, `GROUP_NAME_WIDTH`) and 
 `worldantsUploads` (`query.do`), `WorldantsUploadDb.getWorldantsChangeCount` (the size guard).
 
 **Status.** In use.
+
+### `genus_concept_rule`
+
+**Purpose.** Old genus concepts approved by Brian Fisher (2026-11-03): in a bioregion, the morphospecies and indets of an old
+genus belong to a new genus (rule 1: Mesoponera in the Afrotropical and Malagasy bioregions = Xiphopelta). The nightly name
+update and the specimen upload move them, keeping the code part of the name and recording the reason.
+
+**Key.** `id` (auto); unique (`old_genus`, `bioregion`). **Key columns.** `old_genus`, `bioregion`, `new_genus` (genus taxon
+names), `status` ('approved' or 'rejected'), `approved_by`, `approved_at`, `note`.
+
+**Written by.** `upload.GenusConceptRuleDb` (`ensureSchema` creates it and seeds rule 1 when empty); the admin page
+`genusConceptRules.do` (Approve / Reject a proposal). **Read by.** `upload.GenusConceptRule` (nightly name update,
+`SpecimenUploadProcess`), `upload.GenusConceptProposals` (proposals leave out decided pairs).
+
+**Status.** In use (2026-11-03).
 
 ### `specimen_name_update`
 
