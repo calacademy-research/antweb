@@ -36,9 +36,8 @@ def _example(kind):
     return r, pages[0]
 
 
-@pytest.mark.parametrize("kind", [pytest.param(k, marks=pytest.mark.xfail(strict=False, reason=(
-    "F27: in the e2e session the region page (region.do?name=Africa) shows no species list links, while a browser "
-    "sees them; under investigation (docs/flows/public-pages-findings.md)"))) if k == "region" else k for k in LISTS])
+# F27 (2026-11-03): the xfail mark is off for one staging run so that the assertion's diagnostics show in the job log.
+@pytest.mark.parametrize("kind", list(LISTS))
 def test_list_and_place_page(kind):
     """The list page loads with its title and links to the places; the first place opens with its title,
     the statistics table and the links to its species lists."""
