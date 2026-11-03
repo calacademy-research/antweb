@@ -557,7 +557,9 @@ PLACE = "/country.do?name=Madagascar"
 # status (the rows the Specimens number adds up; rows added from specimens collected there add nothing to the total),
 # subfamily rows of every counted status. (Until 11-02 species lists used validmorpho, which now opens All too.)
 LIST = "/taxonomicPage.do?countryName=Madagascar&rank="
-LIST_STATUS = {"species": "all", "genus": "all", "subfamily": "all"}
+# 2026-11-03 (B77): a subfamily row's Genera are the genus rows of its browse page in the view; in All specimen names
+# that is every genus row (placeholders and names AntCat does not know too), so the subfamily list is read in Curated
+LIST_STATUS = {"species": "all", "genus": "all", "subfamily": "curated"}
 
 
 def _place_stats(session):
@@ -569,9 +571,11 @@ def _place_stats(session):
 @needs("admin")
 def test_subtaxon_totals_equal_the_place_numbers():
     """taxonomicPage.do, admin "Subtaxon total" (row 45): the sum of the rows' numbers. For Madagascar with every
-    counted status (All specimen names): rank species = Specimens, rank subfamily = Genera of the place page (which
-    the count check validates); rank genus (2026-11-02: a genus row's Species are those of the view) = the header of
-    the species list in the same view, at most (a name whose genus row is not on the list is under no row)."""
+    counted status (All specimen names): rank species = Specimens; rank genus (2026-11-02: a genus row's Species are
+    those of the view) = the header of the species list in the same view, at most; rank subfamily in Curated (2026-11-03,
+    B77: a subfamily row's Genera are the genus rows of its browse page in the view) at most the header of the genus list
+    in Curated and at most Genera of the place page (which the count check validates). The equalities, with the rows
+    whose parent row is not on the list apart (B76), are e2e:test_numbers_search.py on a place of every kind."""
     s, _token, _id = login("admin")
     stats = _place_stats(s)
     if "species" not in stats:
@@ -592,6 +596,15 @@ def test_subtaxon_totals_equal_the_place_numbers():
         if rank == "genus":
             if species_header is not None and int(m.group(1)) > species_header:
                 wrong.append(f"taxonomicPage rank=genus: Subtaxon total {m.group(1)}, more than the species list's {species_header}")
+            continue
+        if rank == "subfamily":
+            genus_html = s.get(BASE_URL + LIST + "genus&statusSet=curated", timeout=max(TIMEOUT, 180)).text
+            h = re.search(r'<h2 class="display_count"[^>]*>\s*([\d,]+)', genus_html)
+            genus_header = int(h.group(1).replace(",", "")) if h else None
+            if genus_header is not None and int(m.group(1)) > genus_header:
+                wrong.append(f"taxonomicPage rank=subfamily (Curated): Subtaxon total {m.group(1)}, more than the genus list's {genus_header}")
+            if int(m.group(1)) > stats[stat]:
+                wrong.append(f"taxonomicPage rank=subfamily (Curated): Subtaxon total {m.group(1)}, more than the place page's {stat} {stats[stat]}")
             continue
         if int(m.group(1)) != stats[stat]:
             wrong.append(f"taxonomicPage rank={rank}: Subtaxon total {m.group(1)}, place page {stat} {stats[stat]}")

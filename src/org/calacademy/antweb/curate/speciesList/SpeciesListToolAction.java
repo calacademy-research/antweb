@@ -199,6 +199,9 @@ To Do
         String[] listNames = {mapSpeciesList1Name, mapSpeciesList2Name, mapSpeciesList3Name};
         String[][] chosen = {toolForm.getChosen1(), toolForm.getChosen2(), toolForm.getChosen3()};
         java.util.List<ArrayList<String>> oldChosen = java.util.Arrays.asList(oldChosenList1, oldChosenList2, oldChosenList3);
+        // 2026-11-03 (transparency): the curator's reason for this save's removals, one line, at most 250 characters
+        String removeReason = org.calacademy.antweb.home.ListRemovalLog.clip(toolForm.getRemoveReason(), 250);
+        toolForm.setRemoveReason(null);   // the form may live in the session: the reason belongs to this save only
         for (int n = 0; n < 3; n++) {
           if (isMadeOfChildren(listNames[n])) {
             java.util.Set<String> now = chosen[n] == null ? new java.util.HashSet<>() : new java.util.HashSet<>(java.util.Arrays.asList(chosen[n]));
@@ -207,7 +210,7 @@ To Do
             message += " " + Html.esc(SpeciesListMgr.getPrettyName(listNames[n])) + " is made of its children's lists and was not changed: edit the lists it is made of.";
             continue;
           }
-          message += speciesListDb.saveTaxonSet(toolForm.getTaxa(), chosen[n], oldChosen.get(n), listNames[n], accessLogin);
+          message += speciesListDb.saveTaxonSet(toolForm.getTaxa(), chosen[n], oldChosen.get(n), listNames[n], accessLogin, removeReason);
         }
       } 
 

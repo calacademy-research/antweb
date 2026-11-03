@@ -534,8 +534,11 @@ public class UtilDataAction extends AntwebAction {
                 // Upload groups: today's numbers of each group's specimens (Brian Fisher, 2026-10-22, Q13).
                 message += " " + new GroupCountDb(connection).recountAll();
                 message += " " + doAction("crawlForType", form, accessLogin, accessGroup, connection, request, mapping);
-                // The e2e tests read this line: tonight's bioregion endemic flags follow the endemic rule of 2026-10-28.
-                LogMgr.appendLog("compute.log", "  Set 3 done (" + CountInvariants.ENDEMIC_RULE_LOG + ")", true);
+                // The e2e tests read this line: tonight's bioregion endemic flags follow the endemic rule of 2026-10-28, and
+                // every list (geolocales in set 2, projects, museums and bioregions here) got its missing parent rows before
+                // it was counted (B76, 2026-11-03: org.calacademy.antweb.home.ParentRows).
+                LogMgr.appendLog("compute.log", "  Set 3 done (" + CountInvariants.ENDEMIC_RULE_LOG + "; "
+                    + org.calacademy.antweb.home.ParentRows.LOG + ")", true);
             }
 
             // dev: 6.58 mins. Prod: 15.17 mins. Dev2: 12.97

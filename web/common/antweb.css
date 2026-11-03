@@ -2219,3 +2219,6 @@ padding:0;
 .ue_content {
     display:none;
 }
+
+/* All specimen names (2026-11-03): a name removed from the place's list, shown with its specimens */
+.removed-from-list { color: #a33; font-size: 0.85em; font-weight: normal; margin-left: 6px; white-space: nowrap; }

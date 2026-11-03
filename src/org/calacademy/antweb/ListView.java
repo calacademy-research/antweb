@@ -192,6 +192,134 @@ public final class ListView {
         return "";
     }
 
+    /**
+     * A name removed from a place's list (Brian Fisher, 2026-11-03: transparency): when, by whom (a curator's name, or the
+     * job that removed it), and why (the curator's reason, or the job's; may be null).
+     */
+    public static final class Removal {
+        public final java.util.Date date;
+        public final String by;
+        public final String reason;
+
+        public Removal(java.util.Date date, String by, String reason) {
+            this.date = date;
+            this.by = by;
+            this.reason = reason;
+        }
+
+        /** The full text: "removed from the list by Jack Longino (2018-11-16): not in Mozambique". */
+        public String text() {
+            StringBuilder b = new StringBuilder("removed from the list");
+            if (by != null && !by.isEmpty()) b.append(" by ").append(by);
+            if (date != null) b.append(" (").append(new java.text.SimpleDateFormat("yyyy-MM-dd").format(date)).append(")");
+            if (reason != null && !reason.isEmpty()) b.append(": ").append(reason);
+            return b.toString();
+        }
+    }
+
+    /** The name shown for a curator (LoginMgr's logins in memory): first and last name, else "a curator". */
+    static String curatorName(int loginId) {
+        org.calacademy.antweb.Login login = org.calacademy.antweb.util.LoginMgr.getLogin(loginId);
+        if (login == null) return "a curator";
+        String n = ((login.getFirstName() == null ? "" : login.getFirstName()) + " " + (login.getLastName() == null ? "" : login.getLastName())).trim();
+        if (n.isEmpty() && login.getName() != null) n = login.getName();
+        return n.isEmpty() ? "a curator" : n;
+    }
+
+    /**
+     * The names removed from the place's list, by name (2026-11-03, the view All specimen names shows them marked): the
+     * disputes (a curator removed the name with the Species List Tool; geolocale_taxon_dispute, proj_taxon_dispute: date,
+     * curator, reason) and the newest list_removal_log row of each name that is not on the list now (removed by a
+     * curator or a job); of the two the newer, the dispute when they are of the same save. Two queries per page, none per
+     * row. Null for places without curated lists (museums, bioregions) or when there are none.
+     */
+    public static Map<String, Removal> loadRemovals(Connection connection, Overview overview) throws SQLException {
+        String type, key, disputeTable, keyColumn, listTable;
+        if (overview instanceof Geolocale) {
+            type = "geolocale"; key = String.valueOf(((Geolocale) overview).getId());
+            disputeTable = "geolocale_taxon_dispute"; keyColumn = "geolocale_id"; listTable = "geolocale_taxon";
+        } else if (overview instanceof Project) {
+            type = "project"; key = overview.getName();
+            disputeTable = "proj_taxon_dispute"; keyColumn = "project_name"; listTable = "proj_taxon";
+        } else {
+            return null;
+        }
+        Map<String, Removal> out = new HashMap<>();
+        boolean reasonColumn = columnExists(connection, disputeTable, "reason");
+        try (PreparedStatement stmt = connection.prepareStatement("select taxon_name, created, curator_id, "
+                + (reasonColumn ? "reason" : "null") + " from " + disputeTable + " where " + keyColumn + " = ? order by created")) {
+            stmt.setString(1, key);
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) {
+                    int curator = r.getInt(3);
+                    out.put(r.getString(1), new Removal(r.getTimestamp(2), r.wasNull() || curator <= 0 ? null : curatorName(curator), r.getString(4)));
+                }
+            }
+        }
+        if (tableExists(connection, "list_removal_log")) {
+            try (PreparedStatement stmt = connection.prepareStatement("select g.taxon_name, g.removed_at, g.removed_by_login, g.removed_by_job, g.reason"
+                    + " from list_removal_log g where g.list_type = ? and g.list_key = ?"
+                    + " and not exists (select 1 from " + listTable + " x where x." + keyColumn + " = ? and x.taxon_name = g.taxon_name)"
+                    + " order by g.removed_at, g.id")) {
+                stmt.setString(1, type);
+                stmt.setString(2, key);
+                stmt.setString(3, key);
+                try (ResultSet r = stmt.executeQuery()) {
+                    while (r.next()) {
+                        String name = r.getString(1);
+                        java.util.Date at = r.getTimestamp(2);
+                        int login = r.getInt(3);
+                        String by = !r.wasNull() && login > 0 ? curatorName(login) : r.getString(4);
+                        Removal had = out.get(name);
+                        // the same save writes the dispute and the log row: keep the dispute (with the log's reason if it has none)
+                        if (had != null && had.date != null && at != null && Math.abs(at.getTime() - had.date.getTime()) < 120000L) {
+                            if (had.reason == null && r.getString(5) != null) out.put(name, new Removal(had.date, had.by, r.getString(5)));
+                            continue;
+                        }
+                        if (had == null || had.date == null || (at != null && at.after(had.date))) out.put(name, new Removal(at, by, r.getString(5)));
+                    }
+                }
+            }
+        }
+        return out.isEmpty() ? null : out;
+    }
+
+    private static boolean tableExists(Connection connection, String table) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "select 1 from information_schema.tables where table_schema = database() and table_name = ?")) {
+            stmt.setString(1, table);
+            try (ResultSet r = stmt.executeQuery()) { return r.next(); }
+        }
+    }
+
+    private static boolean columnExists(Connection connection, String table, String column) throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement(
+                "select 1 from information_schema.columns where table_schema = database() and table_name = ? and column_name = ?")) {
+            stmt.setString(1, table);
+            stmt.setString(2, column);
+            try (ResultSet r = stmt.executeQuery()) { return r.next(); }
+        }
+    }
+
+    /** Characters of the reason shown on the line (the whole text is in the title). */
+    static final int MARK_REASON_CHARS = 80;
+
+    /**
+     * The mark of a name removed from the list, after its name in All specimen names ("" when not removed): one line,
+     * "removed from the list by <curator or job> (<date>): <reason>", the reason cut to MARK_REASON_CHARS, the whole text
+     * in the title; everything escaped (Brian Fisher, 2026-11-03: transparency).
+     */
+    public static String removedMarkHtml(Map<String, Removal> removals, String taxonName) {
+        if (removals == null || taxonName == null) return "";
+        Removal r = removals.get(taxonName);
+        if (r == null) return "";
+        String shown = r.reason != null && r.reason.length() > MARK_REASON_CHARS
+            ? new Removal(r.date, r.by, r.reason.substring(0, MARK_REASON_CHARS) + "...").text() : r.text();
+        String title = r.text() + ". Shown here because specimens of this name were collected here.";
+        return " <span class=\"removed-from-list\" title=\"" + org.calacademy.antweb.util.Html.escAttr(title) + "\">"
+            + org.calacademy.antweb.util.Html.esc(shown) + "</span>";
+    }
+
     /** Whether a list reads the place's specimens as a whole (source icons, rows from specimens): not regions or subregions. */
     public static boolean readsPlaceSpecimens(Overview overview) {
         return !(overview instanceof Region || overview instanceof Subregion);
@@ -679,12 +807,14 @@ public final class ListView {
         }
 
         public boolean keep(Taxon genusRow) {
-            String sf = genusRow.getSubfamily();
-            String g = genusRow.getGenus();
-            Integer ev = evidence.get(PlaceTaxonNotes.OtherNames.key(sf, g));
             TaxonSet ts = genusRow.getTaxonSet();
-            String kind = sourceKind(ts == null ? null : ts.getSource(), false);
-            return keepGenus(choice, genusRow.getStatus(), kind, species(sf, g), ev == null ? 0 : ev);
+            return keep(genusRow.getSubfamily(), genusRow.getGenus(), genusRow.getStatus(), ts == null ? null : ts.getSource());
+        }
+
+        /** The same, from the genus row's subfamily, genus, status and list source (subfamilyRows: no Taxon per row). */
+        public boolean keep(String subfamily, String genus, String status, String listSource) {
+            Integer ev = evidence.get(PlaceTaxonNotes.OtherNames.key(subfamily, genus));
+            return keepGenus(choice, status, sourceKind(listSource, false), species(subfamily, genus), ev == null ? 0 : ev);
         }
 
         /** The genus rows the view shows (keep), in their order. */
@@ -725,6 +855,85 @@ public final class ListView {
         // count; Brian Fisher, 2026-11-02, 18:40). One query per 500 names (StatisticsDb.antImagedNames).
         rows.withImaged(view.countByGenusOf(org.calacademy.antweb.home.StatisticsDb.antImagedNames(connection, view.taxonNames())));
         return rows;
+    }
+
+    /**
+     * The numbers of a view's genus rows that decide which rows the view shows (Species in the view and the evidence of
+     * keepGenus), without the Not curated and Images numbers (subfamilyRows: the rows are counted, not shown).
+     */
+    static GenusRows loadGenusRowsToKeep(Connection connection, Overview overview, String choice, PlaceSpecimens specimens) throws SQLException {
+        StatusSet viewSet = StatusSet.listStatusSet(choice);
+        ViewNames view = loadViewNames(connection, overview, viewSet, null, null, specimens);
+        Map<String, Integer> evidence = null;
+        if (StatusSet.LIST_VALID.equals(choice) || StatusSet.LIST_VETTED.equals(choice)) {
+            evidence = loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_ALL), null, null, specimens)
+                .countByGenus(BEYOND_GENUS_STATUSES);
+        }
+        return new GenusRows(choice, view.countByGenus(null), evidence);
+    }
+
+    // ------------------------------------------------------------------------------------------------- subfamily rows
+
+    /**
+     * The Genera of a view's subfamily rows in a place (B77; Brian Fisher, 2026-11-03: "browse header counts the view's
+     * rows"). Since 2026-11-02 the browse page of a subfamily in a place lists and counts the genus rows of the chosen view
+     * (Subfamily.setChildren with the view's criteria, then GenusRows.filter); the subfamily's row on the place's list
+     * showed the stored genus_count of the nightly count instead (production: Palearctic Ponerinae 14, its browse page in
+     * the default view Curated 15, with the curated morphogenus Ponerine_genus2). Now the row shows the genus rows its
+     * browse page shows in the same view, linked to that page in that view, as a genus row's Species (GenusRows).
+     */
+    public static final class SubfamilyRows {
+        public final String choice;
+        /** subfamily (lower case) -> the genus rows of the view under it. */
+        final Map<String, Integer> genera;
+
+        public SubfamilyRows(String choice, Map<String, Integer> genera) {
+            this.choice = choice;
+            this.genera = genera == null ? new HashMap<>() : genera;
+        }
+
+        /** The subfamily row's genera in the view (0 when none). */
+        public int genera(String subfamily) {
+            Integer n = subfamily == null ? null : genera.get(subfamily.toLowerCase(Locale.ROOT));
+            return n == null ? 0 : n;
+        }
+    }
+
+    /**
+     * The query of the genus rows of a view in a place, as the subfamily's browse page selects them (Subfamily.setChildren:
+     * the list's genus rows, the view's criteria, a genus value), every subfamily at once: subfamily, genus, status and the
+     * list row's source (null on museum lists, which have none).
+     */
+    public static String subfamilyGenusRowsSql(Overview overview, String listTable, StatusSet viewSet) {
+        String source = "museum_taxon".equals(listTable) ? "null" : listTable + ".source";
+        return "select taxon.subfamily, taxon.genus, taxon.status, " + source + " source"
+            + TaxaPage.listWhere(overview, Rank.GENUS, true, viewSet) + " and taxon.genus != ''";
+    }
+
+    /**
+     * The Genera of the subfamily rows of a place's list in a view: two or three queries per page (the view's names, the
+     * evidence for Valid and Curated, the genus rows), none per row. Null for an overview without the views or that is not
+     * a place (the rows keep their stored numbers).
+     */
+    public static SubfamilyRows loadSubfamilyRows(Connection connection, Overview overview, String choice) throws SQLException {
+        if (!hasViews(overview) || choice == null) return null;
+        String[] tk = org.calacademy.antweb.home.GenusOnly.typeAndKey(overview);
+        if (tk == null) return null;
+        StatusSet viewSet = StatusSet.listStatusSet(choice);
+        // which genus rows the browse page keeps (BrowseAction: GenusRows.filter, in Valid and Curated only)
+        GenusRows keep = loadGenusRowsToKeep(connection, overview, choice, genusListSpecimens(connection, overview, null));
+        Map<String, Integer> genera = new HashMap<>();
+        try (PreparedStatement stmt = connection.prepareStatement(subfamilyGenusRowsSql(overview, PlaceTotals.listTable(tk[0]), viewSet));
+             ResultSet r = stmt.executeQuery()) {
+            java.util.Set<String> seen = new HashSet<>();   // a genus once (the browse page selects distinct genera)
+            while (r.next()) {
+                String sf = r.getString(1);
+                String g = r.getString(2);
+                if (sf == null || g == null || !seen.add(PlaceTaxonNotes.OtherNames.key(sf, g))) continue;
+                if (keep.keep(sf, g, r.getString(3), r.getString(4))) genera.merge(sf.toLowerCase(Locale.ROOT), 1, Integer::sum);
+            }
+        }
+        return new SubfamilyRows(choice, genera);
     }
 
     /**

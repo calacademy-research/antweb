@@ -43,7 +43,9 @@ def test_nightly_writes_the_lines():
     src = read("src/org/calacademy/antweb/util/UtilDataAction.java")
     assert '"  Set 2 done (" + CountInvariants.ENDEMIC_RULE_LOG + "; "' in src
     assert "+ org.calacademy.antweb.home.GeolocaleTaxonDb.GENUS_ROWS_LOG + \")\"" in src
-    assert '"  Set 3 done (" + CountInvariants.ENDEMIC_RULE_LOG + ")"' in src
+    # since 2026-11-03 also the missing parent rows (B76, ParentRows.LOG)
+    assert '"  Set 3 done (" + CountInvariants.ENDEMIC_RULE_LOG + "; "' in src
+    assert "+ org.calacademy.antweb.home.ParentRows.LOG + \")\"" in src
     assert '"  Set 4 done (" + CountInvariants.RULES_LOG' in src
     # since 2026-10-30 the genera rule is the last part of the line (after COUNTING_RULES_LOG)
     assert '+ "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG + ")"' in src
@@ -74,6 +76,18 @@ def test_genus_rows_from_specimens_identified_to_genus():
     assert "join taxon g on g.taxon_name = t.parent_taxon_name" in g and "g.taxarank = 'genus'" in g
 
 
+def test_parent_rows_are_pending_until_the_nightly_run():
+    """B76 (Brian Fisher, 2026-11-03): the nightly count adds the missing genus and subfamily rows of every list
+    (ParentRows) and says so on the "Set 3 done" line; the e2e test of the admin column totals compares strictly once it
+    has run (parent_rows_added) and keeps an expected failure only for names with no counted parent."""
+    rows = read("src/org/calacademy/antweb/home/ParentRows.java")
+    sample = read("tests/e2e/numbers_sample.py")
+    assert java_constant(rows, "LOG") == py_constant(sample, "PARENT_ROWS_LOG")
+    assert 'return compute_log_has("Set 3 done", PARENT_ROWS_LOG)' in sample
+    assert "parentRowsAdded += parentRows.add(countable);" in read("src/org/calacademy/antweb/home/CountDb.java")
+    assert "ns.parent_rows_added()" in read("tests/e2e/test_numbers_search.py")
+
+
 def test_genera_rule_is_pending_until_the_nightly_run():
     """Brian Fisher, 2026-10-30: Genera are valid genera and morphogenera. The count check (rulesCounted) and the e2e tests
     (genera_rule_counted) call the stored Genera pending until the "Set 4 done" line has GENERA_RULE_LOG; the e2e tests
@@ -83,7 +97,8 @@ def test_genera_rule_is_pending_until_the_nightly_run():
     sample = read("tests/e2e/numbers_sample.py")
     assert 'return compute_log_has("Set 4 done", GENERA_RULE_LOG)' in sample
     lists = read("tests/e2e/test_numbers_lists.py")
-    assert lists.count("ns.genera_rule_counted() is False") == 2
+    # 2026-11-03 (B77): the subfamily rows' Genera are counted live in the view, so the browse test no longer waits
+    assert lists.count("ns.genera_rule_counted() is False") == 1
     assert "ns.genera_rule_counted()" in read("tests/e2e/test_numbers_live.py")
     assert 'name == "Genera" and ns.genera_rule_counted() is False' in read("tests/e2e/test_count_check.py")
     src = read("src/org/calacademy/antweb/util/NumberChecks.java")

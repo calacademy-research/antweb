@@ -218,9 +218,13 @@ public final class TaxaPageAction extends AntwebAction {
             if (Rank.SPECIES.equals(rank)) {
               if (!StatusSet.LIST_ALL.equals(statusSetStr) && !StatusSet.LIST_NOT_CURATED.equals(statusSetStr)) taxaPage.findGenusOnly(connection, overview);
               taxaPage.findPlaceSpecimens(connection, overview);
+              // 2026-11-03: names removed from the list are shown in All specimen names, marked
+              if (StatusSet.LIST_ALL.equals(statusSetStr)) taxaPage.findDisputes(connection, overview);
             }
             // 2026-11-02: the genus rows in the view: Species, Not curated, species imaged, and the rows the view shows.
             if (Rank.GENUS.equals(rank)) taxaPage.findGenusRows(connection, overview, statusSetStr);
+            // 2026-11-03 (B77): the subfamily rows' Genera in the view (the genus rows of their browse pages in that view).
+            if (Rank.SUBFAMILY.equals(rank)) taxaPage.findSubfamilyRows(connection, overview, statusSetStr);
 
 //         if (HttpUtil.getTarget(request).contains("ionName=Oceania") && (AntwebProps.isDevMode() || LoginMgr.isMark(request))) { s_log.warn("MarkNote() break:" + HttpUtil.getTarget(request)); return (mapping.findForward("error"));}
 // Doubled

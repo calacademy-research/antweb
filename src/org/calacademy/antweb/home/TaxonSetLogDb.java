@@ -28,4 +28,27 @@ public abstract class TaxonSetLogDb extends AntwebDb {
     public abstract TaxonSet getDispute(String speciesListName, String taxonName) throws SQLException ;
     public abstract ArrayList<TaxonSet> getDisputes(String speciesListName, String taxonName) throws SQLException ;
 
+    /** The list type (ListRemovalLog.GEOLOCALE, PROJECT) and key (geolocale id, project name) of a list row. */
+    public abstract String[] listTypeAndKey(TaxonSet taxonSet);
+
+    /**
+     * Brian Fisher, 2026-11-03 (transparency): a dispute (a name a curator removed from the list) with the curator's reason,
+     * shown with the name (the view All specimen names). reason: optional, at most 255 characters (ListRemovalLog.clip).
+     */
+    public void insertDispute(TaxonSet taxonSet, String reason) throws SQLException {
+        insertDispute(taxonSet);
+        String r = ListRemovalLog.clip(reason, 255);
+        if (r == null || taxonSet == null) return;
+        ListRemovalLog.ensureSchema(getConnection());   // the reason column (normally added at startup)
+        String[] tk = listTypeAndKey(taxonSet);
+        String table = ListRemovalLog.GEOLOCALE.equals(tk[0]) ? "geolocale_taxon_dispute" : "proj_taxon_dispute";
+        try (java.sql.PreparedStatement stmt = getConnection().prepareStatement("update " + table + " set reason = ? where "
+                + ListRemovalLog.keyColumn(tk[0]) + " = ? and taxon_name = ?")) {
+            stmt.setString(1, r);
+            stmt.setString(2, tk[1]);
+            stmt.setString(3, taxonSet.getTaxonName());
+            stmt.executeUpdate();
+        }
+    }
+
 }

@@ -8,7 +8,9 @@
      (genus rows in a place: "N species imaged", the species of the view with an image of the ant) | Map |
      Source (an icon, ListView.sourceIconHtml: specimen, curated, literature; a name with a specimen collected here
      shows specimen even with a literature entry, ListView.sourceKind). Uses the including page's children, overview,
-     pageRank, displayGlobal, place flags, genusRows and placeSpecimens. Docs: docs/flows/places.md,
+     pageRank, displayGlobal, place flags, genusRows, subfamilyRows and placeSpecimens. Subfamily rows in a place with the
+     views (2026-11-03, B77): Genera = the genus rows of the subfamily's browse page in the same view, linked to it
+     (ListView.SubfamilyRows). Docs: docs/flows/places.md,
      docs/flows/taxon-pages.md, docs/numbers.md rows 38 to 44. Tests: tests/e2e/test_list_sources.py,
      test_numbers_lists.py, test_numbers_live.py, test_status_choice.py. --%><!-- taxonReportBody.jsp -->
 <%
@@ -92,6 +94,11 @@
               + " and names not in AntCat. Counted once a day (after an upload it catches up the next morning); click the"
               + " number to see those names and their specimens." : "");
       asterixTitle = "The species and subspecies of the genus in this view";
+    } else if (Rank.SUBFAMILY.equals(pageRank) && subfamilyRows != null) {
+      // 2026-11-03 (B77): a subfamily row's Genera are the genus rows of its browse page in this view
+      asterixNote = "Genera: the genera of the subfamily in " + locale + " in this view ("
+          + StatusSet.choiceLabel(subfamilyRows.choice, "genera") + "), the genus rows its page lists in the same view.";
+      asterixTitle = "The genera of the subfamily in this view";
     } else if (Rank.GENUS.equals(pageRank)) {
       asterixNote = "Numbers marked * count the species and subspecies of the genus in " + locale
           + " that are valid names or morphospecies; names identified to genus only (indetermined, unidentifiable)"
@@ -257,7 +264,7 @@
 <% } %>
         <%@include file="/common/isFromSpecimen.jsp" %> 
 
-          <a href="<%= AntwebProps.getDomainApp() %>/description.do?<%= browserParams %>"><%= childDagger %><%= child.getPrettyName() %></a>
+          <a href="<%= AntwebProps.getDomainApp() %>/description.do?<%= browserParams %>"><%= childDagger %><%= child.getPrettyName() %></a><%= org.calacademy.antweb.ListView.removedMarkHtml(listDisputes, child.getTaxonName()) %>
         </div> 
         <div class="list_extras author_date"><%= (new Formatter()).clearNull(child.getAuthorDate()) %></div>
     <% if (childTaxonSet.exists()) {         
@@ -284,6 +291,13 @@
               notCuratedCell = ncRow == null ? "" : org.calacademy.antweb.PlaceTaxonNotes.notCuratedCellHtml(ncRow.notCurated,
                   org.calacademy.antweb.PlaceTaxonNotes.notCuratedUrl(child.getSubfamily(), child.getGenus(), overview));
             }
+          } else if (Rank.SUBFAMILY.equals(pageRank) && subfamilyRows != null) {
+            // 2026-11-03 (B77): the genus rows of the subfamily's browse page in this view (ListView.SubfamilyRows), linked
+            // to that page in the same view; the stored genus_count (every counted genus row of the nightly count) is not shown
+            int viewGenera = subfamilyRows.genera(child.getSubfamily());
+            subtaxonTotal += viewGenera - nextSubtaxonCount;
+            childCountStr = viewGenera <= 0 ? "No " + Rank.getNextPluralRank(pageRank, 1)
+                : "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "&statusSet=" + Html.url(subfamilyRows.choice) + "'><span class='numbers'>" + viewGenera + "</span> " + Rank.getNextPluralRank(pageRank, 1) + "</a>";
           } else if (nextSubtaxon != null && nextSubtaxon.contains("No ")) {
             childCountStr = nextSubtaxon; //"No Specimens";
           } else {
@@ -414,7 +428,10 @@
      // The check number adds up each row's own number for this place (the column marked *); the tests read
      // data-subtaxon-total. docs/numbers.md row 45.
      String totalColumn = displayGlobal ? (isMuseum ? ((Museum) overview).getCode() : overview.toString()) : "Specimens";
-     if (Rank.SUBFAMILY.equals(pageRank)) {
+     if (Rank.SUBFAMILY.equals(pageRank) && subfamilyRows != null) {
+       totalNote = "Genera total (administrators only): the Genera column adds up to " + Formatter.commaFormat(subtaxonTotal)
+           + " genera of this view; it should equal the header of the genus list in the same view.";
+     } else if (Rank.SUBFAMILY.equals(pageRank)) {
        totalNote = "Genera total (administrators only): the Genera column adds up to " + Formatter.commaFormat(subtaxonTotal)
            + " genera; it should equal Genera on the " + locale + " overview page.";
      } else if (Rank.GENUS.equals(pageRank) && genusRows != null) {

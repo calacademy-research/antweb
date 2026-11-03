@@ -143,6 +143,28 @@ df -h / ; free -h ; docker stats --no-stream antweb_antweb_1
 
 Expect four containers `Up` (the API also `(healthy)`), no repeated exceptions in the log, the root disk under 85%, and `Answer: false`.
 
+## Removing names from species lists by hand
+
+Brian Fisher, 2026-11-03 (transparency): a name removed from a country's, adm1's, region's, subregion's or project's
+list keeps a record in `list_removal_log` (docs/data-model.md). Curators remove names with the Species List Tool (it
+writes the record and the reason itself); the nightly clean-up and the orphan tool write theirs. A one-off data script
+that deletes list rows writes the record first, with the same condition as its delete, then deletes, in one session.
+Back up the rows to a dated table first, as for any data change.
+
+```
+# ssh root@165.232.136.170   (staging; production the same with /root/antweb/etc/db.properties)
+F=/root/antweb-next/etc/db.properties; docker exec -i -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant <<'SQL'
+insert into list_removal_log (list_type, list_key, taxon_name, source, removed_by_job, reason, removed_at)
+  select 'geolocale', l.geolocale_id, l.taxon_name, l.source, 'script 2026-11-03 <name>', '<why, one line>', now()
+  from geolocale_taxon l where <condition>;
+delete l from geolocale_taxon l where <the same condition>;
+SQL
+```
+
+Projects: `'project', l.project_name ... from proj_taxon l`. Expect no output; check with
+`select removed_by_job, count(*) from list_removal_log group by 1;`. The names then show in the list's view All
+specimen names, when specimens of them were collected there, marked "removed from the list by <script> (<date>): <why>".
+
 ## Backups
 
 | What | When | Where | Kept |

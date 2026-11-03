@@ -574,6 +574,10 @@ public class GeolocaleTaxonLogDb extends TaxonSetLogDb {
      */  
 // ----------------- Dispute ----------------------------------------
      
+    public String[] listTypeAndKey(TaxonSet taxonSet) {
+        return new String[] {ListRemovalLog.GEOLOCALE, String.valueOf(((GeolocaleTaxon) taxonSet).getGeolocaleId())};
+    }
+
     public void insertDispute(TaxonSet taxonSet) throws SQLException {
     
         GeolocaleTaxon geolocaleTaxon = (GeolocaleTaxon) taxonSet;

@@ -400,6 +400,10 @@ public class ProjTaxonDb extends EditableTaxonSetDb {
         String dml = "delete from proj_taxon where taxon_name in (select taxon_name from taxon t where t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon' and "
           + BlankNameCleanup.morphoNoSpecimen(blankSafe) + ")"
           + " and source not in " + CuratorTaxonSetDb.curatorSourceList();
+        // Brian Fisher, 2026-11-03 (transparency): the rows are recorded before they go (ListRemovalLog), same condition
+        ListRemovalLog.recordWhere(getConnection(), ListRemovalLog.PROJECT, "l.taxon_name in (select t.taxon_name from taxon t where"
+            + " t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon' and " + BlankNameCleanup.morphoNoSpecimen(blankSafe) + ")"
+            + " and l.source not in " + CuratorTaxonSetDb.curatorSourceList(), ListRemovalLog.JOB_MORPHO_NO_SPECIMEN, ListRemovalLog.REASON_MORPHO_NO_SPECIMEN);
         Statement stmt = null;
         int c = 0;
         try {

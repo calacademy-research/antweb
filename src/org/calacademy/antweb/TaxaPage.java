@@ -153,7 +153,9 @@ public class TaxaPage implements Serializable {
 			w += " and taxon.taxarank in ('genus', 'species', 'subspecies')" + names.getAndCriteria("taxon", rank);
 			if ("genus".equals(rank)) w += " and coalesce(taxon.genus, '') <> ''";
 		}
-		w += ListView.notDisputed(overview, "taxon");
+		// Brian Fisher, 2026-11-03 ("this is the transparency we need"): All specimen names shows every name collected
+		// here, a name removed from the list too (marked on the page: TaxaPage.findDisputes); the other views leave it out.
+		if (!StatusSet.ALL_NAMES.equals(names.getValue())) w += ListView.notDisputed(overview, "taxon");
 		if (!withFossil) w += " and taxon.fossil = 0 ";
 		return w;
 	}
@@ -472,6 +474,26 @@ public class TaxaPage implements Serializable {
 		return genusRows;
 	}
 
+	private ListView.SubfamilyRows subfamilyRows;
+
+	/**
+	 * Subfamily lists (B77, Brian Fisher, 2026-11-03): each subfamily row's Genera are the genus rows its browse page shows
+	 * in the same view (ListView.SubfamilyRows), not the stored genus_count. On a database error the rows keep their stored
+	 * numbers.
+	 */
+	public void findSubfamilyRows(Connection connection, Overview overview, String choice) {
+		try {
+			subfamilyRows = ListView.loadSubfamilyRows(connection, overview, choice);
+		} catch (SQLException | RuntimeException e) {
+			s_log.warn("findSubfamilyRows() overview:" + overview + " e:" + e);
+			subfamilyRows = null;
+		}
+	}
+
+	public ListView.SubfamilyRows getSubfamilyRows() {
+		return subfamilyRows;
+	}
+
 	private ListView.PlaceSpecimens placeSpecimens;
 
 	/**
@@ -504,6 +526,26 @@ public class TaxaPage implements Serializable {
 
 	public ListView.PlaceSpecimens getPlaceSpecimens() {
 		return placeSpecimens;
+	}
+
+	private java.util.Map<String, ListView.Removal> disputes;
+
+	/**
+	 * All specimen names (2026-11-03): the names removed from this place's list (geolocale_taxon_dispute,
+	 * proj_taxon_dispute, list_removal_log) with the date, who and why, so the page marks them "removed from the list by
+	 * ... (date): reason" (ListView.loadRemovals; Brian Fisher, 2026-11-03: transparency). Null when none.
+	 */
+	public void findDisputes(Connection connection, Overview overview) {
+		try {
+			disputes = ListView.loadRemovals(connection, overview);
+		} catch (SQLException | RuntimeException e) {
+			s_log.warn("findDisputes() overview:" + overview + " e:" + e);
+			disputes = null;
+		}
+	}
+
+	public java.util.Map<String, ListView.Removal> getDisputes() {
+		return disputes;
 	}
 
 	public void findUnimaged(Connection connection) throws SQLException {
