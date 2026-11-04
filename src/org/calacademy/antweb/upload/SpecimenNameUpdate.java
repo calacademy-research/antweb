@@ -363,6 +363,21 @@ public class SpecimenNameUpdate {
         return new GenusDecision(Outcome.CHANGE, g, g.newName, g.newName.equals(uploadedName) ? null : uploadedName);
     }
 
+    /**
+     * Whether current is what an approved old genus concept makes of name: its genus is a rule's old genus and current
+     * is the rule's new genus with the same code part (GenusConceptRule.decide). Pure: tested in GenusConceptRuleTest.
+     */
+    public static boolean byConceptRule(List<GenusConceptRule.Rule> rules, String name, String current) {
+        if (rules == null || name == null || current == null) return false;
+        String genus = GenusSynonymRule.genusPart(name);
+        String rest = name.substring(genus.length());
+        if (rest.isBlank()) return false;
+        for (GenusConceptRule.Rule r : rules) {
+            if (r.oldGenus.equals(genus) && current.equals(r.newGenus + rest)) return true;
+        }
+        return false;
+    }
+
     static Outcome genusOutcome(GenusSynonymRule.Kind kind) {
         switch (kind) {
             case GENUS_NOT_IN_ANTCAT: return Outcome.GENUS_NOT_IN_ANTCAT;
@@ -671,6 +686,8 @@ public class SpecimenNameUpdate {
         // file it now. GenusSynonymRule decides; the moves go through the same cap, rows and update as above.
         List<Change> noGenus = new ArrayList<>();
         List<Change> noCombination = new ArrayList<>();
+        // the approved old genus concepts, read once per run (third pass below; the second pass leaves their moves alone)
+        List<GenusConceptRule.Rule> conceptRules = new GenusConceptRuleDb(connection).approved();
         GenusSynonymRule.Genera genera = GenusSynonymRule.plainGenera(connection);
         Map<String, GenusSynonymRule.Result> genusCache = new java.util.HashMap<>();
         List<Object[]> genusCandidates = new ArrayList<>();
@@ -691,6 +708,12 @@ public class SpecimenNameUpdate {
                 currentValidCache.put(current, currentValid);
             }
             GenusDecision gd = decideGenus(uploaded, current, onUploaded, onCurrent, currentValid);
+            // A name the third pass made from where this pass would file the uploaded name stays (review of #321:
+            // "(formicidae)mesoponera (indet)" -> Mesoponera (indet) -> Xiphopelta (indet) -> back again every night)
+            if (gd.outcome == Outcome.CHANGE && byConceptRule(conceptRules, gd.newName, current)) {
+                summary.skipped.merge(Outcome.UNCHANGED, 1, Integer::sum);
+                continue;
+            }
             GenusSynonymRule.Result g = gd.rule;
             if (gd.outcome == Outcome.CHANGE && g.kind == GenusSynonymRule.Kind.SPECIES_RULE) {
                 // A species name: the shared-name hold of the first pass and of the upload (SharedNameReport).
@@ -753,7 +776,6 @@ public class SpecimenNameUpdate {
 
         // Third pass (Brian Fisher, 2026-11-03): approved old genus concepts (GenusConceptRule), e.g. Mesoponera in the
         // Afrotropical and Malagasy regions is Xiphopelta. Morphospecies and indets of those bioregions only.
-        List<GenusConceptRule.Rule> conceptRules = new GenusConceptRuleDb(connection).approved();   // read once per run
         List<Object[]> conceptCandidates = new ArrayList<>();
         try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(conceptCandidatesSql(conceptRules))) {
             while (r.next()) conceptCandidates.add(new Object[] {r.getInt(1), r.getString(2), r.getString(3), r.getString(4)});

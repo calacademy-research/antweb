@@ -55,10 +55,30 @@ public class GenusConceptRuleDb {
             + ") ENGINE=InnoDB" + defaults;
     }
 
+    private static volatile boolean s_schemaChecked = false;
+
+    /** For the database tests, which drop and re-create the table between tests. */
+    public static void resetSchemaCheck() {
+        s_schemaChecked = false;
+    }
+
+    /**
+     * Creates the table only when it is missing, and seeds it only then (review of #321: a CREATE TABLE, even IF NOT
+     * EXISTS, commits the caller's open transaction in MySQL, and the nightly name update reads the rules mid-run; and
+     * an emptied table must not re-approve the seed rules by itself). Checked once per server start.
+     */
     public void ensureSchema() throws SQLException {
+        if (s_schemaChecked) return;
         String charset = null;
         String collation = null;
         try (Statement stmt = connection.createStatement()) {
+            try (ResultSet r = stmt.executeQuery("select 1 from information_schema.tables where table_schema = database()"
+                    + " and table_name = 'genus_concept_rule'")) {
+                if (r.next()) {
+                    s_schemaChecked = true;
+                    return;
+                }
+            }
             try (ResultSet r = stmt.executeQuery("select character_set_name, collation_name from information_schema.columns"
                     + " where table_schema = database() and table_name = 'taxon' and column_name = 'taxon_name'")) {
                 if (r.next()) {
@@ -67,12 +87,8 @@ public class GenusConceptRuleDb {
                 }
             }
             stmt.executeUpdate(createTable(charset, collation));
-            boolean empty;
-            try (ResultSet r = stmt.executeQuery("select count(*) from genus_concept_rule")) {
-                empty = r.next() && r.getInt(1) == 0;
-            }
-            if (!empty) return;
         }
+        s_schemaChecked = true;
         for (GenusConceptRule.Rule rule : GenusConceptRule.SEED) {
             for (String bioregion : new java.util.TreeSet<>(rule.bioregions)) {
                 save(rule.oldGenus, bioregion, rule.newGenus, APPROVED, rule.approvedBy, Timestamp.valueOf(rule.approvedOn + " 10:35:00"), rule.note);
