@@ -189,11 +189,17 @@
   String pw = placeWord;
   boolean isAdm1 = isGeolocale && "adm1".equals(georank);
   String listName = "this " + pw + "'s AntWeb list";
+  // Each Taxonomic diversity number opens its list (Brian Fisher, 2026-11-04; the Species number went to the admin
+  // count report). Subfamilies and Genera count every counted status: the view All specimen names; Valid species:
+  // the view Valid. Species / subspecies / morphospecies has no view of exactly those names: it opens All specimen
+  // names, which also lists the names not counted as species (marked; see the row's definition).
+  String listBase = AntwebProps.getDomainApp() + "/taxonomicPage.do?" + overview.getParams() + "&rank=";
+  String allView = "&statusSet=" + org.calacademy.antweb.StatusSet.LIST_ALL;
+  String subfamilyCell = "<a href=\"" + Html.escAttr(listBase + "subfamily" + allView) + "\">" + Formatter.commaFormat(overview.getSubfamilyCount()) + "</a>";
+  String genusCell = "<a href=\"" + Html.escAttr(listBase + "genus" + allView) + "\">" + Formatter.commaFormat(overview.getGenusCount()) + "</a>";
+  String validCell = "<a href=\"" + Html.escAttr(listBase + "species&statusSet=" + org.calacademy.antweb.StatusSet.LIST_VALID) + "\">" + Formatter.commaFormat(overview.getValidSpeciesCount()) + "</a>";
   String speciesCount = Formatter.commaFormat(overview.getSpeciesCount());
-  String speciesCell = speciesCount;
-  if (overview instanceof Geolocale && LoginMgr.isAdmin(request)) {
-    speciesCell = "<a href='" + AntwebProps.getDomainApp() + "/utilData.do?action=countReport&num=" + ((Geolocale) overview).getId() + "'>" + speciesCount + "</a>";
-  }
+  String speciesCell = "<a href=\"" + Html.escAttr(listBase + "species" + allView) + "\">" + speciesCount + "</a>";
   String introducedListLink = "<a href='" + AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&project=introducedants'>introduced-species list</a>";
 
   boolean showEndemism = isBioregion || (isGeolocale && ("country".equals(georank) || isAdm1));
@@ -251,10 +257,10 @@
 <div id="place-stats"<% if (placeImages != null && !isSpeciesListOnly) { %> data-images="<%= placeImages.allImages %>" data-ant="<%= placeImages.antImages %>" data-labels="<%= placeImages.labelImages() %>" data-imaged="<%= placeImages.imagedSpecimens %>" data-label-only="<%= placeImages.labelOnlySpecimens %>"<% } %>>
 <table class="place_stats">
 <tr class="ps_head"><th colspan="3">Taxonomic diversity</th></tr>
-<tr data-stat="subfamilies" data-n="<%= overview.getSubfamilyCount() %>"><td class="ps_name">Subfamilies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getSubfamilyCount()) %></td><td class="ps_def">Subfamilies recorded on <%= listName %>: valid subfamilies only. Specimens identified only to family and subfamily names not in AntCat are not counted.</td></tr>
-<tr data-stat="genera" data-n="<%= overview.getGenusCount() %>"><td class="ps_name">Genera</td><td class="ps_num"><%= Formatter.commaFormat(overview.getGenusCount()) %></td><td class="ps_def">Genera recorded on <%= listName %>: valid genera and morphogenera, including genera known here only from specimens identified to genus. Names identified only to subfamily and genus names not in AntCat are not counted.</td></tr>
+<tr data-stat="subfamilies" data-n="<%= overview.getSubfamilyCount() %>"><td class="ps_name">Subfamilies</td><td class="ps_num"><%= subfamilyCell %></td><td class="ps_def">Subfamilies recorded on <%= listName %>: valid subfamilies only. Specimens identified only to family and subfamily names not in AntCat are not counted.</td></tr>
+<tr data-stat="genera" data-n="<%= overview.getGenusCount() %>"><td class="ps_name">Genera</td><td class="ps_num"><%= genusCell %></td><td class="ps_def">Genera recorded on <%= listName %>: valid genera and morphogenera, including genera known here only from specimens identified to genus. Names identified only to subfamily and genus names not in AntCat are not counted.</td></tr>
 <% if (overview.getValidSpeciesCount() > 0) { %>
-<tr data-stat="valid" data-n="<%= overview.getValidSpeciesCount() %>"><td class="ps_name">Valid species / subspecies</td><td class="ps_num"><%= Formatter.commaFormat(overview.getValidSpeciesCount()) %></td><td class="ps_def">Currently valid, formally named, living (non-fossil) species and subspecies recorded on <%= listName %>. Excludes morphospecies and unidentified taxa.</td></tr>
+<tr data-stat="valid" data-n="<%= overview.getValidSpeciesCount() %>"><td class="ps_name">Valid species / subspecies</td><td class="ps_num"><%= validCell %></td><td class="ps_def">Currently valid, formally named, living (non-fossil) species and subspecies recorded on <%= listName %>. Excludes morphospecies and unidentified taxa.</td></tr>
 <% } %>
 <tr data-stat="species" data-n="<%= overview.getSpeciesCount() %>"><td class="ps_name">Species / subspecies / morphospecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">Species and subspecies recorded on <%= listName %>, from any source, that are valid names or morphospecies. Specimens identified to genus only (indetermined or unidentifiable names) and names not in AntCat (unrecognized) are not counted as species; their specimens are counted under Specimens and their genera under Genera.</td></tr>
 <% if (showEndemism) { %>

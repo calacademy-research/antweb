@@ -7,6 +7,8 @@ statistics and image numbers are tested by test_region_counts.py, test_place_ima
 test_numbers_pages.py; the links of every page type by test_site_links.py; field guides and the compare
 tool by test_field_guide_compare.py.
 """
+import re
+
 import pytest
 
 from public_pages import api_json, assert_message, assert_ok, fetch, links, params, title
@@ -127,3 +129,23 @@ def test_adm1_page_of_its_country():
     assert_ok(page, adm1s[0])
     t = title(page)
     assert t.startswith("Adm1: ") and params(adm1s[0])["name"] in t and t.endswith(" - Antweb"), t
+
+
+@pytest.mark.parametrize("path", ["/country.do?name=Madagascar", "/adm1.do?name=California&country=United+States"])
+def test_diversity_numbers_open_their_lists(path):
+    """Each Taxonomic diversity number on a place page opens its list (Brian Fisher, 2026-11-04: only the Species
+    number had a link, and it opened the admin count report): Subfamilies and Genera the view All specimen names,
+    Valid species the view Valid, Species / subspecies / morphospecies All specimen names."""
+    r = fetch(path)
+    assert_ok(r, path)
+    expected = {"subfamilies": ("subfamily", "all"), "genera": ("genus", "all"), "valid": ("species", "valid"),
+                "species": ("species", "all")}
+    for stat, (rank, view) in expected.items():
+        row = re.search(r'<tr data-stat="%s"[^>]*>(.*?)</tr>' % stat, r.text, re.S)
+        assert row, f"{path}: no {stat} row"
+        cell = re.search(r'<td class="ps_num">(.*?)</td>', row.group(1), re.S).group(1)
+        hrefs = links(cell, "taxonomicPage")
+        assert hrefs, f"{path}: the {stat} number is not linked: {cell[:200]}"
+        p = params(hrefs[0])
+        assert (p.get("rank"), p.get("statusSet")) == (rank, view), f"{path} {stat}: {hrefs[0]}"
+        assert "countReport" not in cell, f"{path}: {stat} still links the count report"

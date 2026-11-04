@@ -460,7 +460,8 @@
 <% } %>
 <BR><span id="port-of-entry-list-note">These are ant species intercepted at ports of entry, not established introductions. They are not counted in any place total or in the introduced species list, and this list shows no specimen or image numbers.</span>
 <% } else { %>
-<br><div id="list-notes"><b>Notes on specimen and image counts</b>
+<%-- Folded like "About this list" at the top (Brian Fisher, 2026-11-04): click the arrow to read the notes. --%>
+<details id="list-notes" class="about-list list-notes"><summary>Notes on specimen and image counts</summary>
 <% if (totalNote != null) { %>
 <br><%= ++noteNum %>. <span id="subtaxon-total" data-subtaxon-total="<%= subtaxonTotal %>"><%= totalNote %></span>
 <% } %>
@@ -470,5 +471,5 @@
 <% } %>
 <br><%= ++noteNum %>. <span id="asterisk-note"><%= asterixNote %></span>
 <br><%= ++noteNum %>. <span id="images-definition" class="images-definition"><%= org.calacademy.antweb.util.Html.esc(imagesDefinition) %></span>
-</div>
+</details>
 <% } %>

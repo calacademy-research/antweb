@@ -255,8 +255,9 @@ def test_list_says_what_the_images_column_counts():
                     " from specimens collected anywhere. Specimen label images are not counted. Click the number to see"
                     f" the images; those from {p.name} come first."), text
     assert "in brackets" not in text and "first number" not in text and "parenthes" not in text, text
-    notes = re.search(r'<div id="list-notes">(.*?)</div>', html, re.S)
-    assert notes and "<b>Notes on specimen and image counts</b>" in notes.group(1), f"{p}: no list notes heading"
+    # folded under an arrow like "About this list" (2026-11-04)
+    notes = re.search(r'<details id="list-notes"[^>]*>(.*?)</details>', html, re.S)
+    assert notes and "<summary>Notes on specimen and image counts</summary>" in notes.group(1), f"{p}: no list notes heading"
     assert "counts marked with an asterisk (*) include every" in unescape(notes.group(1)), notes.group(1)
 
 
