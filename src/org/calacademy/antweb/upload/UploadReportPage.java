@@ -63,11 +63,11 @@ public final class UploadReportPage {
 
     private static final Map<String, String> GROUP_LEADS = new LinkedHashMap<>();
     static {
-        GROUP_LEADS.put(MessageMgr.NAME_CHANGE, "AntCat has a newer name for these names. AntWeb filed the lines under the current name; please change them in your own data.");
+        GROUP_LEADS.put(MessageMgr.NAME_CHANGE, "AntCat has a newer name for these names. AntWeb filed these specimens under the current name; please change them in your own data.");
         GROUP_LEADS.put(MessageMgr.NOT_LOADED, "These lines of your file are not in AntWeb. Fix them in your data and upload again.");
-        GROUP_LEADS.put(MessageMgr.CORRECTED_KIND, "AntWeb changed what these lines said and loaded them. Please make the same change in your own data, so the next upload does not need it.");
-        GROUP_LEADS.put(MessageMgr.RED_FLAG, "These specimens were loaded with a red flag: until the problem is fixed they do not appear in most of AntWeb. Open a line to see them.");
-        GROUP_LEADS.put(MessageMgr.NOTE, "Loaded. Worth a look: names AntCat does not know, places AntWeb does not recognise, and similar. Open a line to see it.");
+        GROUP_LEADS.put(MessageMgr.CORRECTED_KIND, "AntWeb changed what your file said for these specimens and loaded them. Please make the same change in your own data, so the next upload does not need it.");
+        GROUP_LEADS.put(MessageMgr.RED_FLAG, "These specimens were loaded with a red flag: until the problem is fixed they do not appear in most of AntWeb. Open a section to see them.");
+        GROUP_LEADS.put(MessageMgr.NOTE, "Loaded. Worth a look: names AntCat does not know, places AntWeb does not recognise, and similar. Open a section to see it.");
         GROUP_LEADS.put(MessageMgr.ALREADY_IN_ANTWEB, "Another collection uploaded these codes first; AntWeb keeps their record. Nothing to fix in your data.");
     }
 
@@ -191,7 +191,7 @@ public final class UploadReportPage {
             if (in.isEmpty()) continue;
             b.append("<div class=\"rep-group rep-").append(g.getKey()).append("\" id=\"rep-").append(g.getKey()).append("\">\n");
             b.append("<h2 class=\"rep-group-title\">").append(Html.esc(g.getValue()))
-             .append(" <span class=\"rep-pill\">").append(allLines ? plural(lines, "line") : plural(lines, "item")).append("</span></h2>\n");
+             .append(" <span class=\"rep-pill\">").append(allLines ? plural(lines, lineWord(g.getKey())) : plural(lines, "item")).append("</span></h2>\n");
             b.append("<p class=\"aw-lead\">").append(Html.esc(GROUP_LEADS.get(g.getKey()))).append("</p>\n");
             boolean open = OPEN_GROUPS.contains(g.getKey());
             for (MessageMgr.ReportSection s : in) section(b, s, f, app, open);
@@ -314,7 +314,9 @@ public final class UploadReportPage {
             if (parts[1] != null || r.detailHtml != null) anyAction = true;
             split.add(parts);
         }
-        anyLines = anyLines && f.uploadFileName != null;
+        // The file's line numbers only where nothing was loaded: there is no specimen to point to, and the curator has
+        // to find the line in the file (Brian Fisher, 2026-11-04: "we are interested in the specimens, not the lines")
+        anyLines = anyLines && f.uploadFileName != null && MessageMgr.NOT_LOADED.equals(s.kind);
 
         b.append("<section class=\"aw-card rep-sec\" id=\"sec-").append(Html.escAttr(s.key)).append("\" data-key=\"").append(Html.escAttr(s.key))
          .append("\" data-kind=\"").append(s.kind).append("\" data-total=\"").append(s.count).append("\" data-rows=\"").append(s.rows.size()).append("\">\n");
@@ -322,6 +324,7 @@ public final class UploadReportPage {
         if (!open) b.append("<details class=\"rep-fold\"><summary>");
         b.append("<h3 class=\"rep-sec-title\">").append(headingText(s.headingHtml));
         if (MessageMgr.unrecognizedColumn.equals(s.key)) b.append(": ").append(String.format("%,d", s.count));   // "Columns ignored (not AntWeb columns): 10"
+        else if ("line".equals(s.unit)) b.append(" <span class=\"rep-pill\">").append(plural(s.count, lineWord(s.kind))).append("</span>");
         else b.append(" <span class=\"rep-pill\">").append(plural(s.count, s.unit, s.units)).append("</span>");
         // Each link says what it opens (Michele Esposito, 2026-11-03: "details" and "list" did not say which was which).
         if (s.detailHref != null) b.append(" <a class=\"rep-detail\" href=\"").append(Html.escAttr(s.detailHref)).append("\">")
@@ -493,6 +496,14 @@ public final class UploadReportPage {
         b.append("</div>\n");
     }
 
+    /**
+     * What a count of file lines is called (Brian Fisher, 2026-11-04): a loaded line is one specimen record, so
+     * "specimen"; a line that was not loaded is only a line of the file.
+     */
+    static String lineWord(String kind) {
+        return MessageMgr.NOT_LOADED.equals(kind) ? "line" : "specimen";
+    }
+
     static String plural(int n, String word) {
         return plural(n, word, word + "s");
     }
@@ -522,20 +533,18 @@ public final class UploadReportPage {
         + ".aw-report .rep-tile-corrected.rep-alert .rep-n{color:#8a5300;}"
         + ".aw-report .rep-sentence{font-weight:600;margin:0 0 4px 0;}"
         + ".aw-report .rep-group{margin:22px 0 0 0;}"
-        + ".aw-report h2.rep-group-title{font-size:18px;margin:0 0 4px 0;padding-left:10px;border-left:4px solid #8a96a3;}"
-        + ".aw-report .rep-notLoaded h2.rep-group-title{border-left-color:#c0392b;}"
-        + ".aw-report .rep-corrected h2.rep-group-title{border-left-color:#d97706;}"
-        + ".aw-report .rep-nameChange h2.rep-group-title{border-left-color:#1f63c6;}"
+        // no colour bar beside the headings (Michele Esposito, 2026-11-04: it draws the eye down); the count carries the colour
+        + ".aw-report h2.rep-group-title{font-size:18px;margin:0 0 4px 0;}"
         + ".aw-report details.rep-fold > summary{cursor:pointer;list-style-position:outside;margin-left:16px;}"
         + ".aw-report details.rep-fold > summary h3{display:inline;}"
         + ".aw-report details.rep-fold[open] > summary{margin-bottom:6px;}"
-        + ".aw-report .rep-redFlag h2.rep-group-title{border-left-color:#e11d48;}"
+
         + ".aw-report .rep-group > .aw-lead{margin:0 0 10px 14px;color:#5b6570;}"
         + ".aw-report .rep-pill{display:inline-block;vertical-align:2px;margin-left:6px;padding:1px 9px;border-radius:999px;background:#e8edf5;"
         + "color:#44546a;font-size:12px;font-weight:650;white-space:nowrap;}"
-        + ".aw-report .rep-notLoaded .rep-pill{background:#fdecea;color:#a0281a;}"
-        + ".aw-report .rep-corrected .rep-pill{background:#fff1d6;color:#8a5300;}"
-        + ".aw-report .rep-redFlag .rep-pill{background:#ffe4e9;color:#9f1239;}"
+        // red: something to fix in the curator's data; gray (the default above): notes, nothing to fix
+        + ".aw-report .rep-notLoaded .rep-pill,.aw-report .rep-nameChange .rep-pill,.aw-report .rep-corrected .rep-pill,"
+        + ".aw-report .rep-redFlag .rep-pill{background:#fdecea;color:#a0281a;}"
         + ".aw-report h3.rep-sec-title{font-size:15px;font-weight:650;color:#1f2529;text-transform:none;letter-spacing:0;margin:0 0 4px 0;}"
         + ".aw-report .rep-detail{font-size:13px;font-weight:600;margin-left:4px;}"
         + ".aw-report .rep-did{margin:0 0 8px 0;color:#4a545e;font-size:13px;}"
