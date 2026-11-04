@@ -76,11 +76,11 @@ public class UploadDecisions1028Test extends TestCase {
     }
 
     public void testIndetEpithetIsTheOneForm() {
-        for (String s : new String[] {"indet", "Indet", "INDET", "indet.", "Indet.", " indet ", "undet", "Undet.", "(indet)", "(Indet)."}) {
+        for (String s : new String[] {"indet", "Indet", "INDET", "indet.", "Indet.", " indet ", "undet", "Undet.", "(indet)", "(Indet).", "_indet_", "_Indet_", "_undet_"}) {
             assertTrue(s, UploadUtil.isIndetEpithet(s));
             assertEquals(s, "(indet)", UploadUtil.normalizeIndetEpithet(s));
         }
-        for (String s : new String[] {"megacephala", "indeterminata", "indet1", "sp.", "sp", "", "indet x", "(indet"}) {
+        for (String s : new String[] {"megacephala", "indeterminata", "indet1", "sp.", "sp", "", "indet x", "(indet", "_indet", "indet_", "__", "_sp_"}) {
             assertFalse(s, UploadUtil.isIndetEpithet(s));
             assertEquals(s, s, UploadUtil.normalizeIndetEpithet(s));
         }

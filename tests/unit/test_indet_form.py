@@ -70,6 +70,20 @@ def test_names():
           " four words are left for a look by hand.")
 
 
+def test_underscore_indet_is_indet():
+    """"_indet_" (Brian Fisher, 2026-11-04: "(amblyoponinae) _indet_" next to "(amblyoponinae) (indet)" in California)."""
+    import re
+    assert tf.new_name("amblyoponinae(amblyoponinae) _indet_") == "amblyoponinae(amblyoponinae) (indet)"
+    assert tf.new_name("myrmicinaepheidole _Indet_") == "myrmicinaepheidole (indet)"
+    assert tf.new_name("myrmicinaepheidole _undet_") == "myrmicinaepheidole (indet)"
+    assert tf.new_name("myrmicinaepheidole _indet_ x") == "myrmicinaepheidole (indet)"
+    assert tf.new_name("myrmicinaepheidole megacephala _indet_") == "myrmicinaepheidole megacephala"
+    for keep in ("myrmicinaepheidole _indet", "myrmicinaepheidole indet_x", "myrmicinaepheidole _sp_1"):
+        assert tf.new_name(keep) is None, keep
+    sql_re = tf.SQL_OLD_FORM.strip("'").replace("[.]", r"\.")
+    assert re.match(sql_re, "amblyoponinae(amblyoponinae) _indet_", re.I)
+
+
 def test_sp_is_indet_but_never_a_morphospecies():
     """Brian Fisher, 2026-10-30: "<Genus> sp." (exactly two words, the second sp or sp.) is indet; a morphospecies
     ("sp 1", "sp-1", "sp. A") never is."""

@@ -76,9 +76,10 @@ import sys
 INDET = "(indet)"
 # The old form: two words, the second indet, undet or sp, with or without a period (any case). "<g> sp." is indet
 # (Brian Fisher, 2026-10-30): exactly two words; a morphospecies such as "<g> sp 1", "<g> sp-1" or "<g> sp. A" never.
-OLD_FORM = re.compile(r"^(\S+) (indet|undet|sp)\.?$", re.IGNORECASE)
-# An epithet that says "not identified at this rank": indet, undet, (indet), sp. (any case, trailing period).
-_IND = r"(?:(?:indet|undet|sp)\.?|\(indet\))"
+OLD_FORM = re.compile(r"^(\S+) (_(?:indet|undet)_|(?:indet|undet|sp)\.?)$", re.IGNORECASE)
+# An epithet that says "not identified at this rank": indet, undet, (indet), sp. (any case, trailing period), and
+# _indet_ / _undet_ (Brian Fisher, 2026-11-04: "(amblyoponinae) _indet_" in California).
+_IND = r"(?:(?:indet|undet|sp)\.?|\(indet\)|_(?:indet|undet)_)"
 # Three words, the species indet: "<g> indet <x>" (Ocymyrmex indet karooicus). Identified only to genus.
 SPECIES_INDET_3 = re.compile(r"^(\S+) " + _IND + r" (\S+)$", re.IGNORECASE)
 # Three words, the subspecies indet: "<g> <sp> indet" (Gnamptogenys striatula-complex indet). Identified to species.
@@ -88,9 +89,9 @@ SUBSPECIES_INDET_3 = re.compile(r"^(\S+) (\S+) " + _IND + r"$", re.IGNORECASE)
 SP_MORPHO_3 = re.compile(r"^\S+ sp\.? (?!" + _IND + r"$)\S+$", re.IGNORECASE)
 # Any name with indet or undet as a word after the first, or "(indet)" followed by a word or as the third word (to
 # count what the tool does not handle).
-ANY_INDET_WORD = re.compile(r" (indet|undet)\.?( |$)| \(indet\) |^\S+ \S+ \(indet\)$|^\S+ sp\.?$", re.IGNORECASE)
-SQL_OLD_FORM = "'^[^ ]+ (indet|undet|sp)[.]?$'"
-SQL_ANY_INDET_WORD = "' (indet|undet)[.]?( |$)| [(]indet[)] |^[^ ]+ [^ ]+ [(]indet[)]$|^[^ ]+ sp[.]?$'"
+ANY_INDET_WORD = re.compile(r" _?(indet|undet)_?\.?( |$)| \(indet\) |^\S+ \S+ \(indet\)$|^\S+ sp\.?$", re.IGNORECASE)
+SQL_OLD_FORM = "'^[^ ]+ (_(indet|undet)_|(indet|undet|sp)[.]?)$'"
+SQL_ANY_INDET_WORD = "' _?(indet|undet)_?[.]?( |$)| [(]indet[)] |^[^ ]+ [^ ]+ [(]indet[)]$|^[^ ]+ sp[.]?$'"
 # What a name is (kind_of): the two-word old form, three words with the species indet, three words with the
 # subspecies indet.
 TWO_WORD, SPECIES_INDET, SUBSPECIES_INDET = "two-word", "species indet", "subspecies indet"
