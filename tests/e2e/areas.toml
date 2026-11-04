@@ -322,6 +322,7 @@ tests = [
   "test_curate_page_layout.py",
   "test_tool_pages_style.py",           # shared tool-page look (common/tools.css)
   "test_curator_species_lists.py",
+  "test_species_list_tool_save.py",   # Species List Tool save round trip: remove with a reason, marked in All, put back (2026-11-03)
   "test_display_cleanup.py",
   "test_group_form_help.py",
   "test_hardening_2026_10_18.py",
@@ -435,6 +436,7 @@ paths = [
   "src/org/calacademy/antweb/PlaceTaxonNotes.java",
 ]
 tests = [
+  "test_place_recalc.py",              # Update statistics on a country and an adm1, as admin (2026-11-03)
   "test_place_pages.py",               # place pages, their lists and species lists (step 2)
   "test_geolocale_edit.py",
   "test_geolocale_edit_page.py",
