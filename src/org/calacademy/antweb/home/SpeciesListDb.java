@@ -375,6 +375,9 @@ public class SpeciesListDb extends AntwebDb {
     if (searchTaxa != null) {
       for (Taxon taxon : searchTaxa) {
         String subfamily = taxon.getSubfamily();
+        // ant subfamilies only (Brian Fisher, 2026-11-04: an Advanced Search of Madagascar also finds grasshoppers,
+        // bees and mantids, whose subfamilies filled the subfamily links)
+        if (!isAntSubfamily(taxon.getFamily(), subfamily)) continue;
         if (!refListSubfamilies.contains(subfamily)) refListSubfamilies.add(subfamily);
       } 
     }
@@ -382,6 +385,14 @@ public class SpeciesListDb extends AntwebDb {
        
     return refListSubfamilies;
   }
+
+    /**
+     * A subfamily link of the Species List Tool: an ant (family formicidae) subfamily, not a placeholder such as
+     * "(formicidae)" (the same rule as the list query above: family formicidae, subfamily not like '(%').
+     */
+    public static boolean isAntSubfamily(String family, String subfamily) {
+      return "formicidae".equals(family) && subfamily != null && !subfamily.isBlank() && !subfamily.startsWith("(");
+    }
 
     /** True if a taxon of this name exists. */
     private boolean isTaxon(String taxonName) throws SQLException {

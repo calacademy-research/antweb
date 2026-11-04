@@ -34,4 +34,14 @@ public class SpeciesListPermaLinkTest extends TestCase {
         assertFalse(org.calacademy.antweb.home.SpeciesListDb.refusesOnPlaceList("ponerinaeanochetus madagascarensis"));
         assertFalse(org.calacademy.antweb.home.SpeciesListDb.refusesOnPlaceList(null));
     }
+
+    /** Subfamily links: ant subfamilies only (Brian Fisher, 2026-11-04: Madagascar showed Acridinae, Apinae, Mantinae...). */
+    public void testSubfamilyLinksAreAntSubfamiliesOnly() {
+        assertTrue(org.calacademy.antweb.home.SpeciesListDb.isAntSubfamily("formicidae", "dorylinae"));
+        assertFalse(org.calacademy.antweb.home.SpeciesListDb.isAntSubfamily("acrididae", "acridinae"));
+        assertFalse(org.calacademy.antweb.home.SpeciesListDb.isAntSubfamily("apidae", "apinae"));
+        assertFalse(org.calacademy.antweb.home.SpeciesListDb.isAntSubfamily(null, "mantinae"));
+        assertFalse(org.calacademy.antweb.home.SpeciesListDb.isAntSubfamily("formicidae", "(formicidae)"));
+        assertFalse(org.calacademy.antweb.home.SpeciesListDb.isAntSubfamily("formicidae", null));
+    }
 }
