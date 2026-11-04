@@ -538,7 +538,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             if (country == null) {
                 AntwebUtil.count("countryMissing");
                 //A.log("parseLine() code:" + code + " countryMissingCount:" + AntwebUtil.getCount("countryMissing") + " lineNum:" + lineNum + " countryMissing:" + country);
-				getMessageMgr().addToMessages(MessageMgr.countryMissing);
+				// the code too (2026-11-03, Michele Esposito): the section links the list of codes, as Adm1 is missing does
+				getMessageMgr().addCountWithDetail(MessageMgr.countryMissing, (String) specimenItem.get("code"));
                 String adm1 = (String) specimenItem.get("adm1");
 				Geolocale inferCountry = GeolocaleMgr.inferCountry(adm1);
                 //A.log("parseLine() adm1:" + adm1 + " country:" + inferCountry);            
