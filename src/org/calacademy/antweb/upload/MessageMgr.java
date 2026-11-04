@@ -408,6 +408,7 @@ public class MessageMgr {
     /** For tests: {lines kept for the details page, lines only counted}. */
     public int[] detailSizes(String key) {
       Test test = getTest(key);
+      if (test == null) return new int[] {0, 0};
       return new int[] {test.details.size(), test.detailsMore};
     }
 
@@ -880,7 +881,7 @@ public class MessageMgr {
             // one write for the whole page (was one per line)
             StringBuilder page = new StringBuilder("<html><head><meta charset=\"utf-8\"/></head><body>\n");
             for (String detail : details) page.append(Html.esc(detail)).append("<br>\n");
-            if (detailsMore > 0) page.append(String.format("… and %,d more", detailsMore)).append("<br>\n");
+            if (detailsMore > 0) page.append(String.format("... and %,d more", detailsMore)).append("<br>\n");
             page.append("</body></html>");
             LogMgr.appendLog(fileName, page.toString());
         }
