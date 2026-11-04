@@ -567,6 +567,7 @@ paths = [
   "bin/**",
 ]
 tests = [
+  "test_admin_pages_rest.py",          # curator and admin pages no test opened, read only (2026-11-03)
   "test_admin_switches.py",            # upload down time on and off, admin alerts, password campaign preview (admin, 2026-11-03)
   "test_museum_manager.py",            # Museum Manager save, rename, delete with confirmation (admin, 2026-11-03)
   "test_admin_staging.py",
