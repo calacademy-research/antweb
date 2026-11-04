@@ -78,7 +78,7 @@ assert close(cr.cost({"cache_creation_input_tokens": 1_000_000}, batch=True), cr
 # The config in the repository parses and has the approved values.
 b = a.load_budget()
 assert b["start"] == datetime.datetime(2026, 10, 29, 19, 0, tzinfo=UTC), b["start"]
-assert (b["start_balance"], b["reserve"]) == (59.87, 10.00)
+assert (b["start_balance"], b["reserve"]) == (59.87, -1000.00)   # spend down, no reserve (Brian, 2026-11-03)
 assert b["expires"] == real_date(2026, 11, 8)
 assert b["review_estimate"] > 0
 
@@ -97,6 +97,8 @@ assert n == 2 and close(spent, 1.0 + 1.2346), (spent, n)
 assert a.ledger_spent("", t0) == (0.0, 0)
 
 # Decision: run above the reserve; pause at or below it; pause from the expiry day on; reviews count.
+# Checked with a $10 reserve (the repository runs without one since 2026-11-03).
+b = dict(b, reserve=10.00)
 now = datetime.datetime(2026, 10, 30, 12, 0, tzinfo=UTC)
 go, left, msg = a.budget_decision(b, 20.0, 3, now)
 assert go and close(left, 59.87 - 20.0 - 3 * b["review_estimate"]), (go, left, msg)
@@ -126,7 +128,7 @@ with tempfile.TemporaryDirectory() as d:
     go, lines = a.budget_check(now)
     assert go and "4 Claude review runs" in lines[1] and "2 ledger lines" in lines[1], lines
     with open(path, "a") as f:
-        f.write(a.ledger_line(now, "9", "audit", 45.0, "big"))
+        f.write(a.ledger_line(now, "9", "audit", 1100.0, "big"))   # below the repository's reserve (-$1,000)
     go, lines = a.budget_check(now)
     assert not go and lines[0].startswith("- Audit paused: estimated credit left $"), lines
     a.count_review_runs = lambda repo, token, start: None
