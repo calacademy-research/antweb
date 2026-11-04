@@ -27,14 +27,13 @@ SECTIONS = ["Taxonomic diversity", "Endemism and introduced species", "Specimen 
 
 # data-stat of each row and the start of its definition.
 DEFINITIONS = [
-    # genera and subfamilies rule of 2026-10-30: valid subfamilies only
-    ("subfamilies", "Subfamilies recorded on this country's AntWeb list: valid subfamilies only"),
-    # genera rule of 2026-10-30: valid genera and morphogenera only
-    ("genera", "Genera recorded on this country's AntWeb list: valid genera and morphogenera"),
+    # 2026-11-04: each number is the header of the list it opens (default view Curated; Valid species: view Valid)
+    ("subfamilies", "Subfamilies on this country's AntWeb list in its default view, Curated (the number opens it): valid subfamilies only"),
+    ("genera", "Genera on this country's AntWeb list in its default view, Curated (the number opens it): valid genera, and"
+               " morphogenera with a curated morphospecies here"),
     ("valid", "Currently valid, formally named, living (non-fossil) species and subspecies"),
-    # counting rules of 2026-10-28: valid names and morphospecies only
-    ("species", "Species and subspecies recorded on this country's AntWeb list, from any source, that are valid names or"
-                " morphospecies"),
+    ("species", "Species and subspecies on this country's AntWeb list in its default view, Curated (the number opens it):"
+                " valid names and curated morphospecies"),
     ("endemic", "Valid species and subspecies recorded for this country and no other country in AntWeb"),
     ("introduced", "Species introduced by humans that are not native to this country's bioregion"),
     ("specimens", "Ant specimens collected in this country and identified to a species, morphospecies, or unidentified taxon"),

@@ -511,6 +511,8 @@ public final class OverviewAction extends DescriptionAction {
         if (type == null || key == null) return;
         try {
             request.setAttribute("placeImages", new PlaceImageCountDb(connection).read(type, key));
+            // Genera and Species as the place's lists in the default view show them (2026-11-04; -1: not counted yet)
+            request.setAttribute("placeViewTotals", new org.calacademy.antweb.home.PlaceViewTotalDb(connection).read(overview));
         } catch (SQLException e) {
             s_log.warn("setPlaceImages() " + type + " " + key + " e:" + e);
         }

@@ -200,6 +200,9 @@ public final class TaxaPageAction extends AntwebAction {
             //A.log("execute() overview:" + overview);
             // 2026-11-02: the Fossil button only when the list has fossil names here (one EXISTS query)
             ListView.setHasFossil(request, connection, overview, rank, null, null);
+            // the place page's Species as counted nightly (the Valid header's "of N", 2026-11-04)
+            try { request.setAttribute("placeViewTotals", new org.calacademy.antweb.home.PlaceViewTotalDb(connection).read(overview)); }
+            catch (SQLException e) { s_log.warn("execute() placeViewTotals e:" + e); }
             // 2026-11-02 (speed): a genus or species list reads the place's specimens once, for its specimen half, its genus
             // rows and its source icons (review of #316: the species lists' Curated default had a specimen scan per query)
             // (species lists only where the view adds the names of specimens collected there: not museums or bioregions).

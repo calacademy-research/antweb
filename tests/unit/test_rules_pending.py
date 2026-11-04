@@ -97,9 +97,12 @@ def test_genera_rule_is_pending_until_the_nightly_run():
     sample = read("tests/e2e/numbers_sample.py")
     assert 'return compute_log_has("Set 4 done", GENERA_RULE_LOG)' in sample
     lists = read("tests/e2e/test_numbers_lists.py")
-    # 2026-11-03 (B77): the subfamily rows' Genera are counted live in the view, so the browse test no longer waits
-    assert lists.count("ns.genera_rule_counted() is False") == 1
-    assert "ns.genera_rule_counted()" in read("tests/e2e/test_numbers_live.py")
+    # 2026-11-03 (B77): the subfamily rows' Genera are counted live in the view, so the browse test no longer waits;
+    # 2026-11-04: the place page's Genera and Species are the default list's rows (PlaceViewTotalDb): the header tests
+    # wait only for that count (data-view-counted), not for the 2026-10-30 rule
+    assert lists.count("ns.genera_rule_counted() is False") == 0
+    live = read("tests/e2e/test_numbers_live.py")
+    assert 'data-view-counted="true"' in live and 'data-view-counted="true"' in lists
     assert 'name == "Genera" and ns.genera_rule_counted() is False' in read("tests/e2e/test_count_check.py")
     src = read("src/org/calacademy/antweb/util/NumberChecks.java")
     assert src.count("i == 6 && v[i] != recount[i] && !inv.result.rulesCounted) pi = CountInvariants.GENERA_RULE_PENDING") == 1
@@ -121,7 +124,7 @@ def test_group_species_is_pending_until_the_nightly_run():
 
 def test_e2e_tests_use_the_helpers():
     lists = read("tests/e2e/test_numbers_lists.py")
-    assert lists.count("ns.counting_rules_counted() is False") == 2   # the default-list test compares with the default choice (2026-10-30)
+    assert lists.count("ns.counting_rules_counted() is False") == 1   # the browse test; the header test waits for the view count (2026-11-04)
     endemic = read("tests/e2e/test_numbers_endemic.py")
     assert "ns.endemic_rule_counted" in endemic and "ns.counting_rules_counted" in endemic
     groups = read("tests/e2e/test_count_check.py")

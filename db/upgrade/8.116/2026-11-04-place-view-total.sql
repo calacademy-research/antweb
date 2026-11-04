@@ -1,0 +1,24 @@
+-- The place page's Genera and Species (Brian Fisher, 2026-11-04): each number is the header of the list it opens.
+--
+--   place_view_total   per place and rank, the rows the place's list shows in its default view (Curated; Valid (with
+--                      fossils) on the AntCat list and Fossil Ants), counted nightly with the list page's own code
+--                      (PlaceViewTotalDb, nightly set 4, after placeGenusCuration; utilData.do?action=placeViewTotals).
+--     list_type        geolocale (key the geolocale id), bioregion (name), museum (code), project (name)
+--     list_key         as PlaceImageCountDb
+--     taxarank         genus or species
+--     view_name        the view counted
+--     n                the rows shown
+--     counted          when the row was written
+--
+-- The application creates the table when it is missing (PlaceViewTotalDb.ensureSchema), in the character set and
+-- collation of taxon.taxon_name; this file records it. The page never fails on it: missing table or rows, the place
+-- page shows its stored totals.
+
+-- CREATE TABLE IF NOT EXISTS place_view_total (
+--   list_type varchar(16) NOT NULL, list_key varchar(128) NOT NULL, taxarank varchar(16) NOT NULL,
+--   view_name varchar(32) NOT NULL, n int NOT NULL DEFAULT 0, counted datetime NULL,
+--   PRIMARY KEY (list_type, list_key, taxarank)
+-- ) ENGINE=InnoDB;
+
+-- Undo: the place pages go back to their stored totals at once (the table is read, never required).
+-- DROP TABLE IF EXISTS place_view_total;

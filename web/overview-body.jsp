@@ -196,9 +196,14 @@
   String listBase = AntwebProps.getDomainApp() + "/taxonomicPage.do?" + overview.getParams() + "&rank=";
   String curatedView = "&statusSet=" + org.calacademy.antweb.StatusSet.LIST_VETTED;
   String subfamilyCell = "<a href=\"" + Html.escAttr(listBase + "subfamily" + curatedView) + "\">" + Formatter.commaFormat(overview.getSubfamilyCount()) + "</a>";
-  String genusCell = "<a href=\"" + Html.escAttr(listBase + "genus" + curatedView) + "\">" + Formatter.commaFormat(overview.getGenusCount()) + "</a>";
+  // Genera and Species: the rows of the lists in the default view, counted nightly with the list's own code
+  // (PlaceViewTotalDb, 2026-11-04); a place not counted yet shows its stored total.
+  int[] viewTotals = (int[]) request.getAttribute("placeViewTotals");
+  int generaShown = viewTotals != null && viewTotals[0] >= 0 ? viewTotals[0] : overview.getGenusCount();
+  int speciesShown = viewTotals != null && viewTotals[1] >= 0 ? viewTotals[1] : overview.getSpeciesCount();
+  String genusCell = "<a href=\"" + Html.escAttr(listBase + "genus" + curatedView) + "\">" + Formatter.commaFormat(generaShown) + "</a>";
   String validCell = "<a href=\"" + Html.escAttr(listBase + "species&statusSet=" + org.calacademy.antweb.StatusSet.LIST_VALID) + "\">" + Formatter.commaFormat(overview.getValidSpeciesCount()) + "</a>";
-  String speciesCount = Formatter.commaFormat(overview.getSpeciesCount());
+  String speciesCount = Formatter.commaFormat(speciesShown);
   String speciesCell = "<a href=\"" + Html.escAttr(listBase + "species" + curatedView) + "\">" + speciesCount + "</a>";
   String introducedListLink = "<a href='" + AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&project=introducedants'>introduced-species list</a>";
 
@@ -254,15 +259,15 @@
     specimenListLink += "<br>Names of all specimens collected here, including those not on the list: <a id=\"specimen-taxa-link\" href=\"" + Html.escAttr(specimenTaxaUrl) + "\">All specimen names</a>.";
   }
 %>
-<div id="place-stats"<% if (placeImages != null && !isSpeciesListOnly) { %> data-images="<%= placeImages.allImages %>" data-ant="<%= placeImages.antImages %>" data-labels="<%= placeImages.labelImages() %>" data-imaged="<%= placeImages.imagedSpecimens %>" data-label-only="<%= placeImages.labelOnlySpecimens %>"<% } %>>
+<div id="place-stats" data-view-counted="<%= viewTotals != null && viewTotals[0] >= 0 %>"<% if (placeImages != null && !isSpeciesListOnly) { %> data-images="<%= placeImages.allImages %>" data-ant="<%= placeImages.antImages %>" data-labels="<%= placeImages.labelImages() %>" data-imaged="<%= placeImages.imagedSpecimens %>" data-label-only="<%= placeImages.labelOnlySpecimens %>"<% } %>>
 <table class="place_stats">
 <tr class="ps_head"><th colspan="3">Taxonomic diversity</th></tr>
-<tr data-stat="subfamilies" data-n="<%= overview.getSubfamilyCount() %>"><td class="ps_name">Subfamilies</td><td class="ps_num"><%= subfamilyCell %></td><td class="ps_def">Subfamilies recorded on <%= listName %>: valid subfamilies only. Specimens identified only to family and subfamily names not in AntCat are not counted.</td></tr>
-<tr data-stat="genera" data-n="<%= overview.getGenusCount() %>"><td class="ps_name">Genera</td><td class="ps_num"><%= genusCell %></td><td class="ps_def">Genera recorded on <%= listName %>: valid genera and morphogenera, including genera known here only from specimens identified to genus. Names identified only to subfamily and genus names not in AntCat are not counted.</td></tr>
+<tr data-stat="subfamilies" data-n="<%= overview.getSubfamilyCount() %>"><td class="ps_name">Subfamilies</td><td class="ps_num"><%= subfamilyCell %></td><td class="ps_def">Subfamilies on <%= listName %> in its default view, Curated (the number opens it): valid subfamilies only. Specimens identified only to family and subfamily names not in AntCat are not counted.</td></tr>
+<tr data-stat="genera" data-n="<%= generaShown %>"><td class="ps_name">Genera</td><td class="ps_num"><%= genusCell %></td><td class="ps_def">Genera on <%= listName %> in its default view, Curated (the number opens it): valid genera, and morphogenera with a curated morphospecies here. Genera known here only from specimens identified to genus are listed under All specimen names and not counted.</td></tr>
 <% if (overview.getValidSpeciesCount() > 0) { %>
-<tr data-stat="valid" data-n="<%= overview.getValidSpeciesCount() %>"><td class="ps_name">Valid species / subspecies</td><td class="ps_num"><%= validCell %></td><td class="ps_def">Currently valid, formally named, living (non-fossil) species and subspecies recorded on <%= listName %>. Excludes morphospecies and unidentified taxa.</td></tr>
+<tr data-stat="valid" data-n="<%= overview.getValidSpeciesCount() %>"><td class="ps_name">Valid species / subspecies</td><td class="ps_num"><%= validCell %></td><td class="ps_def">Currently valid, formally named, living (non-fossil) species and subspecies on <%= listName %>: its view Valid (the number opens it). Excludes morphospecies and unidentified taxa.</td></tr>
 <% } %>
-<tr data-stat="species" data-n="<%= overview.getSpeciesCount() %>"><td class="ps_name">Species / subspecies / morphospecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">Species and subspecies recorded on <%= listName %>, from any source, that are valid names or morphospecies. Specimens identified to genus only (indetermined or unidentifiable names) and names not in AntCat (unrecognized) are not counted as species; their specimens are counted under Specimens and their genera under Genera.</td></tr>
+<tr data-stat="species" data-n="<%= speciesShown %>"><td class="ps_name">Species / subspecies / morphospecies</td><td class="ps_num"><%= speciesCell %></td><td class="ps_def">Species and subspecies on <%= listName %> in its default view, Curated (the number opens it): valid names and curated morphospecies (morphospecies a curator has added to a list). Other morphospecies, names identified only to genus and names not in AntCat are listed under All specimen names and not counted here; their specimens are counted under Specimens.</td></tr>
 <% if (showEndemism) { %>
 <tr class="ps_head"><th colspan="3">Endemism and introduced species</th></tr>
 <tr data-stat="endemic" data-n="<%= overview.getEndemicSpeciesCount() %>"><td class="ps_name">Endemic</td><td class="ps_num"><%= endemicCell %></td><td class="ps_def"><%= endemicDef %></td></tr>
