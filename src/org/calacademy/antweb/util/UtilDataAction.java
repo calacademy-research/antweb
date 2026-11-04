@@ -688,6 +688,7 @@ public class UtilDataAction extends AntwebAction {
  		if (action.equals("updateTaxonSets")) {
             message = TaxonSetDb.updateTaxonSetTaxonNames(connection); // works on all taxon sets.
             message += TaxonSetDb.updateTaxonSetSources(connection); // works on all taxon sets.
+            jobLine("Taxon sets updated", message);
         }
 		   
         // This should only need to be run once. No! Species list tool will not allow addition.
@@ -704,6 +705,7 @@ public class UtilDataAction extends AntwebAction {
 		  message += TaxonDb.deleteSpeciesWithoutSpecimenOrAntcatSource(connection, blankSafe);
 		  message += TaxonDb.deleteGeneraWithoutSpecimenOrAntcatSource(connection, blankSafe);
           message += TaxonSetDb.dataCleanup(connection, blankSafe);
+		  jobLine("Data cleanup done", message);
 		}
 
 		// The nightly name update by hand (admin, POST): specimenNameUpdate uses the setting in
@@ -740,6 +742,7 @@ public class UtilDataAction extends AntwebAction {
 		if (action.equals("generateGeolocaleTaxaFromSpecimens")) {
 		  message = new GeolocaleTaxonDb(connection).generateGeolocaleTaxaFromSpecimens();
 		  message = "Finished Generate Geolocale Taxa From Specimens message:" + message;
+		  jobLine("Geolocale taxa from specimens generated", message);
 		}
 
 		// Very fast. Run occasionally to get adm1s in line with hierarchy. Should be rare. Unnecessary.
@@ -1159,5 +1162,15 @@ public class UtilDataAction extends AntwebAction {
             + "<p>Apply the fix: remove the proxy records and insert the missing parent records "
             + "(country for each adm1 record, parent taxon for each record).</p>"
             + Csrf.postButton(request, url, "Apply the fix", "Change geolocale_taxon records now?");
+    }
+
+    /**
+     * A job's own result line in compute.log (2026-11-04: three nightly jobs wrote none, so the morning test
+     * tests/e2e/test_nightly_jobs_ran.py could only infer they had run from the next step's line). Plain text, one line.
+     */
+    static void jobLine(String what, String result) {
+        String plain = result == null ? "" : result.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim();
+        if (plain.length() > 300) plain = plain.substring(0, 300) + "...";
+        LogMgr.appendLog("compute.log", "  " + what + (plain.isEmpty() ? "" : ": " + plain), true);
     }
 }

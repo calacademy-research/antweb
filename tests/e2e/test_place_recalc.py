@@ -69,3 +69,12 @@ def test_admin_updates_a_country_and_an_adm1():
     posted, page = _press(s, path)
     assert posted == "/adm1.do?action=recalc", posted
     _check(page, [adm1.group(2).strip()], path)
+
+
+@needs("admin")
+def test_region_and_subregion_pages_offer_no_update_button():
+    """Region and subregion pages do not recount (OverviewAction): no "Update statistics" button there (2026-11-04)."""
+    s, _token, _lid = login("admin")
+    for path in ("/region.do?name=Africa", "/subregion.do?name=Eastern%20Africa"):
+        page = s.get(BASE_URL + path, timeout=max(TIMEOUT, 120)).text
+        assert _button(page) is None, f"{path}: shows an Update statistics button that does nothing"

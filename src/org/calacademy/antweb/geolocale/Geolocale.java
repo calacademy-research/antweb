@@ -569,6 +569,9 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
     }             
     
     public String getRecalcLink() {
+      // Only pages that recount (OverviewAction: country, island, adm1); region and subregion pages showed a button that
+      // did nothing (2026-11-04, Brian Fisher: remove it)
+      if (!"country".equals(getGeorank()) && !"adm1".equals(getGeorank()) && !"island".equals(getGeorank())) return "";
       return "<a href='" + getThisPageTarget() + "&action=recalc'>Update statistics</a>";    
     }
 
