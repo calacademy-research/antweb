@@ -356,6 +356,65 @@ def test_refresh_adds_upload_as_after_restore():
     assert "|| log \"WARNING: the \\\"Upload as\\\" list was not updated" in src, "a failure there is no rollback"
 
 
+def test_settings_names_and_missing():
+    with tempfile.TemporaryDirectory() as etc:
+        assert sh('settings_names "$1"', etc)[1].strip() == ""
+        assert sh('missing_staging_settings "$1"', etc)[1].split() == ["name-update.properties"]
+        for n in ("name-update.properties", "db.properties", "log4j2.xml"):
+            open(os.path.join(etc, n), "w").write("x\n")
+        assert sh('settings_names "$1"', etc)[1].strip() == "db.properties name-update.properties"
+        code, out = sh('missing_staging_settings "$1"', etc)
+        assert code == 0 and out.strip() == ""
+
+
+def test_settings_put_back_after_refresh():
+    """2026-11-04: staging lost etc/name-update.properties around the refresh of 2026-11-02. A settings file
+    missing at the end is put back (content and mode kept); an edited one is left as it is."""
+    with tempfile.TemporaryDirectory() as tmp:
+        etc, saved = os.path.join(tmp, "etc"), os.path.join(tmp, "work", "etc-saved")
+        os.makedirs(etc)
+        os.makedirs(os.path.dirname(saved))
+        nu, db = os.path.join(etc, "name-update.properties"), os.path.join(etc, "db.properties")
+        open(nu, "w").write("mode=report\n")
+        open(db, "w").write("user=a\npassword=b\n")
+        os.chmod(nu, 0o640)
+        open(os.path.join(etc, "AppResStageDocker.properties"), "w").write("tracked=1\n")
+        code, _ = sh('save_settings "$1" "$2"', etc, saved)
+        assert code == 0
+        assert sorted(os.listdir(saved)) == ["AppResStageDocker.properties", "db.properties", "name-update.properties"]
+        assert os.stat(saved).st_mode & 0o777 == 0o700
+        # Nothing missing, nothing changed: no line.
+        assert sh('restore_missing_settings "$1" "$2"', etc, saved)[1] == ""
+        os.remove(nu)
+        open(db, "w").write("user=a\npassword=new\n")
+        code, out = sh('restore_missing_settings "$1" "$2"', etc, saved)
+        assert code == 0
+        assert "etc/name-update.properties was missing: put back" in out, out
+        assert "etc/db.properties changed during the refresh: left as it is" in out, out
+        assert open(nu).read() == "mode=report\n" and os.stat(nu).st_mode & 0o777 == 0o640
+        assert open(db).read() == "user=a\npassword=new\n"
+        # A second save replaces the copy; no copy: nothing to do.
+        assert sh('restore_missing_settings "$1" "$2"', etc, os.path.join(tmp, "none"))[0] == 0
+
+
+def test_refresh_keeps_settings_steps():
+    src = open(REFRESH, encoding="utf-8").read()
+    body = src[src.index("\nrefresh() {"):src.index("\nmain() {")]
+    save = body.index('save_settings "$PROJECT_DIR/etc" "$SETTINGS_SAVED"')
+    assert save < body.index('docker stop "$APP_CONTAINER"'), "the settings are copied before AntWeb is stopped"
+    assert body.index("check_settings") < body.index('log "Refresh OK'), "missing settings are put back before Refresh OK"
+    main_ = src[src.index("\nmain() {"):]
+    assert "trap on_exit EXIT" in main_ and 'rm -rf -- "$SETTINGS_SAVED"' in main_
+    on_exit = src[src.index("\non_exit() {"):]
+    on_exit = on_exit[:on_exit.index("\n}\n")]
+    for step in ('rm -f "$WORK_DIR"/prod-*.sql.gz', "check_settings", 'rm -rf -- "$SETTINGS_SAVED"'):
+        assert step in on_exit, step
+    assert 'STAGING_SETTINGS="name-update.properties"' in src
+    # The script never deletes or rewrites anything in etc/ itself.
+    assert not re.search(r"(rm|mv|truncate)[^\n]*PROJECT_DIR/etc", src)
+    assert not re.search(r">\s*\"?\$PROJECT_DIR/etc", src)
+
+
 def main():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):
