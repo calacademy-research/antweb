@@ -31,6 +31,7 @@ import pytest
 
 import numbers_sample as ns
 from antweb import new_session
+from public_pages import site_path
 
 MOZ_GENERA = "/taxonomicPage.do?rank=genus&countryName=Mozambique"
 MOZ_SPECIES = "/taxonomicPage.do?rank=species&countryName=Mozambique"
@@ -229,3 +230,20 @@ def test_rows_added_from_specimens_say_specimens():
         pytest.skip("no rows added from specimens on the Madagascar list (All specimen names) today")
     wrong = [c for c in added if not re.fullmatch(r"[\d,]+ Specimens?", c.strip())]
     assert not wrong, wrong[:5]
+
+
+def test_rows_not_on_the_list_open_their_specimens():
+    """A row added from specimens links its name and its "N Specimens" to the name in the place in the view All
+    specimen names, which shows the specimens. In the default view an indetermined name's page said "0 Specimens"
+    (Temnothorax (indet) in Mozambique, CASENT0849587; Brian Fisher, 2026-11-04)."""
+    html = ns.get("/taxonomicPage.do?rank=species&countryName=Madagascar&statusSet=all", new_session())
+    rows = [c for c in re.split(r'<div class="sd_data"', html)[1:] if 'title="Not on the list: from specimens collected here"' in c]
+    if not rows:
+        pytest.skip("no rows added from specimens on the Madagascar list today")
+    for row in rows[:20]:
+        for href in re.findall(r"""href=['"]([^'"]*(?:description|browse)\.do\?[^'"]*)['"]""", row):
+            assert "statusSet=all" in unescape(href), f"a row not on the list links without the view: {href}"
+    href = re.search(r"""href=['"]([^'"]*browse\.do\?[^'"]*)['"]""", rows[0])
+    assert href, "the added row's specimen number is not linked"
+    page = ns.text_of(ns.get(site_path(href.group(1)), new_session()))
+    assert not re.search(r"\b0 Specimens", page), f"{href.group(1)}: the name's page shows 0 specimens"

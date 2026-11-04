@@ -239,6 +239,13 @@
 	 if (showChild) {
 
 	   TaxonSet childTaxonSet = child.getTaxonSet();
+	   // A row not on the list (added from specimens, or removed and shown in All specimen names): its name and
+	   // specimen links open the name in the place in the view All specimen names, which shows its specimens. The
+	   // default view leaves out indetermined and other non-curated names: Temnothorax (indet) in Mozambique opened
+	   // with "0 Specimens" (CASENT0849587; Brian Fisher, 2026-11-04).
+	   if (childTaxonSet == null || !childTaxonSet.exists()) {
+	     browserParams += "&statusSet=" + org.calacademy.antweb.StatusSet.LIST_ALL;
+	   }
 
 	   String childDagger = "";
 	   if (child.getIsFossil()) childDagger = "&dagger;";
@@ -386,7 +393,7 @@
              subtaxonTotal += placeSpecimens.count(child.getTaxonName());
            // on a genus page (rows of species), linked to the name's specimens in the place (its page in the place)
            if (!Rank.GENUS.equals(pageRank)) {
-             addedCount = "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "'>" + addedCount + "</a>";
+             addedCount = "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + browserParams + "'>" + addedCount + "</a>";
            }
          }
          if (Rank.GENUS.equals(pageRank) && genusRows != null) {
