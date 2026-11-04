@@ -174,6 +174,39 @@ public final class NameUpdateReason {
         }
     }
 
+    /** The start of a genus-level reason (GenusSynonymRule); UploadNameReasons italicizes the genus names of such a reason. */
+    public static final String GENUS_SYNONYM = "genus synonym: ";
+    public static final String SUBFAMILY_PLACED = "placed in its subfamily: ";
+    /** GenusConceptRule.reason (2026-11-03). */
+    public static final String OLD_GENUS_CONCEPT = "Old genus concept: ";
+
+    /**
+     * Why a morphospecies or indet moved with its genus (Brian Fisher, 2026-11-03): the old genus's AntCat
+     * history, "Junior synonym of Allomerus: Longino &amp; Branstetter, 2026", as "genus synonym: Wasmannia is a
+     * junior synonym of Allomerus (Longino &amp; Branstetter 2026)". Without that entry, the "Senior synonym of"
+     * entry in the valid genus's history; without either, no reference. oldGenus, newGenus: genus TaxonInfo
+     * (name a display genus name, e.g. Wasmannia).
+     */
+    public static NameUpdateReason genusSynonym(TaxonInfo oldGenus, TaxonInfo newGenus) {
+        String o = oldGenus.name.toLowerCase(Locale.ROOT);
+        String n = newGenus.name.toLowerCase(Locale.ROOT);
+        String text = GENUS_SYNONYM + oldGenus.name + " is a junior synonym of " + newGenus.name;
+        String ref = oldGenus.history.juniorSynonymRef(s -> AntcatHistory.genusOf(s).equals(n));
+        if (ref != null) return new NameUpdateReason(text + refPart(ref), oldGenus.antcatId);
+        ref = newGenus.history.seniorSynonymRef(s -> AntcatHistory.genusOf(s).equals(o));
+        if (ref != null) return new NameUpdateReason(text + refPart(ref), newGenus.antcatId);
+        return new NameUpdateReason(text, oldGenus.antcatId != null ? oldGenus.antcatId : newGenus.antcatId);
+    }
+
+    /**
+     * A name filed without a subfamily ("(formicidae)pyramica ..."), now under its genus's subfamily (Brian
+     * Fisher, 2026-11-03): "placed in its subfamily: Pyramica is in Myrmicinae (the upload gave no subfamily)".
+     */
+    public static NameUpdateReason subfamilyPlaced(TaxonInfo genus, String subfamily) {
+        String sub = subfamily == null || subfamily.isEmpty() ? "?" : Character.toUpperCase(subfamily.charAt(0)) + subfamily.substring(1);
+        return new NameUpdateReason(SUBFAMILY_PLACED + genus.name + " is in " + sub + " (the upload gave no subfamily)", genus.antcatId);
+    }
+
     private static NameUpdateReason placed(TaxonInfo old, TaxonInfo target, String[] n, Integer fallbackId) {
         String[] species = {n[0], n[1]};
         Predicate<String> ofSpecies = s -> sameTaxon(parts(s), species, false);

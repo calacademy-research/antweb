@@ -420,7 +420,8 @@ public final class LoginEditPage {
         b.append("<div class=\"loginEdit\">\n<h1>Your login</h1>\n");
         b.append("<form action=\"").append(e(secureApp)).append("/saveLogin.do\" method=\"POST\">").append(csrfField == null ? "" : csrfField).append("\n");
         b.append("<input type=\"hidden\" name=\"id\" value=\"").append(s.id).append("\">\n");
-        b.append("<h2>Account</h2>\n<p class=\"hint\">Your email address receives password links and upload emails.</p>\n<table class=\"fields\">\n");
+        b.append("<h2>Account</h2>\n<p class=\"hint\">Your email address receives password links and upload emails;"
+            + " to change it, also enter your current password below.</p>\n<table class=\"fields\">\n");
         field(b, "Username", "name", "text", s.name, "username");
         field(b, "Email", "email", "text", s.email, "email");
         field(b, "First name", "firstName", "text", s.firstName, "given-name");

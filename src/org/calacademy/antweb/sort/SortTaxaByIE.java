@@ -34,12 +34,8 @@ public class SortTaxaByIE implements Comparator<Taxon>
 		boolean bIsIntroduced = false;
 		String aIntroducedMap = a.getIntroducedMap();
 		String bIntroducedMap = b.getIntroducedMap();
-		if (aIntroducedMap != null) {
-		  aIsIntroduced = !TaxonPropMgr.isBioregionNative(bioregion, aIntroducedMap);  
-		}
-		if (bIntroducedMap != null) {
-		  bIsIntroduced = !TaxonPropMgr.isBioregionNative(bioregion, bIntroducedMap);  
-		}
+		aIsIntroduced = TaxonPropMgr.isIntroducedIn(aIntroducedMap, bioregion);  // the rule of the nightly flags
+		bIsIntroduced = TaxonPropMgr.isIntroducedIn(bIntroducedMap, bioregion);  // the rule of the nightly flags
 
         boolean aIsEndemic = a.getTaxonSet().getIsEndemic();
         boolean bIsEndemic = b.getTaxonSet().getIsEndemic();

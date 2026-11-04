@@ -67,6 +67,14 @@ if (exception != null) {
     if (AntwebProps.isDevMode()) {
       AntwebUtil.log(logMessage + " 2 " + AntwebUtil.getStackTrace(exception));
     } else {
+      // The first lines of the stack trace, so the case number leads to the file and line (2026-11-02: production
+      // logged only "No stacktrace.").
+      String stack = AntwebUtil.getStackTrace(exception);
+      if (stack != null) {
+        String[] lines = stack.split("\n");
+        if (lines.length > 15) stack = String.join("\n", java.util.Arrays.copyOf(lines, 15)) + "\n...";
+        shortStack = stack;
+      }
       AntwebUtil.log(logMessage + " 3 " + shortStack);
     }
   }

@@ -10,6 +10,18 @@
 log_path="../logs/detail/rebootCheck.log"
 cd "$(dirname "$0")"
 
+# The log folder belongs to the container's tomcat user. This script runs as root on the host, so it never writes
+# through a link (2026-11-02): a link planted as the log file or as its folder could point at any host file.
+log_line() {
+    local dir
+    dir=$(dirname "$log_path")
+    if [[ -L "$log_path" || -L "$dir" || -L "$(dirname "$dir")" ]]; then
+        echo "reboot_checker: $log_path or its folder is a link; not written" >&2
+        return 0
+    fi
+    echo "$1" >> "$log_path"
+}
+
 dry_run=0
 [[ "$1" == "--dry-run" ]] && dry_run=1
 
@@ -57,33 +69,33 @@ elif [[ $is_busy == 1 && ( "$page_content" == *"<b>true</b>"* || "$page_content"
     str="Restart wanted but AntWeb is $busy; not restarting now, asking again in 5 minutes. $now"
     exit_code=0
     echo "$str"
-    echo "$str" >> "$log_path"
+    log_line "$str"
 
 elif [[ "$page_content" == *"<b>true</b>"* ]]; then
     str="Diagnostic: 'true' found in reboot_checker.sh. Container restart: $now"
     exit_code=0
     echo "$str"
-    echo "$str" >> "$log_path"
+    log_line "$str"
     docker restart antweb_antweb_1
 
 elif [[ "$page_content" == *"case#"* ]]; then
     str="Diagnostic: 'case#' found in reboot_checker.sh. Container restart: $now"
     exit_code=1
     echo "$str"
-    echo "$str" >> "$log_path"
+    log_line "$str"
     docker restart antweb_antweb_1
 
 elif [[ -z "$page_content" ]]; then
     str="Warning: Empty response (app may be down). No action taken. $now"
     exit_code=1
     echo "$str"
-    echo "$str" >> "$log_path"
+    log_line "$str"
 
 else
     str="Warning: Unexpected response. No action taken. $now"
     exit_code=1
     echo "$str"
-    echo "$str" >> "$log_path"
+    log_line "$str"
 fi
 
 exit $exit_code

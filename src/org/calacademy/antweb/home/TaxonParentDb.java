@@ -63,6 +63,22 @@ public class TaxonParentDb extends AntwebDb {
         + " where " + NAMES + " and (c.parent_taxon_name is null or c.parent_taxon_name <> g.taxon_name)";
 
     /**
+     * B78 (2026-11-03, Fossil ants): ant genera of a counted status that are their own current valid name and have no
+     * parent. The 15 incertae sedis fossil genera (Archaeopone, Baikuris, ...) and the morphogenus Ponerine genus2 came
+     * without one: the list shows them under their subfamily, but the subfamily row counts its genera by parent
+     * (Incertae sedis said 0 genera, the list 15). A genus without parent gets the row of its subfamily column, when that
+     * row exists. A genus that has a parent keeps it.
+     */
+    public static final String GENERA = "c.family = 'formicidae' and c.taxarank = 'genus' and c.status in " + PlaceTotals.COUNTABLE
+        + " and (c.current_valid_name is null or c.current_valid_name = '' or c.current_valid_name = c.taxon_name)"
+        + " and coalesce(c.subfamily, '') <> ''";
+
+    /** The parent of each genus of GENERA without parent set to its subfamily row, where that row exists. */
+    public static final String UPDATE_GENUS_PARENTS_SQL = "update taxon c join taxon s on s.taxon_name = c.subfamily and s.taxarank = 'subfamily'"
+        + " set c.parent_taxon_name = s.taxon_name"
+        + " where " + GENERA + " and coalesce(c.parent_taxon_name, '') = ''";
+
+    /**
      * Names of NAMES whose genus by name has no taxon row (reported, never repaired): name, status, and a genus row of
      * the same genus under another subfamily if there is one (the upload lacked the subfamily), else null.
      */
@@ -76,6 +92,8 @@ public class TaxonParentDb extends AntwebDb {
     public static final class Result {
         /** parents set to their genus row */
         public int parents;
+        /** genera without parent given their subfamily row (B78) */
+        public int genusParents;
         /** names whose genus has no taxon row (not changed), and of those the valid ones (an AntCat import problem) */
         public int missing;
         public int missingValid;
@@ -83,10 +101,10 @@ public class TaxonParentDb extends AntwebDb {
         public final java.util.List<String> examples = new java.util.ArrayList<>();
         public final java.util.List<String> validExamples = new java.util.ArrayList<>();
 
-        public boolean changed() { return parents > 0; }
+        public boolean changed() { return parents > 0 || genusParents > 0; }
 
         public String line() {
-            String line = "taxon parents (B36): " + parents + " parents set to the genus";
+            String line = "taxon parents (B36): " + parents + " parents set to the genus; (B78) " + genusParents + " genera given their subfamily";
             if (missing > 0) {
                 line += "; " + missing + " names whose genus has no taxon row, not changed (" + missingValid + " valid: AntCat import problem;"
                     + " others: subfamily missing in the upload, or not an ant), e.g. " + String.join(", ", examples);
@@ -111,6 +129,7 @@ public class TaxonParentDb extends AntwebDb {
         Result result = new Result();
         try (Statement stmt = getConnection().createStatement()) {
             result.parents = stmt.executeUpdate(UPDATE_PARENTS_SQL);
+            result.genusParents = stmt.executeUpdate(UPDATE_GENUS_PARENTS_SQL);
         }
         missing(result);
         if (result.changed() || result.missing > 0) s_log.info("repair() " + result.line());

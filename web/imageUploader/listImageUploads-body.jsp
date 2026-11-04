@@ -36,10 +36,11 @@
     //AntwebUtil.log("listImageUploads-body.jsp uploadsBy:" + uploadsBy);
 %>
 <%
-    // The way back from the list of all groups to one's own group's list (Brian Fisher, 2026-10-23).
+    // The way back from the list of all groups to one's own group's list (Brian Fisher, 2026-10-23). Only
+    // admins see every group's uploads, and only they get the link to that list (2026-11-02).
     Group accessGroup = GroupMgr.getAccessGroup(request);
 %>
-<p class="aw-crumbs"><a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a><% if (!"all".equals(uploadsBy)) { %> | <a id="all-image-uploads" href = "<%= domainApp %>/listImageUploads.do">All groups' image uploads</a><% } else if (accessGroup != null) { %> | <a id="own-group-image-uploads" href = "<%= domainApp %>/listImageUploads.do?groupId=<%= accessGroup.getId() %>"><%= Html.esc(accessGroup.getAbbrev()) %> image uploads</a><% } %></p>
+<p class="aw-crumbs"><a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a><% if (!"all".equals(uploadsBy) && LoginMgr.isAdmin(request)) { %> | <a id="all-image-uploads" href = "<%= domainApp %>/listImageUploads.do">All groups' image uploads</a><% } else if (accessGroup != null) { %> | <a id="own-group-image-uploads" href = "<%= domainApp %>/listImageUploads.do?groupId=<%= accessGroup.getId() %>"><%= Html.esc(accessGroup.getAbbrev()) %> image uploads</a><% } %></p>
 <% if (message != null) out.println("<h2 class=\"aw-title\">" + message + "</h2>"); %>
 <div class="aw-intro"><p>One line per batch of uploaded images, newest first: who uploaded it, the photographer, whether it
 finished and how many images it holds. The date opens the batch's report (images saved, and any not saved with the reason).</p></div>

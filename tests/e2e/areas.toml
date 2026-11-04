@@ -44,6 +44,7 @@ paths = [
 # login limit (10 a minute) and the test records are never shared. A test listed here that logs in
 # fails with "logs in but is listed in [parallel]" (antweb.post_login): remove it from the list.
 tests = [
+  "test_public_pages_rest.py",         # collections pages, adm1 reports and downloads, API doc, old recent edits address (2026-11-03)
   # whole files
   "test_actions.py",
   "test_api.py",
@@ -322,6 +323,7 @@ tests = [
   "test_curate_page_layout.py",
   "test_tool_pages_style.py",           # shared tool-page look (common/tools.css)
   "test_curator_species_lists.py",
+  "test_species_list_tool_save.py",   # Species List Tool save round trip: remove with a reason, marked in All, put back (2026-11-03)
   "test_display_cleanup.py",
   "test_group_form_help.py",
   "test_hardening_2026_10_18.py",
@@ -435,6 +437,7 @@ paths = [
   "src/org/calacademy/antweb/PlaceTaxonNotes.java",
 ]
 tests = [
+  "test_place_recalc.py",              # Update statistics on a country and an adm1, as admin (2026-11-03)
   "test_place_pages.py",               # place pages, their lists and species lists (step 2)
   "test_geolocale_edit.py",
   "test_geolocale_edit_page.py",
@@ -564,6 +567,9 @@ paths = [
   "bin/**",
 ]
 tests = [
+  "test_admin_pages_rest.py",          # curator and admin pages no test opened, read only (2026-11-03)
+  "test_admin_switches.py",            # upload down time on and off, admin alerts, password campaign preview (admin, 2026-11-03)
+  "test_museum_manager.py",            # Museum Manager save, rename, delete with confirmation (admin, 2026-11-03)
   "test_admin_staging.py",
   "test_reports_plain_language.py",
   "test_parts_by_group.py",
@@ -629,6 +635,7 @@ paths = [
   "web/util/statsPage*",
 ]
 tests = [
+  "test_public_pages_rest.py",         # the public pages no other test opened (2026-11-03)
   "test_site_links.py",                # links on every public page type, map popups included
   "test_home_page_links.py",
   "test_documentation_links.py",

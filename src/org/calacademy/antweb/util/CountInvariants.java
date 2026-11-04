@@ -48,7 +48,8 @@ import org.calacademy.antweb.home.PlaceTotals;
  *   geo.regions              a subregion's or region's Specimens <= the sum of its countries' Specimens
  *
  * A difference is "pending" (expected to go away after the next nightly run) when something changed after the
- * last nightly run (the place's list got a row, an upload, new images, renamed specimens) or when the number's
+ * last nightly run (the place's list got a row; an upload, new images or renamed specimens of that place, ChangedPlaces,
+ * 2026-11-03: until then any upload made every place's numbers pending) or when the number's
  * rule changed on 2026-10-21 and no nightly run has counted it that way yet (compute.log has no RULES_LOG line).
  * Every other difference is "real". Read-only.
  */
@@ -361,8 +362,15 @@ public final class CountInvariants {
         if (check.list && key != null && listChanged.getOrDefault(type, new HashSet<>()).contains(key)) {
             return "the list got a new row after the last nightly run";
         }
-        if (check.upload && result.uploadSinceNightly) return "specimens were uploaded after the last nightly run";
-        if (check.images && result.imagesSinceNightly) return "images were added after the last nightly run";
+        // Brian Fisher, 2026-11-03 (audit of 2026-11-02): an upload or new images make a place's numbers pending only when
+        // they touched that place (ChangedPlaces); numbers of the whole site (key null, type site) after any of them
+        boolean place = key != null && result.changed != null && !"site".equals(type);
+        if (check.upload && (place ? result.changed.specimens(type, key) : result.uploadSinceNightly)) {
+            return place ? ChangedPlaces.SPECIMENS_REASON : "specimens were uploaded after the last nightly run";
+        }
+        if (check.images && (place ? result.changed.images(type, key) : result.imagesSinceNightly)) {
+            return place ? ChangedPlaces.IMAGES_REASON : "images were added after the last nightly run";
+        }
         return null;
     }
 

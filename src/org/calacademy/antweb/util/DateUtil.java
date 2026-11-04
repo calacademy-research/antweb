@@ -223,6 +223,7 @@ public abstract class DateUtil {
   private static final java.util.regex.Pattern ZERO_DAY = java.util.regex.Pattern.compile("^(\\d{4})([-/])(\\d{1,2})\\2(0{1,2})$");
   private static final java.util.regex.Pattern DATE_TIME = java.util.regex.Pattern.compile("^\\d{4}-\\d{2}-\\d{2}[T ]\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z?$");
   private static final java.util.regex.Pattern ZERO_MONTH = java.util.regex.Pattern.compile("^(\\d{4})([-/])(0{1,2})(\\2(0{0,2}))?$");
+  private static final java.util.regex.Pattern DASHED_NUMERIC = java.util.regex.Pattern.compile("^(\\d{1,2})-(\\d{1,2})-(\\d{4})$");
 
   /**
    * An upload date as typed, made ready for parsing (Brian Fisher, 2026-10-27): trimmed, a trailing "/" or "-"
@@ -234,6 +235,10 @@ public abstract class DateUtil {
     String s = dateStr.trim();
     while (s.length() > 4 && (s.endsWith("/") || s.endsWith("-"))) s = s.substring(0, s.length() - 1).trim();
     if (DATE_TIME.matcher(s).matches()) s = s.substring(0, 10);  // "2012-03-27 15:48:09.0", "2012-03-27T00:00:00Z"
+    // "10-12-2012" is read as "10/12/2012" (2026-11-02): it was taken for a range and stored as 2012-01-01, with no
+    // note. Now month/day as for slashes, and listed as "Date read as month/day (please check)" when either could be.
+    java.util.regex.Matcher dashed = DASHED_NUMERIC.matcher(s);
+    if (dashed.matches()) s = dashed.group(1) + "/" + dashed.group(2) + "/" + dashed.group(3);
     java.util.regex.Matcher m = ZERO_MONTH.matcher(s);
     if (m.matches()) return m.group(1) + "-01-01";
     m = ZERO_DAY.matcher(s);

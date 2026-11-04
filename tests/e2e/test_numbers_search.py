@@ -27,8 +27,10 @@ specimens that the API finds by its country) and a genus of its list with at mos
           identified to genus left out (B52, fixed).
   row 66  locality.do "N collections": N = the collections listed = the distinct collection codes of the locality's
           specimens (search by locality code, read from the rows' "Collection:" links) (B51, fixed).
-  row 45  taxonomicPage.do and browse.do, admin "Subtaxon total" (admin test account): = the sum of the numbers in the
-          rows; for every kind of place: rank genus = the place's Species, rank subfamily = Genera, rank species <=
+  row 45  taxonomicPage.do and browse.do, admin column total (admin test account): = the sum of the numbers in the
+          rows; for every kind of place, in the view Curated: rank subfamily = the header of the genus list and <=
+          Genera, rank genus = the header of the species list (rows whose parent row is not on the list apart: B76,
+          fixed 2026-11-03; only parents that are not counted names stay an expected failure, B36), rank species <=
           Specimens; browse.do of a genus: = the sum of its rows, and its rows = the genus row's "N Species".
   row 19  statsPage.do Museum Data, Valid Fossil: for the day's museums, subfamilies, genera, species + subspecies =
           the headers of the museum's lists with statusSet "valid fossil" (TaxaPage, a different code path).
@@ -513,22 +515,35 @@ def _subtaxon(html):
     return int(m.group(1)) if m else None
 
 
+def _parent_of(row, rank):
+    """The parent row's taxon name of a list row of rank genus (its subfamily) or species (its genus: subfamily + genus,
+    the first word of the name), lower case; None when the row has no description link."""
+    if rank == "genus":
+        return ns.row_taxon_name(row, "subfamily")
+    name = row["name"]
+    return name.split(" ")[0] if name else None
+
+
 @pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")
 @needs("admin")
 def test_subtaxon_total_is_the_sum_of_the_rows_of_every_kind_of_place():
-    """Row 45: the admin "Subtaxon total" of taxonomicPage.do = the sum of the rows' numbers, for the day's place of
-    every kind, in the default view (Curated, 2026-11-02); rank subfamily <= Genera (fossil subfamilies are in the view
-    Fossil), rank genus <= the header of the species list in the same view (a genus row's Species are those of the view;
-    a name whose genus row is not on the list is under no row, B76), rank species <= Specimens (names not identified to
-    genus are in Specimens only); and on browse.do of a genus of the day's country = the sum of its rows, its rows =
-    the genus row's Species (the link keeps the view). A total above the expected number fails."""
+    """Row 45: the admin column total of taxonomicPage.do = the sum of the rows' numbers, for the day's place of every
+    kind, in the default view (Curated, 2026-11-02); rank subfamily = the header of the genus list in the same view (a
+    subfamily row's Genera are its genus rows of the view, B77 fixed 2026-11-03) and <= Genera of the place page (fossil
+    subfamilies are in the view Fossil); rank genus = the header of the species list in the same view (a genus row's
+    Species are those of the view); rank species <= Specimens (names not identified to genus are in Specimens only); and
+    on browse.do of a genus of the day's country = the sum of its rows, its rows = the genus row's Species (the link keeps
+    the view). B76 (fixed 2026-11-03): a row whose parent row is not on the list is under no row of the list; the nightly
+    count adds the missing parent rows (ParentRows), so such a row fails, unless its parent is not a counted genus or
+    subfamily (a placeholder, another status, or no taxon row, B36): those are listed as an expected failure. Until a
+    nightly run has added the parent rows (compute.log "Set 3 done" line) the test skips as pending."""
     s, _token, _id = login("admin")
-    wrong, checked, known = [], [], []
+    wrong, checked, known, missing = [], [], [], []
     for p in ns.one_place_of_each_kind("subtaxon"):
         stats = ns.place_stats(ns.fetch(p.page, s) or "")
         if "species" not in stats:
             continue
-        for rank, stat, rule in (("subfamily", "genera", "<="), ("genus", "species list", "<="), ("species", "specimens", "<=")):
+        for rank, child_rank in (("subfamily", "genus"), ("genus", "species"), ("species", None)):
             if rank != "subfamily" and stats.get("species", 0) > 1500:
                 continue   # a list too long for the time of a test
             html = ns.fetch(p.list_url(rank), s)
@@ -538,21 +553,37 @@ def test_subtaxon_total_is_the_sum_of_the_rows_of_every_kind_of_place():
             rows = ns.list_rows(html)
             summed = sum(_row_number(r["html"]) for r in rows)
             if total != summed:
-                wrong.append(f"{p} rank={rank}: Subtaxon total {total}, rows add up to {summed}")
-            if stat == "species list":
-                expected, _text = ns.header(ns.fetch(p.list_url("species"), s) or "")
-                if expected is None:
-                    continue
-            else:
-                expected = stats.get(stat, 0)
-            if rule == "=" and total < expected:
-                # B76: the place counts every counted row of the rank; a row counts under its parent row only when its
-                # parent (taxon.parent_taxon_name) is a row of the list, so names with no parent, or whose parent row
-                # is not on the place's list, are in the place number and under no row of the list.
-                known.append(f"{p} rank={rank}: Subtaxon total {total}, place {stat} {expected}")
-            elif (rule == "=" and total != expected) or (rule == "<=" and total > expected):
-                wrong.append(f"{p} rank={rank}: Subtaxon total {total}, place {stat} {expected} (must be {rule})")
+                wrong.append(f"{p} rank={rank}: column total {total}, rows add up to {summed}")
             checked.append(f"{p} {rank}")
+            if child_rank is None:
+                if total > stats.get("specimens", 0):
+                    wrong.append(f"{p} rank=species: column total {total}, place Specimens {stats.get('specimens', 0)} (must be <=)")
+                continue
+            if rank == "subfamily" and total > stats.get("genera", 0):
+                wrong.append(f"{p} rank=subfamily: column total {total}, place Genera {stats.get('genera', 0)} (must be <=)")
+            child_html = ns.fetch(p.list_url(child_rank), s) or ""
+            expected, _text = ns.header(child_html)
+            if expected is None:
+                continue
+            # the rows of the child list (same view) whose parent row is not on this list are under no row (B76)
+            parents = {ns.row_taxon_name(r, rank) for r in rows}
+            orphans = {}
+            for cr in ns.list_rows(child_html):
+                parent = _parent_of(cr, child_rank)
+                if parent is not None and parent not in parents:
+                    orphans.setdefault(parent, []).append(cr["name"] or ns.row_taxon_name(cr, "genus") or "?")
+            under_none = sum(len(v) for v in orphans.values())
+            if total + under_none != expected:
+                wrong.append(f"{p} rank={rank}: column total {total} + {under_none} rows under no row, header of the {child_rank}"
+                             f" list {expected} (must be =)")
+            if orphans:
+                counted = ns.counted_subfamily_names() if rank == "subfamily" else ns.counted_genus_names()
+                for parent, names in sorted(orphans.items()):
+                    line = f"{p} rank={rank}: {len(names)} {child_rank} rows under {parent!r}, not on the list ({', '.join(names[:3])})"
+                    if counted is not None and parent in counted:
+                        missing.append(line)   # a counted parent: the nightly count adds its row (ParentRows)
+                    else:
+                        known.append(line)
             if p.kind == "country" and rank == "genus" and rows:
                 r = ns.pick(rows, 1, "subtaxon-browse")[0]
                 link = re.search(r"href='[^']*/browse\.do\?([^']+)'", r["html"])
@@ -563,14 +594,20 @@ def test_subtaxon_total_is_the_sum_of_the_rows_of_every_kind_of_place():
                     if btotal is not None:
                         bsum = sum(_row_number(b["html"]) for b in brows)
                         if btotal != bsum:
-                            wrong.append(f"{p} browse.do?{link.group(1)}: Subtaxon total {btotal}, rows add up to {bsum}")
+                            wrong.append(f"{p} browse.do?{link.group(1)}: column total {btotal}, rows add up to {bsum}")
                         if len(brows) != _row_number(r["html"]):
                             wrong.append(f"{p} browse.do?{link.group(1)}: {len(brows)} rows, genus row {_row_number(r['html'])} Species")
     if not checked:
-        pytest.skip("no list with a Subtaxon total " + ns.day_note())
+        pytest.skip("no list with a column total " + ns.day_note())
+    pending = bool(missing) and ns.parent_rows_added() is False
+    if not pending:
+        wrong += [m + " (its parent is a counted name: the nightly count should have added its row, B76)" for m in missing]
     assert not wrong, f"{len(checked)} lists {ns.day_note()} (place numbers of the last nightly run):\n" + "\n".join(wrong + known)
+    if pending:
+        pytest.skip(ns.rules_pending_note("missing parent rows of 2026-11-03 (B76)") + ":\n" + "\n".join(missing + known))
     if known:
-        pytest.xfail("B76 (open): place numbers count names under no row of the list:\n" + "\n".join(known))
+        pytest.xfail("B36: rows whose parent is not a counted name (a placeholder, another status, or no taxon row) are"
+                     " under no row of the list:\n" + "\n".join(known))
 
 
 # ----------------------------------------------------------------------------------------------- row 19

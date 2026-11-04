@@ -35,10 +35,15 @@ public final class StatsPageAction extends AntwebAction {
      * first visit, which counts once; that copy is kept until the next nightly run. The page says when the tables were
      * counted ("statsCountedAt").
      */
-    private static java.util.Map<String, Object> s_numbers = null;
+    private static volatile java.util.Map<String, Object> s_numbers = null;
+
+    // One count at a time (the nightly recount or the first visit after a restart). Visits never wait for a
+    // recount: they show the kept copy until the new one replaces it (2026-11-02; before, every visit waited for
+    // the whole count, and after a restart each waiting visit held a database connection).
+    private static final Object COUNT_LOCK = new Object();
 
     /** The kept tables, or null when there are none yet (after a restart). */
-    static synchronized java.util.Map<String, Object> keptNumbers() {
+    static java.util.Map<String, Object> keptNumbers() {
         return s_numbers;
     }
 
@@ -46,7 +51,7 @@ public final class StatsPageAction extends AntwebAction {
     public static String recount(Connection connection) {
         try {
             long start = System.currentTimeMillis();
-            synchronized (StatsPageAction.class) {
+            synchronized (COUNT_LOCK) {
                 s_numbers = count(connection);
             }
             return "statistics page tables counted in " + (System.currentTimeMillis() - start) / 1000 + " s";
@@ -57,9 +62,13 @@ public final class StatsPageAction extends AntwebAction {
     }
 
     /** The kept tables, or (none yet) counted now and kept. One count at a time. */
-    static synchronized java.util.Map<String, Object> numbers(Connection connection) throws SQLException {
-        if (s_numbers == null) s_numbers = count(connection);
-        return s_numbers;
+    static java.util.Map<String, Object> numbers(Connection connection) throws SQLException {
+        java.util.Map<String, Object> kept = s_numbers;
+        if (kept != null) return kept;
+        synchronized (COUNT_LOCK) {
+            if (s_numbers == null) s_numbers = count(connection);
+            return s_numbers;
+        }
     }
 
     private static java.util.Map<String, Object> count(Connection connection) throws SQLException {
@@ -91,6 +100,13 @@ public final class StatsPageAction extends AntwebAction {
 
         Connection connection = null;
         String dbMethodName = DBUtil.getDbMethodName("StatsPageAction.execute()");
+        // No copy yet (after a restart): one visit counts; the others wait here without holding a connection.
+        synchronized (COUNT_LOCK) {
+          kept = keptNumbers();
+          if (kept != null) {
+            for (java.util.Map.Entry<String, Object> e : kept.entrySet()) request.setAttribute(e.getKey(), e.getValue());
+            return mapping.findForward("success");
+          }
         try {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, dbMethodName);
@@ -104,6 +120,7 @@ public final class StatsPageAction extends AntwebAction {
         } finally { 		
             DBUtil.close(connection, this, dbMethodName);
         }        
+        }
         
 		if (success) {
 		    return mapping.findForward("success");

@@ -38,8 +38,10 @@ import org.calacademy.antweb.util.*;
  * upload report's "Recognized invalid species" section, the reason with AntCat's reference (linked to
  * the AntCat page of the taxon whose history gave it; NameUpdateReason), the number of specimens and
  * their codes. Rows recorded before the reason existed show the AntCat status of the old name.
- * Two lists of the latest run come first: "Needs the curator's decision" (names shared by two or more
- * AntCat taxa) and, collapsed, "Not moved: filed under a name AntCat calls valid" (keptValidHtml).
+ * Lists of the latest run come first: "Needs the curator's decision" (names shared by two or more
+ * AntCat taxa) and, collapsed, "Not moved: filed under a name AntCat calls valid" (keptValidHtml) and
+ * "Not moved: genus not in AntCat" (noGenusHtml, 2026-11-03) and "Not moved: combination not in AntCat"
+ * (noCombinationHtml, with the list for the AntCat editors, 2026-11-03).
  */
 public final class NameUpdatesAction extends AntwebAction {
 
@@ -80,6 +82,8 @@ public final class NameUpdatesAction extends AntwebAction {
             List<SpecimenNameUpdateDb.Line> lines = groupId < 0 ? new ArrayList<>() : db.getLines(groupId, runs);
             List<SpecimenNameUpdateDb.Line> shared = groupId < 0 ? new ArrayList<>() : db.getShared(groupId);
             List<SpecimenNameUpdateDb.Line> keptValid = groupId < 0 ? new ArrayList<>() : db.getKeptValid(groupId);
+            List<SpecimenNameUpdateDb.Line> noGenus = groupId < 0 ? new ArrayList<>() : db.getNoGenus(groupId);
+            List<SpecimenNameUpdateDb.Line> noCombination = groupId < 0 ? new ArrayList<>() : db.getNoCombination(groupId);
             List<Integer> groupIds = isAdmin ? db.getGroupIds() : new ArrayList<>();
 
             StringBuilder html = new StringBuilder();
@@ -90,6 +94,8 @@ public final class NameUpdatesAction extends AntwebAction {
             html.append("<div class=\"aw-card\" id=\"name-updates-report\">");
             html.append(sharedHtml(shared, AntwebProps.getDomainApp(), shared.isEmpty() ? SharedNames.none() : SharedNames.load(connection)));
             html.append(keptValidHtml(keptValid, AntwebProps.getDomainApp()));
+            html.append(noGenusHtml(noGenus, AntwebProps.getDomainApp()));
+            html.append(noCombinationHtml(noCombination, groupId == 0 ? db.getCombinationsForAntcat() : null, AntwebProps.getDomainApp()));
             html.append(linesHtml(runs, lines, AntwebProps.getDomainApp()));
             html.append("</div>");
             request.setAttribute("html", html.toString());
@@ -240,6 +246,87 @@ public final class NameUpdatesAction extends AntwebAction {
                     b.append(", which AntCat now gives as ").append(Taxon.makeDescriptionLink(line.newName));
                 }
                 b.append(")");
+            }
+            appendCodes(b, line, domainApp);
+            b.append("</li>");
+        }
+        if (open) b.append("</ul>");
+        return b.append("</details>").toString();
+    }
+
+    static final String NO_GENUS_HELP = "These specimens were uploaded without a subfamily, and AntCat has no genus of the name given"
+        + " (often a misspelling). They are not corrected by guess: please correct the genus in your data and upload again.";
+
+    /**
+     * Brian Fisher, 2026-11-03: names filed without a subfamily whose genus AntCat does not have ("(formicidae)stumigenys
+     * ..."), collapsed, for the curator to correct (SpecimenNameUpdate.NO_GENUS).
+     */
+    public static String noGenusHtml(List<SpecimenNameUpdateDb.Line> lines, String domainApp) {
+        if (lines.isEmpty()) return "";
+        StringBuilder b = new StringBuilder("<details class=\"name-update-no-genus-section\" style=\"margin:18px 0 6px\">"
+            + "<summary style=\"" + SECTION_STYLE + ";cursor:pointer\">Not moved: genus not in AntCat ("
+            + String.format("%,d", lines.size()) + (lines.size() == 1 ? " name" : " names") + ")</summary>"
+            + "<p>" + Html.esc(NO_GENUS_HELP) + "</p>");
+        int lastGroup = Integer.MIN_VALUE;
+        boolean open = false;
+        for (SpecimenNameUpdateDb.Line line : lines) {
+            if (line.groupId != lastGroup) {
+                if (open) b.append("</ul>");
+                b.append("<h4>").append(Html.esc(groupName(line.groupId))).append("</h4><ul>");
+                open = true;
+                lastGroup = line.groupId;
+            }
+            b.append("<li class=\"name-update-no-genus\">").append(Taxon.makeDescriptionLink(line.oldName));
+            if (line.uploadedName != null && !line.uploadedName.isEmpty() && !line.uploadedName.equals(line.oldName)) {
+                b.append(" (uploaded as ").append(Taxon.makeDescriptionLink(line.uploadedName)).append(")");
+            }
+            appendCodes(b, line, domainApp);
+            b.append("</li>");
+        }
+        if (open) b.append("</ul>");
+        return b.append("</details>").toString();
+    }
+
+    static final String NO_COMBINATION_HELP = "These specimens are filed under a genus AntCat now treats as a junior synonym,"
+        + " with a species name AntCat has no record of in that genus. They are not moved by guess (the same epithet in the"
+        + " senior genus may be another species). The list goes to the AntCat editors; once AntCat has the combination,"
+        + " the specimens move to the current valid name the next night.";
+
+    /**
+     * Brian Fisher, 2026-11-03: names left under a synonym genus because AntCat does not have the combination
+     * (SpecimenNameUpdate.NO_COMBINATION), collapsed; for all groups also the list for the AntCat editors
+     * (old genus, epithet, senior genus, specimens, groups). combinations: null to leave that list out.
+     */
+    public static String noCombinationHtml(List<SpecimenNameUpdateDb.Line> lines, List<String[]> combinations, String domainApp) {
+        if (lines.isEmpty()) return "";
+        StringBuilder b = new StringBuilder("<details class=\"name-update-no-combination-section\" style=\"margin:18px 0 6px\">"
+            + "<summary style=\"" + SECTION_STYLE + ";cursor:pointer\">Not moved: combination not in AntCat ("
+            + String.format("%,d", lines.size()) + (lines.size() == 1 ? " name" : " names") + ")</summary>"
+            + "<p>" + Html.esc(NO_COMBINATION_HELP) + "</p>");
+        if (combinations != null && !combinations.isEmpty()) {
+            b.append("<table class=\"name-update-combinations\"><tr><th>Genus (synonym)</th><th>Species part</th><th>Senior genus in AntCat</th>"
+                + "<th>Specimens</th><th>Groups</th></tr>");
+            for (String[] c : combinations) {
+                b.append("<tr><td><i>").append(Html.esc(c[0])).append("</i></td><td>").append(Html.esc(c[1])).append("</td><td><i>")
+                 .append(Html.esc(c[2])).append("</i></td><td>").append(Html.esc(c[3])).append("</td><td>").append(Html.esc(c[4])).append("</td></tr>");
+            }
+            b.append("</table>");
+        }
+        int lastGroup = Integer.MIN_VALUE;
+        boolean open = false;
+        for (SpecimenNameUpdateDb.Line line : lines) {
+            if (line.groupId != lastGroup) {
+                if (open) b.append("</ul>");
+                b.append("<h4>").append(Html.esc(groupName(line.groupId))).append("</h4><ul>");
+                open = true;
+                lastGroup = line.groupId;
+            }
+            b.append("<li class=\"name-update-no-combination\">").append(Taxon.makeDescriptionLink(line.oldName));
+            if (line.uploadedName != null && !line.uploadedName.isEmpty() && !line.uploadedName.equals(line.oldName)) {
+                b.append(" (uploaded as ").append(Taxon.makeDescriptionLink(line.uploadedName)).append(")");
+            }
+            if (line.newName != null && !line.newName.isEmpty()) {
+                b.append(", genus now <i>").append(Html.esc(Taxon.getPrettyTaxonName(line.newName))).append("</i>");
             }
             appendCodes(b, line, domainApp);
             b.append("</li>");

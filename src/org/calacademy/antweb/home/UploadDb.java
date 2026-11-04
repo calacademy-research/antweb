@@ -391,19 +391,18 @@ public class UploadDb extends AntwebDb {
 
     public void updateGroup(Group accessGroup) {
         //s_log.warn("updateGroup()");
-        String dml = null;
-        Statement stmt = null;
         int uploadCount = getUploadCount(accessGroup.getId());
         Timestamp firstUpload = getFirstUploadDate(accessGroup.getId());
-        try {
-            stmt = DBUtil.getStatement(getConnection(), "updateUpload()");
-            dml = "update ant_group set first_specimen_upload = '" + firstUpload + "', upload_count = " + uploadCount + " where id = " + accessGroup.getId();
-            //A.log("updateGroup insert:" + dml);
-            stmt.executeUpdate(dml);
+        // Bound (2026-11-02): a group without a dated upload wrote the text 'null' into the datetime column, the
+        // update failed and upload_count was not updated either.
+        String dml = "update ant_group set first_specimen_upload = ?, upload_count = ? where id = ?";
+        try (PreparedStatement stmt = getConnection().prepareStatement(dml)) {
+            stmt.setTimestamp(1, firstUpload);
+            stmt.setInt(2, uploadCount);
+            stmt.setInt(3, accessGroup.getId());
+            stmt.executeUpdate();
         } catch (SQLException e) {
             s_log.error("updateUpload() e:" + e);
-        } finally {
-           DBUtil.close(stmt, null, this, "updateUpload()");
         }
     }
 

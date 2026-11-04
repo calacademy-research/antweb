@@ -210,6 +210,7 @@ unused and backup is a search of the code for SQL that names the table (2026-10-
 | `taxon_set_parked` | [5](#taxon_set_parked) | in use (2026-10-19) |
 | `place_genus_curation` | [5](#place_genus_curation) | in use (2026-11-02) |
 | `place_specimen_name` | [5](#place_specimen_name) | in use (2026-11-02) |
+| `list_removal_log` | [5](#list_removal_log) | in use (2026-11-03) |
 | `image` | [6](#image) | in use |
 | `group_image` | [6](#group_image) | in use |
 | `image_upload`, `image_uploaded` | [6](#image_upload) | in use |
@@ -230,6 +231,7 @@ unused and backup is a search of the code for SQL that names the table (2026-10-
 | `upload_line` | [8](#upload_line) | in use |
 | `worldants_upload` | [8](#worldants_upload) | in use |
 | `specimen_name_update` | [8](#specimen_name_update) | in use (2026-10-20) |
+| `genus_concept_rule` | [8](#genus_concept_rule) | in use (2026-11-03) |
 | `background_job` | [8](#background_job) | in use (2026-10-20) |
 | `object_map` | [8](#object_map) | in use |
 | `ant_group` | [9](#ant_group) | in use |
@@ -609,11 +611,16 @@ species list upload (`ProjTaxonDb.insertItem`, `delete`).
 **Purpose.** Names a curator removed from a country's or adm1's list although specimens put them there: the nightly
 rebuild (set 2) removes them again (`generateGeolocaleTaxaFromSpecimens`).
 
-**Key columns.** `geolocale_id`, `taxon_name`, `source`, `rev`, `curator_id`, `created`.
+**Key columns.** `geolocale_id`, `taxon_name`, `source`, `rev`, `curator_id`, `created`, `reason` (since 2026-11-03,
+nullable varchar(255): the curator's "Reason for removing (shown with the name)" in the Species List Tool, optional;
+`TaxonSetLogDb.insertDispute(taxonSet, reason)`; added at startup by `ListRemovalLog.ensureSchema`, record
+`db/upgrade/8.115/2026-11-03-list-removal-log.sql`).
 
 **Written by.** `GeolocaleTaxonLogDb.insertDispute`, `removeDispute` (curators' species list tool, `SpeciesListDb`).
 
-**Read by.** `GeolocaleTaxonLogDb.getDispute(s)`, set 2, admin query.
+**Read by.** `GeolocaleTaxonLogDb.getDispute(s)`, set 2, admin query; the view All specimen names, which shows the
+removed names collected in the place, marked "removed from the list by <curator> (<date>): <reason>"
+(`ListView.loadRemovals`, Brian Fisher 2026-11-03: transparency).
 
 **Numbers.** Indirectly #20 to #26 (rows it removes are not counted).
 
@@ -623,7 +630,8 @@ rebuild (set 2) removes them again (`generateGeolocaleTaxaFromSpecimens`).
 
 **Purpose.** The same for project lists.
 
-**Key columns.** `project_name`, `taxon_name`, `source`, `rev`, `curator_id`, `created`.
+**Key columns.** `project_name`, `taxon_name`, `source`, `rev`, `curator_id`, `created`, `reason` (since 2026-11-03, as
+`geolocale_taxon_dispute.reason`).
 
 **Written by.** `ProjTaxonLogDb.insertDispute`, `removeDispute`. **Read by.** `ProjTaxonLogDb`,
 `ProjTaxonDb.regenerateAllAntweb`, admin query.
@@ -708,6 +716,43 @@ table (2026-11-02, speed).
 **Written by.** As `place_genus_curation`. **Read by.** `ListView.loadStoredPlaceSpecimens`, `ListView.hereCondition`.
 
 **Status.** In use (2026-11-02).
+
+### `list_removal_log`
+
+**Purpose.** The record of every name removed from a country's, adm1's, region's, subregion's or project's species
+list, by a curator or by a job (Brian Fisher, 2026-11-03: "We need transparency: transparency in source, and if
+something is deleted, we still need transparency").
+
+**Key.** `id` (auto). **Key columns.** `list_type` ('geolocale' or 'project'), `list_key` (geolocale id or project
+name), `taxon_name`, `source` (of the removed row), `removed_by_login` (the curator, or null), `removed_by_job` (the job,
+or null), `reason` (the curator's or the job's, or null), `removed_at`. Indexes (`list_type`, `list_key`, `taxon_name`)
+and (`removed_at`).
+
+**Written by.** `home.ListRemovalLog`, just before each delete, by the same condition: the Species List Tool's save
+(`SpeciesListDb.saveTaxonSet`: curator and reason, one batch per save); nightly set 2's clean-up (`TaxonSetDb.dataCleanup`:
+"nightly clean-up: morphospecies with no specimens", `GeolocaleTaxonDb` and `ProjTaxonDb.deleteUncuratedMorphosWithoutSpecimen`;
+"nightly clean-up: name no longer in AntWeb", `deleteGeolocaleTaxaWithoutTaxon` and the project rows without a taxon;
+the curators' rows of those names are parked first, `taxon_set_parked`, and come back); the orphan tool
+(`OrphansDb.deleteTaxon`: "orphan tool: name deleted"). Not the routine rebuilds (the rows from specimens deleted and
+inserted again each night, the AntCat rows of set 1, the Global list allantwebants, the proxy and childless genus rows
+of set 5). Created at startup when missing (`ListRemovalLog.ensureSchema`, from `LoginMgr`; DDL only when missing, as a
+CREATE commits an open transaction). Record: `db/upgrade/8.115/2026-11-03-list-removal-log.sql`.
+
+**One-off data scripts** that delete list rows write the same record first, with the delete's condition on alias `l`
+(`ListRemovalLog.scriptSql` gives it):
+
+```
+insert into list_removal_log (list_type, list_key, taxon_name, source, removed_by_job, reason, removed_at)
+  select 'geolocale', l.geolocale_id, l.taxon_name, l.source, 'script 2026-11-03 <name>', '<why>', now()
+  from geolocale_taxon l where <the delete's condition>;
+-- projects: 'project', l.project_name ... from proj_taxon l
+```
+
+**Read by.** The view All specimen names of a place's species list (`ListView.loadRemovals`, with the disputes; one load
+per page): a removed name collected in the place is shown, marked "removed from the list by <curator or job> (<date>):
+<reason>", the newest record of each name that is not on the list now.
+
+**Status.** In use (2026-11-03).
 
 ## 6. Images
 
@@ -964,6 +1009,21 @@ from `information_schema` on every upload, at most 100, `GROUP_NAME_WIDTH`) and 
 `worldantsUploads` (`query.do`), `WorldantsUploadDb.getWorldantsChangeCount` (the size guard).
 
 **Status.** In use.
+
+### `genus_concept_rule`
+
+**Purpose.** Old genus concepts approved by Brian Fisher (2026-11-03): in a bioregion, the morphospecies and indets of an old
+genus belong to a new genus (rule 1: Mesoponera in the Afrotropical and Malagasy bioregions = Xiphopelta). The nightly name
+update and the specimen upload move them, keeping the code part of the name and recording the reason.
+
+**Key.** `id` (auto); unique (`old_genus`, `bioregion`). **Key columns.** `old_genus`, `bioregion`, `new_genus` (genus taxon
+names), `status` ('approved' or 'rejected'), `approved_by`, `approved_at`, `note`.
+
+**Written by.** `upload.GenusConceptRuleDb` (`ensureSchema` creates it and seeds rule 1 when empty); the admin page
+`genusConceptRules.do` (Approve / Reject a proposal). **Read by.** `upload.GenusConceptRule` (nightly name update,
+`SpecimenUploadProcess`), `upload.GenusConceptProposals` (proposals leave out decided pairs).
+
+**Status.** In use (2026-11-03).
 
 ### `specimen_name_update`
 

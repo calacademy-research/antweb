@@ -70,7 +70,10 @@ import java.util.Set;
  * to disappear after the next nightly run) when, after the end of the last nightly run (08:15): a
  * specimen of that name was uploaded, or specimens were moved to or from that name (name update by
  * hand), or the list row was added, or (for a stored number higher than the recount, or a species or
- * genus count) any specimen upload happened (an upload can remove specimens and list rows). Every
+ * genus count, or a number of the place itself) an upload, rename or image touched that place
+ * (ChangedPlaces: its specimens, or the names of its list for projects; Brian Fisher, 2026-11-03, audit of
+ * 2026-11-02: until then any specimen upload anywhere made every difference of every place pending). The
+ * Global column (allantwebants, every specimen in AntWeb) is touched by any upload. Every
  * other difference is "real". Between 05:00 and 08:15 the nightly run is still writing the numbers:
  * the check says so and the e2e test skips.
  */
@@ -203,6 +206,12 @@ public class CountCheck {
         public boolean regionRuleCounted = true;
         /** A nightly run has counted by the rules of 2026-10-21 (CountInvariants.RULES_LOG). */
         public boolean rulesCounted = true;
+        /**
+         * The places touched by uploads, renames and images after the last nightly count (Brian Fisher, 2026-11-03): only
+         * their numbers are pending for those reasons; null when they could not be read (then any upload makes every
+         * difference pending, as before).
+         */
+        public ChangedPlaces changed;
         /** The invariants over every place (null when not run). */
         public CountInvariants invariants;
         /** The live database's tables and columns against the committed snapshot (SchemaCheck, 2026-10-22; null when not run). */
@@ -308,6 +317,14 @@ public class CountCheck {
         if (lastRunEnd != null && !result.inNightlyWindow) result.countedUntil = lastRunEnd;
         Set<String> changedNames = changedNamesSince(result);
         imagesSince(result);
+        // 2026-11-03 (audit of 2026-11-02): an upload, rename or image makes the numbers of the places it touched pending,
+        // not those of every place (ChangedPlaces)
+        try {
+            result.changed = ChangedPlaces.load(connection, result.countedUntil, result.uploadSinceNightly, result.imagesSinceNightly);
+        } catch (SQLException | RuntimeException e) {
+            result.changed = null;
+            result.notes.add("The places touched by today's uploads could not be read (" + e + "): any upload makes every difference pending.");
+        }
 
         if (invariants) {
             result.invariants = new CountInvariants(connection, result, changedNames, rulesCounted);
@@ -589,10 +606,9 @@ public class CountCheck {
         }
         String pending = !result.rulesCounted ? CountInvariants.RULES_PENDING
             : place.isFromCountries() && !result.regionRuleCounted ? REGION_RULE_PENDING
-            : result.imagesSinceNightly ? "images were added after the last nightly run"
-            : result.uploadSinceNightly ? "specimens were uploaded after the last nightly run"
-            : listChanged ? "the list got a new row after the last nightly run"
-            : !changedNames.isEmpty() ? "specimens were renamed after the last nightly run" : null;
+            : imagesChanged(result, place) != null ? imagesChanged(result, place)
+            : specimensChanged(result, place, changedNames) != null ? specimensChanged(result, place, changedNames)
+            : listChanged ? "the list got a new row after the last nightly run" : null;
         int rows = 0;
         Set<String> shots = new java.util.TreeSet<>(recount.keySet());
         shots.addAll(storedShots.keySet());
@@ -658,9 +674,8 @@ public class CountCheck {
             }
             String pending = !result.rulesCounted ? CountInvariants.RULES_PENDING
                 : place.isFromCountries() && !result.regionRuleCounted ? REGION_RULE_PENDING
-                : result.uploadSinceNightly ? "specimens were uploaded after the last nightly run"
-                : listChanged ? "the list got a new row after the last nightly run"
-                : !changedNames.isEmpty() ? "specimens were renamed after the last nightly run" : null;
+                : specimensChanged(result, place, changedNames) != null ? specimensChanged(result, place, changedNames)
+                : listChanged ? "the list got a new row after the last nightly run" : null;
             result.mismatches.add(new Mismatch(place, "place specimens", "Specimens", stored, recount, pending));
         }
         return 1;
@@ -699,9 +714,8 @@ public class CountCheck {
         }
         if (stored != recount) {
             String pending = !result.rulesCounted ? CountInvariants.RULES_PENDING
-                : result.uploadSinceNightly ? "specimens were uploaded after the last nightly run"
-                : listChangedSince(place, result) ? "the list got a new row after the last nightly run"
-                : !changedNames.isEmpty() ? "specimens were renamed after the last nightly run" : null;
+                : specimensChanged(result, place, changedNames) != null ? specimensChanged(result, place, changedNames)
+                : listChangedSince(place, result) ? "the list got a new row after the last nightly run" : null;
             result.mismatches.add(new Mismatch(place, "place specimens", "Specimens", stored, recount, pending));
         }
         return 1;
@@ -738,9 +752,8 @@ public class CountCheck {
         }
         if (stored != recount) {
             String pending = !result.rulesCounted ? CountInvariants.RULES_PENDING
-                : result.uploadSinceNightly ? "specimens were uploaded after the last nightly run"
-                : listChangedSince(place, result) ? "the list got a new row after the last nightly run"
-                : !changedNames.isEmpty() ? "specimens were renamed after the last nightly run" : null;
+                : specimensChanged(result, place, changedNames) != null ? specimensChanged(result, place, changedNames)
+                : listChangedSince(place, result) ? "the list got a new row after the last nightly run" : null;
             result.mismatches.add(new Mismatch(place, "place specimens", "Specimens", stored, recount, pending));
         }
         return 1;
@@ -829,9 +842,9 @@ public class CountCheck {
                     String pending = rowPending(r.getTimestamp(3), result);
                     if (pending == null && place.isFromCountries() && !result.regionRuleCounted) pending = REGION_RULE_PENDING;
                     if (pending == null && !antImagesRuleCounted) pending = ANT_IMAGES_PENDING;
-                    if (pending == null && result.imagesSinceNightly) pending = "images were added after the last nightly run";
+                    if (pending == null) pending = imagesChanged(result, place);
                     if (pending == null && changedNames.contains(name)) pending = "specimens of this name uploaded or renamed after the last nightly run";
-                    if (pending == null && result.uploadSinceNightly) pending = "specimens were uploaded after the last nightly run";
+                    if (pending == null) pending = specimensChanged(result, place, null);
                     result.mismatches.add(new Mismatch(place, "images", name, s, c, pending));
                 }
             }
@@ -888,6 +901,25 @@ public class CountCheck {
         return null;
     }
 
+    /**
+     * Why the place's numbers may differ because of specimens (Brian Fisher, 2026-11-03): specimens of the place were
+     * uploaded or renamed after the last nightly count (ChangedPlaces), or null. Until 2026-11-03 any upload anywhere (or
+     * any rename) made it pending. Without ChangedPlaces (not read): as before.
+     */
+    static String specimensChanged(Result result, Place place, Set<String> changedNames) {
+        if (result.changed == null) {
+            return result.uploadSinceNightly ? "specimens were uploaded after the last nightly run"
+                : changedNames != null && !changedNames.isEmpty() ? "specimens were renamed after the last nightly run" : null;
+        }
+        return result.changed.specimens(place.type, place.key) ? ChangedPlaces.SPECIMENS_REASON : null;
+    }
+
+    /** The same for images: images of the place's specimens were added after the last nightly count, or null. */
+    static String imagesChanged(Result result, Place place) {
+        if (result.changed == null) return result.imagesSinceNightly ? "images were added after the last nightly run" : null;
+        return result.changed.images(place.type, place.key) ? ChangedPlaces.IMAGES_REASON : null;
+    }
+
     /** Species and subspecies rows: specimen_count against the specimens in the place. */
     int checkSpecimens(Place place, Result result, Set<String> changedNames) throws SQLException {
         String t = place.table();
@@ -933,7 +965,8 @@ public class CountCheck {
                     String pending = rowPending(r.getTimestamp(3), result);
                     if (pending == null && place.isFromCountries() && !result.regionRuleCounted) pending = REGION_RULE_PENDING;
                     if (pending == null && changedNames.contains(name)) pending = "specimens of this name uploaded or renamed after the last nightly run";
-                    if (pending == null && s > c && result.uploadSinceNightly) pending = "an upload after the last nightly run may have removed specimens";
+                    // an upload of this place's specimens may have removed some of this name (2026-11-03: of this place only)
+                    if (pending == null && s > c && specimensChanged(result, place, null) != null) pending = "an upload after the last nightly run may have removed specimens";
                     result.mismatches.add(new Mismatch(place, "specimens", name, s, c, pending));
                 }
             }
@@ -987,7 +1020,7 @@ public class CountCheck {
                     String pending = rowPending(r.getTimestamp(3), result);
                     if (pending == null && !result.rulesCounted) pending = CountInvariants.RULES_PENDING;
                     if (pending == null && childPending.containsKey(name)) pending = "a row under it was added, or its specimens changed, after the last nightly run";
-                    if (pending == null && result.uploadSinceNightly) pending = "an upload after the last nightly run may have removed list rows";
+                    if (pending == null && specimensChanged(result, place, null) != null) pending = "an upload after the last nightly run may have removed list rows";
                     result.mismatches.add(new Mismatch(place, check, name, s, c, pending));
                 }
             }
@@ -1025,6 +1058,7 @@ public class CountCheck {
                     if (s == c) continue;
                     String pending = rowPending(r.getTimestamp(3), result);
                     if (pending == null && changedNames.contains(name)) pending = "specimens of this name uploaded or renamed after the last nightly run";
+                    // the Global column counts every specimen in AntWeb: any upload touches it
                     if (pending == null && s > c && result.uploadSinceNightly) pending = "an upload after the last nightly run may have removed specimens";
                     result.mismatches.add(new Mismatch(place, "global", name, s, c, pending));
                 }

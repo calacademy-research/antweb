@@ -35,6 +35,17 @@ public class SpeciesListToolForm extends AdvancedSearchForm {
 	private String refSpeciesListName;
     private String displaySubfamily = "none";
     
+    // Brian Fisher, 2026-11-03 (transparency): "Reason for removing (shown with the name)", optional, kept with the names
+    // removed in a save (SpeciesListDb.saveTaxonSet)
+    private String removeReason;
+
+    public String getRemoveReason() {
+        return removeReason;
+    }
+    public void setRemoveReason(String removeReason) {
+        this.removeReason = removeReason;
+    }
+
     private int projLogId = 0;
     private int geoLogId = 0; 
     

@@ -65,7 +65,10 @@ def test_morpho_cleanups_spare_curator_rows():
 
 
 def test_species_list_tool_clears_dispute_before_insert_and_recounts():
-    body = _method(_code(HOME / "SpeciesListDb.java"), "public String saveTaxonSet(")
+    # the overload that saves (2026-11-03: a second saveTaxonSet takes the removal reason and calls it)
+    code = _code(HOME / "SpeciesListDb.java")
+    starts = [i for i in range(len(code)) if code.startswith("public String saveTaxonSet(", i)]
+    body = next(b for b in (_method(code[i:], "public String saveTaxonSet(") for i in starts) if "for (String taxonName : chosen)" in b)
     loop = body[body.index("for (String taxonName : chosen)"):]
     assert loop.index("removeDispute(") < loop.index('insert(overview, taxonName, "speciesListTool")')
     assert "recount(speciesListName" in body

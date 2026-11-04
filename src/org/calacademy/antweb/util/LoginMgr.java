@@ -103,6 +103,12 @@ public class LoginMgr extends Manager {
             s_log.error("startPasswordConversion() place_genus_curation not created e:" + e);
           }
           try {
+            // list_removal_log and the dispute tables' reason column (Brian Fisher, 2026-11-03: transparency)
+            org.calacademy.antweb.home.ListRemovalLog.ensureSchema(conn);
+          } catch (SQLException e) {
+            s_log.error("startPasswordConversion() list_removal_log not created e:" + e);
+          }
+          try {
             // Stored licence texts to CC BY 4.0 (decision of 2026-10-29), backup first; no-op once done.
             org.calacademy.antweb.home.LicenseUpdateDb.run(conn);
           } catch (SQLException e) {

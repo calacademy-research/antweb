@@ -153,6 +153,10 @@ jobs:
         run: |
           docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_audit_tj.py
 
+      - name: API audit fixes of 2026-11-02 (bad filter values refused, georeferenced=false, plain LIKE characters, time limit) (tests/unit/test_api_audit_tl.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" antweb/api:dev /t/test_api_audit_tl.py
+
       - name: API decisions of 2026-10-27 (subcastes within caste, inclusive bounds, 503 without up, login required) (tests/unit/test_api_decisions.py)
         run: |
           docker run --rm --entrypoint python -e REPO_DIR=/repo -v "$PWD/tests/unit:/t:ro" \
@@ -623,7 +627,11 @@ jobs:
         # TaxonWorks transform. TaxonWorksNightlyDecisionsTest: wait/skip decisions, one run at a
         # time, no settings file. NameResolutionRuleTest: statuses that use the current valid name,
         # indet and morpho names. SpecimenNameUpdateTest: the upload's name rule with a fake taxon table
-        # and the nightly name update's decisions, cap, settings and page line. AntcatHistoryTest: AntCat's
+        # and the nightly name update's decisions, cap, settings and page line. GenusSynonymRuleTest: morphospecies and
+        # indets of a synonym genus, names without subfamily ("(formicidae)pyramica ludovici"), combinations AntCat does
+        # not have (never guessed), the second pass's decision and the genus reasons (2026-11-03). GenusConceptRuleTest: approved
+        # old genus concepts (Mesoponera in the Afrotropical and Malagasy regions is Xiphopelta), bioregion, morphos only.
+        # GenusConceptProposalsTest: old genus concepts proposed from AntCat data (propose, split, mixed) and the page. AntcatHistoryTest: AntCat's
         # taxonomic history (fixtures/antcat-history.tsv) and the wording of each move's reason. SharedNamesTest: names
         # of two or more AntCat taxa (fixtures/antcat-shared-names.tsv), held for the curator. SharedNameReportTest: the
         # upload report and the Name updates page give the same "Needs the curator's decision" line (one code path; homonyms included). PasswordHashCompatTest: hashes made by
@@ -660,6 +668,9 @@ jobs:
               /t/org/calacademy/antweb/upload/TaxonWorksNightlyDecisionsTest.java \
               /t/org/calacademy/antweb/upload/NameResolutionRuleTest.java \
               /t/org/calacademy/antweb/upload/SpecimenNameUpdateTest.java \
+              /t/org/calacademy/antweb/upload/GenusSynonymRuleTest.java \
+              /t/org/calacademy/antweb/upload/GenusConceptRuleTest.java \
+              /t/org/calacademy/antweb/upload/GenusConceptProposalsTest.java \
               /t/org/calacademy/antweb/upload/AntcatHistoryTest.java \
               /t/org/calacademy/antweb/upload/SharedNamesTest.java \
               /t/org/calacademy/antweb/upload/SharedNameReportTest.java \
@@ -676,7 +687,7 @@ jobs:
               /t/org/calacademy/antweb/upload/SubfamilyFromGenusTest.java \
               /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:11 \
-                     upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:19 \
+                     upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:19 upload.GenusSynonymRuleTest:16 upload.GenusConceptRuleTest:6 upload.GenusConceptProposalsTest:4 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
@@ -773,6 +784,9 @@ jobs:
       - name: Audit fixes of 2026-10-30 in scripts and pages (fix-perms, taxon-set backup, escaping; tests/unit/test_audit_tk.py)
         run: python3 tests/unit/test_audit_tk.py
 
+      - name: Audit fixes of 2026-11-02 in host scripts and the e2e workflow (no writes through links, private dump file, no token left; tests/unit/test_audit_tl.py)
+        run: python3 tests/unit/test_audit_tl.py
+
       - name: Indet form tool, names, SQL and command flow without a database (tests/unit/test_indet_form.py)
         run: python3 tests/unit/test_indet_form.py
 
@@ -863,6 +877,30 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.AuditTkFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (6 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the audit fixes of 2026-11-02
+        # AuditTlFixesTest (no database): a removed group, project, country or "upload as" ends the login's sessions;
+        # "Origin: null" is refused on the sign-in pages; Create Account follows the password and username rules; an
+        # email change needs the current password; caste sort, homonym links, statistics lock, subfamily of a name,
+        # spelling guesses, inactive accounts, image owners, one run of the sets at a time, failed-job wording, upload
+        # line numbers and escaped errors, species lists by key, range reports by id, dashed dates, centroids, and
+        # CREATE TABLE only when the table is missing; upload lists of a curator's own group only (admins: all groups);
+        # no or an unknown bioregion is never introduced (2026-11-02).
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/AuditTlFixesTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.AuditTlFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (22 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the upload decisions of 2026-10-28 (current valid name not in AntWeb, lines identified only to genus or subfamily, UTF-8 only)
@@ -985,7 +1023,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.StatusChoiceTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             grep -v "LogMgr" /tmp/out.txt | tail -3
-            grep -q "^OK (10 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+            grep -q "^OK (11 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Java unit tests of the views' rules (2026-11-02; curated morphospecies, specimen names of geolocale lists, genus rows, Not curated, species imaged, source icons; ListViewTest)
@@ -1007,7 +1045,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.ListViewTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             grep -v "LogMgr" /tmp/out.txt | tail -3
-            grep -q "^OK (12 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+            grep -q "^OK (14 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Java unit tests of who may edit species lists (2026-11-02; any curator any list, not the system lists; projects stay with their curators; SecurityBatch5Test)
@@ -1077,7 +1115,9 @@ jobs:
           '
           # SpecimenNameUpdateDbTest: the nightly name update (report, apply, cap, parked list entries, names kept on a
           # valid name), the upload report's reason read from the same tables, and the same shared-name line in the
-          # upload report and on the page.
+          # upload report and on the page; the second pass (2026-11-03): synonym-genus morphospecies and indets, names
+          # without subfamily, taxon rows made in apply only, the no_genus and no_combo lists; the third pass (old genus
+          # concepts by bioregion); the proposal queries and an approved genus_concept_rule row driving the move.
           # CountCheckTest: list counts against a recount from specimens (real and pending differences).
           # PlaceImageCountDbTest: Images, images per view and Imaged specimens of places (labels apart),
           # per-taxon image counts of a place, and the count check of those numbers.
@@ -1087,6 +1127,8 @@ jobs:
           # non-BMP), in the upload's transaction, and a failure is thrown, not only logged (production 2026-10-21).
           # PageTextRenameDbTest: renaming a place (editGeolocale.do) moves its page text and history (object_edit,
           # object_hist) with their dates; a new name that has page text already is refused and nothing changes.
+          # The rename also carries the new name to child places, the region/subregion columns below, synonyms and a
+          # country's curator assignments (login_country), in the same transaction; an ambiguous old name carries nothing.
           # SpecimenNameHistoryDbTest: the specimen page's Name History query (applied rows of one specimen, newest first,
           # never report-only rows; index by_code; no history when the table is missing).
           # CountInvariantsTest: the count check's invariants over every place (docs/numbers.md), each wrong number found.
@@ -1110,7 +1152,8 @@ jobs:
           # 2026-10-30: the specimens collected in a place under names not on its species list, by genus; 2026-11-02:
           # the views (Valid, Curated, All specimen names): curated morphospecies, the names of specimens collected there,
           # disputes, red flags, the genus rows' Species, species imaged and which rows each view shows, the same from the
-          # names stored nightly. PlaceGenusCurationDbTest (2026-11-02): the nightly Not curated count per place and genus
+          # names stored nightly; 2026-11-03 (B77): a subfamily row's Genera = the genus rows of its browse page in the
+          # same view. PlaceGenusCurationDbTest (2026-11-02): the nightly Not curated count per place and genus
           # (valid names and curated morphospecies left out; uncurated morphospecies, indet and unrecognized names counted;
           # red flags never; country and island_country once; adm1s, museums, bioregions), the page's read (no table: no
           # error), the view Not curated's names.
@@ -1118,6 +1161,11 @@ jobs:
           # "(myrmicinae)" and unrecognized genus names are not genera), in the nightly totals, the subfamily rows' Genera,
           # upload groups and the count check; Subfamilies count valid subfamilies only (not "(formicidae)" or misspelled
           # names, curated projects too: B67 superseded); the Worldants change alert compares each import with the previous one.
+          # ParentRowsDbTest (2026-11-03, B76): the nightly count adds the missing genus and subfamily rows of every kind
+          # of list (not placeholders, other statuses, names without a taxon row or parents a curator removed), so the rows
+          # add up to the place's Genera and Species.
+          # ListRemovalDbTest (2026-11-03, transparency): a dispute keeps the curator's reason; list_removal_log records the
+          # curators' removals and the nightly clean-up's; the view All specimen names loads who, when and why per place.
           # BlankNameCleanupDbTest (2026-10-29): with specimens of blank name, the old cleanups delete nothing; the
           # blank-safe ones delete the names and list rows no specimen uses (not AntCat's, not curators' rows, not blank
           # rows) and the preview counts them. Last: it makes its own small tables.
@@ -1149,8 +1197,10 @@ jobs:
               /t/org/calacademy/antweb/home/PlaceGenusCurationDbTest.java \
               /t/org/calacademy/antweb/home/GeneraRuleDbTest.java \
               /t/org/calacademy/antweb/home/BlankNameCleanupDbTest.java \
-              /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:12 util.CountCheckTest:7 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:7 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:12 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:7 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:10 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:11 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
+              /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java \
+              /t/org/calacademy/antweb/home/ParentRowsDbTest.java \
+              /t/org/calacademy/antweb/home/ListRemovalDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:21 home.PlaceTotalsDbTest:16 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:11 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
@@ -1402,6 +1452,12 @@ jobs:
 
       - name: Every e2e test file is in the quick set or an area (tests/unit/test_e2e_areas.py)
         run: python3 tests/unit/test_e2e_areas.py
+
+      - name: The e2e link reader reads links as a browser does (tests/unit/test_e2e_link_reader.py, finding F27)
+        run: python3 tests/unit/test_e2e_link_reader.py
+
+      - name: Actions with the shared dummyForm keep it per request (tests/unit/test_struts_form_scope.py)
+        run: python3 tests/unit/test_struts_form_scope.py
 
       - name: web/log on a host folder (report links, tomcat writes, log rotation)
         # web/log is a host folder in production (docker-compose.yml: ./logs/web). Starting

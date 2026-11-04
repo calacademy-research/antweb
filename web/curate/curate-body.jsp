@@ -224,6 +224,9 @@
 <% } %>
     <li><a href="<%= domainApp %>/nameUpdates.do">Name update report</a>: specimens moved to the current valid name after a name changed in AntCat.</li>
 <% if (LoginMgr.isAdmin(accessLogin)) { %>
+    <li><a href="<%= domainApp %>/genusConceptRules.do">Old genus concepts</a>: genera whose species AntCat moved, by bioregion; approve a rule and the nightly run moves that bioregion's morphospecies and indets of the old genus.</li>
+<% } %>
+<% if (LoginMgr.isAdmin(accessLogin)) { %>
     <li><a href="<%= domainApp %>/countCheck.do">Check the counts</a>: recounts, from the specimen records, the numbers shown on a few sample country, project, museum and bioregion pages (specimens, species, genera, images) and lists any that differ from what the site shows. Usually nothing to do: the nightly run corrects them.</li>
 <% } %>
   </ul>

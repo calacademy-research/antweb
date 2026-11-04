@@ -128,24 +128,20 @@ public final class Caste {
 
         //A.log("sortSpecimenByCasteSubcaste() caste:" + caste + " subcaste:" + subcaste);
 
-        if (subcaste != null) {
-          if (subcaste.equals("major/soldier")) majorSoldiers.add(specimen);          
-          if (subcaste.equals("normal")) normals.add(specimen);          
-
-          if ("queen".equals(caste) && subcaste.equals("ergatoid")) ergatoidQueens.add(specimen);
-          if (subcaste.equals("alate/dealate")) alateDealateQueens.add(specimen);
-
-          if (subcaste.equals("brachypterous")) brachypterousQueens.add(specimen);
-
-          if ("male".equals(caste) && subcaste.equals("ergatoid")) ergatoidMales.add(specimen);          
-          if ("male".equals(caste) && subcaste.equals("alate")) alateMales.add(specimen);          
-
-          if (subcaste.equals("intercaste")) intercastes.add(specimen);          
-          if (subcaste.equals("gynandromorph")) gynandromorphs.add(specimen);          
-          if (subcaste.equals("larva/pupa")) larvaPupas.add(specimen);          
-        } else {
-          undefined.add(specimen);        
-        }
+        // Every specimen goes into exactly one group (2026-11-02): a subcaste that matched no group (an empty one,
+        // "ergatoid" of a worker, any other value) was left out, so the list was shorter than its count.
+        if (subcaste == null) undefined.add(specimen);
+        else if (subcaste.equals("major/soldier")) majorSoldiers.add(specimen);
+        else if (subcaste.equals("normal")) normals.add(specimen);
+        else if ("queen".equals(caste) && subcaste.equals("ergatoid")) ergatoidQueens.add(specimen);
+        else if (subcaste.equals("alate/dealate")) alateDealateQueens.add(specimen);
+        else if (subcaste.equals("brachypterous")) brachypterousQueens.add(specimen);
+        else if ("male".equals(caste) && subcaste.equals("ergatoid")) ergatoidMales.add(specimen);
+        else if ("male".equals(caste) && subcaste.equals("alate")) alateMales.add(specimen);
+        else if (subcaste.equals("intercaste")) intercastes.add(specimen);
+        else if (subcaste.equals("gynandromorph")) gynandromorphs.add(specimen);
+        else if (subcaste.equals("larva/pupa")) larvaPupas.add(specimen);
+        else undefined.add(specimen);
 	  }
 
 	  theChildren = new ArrayList<>();

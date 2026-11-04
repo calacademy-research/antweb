@@ -7,6 +7,8 @@ statistics and image numbers are tested by test_region_counts.py, test_place_ima
 test_numbers_pages.py; the links of every page type by test_site_links.py; field guides and the compare
 tool by test_field_guide_compare.py.
 """
+import re
+
 import pytest
 
 from public_pages import api_json, assert_message, assert_ok, fetch, links, params, title
@@ -36,9 +38,8 @@ def _example(kind):
     return r, pages[0]
 
 
-@pytest.mark.parametrize("kind", [pytest.param(k, marks=pytest.mark.xfail(strict=False, reason=(
-    "F27: in the e2e session the region page (region.do?name=Africa) shows no species list links, while a browser "
-    "sees them; under investigation (docs/flows/public-pages-findings.md)"))) if k == "region" else k for k in LISTS])
+# F27 (2026-11-03): the xfail mark is off for one staging run so that the assertion's diagnostics show in the job log.
+@pytest.mark.parametrize("kind", list(LISTS))
 def test_list_and_place_page(kind):
     """The list page loads with its title and links to the places; the first place opens with its title,
     the statistics table and the links to its species lists."""
@@ -128,3 +129,23 @@ def test_adm1_page_of_its_country():
     assert_ok(page, adm1s[0])
     t = title(page)
     assert t.startswith("Adm1: ") and params(adm1s[0])["name"] in t and t.endswith(" - Antweb"), t
+
+
+@pytest.mark.parametrize("path", ["/country.do?name=Madagascar", "/adm1.do?name=California&country=United+States"])
+def test_diversity_numbers_open_their_lists(path):
+    """Each Taxonomic diversity number on a place page opens its list (Brian Fisher, 2026-11-04: only the Species
+    number had a link, and it opened the admin count report): Subfamilies, Genera and Species / subspecies /
+    morphospecies the default view Curated, Valid species the view Valid (claude/antweb-list-design-rules.md)."""
+    r = fetch(path)
+    assert_ok(r, path)
+    expected = {"subfamilies": ("subfamily", "curated"), "genera": ("genus", "curated"), "valid": ("species", "valid"),
+                "species": ("species", "curated")}
+    for stat, (rank, view) in expected.items():
+        row = re.search(r'<tr data-stat="%s"[^>]*>(.*?)</tr>' % stat, r.text, re.S)
+        assert row, f"{path}: no {stat} row"
+        cell = re.search(r'<td class="ps_num">(.*?)</td>', row.group(1), re.S).group(1)
+        hrefs = links(cell, "taxonomicPage")
+        assert hrefs, f"{path}: the {stat} number is not linked: {cell[:200]}"
+        p = params(hrefs[0])
+        assert (p.get("rank"), p.get("statusSet")) == (rank, view), f"{path} {stat}: {hrefs[0]}"
+        assert "countReport" not in cell, f"{path}: {stat} still links the count report"

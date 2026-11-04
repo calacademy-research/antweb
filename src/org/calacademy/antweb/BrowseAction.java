@@ -505,6 +505,16 @@ public class BrowseAction extends DescriptionAction {
 			  }
 			}
 
+			// 2026-11-03 (B77): the subfamily rows of the family in a place: their Genera are the genus rows of their browse
+			// pages in the view (ListView.SubfamilyRows), as on the place's subfamily list.
+			if (taxon instanceof Family && !global && ListView.hasViews(overview) && org.calacademy.antweb.home.GenusOnly.typeAndKey(overview) != null) {
+			  try {
+			    request.setAttribute(PlaceTaxonNotes.SUBFAMILY_ROWS, ListView.loadSubfamilyRows(connection, overview, statusSetStr));
+			  } catch (SQLException | RuntimeException e) {
+			    s_log.warn("execute() subfamily rows taxon:" + taxon.getTaxonName() + " overview:" + overview + " e:" + e);
+			  }
+			}
+
 			// 2026-11-02: a genus in a place in the view Not curated (reached from the genus row's Not curated number): the
 			// header gives the stored breakdown ("3,392 specimens not curated: 298 morphospecies (2,820 specimens), 572
 			// identified only to genus"); the rows added from specimens collected here show their specimens (one genus read).

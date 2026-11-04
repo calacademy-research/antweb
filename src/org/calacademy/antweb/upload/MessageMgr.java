@@ -70,7 +70,8 @@ public class MessageMgr {
         int i = 0;
         for (String error : getErrors()) {
           i = i + 1;
-          if (i <= maxI) errorReport += "<br><br>" + error;
+          // Escaped (2026-11-02): an error holds the failed query with values from the uploaded file.
+          if (i <= maxI) errorReport += "<br><br>" + org.calacademy.antweb.util.Html.esc(error);
           if (i == maxI) errorReport += "<br>...";
         }
         return errorReport;
@@ -121,6 +122,7 @@ public class MessageMgr {
     public static final String noValidSubfamilyForGenus = "noValidSubfamilyForGenus";
     public static final String preferredSubfamilyForGenusReplaced = "preferredSubfamilyForGenusReplaced";
     public static final String synonymGenusReplaced = "synonymGenusReplaced";
+    public static final String genusConceptReplaced = "genusConceptReplaced";   // 2026-11-03, GenusConceptRule
     public static final String invalidSubfamilyForGenusReplaced = "invalidSubfamilyForGenusReplaced";
     public static final String databaseErrors = "databaseErrors";
     public static final String futureDateCollected = "futureDateCollected";
@@ -315,6 +317,7 @@ public class MessageMgr {
       testList.add(new Test(invalidSubfamilyForGenus, SET, "<b>Invalid Subfamily For Genus <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(noValidSubfamilyForGenus, SET, "<b>No valid Subfamily For Genus <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(synonymGenusReplaced, SET, "<b>Synonymized genus replaced with current valid genus from AntCat.org <font color=green>(uploaded)</font></b>"));
+      testList.add(new Test(genusConceptReplaced, SET, "<b>Old genus concept: morphospecies or indet filed under the genus AntCat now uses in this region <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(preferredSubfamilyForGenusReplaced, SET, "<b>Preferred Subfamily For Genus <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(invalidSubfamilyForGenusReplaced, MAP, "<b>Invalid Subfamily for Genus.  Submitted subfamily replaced with valid subfamily <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(databaseErrors, SET, "<b>Database Errors <font color=red>(not uploaded)</font></b>"));
@@ -405,6 +408,7 @@ public class MessageMgr {
     /** For tests: {lines kept for the details page, lines only counted}. */
     public int[] detailSizes(String key) {
       Test test = getTest(key);
+      if (test == null) return new int[] {0, 0};
       return new int[] {test.details.size(), test.detailsMore};
     }
 
@@ -555,6 +559,7 @@ public class MessageMgr {
     public static final Set<String> CORRECTED = Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(
         subspeciesIndetDropped, speciesIndetSubspeciesIgnored,      // "Name corrected: ..."
         synonymGenusReplaced, recognizedInvalidSpecies,             // replaced with the current valid name
+        genusConceptReplaced,                                       // old genus concept (GenusConceptRule)
         preferredSubfamilyForGenusReplaced, invalidSubfamilyForGenusReplaced,
         specimenIdSpacesRemoved, codeQuoteReplaced,                 // code changed
         invalidDateCollectedStart, invalidDateCollectedEnd, invalidDateDetermined))); // uploaded without the date
@@ -876,7 +881,7 @@ public class MessageMgr {
             // one write for the whole page (was one per line)
             StringBuilder page = new StringBuilder("<html><head><meta charset=\"utf-8\"/></head><body>\n");
             for (String detail : details) page.append(Html.esc(detail)).append("<br>\n");
-            if (detailsMore > 0) page.append(String.format("… and %,d more", detailsMore)).append("<br>\n");
+            if (detailsMore > 0) page.append(String.format("... and %,d more", detailsMore)).append("<br>\n");
             page.append("</body></html>");
             LogMgr.appendLog(fileName, page.toString());
         }

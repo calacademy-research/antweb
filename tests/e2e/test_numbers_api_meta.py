@@ -293,8 +293,8 @@ def test_taxa_count_is_the_taxa_of_the_filter():
 
 # --------------------------------------------------------------------------------- rows 106, 107: /images, /taxaImages
 
-def _images_of(code):
-    body = _api(f"images?specimenCode={quote_plus(code)}")
+def _images_of(code, since=None):
+    body = _api(f"images?specimenCode={quote_plus(code)}" + (f"&since={since}" if since else ""))
     return sum(len(r.get("images") or []) for r in ns.api_rows(body)), body
 
 
@@ -322,14 +322,18 @@ def test_images_counts_of_many_specimens():
     if twice:
         wrong.append(f"/{path}: specimens listed more than once {twice[:5]}")
     whole = rows[:-1] if images >= 300 else rows   # the last specimen may go on in the next page
+    # the reply lists only the images of the last <since> days: compare with the same window (2026-11-03: specimens
+    # with older images too, 8 recent of 22)
+    since = re.search(r"since=(\d+)", path)
+    since = since.group(1) if since else None
     for r in ns.pick(whole, 3, "api-images"):
         code, shown = r.get("specimenCode"), len(r.get("images") or [])
-        alone, b = _images_of(code)
+        alone, b = _images_of(code, since)
         if alone != shown or _meta(b).get("count") != alone or _meta(b).get("specimenCount") != 1:
             wrong.append(f"{code}: {shown} images in /{path}, /images of it {alone} (meta {_meta(b).get('count')},"
                          f" {_meta(b).get('specimenCount')} specimens)")
         spec = ns.api_rows(_api(f"specimens?specimenCode={quote_plus(code)}"))
-        if spec and _int(spec[0].get("imageCount")) != alone:
+        if not since and spec and _int(spec[0].get("imageCount")) != alone:
             wrong.append(f"{code}: /specimens imageCount {spec[0].get('imageCount')}, /images {alone}")
     assert not wrong, ns.day_note() + "\n" + "\n".join(wrong)
 
@@ -467,7 +471,8 @@ def _compare_list(p, rank, api_rows, wrong):
     """The place's list of that rank (every counted status: the view All specimen names, its rows of the list only)
     against the API rows: each name listed has an API row with the same own count, and Images at least the API's
     (place) imageCount. Since 2026-11-02 a genus row's Species are those of the view (ListView), not the stored count
-    the API gives, so genus rows are compared by name only (their Images is "N species imaged" since then). Rows added from specimens collected there (not
+    the API gives, so genus rows are compared by name only (their Images is "N species imaged" since then); since
+    2026-11-03 (B77) a subfamily row's Genera too (compared by name and Images). Rows added from specimens collected there (not
     on the list, ns.on_list) are not API rows. Returns the number of rows compared, or None when the page is not read."""
     html = ns.fetch(p.list_url(rank, "all"))
     if html is None:
@@ -483,7 +488,9 @@ def _compare_list(p, rank, api_rows, wrong):
         if a is None:
             wrong.append(f"{p} {rank} {name}: on the list, not in the API")
             continue
-        if own is not None and rank != "genus" and _int(a.get(OWN_COUNT[rank])) != own:
+        # 2026-11-03 (B77): a subfamily row's Genera are the genus rows of its browse page in the view (ListView.SubfamilyRows),
+        # not the stored genus_count the API gives, so subfamily rows, like genus rows, are compared by name and Images only
+        if own is not None and rank not in ("genus", "subfamily") and _int(a.get(OWN_COUNT[rank])) != own:
             wrong.append(f"{p} {rank} {name}: list {own}, API {OWN_COUNT[rank]} {a.get(OWN_COUNT[rank])}")
         # Since 2026-10-28 the list's Images cell shows the AntWeb-wide number (images of the name from any
         # specimen, ImagesAnywhere.imagesColumn: max of the AntWeb-wide and the place's own count), while the API's

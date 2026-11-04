@@ -108,6 +108,11 @@ public class PlaceImageCountDb {
     /** Creates place_image_count when missing, in the character set and collation of taxon.taxon_name. */
     public void ensureSchema() throws SQLException {
         if (s_schemaChecked) return;
+        // Created only when missing: CREATE TABLE commits the caller's transaction (nightly set), 2026-11-02.
+        if (LicenseUpdateDb.tableExists(connection, "place_image_count")) {
+            s_schemaChecked = true;
+            return;
+        }
         String charset = null;
         String collation = null;
         String query = "select character_set_name, collation_name from information_schema.columns"

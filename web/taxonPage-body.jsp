@@ -321,7 +321,7 @@ To do:
             String taxonomicTreatment = (String) desc.get("taxonomictreatment");
             //String taxonomicTreatment = new Formatter().convertFromUTF8((String) desc.get("taxonomictreatment"));
             //if (AntwebProps.isDevOrStageMode()) AntwebUtil.log("taxonPage-body.jsp utf8 taxonomicTreatment:" + taxonomicTreatment); %>
-        <%= taxonomicTreatment %>
+        <%= HtmlSanitizer.sanitize(taxonomicTreatment) %><%-- sanitized like the taxonomic history (2026-11-02) --%>
                     <!-- %= new Formatter().convertFromUTF8((String) desc.get("taxonomictreatment")) % -->
                     <!-- % String words = new Formatter().removeTag(new Formatter().replaceAttribute("style", (String) desc.get("taxonomictreatment"),""), "br"); % -->
                     <!-- %= new Formatter().removeTag((String) words, "o:p") % -->

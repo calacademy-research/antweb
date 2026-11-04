@@ -22,7 +22,9 @@ import org.apache.commons.logging.LogFactory;
  * /listSpecimenUploads.do (also /listUploads.do) and /listImageUploads.do: the Specimen Upload Reports
  * (util/listSpecimenUploads.jsp; table upload, filtered by groupId= or loginId=) and Image Upload Reports
  * (imageUploader/listImageUploads.jsp; table image_upload, by groupId= or curatorId=). Curators and admins
- * (Check.curator). Read-only. Docs: docs/flows/specimen-upload.md (section 3, step 11),
+ * (Check.curator). Curators see only their own group's uploads (a groupId= of another group shows their own;
+ * curatorId=/loginId= lists only that login's uploads in their group); admins see every group's (Brian Fisher,
+ * 2026-11-02). Read-only. Docs: docs/flows/specimen-upload.md (section 3, step 11),
  * docs/flows/image-upload.md. Tests: tests/e2e/test_upload_list_views.py, test_image_upload.py,
  * test_curate_page_clarity.py.
  */
@@ -72,6 +74,8 @@ public final class ListUploadsAction extends AntwebAction {
         if (groupId != null) {
             groupIdInt = groupId;
         }
+        groupIdInt = scopeGroupId(LoginMgr.getAccessLogin(request), groupIdInt);
+        groupId = groupIdInt;
         String groupName = null;
 
         Integer curatorId = (Integer) df.get("curatorId");        
@@ -104,7 +108,10 @@ public final class ListUploadsAction extends AntwebAction {
                     
         String message = null;
 
-        if (groupIdInt != 0) {
+        if (groupIdInt < 0) {
+          // a curator without an upload group sees no uploads (2026-11-02, B3); say so instead of "Group: -1"
+          message = "Image Uploads Reports for Group: none (your login has no upload group)";
+        } else if (groupIdInt != 0 && curatorIdInt == 0) {
           Group group = GroupMgr.getGroup(groupId);
           String title = "" + groupId;
           if (group != null) title = Html.esc(group.getAbbrev());
@@ -132,6 +139,8 @@ public final class ListUploadsAction extends AntwebAction {
         if (groupId != null) {
             groupIdInt = groupId;
         }
+        groupIdInt = scopeGroupId(LoginMgr.getAccessLogin(request), groupIdInt);
+        groupId = groupIdInt;
         String groupName = null;
 
         Integer loginId = (Integer) df.get("loginId");        
@@ -186,7 +195,7 @@ public final class ListUploadsAction extends AntwebAction {
 
         // Which view this is (the page says it plainly, 2026-10-22): one group's uploads, one login's, or every group's.
         String view;
-        if (groupIdInt != 0) {
+        if (groupIdInt != 0 && loginIdInt == 0) {
           Group group = GroupMgr.getGroup(groupId);
           String title = "group " + groupId;
           if (group != null) title = Html.esc(group.getName());
@@ -208,6 +217,20 @@ public final class ListUploadsAction extends AntwebAction {
         request.setAttribute("message", message);
         request.setAttribute("uploadsView", view);
         request.setAttribute("uploads", uploads);
+    }
+
+    /**
+     * The group whose uploads the list shows: an admin's choice (0 = every group); for anyone else their own
+     * group, whatever was asked (-1, which matches no upload, for a login without a group).
+     */
+    public static int scopeGroupId(boolean isAdmin, int ownGroupId, int requestedGroupId) {
+        if (isAdmin) return requestedGroupId;
+        return ownGroupId > 0 ? ownGroupId : -1;
+    }
+
+    static int scopeGroupId(Login accessLogin, int requestedGroupId) {
+        if (accessLogin == null) return -1;
+        return scopeGroupId(LoginMgr.isAdmin(accessLogin), accessLogin.getGroupId(), requestedGroupId);
     }
 
     public static final String UPLOADS_VIEW_ALL = "all";

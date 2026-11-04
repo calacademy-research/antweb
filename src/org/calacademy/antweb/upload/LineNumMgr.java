@@ -117,6 +117,15 @@ public class LineNumMgr {
 	  badCarriageReturnLines.add(lineNum);
 	}
 
+	/**
+	 * The file line (header = 1, as numbered here and in upload_line) of a data line as SpecimenUpload numbers them
+	 * (first data line = 1). Until 2026-11-02 SpecimenUpload checked its own number here, so the line after each bad
+	 * fragment was skipped and the fragment itself loaded.
+	 */
+	public static int fileLine(int dataLine) {
+	  return dataLine + 1;
+	}
+
 	public static boolean isGoodCarriageReturnLine(int lineNum) {
 	  return !isBadCarriageReturnLine(lineNum);
 	}

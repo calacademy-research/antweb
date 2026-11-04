@@ -1,6 +1,6 @@
 <%-- The introduced (red I) or endemic (green E) mark of a list row, linked to common/distStatusDisplayPage.jsp;
      introduced when the row's introduced map says the taxon is not native to the place's bioregion
-     (TaxonPropMgr.isBioregionNative). Statically included by taxonReportBody.jsp (uses overview, child, thisChild).
+     (TaxonPropMgr.isIntroducedIn, the rule of the nightly flags; a place without a bioregion marks none). Statically included by taxonReportBody.jsp (uses overview, child, thisChild).
      Docs: docs/numbers.md rows 24 and 25. --%><% 
 	String bioregion = null;
 	//String altBioregion = null;
@@ -17,12 +17,8 @@
     //A.log("distStatus.jsp intrdocuedMap:" + introducedMap);
 	boolean isIntroduced = false;
 
-	if (introducedMap != null) {
-	  isIntroduced = !TaxonPropMgr.isBioregionNative(bioregion, introducedMap);  
-	  //A.log("distStatus.jsp overview:" + overview + " child:" + child + " isIntroduced:" + isIntroduced + " bioregion:" + bioregion + " introducedMap:" + introducedMap);
-	} else {
-	  //A.log("distStatus.jsp NOPE overview:" + overview);
-	}
+	// The rule of the nightly Introduced flags (TaxonPropMgr.isIntroducedIn; no bioregion: not introduced).
+	isIntroduced = TaxonPropMgr.isIntroducedIn(introducedMap, bioregion);
 
     if (isIntroduced) { %>
       <a href='<%= AntwebProps.getDomainApp() %>/common/distStatusDisplayPage.jsp#type' target="new">

@@ -17,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
 
 /**
  * /list.do (also /favs.do): assorted lists by action=. Public: likes (favourite images, imageLikes.jsp),
- * pictureLikes and recentDescEdits (util/list.jsp). Curators: introducedSpecimen and multiBioregionTaxaList
+ * pictureLikes (util/list.jsp); recentDescEdits redirects to /recentDescEdits.do. Curators: introducedSpecimen and multiBioregionTaxaList
  * (groupId=; util/listTable.jsp, util/listOfLists.jsp). Admins: usrAdm, usrAdmLastLogin (util/list.jsp) and
  * casentDAnomalies (specimen parts, -D codes, with different names; HTML or CSV, PartsReport). Reads tables
  * image_like, description_edit, specimen and login; writes nothing. Bots are refused. Docs:
@@ -102,13 +102,9 @@ public final class ListAction extends AntwebAction {
                     return mapping.findForward("likes");
                 }
                 case "recentDescEdits": {
-                    String message = "Antweb Recent Description Edits";
-                    request.setAttribute("message", message);
-                    session.setAttribute("taxon", null);
-                    DescEditDb descEditDb = new DescEditDb(connection);
-                    ArrayList<DescEdit> descEdits = descEditDb.getRecentDescEdits();
-                    request.setAttribute("descEdits", descEdits);
-                    break;
+                    // The page is /recentDescEdits.do (RecentDescEditsAction); here it gave a 500 (util/list.jsp
+                    // reads "list", not "descEdits"). Old links go there (2026-11-03, road map step 5).
+                    return new ActionForward("/recentDescEdits.do?action=recentDescEdits", true);
                 }
                 default:
 

@@ -175,7 +175,7 @@ public class SpecimenUpload extends SpecimenUploadParse {
                     String uploadFileName = uploadFile.getFileNameBase(); //uploadFile.getBackupFileName();
                     //A.log("importSpecimens could use backupFileName:" + uploadFile.getFileNameBase() + " instead of shortFileName:" + shortFileName);
 
-					if (LineNumMgr.isGoodCarriageReturnLine(lineNum)) {        
+					if (LineNumMgr.isGoodCarriageReturnLine(LineNumMgr.fileLine(lineNum))) {   // file numbering (header = 1)
 						// Do the work to populate the specimenItem, taxonItem
 						String errorMessage = parseLine(theLine, lineNum, specimenItem, taxonItem, otherColumns, colList, uploadFileName, curator);
 						if (errorMessage == null) {

@@ -102,6 +102,9 @@ public class SessionRequestFilter implements Filter {
 
 
             //A.log("doFilter()");
+            // Makes the session before the page starts (as RememberMeFilter does for .jsp pages): pages set session
+            // attributes while they are being written, and Tomcat can not create a session after the response is
+            // committed. So every .do request has a session (and a cookie), also a bot's (audit 2026-11-02, kept).
             ServletContext ctx = request.getSession().getServletContext();
 
             DataSource ds = null;
@@ -161,6 +164,7 @@ public class SessionRequestFilter implements Filter {
             } else if (Csrf.methodNeedsCheck(request.getMethod()) && Csrf.isSignInPath(request)) {
                 // Sign-in pages have no token yet, but a post from another site is refused.
                 String refused = Csrf.crossSite(request);
+                if (refused == null) refused = Csrf.nullOrigin(request);
                 if (refused != null) {
                     s_log.warn("doFilter() csrf refused: " + refused + " path:" + request.getServletPath()
                         + " ip:" + HttpUtil.getClientIpAddress(request));

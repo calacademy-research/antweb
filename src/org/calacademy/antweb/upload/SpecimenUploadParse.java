@@ -52,6 +52,30 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
     static int MAXLENGTH = 80;
 
+    /**
+     * Brian Fisher, 2026-11-03: only a morphospecies or indet (or a line without species) moves with a synonym genus to
+     * the valid genus, as GenusSynonymRule decides for the nightly name update; a species name stays.
+     */
+    public static boolean movesWithSynonymGenus(String speciesName, String subspeciesName) {
+        if (Utility.isBlank(speciesName)) return true;
+        String rest = speciesName.trim() + (Utility.isBlank(subspeciesName) ? "" : " " + subspeciesName.trim());
+        return Taxon.isMorphoOrIndet("x " + rest);
+    }
+
+    /** Set by parseLine() for the line being read: {synonym genus, valid genus} taxon names when the genus was moved, else null. */
+    private String[] synonymGenusMove;
+
+    /**
+     * The name a line was uploaded as when parseLine() moved its synonym genus to the valid genus (a morphospecies,
+     * indet or name AntCat does not know: "lioponera (indet)" from Phyracaces): the synonym genus with the rest of
+     * the name, "dorylinaephyracaces (indet)". Null when the genus was not moved or the name is not under the valid genus.
+     */
+    public static String uploadedNameBeforeGenusMove(String taxonName, String[] move) {
+        if (taxonName == null || move == null || move[0] == null || move[1] == null) return null;
+        if (!taxonName.startsWith(move[1] + " ")) return null;
+        return move[0] + taxonName.substring(move[1].length());
+    }
+
     String currentDateFunction = "now()";  // for mysql 
 
     SpecimenUploadDb m_specimenUploadDb;
@@ -334,6 +358,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             // Brian Fisher, 2026-10-28: a line identified only to genus or only to subfamily is filed as indet (below)
             // and listed in the report (SpecimenUploadProcess.processLine).
             identifiedOnlyTo = identifiedOnlyTo(subfamilyName, genusName, speciesName);
+            synonymGenusMove = null;
             
 			/*  
 			  (1). if species name blank = change to (indet)
@@ -378,16 +403,23 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                     Genus synonymGenus = TaxonMgr.getSynonymGenusFromName(genusName);
                     Genus validGenus = TaxonMgr.getCurrentValidGenus(synonymGenus);
                     if (validGenus != null) {
-                        if (isKnownCombination(synonymGenus.getSubfamily(), genusName, speciesName, subspeciesName)) {
+                        if (isKnownCombination(synonymGenus.getSubfamily(), genusName, speciesName, subspeciesName)
+                            || !movesWithSynonymGenus(speciesName, subspeciesName)) {
                             // AntCat has a current valid name for this combination (e.g. Wasmannia
                             // auropunctata -> Allomerus auropunctatus). Keep it as uploaded; the
                             // species step replaces the whole name ("Recognized invalid species").
+                            // Brian Fisher, 2026-11-03: a species name AntCat does not know is kept as uploaded too
+                            // (it was moved to the valid genus): the same epithet in the senior genus may be another
+                            // species. The nightly name update lists it for the AntCat editors (no_combo) and moves it
+                            // once AntCat has the combination.
                             keepSynonymGenus = true;
                         } else {
-                            // Morphospecies, indets and names AntCat does not know: move to the
-                            // current valid genus.
+                            // Morphospecies and indets: move to the current valid genus.
                             getMessageMgr().addToMessages(MessageMgr.synonymGenusReplaced,
                                 Html.esc(Formatter.initCap(genusName) + " -> " + Formatter.initCap(validGenus.getName())));
+                            // Brian Fisher, 2026-11-03: the name as uploaded is kept ("Uploaded As"), as the nightly
+                            // name update keeps it when it moves older specimens (GenusSynonymRule).
+                            synonymGenusMove = new String[] {synonymGenus.getTaxonName(), validGenus.getTaxonName()};
                             genusName = validGenus.getName();
                             genus = validGenus;
                         }
@@ -733,6 +765,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             } else {
               specimenItem.put("taxon_name", taxonName);
               taxonItem.put("taxon_name", taxonName);            
+              String uploadedAs = uploadedNameBeforeGenusMove(taxonName, synonymGenusMove);
+              if (uploadedAs != null) specimenItem.put("original_taxon_name", uploadedAs);
+              synonymGenusMove = null;
             }      
             
 //if ("casent0187122".equals(code)) A.log("parseLine() 1");                  

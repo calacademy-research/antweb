@@ -168,6 +168,29 @@ public class TaxonTreeCountDbTest extends TestCase {
         assertEquals(2, again.missing);
     }
 
+    /**
+     * B78 (Fossil ants, 2026-11-03): a genus without parent gets its subfamily row (the incertae sedis fossil genera,
+     * the morphogenus Ponerine genus2); a genus with a parent keeps it; a genus whose subfamily has no row is left.
+     */
+    public void testGenusWithoutParentGetsItsSubfamily() throws Exception {
+        exec("insert into taxon (taxon_name, taxarank, status, family, subfamily) values ('incertae_sedis', 'subfamily', 'valid', 'formicidae', 'incertae_sedis')");
+        exec("insert into taxon (taxon_name, taxarank, status, family, subfamily, genus, fossil) values"
+            + " ('incertae_sedisbaikuris', 'genus', 'valid', 'formicidae', 'incertae_sedis', 'baikuris', 1),"
+            + " ('ponerinaeponerine_genus2', 'genus', 'morphotaxon', 'formicidae', 'ponerinae', 'ponerine_genus2', 0),"
+            + " ('nosuchsubfamilyzzgenus', 'genus', 'valid', 'formicidae', 'nosuchsubfamily', 'zzgenus', 0)");
+        if (one("select count(*) from taxon where taxon_name = 'ponerinae' and taxarank = 'subfamily'") == 0) {
+            exec("insert into taxon (taxon_name, taxarank, status, family, subfamily) values ('ponerinae', 'subfamily', 'valid', 'formicidae', 'ponerinae')");
+        }
+        genus(WASMANNIA, MYRM, "wasmannia", "valid");   // has its parent
+        TaxonParentDb.Result result = new TaxonParentDb(connection).repair();
+        assertEquals(result.line(), 2, result.genusParents);
+        assertEquals("incertae_sedis", text("select parent_taxon_name from taxon where taxon_name = 'incertae_sedisbaikuris'"));
+        assertEquals("ponerinae", text("select parent_taxon_name from taxon where taxon_name = 'ponerinaeponerine_genus2'"));
+        assertNull("no subfamily row: left", text("select parent_taxon_name from taxon where taxon_name = 'nosuchsubfamilyzzgenus'"));
+        assertEquals(MYRM, text("select parent_taxon_name from taxon where taxon_name = '" + WASMANNIA + "'"));
+        assertEquals("a second run changes nothing", 0, new TaxonParentDb(connection).repair().genusParents);
+    }
+
     /** No valid name without a genus row: no alert. */
     public void testNoAlertWithoutAValidNameMissingItsGenus() throws Exception {
         species(INDET, "indetermined", null, "(indet)", "decamorium", null);

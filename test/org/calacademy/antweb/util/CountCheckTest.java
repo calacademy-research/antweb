@@ -65,6 +65,8 @@ public class CountCheckTest extends TestCase {
         // the genus column of the live table (the species counts read it: PlaceTotals.identifiedToGenus); invisible, so
         // the inserts by position stay as they are
         exec("alter table taxon add column genus varchar(64) invisible");
+        // and its family (the nightly count adds missing parent rows of ant names, ParentRows, 2026-11-03)
+        exec("alter table taxon add column family varchar(40) invisible default 'formicidae'");
         exec("insert into upload values (1, '2020-01-01 10:00:00')");
         exec("insert into specimen values ('casent1', '" + SP_A + "', 'morphotaxon', 'Madagascar', null, 'Madagascar', null, 'Malagasy', 1)");
         exec("insert into specimen values ('casent2', '" + SP_A + "', 'morphotaxon', 'Madagascar', null, 'Madagascar', null, 'Malagasy', 1)");
@@ -190,6 +192,38 @@ public class CountCheckTest extends TestCase {
         assertTrue(r.uploadSinceNightly);
         assertEquals(r.mismatches.toString(), 0, r.real());
         assertTrue(r.pending() >= 1);
+    }
+
+    /**
+     * Brian Fisher, 2026-11-03 (audit of 2026-11-02): a difference is pending only when an upload touched the place or the
+     * name. An upload of a specimen in Mauritius leaves Madagascar's stale numbers real; it touches Mauritius, its
+     * subregion and region and the bioregion. The same upload in Madagascar makes them pending.
+     */
+    public void testAnUploadElsewhereLeavesTheDifferenceReal() throws Exception {
+        // geolocale rows (ChangedPlaces finds a specimen's places by name); no place-total columns, so no place checks here
+        exec("create table geolocale (id int primary key, name varchar(128), georank varchar(20), parent varchar(128))");
+        exec("insert into geolocale values (7, 'Madagascar', 'country', 'Indian Ocean'), (8, 'Mauritius', 'country', 'Indian Ocean'),"
+            + " (9, 'Kenya', 'country', 'Eastern Africa'), (3, 'Indian Ocean', 'subregion', 'Africa'), (1, 'Africa', 'region', null)");
+        exec("update geolocale_taxon set specimen_count = 9 where taxon_name = '" + SP_A + "'");   // higher than the recount
+        exec("update geolocale_taxon set species_count = 5 where taxon_name = '" + GENUS + "'");
+        exec("insert into taxon values ('myrmicinaepheidole mu1', 'species', 'morphotaxon', '" + GENUS + "', null)");
+        exec("insert into upload values (2, now())");
+        exec("insert into specimen values ('casent9', 'myrmicinaepheidole mu1', 'morphotaxon', 'Mauritius', null, 'Mauritius', null, 'Malagasy', 2)");
+        CountCheck.Result r = check();
+        assertTrue(r.uploadSinceNightly);
+        assertEquals(r.mismatches.toString(), 2, r.real());
+        assertEquals(r.mismatches.toString(), 0, r.pending());
+        assertFalse(r.changed.specimens(CountCheck.GEOLOCALE, "7"));
+        assertFalse(r.changed.specimens(CountCheck.GEOLOCALE, "9"));
+        assertFalse("not a name of its list", r.changed.specimens(CountCheck.PROJECT, "madants"));
+        for (String id : new String[] {"8", "3", "1"}) assertTrue(id, r.changed.specimens(CountCheck.GEOLOCALE, id));
+        assertTrue(r.changed.specimens(CountCheck.BIOREGION, "Malagasy"));
+
+        exec("update specimen set country = 'Madagascar', island_country = 'Madagascar' where code = 'casent9'");
+        r = check();
+        assertTrue(r.changed.specimens(CountCheck.GEOLOCALE, "7"));
+        assertEquals(r.mismatches.toString(), 0, r.real());
+        assertEquals(r.mismatches.toString(), 2, r.pending());
     }
 
     public void testListRowAddedAfterTheNightlyIsPending() throws Exception {

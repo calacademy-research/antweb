@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """The notes under every taxon list are one block in the project lead's wording (Brian Fisher, 2026-10-28).
 
-<div id="list-notes"><b>Notes on specimen and image counts</b>, then numbered notes:
+<details id="list-notes"> with <summary>Notes on specimen and image counts</summary> (folded like "About this list",
+Brian Fisher, 2026-11-04), then numbered notes:
   1. (administrators only) Specimen total / Genera total / Species total, id="subtaxon-total" with data-subtaxon-total;
   2. the asterisk note (what a count marked * includes);
   3. the Images note, id="images-definition" (one number, label images not counted, the place's images first).
@@ -18,11 +19,11 @@ JSP = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "web"
 
 def main():
     jsp = open(JSP, encoding="utf-8").read()
-    block = jsp[jsp.index('<div id="list-notes">'):]
-    block = block[:block.index("</div>")]
+    block = jsp[jsp.index('<details id="list-notes"'):]
+    block = block[:block.index("</details>")]
 
     # the heading and the order of the three notes
-    assert block.startswith('<div id="list-notes"><b>Notes on specimen and image counts</b>'), block[:80]
+    assert block.startswith('<details id="list-notes" class="about-list list-notes"><summary>Notes on specimen and image counts</summary>'), block[:120]
     i_total = block.index('id="subtaxon-total" data-subtaxon-total="<%= subtaxonTotal %>"')
     i_star = block.index("<%= asterixNote %>")
     i_images = block.index('id="images-definition"')

@@ -325,7 +325,12 @@ The SpeciesListTool log is here: <a href="<%= AntwebProps.getDomainApp() %>/logM
     <input type="hidden" name="action" value="save"/>
     <input type="hidden" name="refSpeciesListType" value="<%= Html.escAttr(String.valueOf(refSpeciesListType)) %>" />
     <input type="hidden" name="refSpeciesListName" value="<%= Html.escAttr(String.valueOf(refSpeciesListName)) %>"/>
-    <input type="submit" name="save" value="Save Changes"> <br><br>    
+    <input type="submit" name="save" value="Save Changes">
+    <%-- Brian Fisher, 2026-11-03 (transparency): an optional reason, kept with every name this save removes and shown with
+         it on the place's list (All specimen names) --%>
+    <label for="removeReason" style="margin-left:12px">Reason for removing (shown with the name):</label>
+    <input type="text" id="removeReason" name="removeReason" maxlength="250" size="60" value="" placeholder="optional, one line">
+    <br><br>    
 
 <%
     ArrayList<Taxon> mapSpeciesList1 = (ArrayList<Taxon>) toolProps.getMapSpeciesList1();

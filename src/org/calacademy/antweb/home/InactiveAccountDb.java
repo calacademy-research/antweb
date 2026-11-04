@@ -191,16 +191,14 @@ public class InactiveAccountDb extends AntwebDb {
                 List<Integer> chunk = ids.subList(from, Math.min(ids.size(), from + 500));
                 String in = placeholders(chunk.size());
                 try (PreparedStatement ins = conn.prepareStatement(
-                        "insert into " + backup + " select * from login where inactive = 0 and id in (" + in + ")")) {
+                        "insert into " + backup + " select * from login where " + STILL_REGULAR + " and id in (" + in + ")")) {
                     bind(ins, chunk);
                     r.backedUp += ins.executeUpdate();
                 }
                 try (PreparedStatement upd = conn.prepareStatement(
                         "update login set inactive = 1, inactive_since = now(), session_version = session_version + 1,"
                         + " created = created"
-                        + " where inactive = 0 and coalesce(is_admin, 0) = 0 and coalesce(group_id, 0) <= 0"
-                        + " and coalesce(is_upload_specimens, 0) = 0 and coalesce(is_upload_images, 0) = 0"
-                        + " and id in (" + in + ")")) {
+                        + " where " + STILL_REGULAR + " and id in (" + in + ")")) {
                     bind(upd, chunk);
                     r.updated += upd.executeUpdate();
                 }
@@ -221,6 +219,16 @@ public class InactiveAccountDb extends AntwebDb {
         }
         return r;
     }
+
+    /**
+     * Rechecked when the accounts are made inactive (the list may be older than the data): still active and still a
+     * regular account, the rule of InactiveAccounts.isRegular. Since 2026-11-02 also no projects and no countries
+     * (a curator with only species lists could be made inactive), and the backup holds exactly the rows updated.
+     */
+    public static final String STILL_REGULAR = "inactive = 0 and coalesce(is_admin, 0) = 0 and coalesce(group_id, 0) <= 0"
+        + " and coalesce(is_upload_specimens, 0) = 0 and coalesce(is_upload_images, 0) = 0"
+        + " and not exists (select 1 from login_project p where p.login_id = login.id)"
+        + " and not exists (select 1 from login_country c where c.login_id = login.id)";
 
     private boolean tableExists(String table) throws SQLException {
         String q = "select count(*) from information_schema.tables where table_schema = database() and table_name = ?";

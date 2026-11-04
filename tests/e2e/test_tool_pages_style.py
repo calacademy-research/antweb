@@ -37,6 +37,7 @@ CONVERTED = [
     ("web/util/listSpecimenUploads-body.jsp", "specimen-uploads-page"),
     ("web/imageUploader/listImageUploads-body.jsp", "image-uploads-page"),
     ("web/curate/adminHtmlMessage-body.jsp", "admin-result-page"),
+    ("web/curate/genusConceptRules-body.jsp", "genus-concept-rules-page"),
 ]
 # Bodies shared with the public layout: tool look only inside the admin layout.
 SHARED_BODIES = ["web/common/message-body.jsp", "web/common/unboldMessage-body.jsp"]

@@ -313,7 +313,7 @@ No specimens in this collection.
 
        session.setAttribute("taxon", collection.getResultsAsTaxon());
 
-       int limit = 1000;
+       int limit = 1000 - 1;   // the last index shown (specimenReport.jsp shows index 0 to limit): 1000 rows
  %>
        <%@include file="/specimenReport.jsp" %> 
 

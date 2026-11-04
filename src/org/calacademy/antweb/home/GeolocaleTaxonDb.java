@@ -295,6 +295,8 @@ We never blow away "speciesList" or "curator" records. But specimen can overwrit
 
     // Preferred method
     public int delete(Overview overview, String taxonName) throws SQLException {
+      // By id (2026-11-02): a place found again by its name could be another place of that name (an adm1 "Georgia").
+      if (overview instanceof Geolocale) return delete("" + ((Geolocale) overview).getId(), taxonName);
       return delete(overview.getName(), taxonName);
     }
 
@@ -737,6 +739,10 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
           // 2026-10-29: only the rows from specimens; it deleted the curators' rows of the name too (on every place).
           + " and source = '" + Source.SPECIMEN + "'";
         //s_log.warn("deleteUncuratedMorphosWithoutSpecimen() query:" + dml);
+        // Brian Fisher, 2026-11-03 (transparency): the rows are recorded before they go (ListRemovalLog), same condition
+        ListRemovalLog.recordWhere(getConnection(), ListRemovalLog.GEOLOCALE, "l.source = '" + Source.SPECIMEN + "' and l.taxon_name in"
+            + " (select t.taxon_name from taxon t where t.taxarank in ('species', 'subspecies') and t.status = 'morphotaxon' and "
+            + BlankNameCleanup.morphoNoSpecimen(blankSafe) + ")", ListRemovalLog.JOB_MORPHO_NO_SPECIMEN, ListRemovalLog.REASON_MORPHO_NO_SPECIMEN);
         Statement stmt = null;
         int c = 0;
         try {
@@ -754,6 +760,9 @@ String query = "select taxon_name, gt.geolocale_id id, g.name, g.bioregion biore
 
     public String deleteGeolocaleTaxaWithoutTaxon() throws SQLException {
       String dmlWhereClause = "where taxon_name not in (select taxon_name from taxon)";
+      // 2026-11-03 (transparency): recorded before the delete (ListRemovalLog); curators' rows were parked first
+      ListRemovalLog.recordWhere(getConnection(), ListRemovalLog.GEOLOCALE, "l.taxon_name not in (select taxon_name from taxon)",
+          ListRemovalLog.JOB_NO_TAXON, ListRemovalLog.REASON_NO_TAXON);
       int retVal = new UtilDb(getConnection()).deleteFrom("geolocale_taxon", dmlWhereClause);
       return retVal + " deleteGeolocaleTaxaWithoutTaxon. ";
     }

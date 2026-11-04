@@ -326,4 +326,12 @@ public class StatusChoiceTest extends TestCase {
         assertEquals(StatusSet.LIST_VETTED, StatusSet.listChoice("vetted"));
         assertEquals(StatusSet.LIST_ALL, StatusSet.listChoice("validmorpho"));
     }
+
+    /** Fossil ants (Valid (with fossils)) lists morphotaxa too, as its Genera counts them (2026-11-03, B78 option a). */
+    public void testValidWithFossilsListsMorphotaxa() {
+        String c = new StatusSet(StatusSet.VALID_WITH_FOSSIL).getCriteria("taxon");
+        assertTrue(c, c.contains("'valid'") && c.contains("'morphotaxon'"));
+        String sp = new StatusSet(StatusSet.VALID_WITH_FOSSIL).getCriteria("specimen");
+        assertFalse("specimen queries unchanged: " + sp, sp.contains("morphotaxon"));
+    }
 }

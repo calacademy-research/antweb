@@ -262,6 +262,7 @@ if (childrenList != null) {
 
  	 <% if (taxon.getChildrenCount() > 0) {
 	 Object child = null;
+	 limit = limit - 1;   // specimenReport.jsp takes the last index shown (from 0): limit rows, not limit + 1 (2026-11-02)
 	 %>
 		<%@include file="/specimenReport.jsp" %>  
 	 <% } %> 

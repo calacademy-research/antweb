@@ -89,6 +89,7 @@
   "/museum": "message",
   "/museums": "ok",
   "/nameUpdates": "login",
+  "/genusConceptRules": "login",
   "/newGroup": "login",
   "/newLogin": "login",
   "/notFound": "not_found",
