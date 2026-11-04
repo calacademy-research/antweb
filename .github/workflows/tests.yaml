@@ -345,7 +345,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/DownloadGuardsTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.DownloadGuardsTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (6 tests)" /tmp/out.txt
+            grep -q "^OK (7 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of log growth (short message-page record, entry cap, log viewer cap, row limits, log size check) and the mount check

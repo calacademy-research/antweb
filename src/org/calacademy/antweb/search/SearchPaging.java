@@ -79,6 +79,17 @@ public class SearchPaging implements Serializable {
         return "Showing " + DownloadLimits.count(first) + "–" + DownloadLimits.count(last) + " of " + DownloadLimits.count(total);
     }
 
+    /**
+     * Map and Compare work on the specimens of the page shown, not the whole search (Brian Fisher, 2026-11-04: they are
+     * to be revisited in phase 6). Their label says so when the search found more: "the 200 specimens on this page, of
+     * 141,728 found"; otherwise "N specimens". paging null (a search without paging): "N specimens".
+     */
+    public static String pageNote(int shown, SearchPaging paging) {
+        String n = DownloadLimits.count(shown) + (shown == 1 ? " specimen" : " specimens");
+        if (paging == null || paging.getTotal() <= shown) return n;
+        return "the " + n + " on this page, of " + DownloadLimits.count(paging.getTotal()) + " found";
+    }
+
     // The sort choices of the list (specimenReport.jsp "Sort by") and their columns. Unknown values
     // sort by specimen code. sp.code is always last, so that the order is the same on every page.
     private static final Map<String, String> SORT_COLUMNS = new LinkedHashMap<>();

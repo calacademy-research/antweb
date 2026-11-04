@@ -53,7 +53,9 @@ public final class PrepareCompareResultsAction extends PrepareAction {
 		if (ResultRank.SPECIMEN.equals(resultRank)) {
 			results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
 			if (results != null && session.getAttribute("fullAdvancedSearchResults") != null) results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
-            resultSetModifier = results == null ? "" : "(from " + results.getResults().size() + " total specimens)";
+            // "(from 200 total specimens)" when the search found 141,728: the page shown, said so (2026-11-04)
+            resultSetModifier = results == null ? "" : "(from " + SearchPaging.pageNote(results.getResults().size(),
+                (SearchPaging) session.getAttribute("advancedSearchPaging")) + ")";
 			forwardString = "advancedSearch";
         } else if (ResultRank.isTaxonRank(resultRank)) {
             // This set should show for all qualifying specimen's species.  
