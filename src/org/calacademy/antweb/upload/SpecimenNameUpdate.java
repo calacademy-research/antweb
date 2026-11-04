@@ -415,24 +415,57 @@ public class SpecimenNameUpdate {
     /**
      * Third-pass candidates (GenusConceptRule): specimens filed under a morphospecies or indet name of an old genus
      * that has a rule, in a bioregion some rule names (the rule itself decides per genus and bioregion), grouped
-     * by bioregion too. The genus names and bioregions come from the code (GenusConceptRule.RULES), quoted.
+     * by bioregion too. The genus names and bioregions come from genus_concept_rule rows (an admin form), so they
+     * are bound as parameters (conceptCandidatesParams, in the same order), and the genus is compared exactly
+     * (substring_index), not with LIKE, where the "_" of a morphogenus name would be a wildcard (review of #321).
      */
-    static String conceptCandidatesSql(List<GenusConceptRule.Rule> rules) {
-        StringBuilder genera = new StringBuilder();
-        for (String g : GenusConceptRule.oldGenera(rules)) {
-            genera.append(genera.length() == 0 ? "" : " or ").append("s.taxon_name like '").append(g.replace("'", "''")).append(" %'");
-        }
-        StringBuilder bioregions = new StringBuilder();
-        for (String b : GenusConceptRule.bioregions(rules)) {
-            bioregions.append(bioregions.length() == 0 ? "" : ", ").append("'").append(b.replace("'", "''")).append("'");
-        }
-        if (genera.length() == 0) genera.append("1 = 0");
-        if (bioregions.length() == 0) bioregions.append("''");
+    public static String conceptCandidatesSql(List<GenusConceptRule.Rule> rules) {
+        int genera = GenusConceptRule.oldGenera(rules).size();
+        int bioregions = GenusConceptRule.bioregions(rules).size();
+        String where = genera == 0 || bioregions == 0 ? "1 = 0"
+            : "substring_index(s.taxon_name, ' ', 1) in (" + marks(genera) + ") and s.taxon_name like '% %'"
+              + " and s.bioregion in (" + marks(bioregions) + ")";
         return "select s.access_group, coalesce(nullif(s.original_taxon_name, ''), s.taxon_name) uploaded, s.taxon_name, s.bioregion, count(*) n"
             + " from specimen s"
-            + " where (" + genera + ") and s.bioregion in (" + bioregions + ")"
+            + " where " + where
             + " group by s.access_group, uploaded, s.taxon_name, s.bioregion"
             + " order by s.access_group, uploaded, s.taxon_name, s.bioregion";
+    }
+
+    /** The parameters of conceptCandidatesSql, in order: the old genera, then the bioregions (none when either is empty). */
+    public static List<String> conceptCandidatesParams(List<GenusConceptRule.Rule> rules) {
+        List<String> genera = new ArrayList<>(GenusConceptRule.oldGenera(rules));
+        List<String> bioregions = new ArrayList<>(GenusConceptRule.bioregions(rules));
+        List<String> out = new ArrayList<>();
+        if (genera.isEmpty() || bioregions.isEmpty()) return out;
+        out.addAll(genera);
+        out.addAll(bioregions);
+        return out;
+    }
+
+    private static String marks(int n) {
+        return String.join(", ", java.util.Collections.nCopies(n, "?"));
+    }
+
+    /**
+     * The approved old genus concepts, or none when they cannot be read (review of #321: a failure here must not stop
+     * the first and second passes, the AntCat synonym moves the nightly made before the rules existed).
+     */
+    static List<GenusConceptRule.Rule> approvedConceptRules(Connection connection) {
+        try {
+            return new GenusConceptRuleDb(connection).approved();
+        } catch (SQLException | RuntimeException e) {
+            s_log.error("approvedConceptRules() old genus concept rules not read, third pass skipped: " + e);
+            return new ArrayList<>();
+        }
+    }
+
+    /** True when an earlier pass of this run already has a change for these specimens (group, uploaded and current name). */
+    public static boolean alreadyMoved(List<Change> changes, int groupId, String uploaded, String current) {
+        for (Change c : changes) {
+            if (c.groupId == groupId && c.oldName.equals(current) && java.util.Objects.equals(c.uploadedName, uploaded)) return true;
+        }
+        return false;
     }
 
     /** Apply mode changes nothing when more specimens than maxChanges would move in one run. */
@@ -459,7 +492,7 @@ public class SpecimenNameUpdate {
         String newTaxonGenus;
         /** Third pass (GenusConceptRule): only the specimens of this bioregion. Null: any bioregion. */
         String bioregion;
-        Change(int groupId, String uploadedName, String oldName, String newName, String newOriginalName, String antcatStatus) {
+        public Change(int groupId, String uploadedName, String oldName, String newName, String newOriginalName, String antcatStatus) {
             this(groupId, uploadedName, oldName, newName, newOriginalName, antcatStatus, null);
         }
         Change(int groupId, String uploadedName, String oldName, String newName, String newOriginalName, String antcatStatus, NameUpdateReason reason) {
@@ -687,7 +720,7 @@ public class SpecimenNameUpdate {
         List<Change> noGenus = new ArrayList<>();
         List<Change> noCombination = new ArrayList<>();
         // the approved old genus concepts, read once per run (third pass below; the second pass leaves their moves alone)
-        List<GenusConceptRule.Rule> conceptRules = new GenusConceptRuleDb(connection).approved();
+        List<GenusConceptRule.Rule> conceptRules = approvedConceptRules(connection);
         GenusSynonymRule.Genera genera = GenusSynonymRule.plainGenera(connection);
         Map<String, GenusSynonymRule.Result> genusCache = new java.util.HashMap<>();
         List<Object[]> genusCandidates = new ArrayList<>();
@@ -777,8 +810,12 @@ public class SpecimenNameUpdate {
         // Third pass (Brian Fisher, 2026-11-03): approved old genus concepts (GenusConceptRule), e.g. Mesoponera in the
         // Afrotropical and Malagasy regions is Xiphopelta. Morphospecies and indets of those bioregions only.
         List<Object[]> conceptCandidates = new ArrayList<>();
-        try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(conceptCandidatesSql(conceptRules))) {
-            while (r.next()) conceptCandidates.add(new Object[] {r.getInt(1), r.getString(2), r.getString(3), r.getString(4)});
+        try (java.sql.PreparedStatement stmt = connection.prepareStatement(conceptCandidatesSql(conceptRules))) {
+            List<String> params = conceptCandidatesParams(conceptRules);
+            for (int i = 0; i < params.size(); i++) stmt.setString(i + 1, params.get(i));
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) conceptCandidates.add(new Object[] {r.getInt(1), r.getString(2), r.getString(3), r.getString(4)});
+            }
         }
         Map<String, NameUpdateReason> conceptReasons = new java.util.HashMap<>();
         for (Object[] c : conceptCandidates) {
@@ -789,6 +826,7 @@ public class SpecimenNameUpdate {
             if (uploaded == null || current == null || bioregion == null) continue;
             GenusConceptRule.Move move = GenusConceptRule.decide(conceptRules, current, bioregion, lookup);
             if (move == null || move.newName.equals(current)) continue;
+            if (alreadyMoved(changes, groupId, uploaded, current)) continue;   // the second pass moved them this run
             String key = move.rule.oldGenus + "\t" + bioregion;
             NameUpdateReason reason = conceptReasons.get(key);
             if (reason == null) {

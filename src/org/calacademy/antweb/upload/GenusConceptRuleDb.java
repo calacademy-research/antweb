@@ -88,12 +88,23 @@ public class GenusConceptRuleDb {
             }
             stmt.executeUpdate(createTable(charset, collation));
         }
-        s_schemaChecked = true;
-        for (GenusConceptRule.Rule rule : GenusConceptRule.SEED) {
-            for (String bioregion : new java.util.TreeSet<>(rule.bioregions)) {
-                save(rule.oldGenus, bioregion, rule.newGenus, APPROVED, rule.approvedBy, Timestamp.valueOf(rule.approvedOn + " 10:35:00"), rule.note);
+        // Seeded right after the create; when a seed row fails, the new table is dropped again so the next run
+        // creates and seeds it once more, instead of finding it empty and never seeding it (review of #321).
+        try {
+            for (GenusConceptRule.Rule rule : GenusConceptRule.SEED) {
+                for (String bioregion : new java.util.TreeSet<>(rule.bioregions)) {
+                    save(rule.oldGenus, bioregion, rule.newGenus, APPROVED, rule.approvedBy, Timestamp.valueOf(rule.approvedOn + " 10:35:00"), rule.note);
+                }
             }
+        } catch (SQLException | RuntimeException e) {
+            try (Statement stmt = connection.createStatement()) {
+                stmt.executeUpdate("drop table if exists genus_concept_rule");
+            } catch (SQLException dropped) {
+                e.addSuppressed(dropped);
+            }
+            throw e;
         }
+        s_schemaChecked = true;
     }
 
     /** One row of the table. */
