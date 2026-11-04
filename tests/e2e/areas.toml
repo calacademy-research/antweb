@@ -44,6 +44,7 @@ paths = [
 # login limit (10 a minute) and the test records are never shared. A test listed here that logs in
 # fails with "logs in but is listed in [parallel]" (antweb.post_login): remove it from the list.
 tests = [
+  "test_public_pages_rest.py",         # collections pages, adm1 reports and downloads, API doc, old recent edits address (2026-11-03)
   # whole files
   "test_actions.py",
   "test_api.py",
@@ -633,6 +634,7 @@ paths = [
   "web/util/statsPage*",
 ]
 tests = [
+  "test_public_pages_rest.py",         # the public pages no other test opened (2026-11-03)
   "test_site_links.py",                # links on every public page type, map popups included
   "test_home_page_links.py",
   "test_documentation_links.py",
