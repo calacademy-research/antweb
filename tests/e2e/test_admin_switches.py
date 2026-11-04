@@ -71,3 +71,28 @@ def test_password_reset_campaign_preview_and_unconfirmed_steps_do_nothing():
     for step in ("/passwordResetCampaign.do?action=mark", "/passwordResetCampaign.do?action=send"):
         text = ns.text_of(_post(s, token, step))   # no confirm=yes
         assert "Nothing done" in text, f"{step} without the confirm box: {text[:300]}"
+
+
+def _server_debug(session):
+    """The server debug option set now, as the Server Debug page shows it ('' when none)."""
+    m = re.search(r"<b>Set Server Debug:</b>\s*([^<\n]*)", _get(session, "/serverDebug.do"))
+    assert m, "serverDebug.do does not show the option set now"
+    return m.group(1).strip()
+
+
+@needs("admin")
+def test_server_debug_set_and_restored():
+    """Server Debug (catalog gap serverDebug.do action setDebug, 2026-11-04): a GET asks for confirmation and changes
+    nothing; a POST sets the option (logGetConns, which only adds log lines) and the page shows it; the option set
+    before is put back whatever fails."""
+    s, token, _lid = login("admin")
+    before = _server_debug(s)
+    assert CONFIRM in ns.text_of(_get(s, "/serverDebug.do?action=setDebug&param=logGetConns")), \
+        "a GET of setDebug did not ask for confirmation"
+    assert _server_debug(s) == before, "a GET of setDebug changed the option"
+    try:
+        _post(s, token, "/serverDebug.do?action=setDebug", param="logGetConns")
+        assert _server_debug(s) == "logGetConns", "setDebug did not set the option"
+    finally:
+        _post(s, token, "/serverDebug.do?action=setDebug", param=before)
+    assert _server_debug(s) == before, f"the option was not put back to {before!r}"

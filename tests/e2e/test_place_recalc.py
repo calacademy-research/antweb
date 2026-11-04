@@ -78,3 +78,29 @@ def test_region_and_subregion_pages_offer_no_update_button():
     for path in ("/region.do?name=Africa", "/subregion.do?name=Eastern%20Africa"):
         page = s.get(BASE_URL + path, timeout=max(TIMEOUT, 120)).text
         assert _button(page) is None, f"{path}: shows an Update statistics button that does nothing"
+
+
+# Small places of the other kinds whose page recounts (OverviewAction: the project, museum and bioregion branches
+# and island.do through the country branch). The smallest of their kind on staging, 2026-11-04: museum BPPC
+# (1 specimen), project Anomalous (27 valid species), bioregion Oceania, island Hawaii.
+OTHER_PLACES = [
+    ("/museum.do?code=BPPC", "/museum.do?action=recalc", ["BPPC"]),
+    ("/project.do?name=anomalousants", "/project.do?action=recalc", ["Anomalous"]),
+    ("/bioregion.do?name=Oceania", "/bioregion.do?action=recalc", ["Oceania"]),
+    ("/island.do?name=Hawaii", "/island.do?action=recalc", ["Hawaii"]),
+]
+
+
+@needs("admin")
+@pytest.mark.parametrize("path, recalc, words", OTHER_PLACES)
+def test_admin_updates_a_museum_a_project_a_bioregion_and_an_island(path, recalc, words):
+    """The "Update statistics" button of a museum, a project, a bioregion and an island page recounts that place and
+    shows the page again with its statistics (catalog gaps 9 to 12, 2026-11-04)."""
+    s, _token, _lid = login("admin")
+    posted, page = _press(s, path)
+    assert posted == recalc, posted
+    text = ns.text_of(page)
+    for word in words:
+        assert word in text, f"{path} after Update statistics: '{word}' not on the page: {text[:300]}"
+    for bad in ("not found", "Exception", "failed due to"):
+        assert bad not in text, f"{path} after Update statistics: '{bad}': {text[:300]}"

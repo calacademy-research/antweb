@@ -44,7 +44,7 @@ public class UploadAction extends AntwebAction {
 	// Site-wide jobs: admins only.
 	static final java.util.Set<String> ADMIN_ONLY_ACTIONS = java.util.Set.of(
 			"fetchAndReloadWorldants",
-			"runStatistics", "runCountCrawls", "genRecentDescEdits");
+			"runStatistics", "genRecentDescEdits");
 
 	// Removed sub-actions (unused tools, 2026-10): answered as "Action not found." before anything else.
 	// allSpecimenFiles (reload every group from the working folder) and GBIFUpload: Curate page cleanup.
@@ -53,7 +53,8 @@ public class UploadAction extends AntwebAction {
 	// utilData.do?action=genRecentContent (Technical page), which also regenerates recent images.
 	static final java.util.Set<String> REMOVED_ACTIONS = java.util.Set.of(
 			"reloadSpecimenList", "removeSpecimenList", "uploadSpeciesList", "specimenTest", "speciesTest",
-			"allSpecimenFiles", "GBIFUpload", "reloadSpeciesLists", "toggleDownTime", "genAll");
+			"allSpecimenFiles", "GBIFUpload", "reloadSpeciesLists", "toggleDownTime", "genAll",
+			"runCountCrawls");   // did nothing (it logged "should be done through UtilData.do"); removed 2026-11-04
 
 	// Admin jobs linked from the Curate page: a GET shows a confirmation page that repeats the
 	// request by POST with the form token (PostOnly). Every other sub-action must be posted.
@@ -661,12 +662,6 @@ public class UploadAction extends AntwebAction {
 			//return (mapping.findForward("statisticsStr"));
 			return mapping.findForward("statisticsDo");
 		}
-		if (action.equals("runCountCrawls")) {
-			s_log.error("doAction() Run Count Crawl should be done through UtilData.do.");
-			//runCountCrawls(connection);
-			//return (mapping.findForward("success"));
-		}
-
 		if (action.equals("genRecentDescEdits")) {
 			try {
 				AntwebFunctions.genRecentDescEdits(connection);

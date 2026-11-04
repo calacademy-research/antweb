@@ -26,6 +26,7 @@ PAGES = [
     ("/manageMuseum.do?action=view&code=CASC", "Museum Manager"),
     ("/viewMuseum.do?action=view&code=CASC", "CASC"),
     ("/saveMuseum.do?action=view&code=CASC", "CASC"),
+    ("/saveMuseum.do?code=BPPC", "Museum Manager"),   # no action: the Museum Manager form
     ("/speciesListToolSearch.do", "Species List Tool"),
     ("/list.do", "not found"),   # no action: "action:null not found." (gave a 500 logged in, 2026-11-03)
     ("/speciesListTool.do?action=changeRefSpeciesList&refSpeciesListType=antcat", "Species List Tool"),

@@ -42,6 +42,9 @@ jobs:
         # purpose and status of the new rows, commit docs/catalog/ (see docs/README.md).
         run: python3 tools/catalog/build_catalog.py --check
 
+      - name: Catalog tool rules (tests/unit/test_catalog_tool.py; version in a page name, status manual)
+        run: python3 tests/unit/test_catalog_tool.py
+
       - name: Every number on the site names its test (docs/numbers.md)
         # Each kind of number AntWeb shows has a row: status yes, partly or not yet; the tests it names exist;
         # every count check (CountInvariants.IDS) is named. Fix: edit docs/numbers.md (see its section 1).

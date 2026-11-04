@@ -88,6 +88,10 @@ SET5_SKIPPED = "set5 skipped on staging (memory)"
 JOB_LINES = {
     "/utilData.do?action=set1": "taxon parents (B36):",
     "/utilData.do?action=worldantsFetchAndReload": "AntCat import done",
+    # the Curate page's "Import AntCat names now" runs the same import (SpeciesListUploader.worldantsFetchAndReload)
+    "/upload.do?action=fetchAndReloadWorldants": "AntCat import done",
+    # the admin's "run the name update now" runs the nightly's step (SpecimenNameUpdate with etc/name-update.properties)
+    "/utilData.do?action=specimenNameUpdate": "name update:",
     "/utilData.do?action=set2": "Set 2 done",
     # their own lines since 2026-11-04 (UtilDataAction.jobLine); presence only, not in the ordered list above
     "/utilData.do?action=dataCleanup": "Data cleanup done",
