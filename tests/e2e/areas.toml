@@ -566,6 +566,7 @@ paths = [
   "bin/**",
 ]
 tests = [
+  "test_museum_manager.py",            # Museum Manager save, rename, delete with confirmation (admin, 2026-11-03)
   "test_admin_staging.py",
   "test_reports_plain_language.py",
   "test_parts_by_group.py",
