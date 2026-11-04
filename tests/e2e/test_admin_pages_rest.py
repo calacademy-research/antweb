@@ -19,6 +19,7 @@ PAGES = [
     ("/logMgr.do?action=worldants", "Log Manager"),
     ("/logMgr.do?action=specimenDetails", "Specimen Description"),
     ("/newGroup.do", "New upload group"),
+    ("/genusConceptRules.do", "Old genus concepts"),
     ("/query.do?action=curiousQueries", "Curious queries"),
     ("/query.do?action=devQueries", "Dev"),
     ("/query.do?action=events", "Events Report"),
@@ -26,6 +27,7 @@ PAGES = [
     ("/viewMuseum.do?action=view&code=CASC", "CASC"),
     ("/saveMuseum.do?action=view&code=CASC", "CASC"),
     ("/speciesListToolSearch.do", "Species List Tool"),
+    ("/list.do", "not found"),   # no action: "action:null not found." (gave a 500 logged in, 2026-11-03)
     ("/speciesListTool.do?action=changeRefSpeciesList&refSpeciesListType=antcat", "Species List Tool"),
 ]
 

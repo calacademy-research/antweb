@@ -37,16 +37,18 @@ def test_admin_saves_renames_and_deletes_a_museum():
     if _listed(s):
         _delete(s, token)   # left by an earlier run that stopped half way
     try:
-        _post(s, token, "/saveMuseum.do?action=save", code=CODE, name=NAME, title="", isActive="true")
+        _post(s, token, "/viewMuseum.do?action=save", code=CODE, name=NAME, title="", isActive="true")
         assert _listed(s), f"{CODE} saved but not in the Museum Manager list"
         form = s.get(f"{BASE_URL}/viewMuseum.do?code={CODE}", timeout=TIMEOUT).text
         assert NAME in form, f"/viewMuseum.do?code={CODE} does not show the saved name"
 
+        _post(s, token, "/saveMuseum.do?action=save", code=CODE, name=NAME + " renamed", title="", isActive="true")
         _post(s, token, "/manageMuseum.do?action=save", code=CODE, name=NAME + " renamed", title="", isActive="true")
         form = s.get(f"{BASE_URL}/viewMuseum.do?code={CODE}", timeout=TIMEOUT).text
         assert NAME + " renamed" in form, "the second save did not change the name"
 
-        ask = _post(s, token, "/manageMuseum.do?action=delete", code=CODE, step="delete")
+        ask = _post(s, token, "/saveMuseum.do?action=delete", code=CODE, step="delete")
+        assert "Delete museum" in ns.text_of(_post(s, token, "/manageMuseum.do?action=delete", code=CODE, step="delete"))
         text = ns.text_of(ask)
         assert f"Delete museum {CODE}?" in text and "cannot be undone" in text, text[:300]
         assert "specimen records carry this museum code" not in text, "a test museum code is used by specimens"
