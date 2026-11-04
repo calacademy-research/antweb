@@ -111,9 +111,9 @@ public class PlaceViewTotalDb {
         return page.getChildrenCount();
     }
 
-    /** The stored rows of a place: {genera, species}, -1 where not counted. */
+    /** The stored rows of a place: {genera, species, subfamilies}, -1 where not counted. */
     public int[] read(Overview overview) throws SQLException {
-        int[] out = {-1, -1};
+        int[] out = {-1, -1, -1};
         String[] tk = typeAndKey(overview);
         if (tk == null || !tableExists()) return out;
         try (PreparedStatement stmt = connection.prepareStatement(
@@ -124,6 +124,7 @@ public class PlaceViewTotalDb {
                 while (r.next()) {
                     if (Rank.GENUS.equals(r.getString(1))) out[0] = r.getInt(2);
                     if (Rank.SPECIES.equals(r.getString(1))) out[1] = r.getInt(2);
+                    if (Rank.SUBFAMILY.equals(r.getString(1))) out[2] = r.getInt(2);
                 }
             }
         }
@@ -139,13 +140,13 @@ public class PlaceViewTotalDb {
     }
 
     /** Stores one place's totals (replaces its rows). */
-    void store(Overview overview, int genera, int species) throws SQLException {
+    void store(Overview overview, int genera, int species, int subfamilies) throws SQLException {
         String[] tk = typeAndKey(overview);
         if (tk == null) return;
         String view = StatusSet.defaultChoice(overview);
         try (PreparedStatement stmt = connection.prepareStatement("replace into place_view_total"
                 + " (list_type, list_key, taxarank, view_name, n, counted) values (?, ?, ?, ?, ?, now())")) {
-            for (Object[] row : new Object[][] {{Rank.GENUS, genera}, {Rank.SPECIES, species}}) {
+            for (Object[] row : new Object[][] {{Rank.GENUS, genera}, {Rank.SPECIES, species}, {Rank.SUBFAMILY, subfamilies}}) {
                 stmt.setString(1, tk[0]);
                 stmt.setString(2, tk[1]);
                 stmt.setString(3, (String) row[0]);
@@ -190,7 +191,8 @@ public class PlaceViewTotalDb {
             if (auto) connection.setAutoCommit(false);
             for (Overview place : places()) {
                 try {
-                    store(place, listRows(place, Rank.GENUS), listRows(place, Rank.SPECIES));
+                    // subfamilies too (2026-11-04: North America showed 15 stored, its Curated list 11)
+                    store(place, listRows(place, Rank.GENUS), listRows(place, Rank.SPECIES), listRows(place, Rank.SUBFAMILY));
                     if (++done % 100 == 0) connection.commit();
                 } catch (SQLException | RuntimeException e) {
                     if (failed.size() < 5) failed.add(place.getName() + " (" + e.getMessage() + ")");

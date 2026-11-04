@@ -707,13 +707,13 @@ transaction). Created by the application; record and undo in `db/upgrade/8.115/2
 
 ### `place_view_total`
 
-**Purpose.** The place page's Genera and Species (Brian Fisher, 2026-11-04): the rows each place's genus and species
+**Purpose.** The place page's Subfamilies, Genera and Species (Brian Fisher, 2026-11-04): the rows each place's subfamily, genus and species
 lists show in their default view (Curated; Valid (with fossils) on the AntCat list and Fossil Ants), counted with the
 list page's own code (`TaxaPage.fetchChildren`, `loadCollected`, `findGenusRows`), so each number equals the header of
 the list it opens.
 
 **Key.** (`list_type`, `list_key`, `taxarank`). `list_type`: `geolocale` (key the geolocale id), `bioregion` (name),
-`museum` (code), `project` (name), as `PlaceImageCountDb`; `taxarank`: `genus` or `species`.
+`museum` (code), `project` (name), as `PlaceImageCountDb`; `taxarank`: `subfamily`, `genus` or `species`.
 
 **Key columns.** `view_name` (the view counted), `n`, `counted`.
 

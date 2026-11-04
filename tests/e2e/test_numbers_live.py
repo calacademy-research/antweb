@@ -98,7 +98,7 @@ def test_list_headers_equal_place_numbers():
         n, text = header(_get(f"/taxonomicPage.do?rank={rank}&{WHERE}&statusSet={status}"))
         if n != stats[stat]:
             line = f"rank={rank} {status}: list {n}, place page {stat} {stats[stat]}"
-            (pending if stat in ("genera", "species") and not counted else wrong).append(line)
+            (pending if stat in ("subfamilies", "genera", "species") and not counted else wrong).append(line)
     assert not wrong, "Madagascar list header vs place page: " + "; ".join(wrong)
     if pending:
         pytest.skip("place list totals not counted yet by a nightly run (PlaceViewTotalDb): " + "; ".join(pending))

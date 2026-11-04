@@ -102,8 +102,8 @@ def test_list_headers_equal_place_numbers_of_every_kind():
             expected = stats.get(stat, 0)
             if n != expected:
                 line = f"{p} rank={rank} {status}: header {n}, place page {stat} {expected}"
-                # Genera and Species follow the list once the nightly has counted the place (PlaceViewTotalDb)
-                (pending if stat in ("genera", "species") and not stats["_view_counted"] else wrong).append(line)
+                # Subfamilies, Genera and Species follow the list once the nightly has counted the place (PlaceViewTotalDb)
+                (pending if stat in ("subfamilies", "genera", "species") and not stats["_view_counted"] else wrong).append(line)
         # the views nest: every Valid name is Curated, every Curated name in All specimen names
         if len(headers) == 3 and not (headers["valid"] <= headers["curated"] <= headers["all"]):
             wrong.append(f"{p}: species headers Valid {headers['valid']}, Curated {headers['curated']}, All {headers['all']}: not nested")
