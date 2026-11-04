@@ -323,7 +323,7 @@ public class CountCheck {
             result.changed = ChangedPlaces.load(connection, result.countedUntil, result.uploadSinceNightly, result.imagesSinceNightly);
         } catch (SQLException | RuntimeException e) {
             result.changed = null;
-            result.notes.add("The places touched by today's uploads could not be read (" + e + "): any upload makes every difference pending.");
+            result.notes.add("The places touched by today's uploads could not be read (" + Html.esc(String.valueOf(e)) + "): any upload makes every difference pending.");
         }
 
         if (invariants) {

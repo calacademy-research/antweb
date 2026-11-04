@@ -669,7 +669,7 @@ public class AdvancedSearchForm extends TaxaFromSearchForm {
 	public String[] getAdm2s() {
 		return adm2s;
 	}
-	public void setAdm2s(String[] adm2) {
+	public void setAdm2s(String[] adm2s) {
 		this.adm2s = adm2s;
 	}
 	

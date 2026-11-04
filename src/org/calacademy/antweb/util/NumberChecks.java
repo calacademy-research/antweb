@@ -79,12 +79,12 @@ public final class NumberChecks {
     /** Whether the table exists (cached: information_schema is slow). */
     private boolean has(String table) {
         return tables.computeIfAbsent(table, t -> {
-            try { return inv.tableExists(t); } catch (SQLException e) { return false; }
+            try { return inv.tableExists(t); } catch (SQLException e) { inv.lookupFailed(t, e); return false; }
         });
     }
 
     private boolean has(String table, String column) {
-        try { return has(table) && inv.columnExists(table, column); } catch (SQLException e) { return false; }
+        try { return has(table) && inv.columnExists(table, column); } catch (SQLException e) { inv.lookupFailed(table + "." + column, e); return false; }
     }
 
     private static long[] add(long[] a, long[] b) {

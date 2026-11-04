@@ -67,7 +67,7 @@ Request objects:
             case "specimen":
             case "locality":
                 results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
-                if (session.getAttribute("fullAdvancedSearchResults") != null)
+                if (results != null && session.getAttribute("fullAdvancedSearchResults") != null)
                     results.setResults((ArrayList) session.getAttribute("fullAdvancedSearchResults")); // added to fix session
                 forwardString = "advancedSearch";
                 break;
@@ -75,7 +75,7 @@ Request objects:
             case "genus":
             case "subfamily":
                 results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
-                if (session.getAttribute("fullAdvancedSearchResults") != null)
+                if (results != null && session.getAttribute("fullAdvancedSearchResults") != null)
                     results.setResults((ArrayList) session.getAttribute("fullAdvancedSearchResults")); // added to fix session
                 request.setAttribute("resultRank", resultRank);
                 forwardString = "advancedSearchByTaxon";

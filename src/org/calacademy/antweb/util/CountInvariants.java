@@ -972,7 +972,18 @@ public final class CountInvariants {
     }
 
     private boolean tableExistsQuietly(String table) {
-        try { return tableExists(table); } catch (SQLException e) { return false; }
+        try { return tableExists(table); } catch (SQLException e) { lookupFailed(table, e); return false; }
+    }
+
+    /**
+     * A failed lookup of a table or column skips the checks that need it: say so on the page (a note), so that a
+     * skipped check is not read as one without differences (2026-11-04).
+     */
+    void lookupFailed(String what, SQLException e) {
+        if (result == null) return;
+        String note = "Could not read whether " + Html.esc(what) + " exists (" + Html.esc(String.valueOf(e.getMessage()))
+            + "): the checks that need it were skipped.";
+        if (!result.notes.contains(note)) result.notes.add(note);
     }
 
     /** Checks, real and pending differences per check id (for the page and the tests). */

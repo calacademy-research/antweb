@@ -128,6 +128,7 @@ public class OperationDetails {
     
     public String getExecTimeMin() {
       String execTime = getExecTime();
+      if (execTime == null) return "";
       int i = execTime.indexOf(" ");
       if (i > 0) {
         String execTimeSec = execTime.substring(0, i);
@@ -143,9 +144,9 @@ public class OperationDetails {
     }
 
     public void augment(OperationDetails opeationDetails) {
-      if (!opeationDetails.getMessage().equals("success")) {
-        setMessage(getMessage() + opeationDetails.getMessage());
-      }
+      // null-safe (2026-11-04): a null message of either side gave a NullPointerException or a leading "null"
+      if (opeationDetails == null || opeationDetails.getMessage() == null || "success".equals(opeationDetails.getMessage())) return;
+      setMessage(getMessage() == null ? opeationDetails.getMessage() : getMessage() + opeationDetails.getMessage());
     }
 
     public String getOperation() {
