@@ -19,6 +19,8 @@
 #   4. Downloads the dump and checks it is complete (gzip test, one database `ant`, "Dump completed").
 #   5. Saves the staging test logins (password hashes) with create-test-accounts.py --save-to,
 #      and the list of columns, to see afterwards what staging had that production has not.
+#      Copies staging's server-only settings (etc/*.properties) to a root-only folder and logs their
+#      names; warns when a file staging needs (STAGING_SETTINGS) is missing.
 #   6. Dumps staging's current database to one safety dump (the rollback).
 #   7. Stops AntWeb, loads the production dump, checks it, scrubs personal data (scrub.sql),
 #      puts the test logins back with their saved hashes, adds zztest_uploader to the "Upload as"
@@ -26,7 +28,8 @@
 #      adminLogin=NAME; no file: the login antweb) if missing, starts AntWeb and waits for it.
 #   8. On any failure in step 7 it loads the safety dump again and starts AntWeb.
 #   9. On success it deletes the downloaded dump and the safety dump (--keep-safety keeps the
-#      safety dump until the next refresh).
+#      safety dump until the next refresh). At the end of every run, a settings file that went
+#      missing from etc/ is put back from the copy of step 5, which is then deleted.
 # Nothing is ever written to production or to the Spaces bucket.
 
 set -Eeuo pipefail
@@ -62,6 +65,13 @@ LOG_FILE=""
 SAFETY="$WORK_DIR/staging-before-refresh.sql.gz"
 SAVED="$WORK_DIR/keep-accounts.json"
 SCHEMA_BEFORE="$WORK_DIR/schema-before.tsv"
+# Server-only settings (etc/, gitignored). The refresh changes only the database and never writes to etc/, but
+# after the refresh of 2026-11-02 staging had no etc/name-update.properties (Brian put it back on 2026-11-04:
+# mode=report). Neither this script nor the deploy deletes etc/ files; the cause was not found. So the refresh
+# copies etc/*.properties first, puts back any that are missing at the end, and logs their names (never their
+# content). STAGING_SETTINGS: files staging should have (a warning when one is missing).
+SETTINGS_SAVED="$WORK_DIR/etc-saved"
+STAGING_SETTINGS="name-update.properties"
 APP_STOPPED=0
 IN_RESTORE=0
 
@@ -114,6 +124,46 @@ dump_age_days() {
 # for the load, i.e. 3 x the compressed dump, plus a fixed margin.
 needed_mb() {
   echo $(( ( $1 * 3 + 1048575 ) / 1048576 + $2 ))
+}
+
+# settings_names ETC_DIR: the names of the settings files (*.properties) in ETC_DIR on one line, sorted.
+settings_names() {
+  local f
+  for f in "$1"/*.properties; do [[ -f "$f" ]] && basename "$f"; done | LC_ALL=C sort | paste -sd ' ' -
+}
+
+# missing_staging_settings ETC_DIR: the files of STAGING_SETTINGS that ETC_DIR lacks, one per line.
+missing_staging_settings() {
+  local n
+  for n in $STAGING_SETTINGS; do [[ -f "$1/$n" ]] || echo "$n"; done
+  return 0
+}
+
+# save_settings ETC_DIR SAVE_DIR: copy ETC_DIR/*.properties (mode, owner and time kept) into a fresh SAVE_DIR.
+save_settings() {
+  local f
+  rm -rf -- "$2"
+  install -d -m 700 "$2"
+  for f in "$1"/*.properties; do
+    if [[ -f "$f" ]]; then cp -p -- "$f" "$2/"; fi
+  done
+}
+
+# restore_missing_settings ETC_DIR SAVE_DIR: put back every saved file that is no longer in ETC_DIR, one line
+# each. A file that is there but differs from the copy is left as it is (someone may have edited it), one line.
+restore_missing_settings() {
+  local f n
+  [[ -d "$2" ]] || return 0
+  for f in "$2"/*.properties; do
+    [[ -f "$f" ]] || continue
+    n=$(basename "$f")
+    if [[ ! -e "$1/$n" ]]; then
+      cp -p -- "$f" "$1/$n" && echo "etc/$n was missing: put back from the copy taken before the refresh"
+    elif ! cmp -s -- "$f" "$1/$n"; then
+      echo "etc/$n changed during the refresh: left as it is"
+    fi
+  done
+  return 0
 }
 
 # ---------------------------------------------------------------- logging and database
@@ -221,6 +271,34 @@ recover() {
   fi
   IN_RESTORE=0
   APP_STOPPED=0
+}
+
+# log_settings: the names of staging's settings files (never their content) and a warning for each of
+# STAGING_SETTINGS that is missing.
+log_settings() {
+  local n
+  log "Server settings on staging (etc/, kept as they are): $(settings_names "$PROJECT_DIR/etc")"
+  for n in $(missing_staging_settings "$PROJECT_DIR/etc"); do
+    log "WARNING: etc/$n is missing on staging (see STAGING_SETTINGS in this script and docs/runbook.md)"
+  done
+}
+
+# check_settings: put back the settings files that went missing from etc/ during this run (one warning each).
+check_settings() {
+  local line
+  while IFS= read -r line; do
+    if [[ -n "$line" ]]; then log "WARNING: $line"; fi
+  done < <(restore_missing_settings "$PROJECT_DIR/etc" "$SETTINGS_SAVED")
+}
+
+# At the end of every run (success, refusal or failure): the downloaded production dump never stays on staging
+# (it can be fetched again from Spaces); missing settings files are put back, then their copy is deleted.
+on_exit() {
+  trap - ERR
+  set +e
+  rm -f "$WORK_DIR"/prod-*.sql.gz
+  check_settings
+  rm -rf -- "$SETTINGS_SAVED"
 }
 
 # ---------------------------------------------------------------- steps
@@ -348,6 +426,7 @@ dry_run_report() {
   recent=$(sql_value "select coalesce(group_concat(name order by name separator ', '), 'none') from login where last_login > now() - interval 14 day and name not like 'zztest\\_%'")
   log "Logins used on staging in the last 14 days (not zztest): $recent"
   log "  (the ANTWEB_TEST_USER login of the end-to-end tests is probably among them; add its name to $KEEP_LOGINS_FILE)"
+  log_settings
   if [[ -s "$SAFETY" ]]; then log "A safety dump from an earlier run exists: $SAFETY (it would be replaced)"; fi
   log "Would: download $DUMP_NAME to $WORK_DIR, save the test logins, dump staging to $SAFETY, stop AntWeb,"
   log "       load the dump, $( ((SCRUB)) && echo 'scrub emails and passwords (scrub.sql)' || echo 'NOT scrub'), put the test logins back,"
@@ -399,6 +478,8 @@ refresh() {
   python3 "$accounts_py" --save-to "$SAVED" --keep-logins "$KEEP_LOGINS_FILE" 2>&1 | while IFS= read -r l; do log "  $l"; done
   [[ -s "$SAVED" ]] || die "could not save the test logins"
   sql_value "select table_name, column_name from information_schema.columns where table_schema = 'ant'" | LC_ALL=C sort > "$SCHEMA_BEFORE"
+  save_settings "$PROJECT_DIR/etc" "$SETTINGS_SAVED"
+  log_settings
 
   log "Safety dump of staging's current database to $SAFETY"
   dump_staging_to "$SAFETY" || die "the safety dump failed. Nothing was changed."
@@ -468,6 +549,7 @@ refresh() {
     rm -f "$SAFETY"
     log "Safety dump deleted"
   fi
+  check_settings
   log "Refresh OK: staging has production's data of $DUMP_NAME ($(( (SECONDS - t0) / 60 )) min in all)"
 }
 
@@ -483,8 +565,9 @@ main() {
   if (( ! DRY_RUN )); then
     install -d -m 700 "$WORK_DIR"
     LOG_FILE="$WORK_DIR/refresh.log"
-    # The downloaded production dump never stays on staging (it can be fetched again from Spaces).
-    trap 'rm -f "$WORK_DIR"/prod-*.sql.gz' EXIT
+    # A settings copy left by a run that was killed is never used: it could put back a file removed since.
+    rm -rf -- "$SETTINGS_SAVED"
+    trap on_exit EXIT
   fi
   log "Start$( ((DRY_RUN)) && echo ' (dry run)')$( ((ROLLBACK)) && echo ' (rollback)'): $*"
   trap 'on_error $LINENO' ERR

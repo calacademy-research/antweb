@@ -571,6 +571,7 @@ tests = [
   "test_admin_switches.py",            # upload down time on and off, admin alerts, password campaign preview (admin, 2026-11-03)
   "test_museum_manager.py",            # Museum Manager save, rename, delete with confirmation (admin, 2026-11-03)
   "test_admin_staging.py",
+  "test_nightly_jobs_ran.py",          # each nightly job wrote its line in the last nightly run (admin, read-only, 2026-11-04)
   "test_reports_plain_language.py",
   "test_parts_by_group.py",
   "test_logmgr.py",
