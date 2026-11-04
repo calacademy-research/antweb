@@ -7,7 +7,6 @@ pages recorded from staging (fingerprint.py, expectations.json) as fallbacks. Ev
 """
 import html
 import re
-from html.parser import HTMLParser
 import time
 from functools import lru_cache
 from urllib.parse import parse_qs, urlsplit
@@ -79,37 +78,34 @@ def assert_message(r, expected, what=""):
     assert expected in got, f"{what or r.url}: message {got[:300]!r} does not contain {expected!r}"
 
 
+ENTITY = re.compile(r"&(?:#\d+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);")
+
+
+def attr_unescape(value):
+    """An attribute value as a browser reads it: only entities ending in ';' are decoded. html.unescape also decodes
+    '&reg' without ';', so '...&regionName=Africa' became '...(R)ionName=Africa' and region links lost their parameters
+    (the root of finding F27, 2026-11-03; country links use '&countryName')."""
+    return ENTITY.sub(lambda m: html.unescape(m.group(0)), value or "")
+
+
 def site_path(link):
     """'https://host/x.do?a=b' or '/x.do?a=b' or 'x.do?a=b' -> '/x.do?a=b' (HTML entities decoded)."""
-    link = html.unescape(link.strip())
+    link = attr_unescape(link.strip())
     parts = urlsplit(link)
     path = parts.path if parts.path.startswith("/") else "/" + parts.path
     return path + ("?" + parts.query if parts.query else "")
 
 
-class _Anchors(HTMLParser):
-    """The href of every <a> in a page, in order (an HTML parser: a regex over the whole page paired quotes across
-    the region page's map script and found none of its links, finding F27, 2026-11-03)."""
-
-    def __init__(self):
-        super().__init__(convert_charrefs=True)
-        self.hrefs = []
-
-    def handle_starttag(self, tag, attrs):
-        if tag == "a":
-            for k, v in attrs:
-                if k == "href" and v:
-                    self.hrefs.append(v)
+SCRIPT = re.compile(r"<script\b.*?</script\s*>", re.I | re.S)
+COMMENT = re.compile(r"<!--(?:>|->|.*?--!?>)", re.S)
 
 
 def _anchor_hrefs(page):
-    parser = _Anchors()
-    try:
-        parser.feed(page or "")
-        parser.close()
-    except Exception:  # a page the parser cannot read: the old regex
-        return [h for _, h in HREF.findall(page or "")]
-    return parser.hrefs
+    """The href values of a page outside its scripts and HTML comments, as a browser reads them (finding F27,
+    2026-11-03: a regex over the whole page paired quotes across the region page's map script; then Python's HTML
+    parser still found none of the Africa page's 5 list links, which come after 198 links inside comments)."""
+    text = COMMENT.sub(" ", SCRIPT.sub(" ", page or ""))
+    return [h for _, h in HREF.findall(text)]
 
 
 def links(page, action):
@@ -117,7 +113,7 @@ def links(page, action):
     out = []
     for href in _anchor_hrefs(page):
         if re.search(r"(^|/)" + re.escape(action) + r"\.do(\?|$)", href) and not href.startswith(("mailto:", "javascript:")):
-            host = urlsplit(html.unescape(href)).hostname
+            host = urlsplit(attr_unescape(href)).hostname
             if host and host != urlsplit(BASE_URL).hostname and not host.endswith("antweb.org"):
                 continue
             p = site_path(href)

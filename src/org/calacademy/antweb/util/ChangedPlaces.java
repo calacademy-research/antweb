@@ -206,7 +206,11 @@ public final class ChangedPlaces {
             + (cvn ? " union select t.current_valid_name from specimen s join taxon t on t.taxon_name = s.taxon_name where " + cond
                 + " and t.current_valid_name is not null" : "")
             + (renames ? " union select old_name from specimen_name_update where mode = 'changed' and run_date >= ?" : "");
-        try (PreparedStatement stmt = db.connection.prepareStatement("select distinct l.project_name from proj_taxon l where l.taxon_name in (" + names + ")")) {
+        // The names as a derived table, joined once (2026-11-03): "taxon_name in (... union ...)" is not turned into a
+        // semi-join by MySQL, so the union ran again for every proj_taxon row and the count check job never ended
+        // within its 10 minutes on staging.
+        try (PreparedStatement stmt = db.connection.prepareStatement("select distinct l.project_name from (" + names + ") n"
+                + " join proj_taxon l on l.taxon_name = n.taxon_name")) {
             int n = nParams * (cvn ? 2 : 1) + (renames ? 1 : 0);
             for (int i = 1; i <= n; i++) stmt.setTimestamp(i, since);
             try (ResultSet r = stmt.executeQuery()) {
