@@ -228,8 +228,31 @@ public class GenusConceptRuleDb {
         return new ArrayList<>(pairs.values());
     }
 
-    /** loadPairs() classified against the table: the listed pairs, PROPOSE first. */
+    /** loadPairs() classified against the table: the listed pairs, PROPOSE first, each with the names a rule would move. */
     public List<GenusConceptProposals.Pair> proposals() throws SQLException {
-        return GenusConceptProposals.listed(loadPairs(), ruledKeys());
+        List<GenusConceptProposals.Pair> listed = GenusConceptProposals.listed(loadPairs(), ruledKeys());
+        for (GenusConceptProposals.Pair p : listed) loadWillMove(p);
+        return listed;
+    }
+
+    /** The specimens a rule would move, as SPECIMENS_SQL counts them, by name: {taxon_name, specimens, up to 5 codes}. */
+    public static final String WILL_MOVE_SQL = "select s.taxon_name, count(*) n,"
+        + " substring_index(group_concat(s.code order by s.code separator ' '), ' ', 5) codes"
+        + " from specimen s"
+        + " where s.taxon_name like ? escape '!' and s.bioregion = ?"
+        + " and s.status in ('" + Status.MORPHOTAXON + "', '" + Status.INDETERMINED + "')"
+        + " and (s.flag is null or s.flag != 'red')"
+        + " group by s.taxon_name order by n desc, s.taxon_name";
+
+    void loadWillMove(GenusConceptProposals.Pair p) throws SQLException {
+        p.willMove.clear();
+        String prefix = p.genus.replace("!", "!!").replace("%", "!%").replace("_", "!_") + " %";
+        try (PreparedStatement stmt = connection.prepareStatement(WILL_MOVE_SQL)) {
+            stmt.setString(1, prefix);
+            stmt.setString(2, p.bioregion);
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) p.willMove.add(new String[] {r.getString(1), r.getString(2), r.getString(3)});
+            }
+        }
     }
 }

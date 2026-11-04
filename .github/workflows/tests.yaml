@@ -687,7 +687,7 @@ jobs:
               /t/org/calacademy/antweb/upload/SubfamilyFromGenusTest.java \
               /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:11 \
-                     upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:19 upload.GenusSynonymRuleTest:16 upload.GenusConceptRuleTest:5 upload.GenusConceptProposalsTest:4 \
+                     upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:19 upload.GenusSynonymRuleTest:16 upload.GenusConceptRuleTest:5 upload.GenusConceptProposalsTest:5 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \

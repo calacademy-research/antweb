@@ -90,4 +90,17 @@ public class GenusConceptProposalsTest extends TestCase {
         assertEquals("approve and reject per proposal only", 4, html.split("type=\"submit\"", -1).length - 1);
         assertTrue(GenusConceptRulesAction.rulesHtml(List.of()).contains("None yet."));
     }
+
+    /** The page says what a rule moves: each name, old -> new, its specimens and codes (Brian Fisher, 2026-11-04). */
+    public void testWillMoveNamesTheSpecimens() {
+        Pair p = pair("dolichoderinaebothriomyrmex", "Indomalaya", 2, moved("dolichoderinaechronoxenus", 7, true,
+            "dolichoderinaebothriomyrmex myops>dolichoderinaechronoxenus myops"));
+        p.willMove.add(new String[] {"dolichoderinaebothriomyrmex (indet)", "2", "casent0001 casent0002"});
+        p.kind = Kind.PROPOSE;
+        String html = GenusConceptRulesAction.willMoveHtml(p, "");
+        assertTrue(html, html.contains("Bothriomyrmex (indet) &rarr; Chronoxenus (indet): 2 specimens ("));
+        assertTrue(html, html.contains("href=\"/specimen.do?code=casent0001\">casent0001</a>"));
+        String page = GenusConceptRulesAction.proposalsHtml(List.of(p), "<input type=\"hidden\" name=\"_csrf\" value=\"t\">", "");
+        assertTrue(page, page.contains("<th>Will move (only morphospecies and indets)</th><th>Why: AntCat moved these species</th>"));
+    }
 }
