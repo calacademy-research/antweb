@@ -759,9 +759,10 @@ public final class ListView {
             if (specimens != null) for (Map.Entry<String, String[]> e : specimens.names.entrySet()) {
                 String[] v = e.getValue();
                 generaWithSpecimens.add(PlaceTaxonNotes.OtherNames.key(v[0], v[1]));
-                if (isPlaceholderGenus(v[1]) && org.calacademy.antweb.upload.UploadUtil.INDET_EPITHET.equals(v[2])) {
-                    subfamilyOnlySpecimens.merge(PlaceTaxonNotes.OtherNames.key(v[0], v[1]), specimens.count(e.getKey()), Integer::sum);
-                }
+                // by the name, "dorylinae(dorylinae) (indet)": its genus row is "dorylinae(dorylinae)" (not by the taxon
+                // table's genus and species columns, which the staging check of 2026-11-04 showed do not match)
+                String genusRow = placeholderIndetGenusRow(e.getKey());
+                if (genusRow != null) subfamilyOnlySpecimens.merge(genusRow, specimens.count(e.getKey()), Integer::sum);
             }
             return this;
         }
@@ -776,9 +777,18 @@ public final class ListView {
          * list's "(dorylinae)" row shows "N Specimens" in its Species column, linked to them, as "Adetomyrma (indet)" on the
          * species list). 0 for any other genus, or when the place's specimens were not read (regions, subregions).
          */
-        public int subfamilyOnlySpecimens(String subfamily, String genus) {
-            Integer n = subfamilyOnlySpecimens.get(PlaceTaxonNotes.OtherNames.key(subfamily, genus));
+        public int subfamilyOnlySpecimens(String genusTaxonName) {
+            Integer n = genusTaxonName == null ? null : subfamilyOnlySpecimens.get(genusTaxonName.toLowerCase(Locale.ROOT));
             return n == null ? 0 : n;
+        }
+
+        /** "dorylinae(dorylinae) (indet)" -> "dorylinae(dorylinae)" (lower case); null for any other name. */
+        public static String placeholderIndetGenusRow(String taxonName) {
+            String suffix = " " + org.calacademy.antweb.upload.UploadUtil.INDET_EPITHET;
+            if (taxonName == null || !taxonName.toLowerCase(Locale.ROOT).endsWith(suffix)) return null;
+            String genusRow = taxonName.substring(0, taxonName.length() - suffix.length());
+            if (genusRow.contains(" ") || !genusRow.endsWith(")") || !genusRow.contains("(")) return null;
+            return genusRow.toLowerCase(Locale.ROOT);
         }
 
         /** The browse page of a placeholder genus's "(indet)" specimens in the place, in All specimen names. */

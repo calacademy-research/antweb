@@ -295,7 +295,7 @@
                 : "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "&statusSet=" + Html.url(genusRows.choice) + "'><span class='numbers'>" + viewSpecies + "</span></a>";
             // A placeholder genus row ("(dorylinae)", All specimen names): its specimens identified only to subfamily here,
             // linked to them, as "Adetomyrma (indet)" on the species list (Brian Fisher, 2026-11-04)
-            int subfamilyOnly = org.calacademy.antweb.ListView.GenusRows.isPlaceholderGenus(child.getGenus()) ? genusRows.subfamilyOnlySpecimens(child.getSubfamily(), child.getGenus()) : 0;
+            int subfamilyOnly = org.calacademy.antweb.ListView.GenusRows.isPlaceholderGenus(child.getGenus()) ? genusRows.subfamilyOnlySpecimens(child.getTaxonName()) : 0;
             if (subfamilyOnly > 0) {
               childCountStr = "<a class='subfamily-only' title='" + Html.escAttr("Specimens identified only to subfamily in " + overview.getName()) + "' href='"
                   + Html.escAttr(AntwebProps.getDomainApp() + org.calacademy.antweb.ListView.GenusRows.subfamilyOnlyUrl(child.getSubfamily(), child.getGenus(), overview.getParams()))
