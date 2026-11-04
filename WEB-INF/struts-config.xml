@@ -399,7 +399,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
       
       <action path="/list"
               type = "org.calacademy.antweb.util.ListAction"
-              name="dummyForm">
+              name="dummyForm" scope="request">
           <forward name ="success" path="/util/list.jsp"/>
           <forward name ="list" path="/util/list.jsp"/>
           <forward name ="listTable" path="/util/listTable.jsp"/>
@@ -745,7 +745,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
     <!-- Only action=recentDescEdits (or none); other actions 404 (2026-10-19; the reports are on /list.do). -->
     <action path="/recentDescEdits"
             type="org.calacademy.antweb.util.RecentDescEditsAction"
-            name="dummyForm">
+            name="dummyForm" scope="request">
       <forward name="success" path="/descEditReport.jsp"/>
     </action>
 
@@ -818,7 +818,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
 <!-- if troubles, see layout.jsp:55 -->
      <action path="/getSearchList"
              type = "org.calacademy.antweb.search.SearchListAction"
-             name="dummyForm">          
+             name="dummyForm" scope="request">          
      </action>         
     
     <!-- end Search related -->
@@ -834,7 +834,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
         
     <action path="/collection"
             type="org.calacademy.antweb.CollectionAction"
-            name="dummyForm">
+            name="dummyForm" scope="request">
       <forward name="success" path="/collection.jsp"/>
     </action>
                                                                                                                
@@ -1294,7 +1294,7 @@ We would like to remove getChildImages.  Not needed now in the new UI
    
 	<action path="/adm1Mgr"
 			type="org.calacademy.antweb.curate.geolocale.Adm1MgrAction"
-			name="dummyForm">
+			name="dummyForm" scope="request">
 	  <forward name="success" path="/curate/geolocale/adm1Mgr.jsp"/>
 	</action>   
 
@@ -1406,13 +1406,13 @@ We would like to remove getChildImages.  Not needed now in the new UI
 
       <action path="/serverStatus"
               type = "org.calacademy.antweb.util.ServerStatusAction"
-              name="dummyForm">
+              name="dummyForm" scope="request">
           <forward name ="success" path="/util/serverStatus.jsp"/>
       </action>
 
     <action path="/serverDebug"
             type = "org.calacademy.antweb.util.ServerDebug"
-            name="dummyForm">
+            name="dummyForm" scope="request">
       <forward name ="success" path="/util/serverDebug.jsp"/>
     </action>
 
@@ -1423,19 +1423,19 @@ We would like to remove getChildImages.  Not needed now in the new UI
 
       <action path="/dbStatus"
               type = "org.calacademy.antweb.util.DbStatusAction"
-              name="dummyForm">
+              name="dummyForm" scope="request">
           <forward name ="success" path="/util/dbStatus.jsp"/>
       </action>
 
       <action path="/adminAlert"
               type = "org.calacademy.antweb.util.AdminAlertAction"
-              name="dummyForm">
+              name="dummyForm" scope="request">
           <forward name ="success" path="/util/adminAlert.jsp"/>
       </action>
           
       <action path="/statistics"   
               type = "org.calacademy.antweb.StatisticsAction"
-              name="dummyForm">
+              name="dummyForm" scope="request">
           <forward name ="statisticsStr" path="/util/statisticsStr.jsp"/>     
           <forward name ="statisticsRealTime" path="/util/statisticsRealTime.jsp"/>     
           <forward name ="statisticsRealTime-body" path="/util/statisticsRealTime-body.jsp"/>     
@@ -1444,14 +1444,14 @@ We would like to remove getChildImages.  Not needed now in the new UI
 
       <action path="/statsPage"   
               type = "org.calacademy.antweb.StatsPageAction"
-              name="dummyForm">
+              name="dummyForm" scope="request">
           <forward name ="success" path="/util/statsPage.jsp"/>     
       </action>
 
 
       <action path="/uptime"
               type = "org.calacademy.antweb.util.UptimeAction"
-              name="dummyForm">
+              name="dummyForm" scope="request">
           <forward name ="success" path="/util/uptime.jsp"/>
           <forward name ="fail" path="/util/uptimeFail.jsp"/>
       </action>

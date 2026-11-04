@@ -50,7 +50,7 @@ def test_admin_saves_renames_and_deletes_a_museum():
         ask = _post(s, token, "/saveMuseum.do?action=delete", code=CODE, step="delete")
         assert "Delete museum" in ns.text_of(_post(s, token, "/manageMuseum.do?action=delete", code=CODE, step="delete"))
         text = ns.text_of(ask)
-        assert f"Delete museum {CODE}?" in text and "cannot be undone" in text, text[:300]
+        assert re.search(rf"Delete museum {CODE}\s*\?", text) and "cannot be undone" in text, text[-600:]
         assert "specimen records carry this museum code" not in text, "a test museum code is used by specimens"
         assert _listed(s), "the delete was not confirmed but the museum is gone"
 

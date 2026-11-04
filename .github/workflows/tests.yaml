@@ -1456,6 +1456,9 @@ jobs:
       - name: The e2e link reader reads links as a browser does (tests/unit/test_e2e_link_reader.py, finding F27)
         run: python3 tests/unit/test_e2e_link_reader.py
 
+      - name: Actions with the shared dummyForm keep it per request (tests/unit/test_struts_form_scope.py)
+        run: python3 tests/unit/test_struts_form_scope.py
+
       - name: web/log on a host folder (report links, tomcat writes, log rotation)
         # web/log is a host folder in production (docker-compose.yml: ./logs/web). Starting
         # from an empty one, antweb-fix-perms must make the four upload report links into
