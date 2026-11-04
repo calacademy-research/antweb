@@ -495,6 +495,18 @@ def test_audit_triage_20261029(sources):
     print("Audit triage fixes of 2026-10-29 hold.")
 
 
+def test_audit_triage_20261104(sources):
+    """Search tools with no search in the session say so instead of failing; the adm2s setter keeps its value."""
+    cmp = sources["src/org/calacademy/antweb/search/PrepareCompareResultsAction.java"]
+    assert 'if (results == null) return mapping.findForward("sessionExpired");' in cmp
+    assert cmp.count('if (results != null && session.getAttribute("fullAdvancedSearchResults") != null)') == 3
+    mp = sources["src/org/calacademy/antweb/search/PrepareMapResultsAction.java"]
+    assert mp.count('if (results != null && session.getAttribute("fullAdvancedSearchResults") != null)') == 2
+    form = sources["src/org/calacademy/antweb/search/AdvancedSearchForm.java"]
+    assert "public void setAdm2s(String[] adm2s) {" in form
+    print("Audit triage fixes of 2026-11-04 hold.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -516,6 +528,7 @@ def main():
     test_nightly_triage_2026_10_28(sources)
     test_places_and_search_fixes_20261028(sources)
     test_audit_triage_20261029(sources)
+    test_audit_triage_20261104(sources)
 
 
 if __name__ == "__main__":

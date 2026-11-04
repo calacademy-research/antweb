@@ -52,14 +52,14 @@ public final class PrepareCompareResultsAction extends PrepareAction {
 		String forwardString = "failure";
 		if (ResultRank.SPECIMEN.equals(resultRank)) {
 			results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
-			if (session.getAttribute("fullAdvancedSearchResults") != null) results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
-            resultSetModifier = "(from " + results.getResults().size() + " total specimens)";
+			if (results != null && session.getAttribute("fullAdvancedSearchResults") != null) results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
+            resultSetModifier = results == null ? "" : "(from " + results.getResults().size() + " total specimens)";
 			forwardString = "advancedSearch";
         } else if (ResultRank.isTaxonRank(resultRank)) {
             // This set should show for all qualifying specimen's species.  
             /* Take the distinct set of species and get the ones that are imaged. */
             results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
-			if (session.getAttribute("fullAdvancedSearchResults") != null) results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
+			if (results != null && session.getAttribute("fullAdvancedSearchResults") != null) results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
             request.setAttribute("resultRank", resultRank);            
             resultSetModifier = "";
             request.setAttribute("resultSetModifier", resultSetModifier);			
@@ -68,7 +68,7 @@ public final class PrepareCompareResultsAction extends PrepareAction {
 		/*  else if (resultRank.equals("speciesSpecific")) {
          // This set would show only species with imaged in specimens within search criteria
             results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
-			if (session.getAttribute("fullAdvancedSearchResults") != null) results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
+			if (results != null && session.getAttribute("fullAdvancedSearchResults") != null) results.setResults((ArrayList)session.getAttribute("fullAdvancedSearchResults")); // added to fix session
             //session.setAttribute("taxonList", ((AdvancedSearchResults) results).getSpeciesList());
             resultSetModifier = "(from " + results.getResults().size() + " imaged specimens)";
             request.setAttribute("resultRank", resultRank);            
@@ -93,6 +93,9 @@ public final class PrepareCompareResultsAction extends PrepareAction {
 		}*/
 
         //s_log.warn("execute() results.size:" + results.getResults().size());
+
+		// No results in the session (expired, or no search yet): a message, not a NullPointerException (2026-11-04).
+		if (results == null) return mapping.findForward("sessionExpired");
 
 		// This is held for PrepareMapResults, download  // added to fix session
 		session.setAttribute("fullAdvancedSearchResults", results.getResults());  
