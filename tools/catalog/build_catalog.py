@@ -9,7 +9,8 @@
 Machine columns come from the code and are rewritten on every run:
   - actions, classes and forwards (JSPs) from WEB-INF/struts-config.xml;
   - sub-actions from the Java source (string literals compared with the `action` parameter,
-    or the class's ACTIONS set where it has one);
+    or the class's ACTIONS set where it has one); for a class shared by several actions that
+    branches on the request URI (OverviewAction), only the sub-actions that action's branch uses;
   - the access rule from the checks found in the Java class (and its superclass) and in the
     JSPs it forwards to (adminCheck.jsp, curatorCheck.jsp, loginCheck.jsp includes);
   - e2e coverage from tests/e2e (URLs each test requests, including parametrized lists and
@@ -344,6 +345,31 @@ def analyse_class(cls, seen=None):
                     subs |= vals
     res["subs"] = sorted(subs)
 
+    # A class shared by several actions that branches on the request URI, as OverviewAction does
+    # (if (uri.contains("/projects.do")) { ... return ...; }): a sub-action exists for an action
+    # only when that action's branch uses it, the literal or a boolean made from it
+    # (boolean isRecalc = "recalc".equals(action) && ...). 2026-11-04: the list pages
+    # (/countries.do, /projects.do, ...) return their list without reading action=recalc.
+    uri_blocks = []
+    for m in re.finditer(r"\bif\s*\(", code):
+        p0 = m.end() - 1
+        p1 = matching(code, p0, "(", ")")
+        cond = code[p0 + 1:p1 - 1]
+        lits = re.findall(r'\b\w+\.contains\("(/\w+\.do)"\)', cond)
+        if not lits or re.sub(r'\b\w+\.contains\("/\w+\.do"\)|\|\||\s', "", cond):
+            continue
+        bm = re.match(r"\s*\{", code[p1:])
+        if not bm:
+            continue
+        b0 = p1 + bm.end() - 1
+        uri_blocks.append((lits, code[b0:matching(code, b0, "{", "}")]))
+    res["uri_blocks"] = uri_blocks
+    sub_bools = {}
+    for m in re.finditer(r"boolean\s+(\w+)\s*=\s*([^;]*);", code):
+        for v in re.findall(r'"(\w+)"\.equals\((?:%s)\)' % av, m.group(2)):
+            sub_bools.setdefault(v, set()).add(m.group(1))
+    res["sub_bools"] = sub_bools
+
     # switch (action) { case "x": ... } blocks: a check inside a case applies to that case only.
     switches = []
     for sw in re.finditer(r"switch\s*\(\s*(?:%s)\s*\)\s*\{" % av, code):
@@ -490,6 +516,23 @@ def analyse_class(cls, seen=None):
                 res["subs"] = sres["subs"]
                 res["action_vars"] = sres["action_vars"]
     return res
+
+
+def subs_for_path(an, path):
+    """The class's sub-actions that the action at path can reach (see uri_blocks in analyse_class)."""
+    subs = an["subs"]
+    blocks = an.get("uri_blocks") or []
+    url = path + ".do"
+    # The first branch whose test matches this URI, as the Java runs them in order.
+    block = next((body for lits, body in blocks if any(lit in url for lit in lits)), None)
+    if block is None:
+        return subs
+    keep = []
+    for s in subs:
+        names = an.get("sub_bools", {}).get(s, set())
+        if '"%s"' % s in block or any(re.search(r"\b%s\b" % re.escape(n), block) for n in names):
+            keep.append(s)
+    return keep
 
 
 def enclosing_if(code, pos, spans):
@@ -814,7 +857,7 @@ def build(traffic=None, traffic_absent="0", removed=None):
     for a in actions:
         an = analyses.get(a["type"])
         if an:
-            for s in an["subs"]:
+            for s in subs_for_path(an, a["path"]):
                 known_subs.add((a["path"], s))
     for k, r in removed.items():
         if r.get("kind") == "sub-action" and ".do?action=" in k:
@@ -856,7 +899,7 @@ def build(traffic=None, traffic_absent="0", removed=None):
                        exp.get(path, ""), sorted(hits.get(path, ())), probe.get(path, set()))
         rows.append(row)
         if an:
-            for s in an["subs"]:
+            for s in subs_for_path(an, path):
                 key = "%s.do?action=%s" % (path, s)
                 srule, swhere, sev, _ = access_summary(an, s, jsp_r, jsp_file)
                 rows.append(base_row(key, key, "sub-action", a["type"], [], srule, swhere, sev, writes,
