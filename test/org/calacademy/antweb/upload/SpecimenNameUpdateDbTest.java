@@ -50,6 +50,7 @@ public class SpecimenNameUpdateDbTest extends TestCase {
         connection.setAutoCommit(true);
         try (Statement s = connection.createStatement()) {
             for (String t : new String[] {"specimen", "taxon", "homonym", "description_edit", "genus_concept_rule"}) s.executeUpdate("drop table if exists " + t);
+            org.calacademy.antweb.upload.GenusConceptRuleDb.resetSchemaCheck();
             s.executeUpdate("create table taxon (taxon_name varchar(128) not null primary key, taxarank varchar(20),"
                 + " status varchar(40), current_valid_name varchar(128), insert_method varchar(30), family varchar(64),"
                 + " subfamily varchar(64), tribe varchar(64), genus varchar(64), subgenus varchar(64), species varchar(64),"
@@ -570,6 +571,29 @@ public class SpecimenNameUpdateDbTest extends TestCase {
     private void specimenIn(String code, String taxonName, int group, String bioregion) throws SQLException {
         exec("insert into specimen (code, taxon_name, original_taxon_name, access_group, status, subfamily, genus, species, bioregion)"
             + " values (" + q(code) + ", " + q(taxonName) + ", null, " + group + ", 'indetermined', 'ponerinae', 'mesoponera', 'x', " + q(bioregion) + ")");
+    }
+
+    /**
+     * Review of #321: a name uploaded without a subfamily in a bioregion with an approved old genus concept is moved
+     * by the second pass ("(formicidae)mesoponera (indet)" -> Mesoponera (indet)), then by the concept rule (Xiphopelta),
+     * and must then stay: the second pass did move it back every other night. Three apply runs, one name.
+     */
+    public void testPlaceholderUploadInAConceptBioregionStaysPut() throws Exception {
+        taxon("ponerinaemesoponera", "genus", "valid", null, null, "ponerinae", "mesoponera", null, null);
+        taxon("ponerinaexiphopelta", "genus", "valid", null, null, "ponerinae", "xiphopelta", null, null);
+        taxon("(formicidae)mesoponera", "genus", "unrecognized", null, "addMissingGenus", "(formicidae)", "mesoponera", null, null);
+        taxon("(formicidae)mesoponera (indet)", "species", "indetermined", null, "specimenUpload", "(formicidae)", "mesoponera", "(indet)", null);
+        exec("update taxon set antcat_id = 601, tribe = 'ponerini' where taxon_name = 'ponerinaexiphopelta'");
+        specimenIn("zz0000001", "(formicidae)mesoponera (indet)", 30, "Afrotropical");
+        String[] names = new String[3];
+        for (int night = 0; night < 3; night++) {
+            SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000);
+            names[night] = nameOf("zz0000001");
+        }
+        assertEquals("filed under Xiphopelta by the third night: " + String.join(", ", names), "ponerinaexiphopelta (indet)", names[2]);
+        SpecimenNameUpdate.Summary again = SpecimenNameUpdate.run(connection, SpecimenNameUpdate.APPLY, 50000);
+        assertEquals("nothing moves any more", 0, again.specimens);
+        assertEquals("ponerinaexiphopelta (indet)", nameOf("zz0000001"));
     }
 
     /**

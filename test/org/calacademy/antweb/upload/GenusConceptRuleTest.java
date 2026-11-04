@@ -10,6 +10,7 @@ import junit.framework.TestCase;
 import org.calacademy.antweb.Status;
 import org.calacademy.antweb.upload.CurrentValidNameRule;
 import org.calacademy.antweb.upload.GenusConceptRule;
+import org.calacademy.antweb.upload.SpecimenNameUpdate;
 import org.calacademy.antweb.upload.UploadNameReasons;
 
 /**
@@ -40,6 +41,16 @@ public class GenusConceptRuleTest extends TestCase {
     static String move(String name, String bioregion) throws Exception {
         GenusConceptRule.Move m = GenusConceptRule.decide(GenusConceptRule.SEED, name, bioregion, LOOKUP);
         return m == null ? null : m.newName;
+    }
+
+    /** A name an approved rule made from another name is recognised (the second pass of the name update leaves it). */
+    public void testByConceptRule() {
+        java.util.List<GenusConceptRule.Rule> rules = GenusConceptRule.SEED;
+        assertTrue(SpecimenNameUpdate.byConceptRule(rules, "ponerinaemesoponera (indet)", "ponerinaexiphopelta (indet)"));
+        assertTrue(SpecimenNameUpdate.byConceptRule(rules, "ponerinaemesoponera kg01", "ponerinaexiphopelta kg01"));
+        assertFalse(SpecimenNameUpdate.byConceptRule(rules, "ponerinaemesoponera kg01", "ponerinaexiphopelta kg02"));
+        assertFalse(SpecimenNameUpdate.byConceptRule(rules, "ponerinaealpha (indet)", "ponerinaexiphopelta (indet)"));
+        assertFalse(SpecimenNameUpdate.byConceptRule(null, "ponerinaemesoponera (indet)", "ponerinaexiphopelta (indet)"));
     }
 
     /** The seed of table genus_concept_rule: rule 1, approved by Brian Fisher, 2026-11-03. */
