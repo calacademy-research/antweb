@@ -782,6 +782,20 @@ public final class ListView {
             return n == null ? 0 : n;
         }
 
+        /**
+         * The Species cell of a placeholder genus row: "N Specimens" linked to them (hover "Specimens identified only to
+         * subfamily in <place>"); null when the row is not a placeholder or has none counted here.
+         */
+        public String subfamilyOnlyCellHtml(Taxon child, Overview overview) {
+            if (child == null || overview == null || !isPlaceholderGenus(child.getGenus())) return null;
+            int n = subfamilyOnlySpecimens(child.getTaxonName());
+            if (n <= 0) return null;
+            return "<a class='subfamily-only' title='" + org.calacademy.antweb.util.Html.escAttr("Specimens identified only to subfamily in " + overview.getName())
+                + "' href='" + org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.AntwebProps.getDomainApp()
+                    + subfamilyOnlyUrl(child.getSubfamily(), child.getGenus(), overview.getParams()))
+                + "'><span class='numbers'>" + Formatter.commaFormat(n) + "</span> " + (n == 1 ? "Specimen" : "Specimens") + "</a>";
+        }
+
         /** "dorylinae(dorylinae) (indet)" -> "dorylinae(dorylinae)" (lower case); null for any other name. */
         public static String placeholderIndetGenusRow(String taxonName) {
             String suffix = " " + org.calacademy.antweb.upload.UploadUtil.INDET_EPITHET;

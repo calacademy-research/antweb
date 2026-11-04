@@ -295,12 +295,8 @@
                 : "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "&statusSet=" + Html.url(genusRows.choice) + "'><span class='numbers'>" + viewSpecies + "</span></a>";
             // A placeholder genus row ("(dorylinae)", All specimen names): its specimens identified only to subfamily here,
             // linked to them, as "Adetomyrma (indet)" on the species list (Brian Fisher, 2026-11-04)
-            int subfamilyOnly = org.calacademy.antweb.ListView.GenusRows.isPlaceholderGenus(child.getGenus()) ? genusRows.subfamilyOnlySpecimens(child.getTaxonName()) : 0;
-            if (subfamilyOnly > 0) {
-              childCountStr = "<a class='subfamily-only' title='" + Html.escAttr("Specimens identified only to subfamily in " + overview.getName()) + "' href='"
-                  + Html.escAttr(AntwebProps.getDomainApp() + org.calacademy.antweb.ListView.GenusRows.subfamilyOnlyUrl(child.getSubfamily(), child.getGenus(), overview.getParams()))
-                  + "'><span class='numbers'>" + Formatter.commaFormat(subfamilyOnly) + "</span> " + (subfamilyOnly == 1 ? "Specimen" : "Specimens") + "</a>";
-            }
+            String subfamilyOnlyCell = genusRows.subfamilyOnlyCellHtml(child, overview);
+            if (subfamilyOnlyCell != null) childCountStr = subfamilyOnlyCell;
             if (showNotCuratedColumn) {
               org.calacademy.antweb.home.PlaceGenusCurationDb.Row ncRow = genusRows.notCurated(child.getSubfamily(), child.getGenus());
               notCuratedCell = ncRow == null ? "" : org.calacademy.antweb.PlaceTaxonNotes.notCuratedCellHtml(ncRow.notCurated,
@@ -413,6 +409,9 @@
            org.calacademy.antweb.home.PlaceGenusCurationDb.Row addedNc = genusRows.notCurated(child.getSubfamily(), child.getGenus());
            if (addedNc != null) addedOther = org.calacademy.antweb.PlaceTaxonNotes.notCuratedCellHtml(addedNc.notCurated,
                org.calacademy.antweb.PlaceTaxonNotes.notCuratedUrl(child.getSubfamily(), child.getGenus(), overview));
+           // a placeholder row ("(dorylinae)"): its specimens identified only to subfamily here (Brian Fisher, 2026-11-04)
+           String addedSubfamilyOnly = genusRows.subfamilyOnlyCellHtml(child, overview);
+           if (addedSubfamilyOnly != null) addedCount = addedSubfamilyOnly;
            int addedImaged = genusRows.imaged(child.getSubfamily(), child.getGenus());
            if (addedImaged > 0) addedImages = "<a href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams()
                + "&statusSet=" + Html.url(genusRows.choice) + "'>" + org.calacademy.antweb.ImagesAnywhere.speciesImagedCell(addedImaged) + "</a>";
