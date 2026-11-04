@@ -696,7 +696,14 @@ Found while doing this (2026-10-26, end-to-end tests of rows 24 to 53; each has 
   ct.taxon_name = c.taxon_name where c.project_name = 'fossilants' and ct.parent_taxon_name = l.taxon_name)` (cause 2:
   the genus rows set 5 deletes tonight; run it after set 3 and again after set 5, and compare
   `select genus_count from project where project_name = 'fossilants'` with the first query's count of genera).
-  Code left as it is until the cause is confirmed. Seen in the code on the way: `ProjTaxonCountDb.fixExceptions` gives
+  Confirmed on production 2026-11-03 16:50 (Brian ran the three queries, tools/review/fossilants-genus-count.sql): stored
+  Genera 257; cause 1 holds: the 15 incertae sedis fossil genera and the morphogenus ponerinaeponerine_genus2 have no
+  parent (subfamily row Incertae sedis: genus_count 0, 15 listed); Myrmicinae 70 stored against 69 (recheck after the
+  next nightly); cause 2 found nothing. B78 (fixed 2026-11-03): the nightly parent repair (TaxonParentDb, set 1) gives a
+  genus without parent its subfamily row (test TaxonTreeCountDbTest.testGenusWithoutParentGetsItsSubfamily). Open for
+  Brian: Genera counts the morphogenus but the Fossil ants list (status valid) does not show it: (a) show morphogenera
+  on that list, or (b) count only valid genera there.
+  Code left as it is until the cause is confirmed (cause 2). Seen in the code on the way: `ProjTaxonCountDb.fixExceptions` gives
   fossilants rows that are not valid the source `curator`, a source that makes a morphospecies curated everywhere in the
   Curated view (`ListView.vettedCondition` leaves out worldants and allantwebants only), to look at with Brian.
 
