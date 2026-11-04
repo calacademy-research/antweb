@@ -701,8 +701,9 @@ Found while doing this (2026-10-26, end-to-end tests of rows 24 to 53; each has 
   parent (subfamily row Incertae sedis: genus_count 0, 15 listed); Myrmicinae 70 stored against 69 (recheck after the
   next nightly); cause 2 found nothing. B78 (fixed 2026-11-03): the nightly parent repair (TaxonParentDb, set 1) gives a
   genus without parent its subfamily row (test TaxonTreeCountDbTest.testGenusWithoutParentGetsItsSubfamily). Open for
-  Brian: Genera counts the morphogenus but the Fossil ants list (status valid) does not show it: (a) show morphogenera
-  on that list, or (b) count only valid genera there.
+  Brian: Genera counts the morphogenus but the Fossil ants list (status valid) did not show it. Brian 16:55: (a), the
+  list shows morphotaxa too (StatusSet Valid (with fossils): status valid or morphotaxon; StatusChoiceTest), one
+  counting rule everywhere.
   Code left as it is until the cause is confirmed (cause 2). Seen in the code on the way: `ProjTaxonCountDb.fixExceptions` gives
   fossilants rows that are not valid the source `curator`, a source that makes a morphospecies curated everywhere in the
   Curated view (`ListView.vettedCondition` leaves out worldants and allantwebants only), to look at with Brian.

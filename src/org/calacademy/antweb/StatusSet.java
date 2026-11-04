@@ -244,7 +244,10 @@ public class StatusSet extends Status {
       //A.log("getAndCriteria() table:" + table + " status:" + getValue());        
 
       if ("taxon".equals(table)) {
-        if (StatusSet.VALID_WITH_FOSSIL.equals(getValue())) criteria = " " + table + ".status = '" + VALID + "'"; // Will be further restricted by the fossilants list.
+        // The AntCat list and Fossil Ants (further restricted by the list). Morphotaxa too (Brian Fisher, 2026-11-03: the
+        // Fossil ants Genera counted the morphogenus Ponerine genus2, as every list's Genera counts valid and morpho
+        // genera, but the list did not show it). The AntCat list has no morphotaxa.
+        if (StatusSet.VALID_WITH_FOSSIL.equals(getValue())) criteria = " " + table + ".status in ('" + VALID + "', 'morphotaxon')";
         if (StatusSet.VALID_FOSSIL.equals(getValue())) criteria = " " + table + ".status = '" + VALID + "' and fossil = 1 ";
         if (StatusSet.VALID_EXTANT.equals(getValue())) criteria = " " + table + ".status = '" + VALID + "' and fossil = 0 ";
       } else {
