@@ -1045,7 +1045,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.ListViewTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             grep -v "LogMgr" /tmp/out.txt | tail -3
-            grep -q "^OK (14 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+            grep -q "^OK (15 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Java unit tests of who may edit species lists (2026-11-02; any curator any list, not the system lists; projects stay with their curators; SecurityBatch5Test)

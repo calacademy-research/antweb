@@ -169,6 +169,29 @@ public class ListViewTest extends TestCase {
         assertFalse(rows.hasSpecimens("formicinae", "lividopone"));
     }
 
+    /**
+     * Genus list, placeholder rows (Brian Fisher, 2026-11-04): "(dorylinae)" counts the specimens collected here filed
+     * under "(dorylinae) (indet)", and links to them in All specimen names; real genera count none.
+     */
+    public void testPlaceholderGenusRowsCountSubfamilyOnlySpecimens() {
+        ListView.PlaceSpecimens ps = new ListView.PlaceSpecimens();
+        ps.add("dorylinae(dorylinae) (indet)", "dorylinae", "(dorylinae)", "(indet)", null, "species", "indetermined", 22);
+        ps.add("dorylinae(dorylinae) (indet)", "dorylinae", "(dorylinae)", "(indet)", null, "species", "indetermined", 3);
+        ps.add("myrmicinae(myrmicinae) (indet)", "myrmicinae", "(myrmicinae)", "(indet)", null, "species", "indetermined", 1);
+        ps.add("ponerinaeadetomyrma (indet)", "ponerinae", "adetomyrma", "(indet)", null, "species", "indetermined", 22);
+        ListView.GenusRows rows = new ListView.GenusRows("all", null, null).withSpecimens(ps);
+        assertEquals(25, rows.subfamilyOnlySpecimens("dorylinae", "(dorylinae)"));
+        assertEquals(1, rows.subfamilyOnlySpecimens("myrmicinae", "(myrmicinae)"));
+        assertEquals(0, rows.subfamilyOnlySpecimens("ponerinae", "adetomyrma"));
+        assertEquals(0, rows.subfamilyOnlySpecimens("amblyoponinae", "(amblyoponinae)"));
+        assertEquals(0, new ListView.GenusRows("all", null, null).withSpecimens(null).subfamilyOnlySpecimens("dorylinae", "(dorylinae)"));
+        assertTrue(ListView.GenusRows.isPlaceholderGenus("(dorylinae)"));
+        assertFalse(ListView.GenusRows.isPlaceholderGenus("adetomyrma"));
+        assertFalse(ListView.GenusRows.isPlaceholderGenus(null));
+        assertEquals("/browse.do?subfamily=dorylinae&genus=%28dorylinae%29&species=%28indet%29&rank=species&countryName=Madagascar&statusSet=all",
+            ListView.GenusRows.subfamilyOnlyUrl("dorylinae", "(dorylinae)", "countryName=Madagascar"));
+    }
+
     private static org.calacademy.antweb.home.PlaceGenusCurationDb.Row ncRow(String subfamily, String genus, int specimens, int notCurated) {
         org.calacademy.antweb.home.PlaceGenusCurationDb.Row r = new org.calacademy.antweb.home.PlaceGenusCurationDb.Row();
         r.subfamily = subfamily;
