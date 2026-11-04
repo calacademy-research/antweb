@@ -134,12 +134,12 @@ def test_adm1_page_of_its_country():
 @pytest.mark.parametrize("path", ["/country.do?name=Madagascar", "/adm1.do?name=California&country=United+States"])
 def test_diversity_numbers_open_their_lists(path):
     """Each Taxonomic diversity number on a place page opens its list (Brian Fisher, 2026-11-04: only the Species
-    number had a link, and it opened the admin count report): Subfamilies and Genera the view All specimen names,
-    Valid species the view Valid, Species / subspecies / morphospecies All specimen names."""
+    number had a link, and it opened the admin count report): Subfamilies, Genera and Species / subspecies /
+    morphospecies the default view Curated, Valid species the view Valid (claude/antweb-list-design-rules.md)."""
     r = fetch(path)
     assert_ok(r, path)
-    expected = {"subfamilies": ("subfamily", "all"), "genera": ("genus", "all"), "valid": ("species", "valid"),
-                "species": ("species", "all")}
+    expected = {"subfamilies": ("subfamily", "curated"), "genera": ("genus", "curated"), "valid": ("species", "valid"),
+                "species": ("species", "curated")}
     for stat, (rank, view) in expected.items():
         row = re.search(r'<tr data-stat="%s"[^>]*>(.*?)</tr>' % stat, r.text, re.S)
         assert row, f"{path}: no {stat} row"

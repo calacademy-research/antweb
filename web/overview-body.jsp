@@ -190,16 +190,16 @@
   boolean isAdm1 = isGeolocale && "adm1".equals(georank);
   String listName = "this " + pw + "'s AntWeb list";
   // Each Taxonomic diversity number opens its list (Brian Fisher, 2026-11-04; the Species number went to the admin
-  // count report). Subfamilies and Genera count every counted status: the view All specimen names; Valid species:
-  // the view Valid. Species / subspecies / morphospecies has no view of exactly those names: it opens All specimen
-  // names, which also lists the names not counted as species (marked; see the row's definition).
+  // count report). The views are those of claude/antweb-list-design-rules.md ("The four views"): Subfamilies, Genera
+  // and Species / subspecies / morphospecies open the default view Curated (valid names and curated morphospecies;
+  // California 2026-11-04: Species 340 = "340 Species (valid and curated)"); Valid species opens the view Valid.
   String listBase = AntwebProps.getDomainApp() + "/taxonomicPage.do?" + overview.getParams() + "&rank=";
-  String allView = "&statusSet=" + org.calacademy.antweb.StatusSet.LIST_ALL;
-  String subfamilyCell = "<a href=\"" + Html.escAttr(listBase + "subfamily" + allView) + "\">" + Formatter.commaFormat(overview.getSubfamilyCount()) + "</a>";
-  String genusCell = "<a href=\"" + Html.escAttr(listBase + "genus" + allView) + "\">" + Formatter.commaFormat(overview.getGenusCount()) + "</a>";
+  String curatedView = "&statusSet=" + org.calacademy.antweb.StatusSet.LIST_VETTED;
+  String subfamilyCell = "<a href=\"" + Html.escAttr(listBase + "subfamily" + curatedView) + "\">" + Formatter.commaFormat(overview.getSubfamilyCount()) + "</a>";
+  String genusCell = "<a href=\"" + Html.escAttr(listBase + "genus" + curatedView) + "\">" + Formatter.commaFormat(overview.getGenusCount()) + "</a>";
   String validCell = "<a href=\"" + Html.escAttr(listBase + "species&statusSet=" + org.calacademy.antweb.StatusSet.LIST_VALID) + "\">" + Formatter.commaFormat(overview.getValidSpeciesCount()) + "</a>";
   String speciesCount = Formatter.commaFormat(overview.getSpeciesCount());
-  String speciesCell = "<a href=\"" + Html.escAttr(listBase + "species" + allView) + "\">" + speciesCount + "</a>";
+  String speciesCell = "<a href=\"" + Html.escAttr(listBase + "species" + curatedView) + "\">" + speciesCount + "</a>";
   String introducedListLink = "<a href='" + AntwebProps.getDomainApp() + "/taxonomicPage.do?rank=species&project=introducedants'>introduced-species list</a>";
 
   boolean showEndemism = isBioregion || (isGeolocale && ("country".equals(georank) || isAdm1));
