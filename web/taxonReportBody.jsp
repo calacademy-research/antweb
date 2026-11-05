@@ -293,6 +293,10 @@
             subtaxonTotal += viewSpecies - nextSubtaxonCount;
             childCountStr = viewSpecies <= 0 ? "<span class='no-species' title='No species of this genus in this view'>&ndash;</span>"
                 : "<a href='" + AntwebProps.getDomainApp() + "/browse.do?" + child.getBrowserParams() + "&statusSet=" + Html.url(genusRows.choice) + "'><span class='numbers'>" + viewSpecies + "</span></a>";
+            // A placeholder genus row ("(dorylinae)", All specimen names): its specimens identified only to subfamily here,
+            // linked to them, as "Adetomyrma (indet)" on the species list (Brian Fisher, 2026-11-04)
+            String subfamilyOnlyCell = genusRows.subfamilyOnlyCellHtml(child, overview);
+            if (subfamilyOnlyCell != null) childCountStr = subfamilyOnlyCell;
             if (showNotCuratedColumn) {
               org.calacademy.antweb.home.PlaceGenusCurationDb.Row ncRow = genusRows.notCurated(child.getSubfamily(), child.getGenus());
               notCuratedCell = ncRow == null ? "" : org.calacademy.antweb.PlaceTaxonNotes.notCuratedCellHtml(ncRow.notCurated,
@@ -405,6 +409,9 @@
            org.calacademy.antweb.home.PlaceGenusCurationDb.Row addedNc = genusRows.notCurated(child.getSubfamily(), child.getGenus());
            if (addedNc != null) addedOther = org.calacademy.antweb.PlaceTaxonNotes.notCuratedCellHtml(addedNc.notCurated,
                org.calacademy.antweb.PlaceTaxonNotes.notCuratedUrl(child.getSubfamily(), child.getGenus(), overview));
+           // a placeholder row ("(dorylinae)"): its specimens identified only to subfamily here (Brian Fisher, 2026-11-04)
+           String addedSubfamilyOnly = genusRows.subfamilyOnlyCellHtml(child, overview);
+           if (addedSubfamilyOnly != null) addedCount = addedSubfamilyOnly;
            int addedImaged = genusRows.imaged(child.getSubfamily(), child.getGenus());
            if (addedImaged > 0) addedImages = "<a href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams()
                + "&statusSet=" + Html.url(genusRows.choice) + "'>" + org.calacademy.antweb.ImagesAnywhere.speciesImagedCell(addedImaged) + "</a>";

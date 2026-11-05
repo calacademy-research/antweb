@@ -9,7 +9,8 @@
 Machine columns come from the code and are rewritten on every run:
   - actions, classes and forwards (JSPs) from WEB-INF/struts-config.xml;
   - sub-actions from the Java source (string literals compared with the `action` parameter,
-    or the class's ACTIONS set where it has one);
+    or the class's ACTIONS set where it has one); for a class shared by several actions that
+    branches on the request URI (OverviewAction), only the sub-actions that action's branch uses;
   - the access rule from the checks found in the Java class (and its superclass) and in the
     JSPs it forwards to (adminCheck.jsp, curatorCheck.jsp, loginCheck.jsp includes);
   - e2e coverage from tests/e2e (URLs each test requests, including parametrized lists and
@@ -48,8 +49,10 @@ API = REPO / "api" / "v3.1" / "api.py"
 OUT = REPO / "docs" / "catalog"
 
 HAND = ["purpose", "status", "notes"]
-# The status values in use: keep, removed, check (a decision still to make), remove? (proposed), or empty for a new row.
-STATUSES = {"keep", "removed", "check", "remove?", ""}
+# The status values in use: keep, removed, check (a decision still to make), remove? (proposed), manual (not tested end to
+# end on purpose: it sends email, restarts the app, runs on production only, or is a one-off admin repair; the notes
+# column says why and how it is checked; Brian Fisher, 2026-11-04), or empty for a new row.
+STATUSES = {"keep", "removed", "check", "remove?", "manual", ""}
 COLUMNS = ["key", "kind", "url", "class", "jsps", "access", "access_where", "access_evidence",
            "writes", "anon_result", "e2e_tests", "e2e_probe", "hits"] + HAND
 
@@ -344,6 +347,31 @@ def analyse_class(cls, seen=None):
                     subs |= vals
     res["subs"] = sorted(subs)
 
+    # A class shared by several actions that branches on the request URI, as OverviewAction does
+    # (if (uri.contains("/projects.do")) { ... return ...; }): a sub-action exists for an action
+    # only when that action's branch uses it, the literal or a boolean made from it
+    # (boolean isRecalc = "recalc".equals(action) && ...). 2026-11-04: the list pages
+    # (/countries.do, /projects.do, ...) return their list without reading action=recalc.
+    uri_blocks = []
+    for m in re.finditer(r"\bif\s*\(", code):
+        p0 = m.end() - 1
+        p1 = matching(code, p0, "(", ")")
+        cond = code[p0 + 1:p1 - 1]
+        lits = re.findall(r'\b\w+\.contains\("(/\w+\.do)"\)', cond)
+        if not lits or re.sub(r'\b\w+\.contains\("/\w+\.do"\)|\|\||\s', "", cond):
+            continue
+        bm = re.match(r"\s*\{", code[p1:])
+        if not bm:
+            continue
+        b0 = p1 + bm.end() - 1
+        uri_blocks.append((lits, code[b0:matching(code, b0, "{", "}")]))
+    res["uri_blocks"] = uri_blocks
+    sub_bools = {}
+    for m in re.finditer(r"boolean\s+(\w+)\s*=\s*([^;]*);", code):
+        for v in re.findall(r'"(\w+)"\.equals\((?:%s)\)' % av, m.group(2)):
+            sub_bools.setdefault(v, set()).add(m.group(1))
+    res["sub_bools"] = sub_bools
+
     # switch (action) { case "x": ... } blocks: a check inside a case applies to that case only.
     switches = []
     for sw in re.finditer(r"switch\s*\(\s*(?:%s)\s*\)\s*\{" % av, code):
@@ -492,6 +520,23 @@ def analyse_class(cls, seen=None):
     return res
 
 
+def subs_for_path(an, path):
+    """The class's sub-actions that the action at path can reach (see uri_blocks in analyse_class)."""
+    subs = an["subs"]
+    blocks = an.get("uri_blocks") or []
+    url = path + ".do"
+    # The first branch whose test matches this URI, as the Java runs them in order.
+    block = next((body for lits, body in blocks if any(lit in url for lit in lits)), None)
+    if block is None:
+        return subs
+    keep = []
+    for s in subs:
+        names = an.get("sub_bools", {}).get(s, set())
+        if '"%s"' % s in block or any(re.search(r"\b%s\b" % re.escape(n), block) for n in names):
+            keep.append(s)
+    return keep
+
+
 def enclosing_if(code, pos, spans):
     """The condition of the innermost if-block containing pos within its method, or None."""
     meth = next((s for s in spans if s[1] <= pos < s[2]), None)
@@ -599,7 +644,8 @@ def jsp_rule(web_path, depth=0, seen=None):
 
 # ---------------------------------------------------------------- e2e tests
 
-KEY_RE = re.compile(r"(?<![\w.])/?([a-z][A-Za-z0-9]*)\.do\b(\?[^\s\"'#<>]*)?")
+# A version number may be part of the name: /apiV3.1.do (2026-11-04: its test was not counted).
+KEY_RE = re.compile(r"(?<![\w.])/?([a-z][A-Za-z0-9]*(?:\.[0-9]+)?)\.do\b(\?[^\s\"'#<>]*)?")
 API_RE = re.compile(r"/v3\.1/(\w+)")
 
 
@@ -814,7 +860,7 @@ def build(traffic=None, traffic_absent="0", removed=None):
     for a in actions:
         an = analyses.get(a["type"])
         if an:
-            for s in an["subs"]:
+            for s in subs_for_path(an, a["path"]):
                 known_subs.add((a["path"], s))
     for k, r in removed.items():
         if r.get("kind") == "sub-action" and ".do?action=" in k:
@@ -856,7 +902,7 @@ def build(traffic=None, traffic_absent="0", removed=None):
                        exp.get(path, ""), sorted(hits.get(path, ())), probe.get(path, set()))
         rows.append(row)
         if an:
-            for s in an["subs"]:
+            for s in subs_for_path(an, path):
                 key = "%s.do?action=%s" % (path, s)
                 srule, swhere, sev, _ = access_summary(an, s, jsp_r, jsp_file)
                 rows.append(base_row(key, key, "sub-action", a["type"], [], srule, swhere, sev, writes,
@@ -1086,12 +1132,14 @@ def hits_num(r):
 
 
 def write_gaps(rows, path, traffic_label):
-    gaps = [r for r in rows if not r["e2e_tests"] and r["status"] not in ("remove?", "removed") and r["key"] != "/notFound"]
+    gaps = [r for r in rows if not r["e2e_tests"] and r["status"] not in ("remove?", "removed", "manual") and r["key"] != "/notFound"]
+    manual = sorted([r for r in rows if not r["e2e_tests"] and r["status"] == "manual"], key=lambda r: r["key"].lower())
     out = ["# E2E coverage gaps", "",
            "Generated by `tools/catalog/build_catalog.py` with the catalog. Actions, sub-actions and API routes that no "
            "functional end-to-end test requests, most important first. \"Probe\" means the only test is "
            "test_actions.py's anonymous request without parameters (it shows the page answers and asks for a login "
-           "where it should, not that the function works). Rows marked remove? or removed in the catalog are left out.", "",
+           "where it should, not that the function works). Rows marked remove? or removed in the catalog are left out; "
+           "rows marked manual (not tested end to end on purpose) are listed at the end with the reason.", "",
            "Hits: %s." % (traffic_label or "not loaded"), "",
            "%d of %d rows have no functional e2e test." % (len(gaps), len(rows)), ""]
     n = 0
@@ -1108,6 +1156,16 @@ def write_gaps(rows, path, traffic_label):
             out.append("| %d | `%s` | %s | %s | %s | %s | %s |" % (
                 n, md_cell(r["url"] if r["kind"] == "action" else r["key"]), md_cell(r["access"]), md_cell(r["hits"]),
                 md_cell(r["e2e_probe"].replace("anon", "probe")), md_cell(r["purpose"]), md_cell(r["status"])))
+        out.append("")
+    if manual:
+        out += ["## Not tested end to end on purpose (%d)" % len(manual), "",
+                "Status manual: the job sends email, restarts the app, runs on production only, or is a one-off admin "
+                "repair. The notes say why and how it is checked.", "",
+                "| URL | Access | Hits | Purpose | Why, and how it is checked |", "|---|---|---|---|---|"]
+        for r in manual:
+            out.append("| `%s` | %s | %s | %s | %s |" % (
+                md_cell(r["url"] if r["kind"] == "action" else r["key"]), md_cell(r["access"]), md_cell(r["hits"]),
+                md_cell(r["purpose"]), md_cell(r["notes"])))
         out.append("")
     path.write_text("\n".join(out), encoding="utf-8")
 

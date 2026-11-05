@@ -127,7 +127,7 @@ def _check(r, secs, label):
 
 @pytest.mark.parametrize("name", NAMES)
 def test_query_runs(admin, manager_page, name):
-    r, secs = _run(admin, f"/query.do?name={name}")
+    r, secs = _run(admin, f"/query.do?action=query&name={name}")   # action=query is the default; named so the catalog counts it
     _check(r, secs, name)
 
 

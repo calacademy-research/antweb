@@ -61,22 +61,29 @@ _STATS = {}
 def stats_of(p):
     key = repr(p)
     if key not in _STATS:
-        _STATS[key] = ns.place_stats(ns.fetch(p.page) or "")
+        html = ns.fetch(p.page) or ""
+        stats = ns.place_stats(html)
+        # 2026-11-04: Genera and Species are the rows of the default list, counted nightly (PlaceViewTotalDb); until a
+        # nightly has counted this place the page shows its old stored totals
+        stats["_view_counted"] = 'data-view-counted="true"' in html
+        _STATS[key] = stats
     return _STATS[key]
 
 
 def test_list_headers_equal_place_numbers_of_every_kind():
-    """Row 38: for the day's place of every kind, the list header with every counted status = Subfamilies, Genera of
-    the place page; species in the view Valid = Valid species (0 when the page shows no Valid row), and Valid <= Curated
-    <= All specimen names; every header = the rows its page lists."""
-    wrong, stored, stored_genera, checked, slow = [], [], [], [], []
+    """Row 38 (Brian Fisher, 2026-11-04: each place page number is the header of the list it opens): for the day's
+    place of every kind, Subfamilies, Genera and Species / subspecies / morphospecies of the place page = the list
+    headers in the default view (Curated; "/utilData.do?action=placeViewTotals" counts them nightly), Valid species = the
+    header in the view Valid (0 when the page shows no Valid row); Valid <= Curated <= All specimen names; every header =
+    the rows its page lists."""
+    wrong, pending, checked, slow = [], [], [], []
     for p in places():
         stats = stats_of(p)
         if "species" not in stats:
             continue
         headers = {}
-        for rank, stat, status in (("subfamily", "subfamilies", "all"), ("genus", "genera", "all"),
-                                   ("species", "valid", "valid"), ("species", None, "curated"), ("species", None, "all")):
+        for rank, stat, status in (("subfamily", "subfamilies", "curated"), ("genus", "genera", "curated"),
+                                   ("species", "valid", "valid"), ("species", "species", "curated"), ("species", None, "all")):
             html = ns.fetch(p.list_url(rank, status))
             if html is None:
                 slow.append(f"{p} {rank} {status}")
@@ -85,8 +92,7 @@ def test_list_headers_equal_place_numbers_of_every_kind():
             if n is None:
                 wrong.append(f"{p} rank={rank} {status}: no header ({text!r})")
                 continue
-            listed = ns.list_rows(html)
-            rows = len(listed)
+            rows = len(ns.list_rows(html))
             if rows != n:
                 wrong.append(f"{p} rank={rank} {status}: header {text!r}, {rows} rows listed")
             if rank == "species":
@@ -94,42 +100,19 @@ def test_list_headers_equal_place_numbers_of_every_kind():
             if stat is None:
                 continue
             expected = stats.get(stat, 0)
-            # Genera and subfamilies rule (Brian Fisher, 2026-10-30): Subfamilies and Genera count the listed rows that
-            # are valid subfamilies (not placeholders such as "(formicidae)", not unrecognized names) and genera (valid genera and morphogenera; not "(myrmicinae)" or
-            # unrecognized genus names, which stay on the list): the header counts every row listed.
-            if rank in ("subfamily", "genus"):
-                counted = ns.counted_rows(listed, rank)
-                if counted is None:
-                    slow.append(f"{p} {rank} {status} (row names or API genera not read)")
-                    continue
-                n = counted
-            # (B67, a curated project's Subfamilies of every status, was superseded on 2026-10-30: every kind of place,
-            # curated projects too, counts valid subfamilies only)
             if n != expected:
-                # Subfamilies and Genera apart (2026-10-30 review): the genera and subfamilies rule's pending covers them only
-                (stored_genera if rank in ("subfamily", "genus") else stored).append(
-                    f"{p} rank={rank} {status}: {'rows counted' if rank != 'species' else 'header'} {n}, place page {stat} {expected}")
+                line = f"{p} rank={rank} {status}: header {n}, place page {stat} {expected}"
+                # Subfamilies, Genera and Species follow the list once the nightly has counted the place (PlaceViewTotalDb)
+                (pending if stat in ("subfamilies", "genera", "species") and not stats["_view_counted"] else wrong).append(line)
         # the views nest: every Valid name is Curated, every Curated name in All specimen names
         if len(headers) == 3 and not (headers["valid"] <= headers["curated"] <= headers["all"]):
             wrong.append(f"{p}: species headers Valid {headers['valid']}, Curated {headers['curated']}, All {headers['all']}: not nested")
         checked.append(repr(p))
     if not checked:
         pytest.skip("no place page with data-stat numbers " + ns.day_note())
-    # the place page's numbers are stored by the nightly run, the list header is counted live: until a nightly run has
-    # counted by the counting rules of 2026-10-28 they differ (pending); the header against its own rows stays strict
-    rules_pending = ns.counting_rules_counted() is False
-    pending_species = bool(stored) and rules_pending
-    # Subfamilies and Genera: also until a nightly run has counted by the genera and subfamilies rule of 2026-10-30
-    # (that pending never hides a species difference: the lists are split, as in test_numbers_live.py)
-    pending_genera = bool(stored_genera) and (rules_pending or ns.genera_rule_counted() is False)
-    if not pending_species:
-        wrong += stored
-    if not pending_genera:
-        wrong += stored_genera
     assert not wrong, (f"{len(checked)} places {ns.day_note()} ({PENDING}); not read: {slow}:\n" + "\n".join(wrong))
-    if pending_species or pending_genera:
-        pending = (stored if pending_species else []) + (stored_genera if pending_genera else [])
-        pytest.skip(ns.rules_pending_note("counting rules of 2026-10-28 and the genera and subfamilies rule of 2026-10-30") + ":\n" + "\n".join(pending))
+    if pending:
+        pytest.skip("place list totals not counted yet by a nightly run (PlaceViewTotalDb, 2026-11-04):\n" + "\n".join(pending))
 
 
 def test_default_list_forgets_the_last_choice():

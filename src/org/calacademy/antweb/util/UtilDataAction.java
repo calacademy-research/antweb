@@ -53,7 +53,7 @@ public class UtilDataAction extends AntwebAction {
         "generateGeolocaleTaxaFromSpecimens", "geolocaleCountCrawl", "geolocaleTaxonFix",
         "fixGeolocaleTaxonParentage", "updateGeolocaleParentHierarchy",
         "projectCountCrawl", "populateMuseum", "populateBioregion", "updateTaxonSets", "crawlForType",
-        "imageCountCrawl", "placeImageCounts", "placeGenusCuration", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
+        "imageCountCrawl", "placeImageCounts", "placeGenusCuration", "placeViewTotals", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
         "verifyProjTaxon", "regenerateAllAntweb", "runCountCrawls", "countReport",
         "genGoogleMapFunction", "delGoogleMapFunction", "genGroupObjectMaps",
         "calcCaste", "setIsRestart", "siteWarning", "genRecentContent");
@@ -570,6 +570,16 @@ public class UtilDataAction extends AntwebAction {
                     LogMgr.appendLog("compute.log", "  " + PlaceGenusCurationDb.LOG + ": failed (" + e + ")", true);
                     message += " not curated not counted (" + e + ")";
                 }
+                // The place pages' Genera and Species = the headers of their lists in the default view (2026-11-04,
+                // PlaceViewTotalDb), after the Not curated count (the lists read place_specimen_name). Its own try.
+                try {
+                    connection.commit();
+                    message += " " + doAction("placeViewTotals", form, accessLogin, accessGroup, connection, request, mapping);
+                } catch (Exception e) {
+                    s_log.error("set4 placeViewTotals e:" + e);
+                    LogMgr.appendLog("compute.log", "  " + org.calacademy.antweb.home.PlaceViewTotalDb.LOG + ": failed (" + e + ")", true);
+                    message += " place list totals not counted (" + e + ")";
+                }
                 // Home page and statsPage numbers (2026-10-21): written only after specimen uploads, so images added
                 // since were missing. Now also every night, after the image counts. Its own try: a failure here
                 // must not stop set 4.
@@ -678,6 +688,7 @@ public class UtilDataAction extends AntwebAction {
  		if (action.equals("updateTaxonSets")) {
             message = TaxonSetDb.updateTaxonSetTaxonNames(connection); // works on all taxon sets.
             message += TaxonSetDb.updateTaxonSetSources(connection); // works on all taxon sets.
+            jobLine("Taxon sets updated", message);
         }
 		   
         // This should only need to be run once. No! Species list tool will not allow addition.
@@ -694,6 +705,7 @@ public class UtilDataAction extends AntwebAction {
 		  message += TaxonDb.deleteSpeciesWithoutSpecimenOrAntcatSource(connection, blankSafe);
 		  message += TaxonDb.deleteGeneraWithoutSpecimenOrAntcatSource(connection, blankSafe);
           message += TaxonSetDb.dataCleanup(connection, blankSafe);
+		  jobLine("Data cleanup done", message);
 		}
 
 		// The nightly name update by hand (admin, POST): specimenNameUpdate uses the setting in
@@ -730,6 +742,7 @@ public class UtilDataAction extends AntwebAction {
 		if (action.equals("generateGeolocaleTaxaFromSpecimens")) {
 		  message = new GeolocaleTaxonDb(connection).generateGeolocaleTaxaFromSpecimens();
 		  message = "Finished Generate Geolocale Taxa From Specimens message:" + message;
+		  jobLine("Geolocale taxa from specimens generated", message);
 		}
 
 		// Very fast. Run occasionally to get adm1s in line with hierarchy. Should be rare. Unnecessary.
@@ -902,6 +915,13 @@ public class UtilDataAction extends AntwebAction {
 		  } else {
 		    message = placeImageCountDb.updateAll();
 		  }
+		  LogMgr.appendLog("compute.log", "  " + message, true);
+		}
+
+		// The place pages' Genera and Species: the rows of their lists in the default view (Brian Fisher, 2026-11-04;
+		// PlaceViewTotalDb). Nightly set 4; admins: utilData.do?action=placeViewTotals. Writes "Place list totals counted".
+		if (action.equals("placeViewTotals")) {
+		  message = new org.calacademy.antweb.home.PlaceViewTotalDb(connection).fillAll();
 		  LogMgr.appendLog("compute.log", "  " + message, true);
 		}
 
@@ -1142,5 +1162,15 @@ public class UtilDataAction extends AntwebAction {
             + "<p>Apply the fix: remove the proxy records and insert the missing parent records "
             + "(country for each adm1 record, parent taxon for each record).</p>"
             + Csrf.postButton(request, url, "Apply the fix", "Change geolocale_taxon records now?");
+    }
+
+    /**
+     * A job's own result line in compute.log (2026-11-04: three nightly jobs wrote none, so the morning test
+     * tests/e2e/test_nightly_jobs_ran.py could only infer they had run from the next step's line). Plain text, one line.
+     */
+    static void jobLine(String what, String result) {
+        String plain = result == null ? "" : result.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim();
+        if (plain.length() > 300) plain = plain.substring(0, 300) + "...";
+        LogMgr.appendLog("compute.log", "  " + what + (plain.isEmpty() ? "" : ": " + plain), true);
     }
 }

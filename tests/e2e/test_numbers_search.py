@@ -341,7 +341,8 @@ def test_compare_and_map_preparations_count_what_they_list():
                          + ("with a photo" if tool == "Compare" else f"with API coordinates ({PENDING})"))
     _html, species, specimens = by_species(country, genus, s)
     for tool, pattern in (("Compare", r"([\d,]+) imaged species"),
-                          ("Map", r"([\d,]+) georeferenced species \(from ([\d,]+) specimens\)")):
+                          ("Map", r"([\d,]+) georeferenced species \(from (?:the )?([\d,]+) specimens?"
+                                  r"(?: on this page, of [\d,]+ found)?\)")):
         by_species(country, genus, s)   # the preparation changes the session's results: search again
         html = ns.fetch(f"/prepare{tool}Results.do?resultRank=species", s)
         if html is None:

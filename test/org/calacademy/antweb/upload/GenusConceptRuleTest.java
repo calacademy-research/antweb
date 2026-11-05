@@ -53,6 +53,34 @@ public class GenusConceptRuleTest extends TestCase {
         assertFalse(SpecimenNameUpdate.byConceptRule(null, "ponerinaemesoponera (indet)", "ponerinaexiphopelta (indet)"));
     }
 
+    /**
+     * The third pass's query binds the rule values as parameters and compares the genus exactly: a morphogenus
+     * name's "_" is not a LIKE wildcard, and a quote or backslash in a rule is only data (review of #321).
+     */
+    public void testConceptCandidatesAreBoundAndExact() {
+        java.util.List<GenusConceptRule.Rule> rules = java.util.List.of(
+            new GenusConceptRule.Rule("ponerinaeponerine_genus2", Set.of("Afrotropical", "Mala'gasy\\"), "ponerinaexiphopelta", "x", "2026-11-04", "test"));
+        String sql = SpecimenNameUpdate.conceptCandidatesSql(rules);
+        assertFalse(sql, sql.contains("ponerine_genus2"));
+        assertFalse(sql, sql.contains("Mala"));
+        assertFalse(sql, sql.contains("taxon_name like 'ponerinae"));
+        assertTrue(sql, sql.contains("substring_index(s.taxon_name, ' ', 1) in (?)"));
+        assertTrue(sql, sql.contains("s.bioregion in (?, ?)"));
+        assertEquals(java.util.List.of("ponerinaeponerine_genus2", "Afrotropical", "Mala'gasy\\"), SpecimenNameUpdate.conceptCandidatesParams(rules));
+        String none = SpecimenNameUpdate.conceptCandidatesSql(java.util.List.of());
+        assertTrue(none, none.contains("where 1 = 0"));
+        assertTrue(SpecimenNameUpdate.conceptCandidatesParams(java.util.List.of()).isEmpty());
+    }
+
+    /** Specimens the second pass already moves in a run are not moved again by the third pass (review of #321). */
+    public void testAlreadyMovedIsNotMovedTwice() {
+        java.util.List<SpecimenNameUpdate.Change> changes = new java.util.ArrayList<>();
+        changes.add(new SpecimenNameUpdate.Change(2, "ponerinaemesoponera kg01", "ponerinaemesoponera kg01", "ponerinaeother kg01", null, "synonym"));
+        assertTrue(SpecimenNameUpdate.alreadyMoved(changes, 2, "ponerinaemesoponera kg01", "ponerinaemesoponera kg01"));
+        assertFalse(SpecimenNameUpdate.alreadyMoved(changes, 3, "ponerinaemesoponera kg01", "ponerinaemesoponera kg01"));
+        assertFalse(SpecimenNameUpdate.alreadyMoved(changes, 2, "ponerinaemesoponera kg02", "ponerinaemesoponera kg02"));
+    }
+
     /** The seed of table genus_concept_rule: rule 1, approved by Brian Fisher, 2026-11-03. */
     public void testRuleOneIsTheSeed() {
         assertEquals(1, GenusConceptRule.SEED.size());

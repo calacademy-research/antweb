@@ -393,9 +393,16 @@ public class UploadReportPageTest extends TestCase {
         assertTrue(page.contains("action=introducedSpecimen&amp;groupId=62"));
         // Every line links to the line as uploaded, as on the specimen page.
         assertTrue(page, page.contains("<a href=\"" + APP + "/logMgr.do?action=uploadLog&amp;file=20261029-14%3A02%3A11-specimen62.txt&amp;line=926\" title=\"This line as uploaded\">926</a>"));
-        // 7 adm1 names, Kourou's 64 lines: three shown, the rest under "+61 more".
-        assertTrue(page, page.contains("<summary>+61 more</summary>"));
+        // 7 adm1 names (a note: loaded), Kourou's 64 specimens folded under their number; the file's line numbers only
+        // in Not loaded (Brian Fisher, 2026-11-04: specimens, not lines)
+        assertFalse(page, page.contains("<summary>+61 more</summary>"));
         assertTrue(page, page.contains("<summary>64 specimens</summary>"));
+        String[] secs = page.split("<section ");
+        for (int k = 1; k < secs.length; k++) {   // [0] is the head and its style rules
+            String sec = secs[k];
+            if (sec.contains("class=\"rep-c-line\"")) assertTrue("a Line column outside Not loaded: " + sec.substring(0, Math.min(200, sec.length())),
+                sec.contains("data-kind=\"" + MessageMgr.NOT_LOADED + "\""));
+        }
         // Checks that found nothing: one collapsed line.
         int sections = sections(page).size();
         assertTrue(page, page.contains("<summary>" + x.mgr.passedHeadings().size() + " other checks found nothing</summary>"));
@@ -437,7 +444,7 @@ public class UploadReportPageTest extends TestCase {
         assertTrue(dup, dup.contains("<details class=\"rep-fold\"><summary>"));
         assertTrue(dup, dup.contains("Code already in AntWeb, uploaded by UC Davis (Ward lab)"));
         assertTrue(dup, dup.contains("<summary>171 specimens</summary>"));
-        assertTrue(dup, dup.contains("<summary>+168 more</summary>"));
+        assertFalse("no line numbers outside Not loaded", dup.contains("<summary>+168 more</summary>"));
         // 46 recognized invalid names (open): 10 rows, then the rest under "Show all 46 rows".
         String rec = sectionHtml(page, MessageMgr.recognizedInvalidSpecies);
         assertTrue(rec, rec.contains("<details class=\"rep-more\"><summary>Show all 46 rows</summary>"));

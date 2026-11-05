@@ -91,7 +91,8 @@
 	// Brian Fisher, 2026-10-30 and 2026-11-02: the header says what the list shows, its number the rows of the view
 	// ("2,672 Valid species (of 6,960 species and morphospecies)", "116 Genera (valid and curated)"). StatusSet.listHeading.
 	String childHeading = StatusSet.listHeading(taxaPage.getStatusSetStr(), childrenCount, Rank.getPluralRank(pageRank),
-	    Rank.getPluralRank(pageRank), overview == null ? -1 : overview.getSpeciesCount(), overview == null ? null : overview.getName(),
+	    Rank.getPluralRank(pageRank), overview == null ? -1 : (request.getAttribute("placeViewTotals") instanceof int[] && ((int[]) request.getAttribute("placeViewTotals"))[1] >= 0
+	        ? ((int[]) request.getAttribute("placeViewTotals"))[1] : overview.getSpeciesCount()), overview == null ? null : overview.getName(),
 	    StatusSet.fossilSubfamilies(request));
 	String childSizeStr = Html.esc(childHeading);
 

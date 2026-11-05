@@ -217,7 +217,7 @@ public class StatusChoiceTest extends TestCase {
     }
 
     public void testHeadersSayWhatTheListShows() {
-        assertEquals("2,672 Valid species (of 6,960 species and morphospecies)", StatusSet.listHeading("valid", 2672, "Species", "Species", 6960));
+        assertEquals("2,672 Valid species (of 6,960 species, valid and curated)", StatusSet.listHeading("valid", 2672, "Species", "Species", 6960));
         assertEquals("2,700 Species (valid and curated)", StatusSet.listHeading("curated", 2700, "Species", "Species", 6960));
         assertEquals("116 Genera (valid and curated)", StatusSet.listHeading("curated", 116, "Genera", "Genus", -1));
         assertEquals("7,215 Species (all specimen names)", StatusSet.listHeading("all", 7215, "Species", "Species", 6960));

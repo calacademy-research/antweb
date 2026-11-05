@@ -69,3 +69,55 @@ def test_admin_updates_a_country_and_an_adm1():
     posted, page = _press(s, path)
     assert posted == "/adm1.do?action=recalc", posted
     _check(page, [adm1.group(2).strip()], path)
+
+
+@needs("admin")
+def test_region_and_subregion_pages_offer_no_update_button():
+    """Region and subregion pages do not recount (OverviewAction): no "Update statistics" button there (2026-11-04)."""
+    s, _token, _lid = login("admin")
+    for path in ("/region.do?name=Africa", "/subregion.do?name=Eastern%20Africa"):
+        page = s.get(BASE_URL + path, timeout=max(TIMEOUT, 120)).text
+        assert _button(page) is None, f"{path}: shows an Update statistics button that does nothing"
+
+
+# Small places of the other kinds whose page recounts (OverviewAction: the project, museum and bioregion branches
+# and island.do through the country branch). The smallest of their kind on staging, 2026-11-04: museum BPPC
+# (1 specimen), project Anomalous (27 valid species), bioregion Oceania, island Hawaii.
+OTHER_PLACES = [
+    ("/museum.do?code=BPPC", "/museum.do?action=recalc", ["BPPC"]),
+    ("/project.do?name=anomalousants", "/project.do?action=recalc", ["Anomalous"]),
+    ("/bioregion.do?name=Oceania", "/bioregion.do?action=recalc", ["Oceania"]),
+    ("/island.do?name=Hawaii", "/island.do?action=recalc", ["Hawaii"]),
+]
+
+
+def _flag_lists(session):
+    """(endemic.do, introduced.do) name counts of the bioregion Oceania."""
+    out = []
+    for page in ("endemic", "introduced"):
+        html = session.get(f"{BASE_URL}/{page}.do?bioregionName=Oceania", timeout=max(TIMEOUT, 120)).text
+        out.append(len(ns.numbered_names(html)))
+    return tuple(out)
+
+
+@needs("admin")
+@pytest.mark.parametrize("path, recalc, words", OTHER_PLACES)
+def test_admin_updates_a_museum_a_project_a_bioregion_and_an_island(path, recalc, words):
+    """The "Update statistics" button of a museum, a project, a bioregion and an island page recounts that place and
+    shows the page again with its statistics (catalog gaps 9 to 12, 2026-11-04)."""
+    s, _token, _lid = login("admin")
+    posted, page = _press(s, path)
+    assert posted == recalc, posted
+    if path.startswith("/bioregion.do"):
+        # after the recount the page's Endemic and Introduced = the names on endemic.do and introduced.do (2026-11-05:
+        # the recount cleared the flags, Oceania's endemic.do listed 17 names while the page said Endemic 142)
+        stats = ns.place_stats(page)
+        lists = _flag_lists(s)
+        assert (stats.get("endemic"), stats.get("introduced")) == lists, (
+            f"{path} after Update statistics: page Endemic/Introduced {stats.get('endemic')}/{stats.get('introduced')},"
+            f" endemic.do/introduced.do {lists[0]}/{lists[1]}")
+    text = ns.text_of(page)
+    for word in words:
+        assert word in text, f"{path} after Update statistics: '{word}' not on the page: {text[:300]}"
+    for bad in ("not found", "Exception", "failed due to"):
+        assert bad not in text, f"{path} after Update statistics: '{bad}': {text[:300]}"

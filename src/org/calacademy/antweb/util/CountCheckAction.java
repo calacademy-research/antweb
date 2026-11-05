@@ -361,6 +361,15 @@ public final class CountCheckAction extends AntwebAction {
             result.coreMillis / 1000.0, result.rotatingMillis / 1000.0, result.rotatingChecked, result.rotatingPlanned);
     }
 
+    /** The differences not listed (Result.unlisted), real or pending. */
+    static int unlistedCount(CountCheck.Result result, boolean real) {
+        int n = 0;
+        for (java.util.Map.Entry<String, Integer> e : result.unlisted.entrySet()) {
+            if (e.getKey().endsWith(" (pending)") != real) n += e.getValue();
+        }
+        return n;
+    }
+
     static String html(CountCheck.Result result, String domainApp) {
         SimpleDateFormat f = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         StringBuilder b = new StringBuilder(HELP);
@@ -416,7 +425,8 @@ public final class CountCheckAction extends AntwebAction {
         for (CountCheck.Place p : result.places) {
             int real = 0, pending = 0;
             for (CountCheck.Mismatch m : result.mismatches) {
-                if (m.place != p) continue;
+                // equals, not identity: the invariants make their own Place objects for the same place (2026-11-04)
+                if (!p.equals(m.place)) continue;
                 if (m.isReal()) ++real; else ++pending;
             }
             b.append("<tr><td>").append(Html.esc(p.label)).append("</td><td>").append(result.rowsChecked.getOrDefault(p, 0))
@@ -426,7 +436,11 @@ public final class CountCheckAction extends AntwebAction {
         for (boolean real : new boolean[] {true, false}) {
             List<CountCheck.Mismatch> list = new ArrayList<>();
             for (CountCheck.Mismatch m : result.mismatches) if (m.isReal() == real) list.add(m);
-            b.append("<h3>").append(real ? "Real differences" : "Pending differences").append(" (").append(list.size()).append(")</h3>");
+            // The heading adds the differences not listed (more than LIST_CAP of one check), so it agrees with the
+            // final line's numbers (data-real, data-pending).
+            int notListed = unlistedCount(result, real);
+            b.append("<h3>").append(real ? "Real differences" : "Pending differences").append(" (").append(list.size() + notListed)
+             .append(notListed > 0 ? ", of which " + notListed + " not listed below" : "").append(")</h3>");
             if (list.isEmpty()) {
                 b.append("<p>None.</p>");
                 continue;

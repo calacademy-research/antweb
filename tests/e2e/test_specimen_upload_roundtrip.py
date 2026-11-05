@@ -370,3 +370,20 @@ def test_upload_needs_post(uploader):
     r = s.get(BASE_URL + "/upload.do?action=specimenUpload", timeout=TIMEOUT)
     assert r.status_code < 500
     assert "must be submitted through an http post" in r.text, _text(r.text)[:300]
+
+
+def _museum_calc(s, token):
+    return s.post(f"{BASE_URL}/upload.do?_csrf={token}", files={"action": (None, "museumCalc"), "_csrf": (None, token)},
+                  timeout=max(TIMEOUT, 300))
+
+
+@needs("uploader")
+def test_museum_recount_after_an_upload(uploader, names):
+    """Recount museums ("/upload.do?action=museumCalc", catalog gap 4, 2026-11-04): after an upload in the same session
+    it recounts the museums of that upload ("Museums recounted: ...").
+    Without an upload in the session it asks for one (UploadAction.mayRecalcMuseums)."""
+    s, token, _gid = uploader
+    _syn, valid = names
+    _upload_baseline(s, token, valid)
+    r = _museum_calc(s, token)
+    assert r.status_code == 200 and "Museums recounted:" in r.text, _text(r.text)[:300]

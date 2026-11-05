@@ -47,6 +47,14 @@ public class DownloadGuardsTest extends TestCase {
         assertEquals("Showing 0 of 0", SearchPaging.showingText(1, 0));
     }
 
+    /** Map and Compare work on the page shown; their label says so when the search found more (2026-11-04). */
+    public void testPageNote() {
+        SearchPaging paged = new SearchPaging(141728, 1, null, null, null);
+        assertEquals("the 200 specimens on this page, of 141,728 found", SearchPaging.pageNote(200, paged));
+        assertEquals("12 specimens", SearchPaging.pageNote(12, new SearchPaging(12, 1, null, null, null)));
+        assertEquals("1 specimen", SearchPaging.pageNote(1, null));
+    }
+
     public void testPagesAndOffsets() {
         assertEquals(0, SearchPaging.offset(1));
         assertEquals(200, SearchPaging.offset(2));

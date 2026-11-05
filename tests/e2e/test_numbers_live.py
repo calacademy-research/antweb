@@ -38,7 +38,6 @@ from html import unescape
 import pytest
 
 from antweb import BASE_URL, TIMEOUT, classify, new_session
-import numbers_sample as ns
 
 PLACE = "/country.do?name=Madagascar"
 WHERE = "countryName=Madagascar"
@@ -84,31 +83,25 @@ def header(html):
 
 
 def test_list_headers_equal_place_numbers():
+    """Madagascar (Brian Fisher, 2026-11-04): each number of the place page's Taxonomic diversity = the header of the
+    list it opens: Subfamilies, Genera, Species / subspecies / morphospecies in the default view Curated, Valid species
+    in the view Valid."""
+    page = _get("/country.do?name=Madagascar")
+    counted = 'data-view-counted="true"' in page
     stats = place_stats()
-    wrong, stored = [], []
-    for rank, stat, status in (("subfamily", "subfamilies", "all"), ("genus", "genera", "all"), ("species", "valid", "valid")):
+    wrong, pending = [], []
+    for rank, stat, status in (("subfamily", "subfamilies", "curated"), ("genus", "genera", "curated"),
+                               ("species", "valid", "valid"), ("species", "species", "curated")):
         if stat not in stats:
             wrong.append(f"the Madagascar page has no data-stat {stat}")
             continue
-        html = _get(f"/taxonomicPage.do?rank={rank}&{WHERE}&statusSet={status}")
-        n, text = header(html)
-        if rank in ("subfamily", "genus"):
-            # Genera rule (Brian Fisher, 2026-10-30): the place counts the listed rows that are subfamilies (no
-            # placeholders) and genera (valid genera and morphogenera); the header counts every row listed.
-            counted = ns.counted_rows(ns.list_rows(html), rank)
-            if counted is None:
-                continue
-            n = counted
+        n, text = header(_get(f"/taxonomicPage.do?rank={rank}&{WHERE}&statusSet={status}"))
         if n != stats[stat]:
-            (stored if rank in ("subfamily", "genus") else wrong).append(f"rank={rank} {status}: list {n}, place page {stat} {stats[stat]}")
-    # the place's Genera and Subfamilies are counted by the genera and subfamilies rule of 2026-10-30 at the next nightly run: pending
-    if stored and ns.genera_rule_counted() is not False:
-        wrong += stored
-    # One line (the GitHub annotation shows the start only). The place numbers are those of the last nightly run: before
-    # a nightly run with the rules of 2026-10-21 (ants only, counted from the list) they can differ from the live list.
-    assert not wrong, "Madagascar list header vs place page: " + "; ".join(wrong) + " (expected to agree after a nightly run with the 2026-10-21 rules)"
-    if stored:
-        pytest.skip(ns.rules_pending_note("genera and subfamilies rule of 2026-10-30") + ": " + "; ".join(stored))
+            line = f"rank={rank} {status}: list {n}, place page {stat} {stats[stat]}"
+            (pending if stat in ("subfamilies", "genera", "species") and not counted else wrong).append(line)
+    assert not wrong, "Madagascar list header vs place page: " + "; ".join(wrong)
+    if pending:
+        pytest.skip("place list totals not counted yet by a nightly run (PlaceViewTotalDb): " + "; ".join(pending))
 
 
 def test_unimaged_header_is_within_the_list():

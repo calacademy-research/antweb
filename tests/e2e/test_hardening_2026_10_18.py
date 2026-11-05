@@ -163,7 +163,8 @@ def test_introduced_map_admin_only(own_login):
     assert classify(r).category == "login", classify(r)
 
 
-REMOVED_UPLOAD_ACTIONS = ["reloadSpecimenList", "removeSpecimenList", "uploadSpeciesList"]
+REMOVED_UPLOAD_ACTIONS = ["reloadSpecimenList", "removeSpecimenList", "uploadSpeciesList",
+                          "runCountCrawls"]   # did nothing; removed 2026-11-04
 
 
 @pytest.mark.parametrize("action", REMOVED_UPLOAD_ACTIONS)

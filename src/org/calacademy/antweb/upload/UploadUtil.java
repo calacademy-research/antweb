@@ -38,14 +38,16 @@ public class UploadUtil {
     public static final String INDET_EPITHET = "(indet)";
 
     /**
-     * True when a species epithet says "not identified to species" (Brian Fisher, 2026-10-28): "indet", "undet" or
-     * "(indet)", in any case, with or without a trailing period ("Indet", "indet.", "UNDET."). Blank and "sp." are
+     * True when a species epithet says "not identified to species" (Brian Fisher, 2026-10-28): "indet", "undet",
+     * "_indet_" or "(indet)", in any case, with or without a trailing period ("Indet", "indet.", "UNDET."). Blank and "sp." are
      * handled by the specimen upload itself (SpecimenUploadParse.parseLine).
      */
     public static boolean isIndetEpithet(String species) {
         if (species == null) return false;
         String s = species.trim().toLowerCase(java.util.Locale.ROOT);
         if (s.endsWith(".")) s = s.substring(0, s.length() - 1).trim();
+        // "_indet_" (Brian Fisher, 2026-11-04: seen in California, "(amblyoponinae) _indet_"): the word between underscores
+        if (s.length() > 2 && s.startsWith("_") && s.endsWith("_")) s = s.substring(1, s.length() - 1);
         return "indet".equals(s) || "undet".equals(s) || INDET_EPITHET.equals(s);
     }
 

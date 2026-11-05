@@ -67,7 +67,7 @@ Request objects:
             case "specimen":
             case "locality":
                 results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
-                if (session.getAttribute("fullAdvancedSearchResults") != null)
+                if (results != null && session.getAttribute("fullAdvancedSearchResults") != null)
                     results.setResults((ArrayList) session.getAttribute("fullAdvancedSearchResults")); // added to fix session
                 forwardString = "advancedSearch";
                 break;
@@ -75,7 +75,7 @@ Request objects:
             case "genus":
             case "subfamily":
                 results = (AdvancedSearchResults) session.getAttribute("advancedSearchResults");
-                if (session.getAttribute("fullAdvancedSearchResults") != null)
+                if (results != null && session.getAttribute("fullAdvancedSearchResults") != null)
                     results.setResults((ArrayList) session.getAttribute("fullAdvancedSearchResults")); // added to fix session
                 request.setAttribute("resultRank", resultRank);
                 forwardString = "advancedSearchByTaxon";
@@ -97,12 +97,16 @@ Request objects:
 		ArrayList newResults = getModifiedSet(resultRank, results.getResults(), request);
 		results.setResults(newResults);
 
-        resultSetModifier = newResults.size() + " georeferenced specimens";
+        // the page shown, said so when the search found more (2026-11-04)
+        SearchPaging paging = "bayAreaSearch".equals(forwardString) ? null : (SearchPaging) session.getAttribute("advancedSearchPaging");
+        int pageSpecimens = ((java.util.List) session.getAttribute("fullAdvancedSearchResults")).size();
+        resultSetModifier = newResults.size() + " georeferenced specimens"
+            + (paging != null && paging.getTotal() > pageSpecimens ? " (from " + SearchPaging.pageNote(pageSpecimens, paging) + ")" : "");
 
         if (resultRank.equals("species")) {
             ArrayList taxonList = ((AdvancedSearchResults) results).getSpeciesList();
             resultSetModifier = taxonList.size() + " georeferenced species "
-               + "(from " + results.getResults().size() + " specimens)";
+               + "(from " + SearchPaging.pageNote(pageSpecimens, paging) + ")";
 			session.setAttribute("taxonList", taxonList);
         }
 

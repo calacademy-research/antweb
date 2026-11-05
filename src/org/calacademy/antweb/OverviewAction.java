@@ -183,6 +183,11 @@ public final class OverviewAction extends DescriptionAction {
 
                    BioregionDb bioregionDb = new BioregionDb(connection);
                    bioregionDb.populate(name);
+                   // populate(name) rebuilds the bioregion's list without its introduced and endemic flags; set them
+                   // again as the nightly does after its populate (introduced first). Without this the page kept
+                   // "Endemic 142" while endemic.do listed 17 (Oceania, 2026-11-05).
+                   bioregionDb.calcIntroduced();
+                   bioregionDb.calcEndemic();
                    new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.BIOREGION, name);
 
                    BioregionMgr.populate(connection, true);
@@ -511,6 +516,8 @@ public final class OverviewAction extends DescriptionAction {
         if (type == null || key == null) return;
         try {
             request.setAttribute("placeImages", new PlaceImageCountDb(connection).read(type, key));
+            // Genera and Species as the place's lists in the default view show them (2026-11-04; -1: not counted yet)
+            request.setAttribute("placeViewTotals", new org.calacademy.antweb.home.PlaceViewTotalDb(connection).read(overview));
         } catch (SQLException e) {
             s_log.warn("setPlaceImages() " + type + " " + key + " e:" + e);
         }

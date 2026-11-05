@@ -247,3 +247,20 @@ def test_rows_not_on_the_list_open_their_specimens():
     assert href, "the added row's specimen number is not linked"
     page = ns.text_of(ns.get(site_path(href.group(1)), new_session()))
     assert not re.search(r"\b0 Specimens", page), f"{href.group(1)}: the name's page shows 0 specimens"
+
+
+def test_placeholder_genus_rows_open_their_specimens():
+    """Genus list, All specimen names (Brian Fisher, 2026-11-04): a placeholder row ("(dorylinae)") shows in its Species
+    column "N Specimens", its specimens collected here identified only to subfamily, linked to them; the page it opens
+    lists the same number. Real genera keep their species number."""
+    html = ns.get("/taxonomicPage.do?rank=genus&countryName=Madagascar&statusSet=all", new_session())
+    cells = re.findall(r"""<a class='subfamily-only' title='([^']*)' href='([^']*)'><span class='numbers'>([\d,]+)</span> Specimens?</a>""", html)
+    if not cells:
+        pytest.skip("no placeholder genus rows with specimens on the Madagascar genus list today")
+    for title, href, n in cells[:4]:
+        href = unescape(href)
+        assert "statusSet=all" in href and "species=%28indet%29" in href and "Madagascar" in href, href
+        assert "identified only to subfamily" in title, title
+        page = ns.text_of(ns.get(site_path(href), new_session()))
+        m = re.search(r"\b([\d,]+) Specimens?\b", page)
+        assert m and m.group(1) == n, f"{href}: the list says {n} specimens, the page {m.group(0) if m else 'none'}"

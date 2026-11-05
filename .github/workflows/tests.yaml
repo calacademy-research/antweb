@@ -42,6 +42,9 @@ jobs:
         # purpose and status of the new rows, commit docs/catalog/ (see docs/README.md).
         run: python3 tools/catalog/build_catalog.py --check
 
+      - name: Catalog tool rules (tests/unit/test_catalog_tool.py; version in a page name, status manual)
+        run: python3 tests/unit/test_catalog_tool.py
+
       - name: Every number on the site names its test (docs/numbers.md)
         # Each kind of number AntWeb shows has a row: status yes, partly or not yet; the tests it names exist;
         # every count check (CountInvariants.IDS) is named. Fix: edit docs/numbers.md (see its section 1).
@@ -342,7 +345,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/DownloadGuardsTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.DownloadGuardsTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (6 tests)" /tmp/out.txt
+            grep -q "^OK (7 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of log growth (short message-page record, entry cap, log viewer cap, row limits, log size check) and the mount check
@@ -687,7 +690,7 @@ jobs:
               /t/org/calacademy/antweb/upload/SubfamilyFromGenusTest.java \
               /t/org/calacademy/antweb/upload/LocalityCodePlainTest.java
             for t in upload.TaxonWorksTransformFixtureTest:10 upload.TaxonWorksNightlyDecisionsTest:11 \
-                     upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:19 upload.GenusSynonymRuleTest:16 upload.GenusConceptRuleTest:6 upload.GenusConceptProposalsTest:4 \
+                     upload.NameResolutionRuleTest:6 upload.SpecimenNameUpdateTest:19 upload.GenusSynonymRuleTest:16 upload.GenusConceptRuleTest:8 upload.GenusConceptProposalsTest:5 \
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
@@ -837,6 +840,25 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.NightlyTriageThTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (10 tests)" /tmp/out.txt
+          '
+
+      - name: Java unit tests of the count check page and small fixes of 2026-11-04
+        # AuditTmFixesTest (no database): the count check's per-place table and headings agree with its final line;
+        # a failed table lookup is a note on the page; OperationDetails with null messages; the adm2s setter.
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/AuditTmFixesTest.java
+            # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.AuditTmFixesTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (4 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of the audit fixes of 2026-10-29
@@ -1045,7 +1067,7 @@ jobs:
             # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.ListViewTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             grep -v "LogMgr" /tmp/out.txt | tail -3
-            grep -q "^OK (14 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
+            grep -q "^OK (15 tests)" /tmp/out.txt || { cat /tmp/out.txt; exit 1; }
           '
 
       - name: Java unit tests of who may edit species lists (2026-11-02; any curator any list, not the system lists; projects stay with their curators; SecurityBatch5Test)
@@ -1431,7 +1453,7 @@ jobs:
       - name: Curator, admin and shared page fragments escape request values, do not fail, count right (tests/unit/test_curate_page_fixes.py)
         run: python3 tests/unit/test_curate_page_fixes.py
 
-      - name: Java unit tests of the Species List Tool (permalink list names escaped; "(indet)" names not added to place lists)
+      - name: Java unit tests of the Species List Tool (permalink list names escaped; "(indet)" names not added to place lists; subfamily links ant only)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
             set -e
@@ -1441,7 +1463,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/curate/speciesList/SpeciesListPermaLinkTest.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.curate.speciesList.SpeciesListPermaLinkTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (3 tests)" /tmp/out.txt
+            grep -q "^OK (4 tests)" /tmp/out.txt
           '
 
       - name: deploy.sh no-restart list (tests/unit/test_deploy_paths.py)

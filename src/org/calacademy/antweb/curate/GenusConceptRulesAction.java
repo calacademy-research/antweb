@@ -118,7 +118,8 @@ public final class GenusConceptRulesAction extends AntwebAction {
             + "the old genus has no valid species left in the bioregion.",
         "A morphospecies or indet (Mesoponera kg01, Mesoponera (indet)) has no AntCat name to follow, so it stays in the old genus "
             + "after AntCat moves the species. An approved rule moves that bioregion's morphospecies and indets of the old genus to "
-            + "the new genus, keeping the code part of the name and recording why.",
+            + "the new genus, keeping the code part of the name and recording why. Only morphospecies and indets move: AntCat's "
+            + "named species have already moved (\"Why\" lists them as the evidence); \"Will move\" lists every name and specimen a rule moves.",
         "Approve or reject each proposal. Approved rules apply from the next nightly run (and in every upload). Splits, genera "
             + "with valid species left, and new genera AntWeb does not have stay manual.");
 
@@ -145,7 +146,8 @@ public final class GenusConceptRulesAction extends AntwebAction {
 
     private static String table(List<GenusConceptProposals.Pair> listed, GenusConceptProposals.Kind kind, String csrfField, String domainApp) {
         StringBuilder b = new StringBuilder("<table><tr><th>Old genus</th><th>Bioregion</th><th>Evidence</th>"
-            + "<th>Specimens (morphospecies, indets)</th><th>Examples</th>" + (csrfField != null ? "<th>Decision</th>" : "") + "</tr>");
+            + "<th>Specimens (morphospecies, indets)</th><th>Will move (only morphospecies and indets)</th><th>Why: AntCat moved these species</th>"
+            + (csrfField != null ? "<th>Decision</th>" : "") + "</tr>");
         for (GenusConceptProposals.Pair p : listed) {
             if (p.kind != kind) continue;
             b.append("<tr class=\"genus-concept-row\"><td>").append(Taxon.makeDescriptionLink(p.genus, Taxon.getPrettyTaxonName(p.genus)))
@@ -156,13 +158,42 @@ public final class GenusConceptRulesAction extends AntwebAction {
                 if (i++ > 0) b.append(", ");
                 b.append(Html.esc(NameUpdatesAction.groupName(e.getKey()))).append(" ").append(e.getValue());
             }
-            b.append(")</td><td>").append(Html.esc(String.join("; ", GenusConceptProposals.examples(p, EXAMPLES)))).append("</td>");
+            b.append(")</td><td>").append(willMoveHtml(p, domainApp));
+            b.append("</td><td>").append(Html.esc(String.join("; ", GenusConceptProposals.examples(p, EXAMPLES)))).append("</td>");
             if (csrfField != null) {
                 b.append("<td>").append(form(p, "approve", "Approve", csrfField, domainApp)).append(form(p, "reject", "Reject", csrfField, domainApp)).append("</td>");
             }
             b.append("</tr>");
         }
         return b.append("</table>").toString();
+    }
+
+    /**
+     * The names a rule would move and their specimens (Brian Fisher, 2026-11-04: the page showed AntCat's moved species,
+     * which have already moved, and only a total of the specimens that would): "Bothriomyrmex (indet) -> Chronoxenus
+     * (indet): 2 specimens (codes)", each code linked to its specimen page.
+     */
+    public static String willMoveHtml(GenusConceptProposals.Pair p, String domainApp) {
+        if (p.willMove.isEmpty()) return "";
+        String target = p.newGenus();
+        StringBuilder b = new StringBuilder();
+        for (String[] m : p.willMove) {
+            String name = m[0];
+            String rest = name.startsWith(p.genus) ? name.substring(p.genus.length()) : "";
+            if (b.length() > 0) b.append("<br>");
+            b.append(Html.esc(Taxon.getPrettyTaxonName(name)));
+            if (target != null && !rest.isEmpty()) b.append(" &rarr; ").append(Html.esc(Taxon.getPrettyTaxonName(target + rest)));
+            int n = Integer.parseInt(m[1]);
+            b.append(": ").append(String.format("%,d", n)).append(n == 1 ? " specimen" : " specimens").append(" (");
+            String[] codes = m[2] == null ? new String[0] : m[2].split(" ");
+            for (int i = 0; i < codes.length; i++) {
+                if (i > 0) b.append(", ");
+                b.append("<a href=\"").append(Html.escAttr(domainApp + "/specimen.do?code=" + codes[i])).append("\">").append(Html.esc(codes[i])).append("</a>");
+            }
+            if (n > codes.length) b.append(", ...");
+            b.append(")");
+        }
+        return b.toString();
     }
 
     private static String form(GenusConceptProposals.Pair p, String op, String label, String csrfField, String domainApp) {

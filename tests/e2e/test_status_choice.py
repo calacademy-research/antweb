@@ -4,7 +4,7 @@ status choice of 2026-10-30 and the "Names from" selector.
 List pages (taxonomicPage.do, browse.do, images.do) show four buttons, a segmented control (not a menu), the same on
 every kind of list; Fossil only when the list has fossil names in the place (2026-11-02, hidden otherwise):
 
-  valid   Valid               names AntCat calls valid ("N Valid species (of M species and morphospecies)", N = Valid
+  valid   Valid               names AntCat calls valid ("N Valid species (of M species, valid and curated)", N = Valid
                               species / subspecies of the place page)
   curated Curated (default)   Valid + curated morphospecies ("N Species (valid and curated)"); vetted, its first
                               name, still opens it
@@ -155,7 +155,7 @@ def test_each_choice_header_equals_the_place_page_number():
             if choice == "valid":
                 if n != stats.get("valid", 0):
                     stored.append(f"{p} valid: header {n}, place page Valid species {stats.get('valid', 0)}")
-                of = re.search(r"\(of ([\d,]+) species and morphospecies\)", text)
+                of = re.search(r"\(of ([\d,]+) species, valid and curated\)", text)
                 if n and (not of or ns.n(of.group(1)) != stats["species"]):
                     wrong.append(f"{p} valid: header {text!r}, place page Species {stats['species']}")
         if {"valid", "curated", "all"} <= set(headers) and not headers["valid"] <= headers["curated"] <= headers["all"]:

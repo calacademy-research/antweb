@@ -131,3 +131,18 @@ def test_taxonworks_job_logged_that_day(admin, name, marker):
         pytest.skip(f"the TaxonWorks nightly upload is off on this server (no etc/taxonworks.properties): {off[-1]}")
     failed = [l for l in lines if "FAILED" in l]
     assert not failed, f"{name}.log, {day}:\n" + _quote(failed, 5)
+
+
+def test_taxonworks_upload_loaded_that_day(admin):
+    """The TaxonWorks upload ("/upload.do?action=taxonWorksUpload", catalog gap 1; an admin's upload of a TaxonWorks
+    archive runs the same TaxonWorksUploader and specimen upload as the nightly, which CAS uses every day): the
+    run day's nightly loaded the archive ("uploaded N records") or found it unchanged; not stopped by the size guard,
+    not failed (2026-11-04). Uploading an archive from a test would replace the CAS group's specimens on staging."""
+    day = _run_day()
+    lines = [l for l in _log(admin, "taxonworksNightly", 2000) if l.startswith(day)]
+    if lines and all(re.search(r"skipped: no \S*taxonworks\.properties", l) for l in lines):
+        pytest.skip(f"the TaxonWorks nightly upload is off on this server: {lines[-1]}")
+    assert lines, f"no taxonworksNightly.log line from {day}"
+    final = lines[-1]
+    assert re.search(r"\d{2}:\d{2}:\d{2} (uploaded \d+ records|skipped: archive unchanged)", final), (
+        f"the TaxonWorks upload of {day} did not load the archive: {final}")

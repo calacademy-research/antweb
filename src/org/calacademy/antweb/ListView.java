@@ -751,10 +751,65 @@ public final class ListView {
             this.evidence = evidence == null ? new HashMap<>() : evidence;
         }
 
+        /** Specimens collected here identified only to subfamily, by placeholder genus ("(dorylinae)"): the "(indet)" name's. */
+        final Map<String, Integer> subfamilyOnlySpecimens = new HashMap<>();
+
         /** Marks the genera of the place's specimens (loadGenusRows; also for tests). */
         public GenusRows withSpecimens(PlaceSpecimens specimens) {
-            if (specimens != null) for (String[] v : specimens.names.values()) generaWithSpecimens.add(PlaceTaxonNotes.OtherNames.key(v[0], v[1]));
+            if (specimens != null) for (Map.Entry<String, String[]> e : specimens.names.entrySet()) {
+                String[] v = e.getValue();
+                generaWithSpecimens.add(PlaceTaxonNotes.OtherNames.key(v[0], v[1]));
+                // by the name, "dorylinae(dorylinae) (indet)": its genus row is "dorylinae(dorylinae)" (not by the taxon
+                // table's genus and species columns, which the staging check of 2026-11-04 showed do not match)
+                String genusRow = placeholderIndetGenusRow(e.getKey());
+                if (genusRow != null) subfamilyOnlySpecimens.merge(genusRow, specimens.count(e.getKey()), Integer::sum);
+            }
             return this;
+        }
+
+        /** A genus row standing for a subfamily ("(dorylinae)", "(formicidae)"): specimens identified only to subfamily. */
+        public static boolean isPlaceholderGenus(String genus) {
+            return genus != null && genus.startsWith("(");
+        }
+
+        /**
+         * The specimens collected here filed under a placeholder genus's "(indet)" name (Brian Fisher, 2026-11-04: the genus
+         * list's "(dorylinae)" row shows "N Specimens" in its Species column, linked to them, as "Adetomyrma (indet)" on the
+         * species list). 0 for any other genus, or when the place's specimens were not read (regions, subregions).
+         */
+        public int subfamilyOnlySpecimens(String genusTaxonName) {
+            Integer n = genusTaxonName == null ? null : subfamilyOnlySpecimens.get(genusTaxonName.toLowerCase(Locale.ROOT));
+            return n == null ? 0 : n;
+        }
+
+        /**
+         * The Species cell of a placeholder genus row: "N Specimens" linked to them (hover "Specimens identified only to
+         * subfamily in <place>"); null when the row is not a placeholder or has none counted here.
+         */
+        public String subfamilyOnlyCellHtml(Taxon child, Overview overview) {
+            if (child == null || overview == null || !isPlaceholderGenus(child.getGenus())) return null;
+            int n = subfamilyOnlySpecimens(child.getTaxonName());
+            if (n <= 0) return null;
+            return "<a class='subfamily-only' title='" + org.calacademy.antweb.util.Html.escAttr("Specimens identified only to subfamily in " + overview.getName())
+                + "' href='" + org.calacademy.antweb.util.Html.escAttr(org.calacademy.antweb.util.AntwebProps.getDomainApp()
+                    + subfamilyOnlyUrl(child.getSubfamily(), child.getGenus(), overview.getParams()))
+                + "'><span class='numbers'>" + Formatter.commaFormat(n) + "</span> " + (n == 1 ? "Specimen" : "Specimens") + "</a>";
+        }
+
+        /** "dorylinae(dorylinae) (indet)" -> "dorylinae(dorylinae)" (lower case); null for any other name. */
+        public static String placeholderIndetGenusRow(String taxonName) {
+            String suffix = " " + org.calacademy.antweb.upload.UploadUtil.INDET_EPITHET;
+            if (taxonName == null || !taxonName.toLowerCase(Locale.ROOT).endsWith(suffix)) return null;
+            String genusRow = taxonName.substring(0, taxonName.length() - suffix.length());
+            if (genusRow.contains(" ") || !genusRow.endsWith(")") || !genusRow.contains("(")) return null;
+            return genusRow.toLowerCase(Locale.ROOT);
+        }
+
+        /** The browse page of a placeholder genus's "(indet)" specimens in the place, in All specimen names. */
+        public static String subfamilyOnlyUrl(String subfamily, String genus, String placeParams) {
+            return "/browse.do?subfamily=" + org.calacademy.antweb.util.Html.url(subfamily) + "&genus=" + org.calacademy.antweb.util.Html.url(genus)
+                + "&species=" + org.calacademy.antweb.util.Html.url(org.calacademy.antweb.upload.UploadUtil.INDET_EPITHET) + "&rank=species&" + placeParams
+                + "&statusSet=" + StatusSet.LIST_ALL;
         }
 
         /** The stored Not curated numbers (null: cells empty); placeHasColumn: the place shows the column. */

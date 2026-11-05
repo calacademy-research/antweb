@@ -567,7 +567,8 @@ public class StatusSet extends Status {
         boolean speciesRows = "species".equals(lower);
         if (LIST_VALID.equals(choice)) {
             String h = num + " Valid " + lower;
-            if (speciesRows && speciesTotal >= 0) h += " (of " + String.format(Locale.US, "%,d", speciesTotal) + " species and morphospecies)";
+            // the place page's Species, the rows of the default view (2026-11-04: was every morphospecies)
+            if (speciesRows && speciesTotal >= 0) h += " (of " + String.format(Locale.US, "%,d", speciesTotal) + " species, valid and curated)";
             return h;
         }
         if (LIST_VETTED.equals(choice)) return num + " " + noun + " (valid and curated)";

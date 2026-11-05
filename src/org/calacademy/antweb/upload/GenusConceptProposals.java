@@ -58,6 +58,8 @@ public final class GenusConceptProposals {
         public final Map<Integer, Integer> specimensByGroup = new TreeMap<>();
         public final Map<String, Moved> moved = new TreeMap<>();   // by new genus taxon name; never G itself
         public int validSpecies;             // G's valid species and subspecies on B's list
+        /** What a rule would move (2026-11-04: the page showed only a total): {taxon name, specimens, first codes}. */
+        public final List<String[]> willMove = new ArrayList<>();
         public Kind kind = Kind.NONE;
         public Pair(String genus, String bioregion) {
             this.genus = genus;
