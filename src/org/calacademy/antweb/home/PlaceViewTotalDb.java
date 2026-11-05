@@ -42,7 +42,8 @@ import org.apache.commons.logging.LogFactory;
  * admins: utilData.do?action=placeViewTotals. Writes "Place list totals counted: ..." to compute.log.
  * Places: valid geolocales whose list has rows, bioregions, museums, projects; not the AntWeb-wide list (allantwebants,
  * its species list is refused as too expensive), which keeps its stored totals.
- * Tests: tests/e2e/test_numbers_live.py (test_place_numbers_equal_their_default_list).
+ * Tests: tests/e2e/test_numbers_live.py (test_list_headers_equal_place_numbers), test_numbers_lists.py
+ * (test_list_headers_equal_place_numbers_of_every_kind), test_nightly_jobs_ran.py (test_place_list_totals_counted_every_place).
  */
 public class PlaceViewTotalDb {
 
@@ -133,11 +134,23 @@ public class PlaceViewTotalDb {
         return out;
     }
 
+    /** The database's clock (the counted column is set with now()). */
+    private java.sql.Timestamp dbNow() throws SQLException {
+        try (PreparedStatement stmt = connection.prepareStatement("select now()"); ResultSet r = stmt.executeQuery()) {
+            return r.next() ? r.getTimestamp(1) : null;
+        }
+    }
+
+    /** Whether the table exists; once it does, not asked again (it is read on every place page; review of #324). */
+    private static volatile boolean s_tableSeen = false;
+
     private boolean tableExists() throws SQLException {
+        if (s_tableSeen) return true;
         try (PreparedStatement stmt = connection.prepareStatement(
                 "select 1 from information_schema.tables where table_schema = database() and table_name = 'place_view_total'");
              ResultSet r = stmt.executeQuery()) {
-            return r.next();
+            s_tableSeen = r.next();
+            return s_tableSeen;
         }
     }
 
@@ -186,7 +199,9 @@ public class PlaceViewTotalDb {
     public String fillAll() throws SQLException {
         ensureSchema();
         long start = System.currentTimeMillis();
+        java.sql.Timestamp runStart = dbNow();
         int done = 0;
+        int failedCount = 0;
         List<String> failed = new ArrayList<>();
         boolean auto = connection.getAutoCommit();
         try {
@@ -197,16 +212,26 @@ public class PlaceViewTotalDb {
                     store(place, listRows(place, Rank.GENUS), listRows(place, Rank.SPECIES), listRows(place, Rank.SUBFAMILY));
                     if (++done % 100 == 0) connection.commit();
                 } catch (SQLException | RuntimeException e) {
+                    failedCount++;
                     if (failed.size() < 5) failed.add(place.getName() + " (" + e.getMessage() + ")");
                     s_log.warn("fillAll() " + place.getName() + " e:" + e);
                 }
             }
             connection.commit();
+            // Rows not written by this run (a place no longer listed, or one that failed tonight) are removed, so its page
+            // shows its stored totals and data-view-counted="false" rather than an old number (review of #324).
+            int stale = 0;
+            if (runStart != null) try (PreparedStatement d = connection.prepareStatement("delete from place_view_total where counted < ?")) {
+                d.setTimestamp(1, runStart);
+                stale = d.executeUpdate();
+            }
+            connection.commit();
+            if (stale > 0) s_log.info("fillAll() " + stale + " rows not counted tonight removed");
         } finally {
             if (auto) connection.setAutoCommit(true);
         }
         // none counted: FAILED, so the morning check reports it (2026-11-05: every place failed and the line read "0 places")
         return LOG + ": " + (done == 0 && !failed.isEmpty() ? "FAILED, " : "") + done + " places in " + (System.currentTimeMillis() - start) / 1000 + " s"
-            + (failed.isEmpty() ? "" : "; not counted: " + String.join(", ", failed));
+            + (failed.isEmpty() ? "" : "; FAILED for " + failedCount + " places (their stored totals are shown), e.g. " + String.join(", ", failed));
     }
 }

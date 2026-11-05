@@ -13,10 +13,10 @@ Which line proves which job (checked in the Java source, 2026-11-04):
 - set 1 (UtilDataAction set1): "AntCat import done" after worldantsFetchAndReload succeeded, then the name
   update ("name update: ...", nightlyNameUpdate) and the taxon parents repair ("taxon parents (B36): ...",
   nightlyTaxonParents), its last step;
-- set 2: dataCleanup has no line of its own (the blank-name preview lines are gone since the blank-safe rules
-  are on); the next step, recountGlobal, writes "Global column recounted after the clean-up", then
-  recountAntCatList "AntCat list (worldants) recounted after set 1"; generateGeolocaleTaxaFromSpecimens and
-  updateTaxonSets write no line: they ran when the next line, geolocaleCountCrawl's "Populating Geolocales"
+- set 2: dataCleanup writes "Data cleanup done" (since 2026-11-04, UtilDataAction.jobLine), then recountGlobal
+  "Global column recounted after the clean-up" and recountAntCatList "AntCat list (worldants) recounted after set 1";
+  generateGeolocaleTaxaFromSpecimens and updateTaxonSets write "Geolocale taxa from specimens generated" and "Taxon
+  sets updated" (also since 2026-11-04); then geolocaleCountCrawl's "Populating Geolocales"
   (GeolocaleDb.updateCounts, then "Adm1s populated:", "Countries populated", "Subregions populated",
   "Regions populated"), follows the AntCat list line; "Set 2 done" ends the set;
 - set 3: projectCountCrawl "Project species-list counts crawled:" and "Projects counts computed",
@@ -203,4 +203,4 @@ def test_place_list_totals_counted_every_place(run_lines):
     line = run_lines[i][1]
     m = re.match(r"Place list totals counted: (?:FAILED, )?(\d+) places", line)
     assert m and int(m.group(1)) > 0, f"no place counted: {line[:300]}"
-    assert "not counted:" not in line, f"places not counted: {line[:400]}"
+    assert "FAILED" not in line and "not counted:" not in line, f"places not counted: {line[:400]}"
