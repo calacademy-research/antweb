@@ -183,6 +183,11 @@ public final class OverviewAction extends DescriptionAction {
 
                    BioregionDb bioregionDb = new BioregionDb(connection);
                    bioregionDb.populate(name);
+                   // populate(name) rebuilds the bioregion's list without its introduced and endemic flags; set them
+                   // again as the nightly does after its populate (introduced first). Without this the page kept
+                   // "Endemic 142" while endemic.do listed 17 (Oceania, 2026-11-05).
+                   bioregionDb.calcIntroduced();
+                   bioregionDb.calcEndemic();
                    new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.BIOREGION, name);
 
                    BioregionMgr.populate(connection, true);

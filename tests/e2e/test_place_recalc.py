@@ -91,6 +91,15 @@ OTHER_PLACES = [
 ]
 
 
+def _flag_lists(session):
+    """(endemic.do, introduced.do) name counts of the bioregion Oceania."""
+    out = []
+    for page in ("endemic", "introduced"):
+        html = session.get(f"{BASE_URL}/{page}.do?bioregionName=Oceania", timeout=max(TIMEOUT, 120)).text
+        out.append(len(ns.numbered_names(html)))
+    return tuple(out)
+
+
 @needs("admin")
 @pytest.mark.parametrize("path, recalc, words", OTHER_PLACES)
 def test_admin_updates_a_museum_a_project_a_bioregion_and_an_island(path, recalc, words):
@@ -99,6 +108,14 @@ def test_admin_updates_a_museum_a_project_a_bioregion_and_an_island(path, recalc
     s, _token, _lid = login("admin")
     posted, page = _press(s, path)
     assert posted == recalc, posted
+    if path.startswith("/bioregion.do"):
+        # after the recount the page's Endemic and Introduced = the names on endemic.do and introduced.do (2026-11-05:
+        # the recount cleared the flags, Oceania's endemic.do listed 17 names while the page said Endemic 142)
+        stats = ns.place_stats(page)
+        lists = _flag_lists(s)
+        assert (stats.get("endemic"), stats.get("introduced")) == lists, (
+            f"{path} after Update statistics: page Endemic/Introduced {stats.get('endemic')}/{stats.get('introduced')},"
+            f" endemic.do/introduced.do {lists[0]}/{lists[1]}")
     text = ns.text_of(page)
     for word in words:
         assert word in text, f"{path} after Update statistics: '{word}' not on the page: {text[:300]}"
