@@ -242,6 +242,12 @@ public class UploadDecisions1028Test extends TestCase {
         assertNull("an unknown genus with no subfamily: loaded and listed", SpecimenUploadParse.nonAntRefusal("", "(formicidae)", "newgenus", isAnt));
         assertNull("an ant", SpecimenUploadParse.nonAntRefusal("Formicidae", "myrmicinae", "pheidole", isAnt));
         assertNull("an ant indet", SpecimenUploadParse.nonAntRefusal("", "(formicidae)", "(formicidae)", isAnt));
+        assertNull("no subfamily written as (indet)", SpecimenUploadParse.nonAntRefusal("", "(indet)", "pheidole", isAnt));
+        // a subfamily AntWeb does not have, with an ant genus: an ant (Ecitoninae Eciton, Heteroponerinae Heteroponera)
+        java.util.function.Predicate<String> antGenus = java.util.Set.of("eciton", "heteroponera")::contains;
+        assertNull(SpecimenUploadParse.nonAntRefusal("", "ecitoninae", "Eciton", isAnt, antGenus));
+        assertNull(SpecimenUploadParse.nonAntRefusal("formicidae", "heteroponerinae", "heteroponera", isAnt, antGenus));
+        assertEquals(MessageMgr.nonAntSubfamilyUnderFormicidae, SpecimenUploadParse.nonAntRefusal("", "pselaphinae", "(pselaphinae)", isAnt, antGenus));
         // another family: a genus needs its subfamily
         assertEquals(MessageMgr.nonAntIncompleteClassification, SpecimenUploadParse.nonAntRefusal("Staphylinidae", "", "leptusa", isAnt));
         assertNull("family, subfamily, genus", SpecimenUploadParse.nonAntRefusal("Staphylinidae", "aleocharinae", "leptusa", isAnt));
