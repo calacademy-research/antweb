@@ -1450,8 +1450,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
      * - Family Formicidae (or none, which the upload reads as Formicidae): a subfamily that is not an ant subfamily
      *   ("Pselaphinae", "(clavigerini)"), or a genus on KNOWN_NON_ANT_GENERA, is refused. A genus AntCat does not know with
      *   no subfamily is loaded and listed for the curator ("Genus not in AntCat: check whether this is an ant").
-     * - Another family (a non-ant): a genus needs its subfamily ("Staphylinidae: Aleocharinae: Leptusa"); a line
-     *   identified only to subfamily or family is complete.
+     * - Another family (a non-ant): loaded as given, with or without a subfamily (subfamilies are not used in every
+     *   group; Brian Fisher, 2026-11-05).
      * family: the family column as given (blank: Formicidae); isAntSubfamily: Subfamily.isValidAntSubfamily.
      */
     public static String nonAntRefusal(String family, String subfamily, String genus, java.util.function.Predicate<String> isAntSubfamily) {
@@ -1478,7 +1478,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             if (hasGenus && KNOWN_NON_ANT_GENERA.contains(g)) return MessageMgr.knownNonAntGenusUnderFormicidae;
             return null;
         }
-        if (hasGenus && noSubfamily) return MessageMgr.nonAntIncompleteClassification;
+        // another family (a non-ant): loaded as given; a subfamily is not required (Brian Fisher, 2026-11-05: subfamilies
+        // are not used in every group as they are in ants)
         return null;
     }
 

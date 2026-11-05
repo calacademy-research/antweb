@@ -248,8 +248,8 @@ public class UploadDecisions1028Test extends TestCase {
         assertNull(SpecimenUploadParse.nonAntRefusal("", "ecitoninae", "Eciton", isAnt, antGenus));
         assertNull(SpecimenUploadParse.nonAntRefusal("formicidae", "heteroponerinae", "heteroponera", isAnt, antGenus));
         assertEquals(MessageMgr.nonAntSubfamilyUnderFormicidae, SpecimenUploadParse.nonAntRefusal("", "pselaphinae", "(pselaphinae)", isAnt, antGenus));
-        // another family: a genus needs its subfamily
-        assertEquals(MessageMgr.nonAntIncompleteClassification, SpecimenUploadParse.nonAntRefusal("Staphylinidae", "", "leptusa", isAnt));
+        // another family: loaded as given, a subfamily is not required
+        assertNull("family and genus, no subfamily", SpecimenUploadParse.nonAntRefusal("Fulgoridae", "", "pyrops", isAnt));
         assertNull("family, subfamily, genus", SpecimenUploadParse.nonAntRefusal("Staphylinidae", "aleocharinae", "leptusa", isAnt));
         assertNull("identified only to subfamily", SpecimenUploadParse.nonAntRefusal("Staphylinidae", "aleocharinae", "(aleocharinae)", isAnt));
         assertNull("identified only to family", SpecimenUploadParse.nonAntRefusal("Acrididae", "", "", isAnt));
