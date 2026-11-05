@@ -192,3 +192,15 @@ def test_each_job_wrote_its_line(run_lines):
         elif FAILED.search(run_lines[i][1]):
             problems.append(f"{url}: {run_lines[i][1][:200]}")
     assert not problems, (f"nightly run of {run_lines[0][0]}:\n  " + "\n  ".join(problems))
+
+
+def test_place_list_totals_counted_every_place(run_lines):
+    """The nightly count of the place pages' Subfamilies, Genera and Species ("/utilData.do?action=placeViewTotals",
+    PlaceViewTotalDb) counted places and none failed. 2026-11-05: every place failed with the same error and the line
+    read "Place list totals counted: 0 places ...; not counted: Aargau (...)", which the presence check let through."""
+    i = _find(run_lines, "Place list totals counted:")
+    assert i is not None, "no 'Place list totals counted:' line in the nightly run:\n" + _quote(run_lines)
+    line = run_lines[i][1]
+    m = re.match(r"Place list totals counted: (?:FAILED, )?(\d+) places", line)
+    assert m and int(m.group(1)) > 0, f"no place counted: {line[:300]}"
+    assert "not counted:" not in line, f"places not counted: {line[:400]}"

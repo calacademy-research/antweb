@@ -106,7 +106,9 @@ public class PlaceViewTotalDb {
                 || (Rank.SPECIES.equals(rank) && ListView.addsSpecimenNames(overview))) {
             page.loadCollected(connection, overview, rank);
         }
-        page.fetchChildren(connection, overview, rank, false, false, false, true, null, StatusSet.listStatusSet(choice, overview.getName()));
+        // withImages false, withTaxa true (the list's names; false left the query empty: "0 places", 2026-11-05),
+        // withSpecimen false, withFossil true: as TaxaPageAction calls it
+        page.fetchChildren(connection, overview, rank, false, true, false, true, null, StatusSet.listStatusSet(choice, overview.getName()));
         if (Rank.GENUS.equals(rank)) page.findGenusRows(connection, overview, choice);
         return page.getChildrenCount();
     }
@@ -203,7 +205,8 @@ public class PlaceViewTotalDb {
         } finally {
             if (auto) connection.setAutoCommit(true);
         }
-        return LOG + ": " + done + " places in " + (System.currentTimeMillis() - start) / 1000 + " s"
+        // none counted: FAILED, so the morning check reports it (2026-11-05: every place failed and the line read "0 places")
+        return LOG + ": " + (done == 0 && !failed.isEmpty() ? "FAILED, " : "") + done + " places in " + (System.currentTimeMillis() - start) / 1000 + " s"
             + (failed.isEmpty() ? "" : "; not counted: " + String.join(", ", failed));
     }
 }
