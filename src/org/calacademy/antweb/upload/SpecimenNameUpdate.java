@@ -448,15 +448,16 @@ public class SpecimenNameUpdate {
     }
 
     /**
-     * The approved old genus concepts, or none when they cannot be read (review of #321: a failure here must not stop
-     * the first and second passes, the AntCat synonym moves the nightly made before the rules existed).
+     * The approved old genus concepts, or null when they cannot be read. Then the second and third passes are skipped
+     * that night (review of #324: without the rules the second pass would move names an approved rule moved earlier back
+     * to the old genus); the first pass goes on.
      */
     static List<GenusConceptRule.Rule> approvedConceptRules(Connection connection) {
         try {
             return new GenusConceptRuleDb(connection).approved();
         } catch (SQLException | RuntimeException e) {
-            s_log.error("approvedConceptRules() old genus concept rules not read, third pass skipped: " + e);
-            return new ArrayList<>();
+            s_log.error("approvedConceptRules() old genus concept rules not read, second and third passes skipped: " + e);
+            return null;
         }
     }
 
@@ -724,7 +725,7 @@ public class SpecimenNameUpdate {
         GenusSynonymRule.Genera genera = GenusSynonymRule.plainGenera(connection);
         Map<String, GenusSynonymRule.Result> genusCache = new java.util.HashMap<>();
         List<Object[]> genusCandidates = new ArrayList<>();
-        try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(genusCandidatesSql())) {
+        if (conceptRules != null) try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(genusCandidatesSql())) {
             while (r.next()) genusCandidates.add(new Object[] {r.getInt(1), r.getString(2), r.getString(3)});
         }
         for (Object[] c : genusCandidates) {
@@ -810,7 +811,9 @@ public class SpecimenNameUpdate {
         // Third pass (Brian Fisher, 2026-11-03): approved old genus concepts (GenusConceptRule), e.g. Mesoponera in the
         // Afrotropical and Malagasy regions is Xiphopelta. Morphospecies and indets of those bioregions only.
         List<Object[]> conceptCandidates = new ArrayList<>();
-        try (java.sql.PreparedStatement stmt = connection.prepareStatement(conceptCandidatesSql(conceptRules))) {
+        // the second pass's changes: the third pass skips their specimens, not its own other bioregions (review of #324)
+        List<Change> beforeThirdPass = new ArrayList<>(changes);
+        if (conceptRules != null) try (java.sql.PreparedStatement stmt = connection.prepareStatement(conceptCandidatesSql(conceptRules))) {
             List<String> params = conceptCandidatesParams(conceptRules);
             for (int i = 0; i < params.size(); i++) stmt.setString(i + 1, params.get(i));
             try (ResultSet r = stmt.executeQuery()) {
@@ -826,7 +829,7 @@ public class SpecimenNameUpdate {
             if (uploaded == null || current == null || bioregion == null) continue;
             GenusConceptRule.Move move = GenusConceptRule.decide(conceptRules, current, bioregion, lookup);
             if (move == null || move.newName.equals(current)) continue;
-            if (alreadyMoved(changes, groupId, uploaded, current)) continue;   // the second pass moved them this run
+            if (alreadyMoved(beforeThirdPass, groupId, uploaded, current)) continue;   // the second pass moved them this run
             String key = move.rule.oldGenus + "\t" + bioregion;
             NameUpdateReason reason = conceptReasons.get(key);
             if (reason == null) {

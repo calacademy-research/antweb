@@ -5,7 +5,7 @@
 --                      (PlaceViewTotalDb, nightly set 4, after placeGenusCuration; utilData.do?action=placeViewTotals).
 --     list_type        geolocale (key the geolocale id), bioregion (name), museum (code), project (name)
 --     list_key         as PlaceImageCountDb
---     taxarank         genus or species
+--     taxarank         subfamily, genus or species
 --     view_name        the view counted
 --     n                the rows shown
 --     counted          when the row was written
