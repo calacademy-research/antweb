@@ -264,3 +264,15 @@ def test_placeholder_genus_rows_open_their_specimens():
         page = ns.text_of(ns.get(site_path(href), new_session()))
         m = re.search(r"\b([\d,]+) Specimens?\b", page)
         assert m and m.group(1) == n, f"{href}: the list says {n} specimens, the page {m.group(0) if m else 'none'}"
+
+
+def test_fossil_only_genera_only_in_the_fossil_view():
+    """A genus known in a place only from fossils is listed in the view Fossil only (Brian Fisher, 2026-11-05): Ukraine's
+    Oecophylla (Rovno amber) was on the Curated genus list with no species."""
+    rows = {}
+    for view in ("curated", "valid", "all", "fossil"):
+        html = ns.get(f"/taxonomicPage.do?rank=genus&countryName=Ukraine&statusSet={view}", new_session())
+        rows[view] = "Oecophylla" in " ".join(ns.text_of(r) for r in ns.list_rows(html))
+    if not rows["fossil"]:
+        pytest.skip("Oecophylla is not on Ukraine's Fossil genus list on this server")
+    assert not (rows["curated"] or rows["valid"] or rows["all"]), f"Oecophylla in Ukraine, by view: {rows}"

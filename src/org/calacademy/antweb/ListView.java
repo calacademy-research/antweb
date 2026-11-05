@@ -673,6 +673,17 @@ public final class ListView {
      * "(indet)" specimens is only in All specimen names; a morphogenus is in Curated only with a curated morphospecies.
      */
     public static boolean keepGenus(String choice, String status, String sourceKind, int speciesInView, int evidence) {
+        return keepGenus(choice, status, sourceKind, speciesInView, evidence, 0);
+    }
+
+    /**
+     * The same, with the genus's fossil names on the place's list (the view Fossil). A genus known in the place only from
+     * fossils (no names in the view, no other evidence, fossil names there) is shown in the view Fossil only (Brian
+     * Fisher, 2026-11-05: Ukraine's Oecophylla, Pristomyrmex, Stigmatomma and Vollenhovia, Rovno amber, showed in Curated
+     * with no species).
+     */
+    public static boolean keepGenus(String choice, String status, String sourceKind, int speciesInView, int evidence, int fossilNames) {
+        if (!StatusSet.LIST_FOSSIL.equals(choice) && speciesInView <= 0 && evidence <= 0 && fossilNames > 0) return false;
         if (!(StatusSet.LIST_VALID.equals(choice) || StatusSet.LIST_VETTED.equals(choice))) return true;
         if (speciesInView > 0) return true;
         if (!Status.VALID.equals(status)) return false;
@@ -742,6 +753,15 @@ public final class ListView {
         Map<String, org.calacademy.antweb.home.PlaceGenusCurationDb.Row> curation;
         /** Whether the place has the Not curated column (countries, adm1s, museums, bioregions). */
         boolean placeHasCuration;
+        /** The genus's fossil names on the place's list (the view Fossil), by genus; null when not read (keepGenus). */
+        Map<String, Integer> fossilByGenus;
+
+        /** The fossil names by genus (loadGenusRows, loadGenusRowsToKeep; also for tests). */
+        public GenusRows withFossil(Map<String, Integer> fossilNames) {
+            this.fossilByGenus = fossilNames;
+            return this;
+        }
+
         /** The species in the view with an image of the ant, by genus (the Images cell); null when not read. */
         Map<String, Integer> imaged;
 
@@ -868,8 +888,11 @@ public final class ListView {
 
         /** The same, from the genus row's subfamily, genus, status and list source (subfamilyRows: no Taxon per row). */
         public boolean keep(String subfamily, String genus, String status, String listSource) {
-            Integer ev = evidence.get(PlaceTaxonNotes.OtherNames.key(subfamily, genus));
-            return keepGenus(choice, status, sourceKind(listSource, false), species(subfamily, genus), ev == null ? 0 : ev);
+            String key = PlaceTaxonNotes.OtherNames.key(subfamily, genus);
+            Integer ev = evidence.get(key);
+            Integer fossil = fossilByGenus == null ? null : fossilByGenus.get(key);
+            return keepGenus(choice, status, sourceKind(listSource, false), species(subfamily, genus), ev == null ? 0 : ev,
+                fossil == null ? 0 : fossil);
         }
 
         /** The genus rows the view shows (keep), in their order. */
@@ -903,7 +926,8 @@ public final class ListView {
             evidence = loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_ALL), subfamily, null, specimens)
                 .countByGenus(BEYOND_GENUS_STATUSES);
         }
-        GenusRows rows = new GenusRows(choice, view.countByGenus(null), evidence).withSpecimens(specimens);
+        GenusRows rows = new GenusRows(choice, view.countByGenus(null), evidence).withSpecimens(specimens)
+            .withFossil(fossilNames(connection, overview, choice, subfamily, specimens));
         boolean hasColumn = org.calacademy.antweb.home.PlaceGenusCurationDb.typeAndKey(overview) != null;
         rows.withCuration(hasColumn, hasColumn ? org.calacademy.antweb.home.PlaceGenusCurationDb.read(connection, overview) : null);
         // Images: of the species of the genus in the view, those with an image of the ant anywhere in AntWeb (labels never
@@ -924,7 +948,15 @@ public final class ListView {
             evidence = loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_ALL), null, null, specimens)
                 .countByGenus(BEYOND_GENUS_STATUSES);
         }
-        return new GenusRows(choice, view.countByGenus(null), evidence);
+        return new GenusRows(choice, view.countByGenus(null), evidence).withFossil(fossilNames(connection, overview, choice, null, specimens));
+    }
+
+    /** The place's fossil names by genus (the view Fossil), for the other views' keepGenus; null in the view Fossil. */
+    static Map<String, Integer> fossilNames(Connection connection, Overview overview, String choice, String subfamily,
+            PlaceSpecimens specimens) throws SQLException {
+        if (StatusSet.LIST_FOSSIL.equals(choice)) return null;
+        return loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_FOSSIL), subfamily, null, specimens)
+            .countByGenus(null);
     }
 
     // ------------------------------------------------------------------------------------------------- subfamily rows
