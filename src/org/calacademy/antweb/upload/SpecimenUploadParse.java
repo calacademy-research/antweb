@@ -383,7 +383,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             subfamilyName = stripSubfamilyParentheses(subfamilyName);
 
             // Non-ants only with their full classification (Brian Fisher, 2026-11-05): refused here, before any name work.
-            String nonAnt = nonAntRefusal((String) taxonItem.get("family"), subfamilyName, genusName, Subfamily::isValidAntSubfamily);
+            String nonAnt = nonAntRefusal((String) taxonItem.get("family"), subfamilyName, genusName,
+                SpecimenUploadParse::isKnownAntSubfamily, SpecimenUploadParse::isAntcatAntGenus);
             if (nonAnt != null) {
               getMessageMgr().addToMessages(nonAnt, Html.esc(Formatter.initCap(subfamilyName) + " " + Formatter.initCap(genusName == null ? "" : genusName)
                   + " (family " + taxonItem.get("family") + ")"));
@@ -1421,6 +1422,21 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         return found;
     }
 
+    /** A subfamily AntWeb has for the ants, in any status (valid, unavailable, incertae_sedis ...). */
+    static boolean isKnownAntSubfamily(String subfamily) {
+        if (subfamily == null) return false;
+        if (Subfamily.isValidAntSubfamily(subfamily)) return true;
+        java.util.List<Taxon> all = TaxonMgr.getSubfamilies();
+        if (all != null) for (Taxon t : all) if (subfamily.equals(t.getName()) && t.isAnt()) return true;
+        return "incertae_sedis".equals(subfamily);
+    }
+
+    /** A genus AntCat has (current valid, or a synonym of one): the line is an ant whatever its subfamily says. */
+    static boolean isAntcatAntGenus(String genus) {
+        if (genus == null || genus.isBlank()) return false;
+        return TaxonMgr.getGenusFromName(genus) != null || TaxonMgr.getSynonymGenusFromName(genus) != null;
+    }
+
     /**
      * Genus names confirmed as not ants by Brian Fisher (2026-11-05, University of Utah's file): a line that files one
      * under Formicidae (or no family) is not loaded. Lower case.
@@ -1439,6 +1455,17 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
      * family: the family column as given (blank: Formicidae); isAntSubfamily: Subfamily.isValidAntSubfamily.
      */
     public static String nonAntRefusal(String family, String subfamily, String genus, java.util.function.Predicate<String> isAntSubfamily) {
+        return nonAntRefusal(family, subfamily, genus, isAntSubfamily, g -> false);
+    }
+
+    /**
+     * The same, with isAntGenus: a subfamily AntWeb does not know is still an ant line when its genus is an AntCat ant
+     * genus (production 2026-11-05: Ecitoninae with Eciton, Field Museum; Heteroponerinae with Heteroponera, Marcio Pie
+     * Ant Lab and UTIC; neither subfamily name is in AntWeb's taxon table). Only a subfamily unknown to AntWeb with no
+     * ant genus is refused (Pselaphinae, Clavigerini, Scydmaeninae).
+     */
+    public static String nonAntRefusal(String family, String subfamily, String genus, java.util.function.Predicate<String> isAntSubfamily,
+            java.util.function.Predicate<String> isAntGenus) {
         String fam = family == null || family.isBlank() ? "formicidae" : family.trim().toLowerCase(Locale.ROOT);
         boolean noSubfamily = isMissingSubfamily(subfamily);
         String g = genus == null ? "" : genus.trim().toLowerCase(Locale.ROOT);
@@ -1446,7 +1473,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         if ("formicidae".equals(fam)) {
             if (!noSubfamily) {
                 String sub = subfamily.trim().toLowerCase(Locale.ROOT).replace("(", "").replace(")", "");
-                if (!isAntSubfamily.test(sub)) return MessageMgr.nonAntSubfamilyUnderFormicidae;
+                if (!isAntSubfamily.test(sub) && !(hasGenus && isAntGenus.test(g))) return MessageMgr.nonAntSubfamilyUnderFormicidae;
             }
             if (hasGenus && KNOWN_NON_ANT_GENERA.contains(g)) return MessageMgr.knownNonAntGenusUnderFormicidae;
             return null;
