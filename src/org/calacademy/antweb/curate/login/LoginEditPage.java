@@ -289,7 +289,7 @@ public final class LoginEditPage {
 
         // ---- Other settings
         b.append("<h2>Other settings</h2>\n<p class=\"hint\">Rarely needed.</p>\n<table class=\"fields\">\n");
-        b.append("<tr><td><label for=\"uploadAs\">Upload as</label></td><td><input type=\"text\" id=\"uploadAs\" name=\"uploadAs\" value=\"")
+        b.append("<tr><td><label for=\"uploadAs\">Upload as</label></td><td><input type=\"text\" id=\"uploadAs\" name=\"uploadAs\" autocomplete=\"off\" data-lpignore=\"true\" data-1p-ignore=\"true\" data-bwignore=\"true\" value=\"")
          .append(e(s.uploadAs)).append("\" placeholder=\"for example 23,45\">\n<div class=\"hint\">Login numbers, separated by commas. ")
          .append("Used only when this login is an administrator: these logins are listed in its \"Upload as\" menu on Curator Tools, ")
          .append("to upload specimen data into their upload group. Administrators may upload for anyone; this only fills the menu.</div>");
