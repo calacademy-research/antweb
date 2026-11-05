@@ -120,6 +120,10 @@ public class MessageMgr {
     public static final String generaAreHomonyms = "generaAreHomonyms";
     public static final String invalidSubfamilyForGenus = "invalidSubfamilyForGenus";
     public static final String noValidSubfamilyForGenus = "noValidSubfamilyForGenus";
+    /** Brian Fisher, 2026-11-05: non-ants are loaded only with their full classification (SpecimenUploadParse.nonAntRefusal). */
+    public static final String nonAntSubfamilyUnderFormicidae = "nonAntSubfamilyUnderFormicidae";
+    public static final String knownNonAntGenusUnderFormicidae = "knownNonAntGenusUnderFormicidae";
+    public static final String nonAntIncompleteClassification = "nonAntIncompleteClassification";
     public static final String preferredSubfamilyForGenusReplaced = "preferredSubfamilyForGenusReplaced";
     public static final String synonymGenusReplaced = "synonymGenusReplaced";
     public static final String genusConceptReplaced = "genusConceptReplaced";   // 2026-11-03, GenusConceptRule
@@ -316,6 +320,9 @@ public class MessageMgr {
       testList.add(new Test(generaAreHomonyms, SET, "<b>The Following Genera are Homonyms <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(invalidSubfamilyForGenus, SET, "<b>Invalid Subfamily For Genus <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(noValidSubfamilyForGenus, SET, "<b>No valid Subfamily For Genus <font color=red>(not uploaded)</font></b>"));
+      testList.add(new Test(nonAntSubfamilyUnderFormicidae, SET, "<b>Not an ant subfamily, but filed as an ant (family Formicidae or none) <font color=red>(not uploaded)</font></b>"));
+      testList.add(new Test(knownNonAntGenusUnderFormicidae, SET, "<b>Not an ant genus, but filed as an ant (family Formicidae or none) <font color=red>(not uploaded)</font></b>"));
+      testList.add(new Test(nonAntIncompleteClassification, SET, "<b>Not an ant, and the classification is incomplete (a genus without its subfamily) <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(synonymGenusReplaced, SET, "<b>Synonymized genus replaced with current valid genus from AntCat.org <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(genusConceptReplaced, SET, "<b>Old genus concept: morphospecies or indet filed under the genus AntCat now uses in this region <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(preferredSubfamilyForGenusReplaced, SET, "<b>Preferred Subfamily For Genus <font color=green>(uploaded)</font></b>"));

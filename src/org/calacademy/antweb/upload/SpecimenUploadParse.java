@@ -381,6 +381,15 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             // genera then copied (GitHub #94). "(formicidae)" is AntWeb's own placeholder for a
             // missing subfamily and is left alone.
             subfamilyName = stripSubfamilyParentheses(subfamilyName);
+
+            // Non-ants only with their full classification (Brian Fisher, 2026-11-05): refused here, before any name work.
+            String nonAnt = nonAntRefusal((String) taxonItem.get("family"), subfamilyName, genusName, Subfamily::isValidAntSubfamily);
+            if (nonAnt != null) {
+              getMessageMgr().addToMessages(nonAnt, Html.esc(Formatter.initCap(subfamilyName) + " " + Formatter.initCap(genusName == null ? "" : genusName)
+                  + " (family " + taxonItem.get("family") + ")"));
+              errorMessage = "nonAnt:" + nonAnt;
+              return errorMessage;
+            }
             
             // If it is blank, make it a specified indet.
             if (Utility.isBlank(genusName) || "(indet)".equals(genusName)) {
@@ -1410,6 +1419,40 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             if (found == null) found = g.getSubfamily();
         }
         return found;
+    }
+
+    /**
+     * Genus names confirmed as not ants by Brian Fisher (2026-11-05, University of Utah's file): a line that files one
+     * under Formicidae (or no family) is not loaded. Lower case.
+     */
+    public static final java.util.Set<String> KNOWN_NON_ANT_GENERA = java.util.Set.of(
+        "leptinus", "cremastocheilus", "olixon", "thaumatodryinus");
+
+    /**
+     * Non-ants are loaded only with their full classification (Brian Fisher, 2026-11-05; claude/antweb-list-design-rules.md):
+     * the message key of a line's refusal, or null to load it.
+     * - Family Formicidae (or none, which the upload reads as Formicidae): a subfamily that is not an ant subfamily
+     *   ("Pselaphinae", "(clavigerini)"), or a genus on KNOWN_NON_ANT_GENERA, is refused. A genus AntCat does not know with
+     *   no subfamily is loaded and listed for the curator ("Genus not in AntCat: check whether this is an ant").
+     * - Another family (a non-ant): a genus needs its subfamily ("Staphylinidae: Aleocharinae: Leptusa"); a line
+     *   identified only to subfamily or family is complete.
+     * family: the family column as given (blank: Formicidae); isAntSubfamily: Subfamily.isValidAntSubfamily.
+     */
+    public static String nonAntRefusal(String family, String subfamily, String genus, java.util.function.Predicate<String> isAntSubfamily) {
+        String fam = family == null || family.isBlank() ? "formicidae" : family.trim().toLowerCase(Locale.ROOT);
+        boolean noSubfamily = isMissingSubfamily(subfamily);
+        String g = genus == null ? "" : genus.trim().toLowerCase(Locale.ROOT);
+        boolean hasGenus = !g.isEmpty() && !g.startsWith("(") && !Genus.isIndet(g);
+        if ("formicidae".equals(fam)) {
+            if (!noSubfamily) {
+                String sub = subfamily.trim().toLowerCase(Locale.ROOT).replace("(", "").replace(")", "");
+                if (!isAntSubfamily.test(sub)) return MessageMgr.nonAntSubfamilyUnderFormicidae;
+            }
+            if (hasGenus && KNOWN_NON_ANT_GENERA.contains(g)) return MessageMgr.knownNonAntGenusUnderFormicidae;
+            return null;
+        }
+        if (hasGenus && noSubfamily) return MessageMgr.nonAntIncompleteClassification;
+        return null;
     }
 
     /**

@@ -93,6 +93,9 @@ public final class UploadReportPage {
         ACTIONS.put(MessageMgr.speciesIndetSubspeciesIgnored, "Loaded as <Genus> (indet); the subspecies value ignored.");
         ACTIONS.put(MessageMgr.unrecognizedColumn, "Not read into AntWeb's fields (one row per column, not per line).");
         ACTIONS.put(MessageMgr.nameNotInFamilyFormicidae, "Loaded under the name as uploaded; nothing changed.");
+        ACTIONS.put(MessageMgr.nonAntSubfamilyUnderFormicidae, "Not loaded. If it is not an ant, give its family (and subfamily); if it is an ant, give its ant subfamily.");
+        ACTIONS.put(MessageMgr.knownNonAntGenusUnderFormicidae, "Not loaded. This genus is not an ant: give its family and subfamily.");
+        ACTIONS.put(MessageMgr.nonAntIncompleteClassification, "Not loaded. Give the subfamily above the genus (with its family).");
         ACTIONS.put(MessageMgr.multipleBioregionsForNonIntroducedTaxa, "Loaded. A taxon not flagged as introduced has specimens in more than one bioregion.");
         ACTIONS.put(MessageMgr.correctedBioregion, "Loaded with the bioregion of the country (or adm1).");
         ACTIONS.put(MessageMgr.identifiedOnlyToGenus, "Loaded as <Genus> (indet).");
