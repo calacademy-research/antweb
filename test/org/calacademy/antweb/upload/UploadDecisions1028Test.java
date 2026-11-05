@@ -226,4 +226,26 @@ public class UploadDecisions1028Test extends TestCase {
         assertTrue(section, section.contains("-&gt; Species indet: filed as Ocymyrmex (indet)"));
         assertFalse("the code is in the line, no specimen list: " + section, section.contains("1 specimen"));
     }
+
+    /**
+     * Non-ants only with their full classification (Brian Fisher, 2026-11-05; University of Utah's file).
+     * The ant subfamilies are given here (no TaxonMgr in this test).
+     */
+    public void testNonAntRefusal() {
+        java.util.Set<String> ant = java.util.Set.of("myrmicinae", "ponerinae", "dorylinae");
+        java.util.function.Predicate<String> isAnt = ant::contains;
+        // filed as ants (family Formicidae, or none)
+        assertEquals(MessageMgr.nonAntSubfamilyUnderFormicidae, SpecimenUploadParse.nonAntRefusal("", "pselaphinae", "(indet)", isAnt));
+        assertEquals(MessageMgr.nonAntSubfamilyUnderFormicidae, SpecimenUploadParse.nonAntRefusal("formicidae", "clavigerini", "(clavigerini)", isAnt));
+        assertEquals(MessageMgr.knownNonAntGenusUnderFormicidae, SpecimenUploadParse.nonAntRefusal(null, "(formicidae)", "leptinus", isAnt));
+        assertEquals(MessageMgr.knownNonAntGenusUnderFormicidae, SpecimenUploadParse.nonAntRefusal("", "", "Cremastocheilus", isAnt));
+        assertNull("an unknown genus with no subfamily: loaded and listed", SpecimenUploadParse.nonAntRefusal("", "(formicidae)", "newgenus", isAnt));
+        assertNull("an ant", SpecimenUploadParse.nonAntRefusal("Formicidae", "myrmicinae", "pheidole", isAnt));
+        assertNull("an ant indet", SpecimenUploadParse.nonAntRefusal("", "(formicidae)", "(formicidae)", isAnt));
+        // another family: a genus needs its subfamily
+        assertEquals(MessageMgr.nonAntIncompleteClassification, SpecimenUploadParse.nonAntRefusal("Staphylinidae", "", "leptusa", isAnt));
+        assertNull("family, subfamily, genus", SpecimenUploadParse.nonAntRefusal("Staphylinidae", "aleocharinae", "leptusa", isAnt));
+        assertNull("identified only to subfamily", SpecimenUploadParse.nonAntRefusal("Staphylinidae", "aleocharinae", "(aleocharinae)", isAnt));
+        assertNull("identified only to family", SpecimenUploadParse.nonAntRefusal("Acrididae", "", "", isAnt));
+    }
 }
