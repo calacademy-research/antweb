@@ -65,6 +65,8 @@ def test_failed_tests_and_unlisted():
     failed = gate.failed_tests(notes)
     assert failed == {"test_a", "test_b", "test_c"}
     assert gate.unlisted(failed, [{"test": "test_x.py::test_b"}, {"test": "test_c"}]) == ["test_a"]
+    # the e2e workflow separates the names with "; " (2026-11-06, run 42249265193)
+    assert gate.failed_tests([{"title": "e2e failed tests", "message": "2 failed: test_a; test_b"}]) == {"test_a", "test_b"}
 
 
 if __name__ == "__main__":

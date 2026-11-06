@@ -127,7 +127,7 @@ def failed_tests(annotations):
         if title == "e2e failed tests":
             m = re.match(r"\d+ failed: (.*)", msg, re.S)
             if m:
-                names.update(n.strip() for n in m.group(1).split(",") if n.strip())
+                names.update(n.strip() for n in re.split(r"[,;]", m.group(1)) if n.strip())
         elif title == "e2e failure":
             names.add(msg.split(":", 1)[0].strip())
     return names

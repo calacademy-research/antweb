@@ -11,3 +11,59 @@
 # decided_by = "Brian Fisher"
 # decided = 2026-11-06
 # expires = 2026-11-13
+
+[[failure]]
+test = "test_nightly_jobs_ran.py::test_each_job_wrote_its_line"
+reason = "reads the 2026-11-06 05:00 nightly, which failed in set 4 (the bug #326 fixes); passes after a clean 05:00 run"
+decided_by = "Brian Fisher"
+decided = 2026-11-06
+expires = 2026-11-13
+
+[[failure]]
+test = "test_nightly_jobs_ran.py::test_each_set_well_under_the_connection_limit"
+reason = "new in #326; reads the failed 2026-11-06 nightly (set 4 ran 60 minutes); by hand after #326 set 4 took 14 minutes"
+decided_by = "Brian Fisher"
+decided = 2026-11-06
+expires = 2026-11-13
+
+[[failure]]
+test = "test_nightly_jobs_ran.py::test_nightly_lines_in_order"
+reason = "reads the failed 2026-11-06 nightly (#326)"
+decided_by = "Brian Fisher"
+decided = 2026-11-06
+expires = 2026-11-13
+
+[[failure]]
+test = "test_nightly_jobs_ran.py::test_place_list_totals_counted_every_place"
+reason = "reads the failed 2026-11-06 nightly; the by-hand run with #326 counted 1987 places, none failed"
+decided_by = "Brian Fisher"
+decided = 2026-11-06
+expires = 2026-11-13
+
+[[failure]]
+test = "test_nightly_jobs_ran.py::test_set5_skipped_on_staging"
+reason = "reads the failed 2026-11-06 nightly (#326)"
+decided_by = "Brian Fisher"
+decided = 2026-11-06
+expires = 2026-11-13
+
+[[failure]]
+test = "test_list_headers_equal_place_numbers_of_every_kind"
+reason = "Palearctic and atolants were not counted by the failed 2026-11-06 nightly; equal after the by-hand run with #326"
+decided_by = "Brian Fisher"
+decided = 2026-11-06
+expires = 2026-11-13
+
+[[failure]]
+test = "test_list_images_column_shows_the_images_in_antweb"
+reason = "rows added from specimens show '-' in Images (Comoros amd_31); fixed by #325"
+decided_by = "Brian Fisher"
+decided = 2026-11-06
+expires = 2026-11-13
+
+[[failure]]
+test = "test_species_lists_show_valid_names_and_morphospecies_only"
+reason = "Palearctic Acropyga, known there from fossils only, on the Curated genus list; fixed by #325"
+decided_by = "Brian Fisher"
+decided = 2026-11-06
+expires = 2026-11-13
