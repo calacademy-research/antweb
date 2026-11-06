@@ -570,16 +570,10 @@ public class UtilDataAction extends AntwebAction {
                     LogMgr.appendLog("compute.log", "  " + PlaceGenusCurationDb.LOG + ": failed (" + e + ")", true);
                     message += " not curated not counted (" + e + ")";
                 }
-                // The place pages' Genera and Species = the headers of their lists in the default view (2026-11-04,
-                // PlaceViewTotalDb), after the Not curated count (the lists read place_specimen_name). Its own try.
-                try {
-                    connection.commit();
-                    message += " " + doAction("placeViewTotals", form, accessLogin, accessGroup, connection, request, mapping);
-                } catch (Exception e) {
-                    s_log.error("set4 placeViewTotals e:" + e);
-                    LogMgr.appendLog("compute.log", "  " + org.calacademy.antweb.home.PlaceViewTotalDb.LOG + ": failed (" + e + ")", true);
-                    message += " place list totals not counted (" + e + ")";
-                }
+                // The place pages' Genera and Species (PlaceViewTotalDb) are no longer counted here: since 2026-11-06 the
+                // Scheduler counts them right after set 4, on a connection of its own (Scheduler.runPlaceListTotals). They
+                // take about 40 minutes, and inside set 4 they kept its connection past the long pool's 60 minutes
+                // (unreturnedConnectionTimeout): on 2026-11-06 set 4 failed on staging and production and set 5 was skipped.
                 // Home page and statsPage numbers (2026-10-21): written only after specimen uploads, so images added
                 // since were missing. Now also every night, after the image counts. Its own try: a failure here
                 // must not stop set 4.
@@ -919,7 +913,7 @@ public class UtilDataAction extends AntwebAction {
 		}
 
 		// The place pages' Genera and Species: the rows of their lists in the default view (Brian Fisher, 2026-11-04;
-		// PlaceViewTotalDb). Nightly set 4; admins: utilData.do?action=placeViewTotals. Writes "Place list totals counted".
+		// PlaceViewTotalDb). Nightly: after set 4 (Scheduler.runPlaceListTotals); admins: utilData.do?action=placeViewTotals. Writes "Place list totals counted".
 		if (action.equals("placeViewTotals")) {
 		  message = new org.calacademy.antweb.home.PlaceViewTotalDb(connection).fillAll();
 		  LogMgr.appendLog("compute.log", "  " + message, true);

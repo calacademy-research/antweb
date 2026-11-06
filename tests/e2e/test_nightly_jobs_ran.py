@@ -24,7 +24,8 @@ Which line proves which job (checked in the Java source, 2026-11-04):
   "Group counts:", crawlForType "Types Crawl completed", then "Set 3 done";
 - set 4: imageCountCrawl "AntWeb-wide list Images counted" (ProjTaxonCountDb) and "Image Count Crawl
   completed" (ImageCountDb), placeImageCounts "Place image counts:", placeGenusCuration "Not curated
-  counted:", then "Set 4 done";
+  counted:", then "Set 4 done"; then, outside set 4 (Scheduler.runPlaceListTotals, since 2026-11-06),
+  placeViewTotals "Place list totals counted:";
 - set 5 is skipped in staging's nightly ("set5 skipped on staging (memory)", Scheduler); on production it
   runs but writes no line of its own. This test runs on staging only, so set 5 and its jobs
   (deleteConflictedDefaultImages, genObjectMaps, cleanupSpeciesListProxyRecords, verifyProjTaxon) are not
@@ -72,8 +73,9 @@ RUN_LINES = [
     "Image Count Crawl completed",
     "Place image counts:",
     "Not curated counted:",
-    "Place list totals counted:",
     "Set 4 done",
+    # after set 4, on its own connection (Scheduler.runPlaceListTotals, 2026-11-06)
+    "Place list totals counted:",
     "statistics page tables counted",
     "API taxon counts:",
     ("count check started", "Nightly restart requested"),
@@ -204,3 +206,34 @@ def test_place_list_totals_counted_every_place(run_lines):
     m = re.match(r"Place list totals counted: (?:FAILED, )?(\d+) places", line)
     assert m and int(m.group(1)) > 0, f"no place counted: {line[:300]}"
     assert "FAILED" not in line and "not counted:" not in line, f"places not counted: {line[:400]}"
+
+
+# The long pool (longConPool, WEB-INF/struts-configDbAnt.xml) closes a connection held over 60 minutes
+# (unreturnedConnectionTimeout 3600). On 2026-11-06 set 4 ran 60 minutes on staging and production, lost its
+# connection and set 5 was skipped. Staging is faster than production (06:17 vs 06:58 that day), so a step must
+# stay well under the limit here.
+STEP_LIMIT_MINUTES = 40
+STEP_ENDS = [("set 1", "Begin run", "taxon parents (B36):"), ("set 2", "taxon parents (B36):", "Set 2 done"),
+             ("set 3", "Set 2 done", "Set 3 done"), ("set 4", "Set 3 done", "Set 4 done"),
+             ("place list totals", "Set 4 done", "Place list totals counted:")]
+
+
+def test_each_set_well_under_the_connection_limit(run_lines):
+    """Each set of the nightly (one connection each) and the place list totals (its own connection) took under
+    STEP_LIMIT_MINUTES on staging, so none comes near the long pool's 60 minutes on production."""
+    from datetime import datetime
+    def at(marker, start=0):
+        i = _find(run_lines, marker, start)
+        return (i, datetime.strptime(run_lines[i][0].strip(), "%Y-%m-%d %H:%M:%S")) if i is not None else (None, None)
+    slow = []
+    for name, begin, end in STEP_ENDS:
+        i, t0 = at(begin)
+        j, t1 = at(end, (i or 0) + 1) if i is not None else (None, None)
+        if t0 is None or t1 is None:
+            slow.append(f"{name}: no '{begin}' ... '{end}' lines")
+            continue
+        minutes = (t1 - t0).total_seconds() / 60
+        if minutes > STEP_LIMIT_MINUTES:
+            slow.append(f"{name}: {minutes:.0f} minutes ({run_lines[i][0].strip()} to {run_lines[j][0].strip()})")
+    assert not slow, (f"nightly run of {run_lines[0][0]}: steps over {STEP_LIMIT_MINUTES} minutes "
+                      "(the long pool closes a connection at 60):\n  " + "\n  ".join(slow))
