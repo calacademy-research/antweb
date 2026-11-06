@@ -65,3 +65,10 @@ def test_failed_tests_and_unlisted():
     failed = gate.failed_tests(notes)
     assert failed == {"test_a", "test_b", "test_c"}
     assert gate.unlisted(failed, [{"test": "test_x.py::test_b"}, {"test": "test_c"}]) == ["test_a"]
+
+
+if __name__ == "__main__":
+    for name, fn in list(globals().items()):
+        if name.startswith("test_") and callable(fn):
+            fn()
+    print("ok")

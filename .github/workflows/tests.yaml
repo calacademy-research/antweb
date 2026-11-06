@@ -1475,6 +1475,14 @@ jobs:
       - name: Every e2e test file is in the quick set or an area (tests/unit/test_e2e_areas.py)
         run: python3 tests/unit/test_e2e_areas.py
 
+      - name: Release gate checks and the known-failures list (tests/unit/test_release_gate.py)
+        # An entry of tests/e2e/known-failures.toml needs a reason, who decided, and an end date at most 7 days on.
+        run: python3 tests/unit/test_release_gate.py
+
+      - name: The nightly counts the place list totals after set 4, on their own connection (tests/unit/test_place_totals_connection.py)
+        # 2026-11-06: inside set 4 they kept its connection past the long pool's 60 minutes; set 4 failed.
+        run: if [ -f tests/unit/test_place_totals_connection.py ]; then python3 tests/unit/test_place_totals_connection.py; fi
+
       - name: The e2e link reader reads links as a browser does (tests/unit/test_e2e_link_reader.py, finding F27)
         run: python3 tests/unit/test_e2e_link_reader.py
 
