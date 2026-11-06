@@ -501,6 +501,18 @@ public class AntwebMgr {
       return imagedSpeciesCount;
     }
   
+    // The home page numbers of 2026-11-06 (StatisticsDb.HOME_COLUMNS): set by the nightly statistics and read from the
+    // latest statistics row at start-up; statsPage shows them. Empty until then (statsPage says AntWeb is starting).
+    static volatile java.util.Map<String, Long> homeCounts = java.util.Collections.emptyMap();
+    public static void setHomeCounts(java.util.Map<String, Long> counts) {
+      homeCounts = java.util.Collections.unmodifiableMap(new java.util.LinkedHashMap<>(counts));
+    }
+    /** A home page number (StatisticsDb.HOME_COLUMNS key), or -1 when not counted yet. */
+    public static long getHomeCount(String column) {
+      Long n = homeCounts.get(column);
+      return n == null ? -1 : n;
+    }
+
     public static void populateStats(Connection connection, boolean forceReload) {
         //A.log("populateStats() c:" + getSpecimensCount() + " forceReload:" + forceReload);
         if (getSpecimensCount() != 0 && !forceReload) return;      
@@ -525,6 +537,24 @@ public class AntwebMgr {
             s_log.warn("populateStats() query:" + query + " e:" + e);
         } finally {
               DBUtil.close(stmt, rset, "populateStats()");
+        }
+        // The home page numbers of 2026-11-06, when the latest row has them (null in rows written before).
+        try (Statement s = connection.createStatement();
+             ResultSet r = s.executeQuery("select * from statistics order by created desc, id desc limit 1")) {
+            if (r.next()) {
+                java.util.Map<String, Long> counts = new java.util.LinkedHashMap<>();
+                java.sql.ResultSetMetaData md = r.getMetaData();
+                java.util.Set<String> cols = new java.util.HashSet<>();
+                for (int i = 1; i <= md.getColumnCount(); i++) cols.add(md.getColumnLabel(i).toLowerCase(java.util.Locale.ROOT));
+                for (String col : org.calacademy.antweb.home.StatisticsDb.HOME_COLUMNS.keySet()) {
+                    if (!cols.contains(col)) continue;
+                    long v = r.getLong(col);
+                    if (!r.wasNull()) counts.put(col, v);
+                }
+                if (!counts.isEmpty()) setHomeCounts(counts);
+            }
+        } catch (SQLException e) {
+            s_log.warn("populateStats() home counts e:" + e);
         }
         // Label images (not in the statistics row): counted live once.
         try (Statement s = connection.createStatement();

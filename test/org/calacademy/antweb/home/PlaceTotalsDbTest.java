@@ -377,6 +377,53 @@ public class PlaceTotalsDbTest extends TestCase {
         assertEquals(list(r), 0, home);
     }
 
+    /**
+     * The home page numbers of 2026-11-06 (Brian Fisher, release 9.3.0; StatisticsDb.HOME_COLUMNS): valid living species
+     * only (no subspecies, no morphospecies), those with a specimen, those with a photo of the ant (labels never count),
+     * fossils apart; subspecies and morphospecies for statsPage. Written to the statistics row (columns added to an older
+     * table) and to the box; the count check recounts them.
+     */
+    public void testHomeNumbersOf20261106() throws Exception {
+        // fixture: pheidole a (valid, casent1 has a head photo), hypoponera b (valid, casent5 has a label photo only),
+        // pheidole b (morphospecies, casent3 has a profile photo), pheidole a x (valid subspecies, no photo)
+        assertEquals("pheidole a, hypoponera b", 2, one(StatisticsDb.LIVING_SPECIES_SQL));
+        assertEquals(0, one(StatisticsDb.FOSSIL_SPECIES_SQL));
+        assertEquals(2, one(StatisticsDb.LIVING_SPECIES_WITH_SPECIMENS_SQL));
+        assertEquals("pheidole a (hypoponera b has a label photo only)", 1, one(StatisticsDb.LIVING_SPECIES_IMAGED_SQL));
+        assertEquals(1, one(StatisticsDb.LIVING_SUBSPECIES_SQL));
+        assertEquals(1, one(StatisticsDb.MORPHOSPECIES_SQL));
+        assertEquals(1, one(StatisticsDb.MORPHOSPECIES_IMAGED_SQL));
+        // a fossil species with an image, a valid living species without specimens
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, fossil) values"
+            + " ('myrmicinaepheidole fossilis', 'species', 'valid', '" + PHEIDOLE + "', 'formicidae', 'myrmicinae', 1),"
+            + " ('myrmicinaepheidole nova', 'species', 'valid', '" + PHEIDOLE + "', 'formicidae', 'myrmicinae', 0)");
+        exec("insert into specimen (code, taxon_name, status, upload_id, image_count) values ('f1', 'myrmicinaepheidole fossilis', 'valid', 1, 1)");
+        exec("insert into image (id, image_of_id, shot_type, upload_date) values (21, 'f1', 'd', '2020-01-01 10:00:00')");
+        assertEquals(3, one(StatisticsDb.LIVING_SPECIES_SQL));
+        assertEquals(1, one(StatisticsDb.FOSSIL_SPECIES_SQL));
+        assertEquals("pheidole nova has no specimen", 2, one(StatisticsDb.LIVING_SPECIES_WITH_SPECIMENS_SQL));
+        assertEquals(1, one(StatisticsDb.FOSSIL_SPECIES_IMAGED_SQL));
+        new StatisticsDb(connection).populateStatistics("nightly", 0, "set4", null);
+        assertEquals(3, one("select living_species from statistics order by id desc limit 1"));
+        assertEquals(2, one("select living_species_specimens from statistics order by id desc limit 1"));
+        assertEquals(1, one("select living_species_imaged from statistics order by id desc limit 1"));
+        assertEquals(1, one("select morphospecies_imaged from statistics order by id desc limit 1"));
+        CountCheck.Result r = invariants();
+        int home = 0;
+        for (CountCheck.Mismatch m : r.mismatches) if ("home".equals(m.check)) ++home;
+        assertEquals(list(r), 0, home);
+
+        java.util.Map<String, Long> n = new java.util.LinkedHashMap<>();
+        n.put("living_species", 14528L); n.put("fossil_species", 851L); n.put("living_species_specimens", 12599L); n.put("living_species_imaged", 12064L);
+        String box = StatisticsDb.homeBoxHtml(917345, n, 216735, 64265, 62716);
+        assertTrue(box, box.contains("<span class=\"numbers\" title=\"Specimen records in AntWeb\">917345</span><span class=\"stat-l\">specimen records</span>"));
+        assertTrue(box, box.contains(">14528</span><span class=\"stat-l\">valid living ant species</span><span class=\"stat-s\">+ 851 fossil species</span>"));
+        assertTrue(box, box.contains(">12599</span><span class=\"stat-l\">species with specimens in AntWeb</span><span class=\"stat-s\">87% of valid living species</span>"));
+        assertTrue(box, box.contains(">12064</span><span class=\"stat-l\">species imaged</span><span class=\"stat-s\">83% of valid living species</span>"));
+        assertTrue(box, box.contains(">216735</span><span class=\"stat-l\">images of ants of 64,265 specimens</span><span class=\"stat-s\">+ 62,716 label images</span>"));
+        assertEquals("", StatisticsDb.percent(1, 0));
+    }
+
     public void testGlobalIsRecountedAfterTheNameUpdateMovedSpecimens() {
         SpecimenNameUpdate.Summary s = new SpecimenNameUpdate.Summary();
         assertFalse(UtilDataAction.globalRecountNeeded(s));

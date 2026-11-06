@@ -36,6 +36,24 @@
    int liveImagedSpecimens = AntwebMgr.getImagedSpecimensCount();
    int liveTotalImages = AntwebMgr.getTotalImagesCount();
    String starting = "<span data-stat=\"starting\">not yet available: AntWeb is starting (a few minutes after a restart); reload in a few minutes</span>"; %>
+<% // The home page numbers of 2026-11-06 (Brian Fisher, release 9.3.0; StatisticsDb.HOME_COLUMNS), with the subspecies,
+   // morphospecies and imaged fossils the home page leaves out. From the latest nightly statistics (-1 until loaded).
+   long hLiving = AntwebMgr.getHomeCount("living_species");
+   long hSpecimens = AntwebMgr.getHomeCount("living_species_specimens");
+   long hImaged = AntwebMgr.getHomeCount("living_species_imaged");
+   String notYet = "<span data-stat=\"pending\">not yet counted (the next nightly run counts it)</span>";
+   java.util.function.LongFunction<String> fmt = v -> v >= 0 ? A.commaFormat(v) : notYet; %>
+<br><b data-stat="living-species"><%= fmt.apply(hLiving) %> valid living ant species</b> (+ <span data-stat="fossil-species"><%= fmt.apply(AntwebMgr.getHomeCount("fossil_species")) %></span> fossil species)
+<br>&nbsp;&nbsp;Valid ant species in AntCat, identified to genus; subspecies are counted below. As the default species lists, living species apart from fossils.
+<br><br><b data-stat="species-with-specimens"><%= fmt.apply(hSpecimens) %> species with specimens in AntWeb</b><% if (hLiving > 0 && hSpecimens >= 0) { %> (<%= org.calacademy.antweb.home.StatisticsDb.percent(hSpecimens, hLiving) %> of valid living species)<% } %>
+<br>&nbsp;&nbsp;Valid living ant species with at least one specimen record in AntWeb.
+<br><br><b data-stat="species-imaged"><%= fmt.apply(hImaged) %> species imaged</b><% if (hLiving > 0 && hImaged >= 0) { %> (<%= org.calacademy.antweb.home.StatisticsDb.percent(hImaged, hLiving) %> of valid living species<% if (hSpecimens > 0) { %>; <%= org.calacademy.antweb.home.StatisticsDb.percent(hImaged, hSpecimens) %> of those with specimens<% } %>)<% } %>
+<br>&nbsp;&nbsp;Valid living ant species with at least one photo of the ant (label photos do not count).
+<br><br><b data-stat="fossil-species-imaged"><%= fmt.apply(AntwebMgr.getHomeCount("fossil_species_imaged")) %> fossil species imaged</b>
+<br><br><b data-stat="living-subspecies"><%= fmt.apply(AntwebMgr.getHomeCount("living_subspecies")) %> valid living subspecies</b>
+<br><br><b data-stat="morphospecies"><%= fmt.apply(AntwebMgr.getHomeCount("morphospecies")) %> morphospecies</b>, <span data-stat="morphospecies-imaged"><%= fmt.apply(AntwebMgr.getHomeCount("morphospecies_imaged")) %></span> imaged
+<br>&nbsp;&nbsp;Ant morphospecies (codes such as "amd01" for species not yet named), identified to genus.
+<br><br>
 <br><b data-stat="valid-species"><%= liveValidSpecies > 0 ? A.commaFormat(liveValidSpecies) : starting %> valid species + ssp.</b>
 <br>&nbsp;&nbsp;Valid ant (Formicidae) species and subspecies, fossils included. Names of other families and names not identified to genus are not counted.
  
