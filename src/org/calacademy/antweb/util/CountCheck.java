@@ -382,12 +382,19 @@ public class CountCheck {
 
     private static final java.util.regex.Pattern LOG_LINE = java.util.regex.Pattern.compile("^(\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d) (Begin|End) run\\b");
 
+    private static final java.util.regex.Pattern SET3_DONE = java.util.regex.Pattern.compile("^(\\d{4}-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d)\\s+Set 3 done\\b");
+
     /**
-     * End of the last nightly run in compute.log ("<date time> Begin run" ... "<date time> End run")
-     * that has no "FAILED" line between its Begin and End; null if there is none.
+     * When the counts of the last nightly run in compute.log ("<date time> Begin run" ... "<date time> End run") with no
+     * "FAILED" line between its Begin and End were taken; null if there is none. That is its "Set 3 done" line when it has
+     * one, else its End: set 4 counts the images and the place list totals after set 3, and since 2026-11-06 the place
+     * list totals run about 40 minutes after set 4 (Scheduler.runPlaceListTotals), so an image added in that time was
+     * taken as counted and showed as a real difference (staging 2026-11-06, México: place images 9 -> 10). Changes after
+     * this time are pending; the lists of sets 2 and 3 and set 1's uploads were counted before it.
      */
     public static Timestamp lastCompletedRun(List<String> lines) {
         Timestamp last = null;
+        Timestamp set3 = null;
         boolean inRun = false;
         boolean failed = false;
         for (String line : lines) {
@@ -396,13 +403,17 @@ public class CountCheck {
                 if ("Begin".equals(m.group(2))) {
                     inRun = true;
                     failed = false;
+                    set3 = null;
                 } else if (inRun) {
-                    if (!failed) last = Timestamp.valueOf(m.group(1));
+                    if (!failed) last = set3 != null ? set3 : Timestamp.valueOf(m.group(1));
                     inRun = false;
                 }
-            } else if (inRun && line.contains("FAILED") && !line.contains("name update")) {
-                failed = true;
+                continue;
             }
+            if (!inRun) continue;
+            java.util.regex.Matcher s3 = SET3_DONE.matcher(line);
+            if (s3.find()) set3 = Timestamp.valueOf(s3.group(1));
+            else if (line.contains("FAILED") && !line.contains("name update")) failed = true;
         }
         return last;
     }
