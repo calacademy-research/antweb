@@ -621,7 +621,12 @@ public final class ListView {
 
     /** The same, the specimen half on the names collected here as hereCondition gives them (null: a subquery). */
     public static String viewNamesSqlHere(Overview overview, StatusSet viewSet, String subfamily, String genus, String here) {
-        String extra = "";
+        return viewNamesSqlHere(overview, viewSet, subfamily, genus, here, null);
+    }
+
+    /** The same, of the living (fossil 0) or fossil (fossil 1) names only; null: both. */
+    public static String viewNamesSqlHere(Overview overview, StatusSet viewSet, String subfamily, String genus, String here, Integer fossil) {
+        String extra = fossil == null ? "" : " and taxon.fossil = " + (fossil == 1 ? 1 : 0);
         if (subfamily != null && !subfamily.isEmpty()) extra += " and taxon.subfamily = " + DBUtil.sqlQuote(subfamily);
         if (genus != null && !genus.isEmpty()) extra += " and taxon.genus = " + DBUtil.sqlQuote(genus);
         return TaxaPage.viewQueryHere(overview, Rank.SPECIES, true, viewSet,
@@ -630,11 +635,17 @@ public final class ListView {
 
     public static ViewNames loadViewNames(Connection connection, Overview overview, StatusSet viewSet, String subfamily, String genus,
             PlaceSpecimens collected) throws SQLException {
+        return loadViewNames(connection, overview, viewSet, subfamily, genus, collected, null);
+    }
+
+    /** The same, of the living (fossil 0) or fossil (fossil 1) names only; null: both. */
+    public static ViewNames loadViewNames(Connection connection, Overview overview, StatusSet viewSet, String subfamily, String genus,
+            PlaceSpecimens collected, Integer fossil) throws SQLException {
         ViewNames out = new ViewNames();
         // stored names: a subquery of place_specimen_name; names read here: an IN list, above MAX_NAMED_IN names the
         // specimen half keeps its subquery (no very long IN list; review of #316)
         try (PreparedStatement stmt = connection.prepareStatement(viewNamesSqlHere(overview, viewSet, subfamily, genus,
-                hereCondition("taxon", collected)));
+                hereCondition("taxon", collected), fossil));
              ResultSet r = stmt.executeQuery()) {
             while (r.next()) out.add(r.getString("taxon_name"), r.getString("subfamily"), r.getString("genus"), r.getString("status"));
         }
@@ -683,10 +694,10 @@ public final class ListView {
      * with no species).
      */
     public static boolean keepGenus(String choice, String status, String sourceKind, int speciesInView, int evidence, int fossilNames) {
-        // The evidence (the names of All specimen names) includes the fossil names themselves, from the list and from
-        // specimens collected here (2026-11-06: Palearctic Acropyga, Baltic amber specimens, stayed in Curated): only the
-        // evidence beyond the fossil names keeps the genus.
-        if (!StatusSet.LIST_FOSSIL.equals(choice) && speciesInView <= 0 && fossilNames > 0 && evidence - fossilNames <= 0) return false;
+        // evidence: living names only; fossilNames: the fossil names of All specimen names, on the list or collected here
+        // (2026-11-06: Palearctic Acropyga, known there only from Baltic amber specimens, stayed in Curated: the Fossil
+        // view adds no specimen names, and the evidence counted the fossil names)
+        if (!StatusSet.LIST_FOSSIL.equals(choice) && speciesInView <= 0 && evidence <= 0 && fossilNames > 0) return false;
         if (!(StatusSet.LIST_VALID.equals(choice) || StatusSet.LIST_VETTED.equals(choice))) return true;
         if (speciesInView > 0) return true;
         if (!Status.VALID.equals(status)) return false;
@@ -926,7 +937,7 @@ public final class ListView {
         ViewNames view = loadViewNames(connection, overview, viewSet, subfamily, null, specimens);
         Map<String, Integer> evidence = null;
         if (StatusSet.LIST_VALID.equals(choice) || StatusSet.LIST_VETTED.equals(choice)) {
-            evidence = loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_ALL), subfamily, null, specimens)
+            evidence = loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_ALL), subfamily, null, specimens, 0)
                 .countByGenus(BEYOND_GENUS_STATUSES);
         }
         GenusRows rows = new GenusRows(choice, view.countByGenus(null), evidence).withSpecimens(specimens)
@@ -948,17 +959,21 @@ public final class ListView {
         ViewNames view = loadViewNames(connection, overview, viewSet, null, null, specimens);
         Map<String, Integer> evidence = null;
         if (StatusSet.LIST_VALID.equals(choice) || StatusSet.LIST_VETTED.equals(choice)) {
-            evidence = loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_ALL), null, null, specimens)
+            evidence = loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_ALL), null, null, specimens, 0)
                 .countByGenus(BEYOND_GENUS_STATUSES);
         }
         return new GenusRows(choice, view.countByGenus(null), evidence).withFossil(fossilNames(connection, overview, choice, null, specimens));
     }
 
-    /** The place's fossil names by genus (the view Fossil), for the other views' keepGenus; null in the view Fossil. */
+    /**
+     * The place's fossil names by genus, for the other views' keepGenus; null in the view Fossil: the fossil names of All
+     * specimen names, on the list or collected here (2026-11-06: the view Fossil adds no names from specimens, so a genus
+     * known only from fossil specimens, Palearctic Acropyga, counted none).
+     */
     static Map<String, Integer> fossilNames(Connection connection, Overview overview, String choice, String subfamily,
             PlaceSpecimens specimens) throws SQLException {
         if (StatusSet.LIST_FOSSIL.equals(choice)) return null;
-        return loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_FOSSIL), subfamily, null, specimens)
+        return loadViewNames(connection, overview, StatusSet.listStatusSet(StatusSet.LIST_ALL), subfamily, null, specimens, 1)
             .countByGenus(null);
     }
 

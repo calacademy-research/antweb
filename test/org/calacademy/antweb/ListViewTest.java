@@ -177,11 +177,11 @@ public class ListViewTest extends TestCase {
         }
         assertTrue(ListView.keepGenus("fossil", "valid", lit, 3, 0, 3));
         assertTrue("an extant species too", ListView.keepGenus("curated", "valid", lit, 1, 0, 3));
-        // the evidence counts the names of All specimen names, the fossil names among them (2026-11-06)
-        assertTrue("two morphospecies collected here besides the 3 fossil names", ListView.keepGenus("curated", "valid", ListView.SOURCE_SPECIMEN, 0, 5, 3));
-        assertFalse("only fossil specimens collected here (Palearctic Acropyga, Baltic amber)", ListView.keepGenus("curated", "valid", ListView.SOURCE_SPECIMEN, 0, 3, 3));
-        assertFalse(ListView.keepGenus("valid", "valid", ListView.SOURCE_SPECIMEN, 0, 3, 3));
-        assertTrue(ListView.keepGenus("fossil", "valid", ListView.SOURCE_SPECIMEN, 3, 3, 3));
+        // the evidence counts living names only, the fossil names those of All specimen names (2026-11-06)
+        assertTrue("a morphospecies collected here", ListView.keepGenus("curated", "valid", ListView.SOURCE_SPECIMEN, 0, 2, 3));
+        assertFalse("only fossil specimens collected here (Palearctic Acropyga, Baltic amber)", ListView.keepGenus("curated", "valid", ListView.SOURCE_SPECIMEN, 0, 0, 3));
+        assertFalse(ListView.keepGenus("valid", "valid", ListView.SOURCE_SPECIMEN, 0, 0, 3));
+        assertTrue(ListView.keepGenus("fossil", "valid", ListView.SOURCE_SPECIMEN, 3, 0, 3));
         assertTrue("no fossil names: the rule before", ListView.keepGenus("curated", "valid", lit, 0, 0, 0));
         java.util.Map<String, Integer> species = new java.util.HashMap<>();
         java.util.Map<String, Integer> fossil = new java.util.HashMap<>();
