@@ -36,6 +36,7 @@ ALLOWED = {
     ("specimenReport.jsp", "getImageCount"): "a comment, and the unreached taxon branch: the list row's images of the ant",
     ("specimenReport.jsp", "getImageCountStr"): "the unreached taxon branch: the list row's images of the ant (nightly set 4)",
     ("taxonChildImageSet.jsp", "getImageCountStr"): "a comment",
+    ("taxonReportBody.jsp", "getImageCount"): "rows added from specimens: the AntWeb-wide row's images of the ant (allantwebants, set 4), as on the list's own rows",
     ("taxonReportBody.jsp", "getHasImagesCount"): "a comment",
     ("util/statsPage-body.jsp", "getTotalImagesCount"): "total specimen images: images of the ant (+ labels apart)",
 }

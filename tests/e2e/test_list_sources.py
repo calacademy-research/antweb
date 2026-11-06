@@ -264,3 +264,34 @@ def test_placeholder_genus_rows_open_their_specimens():
         page = ns.text_of(ns.get(site_path(href), new_session()))
         m = re.search(r"\b([\d,]+) Specimens?\b", page)
         assert m and m.group(1) == n, f"{href}: the list says {n} specimens, the page {m.group(0) if m else 'none'}"
+
+
+def test_fossil_only_genera_only_in_the_fossil_view():
+    """A genus known in a place only from fossils is listed in the view Fossil only (Brian Fisher, 2026-11-05): Ukraine's
+    Oecophylla (Rovno amber) was on the Curated genus list with no species."""
+    rows = {}
+    for view in ("curated", "valid", "all", "fossil"):
+        html = ns.get(f"/taxonomicPage.do?rank=genus&countryName=Ukraine&statusSet={view}", new_session())
+        rows[view] = any("oecophylla" in (r["name"] or "").lower() for r in ns.list_rows(html))
+    if not rows["fossil"]:
+        pytest.skip("Oecophylla is not on Ukraine's Fossil genus list on this server")
+    assert not (rows["curated"] or rows["valid"] or rows["all"]), f"Oecophylla in Ukraine, by view: {rows}"
+
+
+def test_rows_added_from_specimens_marks_and_images():
+    """Rows added from specimens (not on the list), Brian Fisher 2026-11-05: no Introduced or Endemic mark (they are on
+    no introduced or endemic list; New Caledonia's Brachymyrmex obscurior_cf was marked Introduced), and their Images
+    cell is "No Images" or "N Images" like every other row (it was "-": Comoros Hypoponera amd_01)."""
+    checked = 0
+    for country in ("New%20Caledonia", "Comoros"):
+        html = ns.get(f"/taxonomicPage.do?rank=species&countryName={country}&statusSet=all", new_session())
+        for row in [c for c in re.split(r'<div class="sd_data"', html)[1:] if 'title="Not on the list: from specimens collected here"' in c][:40]:
+            name = ns.text_of(row)[:60]
+            assert 'title="Introduced"' not in row and 'title="Endemic"' not in row, f"{country}: {name}: marked although not on the list"
+            images = re.search(r'<div class="list_extras images[^"]*">(.*?)</div>', row, re.S)
+            if images:
+                cell = ns.text_of(images.group(1))
+                assert re.fullmatch(r"No Images|[\d,]+ Images?", cell), f"{country}: {name}: Images cell {cell!r}"
+            checked += 1
+    if not checked:
+        pytest.skip("no rows added from specimens on these lists today")
