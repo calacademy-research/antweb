@@ -396,4 +396,18 @@ public class ListViewTest extends TestCase {
         assertTrue("the whole reason in the title", c.contains(longReason.toString().trim() + ". Shown here"));
         assertEquals("a name with no date or curator", "removed from the list", new ListView.Removal(null, null, null).text());
     }
+
+    /** Brian Fisher, 2026-11-06: the view Fossil lists at genus rank the living genera with valid fossil species on the
+     *  same list too (Ukraine: Oecophylla, known there only from Rovno amber); other views and ranks are unchanged. */
+    public void testFossilViewListsLivingGeneraWithFossilSpeciesHere() {
+        String geo = ", geolocale_taxon where geolocale_taxon.taxon_name = taxon.taxon_name and geolocale_id = '7'";
+        StatusSet fossil = StatusSet.listStatusSet(StatusSet.LIST_FOSSIL);
+        String c = TaxaPage.genusAwareCriteria(geo, fossil, "genus");
+        assertTrue(c, c.contains("taxon.fossil = 1 or exists (select 1 from taxon fs, geolocale_taxon where geolocale_taxon.taxon_name = fs.taxon_name and geolocale_id = '7'"));
+        assertTrue(c, c.contains("fs.genus = taxon.genus") && c.contains("fs.fossil = 1") && c.contains("fs.taxarank in ('species', 'subspecies')"));
+        assertEquals("species rank unchanged", fossil.getAndCriteria("taxon", "species"), TaxaPage.genusAwareCriteria(geo, fossil, "species"));
+        StatusSet curated = StatusSet.listStatusSet(StatusSet.LIST_VETTED);
+        assertEquals("other views unchanged", curated.getAndCriteria("taxon", "genus"), TaxaPage.genusAwareCriteria(geo, curated, "genus"));
+        assertTrue("global lists: every fossil species", TaxaPage.genusAwareCriteria(" where 1 = 1", fossil, "genus").contains("from taxon fs where 1 = 1 and fs.subfamily"));
+    }
 }
