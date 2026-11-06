@@ -511,7 +511,7 @@ def test_upload_as_list(sources):
     """Upload as (Brian Fisher, 2026-11-05): the box keeps password managers off (one blanked it), and saving one's own
     login updates the Curate page's menu at once (it showed the old list until log out)."""
     page = sources["src/org/calacademy/antweb/curate/login/LoginEditPage.java"]
-    assert 'name=\\"uploadAs\\" autocomplete=\\"off\\" data-lpignore=\\"true\\"' in page
+    assert 'name=\\"uploadAs\\" value=' in page and 'autocomplete=\\"off\\" data-lpignore=\\"true\\"' in page
     save = sources["src/org/calacademy/antweb/curate/login/SaveLoginAction.java"]
     assert "if (isSelf && result.after != null) accessLogin.setUploadAs(" in save
     print("Upload as: password managers kept off, own menu updated on save.")
