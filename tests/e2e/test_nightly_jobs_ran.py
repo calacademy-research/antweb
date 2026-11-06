@@ -212,15 +212,16 @@ def test_place_list_totals_counted_every_place(run_lines):
 # (unreturnedConnectionTimeout 3600). On 2026-11-06 set 4 ran 60 minutes on staging and production, lost its
 # connection and set 5 was skipped. Staging is faster than production (06:17 vs 06:58 that day), so a step must
 # stay well under the limit here.
+# The place list totals run on a direct connection (no 60-minute limit; 36 minutes on staging, over 42 on
+# production on 2026-11-06), so they are not in this list.
 STEP_LIMIT_MINUTES = 40
 STEP_ENDS = [("set 1", "Begin run", "taxon parents (B36):"), ("set 2", "taxon parents (B36):", "Set 2 done"),
-             ("set 3", "Set 2 done", "Set 3 done"), ("set 4", "Set 3 done", "Set 4 done"),
-             ("place list totals", "Set 4 done", "Place list totals counted:")]
+             ("set 3", "Set 2 done", "Set 3 done"), ("set 4", "Set 3 done", "Set 4 done")]
 
 
 def test_each_set_well_under_the_connection_limit(run_lines):
-    """Each set of the nightly (one connection each) and the place list totals (its own connection) took under
-    STEP_LIMIT_MINUTES on staging, so none comes near the long pool's 60 minutes on production."""
+    """Each set of the nightly (one long-pool connection each) took under STEP_LIMIT_MINUTES on staging, so none
+    comes near the pool's 60 minutes on production."""
     from datetime import datetime
     def at(marker, start=0):
         i = _find(run_lines, marker, start)
