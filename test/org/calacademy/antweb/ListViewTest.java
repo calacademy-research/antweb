@@ -169,6 +169,28 @@ public class ListViewTest extends TestCase {
         assertFalse(rows.hasSpecimens("formicinae", "lividopone"));
     }
 
+    /** A genus known in the place only from fossils is in the view Fossil only (Brian Fisher, 2026-11-05: Ukraine). */
+    public void testFossilOnlyGenusOnlyInFossil() {
+        String lit = ListView.SOURCE_ANTCAT;
+        for (String choice : new String[] {"valid", "curated", "all"}) {
+            assertFalse(choice, ListView.keepGenus(choice, "valid", lit, 0, 0, 3));
+        }
+        assertTrue(ListView.keepGenus("fossil", "valid", lit, 3, 0, 3));
+        assertTrue("an extant species too", ListView.keepGenus("curated", "valid", lit, 1, 0, 3));
+        // the evidence counts living names only, the fossil names those of All specimen names (2026-11-06)
+        assertTrue("a morphospecies collected here", ListView.keepGenus("curated", "valid", ListView.SOURCE_SPECIMEN, 0, 2, 3));
+        assertFalse("only fossil specimens collected here (Palearctic Acropyga, Baltic amber)", ListView.keepGenus("curated", "valid", ListView.SOURCE_SPECIMEN, 0, 0, 3));
+        assertFalse(ListView.keepGenus("valid", "valid", ListView.SOURCE_SPECIMEN, 0, 0, 3));
+        assertTrue(ListView.keepGenus("fossil", "valid", ListView.SOURCE_SPECIMEN, 3, 0, 3));
+        assertTrue("no fossil names: the rule before", ListView.keepGenus("curated", "valid", lit, 0, 0, 0));
+        java.util.Map<String, Integer> species = new java.util.HashMap<>();
+        java.util.Map<String, Integer> fossil = new java.util.HashMap<>();
+        fossil.put("formicinae|oecophylla", 2);
+        ListView.GenusRows rows = new ListView.GenusRows("curated", species, null).withFossil(fossil);
+        assertFalse(rows.keep("formicinae", "oecophylla", "valid", "antcat"));
+        assertTrue(rows.keep("formicinae", "lasius", "valid", "antcat"));
+    }
+
     /**
      * Genus list, placeholder rows (Brian Fisher, 2026-11-04): "(dorylinae)" counts the specimens collected here filed
      * under "(dorylinae) (indet)", and links to them in All specimen names; real genera count none.

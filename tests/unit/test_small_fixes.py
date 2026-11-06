@@ -507,6 +507,16 @@ def test_audit_triage_20261104(sources):
     print("Audit triage fixes of 2026-11-04 hold.")
 
 
+def test_upload_as_list(sources):
+    """Upload as (Brian Fisher, 2026-11-05): the box keeps password managers off (one blanked it), and saving one's own
+    login updates the Curate page's menu at once (it showed the old list until log out)."""
+    page = sources["src/org/calacademy/antweb/curate/login/LoginEditPage.java"]
+    assert 'name=\\"uploadAs\\" value=' in page and 'autocomplete=\\"off\\" data-lpignore=\\"true\\"' in page
+    save = sources["src/org/calacademy/antweb/curate/login/SaveLoginAction.java"]
+    assert "if (isSelf && result.after != null) accessLogin.setUploadAs(" in save
+    print("Upload as: password managers kept off, own menu updated on save.")
+
+
 def main():
     sources = java_sources()
     assert len(sources) > 400, len(sources)
@@ -529,6 +539,7 @@ def main():
     test_places_and_search_fixes_20261028(sources)
     test_audit_triage_20261029(sources)
     test_audit_triage_20261104(sources)
+    test_upload_as_list(sources)
 
 
 if __name__ == "__main__":
