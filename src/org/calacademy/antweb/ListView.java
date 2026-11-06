@@ -683,7 +683,10 @@ public final class ListView {
      * with no species).
      */
     public static boolean keepGenus(String choice, String status, String sourceKind, int speciesInView, int evidence, int fossilNames) {
-        if (!StatusSet.LIST_FOSSIL.equals(choice) && speciesInView <= 0 && evidence <= 0 && fossilNames > 0) return false;
+        // The evidence (the names of All specimen names) includes the fossil names themselves, from the list and from
+        // specimens collected here (2026-11-06: Palearctic Acropyga, Baltic amber specimens, stayed in Curated): only the
+        // evidence beyond the fossil names keeps the genus.
+        if (!StatusSet.LIST_FOSSIL.equals(choice) && speciesInView <= 0 && fossilNames > 0 && evidence - fossilNames <= 0) return false;
         if (!(StatusSet.LIST_VALID.equals(choice) || StatusSet.LIST_VETTED.equals(choice))) return true;
         if (speciesInView > 0) return true;
         if (!Status.VALID.equals(status)) return false;
