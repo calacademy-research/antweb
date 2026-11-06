@@ -1481,7 +1481,7 @@ jobs:
 
       - name: The nightly counts the place list totals after set 4, on their own connection (tests/unit/test_place_totals_connection.py)
         # 2026-11-06: inside set 4 they kept its connection past the long pool's 60 minutes; set 4 failed.
-        run: if [ -f tests/unit/test_place_totals_connection.py ]; then python3 tests/unit/test_place_totals_connection.py; fi
+        run: python3 tests/unit/test_place_totals_connection.py
 
       - name: The e2e link reader reads links as a browser does (tests/unit/test_e2e_link_reader.py, finding F27)
         run: python3 tests/unit/test_e2e_link_reader.py
