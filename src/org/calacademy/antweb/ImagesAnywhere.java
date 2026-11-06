@@ -113,7 +113,7 @@ public final class ImagesAnywhere {
      * the same view; a genus images page has no place-first order (placeFirst is for species pages).
      */
     public static String speciesImagedCell(int n) {
-        if (n <= 0) return "<span class='no-species' title='No species of this genus in this view has an image'>&ndash;</span>";
+        if (n <= 0) return "<span class='none-imaged' title='No species of this genus in this view has an image'>&ndash;</span>";
         return "<span class='numbers'>" + n + "</span>";
     }
 
