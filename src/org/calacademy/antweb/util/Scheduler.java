@@ -255,6 +255,9 @@ public class Scheduler extends AntwebAction {
 						currentSet = 4;
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set4&param=allow";
 						output += runSet(currentSet, url, codeHeader);
+						// After set 4 (its Not curated count fills place_specimen_name, which the lists read), on a
+						// connection of its own; a failure here is logged and does not stop the run.
+						runPlaceListTotals();
 					}
 					// set5 (object maps, reload all) needs more memory than staging's 4 GB droplet has:
 					// skip it there in the nightly run (an admin can still request it by hand).
@@ -376,6 +379,26 @@ public class Scheduler extends AntwebAction {
     }
 
     /** One set: its answer, or AntwebException when it failed (the run stops). */
+    /**
+     * The place pages' Subfamilies, Genera and Species: the rows of their lists in the default view (PlaceViewTotalDb,
+     * "Place list totals counted"). Run by the nightly right after set 4, outside set 4's request (2026-11-06): it takes
+     * about 40 minutes, and inside set 4 it kept set 4's connection past the long pool's 60 minutes
+     * (unreturnedConnectionTimeout in struts-configDbAnt.xml), so c3p0 closed it ("No operations allowed after connection
+     * closed"), set 4 failed and set 5 was skipped, on staging and production. A direct connection (DBUtilSimple, as the
+     * steps after the run use) is not taken back by the pool. The compute flag is held, so no data job starts meanwhile.
+     */
+    static void runPlaceListTotals() {
+        UtilDataAction.setInComputeProcess("placeViewTotals");
+        try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
+            LogMgr.appendLog("compute.log", "  " + new org.calacademy.antweb.home.PlaceViewTotalDb(connection).fillAll(), true);
+        } catch (Exception e) {
+            s_log.error("runPlaceListTotals() e:" + e);
+            LogMgr.appendLog("compute.log", "  " + org.calacademy.antweb.home.PlaceViewTotalDb.LOG + ": FAILED (" + e + ")", true);
+        } finally {
+            UtilDataAction.setInComputeProcess(null);
+        }
+    }
+
     private static String runSet(int set, String url, java.util.Map<String, String> codeHeader) throws AntwebException, IOException {
         String setOutput = HttpUtil.fetchUrl(url, SET_READ_TIMEOUT_MS, codeHeader);
         String note = setOutput != null && setOutput.length() > 20 ? setOutput.substring(0, 20) : setOutput;
