@@ -496,6 +496,12 @@ museum
         return have.containsAll(HOME_COLUMNS.keySet());
     }
 
+    /** "87% of valid living species", or "" when the living species are not counted (review of #327). */
+    static String ofLiving(long part, long living) {
+        String p = percent(part, living);
+        return p.isEmpty() ? "" : p + " of valid living species";
+    }
+
     /** "87%": part of whole, rounded; "" when whole is 0. */
     public static String percent(long part, long whole) {
         return whole <= 0 ? "" : Math.round(100.0 * part / whole) + "%";
@@ -517,10 +523,10 @@ museum
             "valid living ant species", "+ " + A.commaFormat(n.getOrDefault("fossil_species", 0L)) + " fossil species"));
         b.append(stat("species-with-specimens", n.getOrDefault("living_species_specimens", 0L),
             "Valid living ant species with at least one specimen record in AntWeb", "species with specimens in AntWeb",
-            percent(n.getOrDefault("living_species_specimens", 0L), living) + " of valid living species"));
+            ofLiving(n.getOrDefault("living_species_specimens", 0L), living)));
         b.append(stat("species-imaged", n.getOrDefault("living_species_imaged", 0L),
             "Valid living ant species with a photo of the ant (label photos do not count)", "species imaged",
-            percent(n.getOrDefault("living_species_imaged", 0L), living) + " of valid living species"));
+            ofLiving(n.getOrDefault("living_species_imaged", 0L), living)));
         b.append("<div class=\"stat-rule\"></div>\n");
         b.append(stat("images", antImages, "Images of the ant; label images are counted separately",
             "images of ants of " + A.commaFormat(imagedSpecimens) + " specimens", "+ " + A.commaFormat(labelImages) + " label images"));

@@ -387,7 +387,7 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
                 SpecimenUploadParse::isKnownAntSubfamily, SpecimenUploadParse::isAntcatAntGenus);
             if (nonAnt != null) {
               getMessageMgr().addToMessages(nonAnt, Html.esc(Formatter.initCap(subfamilyName) + " " + Formatter.initCap(genusName == null ? "" : genusName)
-                  + " (family " + taxonItem.get("family") + ")"));
+                  + (taxonItem.get("family") == null ? " (no family given)" : " (family " + taxonItem.get("family") + ")")));
               errorMessage = "nonAnt:" + nonAnt;
               return errorMessage;
             }

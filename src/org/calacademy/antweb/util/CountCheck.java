@@ -413,7 +413,7 @@ public class CountCheck {
             if (!inRun) continue;
             java.util.regex.Matcher s3 = SET3_DONE.matcher(line);
             if (s3.find()) set3 = Timestamp.valueOf(s3.group(1));
-            else if (line.contains("FAILED") && !line.contains("name update")) failed = true;
+            if (line.contains("FAILED") && !line.contains("name update")) failed = true;
         }
         return last;
     }

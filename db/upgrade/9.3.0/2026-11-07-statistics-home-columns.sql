@@ -1,6 +1,7 @@
 -- The home page numbers of release 9.3.0 (Brian Fisher, 2026-11-06), one column each on the statistics row.
 -- Applied automatically at startup by StatisticsDb.ensureHomeColumns (called from LoginMgr), only for the columns
--- that are missing; this file records the change. Rollback: drop the columns (the home box then shows "not yet counted").
+-- that are missing; this file records the change and is not meant to be run (after startup the columns exist and
+-- the first alter fails). Rollback: drop the columns (the home box then shows "not yet counted").
 alter table statistics add column living_species int null;
 alter table statistics add column fossil_species int null;
 alter table statistics add column living_species_specimens int null;
