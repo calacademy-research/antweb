@@ -509,7 +509,9 @@ latest row; the admin page `statistics.do` shows the history.
 **Key columns.** `id`, `created`, `action` (what triggered it), `login_id`, `exec_time`, and the totals:
 `specimens`, `specimens_imaged`, `total_images`, `species_imaged`, `valid_species_imaged`, `extant_taxa`,
 `total_taxa`, `proj_taxa`, `geolocale_taxa`, `geolocale_taxa_endemic`, `geolocale_taxa_introduced`,
-`bioregion_taxa`, `museum_taxa`.
+`bioregion_taxa`, `museum_taxa`; since 2026-11-06 the home page numbers (`StatisticsDb.HOME_COLUMNS`, added by
+`ensureHomeColumns`, null in older rows): `living_species`, `fossil_species`, `living_species_specimens`,
+`living_species_imaged`, `fossil_species_imaged`, `living_subspecies`, `morphospecies`, `morphospecies_imaged`.
 
 **Written by.** `StatisticsDb.populateStatistics`: after each specimen upload (`UploadAction`) and, since
 2026-10-21, every night in set 4 (`UtilDataAction`).

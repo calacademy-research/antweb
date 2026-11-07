@@ -851,6 +851,36 @@ public final class CountInvariants {
                     compare(c, "site", "home", "statsPage valid species + ssp. (taxa in memory)", statsPageValidSpecies, live, "=", null);
                 }
             }
+            // The home page numbers of 2026-11-06 (StatisticsDb.HOME_COLUMNS): each stored number = a recount, and they nest
+            // (imaged <= with specimens <= valid living species). Rows written before have none (null): nothing to compare.
+            Map<String, Long> stored = new LinkedHashMap<>();
+            try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(
+                    "select * from statistics order by created desc, id desc limit 1"))) {
+                if (r.next()) {
+                    java.sql.ResultSetMetaData md = r.getMetaData();
+                    Set<String> cols = new HashSet<>();
+                    for (int k = 1; k <= md.getColumnCount(); k++) cols.add(md.getColumnLabel(k).toLowerCase(java.util.Locale.ROOT));
+                    for (String col : org.calacademy.antweb.home.StatisticsDb.HOME_COLUMNS.keySet()) {
+                        if (!cols.contains(col)) continue;
+                        long v = r.getLong(col);
+                        if (!r.wasNull()) stored.put(col, v);
+                    }
+                }
+            }
+            for (Map.Entry<String, Long> e : stored.entrySet()) {
+                long live;
+                try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(org.calacademy.antweb.home.StatisticsDb.HOME_COLUMNS.get(e.getKey())))) {
+                    live = r.next() ? r.getLong(1) : 0;
+                }
+                boolean imaged = e.getKey().endsWith("_imaged");
+                String p = uploadSince ? "specimens were uploaded after the numbers were written"
+                    : imaged && imagesSince ? "images were added after the numbers were written" : null;
+                compare(c, "site", "home", org.calacademy.antweb.home.StatisticsDb.HOME_LABELS.get(e.getKey()), e.getValue(), live, "=", p);
+            }
+            if (stored.containsKey("living_species") && stored.containsKey("living_species_specimens") && stored.containsKey("living_species_imaged")) {
+                compare(c, "site", "home", "species imaged <= species with specimens in AntWeb", stored.get("living_species_imaged"), stored.get("living_species_specimens"), "<=", null);
+                compare(c, "site", "home", "species with specimens in AntWeb <= valid living ant species", stored.get("living_species_specimens"), stored.get("living_species"), "<=", null);
+            }
         });
     }
 

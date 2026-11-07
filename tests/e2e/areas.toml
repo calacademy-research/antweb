@@ -647,5 +647,6 @@ tests = [
   "test_request_limits.py",
   "test_curate_page_layout.py",       # About menu, Curators page
   "test_home_and_stats.py",            # home page and statsPage.do sections (step 2)
+  "test_home_numbers.py",              # home page numbers of 2026-11-06 and statsPage details
   "test_field_guide_compare.py",
 ]

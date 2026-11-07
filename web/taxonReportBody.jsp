@@ -355,8 +355,12 @@
         <% if (showNotCuratedColumn && genusImagedCells) { %><div class="list_extras other genus-col"><%= notCuratedCell == null ? "" : notCuratedCell %></div><% } %>
 
         <div class="list_extras map">
-          <% if (childTaxonSet.getSubtaxonCount(1) > 0) { %>
+          <% // Brian Fisher, 2026-11-07: curated names with no specimens collected here get the map too (the map shows the
+             // name's AntWeb specimens); before, Map was shown only when the place had specimens of the name
+             if (childTaxonSet.getSubtaxonCount(1) > 0) { %>
             <a href="<%= mapLink %>">Map</a>
+          <% } else if (childTaxonSet.getGlobalChildCount() > 0) { %>
+            <a href="<%= mapLink %>" title="Map of the AntWeb specimens of this name (none collected here)">Map</a>
           <% } %>
         </div>
         <% if (!isMuseum) { %>
@@ -387,6 +391,14 @@
          String addedCount = "&ndash;";
          String addedOther = "";
          String addedImages = "&ndash;";
+         // species rows: the images of the name in AntWeb, as on the list's own rows (Brian Fisher, 2026-11-05: Comoros
+         // Hypoponera amd_01 showed "-"); AllAntwebMgr holds the AntWeb-wide row of every name (no query per row)
+         if (!Rank.GENUS.equals(pageRank) && !listOnly) {
+           org.calacademy.antweb.ProjTaxon allRow = org.calacademy.antweb.util.AllAntwebMgr.get(child.getTaxonName());
+           String cell = org.calacademy.antweb.ImagesAnywhere.imagesColumn(allRow == null ? 0 : allRow.getImageCount(), 0, imagesFromPhrase);
+           addedImages = cell.startsWith("No ") ? cell
+               : "<a href='" + AntwebProps.getDomainApp() + "/images.do?" + child.getBrowserParams() + "'>" + cell + "</a>";
+         }
          if (placeSpecimens != null && placeSpecimens.has(child.getTaxonName())) {
            // "N specimens", as on the list's own rows (Brian Fisher, 2026-11-03: was "N here")
            int addedN = placeSpecimens.count(child.getTaxonName());

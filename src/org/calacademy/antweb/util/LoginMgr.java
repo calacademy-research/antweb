@@ -103,6 +103,12 @@ public class LoginMgr extends Manager {
             s_log.error("startPasswordConversion() place_genus_curation not created e:" + e);
           }
           try {
+            // statistics: the home page columns of 2026-11-06 (at startup on its own connection, not in the nightly: review of #327)
+            org.calacademy.antweb.home.StatisticsDb.ensureHomeColumns(conn);
+          } catch (SQLException e) {
+            s_log.error("startPasswordConversion() statistics home columns not added e:" + e);
+          }
+          try {
             // list_removal_log and the dispute tables' reason column (Brian Fisher, 2026-11-03: transparency)
             org.calacademy.antweb.home.ListRemovalLog.ensureSchema(conn);
           } catch (SQLException e) {

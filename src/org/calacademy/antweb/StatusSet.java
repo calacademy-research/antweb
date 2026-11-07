@@ -573,7 +573,9 @@ public class StatusSet extends Status {
         }
         if (LIST_VETTED.equals(choice)) return num + " " + noun + " (valid and curated)";
         if (LIST_ALL.equals(choice) || LIST_VALID_MORPHO.equals(choice)) return num + " " + noun + " (all specimen names)";
-        if (LIST_FOSSIL.equals(choice)) return num + " Fossil " + lower;
+        // genera and subfamilies: those of the fossil species, living ones too (Brian Fisher, 2026-11-06: "a list of
+        // genera with fossil species", not of fossil genera; TaxaPage.genusAwareCriteria)
+        if (LIST_FOSSIL.equals(choice)) return withFossilSpecies(lower) ? num + " " + rankNoun(lower, count) + " with fossil species" : num + " Fossil " + lower;
         if (LIST_NOT_CURATED.equals(choice)) return num + " " + noun + " (not curated)";
         if (choice != null && choice.startsWith("own:")) choice = choice.substring(4);
         String statusStr = (choice == null || ALL.equals(choice)) ? "" : ownLabel(choice) + " ";
@@ -619,11 +621,24 @@ public class StatusSet extends Status {
         if (LIST_VALID.equals(choice)) return num + " Valid " + lower + " imaged" + of + "valid " + totalNoun + ")";
         if (LIST_VETTED.equals(choice)) return num + " " + noun + " imaged" + of + totalNoun + ", valid and curated)";
         if (LIST_ALL.equals(choice) || LIST_VALID_MORPHO.equals(choice)) return num + " " + noun + " imaged" + of + totalNoun + ", all specimen names)";
-        if (LIST_FOSSIL.equals(choice)) return num + " Fossil " + lower + " imaged" + of + "fossil " + totalNoun + ")";
+        if (LIST_FOSSIL.equals(choice)) return withFossilSpecies(lower) ? num + " " + rankNoun(lower, imaged) + " with fossil species imaged" + of + rankNoun(totalNoun, total) + " with fossil species)"
+            : num + " Fossil " + lower + " imaged" + of + "fossil " + totalNoun + ")";
         if (LIST_NOT_CURATED.equals(choice)) return num + " " + noun + " imaged" + of + totalNoun + ", not curated)";
         if (choice != null && choice.startsWith("own:")) choice = choice.substring(4);
         String status = (choice == null || ALL.equals(choice)) ? "" : ownLabel(choice) + " ";
         return num + " " + status + noun + " imaged" + of + status.toLowerCase(Locale.ROOT) + totalNoun + ")";
+    }
+
+    /** Whether a Fossil list of these rows lists the genera or subfamilies of the fossil species (2026-11-06). */
+    private static boolean withFossilSpecies(String lowerNoun) {
+        return lowerNoun.startsWith("genus") || lowerNoun.startsWith("genera") || lowerNoun.startsWith("subfamil");
+    }
+
+    /** "genus" or "subfamily" for one row (callers pass the plural for both), else the plural. */
+    private static String rankNoun(String lowerNoun, int count) {
+        boolean genus = lowerNoun.startsWith("genus") || lowerNoun.startsWith("genera");
+        if (count == 1) return genus ? "genus" : "subfamily";
+        return genus ? "genera" : "subfamilies";
     }
 
     public static String getAllAntwebClause() {

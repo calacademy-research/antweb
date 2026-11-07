@@ -479,6 +479,8 @@ def test_species_lists_show_valid_names_and_morphospecies_only():
         counted = 'class="not-curated"' in (genus_html or "")   # the nightly count has run for this place
         for row in ns.list_rows(genus_html or ""):
             # 2026-11-02: a genus row from specimens with no species in the view shows its Not curated number
+            # the Species cell's dash (taxonReportBody.jsp); the Images cell's dash is class='none-imaged' (until
+            # 2026-11-06 it was 'no-species' too, so a row with species but none imaged, Palearctic Acropyga, was flagged)
             no_species = "class='no-species'" in row["html"]
             fossil = "&dagger;" in row["html"] or "\u2020" in row["html"]
             if has_column and counted and no_species and not fossil and 'class="not-curated"' not in row["html"] \

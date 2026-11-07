@@ -10,7 +10,7 @@ The home page itself does no database work. Its changing parts are files written
 
 | Part | File (under the web root) | Written by | When |
 |---|---|---|---|
-| Current Statistics | `web/genInc/statistics.jsp` | `home.StatisticsDb.populateStatistics()` | after each specimen upload (`UploadAction.runStatistics`) and in nightly set 4 |
+| AntWeb in numbers (until 2026-11-06 Current Statistics) | `web/genInc/statistics.jsp` | `home.StatisticsDb.populateStatistics()` | after each specimen upload (`UploadAction.runStatistics`) and in nightly set 4 |
 | Recent Images | `web/genInc/recentImages_gen_inc.html` | `imageUploader.ImageUploaderAction.writeRecentImages()` | after an image upload saves images (`ImageUploadBatchAction`), at start-up (`AntwebMgr.genRecentContent`), `utilData.do?action=genRecentContent` (Technical page) |
 | Recent Edits | `web/genInc/recentDescEdits.html` | `util.AntwebFunctions.genRecentDescEdits()` (the last manual page-text edits) | after each page-text save (`DescriptionAction`), at start-up, `genRecentContent` |
 | Slideshow, background | `common/slideshow_homepage.jsp`, the page's script | static |
@@ -38,7 +38,14 @@ Home: none at request time ([`statistics`](../data-model.md#statistics), [`image
 
 ## Numbers shown
 
-[numbers.md](../numbers.md) #1 to #5 (home page), #6 to #19 (statistics page).
+[numbers.md](../numbers.md) #1 to #5 and #122 (home page), #6 to #19 and #123 (statistics page).
+
+Since 2026-11-06 (Brian Fisher, release 9.3.0) the home page box is "AntWeb in numbers" (`StatisticsDb.homeBoxHtml`):
+specimen records; valid living ant species (AntCat, species only, + fossil species apart); species with specimens in
+AntWeb and species imaged, each with its share of the valid living species; images of ants of N specimens (+ label
+images). It separates global diversity (AntCat) from AntWeb's coverage. statsPage.do adds the subspecies, morphospecies
+and imaged fossils. The numbers are columns of the statistics row (`StatisticsDb.HOME_COLUMNS`, added to older tables
+by `ensureHomeColumns`), recounted every morning by the count check (`inv:home`).
 
 ## Known issues
 
