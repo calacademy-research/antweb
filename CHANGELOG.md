@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [9.3.0] - 2026-11-07
+
+Place numbers equal their lists; four views of every species and genus list; home page numbers; specimens follow AntCat names daily (uploaded name kept); clearer upload reports; API: full species names and exact country matching. Plain-language notes: release-notes/9.3.0.md. Main PRs: #316, #318, #321, #322, #324, #325, #326, #327.
+
+---
+
 ## [9.2.0] - 2026-10-17
 
 AntWeb's 24th birthday release (AntWeb launched 17 October 2002).
