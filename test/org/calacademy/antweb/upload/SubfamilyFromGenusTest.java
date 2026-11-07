@@ -71,5 +71,9 @@ public class SubfamilyFromGenusTest extends TestCase {
         assertFalse("a morphospecies code", SpecimenUploadParse.speciesIsGenusName("mg01", genera));
         assertFalse("blank", SpecimenUploadParse.speciesIsGenusName(" ", genera));
         assertFalse("missing", SpecimenUploadParse.speciesIsGenusName(null, genera));
+        // production 11-07: Atta cephalotes (cephalotes is also a genus) is a real species, not flagged
+        assertFalse("a known combination", SpecimenUploadParse.flagSpeciesIsGenusName("cephalotes", java.util.Set.of("cephalotes")::contains, () -> true));
+        assertTrue("an unknown combination", SpecimenUploadParse.flagSpeciesIsGenusName("strumigenys", genera, () -> false));
+        assertFalse("not a genus name: no lookup needed", SpecimenUploadParse.flagSpeciesIsGenusName("alberti", genera, () -> { throw new AssertionError(); }));
     }
 }

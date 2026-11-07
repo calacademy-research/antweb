@@ -394,7 +394,10 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
             // Brian Fisher, 2026-11-07: a genus name in the species column is listed for the curator, the line loaded as
             // given (Marcio Pie Ant Lab, 2019: genus "Pyramica", species "strumigenys" stayed an unrecognized name for years).
-            if (speciesIsGenusName(speciesName, SpecimenUploadParse::isAntcatAntGenus)) {
+            // Only a combination AntCat does not know: Atta cephalotes, Solenopsis azteca are real (production 11-07).
+            final String fGenus = genusName, fSpecies = speciesName, fSubspecies = subspeciesName, fSubfamily = subfamilyName;
+            if (flagSpeciesIsGenusName(speciesName, SpecimenUploadParse::isAntcatAntGenus,
+                () -> isKnownCombination(genusSubfamily(fGenus, fSubfamily), fGenus, fSpecies, fSubspecies))) {
               getMessageMgr().addToMessages(MessageMgr.speciesIsGenusName, Html.esc(writtenName.trim()));
             }
             
@@ -1440,8 +1443,22 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     /**
      * Whether the species column holds a genus name (Brian Fisher, 2026-11-07): one word of letters that is a genus of
      * isGenus (AntCat's ant genera, valid or synonym). Placeholders "(indet)" and morphospecies codes are never one.
-     * A warning only: an epithet can legitimately match a genus name, so the curator checks it.
+     * Many real epithets match a genus name (Atta cephalotes, Solenopsis azteca), so the upload flags it only when
+     * AntCat does not know the combination (flagSpeciesIsGenusName): Pyramica strumigenys, Tetramorium triglyphothrix.
      */
+    public static boolean flagSpeciesIsGenusName(String species, java.util.function.Predicate<String> isGenus,
+            java.util.function.BooleanSupplier isKnownName) {
+        return speciesIsGenusName(species, isGenus) && !isKnownName.getAsBoolean();
+    }
+
+    /** The subfamily of an AntCat genus (valid or synonym), else the one given: for the known-name lookup. */
+    private static String genusSubfamily(String genusName, String given) {
+        if (Utility.isBlank(genusName)) return given;
+        Genus g = TaxonMgr.getGenusFromName(genusName);
+        if (g == null) g = TaxonMgr.getSynonymGenusFromName(genusName);
+        return g != null && !Utility.isBlank(g.getSubfamily()) ? g.getSubfamily() : given;
+    }
+
     public static boolean speciesIsGenusName(String species, java.util.function.Predicate<String> isGenus) {
         if (species == null) return false;
         String s = species.trim().toLowerCase(Locale.ROOT);
