@@ -37,6 +37,7 @@ KNOWN_FAILURES = ROOT / "tests/e2e/known-failures.toml"
 PACIFIC = ZoneInfo("America/Los_Angeles")
 CLOSED_FROM, CLOSED_UNTIL = dt.time(4, 45), dt.time(8, 15)
 REVIEW_MARKER = "<!-- claude-review -->"
+REVIEW_BOT = "github-actions[bot]"   # the account the review workflow posts as
 MAX_KNOWN_DAYS = 7
 
 # Code the nightly run executes (UtilDataAction's sets, the Scheduler, the counts and lists it fills). A PR that
@@ -80,7 +81,9 @@ def nightly_files(files):
 
 def review_state(comments, head_sha):
     """(ok, text) for the latest Claude review comment of the PR."""
-    reviews = [c for c in comments if (c.get("body") or "").startswith(REVIEW_MARKER)]
+    # only the review workflow's own comments (review of #330: anyone could post one in that form)
+    reviews = [c for c in comments if (c.get("body") or "").startswith(REVIEW_MARKER)
+               and (c.get("user") or {}).get("login") == REVIEW_BOT]
     if not reviews:
         return False, "no Claude review comment"
     body = reviews[-1]["body"]
@@ -109,8 +112,11 @@ def known_failure_problems(entries, today):
             problems.append(f"{name}: missing {', '.join(missing)}")
             continue
         decided, expires = e["decided"], e["expires"]
-        if not isinstance(decided, dt.date) or not isinstance(expires, dt.date):
+        # dates only (a TOML datetime is a date subclass and would break the comparisons; review of #330)
+        if not all(isinstance(x, dt.date) and not isinstance(x, dt.datetime) for x in (decided, expires)):
             problems.append(f"{name}: decided and expires must be dates (YYYY-MM-DD)")
+        elif decided > today:
+            problems.append(f"{name}: decided in the future ({decided})")
         elif expires < today:
             problems.append(f"{name}: expired {expires}")
         elif (expires - decided).days > MAX_KNOWN_DAYS:
@@ -141,20 +147,35 @@ def unlisted(failed, entries):
 # ---- GitHub ----
 
 def gh(path):
-    """One GET of the GitHub API (lists are asked for with per_page=100, enough for one PR)."""
+    """One GET of the GitHub API."""
     out = subprocess.run(["gh", "api", path], capture_output=True, text=True, check=True).stdout
     return json.loads(out) if out.strip() else None
 
 
+def gh_all(path, key=None):
+    """Every page of a list (review of #330: one page of 100 missed files, comments and runs on large PRs). key: the
+    list inside each page's object ("workflow_runs", "jobs"); None for a plain list."""
+    out = subprocess.run(["gh", "api", "--paginate", path], capture_output=True, text=True, check=True).stdout
+    items, dec, i = [], json.JSONDecoder(), 0
+    while i < len(out):
+        while i < len(out) and out[i].isspace():
+            i += 1
+        if i >= len(out):
+            break
+        page, i = dec.raw_decode(out, i)
+        items += (page.get(key) or []) if key else (page or [])
+    return items
+
+
 def runs_for(sha, name):
-    runs = gh(f"repos/{REPO}/actions/runs?head_sha={sha}&per_page=100")["workflow_runs"]
+    runs = gh_all(f"repos/{REPO}/actions/runs?head_sha={sha}&per_page=100", "workflow_runs")
     return sorted([r for r in runs if r["name"] == name], key=lambda r: r["created_at"])
 
 
 def annotations_of(run_id):
     out = []
-    for job in gh(f"repos/{REPO}/actions/runs/{run_id}/jobs?per_page=100")["jobs"]:
-        out += gh(f"repos/{REPO}/check-runs/{job['id']}/annotations?per_page=100") or []
+    for job in gh_all(f"repos/{REPO}/actions/runs/{run_id}/jobs?per_page=100", "jobs"):
+        out += gh_all(f"repos/{REPO}/check-runs/{job['id']}/annotations?per_page=100")
     return out
 
 
@@ -179,7 +200,7 @@ def main(argv=None):
 
     pr = gh(f"repos/{REPO}/pulls/{args.pr}")
     head = pr["head"]["sha"]
-    files = [f["filename"] for f in gh(f"repos/{REPO}/pulls/{args.pr}/files?per_page=100")]
+    files = [f["filename"] for f in gh_all(f"repos/{REPO}/pulls/{args.pr}/files?per_page=100")]
     results = []
 
     def check(n, name, ok, text):
@@ -202,7 +223,9 @@ def main(argv=None):
     elif not run:
         check(2, "staging", False, "no finished full e2e run for the head (add the full-e2e label)")
     else:
-        check(2, "staging", run["conclusion"] == "success" or not unlisted(failed, entries),
+        # a failed run passes only with named failures that are all listed: a run that failed without naming its
+        # tests (a crash, a collection error) never passes (review of #330)
+        check(2, "staging", run["conclusion"] == "success" or (bool(failed) and not unlisted(failed, entries)),
               f"full e2e {run['conclusion']} ({len(failed)} failed), run {run['id']}")
 
     problems = known_failure_problems(entries, dt.date.today())
@@ -221,7 +244,7 @@ def main(argv=None):
     if args.no_review:
         check(5, "review", True, f"no review: {args.no_review}")
     else:
-        ok, text = review_state(gh(f"repos/{REPO}/issues/{args.pr}/comments?per_page=100") or [], head)
+        ok, text = review_state(gh_all(f"repos/{REPO}/issues/{args.pr}/comments?per_page=100"), head)
         check(5, "review", ok, text)
 
     closed = window_closed(dt.datetime.now(dt.timezone.utc))

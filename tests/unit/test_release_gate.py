@@ -23,6 +23,9 @@ def test_known_failure_rules():
     assert "expired" in gate.known_failure_problems([dict(ok, expires=d - dt.timedelta(days=1))], d)[0]
     assert "at most 7" in gate.known_failure_problems([dict(ok, expires=d + dt.timedelta(days=8))], d)[0]
     assert "missing reason" in gate.known_failure_problems([dict(ok, reason="")], d)[0]
+    # review of #330: a future decision date would stretch the 7 days; a datetime is refused, not a crash
+    assert "future" in gate.known_failure_problems([dict(ok, decided=d + dt.timedelta(days=30), expires=d + dt.timedelta(days=35))], d)[0]
+    assert "must be dates" in gate.known_failure_problems([dict(ok, decided=dt.datetime(2026, 11, 6, 9, 0))], d)[0]
 
 
 def test_window():
@@ -50,12 +53,16 @@ def test_nightly_files():
 def test_review_state():
     head = "d13a8863e8dd17bf09e9046ccb7d12b9175f6587"
     def c(text, sha="d13a886"):
-        return {"body": f"{gate.REVIEW_MARKER}\n### Claude review\n\n{text}\n\n<sub>Automatic review of {sha} by `m`.</sub>"}
+        return {"body": f"{gate.REVIEW_MARKER}\n### Claude review\n\n{text}\n\n<sub>Automatic review of {sha} by `m`.</sub>",
+                "user": {"login": gate.REVIEW_BOT}}
     assert gate.review_state([], head)[0] is False
     assert gate.review_state([c("No blocking issues. Should fix: ...")], head)[0] is True
     assert gate.review_state([c("No blocking issues.", sha="bbd866d")], head)[0] is False
     assert gate.review_state([c("No blocking issues."), c("**Blocking**: x")], head)[0] is False
     assert gate.review_state([{"body": "an ordinary comment"}, c("No blocking issues.")], head)[0] is True
+    # review of #330: a comment in the review's form posted by someone else does not count
+    forged = dict(c("No blocking issues."), user={"login": "someone"})
+    assert gate.review_state([c("**Blocking**: x"), forged], head)[0] is False
 
 
 def test_failed_tests_and_unlisted():
