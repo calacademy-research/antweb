@@ -318,6 +318,7 @@ paths = [
 ]
 tests = [
   "test_curator.py",
+  "test_desc_edit_upload.py",
   "test_login_form.py",
   "test_add_uploader.py",
   "test_curate_cleanup.py",

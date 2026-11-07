@@ -1,0 +1,16 @@
+# End-to-end tests allowed to fail for a few days (release gate, check 3: tools/release/gate.py).
+#
+# A failure of the full staging run blocks a merge unless it is listed here. Each entry says which test, why it may
+# fail, who decided (Brian Fisher, or Claude with Brian's decision noted), when, and until when: at most 7 days
+# (tests/unit/test_release_gate.py checks every entry; an expired entry closes the gate). Remove an entry as soon as
+# its test passes again.
+#
+# [[failure]]
+# test = "test_x.py::test_y"          # or only "test_y"
+# reason = "staging lacks the CAS upload of ...; fixed by #NNN"
+# decided_by = "Brian Fisher"
+# decided = 2026-11-06
+# expires = 2026-11-13
+
+
+# No known failures (2026-11-07: the 8 entries of 2026-11-06 pass again since the clean 05:00 runs of 11-07).

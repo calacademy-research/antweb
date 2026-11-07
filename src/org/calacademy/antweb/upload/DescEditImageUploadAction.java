@@ -22,7 +22,7 @@ import org.apache.commons.logging.LogFactory;
  * isSafeFileName: never JSP, class, jar, script or settings files), a file it replaces is backed up, and the
  * answer gives the link and an img tag (common/descEdit/taxonImageConfirmForm.jsp or overviewImageConfirmForm.jsp).
  * Writes files only, no table; the folder is listed by curatorFiles.do. Form: DescEditImageUploadForm.
- * Tests: test/org/calacademy/antweb/security/AccessChecksTest.java (no functional e2e test, docs/catalog/actions.csv).
+ * Tests: test/org/calacademy/antweb/security/AccessChecksTest.java; tests/e2e/test_desc_edit_upload.py (upload, refusals).
  */
 public class DescEditImageUploadAction extends AntwebAction {
 
