@@ -391,6 +391,12 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
               errorMessage = "nonAnt:" + nonAnt;
               return errorMessage;
             }
+
+            // Brian Fisher, 2026-11-07: a genus name in the species column is listed for the curator, the line loaded as
+            // given (Marcio Pie Ant Lab, 2019: genus "Pyramica", species "strumigenys" stayed an unrecognized name for years).
+            if (speciesIsGenusName(speciesName, SpecimenUploadParse::isAntcatAntGenus)) {
+              getMessageMgr().addToMessages(MessageMgr.speciesIsGenusName, Html.esc(writtenName.trim()));
+            }
             
             // If it is blank, make it a specified indet.
             if (Utility.isBlank(genusName) || "(indet)".equals(genusName)) {
@@ -1429,6 +1435,18 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         java.util.List<Taxon> all = TaxonMgr.getSubfamilies();
         if (all != null) for (Taxon t : all) if (subfamily.equals(t.getName()) && t.isAnt()) return true;
         return "incertae_sedis".equals(subfamily);
+    }
+
+    /**
+     * Whether the species column holds a genus name (Brian Fisher, 2026-11-07): one word of letters that is a genus of
+     * isGenus (AntCat's ant genera, valid or synonym). Placeholders "(indet)" and morphospecies codes are never one.
+     * A warning only: an epithet can legitimately match a genus name, so the curator checks it.
+     */
+    public static boolean speciesIsGenusName(String species, java.util.function.Predicate<String> isGenus) {
+        if (species == null) return false;
+        String s = species.trim().toLowerCase(Locale.ROOT);
+        if (!s.matches("[a-z]{3,}")) return false;
+        return isGenus.test(s);
     }
 
     /** A genus AntCat has (current valid, or a synonym of one): the line is an ant whatever its subfamily says. */

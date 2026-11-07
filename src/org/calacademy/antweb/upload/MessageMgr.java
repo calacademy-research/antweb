@@ -194,6 +194,8 @@ public class MessageMgr {
     public static final String nonAntTaxa = "nonAntTaxa";
     /** 2026-10-22: a line given as an ant whose genus is not an ant genus in AntCat (e.g. Termes), or not a name. Kept. */
     public static final String genusNotInAntcat = "genusNotInAntcat";
+    /** 2026-11-07: the species column holds a genus name (genus "Pyramica", species "strumigenys"). Kept. */
+    public static final String speciesIsGenusName = "speciesIsGenusName";
     public static final String codeQuoteReplaced = "codeQuoteReplaced";
     public static final String invalidSpeciesName = "invalidSpeciesName";
     public static final String specialCharacterFound = "specialCharacterFound";
@@ -385,6 +387,7 @@ public class MessageMgr {
       testList.add(new Test(nonAntTaxa, SET, "<b>Non-ant taxa <font color=green>(uploaded)</font></b>"));     
       testList.add(new Test(codeQuoteReplaced, SET, "<b>Locality or collection code with a double quote: each quote was replaced by - <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(genusNotInAntcat, SET, "<b>Genus not in AntCat (not an ant?) <font color=green>(uploaded)</font></b>"));
+      testList.add(new Test(speciesIsGenusName, SET, "<b>Species column holds a genus name: check the genus and species columns <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(invalidSpeciesName, SET, "<b>Invalid species name <font color=red>(not uploaded)</font></b>"));
 
       testList.add(new Test(specialCharacterFound, SET, "<b>Special Character Found <font color=red>(not uploaded)</font></b>"));

@@ -61,4 +61,15 @@ public class SubfamilyFromGenusTest extends TestCase {
         assertFalse("indet", SpecimenUploadParse.isGenusNotInAntcat("indet", "formicidae"));
         assertFalse("a morphogenus", SpecimenUploadParse.isGenusNotInAntcat("amblyoponine_genus8", "formicidae"));
     }
+
+    public void testAGenusNameInTheSpeciesColumnIsFlagged() {
+        java.util.function.Predicate<String> genera = java.util.Set.of("strumigenys", "pyramica", "pheidole")::contains;
+        assertTrue("Marcio Pie Ant Lab 2019: Pyramica strumigenys", SpecimenUploadParse.speciesIsGenusName("strumigenys", genera));
+        assertTrue("capitals and spaces", SpecimenUploadParse.speciesIsGenusName(" Pheidole ", genera));
+        assertFalse("an ordinary epithet", SpecimenUploadParse.speciesIsGenusName("alberti", genera));
+        assertFalse("indet placeholder", SpecimenUploadParse.speciesIsGenusName("(indet)", genera));
+        assertFalse("a morphospecies code", SpecimenUploadParse.speciesIsGenusName("mg01", genera));
+        assertFalse("blank", SpecimenUploadParse.speciesIsGenusName(" ", genera));
+        assertFalse("missing", SpecimenUploadParse.speciesIsGenusName(null, genera));
+    }
 }
