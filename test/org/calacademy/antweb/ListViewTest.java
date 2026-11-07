@@ -412,5 +412,20 @@ public class ListViewTest extends TestCase {
         String sub = TaxaPage.genusAwareCriteria(geo, fossil, "subfamily");
         assertTrue("subfamilies with fossil species too: " + sub, sub.contains("taxon.fossil = 1 or exists (select 1 from taxon fs, geolocale_taxon")
             && sub.contains("fs.subfamily = taxon.subfamily") && !sub.contains("fs.genus"));
+        // review of #327: Family.setChildren passes "where 1 = 1" without its leading space on global pages
+        String global = TaxaPage.genusAwareCriteria("where 1 = 1", fossil, "subfamily");
+        assertTrue(global, global.contains("from taxon fs where 1 = 1 and") && !global.contains("fswhere"));
+        // review of #327: the fossil-species subquery re-aliases only taxon.taxon_name to fs, so no overview's list clause
+        // may name another taxon column (it would point at the outer row)
+        org.calacademy.antweb.geolocale.Country cty = new org.calacademy.antweb.geolocale.Country();
+        cty.setId(7);
+        org.calacademy.antweb.Museum m = new org.calacademy.antweb.Museum();
+        m.setCode("CASC");
+        org.calacademy.antweb.geolocale.Bioregion b = new org.calacademy.antweb.geolocale.Bioregion();
+        b.setName("Malagasy");
+        for (org.calacademy.antweb.Overview o : new org.calacademy.antweb.Overview[] {cty, m, b, new org.calacademy.antweb.Project("madants")}) {
+            String clause = o.getFetchChildrenClause().replaceAll("(?<![\\w])taxon\\.taxon_name", "");
+            assertFalse(o.getClass().getSimpleName() + ": " + o.getFetchChildrenClause(), java.util.regex.Pattern.compile("(?<![\\w])taxon\\.").matcher(clause).find());
+        }
     }
 }

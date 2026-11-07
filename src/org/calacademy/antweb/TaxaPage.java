@@ -173,7 +173,7 @@ public class TaxaPage implements Serializable {
 	public static String genusAwareCriteria(String fetchChildrenClause, StatusSet statusSet, String rank) {
 		boolean higher = "genus".equals(rank) || "subfamily".equals(rank);
 		if (!higher || !StatusSet.VALID_FOSSIL.equals(statusSet.getValue())) return statusSet.getAndCriteria("taxon", rank);
-		String clause = fetchChildrenClause == null || fetchChildrenClause.trim().isEmpty() ? " where 1 = 1" : fetchChildrenClause;
+		String clause = fetchChildrenClause == null || fetchChildrenClause.trim().isEmpty() ? " where 1 = 1" : (fetchChildrenClause.trim().startsWith(",") ? "" : " ") + fetchChildrenClause.trim();   // "where 1 = 1" without its space (Family.setChildren, global) gave "fswhere" (review of #327)
 		String inner = clause.replaceAll("(?<![\\w])taxon\\.taxon_name", "fs.taxon_name");
 		return " and taxon.status = '" + Status.VALID + "' and (taxon.fossil = 1 or exists (select 1 from taxon fs" + inner
 			+ " and " + org.calacademy.antweb.home.PlaceTotals.fossilSpeciesOf("fs", "taxon", rank) + "))";

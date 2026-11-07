@@ -429,8 +429,7 @@ museum
     /** The names (alias t) with a specimen record. */
     static final String HAS_SPECIMEN = "exists (select 1 from specimen s where s.taxon_name = t.taxon_name)";
     /** The names (alias t) a specimen with a photo of the ant is filed under. */
-    static final String HAS_ANT_IMAGE = "t.taxon_name in (select s.taxon_name from " + "(select i.image_of_id from image i where "
-        + "lower(trim(coalesce(i.shot_type, ''))) <> 'l' group by i.image_of_id) x join specimen s on s.code = x.image_of_id)";
+    static final String HAS_ANT_IMAGE = "t.taxon_name in (select s.taxon_name from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id)";   // the one ant-image rule (review of #327)
 
     public static final String LIVING_SPECIES_SQL = "select count(*) from taxon t where " + validAntSpeciesOnly("t", 0);
     public static final String FOSSIL_SPECIES_SQL = "select count(*) from taxon t where " + validAntSpeciesOnly("t", 1);
@@ -485,6 +484,16 @@ museum
             }
         }
         s_homeColumnsChecked = true;
+    }
+
+    /** Whether the statistics table has every HOME_COLUMNS column (a read, no change). */
+    static boolean homeColumnsExist(Connection connection) throws SQLException {
+        Set<String> have = new HashSet<>();
+        try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery("select column_name from information_schema.columns"
+                + " where table_schema = database() and table_name = 'statistics'")) {
+            while (r.next()) have.add(r.getString(1).toLowerCase(Locale.ROOT));
+        }
+        return have.containsAll(HOME_COLUMNS.keySet());
     }
 
     /** "87%": part of whole, rounded; "" when whole is 0. */
@@ -627,23 +636,27 @@ museum
                 */
             }
 
+            // the home page numbers of 2026-11-06 go in the same insert (review of #327: a later "update ... order by id
+            // desc limit 1" could hit another row); their columns are added at startup (LoginMgr), never here
+            boolean withHome = homeColumnsExist(getConnection());
+            StringBuilder homeCols = new StringBuilder();
+            StringBuilder homeVals = new StringBuilder();
+            if (withHome) {
+                for (java.util.Map.Entry<String, Long> e : home.entrySet()) {
+                    homeCols.append(", ").append(e.getKey());
+                    homeVals.append(", ").append(e.getValue());
+                }
+            } else {
+                s_log.error("populateStatistics() the statistics home columns are missing (added at startup): home numbers not stored");
+            }
             String update = "insert into statistics "
-                    + " (action, specimens, extant_taxa, total_taxa, proj_taxa, bioregion_taxa, museum_taxa, geolocale_taxa, geolocale_taxa_introduced, geolocale_taxa_endemic " 
-                    + " , total_images, specimens_imaged, species_imaged, valid_species_imaged, login_id, exec_time) "  //
+                    + " (action, specimens, extant_taxa, total_taxa, proj_taxa, bioregion_taxa, museum_taxa, geolocale_taxa, geolocale_taxa_introduced, geolocale_taxa_endemic "
+                    + " , total_images, specimens_imaged, species_imaged, valid_species_imaged, login_id, exec_time" + homeCols + ") "
                     + " values ('" + action + "'," +  specimenRecords + "," + validSpecies + "," + numberTotalTaxa
                     + "," + numberProjTaxa + "," + numberBioregionTaxa + "," + numberMuseumTaxa + "," + numberGeolocaleTaxa + "," + numberGeolocaleTaxaIntroduced + "," + numberGeolocaleTaxaEndemic
-                    + "," + totalImages + "," + imagedSpecimens 
-                    + "," + imagedSpecies + "," + validSpeciesImaged + "," + loginId + ", '" + execTime + "')";
+                    + "," + totalImages + "," + imagedSpecimens
+                    + "," + imagedSpecies + "," + validSpeciesImaged + "," + loginId + ", '" + execTime + "'" + homeVals + ")";
             int c = utilDb.runDml(update);
-            // the home page numbers of 2026-11-06, on the row just written (columns added to older tables first)
-            try {
-                ensureHomeColumns(getConnection());
-                StringBuilder set = new StringBuilder();
-                for (java.util.Map.Entry<String, Long> e : home.entrySet()) set.append(set.length() == 0 ? "" : ", ").append(e.getKey()).append(" = ").append(e.getValue());
-                utilDb.runDml("update statistics set " + set + " order by id desc limit 1");
-            } catch (SQLException e) {
-                s_log.error("populateStatistics() home columns e:" + e);
-            }
     }
 }
         

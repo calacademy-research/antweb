@@ -403,6 +403,12 @@ public class PlaceTotalsDbTest extends TestCase {
         assertEquals(1, one(StatisticsDb.FOSSIL_SPECIES_SQL));
         assertEquals("pheidole nova has no specimen", 2, one(StatisticsDb.LIVING_SPECIES_WITH_SPECIMENS_SQL));
         assertEquals(1, one(StatisticsDb.FOSSIL_SPECIES_IMAGED_SQL));
+        // review of #327: the columns are added at startup (LoginMgr), never by the nightly; without them the row is
+        // still written, with the older columns
+        long before = one("select count(*) from statistics");
+        new StatisticsDb(connection).populateStatistics("nightly", 0, "set4", null);
+        assertEquals(before + 1, one("select count(*) from statistics"));
+        StatisticsDb.ensureHomeColumns(connection);
         new StatisticsDb(connection).populateStatistics("nightly", 0, "set4", null);
         assertEquals(3, one("select living_species from statistics order by id desc limit 1"));
         assertEquals(2, one("select living_species_specimens from statistics order by id desc limit 1"));
