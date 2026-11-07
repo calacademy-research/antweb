@@ -135,6 +135,11 @@ public final class NumberChecks {
                     if (col >= 0) recount[row][col] += r.getLong(3);
                 }
             }
+            // Brian Fisher, 2026-11-06: Fossil genera and subfamilies are those of the view Fossil, the extinct ones and
+            // the living ones with a valid fossil species or subspecies (a recount by join, not the page's exists)
+            for (int i = 0; i < 2; i++) recount[1][i] += count("select count(distinct g.taxon_name) from taxon g join taxon fs on fs.subfamily = g.subfamily"
+                + (i == 1 ? " and fs.genus = g.genus" : "") + " where g.status = 'valid' and g.taxarank = '" + RANKS[i] + "' and g.family = 'formicidae'"
+                + " and g.fossil = 0 and fs.fossil = 1 and fs.status = 'valid' and fs.taxarank in ('species', 'subspecies')");
             String[] what = {"Valid Subfamilies", "Valid Genera", "Valid Species", "Valid Subspecies"};
             for (int i = 0; i < 4; i++) {
                 inv.compare(c, "site", "statsPage", "Global Data, Extant: " + what[i], extant.getValue(i + 1), recount[0][i], "=", null);
@@ -279,15 +284,18 @@ public final class NumberChecks {
             .pendingOn(true, true, false, false);   // the place pages' numbers follow the rules of 2026-10-21
         Map<String, long[][]> data = CountInvariants.keyMap();   // as the page counts (Q7: ants only, PlaceTotals.validAntTaxonCondition)
         Map<String, long[][]> ants = CountInvariants.keyMap();   // an independent recount: Formicidae, identified to genus
+        Map<String, long[]> living = CountInvariants.keyMap();   // living genera and subfamilies counted in Valid Fossil too
         String page = museum ? "statsPage Museum Data" : "statsPage Bioregion Data";
         inv.check(check, c -> {
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(statsPlacesSql(type)))) {
                 while (r.next()) {
                     int col = java.util.Arrays.asList(RANKS).indexOf(r.getString(3));
                     if (col < 0) continue;
-                    int f = r.getInt(2) == 1 ? 1 : 0;
+                    // fossil 2: a living genus or subfamily with a fossil species on the list, in the Valid Fossil row (2026-11-06)
+                    int f = r.getInt(2) >= 1 ? 1 : 0;
                     data.computeIfAbsent(r.getString(1), x -> new long[2][4])[f][col] += r.getLong(4);
                     ants.computeIfAbsent(r.getString(1), x -> new long[2][4])[f][col] += r.getLong(5);
+                    if (r.getInt(2) == 2) living.computeIfAbsent(r.getString(1), x -> new long[4])[col] += r.getLong(5);
                 }
             }
             long[][] global = new long[2][4];
@@ -298,6 +306,8 @@ public final class NumberChecks {
                     if (col >= 0) global[r.getInt(1) == 1 ? 1 : 0][col] += r.getLong(3);
                 }
             }
+            for (int i = 0; i < 2; i++) global[1][i] += count("select count(*) from taxon t where t.fossil = 0 and "
+                + PlaceTotals.fossilViewCondition("t", RANKS[i], null, null, null));   // the view Fossil's genera and subfamilies (2026-11-06)
             String t = museum ? "museum" : "bioregion";
             String k = museum ? "code" : "name";
             Map<String, long[]> stored = inv.rows("select " + k + ", subfamily_count, genus_count, species_count, valid_species_count from " + t);
@@ -309,14 +319,15 @@ public final class NumberChecks {
                 long[] s = e.getValue();
                 long[][] d = data.getOrDefault(place, new long[2][4]);
                 long[][] a = ants.getOrDefault(place, new long[2][4]);
+                long[] lv = living.getOrDefault(place, new long[4]);
                 exp.put(place, museum ? d : d[0]);
                 if (!labels.containsKey(place)) continue;
                 String p = inv.why(c, type, place);
                 // Against the place page (both count ants only since 2026-10-22, Q7; stats.nonants compares the page's rule with the recount).
                 inv.compare(c, type, place, page + (museum ? ", Valid Extant" : "") + ": Species + Subspecies (ants) = Valid species of the " + type + " page",
                     a[0][2] + a[0][3], s[3], "=", p);
-                inv.compare(c, type, place, page + ": valid extant and fossil Subfamilies (ants) <= Subfamilies of the " + type + " page", a[0][0] + a[1][0], s[0], "<=", p);
-                inv.compare(c, type, place, page + ": valid extant and fossil Genera (ants) <= Genera of the " + type + " page", a[0][1] + a[1][1], s[1], "<=", p);
+                inv.compare(c, type, place, page + ": valid extant and fossil Subfamilies (ants) <= Subfamilies of the " + type + " page", a[0][0] + a[1][0] - lv[0], s[0], "<=", p);   // a living one once
+                inv.compare(c, type, place, page + ": valid extant and fossil Genera (ants) <= Genera of the " + type + " page", a[0][1] + a[1][1] - lv[1], s[1], "<=", p);
                 inv.compare(c, type, place, page + ": valid extant and fossil species and subspecies (ants) <= Species of the " + type + " page",
                     a[0][2] + a[0][3] + a[1][2] + a[1][3], s[2], "<=", p);
                 for (int f = 0; f < (museum ? 2 : 1); f++) {
@@ -370,7 +381,14 @@ public final class NumberChecks {
         return "select l." + key + ", t.fossil, t.taxarank, sum(case when " + page + " then 1 else 0 end), sum(case when " + recount
             + " then 1 else 0 end) from taxon t join " + list + " l on t.taxon_name = l.taxon_name"
             + " where t.status = 'valid' and t.fossil in (" + (museum ? "0, 1" : "0") + ") and t.taxarank in ('subfamily', 'genus', 'species', 'subspecies')"
-            + " group by l." + key + ", t.fossil, t.taxarank";
+            + " group by l." + key + ", t.fossil, t.taxarank"
+            // Museum Data, Valid Fossil (2026-11-06): the living genera and subfamilies with a fossil species on the same
+            // list, as fossil 2 (counted in the Valid Fossil row, and apart from it in the <= checks)
+            + (museum ? " union all select l.code, 2, t.taxarank, count(*), count(*) from taxon t join museum_taxon l on t.taxon_name = l.taxon_name"
+                + " where t.status = 'valid' and t.fossil = 0 and t.family = 'formicidae' and t.taxarank in ('subfamily', 'genus')"
+                + " and exists (select 1 from taxon fs join museum_taxon fl on fl.taxon_name = fs.taxon_name and fl.code = l.code"
+                + " where fs.subfamily = t.subfamily and (t.taxarank = 'subfamily' or fs.genus = t.genus) and fs.fossil = 1"
+                + " and fs.status = 'valid' and fs.taxarank in ('species', 'subspecies')) group by l.code, t.taxarank" : "");
     }
 
     // ------------------------------------------------------------------ list rows: Images column

@@ -1,4 +1,4 @@
-<%-- Body of the home page (index.jsp): the generated Current Statistics (web/genInc/statistics.jsp), Recent Images
+<%-- Body of the home page (index.jsp): the generated statistics box "AntWeb in numbers" (web/genInc/statistics.jsp, StatisticsDb.homeBoxHtml, 2026-11-06), Recent Images
      and Recent Edits (genInc/*.html) pasted in by FileUtil.getContent(), the mission text, the subfamily slideshow
      (common/slideshow_homepage.jsp), the AntWeb Community links (groups, curators, museums, artists, staff), and the
      World Ant Collections box. No database work at request time. Docs: docs/flows/home-and-statistics.md,
@@ -36,7 +36,7 @@
 
 <div id="home_upper">
     <div id="stats">
-        <b>Current Statistics</b><br />
+        <b class="stats-title">AntWeb in numbers</b>
         <%= FileUtil.getContent("web/genInc/statistics.jsp") %>
         <span class="right"><a href="<%= domainApp %>/statsPage.do">More &#187;</a></span> 
     </div>

@@ -213,7 +213,7 @@ public class UploadNotice {
 
     /**
      * What in the report needs the curator's attention, in one or two sentences (Brian Fisher, 2026-10-29):
-     * "2 lines were corrected and 1 line was not loaded; see the report. Please fix them in your own data
+     * "2 specimens were corrected and 1 line was not loaded; see the report. Please fix them in your own data
      * before your next upload." Only counts; "Nothing in the report needs your attention." when there is
      * nothing. Null when the counts are not known (image uploads, uploads that did not complete).
      * Which report sections count: MessageMgr.CORRECTED.
@@ -223,8 +223,10 @@ public class UploadNotice {
         List<String> parts = new ArrayList<>();
         // Name changes first (Brian Fisher, 2026-11-02: they matter most); codes other groups uploaded first are
         // not a problem in the curator's data and are not counted here.
-        if (f.nameChanges > 0) parts.add(were(f.nameChanges, "line", "lines") + "filed under a name AntCat has changed");
-        if (f.corrected > 0) parts.add(were(f.corrected, "line", "lines") + "corrected");
+        // Brian Fisher, 2026-11-04 and 11-06: a loaded line is a specimen, so the counts say specimens; a line that was
+        // not loaded is only a line of the file (as the report's counts, UploadReportPage.lineWord)
+        if (f.nameChanges > 0) parts.add(were(f.nameChanges, "specimen", "specimens") + "filed under a name AntCat has changed");
+        if (f.corrected > 0) parts.add(were(f.corrected, "specimen", "specimens") + "corrected");
         if (f.notLoaded > 0) parts.add(were(f.notLoaded, "line", "lines") + "not loaded");
         if (f.redFlagged > 0) parts.add(were(f.redFlagged, "specimen", "specimens") + "red-flagged");
         if (parts.isEmpty()) return "Nothing in the report needs your attention.";

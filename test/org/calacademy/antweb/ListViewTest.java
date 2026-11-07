@@ -169,6 +169,28 @@ public class ListViewTest extends TestCase {
         assertFalse(rows.hasSpecimens("formicinae", "lividopone"));
     }
 
+    /** A genus known in the place only from fossils is in the view Fossil only (Brian Fisher, 2026-11-05: Ukraine). */
+    public void testFossilOnlyGenusOnlyInFossil() {
+        String lit = ListView.SOURCE_ANTCAT;
+        for (String choice : new String[] {"valid", "curated", "all"}) {
+            assertFalse(choice, ListView.keepGenus(choice, "valid", lit, 0, 0, 3));
+        }
+        assertTrue(ListView.keepGenus("fossil", "valid", lit, 3, 0, 3));
+        assertTrue("an extant species too", ListView.keepGenus("curated", "valid", lit, 1, 0, 3));
+        // the evidence counts living names only, the fossil names those of All specimen names (2026-11-06)
+        assertTrue("a morphospecies collected here", ListView.keepGenus("curated", "valid", ListView.SOURCE_SPECIMEN, 0, 2, 3));
+        assertFalse("only fossil specimens collected here (Palearctic Acropyga, Baltic amber)", ListView.keepGenus("curated", "valid", ListView.SOURCE_SPECIMEN, 0, 0, 3));
+        assertFalse(ListView.keepGenus("valid", "valid", ListView.SOURCE_SPECIMEN, 0, 0, 3));
+        assertTrue(ListView.keepGenus("fossil", "valid", ListView.SOURCE_SPECIMEN, 3, 0, 3));
+        assertTrue("no fossil names: the rule before", ListView.keepGenus("curated", "valid", lit, 0, 0, 0));
+        java.util.Map<String, Integer> species = new java.util.HashMap<>();
+        java.util.Map<String, Integer> fossil = new java.util.HashMap<>();
+        fossil.put("formicinae|oecophylla", 2);
+        ListView.GenusRows rows = new ListView.GenusRows("curated", species, null).withFossil(fossil);
+        assertFalse(rows.keep("formicinae", "oecophylla", "valid", "antcat"));
+        assertTrue(rows.keep("formicinae", "lasius", "valid", "antcat"));
+    }
+
     /**
      * Genus list, placeholder rows (Brian Fisher, 2026-11-04): "(dorylinae)" counts the specimens collected here filed
      * under "(dorylinae) (indet)", and links to them in All specimen names; real genera count none.
@@ -373,5 +395,37 @@ public class ListViewTest extends TestCase {
         assertTrue(shown, shown.endsWith("...") && shown.length() < longReason.length());
         assertTrue("the whole reason in the title", c.contains(longReason.toString().trim() + ". Shown here"));
         assertEquals("a name with no date or curator", "removed from the list", new ListView.Removal(null, null, null).text());
+    }
+
+    /** Brian Fisher, 2026-11-06: the view Fossil lists at genus rank the living genera with valid fossil species on the
+     *  same list too (Ukraine: Oecophylla, known there only from Rovno amber); other views and ranks are unchanged. */
+    public void testFossilViewListsLivingGeneraWithFossilSpeciesHere() {
+        String geo = ", geolocale_taxon where geolocale_taxon.taxon_name = taxon.taxon_name and geolocale_id = '7'";
+        StatusSet fossil = StatusSet.listStatusSet(StatusSet.LIST_FOSSIL);
+        String c = TaxaPage.genusAwareCriteria(geo, fossil, "genus");
+        assertTrue(c, c.contains("taxon.fossil = 1 or exists (select 1 from taxon fs, geolocale_taxon where geolocale_taxon.taxon_name = fs.taxon_name and geolocale_id = '7'"));
+        assertTrue(c, c.contains("fs.genus = taxon.genus") && c.contains("fs.fossil = 1") && c.contains("fs.taxarank in ('species', 'subspecies')"));
+        assertEquals("species rank unchanged", fossil.getAndCriteria("taxon", "species"), TaxaPage.genusAwareCriteria(geo, fossil, "species"));
+        StatusSet curated = StatusSet.listStatusSet(StatusSet.LIST_VETTED);
+        assertEquals("other views unchanged", curated.getAndCriteria("taxon", "genus"), TaxaPage.genusAwareCriteria(geo, curated, "genus"));
+        assertTrue("global lists: every fossil species", TaxaPage.genusAwareCriteria(" where 1 = 1", fossil, "genus").contains("from taxon fs where 1 = 1 and fs.subfamily"));
+        String sub = TaxaPage.genusAwareCriteria(geo, fossil, "subfamily");
+        assertTrue("subfamilies with fossil species too: " + sub, sub.contains("taxon.fossil = 1 or exists (select 1 from taxon fs, geolocale_taxon")
+            && sub.contains("fs.subfamily = taxon.subfamily") && !sub.contains("fs.genus"));
+        // review of #327: Family.setChildren passes "where 1 = 1" without its leading space on global pages
+        String global = TaxaPage.genusAwareCriteria("where 1 = 1", fossil, "subfamily");
+        assertTrue(global, global.contains("from taxon fs where 1 = 1 and") && !global.contains("fswhere"));
+        // review of #327: the fossil-species subquery re-aliases only taxon.taxon_name to fs, so no overview's list clause
+        // may name another taxon column (it would point at the outer row)
+        org.calacademy.antweb.geolocale.Country cty = new org.calacademy.antweb.geolocale.Country();
+        cty.setId(7);
+        org.calacademy.antweb.Museum m = new org.calacademy.antweb.Museum();
+        m.setCode("CASC");
+        org.calacademy.antweb.geolocale.Bioregion b = new org.calacademy.antweb.geolocale.Bioregion();
+        b.setName("Malagasy");
+        for (org.calacademy.antweb.Overview o : new org.calacademy.antweb.Overview[] {cty, m, b, new org.calacademy.antweb.Project("madants")}) {
+            String clause = o.getFetchChildrenClause().replaceAll("(?<![\\w])taxon\\.taxon_name", "");
+            assertFalse(o.getClass().getSimpleName() + ": " + o.getFetchChildrenClause(), java.util.regex.Pattern.compile("(?<![\\w])taxon\\.").matcher(clause).find());
+        }
     }
 }

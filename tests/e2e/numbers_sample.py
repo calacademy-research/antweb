@@ -20,6 +20,7 @@ import pytest
 import requests
 
 from antweb import BASE_URL, TIMEOUT, classify, new_session
+from public_pages import attr_unescape  # links read as a browser does: '&regionName' is not '(R)ionName' (F27)
 
 SLOW = max(TIMEOUT, 180)
 DAY = int(os.environ.get("ANTWEB_SAMPLE_DAY") or datetime.date.today().toordinal())
@@ -275,7 +276,7 @@ def taxon_name_of(chunk):
     m = re.search(r'description\.do\?([^"\'>]+)', chunk)
     if not m:
         return None
-    q = unescape(m.group(1))
+    q = attr_unescape(m.group(1))
     tn = re.search(r"(?:^|&)taxonName=([^&]+)", q)
     if tn:
         return requests.utils.unquote(tn.group(1)).replace("+", " ").strip().lower()
@@ -430,7 +431,7 @@ def row_taxon_name(row, rank):
     m = re.search(r'description\.do\?([^"\'>]+)', row["html"])
     if not m:
         return None
-    q = unescape(m.group(1))
+    q = attr_unescape(m.group(1))
     p = {k: requests.utils.unquote(v).replace("+", " ").strip().lower() for k, v in (kv.split("=", 1) for kv in q.split("&") if "=" in kv)}
     if rank == "subfamily":
         return p.get("subfamily") or None

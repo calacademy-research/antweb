@@ -130,6 +130,14 @@ def test_species_page_shows_imaged_castes():
     castes = read("src/org/calacademy/antweb/ImagedCastes.java")
     assert "StatisticsDb.ANT_IMAGE" in castes, "label images must not count"
 
+def test_images_dash_is_not_the_species_dash():
+    """2026-11-06: the genus row's Sp. imaged dash had the Species cell's class (no-species), so a row with species but
+    none imaged (Palearctic Acropyga, 4 species) read as a row with no species in the view (e2e
+    test_species_lists_show_valid_names_and_morphospecies_only)."""
+    cell = read("src/org/calacademy/antweb/ImagesAnywhere.java")
+    assert "class='none-imaged'" in cell and "no-species" not in cell
+    assert "class='no-species'" in read("web/taxonReportBody.jsp")
+
 
 if __name__ == "__main__":
     for name, fn in sorted(globals().items()):

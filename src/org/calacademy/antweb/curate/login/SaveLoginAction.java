@@ -398,6 +398,9 @@ s_log.debug("execute() 1 accessLogin:" + accessLogin + " isOwnLogin:" + isOwnLog
                 + step + ": please try that again."), false);
         }
         if (!changes.isEmpty()) LoginMgr.populate(connection, true, false);
+        // One's own "Upload as" list: the Curate page reads it from the session's login, which was read at log in (Brian
+        // Fisher, 2026-11-05: the menu showed the old list until he logged out and in).
+        if (isSelf && result.after != null) accessLogin.setUploadAs(LoginEdit.normalizeUploadAs(result.after.uploadAs));
         if (result.after != null && result.after.uploadSpecimens && result.after.groupId == LoginEdit.NO_GROUP) {
             changes.add("Note: this login may upload specimen data but has no upload group, so its uploads are refused until it has one.");
         }

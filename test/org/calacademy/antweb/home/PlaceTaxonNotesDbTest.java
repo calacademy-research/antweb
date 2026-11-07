@@ -449,7 +449,12 @@ public class PlaceTaxonNotesDbTest extends TestCase {
         assertTrue(ListView.hasFossil(connection, mad, "species", null, null));
         assertTrue("a genus page's children", ListView.hasFossil(connection, mad, "species", MYRM, "pheidole"));
         assertFalse("another genus", ListView.hasFossil(connection, mad, "species", PON, "hypoponera"));
-        assertFalse("no fossil genus row", ListView.hasFossil(connection, mad, "genus", null, null));
+        // 2026-11-06: the Fossil genus list shows the genera with fossil species (living Pheidole here), so its button too
+        assertTrue("a genus with a fossil species here", ListView.hasFossil(connection, mad, "genus", null, null));
+        assertTrue("its subfamily", ListView.hasFossil(connection, mad, "subfamily", null, null));
+        exec("update taxon set fossil = 0 where taxon_name = '" + PA + "'");
+        assertFalse("no fossil species: no Fossil genus list", ListView.hasFossil(connection, mad, "genus", null, null));
+        exec("update taxon set fossil = 1 where taxon_name = '" + PA + "'");
         assertFalse("Mozambique's list is empty", ListView.hasFossil(connection, mozambique(), "species", null, null));
     }
 

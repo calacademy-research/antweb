@@ -70,7 +70,7 @@ public class Subfamily extends Family implements Serializable {
                     + " and taxon.subfamily = '" + AntFormatter.escapeQuotes(subfamily) + "'"
                     + " and taxon.genus != '' "
                     + " and taxarank = 'genus' "
-                    + statusSet.getAndCriteria("taxon", "genus")   // 2026-10-30: Valid choices, the Genera rule
+                    + TaxaPage.genusAwareCriteria(fetchChildrenClause, statusSet, "genus")   // 2026-10-30: Valid choices, the Genera rule; 2026-11-06: Fossil adds living genera with fossil species here
             ;
 
             //A.log("setChildren(5) overview:" + overview + " query:" + query);
