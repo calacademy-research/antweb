@@ -31,7 +31,6 @@ difference right after an upload can be pending (the failure says so). Read-only
 import math
 import re
 from collections import Counter, defaultdict
-from html import unescape
 from urllib.parse import quote_plus, unquote_plus
 
 import pytest
@@ -462,7 +461,7 @@ def _row_name(row, rank):
     m = re.search(r'description\.do\?([^"\'>]+)', row["html"])
     if not m:
         return None
-    params = dict(kv.split("=", 1) for kv in unescape(m.group(1)).split("&") if "=" in kv)
+    params = dict(kv.split("=", 1) for kv in ns.attr_unescape(m.group(1)).split("&") if "=" in kv)
     name = (params.get("subfamily") or "") + (params.get("genus") or "" if rank == "genus" else "")
     return unquote_plus(name).strip().lower() or None
 

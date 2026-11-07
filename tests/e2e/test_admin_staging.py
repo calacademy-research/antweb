@@ -99,6 +99,15 @@ def test_nightly_run_completed(admin):
     begins = [i for i, l in enumerate(lines) if re.match(STAMP + r"Begin run\b", l)]
     assert begins, (f"no 'Begin run' line in the last {len(lines)} lines of compute.log; its last lines:\n"
                     + _quote(lines))
+    # Before 08:30 the day is yesterday, unless today's run has already ended (2026-11-07: a run at 07:45 read the
+    # failed run of the day before although today's had ended clean at 06:04)
+    today = _pacific_now().date().isoformat()
+    if day != today:
+        for i in begins:
+            if lines[i].startswith(today) and lines[i][11:16] >= NIGHTLY_START and any(
+                    re.match(STAMP + r"End run\b", l) for l in lines[i + 1:]):
+                day = today
+                break
     nightly = [i for i in begins if lines[i].startswith(day) and lines[i][11:16] >= NIGHTLY_START]
     assert nightly, (f"no nightly run (a 'Begin run' at or after {NIGHTLY_START}) on {day} in compute.log; "
                      "the latest runs began: " + ", ".join(lines[i][:19] for i in begins[-3:]))

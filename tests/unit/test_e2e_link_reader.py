@@ -26,6 +26,11 @@ def main():
     assert pp.attr_unescape("a&amp;b") == "a&b"
     assert pp.attr_unescape("a&regionName=b") == "a&regionName=b"
     assert pp.attr_unescape("x&#38;y") == "x&y"
+    # 2026-11-07: the list readers of numbers_sample had the same bug; a region list's subspecies row was read as its
+    # species (Camponotus ligniperda nigrescens as ligniperda: "list 0, API specimenCount 350")
+    import numbers_sample as ns
+    row = '<td><a href="https://staging.antweb.org/description.do?subfamily=formicinae&genus=camponotus&species=ligniperda&subspecies=nigrescens&rank=subspecies&regionName=Europe">x</a></td>'
+    assert ns.taxon_name_of(row) == "formicinaecamponotus ligniperda nigrescens", ns.taxon_name_of(row)
     print("e2e link reader OK")
 
 
