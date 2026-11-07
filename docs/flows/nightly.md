@@ -141,6 +141,31 @@ After any restart AntWeb needs 2 to 4 minutes to load its caches. A restart duri
 
 Admins read the web/log files through `logMgr.do`; only the upload report folders are public.
 
+### The Daily update page (2026-11-07)
+
+`dailyUpdate.do` (curators and admins) shows where a full run is, step by step: the 15 steps of
+`DailyUpdate.STEPS` (AntCat import, TaxonWorks upload, name update, set 1 clean-up, sets 2 to 4, place list totals,
+set 5, log size check, statistics page, API taxon counts, cache reload, count check, end), each with its status (done,
+running, waiting, skipped, failed), start, end, duration and usual time (median of the last 7 completed runs). A step
+over 1.5 times its usual time (and at least a minute over) is yellow, a failed one red. Pages say "daily update",
+never "nightly" (Brian Fisher, 2026-11-07); class names keep "nightly".
+
+- Recording: `Scheduler.doAction` (full runs only: `run`, all sets) calls `DailyUpdate.beginRun()`, then
+  `DailyUpdate.start(step)` where each step begins (set 1's TaxonWorks upload, name update and clean-up in
+  `UtilDataAction`), `skip(step, why)`, `noteFailed` / `noteResult` (from the step's own compute.log line),
+  `failRun` when a set fails, `schedulerFinished` in its finally block. The run ends when its count check job ends
+  (`CountCheckJob.startAfterNightly`; at most 90 minutes). Rows go to `daily_update_step` on a thread of its own and an
+  autocommit connection of its own: recording never touches the run's transaction and never throws into it.
+- Email to antweb@antweb.org, once per step and run: a step failed (not again for a failed set: the Scheduler's own
+  email covers it), or a step ran over twice its usual time and at least 5 minutes over (checked every minute).
+- Banner: visitors' red dot says "AntWeb is running its daily update (about N minutes left)."; the Curate page and a
+  link next to Curate in the header show curators "Step N of M: <step>, started HH:MM Pacific, usually X min; next:
+  <step>" linked to the page.
+- `dailyUpdate.do?format=json` (no login, no personal data): `{"runs":[...]}`, the last 2 runs, newest first, each with
+  `started`, `ended` (null while running), `state` (running, ok, failed) and `steps` (`name`, `label`, `state`, `started`,
+  `ended`, `usual_seconds`, `message`); times ISO 8601 without zone, Pacific. Read by the production morning check.
+- Tests: `DailyUpdateTest` (logic, JSON shape), `DailyUpdateDbTest` (table), `tests/e2e/test_daily_update.py`.
+
 ## 8. Known weak points (details and tests in [test-gaps-uploads-nightly.md](test-gaps-uploads-nightly.md))
 
 - Fixed 2026-10-27: a set that fails ("Error. No changes made ...") now stops the run, logs FAILED and alerts (section 2, step 4). Before, the Scheduler stopped only on "Unexpected error" and went on with the next set.

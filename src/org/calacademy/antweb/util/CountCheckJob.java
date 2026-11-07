@@ -2,6 +2,7 @@ package org.calacademy.antweb.util;
 
 import java.sql.Connection;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -111,7 +112,22 @@ public final class CountCheckJob {
             if (pool != null) BackgroundJobDb.setDataSourceIfMissing(pool);
             DataSource ds = AntwebDataSources.loaded("longConPool");
             if (ds == null) ds = DBUtilSimple.getDataSource();   // the job record does not keep this one
-            BackgroundJobs.Submitted s = submit(ds, 0, "nightly", SECONDS, "after the nightly run");
+            // The Daily update page's count check step ends when this job ends (DailyUpdate.countCheckFinished).
+            final DataSource source = ds;
+            final java.util.concurrent.atomic.AtomicReference<Date> runStart = new java.util.concurrent.atomic.AtomicReference<>();
+            BackgroundJobs.Job job = new BackgroundJobs.Job(BackgroundJobs.DATA, ACTION, "Count check (after the nightly run)", 0, "nightly", 0);
+            BackgroundJobs.Submitted s = BackgroundJobs.get().submit(job, j -> {
+                try {
+                    BackgroundJobs.Outcome outcome = run(j, source, SECONDS);
+                    DailyUpdate.countCheckFinished(runStart.get(), outcome.ok ? null : "the count check failed: " + outcome.result);
+                    return outcome;
+                } catch (Exception e) {
+                    DailyUpdate.countCheckFinished(runStart.get(), "the count check failed: " + e);
+                    throw e;
+                }
+            });
+            if (s.job != null && s.isNew) runStart.set(DailyUpdate.countCheckSubmitted());
+            else DailyUpdate.noteSkipped(DailyUpdate.COUNT_CHECK, s.job == null ? "not started: " + s.refused : "a count check was already running (job " + s.job.getId() + ")");
             // compute.log is read by admins only (logMgr.do): the reason a job was not recorded goes there.
             LogMgr.appendLog("compute.log", "  count check started (job " + (s.job == null
                 ? "none: " + s.refused + (s.error == null ? "" : " " + s.error) : s.job.getId()) + ")", true);

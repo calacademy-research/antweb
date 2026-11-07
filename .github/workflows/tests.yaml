@@ -365,6 +365,20 @@ jobs:
             grep -q "^OK (11 tests)" /tmp/out.txt
           '
 
+      - name: Java unit tests of the Daily update page (usual time, slow and overrun flags, step order, step states, JSON shape)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            test -f $C/org/calacademy/antweb/util/DailyUpdate.class
+            CP="$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            mkdir -p /tmp/tc
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/DailyUpdateTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.DailyUpdateTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            cat /tmp/out.txt
+            grep -q "^OK (9 tests)" /tmp/out.txt
+          '
+
       - name: Java unit tests of small core and util fixes (specimen XML without DOCTYPE, comparators, common names, folder delete keeps link targets)
         run: |
           docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" antweb/antweb:dev -c '
@@ -1145,6 +1159,8 @@ jobs:
           # per-taxon image counts of a place, and the count check of those numbers.
           # RegionCountDbTest: region and subregion numbers count the specimens of their countries only.
           # BackgroundJobDbTest: the background_job table (status pages of uploads and admin jobs; interrupted at start-up).
+          # DailyUpdateDbTest (2026-11-07): the daily_update_step table of the Daily update page (start, end, read back in
+          # step order; usual time = median of the ok rows of the last completed runs; last runs; prune).
           # UploadRecordDbTest: a specimen upload's row in the upload table is written for any group name (quote, long,
           # non-BMP), in the upload's transaction, and a failure is thrown, not only logged (production 2026-10-21).
           # PageTextRenameDbTest: renaming a place (editGeolocale.do) moves its page text and history (object_edit,
@@ -1204,6 +1220,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc \
               /t/org/calacademy/antweb/upload/SpecimenNameUpdateDbTest.java /t/org/calacademy/antweb/util/CountCheckTest.java \
               /t/org/calacademy/antweb/home/PlaceImageCountDbTest.java /t/org/calacademy/antweb/util/BackgroundJobDbTest.java \
+              /t/org/calacademy/antweb/util/DailyUpdateDbTest.java \
               /t/org/calacademy/antweb/home/RegionCountDbTest.java /t/org/calacademy/antweb/home/PageTextRenameDbTest.java \
               /t/org/calacademy/antweb/upload/SpecimenNameHistoryDbTest.java \
               /t/org/calacademy/antweb/util/NumbersTestDb.java \
@@ -1222,7 +1239,7 @@ jobs:
               /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java \
               /t/org/calacademy/antweb/home/ParentRowsDbTest.java \
               /t/org/calacademy/antweb/home/ListRemovalDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:11 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:11 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

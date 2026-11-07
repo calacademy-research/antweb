@@ -385,8 +385,35 @@ public class AntwebMgr {
     */
 	public static boolean hasServerMessage() {
       // The message would be displayed on the curate page.
-        return ServerDb.isInDownTime() || UploadAction.isInUploadProcess() || UtilDataAction.isInComputeProcess() || DBStatus.getIsServerBusy() || isInitializing;
+        return ServerDb.isInDownTime() || UploadAction.isInUploadProcess() || UtilDataAction.isInComputeProcess() || DBStatus.getIsServerBusy() || isInitializing
+            || dailyUpdateRunning();
 	}
+
+    /** The daily update (the nightly run) is going on (DailyUpdate; its compute flag is clear for a moment between sets). */
+    static boolean dailyUpdateRunning() {
+        return Scheduler.isRunning() && DailyUpdate.isActive();
+    }
+
+    /**
+     * The server message for visitors (the red dot's hover in the header, plain text): during the daily update
+     * "AntWeb is running its daily update (about N minutes left)." (Brian Fisher, 2026-11-07: "daily update", never
+     * "nightly"); otherwise getSimpleServerMessage().
+     */
+    public static String getPublicServerMessage() {
+        if (!isInitializing && !ServerDb.isInDownTime() && !UploadAction.isInUploadProcess() && dailyUpdateRunning()) {
+            String line = DailyUpdate.activePublicLine();
+            if (line != null) return line;
+        }
+        return getSimpleServerMessage();
+    }
+
+    /** For curators and admins during the daily update: the step running and a link to the Daily update page; null otherwise. */
+    public static String getDailyUpdateLink() {
+        if (!dailyUpdateRunning()) return null;
+        String hover = DailyUpdate.activeHover();
+        String text = hover == null ? "AntWeb is running its daily update" : hover;
+        return "<a href='" + AntwebProps.getDomainApp() + "/dailyUpdate.do' title='" + Html.escAttr(text) + "'>Daily update running</a>";
+    }
     public static String getSimpleServerMessage() {
        if (isInitializing) {
 		 return "The server is initializing...";       
@@ -396,6 +423,10 @@ public class AntwebMgr {
 	   }
 	   if (UploadAction.isInUploadProcess()) {
 		 return "Upload Currently InProcess (" + UploadAction.getIsInUploadProcess() + "). Some services are down.";
+	   }
+	   if (dailyUpdateRunning()) {
+		 String hover = DailyUpdate.activeHover();
+		 return "AntWeb is running its daily update" + (hover == null ? "" : " (" + hover + ")") + ". Some services are down.";
 	   }
 	   if (UtilDataAction.isInComputeProcess()) {
 		 return "Computation Currently In Process (" + UtilDataAction.getIsInComputeProcess() + "). Some services are down.";
@@ -414,6 +445,13 @@ public class AntwebMgr {
 	   }
 	   if (UploadAction.isInUploadProcess()) {
 		 return "<h3><font color='red'>Upload Currently In <a title='" + Html.escAttr(UploadAction.getIsInUploadProcess()) + "'>Process</a> (some services are down).</font></h3>";
+	   }
+	   if (dailyUpdateRunning()) {
+		 // Curate page (curators and admins): the step, the usual time, what comes next, and the Daily update page.
+		 String hover = DailyUpdate.activeHover();
+		 String text = hover == null ? "Daily update in progress" : hover;
+		 return "<h3><font color='red'>AntWeb is running its daily update (some services are down): <a href='" + AntwebProps.getDomainApp()
+		     + "/dailyUpdate.do' title='" + Html.escAttr(text) + "'>" + Html.esc(text) + "</a>.</font></h3>";
 	   }
 	   if (UtilDataAction.isInComputeProcess()) {
 		 return "<h3><font color='red'>Computation Currently In <a title='" + Html.escAttr(UtilDataAction.getIsInComputeProcess()) + "'>Process</a> (some services are down).</font></h3>";

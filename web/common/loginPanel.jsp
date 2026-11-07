@@ -1,7 +1,9 @@
 <%-- The log-in corner of the header, statically included by common/academyHeader.jsp. Logged in: the display name
      (curators link viewLogin.do?id=, other logins editLogin.do?id=, on the secure domain), Curate (not for
      photo_review logins, Anonymous or groups with a negative id) and Logout (logout.do?target=<this page>). Not
-     logged in: a red dot with the server message (AntwebMgr.getServerMessage) and Login (login.do?target=). Ends
+     logged in: a red dot with the server message (AntwebMgr.getPublicServerMessage, plain text; during the daily update
+     "AntWeb is running its daily update (about N minutes left).") and Login (login.do?target=). Curators see a link to
+     dailyUpdate.do while the daily update runs (its hover names the step). Ends
      with the sanitized text of /data/antweb/web/siteWarning.txt, if that file exists. Tests:
      tests/e2e/test_curator.py, tests/e2e/test_login_needed.py. --%><%@ page import="java.text.*" %>
 <%
@@ -73,7 +75,12 @@
           
           <!-- The redDot.png code was here -->
           
-          <a href="<%= domainApp %>/curate.do">Curate</a> 
+          <a href="<%= domainApp %>/curate.do">Curate</a>
+       <% if (tAccessLogin.isCurator()) {
+            // During the daily update: the running step (hover) and a link to the Daily update page (DailyUpdate).
+            String dailyUpdateLink = AntwebMgr.getDailyUpdateLink();
+            if (dailyUpdateLink != null) { %>&nbsp;|&nbsp;<img src="<%= domainApp %>/image/redDot.png" width="10" alt=""> <%= dailyUpdateLink %><% }
+          } %>
      <% } %>
         &nbsp;| &nbsp;<a href="<%= domainApp %>/logout.do<%= aTarget %>">Logout</a></span>
  <% } else { %>
@@ -84,7 +91,7 @@
 		if (AntwebMgr.hasServerMessage()) { 
 		 // A.log("loginPanel.jsp serverMessage:" + AntwebMgr.getServerMessage());
 		%> 
-		<img src="<%= domainApp %>/image/redDot.png" width="10" title="<%= AntwebMgr.getServerMessage() %>&nbsp;">
+		<img src="<%= domainApp %>/image/redDot.png" width="10" title="<%= org.calacademy.antweb.util.Html.escAttr(AntwebMgr.getPublicServerMessage()) %>">
 	 <% } %>
         
      <%-- One login form for everyone: the full login page (it has "Keep me logged in"),

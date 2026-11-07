@@ -211,8 +211,12 @@ public class Scheduler extends AntwebAction {
 			return m;
 		}
 
+		// The Daily update page (DailyUpdate, 2026-11-07) records full runs only (all sets), never a set started by hand.
+		boolean recorded = "run".equals(action) && num == 0;
+		boolean reachedEnd = false;
 		try {
 		    UtilDataAction.setInComputeProcess(action);
+		    if (recorded) DailyUpdate.beginRun();
 			// One-time code for this run's calls to utilData.do, sent in a request header (SchedulerCall).
 			java.util.Map<String, String> codeHeader = SchedulerCall.headers(AntwebUtil.getSecureCode());
 
@@ -238,21 +242,25 @@ public class Scheduler extends AntwebAction {
 
 					if (i == 0 || i == 1) {
 						currentSet = 1;
+						DailyUpdate.start("antcatImport");
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set1&param=allow";
 						output += runSet(currentSet, url, codeHeader);
 					}
 					if (i == 0 || i == 2) {
 						currentSet = 2;
+						DailyUpdate.start("set2");
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set2&param=allow";
 						output += runSet(currentSet, url, codeHeader);
 					}
 					if (i == 0 || i == 3) {
 						currentSet = 3;
+						DailyUpdate.start("set3");
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set3&param=allow";
 						output += runSet(currentSet, url, codeHeader);
 					}
 					if (i == 0 || i == 4) {
 						currentSet = 4;
+						DailyUpdate.start("set4");
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set4&param=allow";
 						output += runSet(currentSet, url, codeHeader);
 						// After set 4 (its Not curated count fills place_specimen_name, which the lists read), on a
@@ -263,11 +271,13 @@ public class Scheduler extends AntwebAction {
 					// skip it there in the nightly run (an admin can still request it by hand).
 					if (i == 0 && AntwebProps.isStageMode()) {
 						set5Skipped = true;
+						DailyUpdate.skip("set5", "skipped on staging (memory)");
 						s_log.warn("doAction() set5 skipped on staging (memory)");
 						LogMgr.appendLog("compute.log", "  set5 skipped on staging (memory)", true);
 					} else
 					if (i == 0 || i == 5) {
 						currentSet = 5;
+						DailyUpdate.start("set5");
 						url = AntwebProps.getThisDomainApp() + "/utilData.do?action=set5&param=allow&reload=all";
 						output += runSet(currentSet, url, codeHeader);
 					}
@@ -282,6 +292,7 @@ public class Scheduler extends AntwebAction {
 					s_log.error("doAction() " + line + " url:" + HttpUtil.forLog(url));
 					LogMgr.appendLog("compute.log", line, true);
 					notifySetFailed(line);
+					DailyUpdate.failRun(line, true);   // notifySetFailed sent the email
 					return line;
 				}
 				message = "Scheduler " + Html.esc(action) + ":" + num + " completed in " + AntwebUtil.getMinsPassed(startTime) + ". ";
@@ -293,21 +304,26 @@ public class Scheduler extends AntwebAction {
 				  // Each step its own try: a failed step no longer skips the ones after it.
 				  try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
 					try {
+					  DailyUpdate.start("logSizeCheck");
 					  LogMgr.appendLog("compute.log", "  " + LogSizeCheck.run(connection), true);
 					} catch (Exception e) {
 					  s_log.warn("doAction() log size check e:" + e);
 					}
 					// The statistics page (statsPage.do): its tables are counted once a day, here, after the nightly numbers.
 					try {
+					  DailyUpdate.start("statsPage");
 					  LogMgr.appendLog("compute.log", "  " + org.calacademy.antweb.StatsPageAction.recount(connection), true);
 					} catch (Exception e) {
+					  DailyUpdate.noteFailed("statsPage", String.valueOf(e));
 					  s_log.error("doAction() statistics page recount e:" + e);
 					  LogMgr.appendLog("compute.log", "  statistics page not recounted e:" + e, true);
 					}
 					// The API's /taxa counts (B11, 2026-10-26): copied from each name's Global row, after the nightly counts.
 					try {
+					  DailyUpdate.start("apiCounts");
 					  LogMgr.appendLog("compute.log", "  " + org.calacademy.antweb.home.TaxonApiCountDb.copyGlobalCounts(connection), true);
 					} catch (Exception e) {
+					  DailyUpdate.noteFailed("apiCounts", String.valueOf(e));
 					  s_log.error("doAction() API counts e:" + e);
 					  LogMgr.appendLog("compute.log", "  API taxon counts not copied e:" + e, true);
 					}
@@ -318,14 +334,19 @@ public class Scheduler extends AntwebAction {
 					s_log.warn("SET REBOOT TRUE");
 					LogMgr.appendLog("compute.log", "Nightly restart requested (nightlyRestart=true in etc/scheduler.properties). " + memoryReport(), true);
 				    AntwebSystem.setIsRestart(true);	// This will trigger a reboot within 5 minutes.
+				    DailyUpdate.skip("cacheReload", "not needed: the nightly restart reloads the caches");
+				    DailyUpdate.skip(DailyUpdate.COUNT_CHECK, "not run: the nightly restart is on");
 				  } else {
+					if (!set5Skipped) DailyUpdate.skip("cacheReload", "not needed: set 5 reloaded the caches");
 					if (set5Skipped) {
+					  DailyUpdate.start("cacheReload");
 					  // set5 ends with AntwebMgr.populate(), which reloads every cache after the
 					  // counts of sets 2 to 4. Where set5 is skipped (staging), the restart did that.
 					  try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
 						AntwebMgr.populate(connection, true);
 						LogMgr.appendLog("compute.log", "  caches reloaded (AntwebMgr.populate), as set5 was skipped", true);
 					  } catch (Exception e) {
+						DailyUpdate.noteFailed("cacheReload", String.valueOf(e));
 						s_log.error("doAction() cache reload after the nightly run e:" + e);
 						LogMgr.appendLog("compute.log", "  cache reload FAILED e:" + e, true);
 					  }
@@ -334,13 +355,17 @@ public class Scheduler extends AntwebAction {
 					LogMgr.appendLog("compute.log", "Nightly restart skipped (off; nightlyRestart=true in etc/scheduler.properties turns it on). " + memoryReport(), true);
 					// The daily count check (read-only, a background job: countCheck.do shows its report). It waits
 					// until this run's flags are clear (BackgroundJobs gate), then checks the numbers just written.
+					DailyUpdate.start(DailyUpdate.COUNT_CHECK);
 					CountCheckJob.startAfterNightly();
 				  }
 				}
 
+				reachedEnd = true;
 				return message + " output:" + output;
 		    }
 		} finally {
+		  // The run ends on the page now, or when its count check has finished (CountCheckJob.startAfterNightly).
+		  if (recorded) DailyUpdate.schedulerFinished(reachedEnd);
 		  endRun();
 		  UtilDataAction.setInComputeProcess(null);
 
@@ -389,9 +414,11 @@ public class Scheduler extends AntwebAction {
      */
     static void runPlaceListTotals() {
         UtilDataAction.setInComputeProcess("placeViewTotals");
+        DailyUpdate.start("placeListTotals");
         try (java.sql.Connection connection = DBUtilSimple.getDataSource().getConnection()) {
             LogMgr.appendLog("compute.log", "  " + new org.calacademy.antweb.home.PlaceViewTotalDb(connection).fillAll(), true);
         } catch (Exception e) {
+            DailyUpdate.noteFailed("placeListTotals", String.valueOf(e));
             s_log.error("runPlaceListTotals() e:" + e);
             LogMgr.appendLog("compute.log", "  " + org.calacademy.antweb.home.PlaceViewTotalDb.LOG + ": FAILED (" + e + ")", true);
         } finally {

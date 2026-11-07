@@ -477,6 +477,10 @@ public class UtilDataAction extends AntwebAction {
                 message = "set1 - ";
                 OperationDetails worldants = doAction("worldantsFetchAndReload", form, accessLogin, accessGroup, connection, request, mapping);
                 message += worldants;
+                // The Daily update page (DailyUpdate): no-ops unless a full run is recorded.
+                if (worldants == null || !"success".equals(worldants.getMessage())) {
+                    DailyUpdate.noteFailed("antcatImport", "the AntCat import did not succeed: " + (worldants == null ? "no answer" : worldants.getMessage()));
+                }
                 if (worldants != null && "success".equals(worldants.getMessage())) {
                     // The e2e tests read this line: the bioregion lists were rebuilt with valid names only (2026-10-29).
                     LogMgr.appendLog("compute.log", "  AntCat import done (" + org.calacademy.antweb.upload.SpeciesListUpload.BIOREGION_VALID_LOG + ")", true);
@@ -485,13 +489,22 @@ public class UtilDataAction extends AntwebAction {
                 // CAS specimens from TaxonWorks (GitHub #27). Does nothing without etc/taxonworks.properties.
                 // Waits up to 30 minutes (Brian Fisher, 2026-10-24; was 90) for the archive TaxonWorks builds after this run's
                 // request (see TaxonWorksNightly.run); usually a few minutes.
-                message += " taxonWorksNightly: " + org.calacademy.antweb.upload.TaxonWorksNightly.run(connection, 30);
+                DailyUpdate.start("taxonWorks");
+                String taxonWorks = org.calacademy.antweb.upload.TaxonWorksNightly.run(connection, 30);
+                DailyUpdate.noteResult("taxonWorks", taxonWorks);
+                message += " taxonWorksNightly: " + taxonWorks;
                 // Existing specimens follow AntCat name changes (etc/name-update.properties; off without it).
                 // After the AntCat import and the TaxonWorks upload, before sets 2 to 5 rebuild lists and counts.
-                message += " " + nightlyNameUpdate(connection, worldants == null ? null : worldants.getMessage());
+                DailyUpdate.start("nameUpdate");
+                String nameUpdate = nightlyNameUpdate(connection, worldants == null ? null : worldants.getMessage());
+                DailyUpdate.noteResult("nameUpdate", nameUpdate);
+                message += " " + nameUpdate;
                 // Every counted ant name has its genus as parent, so the genus rows of the lists count it (B36,
                 // 2026-10-22). After the import, the upload and the name update; before sets 2 to 5 build the lists.
-                message += " " + nightlyTaxonParents(connection);
+                DailyUpdate.start("set1Finish");
+                String taxonParents = nightlyTaxonParents(connection);
+                DailyUpdate.noteResult("set1Finish", taxonParents);
+                message += " " + taxonParents;
                 TaxonMgr.populate(connection, true, false);
             }
 
