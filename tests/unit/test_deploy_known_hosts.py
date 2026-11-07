@@ -1,6 +1,7 @@
 """Deploys check the server's host key (2026-10-27, Brian Fisher: yes).
 
-Both deploy workflows and the end-to-end tunnel to staging (2026-10-30) compare the key the server answers with against the public host keys pinned in
+Both deploy workflows, the end-to-end tunnel to staging (2026-10-30) and the production smoke and morning
+tunnels (2026-11-07) compare the key the server answers with against the public host keys pinned in
 .github/known_hosts, and ssh runs with StrictHostKeyChecking=yes. Before, ssh-keyscan trusted any key that answered.
 Run: python3 tests/unit/test_deploy_known_hosts.py
 """
@@ -18,7 +19,8 @@ def main():
     pinned = read(".github/known_hosts").split("\n")
     for ip in ("165.232.137.86", "64.225.91.165", "165.232.136.170"):
         assert any(l.startswith(ip + " ssh-ed25519 ") for l in pinned), "no ed25519 key pinned for " + ip
-    for wf in (".github/workflows/deploy.yaml", ".github/workflows/deploy-staging.yaml", ".github/workflows/e2e.yaml"):
+    for wf in (".github/workflows/deploy.yaml", ".github/workflows/deploy-staging.yaml", ".github/workflows/e2e.yaml",
+               ".github/workflows/prod-smoke.yaml", ".github/workflows/prod-morning.yaml"):
         s = read(wf)
         assert "ssh-keyscan -H" not in s, wf + ": still trusts any key"
         assert ".github/known_hosts" in s and "comm -12" in s, wf + ": does not compare with the pinned keys"

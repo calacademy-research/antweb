@@ -81,6 +81,12 @@ jobs:
       - name: Deploys check the pinned server host keys (tests/unit/test_deploy_known_hosts.py)
         run: python3 tests/unit/test_deploy_known_hosts.py
 
+      - name: Production smoke checks only read, GET without sign-in (tests/unit/test_smoke_read_only.py)
+        run: python3 tests/unit/test_smoke_read_only.py
+
+      - name: Production smoke run and morning check pass, fail and skip as they should (tests/unit/test_prod_smoke_logic.py)
+        run: python3 tests/unit/test_prod_smoke_logic.py
+
       - name: The mount check writes into a folder that exists on the servers (tests/unit/test_mountcheck_dir.py)
         run: python3 tests/unit/test_mountcheck_dir.py
 
