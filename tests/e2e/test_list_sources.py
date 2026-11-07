@@ -220,6 +220,28 @@ def test_every_species_number_on_genus_lists_is_a_link(country):
                     f"{view}: bare Species number: {ns.text_of(r['html'])[:120]}"
 
 
+@pytest.mark.parametrize("country", ["Madagascar", "Mozambique"])
+def test_every_species_row_with_antweb_specimens_has_a_map(country):
+    """Brian Fisher, 2026-11-07: a curated name with no specimens collected here still has AntWeb specimens elsewhere,
+    and its Map link opens their map; before, Map was shown only when the place had specimens of the name. Species
+    list, view Curated: a row whose Global column counts specimens has a Map link."""
+    html = ns.get(f"/taxonomicPage.do?rank=species&countryName={country}&statusSet=curated", new_session())
+    checked, wrong = 0, []
+    for r in ns.list_rows(html):
+        cells = re.findall(r'<div class="list_extras specimens[^"]*"[^>]*>(.*?)</div>', r["html"], re.S)
+        if len(cells) < 2:
+            continue
+        m = re.match(r"([\d,]+) Specimens?", ns.text_of(cells[0]).strip())
+        if not m or int(m.group(1).replace(",", "")) == 0:
+            continue
+        checked += 1
+        if "bigMap.do?" not in r["html"]:
+            wrong.append(ns.text_of(r["html"])[:100])
+    if not checked:
+        pytest.skip(f"no species row with a Global count on {country}'s list")
+    assert not wrong, f"{len(wrong)} of {checked} rows with AntWeb specimens have no Map link: " + "; ".join(wrong[:5])
+
+
 def test_rows_added_from_specimens_say_specimens():
     """A row added from specimens collected here says "N Specimens" like the list's own rows (2026-11-03: it said
     "N here"). Only the added rows (title "Not on the list: from specimens collected here") are checked."""

@@ -355,8 +355,12 @@
         <% if (showNotCuratedColumn && genusImagedCells) { %><div class="list_extras other genus-col"><%= notCuratedCell == null ? "" : notCuratedCell %></div><% } %>
 
         <div class="list_extras map">
-          <% if (childTaxonSet.getSubtaxonCount(1) > 0) { %>
+          <% // Brian Fisher, 2026-11-07: curated names with no specimens collected here get the map too (the map shows the
+             // name's AntWeb specimens); before, Map was shown only when the place had specimens of the name
+             if (childTaxonSet.getSubtaxonCount(1) > 0) { %>
             <a href="<%= mapLink %>">Map</a>
+          <% } else if (childTaxonSet.getGlobalChildCount() > 0) { %>
+            <a href="<%= mapLink %>" title="Map of the AntWeb specimens of this name (none collected here)">Map</a>
           <% } %>
         </div>
         <% if (!isMuseum) { %>
