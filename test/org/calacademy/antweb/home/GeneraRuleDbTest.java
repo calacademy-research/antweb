@@ -185,6 +185,22 @@ public class GeneraRuleDbTest extends TestCase {
         assertEquals("the Formicidae row's Subfamilies: Myrmicinae only " + subfamilies, Integer.valueOf(1), subfamilies.get(FAMILY));
     }
 
+    /**
+     * Brian Fisher, 2026-11-07: on Fossil Ants and the AntWeb-wide list a genus row counts only with a species on the
+     * list, as the lists show it (production: Atta and Iridomyrmex, proxy rows with no species, made Fossil Ants 71 vs 70).
+     */
+    public void testFossilAntsAndAntWebWideCountGeneraWithSpeciesOnly() throws Exception {
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus) values"
+            + " ('myrmicinaeatta', 'genus', 'valid', '" + MYRM + "', 'formicidae', '" + MYRM + "', 'atta')");
+        for (String p : new String[] {"allantwebants", "madants"}) {
+            exec("insert into proj_taxon (project_name, taxon_name, created) values ('" + p + "', 'myrmicinaeatta', '2020-01-01')");
+        }
+        Map<String, Integer> wide = counts(new org.calacademy.antweb.Project(org.calacademy.antweb.Project.ALLANTWEBANTS).getCountChildrenQuery("genus"));
+        assertEquals("AntWeb-wide: Pheidole only, Atta has no species " + wide, Integer.valueOf(1), wide.get(MYRM));
+        Map<String, Integer> other = counts(new org.calacademy.antweb.Project("madants").getCountChildrenQuery("genus"));
+        assertEquals("other projects unchanged " + other, Integer.valueOf(2), other.get(MYRM));
+    }
+
     private Map<String, Integer> counts(String sql) throws Exception {
         Map<String, Integer> m = new TreeMap<>();
         try (PreparedStatement s = connection.prepareStatement(sql); ResultSet r = s.executeQuery()) {
