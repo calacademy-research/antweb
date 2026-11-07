@@ -227,6 +227,8 @@ public class StatusChoiceTest extends TestCase {
         // 2026-11-06: genera and subfamilies of the fossil species, not "fossil genera"
         assertEquals("25 genera with fossil species", StatusSet.listHeading("fossil", 25, "Genera", "Genus", -1));
         assertEquals("1 genus with fossil species", StatusSet.listHeading("fossil", 1, "Genera", "Genus", -1));
+        assertEquals("the page passes the plural twice (NHMB on staging)", "1 genus with fossil species", StatusSet.listHeading("fossil", 1, "Genera", "Genera", -1));
+        assertEquals("1 subfamily with fossil species", StatusSet.listHeading("fossil", 1, "Subfamilies", null, -1));
         assertEquals("3 subfamilies with fossil species", StatusSet.listHeading("fossil", 3, "Subfamilies", "Subfamily", -1));
         assertEquals("98 Valid genera", StatusSet.listHeading("valid", 98, "Genera", "Genus", 6960));
         assertEquals("21 Subfamilies (valid and curated)", StatusSet.listHeading("curated", 21, "Subfamilies", "Subfamily", -1));
