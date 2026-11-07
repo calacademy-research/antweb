@@ -123,6 +123,17 @@ public class CountCheckTest extends TestCase {
         assertEquals("a failed name update does not stop the counts", java.sql.Timestamp.valueOf("2026-10-20 07:50:00"), CountCheck.lastCompletedRun(log));
         log.add("2026-10-21 05:00:00 Begin run");
         assertEquals("a run still going does not count", java.sql.Timestamp.valueOf("2026-10-20 07:50:00"), CountCheck.lastCompletedRun(log));
+        // 2026-11-06: the counts are taken from set 4 on, so a run with "Set 3 done" counted from then (the place list
+        // totals keep the run going about 40 minutes after set 4; images added then are pending, not real differences)
+        log.add("2026-10-21 05:17:17   Set 3 done (endemic rule of 2026-10-28)");
+        log.add("2026-10-21 05:30:20   Set 4 done (numbers counted)");
+        log.add("2026-10-21 06:10:00   Place list totals counted: 1987 places in 2333 s");
+        log.add("2026-10-21 06:10:01 End run");
+        assertEquals(java.sql.Timestamp.valueOf("2026-10-21 05:17:17"), CountCheck.lastCompletedRun(log));
+        log.add("2026-10-22 05:00:00 Begin run");
+        log.add("2026-10-22 06:17:39 Scheduler FAILED in set 4 after 77 mins");
+        log.add("2026-10-22 06:17:39 End run");
+        assertEquals("a failed run with set 3 done still does not count", java.sql.Timestamp.valueOf("2026-10-21 05:17:17"), CountCheck.lastCompletedRun(log));
     }
 
     public void testCountedUntilIsTheLastRun() throws Exception {

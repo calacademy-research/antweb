@@ -19,12 +19,16 @@
 
 	// The rule of the nightly Introduced flags (TaxonPropMgr.isIntroducedIn; no bioregion: not introduced).
 	isIntroduced = TaxonPropMgr.isIntroducedIn(introducedMap, bioregion);
+	// A row added from specimens (not on the place's list) is on no introduced or endemic list: no mark (Brian Fisher,
+	// 2026-11-05: New Caledonia's Brachymyrmex obscurior_cf, 1 specimen, was marked Introduced).
+	boolean onList = thisChild.getTaxonSet() != null && thisChild.getTaxonSet().exists();
+	if (!onList) isIntroduced = false;
 
     if (isIntroduced) { %>
       <a href='<%= AntwebProps.getDomainApp() %>/common/distStatusDisplayPage.jsp#type' target="new">
         <img src="<%= AntwebProps.getDomainApp() %>/image/redI.png" width="11" height="12" border="0" title="Introduced">
       </a>
- <% } else if (thisChild.getTaxonSet().getIsEndemic()) { %>
+ <% } else if (onList && thisChild.getTaxonSet().getIsEndemic()) { %>
       <a href='<%= AntwebProps.getDomainApp() %>/common/distStatusDisplayPage.jsp#type' target="new">
         <img src="<%= AntwebProps.getDomainApp() %>/image/greenE.png" width="11" height="12" border="0" title="Endemic">
       </a>

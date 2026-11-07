@@ -64,13 +64,15 @@ museum
 
     /** Global Data: valid ant taxa of the taxon table of one rank, extant (0) or fossil (1). */
     public static String globalCountSql(String rank, int fossil) {
-        return "select count(*) from taxon t where " + PlaceTotals.validAntTaxonCondition("t", rank, fossil);
+        // Fossil: by the view Fossil's rule, genera and subfamilies derived from the fossil species too (2026-11-06)
+        return "select count(*) from taxon t where " + (fossil == 1 ? PlaceTotals.fossilViewCondition("t", rank, null, null, null)
+            : PlaceTotals.validAntTaxonCondition("t", rank, fossil));
     }
 
     /** Bioregion and Museum Data: valid ant taxa of one rank on a list (parameter: the place's key). */
     public static String listCountSql(String listTable, String keyColumn, String rank, int fossil) {
         return "select count(*) from taxon t join " + listTable + " l on l.taxon_name = t.taxon_name where l." + keyColumn + " = ? and "
-            + PlaceTotals.validAntTaxonCondition("t", rank, fossil);
+            + (fossil == 1 ? PlaceTotals.fossilViewCondition("t", rank, "l", listTable, keyColumn) : PlaceTotals.validAntTaxonCondition("t", rank, fossil));
     }
 
     private int[] globalCounts(int fossil) throws SQLException {
@@ -94,9 +96,14 @@ museum
     }
 
     private static StatSet statSet(String name, String prefix, int[] n) {
+        return statSet(name, prefix, n, false);
+    }
+
+    /** fossil: the Fossil row's subfamilies and genera are those with fossil species (Brian Fisher, 2026-11-06). */
+    private static StatSet statSet(String name, String prefix, int[] n, boolean fossil) {
         StatSet statSet = new StatSet(name);
-        statSet.set1(prefix + "Subfamiles", n[0]);
-        statSet.set2(prefix + "Genera", n[1]);
+        statSet.set1(fossil ? "Subfamilies with fossil species" : prefix + "Subfamiles", n[0]);
+        statSet.set2(fossil ? "Genera with fossil species" : prefix + "Genera", n[1]);
         statSet.set3(prefix + "Species", n[2]);
         statSet.set4(prefix + "Subspecies", n[3]);
         return statSet;
@@ -107,7 +114,7 @@ museum
     }
 
     public StatSet getFossilData() throws SQLException {
-      return statSet("Fossil", "Valid ", globalCounts(1));
+      return statSet("Fossil", "Valid ", globalCounts(1), true);
     }
 
 // Bioregion data
@@ -152,7 +159,7 @@ museum
     }
 
     public StatSet getFossilMuseumData(Museum museum) throws SQLException {
-      return statSet(museum.getCode(), "Valid ", listCounts("museum_taxon", "code", museum.getCode(), 1));
+      return statSet(museum.getCode(), "Valid ", listCounts("museum_taxon", "code", museum.getCode(), 1), true);
     }
 
     public StatSet getImageData(Museum museum) throws SQLException {
@@ -406,6 +413,126 @@ museum
      *  included (2026-10-22, Q7: was valid species and subspecies of every family). */
     public static final String VALID_SPECIES_SQL = "select count(*) from taxon t where " + PlaceTotals.validAntSpeciesCondition("t");
 
+    // ---- Home page numbers of 2026-11-06 (Brian Fisher, release 9.3.0): global diversity (AntCat) apart from AntWeb's
+    // coverage. Valid ant species only (no subspecies), living apart from fossil as on statsPage Global Data (fossil 0
+    // or 1), identified to genus; "with specimens" = at least one specimen record filed under the name; "imaged" = a
+    // specimen filed under the name has a photo of the ant (labels never count; ANT_IMAGED). Subspecies, morphospecies
+    // and imaged fossils are on statsPage. Each is a column of the statistics row (HOME_COLUMNS), recounted every morning
+    // by the count check ("home").
+
+    /** A valid ant species identified to genus, living (fossil 0) or fossil (fossil 1). */
+    public static String validAntSpeciesOnly(String alias, int fossil) {
+        return alias + ".status = 'valid' and " + alias + ".taxarank = 'species' and " + alias + ".fossil = " + fossil
+            + PlaceTotals.ANTS.replace("t.", alias + ".") + " and " + PlaceTotals.identifiedToGenus(alias);
+    }
+
+    /** The names (alias t) with a specimen record. */
+    static final String HAS_SPECIMEN = "exists (select 1 from specimen s where s.taxon_name = t.taxon_name)";
+    /** The names (alias t) a specimen with a photo of the ant is filed under. */
+    static final String HAS_ANT_IMAGE = "t.taxon_name in (select s.taxon_name from " + ANT_IMAGED + " join specimen s on s.code = x.image_of_id)";   // the one ant-image rule (review of #327)
+
+    public static final String LIVING_SPECIES_SQL = "select count(*) from taxon t where " + validAntSpeciesOnly("t", 0);
+    public static final String FOSSIL_SPECIES_SQL = "select count(*) from taxon t where " + validAntSpeciesOnly("t", 1);
+    public static final String LIVING_SPECIES_WITH_SPECIMENS_SQL = LIVING_SPECIES_SQL + " and " + HAS_SPECIMEN;
+    public static final String LIVING_SPECIES_IMAGED_SQL = LIVING_SPECIES_SQL + " and " + HAS_ANT_IMAGE;
+    public static final String FOSSIL_SPECIES_IMAGED_SQL = FOSSIL_SPECIES_SQL + " and " + HAS_ANT_IMAGE;
+    /** Valid living ant subspecies (statsPage). */
+    public static final String LIVING_SUBSPECIES_SQL = "select count(*) from taxon t where t.status = 'valid' and t.taxarank = 'subspecies'"
+        + " and t.fossil = 0" + PlaceTotals.ANTS + " and " + PlaceTotals.identifiedToGenus("t");
+    /** Ant morphospecies (species and subspecies rank, identified to genus) and those imaged (statsPage). */
+    public static final String MORPHOSPECIES_SQL = "select count(*) from taxon t where t.status = 'morphotaxon' and t.taxarank in ('species', 'subspecies')"
+        + PlaceTotals.ANTS + " and " + PlaceTotals.identifiedToGenus("t");
+    public static final String MORPHOSPECIES_IMAGED_SQL = MORPHOSPECIES_SQL + " and " + HAS_ANT_IMAGE;
+
+    /** statistics column -> the query that counts it (populateStatistics writes them; CountInvariants.home recounts them). */
+    public static final LinkedHashMap<String, String> HOME_COLUMNS = new LinkedHashMap<>();
+    static {
+        HOME_COLUMNS.put("living_species", LIVING_SPECIES_SQL);
+        HOME_COLUMNS.put("fossil_species", FOSSIL_SPECIES_SQL);
+        HOME_COLUMNS.put("living_species_specimens", LIVING_SPECIES_WITH_SPECIMENS_SQL);
+        HOME_COLUMNS.put("living_species_imaged", LIVING_SPECIES_IMAGED_SQL);
+        HOME_COLUMNS.put("fossil_species_imaged", FOSSIL_SPECIES_IMAGED_SQL);
+        HOME_COLUMNS.put("living_subspecies", LIVING_SUBSPECIES_SQL);
+        HOME_COLUMNS.put("morphospecies", MORPHOSPECIES_SQL);
+        HOME_COLUMNS.put("morphospecies_imaged", MORPHOSPECIES_IMAGED_SQL);
+    }
+
+    /** What each column is, for the count check and the hover text. */
+    public static final java.util.Map<String, String> HOME_LABELS = java.util.Map.of(
+        "living_species", "valid living ant species",
+        "fossil_species", "fossil species",
+        "living_species_specimens", "species with specimens in AntWeb",
+        "living_species_imaged", "species imaged",
+        "fossil_species_imaged", "fossil species imaged",
+        "living_subspecies", "valid living subspecies",
+        "morphospecies", "morphospecies",
+        "morphospecies_imaged", "morphospecies imaged");
+
+    private static volatile boolean s_homeColumnsChecked = false;
+
+    /** Adds the HOME_COLUMNS to a statistics table made before 2026-11-06 (int, null for the rows written before). */
+    public static void ensureHomeColumns(Connection connection) throws SQLException {
+        if (s_homeColumnsChecked) return;
+        try (Statement stmt = connection.createStatement()) {
+            Set<String> have = new HashSet<>();
+            try (ResultSet r = stmt.executeQuery("select column_name from information_schema.columns"
+                    + " where table_schema = database() and table_name = 'statistics'")) {
+                while (r.next()) have.add(r.getString(1).toLowerCase(Locale.ROOT));
+            }
+            for (String col : HOME_COLUMNS.keySet()) {
+                if (!have.contains(col)) stmt.executeUpdate("alter table statistics add column " + col + " int null");
+            }
+        }
+        s_homeColumnsChecked = true;
+    }
+
+    /** Whether the statistics table has every HOME_COLUMNS column (a read, no change). */
+    static boolean homeColumnsExist(Connection connection) throws SQLException {
+        Set<String> have = new HashSet<>();
+        try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery("select column_name from information_schema.columns"
+                + " where table_schema = database() and table_name = 'statistics'")) {
+            while (r.next()) have.add(r.getString(1).toLowerCase(Locale.ROOT));
+        }
+        return have.containsAll(HOME_COLUMNS.keySet());
+    }
+
+    /** "87% of valid living species", or "" when the living species are not counted (review of #327). */
+    static String ofLiving(long part, long living) {
+        String p = percent(part, living);
+        return p.isEmpty() ? "" : p + " of valid living species";
+    }
+
+    /** "87%": part of whole, rounded; "" when whole is 0. */
+    public static String percent(long part, long whole) {
+        return whole <= 0 ? "" : Math.round(100.0 * part / whole) + "%";
+    }
+
+    /** One number of the home page box (web/genInc/statistics.jsp): the number, its label, an optional grey line. */
+    static String stat(String key, long n, String title, String label, String sub) {
+        return "<div class=\"stat\" data-stat=\"" + key + "\"><span class=\"numbers\" title=\"" + title + "\">" + n + "</span>"
+            + "<span class=\"stat-l\">" + label + "</span>" + (sub == null || sub.isEmpty() ? "" : "<span class=\"stat-s\">" + sub + "</span>")
+            + "</div>\n";
+    }
+
+    /** The home page box, from the counted numbers (Brian Fisher, 2026-11-06). */
+    public static String homeBoxHtml(long specimens, java.util.Map<String, Long> n, long antImages, long imagedSpecimens, long labelImages) {
+        long living = n.getOrDefault("living_species", 0L);
+        StringBuilder b = new StringBuilder();
+        b.append(stat("specimens", specimens, "Specimen records in AntWeb", "specimen records", null));
+        b.append(stat("living-species", living, "Valid living ant species in AntCat (species only, identified to genus); fossil species apart",
+            "valid living ant species", "+ " + A.commaFormat(n.getOrDefault("fossil_species", 0L)) + " fossil species"));
+        b.append(stat("species-with-specimens", n.getOrDefault("living_species_specimens", 0L),
+            "Valid living ant species with at least one specimen record in AntWeb", "species with specimens in AntWeb",
+            ofLiving(n.getOrDefault("living_species_specimens", 0L), living)));
+        b.append(stat("species-imaged", n.getOrDefault("living_species_imaged", 0L),
+            "Valid living ant species with a photo of the ant (label photos do not count)", "species imaged",
+            ofLiving(n.getOrDefault("living_species_imaged", 0L), living)));
+        b.append("<div class=\"stat-rule\"></div>\n");
+        b.append(stat("images", antImages, "Images of the ant; label images are counted separately",
+            "images of ants of " + A.commaFormat(imagedSpecimens) + " specimens", "+ " + A.commaFormat(labelImages) + " label images"));
+        return b.toString();
+    }
+
     /** The rules before 2026-10-22 (Q7, every family), only so the count check can tell a number written before the change
      *  (pending until the next nightly run) from a wrong one. */
     public static final String VALID_SPECIES_SQL_BEFORE_Q7 = "select count(*) from taxon where status = 'valid' and taxarank in ('species', 'subspecies')";
@@ -462,6 +589,11 @@ museum
 
             //A.log("populateStatistics 6 query:" + query);
 
+            // the home page numbers of 2026-11-06 (HOME_COLUMNS)
+            java.util.Map<String, Long> home = new LinkedHashMap<>();
+            for (java.util.Map.Entry<String, String> e : HOME_COLUMNS.entrySet()) home.put(e.getKey(), (long) utilDb.getCount(e.getValue()));
+            AntwebMgr.setHomeCounts(home);
+
             query = "select count(*) from taxon where taxarank in ('species', 'subspecies')";
             int numberTotalTaxa = utilDb.getCount(query);
 
@@ -493,17 +625,10 @@ museum
                 // here write out the results
                 //outFile.write("number of types imaged: " + imagedTypes + "<br>\n");
             
-                // Each number explains itself on hover (Brian Fisher: every page explains its numbers; statsPage.do says more).
-                outFile.write("<span class=\"numbers\" title=\"Valid ant (Formicidae) species and subspecies, fossils included; names not identified to genus are not counted\">"
-                    + validSpecies + "</span> valid species + ssp.<br/>\n");
-                //outFile.write("<span class=\"numbers\">" + numberTotalTaxa + "</span> total species + ssp.<br/>\n");            
-                outFile.write("<span class=\"numbers\">" + specimenRecords + "</span> specimen records<br/>\n");
-                outFile.write("<span class=\"numbers\" title=\"Ant species and subspecies (valid names and morphospecies) with a photo of the ant; label photos do not count\">"
-                    + imagedSpecies + "</span> species + ssp. imaged <br/>\n");
-                outFile.write("<span class=\"numbers\">" + imagedSpecimens + "</span> specimens imaged<br/>\n");
-                outFile.write("<span class=\"numbers\" title=\"Images of the ant; label images are counted separately\">" + totalImages
-                    + "</span> total specimen images" + org.calacademy.antweb.ImageCounts.labels(labelImages) + "<br/>\n");
-
+                // The home page box (Brian Fisher, 2026-11-06, release 9.3.0): specimens, valid living species (+ fossil),
+                // those with specimens and those imaged with their share, images of ants. Until then: valid species + ssp.,
+                // specimen records, species + ssp. imaged (morphospecies included), specimens imaged, total images.
+                outFile.write(homeBoxHtml(specimenRecords, home, totalImages, imagedSpecimens, labelImages));
                 outFile.close();
             }
 
@@ -517,13 +642,26 @@ museum
                 */
             }
 
+            // the home page numbers of 2026-11-06 go in the same insert (review of #327: a later "update ... order by id
+            // desc limit 1" could hit another row); their columns are added at startup (LoginMgr), never here
+            boolean withHome = homeColumnsExist(getConnection());
+            StringBuilder homeCols = new StringBuilder();
+            StringBuilder homeVals = new StringBuilder();
+            if (withHome) {
+                for (java.util.Map.Entry<String, Long> e : home.entrySet()) {
+                    homeCols.append(", ").append(e.getKey());
+                    homeVals.append(", ").append(e.getValue());
+                }
+            } else {
+                s_log.error("populateStatistics() the statistics home columns are missing (added at startup): home numbers not stored");
+            }
             String update = "insert into statistics "
-                    + " (action, specimens, extant_taxa, total_taxa, proj_taxa, bioregion_taxa, museum_taxa, geolocale_taxa, geolocale_taxa_introduced, geolocale_taxa_endemic " 
-                    + " , total_images, specimens_imaged, species_imaged, valid_species_imaged, login_id, exec_time) "  //
+                    + " (action, specimens, extant_taxa, total_taxa, proj_taxa, bioregion_taxa, museum_taxa, geolocale_taxa, geolocale_taxa_introduced, geolocale_taxa_endemic "
+                    + " , total_images, specimens_imaged, species_imaged, valid_species_imaged, login_id, exec_time" + homeCols + ") "
                     + " values ('" + action + "'," +  specimenRecords + "," + validSpecies + "," + numberTotalTaxa
                     + "," + numberProjTaxa + "," + numberBioregionTaxa + "," + numberMuseumTaxa + "," + numberGeolocaleTaxa + "," + numberGeolocaleTaxaIntroduced + "," + numberGeolocaleTaxaEndemic
-                    + "," + totalImages + "," + imagedSpecimens 
-                    + "," + imagedSpecies + "," + validSpeciesImaged + "," + loginId + ", '" + execTime + "')";
+                    + "," + totalImages + "," + imagedSpecimens
+                    + "," + imagedSpecies + "," + validSpeciesImaged + "," + loginId + ", '" + execTime + "'" + homeVals + ")";
             int c = utilDb.runDml(update);
     }
 }

@@ -145,12 +145,42 @@ public class NumberChecksTest extends TestCase {
         assertEquals(1, extant.getValue(4));   // pheidole a x
     }
 
+    /**
+     * Brian Fisher, 2026-11-06: the Fossil lists show the genera and subfamilies with fossil species, living ones too, and
+     * statsPage Valid Fossil (Global Data and Museum Data) counts them so. Pheidole a made fossil: CASC's living
+     * Myrmicinae and Pheidole have a fossil species on its list.
+     */
+    public void testValidFossilCountsTheGeneraAndSubfamiliesWithFossilSpecies() throws Exception {
+        exec("update taxon set genus = 'pheidole' where taxon_name in ('" + NumbersTestDb.PHEIDOLE + "', '" + NumbersTestDb.PA + "')");
+        exec("update taxon set fossil = 1 where taxon_name = '" + NumbersTestDb.PA + "'");
+        StatisticsDb db = new StatisticsDb(connection);
+        Museum m = new Museum();
+        m.setCode("CASC");
+        StatSet fossil = db.getFossilMuseumData(m);
+        assertEquals("subfamilies with fossil species", 1, fossil.getValue(1));
+        assertEquals("genera with fossil species", 1, fossil.getValue(2));
+        assertEquals("fossil species", 1, fossil.getValue(3));
+        long[] gf = grouped(NumberChecks.statsPlacesSql("museum"), "CASC", 1);
+        for (int i = 0; i < 4; i++) assertEquals("museum fossil " + (i + 1), fossil.getValue(i + 1), gf[i]);
+        m.setCode("MCZC");
+        assertEquals("no fossil species at MCZC", 0, db.getFossilMuseumData(m).getValue(2));
+        StatSet global = db.getFossilData();
+        assertEquals("Global Data Fossil subfamilies", 1, global.getValue(1));
+        assertEquals("Global Data Fossil genera", 1, global.getValue(2));
+        CountCheck.Result r = check();
+        assertEquals(list(r), 0, real(r, "stats.global"));
+        // CASC's stored Valid species (2) still counts Pheidole a as living: that compare differs; the <= ones count a living
+        // genus or subfamily once
+        assertEquals(list(r), 1, real(r, "stats.museums"));
+    }
+
     private long[] grouped(String sql, String key, int fossil) throws Exception {
         long[] a = new long[4];
         String[] ranks = {"subfamily", "genus", "species", "subspecies"};
         try (Statement s = connection.createStatement(); ResultSet r = s.executeQuery(sql)) {
             while (r.next()) {
-                if (!key.equalsIgnoreCase(r.getString(1)) || r.getInt(2) != fossil) continue;
+                // fossil 2: a living genus or subfamily with a fossil species on the list, in the Valid Fossil row (2026-11-06)
+                if (!key.equalsIgnoreCase(r.getString(1)) || Math.min(r.getInt(2), 1) != fossil) continue;
                 a[java.util.Arrays.asList(ranks).indexOf(r.getString(3))] += r.getLong(4);
             }
         }

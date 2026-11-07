@@ -9,8 +9,11 @@ import re
 
 from public_pages import assert_ok, fetch, links, title
 
-HOME_NUMBERS = ["valid species + ssp.", "specimen records", "species + ssp. imaged", "specimens imaged",
-                "total specimen images"]
+# The box until 2026-11-06, and "AntWeb in numbers" since (test_home_numbers.py checks its numbers): the labels of either.
+HOME_NUMBERS_BEFORE = ["valid species + ssp.", "specimen records", "species + ssp. imaged", "specimens imaged",
+                       "total specimen images"]
+HOME_NUMBERS = ["specimen records", "valid living ant species", "species with specimens in AntWeb", "species imaged",
+                "images of ants of"]
 STATS_SECTIONS = ["Current Statistics:", "Global Data:", "Images:", "Imaged Species:", "Bioregion Data:",
                   "Museum Data:"]
 
@@ -19,10 +22,12 @@ def test_home_page_sections():
     r = fetch("/")
     assert_ok(r, "/")
     assert title(r) == "AntWeb", title(r)
-    stats = re.search(r'<div id="stats">(.*?)</div>', r.text, re.S)
+    # up to the next box (the numbers have their own divs since 2026-11-06)
+    stats = re.search(r'<div id="stats">(.*?)<div id="mission">', r.text, re.S)
     assert stats, "no statistics box"
-    for label in HOME_NUMBERS:
-        assert re.search(r'<span class="numbers"[^>]*>[\d,]+</span>\s*' + re.escape(label), stats.group(1)), \
+    labels = HOME_NUMBERS if 'data-stat="living-species"' in stats.group(1) else HOME_NUMBERS_BEFORE
+    for label in labels:
+        assert re.search(r'<span class="numbers"[^>]*>[\d,]+</span>\s*(?:<span class="stat-l">)?' + re.escape(label), stats.group(1)), \
             f"home page statistics: no number for {label!r} (web/genInc/statistics.jsp not written?)"
     assert links(stats.group(1), "statsPage"), "no link to statsPage.do"
     for box in ('id="recent_activity"', 'id="contributors"', 'id="promo_container"'):

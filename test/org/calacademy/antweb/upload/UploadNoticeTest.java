@@ -233,13 +233,13 @@ public class UploadNoticeTest extends TestCase {
 
     public void testAttentionSummarySentences() {
         assertEquals("Nothing in the report needs your attention.", UploadNotice.attentionSummary(counts(0, 0, 0)));
-        assertEquals("1 line was corrected; see the report. Please fix it in your own data before your next upload.",
+        assertEquals("1 specimen was corrected; see the report. Please fix it in your own data before your next upload.",
             UploadNotice.attentionSummary(counts(1, 0, 0)));
         assertEquals("2 lines were not loaded; see the report. Please fix them in your own data before your next upload.",
             UploadNotice.attentionSummary(counts(0, 2, 0)));
-        assertEquals("2 lines were corrected and 1 line was not loaded; see the report. Please fix them in your own data before your next upload.",
+        assertEquals("2 specimens were corrected and 1 line was not loaded; see the report. Please fix them in your own data before your next upload.",
             UploadNotice.attentionSummary(counts(2, 1, 0)));
-        assertEquals("1,200 lines were corrected, 3 lines were not loaded and 1 specimen was red-flagged; see the report."
+        assertEquals("1,200 specimens were corrected, 3 lines were not loaded and 1 specimen was red-flagged; see the report."
             + " Please fix them in your own data before your next upload.",
             UploadNotice.attentionSummary(counts(1200, 3, 1)));
         // Not known: no summary (image uploads, uploads that did not complete, counts not filled).
@@ -273,7 +273,7 @@ public class UploadNoticeTest extends TestCase {
             + "Upload ID: 5012\n"
             + "Specimens loaded: 1,840\n"
             + "Red-flagged specimens: 0\n\n"
-            + "1 line was corrected; see the report. Please fix it in your own data before your next upload.\n\n"
+            + "1 specimen was corrected; see the report. Please fix it in your own data before your next upload.\n\n"
             + "Upload report, with any problems found in your data:\n"
             + "https://www.antweb.org/web/log/specimen/20261029-10:12:03-specimenUpload.html\n\n"
             + "Replies to this message go to antweb@antweb.org.\n",
@@ -351,7 +351,7 @@ public class UploadNoticeTest extends TestCase {
         f.corrected = m.getCorrectedCount();
         f.nameChanges = m.getNameChangeCount();
         f.alreadyInAntweb = m.getAlreadyInAntwebCount();
-        assertEquals("1 line was filed under a name AntCat has changed and 1 line was not loaded; see the report."
+        assertEquals("1 specimen was filed under a name AntCat has changed and 1 line was not loaded; see the report."
             + " Please fix them in your own data before your next upload.", UploadNotice.attentionSummary(f));
     }
 

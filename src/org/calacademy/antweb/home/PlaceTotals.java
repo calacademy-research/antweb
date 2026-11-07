@@ -341,6 +341,28 @@ public final class PlaceTotals {
         return c;
     }
 
+    /**
+     * A valid fossil species or subspecies (alias fs) of the genus or subfamily row (alias row): the view Fossil lists
+     * the genera and subfamilies derived from the list of fossil species (Brian Fisher, 2026-11-06; TaxaPage.genusAwareCriteria).
+     */
+    public static String fossilSpeciesOf(String fs, String row, String rank) {
+        return fs + ".subfamily = " + row + ".subfamily" + ("genus".equals(rank) ? " and " + fs + ".genus = " + row + ".genus" : "")
+            + " and " + fs + ".fossil = 1 and " + fs + ".status = 'valid' and " + fs + ".taxarank in ('species', 'subspecies')";
+    }
+
+    /**
+     * statsPage Valid Fossil (Global Data and Museum Data, Brian Fisher, 2026-11-06): a valid ant taxon of the rank in
+     * the view Fossil. Species and subspecies: fossil ones. Genera and subfamilies: the extinct ones and the living ones
+     * with a valid fossil species on the same list (list: the list table, as "museum_taxon l"; null for the taxon table),
+     * so the number equals the header of the Fossil list.
+     */
+    public static String fossilViewCondition(String alias, String rank, String listAlias, String listTable, String keyColumn) {
+        if (!"genus".equals(rank) && !"subfamily".equals(rank)) return validAntTaxonCondition(alias, rank, 1);
+        String on = listTable == null ? "" : " join " + listTable + " fl on fl.taxon_name = fs.taxon_name and fl." + keyColumn + " = " + listAlias + "." + keyColumn;
+        return validAntTaxonCondition(alias, rank, null) + " and (" + alias + ".fossil = 1 or (" + alias + ".fossil = 0 and exists (select 1 from taxon fs"
+            + on + " where " + fossilSpeciesOf("fs", alias, rank) + ")))";
+    }
+
     /** The same rule for species and subspecies together (home and statsPage "valid species + ssp."; fossils included). */
     public static String validAntSpeciesCondition(String alias) {
         return "(" + validAntTaxonCondition(alias, "species", null) + " or " + validAntTaxonCondition(alias, "subspecies", null) + ")";

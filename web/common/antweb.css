@@ -1346,6 +1346,14 @@ input[type="checkbox"] {
     width:200px;
     line-height:1.25;
 }
+/* The statistics box (Brian Fisher, 2026-11-06): each number large, its label under it, a grey line for its share
+   (StatisticsDb.homeBoxHtml writes the markup into web/genInc/statistics.jsp). */
+#stats .stats-title { display:block; font-size:16px; margin:0 0 8px; }
+#stats .stat { margin:0 0 9px; }
+#stats .stat .numbers { display:block; font-size:22px; font-weight:bold; line-height:1.1; }
+#stats .stat-l { display:block; font-size:13px; line-height:1.25; }
+#stats .stat-s { display:block; font-size:12px; line-height:1.25; color:rgba(255,255,255,0.75); }
+#stats .stat-rule { border-top:1px solid rgba(255,255,255,0.3); margin:4px 0 8px; }
 
 #mission {
     float:left;
