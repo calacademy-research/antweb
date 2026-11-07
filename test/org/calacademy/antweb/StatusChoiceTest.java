@@ -224,6 +224,10 @@ public class StatusChoiceTest extends TestCase {
         assertEquals("an old address value: the heading of the view it opens", "7,215 Species (all specimen names)",
             StatusSet.listHeading("validmorpho", 7215, "Species", "Species", 6960));
         assertEquals("12 Fossil species", StatusSet.listHeading("fossil", 12, "Species", "Species", 6960));
+        // 2026-11-06: genera and subfamilies of the fossil species, not "fossil genera"
+        assertEquals("25 genera with fossil species", StatusSet.listHeading("fossil", 25, "Genera", "Genus", -1));
+        assertEquals("1 genus with fossil species", StatusSet.listHeading("fossil", 1, "Genera", "Genus", -1));
+        assertEquals("3 subfamilies with fossil species", StatusSet.listHeading("fossil", 3, "Subfamilies", "Subfamily", -1));
         assertEquals("98 Valid genera", StatusSet.listHeading("valid", 98, "Genera", "Genus", 6960));
         assertEquals("21 Subfamilies (valid and curated)", StatusSet.listHeading("curated", 21, "Subfamilies", "Subfamily", -1));
         assertEquals("1 Valid genus", StatusSet.listHeading("valid", 1, "Genera", "Genus", -1));
@@ -251,6 +255,7 @@ public class StatusChoiceTest extends TestCase {
         assertEquals("0 Valid species imaged (out of 3 valid species)", StatusSet.imagedHeading("valid", 0, 3, "Species", "Species"));
         assertEquals("5 Species imaged (out of 7 species, all specimen names)", StatusSet.imagedHeading("all", 5, 7, "Species", "Species"));
         assertEquals("3 Fossil species imaged (out of 12 fossil species)", StatusSet.imagedHeading("fossil", 3, 12, "Species", "Species"));
+        assertEquals("20 genera with fossil species imaged (out of 25 genera with fossil species)", StatusSet.imagedHeading("fossil", 20, 25, "Genera", "Genus"));
         // the AntCat list keeps its own choices
         assertEquals("40 Valid extant Species imaged (out of 98 valid extant species)",
             StatusSet.imagedHeading(StatusSet.VALID_EXTANT, 40, 98, "Species", "Species", Project.WORLDANTS));

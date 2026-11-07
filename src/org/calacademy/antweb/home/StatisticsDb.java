@@ -64,13 +64,15 @@ museum
 
     /** Global Data: valid ant taxa of the taxon table of one rank, extant (0) or fossil (1). */
     public static String globalCountSql(String rank, int fossil) {
-        return "select count(*) from taxon t where " + PlaceTotals.validAntTaxonCondition("t", rank, fossil);
+        // Fossil: by the view Fossil's rule, genera and subfamilies derived from the fossil species too (2026-11-06)
+        return "select count(*) from taxon t where " + (fossil == 1 ? PlaceTotals.fossilViewCondition("t", rank, null, null, null)
+            : PlaceTotals.validAntTaxonCondition("t", rank, fossil));
     }
 
     /** Bioregion and Museum Data: valid ant taxa of one rank on a list (parameter: the place's key). */
     public static String listCountSql(String listTable, String keyColumn, String rank, int fossil) {
         return "select count(*) from taxon t join " + listTable + " l on l.taxon_name = t.taxon_name where l." + keyColumn + " = ? and "
-            + PlaceTotals.validAntTaxonCondition("t", rank, fossil);
+            + (fossil == 1 ? PlaceTotals.fossilViewCondition("t", rank, "l", listTable, keyColumn) : PlaceTotals.validAntTaxonCondition("t", rank, fossil));
     }
 
     private int[] globalCounts(int fossil) throws SQLException {
@@ -94,9 +96,14 @@ museum
     }
 
     private static StatSet statSet(String name, String prefix, int[] n) {
+        return statSet(name, prefix, n, false);
+    }
+
+    /** fossil: the Fossil row's subfamilies and genera are those with fossil species (Brian Fisher, 2026-11-06). */
+    private static StatSet statSet(String name, String prefix, int[] n, boolean fossil) {
         StatSet statSet = new StatSet(name);
-        statSet.set1(prefix + "Subfamiles", n[0]);
-        statSet.set2(prefix + "Genera", n[1]);
+        statSet.set1(fossil ? "Subfamilies with fossil species" : prefix + "Subfamiles", n[0]);
+        statSet.set2(fossil ? "Genera with fossil species" : prefix + "Genera", n[1]);
         statSet.set3(prefix + "Species", n[2]);
         statSet.set4(prefix + "Subspecies", n[3]);
         return statSet;
@@ -107,7 +114,7 @@ museum
     }
 
     public StatSet getFossilData() throws SQLException {
-      return statSet("Fossil", "Valid ", globalCounts(1));
+      return statSet("Fossil", "Valid ", globalCounts(1), true);
     }
 
 // Bioregion data
@@ -152,7 +159,7 @@ museum
     }
 
     public StatSet getFossilMuseumData(Museum museum) throws SQLException {
-      return statSet(museum.getCode(), "Valid ", listCounts("museum_taxon", "code", museum.getCode(), 1));
+      return statSet(museum.getCode(), "Valid ", listCounts("museum_taxon", "code", museum.getCode(), 1), true);
     }
 
     public StatSet getImageData(Museum museum) throws SQLException {

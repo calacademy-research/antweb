@@ -72,7 +72,8 @@ public final class ListView {
         if (StatusSet.LIST_VALID.equals(choice)) return "Valid " + r + ": names AntCat calls valid, from specimens, curated entries or literature";
         if (StatusSet.LIST_VETTED.equals(choice)) return "Valid " + r + " and curated morphospecies (morphospecies a curator has put on a species list)";
         if (StatusSet.LIST_ALL.equals(choice)) return "Every name with specimens here: also the other morphospecies and the specimens identified only to genus";
-        if (StatusSet.LIST_FOSSIL.equals(choice)) return "Fossil " + r;
+        if (StatusSet.LIST_FOSSIL.equals(choice)) return r.startsWith("genera") || r.startsWith("subfamil")
+            ? "The " + r + " with fossil species on this list, extinct and living" : "Fossil " + r;
         if (StatusSet.LIST_NOT_CURATED.equals(choice)) return "Names with specimens here that are not curated: morphospecies no curator has put on a list, specimens identified only to genus, names not in AntCat";
         return null;
     }
@@ -87,7 +88,8 @@ public final class ListView {
                 + " that place's list. This is the view a list opens with."},
             {"All specimen names", "Curated plus every other morphospecies and the specimens identified only to genus"
                 + " (\"Acropyga (indet)\"). A genus known here only from such specimens is listed only in this view."},
-            {"Fossil", "fossil names."},
+            {"Fossil", "fossil species and subspecies; the Fossil genus and subfamily lists show the genera and subfamilies"
+                + " with fossil species here, living ones too (marked † when extinct)."},
         };
     }
 

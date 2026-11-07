@@ -74,7 +74,7 @@
 
 <br><br><br>
 <h2>Global Data:</h2>
-<p id="stats-global-note">Valid ant (Formicidae) taxa in AntWeb's taxon table, from AntCat: living (Extant) and fossil. Other families are not counted, and a species or subspecies counts only when it is identified to genus.</p>
+<p id="stats-global-note">Valid ant (Formicidae) taxa in AntWeb's taxon table, from AntCat: living (Extant) and fossil. Other families are not counted, and a species or subspecies counts only when it is identified to genus. In the Fossil row, subfamilies and genera are those with valid fossil species, extinct and living, as on the Fossil lists.</p>
 <%
 //String statsPageData = (String) request.getAttribute("statsPageData");
 StatSet extantData = (StatSet) request.getAttribute("extantData");
@@ -172,7 +172,7 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
 
 <br><br>
 <h2>Museum Data:</h2>
-<p id="stats-museum-note">Valid ant (Formicidae) taxa on each museum's list, living (Valid Extant) and fossil (Valid Fossil). Other families are not counted, as on the museum pages.</p>
+<p id="stats-museum-note">Valid ant (Formicidae) taxa on each museum's list, living (Valid Extant) and fossil (Valid Fossil). Other families are not counted, as on the museum pages. Valid Fossil subfamilies and genera are those with fossil species on the museum's list, extinct and living: the headers of its Fossil lists.</p>
 
 <br>
 <h3>Valid Extant:</h3>

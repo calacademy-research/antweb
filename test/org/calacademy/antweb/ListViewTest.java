@@ -409,5 +409,8 @@ public class ListViewTest extends TestCase {
         StatusSet curated = StatusSet.listStatusSet(StatusSet.LIST_VETTED);
         assertEquals("other views unchanged", curated.getAndCriteria("taxon", "genus"), TaxaPage.genusAwareCriteria(geo, curated, "genus"));
         assertTrue("global lists: every fossil species", TaxaPage.genusAwareCriteria(" where 1 = 1", fossil, "genus").contains("from taxon fs where 1 = 1 and fs.subfamily"));
+        String sub = TaxaPage.genusAwareCriteria(geo, fossil, "subfamily");
+        assertTrue("subfamilies with fossil species too: " + sub, sub.contains("taxon.fossil = 1 or exists (select 1 from taxon fs, geolocale_taxon")
+            && sub.contains("fs.subfamily = taxon.subfamily") && !sub.contains("fs.genus"));
     }
 }

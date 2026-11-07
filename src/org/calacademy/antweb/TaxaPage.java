@@ -161,20 +161,22 @@ public class TaxaPage implements Serializable {
 	}
 
 	/**
-	 * The view's criteria of a list's rows (StatusSet.getAndCriteria), and in the view Fossil at genus rank also the
-	 * living genera that have valid fossil species on the same list (Brian Fisher, 2026-11-06: Ukraine's Oecophylla,
-	 * Pristomyrmex, Stigmatomma and Vollenhovia, known there only from amber, left the other views on 2026-11-05 and
-	 * must be listed in the view Fossil; it listed extinct genera only). fetchChildrenClause: the overview's list join
-	 * (", geolocale_taxon where geolocale_taxon.taxon_name = taxon.taxon_name and ..."; " where 1 = 1" on global lists),
-	 * repeated for the fossil species under the alias fs. Used by listWhere and Subfamily.setChildren.
+	 * The view's criteria of a list's rows (StatusSet.getAndCriteria), and in the view Fossil at genus and subfamily
+	 * rank also the living genera and subfamilies that have valid fossil species on the same list. Brian Fisher,
+	 * 2026-11-06: a list of genera (and of subfamilies) includes every genus derived from the list of fossil species
+	 * (Ukraine's Oecophylla, Pristomyrmex, Stigmatomma and Vollenhovia, known there only from amber, left the other
+	 * views on 2026-11-05; the view Fossil listed extinct genera only). The statsPage Valid Fossil numbers follow the
+	 * same rule (PlaceTotals.fossilViewCondition). fetchChildrenClause: the overview's list join (", geolocale_taxon
+	 * where geolocale_taxon.taxon_name = taxon.taxon_name and ..."; " where 1 = 1" on global lists), repeated for the
+	 * fossil species under the alias fs. Used by listWhere and Subfamily.setChildren.
 	 */
 	public static String genusAwareCriteria(String fetchChildrenClause, StatusSet statusSet, String rank) {
-		if (!"genus".equals(rank) || !StatusSet.VALID_FOSSIL.equals(statusSet.getValue())) return statusSet.getAndCriteria("taxon", rank);
+		boolean higher = "genus".equals(rank) || "subfamily".equals(rank);
+		if (!higher || !StatusSet.VALID_FOSSIL.equals(statusSet.getValue())) return statusSet.getAndCriteria("taxon", rank);
 		String clause = fetchChildrenClause == null || fetchChildrenClause.trim().isEmpty() ? " where 1 = 1" : fetchChildrenClause;
 		String inner = clause.replaceAll("(?<![\\w])taxon\\.taxon_name", "fs.taxon_name");
 		return " and taxon.status = '" + Status.VALID + "' and (taxon.fossil = 1 or exists (select 1 from taxon fs" + inner
-			+ " and fs.subfamily = taxon.subfamily and fs.genus = taxon.genus and fs.fossil = 1 and fs.status = '" + Status.VALID
-			+ "' and fs.taxarank in ('species', 'subspecies')))";
+			+ " and " + org.calacademy.antweb.home.PlaceTotals.fossilSpeciesOf("fs", "taxon", rank) + "))";
 	}
 
 	/** The list's own rows of a view (" from taxon, <list> where ..."): the place's list, the view's criteria. */
