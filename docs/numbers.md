@@ -406,7 +406,9 @@ Found while doing this (2026-10-22):
   refused. The check (`inv:taxon.parents`) leaves out names not identified to genus and says for each finding whether
   the genus row is missing (AntCat import problem for a valid name; else subfamily missing in the upload, or not an
   ant). Tests: `TaxonTreeCountDbTest#testRepairSetsParentsOnlyToExistingGenusRows`,
-  `#testNoAlertWithoutAValidNameMissingItsGenus`; `SubfamilyFromGenusTest` (4 tests).
+  `#testNoAlertWithoutAValidNameMissingItsGenus`; `SubfamilyFromGenusTest` (5 tests). (4) A species column
+  that holds an AntCat genus name (genus "Pyramica", species "strumigenys", Marcio Pie Ant Lab 2019) is loaded as given
+  and listed under "Species column holds a genus name" (`MessageMgr.speciesIsGenusName`, 2026-11-07).
 
   One-off repair (Brian runs it; staging first: `ssh root@165.232.136.170`, then production: `ssh root@165.232.137.86`
   with `F=/root/antweb/etc/db.properties` in each block). Nightly set 1 with this code does the same every night; the
