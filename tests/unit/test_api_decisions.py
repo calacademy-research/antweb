@@ -111,6 +111,23 @@ def test_health_route_stays_open():
     assert r.status_code == 200 and "Antweb API" in r.get_data(as_text=True), r.status_code
 
 
+def test_front_door_points_to_the_terms_and_the_guide():
+    """Step 6, API keys PR 1 (2026-11-08): / says the API is closed and links the documentation, the terms of use
+    and /llms.txt; every 503 links the terms too."""
+    r = client.get("/")
+    j = r.get_json()
+    assert r.status_code == 200 and j["status"] == "closed", (r.status_code, j)
+    assert j["documentation"] == "https://www.antweb.org/apiV3.1.do", j
+    assert j["terms"] == "https://www.antweb.org/apiV3.1.do#terms", j
+    assert j["guideForPrograms"] == "https://www.antweb.org/llms.txt", j
+    assert "localhost" not in r.get_data(as_text=True), j
+    assert len(j["terms_of_use"]) == 5 and "arranged in advance" in j["terms_of_use"][1], j
+    assert "online at https://www.antweb.org" in j["citation"], j
+    r = client.get("/specimens")
+    assert r.status_code == 503 and r.get_json()["terms"] == j["terms"], r.get_data(as_text=True)[:200]
+    assert r.headers.get("Retry-After") == "86400", dict(r.headers)
+
+
 def test_readonly_login_required_on_servers():
     assert api._readonlyLoginRequired({"API_REQUIRE_READONLY_LOGIN": "true"})
     assert not api._readonlyLoginRequired({"API_REQUIRE_READONLY_LOGIN": "false"})

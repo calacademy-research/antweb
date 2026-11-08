@@ -555,7 +555,7 @@ jobs:
             javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/util/CountRules20261030Test.java
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.util.CountRules20261030Test > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
-            grep -q "^OK (7 tests)" /tmp/out.txt
+            grep -q "^OK (8 tests)" /tmp/out.txt
           '
 
       - name: Java unit tests of images from anywhere (place first, Images column, imaged castes; 2026-10-27)

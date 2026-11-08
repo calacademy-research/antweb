@@ -1,7 +1,7 @@
 <%-- Body of the API v3.1 documentation (apiV3.1.do): global parameters, licence and image-count notes, each route
      with its parameters and example links to https://antweb.org/v3.1 (http://localhost/v3.1 in dev mode).
      Administrators see the admin-only parameters, and the examples get &up=1. Docs: docs/flows/api.md,
-     docs/numbers.md rows 100 to 118. Tests: tests/e2e/test_api.py. --%> 
+     docs/numbers.md rows 100 to 118. Access and terms of use under #terms (step 6, 2026-11-08). Tests: tests/e2e/test_api.py. --%> 
 <%@ page import="org.calacademy.antweb.*" %> 
 <%@ page import="org.calacademy.antweb.util.*" %>
 
@@ -38,6 +38,32 @@
         <p>AntWeb.org is the world's largest online database of images, specimen records, and natural history information on ants. It is community driven and open to contribution from anyone with specimen records, natural history comments, or images.</p> 
         
         <p>This API allows for programatic access to the Antweb database, making the antweb data available to the public in an Json format.</p>
+
+        <h2 id="terms">Access and terms of use</h2>
+        <p><b>Publisher:</b> AntWeb, California Academy of Sciences. <b>Contact:</b> antweb@antweb.org. <b>Last updated:</b> November 2026.</p>
+        <h3>API status and access</h3>
+        <p><b>Status (November 2026):</b> the AntWeb API is temporarily unavailable while free registered API keys and request limits are introduced. During this period data requests return HTTP 503 (Service Unavailable). The API will reopen when registration is ready. Documentation: https://www.antweb.org/apiV3.1.do. API base address: https://www.antweb.org/v3.1/.</p>
+        <p>When access reopens, you can register for a <b>free API key</b> with your name, email address and project description, and your institution or affiliation if you have one. A key is for an identified project or application and allows higher request limits. A small number of requests will be possible without a key, for occasional questions. The request limits will be published here when registration opens.</p>
+        <p>Keep API keys private. Respect the published limits and avoid many parallel requests. When a limit is reached the service returns <b>HTTP 429 (Too Many Requests)</b>; wait for the time given in the <code>Retry-After</code> header before trying again. AntWeb may restrict or revoke access that disrupts the service, compromises security, or repeatedly ignores the limits.</p>
+        <h3>Purpose and responsible data access</h3>
+        <p>AntWeb is a community-supported scientific resource, developed since 2002 under the scientific leadership of <b>Brian L. Fisher</b> at the California Academy of Sciences. Its records and images reflect decades of fieldwork, specimen preparation, imaging, identification and curation by many contributors.</p>
+        <p>AntWeb <b>welcomes research, education, conservation and responsible reuse</b> of its data. The API is designed to support queries and research workflows without overloading the service. Use the API rather than automated scraping of AntWeb's web pages, and follow <code>robots.txt</code>.</p>
+        <p>Routine queries and targeted research downloads are welcome within the published limits. <b>Systematic extraction of the entire database, continuous mirroring, repeated full synchronization, or unusually high-volume requests must be arranged with the AntWeb team in advance.</b> Write to antweb@antweb.org to discuss efficient bulk access, attribution and provenance. The access limits govern use of AntWeb's servers; they do not remove the reuse rights granted by the CC BY 4.0 licence.</p>
+        <h3>Scientific credit and citation</h3>
+        <p>Give the attribution the CC BY 4.0 licence requires. <b>Publications and public research outputs substantially based on AntWeb should cite AntWeb</b>, give the version or access date, and keep enough information for readers to trace the underlying records.</p>
+        <p><b>Citation:</b> AntWeb. Version [version shown in the page header]. California Academy of Sciences, online at https://www.antweb.org. Accessed [day month year].</p>
+        <p>When you cite or publish specimen-level findings, keep <b>AntWeb's unique specimen codes</b> (for example CASENT codes) and the original record's provenance. For datasets that include AntWeb records, name AntWeb as a data source and keep record-level provenance where you reasonably can. A citation of a downstream aggregator alone does not identify the original specimen data.</p>
+        <p>For reproduced images, give the <b>photographer, the specimen code, AntWeb, and a link or reference to the AntWeb record</b>, as the medium allows. More on reuse: <a href="https://www.antweb.org/citing_antweb.jsp">How to Cite AntWeb</a>.</p>
+        <h3>Collaboration and contributing back</h3>
+        <p>If you are planning a <b>country checklist, regional inventory, taxonomic revision, large-scale biodiversity analysis, or another publication that makes substantial use of AntWeb</b>, please contact the AntWeb scientific team early. AntWeb scientists and contributors may help with specimen verification, taxonomy, distribution, data quality and analysis. We welcome real research collaboration and recognition of scientific contributions, including coauthorship when warranted by actual contributions to the new study. Using openly licensed data does not by itself require collaboration or confer coauthorship.</p>
+        <p>If you publish a taxonomic revision or new species descriptions using AntWeb specimens or images, please <b>contribute your new specimen photographs, improved identifications, type designations, type-locality information and publication links back to AntWeb</b>. Original high-resolution photographs of holotypes and other type specimens, with specimen codes and photographer, are especially valuable. Contributions are voluntary; photographers and contributors are credited. How to contribute: <a href="https://www.antweb.org/documentation.do">Participate</a>, or write to antweb@antweb.org.</p>
+        <h3>Licence</h3>
+        <p>AntWeb images and data are licensed <a href="https://creativecommons.org/licenses/by/4.0/"><b>CC BY 4.0</b></a>. These terms govern access to the API and explain scholarly expectations; they do not override the permissions the licence grants.</p>
+        <h3>Identifications and taxonomic names</h3>
+        <p>AntWeb holds valid names, morphospecies, provisional and historical identifications. Treat identifications as information about the specimen that may need verification. For accepted names, synonyms and nomenclatural history, use <a href="https://www.antcat.org"><b>AntCat</b></a>, the taxonomic catalog AntWeb follows.</p>
+        <h3>Usage records and contact</h3>
+        <p>AntWeb records key registration details and request information for security, reliability, abuse prevention, troubleshooting and capacity planning, under the California Academy of Sciences' privacy policy.</p>
+        <p>Questions about access, bulk data, contributions, attribution or collaboration: <b>antweb@antweb.org</b>. Programs and AI agents: please also read <a href="https://www.antweb.org/llms.txt">antweb.org/llms.txt</a>.</p>
 
         <p><b>Global Parameters (available for all api, where applicable):</b>
         <table class="arguments">

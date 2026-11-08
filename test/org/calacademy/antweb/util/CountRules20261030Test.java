@@ -142,4 +142,17 @@ public class CountRules20261030Test extends TestCase {
         assertTrue("no previous import: no change", sql.contains("prev_size is not null"));
         assertTrue(sql, sql.contains("interval 7 day"));
     }
+
+    /** Brian Fisher, 2026-11-07, "count like the list": the check counts a Fossil Ants or AntWeb-wide genus row in its
+     *  subfamily's Genera only when a species of it is on the list, as Project.getCountChildrenQuery does (staging
+     *  2026-11-08 found the check still counting every genus row: Formicinae 50 stored vs 52 rows). */
+    public void testFossilAntsAndAntWebWideSubfamilyCheckCountsGeneraWithSpecies() {
+        String c = CountInvariants.genusWithSpeciesOnList("proj_taxon", "project_name");
+        assertTrue(c, c.contains("not in ('fossilants', 'allantwebants')"));
+        assertTrue(c, c.contains("st.parent_taxon_name = t.taxon_name"));
+        assertTrue(c, c.contains("st.status in ('valid', 'morphotaxon')"));
+        assertTrue(c, c.contains("sc.project_name = c.project_name"));
+        String crawl = new Project("fossilants").getCountChildrenQuery("genus");
+        assertTrue(crawl, crawl.contains("sp.status in ('valid', 'morphotaxon')"));
+    }
 }
