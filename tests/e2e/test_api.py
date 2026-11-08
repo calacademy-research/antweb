@@ -286,3 +286,16 @@ def test_country_matches_the_whole_name():
     assert not others, f"country=Niger returned other countries: {others}"
     lower = _get("/v3.1/specimens?country=madagascar&limit=5&up=1").json()["specimens"]
     assert lower and all(s["country"].lower() == "madagascar" for s in lower), "country=madagascar (lower case) found nothing"
+
+
+def test_llms_txt_and_the_terms_on_the_api_page():
+    """Step 6, API keys PR 1 (2026-11-08): /llms.txt (plain text for programs and AI agents) and the terms of use on
+    the API page, both linked from the API's front door."""
+    r = new_session().get(BASE_URL + "/llms.txt", timeout=TIMEOUT)
+    assert r.status_code == 200 and r.headers.get("Content-Type", "").startswith("text/plain"), (r.status_code, r.headers.get("Content-Type"))
+    for words in ("# AntWeb", "https://www.antweb.org/v3.1/", "apiV3.1.do#terms", "CC BY 4.0", "antweb@antweb.org"):
+        assert words in r.text, words
+    r = new_session().get(BASE_URL + "/apiV3.1.do", timeout=max(TIMEOUT, 120))
+    assert r.status_code == 200 and 'id="terms"' in r.text and "Terms of use" in r.text, r.status_code
+    j = new_session().get(BASE_URL + "/v3.1/", timeout=max(TIMEOUT, 120)).json()
+    assert j["terms"].endswith("/apiV3.1.do#terms") and j["guideForPrograms"].endswith("/llms.txt"), j

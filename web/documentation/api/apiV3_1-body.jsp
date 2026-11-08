@@ -1,7 +1,7 @@
 <%-- Body of the API v3.1 documentation (apiV3.1.do): global parameters, licence and image-count notes, each route
      with its parameters and example links to https://antweb.org/v3.1 (http://localhost/v3.1 in dev mode).
      Administrators see the admin-only parameters, and the examples get &up=1. Docs: docs/flows/api.md,
-     docs/numbers.md rows 100 to 118. Tests: tests/e2e/test_api.py. --%> 
+     docs/numbers.md rows 100 to 118. Access and terms of use under #terms (step 6, 2026-11-08). Tests: tests/e2e/test_api.py. --%> 
 <%@ page import="org.calacademy.antweb.*" %> 
 <%@ page import="org.calacademy.antweb.util.*" %>
 
@@ -38,6 +38,19 @@
         <p>AntWeb.org is the world's largest online database of images, specimen records, and natural history information on ants. It is community driven and open to contribution from anyone with specimen records, natural history comments, or images.</p> 
         
         <p>This API allows for programatic access to the Antweb database, making the antweb data available to the public in an Json format.</p>
+
+        <h2 id="terms">Access and terms of use</h2>
+        <p><b>Status (November 2026):</b> the API is closed while we add free registered API keys. Until then every data request answers HTTP 503 with a short message. Programs and AI agents: please also read <a href="https://www.antweb.org/llms.txt">antweb.org/llms.txt</a>.</p>
+        <p><b>Free API keys</b> (coming): register with your name, email, institution and project; the key raises your limits. Without a key only a few requests are allowed, for one-off questions. When you reach a limit the API answers HTTP 429 with how long to wait.</p>
+        <p><b>Terms of use:</b></p>
+        <ol>
+          <li>Use the API to answer research questions, not to copy the database. Do not harvest all records or run a mirror; for bulk data, write to us.</li>
+          <li>Keep your key private; one key per project.</li>
+          <li>Respect the limits. We may lower the limits of, or revoke, a key that harms the service.</li>
+          <li>Cite AntWeb and the specimen codes you used: <i>AntWeb. Version (shown in the page header). California Academy of Sciences, online at https://www.antweb.org. Accessed &lt;date&gt;.</i></li>
+          <li>AntWeb data and images are licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>: credit the photographer and the specimen code with each image. We record the requests made with each key to plan the service; we do not share them.</li>
+          <li>Larger projects: Brian Fisher, the project lead, welcomes collaboration. Write to antweb@antweb.org.</li>
+        </ol>
 
         <p><b>Global Parameters (available for all api, where applicable):</b>
         <table class="arguments">

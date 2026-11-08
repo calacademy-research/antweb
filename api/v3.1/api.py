@@ -231,11 +231,19 @@ print("server started. devMode:" + str(isDevMode) + " platform:" + sys.platform)
 
 @application.route("/")
 def hello():
-    message = "Antweb API " + version \
-              + "<br><br><a href='" + localTomcatServer + "/" + apiUri + "'>" + version + " Local API Documentation</a>" \
-              + "<br><br><a href='" + prodServer + "/" + apiUri + "'>" + version + " Antweb API Documentation</a>"
-    # + "<br><br>Application:" + application.name
-    return message
+    """The API's front door (step 6, API keys PR 1, 2026-11-08): what the API is, whether it is open, and where the
+    documentation, terms of use and the plain-text guide for programs and AI agents (/llms.txt) are. Always 200 (the
+    uptime check and the deploy smoke run read it; both look for "Antweb API")."""
+    return jsonify(
+        name="Antweb API " + version,
+        status="closed",
+        message=API_DOWN_MESSAGE,
+        documentation=API_DOCS_URL,
+        terms=API_TERMS_URL,
+        guideForPrograms=LLMS_URL,
+        contact="antweb@antweb.org",
+        citation=CITATION,
+    )
 
 
 # - Various Methods, etc.. ---------------------------------------------------------------
@@ -300,11 +308,18 @@ def down(request):
 
 API_DOWN_MESSAGE = "The AntWeb API is closed while we add free registered API keys. It will reopen in the coming weeks; see antweb.org for news."
 
+# The API page (documentation, with the terms of use under #terms) and the plain-text guide for programs and AI agents
+# (web/llms.txt), linked from / and from every 503 (step 6, API keys PR 1, 2026-11-08).
+API_DOCS_URL = prodServer + "/" + apiUri
+API_TERMS_URL = API_DOCS_URL + "#terms"
+LLMS_URL = prodServer + "/llms.txt"
+CITATION = "AntWeb. Version (shown in the page header). California Academy of Sciences, online at https://www.antweb.org. Accessed <date>."
+
 
 def apiDown():
     # Without up=1: HTTP 503 with a JSON message (decided by Brian Fisher 2026-10-27; it was an empty page with
     # HTTP 200). The / route stays open for health checks.
-    response = jsonify(error=API_DOWN_MESSAGE, documentation=prodServer + "/" + apiUri)
+    response = jsonify(error=API_DOWN_MESSAGE, documentation=API_DOCS_URL, terms=API_TERMS_URL)
     response.status_code = 503
     return response
 

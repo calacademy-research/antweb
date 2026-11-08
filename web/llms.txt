@@ -1,0 +1,28 @@
+# AntWeb
+
+> AntWeb (https://www.antweb.org) is the California Academy of Sciences' online database of ant specimens: more than 900,000 specimen records from collections around the world, with images and natural history. Names follow AntCat, the global ant catalog (https://www.antcat.org).
+
+This file is for programs and AI agents that want AntWeb's data. Please read it before you send requests.
+
+## How to get data
+
+- Use the API, not the web pages. Do not crawl or scrape the website for data; robots.txt applies.
+- API: https://www.antweb.org/v3.1/
+- Documentation and terms of use: https://www.antweb.org/apiV3.1.do (terms: https://www.antweb.org/apiV3.1.do#terms)
+- Status (November 2026): the API is closed while we add free registered API keys. Every data request answers HTTP 503 with this message until then.
+- With keys: register for a free key (name, institution, project). Without a key only a few requests are allowed, for one-off questions. When you reach a limit the API answers HTTP 429 with how long to wait; please slow down instead of retrying at once.
+
+## What we ask
+
+- Use the API to answer research questions, not to copy the database. Do not harvest all records or build a mirror.
+- Bulk data is not available automatically. For a larger project, write to antweb@antweb.org; Brian Fisher, the project lead, welcomes collaboration.
+- Cite AntWeb and the specimen codes you use: "AntWeb. Version (shown in the page header). California Academy of Sciences, online at https://www.antweb.org. Accessed <date>."
+- Images and data are licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Credit the photographer and the specimen code with each image, and link back to its AntWeb page.
+
+## Names
+
+- For valid names, synonyms and the taxonomic history of a name, use AntCat (https://www.antcat.org), which AntWeb loads every day.
+
+## Contact
+
+- antweb@antweb.org
