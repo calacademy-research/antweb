@@ -1,28 +1,28 @@
 # AntWeb
 
-> AntWeb (https://www.antweb.org) is the California Academy of Sciences' online database of ant specimens: more than 900,000 specimen records from collections around the world, with images and natural history. Names follow AntCat, the global ant catalog (https://www.antcat.org).
+> AntWeb is the California Academy of Sciences' community-supported resource for ant specimen records, images, distribution and natural history, developed since 2002 under the scientific leadership of Brian L. Fisher. Use its API for data, keep scientific attribution and specimen provenance, and use AntCat for names.
 
-This file is for programs and AI agents that want AntWeb's data. Please read it before you send requests.
+**API status (November 2026):** the data API is temporarily closed while free registered keys and request limits are introduced. Data requests return HTTP 503. Do not get around the closure by scraping pages. When registration opens, use a free API key for regular or substantial use; a small number of requests will work without a key. Respect the limits and the Retry-After header of HTTP 429 answers.
 
-## How to get data
+**Access:** use the API, not crawling or scraping of AntWeb's web pages. Follow robots.txt. Do not harvest the whole database, run an automated mirror, or synchronize it in full through the API without arranging access with the AntWeb team first: antweb@antweb.org. The limits do not change the rights the CC BY 4.0 licence grants.
 
-- Use the API, not the web pages. Do not crawl or scrape the website for data; robots.txt applies.
-- API: https://www.antweb.org/v3.1/
-- Documentation and terms of use: https://www.antweb.org/apiV3.1.do (terms: https://www.antweb.org/apiV3.1.do#terms)
-- Status (November 2026): the API is closed while we add free registered API keys. Every data request answers HTTP 503 with this message until then.
-- With keys: register for a free key (name, institution, project). Without a key only a few requests are allowed, for one-off questions. When you reach a limit the API answers HTTP 429 with how long to wait; please slow down instead of retrying at once.
+**Citation:** research and publications substantially based on AntWeb should cite AntWeb with the version or access date and keep the original specimen codes and provenance: "AntWeb. Version [version shown in the page header]. California Academy of Sciences, online at https://www.antweb.org. Accessed [day month year]." Citing an aggregator alone does not credit the AntWeb source.
 
-## What we ask
+**Images and licence:** AntWeb images and data are licensed CC BY 4.0. Credit the photographer, AntWeb and the specimen code, and link to the AntWeb record where practical.
 
-- Use the API to answer research questions, not to copy the database. Do not harvest all records or build a mirror.
-- Bulk data is not available automatically. For a larger project, write to antweb@antweb.org; Brian Fisher, the project lead, welcomes collaboration.
-- Cite AntWeb and the specimen codes you use: "AntWeb. Version (shown in the page header). California Academy of Sciences, online at https://www.antweb.org. Accessed <date>."
-- Images and data are licensed CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/). Credit the photographer and the specimen code with each image, and link back to its AntWeb page.
+**Collaboration and contributions:** for taxonomic revisions, country or regional lists and large studies that depend on AntWeb, contact the AntWeb team early to explore collaboration. Coauthorship follows real contributions; it is not a condition of reuse. Please contribute new specimen photographs, especially of type specimens, updated identifications, type designations and publication links back to AntWeb, with photographer and contributor credit.
 
-## Names
+**Names:** AntWeb holds specimen identifications, including provisional ones and morphospecies. For accepted names, synonyms and nomenclatural history use AntCat (https://www.antcat.org). Not every AntWeb specimen name is an accepted taxon.
 
-- For valid names, synonyms and the taxonomic history of a name, use AntCat (https://www.antcat.org), which AntWeb loads every day.
+**Contact:** antweb@antweb.org
 
-## Contact
+## Data access and documentation
 
-- antweb@antweb.org
+- [AntWeb API v3.1](https://www.antweb.org/v3.1/): API entry point and status
+- [API documentation and terms](https://www.antweb.org/apiV3.1.do): endpoints, parameters, access and citation
+- [How to Cite AntWeb](https://www.antweb.org/citing_antweb.jsp): image credit and citation
+- [Participate](https://www.antweb.org/documentation.do): how to contribute specimens and images
+
+## Taxonomic authority
+
+- [AntCat](https://www.antcat.org): accepted names, synonyms and nomenclature used by AntWeb

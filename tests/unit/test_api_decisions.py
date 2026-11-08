@@ -121,9 +121,11 @@ def test_front_door_points_to_the_terms_and_the_guide():
     assert j["terms"] == "https://www.antweb.org/apiV3.1.do#terms", j
     assert j["guideForPrograms"] == "https://www.antweb.org/llms.txt", j
     assert "localhost" not in r.get_data(as_text=True), j
-    assert len(j["terms_of_use"]) == 6 and "not to copy the database" in j["terms_of_use"][0], j
+    assert len(j["terms_of_use"]) == 5 and "arranged in advance" in j["terms_of_use"][1], j
+    assert "online at https://www.antweb.org" in j["citation"], j
     r = client.get("/specimens")
     assert r.status_code == 503 and r.get_json()["terms"] == j["terms"], r.get_data(as_text=True)[:200]
+    assert r.headers.get("Retry-After") == "86400", dict(r.headers)
 
 
 def test_readonly_login_required_on_servers():

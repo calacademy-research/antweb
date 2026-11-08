@@ -314,16 +314,15 @@ API_DOWN_MESSAGE = "The AntWeb API is closed while we add free registered API ke
 API_DOCS_URL = prodServer + "/" + apiUri
 API_TERMS_URL = API_DOCS_URL + "#terms"
 LLMS_URL = prodServer + "/llms.txt"
-CITATION = "AntWeb. Version (shown in the page header). California Academy of Sciences, online at https://www.antweb.org. Accessed <date>."
+CITATION = "AntWeb. Version [version shown in the page header]. California Academy of Sciences, online at https://www.antweb.org. Accessed [day month year]."
 # The terms of use as on the API page (#terms), so programs that cannot open the page (Cloudflare challenges it) read them
 # here.
 API_TERMS = [
-    "Use the API to answer research questions, not to copy the database. Do not harvest all records or run a mirror; for bulk data, write to us.",
-    "Keep your key private; one key per project.",
-    "Respect the limits. We may lower the limits of, or revoke, a key that harms the service.",
-    "Cite AntWeb and the specimen codes you used: " + CITATION,
-    "AntWeb data and images are licensed CC BY 4.0: credit the photographer and the specimen code with each image. We record the requests made with each key to plan the service; we do not share them.",
-    "Larger projects: Brian Fisher, the project lead, welcomes collaboration. Write to antweb@antweb.org.",
+    "Use the API, not scraping of AntWeb's web pages; follow robots.txt.",
+    "Systematic extraction of the whole database, mirroring or full synchronization must be arranged in advance: antweb@antweb.org.",
+    "Cite AntWeb with the version or access date and keep the specimen codes and provenance: " + CITATION,
+    "Images and data are licensed CC BY 4.0: credit the photographer, AntWeb and the specimen code.",
+    "Taxonomic revisions and large studies: contact the AntWeb team early; please contribute new specimen and type photographs back.",
 ]
 
 
@@ -332,6 +331,8 @@ def apiDown():
     # HTTP 200). The / route stays open for health checks.
     response = jsonify(error=API_DOWN_MESSAGE, documentation=API_DOCS_URL, terms=API_TERMS_URL)
     response.status_code = 503
+    # programs should come back tomorrow, not retry at once (Brian Fisher's terms, 2026-11-08)
+    response.headers["Retry-After"] = "86400"
     return response
 
 
