@@ -30,6 +30,11 @@
 --   commit;
 -- Delete the backup tables after about 2026-12-08.
 
+-- Reading the specimen table must not wait on the site's own work (staging 2026-11-08: "Lock wait timeout exceeded"
+-- while the tests uploaded specimens): read committed rows without locking them, and wait up to 10 minutes for a lock.
+set session transaction isolation level read committed;
+set session innodb_lock_wait_timeout = 600;
+
 -- 1. The specimens to re-file and their new name parts.
 create table nonant_fix_20261108_specimen as
   select code, taxon_name, subfamily, genus, species, subspecies, status, family
