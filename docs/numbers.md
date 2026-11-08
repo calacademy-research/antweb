@@ -409,7 +409,11 @@ Found while doing this (2026-10-22):
   `#testNoAlertWithoutAValidNameMissingItsGenus`; `SubfamilyFromGenusTest` (5 tests). (4) A species column
   that holds an AntCat genus name (genus "Pyramica", species "strumigenys", Marcio Pie Ant Lab 2019) is loaded as given
   and listed under "Species column holds a genus name" (`MessageMgr.speciesIsGenusName`, 2026-11-07), only when AntCat
-  does not know the combination (Atta cephalotes and Solenopsis azteca are real species).
+  does not know the combination (Atta cephalotes and Solenopsis azteca are real species). (5) A non-ant line (family not Formicidae)
+  without a subfamily is filed under its family in parentheses, "(scarabaeidae)cremastocheilus (indet)", or the higher
+  group given as family, "(coleoptera)(coleoptera) (indet)"; never under the ant placeholder "(formicidae)". A species
+  that repeats the group in parentheses, or "_indet_", is "(indet)" (2026-11-08, `nonAntSubfamilyPlaceholder`,
+  `nonAntIndetSpecies`; existing records: `db/upgrade/9.3.1/2026-11-08-nonant-family-placeholder.sql`).
 
   One-off repair (Brian runs it; staging first: `ssh root@165.232.136.170`, then production: `ssh root@165.232.137.86`
   with `F=/root/antweb/etc/db.properties` in each block). Nightly set 1 with this code does the same every night; the
