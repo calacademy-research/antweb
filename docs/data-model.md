@@ -1386,6 +1386,42 @@ Backup, see the table above. Drop proposed.
 
 Obsolete, see the table above.
 
+### Backups of the non-ant re-filing (2026-11-08)
+
+Made by `db/upgrade/9.3.1/2026-11-08-nonant-family-placeholder.sql` (non-ants filed under "(formicidae)" re-filed under their family; the rollback is in the file's header). **Backup, drop after about 2026-12-08.**
+
+### `nonant_fix_20261108_specimen`
+
+The re-filed specimens before the change (code, taxon_name, subfamily, genus, species, subspecies, status, family): the rollback restores from it.
+
+### `nonant_fix_20261108_work`
+
+Each re-filed specimen with its old and new name parts.
+
+### `nonant_fix_20261108_newtaxa`
+
+The taxon rows the change added (copies of the old rows under the new names).
+
+### `nonant_fix_20261108_oldtaxa`
+
+The old taxon rows no specimen used any more, removed by the change.
+
+### `nonant_fix_20261108_proj_taxon`
+
+The list rows of those old names, removed.
+
+### `nonant_fix_20261108_geolocale_taxon`
+
+The place rows of those old names, removed.
+
+### `nonant_fix_20261108_bioregion_taxon`
+
+The bioregion rows of those old names, removed.
+
+### `nonant_fix_20261108_museum_taxon`
+
+The museum rows of those old names, removed.
+
 ### Dated backups on production (October 2026)
 
 Copies made by hand on production before a change in October 2026 (the to-do list of the AntWeb project records
