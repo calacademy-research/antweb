@@ -583,6 +583,18 @@ public final class CountInvariants {
     // ------------------------------------------------------------------ list rows
 
     /** Status condition (alias t) of the child rows the crawl counts for a list (Geolocale, Project, ... getCountChildrenQuery). */
+    /**
+     * Fossil Ants and the AntWeb-wide list count a genus row in their subfamily's Genera only when a species of it is on
+     * the list (Brian Fisher, 2026-11-07, "count like the list"; Project.genusWithSpeciesCondition). The same rule here,
+     * so the check compares like with like (staging 11-08: Fossil Ants Formicinae 50 stored vs 52 genus rows).
+     */
+    public static String genusWithSpeciesOnList(String listTable, String listKey) {
+        return " and (c." + listKey + " not in ('fossilants', 'allantwebants') or exists (select 1 from " + listTable
+            + " sc join taxon st on st.taxon_name = sc.taxon_name where sc." + listKey + " = c." + listKey
+            + " and st.parent_taxon_name = t.taxon_name and st.taxarank in ('species', 'subspecies')"
+            + " and st.status in ('valid', 'morphotaxon')))";
+    }
+
     static String childStatus(String type, String key) {
         if (!PlaceTotals.PROJECT.equals(type)) return " and t.status in " + COUNTABLE;
         if ("worldants".equals(key)) return " and t.status = 'valid'";
@@ -641,7 +653,8 @@ public final class CountInvariants {
                     // PlaceTotals.countsAsSubfamily, childCountCondition); their Species and Specimens still add up every row under them
                     String n = "genus".equals(parentRank) ? "sum(case when " + PlaceTotals.identifiedToGenus("t") + " and "
                         + PlaceTotals.speciesStatusCondition("t") + " then 1 else 0 end)"
-                        : "subfamily".equals(parentRank) ? "sum(case when " + PlaceTotals.countsAsGenus("t") + " then 1 else 0 end)"
+                        : "subfamily".equals(parentRank) ? "sum(case when " + PlaceTotals.countsAsGenus("t")
+                            + (PlaceTotals.PROJECT.equals(type) ? genusWithSpeciesOnList(l, lk) : "") + " then 1 else 0 end)"
                         : "sum(case when " + PlaceTotals.countsAsSubfamily("t") + " then 1 else 0 end)";
                     StringBuilder sub = new StringBuilder("select c." + lk + " k, t.parent_taxon_name parent, " + n + " n");
                     StringBuilder diff = new StringBuilder("p." + level[2] + " <> coalesce(x.n, 0)");
