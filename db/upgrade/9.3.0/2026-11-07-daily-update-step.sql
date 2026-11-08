@@ -1,0 +1,25 @@
+-- The Daily update page (dailyUpdate.do, Brian Fisher, 2026-11-07): one row per step of each daily update (the
+-- Scheduler's run at 05:00 Pacific), so the page shows which step runs, what comes next and how long each step usually
+-- takes (median of the last 7 completed runs).
+--
+--   daily_update_step   key (run_start, step)
+--     run_start         when the run started (Pacific, as the server's clock)
+--     step              the step's key (DailyUpdate.STEPS: antcatImport, taxonWorks, nameUpdate, set1Finish, set2, set3,
+--                       set4, placeListTotals, set5, logSizeCheck, statsPage, apiCounts, cacheReload, countCheck, end)
+--     step_order        its place in the run (1 to 15)
+--     started, ended    the step's start and end; ended null while it runs
+--     result            ok, failed or skipped; null while it runs
+--     detail            the step's own result line or why it failed (500 characters at most)
+--
+-- The application creates the table when it is missing (DailyUpdateDb.ensureSchema, at start-up and before each write,
+-- on a connection of its own, never in the nightly transaction); this file records it. Rows older than 400 days are
+-- deleted at the start of each run.
+
+-- CREATE TABLE IF NOT EXISTS daily_update_step (
+--   run_start datetime NOT NULL, step varchar(32) NOT NULL, step_order int NOT NULL,
+--   started datetime NULL, ended datetime NULL, result varchar(16) NULL, detail varchar(500) NULL,
+--   PRIMARY KEY (run_start, step)
+-- ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Undo: the page then says the steps could not be read; the daily update itself never needs the table.
+-- DROP TABLE IF EXISTS daily_update_step;

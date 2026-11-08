@@ -705,6 +705,9 @@ group by taxonName
           + " where " + rankClause
           // a subfamily row's Genera: valid genera and morphogenera, no placeholders (2026-10-30, PlaceTotals.childCountCondition)
           + org.calacademy.antweb.home.PlaceTotals.childCountCondition(rank, "taxon")
+          // Brian Fisher, 2026-11-07: on Fossil Ants and the AntWeb-wide list a genus row counts only with a species on the list,
+          // as the lists show it (Atta and Iridomyrmex, AntCat proxy rows with no species on Fossil Ants, made 71 vs 70)
+          + genusWithSpeciesCondition(rank)
 	      + "   and pt.project_name = '" + projectName + "'"
           + StatusSet.getAndCriteria(getName())
                 //+ new StatusSet(StatusSet.ALL).getAndCriteria();
@@ -713,6 +716,15 @@ group by taxonName
         return query;  
     }      
     
+    /** " and exists a valid or morpho species or subspecies on this list" for genus rows of Fossil Ants and allantwebants; else "". */
+    String genusWithSpeciesCondition(String rank) {
+        if (!Rank.GENUS.equals(rank) || !(FOSSILANTS.equals(getName()) || ALLANTWEBANTS.equals(getName()))) return "";
+        // one IN list, materialized once (an EXISTS per genus row could scan taxon for each of thousands of rows)
+        return " and taxon.taxon_name in (select sp.parent_taxon_name from taxon sp join proj_taxon spt on spt.taxon_name = sp.taxon_name"
+            + " where spt.project_name = " + org.calacademy.antweb.util.DBUtil.sqlQuote(getName())
+            + " and sp.taxarank in ('species', 'subspecies') and sp.status in ('valid', 'morphotaxon'))";
+    }
+
     public String getCountGrandChildrenQuery(String rank, String column) {
        
         String rankClause = " taxon.taxarank = '" + rank + "'";

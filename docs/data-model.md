@@ -233,6 +233,7 @@ unused and backup is a search of the code for SQL that names the table (2026-10-
 | `specimen_name_update` | [8](#specimen_name_update) | in use (2026-10-20) |
 | `genus_concept_rule` | [8](#genus_concept_rule) | in use (2026-11-03) |
 | `background_job` | [8](#background_job) | in use (2026-10-20) |
+| `daily_update_step` | [8](#daily_update_step) | in use (2026-11-07) |
 | `object_map` | [8](#object_map) | in use |
 | `ant_group` | [9](#ant_group) | in use |
 | `group_count` | [9](#group_count) | in use (2026-10-22) |
@@ -1078,6 +1079,25 @@ name (`mode = 'changed'`) or would move (`would_change`).
 application; record in `db/upgrade/8.113/2026-10-20-background-job.sql`.
 
 **Status.** In use.
+
+### `daily_update_step`
+
+**Purpose.** The Daily update page (`dailyUpdate.do`, Brian Fisher, 2026-11-07): one row per step of each daily update
+(the Scheduler's run at 05:00 Pacific), so the page shows which step runs, what comes next and how long each step
+usually takes.
+
+**Key.** (`run_start`, `step`). `step` is a key of `DailyUpdate.STEPS` (antcatImport ... countCheck, end); the row
+`end` marks a completed run.
+
+**Key columns.** `step_order`, `started`, `ended` (null while it runs), `result` (`ok`, `failed`, `skipped`; null while
+it runs), `detail`.
+
+**Written by.** `DailyUpdate` (marks in `Scheduler` and `UtilDataAction` set 1; `DailyUpdateDb`, on its own thread and
+autocommit connection, never in the nightly transaction). **Read by.** `dailyUpdate.do` (page and `?format=json`); the
+usual time of a step is the median of its ok rows in the last 7 completed runs. Created by the application; record and
+undo in `db/upgrade/9.3.0/2026-11-07-daily-update-step.sql`. Rows older than 400 days are deleted at each run's start.
+
+**Status.** In use (2026-11-07).
 
 ### `object_map`
 

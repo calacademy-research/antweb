@@ -39,6 +39,7 @@
   "/curation": "ok",
   "/curator": "ok",
   "/curators": "ok",
+  "/dailyUpdate": "login",
   "/dbStatus": "login",
   "/defaultSpecimen": "login",
   "/deleteImages": "login",

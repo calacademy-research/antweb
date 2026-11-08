@@ -126,6 +126,12 @@ public class LoginMgr extends Manager {
           } catch (SQLException e) {
             s_log.error("startPasswordConversion() group_count not created e:" + e);
           }
+          try {
+            // daily_update_step (the Daily update page, 2026-11-07), on this connection of its own
+            DailyUpdateDb.ensureSchema(conn);
+          } catch (SQLException e) {
+            s_log.error("startPasswordConversion() daily_update_step not created e:" + e);
+          }
           // background_job (status pages of uploads and admin jobs); jobs of the last run become "interrupted".
           BackgroundJobDb.startup(conn);
           int count = new LoginDb(conn).hashLegacyPasswords();

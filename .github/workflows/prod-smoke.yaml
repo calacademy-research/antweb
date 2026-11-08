@@ -1,0 +1,82 @@
+name: Production smoke run
+
+# Release gate check 9 (docs/runbook.md, "Production smoke run and morning check"). After every successful
+# production deploy (the Deploy workflow), a short READ-ONLY run against www.antweb.org: a few public pages and the
+# API answer with HTTP 200, no stack trace, the expected text, and the header shows the commit just deployed.
+# Only GET requests, never a sign-in (tests/unit/test_smoke_read_only.py checks tests/smoke/ and this file).
+# The tests that write (the e2e suite) never run here. Rerun: Actions > Production smoke run > Run workflow.
+on:
+  workflow_run:
+    workflows: ["Deploy"]
+    types: [completed]
+    branches: [master]
+  workflow_dispatch:
+
+# A newer deploy's smoke run replaces an older one still waiting or running. Own group: joining the
+# deploy-production group would let a queued smoke run replace a queued deploy.
+concurrency:
+  group: prod-smoke
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-24.04
+    # Waiting for AntWeb after a restart takes up to 7 minutes; the checks themselves under 3.
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Cloudflare's Under Attack Mode challenges robots on the public pages (not on /v3.1/). So the HTML pages are
+      # read through an SSH tunnel to Tomcat's local port on the production server (127.0.0.1:8081), the way the
+      # deploy itself asks AntWeb whether it is busy. Same key and pinned host keys as the Deploy workflow.
+      - name: Tunnel to production (read-only use) and the deployed commit
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          RUN_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          # Host key check, as the deploys do: production must answer with a key pinned in .github/known_hosts.
+          ssh-keyscan -t ed25519,ecdsa,rsa "$SSH_HOST" 2>/dev/null | awk '{print $2" "$3}' | sort -u > /tmp/scanned
+          cut -d" " -f2,3 .github/known_hosts | sort -u > /tmp/pinned
+          if [ -z "$(comm -12 /tmp/scanned /tmp/pinned)" ]; then
+            echo "::error::Production did not answer with a pinned host key (.github/known_hosts). Smoke run stopped."
+            exit 1
+          fi
+          comm -12 /tmp/scanned /tmp/pinned | sed "s|^|$SSH_HOST |" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+          # The commit the deploy wrote for the header (deploy.sh: etc/git-commit). A newer deploy that ran
+          # meanwhile wrote a newer one; the header must show what the server says it runs.
+          commit=$(ssh -o StrictHostKeyChecking=yes -o ConnectTimeout=30 "$SSH_USER@$SSH_HOST" 'cat "$HOME/antweb/etc/git-commit"' < /dev/null | tr -d '[:space:]' || true)
+          if [ -z "$commit" ]; then
+            echo "::warning::Could not read etc/git-commit on the server; expecting $RUN_SHA in the header."
+            commit="$RUN_SHA"
+          elif [ "$commit" != "$RUN_SHA" ]; then
+            echo "::notice::The server runs $commit, newer than this run's $RUN_SHA (a later deploy); checking $commit."
+          fi
+          echo "SMOKE_EXPECT_COMMIT=$commit" >> "$GITHUB_ENV"
+          ssh -o StrictHostKeyChecking=yes -o ExitOnForwardFailure=yes -o ServerAliveInterval=30 -o ConnectTimeout=30 \
+            -f -N -L 18081:127.0.0.1:8081 "$SSH_USER@$SSH_HOST"
+          # The tunnel is up (ssh -f returns after it logged in): the key goes before any check runs.
+          rm -f ~/.ssh/id_rsa
+          echo "SMOKE_SITE_URL=http://127.0.0.1:18081" >> "$GITHUB_ENV"
+
+      - name: Wait until AntWeb answers (2 to 4 minutes after a restart)
+        timeout-minutes: 8
+        run: python3 tests/smoke/prod_smoke.py wait --max-seconds 420
+
+      - name: Smoke run (read-only; pages through the tunnel, API through Cloudflare)
+        timeout-minutes: 3
+        env:
+          SMOKE_API_URL: https://www.antweb.org
+        run: python3 tests/smoke/prod_smoke.py deploy

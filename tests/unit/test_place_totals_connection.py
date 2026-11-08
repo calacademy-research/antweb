@@ -43,3 +43,10 @@ def test_long_pool_limit_is_what_the_e2e_check_assumes():
     long_pool = xml[xml.index('key="longConPool"'):]
     m = re.search(r'unreturnedConnectionTimeout" value="(\d+)"', long_pool)
     assert m and int(m.group(1)) == 3600, "tests/e2e/test_nightly_jobs_ran.py STEP_LIMIT_MINUTES assumes 60 minutes"
+
+
+if __name__ == "__main__":
+    for name, fn in list(globals().items()):
+        if name.startswith("test_") and callable(fn):
+            fn()
+    print("ok")

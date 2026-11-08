@@ -602,6 +602,13 @@ We would like to remove getChildImages.  Not needed now in the new UI
           <forward name="success" path="/curate/genusConceptRules.jsp"/>
       </action>
 
+      <!-- Daily update: where the daily update (05:00 Pacific) is, step by step (curators and admins; ?format=json for anyone). -->
+      <action path="/dailyUpdate"
+              type="org.calacademy.antweb.util.DailyUpdateAction"
+              scope="request">
+          <forward name="success" path="/util/dailyUpdate.jsp"/>
+      </action>
+
       <!-- Count check: list counts recomputed from the specimen table (admins, read-only). -->
       <action path="/countCheck"
               type="org.calacademy.antweb.util.CountCheckAction"

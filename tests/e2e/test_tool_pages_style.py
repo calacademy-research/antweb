@@ -38,6 +38,7 @@ CONVERTED = [
     ("web/imageUploader/listImageUploads-body.jsp", "image-uploads-page"),
     ("web/curate/adminHtmlMessage-body.jsp", "admin-result-page"),
     ("web/curate/genusConceptRules-body.jsp", "genus-concept-rules-page"),
+    ("web/util/dailyUpdate-body.jsp", "daily-update-page"),
 ]
 # Bodies shared with the public layout: tool look only inside the admin layout.
 SHARED_BODIES = ["web/common/message-body.jsp", "web/common/unboldMessage-body.jsp"]
@@ -133,6 +134,7 @@ PAGES = [
     ("/logMgr.do?action=list", "log-manager-page",
      ["<h1>Log Manager</h1>", "Primary Logs", "fileName=compute&ext=log", "fileName=taxonworksNightly&ext=log"]),
     ("/nameUpdates.do", "name-updates-page", ["What this shows:", 'name="from"', "Preview now (report only)"]),
+    ("/dailyUpdate.do", "daily-update-page", ["<h1>Daily update</h1>", "05:00 Pacific", "dailyUpdate.do?format=json"]),
     ("/listSpecimenUploads.do", "specimen-uploads-page", ["<th>Group</th>", 'class="aw-card"']),
     ("/listImageUploads.do", "image-uploads-page", ["image upload batches", "<th>Created</th>"]),
     ("/query.do?name=worldantsUploads", "admin-result-page", ["<h1>Query: worldantsUploads</h1>", 'class="query-check"']),
