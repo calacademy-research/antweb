@@ -1455,6 +1455,14 @@ We would like to remove getChildImages.  Not needed now in the new UI
           <forward name ="success" path="/util/statsPage.jsp"/>     
       </action>
 
+      <!-- Imaging progress (public, 2026-11-08): valid living species and subspecies imaged, by bioregion, country, genus
+           and museum; genus=<key> the unimaged names of a genus; format=csv the unimaged list (ImagingProgressDb). -->
+      <action path="/imagingProgress"
+              type="org.calacademy.antweb.ImagingProgressAction"
+              scope="request">
+          <forward name="success" path="/util/imagingProgress.jsp"/>
+      </action>
+
 
       <action path="/uptime"
               type = "org.calacademy.antweb.util.UptimeAction"

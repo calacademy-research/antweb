@@ -146,6 +146,7 @@ erDiagram
     specimen }o--|| geolocale : "country, adm1 (names)"
     taxon ||--o{ description_edit : "taxon_name"
     geolocale ||--o{ place_image_count : "place_key"
+    geolocale ||--o{ imaging_progress : "place_key (country)"
     taxon {
         varchar taxon_name "key"
         varchar taxarank
@@ -217,6 +218,7 @@ unused and backup is a search of the code for SQL that names the table (2026-10-
 | `image_upload_refused` | [6](#image_upload_refused) | in use (2026-10-18) |
 | `image_like` | [6](#image_like) | in use |
 | `place_image_count` | [6](#place_image_count) | in use (2026-10-20) |
+| `imaging_progress` | [6](#imaging_progress) | in use (2026-11-08) |
 | `artist` | [6](#artist) | in use |
 | `copyright` | [6](#copyright) | in use |
 | `license` | [6](#license) | unused |
@@ -518,9 +520,10 @@ latest row; the admin page `statistics.do` shows the history.
 2026-10-21, every night in set 4 (`UtilDataAction`).
 
 **Read by.** `AntwebMgr.populateStats` (home page, `genInc/statistics.jsp`), `StatisticsAction` (`statistics.do`),
-`CountInvariants` (check `home`).
+`CountInvariants` (check `home`), `ImagingProgressDb.trend` (the trend of `imagingProgress.do`: the last row of each
+day since 2026-10-28).
 
-**Numbers.** #1 to #5, #7 to #10, #97.
+**Numbers.** #1 to #5, #7 to #10, #97, #128.
 
 **Status.** In use.
 
@@ -870,6 +873,38 @@ Created by the application; record and undo in `db/upgrade/8.113/2026-10-20-plac
 **Read by.** Place pages (`PlaceImageCountDb.read`), `CountInvariants` (`place.images`).
 
 **Numbers.** #27 to #32, #75, #76, #109.
+
+**Status.** In use.
+
+### `imaging_progress`
+
+**Purpose.** The imaging progress page (`imagingProgress.do`, Brian Fisher, 2026-11-08): valid living ant species and
+subspecies imaged (a photo of the ant anywhere in AntWeb; label photos never count), for all of AntWeb and by
+bioregion, country, genus and museum, with the unimaged names that have specimens in AntWeb (the imaging labs' work
+queue). One row per place.
+
+**Key.** (`place_type`, `place_key`). `place_type`: `all` (keys `living`, the headline: valid living species and
+subspecies; `living-species`, species only, equal to `statistics.living_species` and `living_species_imaged`;
+`fossil`), `bioregion` (its name), `country` (the geolocale id), `genus` (subfamily + genus, the genus taxon_name),
+`museum` (its code).
+
+**Key columns.** `place_name`, `parent_name` (country: name and bioregion; genus: genus and subfamily), `total` (the
+valid living species and subspecies: of the place's list in the Valid view for bioregions and countries, of the genus,
+with a specimen at the museum), `imaged`, `imaged_here` (a photo of the ant of a specimen collected there:
+`specimen.bioregion`, `specimen.country` or `island_country` for island countries, the museum's own specimens; null
+for `all` and `genus`), `unimaged_with_specimens` (not imaged, at least one specimen record in AntWeb),
+`unimaged_casc` (of those, a specimen with museum CASC), `computed`.
+
+**Written by.** The daily update, set 4, after the statistics row (step `imagingProgress` of `dailyUpdate.do`;
+`ImagingProgressDb.fill`: one grouped query per kind of place, then the rows replaced in one transaction); admins:
+`utilData.do?action=imagingProgress`. Created by the application (`ImagingProgressDb.ensureSchema`, at start-up in
+`LoginMgr` and before the fill); record and undo in `db/upgrade/9.4.0/2026-11-08-imaging-progress.sql`.
+
+**Read by.** `ImagingProgressAction` (`imagingProgress.do`: the page, the genus view `genus=`, the CSV
+`format=csv`; the unimaged list itself is read live from `taxon`, `specimen` and `image`, once per fill),
+`NumberChecks.imagingProgress` (count check `imaging.progress`).
+
+**Numbers.** #124 to #128.
 
 **Status.** In use.
 

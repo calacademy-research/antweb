@@ -45,6 +45,7 @@ paths = [
 # fails with "logs in but is listed in [parallel]" (antweb.post_login): remove it from the list.
 tests = [
   "test_public_pages_rest.py",         # collections pages, adm1 reports and downloads, API doc, old recent edits address (2026-11-03)
+  "test_imaging_progress.py",          # anonymous, read-only (2026-11-08)
   # whole files
   "test_actions.py",
   "test_api.py",
@@ -390,6 +391,9 @@ paths = [
   "web/taxonChildImage*",
   "web/unImagedTaxa.jsp",
   "src/org/calacademy/antweb/search/RecentImageSearch.java",
+  "src/org/calacademy/antweb/home/ImagingProgressDb.java",
+  "src/org/calacademy/antweb/ImagingProgressAction.java",
+  "web/util/imagingProgress*",
 ]
 tests = [
   "test_count_check.py",
@@ -407,6 +411,7 @@ tests = [
   "test_numbers_images.py",            # image, comparison and recent-image counts of every kind of place (2026-10-27)
   "test_images_anywhere.py",           # images from anywhere: species images page, Images column, imaged castes (2026-10-27)
   "test_numbers_uploads.py",           # admin and upload report numbers: curator.do, image and specimen upload reports, statistics.do (2026-10-27)
+  "test_imaging_progress.py",          # imagingProgress.do: headline, tables, unimaged lists, CSV (2026-11-08)
 ]
 
 [areas.places]

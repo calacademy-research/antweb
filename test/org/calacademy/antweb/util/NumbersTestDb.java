@@ -25,6 +25,8 @@ import java.sql.Statement;
  *   casent4  pheidole a x    CASC         -                   -
  *   casent5  hypoponera b    MCZC         Malagasy            l (label only)
  *
+ * Imaging progress (imaging_progress, ImagingProgressDb.fill): living valid names 3, imaged 1 (pheidole a).
+ *
  * Places: country Madagascar (7), its adm1 Atsinanana (8, no specimens), subregion Indian Ocean (3, its countries: Madagascar), project madants,
  * allantwebants (Global), museums CASC and MCZC, bioregion Malagasy; their lists and every stored number as
  * the nightly run writes them.
@@ -61,7 +63,7 @@ public final class NumbersTestDb {
     static final String[] TABLES = {"taxon", "specimen", "image", "geolocale", "geolocale_taxon", "project", "proj_taxon", "museum",
         "museum_taxon", "bioregion", "bioregion_taxon", "place_image_count", "statistics", "upload", "specimen_name_update", "ant_group",
         "description_edit", "image_upload", "image_uploaded", "description_hist", "object_edit", "object_hist", "group_count", "artist",
-        "geolocale_taxon_dispute", "proj_taxon_dispute", "place_genus_curation", "place_specimen_name"};
+        "geolocale_taxon_dispute", "proj_taxon_dispute", "place_genus_curation", "place_specimen_name", "imaging_progress"};
 
     /** Curator numbers as LoginMgr has them for the fixture (login 5): uploads, description edits, image uploads, images uploaded. */
     public static java.util.Map<Integer, int[]> curatorNumbers() {
@@ -126,6 +128,8 @@ public final class NumbersTestDb {
         // the Not curated column of genus lists and the names collected in each place (2026-11-02; empty until filled)
         exec(c, org.calacademy.antweb.home.PlaceGenusCurationDb.createGenusTable(null, null));
         exec(c, org.calacademy.antweb.home.PlaceGenusCurationDb.createNameTable(null, null));
+        // the imaging progress page (2026-11-08; filled at the end of fill() by its own code)
+        exec(c, org.calacademy.antweb.home.ImagingProgressDb.createTable(null, null));
         exec(c, "create table statistics (id int auto_increment primary key, action varchar(40), specimens int, extant_taxa int, total_taxa int,"
             + " proj_taxa int, bioregion_taxa int, museum_taxa int, geolocale_taxa int, geolocale_taxa_introduced int, geolocale_taxa_endemic int,"
             + " total_images int, specimens_imaged int, species_imaged int, valid_species_imaged int, login_id int,"
@@ -324,5 +328,11 @@ public final class NumbersTestDb {
         exec(c, "insert into artist values (1, 'Artist one')");
         exec(c, "insert into image_uploaded values (1, 1, " + OLD + "), (2, 1, " + OLD + ")");
         exec(c, "update image set artist = 1");
+
+        // The imaging progress (2026-11-08): the genus part of the species names, as AntCat writes taxon.genus, and the
+        // table as the daily update fills it. Living valid species and subspecies: pheidole a (imaged, casent1 h),
+        // pheidole a x (not imaged; CASC specimen), hypoponera b (label photo only: not imaged; MCZC specimen).
+        exec(c, "update taxon set genus = if(taxon_name like 'myrmicinaepheidole%', 'pheidole', 'hypoponera') where taxarank in ('species', 'subspecies')");
+        new org.calacademy.antweb.home.ImagingProgressDb(c).fill();
     }
 }

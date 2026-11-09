@@ -88,6 +88,7 @@ public final class DailyUpdate {
         new Step("set2", "Set 2: lists and place counts", "data clean-up, country and adm1 lists and their counts"),
         new Step("set3", "Set 3: projects, museums, bioregions, groups", "their lists and counts, type specimens"),
         new Step("set4", "Set 4: images and Not curated", "image counts of names and places, the Not curated column"),
+        new Step("imagingProgress", "Imaging progress", "species imaged by bioregion, country, genus and museum (set 4; imagingProgress.do)"),
         new Step("placeListTotals", "Place list totals", "the Subfamilies, Genera and Species of each place page"),
         new Step("set5", "Set 5: maps and cache reload", "object maps; every cache reloaded (skipped on staging)"),
         new Step("logSizeCheck", "Log size check", "warns when a log or the disk grows too large"),

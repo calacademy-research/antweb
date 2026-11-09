@@ -49,6 +49,7 @@
 <br>&nbsp;&nbsp;Valid living ant species with at least one specimen record in AntWeb.
 <br><br><b data-stat="species-imaged"><%= fmt.apply(hImaged) %> species imaged</b><% if (hLiving > 0 && hImaged >= 0) { %> (<%= org.calacademy.antweb.home.StatisticsDb.percent(hImaged, hLiving) %> of valid living species<% if (hSpecimens > 0) { %>; <%= org.calacademy.antweb.home.StatisticsDb.percent(hImaged, hSpecimens) %> of those with specimens<% } %>)<% } %>
 <br>&nbsp;&nbsp;Valid living ant species with at least one photo of the ant (label photos do not count).
+<br>&nbsp;&nbsp;<a href="<%= AntwebProps.getDomainApp() %>/imagingProgress.do" id="imaging-progress-link">Imaging progress</a>: species and subspecies imaged by bioregion, country and genus, and the ones still to image.
 <br><br><b data-stat="fossil-species-imaged"><%= fmt.apply(AntwebMgr.getHomeCount("fossil_species_imaged")) %> fossil species imaged</b>
 <br><br><b data-stat="living-subspecies"><%= fmt.apply(AntwebMgr.getHomeCount("living_subspecies")) %> valid living subspecies</b>
 <br><br><b data-stat="morphospecies"><%= fmt.apply(AntwebMgr.getHomeCount("morphospecies")) %> morphospecies</b>, <span data-stat="morphospecies-imaged"><%= fmt.apply(AntwebMgr.getHomeCount("morphospecies_imaged")) %></span> imaged

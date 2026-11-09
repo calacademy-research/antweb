@@ -24,7 +24,7 @@ Which line proves which job (checked in the Java source, 2026-11-04):
   "Group counts:", crawlForType "Types Crawl completed", then "Set 3 done";
 - set 4: imageCountCrawl "AntWeb-wide list Images counted" (ProjTaxonCountDb) and "Image Count Crawl
   completed" (ImageCountDb), placeImageCounts "Place image counts:", placeGenusCuration "Not curated
-  counted:", then "Set 4 done"; then, outside set 4 (Scheduler.runPlaceListTotals, since 2026-11-06),
+  counted:", imagingProgress "Imaging progress counted:" (since 2026-11-08), then "Set 4 done"; then, outside set 4 (Scheduler.runPlaceListTotals, since 2026-11-06),
   placeViewTotals "Place list totals counted:";
 - set 5 is skipped in staging's nightly ("set5 skipped on staging (memory)", Scheduler); on production it
   runs but writes no line of its own. This test runs on staging only, so set 5 and its jobs
@@ -73,6 +73,8 @@ RUN_LINES = [
     "Image Count Crawl completed",
     "Place image counts:",
     "Not curated counted:",
+    # the imaging progress page (2026-11-08), after the statistics row
+    "Imaging progress counted:",
     "Set 4 done",
     # after set 4, on its own connection (Scheduler.runPlaceListTotals, 2026-11-06)
     "Place list totals counted:",
@@ -110,6 +112,7 @@ JOB_LINES = {
     "/utilData.do?action=placeImageCounts": "Place image counts:",
     "/utilData.do?action=placeGenusCuration": "Not curated counted:",
     "/utilData.do?action=placeViewTotals": "Place list totals counted:",
+    "/utilData.do?action=imagingProgress": "Imaging progress counted:",
 }
 
 # Words a job writes on its line when it did not do its work.
