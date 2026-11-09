@@ -300,3 +300,23 @@ def test_llms_txt_and_the_terms_on_the_api_page():
     assert "since 2002" in r.text and "CC BY 4.0" in r.text, "the terms Brian approved (2026-11-08)"
     j = new_session().get(BASE_URL + "/v3.1/", timeout=max(TIMEOUT, 120)).json()
     assert j["terms"].endswith("/apiV3.1.do#terms") and j["guideForPrograms"].endswith("/llms.txt"), j
+
+
+def test_v4_front_door_and_refusals():
+    """Step 6, API keys PR 3 (2026-11-08): /v4/ answers JSON with its status and limits; a data route without a key
+    answers 503 while v4 is closed (or its keys are not configured) or 429, never data without limits; a key in the web
+    address is refused. Skipped while Cloudflare challenges /v4/ (only /v3.1/ is excepted so far)."""
+    r = new_session().get(BASE_URL + "/v4/", timeout=max(TIMEOUT, 120))
+    if not r.headers.get("Content-Type", "").startswith("application/json"):
+        pytest.skip(f"/v4/ is not answered by the API here (HTTP {r.status_code}; Cloudflare challenge?)")
+    j = r.json()
+    assert r.status_code == 200 and j["name"] == "Antweb API v4", (r.status_code, j)
+    assert j["status"] in ("open", "closed", "not configured") and j["keyHeader"] == "X-API-Key", j
+    assert j["limits"]["withoutKey"]["recordsPerAnswer"] == 25, j["limits"]
+    r = new_session().get(BASE_URL + "/v4/specimens?limit=1", timeout=max(TIMEOUT, 120))
+    if j["status"] != "open":
+        assert r.status_code == 503 and "error" in r.json(), (r.status_code, r.text[:200])
+    else:
+        assert r.status_code in (200, 429), (r.status_code, r.text[:200])
+    r = new_session().get(BASE_URL + "/v4/specimens?apiKey=aw_" + "x" * 40, timeout=max(TIMEOUT, 120))
+    assert r.status_code == 400 and "X-API-Key header" in r.json()["error"] and "aw_x" not in r.text, r.text[:200]

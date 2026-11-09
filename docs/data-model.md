@@ -1468,6 +1468,20 @@ The bioregion rows of those old names, removed.
 
 The museum rows of those old names, removed.
 
+### `api_key`
+
+Free registered API keys (step 6, decided by Brian Fisher 2026-11-07/08; created by `db/upgrade/9.4.0/2026-11-08-api-keys.sql`). One row per key: who registered (name, email, institution, project), level (registered, collaborator, admin), status (pending until the email link is followed, active, revoked), limits per key (NULL = the level's default), dates. The key is never stored: only its SHA-256 (`key_hash`) and its first characters (`prefix`) for display; the email confirmation token likewise only as a hash. Written by the API through its own login `antweb_api_usage`, which may write only `last_used` here (and read only the key lookup columns: `id, key_hash, level, status`, the four limits, `last_used`), `api_usage_daily` and `api_rate`. The API v4 (`api/v3.1/api_keys.py`) reads the key's level, status and limits here on every keyed request and sets `last_used` (at most once a minute).
+
+### `api_usage_daily`
+
+Requests, records and refusals (HTTP 429) per API key and day; `key_id` 0 = all requests without a key. Read by the admin page with the registrations list (Brian: who registered and what they did).
+
+Since PR 3 (2026-11-08) also the daily limits of keyed requests in API v4: a request is added to its key's row of the day (UTC) before it is answered, its records are reserved there and the unused part given back afterwards, so paging with `offset` stops at the key's records a day (`api/v3.1/api_keys.py`).
+
+### `api_rate`
+
+Short-lived counters of the API v4 limits (step 6 PR 3, decided by Brian Fisher 2026-11-08; created by `db/upgrade/9.4.0/2026-11-08-api-rate.sql`), shared by the three gunicorn workers of the API container. One row per caller and period: `bucket` is `key:<api_key.id>` or `ip:<SHA-256 of the visitor's IP with a salt of the day>` (the IP itself is never stored), `period` `m` is the minute starting at `start` (requests a minute, keys and visitors without a key), `d` the UTC day (requests and records a day of visitors without a key; keys count their days in `api_usage_daily`). The API deletes rows older than two days (index on `start`). Written only by the login `antweb_api_usage` (select, insert, update, delete on this table). Not for reports: use `api_usage_daily`.
+
 ### Dated backups on production (October 2026)
 
 Copies made by hand on production before a change in October 2026 (the to-do list of the AntWeb project records
