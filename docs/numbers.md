@@ -1134,6 +1134,17 @@ the flag from the specimen page of the specimens concerned (`numbers_sample.with
 `unit:test_api_image_split.py`. Follow-up: a curation view of the red-flagged specimens (why each is flagged, by
 group, CAS first), so curators can fix and unflag them.
 
+Decided by Brian Fisher, 2026-11-09 (the open points of this rule):
+
+- For now red-flagged specimens are left out of the image and specimen counts everywhere: their images by this rule,
+  the specimens themselves by the list rule of 2026-10-30 above. Not for good: we want to bring them back into the
+  fold through a curation view where curators fix and unflag them, starting with the CAS data. Unflagging brings a
+  specimen and its images back into every count at the next nightly run.
+- Pages that show photos keep showing the photos of red-flagged specimens (images.do, browse, comparisons, the
+  specimen page), and the numbers that count the pictures such a page shows (rows 49, 55, 57 to 60, 62) stay as they
+  are.
+- Photographer and image upload numbers (rows 84, 92 to 94) stay as they are: they count work done, not the collection.
+
 ### Views of lists (Brian Fisher, 2026-11-02)
 
 The status menu of lists ("Species Status:", four choices of 2026-10-30, below) and the "Names from" selector of
