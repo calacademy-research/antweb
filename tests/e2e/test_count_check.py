@@ -536,8 +536,15 @@ def test_image_upload_and_orphan_counts_equal_the_recount():
         page = s.get(BASE_URL + "/listImageUploads.do", timeout=max(TIMEOUT, 120)).text
         m = re.search(r"([\d,]+) image upload batches", page) or re.search(r"Total image uploads: (\d+)", page)
         assert m, "listImageUploads.do shows no total"
-        if int(m.group(1).replace(",", "")) != total:
-            wrong.append(f"listImageUploads.do {m.group(1)} image upload batches, recount {total}")
+        shown = int(m.group(1).replace(",", ""))
+        # Batches uploaded after the count check ran (other tests in this run upload images; 11-09: 6,750 shown,
+        # recount 6,748) are left out: their ids are above the highest id the count check saw.
+        max_id = (exp.get("imageUploads") or {}).get("maxId")
+        later = 0
+        if max_id is not None:
+            later = len({int(i) for i in re.findall(r"imageUploadReport\.do\?id=(\d+)", page) if int(i) > max_id})
+        if shown - later != total:
+            wrong.append(f"listImageUploads.do {m.group(1)} image upload batches ({later} uploaded after the count check), recount {total}")
     orphans = exp.get("orphanedImages") or {}
     if "codes" in orphans:
         page = s.get(BASE_URL + "/orphanedImages.do", timeout=max(TIMEOUT, 180)).text
