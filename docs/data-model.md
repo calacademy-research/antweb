@@ -1386,6 +1386,14 @@ Backup, see the table above. Drop proposed.
 
 Obsolete, see the table above.
 
+### `api_key`
+
+Free registered API keys (step 6, decided by Brian Fisher 2026-11-07/08; created by `db/upgrade/9.4.0/2026-11-08-api-keys.sql`). One row per key: who registered (name, email, institution, project), level (registered, collaborator, admin), status (pending until the email link is followed, active, revoked), limits per key (NULL = the level's default), dates. The key is never stored: only its SHA-256 (`key_hash`) and its first characters (`prefix`) for display; the email confirmation token likewise only as a hash. Written by the API through its own login `antweb_api_usage`, which may write only this table and `api_usage_daily`.
+
+### `api_usage_daily`
+
+Requests, records and refusals (HTTP 429) per API key and day; `key_id` 0 = all requests without a key. Read by the admin page with the registrations list (Brian: who registered and what they did).
+
 ### Dated backups on production (October 2026)
 
 Copies made by hand on production before a change in October 2026 (the to-do list of the AntWeb project records

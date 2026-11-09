@@ -104,6 +104,15 @@ def _db_credentials(props, required=None):
     return user, password
 
 
+def _usage_credentials(props):
+    """The login that may write only the API key tables (api_key, api_usage_daily; step 6, PR 2, 2026-11-08), as
+    usageUser= and usagePassword= in etc/api-db.properties (tools/api/setup-usage-login.sh). None without it: key
+    checks and usage counts stay off, the API answers as before."""
+    if props.get('usageUser') and props.get('usagePassword'):
+        return props['usageUser'], props['usagePassword']
+    return None
+
+
 _apiProps = _apiProperties()
 _dbUser, _dbPass = _db_credentials(_apiProps)
 # URL.create quotes the user and password, so a password with @, : or / still works.
