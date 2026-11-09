@@ -86,6 +86,9 @@ jobs:
       - name: Production smoke checks only read, GET without sign-in (tests/unit/test_smoke_read_only.py)
         run: python3 tests/unit/test_smoke_read_only.py
 
+      - name: A recount of one bioregion or museum makes the statistics page count again (tests/unit/test_statspage_forget.py)
+        run: python3 tests/unit/test_statspage_forget.py
+
       - name: Production smoke run and morning check pass, fail and skip as they should (tests/unit/test_prod_smoke_logic.py)
         run: python3 tests/unit/test_prod_smoke_logic.py
 
