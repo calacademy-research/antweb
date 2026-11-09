@@ -26,7 +26,8 @@ and rate-limits it per visitor).
 Routes (all GET, JSON, or one record per line with ndjson=true): / (the documentation page link and health
 check, always open), /specimens, /geoSpecimens, /geoSpeciesStats, /taxa, /distinctTaxa, /images, /measurements,
 /taxaImages, /geolocales, /geolocaleTaxa, /bioregions, /bioregionTaxa and /unimagedGeolocaleTaxa. The data routes
-answer only with up=1 (an admin switch, see down()); without it HTTP 503 with a JSON message. Unknown parameters
+answer only with up=1 (an admin switch, see down(); once V4_OPEN is True it also needs an admin key in X-API-Key,
+upSwitch()); without it HTTP 503 with a JSON message. Unknown parameters
 get HTTP 400 naming the accepted ones. Records per request are capped
 (MAX_LIMIT, maxLimit= in etc/api-db.properties); every reply carries the CC BY 4.0 licence in a Link header,
 and JSON data replies also in a license field.
@@ -317,11 +318,45 @@ def numbers(value, count):
 
 
 def down(request):
-    # The data routes answer only with &up=1 (admin switch, see the documentation page).
+    # The data routes answer only with &up=1 (admin switch, see the documentation page). Returns 1 when the request is
+    # not let in (503), 0 when it is. The inner requests of v4 (api_v4.run) are let in by g.apiV4Inner, set only there;
+    # they never depend on up=1. Once V4_OPEN is True, up=1 also needs an active admin key in X-API-Key (upSwitch()).
+    if g.get('apiV4Inner'):
+        return 0
     up = request.args.get('up', default='*', type=str)
     if up != '1':
         return 1
-    return 0
+    return 0 if upSwitch(request) == 'ok' else 1
+
+
+def upSwitch(request):
+    """'ok' when up=1 may open v3.1 for this request, 'down' (503) or 'badkey' (401). While V4_OPEN is False, up=1 alone
+    is enough (as before; the staging tests use it). Once V4_OPEN is True, it needs an active admin key in the X-API-Key
+    header, looked up with the v4 usage login (api_v4.usage); without that login, refused. Decided once per request
+    (g.apiUpSwitch), since checkUp() and the route's own down() both ask."""
+    if not V4_OPEN:
+        return 'ok'
+    cached = g.get('apiUpSwitch')
+    if cached is not None:
+        return cached
+    result = 'down'
+    store = getattr(sys.modules.get('api_v4'), 'usage', None)
+    sent = request.headers.get('X-API-Key')
+    if store is not None and sent is not None:
+        import api_keys
+        sent = sent.strip()
+        try:
+            row = store.find_key(api_keys.key_hash(sent)) if api_keys.KEY_RE.match(sent) else None
+        except Exception as err:  # noqa: BLE001  counter database down: refused
+            print('API up switch: key lookup failed: ' + type(err).__name__, flush=True)
+            row = None
+            sent = None
+        if sent is not None and (row is None or row.status != 'active'):
+            result = 'badkey'
+        elif row is not None and (row.level or '').lower() == 'admin':
+            result = 'ok'
+    g.apiUpSwitch = result
+    return result
 
 
 # Version 4 with free registered API keys (api_v4.py). False: v4 answers only admin keys, and v3.1 keeps the message
@@ -2690,6 +2725,10 @@ def checkUp():
     if endpoint is None or endpoint in UNCHECKED_ENDPOINTS or endpoint not in application.view_functions:
         return None
     if down(request):
+        if g.get('apiUpSwitch') == 'badkey':
+            response = jsonify(error="This API key is not valid.", documentation=API_DOCS_URL)
+            response.status_code = 401
+            return response
         return apiDown()
     return None
 

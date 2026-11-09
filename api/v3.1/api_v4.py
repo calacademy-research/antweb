@@ -10,7 +10,8 @@ without stripping the path (docker/caddy/Caddyfile and Caddyfile.common). For ea
   4. while api.V4_OPEN is False, answers only admin keys (503 for everyone else);
   5. refuses unknown parameters (400, with the v4 names);
   6. counts the request and reserves its records in the database, or answers 429 with Retry-After;
-  7. runs the v3.1 route itself in an inner request (with up=1 and the level's record limit), renames the fields,
+  7. runs the v3.1 route itself in an inner request (let in by flask.g.apiV4Inner, not up=1, with the level's
+     record limit), renames the fields,
      adds localityCode, and gives back the records it did not use.
 
 Field names in v4 (the v3.1 name, then the Darwin Core term):
@@ -261,7 +262,7 @@ def check_params(endpoint):
 
 
 def run(name, endpoint, admission, has_key, limits):
-    """The v3.1 route in an inner request with up=1 and limit = the reserved records; returns (response, records)."""
+    """The v3.1 route in an inner request (g.apiV4Inner) with limit = the reserved records; returns (response, records)."""
     filters = {}
     inner = MultiDict()
     for k, values in request.args.lists():
@@ -271,10 +272,10 @@ def run(name, endpoint, admission, has_key, limits):
             for v in values:
                 inner.add(k, v)
     inner['limit'] = str(admission.reserved)
-    inner['up'] = '1'
     ndjson = request.args.get('ndjson') == 'true'
     query = urllib.parse.urlencode(list(inner.items(multi=True)))
     with api.application.test_request_context('/' + name, query_string=query, method='GET'):
+        g.apiV4Inner = True     # lets the inner request past checkUp()/down() (never up=1)
         g.apiMaxLimit = admission.reserved
         g.apiV4Filters = filters
         inner_response = api.application.full_dispatch_request()

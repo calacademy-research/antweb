@@ -51,6 +51,11 @@ www.antweb.org {
         format filter {
             wrap json
             request>headers>X-Api-Key delete
+            # the API key confirmation link (apiKeyConfirm.do?token=...) carries a one-time token: dropped from the logged
+            # address, the rest of the address is kept
+            request>uri query {
+                delete token
+            }
         }
 #        format console
     }

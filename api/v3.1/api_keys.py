@@ -23,13 +23,14 @@ usagePassword= in etc/api-db.properties; the data login stays read-only):
   api_usage_daily  requests, records and refusals (HTTP 429) per key and day; key_id 0 = all visitors without a key.
   api_key          last_used (at most one update a minute per key).
 The usage connections use READ COMMITTED and retry a transaction after a deadlock (retried()).
-Visitors without a key are counted by a hash of their IP (SHA-256 with a salt that changes every day and is derived
-from the usage login's password), never by the IP itself. Days and minutes are UTC.
+Visitors without a key are counted by a hash of their IP, for IPv6 of its /64 network (visitor_network(); SHA-256
+with a salt that changes every day and is derived from the usage login's password), never by the IP itself. Days and minutes are UTC.
 
 Docs: docs/flows/api.md, section "v4 and API keys". Tests: tests/unit/test_api_v4.py.
 """
 import hashlib
 import hmac
+import ipaddress
 import math
 import re
 import secrets
@@ -114,6 +115,22 @@ def client_ip(headers, remote_addr):
     if xff.strip():
         return xff.split(',')[-1].strip()
     return remote_addr or ''
+
+
+def visitor_network(ip):
+    """What is counted as one visitor without a key: the IPv4 address itself, or the /64 network of an IPv6 address
+    (one household or server usually holds a whole /64, so counting single IPv6 addresses would let one visitor take
+    the no-key limits many times). An IPv4 address written as IPv6 (::ffff:a.b.c.d) counts as the IPv4 address.
+    Anything that is not an address is counted as written."""
+    try:
+        addr = ipaddress.ip_address(ip.strip().split('%')[0])
+    except ValueError:
+        return ip
+    if addr.version == 6:
+        if addr.ipv4_mapped is not None:
+            return str(addr.ipv4_mapped)
+        return str(ipaddress.ip_network(str(addr) + '/64', strict=False))
+    return str(addr)
 
 
 def ip_hash(ip, secret, day):
@@ -205,7 +222,7 @@ class UsageStore:
         if row is not None:
             return Visitor(key_id=row.id, level=row.level if row.level in KEY_LEVELS else 'registered',
                            bucket='key:%d' % row.id)
-        return Visitor(key_id=None, level=NO_KEY_LEVEL, bucket='ip:' + ip_hash(ip, self.secret, now.date()))
+        return Visitor(key_id=None, level=NO_KEY_LEVEL, bucket='ip:' + ip_hash(visitor_network(ip), self.secret, now.date()))
 
     # --- counters ---
     def _add(self, c, table, keys, adds):

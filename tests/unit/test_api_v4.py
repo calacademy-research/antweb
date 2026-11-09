@@ -385,6 +385,88 @@ def test_ip_hash_changes_every_day_and_needs_the_secret():
     assert api_keys.client_ip({}, "9.9.9.9") == "9.9.9.9"
 
 
+def test_ipv6_visitors_are_counted_per_64_network():
+    assert api_keys.visitor_network("198.51.100.7") == "198.51.100.7"
+    assert api_keys.visitor_network("2001:db8:1:2:aaaa::1") == "2001:db8:1:2::/64"
+    assert api_keys.visitor_network("2001:db8:1:2:bbbb:cccc:dddd:eeee") == "2001:db8:1:2::/64"
+    assert api_keys.visitor_network("2001:db8:1:3::1") == "2001:db8:1:3::/64"
+    assert api_keys.visitor_network("::ffff:198.51.100.7") == "198.51.100.7"
+    assert api_keys.visitor_network("not an ip") == "not an ip"
+    fresh_usage()
+    at(4, second=10)
+    with opened():
+        # five addresses of one /64 share the five requests a minute
+        for i in range(5):
+            assert get("/v4/taxa", ip="2001:db8:1:2::%x" % (i + 1)).status_code == 200, i
+        assert get("/v4/taxa", ip="2001:db8:1:2:ffff::9").status_code == 429
+        # another /64 has its own count; IPv4 addresses are still one each
+        assert get("/v4/taxa", ip="2001:db8:1:3::1").status_code == 200
+        assert get("/v4/taxa", ip="203.0.113.10").status_code == 200
+    with api_v4.usage.engine.connect() as c:
+        buckets = [r[0] for r in c.execute(text("select bucket from api_rate"))]
+    assert not any("2001:db8" in b for b in buckets), buckets
+
+
+# --- the v3.1 admin switch up=1 -----------------------------------------------------------------------------------
+
+def test_up_switch_before_v4_opens_is_as_before():
+    fresh_usage()
+    assert api.V4_OPEN is False
+    assert client.get("/specimens?up=1&limit=2").status_code == 200
+    assert client.get("/specimens?limit=2").status_code == 503
+    # works without the usage login too
+    saved = api_v4.usage
+    api_v4.usage = None
+    try:
+        assert client.get("/specimens?up=1&limit=2").status_code == 200
+    finally:
+        api_v4.usage = saved
+
+
+def test_up_switch_needs_an_admin_key_once_v4_opens():
+    fresh_usage()
+    with opened():
+        r = client.get("/specimens?up=1&limit=2")
+        assert r.status_code == 503 and r.headers["Retry-After"] == "86400", r.status_code
+        assert client.get("/specimens?up=1&limit=2", headers={"X-API-Key": KEYS["registered"]}).status_code == 503
+        assert client.get("/specimens?up=1&limit=2", headers={"X-API-Key": KEYS["collaborator"]}).status_code == 503
+        for bad in (KEYS["revoked"], KEYS["pending"], "aw_" + "x" * 40, "nonsense"):
+            assert client.get("/specimens?up=1&limit=2", headers={"X-API-Key": bad}).status_code == 401, bad
+        r = client.get("/specimens?up=1&limit=2", headers={"X-API-Key": KEYS["admin"]})
+        assert r.status_code == 200 and len(r.get_json()["specimens"]) == 2, r.status_code
+        # an admin key without up=1 does not open v3.1
+        assert client.get("/specimens?limit=2", headers={"X-API-Key": KEYS["admin"]}).status_code == 503
+        # without the usage login: refused, even with an admin key
+        saved = api_v4.usage
+        api_v4.usage = None
+        try:
+            assert client.get("/specimens?up=1", headers={"X-API-Key": KEYS["admin"]}).status_code == 503
+        finally:
+            api_v4.usage = saved
+        # counter database down: refused
+        saved_engine = api_v4.usage.engine
+        api_v4.usage.engine = create_engine("sqlite:////nonexistent/dir/x.db")
+        try:
+            assert client.get("/specimens?up=1", headers={"X-API-Key": KEYS["admin"]}).status_code in (401, 503)
+        finally:
+            api_v4.usage.engine = saved_engine
+
+
+def test_v4_does_not_use_up_and_is_unaffected_by_the_switch():
+    fresh_usage()
+    run_code = open(api_v4.__file__).read().split("def run(")[1].split("def level_name")[0]
+    assert "inner['up']" not in run_code and "g.apiV4Inner = True" in run_code
+    # closed: admin key works; open: no key and registered key work, without any up parameter
+    assert get("/v4/specimens?limit=2", key=KEYS["admin"]).status_code == 200
+    with opened():
+        assert get("/v4/specimens?limit=2").status_code == 200
+        assert get("/v4/specimens?limit=2", key=KEYS["registered"]).status_code == 200
+        assert get("/v4/specimens?up=1").status_code == 400
+    # the flag is set only inside v4's inner request, never for a v3.1 request
+    with api.application.test_request_context("/specimens"):
+        assert api.down(api.request) == 1
+
+
 def test_the_key_is_never_in_logs_or_replies():
     fresh_usage()
     key = KEYS["admin"]
@@ -511,7 +593,7 @@ def test_v31_is_unchanged():
     assert "https://www.antweb.org/v4/" in msg and "https://www.antweb.org/apiKey.do" in msg, msg
 
 
-def test_caddy_routes_v4_and_drops_the_key_from_its_log():
+def test_caddy_routes_v4_and_drops_the_key_and_token_from_its_log():
     if CADDY is None:
         print("  (docker/caddy not mounted, skipped)")
         return
@@ -522,6 +604,10 @@ def test_caddy_routes_v4_and_drops_the_key_from_its_log():
         assert v4.index("reverse_proxy api:5000") < v4.index("}"), name
         assert "handle_path @api_v4" not in text_, name + ": /v4/ keeps its path"
         assert "request>headers>X-Api-Key delete" in text_, name + ": the key header must not reach the access log"
+        # the one-time token of the confirmation link (apiKeyConfirm.do?token=...) is dropped from the logged address
+        f = text_[text_.index("format filter"):]
+        q = f[f.index("request>uri query {"):]
+        assert q.index("delete token") < q.index("}"), name + ": the confirmation token must not reach the access log"
 
 
 if __name__ == "__main__":
