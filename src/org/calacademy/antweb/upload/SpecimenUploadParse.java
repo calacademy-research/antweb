@@ -382,6 +382,14 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             // missing subfamily and is left alone.
             subfamilyName = stripSubfamilyParentheses(subfamilyName);
 
+            // Brian Fisher, 2026-11-08: a non-ant without a subfamily is filed under its own family (or the higher group
+            // given as family, "(coleoptera)") in parentheses, never under the ant placeholder "(formicidae)" (5,098
+            // specimens of University of Utah and CAS were: "(formicidae)(curculionidae) (curculionidae)").
+            String nonAntPlaceholder = nonAntSubfamilyPlaceholder((String) taxonItem.get("family"));
+            if (nonAntPlaceholder != null && "(formicidae)".equals(subfamilyName)) {
+              subfamilyName = nonAntPlaceholder;
+            }
+
             // Non-ants only with their full classification (Brian Fisher, 2026-11-05): refused here, before any name work.
             String nonAnt = nonAntRefusal((String) taxonItem.get("family"), subfamilyName, genusName,
                 SpecimenUploadParse::isKnownAntSubfamily, SpecimenUploadParse::isAntcatAntGenus);
@@ -403,8 +411,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             
             // If it is blank, make it a specified indet.
             if (Utility.isBlank(genusName) || "(indet)".equals(genusName)) {
-              if ("(formicidae)".equals(subfamilyName)) {
-                genusName = "(formicidae)";
+              if (subfamilyName.startsWith("(")) {
+                genusName = subfamilyName;  // "(formicidae)", or a non-ant's family placeholder "(libellulidae)"
               } else {
                 genusName = "(" + subfamilyName + ")";
               }
@@ -529,6 +537,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             // Brian Fisher, 2026-10-28: "indet", "Indet", "indet.", "undet" in the species column is filed exactly as a
             // blank species: "<Genus> (indet)", the one form for a specimen identified only to genus.
             speciesName = UploadUtil.normalizeIndetEpithet(speciesName);
+            // Brian Fisher, 2026-11-08: a non-ant's species column that only repeats its group ("(curculionidae)" under
+            // genus "(curculionidae)") or reads "_indet_" means not identified to species: "(indet)", not a morphospecies.
+            speciesName = nonAntIndetSpecies(speciesName, genusName, (String) taxonItem.get("family"));
 			if (speciesName.contains(" ")) {
 			  int spaceIndex = speciesName.indexOf(" ");
 			  String tempSpeciesName = speciesName.substring(0, spaceIndex);
@@ -1473,8 +1484,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     }
 
     /**
-     * Genus names confirmed as not ants by Brian Fisher (2026-11-05, University of Utah's file): a line that files one
-     * under Formicidae (or no family) is not loaded. Lower case.
+     * Genus names confirmed as not ants by Brian Fisher (2026-11-05): a line that files one under Formicidae (or no
+     * family) is not loaded. Lower case. (University of Utah's file gives their families correctly; they looked like ants
+     * only because the upload filed every non-ant without a subfamily under "(formicidae)", fixed 2026-11-08.)
      */
     public static final java.util.Set<String> KNOWN_NON_ANT_GENERA = java.util.Set.of(
         "leptinus", "cremastocheilus", "olixon", "thaumatodryinus");
@@ -1568,6 +1580,42 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
      */
     public static boolean keepsUnknownGenus(String subfamilyName, java.util.function.Predicate<String> isValidAntSubfamily) {
         return isMissingSubfamily(subfamilyName) || !isValidAntSubfamily.test(subfamilyName);
+    }
+
+    /** A family value without parentheses, lower case ("(Coleoptera)" -> "coleoptera"); "" for none. */
+    static String familyKey(String family) {
+        if (family == null) return "";
+        String f = family.trim().toLowerCase(Locale.ROOT);
+        while (f.length() > 1 && f.startsWith("(") && f.endsWith(")")) f = f.substring(1, f.length() - 1).trim();
+        return f;
+    }
+
+    /**
+     * The subfamily placeholder of a non-ant line without a subfamily (Brian Fisher, 2026-11-08): its family, or the
+     * higher group given as family, in parentheses ("scarabaeidae" -> "(scarabaeidae)", "(coleoptera)" ->
+     * "(coleoptera)"). null for an ant (family Formicidae or none): ants keep "(formicidae)" until their genus gives
+     * the subfamily.
+     */
+    public static String nonAntSubfamilyPlaceholder(String family) {
+        String f = familyKey(family);
+        if (f.isEmpty() || "formicidae".equals(f)) return null;
+        return "(" + f + ")";
+    }
+
+    /**
+     * A non-ant's species column that means "not identified to species" (Brian Fisher, 2026-11-08): the group repeated
+     * in parentheses ("(curculionidae)" with genus "(curculionidae)" or family Curculionidae) or "_indet_" -> "(indet)".
+     * Anything else, and every ant line, is returned unchanged.
+     */
+    public static String nonAntIndetSpecies(String species, String genus, String family) {
+        if (species == null || nonAntSubfamilyPlaceholder(family) == null) return species;
+        String sp = species.trim().toLowerCase(Locale.ROOT);
+        if ("_indet_".equals(sp)) return "(indet)";
+        if (sp.length() > 2 && sp.startsWith("(") && sp.endsWith(")")) {
+            String inner = familyKey(sp);
+            if (inner.equals(familyKey(family)) || inner.equals(familyKey(genus))) return "(indet)";
+        }
+        return species;
     }
 
     /** "(Ampulicinae)" -> "Ampulicinae"; "(formicidae)" (AntWeb's placeholder) and other values unchanged. */
