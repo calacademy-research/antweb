@@ -23,7 +23,7 @@ Rules common to every route:
 
 | Route | Parameters (besides up, limit, offset, ndjson, log) | Returns (list key; metaData count) | Reads | Order (offset paging) |
 |---|---|---|---|---|
-| `/v3.1/` | none | JSON front door (2026-11-08): name "Antweb API V3.1", status, message, documentation, terms (`apiV3.1.do#terms`), guideForPrograms (`/llms.txt`), contact, citation | - | - |
+| `/v3.1/` | none | JSON front door (2026-11-08): name "Antweb API V3.1", status, message, documentation, terms (`apiV3.1.do#terms`), guideForPrograms (`/llms.txt`), contact, citation, v4 (status open or closed, url, getAKey; since PR 3) | - | - |
 | `/specimens` | family, subfamily, genus, species, specimenCode, region, subregion, country, adm1, bioregion, habitat, type, georeferenced, bbox, minDate, maxDate, minElevation, maxElevation, museum, ownedby, locatedat, collectedby, caste, subcaste, fossil, validGenus, validSubfamily, status, hasImage, geolocaleName, lifeStageSex | `specimens`: specimenCode, occurrenceId, institution and collection codes, classification (kingdom to subspecies, scientificName), type, region to adm1, bioregion, decimalLatitude/Longitude, geo, dates, habitat, microhabitat, collectedBy, samplingMethod, lifeStageSex, medium, determinedBy, locality, notes, minimumElevationInMeters, antwebTaxonName, ownedBy, locatedAt, caste, subcaste, fossil, status, imageCount; `count`, `queryTime` | view [`api3_1_specimen`](../data-model.md#api3_1_specimen) (+ `taxon`, `geolocale_taxon`, `geolocale` for geolocaleName) | specimen code: yes |
 | `/geoSpecimens` | coords (lat,lon; required), radius (kilometres, default 5; converted to a box in degrees by `radiusBox()` since 2026-10-26, was added as degrees), distinct (subfamily, genus, species) | `specimens` (as /specimens); with distinct: `subfamilies`, `genera` or `species` ("Genus species") names of the specimens in the area; another distinct value: HTTP 400; `count` | `api3_1_specimen` | specimen code; distinct lists by name: yes |
 | `/geoSpeciesStats` | geolocaleName (required) | `geoSpeciesStats`: per valid species of the place, its specimens by caste and subcaste (queenCount ... maleAlateCount); `count`. An unknown place answers HTTP 404 `{"error": "Geolocale not found: <name>"}` (since 2026-10-26, F23; before, the plain text "Geolocale not found" with HTTP 200) | [`specimen`](../data-model.md#specimen), [`taxon`](../data-model.md#taxon), [`geolocale_taxon`](../data-model.md#geolocale_taxon), [`geolocale`](../data-model.md#geolocale) | taxon name: yes |
@@ -74,3 +74,73 @@ Rules common to every route:
 ## Access, terms and /llms.txt (step 6, API keys PR 1, 2026-11-08)
 
 The API page `apiV3.1.do` has a section "Access and terms of use" (`#terms`), text approved by Brian Fisher 2026-11-08: status, access and free keys (coming), responsible access (bulk by arrangement), citation with specimen codes, collaboration and contributing back, licence CC BY 4.0, identifications vs AntCat names, usage records. Every 503 sends `Retry-After: 86400`. `web/llms.txt` (served at `https://www.antweb.org/llms.txt`) is the plain-text version for programs and AI agents: use the API not the web pages, no harvesting or mirrors, bulk data only by agreement, citation, CC BY 4.0, contact. Both are linked from `/v3.1/` and from every 503. Tests: `tests/unit/test_api_decisions.py::test_front_door_points_to_the_terms_and_the_guide`, `tests/e2e/test_api.py::test_llms_txt_and_the_terms_on_the_api_page`.
+
+## v4 and API keys (step 6, API keys PR 3, 2026-11-08)
+
+Decisions by Brian Fisher, 2026-11-08. The keyed API is **v4** at `https://www.antweb.org/v4/`: the same routes as v3.1 (`/v4/specimens`, `/v4/taxa`, ... every v3.1 data route), with free registered API keys, limits per level and clearer field names. v3.1 answers exactly as before (closed, 503 with the terms).
+
+### Code
+
+- `api/v3.1/api_v4.py`: a separate small Flask application, mounted by the last lines of `api.py` under `/v4` (werkzeug `DispatcherMiddleware`), so the v3.1 application, its url map and its checks (`checkUp`, `checkParams`) are untouched. For each data request it refuses a key in the web address (400), answers 503 without the usage login, checks the key (401), answers 503 while `V4_OPEN` is False unless the key is an admin key, refuses unknown parameters (400, v4 names, `didYouMean` also for old and Darwin Core names: `collectionCode`, `catalogNumber`, `eventID`, `fieldNumber`, `locationID`, `code`), counts the request (429), then runs the v3.1 route itself in an inner request (`application.test_request_context` and `full_dispatch_request`, with `up=1` and `limit` = the records reserved for this answer, `flask.g.apiMaxLimit` raising or lowering the v3.1 cap in `setGlobals()`), renames the fields, adds `localityCode`, rewrites `metaData.parameters` and `metaData.request` to the v4 request, and gives back the records it did not use.
+- `api/v3.1/api_keys.py`: keys, levels, the 429 and 401 texts and the counters (`UsageStore`).
+- Two small hooks in `api.py`, inert outside v4: `setGlobals()` reads `g.apiMaxLimit`, and `getSpecimen()` calls `api_v4.specimen_filters()` (`g.apiV4Filters`).
+- `V4_OPEN = False` in `api.py`. While False: v4 answers admin keys only (everyone else 503 "not open yet", `Retry-After: 86400`), `/v4/` says `"status": "closed"`, and the v3.1 503 keeps its message. When Brian decides keys go live: set `V4_OPEN = True` (one line, through a PR). Then v4 is open at its limits and the v3.1 503 says "The AntWeb API v3.1 is closed. Please use the AntWeb API v4 at https://www.antweb.org/v4/ with a free API key from https://www.antweb.org/apiKey.do." (`apiDownMessage()`). Answering v3.1 data for 3 months with a pointer to v4 is a later change.
+- Caddy: `@api_v4 path /v4 /v4/*` with `handle` (not `handle_path`: the API sees `/v4/...`), in `docker/caddy/Caddyfile` and `Caddyfile.common`. Caddy writes request headers into its access log, so both files drop `X-Api-Key` from the log (`format filter`, `request>headers>X-Api-Key delete`; checked with Caddy 2.10: without the filter the header is logged).
+- Cloudflare: not changed in this PR. `/v4/` is not yet excepted from Under Attack Mode or covered by the `/v3.1/` rate rule; that must be done in the Cloudflare console before v4 opens (Brian's yes first).
+
+### Keys
+
+- Sent only in the header `X-API-Key`. A key in the web address (a parameter named key, apiKey, api_key, X-API-Key, token, or any value that looks like `aw_...`) is refused with HTTP 400 "Send your API key in the X-API-Key header, never in the web address ...", without repeating it.
+- Format `aw_` and 40 random characters (`api_keys.new_key()`, 240 bits). Stored only as SHA-256 in `api_key.key_hash`, with a display prefix (first 7 characters) in `api_key.prefix`. Accepted only with `status = 'active'`.
+- Unknown, malformed, pending or revoked key: HTTP 401 `{"error": "This API key is not valid. Get a free key at https://www.antweb.org/apiKey.do."}`.
+- Never written to a log, an error or a reply: the inner v3.1 request carries no key header, nothing prints request headers, errors print the exception type and message only, and Caddy drops the header from its log (above). `apiKey.do` (the registration form) is PR 4.
+
+### Levels and limits
+
+| | No key (per visitor IP) | Registered key | Collaborator, admin |
+|---|---|---|---|
+| Requests a minute | 5 | 60 | per key (`api_key.per_minute`) |
+| Requests a day | 50 | 5,000 | per key (`per_day`) |
+| Records per answer | 25 | 500 | per key (`max_records`, at most 10,000) |
+| Records a day | 1,250 (50 answers of 25) | 50,000 | per key (`records_per_day`) |
+
+A key's own columns override the defaults for every level; NULL means the registered value. Days and minutes are UTC (a day ends at midnight UTC, 4 PM Pacific in winter). The no-key level's 1,250 records a day is not one of Brian's numbers: it is what 50 answers of 25 can hold, stated so paging cannot exceed it.
+
+- **No "give me everything":** before the query runs, the answer's records (the smaller of the level's records per answer, the records left today and the caller's `limit`) are reserved on the day's row; after it, the unused part is given back. Paging with `offset` therefore stops at the daily record limit, also with requests running at the same time in several workers. When the reply is cut, `metaData.limitNotice` and the header `X-AntWeb-Limit-Notice` say so ("Answers with your key hold at most 500 records, and 50,000 records a day. ..."). Every v4 data reply has `metaData.level` and `metaData.recordsLeftToday` and the headers `X-AntWeb-Level` and `X-AntWeb-Records-Left-Today`.
+- **Over a limit:** HTTP 429, `Retry-After` in seconds (to the next minute, or to midnight UTC), and JSON `{"error", "retryAfter", "getAKey", "contact", "citation"}`. The text: "You have reached the limit for visitors without a key: 5 requests a minute. Please wait 42 seconds. For higher limits, get a free API key at https://www.antweb.org/apiKey.do. Larger projects: write to antweb@antweb.org. Please cite AntWeb: <citation>". For a key it says "your key" and leaves out the sentence about getting a free key (they have one); waits of 2 hours or more add "(about N hours)". The limit names are "requests a minute", "requests a day" and "records a day".
+- **Without the usage login** (`usageUser=`, `usagePassword=` in `etc/api-db.properties`, made by `tools/api/setup-usage-login.sh`): every v4 data route answers 503 "The AntWeb API v4 is not available: API keys are not configured on this server ..." and `/v4/` says `"status": "not configured"`. If the counter database cannot be reached, 503 "The request could not be counted, so it was not answered" (`Retry-After: 60`). v4 never answers without limits.
+
+### Counting (shared by the three gunicorn workers)
+
+In MySQL, written only with the usage login `antweb_api_usage` (the data login stays read-only):
+
+- `api_rate` (new, `db/upgrade/9.4.0/2026-11-08-api-rate.sql`): requests in the current minute per key (`key:<id>`) or visitor (`ip:<hash>`), and requests and records per day of visitors without a key. Rows older than two days are deleted (each worker at most every ten minutes).
+- `api_usage_daily`: requests, records and refusals (429) per key and day; `key_id` 0 = all visitors without a key together.
+- `api_key.last_used`: set at most once a minute per key.
+
+A request is counted by adding to its rows inside one transaction and reading them back (the rows stay locked until the transaction ends, so two workers cannot both take the last request of a limit); a refused request is rolled back and counted only as a refusal. The usage login's connections use READ COMMITTED, and a transaction that hits a deadlock or a lock wait timeout is tried again up to 4 times (`api_keys.retried()`): a check against real MySQL 8.0 (2026-11-08) showed that two workers adding the first request of a new minute at the same moment could deadlock under the default REPEATABLE READ. With both, 5 rounds of 40 simultaneous requests from two stores gave exact counts and no errors. Visitors without a key are told apart by `CF-Connecting-IP` (else the last `X-Forwarded-For` entry, else the TCP peer, as `util/HttpUtil.getClientIpAddress`), stored only as SHA-256 of the IP with a salt that changes every day (an HMAC of the date with the usage login's password), never as the IP.
+
+Setup on a server (staging first): `bash /root/antweb-next/tools/api/setup-usage-login.sh` then `docker restart antweb_api_1` (staging), the same with `/root/antweb/` on production. The script is safe to run again: on a server where PR 2 already made the login, it adds `api_rate` and its grant (select, insert, update, delete on `ant.api_rate` only). Rollback: `drop table api_rate;` (v4 then answers 503) and the PR 2 rollback for the rest.
+
+### Field names
+
+| v4 | v3.1 | Darwin Core | Meaning |
+|---|---|---|---|
+| `specimenCode` | `specimenCode` (in `/taxaImages` specimens: `code`) | `catalogNumber` | the code of one specimen, e.g. CASENT0922626 |
+| `collectingEventCode` | `collectionCode` | `eventID`, `fieldNumber` | the collecting event, what AntWeb calls the collection code, e.g. JTL7095 |
+| `localityCode` | (not given) | `locationID` | the locality as coded by the collector |
+
+`collectionCode` is renamed wherever it appears in a v4 reply (JSON and `ndjson=true`). `localityCode` is added to every specimen record of `/v4/specimens` and `/v4/geoSpecimens` (read from `specimen.localitycode`: the `api3_1_specimen` view has no locality code). `/v4/specimens` also takes `collectingEventCode=` and `localityCode=` as filters. v4 does not take `up` or `log`. Everything else (parameters, filters, other fields, order, paging) is as in v3.1 above.
+
+### Front doors
+
+- `/v4/` (always 200): name "Antweb API v4", status (open, closed, not configured), message, getAKey, keyHeader `X-API-Key`, limits (the table above), routes, fieldNames (the table above), documentation, terms, guideForPrograms, terms_of_use, contact, citation, license.
+- `/v3.1/` adds `v4` (status, url, getAKey, message).
+
+### Tests
+
+| Test | What it pins |
+|---|---|
+| `tests/unit/test_api_v4.py` (CI, in the API image; SQLite for the data and for the counters) | key format and SHA-256, only the hash stored; admin key works before `V4_OPEN`, everyone else 503; 401 for unknown, malformed, pending, revoked keys; key in the address 400; no usage login 503, counter database down 503; no key 5 a minute (429 text and `Retry-After`), 50 a day, 25 records; registered 60 a minute and the defaults; per-key overrides (any level, 10,000 cap); the daily record limit stops offset paging and unused records are given back; counts in `api_usage_daily` and `api_rate`, shared by two stores (workers), no raw IP stored; IP hash per day; the key never in stdout, stderr, bodies or headers (also on 400, 401, 429 and 500); v4 field names in JSON, ndjson and /taxaImages, localityCode, the two new filters; v4 parameter names and hints; every v3.1 data route has a v4 route; both front doors; v3.1 unchanged; both Caddyfiles route `/v4` and drop `X-Api-Key` from the log |
+| `tests/unit/test_api_usage_login_script.py` | the script grants only the three key tables, delete only on `api_rate`, and adds the `api_rate` grant also for an existing login |
+| `tests/e2e/test_api.py::test_v4_front_door_and_refusals` | on staging: `/v4/` answers JSON, a data route without a key answers 503 (closed or not configured) or 429, a key in the address is refused; skipped when Cloudflare challenges `/v4/` |

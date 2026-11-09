@@ -174,6 +174,11 @@ jobs:
             -v "$PWD/docker-compose.yml:/repo/docker-compose.yml:ro" -v "$PWD/docker-compose.dev.yml:/repo/docker-compose.dev.yml:ro" \
             antweb/api:dev /t/test_api_decisions.py
 
+      - name: API v4 with free registered keys (header only, hashes, levels, 429 and 401, daily record limit, no key in logs) (tests/unit/test_api_v4.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" -v "$PWD/docker/caddy:/caddy:ro" \
+            antweb/api:dev /t/test_api_v4.py
+
       - name: API refuses to start without its read-only login (API_REQUIRE_READONLY_LOGIN=true, as on the servers)
         run: |
           d=$(mktemp -d)
