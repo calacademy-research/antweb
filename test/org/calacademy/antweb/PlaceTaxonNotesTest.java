@@ -87,6 +87,7 @@ public class PlaceTaxonNotesTest extends TestCase {
         String q = PlaceTaxonNotes.indetCountSql(" and specimen.country = 'Mozambique'");
         assertTrue(q, q.contains("specimen.taxon_name = ?"));
         assertTrue("imaged: an image of the ant, labels do not count", q.contains(StatisticsDb.ANT_IMAGE));
+        assertTrue("imaged: not a red-flagged specimen (2026-11-09)", q.contains(org.calacademy.antweb.home.SpecimenDb.notRedFlagged("specimen")));
         assertTrue(q.endsWith(" and specimen.country = 'Mozambique'"));
     }
 

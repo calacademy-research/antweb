@@ -10,7 +10,8 @@ import org.calacademy.antweb.home.*;
 
 /**
  * Nightly set 4 (imageCountCrawls): the image counts of the taxon tree, then of every species list. Sets
- * specimen.image_count from the image table, each taxon's from the specimens filed under its name, adds
+ * specimen.image_count from the image table, each taxon's from the specimens filed under its name (red-flagged
+ * specimens left out, Brian Fisher 2026-11-09; StatisticsDb.NOT_RED_FLAGGED_IMAGE), adds
  * subspecies to species, species to genera and so up to the family (by parent_taxon_name), then runs the image
  * crawls of the project, geolocale, bioregion and museum lists. Tables image, specimen, taxon and the four list
  * tables. Docs: docs/flows/nightly.md (set 4), docs/numbers.md. Tests: PlaceTotalsDbTest.
@@ -77,15 +78,13 @@ public class ImageCountDb extends AntwebDb {
     }
 
     /** Update the number of images for each species using the specimen table
-     * <p>Count is determined by summing the image counts of all specimens with matching taxon_name</p>
+     * <p>Count is determined by summing the image counts of all specimens with matching taxon_name, red-flagged
+     * specimens left out (Brian Fisher, 2026-11-09: their images are not counted anywhere; the specimen's own
+     * image_count, countSpecimenImages, stays: it is still imaged)</p>
      * @throws SQLException
      */
     private void countSpeciesImages() throws SQLException {
-        String query = "update taxon " +
-                "set image_count = " +
-                "(select COALESCE(SUM(specimen.image_count), 0) " +
-                "from specimen " +   // the connection's own database (was ant.specimen)
-                "where taxon.taxon_name = specimen.taxon_name)";
+        String query = SPECIES_IMAGES_SQL;
 
         Statement stmt = null;
 
@@ -102,6 +101,11 @@ public class ImageCountDb extends AntwebDb {
         }
     }
 
+
+    /** countSpeciesImages: each taxon's image_count = the images of the specimens filed under its name, not red-flagged. */
+    public static final String SPECIES_IMAGES_SQL = "update taxon set image_count ="
+        + " (select coalesce(sum(specimen.image_count), 0) from specimen"   // the connection's own database (was ant.specimen)
+        + " where taxon.taxon_name = specimen.taxon_name and " + SpecimenDb.notRedFlagged("specimen") + ")";
 
     /**
      * Ranks whose taxon.image_count is added to their parent's, in this order (2026-10-21). countSpeciesImages()

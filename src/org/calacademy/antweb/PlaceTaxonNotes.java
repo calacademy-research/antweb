@@ -30,7 +30,7 @@ import org.calacademy.antweb.util.Html;
  * (4 imaged)", linked to the indet name's page of the same kind and place. In a place the numbers are the place's
  * specimens (the specimens the indet page lists there: country, adm1, bioregion, museum by Overview.getOverviewCriteria;
  * a region or subregion by its countries, Geolocale.regionCountriesSql); in all of AntWeb, every specimen. Imaged: with an
- * image of the ant (labels do not count, StatisticsDb.ANT_IMAGE). Shown only when N > 0; curated projects select no
+ * image of the ant (labels do not count, StatisticsDb.ANT_IMAGE), not red-flagged (2026-11-09). Shown only when N > 0; curated projects select no
  * specimens and show no line. It is not a species anywhere and changes no number of the page.
  *
  * Not recorded. The site keeps the last place in the session, so a visitor lands on Lividopone "in Afrotropical" without
@@ -116,7 +116,9 @@ public final class PlaceTaxonNotes {
 
     /** One parameter (the indet name): the specimens N and those with an image of the ant M. */
     public static String indetCountSql(String placeCriteria) {
-        return "select count(*), coalesce(sum(case when exists (select 1 from image i where i.image_of_id = specimen.code and "
+        // imaged: a photo of the ant, the specimen not red-flagged (Brian Fisher, 2026-11-09: its photos are not counted)
+        return "select count(*), coalesce(sum(case when " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("specimen")
+            + " and exists (select 1 from image i where i.image_of_id = specimen.code and "
             + StatisticsDb.ANT_IMAGE + ") then 1 else 0 end), 0) from specimen where specimen.taxon_name = ?"
             + (placeCriteria == null ? "" : placeCriteria);
     }

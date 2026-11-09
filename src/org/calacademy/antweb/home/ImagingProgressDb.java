@@ -22,7 +22,9 @@ import org.apache.commons.logging.LogFactory;
  * imaged now because AntWeb has specimens of them. The imaging labs' work queue.
  *
  * The rule of "imaged" is the one of the home page and the lists (StatisticsDb.ANT_IMAGE, docs/numbers.md Q6, Q12): a
- * name is imaged when a specimen filed under it, anywhere in AntWeb, has a photo of the ant; label photos never count.
+ * name is imaged when a specimen filed under it, anywhere in AntWeb, has a photo of the ant; label photos never count,
+ * nor do photos of red-flagged specimens (Brian Fisher, 2026-11-09; SpecimenDb.notRedFlagged). A red-flagged specimen
+ * is still a specimen: it counts for "unimaged, with specimens" (it can be fixed and unflagged, or imaged again).
  *
  * Table imaging_progress, one row per place, filled once a day by the daily update (set 4, after the statistics row;
  * its own step "imagingProgress" on dailyUpdate.do; admins: utilData.do?action=imagingProgress), one grouped query per
@@ -36,7 +38,7 @@ import org.apache.commons.logging.LogFactory;
  *               genus      key subfamily + genus (the genus taxon_name); the valid living species and subspecies of it
  *               museum     key the museum code; the valid living species and subspecies with a specimen there
  *   total                    the names counted (above)
- *   imaged                   of them, those with a photo of the ant anywhere in AntWeb
+ *   imaged                   of them, those with a photo of the ant anywhere in AntWeb (not of a red-flagged specimen)
  *   imaged_here              of them, those with a photo of the ant of a specimen collected in this place (bioregion:
  *                            specimen.bioregion; country: specimen.country, or island_country for island countries, as
  *                            the place's Images, PlaceImageCountDb; museum: a specimen of this museum). Null for all and genus.
@@ -72,8 +74,9 @@ public class ImagingProgressDb {
     /** The museum the labs image first (CAS, San Francisco; the MBC lab images CAS specimens too). */
     public static final String CASC = "CASC";
 
-    /** The day the "imaged" rule last changed: statistics rows before it are not comparable (trend). */
-    public static final String RULE_SINCE = "2026-10-28";
+    /** The day the "imaged" rule last changed: statistics rows before it are not comparable (trend). 2026-11-09: photos
+     *  of red-flagged specimens no longer count (was 2026-10-28). */
+    public static final String RULE_SINCE = "2026-11-09";
 
     private final Connection connection;
 
@@ -141,7 +144,7 @@ public class ImagingProgressDb {
     // "is not null": the list query reads it with NOT IN, and one null name in it would empty the whole list (SQL's
     // NOT IN with a null; review 2026-11-08: one imaged specimen without a name took the list from 4,320 names to 0).
     static final String IMAGED_NAMES = "(select distinct s.taxon_name from image i join specimen s on s.code = i.image_of_id where "
-        + StatisticsDb.ANT_IMAGE + " and s.taxon_name is not null)";
+        + StatisticsDb.ANT_IMAGE + " and " + SpecimenDb.notRedFlagged("s") + " and s.taxon_name is not null)";
 
     /** Specimens per name and those of CASC (alias sp: taxon_name, n, casc). */
     static final String SPECIMENS = "(select s.taxon_name, count(*) n, sum(s.museum = '" + CASC + "') casc from specimen s"
@@ -149,7 +152,9 @@ public class ImagingProgressDb {
 
     /** (place key k, name) of the specimens with a photo of the ant collected in each place of the kind, each pair once. */
     static String hereSql(String kind) {
-        String imaged = " from image i join specimen s on s.code = i.image_of_id where " + StatisticsDb.ANT_IMAGE;
+        // photos of red-flagged specimens do not count (2026-11-09), as IMAGED_NAMES
+        String counted = StatisticsDb.ANT_IMAGE + " and " + SpecimenDb.notRedFlagged("s");
+        String imaged = " from image i join specimen s on s.code = i.image_of_id where " + counted;
         switch (kind) {
             case BIOREGION: return "select distinct s.bioregion k, s.taxon_name" + imaged + " and s.bioregion is not null";
             case MUSEUM: return "select distinct s.museum k, s.taxon_name" + imaged + " and s.museum is not null";
@@ -157,9 +162,9 @@ public class ImagingProgressDb {
                 // as the country's Images (PlaceImageCountDb): island countries by specimen.island_country
                 String g = " join geolocale g on g.georank = 'country' and g.is_valid = 1 and ";
                 return "select g.id k, s.taxon_name from image i join specimen s on s.code = i.image_of_id" + g + "coalesce(g.is_island, 0) = 0 and g.name = s.country"
-                    + " where " + StatisticsDb.ANT_IMAGE
+                    + " where " + counted
                     + " union select g.id k, s.taxon_name from image i join specimen s on s.code = i.image_of_id" + g + "coalesce(g.is_island, 0) = 1 and g.name = s.island_country"
-                    + " where " + StatisticsDb.ANT_IMAGE;
+                    + " where " + counted;
             default: return null;
         }
     }

@@ -25,7 +25,8 @@ import org.calacademy.antweb.geolocale.Geolocale;
  * 3,435 images instead of about 29,700.
  *
  * Which images belong to a place: the images of the specimens that the place's "Specimens" number
- * counts (the same rule, so Images and Imaged specimens can never count specimens that Specimens leaves out):
+ * counts (the same rule, so Images and Imaged specimens can never count specimens that Specimens leaves out),
+ * red-flagged specimens left out (Brian Fisher, 2026-11-09: their images are not counted anywhere):
  *
  *   country      specimen.country = the country, status valid, unrecognized, morphotaxon,
  *                indetermined or unidentifiable, name (species or subspecies) on the country's list
@@ -144,6 +145,12 @@ public class PlaceImageCountDb {
      */
     static final String ANTS = " and t.family = 'formicidae'";
 
+    /**
+     * The images of red-flagged specimens are not counted (Brian Fisher, 2026-11-09; StatisticsDb.NOT_RED_FLAGGED_IMAGE):
+     * every source below leaves those specimens out, so Images, Imaged specimens and the label rows of a place have none.
+     */
+    static final String NOT_RED_FLAGGED = " and " + SpecimenDb.notRedFlagged("s");
+
     private static String geolocaleColumnSource(String column, String georankCondition, boolean one) {
         return "select g.id k, s.code code, i.id id, " + SHOT + " shot"
             + " from geolocale g"
@@ -152,7 +159,7 @@ public class PlaceImageCountDb {
             + " join taxon t on t.taxon_name = s.taxon_name"
             + " join image i on i.image_of_id = s.code"
             + " where " + georankCondition
-            + " and t.taxarank in " + SPECIES + " and s.status in " + COUNTABLE + ANTS
+            + " and t.taxarank in " + SPECIES + " and s.status in " + COUNTABLE + ANTS + NOT_RED_FLAGGED
             + (one ? " and g.id = ?" : "");
     }
 
@@ -171,7 +178,7 @@ public class PlaceImageCountDb {
                     + " join geolocale_taxon gt on gt.geolocale_id = d.k and gt.taxon_name = s.taxon_name"
                     + " join taxon t on t.taxon_name = s.taxon_name"
                     + " join image i on i.image_of_id = s.code"
-                    + " where t.taxarank in " + SPECIES + ANTS, true));
+                    + " where t.taxarank in " + SPECIES + ANTS + NOT_RED_FLAGGED, true));
                 break;
             case BIOREGION:
             case MUSEUM:
@@ -199,7 +206,7 @@ public class PlaceImageCountDb {
         return "select m.pk k, s.code code, i.id id, " + SHOT + " shot"
             + PlaceTotals.listSpecimensFrom(type, one ? " = ?" : null,
                 " join taxon t on t.taxon_name = m.list_name join image i on i.image_of_id = s.code")
-            + " and t.taxarank in " + SPECIES + ANTS + own;
+            + " and t.taxarank in " + SPECIES + ANTS + NOT_RED_FLAGGED + own;
     }
 
     // ------------------------------------------------------------------ counting

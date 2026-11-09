@@ -64,7 +64,9 @@ def test_source_page_words():
     assert "\u2014" not in text and "&mdash;" not in text
     assert "nightly" not in text.lower()
     for words in ("Label photos never count", "What the columns mean", "Imaged from here",
-                  "Unimaged but with specimens in AntWeb", "when the rules of these numbers last changed"):
+                  "Unimaged but with specimens in AntWeb", "when the rules of these numbers last changed",
+                  # Brian Fisher, 2026-11-09: photos of red-flagged specimens are not counted, and the page says so
+                  "Photos of red-flagged specimens are not counted", "photos of red-flagged specimens are not counted"):
         assert words in text, words
     assert "toolsHead.jsp" not in text, "a public page: no tools.css"
 

@@ -43,7 +43,7 @@ import org.calacademy.antweb.home.PlaceTotals;
  *   list.global              a species row's specimens in a place <= its "Global" specimens (allantwebants)
  *   global.specimens         "Global" specimens of every species = all its specimen records
  *   home                     home page and statsPage numbers (latest statistics row) = a recount
- *   taxon.images             taxon image_count = images of its own specimens + of the taxa under it;
+ *   taxon.images             taxon image_count = images of its own specimens (not red-flagged, 2026-11-09) + of the taxa under it;
  *                            specimen image_count = its images
  *   geo.regions              a subregion's or region's Specimens <= the sum of its countries' Specimens
  *   imaging.progress         (NumberChecks, 2026-11-08) imagingProgress.do: imaged from here <= imaged <= total, all of
@@ -104,7 +104,7 @@ public final class CountInvariants {
      */
     static final int LIST_CAP = 300;
 
-    static final String RULES_PENDING = "this number's rule changed (2026-10-21, 2026-10-28, 2026-10-30); no nightly run has counted it that way yet";
+    static final String RULES_PENDING = "this number's rule changed (2026-10-21, 2026-10-28, 2026-10-30, 2026-11-09); no nightly run has counted it that way yet";
     /** Upload groups' Genera (2026-10-30): counted by the rule before it until the nightly recount (set 3). */
     static final String GENERA_RULE_PENDING = "counted by the rule before 2026-10-30 (every counted status); the next nightly run counts valid genera and morphogenera only";
     /** The note of the report on the projects the check skips (Project.isSpeciesListOnly). */
@@ -118,9 +118,11 @@ public final class CountInvariants {
 
     public static boolean rulesCounted(List<String> lines) {
         if (lines.isEmpty()) return true;   // no compute.log (unreadable, emptied, rotated): not a reason to call differences pending
-        // every rule change: a run before 2026-10-28 wrote RULES_LOG only, one before 2026-10-30 not GENERA_RULE_LOG
+        // every rule change: a run before 2026-10-28 wrote RULES_LOG only, one before 2026-10-30 not GENERA_RULE_LOG, one
+        // before 2026-11-09 not StatisticsDb.RED_FLAG_IMAGES_RULE_LOG (images of red-flagged specimens not counted)
         for (String line : lines) {
-            if (line.contains(RULES_LOG) && line.contains(COUNTING_RULES_LOG) && line.contains(GENERA_RULE_LOG)) return true;
+            if (line.contains(RULES_LOG) && line.contains(COUNTING_RULES_LOG) && line.contains(GENERA_RULE_LOG)
+                && line.contains(org.calacademy.antweb.home.StatisticsDb.RED_FLAG_IMAGES_RULE_LOG)) return true;
         }
         return false;
     }
@@ -843,6 +845,9 @@ public final class CountInvariants {
                 }
                 String p = null;
                 if (!nightlyRow && (i == 2 || i == 3)) p = RULES_PENDING;
+                // 2026-11-09: images of red-flagged specimens are not counted; a row written before the nightly run that
+                // counts them so (rulesCounted) is pending
+                if (p == null && i >= 2 && !rulesCounted && row[i] != live) p = RULES_PENDING;
                 // Q7 (2026-10-22): ants only. A row written before that rule equals the old count: pending until the next nightly run.
                 String before = i == 0 ? org.calacademy.antweb.home.StatisticsDb.VALID_SPECIES_SQL_BEFORE_Q7
                     : i == 2 ? org.calacademy.antweb.home.StatisticsDb.IMAGED_SPECIES_SQL_BEFORE_Q7
@@ -891,7 +896,8 @@ public final class CountInvariants {
                 }
                 boolean imaged = e.getKey().endsWith("_imaged");
                 String p = uploadSince ? "specimens were uploaded after the numbers were written"
-                    : imaged && imagesSince ? "images were added after the numbers were written" : null;
+                    : imaged && imagesSince ? "images were added after the numbers were written"
+                    : imaged && !rulesCounted ? RULES_PENDING : null;   // red-flagged specimens left out since 2026-11-09
                 compare(c, "site", "home", org.calacademy.antweb.home.StatisticsDb.HOME_LABELS.get(e.getKey()), e.getValue(), live, "=", p);
             }
             if (stored.containsKey("living_species") && stored.containsKey("living_species_specimens") && stored.containsKey("living_species_imaged")) {
@@ -904,18 +910,21 @@ public final class CountInvariants {
     // ------------------------------------------------------------------ taxon and specimen image counts
 
     void taxonImages() {
-        Check check = new Check("taxon.images", "taxon image_count = images of its specimens and of the taxa under it; specimen image_count = its images",
+        Check check = new Check("taxon.images", "taxon image_count = images of its specimens (not red-flagged) and of the taxa under it; specimen image_count = its images",
             "54, 56, 61, 63, 100, 104").pendingOn(true, false, true, true);
         check(check, c -> {
             places.computeIfAbsent("site", x -> keyMap()).put("taxa", "taxon table");
             // Specimens with images: their image_count and name (one pass over specimen); images per specimen.
             Map<String, Long> own = keyMap();
             Map<String, Long> specimenCount = keyMap();
+            // A red-flagged specimen keeps its own image_count but adds nothing to its name's (Brian Fisher, 2026-11-09;
+            // ImageCountDb.SPECIES_IMAGES_SQL).
             try (Statement stmt = connection.createStatement(); ResultSet r = stmt.executeQuery(track(
-                    "select code, taxon_name, image_count from specimen where image_count <> 0"))) {
+                    "select code, taxon_name, image_count, " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("specimen")
+                    + " from specimen where image_count <> 0"))) {
                 while (r.next()) {
                     specimenCount.put(r.getString(1), r.getLong(3));
-                    if (r.getString(2) != null) own.merge(r.getString(2), r.getLong(3), Long::sum);
+                    if (r.getString(2) != null && r.getBoolean(4)) own.merge(r.getString(2), r.getLong(3), Long::sum);
                 }
             }
             Map<String, Long> children = keyMap();

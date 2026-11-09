@@ -62,7 +62,8 @@ public class RegionCountDbTest extends TestCase {
         exec("alter table taxon add column genus varchar(64) invisible");
         exec("create table specimen (code varchar(128) primary key, taxon_name varchar(128), status varchar(40), country varchar(64),"
             + " adm1 varchar(64), island_country varchar(64), museum varchar(64), bioregion varchar(64), upload_id int,"
-            + " family varchar(64), subfamily varchar(64), genus varchar(64), species varchar(64), image_count int default 0)");
+            + " family varchar(64), subfamily varchar(64), genus varchar(64), species varchar(64), image_count int default 0,"
+            + " flag varchar(10))");   // red flag: the place images leave red-flagged specimens out (2026-11-09)
         exec("create table image (id int primary key, image_of_id varchar(128), shot_type varchar(10), upload_date datetime)");
         exec("create table geolocale (id int primary key, name varchar(128), georank varchar(20), parent varchar(128), is_valid tinyint default 1,"
             + " is_island tinyint default 0, specimen_count int default 0, image_count int default 0, imaged_specimen_count int default 0,"

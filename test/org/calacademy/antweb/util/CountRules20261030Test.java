@@ -124,9 +124,13 @@ public class CountRules20261030Test extends TestCase {
     public void testNumbersArePendingUntilANightlyRunCountsByTheGeneraRule() {
         List<String> before = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; " + CountInvariants.COUNTING_RULES_LOG + ")");
         assertFalse(CountInvariants.rulesCounted(before));
+        // since 2026-11-09 the line also has the red-flag images rule (org.calacademy.antweb.home.StatisticsDb.RED_FLAG_IMAGES_RULE_LOG)
         List<String> after = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; x; " + CountInvariants.COUNTING_RULES_LOG
-            + "; " + CountInvariants.GENERA_RULE_LOG + ")");
+            + "; " + CountInvariants.GENERA_RULE_LOG + "; " + org.calacademy.antweb.home.StatisticsDb.RED_FLAG_IMAGES_RULE_LOG + ")");
         assertTrue(CountInvariants.rulesCounted(after));
+        List<String> beforeRedFlag = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; x; " + CountInvariants.COUNTING_RULES_LOG
+            + "; " + CountInvariants.GENERA_RULE_LOG + ")");
+        assertFalse(CountInvariants.rulesCounted(beforeRedFlag));
         assertEquals("genera and subfamilies rule of 2026-10-30", CountInvariants.GENERA_RULE_LOG);
         // a run that wrote the genera rule alone (before the subfamilies rule) is still pending
         List<String> generaOnly = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; x; " + CountInvariants.COUNTING_RULES_LOG

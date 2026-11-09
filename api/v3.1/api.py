@@ -2383,18 +2383,21 @@ def getBioregionTaxa():
 # imageCount (every image file, kept as it was so clients do not break) also has antImageCount and labelImageCount.
 
 LABEL_SHOT_SQL = "lower(trim(coalesce(i.shot_type, ''))) = 'l'"
+# Brian Fisher, 2026-11-09: images of red-flagged specimens are not counted (StatisticsDb.NOT_RED_FLAGGED_IMAGE,
+# SpecimenDb.notRedFlagged in Java). A specimen's own image numbers are unchanged; a name's leave them out.
+NOT_RED_FLAGGED_SQL = "(s.flag is null or s.flag != 'red')"
 
 
 def imageSplitSql(byTaxon, n):
     """One grouped query: key -> images of the ant, label images. byTaxon False: key = specimen code (n codes as
-    :k0 .. :kn-1); True: key = taxon_name, the images of the specimens filed under each name (not the names under it).
-    Runs on MySQL and SQLite (tests/unit/test_api_image_split.py)."""
+    :k0 .. :kn-1); True: key = taxon_name, the images of the specimens filed under each name (not the names under it),
+    red-flagged specimens left out (2026-11-09). Runs on MySQL and SQLite (tests/unit/test_api_image_split.py)."""
     keys = ", ".join(":k%d" % i for i in range(n))
     split = (" sum(case when " + LABEL_SHOT_SQL + " then 0 else 1 end) ant,"
              " sum(case when " + LABEL_SHOT_SQL + " then 1 else 0 end) labels")
     if byTaxon:
         return ("select s.taxon_name k," + split + " from specimen s join image i on i.image_of_id = s.code"
-                " where s.taxon_name in (" + keys + ") group by s.taxon_name")
+                " where s.taxon_name in (" + keys + ") and " + NOT_RED_FLAGGED_SQL + " group by s.taxon_name")
     return "select i.image_of_id k," + split + " from image i where i.image_of_id in (" + keys + ") group by i.image_of_id"
 
 
@@ -2433,10 +2436,12 @@ def shotSplit(shotTypes):
 def imagedTaxaSql(casteClause=""):
     """Names (taxon_name) that are imaged: a specimen of the name has an image of the ant, that is an image
     whose shot type is not 'l' (label). Used by /unimagedGeolocaleTaxa (2026-10-21; before: a specimen with
-    image_count > 1, so a name whose specimens had one image each was "unimaged", and label images counted).
+    image_count > 1, so a name whose specimens had one image each was "unimaged", and label images counted). Images of
+    red-flagged specimens do not count (Brian Fisher, 2026-11-09), as StatisticsDb.ANT_IMAGED_NAMES_SQL in Java.
     casteClause: "" or " and s.caste = '...'" (specimen alias s)."""
     return ("select s.taxon_name from specimen s join image i on i.image_of_id = s.code"
-            " where s.taxon_name is not null and lower(trim(coalesce(i.shot_type, ''))) <> 'l'" + casteClause)
+            " where s.taxon_name is not null and lower(trim(coalesce(i.shot_type, ''))) <> 'l'"
+            " and " + NOT_RED_FLAGGED_SQL + casteClause)
 
 
 @application.route('/unimagedGeolocaleTaxa', methods=['GET'])

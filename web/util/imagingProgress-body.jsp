@@ -1,7 +1,7 @@
 <%-- Body of the public Imaging progress page (imagingProgress.do; ImagingProgressAction, Brian Fisher 2026-11-08): the
      headline (valid living ant species and subspecies imaged, with a bar), the species-only number of the home page, the
      fossils apart, the names that can be imaged now (unimaged, with specimens in AntWeb; CASC first), the trend from the
-     daily statistics rows since 2026-10-28, and sortable tables by museum, bioregion, country and genus, each row linked
+     daily statistics rows since 2026-11-09 (ImagingProgressDb.RULE_SINCE), and sortable tables by museum, bioregion, country and genus, each row linked
      to its list of unimaged names. With genus=<key>: the unimaged names of that genus. Every number is explained on the
      page. Reads request attributes only (table imaging_progress). Docs: docs/numbers.md rows 124 to 128. Tests:
      tests/e2e/test_imaging_progress.py. --%>
@@ -66,7 +66,7 @@
 <p><a href="<%= Html.escAttr(self) %>">Imaging progress</a> &gt; <%= Html.esc(genusRow.label()) %><% if (genusRow.parent != null) { %> (<%= Html.esc(genusRow.parent) %>)<% } %></p>
 <p class="ip-headline"><span class="numbers" data-stat="genus-imaged"><%= n(genusRow.imaged) %></span> of <span data-stat="genus-total"><%= n(genusRow.total) %></span>
   valid living species and subspecies of this genus are imaged (<%= genusRow.percent() %>). <%= bar(genusRow.imaged, genusRow.total) %></p>
-<p class="ip-note">Imaged: at least one specimen filed under the name, anywhere in AntWeb, has a photo of the ant. Label photos never count.</p>
+<p class="ip-note">Imaged: at least one specimen filed under the name, anywhere in AntWeb, has a photo of the ant. Label photos never count, nor do photos of red-flagged specimens.</p>
 <p>The <span data-stat="genus-unimaged"><%= n(genusList == null ? 0 : genusList.size()) %></span> names below are not imaged yet.
   <span data-stat="genus-with-specimens"><%= n(genusRow.unimagedWithSpecimens) %></span> of them have specimens in AntWeb and can be imaged now
   (<%= n(genusRow.unimagedCasc) %> with a specimen at CASC). The ones with CASC specimens come first, then the ones with the most specimens.
@@ -87,7 +87,9 @@
 <h1>Imaging progress</h1>
 <p>How many of the known living ant species and subspecies have a photo of the ant on AntWeb, where they come from, and which ones
   can be imaged now because AntWeb already has specimens of them.</p>
-<p class="ip-note" id="ip-label-note">Label photos never count: a name whose specimens only have photos of their labels is not imaged.</p>
+<p class="ip-note" id="ip-label-note">Label photos never count: a name whose specimens only have photos of their labels is not imaged.
+  Photos of red-flagged specimens are not counted either (since 2026-11-09): a name whose only photos are of red-flagged specimens
+  is not imaged until those specimens are fixed and unflagged.</p>
 <% if (notCounted || progress == null) { %>
 <p id="ip-not-counted">The imaging progress has not been counted yet. The daily update counts it every morning; please come back tomorrow.</p>
 <% } else {
@@ -105,7 +107,7 @@
   (<span data-stat="percent"><%= living.percent() %></span>).</p>
 <p><%= bar(living.imaged, living.total) %></p>
 <p class="ip-explain">Valid living species and subspecies: the names AntCat accepts as valid, not fossils, identified to genus.
-  Imaged: at least one specimen filed under the name, anywhere in AntWeb, has a photo of the ant.
+  Imaged: at least one specimen filed under the name, anywhere in AntWeb, has a photo of the ant (not counting red-flagged specimens).
   Still to image: <span data-stat="unimaged"><%= n(living.unimaged()) %></span>.</p>
 <% } %>
 <% if (species != null) { %>
@@ -174,12 +176,14 @@
 <dl class="ip-columns">
 <dt>Valid living species and subspecies</dt><dd>Bioregions and countries: the valid living species and subspecies on the place's list
   (its Valid view). Genera: those of the genus. Museums: those with at least one specimen at the museum.</dd>
-<dt>Imaged</dt><dd>Of those, the names with a photo of the ant anywhere in AntWeb (any specimen, from any place). Label photos never count.</dd>
-<dt>Imaged from here</dt><dd>Of those, the names with a photo of the ant of a specimen collected in this place (museums: a specimen of this museum).
+<dt>Imaged</dt><dd>Of those, the names with a photo of the ant anywhere in AntWeb (any specimen, from any place). Label photos never count,
+  and photos of red-flagged specimens are not counted.</dd>
+<dt>Imaged from here</dt><dd>Of those, the names with a photo of the ant of a specimen collected in this place (museums: a specimen of this museum),
+  not red-flagged.
   A name can be imaged but not imaged from here, when its only photos are of specimens from elsewhere.</dd>
 <dt>Unimaged</dt><dd>Valid living species and subspecies minus imaged. The number links to the list of these names.</dd>
-<dt>Unimaged but with specimens in AntWeb</dt><dd>Of the unimaged names, those with at least one specimen record in AntWeb, in any museum:
-  they can be imaged now. "At CASC": of those, the names with a specimen at CASC.</dd>
+<dt>Unimaged but with specimens in AntWeb</dt><dd>Of the unimaged names, those with at least one specimen record in AntWeb, in any museum
+  (red-flagged specimens included: they are still specimens): they can be imaged now. "At CASC": of those, the names with a specimen at CASC.</dd>
 </dl>
 <p class="ip-note">Click a column heading to sort the table.</p>
 

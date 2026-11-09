@@ -164,7 +164,7 @@ public final class NumberChecks {
      */
     void statsImages() {
         CountInvariants.Check check = new CountInvariants.Check("stats.images",
-            "statsPage Images table = a recount by status and caste (images of the ant; label images apart); the four castes add up to Total; Sum + labels = all images minus orphan images; orphanedImages.do images and codes = a recount", "13, 14, 15, 99");
+            "statsPage Images table = a recount by status and caste (images of the ant; label images apart; red-flagged specimens left out); the four castes add up to Total; Sum + labels = all images minus orphan images minus images of red-flagged specimens; orphanedImages.do images and codes = a recount", "13, 14, 15, 99");
         inv.check(check, c -> {
             site().put("statsPage", "statsPage.do");
             Map<String, int[]> page = new org.calacademy.antweb.home.ImageDb(inv.connection).getImageStats();
@@ -173,6 +173,7 @@ public final class NumberChecks {
             // 2026-10-27 (Brian Fisher): Total and the castes count images of the ant; label images have their own column.
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
                     "select s.status, s.caste, " + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + " ant, count(*) from image i join specimen s on s.code = i.image_of_id"
+                    + " where " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s")   // 2026-11-09: red-flagged specimens' images not counted
                     + " group by s.status, s.caste, ant"))) {
                 while (r.next()) {
                     String status = r.getString(1);
@@ -217,6 +218,8 @@ public final class NumberChecks {
                     orphanCodes = r.getLong(2);
                 }
             }
+            // images of red-flagged specimens: in no row of the table (Brian Fisher, 2026-11-09)
+            long redFlagged = count("select count(*) from image i join specimen s on s.code = i.image_of_id where s.flag = 'red'");
             // orphanedImages.do (row 99, Q9 2026-10-22): "N images of M specimen codes that are not in AntWeb", as the page computes them
             org.calacademy.antweb.OrphanedImages page2 = new org.calacademy.antweb.OrphanedImages();
             page2.setConnection(inv.connection);
@@ -225,13 +228,14 @@ public final class NumberChecks {
             inv.compare(c, "site", "orphanedImages", "orphanedImages.do: images (N images of M specimen codes) = a recount", page2.getImageCount(), orphans, "=", null);
             inv.compare(c, "site", "orphanedImages", "orphanedImages.do: specimen codes (N images of M specimen codes) = a recount", page2.getOrphans().size(), orphanCodes, "=", null);
             inv.compare(c, "site", "statsPage", "Images table: Sum (statuses shown, images of the ant + label images) + images of specimens without a status = all images (" + all
-                + ") minus orphan images (" + orphans + ")", sum[0] + sum[5] + nullStatus, all - orphans, "=", null);
+                + ") minus orphan images (" + orphans + ") minus images of red-flagged specimens (" + redFlagged + ")", sum[0] + sum[5] + nullStatus, all - orphans - redFlagged, "=", null);
             // Images of specimens without a status are in no row of the table (so not in its Sum): a data finding.
             inv.compare(c, "site", "statsPage", "Images table: images of specimens without a status (in no row, not in the Sum)", nullStatus, 0, "=", null);
             Map<String, Object> images = new LinkedHashMap<>();
             for (Map.Entry<String, long[]> e : recount.entrySet()) images.put(e.getKey(), e.getValue());
             expected("statsPage").put("images", images);
             expected("statsPage").put("imagesSum", sum);
+            expected("statsPage").put("redFlaggedImages", redFlagged);
             expected("orphanedImages").put("codes", orphanCodes);
             expected("orphanedImages").put("images", orphans);
         });
@@ -248,7 +252,8 @@ public final class NumberChecks {
             // names with at least one specimen that has an image of the ant (any rank; labels did count until 2026-10-27), by taxon status
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
                     "select t.status, count(*) from taxon t where t.taxon_name in (select s.taxon_name from specimen s"
-                    + " where s.code in (select i.image_of_id from image i where " + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + ")) group by t.status"))) {
+                    + " where s.code in (select i.image_of_id from image i where " + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + ")"
+                    + " and " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s") + ") group by t.status"))) {   // 2026-11-09
                 while (r.next()) if (r.getString(1) != null) recount.merge(r.getString(1).toLowerCase(java.util.Locale.ROOT), r.getLong(2), Long::sum);
             }
             long countable = 0;
@@ -262,7 +267,8 @@ public final class NumberChecks {
             if (has("statistics", "species_imaged")) {
                 long homeImaged = count("select species_imaged from statistics order by created desc, id desc limit 1");
                 inv.compare(c, "site", "statsPage", "Imaged Species of counted statuses (any rank) >= species + ssp. imaged (home)",
-                    countable, homeImaged, ">=", inv.result.imagesSinceNightly || inv.result.uploadSinceNightly ? "images or specimens were added after the last nightly run" : null);
+                    countable, homeImaged, ">=", inv.result.imagesSinceNightly || inv.result.uploadSinceNightly ? "images or specimens were added after the last nightly run"
+                        : !inv.result.rulesCounted ? CountInvariants.RULES_PENDING : null);   // red-flagged specimens left out since 2026-11-09
             }
             expected("statsPage").put("imagedSpecies", recount);
         });
@@ -487,6 +493,8 @@ public final class NumberChecks {
                     // valid_species_imaged counts ants only since 2026-10-22 (Q7): a row written before equals the old count
                     if (p == null && i == cols.length - 1 && row[i] != live
                             && row[i] == count(org.calacademy.antweb.home.StatisticsDb.VALID_SPECIES_IMAGED_SQL_BEFORE_Q7)) p = CountInvariants.Q7_PENDING;
+                    // red-flagged specimens' images left out since 2026-11-09: pending until a nightly run counted so
+                    if (p == null && i == cols.length - 1 && row[i] != live && !inv.result.rulesCounted) p = CountInvariants.RULES_PENDING;
                     inv.compare(c, "site", "statistics", "statistics.do latest row: " + cols[i], row[i], live, "=", p);
                 }
             }
@@ -1098,7 +1106,7 @@ public final class NumberChecks {
             org.calacademy.antweb.home.ImagingProgressDb.Row living = find(stored.get("all"), org.calacademy.antweb.home.ImagingProgressDb.LIVING);
             org.calacademy.antweb.home.ImagingProgressDb.Row species = find(stored.get("all"), org.calacademy.antweb.home.ImagingProgressDb.LIVING_SPECIES);
             String imagedName = "exists (select 1 from specimen s join image i on i.image_of_id = s.code where s.taxon_name = t.taxon_name and "
-                + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + ")";
+                + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + " and " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s") + ")";   // 2026-11-09
             String livingWhere = org.calacademy.antweb.home.ImagingProgressDb.living("t");
             long livingTotal = count("select count(*) from taxon t where " + livingWhere);
             long livingImaged = count("select count(*) from taxon t where " + livingWhere + " and " + imagedName);
@@ -1160,6 +1168,8 @@ public final class NumberChecks {
     /** Why the imaging progress may differ from a recount: images, uploads or list rows added after it was counted. */
     private String imagingPending(Timestamp computed) throws SQLException {
         if (computed == null) return null;
+        // 2026-11-09: photos of red-flagged specimens no longer count; rows filled before the nightly run that counts so
+        if (!inv.result.rulesCounted) return CountInvariants.RULES_PENDING;
         if (has("image", "upload_date") && count("select count(*) from image where upload_date > ?", computed) > 0) return "images were added after the imaging progress was counted";
         if (createdSince("upload", computed)) return "specimens were uploaded after the imaging progress was counted";
         if (createdSince("geolocale_taxon", computed) || createdSince("bioregion_taxon", computed)) return "a list got a new row after the imaging progress was counted";
@@ -1173,7 +1183,8 @@ public final class NumberChecks {
     private long[] imagingRecount(String kind, String key, String imagedName) throws SQLException {
         String names;
         String here;
-        String ant = org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE;
+        // a photo of the ant, not of a red-flagged specimen (2026-11-09)
+        String ant = org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + " and " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s");
         switch (kind) {
             case "bioregion":
                 names = "select t.taxon_name from taxon t where t.taxon_name in (select l.taxon_name from bioregion_taxon l where l.bioregion_name = ?)"

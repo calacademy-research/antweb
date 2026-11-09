@@ -29,7 +29,8 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *
  * The rules: a label-only name is unimaged; a name imaged elsewhere counts as imaged in Kenya but not as imaged from
  * there; the rows of all of AntWeb equal the home page numbers; the unimaged list and its CSV; the count check finds a
- * wrong row; the trend reads the last statistics row of each day since 2026-10-28.
+ * wrong row; photos of red-flagged specimens do not count (2026-11-09); the trend reads the last statistics row of each
+ * day since 2026-11-09.
  *
  * Runs in CI against MySQL 8.4 (.github/workflows/tests.yaml); ANTWEB_TEST_DB_URL overrides.
  */
@@ -182,14 +183,49 @@ public class ImagingProgressDbTest extends TestCase {
         assertTrue(all, count(r, true) >= 3);
     }
 
+    /**
+     * Brian Fisher, 2026-11-09: photos of red-flagged specimens do not count. A head photo of a red-flagged specimen
+     * leaves its name unimaged everywhere (the headline, its genus, country, museum and the home page's query); the
+     * specimen still counts as a specimen of the name (unimaged, with specimens: it can be fixed and unflagged). The
+     * count check recounts by the same rule and agrees.
+     */
+    public void testPhotosOfRedFlaggedSpecimensDoNotCount() throws Exception {
+        exec(connection, "insert into specimen (code, taxon_name, status, country, museum, bioregion, family, subfamily, flag) values"
+            + " ('casent7', '" + HB + "', 'valid', 'Madagascar', 'MCZC', 'Malagasy', 'formicidae', '" + PON + "', 'red')");
+        exec(connection, "insert into image (id, image_of_id, shot_type, upload_date) values (9902, 'casent7', 'h', '2026-11-01 10:00:00')");
+        new ImagingProgressDb(connection).fill();
+        assertRow(row(ImagingProgressDb.GENUS, HYPO), 1, 0, -1, 1, 0);
+        assertRow(row(ImagingProgressDb.MUSEUM, "MCZC"), 1, 0, 0, 1, 0);
+        assertRow(row(ImagingProgressDb.COUNTRY, "" + MADAGASCAR), 3, 1, 1, 2, 1);
+        assertRow(row(ImagingProgressDb.ALL, ImagingProgressDb.LIVING), 3, 1, -1, 2, 1);
+        ImagingProgressDb.Unimaged hb = null;
+        for (ImagingProgressDb.Unimaged u : new ImagingProgressDb(connection).readUnimaged()) if (HB.equals(u.taxonName)) hb = u;
+        assertNotNull("hypoponera b is still to image", hb);
+        assertEquals("casent5 and the red-flagged casent7: still specimens", 2, hb.specimens);
+        assertEquals(list(checkRun()), 0, count(checkRun(), true));
+
+        // pheidole a's only photographed specimen (casent1) red-flagged: no valid living name is imaged
+        exec(connection, "update specimen set flag = 'red' where code = 'casent1'");
+        new ImagingProgressDb(connection).fill();
+        assertRow(row(ImagingProgressDb.ALL, ImagingProgressDb.LIVING), 3, 0, -1, 3, 2);
+        assertRow(row(ImagingProgressDb.COUNTRY, "" + MADAGASCAR), 3, 0, 0, 3, 2);
+        assertRow(row(ImagingProgressDb.MUSEUM, "CASC"), 2, 0, 0, 2, 2);
+        assertEquals(0, one(StatisticsDb.LIVING_SPECIES_IMAGED_SQL));
+        assertEquals(0, row(ImagingProgressDb.ALL, ImagingProgressDb.LIVING_SPECIES).imaged);
+        assertEquals(3, new ImagingProgressDb(connection).readUnimaged().size());
+        assertEquals(list(checkRun()), 0, count(checkRun(), true));
+    }
+
     public void testTrendReadsTheLastRowOfEachDaySinceTheRuleChanged() throws Exception {
+        // the rule last changed on 2026-11-09 (photos of red-flagged specimens no longer count; before: 2026-10-28)
+        assertEquals("2026-11-09", ImagingProgressDb.RULE_SINCE);
         exec(connection, "delete from statistics");
         exec(connection, "insert into statistics (action, extant_taxa, valid_species_imaged, created) values"
-            + " ('nightly', 100, 10, '2026-10-27 07:00:00'), ('nightly', 100, 20, '2026-10-28 07:00:00'),"
-            + " ('upload', 100, 21, '2026-10-28 15:00:00'), ('nightly', 101, 22, '2026-10-29 07:00:00')");
+            + " ('nightly', 100, 10, '2026-11-08 07:00:00'), ('nightly', 100, 20, '2026-11-09 07:00:00'),"
+            + " ('upload', 100, 21, '2026-11-09 15:00:00'), ('nightly', 101, 22, '2026-11-10 07:00:00')");
         List<ImagingProgressDb.Day> trend = new ImagingProgressDb(connection).trend();
         assertEquals(2, trend.size());
-        assertEquals("2026-10-28", trend.get(0).date);
+        assertEquals("2026-11-09", trend.get(0).date);
         assertEquals(21, trend.get(0).validImaged);
         assertEquals(22, trend.get(1).validImaged);
         assertEquals(101, trend.get(1).validTotal);

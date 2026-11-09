@@ -48,7 +48,7 @@
 <br><br><b data-stat="species-with-specimens"><%= fmt.apply(hSpecimens) %> species with specimens in AntWeb</b><% if (hLiving > 0 && hSpecimens >= 0) { %> (<%= org.calacademy.antweb.home.StatisticsDb.percent(hSpecimens, hLiving) %> of valid living species)<% } %>
 <br>&nbsp;&nbsp;Valid living ant species with at least one specimen record in AntWeb.
 <br><br><b data-stat="species-imaged"><%= fmt.apply(hImaged) %> species imaged</b><% if (hLiving > 0 && hImaged >= 0) { %> (<%= org.calacademy.antweb.home.StatisticsDb.percent(hImaged, hLiving) %> of valid living species<% if (hSpecimens > 0) { %>; <%= org.calacademy.antweb.home.StatisticsDb.percent(hImaged, hSpecimens) %> of those with specimens<% } %>)<% } %>
-<br>&nbsp;&nbsp;Valid living ant species with at least one photo of the ant (label photos do not count).
+<br>&nbsp;&nbsp;Valid living ant species with at least one photo of the ant (label photos and photos of red-flagged specimens do not count).
 <br>&nbsp;&nbsp;<a href="<%= AntwebProps.getDomainApp() %>/imagingProgress.do" id="imaging-progress-link">Imaging progress</a>: species and subspecies imaged by bioregion, country and genus, and the ones still to image.
 <br><br><b data-stat="fossil-species-imaged"><%= fmt.apply(AntwebMgr.getHomeCount("fossil_species_imaged")) %> fossil species imaged</b>
 <br><br><b data-stat="living-subspecies"><%= fmt.apply(AntwebMgr.getHomeCount("living_subspecies")) %> valid living subspecies</b>
@@ -64,12 +64,13 @@
 <br>&nbsp;&nbsp;Specimen records from <% if (institutions > 0) { %>AntWeb's <span data-stat="institutions"><%= A.commaFormat(institutions) %></span> collaborating institutions (the <a href="<%= AntwebProps.getDomainApp() %>/museums.do">Museums</a> list)<% } else { %>AntWeb's collaborating institutions (the <a href="<%= AntwebProps.getDomainApp() %>/museums.do">Museums</a> list; their number is <%= starting %>)<% } %>.
 
 <br><br><b><%= liveImagedSpecies > 0 ? A.commaFormat(liveImagedSpecies) : starting %>  species + ssp. imaged </b>
-<br>&nbsp;&nbsp;Ant species and subspecies that are valid names or morphospecies, with at least one photo of the ant (label photos do not count). Names identified to genus only (indetermined, unidentifiable) and names not in AntCat (unrecognized) are not counted as species (since 2026-10-28).
+<br>&nbsp;&nbsp;Ant species and subspecies that are valid names or morphospecies, with at least one photo of the ant (label photos and photos of red-flagged specimens do not count). Names identified to genus only (indetermined, unidentifiable) and names not in AntCat (unrecognized) are not counted as species (since 2026-10-28).
 
 <br><br><b><%= liveImagedSpecimens > 0 ? A.commaFormat(liveImagedSpecimens) : starting %> specimens imaged</b>
+<br>&nbsp;&nbsp;Specimens with at least one photo of the ant; red-flagged specimens are not counted (since 2026-11-09).
 
 <br><br><b><%= liveTotalImages > 0 ? A.commaFormat(liveTotalImages) : starting %> total specimen images<%= AntwebMgr.getLabelImagesCount() > 0 ? " + " + A.commaFormat(AntwebMgr.getLabelImagesCount()) + " labels" : "" %></b>
-<br>&nbsp;&nbsp;Images of the ant; label images are counted separately (since 2026-10-27; until then the total counted every image file, labels included).
+<br>&nbsp;&nbsp;Images of the ant; label images are counted separately (since 2026-10-27; until then the total counted every image file, labels included). Images of red-flagged specimens are not counted (since 2026-11-09).
 
 
 
@@ -92,6 +93,7 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
 %>
 <br><br><br>
 <h2>Images:</h2>
+<p>Images of the specimens of each status; images of red-flagged specimens are not counted (since 2026-11-09).</p>
 <table border=1>
 <tr><th>Specimen Status</th><th>Total</th><th>Worker</th><th>Male</th><th>Queen</th><th>Other</th><th>Label images</th></tr>
 
@@ -139,6 +141,7 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
 
 <br><br><br>
 <h2>Imaged Species:</h2>
+<p>Names with at least one specimen that has a photo of the ant, by status; photos of red-flagged specimens do not count.</p>
 <table border=1>
 <tr><th>Species Status</th><th>Species</th></tr>
 <%
@@ -204,6 +207,6 @@ ArrayList<StatSet> fossilMuseumData = (ArrayList<StatSet>) request.getAttribute(
 
 
 <br><br>
-<b>Unimaged Valid Ants:</b> <a href='<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=species&project=worldants&isImaged=false'>here</a> (valid species with no photo of the ant anywhere in AntWeb; a specimen with only label photos is not imaged)
+<b>Unimaged Valid Ants:</b> <a href='<%= AntwebProps.getDomainApp() %>/taxonomicPage.do?rank=species&project=worldants&isImaged=false'>here</a> (valid species with no photo of the ant anywhere in AntWeb; a specimen with only label photos is not imaged, nor is a red-flagged specimen)
 
 </div>

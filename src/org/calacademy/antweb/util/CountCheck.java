@@ -520,7 +520,7 @@ public class CountCheck {
             + (list ? " join " + place.table() + " l on l.taxon_name = s.taxon_name and l." + place.keyColumn() + " = ?"
                     + " join taxon t on t.taxon_name = s.taxon_name and t.taxarank in ('species', 'subspecies') and t.family = 'formicidae'"
                   : "")
-            + " where 1 = 1"
+            + " where " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s")   // as PlaceImageCountDb (2026-11-09)
             + (list ? "" : " and s.family = 'formicidae'")   // ants only (2026-10-21)
             + (place.column() != null ? " and s." + place.column() + " = ?" : "")
             + (GEOLOCALE.equals(place.type) ? " and s.status in " + COUNTABLE : "");
@@ -853,6 +853,8 @@ public class CountCheck {
                     String pending = rowPending(r.getTimestamp(3), result);
                     if (pending == null && place.isFromCountries() && !result.regionRuleCounted) pending = REGION_RULE_PENDING;
                     if (pending == null && !antImagesRuleCounted) pending = ANT_IMAGES_PENDING;
+                    // red-flagged specimens' images left out since 2026-11-09 (CountInvariants.rulesCounted)
+                    if (pending == null && !result.rulesCounted) pending = CountInvariants.RULES_PENDING;
                     if (pending == null) pending = imagesChanged(result, place);
                     if (pending == null && changedNames.contains(name)) pending = "specimens of this name uploaded or renamed after the last nightly run";
                     if (pending == null) pending = specimensChanged(result, place, null);
