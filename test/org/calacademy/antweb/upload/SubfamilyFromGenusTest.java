@@ -97,4 +97,22 @@ public class SubfamilyFromGenusTest extends TestCase {
         assertEquals("ants unchanged", "(myrmicinae)", SpecimenUploadParse.nonAntIndetSpecies("(myrmicinae)", "(myrmicinae)", "formicidae"));
         assertEquals("another group in parentheses is kept", "(sp1)", SpecimenUploadParse.nonAntIndetSpecies("(sp1)", "(curculionidae)", "curculionidae"));
     }
+
+    // Review of #333 (2026-11-08): a genus row left under "(formicidae)" never files a non-ant there again.
+    public void testAGenusRowUnderTheAntPlaceholderDoesNotOverrideANonAntsFamily() {
+        assertEquals("(fulgoridae)", SpecimenUploadParse.subfamilyFromGenusRow("(fulgoridae)", "(formicidae)", "(fulgoridae)"));
+        assertEquals("a subfamily the file gave", "cetoniinae",
+            SpecimenUploadParse.subfamilyFromGenusRow("cetoniinae", "(formicidae)", "(scarabaeidae)"));
+        assertEquals("ants take the genus row's subfamily", "myrmicinae",
+            SpecimenUploadParse.subfamilyFromGenusRow("(formicidae)", "myrmicinae", null));
+        assertEquals("an ant line keeps the placeholder genus row", "(formicidae)",
+            SpecimenUploadParse.subfamilyFromGenusRow("(formicidae)", "(formicidae)", null));
+        assertEquals("a non-ant genus row with its own subfamily is used", "cetoniinae",
+            SpecimenUploadParse.subfamilyFromGenusRow("(scarabaeidae)", "cetoniinae", "(scarabaeidae)"));
+    }
+
+    public void testAPlaceholderNeverHoldsASpace() {
+        assertEquals("(coleoptera_curculionidae)", SpecimenUploadParse.nonAntSubfamilyPlaceholder(" Coleoptera  Curculionidae "));
+        assertNull("Formicidae with spaces and parentheses is an ant", SpecimenUploadParse.nonAntSubfamilyPlaceholder(" (Formicidae) "));
+    }
 }
