@@ -332,12 +332,8 @@ def stats_counted_before_a_set(html):
 
 @pytest.mark.skipif(not IS_STAGING, reason="admin test login: staging only")
 @needs("admin")
-def test_statspage_tables_equal_the_recount():
-    """statsPage.do (rows 11 to 19): Global Data, the Images table with its Sum row, Imaged Species, Bioregion Data and
-    Museum Data, each number = the check's recount."""
-    _s, exp = expected_numbers()
-    stats = exp.get("statsPage") or {}
-    html = new_session().get(BASE_URL + "/statsPage.do", timeout=max(TIMEOUT, 180)).text
+def _statspage_wrong(html, stats):
+    """(differences, Global Data rows, Images rows) of statsPage.do against the count check's recount."""
     wrong = []
     glob = _statset_rows(_section(html, "<h2>Global Data:</h2>"))
     for row, key in (("Extant", "extant"), ("Fossil", "fossil")):
@@ -377,6 +373,27 @@ def test_statspage_tables_equal_the_recount():
             wrong.append(f"Museum Data Valid Extant {code}: page {extant[code]}, recount {ex}")
         if code in fossil and fossil[code] != fo:
             wrong.append(f"Museum Data Valid Fossil {code}: page {fossil[code]}, recount {fo}")
+    return wrong, glob, shown
+
+
+def test_statspage_tables_equal_the_recount():
+    """statsPage.do (rows 11 to 19): Global Data, the Images table with its Sum row, Imaged Species, Bioregion Data and
+    Museum Data, each number = the check's recount."""
+    _s, exp = expected_numbers()
+    stats = exp.get("statsPage") or {}
+    html = new_session().get(BASE_URL + "/statsPage.do", timeout=max(TIMEOUT, 180)).text
+    wrong, glob, shown = _statspage_wrong(html, stats)
+    if wrong:
+        # Uploads by other tests between the count check and this page change the numbers (11-09: Oceania page
+        # [10, 64, 283, 4], recount [10, 63, 282, 4]). Count again once and compare with a fresh page; a real
+        # difference stays.
+        s = _s or login("admin")[0]
+        r = run_count_check(s)
+        m = re.search(r'<script type="application/json" id="count-check-expected">(.*?)</script>', r.text, re.S)
+        if m:
+            stats = json.loads(m.group(1)).get("statsPage") or {}
+            html = new_session().get(BASE_URL + "/statsPage.do", timeout=max(TIMEOUT, 180)).text
+            wrong, glob, shown = _statspage_wrong(html, stats)
     assert glob and shown, "statsPage.do: Global Data or Images table not found"
     if wrong:
         older = stats_counted_before_a_set(html)
