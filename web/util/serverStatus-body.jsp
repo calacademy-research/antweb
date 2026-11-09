@@ -16,11 +16,13 @@
 %>
 
 <%-- Tool-page look (common/tools.css, docs/guides/page-style.md; 2026-10-22): the same values and links as
-     before, as label/value tables in cards. Tested in tests/e2e/test_tool_pages_style.py and
-     tests/e2e/test_admin_staging.py. --%>
+     before, as label/value tables in cards. 2026-11-09 (Brian Fisher): the running job links to its page, a
+     "Last finished job" row, "Image upload in progress" (BusyStatus) instead of "Is Image Upload locked" (table
+     operation_lock, no longer written), no "Uptime Fail On Purpose" switch. Tested in tests/e2e/test_tool_pages_style.py
+     and tests/e2e/test_admin_staging.py. --%>
 <%@include file="/common/toolsHead.jsp" %>
 <%!
-  // A true/false flag as a coloured word: red when true means busy or locked.
+  // A true/false flag as a coloured word: red when true means busy.
   static String flag(boolean busy) {
     return busy ? "<span class=\"aw-bad\">true</span>" : "<span class=\"aw-ok\">false</span>";
   }
@@ -29,8 +31,7 @@
 <p class="aw-crumbs"><a href = "<%= domainApp %>">Home</a> | <a href = "<%= domainApp %>/curate.do">Curator Tools</a></p>
 <h1>Server Status</h1>
 <div class="aw-intro"><p>What the AntWeb application is doing now: requests, uploads and jobs in progress, memory, disk and database
-connections, and the server's settings. Look here before restarting the server (wait while an upload is in process or the image
-upload is locked) or when the site is slow.</p></div>
+connections, and the server's settings. Look here when the site is slow, or to follow an upload or data job.</p></div>
 
 <% // Object o = null;  o.toString(); // uncomment this line to create stacktrace %>
 
@@ -43,22 +44,22 @@ upload is locked) or when the site is slow.</p></div>
 <tr><th scope="row">Is Upload in process</th><td><%= flag(UploadAction.isInUploadProcess()) %></td></tr>
 <tr><th scope="row">Is Compute in process</th><td><%= flag(UtilDataAction.isInComputeProcess()) %></td></tr>
 <%
-// Uploads and admin data jobs started from a page run in the background (jobStatus.do).
-String jobRunning = org.calacademy.antweb.util.BackgroundJobs.runningDescription();
-java.util.List<Integer> jobsActive = org.calacademy.antweb.util.BackgroundJobs.get().activeIds();
-
-OperationLock operationLock = (OperationLock) request.getAttribute("operationLock");
-boolean imageLocked = (operationLock != null) && (operationLock.isLocked()) && (!operationLock.isExpired());
-boolean otherOption = !UptimeAction.isFailOnPurpose();
+// Uploads and admin data jobs started from a page run in the background (jobStatus.do, "Uploads and data jobs").
+// ServerStatusAction reads the running job and the last one that ended. Image uploads in progress: BusyStatus,
+// the same source as util.do?action=isBusy (the Image Uploader sends one file per request since 2026-10-17).
+BackgroundJobs.Job runningJob = (BackgroundJobs.Job) request.getAttribute("runningJob");
+BackgroundJobs.Job lastJob = (BackgroundJobs.Job) request.getAttribute("lastJob");
+java.util.List<Integer> jobsActive = BackgroundJobs.get().activeIds();
+int openImageUploads = BusyStatus.openImageBatches(System.currentTimeMillis());
 %>
-<tr><th scope="row">Background job running</th><td><%= jobRunning == null ? "<span class=\"aw-ok\">none</span>" : "<span class=\"aw-bad\">" + org.calacademy.antweb.util.Html.esc(jobRunning) + "</span>" %>
- (<%= jobsActive.size() %> waiting or running; <a href="<%= AntwebProps.getDomainApp() %>/jobStatus.do">Upload status</a>)</td></tr>
-<tr><th scope="row">Is Image Upload locked</th><td><%= flag(imageLocked) %></td></tr>
+<tr id="server-row-running-job"><th scope="row">Background job running</th><td><%= JobStatusAction.runningJobHtml(runningJob, domainApp) %>
+ (<%= jobsActive.size() %> waiting or running; <a href="<%= domainApp %>/jobStatus.do"><%= JobStatusAction.PAGE_TITLE %></a>)</td></tr>
+<tr id="server-row-last-job"><th scope="row">Last finished job</th><td><%= JobStatusAction.lastJobHtml(lastJob, domainApp) %></td></tr>
+<tr id="server-row-image-upload"><th scope="row">Image upload in progress</th><td><%= flag(openImageUploads > 0) %><%= openImageUploads > 0 ? " (" + openImageUploads + " open)" : "" %></td></tr>
 <tr><th scope="row">Upload services</th><td>To take On/Off line: <%= org.calacademy.antweb.util.Csrf.postButton(request, domainApp + "/serverStatus.do?action=toggleDownTime", "Toggle Down Time") %>
 <br><%= ServerDb.getDownTimeMessage() %></td></tr>
-<tr><th scope="row">Uptime Fail On Purpose</th><td><%= UptimeAction.isFailOnPurpose() %>  <%= org.calacademy.antweb.util.Csrf.postButton(request, AntwebProps.getDomainApp() + "/uptime.do?fail=" + otherOption, "[toggle fail]") %></td></tr>
 </table>
-<p class="aw-note">If an upload is in process, or the image upload is locked, it is best to wait before restarting the server.</p>
+<p class="aw-note" id="server-restart-note">Restarts and deploys wait automatically while an upload or data job runs.</p>
 </div>
 
 <div class="aw-card" id="server-resources">

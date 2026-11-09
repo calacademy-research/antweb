@@ -235,6 +235,24 @@ public class BackgroundJobsTest extends TestCase {
         assertTrue(page, page.contains("Please upload the file again."));
     }
 
+    /** Server Status, "Last finished job": the newest job that has ended, from this run or the table. */
+    public void testLastEnded() throws Exception {
+        assertNull(runner.lastEnded());
+        Job old = upload(3, 7);
+        int id = store.insert(old);   // left queued by a stopped server: counts as ended (interrupted)
+        assertEquals(id, runner.lastEnded().getId());
+        assertEquals(Status.interrupted, runner.lastEnded().getStatus());
+        Job done = runner.submit(upload(1, 5), j -> Outcome.ok("Upload complete.")).job;
+        waitFor(done, Status.finished);
+        CountDownLatch go = new CountDownLatch(1);
+        Job running = runner.submit(upload(2, 6), j -> { go.await(5, TimeUnit.SECONDS); return Outcome.ok("x"); }).job;
+        waitFor(running, Status.running);
+        assertEquals("a running job is not the last finished one", done.getId(), runner.lastEnded().getId());
+        go.countDown();
+        waitFor(running, Status.finished);
+        assertEquals(running.getId(), runner.lastEnded().getId());
+    }
+
     public void testProgressText() {
         assertEquals("Reading and saving specimens: line 1,500 of 265,384.",
             BackgroundJobs.progressText("Reading and saving specimens", 1500, 265384));

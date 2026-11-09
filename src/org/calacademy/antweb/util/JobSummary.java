@@ -152,6 +152,18 @@ public final class JobSummary {
         return Html.esc(plain);
     }
 
+    /**
+     * A stored result as one short line of plain text, escaped for HTML (Server Status, "Last finished job"). Upload
+     * results are plain text; data-job results are AntWeb's own HTML, read as text. Longer than max characters: cut
+     * and ended with "...".
+     */
+    public static String shortLine(String result, boolean isUpload, int max) {
+        if (result == null) return "";
+        String t = isUpload ? SPACE.matcher(result).replaceAll(" ").trim() : text(display(result));
+        if (t.length() > max) t = t.substring(0, Math.max(0, max - 3)).trim() + "...";
+        return Html.esc(t);
+    }
+
     /** The message of a message page (common/message-body.jsp: div.wide_left), without the site around it. */
     static String messageText(String page) {
         int i = page.indexOf("class=\"wide_left\"");
