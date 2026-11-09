@@ -26,14 +26,20 @@ and rate-limits it per visitor).
 Routes (all GET, JSON, or one record per line with ndjson=true): / (the documentation page link and health
 check, always open), /specimens, /geoSpecimens, /geoSpeciesStats, /taxa, /distinctTaxa, /images, /measurements,
 /taxaImages, /geolocales, /geolocaleTaxa, /bioregions, /bioregionTaxa and /unimagedGeolocaleTaxa. The data routes
-answer only with up=1 (an admin switch, see down()); without it HTTP 503 with a JSON message. Unknown parameters
+answer only with up=1 (an admin switch, see down(); once V4_OPEN is True it also needs an admin key in X-API-Key,
+upSwitch()); without it HTTP 503 with a JSON message. Unknown parameters
 get HTTP 400 naming the accepted ones. Records per request are capped
 (MAX_LIMIT, maxLimit= in etc/api-db.properties); every reply carries the CC BY 4.0 licence in a Link header,
 and JSON data replies also in a license field.
 
 Reads the AntWeb MySQL database with a read-only login (antweb_api: SELECT on the tables it serves) from
 etc/api-db.properties on the server, mounted alone as /antweb-etc/api-db.properties; without that file the API
-cannot reach the database. Writes nothing. The counts /taxa serves are written into the taxon table by the
+cannot reach the database. v3.1 writes nothing.
+
+Version 4 (/v4/, step 6 PR 3, 2026-11-08) is api_v4.py, mounted under /v4 at the end of this file: the same routes
+with free registered API keys (header X-API-Key), limits per level and the field names specimenCode,
+collectingEventCode and localityCode. Its counts are written with a second login that may write only the API key
+tables (usageUser= and usagePassword=, api_keys.py). V4_OPEN below says whether v4 is open to everyone. The counts /taxa serves are written into the taxon table by the
 nightly (TaxonApiCountDb). User documentation: https://www.antweb.org/apiV3.1.do; developer documentation:
 docs/flows/api.md. Tests: tests/unit/test_api_*.py, tests/e2e (API tests).
 """
@@ -102,6 +108,15 @@ def _db_credentials(props, required=None):
         print('WARNING: no read-only login in ' + API_PROPERTIES + '; the API uses the main account', flush=True)
     print('API database user:', user, flush=True)
     return user, password
+
+
+def _usage_credentials(props):
+    """The login that may write only the API key tables (api_key, api_usage_daily; step 6, PR 2, 2026-11-08), as
+    usageUser= and usagePassword= in etc/api-db.properties (tools/api/setup-usage-login.sh). None without it: key
+    checks and usage counts stay off, the API answers as before."""
+    if props.get('usageUser') and props.get('usagePassword'):
+        return props['usageUser'], props['usagePassword']
+    return None
 
 
 _apiProps = _apiProperties()
@@ -244,6 +259,9 @@ def hello():
         terms_of_use=API_TERMS,
         contact="antweb@antweb.org",
         citation=CITATION,
+        v4={"status": "open" if V4_OPEN else "closed", "url": V4_URL, "getAKey": GET_A_KEY_URL,
+            "message": ("Version 4 is open with free registered API keys." if V4_OPEN else
+                        "Version 4, with free registered API keys, is not open yet.")},
     )
 
 
@@ -300,14 +318,63 @@ def numbers(value, count):
 
 
 def down(request):
-    # The data routes answer only with &up=1 (admin switch, see the documentation page).
+    # The data routes answer only with &up=1 (admin switch, see the documentation page). Returns 1 when the request is
+    # not let in (503), 0 when it is. The inner requests of v4 (api_v4.run) are let in by g.apiV4Inner, set only there;
+    # they never depend on up=1. Once V4_OPEN is True, up=1 also needs an active admin key in X-API-Key (upSwitch()).
+    if g.get('apiV4Inner'):
+        return 0
     up = request.args.get('up', default='*', type=str)
     if up != '1':
         return 1
-    return 0
+    return 0 if upSwitch(request) == 'ok' else 1
 
 
-API_DOWN_MESSAGE = "The AntWeb API is closed while we add free registered API keys. It will reopen in the coming weeks; see antweb.org for news."
+def upSwitch(request):
+    """'ok' when up=1 may open v3.1 for this request, 'down' (503) or 'badkey' (401). While V4_OPEN is False, up=1 alone
+    is enough (as before; the staging tests use it). Once V4_OPEN is True, it needs an active admin key in the X-API-Key
+    header, looked up with the v4 usage login (api_v4.usage); without that login, refused. Decided once per request
+    (g.apiUpSwitch), since checkUp() and the route's own down() both ask."""
+    if not V4_OPEN:
+        return 'ok'
+    cached = g.get('apiUpSwitch')
+    if cached is not None:
+        return cached
+    result = 'down'
+    store = getattr(sys.modules.get('api_v4'), 'usage', None)
+    sent = request.headers.get('X-API-Key')
+    if store is not None and sent is not None:
+        import api_keys
+        sent = sent.strip()
+        try:
+            row = store.find_key(api_keys.key_hash(sent)) if api_keys.KEY_RE.match(sent) else None
+        except Exception as err:  # noqa: BLE001  counter database down: refused
+            print('API up switch: key lookup failed: ' + type(err).__name__, flush=True)
+            row = None
+            sent = None
+        if sent is not None and (row is None or row.status != 'active'):
+            result = 'badkey'
+        elif row is not None and (row.level or '').lower() == 'admin':
+            result = 'ok'
+    g.apiUpSwitch = result
+    return result
+
+
+# Version 4 with free registered API keys (api_v4.py). False: v4 answers only admin keys, and v3.1 keeps the message
+# below. True (when keys go live, Brian Fisher's decision): v4 is open to everyone at its limits, and the v3.1 503
+# points to v4.
+V4_OPEN = False
+V4_URL = "https://www.antweb.org/v4/"
+GET_A_KEY_URL = "https://www.antweb.org/apiKey.do"
+API_CLOSED_MESSAGE = "The AntWeb API is closed while we add free registered API keys. It will reopen in the coming weeks; see antweb.org for news."
+API_MOVED_MESSAGE = ("The AntWeb API v3.1 is closed. Please use the AntWeb API v4 at " + V4_URL + " with a free API key"
+                     " from " + GET_A_KEY_URL + ".")
+
+
+def apiDownMessage(v4Open):
+    return API_MOVED_MESSAGE if v4Open else API_CLOSED_MESSAGE
+
+
+API_DOWN_MESSAGE = apiDownMessage(V4_OPEN)
 
 # The API page (documentation, with the terms of use under #terms) and the plain-text guide for programs and AI agents
 # (web/llms.txt), linked from / and from every 503 (step 6, API keys PR 1, 2026-11-08).
@@ -377,6 +444,8 @@ def setGlobals(request):
     log = request.args.get('log', default='*', type=str)
     ndjson = request.args.get('ndjson', default='*', type=str)
     maxLimit = MAX_LIMIT_NDJSON if ndjson == 'true' else MAX_LIMIT
+    # v4 (api_v4.run, inner request only): the records of the caller's level and day instead of MAX_LIMIT.
+    maxLimit = getattr(g, 'apiMaxLimit', None) or maxLimit
     limit = request.args.get('limit', default=None, type=int)
     requested = limit if limit is not None and limit > 0 else None
     if requested is None:
@@ -815,6 +884,7 @@ def getSpecimen():
         query = query.filter(func.lower(Specimen.subfamily).in_(sorted(VALID_SUBFAMILIES)))
     if validGenus == 'true':
         query = query.filter(func.lower(Specimen.genus).in_(sorted(VALID_GENERA)))
+    query = api_v4.specimen_filters(query, Specimen)   # v4 only: collectingEventCode=, localityCode=
 
     # A fixed order (specimen code, the specimen table's key) so paging with offset neither
     # repeats nor skips records; with 500 per request, paging is how larger sets are fetched.
@@ -2655,6 +2725,10 @@ def checkUp():
     if endpoint is None or endpoint in UNCHECKED_ENDPOINTS or endpoint not in application.view_functions:
         return None
     if down(request):
+        if g.get('apiUpSwitch') == 'badkey':
+            response = jsonify(error="This API key is not valid.", documentation=API_DOCS_URL)
+            response.status_code = 401
+            return response
         return apiDown()
     return None
 
@@ -2713,6 +2787,11 @@ def checkParams():
     if didYouMean:
         body['didYouMean'] = didYouMean
     return jsonify(body), 400
+
+
+# Version 4 under /v4 (api_v4.py): a separate Flask application, so the v3.1 routes and checks above stay as they are.
+import api_v4  # noqa: E402
+api_v4.mount(sys.modules[__name__])
 
 
 if __name__ == "__main__":
