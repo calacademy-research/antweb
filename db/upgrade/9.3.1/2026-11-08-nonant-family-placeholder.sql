@@ -25,9 +25,15 @@
 --   insert into geolocale_taxon select * from nonant_fix_20261108_geolocale_taxon;
 --   insert into bioregion_taxon select * from nonant_fix_20261108_bioregion_taxon;
 --   insert into museum_taxon select * from nonant_fix_20261108_museum_taxon;
+--   -- list and place rows the daily update made for the new names since (review of #333):
+--   delete from proj_taxon where taxon_name in (select taxon_name from nonant_fix_20261108_newtaxa);
+--   delete from geolocale_taxon where taxon_name in (select taxon_name from nonant_fix_20261108_newtaxa);
+--   delete from bioregion_taxon where taxon_name in (select taxon_name from nonant_fix_20261108_newtaxa);
+--   delete from museum_taxon where taxon_name in (select taxon_name from nonant_fix_20261108_newtaxa);
 --   delete t from taxon t join nonant_fix_20261108_newtaxa n on n.taxon_name = t.taxon_name
 --     where not exists (select 1 from specimen s where s.taxon_name = t.taxon_name);
 --   commit;
+-- Run on production 2026-11-08 19:4x: 5,098 re-filed, 283 new taxon rows, 264 removed, 0 specimens without a taxon row.
 -- Delete the backup tables after about 2026-12-08.
 
 -- Reading the specimen table must not wait on the site's own work (staging 2026-11-08: "Lock wait timeout exceeded"

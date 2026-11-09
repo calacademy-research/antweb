@@ -381,6 +381,8 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             // genera then copied (GitHub #94). "(formicidae)" is AntWeb's own placeholder for a
             // missing subfamily and is left alone.
             subfamilyName = stripSubfamilyParentheses(subfamilyName);
+            // "(Formicidae)" as typed in a file is the ant placeholder too (review of #333).
+            if ("(formicidae)".equalsIgnoreCase(subfamilyName.trim())) subfamilyName = "(formicidae)";
 
             // Brian Fisher, 2026-11-08: a non-ant without a subfamily is filed under its own family (or the higher group
             // given as family, "(coleoptera)") in parentheses, never under the ant placeholder "(formicidae)" (5,098
@@ -489,7 +491,9 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 					  getMessageMgr().addToMapMessages(MessageMgr.preferredSubfamilyForGenusReplaced, Html.esc(subfamilyName), displayTaxonName);                  
                       //A.log("parseLine() preferredSubfamilyForGenusReplaced: subfamily:" + subfamily + " subfamilyName:" + subfamilyName + " genus:" + genus + " genusName:" + genusName + " displayTaxonName:" + displayTaxonName);
                   }
-                  subfamilyName = subfamily;
+                  // Brian Fisher, 2026-11-08 (review of #333): a genus row left under the ant placeholder
+                  // ("(formicidae)zanna", made before the non-ant rule) never puts a non-ant back under "(formicidae)".
+                  subfamilyName = subfamilyFromGenusRow(subfamilyName, subfamily, nonAntPlaceholder);
 				} else if (keepSynonymGenus) {
 				  subfamilyName = TaxonMgr.getSynonymGenusFromName(genusName).getSubfamily();
 				} else if (!subfamilyFromGenus(subfamilyName, genusName, SpecimenUploadParse::antcatSubfamilyOfGenus).equals(subfamilyName)) {
@@ -1599,7 +1603,21 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
     public static String nonAntSubfamilyPlaceholder(String family) {
         String f = familyKey(family);
         if (f.isEmpty() || "formicidae".equals(f)) return null;
-        return "(" + f + ")";
+        // A taxon name is subfamily + genus + " " + species: a space inside the placeholder would break it
+        // ("Coleoptera Curculionidae" -> "(coleoptera_curculionidae)"; review of #333).
+        return "(" + f.replaceAll("\\s+", "_") + ")";
+    }
+
+    /**
+     * The subfamily of a line whose genus AntWeb has (review of #333, 2026-11-08): the genus row's subfamily, except
+     * that a non-ant (nonAntPlaceholder not null) keeps its own subfamily when the genus row is under the ant
+     * placeholder "(formicidae)", a row made before non-ants were filed under their family.
+     */
+    public static String subfamilyFromGenusRow(String lineSubfamily, String genusRowSubfamily, String nonAntPlaceholder) {
+        if (nonAntPlaceholder != null && "(formicidae)".equalsIgnoreCase(genusRowSubfamily == null ? "" : genusRowSubfamily.trim())) {
+            return lineSubfamily;
+        }
+        return genusRowSubfamily;
     }
 
     /**
