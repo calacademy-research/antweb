@@ -112,6 +112,23 @@ public final class PlaceTaxonNotes {
         return null;
     }
 
+    /**
+     * placeSpecimenCriteria as disjoint parts whose union is the same specimens, each part servable by one index
+     * (ListView.placeSpecimensSql, 2026-11-09): a country its specimens of specimen.country
+     * (country_adm1_idx), then those of island_country that are not of specimen.country; every other place its one
+     * condition. Null when the place selects no specimens.
+     */
+    public static java.util.List<String> placeSpecimenParts(Overview overview) {
+        String c = placeSpecimenCriteria(overview);
+        if (c == null) return null;
+        if (overview instanceof Country && overview.getName() != null) {
+            String n = org.calacademy.antweb.util.DBUtil.sqlLiteral(overview.getName());
+            return java.util.Arrays.asList(" and specimen.country = " + n,
+                " and specimen.island_country = " + n + " and not (specimen.country <=> " + n + ")");
+        }
+        return java.util.Collections.singletonList(c);
+    }
+
     // ------------------------------------------------------------------------------------------------- indet line
 
     /** One parameter (the indet name): the specimens N and those with an image of the ant M. */

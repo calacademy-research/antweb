@@ -125,7 +125,7 @@ public class CountRules20261030Test extends TestCase {
         List<String> before = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; " + CountInvariants.COUNTING_RULES_LOG + ")");
         assertFalse(CountInvariants.rulesCounted(before));
         List<String> after = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; x; " + CountInvariants.COUNTING_RULES_LOG
-            + "; " + CountInvariants.GENERA_RULE_LOG + ")");
+            + "; " + CountInvariants.GENERA_RULE_LOG + "; " + CountInvariants.ADM1_RULE_LOG + ")");
         assertTrue(CountInvariants.rulesCounted(after));
         assertEquals("genera and subfamilies rule of 2026-10-30", CountInvariants.GENERA_RULE_LOG);
         // a run that wrote the genera rule alone (before the subfamilies rule) is still pending

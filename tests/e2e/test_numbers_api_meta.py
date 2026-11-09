@@ -181,15 +181,21 @@ def _same_place(a, b):
     return fold(a) == fold(b)
 
 
-def _recount_castes(stat, column, name):
-    """The ten counts of a /geoSpeciesStats row recounted from /specimens (status valid, the place column = name),
-    or None when there are too many records."""
+def _recount_castes(stat, column, name, parent=None):
+    """The ten counts of a /geoSpeciesStats row recounted from /specimens (status valid, the place column = name; an
+    adm1 also in its country, parent: B26, fixed 2026-11-09, the rule of every adm1 number), or None when there are too
+    many records or an adm1 has no country."""
     genus, species, taxon = stat.get("genus") or "", stat.get("species") or "", (stat.get("taxonName") or "").lower()
     param = {"country": "country", "adm1": "adm1", "subregion": "subregion", "region": "region"}[column]
+    if column == "adm1" and not parent:
+        return None
+    country = f"&country={quote_plus(parent)}" if column == "adm1" else ""
     rows, _ = _pages(f"specimens?genus={quote_plus(genus)}&species={quote_plus(species)}&status=valid"
-                     f"&{param}={quote_plus(name)}", "count", max_pages=4)
+                     f"&{param}={quote_plus(name)}{country}", "count", max_pages=4)
     if rows is None:
         return None
+    if column == "adm1":
+        rows = [r for r in rows if _same_place(r.get("country"), parent)]
     # the API matches the place with MySQL's equality (utf8mb4 general/0900 collation: case, accents and trailing spaces
     # ignored), so the recount compares names the same way (staging 2026-10-28: a gredleri worker of "Dolnośląskie"
     # whose adm1 is spelled differently was counted by the API and dropped here, 8 vs 7)
@@ -220,7 +226,7 @@ def test_geo_species_stats_castes_equal_the_specimens():
             _, sample, w = _stats_sample(name, "castes")
             wrong += w
             for stat in sample:
-                expected = _recount_castes(stat, rank, name)
+                expected = _recount_castes(stat, rank, name, g.get("parent"))
                 if expected is None:
                     continue
                 diff = {k: (stat.get(k), v) for k, v in expected.items() if _int(stat.get(k)) != v}
@@ -245,10 +251,15 @@ def test_geo_species_stats_of_a_shared_name_count_each_specimen_once():
         wrong += w
         for stat in sample:
             recounts = {}
-            for column in ("country", "adm1", "subregion", "region"):
+            for column in ("country", "subregion", "region"):
                 rc = _recount_castes(stat, column, name)
                 if rc is not None:
                     recounts[column] = rc
+            # an adm1 in its own country (B26): one recount per adm1 of the name
+            for parent in sorted({r.get("parent") for r in ns.geolocales("adm1") if r.get("geolocaleName") == name and r.get("parent")}):
+                rc = _recount_castes(stat, "adm1", name, parent)
+                if rc is not None:
+                    recounts["adm1 of " + parent] = rc
             if not recounts:
                 continue
             got = {k: _int(stat.get(k)) for k, _ in STAT_RULES}

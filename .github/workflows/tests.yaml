@@ -1176,7 +1176,8 @@ jobs:
           # SpecimenNameHistoryDbTest: the specimen page's Name History query (applied rows of one specimen, newest first,
           # never report-only rows; index by_code; no history when the table is missing).
           # CountInvariantsTest: the count check's invariants over every place (docs/numbers.md), each wrong number found.
-          # NumberChecksTest: the count check's other numbers (statsPage tables, admin pages, API /taxa, endemic flags, B25, B26).
+          # NumberChecksTest: the count check's other numbers (statsPage tables, admin pages, API /taxa, endemic flags, B25, the
+          # adm1 Specimens recount by country and name: B26 fixed 2026-11-09).
           # PlaceTotalsDbTest: the numbers the nightly run writes (place totals, pies, endemic, museums, taxon images,
           # home page, Global after the name update, statsPage) as the invariants expect them.
           # NightlyCountOrderDbTest (2026-10-22): an unavailable name does not raise its genus row; a museum list renamed
@@ -1210,6 +1211,11 @@ jobs:
           # add up to the place's Genera and Species.
           # ListRemovalDbTest (2026-11-03, transparency): a dispute keeps the curator's reason; list_removal_log records the
           # curators' removals and the nightly clean-up's; the view All specimen names loads who, when and why per place.
+          # PlaceViewTotalDbTest (2026-11-09, production: Place list totals 4 hours): an adm1 takes the specimens of its own
+          # country and name (B26 fixed; same-named state elsewhere, no country: not its), the adm1 and country queries can
+          # use country_adm1_idx (EXPLAIN), a country's two parts are its specimens once; only places whose data changed are
+          # counted again (unchanged skipped, list or taxon or specimen change counted, specimen names not stored again,
+          # rules change, over 7 days, full count, place gone, a morphospecies curated anywhere), each place committed on its own.
           # BlankNameCleanupDbTest (2026-10-29): with specimens of blank name, the old cleanups delete nothing; the
           # blank-safe ones delete the names and list rows no specimen uses (not AntCat's, not curators' rows, not blank
           # rows) and the preview counts them. Last: it makes its own small tables.
@@ -1244,8 +1250,9 @@ jobs:
               /t/org/calacademy/antweb/home/BlankNameCleanupDbTest.java \
               /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java \
               /t/org/calacademy/antweb/home/ParentRowsDbTest.java \
-              /t/org/calacademy/antweb/home/ListRemovalDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
+              /t/org/calacademy/antweb/home/ListRemovalDbTest.java \
+              /t/org/calacademy/antweb/home/PlaceViewTotalDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:8 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

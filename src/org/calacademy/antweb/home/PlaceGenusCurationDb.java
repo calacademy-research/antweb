@@ -39,7 +39,8 @@ import org.apache.commons.logging.LogFactory;
  *                         unrecognized names). The genus row's Not curated cell and the header of the view Not curated.
  *
  * Places (list_type, list_key) select specimens as their pages do (Overview.getOverviewCriteria): country (country
- * or island_country = the name), adm1 (specimen.adm1 = the name, as the adm1 pages select them), museum (code),
+ * or island_country = the name), adm1 (key: its geolocale id; specimen.country = its parent country and specimen.adm1 =
+ * its name, as the adm1 pages select them; B26, fixed 2026-11-09, before: the name alone), museum (code),
  * bioregion (name). Regions, subregions and projects have no column. Set-based: one grouped query per kind over the
  * specimen table, then one grouped query from place_specimen_name; never one query per place.
  *
@@ -68,7 +69,9 @@ public class PlaceGenusCurationDb {
     /** The list_type and list_key of a place with the column, or null (regions, subregions, projects, all of AntWeb). */
     public static String[] typeAndKey(Overview overview) {
         if (overview instanceof Country) return new String[] {COUNTRY, overview.getName()};
-        if (overview instanceof Adm1) return new String[] {ADM1, overview.getName()};
+        // an adm1 by its geolocale id (B26, fixed 2026-11-09: two states of the same name in two countries are two places;
+        // the key was the name until then)
+        if (overview instanceof Adm1) return new String[] {ADM1, "" + ((Adm1) overview).getId()};
         if (overview instanceof Museum) return new String[] {MUSEUM, ((Museum) overview).getCode()};
         if (overview instanceof Bioregion) return new String[] {BIOREGION, overview.getName()};
         return null;
@@ -146,7 +149,11 @@ public class PlaceGenusCurationDb {
                     + " union all select specimen.island_country place, specimen.taxon_name" + base
                     + " and coalesce(specimen.island_country, '') <> '' and specimen.island_country <> coalesce(specimen.country, '')";
             case ADM1:
-                return "select specimen.adm1 place, specimen.taxon_name" + base + " and coalesce(specimen.adm1, '') <> ''";
+                // the specimens of each adm1 by its country and name (B26, fixed 2026-11-09), keyed by the adm1's geolocale
+                // id: from the adm1s (a few thousand) to their specimens by the index country_adm1_idx
+                return "select g.id place, specimen.taxon_name from geolocale g join specimen on specimen.country = g.parent"
+                    + " and specimen.adm1 = g.name where g.georank = 'adm1' and" + SpecimenDb.getAntSpecimenCriteria("specimen")
+                    + " and " + SpecimenDb.notRedFlagged("specimen");
             case MUSEUM:
                 return "select specimen.museum place, specimen.taxon_name" + base + " and coalesce(specimen.museum, '') <> ''";
             case BIOREGION:

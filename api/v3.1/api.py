@@ -629,9 +629,13 @@ def geolocaleSpecimenCriteria(query, geolocale):
     if georank == "country":
         query = query.filter(countryIs(Specimen.country, name))
     if georank == "adm1":
+        # B26 (fixed 2026-11-09, as the pages count): an adm1 takes the specimens of its country and name; an adm1 without
+        # a parent country takes none (before: every specimen of that adm1 name)
         query = query.filter(Specimen.adm1 == name)
         if geolocale.parent:
             query = query.filter(countryIs(Specimen.country, geolocale.parent))
+        else:
+            query = query.filter(text("1 = 0"))
     return query
 
 
@@ -1023,8 +1027,9 @@ def getGeoSpeciesStats():
         return apiNotFound("Geolocale not found: " + geolocaleName)
     georank = geolocale.georank
     extraClause = " s." + georank + " = :geolocaleName"
-    if georank == "adm1" and geolocale.parent:
-        # An adm1 only in its own country (2026-10-29): adm1 names such as Western exist in several countries.
+    if georank == "adm1":
+        # An adm1 only in its own country (2026-10-29): adm1 names such as Western exist in several countries. B26 (fixed
+        # 2026-11-09, as the pages count): an adm1 without a parent country has no specimens (s.country = NULL is never true).
         extraClause += " and s.country = :parentName"
 
     # queenErgatoidCount and maleErgatoidCount count the ergatoids of their caste (2026-10-22: both counted every

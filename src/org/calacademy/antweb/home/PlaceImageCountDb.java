@@ -30,7 +30,8 @@ import org.calacademy.antweb.geolocale.Geolocale;
  *   country      specimen.country = the country, status valid, unrecognized, morphotaxon,
  *                indetermined or unidentifiable, name (species or subspecies) on the country's list
  *   island       the same with specimen.island_country (geolocale.is_island = 1, any rank)
- *   adm1         the same with specimen.adm1
+ *   adm1         the same with specimen.adm1 and specimen.country = its parent country (B26, fixed
+ *                2026-11-09; before: specimen.adm1 alone, so a state of the same name elsewhere added to it)
  *   region,      since 2026-10-20 (as their Specimens number, Geolocale.getCountSpecimensQuery and
  *   subregion    regionSpecimensSql): the specimens that the pages of its countries count (collected in
  *                one of its countries, countable status, name on that country's list), name also on
@@ -147,7 +148,8 @@ public class PlaceImageCountDb {
     private static String geolocaleColumnSource(String column, String georankCondition, boolean one) {
         return "select g.id k, s.code code, i.id id, " + SHOT + " shot"
             + " from geolocale g"
-            + " join specimen s on s." + column + " = g.name"
+            // an adm1 by its country and name (B26, fixed 2026-11-09; index country_adm1_idx)
+            + " join specimen s on s." + column + " = g.name" + ("adm1".equals(column) ? " and s.country = g.parent" : "")
             + " join geolocale_taxon gt on gt.geolocale_id = g.id and gt.taxon_name = s.taxon_name"
             + " join taxon t on t.taxon_name = s.taxon_name"
             + " join image i on i.image_of_id = s.code"
