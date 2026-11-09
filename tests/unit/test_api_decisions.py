@@ -111,6 +111,13 @@ def test_health_route_stays_open():
     assert r.status_code == 200 and "Antweb API" in r.get_data(as_text=True), r.status_code
 
 
+def test_usage_login_is_read_from_the_api_settings_file():
+    """Step 6, PR 2 (2026-11-08): the key tables' own login, separate from the read-only data login."""
+    assert api._usage_credentials({"user": "apiro", "password": "x"}) is None
+    assert api._usage_credentials({"usageUser": "antweb_api_usage", "usagePassword": "p"}) == ("antweb_api_usage", "p")
+    assert api._usage_credentials({"usageUser": "antweb_api_usage"}) is None
+
+
 def test_front_door_points_to_the_terms_and_the_guide():
     """Step 6, API keys PR 1 (2026-11-08): / says the API is closed and links the documentation, the terms of use
     and /llms.txt; every 503 links the terms too."""

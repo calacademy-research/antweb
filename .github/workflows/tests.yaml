@@ -50,6 +50,8 @@ jobs:
         # every count check (CountInvariants.IDS) is named. Fix: edit docs/numbers.md (see its section 1).
         run: python3 tools/numbers/check_numbers_doc.py
 
+      - name: API key login script never prints the password (tests/unit/test_api_usage_login_script.py)
+        run: python3 tests/unit/test_api_usage_login_script.py
       - name: Every workflow step is valid shell, also inside sh -c '...' (tests/unit/test_workflow_shell.py)
         # 2026-10-24: an apostrophe in a comment ended a quoted sh -c script early; the step failed only on GitHub.
         run: python3 tests/unit/test_workflow_shell.py
