@@ -50,6 +50,8 @@ jobs:
         # every count check (CountInvariants.IDS) is named. Fix: edit docs/numbers.md (see its section 1).
         run: python3 tools/numbers/check_numbers_doc.py
 
+      - name: API key login script (password never printed or on a command line, least privilege, file and MySQL agree) (tests/unit/test_api_usage_login_script.py)
+        run: python3 tests/unit/test_api_usage_login_script.py
       - name: Every workflow step is valid shell, also inside sh -c '...' (tests/unit/test_workflow_shell.py)
         # 2026-10-24: an apostrophe in a comment ended a quoted sh -c script early; the step failed only on GitHub.
         run: python3 tests/unit/test_workflow_shell.py
@@ -171,6 +173,11 @@ jobs:
           docker run --rm --entrypoint python -e REPO_DIR=/repo -v "$PWD/tests/unit:/t:ro" \
             -v "$PWD/docker-compose.yml:/repo/docker-compose.yml:ro" -v "$PWD/docker-compose.dev.yml:/repo/docker-compose.dev.yml:ro" \
             antweb/api:dev /t/test_api_decisions.py
+
+      - name: API v4 with free registered keys (header only, hashes, levels, 429 and 401, daily record limit, no key or token in logs, v3.1 admin switch, IPv6 per /64) (tests/unit/test_api_v4.py)
+        run: |
+          docker run --rm --entrypoint python -v "$PWD/tests/unit:/t:ro" -v "$PWD/docker/caddy:/caddy:ro" \
+            antweb/api:dev /t/test_api_v4.py
 
       - name: API refuses to start without its read-only login (API_REQUIRE_READONLY_LOGIN=true, as on the servers)
         run: |
@@ -714,7 +721,7 @@ jobs:
                      upload.AntcatHistoryTest:19 upload.SharedNamesTest:5 upload.SharedNameReportTest:6 security.PasswordHashCompatTest:2 \
                      util.BackgroundJobsTest:15 upload.UploadNameReasonsTest:6 curate.UploadAsOptionsTest:4 \
                      upload.UploadReportExistsTest:3 upload.SpecimenNameHistoryTest:9 util.SpecimenCodesTest:6 util.RelevantQueriesTest:2 util.QueriesReviewTest:15 \
-                     util.JobSummaryTest:6 upload.SubfamilyFromGenusTest:5 upload.LocalityCodePlainTest:6; do
+                     util.JobSummaryTest:6 upload.SubfamilyFromGenusTest:9 upload.LocalityCodePlainTest:6; do
               cls=${t%%:*}; n=${t##*:}
               # AntwebProps ends the JVM with status 0 when a settings file is missing: require the summary line.
               java -Dantweb.test=/t -Dantweb.web=/web -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
@@ -1178,7 +1185,8 @@ jobs:
           # never report-only rows; index by_code; no history when the table is missing).
           # CountInvariantsTest: the count check's invariants over every place (docs/numbers.md), each wrong number found;
           # a red-flagged imaged specimen: pending until the nightly run, then real, agreeing once recounted (2026-11-09).
-          # NumberChecksTest: the count check's other numbers (statsPage tables, admin pages, API /taxa, endemic flags, B25, B26).
+          # NumberChecksTest: the count check's other numbers (statsPage tables, admin pages, API /taxa, endemic flags, B25, the
+          # adm1 Specimens recount by country and name: B26 fixed 2026-11-09).
           # PlaceTotalsDbTest: the numbers the nightly run writes (place totals, pies, endemic, museums, taxon images,
           # home page, Global after the name update, statsPage) as the invariants expect them.
           # NightlyCountOrderDbTest (2026-10-22): an unavailable name does not raise its genus row; a museum list renamed
@@ -1213,6 +1221,11 @@ jobs:
           # add up to the place's Genera and Species.
           # ListRemovalDbTest (2026-11-03, transparency): a dispute keeps the curator's reason; list_removal_log records the
           # curators' removals and the nightly clean-up's; the view All specimen names loads who, when and why per place.
+          # PlaceViewTotalDbTest (2026-11-09, production: Place list totals 4 hours): an adm1 takes the specimens of its own
+          # country and name (B26 fixed; same-named state elsewhere, no country: not its), the adm1 and country queries can
+          # use country_adm1_idx (EXPLAIN), a country's two parts are its specimens once; only places whose data changed are
+          # counted again (unchanged skipped, list or taxon or specimen change counted, specimen names not stored again,
+          # rules change, over 7 days, full count, place gone, a morphospecies curated anywhere), each place committed on its own.
           # ImagingProgressDbTest (2026-11-08): the imaging progress page's table (a label-only name is unimaged; a name
           # imaged elsewhere is imaged but not imaged from here; all of AntWeb = the home page numbers; the unimaged list
           # and CSV; the count check finds a wrong row; photos of red-flagged specimens do not count, 2026-11-09; the
@@ -1252,8 +1265,9 @@ jobs:
               /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java \
               /t/org/calacademy/antweb/home/ParentRowsDbTest.java \
               /t/org/calacademy/antweb/home/ListRemovalDbTest.java \
+              /t/org/calacademy/antweb/home/PlaceViewTotalDbTest.java \
               /t/org/calacademy/antweb/home/ImagingProgressDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:8 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.ImagingProgressDbTest:8 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:8 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:8 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ImagingProgressDbTest:8; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

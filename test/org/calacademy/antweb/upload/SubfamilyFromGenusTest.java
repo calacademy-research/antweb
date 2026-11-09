@@ -76,4 +76,43 @@ public class SubfamilyFromGenusTest extends TestCase {
         assertTrue("an unknown combination", SpecimenUploadParse.flagSpeciesIsGenusName("strumigenys", genera, () -> false));
         assertFalse("not a genus name: no lookup needed", SpecimenUploadParse.flagSpeciesIsGenusName("alberti", genera, () -> { throw new AssertionError(); }));
     }
+
+    /** Brian Fisher, 2026-11-08: a non-ant without a subfamily is filed under its family, never under "(formicidae)"
+     *  (production: 5,098 University of Utah and CAS specimens, e.g. "(formicidae)(curculionidae) (curculionidae)"). */
+    public void testANonAntWithoutSubfamilyIsFiledUnderItsFamily() {
+        assertEquals("(scarabaeidae)", SpecimenUploadParse.nonAntSubfamilyPlaceholder("Scarabaeidae"));
+        assertEquals("a higher group given as family", "(coleoptera)", SpecimenUploadParse.nonAntSubfamilyPlaceholder("(coleoptera)"));
+        assertEquals("(myriapoda/arachnida)", SpecimenUploadParse.nonAntSubfamilyPlaceholder("(myriapoda/arachnida)"));
+        assertNull("an ant keeps the ant placeholder", SpecimenUploadParse.nonAntSubfamilyPlaceholder("formicidae"));
+        assertNull("no family is read as Formicidae", SpecimenUploadParse.nonAntSubfamilyPlaceholder(""));
+        assertNull(SpecimenUploadParse.nonAntSubfamilyPlaceholder(null));
+    }
+
+    /** Brian Fisher, 2026-11-08: a non-ant's species column that repeats its group, or "_indet_", is "(indet)". */
+    public void testANonAntSpeciesThatRepeatsItsGroupIsIndet() {
+        assertEquals("(indet)", SpecimenUploadParse.nonAntIndetSpecies("(curculionidae)", "(curculionidae)", "curculionidae"));
+        assertEquals("(indet)", SpecimenUploadParse.nonAntIndetSpecies("(arthropoda)", "(arthropoda)", "(arthropoda)"));
+        assertEquals("Leptinus, University of Utah", "(indet)", SpecimenUploadParse.nonAntIndetSpecies("_indet_", "leptinus", "leiodidae"));
+        assertEquals("a real species", "madagascariensis", SpecimenUploadParse.nonAntIndetSpecies("madagascariensis", "zanna", "fulgoridae"));
+        assertEquals("ants unchanged", "(myrmicinae)", SpecimenUploadParse.nonAntIndetSpecies("(myrmicinae)", "(myrmicinae)", "formicidae"));
+        assertEquals("another group in parentheses is kept", "(sp1)", SpecimenUploadParse.nonAntIndetSpecies("(sp1)", "(curculionidae)", "curculionidae"));
+    }
+
+    // Review of #333 (2026-11-08): a genus row left under "(formicidae)" never files a non-ant there again.
+    public void testAGenusRowUnderTheAntPlaceholderDoesNotOverrideANonAntsFamily() {
+        assertEquals("(fulgoridae)", SpecimenUploadParse.subfamilyFromGenusRow("(fulgoridae)", "(formicidae)", "(fulgoridae)"));
+        assertEquals("a subfamily the file gave", "cetoniinae",
+            SpecimenUploadParse.subfamilyFromGenusRow("cetoniinae", "(formicidae)", "(scarabaeidae)"));
+        assertEquals("ants take the genus row's subfamily", "myrmicinae",
+            SpecimenUploadParse.subfamilyFromGenusRow("(formicidae)", "myrmicinae", null));
+        assertEquals("an ant line keeps the placeholder genus row", "(formicidae)",
+            SpecimenUploadParse.subfamilyFromGenusRow("(formicidae)", "(formicidae)", null));
+        assertEquals("a non-ant genus row with its own subfamily is used", "cetoniinae",
+            SpecimenUploadParse.subfamilyFromGenusRow("(scarabaeidae)", "cetoniinae", "(scarabaeidae)"));
+    }
+
+    public void testAPlaceholderNeverHoldsASpace() {
+        assertEquals("(coleoptera_curculionidae)", SpecimenUploadParse.nonAntSubfamilyPlaceholder(" Coleoptera  Curculionidae "));
+        assertNull("Formicidae with spaces and parentheses is an ant", SpecimenUploadParse.nonAntSubfamilyPlaceholder(" (Formicidae) "));
+    }
 }

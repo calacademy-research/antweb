@@ -500,31 +500,21 @@ To Do
   
   private String getAdm1LocalityCriteria(String mapSpeciesList1Name, String mapSpeciesList2Name
       , String mapSpeciesList3Name) {
-    String criteria = "";
-    boolean nonEmpty = false;
-    
-    // The mapSpeciesList?Name variables are the key. For Adm1, an integer.
-    // So, get the speciesListable and use the name?
-    
-    if (!"none".equals(mapSpeciesList1Name) && Utility.isNumber(mapSpeciesList1Name)) {
-      criteria += "'" + DBUtil.escapeQuotes(SpeciesListMgr.getName(mapSpeciesList1Name)) + "'";  // Project.getLocalityName(mapSpeciesList1Name) + "'";
-      nonEmpty = true;
+    // The mapSpeciesList?Name variables are the key. For Adm1, an integer (the geolocale id). An adm1's specimens are
+    // those of its country and name (B26, fixed 2026-11-09; before: adm1 in (names), a state of the same name in another
+    // country too).
+    java.util.List<String> terms = new java.util.ArrayList<>();
+    for (String key : new String[] {mapSpeciesList1Name, mapSpeciesList2Name, mapSpeciesList3Name}) {
+      if ("none".equals(key) || !Utility.isNumber(key)) continue;
+      org.calacademy.antweb.geolocale.Geolocale g = GeolocaleMgr.getGeolocale(key);
+      if (g != null && "adm1".equals(g.getGeorank())) {
+        terms.add("(country = " + DBUtil.sqlLiteral(g.getParent()) + " and adm1 = " + DBUtil.sqlLiteral(g.getName()) + ")");
+      } else {
+        String name = SpeciesListMgr.getName(key);
+        if (name != null) terms.add("adm1 = " + DBUtil.sqlLiteral(name));
+      }
     }
-    if (!"none".equals(mapSpeciesList2Name) && Utility.isNumber(mapSpeciesList2Name)) {
-      if (nonEmpty) criteria += ", ";
-      criteria += "'" + DBUtil.escapeQuotes(SpeciesListMgr.getName(mapSpeciesList2Name)) + "'";
-      nonEmpty = true;
-    }
-    if (!"none".equals(mapSpeciesList3Name) && Utility.isNumber(mapSpeciesList3Name)) {
-      if (nonEmpty) criteria += ", ";
-      criteria += "'" + DBUtil.escapeQuotes(SpeciesListMgr.getName(mapSpeciesList3Name)) + "'";
-      nonEmpty = true;
-    }
-
-    if (nonEmpty) {
-      criteria = " adm1 in (" + criteria + ")";
-    }
-    return criteria;
+    return terms.isEmpty() ? "" : " (" + String.join(" or ", terms) + ")";
   }
 
   private void setCountryLists(Connection connection, ArrayList<Taxon> speciesList, String countryCriteria) 

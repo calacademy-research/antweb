@@ -303,7 +303,8 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
         return " country = " + DBUtil.sqlLiteral(getName());
       }
       if (Georank.adm1.equals(getGeorank())) {
-        return " adm1 = " + DBUtil.sqlLiteral(getName());
+        // B26, fixed 2026-11-09: the state's country and name (adm1Criteria), as its other numbers
+        return " country = " + DBUtil.sqlLiteral(getParent()) + " and adm1 = " + DBUtil.sqlLiteral(getName());
       }
       if (Georank.adm2.equals(getGeorank())) {
         return " adm2 = " + DBUtil.sqlLiteral(getName());
@@ -680,17 +681,33 @@ public class Geolocale extends LocalityOverview implements SpeciesListable, Coun
 
     /**
      * The specimens of this place, as the specimen counts take them (getCountSpecimensQuery):
-     * islands by specimen.island_country, adm1s by specimen.adm1, countries by specimen.country;
-     * regions and subregions by getSpecimenPlaceJoin() (their countries). Specimen alias s. Quotes in
-     * the name are doubled.
+     * islands by specimen.island_country, adm1s by their country and name (adm1Criteria; B26, fixed
+     * 2026-11-09), countries by specimen.country; regions and subregions by getSpecimenPlaceJoin()
+     * (their countries). Specimen alias s. Names as SQL literals (DBUtil.sqlLiteral).
      */
     public String getSpecimenPlaceCriteria() {
-      String name = getName() == null ? "" : getName().replace("'", "''");
-      if (isIsland()) return " and s.island_country = '" + name + "'";
-      if (Georank.ADM1.equals(getGeorank())) return " and s.adm1 = '" + name + "'";
-      if (Georank.COUNTRY.equals(getGeorank())) return " and s.country = '" + name + "'";
+      String name = getName() == null ? "" : getName();
+      if (isIsland()) return " and s.island_country = " + DBUtil.sqlLiteral(name);
+      if (Georank.ADM1.equals(getGeorank())) return adm1Criteria("s", getParent(), name);
+      if (Georank.COUNTRY.equals(getGeorank())) return " and s.country = " + DBUtil.sqlLiteral(name);
       return "";
     }
+
+    /**
+     * The specimens of an adm1 (state, province), B26 fixed 2026-11-09 (Brian Fisher): collected in its country and
+     * with its name, " and a.country = 'parent' and a.adm1 = 'name'" (a: the specimen table's alias). The country is
+     * matched exactly as the country pages match theirs (specimen.country = the country's name). A specimen with this
+     * adm1 and another country, or none, is not the state's (before: every adm1 of that name took it). Both columns
+     * together use the index country_adm1_idx (country, adm1); adm1 alone used no index (production 2026-11-09: the
+     * nightly Place list totals walked every ant specimen for each state, 4 hours). An adm1 without a parent country
+     * takes no specimens. Prepared statements: ADM1_CONDITION with the parameters (parent, name).
+     */
+    public static String adm1Criteria(String alias, String parent, String name) {
+      return " and " + alias + ".country = " + DBUtil.sqlLiteral(parent) + " and " + alias + ".adm1 = " + DBUtil.sqlLiteral(name);
+    }
+
+    /** adm1Criteria with bound parameters (parent country, adm1 name), for the specimen table aliased s. */
+    public static final String ADM1_CONDITION = " and s.country = ? and s.adm1 = ?";
 
     /** Region or subregion page (not an island): its specimens are those of its countries. */
     public boolean isCountedFromCountries() {

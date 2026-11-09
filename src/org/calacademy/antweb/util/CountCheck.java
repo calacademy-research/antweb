@@ -24,7 +24,8 @@ import java.util.Set;
  * places, and lists every number that differs, with both values:
  *
  *   specimens  species and subspecies rows: specimen_count = specimens filed under that name in the
- *              place (geolocale: specimen.country, adm1 or island_country; museum: specimen.museum;
+ *              place (geolocale: specimen.country, island_country, or for an adm1 its country and adm1
+ *              (B26, fixed 2026-11-09); museum: specimen.museum;
  *              bioregion: specimen.bioregion; project: all specimens), of a countable status
  *              (valid, unrecognized, morphotaxon, indetermined, unidentifiable; projects: any status).
  *   species    genus rows: species_count = species and subspecies rows of that genus in the same list
@@ -96,13 +97,44 @@ public class CountCheck {
         public final String label;
         public final String specimenColumn;   // specimen column that places a specimen here; null = all specimens
         public final String specimenValue;
+        /** An adm1's country (its parent): an adm1 takes the specimens of its country and name (B26, fixed 2026-11-09). */
+        public final String specimenCountry;
 
         public Place(String type, String key, String label, String specimenColumn, String specimenValue) {
+            this(type, key, label, specimenColumn, specimenValue, null);
+        }
+
+        public Place(String type, String key, String label, String specimenColumn, String specimenValue, String specimenCountry) {
             this.type = type;
             this.key = key;
             this.label = label;
             this.specimenColumn = specimenColumn;
             this.specimenValue = specimenValue;
+            this.specimenCountry = specimenCountry;
+        }
+
+        /** An adm1 (geolocale id key): the specimens with its country and name (index country_adm1_idx). */
+        public static Place adm1(String geolocaleId, String label, String country, String name) {
+            return new Place(GEOLOCALE, geolocaleId, label, "adm1", name, country);
+        }
+
+        boolean isAdm1() { return "adm1".equals(specimenColumn); }
+
+        /**
+         * The condition (specimen alias s, bound parameters, bindPlace) that places a specimen here, or "" (all specimens;
+         * regions: their own join): " and s.museum = ?", an adm1 " and s.country = ? and s.adm1 = ?".
+         */
+        String placeCondition() {
+            if (column() == null) return "";
+            return isAdm1() ? org.calacademy.antweb.geolocale.Geolocale.ADM1_CONDITION : " and s." + column() + " = ?";
+        }
+
+        /** Binds placeCondition's parameters from index i; returns the next index. */
+        int bindPlace(PreparedStatement stmt, int i) throws SQLException {
+            if (column() == null) return i;
+            if (isAdm1()) stmt.setString(i++, specimenCountry);
+            stmt.setString(i++, specimenValue);
+            return i;
         }
 
         /** A region or subregion (geolocale id key): its specimens are those of its countries. */
@@ -522,7 +554,7 @@ public class CountCheck {
                   : "")
             + " where " + org.calacademy.antweb.home.SpecimenDb.notRedFlagged("s")   // as PlaceImageCountDb (2026-11-09)
             + (list ? "" : " and s.family = 'formicidae'")   // ants only (2026-10-21)
-            + (place.column() != null ? " and s." + place.column() + " = ?" : "")
+            + place.placeCondition()
             + (GEOLOCALE.equals(place.type) ? " and s.status in " + COUNTABLE : "");
     }
 
@@ -536,7 +568,7 @@ public class CountCheck {
         int i = 1;
         if (place.isFromCountries()) for (int n = 0; n < 4; n++) place.setKey(stmt, i++);
         if (GEOLOCALE.equals(place.type) || PROJECT.equals(place.type)) place.setKey(stmt, i++);
-        if (place.column() != null) stmt.setString(i++, place.specimenValue);
+        i = place.bindPlace(stmt, i);
         return i;
     }
 
@@ -661,13 +693,13 @@ public class CountCheck {
             + " join geolocale_taxon l on l.taxon_name = s.taxon_name and l.geolocale_id = ?"
             + " join taxon t on t.taxon_name = s.taxon_name and t.taxarank in ('species', 'subspecies') and t.family = 'formicidae'"
             + " where s.status in " + COUNTABLE
-            + (place.column() != null ? " and s." + place.column() + " = ?" : "");
+            + place.placeCondition();
         int recount;
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             int i = 1;
             if (place.isFromCountries()) for (int n = 0; n < 4; n++) place.setKey(stmt, i++);
             place.setKey(stmt, i++);
-            if (place.column() != null) stmt.setString(i, place.specimenValue);
+            place.bindPlace(stmt, i);
             try (ResultSet r = stmt.executeQuery()) {
                 r.next();
                 recount = r.getInt(1);
@@ -818,14 +850,14 @@ public class CountCheck {
             ? "select x.taxonName, sum(x.imageSum) from (" + org.calacademy.antweb.home.PlaceTotals.allAntwebImagesSql("?") + ") x group by x.taxonName"
             : synonyms
             ? "select x.taxonName, sum(x.imageSum) from (" + org.calacademy.antweb.home.PlaceTotals.imagesByListNameSql(place.type, "?",
-                (place.column() != null ? " and s." + place.column() + " = ?" : "") + (statusFiltered ? " and s.status in " + COUNTABLE : ""))
+                place.placeCondition() + (statusFiltered ? " and s.status in " + COUNTABLE : ""))
                 + ") x group by x.taxonName"
             : "select s.taxon_name, count(i.id) from specimen s"
             + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_OF_SPECIMEN
             + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
             + " join " + place.table() + " l on l.taxon_name = s.taxon_name and l." + place.keyColumn() + " = ?"
             + " where 1 = 1"
-            + (place.column() != null ? " and s." + place.column() + " = ?" : "")
+            + place.placeCondition()
             + (statusFiltered ? " and s.status in " + COUNTABLE : "")
             + " group by s.taxon_name";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
@@ -834,7 +866,7 @@ public class CountCheck {
             place.setKey(stmt, i++);
             if (allAntweb) { place.setKey(stmt, i++); place.setKey(stmt, i++); }
             else if (synonyms) place.setKey(stmt, i++);
-            if (place.column() != null) stmt.setString(i, place.specimenValue);
+            place.bindPlace(stmt, i);
             try (ResultSet r = stmt.executeQuery()) {
                 while (r.next()) recount.put(r.getString(1), r.getInt(2));
             }
@@ -943,13 +975,13 @@ public class CountCheck {
         boolean synonyms = !place.isFromCountries() && org.calacademy.antweb.home.PlaceTotals.synonymsToValid(place.type, place.key);
         String query = synonyms
             ? org.calacademy.antweb.home.PlaceTotals.specimensByListNameSql(place.type, "?",
-                (place.column() != null ? " and s." + place.column() + " = ?" : "")
+                place.placeCondition()
                 + (place.statusFiltered() ? " and s.status in " + COUNTABLE : ""))
             : "select s.taxon_name, count(*) from specimen s"
             + (place.isFromCountries() ? " join " + regionSpecimens() + " on rsc.code = s.code" : "")
             + " join " + t + " l on l.taxon_name = s.taxon_name and l." + k + " = ?"
             + " where 1 = 1"
-            + (place.column() != null ? " and s." + place.column() + " = ?" : "")
+            + place.placeCondition()
             + (place.statusFiltered() ? " and s.status in " + COUNTABLE : "")
             + " group by s.taxon_name";
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
@@ -957,7 +989,7 @@ public class CountCheck {
             if (place.isFromCountries()) for (int n = 0; n < 4; n++) place.setKey(stmt, i++);
             if (synonyms) place.setKey(stmt, i++);
             place.setKey(stmt, i++);
-            if (place.column() != null) stmt.setString(i, place.specimenValue);
+            place.bindPlace(stmt, i);
             try (ResultSet r = stmt.executeQuery()) {
                 while (r.next()) recount.put(r.getString(1), r.getInt(2));
             }

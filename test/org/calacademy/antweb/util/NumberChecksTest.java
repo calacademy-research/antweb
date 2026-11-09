@@ -20,7 +20,7 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
 
 /**
  * The count check's checks of the numbers that are not place totals (NumberChecks, 2026-10-22): statsPage tables,
- * admin pages, API /taxa, endemic flags, and the suspects B25 (taxon parents) and B26 (adm1 by name). On the database
+ * admin pages, API /taxa, endemic flags, the suspect B25 (taxon parents) and the adm1 recount (B26, fixed 2026-11-09). On the database
  * of NumbersTestDb every number agrees (CountInvariantsTest.testRightNumbersGiveNoDifference); here each check finds
  * one wrong number, as a real difference, and the statsPage queries the check uses for all places at once give the
  * same numbers as the page's own code for one place.
@@ -337,8 +337,12 @@ public class NumberChecksTest extends TestCase {
         assertTrue(list(r), b25);
     }
 
-    /** B26: a state of the same name in another country. */
-    public void testAdm1OfTheSameNameInAnotherCountryIsFound() throws Exception {
+    /**
+     * B26 (fixed 2026-11-09): an adm1's Specimens are recounted by its country and name. A stored number that took a state
+     * of the same name in another country, or a specimen with no country (the rule before the fix: 3), differs from the
+     * recount (2); the number by the rule does not.
+     */
+    public void testAdm1SpecimensAreRecountedByCountryAndName() throws Exception {
         exec("update geolocale set specimen_count = 3 where id = " + ATSINANANA);
         exec("insert into geolocale_taxon (geolocale_id, taxon_name, specimen_count, created) values (" + ATSINANANA + ", '" + PA + "', 3, '2020-01-01')");
         exec("update specimen set adm1 = 'Atsinanana' where code in ('casent1', 'casent2')");
@@ -349,7 +353,9 @@ public class NumberChecksTest extends TestCase {
         assertNotNull(list(r), m);
         assertTrue(m.isReal());
         assertEquals(3, m.stored);
-        assertEquals("one of Kenya, one with no country", 1, m.recount);
+        assertEquals("casent1 and casent2; not the one of Kenya, not the one with no country", 2, m.recount);
+        exec("update geolocale set specimen_count = 2 where id = " + ATSINANANA);
+        assertNull("counted by the rule: no difference", first(check(), "geo.adm1.country"));
     }
 
     /** At most LIST_CAP differences of one check are listed; the others are counted (API /taxa can differ for every taxon). */

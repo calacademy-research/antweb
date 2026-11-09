@@ -81,6 +81,15 @@ public final class CountInvariants {
     public static final String GENERA_RULE_LOG = "genera and subfamilies rule of 2026-10-30";
 
     /**
+     * Written to compute.log by nightly set 4 since 2026-11-09 (the same line, after GENERA_RULE_LOG): the adm1 rule of
+     * 2026-11-09 (B26 fixed, Brian Fisher): an adm1 (state, province) takes the specimens of its own country and name
+     * (Geolocale.adm1Criteria), in every number (Specimens, Images, the list rows, the views, the count check's recount).
+     * Sets 2 to 4 count the adm1s, so the line after set 4 says they are counted by it. Until a nightly run has written
+     * it, the numbers of the rules are pending (rulesCounted).
+     */
+    public static final String ADM1_RULE_LOG = "adm1 rule of 2026-11-09";
+
+    /**
      * Written to compute.log by nightly set 2 ("Set 2 done", geolocale endemic flags) and set 3 ("Set 3 done", bioregion
      * endemic flags) since 2026-10-28: the endemic flags and numbers follow the endemic rule of 2026-10-28 (valid names
      * only, native rows only; docs/numbers.md section 5). The e2e tests read it (numbers_sample.endemic_rule_counted) to
@@ -119,9 +128,10 @@ public final class CountInvariants {
     public static boolean rulesCounted(List<String> lines) {
         if (lines.isEmpty()) return true;   // no compute.log (unreadable, emptied, rotated): not a reason to call differences pending
         // every rule change: a run before 2026-10-28 wrote RULES_LOG only, one before 2026-10-30 not GENERA_RULE_LOG, one
-        // before 2026-11-09 not StatisticsDb.RED_FLAG_IMAGES_RULE_LOG (images of red-flagged specimens not counted)
+        // before 2026-11-09 not ADM1_RULE_LOG nor StatisticsDb.RED_FLAG_IMAGES_RULE_LOG (images of red-flagged specimens not counted)
         for (String line : lines) {
             if (line.contains(RULES_LOG) && line.contains(COUNTING_RULES_LOG) && line.contains(GENERA_RULE_LOG)
+                && line.contains(ADM1_RULE_LOG)
                 && line.contains(org.calacademy.antweb.home.StatisticsDb.RED_FLAG_IMAGES_RULE_LOG)) return true;
         }
         return false;

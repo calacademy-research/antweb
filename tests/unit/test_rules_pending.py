@@ -53,8 +53,9 @@ def test_nightly_writes_the_lines():
     assert '"  Set 3 done (" + CountInvariants.ENDEMIC_RULE_LOG + "; "' in src
     assert "+ org.calacademy.antweb.home.ParentRows.LOG + \")\"" in src
     assert '"  Set 4 done (" + CountInvariants.RULES_LOG' in src
-    # since 2026-10-30 the genera rule follows COUNTING_RULES_LOG; since 2026-11-09 the red-flag images rule is last
-    assert '+ "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG' in src
+    # since 2026-10-30 the genera rule follows COUNTING_RULES_LOG; since 2026-11-09 the adm1 rule (B26), then the red-flag images rule
+    assert ('+ "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG + "; "'
+            ' + CountInvariants.ADM1_RULE_LOG') in src
     assert '+ "; " + StatisticsDb.RED_FLAG_IMAGES_RULE_LOG + ")"' in src
     # set 2's line after the geolocale counts, set 3's after the bioregions
     assert src.index('"  Set 2 done (') > src.index('"geolocaleCountCrawl"')
@@ -101,6 +102,7 @@ def test_genera_rule_is_pending_until_the_nightly_run():
     that read compute.log log in, so they are not in [parallel]."""
     java = read("src/org/calacademy/antweb/util/CountInvariants.java")
     assert "line.contains(GENERA_RULE_LOG)" in java
+    assert "line.contains(ADM1_RULE_LOG)" in java   # B26 fixed 2026-11-09: adm1 numbers pending until the nightly
     sample = read("tests/e2e/numbers_sample.py")
     assert 'return compute_log_has("Set 4 done", GENERA_RULE_LOG)' in sample
     lists = read("tests/e2e/test_numbers_lists.py")

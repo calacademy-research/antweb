@@ -450,18 +450,42 @@ public final class ListView {
 
     /** The same, of names only (nNames parameters after the others: the taxon names), when nNames > 0. */
     public static String placeSpecimensSql(String placeCriteria, boolean bySubfamily, boolean byGenus, int nNames) {
+        return placeSpecimensSql(java.util.Collections.singletonList(placeCriteria), bySubfamily, byGenus, nNames);
+    }
+
+    /**
+     * The same, the place's specimens as disjoint parts (PlaceTaxonNotes.placeSpecimenParts: a country's specimens of
+     * specimen.country, then those of island_country only), one select each, added up by name (union all), so each part
+     * can use its own index (2026-11-09: "country = X or island_country = X" used none, a scan per country). The
+     * parameters (subfamily, genus, names) come once per part, in that order.
+     */
+    public static String placeSpecimensSql(List<String> parts, boolean bySubfamily, boolean byGenus, int nNames) {
         StringBuilder in = new StringBuilder();
         if (nNames > 0) {
             in.append(" and specimen.taxon_name in (");
             for (int i = 0; i < nNames; i++) in.append(i == 0 ? "?" : ", ?");
             in.append(")");
         }
+        String filter = (bySubfamily ? " and specimen.subfamily = ?" : "") + (byGenus ? " and specimen.genus = ?" : "") + in;
+        String base = "select specimen.taxon_name from specimen where" + SpecimenDb.getAntSpecimenCriteria("specimen")
+            + " and " + SpecimenDb.notRedFlagged("specimen") + filter;
+        String grouped;
+        if (parts.size() == 1) {
+            String placeCriteria = parts.get(0);
+            grouped = "select specimen.taxon_name, count(*) n from specimen where" + SpecimenDb.getAntSpecimenCriteria("specimen")
+                + " and " + SpecimenDb.notRedFlagged("specimen") + filter
+                + (placeCriteria == null ? "" : placeCriteria)
+                + " group by specimen.taxon_name";
+        } else {
+            StringBuilder u = new StringBuilder();
+            for (String part : parts) {
+                if (u.length() > 0) u.append(" union all ");
+                u.append(base).append(part == null ? "" : part);
+            }
+            grouped = "select y.taxon_name, count(*) n from (" + u + ") y group by y.taxon_name";
+        }
         return "select t.taxon_name, t.subfamily, t.genus, t.species, t.subspecies, t.taxarank, t.status, x.n"
-            + " from (select specimen.taxon_name, count(*) n from specimen where" + SpecimenDb.getAntSpecimenCriteria("specimen")
-            + " and " + SpecimenDb.notRedFlagged("specimen")
-            + (bySubfamily ? " and specimen.subfamily = ?" : "") + (byGenus ? " and specimen.genus = ?" : "") + in
-            + (placeCriteria == null ? "" : placeCriteria)
-            + " group by specimen.taxon_name) x"
+            + " from (" + grouped + ") x"
             + " join taxon t on t.taxon_name = x.taxon_name where t.family = 'formicidae'";
     }
 
@@ -484,6 +508,7 @@ public final class ListView {
             java.util.Collection<String> names) throws SQLException {
         String criteria = PlaceTaxonNotes.placeSpecimenCriteria(overview);
         if (connection == null || criteria == null || criteria.isEmpty()) return null;
+        List<String> parts = PlaceTaxonNotes.placeSpecimenParts(overview);
         boolean bySubfamily = subfamily != null && !subfamily.isEmpty();
         boolean byGenus = genus != null && !genus.isEmpty();
         PlaceSpecimens out = new PlaceSpecimens();
@@ -496,11 +521,13 @@ public final class ListView {
         }
         for (List<String> chunk : chunks) {
             int nNames = chunk == null ? 0 : chunk.size();
-            try (PreparedStatement stmt = connection.prepareStatement(placeSpecimensSql(criteria, bySubfamily, byGenus, nNames))) {
+            try (PreparedStatement stmt = connection.prepareStatement(placeSpecimensSql(parts, bySubfamily, byGenus, nNames))) {
                 int i = 0;
-                if (bySubfamily) stmt.setString(++i, subfamily);
-                if (byGenus) stmt.setString(++i, genus);
-                if (chunk != null) for (String n : chunk) stmt.setString(++i, n);
+                for (int p = 0; p < parts.size(); p++) {
+                    if (bySubfamily) stmt.setString(++i, subfamily);
+                    if (byGenus) stmt.setString(++i, genus);
+                    if (chunk != null) for (String n : chunk) stmt.setString(++i, n);
+                }
                 try (ResultSet r = stmt.executeQuery()) {
                     while (r.next()) {
                         out.add(r.getString("taxon_name"), r.getString("subfamily"), r.getString("genus"), r.getString("species"),

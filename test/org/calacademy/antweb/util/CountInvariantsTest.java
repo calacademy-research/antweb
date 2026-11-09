@@ -73,11 +73,11 @@ public class CountInvariantsTest extends TestCase {
         assertFalse(CountInvariants.rulesCounted(log));
         log.add("2026-10-31 07:40:00   Set 4 done (" + CountInvariants.RULES_LOG + "; " + CountInvariants.COUNTING_RULES_LOG
             + "; " + CountInvariants.GENERA_RULE_LOG + ")");
-        // the red-flag images rule of 2026-11-09 too (the same line since then)
+        // the adm1 rule and the red-flag images rule of 2026-11-09 too (the same line since then)
         assertFalse(CountInvariants.rulesCounted(log));
-        log.add("2026-11-10 07:40:00   Set 4 done (" + CountInvariants.RULES_LOG + "; " + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGES_RULE_LOG
-            + "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG
-            + "; " + org.calacademy.antweb.home.StatisticsDb.RED_FLAG_IMAGES_RULE_LOG + ")");
+        log.add("2026-11-10 07:40:00   Set 4 done (" + CountInvariants.RULES_LOG + "; " + CountInvariants.COUNTING_RULES_LOG
+            + "; " + CountInvariants.GENERA_RULE_LOG + "; " + CountInvariants.ADM1_RULE_LOG
+                    + "; " + org.calacademy.antweb.home.StatisticsDb.RED_FLAG_IMAGES_RULE_LOG + ")");
         assertTrue(CountInvariants.rulesCounted(log));
     }
 

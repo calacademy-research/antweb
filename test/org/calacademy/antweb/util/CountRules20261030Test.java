@@ -126,7 +126,8 @@ public class CountRules20261030Test extends TestCase {
         assertFalse(CountInvariants.rulesCounted(before));
         // since 2026-11-09 the line also has the red-flag images rule (org.calacademy.antweb.home.StatisticsDb.RED_FLAG_IMAGES_RULE_LOG)
         List<String> after = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; x; " + CountInvariants.COUNTING_RULES_LOG
-            + "; " + CountInvariants.GENERA_RULE_LOG + "; " + org.calacademy.antweb.home.StatisticsDb.RED_FLAG_IMAGES_RULE_LOG + ")");
+            + "; " + CountInvariants.GENERA_RULE_LOG + "; " + CountInvariants.ADM1_RULE_LOG
+                    + "; " + org.calacademy.antweb.home.StatisticsDb.RED_FLAG_IMAGES_RULE_LOG + ")");
         assertTrue(CountInvariants.rulesCounted(after));
         List<String> beforeRedFlag = Arrays.asList("  Set 4 done (" + CountInvariants.RULES_LOG + "; x; " + CountInvariants.COUNTING_RULES_LOG
             + "; " + CountInvariants.GENERA_RULE_LOG + ")");

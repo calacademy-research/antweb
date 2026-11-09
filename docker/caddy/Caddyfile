@@ -47,7 +47,16 @@ www.antweb.org {
             roll_keep 10
 #            roll_keep_days 1
         }
-        format json
+        # API keys travel in the X-API-Key header; Caddy logs request headers, so that one is dropped (step 6 PR 3).
+        format filter {
+            wrap json
+            request>headers>X-Api-Key delete
+            # the API key confirmation link (apiKeyConfirm.do?token=...) carries a one-time token: dropped from the logged
+            # address, the rest of the address is kept
+            request>uri query {
+                delete token
+            }
+        }
 #        format console
     }
 
@@ -118,6 +127,15 @@ www.antweb.org {
         }
 
         handle_path /v3.1/* {
+            reverse_proxy api:5000 {
+                header_up X-Forwarded-For {http.request.remote.host}
+            }
+        }
+
+        # API v4 with free registered keys (step 6 PR 3, 2026-11-08; api/v3.1/api_v4.py): the path is kept (/v4/...),
+        # the API container answers it. Same in Caddyfile.common (tests/unit/test_api_v4.py).
+        @api_v4 path /v4 /v4/*
+        handle @api_v4 {
             reverse_proxy api:5000 {
                 header_up X-Forwarded-For {http.request.remote.host}
             }

@@ -617,9 +617,9 @@ public class UtilDataAction extends AntwebAction {
                 // Since 2026-10-27 also: the lists' Images are ant images (StatisticsDb.ANT_IMAGES_RULE_LOG; CountCheck).
                 // Since 2026-10-28 also: the counting rules of 2026-10-28 (CountInvariants.COUNTING_RULES_LOG; docs/numbers.md section 5).
                 // Since 2026-10-30 also: the genera and subfamilies rule of 2026-10-30 (CountInvariants.GENERA_RULE_LOG; sets 2 and 3 counted by it).
-                // Since 2026-11-09 also: the image numbers above leave out red-flagged specimens (StatisticsDb.RED_FLAG_IMAGES_RULE_LOG).
+                // Since 2026-11-09 also: the adm1 rule of 2026-11-09 (B26 fixed: an adm1 by its country and name; CountInvariants.ADM1_RULE_LOG), and the image numbers above leave out red-flagged specimens (StatisticsDb.RED_FLAG_IMAGES_RULE_LOG).
                 LogMgr.appendLog("compute.log", "  Set 4 done (" + CountInvariants.RULES_LOG + "; " + StatisticsDb.ANT_IMAGES_RULE_LOG
-                    + "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG
+                    + "; " + CountInvariants.COUNTING_RULES_LOG + "; " + CountInvariants.GENERA_RULE_LOG + "; " + CountInvariants.ADM1_RULE_LOG
                     + "; " + StatisticsDb.RED_FLAG_IMAGES_RULE_LOG + ")", true);
                 // message += " " + doAction("calcEndemic", form, accessLogin, accessGroup, connection, request, mapping);
                 // message += " " + doAction("calcIntroduced", form, accessLogin, accessGroup, connection, request, mapping);
@@ -942,9 +942,11 @@ public class UtilDataAction extends AntwebAction {
 		}
 
 		// The place pages' Genera and Species: the rows of their lists in the default view (Brian Fisher, 2026-11-04;
-		// PlaceViewTotalDb). Nightly: after set 4 (Scheduler.runPlaceListTotals); admins: utilData.do?action=placeViewTotals. Writes "Place list totals counted".
+		// PlaceViewTotalDb). Nightly: after set 4 (Scheduler.runPlaceListTotals); admins: utilData.do?action=placeViewTotals
+		// (the places whose data changed; &param=all: every place, 2026-11-09). Writes "Place list totals counted".
 		if (action.equals("placeViewTotals")) {
-		  message = new org.calacademy.antweb.home.PlaceViewTotalDb(connection).fillAll();
+		  org.calacademy.antweb.home.PlaceViewTotalDb placeViewTotalDb = new org.calacademy.antweb.home.PlaceViewTotalDb(connection);
+		  message = "all".equals(param) ? placeViewTotalDb.fillAll(true) : placeViewTotalDb.fillAll();
 		  LogMgr.appendLog("compute.log", "  " + message, true);
 		}
 
