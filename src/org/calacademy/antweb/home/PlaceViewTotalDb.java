@@ -321,7 +321,9 @@ public class PlaceViewTotalDb {
             + " union select pt.taxon_name from proj_taxon pt join project p on p.project_name = pt.project_name"
             + " where pt.source in " + sources + " and pt.project_name not in (" + sys + ")) v"
             + " join taxon t on t.taxon_name = v.taxon_name and t.status = 'morphotaxon'";
-        return "v" + checksum("v.taxon_name", vetted) + ";r" + RULES;
+        // genus and subfamily too (review of #336): a curated morphospecies moved to another genus changes which genus
+        // counts as curated without a change of name
+        return "v" + checksum("concat_ws('|', v.taxon_name, t.genus, t.subfamily)", vetted) + ";r" + RULES;
     }
 
     /**
