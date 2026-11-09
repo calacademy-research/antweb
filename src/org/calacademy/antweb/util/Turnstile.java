@@ -20,7 +20,8 @@ import org.apache.commons.logging.LogFactory;
 
 /**
  * Cloudflare Turnstile: a free, privacy-friendly bot check (usually just a
- * checkbox, often invisible) shown on the Create Account form.
+ * checkbox, often invisible) shown on the Create Account form and the free API
+ * key form (apiKey.do, ApiKeyAction).
  *
  * Configured in etc/turnstile.properties on the server (~/antweb/etc/, which
  * the container sees as /antweb/deploy/etc/; the file is in .gitignore and

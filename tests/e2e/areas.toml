@@ -594,13 +594,17 @@ tests = [
 ]
 
 [areas.api]
-# API v3.1 (Flask) and its container.
+# API v3.1 (Flask) and its container; the free API keys (registration, confirmation, admin page).
 paths = [
   "api/**",
   "docker/api/**",
+  "src/**/ApiKey*.java",
+  "web/apiKey*.jsp",
+  "web/curate/apiKeys*.jsp",
 ]
 tests = [
   "test_api.py",
+  "test_api_keys.py",                  # free API keys: apiKey.do, apiKeyConfirm.do, apiKeys.do (2026-11-08)
   "test_api_numbers.py",
   "test_numbers_api_meta.py",
   "test_hardening_2026_10_18.py",
