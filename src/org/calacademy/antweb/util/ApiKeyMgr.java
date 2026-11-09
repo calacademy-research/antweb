@@ -3,7 +3,9 @@ package org.calacademy.antweb.util;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 import org.apache.commons.logging.Log;
@@ -16,9 +18,13 @@ import org.calacademy.antweb.home.ApiKeyDb;
  * database are in ApiKeys; the tables in home/ApiKeyDb.
  *
  *   register()  apiKey.do after the form, the human check and the per-IP limit passed: at most 3 registrations a day
- *               per email address and 100 a day in all; saves the registration as 'pending' with the SHA-256 of a
- *               new confirmation token (24 hours), emails the registrant the link apiKeyConfirm.do?token=..., and
- *               emails a copy (no token, no key) to bfisher@calacademy.org with a link to the admin page.
+ *               per email address, 100 confirmed a day in all and 300 pending a day (a flood of unconfirmed ones
+ *               cannot use up the day); saves the registration as 'pending' with the SHA-256 of a new confirmation
+ *               token (24 hours), emails the registrant the link apiKeyConfirm.do?token=... (the email does not repeat
+ *               the name typed on the form, so the form cannot carry text to any address), and emails a copy (no
+ *               token, no key) to bfisher@calacademy.org with a link to the admin page: at most 20 copies a day (UTC),
+ *               then one email "more registrations today, see apiKeys.do", then none until the next day. The copies
+ *               keep their own count (Emailer.sendNoticeOwnLimit), not the notice budget upload emails use.
  *   confirm()   apiKeyConfirm.do: opening the link (GET) only shows a button (email scanners open links first);
  *               the POST makes the key ("aw_" + 32 characters), stores only its SHA-256 and first 7 characters,
  *               sets the key active and returns it, once, for the page to show.
@@ -51,16 +57,17 @@ public final class ApiKeyMgr {
                 logEvent("registration refused: more than " + ApiKeys.MAX_PER_EMAIL_PER_DAY + " today for one email address");
                 return EMAIL_LIMIT;
             }
-            if (!ApiKeys.allowAll(db.countAllLastDay())) {
-                logEvent("registration refused: more than " + ApiKeys.MAX_PER_DAY_ALL + " registrations today in all");
+            if (!ApiKeys.allowAll(db.countConfirmedLastDay(), db.countPendingLastDay())) {
+                logEvent("registration refused: " + ApiKeys.MAX_PER_DAY_ALL + " confirmed or " + ApiKeys.MAX_PENDING_PER_DAY
+                    + " pending registrations in the last 24 hours in all");
                 return DAILY_LIMIT;
             }
             String token = ApiKeys.newConfirmToken();
             int id = db.insertPending(r, ApiKeys.sha256(token), ApiKeys.CONFIRM_HOURS);
             String link = AntwebProps.getSecureDomainApp() + "/apiKeyConfirm.do?token=" + token;
-            boolean sent = Emailer.sendTransactional(r.email, SUBJECT_CONFIRM, confirmationEmailBody(r.name, link));
+            boolean sent = Emailer.sendTransactional(r.email, SUBJECT_CONFIRM, confirmationEmailBody(link));
             String adminLink = AntwebProps.getSecureDomainApp() + "/apiKeys.do?id=" + id;
-            Emailer.sendNotice(ApiKeys.COPY_TO, SUBJECT_COPY + ": " + r.name, copyText(r, id, LocalDateTime.now(), sent, adminLink), r.email);
+            sendCopy(r, id, sent, adminLink);
             logEvent("registration id:" + id + " saved as pending; confirmation link " + (sent ? "emailed" : "NOT emailed"));
             return sent ? SENT : MAIL_FAILED;
         } catch (SQLException e) {
@@ -103,7 +110,9 @@ public final class ApiKeyMgr {
                     if ("confirm".equals(page.state)) page.state = "error";
                     return page;
                 } catch (SQLIntegrityConstraintViolationException e) {
-                    s_log.info("confirm() id:" + row.id + " key prefix taken, making another");  // 1 in millions
+                    // The prefix ("aw_" + 4 characters, 64^4 = about 16.8 million) is unique; a new key's prefix matches
+                    // one of N existing keys with chance N in 16.8 million (1 in about 17,000 with 1,000 keys).
+                    s_log.info("confirm() id:" + row.id + " key prefix taken, making another");
                 }
             }
             page.state = "error";
@@ -117,7 +126,7 @@ public final class ApiKeyMgr {
 
     static String stateWord(ApiKeyDb.Row row) {
         ApiKeys.ConfirmState s = row == null ? ApiKeys.ConfirmState.UNKNOWN
-            : ApiKeys.confirmState(row.status, row.confirmExpires, row.dbNow == null ? LocalDateTime.now() : row.dbNow);
+            : ApiKeys.confirmState(row.status, row.confirmExpires, row.dbNow == null ? LocalDateTime.now(ZoneOffset.UTC) : row.dbNow);
         switch (s) {
             case VALID: return "confirm";
             case EXPIRED: return "expired";
@@ -127,12 +136,56 @@ public final class ApiKeyMgr {
         }
     }
 
+    // ---------------------------------------------------------------- copies to the administrator
+
+    // Copies sent on the current UTC day (one Tomcat; a restart starts the count again, which is acceptable).
+    private static LocalDate s_copyDay;
+    private static int s_copiesToday;
+
+    /** What to send for the n-th registration of the day (1 = the first): "copy", "summary" (once) or "none". */
+    public static String copyDecision(int nthToday) {
+        if (nthToday <= ApiKeys.MAX_COPIES_PER_DAY) return "copy";
+        return nthToday == ApiKeys.MAX_COPIES_PER_DAY + 1 ? "summary" : "none";
+    }
+
+    private static synchronized int nextCopyNumber() {
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        if (!today.equals(s_copyDay)) {
+            s_copyDay = today;
+            s_copiesToday = 0;
+        }
+        return ++s_copiesToday;
+    }
+
+    private static void sendCopy(ApiKeys.Registration r, int id, boolean linkSent, String adminLink) {
+        String decision = copyDecision(nextCopyNumber());
+        if ("copy".equals(decision)) {
+            Emailer.sendNoticeOwnLimit(ApiKeys.COPY_TO, SUBJECT_COPY + ": " + r.name,
+                copyText(r, id, LocalDateTime.now(ZoneOffset.UTC), linkSent, adminLink), r.email);
+        } else if ("summary".equals(decision)) {
+            Emailer.sendNoticeOwnLimit(ApiKeys.COPY_TO, SUBJECT_MORE, moreText(AntwebProps.getSecureDomainApp() + "/apiKeys.do"), null);
+        } else {
+            s_log.info("sendCopy() id:" + id + " no copy (more than " + ApiKeys.MAX_COPIES_PER_DAY + " today; see apiKeys.do)");
+        }
+    }
+
+    public static final String SUBJECT_MORE = "AntWeb API key registrations: more today";
+
+    /** The one email after the day's copies are used up. */
+    public static String moreText(String listLink) {
+        return "There have been more than " + ApiKeys.MAX_COPIES_PER_DAY + " API key registrations today (UTC)."
+            + " No more copies are sent today; every registration is on the admin page:\n" + listLink + "\n";
+    }
+
     // ---------------------------------------------------------------- email texts (unit tested)
 
-    /** The email to the registrant (HTML, like the password reset email). The link holds the token, never a key. */
-    public static String confirmationEmailBody(String name, String link) {
-        String hello = name == null || name.trim().isEmpty() ? "Hello," : "Hello " + Html.esc(name.trim()) + ",";
-        return hello + "<br><br>\n"
+    /**
+     * The email to the registrant (HTML, like the password reset email). The link holds the token, never a key. It
+     * does not repeat the name typed on the form: anyone can type any address, and the email must not carry their
+     * text to it.
+     */
+    public static String confirmationEmailBody(String link) {
+        return "Hello,<br><br>\n"
             + "Thank you for registering for a free AntWeb API key. To confirm your email address and see your key,"
             + " open this link (it works for " + ApiKeys.CONFIRM_HOURS + " hours, and only once):<br>\n"
             + "<a href=\"" + Html.escAttr(link) + "\">" + Html.esc(link) + "</a><br><br>\n"
@@ -149,7 +202,7 @@ public final class ApiKeyMgr {
             + "Name: " + r.name + "\n"
             + "Email: " + r.email + "\n"
             + "Institution or affiliation: " + (r.institution == null || r.institution.isEmpty() ? "(none given)" : r.institution) + "\n"
-            + "Time: " + when.format(TIME) + " (Pacific)\n"
+            + "Time: " + when.format(TIME) + " (UTC)\n"
             + "Project:\n" + r.project + "\n\n"
             + (linkSent ? "The confirmation link was emailed to the registrant. The key becomes active when they open it."
                         : "The confirmation link could NOT be emailed (mail not configured or a sending limit); the registration stays pending.")

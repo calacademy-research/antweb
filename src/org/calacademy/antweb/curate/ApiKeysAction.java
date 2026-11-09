@@ -34,6 +34,7 @@ import org.calacademy.antweb.util.LoginMgr;
 /**
  * API keys admin page (apiKeys.do; step 6 PR 5, Brian Fisher 2026-11-08). Administrators only.
  *
+ *   Times and days are UTC (as the API writes them; home/ApiKeyDb), labelled "(UTC)".
  *   GET  /apiKeys.do                    every registration, newest first: name, email, institution, project, level,
  *                                       status, key prefix, created, confirmed, last used, requests today / 7 days /
  *                                       30 days, records and refusals (HTTP 429) in 30 days (api_usage_daily), and
@@ -142,7 +143,7 @@ public final class ApiKeysAction extends AntwebAction {
                 case "limits":
                     db.setLimits(id, ApiKeys.parseLimit("Requests a minute", request.getParameter("perMinute")),
                         ApiKeys.parseLimit("Requests a day", request.getParameter("perDay")),
-                        ApiKeys.parseLimit("Records an answer", request.getParameter("maxRecords")),
+                        ApiKeys.parseMaxRecords("Records an answer", request.getParameter("maxRecords")),
                         ApiKeys.parseLimit("Records a day", request.getParameter("recordsPerDay")));
                     return "Key " + id + ": limits saved (a blank limit uses the level's default).";
                 case "note": {
@@ -167,8 +168,9 @@ public final class ApiKeysAction extends AntwebAction {
         + " then <i>active</i>. You get a copy of every registration by email. Click a name to revoke or reactivate the key,"
         + " change its level or limits, or add a note.</p>"
         + "<p><b>Columns:</b> Key is the first 7 characters of the key (the key itself is never stored). Created is when the form"
-        + " was sent, Confirmed when the email link was opened, Last used the last request with the key. Today, 7 days and 30 days"
-        + " count requests; Records is the number of records the API sent in 30 days; Refused counts requests turned away"
+        + " was sent, Confirmed when the email link was opened, Last used the last request with the key. All times and days are"
+        + " UTC (8 hours ahead of Pacific in winter, 7 in summer; a day ends at 4 or 5 PM Pacific), as the API counts them."
+        + " Today, 7 days and 30 days count requests; Records is the number of records the API sent in 30 days; Refused counts requests turned away"
         + " (HTTP 429) for going over a limit in 30 days. The first row adds up all requests made without a key.</p>"
         + "<p><b>Default limits:</b> without a key, " + ApiKeys.NO_KEY_PER_MINUTE + " requests a minute, " + ApiKeys.NO_KEY_PER_DAY
         + " a day and " + ApiKeys.NO_KEY_MAX_RECORDS + " records an answer (per IP address). Registered key: "
@@ -190,7 +192,9 @@ public final class ApiKeysAction extends AntwebAction {
             .append(" <input class=\"aw-btn\" type=\"submit\" value=\"Show\"></div></form>");
         sb.append("<p class=\"aw-note\"><a id=\"api-keys-csv\" href=\"").append(Html.escAttr(app + "/apiKeys.do?format=csv" + query(f)))
             .append("\">Download this list as CSV</a> (opens in a spreadsheet). Registration is ")
-            .append(ApiKeys.isOpen() ? "<b>open</b>" : "<b>not open yet</b> (apiKey.do says \"Registration opens soon\"; apiKeys.open=true in etc/api-keys.properties on the server opens it)")
+            .append(ApiKeys.registrationOpen() ? "<b>open</b>"
+                : ApiKeys.isOpen() ? "<b>not open</b>: apiKeys.open=true, but the human check is not configured (etc/turnstile.properties with siteKey and secret), so apiKey.do says \"Registration opens soon\""
+                : "<b>not open yet</b> (apiKey.do says \"Registration opens soon\"; apiKeys.open=true in etc/api-keys.properties on the server opens it)")
             .append(".</p></div>");
         return sb.toString();
     }
@@ -212,7 +216,7 @@ public final class ApiKeysAction extends AntwebAction {
         StringBuilder sb = new StringBuilder("<div class=\"aw-card\" id=\"api-keys-list\"><h2>Registrations (")
             .append(rows.size()).append(")</h2>");
         sb.append("<table id=\"api-keys-table\"><tr><th>Name</th><th>Email</th><th>Institution</th><th>Project</th><th>Level</th>"
-            + "<th>Status</th><th>Key</th><th>Created</th><th>Confirmed</th><th>Last used</th><th>Today</th><th>7 days</th>"
+            + "<th>Status</th><th>Key</th><th>Created (UTC)</th><th>Confirmed (UTC)</th><th>Last used (UTC)</th><th>Today (UTC)</th><th>7 days</th>"
             + "<th>30 days</th><th>Records, 30 days</th><th>Refused, 30 days</th></tr>");
         sb.append("<tr id=\"api-keys-no-key\"><td colspan=\"10\"><i>All requests without a key</i></td>").append(usageCells(noKey)).append("</tr>");
         for (int i = 0; i < rows.size() && i < SHOWN; i++) {
@@ -251,13 +255,13 @@ public final class ApiKeysAction extends AntwebAction {
         kv(sb, "Institution or affiliation", Html.esc(r.institution == null ? "" : r.institution));
         kv(sb, "Project", Html.esc(r.project).replace("\n", "<br>"));
         kv(sb, "Level", Html.esc(r.level));
-        kv(sb, "Status", Html.esc(r.status) + (r.revoked != null ? " (revoked " + time(r.revoked) + ")" : ""));
+        kv(sb, "Status", Html.esc(r.status) + (r.revoked != null ? " (revoked " + time(r.revoked) + " UTC)" : ""));
         kv(sb, "Key", r.shownPrefix().isEmpty() ? "<i>not made yet (the email link was not opened)</i>" : "<code>" + Html.esc(r.shownPrefix()) + "...</code>");
-        kv(sb, "Created", time(r.created));
-        kv(sb, "Confirmed", time(r.confirmed));
-        if (ApiKeys.PENDING.equals(r.status)) kv(sb, "Link valid until", time(r.confirmExpires));
-        kv(sb, "Last used", time(r.lastUsed));
-        kv(sb, "Requests today, 7 days, 30 days", num(r.usage.today) + ", " + num(r.usage.last7) + ", " + num(r.usage.last30));
+        kv(sb, "Created (UTC)", time(r.created));
+        kv(sb, "Confirmed (UTC)", time(r.confirmed));
+        if (ApiKeys.PENDING.equals(r.status)) kv(sb, "Link valid until (UTC)", time(r.confirmExpires));
+        kv(sb, "Last used (UTC)", time(r.lastUsed));
+        kv(sb, "Requests today (UTC), 7 days, 30 days", num(r.usage.today) + ", " + num(r.usage.last7) + ", " + num(r.usage.last30));
         kv(sb, "Records, 30 days", num(r.usage.records30));
         kv(sb, "Refused (429), 30 days", num(r.usage.refused30));
         kv(sb, "Limits", limits(r));
@@ -292,7 +296,8 @@ public final class ApiKeysAction extends AntwebAction {
         sb.append("</select> ").append(confirmBox).append("<input class=\"aw-btn\" type=\"submit\" value=\"Save the level\"></div></form></div>");
 
         sb.append("<div class=\"aw-card\" id=\"api-key-limits\"><h2>Limits of this key</h2>")
-          .append("<p class=\"aw-lead\">Leave a box blank to use the level's default (shown in grey).</p>")
+          .append("<p class=\"aw-lead\">Leave a box blank to use the level's default (shown in grey). 0 is not allowed: to block a key, revoke it."
+              + " Records an answer: at most " + String.format("%,d", ApiKeys.MAX_RECORDS_PER_ANSWER) + " (the API never puts more in one answer).</p>")
           .append("<form method=\"post\" action=\"").append(action).append("\">").append(csrf).append(hidden)
           .append("<input type=\"hidden\" name=\"op\" value=\"limits\">")
           .append(limitBox("Requests a minute", "perMinute", r.perMinute, ApiKeys.REGISTERED_PER_MINUTE))
@@ -346,8 +351,8 @@ public final class ApiKeysAction extends AntwebAction {
     // ---------------------------------------------------------------- CSV
 
     public static final String[] CSV_HEADER = {"number", "name", "email", "institution", "project", "level", "status", "key (first 7 characters)",
-        "created", "confirmed", "last used", "revoked", "requests a minute", "requests a day", "records an answer", "records a day",
-        "requests today", "requests 7 days", "requests 30 days", "records 30 days", "refused 30 days", "note"};
+        "created (UTC)", "confirmed (UTC)", "last used (UTC)", "revoked (UTC)", "requests a minute", "requests a day", "records an answer", "records a day",
+        "requests today (UTC)", "requests 7 days", "requests 30 days", "records 30 days", "refused 30 days", "note"};
 
     /** The list as CSV text: a header, the no-key row (number 0), then one line per key. */
     public static String csv(List<ApiKeyDb.Row> rows, ApiKeyDb.Usage noKey) {
@@ -365,7 +370,7 @@ public final class ApiKeysAction extends AntwebAction {
 
     private static void writeCsv(HttpServletResponse response, List<ApiKeyDb.Row> rows, ApiKeyDb.Usage noKey) throws IOException {
         response.setContentType("text/csv; charset=UTF-8");
-        response.setHeader("Content-Disposition", "attachment; filename=\"antweb-api-keys-" + LocalDate.now() + ".csv\"");
+        response.setHeader("Content-Disposition", "attachment; filename=\"antweb-api-keys-" + LocalDate.now(java.time.ZoneOffset.UTC) + ".csv\"");
         PrintWriter out = response.getWriter();
         out.write('﻿');  // so spreadsheets read accented names as UTF-8
         out.write(csv(rows, noKey));

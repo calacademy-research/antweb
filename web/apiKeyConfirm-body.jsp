@@ -24,8 +24,8 @@
    <button type="button" class="tool_label" style="float:none;" onclick="var k=document.getElementById('api-key-value');k.select();if(navigator.clipboard){navigator.clipboard.writeText(k.value);}">Copy</button></p>
 <p>Keep it private: anyone with the key can use it in your name. We store only a fingerprint of it, so we cannot send it to you again; if you lose it, register again.</p>
 <p><b>How to use it:</b> send the key in the <code>X-API-Key</code> header of every request, never in the web address. For example:</p>
-<pre style="white-space: pre-wrap; word-break: break-all;">curl -H "X-API-Key: <%= Html.esc(p.key) %>" "https://www.antweb.org/v3.1/specimens?genus=Strumigenys&amp;limit=10"</pre>
-<p>Documentation: <a href="<%= ApiKeys.DOCS_URL %>">AntWeb API</a>. Terms of use: <a href="<%= ApiKeys.TERMS_URL %>">Access and terms of use</a>.</p>
+<pre style="white-space: pre-wrap; word-break: break-all;">curl -H "X-API-Key: <%= Html.esc(p.key) %>" "https://www.antweb.org/v4/specimens?genus=Strumigenys&amp;limit=10"</pre>
+<p>The keyed API is version 4: <a href="<%= ApiKeys.V4_URL %>"><%= ApiKeys.V4_URL %></a> (its limits, routes and field names). Documentation: <a href="<%= ApiKeys.DOCS_URL %>">AntWeb API</a>. Terms of use: <a href="<%= ApiKeys.TERMS_URL %>">Access and terms of use</a>.</p>
 <p>Working on a larger project? Brian L. Fisher welcomes collaborations; write to <a href="mailto:antweb@antweb.org">antweb@antweb.org</a>.</p>
 
 <% } else if ("confirm".equals(p.state) && token != null) { %>

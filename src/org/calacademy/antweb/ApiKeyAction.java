@@ -27,11 +27,12 @@ import org.calacademy.antweb.util.Turnstile;
  *
  *   GET   the form: name, email, project description (required), institution or affiliation (optional), "I agree
  *         to the terms" (links to apiV3.1.do#terms), the Cloudflare Turnstile check. Without apiKeys.open=true in
- *         etc/api-keys.properties on the server the page says "Registration opens soon" and shows no form.
+ *         etc/api-keys.properties on the server, or without the human check (etc/turnstile.properties with siteKey
+ *         and secret; ApiKeys.registrationOpen), the page says "Registration opens soon" and shows no form.
  *   POST  checks, in order: registration open, the form's CSRF token (Csrf.check; the form's session), the fields
  *         (ApiKeys.Registration.problem), Turnstile, at most 5 registrations an hour from the IP address; then
- *         ApiKeyMgr.register (3 a day per email address, 100 a day in all, saves 'pending', emails the link and
- *         the copy to Brian Fisher). The answer is "check your email".
+ *         ApiKeyMgr.register (3 a day per email address, 100 confirmed and 300 pending a day in all, saves
+ *         'pending', emails the link and the copy to Brian Fisher). The answer is "check your email".
  *
  * Request attributes for apiKey-body.jsp: apiKeyState ("closed", "form" or "sent"), apiKeyError (a message shown
  * with the form, or absent), apiKeyForm (the ApiKeys.Registration typed, to fill the form again).
@@ -46,7 +47,7 @@ public final class ApiKeyAction extends AntwebAction {
         throws IOException, ServletException {
 
         response.setHeader("Cache-Control", "no-store");
-        if (!ApiKeys.isOpen()) {
+        if (!ApiKeys.registrationOpen()) {  // apiKeys.open=true and the human check configured
             request.setAttribute("apiKeyState", "closed");
             return mapping.findForward("success");
         }

@@ -73,7 +73,7 @@ public class ApiKeyDbTest extends TestCase {
         assertEquals("pending", one("select status from api_key"));
         assertEquals(ApiKeys.sha256(token), one("select confirm_token_hash from api_key"));
         assertTrue(one("select prefix from api_key").startsWith("p_"));
-        assertEquals("1", one("select count(*) from api_key where confirm_expires > now() + interval 23 hour"));
+        assertEquals("1", one("select count(*) from api_key where confirm_expires > utc_timestamp() + interval 23 hour"));
 
         // Opening the link (GET) shows the button and changes nothing (email scanners open links first).
         ApiKeyMgr.ConfirmPage get = ApiKeyMgr.confirm(connection, token, false);
@@ -105,7 +105,7 @@ public class ApiKeyDbTest extends TestCase {
     public void testExpiredUnknownAndCancelledLinks() throws Exception {
         ApiKeyDb db = new ApiKeyDb(connection);
         String token = pending(db, "Bo", "bo@example.org");
-        exec("update api_key set confirm_expires = now() - interval 1 minute");
+        exec("update api_key set confirm_expires = utc_timestamp() - interval 1 minute");
         assertEquals("expired", ApiKeyMgr.confirm(connection, token, false).state);
         ApiKeyMgr.ConfirmPage post = ApiKeyMgr.confirm(connection, token, true);
         assertEquals("expired", post.state);
@@ -133,25 +133,63 @@ public class ApiKeyDbTest extends TestCase {
         assertEquals(ApiKeyMgr.EMAIL_LIMIT, ApiKeyMgr.register(connection, reg("Di", "di@example.org")));
         assertEquals("3", one("select count(*) from api_key"));
         assertEquals(ApiKeyMgr.MAIL_FAILED, ApiKeyMgr.register(connection, reg("Ed", "ed@example.org")));
-        exec("update api_key set created = now() - interval 25 hour where email = 'di@example.org'");
+        exec("update api_key set created = utc_timestamp() - interval 25 hour where email = 'di@example.org'");
         assertEquals(0, db.countByEmailLastDay("di@example.org"));
-        assertEquals(1, db.countAllLastDay());
+        assertEquals(1, db.countPendingLastDay());
+        assertEquals(0, db.countConfirmedLastDay());
         assertEquals("pending", one("select distinct status from api_key"));
+
+        // The day's total counts confirmed registrations (100) and has a ceiling for pending ones (300)
+        for (int i = 0; i < ApiKeys.MAX_PENDING_PER_DAY - 1; i++) pending(db, "F" + i, "f" + i + "@example.org");
+        assertEquals(ApiKeys.MAX_PENDING_PER_DAY, db.countPendingLastDay());
+        assertEquals(ApiKeyMgr.DAILY_LIMIT, ApiKeyMgr.register(connection, reg("Gu", "gu@example.org")));
+        exec("update api_key set status = 'active', confirmed = utc_timestamp() where name like 'F%'");
+        assertEquals(ApiKeys.MAX_PENDING_PER_DAY - 1, db.countConfirmedLastDay());
+        assertEquals(1, db.countPendingLastDay());
+        assertEquals("over 100 confirmed today", ApiKeyMgr.DAILY_LIMIT, ApiKeyMgr.register(connection, reg("Gu", "gu@example.org")));
+        exec("update api_key set created = utc_timestamp() - interval 25 hour where name like 'F%'");
+        assertEquals(ApiKeyMgr.MAIL_FAILED, ApiKeyMgr.register(connection, reg("Gu", "gu@example.org")));
+    }
+
+    public void testTimesAreUtc() throws Exception {
+        // The API writes api_usage_daily.day and last_used in UTC; the web application writes and compares in UTC too,
+        // whatever the session's time zone (the servers' MySQL runs on Pacific time).
+        try (java.sql.Statement st = connection.createStatement()) {
+            st.execute("set time_zone = '-08:00'");
+            try {
+                ApiKeyDb db = new ApiKeyDb(connection);
+                String token = pending(db, "Hu", "hu@example.org");
+                assertEquals("1", one("select count(*) from api_key where abs(timestampdiff(minute, created, utc_timestamp())) < 2"));
+                assertEquals("1", one("select count(*) from api_key where abs(timestampdiff(minute, confirm_expires, utc_timestamp() + interval 24 hour)) < 2"));
+                assertEquals(1, db.countByEmailLastDay("hu@example.org"));
+                assertEquals("done", ApiKeyMgr.confirm(connection, token, true).state);
+                assertEquals("1", one("select count(*) from api_key where abs(timestampdiff(minute, confirmed, utc_timestamp())) < 2"));
+                int id = Integer.parseInt(one("select id from api_key where name = 'Hu'"));
+                exec("insert into api_usage_daily (day, key_id, requests, records, limited) values (utc_date(), " + id + ", 3, 30, 0)");
+                assertEquals(3, db.get(id).usage.today);
+                assertTrue(db.revoke(id));
+                assertEquals("1", one("select count(*) from api_key where abs(timestampdiff(minute, revoked, utc_timestamp())) < 2"));
+                java.time.LocalDateTime utcNow = java.time.LocalDateTime.now(java.time.ZoneOffset.UTC);
+                assertTrue("dbNow is UTC", Math.abs(java.time.Duration.between(db.get(id).dbNow, utcNow).toMinutes()) < 2);
+            } finally {
+                st.execute("set time_zone = SYSTEM");
+            }
+        }
     }
 
     public void testAdminListUsageAndChanges() throws Exception {
         ApiKeyDb db = new ApiKeyDb(connection);
         String t1 = pending(db, "Ana Old", "ana@example.org");
-        exec("update api_key set created = now() - interval 2 day");
+        exec("update api_key set created = utc_timestamp() - interval 2 day");
         assertEquals("done", ApiKeyMgr.confirm(connection, t1, true).state);
         pending(db, "Bo 100%", "bo@museum.org");
         int ana = Integer.parseInt(one("select id from api_key where name = 'Ana Old'"));
         int bo = Integer.parseInt(one("select id from api_key where name like 'Bo%'"));
 
         exec("insert into api_usage_daily (day, key_id, requests, records, limited) values"
-            + " (curdate(), " + ana + ", 10, 100, 1), (curdate() - interval 5 day, " + ana + ", 20, 200, 2),"
-            + " (curdate() - interval 20 day, " + ana + ", 30, 300, 3), (curdate() - interval 40 day, " + ana + ", 999, 999, 9),"
-            + " (curdate(), 0, 4, 40, 7), (curdate() - interval 29 day, 0, 5, 50, 0)");
+            + " (utc_date(), " + ana + ", 10, 100, 1), (utc_date() - interval 5 day, " + ana + ", 20, 200, 2),"
+            + " (utc_date() - interval 20 day, " + ana + ", 30, 300, 3), (utc_date() - interval 40 day, " + ana + ", 999, 999, 9),"
+            + " (utc_date(), 0, 4, 40, 7), (utc_date() - interval 29 day, 0, 5, 50, 0)");
 
         List<ApiKeyDb.Row> all = db.list(new ApiKeyDb.Filter());
         assertEquals(2, all.size());

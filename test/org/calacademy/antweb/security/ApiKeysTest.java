@@ -89,8 +89,25 @@ public class ApiKeysTest extends TestCase {
         assertTrue(ApiKeys.allowEmail(0));
         assertTrue(ApiKeys.allowEmail(2));
         assertFalse(ApiKeys.allowEmail(3));
-        assertTrue(ApiKeys.allowAll(99));
-        assertFalse(ApiKeys.allowAll(100));
+        // 100 confirmed registrations a day in all; at most 300 pending ones, so a flood of unconfirmed ones stops
+        // itself without using up the day for everyone
+        assertTrue(ApiKeys.allowAll(99, 0));
+        assertFalse(ApiKeys.allowAll(100, 0));
+        assertTrue(ApiKeys.allowAll(0, 299));
+        assertFalse(ApiKeys.allowAll(0, 300));
+        assertEquals(100, ApiKeys.MAX_PER_DAY_ALL);
+        assertEquals(300, ApiKeys.MAX_PENDING_PER_DAY);
+    }
+
+    public void testCopiesToTheAdministrator() {
+        // 20 copies a day, then one "more today" email, then none (own count, not the shared notice budget)
+        assertEquals(20, ApiKeys.MAX_COPIES_PER_DAY);
+        for (int n = 1; n <= 20; n++) assertEquals("registration " + n, "copy", ApiKeyMgr.copyDecision(n));
+        assertEquals("summary", ApiKeyMgr.copyDecision(21));
+        assertEquals("none", ApiKeyMgr.copyDecision(22));
+        assertEquals("none", ApiKeyMgr.copyDecision(500));
+        String more = ApiKeyMgr.moreText("https://www.antweb.org/apiKeys.do");
+        assertTrue(more, more.contains("more than 20 API key registrations today (UTC)") && more.contains("https://www.antweb.org/apiKeys.do"));
     }
 
     public void testRegistrationForm() {
@@ -119,8 +136,29 @@ public class ApiKeysTest extends TestCase {
         assertNull(ApiKeys.parseLimit("x", null));
         assertNull(ApiKeys.parseLimit("x", "  "));
         assertEquals(Integer.valueOf(5000), ApiKeys.parseLimit("x", "5,000"));
-        assertEquals(Integer.valueOf(0), ApiKeys.parseLimit("x", "0"));
+        assertEquals(Integer.valueOf(1), ApiKeys.parseLimit("x", "1"));
         assertEquals(Integer.valueOf(10_000_000), ApiKeys.parseLimit("x", "10000000"));
+        // 0 is refused (the API would read it as the default, not as blocked): revoke the key instead
+        for (String zero : new String[] {"0", " 0 ", "000"}) {
+            try {
+                ApiKeys.parseLimit("Requests a day", zero);
+                fail(zero);
+            } catch (IllegalArgumentException e) {
+                assertTrue(e.getMessage(), e.getMessage().contains("use Revoke to block a key"));
+            }
+        }
+        // records an answer: at most 10,000, the API's own ceiling (api_keys.ABSOLUTE_MAX_RECORDS)
+        assertEquals(10_000, ApiKeys.MAX_RECORDS_PER_ANSWER);
+        assertEquals(Integer.valueOf(10_000), ApiKeys.parseMaxRecords("Records an answer", "10,000"));
+        assertNull(ApiKeys.parseMaxRecords("Records an answer", ""));
+        for (String bad : new String[] {"10001", "0", "50000"}) {
+            try {
+                ApiKeys.parseMaxRecords("Records an answer", bad);
+                fail(bad);
+            } catch (IllegalArgumentException e) {
+                assertTrue(e.getMessage(), e.getMessage().startsWith("Records an answer"));
+            }
+        }
         for (String bad : new String[] {"-1", "abc", "1.5", "10000001", "9999999999"}) {
             try {
                 ApiKeys.parseLimit("Requests a day", bad);
@@ -179,9 +217,10 @@ public class ApiKeysTest extends TestCase {
 
     public void testEmailTexts() {
         String link = "https://www.antweb.org/apiKeyConfirm.do?token=" + ApiKeys.newConfirmToken();
-        String body = ApiKeyMgr.confirmationEmailBody("Ana <b>Silva</b>", link);
+        String body = ApiKeyMgr.confirmationEmailBody(link);
         assertTrue(body.contains(link));
-        assertTrue(body.contains("Ana &lt;b&gt;Silva&lt;/b&gt;"));
+        // the registrant's name is not in the email (it could carry any text to any address)
+        assertTrue(body, body.startsWith("Hello,<br>"));
         assertTrue(body.contains("24 hours"));
         assertTrue(body.contains("https://www.antweb.org/apiV3.1.do#terms"));
         assertTrue(body.contains("Working on a larger project? Brian L. Fisher welcomes collaborations; write to antweb@antweb.org."));
@@ -189,7 +228,7 @@ public class ApiKeysTest extends TestCase {
 
         ApiKeys.Registration r = new ApiKeys.Registration("Ana Silva", "ana@example.org", "", "Maps of Strumigenys", true);
         String copy = ApiKeyMgr.copyText(r, 42, LocalDateTime.of(2026, 11, 8, 14, 3), true, "https://www.antweb.org/apiKeys.do?id=42");
-        for (String s : new String[] {"Ana Silva", "ana@example.org", "(none given)", "Maps of Strumigenys", "2026-11-08 14:03",
+        for (String s : new String[] {"Ana Silva", "ana@example.org", "(none given)", "Maps of Strumigenys", "2026-11-08 14:03 (UTC)",
                                       "https://www.antweb.org/apiKeys.do?id=42", "number 42"}) {
             assertTrue(s, copy.contains(s));
         }
@@ -202,6 +241,10 @@ public class ApiKeysTest extends TestCase {
         }
         assertTrue(ApiKeysAction.HELP.contains("5 requests a minute, 50 a day and 25 records an answer"));
         assertTrue(ApiKeysAction.HELP.contains("60 requests a minute, 5,000 a day, 500 records an answer and 50,000 records a day"));
+        assertTrue(ApiKeysAction.HELP.contains("All times and days are UTC"));
+        for (String h : new String[] {"created (UTC)", "confirmed (UTC)", "last used (UTC)", "revoked (UTC)", "requests today (UTC)"}) {
+            assertTrue(h, java.util.Arrays.asList(ApiKeysAction.CSV_HEADER).contains(h));
+        }
     }
 
     public void testRegistrationOpensWithTheSettingsFile() {
@@ -214,5 +257,11 @@ public class ApiKeysTest extends TestCase {
         assertTrue(ApiKeys.isOpen(p));
         // No file on a test machine: registration is not open.
         assertFalse(ApiKeys.isOpen());
+        // The form opens only with apiKeys.open=true AND the human check configured (etc/turnstile.properties)
+        assertTrue(ApiKeys.opens(true, true));
+        assertFalse("open, but no Turnstile", ApiKeys.opens(true, false));
+        assertFalse(ApiKeys.opens(false, true));
+        assertFalse(ApiKeys.opens(false, false));
+        assertFalse(ApiKeys.registrationOpen());
     }
 }

@@ -34,8 +34,9 @@ def test_source_form_fields_and_checks():
                   "Csrf.field(request)", "Turnstile.isEnabled()", "ApiKeys.TERMS_URL", OPENS_SOON, COLLAB):
         assert field in body, field
     action = _src("src/org/calacademy/antweb/ApiKeyAction.java")
-    # Checked in this order: open, CSRF, fields, human check, per-IP limit, then saved.
-    order = [action.index(s) for s in ("ApiKeys.isOpen()", "Csrf.check(request)", "r.problem()", "Turnstile.check(request)",
+    # Checked in this order: open (apiKeys.open=true and Turnstile configured), CSRF, fields, human check, per-IP
+    # limit, then saved.
+    order = [action.index(s) for s in ("ApiKeys.registrationOpen()", "Csrf.check(request)", "r.problem()", "Turnstile.check(request)",
                                        "ApiKeys.allowIp(", "register(request, r)")]
     assert order == sorted(order), order
 
@@ -46,7 +47,17 @@ def test_source_key_never_logged_or_emailed():
         if "logEvent(" in line or "s_log." in line or "Emailer." in line:
             assert not re.search(r"\b(key|token)\b\s*[+)]", line), line
     assert "sendTransactional(" in mgr  # the link email: its body is never written to a log
+    # the copies to the administrator keep their own count (20 a day, then one "more today"), not the notice budget
+    assert "Emailer.sendNoticeOwnLimit(ApiKeys.COPY_TO" in mgr and "Emailer.sendNotice(" not in mgr
+    # the confirmation email does not repeat the name typed on the form
+    assert "confirmationEmailBody(link)" in mgr and '"Hello,<br><br>' in mgr
     assert "ApiKeys.COPY_TO" in mgr and '"bfisher@calacademy.org"' in _src("src/org/calacademy/antweb/util/ApiKeys.java")
+
+
+def test_source_confirm_page_shows_v4():
+    body = _src("web/apiKeyConfirm-body.jsp")
+    assert "https://www.antweb.org/v4/specimens?" in body and "/v3.1/specimens" not in body
+    assert "ApiKeys.V4_URL" in body and 'V4_URL = "https://www.antweb.org/v4/"' in _src("src/org/calacademy/antweb/util/ApiKeys.java")
 
 
 def test_source_api_page_links_registration():

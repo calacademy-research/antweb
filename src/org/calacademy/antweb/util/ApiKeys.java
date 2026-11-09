@@ -28,12 +28,18 @@ import org.apache.commons.logging.LogFactory;
  *     first 7 characters (api_key.prefix, for the admin page) are stored, never the key itself;
  *   - the email confirmation token is 32 random bytes (43 characters); only its SHA-256 is stored
  *     (api_key.confirm_token_hash), valid for 24 hours, used once;
- *   - registrations are throttled: 5 an hour per IP address (in memory), 3 a day per email address and 100 a day in
- *     all (counted in api_key);
+ *   - registrations are throttled: 5 an hour per IP address (in memory), 3 a day per email address, 100 confirmed
+ *     registrations a day in all and at most 300 pending (unconfirmed) ones made in a day (counted in api_key), so a
+ *     flood of unconfirmed registrations cannot use up the day for everyone;
  *   - the levels, statuses and default limits shown on the admin page;
  *   - CSV fields for the admin page's download;
  *   - etc/api-keys.properties on the server: apiKeys.open=true opens registration (apiKey.do says
- *     "Registration opens soon" without it), so this can be deployed before the API checks keys (PR 3).
+ *     "Registration opens soon" without it), so this can be deployed before the API checks keys (PR 3). The form
+ *     opens only when the human check is configured as well (etc/turnstile.properties with siteKey and secret;
+ *     registrationOpen()); without it the page says "Registration opens soon" and the log says why, once.
+ *   - times: every time of the API keys is UTC, as the API writes it (api_usage_daily.day, last_used); the web
+ *     application writes created, confirmed, confirm_expires and revoked with utc_timestamp() and the admin page
+ *     labels them "(UTC)".
  *
  * Keys and tokens are never logged or emailed (the key is shown once on the confirmation page).
  * Database side: home/ApiKeyDb. Pages: ApiKeyAction (apiKey.do), ApiKeyConfirmAction (apiKeyConfirm.do),
@@ -53,7 +59,12 @@ public final class ApiKeys {
 
     public static final int MAX_PER_IP_PER_HOUR = 5;
     public static final int MAX_PER_EMAIL_PER_DAY = 3;
+    /** Confirmed registrations in the last 24 hours, by anyone. */
     public static final int MAX_PER_DAY_ALL = 100;
+    /** Pending (unconfirmed) registrations made in the last 24 hours, by anyone: a ceiling against floods. */
+    public static final int MAX_PENDING_PER_DAY = 300;
+    /** Copies of registrations to COPY_TO a day (UTC); after that one email says there are more (ApiKeyMgr). */
+    public static final int MAX_COPIES_PER_DAY = 20;
 
     public static final String PENDING = "pending";
     public static final String ACTIVE = "active";
@@ -85,6 +96,10 @@ public final class ApiKeys {
     public static final int REGISTERED_RECORDS_PER_DAY = 50000;
     /** The largest limit an admin may set on a key (a typing error such as 50000000 is refused). */
     public static final int MAX_LIMIT_VALUE = 10_000_000;
+    /** The most records one answer can hold, whatever a key says (api/v3.1/api_keys.py ABSOLUTE_MAX_RECORDS). */
+    public static final int MAX_RECORDS_PER_ANSWER = 10_000;
+    /** Shown when an admin types 0: a limit of 0 would mean the default to the API, not "blocked". */
+    public static final String ZERO_LIMIT_MESSAGE = "0 is not allowed (use Revoke to block a key; leave the box blank for the default).";
 
     public static final int MAX_NAME = 200;
     public static final int MAX_EMAIL = 254;
@@ -95,6 +110,8 @@ public final class ApiKeys {
     public static final String TERMS_URL = "https://www.antweb.org/apiV3.1.do#terms";
     public static final String DOCS_URL = "https://www.antweb.org/apiV3.1.do";
     public static final String HEADER = "X-API-Key";
+    /** The API that takes keys (api/v3.1/api_v4.py). */
+    public static final String V4_URL = "https://www.antweb.org/v4/";
     /** Who gets a copy of every registration (Brian Fisher, 2026-11-08: bfisher@calacademy.org only). */
     public static final String COPY_TO = "bfisher@calacademy.org";
 
@@ -230,8 +247,9 @@ public final class ApiKeys {
         return sameEmailLastDay < MAX_PER_EMAIL_PER_DAY;
     }
 
-    public static boolean allowAll(int allLastDay) {
-        return allLastDay < MAX_PER_DAY_ALL;
+    /** Another registration in all: fewer than 100 confirmed and fewer than 300 pending ones in the last 24 hours. */
+    public static boolean allowAll(int confirmedLastDay, int pendingLastDay) {
+        return confirmedLastDay < MAX_PER_DAY_ALL && pendingLastDay < MAX_PENDING_PER_DAY;
     }
 
     // ---------------------------------------------------------------- the form
@@ -291,16 +309,27 @@ public final class ApiKeys {
     // ---------------------------------------------------------------- admin page
 
     /**
-     * A limit typed on the admin page: blank = the level's default (null); otherwise a whole number from 0 to
-     * MAX_LIMIT_VALUE (commas and spaces allowed, "5,000"). Anything else: IllegalArgumentException with the reason.
+     * A limit typed on the admin page: blank = the level's default (null); otherwise a whole number from 1 to
+     * MAX_LIMIT_VALUE (commas and spaces allowed, "5,000"). 0 is refused (ZERO_LIMIT_MESSAGE: the API reads 0 as the
+     * default). Anything else: IllegalArgumentException with the reason.
      */
     public static Integer parseLimit(String label, String value) {
+        return parseLimit(label, value, MAX_LIMIT_VALUE);
+    }
+
+    /** Records an answer: as parseLimit, at most MAX_RECORDS_PER_ANSWER (10,000, the API's own ceiling). */
+    public static Integer parseMaxRecords(String label, String value) {
+        return parseLimit(label, value, MAX_RECORDS_PER_ANSWER);
+    }
+
+    static Integer parseLimit(String label, String value, int max) {
         if (value == null) return null;
         String v = value.replace(",", "").replace(" ", "").trim();
         if (v.isEmpty()) return null;
         if (!v.matches("\\d{1,9}")) throw new IllegalArgumentException(label + ": \"" + value.trim() + "\" is not a whole number.");
         int n = Integer.parseInt(v);
-        if (n > MAX_LIMIT_VALUE) throw new IllegalArgumentException(label + ": at most " + String.format("%,d", MAX_LIMIT_VALUE) + ".");
+        if (n == 0) throw new IllegalArgumentException(label + ": " + ZERO_LIMIT_MESSAGE);
+        if (n > max) throw new IllegalArgumentException(label + ": at most " + String.format("%,d", max) + ".");
         return n;
     }
 
@@ -337,6 +366,28 @@ public final class ApiKeys {
 
     public static boolean isOpen(Properties p) {
         return p != null && "true".equalsIgnoreCase(p.getProperty("apiKeys.open", "").trim());
+    }
+
+    private static final java.util.concurrent.atomic.AtomicBoolean s_loggedNoTurnstile = new java.util.concurrent.atomic.AtomicBoolean();
+
+    /**
+     * May apiKey.do show its form? Only with apiKeys.open=true AND the human check configured
+     * (etc/turnstile.properties with siteKey and secret): a public form that sends email must not open without it.
+     * Open but without Turnstile: logged once (until the next restart), the page says "Registration opens soon".
+     */
+    public static boolean registrationOpen() {
+        boolean open = isOpen();
+        boolean turnstile = Turnstile.isEnabled();
+        if (open && !turnstile && s_loggedNoTurnstile.compareAndSet(false, true)) {
+            s_log.warn("registrationOpen() apiKeys.open=true, but etc/turnstile.properties has no siteKey and secret:"
+                + " apiKey.do stays closed (\"Registration opens soon\") until the human check is configured");
+        }
+        return opens(open, turnstile);
+    }
+
+    /** The rule of registrationOpen(), for tests. */
+    public static boolean opens(boolean openSetting, boolean turnstileConfigured) {
+        return openSetting && turnstileConfigured;
     }
 
     private static synchronized Properties props() {

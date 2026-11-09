@@ -20,7 +20,12 @@ import org.calacademy.antweb.util.ApiKeys;
  *
  * ensureSchema() creates both tables when missing (once at startup from LoginMgr), with the same DDL as
  * db/upgrade/9.4.0/2026-11-08-api-keys.sql (tools/api/setup-usage-login.sh runs that file and adds the API's own
- * database login). Usage counts are read for the last 30 days, by the database's date (Pacific).
+ * database login). Usage counts are read for the last 30 days.
+ *
+ * Times are UTC throughout (one rule for the web application and the API): the API writes api_usage_daily.day and
+ * last_used in UTC, so this class writes created, confirmed, confirm_expires and revoked with utc_timestamp(), compares
+ * with utc_timestamp() and utc_date() (not the server's local clock, which is Pacific), and the admin page labels the
+ * times "(UTC)". The column default of created (current_timestamp) is never used: every insert sets it.
  * Tests: test/org/calacademy/antweb/home/ApiKeyDbTest.java (MySQL 8.4 in CI).
  */
 public class ApiKeyDb extends AntwebDb {
@@ -79,12 +84,17 @@ public class ApiKeyDb extends AntwebDb {
 
     /** Registrations made with this email address in the last 24 hours (any status). */
     public int countByEmailLastDay(String email) throws SQLException {
-        return count("select count(*) from api_key where email = ? and created > now() - interval 1 day", email);
+        return count("select count(*) from api_key where email = ? and created > utc_timestamp() - interval 1 day", email);
     }
 
-    /** Registrations made in the last 24 hours, by anyone. */
-    public int countAllLastDay() throws SQLException {
-        return count("select count(*) from api_key where created > now() - interval 1 day", null);
+    /** Registrations made in the last 24 hours, by anyone, whose email link was followed (any status since). */
+    public int countConfirmedLastDay() throws SQLException {
+        return count("select count(*) from api_key where confirmed is not null and created > utc_timestamp() - interval 1 day", null);
+    }
+
+    /** Registrations made in the last 24 hours, by anyone, still pending (link not followed yet, or expired). */
+    public int countPendingLastDay() throws SQLException {
+        return count("select count(*) from api_key where status = 'pending' and created > utc_timestamp() - interval 1 day", null);
     }
 
     private int count(String q, String param) throws SQLException {
@@ -104,7 +114,7 @@ public class ApiKeyDb extends AntwebDb {
     public int insertPending(ApiKeys.Registration r, String tokenHash, int hours) throws SQLException {
         String q = "insert into api_key (prefix, key_hash, name, email, institution, project, level, status,"
             + " confirm_token_hash, confirm_expires, created)"
-            + " values (?, ?, ?, ?, ?, ?, ?, ?, ?, now() + interval ? hour, now())";
+            + " values (?, ?, ?, ?, ?, ?, ?, ?, ?, utc_timestamp() + interval ? hour, utc_timestamp())";
         try (PreparedStatement stmt = getConnection().prepareStatement(q, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, ApiKeys.placeholderPrefix());
             stmt.setString(2, ApiKeys.placeholderHash());
@@ -135,8 +145,8 @@ public class ApiKeyDb extends AntwebDb {
      * the same 7 characters) throws SQLIntegrityConstraintViolationException; the caller makes a new key.
      */
     public boolean activate(int id, String tokenHash, String keyHash, String prefix) throws SQLException {
-        String q = "update api_key set key_hash = ?, prefix = ?, status = ?, confirmed = now()"
-            + " where id = ? and status = ? and confirm_token_hash = ? and confirm_expires > now()";
+        String q = "update api_key set key_hash = ?, prefix = ?, status = ?, confirmed = utc_timestamp()"
+            + " where id = ? and status = ? and confirm_token_hash = ? and confirm_expires > utc_timestamp()";
         try (PreparedStatement stmt = getConnection().prepareStatement(q)) {
             stmt.setString(1, keyHash);
             stmt.setString(2, prefix);
@@ -177,14 +187,14 @@ public class ApiKeyDb extends AntwebDb {
     }
 
     private static final String USAGE = "(select key_id,"
-        + " sum(case when day = curdate() then requests else 0 end) as today,"
-        + " sum(case when day >= curdate() - interval 6 day then requests else 0 end) as d7,"
+        + " sum(case when day = utc_date() then requests else 0 end) as today,"
+        + " sum(case when day >= utc_date() - interval 6 day then requests else 0 end) as d7,"
         + " sum(requests) as d30, sum(records) as r30, sum(limited) as l30"
-        + " from api_usage_daily where day >= curdate() - interval 29 day group by key_id)";
+        + " from api_usage_daily where day >= utc_date() - interval 29 day group by key_id)";
 
     private List<Row> select(String whereOrderBy, String... params) throws SQLException {
         String q = "select k.*, coalesce(u.today, 0) as u_today, coalesce(u.d7, 0) as u_d7, coalesce(u.d30, 0) as u_d30,"
-            + " coalesce(u.r30, 0) as u_r30, coalesce(u.l30, 0) as u_l30, now() as db_now"
+            + " coalesce(u.r30, 0) as u_r30, coalesce(u.l30, 0) as u_l30, utc_timestamp() as db_now"
             + " from api_key k left join " + USAGE + " u on u.key_id = k.id " + whereOrderBy;
         List<Row> rows = new ArrayList<>();
         try (PreparedStatement stmt = getConnection().prepareStatement(q)) {
@@ -251,7 +261,7 @@ public class ApiKeyDb extends AntwebDb {
 
     /** Revoke: the key stops working (PR 3 accepts only 'active'). True if changed. */
     public boolean revoke(int id) throws SQLException {
-        return update("update api_key set status = 'revoked', revoked = now() where id = ? and status <> 'revoked'", id);
+        return update("update api_key set status = 'revoked', revoked = utc_timestamp() where id = ? and status <> 'revoked'", id);
     }
 
     /** Reactivate a revoked key that had been confirmed. True if changed. */
@@ -314,7 +324,7 @@ public class ApiKeyDb extends AntwebDb {
         public String prefix, name, email, institution, project, level, status, note;
         public Integer perMinute, perDay, maxRecords, recordsPerDay;
         public LocalDateTime confirmExpires, created, confirmed, lastUsed, revoked;
-        /** The database's clock when the row was read (confirm_expires is compared with it, not with Java's). */
+        /** The database's clock (UTC) when the row was read (confirm_expires is compared with it, not with Java's). */
         public LocalDateTime dbNow;
         public Usage usage = new Usage();
 
