@@ -47,6 +47,8 @@ public class PlaceGenusCurationDbTest extends TestCase {
     static final String MG01 = "myrmicinaecarebara mg01";
     static final String MG02 = "myrmicinaecarebara mg02";
     static final String ZZ = "myrmicinaepheidole zz";
+    static final int TOLIARA = 81;
+    static final int TOLIARA_KENYA = 82;
 
     @Override
     protected void setUp() throws Exception {
@@ -72,6 +74,12 @@ public class PlaceGenusCurationDbTest extends TestCase {
         specimen("m3", MG01, "morphotaxon", null, "Madagascar", null);
         specimen("n1", MG02, "morphotaxon", "Madagascar", "Madagascar", null);
         specimen("z1", ZZ, "unrecognized", "Madagascar", null, null);
+        // B26 (fixed 2026-11-09): the adm1 Toliara of Madagascar (id TOLIARA); a state of the same name in Kenya, and its
+        // specimen, which is not Madagascar's Toliara's
+        exec("insert into geolocale (id, name, georank, parent, is_valid, is_live) values (" + TOLIARA + ", 'Toliara', 'adm1', 'Madagascar', 1, 1),"
+            + " (" + TOLIARA_KENYA + ", 'Toliara', 'adm1', 'Kenya', 1, 1)");
+        exec("insert into specimen (code, taxon_name, status, country, adm1, family, subfamily, genus) values ('k1', '" + MG01
+            + "', 'morphotaxon', 'Kenya', 'Toliara', 'formicidae', '" + MYRM + "', 'carebara')");
         exec("update specimen set genus = 'pheidole' where taxon_name like 'myrmicinaepheidole%'");
         exec("update specimen set genus = 'hypoponera' where taxon_name like 'ponerinaehypoponera%'");
     }
@@ -161,10 +169,16 @@ public class PlaceGenusCurationDbTest extends TestCase {
         assertEquals(0, row("country", "Madagascar", PHEIDOLE).morphoNames);
     }
 
-    /** adm1s by specimen.adm1, museums by code, bioregions by name; the same rule. */
+    /**
+     * adm1s by their country and name (key: the geolocale id; B26, fixed 2026-11-09), museums by code, bioregions by
+     * name; the same rule. m3 (no country) and k1 (Kenya) are not Madagascar's Toliara's; k1 is Kenya's Toliara's.
+     */
     public void testOtherKindsOfPlaces() throws Exception {
         new PlaceGenusCurationDb(connection).fillAll();
-        assertEquals("adm1 Toliara: mg01 3 + indet 1", 4, row("adm1", "Toliara", CAREBARA).notCurated);
+        assertEquals("adm1 Toliara of Madagascar: mg01 2 + indet 1 (m3 has no country, k1 is of Kenya)", 3,
+            row("adm1", "" + TOLIARA, CAREBARA).notCurated);
+        assertEquals("Toliara of Kenya: k1 only", 1, row("adm1", "" + TOLIARA_KENYA, CAREBARA).notCurated);
+        assertNull("no row by the name any more", row("adm1", "Toliara", CAREBARA));
         assertEquals("CASC: every Carebara specimen here", 4, row("museum", "CASC", CAREBARA).notCurated);
         assertEquals("CASC Pheidole: b (casent3) and zz", 2, row("museum", "CASC", PHEIDOLE).notCurated);
         assertEquals("MCZC: Hypoponera b, valid", 0, row("museum", "MCZC", HYPO).notCurated);
@@ -175,7 +189,7 @@ public class PlaceGenusCurationDbTest extends TestCase {
         int[] n = new PlaceGenusCurationDb(connection).fill(PlaceGenusCurationDb.MUSEUM);
         assertTrue(n[0] >= 2 && n[1] >= 3);
         assertEquals(3, row("museum", "CASC", CAREBARA).notCurated);
-        assertEquals("other kinds wait for their own fill", 4, row("adm1", "Toliara", CAREBARA).notCurated);
+        assertEquals("other kinds wait for their own fill", 3, row("adm1", "" + TOLIARA, CAREBARA).notCurated);
         try {
             new PlaceGenusCurationDb(connection).fill("region");
             fail("regions have no column");
@@ -195,7 +209,9 @@ public class PlaceGenusCurationDbTest extends TestCase {
         casc.setCode("CASC");
         assertNotNull(PlaceGenusCurationDb.read(connection, casc));
         Adm1 toliara = new Adm1();
+        toliara.setId(TOLIARA);
         toliara.setName("Toliara");
+        toliara.setParent("Madagascar");
         assertNotNull(PlaceGenusCurationDb.read(connection, toliara));
         Bioregion malagasy = new Bioregion();
         malagasy.setName("Malagasy");

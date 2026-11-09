@@ -1535,8 +1535,8 @@ select g.bioregion from geolocale where name in ('Comoros', 'Ethiopia', 'Macaron
       String clause = null;
       
       if ("adm1".equals(geolocale.getGeorank())) {
-        String name = AntFormatter.escapeQuotes(geolocale.getName());  
-        clause = " adm1 = '" + name + "'";
+        // B26, fixed 2026-11-09: the state's country and name
+        clause = " country = " + DBUtil.sqlLiteral(geolocale.getParent()) + " and adm1 = " + DBUtil.sqlLiteral(geolocale.getName());
         //A.log("getSpecimenLocaleClause() clause:" + clause);
       } else {
 

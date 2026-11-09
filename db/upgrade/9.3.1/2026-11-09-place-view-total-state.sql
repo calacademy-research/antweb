@@ -1,0 +1,23 @@
+-- What each place's list totals were counted from (Brian Fisher, 2026-11-09: the nightly Place list totals took 60
+-- minutes on 11-07 and 11-08 and about 4 hours on 11-09 counting every place every night).
+--
+--   place_view_total_state   per place, the rules and fingerprint its place_view_total rows were counted with
+--                            (PlaceViewTotalDb.fill, nightly after set 4; utilData.do?action=placeViewTotals)
+--     list_type, list_key    as place_view_total
+--     rules                  PlaceViewTotalDb.RULES when counted
+--     fingerprint            counts and crc32 checksums of what the place's lists are built from
+--     counted                when the place was last counted
+--     checked                when its fingerprint was last compared
+--
+-- The application creates the table when it is missing (PlaceViewTotalDb.ensureSchema), in the character set and
+-- collation of taxon.taxon_name; this file records it. Its own table (no ALTER of place_view_total, which every place
+-- page reads).
+
+-- CREATE TABLE IF NOT EXISTS place_view_total_state (
+--   list_type varchar(16) NOT NULL, list_key varchar(128) NOT NULL, rules varchar(64) NOT NULL,
+--   fingerprint varchar(255) NOT NULL, counted datetime NULL, checked datetime NULL,
+--   PRIMARY KEY (list_type, list_key)
+-- ) ENGINE=InnoDB;
+
+-- Undo: the next run counts every place again (the application creates the table again; to stop that too, revert the code).
+-- DROP TABLE IF EXISTS place_view_total_state;

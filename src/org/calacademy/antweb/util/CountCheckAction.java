@@ -227,7 +227,8 @@ public final class CountCheckAction extends AntwebAction {
     static CountCheck.Place geolocalePlace(Geolocale g) {
         String column = "country";
         if (g.isIsland()) column = "island_country";
-        else if (Georank.ADM1.equals(g.getGeorank())) column = "adm1";
+        // an adm1 by its country and name (B26, fixed 2026-11-09)
+        else if (Georank.ADM1.equals(g.getGeorank())) return CountCheck.Place.adm1("" + g.getId(), g.getName(), g.getParent(), g.getName());
         else if (g.isCountedFromCountries()) return CountCheck.Place.region("" + g.getId(), g.getName() + " (" + g.getGeorank() + ")");
         else if (!Georank.COUNTRY.equals(g.getGeorank())) return null;
         return new CountCheck.Place(CountCheck.GEOLOCALE, "" + g.getId(), g.getName(), column, g.getName());

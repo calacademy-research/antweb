@@ -313,6 +313,27 @@ changes `taxon_name` and `original_taxon_name`. Set 3: `museum` (`MuseumDb.popul
 **Numbers.** [numbers.md](numbers.md#2-inventory) #2, #4 (through `statistics`), #26 and #74 (Specimens of a place),
 #35 (Specimens per Subfamily pie), #40, #43, #50 to #53 (habitat, microhabitat, method), #63, #64 to #72, #100.
 
+**Indexes and the place queries** (2026-11-09). Each place reads its specimens by one condition, which must be able to
+use an index (production 2026-11-09: an adm1 read by `adm1 = X` alone used none, and the nightly Place list totals
+walked every ant specimen per state, 4 hours). Production's indexes: `PRIMARY` (`code`), `code_type` (`code`,
+`type_status`), `col_code_idx` (`collectioncode`), `col_museum_idx` (`museum`), `country_adm1_idx` (`country`, `adm1`),
+`county_idx` (`adm2`), `created`, `genus_species_idx` (`genus`, `species`), `loc_code_idx` (`localitycode`),
+`specimen_taxon_name` (`taxon_name`), `subfamily`.
+
+| Place | Condition | Index |
+|---|---|---|
+| adm1 | `country = <its parent> and adm1 = <its name>` (B26, fixed 2026-11-09; `Geolocale.adm1Criteria`) | `country_adm1_idx` |
+| country | `country = X`, then `island_country = X and not (country <=> X)` (`PlaceTaxonNotes.placeSpecimenParts`; some queries still `country = X or island_country = X`) | `country_adm1_idx`; the second part `island_country_idx` (to add) |
+| island | `island_country = X` | `island_country_idx` (to add) |
+| museum | `museum = X` | `col_museum_idx` |
+| bioregion | `bioregion = X` | `bioregion_idx` (to add) |
+| region, subregion | the specimens of their countries (`Geolocale.regionSpecimensSql`) | as countries |
+| project | the names on its list (`proj_taxon`) | `specimen_taxon_name` |
+
+`island_country_idx` and `bioregion_idx` are added online by `db/upgrade/9.3.1/2026-11-09-specimen-place-indexes.sql`
+(ALGORITHM=INPLACE, LOCK=NONE; production at a quiet time; rollback in the file). Until then those reads scan the table.
+Test: `home.PlaceViewTotalDbTest` (EXPLAIN on the test database: the adm1 and country queries can use `country_adm1_idx`).
+
 **Status.** In use.
 
 ### `taxon`
@@ -694,8 +715,9 @@ a valid name nor a curated morphospecies, `ListView.notCuratedCondition`), split
 specimens), specimens identified only to genus, and other names (unrecognized).
 
 **Key.** (`list_type`, `list_key`, `taxon_name`). `list_type`: `country`, `adm1`, `museum`, `bioregion`; `list_key`:
-the country's or adm1's name (as `specimen.country`/`island_country`, `specimen.adm1`), the museum's code, the
-bioregion's name; `taxon_name`: the genus row's (subfamily + genus).
+the country's name (as `specimen.country`/`island_country`), the adm1's geolocale id (since 2026-11-09: its specimens by
+`specimen.country` = its parent and `specimen.adm1` = its name, B26 fixed; until then the adm1's name), the museum's
+code, the bioregion's name; `taxon_name`: the genus row's (subfamily + genus).
 
 **Key columns.** `specimens`, `not_curated`, `morpho_names`, `morpho_specimens`, `indet_specimens`, `other_specimens`,
 `counted`.
@@ -721,18 +743,41 @@ the list it opens.
 **Key columns.** `view_name` (the view counted), `n`, `counted`.
 
 **Written by.** Set 4 and `utilData.do?action=placeViewTotals` (`PlaceViewTotalDb.fillAll`, after `placeGenusCuration`).
-Created by the application; record and undo in `db/upgrade/8.116/2026-11-04-place-view-total.sql`.
+Since 2026-11-09 only the places whose data changed are counted again (`place_view_total_state`), each place committed
+on its own; `&param=all` and Sundays count every place. Created by the application; record and undo in
+`db/upgrade/8.116/2026-11-04-place-view-total.sql`.
 
 **Read by.** Place pages (`OverviewAction.setPlaceImages`, overview-body.jsp), the Valid species list header
 (`TaxaPageAction`). A place not counted yet shows its stored totals.
 
 **Status.** In use (2026-11-04).
 
+### `place_view_total_state`
+
+**Purpose.** What each place's `place_view_total` rows were counted from (2026-11-09, Brian Fisher: the nightly step
+took 60 minutes to 4 hours counting every place every night): the counting rules (`PlaceViewTotalDb.RULES`) and a
+fingerprint (counts and crc32 checksums of the place's list rows with their taxon rows, the specimen names stored for it
+in `place_specimen_name` with their specimens, its disputes, and AntWeb's curated morphospecies). A place whose
+fingerprint and rules are the same, counted within 7 days and whose specimen names were stored again since it was last
+compared, keeps its totals.
+
+**Key.** (`list_type`, `list_key`), as `place_view_total`. **Key columns.** `rules`, `fingerprint`, `counted` (last
+counted), `checked` (last compared).
+
+**Written by.** `PlaceViewTotalDb.fill` (nightly after set 4, `utilData.do?action=placeViewTotals`). Created by the
+application (`PlaceViewTotalDb.ensureSchema`); record and undo in `db/upgrade/9.3.1/2026-11-09-place-view-total-state.sql`.
+Rows of places not counted that night go with their totals.
+
+**Read by.** `PlaceViewTotalDb.fill` only. Deleting every row makes the next run count every place.
+
+**Status.** In use (2026-11-09).
+
 ### `place_specimen_name`
 
 **Purpose.** The not red-flagged ant specimens collected in each place, by name, counted with `place_genus_curation`
 (same `list_type`, `list_key`): the genus lists read the names collected in a place from here, not from the specimen
-table (2026-11-02, speed).
+table (2026-11-02, speed). An adm1's key is its geolocale id since 2026-11-09 (its specimens by its country and name,
+B26 fixed; the name until then, so two states of one name shared their rows).
 
 **Key.** (`list_type`, `list_key`, `taxon_name`). **Key columns.** `specimens`, `counted`.
 
