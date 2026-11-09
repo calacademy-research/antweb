@@ -139,17 +139,19 @@ def check_api_root(api):
 
 
 def check_api_taxa(api):
-    # up=1: the data routes answer only with it while the API is closed for API keys (api.py down()).
-    r = get(api + "/v3.1/taxa?genus=camponotus&limit=1&up=1")
-    if r.status != 200:
-        raise Fail(f"API /v3.1/taxa: HTTP {r.status}, {r.text[:120]!r}")
+    # 2026-11-09: the closed API answers its data routes with 503 and the terms (api.py apiDown); the old admin
+    # switch is refused before it reaches the server (Cloudflare rule "API: admin switch closed"). Until v4 opens,
+    # the smoke run checks that the data route answers as closed, from the API itself (JSON, not a proxy error).
+    r = get(api + "/v3.1/taxa?genus=camponotus&limit=1")
+    if r.status != 503:
+        raise Fail(f"API /v3.1/taxa: HTTP {r.status} (expected 503 while the API is closed), {r.text[:120]!r}")
     try:
-        taxa = json.loads(r.text)["taxa"]
-    except (ValueError, KeyError, TypeError):
-        raise Fail(f"API /v3.1/taxa: not the expected JSON: {r.text[:120]!r}")
-    if not isinstance(taxa, list) or len(taxa) != 1:
-        raise Fail(f"API /v3.1/taxa: expected 1 taxon with limit=1, got {taxa!r:.120}")
-    return "API /v3.1/taxa returns JSON (1 taxon)"
+        body = json.loads(r.text)
+    except ValueError:
+        raise Fail(f"API /v3.1/taxa: 503 but not the API's JSON (proxy or server error?): {r.text[:120]!r}")
+    if not isinstance(body, dict) or "terms" not in body:
+        raise Fail(f"API /v3.1/taxa: 503 without the terms link: {r.text[:120]!r}")
+    return "API /v3.1/taxa answers as closed (503 with the terms)"
 
 
 # ---------- morning check (check 10) ----------
