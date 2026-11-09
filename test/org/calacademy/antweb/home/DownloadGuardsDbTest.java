@@ -136,7 +136,13 @@ public class DownloadGuardsDbTest extends TestCase {
 
     public void testIslandAdm1MuseumBioregionProject() throws Exception {
         assertEquals(Arrays.asList("tz1"), codes(place(3, "Zanzibar", "country", true), 5000));
-        assertEquals(Arrays.asList("mg1", "mg3"), codes(place(4, "Toamasina", "adm1", false), 5000));
+        // an adm1 by its country and name (B26, fixed 2026-11-09): without a parent country it has no specimens
+        Geolocale toamasina = place(4, "Toamasina", "adm1", false);
+        assertEquals(Arrays.asList(), codes(toamasina, 5000));
+        toamasina.setParent("Madagascar");
+        assertEquals(Arrays.asList("mg1", "mg3"), codes(toamasina, 5000));
+        toamasina.setParent("Kenya");
+        assertEquals("a state of the same name in another country", Arrays.asList(), codes(toamasina, 5000));
         Museum mhng = new Museum();
         mhng.setCode("MHNG");
         assertEquals(Arrays.asList("mg2", "mg3"), codes(mhng, 5000));

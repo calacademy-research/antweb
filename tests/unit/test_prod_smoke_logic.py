@@ -63,8 +63,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if path == "/v3.1/":
             return self._send(200, "Antweb API v3.1<br><br><a href='x'>docs</a>")
         if path == "/v3.1/taxa":
-            assert "up=1" in query and "limit=1" in query
-            return self._send(200, json.dumps({"taxa": [{"taxonName": "formicinaecamponotus"}]}), "application/json")
+            # the closed API (2026-11-09): 503 with the terms; the admin switch is never sent
+            assert "up=1" not in query and "limit=1" in query
+            if STATE.get("mode") == "api502":
+                return self._send(502, "<html>Bad gateway</html>")
+            return self._send(503, json.dumps({"error": "closed", "terms": "https://www.antweb.org/apiV3.1.do#terms"}),
+                              "application/json", headers={"Retry-After": "86400"})
         if path == "/dailyUpdate.do":
             d = STATE.get("daily")
             if d is None:
@@ -132,6 +136,8 @@ def main():
     expect(code == 1 and "['Statistics'] not on the page" in out, "missing page text fails", out)
     code, out = run("deploy", mode="500")
     expect(code == 1 and "HTTP 500" in out, "HTTP 500 fails", out)
+    code, out = run("deploy", mode="api502")
+    expect(code == 1 and "expected 503 while the API is closed" in out, "a proxy error on the closed API's data route fails", out)
     code, out = run("deploy", mode="challenge")
     expect(code == 0 and out.count("\nskip  ") + out.startswith("skip  ") == 7 and "header: home page not read" in out
            and "not reachable through Cloudflare challenge" in out and "::warning" in out and "API /v3.1/taxa (" in out,

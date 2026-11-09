@@ -16,7 +16,7 @@ import org.calacademy.antweb.home.PlaceTotals;
 /**
  * The count check's checks of the numbers that are not place totals (2026-10-22, docs/numbers.md "every number
  * checked"): statsPage tables, the admin pages of curators, upload groups, artists, image uploads and statistics,
- * the API's taxon counts, the endemic flags, and the two suspects B25 (taxon parents) and B26 (adm1 by name).
+ * the API's taxon counts, the endemic flags, the suspect B25 (taxon parents) and the recount of adm1 Specimens (B26, fixed 2026-11-09).
  * Each check runs over all rows at once (one or two grouped queries), read-only, like CountInvariants, and adds
  * the numbers the end-to-end tests compare with the pages (CountInvariants.expected, printed in the report as
  * JSON with id count-check-expected).
@@ -990,70 +990,58 @@ public final class NumberChecks {
     }
 
     /**
-     * B26 (2026-10-22): adm1 numbers take the specimens by adm1 name only (Geolocale.getSpecimenPlaceCriteria:
-     * specimen.adm1 = name; also PlaceImageCountDb, TaxaPage, downloads), so a state with the same name in another
-     * country, or a specimen with that adm1 and no country, adds to its Specimens and Images. Per live adm1: the
-     * specimens counted on its page (ants of a counted status, of a species or subspecies on its list) that were not
-     * collected in its country. Real until B26 is fixed. "Its country" is specimen.country equal to the adm1's parent,
-     * as the country pages match their specimens (specimen.country = name): a specimen whose country is spelled
-     * otherwise (an alias) is counted for the state today and is not counted for the country, so it is reported too.
+     * B26 (found 2026-10-22, fixed 2026-11-09, Brian Fisher): an adm1 takes the specimens of its own country only
+     * (specimen.country = the adm1's parent and specimen.adm1 = its name; Geolocale.adm1Criteria). Until the fix every
+     * adm1 number took the specimens by name only, so a state of the same name in another country, or a specimen with
+     * that adm1 and no country, added to its Specimens and Images. Since the fix this is a recount invariant: per live
+     * adm1, its Specimens = the specimens of its country and name that its page counts (ants of a counted status, of a
+     * species or subspecies on its list), one indexed query each (country_adm1_idx), at most 60 s; 0 differences
+     * expected. Pending until a nightly run has counted by the rule (rulesCounted, ADM1_RULE_LOG) and after an upload
+     * that touched the adm1 (ChangedPlaces, by its country and name).
      */
     void adm1ByCountry() {
         if (!inv.places.containsKey(PlaceTotals.GEOLOCALE) || !has("specimen", "adm1")) return;
         CountInvariants.Check check = new CountInvariants.Check("geo.adm1.country",
-            "B26: an adm1's Specimens hold only specimens of its own country (adm1 matched by name only)", "26, 27, 29")
-            .pendingOn(false, true, false, false);
+            "B26 (fixed 2026-11-09): an adm1's Specimens are the specimens of its own country and name", "26, 27, 29")
+            .pendingOn(true, true, true, false);
         inv.check(check, c -> {
-            // 1. the (country, adm1) pairs of the specimens (index country_adm1_idx: under a second); 2. the pairs whose adm1
-            // is the name of a valid adm1 of another country (or that have no country); 3. for those only, the specimens
-            // its page counts (ants of a counted status, of a species or subspecies on its list).
-            Map<String, List<String[]>> adm1s = CountInvariants.keyMap();   // name -> [id, parent]
+            Map<String, long[]> stored = inv.rows("select id, specimen_count from geolocale where georank = 'adm1' and is_valid = 1"
+                + " and coalesce(is_island, 0) = 0");
+            Map<String, String> parents = CountInvariants.keyMap();
+            Map<String, String> names = CountInvariants.keyMap();
             try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
                     "select id, name, parent from geolocale where georank = 'adm1' and is_valid = 1 and coalesce(is_island, 0) = 0"))) {
-                while (r.next()) adm1s.computeIfAbsent(r.getString(2), x -> new ArrayList<>()).add(new String[] {r.getString(1), r.getString(3)});
-            }
-            Map<String, long[]> foreign = CountInvariants.keyMap();
-            List<String[]> pairs = new ArrayList<>();
-            try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
-                    "select country, adm1 from specimen where adm1 is not null group by country, adm1"))) {
-                while (r.next()) pairs.add(new String[] {r.getString(1), r.getString(2)});
+                while (r.next()) {
+                    names.put(r.getString(1), r.getString(2));
+                    parents.put(r.getString(1), r.getString(3));
+                }
             }
             String sql = "select count(*) from specimen s join geolocale_taxon gt on gt.geolocale_id = ? and gt.taxon_name = s.taxon_name"
-                + " join taxon t on t.taxon_name = s.taxon_name where s.country <=> ? and s.adm1 = ?"
+                + " join taxon t on t.taxon_name = s.taxon_name where 1 = 1" + org.calacademy.antweb.geolocale.Geolocale.ADM1_CONDITION
                 + " and t.taxarank in ('species', 'subspecies') and t.family = 'formicidae' and s.status in " + CountInvariants.COUNTABLE;
-            // one indexed query per pair whose adm1 name is a state of another country; at most 60 s (the invariants have
-            // no other time limit), the pairs not reached are named in one difference
+            Map<String, String> inScope = inv.places.get(PlaceTotals.GEOLOCALE);
             long until = System.currentTimeMillis() + 60_000;
             int notReached = 0;
-            for (String[] pair : pairs) {
-                for (String[] g : adm1s.getOrDefault(pair[1], new ArrayList<>())) {
-                    if (pair[0] != null && CountInvariants.key(pair[0]).equals(CountInvariants.key(g[1]))) continue;
-                    if (System.currentTimeMillis() > until) {
-                        ++notReached;
-                        continue;
-                    }
-                    long n = count(sql, Integer.parseInt(g[0]), pair[0], pair[1]);
-                    if (n > 0) foreign.computeIfAbsent(g[0], x -> new long[1])[0] += n;
+            int differ = 0;
+            for (Map.Entry<String, long[]> e : stored.entrySet()) {
+                if (!inScope.containsKey(e.getKey())) continue;
+                if (System.currentTimeMillis() > until) {
+                    ++notReached;
+                    continue;
                 }
+                String parent = parents.get(e.getKey());
+                long recount = parent == null ? 0 : count(sql, Integer.parseInt(e.getKey()), parent, names.get(e.getKey()));
+                long shown = e.getValue()[0];
+                if (shown != recount) ++differ;
+                inv.compare(c, PlaceTotals.GEOLOCALE, e.getKey(), "Specimens = the specimens of its country and adm1 name (B26)",
+                    shown, recount, "=", inv.why(c, PlaceTotals.GEOLOCALE, e.getKey()));
             }
             if (notReached > 0) {
                 site().put("specimens", "specimen table");
-                inv.compare(c, "site", "specimens", "B26: (country, adm1) pairs not counted this time (60 s limit)", notReached, 0, "=",
+                inv.compare(c, "site", "specimens", "B26: adm1s not recounted this time (60 s limit)", notReached, 0, "=",
                     "the check stopped at its time limit; the next run counts them");
             }
-            Map<String, long[]> stored = inv.rows("select id, specimen_count from geolocale where georank = 'adm1' and is_valid = 1");
-            Map<String, String> inScope = inv.places.get(PlaceTotals.GEOLOCALE);
-            Map<String, Object> exp = new TreeMap<>();
-            for (Map.Entry<String, long[]> e : stored.entrySet()) {
-                if (!inScope.containsKey(e.getKey())) continue;
-                long n = foreign.containsKey(e.getKey()) ? foreign.get(e.getKey())[0] : 0;
-                long shown = e.getValue()[0];
-                inv.compare(c, PlaceTotals.GEOLOCALE, e.getKey(), "Specimens without the " + n + " specimens of another country (or none) with this adm1 name (B26)",
-                    shown, shown - n, "=", null);
-                if (n > 0) exp.put(e.getKey(), n);
-            }
-            expected("b26").put("adm1s", exp.size());
-            expected("b26").put("specimens", exp.values().stream().mapToLong(o -> (Long) o).sum());
+            expected("b26").put("adm1sDiffering", differ);
         });
     }
 

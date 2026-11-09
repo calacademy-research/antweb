@@ -111,6 +111,13 @@ route {
         reverse_proxy api:5000
     }
 
+    # API v4 with free registered keys (step 6 PR 3, 2026-11-08; api/v3.1/api_v4.py): the path is kept (/v4/...),
+    # the API container answers it. Same in Caddyfile (tests/unit/test_api_v4.py).
+    @api_v4 path /v4 /v4/*
+    handle @api_v4 {
+        reverse_proxy api:5000
+    }
+
     # Direct *.jsp requests (cleanup batch 2, 2026-10): only the JSPs below reach Tomcat; any other
     # *.jsp is a 404 here. Pages are reached through .do actions, which forward to their JSPs
     # inside Tomcat without passing Caddy, so this does not affect them. The list is the JSPs
@@ -141,5 +148,15 @@ route {
 
 log {
     output file /var/log/caddy/access.log
-    format console      # give one-liners, not json
+    # one-liners, not json; API keys travel in the X-API-Key header and Caddy logs request headers, so that one is
+    # dropped (step 6 PR 3)
+    format filter {
+        wrap console
+        request>headers>X-Api-Key delete
+        # the API key confirmation link (apiKeyConfirm.do?token=...) carries a one-time token: dropped from the logged
+        # address, the rest of the address is kept
+        request>uri query {
+            delete token
+        }
+    }
 }

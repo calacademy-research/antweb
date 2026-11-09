@@ -220,7 +220,10 @@ public abstract class Overview implements Overviewable, Headerable, Describable 
     public String getOverviewCriteria() {
       String overviewCriteria = "";
       if (this instanceof Adm1) {
-        overviewCriteria = " and specimen.adm1 = " + DBUtil.sqlQuote(getName());
+        // B26, fixed 2026-11-09 (Brian Fisher): a state takes the specimens of its own country only, by country and adm1
+        // (index country_adm1_idx); adm1 alone matched a state of the same name in another country, or no country, and
+        // no index served it (production: Place list totals walked every ant specimen per state).
+        overviewCriteria = Geolocale.adm1Criteria("specimen", ((Adm1) this).getParent(), getName());
       }
       if (this instanceof Country) {
         overviewCriteria = " and (specimen.country = " + DBUtil.sqlQuote(getName()) + " or specimen.island_country = " + DBUtil.sqlQuote(getName()) + ")";
