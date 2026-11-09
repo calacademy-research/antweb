@@ -157,6 +157,17 @@ public class ImagingProgressDbTest extends TestCase {
         assertTrue(line, line.startsWith("\"'=cmd, \"\"x\"\"\","));
     }
 
+    // Review 2026-11-08: one imaged specimen without a name emptied the whole list (NOT IN with a null).
+    public void testAnImagedSpecimenWithoutANameDoesNotEmptyTheList() throws Exception {
+        int before = new ImagingProgressDb(connection).readUnimaged().size();
+        assertTrue("the fixture has unimaged names", before > 0);
+        exec(connection, "insert into specimen (code, taxon_name, status, family) values ('noname1', null, 'valid', 'formicidae')");
+        exec(connection, "insert into image (id, image_of_id, shot_type, upload_date) values (9901, 'noname1', 'h', '2026-11-01 10:00:00')");
+        String line = new ImagingProgressDb(connection).fill();
+        assertFalse(line, line.contains("FAILED"));
+        assertEquals(before, new ImagingProgressDb(connection).readUnimaged().size());
+    }
+
     public void testCountCheckAgreesAndFindsAWrongRow() throws Exception {
         CountCheck.Result r = checkRun();
         assertEquals(list(r), 0, count(r, true));

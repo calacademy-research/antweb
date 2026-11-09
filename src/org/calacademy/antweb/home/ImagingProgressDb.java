@@ -138,8 +138,10 @@ public class ImagingProgressDb {
     }
 
     /** The names with a photo of the ant anywhere in AntWeb, each once (alias x, column taxon_name). */
+    // "is not null": the list query reads it with NOT IN, and one null name in it would empty the whole list (SQL's
+    // NOT IN with a null; review 2026-11-08: one imaged specimen without a name took the list from 4,320 names to 0).
     static final String IMAGED_NAMES = "(select distinct s.taxon_name from image i join specimen s on s.code = i.image_of_id where "
-        + StatisticsDb.ANT_IMAGE + ")";
+        + StatisticsDb.ANT_IMAGE + " and s.taxon_name is not null)";
 
     /** Specimens per name and those of CASC (alias sp: taxon_name, n, casc). */
     static final String SPECIMENS = "(select s.taxon_name, count(*) n, sum(s.museum = '" + CASC + "') casc from specimen s"
