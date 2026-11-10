@@ -67,7 +67,7 @@ No new table.
 ## The same files as the command-line tool
 
 `tools/export/specimen_extract.py` (run on a server by an administrator) and `DataExtract` write the same files
-(format 3): the same columns, the same CSV quoting (Python's `csv` default: a field is quoted only when it holds a
+(format 4): the same columns, the same CSV quoting (Python's `csv` default: a field is quoted only when it holds a
 comma, a quote or a line break), NULL as an empty field, numbers and dates as the database prints them (the Java
 code takes their text from the raw answer, not through Java's number formatting), the same filter (old country
 names included), the same manifest keys and text. Checked on 2026-11-10 by running both against the same database
@@ -77,6 +77,10 @@ gzip file. Keep the two in step: a change of the columns or the manifest goes in
 both.
 
 Differences on purpose:
+
+- The tool can also write every specimen that has no country at all to a file of its own (`--with-no-country`,
+  `specimens_no_country.csv.gz`, described under `no_country` in the manifest). The page does not offer that file
+  yet; its manifest has `"no_country": null`, as the tool's has without the option.
 
 - The page takes a country name as the database compares it (so `united states` finds United States); the
   command-line tool needs the exact spelling. Both refuse a name that is not a valid country row.

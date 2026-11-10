@@ -70,7 +70,7 @@ public class DataExtractTest extends TestCase {
     /** The manifest the Python reference texts were made from. */
     private static Map<String, Object> manifest() {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("tool_version", "3");
+        m.put("tool_version", "4");
         m.put("made_utc", "2026-11-10 14:49:21");
         m.put("antweb_commit", "abc1234");
         m.put("antweb_version", "");
@@ -100,6 +100,7 @@ public class DataExtractTest extends TestCase {
         m.put("genera", 80L);
         m.put("names", 2345L);
         m.put("bioregion_list", null);
+        m.put("no_country", null);
         m.put("files", map("specimens.csv.gz", map("sha256", "ab".repeat(32), "bytes", 99L),
             "genus_summary.csv", map("sha256", "cd".repeat(32), "bytes", 7L)));
         return m;
@@ -109,7 +110,7 @@ public class DataExtractTest extends TestCase {
     private static final String PYTHON_TEXT =
         "AntWeb specimen extract\n"
         + "\n"
-        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 3\n"
+        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 4\n"
         + "Countries: United States, Côte d'Ivoire\n"
         + "Islands included: none\n"
         + "Outdated country names included: U.S.A. (now United States), USA (now United States)\n"
@@ -155,7 +156,7 @@ public class DataExtractTest extends TestCase {
     private static final String PYTHON_TEXT_VERIFIED =
         "AntWeb specimen extract\n"
         + "\n"
-        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 3\n"
+        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 4\n"
         + "Countries: United States, Côte d'Ivoire\n"
         + "Islands included: Hawaii, Guam\n"
         + "Outdated country names included: none\n"
@@ -193,7 +194,7 @@ public class DataExtractTest extends TestCase {
     // Written by Python's json.dump(manifest, indent=1, ensure_ascii=False).
     private static final String PYTHON_JSON =
         "{\n"
-        + " \"tool_version\": \"3\",\n"
+        + " \"tool_version\": \"4\",\n"
         + " \"made_utc\": \"2026-11-10 14:49:21\",\n"
         + " \"antweb_commit\": \"abc1234\",\n"
         + " \"antweb_version\": \"\",\n"
@@ -273,6 +274,7 @@ public class DataExtractTest extends TestCase {
         + " \"genera\": 80,\n"
         + " \"names\": 2345,\n"
         + " \"bioregion_list\": null,\n"
+        + " \"no_country\": null,\n"
         + " \"files\": {\n"
         + "  \"specimens.csv.gz\": {\n"
         + "   \"sha256\": \"abababababababababababababababababababababababababababababababab\",\n"

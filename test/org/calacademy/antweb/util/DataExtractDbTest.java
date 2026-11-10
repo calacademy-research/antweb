@@ -236,7 +236,9 @@ public class DataExtractDbTest extends TestCase {
             m.get("outdated_names").toString());
         assertEquals(0L, m.get("filed_under_outdated_name"));
         assertEquals(new ArrayList<>(), m.get("countries_without_specimens"));
-        assertEquals("3", m.get("tool_version"));
+        assertEquals("4", m.get("tool_version"));
+        assertTrue(m.containsKey("no_country"));
+        assertNull(m.get("no_country"));
         assertEquals(Arrays.asList("United States", "Canada", "Mexico"), m.get("countries"));
         assertEquals("abc1234", m.get("antweb_commit"));
         assertEquals("2026-11-10 14:49:21", m.get("made_utc"));
@@ -291,7 +293,7 @@ public class DataExtractDbTest extends TestCase {
         assertTrue(text, text.contains("Cite: AntWeb. Version 9.9.9. California Academy of Sciences, online at https://www.antweb.org. Extract of 2026-11-10."));
         assertFalse(text, text.contains("Differences:"));
         String json = new String(Files.readAllBytes(new File(dir, DataExtract.MANIFEST_JSON).toPath()), StandardCharsets.UTF_8);
-        assertTrue(json, json.startsWith("{\n \"tool_version\": \"3\",\n \"made_utc\": \"2026-11-10 14:49:21\",\n \"antweb_commit\": \"abc1234\","));
+        assertTrue(json, json.startsWith("{\n \"tool_version\": \"4\",\n \"made_utc\": \"2026-11-10 14:49:21\",\n \"antweb_commit\": \"abc1234\","));
         assertTrue(json, json.contains("\n \"specimens\": 5,\n \"verified\": true,\n \"differences\": [],\n"));
     }
 

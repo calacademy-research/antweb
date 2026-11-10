@@ -86,7 +86,7 @@ public final class DataExtract {
     private static final org.apache.commons.logging.Log s_log = org.apache.commons.logging.LogFactory.getLog(DataExtract.class);
 
     /** The format of the files; the same number as tools/export/specimen_extract.py while they write the same. */
-    public static final String VERSION = "3";
+    public static final String VERSION = "4";
 
     /** Rows read by one statement (one page). */
     public static final int PAGE_ROWS = 10000;
@@ -705,6 +705,9 @@ public final class DataExtract {
         m.put("genera", (long) stats.genus.size());
         m.put("names", (long) stats.nameSpecimens.size());
         m.put("bioregion_list", bio);
+        // The command-line tool can also write the specimens that have no country at all to a file of their own
+        // (--with-no-country) and describes it here; the page does not offer that file, so the key is always null.
+        m.put("no_country", null);
         Map<String, Object> fileInfo = new LinkedHashMap<>();
         List<String> names = new ArrayList<>();
         for (File f : files) {
