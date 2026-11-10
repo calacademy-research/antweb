@@ -64,7 +64,7 @@ NOT_FOR_V4 = ('up', 'log')
 NOT_CONFIGURED_MESSAGE = ('The AntWeb API v4 is not available: API keys are not configured on this server. Please try'
                           ' again later or write to antweb@antweb.org.')
 NOT_OPEN_MESSAGE = ('The AntWeb API v4 is not open yet. It opens with free registered API keys in the coming weeks;'
-                    ' see https://www.antweb.org/apiV3.1.do for news.')
+                    ' see https://www.antweb.org/api.do for news.')
 STORE_ERROR_MESSAGE = 'The request could not be counted, so it was not answered. Please try again in a minute.'
 
 

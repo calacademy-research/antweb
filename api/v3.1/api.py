@@ -43,7 +43,7 @@ collectingEventCode and localityCode. Its counts are written with a second login
 tables (usageUser= and usagePassword=, api_keys.py). V4_OPEN below says whether v4 is open to everyone; it is read at
 start from v4Open= in etc/api-db.properties (readV4Open()), so opening and closing need no code change. v4 runs the
 route functions of this file in an inner request (g.apiV4Inner), in both states. The counts /taxa serves are written
-into the taxon table by the daily update (TaxonApiCountDb). User documentation: https://www.antweb.org/apiV3.1.do; developer documentation:
+into the taxon table by the daily update (TaxonApiCountDb). User documentation: https://www.antweb.org/api.do; developer documentation:
 docs/flows/api.md. Tests: tests/unit/test_api_*.py, tests/e2e (API tests).
 """
 
@@ -232,7 +232,7 @@ apiPublicBase = prodServer + "/v3.1"
 def specimenApiUrl(code):
     """The public /specimens address of one specimen (the accepted parameter is specimenCode)."""
     return apiPublicBase + "/specimens?specimenCode=" + urllib.parse.quote(str(code), safe="")
-apiUri = "api" + version + ".do"
+apiUri = "api.do"   # the version-neutral address of the documentation page (apiV3.1.do still opens it; 2026-11-09)
 
 globalMessage = "Either the server is overloaded or there is an error in the application."
 

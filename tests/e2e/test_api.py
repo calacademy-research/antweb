@@ -369,13 +369,13 @@ def test_llms_txt_and_the_terms_on_the_api_page():
     r = new_session().get(BASE_URL + "/llms.txt", timeout=TIMEOUT)
     assert r.status_code == 200 and r.headers.get("Content-Type", "").startswith("text/plain"), (r.status_code, r.headers.get("Content-Type"))
     for words in ("# AntWeb", "https://www.antweb.org/v4/", "https://www.antweb.org/apiKey.do", "X-API-Key",
-                  "https://www.antweb.org/apiV3.1.do", "CC BY 4.0", "antweb@antweb.org"):
+                  "https://www.antweb.org/api.do", "CC BY 4.0", "antweb@antweb.org"):
         assert words in r.text, words
     r = new_session().get(BASE_URL + "/apiV3.1.do", timeout=max(TIMEOUT, 120))
     assert r.status_code == 200 and 'id="terms"' in r.text and "Access and terms of use" in r.text, r.status_code
     assert "since 2002" in r.text and "CC BY 4.0" in r.text, "the terms Brian approved (2026-11-08)"
     j = new_session().get(BASE_URL + "/v3.1/", timeout=max(TIMEOUT, 120)).json()
-    assert j["terms"].endswith("/apiV3.1.do#terms") and j["guideForPrograms"].endswith("/llms.txt"), j
+    assert j["terms"].endswith("/api.do#terms") and j["guideForPrograms"].endswith("/llms.txt"), j
 
 
 def test_v4_front_door_and_refusals():

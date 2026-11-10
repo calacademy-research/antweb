@@ -78,9 +78,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
             if mode == "v4open":
                 # v4 is open (2026-11-09): v3.1 has ended, 410 with the signpost
                 return self._send(410, json.dumps({"error": "ended", "status": "ended", "v4": "https://www.antweb.org/v4/",
-                                                   "terms": "https://www.antweb.org/apiV3.1.do#terms"}), "application/json")
+                                                   "terms": "https://www.antweb.org/api.do#terms"}), "application/json")
             # the closed API (2026-11-09): 503 with the terms
-            return self._send(503, json.dumps({"error": "closed", "terms": "https://www.antweb.org/apiV3.1.do#terms"}),
+            return self._send(503, json.dumps({"error": "closed", "terms": "https://www.antweb.org/api.do#terms"}),
                               "application/json", headers={"Retry-After": "86400"})
         if path == "/dailyUpdate.do":
             d = STATE.get("daily")
