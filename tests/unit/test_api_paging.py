@@ -563,6 +563,77 @@ def test_geo_specimens_without_coords_is_400_naming_the_parameter():
     assert client.get("/geoSpecimens").status_code == 503
 
 
+def test_unimaged_geolocale_taxa_unknown_place_is_404_as_geo_species_stats():
+    """It was HTTP 500 in v4: the v3.1 route answered the plain text "Must enter valid geolocale" with HTTP 200.
+    Now, in v3.1 and v4: an unknown place is HTTP 404 as JSON, the answer /geoSpeciesStats gives; no geolocaleName
+    is HTTP 400 naming the parameter."""
+    fresh_usage()
+    required = "The geolocaleName parameter is required: the name of a place, for example geolocaleName=Madagascar."
+    for route in ("/unimagedGeolocaleTaxa", "/geoSpeciesStats"):
+        r = client.get(route + "?up=1&geolocaleName=Atlantis")
+        assert r.status_code == 404 and r.get_json() == {"error": "Geolocale not found: Atlantis"}, (route, r.status_code)
+    for url in ("/unimagedGeolocaleTaxa?up=1", "/unimagedGeolocaleTaxa?up=1&geolocaleName=", "/unimagedGeolocaleTaxa?up=1&byCaste=1"):
+        r = client.get(url)
+        assert r.status_code == 400 and r.get_json() == {"error": required}, (url, r.status_code, r.get_data(as_text=True))
+    with opened():
+        for route in ("/v4/unimagedGeolocaleTaxa", "/v4/geoSpeciesStats"):
+            r = get(route + "?geolocaleName=Atlantis", expect=404)
+            assert r.get_json() == {"error": "Geolocale not found: Atlantis"}, (route, r.get_data(as_text=True))
+            assert "application/json" in r.headers["Content-Type"], dict(r.headers)
+        assert get("/v4/unimagedGeolocaleTaxa", expect=400).get_json() == {"error": required}
+        assert get("/v4/unimagedGeolocaleTaxa?byCaste=true&ndjson=true", expect=400).get_json() == {"error": required}
+        with api_v4.usage.engine.connect() as c:
+            assert c.execute(text("select coalesce(sum(records), 0) from api_usage_daily")).scalar() == 0
+    assert 'return "Must enter valid geolocale"' not in open(api.__file__).read()
+
+
+def test_no_route_answers_plain_text_with_200():
+    """What made v4 answer HTTP 500: a v3.1 route returning a bare string (HTTP 200, not JSON). No route does, and no
+    route reads an attribute of a place that was not found."""
+    import ast
+    tree = ast.parse(open(api.__file__).read())
+    bare = []
+    for fn in ast.walk(tree):
+        if isinstance(fn, ast.FunctionDef) and any(
+                isinstance(d, ast.Call) and getattr(d.func, "attr", "") == "route" for d in fn.decorator_list):
+            for node in ast.walk(fn):
+                if isinstance(node, ast.Return) and isinstance(node.value, (ast.Constant, ast.JoinedStr, ast.BinOp)):
+                    bare.append((fn.name, node.lineno))
+    assert not bare, bare
+    # every lookup of a place is followed by its "not found" branch
+    src = open(api.__file__).read()
+    calls = src.count("= getGeolocale(")
+    assert calls == src.count("if geolocale is None:") and calls >= 4, (calls, src.count("if geolocale is None:"))
+    # every v4 route answers JSON (never 500) without parameters and with an unknown place or name
+    fresh_usage()
+    with opened():
+        for name in sorted(api_v4.routes()):
+            for query in ("", "?geolocaleName=Atlantis", "?taxonName=nosuchtaxon", "?bioregionName=Atlantis",
+                          "?specimenCode=nosuchcode", "?geolocaleId=999999", "?coords=0,0&distinct=tribe"):
+                r = client.get("/v4/" + name + query, headers={"X-API-Key": KEYS["collaborator"],
+                                                              "CF-Connecting-IP": "198.51.100.7"})
+                if r.status_code == 400 and "Unknown parameter" in (r.get_json(silent=True) or {}).get("error", ""):
+                    continue
+                assert r.status_code in (200, 400, 404), (name + query, r.status_code, r.get_data(as_text=True)[:200])
+
+
+def test_nan_and_inf_are_refused_not_500():
+    """float() reads nan and inf, the MySQL driver refuses them (an HTTP 500 before): now HTTP 400."""
+    fresh_usage()
+    for url in ("/geoSpecimens?up=1&coords=nan,nan", "/geoSpecimens?up=1&coords=inf,0", "/geoSpecimens?up=1&coords=0,-inf",
+                "/geoSpecimens?up=1&coords=37,-122&radius=nan", "/geoSpecimens?up=1&coords=37,-122&radius=inf",
+                "/specimens?up=1&bbox=nan,1,2,3", "/specimens?up=1&bbox=1,inf,2,3"):
+        r = client.get(url)
+        assert r.status_code == 400, (url, r.status_code, r.get_data(as_text=True)[:200])
+    assert client.get("/geoSpecimens?up=1&coords=37.77,-122.47&radius=10&limit=1").status_code == 200
+    assert client.get("/specimens?up=1&bbox=40,-120,30,-125&limit=1").status_code == 200
+    with opened():
+        get("/v4/geoSpecimens?coords=nan,nan", expect=400)
+        r = get("/v4/geoSpecimens?coords=37,-122&radius=inf", expect=400)
+        assert r.get_json() == {"error": "radius must be a number of kilometres, for example radius=10"}, r.get_json()
+        get("/v4/specimens?bbox=nan,1,2,3", expect=400)
+
+
 def test_page_info_when_an_answer_is_cut():
     records = [{"specimenCode": "a"}, {"specimenCode": "b"}, {"specimenCode": "c"}]
     found = {"byCode": True, "complete": True, "lastCode": "c", "total": 3}

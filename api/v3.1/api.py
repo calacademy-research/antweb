@@ -317,9 +317,11 @@ def numbers(value, count):
     if len(parts) != count:
         return None
     try:
-        return [float(p) for p in parts]
+        found = [float(p) for p in parts]
     except ValueError:
         return None
+    # nan and inf are floats to Python but not numbers to MySQL (the driver refuses them: HTTP 500 until 2026-11-10)
+    return found if all(math.isfinite(n) for n in found) else None
 
 
 def down(request):
@@ -996,8 +998,12 @@ def getGeoSpecimens():
     try:
         # Decimal coordinates (37.77,-122.47) used to raise ValueError (HTTP 500).
         lat, lon = float(coordsArray[0]), float(coordsArray[1])
+        if not (math.isfinite(lat) and math.isfinite(lon)):
+            raise ValueError(coords)   # nan, inf: not numbers to MySQL (HTTP 500 until 2026-11-10)
     except (ValueError, IndexError):
         return 'coords must be "latitude,longitude", for example coords=37.77,-122.47', 400
+    if not math.isfinite(radius):
+        return badRequest('radius must be a number of kilometres, for example radius=10')
     minLat, maxLat, minLon, maxLon = radiusBox(lat, lon, radius)
     query = query.filter(Specimen.decimalLatitude <= maxLat, Specimen.decimalLatitude >= minLat)
     query = query.filter(Specimen.decimalLongitude <= maxLon, Specimen.decimalLongitude >= minLon)
@@ -2528,6 +2534,10 @@ def imagedTaxaSql(casteClause=""):
             " where s.taxon_name is not null and lower(trim(coalesce(i.shot_type, ''))) <> 'l'" + casteClause)
 
 
+GEOLOCALE_NAME_REQUIRED_MESSAGE = ('The geolocaleName parameter is required: the name of a place, for example'
+                                   ' geolocaleName=Madagascar.')
+
+
 @application.route('/unimagedGeolocaleTaxa', methods=['GET'])
 def getUnimagedGeolocaleTaxa():
     geolocaleName = request.args.get('geolocaleName', default='*', type=str)
@@ -2538,9 +2548,13 @@ def getUnimagedGeolocaleTaxa():
     limit, offset, log, ndjson, startTime = setGlobals(request)
     if down(request): return apiDown()
 
+    if geolocaleName == '*' or not geolocaleName.strip():
+        return badRequest(GEOLOCALE_NAME_REQUIRED_MESSAGE)
     geolocale = getGeolocale(geolocaleName)
     if geolocale is None:
-        return "Must enter valid geolocale"
+        # 2026-11-10: JSON with HTTP 404, as /geoSpeciesStats answers an unknown place. It was the plain text
+        # "Must enter valid geolocale" with HTTP 200, which v4 could not read as JSON and answered with HTTP 500.
+        return apiNotFound("Geolocale not found: " + geolocaleName)
     # georank = geolocale.georank
     # geoClause = georank + " = '" + geolocaleName + "'"
 
