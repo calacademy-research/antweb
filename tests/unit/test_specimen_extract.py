@@ -58,6 +58,7 @@ data = json.load(open(os.path.join(d, "answers.json")))
 def out(rows): sys.stdout.write("".join("\t".join(r) + "\n" for r in rows))
 if "s.country is null" in sql and "select s.*" in sql: out([data["header"]] + data["no_country_rows"])
 elif "s.country is null" in sql: out([[str(data["no_country_count"])]])
+elif "/* left out */" in sql: out(data.get("left_out", []))
 elif "/* outdated names */" in sql: out(data["outdated"])
 elif "/* per country */" in sql: out(data["per_country"])
 elif "from geolocale" in sql: out(data["places"])
@@ -76,7 +77,7 @@ NO_COUNTRY_ROWS = [
 ]
 
 
-def setup(counts=None, places=None, rows=None, outdated=None, per_country=None, no_country_count=2):
+def setup(counts=None, places=None, rows=None, outdated=None, per_country=None, no_country_count=2, left_out=None):
     d = tempfile.mkdtemp(prefix="extract-test-")
     os.makedirs(os.path.join(d, "proj", "etc"))
     os.makedirs(os.path.join(d, "bin"))
@@ -96,7 +97,8 @@ def setup(counts=None, places=None, rows=None, outdated=None, per_country=None, 
                    # index of the requested country, then the old name / the number of its specimens
                    "outdated": [["0", "USA"]] if outdated is None else outdated,
                    "per_country": [["0", "2"], ["1", "1"], ["2", "1"]] if per_country is None else per_country,
-                   "no_country_rows": NO_COUNTRY_ROWS, "no_country_count": no_country_count}, f)
+                   "no_country_rows": NO_COUNTRY_ROWS, "no_country_count": no_country_count,
+                   "left_out": left_out or []}, f)
     return d
 
 
@@ -163,7 +165,7 @@ def test_the_password_never_reaches_a_command_line_and_the_queries_only_read():
     d = setup()
     run(d, "--countries", "United States,Canada,Mexico", "--bioregion", "Nearctic")
     cs = calls(d)
-    assert len(cs) == 6     # places, old names, the export, the count, the count per country, the bioregion list
+    assert len(cs) == 7     # places, old names, the export, the count, what is left out, the count per country, the bioregion list
     for c in cs:
         assert c["has_pwd"] and "not-a-real-password" not in " ".join(c["argv"]), c["argv"]
         assert c["argv"][:5] == ["exec", "-i", "-e", "MYSQL_PWD", "antweb_mysql_1"]
@@ -208,7 +210,7 @@ def test_specimens_under_an_outdated_name_are_in_the_file_and_counted():
     count = [c["sql"] for c in calls(d) if "group by 1, 2" in c["sql"]][0]
     assert "'USA'" in count
     m = json.load(open(os.path.join(d, "out", "manifest.json")))
-    assert m["tool_version"] == "4"
+    assert m["tool_version"] == "5"
     assert m["outdated_names"] == [{"name": "USA", "valid_name": "United States"}]
     assert m["filed_under_outdated_name"] == 1 and m["specimens"] == 6 and m["verified"] is True
     assert m["countries_without_specimens"] == []
@@ -310,6 +312,48 @@ def test_helpers():
         raise AssertionError("accepted " + repr(bad))
     assert "s.country in ('Canada')" in se.where_sql(["Canada"], []) and "island_country in ('Hawaii')" in se.where_sql(["Canada"], ["Hawaii"])
     print("ok   test_helpers")
+
+
+def test_ants_only_is_the_default_and_says_what_it_left_out():
+    """Brian Fisher, 2026-11-10: an ant study gets ants. The beetles and wasps AntWeb holds are left out, counted
+    by family in the manifest, and --all-families brings them back."""
+    d = setup(left_out=[["(coleoptera)", "164"], ["curculionidae", "153"], ["vespidae", "24"]])
+    r = run(d, "--countries", "United States,Canada,Mexico")
+    assert r.returncode == 0, r.stdout + r.stderr
+    sqls = [c["sql"] for c in calls(d)]
+    export = [q for q in sqls if "select s.*" in q][0]
+    count = [q for q in sqls if "count(*)" in q and "group by 1, 2" in q][0]
+    assert se.ANTS in export and se.ANTS in count, "the file and the check must use the same filter"
+    assert any("/* left out */" in q and "not " + se.ANTS in q for q in sqls)
+    m = json.load(open(os.path.join(d, "out", "manifest.json")))
+    assert m["ants_only"] is True and m["tool_version"] == "5"
+    assert m["left_out_not_formicidae"] == {"specimens": 341, "families": 3,
+                                            "by_family": {"(coleoptera)": 164, "curculionidae": 153, "vespidae": 24}}
+    assert "Ants only (family Formicidae): 341 specimens of other families are left out ((coleoptera) 164, curculionidae 153, vespidae 24)" in r.stdout
+    assert "No family given: 0" in r.stdout
+
+    # a row that is not an ant in an ants-only file is a difference, not a pass
+    bad = [list(x) for x in ROWS]
+    bad[0][HEADER.index("family")] = "vespidae"
+    d = setup(rows=bad)
+    r = run(d, "--countries", "United States,Canada,Mexico")
+    assert r.returncode == 1 and "not_formicidae_in_an_ants_only_file" in r.stdout, r.stdout
+
+    # --all-families: no filter, and the manifest counts the others
+    d = setup(rows=bad)
+    r = run(d, "--countries", "United States,Canada,Mexico", "--all-families", "--with-no-country")
+    assert r.returncode == 0, r.stdout + r.stderr
+    assert not any(se.ANTS in c["sql"] for c in calls(d))
+    m = json.load(open(os.path.join(d, "out", "manifest.json")))
+    assert m["ants_only"] is False and m["not_ants"] == 1 and m["left_out_not_formicidae"] is None
+    assert "All families (--all-families): 1 specimens in the file are not Formicidae" in r.stdout
+
+    # the no-country file follows the same choice
+    d = setup()
+    r = run(d, "--countries", "United States,Canada,Mexico", "--with-no-country")
+    assert r.returncode == 0, r.stdout + r.stderr
+    nc = [c["sql"] for c in calls(d) if "s.country is null" in c["sql"]]
+    assert nc and all(se.ANTS in q for q in nc), nc
 
 
 if __name__ == "__main__":

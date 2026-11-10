@@ -9,7 +9,8 @@ Read-only. Run on an AntWeb server by an administrator:
 
 It writes one folder (default /root/antweb-extracts/<date>-<names>/):
 
-  specimens.csv.gz        every specimen whose country (or island country, see below) is in the list: every
+  specimens.csv.gz        every ant specimen (family Formicidae; --all-families adds the beetles, wasps and other
+                          animals AntWeb holds) whose country (or island country, see below) is in the list: every
                           column of the specimen table, then taxon_status, taxon_fossil, taxon_rank,
                           taxon_current_valid_name, taxon_author_date, group_name and no_taxon_row. Specimens
                           WITHOUT coordinates are in the file (has_coordinates says which): a cut by a shape
@@ -65,7 +66,7 @@ import re
 import subprocess
 import sys
 
-VERSION = "4"
+VERSION = "5"
 TAXON_COLUMNS = ("taxon_status", "taxon_fossil", "taxon_rank", "taxon_current_valid_name", "taxon_author_date",
                  "group_name", "no_taxon_row")
 PLACE_NAME = re.compile(r"^[^\x00-\x1f;\\]{1,64}$")
@@ -117,21 +118,33 @@ def places_sql(countries):
             "or (is_island = 1 and (parent in " + c + " or country in " + c + ")) order by georank, name")
 
 
-def where_sql(countries, islands):
+# Ants only, the default since version 5 (Brian Fisher, 2026-11-10: "why did you include non ants for an ant
+# study?"): AntWeb also holds beetles, wasps, spiders and other animals found with ants (production: 1,289 of the
+# 200,075 specimens of United States, Canada and Mexico). A specimen with no family at all is kept and counted.
+ANTS = "(s.family = 'formicidae' or s.family is null or s.family = '')"
+
+
+def where_sql(countries, islands, ants_only=False):
     w = "s.country in " + sql_list(countries)
     if islands:
         w += " or s.island_country in " + sql_list(islands)
-    return "(" + w + ")"
+    return "(" + w + ")" + (" and " + ANTS if ants_only else "")
 
 
-def export_sql(countries, islands):
+def left_out_sql(countries, islands):
+    """Specimens of the countries that are not ants, by family: what the default leaves out."""
+    return ("select ifnull(nullif(s.family, ''), '(blank)'), count(*) from specimen s where " + where_sql(countries, islands)
+            + " and not " + ANTS + " group by 1 order by 2 desc, 1 /* left out */")
+
+
+def export_sql(countries, islands, ants_only=False):
     return ("set session transaction isolation level read committed; "
             "select s.*, t.status as taxon_status, t.fossil as taxon_fossil, t.taxarank as taxon_rank, "
             "t.current_valid_name as taxon_current_valid_name, t.author_date as taxon_author_date, g.name as group_name, "
             "case when t.taxon_name is null then 1 else 0 end as no_taxon_row "
             "from specimen s left join taxon t on t.taxon_name = s.taxon_name "
             "left join ant_group g on g.id = s.access_group "
-            "where " + where_sql(countries, islands) + " order by s.code")
+            "where " + where_sql(countries, islands, ants_only) + " order by s.code")
 
 
 def outdated_sql(countries):
@@ -163,13 +176,13 @@ def per_country_sql(countries, outdated):
 NO_COUNTRY = "(s.country is null or s.country = '')"
 
 
-def no_country_export_sql():
+def no_country_export_sql(ants_only=False):
     """Specimens with no country at all: no country filter can find them (production 2026-11-10: 1,623, among them
     303 of the University of Utah and 167 of UTEP), so they go in a file of their own for the curators to look through."""
-    return export_sql([], []).replace(where_sql([], []), NO_COUNTRY)
+    return export_sql([], []).replace(where_sql([], []), NO_COUNTRY + (" and " + ANTS if ants_only else ""))
 
 
-def count_sql(countries, islands):
+def count_sql(countries, islands, ants_only=False):
     # Grouped by the bytes of the names: MySQL compares names without accents ("México" = "Mexico"), so a plain
     # GROUP BY adds the two spellings up while the file has them apart (staging 2026-11-10: Mexico 52,206 in the
     # database's count, 52,203 + 3 "México" in the file, reported as a difference).
@@ -177,7 +190,7 @@ def count_sql(countries, islands):
     # convert(... using utf8mb4): the bytes are UTF-8 whatever the column's character set.
     return ("select hex(convert(ifnull(s.country, '') using utf8mb4)), hex(convert(ifnull(s.island_country, '') using utf8mb4)), "
             "count(*) from specimen s where "
-            + where_sql(countries, islands) + " group by 1, 2 order by 1, 2")
+            + where_sql(countries, islands, ants_only) + " group by 1, 2 order by 1, 2")
 
 
 def unhex(value):
@@ -255,6 +268,7 @@ class Stats:
         self.no_taxon_row = 0
         self.flagged = 0
         self.not_ants = 0
+        self.blank_family = 0
         self.genus = collections.defaultdict(lambda: {"specimens": 0, "names": set(), "names_coords": set(),
                                                       "bio_specimens": 0, "bio_names": set()})
         self.name_specimens = collections.Counter()
@@ -275,7 +289,10 @@ class Stats:
             self.no_taxon_row += 1
         if row.get("flag", ""):
             self.flagged += 1
-        if (row.get("family", "") or "").lower() != "formicidae":
+        family = (row.get("family", "") or "").strip().lower()
+        if not family:
+            self.blank_family += 1
+        elif family != "formicidae":
             self.not_ants += 1
         name = row.get("taxon_name", "")
         g = self.genus[((row.get("subfamily", "") or "").lower(), (row.get("genus", "") or "").lower())]
@@ -397,7 +414,8 @@ def manifest_text(m):
     lines += ["", "Without usable coordinates: {:,} (in the file, has_coordinates = 0; a cut by a shape file loses them)".format(m["without_coordinates"]),
               "Name has no taxon row: {:,} (in the file, no_taxon_row = 1; the API's specimen view leaves these out)".format(m["no_taxon_row"]),
               "Red-flagged at upload: {:,} (column flag)".format(m["flagged"]),
-              "Family not Formicidae: {:,}".format(m["not_ants"]),
+              ants_line(m),
+              "No family given: {:,} (in the file)".format(m.get("blank_family", 0)),
               "Filed under an outdated country name: {:,}".format(m.get("filed_under_outdated_name", 0)),
               "Genera: {:,}   distinct names: {:,}".format(m["genera"], m["names"])]
     if m.get("bioregion"):
@@ -423,6 +441,17 @@ def manifest_text(m):
     return "\n".join(lines) + "\n"
 
 
+def ants_line(m):
+    if not m.get("ants_only"):
+        return "All families (--all-families): {:,} specimens in the file are not Formicidae".format(m["not_ants"])
+    left = m.get("left_out_not_formicidae") or {"specimens": 0, "by_family": {}}
+    line = "Ants only (family Formicidae): {:,} specimens of other families are left out".format(left["specimens"])
+    if left["by_family"]:
+        top = list(left["by_family"].items())[:6]
+        line += " (" + ", ".join("%s %s" % (f, "{:,}".format(n)) for f, n in top) + (", ..." if len(left["by_family"]) > 6 else "") + ")"
+    return line + "; --all-families includes them"
+
+
 def read_first_line(path):
     try:
         with open(path, encoding="utf-8") as f:
@@ -443,6 +472,8 @@ def main(argv=None):
     a.add_argument("--countries", required=True, help='AntWeb country names, comma-separated: "United States,Canada,Mexico"')
     a.add_argument("--bioregion", default="", help="also write AntWeb's species list of this bioregion (for example Nearctic)")
     a.add_argument("--no-islands", action="store_true", help="leave out islands AntWeb treats as countries")
+    a.add_argument("--all-families", action="store_true",
+                   help="include the specimens that are not ants (default: family Formicidae only)")
     a.add_argument("--with-no-country", action="store_true",
                    help="also write specimens_no_country.csv.gz: every specimen of AntWeb that has no country")
     a.add_argument("--project", default=None, help="AntWeb checkout with etc/db.properties (default: found)")
@@ -484,8 +515,16 @@ def main(argv=None):
     stats = Stats(args.bioregion, old_names)
     spec_path = os.path.join(out, "specimens.csv.gz")
     print("Exporting (read-only) ...", flush=True)
-    header = write_specimens(stream_query(project, export_sql(countries + old_names, islands), args.container), spec_path, stats)
-    verified, diffs = compare_counts(stats, run_query(project, count_sql(countries + old_names, islands), args.container))
+    ants_only = not args.all_families
+    header = write_specimens(stream_query(project, export_sql(countries + old_names, islands, ants_only), args.container), spec_path, stats)
+    verified, diffs = compare_counts(stats, run_query(project, count_sql(countries + old_names, islands, ants_only), args.container))
+    left_out = None
+    if ants_only:
+        rows = run_query(project, left_out_sql(countries + old_names, islands), args.container)
+        left_out = {"specimens": sum(int(r[1]) for r in rows), "families": len(rows), "by_family": {r[0]: int(r[1]) for r in rows}}
+        if stats.not_ants:      # the file must hold none: the filter and the file disagree
+            verified = False
+            diffs.append({"file": "specimens.csv.gz", "not_formicidae_in_an_ants_only_file": stats.not_ants})
     per_country = {int(r[0]): int(r[1]) for r in run_query(project, per_country_sql(countries, outdated), args.container)}
     empty = [c for i, c in enumerate(countries) if per_country.get(i, 0) == 0]
 
@@ -494,8 +533,9 @@ def main(argv=None):
     if args.with_no_country:
         nc_stats = Stats("")
         nc_path = os.path.join(out, "specimens_no_country.csv.gz")
-        write_specimens(stream_query(project, no_country_export_sql(), args.container), nc_path, nc_stats)
-        nc_db = int(run_query(project, "select count(*) from specimen s where " + NO_COUNTRY, args.container)[0][0])
+        write_specimens(stream_query(project, no_country_export_sql(ants_only), args.container), nc_path, nc_stats)
+        nc_db = int(run_query(project, "select count(*) from specimen s where " + NO_COUNTRY + (" and " + ANTS if ants_only else ""),
+                              args.container)[0][0])
         groups = collections.Counter()
         with gzip.open(nc_path, "rt", encoding="utf-8", newline="") as f:
             for row in csv.DictReader(f):
@@ -528,6 +568,7 @@ def main(argv=None):
         "by_place": [{"country": k[0], "island_country": k[1], "specimens": n} for k, n in sorted(stats.by_place.items())],
         "by_bioregion": dict(sorted(stats.by_bioregion.items())), "by_taxon_status": dict(sorted(stats.by_status.items())),
         "without_coordinates": stats.no_coordinates, "no_taxon_row": stats.no_taxon_row, "flagged": stats.flagged,
+        "ants_only": ants_only, "left_out_not_formicidae": left_out, "blank_family": stats.blank_family,
         "not_ants": stats.not_ants, "filed_under_outdated_name": stats.filed_outdated, "countries_without_specimens": empty,
         "genera": len(stats.genus), "names": len(stats.name_specimens),
         "bioregion_list": bio, "no_country": no_country,
