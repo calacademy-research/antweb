@@ -67,6 +67,13 @@ public final class ImagingProgressAction extends AntwebAction {
             connection = DBUtil.getConnection(dataSource, dbMethodName);
             ImagingProgressDb db = new ImagingProgressDb(connection);
             if (!db.tableExists()) {
+                if (csv) {
+                    // not counted yet (the day of the first deploy): a script asking for the CSV must not get a page
+                    response.setStatus(HttpServletResponse.SC_SERVICE_UNAVAILABLE);
+                    response.setContentType("text/plain; charset=UTF-8");
+                    response.getWriter().write("The imaging progress has not been counted yet. It is counted once a day by the daily update.");
+                    return null;
+                }
                 request.setAttribute("notCounted", Boolean.TRUE);
                 return mapping.findForward("success");
             }
