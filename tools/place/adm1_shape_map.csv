@@ -1,0 +1,52 @@
+# Shapes of the boundary files (geoBoundaries gbOpen) whose name is not the name of the AntWeb state they lie in.
+# Read by tools/place/place_corrections.py. A line starting with # is a note.
+#
+# country: AntWeb's valid country. level: the level of the boundary file (ADM1, ADM2 ...). shape: the file's
+# shapeName. antweb_state: AntWeb's valid state the shape lies in (several shapes may lie in one state).
+# A row is used only when AntWeb has that state as a valid state of the country; the report of each run lists
+# the rows used and the rows not used. A shape with several rows takes the first whose state AntWeb has.
+#
+# Madagascar. AntWeb's states are the six provinces (faritany): Antananarivo, Antsiranana, Fianarantsoa,
+# Mahajanga, Toamasina, Toliara. The boundary file's ADM1 has the 22 regions (faritra) the provinces were divided
+# into in 2004 (Loi n° 2004-001 relative aux Régions); each region lies wholly in one province. Source of the
+# table: the "Province" column of https://en.wikipedia.org/wiki/Regions_of_Madagascar, read 2026-11-10, every
+# row checked. Matsiatra Ambony is Haute Matsiatra. The file has Vatovavy-Fitovinany undivided (divided in 2021
+# into Vatovavy and Fitovinany, both in Fianarantsoa); Ambatosoa (2023, from the north of Analanjirofo) is in
+# Toamasina. The last three rows are for a later file.
+country,level,shape,antweb_state
+Madagascar,ADM1,Analamanga,Antananarivo
+Madagascar,ADM1,Bongolava,Antananarivo
+Madagascar,ADM1,Itasy,Antananarivo
+Madagascar,ADM1,Vakinankaratra,Antananarivo
+Madagascar,ADM1,Diana,Antsiranana
+Madagascar,ADM1,Sava,Antsiranana
+Madagascar,ADM1,Amoron'i Mania,Fianarantsoa
+Madagascar,ADM1,Atsimo-Atsinanana,Fianarantsoa
+Madagascar,ADM1,Matsiatra Ambony,Fianarantsoa
+Madagascar,ADM1,Ihorombe,Fianarantsoa
+Madagascar,ADM1,Vatovavy-Fitovinany,Fianarantsoa
+Madagascar,ADM1,Betsiboka,Mahajanga
+Madagascar,ADM1,Boeny,Mahajanga
+Madagascar,ADM1,Melaky,Mahajanga
+Madagascar,ADM1,Sofia,Mahajanga
+Madagascar,ADM1,Alaotra-Mangoro,Toamasina
+Madagascar,ADM1,Analanjirofo,Toamasina
+Madagascar,ADM1,Atsinanana,Toamasina
+Madagascar,ADM1,Androy,Toliara
+Madagascar,ADM1,Anosy,Toliara
+Madagascar,ADM1,Atsimo-Andrefana,Toliara
+Madagascar,ADM1,Menabe,Toliara
+Madagascar,ADM1,Vatovavy,Fianarantsoa
+Madagascar,ADM1,Fitovinany,Fianarantsoa
+Madagascar,ADM1,Ambatosoa,Toamasina
+# Mexico. The file gives four states their long official names, and the capital its name before 2016.
+Mexico,ADM1,Coahuila de Zaragoza,Coahuila
+Mexico,ADM1,Michoacan de Ocampo,Michoacán
+Mexico,ADM1,Queretaro de Arteaga,Querétaro
+Mexico,ADM1,Veracruz de Ignacio de la Llave,Veracruz
+Mexico,ADM1,Distrito Federal,Ciudad de México
+Mexico,ADM1,Distrito Federal,Distrito Federal
+Mexico,ADM1,Mexico,México
+Mexico,ADM1,Mexico,Estado de México
+# United States. AntWeb's name for the District of Columbia (GeolocaleMgr.getGeolocaleFromProjectName).
+United States,ADM1,District of Columbia,"Washington, D.C."

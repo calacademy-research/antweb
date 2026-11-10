@@ -159,7 +159,7 @@ NATURAL_EARTH_ERROR_KM = 5.0     # measured: its mainland coast is up to 5.1 km 
 # The detailed shapes: geoBoundaries gbOpen ADM0, one file per ISO code (github.com/wmgeolab/geoBoundaries).
 # The files are Git LFS objects: the small pointer file of the pinned commit names the sha256 of the data.
 GB_COMMIT = "8ce2700661a28ee944350e2b329bbabb58d2ff83"
-GB_PATH = "/wmgeolab/geoBoundaries/{commit}/releaseData/gbOpen/{iso}/ADM0/geoBoundaries-{iso}-ADM0{ext}"
+GB_PATH = "/wmgeolab/geoBoundaries/{commit}/releaseData/gbOpen/{iso}/{level}/geoBoundaries-{iso}-{level}{ext}"
 GB_POINTER = "https://raw.githubusercontent.com" + GB_PATH
 GB_DATA = "https://media.githubusercontent.com/media" + GB_PATH
 GEOBOUNDARIES = "geoBoundaries"
@@ -806,12 +806,16 @@ def box_km(lat, lon, south, west, size):
 PAIR = re.compile(rb"\[\s*(-?\d[\d.eE+-]*)\s*,\s*(-?\d[\d.eE+-]*)[^\[\]]*\](\s*\])?")
 
 
-def read_rings(path, thin_m=THIN_M, block_size=1 << 20):
-    """The rings of every polygon of a GeoJSON file, read piece by piece so that a file of 100 MB does not fill
-    the memory. Points closer than thin_m to the last one kept are left out (the line moves by less than
-    thin_m). Returns (rings, points in the file, median distance in metres between the file's points).
-    Holes and pieces need not be told apart: a point is inside when it is inside an odd number of rings."""
-    rings, ring, start = [], [], []
+MARK = re.compile(rb'"type"\s*:\s*"Feature"|"shapeName"\s*:\s*"((?:[^"\\]|\\.)*)"|"coordinates"')
+
+
+def read_features(path, thin_m=THIN_M, block_size=1 << 20):
+    """The features of a GeoJSON file, read piece by piece so that a file of 100 MB does not fill the memory:
+    ([(shapeName, rings)], points in the file, median distance in metres between the file's points). Points
+    closer than thin_m to the last one kept are left out (the line moves by less than thin_m). Holes and
+    pieces need not be told apart: a point is inside when it is inside an odd number of rings."""
+    features, current = [], ["", []]
+    ring, start = [], []
     points, gaps = 0, []
     limit = (thin_m / 1000.0 / KM_PER_DEGREE) ** 2
     scale = kx = ky = px = py = 0.0
@@ -821,7 +825,7 @@ def read_rings(path, thin_m=THIN_M, block_size=1 << 20):
         if len(kept) >= 3:
             if kept[0] != kept[-1]:
                 kept.append(kept[0])
-            rings.append(kept)
+            current[1].append(kept)
 
     with open(path, "rb") as f:
         data, in_coordinates = b"", False
@@ -830,11 +834,20 @@ def read_rings(path, thin_m=THIN_M, block_size=1 << 20):
             data += block
             while data:
                 if not in_coordinates:
-                    at = data.find(b'"coordinates"')
-                    if at < 0:
-                        data = data[-16:] if block else b""
+                    m = MARK.search(data)
+                    if m is None:
+                        data = data[-600:] if block else b""    # a name cut in two waits for the rest
                         break
-                    data, in_coordinates = data[at + 13:], True
+                    data = data[m.end():]
+                    if m.group(0).startswith(b'"type"'):         # the next feature begins
+                        if current[0] or current[1]:
+                            features.append((current[0], current[1]))
+                        current = ["", []]
+                        continue
+                    if m.group(0).startswith(b'"shapeName"'):
+                        current[0] = json.loads(b'"' + m.group(1) + b'"')
+                        continue
+                    in_coordinates = True
                 end = data.find(b"}")
                 part = data if end < 0 else data[:end]
                 if end < 0 and block:
@@ -868,9 +881,18 @@ def read_rings(path, thin_m=THIN_M, block_size=1 << 20):
                 break
     if ring:
         close()
+    if current[0] or current[1]:
+        features.append((current[0], current[1]))
     gaps.sort()
     median = gaps[len(gaps) // 2] * KM_PER_DEGREE * 1000.0 if gaps else 0.0
-    return rings, points, median
+    return features, points, median
+
+
+def read_rings(path, thin_m=THIN_M, block_size=1 << 20):
+    """The rings of every polygon of a GeoJSON file (a country: one shape), with the points in the file and the
+    median distance between them."""
+    features, points, median = read_features(path, thin_m, block_size)
+    return [ring for _, rings in features for ring in rings], points, median
 
 
 class Rings:
@@ -880,14 +902,20 @@ class Rings:
         self.polygons = [rings]
 
 
-def index_of_rings(rings):
-    """An index over one country: a cell small enough for a detailed coast, a grid of about two million cells."""
-    xs = [p[0] for ring in rings for p in ring]
-    ys = [p[1] for ring in rings for p in ring]
+def index_of_shapes(shapes):
+    """An index over the shapes (each a list of rings) of one country: a cell small enough for a detailed line,
+    a grid of about two million cells."""
+    xs = [p[0] for rings in shapes for ring in rings for p in ring]
+    ys = [p[1] for rings in shapes for ring in rings for p in ring]
     west, south, east, north = min(xs), min(ys), max(xs), max(ys)
     width = 360.0 if east - west > 300.0 else east - west
     cell = min(CELL, max(0.01, math.sqrt(max(width, 0.1) * max(north - south, 0.1) / 2.0e6)))
-    return Index([Rings(rings)], forget=True, cell=cell, bounds=(west, south, east, north))
+    return Index([Rings(rings) for rings in shapes], forget=True, cell=cell, bounds=(west, south, east, north))
+
+
+def index_of_rings(rings):
+    """An index over one country drawn as one shape."""
+    return index_of_shapes([rings])
 
 
 def fetch_bytes(url, limit=None):
@@ -934,26 +962,26 @@ class Detail:
             f.write("\n")
         os.replace(self.lock_path + ".part", self.lock_path)
 
-    def _url(self, template, iso, ext):
-        return template.format(commit=self.commit, iso=iso, ext=ext)
+    def _url(self, template, iso, ext, level="ADM0"):
+        return template.format(commit=self.commit, iso=iso, level=level, ext=ext)
 
-    def _fetch(self, iso, ext, path=None):
+    def _fetch(self, iso, ext, path=None, level="ADM0"):
         """One file of the pinned commit, checked against the sha256 its pointer names. Returns (bytes or None,
         sha256, size); with path the data is written there instead. (None, "", 0): there is no such file."""
-        pointer = fetch_bytes(self._url(self.pointer_url, iso, ext), limit=1 << 16)
+        pointer = fetch_bytes(self._url(self.pointer_url, iso, ext, level), limit=1 << 16)
         if pointer is None:
             return None, "", 0
         if pointer.startswith(b"version https://git-lfs"):
             wanted = pointer.split(b"oid sha256:")[1].split()[0].decode("ascii")
-            data = fetch_bytes(self._url(self.data_url, iso, ext))
+            data = fetch_bytes(self._url(self.data_url, iso, ext, level))
             if data is None:
                 return None, "", 0
         else:                                            # a small file kept in the repository itself
-            data = fetch_bytes(self._url(self.pointer_url, iso, ext))
+            data = fetch_bytes(self._url(self.pointer_url, iso, ext, level))
             wanted = hashlib.sha256(data).hexdigest()
         found = hashlib.sha256(data).hexdigest()
         if found != wanted:
-            sys.exit("geoBoundaries " + iso + ext + ": the data has sha256 " + found + ", the pinned commit names " + wanted + ". Nothing was done.")
+            sys.exit("geoBoundaries " + iso + " " + level + ext + ": the data has sha256 " + found + ", the pinned commit names " + wanted + ". Nothing was done.")
         if path is not None:
             with open(path + ".part", "wb") as f:
                 f.write(data)
@@ -961,12 +989,14 @@ class Detail:
             return b"", found, len(data)
         return data, found, len(data)
 
-    def file(self, iso):
-        """The path of the country's file, fetched and checked if need be; None when there is none."""
-        entry = self.lock["files"].get(iso)
+    def file(self, iso, level="ADM0", variant=""):
+        """The path of a file of the country, fetched and checked if need be; None when there is none.
+        level: ADM0 (the country), ADM1 to ADM4 (its divisions). variant: "_simplified" for the light file."""
+        name = iso if (level, variant) == ("ADM0", "") else iso + " " + level + variant      # the key in the lock file
+        entry = self.lock["files"].get(name)
         if entry is not None and entry.get("missing"):
             return None
-        path = os.path.join(self.folder, "geoBoundaries-" + iso + "-ADM0-" + self.commit[:12] + ".geojson")
+        path = os.path.join(self.folder, "geoBoundaries-" + iso + "-" + level + variant + "-" + self.commit[:12] + ".geojson")
         if entry is not None and os.path.exists(path):
             found = sha256_of(path)
             if found != entry["sha256"]:
@@ -974,24 +1004,24 @@ class Detail:
                          + ". Remove the file to fetch it again. Nothing was done.")
             return path
         os.makedirs(self.folder, exist_ok=True)
-        _, sha, size = self._fetch(iso, ".geojson", path)
+        _, sha, size = self._fetch(iso, variant + ".geojson", path, level)
         if not sha:
-            self.lock["files"][iso] = {"missing": True, "checked": datetime.date.today().isoformat()}
+            self.lock["files"][name] = {"missing": True, "checked": datetime.date.today().isoformat()}
             self._save_lock()
             return None
         if entry is not None and entry["sha256"] != sha:
             os.remove(path)
-            sys.exit("geoBoundaries " + iso + ": fetched again, the data has sha256 " + sha + "; the lock file recorded " + entry["sha256"] + ". Nothing was done.")
+            sys.exit("geoBoundaries " + name + ": fetched again, the data has sha256 " + sha + "; the lock file recorded " + entry["sha256"] + ". Nothing was done.")
         licence, source = "not read", ""
-        meta, _, _ = self._fetch(iso, "-metaData.json")
+        meta, _, _ = self._fetch(iso, "-metaData.json", None, level)
         if meta:
             try:
                 about = json.loads(meta.decode("utf-8"))
                 licence, source = str(about.get("boundaryLicense") or "not stated"), str(about.get("boundarySource") or "")
             except ValueError:
                 pass
-        self.lock["files"][iso] = {"file": os.path.basename(path), "bytes": size, "sha256": sha, "licence": licence, "source": source,
-                                   "fetched": datetime.date.today().isoformat()}
+        self.lock["files"][name] = {"file": os.path.basename(path), "bytes": size, "sha256": sha, "licence": licence, "source": source,
+                                    "fetched": datetime.date.today().isoformat()}
         self._save_lock()
         return path
 

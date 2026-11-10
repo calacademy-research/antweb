@@ -838,6 +838,9 @@ jobs:
       - name: Coordinates against the stored country, report only (tests/unit/test_coordinate_country.py)
         run: python3 tests/unit/test_coordinate_country.py
 
+      - name: Place corrections for TaxonWorks, the missing country and state from coordinates (tests/unit/test_place_corrections.py)
+        run: python3 tests/unit/test_place_corrections.py
+
       - name: Pheidole head export, plan and contact sheets without a database (tests/unit/test_pheidole_export.py)
         run: python3 tests/unit/test_pheidole_export.py
 

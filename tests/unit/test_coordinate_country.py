@@ -492,6 +492,18 @@ def test_reading_a_detailed_file_piece_by_piece():
         thinned = cc.Index([cc.Rings([rings[0]])])
         for x, y in dense[::7]:
             assert min(thinned.near(y, x, 5.0).values()) <= 0.25, (x, y)
+        # the features one by one with their shapeName, whether the name stands before or after the shape
+        states = {"type": "FeatureCollection", "features": [
+            {"type": "Feature", "properties": {"shapeName": "Amoron'i Mania", "shapeType": "ADM1"}, "geometry": {"type": "Polygon", "coordinates": [square(0, 0, 1, 1)]}},
+            {"type": "Feature", "geometry": {"type": "MultiPolygon", "coordinates": [[square(2, 0, 3, 1)], [square(4, 0, 5, 1)]]}, "properties": {"shapeName": "Nuevo \"León\""}},
+            {"type": "Feature", "properties": {"shapeName": "Québec"}, "geometry": {"type": "Polygon", "coordinates": [square(6, 0, 7, 1), square(6.2, 0.2, 6.8, 0.8)]}}]}
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(states, f)
+        for size in (1 << 20, 53, 19):
+            features, points, median = cc.read_features(path, thin_m=0.0, block_size=size)
+            assert [(name, len(rings)) for name, rings in features] == [("Amoron'i Mania", 1), ('Nuevo "León"', 2), ("Québec", 2)] and points == 25, (size, features)
+        index = cc.index_of_shapes([rings for _, rings in features])
+        assert index.inside(0.5, 0.5) == [0] and index.inside(0.5, 4.5) == [1] and index.inside(0.1, 6.1) == [2] and index.inside(0.5, 6.5) == []
         # a ring smaller than the thinning distance is kept by its first points
         with open(path, "w", encoding="utf-8") as f:
             json.dump({"features": [{"geometry": {"type": "Polygon", "coordinates": [[[10.0, 10.0], [10.0001, 10.0], [10.0001, 10.0001], [10.0, 10.0001], [10.0, 10.0]]]}}]}, f)
