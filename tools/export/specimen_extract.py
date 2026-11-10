@@ -34,6 +34,10 @@ listed in the manifest; leave them out with --no-islands.
 
 The password is read from <project>/etc/db.properties and goes to docker through the environment, never on
 a command line. Tests: tests/unit/test_specimen_extract.py.
+
+The admin page dataExtract.do writes the same files from the website (src/.../util/DataExtract.java, a port of
+this tool; docs/flows/data-extract.md). Keep the two in step: a change of the columns or the manifest goes into
+both, with VERSION raised in both.
 """
 import argparse
 import collections

@@ -1109,6 +1109,20 @@ We would like to remove getChildImages.  Not needed now in the new UI
         <forward name="success" path="/curate/apiKeys.jsp" />
     </action>
 
+    <!-- Admin: a complete, verified specimen extract for a collaborator (countries, islands, a bioregion's species list);
+         runs as a background job (DataExtractJob), read-only. -->
+    <action path="/dataExtract"
+                type="org.calacademy.antweb.curate.DataExtractAction"
+                scope="request">
+        <forward name="success" path="/curate/dataExtract.jsp" />
+    </action>
+
+    <!-- Admin: one file of a finished data extract, by job number and a file name from a fixed list (the folder is not served). -->
+    <action path="/dataExtractFile"
+                type="org.calacademy.antweb.curate.DataExtractFileAction"
+                scope="request">
+    </action>
+
     <!-- Admin: preview / apply sanitizing of page text saved before edits were sanitized. -->
     <action path="/sanitizeDescriptions"
                 type="org.calacademy.antweb.util.SanitizeDescriptionsAction"
