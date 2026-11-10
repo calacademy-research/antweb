@@ -35,7 +35,12 @@ import static test.org.calacademy.antweb.util.NumbersTestDb.*;
  *  - the daily sequence (2026-11-10, production: "1987 recounted, 0 unchanged" on a Tuesday): what the daily update
  *    rewrites every day before the totals leaves every place unchanged; a morphospecies curated on a list somewhere
  *    counts the places that have the name again, not every place; the stored totals are the lists' rows every day;
- *  - every place is committed on its own (no transaction held from one place to the next).
+ *  - every place is committed on its own (no transaction held from one place to the next);
+ *  - one place between two daily updates (2026-11-10, staging: after "Update statistics" on the bioregion Nearctic its
+ *    genus list had 91 genera and the page said Genera 90): PlaceViewTotalDb.recountPlace counts the one place whose list
+ *    was rebuilt, by its own key for every kind of place, and stores its totals and state; every row of every other
+ *    place stays as it was; the AntWeb-wide list is not counted; a count that fails leaves no totals for the place (its
+ *    page shows the place's own counts until the next daily update) instead of the totals of before the change.
  * Runs in CI against MySQL 8.4 (host "mysql"); ANTWEB_TEST_DB_URL overrides.
  */
 public class PlaceViewTotalDbTest extends TestCase {
@@ -510,6 +515,196 @@ public class PlaceViewTotalDbTest extends TestCase {
         String seventh = nextDay(places);
         assertTrue("day 7: " + seventh, seventh.contains("(0 recounted, 7 unchanged)"));
         assertTotalsAreTodays("day 7", places);
+    }
+
+    // ------------------------------------------------------------------ one place between two daily updates (2026-11-10)
+
+    static final String TETRA = "myrmicinaetetramorium";
+    static final String TT = "myrmicinaetetramorium t";
+
+    /** A valid genus and a valid species of it that no list has yet. */
+    private void newGenusAndSpecies() throws Exception {
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species) values"
+            + " ('" + TETRA + "', 'genus', 'valid', '" + MYRM + "', 'formicidae', '" + MYRM + "', 'tetramorium', null),"
+            + " ('" + TT + "', 'species', 'valid', '" + TETRA + "', 'formicidae', '" + MYRM + "', 'tetramorium', 't')");
+    }
+
+    /**
+     * Every column of every row of the totals and the state table, as text, without the rows of one place (null: every
+     * row): to see that the rows of the other places are exactly as they were, their times too.
+     */
+    private List<String> rowsWithout(String type, String key) throws Exception {
+        List<String> out = new ArrayList<>();
+        for (String table : new String[] {"place_view_total", "place_view_total_state"}) {
+            try (PreparedStatement s = connection.prepareStatement("select * from " + table + " order by 1, 2, 3"); ResultSet r = s.executeQuery()) {
+                int columns = r.getMetaData().getColumnCount();
+                while (r.next()) {
+                    if (r.getString(1).equals(type) && r.getString(2).equals(key)) continue;
+                    StringBuilder b = new StringBuilder(table);
+                    for (int i = 1; i <= columns; i++) b.append('|').append(r.getString(i));
+                    out.add(b.toString());
+                }
+            }
+        }
+        return out;
+    }
+
+    /** A place's state row: {rules, fingerprint, seconds since counted}, or null without one. */
+    private String[] state(String type, String key) throws Exception {
+        try (PreparedStatement s = connection.prepareStatement("select rules, fingerprint, timestampdiff(second, counted, now())"
+                + " from place_view_total_state where list_type = ? and list_key = ?")) {
+            s.setString(1, type);
+            s.setString(2, key);
+            try (ResultSet r = s.executeQuery()) {
+                return r.next() ? new String[] {r.getString(1), r.getString(2), r.getString(3)} : null;
+            }
+        }
+    }
+
+    /**
+     * "Update statistics" on a place page rebuilds that place's list between two daily updates (staging 2026-11-10, the
+     * bioregion Nearctic: its genus list then had 91 genera, the page still said Genera 90). After a place's list gains
+     * a genus and a species, recountPlace makes its stored totals the rows of its lists and stores its state; every row
+     * of the other places is exactly as it was; the next daily update finds every place unchanged.
+     */
+    public void testOnePlaceIsCountedAgainAndNoOtherPlaceIsTouched() throws Exception {
+        exec("alter table proj_taxon add column rev int default 0");   // read by the project list's query
+        List<Overview> places = Arrays.asList(madagascar(), casc(), malagasy(), madants());
+        night(places);
+        anHourLater();
+        PlaceViewTotalDb db = new PlaceViewTotalDb(connection);
+        String key = "" + MADAGASCAR;
+        int genera = stored("geolocale", key, "genus");
+        int species = stored("geolocale", key, "species");
+        int subfamilies = stored("geolocale", key, "subfamily");
+        assertTrue("Madagascar's lists have rows: " + genera + ", " + species + ", " + subfamilies, genera > 0 && species > 0 && subfamilies > 0);
+        List<String> others = rowsWithout("geolocale", key);
+        assertEquals("CASC, Malagasy and madants: three totals and one state row each: " + others, 12, others.size());
+
+        // Madagascar's list gains a genus and a species
+        newGenusAndSpecies();
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, source) values (" + MADAGASCAR + ", '" + TETRA + "', 'antcat'),"
+            + " (" + MADAGASCAR + ", '" + TT + "', 'antcat')");
+        assertEquals("the genus list shows the new genus", genera + 1, db.listRows(madagascar(), "genus"));
+        assertEquals("the species list shows the new species", species + 1, db.listRows(madagascar(), "species"));
+        assertEquals("the stored totals are still those of the last daily update", genera, stored("geolocale", key, "genus"));
+        assertEquals(species, stored("geolocale", key, "species"));
+
+        assertTrue("counted", new PlaceViewTotalDb(connection).recountPlace(madagascar()));
+        assertEquals("Genera = the genus list's rows", genera + 1, stored("geolocale", key, "genus"));
+        assertEquals("Species = the species list's rows", species + 1, stored("geolocale", key, "species"));
+        assertEquals(subfamilies, stored("geolocale", key, "subfamily"));
+        assertTotalsAreTodays("after the count of one place", Arrays.asList(madagascar()));
+        assertEquals("no row of another place was written or removed", others, rowsWithout("geolocale", key));
+        // its state: today's rules and fingerprint, counted now
+        String[] state = state("geolocale", key);
+        assertNotNull(state);
+        assertEquals(PlaceViewTotalDb.RULES, state[0]);
+        assertEquals(db.fingerprint(madagascar(), db.loadCurated()), state[1]);
+        assertTrue("counted now, not an hour ago: " + state[2], Integer.parseInt(state[2]) < 600);
+
+        // a second count changes no number (and still no other place)
+        assertTrue(new PlaceViewTotalDb(connection).recountPlace(madagascar()));
+        assertEquals(genera + 1, stored("geolocale", key, "genus"));
+        assertEquals(species + 1, stored("geolocale", key, "species"));
+        assertEquals(others, rowsWithout("geolocale", key));
+
+        // the state stored for the one place is the state the daily update compares: the next one counts no place again
+        anHourLater();
+        String next = night(places);
+        assertTrue("the next daily update: " + next, next.contains("(0 recounted, 4 unchanged)"));
+        assertEquals(genera + 1, stored("geolocale", key, "genus"));
+        assertEquals(species + 1, stored("geolocale", key, "species"));
+    }
+
+    /**
+     * The button is on museum, bioregion and project pages too (and country, island and adm1 pages are geolocales): each
+     * kind of place is counted by its own key (museum code, bioregion name, project name), and only that place.
+     */
+    public void testEveryKindOfPlaceIsCountedByItsOwnKey() throws Exception {
+        exec("alter table proj_taxon add column rev int default 0");   // read by the project list's query
+        List<Overview> places = Arrays.asList(madagascar(), casc(), malagasy(), madants());
+        night(places);
+        anHourLater();
+        newGenusAndSpecies();
+        exec("insert into museum_taxon (code, taxon_name) values ('CASC', '" + TETRA + "'), ('CASC', '" + TT + "')");
+        exec("insert into bioregion_taxon (bioregion_name, taxon_name) values ('Malagasy', '" + TETRA + "'), ('Malagasy', '" + TT + "')");
+        exec("insert into proj_taxon (project_name, taxon_name, source) values ('madants', '" + TETRA + "', 'antcat'), ('madants', '" + TT + "', 'antcat')");
+        for (Overview place : Arrays.asList(casc(), malagasy(), madants())) {
+            String[] tk = PlaceViewTotalDb.typeAndKey(place);
+            String what = tk[0] + " " + tk[1];
+            int genera = stored(tk[0], tk[1], "genus");
+            int species = stored(tk[0], tk[1], "species");
+            List<String> others = rowsWithout(tk[0], tk[1]);
+            assertEquals(what + ": the three other places", 12, others.size());
+            assertTrue(what, new PlaceViewTotalDb(connection).recountPlace(place));
+            assertEquals(what + " Genera", genera + 1, stored(tk[0], tk[1], "genus"));
+            assertEquals(what + " Species", species + 1, stored(tk[0], tk[1], "species"));
+            assertTotalsAreTodays(what, Arrays.asList(place));
+            assertEquals(what + ": no row of another place was written or removed", others, rowsWithout(tk[0], tk[1]));
+        }
+    }
+
+    /**
+     * A place the daily update does not count (counts(): the AntWeb-wide list) is not counted here either: nothing is
+     * read, written or removed. Rows put there by hand show it: a count would change them, a failed count remove them.
+     */
+    public void testAPlaceThatIsNotCountedIsLeftAlone() throws Exception {
+        exec("alter table proj_taxon add column rev int default 0");   // read by the project list's query
+        night(Arrays.asList(madagascar(), casc()));
+        anHourLater();
+        String allAntweb = org.calacademy.antweb.Project.ALLANTWEBANTS;
+        exec("insert into place_view_total (list_type, list_key, taxarank, view_name, n, counted) values"
+            + " ('project', '" + allAntweb + "', 'species', 'curated', 99, now() - interval 1 day)");
+        exec("insert into place_view_total_state (list_type, list_key, rules, fingerprint, counted, checked) values"
+            + " ('project', '" + allAntweb + "', 'rules', 'fingerprint', now() - interval 1 day, now() - interval 1 day)");
+        List<String> before = rowsWithout(null, null);
+        assertEquals("two places, three totals and one state row each, and the two rows put there by hand", 10, before.size());
+        org.calacademy.antweb.Project all = new org.calacademy.antweb.Project();
+        all.setName(allAntweb);
+        assertFalse(PlaceViewTotalDb.counts(all));
+        PlaceViewTotalDb db = new PlaceViewTotalDb(connection);
+        assertFalse("the AntWeb-wide list", db.recountPlace(all));
+        assertFalse("no place", db.recountPlace(null));
+        assertEquals("nothing written or removed", before, rowsWithout(null, null));
+        assertEquals(99, stored("project", allAntweb, "species"));
+    }
+
+    /**
+     * A count that fails is not thrown (the page that asked for it is still shown) and leaves no wrong number: the place's
+     * totals and state are removed, as the daily update does for a place that fails, so its page shows the place's own
+     * counts (read: -1, data-view-counted="false") and not the totals of before its list changed. No other place is
+     * touched, and the next daily update counts the place as a new one.
+     */
+    public void testAFailingCountLeavesNoWrongNumber() throws Exception {
+        List<Overview> places = Arrays.asList(madagascar(), casc());
+        night(places);
+        anHourLater();
+        String key = "" + MADAGASCAR;
+        int species = stored("geolocale", key, "species");
+        List<String> others = rowsWithout("geolocale", key);
+        assertEquals(4, others.size());
+        // the list changes: the stored Species is now one short
+        exec("insert into taxon (taxon_name, taxarank, status, parent_taxon_name, family, subfamily, genus, species) values ('" + PC
+            + "', 'species', 'valid', '" + PHEIDOLE + "', 'formicidae', '" + MYRM + "', 'pheidole', 'c')");
+        exec("insert into geolocale_taxon (geolocale_id, taxon_name, source) values (" + MADAGASCAR + ", '" + PC + "', 'antcat')");
+        // the count fails: the lists' query reads a column that is gone
+        exec("alter table taxon drop column subspecies");
+        PlaceViewTotalDb db = new PlaceViewTotalDb(connection);
+        assertFalse("a failed count is reported, not thrown", db.recountPlace(madagascar()));
+        for (String rank : new String[] {"genus", "species", "subfamily"}) {
+            assertEquals("no stored " + rank + " total rather than the one of before the change", -1, stored("geolocale", key, rank));
+        }
+        assertTrue("the page reads no totals and shows the place's own counts", Arrays.equals(new int[] {-1, -1, -1}, db.read(madagascar())));
+        assertNull("no state, so the next daily update counts the place", state("geolocale", key));
+        assertEquals("no row of another place was written or removed", others, rowsWithout("geolocale", key));
+
+        // the query works again: the next daily update counts the place as a new one
+        exec("alter table taxon add column subspecies varchar(64)");
+        anHourLater();
+        String next = night(places);
+        assertTrue(next, next.contains("(1 recounted, 1 unchanged); recounted because: new place 1;"));
+        assertEquals(species + 1, stored("geolocale", key, "species"));
     }
 
     /** Each place is committed when it is done, also on a connection whose autocommit was off (restored after). */

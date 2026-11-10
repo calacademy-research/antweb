@@ -65,10 +65,22 @@ import org.apache.commons.logging.LogFactory;
  * then, when places were counted again, why and what took the time ("; recounted because: data changed 12 (list rows
  * 3, specimen names 10), counted over 7 days ago 1; comparing 20 s, counting 4 s").
  *
+ * One place between two daily updates (2026-11-10): recountPlace counts one place again and stores its totals and its
+ * state, and touches no other place's rows. Called wherever one place's list is rebuilt outside the daily update: the
+ * "Update statistics" button of a place page (OverviewAction, action=recalc) and the admin jobs for one place
+ * (utilData.do?action=geolocaleCountCrawl&num=, populateBioregion&name=, populateMuseum&code=, projectCountCrawl&name=).
+ * Until then they rebuilt the list and left these totals as the last daily update counted them, so the page and the
+ * list it opens disagreed until the next daily update (staging 2026-11-10, bioregion Nearctic after "Update
+ * statistics": the genus list had 91 genera, the page said Genera 90; Indomalaya: species list 3,785, page 3,784).
+ * The daily fill and recountPlace count and store through the same method (countAndStore).
+ *
  * Tests: home.PlaceViewTotalDbTest (unchanged places skipped, changed ones counted, rules change, commit per place, the
- * daily sequence day after day, the curated part against ListView.vettedCondition),
+ * daily sequence day after day, the curated part against ListView.vettedCondition; one place counted again, the other
+ * places' rows untouched, a place that is not counted, a count that fails),
  * tests/e2e/test_numbers_live.py (test_list_headers_equal_place_numbers), test_numbers_lists.py
- * (test_list_headers_equal_place_numbers_of_every_kind), test_nightly_jobs_ran.py (test_place_list_totals_counted_every_place).
+ * (test_list_headers_equal_place_numbers_of_every_kind), test_nightly_jobs_ran.py (test_place_list_totals_counted_every_place),
+ * test_place_recalc.py (after "Update statistics" the page's numbers are the headers of its lists),
+ * tests/unit/test_recalc_view_totals.py (every place that rebuilds one list calls recountPlace).
  */
 public class PlaceViewTotalDb {
 
@@ -539,6 +551,62 @@ public class PlaceViewTotalDb {
     }
 
     /**
+     * Counts one place's lists and stores its totals and its state: the per-place step of the daily fill and of
+     * recountPlace, in one method so the two cannot drift. Only this place's rows are written. The three lists are
+     * counted before anything is stored: when a count fails, nothing of this place was written.
+     */
+    private void countAndStore(Overview place, String[] tk, String fingerprint) throws SQLException {
+        // subfamilies too (2026-11-04: North America showed 15 stored, its Curated list 11)
+        store(place, listRows(place, Rank.GENUS), listRows(place, Rank.SPECIES), listRows(place, Rank.SUBFAMILY));
+        writeState(tk, fingerprint, true);
+    }
+
+    /** Removes one place's totals and state (its rows only). */
+    private void removePlace(String[] tk) throws SQLException {
+        for (String table : new String[] {"place_view_total", "place_view_total_state"}) {
+            try (PreparedStatement stmt = connection.prepareStatement("delete from " + table + " where list_type = ? and list_key = ?")) {
+                stmt.setString(1, tk[0]);
+                stmt.setString(2, tk[1]);
+                stmt.executeUpdate();
+            }
+        }
+    }
+
+    /**
+     * Counts ONE place again now and stores its totals and its state (2026-11-10), for the code that rebuilds one
+     * place's list between two daily updates ("Update statistics" on a place page, the admin jobs for one place). Call it
+     * after the place's list and counts are rebuilt. No other place's rows are written or removed: fill() is not used
+     * for this, because it removes the rows of every place that is not in the list it is given.
+     *
+     * Returns true when the place was counted and stored. False, and nothing done, for a place the daily update does not
+     * count either (counts(): the AntWeb-wide list; or not a place with totals). False also when the count fails: never
+     * thrown, so the page that called it is still shown. A place whose count failed loses its totals and its state, as
+     * a place that fails in the daily fill does: its page then shows the place's own stored counts, marked
+     * data-view-counted="false" (the number tests wait for the count instead of comparing), and the next daily update
+     * counts it ("new place"). Keeping the totals would show, as counted, numbers from before the list was rebuilt:
+     * the wrong number this method is there to prevent.
+     *
+     * The statements run on the connection as it is (autocommit or the caller's transaction); nothing is committed here.
+     */
+    public boolean recountPlace(Overview place) {
+        String[] tk = typeAndKey(place);
+        if (tk == null || !counts(place)) return false;
+        try {
+            ensureSchema();
+            countAndStore(place, tk, fingerprint(place, loadCurated()));
+            return true;
+        } catch (SQLException | RuntimeException e) {
+            s_log.warn("recountPlace() " + tk[0] + " " + tk[1] + " not counted; its list totals are removed until the next daily update. e:" + e);
+            try {
+                removePlace(tk);
+            } catch (SQLException | RuntimeException e2) {
+                s_log.warn("recountPlace() " + tk[0] + " " + tk[1] + " totals not removed e:" + e2);
+            }
+            return false;
+        }
+    }
+
+    /**
      * Why a place is counted again, or null when its totals stand (same rules and fingerprint, counted within
      * MAX_AGE_DAYS, its specimen names stored again since it was last compared, totals present).
      */
@@ -623,9 +691,7 @@ public class PlaceViewTotalDb {
                         ++unchanged;
                     } else {
                         long t1 = System.currentTimeMillis();
-                        // subfamilies too (2026-11-04: North America showed 15 stored, its Curated list 11)
-                        store(place, listRows(place, Rank.GENUS), listRows(place, Rank.SPECIES), listRows(place, Rank.SUBFAMILY));
-                        writeState(tk, fingerprint, true);
+                        countAndStore(place, tk, fingerprint);
                         ++recounted;
                         counting += System.currentTimeMillis() - t1;
                         reasons.merge(reason, 1, Integer::sum);

@@ -92,6 +92,9 @@ jobs:
       - name: A recount of one bioregion or museum makes the statistics page count again (tests/unit/test_statspage_forget.py)
         run: python3 tests/unit/test_statspage_forget.py
 
+      - name: Rebuilding one place's list counts its stored list totals again (tests/unit/test_recalc_view_totals.py)
+        run: python3 tests/unit/test_recalc_view_totals.py
+
       - name: Production smoke run and morning check pass, fail and skip as they should (tests/unit/test_prod_smoke_logic.py)
         run: python3 tests/unit/test_prod_smoke_logic.py
 
@@ -1253,7 +1256,10 @@ jobs:
           # 2026-11-10 (production: every place recounted on a Tuesday): the daily sequence day after day (what the daily
           # update rewrites before the totals leaves every place unchanged; a morphospecies curated elsewhere counts only
           # the places that have the name; the stored totals equal the lists every day), the curated part of the
-          # fingerprint against ListView.vettedCondition.
+          # fingerprint against ListView.vettedCondition; one place between two daily updates (staging 2026-11-10: after
+          # "Update statistics" the bioregion Nearctic's genus list had 91 genera, its page said 90): recountPlace makes
+          # the place's stored totals the rows of its lists, for every kind of place by its own key, every row of every
+          # other place stays as it was, the AntWeb-wide list is not counted, a count that fails leaves no totals.
           # ImagingProgressDbTest (2026-11-08): the imaging progress page's table (a label-only name is unimaged; a name
           # imaged elsewhere is imaged but not imaged from here; all of AntWeb = the home page numbers; the unimaged list
           # and CSV; the count check finds a wrong row; photos of red-flagged specimens do not count, 2026-11-09; the
@@ -1300,7 +1306,7 @@ jobs:
               /t/org/calacademy/antweb/home/PlaceViewTotalDbTest.java \
               /t/org/calacademy/antweb/home/ApiKeyDbTest.java \
               /t/org/calacademy/antweb/home/ImagingProgressDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:8 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:10 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:8; do
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:8 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:14 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:8 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:14 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:8; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

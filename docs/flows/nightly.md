@@ -121,6 +121,21 @@ compute.log: "Place list totals counted: N places in S s (M recounted, K unchang
   `utilData.do?action=placeViewTotals&param=all`. Each place is committed on its own (autocommit).
 - Bump `PlaceViewTotalDb.RULES` when what a list shows changes (ListView, StatusSet, TaxaPage, PlaceTotals), so the next
   run counts every place.
+- One place between two daily updates (2026-11-10): whatever rebuilds one place's list outside the daily update counts
+  that place's totals again, `PlaceViewTotalDb.recountPlace(place)`: the "Update statistics" button of a place page
+  (`OverviewAction`, `action=recalc`: project, museum, bioregion, country, island, adm1) and the admin jobs for one
+  place (`utilData.do?action=geolocaleCountCrawl&num=<id>`, `populateBioregion&name=`, `populateMuseum&code=`,
+  `projectCountCrawl&name=`). It writes that place's totals and state only (`fill()` is not used for one place: it
+  removes the rows of every place it is not given), through the same per-place method as the daily fill
+  (`countAndStore`). Before, the button rebuilt the list and left the totals of the last daily update: staging
+  2026-11-10, after 2,215 Mexican specimens became Nearctic and "Update statistics" on the bioregion Nearctic, its genus
+  list had 91 genera and the page said Genera 90 (Indomalaya: species list 3,785, page 3,784). A count that fails is
+  logged, never fails the page, and removes the place's totals and state, as the daily fill does for a failed place: the
+  page shows the place's own counts (`data-view-counted="false"`) until the next daily update counts it ("new place").
+  Not counted again here: the jobs for every place run by hand (run `placeViewTotals` after them), a save in the Species
+  List Tool, a species list upload, a specimen upload and "Recalculate Your Museums" (they do not recount the place's
+  other numbers either; the daily update does). Tests: `PlaceViewTotalDbTest` (the four tests on one place),
+  `tests/e2e/test_place_recalc.py`, `tests/unit/test_recalc_view_totals.py`.
 - Production 2026-11-10 (a Tuesday, the first daily update with the fingerprints): "1987 recounted, 0 unchanged", 584 s.
   Cause: the curated morphospecies were in every place's fingerprint as one checksum of all of AntWeb's
   (`globalFingerprint`), so one curator's entry for a morphospecies anywhere, or one curated morphospecies whose

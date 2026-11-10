@@ -747,7 +747,11 @@ the list it opens.
 
 **Written by.** Set 4 and `utilData.do?action=placeViewTotals` (`PlaceViewTotalDb.fillAll`, after `placeGenusCuration`).
 Since 2026-11-09 only the places whose data changed are counted again (`place_view_total_state`), each place committed
-on its own; `&param=all` and Sundays count every place. Created by the application; record and undo in
+on its own; `&param=all` and Sundays count every place. One place between two daily updates (2026-11-10):
+`PlaceViewTotalDb.recountPlace`, called by the "Update statistics" button of a place page (`OverviewAction`,
+`action=recalc`) and by the admin jobs for one place (`utilData.do?action=geolocaleCountCrawl&num=`,
+`populateBioregion&name=`, `populateMuseum&code=`, `projectCountCrawl&name=`): that place's rows only; a count that
+fails removes them. Created by the application; record and undo in
 `db/upgrade/8.116/2026-11-04-place-view-total.sql`.
 
 **Read by.** Place pages (`OverviewAction.setPlaceImages`, overview-body.jsp), the Valid species list header
@@ -769,7 +773,9 @@ compared, keeps its totals.
 **Key.** (`list_type`, `list_key`), as `place_view_total`. **Key columns.** `rules`, `fingerprint`, `counted` (last
 counted), `checked` (last compared).
 
-**Written by.** `PlaceViewTotalDb.fill` (nightly after set 4, `utilData.do?action=placeViewTotals`). Created by the
+**Written by.** `PlaceViewTotalDb.fill` (nightly after set 4, `utilData.do?action=placeViewTotals`) and, for one place,
+`PlaceViewTotalDb.recountPlace` (2026-11-10: "Update statistics" on a place page, the admin jobs for one place; the
+place's row is written with its totals, or removed with them when its count fails). Created by the
 application (`PlaceViewTotalDb.ensureSchema`); record and undo in `db/upgrade/9.3.1/2026-11-09-place-view-total-state.sql`.
 Rows of places not counted that night go with their totals.
 

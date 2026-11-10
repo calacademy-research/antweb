@@ -786,6 +786,7 @@ public class UtilDataAction extends AntwebAction {
 		  if (geolocaleId > 0) {
 			new GeolocaleDb(connection).updateCounts(geolocaleId);
 			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.GEOLOCALE, "" + geolocaleId);
+			recountListTotals(connection, GeolocaleMgr.getGeolocale(geolocaleId));
 		  } else {			    
             CountDb.s_isBulk = true;
             try {
@@ -817,6 +818,7 @@ public class UtilDataAction extends AntwebAction {
 		    bioregion = Formatter.initCap(bioregion);
 			appendStr += ":" + Html.esc(bioregion);
 			new BioregionDb(connection).populate(bioregion);
+			recountListTotals(connection, BioregionMgr.getBioregion(bioregion));
 		  } else {
 			new BioregionDb(connection).populate();
 		  }
@@ -839,6 +841,7 @@ public class UtilDataAction extends AntwebAction {
 		  if (museumCode != null && !"".equals(museumCode)) {
 			appendStr += ":" + Html.esc(museumCode);
 			museumDb.populate(museumCode);
+			recountListTotals(connection, MuseumMgr.getMuseum(museumCode));
 		  } else {
 			museumDb.populate();
 		  }
@@ -868,6 +871,7 @@ public class UtilDataAction extends AntwebAction {
 			}
 			projectDb.updateCounts(projectName);
 			new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.PROJECT, projectName);
+			recountListTotals(connection, project);
 			appendStr += ":" + Html.esc(projectName);
 		  } else {
 			// The counts on the project species lists (proj_taxon), not only the project totals (2026-10).
@@ -1196,6 +1200,19 @@ public class UtilDataAction extends AntwebAction {
             + "<p>Apply the fix: remove the proxy records and insert the missing parent records "
             + "(country for each adm1 record, parent taxon for each record).</p>"
             + Csrf.postButton(request, url, "Apply the fix", "Change geolocale_taxon records now?");
+    }
+
+    /**
+     * After a job rebuilt ONE place's list (geolocaleCountCrawl with num, populateBioregion with name, populateMuseum
+     * with code, projectCountCrawl with name): the stored totals of that place's lists, which its page shows as
+     * Subfamilies, Genera and Species, are counted again (PlaceViewTotalDb.recountPlace; 2026-11-10: they stayed as the
+     * last daily update counted them, so the page and the rebuilt list disagreed until the next one). Only that place's
+     * rows are written. The forms of these jobs for every place do not call this: the daily update counts the totals in
+     * its own step afterwards (placeViewTotals), which an admin can also run by hand.
+     */
+    static void recountListTotals(Connection connection, Overview place) {
+        if (place == null) return;
+        new PlaceViewTotalDb(connection).recountPlace(place);
     }
 
     /**
