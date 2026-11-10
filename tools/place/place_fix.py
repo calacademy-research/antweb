@@ -13,6 +13,7 @@ What it does: it reads every (country, state, bioregion) combination of the spec
 
   python3 place_fix.py                    report only (the default; nothing is changed)
   python3 place_fix.py --apply            make the changes (a backup table is written first)
+  python3 place_fix.py --countries "United States,Canada,Mexico" [--apply]    only specimens of these countries
   python3 place_fix.py --rollback place_fix_20261110_0915     put the old values back
 
 The rule, the same as the upload's (SpecimenUploadParse.parseLine, GeolocaleMgr.getGeolocaleBioregion):
@@ -62,7 +63,7 @@ import subprocess
 import sys
 import unicodedata
 
-VERSION = "1"
+VERSION = "2"
 TABLE_NAME = re.compile(r"^place_fix_\d{8}_\d{4}$")
 
 
@@ -219,13 +220,15 @@ class Combination:
         self.country, self.adm1, self.bioregion, self.island, self.specimens = country, adm1, bioregion, island, specimens
 
 
-def plan(places, combinations):
-    """(changes, not_fixed): lists of (combination, decision)."""
+def plan(places, combinations, only=None):
+    """(changes, not_fixed): lists of (combination, decision). only: a set of valid country names; a change is
+    then kept only when the specimen's country (after the change) is one of them. not_fixed is never limited."""
     changes, not_fixed = [], []
     for c in combinations:
         d = decide(places, c.country, c.adm1, c.bioregion, c.island)
         if d.new_country is not KEEP or d.new_bioregion is not KEEP:
-            changes.append((c, d))
+            if only is None or (c.country if d.new_country is KEEP else d.new_country) in only:
+                changes.append((c, d))
         if d.problem:
             not_fixed.append((c, d))
     return changes, not_fixed
@@ -244,10 +247,13 @@ def totals(changes, not_fixed):
     return by_reason, by_country, by_problem
 
 
-def report_text(when, commit, changes, not_fixed, after=None, table=None):
+def report_text(when, commit, changes, not_fixed, after=None, table=None, only=None):
     by_reason, by_country, by_problem = totals(changes, not_fixed)
     changed = sum(c.specimens for c, _ in changes)
-    lines = ["AntWeb place fix, " + when + " (tool version " + VERSION + ", AntWeb commit " + (commit or "unknown") + ")", "",
+    lines = ["AntWeb place fix, " + when + " (tool version " + VERSION + ", AntWeb commit " + (commit or "unknown") + ")", ""]
+    if only is not None:
+        lines += ["Limited to these countries (--countries): " + ", ".join(sorted(only)) + ". Other countries are not changed.", ""]
+    lines += [
              "Specimens whose country or bioregion differs from what an upload today would store: " + format(changed, ","),
              "  in " + format(len(changes), ",") + " combinations of country, state and bioregion (changes.csv)", "",
              "By reason (a specimen with a new country and a new bioregion is counted in both):"]
@@ -392,6 +398,8 @@ def main(argv=None):
     a = argparse.ArgumentParser(description="Bring each specimen's country and bioregion up to today's upload rule.")
     a.add_argument("--apply", action="store_true", help="make the changes (default: report only)")
     a.add_argument("--rollback", metavar="TABLE", help="put back the old values kept in this backup table")
+    a.add_argument("--countries", default=None, help="change only specimens of these valid countries, comma separated "
+                   "(for example \"United States,Canada,Mexico\"); default: all countries")
     a.add_argument("--project", default=None, help="AntWeb project folder (default /root/antweb or /root/antweb-next)")
     a.add_argument("--container", default="antweb_mysql_1")
     a.add_argument("--out", default=None, help="output folder (default /root/antweb-place-fix/<date>-<time>)")
@@ -412,7 +420,13 @@ def main(argv=None):
     os.makedirs(folder, exist_ok=True)
     commit = read_first_line(os.path.join(project, "etc", "git-commit"))
     places, combinations = load(project, args.container)
-    changes, not_fixed = plan(places, combinations)
+    only = None
+    if args.countries:
+        only = {n.strip() for n in args.countries.split(",") if n.strip()}
+        unknown = sorted(n for n in only if n not in places.countries or not places.countries[n].is_valid)
+        if unknown:
+            sys.exit("--countries: not a valid AntWeb country: " + ", ".join(unknown))
+    changes, not_fixed = plan(places, combinations, only)
     write_lists(folder, changes, not_fixed)
     expected = sum(c.specimens for c, _ in changes)
     table, after = None, None
@@ -439,12 +453,12 @@ def main(argv=None):
                 w.writerow([r[0], unhex(r[1]), unhex(r[2]) if r[3] == "1" else unhex(r[1]), unhex(r[4]),
                             unhex(r[5]) if r[6] == "1" else unhex(r[4]), unhex(r[7])])
         places2, combinations2 = load(project, args.container)
-        changes2, _ = plan(places2, combinations2)
+        changes2, _ = plan(places2, combinations2, only)
         after = sum(c.specimens for c, _ in changes2)
         if after:
             write_lists(folder, changes2, None, name="changes_after.csv")
 
-    text = report_text(now.strftime("%Y-%m-%d %H:%M"), commit, changes, not_fixed, after=after, table=table)
+    text = report_text(now.strftime("%Y-%m-%d %H:%M"), commit, changes, not_fixed, after=after, table=table, only=only)
     if not args.apply:
         text += "\nReport only: nothing was changed. Run with --apply to make the changes.\n"
     if places.twice:

@@ -122,6 +122,19 @@ def test_plan_and_report():
     assert "NOT ZERO" in pf.report_text("x", "y", changes, not_fixed, after=5, table="place_fix_20261110_0900")
 
 
+def test_only_some_countries():
+    C = pf.Combination
+    combos = [C("Mexico", "Chihuahua", "", False, 1340), C("México", "Chihuahua", "", False, 3), C("Canada", "", "", False, 2),
+              C("", "", "", False, 9)]
+    changes, not_fixed = pf.plan(places(), combos, only={"Mexico"})
+    # México becomes Mexico, so it belongs to Mexico; Canada is left for another day; the curators' list is whole
+    assert sorted(c.specimens for c, _ in changes) == [3, 1340], changes
+    assert [c.specimens for c, _ in not_fixed] == [9], not_fixed
+    text = pf.report_text("x", "y", changes, not_fixed, only={"Mexico"})
+    assert "Limited to these countries (--countries): Mexico." in text, text
+    assert len(pf.plan(places(), combos)[0]) == 3
+
+
 def test_sql_of_apply():
     C = pf.Combination
     changes, _ = pf.plan(places(), [C("México", "Chihuahua", "", False, 3), C("Mexico", "O'Brien", "x", False, 1)])
