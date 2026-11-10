@@ -17,6 +17,7 @@ It never writes to the database: every statement is a single select (coordinate_
   python3 place_corrections.py --shapes-source naturalearth    the country test on Natural Earth alone
   python3 place_corrections.py --states-source naturalearth    the state shapes from Natural Earth's states and provinces
   python3 place_corrections.py --states-source both            the corrections by geoBoundaries, and the two sources compared
+  python3 place_corrections.py --states-source all --ocha-countries MDG,NIC,HND,UGA,PAN    ... and OCHA's files for these countries as the third
   python3 place_corrections.py --no-specimen-test              by the names and the mapping file alone (no read of the specimens)
   python3 place_corrections.py --group-id 1 --tw-archive /root/antweb-place-fix/taxonworksNightly.zip    with the load file for TaxonWorks
   python3 place_corrections.py --tw-archive <file> --tw-summary     what the archive alone says; no database
@@ -133,18 +134,40 @@ The mapping file, tools/place/adm1_shape_map.csv (next to this tool), has five k
   name,country,level,shape,antweb_state,why    the shape's name is another name of the state. A name like any
       other, tested with specimens; nobody approves these lines one by one.
 
-Two sources of state shapes (--states-source).
+Three sources of state shapes (--states-source).
   geoboundaries (the default): geoBoundaries gbOpen, a file for each country and level, ADM1 to ADM4.
   naturalearth: Natural Earth "admin 1 states and provinces", 1:10m, public domain: one file of 4,596 units for
       the world (40.7 MB), pinned to the commit of the country file and to a checksum. One level, called NE in
       the mapping file. A unit has its ISO 3166-2 code, its ne_id, and names in many languages and
       alternative names: every one is a spelling when a unit is matched with an AntWeb state (NE_NAMES).
       The code and the ne_id are carried into corrections.csv, by_collecting_event.csv and mapping_tested.csv.
-  both: the corrections by geoBoundaries; then every country that has specimens to test with is looked up in
-      both sources, and the report has "Sources compared": for each country and source the share of AntWeb's
-      specimens with a state and coordinates that lie in the unit confirmed or matched for their state
-      (agreement), in the unit of another state, in a unit with no AntWeb state, in no unit (the coast).
-      mapping_tested_natural_earth_states_and_provinces_1_10m.csv has the second source's pairs.
+  ocha: UN OCHA's common operational datasets of administrative boundaries (COD-AB), from the Humanitarian Data
+      Exchange (data.humdata.org): for a country the dataset cod-ab-<iso3>, found through HDX's API, its
+      GeoJSON file fetched into the shapes folder as ocha-cod-ab-<iso3>.geojson.zip. They are the files the
+      national offices give OCHA (Madagascar: the disaster management office BNGRC, 24 regions, 120 districts,
+      reviewed 6 July 2026) and are kept current, for about 114 countries. HDX has no pinned commit: the report
+      is the record of which release was used (sha256, HDX's dates, the layer's version), and says "NEW
+      RELEASE" when the checksum is another one than on the last run. The layout of the zip is read from the
+      file. The key of a unit is OCHA's P-code (MG26), in the column unit_code beside unit_source. When HDX
+      refuses or cannot be reached and no file is in the folder, the run stops with the folder and the file
+      name to put a download by hand. --ocha-countries MDG,KEN limits the countries taken from OCHA (a file is
+      tens of megabytes).
+  both, all: the corrections by geoBoundaries; then every country that has specimens to test with is looked up
+      in the two (geoBoundaries, Natural Earth) or the three sources, and the report has "Sources compared":
+      for each country and source the share of AntWeb's specimens with a state and coordinates that lie in the
+      unit confirmed or matched for their state (agreement), in the unit of another state, in a unit with no
+      AntWeb state, in no unit (the coast). A file mapping_tested_<source>.csv has each source's pairs.
+  One country from another source: a line "source,<country>,<source>" in the mapping file. Madagascar is taken
+      from OCHA: geoBoundaries' regions of Madagascar are OpenStreetMap's 22 and do not fit its own districts
+      (the office's); with OCHA's file the 24 regions are shapes of their own and no split line is used.
+      --ignore-source-lines does without these lines.
+
+Consistency of the source. Where a source has the state level and the next level down, each unit of the lower
+level should lie inside one state shape. Measured on a grid of about 40,000 points over the country: the report
+says how many units of the lower level lie less than 97% inside one state shape, and names the worst. By
+default for the countries the mapping file has split, convert or source lines for; --consistency for every
+country looked at (the files of the next level are fetched for it). It is the check that shows a source whose
+two levels come from different makers: nine tenths of geoBoundaries' district Vohipeno lie in the wrong region.
 
 The load file for TaxonWorks (--tw-archive <the archive TaxonWorks writes for AntWeb every day, the .zip or its
 data.tsv>; needs a group). In the format the TaxonWorks team asked for: tw_load.tsv, tab-delimited, UTF-8 with no
@@ -194,7 +217,8 @@ It writes one folder (default /root/antweb-place-fix/<date>-<time>-corrections/)
                            "within the stated error of <state>", a note (state to add; the province check),
                            latitude, longitude, stated error, locality name, country, upload group, the
                            unit's ISO 3166-2 code and ne_id (Natural Earth), the predicate of TaxonWorks,
-                           the bioregion. In the order country, state, collecting event.
+                           the bioregion, unit_code (OCHA's P-code; for Natural Earth the ISO 3166-2 code)
+                           and unit_source. In the order country, state, collecting event.
   by_collecting_event.csv  the working list for TaxonWorks: one line per collecting event, field and current
                            value with the proposed value, the number of specimens, the first and last
                            specimen code, the locality name and the coordinates. A collecting event whose
@@ -225,6 +249,7 @@ The password is read from <project>/etc/db.properties and goes to docker through
 command line. Tests: tests/unit/test_place_corrections.py.
 """
 import argparse
+import codecs
 import collections
 import csv
 import datetime
@@ -238,6 +263,7 @@ import sys
 import time
 import unicodedata
 import urllib.error
+import urllib.request
 import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -245,7 +271,7 @@ _spec = importlib.util.spec_from_file_location("coordinate_country", os.path.joi
 cc = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(cc)
 
-VERSION = "5"
+VERSION = "6"
 LEVELS = ["ADM1", "ADM2", "ADM3", "ADM4"]
 NE_LEVEL = "NE"                  # the one level of Natural Earth's states and provinces, as the mapping file names it
 NE_STATES_NAME = "ne_10m_admin_1_states_provinces.geojson"       # Natural Earth 1:10m, public domain; pinned like the country file
@@ -262,6 +288,14 @@ MIN_OF_STATE = 0.8               # at least this share of the state's located sp
 MIN_OF_SHAPE = 0.8               # and at least this share of the shape's specimens that have a state are filed under the state
 CONTRADICTED_BELOW = 0.5         # a name is contradicted when fewer than this share of the state's located specimens lie in the shape
 MIN_AGAINST = 20                 # ... and the state has at least this many located: six specimens are no evidence against a name
+OCHA_API = "https://data.humdata.org/api/3/action/package_show?id=cod-ab-{iso}"       # HDX: the dataset of a country's COD-AB boundaries
+OCHA_PAGE = "https://data.humdata.org/dataset/cod-ab-{iso}"
+OCHA_AGENT = "Mozilla/5.0 (X11; Linux x86_64) place_corrections.py"                    # HDX refuses a client that does not name itself like a browser
+OCHA_FILE = "ocha-cod-ab-{iso}.geojson.zip"                                             # the name of a country's file in the shapes folder
+OCHA_LOCK = "ocha-cod-ab.lock.json"
+ONE_STATE = 0.97                 # consistency of a source: a unit of the next level should lie at least this much inside one state shape
+GRID_POINTS = 40000              # ... measured on a grid of about this many points over the country
+MAX_CHECK_BYTES = 80000000       # ... and not measured when the file of the next level is larger than this
 MIN_SCORE = 0.7                  # a suggestion of mapping_suggestions.csv is at least this like the shape's name
 SUGGESTIONS = 3                  # at most this many suggestions for one shape
 SIMPLIFIED = "_simplified"       # the light file of geoBoundaries: within 100 m of the full one for 99 in 100 points
@@ -502,7 +536,8 @@ class Rules:
     (country, shape, level, unit, state, note) of the "split" lines: the shape of the state level is told apart
     by the units of a finer level; the unit "*" stands for every unit not named."""
 
-    def __init__(self, new=(), convert=None, within=None, names=(), splits=()):
+    def __init__(self, new=(), convert=None, within=None, names=(), splits=(), sources=None):
+        self.sources = dict(sources or {})                       # country -> the source of its state shapes: geoboundaries, naturalearth or ocha
         self.new = set(new)
         self.convert = dict(convert or {})
         self.within = {country: {plain(state): unit for state, unit in table.items()} for country, table in (within or {}).items()}
@@ -511,23 +546,26 @@ class Rules:
 
 
 def read_rules(path):
-    new, convert, within, names, splits = set(), {}, collections.defaultdict(dict), [], []
+    new, convert, within, names, splits, sources = set(), {}, collections.defaultdict(dict), [], [], {}
     for line in map_lines(path):
         kind = line[0].lower()
         if kind == "convert" and len(line) >= 3:
             convert.setdefault(line[1], []).extend(cell for cell in line[2:] if cell)
         elif kind == "within" and len(line) >= 4:
             within[line[1]][line[2]] = line[3]
+        elif kind == "source" and len(line) >= 3 and line[2].lower() in SOURCE_NAMES:
+            sources[line[1]] = line[2].lower()
         elif kind == "name" and len(line) >= 5 and line[2].upper() in LEVELS + [NE_LEVEL]:
             names.append((line[1], line[2].upper(), line[3], line[4]))
         elif kind == "split" and len(line) >= 6 and line[3].upper() in LEVELS:
             splits.append((line[1], line[2], line[3].upper(), line[4], line[5], line[6] if len(line) > 6 else ""))
         elif len(line) >= 5 and line[1].upper() in LEVELS + [NE_LEVEL] and line[4].lower() == "new":
             new.add(tuple(line[:4]))
-    return Rules(new, convert, within, names, splits)
+    return Rules(new, convert, within, names, splits, sources)
 
 
 ISLAND = "island country"
+SOURCE_NAMES = ("geoboundaries", "naturalearth", "ocha")          # the sources of state shapes, as --states-source and the mapping file name them
 SPECIMENS = "specimens"                                           # how a shape got its state: AntWeb's specimens in it are filed under it
 NEW = "mapping file, a " + TO_ADD                                 # by a row of the mapping file whose state AntWeb does not have yet
 SPLIT = "mapping file, which splits the shape"                    # the state is that of the finer unit the point lies in
@@ -565,7 +603,73 @@ class Evidence:
         self.points[place.name].append((sys.intern(state), lat, lon, count))
 
 
-Unit = collections.namedtuple("Unit", "name spellings code ident", defaults=((), "", ""))     # a shape: its name, other names, ISO 3166-2 code, id
+# a shape: its name, other names, ISO 3166-2 code and ne_id (Natural Earth), P-code (OCHA)
+Unit = collections.namedtuple("Unit", "name spellings code ident pcode", defaults=((), "", "", ""))
+
+
+def thin(ring, metres=None):
+    """A ring without the points closer than metres to the last one kept (the line moves by less than that)."""
+    metres = cc.THIN_M if metres is None else metres
+    if len(ring) < 5:
+        return ring
+    limit = (metres / 1000.0 / cc.KM_PER_DEGREE) ** 2
+    scale = math.cos(math.radians(ring[0][1]))
+    kept = [ring[0]]
+    for x, y in ring[1:-1]:
+        dx, dy = (x - kept[-1][0]) * scale, y - kept[-1][1]
+        if dx * dx + dy * dy >= limit:
+            kept.append((x, y))
+    kept.append(ring[-1])
+    return kept if len(kept) >= 4 else ring
+
+
+def geojson_features(stream, block=1 << 20):
+    """The features of a GeoJSON FeatureCollection, one at a time, from a stream of bytes: a file of 100 MB is not
+    held in memory. Each is the decoded feature (properties, geometry)."""
+    decoder = json.JSONDecoder()
+    read = codecs.getincrementaldecoder("utf-8")("replace")
+    text, more = "", True
+
+    def fill():
+        nonlocal text, more
+        data = stream.read(block)
+        if not data:
+            more = False
+            text += read.decode(b"", True)
+        else:
+            text += read.decode(data)
+
+    while more and '"features"' not in text:
+        fill()
+    at = text.find('"features"')
+    if at < 0:
+        return
+    while more and "[" not in text[at:]:
+        fill()
+    at = text.find("[", at) + 1
+    while True:
+        while True:                                              # to the next feature, or the end of the list
+            rest = text[at:].lstrip(" \t\r\n,")
+            if rest or not more:
+                break
+            text, at = "", 0
+            fill()
+        text, at = rest, 0
+        if not text or text[0] == "]":
+            return
+        while True:
+            try:
+                feature, end = decoder.raw_decode(text)
+                break
+            except ValueError:
+                if not more:
+                    return                                       # a file cut short: what was whole is given
+                fill()
+        text = text[end:]
+        yield feature
+
+
+
 
 
 class GeoSource:
@@ -596,6 +700,18 @@ class GeoSource:
 
     def entry(self, code, level):
         return code + " " + level + SIMPLIFIED, self.detail.lock["files"].get(code + " " + level + SIMPLIFIED, {})
+
+    def below(self, code, level):
+        """The next level down, when there is a file of it that is not too large to measure; else (None, why)."""
+        if level not in LEVELS[:-1]:
+            return None, "no level below"
+        lower = LEVELS[LEVELS.index(level) + 1]
+        if not self.has(code, lower):
+            return None, "no file of " + lower
+        size = self.detail.lock["files"].get(code + " " + lower + SIMPLIFIED, {}).get("bytes", 0)
+        if size > MAX_CHECK_BYTES:
+            return None, "the file of " + lower + " has " + cc.n(size) + " bytes: not measured"
+        return lower, ""
 
 
 def fetch_states(folder, url=NE_STATES_URL, sha256=NE_STATES_SHA256):
@@ -672,8 +788,209 @@ class NaturalEarthStates:
     def where(self, code, level):
         return "Natural Earth states " + code
 
+    def below(self, code, level):
+        return None, "the source has one level"
+
     def entry(self, code, level):
         return "Natural Earth states and provinces", {"licence": "Public domain (Natural Earth)", "source": "naturalearthdata.com"}
+
+
+class Refused(Exception):
+    """HDX could not be asked or did not give the file; the message tells the administrator what to do by hand."""
+
+
+class OchaSource:
+    """UN OCHA's common operational datasets of administrative boundaries (COD-AB), from the Humanitarian Data
+    Exchange (HDX), as the source of state shapes: for a country the dataset cod-ab-<iso3>, its GeoJSON resource
+    (a zip with one layer for each level). The key of a unit is OCHA's P-code (MG26 for Vatovavy).
+
+    HDX has no pinned commit. The file of a country is fetched once into the shapes folder; on each run HDX is
+    asked when the resource was last changed, and a changed file is fetched again. The report is the record of
+    which release was used: the file's sha256, HDX's dates, and "new release" when the checksum is another one
+    than the last run's. A file a person put into the shapes folder by hand is used as it is.
+
+    The layout inside the zip is read from the file, not assumed: the layer of a level is the .geojson member
+    whose name has adm<N> or admin<N> (not the lines or points) or, failing that, whose features have a P-code
+    of level N and none of a finer level; the name and the P-code of a unit are the properties adm<N>_name ...
+    and adm<N>_pcode in whatever capitals (ADM1_EN, ADM1_PCODE in OCHA's older files)."""
+    label = "OCHA COD-AB"
+    levels = ["ADM1", "ADM2"]
+    splits = False                                               # the split lines of the mapping file mend older shapes; these are current
+
+    def __init__(self, folder, api=OCHA_API, only=None, agent=OCHA_AGENT):
+        self.folder, self.api, self.agent = folder, api, agent
+        self.only = None if only is None else {x.strip().upper() for x in only if x.strip()}
+        self.lock_path = os.path.join(folder, OCHA_LOCK)
+        self.lock = {}
+        if os.path.exists(self.lock_path):
+            with open(self.lock_path, encoding="utf-8") as f:
+                self.lock = json.load(f)
+        self.record = {}                                         # ISO code -> what was used in this run, for the report
+        self.missing = {}                                        # ISO code -> why there is no file
+        self._layers = {}
+
+    def path(self, code):
+        return os.path.join(self.folder, OCHA_FILE.format(iso=code.lower()))
+
+    def _open(self, url):
+        return urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": self.agent, "Accept": "*/*"}), timeout=300)
+
+    def by_hand(self, code, why):
+        return ("OCHA's boundaries of " + code + " could not be fetched from HDX (" + why + "). Download the GeoJSON file (" + code.lower()
+                + "_admin_boundaries.geojson.zip) of " + OCHA_PAGE.format(iso=code.lower()) + " in a browser and put it on the server as "
+                + self.path(code) + " ; the next run uses it. Or run with --ignore-source-lines to do without OCHA's files.")
+
+    def file(self, code):
+        """The path of the country's zip, fetched if need be; None when HDX has no such dataset (self.missing says
+        so) or the country is not among those asked for. Raises Refused when HDX cannot be reached and no file
+        is in the folder."""
+        if code in self.record:
+            return self.path(code)
+        if code in self.missing or not code:
+            return None
+        if self.only is not None and code.upper() not in self.only:
+            self.missing[code] = "not among the countries asked for (--ocha-countries)"
+            return None
+        path, known = self.path(code), self.lock.get(code, {})
+        record = {"file": os.path.basename(path)}
+        try:
+            with self._open(self.api.format(iso=code.lower())) as r:
+                answer = json.loads(r.read().decode("utf-8"))
+            result = answer.get("result") or {}
+            resource = next((x for x in result.get("resources", ()) if "geojson" in (str(x.get("format")) + " " + str(x.get("name")) + " " + str(x.get("url"))).lower()), None)
+            if not answer.get("success") or resource is None:
+                self.missing[code] = "HDX has no GeoJSON file in the dataset cod-ab-" + code.lower()
+                return None
+            url = resource.get("download_url") or resource.get("url")
+            record.update({"url": url, "last_modified": str(resource.get("last_modified") or result.get("last_modified") or ""),
+                           "hdx": {key: str(result[key]) for key in sorted(result) if isinstance(result[key], (str, int, float)) and result[key] != ""
+                                   and any(word in key.lower() for word in ("review", "version", "dataset_date", "last_modified", "license_title", "dataset_source"))}})
+            if not os.path.exists(path) or not known or known.get("last_modified") != record["last_modified"]:
+                os.makedirs(self.folder, exist_ok=True)
+                with self._open(url) as r, open(path + ".part", "wb") as f:
+                    for block in iter(lambda: r.read(1 << 20), b""):
+                        f.write(block)
+                os.replace(path + ".part", path)
+                record["fetched"] = datetime.date.today().isoformat()
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                self.missing[code] = "HDX has no dataset cod-ab-" + code.lower()
+                return None
+            if not os.path.exists(path):
+                raise Refused(self.by_hand(code, "HTTP " + str(e.code))) from None
+            record["note"] = "HDX refused (HTTP " + str(e.code) + "): the file in the folder was used"
+        except (urllib.error.URLError, OSError, ValueError) as e:
+            if not os.path.exists(path):
+                raise Refused(self.by_hand(code, str(getattr(e, "reason", e)))) from None
+            record["note"] = "HDX could not be asked (" + str(getattr(e, "reason", e)) + "): the file in the folder was used"
+        if not zipfile.is_zipfile(path):
+            raise Refused(path + " is not a zip file. " + self.by_hand(code, "what came was not the file"))
+        record.update({"sha256": cc.sha256_of(path), "bytes": os.path.getsize(path)})
+        record["release"] = ("first seen" if not known.get("sha256") else "the same file as on " + known.get("seen", "the last run") if known["sha256"] == record["sha256"]
+                             else "NEW RELEASE: the checksum was " + known["sha256"] + " on " + known.get("seen", "the last run"))
+        if "last_modified" not in record:
+            record["last_modified"] = known.get("last_modified", "")
+        self.lock[code] = {"sha256": record["sha256"], "last_modified": record["last_modified"], "seen": datetime.date.today().isoformat()}
+        with open(self.lock_path + ".part", "w", encoding="utf-8") as f:
+            json.dump(self.lock, f, indent=1, sort_keys=True)
+        os.replace(self.lock_path + ".part", self.lock_path)
+        self.record[code] = record
+        return path
+
+    def layers(self, code):
+        """{level number: the member of the zip that holds the polygons of that level}, read from the file."""
+        if code not in self._layers:
+            found = {}
+            path = self.file(code)
+            if path is not None:
+                with zipfile.ZipFile(path) as z:
+                    members = [m.filename for m in z.infolist() if m.filename.lower().endswith((".geojson", ".json")) and not m.is_dir()]
+                    for member in sorted(members, key=len):
+                        base = os.path.basename(member).lower()
+                        if re.search(r"line|point|centroid|admbndl|admbndp|capital", base):
+                            continue
+                        with z.open(member) as f:
+                            first = next(geojson_features(f, 1 << 16), None)
+                        if first is None or (first.get("geometry") or {}).get("type") not in ("Polygon", "MultiPolygon"):
+                            continue
+                        named = re.search(r"adm(?:in)?_?0?([0-5])(?!\d)", base)
+                        coded = [int(m.group(1)) for key in (first.get("properties") or {}) for m in [re.match(r"^adm(?:in)?_?([0-5])_?p_?code$", key.lower())] if m]
+                        level = int(named.group(1)) if named else (max(coded) if coded else None)
+                        if level is not None:
+                            found.setdefault(level, member)
+                self.record[code]["layers"] = {str(k): v for k, v in sorted(found.items())}
+            self._layers[code] = found
+        return self._layers[code]
+
+    def has(self, code, level):
+        return int(level[-1]) in self.layers(code)
+
+    @staticmethod
+    def unit(properties, number):
+        """The Unit of a feature of a level: its name, its other names, its P-code, from whatever the file calls them."""
+        names, pcode = [], ""
+        keys = {key.lower(): key for key in properties}
+        for low in sorted(keys, key=lambda k: (not re.search(r"name\d*$", k), not k.endswith(("_en", "_fr", "_es", "_pt")), k)):
+            m = re.match(r"^adm(?:in)?_?" + str(number) + r"_?(p_?code|name\d*|ref\w*|alt\w*|[a-z]{2})$", low)
+            value = properties[keys[low]]
+            if not m or not isinstance(value, str) or not value.strip():
+                continue
+            if m.group(1).replace("_", "") == "pcode":
+                pcode = value.strip()
+            elif value.strip() not in names:
+                names.append(value.strip())
+        return Unit(names[0], tuple(names[1:]), "", "", pcode) if names else None
+
+    def _read(self, code, level, lines):
+        number = int(level[-1])
+        units, shapes = [], []
+        with zipfile.ZipFile(self.path(code)) as z, z.open(self.layers(code)[number]) as f:
+            for feature in geojson_features(f):
+                unit = self.unit(feature.get("properties") or {}, number)
+                geometry = feature.get("geometry") or {}
+                if unit is None or geometry.get("type") not in ("Polygon", "MultiPolygon"):
+                    continue
+                units.append(unit)
+                if lines:
+                    polygons = geometry["coordinates"] if geometry["type"] == "MultiPolygon" else [geometry["coordinates"]]
+                    shapes.append([thin([(p[0], p[1]) for p in ring]) for polygon in polygons for ring in polygon if len(ring) >= 4])
+                if "properties" not in self.record[code]:
+                    self.record[code]["properties"] = {k: str(v) for k, v in sorted((feature.get("properties") or {}).items())
+                                                       if any(w in k.lower() for w in ("version", "valid", "date")) and v not in (None, "")}
+        return units, shapes
+
+    def names(self, code, level):
+        return self._read(code, level, False)[0] if self.has(code, level) else None
+
+    def shapes(self, code, level):
+        units, shapes = self._read(code, level, True)
+        return units, cc.index_of_shapes(shapes)
+
+    def where(self, code, level):
+        return "OCHA COD-AB " + code + " " + level
+
+    def below(self, code, level):
+        lower = "ADM" + str(int(level[-1]) + 1)
+        return (lower, "") if int(lower[-1]) in self.layers(code) else (None, "no layer of " + lower)
+
+    def entry(self, code, level):
+        hdx = self.record.get(code, {}).get("hdx", {})
+        return "OCHA COD-AB " + code, {"licence": hdx.get("license_title", "see the dataset's page on HDX"), "source": hdx.get("dataset_source", "")}
+
+    def report(self):
+        """The lines of the report: which release of each country's file was used."""
+        out = []
+        for code in sorted(self.record):
+            r = self.record[code]
+            out.append("  " + code + ": " + r["file"] + ", " + cc.n(r["bytes"]) + " bytes, sha256 " + r["sha256"] + "; " + r["release"]
+                       + ("; last modified on HDX " + r["last_modified"] if r.get("last_modified") else "; put into the folder by hand or kept from an earlier run")
+                       + ("; " + r["note"] if r.get("note") else ""))
+            more = dict(r.get("hdx", {}), **r.get("properties", {}))
+            if more:
+                out.append("    " + "; ".join(key + " " + value for key, value in sorted(more.items())))
+            if r.get("layers"):
+                out.append("    layers: " + "; ".join("level " + k + " " + v for k, v in r["layers"].items()))
+        return out
 
 
 class Chosen:
@@ -681,14 +998,14 @@ class Chosen:
     a point in it may get a proposal. where: what the basis of a proposal calls the shapes; units: each shape's
     other names, ISO 3166-2 code and id, where the source has them."""
 
-    def __init__(self, country, code, level, names, states, hows, index, usable=True, where="", units=None):
+    def __init__(self, country, code, level, names, states, hows, index, usable=True, where="", units=None, label="geoBoundaries"):
         self.country, self.code, self.level, self.names, self.states, self.hows = country, code, level, names, states, hows
-        self.index, self.usable = index, usable
+        self.index, self.usable, self.label = index, usable, label
         self.where = where or "geoBoundaries " + code + " " + level
         self.units = units or [Unit(name) for name in names]
 
 
-At = collections.namedtuple("At", "state shape basis reason detail other other_km flag how inside unit", defaults=("", "", "", "", "", "", "", False, None))
+At = collections.namedtuple("At", "state shape basis reason detail other other_km flag how inside unit source", defaults=("", "", "", "", "", "", "", False, None, ""))
 Tested = collections.namedtuple("Tested", "stats states hows lines decide today")
 SHARES = ["in the unit of their state", "in the unit of another state", "in a unit with no AntWeb state", "in no unit"]
 
@@ -760,10 +1077,19 @@ class StateShapes:
     """For each country: the level of geoBoundaries that holds AntWeb's states, the state of each of its shapes
     (tested with AntWeb's own specimens where there are any), and the state of a point."""
 
-    def __init__(self, detail, states, countries, shape_map, evidence=None, rules=None, source=None):
+    def __init__(self, detail, states, countries, shape_map, evidence=None, rules=None, source=None, others=None, check=()):
+        """source: where the shapes come from (geoBoundaries when none is given). others: {name of a source: the
+        source} for the countries whose "source" line of the mapping file names another one; without it the
+        source lines are not followed. check: the countries whose source is measured for consistency (True: all)."""
         self.detail, self.states, self.countries, self.evidence = detail, states, countries, evidence
-        self.source = source or GeoSource(detail)                # where the shapes come from: geoBoundaries, or Natural Earth's states
+        self.source = source or GeoSource(detail)
         self.rules = rules or Rules()
+        self.check = check
+        self.by_country = {}                                     # valid country -> its own source
+        for country, name in self.rules.sources.items():
+            c = countries.resolve(country)
+            if c is not None and others and others.get(name) is not None:
+                self.by_country[c.name] = others[name]
         self.map = collections.defaultdict(list)                 # (country, level, plain shape) -> [(AntWeb state, a state to add)], in order
         self.map_rows = shape_map
         for row in shape_map:
@@ -799,6 +1125,48 @@ class StateShapes:
         self.problems = {}                                       # country -> why it has no state shapes
         self.files = {}                                          # lock key -> licence, for the report
         self._chosen = collections.OrderedDict()                 # country -> Chosen, the two used last
+
+    def source_of(self, country):
+        return self.by_country.get(country, self.source)
+
+    def consistency(self, country, code, level, units, index):
+        """How well the source's state level and its next level down fit: a dict for the report, or None when the
+        country is not to be measured. On a grid of about GRID_POINTS points over the country, each unit of the
+        next level is counted by the state shape its points lie in; a unit should lie at least ONE_STATE inside
+        one state shape. Points in no state shape (the coast) do not count. geoBoundaries' regions of Madagascar
+        are from OpenStreetMap and its districts from the disaster management office: nine tenths of the district
+        Vohipeno lie in the wrong region shape, and this is the check that shows it."""
+        if not (self.check is True or country in self.check):
+            return None
+        source = self.source_of(country)
+        lower, why = source.below(code, level)
+        if lower is None:
+            return {"level": level, "lower": "", "why": why}
+        low_units, low_index = source.shapes(code, lower)
+        west, south = index.west, index.south
+        width, height = index.ncols * index.cell, index.nrows * index.cell
+        step = max(0.002, math.sqrt(width * height / GRID_POINTS))
+        counts = collections.defaultdict(collections.Counter)
+        y = south + step / 2
+        while y < south + height:
+            x = west + step / 2
+            while x < west + width:
+                unit = low_index.inside(y, x)
+                if len(unit) == 1:
+                    state = index.inside(y, x)
+                    if len(state) == 1:
+                        counts[unit[0]][state[0]] += 1
+                x += step
+            y += step
+        measured = {i: c for i, c in counts.items() if sum(c.values()) >= MIN_POINTS}
+        worst = []
+        for i, c in measured.items():
+            total, top = sum(c.values()), c.most_common(2)
+            if top[0][1] < ONE_STATE * total:
+                worst.append((top[0][1] / total, low_units[i].name + ": " + percent(top[0][1], total) + "% in " + units[top[0][0]].name
+                              + (", " + percent(top[1][1], total) + "% in " + units[top[1][0]].name if len(top) > 1 else "")))
+        return {"level": level, "lower": lower, "units": len(low_units), "measured": len(measured), "under": len(worst), "worst": [text for _, text in sorted(worst)[:8]],
+                "step_km": step * cc.KM_PER_DEGREE}
 
     def wanted(self, country):
         """AntWeb's valid states of the country that the shapes are compared with: all but the coarser units that
@@ -837,7 +1205,7 @@ class StateShapes:
                 if new:
                     state, how = wanted, NEW
                     break
-            if state is None and plain(name) in self.splits.get(country, {}):
+            if state is None and getattr(self.source_of(country), "splits", True) and plain(name) in self.splits.get(country, {}):
                 state, how = self.states.find(country, name)[0] or name, SPLIT
             if state is None:
                 for wanted in self.names.get((country, level, plain(name)), ()):
@@ -863,7 +1231,7 @@ class StateShapes:
             hows.append(how)
         return states, hows
 
-    def test(self, country, level, names, index, units=None):
+    def test(self, country, level, names, index, units=None, code=""):
         """The state of each shape of a level, tested with AntWeb's own specimens: a Tested.
 
         Every specimen of the country with a state and coordinates that lies inside exactly one shape of the
@@ -893,11 +1261,14 @@ class StateShapes:
         skip = self.convert.get(country, ())
         wanted = set(self.wanted(country))
         named, named_how = self.match(country, level, names, units)
+        label = self.source_of(country).label
         shapes_named = collections.Counter(x for x, h in zip(named, named_how) if x and h not in BY_FILE + (ISLAND,))
-        ids = lambda i: [units[i].code, units[i].ident] if units is not None else ["", ""]
+        ids = lambda i: ([units[i].code, units[i].ident, units[i].pcode or units[i].code, label if units[i].pcode or units[i].code else ""]
+                         if units is not None else ["", "", "", ""])
         tab = collections.defaultdict(collections.Counter)       # shape number -> state -> specimens
         where = collections.defaultdict(collections.Counter)     # state -> shape number -> specimens
         unlocated = 0
+        halves = collections.Counter()                           # in a shape that is split: (the state of the unit the specimen lies in or None, its stored state)
         for state, lat, lon, count in (self.evidence.points.get(country, ()) if self.evidence is not None else ()):
             if state in skip:
                 continue
@@ -907,6 +1278,8 @@ class StateShapes:
                 continue
             tab[inside[0]][state] += count
             where[state][inside[0]] += count
+            if named_how[inside[0]] == SPLIT and code:
+                halves[(self.split_at(Chosen(country, code, level, names, named, named_how, index), inside[0], lat, lon, 0.0)[0], state)] += count
         of_state = {state: sum(shapes.values()) for state, shapes in where.items()}
         confirmed = {}
         for i, counts in tab.items():
@@ -997,8 +1370,12 @@ class StateShapes:
         # how the specimens lie in the units as they are now named: what the source is worth for AntWeb's states
         shares = collections.Counter({SHARES[3]: unlocated})
         for i, counts in tab.items():
+            if hows[i] == SPLIT and code:                        # a shape that is split: by the state of the unit each specimen lies in
+                continue
             for state, count in counts.items():
                 shares[SHARES[0] if states[i] == state else SHARES[1] if states[i] else SHARES[2]] += count
+        for (half, state), count in halves.items():
+            shares[SHARES[0] if half == state else SHARES[1] if half else SHARES[2]] += count
         stats["shares"] = shares
         return Tested(stats, states, hows, lines, decide, today)
 
@@ -1011,17 +1388,18 @@ class StateShapes:
         while more AntWeb states lie inside a shape that is not their own (AntWeb is finer than the level) than
         are settled at the level. Without: only the names of a level are read, as before, until one fits by
         both halves."""
+        source = self.source_of(country)
         wanted = set(self.wanted(country))
         have = sum(p[3] for p in self.evidence.points.get(country, ()) if p[0] not in self.convert.get(country, ())) if self.evidence is not None else 0
         testing = have >= MIN_POINTS
         tried, kept = [], None
-        for level in self.source.levels:
-            if not self.source.has(code, level):
+        for level in source.levels:
+            if not source.has(code, level):
                 tried.append({"level": level, "shapes": 0})
                 continue
             if testing:
-                units, index = self.source.shapes(code, level)
-                tested = self.test(country, level, [u.name for u in units], index, units)
+                units, index = source.shapes(code, level)
+                tested = self.test(country, level, [u.name for u in units], index, units, code)
                 t = tested.stats
                 tried.append(t)
                 if kept is None or t["sound_hits"] > kept[2].stats["sound_hits"]:
@@ -1033,7 +1411,7 @@ class StateShapes:
                 else:
                     continue
             else:
-                units = self.source.names(code, level)
+                units = source.names(code, level)
                 names = [u.name for u in units]
                 states, hows = self.match(country, level, names, units)
                 tried.append({"level": level, "shapes": len(names), "shape_hits": sum(1 for x in states if x), "states": len(wanted),
@@ -1054,10 +1432,11 @@ class StateShapes:
         if not code:
             self.problems[country] = "AntWeb has no ISO code for the country and no Natural Earth shape gives one"
             return None
+        source = self.source_of(country)
         try:
             if country in self.tables:                           # chosen before, dropped to make room: read again
                 t = self.tables[country]
-                units, index = self.source.shapes(code, t["level"])
+                units, index = source.shapes(code, t["level"])
             else:                                                # the first time: which level, the state of each shape, what the report says
                 tried, kept = self.look(country, code)
                 if any(x.get("confirmed") for x in tried):
@@ -1065,20 +1444,20 @@ class StateShapes:
                 else:
                     picked, usable, why = pick_level(tried)
                 if picked is None:
-                    self.problems[country] = ("geoBoundaries has no file of the divisions of " if self.source.label == "geoBoundaries" else
-                                              self.source.label + " has no units of ") + code
+                    self.problems[country] = ("geoBoundaries has no file of the divisions of " if source.label == "geoBoundaries" else
+                                              source.label + " has no units of ") + code + ("" if not getattr(source, "missing", {}).get(code) else ": " + source.missing[code])
                     return None
                 level = picked["level"]
                 if kept is not None and kept[2].stats["level"] == level:
                     units, index, tested = kept
                 else:
-                    units, index = self.source.shapes(code, level)
-                    tested = self.test(country, level, [u.name for u in units], index, units)
+                    units, index = source.shapes(code, level)
+                    tested = self.test(country, level, [u.name for u in units], index, units, code)
                     usable = usable and any(tested.states)       # the specimens may have contradicted every name
                 kept = None
                 names = [u.name for u in units]
                 wanted = self.wanted(country)
-                key, entry = self.source.entry(code, level)
+                key, entry = source.entry(code, level)
                 self.files[key] = entry
                 states, hows = tested.states, tested.hows
                 for name, state, how in zip(names, states, hows):
@@ -1091,7 +1470,8 @@ class StateShapes:
                         shape_of.setdefault(state, name)
                 t = self.tables[country] = {
                     "code": code, "level": level, "tried": tried, "usable": usable, "why": why, "states": states, "hows": hows,
-                    "where": self.source.where(code, level), "levels": list(self.source.levels),
+                    "where": source.where(code, level), "levels": list(source.levels), "label": source.label,
+                    "consistency": self.consistency(country, code, level, units, index),
                     "lines": tested.lines, "decide": tested.decide, "today": tested.today, "stats": tested.stats,
                     "matched": sorted(got), "not_matched": [x for x in wanted if x not in got], "shape_of": shape_of,
                     "shapes_not_states": sorted({n for n, x in zip(names, states) if not x}),
@@ -1107,7 +1487,7 @@ class StateShapes:
         except (urllib.error.URLError, OSError) as e:
             self.problems[country] = "a boundary file of " + code + " could not be fetched (" + str(getattr(e, "reason", e)) + ")"
             return None
-        chosen = Chosen(country, code, t["level"], [u.name for u in units], t["states"], t["hows"], index, t["usable"], t["where"], units)
+        chosen = Chosen(country, code, t["level"], [u.name for u in units], t["states"], t["hows"], index, t["usable"], t["where"], units, source.label)
         self._chosen[country] = chosen
         while len(self._chosen) > 2:
             self._chosen.popitem(last=False)
@@ -1208,13 +1588,13 @@ class StateShapes:
                                                      else "within the stated error (" + cc.rounded(allowed) + " km) of ") + half)
             basis = (("coordinates inside " if inside else "in the water, " + cc.rounded(near[first]) + " km from ") + name + ", " + where + "; in its unit " + unit
                      + " (" + units_from + "), which the mapping file gives to " + state + (", a " + TO_ADD if new else ""))
-            return At(state, name, basis, "", "", other, other_km, flag, NEW if new else SPLIT, bool(inside), chosen.units[first])
+            return At(state, name, basis, "", "", other, other_km, flag, NEW if new else SPLIT, bool(inside), chosen.units[first], chosen.label)
         if chosen.hows[first] == ISLAND:
             where += "; " + files_as_island(chosen.country, chosen.states[first])
         elif chosen.hows[first] != "name":
             name += " (" + chosen.states[first] + " by the " + chosen.hows[first] + ")"
         basis = ("coordinates inside " if inside else "in the water, " + cc.rounded(near[first]) + " km from ") + name + ", " + where
-        return At(chosen.states[first], chosen.names[first], basis, "", "", other, other_km, flag, chosen.hows[first], bool(inside), chosen.units[first])
+        return At(chosen.states[first], chosen.names[first], basis, "", "", other, other_km, flag, chosen.hows[first], bool(inside), chosen.units[first], chosen.label)
 
 
 def files_as_island(country, island):
@@ -1224,8 +1604,8 @@ def files_as_island(country, island):
 # ---------------------------------------------------------------- one specimen
 
 Row = collections.namedtuple("Row", "code event locality_code country adm1 adm2 island lat lon stated locality notes bioregion group")
-Proposal = collections.namedtuple("Proposal", "field current proposed basis country other other_km flag note code ident bioregion",
-                                  defaults=("", "", "", "", "", "", ""))
+Proposal = collections.namedtuple("Proposal", "field current proposed basis country other other_km flag note code ident bioregion unit_code unit_source",
+                                  defaults=("", "", "", "", "", "", "", "", ""))
 Not = collections.namedtuple("Not", "field reason detail country", defaults=("",))
 
 
@@ -1344,7 +1724,8 @@ class Corrections:
             else:
                 check = SAME_PROVINCE if belongs == converting else OTHER_PROVINCE + " (" + at.state + " is in " + belongs + ")"
             note = check + ("; " + note if note else "")
-        return out + [Proposal("adm1", row.adm1, at.state, at.basis, country, at.other, at.other_km, at.flag, note, at.unit.code, at.unit.ident)]
+        return out + [Proposal("adm1", row.adm1, at.state, at.basis, country, at.other, at.other_km, at.flag, note, at.unit.code, at.unit.ident, "",
+                               at.unit.pcode or at.unit.code, at.source if at.unit.pcode or at.unit.code else "")]
 
     def kind(self, row):
         """Which of the three lists of Brian Fisher's note a record belongs to (for the totals of the report)."""
@@ -1365,13 +1746,13 @@ class Corrections:
 CORRECTIONS_HEADER = ["specimen_code", "collecting_event_code", "locality_code", "field", "current_value", "proposed_value", "basis",
                       "nearest_other_state", "km_to_other_state", "other_state_flag", "note",
                       "latitude", "longitude", "stated_error", "locality_name", "country", "upload_group", "unit_iso_3166_2", "unit_ne_id",
-                      "taxonworks_predicate", "biogeographic_region"]
+                      "taxonworks_predicate", "biogeographic_region", "unit_code", "unit_source"]
 EVENTS_HEADER = ["collecting_event_code", "field", "current_value", "proposed_value", "specimens", "first_specimen_code", "last_specimen_code",
                  "locality_name", "latitude", "longitude", "flag", "nearest_other_state", "km_to_other_state", "other_state_flag", "note",
-                 "country", "basis", "upload_group", "unit_iso_3166_2", "unit_ne_id", "taxonworks_predicate", "biogeographic_region"]
+                 "country", "basis", "upload_group", "unit_iso_3166_2", "unit_ne_id", "taxonworks_predicate", "biogeographic_region", "unit_code", "unit_source"]
 # the first four of the next two: the cells of a line of adm1_shape_map.csv
 TESTED_HEADER = ["country", "level", "shape", "antweb_state", "basis", "specimens_of_the_state_in_the_shape", "percent_of_the_state",
-                 "percent_of_the_shape", "the_shape's_specimens_are_filed_under", "unit_iso_3166_2", "unit_ne_id"]
+                 "percent_of_the_shape", "the_shape's_specimens_are_filed_under", "unit_iso_3166_2", "unit_ne_id", "unit_code", "unit_source"]
 SUGGESTIONS_HEADER = ["country", "level", "shape", "antweb_state", "score", "specimens", "note", "the_shape's_specimens_are_filed_under"]
 DECIDE_HEADER = ["country", "level", "what", "name", "parts", "specimens"]
 NOT_HEADER = ["collecting_event_code", "field", "reason", "detail", "specimens", "first_specimen_code", "last_specimen_code", "country",
@@ -1401,7 +1782,7 @@ class Lists:
         for row, p in self.proposals:
             lines.append(((p.country, states.get(row.code, ""), row.event, row.code, p.field != "country"),
                           [row.code, row.event, row.locality_code, p.field, p.current, p.proposed, p.basis, p.other, p.other_km, p.flag, p.note,
-                           row.lat, row.lon, row.stated, row.locality, p.country, self.group(row), p.code, p.ident, PREDICATE.get(p.field, ""), p.bioregion]))
+                           row.lat, row.lon, row.stated, row.locality, p.country, self.group(row), p.code, p.ident, PREDICATE.get(p.field, ""), p.bioregion, p.unit_code, p.unit_source]))
         return [line for _, line in sorted(lines, key=lambda x: x[0])]
 
     def events(self):
@@ -1437,7 +1818,8 @@ class Lists:
                            row.locality, row.lat, row.lon, ". ".join(flags), p.other if len(values) == 1 else "", p.other_km if len(values) == 1 else "", near,
                            several(collections.Counter(x.note for _, x in items if x.note), len(items)),
                            p.country, p.basis if len(values) == 1 else "", self.group(row), p.code if len(values) == 1 else "", p.ident if len(values) == 1 else "",
-                           PREDICATE.get(field, ""), p.bioregion if len({x.bioregion for _, x in items}) == 1 else ""]))
+                           PREDICATE.get(field, ""), p.bioregion if len({x.bioregion for _, x in items}) == 1 else "",
+                           p.unit_code if len(values) == 1 else "", p.unit_source if len(values) == 1 else ""]))
         return [line for _, line in sorted(lines, key=lambda x: x[0])]
 
     def not_derivable(self):
@@ -1872,32 +2254,66 @@ def compared(sources):
     n = cc.n
     pct = lambda part, whole: (format(100.0 * part / whole, ".1f") if whole else "").rjust(7)
     countries = sorted({c for _, shapes in sources for c in list(shapes.tables) + list(shapes.problems)})
-    rows, totals = [], [collections.Counter() for _ in sources]
+    rows, totals, without = [], [collections.Counter() for _ in sources], [[0, 0] for _ in sources]
     for country in countries:
         cells, most = [], 0
         for k, (label, shapes) in enumerate(sources):
             t = shapes.tables.get(country)
-            if t is None:
+            if t is None:                                        # the source has no shapes of the country: not in its total
                 have = sum(x[3] for x in shapes.evidence.points.get(country, ()) if x[0] not in shapes.convert.get(country, ())) if shapes.evidence is not None else 0
                 counts, level = collections.Counter({SHARES[3]: have}), "none"
+                without[k][0] += 1
+                without[k][1] += have
             else:
                 counts, level = t["stats"]["shares"], t["level"] + ("" if t["usable"] else "*")
+                totals[k].update(counts)
             whole = sum(counts.values())
             most = max(most, whole)
-            totals[k].update(counts)
             cells.append(level.ljust(6) + "".join(pct(counts[x], whole) for x in SHARES))
         rows.append((most, country, cells))
     width = 6 + 7 * len(SHARES)
     out = ["", "Sources compared. AntWeb's specimens that have a state and coordinates (of every group; units being converted, such as the provinces of Madagascar, left",
            "out), by where they lie in the units of each source, in percent: in the unit confirmed or matched for their state (agreement), in the unit of",
-           "another state, in a unit with no AntWeb state, in no unit (the coast, or no shapes for the country). level*: the country gives no proposals.",
+           "another state, in a unit with no AntWeb state, in no unit (the coast). level*: the country gives no proposals. none: the source has no shapes of the",
+           "country, or was not asked for it; such a country is not in the source's line for all countries.",
            "  " + "country".ljust(28) + "specimens".rjust(10) + "".join("  | " + label[:width].ljust(width) for label, _ in sources),
            "  " + "".ljust(38) + "".join("  | " + "level".ljust(6) + "  agree  other no st.no unit" for _ in sources),
-           "  " + "ALL COUNTRIES".ljust(28) + n(max(sum(t.values()) for t in totals) if totals else 0).rjust(10)
-           + "".join("  | " + "".ljust(6) + "".join(pct(t[x], sum(t.values())) for x in SHARES) for t in totals)]
+           "  " + "ALL IT HAS SHAPES OF".ljust(28) + "".rjust(10) + "".join("  | " + "".ljust(6) + "".join(pct(t[x], sum(t.values())) for x in SHARES) for t in totals),
+           "  " + "  specimens in them".ljust(28) + "".rjust(10) + "".join("  | " + (n(sum(t.values())) + "; none: " + n(w[0]) + " countries, " + n(w[1]))[:width].ljust(width)
+                                                                         for t, w in zip(totals, without))]
     for most, country, cells in sorted(rows, key=lambda r: (-r[0], r[1])):
         out.append("  " + country[:28].ljust(28) + n(most).rjust(10) + "".join("  | " + cell for cell in cells))
     return out, totals
+
+
+def consistency_lines(labelled):
+    """The lines of the report on the consistency of the sources, and (countries measured, countries with units
+    under the mark). labelled: [(label, StateShapes)]; each country and source once."""
+    n = cc.n
+    seen, lines, bad = set(), [], 0
+    for _, shapes in labelled:
+        for country in sorted(shapes.tables):
+            c = shapes.tables[country].get("consistency")
+            key = (shapes.tables[country].get("label"), country)
+            if c is None or key in seen:
+                continue
+            seen.add(key)
+            start = "  " + country + ", " + key[0] + ", " + c["level"]
+            if not c["lower"]:
+                lines.append(start + ": not measured (" + c["why"] + ")")
+                continue
+            bad += 1 if c["under"] else 0
+            lines.append(start + " and " + c["lower"] + ": " + n(c["under"]) + " of " + n(c["measured"]) + " units of " + c["lower"] + " lie less than "
+                         + format(100 * ONE_STATE, ".0f") + "% inside one shape of " + c["level"] + (" (" + n(c["units"] - c["measured"]) + " too small to measure)"
+                                                                                                   if c["units"] > c["measured"] else "")
+                         + (". The worst: " + "; ".join(c["worst"]) if c["worst"] else ""))
+    if not lines:
+        return [], 0, 0
+    measured = sum(1 for x in lines if "not measured" not in x)
+    head = ["", "Consistency of the source: where a source has the state level and the next level down, each unit of the lower level should lie inside one state",
+            "shape. Measured on a grid of about " + n(GRID_POINTS) + " points over the country; points in no state shape (the coast) do not count. A source whose two",
+            "levels come from different makers shows here (geoBoundaries' Madagascar: regions from OpenStreetMap, districts from the disaster management office)."]
+    return head + lines, measured, bad
 
 
 def region_lines(table, totals, province_of, code, group_text):
@@ -1942,12 +2358,13 @@ def split_lines(lists, shapes):
 
 
 def report_text(when, commit, group_text, lists, shapes, detail, seconds, tolerance, map_path=MAP_FILE, suggested=None, madagascar=None, evidence=None,
-                sources=None, costs=(), taxonworks=None):
+                sources=None, costs=(), taxonworks=None, available=None):
     """The report: a summary of at most SUMMARY_LINES lines (totals, reasons, what the test with specimens gave,
     what a person has to decide), then the long tables. suggested: (lines of mapping_suggestions.csv, shapes left
     out of it); madagascar: the lines of region_lines, when that table was made; evidence: the Evidence read;
     sources: [(label, StateShapes)] to compare (the first is shapes); costs: lines on time and memory;
-    taxonworks: the lines of tw_report, or None when no archive was given."""
+    taxonworks: the lines of tw_report, or None when no archive was given; available: {name: source} of the
+    sources that were made, for the record of the files used."""
     n = cc.n
     events = lists.events()
     out = ["AntWeb place corrections, " + when + " (tool version " + VERSION + ", AntWeb commit " + (commit or "unknown") + ")",
@@ -2003,6 +2420,10 @@ def report_text(when, commit, group_text, lists, shapes, detail, seconds, tolera
     if adding:
         out += ["Proposed states not yet in AntWeb, to add in the Geolocale Manager first (specimens in brackets): "
                 + "; ".join(k + " (" + n(c) + ")" for k, c in sorted(adding.items())[:6]) + ("; and more, see Details" if len(adding) > 6 else "")]
+    measured = consistency_lines([("", shapes)] + list(sources or []))
+    if measured[1]:
+        out += ["Consistency of the sources (do the state level and the next level down fit?): " + n(measured[1]) + " countries measured, " + n(measured[2])
+                + " with units that lie in more than one state shape (under Details)."]
     if taxonworks is None:
         out += ["For TaxonWorks: no archive was given (--tw-archive), so tw_load.tsv was not written."]
     else:
@@ -2080,8 +2501,9 @@ def report_text(when, commit, group_text, lists, shapes, detail, seconds, tolera
     if shapes.problems:
         out += ["", "Countries with no state shapes (" + n(len(shapes.problems)) + "):"] + ["  " + c + ": " + why for c, why in sorted(shapes.problems.items())]
     used = sorted(shapes.rows_used)
-    out += ["", "Mapping file " + map_path + (": " + n(len(shapes.map_rows)) + " rows, " if os.path.exists(map_path) else ": NOT FOUND (fetch it next to the tool), ")
-            + n(len(used)) + " shapes named by it in this run:"]
+    out += ["", "Mapping file " + map_path + (": " if os.path.exists(map_path) else ": NOT FOUND (fetch it next to the tool): ") + n(len(shapes.map_rows))
+            + " rows that give a shape its state whatever the names and the specimens say (not counted here: " + n(len(shapes.rules.names)) + " name lines, "
+            + n(len(shapes.rules.splits)) + " split lines, " + n(len(shapes.rules.sources)) + " source lines; they follow). " + n(len(used)) + " shapes got their state by such a row in this run:"]
     out += ["  " + c + " " + level + ": " + shape + " -> " + state for c, level, shape, state in used] or ["  none"]
     named = [c + " " + shapes.tables[c]["level"] + ": " + x for c in sorted(shapes.tables) for x in shapes.tables[c].get("named", ())]
     out += ["  Names of the mapping file (" + n(len(shapes.rules.names)) + " \"name\" lines, tested with specimens like any name) that are in use: " + n(len(named))] + cc.wrap(named, 150)
@@ -2096,6 +2518,7 @@ def report_text(when, commit, group_text, lists, shapes, detail, seconds, tolera
                 "the shape, and what AntWeb's specimens in it are filed under. Nothing is used from it by the tool. " + n(left_out) + " more shapes have no records",
                 "and no AntWeb state like them, and are not listed."]
     out += madagascar or []
+    out += measured[0]
     if comparison is not None:
         out += comparison[0]
     if evidence is not None and getattr(evidence, "cost", ""):
@@ -2104,10 +2527,19 @@ def report_text(when, commit, group_text, lists, shapes, detail, seconds, tolera
     by_licence = collections.defaultdict(list)
     for key, entry in shapes.files.items():
         by_licence[entry.get("licence", "not read")].append(key)
-    out += ["", "State shapes: " + ("geoBoundaries gbOpen, the simplified files, commit " + detail.commit + ", in " + detail.folder + ". Checksums: " + detail.lock_path
-                                    if shapes.source.label == "geoBoundaries" else
-                                    shapes.source.label + ", " + NE_STATES_NAME + " at commit " + cc.SHAPES_COMMIT + " of nvkelso/natural-earth-vector, sha256 " + NE_STATES_SHA256),
-            "  Licences:"] + ["    " + lic + ": " + "; ".join(sorted(keys)) for lic, keys in sorted(by_licence.items())]
+    used = {t.get("label", "geoBoundaries") for t in shapes.tables.values()} | {shapes.source.label} | {label for label, _ in sources or []}
+    out += ["", "State shapes:"]
+    if "geoBoundaries" in used:
+        out += ["  geoBoundaries gbOpen, the simplified files, commit " + detail.commit + ", in " + detail.folder + ". Checksums: " + detail.lock_path]
+    if NaturalEarthStates.label in used:
+        out += ["  " + NaturalEarthStates.label + ", " + NE_STATES_NAME + " at commit " + cc.SHAPES_COMMIT + " of nvkelso/natural-earth-vector, sha256 " + NE_STATES_SHA256]
+    ocha = (available or {}).get("ocha") or next((x for x in [shapes.source] + list(shapes.by_country.values()) if isinstance(x, OchaSource)), None)
+    if ocha is not None and ocha.record:
+        out += ["  OCHA COD-AB from HDX (data.humdata.org), in " + ocha.folder + ". HDX has no pinned release: this is the record of the files used."] + ocha.report()
+    own = sorted(c + ": " + shapes.by_country[c].label for c in shapes.by_country)
+    if own:
+        out += ["  Countries the mapping file takes from a source of their own: " + "; ".join(own)]
+    out += ["  Licences:"] + ["    " + lic + ": " + "; ".join(sorted(keys)) for lic, keys in sorted(by_licence.items())]
     countries_used = sorted(iso for iso, f in detail.used.items() if f.get("bytes") and not f.get("problem"))
     out += ["Country shapes: Natural Earth 1:10m" + ("; near a border the full geoBoundaries file of the country: " + " ".join(countries_used) if countries_used else " alone")
             + ". The allowed distance: " + format(tolerance, "g") + " km, or the specimen's stated error when larger."]
@@ -2148,7 +2580,8 @@ def provinces_in_antweb(states):
 
 def madagascar_regions(state_shapes, states, code, rows, tolerance, group_text):
     """The lines of the report for Madagascar by region, from the ADM1 file of the country (the regions)."""
-    source, level = state_shapes.source, state_shapes.source.levels[0]
+    source = state_shapes.source_of(MADAGASCAR)
+    level = source.levels[0]
     if not source.has(code, level):
         return ["", "Madagascar by region: " + source.label + " has no shapes of " + code + "."]
     units, index = source.shapes(code, level)
@@ -2215,9 +2648,14 @@ def main(argv=None):
     a.add_argument("--shapes", default=None, help="a local GeoJSON file in place of the Natural Earth file")
     a.add_argument("--shapes-folder", default=cc.SHAPES_FOLDER, help="where shape files and the lock file are kept (default " + cc.SHAPES_FOLDER + ")")
     a.add_argument("--map", default=MAP_FILE, help="the mapping file (default adm1_shape_map.csv next to this tool)")
-    a.add_argument("--states-source", choices=["geoboundaries", "naturalearth", "both"], default="geoboundaries",
-                   help="the state shapes: geoboundaries (default), naturalearth (Natural Earth's states and provinces), or both: the corrections by "
-                        "geoboundaries, and the two compared on AntWeb's specimens for every country")
+    a.add_argument("--states-source", choices=["geoboundaries", "naturalearth", "ocha", "both", "all"], default="geoboundaries",
+                   help="the state shapes: geoboundaries (default), naturalearth (Natural Earth's states and provinces), ocha (UN OCHA's COD-AB files from HDX); "
+                        "both and all: the corrections by geoboundaries, and the two (geoboundaries, naturalearth) or the three sources compared on AntWeb's "
+                        "specimens for every country. A \"source\" line of the mapping file names another source for one country (Madagascar: ocha)")
+    a.add_argument("--ocha-countries", default=None, help="the ISO codes of the countries to take from OCHA, with commas (MDG,KEN); default: every country HDX has")
+    a.add_argument("--ignore-source-lines", action="store_true", help="do not follow the \"source\" lines of the mapping file: every country from --states-source")
+    a.add_argument("--consistency", action="store_true", help="measure for every country looked at how its source's state level and next level fit "
+                                                              "(default: the countries the mapping file has split, convert or source lines for)")
     a.add_argument("--tw-archive", default=None, help="the archive TaxonWorks writes for AntWeb (taxonworksNightly.zip, or its data.tsv), copied out of the "
                                                       "container: with it tw_load.tsv, tw_bioregion_differs.tsv and tw_unresolved.csv are written (needs a group)")
     a.add_argument("--tw-summary", action="store_true", help="with --tw-archive: print what the archive alone says (codes, blank predicates) and stop; no database")
@@ -2253,7 +2691,6 @@ def main(argv=None):
     if args.group is not None:
         group_id = int(find_group(groups, args.group))
     group_text = "every group" if group_id is None else groups.get(str(group_id), "?") + " (id " + str(group_id) + ")"
-    os.makedirs(folder, exist_ok=True)
 
     path = args.shapes or cc.fetch_shapes(args.shapes_folder)
     with open(path, encoding="utf-8") as f:
@@ -2271,12 +2708,23 @@ def main(argv=None):
             lines += 1
         evidence.cost = ("The read of AntWeb's specimens with a state and coordinates: " + cc.n(lines) + " lines (country, state, place) in "
                          + format(time.time() - began, ".0f") + " seconds; memory after it " + cc.n(cc.peak_mb()) + " MB.")
-    natural = NaturalEarthStates(fetch_states(args.shapes_folder)) if args.states_source != "geoboundaries" else None
-    state_shapes = StateShapes(store, states, countries, read_map(args.map), evidence, read_rules(args.map), natural if args.states_source == "naturalearth" else None)
+    rules, rows_of_map = read_rules(args.map), read_map(args.map)
+    lined = set() if args.ignore_source_lines else set(rules.sources.values())
+    comparing = {"both": ["geoboundaries", "naturalearth"], "all": list(SOURCE_NAMES)}.get(args.states_source, [])
+    needed = lined | set(comparing) | {args.states_source}
+    available = {"geoboundaries": GeoSource(store),
+                 "naturalearth": NaturalEarthStates(fetch_states(args.shapes_folder)) if "naturalearth" in needed else None,
+                 "ocha": OchaSource(args.shapes_folder, only=args.ocha_countries.split(",") if args.ocha_countries else None) if "ocha" in needed else None}
+    named = lambda country: getattr(countries.resolve(country), "name", country)
+    check = True if args.consistency else ({named(c) for c in rules.sources} | {named(c) for c in rules.convert} | {named(c) for c, *_ in rules.splits})
+    state_shapes = StateShapes(store, states, countries, rows_of_map, evidence, rules, available.get(args.states_source) or available["geoboundaries"],
+                               None if args.ignore_source_lines else available, check)
+    for country in sorted(state_shapes.by_country):              # a country the mapping file takes from another source: its file is fetched now, before the slow work
+        if isinstance(state_shapes.by_country[country], OchaSource):
+            state_shapes.by_country[country].file(checker.code_of_country.get(country, ""))
     work = Corrections(checker, states, state_shapes, bioregions)
-    sources = [(state_shapes.source.label, state_shapes)]
-    if args.states_source == "both":
-        sources.append((natural.label, StateShapes(store, states, countries, read_map(args.map), evidence, read_rules(args.map), natural)))
+    sources = [(available[name].label, StateShapes(store, states, countries, rows_of_map, evidence, rules, available[name], None, True if args.consistency else ()))
+               for name in comparing]
 
     stored = [cc.unhex(r[0]) for r in sql(stored_countries_sql(group_id))]
     unknown = [name for name in stored if name.strip() and countries.resolve(name.strip()) is None]
@@ -2289,13 +2737,14 @@ def main(argv=None):
         lists.add(row, work.work(row), work.kind(row))
 
     costs = []
-    if args.states_source == "both" and evidence is not None:    # every country that has specimens to test with, in both sources
+    if sources and evidence is not None:                         # every country that has specimens to test with, in each source
         for label, shapes in sources:
             began = time.time()
             for country in sorted(evidence.points):
                 shapes.choose(country, checker.code_of_country.get(country, ""))
             costs.append("Sources compared, " + label + ": " + cc.n(len(shapes.tables)) + " countries looked up in " + format(time.time() - began, ".0f")
                          + " seconds more; memory at the peak after it " + cc.n(cc.peak_mb()) + " MB.")
+    os.makedirs(folder, exist_ok=True)
     write_csv(os.path.join(folder, "corrections.csv"), CORRECTIONS_HEADER, lists.corrections())
     write_csv(os.path.join(folder, "by_collecting_event.csv"), EVENTS_HEADER, lists.events())
     write_csv(os.path.join(folder, "not_derivable.csv"), NOT_HEADER, lists.not_derivable())
@@ -2303,7 +2752,7 @@ def main(argv=None):
     write_csv(os.path.join(folder, "mapping_tested.csv"), TESTED_HEADER, tested_lines(state_shapes))
     write_csv(os.path.join(folder, "mapping_suggestions.csv"), SUGGESTIONS_HEADER, suggested[0])
     write_csv(os.path.join(folder, "to_decide.csv"), DECIDE_HEADER, decide_lines(state_shapes))
-    for label, shapes in sources[1:]:                            # the second source, when both are compared: its own list of tested pairs
+    for label, shapes in sources:                                # the sources compared: each one's own list of tested pairs
         write_csv(os.path.join(folder, "mapping_tested_" + re.sub(r"[^a-z0-9]+", "_", label.lower()).strip("_") + ".csv"), TESTED_HEADER, tested_lines(shapes))
     madagascar = None
     names = spelt(MADAGASCAR)
@@ -2325,7 +2774,7 @@ def main(argv=None):
         taxonworks = tw_report(archive, counts, args.tw_include_flagged)
     seconds = format(time.time() - started, ".0f") + " seconds; memory at the peak " + cc.n(cc.peak_mb()) + " MB"
     text = report_text(now.strftime("%Y-%m-%d %H:%M"), commit, group_text, lists, state_shapes, store, seconds, args.tolerance_km, args.map, suggested, madagascar, evidence,
-                       sources if evidence is not None else None, costs, taxonworks)
+                       sources if evidence is not None and sources else None, costs, taxonworks, available)
     with open(os.path.join(folder, "report.txt"), "w", encoding="utf-8") as f:
         f.write(text)
     print(text)
@@ -2334,4 +2783,7 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Refused as refused:
+        sys.exit(str(refused) + " Nothing was written.")

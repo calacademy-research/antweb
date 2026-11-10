@@ -245,13 +245,17 @@ def test_level_is_chosen_by_how_the_names_fit():
 
 def test_mapping_file_of_the_repository():
     rows = pc.read_map(pc.MAP_FILE)
-    assert all(len(r) == 4 and r[1] in pc.LEVELS for r in rows) and ("country", "level", "shape", "antweb_state") not in rows and len(rows) == 14
+    assert all(len(r) == 4 and r[1] in pc.LEVELS for r in rows) and ("country", "level", "shape", "antweb_state") not in rows and len(rows) == 17
     with open(pc.MAP_FILE, "rb") as f:
         assert b"\r" not in f.read()
     assert ("Mexico", "ADM1", "Coahuila de Zaragoza", "Coahuila") in rows and ("United States", "ADM1", "District of Columbia", "Washington, D.C.") in rows
     rules = pc.read_rules(pc.MAP_FILE)
     # Madagascar: the regions are AntWeb's states now. One shape has another name; the provinces are converted; each region has its province
-    assert [r for r in rows if r[0] == "Madagascar"] == [("Madagascar", "ADM1", "Matsiatra Ambony", "Haute Matsiatra")]
+    assert [r for r in rows if r[0] == "Madagascar"] == [("Madagascar", "ADM1", "Matsiatra Ambony", "Haute Matsiatra"), ("Madagascar", "ADM1", "Vatovavy", "Vatovavy"),
+                                                        ("Madagascar", "ADM1", "Fitovinany", "Fitovinany"), ("Madagascar", "ADM1", "Ambatosoa", "Ambatosoa")]
+    # Madagascar's shapes are OCHA's (24 regions, the three new ones shapes of their own: rows marked new until AntWeb has them)
+    assert rules.sources == {"Madagascar": "ocha"} and {r for r in rules.new if r[0] == "Madagascar"} == {
+        ("Madagascar", "ADM1", "Vatovavy", "Vatovavy"), ("Madagascar", "ADM1", "Fitovinany", "Fitovinany"), ("Madagascar", "ADM1", "Ambatosoa", "Ambatosoa")}
     assert rules.convert == {"Madagascar": ["Antananarivo", "Antsiranana", "Fianarantsoa", "Mahajanga", "Toamasina", "Toliara"]}
     within = rules.within["Madagascar"]
     # AntWeb's 22 regions (production, 2026-11-10) and the 22 shape names of the file geoBoundaries-MDG-ADM1 (read 2026-11-10)
@@ -287,7 +291,7 @@ def test_mapping_file_of_the_repository():
     # Seychelles: La Digue is Inner Islands; Other Islands is a state to add. The rows are given for the two levels that have these shapes
     assert [r for r in rows if r[0] == "Seychelles"] == [("Seychelles", "ADM2", "La Digue", "Inner Islands"), ("Seychelles", "ADM3", "La Digue", "Inner Islands"),
                                                         ("Seychelles", "ADM2", "Other Islands", "Outer Islands"), ("Seychelles", "ADM3", "Other Islands", "Outer Islands")]
-    assert rules.new == {("Seychelles", "ADM2", "Other Islands", "Outer Islands"), ("Seychelles", "ADM3", "Other Islands", "Outer Islands")}
+    assert {r for r in rules.new if r[0] == "Seychelles"} == {("Seychelles", "ADM2", "Other Islands", "Outer Islands"), ("Seychelles", "ADM3", "Other Islands", "Outer Islands")}
     # the name lines: 148 pairs the lead checked by the names, 94 that are plain from the names; no shape twice; none is a hard row as well
     assert len(rules.names) == 242 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 242 and all(l in pc.LEVELS and x and a for _, l, x, a in rules.names)
     assert ("United Arab Emirates", "ADM1", "Ras al-Khaimah", "Ra's al Khaymah") in rules.names and ("Czech Republic", "ADM1", "Jiho\u010desk\u00fd kraj", "Jiho\u010desk\u00fd") in rules.names
@@ -309,12 +313,12 @@ def test_mapping_rows():
         with open(path, "w", encoding="utf-8") as f:
             f.write("# a note\ncountry,level,shape,antweb_state\nA,ADM1,S,T\nA,adm2,S2,T2,new\nA,ADM1,S3,T3,0.91,12,a pasted line\n"
                     "convert,A,P1,P2\nwithin,A,T,P1\nwithin,A,T-2,P2\nname,A,adm1,S4,T4,the same in French\nname,A,NE,S5,T5\n"
-                    "split,A,S6,ADM2,U1,T6,\"Law 1, of 2021\"\nsplit,A,S6,adm2,*,T7\nsplit,A,S6,XX,U2,T8\n\n")
+                    "split,A,S6,ADM2,U1,T6,\"Law 1, of 2021\"\nsplit,A,S6,adm2,*,T7\nsplit,A,S6,XX,U2,T8\nsource,A,OCHA\nsource,B,somewhere\n\n")
         assert pc.read_map(path) == [("A", "ADM1", "S", "T"), ("A", "adm2", "S2", "T2"), ("A", "ADM1", "S3", "T3")]
         rules = pc.read_rules(path)
         assert rules.new == {("A", "adm2", "S2", "T2")} and rules.convert == {"A": ["P1", "P2"]} and rules.within == {"A": {"t": "P1", "t 2": "P2"}}
         assert rules.names == [("A", "ADM1", "S4", "T4"), ("A", "NE", "S5", "T5")]
-        assert rules.splits == [("A", "S6", "ADM2", "U1", "T6", "Law 1, of 2021"), ("A", "S6", "ADM2", "*", "T7", "")]
+        assert rules.splits == [("A", "S6", "ADM2", "U1", "T6", "Law 1, of 2021"), ("A", "S6", "ADM2", "*", "T7", "")] and rules.sources == {"A": "ocha"}
         assert pc.read_map(os.path.join(folder, "none.csv")) == [] and pc.read_rules(os.path.join(folder, "none.csv")).convert == {}
 
 
@@ -542,7 +546,7 @@ def test_lists_and_a_collecting_event_with_two_proposals():
         ("casent0000013", "adm1", "Chihuahua"), ("casent0000022", "adm1", "Sonora"), ("casent0000011", "adm1", "Sonora"),
         ("casent0000012", "adm1", "Sonora"), ("casent0000014", "adm1", "Sonora")], [(c[0], c[3], c[5]) for c in corrections]
     assert corrections[4] == ["casent0000011", "BLF100", "L1", "adm1", "", "Sonora", "coordinates inside Sonora, geoBoundaries MEX ADM1", "", "", "", "", "25.0", "-108.0", "",
-                              "Sierra, 5 km N", "Mexico", "California Academy of Sciences", "", "", "adm1", ""]
+                              "Sierra, 5 km N", "Mexico", "California Academy of Sciences", "", "", "adm1", "", "", ""]
     events = {(e[0], e[1]): e for e in lists.events()}
     # a collecting event whose specimens get different proposals is flagged
     e = events[("BLF100", "adm1")]
@@ -566,7 +570,7 @@ def test_lists_and_a_collecting_event_with_two_proposals():
             read = list(csv.reader(f))
     assert read[0] == ["specimen_code", "collecting_event_code", "locality_code", "field", "current_value", "proposed_value", "basis", "nearest_other_state",
                        "km_to_other_state", "other_state_flag", "note", "latitude", "longitude", "stated_error", "locality_name", "country", "upload_group", "unit_iso_3166_2", "unit_ne_id", "taxonworks_predicate",
-                       "biogeographic_region"] and read[5] == corrections[4]
+                       "biogeographic_region", "unit_code", "unit_source"] and read[5] == corrections[4]
     text = pc.report_text("2026-11-10 09:00", "abc1234", "California Academy of Sciences (id 1)", lists, work.shapes, _made["store"], "3 seconds", 1.0)
     for part in ("Upload group: California Academy of Sciences (id 1)",
                  "Records looked at (no state, no country, a country AntWeb does not know, a province to convert): 12",
@@ -800,7 +804,7 @@ def test_shapes_tested_with_antweb_s_own_specimens():
     assert at(-3.0, 22.0) == [pc.Not("adm1", pc.NOT_A_STATE, "Katanga", "Congoland")] and at(-3.0, 25.0) == [pc.Not("adm1", pc.NOT_A_STATE, "Ituri Est", "Congoland")]
     t = work.shapes.tables["Congoland"]
     lines = [x for x in pc.tested_lines(work.shapes) if x[0] == "Congoland"]
-    assert pc.TESTED_HEADER[:4] == ["country", "level", "shape", "antweb_state"] and pc.TESTED_HEADER[9:] == ["unit_iso_3166_2", "unit_ne_id"]
+    assert pc.TESTED_HEADER[:4] == ["country", "level", "shape", "antweb_state"] and pc.TESTED_HEADER[9:] == ["unit_iso_3166_2", "unit_ne_id", "unit_code", "unit_source"]
     # shape, state, what it rests on; the state's specimens in the shape, their share of the state's, of the shape's; what the shape's specimens are filed under
     assert [x[2:9] for x in lines] == [
         ["Equateur", "Equateur", "by name only, 3 specimens", 3, "100", "60", "Equateur 3; Bas-Uele 2"],
@@ -873,7 +877,8 @@ def test_natural_earth_states_as_a_second_source():
     second = pc.Corrections(work.checker, work.states, shapes)
     at = lambda lat, lon: second.work(row("casent0000075", "Congoland", lat, lon))
     # by the main name (accents make no difference), with the unit's ISO 3166-2 code and ne_id
-    assert at(-1.0, 21.0) == [pc.Proposal("adm1", "", "Bas-Uele", "coordinates inside Bas-U\u00e9l\u00e9, Natural Earth states CGL", "Congoland", "", "", "", "", "CG-BU", "101")]
+    assert at(-1.0, 21.0) == [pc.Proposal("adm1", "", "Bas-Uele", "coordinates inside Bas-U\u00e9l\u00e9, Natural Earth states CGL", "Congoland", "", "", "", "", "CG-BU", "101", "",
+                                         "CG-BU", "Natural Earth states and provinces 1:10m")]
     # by another name of the unit
     r = at(-1.0, 23.0)
     assert (r[0].proposed, r[0].basis, r[0].code) == ("Equateur", "coordinates inside Province de l'\u00c9quateur (Equateur by the name \u00c9quateur of the unit), "
@@ -889,13 +894,15 @@ def test_natural_earth_states_as_a_second_source():
                                               "against specimens, of 6 states with 5 or more located] | used: NE (the level with the most AntWeb states confirmed by specimens "
                                               "or matched by name)")
     lines = pc.tested_lines(shapes)
-    assert lines[0] == ["Congoland", "NE", "Bas-U\u00e9l\u00e9", "Bas-Uele", "confirmed by specimens, and by the name", 40, "95", "91", "Bas-Uele 40; Kivu 4", "CG-BU", "101"]
+    assert lines[0] == ["Congoland", "NE", "Bas-U\u00e9l\u00e9", "Bas-Uele", "confirmed by specimens, and by the name", 40, "95", "91", "Bas-Uele 40; Kivu 4", "CG-BU", "101",
+                        "CG-BU", "Natural Earth states and provinces 1:10m"]
     assert [x[4] for x in lines] == ["confirmed by specimens, and by the name"] * 4 + ["mapping file", "by name; the specimens agree in part", "by name only, 3 specimens"]
     lists = pc.Lists()
     record = row("casent0000075", "Congoland", -1.0, 21.0, event="E1")
     lists.add(record, second.work(record), "state missing")
-    assert lists.corrections()[0][-4:] == ["CG-BU", "101", "adm1", ""] and lists.events()[0][-4:] == ["CG-BU", "101", "adm1", ""]
-    assert pc.CORRECTIONS_HEADER[-4:] == pc.EVENTS_HEADER[-4:] == ["unit_iso_3166_2", "unit_ne_id", "taxonworks_predicate", "biogeographic_region"]
+    ends = ["CG-BU", "101", "adm1", "", "CG-BU", "Natural Earth states and provinces 1:10m"]
+    assert lists.corrections()[0][-6:] == ends and lists.events()[0][-6:] == ends
+    assert pc.CORRECTIONS_HEADER[-6:] == pc.EVENTS_HEADER[-6:] == ["unit_iso_3166_2", "unit_ne_id", "taxonworks_predicate", "biogeographic_region", "unit_code", "unit_source"]
     # the pinned file: fetched once, never used with another checksum
     with tempfile.TemporaryDirectory() as folder:
         with open(_made["ne_path"], "rb") as f:
@@ -922,18 +929,19 @@ def test_the_sources_compared():
     # the other file: 143 in the unit of their state, 6 in another's, none in a unit with no state, 3 in no unit (the file draws nothing there)
     assert [second.tables["Congoland"]["stats"]["shares"][x] for x in pc.SHARES] == [143, 6, 0, 3]
     lines, totals = pc.compared([("geoBoundaries", work.shapes), (ne.label, second)])
-    assert lines[4:] == [
+    assert lines[5:] == [
         "  country                      specimens  | geoBoundaries                       | Natural Earth states and provinces",
         "                                          | level   agree  other no st.no unit  | level   agree  other no st.no unit",
-        "  ALL COUNTRIES                      176  |          54.0    5.1   40.9    0.0  |          81.2    3.4    0.0   15.3",
+        "  ALL IT HAS SHAPES OF                    |          54.0    5.1   40.9    0.0  |          94.1    3.9    0.0    2.0",
+        "    specimens in them                     | 176; none: 0 countries, 0           | 152; none: 1 countries, 24        ",
         "  Congoland                          152  | ADM1     46.7    5.9   47.4    0.0  | NE       94.1    3.9    0.0    2.0",
         "  Omanland                            24  | ADM2    100.0    0.0    0.0    0.0  | none      0.0    0.0    0.0  100.0",
         "  Reunion                              0  | ADM4  " + " " * 28 + "  | NE*   " + " " * 28], "\n".join(lines)
-    assert [sum(x.values()) for x in totals] == [176, 176]
+    assert [sum(x.values()) for x in totals] == [176, 152]             # a country the source has no shapes of is not in its total
     text = pc.report_text("x", "y", "every group", pc.Lists(), work.shapes, _made["store"], "1 second", 1.0, pc.MAP_FILE, None, None, evidence,
                           [("geoBoundaries", work.shapes), (ne.label, second)], ["Sources compared, geoBoundaries: 3 countries looked up in 2 seconds more."])
     top, rest = text.split("\nDetails\n")
-    assert ("Sources compared, the specimens that lie in the unit of their state: geoBoundaries 54.0% of 176; Natural Earth states and provinces 1:10m 81.2% of 176 "
+    assert ("Sources compared, the specimens that lie in the unit of their state: geoBoundaries 54.0% of 176; Natural Earth states and provinces 1:10m 94.1% of 152 "
             "(table under Details).\n") in top and len(top.split("\n")) <= pc.SUMMARY_LINES
     assert "\n".join(lines) in rest and "\nSources compared, geoBoundaries: 3 countries looked up in 2 seconds more.\n" in rest
 
@@ -961,13 +969,13 @@ def test_the_predicate_and_the_bioregion():
     for record in records:
         lists.add(record, work.work(record), work.kind(record))
     # specimen, field, proposed value; the predicate of TaxonWorks for the field; the bioregion of the place as it will be
-    assert [(c[0], c[3], c[5], c[-2], c[-1]) for c in lists.corrections()] == [
+    assert [(c[0], c[3], c[5], c[-4], c[-3]) for c in lists.corrections()] == [
         ("casent0000112", "country", "Madagascar", "Country", "Malagasy"), ("casent0000112", "adm1", "Antsiranana", "adm1", "Malagasy"),
         ("casent0000115", "country", "Mexico", "Country", "Nearctic"),            # the country proposed for a record that has the state Sonora
         ("casent0000114", "adm1", "Chihuahua", "adm1", ""),                       # the state has two bioregions, and so has the country: left blank
         ("casent0000111", "adm1", "Sonora", "adm1", "Nearctic"),
         ("casent0000113", "country", "United States", "Country", "Oceania"), ("casent0000113", "adm1", "Hawaii", "adm1", "Oceania")], lists.corrections()
-    assert sorted((e[0], e[1], e[-2], e[-1]) for e in lists.events()) == [
+    assert sorted((e[0], e[1], e[-4], e[-3]) for e in lists.events()) == [
         ("E1", "adm1", "adm1", "Nearctic"), ("E2", "adm1", "adm1", "Malagasy"), ("E2", "country", "Country", "Malagasy"), ("E3", "adm1", "adm1", "Oceania"),
         ("E3", "country", "Country", "Oceania"), ("E4", "adm1", "adm1", ""), ("E5", "country", "Country", "Nearctic")], lists.events()
     # the names of the predicates are those AntWeb's upload reads (TaxonWorksTransformer)
@@ -994,7 +1002,7 @@ def test_a_state_to_add():
     assert lists.events()[0][14] == "state to add in the Geolocale Manager first"
     # what AntWeb's specimens in the shape are filed under today is in mapping_tested.csv (3 of Ituri), for the decision to be checked
     line = [x for x in pc.tested_lines(work.shapes) if x[2] == "Ile Nouvelle"][0]
-    assert line[4:] == ["mapping file: state to add in the Geolocale Manager first", 0, "", "0", "Ituri 3", "", ""]
+    assert line[4:] == ["mapping file: state to add in the Geolocale Manager first", 0, "", "0", "Ituri 3", "", "", "", ""]
 
 
 def test_the_level_by_specimens():
@@ -1267,6 +1275,223 @@ def test_madagascar_by_region():
     assert "\nMadagascar by region: every record" in text and text.index("Madagascar by region") > text.index("\nDetails\n")
 
 
+# ---------------------------------------------------------------- OCHA's files, a third source of state shapes
+
+def ocha_feature(properties, polygons):
+    return {"type": "Feature", "properties": properties, "geometry": {"type": "MultiPolygon", "coordinates": [[p] for p in polygons]} if len(polygons) > 1
+            else {"type": "Polygon", "coordinates": polygons}}
+
+
+def ocha_site(folder, version="v01", districts_as_drawn=True):
+    """A folder that stands for HDX: the answer of its API for Splitland's dataset and the zip it names (two levels,
+    P-codes, a layer of lines beside them). Splitland has four regions here: East and West are shapes of their own.
+    Returns the template of the API's address."""
+    os.makedirs(os.path.join(folder, "api"), exist_ok=True)
+    common = {"adm0_name": "Splitland", "adm0_pcode": "SP", "version": version, "valid_on": "2026-07-06", "valid_to": None}
+    regions = [("East", "SP01", [square(72, 0, 73, 2)]), ("West", "SP02", [square(70, 0, 72, 2)]), ("Rest Region", "SP03", [square(74, 0, 75, 2)]),
+               ("Newland", "SP04", [square(73, 0, 74, 2)]), ("Plain", "SP05", [square(75, 0, 76, 1), square(75, 1, 76, 2)])]
+    districts = [("East District", "SP0101", "SP01", square(72, 0, 73, 2)), ("West-District", "SP0201", "SP02", square(70, 0, 71, 2)), ("Middle", "SP0202", "SP02", square(71, 0, 72, 2)),
+                 ("Lost", "SP0401", "SP04", square(73, 0, 74, 2) if districts_as_drawn else square(73, 0, 73.8, 2)),
+                 ("Kept", "SP0301", "SP03", square(74, 0, 75, 2) if districts_as_drawn else square(73.8, 0, 75, 2)),
+                 ("Flat", "SP0501", "SP05", square(75, 0, 76, 2))]
+    layers = {
+        "spl_admin_boundaries/spl_admin0.geojson": [ocha_feature(dict(common), [square(70, 0, 76, 2)])],
+        "spl_admin_boundaries/spl_admin1.geojson": [ocha_feature(dict(common, adm1_name=name, adm1_name1="R\u00e9gion " + name, adm1_pcode=code, area_sqkm=1.0), polygons)
+                                                    for name, code, polygons in regions],
+        "spl_admin_boundaries/spl_admin2.geojson": [ocha_feature(dict(common, adm2_name=name, adm2_pcode=code, adm1_name="x", adm1_pcode=parent), [ring])
+                                                    for name, code, parent, ring in districts],
+        "spl_admin_boundaries/spl_adminlines.geojson": [{"type": "Feature", "properties": {"adm1_pcode": "SP01"}, "geometry": {"type": "LineString", "coordinates": [[70, 0], [76, 0]]}}],
+    }
+    with zipfile.ZipFile(os.path.join(folder, "spl_admin_boundaries.geojson.zip"), "w", zipfile.ZIP_DEFLATED) as z:
+        for member, features in layers.items():
+            z.writestr(member, json.dumps({"type": "FeatureCollection", "name": os.path.basename(member), "features": features}))
+        z.writestr("spl_admin_boundaries/readme.txt", "made up")
+    answer = {"success": True, "result": {"name": "cod-ab-spl", "last_modified": "2026-08-13T10:00:00", "review_date": "2026-07-06T00:00:00", "dataset_source": "Splitland's office",
+                                          "license_title": "Creative Commons Attribution for Intergovernmental Organisations", "num_resources": 2,
+                                          "resources": [{"name": "spl_admin_boundaries.shp.zip", "format": "SHP", "url": "file://" + folder + "/none.shp.zip"},
+                                                        {"name": "spl_admin_boundaries.geojson.zip", "format": "GeoJSON", "last_modified": "2026-08-13T10:00:00" + version,
+                                                         "url": "file://" + folder + "/spl_admin_boundaries.geojson.zip"}]}}
+    with open(os.path.join(folder, "api", "cod-ab-spl.json"), "w", encoding="utf-8") as f:
+        json.dump(answer, f)
+    return "file://" + folder + "/api/cod-ab-{iso}.json"
+
+
+def test_the_ocha_files_from_hdx():
+    with tempfile.TemporaryDirectory() as folder:
+        api = ocha_site(os.path.join(folder, "hdx"))
+        cache = os.path.join(folder, "shapes")
+        ocha = pc.OchaSource(cache, api)
+        # the dataset of the country is asked for at HDX, its GeoJSON file fetched once into the shapes folder under a name of our own
+        path = ocha.file("SPL")
+        assert path == os.path.join(cache, "ocha-cod-ab-spl.geojson.zip") and os.path.exists(path) and pc.OCHA_FILE == "ocha-cod-ab-{iso}.geojson.zip"
+        assert pc.OCHA_API == "https://data.humdata.org/api/3/action/package_show?id=cod-ab-{iso}" and "Mozilla/5.0" in pc.OCHA_AGENT and "place_corrections.py" in pc.OCHA_AGENT
+        # the layout of the zip is read from the file: the polygons of each level, not the lines; the name and the P-code of each unit
+        assert ocha.layers("SPL") == {0: "spl_admin_boundaries/spl_admin0.geojson", 1: "spl_admin_boundaries/spl_admin1.geojson", 2: "spl_admin_boundaries/spl_admin2.geojson"}
+        assert ocha.has("SPL", "ADM1") and ocha.has("SPL", "ADM2") and not ocha.has("SPL", "ADM3") and ocha.levels == ["ADM1", "ADM2"]
+        units = ocha.names("SPL", "ADM1")
+        assert units[0] == pc.Unit("East", ("R\u00e9gion East",), "", "", "SP01") and [u.pcode for u in units] == ["SP01", "SP02", "SP03", "SP04", "SP05"]
+        units, index = ocha.shapes("SPL", "ADM2")
+        assert [u.name for u in units] == ["East District", "West-District", "Middle", "Lost", "Kept", "Flat"] and units[3].pcode == "SP0401"
+        assert [units[i].name for i in index.inside(1.0, 73.5)] == ["Lost"] and ocha.below("SPL", "ADM1") == ("ADM2", "") and ocha.below("SPL", "ADM2") == (None, "no layer of ADM3")
+        # OCHA's older files call the properties ADM1_EN, ADM1_FR, ADM1_PCODE; a name in two languages is two spellings
+        old = pc.OchaSource.unit({"ADM1_EN": "North", "ADM1_FR": "Nord", "ADM1_PCODE": "XX01", "ADM1_REF": "Northern", "ADM0_EN": "X", "ADM0_PCODE": "XX", "ADM2_EN": "no"}, 1)
+        assert old == pc.Unit("North", ("Nord", "Northern"), "", "", "XX01") and pc.OchaSource.unit({"adm2_name": "x"}, 1) is None
+        # the record for the report: HDX has no pinned release, so the file's checksum, its dates and its version are written down
+        with open(path, "rb") as f:
+            digest = hashlib.sha256(f.read()).hexdigest()
+        text = ocha.report()
+        assert text[0] == ("  SPL: ocha-cod-ab-spl.geojson.zip, " + cc.n(os.path.getsize(path)) + " bytes, sha256 " + digest + "; first seen; last modified on HDX 2026-08-13T10:00:00v01"), text
+        assert text[1] == ("    dataset_source Splitland's office; last_modified 2026-08-13T10:00:00; license_title Creative Commons Attribution for Intergovernmental Organisations; "
+                           "review_date 2026-07-06T00:00:00; valid_on 2026-07-06; version v01"), text
+        assert text[2] == "    layers: level 0 spl_admin_boundaries/spl_admin0.geojson; level 1 spl_admin_boundaries/spl_admin1.geojson; level 2 spl_admin_boundaries/spl_admin2.geojson"
+        # the next run: HDX says the file is unchanged, it is not fetched again (the file at HDX is taken away to show it); the same checksum
+        os.rename(os.path.join(folder, "hdx", "spl_admin_boundaries.geojson.zip"), os.path.join(folder, "hdx", "kept.zip"))
+        again = pc.OchaSource(cache, api)
+        assert again.file("SPL") == path and again.report()[0].endswith("sha256 " + digest + "; the same file as on " + __import__("datetime").date.today().isoformat()
+                                                                        + "; last modified on HDX 2026-08-13T10:00:00v01")
+        # a new release at HDX: fetched again, and the report says that the checksum changed
+        ocha_site(os.path.join(folder, "hdx"), "v02")
+        newer = pc.OchaSource(cache, api)
+        newer.file("SPL")
+        assert "; NEW RELEASE: the checksum was " + digest + " on " in newer.report()[0] and "version v02" in "\n".join(newer.report() + [str(newer.names("SPL", "ADM1"))] + newer.report())
+        # a country HDX has no dataset of: no file, and the reason; a country not asked for is not asked at HDX
+        assert pc.OchaSource(cache, api, only=["spl"]).file("MEX") is None
+        # HDX refuses, or cannot be reached, and no file is in the folder: a plain message that says what to do by hand
+        empty = os.path.join(folder, "empty")
+        refused = pc.OchaSource(empty, "file://" + folder + "/nowhere/cod-ab-{iso}.json")
+        try:
+            refused.file("MDG")
+            raise AssertionError("no file and no HDX")
+        except pc.Refused as e:
+            message = str(e)
+        assert message.startswith("OCHA's boundaries of MDG could not be fetched from HDX (") and (
+            "Download the GeoJSON file (mdg_admin_boundaries.geojson.zip) of https://data.humdata.org/dataset/cod-ab-mdg in a browser and put it on the server as "
+            + os.path.join(empty, "ocha-cod-ab-mdg.geojson.zip") + " ; the next run uses it. Or run with --ignore-source-lines to do without OCHA's files.") in message, message
+        # ... and with the file put there by hand it is used, and the report says so
+        os.makedirs(empty)
+        with open(os.path.join(folder, "hdx", "spl_admin_boundaries.geojson.zip"), "rb") as f, open(os.path.join(empty, "ocha-cod-ab-spl.geojson.zip"), "wb") as g:
+            g.write(f.read())
+        by_hand = pc.OchaSource(empty, "file://" + folder + "/nowhere/cod-ab-{iso}.json")
+        assert [u.name for u in by_hand.names("SPL", "ADM1")][:2] == ["East", "West"]
+        assert "; first seen; put into the folder by hand or kept from an earlier run; HDX could not be asked (" in by_hand.report()[0] and by_hand.report()[0].endswith("the file in the folder was used")
+        # a file that is no zip is refused with the same advice
+        with open(os.path.join(empty, "ocha-cod-ab-mdg.geojson.zip"), "w") as f:
+            f.write("<html>refused</html>")
+        try:
+            pc.OchaSource(empty, "file://" + folder + "/nowhere/cod-ab-{iso}.json").file("MDG")
+            raise AssertionError("a file that is no zip")
+        except pc.Refused as e:
+            assert "is not a zip file" in str(e) and "Download the GeoJSON file" in str(e)
+    # the features of a large file are read one at a time, whatever the size of the pieces it comes in
+    data = json.dumps({"type": "FeatureCollection", "crs": {"x": [1, 2]}, "features": [ocha_feature({"adm1_name": "N\u00famero %d" % i, "n": i}, [square(i, 0, i + 1, 1)]) for i in range(40)]})
+    for block in (7, 64, 1 << 20):
+        got = list(pc.geojson_features(io.BytesIO(data.encode("utf-8")), block))
+        assert len(got) == 40 and got[39]["properties"] == {"adm1_name": "N\u00famero 39", "n": 39} and got[0]["geometry"]["type"] == "Polygon", block
+    assert list(pc.geojson_features(io.BytesIO(b'{"type": "FeatureCollection", "features": []}'))) == [] and list(pc.geojson_features(io.BytesIO(b"{}"))) == []
+    assert len(list(pc.geojson_features(io.BytesIO(data.encode("utf-8")[:len(data) // 2])))) in range(15, 25)       # a file cut short gives what is whole
+    # a detailed line is thinned: points closer than 50 m to the last one kept are left out, the ends stay
+    ring = [(0.0, 0.0)] + [(0.0001 * i, 0.0) for i in range(1, 100)] + [(0.01, 0.01), (0.0, 0.01), (0.0, 0.0)]
+    assert len(pc.thin(ring)) < 30 and pc.thin(ring)[0] == pc.thin(ring)[-1] == (0.0, 0.0) and pc.thin(ring[:4]) == ring[:4]
+
+
+def test_a_country_from_ocha_and_the_three_sources():
+    with tempfile.TemporaryDirectory() as folder:
+        api = ocha_site(os.path.join(folder, "hdx"))
+        base = setup()
+        states = pc.States(STATES + [("Old", "Splitland", 1, "")], base.countries)
+        ocha = pc.OchaSource(os.path.join(folder, "shapes"), api)
+        geo = pc.GeoSource(_made["store"])
+        rules = pc.Rules(splits=SPLIT_LINES, sources={"Splitland": "ocha"}, convert={"Splitland": ["Old"]}, within={"Splitland": {"West": "Old", "East": "Old"}})
+        rows = [("Splitland", "ADM1", "East", "East"), ("Splitland", "ADM1", "Newland", "Newland"), ("Splitland", "ADM1", "Rest Region", "Rest")]
+        rules.new = {rows[0], rows[1]}
+        shapes = pc.StateShapes(_made["store"], states, base.countries, rows, None, rules, geo, {"geoboundaries": geo, "naturalearth": None, "ocha": ocha}, {"Splitland"})
+        work = pc.Corrections(base.checker, states, shapes)
+        at = lambda lat, lon, **more: work.work(row("casent0000140", "Splitland", lat, lon, **more))
+        # the mapping file takes Splitland from OCHA (a "source" line); Mexico stays with the source of the run
+        assert shapes.source_of("Splitland") is ocha and shapes.source_of("Mexico") is geo
+        # OCHA's file has the new regions as shapes of their own: no split. The unit's P-code and its source go with the proposal
+        r = at(1.0, 70.5)
+        assert r == [pc.Proposal("adm1", "", "West", "coordinates inside West, OCHA COD-AB SPL ADM1", "Splitland", "", "", "", "", "", "", "", "SP02", "OCHA COD-AB")], r
+        assert at(1.0, 71.5)[0].proposed == "West"                 # in the district the split lines do not name: of no matter here
+        # a region AntWeb does not have yet: a row marked new, as with any source
+        r = at(1.0, 72.5)
+        assert (r[0].proposed, r[0].note, r[0].unit_code, r[0].basis) == ("East", pc.TO_ADD, "SP01", "coordinates inside East (East by the mapping file, a state to add in the "
+                                                                          "Geolocale Manager first), OCHA COD-AB SPL ADM1"), r
+        assert at(1.0, 74.5)[0].basis == "coordinates inside Rest Region (Rest by the mapping file), OCHA COD-AB SPL ADM1" and at(1.0, 75.5)[0].unit_code == "SP05"
+        # the conversion from a coarser unit works with it as with any source
+        r = at(1.0, 70.5, adm1="Old")
+        assert (r[0].current, r[0].proposed, r[0].note) == ("Old", "West", "the stored province is the province of the region")
+        t = shapes.tables["Splitland"]
+        assert t["label"] == "OCHA COD-AB" and t["level"] == "ADM1" and t["where"] == "OCHA COD-AB SPL ADM1" and t["to_add"] == ["East", "Newland"] and shapes.splits_used == []
+        # in the lists: the P-code beside the ISO code and the ne_id, with the source it is from
+        lists = pc.Lists()
+        record = row("casent0000141", "Splitland", 1.0, 70.5, event="E1")
+        lists.add(record, work.work(record), work.kind(record))
+        assert lists.corrections()[0][-6:] == ["", "", "adm1", "", "SP02", "OCHA COD-AB"] and lists.events()[0][-2:] == ["SP02", "OCHA COD-AB"]
+        assert [x[2:5] + x[-2:] for x in t["lines"]][:2] == [["East", "East", "mapping file: state to add in the Geolocale Manager first", "SP01", "OCHA COD-AB"],
+                                                            ["West", "West", "by name only, 0 specimens", "SP02", "OCHA COD-AB"]]
+        # consistency of the source: OCHA's regions and districts fit (every district wholly in one region) ...
+        assert t["consistency"] == {"level": "ADM1", "lower": "ADM2", "units": 6, "measured": 6, "under": 0, "worst": [], "step_km": t["consistency"]["step_km"]}
+        # ... and a source whose district file draws a district over two regions is shown: 84% of Kept in one region, 16% in the next
+        other = pc.OchaSource(os.path.join(folder, "shapes2"), ocha_site(os.path.join(folder, "hdx2"), districts_as_drawn=False))
+        crooked = pc.StateShapes(_made["store"], states, base.countries, rows, None, rules, other, None, True)
+        crooked.choose("Splitland", "SPL")
+        c = crooked.tables["Splitland"]["consistency"]
+        assert (c["under"], c["measured"], c["worst"]) == (1, 6, ["Kept: 84% in Rest Region, 16% in Newland"]), c
+        # with geoBoundaries' own two levels of Splitland: the district Middle lies in the shape Joined, as do East and West: nothing under the mark
+        plain_geo = pc.StateShapes(_made["store"], states, base.countries, [], None, pc.Rules(), geo, None, True)
+        plain_geo.choose("Splitland", "SPL")
+        assert plain_geo.tables["Splitland"]["consistency"]["under"] == 0 and plain_geo.tables["Splitland"]["label"] == "geoBoundaries"
+        # Natural Earth has one level: not measured, and said so. A country that is not to be measured has no entry
+        ne = natural_earth()
+        one = pc.StateShapes(_made["store"], base.states, base.countries, [], None, None, ne, None, True)
+        one.choose("Congoland", "CGL")
+        assert one.tables["Congoland"]["consistency"] == {"level": "NE", "lower": "", "why": "the source has one level"}
+        assert pc.StateShapes(_made["store"], states, base.countries, [], None, None, geo).choose("Splitland", "SPL") and True
+        lines, measured, bad = pc.consistency_lines([("", shapes), ("x", crooked), ("y", one)])
+        assert (measured, bad) == (1, 0) and lines[4:] == [
+            "  Splitland, OCHA COD-AB, ADM1 and ADM2: 0 of 6 units of ADM2 lie less than 97% inside one shape of ADM1",
+            "  Congoland, Natural Earth states and provinces 1:10m, NE: not measured (the source has one level)"], lines      # each country and source once
+        lines, measured, bad = pc.consistency_lines([("x", crooked)])
+        assert (measured, bad) == (1, 1) and lines[4] == ("  Splitland, OCHA COD-AB, ADM1 and ADM2: 1 of 6 units of ADM2 lie less than 97% inside one shape of ADM1. "
+                                                          "The worst: Kept: 84% in Rest Region, 16% in Newland")
+        # the three sources compared on AntWeb's specimens: a third column; a country a source does not have is "none"
+        evidence = pc.Evidence(base.countries, states)
+        for state, lon, count in (("West", 70.5, 20), ("West", 71.5, 10), ("Rest", 74.5, 30), ("Plain", 75.5, 10), ("Joined", 72.5, 6)):
+            evidence.add("Splitland", state, "1.0", str(lon), count)
+        forced = [(x.label, pc.StateShapes(_made["store"], states, base.countries, rows, evidence, rules, x)) for x in (geo, ne, ocha)]
+        for _, x in forced:
+            x.choose("Splitland", "SPL")
+        assert forced[2][1].source_of("Splitland") is ocha and forced[0][1].source_of("Splitland") is geo            # each with its own source, whatever the mapping file says
+        lines, totals = pc.compared(forced)
+        assert lines[5:] == [
+            "  country                      specimens  | geoBoundaries                       | Natural Earth states and provinces  | OCHA COD-AB                       ",
+            "                                          | level   agree  other no st.no unit  | level   agree  other no st.no unit  | level   agree  other no st.no unit",
+            "  ALL IT HAS SHAPES OF                    |          78.9    7.9   13.2    0.0  |                                     |          92.1    7.9    0.0    0.0",
+            "    specimens in them                     | 76; none: 0 countries, 0            | 0; none: 1 countries, 76            | 76; none: 0 countries, 0          ",
+            "  Splitland                           76  | ADM1     78.9    7.9   13.2    0.0  | none      0.0    0.0    0.0  100.0  | ADM1     92.1    7.9    0.0    0.0"], "\n".join(lines)
+        # (geoBoundaries' joined shape is counted by the districts the split lines name: the ten specimens in the district they do not name are in no state)
+        # the report: which file of OCHA's was used, the country's own source, the consistency in the summary and in the tables
+        text = pc.report_text("x", "y", "every group", lists, shapes, _made["store"], "1 second", 1.0, pc.MAP_FILE, None, None, evidence, forced, (), None, {"ocha": ocha})
+        top, rest = text.split("\nDetails\n")
+        assert "Consistency of the sources (do the state level and the next level down fit?): 1 countries measured, 0 with units that lie in more than one state shape" in top
+        assert len(top.split("\n")) <= pc.SUMMARY_LINES
+        for part in ("  OCHA COD-AB from HDX (data.humdata.org), in " + os.path.join(folder, "shapes") + ". HDX has no pinned release: this is the record of the files used.\n"
+                     "  SPL: ocha-cod-ab-spl.geojson.zip, ", "; first seen; last modified on HDX 2026-08-13T10:00:00v01\n",
+                     "  Countries the mapping file takes from a source of their own: Splitland: OCHA COD-AB\n",
+                     "\nConsistency of the source: where a source has the state level and the next level down",
+                     "  Splitland, OCHA COD-AB, ADM1 and ADM2: 0 of 6 units of ADM2 lie less than 97% inside one shape of ADM1\n",
+                     "  geoBoundaries gbOpen, the simplified files, commit ", "  Natural Earth states and provinces 1:10m, ne_10m_admin_1_states_provinces.geojson at commit "):
+            assert part in rest, part + "\n" + rest
+    # a refused download stops the run with the message, whatever asked for the file
+    refused = pc.OchaSource(os.path.join(tempfile.gettempdir(), "no-such-folder-of-shapes"), "file:///nowhere/cod-ab-{iso}.json")
+    try:
+        pc.StateShapes(_made["store"], setup().states, setup().countries, [], None, None, refused).choose("Splitland", "SPL")
+        raise AssertionError("no file and no HDX")
+    except pc.Refused as e:
+        assert "put it on the server as " + os.path.join(tempfile.gettempdir(), "no-such-folder-of-shapes", "ocha-cod-ab-spl.geojson.zip") in str(e)
+
+
 # ---------------------------------------------------------------- the load file for TaxonWorks
 
 TW_HEAD = ["id", "catalogNumber", "country", "fieldNumber", "decimalLatitude", "decimalLongitude", "TW:DataAttribute:CollectingEvent:adm1",
@@ -1467,9 +1692,10 @@ def test_the_geolocale_manager_list():
     text = pc.report_text("x", "y", "every group", lists, work.shapes, _made["store"], "1 second", 1.0)
     assert ("For the Geolocale Manager: names of the boundary files that are no state in AntWeb, with the specimens that lie in them:\n"
             "          3  Madagascar: Analamanga\n          1  Reunion: Le Port") in text, text
-    assert "adm1_shape_map.csv: 6 rows, " in text
+    assert ("adm1_shape_map.csv: 6 rows that give a shape its state whatever the names and the specimens say (not counted here: 0 name lines, 0 split lines, "
+            "0 source lines; they follow). ") in text, text
     missing = pc.report_text("x", "y", "every group", lists, work.shapes, _made["store"], "1 second", 1.0, "/nowhere/adm1_shape_map.csv")
-    assert "Mapping file /nowhere/adm1_shape_map.csv: NOT FOUND (fetch it next to the tool), " in missing
+    assert "Mapping file /nowhere/adm1_shape_map.csv: NOT FOUND (fetch it next to the tool): " in missing
 
 
 def test_every_statement_is_a_single_select():

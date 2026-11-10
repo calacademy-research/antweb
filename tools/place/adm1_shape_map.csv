@@ -6,7 +6,7 @@
 # names are (mapping_tested.csv of each run). This file is for decisions the specimens cannot make. A row here
 # wins over the test and over the names.
 #
-# Five kinds of line.
+# Six kinds of line.
 #
 # 1. country,level,shape,antweb_state[,new]
 #    country: AntWeb's valid country. level: the level of the boundary file (ADM1, ADM2 ...). shape: the file's
@@ -32,6 +32,11 @@
 #    does not have yet is proposed and marked "state to add in the Geolocale Manager first" until it exists.
 #    note: the law and its date, so a reader sees against what the list is kept current. The report of each
 #    run prints the split lines used, and the specimens and collecting events of each state.
+# 6. source,country,geoboundaries|naturalearth|ocha
+#    The country's state shapes are taken from this source, whatever --states-source says for the others
+#    (--ignore-source-lines to do without). ocha: UN OCHA's COD-AB file of the country, fetched from HDX
+#    (data.humdata.org) into the shapes folder; its units carry OCHA's P-code. The split lines of a country are
+#    not used with ocha: they mend older shapes.
 # 5. name,country,level,shape,antweb_state,why
 #    The shape's name is another name of this state (another language, spelling or transliteration). It is a
 #    name like any other: tested with AntWeb's specimens, reported and not used when they contradict it
@@ -61,8 +66,18 @@
 # The region file MDG ADM1 (source OpenStreetMap) and the district file MDG ADM2 (source BNGRC, OCHA) do not draw
 # the same lines: measured 2026-11-10 on a grid, 91 in 100 of the district Vohipeno lie in the region shape
 # Atsimo-Atsinanana, not in Vatovavy-Fitovinany. So that shape is split too: Vohipeno is Fitovinany.
+# The source for Madagascar is OCHA's file (Brian Fisher, 2026-11-10: "we need accurate shape file"): HDX dataset
+# cod-ab-mdg, from the Bureau National de Gestion des Risques et Catastrophes (BNGRC), 24 regions and 120
+# districts, reviewed 6 July 2026 (read on HDX 2026-11-10). geoBoundaries' regions of Madagascar are from
+# OpenStreetMap, 22 of them, and do not fit its own districts (which are BNGRC's): the split lines below mend
+# them when geoBoundaries or Natural Earth is used for Madagascar. With OCHA's file the three new regions are
+# shapes of their own: the three rows marked new propose them until AntWeb has them.
 country,level,shape,antweb_state
+source,Madagascar,ocha
 Madagascar,ADM1,Matsiatra Ambony,Haute Matsiatra
+Madagascar,ADM1,Vatovavy,Vatovavy,new
+Madagascar,ADM1,Fitovinany,Fitovinany,new
+Madagascar,ADM1,Ambatosoa,Ambatosoa,new
 split,Madagascar,Vatovavy-Fitovinany,ADM2,Ifanadiana,Vatovavy,Loi 2021-012 of 24 June 2021: Vatovavy Fitovinany divided into Vatovavy and Fitovinany
 split,Madagascar,Vatovavy-Fitovinany,ADM2,Mananjary,Vatovavy,Loi 2021-012 of 24 June 2021
 split,Madagascar,Vatovavy-Fitovinany,ADM2,Nosy-Varika,Vatovavy,Loi 2021-012 of 24 June 2021
