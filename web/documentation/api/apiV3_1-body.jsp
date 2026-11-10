@@ -1,7 +1,7 @@
 <%-- Body of the API v3.1 documentation (apiV3.1.do): global parameters, licence and image-count notes, each route
      with its parameters and example links to https://antweb.org/v3.1 (http://localhost/v3.1 in dev mode).
      Administrators see the admin-only parameters, and the examples get &up=1. Docs: docs/flows/api.md,
-     docs/numbers.md rows 100 to 118. Access and terms of use under #terms (step 6, 2026-11-08). Tests: tests/e2e/test_api.py. --%> 
+     docs/numbers.md rows 100 to 118. Access and terms of use under #terms (step 6, 2026-11-08), with the link to apiKey.do (register for a free API key). Tests: tests/e2e/test_api.py. --%> 
 <%@ page import="org.calacademy.antweb.*" %> 
 <%@ page import="org.calacademy.antweb.util.*" %>
 
@@ -44,6 +44,7 @@
         <h3>API status and access</h3>
         <p><b>Status (November 2026):</b> the AntWeb API is temporarily unavailable while free registered API keys and request limits are introduced. During this period data requests return HTTP 503 (Service Unavailable). The API will reopen when registration is ready. Documentation: https://www.antweb.org/apiV3.1.do. API base address: https://www.antweb.org/v3.1/.</p>
         <p>When access reopens, you can register for a <b>free API key</b> with your name, email address and project description, and your institution or affiliation if you have one. A key is for an identified project or application and allows higher request limits. A small number of requests will be possible without a key, for occasional questions. The request limits will be published here when registration opens.</p>
+        <p id="api-key-register"><a href="<%= AntwebProps.getSecureDomainApp() %>/apiKey.do"><b>Register for a free API key</b></a>.</p>
         <p>Keep API keys private. Respect the published limits and avoid many parallel requests. When a limit is reached the service returns <b>HTTP 429 (Too Many Requests)</b>; wait for the time given in the <code>Retry-After</code> header before trying again. AntWeb may restrict or revoke access that disrupts the service, compromises security, or repeatedly ignores the limits.</p>
         <h3>Purpose and responsible data access</h3>
         <p>AntWeb is a community-supported scientific resource, developed since 2002 under the scientific leadership of <b>Brian L. Fisher</b> at the California Academy of Sciences. Its records and images reflect decades of fieldwork, specimen preparation, imaging, identification and curation by many contributors.</p>

@@ -86,6 +86,12 @@ jobs:
       - name: Production smoke checks only read, GET without sign-in (tests/unit/test_smoke_read_only.py)
         run: python3 tests/unit/test_smoke_read_only.py
 
+      - name: Keys from the registration page fit the pattern the API accepts (tests/unit/test_api_key_format.py)
+        run: python3 tests/unit/test_api_key_format.py
+
+      - name: A recount of one bioregion or museum makes the statistics page count again (tests/unit/test_statspage_forget.py)
+        run: python3 tests/unit/test_statspage_forget.py
+
       - name: Production smoke run and morning check pass, fail and skip as they should (tests/unit/test_prod_smoke_logic.py)
         run: python3 tests/unit/test_prod_smoke_logic.py
 
@@ -1226,6 +1232,10 @@ jobs:
           # BlankNameCleanupDbTest (2026-10-29): with specimens of blank name, the old cleanups delete nothing; the
           # blank-safe ones delete the names and list rows no specimen uses (not AntCat's, not curators' rows, not blank
           # rows) and the preview counts them. Last: it makes its own small tables.
+          # ApiKeyDbTest (2026-11-08, free API keys): a registration is pending with only the hash of its link; the link
+          # (GET) changes nothing, the button makes the key once (only its SHA-256 and prefix stored); expired, used,
+          # cancelled links; 3 a day per email, 100 confirmed and 300 pending a day in all; times in UTC whatever the
+          # session's time zone; the admin list (newest first, filters, usage, no-key row) and its changes.
           # LicenseUpdateDbTest (2026-10-29): the start-up update of stored licence texts to CC BY 4.0 backs up first,
           # is a no-op on a second run and skips a missing license table. Last: it makes its own small tables.
           docker run --rm --network tzcheck --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
@@ -1258,8 +1268,9 @@ jobs:
               /t/org/calacademy/antweb/home/LicenseUpdateDbTest.java \
               /t/org/calacademy/antweb/home/ParentRowsDbTest.java \
               /t/org/calacademy/antweb/home/ListRemovalDbTest.java \
-              /t/org/calacademy/antweb/home/PlaceViewTotalDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:8 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3; do
+              /t/org/calacademy/antweb/home/PlaceViewTotalDbTest.java \
+              /t/org/calacademy/antweb/home/ApiKeyDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:8 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3
@@ -1282,6 +1293,22 @@ jobs:
             java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.ReportsTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
             cat /tmp/out.txt
             grep -q "^OK (5 tests)" /tmp/out.txt
+          '
+
+      - name: Free API keys (key format and hash, 24-hour links, registration limits, copies to the administrator, form checks, limits typed by an admin, admin CSV, email texts, opens only with Turnstile; ApiKeysTest)
+        run: |
+          docker run --rm --entrypoint sh -v "$PWD/test:/t:ro" -v "$PWD/etc:/e:ro" \
+            -v "$PWD/docker/antweb/platform.properties:/p/platform.properties:ro" antweb/antweb:dev -c '
+            set -e
+            C=/usr/local/antweb/WEB-INF/classes
+            mkdir -p /tmp/res /tmp/tc
+            cp /e/AppResStageDocker.properties /tmp/res/AntwebResources.properties
+            cp /p/platform.properties /tmp/res/
+            CP="/tmp/res:$C:/usr/local/antweb/WEB-INF/lib/*:/usr/local/tomcat/lib/*:/t/lib/junit-4.12.jar"
+            javac -nowarn -encoding UTF-8 -proc:none -cp "$CP" -d /tmp/tc /t/org/calacademy/antweb/security/ApiKeysTest.java
+            java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.security.ApiKeysTest > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; exit 1; }
+            grep -v "LogMgr" /tmp/out.txt | tail -5
+            grep -q "^OK (12 tests)" /tmp/out.txt
           '
 
       - name: Add an uploader and the login form (input checks, welcome email and Send, page; database steps against MySQL 8.4)
@@ -1514,6 +1541,7 @@ jobs:
 
       - name: Release gate checks and the known-failures list (tests/unit/test_release_gate.py)
         # An entry of tests/e2e/known-failures.toml needs a reason, who decided, and an end date at most 7 days on.
+        # Check 8: a running daily update or an unreadable dailyUpdate.do closes the gate (no network use in this test).
         run: python3 tests/unit/test_release_gate.py
 
       - name: The nightly counts the place list totals after set 4, on their own connection (tests/unit/test_place_totals_connection.py)

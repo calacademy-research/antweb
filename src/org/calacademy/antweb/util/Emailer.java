@@ -32,6 +32,8 @@ import org.apache.commons.logging.LogFactory;
  *
  * Notices to one user (e.g. "your upload is complete") go through sendNotice():
  * plain text, no per-subject limit, at most 20 a day to one address and 500 a day in all.
+ * Copies of API key registrations to the administrator go through sendNoticeOwnLimit(): the same,
+ * but counted by their caller (ApiKeyMgr), not against the notice budget.
  *
  * A personal email an administrator wrote on a page (the Add an uploader welcome email) goes
  * through sendPersonal(): plain text, Reply-To and a Bcc copy to the administrator, no
@@ -196,6 +198,22 @@ public class Emailer {
         if (reason != null) {
             s_log.warn("sendNotice() not sent (" + reason + ") to <" + to + "> subject '" + subject + "'");
             LogMgr.appendDataLog("emails.log", "NOT SENT (" + reason + ") to:" + to + " subject:" + subject);
+            return false;
+        }
+        return deliver(to, subject, text, false, replyTo);
+    }
+
+    /**
+     * A plain-text notice that keeps its own daily limit (the caller counts; ApiKeyMgr: copies of API key
+     * registrations to the administrator, at most ApiKeys.MAX_COPIES_PER_DAY and one "more today" email), so it
+     * does not use the shared notice budget of sendNotice() (20 a day to one address, 500 in all), which upload
+     * emails need. Package-private: only callers in util with their own limit. Returns true if handed to the mail
+     * server.
+     */
+    static boolean sendNoticeOwnLimit(String to, String subject, String text, String replyTo) {
+        if (!isConfigured()) {
+            s_log.info("sendNoticeOwnLimit() mail not configured. Email NOT sent to <" + to + "> with subject '" + subject + "'");
+            LogMgr.appendDataLog("emails.log", "NOT SENT (mail not configured) to:" + to + " subject:" + subject + " content:" + text);
             return false;
         }
         return deliver(to, subject, text, false, replyTo);

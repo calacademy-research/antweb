@@ -92,7 +92,7 @@ Decisions by Brian Fisher, 2026-11-08. The keyed API is **v4** at `https://www.a
 ### Keys
 
 - Sent only in the header `X-API-Key`. A key in the web address (a parameter named key, apiKey, api_key, X-API-Key, token, or any value that looks like `aw_...`) is refused with HTTP 400 "Send your API key in the X-API-Key header, never in the web address ...", without repeating it.
-- Format `aw_` and 40 random characters (`api_keys.new_key()`, 240 bits). Stored only as SHA-256 in `api_key.key_hash`, with a display prefix (first 7 characters) in `api_key.prefix`. Accepted only with `status = 'active'`.
+- Format `aw_` and random URL-safe characters: 32 for keys from the registration page (`ApiKeys.newKey()`, 192 bits), 40 from `api_keys.new_key()` (240 bits); the API accepts 20 to 80 (`api_keys.KEY_RE`). Stored only as SHA-256 in `api_key.key_hash`, with a display prefix (first 7 characters) in `api_key.prefix`. Accepted only with `status = 'active'`.
 - Unknown, malformed, pending or revoked key: HTTP 401 `{"error": "This API key is not valid. Get a free key at https://www.antweb.org/apiKey.do."}`.
 - Never written to a log, an error or a reply: the inner v3.1 request carries no key header, nothing prints request headers, errors print the exception type and message only, and Caddy drops the header from its log (above). `apiKey.do` (the registration form) is PR 4.
 
@@ -145,3 +145,46 @@ Setup on a server (staging first): `bash /root/antweb-next/tools/api/setup-usage
 | `tests/unit/test_api_v4.py` (CI, in the API image; SQLite for the data and for the counters) | key format and SHA-256, only the hash stored; admin key works before `V4_OPEN`, everyone else 503; 401 for unknown, malformed, pending, revoked keys; key in the address 400; no usage login 503, counter database down 503; no key 5 a minute (429 text and `Retry-After`), 50 a day, 25 records; registered 60 a minute and the defaults; per-key overrides (any level, 10,000 cap); the daily record limit stops offset paging and unused records are given back; counts in `api_usage_daily` and `api_rate`, shared by two stores (workers), no raw IP stored; IP hash per day; the key never in stdout, stderr, bodies or headers (also on 400, 401, 429 and 500); v4 field names in JSON, ndjson and /taxaImages, localityCode, the two new filters; v4 parameter names and hints; every v3.1 data route has a v4 route; both front doors; v3.1 unchanged; the v3.1 admin switch (`up=1` as before while `V4_OPEN` is False; once True only with an admin key, 401 for a bad key, 503 otherwise and without the usage login); v4 never uses `up=1`; IPv6 visitors counted per /64; both Caddyfiles route `/v4` and drop `X-Api-Key` and the `token` query value from the log |
 | `tests/unit/test_api_usage_login_script.py` | the script grants only the three key tables (on `api_key` only the lookup columns and an update of `last_used`), delete only on `api_rate`, revokes broader grants first on every run, sets the file's password on the login in both branches, never puts a password on a command line, and adds the grants also for an existing login |
 | `tests/e2e/test_api.py::test_v4_front_door_and_refusals` | on staging: `/v4/` answers JSON, a data route without a key answers 503 (closed or not configured) or 429, a key in the address is refused; skipped when Cloudflare challenges `/v4/` |
+
+## Free API keys: registration and the admin page (step 6, PRs 4 and 5, 2026-11-08)
+
+Decided by Brian Fisher: keys are free and issued automatically, with a copy of every registration to
+bfisher@calacademy.org; the admin page gives him the overview.
+
+- **apiKey.do** (`ApiKeyAction`, `web/apiKey-body.jsp`): public form, no AntWeb account needed. Name, email,
+  project description (required), institution or affiliation (optional), "I agree to the terms"
+  (apiV3.1.do#terms), Cloudflare Turnstile, CSRF token. Limits: 5 registrations an hour per IP address (in
+  memory), 3 a day per email address, 100 confirmed registrations a day in all and at most 300 pending
+  (unconfirmed) ones made in a day (both counted in `api_key`, last 24 hours), so a flood of unconfirmed
+  registrations stops at its own ceiling without using up the day's 100. A registration is saved as `pending` with
+  the SHA-256 of a random link token (24 hours); the registrant gets the link apiKeyConfirm.do?token=... (the email
+  starts "Hello," and does not repeat the name typed on the form, so the form cannot carry text to any address),
+  Brian a plain-text copy with a link to apiKeys.do?id=N (Reply-To the registrant). The copies keep their own count
+  (`Emailer.sendNoticeOwnLimit`, not the 20-a-day notice budget the upload emails use): at most 20 a day (UTC), then
+  one email "AntWeb API key registrations: more today" pointing to apiKeys.do, then none until the next day (the
+  count restarts with Tomcat). Until `etc/api-keys.properties` on the server has `apiKeys.open=true` **and** the
+  human check is configured (`etc/turnstile.properties` with siteKey and secret; `ApiKeys.registrationOpen()`; open
+  without Turnstile is logged once) the page says "Registration opens soon" and shows no form, so it can go live
+  before the API checks keys (PR 3). Caddy drops the `token` value from its access log (PR 3 review changes).
+- **apiKeyConfirm.do** (`ApiKeyConfirmAction`): opening the link only shows a button (email scanners open links
+  first). The button makes the key, `aw_` + 32 random URL-safe characters (SecureRandom), stores only its SHA-256
+  (`key_hash`) and first 7 characters (`prefix`), sets `active` and `confirmed`, and shows the key once with how
+  to send it (header `X-API-Key`, with a curl example against `https://www.antweb.org/v4/specimens` and a link to
+  `/v4/`). Used, expired and cancelled links say so and show no key.
+- **apiKeys.do** (`curate.ApiKeysAction`, admins; linked from the Curate page's Manager tools): one row per key,
+  newest first, with use from `api_usage_daily` (today, 7 and 30 days, records and refusals in 30 days) and a
+  first row for requests without a key (`key_id` 0). Filters by status, level, name/email/institution; CSV
+  download (same filters). One key's page (`?id=N`): revoke, reactivate, level (registered, collaborator,
+  admin), the four limits (blank = the default; 0 is refused with "use Revoke to block a key", since the API reads
+  0 as the default; records an answer at most 10,000, the API's own ceiling `api_keys.ABSOLUTE_MAX_RECORDS`), note;
+  each change needs the confirmation box.
+- **Times are UTC** everywhere for API keys: the API writes `api_usage_daily.day` and `last_used` in UTC, and
+  `home/ApiKeyDb` writes `created`, `confirmed`, `confirm_expires` and `revoked` with `utc_timestamp()` and compares
+  with `utc_timestamp()`/`utc_date()` (the servers' MySQL clock is Pacific). The admin page, its CSV and the copy
+  email label times "(UTC)"; "today" is the UTC day (it ends at 4 PM Pacific in winter).
+- Keys and tokens are never logged or emailed. admin.log gets the registration number and, once active, the
+  prefix. While pending, `prefix` and `key_hash` hold random stand-ins (`p_...`) because both columns are
+  required and unique.
+- Code: `util/ApiKeys` (rules, no database), `util/ApiKeyMgr` (register, confirm, email texts), `home/ApiKeyDb`
+  (tables; `ensureSchema()` at startup from LoginMgr). Tests: `test/.../security/ApiKeysTest.java`,
+  `test/.../home/ApiKeyDbTest.java` (MySQL 8.4 in CI), `tests/e2e/test_api_keys.py`.
