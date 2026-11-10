@@ -51,7 +51,7 @@ import re
 import subprocess
 import sys
 
-VERSION = "1"
+VERSION = "2"
 TAXON_COLUMNS = ("taxon_status", "taxon_fossil", "taxon_rank", "taxon_current_valid_name", "taxon_author_date",
                  "group_name", "no_taxon_row")
 PLACE_NAME = re.compile(r"^[^\x00-\x1f;\\]{1,64}$")
@@ -97,7 +97,7 @@ def unescape(field):
 def places_sql(countries):
     c = sql_list(countries)
     return ("select name, georank, is_valid, is_island, ifnull(parent, ''), ifnull(country, ''), ifnull(bioregion, ''), "
-            "ifnull(alt_bioregion, '') from geolocale where (georank = 'country' and name in " + c + ") "
+            "ifnull(alt_bioregion, ''), ifnull(valid_name, '') from geolocale where (georank = 'country' and name in " + c + ") "
             "or (is_island = 1 and (parent in " + c + " or country in " + c + ")) order by georank, name")
 
 
@@ -119,8 +119,16 @@ def export_sql(countries, islands):
 
 
 def count_sql(countries, islands):
-    return ("select ifnull(s.country, ''), ifnull(s.island_country, ''), count(*) from specimen s where "
+    # Grouped by the bytes of the names: MySQL compares names without accents ("México" = "Mexico"), so a plain
+    # GROUP BY adds the two spellings up while the file has them apart (staging 2026-11-10: Mexico 52,206 in the
+    # database's count, 52,203 + 3 "México" in the file, reported as a difference).
+    # hex(): grouped and returned by the bytes, whatever the column's collation and the client's settings.
+    return ("select hex(ifnull(s.country, '')), hex(ifnull(s.island_country, '')), count(*) from specimen s where "
             + where_sql(countries, islands) + " group by 1, 2 order by 1, 2")
+
+
+def unhex(value):
+    return bytes.fromhex(value).decode("utf-8", "replace")
 
 
 def bioregion_list_sql(bioregion):
@@ -286,7 +294,7 @@ def sha256(path):
 
 def compare_counts(stats, db_rows):
     """(verified, differences): the rows written per (country, island country) against the database's count."""
-    db = {(r[0], r[1]): int(r[2]) for r in db_rows}
+    db = {(unhex(r[0]), unhex(r[1])): int(r[2]) for r in db_rows}
     diffs = []
     for key in sorted(set(db) | set(stats.by_place)):
         a, b = stats.by_place.get(key, 0), db.get(key, 0)
@@ -312,6 +320,10 @@ def manifest_text(m):
     lines += ["", "By AntWeb bioregion:"]
     for name, n in m["by_bioregion"].items():
         lines.append("  {:<40} {:>10,}".format(name or "(none)", n))
+    spellings = sorted({p["country"] for p in m["by_place"]} - set(m["countries"]) - set(m["islands"]))
+    if spellings:
+        lines += ["", "Country spellings in the file besides the names asked for (MySQL matches names without accents): "
+                  + ", ".join(spellings)]
     lines += ["", "Without usable coordinates: {:,} (in the file, has_coordinates = 0; a cut by a shape file loses them)".format(m["without_coordinates"]),
               "Name has no taxon row: {:,} (in the file, no_taxon_row = 1; the API's specimen view leaves these out)".format(m["no_taxon_row"]),
               "Red-flagged at upload: {:,} (column flag)".format(m["flagged"]),
@@ -366,10 +378,14 @@ def main(argv=None):
     os.makedirs(out, exist_ok=True)
 
     places = run_query(project, places_sql(countries), args.container)
-    found = {p[0] for p in places if p[1] == "country"}
+    found = {p[0] for p in places if p[1] == "country" and p[2] == "1"}
+    outdated = {p[0]: p[8] for p in places if p[1] == "country" and p[2] != "1"}
     unknown = [c for c in countries if c not in found]
     if unknown:
-        sys.exit("no country row in AntWeb for: " + ", ".join(unknown) + " (names as on AntWeb's country pages)")
+        # a name AntWeb keeps only as an old name (is_valid = 0) holds no specimens: say the valid one
+        sys.exit("no valid country in AntWeb named: " + ", ".join(
+            c + (" (use " + outdated[c] + ")" if outdated.get(c) else "") for c in unknown)
+            + " (names as on AntWeb's country pages)")
     islands = [] if args.no_islands else sorted({p[0] for p in places if p[3] == "1" and p[0] not in countries})
     print("Countries: " + ", ".join(countries))
     for p in places:
