@@ -23,6 +23,10 @@ import org.calacademy.antweb.util.GeolocaleMgr;
  *
  * The cases are those of tests/unit/test_place_fix.py (test_country_spelling_and_old_name), with the same places.
  * No database: the countries are made here (GeolocaleMgr.countriesBySpelling, validCountry, countrySpelledLike).
+ *
+ * The TaxonWorks upload passes a country on only when AntWeb knows it (TaxonWorksTransformer): it now also passes
+ * such a spelling on, as TaxonWorks wrote it, so the upload of the line can correct and report it; before, the
+ * country was dropped and the specimen loaded as "country missing" (GeolocaleMgr.isCountryOrSpelling).
  */
 public class CountrySpellingTest extends TestCase {
 
@@ -168,6 +172,27 @@ public class CountrySpellingTest extends TestCase {
         countries.add(country("Panamá", false, "Canada", false));
         assertEquals("Canada", stored(countries, "Panamá"));
         assertEquals("Panama", stored(countries, "PANAMÁ"));
+    }
+
+    /** The TaxonWorks upload passes on a country AntWeb has under that name (valid or old, as before) or as another spelling. */
+    public void testTaxonWorksPassesAKnownCountryOrItsSpellingOn() {
+        List<Country> countries = places();
+        Map<String, Country> names = byName(countries);
+        Map<String, Country> spellings = GeolocaleMgr.countriesBySpelling(countries);
+        for (String known : new String[] {"Mexico", "USA", "Zaire", "Hawaii"}) {
+            assertTrue(known, GeolocaleMgr.isCountryOrSpelling(names, spellings, known));
+        }
+        for (String spelling : new String[] {"México", "MEXICO", "  panamá ", "united states"}) {
+            assertTrue(spelling, GeolocaleMgr.isCountryOrSpelling(names, spellings, spelling));
+        }
+        for (String unknown : new String[] {"Equador", "usa", "HAWAII", "zaire", "", "   "}) {
+            assertFalse(unknown, GeolocaleMgr.isCountryOrSpelling(names, spellings, unknown));
+        }
+        assertFalse(GeolocaleMgr.isCountryOrSpelling(names, spellings, null));
+        // before the places are loaded: nothing is passed on, as before
+        assertFalse(GeolocaleMgr.isCountryOrSpelling(null, null, "Mexico"));
+        assertTrue(GeolocaleMgr.isCountryOrSpelling(names, null, "Mexico"));
+        assertFalse(GeolocaleMgr.isCountryOrSpelling(names, null, "México"));
     }
 
     /** The upload report: its own section, counted as corrected (the curator is asked to fix the file), the line escaped. */
