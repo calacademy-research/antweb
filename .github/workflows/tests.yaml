@@ -829,6 +829,9 @@ jobs:
       - name: Names the e2e tests expect a test-group upload to write, by the indet rules (tests/unit/test_upload_expected_names.py)
         run: python3 tests/unit/test_upload_expected_names.py
 
+      - name: Specimen extract for collaborators, complete and verified (tests/unit/test_specimen_extract.py)
+        run: python3 tests/unit/test_specimen_extract.py
+
       - name: Pheidole head export, plan and contact sheets without a database (tests/unit/test_pheidole_export.py)
         run: python3 tests/unit/test_pheidole_export.py
 
