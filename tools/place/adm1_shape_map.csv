@@ -133,6 +133,11 @@ Mexico,ADM1,Mexico,México
 Mexico,ADM1,Mexico,Estado de México
 # United States. AntWeb's name for the District of Columbia (GeolocaleMgr.getGeolocaleFromProjectName).
 United States,ADM1,District of Columbia,"Washington, D.C."
+# Nicaragua. geoBoundaries writes "Jinotega (Departamento)". A name with the unit word is a looser name, which the
+# specimens may contradict, and here they do: 4,117 specimens filed under Jinotega lie in the Caribbean region
+# next to it (production 2026-11-10; they are listed in to_decide.csv). The shape is the department all the same,
+# as the shapes named plain Jinotega in OCHA's file and in Natural Earth are by the rule for an exact name.
+Nicaragua,ADM1,Jinotega (Departamento),Jinotega
 # Names: the shape's name is another name of the state. Tested with AntWeb's specimens (see 5 above).
 name,United Arab Emirates,ADM1,Ras al-Khaimah,Ra's al Khaymah,spelling or language of the same name
 name,United Arab Emirates,ADM1,Sharjah,Ash Shāriqah,"the same emirate, AntWeb's transliteration"
@@ -174,6 +179,7 @@ name,Germany,ADM1,Sachsen,Saxony,German name
 name,Bahrain,ADM1,Capital Governorate,Al 'Āşimah,Capital governorate
 name,Cuba,ADM1,Havana,La Habana,Havana
 name,Panama,ADM1,Comarca Ngäbe-Buglé,Ngäbe-Buglé,spelling or language of the same name
+name,Panama,ADM1,Ngöbe Buglé,Ngäbe-Buglé,spelling of the same name as OCHA's file has it (production 2026-11-10)
 name,Solomon Islands,ADM1,Makira,Makira-Ulawa,the same place; AntWeb also has Makira and Ulawa as a valid state
 name,Spain,ADM1,Cataluña/Catalunya,Catalonia,spelling or language of the same name (by AntWeb's old name Cataluña)
 name,Tanzania,ADM1,South Pemba,Pemba South,spelling or language of the same name
@@ -262,6 +268,10 @@ name,Libya,ADM1,Ash Shati',Wādī ash Shāţi',spelling or language of the same 
 name,Malta,ADM1,Mġarr,Imġarr,the same place; AntWeb also has L-Imġarr as a valid state
 name,Mongolia,ADM1,Darkhan-Uul,Darhan-Uul,spelling or language of the same name
 name,Nicaragua,ADM1,South Atlantic Autonomous Region,Costa Caribe Sur,the region's present name (the tool suggested Norte)
+name,Nicaragua,ADM1,North Carribean Coast Autonomous Region,Costa Caribe Norte,the region's name in English as geoBoundaries spells it
+name,Nicaragua,ADM1,Matagalpa (Departemento),Matagalpa,the department; geoBoundaries misspells Departamento
+name,Nicaragua,ADM1,Región Autónoma Costa Caribe Norte,Costa Caribe Norte,the region's full name as OCHA's file has it (production 2026-11-10)
+name,Nicaragua,ADM1,Región Autónoma de la Costa Caribe Sur,Costa Caribe Sur,the region's full name as OCHA's file has it (production 2026-11-10)
 name,North Korea,ADM1,North Hwanghae,Hwanghae-bukto,AntWeb also has Hwangbuk as a valid state
 name,Papua New Guinea,ADM1,Autonomous Region of Bougainville,Bougainville,spelling or language of the same name
 name,Poland,ADM1,Świętokrzyskie Voivodeship,Świętokrzyskie,spelling or language of the same name

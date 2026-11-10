@@ -41,7 +41,22 @@ What it proposes.
         for a person to look at first. (Version 1 gave no proposal there, "two candidates": 4,412 records
         of the first real run, most in small units such as the districts of Mauritius.)
         A point outside every state shape (in the water, or in a gap of the file) gets the state within the
-        allowed distance when there is exactly one; with more than one: "two candidates", both named.
+        allowed distance when there is exactly one, and no other country lies as near: the note of the
+        proposal says "outside the shape, N km from it (coast)". With more than one state that near: "two
+        candidates", both named. With another country that near (or the point inside it): no proposal ("in
+        no state's shape, and another country within the allowed distance").
+     4. One exception to 1, for the islets a country's shape leaves out. A point that the country's shape has
+        in the water, farther out than the allowed distance, but that lies inside a state shape of the
+        states' own file or within the allowed distance of one alone, gets that state; the note says "the
+        country's shape has the point in the water, the states' file draws land here: an islet, or coordinates
+        to check (N km from <country> as <shape> draws it)". Production, 2026-11-10: 380 specimens of
+        Madagascar on Nosy Mangabe, Nosy Ankao, Nosy Ratsy and Nosy Manampao, 2 to 9 km off the coast of the
+        country's shape, got no proposal. A point the country shapes put inside another country gets none.
+     One function answers for a point (Corrections.locate), for a missing state, for a province that is
+     converted and for the table of Madagascar by region, with every source of state shapes. Version 6 had
+     the rule three times: the conversion wanted the point strictly inside a region, and left 2,423 specimens
+     of the Academy with their province that lie on the coast up to 0.69 km outside OCHA's line (Nosy Be
+     Lokobe, Foulpointe, Cap Est) and that the table by region, with a rule of its own, counted in a region.
   B. Country missing: with usable coordinates, the country by the rule of coordinate_country.py (inside
      exactly one, or in the water within the allowed distance of exactly one), then the state as in A.
      Without coordinates: no proposal; the records are grouped in not_derivable.csv with the place text.
@@ -116,9 +131,10 @@ The mapping file, tools/place/adm1_shape_map.csv (next to this tool), has five k
       up. Madagascar (Brian Fisher, 2026-11-10: convert to regions): AntWeb has the six provinces and the 22
       regions; a specimen whose stored state is a province and whose coordinates lie inside one region gets a
       correction: field adm1, current value the province, proposed value the region. The provinces are left
-      out of the test and of the states the shapes are compared with. With a province and no coordinates:
-      "no coordinates: stays with the province"; in the water or in a gap: "coordinates in no region's shape:
-      stays with the province".
+      out of the test and of the states the shapes are compared with. The point is placed as for a missing
+      state (A.1 to A.4). With a province and no coordinates: "no coordinates: stays with the province";
+      farther than the allowed distance from every region: "coordinates in no region's shape: stays with the
+      province".
   within,country,state,unit        the province a region belongs to, for one check: the note of a converted
       specimen says "the stored province is the province of the region", or "stored province differs from the
       coordinates' region: check the coordinates" (production 2026-11-10: about 3,400 of the Academy).
@@ -182,9 +198,11 @@ The code joins the two: AntWeb's specimen.collectioncode is the archive's fieldN
             that country, a name AntWeb does not know, or an island AntWeb files under the country.
   adm1      the state proposed from the coordinates (a missing state; a province of Madagascar to its region).
             Left out and listed in tw_unresolved.csv: proposals within the tolerance of another state (they
-            are for a person to look at first; --tw-include-flagged puts them in), a state AntWeb does not
-            have yet, a stored province that is not the province of the region, different proposals in one
-            event, an event whose value in TaxonWorks is another one than AntWeb has.
+            are for a person to look at first; --tw-include-flagged puts them in), proposals at a place the
+            country's shape leaves out (A.4; the same option puts them in), a state AntWeb does not have yet, a
+            stored province that is not the province of the region, different proposals in one event, an
+            event whose value in TaxonWorks is another one than AntWeb has. A proposal "outside the shape, N km
+            from it (coast)" is in the load file: the note is for the reader of the lists.
   islands   Country = the parent country, adm1 = the island (United States, Hawaii): lines only where
             TaxonWorks differs. Where it holds another state for the island, nothing is proposed.
   BiogeographicRegion   create when the predicate is blank and every specimen of the event has the same
@@ -204,17 +222,27 @@ valid state's bioregion when it has exactly one, else the country's when it has 
 rule of place_fix.decide(); "none", "null" and blank mean none; a state that is an island country has the
 island's).
 
-Madagascar by region (in the report, when AntWeb has the provinces): for each region the specimens of the
-group with coordinates inside it, of every record of Madagascar, and how many of them have as stored state the
-region's province, the region itself, another state or none; and the records with no coordinates. One more
-read of the database, for Madagascar alone.
+Madagascar by region (in the report, when AntWeb has the provinces): every record of Madagascar of the group,
+placed by the function that makes the proposals. For each region the specimens placed in it, how many of them
+lie outside its shape (the coast), and how many have as stored state the region's province, the region itself,
+another state or none; the records with no coordinates; the reasons of those not placed. A line says that the
+records with a province placed here are as many as the proposals from a province to its region: the two counts
+come from one function and must be the same. One more read of the database, for Madagascar alone, by collecting
+event; from it stored_differs.csv is written.
+
+New states. For each proposed state AntWeb does not have yet the report gives what the Geolocale Manager asks
+for when a state is added (Brian Fisher: every new state gets its bounding box and centre looked up), measured
+on the shape of the source and written as the form takes them: "Centroid (lat, lon)" and "Bounding box (west
+lon, south lat, east lon, north lat)", with the unit's code. The centre lies inside the shape: the centroid, or,
+when the centroid falls outside (islands, a crescent), the middle of the widest stretch of the largest part.
 
 It writes one folder (default /root/antweb-place-fix/<date>-<time>-corrections/):
 
   corrections.csv          one line per specimen and field: specimen code, collecting event code, locality
                            code, field (country or adm1), current value, proposed value (AntWeb's valid
                            name), the basis in plain words, the nearest other state, the km to it, the flag
-                           "within the stated error of <state>", a note (state to add; the province check),
+                           "within the stated error of <state>", a note (state to add; the province check;
+                           outside the shape, N km from it (coast); a place the country's shape leaves out),
                            latitude, longitude, stated error, locality name, country, upload group, the
                            unit's ISO 3166-2 code and ne_id (Natural Earth), the predicate of TaxonWorks,
                            the bioregion, unit_code (OCHA's P-code; for Natural Earth the ISO 3166-2 code)
@@ -227,10 +255,21 @@ It writes one folder (default /root/antweb-place-fix/<date>-<time>-corrections/)
                            of corrections.csv from the nearest other state on.
   not_derivable.csv        one line per collecting event (per specimen when it has no code), field and
                            reason: no coordinates; coordinates outside the stated country; two candidates;
-                           the boundary file's name is not a state in AntWeb; AntWeb's states and the
-                           boundary file do not match; no boundary file; country has no states in AntWeb;
-                           stays with the province. With the number of specimens and the place text of the
-                           record (state, adm2, locality name, locality notes, bioregion).
+                           in no state's shape and another country within the allowed distance; the
+                           boundary file's name is not a state in AntWeb; AntWeb's states and the boundary
+                           file do not match; no boundary file; country has no states in AntWeb; stays with
+                           the province. With the number of specimens and the place text of the record
+                           (state, adm2, locality name, locality notes, bioregion).
+  stored_differs.csv       for the curator's eye, Madagascar: the records whose stored province or state is
+                           not the one their coordinates fall in, one line per collecting event, locality
+                           name, stored value and place: specimens, first specimen code, the stored value
+                           and what it is (a province, a state, no state of Madagascar in AntWeb), the
+                           region by the coordinates and its province, the km from the point to the stored
+                           province or state (to the nearest region of that province), the nearest other
+                           region and the km to its border, coordinates, stated error, basis, note. In the
+                           order region, stored value, most specimens first. A point 0.3 km from the
+                           stored province lies on the line; one 40 km from it has wrong coordinates or
+                           a wrong province. Only the header when the table of Madagascar is not made.
   mapping_tested.csv       country, level, shape, antweb_state (the cells of a line of adm1_shape_map.csv),
                            what the pair rests on, the state's specimens in the shape, their percent of the
                            state's and of the shape's, what the shape's specimens are filed under today, the
@@ -243,7 +282,8 @@ It writes one folder (default /root/antweb-place-fix/<date>-<time>-corrections/)
   tw_load.tsv, tw_bioregion_differs.tsv, tw_unresolved.csv    with --tw-archive: see above.
   report.txt               first a summary of at most 60 lines: the totals for each field, the reasons, the
                            conversion, what the test gave, what is to decide, the states to add, the countries
-                           with no level. Then the tables.
+                           with no level. Then the tables; with the states to add, their centroid and
+                           bounding box for the Geolocale Manager.
 
 The password is read from <project>/etc/db.properties and goes to docker through the environment, never on a
 command line. Tests: tests/unit/test_place_corrections.py.
@@ -271,7 +311,7 @@ _spec = importlib.util.spec_from_file_location("coordinate_country", os.path.joi
 cc = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(cc)
 
-VERSION = "6"
+VERSION = "7"
 LEVELS = ["ADM1", "ADM2", "ADM3", "ADM4"]
 NE_LEVEL = "NE"                  # the one level of Natural Earth's states and provinces, as the mapping file names it
 NE_STATES_NAME = "ne_10m_admin_1_states_provinces.geojson"       # Natural Earth 1:10m, public domain; pinned like the country file
@@ -330,6 +370,9 @@ DIFFERS = "stored state differs from where the coordinates fall"
 TERRITORY = "the point is in a territory AntWeb lists as a country of its own"
 AT_SEA = "in the water, farther than the allowed distance from any country"
 NO_COUNTRY_HERE = "the point is in an area with no AntWeb country"
+LEFT_OUT = "the country's shape has the point in the water, the states' file draws land here: an islet, or coordinates to check"
+ANOTHER_COUNTRY = "in no state's shape, and another country within the allowed distance"
+COAST = "outside the shape, {km} km from it (coast)"            # the note of a proposal for a point in no state shape, near one
 
 
 # ---------------------------------------------------------------- AntWeb's states and the names of the shapes
@@ -670,6 +713,79 @@ def geojson_features(stream, block=1 << 20):
 
 
 
+Outline = collections.namedtuple("Outline", "south north west east lat lon centre parts")
+
+
+def holds(ring, x, y):
+    """True when the ring (a list of (longitude, latitude)) holds the point."""
+    inside = False
+    x1, y1 = ring[-1]
+    for x2, y2 in ring:
+        if (y1 > y) != (y2 > y) and x < x1 + (y - y1) * (x2 - x1) / (y2 - y1):
+            inside = not inside
+        x1, y1 = x2, y2
+    return inside
+
+
+def outline(rings):
+    """What the Geolocale Manager asks of a new state, from its shape (rings: each a list of (longitude,
+    latitude); a ring inside another is a hole): an Outline with the bounding box and a centre that lies inside
+    the shape. The centre is the centroid (the parts weighed by their area, the holes taken out); when the
+    centroid lies outside the shape (a crescent, a group of islands), it is the middle of the widest stretch of
+    the shape along the latitude through the middle of its largest part. A shape that reaches across the 180
+    meridian is measured with its western longitudes counted on from 180 (west is then larger than east)."""
+    rings = [list(ring) for ring in rings if len(ring) >= 3]
+    if not rings:
+        return None
+    xs = [p[0] for ring in rings for p in ring]
+    if max(xs) - min(xs) > 180.0:
+        rings = [[(x + 360.0 if x < 0.0 else x, y) for x, y in ring] for ring in rings]
+    boxes = [(min(p[0] for p in ring), max(p[0] for p in ring), min(p[1] for p in ring), max(p[1] for p in ring)) for ring in rings]
+    west, east = min(b[0] for b in boxes), max(b[1] for b in boxes)
+    south, north = min(b[2] for b in boxes), max(b[3] for b in boxes)
+    scale = max(math.cos(math.radians((south + north) / 2.0)), 0.01)
+
+    def measure(ring):
+        """(area, longitude and latitude of the centroid) of one ring, on a flat map around the shape."""
+        x0, y0 = ring[0]
+        area = cx = cy = 0.0
+        ax, ay = (ring[-1][0] - x0) * scale, ring[-1][1] - y0
+        for x, y in ring:
+            bx, by = (x - x0) * scale, y - y0
+            cross = ax * by - bx * ay
+            area += cross
+            cx += (ax + bx) * cross
+            cy += (ay + by) * cross
+            ax, ay = bx, by
+        if area == 0.0:
+            return 0.0, x0, y0
+        return abs(area) / 2.0, x0 + cx / (3.0 * area) / scale, y0 + cy / (3.0 * area)
+
+    within = lambda x, y, skip=-1: sum(1 for i, (ring, b) in enumerate(zip(rings, boxes))
+                                       if i != skip and b[0] <= x <= b[1] and b[2] <= y <= b[3] and holds(ring, x, y))
+    measured = [measure(ring) for ring in rings]
+    total = lon = lat = 0.0
+    for i, (area, x, y) in enumerate(measured):
+        if within(rings[i][0][0], rings[i][0][1], i) % 2:        # a ring inside another: a hole
+            area = -area
+        total, lon, lat = total + area, lon + area * x, lat + area * y
+    centre = "the centroid of the shape"
+    if total > 0.0:
+        lon, lat = lon / total, lat / total
+    if total <= 0.0 or within(lon, lat) % 2 == 0:
+        largest = max(range(len(rings)), key=lambda i: measured[i][0])
+        lat = measured[largest][2]
+        crossings = sorted(x1 + (lat - y1) * (x2 - x1) / (y2 - y1) for ring in rings for (x1, y1), (x2, y2) in zip(ring, ring[1:] + ring[:1])
+                           if (y1 > lat) != (y2 > lat))
+        stretches = [(b - a, (a + b) / 2.0) for a, b in zip(crossings[0::2], crossings[1::2])]
+        if stretches:
+            lon = max(stretches)[1]
+            centre = "a point inside the largest part (the centroid of the shape lies outside it)"
+        else:
+            lon, lat = rings[largest][0]
+            centre = "a point of the outline (no point inside was found)"
+    back = lambda x: x - 360.0 if x > 180.0 else x
+    return Outline(south, north, back(west), back(east), lat, back(lon), centre, len(rings))
 
 
 class GeoSource:
@@ -689,11 +805,16 @@ class GeoSource:
         path = self.detail.file(code, level, SIMPLIFIED)
         return None if path is None else [Unit(name) for name in shape_names(path)]
 
-    def shapes(self, code, level):
-        """(units, index) of a level: its shapes read, their names put right."""
+    def rings(self, code, level):
+        """(units, the rings of each) of a level: its shapes read, their names put right."""
         features, _, _ = cc.read_features(self.detail.file(code, level, SIMPLIFIED))
         features = [(mend(name), rings) for name, rings in features if rings]
-        return [Unit(name) for name, _ in features], cc.index_of_shapes([rings for _, rings in features])
+        return [Unit(name) for name, _ in features], [rings for _, rings in features]
+
+    def shapes(self, code, level):
+        """(units, index) of a level."""
+        units, rings = self.rings(code, level)
+        return units, cc.index_of_shapes(rings)
 
     def where(self, code, level):
         return "geoBoundaries " + code + " " + level
@@ -776,14 +897,18 @@ class NaturalEarthStates:
     def names(self, code, level):
         return [unit for unit, _, _ in self.by_code[code]] if self.by_code.get(code) else None
 
-    def shapes(self, code, level):
+    def rings(self, code, level):
         decoder = json.JSONDecoder()
         shapes = []
         for unit, at, _ in self.by_code[code]:
             geometry = decoder.raw_decode(self.text, at)[0]["geometry"]
             polygons = geometry["coordinates"] if geometry["type"] == "MultiPolygon" else [geometry["coordinates"]]
             shapes.append([[(p[0], p[1]) for p in ring] for polygon in polygons for ring in polygon if len(ring) >= 3])
-        return [unit for unit, _, _ in self.by_code[code]], cc.index_of_shapes(shapes)
+        return [unit for unit, _, _ in self.by_code[code]], shapes
+
+    def shapes(self, code, level):
+        units, rings = self.rings(code, level)
+        return units, cc.index_of_shapes(rings)
 
     def where(self, code, level):
         return "Natural Earth states " + code
@@ -962,9 +1087,12 @@ class OchaSource:
     def names(self, code, level):
         return self._read(code, level, False)[0] if self.has(code, level) else None
 
+    def rings(self, code, level):
+        return self._read(code, level, True)
+
     def shapes(self, code, level):
-        units, shapes = self._read(code, level, True)
-        return units, cc.index_of_shapes(shapes)
+        units, rings = self.rings(code, level)
+        return units, cc.index_of_shapes(rings)
 
     def where(self, code, level):
         return "OCHA COD-AB " + code + " " + level
@@ -1005,7 +1133,8 @@ class Chosen:
         self.units = units or [Unit(name) for name in names]
 
 
-At = collections.namedtuple("At", "state shape basis reason detail other other_km flag how inside unit source", defaults=("", "", "", "", "", "", "", False, None, ""))
+At = collections.namedtuple("At", "state shape basis reason detail other other_km flag how inside unit source km",
+                            defaults=("", "", "", "", "", "", "", False, None, "", ""))       # km: how far outside its shape the point lies ("": inside)
 Tested = collections.namedtuple("Tested", "stats states hows lines decide today")
 SHARES = ["in the unit of their state", "in the unit of another state", "in a unit with no AntWeb state", "in no unit"]
 
@@ -1477,6 +1606,7 @@ class StateShapes:
                     "shapes_not_states": sorted({n for n, x in zip(names, states) if not x}),
                     "islands": sorted(n + (" (" + x + ")" if x != n else "") for n, x, h in zip(names, states, hows) if h == ISLAND),
                     "to_add": sorted({x for x, h in zip(states, hows) if h == NEW} | set(self.split_targets(country, names, hows, True))),
+                    "new_states": self.new_states(country, code, level, source, units, states, hows),
                     "named": sorted(n + " -> " + x for n, x, h in zip(names, states, hows) if h == NAMED),
                     "other_way": sorted(n + " -> " + x + " (" + h + ")" for n, x, h in zip(names, states, hows) if x and h not in ("name", ISLAND)),
                     "licence": entry.get("licence", ""), "source": entry.get("source", "")}
@@ -1492,6 +1622,58 @@ class StateShapes:
         while len(self._chosen) > 2:
             self._chosen.popitem(last=False)
         return chosen
+
+    def new_states(self, country, code, level, source, units, states, hows):
+        """For each state that the mapping file names and AntWeb does not have yet, what the Geolocale Manager
+        asks for when it is added, measured on the source's own shape: [(state, Outline or None, where the
+        shape is from, the unit's code)]. A state that is one or more shapes of the level: those shapes. A
+        state that a split line makes of finer units: those units of geoBoundaries. The file is read once more,
+        and only for a country that has such a state."""
+        whole = collections.OrderedDict()                        # state -> the numbers of its shapes
+        parts = collections.defaultdict(lambda: collections.defaultdict(set))   # finer level -> state -> the plain names of its units
+        rest = []
+        for number, (state, how) in enumerate(zip(states, hows)):
+            if how == NEW:
+                whole.setdefault(state, []).append(number)
+            elif how == SPLIT:
+                entry = self.splits[country][plain(units[number].name)]
+                for unit, target in entry["units"].items():
+                    if self.states.find(country, target)[0] is None:
+                        parts[entry["level"]][target].add(unit)
+                if entry["rest"] and self.states.find(country, entry["rest"])[0] is None and entry["rest"] not in rest:
+                    rest.append(entry["rest"])
+        out = []
+        if whole:
+            _, rings = source.rings(code, level)
+            for state, numbers in whole.items():
+                out.append((state, outline([ring for n in numbers for ring in rings[n]]),
+                            source.where(code, level) + ", shape " + "; ".join(units[n].name for n in numbers),
+                            "; ".join(x for x in (units[n].pcode or units[n].code for n in numbers) if x)))
+        geo = GeoSource(self.detail)
+        for finer in sorted(parts):
+            found, rings = geo.rings(code, finer) if geo.has(code, finer) else ([], [])
+            for state in sorted(parts[finer]):
+                numbers = [n for n, u in enumerate(found) if plain(u.name) in parts[finer][state]]
+                out.append((state, outline([ring for n in numbers for ring in rings[n]]) if numbers else None,
+                            "geoBoundaries " + code + " " + finer + ", units " + "; ".join(found[n].name for n in numbers), ""))
+        out += [(state, None, "every unit of a split shape that the mapping file does not name: not measured", "") for state in rest]
+        return out
+
+    def shapes_of(self, chosen, name):
+        """The numbers of the shapes of a Chosen level that are a state or a coarser unit (a province) by its
+        AntWeb name: the shapes of that state, or of the states the mapping file puts within that unit."""
+        within = self.within.get(chosen.country, {})
+        fits = lambda state: bool(state) and (state == name or within.get(plain(state)) == name)
+        found = []
+        for number, (state, how) in enumerate(zip(chosen.states, chosen.hows)):
+            if how == SPLIT:
+                entry = self.splits[chosen.country][plain(chosen.names[number])]
+                targets = list(entry["units"].values()) + ([entry["rest"]] if entry["rest"] else [])
+                if any(fits(self.states.find(chosen.country, t)[0] or t) for t in targets):
+                    found.append(number)
+            elif fits(state):
+                found.append(number)
+        return tuple(found)
 
     def split_targets(self, country, names, hows, new_only=False):
         """The states the split shapes among names are told apart into (new_only: those AntWeb does not have yet)."""
@@ -1588,13 +1770,15 @@ class StateShapes:
                                                      else "within the stated error (" + cc.rounded(allowed) + " km) of ") + half)
             basis = (("coordinates inside " if inside else "in the water, " + cc.rounded(near[first]) + " km from ") + name + ", " + where + "; in its unit " + unit
                      + " (" + units_from + "), which the mapping file gives to " + state + (", a " + TO_ADD if new else ""))
-            return At(state, name, basis, "", "", other, other_km, flag, NEW if new else SPLIT, bool(inside), chosen.units[first], chosen.label)
+            return At(state, name, basis, "", "", other, other_km, flag, NEW if new else SPLIT, bool(inside), chosen.units[first], chosen.label,
+                      "" if inside else cc.rounded(near[first]))
         if chosen.hows[first] == ISLAND:
             where += "; " + files_as_island(chosen.country, chosen.states[first])
         elif chosen.hows[first] != "name":
             name += " (" + chosen.states[first] + " by the " + chosen.hows[first] + ")"
         basis = ("coordinates inside " if inside else "in the water, " + cc.rounded(near[first]) + " km from ") + name + ", " + where
-        return At(chosen.states[first], chosen.names[first], basis, "", "", other, other_km, flag, chosen.hows[first], bool(inside), chosen.units[first], chosen.label)
+        return At(chosen.states[first], chosen.names[first], basis, "", "", other, other_km, flag, chosen.hows[first], bool(inside), chosen.units[first], chosen.label,
+                  "" if inside else cc.rounded(near[first]))
 
 
 def files_as_island(country, island):
@@ -1607,6 +1791,7 @@ Row = collections.namedtuple("Row", "code event locality_code country adm1 adm2 
 Proposal = collections.namedtuple("Proposal", "field current proposed basis country other other_km flag note code ident bioregion unit_code unit_source",
                                   defaults=("", "", "", "", "", "", "", "", ""))
 Not = collections.namedtuple("Not", "field reason detail country", defaults=("",))
+Placed = collections.namedtuple("Placed", "at chosen stop note")       # what Corrections.locate says of a point
 
 
 class Corrections:
@@ -1695,37 +1880,92 @@ class Corrections:
             return out + [Not("adm1", NO_STATES, country, country)]
         if point is None:
             return out + [Not("adm1", STAYS if converting else NO_COORDINATES, "")]
-        lat, lon = point
-        if stated_country is not None:
-            r = self.checker.decide(row.country, "", lat, lon, row.stated)
-            if r.cls == cc.FLAG:
-                return out + [Not("adm1", OUTSIDE, r.country + ", " + cc.rounded(r.km) + " km from " + stated_country)]
-            if r.cls == cc.TERRITORY:
-                return out + [Not("adm1", TERRITORY, r.country)]
-            if r.cls not in (cc.INSIDE, cc.NEAR):
-                return out + [Not("adm1", NO_FILE, "the stated country has no shape")]
-        chosen = self.shapes.choose(country, self.checker.code_of_country.get(country, ""))
-        if chosen is None:
-            return out + [Not("adm1", NO_FILE, self.shapes.problems.get(country, ""), country)]
-        at = self.shapes.state_at(chosen, lat, lon, cc.allowed_km(row.stated, self.checker.tolerance), self.checker.tolerance)
-        if not chosen.usable:                                    # no proposal from a level below the minimum; the shape is named
-            return out + [Not("adm1", NO_MATCH, at.shape, country)]
-        if at.state is None:
-            return out + [Not("adm1", STAYS_OUTSIDE if converting and at.reason in (NO_SHAPE_HERE, TWO) else at.reason, at.detail, country)]
-        note = TO_ADD if at.how == NEW else ""
+        placed = self.locate(row.country if stated_country is not None else None, country, point[0], point[1], row.stated)
+        if placed.stop is not None:                              # no state for the point; a province stays
+            stays = converting and placed.stop.reason == NO_SHAPE_HERE
+            return out + [placed.stop._replace(reason=STAYS_OUTSIDE) if stays else placed.stop]
+        at = placed.at
+        notes = [TO_ADD] if at.how == NEW else []
         if converting:                                           # from the province to the region the coordinates lie in
-            if not at.inside:
-                return out + [Not("adm1", STAYS_OUTSIDE, at.basis, country)]
             if at.state == converting:
                 return out
             belongs = self.shapes.within.get(country, {}).get(plain(at.state))
             if belongs is None:
-                check = "the mapping file does not say which province " + at.state + " is in"
+                notes.insert(0, "the mapping file does not say which province " + at.state + " is in")
             else:
-                check = SAME_PROVINCE if belongs == converting else OTHER_PROVINCE + " (" + at.state + " is in " + belongs + ")"
-            note = check + ("; " + note if note else "")
-        return out + [Proposal("adm1", row.adm1, at.state, at.basis, country, at.other, at.other_km, at.flag, note, at.unit.code, at.unit.ident, "",
+                notes.insert(0, SAME_PROVINCE if belongs == converting else OTHER_PROVINCE + " (" + at.state + " is in " + belongs + ")")
+        if placed.note:
+            notes.append(placed.note)
+        return out + [Proposal("adm1", row.adm1, at.state, at.basis, country, at.other, at.other_km, at.flag, "; ".join(notes), at.unit.code, at.unit.ident, "",
                                at.unit.pcode or at.unit.code, at.source if at.unit.pcode or at.unit.code else "")]
+
+    def locate(self, stored, country, lat, lon, stated):
+        """The state of one point of a record of a country: a Placed. This is the one place that is asked, by the
+        proposals (a state missing, a province to convert) and by the table of Madagascar by region, for every
+        source of state shapes, so the same point gets the same answer everywhere. stored: the country as the
+        record has it, None when the country was derived from the point itself. Placed(at, chosen, None, note)
+        when the point gets a state (at: what state_at says), Placed(None, chosen or None, the Not with the
+        reason, "") when not.
+
+        The allowed distance is the tolerance (1 km), or the record's stated error when that is larger.
+        1. A point the country shapes put inside another country, farther from its stored country than the
+           allowed distance: no state ("coordinates outside the stated country"); the states' file is not asked.
+        2. A point inside the shape of one state gets that state.
+        3. A point in no state shape that lies within the allowed distance of exactly one state's shape gets
+           that state, and the note says "outside the shape, N km from it (coast)". Within the allowed distance
+           of two states: no state ("two candidates", both named). Another country inside which the point
+           lies, or within the allowed distance: no state (ANOTHER_COUNTRY). No state shape that near: no state.
+        4. A point of 2 or 3 that the country's shape has in the water, farther out than the allowed distance:
+           the states' file draws land that the country's shape leaves out (the islets Nosy Mangabe, Nosy
+           Ankao: 380 specimens of the Academy), or the coordinates are wrong. It gets the state, and the note
+           says so (LEFT_OUT, with the distance), for a person to look at."""
+        gate = None
+        if stored is not None:
+            r = self.checker.decide(stored, "", lat, lon, stated)
+            if r.cls == cc.TERRITORY:
+                return Placed(None, None, Not("adm1", TERRITORY, r.country), "")
+            if r.cls == cc.FLAG:
+                gate = r
+            elif r.cls not in (cc.INSIDE, cc.NEAR):
+                return Placed(None, None, Not("adm1", NO_FILE, "the stated country has no shape"), "")
+        outside = None if gate is None else Not("adm1", OUTSIDE, gate.country + ", " + cc.rounded(gate.km) + " km from " + country)
+        if gate is not None and gate.country not in (cc.WATER, cc.WATER_OR_BORDER):
+            return Placed(None, None, outside, "")               # inside another country
+        chosen = self.shapes.choose(country, self.checker.code_of_country.get(country, ""))
+        if chosen is None:
+            return Placed(None, None, outside or Not("adm1", NO_FILE, self.shapes.problems.get(country, ""), country), "")
+        allowed = cc.allowed_km(stated, self.checker.tolerance)
+        at = self.shapes.state_at(chosen, lat, lon, allowed, self.checker.tolerance)
+        if gate is not None and not (chosen.usable and at.state is not None):
+            return Placed(None, chosen, outside, "")
+        if not chosen.usable:                                    # no proposal from a level below the minimum; the shape is named
+            return Placed(None, chosen, Not("adm1", NO_MATCH, at.shape, country), "")
+        if at.state is None:
+            return Placed(None, chosen, Not("adm1", at.reason, at.detail, country), "")
+        notes = []
+        if not at.inside:
+            other = self.other_country(country, lat, lon, allowed)
+            if other is not None:
+                return Placed(None, chosen, Not("adm1", ANOTHER_COUNTRY, other + "; " + at.km + " km from " + at.state, country), "")
+            notes.append(COAST.format(km=at.km))
+        if gate is not None:
+            notes.append(LEFT_OUT + " (" + cc.rounded(gate.km) + " km from " + country + " as " + (gate.shape or "the country's shape") + " draws it)")
+        return Placed(at, chosen, None, "; ".join(notes))
+
+    def other_country(self, country, lat, lon, km):
+        """Another country than the record's (and its territories) that the point lies in or within km of, by the
+        country shapes: "<name>, <km> km" of the nearest; None when there is none."""
+        checker = self.checker
+        _, accept, _ = checker.stored(country, "")
+        foreign = lambda n: checker.shapes[n].country not in accept and not (checker.shapes[n].also & accept)
+        found = {n: 0.0 for n in checker.index.inside(lat, lon) if foreign(n)}
+        for n, d in checker.index.near(lat, lon, km).items():
+            if foreign(n):
+                found.setdefault(n, d)
+        if not found:
+            return None
+        nearest = min(found, key=lambda n: (found[n], n))
+        return checker.names([nearest])[0] + ", " + ("the point lies in it" if found[nearest] == 0.0 else cc.rounded(found[nearest]) + " km")
 
     def kind(self, row):
         """Which of the three lists of Brian Fisher's note a record belongs to (for the totals of the report)."""
@@ -1885,15 +2125,37 @@ def decide_lines(shapes):
     return [line for country in sorted(shapes.tables) for line in shapes.tables[country]["decide"]]
 
 
-def by_region(index, names, province_of, region_of, states, rows, tolerance):
-    """Madagascar by region. rows: (stored state, latitude, longitude, specimens) of every record of Madagascar.
-    For each region (shape of the boundary file): the specimens with coordinates inside it (or in the water
-    within the tolerance of it alone), and of them how many have as their stored state the province the region
-    belongs to (province_of), the region itself (region_of: its AntWeb name), another state, or none.
-    Returns (table {shape name: [specimens, that province, the region, another state, no state]}, totals Counter)."""
-    table = {name: [0, 0, 0, 0, 0] for name in names}
-    totals = collections.Counter()
-    for adm1, lat, lon, count in rows:
+DIFFERS_HEADER = ["collecting_event_code", "locality_name", "specimens", "first_specimen_code", "stored_value", "stored_value_is", "state_by_coordinates",
+                  "province_of_that_state", "km_to_the_stored_value", "nearest_other_state", "km_to_the_nearest_border", "latitude", "longitude", "stated_error",
+                  "basis", "note", "country"]
+IN_THE_WATER = "in the water, "                                  # how the basis of a point outside every shape begins (state_at)
+
+
+def by_region(work, code, rows):
+    """Madagascar by region, and the lines of stored_differs.csv. rows: (collecting event code, locality name,
+    stored state, island country, latitude, longitude, stated error, specimens, first specimen code) of every
+    record of Madagascar, counted by those. Each point is placed by Corrections.locate, the function the
+    proposals are made with: a record with a province gets a proposal exactly when it is counted in a region
+    here (and the region is another name than the stored one).
+    Returns (table, totals, reasons, lines), or None when there are no shapes of the country.
+      table    {region: [specimens placed in it, of them in the water within the allowed distance, stored state
+               its province, stored state the region itself, another stored state, no stored state]}
+      totals   Counter: specimens, placed, in the water, left out by the country's shape, no coordinates,
+               coordinates that cannot be used, province placed (records with a province that a proposal is made for)
+      reasons  Counter of the reasons a point with coordinates was not placed (the reasons of not_derivable.csv)
+      lines    of stored_differs.csv (DIFFERS_HEADER): the records whose stored state is neither the region the
+               coordinates lie in nor that region's province, by collecting event and place."""
+    shapes, states = work.shapes, work.states
+    chosen = shapes.choose(MADAGASCAR, code)
+    if chosen is None:
+        return None
+    regions = {state for state, how in zip(chosen.states, chosen.hows) if state and how != SPLIT} | set(shapes.split_targets(MADAGASCAR, chosen.names, chosen.hows))
+    within = shapes.within.get(MADAGASCAR, {})
+    provinces = shapes.convert.get(MADAGASCAR, ())
+    table = {region: [0, 0, 0, 0, 0, 0] for region in regions}
+    totals, reasons = collections.Counter(), collections.Counter()
+    placed_at, numbers_of, lines = {}, {}, []
+    for event, locality, adm1, island, lat, lon, stated, count, first in rows:
         totals["specimens"] += count
         try:
             point = (float(lat), float(lon))
@@ -1903,24 +2165,51 @@ def by_region(index, names, province_of, region_of, states, rows, tolerance):
         if not cc.usable(*point):
             totals["coordinates that cannot be used"] += count
             continue
-        found = set(index.inside(*point)) or set(index.near(point[0], point[1], tolerance))
-        if len(found) != 1:
-            totals["in no region's shape" if not found else "on the line between two regions"] += count
+        key = point + (stated,)
+        if key not in placed_at:
+            placed_at[key] = work.locate(MADAGASCAR, MADAGASCAR, point[0], point[1], stated)
+        placed = placed_at[key]
+        if placed.stop is not None:
+            reasons[placed.stop.reason] += count
             continue
-        region = names[next(iter(found))]
-        totals["in a region"] += count
-        line = table[region]
+        at = placed.at
+        totals["placed"] += count
+        line = table.setdefault(at.state, [0, 0, 0, 0, 0, 0])
         line[0] += count
-        stored = states.valid_of(MADAGASCAR, adm1) if adm1 else None
-        if not adm1:
-            line[4] += count
-        elif stored is not None and stored == province_of.get(region):
+        if at.basis.startswith(IN_THE_WATER):
+            totals["in the water"] += count
             line[1] += count
-        elif stored is not None and stored == region_of.get(region):
+        if LEFT_OUT in placed.note:
+            totals["left out by the country's shape"] += count
+        stored = states.valid_of(MADAGASCAR, adm1) if adm1 else None
+        if stored in provinces and not island and at.state != stored:
+            totals["province placed"] += count
+        if not adm1:
+            line[5] += count
+        elif stored is not None and stored == within.get(plain(at.state)):
             line[2] += count
-        else:
+        elif stored is not None and stored == at.state:
             line[3] += count
-    return table, totals
+        else:                                                    # another province, another region, a name AntWeb does not have
+            line[4] += count
+            if stored not in numbers_of:
+                numbers_of[stored] = shapes.shapes_of(placed.chosen, stored) if stored else ()
+            numbers = numbers_of[stored]
+            index = placed.chosen.index
+            here = set(index.inside(*point))
+            km = index.distance(numbers, *point) if numbers and not here & set(numbers) else None
+            other, border = at.other, at.other_km
+            if border == "":                                     # no other state within 25 km: the nearest one, however far
+                far = [(index.distance((n,), *point), state or name) for n, (state, name) in enumerate(zip(placed.chosen.states, placed.chosen.names))
+                       if n not in here and (state or name) != at.state]
+                far = sorted((round(d, 3), name) for d, name in far if d is not None)
+                if far:
+                    other, border = far[0][1], cc.rounded(far[0][0])
+            lines.append(((at.state, stored or adm1, -count, event, locality),
+                          [event, locality, count, first, adm1, "a province" if stored in provinces else "a state" if stored else "no state of Madagascar in AntWeb",
+                           at.state, within.get(plain(at.state)) or "", cc.rounded(km) if km is not None else "", other, border, lat, lon, stated, at.basis,
+                           placed.note, MADAGASCAR]))
+    return table, totals, reasons, [line for _, line in sorted(lines, key=lambda x: x[0])]
 
 
 # ---------------------------------------------------------------- the load file for TaxonWorks
@@ -2172,6 +2461,8 @@ def tw_load(archive, lists, stored, countries, states, bioregions, include_flagg
                     hold(event, code, "adm1", values[0], OTHER_PROVINCE, of(items))
                 elif any(p.flag for _, p in items) and not include_flagged:
                     hold(event, code, "adm1", values[0], NEAR_ANOTHER, of(items))
+                elif any(LEFT_OUT in p.note for _, p in items) and not include_flagged:
+                    hold(event, code, "adm1", values[0], LEFT_OUT, of(items))
                 elif tw_adm1 and tw_adm1 != values[0] and any(p.current != tw_adm1 for _, p in items):
                     hold(event, code, "adm1", values[0], "TaxonWorks holds " + tw_adm1 + ", AntWeb has " + (first.current or "no state") + ": the archive and AntWeb differ", of(items))
                 else:
@@ -2316,20 +2607,30 @@ def consistency_lines(labelled):
     return head + lines, measured, bad
 
 
-def region_lines(table, totals, province_of, code, group_text):
-    """The lines of the report for Madagascar by region (by_region)."""
+def region_lines(table, totals, reasons, province_of, where, group_text, proposals, differs):
+    """The lines of the report for Madagascar by region (by_region). proposals: the proposals of this run from a
+    province to its region, to say that the table and the proposals count the same records; differs: the
+    lines of stored_differs.csv."""
     n = cc.n
+    same = totals["province placed"] == proposals
     out = ["", "Madagascar by region: every record of " + MADAGASCAR + " of " + ("every group" if group_text == "every group" else "the group")
-           + " by the region its coordinates lie in, not only the records with a gap; " + code + ", " + n(len(table)) + " shapes.",
-           "  Records of Madagascar: " + n(totals["specimens"]) + ". With coordinates in one region: " + n(totals["in a region"])
-           + ". No coordinates: " + n(totals["no coordinates"]) + ". Coordinates that cannot be used: " + n(totals["coordinates that cannot be used"])
-           + ". In no region's shape (in the water or outside): " + n(totals["in no region's shape"])
-           + ". On the line between two regions: " + n(totals["on the line between two regions"]) + ".",
-           "  " + "region".ljust(26) + "specimens".rjust(10) + "  " + "its province".ljust(25) + "stored state: that province".rjust(28) + "the region".rjust(12)
-           + "another".rjust(10) + "none".rjust(10)]
+           + " by the region its coordinates lie in, not only the records with a gap; " + where + ", " + n(len(table)) + " regions.",
+           "  Each point is placed by the function that makes the proposals: inside one region's shape, or in no shape and within the allowed distance (1 km, or the",
+           "  stated error when larger) of one region alone and of no other country.",
+           "  Records of Madagascar: " + n(totals["specimens"]) + ". Placed in a region: " + n(totals["placed"]) + " (" + n(totals["in the water"])
+           + " of them outside its shape, within the allowed distance of it alone; " + n(totals["left out by the country's shape"]) + " at a place the country's shape leaves out)."
+           + " No coordinates: " + n(totals["no coordinates"]) + ". Coordinates that cannot be used: " + n(totals["coordinates that cannot be used"]) + ".",
+           "  With coordinates and not placed: " + n(sum(reasons.values())) + ("." if not reasons else ", by reason: " + "; ".join(
+               n(count) + " " + reason for reason, count in sorted(reasons.items(), key=lambda kv: (-kv[1], kv[0]))) + "."),
+           "  Records with a province that are placed in a region: " + n(totals["province placed"]) + "; proposals from a province to its region in this run: " + n(proposals)
+           + (" (the same)." if same else " (NOT THE SAME, and they should be: both come from one function)."),
+           "  stored_differs.csv: " + n(len(differs)) + " lines, " + n(sum(x[2] for x in differs)) + " specimens whose stored province or state is not the one their coordinates"
+           + " fall in (the column \"another\"), by collecting event.",
+           "  " + "region".ljust(26) + "specimens".rjust(10) + "outside shape".rjust(14) + "  " + "its province".ljust(25) + "stored state: that province".rjust(28)
+           + "the region".rjust(12) + "another".rjust(10) + "none".rjust(10)]
     for region in sorted(table):
-        inside, same, itself, another, none = table[region]
-        out.append("  " + region.ljust(26) + n(inside).rjust(10) + "  " + (province_of.get(region) or "not in the mapping file").ljust(25)
+        inside, water, same, itself, another, none = table[region]
+        out.append("  " + region.ljust(26) + n(inside).rjust(10) + n(water).rjust(14) + "  " + (province_of(region) or "not in the mapping file").ljust(25)
                    + n(same).rjust(28) + n(itself).rjust(12) + n(another).rjust(10) + n(none).rjust(10))
     return out
 
@@ -2391,6 +2692,11 @@ def report_text(when, commit, group_text, lists, shapes, detail, seconds, tolera
             flagged = sum(1 for _, p in proposals if p.flag)
             out += ["  " + n(flagged) + " of them (" + n(sum(1 for e in lines if e[13])) + " lines) lie within the stated error, or the allowed " + format(tolerance, "g")
                     + " km, of another state: column other_state_flag, look at those first."]
+            water = sum(1 for _, p in proposals if p.basis.startswith(IN_THE_WATER))
+            left = sum(1 for _, p in proposals if LEFT_OUT in p.note)
+            if water or left:
+                out += ["  " + n(water) + " of them lie outside the state's shape, within the allowed distance of it alone (column note: outside the shape, N km from it (coast)); "
+                        + n(left) + " at a place the country's shape leaves out (column note: an islet, or coordinates to check)."]
         if converting:
             other = collections.Counter(p.proposed for _, p in proposals if p.note.startswith(OTHER_PROVINCE))
             out += ["  " + n(sum(other.values())) + " of them: " + OTHER_PROVINCE + " (column note)"
@@ -2471,6 +2777,19 @@ def report_text(when, commit, group_text, lists, shapes, detail, seconds, tolera
     if adding:
         out += ["", "Proposed states not yet in AntWeb (a line of the mapping file names them): add them in the Geolocale Manager first. With the specimens they are proposed for:"]
         out += cc.lines_of(adding, str)
+        out += ["For each of them, what the Geolocale Manager asks for, measured on the shape of the source (to type as they stand):"]
+        for country in sorted(shapes.tables):
+            for state, box, where, unit in shapes.tables[country].get("new_states", ()):
+                out += ["  " + country + ": " + state + " (" + n(adding[country + ": " + state]) + " specimens)"]
+                if box is None:
+                    out += ["    not measured: " + where]
+                    continue
+                f = lambda x: format(x, ".4f")
+                out += ["    Centroid (lat, lon): " + f(box.lat) + ", " + f(box.lon) + "      " + box.centre,
+                        "    Bounding box (west lon, south lat, east lon, north lat): " + ", ".join(f(x) for x in (box.west, box.south, box.east, box.north))
+                        + "      latitude " + f(box.south) + " to " + f(box.north) + ", longitude " + f(box.west) + " to " + f(box.east)
+                        + (" (across the 180 meridian)" if box.west > box.east else ""),
+                        "    from " + where + (", unit code " + unit if unit else "") + "; " + n(box.parts) + (" ring" if box.parts == 1 else " rings")]
     out += [""]
     names = collections.Counter()
     for row, x in lists.nots:
@@ -2566,11 +2885,15 @@ def stored_countries_sql(group_id=None):
     return "select hex(ifnull(s.country, '')), count(*) from specimen s where 1 = 1" + group_sql(group_id) + " group by 1"
 
 
-def madagascar_sql(names, group_id=None):
-    """Every record of Madagascar (names: the stored spellings of the country), counted by state and coordinates."""
-    return ("select hex(ifnull(s.adm1, '')), ifnull(round(s.decimal_latitude, 5), ''), ifnull(round(s.decimal_longitude, 5), ''), count(*)"
+def madagascar_sql(columns, names, group_id=None):
+    """Every record of Madagascar (names: the stored spellings of the country), counted by collecting event,
+    locality name, state, island country, coordinates and stated error, with the first specimen code."""
+    text = lambda name: "hex(ifnull(s." + name + ", ''))" if name in columns else "''"
+    return ("select " + ", ".join([text("collectioncode"), text("localityname"), "hex(ifnull(s.adm1, ''))", text("island_country"),
+                                   "ifnull(round(s.decimal_latitude, 5), '')", "ifnull(round(s.decimal_longitude, 5), '')", text("latlonmaxerror"),
+                                   "count(*)", "hex(min(s.code))" if "code" in columns else "''"])
             + " from specimen s where hex(s.country) in (" + ", ".join(cc.sql_string(name.encode("utf-8").hex().upper()) for name in names) + ")"
-            + group_sql(group_id) + " group by 1, 2, 3")
+            + group_sql(group_id) + " group by 1, 2, 3, 4, 5, 6, 7")
 
 
 def provinces_in_antweb(states):
@@ -2578,19 +2901,17 @@ def provinces_in_antweb(states):
     return len(PROVINCES & {plain(name) for name in states.of(MADAGASCAR)}) >= 4
 
 
-def madagascar_regions(state_shapes, states, code, rows, tolerance, group_text):
-    """The lines of the report for Madagascar by region, from the ADM1 file of the country (the regions)."""
-    source = state_shapes.source_of(MADAGASCAR)
-    level = source.levels[0]
-    if not source.has(code, level):
-        return ["", "Madagascar by region: " + source.label + " has no shapes of " + code + "."]
-    units, index = source.shapes(code, level)
-    names = [u.name for u in units]
-    regions, _ = state_shapes.match(MADAGASCAR, level, names, units)             # AntWeb's name of each region
-    within = state_shapes.within.get(MADAGASCAR, {})
-    province_of = {name: within.get(plain(region)) for name, region in zip(names, regions) if region}
-    table, totals = by_region(index, names, province_of, dict(zip(names, regions)), states, rows, tolerance)
-    return region_lines(table, totals, province_of, source.where(code, level), group_text)
+def madagascar_regions(work, code, rows, group_text, lists=None):
+    """(The lines of the report for Madagascar by region, the lines of stored_differs.csv), from the shapes the
+    proposals are made with. lists: the Lists of the run, for the count of proposals the table is checked against."""
+    found = by_region(work, code, rows)
+    if found is None:
+        return ["", "Madagascar by region: no shapes of " + code + " (" + work.shapes.problems.get(MADAGASCAR, "") + ")."], []
+    table, totals, reasons, differs = found
+    within = work.shapes.within.get(MADAGASCAR, {})
+    proposals = sum(1 for row, p in lists.proposals if p.field == "adm1" and p.current and p.country == MADAGASCAR) if lists is not None else 0
+    where = work.shapes.tables[MADAGASCAR]["where"]
+    return region_lines(table, totals, reasons, lambda region: within.get(plain(region)), where, group_text, proposals, differs), differs
 
 
 def evidence_sql(columns):
@@ -2754,11 +3075,15 @@ def main(argv=None):
     write_csv(os.path.join(folder, "to_decide.csv"), DECIDE_HEADER, decide_lines(state_shapes))
     for label, shapes in sources:                                # the sources compared: each one's own list of tested pairs
         write_csv(os.path.join(folder, "mapping_tested_" + re.sub(r"[^a-z0-9]+", "_", label.lower()).strip("_") + ".csv"), TESTED_HEADER, tested_lines(shapes))
-    madagascar = None
+    madagascar, differs = None, []
     names = spelt(MADAGASCAR)
     if names and provinces_in_antweb(states) and checker.code_of_country.get(MADAGASCAR):      # one more read: every record of Madagascar
-        rows = [(cc.unhex(r[0]).strip(), r[1], r[2], int(r[3])) for r in sql(madagascar_sql(names, group_id))]
-        madagascar = madagascar_regions(state_shapes, states, checker.code_of_country[MADAGASCAR], rows, args.tolerance_km, group_text)
+        u = cc.unhex
+        number = lambda text: str(float(text)) if text not in ("", "NULL") else ""
+        rows = [(u(r[0]), u(r[1]), u(r[2]).strip(), u(r[3]).strip(), number(r[4]), number(r[5]), u(r[6]), int(r[7]), u(r[8]))
+                for r in sql(madagascar_sql(columns, names, group_id))]
+        madagascar, differs = madagascar_regions(work, checker.code_of_country[MADAGASCAR], rows, group_text, lists)
+    write_csv(os.path.join(folder, "stored_differs.csv"), DIFFERS_HEADER, differs)
     taxonworks = None
     if args.tw_archive:                                          # one more read: the group's specimens by collecting event, for the load file of TaxonWorks
         archive = TwArchive(args.tw_archive)

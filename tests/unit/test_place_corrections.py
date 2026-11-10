@@ -60,6 +60,7 @@ def world():
         feature("Omanland", [[square(50, 16, 54, 24)]], ISO_A3="OML"),
         feature("Nameland", [[square(60, 0, 67, 2)]], ISO_A3="NML"),
         feature("Splitland", [[square(70, 0, 76, 2)]], ISO_A3="SPL"),
+        feature("Isleland", [[square(80, 0, 82, 2)]], ISO_A3="ILE"),
     ]}
 
 
@@ -70,7 +71,8 @@ def countries():
                          C("Tinyland", 1, "", 0, "", "TN", "TNY"), C("Atoll", 1, "", 0, "", "AT", "ATL"),
                          C("Andesia", 1, "", 0, "", "AD", "ADS"), C("Iberia", 1, "", 0, "", "IB", "IBR"),
                          C("Congoland", 1, "", 0, "", "CG", "CGL"), C("Omanland", 1, "", 0, "", "OM", "OML"),
-                         C("Nameland", 1, "", 0, "", "NM", "NML"), C("Splitland", 1, "", 0, "", "SP", "SPL")])
+                         C("Nameland", 1, "", 0, "", "NM", "NML"), C("Splitland", 1, "", 0, "", "SP", "SPL"),
+                         C("Isleland", 1, "", 0, "", "IL", "ILE")])
 
 
 # AntWeb's states: (name, parent, is_valid, valid_name)
@@ -86,7 +88,8 @@ STATES = [("Sonora", "Mexico", 1, ""), ("Chihuahua", "Mexico", 1, ""), ("Coahuil
           ("Katanga Sud", "Congoland", 1, ""), ("Ituri", "Congoland", 1, ""), ("Kivu", "Congoland", 1, ""), ("Kivou", "Congoland", 0, "Kivu"),
           ("Alpha", "Omanland", 1, ""), ("Beta", "Omanland", 1, ""), ("Gamma", "Omanland", 1, ""), ("Delta", "Omanland", 1, "")] + [
           (name, "Nameland", 1, "") for name in ("Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India")] + [
-          ("Joined", "Splitland", 1, ""), ("West", "Splitland", 1, ""), ("Rest", "Splitland", 1, ""), ("Plain", "Splitland", 1, "")]
+          ("Joined", "Splitland", 1, ""), ("West", "Splitland", 1, ""), ("Rest", "Splitland", 1, ""), ("Plain", "Splitland", 1, ""),
+          ("Mainland", "Isleland", 1, "")]
 
 # The rows of a mapping file for the test world (the file of the repository is tested apart)
 TEST_MAP = [("Madagascar", "ADM1", "Diana", "Antsiranana"), ("Madagascar", "ADM1", "Atsimo-Andrefana", "Toliara"), ("Madagascar", "ADM1", "Anosy", "Toliara"),
@@ -127,6 +130,9 @@ FILES = {
     ("SPL", "ADM1"): [("Joined", square(70, 0, 73, 2)), ("Rest", square(73, 0, 75, 2)), ("Plain", square(75, 0, 76, 2))],
     ("SPL", "ADM2"): [("East District", square(72, 0, 73, 2)), ("West-District", square(70, 0, 71, 2)), ("Middle", square(71, 0, 72, 2)), ("Lost", square(73, 0, 74, 2)),
                       ("Kept", square(74, 0, 75, 2)), ("Flat", square(75, 0, 76, 2))],
+    # Isleland: the country's shape is the mainland alone. The states' file draws an islet of the state Mainland 17 km off the coast, and two
+    # islets that are a state AntWeb does not have yet (a list of squares: a shape of several parts)
+    ("ILE", "ADM1"): [("Mainland", [square(80, 0, 82, 2), square(82.1, 0.5, 82.2, 0.6)]), ("Outer", [square(82.1, 1.5, 82.3, 1.7), square(82.5, 0.9, 82.6, 1.0)])],
 }
 
 # Nameland, AntWeb's specimens: (stored state, the number of the shape they lie in, specimens)
@@ -160,7 +166,8 @@ def make_source(folder):
     for (iso, level), shapes in FILES.items():
         data = json.dumps({"type": "FeatureCollection", "features": [
             {"type": "Feature", "properties": {"shapeName": name, "shapeGroup": iso, "shapeType": level},
-             "geometry": {"type": "Polygon", "coordinates": [ring]}} for name, ring in shapes]}).encode("utf-8")
+             "geometry": {"type": "MultiPolygon", "coordinates": [[part] for part in ring]} if isinstance(ring[0][0], list) else {"type": "Polygon", "coordinates": [ring]}}
+            for name, ring in shapes]}).encode("utf-8")
         meta = json.dumps({"boundaryLicense": "Open Data Commons Open Database License 1.0" if iso == "MDG" else "Public Domain", "boundarySource": "a test"}).encode("utf-8")
         for name, content in ((iso + "-" + level + "_simplified.geojson", data), (iso + "-" + level + "-metaData.json", meta)):
             with open(os.path.join(folder, "media", name), "wb") as f:
@@ -245,7 +252,7 @@ def test_level_is_chosen_by_how_the_names_fit():
 
 def test_mapping_file_of_the_repository():
     rows = pc.read_map(pc.MAP_FILE)
-    assert all(len(r) == 4 and r[1] in pc.LEVELS for r in rows) and ("country", "level", "shape", "antweb_state") not in rows and len(rows) == 17
+    assert all(len(r) == 4 and r[1] in pc.LEVELS for r in rows) and ("country", "level", "shape", "antweb_state") not in rows and len(rows) == 18
     with open(pc.MAP_FILE, "rb") as f:
         assert b"\r" not in f.read()
     assert ("Mexico", "ADM1", "Coahuila de Zaragoza", "Coahuila") in rows and ("United States", "ADM1", "District of Columbia", "Washington, D.C.") in rows
@@ -292,11 +299,14 @@ def test_mapping_file_of_the_repository():
     assert [r for r in rows if r[0] == "Seychelles"] == [("Seychelles", "ADM2", "La Digue", "Inner Islands"), ("Seychelles", "ADM3", "La Digue", "Inner Islands"),
                                                         ("Seychelles", "ADM2", "Other Islands", "Outer Islands"), ("Seychelles", "ADM3", "Other Islands", "Outer Islands")]
     assert {r for r in rules.new if r[0] == "Seychelles"} == {("Seychelles", "ADM2", "Other Islands", "Outer Islands"), ("Seychelles", "ADM3", "Other Islands", "Outer Islands")}
-    # the name lines: 148 pairs the lead checked by the names, 94 that are plain from the names; no shape twice; none is a hard row as well
-    assert len(rules.names) == 242 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 242 and all(l in pc.LEVELS and x and a for _, l, x, a in rules.names)
+    # the name lines: 148 pairs the lead checked by the names, 99 that are plain from the names; no shape twice; none is a hard row as well
+    assert len(rules.names) == 247 and len({(c, l, pc.plain(x)) for c, l, x, _ in rules.names}) == 247 and all(l in pc.LEVELS and x and a for _, l, x, a in rules.names)
     assert ("United Arab Emirates", "ADM1", "Ras al-Khaimah", "Ra's al Khaymah") in rules.names and ("Czech Republic", "ADM1", "Jiho\u010desk\u00fd kraj", "Jiho\u010desk\u00fd") in rules.names
     assert ("Democratic Republic of Congo", "ADM1", "Lower Uele", "Bas-U\u00e9l\u00e9") in rules.names and ("Macedonia", "ADM2", "Shtip", "\u0160tip") in rules.names
     assert not {(c, l, pc.plain(x)) for c, l, x, _ in rules.names} & {(c, l, pc.plain(x)) for c, l, x, _ in rows}
+    # Nicaragua: the two Caribbean regions under the names of geoBoundaries and of OCHA's file; the department Jinotega by a row
+    assert ("Nicaragua", "ADM1", "Regi\u00f3n Aut\u00f3noma Costa Caribe Norte", "Costa Caribe Norte") in rules.names and ("Nicaragua", "ADM1", "Jinotega (Departamento)", "Jinotega") in rows
+    assert ("Nicaragua", "ADM1", "North Carribean Coast Autonomous Region", "Costa Caribe Norte") in rules.names
 
 
 def test_mapping_rows():
@@ -403,11 +413,22 @@ def test_the_flag_in_the_lists():
 
 
 def test_in_the_water_near_one_state():
+    # in no state shape, within the allowed distance of one state alone: that state, and the note says how far outside the shape
     r = w("Mexico", 25.0, -110.005)
-    assert r == [pc.Proposal("adm1", "", "Sonora", "in the water, 0.5 km from Sonora, geoBoundaries MEX ADM1", "Mexico")], r
+    assert r == [pc.Proposal("adm1", "", "Sonora", "in the water, 0.5 km from Sonora, geoBoundaries MEX ADM1", "Mexico", "", "", "", "outside the shape, 0.5 km from it (coast)")], r
     # 2 km out: outside the stated country by more than 1 km, no proposal
     r = w("Mexico", 25.0, -110.02)
     assert r == [pc.Not("adm1", pc.OUTSIDE, "in the water, 2.02 km from Mexico")], r
+    # with a stated error of 3 km the same point is within the allowed distance
+    r = w("Mexico", 25.0, -110.02, stated="3 km")
+    assert (r[0].proposed, r[0].note) == ("Sonora", "outside the shape, 2.02 km from it (coast)"), r
+    # in no state shape of Mexico, 0.44 km from Sonora, and inside another country: no proposal, the country named
+    r = w("Mexico", 30.004, -108.0)
+    assert r == [pc.Not("adm1", pc.ANOTHER_COUNTRY, "United States, the point lies in it; 0.44 km from Sonora", "Mexico")], r
+    # in the water off Sonora with a stated error that reaches another country: no proposal either
+    r = w("Mexico", 29.99, -110.005, stated="2 km")
+    assert r == [pc.Not("adm1", pc.ANOTHER_COUNTRY, "United States, 1.21 km; 0.48 km from Sonora", "Mexico")], r
+    assert w("Mexico", 29.99, -110.005)[0].proposed == "Sonora"                              # with the 1 km of the rule the other country is too far
 
 
 def test_outside_the_stated_country():
@@ -440,7 +461,8 @@ def test_state_shape_that_is_an_island_country():
         r = work.work(row("casent0000003", "United States", 21.5, -159.5))
         assert r == [pc.Proposal("adm1", "", "Hawaii", "coordinates inside Hawaii, geoBoundaries USA ADM1; " + HAWAII, "United States")], r
         r = work.work(row("casent0000003", "USA", 21.5, -160.005))                         # an old name of the country, in the water
-        assert r == [pc.Proposal("adm1", "", "Hawaii", "in the water, 0.52 km from Hawaii, geoBoundaries USA ADM1; " + HAWAII, "United States")], r
+        assert r == [pc.Proposal("adm1", "", "Hawaii", "in the water, 0.52 km from Hawaii, geoBoundaries USA ADM1; " + HAWAII, "United States", "", "", "",
+                                 "outside the shape, 0.52 km from it (coast)")], r
         r = work.work(row("casent0000003", "United States", 35.0, -108.0))                 # a state of the mainland: no word of islands
         assert r == [pc.Proposal("adm1", "", "Arizona", "coordinates inside Arizona, geoBoundaries USA ADM1", "United States")], r
         t = work.shapes.tables["United States"]
@@ -1184,10 +1206,15 @@ def test_madagascar_from_the_provinces_to_the_regions():
     assert work.work(m("casent0000093", -15.0, 47.0, "Tulear")) == [pc.Proposal("adm1", "Tulear", "Diana", inside, "Madagascar", "", "", "", flag)]
     # a region the mapping file has no province for: said so, not called a difference
     assert work.work(m("casent0000094", -23.0, 49.0, "Toliara"))[0].note == "the mapping file does not say which province Anosy is in"
-    # no coordinates, in the water, outside the country: the record stays with the province
+    # no coordinates, outside the country: the record stays with the province
     assert work.work(m("casent0000095", adm1="Toliara")) == [pc.Not("adm1", pc.STAYS, "")]
-    assert work.work(m("casent0000096", -24.0, 42.995, "Toliara")) == [pc.Not("adm1", pc.STAYS_OUTSIDE, "in the water, 0.51 km from Atsimo-Andrefana, geoBoundaries MDG ADM1", "Madagascar")]
     assert work.work(m("casent0000097", -30.0, 45.0, "Toliara")) == [pc.Not("adm1", pc.OUTSIDE, "in the water, 445 km from Madagascar")]
+    # in no region's shape, within the allowed distance of one region alone: the region, as for a record with no state, and the note says so
+    # (version 6 left the province: 2,423 specimens of the Academy, all coast points that the table by region counted in a region)
+    water, coast = "in the water, 0.51 km from Atsimo-Andrefana, geoBoundaries MDG ADM1", "outside the shape, 0.51 km from it (coast)"
+    assert work.work(m("casent0000096", -24.0, 42.995, "Toliara")) == [pc.Proposal("adm1", "Toliara", "Atsimo-Andrefana", water, "Madagascar", "", "", "",
+                                                                                 pc.SAME_PROVINCE + "; " + coast)]
+    assert work.work(m("casent0000096", -24.0, 42.995)) == [pc.Proposal("adm1", "", "Atsimo-Andrefana", water, "Madagascar", "", "", "", coast)]
     # a missing state gets the region; a record that has a region, another state, or its island country, is left as it is
     assert work.work(m("casent0000098", -15.0, 47.0)) == [pc.Proposal("adm1", "", "Diana", inside, "Madagascar")]
     assert work.work(m("casent0000099", -15.0, 47.0, "Diana")) == [] and work.work(m("casent0000100", -15.0, 47.0, "Nosy Be")) == []
@@ -1245,34 +1272,177 @@ MDG_RULES = pc.Rules(convert={"Madagascar": ["Antananarivo", "Antsiranana", "Fia
                      within={"Madagascar": {"Diana": "Antsiranana", "Atsimo-Andrefana": "Toliara", "Analamanga": "Antananarivo"}})
 
 
+# Every record of Madagascar: (collecting event, locality name, stored state, island country, latitude, longitude, stated error, specimens, first specimen)
+MDG_RECORDS = [
+    ("E1", "Montagne", "Antsiranana", "", "-15.0", "47.0", "", 10, "casent0000201"), ("E1", "Montagne", "", "", "-15.0", "47.0", "", 2, "casent0000211"),
+    ("E2", "Foret", "Toliara", "", "-15.0", "47.0", "", 1, "casent0000213"), ("E3", "Sud", "Tulear", "", "-24.0", "45.0", "", 5, "casent0000214"),
+    ("", "", "", "", "", "", "", 7, "casent0000219"), ("", "", "", "", "0.0", "0.0", "", 1, "casent0000226"), ("E4", "En mer", "", "", "-30.0", "45.0", "", 3, "casent0000227"),
+    ("E5", "Tana", "Antananarivo", "", "-20.0", "49.0", "", 4, "casent0000230"), ("", "", "", "", "NULL", "NULL", "", 2, "casent0000234"),
+    ("E6", "Plage", "Toliara", "", "-24.0", "42.995", "", 12, "casent0000236"),            # in the water, 0.51 km from Atsimo-Andrefana
+    ("E7", "Diana", "Diana", "", "-15.0", "47.0", "", 6, "casent0000248"), ("E8", "Nosy Be", "Nosy Be", "", "-15.0", "47.0", "", 1, "casent0000254"),
+    ("E9", "Anosy", "Toliara", "", "-23.0", "49.0", "", 2, "casent0000255"),
+    ("E10", "Recif", "Toliara", "", "-24.0", "42.985", "1 minute", 9, "casent0000257"),    # in the water, 1.52 km out: within the stated error of 1.85 km
+    ("E11", "Recif", "Toliara", "", "-24.0", "42.985", "", 8, "casent0000266"),            # the same place with no stated error: outside the country
+    ("E12", "Sud", "Antsiranana", "", "-24.0", "45.0", "", 3, "casent0000274"),            # the province of the far north on a point of the south
+    ("E13", "Ile", "Toliara", "Nosy Be", "-15.0", "47.0", "", 2, "casent0000277")]         # an island-country specimen: no proposal, counted by its place
+
+
 def test_madagascar_by_region():
-    work = setup()
+    base = setup()
     C = cc.Countries([cc.Country("Madagascar", 1, "", 0, "")])
     six = [(name, "Madagascar", 1, "") for name in ("Antananarivo", "Antsiranana", "Fianarantsoa", "Mahajanga", "Toamasina", "Toliara")]
     assert pc.provinces_in_antweb(pc.States(six, C)) and not pc.provinces_in_antweb(pc.States(six[:3] + [("Diana", "Madagascar", 1, "")], C))
-    assert not pc.provinces_in_antweb(work.states)                # the test world has two of them
+    assert not pc.provinces_in_antweb(base.states)                # the test world has two of them
     # AntWeb with provinces and regions; the mapping file says which province a region is in
-    states = pc.States(MDG_STATES, work.countries)
-    shapes = pc.StateShapes(_made["store"], states, work.countries, [], None, MDG_RULES)
-    # (stored state, latitude, longitude, specimens) of every record of Madagascar
-    rows = [("Antsiranana", "-15.0", "47.0", 10), ("", "-15.0", "47.0", 2), ("Toliara", "-15.0", "47.0", 1), ("Tulear", "-24.0", "45.0", 5), ("", "", "", 7),
-            ("", "0.0", "0.0", 1), ("", "-30.0", "45.0", 3), ("Antananarivo", "-20.0", "49.0", 4), ("", "NULL", "NULL", 2), ("", "-24.0", "42.995", 1200),
-            ("Diana", "-15.0", "47.0", 6), ("Nosy Be", "-15.0", "47.0", 1), ("Toliara", "-23.0", "49.0", 2)]
-    lines = pc.madagascar_regions(shapes, states, "MDG", rows, 1.0, "California Academy of Sciences (id 1)")
-    assert lines[:3] == ["", "Madagascar by region: every record of Madagascar of the group by the region its coordinates lie in, not only the records with a gap; "
-                         "geoBoundaries MDG ADM1, 4 shapes.",
-                         "  Records of Madagascar: 1,244. With coordinates in one region: 1,231. No coordinates: 9. Coordinates that cannot be used: 1. "
-                         "In no region's shape (in the water or outside): 3. On the line between two regions: 0."], lines
-    cells = [line.split(None, 1)[0:1] + line[28:].split() for line in lines[4:]]
-    assert lines[3].split() == ["region", "specimens", "its", "province", "stored", "state:", "that", "province", "the", "region", "another", "none"]
-    # Diana: 20 inside; 10 have its province, 6 the region itself, 2 another state (Toliara, and a name AntWeb does not know), 2 none.
-    # A point in the water within 1 km counts. Anosy's province is not in the mapping file of this test.
-    assert cells == [["Analamanga", "4", "Antananarivo", "4", "0", "0", "0"], ["Anosy", "2", "not", "in", "the", "mapping", "file", "0", "0", "2", "0"],
-                     ["Atsimo-Andrefana", "1,205", "Toliara", "5", "0", "0", "1,200"], ["Diana", "20", "Antsiranana", "10", "6", "2", "2"]], cells
-    sql = pc.madagascar_sql(["Madagascar", "MADAGASCAR "], 1)
-    assert cc.read_only(sql) == sql and "group by 1, 2, 3" in sql and "access_group = 1" in sql and "4D4144414741534341522" in sql and "Madagascar" not in sql
-    text = pc.report_text("x", "y", "every group", pc.Lists(), work.shapes, _made["store"], "1 second", 1.0, pc.MAP_FILE, None, lines)
+    states = pc.States(MDG_STATES, base.countries)
+    work = pc.Corrections(base.checker, states, pc.StateShapes(_made["store"], states, base.countries, [], None, MDG_RULES))
+    # the same records, one by one, through the proposals
+    lists, number = pc.Lists(), 0
+    for event, locality, adm1, island, lat, lon, stated, count, first in MDG_RECORDS:
+        for _ in range(count):
+            number += 1
+            record = row("casent%07d" % (200 + number), "Madagascar", "" if lat == "NULL" else lat, "" if lon == "NULL" else lon, adm1=adm1, island=island, event=event,
+                         stated=stated, locality=locality)
+            lists.add(record, work.work(record), work.kind(record))
+    lines, differs = pc.madagascar_regions(work, "MDG", MDG_RECORDS, "California Academy of Sciences (id 1)", lists)
+    assert lines[:8] == ["", "Madagascar by region: every record of Madagascar of the group by the region its coordinates lie in, not only the records with a gap; "
+                         "geoBoundaries MDG ADM1, 4 regions.",
+                         "  Each point is placed by the function that makes the proposals: inside one region's shape, or in no shape and within the allowed distance (1 km, or the",
+                         "  stated error when larger) of one region alone and of no other country.",
+                         "  Records of Madagascar: 78. Placed in a region: 57 (21 of them outside its shape, within the allowed distance of it alone; 0 at a place the "
+                         "country's shape leaves out). No coordinates: 9. Coordinates that cannot be used: 1.",
+                         "  With coordinates and not placed: 11, by reason: 11 coordinates outside the stated country.",
+                         "  Records with a province that are placed in a region: 46; proposals from a province to its region in this run: 46 (the same).",
+                         "  stored_differs.csv: 5 lines, 9 specimens whose stored province or state is not the one their coordinates fall in (the column \"another\"), "
+                         "by collecting event."], lines[:8]
+    assert lines[8].split() == ["region", "specimens", "outside", "shape", "its", "province", "stored", "state:", "that", "province", "the", "region", "another", "none"]
+    cells = [line.split() for line in lines[9:]]
+    # Diana: 22 placed; 10 have its province, 6 the region itself, 4 another state (Toliara twice, a name AntWeb does not know), 2 none.
+    # Atsimo-Andrefana: 21 of its 29 lie outside its shape, within the allowed distance. Anosy's province is not in the mapping file of this test.
+    assert cells == [["Analamanga", "4", "0", "Antananarivo", "4", "0", "0", "0"], ["Anosy", "2", "0", "not", "in", "the", "mapping", "file", "0", "0", "2", "0"],
+                     ["Atsimo-Andrefana", "29", "21", "Toliara", "26", "0", "3", "0"], ["Diana", "22", "0", "Antsiranana", "10", "6", "4", "2"]], cells
+    # the two counts are the same because both ask the one function: for every record, a proposal exactly where the table places it
+    proposed = collections.Counter(p.proposed for _, p in lists.proposals if p.field == "adm1")
+    assert proposed == {"Analamanga": 4, "Anosy": 2, "Atsimo-Andrefana": 29, "Diana": 13}           # Diana: all but the 6 that have the region and the 3 left as they are
+    assert collections.Counter(n.reason for _, n in lists.nots) == {pc.OUTSIDE: 11, pc.NO_COORDINATES: 10}, lists.nots       # 9 with none, 1 with 0, 0
+    for event, locality, adm1, island, lat, lon, stated, count, first in MDG_RECORDS:
+        if lat not in ("", "NULL") and cc.usable(float(lat), float(lon)):
+            placed = work.locate("Madagascar", "Madagascar", float(lat), float(lon), stated)
+            got = work.work(row(first, "Madagascar", lat, lon, event=event, stated=stated))            # the record as if it had no state
+            assert [(p.proposed, p.basis) for p in got if isinstance(p, pc.Proposal)] == ([(placed.at.state, placed.at.basis)] if placed.stop is None else []), (event, got, placed)
+            assert [x for x in got if isinstance(x, pc.Not)] == ([placed.stop] if placed.stop is not None else [])
+    # stored_differs.csv: the records whose stored state is neither the region of their coordinates nor its province, by collecting event
+    assert pc.DIFFERS_HEADER[:11] == ["collecting_event_code", "locality_name", "specimens", "first_specimen_code", "stored_value", "stored_value_is", "state_by_coordinates",
+                                      "province_of_that_state", "km_to_the_stored_value", "nearest_other_state", "km_to_the_nearest_border"]
+    inside = "coordinates inside Diana, geoBoundaries MDG ADM1"
+    assert differs == [
+        ["E9", "Anosy", 2, "casent0000255", "Toliara", "a province", "Anosy", "", "205", "Analamanga", "111", "-23.0", "49.0", "", "coordinates inside Anosy, geoBoundaries MDG ADM1",
+         "", "Madagascar"],
+        # 556 km from the nearest region of the stored province: not a matter of where the line runs
+        ["E12", "Sud", 3, "casent0000274", "Antsiranana", "a province", "Atsimo-Andrefana", "Toliara", "556", "Anosy", "203", "-24.0", "45.0", "",
+         "coordinates inside Atsimo-Andrefana, geoBoundaries MDG ADM1", "", "Madagascar"],
+        ["E8", "Nosy Be", 1, "casent0000254", "Nosy Be", "no state of Madagascar in AntWeb", "Diana", "Antsiranana", "", "Analamanga", "445", "-15.0", "47.0", "", inside,
+         "", "Madagascar"],
+        ["E13", "Ile", 2, "casent0000277", "Toliara", "a province", "Diana", "Antsiranana", "445", "Analamanga", "445", "-15.0", "47.0", "", inside, "", "Madagascar"],
+        ["E2", "Foret", 1, "casent0000213", "Toliara", "a province", "Diana", "Antsiranana", "445", "Analamanga", "445", "-15.0", "47.0", "", inside, "", "Madagascar"]], differs
+    assert sum(x[2] for x in differs) == sum(int(c[-2]) for c in cells)
+    sql = pc.madagascar_sql({"code", "collectioncode", "localityname", "island_country", "latlonmaxerror"}, ["Madagascar", "MADAGASCAR "], 1)
+    assert cc.read_only(sql) == sql and sql.endswith(" group by 1, 2, 3, 4, 5, 6, 7") and "access_group = 1" in sql and "4D4144414741534341522" in sql and "Madagascar" not in sql
+    assert sql.startswith("select hex(ifnull(s.collectioncode, '')), hex(ifnull(s.localityname, '')), hex(ifnull(s.adm1, '')), hex(ifnull(s.island_country, '')), ")
+    assert "hex(ifnull(s.latlonmaxerror, '')), count(*), hex(min(s.code)) from specimen s" in sql
+    assert pc.madagascar_sql({"code"}, ["Madagascar"]).startswith("select '', '', hex(ifnull(s.adm1, '')), '', ")
+    text = pc.report_text("x", "y", "every group", pc.Lists(), base.shapes, _made["store"], "1 second", 1.0, pc.MAP_FILE, None, lines)
     assert "\nMadagascar by region: every record" in text and text.index("Madagascar by region") > text.index("\nDetails\n")
+    # the summary says how many proposals lie outside the shape of their state
+    text = pc.report_text("x", "y", "every group", lists, work.shapes, _made["store"], "1 second", 1.0)
+    assert ("  21 of them lie outside the state's shape, within the allowed distance of it alone (column note: outside the shape, N km from it (coast)); 0 at a place the "
+            "country's shape leaves out (column note: an islet, or coordinates to check).\n") in text.split("\nDetails\n")[0], text
+
+
+def test_an_islet_the_country_shape_leaves_out():
+    base = setup()
+    new = [("Isleland", "ADM1", "Outer", "Outer Islands")]
+    work = pc.Corrections(base.checker, base.states, pc.StateShapes(_made["store"], base.states, base.countries, new, None, pc.Rules(new=new)))
+    at = lambda lat, lon, **more: work.work(row("casent0000301", "Isleland", lat, lon, **more))
+    left = pc.LEFT_OUT + " (17 km from Isleland as Natural Earth 1:10m draws it)"
+    # on the mainland: as ever
+    assert at(1.0, 81.0) == [pc.Proposal("adm1", "", "Mainland", "coordinates inside Mainland, geoBoundaries ILE ADM1", "Isleland")]
+    # on the islet the country's shape leaves out, 17 km in the water by that shape (17 km): the state whose shape holds the point, and the note says so
+    r = at(0.55, 82.15)
+    assert r == [pc.Proposal("adm1", "", "Mainland", "coordinates inside Mainland, geoBoundaries ILE ADM1", "Isleland", "", "", "", left)], r
+    # the same on an islet of a state AntWeb does not have yet: both notes
+    r = at(1.6, 82.2)
+    assert (r[0].proposed, r[0].note) == ("Outer Islands", pc.TO_ADD + "; " + left.replace("17 km", "22 km")), r
+    # half a kilometre off the islet: the rule of the coast holds there as on the mainland, and both notes are given
+    r = at(0.55, 82.205)
+    assert (r[0].proposed, r[0].basis, r[0].note) == ("Mainland", "in the water, 0.56 km from Mainland, geoBoundaries ILE ADM1",
+                                                      "outside the shape, 0.56 km from it (coast); " + left.replace("17 km", "23 km")), r
+    # in the water between the islets, far from every state shape: outside the country, as before
+    assert at(1.0, 82.15) == [pc.Not("adm1", pc.OUTSIDE, "in the water, 17 km from Isleland")]
+    # a point the country shapes put inside another country is not asked of the states' file at all
+    assert setup().work(row("casent0000302", "Mexico", 35.0, -108.0)) == [pc.Not("adm1", pc.OUTSIDE, "United States, 556 km from Mexico")]
+    # the load file for TaxonWorks leaves such a proposal to a person, like one next to another state
+    with tempfile.TemporaryDirectory() as folder:
+        path = os.path.join(folder, "data.tsv")
+        with open(path, "w", encoding="utf-8", newline="") as f:
+            f.write("\t".join(TW_HEAD) + "\n" + "\t".join(["1", "CASENT1", "Isleland", "E90", "0.55", "82.15", "", "", "", "Isleland", "190"]) + "\n")
+        lists = pc.Lists()
+        record = row("casent0000301", "Isleland", 0.55, 82.15, event="E90")
+        lists.add(record, work.work(record), work.kind(record))
+        stored = {"E90": [("Isleland", "", "", "", 1, "casent0000301", "0.55", "82.15")]}
+        load, _, unresolved, _ = pc.tw_load(pc.TwArchive(path), lists, stored, base.countries, base.states, set())
+        assert load == [] and unresolved == [["E90", "190", "adm1", "Mainland", pc.LEFT_OUT, 1, "casent0000301", "0.55", "82.15"]], (load, unresolved)
+        load, _, unresolved, _ = pc.tw_load(pc.TwArchive(path), lists, stored, base.countries, base.states, set(), True)
+        assert load == [["E90", "adm1", "create", "", "Mainland", "0.55", "82.15", "190"]] and unresolved == []
+    # the report: the summary counts them; for the state to add, what the Geolocale Manager asks for, from the shape
+    lists = pc.Lists()
+    for i, (lat, lon) in enumerate([(0.55, 82.15), (1.6, 82.2), (0.95, 82.55), (1.0, 81.0)]):
+        record = row("casent%07d" % (310 + i), "Isleland", lat, lon, event="E9%d" % i)
+        lists.add(record, work.work(record), work.kind(record))
+    text = pc.report_text("x", "y", "every group", lists, work.shapes, _made["store"], "1 second", 1.0)
+    top, rest = text.split("\nDetails\n")
+    assert ("State (adm1): 4 specimens with a proposal (corrections.csv), in 4 lines of by_collecting_event.csv\n"
+            "  0 of them (0 lines) lie within the stated error, or the allowed 1 km, of another state: column other_state_flag, look at those first.\n"
+            "  0 of them lie outside the state's shape, within the allowed distance of it alone (column note: outside the shape, N km from it (coast)); 3 at a place the "
+            "country's shape leaves out (column note: an islet, or coordinates to check).\n") in top, top
+    # the centroid of the two islets lies in the water between them: the centre is a point inside the larger part
+    assert ("For each of them, what the Geolocale Manager asks for, measured on the shape of the source (to type as they stand):\n"
+            "  Isleland: Outer Islands (2 specimens)\n"
+            "    Centroid (lat, lon): 1.6000, 82.2000      a point inside the largest part (the centroid of the shape lies outside it)\n"
+            "    Bounding box (west lon, south lat, east lon, north lat): 82.1000, 0.9000, 82.6000, 1.7000      latitude 0.9000 to 1.7000, longitude 82.1000 to 82.6000\n"
+            "    from geoBoundaries ILE ADM1, shape Outer; 2 rings\n") in rest, rest
+    # a state that a split line makes of finer units: measured on those units
+    split = split_world()
+    split.work(row("casent0000130", "Splitland", 1.0, 72.5))
+    found = {state: (box, where, unit) for state, box, where, unit in split.shapes.tables["Splitland"]["new_states"]}
+    assert sorted(found) == ["East", "Newland"] and found["East"][1:] == ("geoBoundaries SPL ADM2, units East District", "")
+    box = found["East"][0]
+    assert [round(x, 4) for x in box[:6]] == [0.0, 2.0, 72.0, 73.0, 1.0, 72.5] and box.centre == "the centroid of the shape" and box.parts == 1
+
+
+def test_the_outline_of_a_shape():
+    close = lambda box, values: all(abs(a - b) < 1e-6 for a, b in zip(box[:6], values))
+    # a square: its box, and its centroid as the centre
+    box = pc.outline([square(10, 20, 12, 21)])
+    assert close(box, (20, 21, 10, 12, 20.5, 11)) and box.centre == "the centroid of the shape" and box.parts == 1
+    # a ring inside another is a hole: a square with a hole in its east half has its centroid west of the middle
+    box = pc.outline([square(0, 0, 4, 2), square(2.5, 0.5, 3.5, 1.5)])
+    assert box.centre == "the centroid of the shape" and abs(box.lat - 1.0) < 1e-3 and 1.8 < box.lon < 1.9, box
+    # ... and a square with a hole in its middle has its centroid in the hole: the centre is put inside the shape
+    box = pc.outline([square(0, 0, 4, 2), square(1, 0.5, 3, 1.5)])
+    assert box.centre.startswith("a point inside the largest part") and abs(box.lat - 1.0) < 1e-3 and (0 < box.lon < 1 or 3 < box.lon < 4), box
+    # a crescent (a C): the centroid lies in its opening
+    c = [[0, 0], [4, 0], [4, 1], [1, 1], [1, 3], [4, 3], [4, 4], [0, 4], [0, 0]]
+    box = pc.outline([c])
+    assert box.centre.startswith("a point inside the largest part") and pc.holds(c, box.lon, box.lat) and close(box, (0, 4, 0, 4, box.lat, box.lon)), box
+    # a shape across the 180 meridian: measured in one piece, west larger than east
+    box = pc.outline([square(179, -17, 180, -16), square(-180, -17, -178, -16)])
+    assert close(box, (-17, -16, 179, -178, -16.5, -179.5)) and box.centre == "the centroid of the shape", box
+    assert pc.outline([]) is None and pc.outline([[[0, 0], [1, 1]]]) is None
+    # every source gives the rings it builds its index from
+    base = setup()
+    units, rings = pc.GeoSource(_made["store"]).rings("ILE", "ADM1")
+    assert [u.name for u in units] == ["Mainland", "Outer"] and [len(r) for r in rings] == [2, 2]
 
 
 # ---------------------------------------------------------------- OCHA's files, a third source of state shapes
@@ -1701,7 +1871,7 @@ def test_the_geolocale_manager_list():
 def test_every_statement_is_a_single_select():
     columns = {"code", "collectioncode", "localitycode", "country", "adm1", "adm2", "island_country", "latlonmaxerror", "localityname", "localitynotes", "bioregion"}
     statements = [pc.places_sql({"name"}), pc.places_sql({"name", "bioregion", "alt_bioregion"}), pc.stored_countries_sql(), pc.stored_countries_sql(1), pc.rows_sql(columns), pc.rows_sql(columns, 1, ["Africa", "O'Brien; drop table specimen"]),
-                  pc.rows_sql({"code", "country", "adm1"}, 21), pc.madagascar_sql(["Madagascar"]), pc.madagascar_sql(["Madagascar", "O'Brien; drop table specimen"], 1),
+                  pc.rows_sql({"code", "country", "adm1"}, 21), pc.madagascar_sql(columns, ["Madagascar"]), pc.madagascar_sql({"code"}, ["Madagascar", "O'Brien; drop table specimen"], 1),
                   pc.evidence_sql(columns), pc.evidence_sql({"code"}), pc.tw_events_sql(columns | {"bioregion"}, 1), pc.tw_events_sql({"code"}, 21),
                   pc.rows_sql(columns, 1, [], [(["Madagascar", "MADAGASCAR"], ["Toliara", "Tulear", "O'Brien; drop table specimen"]), ([], ["x"])])]
     for sql in statements:
