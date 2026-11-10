@@ -40,10 +40,11 @@ ROWS = [
     ["casent5", "myrmicinaestenamma diecki", "myrmicinae", "stenamma", "Hawaii", "Oahu",
      "21.3", "-157.8", "formicidae", "Oceania", "NULL", "Hawaii", "valid", "0", "species", "NULL", "Emery, 1895", "CAS", "0"],
 ]
-PLACES = [["Canada", "country", "1", "0", "", "", "Nearctic", ""],
-          ["Hawaii", "country", "1", "1", "United States", "United States", "Oceania", ""],
-          ["Mexico", "country", "1", "0", "", "", "Neotropical", "Nearctic"],
-          ["United States", "country", "1", "0", "", "", "Nearctic", "Neotropical"]]
+PLACES = [["Canada", "country", "1", "0", "", "", "Nearctic", "", ""],
+          ["Hawaii", "country", "1", "1", "United States", "United States", "Oceania", "", ""],
+          ["Mexico", "country", "1", "0", "", "", "Neotropical", "Nearctic", ""],
+          ["United States", "country", "1", "0", "", "", "Nearctic", "Neotropical", ""],
+          ["USA", "country", "0", "0", "", "", "", "", "United States"]]
 LIST = [["myrmicinaestenamma diecki", "myrmicinae", "stenamma", "diecki", "", "species", "valid", "0", "specimen", "0", "0"],
         ["myrmicinaestenamma lit", "myrmicinae", "stenamma", "lit", "", "species", "valid", "0", "antcat", "0", "0"]]
 
@@ -135,7 +136,8 @@ def test_a_different_database_count_fails_the_run():
 def test_an_unknown_country_name_stops_before_any_export():
     d = setup()
     r = run(d, "--countries", "USA,Canada")
-    assert r.returncode != 0 and "no country row in AntWeb for: USA" in r.stderr, r.stderr
+    # USA is a row AntWeb keeps as an old name (is_valid = 0, valid_name United States): refused, with the valid name
+    assert r.returncode != 0 and "no valid country in AntWeb named: USA (use United States)" in r.stderr, r.stderr
     assert not any("select s.*" in c["sql"] for c in calls(d))
     print("ok   test_an_unknown_country_name_stops_before_any_export")
 

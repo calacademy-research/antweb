@@ -93,7 +93,7 @@ def unescape(field):
 def places_sql(countries):
     c = sql_list(countries)
     return ("select name, georank, is_valid, is_island, ifnull(parent, ''), ifnull(country, ''), ifnull(bioregion, ''), "
-            "ifnull(alt_bioregion, '') from geolocale where (georank = 'country' and name in " + c + ") "
+            "ifnull(alt_bioregion, ''), ifnull(valid_name, '') from geolocale where (georank = 'country' and name in " + c + ") "
             "or (is_island = 1 and (parent in " + c + " or country in " + c + ")) order by georank, name")
 
 
@@ -362,10 +362,14 @@ def main(argv=None):
     os.makedirs(out, exist_ok=True)
 
     places = run_query(project, places_sql(countries), args.container)
-    found = {p[0] for p in places if p[1] == "country"}
+    found = {p[0] for p in places if p[1] == "country" and p[2] == "1"}
+    outdated = {p[0]: p[8] for p in places if p[1] == "country" and p[2] != "1"}
     unknown = [c for c in countries if c not in found]
     if unknown:
-        sys.exit("no country row in AntWeb for: " + ", ".join(unknown) + " (names as on AntWeb's country pages)")
+        # a name AntWeb keeps only as an old name (is_valid = 0) holds no specimens: say the valid one
+        sys.exit("no valid country in AntWeb named: " + ", ".join(
+            c + (" (use " + outdated[c] + ")" if outdated.get(c) else "") for c in unknown)
+            + " (names as on AntWeb's country pages)")
     islands = [] if args.no_islands else sorted({p[0] for p in places if p[3] == "1" and p[0] not in countries})
     print("Countries: " + ", ".join(countries))
     for p in places:
