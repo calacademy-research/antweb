@@ -70,12 +70,13 @@ public class DataExtractTest extends TestCase {
     /** The manifest the Python reference texts were made from. */
     private static Map<String, Object> manifest() {
         Map<String, Object> m = new LinkedHashMap<>();
-        m.put("tool_version", "1");
+        m.put("tool_version", "3");
         m.put("made_utc", "2026-11-10 14:49:21");
         m.put("antweb_commit", "abc1234");
         m.put("antweb_version", "");
         m.put("countries", Arrays.asList("United States", "Côte d'Ivoire"));
         m.put("islands", new ArrayList<String>());
+        m.put("outdated_names", Arrays.asList(map("name", "U.S.A.", "valid_name", "United States"), map("name", "USA", "valid_name", "United States")));
         m.put("bioregion", "");
         m.put("columns", Arrays.asList("code", "has_coordinates"));
         m.put("specimens", 1234567L);
@@ -85,6 +86,8 @@ public class DataExtractTest extends TestCase {
             map("country", "United States", "island_country", "Ha\"waii\\", "in_file", 0L, "in_database", 1L)));
         m.put("by_place", Arrays.asList(
             map("country", "Côte d'Ivoire", "island_country", "", "specimens", 2L),
+            map("country", "Etats Unis", "island_country", "", "specimens", 1L),
+            map("country", "USA", "island_country", "", "specimens", 7L),
             map("country", "United States", "island_country", "Hawaii", "specimens", 1234565L)));
         m.put("by_bioregion", map("", 5L, "Nearctic", 1234562L));
         m.put("by_taxon_status", map("valid", 1234567L));
@@ -92,6 +95,8 @@ public class DataExtractTest extends TestCase {
         m.put("no_taxon_row", 0L);
         m.put("flagged", 12L);
         m.put("not_ants", 3L);
+        m.put("filed_under_outdated_name", 7L);
+        m.put("countries_without_specimens", Arrays.asList("Côte d'Ivoire"));
         m.put("genera", 80L);
         m.put("names", 2345L);
         m.put("bioregion_list", null);
@@ -104,25 +109,32 @@ public class DataExtractTest extends TestCase {
     private static final String PYTHON_TEXT =
         "AntWeb specimen extract\n"
         + "\n"
-        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 1\n"
-        + "Countries: United States, C\u00f4te d'Ivoire\n"
+        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 3\n"
+        + "Countries: United States, Côte d'Ivoire\n"
         + "Islands included: none\n"
+        + "Outdated country names included: U.S.A. (now United States), USA (now United States)\n"
         + "\n"
         + "Specimens in the file: 1,234,567\n"
         + "Check against the database: DIFFERENT, see differences; run again\n"
+        + "WARNING: AntWeb has no specimen for: Côte d'Ivoire (check that these are the countries meant)\n"
         + "\n"
         + "By country (country / island country):\n"
-        + "  C\u00f4te d'Ivoire                                     2\n"
+        + "  Côte d'Ivoire                                     2\n"
+        + "  Etats Unis                                        1\n"
+        + "  USA                                               7\n"
         + "  United States / Hawaii                    1,234,565\n"
         + "\n"
         + "By AntWeb bioregion:\n"
         + "  (none)                                            5\n"
         + "  Nearctic                                  1,234,562\n"
         + "\n"
+        + "Country spellings in the file besides the names asked for (MySQL matches names without accents): Etats Unis\n"
+        + "\n"
         + "Without usable coordinates: 1,000 (in the file, has_coordinates = 0; a cut by a shape file loses them)\n"
         + "Name has no taxon row: 0 (in the file, no_taxon_row = 1; the API's specimen view leaves these out)\n"
         + "Red-flagged at upload: 12 (column flag)\n"
         + "Family not Formicidae: 3\n"
+        + "Filed under an outdated country name: 7\n"
         + "Genera: 80   distinct names: 2,345\n"
         + "\n"
         + "Files (sha256):\n"
@@ -133,6 +145,9 @@ public class DataExtractTest extends TestCase {
         + "  {\"country\": \"C\\u00f4te d'Ivoire\", \"island_country\": \"\", \"in_file\": 2, \"in_database\": 3}\n"
         + "  {\"country\": \"United States\", \"island_country\": \"Ha\\\"waii\\\\\", \"in_file\": 0, \"in_database\": 1}\n"
         + "\n"
+        + "Spreadsheets: import the columns of specimens.csv as text. Values are written as they are in the database,\n"
+        + "also when they start with =, +, - or @.\n"
+        + "\n"
         + "Cite: AntWeb. Version [version]. California Academy of Sciences, online at https://www.antweb.org. Extract of 2026-11-10.\n"
         + "Images and data on AntWeb are licensed CC BY 4.0.\n";
 
@@ -140,15 +155,16 @@ public class DataExtractTest extends TestCase {
     private static final String PYTHON_TEXT_VERIFIED =
         "AntWeb specimen extract\n"
         + "\n"
-        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 1\n"
-        + "Countries: United States, C\u00f4te d'Ivoire\n"
+        + "Made: 2026-11-10 14:49:21 (UTC)   AntWeb commit: abc1234   tool version 3\n"
+        + "Countries: United States, Côte d'Ivoire\n"
         + "Islands included: Hawaii, Guam\n"
+        + "Outdated country names included: none\n"
         + "\n"
         + "Specimens in the file: 1,234,567\n"
         + "Check against the database: VERIFIED, every count equal\n"
         + "\n"
         + "By country (country / island country):\n"
-        + "  C\u00f4te d'Ivoire                                     2\n"
+        + "  Côte d'Ivoire                                     2\n"
         + "  United States / Hawaii                    1,234,565\n"
         + "\n"
         + "By AntWeb bioregion:\n"
@@ -159,6 +175,7 @@ public class DataExtractTest extends TestCase {
         + "Name has no taxon row: 0 (in the file, no_taxon_row = 1; the API's specimen view leaves these out)\n"
         + "Red-flagged at upload: 12 (column flag)\n"
         + "Family not Formicidae: 3\n"
+        + "Filed under an outdated country name: 0\n"
         + "Genera: 80   distinct names: 2,345\n"
         + "\n"
         + "AntWeb's Nearctic species list: 1,200 names; 34 of them have no specimen in this extract (literature, or other countries)\n"
@@ -167,21 +184,34 @@ public class DataExtractTest extends TestCase {
         + "  abababababababababababababababababababababababababababababababab  specimens.csv.gz\n"
         + "  cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd  genus_summary.csv\n"
         + "\n"
+        + "Spreadsheets: import the columns of specimens.csv as text. Values are written as they are in the database,\n"
+        + "also when they start with =, +, - or @.\n"
+        + "\n"
         + "Cite: AntWeb. Version 9.4.0. California Academy of Sciences, online at https://www.antweb.org. Extract of 2026-11-10.\n"
         + "Images and data on AntWeb are licensed CC BY 4.0.\n";
 
     // Written by Python's json.dump(manifest, indent=1, ensure_ascii=False).
     private static final String PYTHON_JSON =
         "{\n"
-        + " \"tool_version\": \"1\",\n"
+        + " \"tool_version\": \"3\",\n"
         + " \"made_utc\": \"2026-11-10 14:49:21\",\n"
         + " \"antweb_commit\": \"abc1234\",\n"
         + " \"antweb_version\": \"\",\n"
         + " \"countries\": [\n"
         + "  \"United States\",\n"
-        + "  \"C\u00f4te d'Ivoire\"\n"
+        + "  \"Côte d'Ivoire\"\n"
         + " ],\n"
         + " \"islands\": [],\n"
+        + " \"outdated_names\": [\n"
+        + "  {\n"
+        + "   \"name\": \"U.S.A.\",\n"
+        + "   \"valid_name\": \"United States\"\n"
+        + "  },\n"
+        + "  {\n"
+        + "   \"name\": \"USA\",\n"
+        + "   \"valid_name\": \"United States\"\n"
+        + "  }\n"
+        + " ],\n"
         + " \"bioregion\": \"\",\n"
         + " \"columns\": [\n"
         + "  \"code\",\n"
@@ -191,7 +221,7 @@ public class DataExtractTest extends TestCase {
         + " \"verified\": false,\n"
         + " \"differences\": [\n"
         + "  {\n"
-        + "   \"country\": \"C\u00f4te d'Ivoire\",\n"
+        + "   \"country\": \"Côte d'Ivoire\",\n"
         + "   \"island_country\": \"\",\n"
         + "   \"in_file\": 2,\n"
         + "   \"in_database\": 3\n"
@@ -205,9 +235,19 @@ public class DataExtractTest extends TestCase {
         + " ],\n"
         + " \"by_place\": [\n"
         + "  {\n"
-        + "   \"country\": \"C\u00f4te d'Ivoire\",\n"
+        + "   \"country\": \"Côte d'Ivoire\",\n"
         + "   \"island_country\": \"\",\n"
         + "   \"specimens\": 2\n"
+        + "  },\n"
+        + "  {\n"
+        + "   \"country\": \"Etats Unis\",\n"
+        + "   \"island_country\": \"\",\n"
+        + "   \"specimens\": 1\n"
+        + "  },\n"
+        + "  {\n"
+        + "   \"country\": \"USA\",\n"
+        + "   \"island_country\": \"\",\n"
+        + "   \"specimens\": 7\n"
         + "  },\n"
         + "  {\n"
         + "   \"country\": \"United States\",\n"
@@ -226,6 +266,10 @@ public class DataExtractTest extends TestCase {
         + " \"no_taxon_row\": 0,\n"
         + " \"flagged\": 12,\n"
         + " \"not_ants\": 3,\n"
+        + " \"filed_under_outdated_name\": 7,\n"
+        + " \"countries_without_specimens\": [\n"
+        + "  \"Côte d'Ivoire\"\n"
+        + " ],\n"
         + " \"genera\": 80,\n"
         + " \"names\": 2345,\n"
         + " \"bioregion_list\": null,\n"
@@ -254,10 +298,23 @@ public class DataExtractTest extends TestCase {
         m.put("verified", true);
         m.put("differences", new ArrayList<Object>());
         m.put("islands", Arrays.asList("Hawaii", "Guam"));
+        m.put("outdated_names", new ArrayList<Object>());
+        m.put("countries_without_specimens", new ArrayList<String>());
+        m.put("filed_under_outdated_name", 0L);
+        m.put("by_place", Arrays.asList(
+            map("country", "Côte d'Ivoire", "island_country", "", "specimens", 2L),
+            map("country", "United States", "island_country", "Hawaii", "specimens", 1234565L)));
         m.put("bioregion", "Nearctic");
         m.put("antweb_version", "9.4.0");
         m.put("bioregion_list", map("names", 1200L, "names_without_specimen_in_extract", 34L));
         assertEquals(PYTHON_TEXT_VERIFIED, DataExtract.manifestText(m));
+        // what the reference texts hold: the old names, the warning, the other spelling, the count, the spreadsheet line
+        assertTrue(PYTHON_TEXT.contains("Outdated country names included: U.S.A. (now United States), USA (now United States)\n"));
+        assertTrue(PYTHON_TEXT.contains("WARNING: AntWeb has no specimen for: Côte d'Ivoire (check that these are the countries meant)\n"));
+        assertTrue(PYTHON_TEXT.contains("Country spellings in the file besides the names asked for (MySQL matches names without accents): Etats Unis\n"));
+        assertTrue(PYTHON_TEXT.contains("Filed under an outdated country name: 7\n"));
+        assertTrue(PYTHON_TEXT.contains("Spreadsheets: import the columns of specimens.csv as text."));
+        assertTrue(PYTHON_TEXT_VERIFIED.contains("Outdated country names included: none\n") && !PYTHON_TEXT_VERIFIED.contains("WARNING"));
     }
 
     public void testManifestJsonAsPythonWritesIt() {
@@ -357,8 +414,10 @@ public class DataExtractTest extends TestCase {
         new File(root, "123").mkdir();
         new File(root, "notes-124").mkdir();
         assertNull(DataExtractFiles.find(root, 124));
-        assertEquals("antweb-extract-2026-11-10-123-specimens.csv.gz", DataExtractFiles.downloadName(folder, DataExtract.SPECIMENS));
-        assertEquals("antweb-extract-2026-11-10-123.zip", DataExtractFiles.downloadName(folder, DataExtractFiles.ZIP));
+        assertEquals("antweb-extract-2026-11-10-123-specimens.csv.gz", DataExtractFiles.downloadName(folder, DataExtract.SPECIMENS, true));
+        assertEquals("antweb-extract-2026-11-10-123.zip", DataExtractFiles.downloadName(folder, DataExtractFiles.ZIP, true));
+        assertTrue(DataExtractFiles.isVerified(root, 123));
+        assertFalse(DataExtractFiles.isVerified(root, 124));
         assertEquals("application/gzip", DataExtractFiles.contentType("antweb-extract-2026-11-10-123-specimens.csv.gz"));
         assertEquals("text/plain; charset=UTF-8", DataExtractFiles.contentType("x-manifest.txt"));
     }
@@ -459,6 +518,136 @@ public class DataExtractTest extends TestCase {
         assertEquals(0, DataExtractFiles.list(new File(root, "missing")).size());
     }
 
+    /** Review M1: the folder was inside Tomcat's web root, kept private by one Caddy rule. */
+    public void testTheFolderIsOutsideTheWebApplication() throws Exception {
+        String folder = DataExtractFiles.root().getCanonicalPath() + "/";
+        String webRoot = new File(org.calacademy.antweb.util.AntwebProps.getDocRoot()).getCanonicalPath() + "/";
+        String dataRoot = new File(org.calacademy.antweb.util.AntwebProps.getDataRoot()).getCanonicalPath() + "/";
+        assertEquals("/usr/local/tomcat/logs/extracts", DataExtractFiles.root().getPath());
+        assertFalse(folder + " is under the web root " + webRoot, folder.startsWith(webRoot));
+        assertFalse(folder + " is under the data root " + dataRoot, folder.startsWith(dataRoot));
+        // logs/web is the web application's web/log (docker-compose.yml): the extracts are not in it
+        assertFalse(folder.startsWith("/usr/local/tomcat/logs/web/"));
+    }
+
+    /** Review L4: after staging's database is refreshed, job numbers start again. */
+    public void testAJobNumberInTwoFoldersIsTheNewestAndANewExtractReplacesIt() throws Exception {
+        File old = finished(LocalDate.of(2026, 10, 1), 77, true);
+        File newer = finished(LocalDate.of(2026, 11, 9), 77, false);
+        assertEquals(newer, DataExtractFiles.find(root, 77));
+        assertEquals(new File(newer, DataExtract.MANIFEST_TXT), DataExtractFiles.file(root, 77, DataExtract.MANIFEST_TXT));
+        assertFalse("the newest one is the extract of that number: not verified", DataExtractFiles.isVerified(root, 77));
+        // a new extract with the number: the old folders go, so a download never finds old files under the new number
+        File fresh = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 77);
+        assertFalse(old.exists() || newer.exists());
+        assertEquals(fresh, DataExtractFiles.find(root, 77));
+        assertNull(DataExtractFiles.file(root, 77, DataExtract.MANIFEST_TXT));
+        assertEquals("[]", Arrays.toString(fresh.list()));
+        // the same day again (a job that is run twice cannot happen, but the folder is then emptied too)
+        Files.write(new File(fresh, DataExtract.SPECIMENS).toPath(), new byte[] {1});
+        assertEquals("[]", Arrays.toString(DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 77).list()));
+        try {
+            DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 0);
+            fail("a folder without a job number");
+        } catch (java.io.IOException e) {
+            // expected
+        }
+    }
+
+    /** Review L3: the downloads opened as soon as a file named manifest.json existed, also a half-written one. */
+    public void testAHalfWrittenManifestOpensNoDownload() throws Exception {
+        File folder = finished(LocalDate.of(2026, 11, 10), 88, true);
+        File manifest = new File(folder, DataExtract.MANIFEST_JSON);
+        for (String half : new String[] {"", "{", "{\"specimens\": 12", "{\"specimens\": 12}", "{\"verified\": true}", "[1, 2]", "null",
+            "{\"specimens\": \"many\", \"verified\": true}"}) {
+            Files.write(manifest.toPath(), half.getBytes(StandardCharsets.UTF_8));
+            assertNull("manifest: " + half, DataExtractFiles.file(root, 88, DataExtract.SPECIMENS));
+            assertEquals(0, DataExtractFiles.files(root, 88).size());
+            assertFalse(DataExtractFiles.isVerified(root, 88));
+        }
+        // while it is written it has another name, which opens nothing either
+        manifest.delete();
+        Files.write(new File(folder, DataExtract.MANIFEST_JSON + DataExtract.PART).toPath(), "{\"specimens\": 12, \"verified\": true}".getBytes(StandardCharsets.UTF_8));
+        assertNull(DataExtractFiles.file(root, 88, DataExtract.SPECIMENS));
+        assertNull(DataExtractFiles.file(root, 88, DataExtract.MANIFEST_JSON + DataExtract.PART));
+        // whole again
+        Files.write(manifest.toPath(), "{\"specimens\": 12, \"verified\": true}".getBytes(StandardCharsets.UTF_8));
+        assertNotNull(DataExtractFiles.file(root, 88, DataExtract.SPECIMENS));
+    }
+
+    /** Review L2: a NOT VERIFIED extract could be downloaded as a zip labelled "the file to send". */
+    public void testANotVerifiedExtractHasNoZipAndSaysSoInItsName() throws Exception {
+        File folder = finished(LocalDate.of(2026, 11, 10), 99, false);
+        assertFalse(DataExtractFiles.isVerified(root, 99));
+        assertNotNull("its files can still be looked at", DataExtractFiles.file(root, 99, DataExtract.MANIFEST_TXT));
+        assertEquals("antweb-extract-NOT-VERIFIED-2026-11-10-99-specimens.csv.gz", DataExtractFiles.downloadName(folder, DataExtract.SPECIMENS, false));
+        assertEquals("antweb-extract-NOT-VERIFIED-2026-11-10-99-manifest.txt", DataExtractFiles.downloadName(folder, DataExtract.MANIFEST_TXT, false));
+        String links = DataExtractJob.downloadLinks(99, DataExtractFiles.DOWNLOADS, false, "https://x.org");
+        assertFalse(links, links.contains("all.zip") || links.contains("the file to send"));
+        assertEquals(5, links.split("NOT VERIFIED, do not send", -1).length - 1);
+        String ok = DataExtractJob.downloadLinks(99, DataExtractFiles.DOWNLOADS, true, "https://x.org");
+        assertTrue(ok, ok.startsWith("<li><a class=\"extract-file\" href=\"https://x.org/dataExtractFile.do?job=99&amp;file=all.zip\">Everything in one zip file</a> (the file to send)</li>"));
+        assertFalse(ok, ok.contains("NOT VERIFIED"));
+        // the download action gives the zip only for a verified extract (its source: the list is empty otherwise)
+    }
+
+    /** Review L6: half-written files stayed until an admin opened the page; a clean-up could meet a job that just ended. */
+    public void testUnfinishedExtractsAreTidiedButNotTheRunningOne() throws Exception {
+        File stopped = DataExtractFiles.create(root, LocalDate.of(2026, 11, 9), 51);
+        DataExtractFiles.writeRequest(stopped, 51, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Mexico"), true, ""));
+        Files.write(new File(stopped, DataExtract.SPECIMENS + DataExtract.PART).toPath(), new byte[1000]);
+        Files.write(new File(stopped, DataExtract.GENUS_SUMMARY).toPath(), new byte[10]);
+        File running = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 52);
+        Files.write(new File(running, DataExtract.SPECIMENS + DataExtract.PART).toPath(), new byte[1000]);
+        File done = finished(LocalDate.of(2026, 11, 10), 53, true);
+        assertEquals(1, DataExtractFiles.removeUnfinished(root, id -> id == 52));
+        assertEquals("[request.json]", Arrays.toString(stopped.list()));
+        assertEquals("the running extract keeps its file", "[specimens.csv.gz.part]", Arrays.toString(running.list()));
+        assertEquals(6, done.list().length);
+        assertEquals(0, DataExtractFiles.removeUnfinished(root, id -> id == 52));
+        // an extract that finishes between the list and the check (its job is no longer active): read again, kept
+        File racing = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 54);
+        Files.write(new File(racing, DataExtract.SPECIMENS).toPath(), new byte[1000]);
+        assertEquals(1, DataExtractFiles.removeUnfinished(root, id -> {
+            if (id == 54) {
+                try {
+                    Files.write(new File(racing, DataExtract.MANIFEST_JSON).toPath(), "{\"specimens\": 1, \"verified\": true}".getBytes(StandardCharsets.UTF_8));
+                } catch (java.io.IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            return false;
+        }));   // 52 is tidied now (not active any more); 54 finished in between and keeps its files
+        assertTrue(new File(racing, DataExtract.SPECIMENS).exists());
+        assertEquals("[]", Arrays.toString(running.list()));
+    }
+
+    /** Review L5 and L10: the disk limit, and a note that could forge a line of admin.log. */
+    public void testTheDiskLimitAndTheNoteOnOneLine() throws Exception {
+        assertEquals("for Jack fake line of the log x", DataExtractJob.cleanNote(" for Jack\r\nfake line\tof the log\u0000 x "));
+        assertEquals("", DataExtractJob.cleanNote(null));
+        assertEquals("plain", DataExtractJob.cleanNote("plain"));
+        finished(LocalDate.of(2026, 11, 10), 61, true);
+        long used = DataExtractFiles.totalBytes(root);
+        assertTrue(used > 0 && used < 1000);
+        assertNull(DataExtractJob.diskRefusal(root, 1));
+        assertNull("a root that does not exist yet", DataExtractJob.diskRefusal(new File(root, "not/yet"), 1));
+        String noSpace = DataExtractJob.diskRefusal(root, Long.MAX_VALUE);
+        assertTrue(noSpace, noSpace.startsWith("The server has less than "));
+        // the extracts over their limit (a file of that length that takes no room on the disk)
+        File big = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 62);
+        try (java.io.RandomAccessFile f = new java.io.RandomAccessFile(new File(big, DataExtract.SPECIMENS + DataExtract.PART), "rw")) {
+            f.setLength(DataExtractFiles.MAX_TOTAL_BYTES);
+        }
+        assertTrue(DataExtractFiles.totalBytes(root) >= DataExtractFiles.MAX_TOTAL_BYTES);
+        String over = DataExtractJob.diskRefusal(root, 1);
+        assertTrue(over, over.startsWith("The extracts kept on the server use 5,120 MB (the limit is 5,120 MB). Delete one"));
+        DataExtractFiles.delete(big);
+        assertNull(DataExtractJob.diskRefusal(root, 1));
+        assertEquals("caf" + (char) 0xe9, DataExtract.unhex("636166C3A9"));
+        assertEquals("", DataExtract.unhex(""));
+    }
+
     // ------------------------------------------------------------------ the pages
 
     public void testTheJobResultSaysVerifiedOrNotAndEscapes() {
@@ -484,6 +673,11 @@ public class DataExtractTest extends TestCase {
         String bad = DataExtractJob.resultHtml(56, different, "", "https://x.org");
         assertTrue(bad, bad.startsWith("<p id=\"extract-check\" data-verified=\"false\"><span class=\"aw-bad\">NOT VERIFIED</span> 5 specimens were written"));
         assertTrue(bad, bad.contains("Do not send these files: start the extract again."));
+        assertFalse("no zip of an extract that is not verified", bad.contains("all.zip"));
+        assertTrue(bad, bad.contains("file=specimens.csv.gz\">specimens.csv.gz</a>: <b>NOT VERIFIED, do not send</b>"));
+        // review M3: a requested country without specimens and the old names included are said on the page
+        assertTrue(html, html.contains("<p class=\"aw-warn\" id=\"extract-empty\">AntWeb has no specimen for: <b>Côte d&#39;Ivoire</b>."));
+        assertTrue(html, html.contains("Specimens still filed under an old country name are included: U.S.A. (now United States), USA (now United States). Specimens filed that way: 7."));
         assertFalse(bad, bad.contains("extract-note"));
 
         // a very long manifest text is cut at a line end and still fits the job's result (60,000 bytes)
@@ -524,7 +718,7 @@ public class DataExtractTest extends TestCase {
         DataExtractFiles.writeRequest(running, 43, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Mexico"), false, ""));
         File failed = DataExtractFiles.create(root, LocalDate.of(2026, 11, 10), 44);
         DataExtractFiles.writeRequest(failed, 44, 7, "bfisher", "", new DataExtract.Request(Arrays.asList("Canada"), true, ""));
-        String html = DataExtractAction.listHtml(DataExtractFiles.list(root), 43, "https://x.org");
+        String html = DataExtractAction.listHtml(DataExtractFiles.list(root), 43, "<input type=\"hidden\" name=\"_csrf\" value=\"t\">", "https://x.org");
         assertTrue(html, html.contains("<h2>Extracts on the server (4)</h2>"));
         assertTrue(html, html.contains("<tr id=\"extract-41\"><td>2026-11-09</td><td>bfisher</td><td>United States, Canada; with islands; species list of Nearctic</td>"
             + "<td>for the &quot;Nearctic&quot; &lt;team&gt;</td><td class=\"aw-num\">1,234</td><td><span class=\"aw-ok\">VERIFIED</span></td>"));
@@ -534,6 +728,15 @@ public class DataExtractTest extends TestCase {
         assertTrue(html, html.contains("<td>Canada; with islands</td><td></td><td class=\"aw-num\"></td><td><span class=\"aw-bad\">did not finish</span></td><td></td>"));
         assertFalse(html, html.contains("job=43&amp;file") || html.contains("job=44&amp;file"));
         assertTrue(html, html.contains("href=\"https://x.org/jobStatus.do?id=44\">44</a>"));
-        assertTrue(DataExtractAction.listHtml(new ArrayList<DataExtractFiles.Entry>(), 0, "").contains("None yet."));
+        assertTrue(DataExtractAction.listHtml(new ArrayList<DataExtractFiles.Entry>(), 0, "", "").contains("None yet."));
+        // review L2: an extract that is not verified has no zip to send, and every link says so
+        String row42 = html.split("<tr id=\"extract-42\">", 2)[1].split("</tr>", 2)[0];
+        assertFalse(row42, row42.contains("all.zip") || row42.contains("the file to send"));
+        assertTrue(row42, row42.contains("file=specimens.csv.gz\">specimens.csv.gz</a>: <b>NOT VERIFIED, do not send</b>"));
+        // a Delete button (POST with the form token) for every extract but the one in progress
+        assertTrue(html, html.contains("<form class=\"aw-inline-form\" method=\"post\" action=\"https://x.org/dataExtract.do\"><input type=\"hidden\" name=\"_csrf\" value=\"t\">"
+            + "<input type=\"hidden\" name=\"op\" value=\"delete\"><input type=\"hidden\" name=\"job\" value=\"41\">"));
+        assertFalse(html, html.contains("name=\"job\" value=\"43\""));
+        assertTrue(html, html.contains("name=\"job\" value=\"44\""));
     }
 }

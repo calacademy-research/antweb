@@ -51,11 +51,14 @@ import org.calacademy.antweb.util.UtilDataAction;
  *                          the background job (DataExtractJob); the answer is a redirect to the job's page
  *                          (jobStatus.do?id=N). With a wrong name, or while it cannot start, the form comes back
  *                          with a sentence saying why and nothing is started.
+ *   POST op=delete, job=N  (form token) removes that extract's files from the server (not one that is running).
+ * A GET never starts or deletes anything, whatever its parameters.
  *
  * Not started while the daily update or another data job runs (the check utilData.do makes for data jobs), while
- * another extract waits or runs, or when the server has less than 1 GB of free disk. Reads the database only; the
- * files go to a folder that is never served (DataExtractFiles) and are downloaded through dataExtractFile.do.
- * Extracts older than 30 days are removed here and after each daily update.
+ * another extract waits or runs, when the server has less than 1 GB of free disk, or when the extracts kept use
+ * more than 5 GB. Reads the database only; the files go to a folder outside the web application (DataExtractFiles)
+ * and are downloaded through dataExtractFile.do. Extracts older than 30 days and half-written ones are removed
+ * here and after each daily update.
  *
  * Tests: tests/e2e/test_data_extract.py. Docs: docs/guides/data-extract.md.
  */
@@ -77,7 +80,7 @@ public final class DataExtractAction extends AntwebAction {
 
         String countriesText = param(request, "countries", 4000);
         String bioregion = param(request, "bioregion", 64);
-        String note = param(request, "note", 1000);
+        String note = DataExtractJob.cleanNote(param(request, "note", 1000));
         boolean isPost = HttpUtil.isPost(request);
         boolean islands = !isPost || "on".equals(request.getParameter("islands"));   // on unless the box was cleared
         String message = null;
@@ -92,7 +95,11 @@ public final class DataExtractAction extends AntwebAction {
         try {
             DataSource dataSource = getDataSource(request, "conPool");
             connection = DBUtil.getConnection(dataSource, dbMethodName);
-            if (isPost) {
+            if (isPost && "delete".equals(request.getParameter("op"))) {
+                message = delete(root, request.getParameter("job"), login);
+                countriesText = "";
+                note = "";
+            } else if (isPost) {
                 try {
                     DataExtract.Request extract = check(connection, countriesText, picked, islands, bioregion, note);
                     String refused = cannotStartNow(root);
@@ -104,17 +111,14 @@ public final class DataExtractAction extends AntwebAction {
                         + (submitted.isNew ? "" : " (one was already waiting or running)"));
                     return new ActionForward("/jobStatus.do?id=" + submitted.job.getId() + (submitted.isNew ? "" : "&already=1"), true);
                 } catch (DataExtract.BadRequest e) {
-                    message = e.getMessage();
+                    message = e.getMessage() + " No extract was started.";
                 }
             }
-            BackgroundJobs.Job active = DataExtractJob.active();
-            List<DataExtractFiles.Entry> extracts = DataExtractFiles.list(root);
             // An extract the server stopped in the middle of (a restart) leaves a half-written file: removed here.
-            for (DataExtractFiles.Entry e : extracts) {
-                if (!e.isFinished() && (active == null || active.getId() != e.jobId)) DataExtractFiles.deleteData(e.folder);
-            }
+            DataExtractFiles.removeUnfinished(root, DataExtractJob::isActive);
+            BackgroundJobs.Job active = DataExtractJob.active();
             html.append(page(request, message, countriesText, picked, bioregion, islands, note,
-                countries(connection), bioregions(connection), extracts, active, AntwebProps.getDomainApp()));
+                countries(connection), bioregions(connection), DataExtractFiles.list(root), active, AntwebProps.getDomainApp()));
         } catch (SQLException e) {
             s_log.error("execute() e:" + e);
             html.append("<div class=\"aw-msg\">Database error; nothing was started: ").append(Html.esc(e.getMessage())).append("</div>");
@@ -159,13 +163,20 @@ public final class DataExtractAction extends AntwebAction {
             return "Another extract is " + (active.getStatus() == BackgroundJobs.Status.running ? "running" : "waiting to start")
                 + " (job " + active.getId() + ", " + active.getTitle() + "). Extracts run one at a time: please wait until it has finished.";
         }
-        File disk = root;
-        while (disk != null && !disk.exists()) disk = disk.getParentFile();
-        if (disk != null && disk.getTotalSpace() > 0 && disk.getUsableSpace() < DataExtractJob.MIN_FREE_BYTES) {
-            return "The server has less than 1 GB of free disk space (" + String.format("%,d", disk.getUsableSpace() / 1024 / 1024)
-                + " MB). No extract was started.";
-        }
-        return null;
+        return DataExtractJob.diskRefusal(root, DataExtractJob.MIN_FREE_BYTES);
+    }
+
+    /** Removes the files of one extract (the Delete button); returns the sentence shown afterwards. */
+    static String delete(File root, String jobParam, Login login) {
+        int jobId = 0;
+        if (jobParam != null && jobParam.trim().matches("\\d{1,9}")) jobId = Integer.parseInt(jobParam.trim());
+        File folder = DataExtractFiles.find(root, jobId);
+        if (folder == null) return "There is no extract with that number on the server.";
+        if (DataExtractJob.isActive(jobId)) return "Extract " + jobId + " is still running; it was not deleted.";
+        if (!DataExtractFiles.delete(folder)) return "The files of extract " + jobId + " could not all be removed.";
+        org.calacademy.antweb.util.LogMgr.appendLog("admin.log", org.calacademy.antweb.util.DateUtil.getFormatDateTimeStr()
+            + " data extract files deleted by " + DataExtractJob.cleanNote(login.getName()) + ": job " + jobId);
+        return "The files of extract " + jobId + " were removed from the server. Its job stays listed under " + JobStatusAction.PAGE_TITLE + ".";
     }
 
     /** Country names for the pick list: the valid country rows, by name. */
@@ -206,7 +217,7 @@ public final class DataExtractAction extends AntwebAction {
                        List<DataExtractFiles.Entry> extracts, BackgroundJobs.Job active, String domainApp) {
         StringBuilder h = new StringBuilder(HELP);
         if (message != null) {
-            h.append("<div class=\"aw-msg\" id=\"data-extract-message\"><b>No extract was started.</b> ").append(Html.esc(message)).append("</div>");
+            h.append("<div class=\"aw-msg\" id=\"data-extract-message\">").append(Html.esc(message)).append("</div>");
         }
         if (active != null) {
             h.append("<p class=\"aw-warn\" id=\"data-extract-active\">An extract is ")
@@ -215,7 +226,7 @@ public final class DataExtractAction extends AntwebAction {
              .append(Html.esc(active.getTitle())).append("</a>. Extracts run one at a time.</p>");
         }
         h.append(formHtml(Csrf.field(request), countriesText, picked, bioregion, islands, note, countries, bioregions, domainApp));
-        h.append(listHtml(extracts, active == null ? 0 : active.getId(), domainApp));
+        h.append(listHtml(extracts, active == null ? 0 : active.getId(), Csrf.field(request), domainApp));
         return h.toString();
     }
 
@@ -262,13 +273,13 @@ public final class DataExtractAction extends AntwebAction {
         return String.format("%,d MB", bytes / 1024 / 1024);
     }
 
-    public static String listHtml(List<DataExtractFiles.Entry> extracts, int activeJobId, String domainApp) {
+    public static String listHtml(List<DataExtractFiles.Entry> extracts, int activeJobId, String csrfField, String domainApp) {
         StringBuilder h = new StringBuilder("<div class=\"aw-card\" id=\"data-extract-list\"><h2>Extracts on the server (").append(extracts.size()).append(")</h2>");
         h.append("<p class=\"aw-lead\">Kept for ").append(DataExtractFiles.KEEP_DAYS).append(" days, then removed automatically. Only administrators can download them.</p>");
         if (extracts.isEmpty()) return h.append("<p class=\"aw-note\">None yet.</p></div>").toString();
         long total = 0;
         h.append("<table id=\"data-extract-table\"><tr><th>Date</th><th>Started by</th><th>Countries</th><th>Note</th><th>Specimens</th>"
-            + "<th>Check</th><th>Files</th><th>Job</th></tr>");
+            + "<th>Check</th><th>Files</th><th>Job</th><th></th></tr>");
         for (DataExtractFiles.Entry e : extracts) {
             total += e.bytes;
             String filters = String.join(", ", e.countries) + (e.islands ? "; with islands" : "; without islands")
@@ -280,14 +291,27 @@ public final class DataExtractAction extends AntwebAction {
                 h.append(e.jobId == activeJobId ? "in progress" : "<span class=\"aw-bad\">did not finish</span>");
             } else {
                 h.append(e.verified ? "<span class=\"aw-ok\">VERIFIED</span>" : "<span class=\"aw-bad\">NOT VERIFIED</span> do not send");
+                if (!e.emptyCountries.isEmpty()) {
+                    h.append("<div class=\"aw-warn\">No specimen for: ").append(Html.esc(String.join(", ", e.emptyCountries))).append("</div>");
+                }
             }
             h.append("</td><td>");
             if (!e.files.isEmpty()) {
-                h.append("<ul class=\"aw-links\">").append(DataExtractJob.downloadLinks(e.jobId, e.files, domainApp)).append("</ul>").append(size(e.bytes));
+                h.append("<ul class=\"aw-links\">").append(DataExtractJob.downloadLinks(e.jobId, e.files, Boolean.TRUE.equals(e.verified), domainApp))
+                 .append("</ul>").append(size(e.bytes));
             }
-            h.append("</td><td><a href=\"").append(Html.escAttr(domainApp + "/jobStatus.do?id=" + e.jobId)).append("\">").append(e.jobId).append("</a></td></tr>");
+            h.append("</td><td><a href=\"").append(Html.escAttr(domainApp + "/jobStatus.do?id=" + e.jobId)).append("\">").append(e.jobId).append("</a></td><td>");
+            if (e.jobId != activeJobId) {
+                h.append("<form class=\"aw-inline-form\" method=\"post\" action=\"").append(Html.escAttr(domainApp + "/dataExtract.do")).append("\">")
+                 .append(csrfField).append("<input type=\"hidden\" name=\"op\" value=\"delete\"><input type=\"hidden\" name=\"job\" value=\"")
+                 .append(e.jobId).append("\"><input class=\"aw-btn aw-btn-secondary\" type=\"submit\" value=\"Delete\" aria-label=\"Delete the files of extract ")
+                 .append(e.jobId).append("\"></form>");
+            }
+            h.append("</td></tr>");
         }
-        h.append("</table><p class=\"aw-note\">Together these files use ").append(size(total)).append(" on the server.</p></div>");
+        h.append("</table><p class=\"aw-note\">Together these files use ").append(size(total)).append(" on the server (limit ")
+         .append(size(DataExtractFiles.MAX_TOTAL_BYTES)).append("; above it no new extract starts). Delete removes an extract's files at once;")
+         .append(" its job stays listed under ").append(JobStatusAction.PAGE_TITLE).append(".</p></div>");
         return h.toString();
     }
 }

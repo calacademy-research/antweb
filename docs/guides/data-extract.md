@@ -15,8 +15,8 @@ database.
 
 1. **Countries.** Type the country names as they are written on AntWeb's country pages, separated by commas:
    `United States, Canada, Mexico`. Or open "Or pick from AntWeb's countries" and pick them from the list. Capital
-   letters do not matter. If AntWeb does not know a name (USA, for example), nothing starts and the page tells you
-   which name to correct.
+   letters do not matter. If AntWeb does not know a name, or keeps it only as an old name (USA, for example),
+   nothing starts and the page tells you which name to correct and, for an old name, the valid one.
 2. **Include islands filed under these countries** (ticked unless you clear it). AntWeb treats some islands as
    countries of their own, Hawaii under the United States for example. With the box ticked their specimens are in
    the file, and the manifest names the islands that were included.
@@ -34,11 +34,22 @@ The job's page shows one of two things at the top:
 - **VERIFIED**: the file holds exactly the specimens the database has for these places. This is the extract to send.
 - **NOT VERIFIED** (the job is listed as "Did not complete"): the number of specimens written and the database's
   own count differ. The usual reason is an upload that ran at the same moment. Do not send these files; start the
-  extract again.
+  extract again. There is no zip file for such an extract, every link says "NOT VERIFIED, do not send", and a file
+  you download anyway is saved as `antweb-extract-NOT-VERIFIED-...`.
 
-Below it is the manifest: the countries and islands, the number of specimens in all and by country and by
+Two more things can appear under it:
+
+- **"AntWeb has no specimen for: ..."**: a country you asked for has no specimen at all. The extract is still
+  complete for what AntWeb holds; check that this is the country you meant.
+- **"Specimens still filed under an old country name are included"**: some specimen records still say, for
+  example, USA instead of United States. They belong to the country you asked for, so they are in the file; the
+  manifest names the old names and counts those specimens ("Filed under an outdated country name").
+
+Below that is the manifest: the countries and islands, the number of specimens in all and by country and by
 bioregion, how many have no coordinates, how many have a name AntWeb does not know, how many were red-flagged at
-upload, and a line to cite AntWeb.
+upload, and a line to cite AntWeb. If a country is written in more than one way in the records (Mexico with and
+without an accent, for example), each spelling has its own line and a line names the other spellings; they are all
+in the file.
 
 ## The files
 
@@ -60,7 +71,23 @@ Nothing is left out of `specimens.csv.gz`:
 - red-flagged specimens are in the file; the column `flag` says so.
 
 `specimens.csv.gz` is a compressed CSV file in UTF-8. The collaborator unzips it and opens it in R, Python or a
-spreadsheet (a very large file is too big for Excel).
+spreadsheet (a very large file is too big for Excel). In a spreadsheet, import the columns **as text**: the values
+are written exactly as they are in the database, also when one starts with =, +, - or @, which a spreadsheet would
+otherwise take for a formula. The manifest says the same.
+
+### What leaves AntWeb with the file
+
+The file holds every column of the specimen record. Besides the specimen data shown on the site that includes:
+
+- `other`: every column of the curator's upload file that AntWeb has no column of its own for (on the site only
+  curators see it);
+- `access_group`, `access_login`, `upload_id`: the numbers of the upload group, the login and the upload that
+  loaded the record (numbers only; `group_name` is the group's name);
+- `backup_file_name`, `line_num`: the uploaded file the record came from and its line;
+- `flag`, `issue`: the upload checks (red flag and its reason);
+- the names of collectors and determiners (`collectedby`, `determinedby`), as on the site.
+
+There are no login names, email addresses or passwords in any file, and your note is not in them.
 
 ## Rules
 
@@ -71,9 +98,15 @@ spreadsheet (a very large file is too big for Excel).
   started them, the countries, the note, the number of specimens and VERIFIED or not. After 30 days the files are
   removed automatically; the job stays listed under Uploads and data jobs, so there is a record of who made which
   extract.
-- **Only administrators** can open the page or download a file. The files are not reachable by any web address
-  other than the download links.
-- The server needs 1 GB of free disk space to start an extract.
+- **Delete.** The button at the end of an extract's line removes its files at once (not while it is running). The
+  job stays listed; its download links then answer "not found".
+- **Only administrators** can open the page or download a file. The files are kept outside the website's own
+  folder: no web address leads to them other than the download links.
+- **Disk.** The server needs 1 GB of free disk space to start an extract, and all extracts together may use 5 GB;
+  above that, delete one first. An extract stops by itself if the disk runs low while it is written, or after 50
+  minutes (ask for fewer countries at a time); it then leaves no files.
+- **While an extract runs** the specimens are read a few thousand at a time. A record that changes at that moment
+  is in the file as it was when it was read; if records were added or removed the check says NOT VERIFIED.
 
 ## For developers
 

@@ -12,6 +12,7 @@ Step-by-step procedures for running www.antweb.org and staging.antweb.org. How t
 - **No secrets in commands, chat, docs or the repo.** Database commands read the login from `etc/db.properties` (pattern below); never put a password on a command line. Never `cat` a file in `etc/` that holds a password, key or token (`db`, `api-db`, `mail`, `turnstile`, `taxonworks`).
 - **Avoid 05:00 to 08:00 Pacific on production** for restarts and deploys that restart AntWeb: the nightly sets are running, and a restart stops them.
 - **Write tests never run against production.**
+- **Before a change of a table (ALTER TABLE, an upgrade script): no background job running.** Uploads and data jobs (`jobStatus.do`) must show none Waiting or Running: a change of `specimen` or `taxon` waits for a running upload or data extract, and the site queues behind the waiting change. Start the script with `set session lock_wait_timeout = 5;` so it gives up after 5 seconds instead (then try again later).
 - Deleting or power-cycling a droplet is done only by Brian in the DigitalOcean console. Changing DigitalOcean, Cloudflare, AWS or GitHub settings needs Brian's yes.
 
 Database command pattern (production; on staging use `F=/root/antweb-next/etc/db.properties`):
@@ -100,6 +101,7 @@ Production paths; on staging replace `/root/antweb` with `/root/antweb-next` (or
 | Tomcat files: `catalina.*.log`, `localhost_access_log.*.txt` (180 days), `antweb.log`, `antwebInfo.log`, `detail/` (search, upload, event logs) | `/root/antweb/logs/` | `logMgr.do?action=antwebLog`, `antwebInfoLog` |
 | Data logs: `emails.log` (every mail sent or not sent), `messages.txt` (one short line per message page), `longRequest.log` (requests over 10 seconds), `serverBusy.html`, `cCheck.log` (CPU over 90%), `logrotate.log` | `/root/antweb/logbak/` (container `/usr/local/antweb/log`; rotated as below) | `messages.txt`, `longRequest.log`, `cCheck.log` and `serverBusy.html` through logMgr.do; `emails.log` only on the host |
 | Upload reports (public, linked from group and upload pages) | `/mnt/antweb/web/log/{upload,specimen,worldants,detail}/` | `https://www.antweb.org/web/log/upload/...` |
+| Data extracts made on `dataExtract.do` (not logs: one folder per extract, removed after 30 days, at most 5 GB) | `/root/antweb/logs/extracts/` (container `/usr/local/tomcat/logs/extracts`, outside the web application) | the Data extract page (admin): download, Delete |
 | Caddy access log (JSON) | `/root/antweb/docker/caddy/logs/access.log` | |
 | Restart checker | `/root/antweb/logs/detail/rebootCheck.log` (only restarts and warnings) | |
 | Watchdog | `/var/log/antweb-watchdog.log`; thread dumps in `/root/antweb-watchdog-dumps/` | |
