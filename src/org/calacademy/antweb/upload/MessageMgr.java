@@ -148,6 +148,9 @@ public class MessageMgr {
     //public static final String adm1UpgradeToIsland = "adm1UpgradeToIsland";
     public static final String invalidLatLon = "invalidLatLon";
     public static final String notValidCountries = "notValidCountries";
+    /** 2026-11-10: a country written with other capitals, accents or blanks than AntWeb's name (México): stored as
+     *  AntWeb's name (Mexico), one line per spelling (GeolocaleMgr.getCountrySpelledLike). */
+    public static final String countrySpellingCorrected = "countrySpellingCorrected";
     public static final String unrecognizedColumn = "unrecognizedColumn";
     public static final String invalidColumn = "invalidColumn";
     public static final String notValidAdm1 = "notValidAdm1";
@@ -347,6 +350,7 @@ public class MessageMgr {
       testList.add(new Test(notValidBioregion, STR, "<b>Not valid Antweb Biogeographic Regions</b> "));
       //testList.add(new Test(adm1UpgradeToIsland, STR, "<b>Adm1 upgraded to Island Country</b>"));
       testList.add(new Test(notValidCountries, STR, "<b>Not Antweb valid countries</b>"));
+      testList.add(new Test(countrySpellingCorrected, SET, "<b>Country spelling corrected <font color=green>(uploaded)</font></b>"));
       testList.add(new Test(invalidLatLon, STR, "<b>Invalid lat/lon <font color=red>(not uploaded)</font></b>"));
       testList.add(new Test(unrecognizedColumn, STR, "<b>" + COLUMNS_IGNORED_HEADING + "</b>"));
       testList.add(new Test(invalidColumn, SET, "<b>Invalid Column Count <font color=red>(not uploaded)</font></b>"));
@@ -570,6 +574,7 @@ public class MessageMgr {
         genusConceptReplaced,                                       // old genus concept (GenusConceptRule)
         preferredSubfamilyForGenusReplaced, invalidSubfamilyForGenusReplaced,
         specimenIdSpacesRemoved, codeQuoteReplaced,                 // code changed
+        countrySpellingCorrected,                                   // country stored under AntWeb's spelling
         invalidDateCollectedStart, invalidDateCollectedEnd, invalidDateDetermined))); // uploaded without the date
 
     /*

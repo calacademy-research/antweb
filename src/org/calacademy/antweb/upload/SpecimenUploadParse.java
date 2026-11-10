@@ -24,7 +24,8 @@ import java.util.*;
  * genera), maps country, adm1 and bioregion to AntWeb's names, cleans locality and collection codes, and
  * red-flags coordinates outside the country or adm1. Refusals and corrections go to the report (MessageMgr).
  * Docs: docs/flows/specimen-upload.md (sections 2.1, 3 step 7, 3b).
- * Tests: UploadNightlyDecisionsTest, SubfamilyFromGenusTest, LocalityCodePlainTest, UploadDecisions1028Test.
+ * Tests: UploadNightlyDecisionsTest, SubfamilyFromGenusTest, LocalityCodePlainTest, UploadDecisions1028Test,
+ * CountrySpellingTest.
  */
 public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
 
@@ -613,6 +614,15 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
             }
             if (country != null) {
 				validCountry = GeolocaleMgr.getValidCountry(country);  // May change, for instance USA to United States.
+				if (validCountry == null) {
+				  // 2026-11-10: the same country written with other capitals, accents or blanks (México, MEXICO) is stored
+				  // under AntWeb's name, as tools/place/place_fix.py does for the specimens already stored; without this
+				  // the next upload of the file brought the other spelling back. The report lists each change.
+				  validCountry = GeolocaleMgr.getCountrySpelledLike(country);
+				  if (validCountry != null) {
+				    getMessageMgr().addToMessages(MessageMgr.countrySpellingCorrected, countrySpellingLine(country, validCountry.getName()));
+				  }
+				}
 				if (validCountry != null) {
 				  country = validCountry.getName();  
 				  String region = validCountry.getRegion();
@@ -909,6 +919,12 @@ public abstract class SpecimenUploadParse extends SpecimenUploadProcess {
         Float lat = (Float) latObj;
         Float lon = (Float) lonObj;
         return new Coordinate(lon, lat);
+    }
+
+    /** The upload report's line for a country stored under AntWeb's spelling (GeolocaleMgr.getCountrySpelledLike):
+     *  "México -> Mexico", HTML escaped; the report page shows the two as "In your file" and "AntWeb". */
+    public static String countrySpellingLine(String uploaded, String stored) {
+        return Html.esc(uploaded + " -> " + stored);
     }
 
     /** A code with a double quote is listed in the upload report with the code it is stored as (UploadUtil.quotesToDash). */
