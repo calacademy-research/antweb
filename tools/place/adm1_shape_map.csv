@@ -1,48 +1,71 @@
-# Shapes of the boundary files (geoBoundaries gbOpen) whose name is not the name of the AntWeb state they lie in.
+# What the data cannot settle about the shapes of the boundary files (geoBoundaries gbOpen) and AntWeb's states.
 # Read by tools/place/place_corrections.py. A line starting with # is a note.
 #
-# country: AntWeb's valid country. level: the level of the boundary file (ADM1, ADM2 ...). shape: the file's
-# shapeName. antweb_state: AntWeb's valid state the shape lies in (several shapes may lie in one state).
-# A row is used only when AntWeb has that state as a valid state of the country; the report of each run lists
-# the rows used. A shape with several rows takes the first whose state AntWeb has.
-# Each run writes mapping_suggestions.csv with the same first four columns: for each shape that is no AntWeb
-# state, the AntWeb states whose name is most like it, with a score and the specimens in the shape. A line a
-# person approves is pasted here (the columns score, specimens and note may stay: they are not read).
-# A shape name is written as the report shows it (a name spoilt in the boundary file is shown put right).
+# The tool tests each shape against AntWeb's own specimens that have a state and coordinates: a shape whose
+# specimens are filed under one state, and that holds that state's specimens, is that state, whatever the two
+# names are (mapping_tested.csv of each run). This file is for decisions the specimens cannot make. A row here
+# wins over the test and over the names.
 #
-# Madagascar. AntWeb's states are the six provinces (faritany): Antananarivo, Antsiranana, Fianarantsoa,
-# Mahajanga, Toamasina, Toliara. The boundary file's ADM1 has the 22 regions (faritra) the provinces were divided
-# into in 2004 (Loi n° 2004-001 relative aux Régions); each region lies wholly in one province. Source of the
-# table: the "Province" column of https://en.wikipedia.org/wiki/Regions_of_Madagascar, read 2026-11-10, every
-# row checked. Matsiatra Ambony is Haute Matsiatra. The file has Vatovavy-Fitovinany undivided (divided in 2021
-# into Vatovavy and Fitovinany, both in Fianarantsoa); Ambatosoa (2023, from the north of Analanjirofo) is in
-# Toamasina. The last three rows are for a later file.
+# Three kinds of line.
+#
+# 1. country,level,shape,antweb_state[,new]
+#    country: AntWeb's valid country. level: the level of the boundary file (ADM1, ADM2 ...). shape: the file's
+#    shapeName, as the report shows it (a name spoilt in the boundary file is shown put right). antweb_state:
+#    AntWeb's valid state the shape lies in (several shapes may lie in one state). A row is used only when AntWeb
+#    has that state as a valid state of the country, unless the fifth cell is the word new: then the state is
+#    one AntWeb does not have yet, the proposals name it and say "state to add in the Geolocale Manager first",
+#    and the report lists it under "States to add". A shape with several rows takes the first whose state
+#    AntWeb has. Lines of mapping_tested.csv and mapping_suggestions.csv have the same first four cells and can
+#    be pasted here (their other cells are not read, unless the fifth is the word new).
+# 2. convert,country,coarser unit,coarser unit,...
+#    AntWeb has two sets of valid states for the country, a coarser one that is given up and the one the
+#    boundary file has. A specimen whose stored state is one of the coarser units named here, and whose
+#    coordinates lie inside one shape, gets a correction from the coarser unit to the state of the shape. The
+#    coarser units are left out of the test above.
+# 3. within,country,state,coarser unit
+#    The coarser unit a state belongs to. Used for one check only: whether the stored coarser unit of a
+#    converted specimen is the one its coordinates' state belongs to. If not: "check the coordinates".
+#
+# Madagascar. AntWeb has the six provinces (faritany: Antananarivo, Antsiranana, Fianarantsoa, Mahajanga,
+# Toamasina, Toliara) and the 22 regions (faritra) they were divided into in 2004 (Loi n° 2004-001 relative aux
+# Régions) as valid states. The provinces were used only because nobody knew how to convert to the regions; with
+# coordinates and shapes the specimens are converted to the regions (Brian Fisher, 2026-11-10). The boundary
+# file's ADM1 has the 22 regions under AntWeb's names (a hyphen or not makes no difference), but for one: the
+# file's Matsiatra Ambony is AntWeb's Haute Matsiatra. Each region lies wholly in one province. Source of the
+# "within" lines: the "Province" column of https://en.wikipedia.org/wiki/Regions_of_Madagascar, read 2026-11-10,
+# every row checked. The file has Vatovavy-Fitovinany undivided (divided in 2021).
 country,level,shape,antweb_state
-Madagascar,ADM1,Analamanga,Antananarivo
-Madagascar,ADM1,Bongolava,Antananarivo
-Madagascar,ADM1,Itasy,Antananarivo
-Madagascar,ADM1,Vakinankaratra,Antananarivo
-Madagascar,ADM1,Diana,Antsiranana
-Madagascar,ADM1,Sava,Antsiranana
-Madagascar,ADM1,Amoron'i Mania,Fianarantsoa
-Madagascar,ADM1,Atsimo-Atsinanana,Fianarantsoa
-Madagascar,ADM1,Matsiatra Ambony,Fianarantsoa
-Madagascar,ADM1,Ihorombe,Fianarantsoa
-Madagascar,ADM1,Vatovavy-Fitovinany,Fianarantsoa
-Madagascar,ADM1,Betsiboka,Mahajanga
-Madagascar,ADM1,Boeny,Mahajanga
-Madagascar,ADM1,Melaky,Mahajanga
-Madagascar,ADM1,Sofia,Mahajanga
-Madagascar,ADM1,Alaotra-Mangoro,Toamasina
-Madagascar,ADM1,Analanjirofo,Toamasina
-Madagascar,ADM1,Atsinanana,Toamasina
-Madagascar,ADM1,Androy,Toliara
-Madagascar,ADM1,Anosy,Toliara
-Madagascar,ADM1,Atsimo-Andrefana,Toliara
-Madagascar,ADM1,Menabe,Toliara
-Madagascar,ADM1,Vatovavy,Fianarantsoa
-Madagascar,ADM1,Fitovinany,Fianarantsoa
-Madagascar,ADM1,Ambatosoa,Toamasina
+Madagascar,ADM1,Matsiatra Ambony,Haute Matsiatra
+convert,Madagascar,Antananarivo,Antsiranana,Fianarantsoa,Mahajanga,Toamasina,Toliara
+within,Madagascar,Analamanga,Antananarivo
+within,Madagascar,Bongolava,Antananarivo
+within,Madagascar,Itasy,Antananarivo
+within,Madagascar,Vakinankaratra,Antananarivo
+within,Madagascar,Diana,Antsiranana
+within,Madagascar,Sava,Antsiranana
+within,Madagascar,Amoron'i Mania,Fianarantsoa
+within,Madagascar,Atsimo-Atsinanana,Fianarantsoa
+within,Madagascar,Haute Matsiatra,Fianarantsoa
+within,Madagascar,Ihorombe,Fianarantsoa
+within,Madagascar,Vatovavy Fitovinany,Fianarantsoa
+within,Madagascar,Betsiboka,Mahajanga
+within,Madagascar,Boeny,Mahajanga
+within,Madagascar,Melaky,Mahajanga
+within,Madagascar,Sofia,Mahajanga
+within,Madagascar,Alaotra Mangoro,Toamasina
+within,Madagascar,Analanjirofo,Toamasina
+within,Madagascar,Atsinanana,Toamasina
+within,Madagascar,Androy,Toliara
+within,Madagascar,Anosy,Toliara
+within,Madagascar,Atsimo-Andrefana,Toliara
+within,Madagascar,Menabe,Toliara
+# Seychelles (Brian Fisher, 2026-11-10). The shape La Digue is AntWeb's state Inner Islands. The shape Other
+# Islands is the state Outer Islands, which AntWeb does not have yet. The two shapes have these names at the
+# second and the third level of the file (read 2026-11-10); the row of the level the tool uses counts.
+Seychelles,ADM2,La Digue,Inner Islands
+Seychelles,ADM3,La Digue,Inner Islands
+Seychelles,ADM2,Other Islands,Outer Islands,new
+Seychelles,ADM3,Other Islands,Outer Islands,new
 # Mexico. The file gives four states their long official names, and the capital its name before 2016.
 Mexico,ADM1,Coahuila de Zaragoza,Coahuila
 Mexico,ADM1,Michoacan de Ocampo,Michoacán
