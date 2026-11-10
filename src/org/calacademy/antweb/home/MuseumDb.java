@@ -290,10 +290,29 @@ public class MuseumDb extends AntwebDb {
     }
 
     public void populate() throws SQLException {
+      java.util.Arrays.fill(populateMillis, 0);
+      int museums = 0;
       for (Museum museum : MuseumMgr.getMuseums()) {
         populate(museum.getCode());
+        ++museums;
       }
-      LogMgr.appendLog("compute.log", "  Museums populated", true);   
+      // The time of each part over all museums (2026-11-10, Brian Fisher: a faster daily update; production 11-10:
+      // 5 minutes, and the line said only that it was done).
+      StringBuilder times = new StringBuilder();
+      for (int i = 0; i < POPULATE_PARTS.length; i++) {
+        times.append(", ").append(POPULATE_PARTS[i]).append(" ").append(populateMillis[i] / 1000).append(" s");
+      }
+      LogMgr.appendLog("compute.log", "  Museums populated (" + museums + " museums" + times + ")", true);
+    }
+
+    /** The parts of populate(code), timed over all museums by populate(). */
+    static final String[] POPULATE_PARTS = {"specimen.museum", "museum numbers", "species rows", "synonym rows", "higher taxa", "counts", "totals"};
+    private final long[] populateMillis = new long[POPULATE_PARTS.length];
+
+    private long lap(int part, long since) {
+      long now = System.currentTimeMillis();
+      populateMillis[part] += now - since;
+      return now;
     }
 
     private void freshStart(String code) throws SQLException {
@@ -303,29 +322,37 @@ public class MuseumDb extends AntwebDb {
 
     public void populate(String code) throws SQLException {
 
+      long t = System.currentTimeMillis();
       freshStart(code);
       // Set the specimen.museum field to be the museum code. Prepare.
       populateSpecimenMuseum(code);
+      t = lap(0, t);
       
       // Populate Museum table with data from specimen table.
       populateFromSpecimenData(code);
+      t = lap(1, t);
 
       // Populate the Museum_taxon table.
       populateSpecies(code);
+      t = lap(2, t);
 
       // Rows of synonyms renamed to (merged into) their current valid name before the higher taxa are added and the
       // list is counted (2026-10-22; was nightly set 3's updateTaxonSets, after the totals: the museum AFRC had 14 valid
       // species rows its Species number did not count). The counts take the synonyms' specimens (Museum.getCountSpecimensQuery).
       new MuseumTaxonDb(getConnection()).renameToValid(PlaceTotals.MUSEUM, code);
+      t = lap(3, t);
 
       populateHigherTaxa(code);
+      t = lap(4, t);
       
       // Crawl the Museum_taxon table to find the counts.
       MuseumTaxonCountDb MuseumTaxonCountDb = new MuseumTaxonCountDb(getConnection());
       MuseumTaxonCountDb.childrenCountCrawl(code);
+      t = lap(5, t);
 
       // update museum fields (title, image_count, subfamily_count, genus_count, species_count).                    
       finish(code); 
+      lap(6, t);
      // A.log("populate() code:" + code + " after finish");
     }
 

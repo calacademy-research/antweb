@@ -145,6 +145,23 @@ compute.log: "Place list totals counted: N places in S s (M recounted, K unchang
 | `verifyProjTaxon` | `ProjTaxonDb.verifyProjTaxon()` (line 472) | deletes genus rows from project lists (not `worldants`) that have no species in that project |
 | caches | `AntwebMgr.populate(connection, true)` | reloads every in-memory manager (taxa, geolocales, projects, museums, groups, ...); pages show "initializing" meanwhile; also increments the specimen upload id |
 
+### Where the time goes (lines with times, 2026-11-10)
+
+Three compute.log lines say how long their parts took, so a slow step can be read from the log (Brian Fisher,
+2026-11-10: a faster daily update; production that day: museums 5 minutes, image counts 8, place image counts 13.6):
+
+- "Museums populated (N museums, specimen.museum S s, museum numbers S s, species rows S s, synonym rows S s, higher
+  taxa S s, counts S s, totals S s)": the parts of `MuseumDb.populate(code)` over all museums. `specimen.museum` is, per
+  museum, `update specimen set museum = null where museum = X` and `update specimen set museum = X where ownedBy regexp
+  ...` (no index serves the regexp: the specimen table is read once per museum).
+- "Image Count Crawl completed (specimens S s, taxa S s, roll-up S s, geolocale lists S s, project lists S s, bioregion
+  lists S s, museum lists S s)": `ImageCountDb.imageCountCrawls`. The list parts run one query per place and one UPDATE
+  per list row with images.
+- "Place image counts: geolocale N places with images in S s (islands S s, countries S s, adm1s S s, regions and
+  subregions S s); ...": the four sources of the geolocale kind (`PlaceImageCountDb.sources`), two grouped queries each.
+
+The lines still begin with the same words (the tests and the morning check look for the beginning).
+
 ## 5. Restart logic
 
 | Piece | Where | Rule |

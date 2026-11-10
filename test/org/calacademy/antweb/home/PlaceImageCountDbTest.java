@@ -148,6 +148,9 @@ public class PlaceImageCountDbTest extends TestCase {
         PlaceImageCountDb db = new PlaceImageCountDb(connection);
         String line = db.updateAll();
         assertTrue(line, line.startsWith("Place image counts:"));
+        // 2026-11-10: the geolocale part says how long each of its sources took (production: 639 s, which one?)
+        assertTrue(line, line.matches("Place image counts: geolocale \\d+ places with images in [0-9.]+ s \\(islands [0-9.]+ s, countries [0-9.]+ s,"
+            + " adm1s [0-9.]+ s, regions and subregions [0-9.]+ s\\); bioregion \\d+ places with images in [0-9.]+ s; museum .* s; project .* s;"));
 
         PlaceImageCountDb.PlaceImages p = db.read(PlaceImageCountDb.GEOLOCALE, "7");
         assertNotNull(p);
