@@ -104,7 +104,8 @@ def test_confirm_page_with_an_unusable_token(query):
     assert_ok(r)
     assert title(r) == "AntWeb - Your API key", title(r)
     assert "This link is not valid." in r.text
-    assert 'name="token"' not in r.text and "aw_" not in r.text
+    # no button and no key (a key is "aw_" and 32 characters; the header's own ids start with aw_ too)
+    assert 'name="token"' not in r.text and not re.search(r"aw_[A-Za-z0-9_-]{20,}", r.text)
     assert "/apiKey.do" in r.text
     assert "no-store" in r.headers.get("Cache-Control", ""), r.headers.get("Cache-Control")
     assert r.headers.get("Referrer-Policy") == "no-referrer", r.headers.get("Referrer-Policy")

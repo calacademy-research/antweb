@@ -125,7 +125,7 @@ def test_daily_check():
 
     def boom():
         raise OSError("Tunnel connection failed: 403 Forbidden")
-    # running: closed, also with --nightly-checked
+    # running: closed, also with --daily-update-checked
     assert gate.daily_check(lambda: _json(running), False)[0] is False
     assert gate.daily_check(lambda: _json(running), True)[0] is False
     assert gate.daily_check(lambda: _json(ok), False)[0] is True
@@ -135,10 +135,10 @@ def test_daily_check():
     ok_, text = gate.daily_check(lambda: (403, {"cf-mitigated": "challenge"}, ""), False)
     assert ok_ is False and gate.UNKNOWN_DAILY in text
     ok_, text = gate.daily_check(boom, True)
-    assert ok_ is True and gate.UNKNOWN_DAILY in text and "--nightly-checked" in text
+    assert ok_ is True and gate.UNKNOWN_DAILY in text and "--daily-update-checked" in text
     # user wording: "daily update", never "nightly" in what check 8 says (the flag's name aside)
     for fetch, by_hand in ((lambda: _json(running), False), (lambda: _json(ok), False), (boom, False)):
-        assert "nightly" not in gate.daily_check(fetch, by_hand)[1].replace("--nightly-checked", "")
+        assert "nightly" not in gate.daily_check(fetch, by_hand)[1].replace("--daily-update-checked", "")
 
 
 if __name__ == "__main__":

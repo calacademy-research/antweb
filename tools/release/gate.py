@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Release gate: may this pull request be merged to master (which deploys production)?
 
-    python3 tools/release/gate.py PR_NUMBER [--nightly-checked] [--no-review "reason"]
+    python3 tools/release/gate.py PR_NUMBER [--nightly-checked] [--daily-update-checked] [--no-review "reason"]
 
 Prints one line per check and then GATE OPEN or GATE CLOSED (exit 0 or 1). Claude runs it before every merge
 and pastes the result into the pull request. The checks (decided by Brian Fisher, 2026-11-05; docs in
@@ -19,7 +19,7 @@ tools/release/README.md):
  7. rollback  The PR text has a "Rollback:" line.
  8. daily     The daily update is not running on production now (dailyUpdate.do?format=json, the latest run's state).
               When the page cannot be read (Cloudflare challenge, no network, unexpected answer) the check fails as
-              "unknown - check dailyUpdate.do by hand"; --nightly-checked (the page was read by hand) lets it pass.
+              "unknown - check dailyUpdate.do by hand"; --daily-update-checked (the page was read by hand) lets it pass.
 
 Read-only: it only reads the GitHub API (through the gh command line tool), the repository, and one GET of the
 production daily update status (no sign-in).
@@ -158,8 +158,8 @@ def daily_check(fetch, checked_by_hand):
     if state == "not running":
         return True, detail
     if checked_by_hand:
-        return True, f"{UNKNOWN_DAILY} ({detail}); passed with --nightly-checked (read by hand)"
-    return False, f"{UNKNOWN_DAILY} ({detail}); when it is not running, rerun with --nightly-checked"
+        return True, f"{UNKNOWN_DAILY} ({detail}); passed with --daily-update-checked (read by hand)"
+    return False, f"{UNKNOWN_DAILY} ({detail}); when it is not running, rerun with --daily-update-checked"
 
 
 def has_rollback(body):
@@ -284,6 +284,8 @@ def full_e2e_run(sha):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("pr", type=int)
+    ap.add_argument("--daily-update-checked", action="store_true",
+                    help="dailyUpdate.do on production was read by hand: the daily update is not running (check 8)")
     ap.add_argument("--nightly-checked", action="store_true",
                     help="the morning compute.log and morning tests were read for this commit (check 4); also: "
                          "dailyUpdate.do was read by hand and the daily update is not running (check 8)")
@@ -346,7 +348,7 @@ def main(argv=None):
     check(7, "rollback", has_rollback(pr.get("body")), "Rollback: line found" if has_rollback(pr.get("body"))
           else "no 'Rollback:' line in the PR text")
 
-    check(8, "daily", *daily_check(fetch_daily_update, args.nightly_checked))
+    check(8, "daily", *daily_check(fetch_daily_update, args.daily_update_checked))
 
     ok = all(results)
     print("GATE OPEN" if ok else "GATE CLOSED")

@@ -92,7 +92,7 @@ Decisions by Brian Fisher, 2026-11-08. The keyed API is **v4** at `https://www.a
 ### Keys
 
 - Sent only in the header `X-API-Key`. A key in the web address (a parameter named key, apiKey, api_key, X-API-Key, token, or any value that looks like `aw_...`) is refused with HTTP 400 "Send your API key in the X-API-Key header, never in the web address ...", without repeating it.
-- Format `aw_` and 40 random characters (`api_keys.new_key()`, 240 bits). Stored only as SHA-256 in `api_key.key_hash`, with a display prefix (first 7 characters) in `api_key.prefix`. Accepted only with `status = 'active'`.
+- Format `aw_` and random URL-safe characters: 32 for keys from the registration page (`ApiKeys.newKey()`, 192 bits), 40 from `api_keys.new_key()` (240 bits); the API accepts 20 to 80 (`api_keys.KEY_RE`). Stored only as SHA-256 in `api_key.key_hash`, with a display prefix (first 7 characters) in `api_key.prefix`. Accepted only with `status = 'active'`.
 - Unknown, malformed, pending or revoked key: HTTP 401 `{"error": "This API key is not valid. Get a free key at https://www.antweb.org/apiKey.do."}`.
 - Never written to a log, an error or a reply: the inner v3.1 request carries no key header, nothing prints request headers, errors print the exception type and message only, and Caddy drops the header from its log (above). `apiKey.do` (the registration form) is PR 4.
 
