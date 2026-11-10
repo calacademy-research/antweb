@@ -53,7 +53,7 @@ public class UtilDataAction extends AntwebAction {
         "generateGeolocaleTaxaFromSpecimens", "geolocaleCountCrawl", "geolocaleTaxonFix",
         "fixGeolocaleTaxonParentage", "updateGeolocaleParentHierarchy",
         "projectCountCrawl", "populateMuseum", "populateBioregion", "updateTaxonSets", "crawlForType",
-        "imageCountCrawl", "placeImageCounts", "placeGenusCuration", "placeViewTotals", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
+        "imageCountCrawl", "placeImageCounts", "placeGenusCuration", "placeViewTotals", "imagingProgress", "deleteConflictedDefaultImages", "genObjectMaps", "cleanupSpeciesListProxyRecords",
         "verifyProjTaxon", "regenerateAllAntweb", "runCountCrawls", "countReport",
         "genGoogleMapFunction", "delGoogleMapFunction", "genGroupObjectMaps",
         "calcCaste", "setIsRestart", "siteWarning", "genRecentContent");
@@ -599,6 +599,20 @@ public class UtilDataAction extends AntwebAction {
                     s_log.error("set4 populateStatistics() e:" + e);
                     message += " statistics not written (" + e + ")";
                 }
+                // The imaging progress page (Brian Fisher, 2026-11-08; ImagingProgressDb, imagingProgress.do): after the
+                // statistics row, so its headline and the home page's species imaged are counted from the same data. Its
+                // own step of the daily update and its own try: a failure costs that page's numbers, never the rest of set 4.
+                DailyUpdate.start("imagingProgress");
+                try {
+                    connection.commit();
+                    message += " " + doAction("imagingProgress", form, accessLogin, accessGroup, connection, request, mapping);
+                } catch (Exception e) {
+                    try { connection.rollback(); } catch (SQLException e2) { s_log.error("set4 imagingProgress rollback e:" + e2); }
+                    s_log.error("set4 imagingProgress e:" + e);
+                    DailyUpdate.noteFailed("imagingProgress", String.valueOf(e));
+                    LogMgr.appendLog("compute.log", "  " + org.calacademy.antweb.home.ImagingProgressDb.LOG + ": FAILED (" + e + ")", true);
+                    message += " imaging progress not counted (" + e + ")";
+                }
                 // countCheck.do reads this line: tonight's numbers follow the rules of 2026-10-21 (PlaceTotals).
                 // Since 2026-10-27 also: the lists' Images are ant images (StatisticsDb.ANT_IMAGES_RULE_LOG; CountCheck).
                 // Since 2026-10-28 also: the counting rules of 2026-10-28 (CountInvariants.COUNTING_RULES_LOG; docs/numbers.md section 5).
@@ -933,6 +947,15 @@ public class UtilDataAction extends AntwebAction {
 		  org.calacademy.antweb.home.PlaceViewTotalDb placeViewTotalDb = new org.calacademy.antweb.home.PlaceViewTotalDb(connection);
 		  message = "all".equals(param) ? placeViewTotalDb.fillAll(true) : placeViewTotalDb.fillAll();
 		  LogMgr.appendLog("compute.log", "  " + message, true);
+		}
+
+		// The imaging progress page (Brian Fisher, 2026-11-08): valid living species and subspecies imaged by bioregion,
+		// country, genus and museum (ImagingProgressDb, table imaging_progress). Daily update: set 4, after the statistics
+		// row (step imagingProgress); admins: utilData.do?action=imagingProgress. Writes "Imaging progress counted: ...".
+		if (action.equals("imagingProgress")) {
+		  message = new org.calacademy.antweb.home.ImagingProgressDb(connection).fill();
+		  LogMgr.appendLog("compute.log", "  " + message, true);
+		  if (message.contains("FAILED")) DailyUpdate.noteFailed("imagingProgress", message);
 		}
 
 		// The Not curated column of genus lists (Brian Fisher, 2026-11-02): per place and genus, the specimens collected

@@ -46,6 +46,8 @@ import org.calacademy.antweb.home.PlaceTotals;
  *   taxon.images             taxon image_count = images of its own specimens + of the taxa under it;
  *                            specimen image_count = its images
  *   geo.regions              a subregion's or region's Specimens <= the sum of its countries' Specimens
+ *   imaging.progress         (NumberChecks, 2026-11-08) imagingProgress.do: imaged from here <= imaged <= total, all of
+ *                            AntWeb = a recount and the home page's species imaged, a sample of places recounted
  *
  * A difference is "pending" (expected to go away after the next nightly run) when something changed after the
  * last nightly run (the place's list got a row; an upload, new images or renamed specimens of that place, ChangedPlaces,
@@ -101,7 +103,9 @@ public final class CountInvariants {
         "list.genus", "list.subfamily", "list.family", "list.global", "global.specimens", "home", "taxon.images", "geo.regions",
         // NumberChecks (2026-10-22)
         "stats.global", "stats.images", "stats.imaged", "stats.bioregions", "stats.museums", "stats.nonants", "list.images", "admin.statistics", "admin.groups",
-        "admin.curators", "admin.artists", "admin.imageUploads", "admin.imageUploadArtists", "api.taxa", "place.endemic.flags", "taxon.parents", "geo.adm1.country"};
+        "admin.curators", "admin.artists", "admin.imageUploads", "admin.imageUploadArtists", "api.taxa", "place.endemic.flags", "taxon.parents", "geo.adm1.country",
+        // NumberChecks.imagingProgress (2026-11-08): imagingProgress.do
+        "imaging.progress"};
 
     /**
      * At most this many differences of one check are listed in the report (2026-10-22: API /taxa, B11, can differ for

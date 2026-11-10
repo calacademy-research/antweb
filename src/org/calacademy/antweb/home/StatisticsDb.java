@@ -524,9 +524,12 @@ museum
         b.append(stat("species-with-specimens", n.getOrDefault("living_species_specimens", 0L),
             "Valid living ant species with at least one specimen record in AntWeb", "species with specimens in AntWeb",
             ofLiving(n.getOrDefault("living_species_specimens", 0L), living)));
+        // linked to the imaging progress page (2026-11-08: by bioregion, country and genus, and the names still to image)
+        b.append("<a class=\"stat-link\" href=\"/imagingProgress.do\" title=\"Imaging progress: by bioregion, country and genus, and the species still to image\">");
         b.append(stat("species-imaged", n.getOrDefault("living_species_imaged", 0L),
             "Valid living ant species with a photo of the ant (label photos do not count)", "species imaged",
-            ofLiving(n.getOrDefault("living_species_imaged", 0L), living)));
+            ofLiving(n.getOrDefault("living_species_imaged", 0L), living)).replaceFirst("\n$", ""));
+        b.append("</a>\n");
         b.append("<div class=\"stat-rule\"></div>\n");
         b.append(stat("images", antImages, "Images of the ant; label images are counted separately",
             "images of ants of " + A.commaFormat(imagedSpecimens) + " specimens", "+ " + A.commaFormat(labelImages) + " label images"));

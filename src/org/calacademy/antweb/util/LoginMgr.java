@@ -114,6 +114,12 @@ public class LoginMgr extends Manager {
             s_log.error("startPasswordConversion() statistics home columns not added e:" + e);
           }
           try {
+            // imaging_progress (the imaging progress page, 2026-11-08): created here, not in set 4's transaction
+            new org.calacademy.antweb.home.ImagingProgressDb(conn).ensureSchema();
+          } catch (SQLException e) {
+            s_log.error("startPasswordConversion() imaging_progress not created e:" + e);
+          }
+          try {
             // list_removal_log and the dispute tables' reason column (Brian Fisher, 2026-11-03: transparency)
             org.calacademy.antweb.home.ListRemovalLog.ensureSchema(conn);
           } catch (SQLException e) {

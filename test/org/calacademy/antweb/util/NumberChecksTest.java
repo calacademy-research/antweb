@@ -245,6 +245,23 @@ public class NumberChecksTest extends TestCase {
         assertEquals("pheidole a 1 and b 1 (ant images; 2026-10-27)", 2, m.recount);
     }
 
+    /**
+     * The sample of places the count check recounts each morning always ends (review of #340: with 13 rows of a
+     * kind the steps of 13 reached 2 rows, never 6, and the count check would not have finished).
+     */
+    public void testImagingSampleAlwaysEndsAndHasTheRightSize() {
+        for (int size : new int[] {0, 1, 2, 5, 6, 7, 13, 26, 39, 52, 65, 78, 100, 301}) {
+            for (int day = 1; day <= 366; day++) {
+                java.util.Set<Integer> pick = NumberChecks.imagingSample(day, size);
+                assertEquals("size " + size + " day " + day, Math.min(6, size), pick.size());
+                if (size > 0) assertTrue("the largest row is always in the sample", pick.contains(0));
+                for (int i : pick) assertTrue("row " + i + " of " + size, i >= 0 && i < size);
+            }
+        }
+        // the sample changes with the day
+        assertFalse(NumberChecks.imagingSample(1, 100).equals(NumberChecks.imagingSample(2, 100)));
+    }
+
     public void testApiTaxaCountsAreTheGlobalRow() throws Exception {
         exec("update taxon set specimen_count = 0 where taxon_name = '" + PA + "'");
         CountCheck.Result r = check();

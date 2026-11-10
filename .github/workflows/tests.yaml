@@ -1229,6 +1229,9 @@ jobs:
           # use country_adm1_idx (EXPLAIN), a country's two parts are its specimens once; only places whose data changed are
           # counted again (unchanged skipped, list or taxon or specimen change counted, specimen names not stored again,
           # rules change, over 7 days, full count, place gone, a morphospecies curated anywhere), each place committed on its own.
+          # ImagingProgressDbTest (2026-11-08): the imaging progress page's table (a label-only name is unimaged; a name
+          # imaged elsewhere is imaged but not imaged from here; all of AntWeb = the home page numbers; the unimaged list
+          # and CSV; the count check finds a wrong row; the trend from the statistics rows since 2026-10-28).
           # BlankNameCleanupDbTest (2026-10-29): with specimens of blank name, the old cleanups delete nothing; the
           # blank-safe ones delete the names and list rows no specimen uses (not AntCat's, not curators' rows, not blank
           # rows) and the preview counts them. Last: it makes its own small tables.
@@ -1269,8 +1272,9 @@ jobs:
               /t/org/calacademy/antweb/home/ParentRowsDbTest.java \
               /t/org/calacademy/antweb/home/ListRemovalDbTest.java \
               /t/org/calacademy/antweb/home/PlaceViewTotalDbTest.java \
-              /t/org/calacademy/antweb/home/ApiKeyDbTest.java
-            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:22 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:8 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5; do
+              /t/org/calacademy/antweb/home/ApiKeyDbTest.java \
+              /t/org/calacademy/antweb/home/ImagingProgressDbTest.java
+            for t in upload.SpecimenNameUpdateDbTest:17 util.CountCheckTest:8 home.PlaceImageCountDbTest:7 util.BackgroundJobDbTest:4 util.DailyUpdateDbTest:4 home.RegionCountDbTest:4 home.PageTextRenameDbTest:10 upload.SpecimenNameHistoryDbTest:5 util.CountInvariantsTest:13 util.NumberChecksTest:23 home.PlaceTotalsDbTest:17 home.DownloadGuardsDbTest:6 home.UploadRecordDbTest:6 home.NightlyCountOrderDbTest:4 home.TaxonTreeCountDbTest:8 home.ArtistMoveDbTest:2 home.NumberDecisionsDbTest:7 home.PlaceTaxonNotesDbTest:11 home.PlaceGenusCurationDbTest:5 home.GeneraRuleDbTest:12 home.ParentRowsDbTest:4 home.ListRemovalDbTest:4 home.PlaceViewTotalDbTest:8 home.BlankNameCleanupDbTest:5 home.LicenseUpdateDbTest:3 home.ApiKeyDbTest:5 home.ImagingProgressDbTest:7; do
               cls=${t%%:*}; n=${t##*:}
               java -cp "/tmp/tc:$CP" junit.textui.TestRunner test.org.calacademy.antweb.$cls > /tmp/out.txt 2>&1 || { cat /tmp/out.txt; grep -E "^[0-9]+\) |^Caused by|Exception:" /tmp/out.txt | head -6 | sed "s/^/::error::$cls: /"; exit 1; }
               grep -v "LogMgr" /tmp/out.txt | tail -3

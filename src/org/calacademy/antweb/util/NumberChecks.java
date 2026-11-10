@@ -29,6 +29,8 @@ import org.calacademy.antweb.home.PlaceTotals;
  *     wrote them;
  *   - relations that must hold (a part is at most the whole; numbers on two pages that count the same thing).
  *
+ * Since 2026-11-08 also the imaging progress page (imagingProgress.do, table imaging_progress): imagingProgress().
+ *
  * None of these numbers changed rule on 2026-10-21, so no difference is pending for that reason; a difference is
  * pending only when something changed after the number was written (an upload, a list edit, an image upload).
  */
@@ -57,6 +59,7 @@ public final class NumberChecks {
         endemicFlags();
         taxonParents();
         adm1ByCountry();
+        imagingProgress();
     }
 
     // ------------------------------------------------------------------ helpers
@@ -1043,6 +1046,175 @@ public final class NumberChecks {
             }
             expected("b26").put("adm1sDiffering", differ);
         });
+    }
+
+    // ------------------------------------------------------------------ imaging progress (2026-11-08)
+
+    /** How many rows of each kind of place (bioregion, country, genus, museum) are recounted each morning. */
+    static final int IMAGING_SAMPLE = 6;
+
+    /**
+     * Which rows of a kind (sorted, largest first) are recounted today: row 0 and others chosen by the day of the
+     * year, IMAGING_SAMPLE in all, or every row when there are fewer. Always ends: the chosen steps of 13 visit only
+     * size / 13 rows when the size is a multiple of 13 (13 museums: 2 rows, never 6; review of #340), so after one
+     * pass the next rows in order fill the sample.
+     */
+    public static java.util.Set<Integer> imagingSample(int day, int size) {
+        java.util.Set<Integer> pick = new java.util.TreeSet<>();
+        if (size <= 0) return pick;
+        int want = Math.min(IMAGING_SAMPLE, size);
+        pick.add(0);
+        for (int i = 0; i < size && pick.size() < want; i++) pick.add(Math.floorMod(day * 7 + i * 13, size));
+        for (int i = 0; i < size && pick.size() < want; i++) pick.add(i);
+        return pick;
+    }
+
+    /**
+     * imagingProgress.do (rows 124 to 128; Brian Fisher, 2026-11-08): every stored row of imaging_progress nests
+     * (imaged from here <= imaged <= total; unimaged with specimens <= not imaged; with a CASC specimen <= with
+     * specimens); the rows of all of AntWeb are recounted and equal the home page's numbers (valid living species
+     * imaged = statistics.living_species_imaged); the unimaged list (CSV) has total minus imaged names; and a sample of
+     * places of each kind (the largest and a few chosen by the day) is recounted by a query of its own, name by name
+     * (exists, not the fill's grouped joins). A difference is pending when images, specimens or list rows were added
+     * after the rows were counted.
+     */
+    void imagingProgress() {
+        if (!has(org.calacademy.antweb.home.ImagingProgressDb.TABLE)) return;
+        CountInvariants.Check check = new CountInvariants.Check("imaging.progress",
+            "imagingProgress.do: every row nests (from here <= imaged <= total), all of AntWeb = a recount and the home page's species imaged,"
+            + " the unimaged list = total minus imaged, a sample of places recounted", "124, 125, 126, 127, 128");
+        inv.check(check, c -> {
+            site().put("imagingProgress", "imagingProgress.do");
+            org.calacademy.antweb.home.ImagingProgressDb db = new org.calacademy.antweb.home.ImagingProgressDb(inv.connection);
+            java.sql.Timestamp computed = null;
+            Map<String, java.util.List<org.calacademy.antweb.home.ImagingProgressDb.Row>> stored = new LinkedHashMap<>();
+            for (String kind : org.calacademy.antweb.home.ImagingProgressDb.KINDS) {
+                java.util.List<org.calacademy.antweb.home.ImagingProgressDb.Row> rows = db.read(kind);
+                stored.put(kind, rows);
+                for (org.calacademy.antweb.home.ImagingProgressDb.Row r : rows) {
+                    if (r.computed != null && (computed == null || r.computed.before(computed))) computed = r.computed;
+                    String what = "imaging progress, " + kind + " " + r.label() + ": ";
+                    if (r.imagedHere >= 0) inv.compare(c, "site", "imagingProgress", what + "imaged from here <= imaged", r.imagedHere, r.imaged, "<=", null);
+                    inv.compare(c, "site", "imagingProgress", what + "imaged <= total", r.imaged, r.total, "<=", null);
+                    inv.compare(c, "site", "imagingProgress", what + "unimaged with specimens <= not imaged", r.unimagedWithSpecimens, r.total - r.imaged, "<=", null);
+                    inv.compare(c, "site", "imagingProgress", what + "with a CASC specimen <= unimaged with specimens", r.unimagedCasc, r.unimagedWithSpecimens, "<=", null);
+                }
+            }
+            String p = imagingPending(computed);
+            // All of AntWeb: a recount by the home page's queries (StatisticsDb.HOME_COLUMNS) and by exists.
+            org.calacademy.antweb.home.ImagingProgressDb.Row living = find(stored.get("all"), org.calacademy.antweb.home.ImagingProgressDb.LIVING);
+            org.calacademy.antweb.home.ImagingProgressDb.Row species = find(stored.get("all"), org.calacademy.antweb.home.ImagingProgressDb.LIVING_SPECIES);
+            String imagedName = "exists (select 1 from specimen s join image i on i.image_of_id = s.code where s.taxon_name = t.taxon_name and "
+                + org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE + ")";
+            String livingWhere = org.calacademy.antweb.home.ImagingProgressDb.living("t");
+            long livingTotal = count("select count(*) from taxon t where " + livingWhere);
+            long livingImaged = count("select count(*) from taxon t where " + livingWhere + " and " + imagedName);
+            inv.compare(c, "site", "imagingProgress", "imaging progress headline: valid living species and subspecies = a recount", living == null ? 0 : living.total, livingTotal, "=", p);
+            inv.compare(c, "site", "imagingProgress", "imaging progress headline: imaged = a recount", living == null ? 0 : living.imaged, livingImaged, "=", p);
+            inv.compare(c, "site", "imagingProgress", "imaging progress: valid living species = home page valid living ant species (a recount)",
+                species == null ? 0 : species.total, count(org.calacademy.antweb.home.StatisticsDb.LIVING_SPECIES_SQL), "=", p);
+            inv.compare(c, "site", "imagingProgress", "imaging progress: living species imaged = home page species imaged (a recount)",
+                species == null ? 0 : species.imaged, count(org.calacademy.antweb.home.StatisticsDb.LIVING_SPECIES_IMAGED_SQL), "=", p);
+            if (species != null && has("statistics", "living_species_imaged")) {
+                Long home = null;
+                try (Statement stmt = inv.connection.createStatement(); ResultSet r = stmt.executeQuery(inv.track(
+                        "select living_species_imaged from statistics where living_species_imaged is not null order by created desc, id desc limit 1"))) {
+                    if (r.next()) home = r.getLong(1);
+                }
+                if (home != null) inv.compare(c, "site", "imagingProgress", "imaging progress: living species imaged = statistics.living_species_imaged (home page, as shown)",
+                    species.imaged, home, "=", p == null ? null : p + " (or the statistics row is older than the imaging progress)");
+            }
+            if (living != null) {
+                inv.compare(c, "site", "imagingProgress", "imaging progress: names in the unimaged list (CSV) = total minus imaged",
+                    db.readUnimaged().size(), living.total - living.imaged, "=", p);
+            }
+            // A sample of each kind: the largest place and some chosen by the day, recounted name by name.
+            int day = java.time.LocalDate.now().getDayOfYear();
+            Map<String, Object> exp = new LinkedHashMap<>();
+            for (String kind : new String[] {"bioregion", "country", "genus", "museum"}) {
+                java.util.List<org.calacademy.antweb.home.ImagingProgressDb.Row> rows = new java.util.ArrayList<>(stored.get(kind));
+                if (rows.isEmpty()) continue;
+                rows.sort((a, b) -> b.total != a.total ? Integer.compare(b.total, a.total) : a.key.compareTo(b.key));
+                for (int i : imagingSample(day, rows.size())) {
+                    org.calacademy.antweb.home.ImagingProgressDb.Row r = rows.get(i);
+                    long[] n = imagingRecount(kind, r.key, imagedName);
+                    String what = "imaging progress, " + kind + " " + r.label() + " (recount): ";
+                    inv.compare(c, "site", "imagingProgress", what + "total", r.total, n[0], "=", p);
+                    inv.compare(c, "site", "imagingProgress", what + "imaged", r.imaged, n[1], "=", p);
+                    if (r.imagedHere >= 0) inv.compare(c, "site", "imagingProgress", what + "imaged from here", r.imagedHere, n[2], "=", p);
+                    inv.compare(c, "site", "imagingProgress", what + "unimaged with specimens", r.unimagedWithSpecimens, n[3], "=", p);
+                    inv.compare(c, "site", "imagingProgress", what + "unimaged with a CASC specimen", r.unimagedCasc, n[4], "=", p);
+                }
+                exp.put(kind, rows.size());
+            }
+            if (living != null) {
+                exp.put("total", living.total);
+                exp.put("imaged", living.imaged);
+            }
+            if (species != null) exp.put("livingSpeciesImaged", species.imaged);
+            expected("imagingProgress").putAll(exp);
+        });
+    }
+
+    private static org.calacademy.antweb.home.ImagingProgressDb.Row find(java.util.List<org.calacademy.antweb.home.ImagingProgressDb.Row> rows, String key) {
+        if (rows != null) for (org.calacademy.antweb.home.ImagingProgressDb.Row r : rows) if (key.equals(r.key)) return r;
+        return null;
+    }
+
+    /** Why the imaging progress may differ from a recount: images, uploads or list rows added after it was counted. */
+    private String imagingPending(Timestamp computed) throws SQLException {
+        if (computed == null) return null;
+        if (has("image", "upload_date") && count("select count(*) from image where upload_date > ?", computed) > 0) return "images were added after the imaging progress was counted";
+        if (createdSince("upload", computed)) return "specimens were uploaded after the imaging progress was counted";
+        if (createdSince("geolocale_taxon", computed) || createdSince("bioregion_taxon", computed)) return "a list got a new row after the imaging progress was counted";
+        return null;
+    }
+
+    /**
+     * One place recounted: total, imaged, imaged from here (-1: none), unimaged with specimens, unimaged with a CASC
+     * specimen. The names by the place's own rule, each tested with exists subqueries.
+     */
+    private long[] imagingRecount(String kind, String key, String imagedName) throws SQLException {
+        String names;
+        String here;
+        String ant = org.calacademy.antweb.home.StatisticsDb.ANT_IMAGE;
+        switch (kind) {
+            case "bioregion":
+                names = "select t.taxon_name from taxon t where t.taxon_name in (select l.taxon_name from bioregion_taxon l where l.bioregion_name = ?)"
+                    + " and " + PlaceTotals.VALID_CONDITION;
+                here = "exists (select 1 from specimen s join image i on i.image_of_id = s.code where s.taxon_name = t.taxon_name and s.bioregion = ? and " + ant + ")";
+                break;
+            case "country":
+                names = "select t.taxon_name from taxon t where t.taxon_name in (select l.taxon_name from geolocale_taxon l where l.geolocale_id = ?)"
+                    + " and " + PlaceTotals.VALID_CONDITION;
+                here = "exists (select 1 from specimen s join image i on i.image_of_id = s.code join geolocale g on g.id = ?"
+                    + " where s.taxon_name = t.taxon_name and " + ant
+                    + " and ((coalesce(g.is_island, 0) = 0 and s.country = g.name) or (coalesce(g.is_island, 0) = 1 and s.island_country = g.name)))";
+                break;
+            case "museum":
+                names = "select t.taxon_name from taxon t where t.taxon_name in (select s.taxon_name from specimen s where s.museum = ?)"
+                    + " and " + org.calacademy.antweb.home.ImagingProgressDb.living("t");
+                here = "exists (select 1 from specimen s join image i on i.image_of_id = s.code where s.taxon_name = t.taxon_name and s.museum = ? and " + ant + ")";
+                break;
+            default:   // genus: key = subfamily + genus
+                names = "select t.taxon_name from taxon t where concat(coalesce(t.subfamily, ''), t.genus) = ? and " + org.calacademy.antweb.home.ImagingProgressDb.living("t");
+                here = null;
+        }
+        String withSpecimen = "exists (select 1 from specimen s where s.taxon_name = t.taxon_name)";
+        String withCasc = "exists (select 1 from specimen s where s.taxon_name = t.taxon_name and s.museum = '" + org.calacademy.antweb.home.ImagingProgressDb.CASC + "')";
+        // the names of the place (subquery n), each tested with exists; every parameter is the place key
+        String sql = "select count(*), coalesce(sum(" + imagedName + "), 0), " + (here == null ? "-1" : "coalesce(sum(" + here + "), 0)")
+            + ", coalesce(sum(not " + imagedName + " and " + withSpecimen + "), 0), coalesce(sum(not " + imagedName + " and " + withCasc + "), 0)"
+            + " from (" + names + ") n join taxon t on t.taxon_name = n.taxon_name";
+        try (PreparedStatement stmt = inv.connection.prepareStatement(inv.track(sql))) {
+            stmt.setString(1, key);
+            if (here != null) stmt.setString(2, key);   // both placeholders are the key, so their order does not matter
+            try (ResultSet r = stmt.executeQuery()) {
+                long[] out = new long[5];
+                if (r.next()) for (int i = 0; i < 5; i++) out[i] = r.getLong(i + 1);
+                return out;
+            }
+        }
     }
 
     /** The values for the end-to-end tests as JSON (in a script element of the report; no "</" inside). */
