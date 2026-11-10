@@ -189,6 +189,28 @@ It hands the values to `api_v4.run()` through `flask.g.apiV4Paging`; `page_info(
 
 **Not included (decisions open).** `/images` and `/taxaImages`: their `limit` and `offset` count images while their records are specimens and taxa, so a total would be in another unit than the list, and one specimen's images can fall on two pages. `/measurements`, `/distinctTaxa`, `/geolocales`, `/geolocaleTaxa`, `/bioregions`, `/bioregionTaxa`: the same `rows()` call would give them `total`, `returned` and `complete`; not done here. `/v4/geoSpecimens` without `coords` answers HTTP 500 (the v3.1 route answers plain text, which v4 cannot read as JSON; as before this work).
 
+### Finding: specimens whose name has no taxon row are never served (2026-11-10, decision open)
+
+The view `api3_1_specimen` (`db/upgrade/8.77/2022-06-19.sql`; `db/upgrade/8.110` did not change it) is `specimen s join taxon t on t.taxon_name = s.taxon_name`: an INNER JOIN. A specimen whose `taxon_name` has no row in `taxon` is in no answer of `/specimens`, `/geoSpecimens`, `/distinctTaxa`, and `/measurements` gives its measurements without the specimen's taxon and place. `metaData.total` counts the view, so it does not show these specimens either. Nothing was changed. `/taxaImages` (view `taxon_image`) has the same join.
+
+How many there are is not known from the repository. On production (read-only):
+
+```
+F=/root/antweb/etc/db.properties; docker exec -e MYSQL_PWD="$(sed -n 's/^password=//p' "$F")" antweb_mysql_1 mysql -u "$(sed -n 's/^user=//p' "$F")" ant -e "select count(*) specimens, count(distinct s.taxon_name) names from specimen s left join taxon t on t.taxon_name = s.taxon_name where t.taxon_name is null; select s.genus, count(*) specimens, count(distinct s.taxon_name) names from specimen s left join taxon t on t.taxon_name = s.taxon_name where t.taxon_name is null group by s.genus order by specimens desc limit 30; show create view api3_1_specimen\G"
+```
+
+(The last statement shows the view as it is on production, which may differ from the repository's last definition.) If the first number is 0 there is nothing to decide. The second list shows whether Stenamma is among them, that is, whether this join is what cut the March 2026 extract.
+
+What a LEFT JOIN (`specimen s left join taxon t ...`) would change:
+
+- **More records:** those specimens appear in `/specimens`, `/geoSpecimens`, `/distinctTaxa` (their names and counts) and with their taxon and place in `/measurements`; every count and `total` of these routes rises by them. Tests that compare API counts with the site's numbers (`tests/e2e/test_api_numbers.py`, numbers.md #100 to #118) would need checking against how the site counts these specimens.
+- **Two fields are empty for them:** the view takes only `fossil` and `status` (`taxon_status`) from `taxon`; both would be `null`. A program that expects `true`/`false` and a status word would meet `null`.
+- **Filters on those two fields leave them out, as now:** `status=valid`, `fossil=true` and `fossil=false` do not match `null` (so `fossil=false` would not mean "everything that is not a fossil"). `/measurements` `taxonStatus=` likewise. `geolocaleName=` joins `taxon` itself and still leaves them out.
+- **Speed:** for filters on specimen columns (country, genus, code) the plan is the same (specimen first, taxon by its key). For `status=` or `fossil=` MySQL turns the LEFT JOIN back into an inner join (the filter rejects `null`), so those are as now.
+- **How:** one upgrade script that redefines the view (staging first; rollback is the present definition, saved from `show create view` before the change). `tests/unit` uses a table of the same name, so only an end-to-end test on staging can pin it.
+
+The other way to close the gap is at the source: a specimen without a taxon row is a data fault (the upload or a name update left it behind), so a data check that lists them (and a repair that makes the missing taxon rows, or a report to the curator) fixes the site and the API at once, and the view can stay. Both can be done. Decision for Brian Fisher.
+
 ### Front doors
 
 - `/v4/` (always 200): name "Antweb API v4", status (open, closed, not configured), message, getAKey, keyHeader `X-API-Key`, limits (the table above), routes, fieldNames (the table above), paging (total, returned, complete, afterCode and the ndjson headers, in a sentence each; `api_v4.PAGING`), documentation, terms, guideForPrograms, terms_of_use, contact, citation, license.
