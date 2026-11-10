@@ -832,6 +832,9 @@ jobs:
       - name: Specimen extract for collaborators, complete and verified (tests/unit/test_specimen_extract.py)
         run: python3 tests/unit/test_specimen_extract.py
 
+      - name: Place fix, the stored country and bioregion against today's upload rule (tests/unit/test_place_fix.py)
+        run: python3 tests/unit/test_place_fix.py
+
       - name: Pheidole head export, plan and contact sheets without a database (tests/unit/test_pheidole_export.py)
         run: python3 tests/unit/test_pheidole_export.py
 
