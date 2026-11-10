@@ -25,7 +25,8 @@ import java.util.stream.Stream;
  * at start-up (about 12 seconds) and on util.do?action=reloadAntwebMgr. Lookups by name or id, validity of a
  * country or adm1 for uploads, a place's bioregion, and the adm1 lists of countryAdm1List.do. Docs:
  * docs/flows/places.md. Tests: PreviousDeterminationsTest, tests/unit/test_small_fixes.py, CountrySpellingTest
- * (a country written with other capitals, accents or blanks, for the specimen upload).
+ * (a country written with other capitals, accents or blanks, for the specimen upload), PlaceBioregionTest (the
+ * bioregion a country and state give an uploaded specimen).
  */
 public class GeolocaleMgr extends Manager {
 
@@ -633,6 +634,21 @@ public class GeolocaleMgr extends Manager {
         return bySpelling.get(normalName(name));
     }
 
+    /**
+     * For the TaxonWorks upload (TaxonWorksTransformer), which passes a country on only when AntWeb knows it: a name
+     * AntWeb has as a country (valid or an old name, as getCountry), or another spelling of one valid country
+     * (getCountrySpelledLike). False before the places are loaded.
+     */
+    public static boolean isCountryOrSpelling(String name) {
+        return isCountryOrSpelling(countryNameMap, countrySpellingMap, name);
+    }
+
+    /** isCountryOrSpelling on given maps; the tests call it without a database. */
+    public static boolean isCountryOrSpelling(Map<String, Country> countryNames, Map<String, Country> bySpelling, String name) {
+        if (countryNames == null || name == null) return false;
+        return countryNames.containsKey(name) || countrySpelledLike(bySpelling, name) != null;
+    }
+
 
     // Convenience method
     public static int getCountryId(String name) {
@@ -773,8 +789,14 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
      * @return The valid adm1 or null if not found.
      */
     public static @Nullable Geolocale getValidAdm1(String adm1, String country) {
+        return validAdm1(adm1CountryMap, adm1, country);
+    }
 
-        Adm1 matching_adm1 = adm1CountryMap.get(adm1, country);
+    /** getValidAdm1 on a given map (key: adm1 name, country name); the tests call it without a database. */
+    public static @Nullable Adm1 validAdm1(MultiKeyMap<String, Adm1> adm1s, String adm1, String country) {
+        if (adm1s == null) return null;
+
+        Adm1 matching_adm1 = adm1s.get(adm1, country);
 
         if (matching_adm1 == null) {
             return null;
@@ -782,7 +804,7 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
 
         if (matching_adm1.isValid()) {return matching_adm1;}
 
-        Adm1 valid_adm1 = adm1CountryMap.get(matching_adm1.getValidName(), country);
+        Adm1 valid_adm1 = adm1s.get(matching_adm1.getValidName(), country);
 
         if (valid_adm1 == null) {
             // This will show up in the upload report.
@@ -837,20 +859,38 @@ A.log("isValid() " + name + " = " + geolocale.getName() + "?");
         return display.toString();
     }
 
+    /**
+     * The bioregion the specimen upload stores for a country and state (adm1). The valid countries and states, the
+     * list on bioregionCountryList.do, are AntWeb's definition (Brian Fisher, 2026-11-10): the state's bioregion when
+     * the state is valid, or is an old name that points to a valid state, and has exactly one; otherwise the
+     * country's when the country has exactly one; otherwise null (the upload then keeps the bioregion of the
+     * curator's file when that is a bioregion name). A row for an old state name that points to no valid state
+     * gives nothing, whatever bioregion it holds: such rows were filled with the country's first bioregion when
+     * they were made. The same rule as decide() in tools/place/place_fix.py, which corrects the specimens already
+     * stored. The country's own row is read by its exact name, as before (the upload has replaced an old name with
+     * the valid one by then).
+     */
     public static String getGeolocaleBioregion(String countryName, String adm1Name) {
+        return geolocaleBioregion(countryNameMap, adm1CountryMap, countryName, adm1Name);
+    }
+
+    /** getGeolocaleBioregion on given maps (all country names; adm1 name and country name); the tests call it without a database. */
+    public static @Nullable String geolocaleBioregion(Map<String, Country> countryNames, MultiKeyMap<String, Adm1> adm1s,
+                                                      String countryName, String adm1Name) {
+        if (countryNames == null) return null;
         String useBioregion = null;
 
-        Geolocale adm1 = getAdm1(adm1Name, countryName);
+        Country validCountry = validCountry(countryNames, countryName);
+        Adm1 adm1 = validCountry == null || adm1Name == null ? null : validAdm1(adm1s, adm1Name, validCountry.getName());
         if (adm1 != null) {
             useBioregion = adm1.getTheOneBioregion();
         }
         if (useBioregion == null) {
-            Geolocale country = getCountry(countryName);
+            Geolocale country = countryNames.get(countryName);
             if (country != null) {
                 useBioregion = country.getTheOneBioregion();
             }
         }
-        //A.log("GeolocaleMgr.getGeolocaleBioregion() countryName:" + countryName + " adm1Name:" + adm1Name + " useBioregion:" + useBioregion);
         return useBioregion;
     }
 
