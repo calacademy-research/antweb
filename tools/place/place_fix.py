@@ -21,10 +21,13 @@ The rule, the same as the upload's (SpecimenUploadParse.parseLine, GeolocaleMgr.
   country    a name AntWeb lists as an old name of a valid country becomes the valid name (USA: United States).
              New here, and to go into the upload as well: a name that differs from exactly one valid country
              only by capitals, accents or blanks becomes that country (México: Mexico).
-  bioregion  the bioregion of the state (of its valid name when the state is filed under an old name) when the
-             state has exactly one; otherwise the country's when the country has exactly one; otherwise the
+  bioregion  the bioregion of the valid state (the state itself, or the valid name an old name points to) when
+             that state has exactly one; otherwise the country's when the country has exactly one; otherwise the
              stored value stays as it is (United States or Mexico with no state: the tool cannot know).
-             "none", "null" and blank count as no bioregion, as in Geolocale.noBioregion.
+             "none", "null" and blank count as no bioregion, as in Geolocale.noBioregion. The valid countries
+             and states are AntWeb's definition (bioregionCountryList.do); a row for an old state name that
+             points to no valid state defines nothing (version 3; the upload still reads such a row, to be
+             changed with this tool).
   never      the state is not changed (the upload stores the state as the curator wrote it); a specimen filed
              under an island country (island_country) is not touched; nothing is guessed from locality text
              or coordinates.
@@ -63,7 +66,7 @@ import subprocess
 import sys
 import unicodedata
 
-VERSION = "2"
+VERSION = "3"
 TABLE_NAME = re.compile(r"^place_fix_\d{8}_\d{4}$")
 
 
@@ -182,9 +185,12 @@ def decide(places, country, adm1, bioregion, island):
     if row is None:
         return Decision(KEEP, KEEP, [], "country not known to AntWeb")
 
+    # Only a valid state defines a bioregion (the list on bioregionCountryList.do). A row for an old name that
+    # points to no valid state is not a definition: such rows were filled with the country's first bioregion when
+    # they were made (production 2026-11-10: Irian Jaya, Sulawesi and Moluccas say Indomalaya, AntWeb's map says
+    # Australasia), and some hold stray values (a Lithuanian old name says Oceania).
     state = places.valid_adm1(adm1, row.name) if adm1 else None
-    if state is None and adm1:
-        state = places.adm1s.get((adm1, row.name))     # an old name with no valid name: its own row
+    old_name = adm1 is not None and state is None and (adm1, row.name) in places.adm1s
     derived = state.one_bioregion() if state is not None else None
     source = "state" if derived else None
     if derived is None:
@@ -202,6 +208,8 @@ def decide(places, country, adm1, bioregion, island):
     if stored is None:
         if adm1 is None:
             problem = "no bioregion: no state, and the country has two bioregions"
+        elif old_name:
+            problem = "no bioregion: an old state name with no valid name in AntWeb, and the country has two bioregions"
         elif state is None:
             problem = "no bioregion: state not known to AntWeb, and the country has two bioregions"
         else:
