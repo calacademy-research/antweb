@@ -57,8 +57,8 @@ Two sets of shapes.
   geoBoundaries gbOpen ADM0 (--shapes-source geoboundaries; github.com/wmgeolab/geoBoundaries at GB_COMMIT):
   one file for each ISO code, 229 files, 710 MB in all, each under its own licence (ODbL, CC BY, public
   domain ...: the report names the licence of every file used). 160 files are detailed (their points a median
-  of 3 to 250 m apart: Mexico 40 m, Madagascar 88 m, Indonesia 82 m, New Zealand 4 m); 69 are coarse
-  (United States 1.5 km, United Kingdom 2 km, Colombia 8 km, China 11 km).
+  of 2 to 236 m apart: Mexico 23 m, Madagascar 91 m, Indonesia 57 m, New Zealand 5 m); 69 are coarse
+  (France 0.6 km, United States 1.4 km, United Kingdom 2 km, Colombia 8 km, China 12 km).
     When: a point is tested on the detailed file when Natural Earth has it within 10 km of a border of its
     stored country (inside or outside), or in the water within 100 km of it (an islet Natural Earth leaves
     out). Every other point is far from every border and Natural Earth's answer cannot change.
@@ -850,7 +850,7 @@ def read_rings(path, thin_m=THIN_M, block_size=1 << 20):
                         ring, start = [(x, y)], [(x, y)]
                         kx, ky = x, y
                     else:
-                        if points % 20 == 0 or points < 400:    # a sample of the distances between the file's points
+                        if len(gaps) < 50000 or points % 20 == 0:       # the distances between the file's points, a sample of a long file
                             gaps.append(math.hypot((x - px) * scale, y - py))
                         if len(start) < 8:
                             start.append((x, y))
@@ -1094,7 +1094,7 @@ class Checker:
     def grid(self, code):
         """The index of the detailed file of an ISO code, or None: there is no file, or the file has no more
         points than Natural Earth's own shapes of that code (then Natural Earth is the finer of the two; the
-        geoBoundaries files of 69 countries are coarse, China's and Colombia's with points 8 to 11 km apart)."""
+        geoBoundaries files of 69 countries are coarse, China's and Colombia's with points 8 to 12 km apart)."""
         if self.detail is None or self.detail.used.get(code, {}).get("problem"):
             return None
         grid = self.detail.index(code)
