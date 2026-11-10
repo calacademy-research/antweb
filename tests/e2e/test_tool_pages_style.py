@@ -40,6 +40,7 @@ CONVERTED = [
     ("web/curate/genusConceptRules-body.jsp", "genus-concept-rules-page"),
     ("web/util/dailyUpdate-body.jsp", "daily-update-page"),
     ("web/curate/apiKeys-body.jsp", "api-keys-page"),
+    ("web/curate/dataExtract-body.jsp", "data-extract-page"),
 ]
 # Bodies shared with the public layout: tool look only inside the admin layout.
 SHARED_BODIES = ["web/common/message-body.jsp", "web/common/unboldMessage-body.jsp"]
@@ -137,6 +138,7 @@ PAGES = [
     ("/nameUpdates.do", "name-updates-page", ["What this shows:", 'name="from"', "Preview now (report only)"]),
     ("/dailyUpdate.do", "daily-update-page", ["<h1>Daily update</h1>", "05:00 Pacific", "dailyUpdate.do?format=json"]),
     ("/apiKeys.do", "api-keys-page", ["<h1>API keys</h1>", 'id="api-keys-table"', "apiKeys.do?format=csv"]),
+    ("/dataExtract.do", "data-extract-page", ["<h1>Data extract</h1>", 'id="data-extract-form"', 'id="data-extract-list"']),
     ("/listSpecimenUploads.do", "specimen-uploads-page", ["<th>Group</th>", 'class="aw-card"']),
     ("/listImageUploads.do", "image-uploads-page", ["image upload batches", "<th>Created</th>"]),
     ("/query.do?name=worldantsUploads", "admin-result-page", ["<h1>Query: worldantsUploads</h1>", 'class="query-check"']),

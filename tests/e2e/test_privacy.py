@@ -13,6 +13,8 @@ from antweb import BASE_URL, IS_PRODUCTION, new_session
                                   "/web/log/compute.log-20261025", "/web/log/logins.txt-20261025.gz",
                                   "/web/log/from-container-20261018-120000/compute.log", "/log/.logrotate.state",
                                   "/log/logrotate.log",
+                                  # Data extracts (dataExtract.do) are kept under the data logs; admins download them through dataExtractFile.do.
+                                  "/log/extracts/", "/log/extracts/2026-11-10-1/manifest.txt",
                                   "/web/upload/20220224-11:49:08-specimen2.txt", "/web/upload/x.txt"])
 def test_private_file_not_public(path):
     r = new_session().get(BASE_URL + path, timeout=60)
