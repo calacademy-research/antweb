@@ -37,7 +37,8 @@ def _counted():
 
 
 def _n(html, key):
-    m = re.search(r'data-stat="' + re.escape(key) + r'">([\d,]+)<', html)
+    # the number may be followed by words inside the same element (statsPage: "12,065 species imaged")
+    m = re.search(r'data-stat="' + re.escape(key) + r'">([\d,]+)(?=[<\s])', html)
     assert m, f"no number {key!r}"
     return int(m.group(1).replace(",", ""))
 
