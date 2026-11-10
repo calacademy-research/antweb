@@ -88,7 +88,8 @@ These files are gitignored and exist only on the droplets, in `etc/` of the proj
 | `db.properties` | `DbCredentials`, the dump scripts | MySQL login of the application (`user=`, `password=`). Read at start. | Falls back to the placeholder in the image: the site cannot reach its database. |
 | `api-db.properties` | API (`api.py`), at start | Read-only MySQL login of the API. | API logs in with the placeholder and fails. |
 | `mail.properties` | `Emailer` | Amazon SES SMTP settings (`host`, `port`, `username`, `password`, `from`). | No mail is sent; messages are written to `logbak/emails.log`. |
-| `turnstile.properties` | `Turnstile` | Cloudflare Turnstile keys for the Create Account form. | Check off; account creation works without it. If present but unverifiable, sign-up is refused. |
+| `turnstile.properties` | `Turnstile` | Cloudflare Turnstile keys for the Create Account and free API key forms. | Check off; account creation works without it. If present but unverifiable, sign-up is refused. |
+| `api-keys.properties` | `ApiKeys` | `apiKeys.open=true` opens registration for free API keys (apiKey.do). | Registration closed: apiKey.do says "Registration opens soon". |
 | `taxonworks.properties` | `TaxonWorksNightly` | `url=` (TaxonWorks public download link), `curatorId=` (login the upload is made as, 1 = Brian, CAS group), optional `minRatio=` (default 0.95). | The nightly TaxonWorks upload is off. |
 | `editor.properties` | `PageEditor` | `pageEditor=ckeditor` puts every curator edit form back on the old CKEditor 3; `tinymce` or no file = TinyMCE 8. | TinyMCE. |
 | `scheduler.properties` | `Scheduler`, at the end of each nightly run | `nightlyRestart=true` asks for a container restart after the nightly run (the old behaviour). | No restart after the nightly run (since 2026-10-18). |

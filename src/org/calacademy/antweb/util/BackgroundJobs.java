@@ -48,6 +48,9 @@ public final class BackgroundJobs {
     /** How many jobs may wait or run at a time (all kinds). */
     public static final int MAX_ACTIVE = 20;
 
+    /** How many of the newest jobs lastEnded() looks through (at most MAX_ACTIVE of them can still be active). */
+    static final int LAST_ENDED_LOOKBACK = MAX_ACTIVE + 5;
+
     /** Finished jobs kept in memory (older ones are read from the table). */
     static final int KEEP_IN_MEMORY = 200;
 
@@ -352,6 +355,15 @@ public final class BackgroundJobs {
             return null;
         }
 
+        /**
+         * The newest job that has ended (finished, did not complete, or interrupted by a restart), from this run
+         * or the table, or null. Shown on the Server Status page as "Last finished job".
+         */
+        public Job lastEnded() {
+            for (Job j : recent(0, LAST_ENDED_LOOKBACK)) if (!j.isActive()) return j;
+            return null;
+        }
+
         void execute(Job job, Work work) {
             CURRENT.set(job);
             CURRENT_RUNNER.set(this);
@@ -498,6 +510,12 @@ public final class BackgroundJobs {
     public static boolean isJobRunning() {
         Runner r = s_runner;
         return r != null && r.isRunning();
+    }
+
+    /** The job started here that is running now, or null (Server Status links to its page). */
+    public static Job runningJob() {
+        Runner r = s_runner;
+        return r == null ? null : r.running();
     }
 
     /** "Upload of <group> by <login>" etc. of the running job, or null. */

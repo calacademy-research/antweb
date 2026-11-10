@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Release gate: may this pull request be merged to master (which deploys production)?
 
-    python3 tools/release/gate.py PR_NUMBER [--nightly-checked] [--no-review "reason"]
+    python3 tools/release/gate.py PR_NUMBER [--nightly-checked] [--daily-update-checked] [--no-review "reason"]
 
 Prints one line per check and then GATE OPEN or GATE CLOSED (exit 0 or 1). Claude runs it before every merge
 and pastes the result into the pull request. The checks (decided by Brian Fisher, 2026-11-05; docs in
@@ -15,19 +15,26 @@ tools/release/README.md):
               says Claude read the morning compute.log for this commit and the morning tests passed.
  5. review    The latest Claude review comment is for the head commit and starts "No blocking issues";
               --no-review "reason" when there is none (for example, the review credit is used up).
- 6. window    Not between 04:45 and 08:15 Pacific (the nightly run).
+ 6. window    Not between 04:45 and 08:15 Pacific (the daily update).
  7. rollback  The PR text has a "Rollback:" line.
+ 8. daily     The daily update is not running on production now (dailyUpdate.do?format=json, the latest run's state).
+              When the page cannot be read (Cloudflare challenge, no network, unexpected answer) the check fails as
+              "unknown - check dailyUpdate.do by hand"; --daily-update-checked (the page was read by hand) lets it pass.
 
-Read-only: it only reads the GitHub API (through the gh command line tool) and the repository.
+Read-only: it only reads the GitHub API (through the gh command line tool), the repository, and one GET of the
+production daily update status (no sign-in).
 """
 import argparse
 import datetime as dt
 import fnmatch
 import json
+import os
 import re
 import subprocess
 import sys
 import tomllib
+import urllib.error
+import urllib.request
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -39,6 +46,12 @@ CLOSED_FROM, CLOSED_UNTIL = dt.time(4, 45), dt.time(8, 15)
 REVIEW_MARKER = "<!-- claude-review -->"
 REVIEW_BOT = "github-actions[bot]"   # the account the review workflow posts as
 MAX_KNOWN_DAYS = 7
+# Check 8. The JSON form needs no sign-in (DailyUpdateAction); the HTML page needs a curator login and, like every page,
+# is behind Cloudflare's challenge, so the gate reads the JSON. ANTWEB_DAILY_UPDATE_URL points it elsewhere (for
+# example an SSH tunnel to Tomcat's local port, http://127.0.0.1:18081/dailyUpdate.do?format=json).
+DAILY_UPDATE_URL = os.environ.get("ANTWEB_DAILY_UPDATE_URL", "https://www.antweb.org/dailyUpdate.do?format=json")
+DAILY_UPDATE_TIMEOUT = 20
+UNKNOWN_DAILY = "unknown - check dailyUpdate.do by hand"
 
 # Code the nightly run executes (UtilDataAction's sets, the Scheduler, the counts and lists it fills). A PR that
 # changes one of these waits for a staging nightly (check 4): 2026-11-03 count check, 2026-11-04 subfamilies,
@@ -69,6 +82,84 @@ def window_closed(now):
     """True between 04:45 and 08:15 Pacific, when the nightly run works and nothing is merged."""
     t = now.astimezone(PACIFIC).time()
     return CLOSED_FROM <= t < CLOSED_UNTIL
+
+
+def daily_update_state(status, headers, text):
+    """("running" | "not running" | "unknown", detail) from one answer of dailyUpdate.do (format=json, or the HTML page).
+
+    Conservative: only an answer that clearly says the latest run is not running gives "not running"; anything else
+    (a Cloudflare challenge, a login page, an error, a state the gate does not know, a run with no end) is "unknown"
+    or "running"."""
+    h = {str(k).lower(): str(v) for k, v in (headers or {}).items()}
+    text = text or ""
+    if h.get("cf-mitigated", "").lower() == "challenge" or any(
+            t in text for t in ("Just a moment", "cf-chl", "challenge-platform")):
+        return "unknown", f"Cloudflare challenge (HTTP {status})"
+    if status != 200:
+        return "unknown", f"HTTP {status}"
+    try:
+        data = json.loads(text)
+    except ValueError:
+        data = None
+    if data is None:
+        # the HTML page (util/dailyUpdate-body.jsp, DailyUpdateAction.runCard): the latest run's state is in
+        # <p id="daily-update-state" data-state="running|ok|failed">
+        m = re.search(r'<[^>]*\bid="daily-update-state"[^>]*>', text)
+        if m:
+            sm = re.search(r'\bdata-state="([a-z]+)"', m.group(0))
+            state = sm.group(1) if sm else ""
+        elif 'id="daily-update-none"' in text:
+            return "not running", "no daily update recorded yet"
+        else:
+            return "unknown", "the answer is neither the daily update JSON nor its page (a login page?)"
+        if state == "running":
+            return "running", "the page says the daily update is running"
+        if state in ("ok", "failed"):
+            return "not running", f"latest daily update {'finished' if state == 'ok' else 'failed'} (page)"
+        return "unknown", f"unexpected state {state!r} on the page"
+    runs = data.get("runs") if isinstance(data, dict) else None
+    if not isinstance(runs, list):
+        return "unknown", "no runs list in the JSON"
+    if not runs:
+        return "not running", "no daily update recorded yet"
+    run = runs[0]   # newest first (DailyUpdateAction.load)
+    if not isinstance(run, dict):
+        return "unknown", "unexpected run in the JSON"
+    state, started, ended = run.get("state"), run.get("started"), run.get("ended")
+    if state == "running":
+        return "running", f"the daily update started {started} Pacific is running"
+    if state == "ok" and ended:
+        return "not running", f"latest daily update {started} to {ended} Pacific finished"
+    if state == "failed":
+        # a failed run has ended (or stopped with the server); merging does not race it
+        return "not running", f"latest daily update (started {started} Pacific) failed, not running"
+    return "unknown", f"unexpected state {state!r} (ended {ended!r}) in the JSON"
+
+
+def fetch_daily_update(url=None):
+    """One GET of the daily update status; (status, headers, text). Errors (no network, DNS, timeout) raise OSError."""
+    req = urllib.request.Request(url or DAILY_UPDATE_URL, method="GET",
+                                 headers={"User-Agent": "antweb-release-gate", "Accept": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=DAILY_UPDATE_TIMEOUT) as r:
+            return r.status, dict(r.headers), r.read().decode("utf-8", "replace")
+    except urllib.error.HTTPError as e:
+        return e.code, dict(e.headers or {}), (e.read().decode("utf-8", "replace") if e.fp else "")
+
+
+def daily_check(fetch, checked_by_hand):
+    """(ok, text) for check 8. fetch() returns (status, headers, text) or raises."""
+    try:
+        state, detail = daily_update_state(*fetch())
+    except Exception as e:  # no network, DNS, timeout, proxy refusal
+        state, detail = "unknown", f"no answer ({e.__class__.__name__}: {str(e)[:120]})"
+    if state == "running":
+        return False, f"the daily update is running on production ({detail}); wait until it ends"
+    if state == "not running":
+        return True, detail
+    if checked_by_hand:
+        return True, f"{UNKNOWN_DAILY} ({detail}); passed with --daily-update-checked (read by hand)"
+    return False, f"{UNKNOWN_DAILY} ({detail}); when it is not running, rerun with --daily-update-checked"
 
 
 def has_rollback(body):
@@ -193,8 +284,11 @@ def full_e2e_run(sha):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("pr", type=int)
+    ap.add_argument("--daily-update-checked", action="store_true",
+                    help="dailyUpdate.do on production was read by hand: the daily update is not running (check 8)")
     ap.add_argument("--nightly-checked", action="store_true",
-                    help="the morning compute.log and morning tests were read for this commit (check 4)")
+                    help="the morning compute.log and morning tests were read for this commit (check 4); also: "
+                         "dailyUpdate.do was read by hand and the daily update is not running (check 8)")
     ap.add_argument("--no-review", metavar="REASON", help="no Claude review, and why (check 5)")
     args = ap.parse_args(argv)
 
@@ -248,10 +342,13 @@ def main(argv=None):
         check(5, "review", ok, text)
 
     closed = window_closed(dt.datetime.now(dt.timezone.utc))
-    check(6, "window", not closed, "04:45 to 08:15 Pacific: the nightly is running" if closed else "outside the nightly")
+    check(6, "window", not closed, "04:45 to 08:15 Pacific: the daily update is running" if closed
+          else "outside the daily update window (04:45 to 08:15 Pacific)")
 
     check(7, "rollback", has_rollback(pr.get("body")), "Rollback: line found" if has_rollback(pr.get("body"))
           else "no 'Rollback:' line in the PR text")
+
+    check(8, "daily", *daily_check(fetch_daily_update, args.daily_update_checked))
 
     ok = all(results)
     print("GATE OPEN" if ok else "GATE CLOSED")

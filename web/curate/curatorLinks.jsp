@@ -4,6 +4,7 @@
     <h2>Manager tools<span class="aw-badge">Admin</span></h2>
     <ul class="aw-links">
       <li><a href="<%= domainApp %>/viewLogins.do">Login Manager</a> (also: all logins with their permissions, logins by last login)</li>
+      <li><a href="<%= domainApp %>/apiKeys.do">API keys</a> (who registered for a free API key, for what project, and how much each key is used; revoke a key, set its level or limits)</li>
       <li><a href="<%= domainApp %>/addUploader.do">Add an uploader</a> (someone wants to upload specimens: login or invitation, upload group, rights and welcome email in one form)</li>
       <li><a href="<%= domainApp %>/viewGroups.do">Upload groups</a> (the institutions, labs and collections that own specimen records; an upload replaces its uploader's group)</li>
       <li><a href="<%= domainApp %>/manageMuseum.do">Museum Manager</a> (the museum codes of specimen data: name, title, active; add or delete)</li>

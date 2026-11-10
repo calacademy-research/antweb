@@ -244,7 +244,7 @@ unused and backup is a search of the code for SQL that names the table (2026-10-
 | `password_reset` | [9](#password_reset) | in use (2026-10-16) |
 | `remember_token` | [9](#remember_token) | in use (2026-10-16) |
 | `server` | [10](#server) | in use |
-| `operation_lock` | [10](#operation_lock) | read only (nothing writes it) |
+| `operation_lock` | [10](#operation_lock) | unused (candidate for removal) |
 | `long_request` | [10](#long_request) | in use |
 | `admin_alerts` | [10](#admin_alerts) | in use |
 | `user_agent`, `user_agent_whitelist` | [10](#user_agent) | in use |
@@ -1304,11 +1304,12 @@ Emptied on staging by `scrub.sql`.
 **Purpose.** An old lock that kept two long operations from running together (`operation`, `locked`, `curator`,
 `curator_id`, `duration_millis`, `unlock_op`).
 
-**Written by.** Nothing that runs: `OperationLockDb.setOperationLock`, `unlock`, `enable` and `disable` have no
-callers. **Read by.** `ServerStatusAction` (shown on the server status page).
+**Written by.** Nothing. **Read by.** Nothing since 2026-11-09: the Server Status row "Is Image Upload locked" and
+the classes `OperationLock` and `OperationLockDb` were removed (Brian Fisher). Image uploads went one file per
+request on 2026-10-17 and nothing had set the lock since; Server Status now shows "Image upload in progress" from
+`BusyStatus`, and uploads use the upload flag and `BackgroundJobs`.
 
-**Status.** Read only; nothing sets the lock any more (uploads use the upload flag and `BackgroundJobs`). Candidate
-to drop with `OperationLockDb` and the status page line.
+**Status.** Unused; the table is kept for now. Candidate for removal (drop it in a `db/upgrade` script).
 
 ### `long_request`
 
@@ -1504,7 +1505,7 @@ The museum rows of those old names, removed.
 
 ### `api_key`
 
-Free registered API keys (step 6, decided by Brian Fisher 2026-11-07/08; created by `db/upgrade/9.4.0/2026-11-08-api-keys.sql`). One row per key: who registered (name, email, institution, project), level (registered, collaborator, admin), status (pending until the email link is followed, active, revoked), limits per key (NULL = the level's default), dates. The key is never stored: only its SHA-256 (`key_hash`) and its first characters (`prefix`) for display; the email confirmation token likewise only as a hash. Written by the API through its own login `antweb_api_usage`, which may write only `last_used` here (and read only the key lookup columns: `id, key_hash, level, status`, the four limits, `last_used`), `api_usage_daily` and `api_rate`. The API v4 (`api/v3.1/api_keys.py`) reads the key's level, status and limits here on every keyed request and sets `last_used` (at most once a minute).
+Free registered API keys (step 6, decided by Brian Fisher 2026-11-07/08; created by `db/upgrade/9.4.0/2026-11-08-api-keys.sql`). One row per key: who registered (name, email, institution, project), level (registered, collaborator, admin), status (pending until the email link is followed, active, revoked), limits per key (NULL = the level's default), dates. The key is never stored: only its SHA-256 (`key_hash`) and its first characters (`prefix`) for display; the email confirmation token likewise only as a hash. Written by the API through its own login `antweb_api_usage`, which may write only `last_used` here (and read only the key lookup columns: `id, key_hash, level, status`, the four limits, `last_used`), `api_usage_daily` and `api_rate`. The API v4 (`api/v3.1/api_keys.py`) reads the key's level, status and limits here on every keyed request and sets `last_used` (at most once a minute). Registrations are written by the web application (apiKey.do, apiKeyConfirm.do; changes on the admin page apiKeys.do; `home/ApiKeyDb`, which also creates the table at startup if missing). While a registration is pending, `prefix` and `key_hash` hold random stand-ins (`p_...`), because both columns are required and unique; the key is made when the link is followed.
 
 ### `api_usage_daily`
 
@@ -1683,7 +1684,7 @@ says done.
 4. **Tables nothing reads:** `license`, `artist_group`, `country_bioregion`, `lookup`, `antwiki_taxon_country`,
    `taxon_country`, `team_member`, `user_agentbak`, and 5 of the 7 views (section 13; the 14 old production-only
    tables and 1 view were dropped on 2026-10-23); the 13 dated backups of October 2026 have drop dates. `country`, `un_country`, `adm1` are read only by
-   classes nothing calls. `operation_lock` is read (server status page) but nothing writes it.
+   classes nothing calls. `operation_lock` is unused since 2026-11-09 (neither read nor written; candidate for removal).
 5. **Columns written or kept that no SQL in the code names:** `geolocale.georanktype`, `georanktypeloc`,
    `woe_id`; `geolocale.specimen_local_count`, `geolocale_taxon.specimen_local_count` (added in 2018,
    `db/upgrade/7.9`), also on `museum` and `bioregion` (production); `specimen.speciesauthor`; `taxon.old_speciesgroup`.

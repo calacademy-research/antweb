@@ -7,8 +7,10 @@ checks the page comes back as that place, with its statistics, and no error. An 
 Staging only (it recounts, so it changes data); one at a time (the recount takes the long connection pool).
 """
 import re
+from datetime import datetime
 from html import unescape
 from urllib.parse import quote, urlparse
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -106,8 +108,17 @@ def test_admin_updates_a_museum_a_project_a_bioregion_and_an_island(path, recalc
     """The "Update statistics" button of a museum, a project, a bioregion and an island page recounts that place and
     shows the page again with its statistics (catalog gaps 9 to 12, 2026-11-04)."""
     s, _token, _lid = login("admin")
+    before = datetime.now(ZoneInfo("America/Los_Angeles")).strftime("%Y-%m-%d %H:%M")
     posted, page = _press(s, path)
     assert posted == recalc, posted
+    if path.startswith(("/bioregion.do", "/museum.do")):
+        # statsPage.do's Bioregion Data and Museum Data read this place's list: after the recount the page counts its
+        # tables again (2026-11-09: it kept the morning's Oceania numbers, 64 genera, while the list had 63)
+        stats_page = s.get(BASE_URL + "/statsPage.do", timeout=max(TIMEOUT, 180)).text
+        m = re.search(r'id="stats-counted-at">The tables below were counted at (\d{4}-\d\d-\d\d \d\d:\d\d)', stats_page)
+        assert m, "statsPage.do shows no 'counted at' line"
+        assert m.group(1) >= before, (f"statsPage.do still shows the tables counted at {m.group(1)}, before the "
+                                      f"Update statistics of {path} at {before}")
     if path.startswith("/bioregion.do"):
         # after the recount the page's Endemic and Introduced = the names on endemic.do and introduced.do (2026-11-05:
         # the recount cleared the flags, Oceania's endemic.do listed 17 names while the page said Endemic 142)

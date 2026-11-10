@@ -8,8 +8,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.struts.action.*;
 import org.calacademy.antweb.Formatter;
 import org.calacademy.antweb.curate.OperationDetails;
-import org.calacademy.antweb.home.OperationLock;
-import org.calacademy.antweb.home.OperationLockDb;
 import org.calacademy.antweb.home.ServerDb;
 import org.calacademy.antweb.upload.UploadAction;
 import org.calacademy.antweb.upload.UploadDetails;

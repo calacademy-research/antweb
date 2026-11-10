@@ -20,6 +20,8 @@ PAGES = [
     ("/logMgr.do?action=specimenDetails", "Specimen Description"),
     ("/newGroup.do", "New upload group"),
     ("/genusConceptRules.do", "Old genus concepts"),
+    ("/apiKeys.do", "API keys"),
+    ("/apiKeys.do?id=999999999", "No API key registration number 999999999."),
     ("/query.do?action=curiousQueries", "Curious queries"),
     ("/query.do?action=devQueries", "Dev"),
     ("/query.do?action=events", "Events Report"),

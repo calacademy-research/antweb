@@ -1076,6 +1076,19 @@ We would like to remove getChildImages.  Not needed now in the new UI
         <forward name="success" path="/resetPassword.jsp" />
     </action>
 
+    <!-- Free API key: public registration form, and the page its confirmation email links to (?token=...). -->
+    <action path="/apiKey"
+                type="org.calacademy.antweb.ApiKeyAction"
+                scope="request">
+        <forward name="success" path="/apiKey.jsp" />
+    </action>
+
+    <action path="/apiKeyConfirm"
+                type="org.calacademy.antweb.ApiKeyConfirmAction"
+                scope="request">
+        <forward name="success" path="/apiKeyConfirm.jsp" />
+    </action>
+
     <!-- Admin only: ask all curators and administrators to set a new password. -->
     <action path="/passwordResetCampaign"
                 type="org.calacademy.antweb.curate.login.PasswordResetCampaignAction"
@@ -1087,6 +1100,13 @@ We would like to remove getChildImages.  Not needed now in the new UI
     <action path="/inactiveAccounts"
                 type="org.calacademy.antweb.curate.login.InactiveAccountsAction"
                 scope="request">
+    </action>
+
+    <!-- Admin: the API key registrations, their use, revoke, level, limits, note; CSV download. -->
+    <action path="/apiKeys"
+                type="org.calacademy.antweb.curate.ApiKeysAction"
+                scope="request">
+        <forward name="success" path="/curate/apiKeys.jsp" />
     </action>
 
     <!-- Admin: preview / apply sanitizing of page text saved before edits were sanitized. -->
@@ -1468,7 +1488,6 @@ We would like to remove getChildImages.  Not needed now in the new UI
               type = "org.calacademy.antweb.util.UptimeAction"
               name="dummyForm" scope="request">
           <forward name ="success" path="/util/uptime.jsp"/>
-          <forward name ="fail" path="/util/uptimeFail.jsp"/>
       </action>
       
 
