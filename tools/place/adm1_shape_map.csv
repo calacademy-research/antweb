@@ -4,7 +4,11 @@
 # country: AntWeb's valid country. level: the level of the boundary file (ADM1, ADM2 ...). shape: the file's
 # shapeName. antweb_state: AntWeb's valid state the shape lies in (several shapes may lie in one state).
 # A row is used only when AntWeb has that state as a valid state of the country; the report of each run lists
-# the rows used and the rows not used. A shape with several rows takes the first whose state AntWeb has.
+# the rows used. A shape with several rows takes the first whose state AntWeb has.
+# Each run writes mapping_suggestions.csv with the same first four columns: for each shape that is no AntWeb
+# state, the AntWeb states whose name is most like it, with a score and the specimens in the shape. A line a
+# person approves is pasted here (the columns score, specimens and note may stay: they are not read).
+# A shape name is written as the report shows it (a name spoilt in the boundary file is shown put right).
 #
 # Madagascar. AntWeb's states are the six provinces (faritany): Antananarivo, Antsiranana, Fianarantsoa,
 # Mahajanga, Toamasina, Toliara. The boundary file's ADM1 has the 22 regions (faritra) the provinces were divided
