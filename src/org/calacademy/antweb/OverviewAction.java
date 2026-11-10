@@ -143,6 +143,7 @@ public final class OverviewAction extends DescriptionAction {
                 new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.MUSEUM, museumCode);
    
                 MuseumMgr.populate(connection, true);
+                StatsPageAction.forget();   // the statistics page reads this list: count its tables again at the next visit
               }						
 
               Museum museum = MuseumMgr.getMuseum(museumCode);
@@ -191,6 +192,7 @@ public final class OverviewAction extends DescriptionAction {
                    new PlaceImageCountDb(connection).updatePlace(PlaceImageCountDb.BIOREGION, name);
 
                    BioregionMgr.populate(connection, true);
+                   StatsPageAction.forget();   // the statistics page reads this list: count its tables again at the next visit
                }
 
 
