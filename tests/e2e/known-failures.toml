@@ -14,10 +14,3 @@
 
 
 # No known failures (2026-11-07: the 8 entries of 2026-11-06 pass again since the clean 05:00 runs of 11-07).
-
-[[failure]]
-test = "test_count_check.py::test_statspage_tables_equal_the_recount"
-reason = "staging data: statsPage.do Bioregion Data Oceania shows 1 genus and 1 species more than the count check's recount (page [10, 64, 283, 4], recount [10, 63, 282, 4]); same numbers in two full runs of #337 (11-09), which changes no counts; being investigated"
-decided_by = "Brian Fisher"
-decided = 2026-11-09
-expires = 2026-11-16
