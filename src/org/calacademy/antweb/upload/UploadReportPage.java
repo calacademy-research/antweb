@@ -9,7 +9,7 @@ import org.calacademy.antweb.util.Html;
 
 /**
  * The upload report page: the HTML file written at upload time into web/log/specimen/ (and web/log/upload/,
- * web/log/worldants/), linked from the upload-complete email, the upload status page and the group's upload list.
+ * web/log/worldants/), linked from the upload-complete email, the Uploads and data jobs page (jobStatus.do) and the group's upload list.
  *
  * Brian Fisher, 2026-10-29: "I really dislike how our specimen reports look"; the report takes the tool pages' look
  * (web/common/tools.css, docs/guides/page-style.md) and reads on a phone:

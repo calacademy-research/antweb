@@ -28,6 +28,7 @@ docker-compose.dev.yml
 antweb-docs.zip
 /build-test/
 /etc/turnstile.properties
+/etc/api-keys.properties
 /etc/api-db.properties
 /etc/taxonworks.properties
 /etc/flickr.properties

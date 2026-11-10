@@ -8,7 +8,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.servlet.http.HttpServletResponse;
-import javax.sql.DataSource;
 
 import org.apache.struts.action.*;
 import java.sql.*;
@@ -24,8 +23,11 @@ import org.calacademy.antweb.Formatter;
     
 /**
  * /serverStatus.do: Server Status page (util/serverStatus.jsp; the page checks for an admin): the three
- * connection pools, the operation lock (table operation_lock), whether the server is busy (DBStatus) and the
- * operating system, Java, memory and disk details. Admins, POST only: action=toggleDownTime (upload down time,
+ * connection pools, uploads and jobs in progress (the running background job and the last finished one, linked to
+ * their pages on jobStatus.do, "Uploads and data jobs"; image uploads in progress from BusyStatus), whether the
+ * server is busy (DBStatus) and the operating system, Java, memory and disk details. The old "Is Image Upload
+ * locked" row (table operation_lock, which nothing writes since image uploads went one file per request on
+ * 2026-10-17) and the "Uptime Fail On Purpose" switch were removed on 2026-11-09. Admins, POST only: action=toggleDownTime (upload down time,
  * table server, ServerDb) and action=email (sends the server busy report). isReady and notReadyReason tell the
  * Scheduler to wait while an upload or compute runs. Docs: docs/catalog/actions.csv. Tests:
  * tests/e2e/test_admin_staging.py, test_request_handling.py, test_tool_pages_style.py.
@@ -82,7 +84,10 @@ static double getVersion () {
                // return (mapping.findForward("message"));
             }
      
-            setOperationLockAttr(dataSource1, request);
+            // The running background job and the last one that ended (table background_job).
+            BackgroundJobDb.setDataSource(dataSource1);
+            request.setAttribute("runningJob", BackgroundJobs.runningJob());
+            request.setAttribute("lastJob", BackgroundJobs.get().lastEnded());
 
             request.setAttribute("isServerBusy", DBStatus.isServerBusy(dataSource1, dataSource2, dataSource3));
 //            request.setAttribute("isServerBusy", DBStatus.isServerBusy(dataSource1, dataSource2, dataSource3));
@@ -119,13 +124,11 @@ static double getVersion () {
 
     public static boolean isReady() {
         return !UploadAction.isInUploadProcess()
-                && !UptimeAction.isFailOnPurpose()
                 && !UtilDataAction.isInComputeProcess();
     }
 				
     public static String notReadyReason() {
       if (UploadAction.isInUploadProcess()) return "A curator (" + UploadAction.getIsInUploadProcess() + " is currently in the process of an Upload.  Please try again shortly.";
-      if (UptimeAction.isFailOnPurpose()) return "Fail on purpose.";
       if (UtilDataAction.isInComputeProcess()) return "Currently in compute process:" + UtilDataAction.getIsInComputeProcess();
       return null;
     }
@@ -256,24 +259,6 @@ static double getVersion () {
 
 // --------------------------------------------------
 	
-    private void setOperationLockAttr(DataSource dataSource, HttpServletRequest request) {
-        OperationLock operationLock = null;
-        Connection connection = null;
-        String dbMethodName = DBUtil.getDbMethodName("ServerStatusAction.setOperationLockAttr()");
-        try {
-            connection = DBUtil.getConnection(dataSource, dbMethodName);
-            operationLock = new OperationLockDb(connection).getOperationLock();
-            if (operationLock != null) {
-              //s_log.warn("setOperationLockAttr() isLocked:" + operationLock.isLocked());
-              request.setAttribute("operationLock", operationLock);
-            }
-        } catch (SQLException e) {
-            s_log.error("setOperationLockAttr() e:" + e);
-        } finally {
-            DBUtil.close(connection, this, dbMethodName);
-        }             
-    }
-
     public boolean executeMethodHabitat(HttpServletRequest request, HttpServletResponse response)
         throws Exception {        
     

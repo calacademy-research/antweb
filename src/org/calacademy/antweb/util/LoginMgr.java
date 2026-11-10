@@ -92,6 +92,11 @@ public class LoginMgr extends Manager {
             s_log.error("startPasswordConversion() login.inactive columns not created e:" + e);
           }
           try {
+            new org.calacademy.antweb.home.ApiKeyDb(conn).ensureSchema();   // api_key, api_usage_daily (free API keys)
+          } catch (SQLException e) {
+            s_log.error("startPasswordConversion() api_key tables not created e:" + e);
+          }
+          try {
             new org.calacademy.antweb.home.PlaceImageCountDb(conn).ensureSchema();   // place_image_count (Images on place pages)
           } catch (SQLException e) {
             s_log.error("startPasswordConversion() place_image_count not created e:" + e);

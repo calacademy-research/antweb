@@ -42,6 +42,7 @@ ADMIN_ONLY = [
     "/loginAs.do?id=1",
     "/sanitizeDescriptions.do",
     "/inactiveAccounts.do",
+    "/apiKeys.do",
     "/addUploader.do",
     "/viewGroups.do",
     "/viewGroup.do?id=1",

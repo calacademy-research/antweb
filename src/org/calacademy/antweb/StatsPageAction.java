@@ -47,6 +47,13 @@ public final class StatsPageAction extends AntwebAction {
         return s_numbers;
     }
 
+    /** Forget the kept tables: the next visit counts them again. Called when a curator recounts one bioregion or
+     *  museum ("Update statistics" on its page), whose list the Bioregion Data and Museum Data tables read; until
+     *  2026-11-09 the page kept the morning's numbers for that place until the next daily update. */
+    public static void forget() {
+        s_numbers = null;
+    }
+
     /** Count the tables now and keep them (the nightly run, at its end). Never throws. */
     public static String recount(Connection connection) {
         try {
