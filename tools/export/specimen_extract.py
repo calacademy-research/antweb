@@ -66,7 +66,7 @@ import re
 import subprocess
 import sys
 
-VERSION = "5"
+VERSION = "6"
 TAXON_COLUMNS = ("taxon_status", "taxon_fossil", "taxon_rank", "taxon_current_valid_name", "taxon_author_date",
                  "group_name", "no_taxon_row")
 PLACE_NAME = re.compile(r"^[^\x00-\x1f;\\]{1,64}$")
@@ -197,12 +197,22 @@ def unhex(value):
     return bytes.fromhex(value).decode("utf-8", "replace")
 
 
-def bioregion_list_sql(bioregion):
+T_ANTS = "(t.family = 'formicidae' or t.family is null or t.family = '')"   # the same choice, on the taxon table
+
+
+def list_left_out_sql(bioregion):
+    """How many names of the bioregion's list are not ants (production 2026-11-10: the Nearctic list holds about
+    130 names of wasps, beetles and others)."""
+    return ("select count(*) from bioregion_taxon bt join taxon t on t.taxon_name = bt.taxon_name where bt.bioregion_name = "
+            + sql_string(bioregion) + " and t.taxarank in ('species', 'subspecies') and not " + T_ANTS + " /* list left out */")
+
+
+def bioregion_list_sql(bioregion, ants_only=False):
     return ("select bt.taxon_name, ifnull(t.subfamily, ''), ifnull(t.genus, ''), ifnull(t.species, ''), ifnull(t.subspecies, ''), "
             "ifnull(t.taxarank, ''), ifnull(t.status, ''), ifnull(t.fossil, ''), ifnull(bt.source, ''), ifnull(bt.is_endemic, ''), "
             "ifnull(bt.is_introduced, '') from bioregion_taxon bt left join taxon t on t.taxon_name = bt.taxon_name "
             "where bt.bioregion_name = " + sql_string(bioregion) + " and (t.taxarank in ('species', 'subspecies') or t.taxon_name is null) "
-            "order by t.subfamily, t.genus, bt.taxon_name")
+            + ("and " + T_ANTS + " " if ants_only else "") + "order by t.subfamily, t.genus, bt.taxon_name")
 
 
 def db_login(project):
@@ -420,8 +430,11 @@ def manifest_text(m):
               "Genera: {:,}   distinct names: {:,}".format(m["genera"], m["names"])]
     if m.get("bioregion"):
         b = m["bioregion_list"]
-        lines += ["", "AntWeb's %s species list: %s names; %s of them have no specimen in this extract (literature, or other countries)"
-                  % (m["bioregion"], "{:,}".format(b["names"]), "{:,}".format(b["names_without_specimen_in_extract"]))]
+        left = b.get("names_left_out_not_formicidae")
+        lines += ["", "AntWeb's %s species list: %s names%s; %s of them have no specimen in this extract (literature, or other countries)"
+                  % (m["bioregion"], "{:,}".format(b["names"]),
+                     "" if left is None else " of ants ({:,} names of other families left out)".format(left),
+                     "{:,}".format(b["names_without_specimen_in_extract"]))]
     if m.get("no_country"):
         nc = m["no_country"]
         lines += ["", "Specimens with no country, in specimens_no_country.csv.gz (all of AntWeb; no country filter finds them): "
@@ -555,8 +568,10 @@ def main(argv=None):
     bio = None
     if args.bioregion:
         list_path = os.path.join(out, "bioregion_list.csv")
-        names, missing = write_bioregion_list(list_path, run_query(project, bioregion_list_sql(args.bioregion), args.container), stats)
-        bio = {"names": names, "names_without_specimen_in_extract": missing}
+        names, missing = write_bioregion_list(list_path, run_query(project, bioregion_list_sql(args.bioregion, ants_only), args.container), stats)
+        bio = {"names": names, "names_without_specimen_in_extract": missing,
+               "names_left_out_not_formicidae": int(run_query(project, list_left_out_sql(args.bioregion), args.container)[0][0])
+               if ants_only else None}
         files.append(list_path)
 
     manifest = {
