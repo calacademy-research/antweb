@@ -1,7 +1,9 @@
 <%-- Body of the API v3.1 documentation (apiV3.1.do): global parameters, licence and image-count notes, each route
      with its parameters and example links to https://antweb.org/v3.1 (http://localhost/v3.1 in dev mode).
      Administrators see the admin-only parameters, and the examples get &up=1. Docs: docs/flows/api.md,
-     docs/numbers.md rows 100 to 118. Access and terms of use under #terms (step 6, 2026-11-08), with the link to apiKey.do (register for a free API key). Tests: tests/e2e/test_api.py. --%> 
+     docs/numbers.md rows 100 to 118. The page does not know whether v4 is open (one switch in the API's own settings
+     file, v4Open in etc/api-db.properties), so its status text and the section #v4 are written to be right in both
+     states and point to the live status at /v4/ (2026-11-09). Access and terms of use under #terms (step 6, 2026-11-08), with the link to apiKey.do (register for a free API key). Tests: tests/e2e/test_api.py. --%> 
 <%@ page import="org.calacademy.antweb.*" %> 
 <%@ page import="org.calacademy.antweb.util.*" %>
 
@@ -42,8 +44,8 @@
         <h2 id="terms">Access and terms of use</h2>
         <p><b>Publisher:</b> AntWeb, California Academy of Sciences. <b>Contact:</b> antweb@antweb.org. <b>Last updated:</b> November 2026.</p>
         <h3>API status and access</h3>
-        <p><b>Status (November 2026):</b> the AntWeb API is temporarily unavailable while free registered API keys and request limits are introduced. During this period data requests return HTTP 503 (Service Unavailable). The API will reopen when registration is ready. Documentation: https://www.antweb.org/apiV3.1.do. API base address: https://www.antweb.org/v3.1/.</p>
-        <p>When access reopens, you can register for a <b>free API key</b> with your name, email address and project description, and your institution or affiliation if you have one. A key is for an identified project or application and allows higher request limits. A small number of requests will be possible without a key, for occasional questions. The request limits will be published here when registration opens.</p>
+        <p><b>Status (November 2026):</b> the AntWeb API is moving from version 3.1 to <a href="#v4"><b>version 4</b></a>, with free registered API keys and request limits. The live status is at <a href="https://www.antweb.org/v4/">https://www.antweb.org/v4/</a> (<code>"status": "open"</code> or <code>"closed"</code>). Until version 4 opens, data requests return HTTP 503 (Service Unavailable). From the day version 4 opens, version 3.1 has ended: its data requests return HTTP 410 (Gone) with a short message that points to version 4, and https://www.antweb.org/v3.1/ itself keeps answering with the status "ended". Documentation: https://www.antweb.org/apiV3.1.do. API base address: https://www.antweb.org/v4/.</p>
+        <p>You can register for a <b>free API key</b> with your name, email address and project description, and your institution or affiliation if you have one. A key is for an identified project or application and allows higher request limits. A small number of requests is possible without a key, for occasional questions. The request limits are listed under <a href="#v4">Version 4</a>.</p>
         <p id="api-key-register"><a href="<%= AntwebProps.getSecureDomainApp() %>/apiKey.do"><b>Register for a free API key</b></a>.</p>
         <p>Keep API keys private. Respect the published limits and avoid many parallel requests. When a limit is reached the service returns <b>HTTP 429 (Too Many Requests)</b>; wait for the time given in the <code>Retry-After</code> header before trying again. AntWeb may restrict or revoke access that disrupts the service, compromises security, or repeatedly ignores the limits.</p>
         <h3>Purpose and responsible data access</h3>
@@ -94,6 +96,22 @@
         <p><b>Parameter names:</b> parameter names are case sensitive. A request with a parameter the function does not know (for example a misspelt name) is answered with HTTP 400 and a JSON message listing the accepted parameters, instead of ignoring it. When a close name exists, the message suggests it ("did you mean").</p>
         <p id="license"><b>Licence</b> (since 2026-10-29): <jsp:include page="/common/licenseStatement.jsp" flush="true"/> Every reply has the HTTP header <code>Link: &lt;https://creativecommons.org/licenses/by/4.0/&gt;; rel="license"</code>, and every JSON reply with data has a top-level <b>license</b> object: <code>{"name": "CC BY 4.0", "url": "https://creativecommons.org/licenses/by/4.0/", "citation": "..."}</code>. ndjson replies and error replies carry the header only.</p>
         <p id="image-counts"><b>Image counts</b> (since 2026-10-27): on AntWeb "Images" means images of the ant (head, profile, dorsal and other views); label images are counted separately. <b>imageCount</b> keeps its meaning (every image file, label images included) so existing programs keep working. <b>antImageCount</b> and <b>labelImageCount</b> are added: on /specimens and /geoSpecimens the specimen's images of the ant and label images; on /taxa the images of the specimens filed under the name (imageCount there also counts the names under it); in the metaData of /images and /taxaImages the images of the ant and label images of the reply. On /geolocales, /bioregions, /geolocaleTaxa and /bioregionTaxa, imageCount is the place's number: every image file of a place (imagedSpecimenCount counts specimens with an image of the ant), and on the lists' rows the images of the ant.</p>
+        <h2 id="v4">Version 4</h2>
+        <p>Version 4 is at <b>https://www.antweb.org/v4/</b>. It has the same routes, parameters and replies as version 3.1 described below (<code>/v4/specimens</code>, <code>/v4/taxa</code>, and so on), with these differences. The examples on this page are written for version 3.1; for version 4 replace <code>/v3.1/</code> with <code>/v4/</code>. When version 4 is open, version 3.1 has ended (HTTP 410).</p>
+        <ul>
+            <li><b>API key:</b> send your free key in the HTTP header <code>X-API-Key</code>, never in the web address (a key in the address is refused with HTTP 400). Example: <code>curl -H "X-API-Key: YOUR_KEY" "https://www.antweb.org/v4/specimens?genus=camponotus&amp;limit=5"</code>. <a href="<%= AntwebProps.getSecureDomainApp() %>/apiKey.do">Register for a free API key</a>.</li>
+            <li><b>Field names:</b> <code>specimenCode</code> (the code of one specimen; in /taxaImages it was <code>code</code>), <code>collectingEventCode</code> (was <code>collectionCode</code>) and <code>localityCode</code> (new, on /specimens and /geoSpecimens). /specimens also takes <code>collectingEventCode=</code> and <code>localityCode=</code> as filters.</li>
+            <li><b>Status and limits</b> are also given by https://www.antweb.org/v4/ itself, with the list of routes.</li>
+        </ul>
+        <table class="arguments">
+            <tr><th>Limit</th><th>Without a key (per address)</th><th>With a free registered key</th></tr>
+            <tr><td>Requests a minute</td><td>5</td><td>60</td></tr>
+            <tr><td>Requests a day</td><td>50</td><td>5,000</td></tr>
+            <tr><td>Records per answer</td><td>25</td><td>500</td></tr>
+            <tr><td>Records a day</td><td>1,250</td><td>50,000</td></tr>
+        </table>
+        <p>API days are UTC days: the daily limits start again at midnight UTC. Larger answers are fetched in pages with <code>offset</code>. Over a limit the reply is HTTP 429 with a <code>Retry-After</code> header (seconds); every data reply says how many records are left today (<code>metaData.recordsLeftToday</code>, header <code>X-AntWeb-Records-Left-Today</code>). For larger projects write to antweb@antweb.org. AntWeb's data change with each daily update.</p>
+
         <p><p>
         <p>There are the different ways to access the api, documented below...
            <br>&nbsp;&nbsp;<a href="#specimens">Specimens</a>

@@ -2,7 +2,9 @@
 
 > AntWeb is the California Academy of Sciences' community-supported resource for ant specimen records, images, distribution and natural history, developed since 2002 under the scientific leadership of Brian L. Fisher. Use its API for data, keep scientific attribution and specimen provenance, and use AntCat for names.
 
-**API status (November 2026):** the data API is temporarily closed while free registered keys and request limits are introduced. Data requests return HTTP 503. Do not get around the closure by scraping pages. When registration opens, use a free API key for regular or substantial use; a small number of requests will work without a key. Respect the limits and the Retry-After header of HTTP 429 answers.
+**API status (November 2026):** AntWeb's data API is version 4 at https://www.antweb.org/v4/, with free registered API keys and request limits. https://www.antweb.org/v4/ says whether it is open ("status": "open" or "closed"), and lists the routes, the limits and the field names. Until version 4 opens, data requests return HTTP 503. From the day it opens, version 3.1 (https://www.antweb.org/v3.1/) has ended: its data requests return HTTP 410 with a pointer to version 4. Do not get around a closure or a limit by scraping pages.
+
+**Keys and limits:** get a free API key at https://www.antweb.org/apiKey.do and send it in the HTTP header X-API-Key, never in the web address. With a key: 60 requests a minute, 5,000 requests and 50,000 records a day, 500 records per answer. Without a key, for occasional questions: 5 requests a minute, 50 requests and 1,250 records a day per address, 25 records per answer. API days are UTC days (limits start again at midnight UTC). Respect the limits and the Retry-After header of HTTP 429 answers. Version 4 field names: specimenCode, collectingEventCode, localityCode.
 
 **Access:** use the API, not crawling or scraping of AntWeb's web pages. Follow robots.txt. Do not harvest the whole database, run an automated mirror, or synchronize it in full through the API without arranging access with the AntWeb team first: antweb@antweb.org. The limits do not change the rights the CC BY 4.0 licence grants.
 
@@ -18,7 +20,8 @@
 
 ## Data access and documentation
 
-- [AntWeb API v3.1](https://www.antweb.org/v3.1/): API entry point and status
+- [AntWeb API v4](https://www.antweb.org/v4/): API entry point, status, routes and limits
+- [Free API key](https://www.antweb.org/apiKey.do): registration
 - [API documentation and terms](https://www.antweb.org/apiV3.1.do): endpoints, parameters, access and citation
 - [How to Cite AntWeb](https://www.antweb.org/citing_antweb.jsp): image credit and citation
 - [Participate](https://www.antweb.org/documentation.do): how to contribute specimens and images
