@@ -1538,6 +1538,7 @@ jobs:
 
       - name: Release gate checks and the known-failures list (tests/unit/test_release_gate.py)
         # An entry of tests/e2e/known-failures.toml needs a reason, who decided, and an end date at most 7 days on.
+        # Check 8: a running daily update or an unreadable dailyUpdate.do closes the gate (no network use in this test).
         run: python3 tests/unit/test_release_gate.py
 
       - name: The nightly counts the place list totals after set 4, on their own connection (tests/unit/test_place_totals_connection.py)

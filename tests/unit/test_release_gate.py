@@ -76,6 +76,71 @@ def test_failed_tests_and_unlisted():
     assert gate.failed_tests([{"title": "e2e failed tests", "message": "2 failed: test_a; test_b"}]) == {"test_a", "test_b"}
 
 
+def _json(*runs):
+    import json
+    return 200, {"Content-Type": "application/json"}, json.dumps({"runs": list(runs)})
+
+
+def test_daily_update_state_json():
+    running = {"started": "2026-11-09T05:00:00", "ended": None, "state": "running", "steps": []}
+    ok = {"started": "2026-11-08T05:00:00", "ended": "2026-11-08T07:41:00", "state": "ok", "steps": []}
+    failed = {"started": "2026-11-08T05:00:00", "ended": None, "state": "failed", "steps": []}
+    assert gate.daily_update_state(*_json(running, ok))[0] == "running"
+    assert gate.daily_update_state(*_json(ok, failed))[0] == "not running"
+    assert gate.daily_update_state(*_json(failed, ok))[0] == "not running"
+    assert gate.daily_update_state(*_json())[0] == "not running"
+    # conservative: an ok run with no end, a state the gate does not know, other JSON
+    assert gate.daily_update_state(*_json(dict(ok, ended=None)))[0] == "unknown"
+    assert gate.daily_update_state(*_json(dict(ok, state="waiting")))[0] == "unknown"
+    assert gate.daily_update_state(200, {}, '{"status": "fine"}')[0] == "unknown"
+    assert gate.daily_update_state(200, {}, "[]")[0] == "unknown"
+
+
+def test_daily_update_state_unreachable():
+    challenge = "<html><title>Just a moment...</title><script src='/cdn-cgi/challenge-platform/x'></script>"
+    assert gate.daily_update_state(403, {}, challenge)[0] == "unknown"
+    assert gate.daily_update_state(200, {"cf-mitigated": "challenge"}, "")[0] == "unknown"
+    assert gate.daily_update_state(404, {}, "not found")[0] == "unknown"
+    assert gate.daily_update_state(502, {}, "")[0] == "unknown"
+    # a login page (the HTML page needs a curator login)
+    assert gate.daily_update_state(200, {}, "<html><form action='login.do'>")[0] == "unknown"
+
+
+def test_daily_update_state_page():
+    # markup of DailyUpdateAction.runCard (util/dailyUpdate-body.jsp)
+    def page(state):
+        return ('<div class="aw-card" id="daily-update-latest"><h2>Today\'s daily update (running)</h2>'
+                f'<p class="aw-lead" id="daily-update-state" data-state="{state}">2026-11-09, started 05:00: x.</p>'
+                '<table class="daily-update-steps"><tr data-step="end" data-state="done"></tr></table></div>')
+    assert gate.daily_update_state(200, {}, page("running"))[0] == "running"
+    assert gate.daily_update_state(200, {}, page("ok"))[0] == "not running"
+    assert gate.daily_update_state(200, {}, page("failed"))[0] == "not running"
+    assert gate.daily_update_state(200, {}, page("weird"))[0] == "unknown"
+    assert gate.daily_update_state(200, {}, '<div class="aw-card" id="daily-update-none"><p>No daily update</p></div>')[0] == "not running"
+
+
+def test_daily_check():
+    running = {"started": "2026-11-09T05:00:00", "ended": None, "state": "running"}
+    ok = {"started": "2026-11-08T05:00:00", "ended": "2026-11-08T07:41:00", "state": "ok"}
+
+    def boom():
+        raise OSError("Tunnel connection failed: 403 Forbidden")
+    # running: closed, also with --nightly-checked
+    assert gate.daily_check(lambda: _json(running), False)[0] is False
+    assert gate.daily_check(lambda: _json(running), True)[0] is False
+    assert gate.daily_check(lambda: _json(ok), False)[0] is True
+    # unknown fails closed unless it was read by hand
+    ok_, text = gate.daily_check(boom, False)
+    assert ok_ is False and gate.UNKNOWN_DAILY in text
+    ok_, text = gate.daily_check(lambda: (403, {"cf-mitigated": "challenge"}, ""), False)
+    assert ok_ is False and gate.UNKNOWN_DAILY in text
+    ok_, text = gate.daily_check(boom, True)
+    assert ok_ is True and gate.UNKNOWN_DAILY in text and "--nightly-checked" in text
+    # user wording: "daily update", never "nightly" in what check 8 says (the flag's name aside)
+    for fetch, by_hand in ((lambda: _json(running), False), (lambda: _json(ok), False), (boom, False)):
+        assert "nightly" not in gate.daily_check(fetch, by_hand)[1].replace("--nightly-checked", "")
+
+
 if __name__ == "__main__":
     for name, fn in list(globals().items()):
         if name.startswith("test_") and callable(fn):
