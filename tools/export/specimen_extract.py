@@ -60,6 +60,7 @@ import csv
 import datetime
 import gzip
 import hashlib
+import io
 import json
 import os
 import re
@@ -323,7 +324,10 @@ def write_specimens(lines, path, stats):
     header = None
     part = path + ".part"       # renamed when complete: a failed run leaves no specimens.csv.gz
     try:
-        with gzip.open(part, "wt", encoding="utf-8", newline="") as f:
+        # no file name and no time in the gzip header: the same specimens give the same bytes and the same
+        # sha256 on every run (2026-11-10: two runs a minute apart, same data, had different checksums)
+        with open(part, "wb") as raw, gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0) as gz, \
+                io.TextIOWrapper(gz, encoding="utf-8", newline="") as f:
             w = csv.writer(f)
             for line in lines:
                 fields = line.split("\t")

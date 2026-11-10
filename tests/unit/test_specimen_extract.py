@@ -360,6 +360,22 @@ def test_ants_only_is_the_default_and_says_what_it_left_out():
     assert nc and all(se.ANTS in q for q in nc), nc
 
 
+def test_the_same_specimens_give_the_same_checksum():
+    """Two runs over the same data: the same bytes (no time, no file name in the gzip header)."""
+    import time
+    shas = []
+    for _ in range(2):
+        d = setup()
+        r = run(d, "--countries", "United States,Canada,Mexico", "--with-no-country")
+        assert r.returncode == 0, r.stdout + r.stderr
+        m = json.load(open(os.path.join(d, "out", "manifest.json")))
+        shas.append((m["files"]["specimens.csv.gz"]["sha256"], m["files"]["specimens_no_country.csv.gz"]["sha256"]))
+        time.sleep(1.1)
+    assert shas[0] == shas[1], shas
+    with gzip.open(os.path.join(d, "out", "specimens.csv.gz"), "rt", encoding="utf-8", newline="") as f:
+        assert len(list(csv.DictReader(f))) == 5
+
+
 if __name__ == "__main__":
     test_helpers()
     test_the_extract_is_complete_and_verified()
@@ -373,4 +389,5 @@ if __name__ == "__main__":
     test_a_second_run_and_a_failed_run_leave_no_stale_or_partial_file()
     test_specimens_with_no_country_go_in_their_own_file()
     test_ants_only_is_the_default_and_says_what_it_left_out()
+    test_the_same_specimens_give_the_same_checksum()
     print("ok")
