@@ -47,8 +47,13 @@ import org.apache.commons.logging.LogFactory;
  * 11-08 and about 4 hours on 11-09, production). Every place has a fingerprint (fingerprint(): counts and checksums of
  * what its lists are built from: its list rows with the taxon rows of their names, the names of the specimens collected
  * there as the Not curated count stored them tonight (place_specimen_name, with the specimens of each name and the taxon
- * row), the names a curator removed there (disputes), and, for every place, the curated morphospecies of AntWeb (a
- * morphospecies on any curator's list entry, ListView.vettedCondition) and the counting rules (RULES)). Specimen dates are no signal: an upload, the
+ * row), the names a curator removed there (disputes), the curated morphospecies among the place's own names (a
+ * morphospecies on any curator's list entry is curated in every place, ListView.vettedCondition; curatedPart) and the
+ * counting rules (RULES)). Until 2026-11-10 the curated part was one checksum of every curated morphospecies of AntWeb,
+ * the same in every place's fingerprint: one curator's entry anywhere, or one curated morphospecies whose specimens were
+ * renamed, and the daily update counted every place again (production 2026-11-10, a Tuesday: "1987 recounted, 0
+ * unchanged", 584 s). A curated morphospecies can only change the lists of the places that have the name, so each place
+ * now takes the curated ones of its own names. Specimen dates are no signal: an upload, the
  * nightly TaxonWorks upload of CAS among them, deletes its group's specimens and loads them again (SpecimenUploadDb
  * .dropSpecimens), so every CAS specimen gets a new last_modified every night. A place is counted again when its
  * fingerprint differs from the one stored with its totals (place_view_total_state), when the specimen names it was
@@ -56,9 +61,12 @@ import org.apache.commons.logging.LogFactory;
  * last count is over 7 days old, when RULES changed, on Sundays (everything, weekly), when its totals are missing, and
  * by the admin action with param=all. Each place commits on its own (autocommit; until 2026-11-09 one transaction per
  * 100 places held metadata locks on specimen, taxon and the lists for minutes, and an online ALTER TABLE timed out
- * waiting for them). The line in compute.log: "Place list totals counted: N places in S s (M recounted, K unchanged)".
+ * waiting for them). The line in compute.log: "Place list totals counted: N places in S s (M recounted, K unchanged)",
+ * then, when places were counted again, why and what took the time ("; recounted because: data changed 12 (list rows
+ * 3, specimen names 10), counted over 7 days ago 1; comparing 20 s, counting 4 s").
  *
- * Tests: home.PlaceViewTotalDbTest (unchanged places skipped, changed ones counted, rules change, commit per place),
+ * Tests: home.PlaceViewTotalDbTest (unchanged places skipped, changed ones counted, rules change, commit per place, the
+ * daily sequence day after day, the curated part against ListView.vettedCondition),
  * tests/e2e/test_numbers_live.py (test_list_headers_equal_place_numbers), test_numbers_lists.py
  * (test_list_headers_equal_place_numbers_of_every_kind), test_nightly_jobs_ran.py (test_place_list_totals_counted_every_place).
  */
@@ -309,28 +317,108 @@ public class PlaceViewTotalDb {
     }
 
     /**
-     * What every place's lists depend on beyond its own rows: the curated morphospecies (a morphospecies on any curator's
-     * list entry is curated in every place, and its morphogenus with it: ListView.vettedCondition) and the rules. Only
-     * names of status morphotaxon: a curator adding a valid name to a list changes no other place. Read once per run.
+     * The curated morphospecies of AntWeb, read once per run: the morphotaxon names on a curator's list entry
+     * (names: taxon.taxon_name, lower case) and the genera with a curated morphospecies or subspecies (genera: subfamily
+     * and genus, lower case). The same rule as ListView.vettedCondition, which the lists are counted with: a name of
+     * status morphotaxon is curated when it is on a geolocale_taxon row or on a proj_taxon row of a project that is not a
+     * system list, with a curator's source (own); a genus row (no space in its name) also when a morphospecies of its
+     * subfamily and genus is (under). Test: testCuratedPartFollowsTheListsRule.
      */
-    String globalFingerprint() throws SQLException {
+    public static final class Curated {
+        final Set<String> names = new HashSet<>();
+        final Set<String> genera = new HashSet<>();
+
+        private static String lower(String v) {
+            return v == null ? "" : v.toLowerCase(java.util.Locale.ROOT);
+        }
+
+        static String genusKey(String subfamily, String genus) {
+            return lower(subfamily) + "\u0000" + lower(genus);
+        }
+
+        /** Whether the lists show this morphotaxon name as curated (ListView.vettedCondition of its taxon row). */
+        public boolean isCurated(String taxonName, String subfamily, String genus) {
+            if (taxonName == null) return false;
+            if (names.contains(lower(taxonName))) return true;
+            return taxonName.indexOf(' ') < 0 && genus != null && !genus.isEmpty() && subfamily != null
+                && genera.contains(genusKey(subfamily, genus));
+        }
+    }
+
+    /** One query: every morphotaxon name on a curator's list entry, with its rank, subfamily and genus. */
+    public Curated loadCurated() throws SQLException {
         String sources = CuratorTaxonSetDb.curatorSourceList();
-        StringBuilder sys = new StringBuilder();
-        for (String p : CuratorTaxonSetDb.SYSTEM_PROJECTS) sys.append(sys.length() == 0 ? "" : ", ").append(org.calacademy.antweb.util.DBUtil.sqlLiteral(p));
         String vetted = "(select taxon_name from geolocale_taxon where source in " + sources
             + " union select pt.taxon_name from proj_taxon pt join project p on p.project_name = pt.project_name"
-            + " where pt.source in " + sources + " and pt.project_name not in (" + sys + ")) v"
+            + " where pt.source in " + sources + " and pt.project_name not in " + CuratorTaxonSetDb.systemProjectList() + ") v"
             + " join taxon t on t.taxon_name = v.taxon_name and t.status = 'morphotaxon'";
-        // genus and subfamily too (review of #336): a curated morphospecies moved to another genus changes which genus
-        // counts as curated without a change of name
-        return "v" + checksum("concat_ws('|', v.taxon_name, t.genus, t.subfamily)", vetted) + ";r" + RULES;
+        Curated out = new Curated();
+        try (Statement stmt = connection.createStatement();
+             ResultSet r = stmt.executeQuery("select t.taxon_name, t.taxarank, t.subfamily, t.genus from " + vetted)) {
+            while (r.next()) {
+                out.names.add(Curated.lower(r.getString(1)));
+                String rank = r.getString(2);
+                // a morphogenus is curated with a curated morphospecies of it (ListView.vettedCondition, "under")
+                if ((Rank.SPECIES.equals(rank) || Rank.SUBSPECIES.equals(rank)) && r.getString(3) != null && r.getString(4) != null
+                        && !r.getString(4).isEmpty()) {
+                    out.genera.add(Curated.genusKey(r.getString(3), r.getString(4)));
+                }
+            }
+        }
+        return out;
     }
 
     /**
-     * A place's fingerprint: its list rows with the taxon rows of their names, the specimen names collected there as
-     * stored tonight (place_specimen_name, with the specimens per name and the taxon row), its disputes, and global.
+     * The curated morphospecies among a place's own names: "n:sum" of the morphotaxon names on its list or among its
+     * stored specimen names that the lists show as curated. One query per place (the place's morphotaxon names, by the
+     * list's key and place_specimen_name's key), compared in memory with the curated names of AntWeb (loadCurated).
+     * A curator's entry for a morphospecies changes this part in the places that have the name, and in no other place.
      */
-    public String fingerprint(Overview overview, String global) throws SQLException {
+    String curatedPart(Overview overview, Curated curated) throws SQLException {
+        StringBuilder q = new StringBuilder();
+        List<Object> params = new ArrayList<>();
+        Object[] list = listOf(overview);
+        if (list != null) {
+            q.append("select t.taxon_name, t.subfamily, t.genus from ").append(list[0]).append(" l join taxon t on t.taxon_name = l.taxon_name"
+                + " where l.").append(list[1]).append(" = ? and t.status = 'morphotaxon'");
+            params.add(list[2]);
+        }
+        String[] names = PlaceGenusCurationDb.typeAndKey(overview);
+        if (names != null && hasTable("place_specimen_name")) {
+            if (q.length() > 0) q.append(" union ");
+            q.append("select t.taxon_name, t.subfamily, t.genus from place_specimen_name p join taxon t on t.taxon_name = p.taxon_name"
+                + " where p.list_type = ? and p.list_key = ? and t.status = 'morphotaxon'");
+            params.add(names[0]);
+            params.add(names[1]);
+        }
+        if (q.length() == 0) return "0:0";
+        Set<String> mine = new HashSet<>();
+        try (PreparedStatement stmt = connection.prepareStatement(q.toString())) {
+            for (int i = 0; i < params.size(); i++) stmt.setObject(i + 1, params.get(i));
+            try (ResultSet r = stmt.executeQuery()) {
+                while (r.next()) {
+                    if (curated.isCurated(r.getString(1), r.getString(2), r.getString(3))) mine.add(Curated.lower(r.getString(1)));
+                }
+            }
+        }
+        long sum = 0;
+        for (String name : mine) {
+            java.util.zip.CRC32 crc = new java.util.zip.CRC32();
+            crc.update(name.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            sum += crc.getValue();
+        }
+        return mine.size() + ":" + sum;
+    }
+
+    /** The parts of a fingerprint, by their first letter (the log line's reasons). */
+    static final String[][] PARTS = {{"l", "list rows"}, {"s", "specimen names"}, {"d", "removed names"}, {"c", "curated morphospecies"}};
+
+    /**
+     * A place's fingerprint: its list rows with the taxon rows of their names (l), the specimen names collected there as
+     * stored tonight (s: place_specimen_name, with the specimens per name and the taxon row), its disputes (d), the
+     * curated morphospecies among its names (c: curatedPart) and the rules (r).
+     */
+    public String fingerprint(Overview overview, Curated curated) throws SQLException {
         StringBuilder f = new StringBuilder();
         List<String> taxon = taxonColumns("t");
         Object[] list = listOf(overview);
@@ -357,8 +445,33 @@ public class PlaceViewTotalDb {
         if (overview instanceof Project && hasTable("proj_taxon_dispute")) {
             f.append(";d").append(checksum("d.taxon_name", "proj_taxon_dispute d where d.project_name = ?", overview.getName()));
         }
-        f.append(";").append(global);
+        f.append(";c").append(curatedPart(overview, curated));
+        f.append(";r").append(RULES);
         return f.length() > 255 ? f.substring(0, 255) : f.toString();
+    }
+
+    /** The parts of a fingerprint by their letter ("l" -> "12:345"); a part's text has no ';'. */
+    static java.util.Map<String, String> parts(String fingerprint) {
+        java.util.Map<String, String> out = new java.util.HashMap<>();
+        if (fingerprint == null) return out;
+        for (String part : fingerprint.split(";")) if (!part.isEmpty()) out.put(part.substring(0, 1), part.substring(1));
+        return out;
+    }
+
+    /**
+     * Which parts of a place's data changed (the names of PARTS), for the log line; "fingerprint of an earlier version"
+     * for one stored before 2026-11-10 (it has the checksum of all curated morphospecies, "v", and no "c").
+     */
+    static List<String> changedParts(String stored, String now) {
+        List<String> out = new ArrayList<>();
+        java.util.Map<String, String> a = parts(stored);
+        java.util.Map<String, String> b = parts(now);
+        if (a.containsKey("v") || !a.containsKey("c")) {
+            out.add("fingerprint of an earlier version");
+            return out;
+        }
+        for (String[] part : PARTS) if (!java.util.Objects.equals(a.get(part[0]), b.get(part[0]))) out.add(part[1]);
+        return out;
     }
 
     /** A place's stored state: rules, fingerprint, counted, checked. */
@@ -431,14 +544,16 @@ public class PlaceViewTotalDb {
      */
     static String recountReason(State st, String fingerprint, boolean hasTotals, java.sql.Timestamp namesFilled, boolean usesNames,
                                 java.sql.Timestamp now) {
-        if (st == null) return "not counted yet";
+        if (st == null) return "new place";
         if (!hasTotals) return "totals missing";
         if (!RULES.equals(st.rules)) return "rules changed";
         if (st.counted == null || now == null || now.getTime() - st.counted.getTime() > MAX_AGE_DAYS * 86_400_000L) return "counted over " + MAX_AGE_DAYS + " days ago";
         if (usesNames && (namesFilled == null || st.checked == null || !namesFilled.after(st.checked))) return "specimen names not stored again since the last count";
-        if (!fingerprint.equals(st.fingerprint)) return "data changed";
+        if (!fingerprint.equals(st.fingerprint)) return DATA_CHANGED;
         return null;
     }
+
+    static final String DATA_CHANGED = "data changed";
 
     /** Tests only: called after each place is done (its list_type and list_key), to see that it is committed. */
     private static volatile java.util.function.BiConsumer<String, String> s_afterPlace = null;
@@ -475,13 +590,18 @@ public class PlaceViewTotalDb {
         int failedCount = 0;
         List<String> failed = new ArrayList<>();
         Set<String> handled = new HashSet<>();
+        // why places were counted again, and which part of their data changed (the log line)
+        java.util.Map<String, Integer> reasons = new java.util.LinkedHashMap<>();
+        java.util.Map<String, Integer> changed = new java.util.LinkedHashMap<>();
+        long comparing = 0;
+        long counting = 0;
         try {
             // autocommit: every statement its own transaction, so no lock is held from one place to the next
             if (!auto) {
                 connection.commit();
                 connection.setAutoCommit(true);
             }
-            String global = globalFingerprint();
+            Curated curated = loadCurated();
             java.sql.Timestamp now = dbNow();
             java.util.Map<String, State> states = readStates();
             Set<String> withTotals = placesWithTotals();
@@ -491,18 +611,25 @@ public class PlaceViewTotalDb {
                 if (tk == null) continue;
                 String k = key(tk[0], tk[1]);
                 try {
-                    String fingerprint = fingerprint(place, global);
+                    long t0 = System.currentTimeMillis();
+                    String fingerprint = fingerprint(place, curated);
                     String[] names = PlaceGenusCurationDb.typeAndKey(place);
-                    String reason = all ? "full count" : recountReason(states.get(k), fingerprint, withTotals.contains(k),
+                    State st = states.get(k);
+                    String reason = all ? "full count" : recountReason(st, fingerprint, withTotals.contains(k),
                         names == null ? null : filled.get(names[0]), names != null, now);
+                    comparing += System.currentTimeMillis() - t0;
                     if (reason == null) {
                         writeState(tk, fingerprint, false);
                         ++unchanged;
                     } else {
+                        long t1 = System.currentTimeMillis();
                         // subfamilies too (2026-11-04: North America showed 15 stored, its Curated list 11)
                         store(place, listRows(place, Rank.GENUS), listRows(place, Rank.SPECIES), listRows(place, Rank.SUBFAMILY));
                         writeState(tk, fingerprint, true);
                         ++recounted;
+                        counting += System.currentTimeMillis() - t1;
+                        reasons.merge(reason, 1, Integer::sum);
+                        if (DATA_CHANGED.equals(reason)) for (String part : changedParts(st.fingerprint, fingerprint)) changed.merge(part, 1, Integer::sum);
                     }
                     handled.add(k);
                     if (s_afterPlace != null) s_afterPlace.accept(tk[0], tk[1]);
@@ -524,7 +651,29 @@ public class PlaceViewTotalDb {
         // none counted: FAILED, so the morning check reports it (2026-11-05: every place failed and the line read "0 places")
         return LOG + ": " + (done == 0 && !failed.isEmpty() ? "FAILED, " : "") + done + " places in " + (System.currentTimeMillis() - start) / 1000 + " s"
             + " (" + recounted + " recounted, " + unchanged + " unchanged)"
+            + because(reasons, changed) + (done == 0 ? "" : "; comparing " + comparing / 1000 + " s, counting " + counting / 1000 + " s")
             + (failed.isEmpty() ? "" : "; FAILED for " + failedCount + " places (their stored totals are shown), e.g. " + String.join(", ", failed));
+    }
+
+    /**
+     * The log line's reasons: "; recounted because: data changed 12 (list rows 3, specimen names 10), counted over 7 days
+     * ago 1", or "" when no place was counted again. A place whose data changed can be in several parts.
+     */
+    static String because(java.util.Map<String, Integer> reasons, java.util.Map<String, Integer> changed) {
+        if (reasons.isEmpty()) return "";
+        StringBuilder b = new StringBuilder("; recounted because: ");
+        boolean first = true;
+        for (java.util.Map.Entry<String, Integer> e : reasons.entrySet()) {
+            if (!first) b.append(", ");
+            first = false;
+            b.append(e.getKey()).append(" ").append(e.getValue());
+            if (DATA_CHANGED.equals(e.getKey()) && !changed.isEmpty()) {
+                List<String> parts = new ArrayList<>();
+                for (java.util.Map.Entry<String, Integer> c : changed.entrySet()) parts.add(c.getKey() + " " + c.getValue());
+                b.append(" (").append(String.join(", ", parts)).append(")");
+            }
+        }
+        return b.toString();
     }
 
     /** Deletes a table's rows of the places not in keep; returns the rows deleted. One place per statement. */

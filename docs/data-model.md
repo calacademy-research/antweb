@@ -757,7 +757,9 @@ on its own; `&param=all` and Sundays count every place. Created by the applicati
 **Purpose.** What each place's `place_view_total` rows were counted from (2026-11-09, Brian Fisher: the nightly step
 took 60 minutes to 4 hours counting every place every night): the counting rules (`PlaceViewTotalDb.RULES`) and a
 fingerprint (counts and crc32 checksums of the place's list rows with their taxon rows, the specimen names stored for it
-in `place_specimen_name` with their specimens, its disputes, and AntWeb's curated morphospecies). A place whose
+in `place_specimen_name` with their specimens, its disputes, and the curated morphospecies among the place's own names:
+part `c`, since 2026-11-10; before, one checksum of all of AntWeb's curated morphospecies, part `v`, which changed every
+place's fingerprint at once). The parts are `l`, `s`, `d`, `c`, `r`, separated by `;`. A place whose
 fingerprint and rules are the same, counted within 7 days and whose specimen names were stored again since it was last
 compared, keeps its totals.
 

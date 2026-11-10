@@ -111,13 +111,28 @@ compute.log: "Place list totals counted: N places in S s (M recounted, K unchang
   `island_country_idx` and `bioregion_idx` come with `db/upgrade/9.3.1/2026-11-09-specimen-place-indexes.sql`, until
   then those parts scan); only the places whose data changed are counted again: a fingerprint per place
   (`place_view_total_state`: its list rows with their taxon rows, tonight's stored specimen names with their
-  specimens, its disputes, AntWeb's curated morphospecies, the rules `PlaceViewTotalDb.RULES`). Specimen dates are no
+  specimens, its disputes, the curated morphospecies among its names (until 2026-11-10: all of AntWeb's), the rules
+  `PlaceViewTotalDb.RULES`). Specimen dates are no
   signal: every upload, the nightly CAS TaxonWorks upload among them, deletes its group's specimens and loads them
   again. Counted again: a changed fingerprint, specimen names not stored again since the last comparison (the Not
   curated count failed), a count older than 7 days, new rules, missing totals; every place on Sundays and with
   `utilData.do?action=placeViewTotals&param=all`. Each place is committed on its own (autocommit).
 - Bump `PlaceViewTotalDb.RULES` when what a list shows changes (ListView, StatusSet, TaxaPage, PlaceTotals), so the next
   run counts every place.
+- Production 2026-11-10 (a Tuesday, the first daily update with the fingerprints): "1987 recounted, 0 unchanged", 584 s.
+  Cause: the curated morphospecies were in every place's fingerprint as one checksum of all of AntWeb's
+  (`globalFingerprint`), so one curator's entry for a morphospecies anywhere, or one curated morphospecies whose
+  specimens were renamed or lost, changed every fingerprint. What the daily update rewrites every day (specimens of CAS
+  deleted and loaded again, list rows deleted and inserted again, counts, the stored specimen names) changes no
+  fingerprint: `PlaceViewTotalDbTest#testTheDailySequenceRecountsOnlyThePlacesThatChanged`. Since 2026-11-10 each place
+  takes the curated morphospecies among its own names (list rows and stored specimen names; `curatedPart`, the rule of
+  `ListView.vettedCondition` read once per run): a curated morphospecies counts again the places that have the name.
+  The first run after the change counts every place once more (the stored fingerprints have the old form).
+- The line also says why places were counted again and what took the time: "...(12 recounted, 1975 unchanged);
+  recounted because: data changed 12 (list rows 3, specimen names 10, curated morphospecies 1); comparing 20 s,
+  counting 4 s". Reasons: data changed (with the parts: list rows, specimen names, removed names, curated
+  morphospecies, or "fingerprint of an earlier version"), new place, totals missing, rules changed, counted over 7 days
+  ago, specimen names not stored again since the last count, full count.
 
 ### Set 5 (line 262): maps and checks, about 51 minutes; skipped on staging
 
