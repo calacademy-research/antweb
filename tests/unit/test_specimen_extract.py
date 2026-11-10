@@ -330,7 +330,7 @@ def test_ants_only_is_the_default_and_says_what_it_left_out():
     assert se.ANTS in export and se.ANTS in count, "the file and the check must use the same filter"
     assert any("/* left out */" in q and "not " + se.ANTS in q for q in sqls)
     m = json.load(open(os.path.join(d, "out", "manifest.json")))
-    assert m["ants_only"] is True and m["tool_version"] == "5"
+    assert m["ants_only"] is True and m["tool_version"] == "6"
     assert m["left_out_not_formicidae"] == {"specimens": 341, "families": 3,
                                             "by_family": {"(coleoptera)": 164, "curculionidae": 153, "vespidae": 24}}
     assert "Ants only (family Formicidae): 341 specimens of other families are left out ((coleoptera) 164, curculionidae 153, vespidae 24)" in r.stdout
@@ -372,4 +372,5 @@ if __name__ == "__main__":
     test_a_country_without_specimens_is_a_warning()
     test_a_second_run_and_a_failed_run_leave_no_stale_or_partial_file()
     test_specimens_with_no_country_go_in_their_own_file()
+    test_ants_only_is_the_default_and_says_what_it_left_out()
     print("ok")
