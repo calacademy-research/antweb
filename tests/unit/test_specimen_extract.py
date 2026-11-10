@@ -78,6 +78,7 @@ def setup(counts=None, places=None):
     os.chmod(shim, os.stat(shim).st_mode | stat.S_IXUSR)
     if counts is None:
         counts = [["Canada", "", "1"], ["Hawaii", "Hawaii", "1"], ["Mexico", "", "1"], ["United States", "", "2"]]
+    counts = [[c[0].encode("utf-8").hex(), c[1].encode("utf-8").hex(), c[2]] for c in counts]   # the count query answers hex(name)
     with open(os.path.join(d, "bin", "answers.json"), "w") as f:
         json.dump({"places": places or PLACES, "header": HEADER, "rows": ROWS, "counts": counts, "list": LIST}, f)
     return d
@@ -156,6 +157,27 @@ def test_the_password_never_reaches_a_command_line_and_the_queries_only_read():
     print("ok   test_the_password_never_reaches_a_command_line_and_the_queries_only_read")
 
 
+def test_the_database_count_is_grouped_by_the_exact_spelling():
+    """Staging 2026-11-10: three specimens say "México"; MySQL's `country in ('Mexico')` finds them and a plain
+    GROUP BY country adds them to Mexico, so the check reported a difference for a complete file."""
+    sql = se.count_sql(["Mexico"], [])
+    assert "hex(ifnull(s.country, ''))" in sql and "hex(ifnull(s.island_country, ''))" in sql
+    stats = se.Stats("")
+    for country in ("Mexico", "M\u00e9xico", "M\u00e9xico"):
+        stats.add({"country": country, "island_country": ""})
+    hx = lambda v: v.encode("utf-8").hex().upper()
+    assert se.compare_counts(stats, [[hx("Mexico"), "", "1"], [hx("M\u00e9xico"), "", "2"]]) == (True, [])
+    assert se.compare_counts(stats, [[hx("Mexico"), "", "3"]])[0] is False
+    text = se.manifest_text({"made_utc": "2026-11-10 15:49:20", "antweb_commit": "x", "tool_version": "2", "countries": ["Mexico"],
+                             "islands": [], "specimens": 4, "verified": True, "differences": [],
+                             "by_place": [{"country": "Mexico", "island_country": "", "specimens": 1},
+                                          {"country": "M\u00e9xico", "island_country": "", "specimens": 3}],
+                             "by_bioregion": {}, "without_coordinates": 0, "no_taxon_row": 0, "flagged": 0, "not_ants": 0,
+                             "genera": 1, "names": 1, "files": {}})
+    assert "Country spellings in the file besides the names asked for" in text and "M\u00e9xico" in text
+    print("ok   test_the_database_count_is_grouped_by_the_exact_spelling")
+
+
 def test_islands_can_be_left_out():
     d = setup(counts=[["Canada", "", "1"], ["Mexico", "", "1"], ["United States", "", "2"]])
     run(d, "--countries", "United States,Canada,Mexico", "--no-islands")
@@ -187,4 +209,5 @@ if __name__ == "__main__":
     test_an_unknown_country_name_stops_before_any_export()
     test_the_password_never_reaches_a_command_line_and_the_queries_only_read()
     test_islands_can_be_left_out()
+    test_the_database_count_is_grouped_by_the_exact_spelling()
     print("ok")
