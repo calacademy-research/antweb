@@ -33,11 +33,20 @@ What it proposes.
         within the allowed distance of exactly one. A second state within the allowed distance: "two
         candidates", both named, no proposal.
   B. Country missing: with usable coordinates, the country by the rule of coordinate_country.py (inside
-     exactly one, or in the water within the allowed distance of exactly one), then the state as in A. An
-     island country (Hawaii) is proposed as its parent country, the island named in the basis. Without
-     coordinates: no proposal; the records are grouped in not_derivable.csv with the place text they have.
+     exactly one, or in the water within the allowed distance of exactly one), then the state as in A.
+     Without coordinates: no proposal; the records are grouped in not_derivable.csv with the place text.
   C. Country not valid in AntWeb ("Africa"): listed with what the record has; with coordinates the country
      the point is in is proposed, and the state when it is missing.
+
+Island countries (Brian Fisher, 2026-11-10: TaxonWorks is filled as AntWeb needs it). AntWeb reads Hawaii as
+the state of a specimen of the United States, or as its country, and stores the country United States with the
+island country Hawaii (SpecimenUploadParse). So for TaxonWorks the correction is country United States and
+state Hawaii. A state shape whose name is a valid island country of AntWeb (geolocale: georank country,
+is_island 1, is_valid 1) with the specimen's country as its parent (geolocale.country) is proposed as the state,
+by the island's AntWeb name, the basis saying "AntWeb files this under <country> as the island <name>"; it is
+not listed as "not a state in AntWeb", and the table of names counts island shapes apart. A missing country
+in such an island gets two lines: the country (the parent) and the state (the island). A specimen that has
+its island country already is left out, as before.
 
 Which level of the boundary files holds AntWeb's states. Not assumed to be ADM1. For each country the shape
 names of ADM1, then ADM2, ADM3, ADM4 are compared with AntWeb's valid states of that country (geolocale,
@@ -94,7 +103,7 @@ _spec = importlib.util.spec_from_file_location("coordinate_country", os.path.joi
 cc = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(cc)
 
-VERSION = "1"
+VERSION = "2"
 LEVELS = ["ADM1", "ADM2", "ADM3", "ADM4"]
 GOOD_MATCH = 0.8                 # a level that matches this share of AntWeb's states ends the search
 SIMPLIFIED = "_simplified"       # the light file of geoBoundaries: within 100 m of the full one for 99 in 100 points
@@ -181,11 +190,15 @@ def read_map(path):
     return rows
 
 
+ISLAND = "island country"
+
+
 class Chosen:
     """The level of the boundary files used for one country: its shapes, the AntWeb state of each, the index."""
 
-    def __init__(self, code, level, names, states, hows, index, tried):
-        self.code, self.level, self.names, self.states, self.hows, self.index, self.tried = code, level, names, states, hows, index, tried
+    def __init__(self, country, code, level, names, states, hows, index, tried):
+        self.country, self.code, self.level, self.names, self.states, self.hows = country, code, level, names, states, hows
+        self.index, self.tried = index, tried
 
 
 class StateShapes:
@@ -205,8 +218,24 @@ class StateShapes:
         self.files = {}                                          # lock key -> licence, for the report
         self._chosen = collections.OrderedDict()                 # country -> Chosen, the two used last
 
+    def island(self, country, name):
+        """The AntWeb name of the valid island country a shape name means, when the island's parent country is
+        country (Hawaii for the United States); None otherwise."""
+        place = self.countries.resolve(name)
+        if place is None or not place.is_island or not place.parent:
+            return None
+        parent = self.countries.resolve(place.parent)
+        return place.name if parent is not None and parent.name == country else None
+
+    @staticmethod
+    def states_matched(wanted, states, hows):
+        """The AntWeb states the shapes of a level name. An island shape is counted apart; it counts here only
+        when AntWeb has the island as a state of the country as well (Hawaii of the United States)."""
+        return {s for s, h in zip(states, hows) if s and (h != ISLAND or s in wanted)}
+
     def match(self, country, level, names):
-        """The AntWeb state of each shape name (None for none) and how it was found."""
+        """What to enter as the state for each shape name (None for none) and how it was found: by the mapping
+        file, as an island country of AntWeb, by the name of a state."""
         states, hows = [], []
         for name in names:
             state, how = None, ""
@@ -215,6 +244,10 @@ class StateShapes:
                 if found is not None:
                     state, how = found, "mapping file"
                     break
+            if state is None:
+                island = self.island(country, name)
+                if island is not None:
+                    state, how = island, ISLAND
             if state is None:
                 state, how = self.states.find(country, name)
             states.append(state)
@@ -246,8 +279,10 @@ class StateShapes:
             features = [(name, rings) for name, rings in features if rings]
             names = [name for name, _ in features]
             states, hows = self.match(country, level, names)
-            matched = len({s for s in states if s})
-            tried.append(level + ": " + cc.n(len(names)) + " shapes, " + cc.n(matched) + " of " + cc.n(len(wanted)) + " AntWeb states matched")
+            matched = len(self.states_matched(wanted, states, hows))
+            islands = sum(1 for h in hows if h == ISLAND)
+            tried.append(level + ": " + cc.n(len(names)) + " shapes, " + cc.n(matched) + " of " + cc.n(len(wanted)) + " AntWeb states matched"
+                         + (", " + cc.n(islands) + (" shape is an island country" if islands == 1 else " shapes are island countries") + " of AntWeb" if islands else ""))
             if features and (best is None or matched > best[0]):
                 best = (matched, level, features, states, hows)
             if wanted and matched >= GOOD_MATCH * len(wanted):
@@ -257,7 +292,7 @@ class StateShapes:
             return None
         matched, level, features, states, hows = best
         names = [name for name, _ in features]
-        chosen = Chosen(code, level, names, states, hows, cc.index_of_shapes([rings for _, rings in features]), tried)
+        chosen = Chosen(country, code, level, names, states, hows, cc.index_of_shapes([rings for _, rings in features]), tried)
         if country not in self.level_of:                         # the first time: what the report says of this country
             self.level_of[country] = level
             entry = self.detail.lock["files"].get(code + " " + level + SIMPLIFIED, {})
@@ -265,11 +300,12 @@ class StateShapes:
             for name, state, how in zip(names, states, hows):
                 if how == "mapping file":
                     self.rows_used.add((country, level, name, state))
-            got = {s for s in states if s}
+            got = self.states_matched(wanted, states, hows)
             self.tables[country] = {
                 "code": code, "level": level, "tried": tried, "matched": sorted(got), "not_matched": [s for s in wanted if s not in got],
                 "shapes_not_states": sorted(n for n, s in zip(names, states) if not s),
-                "other_way": sorted(n + " -> " + s + " (" + h + ")" for n, s, h in zip(names, states, hows) if s and h != "name"),
+                "islands": sorted(n + (" (" + s + ")" if s != n else "") for n, s, h in zip(names, states, hows) if h == ISLAND),
+                "other_way": sorted(n + " -> " + s + " (" + h + ")" for n, s, h in zip(names, states, hows) if s and h not in ("name", ISLAND)),
                 "licence": entry.get("licence", ""), "source": entry.get("source", "")}
         self._chosen[country] = chosen
         while len(self._chosen) > 2:
@@ -297,11 +333,17 @@ class StateShapes:
             return None, "", NOT_A_STATE, chosen.names[first]
         where = "geoBoundaries " + chosen.code + " " + chosen.level
         name = chosen.names[first]
-        if chosen.hows[first] != "name":
+        if chosen.hows[first] == ISLAND:
+            where += "; " + files_as_island(chosen.country, chosen.states[first])
+        elif chosen.hows[first] != "name":
             name += " (" + chosen.states[first] + " by the " + chosen.hows[first] + ")"
         if inside:
             return chosen.states[first], "coordinates inside " + name + ", " + where, "", ""
         return chosen.states[first], "in the water, " + cc.rounded(found[first]) + " km from " + name + ", " + where, "", ""
+
+
+def files_as_island(country, island):
+    return "AntWeb files this under " + country + " as the island " + island
 
 
 # ---------------------------------------------------------------- one specimen
@@ -337,41 +379,43 @@ class Corrections:
         return (lat, lon) if cc.usable(lat, lon) else None
 
     def derive(self, row, point, current):
-        """The country of a record that has none, or none AntWeb knows: (Proposal or Not, valid country or None)."""
+        """The country of a record that has none, or none AntWeb knows: (Proposal or Not, valid country or None,
+        Proposal of the state or None). A point in an island country of AntWeb (Hawaii) gives its parent country
+        as the country and the island as the state: that is how AntWeb, and so TaxonWorks, files it."""
         prefix = "" if current == "" else "country not valid in AntWeb; "
         if point is None:
-            return Not("country", prefix + NO_COORDINATES, ""), None
+            return Not("country", prefix + NO_COORDINATES, ""), None, None
         r = self.checker.derive(point[0], point[1], row.stated)
         if r.cls in (cc.DERIVE_IN, cc.DERIVE_NEAR):
             place = self.countries.rows[r.country]
-            name = r.country
             basis = ("coordinates inside " if r.cls == cc.DERIVE_IN else "in the water, " + cc.rounded(r.km) + " km from ") + r.country + ", " + r.shape
-            if place.is_island and place.parent and self.countries.resolve(place.parent) is not None:
-                name = self.countries.resolve(place.parent).name
-                basis += " (" + r.country + " is an island country of " + name + " in AntWeb)"
-            return Proposal("country", current, name, basis, name), name
+            parent = self.countries.resolve(place.parent) if place.is_island and place.parent else None
+            if parent is None:
+                return Proposal("country", current, r.country, basis, r.country), r.country, None
+            basis += "; " + files_as_island(parent.name, r.country)
+            return Proposal("country", current, parent.name, basis, parent.name), parent.name, Proposal("adm1", "", r.country, basis, parent.name)
         if r.cls == cc.TWO:
-            return Not("country", prefix + TWO, r.country), None
+            return Not("country", prefix + TWO, r.country), None, None
         if r.cls == cc.DERIVE_NONE:
-            return Not("country", prefix + NO_COUNTRY_HERE, r.country), None
+            return Not("country", prefix + NO_COUNTRY_HERE, r.country), None, None
         nearest = (cc.rounded(r.km) + " km from " + r.country) if r.country else ((cc.rounded(r.km) + " km from the nearest country") if r.km is not None else "")
-        return Not("country", prefix + AT_SEA, nearest), None
+        return Not("country", prefix + AT_SEA, nearest), None, None
 
     def _work(self, row):
         out = []
         point = self.point(row)
         valid = self.countries.resolve(row.country) if row.country else None
         stated_country = None                                    # the stored country, when it is valid
-        if not row.country:
-            first, country = self.derive(row, point, "")
-            out.append(first)
-        elif valid is None:
-            first, country = self.derive(row, point, row.country)
+        island_state = None
+        if not row.country or valid is None:
+            first, country, island_state = self.derive(row, point, row.country if row.country else "")
             out.append(first)
         else:
             country = stated_country = valid.name
         if row.adm1 or row.island or country is None:
             return out
+        if island_state is not None:
+            return out + [island_state]
         if not self.states.of(country):
             return out + [Not("adm1", NO_STATES, country, country)]
         if point is None:
@@ -518,6 +562,7 @@ def report_text(when, commit, group_text, lists, shapes, detail, seconds, tolera
         out += ["  " + country + ": geoBoundaries " + t["code"] + " " + t["level"] + " (" + "; ".join(t["tried"]) + ")",
                 "    AntWeb states matched (" + n(len(t["matched"])) + "): " + "; ".join(t["matched"]),
                 "    AntWeb states not matched (" + n(len(t["not_matched"])) + "): " + "; ".join(t["not_matched"]),
+                "    shapes that are an island country of AntWeb, entered as the state (" + n(len(t["islands"])) + "): " + "; ".join(t["islands"]),
                 "    shapes that are no state in AntWeb (" + n(len(t["shapes_not_states"])) + "): " + "; ".join(t["shapes_not_states"])]
         if t["other_way"]:
             out += ["    matched in another way than by the name itself: " + "; ".join(t["other_way"])]

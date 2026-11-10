@@ -230,6 +230,74 @@ def test_island_country_specimen_is_left_out():
     assert work.kind(row("x", "Africa")) == "country not valid in AntWeb"
 
 
+HAWAII = "AntWeb files this under United States as the island Hawaii"
+
+
+def without_hawaii_as_a_state():
+    """The test world where AntWeb has Hawaii as an island country only, not as a state of the United States too."""
+    work = setup()
+    states = pc.States([s for s in STATES if s[0] != "Hawaii"], work.countries)
+    return pc.Corrections(work.checker, states, pc.StateShapes(_made["store"], states, work.countries, pc.read_map(pc.MAP_FILE)))
+
+
+def test_state_shape_that_is_an_island_country():
+    # Brian Fisher, 2026-11-10: AntWeb reads Hawaii as the state of a specimen of the United States and stores it as
+    # the island country; so the state to enter in TaxonWorks is Hawaii.
+    for work in (setup(), without_hawaii_as_a_state()):
+        r = work.work(row("casent0000003", "United States", 21.5, -159.5))
+        assert r == [pc.Proposal("adm1", "", "Hawaii", "coordinates inside Hawaii, geoBoundaries USA ADM1; " + HAWAII, "United States")], r
+        r = work.work(row("casent0000003", "USA", 21.5, -160.005))                         # an old name of the country, in the water
+        assert r == [pc.Proposal("adm1", "", "Hawaii", "in the water, 0.52 km from Hawaii, geoBoundaries USA ADM1; " + HAWAII, "United States")], r
+        r = work.work(row("casent0000003", "United States", 35.0, -108.0))                 # a state of the mainland: no word of islands
+        assert r == [pc.Proposal("adm1", "", "Arizona", "coordinates inside Arizona, geoBoundaries USA ADM1", "United States")], r
+        t = work.shapes.tables["United States"]
+        assert t["islands"] == ["Hawaii"] and t["shapes_not_states"] == [] and t["other_way"] == [] and t["level"] == "ADM1"
+    # the island shape is counted apart from the states matched; it is a state matched too only when AntWeb has it as one
+    t = setup().shapes.tables["United States"]
+    assert t["tried"] == ["ADM1: 3 shapes, 3 of 3 AntWeb states matched, 1 shape is an island country of AntWeb"], t["tried"]
+    assert t["matched"] == ["Arizona", "Hawaii", "New Mexico"] and t["not_matched"] == []
+    other = without_hawaii_as_a_state()
+    other.work(row("casent0000003", "United States", 21.5, -159.5))
+    t = other.shapes.tables["United States"]
+    assert t["tried"] == ["ADM1: 3 shapes, 2 of 2 AntWeb states matched, 1 shape is an island country of AntWeb"], t["tried"]
+    assert t["matched"] == ["Arizona", "New Mexico"] and t["not_matched"] == []
+    # only a valid island country whose parent is the specimen's country
+    shapes = setup().shapes
+    assert shapes.island("United States", "HAWAII") == "Hawaii" and shapes.island("Mexico", "Hawaii") is None
+    assert shapes.island("United States", "Mexico") is None and shapes.island("United States", "Arizona") is None
+    known = cc.Countries([cc.Country("United States", 1, "", 0, ""), cc.Country("Hawaii", 0, "", 1, "United States"), cc.Country("Guam", 1, "", 1, "")])
+    old = pc.StateShapes(_made["store"], pc.States(STATES, known), known, [])
+    assert old.island("United States", "Hawaii") is None and old.island("United States", "Guam") is None      # not valid; no parent
+    # the report: the island shape in the table of names, and not in the list for the Geolocale Manager
+    lists = pc.Lists()
+    record = row("casent0000003", "United States", 21.5, -159.5, event="BLF300")
+    lists.add(record, other.work(record), other.kind(record))
+    text = pc.report_text("x", "y", "every group", lists, other.shapes, _made["store"], "1 second", 1.0)
+    assert ("    AntWeb states matched (2): Arizona; New Mexico\n    AntWeb states not matched (0): \n"
+            "    shapes that are an island country of AntWeb, entered as the state (1): Hawaii\n    shapes that are no state in AntWeb (0): \n") in text, text
+    assert "with the specimens that lie in them:\n  none\n" in text, text
+    assert lists.corrections()[0][3:7] == ["adm1", "", "Hawaii", "coordinates inside Hawaii, geoBoundaries USA ADM1; " + HAWAII]
+
+
+def test_country_missing_in_an_island_country():
+    # two lines: the country is the island's parent, the state the island
+    for work in (setup(), without_hawaii_as_a_state()):
+        basis = "coordinates inside Hawaii, Natural Earth 1:10m; " + HAWAII
+        r = work.work(row("casent0000004", "", 21.5, -159.5))
+        assert r == [pc.Proposal("country", "", "United States", basis, "United States"), pc.Proposal("adm1", "", "Hawaii", basis, "United States")], r
+        basis = "in the water, 0.52 km from Hawaii, Natural Earth 1:10m; " + HAWAII
+        r = work.work(row("casent0000004", "", 21.5, -160.005))
+        assert r == [pc.Proposal("country", "", "United States", basis, "United States"), pc.Proposal("adm1", "", "Hawaii", basis, "United States")], r
+        # a country AntWeb does not know: the same two lines, the stored value in the first
+        r = work.work(row("casent0000004", "Sandwich Islands", 21.5, -159.5))
+        assert [(x.field, x.current, x.proposed) for x in r] == [("country", "Sandwich Islands", "United States"), ("adm1", "", "Hawaii")], r
+        # a record that has a state, or its island country, gets the country alone
+        assert [(x.field, x.proposed) for x in work.work(row("casent0000004", "", 21.5, -159.5, adm1="Honolulu"))] == [("country", "United States")]
+        assert [(x.field, x.proposed) for x in work.work(row("casent0000004", "", 21.5, -159.5, island="Hawaii"))] == [("country", "United States")]
+    # a country that is no island: one line for the country and the state from the state shapes, as before
+    assert [x.basis for x in w("", 25.0, -108.0)] == ["coordinates inside Mexico, Natural Earth 1:10m", "coordinates inside Sonora, geoBoundaries MEX ADM1"]
+
+
 def test_reasons_for_no_proposal():
     assert w("Tinyland", 0.5, 0.5) == [pc.Not("adm1", pc.NO_STATES, "Tinyland", "Tinyland")]              # the country has no states in AntWeb
     assert w("Mexico") == [pc.Not("adm1", pc.NO_COORDINATES, "")]
@@ -246,10 +314,6 @@ def test_country_missing():
     # in the water within 1 km of one country
     r = w("", 25.0, -110.005)
     assert [x.proposed for x in r] == ["Mexico", "Sonora"] and r[0].basis == "in the water, 0.5 km from Mexico, Natural Earth 1:10m", r
-    # an island country is proposed as its parent country
-    r = w("", 21.5, -159.5)
-    assert r[0] == pc.Proposal("country", "", "United States", "coordinates inside Hawaii, Natural Earth 1:10m (Hawaii is an island country of United States in AntWeb)", "United States")
-    assert r[1].proposed == "Hawaii" and r[1].field == "adm1"
     # no coordinates, far at sea: nothing proposed, and no second line for the state
     assert w("") == [pc.Not("country", pc.NO_COORDINATES, "")]
     assert w("", 25.0, -112.0) == [pc.Not("country", pc.AT_SEA, "202 km from the nearest country")]
